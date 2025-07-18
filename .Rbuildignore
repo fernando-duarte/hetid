@@ -84,3 +84,4 @@
 # Makefile
 ^Makefile$
 ^LICENSE\.md$
+^CLAUDE\.local\.md$
