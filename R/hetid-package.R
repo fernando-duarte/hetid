@@ -1,4 +1,6 @@
 #' @keywords internal
+#' @importFrom utils download.file read.csv write.csv
+#' @importFrom stats aggregate
 "_PACKAGE"
 
 #' hetid: Identification Through Heteroskedasticity for VFCI
@@ -49,7 +51,6 @@
 #' mismeasured and endogenous regressor models." Journal of Business & Economic
 #' Statistics, 30(1), 67-80.
 #'
-#' @docType package
 #' @name hetid-package
 #' @aliases hetid
 

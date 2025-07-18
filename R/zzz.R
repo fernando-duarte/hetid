@@ -30,13 +30,13 @@
 
     if (csv_path == "" || !file.exists(csv_path)) {
       messages[[length(messages) + 1]] <- paste0(
-        "  • ", source$name, ": Not found. Run ", source$download_fn
+        "  * ", source$name, ": Not found. Run ", source$download_fn
       )
     } else {
       # Get file modification time
       file_date <- file.info(csv_path)$mtime
       messages[[length(messages) + 1]] <- paste0(
-        "  • ", source$name, ": Available (updated ",
+        "  * ", source$name, ": Available (updated ",
         format(file_date, "%Y-%m-%d"), ")"
       )
     }
