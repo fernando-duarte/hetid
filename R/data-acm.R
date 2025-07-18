@@ -1,0 +1,76 @@
+#' ACM Term Structure Data Documentation
+#'
+#' @description
+#' Documentation for the Adrian, Crump, and Moench (ACM) term structure dataset
+#' available through the \code{load_term_premia()} and \code{extract_acm_data()}
+#' functions. This dataset contains model-implied yields, term premia, and
+#' risk-neutral yields for U.S. Treasury securities.
+#'
+#' @format The ACM data is stored as a CSV file with the following structure:
+#' \describe{
+#'   \item{DATE}{The business-day observation date for each row in the series}
+#'   \item{ACMY01-ACMY10}{Model-implied zero-coupon Treasury yields from the ACM
+#'     model, for maturities of 1-year up to 10-years}
+#'   \item{ACMTP01-ACMTP10}{ACM term premium estimates for 1- to 10-year
+#'     maturities—i.e., the additional compensation investors require for bearing
+#'     interest-rate risk}
+#'   \item{ACMRNY01-ACMRNY10}{Risk-neutral yields (the expected average short-rate
+#'     path) over 1- to 10-year horizons, as implied by the ACM model}
+#' }
+#'
+#' @details
+#' ## Maturity Suffix
+#' The numeric suffix 01-10 in each of the ACM fields denotes the maturity in
+#' years (1 = one year, ..., 10 = ten years).
+#'
+#' ## Units
+#' All yield, term-premium, and risk-neutral-yield values are expressed in
+#' annualized percentage points (i.e., percent).
+#'
+#' ## Frequency
+#' The dataset is monthly frequency (one entry per month), typically using
+#' end-of-month observations.
+#'
+#' ## Relationship Between Fields
+#' By construction, for each maturity n:
+#' \deqn{\text{ACMTP}_n = \text{ACMY}_n - \text{ACMRNY}_n}
+#'
+#' That is, the term premium is simply the difference between the model-implied
+#' yield and the risk-neutral yield.
+#'
+#' @section Data Source:
+#' The data is sourced from the Federal Reserve Bank of New York and is based on
+#' the methodology described in Adrian, Crump, and Moench (2013).
+#'
+#' @section Usage:
+#' To access the raw ACM data:
+#' \preformatted{
+#' # Download the data (if not already available)
+#' download_term_premia()
+#'
+#' # Load the raw data
+#' acm_raw <- load_term_premia()
+#'
+#' # Or use the convenience function for processed data
+#' acm_data <- extract_acm_data(
+#'   data_types = c("yields", "term_premia"),
+#'   maturities = c(2, 5, 10)
+#' )
+#' }
+#'
+#' @references
+#' Adrian, T., Crump, R. K., and Moench, E. (2013). "Pricing the term structure
+#' with linear regressions." Journal of Financial Economics, 110(1), 110-138.
+#'
+#' Federal Reserve Bank of New York. "Treasury Term Premia."
+#' \url{https://www.newyorkfed.org/research/data_indicators/term-premia-tabs}
+#'
+#' @seealso
+#' \code{\link{load_term_premia}} for loading the raw data
+#' \code{\link{extract_acm_data}} for convenient data extraction
+#' \code{\link{download_term_premia}} for downloading the latest data
+#'
+#' @name acm_data
+#' @aliases ACM_data ACM acm term_premia
+#' @keywords datasets
+NULL
