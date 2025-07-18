@@ -12,6 +12,7 @@ cran
 cre
 crlf
 css
+csv
 cxx
 cyclocomp
 DeHaven
@@ -20,6 +21,7 @@ duarte
 edu
 eol
 eot
+extdata
 fernando
 gitattributes
 github
@@ -72,9 +74,16 @@ Rprofile
 Rproj
 styler
 sublicense
+SVENF
+SVENPY
+SVENY
 svg
 testthat
 tex
+THREEFF
+THREEFFTP
+THREEFY
+THREEFYTP
 Tobias
 ttf
 VFCI
