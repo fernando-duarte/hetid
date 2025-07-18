@@ -26,8 +26,11 @@ repos:
 
       # Lint R code
       - id: lintr
-        args: [--warn_only]
+        args: [--warn_only, --error_on_lint]
         verbose: true
+        additional_dependencies:
+          - lintr
+          - cyclocomp
 
       # Check that README.Rmd hasn't changed without updating README.md
       - id: readme-rmd-rendered
