@@ -17,7 +17,8 @@ compute_n_hat(yields, term_premia, i)
 Numeric vector of n_hat(i,t) values
 }
 \description{
-Computes the time series n_hat(i,t) which is an estimator for E_t[p_(t+i)^(1)] = -E_t[y_(t+i)^(1)]
+Computes the time series n_hat(i,t) which is an estimator for
+E_t[p_(t+i)^(1)] = -E_t[y_(t+i)^(1)]
 }
 \details{
 The formula is:
