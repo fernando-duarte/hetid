@@ -25,6 +25,7 @@
 ^pkgdown$
 ^doc$
 ^Meta$
+^inst/doc/.*\.md$
 
 # Development directories
 ^data-raw$
