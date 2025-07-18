@@ -2,6 +2,7 @@
 
 export(download_term_premia)
 export(download_yield_curve)
+export(extract_acm_data)
 export(hello)
 export(load_term_premia)
 export(load_yield_curve)
