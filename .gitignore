@@ -109,3 +109,6 @@ yarn-error.log*
 
 # Other
 .quarto
+
+# Large data files
+inst/extdata/*.csv
