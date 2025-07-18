@@ -88,3 +88,8 @@
 ^LICENSE\.md$
 ^CLAUDE\.local\.md$
 ^data-raw$
+
+# Analysis scripts (not part of package)
+^hetid_analysis_script\.R$
+^hetid_interactive_analysis\.R$
+^example_hetid_analysis\.R$
