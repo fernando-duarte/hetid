@@ -68,13 +68,6 @@ Useful links:
   \item Report bugs at \url{https://github.com/fernando-duarte/hetid/issues}
 }
 
-
-Useful links:
-\itemize{
-  \item \url{https://github.com/fernando-duarte/hetid}
-  \item Report bugs at \url{https://github.com/fernando-duarte/hetid/issues}
-}
-
 }
 \author{
 \strong{Maintainer}: Fernando Duarte \email{fernando_duarte@brown.edu} (\href{https://orcid.org/0000-0002-8495-6936}{ORCID})
