@@ -14,14 +14,14 @@ compute_n_hat(yields, term_premia, i)
 \item{i}{Integer, the horizon (must be >= 1)}
 }
 \value{
-Numeric vector of n_hat_{i,t} values
+Numeric vector of n_hat(i,t) values
 }
 \description{
-Computes the time series n_hat_{i,t} which is an estimator for E_t\link{p_{t+i}^{(1)}} = -E_t\link{y_{t+i}^{(1)}}
+Computes the time series n_hat(i,t) which is an estimator for E_t[p_(t+i)^(1)] = -E_t[y_(t+i)^(1)]
 }
 \details{
 The formula is:
-n_hat_{i,t} = i*y_t^{(i)} - (i+1)*y_t^{(i+1)} + (i+1)\emph{TP_t^{(i+1)} - i}TP_t^{(i)}
+n_hat(i,t) = i*y_t^(i) - (i+1)*y_t^(i+1) + (i+1)\emph{TP_t^(i+1) - i}TP_t^(i)
 }
 \examples{
 \dontrun{

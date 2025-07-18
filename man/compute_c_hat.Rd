@@ -17,11 +17,11 @@ compute_c_hat(yields, term_premia, i)
 Numeric value of c_hat_i
 }
 \description{
-Computes c_hat_i which estimates sup_t exp(2*E_t\link{p_{t+i}^{(1)}})
+Computes c_hat_i which estimates sup_t exp(2*E_t[p_(t+i)^(1)])
 }
 \details{
 The formula is:
-c_hat_i = max_{1 <= t <= T} exp(2*n_hat_{i,t})
+c_hat_i = max over t of exp(2*n_hat(i,t))
 }
 \examples{
 \dontrun{

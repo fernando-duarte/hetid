@@ -17,11 +17,11 @@ compute_k_hat(yields, term_premia, i)
 Numeric value of k_hat_i
 }
 \description{
-Computes k_hat_i which estimates E[(p_{t+i}^{(1)} - E_{t+1}\link{p_{t+i}^{(1)}})^4]
+Computes k_hat_i which estimates E[(p_(t+i)^(1) - E_(t+1)[p_(t+i)^(1)])^4]
 }
 \details{
 The formula is:
-k_hat_i = (1/(T-i)) * sum_{t=1}^{T-i} (-y_{t+i}^{(1)} - n_hat_{i-1,t+1})^4
+k_hat_i = (1/(T-i)) * sum_t=1^(T-i) (-y_(t+i)^(1) - n_hat(i-1,t+1))^4
 }
 \examples{
 \dontrun{

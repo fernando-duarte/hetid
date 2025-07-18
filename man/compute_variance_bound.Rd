@@ -17,11 +17,11 @@ compute_variance_bound(yields, term_premia, i)
 Numeric value of the variance bound (1/4)\emph{c_hat_i}k_hat_i
 }
 \description{
-Computes the empirical upper bound for Var(error_{i,t+1})
+Computes the empirical upper bound for Var(error(i,t+1))
 }
 \details{
 The variance bound is:
-Var(error_{i,t+1}) <= (1/4)\emph{c_hat_i}k_hat_i
+Var(error(i,t+1)) <= (1/4)\emph{c_hat_i}k_hat_i
 }
 \examples{
 \dontrun{
