@@ -1,3 +1,6 @@
+ACMRNY
+ACMTP
+ACMY
 aut
 BugReports
 bz
@@ -57,6 +60,7 @@ Rdata
 RData
 rds
 README
+readxl
 renv
 Renviron
 rmarkdown

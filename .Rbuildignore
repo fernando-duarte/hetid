@@ -85,3 +85,4 @@
 ^Makefile$
 ^LICENSE\.md$
 ^CLAUDE\.local\.md$
+^data-raw$

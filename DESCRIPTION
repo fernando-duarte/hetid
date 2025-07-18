@@ -15,6 +15,7 @@ Depends:
     R (>= 3.5.0)
 Suggests:
     knitr,
+    readxl,
     rmarkdown,
     testthat (>= 3.0.0)
 Additional_repositories: https://github.com/VFCI/macro_dynamics
