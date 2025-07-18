@@ -35,6 +35,8 @@ jpeg
 jpg
 js
 json
+knitr
+LazyData
 Lewbel
 lf
 LF
@@ -57,6 +59,7 @@ rds
 README
 renv
 Renviron
+rmarkdown
 Rmd
 Rnw
 Roxygen
