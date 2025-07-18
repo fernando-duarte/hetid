@@ -6,6 +6,8 @@
 \alias{hetid-package}
 \title{hetid: Identification Through Heteroskedasticity for VFCI}
 \description{
+\if{html}{\figure{logo.png}{options: style='float: right' alt='logo' width='120'}}
+
 Applies identification through heteroskedasticity from Lewbel (2012) for triangular systems to estimate the VFCI (volatility financial conditions index) by Tobias Adrian, Matthew DeHaven, Fernando Duarte and Tara Iyer.
 }
 \seealso{
