@@ -32,7 +32,7 @@
 #'   \item{gspc}{S&P 500 index}
 #'   \item{gspc_ret}{S&P 500 returns}
 #'   \item{gspc_vol}{S&P 500 volatility}
-#'   \item{mp_shock_*}{Various monetary policy shock measures}
+#'   \item{mp_shock_...}{Various monetary policy shock measures}
 #'   \item{gsfci}{Goldman Sachs Financial Conditions Index}
 #'   \item{ecy}{Excess cyclical yield}
 #'   \item{ebp}{Excess bond premium}
@@ -42,7 +42,7 @@
 #'   \item{mu}{Expected excess returns}
 #'   \item{vfci}{Volatility Financial Conditions Index}
 #'   \item{vfci_lev}{VFCI level}
-#'   \item{gr*, lgr*, fgr*}{Various growth rates and transformations}
+#'   \item{gr..., lgr..., fgr...}{Various growth rates and transformations}
 #' }
 #'
 #' @source Various sources including Federal Reserve Economic Data (FRED),

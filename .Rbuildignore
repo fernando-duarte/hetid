@@ -78,9 +78,10 @@
 ^\.idea$
 
 # Large data files (if any)
-^.*\.rda$
-^.*\.RData$
-^.*\.rds$
+# Commented out to allow data/ files
+# ^.*\.rda$
+# ^.*\.RData$
+# ^.*\.rds$
 
 # Makefile
 ^Makefile$
