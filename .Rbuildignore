@@ -1,0 +1,85 @@
+# Development files
+^.*\.Rproj$
+^\.Rproj\.user$
+^README\.Rmd$
+^README\.html$
+^NEWS\.md$
+^cran-comments\.md$
+
+# Git and GitHub
+^\.git$
+^\.gitignore$
+^\.gitattributes$
+^\.github$
+
+# CI/CD
+^\.travis\.yml$
+^appveyor\.yml$
+^codecov\.yml$
+^\.circleci$
+^\.gitlab-ci\.yml$
+
+# Documentation
+^_pkgdown\.yml$
+^docs$
+^pkgdown$
+^doc$
+^Meta$
+
+# Development directories
+^data-raw$
+^dev$
+^inst/examples$
+^scripts$
+^revdep$
+
+# Testing
+^tests/testthat/_snaps$
+^tests/testthat/Rplots\.pdf$
+
+# macOS
+^\.DS_Store$
+\.DS_Store$
+
+# Windows
+^Thumbs\.db$
+
+# RStudio
+^.*\.Rproj$
+^\.Rproj\.user$
+
+# Temporary files
+^.*\.log$
+^.*\.tmp$
+^.*\.temp$
+^.*\.bak$
+^.*\.swp$
+^.*\.swo$
+~$
+
+# Package development
+^CRAN-RELEASE$
+^CRAN-SUBMISSION$
+^\.Rcheck$
+^.*\.tar\.gz$
+
+# Claude-specific
+^\.claude$
+^CLAUDE\.md$
+
+# Other common files to exclude
+^\.lintr$
+^\.pre-commit-config\.yaml$
+^tic\.R$
+^codemeta\.json$
+^\.ccache$
+^\.vscode$
+^\.idea$
+
+# Large data files (if any)
+^.*\.rda$
+^.*\.RData$
+^.*\.rds$
+
+# Makefile
+^Makefile$
