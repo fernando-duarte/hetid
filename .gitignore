@@ -73,7 +73,9 @@ Rplots.pdf
 vignettes/*.html
 vignettes/*.pdf
 vignettes/.build.timestamp
-inst/doc
+inst/doc/*.html
+inst/doc/*.pdf
+inst/doc/*.R
 
 # R package check results
 *.Rcheck/
