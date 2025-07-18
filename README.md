@@ -10,6 +10,16 @@
 
 The goal of hetid is to …
 
+## Development
+
+This package uses pre-commit hooks to ensure code quality. Key
+formatting rules:
+
+- **Line length**: Maximum 100 characters (manually break long lines)
+- **Indentation**: 2 spaces
+- **Assignment**: Use `<-` not `=`
+- **Line endings**: LF (automatic)
+
 ## Installation
 
 You can install the development version of hetid from

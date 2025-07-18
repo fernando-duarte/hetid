@@ -37,6 +37,7 @@ linters
 md
 mit
 png
+pre
 Rbuildignore
 RcppExports
 rda
@@ -52,6 +53,7 @@ Roxygen
 RoxygenNote
 Rprofile
 Rproj
+styler
 svg
 testthat
 tex
