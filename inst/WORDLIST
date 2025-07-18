@@ -1,3 +1,4 @@
+ACM
 ACMRNY
 ACMTP
 ACMY
@@ -11,6 +12,7 @@ cpp
 cran
 cre
 crlf
+Crump
 css
 csv
 cxx
@@ -49,12 +51,15 @@ linter
 linters
 md
 MERCHANTABILITY
+mismeasured
 mit
+Moench
 NONINFRINGEMENT
 orcid
 ORCID
 png
 pre
+premia
 Rbuildignore
 RcppExports
 rda
@@ -72,6 +77,7 @@ Roxygen
 RoxygenNote
 Rprofile
 Rproj
+SDF
 styler
 sublicense
 SVENF
@@ -91,3 +97,4 @@ woff
 xz
 yaml
 yml
+γ
