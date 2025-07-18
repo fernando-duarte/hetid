@@ -1,0 +1,83 @@
+# See https://pre-commit.com for more information
+# See https://pre-commit.com/hooks.html for more hooks
+repos:
+  - repo: https://github.com/lorenzwalthert/precommit
+    rev: v0.4.3.9012
+    hooks:
+      # Style and format R code
+      - id: style-files
+        args: [--style_pkg=styler, --style_fun=tidyverse_style]
+
+      # Update documentation
+      - id: roxygenize
+        additional_dependencies:
+          - roxygen2
+          - devtools
+
+      # Keep DESCRIPTION tidy
+      - id: use-tidy-description
+
+      # Check for parsing errors
+      - id: parsable-R
+
+      # Spell check
+      - id: spell-check
+        args: [--lang=en-US]
+
+      # Lint R code
+      - id: lintr
+        args: [--warn_only]
+        verbose: true
+
+      # Check that README.Rmd hasn't changed without updating README.md
+      - id: readme-rmd-rendered
+
+      # Ensure no merge conflicts markers
+      - id: no-browser-statement
+
+      # Dependencies are used
+      - id: deps-in-desc
+
+  # Standard pre-commit hooks
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      # Remove trailing whitespace
+      - id: trailing-whitespace
+
+      # Ensure files end with newline
+      - id: end-of-file-fixer
+
+      # Check yaml files
+      - id: check-yaml
+
+      # Check for large files
+      - id: check-added-large-files
+        args: ['--maxkb=1000']
+
+      # Fix mixed line endings
+      - id: mixed-line-ending
+        args: ['--fix=lf']
+
+      # Check merge conflicts
+      - id: check-merge-conflict
+
+      # Check case conflict (for cross-platform)
+      - id: check-case-conflict
+
+# Configure files to exclude
+exclude: |
+  (?x)^(
+    \.Rproj\.user/.*|
+    \.Rhistory|
+    \.RData|
+    \.Ruserdata/.*|
+    .*\.Rproj|
+    \.git/.*|
+    docs/.*|
+    revdep/.*|
+    inst/doc/.*|
+    man/.*|
+    NAMESPACE|
+    README\.md
+  )$
