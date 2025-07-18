@@ -1,0 +1,110 @@
+# Claude-specific
+.claude
+CLAUDE.md
+
+# R and RStudio files
+.Rproj.user
+.Rhistory
+.Rdata
+.RData
+.Ruserdata
+*.Rproj
+
+# OAuth2 token
+.httr-oauth
+
+# knitr and R markdown
+/*_cache/
+/cache/
+*.utf8.md
+*.knit.md
+.Rmarkdown.state
+
+# R Environment Variables
+.Renviron
+.Rprofile
+
+# pkgdown site
+docs/
+/doc/
+/Meta/
+
+# translation temp files
+po/*~
+
+# RStudio Connect folder
+rsconnect/
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Linux
+*~
+.directory
+
+# Temporary files
+*.tmp
+*.temp
+*.log
+*.bak
+*.swp
+*.swo
+
+# Package tarballs
+/*.tar.gz
+
+# Compiled files
+src/*.o
+src/*.so
+src/*.dll
+
+# Testing
+testthat/Rplots.pdf
+
+# vignettes
+vignettes/*.html
+vignettes/*.pdf
+vignettes/.build.timestamp
+inst/doc
+
+# R package check results
+*.Rcheck/
+hetid.Rcheck/
+
+# Coverage reports
+covr/
+coverage/
+coverage.html
+
+# Benchmarking
+*.bench
+*.benchmark
+
+# IDE files
+.vscode/
+.idea/
+*.sublime-*
+
+# Python (if using reticulate)
+__pycache__/
+*.py[cod]
+*$py.class
+.Python
+.venv/
+venv/
+
+# npm/node (if using htmlwidgets or similar)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Other
+.quarto
