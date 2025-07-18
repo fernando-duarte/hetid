@@ -1,16 +1,16 @@
 #' Compute Expected Log Bond Price Estimator (n_hat)
 #'
-#' Computes the time series n_hat_{i,t} which is an estimator for E_t[p_{t+i}^{(1)}] = -E_t[y_{t+i}^{(1)}]
+#' Computes the time series n_hat(i,t) which is an estimator for E_t\[p_(t+i)^(1)\] = -E_t\[y_(t+i)^(1)\]
 #'
 #' @param yields Data frame with columns y1, y2, ..., containing yields
 #' @param term_premia Data frame with columns tp1, tp2, ..., containing term premia
 #' @param i Integer, the horizon (must be >= 1)
 #'
-#' @return Numeric vector of n_hat_{i,t} values
+#' @return Numeric vector of n_hat(i,t) values
 #'
 #' @details
 #' The formula is:
-#' n_hat_{i,t} = i*y_t^{(i)} - (i+1)*y_t^{(i+1)} + (i+1)*TP_t^{(i+1)} - i*TP_t^{(i)}
+#' n_hat(i,t) = i*y_t^(i) - (i+1)*y_t^(i+1) + (i+1)*TP_t^(i+1) - i*TP_t^(i)
 #'
 #' @export
 #'
@@ -56,7 +56,7 @@ compute_n_hat <- function(yields, term_premia, i) {
 
 #' Compute Fourth Moment Estimator (k_hat)
 #'
-#' Computes k_hat_i which estimates E[(p_{t+i}^{(1)} - E_{t+1}[p_{t+i}^{(1)}])^4]
+#' Computes k_hat_i which estimates E\[(p_(t+i)^(1) - E_(t+1)\[p_(t+i)^(1)\])^4\]
 #'
 #' @param yields Data frame with columns y1, y2, ..., containing yields
 #' @param term_premia Data frame with columns tp1, tp2, ..., containing term premia
@@ -66,7 +66,7 @@ compute_n_hat <- function(yields, term_premia, i) {
 #'
 #' @details
 #' The formula is:
-#' k_hat_i = (1/(T-i)) * sum_{t=1}^{T-i} (-y_{t+i}^{(1)} - n_hat_{i-1,t+1})^4
+#' k_hat_i = (1/(T-i)) * sum_t=1^(T-i) (-y_(t+i)^(1) - n_hat(i-1,t+1))^4
 #'
 #' @export
 #'
@@ -96,10 +96,10 @@ compute_k_hat <- function(yields, term_premia, i) {
 
   # Special case for i=1: n_hat_0 = -y1
   if (i == 1) {
-    # For i=1, n_hat_{0,t} = E_t[p_{t+0}^{(1)}] = p_t^{(1)} = -y_t^{(1)}
+    # For i=1, n_hat(0,t) = E_t\[p_(t+0)^(1)\] = p_t^(1) = -y_t^(1)
     n_hat_i_minus_1 <- -y1 / 100 # Convert to decimal
   } else {
-    # Compute n_hat_{i-1} series
+    # Compute n_hat(i-1) series
     n_hat_i_minus_1 <- compute_n_hat(yields, term_premia, i - 1)
   }
 
@@ -134,7 +134,7 @@ compute_k_hat <- function(yields, term_premia, i) {
 
 #' Compute Supremum Estimator (c_hat)
 #'
-#' Computes c_hat_i which estimates sup_t exp(2*E_t[p_{t+i}^{(1)}])
+#' Computes c_hat_i which estimates sup_t exp(2*E_t\[p_(t+i)^(1)\])
 #'
 #' @param yields Data frame with columns y1, y2, ..., containing yields
 #' @param term_premia Data frame with columns tp1, tp2, ..., containing term premia
@@ -144,7 +144,7 @@ compute_k_hat <- function(yields, term_premia, i) {
 #'
 #' @details
 #' The formula is:
-#' c_hat_i = max_{1 <= t <= T} exp(2*n_hat_{i,t})
+#' c_hat_i = max over t of exp(2*n_hat(i,t))
 #'
 #' @export
 #'
@@ -183,7 +183,7 @@ compute_c_hat <- function(yields, term_premia, i) {
 
 #' Compute Variance Bound
 #'
-#' Computes the empirical upper bound for Var(error_{i,t+1})
+#' Computes the empirical upper bound for Var(error(i,t+1))
 #'
 #' @param yields Data frame with columns y1, y2, ..., containing yields
 #' @param term_premia Data frame with columns tp1, tp2, ..., containing term premia
@@ -193,7 +193,7 @@ compute_c_hat <- function(yields, term_premia, i) {
 #'
 #' @details
 #' The variance bound is:
-#' Var(error_{i,t+1}) <= (1/4)*c_hat_i*k_hat_i
+#' Var(error(i,t+1)) <= (1/4)*c_hat_i*k_hat_i
 #'
 #' @export
 #'
@@ -226,7 +226,7 @@ compute_variance_bound <- function(yields, term_premia, i) {
 
 #' Compute SDF News (Innovations)
 #'
-#' Computes the time series of SDF news Delta_{t+1}p_{t+i}^{(1)} or Delta_{t+1}y_{t+i}^{(1)}
+#' Computes the time series of SDF news Delta_(t+1)p_(t+i)^(1) or Delta_(t+1)y_(t+i)^(1)
 #'
 #' @param yields Data frame with columns y1, y2, ..., containing yields
 #' @param term_premia Data frame with columns tp1, tp2, ..., containing term premia
@@ -237,10 +237,10 @@ compute_variance_bound <- function(yields, term_premia, i) {
 #'
 #' @details
 #' The SDF news for log prices is:
-#' Delta_{t+1}p_{t+i}^{(1)} = n_hat_{i-1,t+1} - n_hat_{i,t}
+#' Delta_(t+1)p_(t+i)^(1) = n_hat(i-1,t+1) - n_hat(i,t)
 #'
 #' The SDF news for yields is:
-#' Delta_{t+1}y_{t+i}^{(1)} = -Delta_{t+1}p_{t+i}^{(1)}
+#' Delta_(t+1)y_(t+i)^(1) = -Delta_(t+1)p_(t+i)^(1)
 #'
 #' @export
 #'
@@ -275,7 +275,7 @@ compute_sdf_news <- function(yields, term_premia, i, return_yield_news = FALSE) 
 
   # Special case for i=1: n_hat_0 = -y1
   if (i == 1) {
-    # For i=1, n_hat_{0,t} = E_t[p_{t+0}^{(1)}] = p_t^{(1)} = -y_t^{(1)}
+    # For i=1, n_hat(0,t) = E_t\[p_(t+0)^(1)\] = p_t^(1) = -y_t^(1)
     y1 <- yields[["y1"]]
     if (is.null(y1)) {
       stop("y1 column not found in yields")
@@ -291,7 +291,7 @@ compute_sdf_news <- function(yields, term_premia, i, return_yield_news = FALSE) 
   # Initialize result
   sdf_news <- rep(NA, T - 1)
 
-  # Compute news: n_hat_{i-1,t+1} - n_hat_{i,t}
+  # Compute news: n_hat(i-1,t+1) - n_hat(i,t)
   for (t in 1:(T - 1)) {
     if (!is.na(n_hat_i_minus_1[t + 1]) && !is.na(n_hat_i[t])) {
       sdf_news[t] <- n_hat_i_minus_1[t + 1] - n_hat_i[t]

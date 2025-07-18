@@ -19,14 +19,14 @@ compute_sdf_news(yields, term_premia, i, return_yield_news = FALSE)
 Numeric vector of SDF news
 }
 \description{
-Computes the time series of SDF news Delta_{t+1}p_{t+i}^{(1)} or Delta_{t+1}y_{t+i}^{(1)}
+Computes the time series of SDF news Delta_(t+1)p_(t+i)^(1) or Delta_(t+1)y_(t+i)^(1)
 }
 \details{
 The SDF news for log prices is:
-Delta_{t+1}p_{t+i}^{(1)} = n_hat_{i-1,t+1} - n_hat_{i,t}
+Delta_(t+1)p_(t+i)^(1) = n_hat(i-1,t+1) - n_hat(i,t)
 
 The SDF news for yields is:
-Delta_{t+1}y_{t+i}^{(1)} = -Delta_{t+1}p_{t+i}^{(1)}
+Delta_(t+1)y_(t+i)^(1) = -Delta_(t+1)p_(t+i)^(1)
 }
 \examples{
 \dontrun{
