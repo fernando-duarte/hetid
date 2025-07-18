@@ -52,20 +52,28 @@ load_term_premia <- function(auto_download = FALSE) {
 
       # Convert DATE column to Date class if it exists
       if ("DATE" %in% names(df)) {
-        # Try to convert date - it might be in various formats
+        # Try to convert date - ACM data uses DD-Mon-YYYY format
         tryCatch(
           {
-            df$DATE <- as.Date(df$DATE)
+            df$DATE <- as.Date(df$DATE, format = "%d-%b-%Y")
           },
           error = function(e) {
-            # If standard conversion fails, try other formats
+            # If that fails, try standard conversion
             tryCatch(
               {
-                df$DATE <- as.Date(df$DATE, format = "%Y-%m-%d")
+                df$DATE <- as.Date(df$DATE)
               },
               error = function(e2) {
-                # Leave as character if conversion fails
-                warning("Could not convert DATE column to Date class. Keeping as character.")
+                # If that fails too, try ISO format
+                tryCatch(
+                  {
+                    df$DATE <- as.Date(df$DATE, format = "%Y-%m-%d")
+                  },
+                  error = function(e3) {
+                    # Leave as character if all conversions fail
+                    warning("Could not convert DATE column to Date class. Keeping as character.")
+                  }
+                )
               }
             )
           }
