@@ -67,6 +67,7 @@ src/*.dll
 
 # Testing
 testthat/Rplots.pdf
+Rplots.pdf
 
 # vignettes
 vignettes/*.html
