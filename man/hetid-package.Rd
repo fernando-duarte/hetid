@@ -4,9 +4,9 @@
 \name{hetid-package}
 \alias{hetid}
 \alias{hetid-package}
-\title{hetid: What the Package Does (One Line, Title Case)}
+\title{hetid: Identification Through Heteroskedasticity for VFCI}
 \description{
-What the package does (one paragraph).
+Applies identification through heteroskedasticity from Lewbel (2012) for triangular systems to estimate the VFCI (volatility financial conditions index) by Tobias Adrian, Matthew DeHaven, Fernando Duarte and Tara Iyer.
 }
 \seealso{
 Useful links:
@@ -17,7 +17,7 @@ Useful links:
 
 }
 \author{
-\strong{Maintainer}: First Last \email{first.last@example.com}
+\strong{Maintainer}: Fernando Duarte \email{fernando_duarte@brown.edu} (\href{https://orcid.org/0000-0002-8495-6936}{ORCID})
 
 }
 \keyword{internal}
