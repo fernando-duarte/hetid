@@ -5,7 +5,7 @@ linters: linters_with_defaults(
     trailing_whitespace_linter = trailing_whitespace_linter(),
     trailing_blank_lines_linter = trailing_blank_lines_linter(),
     assignment_linter = assignment_linter(),
-    closed_curly_linter = closed_curly_linter(allow_single_line = TRUE),
+    brace_linter = brace_linter(allow_single_line = TRUE),
     commas_linter = commas_linter(),
     commented_code_linter = commented_code_linter(),
     cyclocomp_linter = cyclocomp_linter(complexity_limit = 20),
