@@ -111,10 +111,3 @@ compute_w1_residuals <- function(n_pcs = 4, data = NULL) {
     model = model
   )
 }
-
-#' @rdname compute_w1_residuals
-#' @export
-compute_reduced_form_residual_y1 <- function(n_pcs = 4, data = NULL) {
-  .Deprecated("compute_w1_residuals")
-  compute_w1_residuals(n_pcs = n_pcs, data = data)
-}

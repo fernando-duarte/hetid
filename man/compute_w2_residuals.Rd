@@ -2,19 +2,9 @@
 % Please edit documentation in R/compute_w2_residuals.R
 \name{compute_w2_residuals}
 \alias{compute_w2_residuals}
-\alias{compute_reduced_form_residual_y2}
 \title{Compute Reduced Form Residuals for Y2 Variables}
 \usage{
 compute_w2_residuals(
-  yields,
-  term_premia,
-  maturities = 1:9,
-  n_pcs = 4,
-  pcs = NULL,
-  use_tp_adjustment = TRUE
-)
-
-compute_reduced_form_residual_y2(
   yields,
   term_premia,
   maturities = 1:9,

@@ -9,7 +9,7 @@ linters: linters_with_defaults(
     commas_linter = commas_linter(),
     commented_code_linter = commented_code_linter(),
     cyclocomp_linter = cyclocomp_linter(complexity_limit = 20),
-    object_usage_linter = object_usage_linter(),
+    object_usage_linter = NULL,  # Disabled - too many false positives for internal functions
     object_length_linter = object_length_linter(length = 30L)
   )
 exclusions: list(

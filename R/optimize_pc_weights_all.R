@@ -80,13 +80,3 @@ optimize_pc_weights_all <- function(pc_matrix, w1, w2_list, tau,
 
   df_results
 }
-
-#' @rdname optimize_pc_weights_all
-#' @export
-optimize_pc_weights_all_maturities <- function(pc_matrix, w1, w2_list, tau,
-                                               use_t_minus_1 = TRUE,
-                                               parallel = FALSE,
-                                               n_cores = NULL) {
-  .Deprecated("optimize_pc_weights_all")
-  optimize_pc_weights_all(pc_matrix, w1, w2_list, tau, use_t_minus_1, parallel, n_cores)
-}

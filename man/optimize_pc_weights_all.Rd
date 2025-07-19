@@ -2,20 +2,9 @@
 % Please edit documentation in R/optimize_pc_weights_all.R
 \name{optimize_pc_weights_all}
 \alias{optimize_pc_weights_all}
-\alias{optimize_pc_weights_all_maturities}
 \title{Optimize PC Weights for All Maturities}
 \usage{
 optimize_pc_weights_all(
-  pc_matrix,
-  w1,
-  w2_list,
-  tau,
-  use_t_minus_1 = TRUE,
-  parallel = FALSE,
-  n_cores = NULL
-)
-
-optimize_pc_weights_all_maturities(
   pc_matrix,
   w1,
   w2_list,

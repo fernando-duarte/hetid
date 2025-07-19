@@ -183,12 +183,3 @@ compute_w2_residuals <- function(yields, term_premia, maturities = 1:9,
     n_obs = n_obs_used
   )
 }
-
-#' @rdname compute_w2_residuals
-#' @export
-compute_reduced_form_residual_y2 <- function(yields, term_premia, maturities = 1:9,
-                                             n_pcs = 4, pcs = NULL,
-                                             use_tp_adjustment = TRUE) {
-  .Deprecated("compute_w2_residuals")
-  compute_w2_residuals(yields, term_premia, maturities, n_pcs, pcs, use_tp_adjustment)
-}

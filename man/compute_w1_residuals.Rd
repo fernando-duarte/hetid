@@ -2,12 +2,9 @@
 % Please edit documentation in R/compute_w1_residuals.R
 \name{compute_w1_residuals}
 \alias{compute_w1_residuals}
-\alias{compute_reduced_form_residual_y1}
 \title{Compute Reduced Form Residual for Primary Endogenous Variable (Y1)}
 \usage{
 compute_w1_residuals(n_pcs = 4, data = NULL)
-
-compute_reduced_form_residual_y1(n_pcs = 4, data = NULL)
 }
 \arguments{
 \item{n_pcs}{Integer, number of principal components to use (1-6). Default is 4.}
