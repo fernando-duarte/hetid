@@ -54,14 +54,14 @@
 #'
 solve_gamma_quadratic <- function(pc_j, w1, w2, tau, use_t_minus_1 = TRUE) {
   # Validate inputs and clean data
-  validated <- validate_gamma_inputs(pc_j, w1, w2, tau)
+  validated <- validate_gamma_inputs(pc_j, w1, w2, tau) # nolint: object_usage_linter
   pc_j <- validated$pc_j
   w1 <- validated$w1
   w2 <- validated$w2
   n <- validated$n
 
   # Compute moments
-  moments <- compute_gamma_moments(pc_j, w1, w2, use_t_minus_1)
+  moments <- compute_gamma_moments(pc_j, w1, w2, use_t_minus_1) # nolint: object_usage_linter
 
   # Compute quadratic coefficients
   a <- 1 - tau^2

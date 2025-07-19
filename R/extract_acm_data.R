@@ -118,7 +118,7 @@ extract_acm_data <- function(data_types = c("yields", "term_premia"),
   result <- data.frame(date = acm_data$DATE)
 
   # Build column mapping for selected data types and maturities
-  col_mapping <- build_acm_col_mapping(data_types, maturities)
+  col_mapping <- build_acm_col_mapping(data_types, maturities) # nolint: object_usage_linter
 
   # Extract selected columns
   for (new_name in names(col_mapping)) {
@@ -132,7 +132,7 @@ extract_acm_data <- function(data_types = c("yields", "term_premia"),
 
   # Convert to quarterly if requested
   if (frequency == "quarterly") {
-    result <- convert_to_quarterly(result)
+    result <- convert_to_quarterly(result) # nolint: object_usage_linter
   }
 
   # Sort by date
