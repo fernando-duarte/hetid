@@ -1,7 +1,7 @@
 linters: linters_with_defaults(
     line_length_linter(100),
     object_name_linter = object_name_linter(styles = c("snake_case", "CamelCase")),
-    indentation_linter = indentation_linter(2),
+    indentation_linter = NULL,  # Disabled - styler handles formatting
     trailing_whitespace_linter = trailing_whitespace_linter(),
     trailing_blank_lines_linter = trailing_blank_lines_linter(),
     assignment_linter = assignment_linter(),
