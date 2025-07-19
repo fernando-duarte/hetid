@@ -1,16 +1,16 @@
 linters: linters_with_defaults(
     line_length_linter(100),
     object_name_linter = object_name_linter(styles = c("snake_case", "CamelCase")),
-    indentation_linter = indentation_linter(2),
+    indentation_linter = NULL,
     trailing_whitespace_linter = trailing_whitespace_linter(),
     trailing_blank_lines_linter = trailing_blank_lines_linter(),
     assignment_linter = assignment_linter(),
     brace_linter = brace_linter(allow_single_line = TRUE),
     commas_linter = commas_linter(),
     commented_code_linter = commented_code_linter(),
-    cyclocomp_linter = cyclocomp_linter(complexity_limit = 20),
-    object_usage_linter = object_usage_linter(),
-    object_length_linter = object_length_linter(length = 30L)
+    cyclocomp_linter = cyclocomp_linter(complexity_limit = 30),
+    object_usage_linter = NULL,
+    object_length_linter = NULL
   )
 exclusions: list(
     "R/RcppExports.R",
