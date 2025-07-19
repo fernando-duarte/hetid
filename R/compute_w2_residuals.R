@@ -46,52 +46,14 @@
 compute_w2_residuals <- function(yields, term_premia, maturities = 1:9,
                                  n_pcs = 4, pcs = NULL,
                                  use_tp_adjustment = TRUE) {
-  # Validate inputs
-  if (!is.data.frame(yields) && !is.matrix(yields)) {
-    stop("yields must be a data frame or matrix")
-  }
-  if (!is.data.frame(term_premia) && !is.matrix(term_premia)) {
-    stop("term_premia must be a data frame or matrix")
-  }
+  # Validate and prepare inputs
+  validated <- validate_w2_inputs(yields, term_premia, maturities) # nolint: object_usage_linter
+  yields_df <- validated$yields
+  term_premia_df <- validated$term_premia
+  maturities <- validated$maturities
 
-  # Convert to data frames if matrices
-  if (is.matrix(yields)) yields <- as.data.frame(yields)
-  if (is.matrix(term_premia)) term_premia <- as.data.frame(term_premia)
-
-  # Check maturity range
-  max_maturity <- min(10, ncol(yields), ncol(term_premia))
-  if (any(maturities > max_maturity)) {
-    warning(paste("Some maturities exceed available data. Using 1:", max_maturity))
-    maturities <- maturities[maturities <= max_maturity]
-  }
-
-  # Load PCs if not provided
-  if (is.null(pcs)) {
-    # Get the variables data from the package
-    data("variables", package = "hetid", envir = environment())
-    variables <- get("variables", envir = environment())
-
-    # Extract PCs
-    pc_cols <- paste0("pc", 1:n_pcs)
-    if (!all(pc_cols %in% names(variables))) {
-      stop(paste(
-        "Missing PC columns in variables data:",
-        paste(setdiff(pc_cols, names(variables)), collapse = ", ")
-      ))
-    }
-    pcs <- as.matrix(variables[, pc_cols])
-  }
-
-  # Ensure PCs is a matrix
-  if (!is.matrix(pcs)) {
-    pcs <- as.matrix(pcs)
-  }
-
-  # Check dimensions
-  n_obs <- nrow(yields)
-  if (nrow(pcs) != n_obs) {
-    stop("Number of rows in pcs must match number of rows in yields")
-  }
+  # Load or validate PCs
+  pcs <- load_w2_pcs(pcs, n_pcs, nrow(yields_df)) # nolint: object_usage_linter
 
   # Initialize storage
   residuals_list <- list()
@@ -107,67 +69,22 @@ compute_w2_residuals <- function(yields, term_premia, maturities = 1:9,
   for (idx in seq_along(maturities)) {
     i <- maturities[idx]
 
-    # Get yield column
-    y_col <- paste0("y", i)
-    if (!y_col %in% names(yields)) {
-      warning(paste("Yield column", y_col, "not found. Skipping maturity", i))
-      next
-    }
-    y_i <- yields[[y_col]]
-
-    # Get term premium if using adjustment
-    if (use_tp_adjustment) {
-      tp_col <- paste0("tp", i)
-      if (!tp_col %in% names(term_premia)) {
-        warning(paste("Term premium column", tp_col, "not found. Skipping maturity", i))
-        next
-      }
-      tp_i <- term_premia[[tp_col]]
-      # Convert to decimal if needed (assuming inputs are in percentage)
-      y_i_decimal <- y_i / 100
-      tp_i_decimal <- tp_i / 100
-      y2_base <- y_i_decimal - tp_i_decimal
-    } else {
-      y_i_decimal <- y_i / 100
-      y2_base <- y_i_decimal
-    }
-
-    # Create Y2_{t+1} (shift forward by 1)
-    y2_future <- y2_base[-1]
-
-    # Use lagged PCs (PC_t to predict Y2_{t+1})
-    pcs_lagged <- pcs[-nrow(pcs), , drop = FALSE]
-
-    # Remove missing values
-    complete_idx <- complete.cases(y2_future, pcs_lagged)
-    y2_clean <- y2_future[complete_idx]
-    pcs_clean <- pcs_lagged[complete_idx, , drop = FALSE]
-
-    # Skip if insufficient data
-    if (length(y2_clean) < n_pcs + 2) {
-      warning(paste("Insufficient data for maturity", i, ". Skipping."))
-      next
-    }
-
-    # Prepare regression data
-    reg_data <- data.frame(
-      y = y2_clean,
-      pcs_clean
+    # Process single maturity
+    result <- process_w2_maturity( # nolint: object_usage_linter
+      i, yields_df, term_premia_df, pcs, n_pcs, use_tp_adjustment
     )
-    names(reg_data)[-1] <- paste0("PC", 1:n_pcs)
 
-    # Create formula
-    formula_str <- paste("y ~", paste(paste0("PC", 1:n_pcs), collapse = " + "))
-
-    # Run regression
-    model <- lm(as.formula(formula_str), data = reg_data)
+    # Skip if NULL result
+    if (is.null(result)) {
+      next
+    }
 
     # Store results
-    residuals_list[[paste0("maturity_", i)]] <- residuals(model)
-    fitted_list[[paste0("maturity_", i)]] <- fitted(model)
-    coef_matrix[idx, ] <- coef(model)
-    r_squared[idx] <- summary(model)$r.squared
-    n_obs_used[idx] <- length(y2_clean)
+    residuals_list[[paste0("maturity_", i)]] <- result$residuals
+    fitted_list[[paste0("maturity_", i)]] <- result$fitted
+    coef_matrix[idx, ] <- result$coefficients
+    r_squared[idx] <- result$r_squared
+    n_obs_used[idx] <- result$n_obs
   }
 
   # Set row/column names for coefficient matrix

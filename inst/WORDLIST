@@ -25,6 +25,7 @@ DeHaven
 deps
 desc
 dev
+devtools
 duarte
 edu
 eol
@@ -109,6 +110,7 @@ THREEFF
 THREEFFTP
 THREEFY
 THREEFYTP
+tidyverse
 Tobias
 ttf
 VFCI
