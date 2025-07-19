@@ -13,9 +13,11 @@
 #' \describe{
 #'   \item{roots}{Numeric vector of length 2 containing the roots gamma_1^(1) and gamma_1^(2),
 #'                ordered so the root with smallest real part is first}
-#'   \item{coefficients}{Named vector with quadratic coefficients a, b, c where a*gamma_1^2 + b*gamma_1 + c = 0}
+#'   \item{coefficients}{Named vector with quadratic coefficients a, b, c where
+#'                        a*gamma_1^2 + b*gamma_1 + c = 0}
 #'   \item{discriminant}{The discriminant b^2 - 4ac}
-#'   \item{components}{List containing all computed covariances and variances used in the calculation}
+#'   \item{components}{List containing all computed covariances and variances
+#'                      used in the calculation}
 #' }
 #'
 #' @details
@@ -51,77 +53,24 @@
 #' }
 #'
 solve_gamma_quadratic <- function(pc_j, w1, w2, tau, use_t_minus_1 = TRUE) {
-  # Input validation
-  if (!is.numeric(pc_j) || !is.numeric(w1) || !is.numeric(w2)) {
-    stop("pc_j, w1, and w2 must be numeric vectors")
-  }
+  # Validate inputs and clean data
+  validated <- validate_gamma_inputs(pc_j, w1, w2, tau)
+  pc_j <- validated$pc_j
+  w1 <- validated$w1
+  w2 <- validated$w2
+  n <- validated$n
 
-  # Check equal lengths
-  n <- length(pc_j)
-  if (length(w1) != n || length(w2) != n) {
-    stop("All input time series must have the same length")
-  }
-
-  # Check tau
-  if (!is.numeric(tau) || length(tau) != 1 || tau < 0 || tau > 1) {
-    stop("tau must be a single numeric value between 0 and 1")
-  }
-
-  # Remove any rows with NA values
-  complete_idx <- complete.cases(pc_j, w1, w2)
-  if (sum(complete_idx) < 3) {
-    stop("Not enough complete observations (need at least 3)")
-  }
-
-  pc_j <- pc_j[complete_idx]
-  w1 <- w1[complete_idx]
-  w2 <- w2[complete_idx]
-  n <- length(pc_j)
-
-  # Set denominator for variance/covariance calculations
-  denom <- ifelse(use_t_minus_1, n - 1, n)
-
-  # Compute derived series
-  w1_w2 <- w1 * w2
-  w2_sq <- w2^2
-
-  # Compute means
-  mean_pc_j <- mean(pc_j)
-  mean_w1_w2 <- mean(w1_w2)
-  mean_w2_sq <- mean(w2_sq)
-
-  # Compute covariances and variances
-  # Cov(W1*W2, PC_j)
-  cov_w1w2_pcj <- sum((w1_w2 - mean_w1_w2) * (pc_j - mean_pc_j)) / denom
-
-  # Cov(W2^2, PC_j)
-  cov_w2sq_pcj <- sum((w2_sq - mean_w2_sq) * (pc_j - mean_pc_j)) / denom
-
-  # Var(W1*W2)
-  var_w1w2 <- sum((w1_w2 - mean_w1_w2)^2) / denom
-
-  # Var(W2^2)
-  var_w2sq <- sum((w2_sq - mean_w2_sq)^2) / denom
-
-  # Cov(W1*W2, W2^2)
-  cov_w1w2_w2sq <- sum((w1_w2 - mean_w1_w2) * (w2_sq - mean_w2_sq)) / denom
-
-  # Check for zero denominators
-  if (abs(cov_w2sq_pcj) < .Machine$double.eps) {
-    stop("Cov(W2^2, PC_j) is effectively zero, cannot compute quadratic coefficients")
-  }
-  if (abs(var_w2sq) < .Machine$double.eps) {
-    stop("Var(W2^2) is effectively zero, cannot compute quadratic coefficients")
-  }
+  # Compute moments
+  moments <- compute_gamma_moments(pc_j, w1, w2, use_t_minus_1)
 
   # Compute quadratic coefficients
-  # a * gamma_1^2 + b * gamma_1 + c = 0
-
   a <- 1 - tau^2
 
-  b <- 2 * (cov_w1w2_w2sq / var_w2sq * tau^2 - cov_w1w2_pcj / cov_w2sq_pcj)
+  b <- 2 * (moments$cov_w1w2_w2sq / moments$var_w2sq * tau^2 -
+    moments$cov_w1w2_pcj / moments$cov_w2sq_pcj)
 
-  c <- (cov_w1w2_pcj^2) / (cov_w2sq_pcj^2) - var_w1w2 / var_w2sq * tau^2
+  c <- (moments$cov_w1w2_pcj^2) / (moments$cov_w2sq_pcj^2) -
+    moments$var_w1w2 / moments$var_w2sq * tau^2
 
   # Compute discriminant
   discriminant <- b^2 - 4 * a * c
@@ -161,14 +110,15 @@ solve_gamma_quadratic <- function(pc_j, w1, w2, tau, use_t_minus_1 = TRUE) {
     roots = roots,
     coefficients = c(a = a, b = b, c = c),
     discriminant = discriminant,
-    components = list(
-      cov_w1w2_pcj = cov_w1w2_pcj,
-      cov_w2sq_pcj = cov_w2sq_pcj,
-      var_w1w2 = var_w1w2,
-      var_w2sq = var_w2sq,
-      cov_w1w2_w2sq = cov_w1w2_w2sq,
-      n_obs = n,
-      denominator = denom
+    components = c(
+      moments,
+      list(
+        a = a,
+        b = b,
+        c = c,
+        discriminant = discriminant,
+        n_obs = n
+      )
     )
   )
 }

@@ -103,7 +103,7 @@ solve_gamma_quadratic_lincomb <- function(pc_matrix, weights, w1, w2, tau,
 
   # Coefficient of gamma_1
   b <- 2 * ((cov_w1w2_w2sq / var_w2sq) * tau^2 -
-            (cov_w1w2_lc / cov_w2sq_lc))
+    (cov_w1w2_lc / cov_w2sq_lc))
 
   # Constant term
   c <- (cov_w1w2_lc^2 / cov_w2sq_lc^2) - (var_w1w2 / var_w2sq) * tau^2

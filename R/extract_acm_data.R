@@ -118,31 +118,7 @@ extract_acm_data <- function(data_types = c("yields", "term_premia"),
   result <- data.frame(date = acm_data$DATE)
 
   # Build column mapping for selected data types and maturities
-  col_mapping <- list()
-
-  if ("yields" %in% data_types) {
-    for (mat in maturities) {
-      old_col <- sprintf("ACMY%02d", mat)
-      new_col <- sprintf("y%d", mat)
-      col_mapping[[new_col]] <- old_col
-    }
-  }
-
-  if ("term_premia" %in% data_types) {
-    for (mat in maturities) {
-      old_col <- sprintf("ACMTP%02d", mat)
-      new_col <- sprintf("tp%d", mat)
-      col_mapping[[new_col]] <- old_col
-    }
-  }
-
-  if ("risk_neutral" %in% data_types) {
-    for (mat in maturities) {
-      old_col <- sprintf("ACMRNY%02d", mat)
-      new_col <- sprintf("rn%d", mat)
-      col_mapping[[new_col]] <- old_col
-    }
-  }
+  col_mapping <- build_acm_col_mapping(data_types, maturities)
 
   # Extract selected columns
   for (new_name in names(col_mapping)) {
@@ -156,28 +132,7 @@ extract_acm_data <- function(data_types = c("yields", "term_premia"),
 
   # Convert to quarterly if requested
   if (frequency == "quarterly") {
-    # Add year and month to identify quarter ends
-    result$year <- as.numeric(format(result$date, "%Y"))
-    result$month <- as.numeric(format(result$date, "%m"))
-    result$quarter <- ceiling(result$month / 3)
-
-    # For each quarter, keep only the last observation
-    result <- result[order(result$date), ]
-
-    # Group by year-quarter and take last observation
-    last_in_quarter <- aggregate(
-      date ~ year + quarter,
-      data = result,
-      FUN = max
-    )
-
-    # Merge to get full data for last observation in each quarter
-    result <- merge(
-      last_in_quarter[, "date", drop = FALSE],
-      result[, setdiff(names(result), c("year", "month", "quarter"))],
-      by = "date",
-      all.x = TRUE
-    )
+    result <- convert_to_quarterly(result)
   }
 
   # Sort by date

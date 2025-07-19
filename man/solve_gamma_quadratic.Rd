@@ -22,9 +22,11 @@ A named list containing:
 \describe{
 \item{roots}{Numeric vector of length 2 containing the roots gamma_1^(1) and gamma_1^(2),
 ordered so the root with smallest real part is first}
-\item{coefficients}{Named vector with quadratic coefficients a, b, c where a\emph{gamma_1^2 + b}gamma_1 + c = 0}
+\item{coefficients}{Named vector with quadratic coefficients a, b, c where
+a\emph{gamma_1^2 + b}gamma_1 + c = 0}
 \item{discriminant}{The discriminant b^2 - 4ac}
-\item{components}{List containing all computed covariances and variances used in the calculation}
+\item{components}{List containing all computed covariances and variances
+used in the calculation}
 }
 }
 \description{
