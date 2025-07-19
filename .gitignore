@@ -111,3 +111,6 @@ yarn-error.log*
 
 # Other
 .quarto
+
+# Script outputs
+scripts/output/

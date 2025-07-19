@@ -93,3 +93,5 @@
 ^hetid_analysis_script\.R$
 ^hetid_interactive_analysis\.R$
 ^example_hetid_analysis\.R$
+^hetid_analysis_enhanced\.R$
+^test_enhanced_analysis\.R$
