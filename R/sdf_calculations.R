@@ -1,19 +1,19 @@
-#' Compute SDF News (Innovations)
+#' Compute Price News
 #'
-#' Computes the time series of SDF news Delta_(t+1)p_(t+i)^(1) or Delta_(t+1)y_(t+i)^(1)
+#' Computes the time series of price news Delta_(t+1)p_(t+i)^(1) or Delta_(t+1)y_(t+i)^(1)
 #'
 #' @param yields Data frame with columns y1, y2, ..., containing yields
 #' @param term_premia Data frame with columns tp1, tp2, ..., containing term premia
 #' @param i Integer, the horizon (must be >= 1)
 #' @param return_yield_news Logical, if TRUE returns yield news instead of log price news
 #'
-#' @return Numeric vector of SDF news
+#' @return Numeric vector of price news
 #'
 #' @details
-#' The SDF news for log prices is:
+#' The price news for log prices is:
 #' Delta_(t+1)p_(t+i)^(1) = n_hat(i-1,t+1) - n_hat(i,t)
 #'
-#' The SDF news for yields is:
+#' The price news for yields is:
 #' Delta_(t+1)y_(t+i)^(1) = -Delta_(t+1)p_(t+i)^(1)
 #'
 #' @export
@@ -23,15 +23,15 @@
 #' # Extract ACM data
 #' data <- extract_acm_data(data_types = c("yields", "term_premia"))
 #'
-#' # Compute SDF news for i=5 (log price news)
-#' sdf_news_5 <- compute_sdf_news(
+#' # Compute price news for i=5 (log price news)
+#' price_news_5 <- compute_price_news(
 #'   yields = data[, grep("^y", names(data))],
 #'   term_premia = data[, grep("^tp", names(data))],
 #'   i = 5
 #' )
 #'
-#' # Compute SDF news for yields
-#' sdf_yield_news_5 <- compute_sdf_news(
+#' # Compute price news for yields
+#' yield_news_5 <- compute_price_news(
 #'   yields = data[, grep("^y", names(data))],
 #'   term_premia = data[, grep("^tp", names(data))],
 #'   i = 5,
@@ -39,13 +39,13 @@
 #' )
 #' }
 #'
-compute_sdf_news <- function(yields, term_premia, i, return_yield_news = FALSE) {
+compute_price_news <- function(yields, term_premia, i, return_yield_news = FALSE) {
   if (i < 1) {
     stop("i must be >= 1")
   }
 
   # Compute n_hat series
-  n_hat_i <- compute_n_hat(yields, term_premia, i)
+  n_hat_i <- compute_n_hat(yields, term_premia, i) # nolint
 
   # Special case for i=1: n_hat_0 = -y1
   if (i == 1) {
@@ -56,28 +56,28 @@ compute_sdf_news <- function(yields, term_premia, i, return_yield_news = FALSE) 
     }
     n_hat_i_minus_1 <- -y1 / 100 # Convert to decimal
   } else {
-    n_hat_i_minus_1 <- compute_n_hat(yields, term_premia, i - 1)
+    n_hat_i_minus_1 <- compute_n_hat(yields, term_premia, i - 1) # nolint
   }
 
   # Number of observations
   n_obs <- length(n_hat_i)
 
   # Initialize result
-  sdf_news <- rep(NA, n_obs - 1)
+  price_news <- rep(NA, n_obs - 1)
 
   # Compute news: n_hat(i-1,t+1) - n_hat(i,t)
   for (t in 1:(n_obs - 1)) {
     if (!is.na(n_hat_i_minus_1[t + 1]) && !is.na(n_hat_i[t])) {
-      sdf_news[t] <- n_hat_i_minus_1[t + 1] - n_hat_i[t]
+      price_news[t] <- n_hat_i_minus_1[t + 1] - n_hat_i[t]
     }
   }
 
   # Return yield news if requested
   if (return_yield_news) {
-    sdf_news <- -sdf_news
+    price_news <- -price_news
   }
 
-  sdf_news
+  price_news
 }
 
 
@@ -124,10 +124,10 @@ compute_sdf_innovations <- function(yields, term_premia, i) {
   }
 
   # Compute n_hat(i,t) series
-  n_hat_i <- compute_n_hat(yields, term_premia, i)
+  n_hat_i <- compute_n_hat(yields, term_premia, i) # nolint
 
-  # Compute SDF news (Delta_(t+1)p_(t+i)^(1))
-  delta_p <- compute_sdf_news(yields, term_premia, i, return_yield_news = FALSE)
+  # Compute price news (Delta_(t+1)p_(t+i)^(1))
+  delta_p <- compute_price_news(yields, term_premia, i, return_yield_news = FALSE)
 
   # Compute E[(Delta_(t+1)p_(t+i)^(1))^2]
   # Remove NA values for the expectation calculation

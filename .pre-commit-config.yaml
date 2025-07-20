@@ -40,6 +40,7 @@ repos:
 
       # Dependencies are used
       - id: deps-in-desc
+        exclude: '^scripts/'
 
   # Standard pre-commit hooks
   - repo: https://github.com/pre-commit/pre-commit-hooks
@@ -68,6 +69,17 @@ repos:
 
       # Check case conflict (for cross-platform)
       - id: check-case-conflict
+
+  # Custom local hooks
+  - repo: local
+    hooks:
+      - id: claude-reminder
+        name: Remind Claude about CLAUDE.md rules
+        entry: .git/hooks/claude-check.sh
+        language: script
+        always_run: true
+        pass_filenames: false
+        stages: [pre-commit]
 
 # Configure files to exclude
 exclude: |

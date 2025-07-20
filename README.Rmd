@@ -44,7 +44,7 @@ The package provides functions for:
   - Fourth moment estimators (k_hat)
   - Supremum estimators (c_hat)
   - Variance bounds
-  - SDF news and innovations
+  - Price news and SDF innovations
 
 - **Heteroskedasticity Identification**:
   - Compute reduced form residuals for primary and secondary endogenous variables

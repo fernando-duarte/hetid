@@ -35,7 +35,7 @@ The package provides functions for:
   - Fourth moment estimators (k_hat)
   - Supremum estimators (c_hat)
   - Variance bounds
-  - SDF news and innovations
+  - Price news and SDF innovations
 - **Heteroskedasticity Identification**:
   - Compute reduced form residuals for primary and secondary endogenous
     variables
@@ -68,31 +68,32 @@ result <- solve_gamma_quadratic(
 )
 ```
 
-## Analysis Script
+## Analysis Scripts
 
-The repository includes a comprehensive analysis script (not part of the
-package) that demonstrates all package functionality:
+The repository includes example scripts (not part of the package) for
+comprehensive analysis:
 
-**`hetid_analysis_enhanced.R`**: Complete analysis script that includes:
-- Computation of γ₁ roots for all combinations of principal components
-  (j=1,…,J) and maturities (i=1,…,10)
-- Breusch-Pagan heteroskedasticity tests for W_{2,i} residuals
-- Correlation calculations |corr(PC_j, W²_{2,i})| for all combinations
-- Optimization of PC weights to minimize root distance
-- Enhanced visualizations including:
-  - Heteroskedasticity test p-values
-  - Correlation heatmaps
-  - Root plots for both individual PCs and optimal linear combinations
+1.  **`hetid_analysis_script.R`**: Complete analysis script that
+    computes γ₁ roots for all combinations of principal components
+    (j=1,…,J) and maturities (i=1,…,10)
 
-To run the analysis:
+2.  **`hetid_interactive_analysis.R`**: Interactive version allowing
+    user to specify parameters and explore different configurations
+
+3.  **`example_hetid_analysis.R`**: Simple demonstration of basic
+    package functionality
+
+To run the full analysis:
 
 ``` r
-source("hetid_analysis_enhanced.R")
+source("hetid_analysis_script.R")
 ```
 
-The script allows you to specify:
-- `J`: Number of principal components to use (1-6)
-- `tau`: Quantile parameter (0-1)
+Or for interactive exploration:
+
+``` r
+source("hetid_interactive_analysis.R")
+```
 
 ## References
 
