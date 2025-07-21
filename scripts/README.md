@@ -47,8 +47,8 @@ Each test script demonstrates one function with default parameters:
 - **test_compute_sdf_innovations.R**: SDF innovations with convexity adjustment
 
 #### Residual Computations
-- **test_compute_reduced_form_residual_y1.R**: Consumption growth residuals
-- **test_compute_reduced_form_residual_y2.R**: SDF innovation residuals
+- **test_compute_reduced_form_residual_y1.R**: Consumption growth residuals (tests compute_w1_residuals)
+- **test_compute_reduced_form_residual_y2.R**: SDF innovation residuals (tests compute_w2_residuals)
 
 #### Quadratic Solvers
 - **test_solve_gamma_quadratic.R**: Basic gamma1 quadratic solver

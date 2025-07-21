@@ -10,7 +10,9 @@ solve_gamma_quadratic_lincomb(
   w1,
   w2,
   tau,
-  use_t_minus_1 = TRUE
+  use_t_minus_1 = TRUE,
+  return_df = FALSE,
+  dates = NULL
 )
 }
 \arguments{
@@ -25,11 +27,15 @@ solve_gamma_quadratic_lincomb(
 \item{tau}{Quantile parameter between 0 and 1}
 
 \item{use_t_minus_1}{Logical indicating whether to use lagged PCs}
+
+\item{return_df}{Logical, if TRUE includes dates in the linear_comb output (default FALSE)}
+
+\item{dates}{Optional vector of dates corresponding to the rows in pc_matrix}
 }
 \value{
 List containing:
 \item{roots}{Vector of two roots (possibly complex)}
-\item{linear_comb}{The linear combination of PCs used}
+\item{linear_comb}{The linear combination of PCs used (data frame with dates if return_df=TRUE)}
 \item{normalized_weights}{The normalized weights}
 \item{variance}{Variance of the linear combination (should be 1)}
 \item{error}{Error message if computation failed}

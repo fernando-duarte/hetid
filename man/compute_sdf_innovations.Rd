@@ -4,7 +4,13 @@
 \alias{compute_sdf_innovations}
 \title{Compute SDF Innovations Time Series}
 \usage{
-compute_sdf_innovations(yields, term_premia, i)
+compute_sdf_innovations(
+  yields,
+  term_premia,
+  i,
+  return_df = FALSE,
+  dates = NULL
+)
 }
 \arguments{
 \item{yields}{Data frame with columns y1, y2, ..., containing yields}
@@ -12,9 +18,14 @@ compute_sdf_innovations(yields, term_premia, i)
 \item{term_premia}{Data frame with columns tp1, tp2, ..., containing term premia}
 
 \item{i}{Integer, the horizon (must be >= 1)}
+
+\item{return_df}{Logical, if TRUE returns a data frame with dates (default FALSE)}
+
+\item{dates}{Optional vector of dates corresponding to the rows in yields/term_premia.
+If not provided and return_df = TRUE, will use row indices.}
 }
 \value{
-Numeric vector of SDF innovations
+Numeric vector of SDF innovations, or data frame with dates if return_df = TRUE
 }
 \description{
 Computes the time series of SDF innovations given by:
@@ -43,6 +54,15 @@ sdf_innovations_5 <- compute_sdf_innovations(
   yields = data[, grep("^y", names(data))],
   term_premia = data[, grep("^tp", names(data))],
   i = 5
+)
+
+# Compute SDF innovations with dates
+sdf_innovations_5_df <- compute_sdf_innovations(
+  yields = data[, grep("^y", names(data))],
+  term_premia = data[, grep("^tp", names(data))],
+  i = 5,
+  return_df = TRUE,
+  dates = data$date
 )
 }
 

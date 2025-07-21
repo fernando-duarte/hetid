@@ -49,20 +49,20 @@ for (i in 1:9) {
 
 print(round(innov_stats, 6))
 
-# Compare with SDF news
-cat("\nRelationship to SDF news\n")
+# Compare with price news
+cat("\nRelationship to price news\n")
 i <- 4
-sdf_news_4 <- compute_sdf_news(yields, term_premia, i = 4)
+price_news_4 <- compute_price_news(yields, term_premia, i = 4)
 sdf_innov_4 <- compute_sdf_innovations(yields, term_premia, i = 4)
 
 # Align lengths (both should be n-1)
-cat(sprintf("  Length of SDF news: %d\n", length(sdf_news_4)))
+cat(sprintf("  Length of price news: %d\n", length(price_news_4)))
 cat(sprintf("  Length of SDF innovations: %d\n", length(sdf_innov_4)))
 
 # Correlation
-correlation <- cor(sdf_news_4, sdf_innov_4, use = "complete.obs")
-cat(sprintf("  Correlation between news and innovations: %.3f\n", correlation))
-cat(sprintf("  (High correlation expected, innovations include adjustment terms)\n"))
+correlation <- cor(price_news_4, sdf_innov_4, use = "complete.obs")
+cat(sprintf("  Correlation between price news and innovations: %.3f\n", correlation))
+cat(sprintf("  (High correlation expected, innovations include price news with adjustment terms)\n"))
 
 # Check the adjustment factor effect
 cat("\nConvexity adjustment effect\n")
@@ -88,14 +88,48 @@ cat("\nVisual inspection of time series\n")
 sdf_innov_2 <- compute_sdf_innovations(yields, term_premia, i = 2)
 dates <- acm_data$date[2:length(acm_data$date)]
 
+# Option to save plot
+save_plot <- FALSE # Set to TRUE to save the plot
+if (save_plot) {
+  pdf("scripts/output/tests/sdf_innovations_timeseries.pdf", width = 10, height = 6)
+}
+
+# Create time series plot
+plot(dates, sdf_innov_2,
+  type = "l", col = "darkblue",
+  main = "SDF Innovations Over Time (i=2)",
+  xlab = "Date", ylab = "SDF Innovation",
+  las = 1
+)
+
+# Add horizontal lines at ±2 SD
+sd_innov <- sd(sdf_innov_2, na.rm = TRUE)
+abline(h = 2 * sd_innov, col = "red", lty = 2)
+abline(h = -2 * sd_innov, col = "red", lty = 2)
+abline(h = 0, col = "gray", lty = 3)
+
+# Add legend
+legend("bottomright",
+  legend = c("SDF Innovations", "±2 SD bounds", "Zero line"),
+  col = c("darkblue", "red", "gray"),
+  lty = c(1, 2, 3),
+  cex = 0.8
+)
+
 # Show periods of high volatility
 high_vol_periods <- which(abs(sdf_innov_2) > 2 * sd(sdf_innov_2, na.rm = TRUE))
 cat(sprintf(
-  "  Observations with |innovation| > 2*SD: %d\n",
-  length(high_vol_periods)
+  "  Observations with |innovation| > 2*SD: %d (%.1f%%)\n",
+  length(high_vol_periods),
+  100 * length(high_vol_periods) / length(sdf_innov_2)
 ))
 
+# Highlight extreme points on the plot
 if (length(high_vol_periods) > 0) {
+  points(dates[high_vol_periods], sdf_innov_2[high_vol_periods],
+    col = "red", pch = 16, cex = 0.6
+  )
+
   cat("  Sample high volatility dates:\n")
   for (idx in head(high_vol_periods, 5)) {
     cat(sprintf(
@@ -103,6 +137,12 @@ if (length(high_vol_periods) > 0) {
       dates[idx], sdf_innov_2[idx]
     ))
   }
+}
+
+# Close plot device if saving
+if (save_plot) {
+  dev.off()
+  cat("\n  Plot saved to scripts/output/tests/sdf_innovations_timeseries.pdf\n")
 }
 
 cat("\nTest complete!\n")

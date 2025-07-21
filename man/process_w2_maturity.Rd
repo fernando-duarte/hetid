@@ -4,14 +4,7 @@
 \alias{process_w2_maturity}
 \title{Process Single Maturity for W2}
 \usage{
-process_w2_maturity(
-  i,
-  yields_df,
-  term_premia_df,
-  pcs,
-  n_pcs,
-  use_tp_adjustment
-)
+process_w2_maturity(i, yields_df, term_premia_df, pcs, n_pcs)
 }
 \arguments{
 \item{i}{Maturity index}
@@ -23,8 +16,6 @@ process_w2_maturity(
 \item{pcs}{Principal components matrix}
 
 \item{n_pcs}{Number of PCs}
-
-\item{use_tp_adjustment}{Whether to use term premium adjustment}
 }
 \value{
 List with regression results or NULL if skipped

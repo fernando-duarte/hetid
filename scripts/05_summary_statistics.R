@@ -40,7 +40,10 @@ cat(sprintf("Time: %s\n\n", format(Sys.time(), "%H:%M:%S")))
 
 # Load data
 data("variables")
-acm_data <- extract_acm_data(data_types = c("yields", "term_premia"))
+acm_data <- extract_acm_data(
+  data_types = c("yields", "term_premia"),
+  frequency = "quarterly"
+)
 yields_data <- acm_data[, grep("^y", names(acm_data))]
 tp_data <- acm_data[, grep("^tp", names(acm_data))]
 
@@ -124,7 +127,7 @@ cat("3. CONSUMPTION GROWTH (Y1) ANALYSIS\n")
 cat("====================================\n\n")
 
 # Compute residuals
-res_y1 <- compute_reduced_form_residual_y1(n_pcs = J)
+res_y1 <- compute_w1_residuals(n_pcs = J)
 W1 <- res_y1$residuals
 
 cat("Reduced form regression for Y1:\n")
@@ -159,12 +162,12 @@ cat("4. SDF INNOVATIONS (Y2) ANALYSIS\n")
 cat("=================================\n\n")
 
 # Compute residuals for all maturities
-res_y2 <- compute_reduced_form_residual_y2(
+res_y2 <- compute_w2_residuals(
   yields = yields_data,
   term_premia = tp_data,
   maturities = 1:I,
   n_pcs = J,
-  variables_data = variables
+  pcs = as.matrix(variables[, paste0("pc", 1:J)])
 )
 W2_list <- res_y2$residuals
 

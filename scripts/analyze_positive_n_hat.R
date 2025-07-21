@@ -7,8 +7,9 @@ yields <- acm_data[, grep("^y", names(acm_data))]
 term_premia <- acm_data[, grep("^tp", names(acm_data))]
 dates <- acm_data$date
 
-# Compute n_hat for i=1
-n_hat_1 <- compute_n_hat(yields, term_premia, i = 1)
+# Compute n_hat for i=1 with dates
+n_hat_1_df <- compute_n_hat(yields, term_premia, i = 1, return_df = TRUE, dates = dates)
+n_hat_1 <- n_hat_1_df$n_hat
 
 # Find positive values
 positive_idx <- which(n_hat_1 > 0)

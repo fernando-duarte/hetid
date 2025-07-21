@@ -6,8 +6,11 @@
 #' @param yields Data frame with columns y1, y2, ..., containing yields
 #' @param term_premia Data frame with columns tp1, tp2, ..., containing term premia
 #' @param i Integer, the horizon (must be >= 1)
+#' @param return_df Logical, if TRUE returns a data frame with dates (default FALSE)
+#' @param dates Optional vector of dates corresponding to the rows in yields/term_premia.
+#'   If not provided and return_df = TRUE, will use row indices.
 #'
-#' @return Numeric vector of n_hat(i,t) values
+#' @return Numeric vector of n_hat(i,t) values, or data frame with dates if return_df = TRUE
 #'
 #' @details
 #' The formula is:
@@ -26,9 +29,18 @@
 #'   term_premia = data[, grep("^tp", names(data))],
 #'   i = 5
 #' )
+#'
+#' # Compute n_hat with dates
+#' n_hat_5_df <- compute_n_hat(
+#'   yields = data[, grep("^y", names(data))],
+#'   term_premia = data[, grep("^tp", names(data))],
+#'   i = 5,
+#'   return_df = TRUE,
+#'   dates = data$date
+#' )
 #' }
 #'
-compute_n_hat <- function(yields, term_premia, i) {
+compute_n_hat <- function(yields, term_premia, i, return_df = FALSE, dates = NULL) {
   if (i < 1) {
     stop("i must be >= 1")
   }
@@ -51,7 +63,28 @@ compute_n_hat <- function(yields, term_premia, i) {
   n_hat <- i * y_i - (i + 1) * y_i_plus_1 + (i + 1) * tp_i_plus_1 - i * tp_i
 
   # Convert percentages to decimals (ACM data is in percentage points)
-  n_hat / 100
+  n_hat <- n_hat / 100
+
+  # Return data frame with dates if requested
+  if (return_df) {
+    # Use provided dates, or create generic time index
+    if (is.null(dates)) {
+      dates <- 1:nrow(yields)
+    }
+
+    # Ensure dates is the same length as the data
+    if (length(dates) != length(n_hat)) {
+      stop("Length of dates must match number of rows in yields")
+    }
+
+    return(data.frame(
+      date = dates,
+      n_hat = n_hat,
+      stringsAsFactors = FALSE
+    ))
+  }
+
+  n_hat
 }
 
 

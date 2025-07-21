@@ -10,7 +10,8 @@ compute_w2_residuals(
   maturities = 1:9,
   n_pcs = 4,
   pcs = NULL,
-  use_tp_adjustment = TRUE
+  return_df = FALSE,
+  dates = NULL
 )
 }
 \arguments{
@@ -24,10 +25,12 @@ compute_w2_residuals(
 
 \item{pcs}{Matrix of principal components (T x n_pcs). If NULL, loads from package data.}
 
-\item{use_tp_adjustment}{Logical, whether to adjust yields by term premia (default: TRUE)}
+\item{return_df}{Logical, if TRUE returns a data frame with dates (default FALSE).}
+
+\item{dates}{Optional vector of dates. If NULL and return_df = TRUE, will attempt to extract from data.}
 }
 \value{
-A list containing:
+If return_df = FALSE, returns a list containing:
 \describe{
 \item{residuals}{List of residual vectors, one for each maturity}
 \item{fitted}{List of fitted value vectors}
@@ -35,18 +38,23 @@ A list containing:
 \item{r_squared}{Vector of R-squared values for each maturity}
 \item{n_obs}{Number of observations used in each regression}
 }
+If return_df = TRUE, returns a data frame with columns:
+\describe{
+\item{date}{Date column}
+\item{maturity}{Maturity identifier}
+\item{residuals}{Residuals W_{2,t+1}}
+\item{fitted}{Fitted values from the regression}
+}
 }
 \description{
 Computes residuals W_{2,t+1}^{(i)} from regressing Y_{2,t+1}^{(i)} variables
-(yield or term premium changes) on principal components and a constant.
+(SDF innovations) on principal components and a constant.
 }
 \details{
-For each maturity i, computes Y_{2,t+1}^{(i)} as:
-\itemize{
-\item If use_tp_adjustment = TRUE: Y_{2,t+1}^{(i)} = y_{t+1}^{(i)} - tp_{t+1}^{(i)}
-\item If use_tp_adjustment = FALSE: Y_{2,t+1}^{(i)} = y_{t+1}^{(i)}
-}
+For each maturity i, computes Y_{2,t+1}^{(i)} as the SDF innovation:
+Y_{2,t+1}^{(i)} = E_{t+1}\link{SDF_{t+1+i}} - E_t\link{SDF_{t+1+i}}
 
+This is computed using the compute_sdf_innovations() function.
 Then regresses Y_{2,t+1}^{(i)} on PC_t to get residuals W_{2,t+1}^{(i)}.
 }
 \examples{
@@ -61,5 +69,12 @@ res_y2 <- compute_w2_residuals(yields, term_premia)
 
 # Compute for specific maturities only
 res_y2_short <- compute_w2_residuals(yields, term_premia, maturities = 1:3)
+
+# Get results as data frame
+res_y2_df <- compute_w2_residuals(yields, term_premia,
+  maturities = c(3, 5, 7),
+  return_df = TRUE
+)
+head(res_y2_df)
 }
 }

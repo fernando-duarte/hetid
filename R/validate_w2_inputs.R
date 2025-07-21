@@ -87,11 +87,10 @@ load_w2_pcs <- function(pcs, n_pcs, n_obs) {
 #' @param term_premia_df Term premia data frame
 #' @param pcs Principal components matrix
 #' @param n_pcs Number of PCs
-#' @param use_tp_adjustment Whether to use term premium adjustment
 #'
 #' @return List with regression results or NULL if skipped
 #' @keywords internal
-process_w2_maturity <- function(i, yields_df, term_premia_df, pcs, n_pcs, use_tp_adjustment) {
+process_w2_maturity <- function(i, yields_df, term_premia_df, pcs, n_pcs) {
   # Get yield column
   y_col <- paste0("y", i)
   if (!y_col %in% names(yields_df)) {
@@ -99,28 +98,24 @@ process_w2_maturity <- function(i, yields_df, term_premia_df, pcs, n_pcs, use_tp
     return(NULL)
   }
 
-  # Get base values
-  y_i <- yields_df[[y_col]] / 100 # Convert to decimal
-
-  if (use_tp_adjustment) {
-    tp_col <- paste0("tp", i)
-    if (!tp_col %in% names(term_premia_df)) {
-      warning(paste("Term premium column", tp_col, "not found. Skipping maturity", i))
-      return(NULL)
-    }
-    tp_i <- term_premia_df[[tp_col]] / 100
-    y2_base <- y_i - tp_i
-  } else {
-    y2_base <- y_i
+  # Check term premium column exists
+  tp_col <- paste0("tp", i)
+  if (!tp_col %in% names(term_premia_df)) {
+    warning(paste("Term premium column", tp_col, "not found. Skipping maturity", i))
+    return(NULL)
   }
 
-  # Create Y2_{t+1} and lagged PCs
-  y2_future <- y2_base[-1]
-  pcs_lagged <- pcs[-nrow(pcs), , drop = FALSE]
+  # Compute SDF innovations for this maturity
+  # This gives us Y_{2,t+1}^{(i)} = E_{t+1}[SDF_{t+1+i}] - E_t[SDF_{t+1+i}]
+  sdf_innov <- compute_sdf_innovations(yields_df, term_premia_df, i = i) # nolint
+
+  # Create lagged PCs
+  # SDF innovations have length T-1, so we need PCs from 1:(T-1)
+  pcs_lagged <- pcs[1:(nrow(pcs) - 1), , drop = FALSE]
 
   # Clean data
-  complete_idx <- complete.cases(y2_future, pcs_lagged)
-  y2_clean <- y2_future[complete_idx]
+  complete_idx <- complete.cases(sdf_innov, pcs_lagged)
+  y2_clean <- sdf_innov[complete_idx]
   pcs_clean <- pcs_lagged[complete_idx, , drop = FALSE]
 
   # Check sufficient data

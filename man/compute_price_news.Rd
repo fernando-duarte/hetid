@@ -4,7 +4,14 @@
 \alias{compute_price_news}
 \title{Compute Price News}
 \usage{
-compute_price_news(yields, term_premia, i, return_yield_news = FALSE)
+compute_price_news(
+  yields,
+  term_premia,
+  i,
+  return_yield_news = FALSE,
+  return_df = FALSE,
+  dates = NULL
+)
 }
 \arguments{
 \item{yields}{Data frame with columns y1, y2, ..., containing yields}
@@ -14,9 +21,14 @@ compute_price_news(yields, term_premia, i, return_yield_news = FALSE)
 \item{i}{Integer, the horizon (must be >= 1)}
 
 \item{return_yield_news}{Logical, if TRUE returns yield news instead of log price news}
+
+\item{return_df}{Logical, if TRUE returns a data frame with dates (default FALSE)}
+
+\item{dates}{Optional vector of dates corresponding to the rows in yields/term_premia.
+If not provided and return_df = TRUE, will use row indices.}
 }
 \value{
-Numeric vector of price news
+Numeric vector of price news, or data frame with dates if return_df = TRUE
 }
 \description{
 Computes the time series of price news Delta_(t+1)p_(t+i)^(1) or Delta_(t+1)y_(t+i)^(1)
@@ -40,12 +52,14 @@ price_news_5 <- compute_price_news(
   i = 5
 )
 
-# Compute price news for yields
-yield_news_5 <- compute_price_news(
+# Compute price news for yields with dates
+yield_news_5_df <- compute_price_news(
   yields = data[, grep("^y", names(data))],
   term_premia = data[, grep("^tp", names(data))],
   i = 5,
-  return_yield_news = TRUE
+  return_yield_news = TRUE,
+  return_df = TRUE,
+  dates = data$date
 )
 }
 

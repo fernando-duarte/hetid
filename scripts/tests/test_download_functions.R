@@ -14,7 +14,7 @@ cat("==========================\n\n")
 # Note: These functions download data from the internet
 # They will only run if you have an internet connection
 
-# Test 1: Check current data availability
+# Test: Check current data availability
 cat("Current data availability\n")
 # The package startup message shows what's available
 # Check files in extdata
@@ -22,7 +22,7 @@ extdata_path <- system.file("extdata", package = "hetid")
 files <- list.files(extdata_path)
 cat(sprintf("  Files in extdata: %s\n", paste(files, collapse = ", ")))
 
-# Test 2: download_term_premia()
+# Test: download_term_premia()
 cat("\ndownload_term_premia() function\n")
 cat("  This downloads ACM data from NY Fed\n")
 
@@ -53,7 +53,7 @@ if (file_exists) {
   cat("  Run: download_term_premia()\n")
 }
 
-# Test 3: download_yield_curve()
+# Test: download_yield_curve()
 cat("\ndownload_yield_curve() function\n")
 cat("  This downloads Fed yield curve data\n")
 
@@ -78,7 +78,7 @@ for (dataset in datasets) {
   }
 }
 
-# Test 4: Loading functions
+# Test: Loading functions
 cat("\nLoading functions\n")
 
 # Try loading ACM data
@@ -112,7 +112,7 @@ if (file.exists(fed_file)) {
   ))
 }
 
-# Test 5: Download URLs
+# Test: Download URLs
 cat("\nSource URLs\n")
 cat("  ACM data: https://www.newyorkfed.org/research/data_indicators/term-premia-tabs\n")
 cat("  Fed yield curves: https://www.federalreserve.gov/data/nominal-yield-curve.htm\n")

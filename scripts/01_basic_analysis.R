@@ -39,7 +39,10 @@ cat(sprintf("Output directory: %s\n\n", output_dir))
 # Load data
 cat("Loading data...\n")
 data("variables")
-acm_data <- extract_acm_data(data_types = c("yields", "term_premia"))
+acm_data <- extract_acm_data(
+  data_types = c("yields", "term_premia"),
+  frequency = "quarterly"
+)
 yields_data <- acm_data[, grep("^y", names(acm_data))]
 tp_data <- acm_data[, grep("^tp", names(acm_data))]
 
@@ -48,19 +51,19 @@ I <- 9
 
 # Compute W1 (consumption growth residuals)
 cat("\nComputing W1 residuals...\n")
-res_y1 <- compute_reduced_form_residual_y1(n_pcs = J)
+res_y1 <- compute_w1_residuals(n_pcs = J)
 W1 <- res_y1$residuals
 cat(sprintf("  Observations: %d\n", length(W1)))
 cat(sprintf("  R-squared: %.4f\n", res_y1$r_squared))
 
 # Compute W2i for all maturities
 cat("\nComputing W2 residuals for all maturities...\n")
-res_y2 <- compute_reduced_form_residual_y2(
+res_y2 <- compute_w2_residuals(
   yields = yields_data,
   term_premia = tp_data,
   maturities = 1:I,
   n_pcs = J,
-  variables_data = variables
+  pcs = as.matrix(variables[, paste0("pc", 1:J)])
 )
 W2_list <- res_y2$residuals
 

@@ -13,20 +13,23 @@ cat("======================================\n\n")
 
 # Prepare test data
 data("variables")
-acm_data <- extract_acm_data(data_types = c("yields", "term_premia"))
+acm_data <- extract_acm_data(
+  data_types = c("yields", "term_premia"),
+  frequency = "quarterly"
+)
 yields <- acm_data[, grep("^y", names(acm_data))]
 term_premia <- acm_data[, grep("^tp", names(acm_data))]
 
 # Compute residuals
-res_y1 <- compute_reduced_form_residual_y1(n_pcs = 4)
+res_y1 <- compute_w1_residuals(n_pcs = 4)
 W1 <- res_y1$residuals
 
-res_y2 <- compute_reduced_form_residual_y2(
+res_y2 <- compute_w2_residuals(
   yields = yields,
   term_premia = term_premia,
   maturities = c(3, 5, 7), # Multiple maturities for testing
   n_pcs = 4,
-  variables_data = variables
+  pcs = as.matrix(variables[, paste0("pc", 1:4)])
 )
 W2_list <- res_y2$residuals
 
@@ -39,7 +42,7 @@ W1_aligned <- W1[1:n_obs]
 PC_aligned <- PC_matrix[1:n_obs, ]
 W2_aligned <- W2_list[[2]][1:n_obs] # Use maturity 5
 
-# Test 1: Basic optimization
+# Test: Basic optimization
 cat("Basic optimization for maturity 5\n")
 opt_result <- optimize_pc_weights(
   pc_matrix = PC_aligned,
@@ -66,7 +69,7 @@ if (!opt_result$is_complex) {
   cat(sprintf("  Root distance: %.4f\n", opt_result$root_distance))
 }
 
-# Test 2: Different initial weights
+# Test: Different initial weights
 cat("\nEffect of initial weights\n")
 initial_patterns <- list(
   "Equal" = rep(1 / sqrt(4), 4),
@@ -93,7 +96,7 @@ for (pattern_name in names(initial_patterns)) {
   ))
 }
 
-# Test 3: Different tau values
+# Test: Different tau values
 cat("\nOptimization across tau values\n")
 tau_values <- c(0.1, 0.3, 0.5, 0.7, 0.9)
 
@@ -117,7 +120,7 @@ for (tau in tau_values) {
   }
 }
 
-# Test 4: Compare with individual PCs
+# Test: Compare with individual PCs
 cat("\nComparison with individual PCs\n")
 # First compute for individual PCs
 individual_distances <- numeric(4)
@@ -162,7 +165,7 @@ cat(sprintf(
     min(individual_distances, na.rm = TRUE) * 100
 ))
 
-# Test 5: Optimization parameters
+# Test: Optimization parameters
 cat("\nDifferent optimization settings\n")
 opt_settings <- list(
   "Default" = list(method = "Nelder-Mead", maxit = 1000),
@@ -191,7 +194,7 @@ for (setting_name in names(opt_settings)) {
   ))
 }
 
-# Test 6: Verify unit variance of linear combination
+# Test: Verify unit variance of linear combination
 cat("\nVerify properties of optimal solution\n")
 opt_final <- optimize_pc_weights(
   pc_matrix = PC_aligned,

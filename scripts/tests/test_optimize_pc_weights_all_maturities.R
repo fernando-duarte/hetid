@@ -12,22 +12,25 @@ cat("=====================================================\n\n")
 
 # Prepare test data
 data("variables")
-acm_data <- extract_acm_data(data_types = c("yields", "term_premia"))
+acm_data <- extract_acm_data(
+  data_types = c("yields", "term_premia"),
+  frequency = "quarterly"
+)
 yields <- acm_data[, grep("^y", names(acm_data))]
 term_premia <- acm_data[, grep("^tp", names(acm_data))]
 
 # Compute residuals for all maturities
-res_y1 <- compute_reduced_form_residual_y1(n_pcs = 4)
+res_y1 <- compute_w1_residuals(n_pcs = 4)
 W1 <- res_y1$residuals
 
 # Test with subset of maturities for speed
 test_maturities <- c(2, 4, 6, 8)
-res_y2 <- compute_reduced_form_residual_y2(
+res_y2 <- compute_w2_residuals(
   yields = yields,
   term_premia = term_premia,
   maturities = test_maturities,
   n_pcs = 4,
-  variables_data = variables
+  pcs = as.matrix(variables[, paste0("pc", 1:4)])
 )
 W2_list <- res_y2$residuals
 
@@ -40,7 +43,7 @@ W1_aligned <- W1[1:n_obs]
 PC_aligned <- PC_matrix[1:n_obs, ]
 W2_list_aligned <- lapply(W2_list, function(w) w[1:n_obs])
 
-# Test 1: Basic functionality (no parallel)
+# Test: Basic functionality (no parallel)
 cat("Basic optimization across maturities\n")
 opt_results <- optimize_pc_weights_all_maturities(
   pc_matrix = PC_aligned,
@@ -55,7 +58,7 @@ cat(sprintf("  Results for %d maturities\n", nrow(opt_results)))
 cat("\n  Summary of results:\n")
 print(opt_results[, c("maturity", "root_distance", "is_complex", "convergence")])
 
-# Test 2: Extract full results
+# Test: Extract full results
 cat("\nAccessing full results\n")
 full_results <- attr(opt_results, "full_results")
 cat(sprintf(
@@ -76,7 +79,7 @@ if (length(full_results) > 0) {
   }
 }
 
-# Test 3: Find best maturity
+# Test: Find best maturity
 cat("\nFinding best maturity\n")
 real_roots <- opt_results[!opt_results$is_complex, ]
 if (nrow(real_roots) > 0) {
@@ -102,7 +105,7 @@ if (nrow(real_roots) > 0) {
   cat("  No real root solutions found\n")
 }
 
-# Test 4: Different tau values
+# Test: Different tau values
 cat("\nEffect of tau on optimization\n")
 tau_values <- c(0.3, 0.5, 0.7)
 min_distances <- numeric(length(tau_values))
@@ -133,7 +136,7 @@ for (i in 1:length(tau_values)) {
   ))
 }
 
-# Test 5: Convergence statistics
+# Test: Convergence statistics
 cat("\nConvergence statistics\n")
 convergence_table <- table(opt_results$convergence)
 cat("  Convergence codes:\n")
@@ -145,7 +148,7 @@ for (code in names(convergence_table)) {
 }
 cat("  (0 = successful convergence)\n")
 
-# Test 6: Complex vs real roots
+# Test: Complex vs real roots
 cat("\nComplex vs real root solutions\n")
 n_complex <- sum(opt_results$is_complex)
 n_real <- sum(!opt_results$is_complex)

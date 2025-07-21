@@ -13,20 +13,23 @@ cat("================================================\n\n")
 
 # Prepare test data
 data("variables")
-acm_data <- extract_acm_data(data_types = c("yields", "term_premia"))
+acm_data <- extract_acm_data(
+  data_types = c("yields", "term_premia"),
+  frequency = "quarterly"
+)
 yields <- acm_data[, grep("^y", names(acm_data))]
 term_premia <- acm_data[, grep("^tp", names(acm_data))]
 
 # Compute residuals
-res_y1 <- compute_reduced_form_residual_y1(n_pcs = 4)
+res_y1 <- compute_w1_residuals(n_pcs = 4)
 W1 <- res_y1$residuals
 
-res_y2 <- compute_reduced_form_residual_y2(
+res_y2 <- compute_w2_residuals(
   yields = yields,
   term_premia = term_premia,
   maturities = 5,
   n_pcs = 4,
-  variables_data = variables
+  pcs = as.matrix(variables[, paste0("pc", 1:4)])
 )
 W2 <- res_y2$residuals[[1]]
 
@@ -39,7 +42,7 @@ W1_aligned <- W1[1:n_obs]
 W2_aligned <- W2[1:n_obs]
 PC_aligned <- PC_matrix[1:n_obs, ]
 
-# Test 1: Equal weights
+# Test: Equal weights
 cat("Linear combination with equal weights\n")
 weights_equal <- rep(1 / sqrt(4), 4) # Normalized to unit variance
 result_equal <- solve_gamma_quadratic_lincomb(
@@ -65,7 +68,7 @@ if (!is.null(result_equal$error)) {
   cat(sprintf("  Linear combination variance: %.4f\n", result_equal$variance))
 }
 
-# Test 2: Single PC (should match solve_gamma_quadratic)
+# Test: Single PC (should match solve_gamma_quadratic)
 cat("\nSingle PC weight (should match basic function)\n")
 weights_single <- c(1, 0, 0, 0)
 result_single <- solve_gamma_quadratic_lincomb(
@@ -101,7 +104,7 @@ cat(sprintf(
   )
 ))
 
-# Test 3: Different weight patterns
+# Test: Different weight patterns
 cat("\nDifferent weight patterns\n")
 weight_patterns <- list(
   "First two PCs" = c(1 / sqrt(2), 1 / sqrt(2), 0, 0),
@@ -135,7 +138,7 @@ for (pattern_name in names(weight_patterns)) {
   }
 }
 
-# Test 4: Verify normalization
+# Test: Verify normalization
 cat("\nWeight normalization\n")
 raw_weights <- c(2, 3, 1, 0.5) # Not normalized
 result_raw <- solve_gamma_quadratic_lincomb(
@@ -161,7 +164,7 @@ cat(sprintf(
   result_raw$variance
 ))
 
-# Test 5: Effect of tau
+# Test: Effect of tau
 cat("\nEffect of tau with fixed weights\n")
 weights_fixed <- c(0.5, 0.5, 0.3, 0.3)
 tau_values <- c(0.1, 0.3, 0.5, 0.7, 0.9)
@@ -188,7 +191,7 @@ for (tau in tau_values) {
   }
 }
 
-# Test 6: Properties of linear combination
+# Test: Properties of linear combination
 cat("\nLinear combination properties\n")
 weights_test <- c(0.4, 0.3, 0.2, 0.1)
 result_test <- solve_gamma_quadratic_lincomb(

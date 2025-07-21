@@ -4,15 +4,17 @@
 \alias{compute_w1_residuals}
 \title{Compute Reduced Form Residual for Primary Endogenous Variable (Y1)}
 \usage{
-compute_w1_residuals(n_pcs = 4, data = NULL)
+compute_w1_residuals(n_pcs = 4, data = NULL, return_df = FALSE)
 }
 \arguments{
 \item{n_pcs}{Integer, number of principal components to use (1-6). Default is 4.}
 
 \item{data}{Optional data frame containing the variables. If NULL, loads from package data.}
+
+\item{return_df}{Logical, if TRUE returns a data frame with dates (default FALSE).}
 }
 \value{
-A list containing:
+If return_df = FALSE, returns a list containing:
 \describe{
 \item{residuals}{Numeric vector of residuals W_{1,t+1}}
 \item{fitted}{Numeric vector of fitted values}
@@ -20,6 +22,12 @@ A list containing:
 \item{r_squared}{R-squared of the regression}
 \item{dates}{Date vector corresponding to residuals}
 \item{model}{The lm object from the regression}
+}
+If return_df = TRUE, returns a data frame with columns:
+\describe{
+\item{date}{Date column}
+\item{residuals}{Residuals W_{1,t+1}}
+\item{fitted}{Fitted values from the regression}
 }
 }
 \description{
@@ -30,7 +38,7 @@ on principal components (PC_t) and a constant.
 The function performs the regression:
 Y_{1,t+1} = alpha + beta' * PC_t + W_{1,t+1}
 
-where Y_{1,t+1} is consumption growth (fgr1.gdpc1) and PC_t are the first n_pcs
+where Y_{1,t+1} is consumption growth (gr1.pcecc96) and PC_t are the first n_pcs
 principal components (pc1, ..., pc6).
 }
 \examples{
@@ -40,6 +48,10 @@ res_y1 <- compute_w1_residuals()
 
 # Use only first 2 PCs
 res_y1_2pc <- compute_w1_residuals(n_pcs = 2)
+
+# Get results as data frame
+res_y1_df <- compute_w1_residuals(n_pcs = 4, return_df = TRUE)
+head(res_y1_df)
 
 # Plot residuals
 plot(res_y1$dates, res_y1$residuals,

@@ -98,7 +98,10 @@ if (!file.exists(system.file("extdata", "acm_term_premia.csv", package = "hetid"
 
 # Extract ACM data
 cat("Loading ACM data...\n")
-acm_data <- extract_acm_data(data_types = c("yields", "term_premia"))
+acm_data <- extract_acm_data(
+  data_types = c("yields", "term_premia"),
+  frequency = "quarterly"
+)
 yields_data <- acm_data[, grep("^y", names(acm_data))]
 tp_data <- acm_data[, grep("^tp", names(acm_data))]
 
@@ -111,7 +114,7 @@ cat("(Limited to 9 because SDF innovations need y(i+1))\n\n")
 
 # Step 1: Compute W1 (reduced form residual for consumption growth)
 cat("Computing W1 (consumption growth residuals)...\n")
-res_y1 <- compute_reduced_form_residual_y1(n_pcs = J)
+res_y1 <- compute_w1_residuals(n_pcs = J)
 W1 <- res_y1$residuals
 cat(sprintf("  Number of observations: %d\n", length(W1)))
 cat(sprintf("  R-squared: %.4f\n", res_y1$r_squared))
@@ -119,12 +122,12 @@ cat("\n")
 
 # Step 2: Compute W2i for all maturities i=1,...,I
 cat("Computing W2i (SDF innovation residuals) for all maturities...\n")
-res_y2 <- compute_reduced_form_residual_y2(
+res_y2 <- compute_w2_residuals(
   yields = yields_data,
   term_premia = tp_data,
   maturities = 1:I,
   n_pcs = J,
-  variables_data = variables
+  pcs = as.matrix(variables[, paste0("pc", 1:J)])
 )
 
 # Extract all W2i

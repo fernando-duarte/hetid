@@ -5,8 +5,9 @@
 #'
 #' @param n_pcs Integer, number of principal components to use (1-6). Default is 4.
 #' @param data Optional data frame containing the variables. If NULL, loads from package data.
+#' @param return_df Logical, if TRUE returns a data frame with dates (default FALSE).
 #'
-#' @return A list containing:
+#' @return If return_df = FALSE, returns a list containing:
 #' \describe{
 #'   \item{residuals}{Numeric vector of residuals W_{1,t+1}}
 #'   \item{fitted}{Numeric vector of fitted values}
@@ -15,12 +16,18 @@
 #'   \item{dates}{Date vector corresponding to residuals}
 #'   \item{model}{The lm object from the regression}
 #' }
+#' If return_df = TRUE, returns a data frame with columns:
+#' \describe{
+#'   \item{date}{Date column}
+#'   \item{residuals}{Residuals W_{1,t+1}}
+#'   \item{fitted}{Fitted values from the regression}
+#' }
 #'
 #' @details
 #' The function performs the regression:
 #' Y_{1,t+1} = alpha + beta' * PC_t + W_{1,t+1}
 #'
-#' where Y_{1,t+1} is consumption growth (fgr1.gdpc1) and PC_t are the first n_pcs
+#' where Y_{1,t+1} is consumption growth (gr1.pcecc96) and PC_t are the first n_pcs
 #' principal components (pc1, ..., pc6).
 #'
 #' @importFrom stats lm residuals fitted coef as.formula complete.cases
@@ -35,6 +42,10 @@
 #' # Use only first 2 PCs
 #' res_y1_2pc <- compute_w1_residuals(n_pcs = 2)
 #'
+#' # Get results as data frame
+#' res_y1_df <- compute_w1_residuals(n_pcs = 4, return_df = TRUE)
+#' head(res_y1_df)
+#'
 #' # Plot residuals
 #' plot(res_y1$dates, res_y1$residuals,
 #'   type = "l",
@@ -43,7 +54,7 @@
 #' )
 #' }
 #'
-compute_w1_residuals <- function(n_pcs = 4, data = NULL) {
+compute_w1_residuals <- function(n_pcs = 4, data = NULL, return_df = FALSE) {
   # Validate inputs
   if (!n_pcs %in% 1:6) {
     stop("n_pcs must be between 1 and 6")
@@ -57,21 +68,22 @@ compute_w1_residuals <- function(n_pcs = 4, data = NULL) {
   }
 
   # Check required columns
-  required_cols <- c("date", "fgr1.gdpc1", paste0("pc", 1:n_pcs))
+  required_cols <- c("date", "gr1.pcecc96", paste0("pc", 1:n_pcs))
   missing_cols <- setdiff(required_cols, names(data))
   if (length(missing_cols) > 0) {
     stop(paste("Missing required columns:", paste(missing_cols, collapse = ", ")))
   }
 
   # Extract relevant variables
-  y1 <- data$fgr1.gdpc1
+  y1 <- data$gr1.pcecc96 # Consumption growth (not forwarded)
   dates <- data$date
 
   # Create PC matrix
   pc_cols <- paste0("pc", 1:n_pcs)
   pc_matrix <- as.matrix(data[, pc_cols])
 
-  # Create lagged PCs
+  # Create lagged PCs to align with Y_{t+1}
+  # Since y1 is gr1 (not fgr1), we need to lag PCs
   n <- length(y1)
   pc_lagged <- pc_matrix[1:(n - 1), , drop = FALSE]
   y1_future <- y1[2:n]
@@ -102,6 +114,17 @@ compute_w1_residuals <- function(n_pcs = 4, data = NULL) {
   r_squared <- summary(model)$r.squared
 
   # Return results
+  if (return_df) {
+    # Return data frame with dates
+    return(data.frame(
+      date = dates_clean,
+      residuals = residuals,
+      fitted = fitted_values,
+      stringsAsFactors = FALSE
+    ))
+  }
+
+  # Return list (original format)
   list(
     residuals = residuals,
     fitted = fitted_values,

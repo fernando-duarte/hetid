@@ -84,7 +84,7 @@ cat(sprintf(
   max(abs(error_3))
 )) # should be zero
 
-# Compute n_hat(i-1,t+1), which estimates E_(t+1)[p_(t+i)^(1)]
+# Compute n_hat(i-1,t+1), which estimates E_(t+1)[p_(t+i)^(1)], manually
 
 # Get variables for maturity i-1
 n_hat_2 <- compute_n_hat(yields, term_premia, i = i - 1)

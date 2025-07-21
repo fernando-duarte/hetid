@@ -6,8 +6,11 @@
 #' @param term_premia Data frame with columns tp1, tp2, ..., containing term premia
 #' @param i Integer, the horizon (must be >= 1)
 #' @param return_yield_news Logical, if TRUE returns yield news instead of log price news
+#' @param return_df Logical, if TRUE returns a data frame with dates (default FALSE)
+#' @param dates Optional vector of dates corresponding to the rows in yields/term_premia.
+#'   If not provided and return_df = TRUE, will use row indices.
 #'
-#' @return Numeric vector of price news
+#' @return Numeric vector of price news, or data frame with dates if return_df = TRUE
 #'
 #' @details
 #' The price news for log prices is:
@@ -30,22 +33,24 @@
 #'   i = 5
 #' )
 #'
-#' # Compute price news for yields
-#' yield_news_5 <- compute_price_news(
+#' # Compute price news for yields with dates
+#' yield_news_5_df <- compute_price_news(
 #'   yields = data[, grep("^y", names(data))],
 #'   term_premia = data[, grep("^tp", names(data))],
 #'   i = 5,
-#'   return_yield_news = TRUE
+#'   return_yield_news = TRUE,
+#'   return_df = TRUE,
+#'   dates = data$date
 #' )
 #' }
 #'
-compute_price_news <- function(yields, term_premia, i, return_yield_news = FALSE) {
+compute_price_news <- function(yields, term_premia, i, return_yield_news = FALSE, return_df = FALSE, dates = NULL) {
   if (i < 1) {
     stop("i must be >= 1")
   }
 
   # Compute n_hat series
-  n_hat_i <- compute_n_hat(yields, term_premia, i) # nolint
+  n_hat_i <- compute_n_hat(yields, term_premia, i, return_df = FALSE, dates = dates) # nolint
 
   # Special case for i=1: n_hat_0 = -y1
   if (i == 1) {
@@ -56,7 +61,7 @@ compute_price_news <- function(yields, term_premia, i, return_yield_news = FALSE
     }
     n_hat_i_minus_1 <- -y1 / 100 # Convert to decimal
   } else {
-    n_hat_i_minus_1 <- compute_n_hat(yields, term_premia, i - 1) # nolint
+    n_hat_i_minus_1 <- compute_n_hat(yields, term_premia, i - 1, return_df = FALSE, dates = dates) # nolint
   }
 
   # Number of observations
@@ -77,6 +82,30 @@ compute_price_news <- function(yields, term_premia, i, return_yield_news = FALSE
     price_news <- -price_news
   }
 
+  # Return data frame with dates if requested
+  if (return_df) {
+    # Use provided dates, or create generic time index
+    if (is.null(dates)) {
+      dates <- 1:nrow(yields)
+    }
+
+    # Ensure dates is the same length as the data
+    if (length(dates) != nrow(yields)) {
+      stop("Length of dates must match number of rows in yields")
+    }
+
+    # Create output vector with proper alignment
+    # price_news[t] represents news from t to t+1, so it aligns with date t+1
+    # First observation is NA because we can't compute news for t=0 to t=1
+    price_news_aligned <- c(NA, price_news)
+
+    return(data.frame(
+      date = dates,
+      price_news = price_news_aligned,
+      stringsAsFactors = FALSE
+    ))
+  }
+
   price_news
 }
 
@@ -90,8 +119,11 @@ compute_price_news <- function(yields, term_premia, i, return_yield_news = FALSE
 #' @param yields Data frame with columns y1, y2, ..., containing yields
 #' @param term_premia Data frame with columns tp1, tp2, ..., containing term premia
 #' @param i Integer, the horizon (must be >= 1)
+#' @param return_df Logical, if TRUE returns a data frame with dates (default FALSE)
+#' @param dates Optional vector of dates corresponding to the rows in yields/term_premia.
+#'   If not provided and return_df = TRUE, will use row indices.
 #'
-#' @return Numeric vector of SDF innovations
+#' @return Numeric vector of SDF innovations, or data frame with dates if return_df = TRUE
 #'
 #' @details
 #' The SDF innovation is computed as:
@@ -116,18 +148,27 @@ compute_price_news <- function(yields, term_premia, i, return_yield_news = FALSE
 #'   term_premia = data[, grep("^tp", names(data))],
 #'   i = 5
 #' )
+#'
+#' # Compute SDF innovations with dates
+#' sdf_innovations_5_df <- compute_sdf_innovations(
+#'   yields = data[, grep("^y", names(data))],
+#'   term_premia = data[, grep("^tp", names(data))],
+#'   i = 5,
+#'   return_df = TRUE,
+#'   dates = data$date
+#' )
 #' }
 #'
-compute_sdf_innovations <- function(yields, term_premia, i) {
+compute_sdf_innovations <- function(yields, term_premia, i, return_df = FALSE, dates = NULL) {
   if (i < 1) {
     stop("i must be >= 1")
   }
 
   # Compute n_hat(i,t) series
-  n_hat_i <- compute_n_hat(yields, term_premia, i) # nolint
+  n_hat_i <- compute_n_hat(yields, term_premia, i, return_df = FALSE, dates = dates) # nolint
 
   # Compute price news (Delta_(t+1)p_(t+i)^(1))
-  delta_p <- compute_price_news(yields, term_premia, i, return_yield_news = FALSE)
+  delta_p <- compute_price_news(yields, term_premia, i, return_yield_news = FALSE, return_df = FALSE, dates = dates)
 
   # Compute E[(Delta_(t+1)p_(t+i)^(1))^2]
   # Remove NA values for the expectation calculation
@@ -150,6 +191,28 @@ compute_sdf_innovations <- function(yields, term_premia, i) {
       sdf_innovations[t] <- exp(n_hat_i[t]) *
         (delta_p[t] + 0.5 * delta_p[t]^2 - 0.5 * expected_delta_p_squared)
     }
+  }
+
+  # Return data frame with dates if requested
+  if (return_df) {
+    # Use provided dates, or create generic time index
+    if (is.null(dates)) {
+      dates <- 1:nrow(yields)
+    }
+
+    # Ensure dates is the same length as the data
+    if (length(dates) != nrow(yields)) {
+      stop("Length of dates must match number of rows in yields")
+    }
+
+    # SDF innovations have same alignment as price news: first observation is NA
+    sdf_innovations_aligned <- c(NA, sdf_innovations)
+
+    return(data.frame(
+      date = dates,
+      sdf_innovations = sdf_innovations_aligned,
+      stringsAsFactors = FALSE
+    ))
   }
 
   sdf_innovations

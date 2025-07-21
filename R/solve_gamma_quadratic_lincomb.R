@@ -9,10 +9,12 @@
 #' @param w2 Vector of reduced form residuals for Y2
 #' @param tau Quantile parameter between 0 and 1
 #' @param use_t_minus_1 Logical indicating whether to use lagged PCs
+#' @param return_df Logical, if TRUE includes dates in the linear_comb output (default FALSE)
+#' @param dates Optional vector of dates corresponding to the rows in pc_matrix
 #'
 #' @return List containing:
 #'   \item{roots}{Vector of two roots (possibly complex)}
-#'   \item{linear_comb}{The linear combination of PCs used}
+#'   \item{linear_comb}{The linear combination of PCs used (data frame with dates if return_df=TRUE)}
 #'   \item{normalized_weights}{The normalized weights}
 #'   \item{variance}{Variance of the linear combination (should be 1)}
 #'   \item{error}{Error message if computation failed}
@@ -20,7 +22,7 @@
 #' @importFrom stats var cov
 #' @export
 solve_gamma_quadratic_lincomb <- function(pc_matrix, weights, w1, w2, tau,
-                                          use_t_minus_1 = TRUE) {
+                                          use_t_minus_1 = TRUE, return_df = FALSE, dates = NULL) {
   # Input validation
   if (!is.matrix(pc_matrix)) {
     pc_matrix <- as.matrix(pc_matrix)
@@ -127,9 +129,30 @@ solve_gamma_quadratic_lincomb <- function(pc_matrix, weights, w1, w2, tau,
     )
   }
 
+  # Handle linear_comb output format
+  if (return_df) {
+    # Create dates if not provided
+    if (is.null(dates)) {
+      dates <- 1:length(linear_comb)
+    }
+
+    # Ensure dates match length
+    if (length(dates) != length(linear_comb)) {
+      stop("Length of dates must match number of rows in pc_matrix")
+    }
+
+    linear_comb_output <- data.frame(
+      date = dates,
+      linear_comb = linear_comb,
+      stringsAsFactors = FALSE
+    )
+  } else {
+    linear_comb_output <- linear_comb
+  }
+
   list(
     roots = roots,
-    linear_comb = linear_comb,
+    linear_comb = linear_comb_output,
     normalized_weights = normalized_weights,
     variance = var(linear_comb, na.rm = TRUE),
     error = NULL

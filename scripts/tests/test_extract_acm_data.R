@@ -11,7 +11,7 @@ library(hetid)
 cat("Testing extract_acm_data() function\n")
 cat("===================================\n\n")
 
-# Test 1: Basic extraction with defaults
+# Test: Basic extraction with defaults
 cat("Default extraction (all data types)\n")
 acm_default <- extract_acm_data()
 
@@ -29,7 +29,7 @@ cat(sprintf(
 ))
 cat("  ...\n")
 
-# Test 2: Specific data types
+# Test: Specific data types
 cat("\nExtracting specific data types\n")
 # Yields only
 yields_only <- extract_acm_data(data_types = "yields")
@@ -43,7 +43,7 @@ cat(sprintf("  Term premia only: %d columns\n", ncol(tp_only)))
 yields_tp <- extract_acm_data(data_types = c("yields", "term_premia"))
 cat(sprintf("  Yields + term premia: %d columns\n", ncol(yields_tp)))
 
-# Test 3: Maturity filtering
+# Test: Maturity filtering
 cat("\nFiltering by maturity\n")
 mat_subset <- extract_acm_data(
   data_types = "yields",
@@ -55,7 +55,7 @@ cat(sprintf(
   paste(names(mat_subset)[-1], collapse = ", ")
 ))
 
-# Test 4: Date filtering
+# Test: Date filtering
 cat("\nDate range filtering\n")
 date_filtered <- extract_acm_data(
   start_date = "2010-01-01",
@@ -68,7 +68,7 @@ cat(sprintf(
 ))
 cat(sprintf("  Observations: %d\n", nrow(date_filtered)))
 
-# Test 5: Frequency conversion
+# Test: Frequency conversion
 cat("\nFrequency conversion\n")
 monthly_data <- extract_acm_data(frequency = "monthly")
 quarterly_data <- extract_acm_data(frequency = "quarterly")
@@ -86,13 +86,13 @@ for (i in 1:5) {
   cat(sprintf("    %s\n", quarterly_data$date[i]))
 }
 
-# Test 6: Auto-download feature
+# Test: Auto-download feature
 cat("\nAuto-download feature\n")
 # This would download if file doesn't exist
 result <- extract_acm_data(auto_download = TRUE)
 cat(sprintf("  Data loaded: %s\n", ifelse(nrow(result) > 0, "Yes", "No")))
 
-# Test 7: Data integrity checks
+# Test: Data integrity checks
 cat("\nData integrity checks\n")
 full_data <- extract_acm_data(data_types = c("yields", "term_premia", "risk_neutral"))
 
@@ -115,7 +115,7 @@ cat(sprintf(
 tp_means <- colMeans(full_data[, grep("^tp", names(full_data))], na.rm = TRUE)
 cat(sprintf("  Mean term premium at 10Y: %.3f%%\n", tp_means["tp10"]))
 
-# Test 8: Risk-neutral yields
+# Test: Risk-neutral yields
 cat("\nRisk-neutral yields\n")
 rn_data <- extract_acm_data(data_types = "risk_neutral")
 rn_cols <- grep("^rn", names(rn_data))

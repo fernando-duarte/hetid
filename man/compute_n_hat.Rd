@@ -4,7 +4,7 @@
 \alias{compute_n_hat}
 \title{Compute Expected Log Bond Price Estimator (n_hat)}
 \usage{
-compute_n_hat(yields, term_premia, i)
+compute_n_hat(yields, term_premia, i, return_df = FALSE, dates = NULL)
 }
 \arguments{
 \item{yields}{Data frame with columns y1, y2, ..., containing yields}
@@ -12,9 +12,14 @@ compute_n_hat(yields, term_premia, i)
 \item{term_premia}{Data frame with columns tp1, tp2, ..., containing term premia}
 
 \item{i}{Integer, the horizon (must be >= 1)}
+
+\item{return_df}{Logical, if TRUE returns a data frame with dates (default FALSE)}
+
+\item{dates}{Optional vector of dates corresponding to the rows in yields/term_premia.
+If not provided and return_df = TRUE, will use row indices.}
 }
 \value{
-Numeric vector of n_hat(i,t) values
+Numeric vector of n_hat(i,t) values, or data frame with dates if return_df = TRUE
 }
 \description{
 Computes the time series n_hat(i,t) which is an estimator for
@@ -34,6 +39,15 @@ n_hat_5 <- compute_n_hat(
   yields = data[, grep("^y", names(data))],
   term_premia = data[, grep("^tp", names(data))],
   i = 5
+)
+
+# Compute n_hat with dates
+n_hat_5_df <- compute_n_hat(
+  yields = data[, grep("^y", names(data))],
+  term_premia = data[, grep("^tp", names(data))],
+  i = 5,
+  return_df = TRUE,
+  dates = data$date
 )
 }
 

@@ -132,10 +132,10 @@ for (i in 1:9) {
       sd_ratio <- sqrt(ratio)
       cat(sprintf(
         paste0(
-          "    i=%d: Bound/Var(y%d) = %.2e / %.2e = %.4f    |",
-          "    sqrt(Bound/Var)(y%d) = %.4f\n"
+          "    i=%d: Bound/Var(y%d) = %.2e / %.2e = %.4f  |",
+          "    sqrt(Bound/Var)(y%d) = %.4f\n "
         ),
-        i, i, var_bounds[i], uncond_var_decimal, ratio, i, ssd_ratio
+        i, i, var_bounds[i], uncond_var_decimal, ratio, i, sd_ratio
       ))
     } else if (var_bounds[i] == 0) {
       cat(sprintf("    i=%d: Bound = 0 (k_hat is zero for i=1)\n", i))
