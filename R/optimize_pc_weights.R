@@ -14,6 +14,7 @@
 #' @param method Optimization method (default: "Nelder-Mead")
 #' @param maxit Maximum iterations (default: 1000)
 #' @param penalty_complex Penalty for complex roots (default: 1e6)
+#' @param dates Optional vector of dates corresponding to the time series
 #'
 #' @return List containing:
 #'   \item{optimal_weights}{Optimal normalized weights}
@@ -21,8 +22,9 @@
 #'   \item{root_distance}{Distance between roots}
 #'   \item{objective_value}{Final objective function value}
 #'   \item{convergence}{Convergence indicator from optim}
-#'   \item{linear_comb}{The optimal linear combination}
+#'   \item{linear_comb}{The optimal linear combination (data frame if dates provided)}
 #'   \item{is_complex}{Whether roots are complex}
+#'   \item{dates_used}{If dates provided, the dates used after removing NA values}
 #'
 #' @importFrom stats optim
 #' @export
@@ -31,7 +33,8 @@ optimize_pc_weights <- function(pc_matrix, w1, w2, tau, maturity = NULL,
                                 initial_weights = NULL,
                                 method = "Nelder-Mead",
                                 maxit = 1000,
-                                penalty_complex = 1e6) {
+                                penalty_complex = 1e6,
+                                dates = NULL) {
   n_pcs <- ncol(pc_matrix)
 
   # Set initial weights if not provided
@@ -49,14 +52,16 @@ optimize_pc_weights <- function(pc_matrix, w1, w2, tau, maturity = NULL,
 
     norm_weights <- weights / weight_norm
 
-    # Solve quadratic with these weights
+    # Solve quadratic with these weights (no dates needed during optimization)
     result <- solve_gamma_quadratic_lincomb(
       pc_matrix = pc_matrix,
       weights = norm_weights,
       w1 = w1,
       w2 = w2,
       tau = tau,
-      use_t_minus_1 = use_t_minus_1
+      use_t_minus_1 = use_t_minus_1,
+      return_df = FALSE,
+      dates = NULL
     )
 
     # Check for errors
@@ -95,7 +100,9 @@ optimize_pc_weights <- function(pc_matrix, w1, w2, tau, maturity = NULL,
     w1 = w1,
     w2 = w2,
     tau = tau,
-    use_t_minus_1 = use_t_minus_1
+    use_t_minus_1 = use_t_minus_1,
+    return_df = !is.null(dates), # Return df format if dates provided
+    dates = dates
   )
 
   # Prepare output

@@ -14,7 +14,8 @@ optimize_pc_weights(
   initial_weights = NULL,
   method = "Nelder-Mead",
   maxit = 1000,
-  penalty_complex = 1e+06
+  penalty_complex = 1e+06,
+  dates = NULL
 )
 }
 \arguments{
@@ -37,6 +38,8 @@ optimize_pc_weights(
 \item{maxit}{Maximum iterations (default: 1000)}
 
 \item{penalty_complex}{Penalty for complex roots (default: 1e6)}
+
+\item{dates}{Optional vector of dates corresponding to the time series}
 }
 \value{
 List containing:
@@ -45,8 +48,9 @@ List containing:
 \item{root_distance}{Distance between roots}
 \item{objective_value}{Final objective function value}
 \item{convergence}{Convergence indicator from optim}
-\item{linear_comb}{The optimal linear combination}
+\item{linear_comb}{The optimal linear combination (data frame if dates provided)}
 \item{is_complex}{Whether roots are complex}
+\item{dates_used}{If dates provided, the dates used after removing NA values}
 }
 \description{
 Finds the optimal weights for a linear combination of principal components

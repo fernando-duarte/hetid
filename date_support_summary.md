@@ -41,6 +41,20 @@ Added `return_df` parameter to residual computation functions and fixed data ali
                                           return_df = TRUE, dates = dates)
   ```
 
+### 4. `solve_gamma_quadratic()`
+- **File**: `R/solve_gamma_quadratic.R`
+- **New parameter**: `dates = NULL`
+- **Behavior**:
+  - Tracks which dates remain after removing NA values during validation
+  - Returns `dates_used` in output when dates are provided
+  - Helps users understand which observations were included in the analysis
+- **Example**:
+  ```r
+  dates <- seq(as.Date("2020-01-01"), length.out = n, by = "month")
+  result <- solve_gamma_quadratic(pc_j, w1, w2, tau = 0.5, dates = dates)
+  print(result$dates_used) # Shows dates after removing NA values
+  ```
+
 ## Data Alignment Issues Fixed
 
 Fixed data frequency mismatch in 8 files where monthly ACM data was being used with quarterly PCs:
