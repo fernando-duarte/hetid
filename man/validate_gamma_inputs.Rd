@@ -4,7 +4,7 @@
 \alias{validate_gamma_inputs}
 \title{Validate Inputs for Gamma Quadratic Solver}
 \usage{
-validate_gamma_inputs(pc_j, w1, w2, tau)
+validate_gamma_inputs(pc_j, w1, w2, tau, dates = NULL)
 }
 \arguments{
 \item{pc_j}{Principal component vector}
@@ -14,6 +14,8 @@ validate_gamma_inputs(pc_j, w1, w2, tau)
 \item{w2}{Reduced form residual for Y2}
 
 \item{tau}{Quantile parameter}
+
+\item{dates}{Optional vector of dates corresponding to the time series}
 }
 \value{
 List with cleaned data and validation results

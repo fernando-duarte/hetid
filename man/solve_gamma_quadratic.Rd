@@ -4,7 +4,7 @@
 \alias{solve_gamma_quadratic}
 \title{Solve Quadratic Equation for Gamma_1}
 \usage{
-solve_gamma_quadratic(pc_j, w1, w2, tau, use_t_minus_1 = TRUE)
+solve_gamma_quadratic(pc_j, w1, w2, tau, use_t_minus_1 = TRUE, dates = NULL)
 }
 \arguments{
 \item{pc_j}{Numeric vector, time series of PC_jt (principal component j at time t)}
@@ -16,6 +16,9 @@ solve_gamma_quadratic(pc_j, w1, w2, tau, use_t_minus_1 = TRUE)
 \item{tau}{Numeric, parameter between 0 and 1}
 
 \item{use_t_minus_1}{Logical, if TRUE uses T-1 in denominators (default), if FALSE uses T}
+
+\item{dates}{Optional vector of dates corresponding to the time series. If provided, the function
+will return information about which dates were used after removing NA values.}
 }
 \value{
 A named list containing:
@@ -27,6 +30,8 @@ a\emph{gamma_1^2 + b}gamma_1 + c = 0}
 \item{discriminant}{The discriminant b^2 - 4ac}
 \item{components}{List containing all computed covariances and variances
 used in the calculation}
+\item{dates_used}{If dates parameter was provided, returns the dates corresponding to
+observations used after removing NA values}
 }
 }
 \description{
@@ -62,6 +67,11 @@ print(result$roots)
 
 # Use T instead of T-1 in denominators
 result_t <- solve_gamma_quadratic(pc_j, w1, w2, tau = 0.5, use_t_minus_1 = FALSE)
+
+# With dates to track which observations were used
+dates <- seq(as.Date("2020-01-01"), length.out = n, by = "month")
+result_dates <- solve_gamma_quadratic(pc_j, w1, w2, tau = 0.5, dates = dates)
+print(result_dates$dates_used) # Shows dates after removing NA values
 }
 
 }

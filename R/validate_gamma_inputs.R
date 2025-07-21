@@ -6,10 +6,11 @@
 #' @param w1 Reduced form residual for Y1
 #' @param w2 Reduced form residual for Y2
 #' @param tau Quantile parameter
+#' @param dates Optional vector of dates corresponding to the time series
 #'
 #' @return List with cleaned data and validation results
 #' @keywords internal
-validate_gamma_inputs <- function(pc_j, w1, w2, tau) {
+validate_gamma_inputs <- function(pc_j, w1, w2, tau, dates = NULL) {
   # Validate numeric types for all inputs at once
   inputs_numeric <- all(sapply(list(pc_j, w1, w2), is.numeric))
   if (!inputs_numeric) {
@@ -20,6 +21,13 @@ validate_gamma_inputs <- function(pc_j, w1, w2, tau) {
   lengths <- c(length(pc_j), length(w1), length(w2))
   if (length(unique(lengths)) > 1) {
     stop("All input time series must have the same length")
+  }
+
+  # Validate dates if provided
+  if (!is.null(dates)) {
+    if (length(dates) != lengths[1]) {
+      stop("Length of dates must match length of input time series")
+    }
   }
 
   # Validate tau parameter
@@ -36,10 +44,18 @@ validate_gamma_inputs <- function(pc_j, w1, w2, tau) {
     stop("Not enough complete observations (need at least 3)")
   }
 
-  list(
+  # Prepare output
+  result <- list(
     pc_j = pc_j[complete_idx],
     w1 = w1[complete_idx],
     w2 = w2[complete_idx],
     n = n_complete
   )
+
+  # Add dates if provided
+  if (!is.null(dates)) {
+    result$dates <- dates[complete_idx]
+  }
+
+  result
 }
