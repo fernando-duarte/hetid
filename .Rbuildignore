@@ -99,3 +99,4 @@
 ^REFACTORING_PLAN\.md$
 ^baseline-duplication-report\.xml$
 ^duplication-tracking$
+^return_value_patterns\.md$
