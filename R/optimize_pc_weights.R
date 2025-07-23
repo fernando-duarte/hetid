@@ -1,14 +1,14 @@
 #' Optimize PC Weights to Minimize Root Distance
 #'
 #' Finds the optimal weights for a linear combination of principal components
-#' that minimizes the distance between the two roots of the gamma_1 quadratic
+#' that minimizes the distance between the two roots of the theta quadratic
 #' equation, with preference for real roots.
 #'
-#' @param pc_matrix Matrix of principal components (n x J)
+#' @param pcs Matrix of principal components (n x J)
 #' @param w1 Vector of reduced form residuals for Y1
 #' @param w2 Vector of reduced form residuals for Y2
 #' @param tau Quantile parameter between 0 and 1
-#' @param maturity Maturity index (for Y2 residuals)
+#' @param i Maturity index (for Y2 residuals)
 #' @param use_t_minus_1 Logical, if TRUE uses n-1 in variance/covariance denominators
 #' @param initial_weights Initial weights (default: equal weights)
 #' @param method Optimization method (default: "Nelder-Mead")
@@ -28,14 +28,14 @@
 #'
 #' @importFrom stats optim
 #' @export
-optimize_pc_weights <- function(pc_matrix, w1, w2, tau, maturity = NULL,
+optimize_pc_weights <- function(pcs, w1, w2, tau, i = NULL,
                                 use_t_minus_1 = TRUE,
                                 initial_weights = NULL,
                                 method = "Nelder-Mead",
                                 maxit = 1000,
                                 penalty_complex = 1e6,
                                 dates = NULL) {
-  n_pcs <- ncol(pc_matrix)
+  n_pcs <- ncol(pcs)
 
   # Set initial weights if not provided
   if (is.null(initial_weights)) {
@@ -53,8 +53,8 @@ optimize_pc_weights <- function(pc_matrix, w1, w2, tau, maturity = NULL,
     norm_weights <- weights / weight_norm
 
     # Solve quadratic with these weights (no dates needed during optimization)
-    result <- solve_gamma_quadratic_lincomb(
-      pc_matrix = pc_matrix,
+    result <- solve_theta_quadratic_lincomb(
+      pcs = pcs,
       weights = norm_weights,
       w1 = w1,
       w2 = w2,
@@ -95,8 +95,8 @@ optimize_pc_weights <- function(pc_matrix, w1, w2, tau, maturity = NULL,
   optimal_weights <- opt_result$par / weight_norm
 
   # Compute final solution with optimal weights
-  final_result <- solve_gamma_quadratic_lincomb(
-    pc_matrix = pc_matrix,
+  final_result <- solve_theta_quadratic_lincomb(
+    pcs = pcs,
     weights = optimal_weights,
     w1 = w1,
     w2 = w2,
@@ -120,8 +120,13 @@ optimize_pc_weights <- function(pc_matrix, w1, w2, tau, maturity = NULL,
     convergence = opt_result$convergence,
     linear_comb = final_result$linear_comb,
     is_complex = is.complex(final_result$roots),
-    maturity = maturity
+    dates_used = if (!is.null(dates)) final_result$dates else NULL
   )
+
+  # Add maturity if provided
+  if (!is.null(i)) {
+    output$maturity <- i
+  }
 
   output
 }

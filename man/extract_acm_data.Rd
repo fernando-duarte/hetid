@@ -34,7 +34,7 @@ Quarterly data uses the last observation of each quarter.}
 downloads it. Default is FALSE.}
 }
 \value{
-A data frame with Date column and selected variables.
+A data frame with date column and selected variables.
 Column naming convention:
 \itemize{
 \item Yields: y1, y2, ..., y10

@@ -8,13 +8,13 @@ NULL
 
 #' Validate inputs for theta optimization
 #' @noRd
-validate_theta_inputs <- function(maturity, n_pcs, pc_data, maturities) {
-  if (maturity < 2) {
+validate_theta_inputs <- function(i, n_pcs, pc_data, maturities) {
+  if (i < 2) {
     stop("Maturity must be >= 2")
   }
 
-  if (!maturity %in% maturities) {
-    stop(paste("Maturity", maturity, "not found in available maturities"))
+  if (!i %in% maturities) {
+    stop(paste("Maturity", i, "not found in available maturities"))
   }
 
   if (n_pcs < 1 || n_pcs > 6) {
@@ -29,7 +29,7 @@ validate_theta_inputs <- function(maturity, n_pcs, pc_data, maturities) {
 #' Prepare data for theta optimization
 #' @importFrom stats complete.cases
 #' @noRd
-prepare_theta_data <- function(maturity, n_pcs, pc_data,
+prepare_theta_data <- function(i, n_pcs, pc_data,
                                yields, term_premia, verbose) {
   # Extract the first n_pcs principal components
   pc_matrix <- pc_data[, 1:n_pcs]
@@ -42,8 +42,8 @@ prepare_theta_data <- function(maturity, n_pcs, pc_data,
   w1 <- res_w1$residuals
 
   # W2 residuals for the specified maturity
-  res_w2 <- compute_w2_residuals(yields, term_premia, maturities = maturity)
-  w2 <- res_w2$residuals[[as.character(maturity)]]
+  res_w2 <- compute_w2_residuals(yields, term_premia, maturities = i)
+  w2 <- res_w2$residuals[[as.character(i)]]
 
   # Align data (remove NAs)
   n_obs <- min(length(w1), length(w2), nrow(pc_matrix))

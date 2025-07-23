@@ -1,7 +1,7 @@
 #' Unified Moment Computation for Gamma Quadratic Functions
 #'
 #' Single source of truth for computing moments (means, variances, covariances)
-#' used throughout the gamma quadratic solver functions.
+#' used throughout the theta quadratic solver functions.
 #'
 #' @param x First vector
 #' @param y Second vector (optional for covariance)
@@ -70,7 +70,7 @@ compute_cov <- function(x, y, use_t_minus_1 = TRUE, na_rm = FALSE) {
 
 #' Compute All Moments for Gamma Quadratic
 #'
-#' Computes all required moments for the gamma quadratic equation
+#' Computes all required moments for the theta quadratic equation
 #' using the unified moment functions.
 #'
 #' @param pc Vector of principal component values
@@ -89,7 +89,7 @@ compute_cov <- function(x, y, use_t_minus_1 = TRUE, na_rm = FALSE) {
 #' }
 #'
 #' @keywords internal
-compute_gamma_moments_unified <- function(pc, w1, w2, use_t_minus_1 = TRUE) {
+compute_theta_moments_unified <- function(pc, w1, w2, use_t_minus_1 = TRUE) {
   # Check equal lengths
   if (length(pc) != length(w1) || length(pc) != length(w2)) {
     stop("All input vectors must have the same length")
@@ -122,26 +122,26 @@ compute_gamma_moments_unified <- function(pc, w1, w2, use_t_minus_1 = TRUE) {
 
 #' Compute Quadratic Coefficients
 #'
-#' Computes the coefficients a, b, c for the gamma quadratic equation
+#' Computes the coefficients a, b, c for the theta quadratic equation
 #' given the moments.
 #'
-#' @param moments List of moments from compute_gamma_moments_unified
+#' @param moments List of moments from compute_theta_moments_unified
 #' @param tau Quantile parameter between 0 and 1
 #'
 #' @return List containing:
 #' \describe{
-#'   \item{a}{Coefficient of gamma_1^2}
-#'   \item{b}{Coefficient of gamma_1}
+#'   \item{a}{Coefficient of theta^2}
+#'   \item{b}{Coefficient of theta}
 #'   \item{c}{Constant term}
 #'   \item{discriminant}{b^2 - 4ac}
 #' }
 #'
 #' @keywords internal
 compute_quadratic_coefficients <- function(moments, tau) {
-  # Coefficient of gamma_1^2
+  # Coefficient of theta^2
   a <- 1 - tau^2
 
-  # Coefficient of gamma_1
+  # Coefficient of theta
   b <- 2 * ((moments$cov_w1w2_w2sq / moments$var_w2sq) * tau^2 -
     (moments$cov_w1w2_pc / moments$cov_w2sq_pc))
 

@@ -30,6 +30,6 @@ For compute_cov: scalar covariance
 }
 \description{
 Single source of truth for computing moments (means, variances, covariances)
-used throughout the gamma quadratic solver functions.
+used throughout the theta quadratic solver functions.
 }
 \keyword{internal}

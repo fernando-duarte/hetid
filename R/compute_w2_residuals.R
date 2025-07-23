@@ -104,7 +104,7 @@ compute_w2_residuals <- function(yields, term_premia, maturities = 1:9,
 
   # Set row/column names for coefficient matrix
   rownames(coef_matrix) <- paste0("maturity_", maturities)
-  colnames(coef_matrix) <- c("(Intercept)", paste0("PC", 1:n_pcs))
+  colnames(coef_matrix) <- c("(Intercept)", paste0("pc", 1:n_pcs))
 
   # Handle return_df option
   if (return_df) {

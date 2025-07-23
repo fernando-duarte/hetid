@@ -80,6 +80,11 @@ load_term_premia <- function(auto_download = FALSE) {
         )
       }
 
+      # Standardize column name to lowercase 'date'
+      if ("DATE" %in% names(df)) {
+        names(df)[names(df) == "DATE"] <- "date"
+      }
+
       df
     },
     error = function(e) {

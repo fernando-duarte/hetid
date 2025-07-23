@@ -127,8 +127,8 @@ generate_panel_b_pc_weights <- function(results_filtered, maturities, n_pcs) {
     weights <- sapply(maturities, function(mat) {
       if (as.character(mat) %in% names(results_filtered)) {
         res <- results_filtered[[as.character(mat)]]
-        if (!is.null(res$weights_opt) && length(res$weights_opt) >= j) {
-          paste0("$", format_number(res$weights_opt[j]), "$")
+        if (!is.null(res$optimal_weights) && length(res$optimal_weights) >= j) {
+          paste0("$", format_number(res$optimal_weights[j]), "$")
         } else {
           "$--$"
         }

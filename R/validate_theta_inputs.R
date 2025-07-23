@@ -1,6 +1,6 @@
-#' Validate Inputs for Gamma Quadratic Solver
+#' Validate Inputs for Theta Quadratic Solver
 #'
-#' Internal function to validate inputs for solve_gamma_quadratic
+#' Internal function to validate inputs for solve_theta_quadratic
 #'
 #' @param pc_j Principal component vector
 #' @param w1 Reduced form residual for Y1
@@ -10,7 +10,7 @@
 #'
 #' @return List with cleaned data and validation results
 #' @keywords internal
-validate_gamma_inputs <- function(pc_j, w1, w2, tau, dates = NULL) {
+validate_theta_inputs <- function(pc_j, w1, w2, tau, dates = NULL) {
   # Validate numeric types for all inputs at once
   inputs_numeric <- all(sapply(list(pc_j, w1, w2), is.numeric))
   if (!inputs_numeric) {

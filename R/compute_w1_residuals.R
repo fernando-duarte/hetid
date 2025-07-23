@@ -96,7 +96,7 @@ compute_w1_residuals <- function(n_pcs = 4, data = NULL, return_df = FALSE) {
   dates_clean <- dates_future[complete_idx]
 
   # Create formula for regression
-  pc_names <- paste0("PC", 1:n_pcs)
+  pc_names <- paste0("pc", 1:n_pcs)
   colnames(pc_clean) <- pc_names
   formula_str <- paste("y ~ ", paste(pc_names, collapse = " + "))
   reg_formula <- as.formula(formula_str)

@@ -1,6 +1,6 @@
-#' Solve Quadratic Equation for Gamma_1
+#' Solve Quadratic Equation for Theta
 #'
-#' Finds the roots of the quadratic equation in gamma_1 given time series of PC_jt,
+#' Finds the roots of the quadratic equation in theta given time series of PC_jt,
 #' W_1,t+1, W_2,i,t+1, and a parameter tau.
 #'
 #' @param pc_j Numeric vector, time series of PC_jt (principal component j at time t)
@@ -16,10 +16,10 @@
 #'
 #' @return A named list containing:
 #' \describe{
-#'   \item{roots}{Numeric vector of length 2 containing the roots gamma_1^(1) and gamma_1^(2),
+#'   \item{roots}{Numeric vector of length 2 containing the roots theta^(1) and theta^(2),
 #'                ordered so the root with smallest real part is first}
 #'   \item{coefficients}{Named vector with quadratic coefficients a, b, c where
-#'                        a*gamma_1^2 + b*gamma_1 + c = 0}
+#'                        a*theta^2 + b*theta + c = 0}
 #'   \item{discriminant}{The discriminant b^2 - 4ac}
 #'   \item{components}{List containing all computed covariances and variances
 #'                      used in the calculation}
@@ -29,7 +29,7 @@
 #'
 #' @details
 #' The function solves the quadratic equation:
-#' a*gamma_1^2 + b*gamma_1 + c = 0
+#' a*theta^2 + b*theta + c = 0
 #'
 #' where:
 #' - a = (1 - tau^2)
@@ -54,21 +54,21 @@
 #' w2 <- rnorm(n)
 #'
 #' # Solve quadratic for tau = 0.5
-#' result <- solve_gamma_quadratic(pc_j, w1, w2, tau = 0.5)
+#' result <- solve_theta_quadratic(pc_j, w1, w2, tau = 0.5)
 #' print(result$roots)
 #'
 #' # Use biased estimator (n instead of n-1 in denominators)
-#' result_biased <- solve_gamma_quadratic(pc_j, w1, w2, tau = 0.5, use_t_minus_1 = FALSE)
+#' result_biased <- solve_theta_quadratic(pc_j, w1, w2, tau = 0.5, use_t_minus_1 = FALSE)
 #'
 #' # With dates to track which observations were used
 #' dates <- seq(as.Date("2020-01-01"), length.out = n, by = "month")
-#' result_dates <- solve_gamma_quadratic(pc_j, w1, w2, tau = 0.5, dates = dates)
+#' result_dates <- solve_theta_quadratic(pc_j, w1, w2, tau = 0.5, dates = dates)
 #' print(result_dates$dates_used) # Shows dates after removing NA values
 #' }
 #'
-solve_gamma_quadratic <- function(pc_j, w1, w2, tau, use_t_minus_1 = TRUE, dates = NULL) {
+solve_theta_quadratic <- function(pc_j, w1, w2, tau, use_t_minus_1 = TRUE, dates = NULL) {
   # Validate inputs and clean data
-  validated <- validate_gamma_inputs(pc_j, w1, w2, tau, dates) # nolint: object_usage_linter
+  validated <- validate_theta_inputs(pc_j, w1, w2, tau, dates) # nolint: object_usage_linter
   pc_j <- validated$pc_j
   w1 <- validated$w1
   w2 <- validated$w2
@@ -76,7 +76,7 @@ solve_gamma_quadratic <- function(pc_j, w1, w2, tau, use_t_minus_1 = TRUE, dates
   dates_used <- if (!is.null(dates)) validated$dates else NULL
 
   # Compute moments using unified function
-  moments <- compute_gamma_moments_unified(pc_j, w1, w2, use_t_minus_1) # nolint: object_usage_linter
+  moments <- compute_theta_moments_unified(pc_j, w1, w2, use_t_minus_1) # nolint: object_usage_linter
 
   # Compute quadratic coefficients using unified function
   coeffs <- compute_quadratic_coefficients(moments, tau) # nolint: object_usage_linter

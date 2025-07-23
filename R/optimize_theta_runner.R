@@ -65,10 +65,10 @@ run_multistart_optimization <- function(objective_fn, constraint_fn, n_pcs,
 
 #' Extract and format theta optimization results
 #' @noRd
-extract_theta_results <- function(final_result, maturity, n_pcs, tau_opt,
+extract_theta_results <- function(final_result, i, n_pcs, tau_opt,
                                   best_objective, convergence, start_time) {
   # Extract normalized weights and coefficients
-  weights_opt <- final_result$normalized_weights
+  optimal_weights <- final_result$normalized_weights
   a_opt <- final_result$coefficients["a"]
   b_opt <- final_result$coefficients["b"]
   c_opt <- final_result$coefficients["c"]
@@ -91,14 +91,14 @@ extract_theta_results <- function(final_result, maturity, n_pcs, tau_opt,
 
   # Return results
   list(
-    maturity = maturity,
+    maturity = i,
     n_pcs = n_pcs,
     tau_opt = tau_opt,
-    weights_opt = weights_opt,
+    optimal_weights = optimal_weights,
     theta_lower = theta_lower,
     theta_upper = theta_upper,
     interval_width = theta_upper - theta_lower,
-    objective = best_objective,
+    objective_value = best_objective,
     convergence = convergence,
     time_elapsed = time_elapsed,
     A = a_opt,

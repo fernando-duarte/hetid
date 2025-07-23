@@ -126,9 +126,9 @@ process_w2_maturity <- function(i, yields_df, term_premia_df, pcs, n_pcs) {
 
   # Run regression
   reg_data <- data.frame(y = y2_clean, pcs_clean)
-  names(reg_data)[-1] <- paste0("PC", 1:n_pcs)
+  names(reg_data)[-1] <- paste0("pc", 1:n_pcs)
 
-  formula_str <- paste("y ~", paste(paste0("PC", 1:n_pcs), collapse = " + "))
+  formula_str <- paste("y ~", paste(paste0("pc", 1:n_pcs), collapse = " + "))
   model <- lm(as.formula(formula_str), data = reg_data)
 
   list(

@@ -1,9 +1,9 @@
-#' Solve Quadratic Equation for Gamma using Linear Combination of PCs
+#' Solve Quadratic Equation for Theta using Linear Combination of PCs
 #'
-#' Solves the quadratic equation for the identification parameter gamma
+#' Solves the quadratic equation for the identification parameter theta
 #' using a linear combination of principal components with normalized weights.
 #'
-#' @param pc_matrix Matrix of principal components (n x J)
+#' @param pcs Matrix of principal components (n x J)
 #' @param weights Vector of weights for linear combination (length J)
 #' @param w1 Vector of reduced form residuals for Y1
 #' @param w2 Vector of reduced form residuals for Y2
@@ -11,7 +11,7 @@
 #' @param normalize_by Character, how to normalize weights: "norm" (L2 norm) or "variance"
 #' @param use_t_minus_1 Logical, if TRUE uses n-1 in variance/covariance denominators
 #' @param return_df Logical, if TRUE includes dates in the linear_comb output
-#' @param dates Optional vector of dates corresponding to the rows in pc_matrix
+#' @param dates Optional vector of dates corresponding to the rows in pcs
 #'
 #' @return List containing:
 #'   \item{roots}{Vector of two roots (possibly complex)}
@@ -26,7 +26,7 @@
 #'
 #' @details
 #' This function creates a linear combination of principal components and solves
-#' the gamma quadratic equation. It provides options for:
+#' the theta quadratic equation. It provides options for:
 #' - Weight normalization: by L2 norm (sum of squares = 1) or by variance
 #' - Denominator choice: n-1 (unbiased) or n (biased)
 #'
@@ -34,7 +34,7 @@
 #'
 #' @importFrom stats var complete.cases
 #' @export
-solve_gamma_quadratic_lincomb <- function(pc_matrix,
+solve_theta_quadratic_lincomb <- function(pcs,
                                           weights,
                                           w1,
                                           w2,
@@ -46,11 +46,11 @@ solve_gamma_quadratic_lincomb <- function(pc_matrix,
   # Input validation
   normalize_by <- match.arg(normalize_by)
 
-  if (!is.matrix(pc_matrix)) {
-    pc_matrix <- as.matrix(pc_matrix)
+  if (!is.matrix(pcs)) {
+    pcs <- as.matrix(pcs)
   }
 
-  if (ncol(pc_matrix) != length(weights)) {
+  if (ncol(pcs) != length(weights)) {
     return(list(
       roots = c(NA, NA),
       error = "Number of weights must match number of PCs"
@@ -58,7 +58,7 @@ solve_gamma_quadratic_lincomb <- function(pc_matrix,
   }
 
   # Create linear combination with raw weights first
-  linear_comb_raw <- as.vector(pc_matrix %*% weights)
+  linear_comb_raw <- as.vector(pcs %*% weights)
 
   # Normalize weights based on chosen method
   if (normalize_by == "norm") {
@@ -93,7 +93,7 @@ solve_gamma_quadratic_lincomb <- function(pc_matrix,
   dates_for_calc <- NULL
   if (!is.null(dates)) {
     if (length(dates) != n) {
-      stop("Length of dates must match number of rows in pc_matrix")
+      stop("Length of dates must match number of rows in pcs")
     }
     dates_for_calc <- dates
   }
@@ -119,7 +119,7 @@ solve_gamma_quadratic_lincomb <- function(pc_matrix,
   }
 
   # Compute moments using unified function
-  moments <- compute_gamma_moments_unified(
+  moments <- compute_theta_moments_unified(
     pc = lc_aligned,
     w1 = w1_aligned,
     w2 = w2_aligned,

@@ -22,7 +22,7 @@ optimize_theta_all_maturities <- function(maturities_to_test,
       result <- tryCatch(
         {
           optimize_theta_identification(
-            maturity = mat,
+            i = mat,
             n_pcs = J,
             ...
           )
@@ -48,7 +48,7 @@ optimize_theta_all_maturities <- function(maturities_to_test,
       theta_lower = res$theta_lower,
       theta_upper = res$theta_upper,
       interval_width = res$interval_width,
-      objective = res$objective,
+      objective = res$objective_value,
       time = res$time_elapsed,
       stringsAsFactors = FALSE
     )

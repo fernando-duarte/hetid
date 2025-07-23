@@ -10,7 +10,7 @@
 \format{
 The ACM data is stored as a CSV file with the following structure:
 \describe{
-\item{DATE}{The business-day observation date for each row in the series}
+\item{date}{The business-day observation date for each row in the series (originally 'DATE' in source data, standardized to lowercase)}
 \item{ACMY01-ACMY10}{Model-implied zero-coupon Treasury yields from the ACM
 model, for maturities of 1-year up to 10-years}
 \item{ACMTP01-ACMTP10}{ACM term premium estimates for 1- to 10-year

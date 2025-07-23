@@ -3,7 +3,7 @@
 #' Runs the PC weight optimization for all maturities and returns
 #' a summary of results.
 #'
-#' @param pc_matrix Matrix of principal components (T x J)
+#' @param pcs Matrix of principal components (T x J)
 #' @param w1 Vector of reduced form residuals for Y1
 #' @param w2_list List of reduced form residuals for Y2, one for each maturity
 #' @param tau Quantile parameter
@@ -14,21 +14,21 @@
 #' @return Data frame with optimization results for each maturity
 #'
 #' @export
-optimize_pc_weights_all <- function(pc_matrix, w1, w2_list, tau,
+optimize_pc_weights_all <- function(pcs, w1, w2_list, tau,
                                     use_t_minus_1 = TRUE,
                                     parallel = FALSE,
                                     n_cores = NULL) {
   n_maturities <- length(w2_list)
-  n_pcs <- ncol(pc_matrix)
+  n_pcs <- ncol(pcs)
 
   # Function to optimize for one maturity
   optimize_one <- function(i) {
     result <- optimize_pc_weights(
-      pc_matrix = pc_matrix,
+      pcs = pcs,
       w1 = w1,
       w2 = w2_list[[i]],
       tau = tau,
-      maturity = i,
+      i = i,
       use_t_minus_1 = use_t_minus_1
     )
 
@@ -61,7 +61,7 @@ optimize_pc_weights_all <- function(pc_matrix, w1, w2_list, tau,
 
     # Export necessary objects and functions
     parallel::clusterExport(cl, c(
-      "solve_gamma_quadratic_lincomb",
+      "solve_theta_quadratic_lincomb",
       "optimize_pc_weights"
     ),
     envir = environment()

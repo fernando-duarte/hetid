@@ -5,7 +5,7 @@
 \title{Optimize PC Weights for All Maturities}
 \usage{
 optimize_pc_weights_all(
-  pc_matrix,
+  pcs,
   w1,
   w2_list,
   tau,
@@ -15,7 +15,7 @@ optimize_pc_weights_all(
 )
 }
 \arguments{
-\item{pc_matrix}{Matrix of principal components (T x J)}
+\item{pcs}{Matrix of principal components (T x J)}
 
 \item{w1}{Vector of reduced form residuals for Y1}
 

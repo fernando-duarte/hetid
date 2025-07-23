@@ -67,7 +67,7 @@ generate_theta_summary_table <- function(results_df,
         theta_lower = results_J$theta_lower[i],
         theta_upper = results_J$theta_upper[i],
         interval_width = results_J$interval_width[i],
-        weights_opt = NULL # Would need to be extracted from full results
+        optimal_weights = NULL # Would need to be extracted from full results
       )
     }
 

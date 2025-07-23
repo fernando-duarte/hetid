@@ -5,7 +5,7 @@
 \title{Optimize Theta (Heteroskedasticity Parameter) Identification}
 \usage{
 optimize_theta_identification(
-  maturity,
+  i,
   n_pcs = 4,
   pc_data,
   yields,
@@ -19,7 +19,7 @@ optimize_theta_identification(
 )
 }
 \arguments{
-\item{maturity}{Bond maturity in years (must be >= 2)}
+\item{i}{Bond maturity in years (must be >= 2)}
 
 \item{n_pcs}{Number of principal components to use (J = 1 to 6, default 4)}
 
@@ -46,11 +46,11 @@ List containing:
 \item{maturity}{The maturity used}
 \item{n_pcs}{Number of PCs used (J)}
 \item{tau_opt}{Optimal tau value}
-\item{weights_opt}{Optimal PC weights (normalized)}
+\item{optimal_weights}{Optimal PC weights (normalized)}
 \item{theta_lower}{Lower bound of identified set for theta}
 \item{theta_upper}{Upper bound of identified set for theta}
 \item{interval_width}{Width of the identified interval}
-\item{objective}{Optimal objective function value}
+\item{objective_value}{Optimal objective function value}
 \item{convergence}{Convergence status from optimizer}
 \item{time_elapsed}{Computation time in seconds}
 \item{A}{Quadratic coefficient A}

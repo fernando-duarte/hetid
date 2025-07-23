@@ -5,7 +5,7 @@
 #' This function finds the optimal tau and PC weights that minimize
 #' the distance between the two roots of the quadratic equation.
 #'
-#' @param maturity Bond maturity in years (must be >= 2)
+#' @param i Bond maturity in years (must be >= 2)
 #' @param n_pcs Number of principal components to use (J = 1 to 6, default 4)
 #' @param pc_data Matrix of principal components (T x K) where K >= n_pcs
 #' @param yields Matrix of yields (T x M) where M is number of maturities
@@ -21,11 +21,11 @@
 #'   \item{maturity}{The maturity used}
 #'   \item{n_pcs}{Number of PCs used (J)}
 #'   \item{tau_opt}{Optimal tau value}
-#'   \item{weights_opt}{Optimal PC weights (normalized)}
+#'   \item{optimal_weights}{Optimal PC weights (normalized)}
 #'   \item{theta_lower}{Lower bound of identified set for theta}
 #'   \item{theta_upper}{Upper bound of identified set for theta}
 #'   \item{interval_width}{Width of the identified interval}
-#'   \item{objective}{Optimal objective function value}
+#'   \item{objective_value}{Optimal objective function value}
 #'   \item{convergence}{Convergence status from optimizer}
 #'   \item{time_elapsed}{Computation time in seconds}
 #'   \item{A}{Quadratic coefficient A}
@@ -36,7 +36,7 @@
 #' @importFrom nloptr nloptr
 #' @importFrom stats rnorm runif complete.cases
 #' @export
-optimize_theta_identification <- function(maturity,
+optimize_theta_identification <- function(i,
                                           n_pcs = 4,
                                           pc_data,
                                           yields,
@@ -48,22 +48,22 @@ optimize_theta_identification <- function(maturity,
                                           algorithm = "NLOPT_LN_COBYLA",
                                           verbose = FALSE) {
   # Input validation
-  validate_theta_inputs(maturity, n_pcs, pc_data, maturities)
+  validate_theta_inputs(i, n_pcs, pc_data, maturities)
 
   # Start timing
   start_time <- Sys.time()
 
   # Prepare data
   data_prep <- prepare_theta_data(
-    maturity, n_pcs, pc_data,
+    i, n_pcs, pc_data,
     yields, term_premia, verbose
   )
   w1 <- data_prep$w1
   w2 <- data_prep$w2
-  pc_matrix <- data_prep$pc_matrix
+  pcs <- data_prep$pc_matrix
 
   # Define objective function
-  objective_fn <- create_theta_objective(pc_matrix, w1, w2, n_pcs)
+  objective_fn <- create_theta_objective(pcs, w1, w2, n_pcs)
 
   # Constraint function: sum of squared weights = 1
   constraint_fn <- function(params) {
@@ -88,8 +88,8 @@ optimize_theta_identification <- function(maturity,
   weights_raw_opt <- opt_result$solution[2:(n_pcs + 1)]
 
   # Compute final results
-  final_result <- solve_gamma_quadratic_lincomb(
-    pc_matrix = pc_matrix,
+  final_result <- solve_theta_quadratic_lincomb(
+    pcs = pcs,
     weights = weights_raw_opt,
     w1 = w1,
     w2 = w2,
@@ -102,7 +102,7 @@ optimize_theta_identification <- function(maturity,
   # Extract and format results
   results <- extract_theta_results(
     final_result = final_result,
-    maturity = maturity,
+    i = i,
     n_pcs = n_pcs,
     tau_opt = tau_opt,
     best_objective = opt_result$objective,

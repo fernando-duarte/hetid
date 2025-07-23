@@ -87,6 +87,13 @@ load_yield_curve <- function(dataset = c("feds200628", "feds200533"),
         }
       }
 
+      # Standardize date column name to lowercase 'date'
+      if ("Date" %in% names(df)) {
+        names(df)[names(df) == "Date"] <- "date"
+      } else if ("DATE" %in% names(df)) {
+        names(df)[names(df) == "DATE"] <- "date"
+      }
+
       df
     },
     error = function(e) {

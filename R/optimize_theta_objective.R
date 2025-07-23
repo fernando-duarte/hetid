@@ -8,14 +8,14 @@ NULL
 
 #' Create objective function for theta optimization
 #' @noRd
-create_theta_objective <- function(pc_matrix, w1, w2, n_pcs) {
+create_theta_objective <- function(pcs, w1, w2, n_pcs) {
   function(params) {
     tau <- params[1]
     weights_raw <- params[2:(n_pcs + 1)]
 
     # Use unified function for solving
-    result <- solve_gamma_quadratic_lincomb(
-      pc_matrix = pc_matrix,
+    result <- solve_theta_quadratic_lincomb(
+      pcs = pcs,
       weights = weights_raw, # Let the function handle normalization
       w1 = w1,
       w2 = w2,

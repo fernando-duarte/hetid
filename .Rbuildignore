@@ -32,6 +32,7 @@
 ^dev$
 ^inst/examples$
 ^scripts$
+^scripts_new$
 ^revdep$
 
 # Testing
@@ -96,3 +97,5 @@
 ^hetid_analysis_enhanced\.R$
 ^test_enhanced_analysis\.R$
 ^REFACTORING_PLAN\.md$
+^baseline-duplication-report\.xml$
+^duplication-tracking$

@@ -7,21 +7,21 @@
 compute_quadratic_coefficients(moments, tau)
 }
 \arguments{
-\item{moments}{List of moments from compute_gamma_moments_unified}
+\item{moments}{List of moments from compute_theta_moments_unified}
 
 \item{tau}{Quantile parameter between 0 and 1}
 }
 \value{
 List containing:
 \describe{
-\item{a}{Coefficient of gamma_1^2}
-\item{b}{Coefficient of gamma_1}
+\item{a}{Coefficient of theta^2}
+\item{b}{Coefficient of theta}
 \item{c}{Constant term}
 \item{discriminant}{b^2 - 4ac}
 }
 }
 \description{
-Computes the coefficients a, b, c for the gamma quadratic equation
+Computes the coefficients a, b, c for the theta quadratic equation
 given the moments.
 }
 \keyword{internal}

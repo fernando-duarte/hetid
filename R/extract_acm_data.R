@@ -18,7 +18,7 @@
 #' @param auto_download Logical. If TRUE and data doesn't exist, automatically
 #'   downloads it. Default is FALSE.
 #'
-#' @return A data frame with Date column and selected variables.
+#' @return A data frame with date column and selected variables.
 #'   Column naming convention:
 #'   - Yields: y1, y2, ..., y10
 #'   - Term premia: tp1, tp2, ..., tp10
@@ -93,9 +93,10 @@ extract_acm_data <- function(data_types = c("yields", "term_premia"),
     )
   }
 
-  # Ensure DATE column is properly converted to Date type
-  if ("DATE" %in% names(acm_data) && !inherits(acm_data$DATE, "Date")) {
-    acm_data$DATE <- as.Date(acm_data$DATE, format = "%d-%b-%Y")
+  # The load_term_premia function now returns lowercase 'date' column
+  # Ensure date column is properly converted to Date type
+  if ("date" %in% names(acm_data) && !inherits(acm_data$date, "Date")) {
+    acm_data$date <- as.Date(acm_data$date, format = "%d-%b-%Y")
   }
 
   # Convert dates if provided as strings
@@ -108,14 +109,14 @@ extract_acm_data <- function(data_types = c("yields", "term_premia"),
 
   # Filter by date range
   if (!is.null(start_date)) {
-    acm_data <- acm_data[acm_data$DATE >= start_date, ]
+    acm_data <- acm_data[acm_data$date >= start_date, ]
   }
   if (!is.null(end_date)) {
-    acm_data <- acm_data[acm_data$DATE <= end_date, ]
+    acm_data <- acm_data[acm_data$date <= end_date, ]
   }
 
-  # Start with Date column
-  result <- data.frame(date = acm_data$DATE)
+  # Start with date column
+  result <- data.frame(date = acm_data$date)
 
   # Build column mapping for selected data types and maturities
   col_mapping <- build_acm_col_mapping(data_types, maturities) # nolint: object_usage_linter

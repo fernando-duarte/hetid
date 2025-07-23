@@ -5,11 +5,11 @@
 \title{Optimize PC Weights to Minimize Root Distance}
 \usage{
 optimize_pc_weights(
-  pc_matrix,
+  pcs,
   w1,
   w2,
   tau,
-  maturity = NULL,
+  i = NULL,
   use_t_minus_1 = TRUE,
   initial_weights = NULL,
   method = "Nelder-Mead",
@@ -19,7 +19,7 @@ optimize_pc_weights(
 )
 }
 \arguments{
-\item{pc_matrix}{Matrix of principal components (n x J)}
+\item{pcs}{Matrix of principal components (n x J)}
 
 \item{w1}{Vector of reduced form residuals for Y1}
 
@@ -27,7 +27,7 @@ optimize_pc_weights(
 
 \item{tau}{Quantile parameter between 0 and 1}
 
-\item{maturity}{Maturity index (for Y2 residuals)}
+\item{i}{Maturity index (for Y2 residuals)}
 
 \item{use_t_minus_1}{Logical, if TRUE uses n-1 in variance/covariance denominators}
 
@@ -54,6 +54,6 @@ List containing:
 }
 \description{
 Finds the optimal weights for a linear combination of principal components
-that minimizes the distance between the two roots of the gamma_1 quadratic
+that minimizes the distance between the two roots of the theta quadratic
 equation, with preference for real roots.
 }
