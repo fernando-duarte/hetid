@@ -121,3 +121,7 @@ results/
 duplication-tracking/
 baseline-duplication-report.xml
 REFACTORING_PLAN.md
+
+# Documentation files not for version control
+REFACTORING_COMPLETE.md
+return_value_patterns.md
