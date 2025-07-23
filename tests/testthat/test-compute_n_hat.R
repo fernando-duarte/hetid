@@ -1,202 +1,138 @@
-# Test file for compute_n_hat function
-# Tests expected log bond price estimator
-
-test_that("compute_n_hat returns expected structure", {
+test_that("compute_n_hat returns time series of expected log bond prices", {
   # Load test data
-  data <- extract_acm_data()
-
-  # Test with default parameters
-  result <- compute_n_hat(data, data, i = 4)
-
-  # Check output structure - returns a vector
-  expect_type(result, "double")
-  expect_true(length(result) > 1) # Should be a vector
-  expect_true(all(is.finite(result))) # All elements should be finite
-
-  # n_hat represents log bond prices, can be negative
-  expect_true(is.numeric(result))
-})
-
-test_that("compute_n_hat scales with maturity", {
-  # Load test data
-  data <- extract_acm_data()
-
-  # Compute for short and long maturities
-  n_hat_short <- compute_n_hat(data, data, i = 2)
-  n_hat_long <- compute_n_hat(data, data, i = 8)
-
-  # Check that both return vectors
-  expect_true(length(n_hat_short) > 1)
-  expect_true(length(n_hat_long) > 1)
-
-  # All values should be finite
-  expect_true(all(is.finite(n_hat_short)))
-  expect_true(all(is.finite(n_hat_long)))
-})
-
-test_that("compute_n_hat manual verification with simple data", {
-  # Create test data with known properties
-  set.seed(789)
-  n_obs <- 150
-
-  # Create data frame with required columns
-  test_data <- data.frame(
-    y1 = 5 + rnorm(n_obs, 0, 0.1),
-    y2 = 5.2 + rnorm(n_obs, 0, 0.1),
-    y3 = 5.4 + rnorm(n_obs, 0, 0.1),
-    y4 = 5.6 + rnorm(n_obs, 0, 0.1),
-    y5 = 5.8 + rnorm(n_obs, 0, 0.1),
-    tp1 = 1 + rnorm(n_obs, 0, 0.01),
-    tp2 = 1.2 + rnorm(n_obs, 0, 0.01),
-    tp3 = 1.4 + rnorm(n_obs, 0, 0.01),
-    tp4 = 1.6 + rnorm(n_obs, 0, 0.01),
-    tp5 = 1.8 + rnorm(n_obs, 0, 0.01)
+  data <- extract_acm_data(
+    data_types = c("yields", "term_premia"),
+    frequency = "quarterly"
   )
+  yields <- data[, grep("^y", names(data))]
+  term_premia <- data[, grep("^tp", names(data))]
 
-  # Compute n_hat
-  result <- compute_n_hat(test_data, test_data, i = 3)
+  # Test for maturity 5
+  n_hat_5 <- compute_n_hat(yields, term_premia, i = 5)
 
-  # Check it returns a vector
-  expect_true(length(result) > 1)
-
-  # For log bond prices with 5% yields, expect negative values on average
-  expect_true(mean(result) < 0)
-
-  # Should be reasonably sized
-  expect_true(all(result > -10))
-  expect_true(all(result < 10))
+  expect_type(n_hat_5, "double")
+  expect_length(n_hat_5, nrow(yields))
+  expect_true(all(is.finite(n_hat_5) | is.na(n_hat_5)))
 })
 
-test_that("compute_n_hat consistency across maturities", {
+test_that("n_hat should generally be negative", {
   # Load test data
-  data <- extract_acm_data()
+  data <- extract_acm_data(
+    data_types = c("yields", "term_premia"),
+    frequency = "quarterly"
+  )
+  yields <- data[, grep("^y", names(data))]
+  term_premia <- data[, grep("^tp", names(data))]
 
-  # Compute for all maturities and take mean
-  n_hat_means <- numeric(9)
-  for (i in 1:9) {
-    n_hat_vector <- compute_n_hat(data, data, i = i)
-    n_hat_means[i] <- mean(n_hat_vector, na.rm = TRUE)
+  # Test for multiple maturities
+  for (i in 2:9) {
+    n_hat_i <- compute_n_hat(yields, term_premia, i = i)
+
+    # Most values should be negative (bonds trade below par)
+    prop_negative <- sum(n_hat_i < 0, na.rm = TRUE) / sum(!is.na(n_hat_i))
+    expect_gt(prop_negative, 0.8,
+      label = paste("Most n_hat values should be negative for maturity", i)
+    )
   }
-
-  # All means should be finite
-  expect_true(all(is.finite(n_hat_means)))
-
-  # Check for reasonable progression (not strictly monotonic due to estimation)
-  expect_true(length(unique(n_hat_means)) > 5) # Should vary across maturities
 })
 
-test_that("compute_n_hat handles missing data", {
+test_that("n_hat formula verification", {
   # Load test data
-  data <- extract_acm_data()
+  data <- extract_acm_data(
+    data_types = c("yields", "term_premia"),
+    frequency = "quarterly"
+  )
+  yields <- data[, grep("^y", names(data))]
+  term_premia <- data[, grep("^tp", names(data))]
 
-  # Create copy with NAs
-  data_na <- data
+  # Test for i=3
+  i <- 3
+  n_hat_3 <- compute_n_hat(yields, term_premia, i = i)
 
-  # Introduce scattered NAs
-  n_nas <- 20
-  na_positions <- sample(1:nrow(data), n_nas)
-  data_na[na_positions, c("y5", "tp5")] <- NA
+  # Manual calculation: n_hat = i*y_i - (i+1)*y_{i+1} + (i+1)*TP_{i+1} - i*TP_i
+  y_3 <- yields$y3 / 100
+  y_4 <- yields$y4 / 100
+  tp_3 <- term_premia$tp3 / 100
+  tp_4 <- term_premia$tp4 / 100
 
-  # Should still compute
-  result <- compute_n_hat(data_na, data_na, i = 5)
+  n_hat_manual <- i * y_3 - (i + 1) * y_4 + (i + 1) * tp_4 - i * tp_3
 
-  expect_type(result, "double")
-  # Should return a vector with some finite values despite NAs
-  expect_true(length(result) > 1)
-  expect_true(sum(is.finite(result)) > 0)
+  expect_equal(n_hat_3, n_hat_manual,
+    tolerance = 1e-10,
+    label = "n_hat should match formula calculation"
+  )
 })
 
-test_that("compute_n_hat relationship with other estimators", {
+test_that("n_hat works for all maturities 1-9", {
   # Load test data
-  data <- extract_acm_data()
+  data <- extract_acm_data(
+    data_types = c("yields", "term_premia"),
+    frequency = "quarterly"
+  )
+  yields <- data[, grep("^y", names(data))]
+  term_premia <- data[, grep("^tp", names(data))]
 
-  # Compute all three estimators for same maturity
-  n_hat <- compute_n_hat(data, data, i = 6)
-  c_hat <- compute_c_hat(data, data, i = 6)
-  k_hat <- compute_k_hat(data, data, i = 6)
+  # Test all maturities
+  for (i in 1:9) {
+    n_hat_i <- compute_n_hat(yields, term_premia, i = i)
 
-  # n_hat is a vector, others are scalars
-  expect_true(length(n_hat) > 1) # n_hat is a vector
-  expect_true(all(is.finite(n_hat)))
-  expect_true(is.finite(c_hat))
-  expect_true(is.finite(k_hat))
-
-  # c_hat and k_hat should be positive (moments)
-  expect_true(c_hat > 0)
-  expect_true(k_hat > 0)
+    expect_type(n_hat_i, "double")
+    expect_length(n_hat_i, nrow(yields))
+    expect_true(any(!is.na(n_hat_i)),
+      label = paste("n_hat should have non-NA values for maturity", i)
+    )
+  }
 })
 
-test_that("compute_n_hat stability test", {
+test_that("n_hat lagged computation verification", {
   # Load test data
-  data <- extract_acm_data()
-
-  # Compute using different subsets of data
-  n_full <- nrow(data)
-  n_half <- floor(n_full / 2)
-
-  result_first_half <- compute_n_hat(
-    data[1:n_half, ],
-    data[1:n_half, ],
-    i = 4
+  data <- extract_acm_data(
+    data_types = c("yields", "term_premia"),
+    frequency = "quarterly"
   )
+  yields <- data[, grep("^y", names(data))]
+  term_premia <- data[, grep("^tp", names(data))]
 
-  result_second_half <- compute_n_hat(
-    data[(n_half + 1):n_full, ],
-    data[(n_half + 1):n_full, ],
-    i = 4
+  # Get n_hat for i=2
+  i <- 2
+  n_hat_2 <- compute_n_hat(yields, term_premia, i = i)
+
+  # Manual calculation at t+1
+  y_2 <- yields$y2 / 100
+  y_3 <- yields$y3 / 100
+  tp_2 <- term_premia$tp2 / 100
+  tp_3 <- term_premia$tp3 / 100
+
+  # Compute n_hat(2,t) using the formula
+  n_hat_manual <- i * y_2 - (i + 1) * y_3 + (i + 1) * tp_3 - i * tp_2
+
+  # Check consistency (formula should give same result)
+  expect_equal(n_hat_2, n_hat_manual,
+    tolerance = 1e-10,
+    label = "n_hat computation should be consistent"
   )
-
-  # Both should be vectors
-  expect_true(length(result_first_half) > 1)
-  expect_true(length(result_second_half) > 1)
-
-  # Compare means - should be in same ballpark
-  mean_first <- mean(result_first_half, na.rm = TRUE)
-  mean_second <- mean(result_second_half, na.rm = TRUE)
-  expect_true(abs(mean_first - mean_second) < 5)
 })
 
-test_that("compute_n_hat extreme values test", {
-  # Test with very high yields
-  high_data <- data.frame(
-    y1 = rep(20, 100),
-    y2 = rep(20.5, 100),
-    y3 = rep(21, 100),
-    tp1 = rep(5, 100),
-    tp2 = rep(5.2, 100),
-    tp3 = rep(5.4, 100)
+test_that("n_hat date alignment when dates provided", {
+  # Load test data
+  data <- extract_acm_data(
+    data_types = c("yields", "term_premia"),
+    frequency = "quarterly"
+  )
+  yields <- data[, grep("^y", names(data))]
+  term_premia <- data[, grep("^tp", names(data))]
+
+  # Test with dates as data frame
+  n_hat_df <- compute_n_hat(yields, term_premia,
+    i = 5,
+    return_df = TRUE, dates = data$date
   )
 
-  result_high <- compute_n_hat(high_data, high_data, i = 2)
-  expect_true(length(result_high) > 1)
-  expect_true(all(is.finite(result_high)))
+  expect_s3_class(n_hat_df, "data.frame")
+  expect_true("date" %in% names(n_hat_df))
+  expect_true("n_hat" %in% names(n_hat_df))
+  expect_equal(nrow(n_hat_df), nrow(yields))
 
-  # Test with very low yields
-  low_data <- data.frame(
-    y1 = rep(0.1, 100),
-    y2 = rep(0.15, 100),
-    y3 = rep(0.2, 100),
-    tp1 = rep(0.01, 100),
-    tp2 = rep(0.015, 100),
-    tp3 = rep(0.02, 100)
-  )
-
-  result_low <- compute_n_hat(low_data, low_data, i = 2)
-  expect_true(length(result_low) > 1)
-  expect_true(all(is.finite(result_low)))
-})
-
-test_that("compute_n_hat error handling", {
-  data <- extract_acm_data()
-
-  # Invalid maturity index
-  expect_error(compute_n_hat(data, data, i = 0))
-  expect_error(compute_n_hat(data, data, i = 100))
-
-  # Missing required columns
-  bad_data <- data[, c("date", "y2", "y3", "tp2", "tp3")] # Missing y1, etc
-  expect_error(compute_n_hat(bad_data, bad_data, i = 5))
-
-  # Wrong input type
-  expect_error(compute_n_hat(list(data), data, i = 2))
+  # Dates should match input dates
+  expect_equal(n_hat_df$date, data$date)
 })

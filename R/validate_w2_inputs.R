@@ -66,16 +66,21 @@ load_w2_pcs <- function(pcs, n_pcs, n_obs) {
       ))
     }
     pcs <- as.matrix(variables[, pc_cols])
+
+    # Return the PCs as-is - alignment will be handled by process_w2_maturity
+    # This is expected when using quarterly ACM data with variables data
+    return(pcs)
   } else {
+    # User provided PCs
     pcs <- as.matrix(pcs)
-  }
 
-  # Validate dimensions
-  if (nrow(pcs) != n_obs) {
-    stop("Number of rows in pcs must match number of rows in yields")
-  }
+    # Validate dimensions for user-provided PCs
+    if (nrow(pcs) != n_obs) {
+      stop("Number of rows in user-provided pcs must match number of rows in yields")
+    }
 
-  pcs
+    return(pcs)
+  }
 }
 
 #' Process Single Maturity for W2
@@ -110,8 +115,19 @@ process_w2_maturity <- function(i, yields_df, term_premia_df, pcs, n_pcs) {
   sdf_innov <- compute_sdf_innovations(yields_df, term_premia_df, i = i) # nolint
 
   # Create lagged PCs
-  # SDF innovations have length T-1, so we need PCs from 1:(T-1)
-  pcs_lagged <- pcs[1:(nrow(pcs) - 1), , drop = FALSE]
+  # SDF innovations have length T-1
+  # Handle case where PCs have different length than yields
+  n_sdf <- length(sdf_innov)
+  n_pcs_available <- nrow(pcs) - 1
+
+  if (n_pcs_available < n_sdf) {
+    # PCs are shorter - use what we have
+    pcs_lagged <- pcs[1:n_pcs_available, , drop = FALSE]
+    sdf_innov <- sdf_innov[1:n_pcs_available]
+  } else {
+    # PCs are same length or longer - use first n_sdf rows
+    pcs_lagged <- pcs[1:n_sdf, , drop = FALSE]
+  }
 
   # Clean data
   complete_idx <- complete.cases(sdf_innov, pcs_lagged)

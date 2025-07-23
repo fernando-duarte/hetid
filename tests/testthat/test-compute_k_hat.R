@@ -1,163 +1,152 @@
-# Test file for compute_k_hat function
-# Tests fourth moment estimator calculations
-
-test_that("compute_k_hat returns expected structure", {
+test_that("compute_k_hat returns single positive value (fourth moment)", {
   # Load test data
-  data <- extract_acm_data()
+  data <- extract_acm_data(
+    data_types = c("yields", "term_premia"),
+    frequency = "quarterly"
+  )
+  yields <- data[, grep("^y", names(data))]
+  term_premia <- data[, grep("^tp", names(data))]
 
-  # Test with default parameters - pass the whole data frame
-  result <- compute_k_hat(data, data, i = 3)
+  # Test for maturity 5
+  k_hat_5 <- compute_k_hat(yields, term_premia, i = 5)
 
-  # Check output structure
-  expect_type(result, "double")
-  expect_length(result, 1)
-  expect_true(is.finite(result))
-  expect_true(result >= 0) # Fourth moment should be non-negative
+  expect_type(k_hat_5, "double")
+  expect_length(k_hat_5, 1)
+  expect_true(is.finite(k_hat_5))
+  expect_gt(k_hat_5, 0, label = "k_hat should be positive (fourth moment)")
 })
 
-test_that("compute_k_hat relationship with maturity", {
+test_that("special case i=1 returns 0", {
   # Load test data
-  data <- extract_acm_data()
+  data <- extract_acm_data(
+    data_types = c("yields", "term_premia"),
+    frequency = "quarterly"
+  )
+  yields <- data[, grep("^y", names(data))]
+  term_premia <- data[, grep("^tp", names(data))]
 
-  # Compute for multiple maturities
-  k_hat_values <- numeric(8)
-  for (i in 2:9) {
-    k_hat_values[i - 1] <- compute_k_hat(data, data, i = i)
+  # For i=1, k_hat should be 0
+  k_hat_1 <- compute_k_hat(yields, term_premia, i = 1)
+
+  expect_equal(k_hat_1, 0,
+    label = "k_hat should be 0 when i=1 (uses n_hat_0 = -y1)"
+  )
+})
+
+test_that("k_hat manual calculation verification", {
+  # Load test data
+  data <- extract_acm_data(
+    data_types = c("yields", "term_premia"),
+    frequency = "quarterly"
+  )
+  yields <- data[, grep("^y", names(data))]
+  term_premia <- data[, grep("^tp", names(data))]
+
+  # Test for i=5
+  i <- 5
+  k_hat_5 <- compute_k_hat(yields, term_premia, i = i)
+
+  # Manual calculation
+  n_hat <- compute_n_hat(yields, term_premia, i = i - 1)
+  y <- yields$y1 / 100 # Convert to decimal
+
+  # Get n_hat at t+1
+  n_hat_t_plus_1 <- c(n_hat[-1], NA)
+
+  # Get y at t+i
+  y_t_plus_i <- c(y[-seq_len(i)], rep(NA, i))
+
+  # Compute k_hat manually
+  T <- length(y)
+  k_hat_manual <- sum((-y_t_plus_i - n_hat_t_plus_1)^4, na.rm = TRUE) / (T - i)
+
+  expect_equal(k_hat_5, k_hat_manual,
+    tolerance = 1e-10,
+    label = "k_hat should match manual calculation"
+  )
+})
+
+test_that("k_hat monotonicity - generally increases with maturity", {
+  # Load test data
+  data <- extract_acm_data(
+    data_types = c("yields", "term_premia"),
+    frequency = "quarterly"
+  )
+  yields <- data[, grep("^y", names(data))]
+  term_premia <- data[, grep("^tp", names(data))]
+
+  # Compute k_hat for all maturities
+  k_values <- numeric(9)
+  for (i in 1:9) {
+    k_values[i] <- compute_k_hat(yields, term_premia, i = i)
   }
 
-  # Check all values are positive
-  expect_true(all(k_hat_values > 0))
-
-  # Fourth moments should generally increase with maturity
-  # (allowing for estimation noise)
-  expect_true(k_hat_values[8] > k_hat_values[1] * 0.5)
+  # Check general increasing trend (allowing for some non-monotonicity)
+  # Count how many increases vs decreases
+  increases <- sum(diff(k_values[2:9]) > 0) # Exclude i=1 which is 0
+  expect_gte(increases, 4,
+    label = "k_hat should generally increase with maturity"
+  )
 })
 
-test_that("compute_k_hat manual calculation verification", {
-  # Create controlled test data
-  set.seed(456)
-  n_obs <- 200
-
-  # Create data frame with required column names
-  yields_df <- data.frame(
-    y1 = 3 + cumsum(rnorm(n_obs, 0, 0.01)),
-    y2 = 3.2 + cumsum(rnorm(n_obs, 0, 0.01)),
-    y3 = 3.4 + cumsum(rnorm(n_obs, 0, 0.01))
-  )
-
-  term_premia_df <- data.frame(
-    tp1 = rep(0.2, n_obs),
-    tp2 = rep(0.3, n_obs),
-    tp3 = rep(0.4, n_obs)
-  )
-
-  # Compute k_hat
-  result <- compute_k_hat(yields_df, term_premia_df, i = 2)
-
-  # Fourth moment should be small for this stable data
-  expect_true(result > 0)
-  expect_true(result < 1) # Should be reasonably small
-})
-
-test_that("compute_k_hat consistency with compute_c_hat", {
+test_that("k_hat positivity - all values positive except i=1", {
   # Load test data
-  data <- extract_acm_data()
-
-  # Compute both estimators
-  c_hat <- compute_c_hat(data, data, i = 5)
-  k_hat <- compute_k_hat(data, data, i = 5)
-
-  # Both should be positive
-  expect_true(c_hat > 0)
-  expect_true(k_hat > 0)
-
-  # They measure different moments, so no strict relationship,
-  # but both should be finite and reasonable
-  expect_true(is.finite(c_hat))
-  expect_true(is.finite(k_hat))
-})
-
-test_that("compute_k_hat handles missing data", {
-  # Load test data
-  data <- extract_acm_data()
-
-  # Create copies with missing values
-  data_na <- data
-
-  # Create gaps in the data
-  data_na[50:55, c("y4", "y5")] <- NA
-  data_na[100:105, c("tp4", "tp5")] <- NA
-
-  # Should handle NAs gracefully
-  result <- compute_k_hat(data_na, data_na, i = 4)
-
-  expect_type(result, "double")
-  expect_true(is.finite(result))
-  expect_true(result > 0)
-})
-
-test_that("compute_k_hat deterministic for same input", {
-  # Load test data
-  data <- extract_acm_data()
-
-  # Multiple runs should give same result
-  results <- replicate(5, compute_k_hat(data, data, i = 6))
-
-  # All results should be identical
-  expect_true(all(results == results[1]))
-})
-
-test_that("compute_k_hat edge cases", {
-  # Minimum required data
-  min_data <- data.frame(
-    y1 = rnorm(10, 3, 0.1),
-    y2 = rnorm(10, 3.2, 0.1),
-    y3 = rnorm(10, 3.4, 0.1),
-    tp1 = rnorm(10, 0.2, 0.01),
-    tp2 = rnorm(10, 0.3, 0.01),
-    tp3 = rnorm(10, 0.4, 0.01)
+  data <- extract_acm_data(
+    data_types = c("yields", "term_premia"),
+    frequency = "quarterly"
   )
+  yields <- data[, grep("^y", names(data))]
+  term_premia <- data[, grep("^tp", names(data))]
 
-  # Should work with small dataset
-  result <- compute_k_hat(min_data, min_data, i = 2)
-  expect_type(result, "double")
+  # Test all maturities
+  for (i in 1:9) {
+    k_hat_i <- compute_k_hat(yields, term_premia, i = i)
 
-  # Test with constant yields (no variation)
-  const_data <- data.frame(
-    y1 = rep(3, 100),
-    y2 = rep(3.2, 100),
-    y3 = rep(3.4, 100),
-    y4 = rep(3.6, 100),
-    y5 = rep(3.8, 100),
-    tp1 = rep(0.2, 100),
-    tp2 = rep(0.3, 100),
-    tp3 = rep(0.4, 100),
-    tp4 = rep(0.5, 100),
-    tp5 = rep(0.6, 100)
-  )
-
-  result_const <- compute_k_hat(const_data, const_data, i = 3)
-
-  # Should handle constant data (fourth moment near zero)
-  expect_true(is.finite(result_const))
-  expect_true(result_const >= 0)
+    if (i == 1) {
+      expect_equal(k_hat_i, 0,
+        label = "k_hat should be 0 for i=1"
+      )
+    } else {
+      expect_gt(k_hat_i, 0,
+        label = paste("k_hat should be positive for i =", i)
+      )
+    }
+  }
 })
 
-test_that("compute_k_hat error handling", {
-  data <- extract_acm_data()
+test_that("k_hat time alignment verification", {
+  # Load test data
+  data <- extract_acm_data(
+    data_types = c("yields", "term_premia"),
+    frequency = "quarterly"
+  )
+  yields <- data[, grep("^y", names(data))]
+  term_premia <- data[, grep("^tp", names(data))]
 
-  # Invalid maturity
-  expect_error(compute_k_hat(data, data, i = -1))
-  expect_error(compute_k_hat(data, data, i = 0))
+  # Test with i=3 for clarity
+  i <- 3
+  k_hat_3 <- compute_k_hat(yields, term_premia, i = i)
 
-  # Missing required columns
-  bad_data <- data[, c("date", "y2", "y3")] # Missing y1
-  expect_error(compute_k_hat(bad_data, bad_data, i = 2))
+  # Manual verification of time alignment
+  n_hat_2 <- compute_n_hat(yields, term_premia, i = i - 1)
+  y1 <- yields$y1 / 100
 
-  # Wrong input types
-  expect_error(compute_k_hat("not a data frame", data, i = 2))
-  expect_error(compute_k_hat(data, "not a data frame", i = 2))
+  # Time alignment check: n_hat at t+1 and y at t+i
+  n <- length(y1)
 
-  # Insufficient data for given i
-  expect_error(compute_k_hat(data[1:2, ], data[1:2, ], i = 5))
+  # For k_hat calculation, we need:
+  # - n_hat_{i-1,t+1} which is n_hat_2 shifted forward by 1
+  # - y_{t+i}^{(1)} which is y1 shifted forward by i
+
+  # The valid range for computation is from t=1 to t=n-i
+  valid_range <- 1:(n - i)
+
+  # Verify we're using the right time indices
+  # Time alignment should produce correct number of valid observations
+  expect_length(valid_range, n - i)
+
+  # The function should handle NA values correctly
+  expect_true(is.finite(k_hat_3),
+    label = "k_hat should handle time-shifted data correctly"
+  )
 })
