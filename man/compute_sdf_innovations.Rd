@@ -17,7 +17,10 @@ compute_sdf_innovations(
 
 \item{term_premia}{Data frame with columns tp1, tp2, ..., containing term premia}
 
-\item{i}{Integer, the horizon (must be >= 1)}
+\item{i}{Integer specifying the maturity index (column) to analyze.
+Must be between 1 and ncol(yields). Corresponds to maturity in years
+for ACM dataset (i=1 is 1-year, i=2 is 2-year, ..., i=10 is 10-year).
+The maturity index determines which yield curve point is used in the analysis.}
 
 \item{return_df}{Logical, if TRUE returns a data frame with dates (default FALSE)}
 
@@ -25,7 +28,7 @@ compute_sdf_innovations(
 If not provided and return_df = TRUE, will use row indices.}
 }
 \value{
-Numeric vector of SDF innovations, or data frame with dates if return_df = TRUE
+Numeric vector of computed values, or data frame with dates if return_df = TRUE
 }
 \description{
 Computes the time series of SDF innovations given by:
@@ -48,18 +51,15 @@ for t=1 to T-1
 \dontrun{
 # Extract ACM data
 data <- extract_acm_data(data_types = c("yields", "term_premia"))
+yields <- data[, grep("^y", names(data))]
+term_premia <- data[, grep("^tp", names(data))]
 
 # Compute SDF innovations for i=5
-sdf_innovations_5 <- compute_sdf_innovations(
-  yields = data[, grep("^y", names(data))],
-  term_premia = data[, grep("^tp", names(data))],
-  i = 5
-)
+sdf_innovations_5 <- compute_sdf_innovations(yields, term_premia, i = 5)
 
 # Compute SDF innovations with dates
 sdf_innovations_5_df <- compute_sdf_innovations(
-  yields = data[, grep("^y", names(data))],
-  term_premia = data[, grep("^tp", names(data))],
+  yields, term_premia,
   i = 5,
   return_df = TRUE,
   dates = data$date

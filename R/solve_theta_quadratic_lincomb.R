@@ -3,13 +3,12 @@
 #' Solves the quadratic equation for the identification parameter theta
 #' using a linear combination of principal components with normalized weights.
 #'
-#' @param pcs Matrix of principal components (n x J)
+#' @template param-pc-data
 #' @param weights Vector of weights for linear combination (length J)
-#' @param w1 Vector of reduced form residuals for Y1
-#' @param w2 Vector of reduced form residuals for Y2
-#' @param tau Quantile parameter between 0 and 1
+#' @template param-residuals-w1-w2
+#' @template param-tau
 #' @param normalize_by Character, how to normalize weights: "norm" (L2 norm) or "variance"
-#' @param use_t_minus_1 Logical, if TRUE uses n-1 in variance/covariance denominators
+#' @template param-use-t-minus-1
 #' @param return_df Logical, if TRUE includes dates in the linear_comb output
 #' @param dates Optional vector of dates corresponding to the rows in pcs
 #'
@@ -110,66 +109,48 @@ solve_theta_quadratic_lincomb <- function(pcs,
     dates_used <- NULL
   }
 
-  # Check for sufficient observations
-  if (length(w1_aligned) < 10) {
-    return(list(
-      roots = c(NA, NA),
-      error = "Insufficient observations after alignment"
-    ))
-  }
-
-  # Compute moments using unified function
-  moments <- compute_theta_moments_unified(
-    pc = lc_aligned,
-    w1 = w1_aligned,
-    w2 = w2_aligned,
-    use_t_minus_1 = use_t_minus_1
-  )
-
-  # Compute quadratic coefficients using unified function
-  coeffs <- compute_quadratic_coefficients(moments, tau)
-
-  # Solve quadratic equation using unified function
-  roots <- solve_quadratic(coeffs$a, coeffs$b, coeffs$c, coeffs$discriminant)
-
-  # Handle linear_comb output format
-  if (return_df) {
-    if (is.null(dates)) {
-      dates <- seq_len(n)
+  # Validate aligned data
+  validation_result <- tryCatch(
+    {
+      validate_aligned_data(w1_aligned, w2_aligned, lc_aligned, min_obs = 10)
+      NULL
+    },
+    error = function(e) {
+      create_error_result(e$message)
     }
-
-    linear_comb_output <- data.frame(
-      date = dates,
-      linear_comb = linear_comb,
-      stringsAsFactors = FALSE
-    )
-  } else {
-    linear_comb_output <- linear_comb
-  }
-
-  # Prepare comprehensive output
-  result <- list(
-    roots = roots,
-    coefficients = c(a = coeffs$a, b = coeffs$b, c = coeffs$c),
-    discriminant = coeffs$discriminant,
-    linear_comb = linear_comb_output,
-    normalized_weights = normalized_weights,
-    variance = var(linear_comb, na.rm = TRUE),
-    components = moments, # Include all moments for transparency
-    error = NULL
   )
 
-  # Add dates_used if applicable
-  if (!is.null(dates_used)) {
-    result$dates_used <- dates_used
+  if (!is.null(validation_result)) {
+    return(validation_result)
   }
+
+  # Use core quadratic solver
+  result <- solve_theta_quadratic_core(
+    pc_aligned = lc_aligned,
+    w1_aligned = w1_aligned,
+    w2_aligned = w2_aligned,
+    tau = tau,
+    use_t_minus_1 = use_t_minus_1,
+    dates_used = dates_used,
+    additional_components = list(
+      variance = var(linear_comb, na.rm = TRUE)
+    )
+  )
+
+  # Handle linear_comb output format using utility function
+  linear_comb_output <- prepare_linear_comb_output(linear_comb, return_df, dates, n)
+
+  # Add linear combination and weights to result
+  result$linear_comb <- linear_comb_output
+  result$normalized_weights <- normalized_weights
+  result$error <- NULL
 
   # Add metadata about settings used
-  result$settings <- list(
+  result <- add_solver_metadata(result, list(
     normalize_by = normalize_by,
     use_t_minus_1 = use_t_minus_1,
     n_obs_used = length(w1_aligned)
-  )
+  ), "linear_combination")
 
   result
 }

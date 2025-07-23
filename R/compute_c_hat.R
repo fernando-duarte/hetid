@@ -3,7 +3,7 @@
 #' Computes c_hat_i which estimates sup_t exp(2*E_t\[p_(t+i)^(1)\]) following
 #' the methodology in Adrian, Crump, and Moench (2013).
 #'
-#' @template acm-data
+#' @template param-yields-term-premia
 #' @template param-maturity-index
 #'
 #' @return Numeric value of c_hat_i
@@ -11,9 +11,7 @@
 #' @section Mathematical Formula:
 #' \deqn{c\_hat_i = \max_t \exp(2 \cdot n\_hat(i,t))}
 #'
-#' @section Literature Reference:
-#' This implements the supremum estimator from Adrian, Crump, and Moench (2013)
-#' for term structure analysis.
+#' @template section-acm-methodology
 #'
 #' @details
 #' The supremum estimator provides an upper bound for the exponential of twice
@@ -25,13 +23,11 @@
 #' \dontrun{
 #' # Extract ACM data
 #' data <- extract_acm_data(data_types = c("yields", "term_premia"))
+#' yields <- data[, grep("^y", names(data))]
+#' term_premia <- data[, grep("^tp", names(data))]
 #'
 #' # Compute c_hat for i=5
-#' c_hat_5 <- compute_c_hat(
-#'   yields = data[, grep("^y", names(data))],
-#'   term_premia = data[, grep("^tp", names(data))],
-#'   i = 5
-#' )
+#' c_hat_5 <- compute_c_hat(yields, term_premia, i = 5)
 #' }
 #'
 compute_c_hat <- function(yields, term_premia, i) {

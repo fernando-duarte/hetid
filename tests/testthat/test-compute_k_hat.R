@@ -1,32 +1,23 @@
 test_that("compute_k_hat returns single positive value (fourth moment)", {
-  # Load test data
-  data <- extract_acm_data(
-    data_types = c("yields", "term_premia"),
-    frequency = "quarterly"
-  )
-  yields <- data[, grep("^y", names(data))]
-  term_premia <- data[, grep("^tp", names(data))]
+  # Setup standard test environment
+  test_env <- setup_standard_test_env()
 
   # Test for maturity 5
-  k_hat_5 <- compute_k_hat(yields, term_premia, i = 5)
+  k_hat_5 <- compute_k_hat(test_env$yields, test_env$term_premia, i = 5)
 
-  expect_type(k_hat_5, "double")
-  expect_length(k_hat_5, 1)
-  expect_true(is.finite(k_hat_5))
-  expect_gt(k_hat_5, 0, label = "k_hat should be positive (fourth moment)")
+  # Apply standard expectations for single positive value
+  expect_single_finite_value(k_hat_5,
+    should_be_positive = TRUE,
+    label = "k_hat should be positive (fourth moment)"
+  )
 })
 
 test_that("special case i=1 returns 0", {
-  # Load test data
-  data <- extract_acm_data(
-    data_types = c("yields", "term_premia"),
-    frequency = "quarterly"
-  )
-  yields <- data[, grep("^y", names(data))]
-  term_premia <- data[, grep("^tp", names(data))]
+  # Setup standard test environment
+  test_env <- setup_standard_test_env()
 
   # For i=1, k_hat should be 0
-  k_hat_1 <- compute_k_hat(yields, term_premia, i = 1)
+  k_hat_1 <- compute_k_hat(test_env$yields, test_env$term_premia, i = 1)
 
   expect_equal(k_hat_1, 0,
     label = "k_hat should be 0 when i=1 (uses n_hat_0 = -y1)"

@@ -18,5 +18,6 @@ Data frame with results for all combinations
 }
 \description{
 Convenience function to run optimize_theta_identification for multiple
-maturities and/or different numbers of principal components.
+maturities and/or different numbers of principal components extracted from
+financial asset returns.
 }

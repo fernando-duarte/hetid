@@ -3,14 +3,11 @@
 #' Computes the time series n_hat(i,t) which is an estimator for
 #' E_t\[p_(t+i)^(1)\] = -E_t\[y_(t+i)^(1)\]
 #'
-#' @param yields Data frame with columns y1, y2, ..., containing yields
-#' @param term_premia Data frame with columns tp1, tp2, ..., containing term premia
-#' @param i Integer, the horizon (must be >= 1)
-#' @param return_df Logical, if TRUE returns a data frame with dates (default FALSE)
-#' @param dates Optional vector of dates corresponding to the rows in yields/term_premia.
-#'   If not provided and return_df = TRUE, will use row indices.
+#' @template param-yields-term-premia
+#' @template param-maturity-index
+#' @template param-return-df-dates
 #'
-#' @return Numeric vector of n_hat(i,t) values, or data frame with dates if return_df = TRUE
+#' @template return-numeric-or-dataframe
 #'
 #' @details
 #' The formula is:

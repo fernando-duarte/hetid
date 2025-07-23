@@ -32,14 +32,14 @@ If return_df = TRUE, returns a data frame with columns:
 }
 \description{
 Computes the residual W_\{1,t+1\} from regressing consumption growth (Y_\{1,t+1\})
-on principal components (PC_t) and a constant.
+on principal components extracted from financial asset returns (PC_t) and a constant.
 }
 \details{
 The function performs the regression:
 Y_\{1,t+1\} = alpha + beta' * PC_t + W_\{1,t+1\}
 
 where Y_\{1,t+1\} is consumption growth (gr1.pcecc96) and PC_t are the first n_pcs
-principal components (pc1, ..., pc6).
+principal components extracted from financial asset returns (pc1, ..., pc6).
 }
 \examples{
 \dontrun{

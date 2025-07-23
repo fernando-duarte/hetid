@@ -11,7 +11,10 @@ compute_variance_bound(yields, term_premia, i)
 
 \item{term_premia}{Data frame with columns tp1, tp2, ..., containing term premia}
 
-\item{i}{Integer, the horizon (must be >= 1)}
+\item{i}{Integer specifying the maturity index (column) to analyze.
+Must be between 1 and ncol(yields). Corresponds to maturity in years
+for ACM dataset (i=1 is 1-year, i=2 is 2-year, ..., i=10 is 10-year).
+The maturity index determines which yield curve point is used in the analysis.}
 }
 \value{
 Numeric value of the variance bound (1/4)\emph{c_hat_i}k_hat_i
@@ -27,13 +30,11 @@ Var(error(i,t+1)) <= (1/4)\emph{c_hat_i}k_hat_i
 \dontrun{
 # Extract ACM data
 data <- extract_acm_data(data_types = c("yields", "term_premia"))
+yields <- data[, grep("^y", names(data))]
+term_premia <- data[, grep("^tp", names(data))]
 
 # Compute variance bound for i=5
-var_bound_5 <- compute_variance_bound(
-  yields = data[, grep("^y", names(data))],
-  term_premia = data[, grep("^tp", names(data))],
-  i = 5
-)
+var_bound_5 <- compute_variance_bound(yields, term_premia, i = 5)
 }
 
 }

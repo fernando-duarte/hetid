@@ -6,7 +6,8 @@
 #' @param results_list List of optimization results from optimize_theta_identification
 #'   or the full_results component from optimize_theta_all_maturities
 #' @param maturities Vector of maturities to include (default 2:9)
-#' @param n_pcs Number of principal components to show (default 4)
+#' @param n_pcs Number of principal components extracted from financial asset returns
+#'   to show (default 4)
 #' @param table_only Logical, if TRUE returns only the table code, if FALSE
 #'   returns complete LaTeX document (default TRUE)
 #' @param landscape Logical, if TRUE uses landscape orientation (default TRUE)

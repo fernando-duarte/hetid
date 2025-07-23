@@ -7,7 +7,7 @@
 compute_theta_moments_unified(pc, w1, w2, use_t_minus_1 = TRUE)
 }
 \arguments{
-\item{pc}{Vector of principal component values}
+\item{pc}{Vector of principal component values extracted from financial asset returns}
 
 \item{w1}{Vector of W1 residuals}
 

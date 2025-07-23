@@ -7,11 +7,12 @@
 solve_theta_quadratic(pc_j, w1, w2, tau, use_t_minus_1 = TRUE, dates = NULL)
 }
 \arguments{
-\item{pc_j}{Numeric vector, time series of PC_jt (principal component j at time t)}
+\item{pc_j}{Numeric vector, time series of PC_jt (principal component j extracted
+from financial asset returns at time t)}
 
-\item{w1}{Numeric vector, time series of W_1,t+1 (reduced form residual for Y1)}
+\item{w1}{Vector of reduced form residuals for Y1 (consumption growth)}
 
-\item{w2}{Numeric vector, time series of W_2,i,t+1 (reduced form residual for Y2 at maturity i)}
+\item{w2}{Vector of reduced form residuals for Y2 (SDF innovations)}
 
 \item{tau}{Numeric value between 0 and 1 specifying the quantile for
 identification in the Lewbel (2012) method. Default is 0.5 (median)
@@ -20,9 +21,7 @@ strength and should be chosen based on the heteroskedasticity pattern
 in the data. Values closer to 0.5 typically provide more robust identification.}
 
 \item{use_t_minus_1}{Logical, if TRUE uses n-1 in variance/covariance denominators (unbiased),
-if FALSE uses n (biased). Note: W1 and W2 residuals are pre-computed
-using the appropriate timing alignment, so this parameter does NOT
-affect the PC timing.}
+if FALSE uses n (biased). Default is TRUE following standard econometric practice.}
 
 \item{dates}{Optional vector of dates corresponding to the time series. If provided, the function
 will return information about which dates were used after removing NA values.}
@@ -47,6 +46,9 @@ W_1,t+1, W_2,i,t+1, and a parameter tau using the identification through
 heteroskedasticity approach from Lewbel (2012).
 }
 \details{
+Note: W1 and W2 residuals are pre-computed using the appropriate timing
+alignment, so the use_t_minus_1 parameter does NOT affect the PC timing.
+
 Note: The input residuals W1 and W2 are expected to be pre-computed using the
 appropriate timing alignment (typically using lagged PCs to predict future values).
 The covariances and variances are computed using empirical estimators with either

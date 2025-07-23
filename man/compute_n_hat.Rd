@@ -11,7 +11,10 @@ compute_n_hat(yields, term_premia, i, return_df = FALSE, dates = NULL)
 
 \item{term_premia}{Data frame with columns tp1, tp2, ..., containing term premia}
 
-\item{i}{Integer, the horizon (must be >= 1)}
+\item{i}{Integer specifying the maturity index (column) to analyze.
+Must be between 1 and ncol(yields). Corresponds to maturity in years
+for ACM dataset (i=1 is 1-year, i=2 is 2-year, ..., i=10 is 10-year).
+The maturity index determines which yield curve point is used in the analysis.}
 
 \item{return_df}{Logical, if TRUE returns a data frame with dates (default FALSE)}
 
@@ -19,7 +22,7 @@ compute_n_hat(yields, term_premia, i, return_df = FALSE, dates = NULL)
 If not provided and return_df = TRUE, will use row indices.}
 }
 \value{
-Numeric vector of n_hat(i,t) values, or data frame with dates if return_df = TRUE
+Numeric vector of computed values, or data frame with dates if return_df = TRUE
 }
 \description{
 Computes the time series n_hat(i,t) which is an estimator for

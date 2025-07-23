@@ -31,7 +31,7 @@ validate_theta_opt_inputs <- function(i, n_pcs, pc_data, maturities) {
 #' @noRd
 prepare_theta_data <- function(i, n_pcs, pc_data,
                                yields, term_premia, verbose) {
-  # Extract the first n_pcs principal components
+  # Extract the first n_pcs principal components from financial asset returns
   pc_matrix <- pc_data[, 1:n_pcs]
 
   # Compute residuals

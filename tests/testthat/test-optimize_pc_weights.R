@@ -1,5 +1,5 @@
 # Test file for optimize_pc_weights function
-# Tests optimal PC weight finding for single maturity
+# Tests optimal weight finding for principal components from financial asset returns
 
 test_that("optimize_pc_weights returns expected structure", {
   # Create test data
@@ -40,7 +40,7 @@ test_that("optimize_pc_weights returns expected structure", {
   expect_length(result$linear_comb, n)
 })
 
-test_that("optimize_pc_weights improves over individual PCs", {
+test_that("optimize_pc_weights improves over individual principal components", {
   # Create test data with structure
   set.seed(456)
   n <- 200

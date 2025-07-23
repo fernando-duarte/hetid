@@ -15,20 +15,26 @@ compute_w2_residuals(
 )
 }
 \arguments{
-\item{yields}{Data frame with yield columns (y1, y2, ..., y10)}
+\item{yields}{Data frame with columns y1, y2, ..., containing yields}
 
-\item{term_premia}{Data frame with term premium columns (tp1, tp2, ..., tp10)}
+\item{term_premia}{Data frame with columns tp1, tp2, ..., containing term premia}
 
 \item{maturities}{Vector of maturities to process (default: 1:9)}
 
-\item{n_pcs}{Number of principal components to use (default: 4)}
+\item{n_pcs}{Integer specifying the number of principal components to use.
+Must be between 1 and 6. Default is 4 following Adrian, Crump, and Moench (2013).
+The choice of n_pcs represents a trade-off between capturing variation in
+financial asset returns and maintaining computational stability. More components
+capture more variation but may lead to overfitting in finite samples.}
 
-\item{pcs}{Matrix of principal components (T x n_pcs). If NULL, loads from package data.}
+\item{pcs}{Matrix of principal components (n x J) where n is the number of
+observations and J is the number of components, extracted from a broader set of
+returns of financial assets.}
 
-\item{return_df}{Logical, if TRUE returns a data frame with dates (default FALSE).}
+\item{return_df}{Logical, if TRUE returns a data frame with dates (default FALSE)}
 
-\item{dates}{Optional vector of dates. If NULL and return_df = TRUE, will attempt to
-extract from data.}
+\item{dates}{Optional vector of dates corresponding to the rows in yields/term_premia.
+If not provided and return_df = TRUE, will use row indices.}
 }
 \value{
 If return_df = FALSE, returns a list containing:
@@ -49,7 +55,7 @@ If return_df = TRUE, returns a data frame with columns:
 }
 \description{
 Computes residuals W_\{2,t+1\}^\{(i)\} from regressing Y_\{2,t+1\}^\{(i)\} variables
-(SDF innovations) on principal components and a constant.
+(SDF innovations) on principal components extracted from financial asset returns and a constant.
 }
 \details{
 For each maturity i, computes Y_\{2,t+1\}^\{(i)\} as the SDF innovation:

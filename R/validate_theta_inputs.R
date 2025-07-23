@@ -2,7 +2,7 @@
 #'
 #' Internal function to validate inputs for solve_theta_quadratic
 #'
-#' @param pc_j Principal component vector
+#' @param pc_j Principal component vector extracted from financial asset returns
 #' @param w1 Reduced form residual for Y1
 #' @param w2 Reduced form residual for Y2
 #' @param tau Quantile parameter

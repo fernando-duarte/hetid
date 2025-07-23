@@ -21,7 +21,8 @@ or the full_results component from optimize_theta_all_maturities}
 
 \item{maturities}{Vector of maturities to include (default 2:9)}
 
-\item{n_pcs}{Number of principal components to show (default 4)}
+\item{n_pcs}{Number of principal components extracted from financial asset returns
+to show (default 4)}
 
 \item{table_only}{Logical, if TRUE returns only the table code, if FALSE
 returns complete LaTeX document (default TRUE)}

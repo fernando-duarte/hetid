@@ -7,12 +7,13 @@
 validate_n_pcs(n_pcs)
 }
 \arguments{
-\item{n_pcs}{Number of principal components to validate}
+\item{n_pcs}{Number of principal components extracted from financial asset returns to validate}
 }
 \value{
 Invisible TRUE if valid, stops with informative error if invalid
 }
 \description{
-Validates n_pcs parameter against academic literature and computational constraints.
+Validates n_pcs parameter for principal components extracted from financial asset returns
+against academic literature and computational constraints.
 }
 \keyword{internal}

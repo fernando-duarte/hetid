@@ -1,13 +1,15 @@
 #' Optimize Theta (Heteroskedasticity Parameter) Identification
 #'
 #' Solves the optimization problem P(i,J) to identify the heteroskedasticity
-#' parameter theta_i for a given maturity using J principal components.
+#' parameter theta_i for a given maturity using J principal components extracted
+#' from financial asset returns.
 #' This function finds the optimal tau and PC weights that minimize
 #' the distance between the two roots of the quadratic equation.
 #'
 #' @template param-maturity-index
 #' @template param-n-pcs
-#' @param pc_data Matrix of principal components (T x K) where K >= n_pcs
+#' @param pc_data Matrix of principal components extracted from financial asset returns
+#'   (T x K) where K >= n_pcs
 #' @param yields Matrix of yields (T x M) where M is number of maturities
 #' @param term_premia Matrix of term premia (T x M)
 #' @param maturities Vector of all available maturities

@@ -119,7 +119,8 @@ generate_panel_a_identified_sets <- function(results_filtered, maturities) {
 generate_panel_b_pc_weights <- function(results_filtered, maturities, n_pcs) {
   lines <- c(
     "\\addlinespace[1em]",
-    "\\multicolumn{9}{l}{\\textbf{B. Optimal Principal Component Weights}} \\\\",
+    "\\multicolumn{9}{l}{\\textbf{B. Optimal Weights for Principal Components}} \\\\",
+    "\\multicolumn{9}{l}{\\textit{(from Financial Asset Returns)}} \\\\",
     "\\addlinespace[0.3em]"
   )
 
@@ -174,7 +175,8 @@ generate_default_notes <- function(n_pcs, maturities) {
     "for the heteroskedasticity parameter $\\theta_i$ across different bond maturities.",
     "Panel A reports the identified set $[\\theta_i^{(1)}, \\theta_i^{(2)}]$ along with",
     "the interval width.",
-    "Panel B shows the optimal weights for the first", n_pcs, "principal components,",
+    "Panel B shows the optimal weights for the first", n_pcs,
+    "principal components extracted from financial asset returns,",
     "normalized such that $\\sum_{j=1}^{", n_pcs, "} w_j^2 = 1$.",
     "Panel C displays the optimal lag parameter $\\tau_i \\in [0, 0.99)$ as a percentage.",
     "The optimization uses the COBYLA algorithm with 20 random starting points.",

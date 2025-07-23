@@ -60,9 +60,10 @@ validate_data_dimensions <- function(yields, term_premia) {
 
 #' Validate Number of Principal Components
 #'
-#' Validates n_pcs parameter against academic literature and computational constraints.
+#' Validates n_pcs parameter for principal components extracted from financial asset returns
+#' against academic literature and computational constraints.
 #'
-#' @param n_pcs Number of principal components to validate
+#' @param n_pcs Number of principal components extracted from financial asset returns to validate
 #'
 #' @return Invisible TRUE if valid, stops with informative error if invalid
 #' @keywords internal

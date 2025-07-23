@@ -7,7 +7,7 @@
 validate_theta_inputs(pc_j, w1, w2, tau, dates = NULL)
 }
 \arguments{
-\item{pc_j}{Principal component vector}
+\item{pc_j}{Principal component vector extracted from financial asset returns}
 
 \item{w1}{Reduced form residual for Y1}
 

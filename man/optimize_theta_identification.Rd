@@ -26,11 +26,12 @@ The maturity index determines which yield curve point is used in the analysis.}
 
 \item{n_pcs}{Integer specifying the number of principal components to use.
 Must be between 1 and 6. Default is 4 following Adrian, Crump, and Moench (2013).
-The choice of n_pcs represents a trade-off between capturing yield curve variation
-and maintaining computational stability. More components capture more variation
-but may lead to overfitting in finite samples.}
+The choice of n_pcs represents a trade-off between capturing variation in
+financial asset returns and maintaining computational stability. More components
+capture more variation but may lead to overfitting in finite samples.}
 
-\item{pc_data}{Matrix of principal components (T x K) where K >= n_pcs}
+\item{pc_data}{Matrix of principal components extracted from financial asset returns
+(T x K) where K >= n_pcs}
 
 \item{yields}{Matrix of yields (T x M) where M is number of maturities}
 
@@ -67,7 +68,8 @@ List containing:
 }
 \description{
 Solves the optimization problem P(i,J) to identify the heteroskedasticity
-parameter theta_i for a given maturity using J principal components.
+parameter theta_i for a given maturity using J principal components extracted
+from financial asset returns.
 This function finds the optimal tau and PC weights that minimize
 the distance between the two roots of the quadratic equation.
 }

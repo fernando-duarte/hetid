@@ -4,14 +4,13 @@
 #' W_1,t+1, W_2,i,t+1, and a parameter tau using the identification through
 #' heteroskedasticity approach from Lewbel (2012).
 #'
-#' @param pc_j Numeric vector, time series of PC_jt (principal component j at time t)
-#' @param w1 Numeric vector, time series of W_1,t+1 (reduced form residual for Y1)
-#' @param w2 Numeric vector, time series of W_2,i,t+1 (reduced form residual for Y2 at maturity i)
+#' @param pc_j Numeric vector, time series of PC_jt (principal component j extracted
+#'   from financial asset returns at time t)
+#' @template param-residuals-w1-w2
 #' @template param-tau
-#' @param use_t_minus_1 Logical, if TRUE uses n-1 in variance/covariance denominators (unbiased),
-#'                      if FALSE uses n (biased). Note: W1 and W2 residuals are pre-computed
-#'                      using the appropriate timing alignment, so this parameter does NOT
-#'                      affect the PC timing.
+#' @template param-use-t-minus-1
+#' @details Note: W1 and W2 residuals are pre-computed using the appropriate timing
+#'   alignment, so the use_t_minus_1 parameter does NOT affect the PC timing.
 #' @param dates Optional vector of dates corresponding to the time series. If provided, the function
 #'              will return information about which dates were used after removing NA values.
 #'
@@ -81,43 +80,15 @@ solve_theta_quadratic <- function(pc_j, w1, w2, tau, use_t_minus_1 = TRUE, dates
   pc_j <- validated$pc_j
   w1 <- validated$w1
   w2 <- validated$w2
-  n <- validated$n
   dates_used <- if (!is.null(dates)) validated$dates else NULL
 
-  # Compute moments using unified function
-  moments <- compute_theta_moments_unified(pc_j, w1, w2, use_t_minus_1) # nolint: object_usage_linter
-
-  # Compute quadratic coefficients using unified function
-  coeffs <- compute_quadratic_coefficients(moments, tau) # nolint: object_usage_linter
-  a <- coeffs$a
-  b <- coeffs$b
-  c <- coeffs$c
-  discriminant <- coeffs$discriminant
-
-  # Solve quadratic equation using unified function
-  roots <- solve_quadratic(a, b, c, discriminant) # nolint: object_usage_linter
-
-  # Prepare results
-  result <- list(
-    roots = roots,
-    coefficients = c(a = a, b = b, c = c),
-    discriminant = discriminant,
-    components = c(
-      moments,
-      list(
-        a = a,
-        b = b,
-        c = c,
-        discriminant = discriminant,
-        n_obs = n
-      )
-    )
+  # Use core quadratic solver with validated data
+  solve_theta_quadratic_core(
+    pc_aligned = pc_j,
+    w1_aligned = w1,
+    w2_aligned = w2,
+    tau = tau,
+    use_t_minus_1 = use_t_minus_1,
+    dates_used = dates_used
   )
-
-  # Add dates_used if dates were provided
-  if (!is.null(dates_used)) {
-    result$dates_used <- dates_used
-  }
-
-  result
 }

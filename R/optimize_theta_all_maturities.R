@@ -1,7 +1,8 @@
 #' Run Theta Identification for Multiple Maturities
 #'
 #' Convenience function to run optimize_theta_identification for multiple
-#' maturities and/or different numbers of principal components.
+#' maturities and/or different numbers of principal components extracted from
+#' financial asset returns.
 #'
 #' @param maturities_to_test Vector of maturities to test
 #' @param n_pcs_options Vector of PC counts to test (default 4)

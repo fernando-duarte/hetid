@@ -2,9 +2,8 @@
 #'
 #' Computes the empirical upper bound for Var(error(i,t+1))
 #'
-#' @param yields Data frame with columns y1, y2, ..., containing yields
-#' @param term_premia Data frame with columns tp1, tp2, ..., containing term premia
-#' @param i Integer, the horizon (must be >= 1)
+#' @template param-yields-term-premia
+#' @template param-maturity-index
 #'
 #' @return Numeric value of the variance bound (1/4)*c_hat_i*k_hat_i
 #'
@@ -18,13 +17,11 @@
 #' \dontrun{
 #' # Extract ACM data
 #' data <- extract_acm_data(data_types = c("yields", "term_premia"))
+#' yields <- data[, grep("^y", names(data))]
+#' term_premia <- data[, grep("^tp", names(data))]
 #'
 #' # Compute variance bound for i=5
-#' var_bound_5 <- compute_variance_bound(
-#'   yields = data[, grep("^y", names(data))],
-#'   term_premia = data[, grep("^tp", names(data))],
-#'   i = 5
-#' )
+#' var_bound_5 <- compute_variance_bound(yields, term_premia, i = 5)
 #' }
 #'
 compute_variance_bound <- function(yields, term_premia, i) {

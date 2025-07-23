@@ -25,7 +25,7 @@ Each test file corresponds to a specific function and includes:
 
 ### Identification Functions
 - `test-solve_gamma_quadratic.R` - Tests gamma1 quadratic solver
-- `test-optimize_pc_weights.R` - Tests optimal PC weight finding
+- `test-optimize_pc_weights.R` - Tests optimal weight finding for principal components from financial asset returns
 
 ### Data Functions
 - `test-extract_acm_data.R` - Tests ACM data extraction

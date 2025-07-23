@@ -4,12 +4,11 @@
 #' that minimizes the distance between the two roots of the theta quadratic
 #' equation, with preference for real roots.
 #'
-#' @param pcs Matrix of principal components (n x J)
-#' @param w1 Vector of reduced form residuals for Y1
-#' @param w2 Vector of reduced form residuals for Y2
-#' @param tau Quantile parameter between 0 and 1
+#' @template param-pc-data
+#' @template param-residuals-w1-w2
+#' @template param-tau
 #' @param i Maturity index (for Y2 residuals)
-#' @param use_t_minus_1 Logical, if TRUE uses n-1 in variance/covariance denominators
+#' @template param-use-t-minus-1
 #' @param initial_weights Initial weights (default: equal weights)
 #' @param method Optimization method (default: "Nelder-Mead")
 #' @param maxit Maximum iterations (default: 1000)

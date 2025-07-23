@@ -1,16 +1,13 @@
 #' Compute Reduced Form Residuals for Y2 Variables
 #'
 #' Computes residuals W_\{2,t+1\}^\{(i)\} from regressing Y_\{2,t+1\}^\{(i)\} variables
-#' (SDF innovations) on principal components and a constant.
+#' (SDF innovations) on principal components extracted from financial asset returns and a constant.
 #'
-#' @param yields Data frame with yield columns (y1, y2, ..., y10)
-#' @param term_premia Data frame with term premium columns (tp1, tp2, ..., tp10)
+#' @template param-yields-term-premia
 #' @param maturities Vector of maturities to process (default: 1:9)
-#' @param n_pcs Number of principal components to use (default: 4)
-#' @param pcs Matrix of principal components (T x n_pcs). If NULL, loads from package data.
-#' @param return_df Logical, if TRUE returns a data frame with dates (default FALSE).
-#' @param dates Optional vector of dates. If NULL and return_df = TRUE, will attempt to
-#'   extract from data.
+#' @template param-n-pcs
+#' @template param-pc-data
+#' @template param-return-df-dates
 #'
 #' @return If return_df = FALSE, returns a list containing:
 #' \describe{

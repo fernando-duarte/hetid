@@ -73,7 +73,7 @@ compute_cov <- function(x, y, use_t_minus_1 = TRUE, na_rm = FALSE) {
 #' Computes all required moments for the theta quadratic equation
 #' using the unified moment functions.
 #'
-#' @param pc Vector of principal component values
+#' @param pc Vector of principal component values extracted from financial asset returns
 #' @param w1 Vector of W1 residuals
 #' @param w2 Vector of W2 residuals
 #' @param use_t_minus_1 Logical, if TRUE uses n-1 denominator

@@ -4,14 +4,11 @@
 #' exp(n_hat(i,t)) * (Delta_(t+1)p_(t+i)^(1) + 0.5*(Delta_(t+1)p_(t+i)^(1))^2 -
 #' 0.5*E\\[(Delta_(t+1)p_(t+i)^(1))^2\\])
 #'
-#' @param yields Data frame with columns y1, y2, ..., containing yields
-#' @param term_premia Data frame with columns tp1, tp2, ..., containing term premia
-#' @param i Integer, the horizon (must be >= 1)
-#' @param return_df Logical, if TRUE returns a data frame with dates (default FALSE)
-#' @param dates Optional vector of dates corresponding to the rows in yields/term_premia.
-#'   If not provided and return_df = TRUE, will use row indices.
+#' @template param-yields-term-premia
+#' @template param-maturity-index
+#' @template param-return-df-dates
 #'
-#' @return Numeric vector of SDF innovations, or data frame with dates if return_df = TRUE
+#' @template return-numeric-or-dataframe
 #'
 #' @details
 #' The SDF innovation is computed as:
@@ -29,18 +26,15 @@
 #' \dontrun{
 #' # Extract ACM data
 #' data <- extract_acm_data(data_types = c("yields", "term_premia"))
+#' yields <- data[, grep("^y", names(data))]
+#' term_premia <- data[, grep("^tp", names(data))]
 #'
 #' # Compute SDF innovations for i=5
-#' sdf_innovations_5 <- compute_sdf_innovations(
-#'   yields = data[, grep("^y", names(data))],
-#'   term_premia = data[, grep("^tp", names(data))],
-#'   i = 5
-#' )
+#' sdf_innovations_5 <- compute_sdf_innovations(yields, term_premia, i = 5)
 #'
 #' # Compute SDF innovations with dates
 #' sdf_innovations_5_df <- compute_sdf_innovations(
-#'   yields = data[, grep("^y", names(data))],
-#'   term_premia = data[, grep("^tp", names(data))],
+#'   yields, term_premia,
 #'   i = 5,
 #'   return_df = TRUE,
 #'   dates = data$date
@@ -49,14 +43,13 @@
 #'
 compute_sdf_innovations <- function(yields, term_premia, i,
                                     return_df = FALSE, dates = NULL) {
-  if (i < 1) {
-    stop("i must be >= 1")
-  }
+  # Validate maturity parameter
+  validate_maturity_param(i)
 
   # Compute n_hat(i,t) series
-  n_hat_i <- compute_n_hat(yields, term_premia, i,
+  n_hat_i <- compute_n_hat_validated(yields, term_premia, i,
     return_df = FALSE, dates = dates
-  ) # nolint
+  )
 
   # Compute price news (Delta_(t+1)p_(t+i)^(1))
   delta_p <- compute_price_news(yields, term_premia, i,
@@ -64,50 +57,22 @@ compute_sdf_innovations <- function(yields, term_premia, i,
     return_df = FALSE, dates = dates
   )
 
-  # Compute E[(Delta_(t+1)p_(t+i)^(1))^2]
-  # Remove NA values for the expectation calculation
-  delta_p_clean <- delta_p[!is.na(delta_p)]
-  if (length(delta_p_clean) == 0) {
-    stop("No valid SDF news values to compute expectation")
+  # Compute E[(Delta_(t+1)p_(t+i)^(1))^2] using utility function
+  expected_delta_p_squared <- compute_expected_squared(
+    delta_p,
+    "No valid SDF news values to compute expectation"
+  )
+
+  # Define SDF transformation function
+  sdf_transform <- function(n_hat_val, delta_p_val, expected_sq) {
+    exp(n_hat_val) * (delta_p_val + 0.5 * delta_p_val^2 - 0.5 * expected_sq)
   }
 
-  expected_delta_p_squared <- mean(delta_p_clean^2)
+  # Compute SDF innovations using utility function
+  sdf_innovations <- apply_time_series_transform(
+    n_hat_i[seq_along(delta_p)], delta_p, sdf_transform, expected_delta_p_squared
+  )
 
-  # Number of observations (T-1 since delta_p has T-1 elements)
-  t_minus_1 <- length(delta_p)
-
-  # Initialize result
-  sdf_innovations <- rep(NA, t_minus_1)
-
-  # Compute SDF innovations
-  for (t in 1:t_minus_1) {
-    if (!is.na(n_hat_i[t]) && !is.na(delta_p[t])) {
-      sdf_innovations[t] <- exp(n_hat_i[t]) *
-        (delta_p[t] + 0.5 * delta_p[t]^2 - 0.5 * expected_delta_p_squared)
-    }
-  }
-
-  # Return data frame with dates if requested
-  if (return_df) {
-    # Use provided dates, or create generic time index
-    if (is.null(dates)) {
-      dates <- 1:nrow(yields)
-    }
-
-    # Ensure dates is the same length as the data
-    if (length(dates) != nrow(yields)) {
-      stop("Length of dates must match number of rows in yields")
-    }
-
-    # SDF innovations have same alignment as price news: first observation is NA
-    sdf_innovations_aligned <- c(NA, sdf_innovations)
-
-    return(data.frame(
-      date = dates,
-      sdf_innovations = sdf_innovations_aligned,
-      stringsAsFactors = FALSE
-    ))
-  }
-
-  sdf_innovations
+  # Return data frame with dates if requested using utility function
+  prepare_return_data(sdf_innovations, return_df, dates, yields, "sdf_innovations")
 }

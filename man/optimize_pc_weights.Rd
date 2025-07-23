@@ -19,17 +19,24 @@ optimize_pc_weights(
 )
 }
 \arguments{
-\item{pcs}{Matrix of principal components (n x J)}
+\item{pcs}{Matrix of principal components (n x J) where n is the number of
+observations and J is the number of components, extracted from a broader set of
+returns of financial assets.}
 
-\item{w1}{Vector of reduced form residuals for Y1}
+\item{w1}{Vector of reduced form residuals for Y1 (consumption growth)}
 
-\item{w2}{Vector of reduced form residuals for Y2}
+\item{w2}{Vector of reduced form residuals for Y2 (SDF innovations)}
 
-\item{tau}{Quantile parameter between 0 and 1}
+\item{tau}{Numeric value between 0 and 1 specifying the quantile for
+identification in the Lewbel (2012) method. Default is 0.5 (median)
+following the literature. The choice of tau affects the identification
+strength and should be chosen based on the heteroskedasticity pattern
+in the data. Values closer to 0.5 typically provide more robust identification.}
 
 \item{i}{Maturity index (for Y2 residuals)}
 
-\item{use_t_minus_1}{Logical, if TRUE uses n-1 in variance/covariance denominators}
+\item{use_t_minus_1}{Logical, if TRUE uses n-1 in variance/covariance denominators (unbiased),
+if FALSE uses n (biased). Default is TRUE following standard econometric practice.}
 
 \item{initial_weights}{Initial weights (default: equal weights)}
 

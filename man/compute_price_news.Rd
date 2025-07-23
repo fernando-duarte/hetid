@@ -18,7 +18,10 @@ compute_price_news(
 
 \item{term_premia}{Data frame with columns tp1, tp2, ..., containing term premia}
 
-\item{i}{Integer, the horizon (must be >= 1)}
+\item{i}{Integer specifying the maturity index (column) to analyze.
+Must be between 1 and ncol(yields). Corresponds to maturity in years
+for ACM dataset (i=1 is 1-year, i=2 is 2-year, ..., i=10 is 10-year).
+The maturity index determines which yield curve point is used in the analysis.}
 
 \item{return_yield_news}{Logical, if TRUE returns yield news instead of log price news}
 
@@ -28,7 +31,7 @@ compute_price_news(
 If not provided and return_df = TRUE, will use row indices.}
 }
 \value{
-Numeric vector of price news, or data frame with dates if return_df = TRUE
+Numeric vector of computed values, or data frame with dates if return_df = TRUE
 }
 \description{
 Computes the time series of price news Delta_(t+1)p_(t+i)^(1) or Delta_(t+1)y_(t+i)^(1)
@@ -44,18 +47,15 @@ Delta_(t+1)y_(t+i)^(1) = -Delta_(t+1)p_(t+i)^(1)
 \dontrun{
 # Extract ACM data
 data <- extract_acm_data(data_types = c("yields", "term_premia"))
+yields <- data[, grep("^y", names(data))]
+term_premia <- data[, grep("^tp", names(data))]
 
 # Compute price news for i=5 (log price news)
-price_news_5 <- compute_price_news(
-  yields = data[, grep("^y", names(data))],
-  term_premia = data[, grep("^tp", names(data))],
-  i = 5
-)
+price_news_5 <- compute_price_news(yields, term_premia, i = 5)
 
-# Compute price news for yields with dates
+# Compute yield news with dates
 yield_news_5_df <- compute_price_news(
-  yields = data[, grep("^y", names(data))],
-  term_premia = data[, grep("^tp", names(data))],
+  yields, term_premia,
   i = 5,
   return_yield_news = TRUE,
   return_df = TRUE,

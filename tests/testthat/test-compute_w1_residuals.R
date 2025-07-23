@@ -37,10 +37,20 @@ test_that("R-squared matches manual regression", {
   # Run regression manually
   manual_reg <- lm(y ~ pc_lagged)
   manual_r2 <- summary(manual_reg)$r.squared
+  manual_coefs <- coef(manual_reg)
 
   expect_equal(res_y1$r_squared, manual_r2,
     tolerance = 1e-10,
     label = "R-squared should match manual regression"
+  )
+
+  # Check coefficients match
+  # Rename manual coefficients to match function output
+  names(manual_coefs) <- c("(Intercept)", paste0("pc", 1:3))
+
+  expect_equal(res_y1$coefficients, manual_coefs,
+    tolerance = 1e-10,
+    label = "Coefficients should match manual regression"
   )
 })
 

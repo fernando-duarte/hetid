@@ -14,7 +14,7 @@ NULL
 #'
 #' @format List containing academic research constants:
 #' \describe{
-#'   \item{DEFAULT_N_PCS}{Standard number of principal components (4) from Adrian, Crump, Moench (2013)}
+#'   \item{DEFAULT_N_PCS}{Standard number of principal components (4) extracted from financial asset returns}
 #'   \item{MAX_N_PCS}{Maximum number of principal components (6) for computational stability}
 #'   \item{MIN_MATURITY}{Minimum maturity index (1) from ACM data availability constraint}
 #'   \item{MAX_MATURITY}{Maximum maturity index (10) from ACM dataset maturity limit}
@@ -34,7 +34,7 @@ NULL
 #'
 #' @export
 HETID_CONSTANTS <- list(
-  # Principal component defaults from ACM (2013)
+  # Principal component defaults from financial asset returns
   DEFAULT_N_PCS = 4L, # Standard in Adrian, Crump, Moench (2013)
   MAX_N_PCS = 6L, # Computational stability limit
 
