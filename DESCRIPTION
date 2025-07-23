@@ -1,6 +1,8 @@
 Package: hetid
 Title: Identification Through Heteroskedasticity for VFCI
 Version: 0.1.0
+Author: Fernando Duarte [aut, cre] (<https://orcid.org/0000-0002-8495-6936>)
+Maintainer: Fernando Duarte <fernando_duarte@brown.edu>
 Authors@R:
     person("Fernando", "Duarte", , "fernando_duarte@brown.edu", role = c("aut", "cre"),
            comment = c(ORCID = "0000-0002-8495-6936"))

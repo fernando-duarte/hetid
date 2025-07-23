@@ -28,7 +28,6 @@ The package provides functions for:
 
 - **Data Access**: Download and load Federal Reserve economic data
   - ACM term structure data (yields, term premia, risk-neutral yields)
-  - Federal Reserve yield curve data
   - Quarterly economic and financial variables
 - **Bond Calculations**: Compute bond-related quantities
   - Expected log bond prices (n_hat)

@@ -19,15 +19,11 @@
 #' }
 #'
 #' @section Data Sources:
-#' The package provides access to three main data sources:
+#' The package provides access to ACM term structure data:
 #' \describe{
 #'   \item{ACM Term Premia}{Monthly term structure data from Adrian, Crump, and
 #'     Moench (2013), including yields, term premia, and risk-neutral yields for
 #'     1-10 year maturities. See \code{\link{acm_data}} for details.}
-#'   \item{Fed Yield Curve (Svensson)}{Daily Svensson yield curve parameters
-#'     (feds200628). Download with \code{\link{download_yield_curve}}.}
-#'   \item{Fed Yield Curve (Smoothed)}{Daily smoothed yield curve data
-#'     (feds200533). Download with \code{\link{download_yield_curve}}.}
 #' }
 #'
 #' @section Getting Started:
@@ -37,10 +33,6 @@
 #'   data_types = c("yields", "term_premia"),
 #'   maturities = c(2, 5, 10)
 #' )
-#'
-#' # Download Fed yield curve data
-#' download_yield_curve("both")
-#' svensson <- load_yield_curve("feds200628")
 #' }
 #'
 #' @references

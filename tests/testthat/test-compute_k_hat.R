@@ -57,8 +57,8 @@ test_that("k_hat manual calculation verification", {
   y_t_plus_i <- c(y[-seq_len(i)], rep(NA, i))
 
   # Compute k_hat manually
-  T <- length(y)
-  k_hat_manual <- sum((-y_t_plus_i - n_hat_t_plus_1)^4, na.rm = TRUE) / (T - i)
+  n_obs <- length(y)
+  k_hat_manual <- sum((-y_t_plus_i - n_hat_t_plus_1)^4, na.rm = TRUE) / (n_obs - i)
 
   expect_equal(k_hat_5, k_hat_manual,
     tolerance = 1e-10,

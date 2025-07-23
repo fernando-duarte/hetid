@@ -1,5 +1,5 @@
 # Test file for download functions
-# Tests download_term_premia and download_yield_curve
+# Tests download_term_premia
 
 test_that("download_term_premia works correctly", {
   # Skip if offline
@@ -22,31 +22,7 @@ test_that("download_term_premia works correctly", {
   }
 })
 
-test_that("download_yield_curve works correctly", {
-  # Skip if offline
-  skip_if_offline()
-
-  # Test download for default dataset
-  expect_silent(download_yield_curve(force = FALSE, quiet = TRUE))
-
-  # Check file exists
-  data_dir <- system.file("extdata", package = "hetid")
-  yc_file <- file.path(data_dir, "feds200628.csv")
-
-  # File should exist
-  expect_true(file.exists(yc_file))
-
-  # Test alternative dataset
-  expect_silent(download_yield_curve(
-    dataset = "feds200533",
-    force = FALSE, quiet = TRUE
-  ))
-
-  alt_file <- file.path(data_dir, "feds200533.csv")
-  expect_true(file.exists(alt_file))
-})
-
-test_that("download functions handle force parameter", {
+test_that("download_term_premia handles force parameter", {
   # Skip if offline
   skip_if_offline()
 
@@ -67,26 +43,12 @@ test_that("download functions handle force parameter", {
   }
 })
 
-test_that("download functions validate dataset parameter", {
-  # Invalid dataset should error
-  expect_error(download_yield_curve(dataset = "invalid_dataset"))
-
-  # Valid datasets should work
-  valid_datasets <- c("feds200628", "feds200533")
-
-  for (dataset in valid_datasets) {
-    # Should not error (but might not download if offline)
-    expect_error(download_yield_curve(dataset = dataset, quiet = TRUE), NA)
-  }
-})
-
-test_that("load functions work after download", {
+test_that("load_term_premia works after download", {
   # Skip if offline
   skip_if_offline()
 
   # Ensure data is downloaded
   download_term_premia(force = FALSE, quiet = TRUE)
-  download_yield_curve(force = FALSE, quiet = TRUE)
 
   # Load should work
   tp_data <- load_term_premia()
@@ -94,13 +56,17 @@ test_that("load functions work after download", {
   expect_true(nrow(tp_data) > 0)
   expect_true("date" %in% names(tp_data))
 
-  yc_data <- load_yield_curve()
-  expect_s3_class(yc_data, "data.frame")
-  expect_true(nrow(yc_data) > 0)
-  expect_true("date" %in% names(yc_data))
+  # Check that ACM data contains both yields and term premia
+  yield_cols <- grep("^ACMY", names(tp_data), value = TRUE)
+  tp_cols <- grep("^ACMTP", names(tp_data), value = TRUE)
+  rny_cols <- grep("^ACMRNY", names(tp_data), value = TRUE)
+
+  expect_true(length(yield_cols) > 0)
+  expect_true(length(tp_cols) > 0)
+  expect_true(length(rny_cols) > 0)
 })
 
-test_that("download functions quiet parameter", {
+test_that("download_term_premia quiet parameter", {
   # Skip if offline
   skip_if_offline()
 
@@ -111,15 +77,7 @@ test_that("download functions quiet parameter", {
   # which is environment-dependent
 })
 
-test_that("download error handling", {
-  # Test with invalid URL (simulate by using wrong dataset)
-  # This should give informative error
-  expect_error(download_yield_curve(dataset = "nonexistent"),
-    class = "error"
-  )
-})
-
-test_that("file permissions after download", {
+test_that("download_term_premia file permissions", {
   # Skip if offline
   skip_if_offline()
 

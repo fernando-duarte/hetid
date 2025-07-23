@@ -41,7 +41,7 @@ load_term_premia <- function(auto_download = FALSE) {
       }
     } else {
       message("Term premia data not found. Please run download_term_premia() first.")
-      NULL
+      return(NULL)
     }
   }
 
