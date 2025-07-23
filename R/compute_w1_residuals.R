@@ -1,6 +1,6 @@
 #' Compute Reduced Form Residual for Primary Endogenous Variable (Y1)
 #'
-#' Computes the residual W_{1,t+1} from regressing consumption growth (Y_{1,t+1})
+#' Computes the residual W_\{1,t+1\} from regressing consumption growth (Y_\{1,t+1\})
 #' on principal components (PC_t) and a constant.
 #'
 #' @param n_pcs Integer, number of principal components to use (1-6). Default is 4.
@@ -9,7 +9,7 @@
 #'
 #' @return If return_df = FALSE, returns a list containing:
 #' \describe{
-#'   \item{residuals}{Numeric vector of residuals W_{1,t+1}}
+#'   \item{residuals}{Numeric vector of residuals W_\{1,t+1\}}
 #'   \item{fitted}{Numeric vector of fitted values}
 #'   \item{coefficients}{Regression coefficients}
 #'   \item{r_squared}{R-squared of the regression}
@@ -19,15 +19,15 @@
 #' If return_df = TRUE, returns a data frame with columns:
 #' \describe{
 #'   \item{date}{Date column}
-#'   \item{residuals}{Residuals W_{1,t+1}}
+#'   \item{residuals}{Residuals W_\{1,t+1\}}
 #'   \item{fitted}{Fitted values from the regression}
 #' }
 #'
 #' @details
 #' The function performs the regression:
-#' Y_{1,t+1} = alpha + beta' * PC_t + W_{1,t+1}
+#' Y_\{1,t+1\} = alpha + beta' * PC_t + W_\{1,t+1\}
 #'
-#' where Y_{1,t+1} is consumption growth (gr1.pcecc96) and PC_t are the first n_pcs
+#' where Y_\{1,t+1\} is consumption growth (gr1.pcecc96) and PC_t are the first n_pcs
 #' principal components (pc1, ..., pc6).
 #'
 #' @importFrom stats lm residuals fitted coef as.formula complete.cases

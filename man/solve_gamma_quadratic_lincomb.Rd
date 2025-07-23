@@ -2,7 +2,7 @@
 % Please edit documentation in R/solve_gamma_quadratic_lincomb.R
 \name{solve_gamma_quadratic_lincomb}
 \alias{solve_gamma_quadratic_lincomb}
-\title{Solve Quadratic Equation for gamma_1 using Linear Combination of PCs}
+\title{Solve Quadratic Equation for Gamma using Linear Combination of PCs}
 \usage{
 solve_gamma_quadratic_lincomb(
   pc_matrix,
@@ -10,6 +10,7 @@ solve_gamma_quadratic_lincomb(
   w1,
   w2,
   tau,
+  normalize_by = c("norm", "variance"),
   use_t_minus_1 = TRUE,
   return_df = FALSE,
   dates = NULL
@@ -26,21 +27,37 @@ solve_gamma_quadratic_lincomb(
 
 \item{tau}{Quantile parameter between 0 and 1}
 
-\item{use_t_minus_1}{Logical indicating whether to use lagged PCs}
+\item{normalize_by}{Character, how to normalize weights: "norm" (L2 norm) or "variance"}
 
-\item{return_df}{Logical, if TRUE includes dates in the linear_comb output (default FALSE)}
+\item{use_t_minus_1}{Logical, if TRUE uses n-1 in variance/covariance denominators}
+
+\item{return_df}{Logical, if TRUE includes dates in the linear_comb output}
 
 \item{dates}{Optional vector of dates corresponding to the rows in pc_matrix}
 }
 \value{
 List containing:
 \item{roots}{Vector of two roots (possibly complex)}
-\item{linear_comb}{The linear combination of PCs used (data frame with dates if return_df=TRUE)}
+\item{coefficients}{Named vector with quadratic coefficients a, b, c}
+\item{discriminant}{The discriminant b^2 - 4ac}
+\item{linear_comb}{The linear combination of PCs used}
 \item{normalized_weights}{The normalized weights}
-\item{variance}{Variance of the linear combination (should be 1)}
+\item{variance}{Variance of the linear combination}
+\item{components}{List of all computed moments for transparency}
+\item{dates_used}{If dates provided, dates after alignment}
 \item{error}{Error message if computation failed}
 }
 \description{
-Solves the quadratic equation for the identification parameter gamma_1
+Solves the quadratic equation for the identification parameter gamma
 using a linear combination of principal components with normalized weights.
+}
+\details{
+This function creates a linear combination of principal components and solves
+the gamma quadratic equation. It provides options for:
+\itemize{
+\item Weight normalization: by L2 norm (sum of squares = 1) or by variance
+\item Denominator choice: n-1 (unbiased) or n (biased)
+}
+
+The function always uses lagged PCs for consistency with residual computation.
 }

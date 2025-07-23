@@ -7,7 +7,10 @@
 #' @param w1 Numeric vector, time series of W_1,t+1 (reduced form residual for Y1)
 #' @param w2 Numeric vector, time series of W_2,i,t+1 (reduced form residual for Y2 at maturity i)
 #' @param tau Numeric, parameter between 0 and 1
-#' @param use_t_minus_1 Logical, if TRUE uses T-1 in denominators (default), if FALSE uses T
+#' @param use_t_minus_1 Logical, if TRUE uses n-1 in variance/covariance denominators (unbiased),
+#'                      if FALSE uses n (biased). Note: W1 and W2 residuals are pre-computed
+#'                      using the appropriate timing alignment, so this parameter does NOT
+#'                      affect the PC timing.
 #' @param dates Optional vector of dates corresponding to the time series. If provided, the function
 #'              will return information about which dates were used after removing NA values.
 #'
@@ -33,8 +36,10 @@
 #' - b = 2*(Cov(W1*W2, W2^2)/Var(W2^2) * tau^2 - Cov(W1*W2, PC_j)/Cov(W2^2, PC_j))
 #' - c = \\[Cov(W1*W2, PC_j)\\]^2 / \\[Cov(W2^2, PC_j)\\]^2 - Var(W1*W2)/Var(W2^2) * tau^2
 #'
+#' Note: The input residuals W1 and W2 are expected to be pre-computed using the
+#' appropriate timing alignment (typically using lagged PCs to predict future values).
 #' The covariances and variances are computed using empirical estimators with either
-#' T-1 or T in the denominator based on use_t_minus_1.
+#' n-1 or n in the denominator based on use_t_minus_1.
 #'
 #' @importFrom stats complete.cases
 #' @export
@@ -52,8 +57,8 @@
 #' result <- solve_gamma_quadratic(pc_j, w1, w2, tau = 0.5)
 #' print(result$roots)
 #'
-#' # Use T instead of T-1 in denominators
-#' result_t <- solve_gamma_quadratic(pc_j, w1, w2, tau = 0.5, use_t_minus_1 = FALSE)
+#' # Use biased estimator (n instead of n-1 in denominators)
+#' result_biased <- solve_gamma_quadratic(pc_j, w1, w2, tau = 0.5, use_t_minus_1 = FALSE)
 #'
 #' # With dates to track which observations were used
 #' dates <- seq(as.Date("2020-01-01"), length.out = n, by = "month")
@@ -70,50 +75,18 @@ solve_gamma_quadratic <- function(pc_j, w1, w2, tau, use_t_minus_1 = TRUE, dates
   n <- validated$n
   dates_used <- if (!is.null(dates)) validated$dates else NULL
 
-  # Compute moments
-  moments <- compute_gamma_moments(pc_j, w1, w2, use_t_minus_1) # nolint: object_usage_linter
+  # Compute moments using unified function
+  moments <- compute_gamma_moments_unified(pc_j, w1, w2, use_t_minus_1) # nolint: object_usage_linter
 
-  # Compute quadratic coefficients
-  a <- 1 - tau^2
+  # Compute quadratic coefficients using unified function
+  coeffs <- compute_quadratic_coefficients(moments, tau) # nolint: object_usage_linter
+  a <- coeffs$a
+  b <- coeffs$b
+  c <- coeffs$c
+  discriminant <- coeffs$discriminant
 
-  b <- 2 * (moments$cov_w1w2_w2sq / moments$var_w2sq * tau^2 -
-    moments$cov_w1w2_pcj / moments$cov_w2sq_pcj)
-
-  c <- (moments$cov_w1w2_pcj^2) / (moments$cov_w2sq_pcj^2) -
-    moments$var_w1w2 / moments$var_w2sq * tau^2
-
-  # Compute discriminant
-  discriminant <- b^2 - 4 * a * c
-
-  # Solve quadratic equation
-  if (abs(a) < .Machine$double.eps) {
-    # Linear equation case (a ≈ 0, which means tau ≈ 1)
-    if (abs(b) < .Machine$double.eps) {
-      stop("Both a and b coefficients are effectively zero")
-    }
-    roots <- c(-c / b, NA)
-  } else if (discriminant < 0) {
-    # Complex roots
-    real_part <- -b / (2 * a)
-    imag_part <- sqrt(-discriminant) / (2 * a)
-    roots <- complex(
-      real = c(real_part, real_part),
-      imaginary = c(-imag_part, imag_part)
-    )
-  } else {
-    # Real roots
-    sqrt_disc <- sqrt(discriminant)
-    root1 <- (-b - sqrt_disc) / (2 * a)
-    root2 <- (-b + sqrt_disc) / (2 * a)
-    roots <- c(root1, root2)
-  }
-
-  # Order roots by real part (smallest first)
-  if (!is.na(roots[2])) {
-    if (Re(roots[2]) < Re(roots[1])) {
-      roots <- roots[c(2, 1)]
-    }
-  }
+  # Solve quadratic equation using unified function
+  roots <- solve_quadratic(a, b, c, discriminant) # nolint: object_usage_linter
 
   # Prepare results
   result <- list(

@@ -23,7 +23,7 @@ optimize_pc_weights_all(
 
 \item{tau}{Quantile parameter}
 
-\item{use_t_minus_1}{Whether to use lagged PCs (default TRUE)}
+\item{use_t_minus_1}{Logical, if TRUE uses n-1 in variance/covariance denominators}
 
 \item{parallel}{Whether to run in parallel (default FALSE)}
 

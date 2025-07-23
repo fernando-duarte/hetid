@@ -10,6 +10,7 @@ bz
 CamelCase
 CMD
 cmd
+codebase
 cov
 cpp
 cran
@@ -39,6 +40,8 @@ github
 gitignore
 gpl
 gz
+Hadley
+Hardcoded
 heteroskedasticity
 Heteroskedasticity
 hetid
@@ -67,6 +70,7 @@ mismeasured
 mit
 Moench
 MyPackages
+nloptr
 NONINFRINGEMENT
 nrow
 orcid
@@ -93,6 +97,7 @@ Rmd
 rmd
 Rnw
 Roxygen
+roxygen
 roxygenize
 RoxygenNote
 Rprofile
@@ -116,6 +121,7 @@ tidyverse
 Tobias
 ttf
 VFCI
+Wickham's
 woff
 xz
 yaml

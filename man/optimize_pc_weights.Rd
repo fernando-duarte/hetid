@@ -29,7 +29,7 @@ optimize_pc_weights(
 
 \item{maturity}{Maturity index (for Y2 residuals)}
 
-\item{use_t_minus_1}{Logical indicating whether to use lagged PCs}
+\item{use_t_minus_1}{Logical, if TRUE uses n-1 in variance/covariance denominators}
 
 \item{initial_weights}{Initial weights (default: equal weights)}
 

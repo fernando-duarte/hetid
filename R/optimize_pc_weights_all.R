@@ -7,7 +7,7 @@
 #' @param w1 Vector of reduced form residuals for Y1
 #' @param w2_list List of reduced form residuals for Y2, one for each maturity
 #' @param tau Quantile parameter
-#' @param use_t_minus_1 Whether to use lagged PCs (default TRUE)
+#' @param use_t_minus_1 Logical, if TRUE uses n-1 in variance/covariance denominators
 #' @param parallel Whether to run in parallel (default FALSE)
 #' @param n_cores Number of cores to use if parallel=TRUE
 #'

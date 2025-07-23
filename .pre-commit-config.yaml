@@ -13,6 +13,7 @@ repos:
         additional_dependencies:
           - roxygen2
           - devtools
+          - nloptr
 
       # Keep DESCRIPTION tidy
       - id: use-tidy-description

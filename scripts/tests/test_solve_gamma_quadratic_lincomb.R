@@ -116,7 +116,7 @@ weight_patterns <- list(
 for (pattern_name in names(weight_patterns)) {
   weights <- weight_patterns[[pattern_name]]
   result <- solve_gamma_quadratic_lincomb(
-    pc_matrix = PC_aligned,
+    pc_matrix = PC_aligned[, 1:4], # Use first 4 PCs
     weights = weights,
     w1 = W1_aligned,
     w2 = W2_aligned,
@@ -171,7 +171,7 @@ tau_values <- c(0.1, 0.3, 0.5, 0.7, 0.9)
 
 for (tau in tau_values) {
   result <- solve_gamma_quadratic_lincomb(
-    pc_matrix = PC_aligned,
+    pc_matrix = PC_aligned[, 1:4], # Use first 4 PCs
     weights = weights_fixed,
     w1 = W1_aligned,
     w2 = W2_aligned,
@@ -211,6 +211,54 @@ if (!is.null(result_test$linear_comb)) {
   cat(sprintf(
     "    Correlation with PC1: %.3f\n",
     cor(lc, PC_aligned[, 1], use = "complete.obs")
+  ))
+}
+
+# Test: Using all 6 PCs
+cat("\nLinear combination with all 6 PCs\n")
+weights_all6 <- rep(1 / sqrt(6), 6) # Equal weights for all 6
+result_all6 <- solve_gamma_quadratic_lincomb(
+  pc_matrix = PC_aligned, # Now uses all 6 PCs
+  weights = weights_all6,
+  w1 = W1_aligned,
+  w2 = W2_aligned,
+  tau = 0.5,
+  use_t_minus_1 = TRUE
+)
+
+if (!is.null(result_all6$error)) {
+  cat(sprintf("  Error: %s\n", result_all6$error))
+} else {
+  cat(sprintf(
+    "  Roots: [%.4f, %.4f]\n",
+    Re(result_all6$roots[1]), Re(result_all6$roots[2])
+  ))
+  cat(sprintf("  Linear combination variance: %.4f\n", result_all6$variance))
+}
+
+# Test: Custom weights for 6 PCs
+cat("\nCustom weights for 6 PCs (favoring later PCs)\n")
+weights_custom6 <- c(0.1, 0.15, 0.2, 0.25, 0.3, 0.35)
+weights_custom6 <- weights_custom6 / sqrt(sum(weights_custom6^2))
+result_custom6 <- solve_gamma_quadratic_lincomb(
+  pc_matrix = PC_aligned,
+  weights = weights_custom6,
+  w1 = W1_aligned,
+  w2 = W2_aligned,
+  tau = 0.5,
+  use_t_minus_1 = TRUE
+)
+
+if (!is.null(result_custom6$error)) {
+  cat(sprintf("  Error: %s\n", result_custom6$error))
+} else {
+  cat(sprintf(
+    "  Roots: [%.4f, %.4f]\n",
+    Re(result_custom6$roots[1]), Re(result_custom6$roots[2])
+  ))
+  cat(sprintf(
+    "  Normalized weights: %s\n",
+    paste(round(result_custom6$normalized_weights, 3), collapse = ", ")
   ))
 }
 

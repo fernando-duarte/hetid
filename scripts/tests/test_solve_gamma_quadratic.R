@@ -121,7 +121,7 @@ for (tau in tau_values) {
 
 # Test: Different PCs
 cat("\nResults for different PCs (tau = 0.5)\n")
-for (j in 1:4) {
+for (j in 1:6) {
   PC_j <- variables_aligned[[paste0("pc", j)]]
   PC_j_aligned <- PC_j[1:n_obs]
 
@@ -225,3 +225,241 @@ cat(sprintf(
 ))
 
 cat("\nTest complete!\n")
+
+# =============================================================================
+# Interactive Quadratic Visualization
+# =============================================================================
+cat("\n\nInteractive Quadratic Visualization\n")
+cat("===================================\n")
+cat("Modify the parameters below to explore different scenarios\n\n")
+
+# User-configurable parameters
+plot_tau <- 0.5 # Change this value between 0 and 1
+plot_pc_index <- 1 # Which PC to use (1, 2, 3, 4, 5, or 6)
+plot_lag_pc <- TRUE # TRUE for lagged PC (PC at t-1), FALSE for contemporaneous (PC at t)
+
+# Store all PC data
+all_pcs <- list(
+  variables_aligned$pc1[1:n_obs],
+  variables_aligned$pc2[1:n_obs],
+  variables_aligned$pc3[1:n_obs],
+  variables_aligned$pc4[1:n_obs],
+  variables_aligned$pc5[1:n_obs],
+  variables_aligned$pc6[1:n_obs]
+)
+
+# Function to compute quadratic coefficients
+compute_quadratic_coeffs <- function(pc_j, w1, w2, tau, use_t_minus_1) {
+  # Get result from solve_gamma_quadratic
+  result <- solve_gamma_quadratic(
+    pc_j = pc_j,
+    w1 = w1,
+    w2 = w2,
+    tau = tau,
+    use_t_minus_1 = use_t_minus_1
+  )
+
+  if (!is.null(result$error)) {
+    return(list(error = result$error))
+  }
+
+  # Extract coefficients
+  a <- result$coefficients["a"]
+  b <- result$coefficients["b"]
+  c <- result$coefficients["c"]
+
+  list(
+    a = a,
+    b = b,
+    c = c,
+    roots = result$roots,
+    discriminant = result$discriminant
+  )
+}
+
+# Compute coefficients for current parameters
+cat(sprintf(
+  "Computing quadratic for: tau = %.2f, PC%d, %s\n",
+  plot_tau, plot_pc_index,
+  ifelse(plot_use_lag, "lagged PC", "contemporaneous PC")
+))
+
+coeffs <- compute_quadratic_coeffs(
+  pc_j = all_pcs[[plot_pc_index]],
+  w1 = W1_aligned,
+  w2 = W2_aligned,
+  tau = plot_tau,
+  use_t_minus_1 = plot_use_lag
+)
+
+if (!is.null(coeffs$error)) {
+  cat(sprintf("Error: %s\n", coeffs$error))
+} else {
+  # Create the plot
+  cat("\nQuadratic equation: ")
+  cat(sprintf(
+    "%.4f * gamma_1^2 + %.4f * gamma_1 + %.4f = 0\n\n",
+    coeffs$a, coeffs$b, coeffs$c
+  ))
+
+  # Define gamma_1 range for plotting
+  if (is.complex(coeffs$roots[1])) {
+    # For complex roots, center around -b/(2a)
+    center <- -coeffs$b / (2 * coeffs$a)
+    gamma_range <- seq(center - 5, center + 5, length.out = 1000)
+  } else {
+    # For real roots, plot around the roots
+    root_min <- min(Re(coeffs$roots))
+    root_max <- max(Re(coeffs$roots))
+    margin <- abs(root_max - root_min) * 0.5 + 1
+    gamma_range <- seq(root_min - margin, root_max + margin, length.out = 1000)
+  }
+
+  # Compute quadratic values
+  quad_values <- coeffs$a * gamma_range^2 + coeffs$b * gamma_range + coeffs$c
+
+  # Set up plot
+  par(mfrow = c(1, 1), mar = c(5, 4, 4, 2))
+
+  # Plot the quadratic
+  plot(gamma_range, quad_values,
+    type = "l", lwd = 2, col = "blue",
+    xlab = expression(gamma[1]),
+    ylab = expression(paste("f(", gamma[1], ")")),
+    main = sprintf(
+      "Quadratic Function: tau = %.2f, PC%d, %s",
+      plot_tau, plot_pc_index,
+      ifelse(plot_use_lag, "Lagged PC", "Contemporaneous PC")
+    )
+  )
+
+  # Add horizontal line at y = 0
+  abline(h = 0, col = "gray", lty = 2)
+
+  # Add vertical lines at roots if they are real
+  if (!is.complex(coeffs$roots[1])) {
+    abline(v = coeffs$roots[1], col = "red", lty = 2, lwd = 2)
+    abline(v = coeffs$roots[2], col = "red", lty = 2, lwd = 2)
+
+    # Add points at roots
+    points(coeffs$roots[1], 0, pch = 19, col = "red", cex = 1.5)
+    points(coeffs$roots[2], 0, pch = 19, col = "red", cex = 1.5)
+
+    # Add root labels
+    text(coeffs$roots[1], max(quad_values) * 0.1,
+      sprintf("γ₁⁽¹⁾ = %.3f", coeffs$roots[1]),
+      col = "red", pos = 3
+    )
+    text(coeffs$roots[2], max(quad_values) * 0.1,
+      sprintf("γ₁⁽²⁾ = %.3f", coeffs$roots[2]),
+      col = "red", pos = 3
+    )
+  }
+
+  # Add legend
+  legend_text <- c(
+    sprintf("a = %.4f", coeffs$a),
+    sprintf("b = %.4f", coeffs$b),
+    sprintf("c = %.4f", coeffs$c),
+    sprintf("Discriminant = %.4f", coeffs$discriminant)
+  )
+
+  if (is.complex(coeffs$roots[1])) {
+    legend_text <- c(legend_text, "Roots: Complex")
+  } else {
+    legend_text <- c(
+      legend_text,
+      sprintf("Root distance = %.4f", abs(coeffs$roots[1] - coeffs$roots[2]))
+    )
+  }
+
+  legend("topright", legend_text, bg = "white", box.lty = 1)
+
+  # Print roots information
+  cat("Roots:\n")
+  if (is.complex(coeffs$roots[1])) {
+    cat(sprintf(
+      "  γ₁⁽¹⁾ = %.4f + %.4fi\n",
+      Re(coeffs$roots[1]), Im(coeffs$roots[1])
+    ))
+    cat(sprintf(
+      "  γ₁⁽²⁾ = %.4f + %.4fi\n",
+      Re(coeffs$roots[2]), Im(coeffs$roots[2])
+    ))
+  } else {
+    cat(sprintf("  γ₁⁽¹⁾ = %.4f\n", coeffs$roots[1]))
+    cat(sprintf("  γ₁⁽²⁾ = %.4f\n", coeffs$roots[2]))
+    cat(sprintf("  Distance = %.4f\n", abs(coeffs$roots[1] - coeffs$roots[2])))
+  }
+}
+
+cat("\n")
+cat("To explore different scenarios, modify these parameters:\n")
+cat("  plot_tau       : tau value (0 to 1)\n")
+cat("  plot_pc_index  : which PC to use (1, 2, 3, 4, 5, or 6)\n")
+cat("  plot_lag_pc    : TRUE for lagged PC (t-1), FALSE for contemporaneous PC (t)\n")
+cat("Then re-run this section of the code.\n")
+
+# Additional analysis: Show how roots change with tau
+cat("\n\nRoot behavior across tau values:\n")
+cat("================================\n")
+
+# Create a grid of tau values
+tau_grid <- seq(0.1, 0.9, by = 0.1)
+root1_values <- numeric(length(tau_grid))
+root2_values <- numeric(length(tau_grid))
+is_complex_flags <- logical(length(tau_grid))
+
+for (i in seq_along(tau_grid)) {
+  result <- solve_gamma_quadratic(
+    pc_j = all_pcs[[plot_pc_index]],
+    w1 = W1_aligned,
+    w2 = W2_aligned,
+    tau = tau_grid[i],
+    use_t_minus_1 = plot_use_lag
+  )
+
+  if (!is.null(result$error)) {
+    root1_values[i] <- NA
+    root2_values[i] <- NA
+  } else {
+    is_complex_flags[i] <- is.complex(result$roots[1])
+    root1_values[i] <- Re(result$roots[1])
+    root2_values[i] <- Re(result$roots[2])
+  }
+}
+
+# Plot roots vs tau
+par(mfrow = c(1, 1), mar = c(5, 4, 4, 2))
+plot(tau_grid, root1_values,
+  type = "b", col = "blue", pch = 19,
+  xlab = "tau", ylab = "Root values",
+  main = sprintf(
+    "Roots vs tau (PC%d, %s)",
+    plot_pc_index,
+    ifelse(plot_use_lag, "Lagged PC", "Contemporaneous PC")
+  ),
+  ylim = range(c(root1_values, root2_values), na.rm = TRUE)
+)
+lines(tau_grid, root2_values, type = "b", col = "red", pch = 19)
+
+# Mark complex root regions
+complex_idx <- which(is_complex_flags)
+if (length(complex_idx) > 0) {
+  for (idx in complex_idx) {
+    rect(tau_grid[idx] - 0.05, par("usr")[3],
+      tau_grid[idx] + 0.05, par("usr")[4],
+      col = rgb(1, 0, 0, 0.2), border = NA
+    )
+  }
+}
+
+legend("topright",
+  c("Root 1", "Root 2", "Complex region"),
+  col = c("blue", "red", rgb(1, 0, 0, 0.2)),
+  lty = c(1, 1, NA),
+  pch = c(19, 19, NA),
+  fill = c(NA, NA, rgb(1, 0, 0, 0.2))
+)
+
+cat("\nVisualization complete!\n")

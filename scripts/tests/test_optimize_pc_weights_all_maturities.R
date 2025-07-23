@@ -19,23 +19,33 @@ acm_data <- extract_acm_data(
 yields <- acm_data[, grep("^y", names(acm_data))]
 term_premia <- acm_data[, grep("^tp", names(acm_data))]
 
+# Align data by year-quarter
+variables$year_quarter <- paste0(format(variables$date, "%Y"), "-Q", quarters(variables$date))
+acm_data$year_quarter <- paste0(format(acm_data$date, "%Y"), "-Q", quarters(acm_data$date))
+common_quarters <- intersect(variables$year_quarter, acm_data$year_quarter)
+variables_indices <- which(variables$year_quarter %in% common_quarters)
+acm_indices <- which(acm_data$year_quarter %in% common_quarters)
+variables_aligned <- variables[variables_indices, ]
+yields_aligned <- yields[acm_indices, ]
+term_premia_aligned <- term_premia[acm_indices, ]
+
 # Compute residuals for all maturities
-res_y1 <- compute_w1_residuals(n_pcs = 4)
+res_y1 <- compute_w1_residuals(n_pcs = 4, data = variables_aligned)
 W1 <- res_y1$residuals
 
 # Test with subset of maturities for speed
 test_maturities <- c(2, 4, 6, 8)
 res_y2 <- compute_w2_residuals(
-  yields = yields,
-  term_premia = term_premia,
+  yields = yields_aligned,
+  term_premia = term_premia_aligned,
   maturities = test_maturities,
   n_pcs = 4,
-  pcs = as.matrix(variables[, paste0("pc", 1:4)])
+  pcs = as.matrix(variables_aligned[, paste0("pc", 1:4)])
 )
 W2_list <- res_y2$residuals
 
 # Get PC matrix
-PC_matrix <- as.matrix(variables[, paste0("pc", 1:4)])
+PC_matrix <- as.matrix(variables_aligned[, paste0("pc", 1:4)])
 
 # Align data
 n_obs <- min(length(W1), nrow(PC_matrix), length(W2_list[[1]]))

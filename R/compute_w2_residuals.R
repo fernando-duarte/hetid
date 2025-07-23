@@ -1,6 +1,6 @@
 #' Compute Reduced Form Residuals for Y2 Variables
 #'
-#' Computes residuals W_{2,t+1}^{(i)} from regressing Y_{2,t+1}^{(i)} variables
+#' Computes residuals W_\{2,t+1\}^\{(i)\} from regressing Y_\{2,t+1\}^\{(i)\} variables
 #' (SDF innovations) on principal components and a constant.
 #'
 #' @param yields Data frame with yield columns (y1, y2, ..., y10)
@@ -9,7 +9,8 @@
 #' @param n_pcs Number of principal components to use (default: 4)
 #' @param pcs Matrix of principal components (T x n_pcs). If NULL, loads from package data.
 #' @param return_df Logical, if TRUE returns a data frame with dates (default FALSE).
-#' @param dates Optional vector of dates. If NULL and return_df = TRUE, will attempt to extract from data.
+#' @param dates Optional vector of dates. If NULL and return_df = TRUE, will attempt to
+#'   extract from data.
 #'
 #' @return If return_df = FALSE, returns a list containing:
 #' \describe{
@@ -23,16 +24,16 @@
 #' \describe{
 #'   \item{date}{Date column}
 #'   \item{maturity}{Maturity identifier}
-#'   \item{residuals}{Residuals W_{2,t+1}}
+#'   \item{residuals}{Residuals W_\\{2,t+1\\}}
 #'   \item{fitted}{Fitted values from the regression}
 #' }
 #'
 #' @details
-#' For each maturity i, computes Y_{2,t+1}^{(i)} as the SDF innovation:
-#' Y_{2,t+1}^{(i)} = E_{t+1}[SDF_{t+1+i}] - E_t[SDF_{t+1+i}]
+#' For each maturity i, computes Y_\{2,t+1\}^\{(i)\} as the SDF innovation:
+#' Y_\\{2,t+1\\}^\\{(i)\\} = E_\\{t+1\\}\\[SDF_\\{t+1+i\\}\\] - E_t\\[SDF_\\{t+1+i\\}\\]
 #'
 #' This is computed using the compute_sdf_innovations() function.
-#' Then regresses Y_{2,t+1}^{(i)} on PC_t to get residuals W_{2,t+1}^{(i)}.
+#' Then regresses Y_\{2,t+1\}^\{(i)\} on PC_t to get residuals W_\{2,t+1\}^\{(i)\}.
 #'
 #' @importFrom stats lm residuals fitted coef
 #' @importFrom utils data

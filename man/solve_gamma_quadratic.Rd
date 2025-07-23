@@ -15,7 +15,10 @@ solve_gamma_quadratic(pc_j, w1, w2, tau, use_t_minus_1 = TRUE, dates = NULL)
 
 \item{tau}{Numeric, parameter between 0 and 1}
 
-\item{use_t_minus_1}{Logical, if TRUE uses T-1 in denominators (default), if FALSE uses T}
+\item{use_t_minus_1}{Logical, if TRUE uses n-1 in variance/covariance denominators (unbiased),
+if FALSE uses n (biased). Note: W1 and W2 residuals are pre-computed
+using the appropriate timing alignment, so this parameter does NOT
+affect the PC timing.}
 
 \item{dates}{Optional vector of dates corresponding to the time series. If provided, the function
 will return information about which dates were used after removing NA values.}
@@ -49,8 +52,10 @@ where:
 \item c = \[Cov(W1\emph{W2, PC_j)\]^2 / \[Cov(W2^2, PC_j)\]^2 - Var(W1}W2)/Var(W2^2) * tau^2
 }
 
+Note: The input residuals W1 and W2 are expected to be pre-computed using the
+appropriate timing alignment (typically using lagged PCs to predict future values).
 The covariances and variances are computed using empirical estimators with either
-T-1 or T in the denominator based on use_t_minus_1.
+n-1 or n in the denominator based on use_t_minus_1.
 }
 \examples{
 \dontrun{
@@ -65,8 +70,8 @@ w2 <- rnorm(n)
 result <- solve_gamma_quadratic(pc_j, w1, w2, tau = 0.5)
 print(result$roots)
 
-# Use T instead of T-1 in denominators
-result_t <- solve_gamma_quadratic(pc_j, w1, w2, tau = 0.5, use_t_minus_1 = FALSE)
+# Use biased estimator (n instead of n-1 in denominators)
+result_biased <- solve_gamma_quadratic(pc_j, w1, w2, tau = 0.5, use_t_minus_1 = FALSE)
 
 # With dates to track which observations were used
 dates <- seq(as.Date("2020-01-01"), length.out = n, by = "month")

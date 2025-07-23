@@ -27,7 +27,8 @@ compute_w2_residuals(
 
 \item{return_df}{Logical, if TRUE returns a data frame with dates (default FALSE).}
 
-\item{dates}{Optional vector of dates. If NULL and return_df = TRUE, will attempt to extract from data.}
+\item{dates}{Optional vector of dates. If NULL and return_df = TRUE, will attempt to
+extract from data.}
 }
 \value{
 If return_df = FALSE, returns a list containing:
@@ -42,20 +43,20 @@ If return_df = TRUE, returns a data frame with columns:
 \describe{
 \item{date}{Date column}
 \item{maturity}{Maturity identifier}
-\item{residuals}{Residuals W_{2,t+1}}
+\item{residuals}{Residuals W_\\{2,t+1\\}}
 \item{fitted}{Fitted values from the regression}
 }
 }
 \description{
-Computes residuals W_{2,t+1}^{(i)} from regressing Y_{2,t+1}^{(i)} variables
+Computes residuals W_\{2,t+1\}^\{(i)\} from regressing Y_\{2,t+1\}^\{(i)\} variables
 (SDF innovations) on principal components and a constant.
 }
 \details{
-For each maturity i, computes Y_{2,t+1}^{(i)} as the SDF innovation:
-Y_{2,t+1}^{(i)} = E_{t+1}\link{SDF_{t+1+i}} - E_t\link{SDF_{t+1+i}}
+For each maturity i, computes Y_\{2,t+1\}^\{(i)\} as the SDF innovation:
+Y_\\{2,t+1\\}^\\{(i)\\} = E_\\{t+1\\}\[SDF_\\{t+1+i\\}\] - E_t\[SDF_\\{t+1+i\\}\]
 
 This is computed using the compute_sdf_innovations() function.
-Then regresses Y_{2,t+1}^{(i)} on PC_t to get residuals W_{2,t+1}^{(i)}.
+Then regresses Y_\{2,t+1\}^\{(i)\} on PC_t to get residuals W_\{2,t+1\}^\{(i)\}.
 }
 \examples{
 \dontrun{

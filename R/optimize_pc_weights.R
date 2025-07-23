@@ -9,7 +9,7 @@
 #' @param w2 Vector of reduced form residuals for Y2
 #' @param tau Quantile parameter between 0 and 1
 #' @param maturity Maturity index (for Y2 residuals)
-#' @param use_t_minus_1 Logical indicating whether to use lagged PCs
+#' @param use_t_minus_1 Logical, if TRUE uses n-1 in variance/covariance denominators
 #' @param initial_weights Initial weights (default: equal weights)
 #' @param method Optimization method (default: "Nelder-Mead")
 #' @param maxit Maximum iterations (default: 1000)
@@ -59,6 +59,7 @@ optimize_pc_weights <- function(pc_matrix, w1, w2, tau, maturity = NULL,
       w1 = w1,
       w2 = w2,
       tau = tau,
+      normalize_by = "variance", # Original function used variance normalization
       use_t_minus_1 = use_t_minus_1,
       return_df = FALSE,
       dates = NULL
@@ -100,6 +101,7 @@ optimize_pc_weights <- function(pc_matrix, w1, w2, tau, maturity = NULL,
     w1 = w1,
     w2 = w2,
     tau = tau,
+    normalize_by = "variance", # Original function used variance normalization
     use_t_minus_1 = use_t_minus_1,
     return_df = !is.null(dates), # Return df format if dates provided
     dates = dates
