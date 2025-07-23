@@ -43,7 +43,7 @@ If return_df = TRUE, returns a data frame with columns:
 \describe{
 \item{date}{Date column}
 \item{maturity}{Maturity identifier}
-\item{residuals}{Residuals W_\\{2,t+1\\}}
+\item{residuals}{Residuals \eqn{W_{2,t+1}}}
 \item{fitted}{Fitted values from the regression}
 }
 }
@@ -53,7 +53,7 @@ Computes residuals W_\{2,t+1\}^\{(i)\} from regressing Y_\{2,t+1\}^\{(i)\} varia
 }
 \details{
 For each maturity i, computes Y_\{2,t+1\}^\{(i)\} as the SDF innovation:
-Y_\\{2,t+1\\}^\\{(i)\\} = E_\\{t+1\\}\[SDF_\\{t+1+i\\}\] - E_t\[SDF_\\{t+1+i\\}\]
+\eqn{Y_{2,t+1}^{(i)} = E_{t+1}[SDF_{t+1+i}] - E_t[SDF_{t+1+i}]}
 
 This is computed using the compute_sdf_innovations() function.
 Then regresses Y_\{2,t+1\}^\{(i)\} on PC_t to get residuals W_\{2,t+1\}^\{(i)\}.

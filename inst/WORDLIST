@@ -23,6 +23,7 @@ cxx
 cyclocomp
 cyclomatic
 DeHaven
+Deliverables
 deps
 desc
 dev
@@ -78,6 +79,7 @@ ORCID
 parsable
 pc
 pcj
+PMD
 png
 pre
 premia

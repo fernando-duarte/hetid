@@ -115,3 +115,8 @@ yarn-error.log*
 # Scripts and outputs
 scripts/
 results/
+
+# Duplication tracking
+duplication-tracking/
+baseline-duplication-report.xml
+REFACTORING_PLAN.md
