@@ -109,11 +109,11 @@ compute_theta_moments_unified <- function(pc, w1, w2, use_t_minus_1 = TRUE) {
     var_pc = compute_var(pc, use_t_minus_1 = use_t_minus_1)
   )
 
-  # Validate critical moments
-  if (abs(moments$cov_w2sq_pc) < .Machine$double.eps) {
+  # Validate critical moments using academic constants
+  if (abs(moments$cov_w2sq_pc) < HETID_CONSTANTS$MACHINE_EPSILON) {
     stop("Cov(W2^2, PC) is effectively zero, cannot compute quadratic coefficients")
   }
-  if (abs(moments$var_w2sq) < .Machine$double.eps) {
+  if (abs(moments$var_w2sq) < HETID_CONSTANTS$MACHINE_EPSILON) {
     stop("Var(W2^2) is effectively zero, cannot compute quadratic coefficients")
   }
 
@@ -172,10 +172,10 @@ solve_quadratic <- function(a, b, c, discriminant = NULL) {
     discriminant <- b^2 - 4 * a * c
   }
 
-  # Handle special cases
-  if (abs(a) < .Machine$double.eps) {
+  # Handle special cases using academic constants
+  if (abs(a) < HETID_CONSTANTS$MACHINE_EPSILON) {
     # Linear equation case
-    if (abs(b) < .Machine$double.eps) {
+    if (abs(b) < HETID_CONSTANTS$MACHINE_EPSILON) {
       stop("Both a and b coefficients are effectively zero")
     }
     roots <- c(-c / b, NA)

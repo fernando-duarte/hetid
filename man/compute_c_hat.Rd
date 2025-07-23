@@ -2,27 +2,55 @@
 % Please edit documentation in R/compute_c_hat.R
 \name{compute_c_hat}
 \alias{compute_c_hat}
-\title{Compute Supremum Estimator (c_hat)}
+\title{Compute Supremum Estimator (c_hat) for Term Structure Analysis}
 \usage{
 compute_c_hat(yields, term_premia, i)
 }
 \arguments{
-\item{yields}{Data frame with columns y1, y2, ..., containing yields}
+\item{yields}{Numeric matrix of yield curve data from Adrian, Crump, and Moench (2013).
+Rows represent time periods, columns represent maturities (1-10 years).
+Missing values should be coded as NA. All values in annualized percentage points.}
 
-\item{term_premia}{Data frame with columns tp1, tp2, ..., containing term premia}
+\item{term_premia}{Numeric matrix of term premia data from Adrian, Crump, and Moench (2013).
+Rows represent time periods, columns represent maturities (1-10 years).
+Missing values should be coded as NA. All values in annualized percentage points.
+By construction: Term Premium = Yield - Risk-Neutral Yield.}
 
-\item{i}{Integer, the horizon (must be >= 1)}
+\item{i}{Integer specifying the maturity index (column) to analyze.
+Must be between 1 and ncol(yields). Corresponds to maturity in years
+for ACM dataset (i=1 is 1-year, i=2 is 2-year, ..., i=10 is 10-year).
+The maturity index determines which yield curve point is used in the analysis.}
 }
 \value{
 Numeric value of c_hat_i
 }
 \description{
-Computes c_hat_i which estimates sup_t exp(2*E_t[p_(t+i)^(1)])
+Computes c_hat_i which estimates sup_t exp(2*E_t[p_(t+i)^(1)]) following
+the methodology in Adrian, Crump, and Moench (2013).
 }
 \details{
-The formula is:
-c_hat_i = max over t of exp(2*n_hat(i,t))
+The supremum estimator provides an upper bound for the exponential of twice
+the expected log price at horizon i.
 }
+\section{Data Source}{
+
+The ACM data is sourced from the Federal Reserve Bank of New York and is based on
+the methodology described in Adrian, Crump, and Moench (2013). The data contains
+model-implied yields, term premia, and risk-neutral yields for U.S. Treasury securities
+with maturities from 1 to 10 years.
+}
+
+\section{Mathematical Formula}{
+
+\deqn{c\_hat_i = \max_t \exp(2 \cdot n\_hat(i,t))}
+}
+
+\section{Literature Reference}{
+
+This implements the supremum estimator from Adrian, Crump, and Moench (2013)
+for term structure analysis.
+}
+
 \examples{
 \dontrun{
 # Extract ACM data
@@ -36,4 +64,8 @@ c_hat_5 <- compute_c_hat(
 )
 }
 
+}
+\references{
+Adrian, T., Crump, R. K., and Moench, E. (2013). "Pricing the term structure
+with linear regressions." Journal of Financial Economics, 110(1), 110-138.
 }

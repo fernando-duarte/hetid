@@ -200,7 +200,7 @@ test_that("solve_theta_quadratic consistency", {
 
   # All should give same results
   roots_1 <- results[[1]]$roots
-  for (i in 2:5) {
+  for (i in 1:5) {
     if (!is.null(roots_1) && !is.null(results[[i]]$roots)) {
       expect_equal(results[[i]]$roots, roots_1)
     }

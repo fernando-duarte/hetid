@@ -1,16 +1,23 @@
-#' Compute Fourth Moment Estimator (k_hat)
+#' Compute Fourth Moment Estimator (k_hat) for Term Structure Analysis
 #'
 #' Computes k_hat_i which estimates E\[(p_(t+i)^(1) - E_(t+1)\[p_(t+i)^(1)\])^4\]
+#' following the methodology in Adrian, Crump, and Moench (2013).
 #'
-#' @param yields Data frame with columns y1, y2, ..., containing yields
-#' @param term_premia Data frame with columns tp1, tp2, ..., containing term premia
-#' @param i Integer, the horizon (must be >= 1)
+#' @template acm-data
+#' @template param-maturity-index
 #'
 #' @return Numeric value of k_hat_i
 #'
+#' @section Mathematical Formula:
+#' \deqn{k\_hat_i = \frac{1}{T-i} \sum_{t=1}^{T-i} (-y_{t+i}^{(1)} - n\_hat(i-1,t+1))^4}
+#'
+#' @section Literature Reference:
+#' This implements the fourth moment estimator from Adrian, Crump, and Moench (2013)
+#' for term structure analysis.
+#'
 #' @details
-#' The formula is:
-#' k_hat_i = (1/(T-i)) * sum_t=1^(T-i) (-y_(t+i)^(1) - n_hat(i-1,t+1))^4
+#' The fourth moment estimator captures the kurtosis of forecast errors in
+#' the term structure model, providing information about tail risks.
 #'
 #' @export
 #'
@@ -28,9 +35,8 @@
 #' }
 #'
 compute_k_hat <- function(yields, term_premia, i) {
-  if (i < 1) {
-    stop("i must be >= 1")
-  }
+  # Use standardized validation
+  validate_maturity_index(i)
 
   # Get y1 series
   y1 <- yields[["y1"]]

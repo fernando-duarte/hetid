@@ -21,24 +21,16 @@
 #' @seealso \code{\link{download_term_premia}} for downloading the data
 #'
 load_term_premia <- function(auto_download = FALSE) {
-  # Find the CSV file
-  csv_path <- system.file("extdata", "ACMTermPremium.csv", package = "hetid")
-
-  # If not found in installed package, check development directory
-  if (csv_path == "") {
-    csv_path <- file.path("inst", "extdata", "ACMTermPremium.csv")
-  }
+  # Use standardized path management
+  csv_path <- get_acm_data_path()
 
   # Check if file exists
-  if (!file.exists(csv_path)) {
+  if (!check_data_file_exists("ACMTermPremium.csv")) {
     if (auto_download) {
       message("Term premia data not found. Downloading...")
       download_term_premia()
-      # Try loading again
-      csv_path <- system.file("extdata", "ACMTermPremium.csv", package = "hetid")
-      if (csv_path == "") {
-        csv_path <- file.path("inst", "extdata", "ACMTermPremium.csv")
-      }
+      # Update path after download
+      csv_path <- get_acm_data_path()
     } else {
       message("Term premia data not found. Please run download_term_premia() first.")
       return(NULL)

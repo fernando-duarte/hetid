@@ -1,12 +1,13 @@
-#' Solve Quadratic Equation for Theta
+#' Solve Quadratic Equation for Theta (Lewbel 2012 Method)
 #'
 #' Finds the roots of the quadratic equation in theta given time series of PC_jt,
-#' W_1,t+1, W_2,i,t+1, and a parameter tau.
+#' W_1,t+1, W_2,i,t+1, and a parameter tau using the identification through
+#' heteroskedasticity approach from Lewbel (2012).
 #'
 #' @param pc_j Numeric vector, time series of PC_jt (principal component j at time t)
 #' @param w1 Numeric vector, time series of W_1,t+1 (reduced form residual for Y1)
 #' @param w2 Numeric vector, time series of W_2,i,t+1 (reduced form residual for Y2 at maturity i)
-#' @param tau Numeric, parameter between 0 and 1
+#' @template param-tau
 #' @param use_t_minus_1 Logical, if TRUE uses n-1 in variance/covariance denominators (unbiased),
 #'                      if FALSE uses n (biased). Note: W1 and W2 residuals are pre-computed
 #'                      using the appropriate timing alignment, so this parameter does NOT
@@ -27,15 +28,23 @@
 #'                     observations used after removing NA values}
 #' }
 #'
-#' @details
+#' @section Mathematical Formula:
 #' The function solves the quadratic equation:
-#' a*theta^2 + b*theta + c = 0
+#' \deqn{a \theta^2 + b \theta + c = 0}
 #'
 #' where:
-#' - a = (1 - tau^2)
-#' - b = 2*(Cov(W1*W2, W2^2)/Var(W2^2) * tau^2 - Cov(W1*W2, PC_j)/Cov(W2^2, PC_j))
-#' - c = \\[Cov(W1*W2, PC_j)\\]^2 / \\[Cov(W2^2, PC_j)\\]^2 - Var(W1*W2)/Var(W2^2) * tau^2
+#' \deqn{a = (1 - \tau^2)}
+#' \deqn{b = 2(\frac{Cov(W_1 W_2, W_2^2)}{Var(W_2^2)} \tau^2 -
+#'   \frac{Cov(W_1 W_2, PC_j)}{Cov(W_2^2, PC_j)})}
+#' \deqn{c = \frac{[Cov(W_1 W_2, PC_j)]^2}{[Cov(W_2^2, PC_j)]^2} -
+#'   \frac{Var(W_1 W_2)}{Var(W_2^2)} \tau^2}
 #'
+#' @section Literature Reference:
+#' This implements the identification through heteroskedasticity approach from
+#' Lewbel (2012), adapted for term structure analysis following the methodology
+#' in Adrian, Crump, and Moench (2013).
+#'
+#' @details
 #' Note: The input residuals W1 and W2 are expected to be pre-computed using the
 #' appropriate timing alignment (typically using lagged PCs to predict future values).
 #' The covariances and variances are computed using empirical estimators with either

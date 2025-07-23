@@ -33,7 +33,7 @@ optimize_pc_weights <- function(pcs, w1, w2, tau, i = NULL,
                                 initial_weights = NULL,
                                 method = "Nelder-Mead",
                                 maxit = 1000,
-                                penalty_complex = 1e6,
+                                penalty_complex = HETID_CONSTANTS$OPTIMIZATION_PENALTY,
                                 dates = NULL) {
   n_pcs <- ncol(pcs)
 

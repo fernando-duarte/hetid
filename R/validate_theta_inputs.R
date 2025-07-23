@@ -11,38 +11,24 @@
 #' @return List with cleaned data and validation results
 #' @keywords internal
 validate_theta_inputs <- function(pc_j, w1, w2, tau, dates = NULL) {
-  # Validate numeric types for all inputs at once
-  inputs_numeric <- all(sapply(list(pc_j, w1, w2), is.numeric))
-  if (!inputs_numeric) {
-    stop("pc_j, w1, and w2 must be numeric vectors")
-  }
-
-  # Check equal lengths
-  lengths <- c(length(pc_j), length(w1), length(w2))
-  if (length(unique(lengths)) > 1) {
-    stop("All input time series must have the same length")
-  }
+  # Use standardized validation utilities
+  validate_numeric_inputs(pc_j = pc_j, w1 = w1, w2 = w2)
+  validate_time_series_lengths(pc_j, w1, w2)
+  validate_tau_parameter(tau)
 
   # Validate dates if provided
   if (!is.null(dates)) {
-    if (length(dates) != lengths[1]) {
+    if (length(dates) != length(pc_j)) {
       stop("Length of dates must match length of input time series")
     }
-  }
-
-  # Validate tau parameter
-  tau_valid <- is.numeric(tau) && length(tau) == 1 && tau >= 0 && tau <= 1
-  if (!tau_valid) {
-    stop("tau must be a single numeric value between 0 and 1")
   }
 
   # Remove any rows with NA values
   complete_idx <- complete.cases(pc_j, w1, w2)
   n_complete <- sum(complete_idx)
 
-  if (n_complete < 3) {
-    stop("Not enough complete observations (need at least 3)")
-  }
+  # Use standardized minimum observations validation
+  validate_min_observations(n_complete)
 
   # Prepare output
   result <- list(

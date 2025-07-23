@@ -2,27 +2,55 @@
 % Please edit documentation in R/compute_k_hat.R
 \name{compute_k_hat}
 \alias{compute_k_hat}
-\title{Compute Fourth Moment Estimator (k_hat)}
+\title{Compute Fourth Moment Estimator (k_hat) for Term Structure Analysis}
 \usage{
 compute_k_hat(yields, term_premia, i)
 }
 \arguments{
-\item{yields}{Data frame with columns y1, y2, ..., containing yields}
+\item{yields}{Numeric matrix of yield curve data from Adrian, Crump, and Moench (2013).
+Rows represent time periods, columns represent maturities (1-10 years).
+Missing values should be coded as NA. All values in annualized percentage points.}
 
-\item{term_premia}{Data frame with columns tp1, tp2, ..., containing term premia}
+\item{term_premia}{Numeric matrix of term premia data from Adrian, Crump, and Moench (2013).
+Rows represent time periods, columns represent maturities (1-10 years).
+Missing values should be coded as NA. All values in annualized percentage points.
+By construction: Term Premium = Yield - Risk-Neutral Yield.}
 
-\item{i}{Integer, the horizon (must be >= 1)}
+\item{i}{Integer specifying the maturity index (column) to analyze.
+Must be between 1 and ncol(yields). Corresponds to maturity in years
+for ACM dataset (i=1 is 1-year, i=2 is 2-year, ..., i=10 is 10-year).
+The maturity index determines which yield curve point is used in the analysis.}
 }
 \value{
 Numeric value of k_hat_i
 }
 \description{
 Computes k_hat_i which estimates E[(p_(t+i)^(1) - E_(t+1)[p_(t+i)^(1)])^4]
+following the methodology in Adrian, Crump, and Moench (2013).
 }
 \details{
-The formula is:
-k_hat_i = (1/(T-i)) * sum_t=1^(T-i) (-y_(t+i)^(1) - n_hat(i-1,t+1))^4
+The fourth moment estimator captures the kurtosis of forecast errors in
+the term structure model, providing information about tail risks.
 }
+\section{Data Source}{
+
+The ACM data is sourced from the Federal Reserve Bank of New York and is based on
+the methodology described in Adrian, Crump, and Moench (2013). The data contains
+model-implied yields, term premia, and risk-neutral yields for U.S. Treasury securities
+with maturities from 1 to 10 years.
+}
+
+\section{Mathematical Formula}{
+
+\deqn{k\_hat_i = \frac{1}{T-i} \sum_{t=1}^{T-i} (-y_{t+i}^{(1)} - n\_hat(i-1,t+1))^4}
+}
+
+\section{Literature Reference}{
+
+This implements the fourth moment estimator from Adrian, Crump, and Moench (2013)
+for term structure analysis.
+}
+
 \examples{
 \dontrun{
 # Extract ACM data
@@ -36,4 +64,8 @@ k_hat_5 <- compute_k_hat(
 )
 }
 
+}
+\references{
+Adrian, T., Crump, R. K., and Moench, E. (2013). "Pricing the term structure
+with linear regressions." Journal of Financial Economics, 110(1), 110-138.
 }

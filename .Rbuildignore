@@ -97,6 +97,8 @@
 ^hetid_analysis_enhanced\.R$
 ^test_enhanced_analysis\.R$
 ^REFACTORING_PLAN\.md$
+^REFACTORING_COMPLETE\.md$
 ^baseline-duplication-report\.xml$
 ^duplication-tracking$
 ^return_value_patterns\.md$
+^man-roxygen$

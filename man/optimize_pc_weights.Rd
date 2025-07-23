@@ -14,7 +14,7 @@ optimize_pc_weights(
   initial_weights = NULL,
   method = "Nelder-Mead",
   maxit = 1000,
-  penalty_complex = 1e+06,
+  penalty_complex = HETID_CONSTANTS$OPTIMIZATION_PENALTY,
   dates = NULL
 )
 }

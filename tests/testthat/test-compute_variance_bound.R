@@ -42,13 +42,21 @@ test_that("variance bound is positive for all i>1", {
   yields <- data[, grep("^y", names(data))]
   term_premia <- data[, grep("^tp", names(data))]
 
-  # Test all maturities > 1
-  for (i in 2:9) {
+  # Test all maturities (including maturity 1)
+  for (i in 1:9) {
     var_bound_i <- compute_variance_bound(yields, term_premia, i = i)
 
-    expect_gt(var_bound_i, 0,
-      label = paste("Variance bound should be positive for i =", i)
-    )
+    if (i == 1) {
+      # For maturity 1, variance bound should be 0
+      expect_equal(var_bound_i, 0,
+        tolerance = 1e-10,
+        label = "Variance bound should be 0 for i = 1"
+      )
+    } else {
+      expect_gt(var_bound_i, 0,
+        label = paste("Variance bound should be positive for i =", i)
+      )
+    }
   }
 })
 

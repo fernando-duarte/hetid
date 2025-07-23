@@ -8,17 +8,17 @@ NULL
 
 #' Validate inputs for theta optimization
 #' @noRd
-validate_theta_inputs <- function(i, n_pcs, pc_data, maturities) {
+validate_theta_opt_inputs <- function(i, n_pcs, pc_data, maturities) {
+  # Use standardized validation utilities
+  validate_maturity_index(i, max_maturity = max(maturities))
+  validate_n_pcs(n_pcs)
+
   if (i < 2) {
-    stop("Maturity must be >= 2")
+    stop("Maturity must be >= 2 for theta optimization")
   }
 
   if (!i %in% maturities) {
     stop(paste("Maturity", i, "not found in available maturities"))
-  }
-
-  if (n_pcs < 1 || n_pcs > 6) {
-    stop("n_pcs must be between 1 and 6")
   }
 
   if (ncol(pc_data) < n_pcs) {

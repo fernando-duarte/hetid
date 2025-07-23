@@ -5,8 +5,8 @@
 #' This function finds the optimal tau and PC weights that minimize
 #' the distance between the two roots of the quadratic equation.
 #'
-#' @param i Bond maturity in years (must be >= 2)
-#' @param n_pcs Number of principal components to use (J = 1 to 6, default 4)
+#' @template param-maturity-index
+#' @template param-n-pcs
 #' @param pc_data Matrix of principal components (T x K) where K >= n_pcs
 #' @param yields Matrix of yields (T x M) where M is number of maturities
 #' @param term_premia Matrix of term premia (T x M)
@@ -48,7 +48,7 @@ optimize_theta_identification <- function(i,
                                           algorithm = "NLOPT_LN_COBYLA",
                                           verbose = FALSE) {
   # Input validation
-  validate_theta_inputs(i, n_pcs, pc_data, maturities)
+  validate_theta_opt_inputs(i, n_pcs, pc_data, maturities)
 
   # Start timing
   start_time <- Sys.time()
@@ -72,7 +72,7 @@ optimize_theta_identification <- function(i,
   }
 
   # Run multi-start optimization
-  opt_result <- run_multistart_optimization(
+  opt_result <- run_theta_multistart(
     objective_fn = objective_fn,
     constraint_fn = constraint_fn,
     n_pcs = n_pcs,

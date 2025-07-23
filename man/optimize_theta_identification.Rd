@@ -19,9 +19,16 @@ optimize_theta_identification(
 )
 }
 \arguments{
-\item{i}{Bond maturity in years (must be >= 2)}
+\item{i}{Integer specifying the maturity index (column) to analyze.
+Must be between 1 and ncol(yields). Corresponds to maturity in years
+for ACM dataset (i=1 is 1-year, i=2 is 2-year, ..., i=10 is 10-year).
+The maturity index determines which yield curve point is used in the analysis.}
 
-\item{n_pcs}{Number of principal components to use (J = 1 to 6, default 4)}
+\item{n_pcs}{Integer specifying the number of principal components to use.
+Must be between 1 and 6. Default is 4 following Adrian, Crump, and Moench (2013).
+The choice of n_pcs represents a trade-off between capturing yield curve variation
+and maintaining computational stability. More components capture more variation
+but may lead to overfitting in finite samples.}
 
 \item{pc_data}{Matrix of principal components (T x K) where K >= n_pcs}
 

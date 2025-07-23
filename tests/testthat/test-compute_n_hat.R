@@ -24,8 +24,8 @@ test_that("n_hat should generally be negative", {
   yields <- data[, grep("^y", names(data))]
   term_premia <- data[, grep("^tp", names(data))]
 
-  # Test for multiple maturities
-  for (i in 2:9) {
+  # Test for multiple maturities (including maturity 1)
+  for (i in 1:9) {
     n_hat_i <- compute_n_hat(yields, term_premia, i = i)
 
     # Most values should be negative (bonds trade below par)

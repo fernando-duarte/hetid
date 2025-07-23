@@ -27,12 +27,12 @@ create_theta_objective <- function(pcs, w1, w2, n_pcs) {
 
     # Check for errors
     if (!is.null(result$error)) {
-      return(1e6)
+      return(HETID_CONSTANTS$OPTIMIZATION_PENALTY)
     }
 
     # Check if roots are complex
     if (is.complex(result$roots)) {
-      return(1e6)
+      return(HETID_CONSTANTS$OPTIMIZATION_PENALTY)
     }
 
     # Objective: minimize distance between roots

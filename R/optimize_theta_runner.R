@@ -6,13 +6,13 @@
 #' @keywords internal
 NULL
 
-#' Run multi-start optimization
+#' Run multi-start optimization for theta identification
 #' @importFrom nloptr nloptr
 #' @importFrom stats rnorm runif
 #' @noRd
-run_multistart_optimization <- function(objective_fn, constraint_fn, n_pcs,
-                                        tau_bounds, weight_bounds, n_starts,
-                                        algorithm, verbose) {
+run_theta_multistart <- function(objective_fn, constraint_fn, n_pcs,
+                                 tau_bounds, weight_bounds, n_starts,
+                                 algorithm, verbose) {
   # Set up optimization bounds
   lower_bounds <- c(tau_bounds[1], rep(-weight_bounds, n_pcs))
   upper_bounds <- c(tau_bounds[2], rep(weight_bounds, n_pcs))

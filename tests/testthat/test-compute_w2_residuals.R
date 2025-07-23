@@ -22,6 +22,33 @@ test_that("compute_w2_residuals works for single maturity", {
   expect_length(res_y2$r_squared, 1)
 })
 
+test_that("compute_w2_residuals works for maturity 1", {
+  # Load test data
+  data <- extract_acm_data(
+    data_types = c("yields", "term_premia"),
+    frequency = "quarterly"
+  )
+  yields <- data[, grep("^y", names(data))]
+  term_premia <- data[, grep("^tp", names(data))]
+
+  # Test maturity 1 specifically
+  res_y2_mat1 <- compute_w2_residuals(yields, term_premia,
+    maturities = 1, n_pcs = 4
+  )
+
+  expect_type(res_y2_mat1, "list")
+  expect_true("residuals" %in% names(res_y2_mat1))
+  expect_true("r_squared" %in% names(res_y2_mat1))
+
+  # Check that we get valid residuals for maturity 1
+  expect_true("maturity_1" %in% names(res_y2_mat1$residuals))
+  expect_true(length(res_y2_mat1$residuals$maturity_1) > 0)
+
+  # R-squared should be reasonable
+  expect_gt(res_y2_mat1$r_squared[1], 0)
+  expect_lt(res_y2_mat1$r_squared[1], 1)
+})
+
 test_that("compute_w2_residuals works for multiple maturities", {
   # Load test data
   data <- extract_acm_data(
@@ -31,8 +58,8 @@ test_that("compute_w2_residuals works for multiple maturities", {
   yields <- data[, grep("^y", names(data))]
   term_premia <- data[, grep("^tp", names(data))]
 
-  # Test multiple maturities - let the function handle PC loading internally
-  maturities <- c(2, 5, 7)
+  # Test multiple maturities (including maturity 1) - let the function handle PC loading internally
+  maturities <- c(1, 2, 5, 7)
   res_y2 <- compute_w2_residuals(yields, term_premia,
     maturities = maturities, n_pcs = 4
   )

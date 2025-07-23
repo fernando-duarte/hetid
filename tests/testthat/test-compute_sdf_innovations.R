@@ -24,8 +24,8 @@ test_that("SDF innovations have mean near zero", {
   yields <- data[, grep("^y", names(data))]
   term_premia <- data[, grep("^tp", names(data))]
 
-  # Test for multiple maturities
-  for (i in c(2, 5, 8)) {
+  # Test for multiple maturities (including maturity 1)
+  for (i in c(1, 2, 5, 8)) {
     sdf_innov_i <- compute_sdf_innovations(yields, term_premia, i = i)
 
     # Mean should be close to 0

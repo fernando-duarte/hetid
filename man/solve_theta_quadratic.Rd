@@ -2,7 +2,7 @@
 % Please edit documentation in R/solve_theta_quadratic.R
 \name{solve_theta_quadratic}
 \alias{solve_theta_quadratic}
-\title{Solve Quadratic Equation for Theta}
+\title{Solve Quadratic Equation for Theta (Lewbel 2012 Method)}
 \usage{
 solve_theta_quadratic(pc_j, w1, w2, tau, use_t_minus_1 = TRUE, dates = NULL)
 }
@@ -13,7 +13,11 @@ solve_theta_quadratic(pc_j, w1, w2, tau, use_t_minus_1 = TRUE, dates = NULL)
 
 \item{w2}{Numeric vector, time series of W_2,i,t+1 (reduced form residual for Y2 at maturity i)}
 
-\item{tau}{Numeric, parameter between 0 and 1}
+\item{tau}{Numeric value between 0 and 1 specifying the quantile for
+identification in the Lewbel (2012) method. Default is 0.5 (median)
+following the literature. The choice of tau affects the identification
+strength and should be chosen based on the heteroskedasticity pattern
+in the data. Values closer to 0.5 typically provide more robust identification.}
 
 \item{use_t_minus_1}{Logical, if TRUE uses n-1 in variance/covariance denominators (unbiased),
 if FALSE uses n (biased). Note: W1 and W2 residuals are pre-computed
@@ -39,24 +43,35 @@ observations used after removing NA values}
 }
 \description{
 Finds the roots of the quadratic equation in theta given time series of PC_jt,
-W_1,t+1, W_2,i,t+1, and a parameter tau.
+W_1,t+1, W_2,i,t+1, and a parameter tau using the identification through
+heteroskedasticity approach from Lewbel (2012).
 }
 \details{
-The function solves the quadratic equation:
-a\emph{theta^2 + b}theta + c = 0
-
-where:
-\itemize{
-\item a = (1 - tau^2)
-\item b = 2*(Cov(W1\emph{W2, W2^2)/Var(W2^2) * tau^2 - Cov(W1}W2, PC_j)/Cov(W2^2, PC_j))
-\item c = \[Cov(W1\emph{W2, PC_j)\]^2 / \[Cov(W2^2, PC_j)\]^2 - Var(W1}W2)/Var(W2^2) * tau^2
-}
-
 Note: The input residuals W1 and W2 are expected to be pre-computed using the
 appropriate timing alignment (typically using lagged PCs to predict future values).
 The covariances and variances are computed using empirical estimators with either
 n-1 or n in the denominator based on use_t_minus_1.
 }
+\section{Mathematical Formula}{
+
+The function solves the quadratic equation:
+\deqn{a \theta^2 + b \theta + c = 0}
+
+where:
+\deqn{a = (1 - \tau^2)}
+\deqn{b = 2(\frac{Cov(W_1 W_2, W_2^2)}{Var(W_2^2)} \tau^2 -
+  \frac{Cov(W_1 W_2, PC_j)}{Cov(W_2^2, PC_j)})}
+\deqn{c = \frac{[Cov(W_1 W_2, PC_j)]^2}{[Cov(W_2^2, PC_j)]^2} -
+  \frac{Var(W_1 W_2)}{Var(W_2^2)} \tau^2}
+}
+
+\section{Literature Reference}{
+
+This implements the identification through heteroskedasticity approach from
+Lewbel (2012), adapted for term structure analysis following the methodology
+in Adrian, Crump, and Moench (2013).
+}
+
 \examples{
 \dontrun{
 # Generate sample data

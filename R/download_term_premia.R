@@ -24,25 +24,12 @@
 #' Journal of Financial Economics, 110(1), 110-138.
 #'
 download_term_premia <- function(force = FALSE, quiet = FALSE) {
-  # Define URLs and paths
-  url <- "https://www.newyorkfed.org/medialibrary/media/research/data_indicators/ACMTermPremium.xls"
+  # Use academic data source URL from constants
+  url <- DATA_URLS$ACM_TERM_PREMIA
 
-  # Use inst/extdata for the CSV file (will be in extdata/ after installation)
-  pkg_dir <- system.file(package = "hetid")
-  if (pkg_dir == "") {
-    # Package not installed, use current directory structure
-    csv_dir <- file.path("inst", "extdata")
-  } else {
-    # Package installed, use installed location
-    csv_dir <- file.path(pkg_dir, "extdata")
-  }
-
-  # Create directory if it doesn't exist
-  if (!dir.exists(csv_dir)) {
-    dir.create(csv_dir, recursive = TRUE)
-  }
-
-  csv_path <- file.path(csv_dir, "ACMTermPremium.csv")
+  # Use standardized path management
+  validate_data_directory(create_if_missing = TRUE)
+  csv_path <- get_acm_data_path()
 
   # Check if file already exists
   if (file.exists(csv_path) && !force) {
