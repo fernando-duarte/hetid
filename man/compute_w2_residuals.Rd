@@ -66,20 +66,21 @@ Then regresses Y_\{2,t+1\}^\{(i)\} on PC_t to get residuals W_\{2,t+1\}^\{(i)\}.
 }
 \examples{
 \dontrun{
-# Load ACM data
-acm_data <- extract_acm_data()
+# Load ACM data - need maturities 1, i-1, i, i+1 for each maturity i
+# For maturities 2, 3, we need maturities 1, 2, 3, 4
+acm_data <- extract_acm_data(
+  data_types = c("yields", "term_premia"),
+  maturities = c(1, 2, 3, 4)
+)
 yields <- acm_data[, grep("^y", names(acm_data))]
 term_premia <- acm_data[, grep("^tp", names(acm_data))]
 
-# Compute residuals for all maturities
-res_y2 <- compute_w2_residuals(yields, term_premia)
-
-# Compute for specific maturities only
-res_y2_short <- compute_w2_residuals(yields, term_premia, maturities = 1:3)
+# Compute residuals for specific maturities
+res_y2 <- compute_w2_residuals(yields, term_premia, maturities = c(2, 3))
 
 # Get results as data frame
 res_y2_df <- compute_w2_residuals(yields, term_premia,
-  maturities = c(3, 5, 7),
+  maturities = c(2, 3),
   return_df = TRUE
 )
 head(res_y2_df)

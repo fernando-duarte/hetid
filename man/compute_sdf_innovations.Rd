@@ -49,8 +49,12 @@ for t=1 to T-1
 }
 \examples{
 \dontrun{
-# Extract ACM data
-data <- extract_acm_data(data_types = c("yields", "term_premia"))
+# Extract ACM data - need maturities 1, i-1, i, i+1 for maturity i
+# For i=5, we need maturities 1, 4, 5, 6
+data <- extract_acm_data(
+  data_types = c("yields", "term_premia"),
+  maturities = c(1, 4, 5, 6)
+)
 yields <- data[, grep("^y", names(data))]
 term_premia <- data[, grep("^tp", names(data))]
 
