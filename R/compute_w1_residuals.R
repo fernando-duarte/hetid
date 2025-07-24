@@ -54,10 +54,11 @@
 #' )
 #' }
 #'
-compute_w1_residuals <- function(n_pcs = 4, data = NULL, return_df = FALSE) {
+compute_w1_residuals <- function(n_pcs = HETID_CONSTANTS$DEFAULT_N_PCS,
+                                 data = NULL, return_df = FALSE) {
   # Validate inputs
-  if (!n_pcs %in% 1:6) {
-    stop("n_pcs must be between 1 and 6")
+  if (!n_pcs %in% 1:HETID_CONSTANTS$MAX_N_PCS) {
+    stop("n_pcs must be between 1 and ", HETID_CONSTANTS$MAX_N_PCS)
   }
 
   # Load data if not provided

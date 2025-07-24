@@ -4,7 +4,11 @@
 \alias{compute_w1_residuals}
 \title{Compute Reduced Form Residual for Primary Endogenous Variable (Y1)}
 \usage{
-compute_w1_residuals(n_pcs = 4, data = NULL, return_df = FALSE)
+compute_w1_residuals(
+  n_pcs = HETID_CONSTANTS$DEFAULT_N_PCS,
+  data = NULL,
+  return_df = FALSE
+)
 }
 \arguments{
 \item{n_pcs}{Integer, number of principal components to use (1-6). Default is 4.}

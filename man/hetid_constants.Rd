@@ -14,6 +14,14 @@ extracted from financial asset returns}
 \item{MAX_MATURITY}{Maximum maturity index (10) from ACM dataset maturity limit}
 \item{MACHINE_EPSILON}{Machine precision for numerical comparisons}
 \item{MIN_OBSERVATIONS}{Minimum observations required for statistical estimation (3)}
+\item{PERCENT_TO_DECIMAL}{Divisor for percentage to decimal conversion (100)}
+\item{ACM_DATE_FORMAT}{Date format used in ACM data files ("\\%d-\\%b-\\%Y")}
+\item{ISO_DATE_FORMAT}{Standard ISO date format ("\\%Y-\\%m-\\%d")}
+\item{YEAR_FORMAT}{Format for extracting year ("\\%Y")}
+\item{MONTH_FORMAT}{Format for extracting month ("\\%m")}
+\item{CONSUMPTION_GROWTH_COL}{Column name for consumption growth ("gr1.pcecc96")}
+\item{COL_FORMAT_PADDED}{Format pattern for padded column names ("\\%s\\%02d")}
+\item{COL_FORMAT_SIMPLE}{Format pattern for simple column names ("\\%s\\%d")}
 }
 }
 \usage{

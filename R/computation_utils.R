@@ -11,8 +11,8 @@ NULL
 #' @param i Maturity parameter
 #' @keywords internal
 validate_maturity_param <- function(i) {
-  if (i < 1) {
-    stop("i must be >= 1")
+  if (i < HETID_CONSTANTS$MIN_MATURITY) {
+    stop("i must be >= ", HETID_CONSTANTS$MIN_MATURITY)
   }
   invisible(TRUE)
 }
@@ -50,7 +50,7 @@ compute_n_hat_previous <- function(yields, term_premia, i, dates = NULL) {
     if (is.null(y1)) {
       stop("y1 column not found in yields")
     }
-    return(-y1 / 100) # Convert to decimal
+    return(-y1 / HETID_CONSTANTS$PERCENT_TO_DECIMAL) # Convert to decimal
   } else {
     return(compute_n_hat(yields, term_premia, i - 1,
       return_df = FALSE, dates = dates

@@ -47,7 +47,7 @@ load_term_premia <- function(auto_download = FALSE) {
         # Try to convert date - ACM data uses DD-Mon-YYYY format
         tryCatch(
           {
-            df$DATE <- as.Date(df$DATE, format = "%d-%b-%Y")
+            df$DATE <- as.Date(df$DATE, format = HETID_CONSTANTS$ACM_DATE_FORMAT)
           },
           error = function(e) {
             # If that fails, try standard conversion
@@ -59,7 +59,7 @@ load_term_premia <- function(auto_download = FALSE) {
                 # If that fails too, try ISO format
                 tryCatch(
                   {
-                    df$DATE <- as.Date(df$DATE, format = "%Y-%m-%d")
+                    df$DATE <- as.Date(df$DATE, format = HETID_CONSTANTS$ISO_DATE_FORMAT)
                   },
                   error = function(e3) {
                     # Leave as character if all conversions fail

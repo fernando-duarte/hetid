@@ -38,8 +38,8 @@
 #' }
 #'
 compute_n_hat <- function(yields, term_premia, i, return_df = FALSE, dates = NULL) {
-  if (i < 1) {
-    stop("i must be >= 1")
+  if (i < HETID_CONSTANTS$MIN_MATURITY) {
+    stop("i must be >= ", HETID_CONSTANTS$MIN_MATURITY)
   }
 
   # Extract relevant columns
@@ -60,7 +60,7 @@ compute_n_hat <- function(yields, term_premia, i, return_df = FALSE, dates = NUL
   n_hat <- i * y_i - (i + 1) * y_i_plus_1 + (i + 1) * tp_i_plus_1 - i * tp_i
 
   # Convert percentages to decimals (ACM data is in percentage points)
-  n_hat <- n_hat / 100
+  n_hat <- n_hat / HETID_CONSTANTS$PERCENT_TO_DECIMAL
 
   # Return data frame with dates if requested
   if (return_df) {

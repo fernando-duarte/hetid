@@ -7,8 +7,8 @@
 compute_w2_residuals(
   yields,
   term_premia,
-  maturities = 1:9,
-  n_pcs = 4,
+  maturities = HETID_CONSTANTS$MIN_MATURITY:(HETID_CONSTANTS$MAX_MATURITY - 1),
+  n_pcs = HETID_CONSTANTS$DEFAULT_N_PCS,
   pcs = NULL,
   return_df = FALSE,
   dates = NULL

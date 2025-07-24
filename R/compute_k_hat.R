@@ -43,7 +43,7 @@ compute_k_hat <- function(yields, term_premia, i) {
   # Special case for i=1: n_hat_0 = -y1
   if (i == 1) {
     # For i=1, n_hat(0,t) = E_t\[p_(t+0)^(1)\] = p_t^(1) = -y_t^(1)
-    n_hat_i_minus_1 <- -y1 / 100 # Convert to decimal
+    n_hat_i_minus_1 <- -y1 / HETID_CONSTANTS$PERCENT_TO_DECIMAL # Convert to decimal
   } else {
     # Compute n_hat(i-1) series
     n_hat_i_minus_1 <- compute_n_hat(yields, term_premia, i - 1)
@@ -64,7 +64,7 @@ compute_k_hat <- function(yields, term_premia, i) {
   for (t in 1:(n_obs - i)) {
     if (!is.na(y1[t + i]) && !is.na(n_hat_i_minus_1[t + 1])) {
       # Convert y1 from percentage to decimal
-      term <- (-y1[t + i] / 100 - n_hat_i_minus_1[t + 1])^4
+      term <- (-y1[t + i] / HETID_CONSTANTS$PERCENT_TO_DECIMAL - n_hat_i_minus_1[t + 1])^4
       sum_val <- sum_val + term
       count <- count + 1
     }

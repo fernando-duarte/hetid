@@ -6,7 +6,7 @@
 \usage{
 extract_acm_data(
   data_types = c("yields", "term_premia"),
-  maturities = 1:10,
+  maturities = HETID_CONSTANTS$MIN_MATURITY:HETID_CONSTANTS$MAX_MATURITY,
   start_date = NULL,
   end_date = NULL,
   frequency = c("monthly", "quarterly"),

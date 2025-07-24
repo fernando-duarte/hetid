@@ -20,6 +20,14 @@ NULL
 #'   \item{MAX_MATURITY}{Maximum maturity index (10) from ACM dataset maturity limit}
 #'   \item{MACHINE_EPSILON}{Machine precision for numerical comparisons}
 #'   \item{MIN_OBSERVATIONS}{Minimum observations required for statistical estimation (3)}
+#'   \item{PERCENT_TO_DECIMAL}{Divisor for percentage to decimal conversion (100)}
+#'   \item{ACM_DATE_FORMAT}{Date format used in ACM data files ("\%d-\%b-\%Y")}
+#'   \item{ISO_DATE_FORMAT}{Standard ISO date format ("\%Y-\%m-\%d")}
+#'   \item{YEAR_FORMAT}{Format for extracting year ("\%Y")}
+#'   \item{MONTH_FORMAT}{Format for extracting month ("\%m")}
+#'   \item{CONSUMPTION_GROWTH_COL}{Column name for consumption growth ("gr1.pcecc96")}
+#'   \item{COL_FORMAT_PADDED}{Format pattern for padded column names ("\%s\%02d")}
+#'   \item{COL_FORMAT_SIMPLE}{Format pattern for simple column names ("\%s\%d")}
 #' }
 #'
 #' @references
@@ -42,9 +50,23 @@ HETID_CONSTANTS <- list(
 
   # Numerical parameters
   MACHINE_EPSILON = .Machine$double.eps,
+  PERCENT_TO_DECIMAL = 100, # Divisor for percentage conversion
 
   # Statistical requirements
-  MIN_OBSERVATIONS = 3L # Minimum observations needed
+  MIN_OBSERVATIONS = 3L, # Minimum observations needed
+
+  # Date formats
+  ACM_DATE_FORMAT = "%d-%b-%Y", # ACM data date format
+  ISO_DATE_FORMAT = "%Y-%m-%d", # ISO standard date format
+  YEAR_FORMAT = "%Y", # Year extraction format
+  MONTH_FORMAT = "%m", # Month extraction format
+
+  # Column names
+  CONSUMPTION_GROWTH_COL = "gr1.pcecc96", # Consumption growth variable
+
+  # Column format patterns
+  COL_FORMAT_PADDED = "%s%02d", # Padded format (e.g., ACMY01)
+  COL_FORMAT_SIMPLE = "%s%d" # Simple format (e.g., y1)
 )
 
 #' Data Source URLs

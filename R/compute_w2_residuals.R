@@ -56,8 +56,10 @@
 #' )
 #' head(res_y2_df)
 #' }
-compute_w2_residuals <- function(yields, term_premia, maturities = 1:9,
-                                 n_pcs = 4, pcs = NULL, return_df = FALSE, dates = NULL) {
+compute_w2_residuals <- function(yields, term_premia,
+                                 maturities = HETID_CONSTANTS$MIN_MATURITY:(HETID_CONSTANTS$MAX_MATURITY - 1),
+                                 n_pcs = HETID_CONSTANTS$DEFAULT_N_PCS,
+                                 pcs = NULL, return_df = FALSE, dates = NULL) {
   # Validate and prepare inputs
   validated <- validate_w2_inputs(yields, term_premia, maturities) # nolint: object_usage_linter
   yields_df <- validated$yields

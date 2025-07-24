@@ -63,7 +63,7 @@
 #' }
 #'
 extract_acm_data <- function(data_types = c("yields", "term_premia"),
-                             maturities = 1:10,
+                             maturities = HETID_CONSTANTS$MIN_MATURITY:HETID_CONSTANTS$MAX_MATURITY,
                              start_date = NULL,
                              end_date = NULL,
                              frequency = c("monthly", "quarterly"),
@@ -79,8 +79,11 @@ extract_acm_data <- function(data_types = c("yields", "term_premia"),
     )
   }
 
-  if (!all(maturities %in% 1:10)) {
-    stop("Maturities must be integers between 1 and 10")
+  if (!all(maturities %in% HETID_CONSTANTS$MIN_MATURITY:HETID_CONSTANTS$MAX_MATURITY)) {
+    stop(
+      "Maturities must be integers between ",
+      HETID_CONSTANTS$MIN_MATURITY, " and ", HETID_CONSTANTS$MAX_MATURITY
+    )
   }
 
   # Load ACM data
@@ -96,7 +99,7 @@ extract_acm_data <- function(data_types = c("yields", "term_premia"),
   # The load_term_premia function now returns lowercase 'date' column
   # Ensure date column is properly converted to Date type
   if ("date" %in% names(acm_data) && !inherits(acm_data$date, "Date")) {
-    acm_data$date <- as.Date(acm_data$date, format = "%d-%b-%Y")
+    acm_data$date <- as.Date(acm_data$date, format = HETID_CONSTANTS$ACM_DATE_FORMAT)
   }
 
   # Convert dates if provided as strings

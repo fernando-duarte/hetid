@@ -22,8 +22,8 @@ build_acm_col_mapping <- function(data_types, maturities) {
     if (dtype %in% names(mapping_rules)) {
       rule <- mapping_rules[[dtype]]
       for (mat in maturities) {
-        old_col <- sprintf("%s%02d", rule$prefix_old, mat)
-        new_col <- sprintf("%s%d", rule$prefix_new, mat)
+        old_col <- sprintf(HETID_CONSTANTS$COL_FORMAT_PADDED, rule$prefix_old, mat)
+        new_col <- sprintf(HETID_CONSTANTS$COL_FORMAT_SIMPLE, rule$prefix_new, mat)
         col_mapping[[new_col]] <- old_col
       }
     }
