@@ -32,7 +32,7 @@
 ^dev$
 ^inst/examples$
 ^scripts$
-^scripts_new$
+^scripts_old$
 ^revdep$
 
 # Testing

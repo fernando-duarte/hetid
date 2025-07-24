@@ -114,7 +114,7 @@ yarn-error.log*
 
 # Scripts and outputs
 scripts/
-scripts_new/
+scripts_old/
 results/
 
 # Duplication tracking
