@@ -1,13 +1,5 @@
 #' Package Constants
 #'
-#' Constants used throughout the hetid package.
-#'
-#' @name hetid_constants
-#' @keywords internal
-NULL
-
-#' Package Constants
-#'
 #' Constants used for computations and data processing.
 #' All values are documented with their sources.
 #'
