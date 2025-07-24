@@ -11,6 +11,6 @@ Character string with full path to ACM data file
 }
 \description{
 Specialized function for ACM term premia data file path.
-Provides academic research context for the specific dataset.
+Provides path for the specific dataset.
 }
 \keyword{internal}

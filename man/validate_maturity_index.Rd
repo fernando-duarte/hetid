@@ -15,6 +15,6 @@ validate_maturity_index(i, max_maturity = HETID_CONSTANTS$MAX_MATURITY)
 Invisible TRUE if valid, stops with informative error if invalid
 }
 \description{
-Validates maturity index against ACM dataset constraints with academic context.
+Validates maturity index against dataset constraints.
 }
 \keyword{internal}

@@ -3,7 +3,7 @@
 \docType{data}
 \name{DATA_URLS}
 \alias{DATA_URLS}
-\title{Academic Data Source URLs (Versioned for Reproducibility)}
+\title{Data Source URLs}
 \format{
 List containing versioned data source URLs:
 \describe{
@@ -15,8 +15,8 @@ List containing versioned data source URLs:
 DATA_URLS
 }
 \description{
-URLs for academic data sources with version control for research reproducibility.
-These URLs are documented and versioned to ensure reproducible research.
+URLs for external data sources.
+These URLs are documented for data access.
 }
 \references{
 Adrian, T., Crump, R. K., and Moench, E. (2013). "Pricing the term structure

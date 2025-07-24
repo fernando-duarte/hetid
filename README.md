@@ -19,16 +19,13 @@ heteroskedasticity methods from Lewbel (2012) for triangular systems,
 with applications to the **Volatility Financial Conditions Index
 (VFCI)** developed by Adrian, DeHaven, Duarte, and Iyer.
 
-This package provides a complete toolkit for empirical macroeconomic
-analysis using heteroskedasticity-based identification, including:
+This package provides tools for working with heteroskedasticity-based
+identification methods:
 
-- **Data Management**: Access to ACM term structure data and economic
-  variables
-- **Bond Pricing**: Comprehensive bond pricing calculations and moment
-  estimators
-- **Identification**: Implementation of Lewbel (2012) identification
-  methods
-- **Optimization**: Tools for finding optimal identification parameters
+- **Data Management**: Access to ACM term structure data
+- **Bond Pricing**: Bond pricing calculations and moment estimators
+- **Residual Computation**: Implementation of Lewbel (2012)
+  identification methods
 
 ## Key Methodology
 
@@ -63,7 +60,7 @@ pak::pak("fernando-duarte/hetid")
 
 - **ACM Term Structure Data**: Monthly yields, term premia, and
   risk-neutral yields (1-10 years)
-- **Economic Variables**: Quarterly macroeconomic and financial data
+- **Economic Variables**: Quarterly economic and financial data
 - **Automatic Updates**: Download latest data from Federal Reserve
   sources
 - **Data Validation**: Built-in checks for data consistency and
@@ -85,22 +82,8 @@ pak::pak("fernando-duarte/hetid")
 
 - **Reduced Form Residuals**: Compute W₁ and W₂ residuals for
   identification
-- **Quadratic Solvers**: Solve identification equations for structural
-  parameters θ
-- **Principal Component Optimization**: Find optimal PC weights for
-  identification
 - **Multi-maturity Analysis**: Simultaneous estimation across the yield
   curve
-
-### ⚡ Optimization Tools
-
-- **Weight Optimization**: Find optimal principal component combinations
-- **Multi-start Algorithms**: Robust optimization with multiple starting
-  points
-- **Constraint Handling**: Built-in constraints for economic
-  interpretability
-- **Convergence Diagnostics**: Comprehensive optimization result
-  analysis
 
 ## Quick Start
 
@@ -121,21 +104,7 @@ w2_residuals <- compute_w2_residuals(
   maturities = c(2, 5, 10)
 )
 
-# 3. Solve for Structural Parameters
-result <- solve_theta_quadratic(
-  pc_j = variables$pc1,
-  w1 = w1_residuals$residuals,
-  w2 = w2_residuals$residuals[[1]],
-  tau = 0.5
-)
-
-# 4. Optimization (Optional)
-optimal <- optimize_pc_weights(
-  pcs = as.matrix(variables[, paste0("pc", 1:4)]),
-  w1 = w1_residuals$residuals,
-  w2 = w2_residuals$residuals[[1]],
-  tau = 0.5
-)
+# 3. Further analysis requires external optimization tools
 ```
 
 ### Bond Pricing Examples
@@ -172,16 +141,7 @@ system:
     Y₂,t+1 = γ' Zₜ + ε₂,t+1
 
 The key insight from Lewbel (2012) is that identification can be
-achieved through the moment condition:
-
-    E[ε₁,t+1 ε₂,t+1 | Zₜ] = τ · Var(ε₂,t+1 | Zₜ)
-
-This leads to a quadratic equation in θ:
-
-    a θ² + b θ + c = 0
-
-Where the coefficients depend on sample moments of the residuals and
-principal components.
+achieved through heteroskedasticity-based moment conditions.
 
 ## Function Reference
 
@@ -204,14 +164,6 @@ principal components.
 
 - `compute_w1_residuals()` - Primary endogenous variable residuals
 - `compute_w2_residuals()` - Secondary endogenous variable residuals
-- `solve_theta_quadratic()` - Solve identification equations
-- `solve_theta_quadratic_lincomb()` - Solve with PC combinations
-
-### Optimization Functions
-
-- `optimize_pc_weights()` - Optimize principal component weights
-- `optimize_theta_identification()` - Full identification optimization
-- `optimize_theta_all_maturities()` - Multi-maturity optimization
 
 ## Data Sources
 
@@ -220,36 +172,9 @@ The package provides access to:
 - **ACM Term Structure Data**: Monthly data from Adrian, Crump, and
   Moench (2013) including yields, term premia, and risk-neutral yields
   for 1-10 year maturities
-- **Economic Variables**: Quarterly macroeconomic and financial
-  variables including GDP, inflation, financial conditions indices, and
-  principal components
-
-## Analysis Scripts
-
-The repository includes example scripts (not part of the package) for
-comprehensive analysis:
-
-1.  **`hetid_analysis_script.R`**: Complete analysis script that
-    computes γ₁ roots for all combinations of principal components
-    (j=1,…,J) and maturities (i=1,…,10)
-
-2.  **`hetid_interactive_analysis.R`**: Interactive version allowing
-    user to specify parameters and explore different configurations
-
-3.  **`example_hetid_analysis.R`**: Simple demonstration of basic
-    package functionality
-
-To run the full analysis:
-
-``` r
-source("hetid_analysis_script.R")
-```
-
-Or for interactive exploration:
-
-``` r
-source("hetid_interactive_analysis.R")
-```
+- **Economic Variables**: Quarterly economic and financial variables
+  including GDP, inflation, financial conditions indices, and principal
+  components
 
 ## References
 

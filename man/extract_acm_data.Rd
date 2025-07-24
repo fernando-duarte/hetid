@@ -15,7 +15,7 @@ extract_acm_data(
 }
 \arguments{
 \item{data_types}{Character vector specifying which data to extract.
-Options: "yields", "term_premia", "risk_neutral".
+Options: "yields", "term_premia", "risk_neutral_yields".
 Default is c("yields", "term_premia").}
 
 \item{maturities}{Numeric vector of maturities (1-10 years).
@@ -39,7 +39,7 @@ Column naming convention:
 \itemize{
 \item Yields: y1, y2, ..., y10
 \item Term premia: tp1, tp2, ..., tp10
-\item Risk-neutral yields: rn1, rn2, ..., rn10
+\item Risk-neutral yields: rny1, rny2, ..., rny10
 }
 }
 \description{
@@ -80,7 +80,7 @@ data <- extract_acm_data(
 
 # Extract all three data types for 5-year maturity
 data <- extract_acm_data(
-  data_types = c("yields", "term_premia", "risk_neutral"),
+  data_types = c("yields", "term_premia", "risk_neutral_yields"),
   maturities = 5
 )
 }

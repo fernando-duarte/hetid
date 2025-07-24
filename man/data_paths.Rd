@@ -2,9 +2,9 @@
 % Please edit documentation in R/data_paths.R
 \name{data_paths}
 \alias{data_paths}
-\title{Simple Path Management for Academic Data}
+\title{Path Management Utilities}
 \description{
-Simple, reliable path resolution functions for academic research data
+Path resolution functions for package data
 that work consistently across development and installed package environments.
 }
 \keyword{internal}

@@ -66,7 +66,7 @@ compute_n_hat <- function(yields, term_premia, i, return_df = FALSE, dates = NUL
   if (return_df) {
     # Use provided dates, or create generic time index
     if (is.null(dates)) {
-      dates <- 1:nrow(yields)
+      dates <- seq_len(nrow(yields))
     }
 
     # Ensure dates is the same length as the data

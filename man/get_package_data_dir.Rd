@@ -11,6 +11,6 @@ Character string with path to package data directory
 }
 \description{
 Returns the appropriate data directory path for both development and
-installed package environments, ensuring reliable access to academic datasets.
+installed package environments, ensuring reliable access to datasets.
 }
 \keyword{internal}

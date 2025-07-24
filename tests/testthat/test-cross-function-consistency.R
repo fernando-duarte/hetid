@@ -189,7 +189,7 @@ test_that("quarterly data uses last month of quarter", {
   expect_true(all(matching_dates))
 
   # For a sample of quarterly dates, verify they match the monthly data
-  sample_dates <- quarterly_data$date[1:min(10, nrow(quarterly_data))]
+  sample_dates <- quarterly_data$date[seq_len(min(10, nrow(quarterly_data)))]
   for (date in sample_dates) {
     # Find the quarterly value
     q_row <- quarterly_data[quarterly_data$date == date, ]

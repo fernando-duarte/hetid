@@ -13,6 +13,6 @@ validate_time_series_lengths(...)
 Invisible TRUE if valid, stops with informative error if invalid
 }
 \description{
-Validates that multiple time series have consistent lengths for academic analysis.
+Validates that multiple time series have consistent lengths.
 }
 \keyword{internal}

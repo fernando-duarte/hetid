@@ -101,7 +101,8 @@ expect_time_series <- function(result, expected_length = NULL, allow_na = TRUE, 
 #' @param expected_rows Expected number of rows (optional)
 #' @param label Label for the expectation
 #' @keywords internal
-expect_standard_dataframe <- function(result, expected_cols, expected_rows = NULL, label = "result") {
+expect_standard_dataframe <- function(result, expected_cols, expected_rows = NULL,
+                                      label = "result") {
   expect_s3_class(result, "data.frame")
   expect_named(result, expected_cols)
 

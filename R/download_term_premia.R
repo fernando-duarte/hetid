@@ -24,7 +24,7 @@
 #' Journal of Financial Economics, 110(1), 110-138.
 #'
 download_term_premia <- function(force = FALSE, quiet = FALSE) {
-  # Use academic data source URL from constants
+  # Use data source URL from constants
   url <- DATA_URLS$ACM_TERM_PREMIA
 
   # Use standardized path management

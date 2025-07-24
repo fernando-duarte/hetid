@@ -14,6 +14,6 @@ Invisible TRUE if successful, stops with error if validation fails
 }
 \description{
 Ensures the data directory exists and is accessible.
-Creates directory if needed for academic research workflows.
+Creates directory if needed.
 }
 \keyword{internal}

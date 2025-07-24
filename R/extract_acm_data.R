@@ -5,7 +5,7 @@
 #' Optionally converts monthly data to quarterly frequency.
 #'
 #' @param data_types Character vector specifying which data to extract.
-#'   Options: "yields", "term_premia", "risk_neutral".
+#'   Options: "yields", "term_premia", "risk_neutral_yields".
 #'   Default is c("yields", "term_premia").
 #' @param maturities Numeric vector of maturities (1-10 years).
 #'   Default is 1:10 (all maturities).
@@ -22,7 +22,7 @@
 #'   Column naming convention:
 #'   - Yields: y1, y2, ..., y10
 #'   - Term premia: tp1, tp2, ..., tp10
-#'   - Risk-neutral yields: rn1, rn2, ..., rn10
+#'   - Risk-neutral yields: rny1, rny2, ..., rny10
 #'
 #' @details
 #' The ACM data contains:
@@ -57,7 +57,7 @@
 #'
 #' # Extract all three data types for 5-year maturity
 #' data <- extract_acm_data(
-#'   data_types = c("yields", "term_premia", "risk_neutral"),
+#'   data_types = c("yields", "term_premia", "risk_neutral_yields"),
 #'   maturities = 5
 #' )
 #' }
@@ -71,7 +71,7 @@ extract_acm_data <- function(data_types = c("yields", "term_premia"),
   # Validate inputs
   frequency <- match.arg(frequency)
 
-  valid_types <- c("yields", "term_premia", "risk_neutral")
+  valid_types <- c("yields", "term_premia", "risk_neutral_yields")
   if (!all(data_types %in% valid_types)) {
     stop(
       "Invalid data_types. Must be one or more of: ",

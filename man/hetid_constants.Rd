@@ -3,17 +3,16 @@
 \docType{data}
 \name{HETID_CONSTANTS}
 \alias{HETID_CONSTANTS}
-\title{Academic Research Constants}
+\title{Package Constants}
 \format{
-List containing academic research constants:
+List containing package constants:
 \describe{
-\item{DEFAULT_N_PCS}{Standard number of principal components (4) extracted from financial asset returns}
+\item{DEFAULT_N_PCS}{Standard number of principal components (4)
+extracted from financial asset returns}
 \item{MAX_N_PCS}{Maximum number of principal components (6) for computational stability}
 \item{MIN_MATURITY}{Minimum maturity index (1) from ACM data availability constraint}
 \item{MAX_MATURITY}{Maximum maturity index (10) from ACM dataset maturity limit}
-\item{OPTIMIZATION_PENALTY}{Penalty for constraint violations (1e6) in optimization}
 \item{MACHINE_EPSILON}{Machine precision for numerical comparisons}
-\item{DEFAULT_TAU}{Default quantile parameter (0.5) for median identification from Lewbel (2012)}
 \item{MIN_OBSERVATIONS}{Minimum observations required for statistical estimation (3)}
 }
 }
@@ -21,8 +20,8 @@ List containing academic research constants:
 HETID_CONSTANTS
 }
 \description{
-Constants with literature context for academic research reproducibility.
-All values are documented with their academic sources and rationale.
+Constants used for computations and data processing.
+All values are documented with their sources.
 }
 \references{
 Adrian, T., Crump, R. K., and Moench, E. (2013). "Pricing the term structure

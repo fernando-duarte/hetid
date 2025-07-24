@@ -27,7 +27,7 @@ validate_w2_inputs <- function(yields, term_premia, maturities) {
   # Use standardized data dimension validation
   validate_data_dimensions(yields_df, term_premia_df)
 
-  # Validate maturity range using academic constants
+  # Validate maturity range
   max_maturity <- min(HETID_CONSTANTS$MAX_MATURITY, ncol(yields_df), ncol(term_premia_df))
   valid_maturities <- maturities[maturities <= max_maturity]
 
@@ -72,7 +72,7 @@ load_w2_pcs <- function(pcs, n_pcs, n_obs) {
 
     # Return the PCs as-is - alignment will be handled by process_w2_maturity
     # This is expected when using quarterly ACM data with variables data
-    return(pcs)
+    pcs
   } else {
     # User provided PCs
     pcs <- as.matrix(pcs)
@@ -82,7 +82,7 @@ load_w2_pcs <- function(pcs, n_pcs, n_obs) {
       stop("Number of rows in user-provided pcs must match number of rows in yields")
     }
 
-    return(pcs)
+    pcs
   }
 }
 

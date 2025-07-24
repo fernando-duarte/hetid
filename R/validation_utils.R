@@ -1,7 +1,6 @@
-#' Simple Validation Utilities for Academic Research Code
+#' Validation Utilities
 #'
-#' Simple validation helpers that consolidate common input checking patterns
-#' while preserving mathematical clarity and academic research context.
+#' Validation helpers that consolidate common input checking patterns.
 #'
 #' @name validation_utils
 #' @keywords internal
@@ -9,7 +8,7 @@ NULL
 
 #' Validate Maturity Index
 #'
-#' Validates maturity index against ACM dataset constraints with academic context.
+#' Validates maturity index against dataset constraints.
 #'
 #' @param i Integer maturity index to validate
 #' @param max_maturity Maximum allowed maturity (default from ACM dataset limit)
@@ -24,7 +23,7 @@ validate_maturity_index <- function(i, max_maturity = HETID_CONSTANTS$MAX_MATURI
   if (i < HETID_CONSTANTS$MIN_MATURITY || i > max_maturity) {
     stop(
       "Maturity index i must be between ", HETID_CONSTANTS$MIN_MATURITY,
-      " and ", max_maturity, " (ACM dataset constraint)"
+      " and ", max_maturity
     )
   }
 
@@ -33,7 +32,7 @@ validate_maturity_index <- function(i, max_maturity = HETID_CONSTANTS$MAX_MATURI
 
 #' Validate Data Dimensions
 #'
-#' Validates that yields and term premia have consistent dimensions for academic analysis.
+#' Validates that yields and term premia have consistent dimensions.
 #'
 #' @param yields Yields data (matrix or data frame)
 #' @param term_premia Term premia data (matrix or data frame)
@@ -60,10 +59,9 @@ validate_data_dimensions <- function(yields, term_premia) {
 
 #' Validate Number of Principal Components
 #'
-#' Validates n_pcs parameter for principal components extracted from financial asset returns
-#' against academic literature and computational constraints.
+#' Validates n_pcs parameter for principal components.
 #'
-#' @param n_pcs Number of principal components extracted from financial asset returns to validate
+#' @param n_pcs Number of principal components to validate
 #'
 #' @return Invisible TRUE if valid, stops with informative error if invalid
 #' @keywords internal
@@ -75,39 +73,19 @@ validate_n_pcs <- function(n_pcs) {
   if (n_pcs < 1 || n_pcs > HETID_CONSTANTS$MAX_N_PCS) {
     stop(
       "n_pcs must be between 1 and ", HETID_CONSTANTS$MAX_N_PCS,
-      " (computational stability constraint from ACM 2013)"
     )
   }
 
   invisible(TRUE)
 }
 
-#' Validate Tau Parameter
-#'
-#' Validates tau parameter for Lewbel (2012) identification method.
-#'
-#' @param tau Quantile parameter to validate
-#'
-#' @return Invisible TRUE if valid, stops with informative error if invalid
-#' @keywords internal
-validate_tau_parameter <- function(tau) {
-  if (!is.numeric(tau) || length(tau) != 1 || !is.finite(tau)) {
-    stop("tau must be a single finite numeric value")
-  }
-
-  if (tau < 0 || tau > 1) {
-    stop("tau must be between 0 and 1 (quantile parameter from Lewbel 2012)")
-  }
-
-  invisible(TRUE)
-}
 
 #' Validate Minimum Observations
 #'
 #' Validates that sufficient observations are available for statistical estimation.
 #'
 #' @param n Number of observations to validate
-#' @param min_obs Minimum required observations (default from academic standards)
+#' @param min_obs Minimum required observations
 #'
 #' @return Invisible TRUE if valid, stops with informative error if invalid
 #' @keywords internal
@@ -119,7 +97,7 @@ validate_min_observations <- function(n, min_obs = HETID_CONSTANTS$MIN_OBSERVATI
   if (n < min_obs) {
     stop(
       "Not enough complete observations (need at least ", min_obs,
-      " for statistical estimation)"
+      ")"
     )
   }
 
@@ -128,7 +106,7 @@ validate_min_observations <- function(n, min_obs = HETID_CONSTANTS$MIN_OBSERVATI
 
 #' Validate Time Series Lengths
 #'
-#' Validates that multiple time series have consistent lengths for academic analysis.
+#' Validates that multiple time series have consistent lengths.
 #'
 #' @param ... Time series vectors to validate
 #'

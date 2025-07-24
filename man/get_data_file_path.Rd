@@ -14,6 +14,6 @@ Character string with full path to data file
 }
 \description{
 Constructs full path to a data file in the package data directory.
-Provides consistent path resolution for academic research reproducibility.
+Provides consistent path resolution.
 }
 \keyword{internal}

@@ -56,8 +56,6 @@ Federal Reserve sources
 \subsection{Identification Methods:}{
 \itemize{
 \item \strong{Reduced Form Residuals}: Compute W1 and W2 residuals for identification
-\item \strong{Quadratic Solvers}: Solve identification equations for structural parameters
-\item \strong{Optimization}: Find optimal principal component weights
 \item \strong{Multi-maturity Analysis}: Simultaneous estimation across yield curve
 }}
 }
@@ -77,21 +75,7 @@ w2_residuals <- compute_w2_residuals(
   maturities = c(2, 5, 10)
 )
 
-# 3. Solve for Structural Parameters
-result <- solve_theta_quadratic(
-  pc_j = variables$pc1,
-  w1 = w1_residuals$residuals,
-  w2 = w2_residuals$residuals[[1]],
-  tau = 0.5
-)
-
-# 4. Optimization (Optional)
-optimal <- optimize_pc_weights(
-  pcs = as.matrix(variables[, paste0("pc", 1:4)]),
-  w1 = w1_residuals$residuals,
-  w2 = w2_residuals$residuals[[1]],
-  tau = 0.5
-)
+# 3. Further analysis requires external optimization tools
 }
 }
 
@@ -130,15 +114,6 @@ principal components of financial asset returns.}
 \itemize{
 \item \code{\link{compute_w1_residuals}()}: Primary endogenous variable residuals
 \item \code{\link{compute_w2_residuals}()}: Secondary endogenous variable residuals
-\item \code{\link{solve_theta_quadratic}()}: Solve identification equations
-\item \code{\link{solve_theta_quadratic_lincomb}()}: Solve with PC combinations
-}}
-
-\subsection{Optimization Functions:}{
-\itemize{
-\item \code{\link{optimize_pc_weights}()}: Optimize PC weights
-\item \code{\link{optimize_theta_identification}()}: Full identification optimization
-\item \code{\link{optimize_theta_all_maturities}()}: Multi-maturity optimization
 }}
 }
 
@@ -148,11 +123,8 @@ The identification strategy exploits the relationship:
 \deqn{Y_{1,t+1} = \theta Y_{2,t+1} + \epsilon_{1,t+1}}
 \deqn{Y_{2,t+1} = \gamma' Z_t + \epsilon_{2,t+1}}
 
-Where identification is achieved through the moment condition:
-\deqn{E[\epsilon_{1,t+1} \epsilon_{2,t+1} | Z_t] = \tau \cdot Var(\epsilon_{2,t+1} | Z_t)}
-
-This leads to a quadratic equation in \eqn{\theta} that can be solved using
-the functions in this package.
+Where identification is achieved through heteroskedasticity-based moment conditions
+as described in Lewbel (2012).
 }
 
 \references{

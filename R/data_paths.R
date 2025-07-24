@@ -1,6 +1,6 @@
-#' Simple Path Management for Academic Data
+#' Path Management Utilities
 #'
-#' Simple, reliable path resolution functions for academic research data
+#' Path resolution functions for package data
 #' that work consistently across development and installed package environments.
 #'
 #' @name data_paths
@@ -10,12 +10,12 @@ NULL
 #' Get Package Data Directory
 #'
 #' Returns the appropriate data directory path for both development and
-#' installed package environments, ensuring reliable access to academic datasets.
+#' installed package environments, ensuring reliable access to datasets.
 #'
 #' @return Character string with path to package data directory
 #' @keywords internal
 get_package_data_dir <- function() {
-  # Simple, reliable path resolution for academic data
+  # Path resolution for package data
   pkg_dir <- system.file(package = "hetid")
 
   if (pkg_dir == "") {
@@ -30,7 +30,7 @@ get_package_data_dir <- function() {
 #' Get Data File Path
 #'
 #' Constructs full path to a data file in the package data directory.
-#' Provides consistent path resolution for academic research reproducibility.
+#' Provides consistent path resolution.
 #'
 #' @param filename Character string with filename (including extension)
 #'
@@ -47,7 +47,7 @@ get_data_file_path <- function(filename) {
 #' Check Data File Exists
 #'
 #' Checks if a data file exists in the package data directory.
-#' Useful for academic research workflows that depend on external data.
+#' Useful for workflows that depend on external data.
 #'
 #' @param filename Character string with filename (including extension)
 #'
@@ -61,7 +61,7 @@ check_data_file_exists <- function(filename) {
 #' Get ACM Data File Path
 #'
 #' Specialized function for ACM term premia data file path.
-#' Provides academic research context for the specific dataset.
+#' Provides path for the specific dataset.
 #'
 #' @return Character string with full path to ACM data file
 #' @keywords internal
@@ -72,7 +72,7 @@ get_acm_data_path <- function() {
 #' Validate Data Directory
 #'
 #' Ensures the data directory exists and is accessible.
-#' Creates directory if needed for academic research workflows.
+#' Creates directory if needed.
 #'
 #' @param create_if_missing Logical, whether to create directory if it doesn't exist
 #'

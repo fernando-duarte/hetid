@@ -615,17 +615,15 @@ padding-top: 0px;
 heteroskedasticity methods from Lewbel (2012) for triangular systems,
 with applications to the <strong>Volatility Financial Conditions Index
 (VFCI)</strong> developed by Adrian, DeHaven, Duarte, and Iyer.</p>
-<p>This package provides a complete toolkit for empirical macroeconomic
-analysis using heteroskedasticity-based identification, including:</p>
+<p>This package provides tools for working with heteroskedasticity-based
+identification methods:</p>
 <ul>
-<li><strong>Data Management</strong>: Access to ACM term structure data
-and economic variables</li>
-<li><strong>Bond Pricing</strong>: Comprehensive bond pricing
-calculations and moment estimators</li>
-<li><strong>Identification</strong>: Implementation of Lewbel (2012)
-identification methods</li>
-<li><strong>Optimization</strong>: Tools for finding optimal
-identification parameters</li>
+<li><strong>Data Management</strong>: Access to ACM term structure
+data</li>
+<li><strong>Bond Pricing</strong>: Bond pricing calculations and moment
+estimators</li>
+<li><strong>Residual Computation</strong>: Implementation of Lewbel
+(2012) identification methods</li>
 </ul>
 <h2 id="key-methodology">Key Methodology</h2>
 <p>The package implements the identification through heteroskedasticity
@@ -647,7 +645,7 @@ variables are unavailable or weak.</p>
 <ul>
 <li><strong>ACM Term Structure Data</strong>: Monthly yields, term
 premia, and risk-neutral yields (1-10 years)</li>
-<li><strong>Economic Variables</strong>: Quarterly macroeconomic and
+<li><strong>Economic Variables</strong>: Quarterly economic and
 financial data</li>
 <li><strong>Automatic Updates</strong>: Download latest data from
 Federal Reserve sources</li>
@@ -675,23 +673,8 @@ errors</li>
 <ul>
 <li><strong>Reduced Form Residuals</strong>: Compute W₁ and W₂ residuals
 for identification</li>
-<li><strong>Quadratic Solvers</strong>: Solve identification equations
-for structural parameters θ</li>
-<li><strong>Principal Component Optimization</strong>: Find optimal PC
-weights for identification</li>
 <li><strong>Multi-maturity Analysis</strong>: Simultaneous estimation
 across the yield curve</li>
-</ul>
-<h3 id="zap-optimization-tools">⚡ Optimization Tools</h3>
-<ul>
-<li><strong>Weight Optimization</strong>: Find optimal principal
-component combinations</li>
-<li><strong>Multi-start Algorithms</strong>: Robust optimization with
-multiple starting points</li>
-<li><strong>Constraint Handling</strong>: Built-in constraints for
-economic interpretability</li>
-<li><strong>Convergence Diagnostics</strong>: Comprehensive optimization
-result analysis</li>
 </ul>
 <h2 id="quick-start">Quick Start</h2>
 <h3 id="basic-workflow">Basic Workflow</h3>
@@ -709,21 +692,7 @@ result analysis</li>
 <span id="cb4-12"><a href="#cb4-12" tabindex="-1"></a>  <span class="at">maturities =</span> <span class="fu">c</span>(<span class="dv">2</span>, <span class="dv">5</span>, <span class="dv">10</span>)</span>
 <span id="cb4-13"><a href="#cb4-13" tabindex="-1"></a>)</span>
 <span id="cb4-14"><a href="#cb4-14" tabindex="-1"></a></span>
-<span id="cb4-15"><a href="#cb4-15" tabindex="-1"></a><span class="co"># 3. Solve for Structural Parameters</span></span>
-<span id="cb4-16"><a href="#cb4-16" tabindex="-1"></a>result <span class="ot">&lt;-</span> <span class="fu">solve_theta_quadratic</span>(</span>
-<span id="cb4-17"><a href="#cb4-17" tabindex="-1"></a>  <span class="at">pc_j =</span> variables<span class="sc">$</span>pc1,</span>
-<span id="cb4-18"><a href="#cb4-18" tabindex="-1"></a>  <span class="at">w1 =</span> w1_residuals<span class="sc">$</span>residuals,</span>
-<span id="cb4-19"><a href="#cb4-19" tabindex="-1"></a>  <span class="at">w2 =</span> w2_residuals<span class="sc">$</span>residuals[[<span class="dv">1</span>]],</span>
-<span id="cb4-20"><a href="#cb4-20" tabindex="-1"></a>  <span class="at">tau =</span> <span class="fl">0.5</span></span>
-<span id="cb4-21"><a href="#cb4-21" tabindex="-1"></a>)</span>
-<span id="cb4-22"><a href="#cb4-22" tabindex="-1"></a></span>
-<span id="cb4-23"><a href="#cb4-23" tabindex="-1"></a><span class="co"># 4. Optimization (Optional)</span></span>
-<span id="cb4-24"><a href="#cb4-24" tabindex="-1"></a>optimal <span class="ot">&lt;-</span> <span class="fu">optimize_pc_weights</span>(</span>
-<span id="cb4-25"><a href="#cb4-25" tabindex="-1"></a>  <span class="at">pcs =</span> <span class="fu">as.matrix</span>(variables[, <span class="fu">paste0</span>(<span class="st">&quot;pc&quot;</span>, <span class="dv">1</span><span class="sc">:</span><span class="dv">4</span>)]),</span>
-<span id="cb4-26"><a href="#cb4-26" tabindex="-1"></a>  <span class="at">w1 =</span> w1_residuals<span class="sc">$</span>residuals,</span>
-<span id="cb4-27"><a href="#cb4-27" tabindex="-1"></a>  <span class="at">w2 =</span> w2_residuals<span class="sc">$</span>residuals[[<span class="dv">1</span>]],</span>
-<span id="cb4-28"><a href="#cb4-28" tabindex="-1"></a>  <span class="at">tau =</span> <span class="fl">0.5</span></span>
-<span id="cb4-29"><a href="#cb4-29" tabindex="-1"></a>)</span></code></pre></div>
+<span id="cb4-15"><a href="#cb4-15" tabindex="-1"></a><span class="co"># 3. Further analysis requires external optimization tools</span></span></code></pre></div>
 <h3 id="bond-pricing-examples">Bond Pricing Examples</h3>
 <div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a><span class="co"># Extract ACM data</span></span>
 <span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a>data <span class="ot">&lt;-</span> <span class="fu">extract_acm_data</span>(<span class="at">data_types =</span> <span class="fu">c</span>(<span class="st">&quot;yields&quot;</span>, <span class="st">&quot;term_premia&quot;</span>))</span>
@@ -751,12 +720,7 @@ triangular system:</p>
 <pre><code>Y₁,t+1 = θ Y₂,t+1 + ε₁,t+1
 Y₂,t+1 = γ&#39; Zₜ + ε₂,t+1</code></pre>
 <p>The key insight from Lewbel (2012) is that identification can be
-achieved through the moment condition:</p>
-<pre><code>E[ε₁,t+1 ε₂,t+1 | Zₜ] = τ · Var(ε₂,t+1 | Zₜ)</code></pre>
-<p>This leads to a quadratic equation in θ:</p>
-<pre><code>a θ² + b θ + c = 0</code></pre>
-<p>Where the coefficients depend on sample moments of the residuals and
-principal components.</p>
+achieved through heteroskedasticity-based moment conditions.</p>
 <h2 id="function-reference">Function Reference</h2>
 <h3 id="data-functions">Data Functions</h3>
 <ul>
@@ -781,19 +745,6 @@ changes</li>
 residuals</li>
 <li><code>compute_w2_residuals()</code> - Secondary endogenous variable
 residuals</li>
-<li><code>solve_theta_quadratic()</code> - Solve identification
-equations</li>
-<li><code>solve_theta_quadratic_lincomb()</code> - Solve with PC
-combinations</li>
-</ul>
-<h3 id="optimization-functions">Optimization Functions</h3>
-<ul>
-<li><code>optimize_pc_weights()</code> - Optimize principal component
-weights</li>
-<li><code>optimize_theta_identification()</code> - Full identification
-optimization</li>
-<li><code>optimize_theta_all_maturities()</code> - Multi-maturity
-optimization</li>
 </ul>
 <h2 id="data-sources">Data Sources</h2>
 <p>The package provides access to:</p>
@@ -801,27 +752,10 @@ optimization</li>
 <li><strong>ACM Term Structure Data</strong>: Monthly data from Adrian,
 Crump, and Moench (2013) including yields, term premia, and risk-neutral
 yields for 1-10 year maturities</li>
-<li><strong>Economic Variables</strong>: Quarterly macroeconomic and
+<li><strong>Economic Variables</strong>: Quarterly economic and
 financial variables including GDP, inflation, financial conditions
 indices, and principal components</li>
 </ul>
-<h2 id="analysis-scripts">Analysis Scripts</h2>
-<p>The repository includes example scripts (not part of the package) for
-comprehensive analysis:</p>
-<ol style="list-style-type: decimal">
-<li><p><strong><code>hetid_analysis_script.R</code></strong>: Complete
-analysis script that computes γ₁ roots for all combinations of principal
-components (j=1,…,J) and maturities (i=1,…,10)</p></li>
-<li><p><strong><code>hetid_interactive_analysis.R</code></strong>:
-Interactive version allowing user to specify parameters and explore
-different configurations</p></li>
-<li><p><strong><code>example_hetid_analysis.R</code></strong>: Simple
-demonstration of basic package functionality</p></li>
-</ol>
-<p>To run the full analysis:</p>
-<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" tabindex="-1"></a><span class="fu">source</span>(<span class="st">&quot;hetid_analysis_script.R&quot;</span>)</span></code></pre></div>
-<p>Or for interactive exploration:</p>
-<div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" tabindex="-1"></a><span class="fu">source</span>(<span class="st">&quot;hetid_interactive_analysis.R&quot;</span>)</span></code></pre></div>
 <h2 id="references">References</h2>
 <ul>
 <li><p>Adrian, T., Crump, R. K., and Moench, E. (2013). “Pricing the

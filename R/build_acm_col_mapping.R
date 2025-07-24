@@ -14,7 +14,7 @@ build_acm_col_mapping <- function(data_types, maturities) {
   mapping_rules <- list(
     yields = list(prefix_old = "ACMY", prefix_new = "y"),
     term_premia = list(prefix_old = "ACMTP", prefix_new = "tp"),
-    risk_neutral = list(prefix_old = "ACMRNY", prefix_new = "rn")
+    risk_neutral_yields = list(prefix_old = "ACMRNY", prefix_new = "rny")
   )
 
   # Build mapping for each data type

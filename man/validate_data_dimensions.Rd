@@ -15,6 +15,6 @@ validate_data_dimensions(yields, term_premia)
 Invisible TRUE if valid, stops with informative error if invalid
 }
 \description{
-Validates that yields and term premia have consistent dimensions for academic analysis.
+Validates that yields and term premia have consistent dimensions.
 }
 \keyword{internal}

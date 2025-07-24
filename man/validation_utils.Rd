@@ -2,9 +2,8 @@
 % Please edit documentation in R/validation_utils.R
 \name{validation_utils}
 \alias{validation_utils}
-\title{Simple Validation Utilities for Academic Research Code}
+\title{Validation Utilities}
 \description{
-Simple validation helpers that consolidate common input checking patterns
-while preserving mathematical clarity and academic research context.
+Validation helpers that consolidate common input checking patterns.
 }
 \keyword{internal}

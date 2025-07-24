@@ -14,6 +14,6 @@ Logical indicating whether file exists
 }
 \description{
 Checks if a data file exists in the package data directory.
-Useful for academic research workflows that depend on external data.
+Useful for workflows that depend on external data.
 }
 \keyword{internal}

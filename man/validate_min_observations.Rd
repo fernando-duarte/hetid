@@ -9,7 +9,7 @@ validate_min_observations(n, min_obs = HETID_CONSTANTS$MIN_OBSERVATIONS)
 \arguments{
 \item{n}{Number of observations to validate}
 
-\item{min_obs}{Minimum required observations (default from academic standards)}
+\item{min_obs}{Minimum required observations}
 }
 \value{
 Invisible TRUE if valid, stops with informative error if invalid

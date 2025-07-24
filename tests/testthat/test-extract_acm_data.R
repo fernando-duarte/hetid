@@ -97,12 +97,12 @@ test_that("extract_acm_data data types selection", {
 
   # All three types
   data_all <- extract_acm_data(
-    data_types = c("yields", "term_premia", "risk_neutral"),
+    data_types = c("yields", "term_premia", "risk_neutral_yields"),
     auto_download = TRUE
   )
   expect_true(all(paste0("y", 1:10) %in% names(data_all)))
   expect_true(all(paste0("tp", 1:10) %in% names(data_all)))
-  expect_true(all(paste0("rn", 1:10) %in% names(data_all)))
+  expect_true(all(paste0("rny", 1:10) %in% names(data_all)))
 })
 
 test_that("extract_acm_data frequency conversion", {
@@ -154,7 +154,7 @@ test_that("extract_acm_data handles edge cases", {
 test_that("extract_acm_data data consistency", {
   # Test that term premium = yield - risk-neutral yield
   data <- extract_acm_data(
-    data_types = c("yields", "term_premia", "risk_neutral"),
+    data_types = c("yields", "term_premia", "risk_neutral_yields"),
     maturities = c(2, 5, 10),
     auto_download = TRUE
   )
@@ -163,11 +163,11 @@ test_that("extract_acm_data data consistency", {
   for (mat in c(2, 5, 10)) {
     y_col <- paste0("y", mat)
     tp_col <- paste0("tp", mat)
-    rn_col <- paste0("rn", mat)
+    rny_col <- paste0("rny", mat)
 
     # Term premium should equal yield minus risk-neutral yield
     # Allow small tolerance for rounding
-    calculated_tp <- data[[y_col]] - data[[rn_col]]
+    calculated_tp <- data[[y_col]] - data[[rny_col]]
     expect_equal(data[[tp_col]], calculated_tp, tolerance = 1e-6)
   }
 })
