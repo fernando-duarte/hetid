@@ -307,15 +307,7 @@ perform_hetero_tests <- function(y, x_vars, var_name) {
     }
   )
 
-  # Anscombe test
-  anscombe_test <- tryCatch(
-    {
-      anscombe(lm_model)
-    },
-    error = function(e) {
-      list(statistic = NA, p.value = NA)
-    }
-  )
+
 
   # Cook-Weisberg test
   cw_test <- tryCatch(
@@ -337,8 +329,6 @@ perform_hetero_tests <- function(y, x_vars, var_name) {
     GQ_pval = as.numeric(gq_test$p.value),
     Harvey_stat = as.numeric(harvey_test$statistic),
     Harvey_pval = as.numeric(harvey_test$p.value),
-    Anscombe_stat = as.numeric(anscombe_test$statistic),
-    Anscombe_pval = as.numeric(anscombe_test$p.value),
     CW_stat = as.numeric(cw_test$statistic),
     CW_pval = as.numeric(cw_test$p.value),
     N = nrow(reg_data),
@@ -360,8 +350,7 @@ hetero_results <- do.call(rbind, lapply(all_test_vars, function(v) {
 # Format results
 hetero_numeric_cols <- c(
   "White_stat", "White_pval", "BP_stat", "BP_pval", "GQ_stat", "GQ_pval",
-  "Harvey_stat", "Harvey_pval", "Anscombe_stat", "Anscombe_pval",
-  "CW_stat", "CW_pval"
+  "Harvey_stat", "Harvey_pval", "CW_stat", "CW_pval"
 )
 hetero_results[hetero_numeric_cols] <- lapply(
   hetero_results[hetero_numeric_cols],
@@ -370,35 +359,24 @@ hetero_results[hetero_numeric_cols] <- lapply(
 
 print(kable(hetero_results, format = "simple", align = "l"))
 
-# Create comprehensive heteroskedasticity summary table
-hetero_summary <- data.frame(
-  Variable = hetero_results$Variable,
-  White_Test = ifelse(hetero_results$White_pval < 0.05, "Reject H0", "Fail to Reject"),
-  White_pval = round(hetero_results$White_pval, 4),
-  BP_Test = ifelse(hetero_results$BP_pval < 0.05, "Reject H0", "Fail to Reject"),
-  BP_pval = round(hetero_results$BP_pval, 4),
-  GQ_Test = ifelse(hetero_results$GQ_pval < 0.05, "Reject H0", "Fail to Reject"),
-  GQ_pval = round(hetero_results$GQ_pval, 4),
-  Harvey_Test = ifelse(hetero_results$Harvey_pval < 0.05, "Reject H0", "Fail to Reject"),
-  Harvey_pval = round(hetero_results$Harvey_pval, 4),
-  Anscombe_Test = ifelse(hetero_results$Anscombe_pval < 0.05, "Reject H0", "Fail to Reject"),
-  Anscombe_pval = round(hetero_results$Anscombe_pval, 4),
-  CW_Test = ifelse(hetero_results$CW_pval < 0.05, "Reject H0", "Fail to Reject"),
-  CW_pval = round(hetero_results$CW_pval, 4),
-  stringsAsFactors = FALSE
-)
+# Summary of heteroskedasticity test results
+cat("\n\nHeteroskedasticity Test Summary:\n")
+cat("===============================\n")
 
-# Split summary table for better console display
-hetero_summary_1 <- hetero_summary[, c("Variable", "White_Test", "White_pval", "BP_Test", "BP_pval", "GQ_Test", "GQ_pval")]
-hetero_summary_2 <- hetero_summary[, c("Variable", "Harvey_Test", "Harvey_pval", "Anscombe_Test", "Anscombe_pval", "CW_Test", "CW_pval")]
+# Count rejections for each test
+white_rejections <- sum(hetero_results$White_pval < 0.05, na.rm = TRUE)
+bp_rejections <- sum(hetero_results$BP_pval < 0.05, na.rm = TRUE)
+gq_rejections <- sum(hetero_results$GQ_pval < 0.05, na.rm = TRUE)
+harvey_rejections <- sum(hetero_results$Harvey_pval < 0.05, na.rm = TRUE)
+cw_rejections <- sum(hetero_results$CW_pval < 0.05, na.rm = TRUE)
+total_vars <- nrow(hetero_results)
 
-cat("\n\nHeteroskedasticity Test Summary - Part 1 (H0: Homoskedasticity):\n")
-cat("================================================================\n")
-print(kable(hetero_summary_1, format = "simple", align = "l"))
-
-cat("\n\nHeteroskedasticity Test Summary - Part 2 (H0: Homoskedasticity):\n")
-cat("================================================================\n")
-print(kable(hetero_summary_2, format = "simple", align = "l"))
+cat("Variables showing heteroskedasticity (p < 0.05):\n")
+cat("- White Test:", white_rejections, "/", total_vars, "variables\n")
+cat("- Breusch-Pagan Test:", bp_rejections, "/", total_vars, "variables\n")
+cat("- Goldfeld-Quandt Test:", gq_rejections, "/", total_vars, "variables\n")
+cat("- Harvey Test:", harvey_rejections, "/", total_vars, "variables\n")
+cat("- Cook-Weisberg Test:", cw_rejections, "/", total_vars, "variables\n")
 
 # Add interpretation of heteroskedasticity tests
 cat("\n\nInterpretation Guide:\n")
@@ -407,10 +385,8 @@ cat("White Test: General test for heteroskedasticity\n")
 cat("Breusch-Pagan (BP): More powerful against specific forms\n")
 cat("Goldfeld-Quandt (GQ): Tests for monotonic heteroskedasticity\n")
 cat("Harvey Test: Tests heteroskedasticity related to fitted values\n")
-cat("Anscombe Test: Tests for σ²ᵢ = σ²Xᵢᵝ form of heteroskedasticity\n")
 cat("Cook-Weisberg (CW): Score test, more powerful than BP for certain alternatives\n")
-cat("'Reject H0' = Evidence of heteroskedasticity (p < 0.05)\n")
-cat("'Fail to Reject' = No strong evidence against homoskedasticity\n")
+cat("All tests: H0 = Homoskedasticity, reject if p < 0.05\n")
 
 # Save all results
 output_dir <- file.path(OUTPUT_DIR, "temp/time_series_properties")
