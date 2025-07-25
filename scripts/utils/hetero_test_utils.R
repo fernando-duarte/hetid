@@ -9,57 +9,27 @@ perform_all_hetero_tests <- function(lm_model, var_name = "Variable") {
   results <- data.frame(Variable = var_name, stringsAsFactors = FALSE)
 
   # White test
-  white_test <- tryCatch(
-    {
-      skedastic::white(lm_model)
-    },
-    error = function(e) list(statistic = NA, p.value = NA)
-  )
-
+  white_test <- skedastic::white(lm_model)
   results$White_stat <- as.numeric(white_test$statistic)
   results$White_pval <- as.numeric(white_test$p.value)
 
   # Breusch-Pagan test
-  bp_test <- tryCatch(
-    {
-      skedastic::breusch_pagan(lm_model)
-    },
-    error = function(e) list(statistic = NA, p.value = NA)
-  )
-
+  bp_test <- skedastic::breusch_pagan(lm_model)
   results$BP_stat <- as.numeric(bp_test$statistic)
   results$BP_pval <- as.numeric(bp_test$p.value)
 
   # Goldfeld-Quandt test
-  gq_test <- tryCatch(
-    {
-      skedastic::goldfeld_quandt(lm_model)
-    },
-    error = function(e) list(statistic = NA, p.value = NA)
-  )
-
+  gq_test <- skedastic::goldfeld_quandt(lm_model)
   results$GQ_stat <- as.numeric(gq_test$statistic)
   results$GQ_pval <- as.numeric(gq_test$p.value)
 
   # Harvey test
-  harvey_test <- tryCatch(
-    {
-      skedastic::harvey(lm_model)
-    },
-    error = function(e) list(statistic = NA, p.value = NA)
-  )
-
+  harvey_test <- skedastic::harvey(lm_model)
   results$Harvey_stat <- as.numeric(harvey_test$statistic)
   results$Harvey_pval <- as.numeric(harvey_test$p.value)
 
   # Cook-Weisberg test
-  cw_test <- tryCatch(
-    {
-      skedastic::cook_weisberg(lm_model)
-    },
-    error = function(e) list(statistic = NA, p.value = NA)
-  )
-
+  cw_test <- skedastic::cook_weisberg(lm_model)
   results$CW_stat <- as.numeric(cw_test$statistic)
   results$CW_pval <- as.numeric(cw_test$p.value)
 

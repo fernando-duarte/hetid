@@ -52,54 +52,34 @@ analyze_time_series <- function(x, var_name, max_lags = 8) {
   lb_test <- Box.test(x, lag = max_lags, type = "Ljung-Box")
 
   # Phillips-Perron test (using urca package)
-  pp_test <- tryCatch(
-    {
-      pp_result <- ur.pp(x, type = "Z-tau", model = "constant")
-      list(
-        statistic = pp_result@teststat,
-        p.value = ifelse(pp_result@teststat < pp_result@cval[2], 0.01, 0.1)
-      )
-    },
-    error = function(e) {
-      list(statistic = NA, p.value = NA, method = "PP test failed")
-    }
+  pp_result <- ur.pp(x, type = "Z-tau", model = "constant")
+  pp_test <- list(
+    statistic = pp_result@teststat,
+    p.value = ifelse(pp_result@teststat < pp_result@cval[2], 0.01, 0.1)
   )
 
   # ARCH test for heteroskedasticity (using squared residuals from AR(1))
-  arch_test <- tryCatch(
-    {
-      ar_model <- ar(x, order.max = 1, method = "ols")
-      residuals_sq <- ar_model$resid^2
-      residuals_sq <- residuals_sq[!is.na(residuals_sq)]
-      if (length(residuals_sq) > 10) {
-        Box.test(residuals_sq, lag = 4, type = "Ljung-Box")
-      } else {
-        list(statistic = NA, p.value = NA, method = "ARCH test - insufficient data")
-      }
-    },
-    error = function(e) {
-      list(statistic = NA, p.value = NA, method = "ARCH test failed")
-    }
-  )
+  ar_model <- ar(x, order.max = 1, method = "ols")
+  residuals_sq <- ar_model$resid^2
+  residuals_sq <- residuals_sq[!is.na(residuals_sq)]
 
-  # Jarque-Bera test for normality (manual implementation)
-  jb_test <- tryCatch(
-    {
-      n <- length(x[!is.na(x)])
-      if (n < 8) {
-        list(statistic = NA, p.value = NA)
-      } else {
-        skew <- moments::skewness(x, na.rm = TRUE)
-        kurt <- moments::kurtosis(x, na.rm = TRUE)
-        jb_stat <- n * (skew^2 / 6 + (kurt - 3)^2 / 24)
-        jb_pval <- 1 - pchisq(jb_stat, df = 2)
-        list(statistic = jb_stat, p.value = jb_pval)
-      }
-    },
-    error = function(e) {
-      list(statistic = NA, p.value = NA, method = "JB test failed")
-    }
-  )
+  if (length(residuals_sq) > 10) {
+    arch_test <- Box.test(residuals_sq, lag = 4, type = "Ljung-Box")
+  } else {
+    arch_test <- list(statistic = NA, p.value = NA)
+  }
+
+  # Jarque-Bera test for normality
+  n <- length(x[!is.na(x)])
+  if (n < 8) {
+    jb_test <- list(statistic = NA, p.value = NA)
+  } else {
+    skew <- moments::skewness(x, na.rm = TRUE)
+    kurt <- moments::kurtosis(x, na.rm = TRUE)
+    jb_stat <- n * (skew^2 / 6 + (kurt - 3)^2 / 24)
+    jb_pval <- 1 - pchisq(jb_stat, df = 2)
+    jb_test <- list(statistic = jb_stat, p.value = jb_pval)
+  }
 
   return(data.frame(
     Variable = var_name,
@@ -370,23 +350,15 @@ cli_ul(c(
 
 # Use utility function to create diagnostic plots
 create_hetero_plots_wrapper <- function(var_name, y_var, predictor_vars) {
-  tryCatch(
-    {
-      # Create regression model
-      reg_data <- data.frame(y = y_var, predictor_vars)
-      reg_data <- reg_data[complete.cases(reg_data), ]
-      lm_model <- lm(y ~ ., data = reg_data)
+  # Create regression model
+  reg_data <- data.frame(y = y_var, predictor_vars)
+  reg_data <- reg_data[complete.cases(reg_data), ]
+  lm_model <- lm(y ~ ., data = reg_data)
 
-      # Use utility function for diagnostic plots
-      create_hetero_diagnostic_plots(lm_model, var_name,
-        plot_dir = plots_dir,
-        save_plots = TRUE, display_plots = TRUE
-      )
-      return(TRUE)
-    },
-    error = function(e) {
-      return(FALSE)
-    }
+  # Use utility function for diagnostic plots
+  create_hetero_diagnostic_plots(lm_model, var_name,
+    plot_dir = plots_dir,
+    save_plots = TRUE, display_plots = TRUE
   )
 }
 

@@ -37,27 +37,17 @@ analyze_time_series_properties <- function(x, var_name, max_lags = 8) {
   pacf_result <- pacf(x, lag.max = max_lags, plot = FALSE, na.action = na.pass)
 
   # ARCH test
-  arch_test <- tryCatch(
-    {
-      ar_model <- ar(x, order.max = 1, method = "ols")
-      residuals_sq <- ar_model$resid^2
-      residuals_sq <- residuals_sq[!is.na(residuals_sq)]
-      Box.test(residuals_sq, lag = 4, type = "Ljung-Box")
-    },
-    error = function(e) list(statistic = NA, p.value = NA)
-  )
+  ar_model <- ar(x, order.max = 1, method = "ols")
+  residuals_sq <- ar_model$resid^2
+  residuals_sq <- residuals_sq[!is.na(residuals_sq)]
+  arch_test <- Box.test(residuals_sq, lag = 4, type = "Ljung-Box")
 
   # Jarque-Bera test for normality
-  jb_test <- tryCatch(
-    {
-      skew <- summary_stats$Skewness
-      kurt <- summary_stats$Kurtosis
-      jb_stat <- n * (skew^2 / 6 + (kurt - 3)^2 / 24)
-      jb_pval <- 1 - pchisq(jb_stat, df = 2)
-      list(statistic = jb_stat, p.value = jb_pval)
-    },
-    error = function(e) list(statistic = NA, p.value = NA)
-  )
+  skew <- summary_stats$Skewness
+  kurt <- summary_stats$Kurtosis
+  jb_stat <- n * (skew^2 / 6 + (kurt - 3)^2 / 24)
+  jb_pval <- 1 - pchisq(jb_stat, df = 2)
+  jb_test <- list(statistic = jb_stat, p.value = jb_pval)
 
   data.frame(
     Variable = var_name,
@@ -274,12 +264,12 @@ sq_residual_data <- data.frame(price_news_residuals_sq = price_news_residuals_sq
 sq_residual_lm <- lm(price_news_residuals_sq ~ ., data = sq_residual_data)
 
 sq_hetero_tests <- list(
-  White = tryCatch(white(sq_residual_lm), error = function(e) list(statistic = NA, p.value = NA)),
-  BP = tryCatch(breusch_pagan(sq_residual_lm), error = function(e) list(statistic = NA, p.value = NA)),
-  GQ = tryCatch(goldfeld_quandt(sq_residual_lm), error = function(e) list(statistic = NA, p.value = NA)),
-  Harvey = tryCatch(harvey(sq_residual_lm), error = function(e) list(statistic = NA, p.value = NA)),
-  Anscombe = tryCatch(anscombe(sq_residual_lm), error = function(e) list(statistic = NA, p.value = NA)),
-  CW = tryCatch(cook_weisberg(sq_residual_lm), error = function(e) list(statistic = NA, p.value = NA))
+  White = white(sq_residual_lm),
+  BP = breusch_pagan(sq_residual_lm),
+  GQ = goldfeld_quandt(sq_residual_lm),
+  Harvey = harvey(sq_residual_lm),
+  Anscombe = anscombe(sq_residual_lm),
+  CW = cook_weisberg(sq_residual_lm)
 )
 
 sq_hetero_summary <- data.frame(

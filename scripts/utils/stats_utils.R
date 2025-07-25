@@ -43,43 +43,17 @@ perform_stationarity_tests <- function(x, var_name) {
   results <- data.frame(Variable = var_name, stringsAsFactors = FALSE)
 
   # ADF test
-  adf_test <- tryCatch(
-    {
-      adf_result <- urca::ur.df(x, type = "drift", selectlags = "AIC")
-      list(
-        statistic = adf_result@teststat[1],
-        p.value = ifelse(adf_result@teststat[1] < adf_result@cval[1, 2], 0.01, 0.1)
-      )
-    },
-    error = function(e) list(statistic = NA, p.value = NA)
-  )
-
-  results$ADF_stat <- adf_test$statistic
-  results$ADF_pval <- adf_test$p.value
+  adf_result <- urca::ur.df(x, type = "drift", selectlags = "AIC")
+  results$ADF_stat <- adf_result@teststat[1]
+  results$ADF_pval <- ifelse(adf_result@teststat[1] < adf_result@cval[1, 2], 0.01, 0.1)
 
   # KPSS test
-  kpss_test <- tryCatch(
-    {
-      kpss_result <- urca::ur.kpss(x, type = "mu")
-      list(
-        statistic = kpss_result@teststat,
-        p.value = ifelse(kpss_result@teststat > kpss_result@cval[2], 0.01, 0.1)
-      )
-    },
-    error = function(e) list(statistic = NA, p.value = NA)
-  )
-
-  results$KPSS_stat <- kpss_test$statistic
-  results$KPSS_pval <- kpss_test$p.value
+  kpss_result <- urca::ur.kpss(x, type = "mu")
+  results$KPSS_stat <- kpss_result@teststat
+  results$KPSS_pval <- ifelse(kpss_result@teststat > kpss_result@cval[2], 0.01, 0.1)
 
   # Ljung-Box test
-  lb_test <- tryCatch(
-    {
-      Box.test(x, lag = 8, type = "Ljung-Box")
-    },
-    error = function(e) list(statistic = NA, p.value = NA)
-  )
-
+  lb_test <- Box.test(x, lag = 8, type = "Ljung-Box")
   results$LB_stat <- lb_test$statistic
   results$LB_pval <- lb_test$p.value
 
