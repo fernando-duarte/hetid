@@ -28,6 +28,11 @@ perform_all_hetero_tests <- function(lm_model, var_name = "Variable") {
   results$Harvey_stat <- as.numeric(harvey_test$statistic)
   results$Harvey_pval <- as.numeric(harvey_test$p.value)
 
+  # Anscombe test
+  anscombe_test <- skedastic::anscombe(lm_model)
+  results$Anscombe_stat <- as.numeric(anscombe_test$statistic)
+  results$Anscombe_pval <- as.numeric(anscombe_test$p.value)
+
   # Cook-Weisberg test
   cw_test <- skedastic::cook_weisberg(lm_model)
   results$CW_stat <- as.numeric(cw_test$statistic)
@@ -133,7 +138,8 @@ create_hetero_diagnostic_plots <- function(lm_model, var_name,
     )
 
     # Create and save combined plot
-    combined_plot <- gridExtra::grid.arrange(p1, p2, p3, p4,
+    # Use arrangeGrob instead of grid.arrange for ggsave compatibility
+    combined_plot <- gridExtra::arrangeGrob(p1, p2, p3, p4,
       ncol = 2,
       top = paste("Heteroskedasticity Diagnostics:", var_name)
     )

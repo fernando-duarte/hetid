@@ -133,7 +133,7 @@ cor_table <- as.data.frame(cor_price_news) %>%
   fmt_number(columns = -Variable, decimals = 3) %>%
   data_color(
     columns = -Variable,
-    colors = scales::col_numeric(
+    fn = scales::col_numeric(
       palette = c("blue", "white", "red"),
       domain = c(-1, 1)
     )

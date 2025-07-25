@@ -1,7 +1,6 @@
-#!/usr/bin/env Rscript
-
 # Main Script to Run All Analysis Scripts
 # This script executes all scripts in the hetid package in the proper order
+# Run this script directly in RStudio by clicking Source or using Ctrl/Cmd+Shift+S
 
 # Load required packages
 library(here)
@@ -40,13 +39,11 @@ run_script <- function(script_path, description) {
 
 # Define the order of script execution
 scripts_to_run <- list(
-  # Data preparation
+  # Data preparation and analysis scripts
   list(
-    path = here::here("scripts/00_data_prep/load_data.R"),
-    desc = "Loading and Preparing Data"
+    path = here::here("scripts/01_data_analysis/create_data.R"),
+    desc = "Creating and Loading Data"
   ),
-
-  # Data analysis scripts
   list(
     path = here::here("scripts/01_data_analysis/summary_statistics.R"),
     desc = "Computing Summary Statistics"
