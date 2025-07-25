@@ -26,40 +26,15 @@ pc_lag_vars <- grep("^pc\\d+_lag1$", names(data_with_news), value = TRUE)
 
 cli_h1("1. TIME SERIES PROPERTIES OF PRICE NEWS")
 
-# Function to perform comprehensive time series tests
+# Use utility function for time series analysis
 analyze_time_series_properties <- function(x, var_name, max_lags = 8) {
-  # Basic statistics
+  # Get summary stats and stationarity tests from utilities
+  summary_stats <- compute_summary_stats(x, var_name, compute_ac = TRUE, max_lags = max_lags)
+  stat_tests <- perform_stationarity_tests(x, var_name)
+
+  # Additional tests not in utility
   n <- length(x[!is.na(x)])
-
-  # ACF and PACF
-  acf_result <- acf(x, lag.max = max_lags, plot = FALSE, na.action = na.pass)
   pacf_result <- pacf(x, lag.max = max_lags, plot = FALSE, na.action = na.pass)
-
-  # Ljung-Box test for serial correlation
-  lb_test <- Box.test(x, lag = max_lags, type = "Ljung-Box")
-
-  # Unit root tests
-  adf_test <- tryCatch(
-    {
-      adf_result <- ur.df(x, type = "drift", selectlags = "AIC")
-      list(
-        statistic = adf_result@teststat[1],
-        p.value = ifelse(adf_result@teststat[1] < adf_result@cval[1, 2], 0.01, 0.1)
-      )
-    },
-    error = function(e) list(statistic = NA, p.value = NA)
-  )
-
-  kpss_test <- tryCatch(
-    {
-      kpss_result <- ur.kpss(x, type = "mu")
-      list(
-        statistic = kpss_result@teststat,
-        p.value = ifelse(kpss_result@teststat > kpss_result@cval[2], 0.01, 0.1)
-      )
-    },
-    error = function(e) list(statistic = NA, p.value = NA)
-  )
 
   # ARCH test
   arch_test <- tryCatch(
@@ -75,8 +50,8 @@ analyze_time_series_properties <- function(x, var_name, max_lags = 8) {
   # Jarque-Bera test for normality
   jb_test <- tryCatch(
     {
-      skew <- skewness(x, na.rm = TRUE)
-      kurt <- kurtosis(x, na.rm = TRUE)
+      skew <- summary_stats$Skewness
+      kurt <- summary_stats$Kurtosis
       jb_stat <- n * (skew^2 / 6 + (kurt - 3)^2 / 24)
       jb_pval <- 1 - pchisq(jb_stat, df = 2)
       list(statistic = jb_stat, p.value = jb_pval)
@@ -86,24 +61,24 @@ analyze_time_series_properties <- function(x, var_name, max_lags = 8) {
 
   data.frame(
     Variable = var_name,
-    Mean = mean(x, na.rm = TRUE),
-    SD = sd(x, na.rm = TRUE),
-    Skewness = skewness(x, na.rm = TRUE),
-    Kurtosis = kurtosis(x, na.rm = TRUE),
-    AC1 = acf_result$acf[2],
-    AC4 = acf_result$acf[5],
+    Mean = summary_stats$Mean,
+    SD = summary_stats$SD,
+    Skewness = summary_stats$Skewness,
+    Kurtosis = summary_stats$Kurtosis,
+    AC1 = summary_stats$AC1,
+    AC4 = if ("AC4" %in% names(summary_stats)) summary_stats$AC4 else NA,
     PAC1 = pacf_result$acf[1],
-    LB_stat = lb_test$statistic,
-    LB_pval = lb_test$p.value,
-    ADF_stat = adf_test$statistic,
-    ADF_pval = adf_test$p.value,
-    KPSS_stat = kpss_test$statistic,
-    KPSS_pval = kpss_test$p.value,
+    LB_stat = stat_tests$LB_stat,
+    LB_pval = stat_tests$LB_pval,
+    ADF_stat = stat_tests$ADF_stat,
+    ADF_pval = stat_tests$ADF_pval,
+    KPSS_stat = stat_tests$KPSS_stat,
+    KPSS_pval = stat_tests$KPSS_pval,
     ARCH_stat = arch_test$statistic,
     ARCH_pval = arch_test$p.value,
     JB_stat = jb_test$statistic,
     JB_pval = jb_test$p.value,
-    N = n,
+    N = summary_stats$N,
     stringsAsFactors = FALSE
   )
 }
@@ -121,50 +96,44 @@ ts_results_display[numeric_cols] <- lapply(
 
 cli_h2("Basic Statistics and Autocorrelations")
 
-# Create interactive table
-basic_stats_dt <- datatable(
+# Use utility function for interactive table
+basic_stats_dt <- create_interactive_table(
   ts_results_display[, c(
     "Variable", "Mean", "SD", "Skewness",
     "Kurtosis", "AC1", "AC4", "PAC1"
   )],
-  options = list(
-    pageLength = 10,
-    dom = "t",
-    columnDefs = list(
-      list(className = "dt-left", targets = 0),
-      list(className = "dt-right", targets = 1:7)
-    )
-  ),
-  rownames = FALSE
-) %>%
-  formatRound(columns = 2:8, digits = 4)
+  page_length = 10, round_digits = 4
+)
 
 print(basic_stats_dt)
 
 cli_h2("Stationarity and Serial Correlation Tests")
 
-# Create formatted table
-stat_tests_table <- ts_results_display[, c(
+# Use utility function for formatted table
+stat_test_data <- ts_results_display[, c(
   "Variable", "LB_stat", "LB_pval",
   "ADF_stat", "ADF_pval", "KPSS_stat", "KPSS_pval"
-)] %>%
-  gt() %>%
-  tab_header(title = "Unit Root and Serial Correlation Tests") %>%
-  fmt_number(columns = c(LB_stat:KPSS_pval), decimals = 4) %>%
-  tab_style(
-    style = cell_fill(color = "lightgreen"),
-    locations = cells_body(
-      columns = c(LB_pval, ADF_pval, KPSS_pval),
-      rows = LB_pval < 0.05 | ADF_pval < 0.05 | KPSS_pval < 0.05
-    )
-  )
+)]
+significant_rows <- which(
+  stat_test_data$LB_pval < 0.05 |
+    stat_test_data$ADF_pval < 0.05 |
+    stat_test_data$KPSS_pval < 0.05
+)
+
+stat_tests_table <- create_formatted_table(
+  stat_test_data,
+  title = "Unit Root and Serial Correlation Tests",
+  highlight_rows = significant_rows,
+  highlight_color = "lightgreen"
+) %>%
+  fmt_number(columns = c(LB_stat:KPSS_pval), decimals = 4)
 
 print(stat_tests_table)
 
 cli_h1("2. HETEROSKEDASTICITY ANALYSIS OF PRICE NEWS")
 
-# Function to perform comprehensive heteroskedasticity tests
-perform_hetero_tests <- function(y, x_vars, var_name) {
+# Use utility function wrapper for heteroskedasticity tests
+perform_hetero_tests_wrapper <- function(y, x_vars, var_name) {
   # Create data frame for regression
   reg_data <- data.frame(y = y, x_vars)
   reg_data <- reg_data[complete.cases(reg_data), ]
@@ -176,99 +145,35 @@ perform_hetero_tests <- function(y, x_vars, var_name) {
       BP_stat = NA, BP_pval = NA,
       GQ_stat = NA, GQ_pval = NA,
       Harvey_stat = NA, Harvey_pval = NA,
-      Anscombe_stat = NA, Anscombe_pval = NA,
       CW_stat = NA, CW_pval = NA,
       N = nrow(reg_data),
       stringsAsFactors = FALSE
     ))
   }
 
-  # Fit linear model
+  # Fit linear model and use utility
   lm_model <- lm(y ~ ., data = reg_data)
-
-  # White test
-  white_test <- tryCatch(
-    {
-      white(lm_model)
-    },
-    error = function(e) list(statistic = NA, p.value = NA)
-  )
-
-  # Breusch-Pagan test
-  bp_test <- tryCatch(
-    {
-      breusch_pagan(lm_model)
-    },
-    error = function(e) list(statistic = NA, p.value = NA)
-  )
-
-  # Goldfeld-Quandt test
-  gq_test <- tryCatch(
-    {
-      goldfeld_quandt(lm_model)
-    },
-    error = function(e) list(statistic = NA, p.value = NA)
-  )
-
-  # Harvey test
-  harvey_test <- tryCatch(
-    {
-      harvey(lm_model)
-    },
-    error = function(e) list(statistic = NA, p.value = NA)
-  )
-
-  # Anscombe test
-  anscombe_test <- tryCatch(
-    {
-      anscombe(lm_model)
-    },
-    error = function(e) list(statistic = NA, p.value = NA)
-  )
-
-  # Cook-Weisberg test
-  cw_test <- tryCatch(
-    {
-      cook_weisberg(lm_model)
-    },
-    error = function(e) list(statistic = NA, p.value = NA)
-  )
-
-  data.frame(
-    Variable = var_name,
-    White_stat = as.numeric(white_test$statistic),
-    White_pval = as.numeric(white_test$p.value),
-    BP_stat = as.numeric(bp_test$statistic),
-    BP_pval = as.numeric(bp_test$p.value),
-    GQ_stat = as.numeric(gq_test$statistic),
-    GQ_pval = as.numeric(gq_test$p.value),
-    Harvey_stat = as.numeric(harvey_test$statistic),
-    Harvey_pval = as.numeric(harvey_test$p.value),
-    Anscombe_stat = as.numeric(anscombe_test$statistic),
-    Anscombe_pval = as.numeric(anscombe_test$p.value),
-    CW_stat = as.numeric(cw_test$statistic),
-    CW_pval = as.numeric(cw_test$p.value),
-    N = nrow(reg_data),
-    stringsAsFactors = FALSE
-  )
+  perform_all_hetero_tests(lm_model, var_name)
 }
 
 predictor_vars <- data_with_news[, pc_lag_vars]
 
 hetero_results <- do.call(rbind, lapply(price_news_vars, function(v) {
-  perform_hetero_tests(data_with_news[[v]], predictor_vars, v)
+  perform_hetero_tests_wrapper(data_with_news[[v]], predictor_vars, v)
 }))
 
-# Format results
+# Format results - check which columns exist
 hetero_numeric_cols <- c(
   "White_stat", "White_pval", "BP_stat", "BP_pval",
-  "GQ_stat", "GQ_pval", "Harvey_stat", "Harvey_pval",
-  "Anscombe_stat", "Anscombe_pval", "CW_stat", "CW_pval"
+  "GQ_stat", "GQ_pval", "Harvey_stat", "Harvey_pval", "CW_stat", "CW_pval"
 )
-hetero_results[hetero_numeric_cols] <- lapply(
-  hetero_results[hetero_numeric_cols],
-  function(x) round(x, 4)
-)
+existing_cols <- intersect(hetero_numeric_cols, names(hetero_results))
+if (length(existing_cols) > 0) {
+  hetero_results[existing_cols] <- lapply(
+    hetero_results[existing_cols],
+    function(x) round(x, 4)
+  )
+}
 
 cli_h2("Heteroskedasticity Tests - Part 1")
 

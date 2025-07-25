@@ -42,39 +42,14 @@ cli_h1("Time Series Properties Analysis")
 
 # Function to perform comprehensive time series tests
 analyze_time_series <- function(x, var_name, max_lags = 8) {
+  # Get stationarity test results from utility
+  stat_tests <- perform_stationarity_tests(x, var_name)
+
   # Basic autocorrelation analysis
   acf_result <- acf(x, lag.max = max_lags, plot = FALSE, na.action = na.pass)
 
   # Ljung-Box test for serial correlation
   lb_test <- Box.test(x, lag = max_lags, type = "Ljung-Box")
-
-  # Augmented Dickey-Fuller test for unit root (using urca package)
-  adf_test <- tryCatch(
-    {
-      adf_result <- ur.df(x, type = "drift", selectlags = "AIC")
-      list(
-        statistic = adf_result@teststat[1],
-        p.value = ifelse(adf_result@teststat[1] < adf_result@cval[1, 2], 0.01, 0.1)
-      )
-    },
-    error = function(e) {
-      list(statistic = NA, p.value = NA, method = "ADF test failed")
-    }
-  )
-
-  # KPSS test for stationarity (using urca package)
-  kpss_test <- tryCatch(
-    {
-      kpss_result <- ur.kpss(x, type = "mu")
-      list(
-        statistic = kpss_result@teststat,
-        p.value = ifelse(kpss_result@teststat > kpss_result@cval[2], 0.01, 0.1)
-      )
-    },
-    error = function(e) {
-      list(statistic = NA, p.value = NA, method = "KPSS test failed")
-    }
-  )
 
   # Phillips-Perron test (using urca package)
   pp_test <- tryCatch(
@@ -132,12 +107,12 @@ analyze_time_series <- function(x, var_name, max_lags = 8) {
     SD = sd(x, na.rm = TRUE),
     AC1 = acf_result$acf[2],
     AC4 = acf_result$acf[5],
-    LB_stat = lb_test$statistic,
-    LB_pval = lb_test$p.value,
-    ADF_stat = adf_test$statistic,
-    ADF_pval = adf_test$p.value,
-    KPSS_stat = kpss_test$statistic,
-    KPSS_pval = kpss_test$p.value,
+    LB_stat = stat_tests$LB_stat,
+    LB_pval = stat_tests$LB_pval,
+    ADF_stat = stat_tests$ADF_stat,
+    ADF_pval = stat_tests$ADF_pval,
+    KPSS_stat = stat_tests$KPSS_stat,
+    KPSS_pval = stat_tests$KPSS_pval,
     PP_stat = pp_test$statistic,
     PP_pval = pp_test$p.value,
     ARCH_stat = arch_test$statistic,
@@ -221,29 +196,8 @@ basic_stats <- basic_stats[!grepl("---", basic_stats$Variable), ]
 
 cli_h2("Basic Statistics")
 
-# Create interactive HTML table for basic statistics
-basic_stats_dt <- datatable(
-  basic_stats,
-  caption = htmltools::tags$caption(
-    style = "caption-side: top; text-align: left; font-size: 16px; font-weight: bold;",
-    "Basic Statistics",
-    htmltools::br(),
-    htmltools::tags$small(
-      "Mean: Average value over sample period | ",
-      "SD: Standard deviation (volatility) | ",
-      "AC1: First-order autocorrelation (persistence) | ",
-      "AC4: Fourth-order autocorrelation (seasonal patterns)"
-    )
-  ),
-  options = list(
-    pageLength = 15,
-    scrollX = TRUE,
-    dom = "Bfrtip",
-    buttons = c("copy", "csv", "excel")
-  ),
-  extensions = "Buttons"
-) %>%
-  formatRound(columns = c("Mean", "SD", "AC1", "AC4"), digits = 4)
+# Use utility function for interactive table
+basic_stats_dt <- create_interactive_table(basic_stats, page_length = 15, round_digits = 4)
 
 # Save HTML table
 htmlwidgets::saveWidget(
@@ -308,8 +262,8 @@ print(kable(serial_norm_stats_clean, format = "simple", align = "l", digits = 4,
 cat("\n\nHeteroskedasticity Tests (using skedastic package)\n")
 cat("==================================================\n")
 
-# Function to perform heteroskedasticity tests
-perform_hetero_tests <- function(y, x_vars, var_name) {
+# Use utility function for heteroskedasticity tests
+perform_hetero_tests_wrapper <- function(y, x_vars, var_name) {
   # Create data frame for regression
   reg_data <- data.frame(y = y, x_vars)
   reg_data <- reg_data[complete.cases(reg_data), ]
@@ -320,93 +274,17 @@ perform_hetero_tests <- function(y, x_vars, var_name) {
       White_stat = NA, White_pval = NA,
       BP_stat = NA, BP_pval = NA,
       GQ_stat = NA, GQ_pval = NA,
+      Harvey_stat = NA, Harvey_pval = NA,
+      Anscombe_stat = NA, Anscombe_pval = NA,
+      CW_stat = NA, CW_pval = NA,
       N = nrow(reg_data),
       stringsAsFactors = FALSE
     ))
   }
 
-  # Fit linear model
+  # Fit linear model and use utility
   lm_model <- lm(y ~ ., data = reg_data)
-
-  # White test
-  white_test <- tryCatch(
-    {
-      white(lm_model)
-    },
-    error = function(e) {
-      list(statistic = NA, p.value = NA)
-    }
-  )
-
-  # Breusch-Pagan test
-  bp_test <- tryCatch(
-    {
-      breusch_pagan(lm_model)
-    },
-    error = function(e) {
-      list(statistic = NA, p.value = NA)
-    }
-  )
-
-  # Goldfeld-Quandt test
-  gq_test <- tryCatch(
-    {
-      goldfeld_quandt(lm_model)
-    },
-    error = function(e) {
-      list(statistic = NA, p.value = NA)
-    }
-  )
-
-  # Harvey test
-  harvey_test <- tryCatch(
-    {
-      harvey(lm_model)
-    },
-    error = function(e) {
-      list(statistic = NA, p.value = NA)
-    }
-  )
-
-  # Anscombe test
-  anscombe_test <- tryCatch(
-    {
-      anscombe(lm_model)
-    },
-    error = function(e) {
-      list(statistic = NA, p.value = NA)
-    }
-  )
-
-
-
-  # Cook-Weisberg test
-  cw_test <- tryCatch(
-    {
-      cook_weisberg(lm_model)
-    },
-    error = function(e) {
-      list(statistic = NA, p.value = NA)
-    }
-  )
-
-  return(data.frame(
-    Variable = var_name,
-    White_stat = as.numeric(white_test$statistic),
-    White_pval = as.numeric(white_test$p.value),
-    BP_stat = as.numeric(bp_test$statistic),
-    BP_pval = as.numeric(bp_test$p.value),
-    GQ_stat = as.numeric(gq_test$statistic),
-    GQ_pval = as.numeric(gq_test$p.value),
-    Harvey_stat = as.numeric(harvey_test$statistic),
-    Harvey_pval = as.numeric(harvey_test$p.value),
-    Anscombe_stat = as.numeric(anscombe_test$statistic),
-    Anscombe_pval = as.numeric(anscombe_test$p.value),
-    CW_stat = as.numeric(cw_test$statistic),
-    CW_pval = as.numeric(cw_test$p.value),
-    N = nrow(reg_data),
-    stringsAsFactors = FALSE
-  ))
+  perform_all_hetero_tests(lm_model, var_name)
 }
 
 # Prepare predictor variables (lagged PCs)
@@ -416,19 +294,23 @@ predictor_vars <- df[, pc_lag_vars]
 all_test_vars <- c(yield_vars, tp_vars, pc_lag_vars, macro_vars)
 hetero_results <- do.call(rbind, lapply(all_test_vars, function(v) {
   if (v %in% names(df)) {
-    perform_hetero_tests(df[[v]], predictor_vars, v)
+    perform_hetero_tests_wrapper(df[[v]], predictor_vars, v)
   }
 }))
 
-# Format results
+# Format results - check which columns are actually present
 hetero_numeric_cols <- c(
   "White_stat", "White_pval", "BP_stat", "BP_pval", "GQ_stat", "GQ_pval",
-  "Harvey_stat", "Harvey_pval", "Anscombe_stat", "Anscombe_pval", "CW_stat", "CW_pval"
+  "Harvey_stat", "Harvey_pval", "CW_stat", "CW_pval"
 )
-hetero_results[hetero_numeric_cols] <- lapply(
-  hetero_results[hetero_numeric_cols],
-  function(x) round(x, 4)
-)
+# Only format columns that exist
+existing_cols <- intersect(hetero_numeric_cols, names(hetero_results))
+if (length(existing_cols) > 0) {
+  hetero_results[existing_cols] <- lapply(
+    hetero_results[existing_cols],
+    function(x) round(x, 4)
+  )
+}
 
 cat("\n\nHeteroskedasticity Tests (using skedastic package)\n")
 cat("==================================================\n")
@@ -443,8 +325,12 @@ cat("Breusch-Pagan (BP): More powerful against specific forms of heteroskedastic
 cat("Goldfeld-Quandt (GQ): Tests for monotonic heteroskedasticity\n\n")
 
 # Split heteroskedasticity results into two tables for better readability (p-values only)
-hetero_table1 <- hetero_results[, c("Variable", "White_pval", "BP_pval", "GQ_pval")]
-hetero_table2 <- hetero_results[, c("Variable", "Harvey_pval", "Anscombe_pval", "CW_pval")]
+# Check which columns exist
+pval_cols1 <- intersect(c("Variable", "White_pval", "BP_pval", "GQ_pval"), names(hetero_results))
+pval_cols2 <- intersect(c("Variable", "Harvey_pval", "CW_pval"), names(hetero_results))
+
+hetero_table1 <- hetero_results[, pval_cols1]
+hetero_table2 <- hetero_results[, pval_cols2]
 
 cat("Heteroskedasticity Tests - Part 1 (p-values):\n")
 hetero_table1_clean <- hetero_table1
@@ -463,13 +349,13 @@ print(kable(hetero_table2_clean, format = "simple", align = "l", row.names = FAL
 # Summary of heteroskedasticity test results
 cli_h2("Heteroskedasticity Test Summary")
 
-# Count rejections for each test
-white_rejections <- sum(hetero_results$White_pval < 0.05, na.rm = TRUE)
-bp_rejections <- sum(hetero_results$BP_pval < 0.05, na.rm = TRUE)
-gq_rejections <- sum(hetero_results$GQ_pval < 0.05, na.rm = TRUE)
-harvey_rejections <- sum(hetero_results$Harvey_pval < 0.05, na.rm = TRUE)
-anscombe_rejections <- sum(hetero_results$Anscombe_pval < 0.05, na.rm = TRUE)
-cw_rejections <- sum(hetero_results$CW_pval < 0.05, na.rm = TRUE)
+# Count rejections for each test - only count columns that exist
+white_rejections <- if ("White_pval" %in% names(hetero_results)) sum(hetero_results$White_pval < 0.05, na.rm = TRUE) else 0
+bp_rejections <- if ("BP_pval" %in% names(hetero_results)) sum(hetero_results$BP_pval < 0.05, na.rm = TRUE) else 0
+gq_rejections <- if ("GQ_pval" %in% names(hetero_results)) sum(hetero_results$GQ_pval < 0.05, na.rm = TRUE) else 0
+harvey_rejections <- if ("Harvey_pval" %in% names(hetero_results)) sum(hetero_results$Harvey_pval < 0.05, na.rm = TRUE) else 0
+anscombe_rejections <- if ("Anscombe_pval" %in% names(hetero_results)) sum(hetero_results$Anscombe_pval < 0.05, na.rm = TRUE) else 0
+cw_rejections <- if ("CW_pval" %in% names(hetero_results)) sum(hetero_results$CW_pval < 0.05, na.rm = TRUE) else 0
 total_vars <- nrow(hetero_results)
 
 cli_text("Variables showing heteroskedasticity (p < 0.05):")
@@ -482,8 +368,8 @@ cli_ul(c(
   paste("Cook-Weisberg Test:", cw_rejections, "/", total_vars, "variables")
 ))
 
-# Function to create diagnostic plots for a variable
-create_hetero_plots <- function(var_name, y_var, predictor_vars) {
+# Use utility function to create diagnostic plots
+create_hetero_plots_wrapper <- function(var_name, y_var, predictor_vars) {
   tryCatch(
     {
       # Create regression model
@@ -491,79 +377,11 @@ create_hetero_plots <- function(var_name, y_var, predictor_vars) {
       reg_data <- reg_data[complete.cases(reg_data), ]
       lm_model <- lm(y ~ ., data = reg_data)
 
-      # Create manual diagnostic plots using ggplot2 (more reliable)
-      fitted_vals <- fitted(lm_model)
-      residuals_vals <- residuals(lm_model)
-
-      # Create data frame for plotting
-      plot_data <- data.frame(
-        fitted = fitted_vals,
-        residuals = residuals_vals,
-        sqrt_abs_resid = sqrt(abs(residuals_vals)),
-        squared_resid = residuals_vals^2,
-        index = 1:length(residuals_vals)
+      # Use utility function for diagnostic plots
+      create_hetero_diagnostic_plots(lm_model, var_name,
+        plot_dir = plots_dir,
+        save_plots = TRUE, display_plots = TRUE
       )
-
-      # Plot 1: Residuals vs Fitted
-      p1 <- ggplot(plot_data, aes(x = fitted, y = residuals)) +
-        geom_point(alpha = 0.6, color = "blue") +
-        geom_hline(yintercept = 0, color = "red", linetype = "dashed") +
-        geom_smooth(se = FALSE, color = "darkred", method = "loess") +
-        labs(
-          title = paste("Residuals vs Fitted:", var_name),
-          x = "Fitted Values", y = "Residuals"
-        ) +
-        theme_minimal()
-
-      # Plot 2: Scale-Location Plot
-      p2 <- ggplot(plot_data, aes(x = fitted, y = sqrt_abs_resid)) +
-        geom_point(alpha = 0.6, color = "blue") +
-        geom_smooth(se = FALSE, color = "darkred", method = "loess") +
-        labs(
-          title = paste("Scale-Location Plot:", var_name),
-          x = "Fitted Values", y = "√|Residuals|"
-        ) +
-        theme_minimal()
-
-      # Plot 3: Squared Residuals vs Fitted
-      p3 <- ggplot(plot_data, aes(x = fitted, y = squared_resid)) +
-        geom_point(alpha = 0.6, color = "blue") +
-        geom_smooth(se = FALSE, color = "darkred", method = "loess") +
-        labs(
-          title = paste("Squared Residuals vs Fitted:", var_name),
-          x = "Fitted Values", y = "Squared Residuals"
-        ) +
-        theme_minimal()
-
-      # Plot 4: Residuals vs Index (time series pattern)
-      p4 <- ggplot(plot_data, aes(x = index, y = residuals)) +
-        geom_point(alpha = 0.6, color = "blue") +
-        geom_hline(yintercept = 0, color = "red", linetype = "dashed") +
-        geom_smooth(se = FALSE, color = "darkred", method = "loess") +
-        labs(
-          title = paste("Residuals vs Index:", var_name),
-          x = "Observation Index", y = "Residuals"
-        ) +
-        theme_minimal()
-
-      # Combine plots into a 2x2 grid for viewer display
-      combined_plot <- gridExtra::grid.arrange(p1, p2, p3, p4,
-        ncol = 2,
-        top = paste("Heteroskedasticity Diagnostics:", var_name)
-      )
-
-      # Display in RStudio viewer
-      print(combined_plot)
-
-      # Save individual plots
-      ggsave(file.path(plots_dir, paste0(var_name, "_residuals_vs_fitted.svg")), p1, width = 8, height = 6)
-      ggsave(file.path(plots_dir, paste0(var_name, "_scale_location.svg")), p2, width = 8, height = 6)
-      ggsave(file.path(plots_dir, paste0(var_name, "_squared_residuals.svg")), p3, width = 8, height = 6)
-      ggsave(file.path(plots_dir, paste0(var_name, "_residuals_vs_index.svg")), p4, width = 8, height = 6)
-
-      # Also save the combined plot
-      ggsave(file.path(plots_dir, paste0(var_name, "_combined_diagnostics.svg")), combined_plot, width = 12, height = 10)
-
       return(TRUE)
     },
     error = function(e) {
@@ -576,7 +394,7 @@ create_hetero_plots <- function(var_name, y_var, predictor_vars) {
 key_vars <- c("y2", "y5", "y10", "tp2", "tp5", "tp10", "gr1.pcecc96")
 plot_success <- sapply(key_vars, function(var) {
   if (var %in% names(df)) {
-    create_hetero_plots(var, df[[var]], predictor_vars)
+    create_hetero_plots_wrapper(var, df[[var]], predictor_vars)
   } else {
     FALSE
   }
@@ -610,12 +428,12 @@ summary_table <- data.frame(
   LB = ifelse(all_ts_results$LB_pval[!grepl("---", all_ts_results$Variable)] < 0.05, "R", "F"),
   ARCH = ifelse(all_ts_results$ARCH_pval[!grepl("---", all_ts_results$Variable)] < 0.05, "R", "F"),
   JB = ifelse(all_ts_results$JB_pval[!grepl("---", all_ts_results$Variable)] < 0.05, "R", "F"),
-  White = ifelse(hetero_results$White_pval < 0.05, "R", "F"),
-  BP = ifelse(hetero_results$BP_pval < 0.05, "R", "F"),
-  GQ = ifelse(hetero_results$GQ_pval < 0.05, "R", "F"),
-  Harvey = ifelse(hetero_results$Harvey_pval < 0.05, "R", "F"),
-  Anscombe = ifelse(hetero_results$Anscombe_pval < 0.05, "R", "F"),
-  CW = ifelse(hetero_results$CW_pval < 0.05, "R", "F"),
+  White = if ("White_pval" %in% names(hetero_results)) ifelse(hetero_results$White_pval < 0.05, "R", "F") else "-",
+  BP = if ("BP_pval" %in% names(hetero_results)) ifelse(hetero_results$BP_pval < 0.05, "R", "F") else "-",
+  GQ = if ("GQ_pval" %in% names(hetero_results)) ifelse(hetero_results$GQ_pval < 0.05, "R", "F") else "-",
+  Harvey = if ("Harvey_pval" %in% names(hetero_results)) ifelse(hetero_results$Harvey_pval < 0.05, "R", "F") else "-",
+  Anscombe = if ("Anscombe_pval" %in% names(hetero_results)) ifelse(hetero_results$Anscombe_pval < 0.05, "R", "F") else "-",
+  CW = if ("CW_pval" %in% names(hetero_results)) ifelse(hetero_results$CW_pval < 0.05, "R", "F") else "-",
   stringsAsFactors = FALSE
 )
 
