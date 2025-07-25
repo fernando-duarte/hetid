@@ -227,7 +227,7 @@ f_stat <- reg_summary$fstatistic
 f_pval <- if (!is.null(f_stat)) pf(f_stat[1], f_stat[2], f_stat[3], lower.tail = FALSE) else NA
 
 cli_ul(c(
-  paste("R-squared:", cli_col_blue(round(reg_summary$r.squared, 4))),
+  paste("R-squared:", round(reg_summary$r.squared, 4)),
   paste("Adjusted R-squared:", round(reg_summary$adj.r.squared, 4)),
   paste("F-statistic p-value:", format.pval(f_pval))
 ))
@@ -264,10 +264,7 @@ hetero_f_pval <- format.pval(pf(hetero_summary$fstatistic[1],
 ))
 
 cli_ul(c(
-  paste(
-    "R-squared for heteroskedasticity regression:",
-    if (hetero_r2 > 0.1) cli_col_green(hetero_r2) else cli_col_red(hetero_r2)
-  ),
+  paste("R-squared for heteroskedasticity regression:", hetero_r2),
   paste("F-statistic p-value:", hetero_f_pval)
 ))
 

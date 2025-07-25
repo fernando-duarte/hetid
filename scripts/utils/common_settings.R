@@ -52,3 +52,15 @@ set_analysis_seed <- function(seed = SEED) {
   set.seed(seed)
   invisible(seed)
 }
+
+# Source utility functions if they exist
+utils_dir <- file.path(SCRIPTS_DIR, "utils")
+if (file.exists(file.path(utils_dir, "plotting_utils.R"))) {
+  source(file.path(utils_dir, "plotting_utils.R"))
+}
+if (file.exists(file.path(utils_dir, "stats_utils.R"))) {
+  source(file.path(utils_dir, "stats_utils.R"))
+}
+if (file.exists(file.path(utils_dir, "hetero_test_utils.R"))) {
+  source(file.path(utils_dir, "hetero_test_utils.R"))
+}

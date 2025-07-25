@@ -14,6 +14,7 @@ library(gt)
 library(DT)
 library(htmltools)
 library(plotly)
+library(knitr)
 library(here)
 source(here::here("scripts/utils/common_settings.R"))
 
@@ -473,12 +474,12 @@ total_vars <- nrow(hetero_results)
 
 cli_text("Variables showing heteroskedasticity (p < 0.05):")
 cli_ul(c(
-  paste("White Test:", cli_col_red(white_rejections), "/", total_vars, "variables"),
-  paste("Breusch-Pagan Test:", cli_col_red(bp_rejections), "/", total_vars, "variables"),
-  paste("Goldfeld-Quandt Test:", cli_col_red(gq_rejections), "/", total_vars, "variables"),
-  paste("Harvey Test:", cli_col_red(harvey_rejections), "/", total_vars, "variables"),
-  paste("Anscombe Test:", cli_col_red(anscombe_rejections), "/", total_vars, "variables"),
-  paste("Cook-Weisberg Test:", cli_col_red(cw_rejections), "/", total_vars, "variables")
+  paste("White Test:", white_rejections, "/", total_vars, "variables"),
+  paste("Breusch-Pagan Test:", bp_rejections, "/", total_vars, "variables"),
+  paste("Goldfeld-Quandt Test:", gq_rejections, "/", total_vars, "variables"),
+  paste("Harvey Test:", harvey_rejections, "/", total_vars, "variables"),
+  paste("Anscombe Test:", anscombe_rejections, "/", total_vars, "variables"),
+  paste("Cook-Weisberg Test:", cw_rejections, "/", total_vars, "variables")
 ))
 
 # Function to create diagnostic plots for a variable
@@ -555,13 +556,13 @@ create_hetero_plots <- function(var_name, y_var, predictor_vars) {
       print(combined_plot)
 
       # Save individual plots
-      ggsave(file.path(plots_dir, paste0(var_name, "_residuals_vs_fitted.png")), p1, width = 8, height = 6)
-      ggsave(file.path(plots_dir, paste0(var_name, "_scale_location.png")), p2, width = 8, height = 6)
-      ggsave(file.path(plots_dir, paste0(var_name, "_squared_residuals.png")), p3, width = 8, height = 6)
-      ggsave(file.path(plots_dir, paste0(var_name, "_residuals_vs_index.png")), p4, width = 8, height = 6)
+      ggsave(file.path(plots_dir, paste0(var_name, "_residuals_vs_fitted.svg")), p1, width = 8, height = 6)
+      ggsave(file.path(plots_dir, paste0(var_name, "_scale_location.svg")), p2, width = 8, height = 6)
+      ggsave(file.path(plots_dir, paste0(var_name, "_squared_residuals.svg")), p3, width = 8, height = 6)
+      ggsave(file.path(plots_dir, paste0(var_name, "_residuals_vs_index.svg")), p4, width = 8, height = 6)
 
       # Also save the combined plot
-      ggsave(file.path(plots_dir, paste0(var_name, "_combined_diagnostics.png")), combined_plot, width = 12, height = 10)
+      ggsave(file.path(plots_dir, paste0(var_name, "_combined_diagnostics.svg")), combined_plot, width = 12, height = 10)
 
       return(TRUE)
     },

@@ -328,7 +328,7 @@ cli_h2("Price News Regression Summary")
 
 cli_ul(c(
   paste("Dependent variable:", residuals_analysis$price_news_var_short),
-  paste("R-squared:", cli_col_blue(round(residuals_analysis$price_news_regression$r.squared, 4))),
+  paste("R-squared:", round(residuals_analysis$price_news_regression$r.squared, 4)),
   paste("Adjusted R-squared:", round(residuals_analysis$price_news_regression$adj.r.squared, 4)),
   paste("Number of observations:", length(price_news_residuals))
 ))
@@ -523,7 +523,7 @@ p1 <- ggplot(
   theme_minimal() +
   theme(legend.position = "bottom")
 
-ggsave(file.path(plot_dir, "price_news_time_series.pdf"), p1, width = 10, height = 6)
+ggsave(file.path(plot_dir, "price_news_time_series.svg"), p1, width = 10, height = 6)
 
 p2 <- ggplot(
   rolling_stats %>% filter(!is.na(roll_sd)),
@@ -537,9 +537,9 @@ p2 <- ggplot(
   ) +
   theme_minimal()
 
-ggsave(file.path(plot_dir, "rolling_volatility.pdf"), p2, width = 10, height = 6)
+ggsave(file.path(plot_dir, "rolling_volatility.svg"), p2, width = 10, height = 6)
 
-pdf(file.path(plot_dir, "price_news_residuals_qq.pdf"), width = 8, height = 8)
+svglite::svglite(file.path(plot_dir, "price_news_residuals_qq.svg"), width = 8, height = 8)
 par(mfrow = c(2, 2))
 price_news_model <- residuals_analysis$price_news_regression
 if ("model" %in% names(price_news_model)) {
@@ -591,7 +591,7 @@ p4 <- ggplot(
   ) +
   theme_minimal()
 
-ggsave(file.path(plot_dir, "heteroskedasticity_pattern.pdf"), p4, width = 8, height = 6)
+ggsave(file.path(plot_dir, "heteroskedasticity_pattern.svg"), p4, width = 8, height = 6)
 
 cli_h1("7. SAVING ANALYSIS RESULTS")
 
