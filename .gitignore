@@ -113,7 +113,6 @@ yarn-error.log*
 .quarto
 
 # Scripts and outputs
-scripts/
 scripts_old/
 results/
 
