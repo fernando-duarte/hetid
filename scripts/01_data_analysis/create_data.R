@@ -83,6 +83,16 @@ for (i in 1:MAX_N_PCS) {
 # Remove first observation which has NA lags
 data <- data[-1, ]
 
+# Normalize PCs to have mean 0 and variance 1
+for (i in 1:MAX_N_PCS) {
+  pc_col <- paste0("pc", i)
+  # Calculate mean and sd
+  pc_mean <- mean(data[[pc_col]], na.rm = TRUE)
+  pc_sd <- sd(data[[pc_col]], na.rm = TRUE)
+  # Normalize
+  data[[pc_col]] <- (data[[pc_col]] - pc_mean) / pc_sd
+}
+
 # Normalize lagged PCs to have mean 0 and variance 1
 for (i in 1:MAX_N_PCS) {
   lag_col <- paste0("pc", i, "_lag1")

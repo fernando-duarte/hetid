@@ -15,6 +15,7 @@ Initial data preparation and exploratory analysis
 Computation and analysis of pricing kernel innovations
 - `compute_news.R` - Calculate price news and SDF innovations
 - `analyze_news.R` - Statistical analysis of computed news/innovations
+- `visualize_news.R` - Create exploratory plots of bond price news and sdf news
 - `output_results.R` - Export results for downstream analysis
 
 ### 03_variance_bounds/
