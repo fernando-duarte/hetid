@@ -218,7 +218,7 @@ if (length(price_news_2_idx) == 0 || length(price_news_5_idx) == 0) {
   # Fallback to first two available maturities
   price_news_2_idx <- 1
   price_news_5_idx <- min(2, length(price_news_vars))
-  cat("Note: Using", price_news_vars[price_news_2_idx], "and", price_news_vars[price_news_5_idx], "for heteroskedasticity analysis\n")
+  cli_alert_info("Using {.val {price_news_vars[price_news_2_idx]}} and {.val {price_news_vars[price_news_5_idx]}} for heteroskedasticity analysis")
 }
 
 # Extract price news for heteroskedasticity analysis (short maturity)

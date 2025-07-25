@@ -194,21 +194,26 @@ print(kable(basic_stats_clean, format = "simple", align = "l", digits = 4, row.n
 unit_root_stats <- all_ts_results[, c("Variable", "ADF_stat", "ADF_pval", "KPSS_stat", "KPSS_pval", "PP_stat", "PP_pval")]
 unit_root_stats <- unit_root_stats[!grepl("---", unit_root_stats$Variable), ]
 
-cat("\nUnit Root and Stationarity Tests:\n")
-cat("=================================\n")
-cat("These tests examine whether time series are stationary or non-stationary:\n\n")
-cat("ADF (Augmented Dickey-Fuller):\n")
-cat("- H0: Series has a unit root (non-stationary)\n")
-cat("- H1: Series is stationary\n")
-cat("- Reject H0 if p < 0.05 (evidence of stationarity)\n\n")
-cat("KPSS (Kwiatkowski-Phillips-Schmidt-Shin):\n")
-cat("- H0: Series is stationary\n")
-cat("- H1: Series has a unit root (non-stationary)\n")
-cat("- Reject H0 if p < 0.05 (evidence of non-stationarity)\n\n")
-cat("Phillips-Perron (PP):\n")
-cat("- H0: Series has a unit root (non-stationary)\n")
-cat("- H1: Series is stationary\n")
-cat("- Reject H0 if p < 0.05 (evidence of stationarity)\n\n")
+cli_h2("Unit Root and Stationarity Tests")
+cli_text("These tests examine whether time series are stationary or non-stationary:")
+cli_h3("ADF (Augmented Dickey-Fuller)")
+cli_ul(c(
+  "H0: Series has a unit root (non-stationary)",
+  "H1: Series is stationary",
+  "Reject H0 if p < 0.05 (evidence of stationarity)"
+))
+cli_h3("KPSS (Kwiatkowski-Phillips-Schmidt-Shin)")
+cli_ul(c(
+  "H0: Series is stationary",
+  "H1: Series has a unit root (non-stationary)",
+  "Reject H0 if p < 0.05 (evidence of non-stationarity)"
+))
+cli_h3("Phillips-Perron (PP)")
+cli_ul(c(
+  "H0: Series has a unit root (non-stationary)",
+  "H1: Series is stationary",
+  "Reject H0 if p < 0.05 (evidence of stationarity)"
+))
 # Clean the unit root stats table for console display
 unit_root_stats_clean <- unit_root_stats
 rownames(unit_root_stats_clean) <- NULL
@@ -218,29 +223,33 @@ print(kable(unit_root_stats_clean, format = "simple", align = "l", digits = 4, r
 serial_norm_stats <- all_ts_results[, c("Variable", "LB_stat", "LB_pval", "ARCH_stat", "ARCH_pval", "JB_stat", "JB_pval")]
 serial_norm_stats <- serial_norm_stats[!grepl("---", serial_norm_stats$Variable), ]
 
-cat("\nSerial Correlation and Normality Tests:\n")
-cat("======================================\n")
-cat("These tests examine serial correlation, conditional heteroskedasticity, and normality:\n\n")
-cat("Ljung-Box (LB):\n")
-cat("- H0: No serial correlation in the series\n")
-cat("- H1: Serial correlation is present\n")
-cat("- Reject H0 if p < 0.05 (evidence of serial correlation)\n\n")
-cat("ARCH:\n")
-cat("- H0: No conditional heteroskedasticity (constant variance)\n")
-cat("- H1: Conditional heteroskedasticity is present (time-varying variance)\n")
-cat("- Reject H0 if p < 0.05 (evidence of ARCH effects)\n\n")
-cat("Jarque-Bera (JB):\n")
-cat("- H0: Series follows a normal distribution\n")
-cat("- H1: Series does not follow a normal distribution\n")
-cat("- Reject H0 if p < 0.05 (evidence of non-normality)\n\n")
+cli_h2("Serial Correlation and Normality Tests")
+cli_text("These tests examine serial correlation, conditional heteroskedasticity, and normality:")
+cli_h3("Ljung-Box (LB)")
+cli_ul(c(
+  "H0: No serial correlation in the series",
+  "H1: Serial correlation is present",
+  "Reject H0 if p < 0.05 (evidence of serial correlation)"
+))
+cli_h3("ARCH")
+cli_ul(c(
+  "H0: No conditional heteroskedasticity (constant variance)",
+  "H1: Conditional heteroskedasticity is present (time-varying variance)",
+  "Reject H0 if p < 0.05 (evidence of ARCH effects)"
+))
+cli_h3("Jarque-Bera (JB)")
+cli_ul(c(
+  "H0: Series follows a normal distribution",
+  "H1: Series does not follow a normal distribution",
+  "Reject H0 if p < 0.05 (evidence of non-normality)"
+))
 # Clean the serial norm stats table for console display
 serial_norm_stats_clean <- serial_norm_stats
 rownames(serial_norm_stats_clean) <- NULL
 print(kable(serial_norm_stats_clean, format = "simple", align = "l", digits = 4, row.names = FALSE))
 
 # Heteroskedasticity tests using skedastic package
-cat("\n\nHeteroskedasticity Tests (using skedastic package)\n")
-cat("==================================================\n")
+cli_h1("Heteroskedasticity Tests (using skedastic package)")
 
 # Use utility function for heteroskedasticity tests
 perform_hetero_tests_wrapper <- function(y, x_vars, var_name) {
@@ -292,17 +301,20 @@ if (length(existing_cols) > 0) {
   )
 }
 
-cat("\n\nHeteroskedasticity Tests (using skedastic package)\n")
-cat("==================================================\n")
-cat("These tests examine whether the variance of regression residuals is constant:\n\n")
-cat("All heteroskedasticity tests:\n")
-cat("- H0: Homoskedasticity (constant variance of residuals)\n")
-cat("- H1: Heteroskedasticity (non-constant variance of residuals)\n")
-cat("- Reject H0 if p < 0.05 (evidence of heteroskedasticity)\n\n")
-
-cat("White Test: General test for any form of heteroskedasticity\n")
-cat("Breusch-Pagan (BP): More powerful against specific forms of heteroskedasticity\n")
-cat("Goldfeld-Quandt (GQ): Tests for monotonic heteroskedasticity\n\n")
+cli_h2("Heteroskedasticity Test Details")
+cli_text("These tests examine whether the variance of regression residuals is constant:")
+cli_text("{.strong All heteroskedasticity tests:}")
+cli_ul(c(
+  "H0: Homoskedasticity (constant variance of residuals)",
+  "H1: Heteroskedasticity (non-constant variance of residuals)",
+  "Reject H0 if p < 0.05 (evidence of heteroskedasticity)"
+))
+cli_text("")
+cli_ul(c(
+  "{.strong White Test}: General test for any form of heteroskedasticity",
+  "{.strong Breusch-Pagan (BP)}: More powerful against specific forms of heteroskedasticity",
+  "{.strong Goldfeld-Quandt (GQ)}: Tests for monotonic heteroskedasticity"
+))
 
 # Split heteroskedasticity results into two tables for better readability (p-values only)
 # Check which columns exist
@@ -312,16 +324,18 @@ pval_cols2 <- intersect(c("Variable", "Harvey_pval", "CW_pval"), names(hetero_re
 hetero_table1 <- hetero_results[, pval_cols1]
 hetero_table2 <- hetero_results[, pval_cols2]
 
-cat("Heteroskedasticity Tests - Part 1 (p-values):\n")
+cli_h3("Heteroskedasticity Tests - Part 1 (p-values)")
 hetero_table1_clean <- hetero_table1
 rownames(hetero_table1_clean) <- NULL
 print(kable(hetero_table1_clean, format = "simple", align = "l", row.names = FALSE))
 
-cat("\nHarvey Test: Tests heteroskedasticity related to fitted values\n")
-cat("Anscombe Test: Tests for σ²ᵢ = σ²Xᵢᵝ form of heteroskedasticity\n")
-cat("Cook-Weisberg (CW): Score test, enhanced version of Breusch-Pagan\n\n")
-
-cat("Heteroskedasticity Tests - Part 2 (p-values):\n")
+cli_text("")
+cli_ul(c(
+  "{.strong Harvey Test}: Tests heteroskedasticity related to fitted values",
+  "{.strong Anscombe Test}: Tests for σ²ᵢ = σ²Xᵢᵝ form of heteroskedasticity",
+  "{.strong Cook-Weisberg (CW)}: Score test, enhanced version of Breusch-Pagan"
+))
+cli_h3("Heteroskedasticity Tests - Part 2 (p-values)")
 hetero_table2_clean <- hetero_table2
 rownames(hetero_table2_clean) <- NULL
 print(kable(hetero_table2_clean, format = "simple", align = "l", row.names = FALSE))
@@ -374,22 +388,25 @@ plot_success <- sapply(key_vars, function(var) {
 
 
 # Create comprehensive test summary table
-cat("\n\nComprehensive Test Summary: Reject (R) or Fail to Reject (F) H0\n")
-cat("===============================================================\n")
-cat("Time Series Tests:\n")
-cat("- ADF (Augmented Dickey-Fuller): H0 = Unit root (non-stationary), H1 = Stationary\n")
-cat("- KPSS (Kwiatkowski-Phillips-Schmidt-Shin): H0 = Stationary, H1 = Unit root (non-stationary)\n")
-cat("- PP (Phillips-Perron): H0 = Unit root (non-stationary), H1 = Stationary\n")
-cat("- LB (Ljung-Box): H0 = No serial correlation, H1 = Serial correlation present\n")
-cat("- ARCH: H0 = No conditional heteroskedasticity, H1 = ARCH effects present\n")
-cat("- JB (Jarque-Bera): H0 = Normal distribution, H1 = Non-normal distribution\n\n")
-cat("Heteroskedasticity Tests:\n")
-cat("- White: H0 = Homoskedasticity, H1 = Heteroskedasticity\n")
-cat("- BP (Breusch-Pagan): H0 = Homoskedasticity, H1 = Heteroskedasticity\n")
-cat("- GQ (Goldfeld-Quandt): H0 = Homoskedasticity, H1 = Heteroskedasticity\n")
-cat("- Harvey: H0 = Homoskedasticity, H1 = Heteroskedasticity\n")
-cat("- Anscombe: H0 = Homoskedasticity, H1 = Heteroskedasticity\n")
-cat("- CW (Cook-Weisberg): H0 = Homoskedasticity, H1 = Heteroskedasticity\n\n")
+cli_h1("Comprehensive Test Summary: Reject (R) or Fail to Reject (F) H0")
+cli_h2("Time Series Tests")
+cli_ul(c(
+  "{.strong ADF} (Augmented Dickey-Fuller): H0 = Unit root (non-stationary), H1 = Stationary",
+  "{.strong KPSS} (Kwiatkowski-Phillips-Schmidt-Shin): H0 = Stationary, H1 = Unit root (non-stationary)",
+  "{.strong PP} (Phillips-Perron): H0 = Unit root (non-stationary), H1 = Stationary",
+  "{.strong LB} (Ljung-Box): H0 = No serial correlation, H1 = Serial correlation present",
+  "{.strong ARCH}: H0 = No conditional heteroskedasticity, H1 = ARCH effects present",
+  "{.strong JB} (Jarque-Bera): H0 = Normal distribution, H1 = Non-normal distribution"
+))
+cli_h2("Heteroskedasticity Tests")
+cli_ul(c(
+  "{.strong White}: H0 = Homoskedasticity, H1 = Heteroskedasticity",
+  "{.strong BP} (Breusch-Pagan): H0 = Homoskedasticity, H1 = Heteroskedasticity",
+  "{.strong GQ} (Goldfeld-Quandt): H0 = Homoskedasticity, H1 = Heteroskedasticity",
+  "{.strong Harvey}: H0 = Homoskedasticity, H1 = Heteroskedasticity",
+  "{.strong Anscombe}: H0 = Homoskedasticity, H1 = Heteroskedasticity",
+  "{.strong CW} (Cook-Weisberg): H0 = Homoskedasticity, H1 = Heteroskedasticity"
+))
 
 # Create summary table with reject/fail to reject decisions
 summary_table <- data.frame(
