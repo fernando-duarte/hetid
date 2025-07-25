@@ -503,32 +503,91 @@ analysis_results <- list(
 
 saveRDS(analysis_results, file.path(OUTPUT_DIR, "temp/sdf_news/comprehensive_analysis.rds"))
 
-summary_text <- paste0(
-  "PRICE NEWS ANALYSIS SUMMARY\n",
-  "==========================\n",
-  "Date Range: ", format(min(data_with_news$date), "%Y-%m-%d"), " to ",
-  format(max(data_with_news$date), "%Y-%m-%d"), "\n",
-  "Number of observations: ", nrow(data_with_news), "\n",
-  "Maturities analyzed: ", paste(price_news_vars, collapse = ", "), "\n\n",
-  "KEY FINDINGS:\n",
-  "1. Heteroskedasticity Evidence:\n",
-  "   - ", rejection_summary$Rejections[1], "/", rejection_summary$Total[1],
-  " price news series show heteroskedasticity (White test)\n",
-  "   - Price news squared residuals R-squared: ",
-  round(residuals_analysis$hetero_regression$r.squared, 3), "\n",
-  "   - Strong evidence of time-varying conditional variance\n\n",
-  "2. Time Series Properties:\n",
-  "   - All series are stationary (ADF tests)\n",
-  "   - Moderate serial correlation (AC1 ~ 0.07-0.09)\n",
-  "   - Non-normal distributions with excess kurtosis\n\n",
-  "3. Maturity Patterns:\n",
-  "   - Volatility decreases with maturity (slope = ",
-  round(trend_summary$Slope[2], 5), ")\n",
-  "   - Kurtosis relatively stable across maturities\n\n",
-  "4. Time Variation:\n",
-  "   - Volatility varies significantly over time\n",
-  "   - Highest volatility in 1970s-1980s\n",
-  "   - Lower volatility in recent decades\n"
+# Create analysis summary using cli for console output
+cli_h1("PRICE NEWS ANALYSIS SUMMARY")
+
+cli_text("Date Range: {.val {format(min(data_with_news$date), '%Y-%m-%d')}} to {.val {format(max(data_with_news$date), '%Y-%m-%d')}}")
+cli_text("Number of observations: {.val {nrow(data_with_news)}}")
+cli_text("Maturities analyzed: {.val {paste(price_news_vars, collapse = ', ')}}")
+
+cli_h2("KEY FINDINGS")
+
+cli_h3("1. Heteroskedasticity Evidence")
+cli_ul(c(
+  paste0(
+    rejection_summary$Rejections[1], "/", rejection_summary$Total[1],
+    " price news series show heteroskedasticity (White test)"
+  ),
+  paste0(
+    "Price news squared residuals R-squared: ",
+    round(residuals_analysis$hetero_regression$r.squared, 3)
+  ),
+  "Strong evidence of time-varying conditional variance"
+))
+
+cli_h3("2. Time Series Properties")
+cli_ul(c(
+  "All series are stationary (ADF tests)",
+  "Moderate serial correlation (AC1 ~ 0.07-0.09)",
+  "Non-normal distributions with excess kurtosis"
+))
+
+cli_h3("3. Maturity Patterns")
+cli_ul(c(
+  paste0(
+    "Volatility decreases with maturity (slope = ",
+    round(trend_summary$Slope[2], 5), ")"
+  ),
+  "Kurtosis relatively stable across maturities"
+))
+
+cli_h3("4. Time Variation")
+cli_ul(c(
+  "Volatility varies significantly over time",
+  "Highest volatility in 1970s-1980s",
+  "Lower volatility in recent decades"
+))
+
+# Also create a text file summary for archival purposes
+summary_text <- c(
+  "PRICE NEWS ANALYSIS SUMMARY",
+  "==========================",
+  paste(
+    "Date Range:", format(min(data_with_news$date), "%Y-%m-%d"), "to",
+    format(max(data_with_news$date), "%Y-%m-%d")
+  ),
+  paste("Number of observations:", nrow(data_with_news)),
+  paste("Maturities analyzed:", paste(price_news_vars, collapse = ", ")),
+  "",
+  "KEY FINDINGS:",
+  "",
+  "1. Heteroskedasticity Evidence:",
+  paste(
+    "   -", rejection_summary$Rejections[1], "/", rejection_summary$Total[1],
+    "price news series show heteroskedasticity (White test)"
+  ),
+  paste(
+    "   - Price news squared residuals R-squared:",
+    round(residuals_analysis$hetero_regression$r.squared, 3)
+  ),
+  "   - Strong evidence of time-varying conditional variance",
+  "",
+  "2. Time Series Properties:",
+  "   - All series are stationary (ADF tests)",
+  "   - Moderate serial correlation (AC1 ~ 0.07-0.09)",
+  "   - Non-normal distributions with excess kurtosis",
+  "",
+  "3. Maturity Patterns:",
+  paste(
+    "   - Volatility decreases with maturity (slope =",
+    round(trend_summary$Slope[2], 5), ")"
+  ),
+  "   - Kurtosis relatively stable across maturities",
+  "",
+  "4. Time Variation:",
+  "   - Volatility varies significantly over time",
+  "   - Highest volatility in 1970s-1980s",
+  "   - Lower volatility in recent decades"
 )
 
 writeLines(summary_text, file.path(OUTPUT_DIR, "temp/sdf_news/analysis_summary.txt"))
