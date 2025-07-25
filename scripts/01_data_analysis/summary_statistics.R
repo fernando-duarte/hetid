@@ -1,25 +1,18 @@
 # Summary Statistics
 # Generate descriptive statistics for all variables
 
-# Load required packages
 library(hetid)
 library(dplyr)
 library(tidyr)
-library(knitr)
-library(kableExtra)
-
-# Set up paths
+library(gt)
+library(DT)
 library(here)
 source(here::here("scripts/utils/common_settings.R"))
 
-# Load consolidated data
 input_path <- file.path(OUTPUT_DIR, "temp/data.rds")
 data <- readRDS(input_path)
-
-# Convert list to data frame for analysis
 df <- as.data.frame(data)
 
-# Define variable groups
 yield_vars <- grep("^y\\d+$", names(df), value = TRUE)
 tp_vars <- grep("^tp\\d+$", names(df), value = TRUE)
 pc_vars <- grep("^pc\\d+$", names(df), value = TRUE)
@@ -106,28 +99,48 @@ all_stats <- rbind(
 numeric_cols <- c("Mean", "SD", "Min", "Q1", "Median", "Q3", "Max", "Skewness", "Kurtosis", "AC1", "AC2")
 all_stats[numeric_cols] <- lapply(all_stats[numeric_cols], function(x) round(x, 3))
 
-# Display summary statistics
-print(kable(all_stats, format = "simple", align = "l"))
+cli_h2("Summary Statistics")
 
-# Compute correlation matrices for each group
+summary_table <- all_stats %>%
+  gt() %>%
+  tab_header(
+    title = "Summary Statistics for All Variables",
+    subtitle = "Quarterly Data Analysis"
+  ) %>%
+  fmt_number(
+    columns = c(Mean:AC2),
+    decimals = 3
+  ) %>%
+  tab_style(
+    style = list(
+      cell_fill(color = "#f0f0f0"),
+      cell_text(weight = "bold")
+    ),
+    locations = cells_body(
+      rows = grepl("^---", Variable)
+    )
+  ) %>%
+  tab_options(
+    table.font.size = 11,
+    data_row.padding = px(2)
+  )
+
+print(summary_table)
+
 cor_yields <- cor(df[yield_vars], use = "complete.obs")
 cor_tp <- cor(df[tp_vars], use = "complete.obs")
 cor_pc <- cor(df[pc_vars], use = "complete.obs")
-
-# Cross-correlations between groups
 cor_yields_tp <- cor(df[yield_vars], df[tp_vars], use = "complete.obs")
 cor_pc_macro <- cor(df[pc_vars], df[macro_vars], use = "complete.obs")
 
-# Time series properties
-cat("\n\nTime Series Properties\n")
-cat("======================\n")
-cat("Date range:", format(range(df$date), "%Y-%m-%d"), "\n")
-cat("Frequency: Quarterly\n")
-cat("Number of observations:", nrow(df), "\n")
-cat("Number of years:", round(as.numeric(diff(range(df$date))) / 365.25, 1), "\n")
+cli_h2("Time Series Properties")
+cli_ul(c(
+  paste("Date range:", paste(format(range(df$date), "%Y-%m-%d"), collapse = " to ")),
+  "Frequency: Quarterly",
+  paste("Number of observations:", nrow(df)),
+  paste("Number of years:", round(as.numeric(diff(range(df$date))) / 365.25, 1))
+))
 
-
-# Save results
 output_dir <- file.path(OUTPUT_DIR, "temp/summary_stats")
 dir.create(output_dir, recursive = TRUE, showWarnings = FALSE)
 
@@ -143,20 +156,30 @@ saveRDS(list(
   pc_macro = cor_pc_macro
 ), file.path(output_dir, "correlation_matrices.rds"))
 
-# Create a compact summary table for key variables
 key_vars_summary <- all_stats %>%
   filter(Variable %in% c("y2", "y10", "tp2", "tp10", "pc1", "pc2", "gr1.pcecc96")) %>%
   select(Variable, Mean, SD, Min, Max, Skewness, N)
 
-cat("\n\nKey Variables Summary\n")
-cat("====================\n")
-print(kable(key_vars_summary, format = "simple", align = "l"))
+cli_h2("Key Variables Summary")
 
-# Average statistics by maturity
-cat("\n\nAverage Statistics by Maturity\n")
-cat("==============================\n")
+key_vars_dt <- datatable(
+  key_vars_summary,
+  options = list(
+    pageLength = 10,
+    dom = "t",
+    columnDefs = list(
+      list(className = "dt-left", targets = 0),
+      list(className = "dt-right", targets = 1:5)
+    )
+  ),
+  rownames = FALSE
+) %>%
+  formatRound(columns = c("Mean", "SD", "Min", "Max", "Skewness"), digits = 3)
 
-# Extract maturity numbers and compute averages
+print(key_vars_dt)
+
+cli_h2("Average Statistics by Maturity")
+
 yields_stats_avg <- yields_stats %>%
   mutate(maturity = as.numeric(gsub("y", "", Variable))) %>%
   select(maturity, Mean, SD)
@@ -169,9 +192,29 @@ maturity_summary <- merge(yields_stats_avg, tp_stats_avg,
   by = "maturity", suffixes = c("_yield", "_tp")
 )
 
-print(kable(maturity_summary,
-  format = "simple", align = "l",
-  col.names = c("Maturity", "Yield Mean", "Yield SD", "TP Mean", "TP SD")
-))
+maturity_table <- maturity_summary %>%
+  gt() %>%
+  tab_header(
+    title = "Statistics by Maturity"
+  ) %>%
+  cols_label(
+    maturity = "Maturity",
+    Mean_yield = "Yield Mean",
+    SD_yield = "Yield SD",
+    Mean_tp = "TP Mean",
+    SD_tp = "TP SD"
+  ) %>%
+  fmt_number(
+    columns = c(Mean_yield:SD_tp),
+    decimals = 3
+  ) %>%
+  tab_style(
+    style = cell_fill(color = "lightblue", alpha = 0.3),
+    locations = cells_body(columns = c(Mean_yield, SD_yield))
+  ) %>%
+  tab_style(
+    style = cell_fill(color = "lightgreen", alpha = 0.3),
+    locations = cells_body(columns = c(Mean_tp, SD_tp))
+  )
 
-cat("\nSummary statistics saved to:", file.path(output_dir, "summary_statistics.csv"))
+print(maturity_table)

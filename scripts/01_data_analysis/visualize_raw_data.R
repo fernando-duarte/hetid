@@ -1,7 +1,6 @@
 # Visualize Raw Data
 # Create exploratory plots of raw data
 
-# Load required packages
 library(hetid)
 library(ggplot2)
 library(dplyr)
@@ -9,27 +8,19 @@ library(tidyr)
 library(gridExtra)
 library(corrplot)
 library(svglite)
-
-# Set up paths
 library(here)
 source(here::here("scripts/utils/common_settings.R"))
 
-# Load consolidated data
 input_path <- file.path(OUTPUT_DIR, "temp/data.rds")
 data <- readRDS(input_path)
-
-# Convert list to data frame for analysis
 df <- as.data.frame(data)
 
-# Set up output directory for plots
 plot_dir <- file.path(OUTPUT_DIR, "temp/plots")
 dir.create(plot_dir, recursive = TRUE, showWarnings = FALSE)
 
-# Define color palette
 colors <- c("darkblue", "darkred", "darkgreen", "darkorange", "purple", "brown")
 
 # Time Series Plot of Yields
-# ===========================
 yield_vars <- grep("^y\\d+$", names(df), value = TRUE)
 yields_long <- df %>%
   select(date, all_of(yield_vars)) %>%
@@ -53,8 +44,6 @@ ggsave(file.path(plot_dir, "yields_time_series.svg"), p_yields,
 )
 
 # Term Structure Snapshots
-# ========================
-# Select specific dates for term structure snapshots
 snapshot_dates <- c(
   min(df$date),
   df$date[which.min(abs(df$date - as.Date("2008-12-31")))], # Financial crisis
@@ -92,7 +81,6 @@ ggsave(file.path(plot_dir, "term_structure_snapshots.svg"), p_term_structure,
 )
 
 # Term Premia Time Series
-# =======================
 tp_vars <- grep("^tp\\d+$", names(df), value = TRUE)
 tp_long <- df %>%
   select(date, all_of(tp_vars)) %>%
@@ -119,7 +107,6 @@ ggsave(file.path(plot_dir, "term_premia_time_series.svg"), p_tp,
 )
 
 # Lagged Principal Components Time Series
-# =======================================
 pc_lag_vars <- grep("^pc\\d+_lag1$", names(df), value = TRUE)[1:3] # First 3 lagged PCs
 pc_lag_long <- df %>%
   select(date, all_of(pc_lag_vars)) %>%
@@ -142,7 +129,6 @@ ggsave(file.path(plot_dir, "lagged_principal_components.svg"), p_pcs,
 )
 
 # Consumption Growth
-# ==================
 p_consumption <- ggplot(df, aes(x = date, y = !!sym(HETID_CONSTANTS$CONSUMPTION_GROWTH_COL))) +
   geom_line(color = "darkred") +
   geom_hline(yintercept = 0, linetype = "dashed", alpha = 0.5) +
@@ -160,8 +146,6 @@ ggsave(file.path(plot_dir, "consumption_growth.svg"), p_consumption,
 )
 
 # Correlation Heatmaps
-# ====================
-# Get all lagged PC variables
 pc_lag_vars_all <- grep("^pc\\d+_lag1$", names(df), value = TRUE)
 
 # Yields correlation
@@ -215,8 +199,6 @@ corrplot(cor_pc_tp,
 dev.off()
 
 # Distribution Plots
-# ==================
-# Yield distributions
 yield_dist_data <- df %>%
   select(all_of(c("y2", "y5", "y10"))) %>%
   pivot_longer(everything(), names_to = "maturity", values_to = "yield")
@@ -261,7 +243,6 @@ ggsave(file.path(plot_dir, "lagged_pc_distributions.svg"), p_pc_dist,
 )
 
 # Yield Curve Slope (10Y - 2Y)
-# =============================
 df$slope_10_2 <- df$y10 - df$y2
 
 p_slope <- ggplot(df, aes(x = date, y = slope_10_2)) +
@@ -283,7 +264,6 @@ ggsave(file.path(plot_dir, "yield_curve_slope.svg"), p_slope,
 )
 
 # Scatterplot Matrix for Key Variables
-# ====================================
 key_vars <- c("y2", "y10", "tp2", "tp10", "pc1_lag1", HETID_CONSTANTS$CONSUMPTION_GROWTH_COL)
 pairs_data <- df[key_vars]
 
@@ -295,8 +275,6 @@ pairs(pairs_data,
 dev.off()
 
 # Rolling Statistics
-# ==================
-# Calculate rolling mean and SD for yields
 window_size <- 20 # 5 years for quarterly data
 
 # Note: This will create NA values for the first (window_size - 1) observations
@@ -325,24 +303,21 @@ ggsave(file.path(plot_dir, "rolling_statistics.svg"), p_rolling,
   width = PLOT_WIDTH, height = PLOT_HEIGHT * 0.7
 )
 
-# Summary Report
-# =============
-cat("\nExploratory Plots Generated\n")
-cat("===========================\n")
-cat("Output directory:", plot_dir, "\n\n")
-cat("Files created:\n")
-cat("- yields_time_series.svg - Time series of all yields\n")
-cat("- term_structure_snapshots.svg - Term structure at key dates\n")
-cat("- term_premia_time_series.svg - Term premia over time\n")
-cat("- lagged_principal_components.svg - First 3 lagged PCs over time\n")
-cat("- consumption_growth.svg - Consumption growth with trend\n")
-cat("- correlation_yields.svg - Yield correlation heatmap\n")
-cat("- correlation_term_premia.svg - Term premia correlation heatmap\n")
-cat("- correlation_lagged_pcs.svg - Lagged PC correlation heatmap\n")
-cat("- correlation_pcs_yields.svg - Cross-correlations: Lagged PCs vs Yields\n")
-cat("- correlation_pcs_tp.svg - Cross-correlations: Lagged PCs vs Term Premia\n")
-cat("- yield_distributions.svg - Histograms of selected yields\n")
-cat("- lagged_pc_distributions.svg - Histograms of first 3 lagged PCs\n")
-cat("- yield_curve_slope.svg - 10Y-2Y slope over time\n")
-cat("- scatterplot_matrix.svg - Relationships between key variables\n")
-cat("- rolling_statistics.svg - Rolling mean and volatility\n")
+cli_h1("Exploratory Plots Generated")
+cli_ul(c(
+  "yields_time_series.svg",
+  "term_structure_snapshots.svg",
+  "term_premia_time_series.svg",
+  "lagged_principal_components.svg",
+  "consumption_growth.svg",
+  "correlation_yields.svg",
+  "correlation_term_premia.svg",
+  "correlation_lagged_pcs.svg",
+  "correlation_pcs_yields.svg",
+  "correlation_pcs_tp.svg",
+  "yield_distributions.svg",
+  "lagged_pc_distributions.svg",
+  "yield_curve_slope.svg",
+  "scatterplot_matrix.svg",
+  "rolling_statistics.svg"
+))

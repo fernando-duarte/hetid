@@ -2,7 +2,6 @@
 # Analyze autocorrelation, stationarity, and other time series characteristics;
 # add heteroskedasticity tests from package skedastic
 
-# Load required packages
 library(hetid)
 library(dplyr)
 library(tidyr)
@@ -11,52 +10,34 @@ library(urca)
 library(skedastic)
 library(ggplot2)
 library(gridExtra)
-library(knitr)
-library(kableExtra)
+library(gt)
 library(DT)
 library(htmltools)
-library(ggplot2)
 library(plotly)
-
-# Set up paths
 library(here)
 source(here::here("scripts/utils/common_settings.R"))
 
-# Load consolidated data
 input_path <- file.path(OUTPUT_DIR, "temp/data.rds")
 data <- readRDS(input_path)
-
-# Convert list to data frame for analysis
 df <- as.data.frame(data)
 
-# Define variable groups
 yield_vars <- grep("^y\\d+$", names(df), value = TRUE)
 tp_vars <- grep("^tp\\d+$", names(df), value = TRUE)
 pc_lag_vars <- grep("^pc\\d+_lag1$", names(df), value = TRUE)
 macro_vars <- "gr1.pcecc96"
 
-# Create time series objects
 ts_data <- ts(df[, -which(names(df) == "date")],
   start = c(year(min(df$date)), quarter(min(df$date))),
   frequency = 4
 )
 
-# Create HTML output directory
 html_output_dir <- file.path(OUTPUT_DIR, "temp/time_series_properties/html")
 dir.create(html_output_dir, recursive = TRUE, showWarnings = FALSE)
 
-# Create plots directory
 plots_dir <- file.path(OUTPUT_DIR, "temp/time_series_properties/plots")
 dir.create(plots_dir, recursive = TRUE, showWarnings = FALSE)
 
-cat("Time Series Properties Analysis\n")
-cat("===============================\n")
-cat("Sample period:", format(range(df$date), "%Y-%m-%d"), "\n")
-cat("Frequency: Quarterly\n")
-cat("Number of observations:", nrow(df), "\n")
-cat("Output directories:\n")
-cat("- HTML tables:", html_output_dir, "\n")
-cat("- Plots:", plots_dir, "\n\n")
+cli_h1("Time Series Properties Analysis")
 
 # Function to perform comprehensive time series tests
 analyze_time_series <- function(x, var_name, max_lags = 8) {
@@ -167,9 +148,6 @@ analyze_time_series <- function(x, var_name, max_lags = 8) {
   ))
 }
 
-# Analyze all variable groups
-cat("Computing time series properties for all variables...\n")
-
 # Yields
 yields_ts_results <- do.call(rbind, lapply(yield_vars, function(v) {
   analyze_time_series(df[[v]], v)
@@ -233,16 +211,14 @@ numeric_cols <- c(
 all_ts_results[numeric_cols] <- lapply(all_ts_results[numeric_cols], function(x) round(x, 4))
 
 # Display results in narrower tables
-cat("\nTime Series Properties Summary\n")
-cat("==============================\n")
+cli_h1("Time Series Properties Summary")
 
 # Create narrower tables by splitting columns
 # Basic statistics table
 basic_stats <- all_ts_results[, c("Variable", "Mean", "SD", "AC1", "AC4", "N")]
 basic_stats <- basic_stats[!grepl("---", basic_stats$Variable), ]
 
-cat("\nBasic Statistics:\n")
-cat("================\n")
+cli_h2("Basic Statistics")
 
 # Create interactive HTML table for basic statistics
 basic_stats_dt <- datatable(
@@ -275,9 +251,6 @@ htmlwidgets::saveWidget(
   selfcontained = TRUE
 )
 
-cat("Interactive basic statistics table saved to:", file.path(html_output_dir, "basic_statistics.html"), "\n")
-
-# Clean the basic stats table for console display (remove row names that create X-squared)
 basic_stats_clean <- basic_stats
 rownames(basic_stats_clean) <- NULL
 print(kable(basic_stats_clean, format = "simple", align = "l", digits = 4, row.names = FALSE))
@@ -473,7 +446,6 @@ hetero_table1 <- hetero_results[, c("Variable", "White_pval", "BP_pval", "GQ_pva
 hetero_table2 <- hetero_results[, c("Variable", "Harvey_pval", "Anscombe_pval", "CW_pval")]
 
 cat("Heteroskedasticity Tests - Part 1 (p-values):\n")
-# Clean the hetero table1 for console display
 hetero_table1_clean <- hetero_table1
 rownames(hetero_table1_clean) <- NULL
 print(kable(hetero_table1_clean, format = "simple", align = "l", row.names = FALSE))
@@ -483,14 +455,12 @@ cat("Anscombe Test: Tests for σ²ᵢ = σ²Xᵢᵝ form of heteroskedasticity\n
 cat("Cook-Weisberg (CW): Score test, enhanced version of Breusch-Pagan\n\n")
 
 cat("Heteroskedasticity Tests - Part 2 (p-values):\n")
-# Clean the hetero table2 for console display
 hetero_table2_clean <- hetero_table2
 rownames(hetero_table2_clean) <- NULL
 print(kable(hetero_table2_clean, format = "simple", align = "l", row.names = FALSE))
 
 # Summary of heteroskedasticity test results
-cat("\n\nHeteroskedasticity Test Summary:\n")
-cat("===============================\n")
+cli_h2("Heteroskedasticity Test Summary")
 
 # Count rejections for each test
 white_rejections <- sum(hetero_results$White_pval < 0.05, na.rm = TRUE)
@@ -501,16 +471,15 @@ anscombe_rejections <- sum(hetero_results$Anscombe_pval < 0.05, na.rm = TRUE)
 cw_rejections <- sum(hetero_results$CW_pval < 0.05, na.rm = TRUE)
 total_vars <- nrow(hetero_results)
 
-cat("Variables showing heteroskedasticity (p < 0.05):\n")
-cat("- White Test:", white_rejections, "/", total_vars, "variables\n")
-cat("- Breusch-Pagan Test:", bp_rejections, "/", total_vars, "variables\n")
-cat("- Goldfeld-Quandt Test:", gq_rejections, "/", total_vars, "variables\n")
-cat("- Harvey Test:", harvey_rejections, "/", total_vars, "variables\n")
-cat("- Anscombe Test:", anscombe_rejections, "/", total_vars, "variables\n")
-cat("- Cook-Weisberg Test:", cw_rejections, "/", total_vars, "variables\n")
-
-# Generate heteroskedasticity diagnostic plots using skedastic
-cat("\nGenerating heteroskedasticity diagnostic plots...\n")
+cli_text("Variables showing heteroskedasticity (p < 0.05):")
+cli_ul(c(
+  paste("White Test:", cli_col_red(white_rejections), "/", total_vars, "variables"),
+  paste("Breusch-Pagan Test:", cli_col_red(bp_rejections), "/", total_vars, "variables"),
+  paste("Goldfeld-Quandt Test:", cli_col_red(gq_rejections), "/", total_vars, "variables"),
+  paste("Harvey Test:", cli_col_red(harvey_rejections), "/", total_vars, "variables"),
+  paste("Anscombe Test:", cli_col_red(anscombe_rejections), "/", total_vars, "variables"),
+  paste("Cook-Weisberg Test:", cli_col_red(cw_rejections), "/", total_vars, "variables")
+))
 
 # Function to create diagnostic plots for a variable
 create_hetero_plots <- function(var_name, y_var, predictor_vars) {
@@ -576,17 +545,27 @@ create_hetero_plots <- function(var_name, y_var, predictor_vars) {
         ) +
         theme_minimal()
 
-      # Save plots
+      # Combine plots into a 2x2 grid for viewer display
+      combined_plot <- gridExtra::grid.arrange(p1, p2, p3, p4,
+        ncol = 2,
+        top = paste("Heteroskedasticity Diagnostics:", var_name)
+      )
+
+      # Display in RStudio viewer
+      print(combined_plot)
+
+      # Save individual plots
       ggsave(file.path(plots_dir, paste0(var_name, "_residuals_vs_fitted.png")), p1, width = 8, height = 6)
       ggsave(file.path(plots_dir, paste0(var_name, "_scale_location.png")), p2, width = 8, height = 6)
       ggsave(file.path(plots_dir, paste0(var_name, "_squared_residuals.png")), p3, width = 8, height = 6)
       ggsave(file.path(plots_dir, paste0(var_name, "_residuals_vs_index.png")), p4, width = 8, height = 6)
 
-      cat("  - 4 diagnostic plots generated for", var_name, "\n")
+      # Also save the combined plot
+      ggsave(file.path(plots_dir, paste0(var_name, "_combined_diagnostics.png")), combined_plot, width = 12, height = 10)
+
       return(TRUE)
     },
     error = function(e) {
-      cat("  - Error generating plots for", var_name, ":", e$message, "\n")
       return(FALSE)
     }
   )
@@ -602,9 +581,6 @@ plot_success <- sapply(key_vars, function(var) {
   }
 })
 
-cat("Heteroskedasticity plots saved to:", plots_dir, "\n")
-total_plots <- sum(plot_success) * 4 # 4 plots per variable
-cat("Generated", total_plots, "diagnostic plots for", sum(plot_success), "variables\n")
 
 # Create comprehensive test summary table
 cat("\n\nComprehensive Test Summary: Reject (R) or Fail to Reject (F) H0\n")
@@ -699,31 +675,12 @@ htmlwidgets::saveWidget(
   selfcontained = TRUE
 )
 
-cat("\nInteractive comprehensive test summary saved to:", file.path(html_output_dir, "comprehensive_test_summary.html"), "\n")
-
-# Clean the summary table for console display (remove row names that create X-squared)
 summary_table_clean <- summary_table
 rownames(summary_table_clean) <- NULL
 print(kable(summary_table_clean, format = "simple", align = "l", row.names = FALSE))
 
-# Save all results
 output_dir <- file.path(OUTPUT_DIR, "temp/time_series_properties")
 dir.create(output_dir, recursive = TRUE, showWarnings = FALSE)
 
-# Save time series properties
 write.csv(all_ts_results, file.path(output_dir, "time_series_properties.csv"), row.names = FALSE)
-
-# Save heteroskedasticity test results
 write.csv(hetero_results, file.path(output_dir, "heteroskedasticity_tests.csv"), row.names = FALSE)
-
-cat("\n\nResults saved to:", output_dir)
-cat("\nFiles created:")
-cat("\n- time_series_properties.csv")
-cat("\n- heteroskedasticity_tests.csv")
-cat("\n- html/basic_statistics.html (interactive table)")
-cat("\n- html/comprehensive_test_summary.html (interactive table)")
-cat("\n- plots/ (heteroskedasticity diagnostic plots)")
-cat("\n\nOpen the HTML files in a web browser for interactive tables with:")
-cat("\n- Sorting and filtering capabilities")
-cat("\n- Export to CSV/Excel functionality")
-cat("\n- Color-coded test results")

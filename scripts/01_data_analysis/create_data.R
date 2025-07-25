@@ -2,33 +2,26 @@
 # Load ACM data, convert to quarterly, merge with variables.RData,
 # consolidate into single dataset with dates
 
-# Load required packages
 library(hetid)
 library(dplyr)
 library(tidyr)
 library(lubridate)
-
-# Set up paths
+library(gt)
 library(here)
 source(here::here("scripts/utils/common_settings.R"))
 
-# Load ACM data with quarterly frequency
 acm_data <- extract_acm_data(frequency = "quarterly")
 
-# Define maturity range
 maturity_range <- HETID_CONSTANTS$MIN_MATURITY:HETID_CONSTANTS$MAX_MATURITY
 
-# Extract components and filter by maturity range
 dates <- acm_data$date
 yield_cols <- paste0("y", maturity_range)
 tp_cols <- paste0("tp", maturity_range)
 yields <- as.matrix(acm_data[, yield_cols])
 term_premia <- as.matrix(acm_data[, tp_cols])
 
-# Load variables data
 data("variables", package = "hetid")
 
-# Prepare variables data
 # Keep only date, consumption growth, and PCs
 pc_cols <- paste0("pc", 1:MAX_N_PCS)
 cols_to_keep <- c("date", HETID_CONSTANTS$CONSUMPTION_GROWTH_COL, pc_cols)
@@ -106,13 +99,11 @@ for (i in 1:MAX_N_PCS) {
 # Convert to list format for consistency with package expectations
 data <- as.list(data)
 
-# Final check for any missing or NA values
 na_check <- sapply(data, function(x) any(is.na(x)))
 if (any(na_check)) {
   stop("ERROR: Missing values found in final dataset. This should not happen.")
 }
 
-# Create summary
 summary_info <- list(
   Frequency = "quarterly",
   `Date Range` = paste(
@@ -127,7 +118,6 @@ summary_info <- list(
   `Other Variables` = "gr1.pcecc96 (consumption growth)"
 )
 
-# Display summary
 summary_df <- data.frame(
   Item = names(summary_info),
   Value = unlist(summary_info),
@@ -135,9 +125,29 @@ summary_df <- data.frame(
   row.names = NULL
 )
 
-print(summary_df, right = FALSE)
+summary_table <- summary_df %>%
+  gt() %>%
+  tab_header(
+    title = "Data Creation Summary",
+    subtitle = "Quarterly ACM and Variables Data Merge"
+  ) %>%
+  tab_style(
+    style = list(
+      cell_fill(color = "lightblue"),
+      cell_text(weight = "bold")
+    ),
+    locations = cells_body(
+      columns = Item,
+      rows = Item == "Number of Observations"
+    )
+  ) %>%
+  tab_options(
+    table.font.size = 12,
+    table.width = pct(60)
+  )
 
-# Save data
+print(summary_table)
+
 output_path <- file.path(OUTPUT_DIR, "temp/data.rds")
 dir.create(dirname(output_path), recursive = TRUE, showWarnings = FALSE)
 saveRDS(data, output_path)

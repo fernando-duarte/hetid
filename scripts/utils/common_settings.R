@@ -3,6 +3,7 @@
 
 # Load required packages
 library(here)
+library(cli) # For better console output
 
 # Set up output directories
 SCRIPTS_DIR <- here::here("scripts")
