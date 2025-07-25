@@ -101,26 +101,18 @@ pcs_matrix <- as.matrix(data_with_news[, pc_lag_vars])
 # Summary statistics for price news
 cli_h2("Price News Summary Statistics")
 
-price_news_stats <- data.frame(
-  Variable = price_news_vars,
-  Mean = colMeans(price_news),
-  SD = apply(price_news, 2, sd),
-  Min = apply(price_news, 2, min),
-  Max = apply(price_news, 2, max),
-  Skewness = apply(price_news, 2, function(x) moments::skewness(x)),
-  Kurtosis = apply(price_news, 2, function(x) moments::kurtosis(x))
-)
-
-price_news_stats[] <- lapply(price_news_stats[-1], function(x) round(x, 4))
-# Create formatted table
-price_news_table <- price_news_stats %>%
-  gt() %>%
-  tab_header(
-    title = "Price News Summary",
-    subtitle = "Statistics across maturities"
-  ) %>%
+# Use utility function to compute statistics for each price news series
+price_news_stats <- do.call(rbind, lapply(1:ncol(price_news), function(i) {
+  compute_summary_stats(price_news[, i], price_news_vars[i], compute_ac = FALSE)
+}))
+# Use utility function for formatted table
+price_news_table <- create_formatted_table(
+  price_news_stats,
+  title = "Price News Summary",
+  subtitle = "Statistics across maturities"
+) %>%
   fmt_number(
-    columns = c(Mean:Kurtosis),
+    columns = -Variable,
     decimals = 4
   ) %>%
   tab_style(
@@ -177,21 +169,42 @@ ac_df <- data.frame(
 print(ac_df)
 
 # Relationship between price news and lagged PCs
-cat("\n\nCorrelations: Price News vs Lagged PCs\n")
-cat("======================================\n")
+cli_h2("Correlations: Price News vs Lagged PCs")
 cor_news_pcs <- cor(price_news, pcs_matrix)
 rownames(cor_news_pcs) <- price_news_vars
 colnames(cor_news_pcs) <- pc_lag_vars
-print(round(cor_news_pcs, 3))
+
+# Create formatted correlation table
+cor_news_pcs_table <- as.data.frame(cor_news_pcs) %>%
+  tibble::rownames_to_column("Price_News") %>%
+  gt() %>%
+  tab_header(title = "Price News vs Lagged PCs Correlations") %>%
+  fmt_number(columns = -Price_News, decimals = 3)
+
+print(cor_news_pcs_table)
 
 # Relationship between price news and consumption growth
-cat("\n\nCorrelations: Price News vs Consumption Growth\n")
-cat("==============================================\n")
+cli_h2("Correlations: Price News vs Consumption Growth")
 consumption_growth <- data_with_news[[HETID_CONSTANTS$CONSUMPTION_GROWTH_COL]]
 cor_news_consumption <- cor(price_news, consumption_growth)
 rownames(cor_news_consumption) <- price_news_vars
 colnames(cor_news_consumption) <- HETID_CONSTANTS$CONSUMPTION_GROWTH_COL
-print(round(cor_news_consumption, 3))
+
+# Create formatted correlation table
+cor_news_consumption_table <- as.data.frame(cor_news_consumption) %>%
+  tibble::rownames_to_column("Price_News") %>%
+  gt() %>%
+  tab_header(title = "Price News vs Consumption Growth") %>%
+  fmt_number(columns = -Price_News, decimals = 3) %>%
+  tab_style(
+    style = cell_fill(color = "lightyellow"),
+    locations = cells_body(
+      columns = -Price_News,
+      rows = abs(cor_news_consumption) > 0.1
+    )
+  )
+
+print(cor_news_consumption_table)
 
 # Heteroskedasticity Analysis of Price News
 cli_h1("Heteroskedasticity Analysis of Price News")

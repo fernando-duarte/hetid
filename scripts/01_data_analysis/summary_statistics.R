@@ -19,47 +19,41 @@ pc_vars <- grep("^pc\\d+$", names(df), value = TRUE)
 pc_lag_vars <- grep("^pc\\d+_lag1$", names(df), value = TRUE)
 macro_vars <- HETID_CONSTANTS$CONSUMPTION_GROWTH_COL
 
-# Function to compute summary statistics
-compute_summary_stats <- function(x, var_name) {
-  # Compute autocorrelations
-  acf_values <- acf(x, lag.max = 2, plot = FALSE, na.action = na.pass)$acf
+# Compute statistics using utility function and add quartiles
+compute_detailed_stats <- function(x, var_name) {
+  # Use utility function for basic stats
+  stats <- compute_summary_stats(x, var_name, compute_ac = TRUE, max_lags = 2)
 
-  data.frame(
-    Variable = var_name,
-    Mean = mean(x, na.rm = TRUE),
-    SD = sd(x, na.rm = TRUE),
-    Min = min(x, na.rm = TRUE),
-    Q1 = quantile(x, 0.25, na.rm = TRUE),
-    Median = median(x, na.rm = TRUE),
-    Q3 = quantile(x, 0.75, na.rm = TRUE),
-    Max = max(x, na.rm = TRUE),
-    Skewness = moments::skewness(x, na.rm = TRUE),
-    Kurtosis = moments::kurtosis(x, na.rm = TRUE),
-    AC1 = acf_values[2], # First autocorrelation (lag 1)
-    AC2 = acf_values[3], # Second autocorrelation (lag 2)
-    N = sum(!is.na(x)),
-    stringsAsFactors = FALSE
-  )
+  # Add quartiles which aren't in the utility function
+  stats$Q1 <- quantile(x, 0.25, na.rm = TRUE)
+  stats$Median <- median(x, na.rm = TRUE)
+  stats$Q3 <- quantile(x, 0.75, na.rm = TRUE)
+
+  # Reorder columns
+  stats[, c(
+    "Variable", "Mean", "SD", "Min", "Q1", "Median", "Q3", "Max",
+    "Skewness", "Kurtosis", "AC1", "AC2", "N"
+  )]
 }
 
 # Compute statistics for each variable group
 yields_stats <- do.call(rbind, lapply(yield_vars, function(v) {
-  compute_summary_stats(df[[v]], v)
+  compute_detailed_stats(df[[v]], v)
 }))
 
 tp_stats <- do.call(rbind, lapply(tp_vars, function(v) {
-  compute_summary_stats(df[[v]], v)
+  compute_detailed_stats(df[[v]], v)
 }))
 
 pc_stats <- do.call(rbind, lapply(pc_vars, function(v) {
-  compute_summary_stats(df[[v]], v)
+  compute_detailed_stats(df[[v]], v)
 }))
 
 pc_lag_stats <- do.call(rbind, lapply(pc_lag_vars, function(v) {
-  compute_summary_stats(df[[v]], v)
+  compute_detailed_stats(df[[v]], v)
 }))
 
-macro_stats <- compute_summary_stats(df[[macro_vars]], macro_vars)
+macro_stats <- compute_detailed_stats(df[[macro_vars]], macro_vars)
 
 # Combine all statistics
 all_stats <- rbind(
@@ -101,12 +95,12 @@ all_stats[numeric_cols] <- lapply(all_stats[numeric_cols], function(x) round(x, 
 
 cli_h2("Summary Statistics")
 
-summary_table <- all_stats %>%
-  gt() %>%
-  tab_header(
-    title = "Summary Statistics for All Variables",
-    subtitle = "Quarterly Data Analysis"
-  ) %>%
+# Use utility function for formatted table
+summary_table <- create_formatted_table(
+  all_stats,
+  title = "Summary Statistics for All Variables",
+  subtitle = "Quarterly Data Analysis"
+) %>%
   fmt_number(
     columns = c(Mean:AC2),
     decimals = 3
@@ -162,19 +156,12 @@ key_vars_summary <- all_stats %>%
 
 cli_h2("Key Variables Summary")
 
-key_vars_dt <- datatable(
+# Use utility function for interactive table
+key_vars_dt <- create_interactive_table(
   key_vars_summary,
-  options = list(
-    pageLength = 10,
-    dom = "t",
-    columnDefs = list(
-      list(className = "dt-left", targets = 0),
-      list(className = "dt-right", targets = 1:5)
-    )
-  ),
-  rownames = FALSE
-) %>%
-  formatRound(columns = c("Mean", "SD", "Min", "Max", "Skewness"), digits = 3)
+  page_length = 10,
+  round_digits = 3
+)
 
 print(key_vars_dt)
 
@@ -192,11 +179,11 @@ maturity_summary <- merge(yields_stats_avg, tp_stats_avg,
   by = "maturity", suffixes = c("_yield", "_tp")
 )
 
-maturity_table <- maturity_summary %>%
-  gt() %>%
-  tab_header(
-    title = "Statistics by Maturity"
-  ) %>%
+# Use utility function for formatted table with custom styling
+maturity_table <- create_formatted_table(
+  maturity_summary,
+  title = "Statistics by Maturity"
+) %>%
   cols_label(
     maturity = "Maturity",
     Mean_yield = "Yield Mean",

@@ -99,10 +99,8 @@ for (i in 1:MAX_N_PCS) {
 # Convert to list format for consistency with package expectations
 data <- as.list(data)
 
-na_check <- sapply(data, function(x) any(is.na(x)))
-if (any(na_check)) {
-  stop("ERROR: Missing values found in final dataset. This should not happen.")
-}
+# Use utility function to check data completeness
+check_data_completeness(as.data.frame(data), stop_on_na = TRUE)
 
 summary_info <- list(
   Frequency = "quarterly",
@@ -125,22 +123,14 @@ summary_df <- data.frame(
   row.names = NULL
 )
 
-summary_table <- summary_df %>%
-  gt() %>%
-  tab_header(
-    title = "Data Creation Summary",
-    subtitle = "Quarterly ACM and Variables Data Merge"
-  ) %>%
-  tab_style(
-    style = list(
-      cell_fill(color = "lightblue"),
-      cell_text(weight = "bold")
-    ),
-    locations = cells_body(
-      columns = Item,
-      rows = Item == "Number of Observations"
-    )
-  ) %>%
+# Use utility function for formatted table
+summary_table <- create_formatted_table(
+  summary_df,
+  title = "Data Creation Summary",
+  subtitle = "Quarterly ACM and Variables Data Merge",
+  highlight_rows = which(summary_df$Item == "Number of Observations"),
+  highlight_color = "lightblue"
+) %>%
   tab_options(
     table.font.size = 12,
     table.width = pct(60)

@@ -4,6 +4,7 @@
 # Load required packages
 library(here)
 library(cli) # For better console output
+library(hetid) # Load package to access constants
 
 # Set up output directories
 SCRIPTS_DIR <- here::here("scripts")
@@ -25,7 +26,7 @@ dir.create(file.path(OUTPUT_TEMP_DIR, "other"), recursive = TRUE, showWarnings =
 # Common parameters
 SEED <- 123 # For reproducibility
 N_CORES <- parallel::detectCores() - 1 # Leave one core free
-MAX_N_PCS <- 6 # Maximum number of principal components to keep
+MAX_N_PCS <- HETID_CONSTANTS$MAX_N_PCS # Use package constant
 
 # Plotting parameters
 PLOT_WIDTH <- 8

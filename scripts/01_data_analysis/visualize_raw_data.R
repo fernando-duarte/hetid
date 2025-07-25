@@ -38,10 +38,7 @@ p_yields <- ggplot(yields_long, aes(x = date, y = yield, color = factor(maturity
   theme_minimal() +
   theme(legend.position = "right")
 
-print(p_yields)
-ggsave(file.path(plot_dir, "yields_time_series.svg"), p_yields,
-  width = PLOT_WIDTH, height = PLOT_HEIGHT
-)
+display_and_save_plot(p_yields, "yields_time_series.svg", dir = plot_dir)
 
 # Term Structure Snapshots
 snapshot_dates <- c(
@@ -75,10 +72,7 @@ p_term_structure <- ggplot(snapshot_data, aes(
   ) +
   theme_minimal()
 
-print(p_term_structure)
-ggsave(file.path(plot_dir, "term_structure_snapshots.svg"), p_term_structure,
-  width = PLOT_WIDTH, height = PLOT_HEIGHT
-)
+display_and_save_plot(p_term_structure, "term_structure_snapshots.svg", dir = plot_dir)
 
 # Term Premia Time Series
 tp_vars <- grep("^tp\\d+$", names(df), value = TRUE)
@@ -101,10 +95,7 @@ p_tp <- ggplot(
   ) +
   theme_minimal()
 
-print(p_tp)
-ggsave(file.path(plot_dir, "term_premia_time_series.svg"), p_tp,
-  width = PLOT_WIDTH, height = PLOT_HEIGHT
-)
+display_and_save_plot(p_tp, "term_premia_time_series.svg", dir = plot_dir)
 
 # Lagged Principal Components Time Series
 pc_lag_vars <- grep("^pc\\d+_lag1$", names(df), value = TRUE)[1:3] # First 3 lagged PCs
@@ -123,10 +114,7 @@ p_pcs <- ggplot(pc_lag_long, aes(x = date, y = value)) +
   ) +
   theme_minimal()
 
-print(p_pcs)
-ggsave(file.path(plot_dir, "lagged_principal_components.svg"), p_pcs,
-  width = PLOT_WIDTH, height = PLOT_HEIGHT * 1.2
-)
+display_and_save_plot(p_pcs, "lagged_principal_components.svg", dir = plot_dir, height = PLOT_HEIGHT * 1.2)
 
 # Consumption Growth
 p_consumption <- ggplot(df, aes(x = date, y = !!sym(HETID_CONSTANTS$CONSUMPTION_GROWTH_COL))) +
@@ -140,63 +128,30 @@ p_consumption <- ggplot(df, aes(x = date, y = !!sym(HETID_CONSTANTS$CONSUMPTION_
   ) +
   theme_minimal()
 
-print(p_consumption)
-ggsave(file.path(plot_dir, "consumption_growth.svg"), p_consumption,
-  width = PLOT_WIDTH, height = PLOT_HEIGHT * 0.7
-)
+display_and_save_plot(p_consumption, "consumption_growth.svg", dir = plot_dir, height = PLOT_HEIGHT * 0.7)
 
 # Correlation Heatmaps
 pc_lag_vars_all <- grep("^pc\\d+_lag1$", names(df), value = TRUE)
 
 # Yields correlation
 cor_yields <- cor(df[yield_vars], use = "complete.obs")
-svglite(file.path(plot_dir, "correlation_yields.svg"), width = 8, height = 7)
-corrplot(cor_yields,
-  method = "color", type = "upper",
-  order = "original", tl.col = "black", tl.srt = 45,
-  title = "Yield Correlations", mar = c(0, 0, 2, 0)
-)
-dev.off()
+save_correlation_heatmap(cor_yields, "Yield Correlations", "correlation_yields.svg", dir = plot_dir)
 
 # Term premia correlation
 cor_tp <- cor(df[tp_vars], use = "complete.obs")
-svglite(file.path(plot_dir, "correlation_term_premia.svg"), width = 8, height = 7)
-corrplot(cor_tp,
-  method = "color", type = "upper",
-  order = "original", tl.col = "black", tl.srt = 45,
-  title = "Term Premia Correlations", mar = c(0, 0, 2, 0)
-)
-dev.off()
+save_correlation_heatmap(cor_tp, "Term Premia Correlations", "correlation_term_premia.svg", dir = plot_dir)
 
 # Lagged PCs correlation
 cor_pc_lag <- cor(df[pc_lag_vars_all], use = "complete.obs")
-svglite(file.path(plot_dir, "correlation_lagged_pcs.svg"), width = 8, height = 7)
-corrplot(cor_pc_lag,
-  method = "color", type = "upper",
-  order = "original", tl.col = "black", tl.srt = 45,
-  title = "Lagged PC Correlations", mar = c(0, 0, 2, 0)
-)
-dev.off()
+save_correlation_heatmap(cor_pc_lag, "Lagged PC Correlations", "correlation_lagged_pcs.svg", dir = plot_dir)
 
 # Cross-correlation: Lagged PCs vs Yields
 cor_pc_yields <- cor(df[pc_lag_vars_all], df[yield_vars], use = "complete.obs")
-svglite(file.path(plot_dir, "correlation_pcs_yields.svg"), width = 10, height = 8)
-corrplot(cor_pc_yields,
-  method = "color",
-  tl.col = "black", tl.srt = 45,
-  title = "Correlations: Lagged PCs vs Yields", mar = c(0, 0, 2, 0)
-)
-dev.off()
+save_correlation_heatmap(cor_pc_yields, "Correlations: Lagged PCs vs Yields", "correlation_pcs_yields.svg", dir = plot_dir)
 
 # Cross-correlation: Lagged PCs vs Term Premia
 cor_pc_tp <- cor(df[pc_lag_vars_all], df[tp_vars], use = "complete.obs")
-svglite(file.path(plot_dir, "correlation_pcs_tp.svg"), width = 10, height = 8)
-corrplot(cor_pc_tp,
-  method = "color",
-  tl.col = "black", tl.srt = 45,
-  title = "Correlations: Lagged PCs vs Term Premia", mar = c(0, 0, 2, 0)
-)
-dev.off()
+save_correlation_heatmap(cor_pc_tp, "Correlations: Lagged PCs vs Term Premia", "correlation_pcs_tp.svg", dir = plot_dir)
 
 # Distribution Plots
 yield_dist_data <- df %>%
@@ -214,10 +169,7 @@ p_yield_dist <- ggplot(yield_dist_data, aes(x = yield, fill = maturity)) +
   theme_minimal() +
   theme(legend.position = "none")
 
-print(p_yield_dist)
-ggsave(file.path(plot_dir, "yield_distributions.svg"), p_yield_dist,
-  width = PLOT_WIDTH, height = PLOT_HEIGHT
-)
+display_and_save_plot(p_yield_dist, "yield_distributions.svg", dir = plot_dir)
 
 # Lagged PC distributions
 pc_lag_dist_vars <- pc_lag_vars_all[1:3] # First 3 lagged PCs
@@ -237,10 +189,7 @@ p_pc_dist <- ggplot(pc_dist_data, aes(x = value, fill = pc)) +
   theme_minimal() +
   theme(legend.position = "none")
 
-print(p_pc_dist)
-ggsave(file.path(plot_dir, "lagged_pc_distributions.svg"), p_pc_dist,
-  width = PLOT_WIDTH, height = PLOT_HEIGHT
-)
+display_and_save_plot(p_pc_dist, "lagged_pc_distributions.svg", dir = plot_dir)
 
 # Yield Curve Slope (10Y - 2Y)
 df$slope_10_2 <- df$y10 - df$y2
@@ -258,10 +207,7 @@ p_slope <- ggplot(df, aes(x = date, y = slope_10_2)) +
   ) +
   theme_minimal()
 
-print(p_slope)
-ggsave(file.path(plot_dir, "yield_curve_slope.svg"), p_slope,
-  width = PLOT_WIDTH, height = PLOT_HEIGHT * 0.7
-)
+display_and_save_plot(p_slope, "yield_curve_slope.svg", dir = plot_dir, height = PLOT_HEIGHT * 0.7)
 
 # Scatterplot Matrix for Key Variables
 key_vars <- c("y2", "y10", "tp2", "tp10", "pc1_lag1", HETID_CONSTANTS$CONSUMPTION_GROWTH_COL)
@@ -298,10 +244,7 @@ p_rolling <- ggplot(df, aes(x = date)) +
   ) +
   theme_minimal()
 
-print(p_rolling)
-ggsave(file.path(plot_dir, "rolling_statistics.svg"), p_rolling,
-  width = PLOT_WIDTH, height = PLOT_HEIGHT * 0.7
-)
+display_and_save_plot(p_rolling, "rolling_statistics.svg", dir = plot_dir, height = PLOT_HEIGHT * 0.7)
 
 cli_h1("Exploratory Plots Generated")
 cli_ul(c(
