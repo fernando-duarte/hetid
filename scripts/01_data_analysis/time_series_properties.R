@@ -217,27 +217,31 @@ numeric_cols <- c(
 )
 all_ts_results[numeric_cols] <- lapply(all_ts_results[numeric_cols], function(x) round(x, 4))
 
-# Display results in smaller tables
+# Display results in narrower tables
 cat("\nTime Series Properties Summary\n")
 cat("==============================\n")
 
-# Split into separate tables for better readability
-yields_display <- all_ts_results[grepl("y\\d+|--- Yields", all_ts_results$Variable), ]
-tp_display <- all_ts_results[grepl("tp\\d+|--- Term Premia", all_ts_results$Variable), ]
-pc_display <- all_ts_results[grepl("pc\\d+_lag1|--- Lagged", all_ts_results$Variable), ]
-macro_display <- all_ts_results[grepl("gr1|--- Macro", all_ts_results$Variable), ]
+# Create narrower tables by splitting columns
+# Basic statistics table
+basic_stats <- all_ts_results[, c("Variable", "Mean", "SD", "AC1", "AC4", "N")]
+basic_stats <- basic_stats[!grepl("---", basic_stats$Variable), ]
 
-cat("\nYields (y1-y10):\n")
-print(kable(yields_display, format = "simple", align = "l"))
+cat("\nBasic Statistics:\n")
+print(kable(basic_stats, format = "simple", align = "l", digits = 4))
 
-cat("\nTerm Premia (tp1-tp10):\n")
-print(kable(tp_display, format = "simple", align = "l"))
+# Unit root and stationarity tests
+unit_root_stats <- all_ts_results[, c("Variable", "ADF_stat", "ADF_pval", "KPSS_stat", "KPSS_pval", "PP_stat", "PP_pval")]
+unit_root_stats <- unit_root_stats[!grepl("---", unit_root_stats$Variable), ]
 
-cat("\nLagged Principal Components:\n")
-print(kable(pc_display, format = "simple", align = "l"))
+cat("\nUnit Root and Stationarity Tests:\n")
+print(kable(unit_root_stats, format = "simple", align = "l", digits = 4))
 
-cat("\nMacro Variables:\n")
-print(kable(macro_display, format = "simple", align = "l"))
+# Serial correlation and normality tests
+serial_norm_stats <- all_ts_results[, c("Variable", "LB_stat", "LB_pval", "ARCH_stat", "ARCH_pval", "JB_stat", "JB_pval")]
+serial_norm_stats <- serial_norm_stats[!grepl("---", serial_norm_stats$Variable), ]
+
+cat("\nSerial Correlation and Normality Tests:\n")
+print(kable(serial_norm_stats, format = "simple", align = "l", digits = 4))
 
 # Heteroskedasticity tests using skedastic package
 cat("\n\nHeteroskedasticity Tests (using skedastic package)\n")
@@ -293,6 +297,36 @@ perform_hetero_tests <- function(y, x_vars, var_name) {
     }
   )
 
+  # Harvey test
+  harvey_test <- tryCatch(
+    {
+      harvey(lm_model)
+    },
+    error = function(e) {
+      list(statistic = NA, p.value = NA)
+    }
+  )
+
+  # Anscombe test
+  anscombe_test <- tryCatch(
+    {
+      anscombe(lm_model)
+    },
+    error = function(e) {
+      list(statistic = NA, p.value = NA)
+    }
+  )
+
+  # Cook-Weisberg test
+  cw_test <- tryCatch(
+    {
+      cook_weisberg(lm_model)
+    },
+    error = function(e) {
+      list(statistic = NA, p.value = NA)
+    }
+  )
+
   return(data.frame(
     Variable = var_name,
     White_stat = as.numeric(white_test$statistic),
@@ -301,6 +335,12 @@ perform_hetero_tests <- function(y, x_vars, var_name) {
     BP_pval = as.numeric(bp_test$p.value),
     GQ_stat = as.numeric(gq_test$statistic),
     GQ_pval = as.numeric(gq_test$p.value),
+    Harvey_stat = as.numeric(harvey_test$statistic),
+    Harvey_pval = as.numeric(harvey_test$p.value),
+    Anscombe_stat = as.numeric(anscombe_test$statistic),
+    Anscombe_pval = as.numeric(anscombe_test$p.value),
+    CW_stat = as.numeric(cw_test$statistic),
+    CW_pval = as.numeric(cw_test$p.value),
     N = nrow(reg_data),
     stringsAsFactors = FALSE
   ))
@@ -309,16 +349,20 @@ perform_hetero_tests <- function(y, x_vars, var_name) {
 # Prepare predictor variables (lagged PCs)
 predictor_vars <- df[, pc_lag_vars]
 
-# Test heteroskedasticity for key variables
-key_vars <- c("y2", "y5", "y10", "tp2", "tp5", "tp10", "gr1.pcecc96")
-hetero_results <- do.call(rbind, lapply(key_vars, function(v) {
+# Test heteroskedasticity for all key variables
+all_test_vars <- c(yield_vars, tp_vars, macro_vars)
+hetero_results <- do.call(rbind, lapply(all_test_vars, function(v) {
   if (v %in% names(df)) {
     perform_hetero_tests(df[[v]], predictor_vars, v)
   }
 }))
 
 # Format results
-hetero_numeric_cols <- c("White_stat", "White_pval", "BP_stat", "BP_pval", "GQ_stat", "GQ_pval")
+hetero_numeric_cols <- c(
+  "White_stat", "White_pval", "BP_stat", "BP_pval", "GQ_stat", "GQ_pval",
+  "Harvey_stat", "Harvey_pval", "Anscombe_stat", "Anscombe_pval",
+  "CW_stat", "CW_pval"
+)
 hetero_results[hetero_numeric_cols] <- lapply(
   hetero_results[hetero_numeric_cols],
   function(x) round(x, 4)
@@ -326,45 +370,47 @@ hetero_results[hetero_numeric_cols] <- lapply(
 
 print(kable(hetero_results, format = "simple", align = "l"))
 
+# Create comprehensive heteroskedasticity summary table
+hetero_summary <- data.frame(
+  Variable = hetero_results$Variable,
+  White_Test = ifelse(hetero_results$White_pval < 0.05, "Reject H0", "Fail to Reject"),
+  White_pval = round(hetero_results$White_pval, 4),
+  BP_Test = ifelse(hetero_results$BP_pval < 0.05, "Reject H0", "Fail to Reject"),
+  BP_pval = round(hetero_results$BP_pval, 4),
+  GQ_Test = ifelse(hetero_results$GQ_pval < 0.05, "Reject H0", "Fail to Reject"),
+  GQ_pval = round(hetero_results$GQ_pval, 4),
+  Harvey_Test = ifelse(hetero_results$Harvey_pval < 0.05, "Reject H0", "Fail to Reject"),
+  Harvey_pval = round(hetero_results$Harvey_pval, 4),
+  Anscombe_Test = ifelse(hetero_results$Anscombe_pval < 0.05, "Reject H0", "Fail to Reject"),
+  Anscombe_pval = round(hetero_results$Anscombe_pval, 4),
+  CW_Test = ifelse(hetero_results$CW_pval < 0.05, "Reject H0", "Fail to Reject"),
+  CW_pval = round(hetero_results$CW_pval, 4),
+  stringsAsFactors = FALSE
+)
+
+# Split summary table for better console display
+hetero_summary_1 <- hetero_summary[, c("Variable", "White_Test", "White_pval", "BP_Test", "BP_pval", "GQ_Test", "GQ_pval")]
+hetero_summary_2 <- hetero_summary[, c("Variable", "Harvey_Test", "Harvey_pval", "Anscombe_Test", "Anscombe_pval", "CW_Test", "CW_pval")]
+
+cat("\n\nHeteroskedasticity Test Summary - Part 1 (H0: Homoskedasticity):\n")
+cat("================================================================\n")
+print(kable(hetero_summary_1, format = "simple", align = "l"))
+
+cat("\n\nHeteroskedasticity Test Summary - Part 2 (H0: Homoskedasticity):\n")
+cat("================================================================\n")
+print(kable(hetero_summary_2, format = "simple", align = "l"))
+
 # Add interpretation of heteroskedasticity tests
-cat("\n\nInterpretation of Heteroskedasticity Tests:\n")
-cat("==========================================\n")
-cat("White Test:\n")
-cat("- Null hypothesis: Homoskedasticity (constant variance)\n")
-cat("- Alternative: Heteroskedasticity (non-constant variance)\n")
-cat("- Reject null if p-value < 0.05 (evidence of heteroskedasticity)\n\n")
-
-cat("Breusch-Pagan Test:\n")
-cat("- Null hypothesis: Homoskedasticity\n")
-cat("- Alternative: Heteroskedasticity\n")
-cat("- More powerful against specific forms of heteroskedasticity\n")
-cat("- Reject null if p-value < 0.05\n\n")
-
-cat("Goldfeld-Quandt Test:\n")
-cat("- Null hypothesis: Homoskedasticity\n")
-cat("- Alternative: Heteroskedasticity (variance increases with fitted values)\n")
-cat("- Tests for monotonic heteroskedasticity\n")
-cat("- Reject null if p-value < 0.05\n\n")
-
-# Summary of results
-significant_white <- sum(hetero_results$White_pval < 0.05, na.rm = TRUE)
-significant_bp <- sum(hetero_results$BP_pval < 0.05, na.rm = TRUE)
-significant_gq <- sum(hetero_results$GQ_pval < 0.05, na.rm = TRUE)
-total_vars <- nrow(hetero_results)
-
-cat("Summary of Test Results:\n")
-cat(
-  "- White test: ", significant_white, "/", total_vars,
-  " variables show significant heteroskedasticity\n"
-)
-cat(
-  "- Breusch-Pagan test: ", significant_bp, "/", total_vars,
-  " variables show significant heteroskedasticity\n"
-)
-cat(
-  "- Goldfeld-Quandt test: ", significant_gq, "/", total_vars,
-  " variables show significant heteroskedasticity\n"
-)
+cat("\n\nInterpretation Guide:\n")
+cat("====================\n")
+cat("White Test: General test for heteroskedasticity\n")
+cat("Breusch-Pagan (BP): More powerful against specific forms\n")
+cat("Goldfeld-Quandt (GQ): Tests for monotonic heteroskedasticity\n")
+cat("Harvey Test: Tests heteroskedasticity related to fitted values\n")
+cat("Anscombe Test: Tests for σ²ᵢ = σ²Xᵢᵝ form of heteroskedasticity\n")
+cat("Cook-Weisberg (CW): Score test, more powerful than BP for certain alternatives\n")
+cat("'Reject H0' = Evidence of heteroskedasticity (p < 0.05)\n")
+cat("'Fail to Reject' = No strong evidence against homoskedasticity\n")
 
 # Save all results
 output_dir <- file.path(OUTPUT_DIR, "temp/time_series_properties")
