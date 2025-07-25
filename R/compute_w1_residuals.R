@@ -27,7 +27,7 @@
 #' The function performs the regression:
 #' Y_\{1,t+1\} = alpha + beta' * PC_t + W_\{1,t+1\}
 #'
-#' where Y_\{1,t+1\} is consumption growth (gr1.pcecc96) and PC_t are the first n_pcs
+#' where Y_\{1,t+1\} is consumption growth and PC_t are the first n_pcs
 #' principal components extracted from financial asset returns (pc1, ..., pc6).
 #'
 #' @importFrom stats lm residuals fitted coef as.formula complete.cases
@@ -69,14 +69,14 @@ compute_w1_residuals <- function(n_pcs = HETID_CONSTANTS$DEFAULT_N_PCS,
   }
 
   # Check required columns
-  required_cols <- c("date", "gr1.pcecc96", paste0("pc", 1:n_pcs))
+  required_cols <- c("date", HETID_CONSTANTS$CONSUMPTION_GROWTH_COL, paste0("pc", 1:n_pcs))
   missing_cols <- setdiff(required_cols, names(data))
   if (length(missing_cols) > 0) {
     stop(paste("Missing required columns:", paste(missing_cols, collapse = ", ")))
   }
 
   # Extract relevant variables
-  y1 <- data$gr1.pcecc96 # Consumption growth (not forwarded)
+  y1 <- data[[HETID_CONSTANTS$CONSUMPTION_GROWTH_COL]] # Consumption growth (not forwarded)
   dates <- data$date
 
   # Create PC matrix

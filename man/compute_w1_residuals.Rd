@@ -42,7 +42,7 @@ on principal components extracted from financial asset returns (PC_t) and a cons
 The function performs the regression:
 Y_\{1,t+1\} = alpha + beta' * PC_t + W_\{1,t+1\}
 
-where Y_\{1,t+1\} is consumption growth (gr1.pcecc96) and PC_t are the first n_pcs
+where Y_\{1,t+1\} is consumption growth and PC_t are the first n_pcs
 principal components extracted from financial asset returns (pc1, ..., pc6).
 }
 \examples{
