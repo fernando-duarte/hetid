@@ -2,18 +2,13 @@
 # Comprehensive analysis of price news with heteroskedasticity tests using skedastic package
 
 source(here::here("scripts/utils/common_settings.R"))
-library(hetid)
-library(dplyr)
-library(tidyr)
-library(lubridate)
-library(ggplot2)
-library(corrplot)
-library(moments)
-library(gt)
-library(DT)
-library(skedastic)
-library(urca)
-library(zoo)
+# Core packages (hetid, dplyr, tidyr, gt, DT, here, cli) loaded via common_settings.R
+
+# Load specialized packages for this script
+load_timeseries_packages() # urca, skedastic, lubridate
+load_visualization_packages() # ggplot2, corrplot
+library(moments) # Statistical moments
+library(zoo) # Time series utilities
 
 cli_h1("Analysis of Price News and Heteroskedasticity Patterns")
 

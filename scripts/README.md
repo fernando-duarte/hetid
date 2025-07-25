@@ -75,9 +75,61 @@ Working outputs and intermediate results
 4. **Optimization**: Run `05_identification_with_optimization/` for optimal identification
 5. **Results Production**: Use `06_results_production/` to generate final outputs
 
+## Running the Scripts
+
+### Run All Scripts
+
+To run the complete analysis pipeline:
+
+```bash
+# From the scripts directory
+Rscript run_all_scripts.R
+
+# Or use the shell script
+./run_all_scripts.sh
+```
+
+### Run Selected Script Groups
+
+To run only specific groups of scripts:
+
+```bash
+# Run only data preparation
+Rscript run_scripts_selective.R data
+
+# Run data prep and analysis
+Rscript run_scripts_selective.R data analysis
+
+# Run only visualization
+Rscript run_scripts_selective.R viz
+
+# Run only SDF news analysis
+Rscript run_scripts_selective.R news
+
+# Show help
+Rscript run_scripts_selective.R --help
+```
+
+Available groups:
+- `data` - Data preparation scripts
+- `analysis` - Statistical analysis scripts
+- `viz` - Visualization scripts
+- `news` - SDF news computation and analysis
+- `all` - Run everything (default)
+
+### Run Individual Scripts
+
+Each script can also be run individually:
+
+```bash
+# Example: Run only summary statistics
+Rscript 01_data_analysis/summary_statistics.R
+```
+
 ## Notes
 
 - All scripts should source necessary functions from `utils/`
 - Outputs are organized by whether they are publication-ready (`output/for_paper/`) or temporary (`output/temp/`)
 - Each analysis folder contains its own `output_results.R` to ensure modularity
 - Scripts are numbered to indicate the recommended execution order
+- The main runner scripts (`run_all_scripts.R` and `run_scripts_selective.R`) handle dependencies and run scripts in the correct order
