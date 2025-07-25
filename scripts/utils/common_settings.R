@@ -1,10 +1,14 @@
 # Common Settings and Configuration
 # Shared parameters and paths for all scripts
 
-# Load required packages
+# Load core packages used across most scripts
 library(here)
 library(cli) # For better console output
 library(hetid) # Load package to access constants
+library(dplyr) # Data manipulation
+library(tidyr) # Data tidying
+library(gt) # Table formatting
+library(DT) # Interactive tables
 
 # Set up output directories
 SCRIPTS_DIR <- here::here("scripts")
@@ -52,6 +56,29 @@ get_timestamp <- function() {
 set_analysis_seed <- function(seed = SEED) {
   set.seed(seed)
   invisible(seed)
+}
+
+# Specialized package loading functions
+load_visualization_packages <- function() {
+  library(ggplot2)
+  library(gridExtra)
+  library(corrplot)
+  library(svglite)
+  library(plotly)
+  invisible(TRUE)
+}
+
+load_timeseries_packages <- function() {
+  library(urca)
+  library(skedastic)
+  library(lubridate)
+  invisible(TRUE)
+}
+
+load_web_packages <- function() {
+  library(htmltools)
+  library(knitr)
+  invisible(TRUE)
 }
 
 # Source utility functions if they exist

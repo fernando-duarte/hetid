@@ -1,13 +1,8 @@
 # Summary Statistics
 # Generate descriptive statistics for all variables
 
-library(hetid)
-library(dplyr)
-library(tidyr)
-library(gt)
-library(DT)
-library(here)
 source(here::here("scripts/utils/common_settings.R"))
+# Core packages (hetid, dplyr, tidyr, gt, DT, here, cli) loaded via common_settings.R
 
 input_path <- file.path(OUTPUT_DIR, "temp/data.rds")
 data <- readRDS(input_path)
@@ -55,37 +50,26 @@ pc_lag_stats <- do.call(rbind, lapply(pc_lag_vars, function(v) {
 
 macro_stats <- compute_detailed_stats(df[[macro_vars]], macro_vars)
 
+# Helper function to create section headers
+create_section_header <- function(title) {
+  data.frame(
+    Variable = paste0("--- ", title, " ---"), Mean = NA, SD = NA, Min = NA,
+    Q1 = NA, Median = NA, Q3 = NA, Max = NA, Skewness = NA,
+    Kurtosis = NA, AC1 = NA, AC2 = NA, N = NA, stringsAsFactors = FALSE
+  )
+}
+
 # Combine all statistics
 all_stats <- rbind(
-  data.frame(
-    Variable = "--- Yields ---", Mean = NA, SD = NA, Min = NA,
-    Q1 = NA, Median = NA, Q3 = NA, Max = NA, Skewness = NA,
-    Kurtosis = NA, AC1 = NA, AC2 = NA, N = NA, stringsAsFactors = FALSE
-  ),
+  create_section_header("Yields"),
   yields_stats,
-  data.frame(
-    Variable = "--- Term Premia ---", Mean = NA, SD = NA, Min = NA,
-    Q1 = NA, Median = NA, Q3 = NA, Max = NA, Skewness = NA,
-    Kurtosis = NA, AC1 = NA, AC2 = NA, N = NA, stringsAsFactors = FALSE
-  ),
+  create_section_header("Term Premia"),
   tp_stats,
-  data.frame(
-    Variable = "--- Principal Components ---", Mean = NA, SD = NA, Min = NA,
-    Q1 = NA, Median = NA, Q3 = NA, Max = NA, Skewness = NA,
-    Kurtosis = NA, AC1 = NA, AC2 = NA, N = NA, stringsAsFactors = FALSE
-  ),
+  create_section_header("Principal Components"),
   pc_stats,
-  data.frame(
-    Variable = "--- Lagged Principal Components ---", Mean = NA, SD = NA, Min = NA,
-    Q1 = NA, Median = NA, Q3 = NA, Max = NA, Skewness = NA,
-    Kurtosis = NA, AC1 = NA, AC2 = NA, N = NA, stringsAsFactors = FALSE
-  ),
+  create_section_header("Lagged Principal Components"),
   pc_lag_stats,
-  data.frame(
-    Variable = "--- Macro Variables ---", Mean = NA, SD = NA, Min = NA,
-    Q1 = NA, Median = NA, Q3 = NA, Max = NA, Skewness = NA,
-    Kurtosis = NA, AC1 = NA, AC2 = NA, N = NA, stringsAsFactors = FALSE
-  ),
+  create_section_header("Macro Variables"),
   macro_stats
 )
 

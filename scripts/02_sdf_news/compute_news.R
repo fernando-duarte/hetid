@@ -3,10 +3,7 @@
 
 # Load required packages and settings
 source(here::here("scripts/utils/common_settings.R"))
-library(hetid)
-library(dplyr)
-library(tidyr)
-library(gt)
+# Core packages (hetid, dplyr, tidyr, gt, DT, here, cli) loaded via common_settings.R
 
 # Load processed data
 data <- readRDS(file.path(OUTPUT_DIR, "temp/data.rds"))

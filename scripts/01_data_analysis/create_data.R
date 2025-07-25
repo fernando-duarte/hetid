@@ -2,13 +2,11 @@
 # Load ACM data, convert to quarterly, merge with variables.RData,
 # consolidate into single dataset with dates
 
-library(hetid)
-library(dplyr)
-library(tidyr)
-library(lubridate)
-library(gt)
-library(here)
 source(here::here("scripts/utils/common_settings.R"))
+# Core packages (hetid, dplyr, tidyr, gt, DT, here, cli) loaded via common_settings.R
+
+# Load specialized packages for this script
+library(lubridate) # Date handling
 
 acm_data <- extract_acm_data(frequency = "quarterly")
 

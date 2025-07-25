@@ -13,7 +13,12 @@ save_plot_svg <- function(plot, filename, dir = plot_dir, width = PLOT_WIDTH, he
     dir.create(dir, recursive = TRUE, showWarnings = FALSE)
   }
 
-  full_path <- file.path(dir, paste0(filename, ".svg"))
+  # Check if filename already ends with .svg
+  if (!grepl("\\.svg$", filename)) {
+    filename <- paste0(filename, ".svg")
+  }
+
+  full_path <- file.path(dir, filename)
   ggsave(full_path, plot, width = width, height = height)
   invisible(TRUE)
 }
@@ -43,7 +48,12 @@ save_correlation_heatmap <- function(cor_matrix, title, filename, dir = plot_dir
     dir.create(dir, recursive = TRUE, showWarnings = FALSE)
   }
 
-  svglite::svglite(file.path(dir, paste0(filename, ".svg")), width = 8, height = 7)
+  # Check if filename already ends with .svg
+  if (!grepl("\\.svg$", filename)) {
+    filename <- paste0(filename, ".svg")
+  }
+
+  svglite::svglite(file.path(dir, filename), width = 8, height = 7)
   corrplot::corrplot(cor_matrix,
     method = "color", type = "upper",
     order = "original", tl.col = "black", tl.srt = 45,
@@ -90,6 +100,10 @@ display_and_save_plot <- function(plot, filename, dir = plot_dir,
                                   width = PLOT_WIDTH, height = PLOT_HEIGHT,
                                   display = TRUE) {
   if (display) {
+    # Ensure no device is capturing the print output
+    if (dev.cur() != 1) {
+      dev.off()
+    }
     print(plot)
   }
   save_plot_svg(plot, filename, dir, width, height)

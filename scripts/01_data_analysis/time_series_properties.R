@@ -2,21 +2,13 @@
 # Analyze autocorrelation, stationarity, and other time series characteristics;
 # add heteroskedasticity tests from package skedastic
 
-library(hetid)
-library(dplyr)
-library(tidyr)
-library(lubridate)
-library(urca)
-library(skedastic)
-library(ggplot2)
-library(gridExtra)
-library(gt)
-library(DT)
-library(htmltools)
-library(plotly)
-library(knitr)
-library(here)
 source(here::here("scripts/utils/common_settings.R"))
+# Core packages (hetid, dplyr, tidyr, gt, DT, here, cli) loaded via common_settings.R
+
+# Load specialized packages for this script
+load_timeseries_packages() # urca, skedastic, lubridate
+load_visualization_packages() # ggplot2, gridExtra, plotly
+load_web_packages() # htmltools, knitr
 
 input_path <- file.path(OUTPUT_DIR, "temp/data.rds")
 data <- readRDS(input_path)
@@ -122,39 +114,26 @@ pc_lag_ts_results <- do.call(rbind, lapply(pc_lag_vars, function(v) {
 # Macro variables
 macro_ts_results <- analyze_time_series(df[[macro_vars]], macro_vars)
 
+# Helper function to create time series section headers
+create_ts_section_header <- function(title) {
+  data.frame(
+    Variable = paste0("--- ", title, " ---"), Mean = NA, SD = NA, AC1 = NA, AC4 = NA,
+    LB_stat = NA, LB_pval = NA, ADF_stat = NA, ADF_pval = NA,
+    KPSS_stat = NA, KPSS_pval = NA, PP_stat = NA, PP_pval = NA,
+    ARCH_stat = NA, ARCH_pval = NA, JB_stat = NA, JB_pval = NA,
+    N = NA, stringsAsFactors = FALSE
+  )
+}
+
 # Combine all results
 all_ts_results <- rbind(
-  data.frame(
-    Variable = "--- Yields ---", Mean = NA, SD = NA, AC1 = NA, AC4 = NA,
-    LB_stat = NA, LB_pval = NA, ADF_stat = NA, ADF_pval = NA,
-    KPSS_stat = NA, KPSS_pval = NA, PP_stat = NA, PP_pval = NA,
-    ARCH_stat = NA, ARCH_pval = NA, JB_stat = NA, JB_pval = NA,
-    N = NA, stringsAsFactors = FALSE
-  ),
+  create_ts_section_header("Yields"),
   yields_ts_results,
-  data.frame(
-    Variable = "--- Term Premia ---", Mean = NA, SD = NA, AC1 = NA, AC4 = NA,
-    LB_stat = NA, LB_pval = NA, ADF_stat = NA, ADF_pval = NA,
-    KPSS_stat = NA, KPSS_pval = NA, PP_stat = NA, PP_pval = NA,
-    ARCH_stat = NA, ARCH_pval = NA, JB_stat = NA, JB_pval = NA,
-    N = NA, stringsAsFactors = FALSE
-  ),
+  create_ts_section_header("Term Premia"),
   tp_ts_results,
-  data.frame(
-    Variable = "--- Lagged Principal Components ---", Mean = NA, SD = NA,
-    AC1 = NA, AC4 = NA, LB_stat = NA, LB_pval = NA, ADF_stat = NA,
-    ADF_pval = NA, KPSS_stat = NA, KPSS_pval = NA, PP_stat = NA,
-    PP_pval = NA, ARCH_stat = NA, ARCH_pval = NA, JB_stat = NA,
-    JB_pval = NA, N = NA, stringsAsFactors = FALSE
-  ),
+  create_ts_section_header("Lagged Principal Components"),
   pc_lag_ts_results,
-  data.frame(
-    Variable = "--- Macro Variables ---", Mean = NA, SD = NA, AC1 = NA, AC4 = NA,
-    LB_stat = NA, LB_pval = NA, ADF_stat = NA, ADF_pval = NA,
-    KPSS_stat = NA, KPSS_pval = NA, PP_stat = NA, PP_pval = NA,
-    ARCH_stat = NA, ARCH_pval = NA, JB_stat = NA, JB_pval = NA,
-    N = NA, stringsAsFactors = FALSE
-  ),
+  create_ts_section_header("Macro Variables"),
   macro_ts_results
 )
 

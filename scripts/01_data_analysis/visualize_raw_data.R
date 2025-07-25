@@ -1,15 +1,11 @@
 # Visualize Raw Data
 # Create exploratory plots of raw data
 
-library(hetid)
-library(ggplot2)
-library(dplyr)
-library(tidyr)
-library(gridExtra)
-library(corrplot)
-library(svglite)
-library(here)
 source(here::here("scripts/utils/common_settings.R"))
+# Core packages (hetid, dplyr, tidyr, gt, DT, here, cli) loaded via common_settings.R
+
+# Load specialized packages for this script
+load_visualization_packages() # ggplot2, gridExtra, corrplot, svglite
 
 input_path <- file.path(OUTPUT_DIR, "temp/data.rds")
 data <- readRDS(input_path)
