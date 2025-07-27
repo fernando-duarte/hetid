@@ -65,6 +65,24 @@ scripts_to_run <- list(
   list(
     path = here::here("scripts/02_sdf_news/analyze_news.R"),
     desc = "Analyzing Price News and Heteroskedasticity"
+  ),
+  list(
+    path = here::here("scripts/02_sdf_news/visualize_news.R"),
+    desc = "Creating Price News Visualizations"
+  ),
+
+  # Variance bounds analysis
+  list(
+    path = here::here("scripts/03_variance_bounds/compute_variance_bounds.R"),
+    desc = "Computing Theoretical Variance Bounds"
+  ),
+  list(
+    path = here::here("scripts/03_variance_bounds/analyze_bounds.R"),
+    desc = "Analyzing Variance Bounds"
+  ),
+  list(
+    path = here::here("scripts/03_variance_bounds/output_results.R"),
+    desc = "Exporting Variance Bounds Results"
   )
 )
 
@@ -97,15 +115,19 @@ if (dir.exists(output_dir)) {
     n_csv <- sum(grepl("\\.csv$", all_files))
     n_rds <- sum(grepl("\\.rds$", all_files))
     n_svg <- sum(grepl("\\.svg$", all_files))
+    n_png <- sum(grepl("\\.png$", all_files))
     n_html <- sum(grepl("\\.html$", all_files))
     n_txt <- sum(grepl("\\.txt$", all_files))
+    n_tex <- sum(grepl("\\.tex$", all_files))
 
     cli_ul(c(
       paste0("CSV files: ", n_csv),
       paste0("RDS files: ", n_rds),
       paste0("SVG plots: ", n_svg),
+      paste0("PNG plots: ", n_png),
       paste0("HTML tables: ", n_html),
       paste0("Text summaries: ", n_txt),
+      paste0("LaTeX files: ", n_tex),
       paste0("Total files: ", length(all_files))
     ))
 

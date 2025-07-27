@@ -12,14 +12,215 @@ library(zoo) # Time series utilities
 
 cli_h1("Analysis of Price News and Heteroskedasticity Patterns")
 
+# Load data and outputs from compute_news.R
 data_with_news <- readRDS(file.path(OUTPUT_DIR, "temp/sdf_news/data_with_news.rds"))
-price_news_stats <- readRDS(file.path(OUTPUT_DIR, "temp/sdf_news/price_news_statistics.rds"))
-residuals_analysis <- readRDS(file.path(OUTPUT_DIR, "temp/sdf_news/price_news_residuals_analysis.rds"))
+compute_output <- readRDS(file.path(OUTPUT_DIR, "temp/sdf_news/compute_output.rds"))
 
-price_news_vars <- grep("^price_news_\\d+$", names(data_with_news), value = TRUE)
+# Extract price news variables and lagged PCs
+price_news_vars <- compute_output$price_news_vars
 pc_lag_vars <- grep("^pc\\d+_lag1$", names(data_with_news), value = TRUE)
 
-cli_h1("1. TIME SERIES PROPERTIES OF PRICE NEWS")
+# Extract price news matrix
+price_news <- as.matrix(data_with_news[, price_news_vars])
+pcs_matrix <- as.matrix(data_with_news[, pc_lag_vars])
+
+cli_h1("1. PRICE NEWS SUMMARY STATISTICS")
+
+# Use utility function to compute statistics for each price news series
+price_news_stats <- do.call(rbind, lapply(1:ncol(price_news), function(i) {
+  compute_summary_stats(price_news[, i], price_news_vars[i], compute_ac = TRUE, max_lags = 8)
+}))
+
+# Use utility function for formatted table
+price_news_table <- create_formatted_table(
+  price_news_stats,
+  title = "Price News Summary Statistics",
+  subtitle = "Statistics across maturities"
+) %>%
+  fmt_number(
+    columns = -Variable,
+    decimals = 4
+  ) %>%
+  tab_style(
+    style = cell_fill(color = "lightcyan"),
+    locations = cells_body(columns = Variable)
+  )
+
+print(price_news_table)
+
+# Correlation structure of price news
+cli_h2("Price News Correlation Matrix")
+cor_price_news <- cor(price_news)
+colnames(cor_price_news) <- price_news_vars
+rownames(cor_price_news) <- price_news_vars
+
+# Create heatmap-style correlation table
+cor_table <- as.data.frame(cor_price_news) %>%
+  tibble::rownames_to_column("Variable") %>%
+  gt() %>%
+  tab_header(title = "Correlation Matrix") %>%
+  fmt_number(columns = -Variable, decimals = 3) %>%
+  data_color(
+    columns = -Variable,
+    fn = scales::col_numeric(
+      palette = c("blue", "white", "red"),
+      domain = c(-1, 1)
+    )
+  )
+
+print(cor_table)
+
+# Relationship between price news and lagged PCs
+cli_h2("Correlations: Price News vs Lagged PCs")
+cor_news_pcs <- cor(price_news, pcs_matrix)
+rownames(cor_news_pcs) <- price_news_vars
+colnames(cor_news_pcs) <- pc_lag_vars
+
+# Create formatted correlation table
+cor_news_pcs_table <- as.data.frame(cor_news_pcs) %>%
+  tibble::rownames_to_column("Price_News") %>%
+  gt() %>%
+  tab_header(title = "Price News vs Lagged PCs Correlations") %>%
+  fmt_number(columns = -Price_News, decimals = 3)
+
+print(cor_news_pcs_table)
+
+# Relationship between price news and consumption growth
+cli_h2("Correlations: Price News vs Consumption Growth")
+consumption_growth <- data_with_news[[HETID_CONSTANTS$CONSUMPTION_GROWTH_COL]]
+cor_news_consumption <- cor(price_news, consumption_growth)
+rownames(cor_news_consumption) <- price_news_vars
+colnames(cor_news_consumption) <- HETID_CONSTANTS$CONSUMPTION_GROWTH_COL
+
+# Create formatted correlation table
+cor_news_consumption_table <- as.data.frame(cor_news_consumption) %>%
+  tibble::rownames_to_column("Price_News") %>%
+  gt() %>%
+  tab_header(title = "Price News vs Consumption Growth") %>%
+  fmt_number(columns = -Price_News, decimals = 3) %>%
+  tab_style(
+    style = cell_fill(color = "lightyellow"),
+    locations = cells_body(
+      columns = -Price_News,
+      rows = abs(cor_news_consumption) > 0.1
+    )
+  )
+
+print(cor_news_consumption_table)
+
+cli_h1("2. HETEROSKEDASTICITY ANALYSIS OF PRICE NEWS")
+
+# Select specific maturities for heteroskedasticity analysis (typically short and medium term)
+# Using maturities 2 and 5 as default (can be adjusted)
+price_news_2_idx <- which(price_news_vars == "price_news_2") # 2-year maturity
+price_news_5_idx <- which(price_news_vars == "price_news_5") # 5-year maturity
+
+if (length(price_news_2_idx) == 0 || length(price_news_5_idx) == 0) {
+  # Fallback to first two available maturities
+  price_news_2_idx <- 1
+  price_news_5_idx <- min(2, length(price_news_vars))
+  cli_alert_info("Using {.val {price_news_vars[price_news_2_idx]}} and {.val {price_news_vars[price_news_5_idx]}} for heteroskedasticity analysis")
+}
+
+# Extract price news for heteroskedasticity analysis (short maturity)
+price_news_short <- price_news[, price_news_2_idx]
+
+# Regress price news on lagged PCs to get residuals
+# price_news = λ0 + λ1'*PCs + residuals
+lm_price_news <- lm(price_news_short ~ ., data = as.data.frame(pcs_matrix))
+price_news_residuals <- residuals(lm_price_news)
+lambda0 <- coef(lm_price_news)[1]
+lambda1 <- coef(lm_price_news)[-1]
+
+cli_h3("Price News Regression Results")
+
+reg_summary <- summary(lm_price_news)
+f_stat <- reg_summary$fstatistic
+f_pval <- if (!is.null(f_stat)) pf(f_stat[1], f_stat[2], f_stat[3], lower.tail = FALSE) else NA
+
+cli_ul(c(
+  paste("Dependent variable:", price_news_vars[price_news_2_idx]),
+  paste("R-squared:", round(reg_summary$r.squared, 4)),
+  paste("Adjusted R-squared:", round(reg_summary$adj.r.squared, 4)),
+  paste("F-statistic p-value:", format.pval(f_pval))
+))
+
+cli_h3("Price News Residuals Summary")
+
+resid_stats <- data.frame(
+  Statistic = c("Mean", "SD", "Skewness", "Kurtosis", "Min", "Max"),
+  Value = c(
+    round(mean(price_news_residuals), 6),
+    round(sd(price_news_residuals), 4),
+    round(moments::skewness(price_news_residuals), 4),
+    round(moments::kurtosis(price_news_residuals), 4),
+    round(min(price_news_residuals), 4),
+    round(max(price_news_residuals), 4)
+  )
+) %>%
+  gt() %>%
+  fmt_number(columns = Value, decimals = 4)
+
+print(resid_stats)
+
+cli_h2("Heteroskedasticity Test Results")
+
+price_news_residuals_sq <- price_news_residuals^2
+
+# Regress squared residuals on lagged PCs
+hetero_lm <- lm(price_news_residuals_sq ~ ., data = as.data.frame(pcs_matrix))
+hetero_summary <- summary(hetero_lm)
+
+hetero_r2 <- round(hetero_summary$r.squared, 4)
+hetero_f_pval <- format.pval(pf(hetero_summary$fstatistic[1],
+  hetero_summary$fstatistic[2],
+  hetero_summary$fstatistic[3],
+  lower.tail = FALSE
+))
+
+cli_ul(c(
+  paste("R-squared for heteroskedasticity regression:", hetero_r2),
+  paste("F-statistic p-value:", hetero_f_pval)
+))
+
+cli_h2("Heteroskedasticity Evidence Summary")
+
+if (hetero_summary$r.squared > 0.1) {
+  cli_alert_success("Strong evidence of heteroskedasticity in price news residuals")
+  cli_alert_info("R-squared = {.val {round(hetero_summary$r.squared, 3)}} suggests lagged PCs explain {.val {round(hetero_summary$r.squared * 100, 1)}}% of residual variance")
+} else if (hetero_summary$r.squared > 0.05) {
+  cli_alert_warning("Moderate evidence of heteroskedasticity in price news residuals")
+  cli_alert_info("R-squared = {.val {round(hetero_summary$r.squared, 3)}}")
+} else {
+  cli_alert_danger("Weak evidence of heteroskedasticity in price news residuals")
+  cli_alert_info("R-squared = {.val {round(hetero_summary$r.squared, 3)}}")
+  cli_alert_info("Consider using different maturities or additional conditioning variables")
+}
+
+# Save residuals analysis for potential later use
+residuals_output <- list(
+  price_news_var_short = price_news_vars[price_news_2_idx],
+  price_news_var_medium = price_news_vars[price_news_5_idx],
+  price_news_residuals = price_news_residuals,
+  lambda0 = lambda0,
+  lambda1 = lambda1,
+  price_news_regression = summary(lm_price_news),
+  hetero_regression = hetero_summary,
+  hetero_r_squared = hetero_summary$r.squared
+)
+saveRDS(residuals_output, file.path(OUTPUT_DIR, "temp/sdf_news/price_news_residuals_analysis.rds"))
+
+# Save statistics output
+stats_output <- list(
+  price_news_stats = price_news_stats,
+  correlation_matrix = cor_price_news,
+  autocorrelations = price_news_stats$AC1,
+  correlation_with_pcs = cor_news_pcs,
+  correlation_with_consumption = cor_news_consumption
+)
+saveRDS(stats_output, file.path(OUTPUT_DIR, "temp/sdf_news/price_news_statistics.rds"))
+
+cli_h1("3. TIME SERIES PROPERTIES OF PRICE NEWS")
 
 # Use utility function for time series analysis
 analyze_time_series_properties <- function(x, var_name, max_lags = 8) {
@@ -115,7 +316,7 @@ stat_tests_table <- create_formatted_table(
 
 print(stat_tests_table)
 
-cli_h1("2. HETEROSKEDASTICITY ANALYSIS OF PRICE NEWS")
+cli_h1("4. HETEROSKEDASTICITY TESTS USING SKEDASTIC PACKAGE")
 
 # Use utility function wrapper for heteroskedasticity tests
 perform_hetero_tests_wrapper <- function(y, x_vars, var_name) {
@@ -210,95 +411,7 @@ rejection_table <- rejection_summary %>%
 
 print(rejection_table)
 
-cli_h1("3. DETAILED ANALYSIS OF PRICE NEWS RESIDUALS")
-
-price_news_residuals <- residuals_analysis$price_news_residuals
-
-cli_h2("Price News Regression Summary")
-
-cli_ul(c(
-  paste("Dependent variable:", residuals_analysis$price_news_var_short),
-  paste("R-squared:", round(residuals_analysis$price_news_regression$r.squared, 4)),
-  paste("Adjusted R-squared:", round(residuals_analysis$price_news_regression$adj.r.squared, 4)),
-  paste("Number of observations:", length(price_news_residuals))
-))
-
-cli_h2("Residual Distribution Analysis")
-residual_stats <- data.frame(
-  Statistic = c("Mean", "SD", "Skewness", "Kurtosis", "Min", "Max", "Q1", "Median", "Q3"),
-  Value = c(
-    mean(price_news_residuals),
-    sd(price_news_residuals),
-    skewness(price_news_residuals),
-    kurtosis(price_news_residuals),
-    min(price_news_residuals),
-    max(price_news_residuals),
-    quantile(price_news_residuals, 0.25),
-    median(price_news_residuals),
-    quantile(price_news_residuals, 0.75)
-  )
-)
-residual_stats$Value <- round(residual_stats$Value, 6)
-resid_dist_table <- residual_stats %>%
-  gt() %>%
-  fmt_number(columns = Value, decimals = 6) %>%
-  tab_style(
-    style = cell_fill(color = "lightsteelblue"),
-    locations = cells_body(
-      rows = Statistic %in% c("Mean", "SD", "Skewness", "Kurtosis")
-    )
-  )
-
-print(resid_dist_table)
-
-price_news_residuals_sq <- price_news_residuals^2
-
-cli_h2("Heteroskedasticity Tests on Squared Price News Residuals")
-
-sq_residual_data <- data.frame(price_news_residuals_sq = price_news_residuals_sq, predictor_vars)
-sq_residual_lm <- lm(price_news_residuals_sq ~ ., data = sq_residual_data)
-
-sq_hetero_tests <- list(
-  White = white(sq_residual_lm),
-  BP = breusch_pagan(sq_residual_lm),
-  GQ = goldfeld_quandt(sq_residual_lm),
-  Harvey = harvey(sq_residual_lm),
-  Anscombe = anscombe(sq_residual_lm),
-  CW = cook_weisberg(sq_residual_lm)
-)
-
-sq_hetero_summary <- data.frame(
-  Test = names(sq_hetero_tests),
-  Statistic = sapply(sq_hetero_tests, function(x) round(as.numeric(x$statistic), 4)),
-  P_value = sapply(sq_hetero_tests, function(x) round(as.numeric(x$p.value), 4)),
-  Significant = sapply(sq_hetero_tests, function(x) {
-    pval <- as.numeric(x$p.value)
-    ifelse(is.na(pval), "NA", ifelse(pval < 0.05, "Yes", "No"))
-  })
-)
-
-# Create formatted table
-sq_hetero_table <- sq_hetero_summary %>%
-  gt() %>%
-  fmt_number(columns = c(Statistic, P_value), decimals = 4) %>%
-  tab_style(
-    style = cell_fill(color = "lightgreen"),
-    locations = cells_body(
-      columns = Significant,
-      rows = Significant == "Yes"
-    )
-  ) %>%
-  tab_style(
-    style = cell_fill(color = "lightpink"),
-    locations = cells_body(
-      columns = Significant,
-      rows = Significant == "No"
-    )
-  )
-
-print(sq_hetero_table)
-
-cli_h1("4. CROSS-MATURITY ANALYSIS")
+cli_h1("5. CROSS-MATURITY ANALYSIS")
 
 maturity_analysis <- data.frame(
   Maturity = as.numeric(gsub("price_news_", "", price_news_vars)),
@@ -343,7 +456,7 @@ trend_table <- trend_summary %>%
 
 print(trend_table)
 
-cli_h1("5. ROLLING WINDOW ANALYSIS")
+cli_h1("6. ROLLING WINDOW ANALYSIS")
 
 window_size <- 40 # 10 years of quarterly data
 price_news_2_data <- data_with_news$price_news_2
@@ -389,86 +502,48 @@ decade_table <- decade_summary %>%
 
 print(decade_table)
 
-cli_h1("6. CREATING VISUALIZATIONS")
+cli_h1("7. DIAGNOSTIC PLOTS FOR ANALYSIS")
 
+# Create diagnostic plots that are part of the analysis (not exploratory)
 plot_dir <- file.path(OUTPUT_DIR, "temp/sdf_news/analysis_plots")
 dir.create(plot_dir, recursive = TRUE, showWarnings = FALSE)
 
-p1 <- ggplot(
-  data_with_news %>%
-    select(date, price_news_2, price_news_5, price_news_9) %>%
-    pivot_longer(cols = -date, names_to = "maturity", values_to = "price_news"),
-  aes(x = date, y = price_news, color = maturity)
-) +
-  geom_line(alpha = 0.7) +
-  geom_hline(yintercept = 0, linetype = "dashed", alpha = 0.5) +
-  scale_color_manual(
-    values = c("price_news_2" = "#1f77b4", "price_news_5" = "#ff7f0e", "price_news_9" = "#2ca02c"),
-    labels = c("2-year", "5-year", "9-year")
-  ) +
-  labs(
-    title = "Price News Over Time",
-    x = "Date", y = "Price News", color = "Maturity"
-  ) +
-  theme_minimal() +
-  theme(legend.position = "bottom")
-
-ggsave(file.path(plot_dir, "price_news_time_series.svg"), p1, width = 10, height = 6)
-
-p2 <- ggplot(
-  rolling_stats %>% filter(!is.na(roll_sd)),
-  aes(x = date, y = roll_sd)
-) +
-  geom_line(color = "darkblue", linewidth = 1) +
-  geom_smooth(method = "loess", se = TRUE, alpha = 0.2, color = "red") +
-  labs(
-    title = "Rolling Volatility of 2-Year Price News (10-year window)",
-    x = "Date", y = "Rolling Standard Deviation"
-  ) +
-  theme_minimal()
-
-ggsave(file.path(plot_dir, "rolling_volatility.svg"), p2, width = 10, height = 6)
-
-svglite::svglite(file.path(plot_dir, "price_news_residuals_qq.svg"), width = 8, height = 8)
+# Diagnostic plots for regression residuals
+svglite::svglite(file.path(plot_dir, "price_news_residuals_diagnostics.svg"), width = 8, height = 8)
 par(mfrow = c(2, 2))
-price_news_model <- residuals_analysis$price_news_regression
-if ("model" %in% names(price_news_model)) {
-  plot(price_news_model$model, which = 1:4)
-} else {
-  # Create basic diagnostic plots manually
-  res <- price_news_residuals
-  fit <- fitted(sq_residual_lm)
+res <- price_news_residuals
+fit <- fitted(lm_price_news)
 
-  # Residuals vs Fitted
-  plot(fit, res,
-    main = "Residuals vs Fitted",
-    xlab = "Fitted values", ylab = "Residuals"
-  )
-  abline(h = 0, lty = 2)
+# Residuals vs Fitted
+plot(fit, res,
+  main = "Residuals vs Fitted",
+  xlab = "Fitted values", ylab = "Residuals"
+)
+abline(h = 0, lty = 2)
 
-  # QQ plot
-  qqnorm(res, main = "Normal Q-Q")
-  qqline(res)
+# QQ plot
+qqnorm(res, main = "Normal Q-Q")
+qqline(res)
 
-  # Scale-Location
-  plot(fit, sqrt(abs(res)),
-    main = "Scale-Location",
-    xlab = "Fitted values", ylab = "Sqrt(|Residuals|)"
-  )
+# Scale-Location
+plot(fit, sqrt(abs(res)),
+  main = "Scale-Location",
+  xlab = "Fitted values", ylab = "Sqrt(|Residuals|)"
+)
 
-  # Residuals vs Leverage (simplified)
-  plot(seq_along(res), res,
-    main = "Residuals vs Order",
-    xlab = "Observation Order", ylab = "Residuals"
-  )
-  abline(h = 0, lty = 2)
-}
+# Residuals vs Order
+plot(seq_along(res), res,
+  main = "Residuals vs Order",
+  xlab = "Observation Order", ylab = "Residuals"
+)
+abline(h = 0, lty = 2)
 dev.off()
 
-p4 <- ggplot(
+# Heteroskedasticity diagnostic plot
+p_hetero_diag <- ggplot(
   data.frame(
-    fitted = fitted(sq_residual_lm),
-    residuals = residuals(sq_residual_lm)
+    fitted = fitted(hetero_lm),
+    residuals = residuals(hetero_lm)
   ),
   aes(x = fitted, y = residuals)
 ) +
@@ -476,21 +551,22 @@ p4 <- ggplot(
   geom_smooth(method = "loess", se = TRUE, color = "red") +
   geom_hline(yintercept = 0, linetype = "dashed") +
   labs(
-    title = "Heteroskedasticity in Squared Price News Residuals",
+    title = "Heteroskedasticity Diagnostic: Squared Residuals Regression",
     x = "Fitted Values", y = "Residuals"
   ) +
   theme_minimal()
 
-ggsave(file.path(plot_dir, "heteroskedasticity_pattern.svg"), p4, width = 8, height = 6)
+ggsave(file.path(plot_dir, "heteroskedasticity_diagnostic.svg"), p_hetero_diag, width = 8, height = 6)
 
-cli_h1("7. SAVING ANALYSIS RESULTS")
+cli_alert_success("Created diagnostic plots for analysis")
+
+cli_h1("8. SAVING ANALYSIS RESULTS")
 
 analysis_results <- list(
   time_series_properties = ts_results,
   heteroskedasticity_tests = hetero_results,
   rejection_summary = rejection_summary,
-  residual_statistics = residual_stats,
-  squared_residual_hetero = sq_hetero_summary,
+  residual_statistics = resid_stats,
   maturity_trends = trend_summary,
   decade_volatility = as.data.frame(decade_summary),
   rolling_statistics = rolling_stats
@@ -515,7 +591,7 @@ cli_ul(c(
   ),
   paste0(
     "Price news squared residuals R-squared: ",
-    round(residuals_analysis$hetero_regression$r.squared, 3)
+    round(residuals_output$hetero_regression$r.squared, 3)
   ),
   "Strong evidence of time-varying conditional variance"
 ))
@@ -563,7 +639,7 @@ summary_text <- c(
   ),
   paste(
     "   - Price news squared residuals R-squared:",
-    round(residuals_analysis$hetero_regression$r.squared, 3)
+    round(residuals_output$hetero_regression$r.squared, 3)
   ),
   "   - Strong evidence of time-varying conditional variance",
   "",
