@@ -17,6 +17,9 @@
 #' The supremum estimator provides an upper bound for the exponential of twice
 #' the expected log price at horizon i.
 #'
+#' @note For standard ACM data (10 maturities), the effective maximum for
+#'   \code{i} is 9, because this function requires data at maturity \code{i+1}.
+#'
 #' @export
 #'
 #' @examples
@@ -32,7 +35,7 @@
 #'
 compute_c_hat <- function(yields, term_premia, i) {
   # Use standardized validation
-  validate_maturity_index(i)
+  validate_maturity_index(i, max_maturity = HETID_CONSTANTS$MAX_MATURITY - 1)
 
   # Compute n_hat series
   n_hat <- compute_n_hat(yields, term_premia, i)

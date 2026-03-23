@@ -20,6 +20,10 @@ validate_maturity_index <- function(i, max_maturity = HETID_CONSTANTS$MAX_MATURI
     stop("Maturity index i must be a single finite numeric value")
   }
 
+  if (i %% 1 != 0) {
+    stop("Maturity index i must be an integer")
+  }
+
   if (i < HETID_CONSTANTS$MIN_MATURITY || i > max_maturity) {
     stop(
       "Maturity index i must be between ", HETID_CONSTANTS$MIN_MATURITY,

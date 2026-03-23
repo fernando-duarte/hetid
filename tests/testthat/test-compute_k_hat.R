@@ -141,3 +141,15 @@ test_that("k_hat time alignment verification", {
     label = "k_hat should handle time-shifted data correctly"
   )
 })
+
+test_that("compute_k_hat rejects non-integer but accepts i=10", {
+  test_env <- setup_standard_test_env()
+  expect_error(
+    compute_k_hat(test_env$yields, test_env$term_premia, i = 1.5),
+    "integer"
+  )
+  # k_hat legitimately supports i=10 (uses n_hat(i-1), not n_hat(i))
+  expect_no_error(
+    compute_k_hat(test_env$yields, test_env$term_premia, i = 10)
+  )
+})

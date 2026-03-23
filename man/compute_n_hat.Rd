@@ -32,6 +32,10 @@ E_t[p_(t+i)^(1)] = -E_t[y_(t+i)^(1)]
 The formula is:
 n_hat(i,t) = i*y_t^(i) - (i+1)*y_t^(i+1) + (i+1)\emph{TP_t^(i+1) - i}TP_t^(i)
 }
+\note{
+For standard ACM data (10 maturities), the effective maximum for
+\code{i} is 9, because this function requires data at maturity \code{i+1}.
+}
 \examples{
 \dontrun{
 # Extract ACM data

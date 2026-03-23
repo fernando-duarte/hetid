@@ -43,6 +43,10 @@ Delta_(t+1)p_(t+i)^(1) = n_hat(i-1,t+1) - n_hat(i,t)
 The price news for yields is:
 Delta_(t+1)y_(t+i)^(1) = -Delta_(t+1)p_(t+i)^(1)
 }
+\note{
+For standard ACM data (10 maturities), the effective maximum for
+\code{i} is 9, because this function requires data at maturity \code{i+1}.
+}
 \examples{
 \dontrun{
 # Extract ACM data - need maturities 1, i-1, i, i+1 for maturity i

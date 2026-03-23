@@ -27,6 +27,10 @@ the methodology in Adrian, Crump, and Moench (2013).
 The supremum estimator provides an upper bound for the exponential of twice
 the expected log price at horizon i.
 }
+\note{
+For standard ACM data (10 maturities), the effective maximum for
+\code{i} is 9, because this function requires data at maturity \code{i+1}.
+}
 \section{Mathematical Formula}{
 
 \deqn{c\_hat_i = \max_t \exp(2 \cdot n\_hat(i,t))}

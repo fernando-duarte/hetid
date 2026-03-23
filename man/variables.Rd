@@ -67,11 +67,13 @@ gdp_growth <- variables$ygr
 inflation <- variables$infl_pce
 
 # Time series plot
+\dontrun{
 plot(variables$date, variables$vfci,
   type = "l",
   xlab = "Date", ylab = "VFCI",
   main = "Volatility Financial Conditions Index"
 )
+}
 
 }
 \keyword{datasets}

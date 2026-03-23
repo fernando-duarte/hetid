@@ -20,6 +20,9 @@
 #' - E\\[(Delta_(t+1)p_(t+i)^(1))^2\\] = (1/(T-1)) * sum(n_hat(i-1,t+1) - n_hat(i,t))^2
 #'   for t=1 to T-1
 #'
+#' @note For standard ACM data (10 maturities), the effective maximum for
+#'   \code{i} is 9, because this function requires data at maturity \code{i+1}.
+#'
 #' @export
 #'
 #' @examples
@@ -48,10 +51,10 @@
 compute_sdf_innovations <- function(yields, term_premia, i,
                                     return_df = FALSE, dates = NULL) {
   # Validate maturity parameter
-  validate_maturity_param(i)
+  validate_maturity_index(i, max_maturity = HETID_CONSTANTS$MAX_MATURITY - 1)
 
   # Compute n_hat(i,t) series
-  n_hat_i <- compute_n_hat_validated(yields, term_premia, i,
+  n_hat_i <- compute_n_hat(yields, term_premia, i,
     return_df = FALSE, dates = dates
   )
 

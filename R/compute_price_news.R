@@ -16,6 +16,9 @@
 #' The price news for yields is:
 #' Delta_(t+1)y_(t+i)^(1) = -Delta_(t+1)p_(t+i)^(1)
 #'
+#' @note For standard ACM data (10 maturities), the effective maximum for
+#'   \code{i} is 9, because this function requires data at maturity \code{i+1}.
+#'
 #' @export
 #'
 #' @examples
@@ -46,10 +49,10 @@ compute_price_news <- function(yields, term_premia, i,
                                return_yield_news = FALSE,
                                return_df = FALSE, dates = NULL) {
   # Validate maturity parameter
-  validate_maturity_param(i)
+  validate_maturity_index(i, max_maturity = HETID_CONSTANTS$MAX_MATURITY - 1)
 
   # Compute n_hat series
-  n_hat_i <- compute_n_hat_validated(yields, term_premia, i,
+  n_hat_i <- compute_n_hat(yields, term_premia, i,
     return_df = FALSE, dates = dates
   )
 

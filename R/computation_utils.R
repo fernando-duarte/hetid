@@ -6,33 +6,6 @@
 #' @keywords internal
 NULL
 
-#' Validate Maturity Parameter
-#'
-#' @param i Maturity parameter
-#' @keywords internal
-validate_maturity_param <- function(i) {
-  if (i < HETID_CONSTANTS$MIN_MATURITY) {
-    stop("i must be >= ", HETID_CONSTANTS$MIN_MATURITY)
-  }
-  invisible(TRUE)
-}
-
-#' Compute N-Hat Series with Validation
-#'
-#' @param yields Yields data
-#' @param term_premia Term premia data
-#' @param i Maturity
-#' @param return_df Whether to return data frame
-#' @param dates Optional dates
-#' @keywords internal
-compute_n_hat_validated <- function(yields, term_premia, i, return_df = FALSE, dates = NULL) {
-  validate_maturity_param(i)
-
-  compute_n_hat(yields, term_premia, i,
-    return_df = return_df, dates = dates
-  )
-}
-
 #' Compute Previous Period N-Hat
 #'
 #' Handles the special case for i=1 where n_hat(0,t) = -y1

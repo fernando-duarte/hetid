@@ -28,7 +28,9 @@ validate_w2_inputs <- function(yields, term_premia, maturities) {
   validate_data_dimensions(yields_df, term_premia_df)
 
   # Validate maturity range
-  max_maturity <- min(HETID_CONSTANTS$MAX_MATURITY, ncol(yields_df), ncol(term_premia_df))
+  max_maturity <- min(
+    HETID_CONSTANTS$MAX_MATURITY - 1, ncol(yields_df), ncol(term_premia_df)
+  )
   valid_maturities <- maturities[maturities <= max_maturity]
 
   if (length(valid_maturities) < length(maturities)) {

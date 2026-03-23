@@ -26,6 +26,10 @@ Computes the empirical upper bound for Var(error(i,t+1))
 The variance bound is:
 Var(error(i,t+1)) <= (1/4)\emph{c_hat_i}k_hat_i
 }
+\note{
+For standard ACM data (10 maturities), the effective maximum for
+\code{i} is 9, because this function requires data at maturity \code{i+1}.
+}
 \examples{
 \dontrun{
 # Extract ACM data

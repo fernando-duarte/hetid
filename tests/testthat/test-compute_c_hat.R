@@ -79,3 +79,15 @@ test_that("c_hat equals exp(2 * max(n_hat))", {
     )
   }
 })
+
+test_that("compute_c_hat rejects invalid maturity values", {
+  test_env <- setup_standard_test_env()
+  expect_error(
+    compute_c_hat(test_env$yields, test_env$term_premia, i = 1.5),
+    "integer"
+  )
+  expect_error(
+    compute_c_hat(test_env$yields, test_env$term_premia, i = 10),
+    "between"
+  )
+})

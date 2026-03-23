@@ -108,3 +108,15 @@ test_that("variance bound generally increases with maturity", {
     label = "Variance bound should generally increase with maturity"
   )
 })
+
+test_that("compute_variance_bound rejects invalid maturity values", {
+  test_env <- setup_standard_test_env()
+  expect_error(
+    compute_variance_bound(test_env$yields, test_env$term_premia, i = 1.5),
+    "integer"
+  )
+  expect_error(
+    compute_variance_bound(test_env$yields, test_env$term_premia, i = 10),
+    "between"
+  )
+})

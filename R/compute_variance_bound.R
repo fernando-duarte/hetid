@@ -11,6 +11,9 @@
 #' The variance bound is:
 #' Var(error(i,t+1)) <= (1/4)*c_hat_i*k_hat_i
 #'
+#' @note For standard ACM data (10 maturities), the effective maximum for
+#'   \code{i} is 9, because this function requires data at maturity \code{i+1}.
+#'
 #' @export
 #'
 #' @examples
@@ -25,9 +28,7 @@
 #' }
 #'
 compute_variance_bound <- function(yields, term_premia, i) {
-  if (i < 1) {
-    stop("i must be >= 1")
-  }
+  validate_maturity_index(i, max_maturity = HETID_CONSTANTS$MAX_MATURITY - 1)
 
   # Compute components
   c_hat <- compute_c_hat(yields, term_premia, i)

@@ -13,6 +13,9 @@
 #' The formula is:
 #' n_hat(i,t) = i*y_t^(i) - (i+1)*y_t^(i+1) + (i+1)*TP_t^(i+1) - i*TP_t^(i)
 #'
+#' @note For standard ACM data (10 maturities), the effective maximum for
+#'   \code{i} is 9, because this function requires data at maturity \code{i+1}.
+#'
 #' @export
 #'
 #' @examples
@@ -38,9 +41,7 @@
 #' }
 #'
 compute_n_hat <- function(yields, term_premia, i, return_df = FALSE, dates = NULL) {
-  if (i < HETID_CONSTANTS$MIN_MATURITY) {
-    stop("i must be >= ", HETID_CONSTANTS$MIN_MATURITY)
-  }
+  validate_maturity_index(i, max_maturity = HETID_CONSTANTS$MAX_MATURITY - 1)
 
   # Extract relevant columns
   y_i <- yields[[paste0("y", i)]]
