@@ -179,6 +179,24 @@ test_that("extract_acm_data preserves data order", {
   expect_true(all(diff(data$date) >= 0))
 })
 
+test_that("extract_acm_data warns on incomplete terminal quarter", {
+  # end_date in May truncates Q2, leaving only Apr and May
+  expect_warning(
+    data <- extract_acm_data(
+      data_types = "yields",
+      maturities = 5,
+      end_date = "2020-05-15",
+      frequency = "quarterly",
+      auto_download = TRUE
+    ),
+    "Incomplete quarter"
+  )
+
+  # Result should still contain data
+  expect_gt(nrow(data), 0)
+  expect_true("y5" %in% names(data))
+})
+
 test_that("extract_acm_data error handling", {
   # Test with auto_download = FALSE and no data
   # First, temporarily move any existing data

@@ -560,7 +560,221 @@ ggsave(file.path(plot_dir, "heteroskedasticity_diagnostic.svg"), p_hetero_diag, 
 
 cli_alert_success("Created diagnostic plots for analysis")
 
-cli_h1("8. SAVING ANALYSIS RESULTS")
+cli_h1("8. SDF NEWS HETEROSKEDASTICITY ANALYSIS")
+
+cli_h2("Computing SDF Innovations")
+
+# Load original data to get yields and term premia
+data <- readRDS(file.path(OUTPUT_DIR, "temp/data.rds"))
+
+# Convert to data frame if it's a list
+if (is.list(data) && !is.data.frame(data)) {
+  data <- as.data.frame(data)
+}
+
+# Extract yields and term premia
+yield_vars <- grep("^y\\d+$", names(data), value = TRUE)
+tp_vars <- grep("^tp\\d+$", names(data), value = TRUE)
+
+# Get yield maturities from variable names
+maturities <- as.numeric(gsub("y", "", yield_vars))
+
+# Extract yields and term premia data frames
+yields_df <- data[, yield_vars]
+tp_df <- data[, tp_vars]
+
+# Compute SDF innovations for each maturity (starting from 2)
+sdf_news_list <- list()
+for (i in 2:(length(maturities) - 1)) {
+  mat_idx <- maturities[i]
+
+  # Compute SDF innovations for maturity i
+  sdf_innov <- compute_sdf_innovations(
+    yields = yields_df,
+    term_premia = tp_df,
+    i = mat_idx,
+    return_df = FALSE,
+    dates = data$date
+  )
+
+  sdf_news_list[[paste0("sdf_news_", mat_idx)]] <- sdf_innov
+}
+
+# Create SDF news matrix
+sdf_news <- do.call(cbind, sdf_news_list)
+sdf_news_vars <- names(sdf_news_list)
+
+cli_alert_success("Computed SDF innovations for {.val {length(sdf_news_vars)}} maturities")
+
+cli_h2("SDF News Regression on Lagged PCs")
+
+# Select maturity for detailed SDF analysis (typically short-medium term)
+sdf_news_idx <- which(sdf_news_vars == "sdf_news_5") # 5-year maturity
+if (length(sdf_news_idx) == 0) {
+  # Fallback to first available maturity
+  sdf_news_idx <- 1
+  cli_alert_info("Using {.val {sdf_news_vars[sdf_news_idx]}} for SDF heteroskedasticity analysis")
+}
+
+# Extract SDF news for the selected maturity
+sdf_news_selected <- sdf_news[, sdf_news_idx]
+
+# Align SDF news with lagged PCs (remove last observation from PCs)
+pcs_matrix_aligned <- pcs_matrix[seq_along(sdf_news_selected), ]
+
+# Regress SDF news on lagged PCs
+# sdf_news_{t+1} = α + β'*PCs_t + ε_{t+1}
+lm_sdf_news <- lm(sdf_news_selected ~ ., data = as.data.frame(pcs_matrix_aligned))
+sdf_news_residuals <- residuals(lm_sdf_news)
+
+cli_h3("SDF News Regression Results")
+
+sdf_reg_summary <- summary(lm_sdf_news)
+sdf_f_stat <- sdf_reg_summary$fstatistic
+sdf_f_pval <- if (!is.null(sdf_f_stat)) pf(sdf_f_stat[1], sdf_f_stat[2], sdf_f_stat[3], lower.tail = FALSE) else NA
+
+cli_ul(c(
+  paste("Dependent variable:", sdf_news_vars[sdf_news_idx]),
+  paste("R-squared:", round(sdf_reg_summary$r.squared, 4)),
+  paste("Adjusted R-squared:", round(sdf_reg_summary$adj.r.squared, 4)),
+  paste("F-statistic:", round(sdf_f_stat[1], 2), "with p-value:", format.pval(sdf_f_pval))
+))
+
+# Create coefficient table
+sdf_coef_table <- data.frame(
+  Coefficient = names(coef(lm_sdf_news)),
+  Estimate = coef(lm_sdf_news),
+  Std_Error = summary(lm_sdf_news)$coefficients[, 2],
+  t_value = summary(lm_sdf_news)$coefficients[, 3],
+  p_value = summary(lm_sdf_news)$coefficients[, 4]
+) %>%
+  gt() %>%
+  tab_header(
+    title = "SDF News Regression Coefficients",
+    subtitle = "Regression of SDF news on lagged PCs"
+  ) %>%
+  fmt_number(columns = c(Estimate, Std_Error, t_value), decimals = 4) %>%
+  fmt_number(columns = p_value, decimals = 4) %>%
+  tab_style(
+    style = cell_fill(color = "lightgreen"),
+    locations = cells_body(
+      columns = p_value,
+      rows = p_value < 0.05
+    )
+  )
+
+print(sdf_coef_table)
+
+cli_h3("SDF News Residuals Summary")
+
+sdf_resid_stats <- data.frame(
+  Statistic = c("Mean", "SD", "Skewness", "Kurtosis", "Min", "Max"),
+  Value = c(
+    round(mean(sdf_news_residuals), 6),
+    round(sd(sdf_news_residuals), 4),
+    round(moments::skewness(sdf_news_residuals), 4),
+    round(moments::kurtosis(sdf_news_residuals), 4),
+    round(min(sdf_news_residuals), 4),
+    round(max(sdf_news_residuals), 4)
+  )
+) %>%
+  gt() %>%
+  fmt_number(columns = Value, decimals = 4)
+
+print(sdf_resid_stats)
+
+cli_h2("Heteroskedasticity Tests for SDF News")
+
+sdf_news_residuals_sq <- sdf_news_residuals^2
+
+# Regress squared residuals on lagged PCs
+sdf_hetero_lm <- lm(sdf_news_residuals_sq ~ ., data = as.data.frame(pcs_matrix_aligned))
+sdf_hetero_summary <- summary(sdf_hetero_lm)
+
+sdf_hetero_r2 <- round(sdf_hetero_summary$r.squared, 4)
+sdf_hetero_f_pval <- format.pval(pf(sdf_hetero_summary$fstatistic[1],
+  sdf_hetero_summary$fstatistic[2],
+  sdf_hetero_summary$fstatistic[3],
+  lower.tail = FALSE
+))
+
+cli_ul(c(
+  paste("R-squared for SDF heteroskedasticity regression:", sdf_hetero_r2),
+  paste("F-statistic p-value:", sdf_hetero_f_pval)
+))
+
+# Perform comprehensive heteroskedasticity tests using skedastic
+cli_h3("Comprehensive Heteroskedasticity Tests")
+
+# Use the utility function to perform all tests
+sdf_hetero_tests <- perform_all_hetero_tests(lm_sdf_news, sdf_news_vars[sdf_news_idx])
+
+# Format and display results
+sdf_hetero_table <- sdf_hetero_tests %>%
+  pivot_longer(cols = -Variable, names_to = "Test", values_to = "Value") %>%
+  mutate(
+    Type = ifelse(grepl("pval", Test), "P-value", "Statistic"),
+    Test_Name = gsub("_stat|_pval", "", Test)
+  ) %>%
+  select(Test_Name, Type, Value) %>%
+  pivot_wider(names_from = Type, values_from = Value) %>%
+  gt() %>%
+  tab_header(
+    title = "SDF News Heteroskedasticity Tests",
+    subtitle = "Testing for conditional heteroskedasticity in SDF innovations"
+  ) %>%
+  fmt_number(columns = c(Statistic, `P-value`), decimals = 4) %>%
+  tab_style(
+    style = cell_fill(color = "lightyellow"),
+    locations = cells_body(
+      columns = `P-value`,
+      rows = `P-value` < 0.05
+    )
+  )
+
+print(sdf_hetero_table)
+
+cli_h2("Interpretation of SDF Heteroskedasticity Tests")
+
+cli_text("{.strong F-test for Joint Significance:}")
+cli_ul(c(
+  paste("F-statistic =", round(sdf_f_stat[1], 2), "with p-value =", format.pval(sdf_f_pval)),
+  "Null hypothesis: All PC coefficients are jointly zero",
+  ifelse(sdf_f_pval < 0.05,
+    "REJECT null at 5% level: PCs jointly predict SDF news",
+    "FAIL TO REJECT null: PCs do not jointly predict SDF news"
+  )
+))
+
+cli_text("")
+cli_text("{.strong Heteroskedasticity Evidence:}")
+if (sdf_hetero_summary$r.squared > 0.1) {
+  cli_alert_success("Strong evidence of heteroskedasticity in SDF news residuals")
+  cli_alert_info("R-squared = {.val {round(sdf_hetero_summary$r.squared, 3)}} suggests lagged PCs explain {.val {round(sdf_hetero_summary$r.squared * 100, 1)}}% of residual variance")
+  cli_alert_info("This supports the heteroskedasticity-based identification approach")
+} else if (sdf_hetero_summary$r.squared > 0.05) {
+  cli_alert_warning("Moderate evidence of heteroskedasticity in SDF news residuals")
+  cli_alert_info("R-squared = {.val {round(sdf_hetero_summary$r.squared, 3)}}")
+} else {
+  cli_alert_danger("Weak evidence of heteroskedasticity in SDF news residuals")
+  cli_alert_info("R-squared = {.val {round(sdf_hetero_summary$r.squared, 3)}}")
+  cli_alert_info("Consider using different maturities or additional conditioning variables")
+}
+
+# Save SDF analysis results
+sdf_residuals_output <- list(
+  sdf_news_var = sdf_news_vars[sdf_news_idx],
+  sdf_news_residuals = sdf_news_residuals,
+  sdf_regression = sdf_reg_summary,
+  sdf_hetero_regression = sdf_hetero_summary,
+  sdf_hetero_r_squared = sdf_hetero_summary$r.squared,
+  sdf_hetero_tests = sdf_hetero_tests,
+  sdf_f_stat = sdf_f_stat[1],
+  sdf_f_pval = sdf_f_pval
+)
+saveRDS(sdf_residuals_output, file.path(OUTPUT_DIR, "temp/sdf_news/sdf_news_residuals_analysis.rds"))
+
+cli_h1("9. SAVING ANALYSIS RESULTS")
 
 analysis_results <- list(
   time_series_properties = ts_results,
@@ -569,7 +783,8 @@ analysis_results <- list(
   residual_statistics = resid_stats,
   maturity_trends = trend_summary,
   decade_volatility = as.data.frame(decade_summary),
-  rolling_statistics = rolling_stats
+  rolling_statistics = rolling_stats,
+  sdf_residuals_analysis = sdf_residuals_output
 )
 
 saveRDS(analysis_results, file.path(OUTPUT_DIR, "temp/sdf_news/comprehensive_analysis.rds"))
@@ -583,7 +798,7 @@ cli_text("Maturities analyzed: {.val {paste(price_news_vars, collapse = ', ')}}"
 
 cli_h2("KEY FINDINGS")
 
-cli_h3("1. Heteroskedasticity Evidence")
+cli_h3("1. Price News Heteroskedasticity Evidence")
 cli_ul(c(
   paste0(
     rejection_summary$Rejections[1], "/", rejection_summary$Total[1],
@@ -596,14 +811,30 @@ cli_ul(c(
   "Strong evidence of time-varying conditional variance"
 ))
 
-cli_h3("2. Time Series Properties")
+cli_h3("2. SDF News Heteroskedasticity Evidence")
+cli_ul(c(
+  paste0(
+    "SDF news F-statistic: ", round(sdf_residuals_output$sdf_f_stat, 2),
+    " (p-value: ", format.pval(sdf_residuals_output$sdf_f_pval), ")"
+  ),
+  paste0(
+    "SDF news squared residuals R-squared: ",
+    round(sdf_residuals_output$sdf_hetero_r_squared, 3)
+  ),
+  ifelse(sdf_residuals_output$sdf_hetero_r_squared > 0.1,
+    "Strong heteroskedasticity in SDF innovations supports identification",
+    "Moderate heteroskedasticity in SDF innovations"
+  )
+))
+
+cli_h3("3. Time Series Properties")
 cli_ul(c(
   "All series are stationary (ADF tests)",
   "Moderate serial correlation (AC1 ~ 0.07-0.09)",
   "Non-normal distributions with excess kurtosis"
 ))
 
-cli_h3("3. Maturity Patterns")
+cli_h3("4. Maturity Patterns")
 cli_ul(c(
   paste0(
     "Volatility decreases with maturity (slope = ",
@@ -612,7 +843,7 @@ cli_ul(c(
   "Kurtosis relatively stable across maturities"
 ))
 
-cli_h3("4. Time Variation")
+cli_h3("5. Time Variation")
 cli_ul(c(
   "Volatility varies significantly over time",
   "Highest volatility in 1970s-1980s",
@@ -632,7 +863,7 @@ summary_text <- c(
   "",
   "KEY FINDINGS:",
   "",
-  "1. Heteroskedasticity Evidence:",
+  "1. Price News Heteroskedasticity Evidence:",
   paste(
     "   -", rejection_summary$Rejections[1], "/", rejection_summary$Total[1],
     "price news series show heteroskedasticity (White test)"
@@ -643,19 +874,30 @@ summary_text <- c(
   ),
   "   - Strong evidence of time-varying conditional variance",
   "",
-  "2. Time Series Properties:",
+  "2. SDF News Heteroskedasticity Evidence:",
+  paste(
+    "   - SDF news F-statistic:", round(sdf_residuals_output$sdf_f_stat, 2),
+    "(p-value:", format.pval(sdf_residuals_output$sdf_f_pval), ")"
+  ),
+  paste(
+    "   - SDF news squared residuals R-squared:",
+    round(sdf_residuals_output$sdf_hetero_r_squared, 3)
+  ),
+  "   - Evidence supports heteroskedasticity-based identification",
+  "",
+  "3. Time Series Properties:",
   "   - All series are stationary (ADF tests)",
   "   - Moderate serial correlation (AC1 ~ 0.07-0.09)",
   "   - Non-normal distributions with excess kurtosis",
   "",
-  "3. Maturity Patterns:",
+  "4. Maturity Patterns:",
   paste(
     "   - Volatility decreases with maturity (slope =",
     round(trend_summary$Slope[2], 5), ")"
   ),
   "   - Kurtosis relatively stable across maturities",
   "",
-  "4. Time Variation:",
+  "5. Time Variation:",
   "   - Volatility varies significantly over time",
   "   - Highest volatility in 1970s-1980s",
   "   - Lower volatility in recent decades"

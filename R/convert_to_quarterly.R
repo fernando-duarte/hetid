@@ -23,6 +23,27 @@ convert_to_quarterly <- function(data) {
     FUN = max
   )
 
+  # Warn if any quarter uses a non-terminal month
+  last_months <- as.numeric(
+    format(last_in_quarter$date, HETID_CONSTANTS$MONTH_FORMAT)
+  )
+  expected_months <- last_in_quarter$quarter * 3
+  incomplete <- last_months != expected_months
+  if (any(incomplete)) {
+    details <- paste0(
+      last_in_quarter$year[incomplete],
+      " Q", last_in_quarter$quarter[incomplete],
+      " (using month ", last_months[incomplete],
+      " instead of ", expected_months[incomplete], ")"
+    )
+    warning(
+      "Incomplete quarter(s) detected: ",
+      paste(details, collapse = "; "),
+      ". Using the latest available month for each.",
+      call. = FALSE
+    )
+  }
+
   # Merge to get full data for last observation in each quarter
   result <- merge(
     last_in_quarter[, "date", drop = FALSE],
