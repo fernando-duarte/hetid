@@ -2,7 +2,7 @@
 # See https://pre-commit.com/hooks.html for more hooks
 repos:
   - repo: https://github.com/lorenzwalthert/precommit
-    rev: v0.4.3.9012
+    rev: v0.4.3.9021
     hooks:
       # Style and format R code
       - id: style-files
@@ -12,8 +12,6 @@ repos:
       - id: roxygenize
         additional_dependencies:
           - roxygen2
-          - devtools
-          - nloptr
 
       # Keep DESCRIPTION tidy
       - id: use-tidy-description
@@ -29,9 +27,6 @@ repos:
       - id: lintr
         args: [--warn_only]
         verbose: true
-        additional_dependencies:
-          - lintr
-          - cyclocomp
 
       # Check that README.Rmd hasn't changed without updating README.md
       - id: readme-rmd-rendered
@@ -45,7 +40,7 @@ repos:
 
   # Standard pre-commit hooks
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v5.0.0
+    rev: v6.0.0
     hooks:
       # Remove trailing whitespace
       - id: trailing-whitespace
