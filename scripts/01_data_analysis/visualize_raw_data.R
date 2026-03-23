@@ -18,9 +18,9 @@ colors <- c("darkblue", "darkred", "darkgreen", "darkorange", "purple", "brown")
 
 # Time Series Plot of Yields
 yield_vars <- grep("^y\\d+$", names(df), value = TRUE)
-yields_long <- df %>%
-  select(date, all_of(yield_vars)) %>%
-  pivot_longer(cols = -date, names_to = "maturity", values_to = "yield") %>%
+yields_long <- df |>
+  select(date, all_of(yield_vars)) |>
+  pivot_longer(cols = -date, names_to = "maturity", values_to = "yield") |>
   mutate(maturity = as.numeric(gsub("y", "", maturity)))
 
 p_yields <- ggplot(yields_long, aes(x = date, y = yield, color = factor(maturity))) +
@@ -44,10 +44,10 @@ snapshot_dates <- c(
   max(df$date)
 )
 
-snapshot_data <- df %>%
-  filter(date %in% snapshot_dates) %>%
-  select(date, all_of(yield_vars)) %>%
-  pivot_longer(cols = -date, names_to = "maturity", values_to = "yield") %>%
+snapshot_data <- df |>
+  filter(date %in% snapshot_dates) |>
+  select(date, all_of(yield_vars)) |>
+  pivot_longer(cols = -date, names_to = "maturity", values_to = "yield") |>
   mutate(
     maturity = as.numeric(gsub("y", "", maturity)),
     date_label = format(date, "%Y-%m")
@@ -72,13 +72,13 @@ display_and_save_plot(p_term_structure, "term_structure_snapshots.svg", dir = pl
 
 # Term Premia Time Series
 tp_vars <- grep("^tp\\d+$", names(df), value = TRUE)
-tp_long <- df %>%
-  select(date, all_of(tp_vars)) %>%
-  pivot_longer(cols = -date, names_to = "maturity", values_to = "term_premium") %>%
+tp_long <- df |>
+  select(date, all_of(tp_vars)) |>
+  pivot_longer(cols = -date, names_to = "maturity", values_to = "term_premium") |>
   mutate(maturity = as.numeric(gsub("tp", "", maturity)))
 
 p_tp <- ggplot(
-  tp_long %>% filter(maturity %in% c(2, 5, 10)),
+  tp_long |> filter(maturity %in% c(2, 5, 10)),
   aes(x = date, y = term_premium, color = factor(maturity))
 ) +
   geom_line() +
@@ -95,8 +95,8 @@ display_and_save_plot(p_tp, "term_premia_time_series.svg", dir = plot_dir)
 
 # Lagged Principal Components Time Series
 pc_lag_vars <- grep("^pc\\d+_lag1$", names(df), value = TRUE)[1:3] # First 3 lagged PCs
-pc_lag_long <- df %>%
-  select(date, all_of(pc_lag_vars)) %>%
+pc_lag_long <- df |>
+  select(date, all_of(pc_lag_vars)) |>
   pivot_longer(cols = -date, names_to = "pc", values_to = "value")
 
 p_pcs <- ggplot(pc_lag_long, aes(x = date, y = value)) +
@@ -172,8 +172,8 @@ save_correlation_heatmap(
 )
 
 # Distribution Plots
-yield_dist_data <- df %>%
-  select(all_of(c("y2", "y5", "y10"))) %>%
+yield_dist_data <- df |>
+  select(all_of(c("y2", "y5", "y10"))) |>
   pivot_longer(everything(), names_to = "maturity", values_to = "yield")
 
 p_yield_dist <- ggplot(yield_dist_data, aes(x = yield, fill = maturity)) +
@@ -191,8 +191,8 @@ display_and_save_plot(p_yield_dist, "yield_distributions.svg", dir = plot_dir)
 
 # Lagged PC distributions
 pc_lag_dist_vars <- pc_lag_vars_all[1:3] # First 3 lagged PCs
-pc_dist_data <- df %>%
-  select(all_of(pc_lag_dist_vars)) %>%
+pc_dist_data <- df |>
+  select(all_of(pc_lag_dist_vars)) |>
   pivot_longer(everything(), names_to = "pc", values_to = "value")
 
 p_pc_dist <- ggplot(pc_dist_data, aes(x = value, fill = pc)) +

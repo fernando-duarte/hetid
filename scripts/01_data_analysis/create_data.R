@@ -25,9 +25,9 @@ pc_cols <- paste0("pc", 1:MAX_N_PCS)
 cols_to_keep <- c("date", HETID_CONSTANTS$CONSUMPTION_GROWTH_COL, pc_cols)
 
 # Prepare variables data
-variables_df <- variables %>%
-  select(all_of(cols_to_keep)) %>%
-  mutate(date = as.Date(date)) %>%
+variables_df <- variables |>
+  select(all_of(cols_to_keep)) |>
+  mutate(date = as.Date(date)) |>
   # Convert to end of quarter to match ACM dates
   mutate(date = ceiling_date(date, "quarter") - 1)
 
@@ -53,9 +53,9 @@ for (i in seq_along(maturity_range)) {
 }
 
 # Merge with variables data by year-quarter (only complete observations)
-variables_to_merge <- variables_df %>%
-  select(-date) %>%
-  filter(complete.cases(.)) # Only keep complete rows before merging
+variables_to_merge <- variables_df |>
+  select(-date) |>
+  (\(x) filter(x, complete.cases(x)))() # Only keep complete rows before merging
 
 data <- merge(data, variables_to_merge, by = "year_quarter", all.x = FALSE)
 
@@ -128,7 +128,7 @@ summary_table <- create_formatted_table(
   subtitle = "Quarterly ACM and Variables Data Merge",
   highlight_rows = which(summary_df$Item == "Number of Observations"),
   highlight_color = "lightblue"
-) %>%
+) |>
   tab_options(
     table.font.size = 12,
     table.width = pct(60)

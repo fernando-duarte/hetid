@@ -471,12 +471,12 @@ summary_dt <- datatable(
     )
   ),
   extensions = "Buttons"
-) %>%
+) |>
   formatStyle(
     columns = c("ADF", "PP", "LB", "ARCH", "JB", "White", "BP", "GQ", "Harvey", "Anscombe", "CW"),
     backgroundColor = styleEqual("R", "#ffcccc"),
     color = styleEqual("R", "#cc0000")
-  ) %>%
+  ) |>
   formatStyle(
     columns = "KPSS",
     backgroundColor = styleEqual("R", "#ffcccc"),

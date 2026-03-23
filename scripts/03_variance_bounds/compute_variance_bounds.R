@@ -75,24 +75,24 @@ variance_bounds_df <- data.frame(
 cli_h2("Variance Bounds Summary")
 
 # Create formatted table
-variance_bounds_table <- variance_bounds_df %>%
-  gt() %>%
+variance_bounds_table <- variance_bounds_df |>
+  gt() |>
   tab_header(
     title = "Theoretical Variance Bounds",
     subtitle = "Components and bounds across maturities"
-  ) %>%
+  ) |>
   fmt_number(
     columns = c(c_hat, k_hat, Variance_Bound),
     decimals = 6
-  ) %>%
+  ) |>
   tab_style(
     style = cell_fill(color = "lightblue"),
     locations = cells_body(columns = Maturity)
-  ) %>%
+  ) |>
   tab_style(
     style = cell_fill(color = "lightyellow"),
     locations = cells_body(columns = Variance_Bound)
-  ) %>%
+  ) |>
   cols_label(
     Maturity = "Maturity (years)",
     c_hat = "ĉ",
@@ -115,9 +115,9 @@ vb_stats <- data.frame(
     sd(variance_bounds, na.rm = TRUE),
     max(variance_bounds, na.rm = TRUE) - min(variance_bounds, na.rm = TRUE)
   )
-) %>%
-  gt() %>%
-  tab_header(title = "Variance Bounds Summary Statistics") %>%
+) |>
+  gt() |>
+  tab_header(title = "Variance Bounds Summary Statistics") |>
   fmt_number(columns = Value, decimals = 6)
 
 print(vb_stats)
@@ -147,10 +147,10 @@ cor_df <- data.frame(
   Component_1 = c("ĉ", "ĉ", "k̂"),
   Component_2 = c("k̂", "Variance Bound", "Variance Bound"),
   Correlation = c(cor_c_k, cor_c_vb, cor_k_vb)
-) %>%
-  gt() %>%
-  tab_header(title = "Component Correlations") %>%
-  fmt_number(columns = Correlation, decimals = 3) %>%
+) |>
+  gt() |>
+  tab_header(title = "Component Correlations") |>
+  fmt_number(columns = Correlation, decimals = 3) |>
   tab_style(
     style = cell_fill(color = "lightgreen"),
     locations = cells_body(
@@ -174,16 +174,16 @@ contrib_df <- data.frame(
   k_hat_normalized = k_hat_normalized,
   c_hat_contribution = c_hat_values / variance_bounds,
   k_hat_contribution = k_hat_values / variance_bounds
-) %>%
-  gt() %>%
+) |>
+  gt() |>
   tab_header(
     title = "Normalized Components and Contributions",
     subtitle = "Relative importance of ĉ and k̂ components"
-  ) %>%
+  ) |>
   fmt_number(
     columns = -Maturity,
     decimals = 3
-  ) %>%
+  ) |>
   cols_label(
     c_hat_normalized = "ĉ (normalized)",
     k_hat_normalized = "k̂ (normalized)",

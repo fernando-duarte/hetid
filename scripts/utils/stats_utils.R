@@ -70,12 +70,12 @@ perform_stationarity_tests <- function(x, var_name) {
 create_formatted_table <- function(data, title, subtitle = NULL,
                                    highlight_rows = NULL,
                                    highlight_color = "lightblue") {
-  tbl <- data %>%
-    gt() %>%
+  tbl <- data |>
+    gt() |>
     tab_header(
       title = title,
       subtitle = subtitle
-    ) %>%
+    ) |>
     tab_options(
       table.font.size = 12,
       data_row.padding = px(2)
@@ -83,7 +83,7 @@ create_formatted_table <- function(data, title, subtitle = NULL,
 
   # Add highlighting if specified
   if (!is.null(highlight_rows)) {
-    tbl <- tbl %>%
+    tbl <- tbl |>
       tab_style(
         style = cell_fill(color = highlight_color),
         locations = cells_body(rows = highlight_rows)
@@ -116,7 +116,7 @@ create_interactive_table <- function(data, page_length = 10, round_digits = 4) {
 
   # Round numeric columns
   if (length(numeric_cols) > 0) {
-    dt <- dt %>%
+    dt <- dt |>
       formatRound(columns = numeric_cols, digits = round_digits)
   }
 

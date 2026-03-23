@@ -75,8 +75,8 @@ save_correlation_heatmap <- function(cor_matrix, title, filename, dir = plot_dir
 #' @return ggplot object
 create_time_series_plot <- function(data, x_var = "date", y_vars, title, y_lab, colors = NULL) {
   # Reshape data to long format
-  plot_data <- data %>%
-    select(all_of(c(x_var, y_vars))) %>%
+  plot_data <- data |>
+    select(all_of(c(x_var, y_vars))) |>
     pivot_longer(cols = -all_of(x_var), names_to = "variable", values_to = "value")
 
   p <- ggplot(plot_data, aes_string(x = x_var, y = "value", color = "variable")) +

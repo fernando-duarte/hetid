@@ -53,8 +53,8 @@ ggsave(file.path(output_dir, "variance_bounds_by_maturity.svg"),
 )
 
 # Plot 2: Components decomposition
-components_long <- variance_bounds_df %>%
-  select(Maturity, c_hat, k_hat) %>%
+components_long <- variance_bounds_df |>
+  select(Maturity, c_hat, k_hat) |>
   pivot_longer(cols = c(c_hat, k_hat), names_to = "Component", values_to = "Value")
 
 p2 <- ggplot(components_long, aes(x = Maturity, y = Value, color = Component)) +
@@ -139,7 +139,7 @@ cli_h2("Identification Implications")
 typical_forecast_var_low <- 0.001
 typical_forecast_var_high <- 0.01
 
-binding_analysis <- variance_bounds_df %>%
+binding_analysis <- variance_bounds_df |>
   mutate(
     potentially_binding_low = Variance_Bound < typical_forecast_var_low,
     potentially_binding_high = Variance_Bound < typical_forecast_var_high,
@@ -165,30 +165,30 @@ cli_ul(c(
 ))
 
 # Create tightness analysis table
-tightness_table <- binding_analysis %>%
-  select(Maturity, Variance_Bound, tightness_ratio_low, tightness_ratio_high) %>%
-  gt() %>%
+tightness_table <- binding_analysis |>
+  select(Maturity, Variance_Bound, tightness_ratio_low, tightness_ratio_high) |>
+  gt() |>
   tab_header(
     title = "Variance Bound Tightness Analysis",
     subtitle = "Ratio of bounds to typical forecast error variances"
-  ) %>%
+  ) |>
   fmt_number(
     columns = c(Variance_Bound, tightness_ratio_low, tightness_ratio_high),
     decimals = 4
-  ) %>%
+  ) |>
   cols_label(
     Maturity = "Maturity",
     Variance_Bound = "Variance Bound",
     tightness_ratio_low = "Ratio (vs 0.001)",
     tightness_ratio_high = "Ratio (vs 0.01)"
-  ) %>%
+  ) |>
   tab_style(
     style = cell_fill(color = "lightcoral"),
     locations = cells_body(
       columns = tightness_ratio_low,
       rows = tightness_ratio_low < 1
     )
-  ) %>%
+  ) |>
   tab_style(
     style = cell_fill(color = "lightyellow"),
     locations = cells_body(

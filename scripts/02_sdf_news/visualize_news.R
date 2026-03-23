@@ -32,9 +32,9 @@ cli_h1("1. TIME SERIES PLOTS")
 price_news <- as.matrix(data_with_news[, price_news_vars])
 
 # Create long format data for plotting
-price_news_long <- data_with_news %>%
-  select(date, all_of(price_news_vars)) %>%
-  pivot_longer(cols = -date, names_to = "maturity", values_to = "price_news") %>%
+price_news_long <- data_with_news |>
+  select(date, all_of(price_news_vars)) |>
+  pivot_longer(cols = -date, names_to = "maturity", values_to = "price_news") |>
   mutate(
     maturity_num = as.numeric(gsub("price_news_", "", maturity)),
     maturity_label = paste0(maturity_num, "-year")
@@ -74,7 +74,7 @@ if (n_maturities >= 3) {
 selected_maturities <- price_news_vars[selected_indices]
 if (length(selected_maturities) > 0) {
   p_ts_overlay <- ggplot(
-    price_news_long %>% filter(maturity %in% selected_maturities),
+    price_news_long |> filter(maturity %in% selected_maturities),
     aes(x = date, y = price_news, color = maturity_label)
   ) +
     geom_line(alpha = 0.8, linewidth = 0.8) +
@@ -114,11 +114,11 @@ ggsave(file.path(plot_dir, "price_news_densities.svg"), p_density, width = 12, h
 cli_h2("Box Plots by Decade")
 
 # Add decade information
-price_news_long <- price_news_long %>%
+price_news_long <- price_news_long |>
   mutate(decade = floor(year(date) / 10) * 10)
 
 p_box_decade <- ggplot(
-  price_news_long %>% filter(maturity %in% selected_maturities),
+  price_news_long |> filter(maturity %in% selected_maturities),
   aes(x = factor(decade), y = price_news, fill = maturity_label)
 ) +
   geom_boxplot(alpha = 0.7, outlier.size = 1) +
@@ -201,16 +201,16 @@ rolling_stats <- analysis_results$rolling_statistics
 
 cli_h2("Rolling Mean and Volatility")
 
-p_roll_stats <- rolling_stats %>%
-  filter(!is.na(roll_sd)) %>%
-  select(date, roll_mean, roll_sd) %>%
-  pivot_longer(cols = c(roll_mean, roll_sd), names_to = "statistic", values_to = "value") %>%
+p_roll_stats <- rolling_stats |>
+  filter(!is.na(roll_sd)) |>
+  select(date, roll_mean, roll_sd) |>
+  pivot_longer(cols = c(roll_mean, roll_sd), names_to = "statistic", values_to = "value") |>
   mutate(
     statistic_label = case_when(
       statistic == "roll_mean" ~ "Rolling Mean",
       statistic == "roll_sd" ~ "Rolling Volatility"
     )
-  ) %>%
+  ) |>
   ggplot(aes(x = date, y = value, color = statistic_label)) +
   geom_line(linewidth = 1) +
   facet_wrap(~statistic_label, scales = "free_y", ncol = 1) +
@@ -228,7 +228,7 @@ ggsave(file.path(plot_dir, "rolling_statistics.svg"), p_roll_stats, width = 10, 
 cli_h2("Rolling Volatility with Economic Events")
 
 # Add shaded regions for notable economic periods
-p_roll_vol_events <- ggplot(rolling_stats %>% filter(!is.na(roll_sd)), aes(x = date, y = roll_sd)) +
+p_roll_vol_events <- ggplot(rolling_stats |> filter(!is.na(roll_sd)), aes(x = date, y = roll_sd)) +
   # Add recession shading (example periods - adjust as needed)
   annotate("rect",
     xmin = as.Date("1980-01-01"), xmax = as.Date("1982-12-31"),
@@ -288,7 +288,7 @@ p_3d <- plot_ly(
     colorscale = "RdBu",
     showscale = TRUE
   )
-) %>%
+) |>
   layout(
     title = "Price News Term Structure Evolution",
     scene = list(
@@ -312,10 +312,10 @@ snapshot_dates <- as.Date(snapshot_dates)
 snapshot_dates <- snapshot_dates[snapshot_dates %in% data_with_news$date]
 
 if (length(snapshot_dates) > 0) {
-  snapshot_data <- data_with_news %>%
-    filter(date %in% snapshot_dates) %>%
-    select(date, all_of(price_news_vars)) %>%
-    pivot_longer(cols = -date, names_to = "maturity", values_to = "price_news") %>%
+  snapshot_data <- data_with_news |>
+    filter(date %in% snapshot_dates) |>
+    select(date, all_of(price_news_vars)) |>
+    pivot_longer(cols = -date, names_to = "maturity", values_to = "price_news") |>
     mutate(
       maturity_num = as.numeric(gsub("price_news_", "", maturity)),
       date_label = format(date, "%Y")
@@ -365,15 +365,15 @@ cli_h2("Price News vs Consumption Growth")
 # Plot relationship with consumption growth
 consumption_growth <- data_with_news[[HETID_CONSTANTS$CONSUMPTION_GROWTH_COL]]
 
-p_consumption <- data_with_news %>%
+p_consumption <- data_with_news |>
   select(all_of(selected_maturities),
     consumption = all_of(HETID_CONSTANTS$CONSUMPTION_GROWTH_COL)
-  ) %>%
+  ) |>
   pivot_longer(
     cols = starts_with("price_news"),
     names_to = "maturity", values_to = "price_news"
-  ) %>%
-  mutate(maturity_label = gsub("price_news_", "", maturity)) %>%
+  ) |>
+  mutate(maturity_label = gsub("price_news_", "", maturity)) |>
   ggplot(aes(x = consumption, y = price_news)) +
   geom_point(alpha = 0.5, color = "darkblue") +
   geom_smooth(method = "lm", se = TRUE, color = "red") +
@@ -391,7 +391,7 @@ cli_h1("7. SUMMARY VISUALIZATION DASHBOARD")
 
 # Create a dashboard-style summary plot
 p1_summary <- ggplot(
-  price_news_long %>% filter(maturity == price_news_vars[1]),
+  price_news_long |> filter(maturity == price_news_vars[1]),
   aes(x = date, y = price_news)
 ) +
   geom_line(color = "#1f77b4", alpha = 0.8) +
@@ -403,7 +403,7 @@ p1_summary <- ggplot(
   theme_minimal()
 
 p2_summary <- ggplot(
-  rolling_stats %>% filter(!is.na(roll_sd)),
+  rolling_stats |> filter(!is.na(roll_sd)),
   aes(x = date, y = roll_sd)
 ) +
   geom_line(color = "#ff7f0e", linewidth = 1) +

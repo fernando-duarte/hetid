@@ -87,11 +87,11 @@ summary_table <- create_formatted_table(
   all_stats,
   title = "Summary Statistics for All Variables",
   subtitle = "Quarterly Data Analysis"
-) %>%
+) |>
   fmt_number(
     columns = c(Mean:AC2),
     decimals = 3
-  ) %>%
+  ) |>
   tab_style(
     style = list(
       cell_fill(color = "#f0f0f0"),
@@ -100,7 +100,7 @@ summary_table <- create_formatted_table(
     locations = cells_body(
       rows = grepl("^---", Variable)
     )
-  ) %>%
+  ) |>
   tab_options(
     table.font.size = 11,
     data_row.padding = px(2)
@@ -137,8 +137,8 @@ saveRDS(list(
   pc_macro = cor_pc_macro
 ), file.path(output_dir, "correlation_matrices.rds"))
 
-key_vars_summary <- all_stats %>%
-  filter(Variable %in% c("y2", "y10", "tp2", "tp10", "pc1", "pc2", "gr1.pcecc96")) %>%
+key_vars_summary <- all_stats |>
+  filter(Variable %in% c("y2", "y10", "tp2", "tp10", "pc1", "pc2", "gr1.pcecc96")) |>
   select(Variable, Mean, SD, Min, Max, Skewness, N)
 
 cli_h2("Key Variables Summary")
@@ -154,12 +154,12 @@ print(key_vars_dt)
 
 cli_h2("Average Statistics by Maturity")
 
-yields_stats_avg <- yields_stats %>%
-  mutate(maturity = as.numeric(gsub("y", "", Variable))) %>%
+yields_stats_avg <- yields_stats |>
+  mutate(maturity = as.numeric(gsub("y", "", Variable))) |>
   select(maturity, Mean, SD)
 
-tp_stats_avg <- tp_stats %>%
-  mutate(maturity = as.numeric(gsub("tp", "", Variable))) %>%
+tp_stats_avg <- tp_stats |>
+  mutate(maturity = as.numeric(gsub("tp", "", Variable))) |>
   select(maturity, Mean, SD)
 
 maturity_summary <- merge(yields_stats_avg, tp_stats_avg,
@@ -170,22 +170,22 @@ maturity_summary <- merge(yields_stats_avg, tp_stats_avg,
 maturity_table <- create_formatted_table(
   maturity_summary,
   title = "Statistics by Maturity"
-) %>%
+) |>
   cols_label(
     maturity = "Maturity",
     Mean_yield = "Yield Mean",
     SD_yield = "Yield SD",
     Mean_tp = "TP Mean",
     SD_tp = "TP SD"
-  ) %>%
+  ) |>
   fmt_number(
     columns = c(Mean_yield:SD_tp),
     decimals = 3
-  ) %>%
+  ) |>
   tab_style(
     style = cell_fill(color = "lightblue", alpha = 0.3),
     locations = cells_body(columns = c(Mean_yield, SD_yield))
-  ) %>%
+  ) |>
   tab_style(
     style = cell_fill(color = "lightgreen", alpha = 0.3),
     locations = cells_body(columns = c(Mean_tp, SD_tp))

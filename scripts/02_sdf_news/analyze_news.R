@@ -36,11 +36,11 @@ price_news_table <- create_formatted_table(
   price_news_stats,
   title = "Price News Summary Statistics",
   subtitle = "Statistics across maturities"
-) %>%
+) |>
   fmt_number(
     columns = -Variable,
     decimals = 4
-  ) %>%
+  ) |>
   tab_style(
     style = cell_fill(color = "lightcyan"),
     locations = cells_body(columns = Variable)
@@ -55,11 +55,11 @@ colnames(cor_price_news) <- price_news_vars
 rownames(cor_price_news) <- price_news_vars
 
 # Create heatmap-style correlation table
-cor_table <- as.data.frame(cor_price_news) %>%
-  tibble::rownames_to_column("Variable") %>%
-  gt() %>%
-  tab_header(title = "Correlation Matrix") %>%
-  fmt_number(columns = -Variable, decimals = 3) %>%
+cor_table <- as.data.frame(cor_price_news) |>
+  tibble::rownames_to_column("Variable") |>
+  gt() |>
+  tab_header(title = "Correlation Matrix") |>
+  fmt_number(columns = -Variable, decimals = 3) |>
   data_color(
     columns = -Variable,
     fn = scales::col_numeric(
@@ -77,10 +77,10 @@ rownames(cor_news_pcs) <- price_news_vars
 colnames(cor_news_pcs) <- pc_lag_vars
 
 # Create formatted correlation table
-cor_news_pcs_table <- as.data.frame(cor_news_pcs) %>%
-  tibble::rownames_to_column("Price_News") %>%
-  gt() %>%
-  tab_header(title = "Price News vs Lagged PCs Correlations") %>%
+cor_news_pcs_table <- as.data.frame(cor_news_pcs) |>
+  tibble::rownames_to_column("Price_News") |>
+  gt() |>
+  tab_header(title = "Price News vs Lagged PCs Correlations") |>
   fmt_number(columns = -Price_News, decimals = 3)
 
 print(cor_news_pcs_table)
@@ -93,11 +93,11 @@ rownames(cor_news_consumption) <- price_news_vars
 colnames(cor_news_consumption) <- HETID_CONSTANTS$CONSUMPTION_GROWTH_COL
 
 # Create formatted correlation table
-cor_news_consumption_table <- as.data.frame(cor_news_consumption) %>%
-  tibble::rownames_to_column("Price_News") %>%
-  gt() %>%
-  tab_header(title = "Price News vs Consumption Growth") %>%
-  fmt_number(columns = -Price_News, decimals = 3) %>%
+cor_news_consumption_table <- as.data.frame(cor_news_consumption) |>
+  tibble::rownames_to_column("Price_News") |>
+  gt() |>
+  tab_header(title = "Price News vs Consumption Growth") |>
+  fmt_number(columns = -Price_News, decimals = 3) |>
   tab_style(
     style = cell_fill(color = "lightyellow"),
     locations = cells_body(
@@ -161,8 +161,8 @@ resid_stats <- data.frame(
     round(min(price_news_residuals), 4),
     round(max(price_news_residuals), 4)
   )
-) %>%
-  gt() %>%
+) |>
+  gt() |>
   fmt_number(columns = Value, decimals = 4)
 
 print(resid_stats)
@@ -320,7 +320,7 @@ stat_tests_table <- create_formatted_table(
   title = "Unit Root and Serial Correlation Tests",
   highlight_rows = significant_rows,
   highlight_color = "lightgreen"
-) %>%
+) |>
   fmt_number(columns = c(LB_stat:KPSS_pval), decimals = 4)
 
 print(stat_tests_table)
@@ -375,9 +375,9 @@ cli_h2("Heteroskedasticity Tests - Part 1")
 hetero_table1 <- hetero_results[, c(
   "Variable", "White_stat", "White_pval",
   "BP_stat", "BP_pval", "GQ_stat", "GQ_pval"
-)] %>%
-  gt() %>%
-  fmt_number(columns = -Variable, decimals = 4) %>%
+)] |>
+  gt() |>
+  fmt_number(columns = -Variable, decimals = 4) |>
   tab_style(
     style = cell_fill(color = "lightyellow"),
     locations = cells_body(
@@ -407,11 +407,11 @@ rejection_summary$Percentage <- round(
   100 * rejection_summary$Rejections / rejection_summary$Total, 1
 )
 
-rejection_table <- rejection_summary %>%
-  gt() %>%
-  tab_header(title = "Test Rejection Summary") %>%
-  fmt_number(columns = c(Rejections, Total), decimals = 0) %>%
-  fmt_number(columns = Percentage, decimals = 1) %>%
+rejection_table <- rejection_summary |>
+  gt() |>
+  tab_header(title = "Test Rejection Summary") |>
+  fmt_number(columns = c(Rejections, Total), decimals = 0) |>
+  fmt_number(columns = Percentage, decimals = 1) |>
   tab_style(
     style = cell_fill(color = "lightcoral"),
     locations = cells_body(
@@ -454,9 +454,9 @@ trend_summary <- data.frame(
   )
 )
 trend_summary[, -1] <- round(trend_summary[, -1], 4)
-trend_table <- trend_summary %>%
-  gt() %>%
-  fmt_number(columns = -Variable, decimals = 4) %>%
+trend_table <- trend_summary |>
+  gt() |>
+  fmt_number(columns = -Variable, decimals = 4) |>
   tab_style(
     style = cell_fill(color = "lightcyan"),
     locations = cells_body(
@@ -489,9 +489,9 @@ rolling_stats <- data.frame(
 )
 
 rolling_stats$decade <- floor(year(rolling_stats$date) / 10) * 10
-decade_summary <- rolling_stats %>%
-  filter(!is.na(roll_sd)) %>%
-  group_by(decade) %>%
+decade_summary <- rolling_stats |>
+  filter(!is.na(roll_sd)) |>
+  group_by(decade) |>
   summarise(
     avg_volatility = mean(roll_sd, na.rm = TRUE),
     min_volatility = min(roll_sd, na.rm = TRUE),
@@ -502,11 +502,11 @@ decade_summary <- rolling_stats %>%
 
 cli_h2("Rolling Window Statistics by Decade")
 
-decade_table <- decade_summary %>%
-  as.data.frame() %>%
-  gt() %>%
-  tab_header(title = "Volatility Evolution by Decade") %>%
-  fmt_number(columns = c(avg_volatility:avg_skewness), decimals = 6) %>%
+decade_table <- decade_summary |>
+  as.data.frame() |>
+  gt() |>
+  tab_header(title = "Volatility Evolution by Decade") |>
+  fmt_number(columns = c(avg_volatility:avg_skewness), decimals = 6) |>
   tab_style(
     style = cell_fill(color = "lightyellow"),
     locations = cells_body(
@@ -672,14 +672,14 @@ sdf_coef_table <- data.frame(
   Std_Error = summary(lm_sdf_news)$coefficients[, 2],
   t_value = summary(lm_sdf_news)$coefficients[, 3],
   p_value = summary(lm_sdf_news)$coefficients[, 4]
-) %>%
-  gt() %>%
+) |>
+  gt() |>
   tab_header(
     title = "SDF News Regression Coefficients",
     subtitle = "Regression of SDF news on lagged PCs"
-  ) %>%
-  fmt_number(columns = c(Estimate, Std_Error, t_value), decimals = 4) %>%
-  fmt_number(columns = p_value, decimals = 4) %>%
+  ) |>
+  fmt_number(columns = c(Estimate, Std_Error, t_value), decimals = 4) |>
+  fmt_number(columns = p_value, decimals = 4) |>
   tab_style(
     style = cell_fill(color = "lightgreen"),
     locations = cells_body(
@@ -702,8 +702,8 @@ sdf_resid_stats <- data.frame(
     round(min(sdf_news_residuals), 4),
     round(max(sdf_news_residuals), 4)
   )
-) %>%
-  gt() %>%
+) |>
+  gt() |>
   fmt_number(columns = Value, decimals = 4)
 
 print(sdf_resid_stats)
@@ -735,20 +735,20 @@ cli_h3("Comprehensive Heteroskedasticity Tests")
 sdf_hetero_tests <- perform_all_hetero_tests(lm_sdf_news, sdf_news_vars[sdf_news_idx])
 
 # Format and display results
-sdf_hetero_table <- sdf_hetero_tests %>%
-  pivot_longer(cols = -Variable, names_to = "Test", values_to = "Value") %>%
+sdf_hetero_table <- sdf_hetero_tests |>
+  pivot_longer(cols = -Variable, names_to = "Test", values_to = "Value") |>
   mutate(
     Type = ifelse(grepl("pval", Test), "P-value", "Statistic"),
     Test_Name = gsub("_stat|_pval", "", Test)
-  ) %>%
-  select(Test_Name, Type, Value) %>%
-  pivot_wider(names_from = Type, values_from = Value) %>%
-  gt() %>%
+  ) |>
+  select(Test_Name, Type, Value) |>
+  pivot_wider(names_from = Type, values_from = Value) |>
+  gt() |>
   tab_header(
     title = "SDF News Heteroskedasticity Tests",
     subtitle = "Testing for conditional heteroskedasticity in SDF innovations"
-  ) %>%
-  fmt_number(columns = c(Statistic, `P-value`), decimals = 4) %>%
+  ) |>
+  fmt_number(columns = c(Statistic, `P-value`), decimals = 4) |>
   tab_style(
     style = cell_fill(color = "lightyellow"),
     locations = cells_body(

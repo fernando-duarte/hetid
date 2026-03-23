@@ -31,42 +31,42 @@ correlations <- variance_bounds_results$correlations
 cli_h2("Creating Publication-Ready Tables")
 
 # Table 1: Main variance bounds results
-main_table <- variance_bounds_df %>%
-  gt() %>%
+main_table <- variance_bounds_df |>
+  gt() |>
   tab_header(
     title = "Theoretical Variance Bounds for Forecast Errors",
     subtitle = "Components and bounds across bond maturities"
-  ) %>%
+  ) |>
   fmt_number(
     columns = c(c_hat, k_hat),
     decimals = 4
-  ) %>%
+  ) |>
   fmt_scientific(
     columns = Variance_Bound,
     decimals = 2
-  ) %>%
+  ) |>
   cols_label(
     Maturity = "Maturity (years)",
     c_hat = html("ĉ<sub>i</sub>"),
     k_hat = html("k̂<sub>i</sub>"),
     Variance_Bound = html("Variance Bound<br/>(×10<sup>-3</sup>)")
-  ) %>%
+  ) |>
   tab_style(
     style = cell_fill(color = "lightblue"),
     locations = cells_body(columns = Maturity)
-  ) %>%
+  ) |>
   tab_style(
     style = cell_fill(color = "lightyellow"),
     locations = cells_body(columns = Variance_Bound)
-  ) %>%
+  ) |>
   tab_footnote(
     footnote = "Variance bound = (1/4) × ĉᵢ × k̂ᵢ",
     locations = cells_column_labels(columns = Variance_Bound)
-  ) %>%
+  ) |>
   tab_footnote(
     footnote = "ĉᵢ = max_t exp(2 × n̂(i,t))",
     locations = cells_column_labels(columns = c_hat)
-  ) %>%
+  ) |>
   tab_footnote(
     footnote = "k̂ᵢ = E[(p_(t+i)^(1) - E_(t+1)[p_(t+i)^(1)])^4]",
     locations = cells_column_labels(columns = k_hat)
@@ -92,16 +92,16 @@ summary_table <- data.frame(
     summary_stats$max,
     summary_stats$sd
   )
-) %>%
-  gt() %>%
+) |>
+  gt() |>
   tab_header(
     title = "Variance Bounds Summary Statistics",
     subtitle = "Distributional properties across maturities"
-  ) %>%
+  ) |>
   fmt_scientific(
     columns = Value,
     decimals = 2
-  ) %>%
+  ) |>
   tab_style(
     style = cell_fill(color = "lightgray"),
     locations = cells_body(columns = Statistic)
@@ -117,16 +117,16 @@ correlation_table <- data.frame(
     correlations$c_hat_variance_bound,
     correlations$k_hat_variance_bound
   )
-) %>%
-  gt() %>%
+) |>
+  gt() |>
   tab_header(
     title = "Component Correlations",
     subtitle = "Relationships between variance bound components"
-  ) %>%
+  ) |>
   fmt_number(
     columns = Correlation,
     decimals = 3
-  ) %>%
+  ) |>
   tab_style(
     style = cell_fill(color = "lightgreen"),
     locations = cells_body(
@@ -152,7 +152,7 @@ write.csv(
 )
 
 # Export for LaTeX
-latex_table <- variance_bounds_df %>%
+latex_table <- variance_bounds_df |>
   mutate(
     c_hat = sprintf("%.4f", c_hat),
     k_hat = sprintf("%.4f", k_hat),
