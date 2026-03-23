@@ -180,11 +180,11 @@ pairs(pairs_data,
   pch = 19,
   col = rgb(0, 0, 1, 0.3),
   cex = 0.5,
-  lower.panel = function(x, y) {
+  lower.panel = function(x, y, ...) {
     points(x, y, pch = 19, col = rgb(0, 0, 1, 0.3), cex = 0.5)
     abline(lm(y ~ x), col = "red", lwd = 2)
   },
-  upper.panel = function(x, y) {
+  upper.panel = function(x, y, ...) {
     usr <- par("usr")
     par(usr = c(0, 1, 0, 1))
     r <- cor(x, y, use = "complete.obs")

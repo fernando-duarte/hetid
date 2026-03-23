@@ -20,7 +20,9 @@ yield_vars <- grep("^y\\d+$", names(data), value = TRUE)
 tp_vars <- grep("^tp\\d+$", names(data), value = TRUE)
 
 # Get yield maturities from variable names
-maturities <- as.numeric(gsub("y", "", yield_vars))
+# Exclude the last maturity because compute_n_hat(i) requires y(i+1) and tp(i+1)
+all_maturities <- as.numeric(gsub("y", "", yield_vars))
+maturities <- all_maturities[-length(all_maturities)]
 
 # Ensure maturities are sorted
 if (!all(maturities == sort(maturities))) {
