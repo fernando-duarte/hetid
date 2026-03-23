@@ -8,7 +8,7 @@ linters: linters_with_defaults(
     brace_linter = brace_linter(allow_single_line = TRUE),
     commas_linter = commas_linter(),
     commented_code_linter = commented_code_linter(),
-    cyclocomp_linter = NULL,  # Disabled - cyclocomp unavailable in pre-commit renv
+    cyclocomp_linter = cyclocomp_linter(complexity_limit = 20),
     object_usage_linter = object_usage_linter(
       interpret_glue = TRUE,
       skip_with = TRUE
