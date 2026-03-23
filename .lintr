@@ -10,7 +10,7 @@ linters: linters_with_defaults(
     commented_code_linter = commented_code_linter(),
     cyclocomp_linter = cyclocomp_linter(complexity_limit = 20),
     object_usage_linter = object_usage_linter(
-      interpret_glue = TRUE,
+      interpret_extensions = "glue",
       skip_with = TRUE
     ),
     object_length_linter = object_length_linter(length = 30L)
