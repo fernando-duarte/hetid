@@ -40,9 +40,6 @@ analyze_time_series <- function(x, var_name, max_lags = 8) {
   # Basic autocorrelation analysis
   acf_result <- acf(x, lag.max = max_lags, plot = FALSE, na.action = na.pass)
 
-  # Ljung-Box test for serial correlation
-  lb_test <- Box.test(x, lag = max_lags, type = "Ljung-Box")
-
   # Phillips-Perron test (using urca package)
   pp_result <- ur.pp(x, type = "Z-tau", model = "constant")
   pp_test <- list(
