@@ -110,7 +110,10 @@ p_pcs <- ggplot(pc_lag_long, aes(x = date, y = value)) +
   ) +
   theme_minimal()
 
-display_and_save_plot(p_pcs, "lagged_principal_components.svg", dir = plot_dir, height = PLOT_HEIGHT * 1.2)
+display_and_save_plot(
+  p_pcs, "lagged_principal_components.svg",
+  dir = plot_dir, height = PLOT_HEIGHT * 1.2
+)
 
 # Consumption Growth
 p_consumption <- ggplot(df, aes(x = date, y = !!sym(HETID_CONSTANTS$CONSUMPTION_GROWTH_COL))) +
@@ -124,7 +127,10 @@ p_consumption <- ggplot(df, aes(x = date, y = !!sym(HETID_CONSTANTS$CONSUMPTION_
   ) +
   theme_minimal()
 
-display_and_save_plot(p_consumption, "consumption_growth.svg", dir = plot_dir, height = PLOT_HEIGHT * 0.7)
+display_and_save_plot(
+  p_consumption, "consumption_growth.svg",
+  dir = plot_dir, height = PLOT_HEIGHT * 0.7
+)
 
 # Correlation Heatmaps
 pc_lag_vars_all <- grep("^pc\\d+_lag1$", names(df), value = TRUE)
@@ -135,19 +141,35 @@ save_correlation_heatmap(cor_yields, "Yield Correlations", "correlation_yields.s
 
 # Term premia correlation
 cor_tp <- cor(df[tp_vars], use = "complete.obs")
-save_correlation_heatmap(cor_tp, "Term Premia Correlations", "correlation_term_premia.svg", dir = plot_dir)
+save_correlation_heatmap(
+  cor_tp, "Term Premia Correlations",
+  "correlation_term_premia.svg",
+  dir = plot_dir
+)
 
 # Lagged PCs correlation
 cor_pc_lag <- cor(df[pc_lag_vars_all], use = "complete.obs")
-save_correlation_heatmap(cor_pc_lag, "Lagged PC Correlations", "correlation_lagged_pcs.svg", dir = plot_dir)
+save_correlation_heatmap(
+  cor_pc_lag, "Lagged PC Correlations",
+  "correlation_lagged_pcs.svg",
+  dir = plot_dir
+)
 
 # Cross-correlation: Lagged PCs vs Yields
 cor_pc_yields <- cor(df[pc_lag_vars_all], df[yield_vars], use = "complete.obs")
-save_correlation_heatmap(cor_pc_yields, "Correlations: Lagged PCs vs Yields", "correlation_pcs_yields.svg", dir = plot_dir)
+save_correlation_heatmap(
+  cor_pc_yields, "Correlations: Lagged PCs vs Yields",
+  "correlation_pcs_yields.svg",
+  dir = plot_dir
+)
 
 # Cross-correlation: Lagged PCs vs Term Premia
 cor_pc_tp <- cor(df[pc_lag_vars_all], df[tp_vars], use = "complete.obs")
-save_correlation_heatmap(cor_pc_tp, "Correlations: Lagged PCs vs Term Premia", "correlation_pcs_tp.svg", dir = plot_dir)
+save_correlation_heatmap(
+  cor_pc_tp, "Correlations: Lagged PCs vs Term Premia",
+  "correlation_pcs_tp.svg",
+  dir = plot_dir
+)
 
 # Distribution Plots
 yield_dist_data <- df %>%
@@ -240,7 +262,10 @@ p_rolling <- ggplot(df, aes(x = date)) +
   ) +
   theme_minimal()
 
-display_and_save_plot(p_rolling, "rolling_statistics.svg", dir = plot_dir, height = PLOT_HEIGHT * 0.7)
+display_and_save_plot(
+  p_rolling, "rolling_statistics.svg",
+  dir = plot_dir, height = PLOT_HEIGHT * 0.7
+)
 
 cli_h1("Exploratory Plots Generated")
 cli_ul(c(

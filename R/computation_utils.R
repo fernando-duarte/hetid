@@ -50,11 +50,11 @@ compute_n_hat_previous <- function(yields, term_premia, i, dates = NULL) {
     if (is.null(y1)) {
       stop("y1 column not found in yields")
     }
-    return(-y1 / HETID_CONSTANTS$PERCENT_TO_DECIMAL) # Convert to decimal
+    -y1 / HETID_CONSTANTS$PERCENT_TO_DECIMAL # Convert to decimal
   } else {
-    return(compute_n_hat(yields, term_premia, i - 1,
+    compute_n_hat(yields, term_premia, i - 1,
       return_df = FALSE, dates = dates
-    ))
+    )
   }
 }
 
@@ -82,7 +82,7 @@ compute_time_series_news <- function(current_series, future_series, negate = FAL
     news <- -news
   }
 
-  return(news)
+  news
 }
 
 #' Prepare Return Data Frame
@@ -141,7 +141,7 @@ compute_expected_squared <- function(series, error_msg = "No valid values to com
   if (length(clean_series) == 0) {
     stop(error_msg)
   }
-  return(mean(clean_series^2))
+  mean(clean_series^2)
 }
 
 #' Apply Transformation to Time Series

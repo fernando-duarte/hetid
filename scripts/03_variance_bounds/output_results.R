@@ -6,8 +6,14 @@ source(here::here("scripts/utils/common_settings.R"))
 load_web_packages()
 
 # Load variance bounds results and analysis
-variance_bounds_results <- readRDS(file.path(OUTPUT_DIR, "temp/variance_bounds/variance_bounds_results.rds"))
-analysis_results <- readRDS(file.path(OUTPUT_DIR, "temp/variance_bounds/variance_bounds_analysis.rds"))
+vb_results_path <- file.path(
+  OUTPUT_DIR, "temp/variance_bounds/variance_bounds_results.rds"
+)
+vb_analysis_path <- file.path(
+  OUTPUT_DIR, "temp/variance_bounds/variance_bounds_analysis.rds"
+)
+variance_bounds_results <- readRDS(vb_results_path)
+analysis_results <- readRDS(vb_analysis_path)
 
 cli_h1("Exporting Variance Bounds Results")
 
@@ -134,8 +140,16 @@ gtsave(correlation_table, file.path(output_paper_dir, "component_correlations.ht
 cli_h2("Creating Data Exports")
 
 # Export main data in multiple formats
-write.csv(variance_bounds_df, file.path(output_paper_dir, "variance_bounds_data.csv"), row.names = FALSE)
-write.csv(variance_bounds_df, file.path(output_temp_dir, "variance_bounds_data.csv"), row.names = FALSE)
+write.csv(
+  variance_bounds_df,
+  file.path(output_paper_dir, "variance_bounds_data.csv"),
+  row.names = FALSE
+)
+write.csv(
+  variance_bounds_df,
+  file.path(output_temp_dir, "variance_bounds_data.csv"),
+  row.names = FALSE
+)
 
 # Export for LaTeX
 latex_table <- variance_bounds_df %>%
@@ -157,7 +171,7 @@ latex_code <- paste0(
   "\\midrule\n"
 )
 
-for (i in 1:nrow(latex_table)) {
+for (i in seq_len(nrow(latex_table))) {
   latex_code <- paste0(
     latex_code,
     latex_table$Maturity[i], " & ",
@@ -191,20 +205,51 @@ analysis_summary <- list(
   data_summary = list(
     n_maturities = nrow(variance_bounds_df),
     maturity_range = paste(range(variance_bounds_df$Maturity), collapse = " to "),
-    variance_bound_range = paste(sprintf("%.2e", range(variance_bounds_df$Variance_Bound)), collapse = " to ")
+    variance_bound_range = paste(
+      sprintf("%.2e", range(variance_bounds_df$Variance_Bound)),
+      collapse = " to "
+    )
   ),
   key_findings = list(
     mean_variance_bound = summary_stats$mean,
     median_variance_bound = summary_stats$median,
-    highest_bound_maturity = variance_bounds_df$Maturity[which.max(variance_bounds_df$Variance_Bound)],
-    lowest_positive_bound_maturity = variance_bounds_df$Maturity[which.min(variance_bounds_df$Variance_Bound[variance_bounds_df$Variance_Bound > 0])],
+    highest_bound_maturity = variance_bounds_df$Maturity[
+      which.max(variance_bounds_df$Variance_Bound)
+    ],
+    lowest_positive_bound_maturity = variance_bounds_df$Maturity[
+      which.min(
+        variance_bounds_df$Variance_Bound[
+          variance_bounds_df$Variance_Bound > 0
+        ]
+      )
+    ],
     c_hat_k_hat_correlation = correlations$c_hat_k_hat,
-    monotonicity_ratio = variance_bounds_results$monotonicity$monotonicity_ratio
+    monotonicity_ratio =
+      variance_bounds_results$monotonicity$monotonicity_ratio
   ),
   interpretation = list(
-    general_trend = if (variance_bounds_results$monotonicity$monotonicity_ratio > 0.6) "Generally increasing with maturity" else "Mixed pattern across maturities",
-    component_dominance = if (abs(correlations$c_hat_variance_bound) > abs(correlations$k_hat_variance_bound)) "c_hat component more influential" else "k_hat component more influential",
-    identification_potential = if (any(variance_bounds_df$Variance_Bound < 0.01)) "Some bounds tight enough for identification" else "Bounds may be loose for identification"
+    general_trend = if (
+      variance_bounds_results$monotonicity$monotonicity_ratio > 0.6
+    ) {
+      "Generally increasing with maturity"
+    } else {
+      "Mixed pattern across maturities"
+    },
+    component_dominance = if (
+      abs(correlations$c_hat_variance_bound) >
+        abs(correlations$k_hat_variance_bound)
+    ) {
+      "c_hat component more influential"
+    } else {
+      "k_hat component more influential"
+    },
+    identification_potential = if (
+      any(variance_bounds_df$Variance_Bound < 0.01)
+    ) {
+      "Some bounds tight enough for identification"
+    } else {
+      "Bounds may be loose for identification"
+    }
   )
 )
 
@@ -213,24 +258,35 @@ saveRDS(analysis_summary, file.path(output_paper_dir, "analysis_summary.rds"))
 saveRDS(analysis_summary, file.path(output_temp_dir, "analysis_summary.rds"))
 
 # Create human-readable summary
+kf <- analysis_summary$key_findings
+interp <- analysis_summary$interpretation
+ds <- analysis_summary$data_summary
+mean_vb <- sprintf("%.2e", kf$mean_variance_bound)
+median_vb <- sprintf("%.2e", kf$median_variance_bound)
+ck_corr <- round(kf$c_hat_k_hat_correlation, 3)
+mono_ratio <- round(kf$monotonicity_ratio, 3)
 summary_text <- paste0(
   "VARIANCE BOUNDS ANALYSIS SUMMARY\n",
   "================================\n\n",
   "Analysis Date: ", Sys.Date(), "\n",
-  "Number of Maturities: ", analysis_summary$data_summary$n_maturities, "\n",
-  "Maturity Range: ", analysis_summary$data_summary$maturity_range, " years\n",
-  "Variance Bound Range: ", analysis_summary$data_summary$variance_bound_range, "\n\n",
+  "Number of Maturities: ", ds$n_maturities, "\n",
+  "Maturity Range: ", ds$maturity_range, " years\n",
+  "Variance Bound Range: ", ds$variance_bound_range,
+  "\n\n",
   "KEY FINDINGS:\n",
-  "- Mean Variance Bound: ", sprintf("%.2e", analysis_summary$key_findings$mean_variance_bound), "\n",
-  "- Median Variance Bound: ", sprintf("%.2e", analysis_summary$key_findings$median_variance_bound), "\n",
-  "- Highest Bound at Maturity: ", analysis_summary$key_findings$highest_bound_maturity, " years\n",
-  "- Lowest Positive Bound at Maturity: ", analysis_summary$key_findings$lowest_positive_bound_maturity, " years\n",
-  "- Component Correlation (ĉ, k̂): ", round(analysis_summary$key_findings$c_hat_k_hat_correlation, 3), "\n",
-  "- Monotonicity Ratio: ", round(analysis_summary$key_findings$monotonicity_ratio, 3), "\n\n",
+  "- Mean Variance Bound: ", mean_vb, "\n",
+  "- Median Variance Bound: ", median_vb, "\n",
+  "- Highest Bound at Maturity: ",
+  kf$highest_bound_maturity, " years\n",
+  "- Lowest Positive Bound at Maturity: ",
+  kf$lowest_positive_bound_maturity, " years\n",
+  "- Component Correlation (c-hat, k-hat): ", ck_corr, "\n",
+  "- Monotonicity Ratio: ", mono_ratio, "\n\n",
   "INTERPRETATION:\n",
-  "- Trend: ", analysis_summary$interpretation$general_trend, "\n",
-  "- Component Dominance: ", analysis_summary$interpretation$component_dominance, "\n",
-  "- Identification Potential: ", analysis_summary$interpretation$identification_potential, "\n"
+  "- Trend: ", interp$general_trend, "\n",
+  "- Component Dominance: ", interp$component_dominance, "\n",
+  "- Identification Potential: ",
+  interp$identification_potential, "\n"
 )
 
 writeLines(summary_text, file.path(output_paper_dir, "variance_bounds_summary.txt"))

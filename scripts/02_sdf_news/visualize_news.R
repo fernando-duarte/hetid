@@ -164,7 +164,8 @@ cli_h2("Scatter Plot Matrix")
 
 # Select subset for scatter plot matrix
 if (length(price_news_vars) > 4) {
-  selected_vars <- price_news_vars[c(1, floor(length(price_news_vars) / 2), length(price_news_vars))]
+  n_pn <- length(price_news_vars)
+  selected_vars <- price_news_vars[c(1, floor(n_pn / 2), n_pn)]
 } else {
   selected_vars <- price_news_vars
 }
@@ -247,7 +248,11 @@ p_roll_vol_events <- ggplot(rolling_stats %>% filter(!is.na(roll_sd)), aes(x = d
   ) +
   theme_minimal()
 
-ggsave(file.path(plot_dir, "rolling_volatility_events.svg"), p_roll_vol_events, width = 10, height = 6)
+ggsave(
+  file.path(plot_dir, "rolling_volatility_events.svg"),
+  p_roll_vol_events,
+  width = 10, height = 6
+)
 
 cli_h1("5. MATURITY STRUCTURE VISUALIZATIONS")
 
@@ -261,7 +266,7 @@ maturity_grid <- expand.grid(
 
 # Extract corresponding price news values
 maturity_grid$price_news <- NA
-for (i in 1:nrow(maturity_grid)) {
+for (i in seq_len(nrow(maturity_grid))) {
   date_idx <- which(data_with_news$date == maturity_grid$date[i])
   mat_var <- paste0("price_news_", maturity_grid$maturity[i])
   if (mat_var %in% names(data_with_news) && length(date_idx) > 0) {
@@ -364,7 +369,10 @@ p_consumption <- data_with_news %>%
   select(all_of(selected_maturities),
     consumption = all_of(HETID_CONSTANTS$CONSUMPTION_GROWTH_COL)
   ) %>%
-  pivot_longer(cols = starts_with("price_news"), names_to = "maturity", values_to = "price_news") %>%
+  pivot_longer(
+    cols = starts_with("price_news"),
+    names_to = "maturity", values_to = "price_news"
+  ) %>%
   mutate(maturity_label = gsub("price_news_", "", maturity)) %>%
   ggplot(aes(x = consumption, y = price_news)) +
   geom_point(alpha = 0.5, color = "darkblue") +

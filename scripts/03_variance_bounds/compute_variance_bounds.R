@@ -240,7 +240,10 @@ cli_ul(c(
     "Lowest positive variance bound:", round(variance_bounds[min_vb_idx], 6),
     "at maturity", maturities[min_vb_idx]
   ),
-  paste("Variance bound range:", round(max(variance_bounds) - min(variance_bounds[variance_bounds > 0]), 6))
+  paste("Variance bound range:", round(
+    max(variance_bounds) - min(variance_bounds[variance_bounds > 0]),
+    6
+  ))
 ))
 
 if (variance_bounds[1] == 0) {

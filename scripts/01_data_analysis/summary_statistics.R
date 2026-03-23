@@ -74,7 +74,10 @@ all_stats <- rbind(
 )
 
 # Format numeric columns
-numeric_cols <- c("Mean", "SD", "Min", "Q1", "Median", "Q3", "Max", "Skewness", "Kurtosis", "AC1", "AC2")
+numeric_cols <- c(
+  "Mean", "SD", "Min", "Q1", "Median", "Q3", "Max",
+  "Skewness", "Kurtosis", "AC1", "AC2"
+)
 all_stats[numeric_cols] <- lapply(all_stats[numeric_cols], function(x) round(x, 3))
 
 cli_h2("Summary Statistics")

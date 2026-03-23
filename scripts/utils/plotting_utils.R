@@ -8,7 +8,9 @@
 #' @param width plot width in inches
 #' @param height plot height in inches
 #' @return invisible TRUE
-save_plot_svg <- function(plot, filename, dir = plot_dir, width = PLOT_WIDTH, height = PLOT_HEIGHT) {
+save_plot_svg <- function(plot, filename, dir = plot_dir,
+                          width = PLOT_WIDTH,
+                          height = PLOT_HEIGHT) {
   if (!dir.exists(dir)) {
     dir.create(dir, recursive = TRUE, showWarnings = FALSE)
   }

@@ -73,7 +73,7 @@ analyze_time_series <- function(x, var_name, max_lags = 8) {
     jb_test <- list(statistic = jb_stat, p.value = jb_pval)
   }
 
-  return(data.frame(
+  data.frame(
     Variable = var_name,
     Mean = mean(x, na.rm = TRUE),
     SD = sd(x, na.rm = TRUE),
@@ -93,7 +93,7 @@ analyze_time_series <- function(x, var_name, max_lags = 8) {
     JB_pval = jb_test$p.value,
     N = sum(!is.na(x)),
     stringsAsFactors = FALSE
-  ))
+  )
 }
 
 # Yields
@@ -170,7 +170,11 @@ rownames(basic_stats_clean) <- NULL
 print(kable(basic_stats_clean, format = "simple", align = "l", digits = 4, row.names = FALSE))
 
 # Unit root and stationarity tests
-unit_root_stats <- all_ts_results[, c("Variable", "ADF_stat", "ADF_pval", "KPSS_stat", "KPSS_pval", "PP_stat", "PP_pval")]
+unit_root_cols <- c(
+  "Variable", "ADF_stat", "ADF_pval",
+  "KPSS_stat", "KPSS_pval", "PP_stat", "PP_pval"
+)
+unit_root_stats <- all_ts_results[, unit_root_cols]
 unit_root_stats <- unit_root_stats[!grepl("---", unit_root_stats$Variable), ]
 
 cli_h2("Unit Root and Stationarity Tests")
@@ -199,7 +203,11 @@ rownames(unit_root_stats_clean) <- NULL
 print(kable(unit_root_stats_clean, format = "simple", align = "l", digits = 4, row.names = FALSE))
 
 # Serial correlation and normality tests
-serial_norm_stats <- all_ts_results[, c("Variable", "LB_stat", "LB_pval", "ARCH_stat", "ARCH_pval", "JB_stat", "JB_pval")]
+serial_norm_cols <- c(
+  "Variable", "LB_stat", "LB_pval",
+  "ARCH_stat", "ARCH_pval", "JB_stat", "JB_pval"
+)
+serial_norm_stats <- all_ts_results[, serial_norm_cols]
 serial_norm_stats <- serial_norm_stats[!grepl("---", serial_norm_stats$Variable), ]
 
 cli_h2("Serial Correlation and Normality Tests")
@@ -323,12 +331,19 @@ print(kable(hetero_table2_clean, format = "simple", align = "l", row.names = FAL
 cli_h2("Heteroskedasticity Test Summary")
 
 # Count rejections for each test - only count columns that exist
-white_rejections <- if ("White_pval" %in% names(hetero_results)) sum(hetero_results$White_pval < 0.05, na.rm = TRUE) else 0
-bp_rejections <- if ("BP_pval" %in% names(hetero_results)) sum(hetero_results$BP_pval < 0.05, na.rm = TRUE) else 0
-gq_rejections <- if ("GQ_pval" %in% names(hetero_results)) sum(hetero_results$GQ_pval < 0.05, na.rm = TRUE) else 0
-harvey_rejections <- if ("Harvey_pval" %in% names(hetero_results)) sum(hetero_results$Harvey_pval < 0.05, na.rm = TRUE) else 0
-anscombe_rejections <- if ("Anscombe_pval" %in% names(hetero_results)) sum(hetero_results$Anscombe_pval < 0.05, na.rm = TRUE) else 0
-cw_rejections <- if ("CW_pval" %in% names(hetero_results)) sum(hetero_results$CW_pval < 0.05, na.rm = TRUE) else 0
+count_rejections <- function(col) {
+  if (col %in% names(hetero_results)) {
+    sum(hetero_results[[col]] < 0.05, na.rm = TRUE)
+  } else {
+    0
+  }
+}
+white_rejections <- count_rejections("White_pval")
+bp_rejections <- count_rejections("BP_pval")
+gq_rejections <- count_rejections("GQ_pval")
+harvey_rejections <- count_rejections("Harvey_pval")
+anscombe_rejections <- count_rejections("Anscombe_pval")
+cw_rejections <- count_rejections("CW_pval")
 total_vars <- nrow(hetero_results)
 
 cli_text("Variables showing heteroskedasticity (p < 0.05):")
@@ -371,7 +386,10 @@ cli_h1("Comprehensive Test Summary: Reject (R) or Fail to Reject (F) H0")
 cli_h2("Time Series Tests")
 cli_ul(c(
   "{.strong ADF} (Augmented Dickey-Fuller): H0 = Unit root (non-stationary), H1 = Stationary",
-  "{.strong KPSS} (Kwiatkowski-Phillips-Schmidt-Shin): H0 = Stationary, H1 = Unit root (non-stationary)",
+  paste0(
+    "{.strong KPSS} (Kwiatkowski-Phillips-Schmidt-Shin): ",
+    "H0 = Stationary, H1 = Unit root (non-stationary)"
+  ),
   "{.strong PP} (Phillips-Perron): H0 = Unit root (non-stationary), H1 = Stationary",
   "{.strong LB} (Ljung-Box): H0 = No serial correlation, H1 = Serial correlation present",
   "{.strong ARCH}: H0 = No conditional heteroskedasticity, H1 = ARCH effects present",
@@ -388,20 +406,30 @@ cli_ul(c(
 ))
 
 # Create summary table with reject/fail to reject decisions
+non_sep <- !grepl("---", all_ts_results$Variable)
+decide_rf <- function(col, pval_col, data) {
+  if (pval_col %in% names(data)) {
+    ifelse(data[[pval_col]] < 0.05, "R", "F")
+  } else {
+    "-"
+  }
+}
 summary_table <- data.frame(
-  Variable = all_ts_results$Variable[!grepl("---", all_ts_results$Variable)],
-  ADF = ifelse(all_ts_results$ADF_pval[!grepl("---", all_ts_results$Variable)] < 0.05, "R", "F"),
-  KPSS = ifelse(all_ts_results$KPSS_pval[!grepl("---", all_ts_results$Variable)] < 0.05, "R", "F"),
-  PP = ifelse(all_ts_results$PP_pval[!grepl("---", all_ts_results$Variable)] < 0.05, "R", "F"),
-  LB = ifelse(all_ts_results$LB_pval[!grepl("---", all_ts_results$Variable)] < 0.05, "R", "F"),
-  ARCH = ifelse(all_ts_results$ARCH_pval[!grepl("---", all_ts_results$Variable)] < 0.05, "R", "F"),
-  JB = ifelse(all_ts_results$JB_pval[!grepl("---", all_ts_results$Variable)] < 0.05, "R", "F"),
-  White = if ("White_pval" %in% names(hetero_results)) ifelse(hetero_results$White_pval < 0.05, "R", "F") else "-",
-  BP = if ("BP_pval" %in% names(hetero_results)) ifelse(hetero_results$BP_pval < 0.05, "R", "F") else "-",
-  GQ = if ("GQ_pval" %in% names(hetero_results)) ifelse(hetero_results$GQ_pval < 0.05, "R", "F") else "-",
-  Harvey = if ("Harvey_pval" %in% names(hetero_results)) ifelse(hetero_results$Harvey_pval < 0.05, "R", "F") else "-",
-  Anscombe = if ("Anscombe_pval" %in% names(hetero_results)) ifelse(hetero_results$Anscombe_pval < 0.05, "R", "F") else "-",
-  CW = if ("CW_pval" %in% names(hetero_results)) ifelse(hetero_results$CW_pval < 0.05, "R", "F") else "-",
+  Variable = all_ts_results$Variable[non_sep],
+  ADF = ifelse(all_ts_results$ADF_pval[non_sep] < 0.05, "R", "F"),
+  KPSS = ifelse(all_ts_results$KPSS_pval[non_sep] < 0.05, "R", "F"),
+  PP = ifelse(all_ts_results$PP_pval[non_sep] < 0.05, "R", "F"),
+  LB = ifelse(all_ts_results$LB_pval[non_sep] < 0.05, "R", "F"),
+  ARCH = ifelse(all_ts_results$ARCH_pval[non_sep] < 0.05, "R", "F"),
+  JB = ifelse(all_ts_results$JB_pval[non_sep] < 0.05, "R", "F"),
+  White = decide_rf("White", "White_pval", hetero_results),
+  BP = decide_rf("BP", "BP_pval", hetero_results),
+  GQ = decide_rf("GQ", "GQ_pval", hetero_results),
+  Harvey = decide_rf("Harvey", "Harvey_pval", hetero_results),
+  Anscombe = decide_rf(
+    "Anscombe", "Anscombe_pval", hetero_results
+  ),
+  CW = decide_rf("CW", "CW_pval", hetero_results),
   stringsAsFactors = FALSE
 )
 

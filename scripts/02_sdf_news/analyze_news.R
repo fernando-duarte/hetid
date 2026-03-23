@@ -27,7 +27,7 @@ pcs_matrix <- as.matrix(data_with_news[, pc_lag_vars])
 cli_h1("1. PRICE NEWS SUMMARY STATISTICS")
 
 # Use utility function to compute statistics for each price news series
-price_news_stats <- do.call(rbind, lapply(1:ncol(price_news), function(i) {
+price_news_stats <- do.call(rbind, lapply(seq_len(ncol(price_news)), function(i) {
   compute_summary_stats(price_news[, i], price_news_vars[i], compute_ac = TRUE, max_lags = 8)
 }))
 
@@ -119,7 +119,11 @@ if (length(price_news_2_idx) == 0 || length(price_news_5_idx) == 0) {
   # Fallback to first two available maturities
   price_news_2_idx <- 1
   price_news_5_idx <- min(2, length(price_news_vars))
-  cli_alert_info("Using {.val {price_news_vars[price_news_2_idx]}} and {.val {price_news_vars[price_news_5_idx]}} for heteroskedasticity analysis")
+  cli_alert_info(paste0(
+    "Using {.val {price_news_vars[price_news_2_idx]}} and ",
+    "{.val {price_news_vars[price_news_5_idx]}} ",
+    "for heteroskedasticity analysis"
+  ))
 }
 
 # Extract price news for heteroskedasticity analysis (short maturity)
@@ -187,7 +191,12 @@ cli_h2("Heteroskedasticity Evidence Summary")
 
 if (hetero_summary$r.squared > 0.1) {
   cli_alert_success("Strong evidence of heteroskedasticity in price news residuals")
-  cli_alert_info("R-squared = {.val {round(hetero_summary$r.squared, 3)}} suggests lagged PCs explain {.val {round(hetero_summary$r.squared * 100, 1)}}% of residual variance")
+  rsq <- round(hetero_summary$r.squared, 3)
+  rsq_pct <- round(hetero_summary$r.squared * 100, 1)
+  cli_alert_info(paste0(
+    "R-squared = {.val {rsq}} suggests lagged PCs ",
+    "explain {.val {rsq_pct}}% of residual variance"
+  ))
 } else if (hetero_summary$r.squared > 0.05) {
   cli_alert_warning("Moderate evidence of heteroskedasticity in price news residuals")
   cli_alert_info("R-squared = {.val {round(hetero_summary$r.squared, 3)}}")
@@ -394,7 +403,9 @@ rejection_summary <- data.frame(
   Total = nrow(hetero_results),
   Percentage = NA
 )
-rejection_summary$Percentage <- round(100 * rejection_summary$Rejections / rejection_summary$Total, 1)
+rejection_summary$Percentage <- round(
+  100 * rejection_summary$Rejections / rejection_summary$Total, 1
+)
 
 rejection_table <- rejection_summary %>%
   gt() %>%
@@ -463,7 +474,11 @@ price_news_2_data <- data_with_news$price_news_2
 
 roll_mean <- rollapply(price_news_2_data, window_size, mean, fill = NA, align = "right")
 roll_sd <- rollapply(price_news_2_data, window_size, sd, fill = NA, align = "right")
-roll_skew <- rollapply(price_news_2_data, window_size, function(x) skewness(x), fill = NA, align = "right")
+roll_skew <- rollapply(
+  price_news_2_data, window_size,
+  function(x) skewness(x),
+  fill = NA, align = "right"
+)
 
 rolling_stats <- data.frame(
   date = data_with_news$date,
@@ -556,7 +571,11 @@ p_hetero_diag <- ggplot(
   ) +
   theme_minimal()
 
-ggsave(file.path(plot_dir, "heteroskedasticity_diagnostic.svg"), p_hetero_diag, width = 8, height = 6)
+ggsave(
+  file.path(plot_dir, "heteroskedasticity_diagnostic.svg"),
+  p_hetero_diag,
+  width = 8, height = 6
+)
 
 cli_alert_success("Created diagnostic plots for analysis")
 
@@ -631,7 +650,13 @@ cli_h3("SDF News Regression Results")
 
 sdf_reg_summary <- summary(lm_sdf_news)
 sdf_f_stat <- sdf_reg_summary$fstatistic
-sdf_f_pval <- if (!is.null(sdf_f_stat)) pf(sdf_f_stat[1], sdf_f_stat[2], sdf_f_stat[3], lower.tail = FALSE) else NA
+sdf_f_pval <- if (!is.null(sdf_f_stat)) {
+  pf(sdf_f_stat[1], sdf_f_stat[2], sdf_f_stat[3],
+    lower.tail = FALSE
+  )
+} else {
+  NA
+}
 
 cli_ul(c(
   paste("Dependent variable:", sdf_news_vars[sdf_news_idx]),
@@ -750,8 +775,15 @@ cli_text("")
 cli_text("{.strong Heteroskedasticity Evidence:}")
 if (sdf_hetero_summary$r.squared > 0.1) {
   cli_alert_success("Strong evidence of heteroskedasticity in SDF news residuals")
-  cli_alert_info("R-squared = {.val {round(sdf_hetero_summary$r.squared, 3)}} suggests lagged PCs explain {.val {round(sdf_hetero_summary$r.squared * 100, 1)}}% of residual variance")
-  cli_alert_info("This supports the heteroskedasticity-based identification approach")
+  sdf_rsq <- round(sdf_hetero_summary$r.squared, 3)
+  sdf_rsq_pct <- round(sdf_hetero_summary$r.squared * 100, 1)
+  cli_alert_info(paste0(
+    "R-squared = {.val {sdf_rsq}} suggests lagged PCs ",
+    "explain {.val {sdf_rsq_pct}}% of residual variance"
+  ))
+  cli_alert_info(
+    "This supports the heteroskedasticity-based identification approach"
+  )
 } else if (sdf_hetero_summary$r.squared > 0.05) {
   cli_alert_warning("Moderate evidence of heteroskedasticity in SDF news residuals")
   cli_alert_info("R-squared = {.val {round(sdf_hetero_summary$r.squared, 3)}}")
@@ -772,7 +804,10 @@ sdf_residuals_output <- list(
   sdf_f_stat = sdf_f_stat[1],
   sdf_f_pval = sdf_f_pval
 )
-saveRDS(sdf_residuals_output, file.path(OUTPUT_DIR, "temp/sdf_news/sdf_news_residuals_analysis.rds"))
+saveRDS(
+  sdf_residuals_output,
+  file.path(OUTPUT_DIR, "temp/sdf_news/sdf_news_residuals_analysis.rds")
+)
 
 cli_h1("9. SAVING ANALYSIS RESULTS")
 
@@ -792,7 +827,11 @@ saveRDS(analysis_results, file.path(OUTPUT_DIR, "temp/sdf_news/comprehensive_ana
 # Create analysis summary using cli for console output
 cli_h1("PRICE NEWS ANALYSIS SUMMARY")
 
-cli_text("Date Range: {.val {format(min(data_with_news$date), '%Y-%m-%d')}} to {.val {format(max(data_with_news$date), '%Y-%m-%d')}}")
+date_min <- format(min(data_with_news$date), "%Y-%m-%d")
+date_max <- format(max(data_with_news$date), "%Y-%m-%d")
+cli_text(
+  "Date Range: {.val {date_min}} to {.val {date_max}}"
+)
 cli_text("Number of observations: {.val {nrow(data_with_news)}}")
 cli_text("Maturities analyzed: {.val {paste(price_news_vars, collapse = ', ')}}")
 

@@ -6,7 +6,10 @@ source(here::here("scripts/utils/common_settings.R"))
 load_visualization_packages()
 
 # Load variance bounds results
-variance_bounds_results <- readRDS(file.path(OUTPUT_DIR, "temp/variance_bounds/variance_bounds_results.rds"))
+vb_path <- file.path(
+  OUTPUT_DIR, "temp/variance_bounds/variance_bounds_results.rds"
+)
+variance_bounds_results <- readRDS(vb_path)
 variance_bounds_df <- variance_bounds_results$variance_bounds_df
 
 cli_h1("Analyzing Variance Bounds and Their Implications")
@@ -122,7 +125,11 @@ if (length(growth_rates) > 0) {
 # Test for trend in variance bounds
 if (length(variance_bounds) > 2) {
   trend_test <- cor.test(maturities, variance_bounds, method = "spearman")
-  cli_alert_info("Spearman correlation with maturity: {.val {round(trend_test$estimate, 3)}} (p = {.val {format.pval(trend_test$p.value)}})")
+  spearman_rho <- round(trend_test$estimate, 3)
+  spearman_p <- format.pval(trend_test$p.value)
+  cli_alert_info(
+    "Spearman correlation with maturity: {.val {spearman_rho}} (p = {.val {spearman_p}})"
+  )
 }
 
 cli_h2("Identification Implications")
@@ -145,9 +152,16 @@ cli_h3("Binding Constraints Analysis")
 n_binding_low <- sum(binding_analysis$potentially_binding_low, na.rm = TRUE)
 n_binding_high <- sum(binding_analysis$potentially_binding_high, na.rm = TRUE)
 
+n_total <- nrow(binding_analysis)
 cli_ul(c(
-  paste("Maturities with tight bounds (< 0.001):", n_binding_low, "out of", nrow(binding_analysis)),
-  paste("Maturities with moderate bounds (< 0.01):", n_binding_high, "out of", nrow(binding_analysis))
+  paste(
+    "Maturities with tight bounds (< 0.001):",
+    n_binding_low, "out of", n_total
+  ),
+  paste(
+    "Maturities with moderate bounds (< 0.01):",
+    n_binding_high, "out of", n_total
+  )
 ))
 
 # Create tightness analysis table
