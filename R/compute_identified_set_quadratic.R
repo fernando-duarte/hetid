@@ -13,7 +13,9 @@
 #' @param s_i_1 List of vectors S_i^(1) from compute_matrix_statistics()
 #' @param s_i_2 List of matrices S_i^(2) from compute_matrix_statistics()
 #' @param sigma_i_sq Named vector of sigma_i^2 values from
-#'   compute_scalar_statistics()
+#'   compute_scalar_statistics(). Must be finite and strictly
+#'   positive (zero indicates no heteroskedasticity to exploit
+#'   for identification).
 #' @param maturities Vector of maturity indices to compute components for.
 #'   Default is all available.
 #'
@@ -123,6 +125,20 @@ compute_identified_set_quadratic <- function(gamma, tau, L_i, V_i, Q_i,
     )
   }
 
+  # Validate sigma_i_sq: must be finite and strictly positive
+  bad_sigma <- which(
+    !is.finite(sigma_i_sq) | sigma_i_sq <= 0
+  )
+  if (length(bad_sigma) > 0) {
+    stop(
+      "sigma_i_sq is non-positive, non-finite, or NA ",
+      "for maturity/maturities ",
+      paste(maturities[bad_sigma], collapse = ", "),
+      ". Cannot compute identified set -- ",
+      "insufficient heteroskedasticity."
+    )
+  }
+
   # Initialize storage
   d_i <- numeric(n_maturities)
   A_i <- vector("list", n_maturities)
@@ -169,6 +185,14 @@ compute_identified_set_quadratic <- function(gamma, tau, L_i, V_i, Q_i,
 
     # Compute d_i = tau_i^2 * V_i / sigma_i^2
     d_i[idx] <- (tau_i^2 * V_i_val) / sigma_i_sq_val
+
+    if (!is.finite(d_i[idx])) {
+      stop(
+        "d_i overflowed to non-finite for maturity ", i,
+        ". sigma_i_sq may be too close to zero ",
+        "for numerically stable computation."
+      )
+    }
 
     # Compute A_i = Q_i * Q_i^T - d_i * S_i^(2)
     Q_i_outer <- outer(Q_i_vec, Q_i_vec)

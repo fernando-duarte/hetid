@@ -74,6 +74,167 @@ test_that("compute_identified_set_quadratic validates inputs correctly", {
   )
 })
 
+test_that("errors on zero sigma_i_sq (no heteroskedasticity)", {
+  gamma <- matrix(1:12, 3, 4)
+  tau <- rep(1, 4)
+  L_i <- rep(1, 4)
+  V_i <- rep(1, 4)
+  Q_i <- lapply(1:4, function(i) rep(1, 4))
+  s_i_0 <- rep(1, 4)
+  s_i_1 <- lapply(1:4, function(i) rep(1, 4))
+  s_i_2 <- lapply(1:4, function(i) matrix(1, 4, 4))
+
+  # sigma_i_sq with a zero value at maturity 2
+  sigma_i_sq <- c(1, 0, 1, 1)
+
+  expect_error(
+    compute_identified_set_quadratic(
+      gamma, tau, L_i, V_i, Q_i,
+      s_i_0, s_i_1, s_i_2, sigma_i_sq
+    ),
+    "maturity/maturities 2"
+  )
+})
+
+test_that("errors on NA/NaN/Inf sigma_i_sq", {
+  gamma <- matrix(1:12, 3, 4)
+  tau <- rep(1, 4)
+  L_i <- rep(1, 4)
+  V_i <- rep(1, 4)
+  Q_i <- lapply(1:4, function(i) rep(1, 4))
+  s_i_0 <- rep(1, 4)
+  s_i_1 <- lapply(1:4, function(i) rep(1, 4))
+  s_i_2 <- lapply(1:4, function(i) matrix(1, 4, 4))
+
+  # NA case
+  expect_error(
+    compute_identified_set_quadratic(
+      gamma, tau, L_i, V_i, Q_i,
+      s_i_0, s_i_1, s_i_2, c(1, NA, 1, 1)
+    ),
+    "non-positive, non-finite, or NA"
+  )
+
+  # NaN case
+  expect_error(
+    compute_identified_set_quadratic(
+      gamma, tau, L_i, V_i, Q_i,
+      s_i_0, s_i_1, s_i_2, c(1, NaN, 1, 1)
+    ),
+    "non-positive, non-finite, or NA"
+  )
+
+  # Inf case
+  expect_error(
+    compute_identified_set_quadratic(
+      gamma, tau, L_i, V_i, Q_i,
+      s_i_0, s_i_1, s_i_2, c(1, Inf, 1, 1)
+    ),
+    "non-positive, non-finite, or NA"
+  )
+
+  # Negative case
+  expect_error(
+    compute_identified_set_quadratic(
+      gamma, tau, L_i, V_i, Q_i,
+      s_i_0, s_i_1, s_i_2, c(1, -0.5, 1, 1)
+    ),
+    "non-positive, non-finite, or NA"
+  )
+})
+
+test_that("reports all bad sigma_i_sq maturities at once", {
+  gamma <- matrix(1:12, 3, 4)
+  tau <- rep(1, 4)
+  L_i <- rep(1, 4)
+  V_i <- rep(1, 4)
+  Q_i <- lapply(1:4, function(i) rep(1, 4))
+  s_i_0 <- rep(1, 4)
+  s_i_1 <- lapply(1:4, function(i) rep(1, 4))
+  s_i_2 <- lapply(1:4, function(i) matrix(1, 4, 4))
+
+  # Multiple bad values
+  sigma_i_sq <- c(0, 1, -1, NA)
+
+  expect_error(
+    compute_identified_set_quadratic(
+      gamma, tau, L_i, V_i, Q_i,
+      s_i_0, s_i_1, s_i_2, sigma_i_sq
+    ),
+    "maturity/maturities 1, 3, 4"
+  )
+})
+
+test_that("errors on zero sigma_i_sq with maturities subset", {
+  J <- 3
+  I <- 6
+  gamma <- matrix(seq_len(J * I), J, I)
+  tau <- rep(1, I)
+
+  maturities <- c(2, 4, 5)
+
+  # Subsetted inputs: zero sigma at position 2 = maturity 4
+  L_i <- rep(1, 3)
+  V_i <- rep(1, 3)
+  Q_i <- lapply(1:3, function(k) rep(1, I))
+  s_i_0 <- rep(1, 3)
+  s_i_1 <- lapply(1:3, function(k) rep(1, I))
+  s_i_2 <- lapply(1:3, function(k) matrix(1, I, I))
+  sigma_i_sq <- c(1, 0, 1)
+
+  expect_error(
+    compute_identified_set_quadratic(
+      gamma, tau, L_i, V_i, Q_i,
+      s_i_0, s_i_1, s_i_2, sigma_i_sq,
+      maturities = maturities
+    ),
+    "maturity/maturities 4"
+  )
+})
+
+test_that("accepts small but positive sigma_i_sq", {
+  gamma <- matrix(1:12, 3, 4)
+  tau <- rep(1, 4)
+  L_i <- rep(1, 4)
+  V_i <- rep(1, 4)
+  Q_i <- lapply(1:4, function(i) rep(1, 4))
+  s_i_0 <- rep(1, 4)
+  s_i_1 <- lapply(1:4, function(i) rep(1, 4))
+  s_i_2 <- lapply(1:4, function(i) matrix(1, 4, 4))
+
+  # Very small but legitimate sigma_i_sq
+  sigma_i_sq <- c(1, 1e-20, 1, 1)
+
+  result <- compute_identified_set_quadratic(
+    gamma, tau, L_i, V_i, Q_i,
+    s_i_0, s_i_1, s_i_2, sigma_i_sq
+  )
+  expect_type(result, "list")
+  expect_true(all(is.finite(result$d_i)))
+})
+
+test_that("errors on d_i overflow from tiny sigma_i_sq", {
+  gamma <- matrix(1:12, 3, 4)
+  tau <- rep(1, 4)
+  L_i <- rep(1, 4)
+  V_i <- rep(1, 4)
+  Q_i <- lapply(1:4, function(i) rep(1, 4))
+  s_i_0 <- rep(1, 4)
+  s_i_1 <- lapply(1:4, function(i) rep(1, 4))
+  s_i_2 <- lapply(1:4, function(i) matrix(1, 4, 4))
+
+  # Positive but past double-precision overflow boundary
+  sigma_i_sq <- c(1, 1e-309, 1, 1)
+
+  expect_error(
+    compute_identified_set_quadratic(
+      gamma, tau, L_i, V_i, Q_i,
+      s_i_0, s_i_1, s_i_2, sigma_i_sq
+    ),
+    "d_i overflowed to non-finite"
+  )
+})
+
 test_that(
   "compute_identified_set_quadratic returns correct structure",
   {

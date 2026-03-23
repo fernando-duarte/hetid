@@ -36,7 +36,9 @@ coefficients for maturity i}
 \item{s_i_2}{List of matrices S_i^(2) from compute_matrix_statistics()}
 
 \item{sigma_i_sq}{Named vector of sigma_i^2 values from
-compute_scalar_statistics()}
+compute_scalar_statistics(). Must be finite and strictly
+positive (zero indicates no heteroskedasticity to exploit
+for identification).}
 
 \item{maturities}{Vector of maturity indices to compute components for.
 Default is all available.}
