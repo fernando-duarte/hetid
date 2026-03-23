@@ -60,23 +60,18 @@ compute_k_hat <- function(yields, term_premia, i) {
     stop("Not enough observations. Need T > i")
   }
 
-  # Compute the fourth moment
-  # Need to align time indices properly
-  sum_val <- 0
-  count <- 0
+  # Compute the fourth moment (vectorized)
+  y1_shifted <- y1[(i + 1):n_obs]
+  n_hat_shifted <- n_hat_i_minus_1[2:(n_obs - i + 1)]
+  valid <- !is.na(y1_shifted) & !is.na(n_hat_shifted)
 
-  for (t in 1:(n_obs - i)) {
-    if (!is.na(y1[t + i]) && !is.na(n_hat_i_minus_1[t + 1])) {
-      # Convert y1 from percentage to decimal
-      term <- (-y1[t + i] / HETID_CONSTANTS$PERCENT_TO_DECIMAL - n_hat_i_minus_1[t + 1])^4
-      sum_val <- sum_val + term
-      count <- count + 1
-    }
-  }
-
-  if (count == 0) {
+  if (!any(valid)) {
     return(NA)
   }
 
-  sum_val / count
+  terms <- (
+    -y1_shifted[valid] / HETID_CONSTANTS$PERCENT_TO_DECIMAL -
+      n_hat_shifted[valid]
+  )^4
+  mean(terms)
 }

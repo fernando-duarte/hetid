@@ -107,12 +107,8 @@ compute_vector_statistics <- function(w1, w2, pcs, maturities = NULL) {
     r_i_0[, idx] <- t(pcs) %*% hadamard_w1_w2i / T_obs
 
     # R_i^(1) = (1/T) * PC^T * (w2 ⊙ w2_i)
-    # This is a J x I matrix
-    r_i_1_mat <- matrix(NA, nrow = J, ncol = I)
-    for (j in seq_len(I)) {
-      hadamard_w2j_w2i <- w2[, j] * w2_i
-      r_i_1_mat[, j] <- t(pcs) %*% hadamard_w2j_w2i / T_obs
-    }
+    # This is a J x I matrix; w2 * w2_i broadcasts the column
+    r_i_1_mat <- t(pcs) %*% (w2 * w2_i) / T_obs
     colnames(r_i_1_mat) <- paste0("maturity_", seq_len(I))
     rownames(r_i_1_mat) <- paste0("pc", seq_len(J))
     r_i_1[[idx]] <- r_i_1_mat
