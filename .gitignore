@@ -1,6 +1,7 @@
 # Claude-specific
 .claude
 CLAUDE.md
+.worktrees/
 
 # R and RStudio files
 .Rproj.user
