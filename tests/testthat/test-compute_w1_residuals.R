@@ -1,6 +1,6 @@
 test_that("compute_w1_residuals returns residuals from PC regression", {
   # Test with default 4 PCs
-  res_y1 <- compute_w1_residuals(n_pcs = 4)
+  res_y1 <- suppressMessages(compute_w1_residuals(n_pcs = 4))
 
   expect_type(res_y1, "list")
   expect_true("residuals" %in% names(res_y1))
@@ -22,7 +22,7 @@ test_that("R-squared matches manual regression", {
   data("variables")
 
   # Compute with 3 PCs
-  res_y1 <- compute_w1_residuals(n_pcs = 3)
+  res_y1 <- suppressMessages(compute_w1_residuals(n_pcs = 3))
 
   # Manual regression
   cons_growth <- variables$gr1.pcecc96
@@ -58,7 +58,7 @@ test_that("R-squared increases with more PCs", {
   # Test with different numbers of PCs
   r2_values <- numeric(6)
   for (j in 1:6) {
-    res <- compute_w1_residuals(n_pcs = j)
+    res <- suppressMessages(compute_w1_residuals(n_pcs = j))
     r2_values[j] <- res$r_squared
   }
 
@@ -83,7 +83,7 @@ test_that("compute_w1_residuals works with custom data", {
 
 test_that("residual mean is approximately zero", {
   # Compute residuals
-  res_y1 <- compute_w1_residuals(n_pcs = 4)
+  res_y1 <- suppressMessages(compute_w1_residuals(n_pcs = 4))
 
   # Mean should be very close to 0
   expect_lt(abs(mean(res_y1$residuals)), 1e-10,
@@ -93,7 +93,7 @@ test_that("residual mean is approximately zero", {
 
 test_that("coefficient structure is correct", {
   # Test with 3 PCs
-  res_y1 <- compute_w1_residuals(n_pcs = 3)
+  res_y1 <- suppressMessages(compute_w1_residuals(n_pcs = 3))
 
   # Should have intercept + 3 PC coefficients
   expect_length(res_y1$coefficients, 4)
@@ -106,9 +106,23 @@ test_that("dates are properly aligned after lagging", {
   data("variables")
 
   # Compute residuals
-  res_y1 <- compute_w1_residuals(n_pcs = 4)
+  res_y1 <- suppressMessages(compute_w1_residuals(n_pcs = 4))
 
   # Dates should be aligned with residuals (excluding first date due to lag)
   expect_equal(res_y1$dates, variables$date[-1])
   expect_length(res_y1$dates, length(res_y1$residuals))
+})
+
+test_that("message emitted when falling back to package data", {
+  expect_message(
+    compute_w1_residuals(n_pcs = 2),
+    "Using bundled"
+  )
+})
+
+test_that("no message when user provides data", {
+  data("variables")
+  expect_no_message(
+    compute_w1_residuals(n_pcs = 2, data = variables)
+  )
 })

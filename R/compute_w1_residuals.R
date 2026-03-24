@@ -63,7 +63,10 @@ compute_w1_residuals <- function(n_pcs = HETID_CONSTANTS$DEFAULT_N_PCS,
 
   # Load data if not provided
   if (is.null(data)) {
-    # Get the variables data from the package
+    message(
+      "Using bundled 'variables' dataset. ",
+      "Pass data= explicitly to use your own data."
+    )
     data("variables", package = "hetid", envir = environment())
     data <- get("variables", envir = environment())
   }
