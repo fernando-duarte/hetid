@@ -44,32 +44,31 @@ load_term_premia <- function(auto_download = FALSE) {
 
       # Convert DATE column to Date class if it exists
       if ("DATE" %in% names(df)) {
-        # Try to convert date - ACM data uses DD-Mon-YYYY format
-        tryCatch(
-          {
-            df$DATE <- as.Date(df$DATE, format = HETID_CONSTANTS$ACM_DATE_FORMAT)
-          },
-          error = function(e) {
-            # If that fails, try standard conversion
-            tryCatch(
-              {
-                df$DATE <- as.Date(df$DATE)
-              },
-              error = function(e2) {
-                # If that fails too, try ISO format
-                tryCatch(
-                  {
-                    df$DATE <- as.Date(df$DATE, format = HETID_CONSTANTS$ISO_DATE_FORMAT)
-                  },
-                  error = function(e3) {
-                    # Leave as character if all conversions fail
-                    warning("Could not convert DATE column to Date class. Keeping as character.")
-                  }
-                )
-              }
-            )
-          }
+        date_formats <- list(
+          HETID_CONSTANTS$ACM_DATE_FORMAT,
+          NULL,
+          HETID_CONSTANTS$ISO_DATE_FORMAT
         )
+        for (fmt in date_formats) {
+          parsed <- tryCatch(
+            if (is.null(fmt)) {
+              as.Date(df$DATE)
+            } else {
+              as.Date(df$DATE, format = fmt)
+            },
+            error = function(e) NULL
+          )
+          if (!is.null(parsed) && !all(is.na(parsed))) {
+            df$DATE <- parsed
+            break
+          }
+        }
+        if (!inherits(df$DATE, "Date")) {
+          warning(
+            "Could not convert DATE column to ",
+            "Date class. Keeping as character."
+          )
+        }
       }
 
       # Standardize column name to lowercase 'date'
