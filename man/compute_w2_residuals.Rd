@@ -31,7 +31,7 @@ capture more variation but may lead to overfitting in finite samples.}
 number of observations and J is the number of components,
 extracted from a broader set of returns of financial assets.
 If NULL, uses the bundled \code{variables} dataset (with a
-message). Pass explicitly to use your own data.}
+warning). Pass explicitly to use your own data.}
 
 \item{return_df}{Logical, if TRUE returns a data frame with dates (default FALSE)}
 

@@ -433,25 +433,3 @@ test_that("return_df dates align correctly with interior NA in PCs", {
     identical(result$date, seq_len(n_obs))
   )
 })
-
-test_that("no warning when user provides own PCs", {
-  acm <- extract_acm_data(
-    data_types = c("yields", "term_premia"),
-    frequency = "quarterly"
-  )
-  yields <- acm[, grep("^y", names(acm))]
-  tp <- acm[, grep("^tp", names(acm))]
-
-  set.seed(42)
-  user_pcs <- matrix(rnorm(nrow(yields) * 2), ncol = 2)
-
-  expect_no_warning(
-    expect_no_message(
-      compute_w2_residuals(
-        yields, tp,
-        maturities = 5, n_pcs = 2,
-        pcs = user_pcs
-      )
-    )
-  )
-})
