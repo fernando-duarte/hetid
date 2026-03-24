@@ -109,14 +109,16 @@ compute_identified_set_quadratic <- function(gamma, tau, L_i, V_i, Q_i,
     stop("s_i_1 and s_i_2 must be lists")
   }
 
-  # Set maturities if not provided
-  if (is.null(maturities)) {
-    maturities <- seq_len(min(
-      length(L_i), length(V_i), length(Q_i),
-      length(s_i_0), length(s_i_1), length(s_i_2),
-      length(sigma_i_sq)
-    ))
-  }
+  # Resolve maturities from names or explicit parameter
+  maturities <- resolve_maturities(
+    maturities,
+    list(
+      L_i = L_i, V_i = V_i, Q_i = Q_i,
+      s_i_0 = s_i_0, s_i_1 = s_i_1,
+      s_i_2 = s_i_2, sigma_i_sq = sigma_i_sq
+    ),
+    n_components
+  )
 
   # Validate maturities against gamma dimensions
   if (any(maturities < 1) || any(maturities > n_components)) {
