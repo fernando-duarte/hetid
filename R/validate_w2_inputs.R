@@ -44,6 +44,18 @@ validate_w2_inputs <- function(yields, term_premia, maturities) {
   )
 }
 
+#' Get Bundled Variables Dataset
+#'
+#' Loads the bundled variables dataset from package data.
+#' Extracted as a separate function for testability.
+#'
+#' @return Data frame containing the variables dataset
+#' @keywords internal
+get_bundled_variables <- function() {
+  data("variables", package = "hetid", envir = environment())
+  get("variables", envir = environment())
+}
+
 #' Load Principal Components (and optionally dates) for W2
 #'
 #' Internal function to load or validate principal components.
@@ -71,8 +83,7 @@ load_w2_pcs <- function(pcs, n_pcs, n_obs) {
       " and pass pcs= explicitly.",
       call. = FALSE
     )
-    data("variables", package = "hetid", envir = environment())
-    variables <- get("variables", envir = environment())
+    variables <- get_bundled_variables()
 
     # Extract PCs
     pc_cols <- paste0("pc", 1:n_pcs)

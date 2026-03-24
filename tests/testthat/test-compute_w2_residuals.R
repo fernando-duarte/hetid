@@ -474,3 +474,40 @@ test_that("error when pcs has fewer columns than n_pcs", {
     "pcs has 2 columns but n_pcs = 4"
   )
 })
+
+test_that("load_w2_pcs errors when bundled data lacks PC columns", {
+  fake_vars <- data.frame(
+    pc1 = 1:10, pc2 = 1:10,
+    date = seq.Date(
+      as.Date("2000-01-01"),
+      by = "quarter",
+      length.out = 10
+    )
+  )
+  local_mocked_bindings(
+    get_bundled_variables = function() fake_vars
+  )
+
+  expect_error(
+    suppressWarnings(
+      load_w2_pcs(NULL, n_pcs = 6, n_obs = 10)
+    ),
+    "Missing PC columns"
+  )
+})
+
+test_that("load_w2_pcs returns NULL dates when no date col", {
+  fake_vars <- data.frame(
+    pc1 = 1:10, pc2 = 1:10,
+    pc3 = 1:10, pc4 = 1:10
+  )
+  local_mocked_bindings(
+    get_bundled_variables = function() fake_vars
+  )
+
+  result <- suppressWarnings(
+    load_w2_pcs(NULL, n_pcs = 4, n_obs = 10)
+  )
+  expect_null(result$dates)
+  expect_equal(ncol(result$pcs), 4)
+})

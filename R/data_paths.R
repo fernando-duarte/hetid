@@ -19,8 +19,10 @@ get_package_data_dir <- function() {
   pkg_dir <- system.file(package = "hetid")
 
   if (pkg_dir == "") {
-    # Development mode - package not installed
+    # nocov start
+    # Dev mode only — unreachable under pkgload::load_all()
     file.path("inst", "extdata")
+    # nocov end
   } else {
     # Installed package
     file.path(pkg_dir, "extdata")
