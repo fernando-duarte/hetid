@@ -4,8 +4,11 @@
 #' on principal components extracted from financial asset returns (PC_t) and a constant.
 #'
 #' @param n_pcs Integer, number of principal components to use (1-6). Default is 4.
-#' @param data Optional data frame containing the variables. If NULL, loads from package data.
-#' @param return_df Logical, if TRUE returns a data frame with dates (default FALSE).
+#' @param data Optional data frame containing the variables. If NULL,
+#'   loads from package data. A \code{date} column is required when
+#'   \code{return_df = TRUE} but optional otherwise.
+#' @param return_df Logical, if TRUE returns a data frame with dates
+#'   (default FALSE). Requires a \code{date} column in \code{data}.
 #'
 #' @return If return_df = FALSE, returns a list containing:
 #' \describe{
@@ -13,7 +16,8 @@
 #'   \item{fitted}{Numeric vector of fitted values}
 #'   \item{coefficients}{Regression coefficients}
 #'   \item{r_squared}{R-squared of the regression}
-#'   \item{dates}{Date vector corresponding to residuals}
+#'   \item{dates}{Date vector corresponding to residuals, or NULL
+#'     if no \code{date} column was provided}
 #'   \item{model}{The lm object from the regression}
 #' }
 #' If return_df = TRUE, returns a data frame with columns:
@@ -71,16 +75,26 @@ compute_w1_residuals <- function(n_pcs = HETID_CONSTANTS$DEFAULT_N_PCS,
     data <- get("variables", envir = environment())
   }
 
-  # Check required columns
-  required_cols <- c("date", HETID_CONSTANTS$CONSUMPTION_GROWTH_COL, paste0("pc", 1:n_pcs))
+  # Check required columns (date is optional unless return_df)
+  has_dates <- "date" %in% names(data)
+  required_cols <- c(
+    HETID_CONSTANTS$CONSUMPTION_GROWTH_COL,
+    paste0("pc", 1:n_pcs)
+  )
+  if (return_df && !has_dates) {
+    required_cols <- c("date", required_cols)
+  }
   missing_cols <- setdiff(required_cols, names(data))
   if (length(missing_cols) > 0) {
-    stop(paste("Missing required columns:", paste(missing_cols, collapse = ", ")))
+    stop(paste(
+      "Missing required columns:",
+      paste(missing_cols, collapse = ", ")
+    ))
   }
 
   # Extract relevant variables
-  y1 <- data[[HETID_CONSTANTS$CONSUMPTION_GROWTH_COL]] # Consumption growth (not forwarded)
-  dates <- data$date
+  y1 <- data[[HETID_CONSTANTS$CONSUMPTION_GROWTH_COL]]
+  dates <- if (has_dates) data$date else NULL
 
   # Create PC matrix
   pc_cols <- paste0("pc", 1:n_pcs)
@@ -91,13 +105,17 @@ compute_w1_residuals <- function(n_pcs = HETID_CONSTANTS$DEFAULT_N_PCS,
   n <- length(y1)
   pc_lagged <- pc_matrix[1:(n - 1), , drop = FALSE]
   y1_future <- y1[2:n]
-  dates_future <- dates[2:n]
+  dates_future <- if (!is.null(dates)) dates[2:n] else NULL
 
   # Remove any rows with missing values
   complete_idx <- complete.cases(y1_future, pc_lagged)
   y1_clean <- y1_future[complete_idx]
   pc_clean <- pc_lagged[complete_idx, , drop = FALSE]
-  dates_clean <- dates_future[complete_idx]
+  dates_clean <- if (!is.null(dates_future)) {
+    dates_future[complete_idx]
+  } else {
+    NULL
+  }
 
   # Create formula for regression
   pc_names <- paste0("pc", 1:n_pcs)

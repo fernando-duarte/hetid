@@ -13,9 +13,12 @@ compute_w1_residuals(
 \arguments{
 \item{n_pcs}{Integer, number of principal components to use (1-6). Default is 4.}
 
-\item{data}{Optional data frame containing the variables. If NULL, loads from package data.}
+\item{data}{Optional data frame containing the variables. If NULL,
+loads from package data. A \code{date} column is required when
+\code{return_df = TRUE} but optional otherwise.}
 
-\item{return_df}{Logical, if TRUE returns a data frame with dates (default FALSE).}
+\item{return_df}{Logical, if TRUE returns a data frame with dates
+(default FALSE). Requires a \code{date} column in \code{data}.}
 }
 \value{
 If return_df = FALSE, returns a list containing:
@@ -24,7 +27,8 @@ If return_df = FALSE, returns a list containing:
 \item{fitted}{Numeric vector of fitted values}
 \item{coefficients}{Regression coefficients}
 \item{r_squared}{R-squared of the regression}
-\item{dates}{Date vector corresponding to residuals}
+\item{dates}{Date vector corresponding to residuals, or NULL
+if no \code{date} column was provided}
 \item{model}{The lm object from the regression}
 }
 If return_df = TRUE, returns a data frame with columns:

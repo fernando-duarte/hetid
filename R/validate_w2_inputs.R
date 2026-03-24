@@ -107,6 +107,12 @@ load_w2_pcs <- function(pcs, n_pcs, n_obs) {
         "must match number of rows in yields"
       )
     }
+    if (ncol(pcs) < n_pcs) {
+      stop(
+        "pcs has ", ncol(pcs), " columns but n_pcs = ",
+        n_pcs, "; supply at least ", n_pcs, " columns"
+      )
+    }
 
     list(pcs = pcs, dates = NULL)
   }

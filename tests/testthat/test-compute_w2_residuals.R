@@ -145,7 +145,7 @@ test_that("R-squared matches manual regression", {
   # Merge datasets by year-quarter
   merged_data <- merge(
     variables[, c("year_quarter", "date", paste0("pc", 1:4))],
-    acm_data[, c("year_quarter", "date", grep("^(y|tp)", names(acm_data), value = TRUE))],
+    acm_data[, c("year_quarter", "date", grep("^(y[0-9]|tp)", names(acm_data), value = TRUE))],
     by = "year_quarter",
     suffixes = c("_var", "_acm")
   )
@@ -431,5 +431,26 @@ test_that("return_df dates align correctly with interior NA in PCs", {
   n_obs <- nrow(result)
   expect_false(
     identical(result$date, seq_len(n_obs))
+  )
+})
+
+test_that("error when pcs has fewer columns than n_pcs", {
+  acm <- extract_acm_data(
+    data_types = c("yields", "term_premia"),
+    frequency = "quarterly"
+  )
+  yields <- acm[, grep("^y[0-9]", names(acm))]
+  tp <- acm[, grep("^tp", names(acm))]
+
+  # 2-column PCs but n_pcs = 4
+  set.seed(42)
+  bad_pcs <- matrix(rnorm(nrow(yields) * 2), ncol = 2)
+
+  expect_error(
+    compute_w2_residuals(
+      yields, tp,
+      maturities = 5, n_pcs = 4, pcs = bad_pcs
+    ),
+    "pcs has 2 columns but n_pcs = 4"
   )
 })

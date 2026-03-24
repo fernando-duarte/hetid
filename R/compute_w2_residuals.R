@@ -7,7 +7,12 @@
 #' @param maturities Vector of maturities to process (default: 1:9)
 #' @template param-n-pcs
 #' @template param-pc-data
-#' @template param-return-df-dates
+#' @param return_df Logical, if TRUE returns a data frame with
+#'   dates (default FALSE)
+#' @param dates Optional vector of dates for the returned data
+#'   frame. If NULL and bundled PCs are used, bundled dates are
+#'   used. If NULL and custom \code{pcs} are supplied, row
+#'   indices are used instead.
 #'
 #' @return If return_df = FALSE, returns a list containing:
 #' \describe{
@@ -46,7 +51,7 @@
 #' invalid regression results. For correct results, merge
 #' your yield data with the bundled PCs by year-quarter and
 #' pass the aligned matrix via the \code{pcs} parameter. See
-#' the package vignette for an example of this workflow.
+#' the examples below for this workflow.
 #'
 #' @importFrom stats lm residuals fitted coef
 #' @importFrom utils data
@@ -54,24 +59,45 @@
 #'
 #' @examples
 #' \dontrun{
-#' # Load ACM data - need maturities 1, i-1, i, i+1 for each maturity i
-#' # For maturities 2, 3, we need maturities 1, 2, 3, 4
+#' # Load quarterly ACM data and bundled PCs
 #' acm_data <- extract_acm_data(
 #'   data_types = c("yields", "term_premia"),
-#'   maturities = c(1, 2, 3, 4)
+#'   maturities = c(1, 2, 3, 4),
+#'   frequency = "quarterly"
 #' )
-#' yields <- acm_data[, grep("^y", names(acm_data))]
-#' term_premia <- acm_data[, grep("^tp", names(acm_data))]
+#' data("variables", package = "hetid")
 #'
-#' # Compute residuals for specific maturities
-#' res_y2 <- compute_w2_residuals(yields, term_premia, maturities = c(2, 3))
-#'
-#' # Get results as data frame
-#' res_y2_df <- compute_w2_residuals(yields, term_premia,
-#'   maturities = c(2, 3),
-#'   return_df = TRUE
+#' # Year-quarter keys for date alignment
+#' acm_data$yq <- paste0(
+#'   format(acm_data$date, "%Y"), "-",
+#'   quarters(acm_data$date)
 #' )
-#' head(res_y2_df)
+#' variables$yq <- paste0(
+#'   format(variables$date, "%Y"), "-",
+#'   quarters(variables$date)
+#' )
+#'
+#' # Merge by year-quarter (covers quarters in both datasets)
+#' pc_cols <- paste0("pc", 1:4)
+#' merged <- merge(
+#'   variables[, c("yq", pc_cols)],
+#'   acm_data[, c("yq", grep("^(y[0-9]|tp)",
+#'     names(acm_data),
+#'     value = TRUE
+#'   ))],
+#'   by = "yq"
+#' )
+#'
+#' # Extract aligned components
+#' pcs <- as.matrix(merged[, pc_cols])
+#' yields <- merged[, grep("^y[0-9]", names(merged))]
+#' tp <- merged[, grep("^tp", names(merged))]
+#'
+#' # Compute residuals with aligned PCs
+#' res_w2 <- compute_w2_residuals(
+#'   yields, tp,
+#'   maturities = c(2, 3), n_pcs = 4, pcs = pcs
+#' )
 #' }
 compute_w2_residuals <- function(yields, term_premia,
                                  maturities = HETID_CONSTANTS$MIN_MATURITY:(

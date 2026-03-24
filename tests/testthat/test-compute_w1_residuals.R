@@ -126,3 +126,27 @@ test_that("no message when user provides data", {
     compute_w1_residuals(n_pcs = 2, data = variables)
   )
 })
+
+test_that("works without date column when return_df = FALSE", {
+  data("variables")
+  no_date <- variables[, setdiff(names(variables), "date")]
+
+  res <- compute_w1_residuals(n_pcs = 2, data = no_date)
+
+  expect_type(res, "list")
+  expect_true(length(res$residuals) > 0)
+  expect_null(res$dates)
+  expect_true(is.finite(res$r_squared))
+})
+
+test_that("errors without date column when return_df = TRUE", {
+  data("variables")
+  no_date <- variables[, setdiff(names(variables), "date")]
+
+  expect_error(
+    compute_w1_residuals(
+      n_pcs = 2, data = no_date, return_df = TRUE
+    ),
+    "date"
+  )
+})

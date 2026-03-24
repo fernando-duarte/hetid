@@ -82,19 +82,45 @@ pak::pak("fernando-duarte/hetid")
 ```{r example, eval=FALSE}
 library(hetid)
 
-# 1. Data Setup
-download_term_premia() # Download latest ACM data
-data <- extract_acm_data(data_types = c("yields", "term_premia"))
+# Data Setup: merge ACM yields with bundled PCs by quarter
+download_term_premia()
+acm_data <- extract_acm_data(
+  data_types = c("yields", "term_premia"),
+  frequency = "quarterly"
+)
+data("variables", package = "hetid")
 
-# 2. Compute Reduced Form Residuals
-w1_residuals <- compute_w1_residuals(n_pcs = 4)
-w2_residuals <- compute_w2_residuals(
-  yields = data[, grep("^y", names(data))],
-  term_premia = data[, grep("^tp", names(data))],
-  maturities = c(2, 5, 10)
+# Year-quarter keys for date alignment
+acm_data$yq <- paste0(
+  format(acm_data$date, "%Y"), "-",
+  quarters(acm_data$date)
+)
+variables$yq <- paste0(
+  format(variables$date, "%Y"), "-",
+  quarters(variables$date)
 )
 
-# 3. Further analysis requires external optimization tools
+# Merge (covers quarters available in both datasets)
+pc_cols <- paste0("pc", 1:4)
+merged <- merge(
+  variables[, c("yq", pc_cols)],
+  acm_data[, c("yq", grep("^(y[0-9]|tp)",
+    names(acm_data),
+    value = TRUE
+  ))],
+  by = "yq"
+)
+pcs <- as.matrix(merged[, pc_cols])
+yields <- merged[, grep("^y[0-9]", names(merged))]
+tp <- merged[, grep("^tp", names(merged))]
+
+# Compute Reduced Form Residuals
+w1 <- compute_w1_residuals(n_pcs = 4)
+w2 <- compute_w2_residuals(
+  yields, tp,
+  maturities = c(2, 5, 9),
+  n_pcs = 4, pcs = pcs
+)
 ```
 
 ### Bond Pricing Examples

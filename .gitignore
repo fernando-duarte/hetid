@@ -20,6 +20,7 @@ CLAUDE.md
 *.utf8.md
 *.knit.md
 .Rmarkdown.state
+README.html
 
 # R Environment Variables
 .Renviron
