@@ -62,11 +62,25 @@ Computes residuals W_\{2,t+1\}^\{(i)\} from regressing Y_\{2,t+1\}^\{(i)\} varia
 (SDF innovations) on principal components extracted from financial asset returns and a constant.
 }
 \details{
-For each maturity i, computes Y_\{2,t+1\}^\{(i)\} as the SDF innovation:
+For each maturity i, computes Y_\{2,t+1\}^\{(i)\} as the SDF
+innovation:
 \eqn{Y_{2,t+1}^{(i)} = E_{t+1}[SDF_{t+1+i}] - E_t[SDF_{t+1+i}]}
 
-This is computed using the compute_sdf_innovations() function.
-Then regresses Y_\{2,t+1\}^\{(i)\} on PC_t to get residuals W_\{2,t+1\}^\{(i)\}.
+This is computed using the \code{compute_sdf_innovations()}
+function. Then regresses Y_\{2,t+1\}^\{(i)\} on PC_t to get
+residuals W_\{2,t+1\}^\{(i)\}.
+
+\strong{Bundled PCs alignment:} When \code{pcs = NULL},
+bundled principal components from the \code{variables}
+dataset are paired with yields \strong{by row position},
+not by calendar date. If yields cover a different time
+period than the bundled data (e.g., quarterly ACM data
+starts 1961-Q2 while bundled PCs start 1962-Q1), each
+row pairs observations from different quarters, producing
+invalid regression results. For correct results, merge
+your yield data with the bundled PCs by year-quarter and
+pass the aligned matrix via the \code{pcs} parameter. See
+the package vignette for an example of this workflow.
 }
 \examples{
 \dontrun{

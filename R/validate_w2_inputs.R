@@ -63,9 +63,13 @@ validate_w2_inputs <- function(yields, term_premia, maturities) {
 #' @keywords internal
 load_w2_pcs <- function(pcs, n_pcs, n_obs) {
   if (is.null(pcs)) {
-    message(
+    warning(
       "Using bundled 'variables' dataset for PCs. ",
-      "Pass pcs= explicitly to use your own data."
+      "Bundled PCs are aligned with yields by row ",
+      "position, not by calendar date. For correct ",
+      "date alignment, merge datasets by year-quarter",
+      " and pass pcs= explicitly.",
+      call. = FALSE
     )
     data("variables", package = "hetid", envir = environment())
     variables <- get("variables", envir = environment())

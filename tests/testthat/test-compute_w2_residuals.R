@@ -8,7 +8,7 @@ test_that("compute_w2_residuals works for single maturity", {
   term_premia <- data[, grep("^tp", names(data))]
 
   # Test single maturity - let the function handle PC loading internally
-  res_y2 <- suppressMessages(compute_w2_residuals(yields, term_premia,
+  res_y2 <- suppressWarnings(compute_w2_residuals(yields, term_premia,
     maturities = 5, n_pcs = 4
   ))
 
@@ -32,7 +32,7 @@ test_that("compute_w2_residuals works for maturity 1", {
   term_premia <- data[, grep("^tp", names(data))]
 
   # Test maturity 1 specifically
-  res_y2_mat1 <- suppressMessages(compute_w2_residuals(yields, term_premia,
+  res_y2_mat1 <- suppressWarnings(compute_w2_residuals(yields, term_premia,
     maturities = 1, n_pcs = 4
   ))
 
@@ -60,7 +60,7 @@ test_that("compute_w2_residuals works for multiple maturities", {
 
   # Test multiple maturities (including maturity 1) - let the function handle PC loading internally
   maturities <- c(1, 2, 5, 7)
-  res_y2 <- suppressMessages(compute_w2_residuals(yields, term_premia,
+  res_y2 <- suppressWarnings(compute_w2_residuals(yields, term_premia,
     maturities = maturities, n_pcs = 4
   ))
 
@@ -80,7 +80,7 @@ test_that("residual properties check", {
   term_premia <- data[, grep("^tp", names(data))]
 
   # Test for maturity 3 - let the function handle PC loading internally
-  res_y2 <- suppressMessages(compute_w2_residuals(yields, term_premia,
+  res_y2 <- suppressWarnings(compute_w2_residuals(yields, term_premia,
     maturities = 3, n_pcs = 4
   ))
   residuals <- res_y2$residuals[[1]]
@@ -106,7 +106,7 @@ test_that("compute_w2_residuals uses SDF innovations", {
   sdf_innov <- compute_sdf_innovations(yields, term_premia, i = i)
 
   # Get W2 residuals - let the function handle PC loading internally
-  res_y2 <- suppressMessages(compute_w2_residuals(yields, term_premia,
+  res_y2 <- suppressWarnings(compute_w2_residuals(yields, term_premia,
     maturities = i, n_pcs = 4
   ))
 
@@ -250,7 +250,7 @@ test_that("length verification for output", {
 
   # Test with multiple maturities - let the function handle PC loading internally
   maturities <- 1:9
-  res_y2 <- suppressMessages(compute_w2_residuals(yields, term_premia,
+  res_y2 <- suppressWarnings(compute_w2_residuals(yields, term_premia,
     maturities = maturities, n_pcs = 4
   ))
 
@@ -263,7 +263,7 @@ test_that("length verification for output", {
   expect_true(all(residual_lengths == residual_lengths[1]))
 })
 
-test_that("message emitted when PCs fall back to package data", {
+test_that("warning emitted when PCs fall back to package data", {
   acm <- extract_acm_data(
     data_types = c("yields", "term_premia"),
     frequency = "quarterly"
@@ -271,9 +271,9 @@ test_that("message emitted when PCs fall back to package data", {
   yields <- acm[, grep("^y", names(acm))]
   tp <- acm[, grep("^tp", names(acm))]
 
-  expect_message(
+  expect_warning(
     compute_w2_residuals(yields, tp, maturities = 5, n_pcs = 2),
-    "Using bundled"
+    "position"
   )
 })
 
@@ -285,18 +285,20 @@ test_that("no message when user provides PCs", {
   yields <- acm[, grep("^y", names(acm))]
   tp <- acm[, grep("^tp", names(acm))]
 
-  # Synthetic PCs with correct row count (nrow(yields), not nrow(variables))
+  # Synthetic PCs with correct row count
   set.seed(42)
   user_pcs <- matrix(
     rnorm(nrow(yields) * 2),
     ncol = 2
   )
 
-  expect_no_message(
-    compute_w2_residuals(
-      yields, tp,
-      maturities = 5, n_pcs = 2,
-      pcs = user_pcs
+  expect_no_warning(
+    expect_no_message(
+      compute_w2_residuals(
+        yields, tp,
+        maturities = 5, n_pcs = 2,
+        pcs = user_pcs
+      )
     )
   )
 })
@@ -376,20 +378,17 @@ test_that("variables loaded only once when PCs and dates both NULL", {
   yields <- acm[, grep("^y", names(acm))]
   tp <- acm[, grep("^tp", names(acm))]
 
-  # Should get exactly one "PCs" message, not two separate loads
-  msgs <- capture_messages(
+  warns <- capture_warnings(
     compute_w2_residuals(
       yields, tp,
       maturities = 5, n_pcs = 2,
       return_df = TRUE
     )
   )
-  # Only one message about bundled data for PCs
-  # Dates reuse the same load -- no second message
-  pc_msgs <- grep("PCs", msgs, value = TRUE)
-  expect_length(pc_msgs, 1)
-  date_msgs <- grep("dates", msgs, value = TRUE)
-  expect_length(date_msgs, 0)
+  # Only one warning about bundled PCs
+  # Dates reuse the same load -- no second warning
+  pc_warns <- grep("position", warns, value = TRUE)
+  expect_length(pc_warns, 1)
 })
 
 test_that("return_df dates align correctly with interior NA in PCs", {
@@ -432,5 +431,27 @@ test_that("return_df dates align correctly with interior NA in PCs", {
   n_obs <- nrow(result)
   expect_false(
     identical(result$date, seq_len(n_obs))
+  )
+})
+
+test_that("no warning when user provides own PCs", {
+  acm <- extract_acm_data(
+    data_types = c("yields", "term_premia"),
+    frequency = "quarterly"
+  )
+  yields <- acm[, grep("^y", names(acm))]
+  tp <- acm[, grep("^tp", names(acm))]
+
+  set.seed(42)
+  user_pcs <- matrix(rnorm(nrow(yields) * 2), ncol = 2)
+
+  expect_no_warning(
+    expect_no_message(
+      compute_w2_residuals(
+        yields, tp,
+        maturities = 5, n_pcs = 2,
+        pcs = user_pcs
+      )
+    )
   )
 })
