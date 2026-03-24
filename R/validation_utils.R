@@ -76,7 +76,7 @@ validate_n_pcs <- function(n_pcs) {
 
   if (n_pcs < 1 || n_pcs > HETID_CONSTANTS$MAX_N_PCS) {
     stop(
-      "n_pcs must be between 1 and ", HETID_CONSTANTS$MAX_N_PCS,
+      "n_pcs must be between 1 and ", HETID_CONSTANTS$MAX_N_PCS
     )
   }
 
@@ -123,12 +123,13 @@ validate_time_series_lengths <- function(...) {
     stop("At least two time series required for length validation")
   }
 
-  lengths <- sapply(series_list, length)
+  series_lengths <- lengths(series_list)
 
-  if (length(unique(lengths)) > 1) {
+  if (length(unique(series_lengths)) > 1) {
     stop(
       "All input time series must have the same length. ",
-      "Got lengths: ", paste(lengths, collapse = ", ")
+      "Got lengths: ",
+      paste(series_lengths, collapse = ", ")
     )
   }
 

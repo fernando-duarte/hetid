@@ -25,7 +25,7 @@
 #'
 download_term_premia <- function(force = FALSE, quiet = FALSE) {
   # Use data source URL from constants
-  url <- DATA_URLS$ACM_TERM_PREMIA
+  download_url <- DATA_URLS$ACM_TERM_PREMIA
 
   # Use standardized path management
   validate_data_directory(create_if_missing = TRUE)
@@ -49,7 +49,7 @@ download_term_premia <- function(force = FALSE, quiet = FALSE) {
   tryCatch(
     {
       download.file(
-        url = url,
+        url = download_url,
         destfile = temp_xls,
         mode = "wb",
         quiet = quiet
@@ -68,14 +68,18 @@ download_term_premia <- function(force = FALSE, quiet = FALSE) {
         message("Converting Excel to CSV...")
       }
 
-      df <- readxl::read_excel(temp_xls)
+      tp_df <- readxl::read_excel(temp_xls)
 
       # Save as CSV
-      write.csv(df, csv_path, row.names = FALSE)
+      write.csv(tp_df, csv_path, row.names = FALSE)
 
       if (!quiet) {
         message("Term premia data saved to: ", csv_path)
-        message("Data dimensions: ", nrow(df), " rows x ", ncol(df), " columns")
+        message(
+          "Data dimensions: ",
+          nrow(tp_df), " rows x ", ncol(tp_df),
+          " columns"
+        )
       }
 
       # Clean up temp file

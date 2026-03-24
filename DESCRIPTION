@@ -23,7 +23,8 @@ Suggests:
     knitr,
     readxl,
     rmarkdown,
-    testthat (>= 3.0.0)
+    testthat (>= 3.0.0),
+    withr
 Additional_repositories: https://github.com/VFCI/macro_dynamics
 Config/testthat/edition: 3
 Encoding: UTF-8

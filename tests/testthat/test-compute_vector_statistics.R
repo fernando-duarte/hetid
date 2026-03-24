@@ -87,19 +87,12 @@ test_that("compute_vector_statistics computes correct values", {
 
   result <- compute_vector_statistics(w1, w2, pcs)
 
-  # Manual calculation for R_1^(0)
-  # w2_1 = c(2, 3, 4)
-  # w1 ⊙ w2_1 = c(1*2, 2*3, 3*4) = c(2, 6, 12)
-  # PC^T * (w1 ⊙ w2_1) = [1,0,0; 0,1,0] * [2,6,12]^T = [2, 6]
-  # R_1^(0) = (1/3) * [2, 6]
+  # R_i^(0) is the mean of PC^T times the Hadamard product of w1 and w2_i
   hadamard <- w1 * w2[, 1]
   expected_r_1_0 <- t(pcs) %*% hadamard / 3
   expect_equal(unname(result$r_i_0[, 1]), as.vector(expected_r_1_0))
 
-  # Manual calculation for P_1^(0)
-  # w2_1^2 = c(4, 9, 16)
-  # PC^T * w2_1^2 = [1,0,0; 0,1,0] * [4,9,16]^T = [4, 9]
-  # P_1^(0) = (1/3) * [4, 9]
+  # P_i^(0) is the mean of PC^T times the squared elements of w2_i
   w2_1_sq <- w2[, 1]^2
   expected_p_1_0 <- t(pcs) %*% w2_1_sq / 3
   expect_equal(unname(result$p_i_0[, 1]), as.vector(expected_p_1_0))

@@ -130,9 +130,9 @@ compute_w1_residuals <- function(n_pcs = HETID_CONSTANTS$DEFAULT_N_PCS,
   model <- lm(reg_formula, data = reg_data)
 
   # Extract results
-  residuals <- residuals(model)
+  resid_vec <- residuals(model)
   fitted_values <- fitted(model)
-  coefficients <- coef(model)
+  coef_vec <- coef(model)
   r_squared <- summary(model)$r.squared
 
   # Return results
@@ -140,7 +140,7 @@ compute_w1_residuals <- function(n_pcs = HETID_CONSTANTS$DEFAULT_N_PCS,
     # Return data frame with dates
     return(data.frame(
       date = dates_clean,
-      residuals = residuals,
+      residuals = resid_vec,
       fitted = fitted_values,
       stringsAsFactors = FALSE
     ))
@@ -148,9 +148,9 @@ compute_w1_residuals <- function(n_pcs = HETID_CONSTANTS$DEFAULT_N_PCS,
 
   # Return list (original format)
   list(
-    residuals = residuals,
+    residuals = resid_vec,
     fitted = fitted_values,
-    coefficients = coefficients,
+    coefficients = coef_vec,
     r_squared = r_squared,
     dates = dates_clean,
     model = model

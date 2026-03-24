@@ -66,18 +66,11 @@ test_that("compute_scalar_statistics computes correct values", {
 
   result <- compute_scalar_statistics(w1, w2)
 
-  # Manual calculation for maturity 1
-  # w2_1 = c(2, 3, 4)
-  # w1 ⊙ w2_1 = c(1*2, 2*3, 3*4) = c(2, 6, 12)
-  # S_1^(0) = (1/3) * (2^2 + 6^2 + 12^2) = (1/3) * (4 + 36 + 144) = 184/3
+  # S_i^(0) is the mean of the squared Hadamard products of w1 and w2_i
   expected_s_1_0 <- sum((w1 * w2[, 1])^2) / 3
   expect_equal(unname(result$s_i_0[1]), expected_s_1_0)
 
-  # sigma_1^2 = (1/3) * ||(w2_1)^⊙2||_2^2 - ((1/3) * ||w2_1||_2^2)^2
-  # w2_1^2 = c(4, 9, 16)
-  # (w2_1^2)^2 = c(16, 81, 256)
-  # term1 = (1/3) * (16 + 81 + 256) = 353/3
-  # term2 = ((1/3) * (4 + 9 + 16))^2 = (29/3)^2 = 841/9
+  # sigma_i^2 is the variance of the squared elements of w2_i
   w2_1_sq <- w2[, 1]^2
   term1 <- sum(w2_1_sq^2) / 3
   term2 <- (sum(w2_1_sq) / 3)^2
@@ -110,10 +103,10 @@ test_that("compute_scalar_statistics handles edge cases", {
 
   result <- compute_scalar_statistics(w1, w2)
 
-  # S_1^(0) = (1/1) * (2*3)^2 = 36
+  # With a single observation, S_1^(0) is simply (w1 * w2)^2
   expect_equal(unname(result$s_i_0[1]), 36)
 
-  # sigma_1^2 = (1/1) * 3^4 - ((1/1) * 3^2)^2 = 81 - 81 = 0
+  # With a single observation, variance of w2^2 is zero
   expect_equal(unname(result$sigma_i_sq[1]), 0)
 
   # Test with zero residuals

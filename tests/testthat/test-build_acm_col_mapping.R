@@ -16,7 +16,7 @@ test_that("term_premia mapping produces correct pairs", {
 })
 
 test_that("risk_neutral_yields mapping produces correct pairs", {
-  mapping <- build_acm_col_mapping("risk_neutral_yields", c(3))
+  mapping <- build_acm_col_mapping("risk_neutral_yields", 3)
 
   expect_equal(mapping[["rny3"]], "ACMRNY03")
   expect_length(mapping, 1)

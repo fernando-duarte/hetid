@@ -63,7 +63,7 @@ compute_matrix_statistics <- function(w1, w2, maturities = NULL) {
   }
 
   # Get dimensions
-  I <- ncol(w2)
+  n_maturities_idx <- ncol(w2)
   n_maturities <- length(maturities)
 
   # Initialize storage
@@ -86,13 +86,19 @@ compute_matrix_statistics <- function(w1, w2, maturities = NULL) {
     hadamard_w1_w2i <- w1 * w2_i
     s_i_1_vec <- t(hadamard_w1_w2i) %*% w2_circ_i / T_obs
     s_i_1_vec <- as.vector(s_i_1_vec) # Ensure it's a vector
-    names(s_i_1_vec) <- paste0("maturity_", seq_len(I))
+    names(s_i_1_vec) <- paste0(
+      "maturity_", seq_len(n_maturities_idx)
+    )
     s_i_1[[idx]] <- s_i_1_vec
 
     # S_i^(2) = (1/T) * (W_2^{circ i})^T * W_2^{circ i}
     s_i_2_mat <- t(w2_circ_i) %*% w2_circ_i / T_obs
-    rownames(s_i_2_mat) <- paste0("maturity_", seq_len(I))
-    colnames(s_i_2_mat) <- paste0("maturity_", seq_len(I))
+    rownames(s_i_2_mat) <- paste0(
+      "maturity_", seq_len(n_maturities_idx)
+    )
+    colnames(s_i_2_mat) <- paste0(
+      "maturity_", seq_len(n_maturities_idx)
+    )
     s_i_2[[idx]] <- s_i_2_mat
   }
 

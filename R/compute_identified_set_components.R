@@ -75,27 +75,27 @@ compute_identified_set_components <- function(gamma, r_i_0, r_i_1, p_i_0,
 
   # Check dimensions
   J <- nrow(gamma)
-  I <- ncol(gamma)
+  n_components <- ncol(gamma)
 
-  if (nrow(r_i_0) != J || ncol(r_i_0) != I) {
+  if (nrow(r_i_0) != J || ncol(r_i_0) != n_components) {
     stop("r_i_0 must have dimensions J x I matching gamma")
   }
 
-  if (length(r_i_1) != I) {
+  if (length(r_i_1) != n_components) {
     stop("r_i_1 must have I elements")
   }
 
-  if (nrow(p_i_0) != J || ncol(p_i_0) != I) {
+  if (nrow(p_i_0) != J || ncol(p_i_0) != n_components) {
     stop("p_i_0 must have dimensions J x I matching gamma")
   }
 
   # Set maturities if not provided
   if (is.null(maturities)) {
-    maturities <- seq_len(I)
+    maturities <- seq_len(n_components)
   }
 
   # Validate maturities
-  if (any(maturities < 1) || any(maturities > I)) {
+  if (any(maturities < 1) || any(maturities > n_components)) {
     stop("maturities must be between 1 and I")
   }
 
@@ -114,10 +114,10 @@ compute_identified_set_components <- function(gamma, r_i_0, r_i_1, p_i_0,
     i <- maturities[idx]
     gamma_i <- gamma[, i, drop = FALSE] # Keep as column vector
 
-    # L_i = gamma_i^T * R_i^(0)
+    # Compute L_i as inner product of gamma_i and R_i^(0)
     L_i[idx] <- as.numeric(t(gamma_i) %*% r_i_0[, i])
 
-    # V_i = (gamma_i^T * P_i^(0))^2
+    # Compute V_i as squared inner product of gamma_i and P_i^(0)
     p_i_0_vec <- p_i_0[, i, drop = FALSE]
     V_i[idx] <- as.numeric(crossprod(gamma_i, p_i_0_vec))^2
 

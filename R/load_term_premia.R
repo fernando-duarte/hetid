@@ -40,10 +40,10 @@ load_term_premia <- function(auto_download = FALSE) {
   # Load the data
   tryCatch(
     {
-      df <- read.csv(csv_path, stringsAsFactors = FALSE)
+      tp_df <- read.csv(csv_path, stringsAsFactors = FALSE)
 
       # Convert DATE column to Date class if it exists
-      if ("DATE" %in% names(df)) {
+      if ("DATE" %in% names(tp_df)) {
         date_formats <- list(
           HETID_CONSTANTS$ACM_DATE_FORMAT,
           NULL,
@@ -52,18 +52,18 @@ load_term_premia <- function(auto_download = FALSE) {
         for (fmt in date_formats) {
           parsed <- tryCatch(
             if (is.null(fmt)) {
-              as.Date(df$DATE)
+              as.Date(tp_df$DATE)
             } else {
-              as.Date(df$DATE, format = fmt)
+              as.Date(tp_df$DATE, format = fmt)
             },
             error = function(e) NULL
           )
           if (!is.null(parsed) && !all(is.na(parsed))) {
-            df$DATE <- parsed
+            tp_df$DATE <- parsed
             break
           }
         }
-        if (!inherits(df$DATE, "Date")) {
+        if (!inherits(tp_df$DATE, "Date")) {
           warning(
             "Could not convert DATE column to ",
             "Date class. Keeping as character."
@@ -72,11 +72,11 @@ load_term_premia <- function(auto_download = FALSE) {
       }
 
       # Standardize column name to lowercase 'date'
-      if ("DATE" %in% names(df)) {
-        names(df)[names(df) == "DATE"] <- "date"
+      if ("DATE" %in% names(tp_df)) {
+        names(tp_df)[names(tp_df) == "DATE"] <- "date"
       }
 
-      df
+      tp_df
     },
     error = function(e) {
       warning("Failed to load term premia data: ", e$message)

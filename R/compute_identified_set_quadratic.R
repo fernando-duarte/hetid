@@ -87,9 +87,9 @@ compute_identified_set_quadratic <- function(gamma, tau, L_i, V_i, Q_i,
     stop("All elements of tau must be positive")
   }
 
-  I <- ncol(gamma)
+  n_components <- ncol(gamma)
 
-  if (length(tau) != I) {
+  if (length(tau) != n_components) {
     stop("tau must have length I (number of columns in gamma)")
   }
 
@@ -170,18 +170,23 @@ compute_identified_set_quadratic <- function(gamma, tau, L_i, V_i, Q_i,
     tau_i <- tau[i]
 
     # Validate dimensions
-    if (!is.numeric(Q_i_vec) || length(Q_i_vec) != I) {
-      stop(paste("Q_i[[", idx, "]] must be a numeric vector of length I"))
+    if (!is.numeric(Q_i_vec) || length(Q_i_vec) != n_components) {
+      stop(paste(
+        "Q_i[[", idx,
+        "]] must be a numeric vector of length I"
+      ))
     }
 
-    if (!is.numeric(s_i_1_vec) || length(s_i_1_vec) != I) {
+    if (!is.numeric(s_i_1_vec) || length(s_i_1_vec) != n_components) {
       stop(paste0(
         "s_i_1 for maturity ", i, " (position ", idx,
         ") must be a numeric vector of length I"
       ))
     }
 
-    if (!is.matrix(s_i_2_mat) || nrow(s_i_2_mat) != I || ncol(s_i_2_mat) != I) {
+    if (!is.matrix(s_i_2_mat) ||
+      nrow(s_i_2_mat) != n_components ||
+      ncol(s_i_2_mat) != n_components) {
       stop(paste0(
         "s_i_2 for maturity ", i, " (position ", idx,
         ") must be an I x I matrix"
@@ -210,8 +215,11 @@ compute_identified_set_quadratic <- function(gamma, tau, L_i, V_i, Q_i,
     }
 
     # Compute b_i = -2 * L_i * Q_i + 2 * d_i * S_i^(1)
-    b_i[[idx]] <- -2 * L_i_val * Q_i_vec + 2 * d_i[idx] * s_i_1_vec
-    names(b_i[[idx]]) <- paste0("maturity_", seq_len(I))
+    b_i[[idx]] <- -2 * L_i_val * Q_i_vec +
+      2 * d_i[idx] * s_i_1_vec
+    names(b_i[[idx]]) <- paste0(
+      "maturity_", seq_len(n_components)
+    )
 
     # Compute c_i = L_i^2 - d_i * S_i^(0)
     c_i[idx] <- L_i_val^2 - d_i[idx] * s_i_0_val

@@ -59,23 +59,23 @@ test_that(
       s_i_0, s_i_1, s_i_2, sigma_i_sq
     )
 
-    # d_i = tau_i^2 * V_i / sigma_i^2
-    expect_equal(unname(result$d_i[1]), 8) # 2^2*4/2
-    expect_equal(unname(result$d_i[2]), 18) # 3^2*6/3
+    # d_i is tau_i squared times V_i over sigma_i squared
+    expect_equal(unname(result$d_i[1]), 8)
+    expect_equal(unname(result$d_i[2]), 18)
 
-    # A_i = Q_i Q_i^T - d_i S_i^(2)
+    # A_i is the outer product of Q_i minus d_i times S_i^(2)
     expected_A_1 <- matrix(c(-7, -2, -2, -4), 2, 2)
     expect_equal(result$A_i[[1]], expected_A_1)
 
-    # b_i = -2 L_i Q_i + 2 d_i S_i^(1)
+    # b_i is negative two L_i Q_i plus two d_i S_i^(1)
     expect_equal(
       result$b_i[[1]],
       c(maturity_1 = -8.4, maturity_2 = -16.8)
     )
 
-    # c_i = L_i^2 - d_i S_i^(0)
-    expect_equal(unname(result$c_i[1]), 21) # 25 - 8*0.5
-    expect_equal(unname(result$c_i[2]), 34.6) # 49 - 18*0.8
+    # c_i is L_i squared minus d_i times S_i^(0)
+    expect_equal(unname(result$c_i[1]), 21)
+    expect_equal(unname(result$c_i[2]), 34.6)
   }
 )
 

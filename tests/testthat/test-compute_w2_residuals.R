@@ -259,7 +259,7 @@ test_that("length verification for output", {
   expect_length(res_y2$r_squared, 9)
 
   # Each residual vector should have same length
-  residual_lengths <- sapply(res_y2$residuals, length)
+  residual_lengths <- lengths(res_y2$residuals)
   expect_true(all(residual_lengths == residual_lengths[1]))
 })
 

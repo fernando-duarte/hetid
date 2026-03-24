@@ -45,13 +45,13 @@ compute_time_series_news <- function(current_series, future_series, negate = FAL
 
   # Compute news: future[t+1] - current[t]
   # NAs propagate naturally via R's NA arithmetic
-  news <- future_series[2:n_obs] - current_series[1:(n_obs - 1)]
+  ts_news <- future_series[2:n_obs] - current_series[1:(n_obs - 1)]
 
   if (negate) {
-    news <- -news
+    ts_news <- -ts_news
   }
 
-  news
+  ts_news
 }
 
 #' Prepare Return Data Frame

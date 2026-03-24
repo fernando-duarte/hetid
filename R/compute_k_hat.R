@@ -69,9 +69,9 @@ compute_k_hat <- function(yields, term_premia, i) {
     return(NA)
   }
 
-  terms <- (
+  khat_terms <- (
     -y1_shifted[valid] / HETID_CONSTANTS$PERCENT_TO_DECIMAL -
       n_hat_shifted[valid]
   )^4
-  mean(terms)
+  mean(khat_terms)
 }

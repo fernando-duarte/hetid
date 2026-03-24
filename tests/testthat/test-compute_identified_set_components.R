@@ -138,13 +138,11 @@ test_that("compute_identified_set_components computes values correctly", {
 
   result <- compute_identified_set_components(gamma, r_i_0, r_i_1, p_i_0)
 
-  # Test L_i = gamma_i^T * r_i_0[, i]
-  # For i=1: gamma_1 = [1, 0]^T, r_i_0[,1] = [2, 3]^T
-  # L_1 = 1*2 + 0*3 = 2
+  # For maturity i, L_i is the inner product of gamma_i and r_i_0[,i]
+  # gamma_1 = [1, 0], r_i_0[,1] = [2, 3] => L_1 = 2
   expect_equal(unname(result$L_i[1]), 2)
 
-  # For i=2: gamma_2 = [0, 1]^T, r_i_0[,2] = [4, 5]^T
-  # L_2 = 0*4 + 1*5 = 5
+  # gamma_2 = [0, 1], r_i_0[,2] = [4, 5] => L_2 = 5
   expect_equal(unname(result$L_i[2]), 5)
 
   # Test V_i = gamma_i^T * (p_i_0[,i] * p_i_0[,i]^T) * gamma_i

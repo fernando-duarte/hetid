@@ -78,10 +78,7 @@ test_that("compute_matrix_statistics computes correct values", {
   result <- compute_matrix_statistics(w1, w2)
 
   # Manual calculation for maturity 1
-  # w2_1 = c(2, 3, 4)
-  # W_2^{circ 1} = diag(w2_1) * w2 = w2_1 * each column of w2
-  # Column 1: c(2*2, 3*3, 4*4) = c(4, 9, 16)
-  # Column 2: c(2*5, 3*6, 4*7) = c(10, 18, 28)
+  # W_2^{circ 1} is diag(w2_1) times w2, i.e., w2_1 scales each row
   w2_1 <- w2[, 1]
   w2_circ_1 <- w2_1 * w2
 
