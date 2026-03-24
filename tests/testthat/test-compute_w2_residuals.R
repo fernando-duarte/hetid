@@ -434,6 +434,26 @@ test_that("return_df dates align correctly with interior NA in PCs", {
   )
 })
 
+test_that("error when user pcs has wrong number of rows", {
+  acm <- extract_acm_data(
+    data_types = c("yields", "term_premia"),
+    frequency = "quarterly"
+  )
+  yields <- acm[, grep("^y[0-9]", names(acm))]
+  tp <- acm[, grep("^tp", names(acm))]
+
+  # PCs with 5 rows but yields has many more
+  bad_pcs <- matrix(rnorm(5 * 4), ncol = 4)
+
+  expect_error(
+    compute_w2_residuals(
+      yields, tp,
+      maturities = 5, n_pcs = 4, pcs = bad_pcs
+    ),
+    "must match number of rows"
+  )
+})
+
 test_that("error when pcs has fewer columns than n_pcs", {
   acm <- extract_acm_data(
     data_types = c("yields", "term_premia"),
