@@ -2,7 +2,7 @@
 % Please edit documentation in R/validate_w2_inputs.R
 \name{load_w2_pcs}
 \alias{load_w2_pcs}
-\title{Load Principal Components for W2}
+\title{Load Principal Components (and optionally dates) for W2}
 \usage{
 load_w2_pcs(pcs, n_pcs, n_obs)
 }
@@ -14,9 +14,16 @@ load_w2_pcs(pcs, n_pcs, n_obs)
 \item{n_obs}{Number of observations (for validation)}
 }
 \value{
-Matrix of principal components
+List with components:
+\describe{
+\item{pcs}{Matrix of principal components}
+\item{dates}{Date vector from bundled data, or NULL
+if user provided PCs}
+}
 }
 \description{
-Internal function to load or validate principal components
+Internal function to load or validate principal components.
+When falling back to package data, also extracts dates
+to avoid a redundant second load.
 }
 \keyword{internal}

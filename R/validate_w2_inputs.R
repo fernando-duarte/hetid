@@ -44,19 +44,29 @@ validate_w2_inputs <- function(yields, term_premia, maturities) {
   )
 }
 
-#' Load Principal Components for W2
+#' Load Principal Components (and optionally dates) for W2
 #'
-#' Internal function to load or validate principal components
+#' Internal function to load or validate principal components.
+#' When falling back to package data, also extracts dates
+#' to avoid a redundant second load.
 #'
 #' @param pcs Provided PCs or NULL
 #' @param n_pcs Number of PCs to use
 #' @param n_obs Number of observations (for validation)
 #'
-#' @return Matrix of principal components
+#' @return List with components:
+#'   \describe{
+#'     \item{pcs}{Matrix of principal components}
+#'     \item{dates}{Date vector from bundled data, or NULL
+#'       if user provided PCs}
+#'   }
 #' @keywords internal
 load_w2_pcs <- function(pcs, n_pcs, n_obs) {
   if (is.null(pcs)) {
-    # Get the variables data from the package
+    message(
+      "Using bundled 'variables' dataset for PCs. ",
+      "Pass pcs= explicitly to use your own data."
+    )
     data("variables", package = "hetid", envir = environment())
     variables <- get("variables", envir = environment())
 
@@ -70,21 +80,31 @@ load_w2_pcs <- function(pcs, n_pcs, n_obs) {
         paste(missing_cols, collapse = ", ")
       ))
     }
-    pcs <- as.matrix(variables[, pc_cols])
 
-    # Return the PCs as-is - alignment will be handled by process_w2_maturity
-    # This is expected when using quarterly ACM data with variables data
-    pcs
+    # Extract dates to avoid a second data() call later
+    bundled_dates <- if ("date" %in% names(variables)) {
+      variables$date[2:nrow(variables)]
+    } else {
+      NULL
+    }
+
+    list(
+      pcs = as.matrix(variables[, pc_cols]),
+      dates = bundled_dates
+    )
   } else {
     # User provided PCs
     pcs <- as.matrix(pcs)
 
     # Validate dimensions for user-provided PCs
     if (nrow(pcs) != n_obs) {
-      stop("Number of rows in user-provided pcs must match number of rows in yields")
+      stop(
+        "Number of rows in user-provided pcs ",
+        "must match number of rows in yields"
+      )
     }
 
-    pcs
+    list(pcs = pcs, dates = NULL)
   }
 }
 

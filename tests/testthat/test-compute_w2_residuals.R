@@ -8,9 +8,9 @@ test_that("compute_w2_residuals works for single maturity", {
   term_premia <- data[, grep("^tp", names(data))]
 
   # Test single maturity - let the function handle PC loading internally
-  res_y2 <- compute_w2_residuals(yields, term_premia,
+  res_y2 <- suppressMessages(compute_w2_residuals(yields, term_premia,
     maturities = 5, n_pcs = 4
-  )
+  ))
 
   expect_type(res_y2, "list")
   expect_true("residuals" %in% names(res_y2))
@@ -32,9 +32,9 @@ test_that("compute_w2_residuals works for maturity 1", {
   term_premia <- data[, grep("^tp", names(data))]
 
   # Test maturity 1 specifically
-  res_y2_mat1 <- compute_w2_residuals(yields, term_premia,
+  res_y2_mat1 <- suppressMessages(compute_w2_residuals(yields, term_premia,
     maturities = 1, n_pcs = 4
-  )
+  ))
 
   expect_type(res_y2_mat1, "list")
   expect_true("residuals" %in% names(res_y2_mat1))
@@ -60,9 +60,9 @@ test_that("compute_w2_residuals works for multiple maturities", {
 
   # Test multiple maturities (including maturity 1) - let the function handle PC loading internally
   maturities <- c(1, 2, 5, 7)
-  res_y2 <- compute_w2_residuals(yields, term_premia,
+  res_y2 <- suppressMessages(compute_w2_residuals(yields, term_premia,
     maturities = maturities, n_pcs = 4
-  )
+  ))
 
   # Should have one element per maturity
   expect_length(res_y2$residuals, length(maturities))
@@ -80,9 +80,9 @@ test_that("residual properties check", {
   term_premia <- data[, grep("^tp", names(data))]
 
   # Test for maturity 3 - let the function handle PC loading internally
-  res_y2 <- compute_w2_residuals(yields, term_premia,
+  res_y2 <- suppressMessages(compute_w2_residuals(yields, term_premia,
     maturities = 3, n_pcs = 4
-  )
+  ))
   residuals <- res_y2$residuals[[1]]
 
   # Mean should be near 0
@@ -106,9 +106,9 @@ test_that("compute_w2_residuals uses SDF innovations", {
   sdf_innov <- compute_sdf_innovations(yields, term_premia, i = i)
 
   # Get W2 residuals - let the function handle PC loading internally
-  res_y2 <- compute_w2_residuals(yields, term_premia,
+  res_y2 <- suppressMessages(compute_w2_residuals(yields, term_premia,
     maturities = i, n_pcs = 4
-  )
+  ))
 
   # The dependent variable in the regression should be SDF innovations
   # The residuals length will be limited by the shorter of SDF innovations
@@ -250,9 +250,9 @@ test_that("length verification for output", {
 
   # Test with multiple maturities - let the function handle PC loading internally
   maturities <- 1:9
-  res_y2 <- compute_w2_residuals(yields, term_premia,
+  res_y2 <- suppressMessages(compute_w2_residuals(yields, term_premia,
     maturities = maturities, n_pcs = 4
-  )
+  ))
 
   # Check dimensions
   expect_length(res_y2$residuals, 9)
@@ -261,4 +261,133 @@ test_that("length verification for output", {
   # Each residual vector should have same length
   residual_lengths <- sapply(res_y2$residuals, length)
   expect_true(all(residual_lengths == residual_lengths[1]))
+})
+
+test_that("message emitted when PCs fall back to package data", {
+  acm <- extract_acm_data(
+    data_types = c("yields", "term_premia"),
+    frequency = "quarterly"
+  )
+  yields <- acm[, grep("^y", names(acm))]
+  tp <- acm[, grep("^tp", names(acm))]
+
+  expect_message(
+    compute_w2_residuals(yields, tp, maturities = 5, n_pcs = 2),
+    "Using bundled"
+  )
+})
+
+test_that("no message when user provides PCs", {
+  acm <- extract_acm_data(
+    data_types = c("yields", "term_premia"),
+    frequency = "quarterly"
+  )
+  yields <- acm[, grep("^y", names(acm))]
+  tp <- acm[, grep("^tp", names(acm))]
+
+  # Synthetic PCs with correct row count (nrow(yields), not nrow(variables))
+  set.seed(42)
+  user_pcs <- matrix(
+    rnorm(nrow(yields) * 2),
+    ncol = 2
+  )
+
+  expect_no_message(
+    compute_w2_residuals(
+      yields, tp,
+      maturities = 5, n_pcs = 2,
+      pcs = user_pcs
+    )
+  )
+})
+
+test_that("row indices used when user provides PCs but not dates", {
+  acm <- extract_acm_data(
+    data_types = c("yields", "term_premia"),
+    frequency = "quarterly"
+  )
+  yields <- acm[, grep("^y", names(acm))]
+  tp <- acm[, grep("^tp", names(acm))]
+
+  # Synthetic PCs with correct row count
+  set.seed(42)
+  user_pcs <- matrix(
+    rnorm(nrow(yields) * 2),
+    ncol = 2
+  )
+
+  # PCs provided, dates not -- should use row indices, no message
+  result <- expect_no_message(
+    compute_w2_residuals(
+      yields, tp,
+      maturities = 5, n_pcs = 2,
+      pcs = user_pcs, return_df = TRUE
+    )
+  )
+  # Dates should be row indices (1, 2, 3, ...)
+  n_expected <- length(unique(result$date))
+  expect_equal(
+    sort(unique(result$date)),
+    seq_len(n_expected)
+  )
+})
+
+test_that("no message for dates when user provides dates", {
+  acm <- extract_acm_data(
+    data_types = c("yields", "term_premia"),
+    frequency = "quarterly"
+  )
+  yields <- acm[, grep("^y", names(acm))]
+  tp <- acm[, grep("^tp", names(acm))]
+
+  # Synthetic PCs with correct row count
+  set.seed(42)
+  user_pcs <- matrix(
+    rnorm(nrow(yields) * 2),
+    ncol = 2
+  )
+  user_dates <- seq(
+    as.Date("2000-01-01"),
+    length.out = nrow(yields) - 1,
+    by = "quarter"
+  )
+
+  result <- expect_no_message(
+    compute_w2_residuals(
+      yields, tp,
+      maturities = 5, n_pcs = 2,
+      pcs = user_pcs, return_df = TRUE,
+      dates = user_dates
+    )
+  )
+  # Verify user-supplied dates are used, not bundled
+  n_obs <- length(unique(result$date))
+  expect_equal(
+    sort(unique(result$date)),
+    user_dates[seq_len(n_obs)]
+  )
+})
+
+test_that("variables loaded only once when PCs and dates both NULL", {
+  acm <- extract_acm_data(
+    data_types = c("yields", "term_premia"),
+    frequency = "quarterly"
+  )
+  yields <- acm[, grep("^y", names(acm))]
+  tp <- acm[, grep("^tp", names(acm))]
+
+  # Should get exactly one "PCs" message, not two separate loads
+  msgs <- capture_messages(
+    compute_w2_residuals(
+      yields, tp,
+      maturities = 5, n_pcs = 2,
+      return_df = TRUE
+    )
+  )
+  # Only one message about bundled data for PCs
+  # Dates reuse the same load -- no second message
+  pc_msgs <- grep("PCs", msgs, value = TRUE)
+  expect_length(pc_msgs, 1)
+  date_msgs <- grep("dates", msgs, value = TRUE)
+  expect_length(date_msgs, 0)
 })

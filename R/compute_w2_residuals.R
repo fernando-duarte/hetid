@@ -68,8 +68,10 @@ compute_w2_residuals <- function(yields, term_premia,
   term_premia_df <- validated$term_premia
   maturities <- validated$maturities
 
-  # Load or validate PCs
-  pcs <- load_w2_pcs(pcs, n_pcs, nrow(yields_df)) # nolint: object_usage_linter
+  # Load or validate PCs (also returns bundled dates if available)
+  pc_result <- load_w2_pcs(pcs, n_pcs, nrow(yields_df))
+  pcs <- pc_result$pcs
+  bundled_dates <- pc_result$dates # nolint: object_usage_linter
 
   # Initialize storage
   residuals_list <- list()
@@ -112,17 +114,14 @@ compute_w2_residuals <- function(yields, term_premia,
     # Create data frame format
     df_list <- list()
 
-    # Get dates - try to extract from data or use provided dates
+    # Get dates from user, from bundled data (already loaded), or indices
     if (is.null(dates)) {
-      # Try to get dates from variables data
-      data("variables", package = "hetid", envir = environment())
-      variables <- get("variables", envir = environment())
-      if ("date" %in% names(variables)) {
-        # SDF innovations have T-1 observations, aligned with dates 2:T
-        dates <- variables$date[2:nrow(variables)]
+      if (!is.null(bundled_dates)) {
+        dates <- bundled_dates
       } else {
-        # Use generic indices
-        dates <- 1:(nrow(yields_df) - 1)
+        # User provided custom PCs -- use row indices per package
+        # convention (consistent with prepare_return_data)
+        dates <- seq_len(nrow(yields_df) - 1)
       }
     }
 
