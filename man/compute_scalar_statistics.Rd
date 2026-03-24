@@ -34,18 +34,13 @@ where \eqn{\odot} denotes the Hadamard (elementwise) product and
 \eqn{W_2^{(i)}} is the i-th column of W2.
 }
 \examples{
-\dontrun{
-# First compute residuals
-w1_res <- compute_w1_residuals()
-w2_res <- compute_w2_residuals(yields, term_premia, maturities = 2:5)
+set.seed(42)
+T_obs <- 100
+I <- 4
+w1 <- rnorm(T_obs)
+w2 <- matrix(rnorm(T_obs * I), nrow = T_obs, ncol = I)
 
-# Extract residual vectors/matrix
-w1 <- w1_res$residuals
-w2 <- do.call(cbind, w2_res$residuals)
-
-# Compute scalar statistics
 scalar_stats <- compute_scalar_statistics(w1, w2)
-print(scalar_stats$s_i_0)
-print(scalar_stats$sigma_i_sq)
-}
+scalar_stats$s_i_0
+scalar_stats$sigma_i_sq
 }

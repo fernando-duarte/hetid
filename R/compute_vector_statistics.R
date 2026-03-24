@@ -26,25 +26,17 @@
 #' @export
 #'
 #' @examples
-#' \dontrun{
-#' # Load principal components
-#' data(variables)
-#' pcs <- as.matrix(variables[, paste0("pc", 1:4)])
+#' set.seed(42)
+#' T_obs <- 100
+#' I <- 4
+#' J <- 3
+#' w1 <- rnorm(T_obs)
+#' w2 <- matrix(rnorm(T_obs * I), nrow = T_obs, ncol = I)
+#' pcs <- matrix(rnorm(T_obs * J), nrow = T_obs, ncol = J)
 #'
-#' # Compute residuals
-#' w1_res <- compute_w1_residuals(n_pcs = 4)
-#' w2_res <- compute_w2_residuals(yields, term_premia, maturities = 2:5)
-#'
-#' # Extract residual vectors/matrix
-#' w1 <- w1_res$residuals
-#' w2 <- do.call(cbind, w2_res$residuals)
-#'
-#' # Align dimensions (PCs are T, residuals are T-1)
-#' pcs_aligned <- pcs[2:nrow(pcs), ]
-#'
-#' # Compute vector statistics
-#' vec_stats <- compute_vector_statistics(w1, w2, pcs_aligned)
-#' }
+#' vec_stats <- compute_vector_statistics(w1, w2, pcs)
+#' vec_stats$r_i_0
+#' vec_stats$r_i_1[[1]]
 compute_vector_statistics <- function(w1, w2, pcs, maturities = NULL) {
   # Validate inputs
   if (!is.numeric(w1) || !is.vector(w1)) {

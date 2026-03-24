@@ -35,20 +35,13 @@ Then for each maturity i:
 where \eqn{\odot} denotes the Hadamard (elementwise) product.
 }
 \examples{
-\dontrun{
-# Compute residuals
-w1_res <- compute_w1_residuals()
-w2_res <- compute_w2_residuals(yields, term_premia, maturities = 2:5)
+set.seed(42)
+T_obs <- 100
+I <- 4
+w1 <- rnorm(T_obs)
+w2 <- matrix(rnorm(T_obs * I), nrow = T_obs, ncol = I)
 
-# Extract residual vectors/matrix
-w1 <- w1_res$residuals
-w2 <- do.call(cbind, w2_res$residuals)
-
-# Compute matrix statistics
 mat_stats <- compute_matrix_statistics(w1, w2)
-
-# Access results for maturity 2
-s_1_mat2 <- mat_stats$s_i_1[[1]] # Vector of length I
-s_2_mat2 <- mat_stats$s_i_2[[1]] # Matrix I x I
-}
+mat_stats$s_i_1[[1]]
+mat_stats$s_i_2[[1]]
 }

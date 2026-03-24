@@ -55,21 +55,20 @@ where \eqn{\boldsymbol{\gamma}_i} is the i-th column of the matrix
 is a vector.
 }
 \examples{
-\dontrun{
-# Assume we have computed vector statistics
-vec_stats <- compute_vector_statistics(w1, w2, pcs)
-
-# Create gamma matrix (J x I)
-J <- 4 # number of PCs
-I <- 8 # number of maturities
+set.seed(42)
+T_obs <- 100
+J <- 3
+I <- 4
+w1 <- rnorm(T_obs)
+w2 <- matrix(rnorm(T_obs * I), nrow = T_obs, ncol = I)
+pcs <- matrix(rnorm(T_obs * J), nrow = T_obs, ncol = J)
 gamma <- matrix(rnorm(J * I), nrow = J, ncol = I)
 
-# Compute identified set components
+vec_stats <- compute_vector_statistics(w1, w2, pcs)
 components <- compute_identified_set_components(
   gamma = gamma,
   r_i_0 = vec_stats$r_i_0,
   r_i_1 = vec_stats$r_i_1,
   p_i_0 = vec_stats$p_i_0
 )
-}
 }

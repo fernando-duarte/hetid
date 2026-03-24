@@ -44,19 +44,25 @@
 #' @export
 #'
 #' @examples
-#' \dontrun{
+#' set.seed(42)
+#' T_obs <- 100
+#' J <- 3
+#' I <- 4
+#' w1 <- rnorm(T_obs)
+#' w2 <- matrix(rnorm(T_obs * I), nrow = T_obs, ncol = I)
+#' pcs <- matrix(rnorm(T_obs * J), nrow = T_obs, ncol = J)
+#' gamma <- matrix(rnorm(J * I), nrow = J, ncol = I)
+#' tau <- rep(1, I)
+#'
 #' vec_stats <- compute_vector_statistics(w1, w2, pcs)
 #' scalar_stats <- compute_scalar_statistics(w1, w2)
 #' matrix_stats <- compute_matrix_statistics(w1, w2)
-#' J <- 4
-#' I <- 8
-#' gamma <- matrix(rnorm(J * I), nrow = J, ncol = I)
-#' tau <- rep(1, I)
 #' components <- compute_identified_set_components(
 #'   gamma = gamma, r_i_0 = vec_stats$r_i_0,
-#'   r_i_1 = vec_stats$r_i_1, p_i_0 = vec_stats$p_i_0
+#'   r_i_1 = vec_stats$r_i_1,
+#'   p_i_0 = vec_stats$p_i_0
 #' )
-#' quad_components <- compute_identified_set_quadratic(
+#' quad <- compute_identified_set_quadratic(
 #'   gamma = gamma, tau = tau,
 #'   L_i = components$L_i, V_i = components$V_i,
 #'   Q_i = components$Q_i,
@@ -65,7 +71,6 @@
 #'   s_i_2 = matrix_stats$s_i_2,
 #'   sigma_i_sq = scalar_stats$sigma_i_sq
 #' )
-#' }
 compute_identified_set_quadratic <- function(gamma, tau, L_i, V_i, Q_i,
                                              s_i_0, s_i_1, s_i_2, sigma_i_sq,
                                              maturities = NULL) {
