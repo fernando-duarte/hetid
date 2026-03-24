@@ -16,6 +16,8 @@
 #'   \item{coefficients}{Matrix of regression coefficients (maturities x predictors)}
 #'   \item{r_squared}{Vector of R-squared values for each maturity}
 #'   \item{n_obs}{Number of observations used in each regression}
+#'   \item{kept_idx}{List of logical vectors indicating which
+#'     rows survived complete.cases filtering, one per maturity}
 #' }
 #' If return_df = TRUE, returns a data frame with columns:
 #' \describe{
@@ -82,6 +84,7 @@ compute_w2_residuals <- function(yields, term_premia,
   ) # +1 for intercept
   r_squared <- numeric(length(maturities))
   n_obs_used <- numeric(length(maturities))
+  kept_idx_list <- list()
 
   # Process each maturity
   for (idx in seq_along(maturities)) {
@@ -103,6 +106,7 @@ compute_w2_residuals <- function(yields, term_premia,
     coef_matrix[idx, ] <- result$coefficients
     r_squared[idx] <- result$r_squared
     n_obs_used[idx] <- result$n_obs
+    kept_idx_list[[paste0("maturity_", i)]] <- result$kept_idx
   }
 
   # Set row/column names for coefficient matrix
@@ -114,14 +118,29 @@ compute_w2_residuals <- function(yields, term_premia,
     # Create data frame format
     df_list <- list()
 
-    # Get dates from user, from bundled data (already loaded), or indices
+    # Track whether user supplied dates
+    user_supplied_dates <- !is.null(dates)
+
+    # Get dates from user, bundled data, or indices
     if (is.null(dates)) {
       if (!is.null(bundled_dates)) {
         dates <- bundled_dates
       } else {
-        # User provided custom PCs -- use row indices per package
-        # convention (consistent with prepare_return_data)
+        # User provided custom PCs -- use row indices
+        # per package convention (prepare_return_data)
         dates <- seq_len(nrow(yields_df) - 1)
+      }
+    }
+
+    # Validate user-supplied dates length
+    if (user_supplied_dates) {
+      expected_len <- nrow(yields_df) - 1
+      if (length(dates) != expected_len) {
+        stop(
+          "dates has ", length(dates),
+          " elements but nrow(yields) - 1 = ",
+          expected_len
+        )
       }
     }
 
@@ -131,9 +150,10 @@ compute_w2_residuals <- function(yields, term_premia,
       mat_key <- paste0("maturity_", i)
 
       if (mat_key %in% names(residuals_list)) {
-        n_obs <- length(residuals_list[[mat_key]])
+        kept <- kept_idx_list[[mat_key]]
+        mat_dates <- dates[which(kept)]
         df_list[[idx]] <- data.frame(
-          date = dates[1:n_obs],
+          date = mat_dates,
           maturity = i,
           residuals = residuals_list[[mat_key]],
           fitted = fitted_list[[mat_key]],
@@ -152,6 +172,7 @@ compute_w2_residuals <- function(yields, term_premia,
     fitted = fitted_list,
     coefficients = coef_matrix,
     r_squared = r_squared,
-    n_obs = n_obs_used
+    n_obs = n_obs_used,
+    kept_idx = kept_idx_list
   )
 }

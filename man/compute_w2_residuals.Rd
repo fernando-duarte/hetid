@@ -46,6 +46,8 @@ If return_df = FALSE, returns a list containing:
 \item{coefficients}{Matrix of regression coefficients (maturities x predictors)}
 \item{r_squared}{Vector of R-squared values for each maturity}
 \item{n_obs}{Number of observations used in each regression}
+\item{kept_idx}{List of logical vectors indicating which
+rows survived complete.cases filtering, one per maturity}
 }
 If return_df = TRUE, returns a data frame with columns:
 \describe{

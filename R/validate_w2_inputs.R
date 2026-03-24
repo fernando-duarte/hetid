@@ -177,6 +177,7 @@ process_w2_maturity <- function(i, yields_df, term_premia_df, pcs, n_pcs) {
     fitted = fitted(model),
     coefficients = coef(model),
     r_squared = summary(model)$r.squared,
-    n_obs = length(y2_clean)
+    n_obs = length(y2_clean),
+    kept_idx = complete_idx
   )
 }

@@ -391,3 +391,46 @@ test_that("variables loaded only once when PCs and dates both NULL", {
   date_msgs <- grep("dates", msgs, value = TRUE)
   expect_length(date_msgs, 0)
 })
+
+test_that("return_df dates align correctly with interior NA in PCs", {
+  acm <- extract_acm_data(
+    data_types = c("yields", "term_premia"),
+    frequency = "quarterly"
+  )
+  yields <- acm[, grep("^y", names(acm))]
+  tp <- acm[, grep("^tp", names(acm))]
+
+  # Create PCs with an interior NA at row 10
+  set.seed(42)
+  n <- nrow(yields)
+  user_pcs <- matrix(rnorm(n * 2), ncol = 2)
+  user_pcs[10, 1] <- NA
+
+  # Use sequential dates so we can verify alignment
+  user_dates <- seq_len(n - 1)
+
+  result <- compute_w2_residuals(
+    yields, tp,
+    maturities = 5, n_pcs = 2,
+    pcs = user_pcs, return_df = TRUE,
+    dates = user_dates
+  )
+
+  # Date 10 should be MISSING (it was the NA row in PCs,
+  # which becomes lagged PC row 10 aligned with SDF
+  # innovation 10)
+  expect_false(10 %in% result$date)
+
+  # Number of dates should equal number of residuals
+  expect_equal(
+    length(result$date),
+    length(result$residuals)
+  )
+
+  # Dates should NOT be consecutive 1:n_obs
+  # (they should skip the NA row)
+  n_obs <- nrow(result)
+  expect_false(
+    identical(result$date, seq_len(n_obs))
+  )
+})
