@@ -118,10 +118,9 @@ compute_identified_set_components <- function(gamma, r_i_0, r_i_1, p_i_0,
     # L_i = gamma_i^T * R_i^(0)
     L_i[idx] <- as.numeric(t(gamma_i) %*% r_i_0[, i])
 
-    # V_i = gamma_i^T * (P_i^(0) * (P_i^(0))^T) * gamma_i
-    p_i_0_vec <- p_i_0[, i, drop = FALSE] # Keep as column vector
-    P_i_0_outer <- p_i_0_vec %*% t(p_i_0_vec)
-    V_i[idx] <- as.numeric(t(gamma_i) %*% P_i_0_outer %*% gamma_i)
+    # V_i = (gamma_i^T * P_i^(0))^2
+    p_i_0_vec <- p_i_0[, i, drop = FALSE]
+    V_i[idx] <- as.numeric(crossprod(gamma_i, p_i_0_vec))^2
 
     # Q_i = gamma_i^T * R_i^(1) (this is a vector of length I)
     R_i_1_mat <- r_i_1[[i]]
