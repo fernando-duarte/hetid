@@ -99,7 +99,7 @@ validate_data_directory <- function(create_if_missing = TRUE) {
   }
 
   # Check if directory is writable
-  if (!file.access(data_dir, mode = 2) == 0) {
+  if (file.access(data_dir, mode = 2) != 0) {
     warning("Data directory may not be writable: ", data_dir)
   }
 

@@ -154,9 +154,12 @@ test_that("load_term_premia warns and returns NULL on read error", {
     get_acm_data_path = function() "/nonexistent/path.csv"
   )
 
-  expect_warning(
-    result <- load_term_premia(),
-    "Failed to load term premia"
+  # read.csv emits a system warning ("cannot open file")
+  # before throwing an error; tryCatch then emits our
+  # "Failed to load" warning. Capture both.
+  warns <- capture_warnings(result <- load_term_premia())
+  expect_true(
+    any(grepl("Failed to load term premia", warns))
   )
   expect_null(result)
 })

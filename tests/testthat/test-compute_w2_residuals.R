@@ -475,6 +475,55 @@ test_that("error when pcs has fewer columns than n_pcs", {
   )
 })
 
+test_that("error when n_pcs is invalid", {
+  acm <- extract_acm_data(
+    data_types = c("yields", "term_premia"),
+    frequency = "quarterly"
+  )
+  yields <- acm[, grep("^y[0-9]", names(acm))]
+  tp <- acm[, grep("^tp", names(acm))]
+
+  expect_error(
+    compute_w2_residuals(yields, tp, n_pcs = 0),
+    "n_pcs must be between"
+  )
+
+  expect_error(
+    compute_w2_residuals(yields, tp, n_pcs = 100),
+    "n_pcs must be between"
+  )
+
+  expect_error(
+    compute_w2_residuals(yields, tp, n_pcs = NA),
+    "n_pcs must be a single finite"
+  )
+})
+
+test_that("error when maturities are non-integer or negative", {
+  acm <- extract_acm_data(
+    data_types = c("yields", "term_premia"),
+    frequency = "quarterly"
+  )
+  yields <- acm[, grep("^y[0-9]", names(acm))]
+  tp <- acm[, grep("^tp", names(acm))]
+
+  expect_error(
+    suppressWarnings(compute_w2_residuals(
+      yields, tp,
+      maturities = c(1.5, 3)
+    )),
+    "positive integers"
+  )
+
+  expect_error(
+    suppressWarnings(compute_w2_residuals(
+      yields, tp,
+      maturities = c(-1, 2)
+    )),
+    "positive integers"
+  )
+})
+
 test_that("load_w2_pcs errors when bundled data lacks PC columns", {
   fake_vars <- data.frame(
     pc1 = 1:10, pc2 = 1:10,

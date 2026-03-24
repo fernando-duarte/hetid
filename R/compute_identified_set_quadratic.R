@@ -118,6 +118,14 @@ compute_identified_set_quadratic <- function(gamma, tau, L_i, V_i, Q_i,
     ))
   }
 
+  # Validate maturities against gamma dimensions
+  if (any(maturities < 1) || any(maturities > n_components)) {
+    stop(
+      "maturities must be between 1 and ncol(gamma) (",
+      n_components, ")"
+    )
+  }
+
   n_maturities <- length(maturities)
   if (any(c(
     length(L_i), length(V_i), length(Q_i),

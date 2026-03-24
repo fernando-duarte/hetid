@@ -79,6 +79,25 @@ documented workflow. They would surface when the identification-layer functions 
 directly with non-standard inputs. Items 13-17 were discovered during adversarial review of the
 implicit data coupling plan and are documented in detail below.
 
+**New findings from follow-up review (2026-03-24):**
+
+24. ~~Missing maturities bounds check in quadratic form (`tau[i]` can exceed `length(tau)`)~~
+    **FIXED** (2026-03-24, added `maturities` bounds validation against `ncol(gamma)`)
+25. Three .R files exceed 200-line limit (quadratic: 234, W2: 218, validate_w2: 204)
+    **PENDING** (to be addressed in future refactoring)
+26. ~~`validate_n_pcs()` is dead code / no `n_pcs` validation in `compute_w2_residuals()`~~
+    **FIXED** (2026-03-24, added `validate_n_pcs(n_pcs)` call in `compute_w2_residuals()`)
+27. ~~`validate_w2_inputs()` doesn't validate maturity integrality or minimum bounds~~
+    **FIXED** (2026-03-24, added integrality and positivity checks)
+28. ~~Confusing `!file.access() == 0` negation in `data_paths.R`~~
+    **FIXED** (2026-03-24, simplified to `file.access() != 0`)
+29. `DESCRIPTION Additional_repositories` points to raw GitHub URL
+    **REJECTED** (acceptable for non-CRAN package)
+30. `apply_time_series_transform()` still loop-based with single call site
+    **REJECTED** (keeping for future reuse, consistent with item 8)
+31. Inconsistent maturity indexing convention between identification functions
+    **PENDING** (API design documentation to be addressed in future)
+
 ---
 
 ## Scores

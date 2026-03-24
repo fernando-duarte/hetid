@@ -298,6 +298,48 @@ test_that(
   }
 )
 
+test_that("errors when maturities exceed ncol(gamma)", {
+  gamma <- matrix(1:12, 3, 4)
+  tau <- rep(1, 4)
+  L_i <- rep(1, 2)
+  V_i <- rep(1, 2)
+  Q_i <- lapply(1:2, function(i) rep(1, 4))
+  s_i_0 <- rep(1, 2)
+  s_i_1 <- lapply(1:2, function(i) rep(1, 4))
+  s_i_2 <- lapply(1:2, function(i) matrix(1, 4, 4))
+  sigma_i_sq <- rep(1, 2)
+
+  expect_error(
+    compute_identified_set_quadratic(
+      gamma, tau, L_i, V_i, Q_i,
+      s_i_0, s_i_1, s_i_2, sigma_i_sq,
+      maturities = c(3, 7)
+    ),
+    "between 1 and ncol\\(gamma\\)"
+  )
+})
+
+test_that("errors when maturities include zero or negative", {
+  gamma <- matrix(1:12, 3, 4)
+  tau <- rep(1, 4)
+  L_i <- rep(1, 2)
+  V_i <- rep(1, 2)
+  Q_i <- lapply(1:2, function(i) rep(1, 4))
+  s_i_0 <- rep(1, 2)
+  s_i_1 <- lapply(1:2, function(i) rep(1, 4))
+  s_i_2 <- lapply(1:2, function(i) matrix(1, 4, 4))
+  sigma_i_sq <- rep(1, 2)
+
+  expect_error(
+    compute_identified_set_quadratic(
+      gamma, tau, L_i, V_i, Q_i,
+      s_i_0, s_i_1, s_i_2, sigma_i_sq,
+      maturities = c(0, 2)
+    ),
+    "between 1 and ncol\\(gamma\\)"
+  )
+})
+
 test_that("rejects mismatched input lengths with subset", {
   set.seed(999)
   J <- 3

@@ -104,7 +104,8 @@ compute_w2_residuals <- function(yields, term_premia,
                                    HETID_CONSTANTS$MAX_MATURITY - 1),
                                  n_pcs = HETID_CONSTANTS$DEFAULT_N_PCS,
                                  pcs = NULL, return_df = FALSE, dates = NULL) {
-  # Validate and prepare inputs
+  # Validate inputs
+  validate_n_pcs(n_pcs)
   validated <- validate_w2_inputs(yields, term_premia, maturities) # nolint: object_usage_linter
   yields_df <- validated$yields
   term_premia_df <- validated$term_premia
