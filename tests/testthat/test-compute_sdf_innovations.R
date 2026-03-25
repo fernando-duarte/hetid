@@ -1,14 +1,8 @@
 test_that("compute_sdf_innovations returns time series", {
-  # Load test data
-  data <- extract_acm_data(
-    data_types = c("yields", "term_premia"),
-    frequency = "quarterly"
-  )
-  yields <- data[, grep("^y", names(data))]
-  term_premia <- data[, grep("^tp", names(data))]
+  test_env <- setup_standard_test_env()
 
   # Test for maturity 5
-  sdf_innov_5 <- compute_sdf_innovations(yields, term_premia, i = 5)
+  sdf_innov_5 <- compute_sdf_innovations(test_env$yields, test_env$term_premia, i = 5)
 
   expect_type(sdf_innov_5, "double")
   expect_true(is.vector(sdf_innov_5))
@@ -16,17 +10,11 @@ test_that("compute_sdf_innovations returns time series", {
 })
 
 test_that("SDF innovations have mean near zero", {
-  # Load test data
-  data <- extract_acm_data(
-    data_types = c("yields", "term_premia"),
-    frequency = "quarterly"
-  )
-  yields <- data[, grep("^y", names(data))]
-  term_premia <- data[, grep("^tp", names(data))]
+  test_env <- setup_standard_test_env()
 
   # Test for multiple maturities (including maturity 1)
   for (i in c(1, 2, 5, 8)) {
-    sdf_innov_i <- compute_sdf_innovations(yields, term_premia, i = i)
+    sdf_innov_i <- compute_sdf_innovations(test_env$yields, test_env$term_premia, i = i)
 
     # Mean should be close to 0
     mean_innov <- mean(sdf_innov_i, na.rm = TRUE)
@@ -37,18 +25,12 @@ test_that("SDF innovations have mean near zero", {
 })
 
 test_that("SDF innovations highly correlated with price news", {
-  # Load test data
-  data <- extract_acm_data(
-    data_types = c("yields", "term_premia"),
-    frequency = "quarterly"
-  )
-  yields <- data[, grep("^y", names(data))]
-  term_premia <- data[, grep("^tp", names(data))]
+  test_env <- setup_standard_test_env()
 
   # Test for maturity 4
   i <- 4
-  price_news_4 <- compute_price_news(yields, term_premia, i = i)
-  sdf_innov_4 <- compute_sdf_innovations(yields, term_premia, i = i)
+  price_news_4 <- compute_price_news(test_env$yields, test_env$term_premia, i = i)
+  sdf_innov_4 <- compute_sdf_innovations(test_env$yields, test_env$term_premia, i = i)
 
   # Should have same length
   expect_equal(length(sdf_innov_4), length(price_news_4))
@@ -61,19 +43,13 @@ test_that("SDF innovations highly correlated with price news", {
 })
 
 test_that("SDF innovations length is n-1", {
-  # Load test data
-  data <- extract_acm_data(
-    data_types = c("yields", "term_premia"),
-    frequency = "quarterly"
-  )
-  yields <- data[, grep("^y", names(data))]
-  term_premia <- data[, grep("^tp", names(data))]
+  test_env <- setup_standard_test_env()
 
   # Test for multiple maturities
   for (i in 1:9) {
-    sdf_innov_i <- compute_sdf_innovations(yields, term_premia, i = i)
+    sdf_innov_i <- compute_sdf_innovations(test_env$yields, test_env$term_premia, i = i)
 
-    expect_equal(length(sdf_innov_i), nrow(yields) - 1,
+    expect_equal(length(sdf_innov_i), nrow(test_env$yields) - 1,
       label = paste("SDF innovations should have length n-1 for maturity", i)
     )
   }

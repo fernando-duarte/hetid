@@ -25,21 +25,15 @@ test_that("special case i=1 returns 0", {
 })
 
 test_that("k_hat manual calculation verification", {
-  # Load test data
-  data <- extract_acm_data(
-    data_types = c("yields", "term_premia"),
-    frequency = "quarterly"
-  )
-  yields <- data[, grep("^y", names(data))]
-  term_premia <- data[, grep("^tp", names(data))]
+  test_env <- setup_standard_test_env()
 
   # Test for i=5
   i <- 5
-  k_hat_5 <- compute_k_hat(yields, term_premia, i = i)
+  k_hat_5 <- compute_k_hat(test_env$yields, test_env$term_premia, i = i)
 
   # Manual calculation
-  n_hat <- compute_n_hat(yields, term_premia, i = i - 1)
-  y <- yields$y1 / 100 # Convert to decimal
+  n_hat <- compute_n_hat(test_env$yields, test_env$term_premia, i = i - 1)
+  y <- test_env$yields$y1 / 100 # Convert to decimal
 
   # Get n_hat at t+1
   n_hat_t_plus_1 <- c(n_hat[-1], NA)
@@ -58,18 +52,12 @@ test_that("k_hat manual calculation verification", {
 })
 
 test_that("k_hat monotonicity - generally increases with maturity", {
-  # Load test data
-  data <- extract_acm_data(
-    data_types = c("yields", "term_premia"),
-    frequency = "quarterly"
-  )
-  yields <- data[, grep("^y", names(data))]
-  term_premia <- data[, grep("^tp", names(data))]
+  test_env <- setup_standard_test_env()
 
   # Compute k_hat for all maturities
   k_values <- numeric(9)
   for (i in 1:9) {
-    k_values[i] <- compute_k_hat(yields, term_premia, i = i)
+    k_values[i] <- compute_k_hat(test_env$yields, test_env$term_premia, i = i)
   }
 
   # Check general increasing trend (allowing for some non-monotonicity)
@@ -81,17 +69,11 @@ test_that("k_hat monotonicity - generally increases with maturity", {
 })
 
 test_that("k_hat positivity - all values positive except i=1", {
-  # Load test data
-  data <- extract_acm_data(
-    data_types = c("yields", "term_premia"),
-    frequency = "quarterly"
-  )
-  yields <- data[, grep("^y", names(data))]
-  term_premia <- data[, grep("^tp", names(data))]
+  test_env <- setup_standard_test_env()
 
   # Test all maturities
   for (i in 1:9) {
-    k_hat_i <- compute_k_hat(yields, term_premia, i = i)
+    k_hat_i <- compute_k_hat(test_env$yields, test_env$term_premia, i = i)
 
     if (i == 1) {
       expect_equal(k_hat_i, 0,
@@ -106,21 +88,15 @@ test_that("k_hat positivity - all values positive except i=1", {
 })
 
 test_that("k_hat time alignment verification", {
-  # Load test data
-  data <- extract_acm_data(
-    data_types = c("yields", "term_premia"),
-    frequency = "quarterly"
-  )
-  yields <- data[, grep("^y", names(data))]
-  term_premia <- data[, grep("^tp", names(data))]
+  test_env <- setup_standard_test_env()
 
   # Test with i=3 for clarity
   i <- 3
-  k_hat_3 <- compute_k_hat(yields, term_premia, i = i)
+  k_hat_3 <- compute_k_hat(test_env$yields, test_env$term_premia, i = i)
 
   # Manual verification of time alignment
-  n_hat_2 <- compute_n_hat(yields, term_premia, i = i - 1)
-  y1 <- yields$y1 / 100
+  n_hat_2 <- compute_n_hat(test_env$yields, test_env$term_premia, i = i - 1)
+  y1 <- test_env$yields$y1 / 100
 
   # Time alignment check: n_hat at t+1 and y at t+i
   n <- length(y1)

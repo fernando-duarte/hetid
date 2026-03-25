@@ -1,64 +1,47 @@
 test_that("all functions handle same ACM data format", {
-  # Load test data once
-  data <- extract_acm_data(
-    data_types = c("yields", "term_premia"),
-    frequency = "quarterly"
-  )
-  yields <- data[, grep("^y", names(data))]
-  term_premia <- data[, grep("^tp", names(data))]
+  test_env <- setup_standard_test_env()
 
   # Test that all functions work with the same data
   i <- 5
 
   # All these should work without error
-  expect_type(compute_c_hat(yields, term_premia, i = i), "double")
-  expect_type(compute_k_hat(yields, term_premia, i = i), "double")
-  expect_type(compute_n_hat(yields, term_premia, i = i), "double")
-  expect_type(compute_price_news(yields, term_premia, i = i), "double")
-  expect_type(compute_sdf_innovations(yields, term_premia, i = i), "double")
-  expect_type(compute_variance_bound(yields, term_premia, i = i), "double")
+  expect_type(compute_c_hat(test_env$yields, test_env$term_premia, i = i), "double")
+  expect_type(compute_k_hat(test_env$yields, test_env$term_premia, i = i), "double")
+  expect_type(compute_n_hat(test_env$yields, test_env$term_premia, i = i), "double")
+  expect_type(compute_price_news(test_env$yields, test_env$term_premia, i = i), "double")
+  expect_type(compute_sdf_innovations(test_env$yields, test_env$term_premia, i = i), "double")
+  expect_type(compute_variance_bound(test_env$yields, test_env$term_premia, i = i), "double")
 })
 
 test_that("functions with date parameters align correctly", {
-  # Load test data
-  data <- extract_acm_data(
-    data_types = c("yields", "term_premia"),
-    frequency = "quarterly"
-  )
-  yields <- data[, grep("^y", names(data))]
-  term_premia <- data[, grep("^tp", names(data))]
-  dates <- data$date
+  test_env <- setup_standard_test_env()
 
   # Test n_hat with dates
-  n_hat_df <- compute_n_hat(yields, term_premia,
+  n_hat_df <- compute_n_hat(test_env$yields, test_env$term_premia,
     i = 5,
-    return_df = TRUE, dates = dates
+    return_df = TRUE, dates = test_env$data$date
   )
 
   expect_s3_class(n_hat_df, "data.frame")
-  expect_equal(n_hat_df$date, dates)
+  expect_equal(n_hat_df$date, test_env$data$date)
 
   # Test price news with dates
-  price_news_df <- compute_price_news(yields, term_premia,
+  price_news_df <- compute_price_news(test_env$yields, test_env$term_premia,
     i = 5,
-    return_df = TRUE, dates = dates
+    return_df = TRUE, dates = test_env$data$date
   )
 
   expect_s3_class(price_news_df, "data.frame")
   # Price news returns a data frame with same number of rows as input
   # The first row has NA because price news can't be computed for t=0
-  expect_equal(nrow(price_news_df), length(dates))
+  expect_equal(nrow(price_news_df), length(test_env$data$date))
   expect_true(is.na(price_news_df$price_news[1]))
 })
 
 test_that("consistent NA handling across functions", {
-  # Load test data
-  data <- extract_acm_data(
-    data_types = c("yields", "term_premia"),
-    frequency = "quarterly"
-  )
-  yields <- data[, grep("^y", names(data))]
-  term_premia <- data[, grep("^tp", names(data))]
+  test_env <- setup_standard_test_env()
+  yields <- test_env$yields
+  term_premia <- test_env$term_premia
 
   # Introduce NAs
   yields[c(10, 20, 30), "y5"] <- NA
@@ -74,32 +57,22 @@ test_that("consistent NA handling across functions", {
 })
 
 test_that("invalid inputs produce appropriate errors", {
-  # Load test data
-  data <- extract_acm_data(
-    data_types = c("yields", "term_premia"),
-    frequency = "quarterly"
-  )
-  yields <- data[, grep("^y", names(data))]
-  term_premia <- data[, grep("^tp", names(data))]
+  test_env <- setup_standard_test_env()
 
   # Test invalid maturity
-  expect_error(compute_c_hat(yields, term_premia, i = 0))
-  expect_error(compute_k_hat(yields, term_premia, i = -1))
-  expect_error(compute_n_hat(yields, term_premia, i = 11))
-  expect_error(compute_price_news(yields, term_premia, i = 15))
-  expect_error(compute_sdf_innovations(yields, term_premia, i = 0))
-  expect_error(compute_variance_bound(yields, term_premia, i = -5))
+  expect_error(compute_c_hat(test_env$yields, test_env$term_premia, i = 0))
+  expect_error(compute_k_hat(test_env$yields, test_env$term_premia, i = -1))
+  expect_error(compute_n_hat(test_env$yields, test_env$term_premia, i = 11))
+  expect_error(compute_price_news(test_env$yields, test_env$term_premia, i = 15))
+  expect_error(compute_sdf_innovations(test_env$yields, test_env$term_premia, i = 0))
+  expect_error(compute_variance_bound(test_env$yields, test_env$term_premia, i = -5))
 })
 
 test_that("functions handle large datasets efficiently", {
-  # Create a larger dataset by repeating data
-  data <- extract_acm_data(
-    data_types = c("yields", "term_premia"),
-    frequency = "quarterly"
-  )
+  test_env <- setup_standard_test_env()
 
   # Repeat data to make it larger (but not too large for testing)
-  large_data <- rbind(data, data, data)
+  large_data <- rbind(test_env$data, test_env$data, test_env$data)
   yields <- large_data[, grep("^y", names(large_data))]
   term_premia <- large_data[, grep("^tp", names(large_data))]
 
@@ -114,36 +87,30 @@ test_that("functions handle large datasets efficiently", {
 })
 
 test_that("similar functions have consistent return structures", {
-  # Load test data
-  data <- extract_acm_data(
-    data_types = c("yields", "term_premia"),
-    frequency = "quarterly"
-  )
-  yields <- data[, grep("^y", names(data))]
-  term_premia <- data[, grep("^tp", names(data))]
+  test_env <- setup_standard_test_env()
 
   # Scalar returns: c_hat, k_hat, variance_bound
-  c_hat <- compute_c_hat(yields, term_premia, i = 5)
-  k_hat <- compute_k_hat(yields, term_premia, i = 5)
-  var_bound <- compute_variance_bound(yields, term_premia, i = 5)
+  c_hat <- compute_c_hat(test_env$yields, test_env$term_premia, i = 5)
+  k_hat <- compute_k_hat(test_env$yields, test_env$term_premia, i = 5)
+  var_bound <- compute_variance_bound(test_env$yields, test_env$term_premia, i = 5)
 
   expect_length(c_hat, 1)
   expect_length(k_hat, 1)
   expect_length(var_bound, 1)
 
   # Vector returns: n_hat, price_news, sdf_innovations
-  n_hat <- compute_n_hat(yields, term_premia, i = 5)
-  price_news <- compute_price_news(yields, term_premia, i = 5)
-  sdf_innov <- compute_sdf_innovations(yields, term_premia, i = 5)
+  n_hat <- compute_n_hat(test_env$yields, test_env$term_premia, i = 5)
+  price_news <- compute_price_news(test_env$yields, test_env$term_premia, i = 5)
+  sdf_innov <- compute_sdf_innovations(test_env$yields, test_env$term_premia, i = 5)
 
   expect_true(length(n_hat) > 1)
   expect_true(length(price_news) > 1)
   expect_true(length(sdf_innov) > 1)
 
   # n_hat has same length as input, others have n-1
-  expect_length(n_hat, nrow(yields))
-  expect_length(price_news, nrow(yields) - 1)
-  expect_length(sdf_innov, nrow(yields) - 1)
+  expect_length(n_hat, nrow(test_env$yields))
+  expect_length(price_news, nrow(test_env$yields) - 1)
+  expect_length(sdf_innov, nrow(test_env$yields) - 1)
 })
 
 test_that("ACM data is quarterly when requested", {

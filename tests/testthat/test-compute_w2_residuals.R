@@ -1,14 +1,8 @@
 test_that("compute_w2_residuals works for single maturity", {
-  # Load test data
-  data <- extract_acm_data(
-    data_types = c("yields", "term_premia"),
-    frequency = "quarterly"
-  )
-  yields <- data[, grep("^y", names(data))]
-  term_premia <- data[, grep("^tp", names(data))]
+  test_env <- setup_standard_test_env()
 
   # Test single maturity - let the function handle PC loading internally
-  res_y2 <- suppressWarnings(compute_w2_residuals(yields, term_premia,
+  res_y2 <- suppressWarnings(compute_w2_residuals(test_env$yields, test_env$term_premia,
     maturities = 5, n_pcs = 4
   ))
 
@@ -23,16 +17,10 @@ test_that("compute_w2_residuals works for single maturity", {
 })
 
 test_that("compute_w2_residuals works for maturity 1", {
-  # Load test data
-  data <- extract_acm_data(
-    data_types = c("yields", "term_premia"),
-    frequency = "quarterly"
-  )
-  yields <- data[, grep("^y", names(data))]
-  term_premia <- data[, grep("^tp", names(data))]
+  test_env <- setup_standard_test_env()
 
   # Test maturity 1 specifically
-  res_y2_mat1 <- suppressWarnings(compute_w2_residuals(yields, term_premia,
+  res_y2_mat1 <- suppressWarnings(compute_w2_residuals(test_env$yields, test_env$term_premia,
     maturities = 1, n_pcs = 4
   ))
 
@@ -50,17 +38,11 @@ test_that("compute_w2_residuals works for maturity 1", {
 })
 
 test_that("compute_w2_residuals works for multiple maturities", {
-  # Load test data
-  data <- extract_acm_data(
-    data_types = c("yields", "term_premia"),
-    frequency = "quarterly"
-  )
-  yields <- data[, grep("^y", names(data))]
-  term_premia <- data[, grep("^tp", names(data))]
+  test_env <- setup_standard_test_env()
 
   # Test multiple maturities (including maturity 1) - let the function handle PC loading internally
   maturities <- c(1, 2, 5, 7)
-  res_y2 <- suppressWarnings(compute_w2_residuals(yields, term_premia,
+  res_y2 <- suppressWarnings(compute_w2_residuals(test_env$yields, test_env$term_premia,
     maturities = maturities, n_pcs = 4
   ))
 
@@ -71,16 +53,10 @@ test_that("compute_w2_residuals works for multiple maturities", {
 })
 
 test_that("residual properties check", {
-  # Load test data
-  data <- extract_acm_data(
-    data_types = c("yields", "term_premia"),
-    frequency = "quarterly"
-  )
-  yields <- data[, grep("^y", names(data))]
-  term_premia <- data[, grep("^tp", names(data))]
+  test_env <- setup_standard_test_env()
 
   # Test for maturity 3 - let the function handle PC loading internally
-  res_y2 <- suppressWarnings(compute_w2_residuals(yields, term_premia,
+  res_y2 <- suppressWarnings(compute_w2_residuals(test_env$yields, test_env$term_premia,
     maturities = 3, n_pcs = 4
   ))
   residuals <- res_y2$residuals[[1]]
@@ -93,20 +69,14 @@ test_that("residual properties check", {
 })
 
 test_that("compute_w2_residuals uses SDF innovations", {
-  # Load test data
-  data <- extract_acm_data(
-    data_types = c("yields", "term_premia"),
-    frequency = "quarterly"
-  )
-  yields <- data[, grep("^y", names(data))]
-  term_premia <- data[, grep("^tp", names(data))]
+  test_env <- setup_standard_test_env()
 
   # Get SDF innovations directly
   i <- 4
-  sdf_innov <- compute_sdf_innovations(yields, term_premia, i = i)
+  sdf_innov <- compute_sdf_innovations(test_env$yields, test_env$term_premia, i = i)
 
   # Get W2 residuals - let the function handle PC loading internally
-  res_y2 <- suppressWarnings(compute_w2_residuals(yields, term_premia,
+  res_y2 <- suppressWarnings(compute_w2_residuals(test_env$yields, test_env$term_premia,
     maturities = i, n_pcs = 4
   ))
 
@@ -240,17 +210,11 @@ test_that("quarterly data alignment test", {
 })
 
 test_that("length verification for output", {
-  # Load test data
-  data <- extract_acm_data(
-    data_types = c("yields", "term_premia"),
-    frequency = "quarterly"
-  )
-  yields <- data[, grep("^y", names(data))]
-  term_premia <- data[, grep("^tp", names(data))]
+  test_env <- setup_standard_test_env()
 
   # Test with multiple maturities - let the function handle PC loading internally
   maturities <- 1:9
-  res_y2 <- suppressWarnings(compute_w2_residuals(yields, term_premia,
+  res_y2 <- suppressWarnings(compute_w2_residuals(test_env$yields, test_env$term_premia,
     maturities = maturities, n_pcs = 4
   ))
 
@@ -264,38 +228,28 @@ test_that("length verification for output", {
 })
 
 test_that("warning emitted when PCs fall back to package data", {
-  acm <- extract_acm_data(
-    data_types = c("yields", "term_premia"),
-    frequency = "quarterly"
-  )
-  yields <- acm[, grep("^y", names(acm))]
-  tp <- acm[, grep("^tp", names(acm))]
+  test_env <- setup_standard_test_env()
 
   expect_warning(
-    compute_w2_residuals(yields, tp, maturities = 5, n_pcs = 2),
+    compute_w2_residuals(test_env$yields, test_env$term_premia, maturities = 5, n_pcs = 2),
     "position"
   )
 })
 
 test_that("no message when user provides PCs", {
-  acm <- extract_acm_data(
-    data_types = c("yields", "term_premia"),
-    frequency = "quarterly"
-  )
-  yields <- acm[, grep("^y", names(acm))]
-  tp <- acm[, grep("^tp", names(acm))]
+  test_env <- setup_standard_test_env()
 
   # Synthetic PCs with correct row count
   set.seed(42)
   user_pcs <- matrix(
-    rnorm(nrow(yields) * 2),
+    rnorm(nrow(test_env$yields) * 2),
     ncol = 2
   )
 
   expect_no_warning(
     expect_no_message(
       compute_w2_residuals(
-        yields, tp,
+        test_env$yields, test_env$term_premia,
         maturities = 5, n_pcs = 2,
         pcs = user_pcs
       )
@@ -304,24 +258,19 @@ test_that("no message when user provides PCs", {
 })
 
 test_that("row indices used when user provides PCs but not dates", {
-  acm <- extract_acm_data(
-    data_types = c("yields", "term_premia"),
-    frequency = "quarterly"
-  )
-  yields <- acm[, grep("^y", names(acm))]
-  tp <- acm[, grep("^tp", names(acm))]
+  test_env <- setup_standard_test_env()
 
   # Synthetic PCs with correct row count
   set.seed(42)
   user_pcs <- matrix(
-    rnorm(nrow(yields) * 2),
+    rnorm(nrow(test_env$yields) * 2),
     ncol = 2
   )
 
   # PCs provided, dates not -- should use row indices, no message
   result <- expect_no_message(
     compute_w2_residuals(
-      yields, tp,
+      test_env$yields, test_env$term_premia,
       maturities = 5, n_pcs = 2,
       pcs = user_pcs, return_df = TRUE
     )
@@ -335,28 +284,23 @@ test_that("row indices used when user provides PCs but not dates", {
 })
 
 test_that("no message for dates when user provides dates", {
-  acm <- extract_acm_data(
-    data_types = c("yields", "term_premia"),
-    frequency = "quarterly"
-  )
-  yields <- acm[, grep("^y", names(acm))]
-  tp <- acm[, grep("^tp", names(acm))]
+  test_env <- setup_standard_test_env()
 
   # Synthetic PCs with correct row count
   set.seed(42)
   user_pcs <- matrix(
-    rnorm(nrow(yields) * 2),
+    rnorm(nrow(test_env$yields) * 2),
     ncol = 2
   )
   user_dates <- seq(
     as.Date("2000-01-01"),
-    length.out = nrow(yields) - 1,
+    length.out = nrow(test_env$yields) - 1,
     by = "quarter"
   )
 
   result <- expect_no_message(
     compute_w2_residuals(
-      yields, tp,
+      test_env$yields, test_env$term_premia,
       maturities = 5, n_pcs = 2,
       pcs = user_pcs, return_df = TRUE,
       dates = user_dates
@@ -371,16 +315,11 @@ test_that("no message for dates when user provides dates", {
 })
 
 test_that("variables loaded only once when PCs and dates both NULL", {
-  acm <- extract_acm_data(
-    data_types = c("yields", "term_premia"),
-    frequency = "quarterly"
-  )
-  yields <- acm[, grep("^y", names(acm))]
-  tp <- acm[, grep("^tp", names(acm))]
+  test_env <- setup_standard_test_env()
 
   warns <- capture_warnings(
     compute_w2_residuals(
-      yields, tp,
+      test_env$yields, test_env$term_premia,
       maturities = 5, n_pcs = 2,
       return_df = TRUE
     )
@@ -392,16 +331,11 @@ test_that("variables loaded only once when PCs and dates both NULL", {
 })
 
 test_that("return_df dates align correctly with interior NA in PCs", {
-  acm <- extract_acm_data(
-    data_types = c("yields", "term_premia"),
-    frequency = "quarterly"
-  )
-  yields <- acm[, grep("^y", names(acm))]
-  tp <- acm[, grep("^tp", names(acm))]
+  test_env <- setup_standard_test_env()
 
   # Create PCs with an interior NA at row 10
   set.seed(42)
-  n <- nrow(yields)
+  n <- nrow(test_env$yields)
   user_pcs <- matrix(rnorm(n * 2), ncol = 2)
   user_pcs[10, 1] <- NA
 
@@ -409,7 +343,7 @@ test_that("return_df dates align correctly with interior NA in PCs", {
   user_dates <- seq_len(n - 1)
 
   result <- compute_w2_residuals(
-    yields, tp,
+    test_env$yields, test_env$term_premia,
     maturities = 5, n_pcs = 2,
     pcs = user_pcs, return_df = TRUE,
     dates = user_dates
@@ -435,19 +369,14 @@ test_that("return_df dates align correctly with interior NA in PCs", {
 })
 
 test_that("error when user pcs has wrong number of rows", {
-  acm <- extract_acm_data(
-    data_types = c("yields", "term_premia"),
-    frequency = "quarterly"
-  )
-  yields <- acm[, grep("^y[0-9]", names(acm))]
-  tp <- acm[, grep("^tp", names(acm))]
+  test_env <- setup_standard_test_env()
 
   # PCs with 5 rows but yields has many more
   bad_pcs <- matrix(rnorm(5 * 4), ncol = 4)
 
   expect_error(
     compute_w2_residuals(
-      yields, tp,
+      test_env$yields, test_env$term_premia,
       maturities = 5, n_pcs = 4, pcs = bad_pcs
     ),
     "must match number of rows"
@@ -455,20 +384,15 @@ test_that("error when user pcs has wrong number of rows", {
 })
 
 test_that("error when pcs has fewer columns than n_pcs", {
-  acm <- extract_acm_data(
-    data_types = c("yields", "term_premia"),
-    frequency = "quarterly"
-  )
-  yields <- acm[, grep("^y[0-9]", names(acm))]
-  tp <- acm[, grep("^tp", names(acm))]
+  test_env <- setup_standard_test_env()
 
   # 2-column PCs but n_pcs = 4
   set.seed(42)
-  bad_pcs <- matrix(rnorm(nrow(yields) * 2), ncol = 2)
+  bad_pcs <- matrix(rnorm(nrow(test_env$yields) * 2), ncol = 2)
 
   expect_error(
     compute_w2_residuals(
-      yields, tp,
+      test_env$yields, test_env$term_premia,
       maturities = 5, n_pcs = 4, pcs = bad_pcs
     ),
     "pcs has 2 columns but n_pcs = 4"
@@ -476,40 +400,30 @@ test_that("error when pcs has fewer columns than n_pcs", {
 })
 
 test_that("error when n_pcs is invalid", {
-  acm <- extract_acm_data(
-    data_types = c("yields", "term_premia"),
-    frequency = "quarterly"
-  )
-  yields <- acm[, grep("^y[0-9]", names(acm))]
-  tp <- acm[, grep("^tp", names(acm))]
+  test_env <- setup_standard_test_env()
 
   expect_error(
-    compute_w2_residuals(yields, tp, n_pcs = 0),
+    compute_w2_residuals(test_env$yields, test_env$term_premia, n_pcs = 0),
     "n_pcs must be between"
   )
 
   expect_error(
-    compute_w2_residuals(yields, tp, n_pcs = 100),
+    compute_w2_residuals(test_env$yields, test_env$term_premia, n_pcs = 100),
     "n_pcs must be between"
   )
 
   expect_error(
-    compute_w2_residuals(yields, tp, n_pcs = NA),
+    compute_w2_residuals(test_env$yields, test_env$term_premia, n_pcs = NA),
     "n_pcs must be a single finite"
   )
 })
 
 test_that("error when maturities are non-integer or negative", {
-  acm <- extract_acm_data(
-    data_types = c("yields", "term_premia"),
-    frequency = "quarterly"
-  )
-  yields <- acm[, grep("^y[0-9]", names(acm))]
-  tp <- acm[, grep("^tp", names(acm))]
+  test_env <- setup_standard_test_env()
 
   expect_error(
     suppressWarnings(compute_w2_residuals(
-      yields, tp,
+      test_env$yields, test_env$term_premia,
       maturities = c(1.5, 3)
     )),
     "positive integers"
@@ -517,7 +431,7 @@ test_that("error when maturities are non-integer or negative", {
 
   expect_error(
     suppressWarnings(compute_w2_residuals(
-      yields, tp,
+      test_env$yields, test_env$term_premia,
       maturities = c(-1, 2)
     )),
     "positive integers"

@@ -1,14 +1,8 @@
 test_that("compute_variance_bound returns single positive value", {
-  # Load test data
-  data <- extract_acm_data(
-    data_types = c("yields", "term_premia"),
-    frequency = "quarterly"
-  )
-  yields <- data[, grep("^y", names(data))]
-  term_premia <- data[, grep("^tp", names(data))]
+  test_env <- setup_standard_test_env()
 
   # Test for maturity 5
-  var_bound_5 <- compute_variance_bound(yields, term_premia, i = 5)
+  var_bound_5 <- compute_variance_bound(test_env$yields, test_env$term_premia, i = 5)
 
   expect_type(var_bound_5, "double")
   expect_length(var_bound_5, 1)
@@ -17,16 +11,10 @@ test_that("compute_variance_bound returns single positive value", {
 })
 
 test_that("special case i=1 returns exactly 0", {
-  # Load test data
-  data <- extract_acm_data(
-    data_types = c("yields", "term_premia"),
-    frequency = "quarterly"
-  )
-  yields <- data[, grep("^y", names(data))]
-  term_premia <- data[, grep("^tp", names(data))]
+  test_env <- setup_standard_test_env()
 
   # For i=1, variance bound should be exactly 0
-  var_bound_1 <- compute_variance_bound(yields, term_premia, i = 1)
+  var_bound_1 <- compute_variance_bound(test_env$yields, test_env$term_premia, i = 1)
 
   expect_equal(var_bound_1, 0,
     label = "Variance bound should be 0 when i=1"
@@ -34,17 +22,11 @@ test_that("special case i=1 returns exactly 0", {
 })
 
 test_that("variance bound is positive for all i>1", {
-  # Load test data
-  data <- extract_acm_data(
-    data_types = c("yields", "term_premia"),
-    frequency = "quarterly"
-  )
-  yields <- data[, grep("^y", names(data))]
-  term_premia <- data[, grep("^tp", names(data))]
+  test_env <- setup_standard_test_env()
 
   # Test all maturities (including maturity 1)
   for (i in 1:9) {
-    var_bound_i <- compute_variance_bound(yields, term_premia, i = i)
+    var_bound_i <- compute_variance_bound(test_env$yields, test_env$term_premia, i = i)
 
     if (i == 1) {
       # For maturity 1, variance bound should be 0
@@ -61,21 +43,15 @@ test_that("variance bound is positive for all i>1", {
 })
 
 test_that("variance bound formula verification", {
-  # Load test data
-  data <- extract_acm_data(
-    data_types = c("yields", "term_premia"),
-    frequency = "quarterly"
-  )
-  yields <- data[, grep("^y", names(data))]
-  term_premia <- data[, grep("^tp", names(data))]
+  test_env <- setup_standard_test_env()
 
   # Test for i=4
   i <- 4
-  var_bound_4 <- compute_variance_bound(yields, term_premia, i = i)
+  var_bound_4 <- compute_variance_bound(test_env$yields, test_env$term_premia, i = i)
 
   # Compute components
-  c_hat_4 <- compute_c_hat(yields, term_premia, i = i)
-  k_hat_4 <- compute_k_hat(yields, term_premia, i = i)
+  c_hat_4 <- compute_c_hat(test_env$yields, test_env$term_premia, i = i)
+  k_hat_4 <- compute_k_hat(test_env$yields, test_env$term_premia, i = i)
 
   # Verify formula: variance_bound = 0.25 * c_hat * k_hat
   expected_bound <- 0.25 * c_hat_4 * k_hat_4
@@ -87,18 +63,12 @@ test_that("variance bound formula verification", {
 })
 
 test_that("variance bound generally increases with maturity", {
-  # Load test data
-  data <- extract_acm_data(
-    data_types = c("yields", "term_premia"),
-    frequency = "quarterly"
-  )
-  yields <- data[, grep("^y", names(data))]
-  term_premia <- data[, grep("^tp", names(data))]
+  test_env <- setup_standard_test_env()
 
   # Compute variance bounds for all maturities
   var_bounds <- numeric(9)
   for (i in 1:9) {
-    var_bounds[i] <- compute_variance_bound(yields, term_premia, i = i)
+    var_bounds[i] <- compute_variance_bound(test_env$yields, test_env$term_premia, i = i)
   }
 
   # Check general increasing trend (allowing for some non-monotonicity)
