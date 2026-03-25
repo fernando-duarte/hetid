@@ -146,7 +146,7 @@ compute_identified_set_components <- function(gamma, r_i_0, r_i_1, p_i_0,
     gamma_i <- gamma[, i, drop = FALSE]
 
     L_i[idx] <- as.numeric(
-      t(gamma_i) %*% r_i_0[, idx]
+      crossprod(gamma_i, r_i_0[, idx])
     )
 
     p_i_0_vec <- p_i_0[, idx, drop = FALSE]
@@ -164,7 +164,7 @@ compute_identified_set_components <- function(gamma, r_i_0, r_i_1, p_i_0,
       ))
     }
     Q_i[[idx]] <- as.numeric(
-      t(gamma_i) %*% R_i_1_mat
+      crossprod(gamma_i, R_i_1_mat)
     )
     names(Q_i[[idx]]) <- paste0(
       "maturity_", seq_len(ncol(R_i_1_mat))

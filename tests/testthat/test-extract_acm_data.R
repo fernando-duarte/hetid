@@ -198,25 +198,14 @@ test_that("extract_acm_data warns on incomplete terminal quarter", {
 })
 
 test_that("extract_acm_data error handling", {
-  # Test with auto_download = FALSE and no data
-  # First, temporarily move any existing data
-  data_dir <- system.file("extdata", package = "hetid")
-  acm_file <- file.path(data_dir, "ACMTermPremium.csv")
-  temp_file <- NULL
-
-  if (file.exists(acm_file)) {
-    temp_file <- tempfile()
-    file.rename(acm_file, temp_file)
-  }
+  # Mock check_data_file_exists to simulate missing data
+  local_mocked_bindings(
+    check_data_file_exists = function(...) FALSE
+  )
 
   # Should error when data not available and auto_download = FALSE
   expect_error(
     extract_acm_data(auto_download = FALSE),
     "ACM data not available"
   )
-
-  # Restore file if it was moved
-  if (!is.null(temp_file) && file.exists(temp_file)) {
-    file.rename(temp_file, acm_file)
-  }
 })

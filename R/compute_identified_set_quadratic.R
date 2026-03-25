@@ -167,8 +167,7 @@ compute_identified_set_quadratic <- function(gamma, tau, L_i, V_i, Q_i,
     }
 
     # Compute A_i = Q_i * Q_i^T - d_i * S_i^(2)
-    Q_i_outer <- outer(Q_i_vec, Q_i_vec)
-    A_i[[idx]] <- Q_i_outer - d_i[idx] * s_i_2_mat
+    A_i[[idx]] <- tcrossprod(Q_i_vec) - d_i[idx] * s_i_2_mat
 
     # Verify A_i is symmetric (it should be by construction)
     if (!isSymmetric(A_i[[idx]],

@@ -39,8 +39,17 @@ download_term_premia <- function(force = FALSE, quiet = FALSE) {
     return(invisible(csv_path))
   }
 
+  # Check if readxl is available before downloading
+  if (!requireNamespace("readxl", quietly = TRUE)) {
+    stop(
+      "Package 'readxl' is required to read Excel files. ",
+      "Please install it with: install.packages('readxl')"
+    )
+  }
+
   # Download to temporary file
   temp_xls <- tempfile(fileext = ".xls")
+  on.exit(unlink(temp_xls), add = TRUE)
 
   if (!quiet) {
     message("Downloading ACM term premia data from NY Fed...")
@@ -54,14 +63,6 @@ download_term_premia <- function(force = FALSE, quiet = FALSE) {
         mode = "wb",
         quiet = quiet
       )
-
-      # Check if readxl is available
-      if (!requireNamespace("readxl", quietly = TRUE)) {
-        stop(
-          "Package 'readxl' is required to read Excel files. ",
-          "Please install it with: install.packages('readxl')"
-        )
-      }
 
       # Read Excel file
       if (!quiet) {
@@ -82,16 +83,9 @@ download_term_premia <- function(force = FALSE, quiet = FALSE) {
         )
       }
 
-      # Clean up temp file
-      unlink(temp_xls)
-
       return(invisible(csv_path))
     },
     error = function(e) {
-      # Clean up on error
-      if (file.exists(temp_xls)) {
-        unlink(temp_xls)
-      }
       stop("Failed to download term premia data: ", e$message)
     }
   )
