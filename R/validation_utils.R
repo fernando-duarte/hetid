@@ -6,6 +6,22 @@
 #' @keywords internal
 NULL
 
+#' Assert Scalar Finite Value
+#'
+#' Internal guard for parameters that must be a single
+#' finite numeric value.
+#'
+#' @param x Value to check
+#' @param name Parameter name for the error message
+#'
+#' @return Invisible NULL; stops with error if invalid
+#' @keywords internal
+assert_scalar_finite <- function(x, name) {
+  if (!is.numeric(x) || length(x) != 1 || !is.finite(x)) {
+    stop(name, " must be a single finite numeric value")
+  }
+}
+
 #' Validate Maturity Index
 #'
 #' Validates maturity index against dataset constraints.
@@ -16,9 +32,7 @@ NULL
 #' @return Invisible TRUE if valid, stops with informative error if invalid
 #' @keywords internal
 validate_maturity_index <- function(i, max_maturity = HETID_CONSTANTS$MAX_MATURITY) {
-  if (!is.numeric(i) || length(i) != 1 || !is.finite(i)) {
-    stop("Maturity index i must be a single finite numeric value")
-  }
+  assert_scalar_finite(i, "Maturity index i")
 
   if (i %% 1 != 0) {
     stop("Maturity index i must be an integer")
@@ -70,9 +84,7 @@ validate_data_dimensions <- function(yields, term_premia) {
 #' @return Invisible TRUE if valid, stops with informative error if invalid
 #' @keywords internal
 validate_n_pcs <- function(n_pcs) {
-  if (!is.numeric(n_pcs) || length(n_pcs) != 1 || !is.finite(n_pcs)) {
-    stop("n_pcs must be a single finite numeric value")
-  }
+  assert_scalar_finite(n_pcs, "n_pcs")
 
   if (n_pcs < 1 || n_pcs > HETID_CONSTANTS$MAX_N_PCS) {
     stop(
@@ -94,9 +106,7 @@ validate_n_pcs <- function(n_pcs) {
 #' @return Invisible TRUE if valid, stops with informative error if invalid
 #' @keywords internal
 validate_min_observations <- function(n, min_obs = HETID_CONSTANTS$MIN_OBSERVATIONS) {
-  if (!is.numeric(n) || length(n) != 1 || !is.finite(n)) {
-    stop("Number of observations must be a single finite numeric value")
-  }
+  assert_scalar_finite(n, "Number of observations")
 
   if (n < min_obs) {
     stop(

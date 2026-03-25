@@ -334,3 +334,40 @@ test_that("validate_data_dimensions checks rows before cols", {
     "same number of observations"
   )
 })
+
+# --- assert_scalar_finite ---
+
+test_that("assert_scalar_finite rejects non-numeric input", {
+  expect_error(
+    assert_scalar_finite("a", "test_param"),
+    "test_param must be a single finite numeric value"
+  )
+})
+
+test_that("assert_scalar_finite rejects vector input", {
+  expect_error(
+    assert_scalar_finite(c(1, 2), "test_param"),
+    "test_param must be a single finite numeric value"
+  )
+})
+
+test_that("assert_scalar_finite rejects non-finite input", {
+  expect_error(
+    assert_scalar_finite(Inf, "test_param"),
+    "test_param must be a single finite numeric value"
+  )
+  expect_error(
+    assert_scalar_finite(NA_real_, "test_param"),
+    "test_param must be a single finite numeric value"
+  )
+  expect_error(
+    assert_scalar_finite(NaN, "test_param"),
+    "test_param must be a single finite numeric value"
+  )
+})
+
+test_that("assert_scalar_finite accepts valid scalar", {
+  expect_silent(assert_scalar_finite(1, "test_param"))
+  expect_silent(assert_scalar_finite(3.14, "test_param"))
+  expect_silent(assert_scalar_finite(-5, "test_param"))
+})
