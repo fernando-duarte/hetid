@@ -35,6 +35,20 @@
 #' \eqn{\hat{\mathbf{R}}_i^{(1)}} is a matrix, and \eqn{\hat{\mathbf{P}}_i^{(0)}}
 #' is a vector.
 #'
+#' @section Maturity Indexing Convention:
+#' This function takes \strong{full-size} inputs: \code{r_i_0}
+#' and \code{p_i_0} must be J x I matrices, and \code{r_i_1}
+#' must be an I-element list (where I = \code{ncol(gamma)}).
+#' The \code{maturities} parameter selects which columns/elements
+#' to process, accessing them by maturity \strong{value}
+#' (e.g., column 5 for maturity 5).
+#'
+#' The outputs (\code{L_i}, \code{V_i}, \code{Q_i}) are
+#' \strong{position-indexed} with length
+#' \code{length(maturities)}, named \code{maturity_N} where
+#' N is the maturity value. These outputs can be passed
+#' directly to \code{\link{compute_identified_set_quadratic}}.
+#'
 #' @export
 #'
 #' @examples

@@ -41,6 +41,27 @@
 #'   \theta^\top A_i \theta + b_i^\top \theta +
 #'   c_i \leq 0, \; i = 1, \ldots, I\}}
 #'
+#' @section Maturity Indexing Convention:
+#' The statistical inputs (\code{L_i}, \code{V_i}, \code{Q_i},
+#' \code{s_i_0}, \code{s_i_1}, \code{s_i_2}, \code{sigma_i_sq})
+#' are \strong{position-indexed}: their length must equal
+#' \code{length(maturities)}, with element \code{k}
+#' corresponding to \code{maturities[k]}.
+#'
+#' In contrast, \code{gamma} and \code{tau} are
+#' \strong{full-size} (length I = \code{ncol(gamma)}), indexed
+#' by maturity value.
+#'
+#' When \code{maturities} is omitted, the function infers
+#' maturity values from input names if they follow the
+#' \code{maturity_N} convention (as returned by
+#' \code{\link{compute_identified_set_components}} and the
+#' statistics functions). For unnamed inputs, it falls back
+#' to \code{1:n} only when n equals \code{ncol(gamma)};
+#' otherwise it errors to prevent silent misalignment.
+#' When \code{maturities} is provided and inputs are named,
+#' the names are validated against \code{maturities}.
+#'
 #' @export
 #'
 #' @examples
