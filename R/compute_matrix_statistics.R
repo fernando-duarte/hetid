@@ -35,32 +35,14 @@
 #' mat_stats <- compute_matrix_statistics(w1, w2)
 #' mat_stats$s_i_1[[1]]
 #' mat_stats$s_i_2[[1]]
-compute_matrix_statistics <- function(w1, w2, maturities = NULL) {
-  # Validate inputs
-  if (!is.numeric(w1) || !is.vector(w1)) {
-    stop("w1 must be a numeric vector")
-  }
-
-  if (!is.matrix(w2) && !is.data.frame(w2)) {
-    stop("w2 must be a matrix or data frame")
-  }
-  w2 <- as.matrix(w2)
-
-  # Check dimensions
-  T_obs <- length(w1)
-  if (nrow(w2) != T_obs) {
-    stop("w1 and w2 must have the same number of observations")
-  }
-
-  # Set maturities if not provided
-  if (is.null(maturities)) {
-    maturities <- seq_len(ncol(w2))
-  }
-
-  # Validate maturities
-  if (any(maturities < 1) || any(maturities > ncol(w2))) {
-    stop("maturities must be between 1 and ncol(w2)")
-  }
+compute_matrix_statistics <- function(w1, w2,
+                                      maturities = NULL) {
+  validated <- validate_statistics_inputs(
+    w1, w2, maturities
+  )
+  w2 <- validated$w2
+  t_obs <- validated$t_obs
+  maturities <- validated$maturities
 
   # Get dimensions
   n_maturities_idx <- ncol(w2)
@@ -68,10 +50,9 @@ compute_matrix_statistics <- function(w1, w2, maturities = NULL) {
 
   # Initialize storage
   s_i_1 <- vector("list", n_maturities)
-  names(s_i_1) <- paste0("maturity_", maturities)
-
+  names(s_i_1) <- maturity_names(maturities)
   s_i_2 <- vector("list", n_maturities)
-  names(s_i_2) <- paste0("maturity_", maturities)
+  names(s_i_2) <- maturity_names(maturities)
 
   # Compute statistics for each maturity
   for (idx in seq_along(maturities)) {
@@ -84,7 +65,7 @@ compute_matrix_statistics <- function(w1, w2, maturities = NULL) {
 
     # S_i^(1) = (1/T) * (w1 ⊙ w2_i)^T * W_2^{circ i}
     hadamard_w1_w2i <- w1 * w2_i
-    s_i_1_vec <- t(hadamard_w1_w2i) %*% w2_circ_i / T_obs
+    s_i_1_vec <- t(hadamard_w1_w2i) %*% w2_circ_i / t_obs
     s_i_1_vec <- as.vector(s_i_1_vec) # Ensure it's a vector
     names(s_i_1_vec) <- paste0(
       "maturity_", seq_len(n_maturities_idx)
@@ -92,7 +73,7 @@ compute_matrix_statistics <- function(w1, w2, maturities = NULL) {
     s_i_1[[idx]] <- s_i_1_vec
 
     # S_i^(2) = (1/T) * (W_2^{circ i})^T * W_2^{circ i}
-    s_i_2_mat <- t(w2_circ_i) %*% w2_circ_i / T_obs
+    s_i_2_mat <- t(w2_circ_i) %*% w2_circ_i / t_obs
     rownames(s_i_2_mat) <- paste0(
       "maturity_", seq_len(n_maturities_idx)
     )
