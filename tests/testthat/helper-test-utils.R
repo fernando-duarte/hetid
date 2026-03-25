@@ -166,10 +166,9 @@ create_synthetic_test_data <- function(n = 100, n_maturities = 10, seed = 123) {
 #' Common patterns for testing error conditions
 #'
 #' @param test_fn Function to test
-#' @param test_env Test environment
 #' @param error_tests List of error test configurations
 #' @keywords internal
-test_standard_errors <- function(test_fn, test_env, error_tests) {
+test_standard_errors <- function(test_fn, error_tests) {
   for (test_config in error_tests) {
     expect_error(
       do.call(test_fn, test_config$args),

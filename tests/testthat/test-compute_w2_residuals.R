@@ -114,14 +114,14 @@ test_that("R-squared matches manual regression", {
 
   # Merge datasets by year-quarter
   merged_data <- merge(
-    variables[, c("year_quarter", "date", paste0("pc", 1:4))],
+    variables[, c("year_quarter", "date", get_pc_column_names(4))],
     acm_data[, c("year_quarter", "date", grep("^(y[0-9]|tp)", names(acm_data), value = TRUE))],
     by = "year_quarter",
     suffixes = c("_var", "_acm")
   )
 
   # Extract merged components
-  pcs_merged <- as.matrix(merged_data[, paste0("pc", 1:4)])
+  pcs_merged <- as.matrix(merged_data[, get_pc_column_names(4)])
   yields_merged <- merged_data[, grep("^y[0-9]", names(merged_data))]
   term_premia_merged <- merged_data[, grep("^tp", names(merged_data))]
 

@@ -35,7 +35,7 @@ test_that("compute_vector_statistics returns correct structure", {
   # Check r_i_0 dimensions and structure
   expect_true(is.matrix(result$r_i_0))
   expect_equal(dim(result$r_i_0), c(J, I))
-  expect_equal(rownames(result$r_i_0), paste0("pc", 1:J))
+  expect_equal(rownames(result$r_i_0), get_pc_column_names(J))
   expect_equal(colnames(result$r_i_0), paste0("maturity_", 1:I))
 
   # Check r_i_1 structure
@@ -48,14 +48,14 @@ test_that("compute_vector_statistics returns correct structure", {
     mat <- result$r_i_1[[i]]
     expect_true(is.matrix(mat))
     expect_equal(dim(mat), c(J, I))
-    expect_equal(rownames(mat), paste0("pc", 1:J))
+    expect_equal(rownames(mat), get_pc_column_names(J))
     expect_equal(colnames(mat), paste0("maturity_", 1:I))
   }
 
   # Check p_i_0 dimensions and structure
   expect_true(is.matrix(result$p_i_0))
   expect_equal(dim(result$p_i_0), c(J, I))
-  expect_equal(rownames(result$p_i_0), paste0("pc", 1:J))
+  expect_equal(rownames(result$p_i_0), get_pc_column_names(J))
   expect_equal(colnames(result$p_i_0), paste0("maturity_", 1:I))
 })
 

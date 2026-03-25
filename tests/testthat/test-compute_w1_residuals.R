@@ -26,7 +26,7 @@ test_that("R-squared matches manual regression", {
 
   # Manual regression
   cons_growth <- variables$gr1.pcecc96
-  pc_cols <- paste0("pc", 1:3)
+  pc_cols <- get_pc_column_names(3)
   pc_data <- as.matrix(variables[, pc_cols])
 
   # Create lagged PCs
@@ -46,7 +46,7 @@ test_that("R-squared matches manual regression", {
 
   # Check coefficients match
   # Rename manual coefficients to match function output
-  names(manual_coefs) <- c("(Intercept)", paste0("pc", 1:3))
+  names(manual_coefs) <- c("(Intercept)", get_pc_column_names(3))
 
   expect_equal(res_y1$coefficients, manual_coefs,
     tolerance = 1e-10,
@@ -98,7 +98,7 @@ test_that("coefficient structure is correct", {
   # Should have intercept + 3 PC coefficients
   expect_length(res_y1$coefficients, 4)
   expect_true("(Intercept)" %in% names(res_y1$coefficients))
-  expect_true(all(paste0("pc", 1:3) %in% names(res_y1$coefficients)))
+  expect_true(all(get_pc_column_names(3) %in% names(res_y1$coefficients)))
 })
 
 test_that("dates are properly aligned after lagging", {
