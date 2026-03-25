@@ -6,6 +6,7 @@
 #' @param maturities Numeric vector of maturities
 #'
 #' @return List mapping new names to old names
+#' @importFrom stats setNames
 #' @keywords internal
 build_acm_col_mapping <- function(data_types, maturities) {
   mappings <- lapply(data_types, function(dtype) {
