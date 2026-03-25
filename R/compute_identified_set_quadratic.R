@@ -133,30 +133,6 @@ compute_identified_set_quadratic <- function(gamma, tau, L_i, V_i, Q_i,
     sigma_i_sq_val <- sigma_i_sq[idx]
     tau_i <- tau[i]
 
-    # Validate dimensions
-    if (!is.numeric(Q_i_vec) || length(Q_i_vec) != n_components) {
-      stop(paste(
-        "Q_i[[", idx,
-        "]] must be a numeric vector of length I"
-      ), call. = FALSE)
-    }
-
-    if (!is.numeric(s_i_1_vec) || length(s_i_1_vec) != n_components) {
-      stop(paste0(
-        "s_i_1 for maturity ", i, " (position ", idx,
-        ") must be a numeric vector of length I"
-      ), call. = FALSE)
-    }
-
-    if (!is.matrix(s_i_2_mat) ||
-      nrow(s_i_2_mat) != n_components ||
-      ncol(s_i_2_mat) != n_components) {
-      stop(paste0(
-        "s_i_2 for maturity ", i, " (position ", idx,
-        ") must be an I x I matrix"
-      ), call. = FALSE)
-    }
-
     # Compute d_i = tau_i^2 * V_i / sigma_i^2
     d_i[idx] <- (tau_i^2 * V_i_val) / sigma_i_sq_val
 

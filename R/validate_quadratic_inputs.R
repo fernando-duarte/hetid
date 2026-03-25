@@ -100,6 +100,38 @@ validate_quadratic_inputs <- function(gamma, tau,
     )
   }
 
+  # Validate per-element dimensions of list inputs
+  for (idx in seq_along(maturities)) {
+    i <- maturities[idx]
+
+    if (!is.numeric(Q_i[[idx]]) ||
+      length(Q_i[[idx]]) != n_components) {
+      stop(paste(
+        "Q_i[[", idx,
+        "]] must be a numeric vector of length I"
+      ), call. = FALSE)
+    }
+
+    if (!is.numeric(s_i_1[[idx]]) ||
+      length(s_i_1[[idx]]) != n_components) {
+      stop(paste0(
+        "s_i_1 for maturity ", i,
+        " (position ", idx,
+        ") must be a numeric vector of length I"
+      ), call. = FALSE)
+    }
+
+    if (!is.matrix(s_i_2[[idx]]) ||
+      nrow(s_i_2[[idx]]) != n_components ||
+      ncol(s_i_2[[idx]]) != n_components) {
+      stop(paste0(
+        "s_i_2 for maturity ", i,
+        " (position ", idx,
+        ") must be an I x I matrix"
+      ), call. = FALSE)
+    }
+  }
+
   list(
     maturities = maturities,
     n_components = n_components,
