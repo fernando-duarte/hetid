@@ -142,16 +142,16 @@ compute_w2_residuals <- function(yields, term_premia,
     }
 
     # Store results
-    residuals_list[[paste0("maturity_", i)]] <- result$residuals
-    fitted_list[[paste0("maturity_", i)]] <- result$fitted
+    residuals_list[[maturity_names(i)]] <- result$residuals
+    fitted_list[[maturity_names(i)]] <- result$fitted
     coef_matrix[idx, ] <- result$coefficients
     r_squared[idx] <- result$r_squared
     n_obs_used[idx] <- result$n_obs
-    kept_idx_list[[paste0("maturity_", i)]] <- result$kept_idx
+    kept_idx_list[[maturity_names(i)]] <- result$kept_idx
   }
 
   # Set row/column names for coefficient matrix
-  rownames(coef_matrix) <- paste0("maturity_", maturities)
+  rownames(coef_matrix) <- maturity_names(maturities)
   colnames(coef_matrix) <- c(
     "(Intercept)", get_pc_column_names(n_pcs)
   )

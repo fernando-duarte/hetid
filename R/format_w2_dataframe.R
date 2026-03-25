@@ -57,7 +57,7 @@ format_w2_dataframe <- function(
   # Build data frame for each maturity
   for (idx in seq_along(maturities)) {
     i <- maturities[idx]
-    mat_key <- paste0("maturity_", i)
+    mat_key <- maturity_names(i)
 
     if (mat_key %in% names(residuals_list)) {
       kept <- kept_idx_list[[mat_key]]

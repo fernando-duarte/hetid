@@ -91,7 +91,7 @@ resolve_maturities <- function(maturities, stats_list,
       maturities <- seq_len(n_stats)
     }
   } else if (!is.null(parsed)) {
-    expected <- paste0("maturity_", maturities)
+    expected <- maturity_names(maturities)
     if (!identical(all_names[[1]], expected)) {
       stop(
         "Input names do not match maturities. ",

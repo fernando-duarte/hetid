@@ -137,9 +137,9 @@ compute_identified_set_components <- function(gamma, r_i_0, r_i_1, p_i_0,
   V_i <- numeric(n_maturities)
   Q_i <- vector("list", n_maturities)
 
-  names(L_i) <- paste0("maturity_", maturities)
-  names(V_i) <- paste0("maturity_", maturities)
-  names(Q_i) <- paste0("maturity_", maturities)
+  names(L_i) <- maturity_names(maturities)
+  names(V_i) <- maturity_names(maturities)
+  names(Q_i) <- maturity_names(maturities)
 
   for (idx in seq_along(maturities)) {
     i <- maturities[idx]

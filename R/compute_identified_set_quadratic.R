@@ -112,10 +112,10 @@ compute_identified_set_quadratic <- function(gamma, tau, L_i, V_i, Q_i,
   b_i <- vector("list", n_maturities)
   c_i <- numeric(n_maturities)
 
-  names(d_i) <- paste0("maturity_", maturities)
-  names(A_i) <- paste0("maturity_", maturities)
-  names(b_i) <- paste0("maturity_", maturities)
-  names(c_i) <- paste0("maturity_", maturities)
+  names(d_i) <- maturity_names(maturities)
+  names(A_i) <- maturity_names(maturities)
+  names(b_i) <- maturity_names(maturities)
+  names(c_i) <- maturity_names(maturities)
 
   # Compute quadratic form components for each maturity
   for (idx in seq_along(maturities)) {
