@@ -86,6 +86,10 @@ validate_data_dimensions <- function(yields, term_premia) {
 validate_n_pcs <- function(n_pcs) {
   assert_scalar_finite(n_pcs, "n_pcs")
 
+  if (n_pcs %% 1 != 0) {
+    stop("n_pcs must be an integer")
+  }
+
   if (n_pcs < 1 || n_pcs > HETID_CONSTANTS$MAX_N_PCS) {
     stop(
       "n_pcs must be between 1 and ", HETID_CONSTANTS$MAX_N_PCS

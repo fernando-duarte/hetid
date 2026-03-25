@@ -106,6 +106,11 @@ test_that("validate_min_observations boundary at default minimum", {
 
 # --- validate_n_pcs ---
 
+test_that("validate_n_pcs rejects non-integer values", {
+  expect_error(validate_n_pcs(1.5), "integer")
+  expect_error(validate_n_pcs(2.7), "integer")
+})
+
 test_that("validate_n_pcs accepts valid values", {
   expect_true(validate_n_pcs(1))
   expect_true(validate_n_pcs(4))
