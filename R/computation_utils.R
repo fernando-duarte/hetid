@@ -166,37 +166,3 @@ run_pc_regression <- function(y, pcs, n_pcs) {
     complete_idx = complete_idx
   )
 }
-
-#' Apply Transformation to Time Series
-#'
-#' Apply a transformation function to aligned time series
-#'
-#' @param series1 First series
-#' @param series2 Second series (optional)
-#' @param transform_fn Transformation function
-#' @param ... Additional arguments to transform_fn
-#' @return Transformed series
-#' @keywords internal
-apply_time_series_transform <- function(series1, series2 = NULL, transform_fn, ...) {
-  if (is.null(series2)) {
-    n_obs <- length(series1)
-    result <- rep(NA, n_obs)
-
-    for (t in 1:n_obs) {
-      if (!is.na(series1[t])) {
-        result[t] <- transform_fn(series1[t], ...)
-      }
-    }
-  } else {
-    n_obs <- min(length(series1), length(series2))
-    result <- rep(NA, n_obs)
-
-    for (t in 1:n_obs) {
-      if (!is.na(series1[t]) && !is.na(series2[t])) {
-        result[t] <- transform_fn(series1[t], series2[t], ...)
-      }
-    }
-  }
-
-  result
-}
