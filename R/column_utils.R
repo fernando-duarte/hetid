@@ -15,13 +15,15 @@ NULL
 #' @keywords internal
 require_column <- function(x, col_name, context = NULL) {
   val <- x[[col_name]]
-  if (is.null(val)) {
-    msg <- paste0(col_name, " column not found")
-    if (!is.null(context)) {
-      msg <- paste0(msg, " in ", context)
-    }
-    stop_bad_argument(msg, arg = col_name)
+  msg <- paste0(col_name, " column not found")
+  if (!is.null(context)) {
+    msg <- paste0(msg, " in ", context)
   }
+  assert_bad_argument_ok(
+    !is.null(val),
+    msg,
+    arg = col_name
+  )
   val
 }
 
@@ -31,12 +33,11 @@ require_column <- function(x, col_name, context = NULL) {
 #' @param name Argument name for error message
 #' @keywords internal
 assert_tabular <- function(x, name) {
-  if (!is.data.frame(x) && !is.matrix(x)) {
-    stop_bad_argument(
-      paste0(name, " must be a matrix or data frame"),
-      arg = name
-    )
-  }
+  assert_bad_argument_ok(
+    is.data.frame(x) || is.matrix(x),
+    paste0(name, " must be a matrix or data frame"),
+    arg = name
+  )
   invisible(TRUE)
 }
 
@@ -49,15 +50,16 @@ assert_tabular <- function(x, name) {
 assert_columns_exist <- function(df, required_cols,
                                  context = NULL) {
   missing_cols <- setdiff(required_cols, names(df))
-  if (length(missing_cols) > 0) {
-    msg <- paste(
-      "Missing required columns:",
-      paste(missing_cols, collapse = ", ")
-    )
-    if (!is.null(context)) {
-      msg <- paste0(msg, " in ", context)
-    }
-    stop_bad_argument(msg)
+  msg <- paste(
+    "Missing required columns:",
+    paste(missing_cols, collapse = ", ")
+  )
+  if (!is.null(context)) {
+    msg <- paste0(msg, " in ", context)
   }
+  assert_bad_argument_ok(
+    length(missing_cols) == 0,
+    msg
+  )
   invisible(TRUE)
 }

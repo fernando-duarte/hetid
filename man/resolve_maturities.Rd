@@ -2,7 +2,7 @@
 % Please edit documentation in R/maturity_utils.R
 \name{resolve_maturities}
 \alias{resolve_maturities}
-\title{Resolve and Validate Maturity Indices}
+\title{Resolve and validate maturity indices}
 \usage{
 resolve_maturities(maturities, stats_list, n_components)
 }
@@ -17,7 +17,6 @@ resolve_maturities(maturities, stats_list, n_components)
 Integer vector of maturity indices
 }
 \description{
-Infers or validates maturity indices from named statistical
-inputs. Used by identification-layer functions.
+Resolve and validate maturity indices
 }
 \keyword{internal}

@@ -61,7 +61,6 @@
 #'   maturities = 5
 #' )
 #' }
-#'
 extract_acm_data <- function(data_types = c("yields", "term_premia"),
                              maturities = HETID_CONSTANTS$MIN_MATURITY:HETID_CONSTANTS$MAX_MATURITY,
                              start_date = NULL,
@@ -70,54 +69,32 @@ extract_acm_data <- function(data_types = c("yields", "term_premia"),
                              auto_download = FALSE) {
   # Validate inputs
   frequency <- match.arg(frequency)
-
-  valid_types <- names(HETID_ACM_SCHEMA)
-  if (!all(data_types %in% valid_types)) {
-    stop_bad_argument(paste0(
-      "Invalid data_types. Must be one or more of: ",
-      paste(valid_types, collapse = ", ")
-    ), arg = "data_types")
-  }
-
-  if (!all(maturities %in% HETID_CONSTANTS$MIN_MATURITY:HETID_CONSTANTS$MAX_MATURITY)) {
-    stop_bad_argument(paste0(
-      "Maturities must be integers between ",
-      HETID_CONSTANTS$MIN_MATURITY,
-      " and ", HETID_CONSTANTS$MAX_MATURITY
-    ), arg = "maturities")
-  }
+  validate_acm_extract_inputs(data_types, maturities)
 
   # Load ACM data
   acm_data <- load_term_premia(auto_download = auto_download)
-
-  if (is.null(acm_data)) {
-    stop_insufficient_data(paste0(
+  assert_insufficient_data_ok(
+    !is.null(acm_data),
+    paste0(
       "ACM data not available. Run download_term_premia()",
       " first or set auto_download = TRUE"
-    ))
-  }
+    )
+  )
 
   # The load_term_premia function now returns lowercase 'date' column
   # Ensure date column is properly converted to Date type
-  if ("date" %in% names(acm_data) && !inherits(acm_data$date, "Date")) {
-    acm_data$date <- as.Date(acm_data$date, format = HETID_CONSTANTS$ACM_DATE_FORMAT)
-  }
+  acm_data <- normalize_acm_date_column(acm_data)
 
   # Convert dates if provided as strings
-  if (!is.null(start_date) && is.character(start_date)) {
-    start_date <- as.Date(start_date)
-  }
-  if (!is.null(end_date) && is.character(end_date)) {
-    end_date <- as.Date(end_date)
-  }
+  start_date <- coerce_optional_date(start_date)
+  end_date <- coerce_optional_date(end_date)
 
   # Filter by date range
-  if (!is.null(start_date)) {
-    acm_data <- acm_data[acm_data$date >= start_date, ]
-  }
-  if (!is.null(end_date)) {
-    acm_data <- acm_data[acm_data$date <= end_date, ]
-  }
+  acm_data <- filter_acm_date_range(
+    acm_data,
+    start_date,
+    end_date
+  )
 
   # Start with date column
   result <- data.frame(date = acm_data$date)
@@ -147,4 +124,75 @@ extract_acm_data <- function(data_types = c("yields", "term_premia"),
   rownames(result) <- NULL
 
   result
+}
+
+#' Validate ACM extraction inputs
+#'
+#' @keywords internal
+#' @noRd
+validate_acm_extract_inputs <- function(data_types, maturities) {
+  valid_types <- names(HETID_ACM_SCHEMA)
+  assert_bad_argument_ok(
+    all(data_types %in% valid_types),
+    paste0(
+      "Invalid data_types. Must be one or more of: ",
+      paste(valid_types, collapse = ", ")
+    ),
+    arg = "data_types"
+  )
+
+  assert_bad_argument_ok(
+    all(
+      maturities %in%
+        HETID_CONSTANTS$MIN_MATURITY:HETID_CONSTANTS$MAX_MATURITY
+    ),
+    paste0(
+      "Maturities must be integers between ",
+      HETID_CONSTANTS$MIN_MATURITY,
+      " and ", HETID_CONSTANTS$MAX_MATURITY
+    ),
+    arg = "maturities"
+  )
+}
+
+#' Coerce optional date input
+#'
+#' @keywords internal
+#' @noRd
+coerce_optional_date <- function(x) {
+  if (!is.null(x) && is.character(x)) {
+    return(as.Date(x))
+  }
+
+  x
+}
+
+#' Normalize ACM date column
+#'
+#' @keywords internal
+#' @noRd
+normalize_acm_date_column <- function(acm_data) {
+  if ("date" %in% names(acm_data) && !inherits(acm_data$date, "Date")) {
+    acm_data$date <- as.Date(
+      acm_data$date,
+      format = HETID_CONSTANTS$ACM_DATE_FORMAT
+    )
+  }
+
+  acm_data
+}
+
+#' Filter ACM data by optional date bounds
+#'
+#' @keywords internal
+#' @noRd
+filter_acm_date_range <- function(acm_data, start_date, end_date) {
+  if (!is.null(start_date)) {
+    acm_data <- acm_data[acm_data$date >= start_date, ]
+  }
+  if (!is.null(end_date)) {
+    acm_data <- acm_data[acm_data$date <= end_date, ]
+  }
+
+  acm_data
 }

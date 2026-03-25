@@ -40,23 +40,23 @@
 compute_vector_statistics <- function(w1, w2, pcs,
                                       maturities = NULL) {
   # Validate pcs type upfront, before iteration
-  if (!is.matrix(pcs) && !is.data.frame(pcs)) {
-    stop_bad_argument(
-      "pcs must be a matrix or data frame",
-      arg = "pcs"
-    )
-  }
+  assert_bad_argument_ok(
+    is.matrix(pcs) || is.data.frame(pcs),
+    "pcs must be a matrix or data frame",
+    arg = "pcs"
+  )
   pcs <- as.matrix(pcs)
 
   results <- compute_per_maturity(
     w1, w2, maturities,
     function(w1, w2, w2_i, t_obs, ...) {
-      if (nrow(pcs) != t_obs) {
-        stop_dimension_mismatch(paste0(
+      assert_dimension_ok(
+        nrow(pcs) == t_obs,
+        paste0(
           "pcs must have the same number of ",
           "observations as w1 and w2"
-        ))
-      }
+        )
+      )
       J <- ncol(pcs)
       n_mat <- ncol(w2)
       hadamard_w1_w2i <- w1 * w2_i

@@ -6,6 +6,64 @@
 #' @keywords internal
 NULL
 
+#' Assert Bad Argument Invariant
+#'
+#' Internal guard that raises a bad-argument condition
+#' when `ok` is not `TRUE`.
+#'
+#' @param ok Logical scalar indicating whether validation passed
+#' @param message Error message for the failing condition
+#' @param arg Optional argument name for the condition payload
+#'
+#' @return Invisible TRUE when validation passes
+#' @keywords internal
+#' @noRd
+assert_bad_argument_ok <- function(ok, message, arg = NULL) {
+  if (!isTRUE(ok)) {
+    stop_bad_argument(message, arg = arg)
+  }
+
+  invisible(TRUE)
+}
+
+#' Assert Dimension Invariant
+#'
+#' Internal guard that raises a dimension-mismatch condition
+#' when `ok` is not `TRUE`.
+#'
+#' @param ok Logical scalar indicating whether validation passed
+#' @param message Error message for the failing condition
+#'
+#' @return Invisible TRUE when validation passes
+#' @keywords internal
+#' @noRd
+assert_dimension_ok <- function(ok, message) {
+  if (!isTRUE(ok)) {
+    stop_dimension_mismatch(message)
+  }
+
+  invisible(TRUE)
+}
+
+#' Assert Data Availability Invariant
+#'
+#' Internal guard that raises an insufficient-data condition
+#' when `ok` is not `TRUE`.
+#'
+#' @param ok Logical scalar indicating whether validation passed
+#' @param message Error message for the failing condition
+#'
+#' @return Invisible TRUE when validation passes
+#' @keywords internal
+#' @noRd
+assert_insufficient_data_ok <- function(ok, message) {
+  if (!isTRUE(ok)) {
+    stop_insufficient_data(message)
+  }
+
+  invisible(TRUE)
+}
+
 #' Assert Scalar Finite Value
 #'
 #' Internal guard for parameters that must be a single
@@ -37,20 +95,21 @@ assert_scalar_finite <- function(x, name) {
 validate_maturity_index <- function(i, max_maturity = HETID_CONSTANTS$MAX_MATURITY) {
   assert_scalar_finite(i, "Maturity index i")
 
-  if (i %% 1 != 0) {
-    stop_bad_argument(
-      "Maturity index i must be an integer",
-      arg = "i"
-    )
-  }
-
-  if (i < HETID_CONSTANTS$MIN_MATURITY || i > max_maturity) {
-    stop_bad_argument(paste0(
+  assert_bad_argument_ok(
+    i %% 1 == 0,
+    "Maturity index i must be an integer",
+    arg = "i"
+  )
+  assert_bad_argument_ok(
+    i >= HETID_CONSTANTS$MIN_MATURITY &&
+      i <= max_maturity,
+    paste0(
       "Maturity index i must be between ",
       HETID_CONSTANTS$MIN_MATURITY,
       " and ", max_maturity
-    ), arg = "i")
-  }
+    ),
+    arg = "i"
+  )
 
   invisible(TRUE)
 }
@@ -65,21 +124,22 @@ validate_maturity_index <- function(i, max_maturity = HETID_CONSTANTS$MAX_MATURI
 #' @return Invisible TRUE if valid, stops with informative error if invalid
 #' @keywords internal
 validate_data_dimensions <- function(yields, term_premia) {
-  if (nrow(yields) != nrow(term_premia)) {
-    stop_dimension_mismatch(paste0(
+  assert_dimension_ok(
+    nrow(yields) == nrow(term_premia),
+    paste0(
       "yields and term_premia must have same number of ",
       "observations. Got ", nrow(yields),
       " vs ", nrow(term_premia), " rows."
-    ))
-  }
-
-  if (ncol(yields) != ncol(term_premia)) {
-    stop_dimension_mismatch(paste0(
+    )
+  )
+  assert_dimension_ok(
+    ncol(yields) == ncol(term_premia),
+    paste0(
       "yields and term_premia must have same number of ",
       "maturities. Got ", ncol(yields),
       " vs ", ncol(term_premia), " columns."
-    ))
-  }
+    )
+  )
 
   invisible(TRUE)
 }
@@ -95,19 +155,19 @@ validate_data_dimensions <- function(yields, term_premia) {
 validate_n_pcs <- function(n_pcs) {
   assert_scalar_finite(n_pcs, "n_pcs")
 
-  if (n_pcs %% 1 != 0) {
-    stop_bad_argument(
-      "n_pcs must be an integer",
-      arg = "n_pcs"
-    )
-  }
-
-  if (n_pcs < 1 || n_pcs > HETID_CONSTANTS$MAX_N_PCS) {
-    stop_bad_argument(paste0(
+  assert_bad_argument_ok(
+    n_pcs %% 1 == 0,
+    "n_pcs must be an integer",
+    arg = "n_pcs"
+  )
+  assert_bad_argument_ok(
+    n_pcs >= 1 && n_pcs <= HETID_CONSTANTS$MAX_N_PCS,
+    paste0(
       "n_pcs must be between 1 and ",
       HETID_CONSTANTS$MAX_N_PCS
-    ), arg = "n_pcs")
-  }
+    ),
+    arg = "n_pcs"
+  )
 
   invisible(TRUE)
 }
@@ -124,12 +184,13 @@ validate_n_pcs <- function(n_pcs) {
 validate_min_observations <- function(n, min_obs = HETID_CONSTANTS$MIN_OBSERVATIONS) {
   assert_scalar_finite(n, "Number of observations")
 
-  if (n < min_obs) {
-    stop_insufficient_data(paste0(
+  assert_insufficient_data_ok(
+    n >= min_obs,
+    paste0(
       "Not enough complete observations (need at least ",
       min_obs, ")"
-    ))
-  }
+    )
+  )
 
   invisible(TRUE)
 }
@@ -145,21 +206,21 @@ validate_min_observations <- function(n, min_obs = HETID_CONSTANTS$MIN_OBSERVATI
 validate_time_series_lengths <- function(...) {
   series_list <- list(...)
 
-  if (length(series_list) < 2) {
-    stop_bad_argument(
-      "At least two time series required for length validation"
-    )
-  }
+  assert_bad_argument_ok(
+    length(series_list) >= 2,
+    "At least two time series required for length validation"
+  )
 
   series_lengths <- lengths(series_list)
 
-  if (length(unique(series_lengths)) > 1) {
-    stop_dimension_mismatch(paste0(
+  assert_dimension_ok(
+    length(unique(series_lengths)) == 1,
+    paste0(
       "All input time series must have the same length. ",
       "Got lengths: ",
       paste(series_lengths, collapse = ", ")
-    ))
-  }
+    )
+  )
 
   invisible(TRUE)
 }
@@ -181,12 +242,11 @@ validate_numeric_inputs <- function(...) {
   }
 
   for (i in seq_along(inputs)) {
-    if (!is.numeric(inputs[[i]])) {
-      stop_bad_argument(
-        paste0(input_names[i], " must be a numeric vector"),
-        arg = input_names[i]
-      )
-    }
+    assert_bad_argument_ok(
+      is.numeric(inputs[[i]]),
+      paste0(input_names[i], " must be a numeric vector"),
+      arg = input_names[i]
+    )
   }
 
   invisible(TRUE)

@@ -1,3 +1,21 @@
+#' Validate numeric vector dimensions
+#'
+#' @keywords internal
+#' @noRd
+is_numeric_vector_dim <- function(x, n_components) {
+  is.numeric(x) && length(x) == n_components
+}
+
+#' Validate square matrix dimensions
+#'
+#' @keywords internal
+#' @noRd
+is_square_matrix_dim <- function(x, n_components) {
+  is.matrix(x) &&
+    nrow(x) == n_components &&
+    ncol(x) == n_components
+}
+
 #' Validate argument types for quadratic inputs
 #'
 #' @inheritParams compute_identified_set_quadratic
@@ -8,51 +26,38 @@ validate_quadratic_types <- function(gamma, tau,
                                      s_i_0, s_i_1,
                                      s_i_2,
                                      sigma_i_sq) {
-  if (!is.matrix(gamma)) {
-    stop_bad_argument(
-      "gamma must be a matrix",
-      arg = "gamma"
-    )
-  }
-
-  if (!is.numeric(tau) || !is.vector(tau)) {
-    stop_bad_argument(
-      "tau must be a numeric vector",
-      arg = "tau"
-    )
-  }
-
-  if (any(tau < 0)) {
-    stop_bad_argument(
-      "All elements of tau must be nonnegative",
-      arg = "tau"
-    )
-  }
-
-  if (!is.numeric(L_i) || !is.numeric(V_i)) {
-    stop_bad_argument(
-      "L_i and V_i must be numeric vectors"
-    )
-  }
-
-  if (!is.list(Q_i)) {
-    stop_bad_argument(
-      "Q_i must be a list",
-      arg = "Q_i"
-    )
-  }
-
-  if (!is.numeric(s_i_0) || !is.numeric(sigma_i_sq)) {
-    stop_bad_argument(
-      "s_i_0 and sigma_i_sq must be numeric vectors"
-    )
-  }
-
-  if (!is.list(s_i_1) || !is.list(s_i_2)) {
-    stop_bad_argument(
-      "s_i_1 and s_i_2 must be lists"
-    )
-  }
+  assert_bad_argument_ok(
+    is.matrix(gamma),
+    "gamma must be a matrix",
+    arg = "gamma"
+  )
+  assert_bad_argument_ok(
+    is.numeric(tau) && is.vector(tau),
+    "tau must be a numeric vector",
+    arg = "tau"
+  )
+  assert_bad_argument_ok(
+    !any(tau < 0),
+    "All elements of tau must be nonnegative",
+    arg = "tau"
+  )
+  assert_bad_argument_ok(
+    is.numeric(L_i) && is.numeric(V_i),
+    "L_i and V_i must be numeric vectors"
+  )
+  assert_bad_argument_ok(
+    is.list(Q_i),
+    "Q_i must be a list",
+    arg = "Q_i"
+  )
+  assert_bad_argument_ok(
+    is.numeric(s_i_0) && is.numeric(sigma_i_sq),
+    "s_i_0 and sigma_i_sq must be numeric vectors"
+  )
+  assert_bad_argument_ok(
+    is.list(s_i_1) && is.list(s_i_2),
+    "s_i_1 and s_i_2 must be lists"
+  )
 }
 
 #' Validate per-element dimensions of list inputs
@@ -68,33 +73,29 @@ validate_list_element_dims <- function(Q_i, s_i_1,
                                        n_components) {
   for (idx in seq_along(maturities)) {
     i <- maturities[idx]
-
-    if (!is.numeric(Q_i[[idx]]) ||
-      length(Q_i[[idx]]) != n_components) {
-      stop_dimension_mismatch(paste(
+    assert_dimension_ok(
+      is_numeric_vector_dim(Q_i[[idx]], n_components),
+      paste(
         "Q_i[[", idx,
         "]] must be a numeric vector of length I"
-      ))
-    }
-
-    if (!is.numeric(s_i_1[[idx]]) ||
-      length(s_i_1[[idx]]) != n_components) {
-      stop_dimension_mismatch(paste0(
+      )
+    )
+    assert_dimension_ok(
+      is_numeric_vector_dim(s_i_1[[idx]], n_components),
+      paste0(
         "s_i_1 for maturity ", i,
         " (position ", idx,
         ") must be a numeric vector of length I"
-      ))
-    }
-
-    if (!is.matrix(s_i_2[[idx]]) ||
-      nrow(s_i_2[[idx]]) != n_components ||
-      ncol(s_i_2[[idx]]) != n_components) {
-      stop_dimension_mismatch(paste0(
+      )
+    )
+    assert_dimension_ok(
+      is_square_matrix_dim(s_i_2[[idx]], n_components),
+      paste0(
         "s_i_2 for maturity ", i,
         " (position ", idx,
         ") must be an I x I matrix"
-      ))
-    }
+      )
+    )
   }
 }
 
@@ -125,11 +126,10 @@ validate_quadratic_inputs <- function(gamma, tau,
 
   n_components <- ncol(gamma)
 
-  if (length(tau) != n_components) {
-    stop_dimension_mismatch(
-      "tau must have length I (number of columns in gamma)"
-    )
-  }
+  assert_dimension_ok(
+    length(tau) == n_components,
+    "tau must have length I (number of columns in gamma)"
+  )
 
   # Resolve maturities from names or explicit parameter
   maturities <- resolve_maturities(
@@ -143,39 +143,44 @@ validate_quadratic_inputs <- function(gamma, tau,
   )
 
   # Validate maturities against gamma dimensions
-  if (any(maturities < 1) ||
-    any(maturities > n_components)) {
-    stop_bad_argument(paste0(
+  assert_bad_argument_ok(
+    all(maturities >= 1) &&
+      all(maturities <= n_components),
+    paste0(
       "maturities must be between 1 and ncol(gamma) (",
       n_components, ")"
-    ), arg = "maturities")
-  }
+    ),
+    arg = "maturities"
+  )
 
   n_maturities <- length(maturities)
-  if (any(c(
-    length(L_i), length(V_i), length(Q_i),
-    length(s_i_0), length(s_i_1), length(s_i_2),
-    length(sigma_i_sq)
-  ) != n_maturities)) {
-    stop_dimension_mismatch(paste0(
+  assert_dimension_ok(
+    all(c(
+      length(L_i), length(V_i), length(Q_i),
+      length(s_i_0), length(s_i_1), length(s_i_2),
+      length(sigma_i_sq)
+    ) == n_maturities),
+    paste0(
       "All statistical inputs must have length ",
       "matching maturities (", n_maturities, ")"
-    ))
-  }
+    )
+  )
 
   # Validate sigma_i_sq
   bad_sigma <- which(
     !is.finite(sigma_i_sq) | sigma_i_sq <= 0
   )
-  if (length(bad_sigma) > 0) {
-    stop_bad_argument(paste0(
+  assert_bad_argument_ok(
+    length(bad_sigma) == 0,
+    paste0(
       "sigma_i_sq is non-positive, non-finite, or NA ",
       "for maturity/maturities ",
       paste(maturities[bad_sigma], collapse = ", "),
       ". Cannot compute identified set -- ",
       "insufficient heteroskedasticity."
-    ), arg = "sigma_i_sq")
-  }
+    ),
+    arg = "sigma_i_sq"
+  )
 
   validate_list_element_dims(
     Q_i, s_i_1, s_i_2, maturities, n_components

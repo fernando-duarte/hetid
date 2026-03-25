@@ -12,11 +12,10 @@ NULL
 #' @param n_valid Number of valid (non-NA) elements
 #' @keywords internal
 validate_transform_length <- function(out, n_valid) {
-  if (length(out) != n_valid) {
-    stop_dimension_mismatch(
-      "transform_fn must return one value per valid element"
-    )
-  }
+  assert_dimension_ok(
+    length(out) == n_valid,
+    "transform_fn must return one value per valid element"
+  )
 }
 
 #' Apply Transformation to Time Series
@@ -40,11 +39,10 @@ apply_time_series_transform <- function(series1, series2 = NULL,
       result[valid] <- out
     }
   } else {
-    if (length(series1) != length(series2)) {
-      stop_dimension_mismatch(
-        "series1 and series2 must have equal length"
-      )
-    }
+    assert_dimension_ok(
+      length(series1) == length(series2),
+      "series1 and series2 must have equal length"
+    )
     result <- rep(NA_real_, length(series1))
     valid <- !is.na(series1) & !is.na(series2)
     if (any(valid)) {

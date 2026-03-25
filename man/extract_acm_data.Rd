@@ -84,5 +84,4 @@ data <- extract_acm_data(
   maturities = 5
 )
 }
-
 }

@@ -82,11 +82,10 @@ prepare_return_data <- function(result_series, return_df, dates, yields, series_
   }
 
   # Ensure dates is the same length as the data
-  if (length(dates) != nrow(yields)) {
-    stop_dimension_mismatch(
-      "Length of dates must match number of rows in yields"
-    )
-  }
+  assert_dimension_ok(
+    length(dates) == nrow(yields),
+    "Length of dates must match number of rows in yields"
+  )
 
   # For news series (T-1 elements), align with dates by adding NA at beginning
   # This represents that news[t] corresponds to change from t to t+1
@@ -115,9 +114,10 @@ prepare_return_data <- function(result_series, return_df, dates, yields, series_
 #' @keywords internal
 compute_expected_squared <- function(series, error_msg = "No valid values to compute expectation") {
   clean_series <- series[!is.na(series)]
-  if (length(clean_series) == 0) {
-    stop_insufficient_data(error_msg)
-  }
+  assert_insufficient_data_ok(
+    length(clean_series) > 0,
+    error_msg
+  )
   mean(clean_series^2)
 }
 

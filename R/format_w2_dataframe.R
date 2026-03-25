@@ -45,13 +45,14 @@ format_w2_dataframe <- function(
   # Validate user-supplied dates length
   if (user_supplied_dates) {
     expected_len <- n_yield_rows - 1
-    if (length(dates) != expected_len) {
-      stop_dimension_mismatch(paste0(
+    assert_dimension_ok(
+      length(dates) == expected_len,
+      paste0(
         "dates has ", length(dates),
         " elements but nrow(yields) - 1 = ",
         expected_len
-      ))
-    }
+      )
+    )
   }
 
   # Build data frame for each maturity
