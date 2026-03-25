@@ -44,32 +44,31 @@ process_w2_maturity <- function(i, yields_df, term_premia_df, pcs, n_pcs) {
     pcs_lagged <- pcs[1:n_sdf, , drop = FALSE]
   }
 
-  # Clean data
-  complete_idx <- complete.cases(sdf_innov, pcs_lagged)
-  y2_clean <- sdf_innov[complete_idx]
-  pcs_clean <- pcs_lagged[complete_idx, , drop = FALSE]
-
-  # Intercept + n_pcs slopes need at least 1 residual df
+  # Subset to relevant PCs before checking completeness
+  pcs_subset <- pcs_lagged[, seq_len(n_pcs), drop = FALSE]
+  complete_idx <- complete.cases(sdf_innov, pcs_subset)
+  n_complete <- sum(complete_idx)
   min_obs_for_regression <- n_pcs + 2L
-  if (length(y2_clean) < min_obs_for_regression) {
-    warning(paste("Insufficient data for maturity", i, ". Skipping."))
+  if (n_complete < min_obs_for_regression) {
+    warning(
+      paste(
+        "Insufficient data for maturity",
+        i, ". Skipping."
+      )
+    )
     return(NULL)
   }
 
-  # Run regression
-  reg_data <- data.frame(y = y2_clean, pcs_clean)
-  pc_names <- get_pc_column_names(n_pcs)
-  names(reg_data)[-1] <- pc_names
-
-  formula_str <- paste("y ~", paste(pc_names, collapse = " + "))
-  model <- lm(as.formula(formula_str), data = reg_data)
+  reg <- run_pc_regression(
+    sdf_innov, pcs_lagged, n_pcs
+  )
 
   list(
-    residuals = residuals(model),
-    fitted = fitted(model),
-    coefficients = coef(model),
-    r_squared = summary(model)$r.squared,
-    n_obs = length(y2_clean),
-    kept_idx = complete_idx
+    residuals = reg$residuals,
+    fitted = reg$fitted,
+    coefficients = reg$coefficients,
+    r_squared = reg$r_squared,
+    n_obs = n_complete,
+    kept_idx = reg$complete_idx
   )
 }

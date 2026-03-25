@@ -106,52 +106,28 @@ compute_w1_residuals <- function(n_pcs = HETID_CONSTANTS$DEFAULT_N_PCS,
   y1_future <- y1[2:n]
   dates_future <- if (!is.null(dates)) dates[2:n] else NULL
 
-  # Remove any rows with missing values
-  complete_idx <- complete.cases(y1_future, pc_lagged)
-  y1_clean <- y1_future[complete_idx]
-  pc_clean <- pc_lagged[complete_idx, , drop = FALSE]
+  reg <- run_pc_regression(y1_future, pc_lagged, n_pcs)
   dates_clean <- if (!is.null(dates_future)) {
-    dates_future[complete_idx]
+    dates_future[reg$complete_idx]
   } else {
     NULL
   }
 
-  # Create formula for regression
-  pc_names <- get_pc_column_names(n_pcs)
-  colnames(pc_clean) <- pc_names
-  formula_str <- paste("y ~ ", paste(pc_names, collapse = " + "))
-  reg_formula <- as.formula(formula_str)
-
-  # Combine into data frame for regression
-  reg_data <- data.frame(y = y1_clean, pc_clean)
-
-  # Run regression
-  model <- lm(reg_formula, data = reg_data)
-
-  # Extract results
-  resid_vec <- residuals(model)
-  fitted_values <- fitted(model)
-  coef_vec <- coef(model)
-  r_squared <- summary(model)$r.squared
-
-  # Return results
   if (return_df) {
-    # Return data frame with dates
     return(data.frame(
       date = dates_clean,
-      residuals = resid_vec,
-      fitted = fitted_values,
+      residuals = reg$residuals,
+      fitted = reg$fitted,
       stringsAsFactors = FALSE
     ))
   }
 
-  # Return list (original format)
   list(
-    residuals = resid_vec,
-    fitted = fitted_values,
-    coefficients = coef_vec,
-    r_squared = r_squared,
+    residuals = reg$residuals,
+    fitted = reg$fitted,
+    coefficients = reg$coefficients,
+    r_squared = reg$r_squared,
     dates = dates_clean,
-    model = model
+    model = reg$model
   )
 }
