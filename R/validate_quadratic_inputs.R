@@ -19,37 +19,37 @@ validate_quadratic_inputs <- function(gamma, tau,
                                       s_i_2, sigma_i_sq,
                                       maturities = NULL) {
   if (!is.matrix(gamma)) {
-    stop("gamma must be a matrix")
+    stop("gamma must be a matrix", call. = FALSE)
   }
 
   if (!is.numeric(tau) || !is.vector(tau)) {
-    stop("tau must be a numeric vector")
+    stop("tau must be a numeric vector", call. = FALSE)
   }
 
   if (any(tau <= 0)) {
-    stop("All elements of tau must be positive")
+    stop("All elements of tau must be positive", call. = FALSE)
   }
 
   n_components <- ncol(gamma)
 
   if (length(tau) != n_components) {
-    stop("tau must have length I (number of columns in gamma)")
+    stop("tau must have length I (number of columns in gamma)", call. = FALSE)
   }
 
   if (!is.numeric(L_i) || !is.numeric(V_i)) {
-    stop("L_i and V_i must be numeric vectors")
+    stop("L_i and V_i must be numeric vectors", call. = FALSE)
   }
 
   if (!is.list(Q_i)) {
-    stop("Q_i must be a list")
+    stop("Q_i must be a list", call. = FALSE)
   }
 
   if (!is.numeric(s_i_0) || !is.numeric(sigma_i_sq)) {
-    stop("s_i_0 and sigma_i_sq must be numeric vectors")
+    stop("s_i_0 and sigma_i_sq must be numeric vectors", call. = FALSE)
   }
 
   if (!is.list(s_i_1) || !is.list(s_i_2)) {
-    stop("s_i_1 and s_i_2 must be lists")
+    stop("s_i_1 and s_i_2 must be lists", call. = FALSE)
   }
 
   # Resolve maturities from names or explicit parameter
@@ -67,7 +67,8 @@ validate_quadratic_inputs <- function(gamma, tau,
   if (any(maturities < 1) || any(maturities > n_components)) {
     stop(
       "maturities must be between 1 and ncol(gamma) (",
-      n_components, ")"
+      n_components, ")",
+      call. = FALSE
     )
   }
 
@@ -79,7 +80,8 @@ validate_quadratic_inputs <- function(gamma, tau,
   ) != n_maturities)) {
     stop(
       "All statistical inputs must have length matching ",
-      "maturities (", n_maturities, ")"
+      "maturities (", n_maturities, ")",
+      call. = FALSE
     )
   }
 
@@ -93,7 +95,8 @@ validate_quadratic_inputs <- function(gamma, tau,
       "for maturity/maturities ",
       paste(maturities[bad_sigma], collapse = ", "),
       ". Cannot compute identified set -- ",
-      "insufficient heteroskedasticity."
+      "insufficient heteroskedasticity.",
+      call. = FALSE
     )
   }
 

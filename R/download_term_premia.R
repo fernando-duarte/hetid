@@ -43,7 +43,8 @@ download_term_premia <- function(force = FALSE, quiet = FALSE) {
   if (!requireNamespace("readxl", quietly = TRUE)) {
     stop(
       "Package 'readxl' is required to read Excel files. ",
-      "Please install it with: install.packages('readxl')"
+      "Please install it with: install.packages('readxl')",
+      call. = FALSE
     )
   }
 
@@ -86,7 +87,9 @@ download_term_premia <- function(force = FALSE, quiet = FALSE) {
       return(invisible(csv_path))
     },
     error = function(e) {
-      stop("Failed to download term premia data: ", e$message)
+      stop("Failed to download term premia data: ", e$message,
+        call. = FALSE
+      )
     }
   )
 }

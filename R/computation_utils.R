@@ -30,7 +30,7 @@ compute_n_hat_previous <- function(yields, term_premia, i, dates = NULL) {
     # For i=1, n_hat(0,t) = E_t[p_(t+0)^(1)] = p_t^(1) = -y_t^(1)
     y1 <- yields[["y1"]]
     if (is.null(y1)) {
-      stop("y1 column not found in yields")
+      stop("y1 column not found in yields", call. = FALSE)
     }
     -y1 / HETID_CONSTANTS$PERCENT_TO_DECIMAL # Convert to decimal
   } else {
@@ -86,7 +86,10 @@ prepare_return_data <- function(result_series, return_df, dates, yields, series_
 
   # Ensure dates is the same length as the data
   if (length(dates) != nrow(yields)) {
-    stop("Length of dates must match number of rows in yields")
+    stop(
+      "Length of dates must match number of rows in yields",
+      call. = FALSE
+    )
   }
 
   # For news series (T-1 elements), align with dates by adding NA at beginning
@@ -117,7 +120,7 @@ prepare_return_data <- function(result_series, return_df, dates, yields, series_
 compute_expected_squared <- function(series, error_msg = "No valid values to compute expectation") {
   clean_series <- series[!is.na(series)]
   if (length(clean_series) == 0) {
-    stop(error_msg)
+    stop(error_msg, call. = FALSE)
   }
   mean(clean_series^2)
 }

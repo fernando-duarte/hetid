@@ -136,14 +136,14 @@ compute_identified_set_quadratic <- function(gamma, tau, L_i, V_i, Q_i,
       stop(paste(
         "Q_i[[", idx,
         "]] must be a numeric vector of length I"
-      ))
+      ), call. = FALSE)
     }
 
     if (!is.numeric(s_i_1_vec) || length(s_i_1_vec) != n_components) {
       stop(paste0(
         "s_i_1 for maturity ", i, " (position ", idx,
         ") must be a numeric vector of length I"
-      ))
+      ), call. = FALSE)
     }
 
     if (!is.matrix(s_i_2_mat) ||
@@ -152,7 +152,7 @@ compute_identified_set_quadratic <- function(gamma, tau, L_i, V_i, Q_i,
       stop(paste0(
         "s_i_2 for maturity ", i, " (position ", idx,
         ") must be an I x I matrix"
-      ))
+      ), call. = FALSE)
     }
 
     # Compute d_i = tau_i^2 * V_i / sigma_i^2
@@ -162,7 +162,8 @@ compute_identified_set_quadratic <- function(gamma, tau, L_i, V_i, Q_i,
       stop(
         "d_i overflowed to non-finite for maturity ", i,
         ". sigma_i_sq may be too close to zero ",
-        "for numerically stable computation."
+        "for numerically stable computation.",
+        call. = FALSE
       )
     }
 

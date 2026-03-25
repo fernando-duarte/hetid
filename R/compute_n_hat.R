@@ -51,10 +51,13 @@ compute_n_hat <- function(yields, term_premia, i, return_df = FALSE, dates = NUL
 
   # Check for missing columns
   if (is.null(y_i) || is.null(y_i_plus_1)) {
-    stop("Required yield columns not found for i = ", i)
+    stop("Required yield columns not found for i = ", i, call. = FALSE)
   }
   if (is.null(tp_i) || is.null(tp_i_plus_1)) {
-    stop("Required term premia columns not found for i = ", i)
+    stop(
+      "Required term premia columns not found for i = ", i,
+      call. = FALSE
+    )
   }
 
   # Compute n_hat

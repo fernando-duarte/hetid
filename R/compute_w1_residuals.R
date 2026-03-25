@@ -85,7 +85,7 @@ compute_w1_residuals <- function(n_pcs = HETID_CONSTANTS$DEFAULT_N_PCS,
     stop(paste(
       "Missing required columns:",
       paste(missing_cols, collapse = ", ")
-    ))
+    ), call. = FALSE)
   }
 
   # Extract relevant variables

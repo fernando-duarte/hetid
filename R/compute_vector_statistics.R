@@ -48,13 +48,14 @@ compute_vector_statistics <- function(w1, w2, pcs,
 
   # Additional pcs validation (unique to this function)
   if (!is.matrix(pcs) && !is.data.frame(pcs)) {
-    stop("pcs must be a matrix or data frame")
+    stop("pcs must be a matrix or data frame", call. = FALSE)
   }
   pcs <- as.matrix(pcs)
   if (nrow(pcs) != t_obs) {
     stop(
       "pcs must have the same number of ",
-      "observations as w1 and w2"
+      "observations as w1 and w2",
+      call. = FALSE
     )
   }
 

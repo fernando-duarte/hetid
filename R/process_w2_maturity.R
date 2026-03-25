@@ -14,14 +14,20 @@ process_w2_maturity <- function(i, yields_df, term_premia_df, pcs, n_pcs) {
   # Get yield column
   y_col <- paste0("y", i)
   if (!y_col %in% names(yields_df)) {
-    warning(paste("Yield column", y_col, "not found. Skipping maturity", i))
+    warning(
+      paste("Yield column", y_col, "not found. Skipping maturity", i),
+      call. = FALSE
+    )
     return(NULL)
   }
 
   # Check term premium column exists
   tp_col <- paste0("tp", i)
   if (!tp_col %in% names(term_premia_df)) {
-    warning(paste("Term premium column", tp_col, "not found. Skipping maturity", i))
+    warning(
+      paste("Term premium column", tp_col, "not found. Skipping maturity", i),
+      call. = FALSE
+    )
     return(NULL)
   }
 
@@ -54,7 +60,8 @@ process_w2_maturity <- function(i, yields_df, term_premia_df, pcs, n_pcs) {
       paste(
         "Insufficient data for maturity",
         i, ". Skipping."
-      )
+      ),
+      call. = FALSE
     )
     return(NULL)
   }

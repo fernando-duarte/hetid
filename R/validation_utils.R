@@ -18,7 +18,9 @@ NULL
 #' @keywords internal
 assert_scalar_finite <- function(x, name) {
   if (!is.numeric(x) || length(x) != 1 || !is.finite(x)) {
-    stop(name, " must be a single finite numeric value")
+    stop(name, " must be a single finite numeric value",
+      call. = FALSE
+    )
   }
 }
 
@@ -35,13 +37,14 @@ validate_maturity_index <- function(i, max_maturity = HETID_CONSTANTS$MAX_MATURI
   assert_scalar_finite(i, "Maturity index i")
 
   if (i %% 1 != 0) {
-    stop("Maturity index i must be an integer")
+    stop("Maturity index i must be an integer", call. = FALSE)
   }
 
   if (i < HETID_CONSTANTS$MIN_MATURITY || i > max_maturity) {
     stop(
       "Maturity index i must be between ", HETID_CONSTANTS$MIN_MATURITY,
-      " and ", max_maturity
+      " and ", max_maturity,
+      call. = FALSE
     )
   }
 
@@ -61,14 +64,16 @@ validate_data_dimensions <- function(yields, term_premia) {
   if (nrow(yields) != nrow(term_premia)) {
     stop(
       "yields and term_premia must have same number of observations. ",
-      "Got ", nrow(yields), " vs ", nrow(term_premia), " rows."
+      "Got ", nrow(yields), " vs ", nrow(term_premia), " rows.",
+      call. = FALSE
     )
   }
 
   if (ncol(yields) != ncol(term_premia)) {
     stop(
       "yields and term_premia must have same number of maturities. ",
-      "Got ", ncol(yields), " vs ", ncol(term_premia), " columns."
+      "Got ", ncol(yields), " vs ", ncol(term_premia), " columns.",
+      call. = FALSE
     )
   }
 
@@ -87,12 +92,13 @@ validate_n_pcs <- function(n_pcs) {
   assert_scalar_finite(n_pcs, "n_pcs")
 
   if (n_pcs %% 1 != 0) {
-    stop("n_pcs must be an integer")
+    stop("n_pcs must be an integer", call. = FALSE)
   }
 
   if (n_pcs < 1 || n_pcs > HETID_CONSTANTS$MAX_N_PCS) {
     stop(
-      "n_pcs must be between 1 and ", HETID_CONSTANTS$MAX_N_PCS
+      "n_pcs must be between 1 and ", HETID_CONSTANTS$MAX_N_PCS,
+      call. = FALSE
     )
   }
 
@@ -114,7 +120,8 @@ validate_min_observations <- function(n, min_obs = HETID_CONSTANTS$MIN_OBSERVATI
   if (n < min_obs) {
     stop(
       "Not enough complete observations (need at least ", min_obs,
-      ")"
+      ")",
+      call. = FALSE
     )
   }
 
@@ -133,7 +140,9 @@ validate_time_series_lengths <- function(...) {
   series_list <- list(...)
 
   if (length(series_list) < 2) {
-    stop("At least two time series required for length validation")
+    stop("At least two time series required for length validation",
+      call. = FALSE
+    )
   }
 
   series_lengths <- lengths(series_list)
@@ -142,7 +151,8 @@ validate_time_series_lengths <- function(...) {
     stop(
       "All input time series must have the same length. ",
       "Got lengths: ",
-      paste(series_lengths, collapse = ", ")
+      paste(series_lengths, collapse = ", "),
+      call. = FALSE
     )
   }
 
@@ -167,7 +177,9 @@ validate_numeric_inputs <- function(...) {
 
   for (i in seq_along(inputs)) {
     if (!is.numeric(inputs[[i]])) {
-      stop(input_names[i], " must be a numeric vector")
+      stop(input_names[i], " must be a numeric vector",
+        call. = FALSE
+      )
     }
   }
 

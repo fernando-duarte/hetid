@@ -14,10 +14,10 @@ validate_w2_inputs <- function(yields, term_premia, maturities) {
   tp_valid <- is.data.frame(term_premia) || is.matrix(term_premia)
 
   if (!yields_valid) {
-    stop("yields must be a data frame or matrix")
+    stop("yields must be a data frame or matrix", call. = FALSE)
   }
   if (!tp_valid) {
-    stop("term_premia must be a data frame or matrix")
+    stop("term_premia must be a data frame or matrix", call. = FALSE)
   }
 
   # Convert to data frames
@@ -29,7 +29,7 @@ validate_w2_inputs <- function(yields, term_premia, maturities) {
 
   # Validate maturity values
   if (any(maturities %% 1 != 0) || any(maturities < 1)) {
-    stop("maturities must be positive integers")
+    stop("maturities must be positive integers", call. = FALSE)
   }
 
   max_maturity <- min(
@@ -39,7 +39,13 @@ validate_w2_inputs <- function(yields, term_premia, maturities) {
   valid_maturities <- maturities[maturities <= max_maturity]
 
   if (length(valid_maturities) < length(maturities)) {
-    warning(paste("Some maturities exceed available data. Using 1:", max_maturity))
+    warning(
+      paste(
+        "Some maturities exceed available data. Using 1:",
+        max_maturity
+      ),
+      call. = FALSE
+    )
   }
 
   list(
@@ -98,7 +104,7 @@ load_w2_pcs <- function(pcs, n_pcs, n_obs) {
       stop(paste(
         "Missing PC columns in variables data:",
         paste(missing_cols, collapse = ", ")
-      ))
+      ), call. = FALSE)
     }
 
     # One-period offset: dates[2:T] aligns with T-1 innovations
@@ -120,13 +126,15 @@ load_w2_pcs <- function(pcs, n_pcs, n_obs) {
     if (nrow(pcs) != n_obs) {
       stop(
         "Number of rows in user-provided pcs ",
-        "must match number of rows in yields"
+        "must match number of rows in yields",
+        call. = FALSE
       )
     }
     if (ncol(pcs) < n_pcs) {
       stop(
         "pcs has ", ncol(pcs), " columns but n_pcs = ",
-        n_pcs, "; supply at least ", n_pcs, " columns"
+        n_pcs, "; supply at least ", n_pcs, " columns",
+        call. = FALSE
       )
     }
 

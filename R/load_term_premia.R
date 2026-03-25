@@ -68,7 +68,8 @@ load_term_premia <- function(auto_download = FALSE) {
         if (!inherits(tp_df$DATE, "Date")) {
           warning(
             "Could not convert DATE column to ",
-            "Date class. Keeping as character."
+            "Date class. Keeping as character.",
+            call. = FALSE
           )
         }
       }
@@ -81,7 +82,7 @@ load_term_premia <- function(auto_download = FALSE) {
       tp_df
     },
     error = function(e) {
-      warning("Failed to load term premia data: ", e$message)
+      warning("Failed to load term premia data: ", e$message, call. = FALSE)
       NULL
     }
   )

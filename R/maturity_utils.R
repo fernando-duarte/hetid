@@ -31,7 +31,7 @@ maturity_names <- function(maturities) {
 resolve_maturities <- function(maturities, stats_list,
                                n_components) {
   if (!is.list(stats_list) || length(stats_list) == 0) {
-    stop("stats_list must be a non-empty list")
+    stop("stats_list must be a non-empty list", call. = FALSE)
   }
 
   all_names <- lapply(stats_list, names)
@@ -41,7 +41,8 @@ resolve_maturities <- function(maturities, stats_list,
     stop(
       "Cannot mix named and unnamed statistical inputs. ",
       "Either name all inputs with 'maturity_N' names ",
-      "or leave all unnamed."
+      "or leave all unnamed.",
+      call. = FALSE
     )
   }
 
@@ -51,7 +52,8 @@ resolve_maturities <- function(maturities, stats_list,
     if (!all(grepl("^maturity_\\d+$", anchor))) {
       stop(
         "Named inputs must follow 'maturity_N' pattern. ",
-        "Got: ", paste(anchor, collapse = ", ")
+        "Got: ", paste(anchor, collapse = ", "),
+        call. = FALSE
       )
     }
     for (nm in names(all_names)[-1]) {
@@ -59,7 +61,8 @@ resolve_maturities <- function(maturities, stats_list,
         stop(
           "Names of ", nm,
           " do not match maturities. ",
-          "All named inputs must have identical names."
+          "All named inputs must have identical names.",
+          call. = FALSE
         )
       }
     }
@@ -70,7 +73,8 @@ resolve_maturities <- function(maturities, stats_list,
         paste(
           parsed[duplicated(parsed)],
           collapse = ", "
-        )
+        ),
+        call. = FALSE
       )
     }
   }
@@ -85,7 +89,8 @@ resolve_maturities <- function(maturities, stats_list,
           "Cannot infer maturities: inputs have length ",
           n_stats, " but n_components = ", n_components,
           ". Pass maturities explicitly or use named ",
-          "inputs with 'maturity_N' names."
+          "inputs with 'maturity_N' names.",
+          call. = FALSE
         )
       }
       maturities <- seq_len(n_stats)
@@ -98,7 +103,8 @@ resolve_maturities <- function(maturities, stats_list,
         "Names: ",
         paste(all_names[[1]], collapse = ", "),
         ". Expected: ",
-        paste(expected, collapse = ", ")
+        paste(expected, collapse = ", "),
+        call. = FALSE
       )
     }
   }

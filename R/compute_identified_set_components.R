@@ -83,19 +83,19 @@ compute_identified_set_components <- function(gamma, r_i_0, r_i_1, p_i_0,
                                               maturities = NULL) {
   # Validate inputs
   if (!is.matrix(gamma)) {
-    stop("gamma must be a matrix")
+    stop("gamma must be a matrix", call. = FALSE)
   }
 
   if (!is.matrix(r_i_0)) {
-    stop("r_i_0 must be a matrix")
+    stop("r_i_0 must be a matrix", call. = FALSE)
   }
 
   if (!is.list(r_i_1)) {
-    stop("r_i_1 must be a list of matrices")
+    stop("r_i_1 must be a list of matrices", call. = FALSE)
   }
 
   if (!is.matrix(p_i_0)) {
-    stop("p_i_0 must be a matrix")
+    stop("p_i_0 must be a matrix", call. = FALSE)
   }
 
   J <- nrow(gamma)
@@ -109,27 +109,32 @@ compute_identified_set_components <- function(gamma, r_i_0, r_i_1, p_i_0,
 
   if (any(maturities < 1) ||
     any(maturities > n_components)) {
-    stop("maturities must be between 1 and I")
+    stop("maturities must be between 1 and I",
+      call. = FALSE
+    )
   }
   n_maturities <- length(maturities)
 
   if (nrow(r_i_0) != J ||
     ncol(r_i_0) != n_maturities) {
     stop(
-      "r_i_0 must be J x length(maturities)"
+      "r_i_0 must be J x length(maturities)",
+      call. = FALSE
     )
   }
 
   if (length(r_i_1) != n_maturities) {
     stop(
-      "r_i_1 must have length(maturities) elements"
+      "r_i_1 must have length(maturities) elements",
+      call. = FALSE
     )
   }
 
   if (nrow(p_i_0) != J ||
     ncol(p_i_0) != n_maturities) {
     stop(
-      "p_i_0 must be J x length(maturities)"
+      "p_i_0 must be J x length(maturities)",
+      call. = FALSE
     )
   }
 
@@ -161,7 +166,7 @@ compute_identified_set_components <- function(gamma, r_i_0, r_i_1, p_i_0,
         "r_i_1 for maturity ", i,
         " (position ", idx,
         ") must be a J x I matrix"
-      ))
+      ), call. = FALSE)
     }
     Q_i[[idx]] <- as.numeric(
       crossprod(gamma_i, R_i_1_mat)

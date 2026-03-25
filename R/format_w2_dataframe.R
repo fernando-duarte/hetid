@@ -49,7 +49,8 @@ format_w2_dataframe <- function(
       stop(
         "dates has ", length(dates),
         " elements but nrow(yields) - 1 = ",
-        expected_len
+        expected_len,
+        call. = FALSE
       )
     }
   }

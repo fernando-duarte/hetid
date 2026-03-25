@@ -17,10 +17,10 @@
 validate_statistics_inputs <- function(w1, w2,
                                        maturities = NULL) {
   if (!is.numeric(w1) || !is.vector(w1)) {
-    stop("w1 must be a numeric vector")
+    stop("w1 must be a numeric vector", call. = FALSE)
   }
   if (!is.matrix(w2) && !is.data.frame(w2)) {
-    stop("w2 must be a matrix or data frame")
+    stop("w2 must be a matrix or data frame", call. = FALSE)
   }
   w2 <- as.matrix(w2)
 
@@ -28,7 +28,8 @@ validate_statistics_inputs <- function(w1, w2,
   if (nrow(w2) != t_obs) {
     stop(
       "w1 and w2 must have the same number of ",
-      "observations"
+      "observations",
+      call. = FALSE
     )
   }
 
@@ -39,12 +40,13 @@ validate_statistics_inputs <- function(w1, w2,
     any(!is.finite(maturities)) ||
     any(maturities %% 1 != 0)) {
     stop(
-      "maturities must be finite integer values"
+      "maturities must be finite integer values",
+      call. = FALSE
     )
   }
   if (any(maturities < 1) ||
     any(maturities > ncol(w2))) {
-    stop("maturities must be between 1 and ncol(w2)")
+    stop("maturities must be between 1 and ncol(w2)", call. = FALSE)
   }
 
   list(w2 = w2, t_obs = t_obs, maturities = maturities)

@@ -41,7 +41,7 @@ compute_k_hat <- function(yields, term_premia, i) {
   # Get y1 series
   y1 <- yields[["y1"]]
   if (is.null(y1)) {
-    stop("y1 column not found in yields")
+    stop("y1 column not found in yields", call. = FALSE)
   }
 
   n_hat_i_minus_1 <- compute_n_hat_previous(
@@ -52,7 +52,7 @@ compute_k_hat <- function(yields, term_premia, i) {
   n_obs <- length(y1)
 
   if (n_obs <= i) {
-    stop("Not enough observations. Need T > i")
+    stop("Not enough observations. Need T > i", call. = FALSE)
   }
 
   # Compute the fourth moment (vectorized)

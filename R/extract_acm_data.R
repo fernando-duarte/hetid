@@ -75,14 +75,16 @@ extract_acm_data <- function(data_types = c("yields", "term_premia"),
   if (!all(data_types %in% valid_types)) {
     stop(
       "Invalid data_types. Must be one or more of: ",
-      paste(valid_types, collapse = ", ")
+      paste(valid_types, collapse = ", "),
+      call. = FALSE
     )
   }
 
   if (!all(maturities %in% HETID_CONSTANTS$MIN_MATURITY:HETID_CONSTANTS$MAX_MATURITY)) {
     stop(
       "Maturities must be integers between ",
-      HETID_CONSTANTS$MIN_MATURITY, " and ", HETID_CONSTANTS$MAX_MATURITY
+      HETID_CONSTANTS$MIN_MATURITY, " and ", HETID_CONSTANTS$MAX_MATURITY,
+      call. = FALSE
     )
   }
 
@@ -92,7 +94,8 @@ extract_acm_data <- function(data_types = c("yields", "term_premia"),
   if (is.null(acm_data)) {
     stop(
       "ACM data not available. Run download_term_premia() first or ",
-      "set auto_download = TRUE"
+      "set auto_download = TRUE",
+      call. = FALSE
     )
   }
 
@@ -130,7 +133,7 @@ extract_acm_data <- function(data_types = c("yields", "term_premia"),
     if (old_name %in% names(acm_data)) {
       result[[new_name]] <- acm_data[[old_name]]
     } else {
-      warning("Column ", old_name, " not found in data")
+      warning("Column ", old_name, " not found in data", call. = FALSE)
     }
   }
 
