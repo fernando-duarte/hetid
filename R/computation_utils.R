@@ -28,10 +28,7 @@ get_pc_column_names <- function(n_pcs) {
 compute_n_hat_previous <- function(yields, term_premia, i, dates = NULL) {
   if (i == 1) {
     # For i=1, n_hat(0,t) = E_t[p_(t+0)^(1)] = p_t^(1) = -y_t^(1)
-    y1 <- yields[["y1"]]
-    if (is.null(y1)) {
-      stop("y1 column not found in yields", call. = FALSE)
-    }
+    y1 <- require_column(yields, "y1", "yields")
     -y1 / HETID_CONSTANTS$PERCENT_TO_DECIMAL # Convert to decimal
   } else {
     compute_n_hat(yields, term_premia, i - 1,

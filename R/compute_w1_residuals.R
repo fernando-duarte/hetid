@@ -80,13 +80,7 @@ compute_w1_residuals <- function(n_pcs = HETID_CONSTANTS$DEFAULT_N_PCS,
   if (return_df && !has_dates) {
     required_cols <- c("date", required_cols)
   }
-  missing_cols <- setdiff(required_cols, names(data))
-  if (length(missing_cols) > 0) {
-    stop(paste(
-      "Missing required columns:",
-      paste(missing_cols, collapse = ", ")
-    ), call. = FALSE)
-  }
+  assert_columns_exist(data, required_cols)
 
   # Extract relevant variables
   y1 <- data[[HETID_CONSTANTS$CONSUMPTION_GROWTH_COL]]

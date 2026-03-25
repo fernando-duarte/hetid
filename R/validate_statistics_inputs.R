@@ -19,9 +19,7 @@ validate_statistics_inputs <- function(w1, w2,
   if (!is.numeric(w1) || !is.vector(w1)) {
     stop("w1 must be a numeric vector", call. = FALSE)
   }
-  if (!is.matrix(w2) && !is.data.frame(w2)) {
-    stop("w2 must be a matrix or data frame", call. = FALSE)
-  }
+  assert_tabular(w2, "w2")
   w2 <- as.matrix(w2)
 
   t_obs <- length(w1)

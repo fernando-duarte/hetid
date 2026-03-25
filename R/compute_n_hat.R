@@ -44,21 +44,12 @@ compute_n_hat <- function(yields, term_premia, i, return_df = FALSE, dates = NUL
   validate_maturity_index(i, max_maturity = HETID_CONSTANTS$EFFECTIVE_MAX_MATURITY)
 
   # Extract relevant columns
-  y_i <- yields[[paste0("y", i)]]
-  y_i_plus_1 <- yields[[paste0("y", i + 1)]]
-  tp_i <- term_premia[[paste0("tp", i)]]
-  tp_i_plus_1 <- term_premia[[paste0("tp", i + 1)]]
-
-  # Check for missing columns
-  if (is.null(y_i) || is.null(y_i_plus_1)) {
-    stop("Required yield columns not found for i = ", i, call. = FALSE)
-  }
-  if (is.null(tp_i) || is.null(tp_i_plus_1)) {
-    stop(
-      "Required term premia columns not found for i = ", i,
-      call. = FALSE
-    )
-  }
+  y_i <- require_column(yields, paste0("y", i), "yields")
+  y_i_plus_1 <- require_column(yields, paste0("y", i + 1), "yields")
+  tp_i <- require_column(term_premia, paste0("tp", i), "term_premia")
+  tp_i_plus_1 <- require_column(
+    term_premia, paste0("tp", i + 1), "term_premia"
+  )
 
   # Compute n_hat
   n_hat <- i * y_i - (i + 1) * y_i_plus_1 + (i + 1) * tp_i_plus_1 - i * tp_i

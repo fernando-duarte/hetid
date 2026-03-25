@@ -10,15 +10,8 @@
 #' @keywords internal
 validate_w2_inputs <- function(yields, term_premia, maturities) {
   # Check input types
-  yields_valid <- is.data.frame(yields) || is.matrix(yields)
-  tp_valid <- is.data.frame(term_premia) || is.matrix(term_premia)
-
-  if (!yields_valid) {
-    stop("yields must be a data frame or matrix", call. = FALSE)
-  }
-  if (!tp_valid) {
-    stop("term_premia must be a data frame or matrix", call. = FALSE)
-  }
+  assert_tabular(yields, "yields")
+  assert_tabular(term_premia, "term_premia")
 
   # Convert to data frames
   yields_df <- as.data.frame(yields)

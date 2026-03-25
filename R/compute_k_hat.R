@@ -39,10 +39,7 @@ compute_k_hat <- function(yields, term_premia, i) {
   validate_maturity_index(i)
 
   # Get y1 series
-  y1 <- yields[["y1"]]
-  if (is.null(y1)) {
-    stop("y1 column not found in yields", call. = FALSE)
-  }
+  y1 <- require_column(yields, "y1", "yields")
 
   n_hat_i_minus_1 <- compute_n_hat_previous(
     yields, term_premia, i
