@@ -35,7 +35,6 @@
 #' principal components extracted from financial asset returns (pc1, ..., pc6).
 #'
 #' @importFrom stats lm residuals fitted coef as.formula complete.cases
-#' @importFrom utils data
 #' @export
 #'
 #' @examples
@@ -61,9 +60,7 @@
 compute_w1_residuals <- function(n_pcs = HETID_CONSTANTS$DEFAULT_N_PCS,
                                  data = NULL, return_df = FALSE) {
   # Validate inputs
-  if (!n_pcs %in% 1:HETID_CONSTANTS$MAX_N_PCS) {
-    stop("n_pcs must be between 1 and ", HETID_CONSTANTS$MAX_N_PCS)
-  }
+  validate_n_pcs(n_pcs)
 
   # Load data if not provided
   if (is.null(data)) {
@@ -71,8 +68,7 @@ compute_w1_residuals <- function(n_pcs = HETID_CONSTANTS$DEFAULT_N_PCS,
       "Using bundled 'variables' dataset. ",
       "Pass data= explicitly to use your own data."
     )
-    data("variables", package = "hetid", envir = environment())
-    data <- get("variables", envir = environment())
+    data <- get_bundled_variables()
   }
 
   # Check required columns (date is optional unless return_df)

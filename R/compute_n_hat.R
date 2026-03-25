@@ -63,24 +63,7 @@ compute_n_hat <- function(yields, term_premia, i, return_df = FALSE, dates = NUL
   # Convert percentages to decimals (ACM data is in percentage points)
   n_hat <- n_hat / HETID_CONSTANTS$PERCENT_TO_DECIMAL
 
-  # Return data frame with dates if requested
-  if (return_df) {
-    # Use provided dates, or create generic time index
-    if (is.null(dates)) {
-      dates <- seq_len(nrow(yields))
-    }
-
-    # Ensure dates is the same length as the data
-    if (length(dates) != length(n_hat)) {
-      stop("Length of dates must match number of rows in yields")
-    }
-
-    return(data.frame(
-      date = dates,
-      n_hat = n_hat,
-      stringsAsFactors = FALSE
-    ))
-  }
-
-  n_hat
+  prepare_return_data(
+    n_hat, return_df, dates, yields, "n_hat"
+  )
 }
