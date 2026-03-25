@@ -1,6 +1,3 @@
-# Claude-specific
-.claude
-CLAUDE.md
 .worktrees/
 
 # R and RStudio files
@@ -30,6 +27,7 @@ README.html
 docs/
 /doc/
 /Meta/
+inst/doc
 
 # translation temp files
 po/*~

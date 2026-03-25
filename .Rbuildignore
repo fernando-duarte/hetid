@@ -21,6 +21,7 @@
 
 # Documentation
 ^_pkgdown\.yml$
+^_pkgdown\.yaml$
 ^docs$
 ^pkgdown$
 ^doc$
@@ -31,6 +32,7 @@
 ^data-raw$
 ^dev$
 ^inst/examples$
+^inst/hooks/claude-check\.sh$
 ^scripts$
 ^scripts_old$
 ^revdep$
@@ -46,10 +48,6 @@
 # Windows
 ^Thumbs\.db$
 
-# RStudio
-^.*\.Rproj$
-^\.Rproj\.user$
-
 # Temporary files
 ^.*\.log$
 ^.*\.tmp$
@@ -63,11 +61,14 @@
 ^CRAN-RELEASE$
 ^CRAN-SUBMISSION$
 ^\.Rcheck$
+^\.\.Rcheck$
+^hetid\.Rcheck$
 ^.*\.tar\.gz$
-
-# Claude-specific
+^\.Rhistory$
+^\.worktrees$
 ^\.claude$
 ^CLAUDE\.md$
+^CLAUDE\.local\.md$
 
 # Other common files to exclude
 ^\.lintr$
@@ -87,8 +88,6 @@
 # Makefile
 ^Makefile$
 ^LICENSE\.md$
-^CLAUDE\.local\.md$
-^data-raw$
 
 # Analysis scripts (not part of package)
 ^hetid_analysis_script\.R$
