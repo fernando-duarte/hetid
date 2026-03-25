@@ -71,68 +71,6 @@ expect_single_finite_value <- function(result, should_be_positive = TRUE, label 
   }
 }
 
-#' Standard Expectations for Time Series Results
-#'
-#' Common expectations for functions that return time series
-#'
-#' @param result The result to test
-#' @param expected_length Expected length (optional)
-#' @param allow_na Whether NA values are allowed
-#' @param label Label for the expectation
-#' @keywords internal
-expect_time_series <- function(result, expected_length = NULL, allow_na = TRUE, label = "result") {
-  expect_type(result, "double")
-
-  if (!is.null(expected_length)) {
-    expect_length(result, expected_length)
-  }
-
-  if (!allow_na) {
-    expect_true(all(is.finite(result)), label = paste(label, "should not contain NA/Inf"))
-  }
-}
-
-#' Standard Expectations for Data Frame Results
-#'
-#' Common expectations for functions that return data frames
-#'
-#' @param result The result to test
-#' @param expected_cols Expected column names
-#' @param expected_rows Expected number of rows (optional)
-#' @param label Label for the expectation
-#' @keywords internal
-expect_standard_dataframe <- function(result, expected_cols, expected_rows = NULL,
-                                      label = "result") {
-  expect_s3_class(result, "data.frame")
-  expect_named(result, expected_cols)
-
-  if (!is.null(expected_rows)) {
-    expect_equal(nrow(result), expected_rows)
-  }
-
-  # Check that date column exists and is properly formatted if expected
-  if ("date" %in% expected_cols) {
-    expect_true(all(!is.na(result$date)), label = "dates should not be NA")
-  }
-}
-
-#' Test Function with Multiple Maturities
-#'
-#' Helper to test a function across multiple maturities
-#'
-#' @param test_fn Function to test (should take yields, term_premia, i as arguments)
-#' @param maturities Vector of maturities to test
-#' @param test_env Test environment from setup_standard_test_env
-#' @param expectation_fn Function to apply expectations to each result
-#' @keywords internal
-test_across_maturities <- function(test_fn, maturities = c(2, 5, 10),
-                                   test_env, expectation_fn) {
-  for (i in maturities) {
-    result <- test_fn(test_env$yields, test_env$term_premia, i)
-    expectation_fn(result, i)
-  }
-}
-
 #' Create Test Data with Known Properties
 #'
 #' Creates synthetic test data with known statistical properties
@@ -159,35 +97,4 @@ create_synthetic_test_data <- function(n = 100, n_maturities = 10, seed = 123) {
     yields = as.data.frame(yields),
     term_premia = as.data.frame(term_premia)
   )
-}
-
-#' Standard Error Testing
-#'
-#' Common patterns for testing error conditions
-#'
-#' @param test_fn Function to test
-#' @param error_tests List of error test configurations
-#' @keywords internal
-test_standard_errors <- function(test_fn, error_tests) {
-  for (test_config in error_tests) {
-    expect_error(
-      do.call(test_fn, test_config$args),
-      test_config$pattern,
-      info = test_config$description
-    )
-  }
-}
-
-#' Validate Computation Results
-#'
-#' Standard validation for computation results
-#'
-#' @param result Computation result
-#' @param validation_rules List of validation rules
-#' @keywords internal
-validate_computation_result <- function(result, validation_rules) {
-  for (rule in validation_rules) {
-    rule_fn <- get(rule$type)
-    do.call(rule_fn, c(list(result), rule$args))
-  }
 }
