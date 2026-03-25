@@ -20,9 +20,16 @@ validate_w2_inputs <- function(yields, term_premia, maturities) {
   # Use standardized data dimension validation
   validate_data_dimensions(yields_df, term_premia_df)
 
-  # Validate maturity values
+  # Validate maturity values -- check empty first
   assert_bad_argument_ok(
-    all(maturities %% 1 == 0) && all(maturities >= 1),
+    length(maturities) > 0,
+    "maturities must not be empty",
+    arg = "maturities"
+  )
+
+  assert_bad_argument_ok(
+    all(maturities %% 1 == 0) &&
+      all(maturities >= 1),
     "maturities must be positive integers",
     arg = "maturities"
   )
@@ -31,22 +38,23 @@ validate_w2_inputs <- function(yields, term_premia, maturities) {
     HETID_CONSTANTS$EFFECTIVE_MAX_MATURITY,
     ncol(yields_df), ncol(term_premia_df)
   )
-  valid_maturities <- maturities[maturities <= max_maturity]
 
-  if (length(valid_maturities) < length(maturities)) {
-    warning(
-      paste(
-        "Some maturities exceed available data. Using 1:",
-        max_maturity
+  if (any(maturities > max_maturity)) {
+    invalid <- maturities[maturities > max_maturity]
+    stop_bad_argument(
+      paste0(
+        "Maturities exceed available data ",
+        "(max ", max_maturity, "): ",
+        paste(invalid, collapse = ", ")
       ),
-      call. = FALSE
+      arg = "maturities"
     )
   }
 
   list(
     yields = yields_df,
     term_premia = term_premia_df,
-    maturities = valid_maturities
+    maturities = maturities
   )
 }
 
@@ -105,7 +113,7 @@ load_w2_pcs <- function(pcs, n_pcs, n_obs) {
 
     # One-period offset: dates[2:T] aligns with T-1 innovations
     bundled_dates <- if ("date" %in% names(variables)) {
-      variables$date[2:nrow(variables)]
+      variables$date[-1]
     } else {
       NULL
     }

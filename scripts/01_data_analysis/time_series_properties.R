@@ -369,11 +369,9 @@ create_hetero_plots_wrapper <- function(var_name, y_var, predictor_vars) {
 
 # Generate plots for key variables (yields, term premia, consumption growth)
 key_vars <- c("y2", "y5", "y10", "tp2", "tp5", "tp10", "gr1.pcecc96")
-plot_success <- sapply(key_vars, function(var) {
+lapply(key_vars, function(var) {
   if (var %in% names(df)) {
     create_hetero_plots_wrapper(var, df[[var]], predictor_vars)
-  } else {
-    FALSE
   }
 })
 

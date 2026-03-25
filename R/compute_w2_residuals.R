@@ -4,7 +4,9 @@
 #' (SDF innovations) on principal components extracted from financial asset returns and a constant.
 #'
 #' @template param-yields-term-premia
-#' @param maturities Vector of maturities to process (default: 1:9)
+#' @param maturities Vector of maturities to process.
+#'   NULL (default) uses the full range from
+#'   MIN_MATURITY to EFFECTIVE_MAX_MATURITY.
 #' @template param-n-pcs
 #' @template param-pc-data
 #' @param return_df Logical, if TRUE returns a data frame with
@@ -100,11 +102,16 @@
 #' )
 #' }
 compute_w2_residuals <- function(yields, term_premia,
-                                 maturities = HETID_CONSTANTS$MIN_MATURITY:(
-                                   HETID_CONSTANTS$EFFECTIVE_MAX_MATURITY),
+                                 maturities = NULL,
                                  n_pcs = HETID_CONSTANTS$DEFAULT_N_PCS,
                                  pcs = NULL, return_df = FALSE, dates = NULL) {
   # Validate inputs
+  if (is.null(maturities)) {
+    maturities <- seq(
+      HETID_CONSTANTS$MIN_MATURITY,
+      HETID_CONSTANTS$EFFECTIVE_MAX_MATURITY
+    )
+  }
   validate_n_pcs(n_pcs)
   validated <- validate_w2_inputs(yields, term_premia, maturities) # nolint: object_usage_linter
   yields_df <- validated$yields

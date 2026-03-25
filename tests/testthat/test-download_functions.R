@@ -148,21 +148,22 @@ test_that("load_term_premia warns on unparseable dates", {
   })
 })
 
-test_that("load_term_premia warns and returns NULL on read error", {
-  local_mocked_bindings(
-    check_data_file_exists = function(...) TRUE,
-    get_acm_data_path = function() "/nonexistent/path.csv"
-  )
+test_that(
+  "load_term_premia errors on read failure",
+  {
+    local_mocked_bindings(
+      check_data_file_exists = function(...) TRUE,
+      get_acm_data_path = function() {
+        "/nonexistent/path.csv"
+      }
+    )
 
-  # read.csv emits a system warning ("cannot open file")
-  # before throwing an error; tryCatch then emits our
-  # "Failed to load" warning. Capture both.
-  warns <- capture_warnings(result <- load_term_premia())
-  expect_true(
-    any(grepl("Failed to load term premia", warns))
-  )
-  expect_null(result)
-})
+    expect_error(
+      load_term_premia(),
+      class = "hetid_error"
+    )
+  }
+)
 
 test_that("load_term_premia parses ISO dates correctly", {
   withr::with_tempdir({

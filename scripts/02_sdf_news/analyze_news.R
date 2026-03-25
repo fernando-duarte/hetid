@@ -524,35 +524,46 @@ plot_dir <- file.path(OUTPUT_DIR, "temp/sdf_news/analysis_plots")
 dir.create(plot_dir, recursive = TRUE, showWarnings = FALSE)
 
 # Diagnostic plots for regression residuals
-svglite::svglite(file.path(plot_dir, "price_news_residuals_diagnostics.svg"), width = 8, height = 8)
-par(mfrow = c(2, 2))
-res <- price_news_residuals
-fit <- fitted(lm_price_news)
+local({
+  svglite::svglite(
+    file.path(
+      plot_dir,
+      "price_news_residuals_diagnostics.svg"
+    ),
+    width = 8, height = 8
+  )
+  on.exit(dev.off(), add = TRUE)
+  par(mfrow = c(2, 2))
+  res <- price_news_residuals
+  fit <- fitted(lm_price_news)
 
-# Residuals vs Fitted
-plot(fit, res,
-  main = "Residuals vs Fitted",
-  xlab = "Fitted values", ylab = "Residuals"
-)
-abline(h = 0, lty = 2)
+  # Residuals vs Fitted
+  plot(fit, res,
+    main = "Residuals vs Fitted",
+    xlab = "Fitted values",
+    ylab = "Residuals"
+  )
+  abline(h = 0, lty = 2)
 
-# QQ plot
-qqnorm(res, main = "Normal Q-Q")
-qqline(res)
+  # QQ plot
+  qqnorm(res, main = "Normal Q-Q")
+  qqline(res)
 
-# Scale-Location
-plot(fit, sqrt(abs(res)),
-  main = "Scale-Location",
-  xlab = "Fitted values", ylab = "Sqrt(|Residuals|)"
-)
+  # Scale-Location
+  plot(fit, sqrt(abs(res)),
+    main = "Scale-Location",
+    xlab = "Fitted values",
+    ylab = "Sqrt(|Residuals|)"
+  )
 
-# Residuals vs Order
-plot(seq_along(res), res,
-  main = "Residuals vs Order",
-  xlab = "Observation Order", ylab = "Residuals"
-)
-abline(h = 0, lty = 2)
-dev.off()
+  # Residuals vs Order
+  plot(seq_along(res), res,
+    main = "Residuals vs Order",
+    xlab = "Observation Order",
+    ylab = "Residuals"
+  )
+  abline(h = 0, lty = 2)
+})
 
 # Heteroskedasticity diagnostic plot
 p_hetero_diag <- ggplot(

@@ -56,12 +56,12 @@ save_correlation_heatmap <- function(cor_matrix, title, filename, dir = plot_dir
   }
 
   svglite::svglite(file.path(dir, filename), width = 8, height = 7)
+  on.exit(dev.off(), add = TRUE)
   corrplot::corrplot(cor_matrix,
     method = "color", type = "upper",
     order = "original", tl.col = "black", tl.srt = 45,
     title = title, mar = c(0, 0, 2, 0)
   )
-  dev.off()
   invisible(TRUE)
 }
 
@@ -102,10 +102,6 @@ display_and_save_plot <- function(plot, filename, dir = plot_dir,
                                   width = PLOT_WIDTH, height = PLOT_HEIGHT,
                                   display = TRUE) {
   if (display) {
-    # Ensure no device is capturing the print output
-    if (dev.cur() != 1) {
-      dev.off()
-    }
     print(plot)
   }
   save_plot_svg(plot, filename, dir, width, height)

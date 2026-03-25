@@ -84,7 +84,7 @@ download_term_premia <- function(force = FALSE, quiet = FALSE) {
         )
       }
 
-      return(invisible(csv_path))
+      invisible(csv_path)
     },
     error = function(e) {
       stop_hetid(paste0(

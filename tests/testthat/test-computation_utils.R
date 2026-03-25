@@ -133,3 +133,34 @@ test_that("run_pc_regression returns expected structure", {
   )
   expect_true(all(result$complete_idx))
 })
+
+test_that(
+  "compute_time_series_news returns empty for single element",
+  {
+    result <- compute_time_series_news(1.0, 2.0)
+    expect_length(result, 0)
+    expect_type(result, "double")
+  }
+)
+
+test_that(
+  "compute_time_series_news works at boundary of two elements",
+  {
+    result <- compute_time_series_news(
+      c(1, 2), c(3, 4)
+    )
+    expect_equal(result, 4 - 1)
+    expect_length(result, 1)
+  }
+)
+
+test_that(
+  "compute_time_series_news handles negation with short input",
+  {
+    result <- compute_time_series_news(
+      c(1, 2), c(3, 4),
+      negate = TRUE
+    )
+    expect_equal(result, -(4 - 1))
+  }
+)

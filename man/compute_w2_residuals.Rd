@@ -7,7 +7,7 @@
 compute_w2_residuals(
   yields,
   term_premia,
-  maturities = HETID_CONSTANTS$MIN_MATURITY:(HETID_CONSTANTS$EFFECTIVE_MAX_MATURITY),
+  maturities = NULL,
   n_pcs = HETID_CONSTANTS$DEFAULT_N_PCS,
   pcs = NULL,
   return_df = FALSE,
@@ -19,7 +19,9 @@ compute_w2_residuals(
 
 \item{term_premia}{Data frame with columns tp1, tp2, ..., containing term premia}
 
-\item{maturities}{Vector of maturities to process (default: 1:9)}
+\item{maturities}{Vector of maturities to process.
+NULL (default) uses the full range from
+MIN_MATURITY to EFFECTIVE_MAX_MATURITY.}
 
 \item{n_pcs}{Integer specifying the number of principal components to use.
 Must be between 1 and 6. Default is 4 following Adrian, Crump, and Moench (2013).

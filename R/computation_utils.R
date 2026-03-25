@@ -49,9 +49,15 @@ compute_n_hat_previous <- function(yields, term_premia, i, dates = NULL) {
 compute_time_series_news <- function(current_series, future_series, negate = FALSE) {
   n_obs <- length(current_series)
 
+  # Guard: need at least 2 obs for differencing
+  if (n_obs < 2) {
+    return(numeric(0))
+  }
+
   # Compute news: future[t+1] - current[t]
   # NAs propagate naturally via R's NA arithmetic
-  ts_news <- future_series[2:n_obs] - current_series[1:(n_obs - 1)]
+  ts_news <- future_series[seq.int(2L, n_obs)] -
+    current_series[seq_len(n_obs - 1L)]
 
   if (negate) {
     ts_news <- -ts_news

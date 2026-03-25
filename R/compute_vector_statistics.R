@@ -61,16 +61,16 @@ compute_vector_statistics <- function(w1, w2, pcs,
       n_mat <- ncol(w2)
       hadamard_w1_w2i <- w1 * w2_i
       r_i_0_vec <- as.vector(
-        t(pcs) %*% hadamard_w1_w2i / t_obs
+        crossprod(pcs, hadamard_w1_w2i) / t_obs
       )
-      r_i_1_mat <- t(pcs) %*% (w2 * w2_i) / t_obs
+      r_i_1_mat <- crossprod(pcs, w2 * w2_i) / t_obs
       colnames(r_i_1_mat) <- paste0(
         "maturity_", seq_len(n_mat)
       )
       rownames(r_i_1_mat) <- get_pc_column_names(J)
       w2_i_sq <- w2_i^2
       p_i_0_vec <- as.vector(
-        t(pcs) %*% w2_i_sq / t_obs
+        crossprod(pcs, w2_i_sq) / t_obs
       )
       list(
         r_i_0 = r_i_0_vec,

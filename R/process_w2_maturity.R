@@ -37,17 +37,33 @@ process_w2_maturity <- function(i, yields_df, term_premia_df, pcs, n_pcs) {
 
   # Create lagged PCs
   # SDF innovations have length T-1
-  # Handle case where PCs have different length than yields
+  # Handle case where PCs have different length
   n_sdf <- length(sdf_innov)
   n_pcs_available <- nrow(pcs) - 1
 
+  # Guard against empty/insufficient PCs
+  if (n_pcs_available < 1 || n_sdf < 1) {
+    warning(
+      "Insufficient data for maturity ", i,
+      ". Skipping.",
+      call. = FALSE
+    )
+    return(NULL)
+  }
+
   if (n_pcs_available < n_sdf) {
-    # PCs are shorter - use what we have
-    pcs_lagged <- pcs[1:n_pcs_available, , drop = FALSE]
-    sdf_innov <- sdf_innov[1:n_pcs_available]
+    pcs_lagged <- pcs[
+      seq_len(n_pcs_available), ,
+      drop = FALSE
+    ]
+    sdf_innov <- sdf_innov[
+      seq_len(n_pcs_available)
+    ]
   } else {
-    # PCs are same length or longer - use first n_sdf rows
-    pcs_lagged <- pcs[1:n_sdf, , drop = FALSE]
+    pcs_lagged <- pcs[
+      seq_len(n_sdf), ,
+      drop = FALSE
+    ]
   }
 
   # Subset to relevant PCs before checking completeness

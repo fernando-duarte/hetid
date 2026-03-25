@@ -100,7 +100,7 @@ create_formatted_table <- function(data, title, subtitle = NULL,
 #' @return DT datatable object
 create_interactive_table <- function(data, page_length = 10, round_digits = 4) {
   # Find numeric columns
-  numeric_cols <- names(data)[sapply(data, is.numeric)]
+  numeric_cols <- names(data)[vapply(data, is.numeric, logical(1))]
 
   dt <- datatable(
     data,
@@ -132,7 +132,9 @@ check_data_completeness <- function(data, stop_on_na = TRUE) {
     na_check <- colSums(is.na(data))
     has_na <- any(na_check > 0)
   } else if (is.list(data)) {
-    na_check <- sapply(data, function(x) sum(is.na(x)))
+    na_check <- vapply(
+      data, function(x) sum(is.na(x)), integer(1)
+    )
     has_na <- any(na_check > 0)
   } else {
     has_na <- any(is.na(data))

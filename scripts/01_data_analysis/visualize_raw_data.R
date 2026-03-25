@@ -231,12 +231,17 @@ display_and_save_plot(p_slope, "yield_curve_slope.svg", dir = plot_dir, height =
 key_vars <- c("y2", "y10", "tp2", "tp10", "pc1_lag1", HETID_CONSTANTS$CONSUMPTION_GROWTH_COL)
 pairs_data <- df[key_vars]
 
-svglite(file.path(plot_dir, "scatterplot_matrix.svg"), width = 10, height = 10)
-pairs(pairs_data,
-  main = "Scatterplot Matrix of Key Variables",
-  pch = 19, cex = 0.5, col = rgb(0, 0, 1, 0.3)
-)
-dev.off()
+local({
+  svglite(
+    file.path(plot_dir, "scatterplot_matrix.svg"),
+    width = 10, height = 10
+  )
+  on.exit(dev.off(), add = TRUE)
+  pairs(pairs_data,
+    main = "Scatterplot Matrix of Key Variables",
+    pch = 19, cex = 0.5, col = rgb(0, 0, 1, 0.3)
+  )
+})
 
 # Rolling Statistics
 window_size <- 20 # 5 years for quarterly data

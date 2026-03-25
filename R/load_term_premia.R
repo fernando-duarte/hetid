@@ -82,8 +82,10 @@ load_term_premia <- function(auto_download = FALSE) {
       tp_df
     },
     error = function(e) {
-      warning("Failed to load term premia data: ", e$message, call. = FALSE)
-      NULL
+      stop_hetid(paste0(
+        "Failed to read term premia data: ",
+        e$message
+      ))
     }
   )
 }

@@ -74,46 +74,51 @@ stop_hetid <- function(message, call = NULL) {
   stop(cnd)
 }
 
-#' Assert or Signal a Bad Argument Error
+#' Assert Bad Argument Invariant
 #'
-#' @param condition Logical; if FALSE, signals the error
+#' @param ok Logical scalar; if not TRUE, signals error
 #' @param message Error message string
-#' @param arg Argument name (optional)
+#' @param arg Optional argument name
 #' @param call The call (default NULL)
-#' @keywords internal
-assert_bad_argument_ok <- function(condition, message,
+#'
+#' @return Invisible TRUE when validation passes
+#' @noRd
+assert_bad_argument_ok <- function(ok, message,
                                    arg = NULL,
                                    call = NULL) {
-  if (!condition) {
+  if (!isTRUE(ok)) {
     stop_bad_argument(message, arg = arg, call = call)
   }
   invisible(TRUE)
 }
 
-#' Assert or Signal a Dimension Mismatch Error
+#' Assert Dimension Invariant
 #'
-#' @param condition Logical; if FALSE, signals the error
+#' @param ok Logical scalar; if not TRUE, signals error
 #' @param message Error message string
 #' @param call The call (default NULL)
-#' @keywords internal
-assert_dimension_ok <- function(condition, message,
+#'
+#' @return Invisible TRUE when validation passes
+#' @noRd
+assert_dimension_ok <- function(ok, message,
                                 call = NULL) {
-  if (!condition) {
+  if (!isTRUE(ok)) {
     stop_dimension_mismatch(message, call = call)
   }
   invisible(TRUE)
 }
 
-#' Assert or Signal an Insufficient Data Error
+#' Assert Data Availability Invariant
 #'
-#' @param condition Logical; if FALSE, signals the error
+#' @param ok Logical scalar; if not TRUE, signals error
 #' @param message Error message string
 #' @param call The call (default NULL)
-#' @keywords internal
-assert_insufficient_data_ok <- function(condition,
-                                        message,
+#'
+#' @return Invisible TRUE when validation passes
+#' @noRd
+assert_insufficient_data_ok <- function(ok, message,
                                         call = NULL) {
-  if (!condition) {
+  if (!isTRUE(ok)) {
     stop_insufficient_data(message, call = call)
   }
   invisible(TRUE)

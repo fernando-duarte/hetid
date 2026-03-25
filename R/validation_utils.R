@@ -6,64 +6,6 @@
 #' @keywords internal
 NULL
 
-#' Assert Bad Argument Invariant
-#'
-#' Internal guard that raises a bad-argument condition
-#' when `ok` is not `TRUE`.
-#'
-#' @param ok Logical scalar indicating whether validation passed
-#' @param message Error message for the failing condition
-#' @param arg Optional argument name for the condition payload
-#'
-#' @return Invisible TRUE when validation passes
-#' @keywords internal
-#' @noRd
-assert_bad_argument_ok <- function(ok, message, arg = NULL) {
-  if (!isTRUE(ok)) {
-    stop_bad_argument(message, arg = arg)
-  }
-
-  invisible(TRUE)
-}
-
-#' Assert Dimension Invariant
-#'
-#' Internal guard that raises a dimension-mismatch condition
-#' when `ok` is not `TRUE`.
-#'
-#' @param ok Logical scalar indicating whether validation passed
-#' @param message Error message for the failing condition
-#'
-#' @return Invisible TRUE when validation passes
-#' @keywords internal
-#' @noRd
-assert_dimension_ok <- function(ok, message) {
-  if (!isTRUE(ok)) {
-    stop_dimension_mismatch(message)
-  }
-
-  invisible(TRUE)
-}
-
-#' Assert Data Availability Invariant
-#'
-#' Internal guard that raises an insufficient-data condition
-#' when `ok` is not `TRUE`.
-#'
-#' @param ok Logical scalar indicating whether validation passed
-#' @param message Error message for the failing condition
-#'
-#' @return Invisible TRUE when validation passes
-#' @keywords internal
-#' @noRd
-assert_insufficient_data_ok <- function(ok, message) {
-  if (!isTRUE(ok)) {
-    stop_insufficient_data(message)
-  }
-
-  invisible(TRUE)
-}
-
 #' Assert Scalar Finite Value
 #'
 #' Internal guard for parameters that must be a single

@@ -145,20 +145,27 @@ colnames(cor_matrix) <- gsub("price_news_", "", colnames(cor_matrix))
 rownames(cor_matrix) <- gsub("price_news_", "", rownames(cor_matrix))
 
 # Create correlation heatmap using corrplot
-svg(file.path(plot_dir, "price_news_correlation_heatmap.svg"), width = 8, height = 8)
-corrplot(cor_matrix,
-  method = "color",
-  type = "upper",
-  order = "original",
-  col = colorRampPalette(c("#4575b4", "white", "#d73027"))(100),
-  addCoef.col = "black",
-  number.cex = 0.8,
-  tl.col = "black",
-  tl.srt = 45,
-  title = "Price News Correlation Matrix",
-  mar = c(0, 0, 2, 0)
-)
-dev.off()
+local({
+  svg(
+    file.path(plot_dir, "price_news_correlation_heatmap.svg"),
+    width = 8, height = 8
+  )
+  on.exit(dev.off(), add = TRUE)
+  corrplot(cor_matrix,
+    method = "color",
+    type = "upper",
+    order = "original",
+    col = colorRampPalette(
+      c("#4575b4", "white", "#d73027")
+    )(100),
+    addCoef.col = "black",
+    number.cex = 0.8,
+    tl.col = "black",
+    tl.srt = 45,
+    title = "Price News Correlation Matrix",
+    mar = c(0, 0, 2, 0)
+  )
+})
 
 cli_h2("Scatter Plot Matrix")
 
@@ -174,25 +181,33 @@ if (length(price_news_vars) > 4) {
 pairs_data <- data_with_news[, selected_vars]
 colnames(pairs_data) <- gsub("price_news_", "", selected_vars)
 
-svg(file.path(plot_dir, "price_news_scatterplot_matrix.svg"), width = 10, height = 10)
-pairs(pairs_data,
-  main = "Price News Scatter Plot Matrix",
-  pch = 19,
-  col = rgb(0, 0, 1, 0.3),
-  cex = 0.5,
-  lower.panel = function(x, y, ...) {
-    points(x, y, pch = 19, col = rgb(0, 0, 1, 0.3), cex = 0.5)
-    abline(lm(y ~ x), col = "red", lwd = 2)
-  },
-  upper.panel = function(x, y, ...) {
-    usr <- par("usr")
-    par(usr = c(0, 1, 0, 1))
-    r <- cor(x, y, use = "complete.obs")
-    txt <- format(r, digits = 2)
-    text(0.5, 0.5, txt, cex = 1.5)
-  }
-)
-dev.off()
+local({
+  svg(
+    file.path(plot_dir, "price_news_scatterplot_matrix.svg"),
+    width = 10, height = 10
+  )
+  on.exit(dev.off(), add = TRUE)
+  pairs(pairs_data,
+    main = "Price News Scatter Plot Matrix",
+    pch = 19,
+    col = rgb(0, 0, 1, 0.3),
+    cex = 0.5,
+    lower.panel = function(x, y, ...) {
+      points(
+        x, y,
+        pch = 19, col = rgb(0, 0, 1, 0.3), cex = 0.5
+      )
+      abline(lm(y ~ x), col = "red", lwd = 2)
+    },
+    upper.panel = function(x, y, ...) {
+      usr <- par("usr")
+      par(usr = c(0, 1, 0, 1))
+      r <- cor(x, y, use = "complete.obs")
+      txt <- format(r, digits = 2)
+      text(0.5, 0.5, txt, cex = 1.5)
+    }
+  )
+})
 
 cli_h1("4. ROLLING STATISTICS VISUALIZATIONS")
 
@@ -346,19 +361,29 @@ pcs_matrix <- as.matrix(data_with_news[, pc_lag_vars])
 cor_news_pcs <- cor(price_news, pcs_matrix)
 
 # Visualize as heatmap
-svg(file.path(plot_dir, "price_news_pcs_correlation.svg"), width = 10, height = 8)
-corrplot(cor_news_pcs,
-  method = "color",
-  col = colorRampPalette(c("#4575b4", "white", "#d73027"))(100),
-  addCoef.col = "black",
-  number.cex = 0.7,
-  tl.col = "black",
-  tl.srt = 45,
-  tl.cex = 0.8,
-  title = "Correlation: Price News vs Lagged Principal Components",
-  mar = c(0, 0, 2, 0)
-)
-dev.off()
+local({
+  svg(
+    file.path(plot_dir, "price_news_pcs_correlation.svg"),
+    width = 10, height = 8
+  )
+  on.exit(dev.off(), add = TRUE)
+  corrplot(cor_news_pcs,
+    method = "color",
+    col = colorRampPalette(
+      c("#4575b4", "white", "#d73027")
+    )(100),
+    addCoef.col = "black",
+    number.cex = 0.7,
+    tl.col = "black",
+    tl.srt = 45,
+    tl.cex = 0.8,
+    title = paste(
+      "Correlation: Price News vs",
+      "Lagged Principal Components"
+    ),
+    mar = c(0, 0, 2, 0)
+  )
+})
 
 cli_h2("Price News vs Consumption Growth")
 

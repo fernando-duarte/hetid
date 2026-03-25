@@ -92,9 +92,20 @@ compute_w1_residuals <- function(n_pcs = HETID_CONSTANTS$DEFAULT_N_PCS,
 
   # Regress Y_{t+1} on PC_t: lag PCs, lead Y1
   n <- length(y1)
-  pc_lagged <- pc_matrix[1:(n - 1), , drop = FALSE]
-  y1_future <- y1[2:n]
-  dates_future <- if (!is.null(dates)) dates[2:n] else NULL
+  assert_insufficient_data_ok(
+    n >= 2,
+    "Need at least 2 observations for lagging"
+  )
+  pc_lagged <- pc_matrix[
+    seq_len(n - 1), ,
+    drop = FALSE
+  ]
+  y1_future <- y1[seq.int(2L, n)]
+  dates_future <- if (!is.null(dates)) {
+    dates[seq.int(2L, n)]
+  } else {
+    NULL
+  }
 
   reg <- run_pc_regression(y1_future, pc_lagged, n_pcs)
   dates_clean <- if (!is.null(dates_future)) {

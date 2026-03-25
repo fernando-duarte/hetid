@@ -150,3 +150,20 @@ test_that("errors without date column when return_df = TRUE", {
     "date"
   )
 })
+
+test_that(
+  "compute_w1_residuals errors on single-row data",
+  {
+    one_row <- data.frame(
+      gr1.pcecc96 = 0.5,
+      pc1 = 0.1, pc2 = 0.2,
+      pc3 = 0.3, pc4 = 0.4
+    )
+    expect_error(
+      suppressMessages(
+        compute_w1_residuals(n_pcs = 4, data = one_row)
+      ),
+      class = "hetid_error_insufficient_data"
+    )
+  }
+)

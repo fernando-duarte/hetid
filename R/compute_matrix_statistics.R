@@ -44,12 +44,12 @@ compute_matrix_statistics <- function(w1, w2,
       w2_circ_i <- w2_i * w2
       hadamard_w1_w2i <- w1 * w2_i
       s_i_1_vec <- as.vector(
-        t(hadamard_w1_w2i) %*% w2_circ_i / t_obs
+        crossprod(hadamard_w1_w2i, w2_circ_i) / t_obs
       )
       names(s_i_1_vec) <- paste0(
         "maturity_", seq_len(n_mat)
       )
-      s_i_2_mat <- t(w2_circ_i) %*% w2_circ_i / t_obs
+      s_i_2_mat <- crossprod(w2_circ_i) / t_obs
       mat_names <- paste0(
         "maturity_", seq_len(n_mat)
       )
