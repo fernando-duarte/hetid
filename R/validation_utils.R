@@ -95,7 +95,6 @@ validate_n_pcs <- function(n_pcs) {
   invisible(TRUE)
 }
 
-
 #' Validate Minimum Observations
 #'
 #' Validates that sufficient observations are available for statistical estimation.
