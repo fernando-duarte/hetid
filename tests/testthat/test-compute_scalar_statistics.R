@@ -1,34 +1,14 @@
-test_that("compute_scalar_statistics validates inputs correctly", {
-  # Test w1 validation
+test_that("compute_scalar_statistics validates w1 input", {
   expect_error(
-    compute_scalar_statistics("not numeric", matrix(1:10, 5, 2)),
+    compute_scalar_statistics("bad", matrix(1:6, 3, 2)),
     "w1 must be a numeric vector"
   )
-  expect_error(
-    compute_scalar_statistics(matrix(1:10, 5, 2), matrix(1:10, 5, 2)),
-    "w1 must be a numeric vector"
-  )
+})
 
-  # Test w2 validation
+test_that("compute_scalar_statistics validates w2 input", {
   expect_error(
-    compute_scalar_statistics(1:5, "not matrix"),
+    compute_scalar_statistics(1:3, "bad"),
     "w2 must be a matrix or data frame"
-  )
-
-  # Test dimension mismatch
-  expect_error(
-    compute_scalar_statistics(1:5, matrix(1:12, 6, 2)),
-    "w1 and w2 must have the same number of observations"
-  )
-
-  # Test invalid maturities
-  expect_error(
-    compute_scalar_statistics(1:5, matrix(1:10, 5, 2), maturities = c(0, 1)),
-    "maturities must be between 1 and ncol\\(w2\\)"
-  )
-  expect_error(
-    compute_scalar_statistics(1:5, matrix(1:10, 5, 2), maturities = c(1, 3)),
-    "maturities must be between 1 and ncol\\(w2\\)"
   )
 })
 

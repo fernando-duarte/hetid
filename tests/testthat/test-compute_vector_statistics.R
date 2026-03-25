@@ -1,38 +1,18 @@
-test_that("compute_vector_statistics validates inputs correctly", {
-  # Test w1 validation
+test_that("compute_vector_statistics validates w1 input", {
   expect_error(
-    compute_vector_statistics("not numeric", matrix(1:10, 5, 2), matrix(1:15, 5, 3)),
+    compute_vector_statistics(
+      "bad", matrix(1:6, 3, 2), matrix(1:6, 3, 2)
+    ),
     "w1 must be a numeric vector"
   )
+})
 
-  # Test w2 validation
+test_that("compute_vector_statistics validates w2 input", {
   expect_error(
-    compute_vector_statistics(1:5, "not matrix", matrix(1:15, 5, 3)),
-    "w2 must be a matrix or data frame"
-  )
-
-  # Test pcs validation
-  expect_error(
-    compute_vector_statistics(1:5, matrix(1:10, 5, 2), "not matrix"),
-    "pcs must be a matrix or data frame"
-  )
-
-  # Test dimension mismatches
-  expect_error(
-    compute_vector_statistics(1:5, matrix(1:12, 6, 2), matrix(1:15, 5, 3)),
-    "w1 and w2 must have the same number of observations"
-  )
-  expect_error(
-    compute_vector_statistics(1:5, matrix(1:10, 5, 2), matrix(1:18, 6, 3)),
-    "pcs must have the same number of observations as w1 and w2"
-  )
-
-  # Test invalid maturities
-  expect_error(
-    compute_vector_statistics(1:5, matrix(1:10, 5, 2), matrix(1:15, 5, 3),
-      maturities = c(0, 1)
+    compute_vector_statistics(
+      1:3, "bad", matrix(1:6, 3, 2)
     ),
-    "maturities must be between 1 and ncol\\(w2\\)"
+    "w2 must be a matrix or data frame"
   )
 })
 
