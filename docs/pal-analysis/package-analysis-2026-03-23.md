@@ -95,8 +95,8 @@ implicit data coupling plan and are documented in detail below.
     **REJECTED** (acceptable for non-CRAN package)
 30. `apply_time_series_transform()` still loop-based with single call site
     **REJECTED** (keeping for future reuse, consistent with item 8)
-31. Inconsistent maturity indexing convention between identification functions
-    **PENDING** (API design documentation to be addressed in future)
+31. ~~Inconsistent maturity indexing convention between identification functions~~
+    **FIXED** (2026-03-24, `compute_identified_set_components()` now accepts position-indexed statistics matching the rest of the pipeline)
 
 ---
 

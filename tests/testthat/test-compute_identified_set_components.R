@@ -43,26 +43,28 @@ test_that("compute_identified_set_components validates inputs correctly", {
     "p_i_0 must be a matrix"
   )
 
-  # Test dimension mismatches
+  # Test r_i_0 dimension mismatch
   expect_error(
     compute_identified_set_components(
       matrix(1:12, 3, 4),
-      matrix(1:20, 4, 5), # Wrong dimensions
-      list(matrix(1:12, 3, 4)),
-      matrix(1:12, 3, 4)
+      matrix(1:15, 3, 5),
+      lapply(1:2, function(k) matrix(1:12, 3, 4)),
+      matrix(1:6, 3, 2),
+      maturities = c(1, 2)
     ),
-    "r_i_0 must have dimensions J x I matching gamma"
+    "r_i_0 must be J x length"
   )
 
-  # Test r_i_1 length
+  # Test r_i_1 length mismatch
   expect_error(
     compute_identified_set_components(
       matrix(1:12, 3, 4),
-      matrix(1:12, 3, 4),
-      list(matrix(1:12, 3, 4), matrix(1:12, 3, 4)), # Wrong length
-      matrix(1:12, 3, 4)
+      matrix(1:9, 3, 3),
+      lapply(1:2, function(k) matrix(1:12, 3, 4)),
+      matrix(1:9, 3, 3),
+      maturities = c(1, 2, 3)
     ),
-    "r_i_1 must have I elements"
+    "r_i_1 must have length"
   )
 
   # Test invalid maturities
@@ -166,29 +168,146 @@ test_that("compute_identified_set_components computes values correctly", {
   expect_equal(result$Q_i[[2]], c(maturity_1 = 6, maturity_2 = 8))
 })
 
-test_that("compute_identified_set_components handles subset of maturities", {
-  # Create test data
-  set.seed(123)
-  J <- 3
-  I <- 4
+test_that(
+  "components handles subset of maturities",
+  {
+    set.seed(123)
+    J <- 3
+    I <- 4
+    maturities <- c(2, 4)
+    n_mat <- length(maturities)
 
-  gamma <- matrix(rnorm(J * I), J, I)
-  r_i_0 <- matrix(rnorm(J * I), J, I)
-  p_i_0 <- matrix(rnorm(J * I), J, I)
-  r_i_1 <- lapply(1:I, function(i) matrix(rnorm(J * I), J, I))
+    gamma <- matrix(rnorm(J * I), J, I)
 
-  # Compute for subset of maturities
-  maturities <- c(2, 4)
-  result <- compute_identified_set_components(
-    gamma, r_i_0, r_i_1, p_i_0,
-    maturities = maturities
-  )
+    r_i_0 <- matrix(rnorm(J * n_mat), J, n_mat)
+    p_i_0 <- matrix(rnorm(J * n_mat), J, n_mat)
+    r_i_1 <- lapply(seq_len(n_mat), function(k) {
+      matrix(rnorm(J * I), J, I)
+    })
 
-  # Check that we only get results for requested maturities
-  expect_length(result$L_i, 2)
-  expect_length(result$V_i, 2)
-  expect_length(result$Q_i, 2)
-  expect_named(result$L_i, paste0("maturity_", maturities))
-  expect_named(result$V_i, paste0("maturity_", maturities))
-  expect_named(result$Q_i, paste0("maturity_", maturities))
-})
+    result <- compute_identified_set_components(
+      gamma, r_i_0, r_i_1, p_i_0,
+      maturities = maturities
+    )
+
+    expect_length(result$L_i, 2)
+    expect_length(result$V_i, 2)
+    expect_length(result$Q_i, 2)
+    expect_named(
+      result$L_i,
+      paste0("maturity_", maturities)
+    )
+  }
+)
+
+test_that(
+  "components accepts position-indexed statistics",
+  {
+    set.seed(42)
+    J <- 3
+    I <- 6
+    maturities <- c(2, 4, 6)
+    n_mat <- length(maturities)
+
+    gamma <- matrix(rnorm(J * I), J, I)
+
+    r_i_0 <- matrix(rnorm(J * n_mat), J, n_mat)
+    colnames(r_i_0) <- paste0(
+      "maturity_", maturities
+    )
+    p_i_0 <- matrix(rnorm(J * n_mat), J, n_mat)
+    colnames(p_i_0) <- paste0(
+      "maturity_", maturities
+    )
+    r_i_1 <- lapply(seq_len(n_mat), function(k) {
+      matrix(rnorm(J * I), J, I)
+    })
+    names(r_i_1) <- paste0(
+      "maturity_", maturities
+    )
+
+    result <- compute_identified_set_components(
+      gamma, r_i_0, r_i_1, p_i_0,
+      maturities = maturities
+    )
+
+    expect_length(result$L_i, n_mat)
+    expect_named(
+      result$L_i,
+      paste0("maturity_", maturities)
+    )
+    expect_length(result$Q_i, n_mat)
+    for (k in seq_len(n_mat)) {
+      expect_length(result$Q_i[[k]], I)
+    }
+  }
+)
+
+test_that(
+  "components infers maturities from named inputs",
+  {
+    set.seed(77)
+    J <- 3
+    I <- 6
+    maturities <- c(2, 4, 6)
+    n_mat <- length(maturities)
+    mat_nms <- paste0("maturity_", maturities)
+
+    gamma <- matrix(rnorm(J * I), J, I)
+
+    r_i_0 <- matrix(rnorm(J * n_mat), J, n_mat)
+    colnames(r_i_0) <- mat_nms
+    p_i_0 <- matrix(rnorm(J * n_mat), J, n_mat)
+    colnames(p_i_0) <- mat_nms
+    r_i_1 <- setNames(
+      lapply(seq_len(n_mat), function(k) {
+        matrix(rnorm(J * I), J, I)
+      }),
+      mat_nms
+    )
+
+    result <- compute_identified_set_components(
+      gamma, r_i_0, r_i_1, p_i_0
+    )
+
+    expect_named(
+      result$L_i,
+      paste0("maturity_", maturities)
+    )
+    expect_length(result$L_i, n_mat)
+  }
+)
+
+test_that(
+  "pipeline: stats -> components with subset",
+  {
+    set.seed(99)
+    T_obs <- 50
+    I <- 6
+    J <- 3
+    maturities <- c(2, 4)
+
+    w1 <- rnorm(T_obs)
+    w2 <- matrix(rnorm(T_obs * I), T_obs, I)
+    pcs <- matrix(rnorm(T_obs * J), T_obs, J)
+    gamma <- matrix(rnorm(J * I), J, I)
+
+    vec <- compute_vector_statistics(
+      w1, w2, pcs,
+      maturities = maturities
+    )
+
+    result <- compute_identified_set_components(
+      gamma, vec$r_i_0, vec$r_i_1, vec$p_i_0,
+      maturities = maturities
+    )
+
+    expect_length(
+      result$L_i, length(maturities)
+    )
+    expect_named(
+      result$L_i,
+      paste0("maturity_", maturities)
+    )
+  }
+)

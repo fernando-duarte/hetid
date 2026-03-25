@@ -220,7 +220,7 @@ test_that(
 )
 
 test_that(
-  "end-to-end pipeline: inferred matches explicit maturities",
+  "end-to-end pipeline: inferred matches explicit",
   {
     set.seed(2024)
     J <- 3
@@ -232,12 +232,27 @@ test_that(
 
     n_obs <- 100
     w1 <- rnorm(n_obs)
-    w2 <- matrix(rnorm(n_obs * I), nrow = n_obs, ncol = I)
-    pcs <- matrix(rnorm(n_obs * J), nrow = n_obs, ncol = J)
+    w2 <- matrix(
+      rnorm(n_obs * I),
+      nrow = n_obs, ncol = I
+    )
+    pcs <- matrix(
+      rnorm(n_obs * J),
+      nrow = n_obs, ncol = J
+    )
 
-    scalar_stats <- compute_scalar_statistics(w1, w2)
-    vec_stats <- compute_vector_statistics(w1, w2, pcs)
-    mat_stats <- compute_matrix_statistics(w1, w2)
+    scalar_stats <- compute_scalar_statistics(
+      w1, w2,
+      maturities = maturities
+    )
+    vec_stats <- compute_vector_statistics(
+      w1, w2, pcs,
+      maturities = maturities
+    )
+    mat_stats <- compute_matrix_statistics(
+      w1, w2,
+      maturities = maturities
+    )
 
     components <- compute_identified_set_components(
       gamma = gamma,
@@ -252,10 +267,10 @@ test_that(
       L_i = components$L_i,
       V_i = components$V_i,
       Q_i = components$Q_i,
-      s_i_0 = scalar_stats$s_i_0[maturities],
-      s_i_1 = mat_stats$s_i_1[maturities],
-      s_i_2 = mat_stats$s_i_2[maturities],
-      sigma_i_sq = scalar_stats$sigma_i_sq[maturities],
+      s_i_0 = scalar_stats$s_i_0,
+      s_i_1 = mat_stats$s_i_1,
+      s_i_2 = mat_stats$s_i_2,
+      sigma_i_sq = scalar_stats$sigma_i_sq,
       maturities = maturities
     )
 
@@ -264,10 +279,10 @@ test_that(
       L_i = components$L_i,
       V_i = components$V_i,
       Q_i = components$Q_i,
-      s_i_0 = scalar_stats$s_i_0[maturities],
-      s_i_1 = mat_stats$s_i_1[maturities],
-      s_i_2 = mat_stats$s_i_2[maturities],
-      sigma_i_sq = scalar_stats$sigma_i_sq[maturities]
+      s_i_0 = scalar_stats$s_i_0,
+      s_i_1 = mat_stats$s_i_1,
+      s_i_2 = mat_stats$s_i_2,
+      sigma_i_sq = scalar_stats$sigma_i_sq
     )
 
     expect_equal(
@@ -275,10 +290,9 @@ test_that(
       unname(quad_inferred$d_i)
     )
 
-    # Independent oracle for d_i
     expected_d_i <- tau[maturities]^2 *
       unname(components$V_i) /
-      unname(scalar_stats$sigma_i_sq[maturities])
+      unname(scalar_stats$sigma_i_sq)
     expect_equal(
       unname(quad_inferred$d_i), expected_d_i,
       info = "d_i must match manual formula"

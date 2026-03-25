@@ -16,17 +16,20 @@ compute_identified_set_components(
 \item{gamma}{Matrix (J x I) where each column gamma_i contains the
 coefficients for maturity i}
 
-\item{r_i_0}{Matrix (J x I) where column i contains R_i^(0) from
-compute_vector_statistics()}
+\item{r_i_0}{Position-indexed matrix (J x n_maturities)
+from \code{compute_vector_statistics()}}
 
-\item{r_i_1}{List of matrices, each element i is R_i^(1) (J x I) from
-compute_vector_statistics()}
+\item{r_i_1}{Position-indexed list of n_maturities
+matrices (each J x I) from
+\code{compute_vector_statistics()}}
 
-\item{p_i_0}{Matrix (J x I) where column i contains P_i^(0) from
-compute_vector_statistics()}
+\item{p_i_0}{Position-indexed matrix (J x n_maturities)
+from \code{compute_vector_statistics()}}
 
-\item{maturities}{Vector of maturity indices to compute components for.
-Default is all columns.}
+\item{maturities}{Integer vector of maturity indices.
+If NULL, inferred from input names via
+\code{\link{resolve_maturities}}; defaults to all
+columns when inputs are unnamed and full-size.}
 }
 \value{
 A list containing:
@@ -56,18 +59,26 @@ is a vector.
 }
 \section{Maturity Indexing Convention}{
 
-This function takes \strong{full-size} inputs: \code{r_i_0}
-and \code{p_i_0} must be J x I matrices, and \code{r_i_1}
-must be an I-element list (where I = \code{ncol(gamma)}).
-The \code{maturities} parameter selects which columns/elements
-to process, accessing them by maturity \strong{value}
-(e.g., column 5 for maturity 5).
+All statistical inputs (r_i_0, r_i_1, p_i_0) are
+\strong{position-indexed}: their outer dimension
+must equal \code{length(maturities)}, with element
+k corresponding to \code{maturities[k]}. Each
+\code{r_i_1[[k]]} remains a full-size J x I matrix.
 
-The outputs (\code{L_i}, \code{V_i}, \code{Q_i}) are
-\strong{position-indexed} with length
-\code{length(maturities)}, named \code{maturity_N} where
-N is the maturity value. These outputs can be passed
-directly to \code{\link{compute_identified_set_quadratic}}.
+\code{gamma} is \strong{full-size} (J x I), indexed
+by maturity value. The function uses
+\code{gamma[, maturities[k]]} internally.
+
+When \code{maturities = NULL}, maturity values are
+inferred from input names via
+\code{\link{resolve_maturities}}, matching the
+convention in
+\code{\link{compute_identified_set_quadratic}}.
+
+This matches the output convention of
+\code{\link{compute_vector_statistics}}, so
+statistics can be passed directly without manual
+subsetting.
 }
 
 \examples{

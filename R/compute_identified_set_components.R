@@ -5,14 +5,17 @@
 #'
 #' @param gamma Matrix (J x I) where each column gamma_i contains the
 #'   coefficients for maturity i
-#' @param r_i_0 Matrix (J x I) where column i contains R_i^(0) from
-#'   compute_vector_statistics()
-#' @param r_i_1 List of matrices, each element i is R_i^(1) (J x I) from
-#'   compute_vector_statistics()
-#' @param p_i_0 Matrix (J x I) where column i contains P_i^(0) from
-#'   compute_vector_statistics()
-#' @param maturities Vector of maturity indices to compute components for.
-#'   Default is all columns.
+#' @param r_i_0 Position-indexed matrix (J x n_maturities)
+#'   from \code{compute_vector_statistics()}
+#' @param r_i_1 Position-indexed list of n_maturities
+#'   matrices (each J x I) from
+#'   \code{compute_vector_statistics()}
+#' @param p_i_0 Position-indexed matrix (J x n_maturities)
+#'   from \code{compute_vector_statistics()}
+#' @param maturities Integer vector of maturity indices.
+#'   If NULL, inferred from input names via
+#'   \code{\link{resolve_maturities}}; defaults to all
+#'   columns when inputs are unnamed and full-size.
 #'
 #' @return A list containing:
 #' \describe{
@@ -36,18 +39,26 @@
 #' is a vector.
 #'
 #' @section Maturity Indexing Convention:
-#' This function takes \strong{full-size} inputs: \code{r_i_0}
-#' and \code{p_i_0} must be J x I matrices, and \code{r_i_1}
-#' must be an I-element list (where I = \code{ncol(gamma)}).
-#' The \code{maturities} parameter selects which columns/elements
-#' to process, accessing them by maturity \strong{value}
-#' (e.g., column 5 for maturity 5).
+#' All statistical inputs (r_i_0, r_i_1, p_i_0) are
+#' \strong{position-indexed}: their outer dimension
+#' must equal \code{length(maturities)}, with element
+#' k corresponding to \code{maturities[k]}. Each
+#' \code{r_i_1[[k]]} remains a full-size J x I matrix.
 #'
-#' The outputs (\code{L_i}, \code{V_i}, \code{Q_i}) are
-#' \strong{position-indexed} with length
-#' \code{length(maturities)}, named \code{maturity_N} where
-#' N is the maturity value. These outputs can be passed
-#' directly to \code{\link{compute_identified_set_quadratic}}.
+#' \code{gamma} is \strong{full-size} (J x I), indexed
+#' by maturity value. The function uses
+#' \code{gamma[, maturities[k]]} internally.
+#'
+#' When \code{maturities = NULL}, maturity values are
+#' inferred from input names via
+#' \code{\link{resolve_maturities}}, matching the
+#' convention in
+#' \code{\link{compute_identified_set_quadratic}}.
+#'
+#' This matches the output convention of
+#' \code{\link{compute_vector_statistics}}, so
+#' statistics can be passed directly without manual
+#' subsetting.
 #'
 #' @export
 #'
@@ -87,34 +98,41 @@ compute_identified_set_components <- function(gamma, r_i_0, r_i_1, p_i_0,
     stop("p_i_0 must be a matrix")
   }
 
-  # Check dimensions
   J <- nrow(gamma)
   n_components <- ncol(gamma)
 
-  if (nrow(r_i_0) != J || ncol(r_i_0) != n_components) {
-    stop("r_i_0 must have dimensions J x I matching gamma")
-  }
+  maturities <- resolve_maturities(
+    maturities,
+    list(r_i_1 = r_i_1),
+    n_components
+  )
 
-  if (length(r_i_1) != n_components) {
-    stop("r_i_1 must have I elements")
-  }
-
-  if (nrow(p_i_0) != J || ncol(p_i_0) != n_components) {
-    stop("p_i_0 must have dimensions J x I matching gamma")
-  }
-
-  # Set maturities if not provided
-  if (is.null(maturities)) {
-    maturities <- seq_len(n_components)
-  }
-
-  # Validate maturities
-  if (any(maturities < 1) || any(maturities > n_components)) {
+  if (any(maturities < 1) ||
+    any(maturities > n_components)) {
     stop("maturities must be between 1 and I")
   }
-
-  # Initialize storage
   n_maturities <- length(maturities)
+
+  if (nrow(r_i_0) != J ||
+    ncol(r_i_0) != n_maturities) {
+    stop(
+      "r_i_0 must be J x length(maturities)"
+    )
+  }
+
+  if (length(r_i_1) != n_maturities) {
+    stop(
+      "r_i_1 must have length(maturities) elements"
+    )
+  }
+
+  if (nrow(p_i_0) != J ||
+    ncol(p_i_0) != n_maturities) {
+    stop(
+      "p_i_0 must be J x length(maturities)"
+    )
+  }
+
   L_i <- numeric(n_maturities)
   V_i <- numeric(n_maturities)
   Q_i <- vector("list", n_maturities)
@@ -123,25 +141,34 @@ compute_identified_set_components <- function(gamma, r_i_0, r_i_1, p_i_0,
   names(V_i) <- paste0("maturity_", maturities)
   names(Q_i) <- paste0("maturity_", maturities)
 
-  # Compute components for each maturity
   for (idx in seq_along(maturities)) {
     i <- maturities[idx]
-    gamma_i <- gamma[, i, drop = FALSE] # Keep as column vector
+    gamma_i <- gamma[, i, drop = FALSE]
 
-    # Compute L_i as inner product of gamma_i and R_i^(0)
-    L_i[idx] <- as.numeric(t(gamma_i) %*% r_i_0[, i])
+    L_i[idx] <- as.numeric(
+      t(gamma_i) %*% r_i_0[, idx]
+    )
 
-    # Compute V_i as squared inner product of gamma_i and P_i^(0)
-    p_i_0_vec <- p_i_0[, i, drop = FALSE]
-    V_i[idx] <- as.numeric(crossprod(gamma_i, p_i_0_vec))^2
+    p_i_0_vec <- p_i_0[, idx, drop = FALSE]
+    V_i[idx] <- as.numeric(
+      crossprod(gamma_i, p_i_0_vec)
+    )^2
 
-    # Q_i = gamma_i^T * R_i^(1) (this is a vector of length I)
-    R_i_1_mat <- r_i_1[[i]]
-    if (!is.matrix(R_i_1_mat) || nrow(R_i_1_mat) != J) {
-      stop(paste("r_i_1[[", i, "]] must be a J x I matrix"))
+    R_i_1_mat <- r_i_1[[idx]]
+    if (!is.matrix(R_i_1_mat) ||
+      nrow(R_i_1_mat) != J) {
+      stop(paste0(
+        "r_i_1 for maturity ", i,
+        " (position ", idx,
+        ") must be a J x I matrix"
+      ))
     }
-    Q_i[[idx]] <- as.numeric(t(gamma_i) %*% R_i_1_mat)
-    names(Q_i[[idx]]) <- paste0("maturity_", seq_len(ncol(R_i_1_mat)))
+    Q_i[[idx]] <- as.numeric(
+      t(gamma_i) %*% R_i_1_mat
+    )
+    names(Q_i[[idx]]) <- paste0(
+      "maturity_", seq_len(ncol(R_i_1_mat))
+    )
   }
 
   list(
