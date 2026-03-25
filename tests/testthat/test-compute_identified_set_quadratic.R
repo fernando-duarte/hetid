@@ -1,20 +1,11 @@
 test_that("compute_identified_set_quadratic validates inputs correctly", {
-  # Create minimal valid inputs for other parameters
-  gamma <- matrix(1:12, 3, 4)
-  tau <- rep(1, 4)
-  L_i <- rep(1, 4)
-  V_i <- rep(1, 4)
-  Q_i <- lapply(1:4, function(i) rep(1, 4))
-  s_i_0 <- rep(1, 4)
-  s_i_1 <- lapply(1:4, function(i) rep(1, 4))
-  s_i_2 <- lapply(1:4, function(i) matrix(1, 4, 4))
-  sigma_i_sq <- rep(1, 4)
+  inputs <- setup_quadratic_test_inputs()
 
   # Test gamma validation
   expect_error(
     compute_identified_set_quadratic(
-      "not matrix", tau, L_i, V_i, Q_i,
-      s_i_0, s_i_1, s_i_2, sigma_i_sq
+      "not matrix", inputs$tau, inputs$L_i, inputs$V_i, inputs$Q_i,
+      inputs$s_i_0, inputs$s_i_1, inputs$s_i_2, inputs$sigma_i_sq
     ),
     "gamma must be a matrix"
   )
@@ -22,8 +13,8 @@ test_that("compute_identified_set_quadratic validates inputs correctly", {
   # Test tau validation
   expect_error(
     compute_identified_set_quadratic(
-      gamma, "not numeric", L_i, V_i, Q_i,
-      s_i_0, s_i_1, s_i_2, sigma_i_sq
+      inputs$gamma, "not numeric", inputs$L_i, inputs$V_i, inputs$Q_i,
+      inputs$s_i_0, inputs$s_i_1, inputs$s_i_2, inputs$sigma_i_sq
     ),
     "tau must be a numeric vector"
   )
@@ -31,8 +22,8 @@ test_that("compute_identified_set_quadratic validates inputs correctly", {
   # Test tau positive values
   expect_error(
     compute_identified_set_quadratic(
-      gamma, c(1, -1, 1, 1), L_i, V_i, Q_i,
-      s_i_0, s_i_1, s_i_2, sigma_i_sq
+      inputs$gamma, c(1, -1, 1, 1), inputs$L_i, inputs$V_i, inputs$Q_i,
+      inputs$s_i_0, inputs$s_i_1, inputs$s_i_2, inputs$sigma_i_sq
     ),
     "All elements of tau must be positive"
   )
@@ -40,8 +31,8 @@ test_that("compute_identified_set_quadratic validates inputs correctly", {
   # Test tau length
   expect_error(
     compute_identified_set_quadratic(
-      gamma, c(1, 1, 1), L_i, V_i, Q_i,
-      s_i_0, s_i_1, s_i_2, sigma_i_sq
+      inputs$gamma, c(1, 1, 1), inputs$L_i, inputs$V_i, inputs$Q_i,
+      inputs$s_i_0, inputs$s_i_1, inputs$s_i_2, inputs$sigma_i_sq
     ),
     "tau must have length I"
   )
@@ -49,8 +40,8 @@ test_that("compute_identified_set_quadratic validates inputs correctly", {
   # Test L_i and V_i numeric
   expect_error(
     compute_identified_set_quadratic(
-      gamma, tau, "not numeric", V_i, Q_i,
-      s_i_0, s_i_1, s_i_2, sigma_i_sq
+      inputs$gamma, inputs$tau, "not numeric", inputs$V_i, inputs$Q_i,
+      inputs$s_i_0, inputs$s_i_1, inputs$s_i_2, inputs$sigma_i_sq
     ),
     "L_i and V_i must be numeric vectors"
   )
@@ -58,8 +49,8 @@ test_that("compute_identified_set_quadratic validates inputs correctly", {
   # Test Q_i list
   expect_error(
     compute_identified_set_quadratic(
-      gamma, tau, L_i, V_i, "not list",
-      s_i_0, s_i_1, s_i_2, sigma_i_sq
+      inputs$gamma, inputs$tau, inputs$L_i, inputs$V_i, "not list",
+      inputs$s_i_0, inputs$s_i_1, inputs$s_i_2, inputs$sigma_i_sq
     ),
     "Q_i must be a list"
   )
@@ -67,125 +58,76 @@ test_that("compute_identified_set_quadratic validates inputs correctly", {
   # Test s_i_1 and s_i_2 lists
   expect_error(
     compute_identified_set_quadratic(
-      gamma, tau, L_i, V_i, Q_i,
-      s_i_0, "not list", s_i_2, sigma_i_sq
+      inputs$gamma, inputs$tau, inputs$L_i, inputs$V_i, inputs$Q_i,
+      inputs$s_i_0, "not list", inputs$s_i_2, inputs$sigma_i_sq
     ),
     "s_i_1 and s_i_2 must be lists"
   )
 })
 
 test_that("errors on zero sigma_i_sq (no heteroskedasticity)", {
-  gamma <- matrix(1:12, 3, 4)
-  tau <- rep(1, 4)
-  L_i <- rep(1, 4)
-  V_i <- rep(1, 4)
-  Q_i <- lapply(1:4, function(i) rep(1, 4))
-  s_i_0 <- rep(1, 4)
-  s_i_1 <- lapply(1:4, function(i) rep(1, 4))
-  s_i_2 <- lapply(1:4, function(i) matrix(1, 4, 4))
-
-  # sigma_i_sq with a zero value at maturity 2
-  sigma_i_sq <- c(1, 0, 1, 1)
+  inputs <- setup_quadratic_test_inputs()
+  inputs$sigma_i_sq <- c(1, 0, 1, 1)
 
   expect_error(
-    compute_identified_set_quadratic(
-      gamma, tau, L_i, V_i, Q_i,
-      s_i_0, s_i_1, s_i_2, sigma_i_sq
-    ),
+    do.call(compute_identified_set_quadratic, inputs),
     "maturity/maturities 2"
   )
 })
 
 test_that("errors on NA/NaN/Inf sigma_i_sq", {
-  gamma <- matrix(1:12, 3, 4)
-  tau <- rep(1, 4)
-  L_i <- rep(1, 4)
-  V_i <- rep(1, 4)
-  Q_i <- lapply(1:4, function(i) rep(1, 4))
-  s_i_0 <- rep(1, 4)
-  s_i_1 <- lapply(1:4, function(i) rep(1, 4))
-  s_i_2 <- lapply(1:4, function(i) matrix(1, 4, 4))
+  inputs <- setup_quadratic_test_inputs()
 
   # NA case
+  inputs$sigma_i_sq <- c(1, NA, 1, 1)
   expect_error(
-    compute_identified_set_quadratic(
-      gamma, tau, L_i, V_i, Q_i,
-      s_i_0, s_i_1, s_i_2, c(1, NA, 1, 1)
-    ),
+    do.call(compute_identified_set_quadratic, inputs),
     "non-positive, non-finite, or NA"
   )
 
   # NaN case
+  inputs$sigma_i_sq <- c(1, NaN, 1, 1)
   expect_error(
-    compute_identified_set_quadratic(
-      gamma, tau, L_i, V_i, Q_i,
-      s_i_0, s_i_1, s_i_2, c(1, NaN, 1, 1)
-    ),
+    do.call(compute_identified_set_quadratic, inputs),
     "non-positive, non-finite, or NA"
   )
 
   # Inf case
+  inputs$sigma_i_sq <- c(1, Inf, 1, 1)
   expect_error(
-    compute_identified_set_quadratic(
-      gamma, tau, L_i, V_i, Q_i,
-      s_i_0, s_i_1, s_i_2, c(1, Inf, 1, 1)
-    ),
+    do.call(compute_identified_set_quadratic, inputs),
     "non-positive, non-finite, or NA"
   )
 
   # Negative case
+  inputs$sigma_i_sq <- c(1, -0.5, 1, 1)
   expect_error(
-    compute_identified_set_quadratic(
-      gamma, tau, L_i, V_i, Q_i,
-      s_i_0, s_i_1, s_i_2, c(1, -0.5, 1, 1)
-    ),
+    do.call(compute_identified_set_quadratic, inputs),
     "non-positive, non-finite, or NA"
   )
 })
 
 test_that("reports all bad sigma_i_sq maturities at once", {
-  gamma <- matrix(1:12, 3, 4)
-  tau <- rep(1, 4)
-  L_i <- rep(1, 4)
-  V_i <- rep(1, 4)
-  Q_i <- lapply(1:4, function(i) rep(1, 4))
-  s_i_0 <- rep(1, 4)
-  s_i_1 <- lapply(1:4, function(i) rep(1, 4))
-  s_i_2 <- lapply(1:4, function(i) matrix(1, 4, 4))
-
-  # Multiple bad values
-  sigma_i_sq <- c(0, 1, -1, NA)
+  inputs <- setup_quadratic_test_inputs()
+  inputs$sigma_i_sq <- c(0, 1, -1, NA)
 
   expect_error(
-    compute_identified_set_quadratic(
-      gamma, tau, L_i, V_i, Q_i,
-      s_i_0, s_i_1, s_i_2, sigma_i_sq
-    ),
+    do.call(compute_identified_set_quadratic, inputs),
     "maturity/maturities 1, 3, 4"
   )
 })
 
 test_that("errors on zero sigma_i_sq with maturities subset", {
-  J <- 3
-  I <- 6
-  gamma <- matrix(seq_len(J * I), J, I)
-  tau <- rep(1, I)
-
+  inputs <- setup_quadratic_test_inputs(
+    n_rows = 3, n_maturities = 3, n_components = 6
+  )
   maturities <- c(2, 4, 5)
-
-  # Subsetted inputs: zero sigma at position 2 = maturity 4
-  L_i <- rep(1, 3)
-  V_i <- rep(1, 3)
-  Q_i <- lapply(1:3, function(k) rep(1, I))
-  s_i_0 <- rep(1, 3)
-  s_i_1 <- lapply(1:3, function(k) rep(1, I))
-  s_i_2 <- lapply(1:3, function(k) matrix(1, I, I))
-  sigma_i_sq <- c(1, 0, 1)
+  inputs$sigma_i_sq <- c(1, 0, 1)
 
   expect_error(
     compute_identified_set_quadratic(
-      gamma, tau, L_i, V_i, Q_i,
-      s_i_0, s_i_1, s_i_2, sigma_i_sq,
+      inputs$gamma, inputs$tau, inputs$L_i, inputs$V_i, inputs$Q_i,
+      inputs$s_i_0, inputs$s_i_1, inputs$s_i_2, inputs$sigma_i_sq,
       maturities = maturities
     ),
     "maturity/maturities 4"
@@ -193,44 +135,20 @@ test_that("errors on zero sigma_i_sq with maturities subset", {
 })
 
 test_that("accepts small but positive sigma_i_sq", {
-  gamma <- matrix(1:12, 3, 4)
-  tau <- rep(1, 4)
-  L_i <- rep(1, 4)
-  V_i <- rep(1, 4)
-  Q_i <- lapply(1:4, function(i) rep(1, 4))
-  s_i_0 <- rep(1, 4)
-  s_i_1 <- lapply(1:4, function(i) rep(1, 4))
-  s_i_2 <- lapply(1:4, function(i) matrix(1, 4, 4))
+  inputs <- setup_quadratic_test_inputs()
+  inputs$sigma_i_sq <- c(1, 1e-20, 1, 1)
 
-  # Very small but legitimate sigma_i_sq
-  sigma_i_sq <- c(1, 1e-20, 1, 1)
-
-  result <- compute_identified_set_quadratic(
-    gamma, tau, L_i, V_i, Q_i,
-    s_i_0, s_i_1, s_i_2, sigma_i_sq
-  )
+  result <- do.call(compute_identified_set_quadratic, inputs)
   expect_type(result, "list")
   expect_true(all(is.finite(result$d_i)))
 })
 
 test_that("errors on d_i overflow from tiny sigma_i_sq", {
-  gamma <- matrix(1:12, 3, 4)
-  tau <- rep(1, 4)
-  L_i <- rep(1, 4)
-  V_i <- rep(1, 4)
-  Q_i <- lapply(1:4, function(i) rep(1, 4))
-  s_i_0 <- rep(1, 4)
-  s_i_1 <- lapply(1:4, function(i) rep(1, 4))
-  s_i_2 <- lapply(1:4, function(i) matrix(1, 4, 4))
-
-  # Positive but past double-precision overflow boundary
-  sigma_i_sq <- c(1, 1e-309, 1, 1)
+  inputs <- setup_quadratic_test_inputs()
+  inputs$sigma_i_sq <- c(1, 1e-309, 1, 1)
 
   expect_error(
-    compute_identified_set_quadratic(
-      gamma, tau, L_i, V_i, Q_i,
-      s_i_0, s_i_1, s_i_2, sigma_i_sq
-    ),
+    do.call(compute_identified_set_quadratic, inputs),
     "d_i overflowed to non-finite"
   )
 })
@@ -245,9 +163,9 @@ test_that(
 
     gamma <- matrix(rnorm(J * I), J, I)
     tau <- runif(I, 0.5, 2)
-    L_i <- runif(I)
-    V_i <- runif(I)
-    Q_i <- lapply(1:I, function(i) rnorm(I))
+    l_i <- runif(I)
+    v_i <- runif(I)
+    q_i <- lapply(1:I, function(i) rnorm(I))
     s_i_0 <- runif(I)
     s_i_1 <- lapply(1:I, function(i) rnorm(I))
     s_i_2 <- lapply(1:I, function(i) {
@@ -257,7 +175,7 @@ test_that(
     sigma_i_sq <- runif(I, 0.1, 1)
 
     result <- compute_identified_set_quadratic(
-      gamma, tau, L_i, V_i, Q_i,
+      gamma, tau, l_i, v_i, q_i,
       s_i_0, s_i_1, s_i_2, sigma_i_sq
     )
 
@@ -299,20 +217,14 @@ test_that(
 )
 
 test_that("errors when maturities exceed ncol(gamma)", {
-  gamma <- matrix(1:12, 3, 4)
-  tau <- rep(1, 4)
-  L_i <- rep(1, 2)
-  V_i <- rep(1, 2)
-  Q_i <- lapply(1:2, function(i) rep(1, 4))
-  s_i_0 <- rep(1, 2)
-  s_i_1 <- lapply(1:2, function(i) rep(1, 4))
-  s_i_2 <- lapply(1:2, function(i) matrix(1, 4, 4))
-  sigma_i_sq <- rep(1, 2)
+  inputs <- setup_quadratic_test_inputs(
+    n_rows = 3, n_maturities = 2, n_components = 4
+  )
 
   expect_error(
     compute_identified_set_quadratic(
-      gamma, tau, L_i, V_i, Q_i,
-      s_i_0, s_i_1, s_i_2, sigma_i_sq,
+      inputs$gamma, inputs$tau, inputs$L_i, inputs$V_i, inputs$Q_i,
+      inputs$s_i_0, inputs$s_i_1, inputs$s_i_2, inputs$sigma_i_sq,
       maturities = c(3, 7)
     ),
     "between 1 and ncol\\(gamma\\)"
@@ -320,20 +232,14 @@ test_that("errors when maturities exceed ncol(gamma)", {
 })
 
 test_that("errors when maturities include zero or negative", {
-  gamma <- matrix(1:12, 3, 4)
-  tau <- rep(1, 4)
-  L_i <- rep(1, 2)
-  V_i <- rep(1, 2)
-  Q_i <- lapply(1:2, function(i) rep(1, 4))
-  s_i_0 <- rep(1, 2)
-  s_i_1 <- lapply(1:2, function(i) rep(1, 4))
-  s_i_2 <- lapply(1:2, function(i) matrix(1, 4, 4))
-  sigma_i_sq <- rep(1, 2)
+  inputs <- setup_quadratic_test_inputs(
+    n_rows = 3, n_maturities = 2, n_components = 4
+  )
 
   expect_error(
     compute_identified_set_quadratic(
-      gamma, tau, L_i, V_i, Q_i,
-      s_i_0, s_i_1, s_i_2, sigma_i_sq,
+      inputs$gamma, inputs$tau, inputs$L_i, inputs$V_i, inputs$Q_i,
+      inputs$s_i_0, inputs$s_i_1, inputs$s_i_2, inputs$sigma_i_sq,
       maturities = c(0, 2)
     ),
     "between 1 and ncol\\(gamma\\)"
@@ -346,9 +252,9 @@ test_that("rejects mismatched input lengths with subset", {
   I <- 6
   gamma <- matrix(rnorm(J * I), J, I)
   tau <- runif(I, 0.5, 2)
-  L_i <- runif(I)
-  V_i <- runif(I)
-  Q_i <- lapply(seq_len(I), function(k) rnorm(I))
+  l_i <- runif(I)
+  v_i <- runif(I)
+  q_i <- lapply(seq_len(I), function(k) rnorm(I))
   s_i_0 <- runif(I)
   s_i_1 <- lapply(seq_len(I), function(k) rnorm(I))
   s_i_2 <- lapply(seq_len(I), function(k) {
@@ -359,12 +265,12 @@ test_that("rejects mismatched input lengths with subset", {
 
   maturities <- c(1, 3, 5)
 
-  # Full-length s_i_1 with subsetted L_i should error
+  # Full-length s_i_1 with subsetted l_i should error
   expect_error(
     compute_identified_set_quadratic(
       gamma, tau,
-      L_i[maturities], V_i[maturities],
-      Q_i[maturities],
+      l_i[maturities], v_i[maturities],
+      q_i[maturities],
       s_i_0[maturities], s_i_1, s_i_2,
       sigma_i_sq[maturities],
       maturities = maturities
