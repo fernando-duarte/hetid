@@ -24,6 +24,7 @@
 #'   \item{MONTH_FORMAT}{Month extraction format}
 #'   \item{CONSUMPTION_GROWTH_COL}{Consumption growth column name}
 #'   \item{PC_PREFIX}{Prefix for principal component columns}
+#'   \item{MATURITY_PREFIX}{Prefix for maturity label columns}
 #'   \item{ACM_DATA_FILENAME}{ACM data CSV filename}
 #'   \item{BUNDLED_VARIABLES_DATASET}{Bundled dataset name}
 #'   \item{COL_FORMAT_PADDED}{Padded column name format}
@@ -69,6 +70,7 @@ HETID_CONSTANTS <- list(
   # Column names
   CONSUMPTION_GROWTH_COL = "gr1.pcecc96",
   PC_PREFIX = "pc",
+  MATURITY_PREFIX = "maturity_",
 
   # Data identity
   ACM_DATA_FILENAME = "ACMTermPremium.csv",
