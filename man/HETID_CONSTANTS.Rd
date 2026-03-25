@@ -7,21 +7,28 @@
 \format{
 List containing package constants:
 \describe{
-\item{DEFAULT_N_PCS}{Standard number of principal components (4) extracted from
-financial asset returns}
-\item{MAX_N_PCS}{Maximum number of principal components (6) for computational stability}
-\item{MIN_MATURITY}{Minimum maturity index (1) from ACM data availability constraint}
-\item{MAX_MATURITY}{Maximum maturity index (10) from ACM dataset maturity limit}
-\item{MACHINE_EPSILON}{Machine precision for numerical comparisons}
-\item{MIN_OBSERVATIONS}{Minimum observations required for statistical estimation (3)}
-\item{PERCENT_TO_DECIMAL}{Divisor for percentage to decimal conversion (100)}
-\item{ACM_DATE_FORMAT}{Date format used in ACM data files}
+\item{DEFAULT_N_PCS}{Standard number of principal components (4)}
+\item{MAX_N_PCS}{Maximum principal components (6)}
+\item{MIN_MATURITY}{Minimum maturity index (1)}
+\item{MAX_MATURITY}{Maximum maturity index (10)}
+\item{EFFECTIVE_MAX_MATURITY}{Max maturity for functions
+needing i+1 (9)}
+\item{MACHINE_EPSILON}{Machine precision}
+\item{MATRIX_SYMMETRY_TOL}{Tolerance for matrix symmetry
+checks}
+\item{MIN_OBSERVATIONS}{Minimum observations for estimation}
+\item{PERCENT_TO_DECIMAL}{Percentage to decimal divisor}
+\item{MONTHS_PER_QUARTER}{Calendar months per quarter (3)}
+\item{ACM_DATE_FORMAT}{Date format in ACM files}
 \item{ISO_DATE_FORMAT}{Standard ISO date format}
-\item{YEAR_FORMAT}{Format for extracting year}
-\item{MONTH_FORMAT}{Format for extracting month}
-\item{CONSUMPTION_GROWTH_COL}{Column name for consumption growth}
-\item{COL_FORMAT_PADDED}{Format pattern for padded column names}
-\item{COL_FORMAT_SIMPLE}{Format pattern for simple column names}
+\item{YEAR_FORMAT}{Year extraction format}
+\item{MONTH_FORMAT}{Month extraction format}
+\item{CONSUMPTION_GROWTH_COL}{Consumption growth column name}
+\item{PC_PREFIX}{Prefix for principal component columns}
+\item{ACM_DATA_FILENAME}{ACM data CSV filename}
+\item{BUNDLED_VARIABLES_DATASET}{Bundled dataset name}
+\item{COL_FORMAT_PADDED}{Padded column name format}
+\item{COL_FORMAT_SIMPLE}{Simple column name format}
 }
 }
 \usage{

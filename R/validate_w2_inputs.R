@@ -33,7 +33,7 @@ validate_w2_inputs <- function(yields, term_premia, maturities) {
   }
 
   max_maturity <- min(
-    HETID_CONSTANTS$MAX_MATURITY - 1,
+    HETID_CONSTANTS$EFFECTIVE_MAX_MATURITY,
     ncol(yields_df), ncol(term_premia_df)
   )
   valid_maturities <- maturities[maturities <= max_maturity]
@@ -91,7 +91,7 @@ load_w2_pcs <- function(pcs, n_pcs, n_obs) {
     variables <- get_bundled_variables()
 
     # Extract PCs
-    pc_cols <- paste0("pc", 1:n_pcs)
+    pc_cols <- get_pc_column_names(n_pcs)
     missing_cols <- setdiff(pc_cols, names(variables))
 
     if (length(missing_cols) > 0) {
@@ -101,7 +101,7 @@ load_w2_pcs <- function(pcs, n_pcs, n_obs) {
       ))
     }
 
-    # Extract dates to avoid a second data() call later
+    # One-period offset: dates[2:T] aligns with T-1 innovations
     bundled_dates <- if ("date" %in% names(variables)) {
       variables$date[2:nrow(variables)]
     } else {
@@ -185,17 +185,19 @@ process_w2_maturity <- function(i, yields_df, term_premia_df, pcs, n_pcs) {
   y2_clean <- sdf_innov[complete_idx]
   pcs_clean <- pcs_lagged[complete_idx, , drop = FALSE]
 
-  # Check sufficient data
-  if (length(y2_clean) < n_pcs + 2) {
+  # Intercept + n_pcs slopes need at least 1 residual df
+  min_obs_for_regression <- n_pcs + 2L
+  if (length(y2_clean) < min_obs_for_regression) {
     warning(paste("Insufficient data for maturity", i, ". Skipping."))
     return(NULL)
   }
 
   # Run regression
   reg_data <- data.frame(y = y2_clean, pcs_clean)
-  names(reg_data)[-1] <- paste0("pc", 1:n_pcs)
+  pc_names <- get_pc_column_names(n_pcs)
+  names(reg_data)[-1] <- pc_names
 
-  formula_str <- paste("y ~", paste(paste0("pc", 1:n_pcs), collapse = " + "))
+  formula_str <- paste("y ~", paste(pc_names, collapse = " + "))
   model <- lm(as.formula(formula_str), data = reg_data)
 
   list(

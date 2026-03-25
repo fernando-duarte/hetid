@@ -25,7 +25,7 @@ load_term_premia <- function(auto_download = FALSE) {
   csv_path <- get_acm_data_path()
 
   # Check if file exists
-  if (!check_data_file_exists("ACMTermPremium.csv")) {
+  if (!check_data_file_exists(HETID_CONSTANTS$ACM_DATA_FILENAME)) {
     if (auto_download) {
       message("Term premia data not found. Downloading...")
       download_term_premia()
@@ -44,6 +44,8 @@ load_term_premia <- function(auto_download = FALSE) {
 
       # Convert DATE column to Date class if it exists
       if ("DATE" %in% names(tp_df)) {
+        # Try ACM format first, then R's default parser (NULL),
+        # then ISO format as final fallback
         date_formats <- list(
           HETID_CONSTANTS$ACM_DATE_FORMAT,
           NULL,

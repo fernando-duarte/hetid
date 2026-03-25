@@ -41,7 +41,7 @@
 #' }
 #'
 compute_n_hat <- function(yields, term_premia, i, return_df = FALSE, dates = NULL) {
-  validate_maturity_index(i, max_maturity = HETID_CONSTANTS$MAX_MATURITY - 1)
+  validate_maturity_index(i, max_maturity = HETID_CONSTANTS$EFFECTIVE_MAX_MATURITY)
 
   # Extract relevant columns
   y_i <- yields[[paste0("y", i)]]

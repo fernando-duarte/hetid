@@ -80,14 +80,14 @@ compute_vector_statistics <- function(w1, w2, pcs, maturities = NULL) {
   # Initialize storage
   r_i_0 <- matrix(NA, nrow = J, ncol = n_maturities)
   colnames(r_i_0) <- paste0("maturity_", maturities)
-  rownames(r_i_0) <- paste0("pc", seq_len(J))
+  rownames(r_i_0) <- get_pc_column_names(J)
 
   r_i_1 <- vector("list", n_maturities)
   names(r_i_1) <- paste0("maturity_", maturities)
 
   p_i_0 <- matrix(NA, nrow = J, ncol = n_maturities)
   colnames(p_i_0) <- paste0("maturity_", maturities)
-  rownames(p_i_0) <- paste0("pc", seq_len(J))
+  rownames(p_i_0) <- get_pc_column_names(J)
 
   # Compute statistics for each maturity
   for (idx in seq_along(maturities)) {
@@ -104,7 +104,7 @@ compute_vector_statistics <- function(w1, w2, pcs, maturities = NULL) {
     colnames(r_i_1_mat) <- paste0(
       "maturity_", seq_len(n_maturities_idx)
     )
-    rownames(r_i_1_mat) <- paste0("pc", seq_len(J))
+    rownames(r_i_1_mat) <- get_pc_column_names(J)
     r_i_1[[idx]] <- r_i_1_mat
 
     # P_i^(0) = (1/T) * PC^T * (w2_i)^⊙2

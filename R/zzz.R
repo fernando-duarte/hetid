@@ -2,7 +2,7 @@
 
 .onAttach <- function(libname, pkgname) {
   # Check ACM data availability using standardized path management
-  if (check_data_file_exists("ACMTermPremium.csv")) {
+  if (check_data_file_exists(HETID_CONSTANTS$ACM_DATA_FILENAME)) {
     # Get file modification time
     csv_path <- get_acm_data_path()
     file_date <- file.info(csv_path)$mtime

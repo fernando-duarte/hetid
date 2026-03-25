@@ -49,7 +49,7 @@ compute_price_news <- function(yields, term_premia, i,
                                return_yield_news = FALSE,
                                return_df = FALSE, dates = NULL) {
   # Validate maturity parameter
-  validate_maturity_index(i, max_maturity = HETID_CONSTANTS$MAX_MATURITY - 1)
+  validate_maturity_index(i, max_maturity = HETID_CONSTANTS$EFFECTIVE_MAX_MATURITY)
 
   # Compute n_hat series
   n_hat_i <- compute_n_hat(yields, term_premia, i,

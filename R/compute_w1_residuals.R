@@ -79,7 +79,7 @@ compute_w1_residuals <- function(n_pcs = HETID_CONSTANTS$DEFAULT_N_PCS,
   has_dates <- "date" %in% names(data)
   required_cols <- c(
     HETID_CONSTANTS$CONSUMPTION_GROWTH_COL,
-    paste0("pc", 1:n_pcs)
+    get_pc_column_names(n_pcs)
   )
   if (return_df && !has_dates) {
     required_cols <- c("date", required_cols)
@@ -97,11 +97,10 @@ compute_w1_residuals <- function(n_pcs = HETID_CONSTANTS$DEFAULT_N_PCS,
   dates <- if (has_dates) data$date else NULL
 
   # Create PC matrix
-  pc_cols <- paste0("pc", 1:n_pcs)
+  pc_cols <- get_pc_column_names(n_pcs)
   pc_matrix <- as.matrix(data[, pc_cols])
 
-  # Create lagged PCs to align with Y_{t+1}
-  # Since y1 is gr1 (not fgr1), we need to lag PCs
+  # Regress Y_{t+1} on PC_t: lag PCs, lead Y1
   n <- length(y1)
   pc_lagged <- pc_matrix[1:(n - 1), , drop = FALSE]
   y1_future <- y1[2:n]
@@ -118,7 +117,7 @@ compute_w1_residuals <- function(n_pcs = HETID_CONSTANTS$DEFAULT_N_PCS,
   }
 
   # Create formula for regression
-  pc_names <- paste0("pc", 1:n_pcs)
+  pc_names <- get_pc_column_names(n_pcs)
   colnames(pc_clean) <- pc_names
   formula_str <- paste("y ~ ", paste(pc_names, collapse = " + "))
   reg_formula <- as.formula(formula_str)

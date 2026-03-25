@@ -6,21 +6,28 @@
 #'
 #' @format List containing package constants:
 #' \describe{
-#'   \item{DEFAULT_N_PCS}{Standard number of principal components (4) extracted from
-#'     financial asset returns}
-#'   \item{MAX_N_PCS}{Maximum number of principal components (6) for computational stability}
-#'   \item{MIN_MATURITY}{Minimum maturity index (1) from ACM data availability constraint}
-#'   \item{MAX_MATURITY}{Maximum maturity index (10) from ACM dataset maturity limit}
-#'   \item{MACHINE_EPSILON}{Machine precision for numerical comparisons}
-#'   \item{MIN_OBSERVATIONS}{Minimum observations required for statistical estimation (3)}
-#'   \item{PERCENT_TO_DECIMAL}{Divisor for percentage to decimal conversion (100)}
-#'   \item{ACM_DATE_FORMAT}{Date format used in ACM data files}
+#'   \item{DEFAULT_N_PCS}{Standard number of principal components (4)}
+#'   \item{MAX_N_PCS}{Maximum principal components (6)}
+#'   \item{MIN_MATURITY}{Minimum maturity index (1)}
+#'   \item{MAX_MATURITY}{Maximum maturity index (10)}
+#'   \item{EFFECTIVE_MAX_MATURITY}{Max maturity for functions
+#'     needing i+1 (9)}
+#'   \item{MACHINE_EPSILON}{Machine precision}
+#'   \item{MATRIX_SYMMETRY_TOL}{Tolerance for matrix symmetry
+#'     checks}
+#'   \item{MIN_OBSERVATIONS}{Minimum observations for estimation}
+#'   \item{PERCENT_TO_DECIMAL}{Percentage to decimal divisor}
+#'   \item{MONTHS_PER_QUARTER}{Calendar months per quarter (3)}
+#'   \item{ACM_DATE_FORMAT}{Date format in ACM files}
 #'   \item{ISO_DATE_FORMAT}{Standard ISO date format}
-#'   \item{YEAR_FORMAT}{Format for extracting year}
-#'   \item{MONTH_FORMAT}{Format for extracting month}
-#'   \item{CONSUMPTION_GROWTH_COL}{Column name for consumption growth}
-#'   \item{COL_FORMAT_PADDED}{Format pattern for padded column names}
-#'   \item{COL_FORMAT_SIMPLE}{Format pattern for simple column names}
+#'   \item{YEAR_FORMAT}{Year extraction format}
+#'   \item{MONTH_FORMAT}{Month extraction format}
+#'   \item{CONSUMPTION_GROWTH_COL}{Consumption growth column name}
+#'   \item{PC_PREFIX}{Prefix for principal component columns}
+#'   \item{ACM_DATA_FILENAME}{ACM data CSV filename}
+#'   \item{BUNDLED_VARIABLES_DATASET}{Bundled dataset name}
+#'   \item{COL_FORMAT_PADDED}{Padded column name format}
+#'   \item{COL_FORMAT_SIMPLE}{Simple column name format}
 #' }
 #'
 #' @references
@@ -40,13 +47,18 @@ HETID_CONSTANTS <- list(
   # Data constraints
   MIN_MATURITY = 1L, # Minimum available maturity
   MAX_MATURITY = 10L, # Maximum available maturity
+  EFFECTIVE_MAX_MATURITY = 9L, # For functions needing i+1
 
   # Numerical parameters
   MACHINE_EPSILON = .Machine$double.eps,
+  MATRIX_SYMMETRY_TOL = 1e-10, # Matrix symmetry check tol
   PERCENT_TO_DECIMAL = 100, # Divisor for percentage conversion
 
   # Statistical requirements
   MIN_OBSERVATIONS = 3L, # Minimum observations needed
+
+  # Calendar
+  MONTHS_PER_QUARTER = 3L,
 
   # Date formats
   ACM_DATE_FORMAT = "%d-%b-%Y", # ACM data date format
@@ -55,11 +67,16 @@ HETID_CONSTANTS <- list(
   MONTH_FORMAT = "%m", # Month extraction format
 
   # Column names
-  CONSUMPTION_GROWTH_COL = "gr1.pcecc96", # Consumption growth variable
+  CONSUMPTION_GROWTH_COL = "gr1.pcecc96",
+  PC_PREFIX = "pc",
+
+  # Data identity
+  ACM_DATA_FILENAME = "ACMTermPremium.csv",
+  BUNDLED_VARIABLES_DATASET = "variables",
 
   # Column format patterns
-  COL_FORMAT_PADDED = "%s%02d", # Padded format (e.g., ACMY01)
-  COL_FORMAT_SIMPLE = "%s%d" # Simple format (e.g., y1)
+  COL_FORMAT_PADDED = "%s%02d", # e.g., ACMY01
+  COL_FORMAT_SIMPLE = "%s%d" # e.g., y1
 )
 
 #' Data Source URLs
@@ -81,5 +98,30 @@ HETID_CONSTANTS <- list(
 DATA_URLS <- list(
   ACM_TERM_PREMIA =
     "https://www.newyorkfed.org/medialibrary/media/research/data_indicators/ACMTermPremium.xls",
-  FED_SVENSSON = "https://www.federalreserve.gov/data/yield-curve-tables/feds200628.csv"
+  FED_SVENSSON =
+    "https://www.federalreserve.gov/data/yield-curve-tables/feds200628.csv"
+)
+
+#' ACM Data Schema
+#'
+#' Maps extraction types to ACM column-name prefixes.
+#' Single source of truth for the ACM naming convention.
+#'
+#' @format Named list. Each element contains:
+#' \describe{
+#'   \item{prefix_old}{Padded prefix in raw ACM data}
+#'   \item{prefix_new}{Short prefix used in package}
+#' }
+#'
+#' @export
+HETID_ACM_SCHEMA <- list(
+  yields = list(
+    prefix_old = "ACMY", prefix_new = "y"
+  ),
+  term_premia = list(
+    prefix_old = "ACMTP", prefix_new = "tp"
+  ),
+  risk_neutral_yields = list(
+    prefix_old = "ACMRNY", prefix_new = "rny"
+  )
 )

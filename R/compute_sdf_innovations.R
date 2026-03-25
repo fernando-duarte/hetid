@@ -51,7 +51,7 @@
 compute_sdf_innovations <- function(yields, term_premia, i,
                                     return_df = FALSE, dates = NULL) {
   # Validate maturity parameter
-  validate_maturity_index(i, max_maturity = HETID_CONSTANTS$MAX_MATURITY - 1)
+  validate_maturity_index(i, max_maturity = HETID_CONSTANTS$EFFECTIVE_MAX_MATURITY)
 
   # Compute n_hat(i,t) series
   n_hat_i <- compute_n_hat(yields, term_premia, i,

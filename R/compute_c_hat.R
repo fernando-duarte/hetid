@@ -35,7 +35,7 @@
 #'
 compute_c_hat <- function(yields, term_premia, i) {
   # Use standardized validation
-  validate_maturity_index(i, max_maturity = HETID_CONSTANTS$MAX_MATURITY - 1)
+  validate_maturity_index(i, max_maturity = HETID_CONSTANTS$EFFECTIVE_MAX_MATURITY)
 
   # Compute n_hat series
   n_hat <- compute_n_hat(yields, term_premia, i)

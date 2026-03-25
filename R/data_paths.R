@@ -68,7 +68,7 @@ check_data_file_exists <- function(filename) {
 #' @return Character string with full path to ACM data file
 #' @keywords internal
 get_acm_data_path <- function() {
-  get_data_file_path("ACMTermPremium.csv")
+  get_data_file_path(HETID_CONSTANTS$ACM_DATA_FILENAME)
 }
 
 #' Validate Data Directory

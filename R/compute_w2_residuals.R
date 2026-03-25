@@ -101,7 +101,7 @@
 #' }
 compute_w2_residuals <- function(yields, term_premia,
                                  maturities = HETID_CONSTANTS$MIN_MATURITY:(
-                                   HETID_CONSTANTS$MAX_MATURITY - 1),
+                                   HETID_CONSTANTS$EFFECTIVE_MAX_MATURITY),
                                  n_pcs = HETID_CONSTANTS$DEFAULT_N_PCS,
                                  pcs = NULL, return_df = FALSE, dates = NULL) {
   # Validate inputs
@@ -152,7 +152,9 @@ compute_w2_residuals <- function(yields, term_premia,
 
   # Set row/column names for coefficient matrix
   rownames(coef_matrix) <- paste0("maturity_", maturities)
-  colnames(coef_matrix) <- c("(Intercept)", paste0("pc", 1:n_pcs))
+  colnames(coef_matrix) <- c(
+    "(Intercept)", get_pc_column_names(n_pcs)
+  )
 
   # Handle return_df option
   if (return_df) {

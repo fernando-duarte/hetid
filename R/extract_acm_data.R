@@ -71,7 +71,7 @@ extract_acm_data <- function(data_types = c("yields", "term_premia"),
   # Validate inputs
   frequency <- match.arg(frequency)
 
-  valid_types <- c("yields", "term_premia", "risk_neutral_yields")
+  valid_types <- names(HETID_ACM_SCHEMA)
   if (!all(data_types %in% valid_types)) {
     stop(
       "Invalid data_types. Must be one or more of: ",

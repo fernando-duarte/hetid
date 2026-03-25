@@ -6,6 +6,15 @@
 #' @keywords internal
 NULL
 
+#' Build PC Column Names
+#'
+#' @param n_pcs Number of principal components
+#' @return Character vector, e.g. c("pc1", "pc2", ...)
+#' @keywords internal
+get_pc_column_names <- function(n_pcs) {
+  paste0(HETID_CONSTANTS$PC_PREFIX, seq_len(n_pcs))
+}
+
 #' Compute Previous Period N-Hat
 #'
 #' Handles the special case for i=1 where n_hat(0,t) = -y1

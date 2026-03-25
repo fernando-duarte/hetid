@@ -240,7 +240,9 @@ compute_identified_set_quadratic <- function(gamma, tau, L_i, V_i, Q_i,
     A_i[[idx]] <- Q_i_outer - d_i[idx] * s_i_2_mat
 
     # Verify A_i is symmetric (it should be by construction)
-    if (!isSymmetric(A_i[[idx]], tol = 1e-10)) {
+    if (!isSymmetric(A_i[[idx]],
+      tol = HETID_CONSTANTS$MATRIX_SYMMETRY_TOL
+    )) {
       # Force exact symmetry
       A_i[[idx]] <- (A_i[[idx]] + t(A_i[[idx]])) / 2
     }

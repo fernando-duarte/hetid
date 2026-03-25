@@ -11,7 +11,9 @@ convert_to_quarterly <- function(data) {
   # Add year and month to identify quarter ends
   data$year <- as.numeric(format(data$date, HETID_CONSTANTS$YEAR_FORMAT))
   data$month <- as.numeric(format(data$date, HETID_CONSTANTS$MONTH_FORMAT))
-  data$quarter <- ceiling(data$month / 3)
+  data$quarter <- ceiling(
+    data$month / HETID_CONSTANTS$MONTHS_PER_QUARTER
+  )
 
   # For each quarter, keep only the last observation
   data <- data[order(data$date), ]
@@ -27,7 +29,8 @@ convert_to_quarterly <- function(data) {
   last_months <- as.numeric(
     format(last_in_quarter$date, HETID_CONSTANTS$MONTH_FORMAT)
   )
-  expected_months <- last_in_quarter$quarter * 3
+  expected_months <- last_in_quarter$quarter *
+    HETID_CONSTANTS$MONTHS_PER_QUARTER
   incomplete <- last_months != expected_months
   if (any(incomplete)) {
     details <- paste0(
