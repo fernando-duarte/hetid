@@ -37,54 +37,29 @@
 #' mat_stats$s_i_2[[1]]
 compute_matrix_statistics <- function(w1, w2,
                                       maturities = NULL) {
-  validated <- validate_statistics_inputs(
-    w1, w2, maturities
+  results <- compute_per_maturity(
+    w1, w2, maturities,
+    function(w1, w2, w2_i, t_obs, ...) {
+      n_mat <- ncol(w2)
+      w2_circ_i <- w2_i * w2
+      hadamard_w1_w2i <- w1 * w2_i
+      s_i_1_vec <- as.vector(
+        t(hadamard_w1_w2i) %*% w2_circ_i / t_obs
+      )
+      names(s_i_1_vec) <- paste0(
+        "maturity_", seq_len(n_mat)
+      )
+      s_i_2_mat <- t(w2_circ_i) %*% w2_circ_i / t_obs
+      mat_names <- paste0(
+        "maturity_", seq_len(n_mat)
+      )
+      rownames(s_i_2_mat) <- mat_names
+      colnames(s_i_2_mat) <- mat_names
+      list(s_i_1 = s_i_1_vec, s_i_2 = s_i_2_mat)
+    }
   )
-  w2 <- validated$w2
-  t_obs <- validated$t_obs
-  maturities <- validated$maturities
-
-  # Get dimensions
-  n_maturities_idx <- ncol(w2)
-  n_maturities <- length(maturities)
-
-  # Initialize storage
-  s_i_1 <- vector("list", n_maturities)
-  names(s_i_1) <- maturity_names(maturities)
-  s_i_2 <- vector("list", n_maturities)
-  names(s_i_2) <- maturity_names(maturities)
-
-  # Compute statistics for each maturity
-  for (idx in seq_along(maturities)) {
-    i <- maturities[idx]
-    w2_i <- w2[, i]
-
-    # Compute W_2^{circ i} = diag(W_2^{(i)}) * W_2
-    # This is element-wise multiplication of each column of W2 by w2_i
-    w2_circ_i <- w2_i * w2 # Broadcasting: each column of w2 is multiplied by w2_i
-
-    # S_i^(1) = (1/T) * (w1 ⊙ w2_i)^T * W_2^{circ i}
-    hadamard_w1_w2i <- w1 * w2_i
-    s_i_1_vec <- t(hadamard_w1_w2i) %*% w2_circ_i / t_obs
-    s_i_1_vec <- as.vector(s_i_1_vec) # Ensure it's a vector
-    names(s_i_1_vec) <- paste0(
-      "maturity_", seq_len(n_maturities_idx)
-    )
-    s_i_1[[idx]] <- s_i_1_vec
-
-    # S_i^(2) = (1/T) * (W_2^{circ i})^T * W_2^{circ i}
-    s_i_2_mat <- t(w2_circ_i) %*% w2_circ_i / t_obs
-    rownames(s_i_2_mat) <- paste0(
-      "maturity_", seq_len(n_maturities_idx)
-    )
-    colnames(s_i_2_mat) <- paste0(
-      "maturity_", seq_len(n_maturities_idx)
-    )
-    s_i_2[[idx]] <- s_i_2_mat
-  }
-
   list(
-    s_i_1 = s_i_1,
-    s_i_2 = s_i_2
+    s_i_1 = lapply(results, `[[`, "s_i_1"),
+    s_i_2 = lapply(results, `[[`, "s_i_2")
   )
 }

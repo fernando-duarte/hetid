@@ -36,37 +36,27 @@
 #' scalar_stats$sigma_i_sq
 compute_scalar_statistics <- function(w1, w2,
                                       maturities = NULL) {
-  validated <- validate_statistics_inputs(
-    w1, w2, maturities
+  results <- compute_per_maturity(
+    w1, w2, maturities,
+    function(w1, w2, w2_i, t_obs, ...) {
+      hadamard_prod <- w1 * w2_i
+      s_i_0_val <- sum(hadamard_prod^2) / t_obs
+      w2_i_sq <- w2_i^2
+      term1 <- sum(w2_i_sq^2) / t_obs
+      term2 <- (sum(w2_i_sq) / t_obs)^2
+      sigma_i_sq_val <- term1 - term2
+      list(
+        s_i_0 = s_i_0_val,
+        sigma_i_sq = sigma_i_sq_val
+      )
+    }
   )
-  w2 <- validated$w2
-  t_obs <- validated$t_obs
-  maturities <- validated$maturities
-
-  # Initialize storage
-  s_i_0 <- numeric(length(maturities))
-  sigma_i_sq <- numeric(length(maturities))
-  names(s_i_0) <- maturity_names(maturities)
-  names(sigma_i_sq) <- maturity_names(maturities)
-
-  # Compute statistics for each maturity
-  for (idx in seq_along(maturities)) {
-    i <- maturities[idx]
-    w2_i <- w2[, i]
-
-    # S_i^(0) = (1/T) * ||w1 ⊙ w2_i||_2^2
-    hadamard_prod <- w1 * w2_i
-    s_i_0[idx] <- sum(hadamard_prod^2) / t_obs
-
-    # sigma_i^2 = (1/T) * ||w2_i^⊙2||_2^2 - ((1/T) * ||w2_i||_2^2)^2
-    w2_i_sq <- w2_i^2
-    term1 <- sum(w2_i_sq^2) / t_obs
-    term2 <- (sum(w2_i_sq) / t_obs)^2
-    sigma_i_sq[idx] <- term1 - term2
-  }
-
   list(
-    s_i_0 = s_i_0,
-    sigma_i_sq = sigma_i_sq
+    s_i_0 = vapply(
+      results, `[[`, numeric(1), "s_i_0"
+    ),
+    sigma_i_sq = vapply(
+      results, `[[`, numeric(1), "sigma_i_sq"
+    )
   )
 }

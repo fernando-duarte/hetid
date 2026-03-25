@@ -39,69 +39,66 @@
 #' vec_stats$r_i_1[[1]]
 compute_vector_statistics <- function(w1, w2, pcs,
                                       maturities = NULL) {
-  validated <- validate_statistics_inputs(
-    w1, w2, maturities
-  )
-  w2 <- validated$w2
-  t_obs <- validated$t_obs
-  maturities <- validated$maturities
-
-  # Additional pcs validation (unique to this function)
+  # Validate pcs type upfront, before iteration
   if (!is.matrix(pcs) && !is.data.frame(pcs)) {
-    stop("pcs must be a matrix or data frame", call. = FALSE)
-  }
-  pcs <- as.matrix(pcs)
-  if (nrow(pcs) != t_obs) {
-    stop(
-      "pcs must have the same number of ",
-      "observations as w1 and w2",
+    stop("pcs must be a matrix or data frame",
       call. = FALSE
     )
   }
+  pcs <- as.matrix(pcs)
 
-  # Get dimensions
+  results <- compute_per_maturity(
+    w1, w2, maturities,
+    function(w1, w2, w2_i, t_obs, ...) {
+      if (nrow(pcs) != t_obs) {
+        stop(
+          "pcs must have the same number of ",
+          "observations as w1 and w2",
+          call. = FALSE
+        )
+      }
+      J <- ncol(pcs)
+      n_mat <- ncol(w2)
+      hadamard_w1_w2i <- w1 * w2_i
+      r_i_0_vec <- as.vector(
+        t(pcs) %*% hadamard_w1_w2i / t_obs
+      )
+      r_i_1_mat <- t(pcs) %*% (w2 * w2_i) / t_obs
+      colnames(r_i_1_mat) <- paste0(
+        "maturity_", seq_len(n_mat)
+      )
+      rownames(r_i_1_mat) <- get_pc_column_names(J)
+      w2_i_sq <- w2_i^2
+      p_i_0_vec <- as.vector(
+        t(pcs) %*% w2_i_sq / t_obs
+      )
+      list(
+        r_i_0 = r_i_0_vec,
+        r_i_1 = r_i_1_mat,
+        p_i_0 = p_i_0_vec
+      )
+    }
+  )
+
   J <- ncol(pcs)
-  n_maturities_idx <- ncol(w2)
-  n_maturities <- length(maturities)
+  mat_names <- names(results)
+  pc_names <- get_pc_column_names(J)
 
-  # Initialize storage
-  r_i_0 <- matrix(0, nrow = J, ncol = n_maturities)
-  rownames(r_i_0) <- get_pc_column_names(J)
-  colnames(r_i_0) <- maturity_names(maturities)
+  r_i_0 <- do.call(
+    cbind, lapply(results, `[[`, "r_i_0")
+  )
+  rownames(r_i_0) <- pc_names
+  colnames(r_i_0) <- mat_names
 
-  r_i_1 <- vector("list", n_maturities)
-  names(r_i_1) <- maturity_names(maturities)
-
-  p_i_0 <- matrix(0, nrow = J, ncol = n_maturities)
-  rownames(p_i_0) <- get_pc_column_names(J)
-  colnames(p_i_0) <- maturity_names(maturities)
-
-  # Compute statistics for each maturity
-  for (idx in seq_along(maturities)) {
-    i <- maturities[idx]
-    w2_i <- w2[, i]
-
-    # R_i^(0) = (1/T) * PC^T * (w1 ⊙ w2_i)
-    hadamard_w1_w2i <- w1 * w2_i
-    r_i_0[, idx] <- t(pcs) %*% hadamard_w1_w2i / t_obs
-
-    # R_i^(1) = (1/T) * PC^T * (w2 ⊙ w2_i)
-    # This is a J x I matrix; w2 * w2_i broadcasts the column
-    r_i_1_mat <- t(pcs) %*% (w2 * w2_i) / t_obs
-    colnames(r_i_1_mat) <- paste0(
-      "maturity_", seq_len(n_maturities_idx)
-    )
-    rownames(r_i_1_mat) <- get_pc_column_names(J)
-    r_i_1[[idx]] <- r_i_1_mat
-
-    # P_i^(0) = (1/T) * PC^T * (w2_i)^⊙2
-    w2_i_sq <- w2_i^2
-    p_i_0[, idx] <- t(pcs) %*% w2_i_sq / t_obs
-  }
+  p_i_0 <- do.call(
+    cbind, lapply(results, `[[`, "p_i_0")
+  )
+  rownames(p_i_0) <- pc_names
+  colnames(p_i_0) <- mat_names
 
   list(
     r_i_0 = r_i_0,
-    r_i_1 = r_i_1,
+    r_i_1 = lapply(results, `[[`, "r_i_1"),
     p_i_0 = p_i_0
   )
 }
