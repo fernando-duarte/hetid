@@ -17,18 +17,20 @@
 validate_statistics_inputs <- function(w1, w2,
                                        maturities = NULL) {
   if (!is.numeric(w1) || !is.vector(w1)) {
-    stop("w1 must be a numeric vector", call. = FALSE)
+    stop_bad_argument(
+      "w1 must be a numeric vector",
+      arg = "w1"
+    )
   }
   assert_tabular(w2, "w2")
   w2 <- as.matrix(w2)
 
   t_obs <- length(w1)
   if (nrow(w2) != t_obs) {
-    stop(
+    stop_dimension_mismatch(paste0(
       "w1 and w2 must have the same number of ",
-      "observations",
-      call. = FALSE
-    )
+      "observations"
+    ))
   }
 
   if (is.null(maturities)) {
@@ -37,14 +39,17 @@ validate_statistics_inputs <- function(w1, w2,
   if (!is.numeric(maturities) ||
     any(!is.finite(maturities)) ||
     any(maturities %% 1 != 0)) {
-    stop(
+    stop_bad_argument(
       "maturities must be finite integer values",
-      call. = FALSE
+      arg = "maturities"
     )
   }
   if (any(maturities < 1) ||
     any(maturities > ncol(w2))) {
-    stop("maturities must be between 1 and ncol(w2)", call. = FALSE)
+    stop_bad_argument(
+      "maturities must be between 1 and ncol(w2)",
+      arg = "maturities"
+    )
   }
 
   list(w2 = w2, t_obs = t_obs, maturities = maturities)

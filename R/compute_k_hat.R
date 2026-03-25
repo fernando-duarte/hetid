@@ -49,7 +49,9 @@ compute_k_hat <- function(yields, term_premia, i) {
   n_obs <- length(y1)
 
   if (n_obs <= i) {
-    stop("Not enough observations. Need T > i", call. = FALSE)
+    stop_insufficient_data(
+      "Not enough observations. Need T > i"
+    )
   }
 
   # Compute the fourth moment (vectorized)

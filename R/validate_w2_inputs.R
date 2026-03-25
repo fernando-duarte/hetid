@@ -22,7 +22,10 @@ validate_w2_inputs <- function(yields, term_premia, maturities) {
 
   # Validate maturity values
   if (any(maturities %% 1 != 0) || any(maturities < 1)) {
-    stop("maturities must be positive integers", call. = FALSE)
+    stop_bad_argument(
+      "maturities must be positive integers",
+      arg = "maturities"
+    )
   }
 
   max_maturity <- min(
@@ -94,10 +97,10 @@ load_w2_pcs <- function(pcs, n_pcs, n_obs) {
     missing_cols <- setdiff(pc_cols, names(variables))
 
     if (length(missing_cols) > 0) {
-      stop(paste(
+      stop_bad_argument(paste(
         "Missing PC columns in variables data:",
         paste(missing_cols, collapse = ", ")
-      ), call. = FALSE)
+      ))
     }
 
     # One-period offset: dates[2:T] aligns with T-1 innovations
@@ -117,18 +120,16 @@ load_w2_pcs <- function(pcs, n_pcs, n_obs) {
 
     # Validate dimensions for user-provided PCs
     if (nrow(pcs) != n_obs) {
-      stop(
+      stop_dimension_mismatch(paste0(
         "Number of rows in user-provided pcs ",
-        "must match number of rows in yields",
-        call. = FALSE
-      )
+        "must match number of rows in yields"
+      ))
     }
     if (ncol(pcs) < n_pcs) {
-      stop(
+      stop_dimension_mismatch(paste0(
         "pcs has ", ncol(pcs), " columns but n_pcs = ",
-        n_pcs, "; supply at least ", n_pcs, " columns",
-        call. = FALSE
-      )
+        n_pcs, "; supply at least ", n_pcs, " columns"
+      ))
     }
 
     list(pcs = pcs, dates = NULL)

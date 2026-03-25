@@ -137,12 +137,11 @@ compute_identified_set_quadratic <- function(gamma, tau, L_i, V_i, Q_i,
     d_i[idx] <- (tau_i^2 * V_i_val) / sigma_i_sq_val
 
     if (!is.finite(d_i[idx])) {
-      stop(
+      stop_hetid(paste0(
         "d_i overflowed to non-finite for maturity ", i,
         ". sigma_i_sq may be too close to zero ",
-        "for numerically stable computation.",
-        call. = FALSE
-      )
+        "for numerically stable computation."
+      ))
     }
 
     # Compute A_i = Q_i * Q_i^T - d_i * S_i^(2)

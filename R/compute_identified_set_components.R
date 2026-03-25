@@ -83,19 +83,31 @@ compute_identified_set_components <- function(gamma, r_i_0, r_i_1, p_i_0,
                                               maturities = NULL) {
   # Validate inputs
   if (!is.matrix(gamma)) {
-    stop("gamma must be a matrix", call. = FALSE)
+    stop_bad_argument(
+      "gamma must be a matrix",
+      arg = "gamma"
+    )
   }
 
   if (!is.matrix(r_i_0)) {
-    stop("r_i_0 must be a matrix", call. = FALSE)
+    stop_bad_argument(
+      "r_i_0 must be a matrix",
+      arg = "r_i_0"
+    )
   }
 
   if (!is.list(r_i_1)) {
-    stop("r_i_1 must be a list of matrices", call. = FALSE)
+    stop_bad_argument(
+      "r_i_1 must be a list of matrices",
+      arg = "r_i_1"
+    )
   }
 
   if (!is.matrix(p_i_0)) {
-    stop("p_i_0 must be a matrix", call. = FALSE)
+    stop_bad_argument(
+      "p_i_0 must be a matrix",
+      arg = "p_i_0"
+    )
   }
 
   J <- nrow(gamma)
@@ -109,32 +121,30 @@ compute_identified_set_components <- function(gamma, r_i_0, r_i_1, p_i_0,
 
   if (any(maturities < 1) ||
     any(maturities > n_components)) {
-    stop("maturities must be between 1 and I",
-      call. = FALSE
+    stop_bad_argument(
+      "maturities must be between 1 and I",
+      arg = "maturities"
     )
   }
   n_maturities <- length(maturities)
 
   if (nrow(r_i_0) != J ||
     ncol(r_i_0) != n_maturities) {
-    stop(
-      "r_i_0 must be J x length(maturities)",
-      call. = FALSE
+    stop_dimension_mismatch(
+      "r_i_0 must be J x length(maturities)"
     )
   }
 
   if (length(r_i_1) != n_maturities) {
-    stop(
-      "r_i_1 must have length(maturities) elements",
-      call. = FALSE
+    stop_dimension_mismatch(
+      "r_i_1 must have length(maturities) elements"
     )
   }
 
   if (nrow(p_i_0) != J ||
     ncol(p_i_0) != n_maturities) {
-    stop(
-      "p_i_0 must be J x length(maturities)",
-      call. = FALSE
+    stop_dimension_mismatch(
+      "p_i_0 must be J x length(maturities)"
     )
   }
 
@@ -162,11 +172,11 @@ compute_identified_set_components <- function(gamma, r_i_0, r_i_1, p_i_0,
     R_i_1_mat <- r_i_1[[idx]]
     if (!is.matrix(R_i_1_mat) ||
       nrow(R_i_1_mat) != J) {
-      stop(paste0(
+      stop_dimension_mismatch(paste0(
         "r_i_1 for maturity ", i,
         " (position ", idx,
         ") must be a J x I matrix"
-      ), call. = FALSE)
+      ))
     }
     Q_i[[idx]] <- as.numeric(
       crossprod(gamma_i, R_i_1_mat)

@@ -73,30 +73,28 @@ extract_acm_data <- function(data_types = c("yields", "term_premia"),
 
   valid_types <- names(HETID_ACM_SCHEMA)
   if (!all(data_types %in% valid_types)) {
-    stop(
+    stop_bad_argument(paste0(
       "Invalid data_types. Must be one or more of: ",
-      paste(valid_types, collapse = ", "),
-      call. = FALSE
-    )
+      paste(valid_types, collapse = ", ")
+    ), arg = "data_types")
   }
 
   if (!all(maturities %in% HETID_CONSTANTS$MIN_MATURITY:HETID_CONSTANTS$MAX_MATURITY)) {
-    stop(
+    stop_bad_argument(paste0(
       "Maturities must be integers between ",
-      HETID_CONSTANTS$MIN_MATURITY, " and ", HETID_CONSTANTS$MAX_MATURITY,
-      call. = FALSE
-    )
+      HETID_CONSTANTS$MIN_MATURITY,
+      " and ", HETID_CONSTANTS$MAX_MATURITY
+    ), arg = "maturities")
   }
 
   # Load ACM data
   acm_data <- load_term_premia(auto_download = auto_download)
 
   if (is.null(acm_data)) {
-    stop(
-      "ACM data not available. Run download_term_premia() first or ",
-      "set auto_download = TRUE",
-      call. = FALSE
-    )
+    stop_insufficient_data(paste0(
+      "ACM data not available. Run download_term_premia()",
+      " first or set auto_download = TRUE"
+    ))
   }
 
   # The load_term_premia function now returns lowercase 'date' column

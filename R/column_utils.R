@@ -20,7 +20,7 @@ require_column <- function(x, col_name, context = NULL) {
     if (!is.null(context)) {
       msg <- paste0(msg, " in ", context)
     }
-    stop(msg, call. = FALSE)
+    stop_bad_argument(msg, arg = col_name)
   }
   val
 }
@@ -32,9 +32,9 @@ require_column <- function(x, col_name, context = NULL) {
 #' @keywords internal
 assert_tabular <- function(x, name) {
   if (!is.data.frame(x) && !is.matrix(x)) {
-    stop(
-      name, " must be a matrix or data frame",
-      call. = FALSE
+    stop_bad_argument(
+      paste0(name, " must be a matrix or data frame"),
+      arg = name
     )
   }
   invisible(TRUE)
@@ -57,7 +57,7 @@ assert_columns_exist <- function(df, required_cols,
     if (!is.null(context)) {
       msg <- paste0(msg, " in ", context)
     }
-    stop(msg, call. = FALSE)
+    stop_bad_argument(msg)
   }
   invisible(TRUE)
 }

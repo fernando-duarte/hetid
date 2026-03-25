@@ -40,7 +40,10 @@ get_package_data_dir <- function() {
 #' @keywords internal
 get_data_file_path <- function(filename) {
   if (!is.character(filename) || length(filename) != 1) {
-    stop("filename must be a single character string", call. = FALSE)
+    stop_bad_argument(
+      "filename must be a single character string",
+      arg = "filename"
+    )
   }
 
   file.path(get_package_data_dir(), filename)
@@ -90,15 +93,16 @@ validate_data_directory <- function(create_if_missing = TRUE) {
           dir.create(data_dir, recursive = TRUE)
         },
         error = function(e) {
-          stop(
+          stop_hetid(paste0(
             "Cannot create data directory: ", data_dir,
-            "\nError: ", e$message,
-            call. = FALSE
-          )
+            "\nError: ", e$message
+          ))
         }
       )
     } else {
-      stop("Data directory does not exist: ", data_dir, call. = FALSE)
+      stop_hetid(paste0(
+        "Data directory does not exist: ", data_dir
+      ))
     }
   }
 

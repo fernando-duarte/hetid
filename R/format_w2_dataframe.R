@@ -46,12 +46,11 @@ format_w2_dataframe <- function(
   if (user_supplied_dates) {
     expected_len <- n_yield_rows - 1
     if (length(dates) != expected_len) {
-      stop(
+      stop_dimension_mismatch(paste0(
         "dates has ", length(dates),
         " elements but nrow(yields) - 1 = ",
-        expected_len,
-        call. = FALSE
-      )
+        expected_len
+      ))
     }
   }
 

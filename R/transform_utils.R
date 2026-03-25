@@ -13,9 +13,8 @@ NULL
 #' @keywords internal
 validate_transform_length <- function(out, n_valid) {
   if (length(out) != n_valid) {
-    stop(
-      "transform_fn must return one value per valid element",
-      call. = FALSE
+    stop_dimension_mismatch(
+      "transform_fn must return one value per valid element"
     )
   }
 }
@@ -42,9 +41,8 @@ apply_time_series_transform <- function(series1, series2 = NULL,
     }
   } else {
     if (length(series1) != length(series2)) {
-      stop(
-        "series1 and series2 must have equal length",
-        call. = FALSE
+      stop_dimension_mismatch(
+        "series1 and series2 must have equal length"
       )
     }
     result <- rep(NA_real_, length(series1))

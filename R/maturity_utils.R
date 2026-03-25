@@ -31,51 +31,50 @@ maturity_names <- function(maturities) {
 resolve_maturities <- function(maturities, stats_list,
                                n_components) {
   if (!is.list(stats_list) || length(stats_list) == 0) {
-    stop("stats_list must be a non-empty list", call. = FALSE)
+    stop_bad_argument(
+      "stats_list must be a non-empty list",
+      arg = "stats_list"
+    )
   }
 
   all_names <- lapply(stats_list, names)
   has_names <- !vapply(all_names, is.null, logical(1))
 
   if (any(has_names) && !all(has_names)) {
-    stop(
+    stop_bad_argument(paste0(
       "Cannot mix named and unnamed statistical inputs. ",
       "Either name all inputs with 'maturity_N' names ",
-      "or leave all unnamed.",
-      call. = FALSE
-    )
+      "or leave all unnamed."
+    ))
   }
 
   parsed <- NULL
   if (all(has_names)) {
     anchor <- all_names[[1]]
     if (!all(grepl("^maturity_\\d+$", anchor))) {
-      stop(
+      stop_bad_argument(paste0(
         "Named inputs must follow 'maturity_N' pattern. ",
-        "Got: ", paste(anchor, collapse = ", "),
-        call. = FALSE
-      )
+        "Got: ", paste(anchor, collapse = ", ")
+      ))
     }
     for (nm in names(all_names)[-1]) {
       if (!identical(all_names[[nm]], anchor)) {
-        stop(
+        stop_bad_argument(paste0(
           "Names of ", nm,
           " do not match maturities. ",
-          "All named inputs must have identical names.",
-          call. = FALSE
-        )
+          "All named inputs must have identical names."
+        ))
       }
     }
     parsed <- as.integer(sub("^maturity_", "", anchor))
     if (anyDuplicated(parsed)) {
-      stop(
+      stop_bad_argument(paste0(
         "Duplicate maturity values in names: ",
         paste(
           parsed[duplicated(parsed)],
           collapse = ", "
-        ),
-        call. = FALSE
-      )
+        )
+      ))
     }
   }
 
@@ -85,27 +84,25 @@ resolve_maturities <- function(maturities, stats_list,
     } else {
       n_stats <- length(stats_list[[1]])
       if (n_stats < n_components) {
-        stop(
+        stop_dimension_mismatch(paste0(
           "Cannot infer maturities: inputs have length ",
           n_stats, " but n_components = ", n_components,
           ". Pass maturities explicitly or use named ",
-          "inputs with 'maturity_N' names.",
-          call. = FALSE
-        )
+          "inputs with 'maturity_N' names."
+        ))
       }
       maturities <- seq_len(n_stats)
     }
   } else if (!is.null(parsed)) {
     expected <- maturity_names(maturities)
     if (!identical(all_names[[1]], expected)) {
-      stop(
+      stop_bad_argument(paste0(
         "Input names do not match maturities. ",
         "Names: ",
         paste(all_names[[1]], collapse = ", "),
         ". Expected: ",
-        paste(expected, collapse = ", "),
-        call. = FALSE
-      )
+        paste(expected, collapse = ", ")
+      ), arg = "maturities")
     }
   }
 

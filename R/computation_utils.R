@@ -83,9 +83,8 @@ prepare_return_data <- function(result_series, return_df, dates, yields, series_
 
   # Ensure dates is the same length as the data
   if (length(dates) != nrow(yields)) {
-    stop(
-      "Length of dates must match number of rows in yields",
-      call. = FALSE
+    stop_dimension_mismatch(
+      "Length of dates must match number of rows in yields"
     )
   }
 
@@ -117,7 +116,7 @@ prepare_return_data <- function(result_series, return_df, dates, yields, series_
 compute_expected_squared <- function(series, error_msg = "No valid values to compute expectation") {
   clean_series <- series[!is.na(series)]
   if (length(clean_series) == 0) {
-    stop(error_msg, call. = FALSE)
+    stop_insufficient_data(error_msg)
   }
   mean(clean_series^2)
 }
