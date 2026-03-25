@@ -35,3 +35,24 @@ test_that("apply_time_series_transform single series handles all-NA", {
   expect_true(all(is.na(result)))
   expect_length(result, 2)
 })
+
+test_that("run_pc_regression returns expected structure", {
+  set.seed(42)
+  y <- rnorm(50)
+  pcs <- matrix(rnorm(100), 50, 2)
+  result <- run_pc_regression(y, pcs, 2)
+
+  expect_true(is.list(result))
+  expect_named(
+    result,
+    c(
+      "residuals", "fitted", "coefficients",
+      "r_squared", "model", "complete_idx"
+    )
+  )
+  expect_length(result$residuals, 50)
+  expect_true(
+    result$r_squared >= 0 && result$r_squared <= 1
+  )
+  expect_true(all(result$complete_idx))
+})

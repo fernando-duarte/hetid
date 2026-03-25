@@ -122,6 +122,48 @@ compute_expected_squared <- function(series, error_msg = "No valid values to com
   mean(clean_series^2)
 }
 
+#' Run PC Regression
+#'
+#' Shared regression core for W1 and W2 residual computation.
+#' Expects pre-aligned, pre-lagged inputs.
+#'
+#' @param y Numeric response vector
+#' @param pcs Matrix of principal components
+#' @param n_pcs Number of PCs to label
+#'
+#' @return List with residuals, fitted, coefficients,
+#'   r_squared, model, and complete_idx
+#' @keywords internal
+run_pc_regression <- function(y, pcs, n_pcs) {
+  # Subset to first n_pcs columns to avoid name
+  # recycling when user supplies extra columns
+  pcs <- pcs[, seq_len(n_pcs), drop = FALSE]
+
+  complete_idx <- complete.cases(y, pcs)
+  y_clean <- y[complete_idx]
+  pcs_clean <- pcs[complete_idx, , drop = FALSE]
+
+  pc_names <- get_pc_column_names(n_pcs)
+  colnames(pcs_clean) <- pc_names
+  formula_str <- paste(
+    "y ~", paste(pc_names, collapse = " + ")
+  )
+  reg_data <- data.frame(y = y_clean, pcs_clean)
+  model <- lm(
+    as.formula(formula_str),
+    data = reg_data
+  )
+
+  list(
+    residuals = residuals(model),
+    fitted = fitted(model),
+    coefficients = coef(model),
+    r_squared = summary(model)$r.squared,
+    model = model,
+    complete_idx = complete_idx
+  )
+}
+
 #' Apply Transformation to Time Series
 #'
 #' Apply a transformation function to aligned time series
