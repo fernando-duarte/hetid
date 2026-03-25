@@ -21,7 +21,9 @@ validate_quadratic_inputs(
 \item{gamma}{Matrix (J x I) where each column gamma_i contains the
 coefficients for maturity i}
 
-\item{tau}{Vector of positive real numbers (length I) containing tau_i values}
+\item{tau}{Vector of nonnegative real numbers (length I) containing tau_i
+values. Exact zeros are allowed and correspond to the point-identification
+benchmark.}
 
 \item{L_i}{Named vector of L_i values from compute_identified_set_components()}
 

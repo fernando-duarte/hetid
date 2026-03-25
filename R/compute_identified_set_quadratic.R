@@ -5,7 +5,9 @@
 #'
 #' @param gamma Matrix (J x I) where each column gamma_i contains the
 #'   coefficients for maturity i
-#' @param tau Vector of positive real numbers (length I) containing tau_i values
+#' @param tau Vector of nonnegative real numbers (length I) containing tau_i
+#'   values. Exact zeros are allowed and correspond to the point-identification
+#'   benchmark.
 #' @param L_i Named vector of L_i values from compute_identified_set_components()
 #' @param V_i Named vector of V_i values from compute_identified_set_components()
 #' @param Q_i List of vectors Q_i from compute_identified_set_components()

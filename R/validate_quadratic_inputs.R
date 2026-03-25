@@ -26,8 +26,8 @@ validate_quadratic_inputs <- function(gamma, tau,
     stop("tau must be a numeric vector", call. = FALSE)
   }
 
-  if (any(tau <= 0)) {
-    stop("All elements of tau must be positive", call. = FALSE)
+  if (any(tau < 0)) {
+    stop("All elements of tau must be nonnegative", call. = FALSE)
   }
 
   n_components <- ncol(gamma)

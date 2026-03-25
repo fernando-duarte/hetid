@@ -22,7 +22,7 @@ test_that("compute_identified_set_quadratic validates inputs correctly", {
       compute_identified_set_quadratic,
       modifyList(inputs, list(tau = c(1, -1, 1, 1)))
     ),
-    "All elements of tau must be positive"
+    "All elements of tau must be nonnegative"
   )
 
   expect_error(
@@ -132,6 +132,25 @@ test_that("accepts small but positive sigma_i_sq", {
   result <- do.call(compute_identified_set_quadratic, inputs)
   expect_type(result, "list")
   expect_true(all(is.finite(result$d_i)))
+})
+
+test_that("accepts exact zero tau and returns the point-id benchmark form", {
+  inputs <- setup_quadratic_test_inputs()
+  inputs$tau <- rep(0, length(inputs$tau))
+
+  result <- do.call(compute_identified_set_quadratic, inputs)
+
+  expect_type(result, "list")
+  expect_equal(unname(result$d_i), rep(0, length(inputs$L_i)))
+
+  for (i in seq_along(inputs$Q_i)) {
+    expect_equal(unname(result$A_i[[i]]), tcrossprod(inputs$Q_i[[i]]))
+    expect_equal(
+      unname(result$b_i[[i]]),
+      -2 * inputs$L_i[i] * inputs$Q_i[[i]]
+    )
+    expect_equal(unname(result$c_i[i]), inputs$L_i[i]^2)
+  }
 })
 
 test_that("errors on d_i overflow from tiny sigma_i_sq", {
