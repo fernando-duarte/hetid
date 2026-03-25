@@ -8,19 +8,20 @@
 #' @return List mapping new names to old names
 #' @keywords internal
 build_acm_col_mapping <- function(data_types, maturities) {
-  col_mapping <- list()
-
-  # Build mapping for each data type
-  for (dtype in data_types) {
-    if (dtype %in% names(HETID_ACM_SCHEMA)) {
-      rule <- HETID_ACM_SCHEMA[[dtype]]
-      for (mat in maturities) {
-        old_col <- sprintf(HETID_CONSTANTS$COL_FORMAT_PADDED, rule$prefix_old, mat)
-        new_col <- sprintf(HETID_CONSTANTS$COL_FORMAT_SIMPLE, rule$prefix_new, mat)
-        col_mapping[[new_col]] <- old_col
-      }
+  mappings <- lapply(data_types, function(dtype) {
+    if (!(dtype %in% names(HETID_ACM_SCHEMA))) {
+      return(NULL)
     }
-  }
-
-  col_mapping
+    rule <- HETID_ACM_SCHEMA[[dtype]]
+    old_cols <- sprintf(
+      HETID_CONSTANTS$COL_FORMAT_PADDED,
+      rule$prefix_old, maturities
+    )
+    new_cols <- sprintf(
+      HETID_CONSTANTS$COL_FORMAT_SIMPLE,
+      rule$prefix_new, maturities
+    )
+    setNames(as.list(old_cols), new_cols)
+  })
+  unlist(mappings, recursive = FALSE)
 }
