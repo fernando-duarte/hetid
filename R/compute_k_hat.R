@@ -44,14 +44,9 @@ compute_k_hat <- function(yields, term_premia, i) {
     stop("y1 column not found in yields")
   }
 
-  # Special case for i=1: n_hat_0 = -y1
-  if (i == 1) {
-    # For i=1, n_hat(0,t) = E_t\[p_(t+0)^(1)\] = p_t^(1) = -y_t^(1)
-    n_hat_i_minus_1 <- -y1 / HETID_CONSTANTS$PERCENT_TO_DECIMAL # Convert to decimal
-  } else {
-    # Compute n_hat(i-1) series
-    n_hat_i_minus_1 <- compute_n_hat(yields, term_premia, i - 1)
-  }
+  n_hat_i_minus_1 <- compute_n_hat_previous(
+    yields, term_premia, i
+  )
 
   # Number of observations
   n_obs <- length(y1)
