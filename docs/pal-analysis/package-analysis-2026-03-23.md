@@ -83,8 +83,9 @@ implicit data coupling plan and are documented in detail below.
 
 24. ~~Missing maturities bounds check in quadratic form (`tau[i]` can exceed `length(tau)`)~~
     **FIXED** (2026-03-24, added `maturities` bounds validation against `ncol(gamma)`)
-25. Three .R files exceed 200-line limit (quadratic: 234, W2: 218, validate_w2: 204)
-    **PENDING** (to be addressed in future refactoring)
+25. ~~Three .R files exceed 200-line limit~~
+    **FIXED** (2026-03-24, extracted `validate_quadratic_inputs.R`,
+    `process_w2_maturity.R`, `format_w2_dataframe.R`; all files now under 200)
 26. ~~`validate_n_pcs()` is dead code / no `n_pcs` validation in `compute_w2_residuals()`~~
     **FIXED** (2026-03-24, added `validate_n_pcs(n_pcs)` call in `compute_w2_residuals()`)
 27. ~~`validate_w2_inputs()` doesn't validate maturity integrality or minimum bounds~~
@@ -96,7 +97,25 @@ implicit data coupling plan and are documented in detail below.
 30. `apply_time_series_transform()` still loop-based with single call site
     **REJECTED** (keeping for future reuse, consistent with item 8)
 31. ~~Inconsistent maturity indexing convention between identification functions~~
-    **FIXED** (2026-03-24, `compute_identified_set_components()` now accepts position-indexed statistics matching the rest of the pipeline)
+    **FIXED** (2026-03-24, `compute_identified_set_components()` now accepts position-indexed
+    statistics matching the rest of the pipeline)
+
+**Findings from magic-value analysis and constant centralization (2026-03-24):**
+
+32. ~~Magic-value debt in data-contract layer (filenames, column prefixes, schema strings)~~
+    **FIXED** (2026-03-24, centralized into `HETID_CONSTANTS` and new `HETID_ACM_SCHEMA` export;
+    see `docs/pal-analysis/magic-values-analysis-2026-03-24.md`)
+33. ~~`MAX_MATURITY - 1` repeated in 7 files without naming the policy~~
+    **FIXED** (2026-03-24, replaced with `EFFECTIVE_MAX_MATURITY` constant)
+34. ~~`paste0("pc", 1:n_pcs)` repeated at 11 call sites~~
+    **FIXED** (2026-03-24, replaced with `get_pc_column_names()` helper)
+
+**Findings from maturity indexing unification (2026-03-24):**
+
+35. ~~Latent pipeline bug: `compute_vector_statistics(maturities = c(2,4))` produced position-indexed
+    outputs incompatible with `compute_identified_set_components()` which expected full-size inputs~~
+    **FIXED** (2026-03-24, as part of item 31 fix; the existing end-to-end test masked this because
+    it only called stats functions with `maturities = NULL`)
 
 ---
 
@@ -145,13 +164,14 @@ extract_acm_data()            compute_sdf_innovations()                   |
 - `data_paths.R` -- path management for external data
 - `build_acm_col_mapping.R` -- column name mapping
 - `convert_to_quarterly.R` -- frequency conversion
-- `constants.R` -- centralized constants (`HETID_CONSTANTS`, `DATA_URLS`)
+- `constants.R` -- centralized constants (`HETID_CONSTANTS`, `DATA_URLS`, `HETID_ACM_SCHEMA`)
+- `maturity_utils.R` -- maturity index resolution from named inputs
 
 ### Architecture Strengths
 
-- **Function-per-file organization** works well at this scale (27 files, max 197 lines)
+- **Function-per-file organization** works well at this scale (29 files)
 - **Minimal dependency footprint**: only `stats` and `utils` as Imports; `readxl` suggested
-- **Clean NAMESPACE** with 18 explicit exports and explicit `importFrom` declarations
+- **Clean NAMESPACE** with 19 explicit exports and explicit `importFrom` declarations
 - **Composable API**: each function is focused and can be used independently or chained
 
 ### Architecture Weaknesses
@@ -159,9 +179,10 @@ extract_acm_data()            compute_sdf_innovations()                   |
 - No high-level convenience function chains the full identification pipeline (scalar stats +
   vector stats + matrix stats + components + quadratic form); users must call 5 functions in
   sequence
-- The computation and identification layers have different conventions for maturity indexing:
-  computation functions take a single `i`, while identification functions take matrices/lists
-  indexed by maturity position, creating an impedance mismatch
+- ~~The computation and identification layers have different conventions for maturity indexing~~
+  **FIXED** (2026-03-24): identification functions now consistently use position-indexed
+  statistics. The remaining convention difference (computation functions take a scalar `i`,
+  identification functions take vectors/matrices) is inherent to the pipeline design
 
 ---
 
@@ -818,52 +839,53 @@ The package passes R CMD check with **0 notes, 0 warnings, 0 errors** (Status: O
 
 | Metric                  | Value                                          |
 |-------------------------|------------------------------------------------|
-| R source files          | 28                                             |
-| Total R source lines    | 2,767                                          |
-| Largest file            | `compute_identified_set_quadratic.R` (221 lines)|
-| Smallest file           | `globals.R` (6 lines)                          |
-| Median file size        | 87 lines                                       |
-| Test files              | 20                                             |
-| Man pages               | 45                                             |
-| Exported functions      | 18                                             |
-| Internal functions      | ~23                                            |
+| R source files          | 29                                             |
+| Total R source lines    | 3,157                                          |
+| Largest file            | `compute_identified_set_quadratic.R` (267 lines)|
+| Smallest file           | `globals.R` (5 lines)                          |
+| Median file size        | 96 lines                                       |
+| Test files              | 23                                             |
+| Man pages               | 50                                             |
+| Exported functions      | 19                                              |
+| Internal functions      | ~25                                            |
 | Dependencies (Imports)  | 2 (`stats`, `utils`)                           |
 | Dependencies (Suggests) | 5 (`curl`, `knitr`, `readxl`, `rmarkdown`, `testthat`) |
 | R CMD check result      | 0 notes, 0 warnings, 0 errors                 |
 
 ### File Size Distribution
 
-All files are under the 200-line project constraint except
-`compute_identified_set_quadratic.R` (221 lines after adding sigma_i_sq guards), which may
-benefit from extracting validation into a helper:
+Three files exceed the 200-line project constraint (item 25, PENDING):
 
 ```
-  6  globals.R
+  5  globals.R
  23  zzz.R
- 33  build_acm_col_mapping.R
- 56  convert_to_quarterly.R
+ 26  build_acm_col_mapping.R
  39  compute_variance_bound.R
  52  compute_c_hat.R
+ 59  convert_to_quarterly.R
  67  compute_price_news.R
- 82  compute_k_hat.R
+ 68  data-variables.R
+ 77  compute_k_hat.R
+ 77  data-acm.R
  85  compute_sdf_innovations.R
  86  compute_n_hat.R
- 85  constants.R
- 87  load_term_premia.R
- 94  download_term_premia.R
- 95  compute_scalar_statistics.R
-105  data_paths.R
-110  compute_matrix_statistics.R
-130  compute_vector_statistics.R
-131  hetid-package.R
-137  compute_w1_residuals.R
-140  compute_identified_set_components.R
+ 88  load_term_premia.R
+ 90  compute_scalar_statistics.R
+ 96  maturity_utils.R
+ 98  download_term_premia.R
+107  data_paths.R
+109  compute_matrix_statistics.R
+120  compute_vector_statistics.R
+127  constants.R
 149  extract_acm_data.R
-152  computation_utils.R
-158  compute_w2_residuals.R
-161  validation_utils.R
-162  validate_w2_inputs.R
-221  compute_identified_set_quadratic.R
+155  hetid-package.R
+157  computation_utils.R
+157  compute_w1_residuals.R
+162  validation_utils.R
+179  compute_identified_set_components.R
+211  validate_w2_inputs.R       ** over 200
+221  compute_w2_residuals.R     ** over 200
+267  compute_identified_set_quadratic.R  ** over 200
 ```
 
 ---
@@ -912,3 +934,6 @@ benefit from extracting validation into a helper:
 | ~~Add W2-specific `@param dates` override (shared template is inaccurate for W2)~~ (done) | `R/compute_w2_residuals.R` | ~~Documentation accuracy~~ |
 | ~~Tighten test grep `^(y|tp)` → `^(y[0-9]|tp)` in W2 merge test~~ (done) | `tests/testthat/test-compute_w2_residuals.R:148` | ~~Test code quality~~ |
 | ~~Decide whether to remove `README.html` from git or document `rmarkdown::render()` usage~~ (done -- removed from git, added to .gitignore) | `README.html`, contributing docs | ~~Build process clarity~~ |
+| ~~Centralize magic values (filenames, schema strings, column prefixes)~~ (done -- `HETID_CONSTANTS` extended, `HETID_ACM_SCHEMA` added, `get_pc_column_names()` helper) | `R/constants.R`, 16 consumer files | ~~Data-contract maintenance~~ |
+| ~~Unify maturity indexing convention~~ (done -- `compute_identified_set_components()` now position-indexed) | `R/compute_identified_set_components.R`, tests | ~~Pipeline consistency~~ |
+| Split over-200-line files (quadratic: 267, W2: 221, validate_w2: 211) | 3 files | Enforces project constraint |

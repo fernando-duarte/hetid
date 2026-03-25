@@ -156,57 +156,16 @@ compute_w2_residuals <- function(yields, term_premia,
     "(Intercept)", get_pc_column_names(n_pcs)
   )
 
-  # Handle return_df option
   if (return_df) {
-    # Create data frame format
-    df_list <- list()
-
-    # Track whether user supplied dates
-    user_supplied_dates <- !is.null(dates)
-
-    # Get dates from user, bundled data, or indices
-    if (is.null(dates)) {
-      if (!is.null(bundled_dates)) {
-        dates <- bundled_dates
-      } else {
-        # User provided custom PCs -- use row indices
-        # per package convention (prepare_return_data)
-        dates <- seq_len(nrow(yields_df) - 1)
-      }
-    }
-
-    # Validate user-supplied dates length
-    if (user_supplied_dates) {
-      expected_len <- nrow(yields_df) - 1
-      if (length(dates) != expected_len) {
-        stop(
-          "dates has ", length(dates),
-          " elements but nrow(yields) - 1 = ",
-          expected_len
-        )
-      }
-    }
-
-    # Build data frame for each maturity
-    for (idx in seq_along(maturities)) {
-      i <- maturities[idx]
-      mat_key <- paste0("maturity_", i)
-
-      if (mat_key %in% names(residuals_list)) {
-        kept <- kept_idx_list[[mat_key]]
-        mat_dates <- dates[which(kept)]
-        df_list[[idx]] <- data.frame(
-          date = mat_dates,
-          maturity = i,
-          residuals = residuals_list[[mat_key]],
-          fitted = fitted_list[[mat_key]],
-          stringsAsFactors = FALSE
-        )
-      }
-    }
-
-    # Combine all maturities
-    return(do.call(rbind, df_list))
+    return(format_w2_dataframe(
+      residuals_list = residuals_list,
+      fitted_list = fitted_list,
+      kept_idx_list = kept_idx_list,
+      maturities = maturities,
+      dates = dates,
+      bundled_dates = bundled_dates,
+      n_yield_rows = nrow(yields_df)
+    ))
   }
 
   # Return list format (original)
