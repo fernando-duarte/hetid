@@ -1,23 +1,13 @@
-#' Validate inputs for the quadratic identified set computation
-#'
-#' Checks types, dimensions, positivity constraints, and resolves
-#' maturities for \code{\link{compute_identified_set_quadratic}}.
+#' Validate argument types for quadratic inputs
 #'
 #' @inheritParams compute_identified_set_quadratic
-#'
-#' @return A list with components:
-#' \describe{
-#'   \item{maturities}{Resolved integer vector of maturity indices}
-#'   \item{n_components}{Number of columns in \code{gamma} (I)}
-#'   \item{n_maturities}{Length of \code{maturities}}
-#' }
-#'
 #' @keywords internal
-validate_quadratic_inputs <- function(gamma, tau,
-                                      L_i, V_i, Q_i,
-                                      s_i_0, s_i_1,
-                                      s_i_2, sigma_i_sq,
-                                      maturities = NULL) {
+#' @noRd
+validate_quadratic_types <- function(gamma, tau,
+                                     L_i, V_i, Q_i,
+                                     s_i_0, s_i_1,
+                                     s_i_2,
+                                     sigma_i_sq) {
   if (!is.matrix(gamma)) {
     stop_bad_argument(
       "gamma must be a matrix",
@@ -36,14 +26,6 @@ validate_quadratic_inputs <- function(gamma, tau,
     stop_bad_argument(
       "All elements of tau must be nonnegative",
       arg = "tau"
-    )
-  }
-
-  n_components <- ncol(gamma)
-
-  if (length(tau) != n_components) {
-    stop_dimension_mismatch(
-      "tau must have length I (number of columns in gamma)"
     )
   }
 
@@ -71,53 +53,19 @@ validate_quadratic_inputs <- function(gamma, tau,
       "s_i_1 and s_i_2 must be lists"
     )
   }
+}
 
-  # Resolve maturities from names or explicit parameter
-  maturities <- resolve_maturities(
-    maturities,
-    list(
-      L_i = L_i, V_i = V_i, Q_i = Q_i,
-      s_i_0 = s_i_0, s_i_1 = s_i_1,
-      s_i_2 = s_i_2, sigma_i_sq = sigma_i_sq
-    ),
-    n_components
-  )
-
-  # Validate maturities against gamma dimensions
-  if (any(maturities < 1) || any(maturities > n_components)) {
-    stop_bad_argument(paste0(
-      "maturities must be between 1 and ncol(gamma) (",
-      n_components, ")"
-    ), arg = "maturities")
-  }
-
-  n_maturities <- length(maturities)
-  if (any(c(
-    length(L_i), length(V_i), length(Q_i),
-    length(s_i_0), length(s_i_1), length(s_i_2),
-    length(sigma_i_sq)
-  ) != n_maturities)) {
-    stop_dimension_mismatch(paste0(
-      "All statistical inputs must have length matching ",
-      "maturities (", n_maturities, ")"
-    ))
-  }
-
-  # Validate sigma_i_sq: must be finite and strictly positive
-  bad_sigma <- which(
-    !is.finite(sigma_i_sq) | sigma_i_sq <= 0
-  )
-  if (length(bad_sigma) > 0) {
-    stop_bad_argument(paste0(
-      "sigma_i_sq is non-positive, non-finite, or NA ",
-      "for maturity/maturities ",
-      paste(maturities[bad_sigma], collapse = ", "),
-      ". Cannot compute identified set -- ",
-      "insufficient heteroskedasticity."
-    ), arg = "sigma_i_sq")
-  }
-
-  # Validate per-element dimensions of list inputs
+#' Validate per-element dimensions of list inputs
+#'
+#' @param Q_i,s_i_1,s_i_2 List inputs to check
+#' @param maturities Resolved maturity vector
+#' @param n_components Expected dimension (I)
+#' @keywords internal
+#' @noRd
+validate_list_element_dims <- function(Q_i, s_i_1,
+                                       s_i_2,
+                                       maturities,
+                                       n_components) {
   for (idx in seq_along(maturities)) {
     i <- maturities[idx]
 
@@ -148,6 +96,90 @@ validate_quadratic_inputs <- function(gamma, tau,
       ))
     }
   }
+}
+
+#' Validate inputs for the quadratic identified set computation
+#'
+#' Checks types, dimensions, positivity constraints, and resolves
+#' maturities for \code{\link{compute_identified_set_quadratic}}.
+#'
+#' @inheritParams compute_identified_set_quadratic
+#'
+#' @return A list with components:
+#' \describe{
+#'   \item{maturities}{Resolved integer vector of maturity indices}
+#'   \item{n_components}{Number of columns in \code{gamma} (I)}
+#'   \item{n_maturities}{Length of \code{maturities}}
+#' }
+#'
+#' @keywords internal
+validate_quadratic_inputs <- function(gamma, tau,
+                                      L_i, V_i, Q_i,
+                                      s_i_0, s_i_1,
+                                      s_i_2, sigma_i_sq,
+                                      maturities = NULL) {
+  validate_quadratic_types(
+    gamma, tau, L_i, V_i, Q_i,
+    s_i_0, s_i_1, s_i_2, sigma_i_sq
+  )
+
+  n_components <- ncol(gamma)
+
+  if (length(tau) != n_components) {
+    stop_dimension_mismatch(
+      "tau must have length I (number of columns in gamma)"
+    )
+  }
+
+  # Resolve maturities from names or explicit parameter
+  maturities <- resolve_maturities(
+    maturities,
+    list(
+      L_i = L_i, V_i = V_i, Q_i = Q_i,
+      s_i_0 = s_i_0, s_i_1 = s_i_1,
+      s_i_2 = s_i_2, sigma_i_sq = sigma_i_sq
+    ),
+    n_components
+  )
+
+  # Validate maturities against gamma dimensions
+  if (any(maturities < 1) ||
+    any(maturities > n_components)) {
+    stop_bad_argument(paste0(
+      "maturities must be between 1 and ncol(gamma) (",
+      n_components, ")"
+    ), arg = "maturities")
+  }
+
+  n_maturities <- length(maturities)
+  if (any(c(
+    length(L_i), length(V_i), length(Q_i),
+    length(s_i_0), length(s_i_1), length(s_i_2),
+    length(sigma_i_sq)
+  ) != n_maturities)) {
+    stop_dimension_mismatch(paste0(
+      "All statistical inputs must have length ",
+      "matching maturities (", n_maturities, ")"
+    ))
+  }
+
+  # Validate sigma_i_sq
+  bad_sigma <- which(
+    !is.finite(sigma_i_sq) | sigma_i_sq <= 0
+  )
+  if (length(bad_sigma) > 0) {
+    stop_bad_argument(paste0(
+      "sigma_i_sq is non-positive, non-finite, or NA ",
+      "for maturity/maturities ",
+      paste(maturities[bad_sigma], collapse = ", "),
+      ". Cannot compute identified set -- ",
+      "insufficient heteroskedasticity."
+    ), arg = "sigma_i_sq")
+  }
+
+  validate_list_element_dims(
+    Q_i, s_i_1, s_i_2, maturities, n_components
+  )
 
   list(
     maturities = maturities,
