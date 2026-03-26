@@ -282,14 +282,14 @@ test_that(
   "pipeline: stats -> components with subset",
   {
     set.seed(99)
-    T_obs <- 50 # nolint: object_name_linter.
+    n_obs <- 50
     I <- 6
     J <- 3
     maturities <- c(2, 4)
 
-    w1 <- rnorm(T_obs)
-    w2 <- matrix(rnorm(T_obs * I), T_obs, I)
-    pcs <- matrix(rnorm(T_obs * J), T_obs, J)
+    w1 <- rnorm(n_obs)
+    w2 <- matrix(rnorm(n_obs * I), n_obs, I)
+    pcs <- matrix(rnorm(n_obs * J), n_obs, J)
     gamma <- matrix(rnorm(J * I), J, I)
 
     vec <- compute_vector_statistics(

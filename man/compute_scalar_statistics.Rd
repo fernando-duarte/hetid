@@ -35,10 +35,10 @@ where \eqn{\odot} denotes the Hadamard (elementwise) product and
 }
 \examples{
 set.seed(42)
-T_obs <- 100
+n_obs <- 100
 I <- 4
-w1 <- rnorm(T_obs)
-w2 <- matrix(rnorm(T_obs * I), nrow = T_obs, ncol = I)
+w1 <- rnorm(n_obs)
+w2 <- matrix(rnorm(n_obs * I), nrow = n_obs, ncol = I)
 
 scalar_stats <- compute_scalar_statistics(w1, w2)
 scalar_stats$s_i_0

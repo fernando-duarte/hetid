@@ -19,12 +19,12 @@ test_that("compute_vector_statistics validates w2 input", {
 test_that("compute_vector_statistics returns correct structure", {
   # Create test data
   set.seed(123)
-  T_obs <- 100 # nolint: object_name_linter.
+  n_obs <- 100
   I <- 3
   J <- 4
-  w1 <- rnorm(T_obs)
-  w2 <- matrix(rnorm(T_obs * I), T_obs, I)
-  pcs <- matrix(rnorm(T_obs * J), T_obs, J)
+  w1 <- rnorm(n_obs)
+  w2 <- matrix(rnorm(n_obs * I), n_obs, I)
+  pcs <- matrix(rnorm(n_obs * J), n_obs, J)
 
   result <- compute_vector_statistics(w1, w2, pcs)
 
@@ -80,12 +80,12 @@ test_that("compute_vector_statistics computes correct values", {
 
 test_that("compute_vector_statistics handles subset of maturities", {
   set.seed(456)
-  T_obs <- 50 # nolint: object_name_linter.
+  n_obs <- 50
   I <- 5
   J <- 3
-  w1 <- rnorm(T_obs)
-  w2 <- matrix(rnorm(T_obs * I), T_obs, I)
-  pcs <- matrix(rnorm(T_obs * J), T_obs, J)
+  w1 <- rnorm(n_obs)
+  w2 <- matrix(rnorm(n_obs * I), n_obs, I)
+  pcs <- matrix(rnorm(n_obs * J), n_obs, J)
 
   # Test with subset of maturities
   maturities <- c(2, 4)
@@ -104,16 +104,16 @@ test_that("compute_vector_statistics handles subset of maturities", {
 
 test_that("compute_vector_statistics handles orthogonal PCs correctly", {
   # Test with orthogonal PCs
-  T_obs <- 4 # nolint: object_name_linter.
+  n_obs <- 4
   w1 <- c(1, 2, 3, 4)
-  w2 <- matrix(c(2, 3, 4, 5), nrow = 4, ncol = 1)
+  w2 <- matrix(c(2, 3, 4, 5), nrow = n_obs, ncol = 1)
 
   # Orthogonal PCs
   pcs <- matrix(c(
     1, 0, 0, 0,
     0, 1, 0, 0,
     0, 0, 1, 0
-  ), nrow = 4, ncol = 3, byrow = FALSE)
+  ), nrow = n_obs, ncol = 3, byrow = FALSE)
 
   result <- compute_vector_statistics(w1, w2, pcs)
 

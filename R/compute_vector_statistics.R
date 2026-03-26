@@ -27,12 +27,12 @@
 #'
 #' @examples
 #' set.seed(42)
-#' T_obs <- 100
+#' n_obs <- 100
 #' I <- 4
 #' J <- 3
-#' w1 <- rnorm(T_obs)
-#' w2 <- matrix(rnorm(T_obs * I), nrow = T_obs, ncol = I)
-#' pcs <- matrix(rnorm(T_obs * J), nrow = T_obs, ncol = J)
+#' w1 <- rnorm(n_obs)
+#' w2 <- matrix(rnorm(n_obs * I), nrow = n_obs, ncol = I)
+#' pcs <- matrix(rnorm(n_obs * J), nrow = n_obs, ncol = J)
 #'
 #' vec_stats <- compute_vector_statistics(w1, w2, pcs)
 #' vec_stats$r_i_0

@@ -83,12 +83,12 @@ subsetting.
 
 \examples{
 set.seed(42)
-T_obs <- 100
+n_obs <- 100
 J <- 3
 I <- 4
-w1 <- rnorm(T_obs)
-w2 <- matrix(rnorm(T_obs * I), nrow = T_obs, ncol = I)
-pcs <- matrix(rnorm(T_obs * J), nrow = T_obs, ncol = J)
+w1 <- rnorm(n_obs)
+w2 <- matrix(rnorm(n_obs * I), nrow = n_obs, ncol = I)
+pcs <- matrix(rnorm(n_obs * J), nrow = n_obs, ncol = J)
 gamma <- matrix(rnorm(J * I), nrow = J, ncol = I)
 
 vec_stats <- compute_vector_statistics(w1, w2, pcs)
