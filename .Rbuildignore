@@ -69,6 +69,7 @@
 ^\.claude$
 ^CLAUDE\.md$
 ^CLAUDE\.local\.md$
+^AGENTS\.md$
 
 # Other common files to exclude
 ^\.lintr$
