@@ -25,7 +25,7 @@ repos:
 
       # Lint R code
       - id: lintr
-        args: [--warn_only]
+        args: []
         verbose: true
 
       # Check that README.Rmd hasn't changed without updating README.md

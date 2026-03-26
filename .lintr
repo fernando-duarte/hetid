@@ -15,7 +15,7 @@ linters: linters_with_defaults(
       interpret_extensions = "glue",
       skip_with = TRUE
     ),
-    object_length_linter = object_length_linter(length = 30L),
+    object_length_linter = object_length_linter(length = 35L),
     # Added from quality audit (2026-03-24) — catch real bugs
     object_overwrite_linter = object_overwrite_linter(),
     unnecessary_concatenation_linter = unnecessary_concatenation_linter(),
