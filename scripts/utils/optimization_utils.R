@@ -25,15 +25,15 @@ solve_profile_bound <- function(quadratic,
   obj_fn <- function(theta) sign_mult * sum(e_k * theta)
   grad_fn <- function(theta) sign_mult * e_k
 
-  # Constraints: -(theta' A_i theta + b_i' theta + c_i) >= 0
-  # nloptr requires hin(x) >= 0 for feasibility
+  # Constraints: theta' A_i theta + b_i' theta + c_i <= 0
+  # nloptr hin(x) <= 0 convention
   constraint_fn <- function(theta) {
     vapply(seq_len(n_con), function(i) {
       ai <- quadratic$A_i[[i]]
       bi <- quadratic$b_i[[i]]
       ci <- quadratic$c_i[i]
-      -(drop(t(theta) %*% ai %*% theta) +
-        sum(bi * theta) + ci)
+      drop(t(theta) %*% ai %*% theta) +
+        sum(bi * theta) + ci
     }, numeric(1))
   }
 
@@ -42,7 +42,7 @@ solve_profile_bound <- function(quadratic,
     for (i in seq_len(n_con)) {
       ai <- quadratic$A_i[[i]]
       bi <- quadratic$b_i[[i]]
-      jac[i, ] <- -(2 * drop(ai %*% theta) + bi)
+      jac[i, ] <- 2 * drop(ai %*% theta) + bi
     }
     jac
   }
@@ -54,7 +54,8 @@ solve_profile_bound <- function(quadratic,
   result <- tryCatch(nloptr::slsqp(
     x0 = theta_start, fn = obj_fn, gr = grad_fn,
     hin = constraint_fn, hinjac = constraint_jac,
-    control = list(xtol_rel = 1e-8, maxeval = 1000)
+    control = list(xtol_rel = 1e-8, maxeval = 1000),
+    deprecatedBehavior = FALSE
   ), error = function(e) {
     list(
       par = theta_start, value = NA_real_,
