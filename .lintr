@@ -34,6 +34,7 @@ exclusions: list(
     "R/RcppExports.R",
     "tests/testthat.R",
     "tests/testthat/helper-*.R",
+    "scripts",
     "renv.lock",
     "README.html"
   )
