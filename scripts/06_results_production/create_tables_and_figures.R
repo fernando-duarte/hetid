@@ -43,7 +43,7 @@ save_plot <- function(p, base_name) {
 cli_h2("Creating Main Identification Table")
 main_df <- comparison_table |>
   select(
-    bond_maturity,
+    component_label,
     baseline_lower, baseline_upper,
     optimized_lower, optimized_upper,
     pct_width_reduction
@@ -52,7 +52,7 @@ main_df <- comparison_table |>
 main_tbl <- gt(main_df) |>
   tab_header(title = paste(
     "Baseline vs Optimized",
-    "Identified Intervals by Maturity"
+    "Identified Intervals by Component"
   )) |>
   tab_spanner(
     label = "Baseline",
@@ -63,7 +63,7 @@ main_tbl <- gt(main_df) |>
     columns = c(optimized_lower, optimized_upper)
   ) |>
   cols_label(
-    bond_maturity = "Bond Maturity",
+    component_label = "Component",
     baseline_lower = "Lower",
     baseline_upper = "Upper",
     optimized_lower = "Lower",
@@ -107,12 +107,12 @@ cli_h2("Creating Interval Plot")
 
 interval_df <- comparison_table |>
   select(
-    bond_maturity,
+    component_label,
     baseline_lower, baseline_upper,
     optimized_lower, optimized_upper
   ) |>
   tidyr::pivot_longer(
-    cols = -bond_maturity,
+    cols = -component_label,
     names_to = c("method", "bound"),
     names_sep = "_"
   ) |>
@@ -123,7 +123,7 @@ interval_df <- comparison_table |>
 p_intervals <- ggplot(
   interval_df,
   aes(
-    x = bond_maturity, ymin = lower,
+    x = component_label, ymin = lower,
     ymax = upper, color = method
   )
 ) +
@@ -136,7 +136,7 @@ p_intervals <- ggplot(
     labels = c("Baseline", "Optimized")
   ) +
   labs(
-    x = "Bond Maturity", y = "Theta Bounds",
+    x = "Component", y = "Theta Bounds",
     color = "Method",
     title = "Identified Intervals: Baseline vs Optimized"
   ) +
@@ -149,12 +149,12 @@ cli_h2("Creating Width Reduction Bar Chart")
 
 p_reduction <- ggplot(
   comparison_table,
-  aes(x = factor(bond_maturity), y = pct_width_reduction)
+  aes(x = component_label, y = pct_width_reduction)
 ) +
   geom_col(fill = "steelblue") +
   labs(
-    x = "Bond Maturity", y = "Width Reduction (%)",
-    title = "Interval Width Reduction by Maturity"
+    x = "Component", y = "Width Reduction (%)",
+    title = "Interval Width Reduction by Component"
   ) +
   theme_minimal()
 

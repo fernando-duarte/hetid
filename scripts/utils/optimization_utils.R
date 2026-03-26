@@ -112,7 +112,7 @@ normalize_gamma_columns <- function(gamma) {
 
 objective_gamma_only <- function(par, moments, tau,
                                  n_pcs, n_components,
-                                 maturities = 1:8) {
+                                 maturities = NULL) {
   gamma <- unpack_gamma(par, n_pcs, n_components)
   gamma <- normalize_gamma_columns(gamma)
   tryCatch(
@@ -141,7 +141,7 @@ run_gamma_optimization <- function(gamma_start,
                                    tau,
                                    n_starts = 10,
                                    seed = SEED,
-                                   maturities = 1:8) {
+                                   maturities = NULL) {
   set.seed(seed)
   n_pcs <- nrow(gamma_start)
   n_comp <- ncol(gamma_start)

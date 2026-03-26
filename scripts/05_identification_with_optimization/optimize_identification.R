@@ -21,7 +21,8 @@ cli_alert_info(
 )
 
 # Fixed tau for set identification
-tau <- rep(0.2, 8)
+n_comp <- ncol(gamma_baseline)
+tau <- rep(0.2, n_comp)
 cli_alert_info("Fixed tau = {.val {tau[1]}} for all components")
 
 # Run multi-start gamma optimization
@@ -65,21 +66,21 @@ optimized_bounds <- solve_all_profile_bounds(
 baseline_bounds <- baseline$bounds_tau_set
 
 # Add maturity labels
-optimized_bounds$bond_maturity <- lookup$bond_maturity
-baseline_bounds$bond_maturity <- lookup$bond_maturity
+optimized_bounds$component_label <- lookup$component_label
+baseline_bounds$component_label <- lookup$component_label
 
 # Display comparison
 cli_h2("Baseline Bounds (tau = 0.2, VFCI gamma)")
 print(
   baseline_bounds[, c(
-    "bond_maturity", "lower", "upper", "width"
+    "component_label", "lower", "upper", "width"
   )]
 )
 
 cli_h2("Optimized Bounds (tau = 0.2, optimized gamma)")
 print(
   optimized_bounds[, c(
-    "bond_maturity", "lower", "upper", "width"
+    "component_label", "lower", "upper", "width"
   )]
 )
 

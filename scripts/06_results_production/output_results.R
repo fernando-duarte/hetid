@@ -61,9 +61,9 @@ obj_final <- optimized$objective_final
 obj_improvement <- obj_start - obj_final
 obj_pct <- obj_improvement / obj_start * 100
 
-mat_range <- range(
-  comp_table$bond_maturity,
-  na.rm = TRUE
+comp_labels <- paste(
+  comp_table$component_label,
+  collapse = ", "
 )
 baseline_diag <- baseline$solver_diagnostics
 optimized_diag <- optimized$solver_diagnostics
@@ -73,7 +73,7 @@ comp_detail <- vapply(
   seq_len(nrow(comp_table)), function(i) {
     r <- comp_table[i, ]
     paste0(
-      "  Maturity ", r$bond_maturity,
+      "  ", r$component_label,
       " (component ", r$component, "): ",
       sprintf("%.4f", r$baseline_width), " -> ",
       sprintf("%.4f", r$optimized_width),
@@ -145,10 +145,7 @@ summary_lines <- c(
     sprintf("%.2f%%", obj_pct)
   ),
   "",
-  paste(
-    "MATURITY RANGE:",
-    mat_range[1], "to", mat_range[2]
-  ),
+  paste("COMPONENTS:", comp_labels),
   "",
   "COMPONENT SUMMARY:",
   comp_detail,

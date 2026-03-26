@@ -14,11 +14,11 @@ join_by <- c("component" = "component_id")
 
 # Merge bounds with lookup for labeling
 bounds_tau0 <- results$bounds_tau0 |>
-  select(-any_of("bond_maturity")) |>
+  select(-any_of(c("bond_maturity", "component_label"))) |>
   left_join(lookup, by = join_by) |>
   mutate(tau_spec = "tau = 0")
 bounds_tau_set <- results$bounds_tau_set |>
-  select(-any_of("bond_maturity")) |>
+  select(-any_of(c("bond_maturity", "component_label"))) |>
   left_join(lookup, by = join_by) |>
   mutate(tau_spec = "tau = 0.2")
 bounds_combined <- bind_rows(bounds_tau0, bounds_tau_set)
@@ -43,7 +43,7 @@ cli_ul(c(
 # Compare point vs set identification widths
 comparison <- bounds_tau0 |>
   select(
-    component, bond_maturity, bond_label,
+    component, component_label,
     lower_tau0 = lower, upper_tau0 = upper, width_tau0 = width
   ) |>
   left_join(
@@ -107,14 +107,14 @@ ct <- theme_minimal() + theme(
 )
 
 p_widths <- ggplot(
-  bounds_combined |> filter(!is.na(bond_maturity)),
-  aes(x = factor(bond_maturity), y = width, fill = tau_spec)
+  bounds_combined |> filter(!is.na(component_label)),
+  aes(x = component_label, y = width, fill = tau_spec)
 ) +
   geom_col(position = position_dodge(0.7), width = 0.6) +
   scale_fill_manual(values = c("tau = 0" = "#2166AC", "tau = 0.2" = "#B2182B")) +
   labs(
     title = "Identified Set Widths by Maturity",
-    x = "Bond Maturity", y = "Width", fill = "Specification"
+    x = "Component", y = "Width", fill = "Specification"
   ) +
   ct +
   theme(legend.position = "bottom")
@@ -122,14 +122,14 @@ save_dual(p_widths, "baseline_widths_by_maturity")
 
 # Eigenvalue diagnostics plot
 p_eig <- ggplot(
-  eig_df |> filter(!is.na(bond_maturity)),
-  aes(x = factor(bond_maturity), y = min_eigenvalue)
+  eig_df |> filter(!is.na(component_label)),
+  aes(x = component_label, y = min_eigenvalue)
 ) +
   geom_col(fill = "#4393C3", width = 0.6) +
   geom_hline(yintercept = 0, linetype = "dashed", color = "red") +
   labs(
     title = "Minimum Eigenvalue of A_i by Maturity",
-    x = "Bond Maturity", y = "Minimum Eigenvalue"
+    x = "Component", y = "Minimum Eigenvalue"
   ) +
   ct
 save_dual(p_eig, "baseline_quadratic_diagnostics")

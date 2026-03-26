@@ -55,15 +55,15 @@ lookup <- baseline_results$lookup
 join_by <- c("component" = "component_id")
 
 baseline_bounds <- baseline_results$bounds_tau_set |>
-  select(-any_of("bond_maturity")) |>
+  select(-any_of(c("bond_maturity", "component_label"))) |>
   left_join(lookup, by = join_by)
 optimized_bounds <- optimized_results$optimized_bounds |>
-  select(-any_of("bond_maturity")) |>
+  select(-any_of(c("bond_maturity", "component_label"))) |>
   left_join(lookup, by = join_by)
 
 comparison_table <- baseline_bounds |>
   select(
-    bond_maturity, component, bond_label,
+    component_label, component,
     baseline_lower = lower,
     baseline_upper = upper
   ) |>
@@ -85,19 +85,28 @@ comparison_table <- baseline_bounds |>
   )
 
 # Merge variance bounds if available
-if (!is.null(variance_bounds)) {
+if (
+  !is.null(variance_bounds) &&
+    "bond_maturity" %in% names(lookup)
+) {
   vb_df <- variance_bounds$variance_bounds_df |>
     rename(bond_maturity = Maturity)
   comparison_table <- comparison_table |>
+    left_join(
+      lookup |> select(component_id, bond_maturity),
+      by = c("component" = "component_id")
+    ) |>
     left_join(vb_df, by = "bond_maturity")
-  cli_alert_success("Variance bounds merged into table")
+  cli_alert_success(
+    "Variance bounds merged into table"
+  )
 }
 
 # Display summary
 cli_h2("Comparison Summary")
 print(comparison_table |>
   select(
-    bond_maturity, baseline_width,
+    component_label, baseline_width,
     optimized_width, pct_width_reduction
   ))
 

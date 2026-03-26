@@ -6,22 +6,30 @@ source(here::here("scripts/utils/common_settings.R"))
 # Core packages and utility functions loaded via common_settings.R
 
 BASELINE_GAMMA_METHOD <- "vfci"
+ID_MODE <- "factors" # "maturities" or "factors"
 
 cli_h1("Computing Baseline Identified Set")
 
 # Load data and configuration
-inputs <- load_identification_inputs()
+inputs <- load_identification_inputs(mode = ID_MODE)
 lookup <- inputs$lookup
 
 cli_ul(c(
-  paste("PC variables:", paste(inputs$pc_vars, collapse = ", ")),
-  paste("Maturities:", paste(lookup$bond_maturity, collapse = ", ")),
+  paste("Mode:", ID_MODE),
+  paste("PCs:", paste(inputs$pc_vars, collapse = ", ")),
+  paste(
+    "Components:",
+    paste(lookup$component_label, collapse = ", ")
+  ),
   paste("Gamma method:", BASELINE_GAMMA_METHOD)
 ))
 
 # Compute residuals
 cli_h2("Computing Residuals")
-resid <- compute_identification_residuals(inputs$data)
+resid <- compute_identification_residuals(
+  inputs$data,
+  mode = ID_MODE
+)
 
 cli_alert_success(
   "Residuals computed: {.val {resid$n_obs}} observations"
@@ -38,8 +46,13 @@ moments <- compute_identification_moments(
 cli_alert_success("Moments computed successfully")
 
 # Get baseline gamma and tau specifications
-gamma <- get_baseline_gamma(method = BASELINE_GAMMA_METHOD)
-tau_specs <- get_tau_spec(tau_point = 0, tau_set = 0.2)
+n_comp <- nrow(lookup)
+gamma <- get_baseline_gamma(
+  method = BASELINE_GAMMA_METHOD, n_components = n_comp
+)
+tau_specs <- get_tau_spec(
+  tau_point = 0, tau_set = 0.2, n_components = n_comp
+)
 
 cli_alert_info(
   "Gamma: {.val {BASELINE_GAMMA_METHOD}} unit-norm loadings"
@@ -104,30 +117,30 @@ if (all_conv_tau_set) {
 }
 
 # Add maturity labels to bounds tables
-bounds_tau0$bond_maturity <- lookup$bond_maturity
-bounds_tau_set$bond_maturity <- lookup$bond_maturity
+bounds_tau0$component_label <- lookup$component_label
+bounds_tau_set$component_label <- lookup$component_label
 
 # Display results
 cli_h2("Baseline Bounds (tau = 0)")
 print(
   bounds_tau0[, c(
-    "bond_maturity", "lower", "upper", "width"
+    "component_label", "lower", "upper", "width"
   )]
 )
 
 cli_h2("Baseline Bounds (tau = 0.2)")
 print(
   bounds_tau_set[, c(
-    "bond_maturity", "lower", "upper", "width"
+    "component_label", "lower", "upper", "width"
   )]
 )
 
 # Assemble results
 results <- list(
   spec = list(
-    n_pcs = 4,
-    maturities = 2:9,
-    components = 1:8
+    n_pcs = length(inputs$pc_vars),
+    mode = ID_MODE,
+    components = lookup$component_id
   ),
   lookup = lookup,
   residuals = list(

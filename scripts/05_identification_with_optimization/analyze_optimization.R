@@ -16,14 +16,17 @@ join_by <- c("component" = "component_id")
 # Compare baseline vs optimized widths
 cli_h2("Comparing Baseline vs Optimized Widths")
 baseline <- results$baseline_bounds |>
-  select(-any_of("bond_maturity")) |>
+  select(-any_of(c("bond_maturity", "component_label"))) |>
   left_join(lookup, by = join_by)
 optimized <- results$optimized_bounds |>
-  select(-any_of("bond_maturity")) |>
+  select(-any_of(c("bond_maturity", "component_label"))) |>
   left_join(lookup, by = join_by)
 
 width_comparison <- baseline |>
-  select(component, bond_maturity, bond_label, baseline_width = width) |>
+  select(
+    component, component_label,
+    baseline_width = width
+  ) |>
   left_join(
     optimized |> select(component, optimized_width = width),
     by = "component"
@@ -92,20 +95,33 @@ ct <- theme_minimal() + theme(
   axis.title = element_text(size = 12)
 )
 plot_data <- width_comparison |>
-  filter(!is.na(bond_maturity)) |>
+  filter(!is.na(component_label)) |>
   pivot_longer(c(baseline_width, optimized_width), names_to = "spec", values_to = "width") |>
   mutate(spec = ifelse(spec == "baseline_width", "Baseline", "Optimized"))
 
-p_widths <- ggplot(plot_data, aes(x = factor(bond_maturity), y = width, fill = spec)) +
+p_widths <- ggplot(
+  plot_data,
+  aes(x = component_label, y = width, fill = spec)
+) +
   geom_col(position = position_dodge(0.7), width = 0.6) +
-  scale_fill_manual(values = c("Baseline" = "#2166AC", "Optimized" = "#B2182B")) +
-  labs(title = "Baseline vs Optimized Set Widths", x = "Bond Maturity", y = "Width", fill = NULL) +
+  scale_fill_manual(
+    values = c(
+      "Baseline" = "#2166AC", "Optimized" = "#B2182B"
+    )
+  ) +
+  labs(
+    title = "Baseline vs Optimized Set Widths",
+    x = "Component", y = "Width", fill = NULL
+  ) +
   ct +
   theme(legend.position = "bottom")
 save_dual(p_widths, "optimized_vs_baseline_widths")
 
 # Gamma heatmap
-gamma_tidy <- expand.grid(pc = seq_len(nrow(results$gamma_optimized)), component = seq_len(n_cols)) |>
+gamma_tidy <- expand.grid(
+  pc = seq_len(nrow(results$gamma_optimized)),
+  component = seq_len(n_cols)
+) |>
   mutate(loading = as.vector(results$gamma_optimized)) |>
   left_join(lookup, by = join_by)
 p_heat <- ggplot(gamma_tidy, aes(x = factor(component), y = factor(pc), fill = loading)) +

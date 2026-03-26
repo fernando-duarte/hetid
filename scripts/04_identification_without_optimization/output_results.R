@@ -37,7 +37,7 @@ width_reduction_pct <- (
 
 # Build the main results table
 table_df <- data.frame(
-  Bond_Maturity = lookup$bond_maturity,
+  Component = lookup$component_label,
   Component_ID = lookup$component_id,
   Lower_tau0 = bounds_tau0$lower,
   Upper_tau0 = bounds_tau0$upper,
@@ -52,7 +52,7 @@ cli_h2("Creating Publication-Ready Tables")
 tbl <- gt(table_df) |>
   tab_header(title = "Baseline Identified Set") |>
   cols_label(
-    Bond_Maturity = "Bond Maturity",
+    Component = "Component",
     Component_ID = "Component ID",
     Lower_tau0 = html("Lower (&tau;=0)"),
     Upper_tau0 = html("Upper (&tau;=0)"),
@@ -100,7 +100,10 @@ diagnostics <- analysis$diagnostics
 # Gather metadata for summary
 gamma_method <- attr(results$gamma_baseline, "method")
 n_components <- nrow(lookup)
-mat_range <- range(lookup$bond_maturity)
+comp_labels <- paste(
+  lookup$component_label,
+  collapse = ", "
+)
 mean_w_tau0 <- mean(width_tau0, na.rm = TRUE)
 mean_w_tau_set <- mean(width_tau_set, na.rm = TRUE)
 
@@ -125,10 +128,7 @@ summary_lines <- c(
   "CONFIGURATION:",
   "  Tau values: 0 (point), 0.2 (set)",
   paste("  Number of components:", n_components),
-  paste(
-    "  Maturity range:",
-    mat_range[1], "to", mat_range[2]
-  ),
+  paste("  Components:", comp_labels),
   "",
   "BOUNDS WIDTH:",
   paste(

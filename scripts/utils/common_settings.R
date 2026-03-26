@@ -93,6 +93,9 @@ if (file.exists(file.path(utils_dir, "stats_utils.R"))) {
 if (file.exists(file.path(utils_dir, "hetero_test_utils.R"))) {
   source(file.path(utils_dir, "hetero_test_utils.R"))
 }
+if (file.exists(file.path(utils_dir, "factor_utils.R"))) {
+  source(file.path(utils_dir, "factor_utils.R"))
+}
 if (file.exists(file.path(utils_dir, "identification_utils.R"))) {
   source(file.path(utils_dir, "identification_utils.R"))
 }

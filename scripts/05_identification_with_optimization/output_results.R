@@ -39,7 +39,7 @@ width_reduction_pct <- analysis$width_comparison$percent_reduction
 
 # Build the main results table
 table_df <- data.frame(
-  Bond_Maturity = lookup$bond_maturity,
+  Component = lookup$component_label,
   Baseline_Lower = baseline_bounds$lower,
   Baseline_Upper = baseline_bounds$upper,
   Optimized_Lower = optimized_bounds$lower,
@@ -57,7 +57,7 @@ tbl <- gt(table_df) |>
     title = "Optimized Identified Set"
   ) |>
   cols_label(
-    Bond_Maturity = "Bond Maturity",
+    Component = "Component",
     Baseline_Lower = "Baseline Lower",
     Baseline_Upper = "Baseline Upper",
     Optimized_Lower = "Optimized Lower",

@@ -1,25 +1,39 @@
 # Identification Utilities -- non-optimization plumbing
 
+# Default bond maturities for identification
+DEFAULT_ID_MATURITIES <- c(2, 5, 9)
+
 #' @return data frame mapping component IDs to bond maturities
-get_identification_maturity_lookup <- function() {
+get_identification_maturity_lookup <- function(
+  maturities = DEFAULT_ID_MATURITIES
+) {
+  n <- length(maturities)
   data.frame(
-    component_id = 1:8,
-    bond_maturity = 2:9,
-    component_label = paste0("maturity_", 1:8),
-    bond_label = paste0("y", 2:9),
+    component_id = seq_len(n),
+    bond_maturity = maturities,
+    component_label = paste0("maturity_", seq_len(n)),
+    bond_label = paste0("y", maturities),
     stringsAsFactors = FALSE
   )
 }
 
-#' Load and prepare all identification inputs
-#' @param n_pcs number of principal components
+#' @param mode "maturities" or "factors"
 #' @return list with data, variable names, and lookup
 load_identification_inputs <- function(
-  n_pcs = HETID_CONSTANTS$DEFAULT_N_PCS
+  n_pcs = HETID_CONSTANTS$DEFAULT_N_PCS,
+  maturities = DEFAULT_ID_MATURITIES,
+  mode = "maturities",
+  factors = DEFAULT_ID_FACTORS
 ) {
   data <- readRDS(file.path(OUTPUT_DIR, "temp/data.rds"))
   if (is.list(data) && !is.data.frame(data)) {
     data <- as.data.frame(data)
+  }
+
+  lookup <- if (mode == "factors") {
+    get_identification_factor_lookup(factors)
+  } else {
+    get_identification_maturity_lookup(maturities)
   }
 
   list(
@@ -28,68 +42,69 @@ load_identification_inputs <- function(
     tp_vars = paste0("tp", 1:10),
     consumption_var = "gr1.pcecc96",
     pc_vars = paste0("pc", seq_len(n_pcs)),
-    lookup = get_identification_maturity_lookup()
+    lookup = lookup,
+    mode = mode
   )
 }
 
-#' Compute W1 and W2 residuals from data
-#' @param data data frame with yields, term premia, PCs,
-#'   and consumption growth
-#' @param maturities bond maturities for W2 (default 2:9)
-#' @param n_pcs number of principal components
+#' @param mode "maturities" or "factors"
 #' @return list with w1, w2, pcs_aligned, and n_obs
 compute_identification_residuals <- function(
   data,
-  maturities = 2:9,
-  n_pcs = HETID_CONSTANTS$DEFAULT_N_PCS
+  maturities = DEFAULT_ID_MATURITIES,
+  n_pcs = HETID_CONSTANTS$DEFAULT_N_PCS,
+  mode = "maturities",
+  factors = DEFAULT_ID_FACTORS
 ) {
   cli::cli_alert_info("Computing W1 residuals...")
   w1_result <- compute_w1_residuals(
     n_pcs = n_pcs, data = data
   )
 
-  # Extract yields, term premia, and PCs for W2
   yield_cols <- paste0("y", 1:10)
   tp_cols <- paste0("tp", 1:10)
   pc_cols <- paste0("pc", seq_len(n_pcs))
-
   yields_df <- data[, yield_cols]
   tp_df <- data[, tp_cols]
   pcs_mat <- as.matrix(data[, pc_cols])
 
-  cli::cli_alert_info("Computing W2 residuals...")
-  w2_result <- compute_w2_residuals(
-    yields = yields_df,
-    term_premia = tp_df,
-    maturities = maturities,
-    n_pcs = n_pcs,
-    pcs = pcs_mat
-  )
+  if (mode == "factors") {
+    w2_mat <- compute_w2_factor_residuals(
+      yields_df, tp_df, pcs_mat, n_pcs, data, factors
+    )
+  } else {
+    cli::cli_alert_info("Computing W2 residuals...")
+    w2_result <- compute_w2_residuals(
+      yields = yields_df, term_premia = tp_df,
+      maturities = maturities,
+      n_pcs = n_pcs, pcs = pcs_mat
+    )
+    w2_mat <- do.call(cbind, w2_result$residuals)
+  }
 
-  # Assemble W2 residuals into a T x I matrix
-  w2_mat <- do.call(
-    cbind, w2_result$residuals
-  )
-
-  # Lagged PCs aligned with residuals:
-  # W1_{t+1} and W2_{i,t+1} use PC_t (rows 1:T-1)
   n_resid <- length(w1_result$residuals)
   pcs_aligned <- pcs_mat[seq_len(n_resid), , drop = FALSE]
 
-  list(
+  result <- list(
     w1 = w1_result$residuals,
     w2 = w2_mat,
     pcs_aligned = pcs_aligned,
     w1_result = w1_result,
-    w2_result = w2_result,
     n_obs = n_resid
   )
+  if (mode == "factors") {
+    result$factor_loadings <- compute_yield_factor_loadings(
+      data, max(factors)
+    )
+  }
+  result
 }
 
 #' @return list with scalar, vector, and matrix statistics
 compute_identification_moments <- function(
-  w1, w2, pcs, maturities = 1:8
+  w1, w2, pcs, maturities = NULL
 ) {
+  if (is.null(maturities)) maturities <- seq_len(ncol(w2))
   cli::cli_alert_info("Computing scalar statistics...")
   scalar <- compute_scalar_statistics(w1, w2, maturities = maturities)
   cli::cli_alert_info("Computing vector statistics...")
@@ -111,13 +126,16 @@ compute_identification_moments <- function(
 #' Get baseline gamma matrix (VFCI unit-norm loadings)
 #' @param method label for the method (stored as attr)
 #' @param n_pcs number of principal components
-#' @param n_components number of maturity components
+#' @param n_components number of components (NULL = infer)
 #' @return J x I matrix with identical columns
 get_baseline_gamma <- function(
   method = "vfci",
   n_pcs = 4,
-  n_components = 8
+  n_components = NULL
 ) {
+  if (is.null(n_components)) {
+    n_components <- length(DEFAULT_ID_MATURITIES)
+  }
   # Unit-norm VFCI PC loading vector
   # From regressing variables$vfci on pc1:pc4:
   #   vfci = 0.1095399*pc1 - 0.1692329*pc2
@@ -126,26 +144,20 @@ get_baseline_gamma <- function(
     0.3714851, -0.5739232,
     -0.4477770, 0.5762870
   )
-
-  gamma <- matrix(
-    unit_norm,
-    nrow = n_pcs,
-    ncol = n_components
-  )
+  gamma <- matrix(unit_norm, nrow = n_pcs, ncol = n_components)
   attr(gamma, "method") <- method
   gamma
 }
 
-#' Build tau specification (point and set values)
-#' @param tau_point scalar tau for point identification
-#' @param tau_set scalar tau for set identification
-#' @param n_components number of maturity components
 #' @return list with tau_point and tau_set vectors
 get_tau_spec <- function(
   tau_point = 0,
   tau_set = 0.2,
-  n_components = 8
+  n_components = NULL
 ) {
+  if (is.null(n_components)) {
+    n_components <- length(DEFAULT_ID_MATURITIES)
+  }
   list(
     tau_point = rep(tau_point, n_components),
     tau_set = rep(tau_set, n_components)
@@ -155,8 +167,11 @@ get_tau_spec <- function(
 #' @return list with components and quadratic system
 build_quadratic_system <- function(
   gamma, tau, moments,
-  maturities = 1:8
+  maturities = NULL
 ) {
+  if (is.null(maturities)) {
+    maturities <- seq_len(ncol(gamma))
+  }
   cli::cli_alert_info(
     "Computing identified set components..."
   )
@@ -167,10 +182,7 @@ build_quadratic_system <- function(
     p_i_0 = moments$p_i_0,
     maturities = maturities
   )
-
-  cli::cli_alert_info(
-    "Computing quadratic form..."
-  )
+  cli::cli_alert_info("Computing quadratic form...")
   quadratic <- compute_identified_set_quadratic(
     gamma = gamma,
     tau = tau,
@@ -183,9 +195,5 @@ build_quadratic_system <- function(
     sigma_i_sq = moments$sigma_i_sq,
     maturities = maturities
   )
-
-  list(
-    components = components,
-    quadratic = quadratic
-  )
+  list(components = components, quadratic = quadratic)
 }
