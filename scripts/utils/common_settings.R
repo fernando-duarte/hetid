@@ -9,6 +9,7 @@ library(dplyr) # Data manipulation
 library(tidyr) # Data tidying
 library(gt) # Table formatting
 library(DT) # Interactive tables
+library(nloptr) # Nonlinear optimization
 
 # Set up output directories
 SCRIPTS_DIR <- here::here("scripts")
@@ -91,4 +92,10 @@ if (file.exists(file.path(utils_dir, "stats_utils.R"))) {
 }
 if (file.exists(file.path(utils_dir, "hetero_test_utils.R"))) {
   source(file.path(utils_dir, "hetero_test_utils.R"))
+}
+if (file.exists(file.path(utils_dir, "identification_utils.R"))) {
+  source(file.path(utils_dir, "identification_utils.R"))
+}
+if (file.exists(file.path(utils_dir, "optimization_utils.R"))) {
+  source(file.path(utils_dir, "optimization_utils.R"))
 }

@@ -83,6 +83,75 @@ scripts_to_run <- list(
   list(
     path = here::here("scripts/03_variance_bounds/output_results.R"),
     desc = "Exporting Variance Bounds Results"
+  ),
+
+  # Baseline identification (fixed PC weights)
+  list(
+    path = here::here(
+      "scripts/04_identification_without_optimization",
+      "compute_identification.R"
+    ),
+    desc = "Computing Baseline Identification"
+  ),
+  list(
+    path = here::here(
+      "scripts/04_identification_without_optimization",
+      "analyze_identification.R"
+    ),
+    desc = "Analyzing Baseline Identification"
+  ),
+  list(
+    path = here::here(
+      "scripts/04_identification_without_optimization",
+      "output_results.R"
+    ),
+    desc = "Exporting Baseline Identification Results"
+  ),
+
+  # Optimized identification (PC weight optimization)
+  list(
+    path = here::here(
+      "scripts/05_identification_with_optimization",
+      "optimize_identification.R"
+    ),
+    desc = "Optimizing PC Weights (Gamma)"
+  ),
+  list(
+    path = here::here(
+      "scripts/05_identification_with_optimization",
+      "analyze_optimization.R"
+    ),
+    desc = "Analyzing Optimization Results"
+  ),
+  list(
+    path = here::here(
+      "scripts/05_identification_with_optimization",
+      "output_results.R"
+    ),
+    desc = "Exporting Optimization Results"
+  ),
+
+  # Final results production
+  list(
+    path = here::here(
+      "scripts/06_results_production",
+      "assemble_results.R"
+    ),
+    desc = "Assembling Final Results"
+  ),
+  list(
+    path = here::here(
+      "scripts/06_results_production",
+      "create_tables_and_figures.R"
+    ),
+    desc = "Creating Publication Tables and Figures"
+  ),
+  list(
+    path = here::here(
+      "scripts/06_results_production",
+      "output_results.R"
+    ),
+    desc = "Exporting Final Results"
   )
 )
 
