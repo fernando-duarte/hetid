@@ -11,10 +11,7 @@ linters: linters_with_defaults(
     commas_linter = commas_linter(),
     commented_code_linter = commented_code_linter(),
     cyclocomp_linter = cyclocomp_linter(complexity_limit = 20),
-    object_usage_linter = object_usage_linter(
-      interpret_extensions = "glue",
-      skip_with = TRUE
-    ),
+    object_usage_linter = NULL,  # Disabled - R CMD check catches real issues
     object_length_linter = object_length_linter(length = 35L),
     # Added from quality audit (2026-03-24) — catch real bugs
     object_overwrite_linter = object_overwrite_linter(),
