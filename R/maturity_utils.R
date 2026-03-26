@@ -105,7 +105,7 @@ infer_maturities <- function(parsed, stats_list, n_components) {
   seq_len(n_stats)
 }
 
-#' Validate explicit maturities against input names
+#' Validate maturities against input names
 #'
 #' @keywords internal
 #' @noRd
