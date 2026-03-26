@@ -79,15 +79,13 @@ stop_hetid <- function(message, call = NULL) {
 #' @param ok Logical scalar; if not TRUE, signals error
 #' @param message Error message string
 #' @param arg Optional argument name
-#' @param call The call (default NULL)
 #'
 #' @return Invisible TRUE when validation passes
 #' @noRd
 assert_bad_argument_ok <- function(ok, message,
-                                   arg = NULL,
-                                   call = NULL) {
+                                   arg = NULL) {
   if (!isTRUE(ok)) {
-    stop_bad_argument(message, arg = arg, call = call)
+    stop_bad_argument(message, arg = arg)
   }
   invisible(TRUE)
 }
@@ -96,14 +94,12 @@ assert_bad_argument_ok <- function(ok, message,
 #'
 #' @param ok Logical scalar; if not TRUE, signals error
 #' @param message Error message string
-#' @param call The call (default NULL)
 #'
 #' @return Invisible TRUE when validation passes
 #' @noRd
-assert_dimension_ok <- function(ok, message,
-                                call = NULL) {
+assert_dimension_ok <- function(ok, message) {
   if (!isTRUE(ok)) {
-    stop_dimension_mismatch(message, call = call)
+    stop_dimension_mismatch(message)
   }
   invisible(TRUE)
 }
@@ -112,14 +108,12 @@ assert_dimension_ok <- function(ok, message,
 #'
 #' @param ok Logical scalar; if not TRUE, signals error
 #' @param message Error message string
-#' @param call The call (default NULL)
 #'
 #' @return Invisible TRUE when validation passes
 #' @noRd
-assert_insufficient_data_ok <- function(ok, message,
-                                        call = NULL) {
+assert_insufficient_data_ok <- function(ok, message) {
   if (!isTRUE(ok)) {
-    stop_insufficient_data(message, call = call)
+    stop_insufficient_data(message)
   }
   invisible(TRUE)
 }

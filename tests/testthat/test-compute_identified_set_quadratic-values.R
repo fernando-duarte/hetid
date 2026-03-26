@@ -4,9 +4,9 @@ test_that("A_i matrices are symmetric", {
   I <- 5
   gamma <- matrix(rnorm(J * I), J, I)
   tau <- runif(I, 0.5, 2)
-  L_i <- runif(I)
-  V_i <- runif(I)
-  Q_i <- lapply(1:I, function(i) rnorm(I))
+  L_i <- runif(I) # nolint: object_name_linter.
+  V_i <- runif(I) # nolint: object_name_linter.
+  Q_i <- lapply(1:I, function(i) rnorm(I)) # nolint: object_name_linter.
   s_i_0 <- runif(I)
   s_i_1 <- lapply(1:I, function(i) rnorm(I))
   s_i_2 <- lapply(1:I, function(i) {
@@ -22,7 +22,7 @@ test_that("A_i matrices are symmetric", {
 
   # Check that each A_i is symmetric
   for (i in 1:I) {
-    A_i_mat <- result$A_i[[i]]
+    A_i_mat <- result$A_i[[i]] # nolint: object_name_linter.
     expect_true(
       isSymmetric(A_i_mat, tol = 1e-10),
       info = paste("A_i for maturity", i, "not symmetric")
@@ -43,9 +43,9 @@ test_that(
     I <- 2
     gamma <- matrix(c(1, 0, 0, 1), J, I)
     tau <- c(2, 3)
-    L_i <- c(5, 7)
-    V_i <- c(4, 6)
-    Q_i <- list(c(1, 2), c(3, 4))
+    L_i <- c(5, 7) # nolint: object_name_linter.
+    V_i <- c(4, 6) # nolint: object_name_linter.
+    Q_i <- list(c(1, 2), c(3, 4)) # nolint: object_name_linter.
     s_i_0 <- c(0.5, 0.8)
     s_i_1 <- list(c(0.1, 0.2), c(0.3, 0.4))
     s_i_2 <- list(
@@ -64,7 +64,7 @@ test_that(
     expect_equal(unname(result$d_i[2]), 18)
 
     # A_i is the outer product of Q_i minus d_i times S_i^(2)
-    expected_A_1 <- matrix(c(-7, -2, -2, -4), 2, 2)
+    expected_A_1 <- matrix(c(-7, -2, -2, -4), 2, 2) # nolint: object_name_linter.
     expect_equal(result$A_i[[1]], expected_A_1)
 
     # b_i is negative two L_i Q_i plus two d_i S_i^(1)
@@ -87,9 +87,9 @@ test_that(
     I <- 6
     gamma <- matrix(rnorm(J * I), J, I)
     tau <- runif(I, 0.5, 2)
-    L_i <- runif(I)
-    V_i <- runif(I)
-    Q_i <- lapply(1:I, function(i) rnorm(I))
+    L_i <- runif(I) # nolint: object_name_linter.
+    V_i <- runif(I) # nolint: object_name_linter.
+    Q_i <- lapply(1:I, function(i) rnorm(I)) # nolint: object_name_linter.
     s_i_0 <- runif(I)
     s_i_1 <- lapply(1:I, function(i) rnorm(I))
     s_i_2 <- lapply(1:I, function(i) {
@@ -131,9 +131,9 @@ test_that(
     tau <- c(1, 2, 3, 4, 5, 6)
 
     mat_nms <- paste0("maturity_", c(2, 4, 6))
-    L_i <- setNames(rep(0, 3), mat_nms)
-    V_i <- setNames(rep(1, 3), mat_nms)
-    Q_i <- setNames(
+    L_i <- setNames(rep(0, 3), mat_nms) # nolint: object_name_linter.
+    V_i <- setNames(rep(1, 3), mat_nms) # nolint: object_name_linter.
+    Q_i <- setNames( # nolint: object_name_linter.
       lapply(1:3, function(k) rep(0, I)), mat_nms
     )
     s_i_0 <- setNames(rep(0, 3), mat_nms)
@@ -167,9 +167,9 @@ test_that(
     gamma <- diag(1, J, I)
     tau <- c(1, 2, 3, 4, 5, 6)
 
-    L_i <- rep(0, 3)
-    V_i <- rep(1, 3)
-    Q_i <- lapply(1:3, function(k) rep(0, I))
+    L_i <- rep(0, 3) # nolint: object_name_linter.
+    V_i <- rep(1, 3) # nolint: object_name_linter.
+    Q_i <- lapply(1:3, function(k) rep(0, I)) # nolint: object_name_linter.
     s_i_0 <- rep(0, 3)
     s_i_1 <- lapply(1:3, function(k) rep(0, I))
     s_i_2 <- lapply(1:3, function(k) matrix(0, I, I))
@@ -194,9 +194,9 @@ test_that(
     tau <- c(1, 2, 3, 4, 5, 6)
 
     nms_a <- paste0("maturity_", c(2, 4, 6))
-    L_i <- setNames(rep(0, 3), nms_a)
-    V_i <- setNames(rep(1, 3), nms_a)
-    Q_i <- setNames(
+    L_i <- setNames(rep(0, 3), nms_a) # nolint: object_name_linter.
+    V_i <- setNames(rep(1, 3), nms_a) # nolint: object_name_linter.
+    Q_i <- setNames( # nolint: object_name_linter.
       lapply(1:3, function(k) rep(0, I)), nms_a
     )
     s_i_0 <- setNames(rep(0, 3), nms_a)
@@ -308,9 +308,9 @@ test_that(
     I <- 6
     gamma <- matrix(rnorm(J * I), J, I)
     tau <- runif(I, 0.5, 2)
-    L_i <- runif(I)
-    V_i <- runif(I)
-    Q_i <- lapply(seq_len(I), function(k) rnorm(I))
+    L_i <- runif(I) # nolint: object_name_linter.
+    V_i <- runif(I) # nolint: object_name_linter.
+    Q_i <- lapply(seq_len(I), function(k) rnorm(I)) # nolint: object_name_linter.
     s_i_0 <- runif(I)
     s_i_1 <- lapply(seq_len(I), function(k) rnorm(I))
     s_i_2 <- lapply(seq_len(I), function(k) {

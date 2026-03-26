@@ -109,7 +109,7 @@ infer_maturities <- function(parsed, stats_list, n_components) {
 #'
 #' @keywords internal
 #' @noRd
-validate_explicit_maturity_names <- function(maturities, all_names, parsed) {
+validate_maturity_names <- function(maturities, all_names, parsed) {
   if (is.null(parsed)) {
     return(invisible(TRUE))
   }
@@ -150,7 +150,7 @@ resolve_maturities <- function(maturities, stats_list,
       n_components
     )
   } else {
-    validate_explicit_maturity_names(
+    validate_maturity_names(
       maturities,
       name_info$all_names,
       name_info$parsed

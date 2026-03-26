@@ -109,14 +109,14 @@ test_that(
 test_that("assertion helpers have expected formals", {
   expect_equal(
     names(formals(assert_bad_argument_ok)),
-    c("ok", "message", "arg", "call")
+    c("ok", "message", "arg")
   )
   expect_equal(
     names(formals(assert_dimension_ok)),
-    c("ok", "message", "call")
+    c("ok", "message")
   )
   expect_equal(
     names(formals(assert_insufficient_data_ok)),
-    c("ok", "message", "call")
+    c("ok", "message")
   )
 })

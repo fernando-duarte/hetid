@@ -158,9 +158,12 @@ test_that(
       }
     )
 
-    expect_error(
-      load_term_premia(),
-      class = "hetid_error"
+    expect_warning(
+      expect_error(
+        load_term_premia(),
+        class = "hetid_error"
+      ),
+      "cannot open file"
     )
   }
 )

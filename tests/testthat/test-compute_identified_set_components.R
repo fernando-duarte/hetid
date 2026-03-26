@@ -282,7 +282,7 @@ test_that(
   "pipeline: stats -> components with subset",
   {
     set.seed(99)
-    T_obs <- 50
+    T_obs <- 50 # nolint: object_name_linter.
     I <- 6
     J <- 3
     maturities <- c(2, 4)

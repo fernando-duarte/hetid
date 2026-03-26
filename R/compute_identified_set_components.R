@@ -135,28 +135,28 @@ compute_identified_set_components <- function(gamma, r_i_0, r_i_1, p_i_0,
     "p_i_0 must be J x length(maturities)"
   )
 
-  L_i <- numeric(n_maturities)
-  V_i <- numeric(n_maturities)
-  Q_i <- vector("list", n_maturities)
+  L_i <- numeric(n_maturities) # nolint: object_name_linter.
+  V_i <- numeric(n_maturities) # nolint: object_name_linter.
+  Q_i <- vector("list", n_maturities) # nolint: object_name_linter.
 
-  names(L_i) <- maturity_names(maturities)
-  names(V_i) <- maturity_names(maturities)
-  names(Q_i) <- maturity_names(maturities)
+  names(L_i) <- maturity_names(maturities) # nolint: object_name_linter.
+  names(V_i) <- maturity_names(maturities) # nolint: object_name_linter.
+  names(Q_i) <- maturity_names(maturities) # nolint: object_name_linter.
 
   for (idx in seq_along(maturities)) {
     i <- maturities[idx]
     gamma_i <- gamma[, i, drop = FALSE]
 
-    L_i[idx] <- as.numeric(
+    L_i[idx] <- as.numeric( # nolint: object_name_linter.
       crossprod(gamma_i, r_i_0[, idx])
     )
 
     p_i_0_vec <- p_i_0[, idx, drop = FALSE]
-    V_i[idx] <- as.numeric(
+    V_i[idx] <- as.numeric( # nolint: object_name_linter.
       crossprod(gamma_i, p_i_0_vec)
     )^2
 
-    R_i_1_mat <- r_i_1[[idx]]
+    R_i_1_mat <- r_i_1[[idx]] # nolint: object_name_linter.
     assert_dimension_ok(
       is.matrix(R_i_1_mat) &&
         nrow(R_i_1_mat) == J,
@@ -166,10 +166,10 @@ compute_identified_set_components <- function(gamma, r_i_0, r_i_1, p_i_0,
         ") must be a J x I matrix"
       )
     )
-    Q_i[[idx]] <- as.numeric(
+    Q_i[[idx]] <- as.numeric( # nolint: object_name_linter.
       crossprod(gamma_i, R_i_1_mat)
     )
-    names(Q_i[[idx]]) <- paste0(
+    names(Q_i[[idx]]) <- paste0( # nolint: object_name_linter.
       "maturity_", seq_len(ncol(R_i_1_mat))
     )
   }

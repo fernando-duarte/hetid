@@ -94,7 +94,8 @@
 #'   s_i_2 = matrix_stats$s_i_2,
 #'   sigma_i_sq = scalar_stats$sigma_i_sq
 #' )
-compute_identified_set_quadratic <- function(gamma, tau, L_i, V_i, Q_i,
+compute_identified_set_quadratic <- function(gamma, tau,
+                                             L_i, V_i, Q_i, # nolint: object_name_linter.
                                              s_i_0, s_i_1, s_i_2, sigma_i_sq,
                                              maturities = NULL) {
   validation <- validate_quadratic_inputs(
@@ -110,12 +111,12 @@ compute_identified_set_quadratic <- function(gamma, tau, L_i, V_i, Q_i,
 
   # Initialize storage
   d_i <- numeric(n_maturities)
-  A_i <- vector("list", n_maturities)
+  A_i <- vector("list", n_maturities) # nolint: object_name_linter.
   b_i <- vector("list", n_maturities)
   c_i <- numeric(n_maturities)
 
   names(d_i) <- maturity_names(maturities)
-  names(A_i) <- maturity_names(maturities)
+  names(A_i) <- maturity_names(maturities) # nolint: object_name_linter.
   names(b_i) <- maturity_names(maturities)
   names(c_i) <- maturity_names(maturities)
 
@@ -124,9 +125,9 @@ compute_identified_set_quadratic <- function(gamma, tau, L_i, V_i, Q_i,
     i <- maturities[idx]
 
     # Extract values for maturity i
-    L_i_val <- L_i[idx]
-    V_i_val <- V_i[idx]
-    Q_i_vec <- Q_i[[idx]]
+    L_i_val <- L_i[idx] # nolint: object_name_linter.
+    V_i_val <- V_i[idx] # nolint: object_name_linter.
+    Q_i_vec <- Q_i[[idx]] # nolint: object_name_linter.
     s_i_0_val <- s_i_0[idx]
     s_i_1_vec <- s_i_1[[idx]]
     s_i_2_mat <- s_i_2[[idx]]
@@ -145,14 +146,14 @@ compute_identified_set_quadratic <- function(gamma, tau, L_i, V_i, Q_i,
     }
 
     # Compute A_i = Q_i * Q_i^T - d_i * S_i^(2)
-    A_i[[idx]] <- tcrossprod(Q_i_vec) - d_i[idx] * s_i_2_mat
+    A_i[[idx]] <- tcrossprod(Q_i_vec) - d_i[idx] * s_i_2_mat # nolint: object_name_linter.
 
     # Verify A_i is symmetric (it should be by construction)
     if (!isSymmetric(A_i[[idx]],
       tol = HETID_CONSTANTS$MATRIX_SYMMETRY_TOL
     )) {
       # Force exact symmetry
-      A_i[[idx]] <- (A_i[[idx]] + t(A_i[[idx]])) / 2
+      A_i[[idx]] <- (A_i[[idx]] + t(A_i[[idx]])) / 2 # nolint: object_name_linter.
     }
 
     # Compute b_i = -2 * L_i * Q_i + 2 * d_i * S_i^(1)

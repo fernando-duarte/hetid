@@ -19,7 +19,7 @@ test_that("compute_vector_statistics validates w2 input", {
 test_that("compute_vector_statistics returns correct structure", {
   # Create test data
   set.seed(123)
-  T_obs <- 100
+  T_obs <- 100 # nolint: object_name_linter.
   I <- 3
   J <- 4
   w1 <- rnorm(T_obs)
@@ -80,7 +80,7 @@ test_that("compute_vector_statistics computes correct values", {
 
 test_that("compute_vector_statistics handles subset of maturities", {
   set.seed(456)
-  T_obs <- 50
+  T_obs <- 50 # nolint: object_name_linter.
   I <- 5
   J <- 3
   w1 <- rnorm(T_obs)
@@ -104,7 +104,7 @@ test_that("compute_vector_statistics handles subset of maturities", {
 
 test_that("compute_vector_statistics handles orthogonal PCs correctly", {
   # Test with orthogonal PCs
-  T_obs <- 4
+  T_obs <- 4 # nolint: object_name_linter.
   w1 <- c(1, 2, 3, 4)
   w2 <- matrix(c(2, 3, 4, 5), nrow = 4, ncol = 1)
 

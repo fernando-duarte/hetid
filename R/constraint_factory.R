@@ -28,7 +28,7 @@ NULL
 #' c_val <- 0.5
 #' check <- make_constraint_checker(A, b, c_val)
 #' check(c(0.5, 0.5)) # Evaluate constraint at theta
-make_constraint_checker <- function(A_i, b_i, c_i) {
+make_constraint_checker <- function(A_i, b_i, c_i) { # nolint: object_name_linter.
   force(A_i)
   force(b_i)
   force(c_i)

@@ -1,6 +1,5 @@
 #' Validate numeric vector dimensions
 #'
-#' @keywords internal
 #' @noRd
 is_numeric_vector_dim <- function(x, n_components) {
   is.numeric(x) && length(x) == n_components
@@ -8,7 +7,6 @@ is_numeric_vector_dim <- function(x, n_components) {
 
 #' Validate square matrix dimensions
 #'
-#' @keywords internal
 #' @noRd
 is_square_matrix_dim <- function(x, n_components) {
   is.matrix(x) &&
@@ -19,10 +17,9 @@ is_square_matrix_dim <- function(x, n_components) {
 #' Validate argument types for quadratic inputs
 #'
 #' @inheritParams compute_identified_set_quadratic
-#' @keywords internal
 #' @noRd
 validate_quadratic_types <- function(gamma, tau,
-                                     L_i, V_i, Q_i,
+                                     L_i, V_i, Q_i, # nolint: object_name_linter.
                                      s_i_0, s_i_1,
                                      s_i_2,
                                      sigma_i_sq) {
@@ -65,9 +62,8 @@ validate_quadratic_types <- function(gamma, tau,
 #' @param Q_i,s_i_1,s_i_2 List inputs to check
 #' @param maturities Resolved maturity vector
 #' @param n_components Expected dimension (I)
-#' @keywords internal
 #' @noRd
-validate_list_element_dims <- function(Q_i, s_i_1,
+validate_list_element_dims <- function(Q_i, s_i_1, # nolint: object_name_linter.
                                        s_i_2,
                                        maturities,
                                        n_components) {
@@ -115,7 +111,7 @@ validate_list_element_dims <- function(Q_i, s_i_1,
 #'
 #' @keywords internal
 validate_quadratic_inputs <- function(gamma, tau,
-                                      L_i, V_i, Q_i,
+                                      L_i, V_i, Q_i, # nolint: object_name_linter.
                                       s_i_0, s_i_1,
                                       s_i_2, sigma_i_sq,
                                       maturities = NULL) {

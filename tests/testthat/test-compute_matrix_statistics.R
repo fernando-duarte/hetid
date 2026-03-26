@@ -15,7 +15,7 @@ test_that("compute_matrix_statistics validates w2 input", {
 test_that("compute_matrix_statistics returns correct structure", {
   # Create test data
   set.seed(123)
-  T_obs <- 100
+  T_obs <- 100 # nolint: object_name_linter.
   I <- 3
   w1 <- rnorm(T_obs)
   w2 <- matrix(rnorm(T_obs * I), T_obs, I)
@@ -79,7 +79,7 @@ test_that("compute_matrix_statistics computes correct values", {
 
 test_that("compute_matrix_statistics handles subset of maturities", {
   set.seed(456)
-  T_obs <- 50
+  T_obs <- 50 # nolint: object_name_linter.
   I <- 5
   w1 <- rnorm(T_obs)
   w2 <- matrix(rnorm(T_obs * I), T_obs, I)
@@ -101,7 +101,7 @@ test_that("compute_matrix_statistics handles subset of maturities", {
 
 test_that("compute_matrix_statistics produces symmetric S_i^(2)", {
   set.seed(789)
-  T_obs <- 20
+  T_obs <- 20 # nolint: object_name_linter.
   I <- 3
   w1 <- rnorm(T_obs)
   w2 <- matrix(rnorm(T_obs * I), T_obs, I)
