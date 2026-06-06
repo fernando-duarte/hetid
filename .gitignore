@@ -117,6 +117,9 @@ scripts_old/
 results/
 scripts/output/
 
+# graphify knowledge graph (generated output)
+graphify-out/
+
 # Duplication tracking
 duplication-tracking/
 baseline-duplication-report.xml
