@@ -2,7 +2,7 @@
 # See https://pre-commit.com/hooks.html for more hooks
 repos:
   - repo: https://github.com/lorenzwalthert/precommit
-    rev: v0.4.3.9021
+    rev: v0.4.3.9025
     hooks:
       # Style and format R code
       - id: style-files

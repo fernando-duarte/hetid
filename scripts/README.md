@@ -37,19 +37,29 @@ Variance bound calculations for identification
 - `output_results.R` - Export variance bound results
 
 ### 04_identification_without_optimization/
-Identification analysis using fixed PC weights.
-This directory is currently empty (placeholder for future
-scripts).
+Baseline identified set using fixed PC weights (VFCI gamma)
+and fixed tau values
+- `compute_identification.R` - Compute the baseline identified
+  set from fixed gamma and tau
+- `analyze_identification.R` - Analyze the baseline identified
+  set
+- `output_results.R` - Export baseline identification results
 
 ### 05_identification_with_optimization/
-Optimal identification through PC weight optimization.
-This directory is currently empty (placeholder for future
-scripts).
+Optimal identification by optimizing PC loadings (gamma) to
+minimize total identified-set width (tau held fixed)
+- `optimize_identification.R` - Optimize gamma via nloptr to
+  minimize set width
+- `analyze_optimization.R` - Analyze optimization results
+- `output_results.R` - Export optimization results
 
 ### 06_results_production/
-Generate publication-ready outputs.
-This directory is currently empty (placeholder for future
-scripts).
+Publication-ready outputs assembled from stages 04 and 05
+- `assemble_results.R` - Merge baseline, optimized, and
+  supporting artifacts into one comparison object
+- `create_tables_and_figures.R` - Build publication tables and
+  figures
+- `output_results.R` - Export final results
 
 ### utils/
 Shared utility functions
@@ -61,6 +71,12 @@ Shared utility functions
   (summary stats, stationarity tests, formatted tables)
 - `hetero_test_utils.R` - Heteroskedasticity testing and
   diagnostics
+- `factor_utils.R` - Yield curve PCA factors (level, slope,
+  curvature) for identification
+- `identification_utils.R` - Non-optimization identification
+  plumbing (maturity lookups, set construction)
+- `optimization_utils.R` - Inner profile bounds and outer
+  gamma optimization helpers
 - `README.md` - Documentation for the utility functions
 
 ### output/
@@ -101,12 +117,12 @@ Working outputs and intermediate results
   `03_variance_bounds/` for fundamental calculations
 - **Identification Analysis**: Execute
   `04_identification_without_optimization/` for baseline
-  results (not yet implemented)
+  results
 - **Optimization**: Run
   `05_identification_with_optimization/` for optimal
-  identification (not yet implemented)
+  identification
 - **Results Production**: Use `06_results_production/` to
-  generate final outputs (not yet implemented)
+  generate final outputs
 
 ## Running the Scripts
 
