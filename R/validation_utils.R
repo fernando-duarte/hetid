@@ -25,34 +25,31 @@ assert_scalar_finite <- function(x, name) {
   }
 }
 
-#' Validate Maturity Index
+#' Assert a Scalar is an Integer Within a Closed Range
 #'
-#' Validates maturity index against dataset constraints.
+#' Shared core for scalar integer-index validators. The \code{arg} defaults to
+#' \code{name} so callers can keep a distinct condition \code{arg} field.
 #'
-#' @param i Integer maturity index to validate
-#' @param max_maturity Maximum allowed maturity (default from ACM dataset limit)
+#' @param x Value to check
+#' @param name Parameter name used in the error message
+#' @param min_value,max_value Inclusive integer bounds
+#' @param arg Condition argument name (defaults to \code{name})
 #'
-#' @return Invisible TRUE if valid, stops with informative error if invalid
+#' @return Invisible TRUE if valid, stops with informative error otherwise.
 #' @keywords internal
-validate_maturity_index <- function(i, max_maturity = HETID_CONSTANTS$MAX_MATURITY) {
-  assert_scalar_finite(i, "Maturity index i")
-
+assert_scalar_integer_in_range <- function(x, name, min_value, max_value,
+                                           arg = name) {
+  assert_scalar_finite(x, name)
   assert_bad_argument_ok(
-    i %% 1 == 0,
-    "Maturity index i must be an integer",
-    arg = "i"
+    x %% 1 == 0,
+    paste0(name, " must be an integer"),
+    arg = arg
   )
   assert_bad_argument_ok(
-    i >= HETID_CONSTANTS$MIN_MATURITY &&
-      i <= max_maturity,
-    paste0(
-      "Maturity index i must be between ",
-      HETID_CONSTANTS$MIN_MATURITY,
-      " and ", max_maturity
-    ),
-    arg = "i"
+    x >= min_value && x <= max_value,
+    paste0(name, " must be between ", min_value, " and ", max_value),
+    arg = arg
   )
-
   invisible(TRUE)
 }
 
@@ -95,23 +92,9 @@ validate_data_dimensions <- function(yields, term_premia) {
 #' @return Invisible TRUE if valid, stops with informative error if invalid
 #' @keywords internal
 validate_n_pcs <- function(n_pcs) {
-  assert_scalar_finite(n_pcs, "n_pcs")
-
-  assert_bad_argument_ok(
-    n_pcs %% 1 == 0,
-    "n_pcs must be an integer",
-    arg = "n_pcs"
+  assert_scalar_integer_in_range(
+    n_pcs, "n_pcs", 1, HETID_CONSTANTS$MAX_N_PCS
   )
-  assert_bad_argument_ok(
-    n_pcs >= 1 && n_pcs <= HETID_CONSTANTS$MAX_N_PCS,
-    paste0(
-      "n_pcs must be between 1 and ",
-      HETID_CONSTANTS$MAX_N_PCS
-    ),
-    arg = "n_pcs"
-  )
-
-  invisible(TRUE)
 }
 
 #' Validate Minimum Observations
@@ -137,29 +120,51 @@ validate_min_observations <- function(n, min_obs = HETID_CONSTANTS$MIN_OBSERVATI
   invisible(TRUE)
 }
 
-#' Validate Time Series Lengths
+#' Validate Equal Lengths Across Inputs
 #'
-#' Validates that multiple time series have consistent lengths.
+#' Validates that multiple inputs (vectors or lists) have consistent lengths.
+#' With \code{expected_length}, every input must equal that length; without it,
+#' the inputs must merely share a common length.
 #'
-#' @param ... Time series vectors to validate
+#' @param ... Vectors or lists whose lengths must agree
+#' @param expected_length Optional single nonnegative integer; if supplied, every
+#'   input must have exactly this length
 #'
 #' @return Invisible TRUE if valid, stops with informative error if invalid
 #' @keywords internal
-validate_time_series_lengths <- function(...) {
+validate_time_series_lengths <- function(..., expected_length = NULL) {
   series_list <- list(...)
-
-  assert_bad_argument_ok(
-    length(series_list) >= 2,
-    "At least two time series required for length validation"
-  )
-
   series_lengths <- lengths(series_list)
 
+  if (is.null(expected_length)) {
+    assert_bad_argument_ok(
+      length(series_list) >= 2,
+      "At least two inputs required for length comparison"
+    )
+    lengths_ok <- length(unique(series_lengths)) == 1
+    expectation <- "All inputs must have the same length"
+  } else {
+    assert_bad_argument_ok(
+      is.numeric(expected_length) &&
+        length(expected_length) == 1 &&
+        is.finite(expected_length) &&
+        expected_length >= 0 &&
+        expected_length %% 1 == 0,
+      "expected_length must be a single finite nonnegative integer",
+      arg = "expected_length"
+    )
+    assert_bad_argument_ok(
+      length(series_list) >= 1,
+      "At least one input required for length validation"
+    )
+    lengths_ok <- all(series_lengths == expected_length)
+    expectation <- paste0("All inputs must have length ", expected_length)
+  }
+
   assert_dimension_ok(
-    length(unique(series_lengths)) == 1,
+    lengths_ok,
     paste0(
-      "All input time series must have the same length. ",
-      "Got lengths: ",
+      expectation, ". Got lengths: ",
       paste(series_lengths, collapse = ", ")
     )
   )
@@ -185,7 +190,7 @@ validate_numeric_inputs <- function(...) {
 
   for (i in seq_along(inputs)) {
     assert_bad_argument_ok(
-      is.numeric(inputs[[i]]),
+      is.numeric(inputs[[i]]) && is.null(dim(inputs[[i]])),
       paste0(input_names[i], " must be a numeric vector"),
       arg = input_names[i]
     )

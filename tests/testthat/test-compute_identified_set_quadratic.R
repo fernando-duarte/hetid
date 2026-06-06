@@ -38,7 +38,7 @@ test_that("compute_identified_set_quadratic validates inputs correctly", {
       compute_identified_set_quadratic,
       modifyList(inputs, list(L_i = "not numeric"))
     ),
-    "L_i and V_i must be numeric vectors"
+    "L_i must be a numeric vector"
   )
 
   expect_error(
@@ -270,6 +270,6 @@ test_that("rejects mismatched input lengths with subset", {
       ),
       list(maturities = maturities)
     )),
-    "length matching maturities"
+    "All inputs must have length"
   )
 })

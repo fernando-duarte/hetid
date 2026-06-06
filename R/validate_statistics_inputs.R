@@ -16,11 +16,7 @@
 #' @keywords internal
 validate_statistics_inputs <- function(w1, w2,
                                        maturities = NULL) {
-  assert_bad_argument_ok(
-    is.numeric(w1) && is.vector(w1),
-    "w1 must be a numeric vector",
-    arg = "w1"
-  )
+  validate_numeric_inputs(w1 = w1)
   assert_tabular(w2, "w2")
   w2 <- as.matrix(w2)
 
@@ -36,18 +32,10 @@ validate_statistics_inputs <- function(w1, w2,
   if (is.null(maturities)) {
     maturities <- seq_len(ncol(w2))
   }
-  assert_bad_argument_ok(
-    is.numeric(maturities) &&
-      all(is.finite(maturities)) &&
-      all(maturities %% 1 == 0),
-    "maturities must be finite integer values",
-    arg = "maturities"
-  )
-  assert_bad_argument_ok(
-    all(maturities >= 1) &&
-      all(maturities <= ncol(w2)),
-    "maturities must be between 1 and ncol(w2)",
-    arg = "maturities"
+  validate_maturities(
+    maturities,
+    max_value = ncol(w2),
+    max_label = "ncol(w2)"
   )
 
   list(w2 = w2, t_obs = t_obs, maturities = maturities)

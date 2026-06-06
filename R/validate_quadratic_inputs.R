@@ -28,10 +28,9 @@ validate_quadratic_types <- function(gamma, tau,
     "gamma must be a matrix",
     arg = "gamma"
   )
-  assert_bad_argument_ok(
-    is.numeric(tau) && is.vector(tau),
-    "tau must be a numeric vector",
-    arg = "tau"
+  validate_numeric_inputs(
+    tau = tau, L_i = L_i, V_i = V_i,
+    s_i_0 = s_i_0, sigma_i_sq = sigma_i_sq
   )
   assert_bad_argument_ok(
     !any(tau < 0),
@@ -39,17 +38,9 @@ validate_quadratic_types <- function(gamma, tau,
     arg = "tau"
   )
   assert_bad_argument_ok(
-    is.numeric(L_i) && is.numeric(V_i),
-    "L_i and V_i must be numeric vectors"
-  )
-  assert_bad_argument_ok(
     is.list(Q_i),
     "Q_i must be a list",
     arg = "Q_i"
-  )
-  assert_bad_argument_ok(
-    is.numeric(s_i_0) && is.numeric(sigma_i_sq),
-    "s_i_0 and sigma_i_sq must be numeric vectors"
   )
   assert_bad_argument_ok(
     is.list(s_i_1) && is.list(s_i_2),
@@ -139,27 +130,16 @@ validate_quadratic_inputs <- function(gamma, tau,
   )
 
   # Validate maturities against gamma dimensions
-  assert_bad_argument_ok(
-    all(maturities >= 1) &&
-      all(maturities <= n_components),
-    paste0(
-      "maturities must be between 1 and ncol(gamma) (",
-      n_components, ")"
-    ),
-    arg = "maturities"
+  validate_maturities(
+    maturities,
+    max_value = n_components,
+    max_label = "ncol(gamma)"
   )
 
   n_maturities <- length(maturities)
-  assert_dimension_ok(
-    all(c(
-      length(L_i), length(V_i), length(Q_i),
-      length(s_i_0), length(s_i_1), length(s_i_2),
-      length(sigma_i_sq)
-    ) == n_maturities),
-    paste0(
-      "All statistical inputs must have length ",
-      "matching maturities (", n_maturities, ")"
-    )
+  validate_time_series_lengths(
+    L_i, V_i, Q_i, s_i_0, s_i_1, s_i_2, sigma_i_sq,
+    expected_length = n_maturities
   )
 
   # Validate sigma_i_sq

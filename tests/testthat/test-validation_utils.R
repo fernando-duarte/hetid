@@ -167,17 +167,20 @@ test_that("validate_n_pcs boundary at max", {
 
 # --- validate_numeric_inputs ---
 
-test_that("validate_numeric_inputs accepts all numeric", {
+test_that("validate_numeric_inputs accepts numeric vectors", {
   expect_true(
     validate_numeric_inputs(x = c(1, 2, 3), y = c(4, 5, 6))
   )
   expect_true(
     validate_numeric_inputs(a = 1L, b = 2.5)
   )
-  expect_true(
-    validate_numeric_inputs(
-      m = matrix(1:4, 2, 2)
-    )
+})
+
+test_that("validate_numeric_inputs rejects a numeric matrix", {
+  expect_error(
+    validate_numeric_inputs(m = matrix(1:4, 2, 2)),
+    "m must be a numeric vector",
+    class = "hetid_error_bad_argument"
   )
 })
 
@@ -253,11 +256,11 @@ test_that("validate_time_series_lengths rejects mismatched", {
 test_that("validate_time_series_lengths rejects fewer than two", {
   expect_error(
     validate_time_series_lengths(c(1, 2, 3)),
-    "At least two time series required"
+    "At least two inputs required"
   )
   expect_error(
     validate_time_series_lengths(),
-    "At least two time series required"
+    "At least two inputs required"
   )
 })
 

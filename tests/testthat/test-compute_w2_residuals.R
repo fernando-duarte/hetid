@@ -426,7 +426,7 @@ test_that("error when maturities are non-integer or negative", {
       test_env$yields, test_env$term_premia,
       maturities = c(1.5, 3)
     )),
-    "positive integers"
+    "must be finite integer values"
   )
 
   expect_error(
@@ -434,7 +434,7 @@ test_that("error when maturities are non-integer or negative", {
       test_env$yields, test_env$term_premia,
       maturities = c(-1, 2)
     )),
-    "positive integers"
+    "must be between 1 and"
   )
 })
 

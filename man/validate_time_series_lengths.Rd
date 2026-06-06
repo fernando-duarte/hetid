@@ -2,17 +2,22 @@
 % Please edit documentation in R/validation_utils.R
 \name{validate_time_series_lengths}
 \alias{validate_time_series_lengths}
-\title{Validate Time Series Lengths}
+\title{Validate Equal Lengths Across Inputs}
 \usage{
-validate_time_series_lengths(...)
+validate_time_series_lengths(..., expected_length = NULL)
 }
 \arguments{
-\item{...}{Time series vectors to validate}
+\item{...}{Vectors or lists whose lengths must agree}
+
+\item{expected_length}{Optional single nonnegative integer; if supplied, every
+input must have exactly this length}
 }
 \value{
 Invisible TRUE if valid, stops with informative error if invalid
 }
 \description{
-Validates that multiple time series have consistent lengths.
+Validates that multiple inputs (vectors or lists) have consistent lengths.
+With \code{expected_length}, every input must equal that length; without it,
+the inputs must merely share a common length.
 }
 \keyword{internal}

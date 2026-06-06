@@ -20,36 +20,16 @@ validate_w2_inputs <- function(yields, term_premia, maturities) {
   # Use standardized data dimension validation
   validate_data_dimensions(yields_df, term_premia_df)
 
-  # Validate maturity values -- check empty first
-  assert_bad_argument_ok(
-    length(maturities) > 0,
-    "maturities must not be empty",
-    arg = "maturities"
-  )
-
-  assert_bad_argument_ok(
-    all(maturities %% 1 == 0) &&
-      all(maturities >= 1),
-    "maturities must be positive integers",
-    arg = "maturities"
-  )
-
+  # Validate maturity values via the shared vector validator
   max_maturity <- min(
     HETID_CONSTANTS$EFFECTIVE_MAX_MATURITY,
     ncol(yields_df), ncol(term_premia_df)
   )
-
-  if (any(maturities > max_maturity)) {
-    invalid <- maturities[maturities > max_maturity]
-    stop_bad_argument(
-      paste0(
-        "Maturities exceed available data ",
-        "(max ", max_maturity, "): ",
-        paste(invalid, collapse = ", ")
-      ),
-      arg = "maturities"
-    )
-  }
+  validate_maturities(
+    maturities,
+    max_value = max_maturity,
+    max_label = "max available maturity"
+  )
 
   list(
     yields = yields_df,
