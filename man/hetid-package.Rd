@@ -171,7 +171,7 @@ Useful links:
 
 }
 \author{
-\strong{Maintainer}: Fernando Duarte \email{fernando_duarte@brown.edu} (\href{https://orcid.org/0000-0002-8495-6936}{ORCID})
+\strong{Maintainer}: Fernando Duarte \email{duarte@alum.mit.edu} (\href{https://orcid.org/0000-0002-8495-6936}{ORCID})
 
 }
 \keyword{internal}
