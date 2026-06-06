@@ -173,5 +173,10 @@ Useful links:
 \author{
 \strong{Maintainer}: Fernando Duarte \email{duarte@alum.mit.edu} (\href{https://orcid.org/0000-0002-8495-6936}{ORCID})
 
+Authors:
+\itemize{
+  \item Fernando Duarte \email{duarte@alum.mit.edu} (\href{https://orcid.org/0000-0002-8495-6936}{ORCID})
+}
+
 }
 \keyword{internal}
