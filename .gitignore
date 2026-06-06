@@ -117,8 +117,10 @@ scripts_old/
 results/
 scripts/output/
 
-# graphify knowledge graph (generated output)
+# graphify knowledge graph (generated output) + local rebuild tooling
 graphify-out/
+tools/
+.mcp.json
 
 # Duplication tracking
 duplication-tracking/

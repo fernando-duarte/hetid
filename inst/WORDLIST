@@ -4,6 +4,7 @@ ACMRNY
 ACMTP
 ACMY
 ADF
+args
 aut
 BugReports
 bz
@@ -33,6 +34,8 @@ ggplot
 gitattributes
 github
 gitignore
+graphify
+graphifyy
 gz
 Hadamard
 heteroskedasticity
@@ -60,6 +63,8 @@ linter
 linters
 Ljung
 lm
+mcp
+mcpServers
 md
 MERCHANTABILITY
 mismeasured
@@ -111,6 +116,7 @@ Tobias
 tp
 TP
 ttf
+uv
 VFCI
 VIX
 withr
