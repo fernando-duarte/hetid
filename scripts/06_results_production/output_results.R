@@ -79,29 +79,34 @@ tau_set <- baseline$tau_specs$tau_set[1]
 
 obj_start <- optimized$objective_start
 obj_final <- optimized$objective_final
-# When the baseline set is unbounded, objective_start is Inf: the start width and
-# its percent improvement are undefined, so report them qualitatively (B1).
+# Improvement is defined only when BOTH objectives are finite. objective_start is
+# Inf when the baseline set is unbounded; objective_final is Inf when the optimizer
+# found no bounded gamma (every multi-start lands on the penalty plateau). Either
+# makes the start width / percent improvement undefined, so report qualitatively
+# instead of printing -Inf.
 baseline_unbounded <- !is.finite(obj_start)
-obj_improvement <- if (baseline_unbounded) NA_real_ else obj_start - obj_final
-obj_pct <- if (baseline_unbounded) NA_real_ else obj_improvement / obj_start * 100
-obj_start_str <- if (baseline_unbounded) {
-  "unbounded"
-} else {
-  sprintf("%.6f", obj_start)
-}
-obj_improvement_str <- if (baseline_unbounded) {
+final_unbounded <- !is.finite(obj_final)
+comparable <- !baseline_unbounded && !final_unbounded
+obj_improvement <- if (comparable) obj_start - obj_final else NA_real_
+obj_pct <- if (comparable) obj_improvement / obj_start * 100 else NA_real_
+obj_start_str <- if (baseline_unbounded) "unbounded" else sprintf("%.6f", obj_start)
+obj_final_str <- if (final_unbounded) "unbounded" else sprintf("%.6f", obj_final)
+reduction_note <- if (baseline_unbounded) {
   "n/a (baseline unbounded)"
 } else {
+  "n/a (optimizer found no bounded gamma)"
+}
+obj_improvement_str <- if (comparable) {
   sprintf("%.6f", obj_improvement)
-}
-obj_pct_str <- if (baseline_unbounded) {
-  "n/a (baseline unbounded)"
 } else {
-  sprintf("%.2f%%", obj_pct)
+  reduction_note
 }
-# Mean reduction is NA when no component has a finite (bounded) baseline width.
+obj_pct_str <- if (comparable) sprintf("%.2f%%", obj_pct) else reduction_note
+# NA when no component has a finite, bounded baseline+optimized pair. That covers
+# baseline-unbounded, optimizer-regressed, and both-unbounded alike, so stay
+# neutral rather than asserting a single (possibly wrong) direction.
 mean_reduction_str <- if (is.na(meta$mean_pct_reduction)) {
-  "n/a (baseline unbounded)"
+  "n/a (no comparable bounded rows)"
 } else {
   sprintf("%.2f%%", meta$mean_pct_reduction)
 }
@@ -192,7 +197,7 @@ summary_lines <- c(
   ),
   paste(
     "  Total width (final):",
-    sprintf("%.6f", obj_final)
+    obj_final_str
   ),
   paste(
     "  Absolute improvement:",

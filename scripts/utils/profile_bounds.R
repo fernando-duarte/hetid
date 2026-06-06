@@ -86,9 +86,16 @@
 # Profile bound (min or max of theta_k). Returns list(bound, bounded, valid):
 #   (TRUE , TRUE ) finite feasible+active bound -> the value
 #   (TRUE , FALSE) finite but feasibility check failed -> "unreliable"
-#   (FALSE, TRUE ) genuinely unbounded (directional box2-active + feasible)
+#   (FALSE, TRUE ) unbounded: strictly feasible at box2 with NO active constraint
 #   (FALSE, FALSE) solver failure / infeasible runaway -> NA (fail closed)
-# Detection is DIRECTIONAL: a "min" can only run to -box2, a "max" to +box2.
+# Unboundedness is detected by the ABSENCE of a binding constraint at box2 (the
+# residual stays << 0), NOT by phi reaching the box edge. With a LINEAR objective
+# the only thing that can stop the optimum while it is strictly feasible is the
+# box itself, so "no constraint binds" => unbounded -- and this holds even when a
+# badly scaled ray stalls partway through the box instead of reaching the edge.
+# Caveat (shared with .feasibility_residual): on a non-convex (indefinite A_i)
+# set a strictly-interior stall short of a constraint that WOULD bind is read as
+# unbounded here, just as a premature boundary stall can pass the active check.
 solve_profile_bound <- function(quadratic, component_index,
                                 direction = c("min", "max"),
                                 box1 = 1e6, box2 = 1e9, feas_tol = 1e-4,
@@ -112,18 +119,22 @@ solve_profile_bound <- function(quadratic, component_index,
       box2, xtol_rel, maxeval
     )
     phi2k <- r2$phi[component_index]
-    box_active <- is.finite(phi2k) &&
-      (if (direction == "min") phi2k <= -0.1 * box2 else phi2k >= 0.1 * box2)
-    if (box_active) {
-      resid2 <- .feasibility_residual(quadratic, delta * r2$phi, omega)
-      if (is.finite(resid2) && resid2 <= feas_tol) {
-        return(list(bound = inf_bound, bounded = FALSE, valid = TRUE))
-      }
-      return(list(bound = NA_real_, bounded = FALSE, valid = FALSE))
-    }
     if (!is.finite(phi2k)) {
       return(list(bound = NA_real_, bounded = FALSE, valid = FALSE))
     }
+    resid2 <- .feasibility_residual(quadratic, delta * r2$phi, omega)
+    if (!is.finite(resid2) || resid2 > feas_tol) {
+      # Infeasible runaway -> fail closed.
+      return(list(bound = NA_real_, bounded = FALSE, valid = FALSE))
+    }
+    if (resid2 < -feas_tol) {
+      # Strictly feasible at box2: no constraint binds, so only the box stopped
+      # the linear objective -> unbounded in this direction (regardless of where
+      # in the box the solver stalled).
+      return(list(bound = inf_bound, bounded = FALSE, valid = TRUE))
+    }
+    # |resid2| <= feas_tol: a constraint binds at box2 -> a genuine large finite
+    # bound that box1 was simply too small to reach.
     phi <- r2$phi
   }
   resid <- .feasibility_residual(quadratic, delta * phi, omega)

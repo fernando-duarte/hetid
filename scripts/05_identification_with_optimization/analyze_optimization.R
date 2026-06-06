@@ -25,26 +25,43 @@ optimized <- results$optimized_bounds |>
 width_comparison <- baseline |>
   select(
     component, component_label,
-    baseline_width = width
+    baseline_width = width,
+    baseline_valid_lower = valid_lower,
+    baseline_valid_upper = valid_upper
   ) |>
   left_join(
-    optimized |> select(component, optimized_width = width),
+    optimized |> select(
+      component,
+      optimized_width = width,
+      optimized_valid_lower = valid_lower,
+      optimized_valid_upper = valid_upper
+    ),
     by = "component"
   ) |>
   mutate(
-    percent_reduction = ifelse(is.finite(baseline_width),
+    baseline_valid = baseline_valid_lower & baseline_valid_upper,
+    optimized_valid = optimized_valid_lower & optimized_valid_upper,
+    # percent_reduction is defined only when BOTH widths are finite; an unbounded
+    # optimized side would otherwise leak -Inf into the saved RDS and the
+    # small-gain diagnostic filter below.
+    percent_reduction = ifelse(
+      is.finite(baseline_width) & is.finite(optimized_width),
       (baseline_width - optimized_width) / baseline_width * 100,
       NA_real_
     ),
-    reduction_label = format_reduction(baseline_width, optimized_width)
+    reduction_label = format_reduction(
+      baseline_width, optimized_width, baseline_valid, optimized_valid
+    )
   )
 mean_red <- mean_pct_reduction(
   width_comparison$baseline_width, width_comparison$optimized_width
 )
+# NA covers three distinct cases (baseline unbounded, optimizer regressed to
+# unbounded, both unbounded); a single fixed direction would assert the wrong one.
 mean_red_str <- if (is.finite(mean_red)) {
   paste0(round(mean_red, 2), "%")
 } else {
-  "baseline unbounded -> optimized bounded"
+  "n/a (no comparable bounded rows)"
 }
 fmt_mean <- function(x) {
   if (all(!is.finite(x))) "unbounded" else round(mean(x[is.finite(x)]), 4)
@@ -57,22 +74,29 @@ cli_ul(c(
 
 # Objective function values
 cli_h2("Objective Function")
+# Reduction is defined only when BOTH objectives are finite. A finite start with
+# an Inf final (optimizer found no bounded gamma) would otherwise print -Inf.
 start_finite <- is.finite(results$objective_start)
-total_red_pct <- if (start_finite) {
+final_finite <- is.finite(results$objective_final)
+comparable <- start_finite && final_finite
+total_red_pct <- if (comparable) {
   (results$objective_start - results$objective_final) /
     results$objective_start * 100
 } else {
   NA_real_
 }
 start_str <- if (start_finite) round(results$objective_start, 6) else "unbounded"
-red_str <- if (start_finite) {
+final_str <- if (final_finite) round(results$objective_final, 6) else "unbounded"
+red_str <- if (comparable) {
   paste0(round(total_red_pct, 2), " %")
-} else {
+} else if (!start_finite) {
   "baseline unbounded"
+} else {
+  "n/a (no bounded gamma found)"
 }
 cli_ul(c(
   paste("Start:", start_str),
-  paste("Final:", round(results$objective_final, 6)),
+  paste("Final:", final_str),
   paste("Reduction:", red_str)
 ))
 

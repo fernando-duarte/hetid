@@ -84,8 +84,11 @@ comparison_table <- baseline_bounds |>
     baseline_width = baseline_upper - baseline_lower,
     optimized_width = optimized_upper - optimized_lower,
     baseline_unbounded = !is.finite(baseline_width),
-    # reduction metrics are meaningless unless BOTH sides are bounded AND valid
+    # reduction metrics are meaningless unless BOTH sides are bounded AND valid.
+    # A genuinely unbounded optimized side is valid=TRUE (see solve_profile_bound),
+    # so check optimized finiteness explicitly -- not just the validity flags.
     metric_invalid = baseline_unbounded |
+      !is.finite(optimized_width) |
       !(baseline_valid_lower & baseline_valid_upper) |
       !(optimized_valid_lower & optimized_valid_upper),
     abs_width_reduction = ifelse(metric_invalid, NA_real_,
@@ -94,7 +97,11 @@ comparison_table <- baseline_bounds |>
     pct_width_reduction = ifelse(metric_invalid, NA_real_,
       abs_width_reduction / baseline_width * 100
     ),
-    reduction_label = format_reduction(baseline_width, optimized_width)
+    reduction_label = format_reduction(
+      baseline_width, optimized_width,
+      baseline_valid_lower & baseline_valid_upper,
+      optimized_valid_lower & optimized_valid_upper
+    )
   )
 
 # Merge variance bounds if available

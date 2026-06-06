@@ -60,6 +60,10 @@ objective_gamma_only <- function(par, moments, tau,
 # Is the set for this gamma unbounded OR invalid in any direction? (Either makes
 # the reported start width dishonest -- both map to Inf, never the 1e6 penalty.)
 .gamma_set_unbounded <- function(gamma, tau, moments, maturities = NULL) {
+  # Match objective_gamma_only: it normalizes columns before building the system,
+  # and the optimizer evaluates the normalized matrix. Normalizing here too keeps
+  # the honest-start oracle and the objective looking at the SAME system.
+  gamma <- normalize_gamma_columns(gamma)
   bt <- tryCatch(
     {
       qs <- symmetrize_quadratic_system(

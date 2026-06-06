@@ -35,11 +35,15 @@ optimized_bounds <- results$optimized_bounds
 baseline_width <- baseline_bounds$upper - baseline_bounds$lower
 optimized_width <- optimized_bounds$upper -
   optimized_bounds$lower
-width_reduction_label <- format_reduction(baseline_width, optimized_width)
 # A width is reliable only when BOTH bounds are valid. Pass an explicit
 # length-matched validity vector (default scalar TRUE collapses the ifelse).
 base_w_valid <- baseline_bounds$valid_lower & baseline_bounds$valid_upper
 opt_w_valid <- optimized_bounds$valid_lower & optimized_bounds$valid_upper
+# The reduction label is also validity-aware: an unreliable bound must not yield
+# a confident percentage.
+width_reduction_label <- format_reduction(
+  baseline_width, optimized_width, base_w_valid, opt_w_valid
+)
 
 # Finite/Inf-aware formatters turn unbounded bounds/widths into "unbounded".
 table_df <- data.frame(

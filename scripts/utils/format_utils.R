@@ -15,10 +15,19 @@ format_width <- function(w, valid = TRUE, digits = 4) {
   format_bound(w, valid = valid, digits = digits)
 }
 
-# Per-row reduction label. Distinguishes NA (failure) from Inf (unbounded), and
-# guards baseline_width <= 0 (e.g. the tau=0 point) and unbounded optimized.
-format_reduction <- function(baseline_width, optimized_width, digits = 1) {
-  ifelse(is.na(baseline_width) | is.na(optimized_width), "n/a",
+# Per-row reduction label. Distinguishes NA (failure) from Inf (unbounded),
+# guards baseline_width <= 0 (e.g. the tau=0 point) and unbounded optimized, and
+# renders "unreliable" when EITHER side failed its feasibility/validity check --
+# so a percentage never sits beside an "unreliable" bound. Validity args default
+# to TRUE (length-1) and are rep_len'd to match, mirroring format_bound.
+format_reduction <- function(baseline_width, optimized_width,
+                             baseline_valid = TRUE, optimized_valid = TRUE,
+                             digits = 1) {
+  baseline_valid <- rep_len(baseline_valid, length(baseline_width))
+  optimized_valid <- rep_len(optimized_valid, length(optimized_width))
+  invalid <- is.na(baseline_valid) | !baseline_valid |
+    is.na(optimized_valid) | !optimized_valid
+  out <- ifelse(is.na(baseline_width) | is.na(optimized_width), "n/a",
     ifelse(is.infinite(baseline_width),
       ifelse(is.finite(optimized_width),
         "baseline unbounded -> optimized bounded", "both unbounded"
@@ -29,6 +38,8 @@ format_reduction <- function(baseline_width, optimized_width, digits = 1) {
       )
     )
   )
+  out[invalid] <- "unreliable"
+  out
 }
 
 # Mean pct reduction over ONLY the finite, positive-baseline (bounded) components.

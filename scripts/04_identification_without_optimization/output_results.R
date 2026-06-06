@@ -32,7 +32,13 @@ bounds_tau_set <- results$bounds_tau_set
 # tau = 0 the point-ID target, so the reduction is measured baseline -> point.
 width_tau0 <- bounds_tau0$upper - bounds_tau0$lower
 width_tau_set <- bounds_tau_set$upper - bounds_tau_set$lower
-width_reduction_label <- format_reduction(width_tau_set, width_tau0)
+# Validity-aware: render "unreliable" rather than a confident percentage when
+# either side's width came from a bound that failed its feasibility check.
+valid_tau_set <- bounds_tau_set$valid_lower & bounds_tau_set$valid_upper
+valid_tau0 <- bounds_tau0$valid_lower & bounds_tau0$valid_upper
+width_reduction_label <- format_reduction(
+  width_tau_set, width_tau0, valid_tau_set, valid_tau0
+)
 
 # Build the main results table. Bounds are formatted to character with the
 # finite/Inf/validity-aware helper so Inf renders "unbounded" and failures
