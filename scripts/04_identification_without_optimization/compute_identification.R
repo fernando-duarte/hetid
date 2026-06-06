@@ -5,7 +5,8 @@
 source(here::here("scripts/utils/common_settings.R"))
 # Core packages and utility functions loaded via common_settings.R
 
-BASELINE_GAMMA_METHOD <- "vfci"
+# Selectable without editing this file: HETID_BASELINE_GAMMA=reduced_form Rscript ...
+BASELINE_GAMMA_METHOD <- Sys.getenv("HETID_BASELINE_GAMMA", "vfci")
 ID_MODE <- "factors" # "maturities" or "factors"
 
 cli_h1("Computing Baseline Identified Set")
@@ -47,14 +48,23 @@ cli_alert_success("Moments computed successfully")
 
 # Get baseline gamma and tau specifications
 n_comp <- nrow(lookup)
-gamma <- get_baseline_gamma(
-  method = BASELINE_GAMMA_METHOD, n_components = n_comp
-)
+gamma <- if (BASELINE_GAMMA_METHOD == "reduced_form") {
+  rf <- resid$gamma_rf
+  if (is.null(rf)) {
+    stop("BASELINE_GAMMA_METHOD='reduced_form' but reduced-form gamma is unavailable")
+  }
+  attr(rf, "method") <- "reduced_form"
+  rf
+} else {
+  get_baseline_gamma(method = BASELINE_GAMMA_METHOD, n_components = n_comp)
+}
 tau_specs <- get_tau_spec(
   tau_point = 0, tau_set = 0.2, n_components = n_comp
 )
 
-cli_alert_info("Gamma: {.val {BASELINE_GAMMA_METHOD}} unit-norm loadings")
+cli_alert_info(
+  "Gamma: {.val {BASELINE_GAMMA_METHOD}} (rank {.val {qr(gamma)$rank}} of {.val {ncol(gamma)}})"
+)
 cli_alert_info("Tau point: {.val {tau_specs$tau_point[1]}}")
 cli_alert_info("Tau set: {.val {tau_specs$tau_set[1]}}")
 
@@ -121,7 +131,7 @@ if (all_bounded_tau_set) {
   cli_alert_success("tau = 0.2 set is bounded")
 } else {
   cli_alert_warning(
-    "tau = 0.2 set is UNBOUNDED (rank-deficient gamma)"
+    "tau = 0.2 set is UNBOUNDED (slack exceeds this gamma's tau*)"
   )
 }
 

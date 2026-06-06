@@ -157,12 +157,20 @@ optimized_conv <- if (optimized_diag$converged) {
   "WARNING: Optimization solver did not converge."
 }
 
-# Assemble summary text
-vfci_note <- paste(
-  "  The baseline uses the bundled VFCI",
-  "construction by explicit",
-  "implementation choice."
-)
+# Assemble summary text (method-aware baseline note)
+baseline_note <- if (identical(gamma_method, "reduced_form")) {
+  paste(
+    "  The baseline uses reduced-form per-factor loadings",
+    "(rank-3 benchmark; unbounded above its tau*)."
+  )
+} else if (identical(gamma_method, "vfci")) {
+  paste(
+    "  The baseline uses the bundled VFCI",
+    "construction by explicit implementation choice."
+  )
+} else {
+  paste("  Baseline gamma method:", gamma_method)
+}
 summary_lines <- c(
   "FINAL IDENTIFICATION RESULTS SUMMARY",
   "====================================",
@@ -171,7 +179,7 @@ summary_lines <- c(
   "BASELINE GAMMA:",
   paste("  Method:", gamma_method),
   paste("  Values:", gamma_str),
-  vfci_note,
+  baseline_note,
   "",
   "TAU VALUES:",
   paste("  Point identification (tau):", tau_point),

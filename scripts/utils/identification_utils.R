@@ -96,6 +96,7 @@ compute_identification_residuals <- function(
     result$factor_loadings <- compute_yield_factor_loadings(
       data, max(factors)
     )
+    result$gamma_rf <- attr(w2_mat, "gamma_rf")
   }
   result
 }

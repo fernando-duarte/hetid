@@ -92,5 +92,54 @@ compute_w2_factor_residuals <- function(
   cli::cli_alert_info(
     "Projecting W2 onto {length(factors)} factors..."
   )
-  w2_all_mat %*% loadings_sel
+  w2_factors <- w2_all_mat %*% loadings_sel
+  # Attach the reduced-form per-factor gamma. Opportunistic: a failure must NOT
+  # break the default (vfci) path, so wrap in tryCatch -> NULL; it is consumed
+  # only when BASELINE_GAMMA_METHOD == "reduced_form".
+  attr(w2_factors, "gamma_rf") <- tryCatch(
+    get_reduced_form_gamma(w2_all$coefficients, pca$loadings, all_mats, factors),
+    error = function(e) {
+      cli::cli_alert_warning(
+        "Reduced-form gamma unavailable: {conditionMessage(e)}"
+      )
+      NULL
+    }
+  )
+  w2_factors
+}
+
+#' Reduced-form per-factor gamma (J x I loadings)
+#'
+#' Each column is the levels-regression loading of a yield-curve factor on the
+#' PCs: the Y2-on-PC slopes (from `compute_w2_residuals()$coefficients`, NOT the
+#' residuals -- those are orthogonal to the PCs by construction and ~0) projected
+#' onto the yield-factor loadings. Scale is irrelevant to the identified set
+#' (each column enters its own constraint homogeneously, degree 2); `normalize`
+#' is cosmetic, matching the VFCI/optimizer unit-norm convention.
+#' @param coefficients n_mat x (1 + n_pcs) levels-regression coefficients
+#' @param loadings yield-curve factor loading matrix (rows = maturities)
+#' @param maturities maturity rows used to build `coefficients` (index `loadings`)
+#' @param factors factor-column indices
+#' @param normalize unit-normalize columns (default TRUE)
+#' @return n_pcs x length(factors) matrix
+get_reduced_form_gamma <- function(coefficients, loadings, maturities, factors,
+                                   normalize = TRUE) {
+  pc_slopes <- coefficients[, colnames(coefficients) != "(Intercept)",
+    drop = FALSE
+  ]
+  load_sel <- loadings[maturities, factors, drop = FALSE]
+  if (nrow(pc_slopes) != nrow(load_sel)) {
+    stop("reduced-form gamma: coefficient rows != loading rows")
+  }
+  if (anyNA(pc_slopes) || anyNA(load_sel)) {
+    stop("reduced-form gamma: NA in coefficients or loadings")
+  }
+  gamma <- t(pc_slopes) %*% load_sel
+  # Guard against the residual-orthogonality trap: real levels slopes are
+  # O(1e-3); near-machine-zero magnitude means the wrong (residual) object.
+  if (max(abs(gamma)) < 1e-10) {
+    stop("reduced-form gamma is ~0 (residual-orthogonality trap?)")
+  }
+  if (normalize) gamma <- normalize_gamma_columns(gamma)
+  gamma
 }
