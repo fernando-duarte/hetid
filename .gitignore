@@ -130,3 +130,6 @@ REFACTORING_PLAN.md
 # Documentation files not for version control
 REFACTORING_COMPLETE.md
 return_value_patterns.md
+
+/.quarto/
+**/*.quarto_ipynb

@@ -85,7 +85,9 @@ run_gamma_optimization <- function(gamma_start,
                                    tau,
                                    n_starts = 10,
                                    seed = SEED,
-                                   maturities = NULL) {
+                                   maturities = NULL,
+                                   maxeval = 500L,
+                                   xtol_rel = 1e-6) {
   set.seed(seed)
   n_pcs <- nrow(gamma_start)
   n_comp <- ncol(gamma_start)
@@ -121,7 +123,7 @@ run_gamma_optimization <- function(gamma_start,
   all_results <- lapply(seq_len(n_starts), function(s) {
     tryCatch(nloptr::slsqp(
       x0 = starts[[s]], fn = obj_fn,
-      control = list(xtol_rel = 1e-6, maxeval = 500)
+      control = list(xtol_rel = xtol_rel, maxeval = maxeval)
     ), error = function(e) {
       list(
         par = starts[[s]], value = 1e6,
