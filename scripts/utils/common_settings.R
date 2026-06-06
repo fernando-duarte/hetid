@@ -102,3 +102,9 @@ if (file.exists(file.path(utils_dir, "identification_utils.R"))) {
 if (file.exists(file.path(utils_dir, "optimization_utils.R"))) {
   source(file.path(utils_dir, "optimization_utils.R"))
 }
+if (file.exists(file.path(utils_dir, "profile_bounds.R"))) {
+  source(file.path(utils_dir, "profile_bounds.R"))
+}
+if (file.exists(file.path(utils_dir, "format_utils.R"))) {
+  source(file.path(utils_dir, "format_utils.R"))
+}

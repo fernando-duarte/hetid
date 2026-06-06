@@ -35,9 +35,20 @@ width_summary <- bounds_combined |>
     sd_width = sd(width, na.rm = TRUE),
     n_components = n(), .groups = "drop"
   )
+# Render Inf widths as "unbounded" rather than printing round(Inf).
+fmt_mean_width <- function(w) {
+  if (all(!is.finite(w))) {
+    "unbounded"
+  } else {
+    paste0(
+      round(mean(w[is.finite(w)]), 4),
+      if (any(!is.finite(w))) " (some unbounded)" else ""
+    )
+  }
+}
 cli_ul(c(
-  paste("tau=0 mean width:", round(width_summary$mean_width[1], 4)),
-  paste("tau=0.2 mean width:", round(width_summary$mean_width[2], 4))
+  paste("tau=0 mean width:", fmt_mean_width(bounds_tau0$width)),
+  paste("tau=0.2 mean width:", fmt_mean_width(bounds_tau_set$width))
 ))
 
 # Compare point vs set identification widths
@@ -60,20 +71,31 @@ comparison <- bounds_tau0 |>
     width_diff = width_tset - width_tau0
   )
 
-# Convergence diagnostics
+# Boundedness / validity diagnostics. Report % bounded and % valid among
+# bounded SEPARATELY: an unbounded side carries valid = TRUE, so averaging
+# validity over unbounded rows would falsely read as "perfect".
 cli_h2("Numerical Diagnostics")
-conv_tau0 <- bounds_tau0 |>
-  summarise(
-    feas_lower = mean(converged_lower, na.rm = TRUE),
-    feas_upper = mean(converged_upper, na.rm = TRUE)
-  )
-conv_tset <- bounds_tau_set |>
-  summarise(
-    feas_lower = mean(converged_lower, na.rm = TRUE),
-    feas_upper = mean(converged_upper, na.rm = TRUE)
-  )
-cli_alert_info("tau=0 conv: {.val {round(conv_tau0$feas_lower, 3)}}/{.val {round(conv_tau0$feas_upper, 3)}}")
-cli_alert_info("tau=0.2 conv: {.val {round(conv_tset$feas_lower, 3)}}/{.val {round(conv_tset$feas_upper, 3)}}")
+summarise_flags <- function(bnds) {
+  bounded <- bnds$bounded_lower & bnds$bounded_upper
+  pct_bounded <- mean(bounded)
+  pct_valid <- if (any(bounded)) {
+    mean((bnds$valid_lower & bnds$valid_upper)[bounded])
+  } else {
+    NA_real_
+  }
+  data.frame(pct_bounded = pct_bounded, pct_valid_among_bounded = pct_valid)
+}
+conv_tau0 <- summarise_flags(bounds_tau0)
+conv_tset <- summarise_flags(bounds_tau_set)
+fmt_pct <- function(x) if (is.na(x)) "n/a" else round(x, 3)
+cli_alert_info(paste0(
+  "tau=0 bounded: {.val {fmt_pct(conv_tau0$pct_bounded)}}, ",
+  "valid|bounded: {.val {fmt_pct(conv_tau0$pct_valid_among_bounded)}}"
+))
+cli_alert_info(paste0(
+  "tau=0.2 bounded: {.val {fmt_pct(conv_tset$pct_bounded)}}, ",
+  "valid|bounded: {.val {fmt_pct(conv_tset$pct_valid_among_bounded)}}"
+))
 
 # Eigenvalue diagnostics
 min_eig <- sapply(results$quadratic_tau_set$quadratic$A_i, function(a) {
@@ -106,14 +128,23 @@ ct <- theme_minimal() + theme(
   axis.title = element_text(size = 12)
 )
 
+# Drop unbounded (non-finite width) rows so the plot never receives Inf.
+plot_widths <- bounds_combined |>
+  filter(!is.na(component_label), is.finite(width))
+n_unbounded <- sum(!is.finite(bounds_combined$width), na.rm = TRUE)
 p_widths <- ggplot(
-  bounds_combined |> filter(!is.na(component_label)),
+  plot_widths,
   aes(x = component_label, y = width, fill = tau_spec)
 ) +
   geom_col(position = position_dodge(0.7), width = 0.6) +
   scale_fill_manual(values = c("tau = 0" = "#2166AC", "tau = 0.2" = "#B2182B")) +
   labs(
     title = "Identified Set Widths by Maturity",
+    subtitle = if (n_unbounded > 0) {
+      paste0(n_unbounded, " component(s) unbounded (omitted)")
+    } else {
+      NULL
+    },
     x = "Component", y = "Width", fill = "Specification"
   ) +
   ct +

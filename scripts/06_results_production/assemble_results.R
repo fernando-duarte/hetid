@@ -65,23 +65,36 @@ comparison_table <- baseline_bounds |>
   select(
     component_label, component,
     baseline_lower = lower,
-    baseline_upper = upper
+    baseline_upper = upper,
+    baseline_valid_lower = valid_lower,
+    baseline_valid_upper = valid_upper
   ) |>
   left_join(
     optimized_bounds |>
       select(
         component,
         optimized_lower = lower,
-        optimized_upper = upper
+        optimized_upper = upper,
+        optimized_valid_lower = valid_lower,
+        optimized_valid_upper = valid_upper
       ),
     by = "component"
   ) |>
   mutate(
     baseline_width = baseline_upper - baseline_lower,
     optimized_width = optimized_upper - optimized_lower,
-    abs_width_reduction = baseline_width - optimized_width,
-    pct_width_reduction = abs_width_reduction /
-      baseline_width * 100
+    baseline_unbounded = !is.finite(baseline_width),
+    # reduction metrics are meaningless unless BOTH sides are bounded AND valid
+    metric_invalid = baseline_unbounded |
+      !(baseline_valid_lower & baseline_valid_upper) |
+      !(optimized_valid_lower & optimized_valid_upper),
+    abs_width_reduction = ifelse(metric_invalid, NA_real_,
+      baseline_width - optimized_width
+    ),
+    pct_width_reduction = ifelse(metric_invalid, NA_real_,
+      abs_width_reduction / baseline_width * 100
+    ),
+    reduction_label = format_reduction(baseline_width, optimized_width)
   )
 
 # Merge variance bounds if available
@@ -111,13 +124,16 @@ print(comparison_table |>
   ))
 
 mean_reduction <- round(
-  mean(
-    comparison_table$pct_width_reduction,
-    na.rm = TRUE
+  mean_pct_reduction(
+    comparison_table$baseline_width,
+    comparison_table$optimized_width
   ), 2
 )
 cli_alert_info(
-  "Mean width reduction: {.val {mean_reduction}}%"
+  paste(
+    "Mean width reduction (bounded components only):",
+    "{.val {mean_reduction}}%"
+  )
 )
 
 # Determine gamma method from baseline

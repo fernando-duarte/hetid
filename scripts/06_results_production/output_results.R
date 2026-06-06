@@ -40,7 +40,28 @@ cli_alert_success("RDS saved: {.path {rds_path}}")
 csv_path <- file.path(
   paper_dir, "final_identification_results.csv"
 )
-write.csv(comp_table, csv_path, row.names = FALSE)
+# Sanitize numeric bound/width/reduction columns so the published CSV carries no
+# Inf/NaN: format Inf -> "unbounded" and NA -> "n/a" via the shared formatters.
+publish_table <- comp_table |>
+  mutate(
+    baseline_lower = format_bound(baseline_lower, baseline_valid_lower),
+    baseline_upper = format_bound(baseline_upper, baseline_valid_upper),
+    optimized_lower = format_bound(optimized_lower, optimized_valid_lower),
+    optimized_upper = format_bound(optimized_upper, optimized_valid_upper),
+    baseline_width = format_width(
+      baseline_width, baseline_valid_lower & baseline_valid_upper
+    ),
+    optimized_width = format_width(
+      optimized_width, optimized_valid_lower & optimized_valid_upper
+    ),
+    abs_width_reduction = ifelse(is.na(abs_width_reduction), "n/a",
+      formatC(abs_width_reduction, format = "f", digits = 4)
+    ),
+    pct_width_reduction = ifelse(is.na(pct_width_reduction), "n/a",
+      formatC(pct_width_reduction, format = "f", digits = 2)
+    )
+  )
+write.csv(publish_table, csv_path, row.names = FALSE)
 cli_alert_success("CSV saved: {.path {csv_path}}")
 
 # Build the plain text summary
@@ -58,8 +79,32 @@ tau_set <- baseline$tau_specs$tau_set[1]
 
 obj_start <- optimized$objective_start
 obj_final <- optimized$objective_final
-obj_improvement <- obj_start - obj_final
-obj_pct <- obj_improvement / obj_start * 100
+# When the baseline set is unbounded, objective_start is Inf: the start width and
+# its percent improvement are undefined, so report them qualitatively (B1).
+baseline_unbounded <- !is.finite(obj_start)
+obj_improvement <- if (baseline_unbounded) NA_real_ else obj_start - obj_final
+obj_pct <- if (baseline_unbounded) NA_real_ else obj_improvement / obj_start * 100
+obj_start_str <- if (baseline_unbounded) {
+  "unbounded"
+} else {
+  sprintf("%.6f", obj_start)
+}
+obj_improvement_str <- if (baseline_unbounded) {
+  "n/a (baseline unbounded)"
+} else {
+  sprintf("%.6f", obj_improvement)
+}
+obj_pct_str <- if (baseline_unbounded) {
+  "n/a (baseline unbounded)"
+} else {
+  sprintf("%.2f%%", obj_pct)
+}
+# Mean reduction is NA when no component has a finite (bounded) baseline width.
+mean_reduction_str <- if (is.na(meta$mean_pct_reduction)) {
+  "n/a (baseline unbounded)"
+} else {
+  sprintf("%.2f%%", meta$mean_pct_reduction)
+}
 
 comp_labels <- paste(
   comp_table$component_label,
@@ -68,36 +113,41 @@ comp_labels <- paste(
 baseline_diag <- baseline$solver_diagnostics
 optimized_diag <- optimized$solver_diagnostics
 
-# Per-component width reduction detail lines
+# Per-component width reduction detail lines. Widths render via format_width
+# (Inf -> "unbounded") and the reduction uses the qualitative reduction_label.
 comp_detail <- vapply(
   seq_len(nrow(comp_table)), function(i) {
     r <- comp_table[i, ]
     paste0(
       "  ", r$component_label,
       " (component ", r$component, "): ",
-      sprintf("%.4f", r$baseline_width), " -> ",
-      sprintf("%.4f", r$optimized_width),
-      " (reduction: ",
-      sprintf("%.2f", r$pct_width_reduction), "%)"
+      format_width(
+        r$baseline_width, r$baseline_valid_lower & r$baseline_valid_upper
+      ), " -> ",
+      format_width(
+        r$optimized_width, r$optimized_valid_lower & r$optimized_valid_upper
+      ),
+      " (reduction: ", r$reduction_label, ")"
     )
   }, character(1)
 )
 
-# Convergence status
+# Baseline status: tau=0 reports KKT validity, tau=0.2 reports boundedness (the
+# diagnostic field now carries boundedness, so FALSE means an unbounded set).
 baseline_conv <- if (
   baseline_diag$all_converged_tau0 &&
     baseline_diag$all_converged_tau_set
 ) {
-  "All baseline bounds converged."
+  "Baseline tau=0 bounds valid; tau=0.2 set bounded."
 } else {
   paste0(
-    "Baseline convergence: tau=0 ",
+    "Baseline status: tau=0 ",
     ifelse(baseline_diag$all_converged_tau0,
-      "OK", "INCOMPLETE"
+      "valid", "INVALID"
     ),
     ", tau=", tau_set, " ",
     ifelse(baseline_diag$all_converged_tau_set,
-      "OK", "INCOMPLETE"
+      "bounded", "unbounded"
     )
   )
 }
@@ -130,7 +180,7 @@ summary_lines <- c(
   "OPTIMIZATION RESULTS:",
   paste(
     "  Total width (start):",
-    sprintf("%.6f", obj_start)
+    obj_start_str
   ),
   paste(
     "  Total width (final):",
@@ -138,11 +188,11 @@ summary_lines <- c(
   ),
   paste(
     "  Absolute improvement:",
-    sprintf("%.6f", obj_improvement)
+    obj_improvement_str
   ),
   paste(
     "  Percent improvement:",
-    sprintf("%.2f%%", obj_pct)
+    obj_pct_str
   ),
   "",
   paste("COMPONENTS:", comp_labels),
@@ -152,7 +202,7 @@ summary_lines <- c(
   "",
   paste(
     "  Mean width reduction:",
-    sprintf("%.2f%%", meta$mean_pct_reduction)
+    mean_reduction_str
   ),
   "",
   "NUMERICAL NOTES:",

@@ -1,4 +1,5 @@
-# Optimization Utilities -- inner profile bounds and outer Gamma optimization
+# Optimization Utilities -- outer Gamma optimization. The inner profile-bounds
+# solver now lives in profile_bounds.R (sourced via common_settings.R).
 
 symmetrize_quadratic_system <- function(quad_system) {
   q <- quad_system$quadratic
@@ -8,90 +9,6 @@ symmetrize_quadratic_system <- function(quad_system) {
       (ai + t(ai)) / 2
   }
   quad_system
-}
-
-solve_profile_bound <- function(quadratic,
-                                component_index,
-                                direction = c("min", "max"),
-                                theta_start = NULL) {
-  direction <- match.arg(direction)
-  n_con <- length(quadratic$A_i)
-  dim_theta <- ncol(quadratic$A_i[[1]])
-
-  e_k <- numeric(dim_theta)
-  e_k[component_index] <- 1
-  sign_mult <- if (direction == "min") 1 else -1
-
-  obj_fn <- function(theta) sign_mult * sum(e_k * theta)
-  grad_fn <- function(theta) sign_mult * e_k
-
-  # Constraints: theta' A_i theta + b_i' theta + c_i <= 0
-  # nloptr hin(x) <= 0 convention
-  constraint_fn <- function(theta) {
-    vapply(seq_len(n_con), function(i) {
-      ai <- quadratic$A_i[[i]]
-      bi <- quadratic$b_i[[i]]
-      ci <- quadratic$c_i[i]
-      drop(t(theta) %*% ai %*% theta) +
-        sum(bi * theta) + ci
-    }, numeric(1))
-  }
-
-  constraint_jac <- function(theta) {
-    jac <- matrix(0, nrow = n_con, ncol = dim_theta)
-    for (i in seq_len(n_con)) {
-      ai <- quadratic$A_i[[i]]
-      bi <- quadratic$b_i[[i]]
-      jac[i, ] <- 2 * drop(ai %*% theta) + bi
-    }
-    jac
-  }
-
-  if (is.null(theta_start)) {
-    theta_start <- rep(0, dim_theta)
-  }
-
-  result <- tryCatch(nloptr::slsqp(
-    x0 = theta_start, fn = obj_fn, gr = grad_fn,
-    hin = constraint_fn, hinjac = constraint_jac,
-    control = list(xtol_rel = 1e-8, maxeval = 1000),
-    deprecatedBehavior = FALSE
-  ), error = function(e) {
-    list(
-      par = theta_start, value = NA_real_,
-      convergence = -99L, iter = 0L,
-      message = e$message
-    )
-  })
-
-  bound_val <- if (direction == "max") -result$value else result$value
-  list(
-    bound = bound_val, theta = result$par,
-    convergence = result$convergence,
-    iterations = result$iter
-  )
-}
-
-solve_all_profile_bounds <- function(quadratic,
-                                     theta_start = NULL) {
-  n_comp <- ncol(quadratic$A_i[[1]])
-  results <- lapply(seq_len(n_comp), function(k) {
-    lo <- solve_profile_bound(
-      quadratic, k, "min", theta_start
-    )
-    hi <- solve_profile_bound(
-      quadratic, k, "max", theta_start
-    )
-    data.frame(
-      component = k,
-      lower = lo$bound, upper = hi$bound,
-      width = hi$bound - lo$bound,
-      converged_lower = lo$convergence >= 0,
-      converged_upper = hi$convergence >= 0,
-      stringsAsFactors = FALSE
-    )
-  })
-  do.call(rbind, results)
 }
 
 compute_total_width <- function(bounds_tbl) {
@@ -110,6 +27,10 @@ normalize_gamma_columns <- function(gamma) {
   sweep(gamma, 2, col_norms, FUN = "/")
 }
 
+# Total identified-set width for a gamma. FAIL CLOSED: reject (large finite
+# penalty) any gamma whose set is unbounded in any direction OR whose any bounded
+# profile fails the feasibility/active validity check. The penalty must stay
+# finite -- the OUTER optimizer is itself an slsqp call that needs finite values.
 objective_gamma_only <- function(par, moments, tau,
                                  n_pcs, n_components,
                                  maturities = NULL) {
@@ -124,8 +45,8 @@ objective_gamma_only <- function(par, moments, tau,
       bounds_tbl <- solve_all_profile_bounds(
         quad_sys$quadratic
       )
-      if (any(!bounds_tbl$converged_lower) ||
-        any(!bounds_tbl$converged_upper)) {
+      if (any(!bounds_tbl$bounded_lower) || any(!bounds_tbl$bounded_upper) ||
+        any(!bounds_tbl$valid_lower) || any(!bounds_tbl$valid_upper)) {
         return(1e6)
       }
       compute_total_width(bounds_tbl)
@@ -134,6 +55,25 @@ objective_gamma_only <- function(par, moments, tau,
       1e6
     }
   )
+}
+
+# Is the set for this gamma unbounded OR invalid in any direction? (Either makes
+# the reported start width dishonest -- both map to Inf, never the 1e6 penalty.)
+.gamma_set_unbounded <- function(gamma, tau, moments, maturities = NULL) {
+  bt <- tryCatch(
+    {
+      qs <- symmetrize_quadratic_system(
+        build_quadratic_system(gamma, tau, moments, maturities)
+      )
+      solve_all_profile_bounds(qs$quadratic)
+    },
+    error = function(e) NULL
+  )
+  if (is.null(bt)) {
+    return(TRUE)
+  }
+  any(!bt$bounded_lower) || any(!bt$bounded_upper) ||
+    any(!bt$valid_lower) || any(!bt$valid_upper)
 }
 
 run_gamma_optimization <- function(gamma_start,
@@ -147,10 +87,16 @@ run_gamma_optimization <- function(gamma_start,
   n_comp <- ncol(gamma_start)
   par_start <- pack_gamma(gamma_start)
 
-  objective_start <- objective_gamma_only(
-    par_start, moments, tau,
-    n_pcs, n_comp, maturities
-  )
+  # Reported start objective is HONEST: Inf when the baseline set is unbounded,
+  # so downstream width-reduction metrics never read the finite 1e6 penalty as a
+  # spurious ~100% improvement. The optimizer internally still uses 1e6.
+  objective_start <- if (
+    .gamma_set_unbounded(gamma_start, tau, moments, maturities)
+  ) {
+    Inf
+  } else {
+    objective_gamma_only(par_start, moments, tau, n_pcs, n_comp, maturities)
+  }
 
   # Generate starting points: primary + perturbed
   starts <- vector("list", n_starts)
@@ -191,10 +137,18 @@ run_gamma_optimization <- function(gamma_start,
     unpack_gamma(best$par, n_pcs, n_comp)
   )
 
+  # Honest final objective: best$value == 1e6 means NO bounded+valid gamma was
+  # found (all starts on the penalty plateau) -> report Inf, not the sentinel.
+  objective_final <- if (is.finite(best$value) && best$value < 1e6) {
+    best$value
+  } else {
+    Inf
+  }
+
   list(
     gamma_optimized = gamma_opt,
     objective_start = objective_start,
-    objective_final = best$value,
+    objective_final = objective_final,
     all_results = all_results,
     best_index = best_idx
   )

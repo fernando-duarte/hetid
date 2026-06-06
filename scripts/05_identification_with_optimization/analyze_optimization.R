@@ -32,22 +32,48 @@ width_comparison <- baseline |>
     by = "component"
   ) |>
   mutate(
-    percent_reduction = (baseline_width - optimized_width) / baseline_width * 100
+    percent_reduction = ifelse(is.finite(baseline_width),
+      (baseline_width - optimized_width) / baseline_width * 100,
+      NA_real_
+    ),
+    reduction_label = format_reduction(baseline_width, optimized_width)
   )
+mean_red <- mean_pct_reduction(
+  width_comparison$baseline_width, width_comparison$optimized_width
+)
+mean_red_str <- if (is.finite(mean_red)) {
+  paste0(round(mean_red, 2), "%")
+} else {
+  "baseline unbounded -> optimized bounded"
+}
+fmt_mean <- function(x) {
+  if (all(!is.finite(x))) "unbounded" else round(mean(x[is.finite(x)]), 4)
+}
 cli_ul(c(
-  paste("Mean baseline:", round(mean(width_comparison$baseline_width, na.rm = TRUE), 4)),
-  paste("Mean optimized:", round(mean(width_comparison$optimized_width, na.rm = TRUE), 4)),
-  paste("Mean reduction:", round(mean(width_comparison$percent_reduction, na.rm = TRUE), 2), "%")
+  paste("Mean baseline:", fmt_mean(width_comparison$baseline_width)),
+  paste("Mean optimized:", fmt_mean(width_comparison$optimized_width)),
+  paste("Mean reduction:", mean_red_str)
 ))
 
 # Objective function values
 cli_h2("Objective Function")
-total_red_pct <- (results$objective_start - results$objective_final) /
-  results$objective_start * 100
+start_finite <- is.finite(results$objective_start)
+total_red_pct <- if (start_finite) {
+  (results$objective_start - results$objective_final) /
+    results$objective_start * 100
+} else {
+  NA_real_
+}
+start_str <- if (start_finite) round(results$objective_start, 6) else "unbounded"
+red_str <- if (start_finite) {
+  paste0(round(total_red_pct, 2), " %")
+} else {
+  "baseline unbounded"
+}
 cli_ul(c(
-  paste("Start:", round(results$objective_start, 6)),
+  paste("Start:", start_str),
   paste("Final:", round(results$objective_final, 6)),
-  paste("Reduction:", round(total_red_pct, 2), "%")
+  paste("Reduction:", red_str)
 ))
 
 # Gamma rotation analysis
@@ -98,6 +124,9 @@ plot_data <- width_comparison |>
   filter(!is.na(component_label)) |>
   pivot_longer(c(baseline_width, optimized_width), names_to = "spec", values_to = "width") |>
   mutate(spec = ifelse(spec == "baseline_width", "Baseline", "Optimized"))
+n_omitted <- sum(!is.finite(plot_data$width))
+plot_data <- plot_data |>
+  filter(is.finite(width))
 
 p_widths <- ggplot(
   plot_data,
@@ -111,6 +140,11 @@ p_widths <- ggplot(
   ) +
   labs(
     title = "Baseline vs Optimized Set Widths",
+    subtitle = if (n_omitted > 0) {
+      paste0(n_omitted, " unbounded bar(s) omitted")
+    } else {
+      NULL
+    },
     x = "Component", y = "Width", fill = NULL
   ) +
   ct +

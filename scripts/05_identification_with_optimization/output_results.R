@@ -31,22 +31,26 @@ lookup <- results$lookup
 baseline_bounds <- results$baseline_bounds
 optimized_bounds <- results$optimized_bounds
 
-# Compute widths and reduction
+# Compute widths and reduction (numeric -- kept for the summary mean below)
 baseline_width <- baseline_bounds$upper - baseline_bounds$lower
 optimized_width <- optimized_bounds$upper -
   optimized_bounds$lower
-width_reduction_pct <- analysis$width_comparison$percent_reduction
+width_reduction_label <- format_reduction(baseline_width, optimized_width)
+# A width is reliable only when BOTH bounds are valid. Pass an explicit
+# length-matched validity vector (default scalar TRUE collapses the ifelse).
+base_w_valid <- baseline_bounds$valid_lower & baseline_bounds$valid_upper
+opt_w_valid <- optimized_bounds$valid_lower & optimized_bounds$valid_upper
 
-# Build the main results table
+# Finite/Inf-aware formatters turn unbounded bounds/widths into "unbounded".
 table_df <- data.frame(
   Component = lookup$component_label,
-  Baseline_Lower = baseline_bounds$lower,
-  Baseline_Upper = baseline_bounds$upper,
-  Optimized_Lower = optimized_bounds$lower,
-  Optimized_Upper = optimized_bounds$upper,
-  Baseline_Width = baseline_width,
-  Optimized_Width = optimized_width,
-  Width_Reduction_Pct = width_reduction_pct
+  Baseline_Lower = format_bound(baseline_bounds$lower, baseline_bounds$valid_lower),
+  Baseline_Upper = format_bound(baseline_bounds$upper, baseline_bounds$valid_upper),
+  Optimized_Lower = format_bound(optimized_bounds$lower, optimized_bounds$valid_lower),
+  Optimized_Upper = format_bound(optimized_bounds$upper, optimized_bounds$valid_upper),
+  Baseline_Width = format_width(baseline_width, base_w_valid),
+  Optimized_Width = format_width(optimized_width, opt_w_valid),
+  Width_Reduction = width_reduction_label
 )
 
 cli_h2("Creating Publication-Ready Tables")
@@ -64,19 +68,9 @@ tbl <- gt(table_df) |>
     Optimized_Upper = "Optimized Upper",
     Baseline_Width = "Baseline Width",
     Optimized_Width = "Optimized Width",
-    Width_Reduction_Pct = "Width Reduction (%)"
-  ) |>
-  fmt_number(
-    columns = c(
-      Baseline_Lower, Baseline_Upper,
-      Optimized_Lower, Optimized_Upper,
-      Baseline_Width, Optimized_Width
-    ),
-    decimals = 4
-  ) |>
-  fmt_number(
-    columns = Width_Reduction_Pct, decimals = 2
+    Width_Reduction = "Width Reduction"
   )
+# Bound/width columns are pre-formatted character; no fmt_number (errors in gt).
 
 # Save HTML
 html_path <- file.path(
@@ -120,13 +114,22 @@ cli_h2("Creating Analysis Summary")
 obj_start <- results$objective_start
 obj_final <- results$objective_final
 mean_cosine <- mean(
-  analysis$gamma_similarity,
+  analysis$gamma_similarity$cosine_sim,
   na.rm = TRUE
 )
-total_reduction <- mean(
-  width_reduction_pct,
-  na.rm = TRUE
-)
+# Mean reduction over bounded components only; NA when the baseline is unbounded.
+total_reduction <- mean_pct_reduction(baseline_width, optimized_width)
+# Honest objective-start string: "unbounded" rather than the 1e6 penalty/Inf.
+obj_start_str <- if (is.finite(obj_start)) {
+  sprintf("%.6f", obj_start)
+} else {
+  "unbounded"
+}
+total_reduction_str <- if (is.finite(total_reduction)) {
+  sprintf("%.2f", total_reduction)
+} else {
+  "baseline unbounded"
+}
 tau_fixed <- results$tau_fixed
 
 # Build plain text summary
@@ -140,7 +143,7 @@ summary_lines <- c(
   "OPTIMIZATION:",
   paste(
     "  Objective (start):",
-    sprintf("%.6f", obj_start)
+    obj_start_str
   ),
   paste(
     "  Objective (final):",
@@ -150,7 +153,7 @@ summary_lines <- c(
   "WIDTH REDUCTION:",
   paste(
     "  Mean width reduction (%):",
-    sprintf("%.2f", total_reduction)
+    total_reduction_str
   ),
   "",
   "GAMMA COMPARISON:",

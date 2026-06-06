@@ -84,11 +84,17 @@ print(
   )]
 )
 
-width_reduction <- sum(baseline_bounds$width) -
-  sum(optimized_bounds$width)
-cli_alert_success(
-  "Total width reduction: {.val {round(width_reduction, 4)}}"
-)
+base_total <- sum(baseline_bounds$width)
+opt_total <- sum(optimized_bounds$width)
+if (!is.finite(base_total)) {
+  cli_alert_success(
+    "Baseline set unbounded; optimized total width = {.val {round(opt_total, 4)}}"
+  )
+} else {
+  cli_alert_success(
+    "Total width reduction: {.val {round(base_total - opt_total, 4)}}"
+  )
+}
 
 # Build optimization trace from all starts
 trace <- data.frame(

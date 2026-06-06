@@ -27,6 +27,8 @@ repos:
       - id: lintr
         args: []
         verbose: true
+        additional_dependencies:
+          - cyclocomp
 
       # Check that README.Rmd hasn't changed without updating README.md
       - id: readme-rmd-rendered

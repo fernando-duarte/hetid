@@ -41,12 +41,21 @@ save_plot <- function(p, base_name) {
 }
 
 cli_h2("Creating Main Identification Table")
+# Bounds render as character via format_bound (Inf -> "unbounded",
+# invalid -> "unreliable"); reduction shown as the qualitative label so an
+# unbounded baseline does not produce a spurious percentage.
 main_df <- comparison_table |>
+  mutate(
+    baseline_lower = format_bound(baseline_lower, baseline_valid_lower),
+    baseline_upper = format_bound(baseline_upper, baseline_valid_upper),
+    optimized_lower = format_bound(optimized_lower, optimized_valid_lower),
+    optimized_upper = format_bound(optimized_upper, optimized_valid_upper)
+  ) |>
   select(
     component_label,
     baseline_lower, baseline_upper,
     optimized_lower, optimized_upper,
-    pct_width_reduction
+    reduction_label
   )
 
 main_tbl <- gt(main_df) |>
@@ -68,16 +77,8 @@ main_tbl <- gt(main_df) |>
     baseline_upper = "Upper",
     optimized_lower = "Lower",
     optimized_upper = "Upper",
-    pct_width_reduction = "Width Reduction (%)"
-  ) |>
-  fmt_number(
-    columns = c(
-      baseline_lower, baseline_upper,
-      optimized_lower, optimized_upper
-    ),
-    decimals = 4
-  ) |>
-  fmt_number(columns = pct_width_reduction, decimals = 2)
+    reduction_label = "Width Reduction"
+  )
 
 save_gt(main_tbl, "identification_intervals_main")
 cli_alert_success("Main identification table saved.")
@@ -120,6 +121,12 @@ interval_df <- comparison_table |>
     names_from = bound, values_from = value
   )
 
+# Drop unbounded intervals so geom_linerange never draws +/-Inf ranges.
+n_interval_total <- nrow(interval_df)
+interval_df <- interval_df |>
+  filter(is.finite(lower) & is.finite(upper))
+n_interval_omitted <- n_interval_total - nrow(interval_df)
+
 p_intervals <- ggplot(
   interval_df,
   aes(
@@ -138,7 +145,12 @@ p_intervals <- ggplot(
   labs(
     x = "Component", y = "Theta Bounds",
     color = "Method",
-    title = "Identified Intervals: Baseline vs Optimized"
+    title = "Identified Intervals: Baseline vs Optimized",
+    subtitle = if (n_interval_omitted > 0) {
+      paste0(n_interval_omitted, " unbounded interval(s) omitted")
+    } else {
+      NULL
+    }
   ) +
   theme_minimal()
 
@@ -147,16 +159,36 @@ cli_alert_success("Interval plot saved.")
 
 cli_h2("Creating Width Reduction Bar Chart")
 
-p_reduction <- ggplot(
-  comparison_table,
-  aes(x = component_label, y = pct_width_reduction)
-) +
-  geom_col(fill = "steelblue") +
-  labs(
-    x = "Component", y = "Width Reduction (%)",
-    title = "Interval Width Reduction by Component"
+# pct_width_reduction is NA where the baseline is unbounded; drop those rows so
+# the bar chart never plots NA. If none remain, annotate rather than draw empty.
+reduction_df <- comparison_table |>
+  filter(is.finite(pct_width_reduction))
+
+if (nrow(reduction_df) > 0) {
+  p_reduction <- ggplot(
+    reduction_df,
+    aes(x = component_label, y = pct_width_reduction)
   ) +
-  theme_minimal()
+    geom_col(fill = "steelblue") +
+    labs(
+      x = "Component", y = "Width Reduction (%)",
+      title = "Interval Width Reduction by Component"
+    ) +
+    theme_minimal()
+} else {
+  p_reduction <- ggplot() +
+    annotate(
+      "text",
+      x = 0.5, y = 0.5,
+      label = "Baseline unbounded; no width reduction to report"
+    ) +
+    labs(title = "Interval Width Reduction by Component") +
+    theme_minimal() +
+    theme(
+      axis.text = element_blank(), axis.title = element_blank(),
+      axis.ticks = element_blank(), panel.grid = element_blank()
+    )
+}
 
 save_plot(p_reduction, "width_reduction")
 cli_alert_success("Width reduction bar chart saved.")

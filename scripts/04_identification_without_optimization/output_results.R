@@ -28,27 +28,30 @@ lookup <- results$lookup
 bounds_tau0 <- results$bounds_tau0
 bounds_tau_set <- results$bounds_tau_set
 
-# Compute width reduction percentage
+# Compute width reduction label. tau = 0.2 is the wider/unbounded baseline spec,
+# tau = 0 the point-ID target, so the reduction is measured baseline -> point.
 width_tau0 <- bounds_tau0$upper - bounds_tau0$lower
 width_tau_set <- bounds_tau_set$upper - bounds_tau_set$lower
-width_reduction_pct <- (
-  (width_tau0 - width_tau_set) / width_tau0 * 100
-)
+width_reduction_label <- format_reduction(width_tau_set, width_tau0)
 
-# Build the main results table
+# Build the main results table. Bounds are formatted to character with the
+# finite/Inf/validity-aware helper so Inf renders "unbounded" and failures
+# "unreliable" (never spurious large numbers).
 table_df <- data.frame(
   Component = lookup$component_label,
   Component_ID = lookup$component_id,
-  Lower_tau0 = bounds_tau0$lower,
-  Upper_tau0 = bounds_tau0$upper,
-  Lower_tau02 = bounds_tau_set$lower,
-  Upper_tau02 = bounds_tau_set$upper,
-  Width_Reduction_Pct = width_reduction_pct
+  Lower_tau0 = format_bound(bounds_tau0$lower, bounds_tau0$valid_lower),
+  Upper_tau0 = format_bound(bounds_tau0$upper, bounds_tau0$valid_upper),
+  Lower_tau02 = format_bound(bounds_tau_set$lower, bounds_tau_set$valid_lower),
+  Upper_tau02 = format_bound(bounds_tau_set$upper, bounds_tau_set$valid_upper),
+  Width_Reduction = width_reduction_label
 )
 
 cli_h2("Creating Publication-Ready Tables")
 
 # Build gt table
+# All bound columns and Width_Reduction are pre-formatted character (so Inf
+# renders "unbounded"); gt::fmt_number would error on character, so omit it.
 tbl <- gt(table_df) |>
   tab_header(title = "Baseline Identified Set") |>
   cols_label(
@@ -58,16 +61,8 @@ tbl <- gt(table_df) |>
     Upper_tau0 = html("Upper (&tau;=0)"),
     Lower_tau02 = html("Lower (&tau;=0.2)"),
     Upper_tau02 = html("Upper (&tau;=0.2)"),
-    Width_Reduction_Pct = "Width Reduction (%)"
-  ) |>
-  fmt_number(
-    columns = c(
-      Lower_tau0, Upper_tau0,
-      Lower_tau02, Upper_tau02
-    ),
-    decimals = 4
-  ) |>
-  fmt_number(columns = Width_Reduction_Pct, decimals = 2)
+    Width_Reduction = "Width Reduction"
+  )
 
 # Save HTML
 html_path <- file.path(
@@ -104,15 +99,26 @@ comp_labels <- paste(
   lookup$component_label,
   collapse = ", "
 )
-mean_w_tau0 <- mean(width_tau0, na.rm = TRUE)
-mean_w_tau_set <- mean(width_tau_set, na.rm = TRUE)
+# Mean widths over finite components only; "unbounded" when all are infinite.
+fmt_mean_width <- function(w) {
+  if (all(!is.finite(w))) {
+    "unbounded"
+  } else {
+    paste0(
+      sprintf("%.6f", mean(w[is.finite(w)])),
+      if (any(!is.finite(w))) " (some unbounded)" else ""
+    )
+  }
+}
+mean_w_tau0 <- fmt_mean_width(width_tau0)
+mean_w_tau_set <- fmt_mean_width(width_tau_set)
 
-# Count converged bounds
-n_conv_tau0 <- sum(
+# Count bounded (finite both-sided) components
+n_bnd_tau0 <- sum(
   is.finite(bounds_tau0$lower) &
     is.finite(bounds_tau0$upper)
 )
-n_conv_tau_set <- sum(
+n_bnd_tau_set <- sum(
   is.finite(bounds_tau_set$lower) &
     is.finite(bounds_tau_set$upper)
 )
@@ -131,23 +137,17 @@ summary_lines <- c(
   paste("  Components:", comp_labels),
   "",
   "BOUNDS WIDTH:",
-  paste(
-    "  Mean width at tau=0:",
-    sprintf("%.6f", mean_w_tau0)
-  ),
-  paste(
-    "  Mean width at tau=0.2:",
-    sprintf("%.6f", mean_w_tau_set)
-  ),
+  paste("  Mean width at tau=0:", mean_w_tau0),
+  paste("  Mean width at tau=0.2:", mean_w_tau_set),
   "",
-  "CONVERGENCE:",
+  "BOUNDEDNESS:",
   paste(
-    "  Converged bounds (tau=0):",
-    n_conv_tau0, "of", n_components
+    "  Bounded components (tau=0):",
+    n_bnd_tau0, "of", n_components
   ),
   paste(
-    "  Converged bounds (tau=0.2):",
-    n_conv_tau_set, "of", n_components
+    "  Bounded components (tau=0.2):",
+    n_bnd_tau_set, "of", n_components
   )
 )
 

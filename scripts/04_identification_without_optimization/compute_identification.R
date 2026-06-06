@@ -54,15 +54,9 @@ tau_specs <- get_tau_spec(
   tau_point = 0, tau_set = 0.2, n_components = n_comp
 )
 
-cli_alert_info(
-  "Gamma: {.val {BASELINE_GAMMA_METHOD}} unit-norm loadings"
-)
-cli_alert_info(
-  "Tau point: {.val {tau_specs$tau_point[1]}}, "
-)
-cli_alert_info(
-  "Tau set: {.val {tau_specs$tau_set[1]}}"
-)
+cli_alert_info("Gamma: {.val {BASELINE_GAMMA_METHOD}} unit-norm loadings")
+cli_alert_info("Tau point: {.val {tau_specs$tau_point[1]}}")
+cli_alert_info("Tau set: {.val {tau_specs$tau_set[1]}}")
 
 # Build quadratic systems
 cli_h2("Building Quadratic Systems")
@@ -86,33 +80,48 @@ cli_alert_success("Quadratic systems built and symmetrized")
 # Solve profile bounds
 cli_h2("Solving Profile Bounds")
 
+# At tau = 0 each constraint is the perfect square (Q_i' theta - L_i)^2, so the
+# set is the single point solve(Q, L). Use the closed-form point when consistent,
+# else fall back to the inequality solver.
 cli_alert("Solving bounds for tau = 0...")
-bounds_tau0 <- solve_all_profile_bounds(
-  quad_sys_tau0$quadratic
-)
+pt_tau0 <- solve_point_identification(quad_sys_tau0$components)
+if (!is.null(pt_tau0)) {
+  bounds_tau0 <- data.frame(
+    component = seq_along(pt_tau0$theta),
+    lower = pt_tau0$theta, upper = pt_tau0$theta, width = 0,
+    bounded_lower = TRUE, bounded_upper = TRUE,
+    valid_lower = TRUE, valid_upper = TRUE
+  )
+  cli_alert_info(
+    "tau = 0 point ID: cond(Q) = {.val {round(pt_tau0$cond, 1)}}"
+  )
+} else {
+  cli_alert_warning("tau = 0 linear system inconsistent; using set solver")
+  bounds_tau0 <- solve_all_profile_bounds(quad_sys_tau0$quadratic)
+}
 
 cli_alert("Solving bounds for tau = 0.2...")
 bounds_tau_set <- solve_all_profile_bounds(
   quad_sys_tau_set$quadratic
 )
 
-# Check convergence
-all_conv_tau0 <- all(bounds_tau0$converged_lower) &&
-  all(bounds_tau0$converged_upper)
-all_conv_tau_set <- all(bounds_tau_set$converged_lower) &&
-  all(bounds_tau_set$converged_upper)
+# Check validity (tau = 0 point ID) and boundedness (tau = 0.2 set)
+all_valid_tau0 <- all(bounds_tau0$valid_lower) &&
+  all(bounds_tau0$valid_upper)
+all_bounded_tau_set <- all(bounds_tau_set$bounded_lower) &&
+  all(bounds_tau_set$bounded_upper)
 
-if (all_conv_tau0) {
-  cli_alert_success("All bounds converged for tau = 0")
+if (all_valid_tau0) {
+  cli_alert_success("tau = 0 point-ID bounds valid")
 } else {
-  cli_alert_warning("Some bounds did NOT converge for tau = 0")
+  cli_alert_warning("Some tau = 0 bounds failed the validity check")
 }
 
-if (all_conv_tau_set) {
-  cli_alert_success("All bounds converged for tau = 0.2")
+if (all_bounded_tau_set) {
+  cli_alert_success("tau = 0.2 set is bounded")
 } else {
   cli_alert_warning(
-    "Some bounds did NOT converge for tau = 0.2"
+    "tau = 0.2 set is UNBOUNDED (rank-deficient gamma)"
   )
 }
 
@@ -121,19 +130,12 @@ bounds_tau0$component_label <- lookup$component_label
 bounds_tau_set$component_label <- lookup$component_label
 
 # Display results
+display_cols <- c("component_label", "lower", "upper", "width")
 cli_h2("Baseline Bounds (tau = 0)")
-print(
-  bounds_tau0[, c(
-    "component_label", "lower", "upper", "width"
-  )]
-)
+print(bounds_tau0[, display_cols])
 
 cli_h2("Baseline Bounds (tau = 0.2)")
-print(
-  bounds_tau_set[, c(
-    "component_label", "lower", "upper", "width"
-  )]
-)
+print(bounds_tau_set[, display_cols])
 
 # Assemble results
 results <- list(
@@ -156,8 +158,8 @@ results <- list(
   bounds_tau0 = bounds_tau0,
   bounds_tau_set = bounds_tau_set,
   solver_diagnostics = list(
-    all_converged_tau0 = all_conv_tau0,
-    all_converged_tau_set = all_conv_tau_set
+    all_converged_tau0 = all_valid_tau0,
+    all_converged_tau_set = all_bounded_tau_set
   )
 )
 
