@@ -21,17 +21,27 @@
 }
 
 # Per-constraint normalization omega_i (positive) -> transformed g_i ~ O(1).
+# A RELATIVE floor rescues constraints whose scale is negligible versus the rest:
+# without it, dividing a near-machine-epsilon constraint value by a microscopic
+# omega_i blows the feasibility residual up to O(1) and spuriously trips the
+# active/infeasible checks. The floor is relative to the median positive scale, so
+# a uniformly small but well-scaled system (every omega_i tiny) is left untouched.
 .derive_constraint_scales <- function(quadratic, delta) {
-  vapply(seq_along(quadratic$A_i), function(i) {
+  raw <- vapply(seq_along(quadratic$A_i), function(i) {
     a <- (quadratic$A_i[[i]] + t(quadratic$A_i[[i]])) / 2
     rho <- max(abs(eigen(a,
       symmetric = TRUE,
       only.values = TRUE
     )$values)) * delta^2
     bmag <- sqrt(sum((delta * quadratic$b_i[[i]])^2))
-    w <- max(rho, bmag, abs(quadratic$c_i[i]))
-    if (!is.finite(w) || w <= 0) 1 else w
+    max(rho, bmag, abs(quadratic$c_i[i]))
   }, numeric(1))
+  raw[!is.finite(raw)] <- 0
+  pos <- raw[raw > 0]
+  floor_val <- if (length(pos)) 1e-12 * stats::median(pos) else 0
+  w <- pmax(raw, floor_val)
+  w[!is.finite(w) | w <= 0] <- 1
+  w
 }
 
 # Solve the scaled subproblem at a given box; return the FULL phi vector and the
@@ -83,22 +93,45 @@
   }, numeric(1)))
 }
 
+# A scaled solve is usable for a bound/track decision only if every coordinate is
+# finite (a crashed solve returns NA for all of phi).
+.solve_finite <- function(r) all(is.finite(r$phi))
+
+# Turn a finite scaled solution into a finite bound. VALID is the
+# solver-INDEPENDENT feasible+active certificate (residual ~ 0): a feasible point
+# that sits on at least one constraint boundary. We deliberately do NOT gate this
+# on the solver's convergence code -- SLSQP returns roundoff-limited codes on
+# legitimately ill-conditioned bounds, so trusting the residual certificate
+# (with hard crashes already screened by .solve_finite) avoids false "unreliable"
+# verdicts on otherwise valid bounds.
+.finalize_bound <- function(quadratic, delta, omega, r, component_index, feas_tol) {
+  resid <- .feasibility_residual(quadratic, delta * r$phi, omega)
+  list(
+    bound = delta * r$phi[component_index], bounded = TRUE,
+    valid = is.finite(resid) && abs(resid) <= feas_tol
+  )
+}
+
 # Profile bound (min or max of theta_k). Returns list(bound, bounded, valid):
 #   (TRUE , TRUE ) finite feasible+active bound -> the value
-#   (TRUE , FALSE) finite but feasibility check failed -> "unreliable"
-#   (FALSE, TRUE ) unbounded: strictly feasible at box2 with NO active constraint
-#   (FALSE, FALSE) solver failure / infeasible runaway -> NA (fail closed)
-# Unboundedness is detected by the ABSENCE of a binding constraint at box2 (the
-# residual stays << 0), NOT by phi reaching the box edge. With a LINEAR objective
-# the only thing that can stop the optimum while it is strictly feasible is the
-# box itself, so "no constraint binds" => unbounded -- and this holds even when a
-# badly scaled ray stalls partway through the box instead of reaching the edge.
-# Caveat (shared with .feasibility_residual): on a non-convex (indefinite A_i)
-# set a strictly-interior stall short of a constraint that WOULD bind is read as
-# unbounded here, just as a premature boundary stall can pass the active check.
+#   (TRUE , FALSE) finite but feasibility/convergence check failed -> "unreliable"
+#   (FALSE, TRUE ) unbounded -> +/-Inf
+#   (FALSE, FALSE) solver failure / infeasible at the largest box -> NA (fail closed)
+#
+# Boundedness is decided by COORDINATE TRACKING across growing boxes, NOT by which
+# constraint happens to be active: a genuine finite bound sits at a fixed location
+# (interior to a large-enough box), while an unbounded coordinate rides the box
+# edge at every box. The box1 solution is accepted directly only when NO
+# coordinate rode the box (so an unbounded ray in a non-target coordinate cannot
+# masquerade as a finite bound); otherwise the box is enlarged (box2, box3) and
+# the target is bounded iff it lands strictly interior to some enlarged box.
+# Caveat: on a non-convex (indefinite A_i) set a strictly-interior local stall
+# short of a constraint that WOULD bind can still be misread -- inherent to the
+# local solver.
 solve_profile_bound <- function(quadratic, component_index,
                                 direction = c("min", "max"),
-                                box1 = 1e6, box2 = 1e9, feas_tol = 1e-4,
+                                box1 = 1e6, box2 = 1e9, box3 = 1e10,
+                                feas_tol = 1e-4,
                                 xtol_rel = 1e-8, maxeval = 1000) {
   direction <- match.arg(direction)
   delta <- .derive_theta_scale(quadratic)
@@ -110,38 +143,35 @@ solve_profile_bound <- function(quadratic, component_index,
     quadratic, component_index, sign_mult, delta, omega,
     box1, xtol_rel, maxeval
   )
-  phi1k <- r1$phi[component_index]
-  if (is.finite(phi1k) && abs(phi1k) < 0.5 * box1) {
-    phi <- r1$phi
-  } else {
-    r2 <- .solve_scaled(
-      quadratic, component_index, sign_mult, delta, omega,
-      box2, xtol_rel, maxeval
-    )
-    phi2k <- r2$phi[component_index]
-    if (!is.finite(phi2k)) {
-      return(list(bound = NA_real_, bounded = FALSE, valid = FALSE))
-    }
-    resid2 <- .feasibility_residual(quadratic, delta * r2$phi, omega)
-    if (!is.finite(resid2) || resid2 > feas_tol) {
-      # Infeasible runaway -> fail closed.
-      return(list(bound = NA_real_, bounded = FALSE, valid = FALSE))
-    }
-    if (resid2 < -feas_tol) {
-      # Strictly feasible at box2: no constraint binds, so only the box stopped
-      # the linear objective -> unbounded in this direction (regardless of where
-      # in the box the solver stalled).
-      return(list(bound = inf_bound, bounded = FALSE, valid = TRUE))
-    }
-    # |resid2| <= feas_tol: a constraint binds at box2 -> a genuine large finite
-    # bound that box1 was simply too small to reach.
-    phi <- r2$phi
+  # Fast path: accept box1 only if it is a clean solve with NO coordinate on the
+  # box edge (an edge-riding coordinate -- target or not -- means the box, not a
+  # constraint, stopped the optimum, so fall through to coordinate tracking).
+  if (.solve_finite(r1) && all(abs(r1$phi) < 0.99 * box1)) {
+    return(.finalize_bound(quadratic, delta, omega, r1, component_index, feas_tol))
   }
-  resid <- .feasibility_residual(quadratic, delta * phi, omega)
-  list(
-    bound = delta * phi[component_index], bounded = TRUE,
-    valid = is.finite(resid) && abs(resid) <= feas_tol
-  )
+
+  # Enlarge the box; a genuine finite bound shows up interior to a big-enough box,
+  # an unbounded direction keeps riding the edge.
+  for (bx in c(box2, box3)) {
+    r <- .solve_scaled(
+      quadratic, component_index, sign_mult, delta, omega,
+      bx, xtol_rel, maxeval
+    )
+    if (!.solve_finite(r)) {
+      return(list(bound = NA_real_, bounded = FALSE, valid = FALSE))
+    }
+    resid <- .feasibility_residual(quadratic, delta * r$phi, omega)
+    if (!is.finite(resid) || resid > feas_tol) {
+      # No feasible point at this box (empty set / runaway) -> fail closed.
+      return(list(bound = NA_real_, bounded = FALSE, valid = FALSE))
+    }
+    if (abs(r$phi[component_index]) < 0.99 * bx) {
+      # Target landed interior -> a constraint bounds it -> genuine finite bound.
+      return(.finalize_bound(quadratic, delta, omega, r, component_index, feas_tol))
+    }
+  }
+  # Target rode the edge even at box3 -> unbounded in this direction.
+  list(bound = inf_bound, bounded = FALSE, valid = TRUE)
 }
 
 # Profile bounds for every coordinate. width = Inf/NA when a side is unbounded/failed.

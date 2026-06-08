@@ -75,6 +75,38 @@ check(
   is.infinite(rh$lower[2]) && is.infinite(rh$upper[2])
 )
 
+# Oblique unbounded {theta1 - theta2 <= 0}: theta1 is unbounded both ways (take
+# theta2 large). The active oblique constraint must NOT be read as a finite bound.
+ro <- solve_all_profile_bounds(quad(list(matrix(0, 3, 3)), list(c(1, -1, 0)), c(0)))
+check(
+  "oblique unbounded: theta1 both sides Inf",
+  is.infinite(ro$lower[1]) && is.infinite(ro$upper[1]) &&
+    !ro$bounded_lower[1] && !ro$bounded_upper[1]
+)
+
+# Genuine large finite bound theta1 in [-7e8, 7e8] (true bound between box1 and
+# box2): must stay BOUNDED, not be misread as unbounded.
+rl <- solve_all_profile_bounds(quad(list(diag(c((1 / 7e8)^2, 1, 1))), list(rep(0, 3)), c(-1)))
+check(
+  "large finite bound theta1 ~ +/-7e8 (bounded)",
+  rl$bounded_lower[1] && rl$bounded_upper[1] &&
+    approx(rl$upper[1], 7e8, 1e-2) && approx(rl$lower[1], -7e8, 1e-2)
+)
+
+# Heterogeneous scale: O(1) unit ball + a real but tiny-scale constraint
+# {1e-16 * theta1 <= 0} (i.e. theta1 <= 0). The relative scale floor must NOT mask
+# the tiny constraint, and the O(1) ball bounds must be unaffected.
+rhet <- solve_all_profile_bounds(quad(
+  list(diag(3), matrix(0, 3, 3)),
+  list(rep(0, 3), c(1e-16, 0, 0)), c(-1, 0)
+))
+check(
+  "heterogeneous scale: tiny constraint not masked",
+  approx(rhet$upper[1], 0, 1e-2) && approx(rhet$lower[1], -1, 1e-2) &&
+    approx(rhet$upper[2], 1, 1e-2) &&
+    all(rhet$valid_lower & rhet$valid_upper)
+)
+
 # Stability: tiny ill-scaled bounded ellipsoid solved at 3 tolerances -> stable.
 q_ill <- quad(list(1e-10 * diag(c(1e-4, 1, 1))), list(rep(0, 3)), c(-1e-10))
 bnds <- lapply(c(1e-6, 1e-8, 1e-10), function(xt) {

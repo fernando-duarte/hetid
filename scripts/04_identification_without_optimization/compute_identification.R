@@ -7,7 +7,7 @@ source(here::here("scripts/utils/common_settings.R"))
 
 # Selectable without editing this file: HETID_BASELINE_GAMMA=reduced_form Rscript ...
 BASELINE_GAMMA_METHOD <- Sys.getenv("HETID_BASELINE_GAMMA", "vfci")
-ID_MODE <- "factors" # "maturities" or "factors"
+ID_MODE <- "maturities" # "maturities" or "factors"
 
 cli_h1("Computing Baseline Identified Set")
 

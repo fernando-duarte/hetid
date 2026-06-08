@@ -107,6 +107,13 @@ scripts_to_run <- list(
     ),
     desc = "Exporting Baseline Identification Results"
   ),
+  list(
+    path = here::here(
+      "scripts/04_identification_without_optimization",
+      "compute_identification_ixj.R"
+    ),
+    desc = "Computing I x J Per-Instrument Identified Set"
+  ),
 
   # Optimized identification (PC weight optimization)
   list(
