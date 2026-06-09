@@ -20,8 +20,8 @@
 #' \dontrun{
 #' # Extract ACM data
 #' data <- extract_acm_data(data_types = c("yields", "term_premia"))
-#' yields <- data[, grep("^y", names(data))]
-#' term_premia <- data[, grep("^tp", names(data))]
+#' yields <- data[, paste0("y", 1:10)]
+#' term_premia <- data[, paste0("tp", 1:10)]
 #'
 #' # Compute variance bound for i=5
 #' var_bound_5 <- compute_variance_bound(yields, term_premia, i = 5)

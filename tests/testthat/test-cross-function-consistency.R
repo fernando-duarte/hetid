@@ -73,8 +73,9 @@ test_that("functions handle large datasets efficiently", {
 
   # Repeat data to make it larger (but not too large for testing)
   large_data <- rbind(test_env$data, test_env$data, test_env$data)
-  yields <- large_data[, grep("^y", names(large_data))]
-  term_premia <- large_data[, grep("^tp", names(large_data))]
+  large_extracted <- extract_yields_and_tp(large_data)
+  yields <- large_extracted$yields
+  term_premia <- large_extracted$term_premia
 
   # All functions should complete without error
   i <- 5

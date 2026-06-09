@@ -56,8 +56,10 @@
 #' \preformatted{
 #' # Data Setup: merge ACM yields with bundled PCs by quarter
 #' download_term_premia()
+#' mats <- 1:10
 #' acm_data <- extract_acm_data(
 #'   data_types = c("yields", "term_premia"),
+#'   maturities = mats,
 #'   frequency = "quarterly"
 #' )
 #' data("variables", package = "hetid")
@@ -76,13 +78,12 @@
 #' pc_cols <- paste0("pc", 1:4)
 #' merged <- merge(
 #'   variables[, c("yq", pc_cols)],
-#'   acm_data[, c("yq", grep("^(y[0-9]|tp)",
-#'     names(acm_data), value = TRUE))],
+#'   acm_data[, c("yq", paste0("y", mats), paste0("tp", mats))],
 #'   by = "yq"
 #' )
 #' pcs <- as.matrix(merged[, pc_cols])
-#' yields <- merged[, grep("^y[0-9]", names(merged))]
-#' tp <- merged[, grep("^tp", names(merged))]
+#' yields <- merged[, paste0("y", mats)]
+#' tp <- merged[, paste0("tp", mats)]
 #'
 #' # Compute Reduced Form Residuals
 #' w1 <- compute_w1_residuals(n_pcs = 4)

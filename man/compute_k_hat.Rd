@@ -46,8 +46,8 @@ data <- extract_acm_data(
   data_types = c("yields", "term_premia"),
   maturities = c(1, 4, 5, 6)
 )
-yields <- data[, grep("^y", names(data))]
-term_premia <- data[, grep("^tp", names(data))]
+yields <- data[, paste0("y", c(1, 4, 5, 6))]
+term_premia <- data[, paste0("tp", c(1, 4, 5, 6))]
 
 # Compute k_hat for i=5
 k_hat_5 <- compute_k_hat(yields, term_premia, i = 5)

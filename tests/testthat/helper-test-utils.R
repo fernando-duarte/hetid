@@ -27,9 +27,10 @@ load_standard_test_data <- function(data_types = c("yields", "term_premia"),
 #' @return List with yields and term_premia data frames
 #' @keywords internal
 extract_yields_and_tp <- function(data) {
+  mats <- HETID_CONSTANTS$MIN_MATURITY:HETID_CONSTANTS$MAX_MATURITY
   list(
-    yields = data[, grep("^y", names(data)), drop = FALSE],
-    term_premia = data[, grep("^tp", names(data)), drop = FALSE]
+    yields = data[, paste0("y", mats), drop = FALSE],
+    term_premia = data[, paste0("tp", mats), drop = FALSE]
   )
 }
 

@@ -43,15 +43,15 @@ data <- extract_acm_data(data_types = c("yields", "term_premia"))
 
 # Compute n_hat for i=5
 n_hat_5 <- compute_n_hat(
-  yields = data[, grep("^y", names(data))],
-  term_premia = data[, grep("^tp", names(data))],
+  yields = data[, paste0("y", 1:10)],
+  term_premia = data[, paste0("tp", 1:10)],
   i = 5
 )
 
 # Compute n_hat with dates
 n_hat_5_df <- compute_n_hat(
-  yields = data[, grep("^y", names(data))],
-  term_premia = data[, grep("^tp", names(data))],
+  yields = data[, paste0("y", 1:10)],
+  term_premia = data[, paste0("tp", 1:10)],
   i = 5,
   return_df = TRUE,
   dates = data$date

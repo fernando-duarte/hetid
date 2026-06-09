@@ -62,9 +62,10 @@
 #' @examples
 #' \dontrun{
 #' # Load quarterly ACM data and bundled PCs
+#' mats <- c(1, 2, 3, 4)
 #' acm_data <- extract_acm_data(
 #'   data_types = c("yields", "term_premia"),
-#'   maturities = c(1, 2, 3, 4),
+#'   maturities = mats,
 #'   frequency = "quarterly"
 #' )
 #' data("variables", package = "hetid")
@@ -83,17 +84,14 @@
 #' pc_cols <- paste0("pc", 1:4)
 #' merged <- merge(
 #'   variables[, c("yq", pc_cols)],
-#'   acm_data[, c("yq", grep("^(y[0-9]|tp)",
-#'     names(acm_data),
-#'     value = TRUE
-#'   ))],
+#'   acm_data[, c("yq", paste0("y", mats), paste0("tp", mats))],
 #'   by = "yq"
 #' )
 #'
 #' # Extract aligned components
 #' pcs <- as.matrix(merged[, pc_cols])
-#' yields <- merged[, grep("^y[0-9]", names(merged))]
-#' tp <- merged[, grep("^tp", names(merged))]
+#' yields <- merged[, paste0("y", mats)]
+#' tp <- merged[, paste0("tp", mats)]
 #'
 #' # Compute residuals with aligned PCs
 #' res_w2 <- compute_w2_residuals(
