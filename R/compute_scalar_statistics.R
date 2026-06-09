@@ -14,10 +14,11 @@
 #' }
 #'
 #' @details
-#' For each maturity i, computes:
-#' \deqn{\hat{S}_i^{(0)} = \frac{1}{T} \| W_1 \odot W_2^{(i)} \|_2^2}
-#' \deqn{\hat{\sigma}_i^2 = \frac{1}{T} \| (W_2^{(i)})^{\odot 2} \|_2^2 -
-#'   \left(\frac{1}{T} \| W_2^{(i)} \|_2^2 \right)^2}
+#' For each maturity i, computes the centered sample variances (1/T
+#' normalization; see [centered_cov()] and the spec sections on moment
+#' notation and centering):
+#' \deqn{\hat{S}_i^{(0)} = \widehat{\mathrm{Var}}(W_1 \odot W_2^{(i)})}
+#' \deqn{\hat{\sigma}_i^2 = \widehat{\mathrm{Var}}\big((W_2^{(i)})^{\odot 2}\big)}
 #'
 #' where \eqn{\odot} denotes the Hadamard (elementwise) product and
 #' \eqn{W_2^{(i)}} is the i-th column of W2.
@@ -40,11 +41,13 @@ compute_scalar_statistics <- function(w1, w2,
     w1, w2, maturities,
     function(w1, w2, w2_i, t_obs, ...) {
       hadamard_prod <- w1 * w2_i
-      s_i_0_val <- sum(hadamard_prod^2) / t_obs
+      s_i_0_val <- as.numeric(
+        centered_cov(hadamard_prod, hadamard_prod, t_obs)
+      )
       w2_i_sq <- w2_i^2
-      term1 <- sum(w2_i_sq^2) / t_obs
-      term2 <- (sum(w2_i_sq) / t_obs)^2
-      sigma_i_sq_val <- term1 - term2
+      sigma_i_sq_val <- as.numeric(
+        centered_cov(w2_i_sq, w2_i_sq, t_obs)
+      )
       list(
         s_i_0 = s_i_0_val,
         sigma_i_sq = sigma_i_sq_val

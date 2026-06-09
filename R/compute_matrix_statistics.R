@@ -17,9 +17,12 @@
 #' First computes the matrix:
 #' \deqn{W_2^{\circ i} = \text{diag}(W_2^{(i)}) W_2}
 #'
-#' Then for each maturity i:
-#' \deqn{\hat{S}_i^{(1)} = \frac{1}{T} (W_1 \odot W_2^{(i)})^T W_2^{\circ i}}
-#' \deqn{\hat{S}_i^{(2)} = \frac{1}{T} (W_2^{\circ i})^T W_2^{\circ i}}
+#' Then for each maturity i computes the centered sample (co)variances (1/T
+#' normalization; see [centered_cov()] and the spec sections on moment
+#' notation and centering):
+#' \deqn{\hat{S}_i^{(1)} = \widehat{\mathrm{Cov}}(W_2^{\circ i},
+#'   W_1 \odot W_2^{(i)})}
+#' \deqn{\hat{S}_i^{(2)} = \widehat{\mathrm{Var}}(W_2^{\circ i})}
 #'
 #' where \eqn{\odot} denotes the Hadamard (elementwise) product.
 #'
@@ -44,12 +47,12 @@ compute_matrix_statistics <- function(w1, w2,
       w2_circ_i <- w2_i * w2
       hadamard_w1_w2i <- w1 * w2_i
       s_i_1_vec <- as.vector(
-        crossprod(hadamard_w1_w2i, w2_circ_i) / t_obs
+        centered_cov(hadamard_w1_w2i, w2_circ_i, t_obs)
       )
       names(s_i_1_vec) <- paste0(
         "maturity_", seq_len(n_mat)
       )
-      s_i_2_mat <- crossprod(w2_circ_i) / t_obs
+      s_i_2_mat <- centered_cov(w2_circ_i, w2_circ_i, t_obs)
       mat_names <- paste0(
         "maturity_", seq_len(n_mat)
       )

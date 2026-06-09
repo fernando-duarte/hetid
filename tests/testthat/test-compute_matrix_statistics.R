@@ -66,14 +66,17 @@ test_that("compute_matrix_statistics computes correct values", {
   w2_1 <- w2[, 1]
   w2_circ_1 <- w2_1 * w2
 
-  # S_1^(1) = (1/3) * (w1 ⊙ w2_1)^T * W_2^{circ 1}
+  # S_1^(1) = centered (1/T) covariance of W_2^{circ 1} with (w1 ⊙ w2_1)
   # w1 ⊙ w2_1 = c(1*2, 2*3, 3*4) = c(2, 6, 12)
   hadamard <- w1 * w2_1
-  expected_s_1_1 <- t(hadamard) %*% w2_circ_1 / 3
-  expect_equal(unname(result$s_i_1[[1]]), as.vector(expected_s_1_1))
+  expected_s_1_1 <- as.vector(
+    t(hadamard) %*% w2_circ_1 / 3 - mean(hadamard) * colMeans(w2_circ_1)
+  )
+  expect_equal(unname(result$s_i_1[[1]]), expected_s_1_1)
 
-  # S_1^(2) = (1/3) * (W_2^{circ 1})^T * W_2^{circ 1}
-  expected_s_1_2 <- t(w2_circ_1) %*% w2_circ_1 / 3
+  # S_1^(2) = centered (1/T) variance of W_2^{circ 1}
+  expected_s_1_2 <- t(w2_circ_1) %*% w2_circ_1 / 3 -
+    tcrossprod(colMeans(w2_circ_1))
   expect_equal(unname(result$s_i_2[[1]]), unname(expected_s_1_2))
 })
 

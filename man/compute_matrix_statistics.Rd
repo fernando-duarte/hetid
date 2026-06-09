@@ -28,9 +28,12 @@ Computes matrix statistics S_i^(1) and S_i^(2) for each maturity i.
 First computes the matrix:
 \deqn{W_2^{\circ i} = \text{diag}(W_2^{(i)}) W_2}
 
-Then for each maturity i:
-\deqn{\hat{S}_i^{(1)} = \frac{1}{T} (W_1 \odot W_2^{(i)})^T W_2^{\circ i}}
-\deqn{\hat{S}_i^{(2)} = \frac{1}{T} (W_2^{\circ i})^T W_2^{\circ i}}
+Then for each maturity i computes the centered sample (co)variances (1/T
+normalization; see \code{\link[=centered_cov]{centered_cov()}} and the spec sections on moment
+notation and centering):
+\deqn{\hat{S}_i^{(1)} = \widehat{\mathrm{Cov}}(W_2^{\circ i},
+  W_1 \odot W_2^{(i)})}
+\deqn{\hat{S}_i^{(2)} = \widehat{\mathrm{Var}}(W_2^{\circ i})}
 
 where \eqn{\odot} denotes the Hadamard (elementwise) product.
 }

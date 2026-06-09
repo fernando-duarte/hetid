@@ -16,10 +16,12 @@
 #' }
 #'
 #' @details
-#' For each maturity i, computes:
-#' \deqn{\hat{R}_i^{(0)} = \frac{1}{T} PC^T (W_1 \odot W_2^{(i)})}
-#' \deqn{\hat{R}_i^{(1)} = \frac{1}{T} PC^T (W_2 \odot W_2^{(i)})}
-#' \deqn{\hat{P}_i^{(0)} = \frac{1}{T} PC^T (W_2^{(i)})^{\odot 2}}
+#' For each maturity i, computes the centered sample covariances of the
+#' principal components with the residual products (1/T normalization; see
+#' [centered_cov()] and the spec sections on moment notation and centering):
+#' \deqn{\hat{R}_i^{(0)} = \widehat{\mathrm{Cov}}(PC, W_1 \odot W_2^{(i)})}
+#' \deqn{\hat{R}_i^{(1)} = \widehat{\mathrm{Cov}}(PC, W_2 \odot W_2^{(i)})}
+#' \deqn{\hat{P}_i^{(0)} = \widehat{\mathrm{Cov}}(PC, (W_2^{(i)})^{\odot 2})}
 #'
 #' where \eqn{\odot} denotes the Hadamard (elementwise) product.
 #'
@@ -61,16 +63,16 @@ compute_vector_statistics <- function(w1, w2, pcs,
       n_mat <- ncol(w2)
       hadamard_w1_w2i <- w1 * w2_i
       r_i_0_vec <- as.vector(
-        crossprod(pcs, hadamard_w1_w2i) / t_obs
+        centered_cov(pcs, hadamard_w1_w2i, t_obs)
       )
-      r_i_1_mat <- crossprod(pcs, w2 * w2_i) / t_obs
+      r_i_1_mat <- centered_cov(pcs, w2 * w2_i, t_obs)
       colnames(r_i_1_mat) <- paste0(
         "maturity_", seq_len(n_mat)
       )
       rownames(r_i_1_mat) <- get_pc_column_names(J)
       w2_i_sq <- w2_i^2
       p_i_0_vec <- as.vector(
-        crossprod(pcs, w2_i_sq) / t_obs
+        centered_cov(pcs, w2_i_sq, t_obs)
       )
       list(
         r_i_0 = r_i_0_vec,

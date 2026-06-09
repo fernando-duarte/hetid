@@ -67,14 +67,14 @@ test_that("compute_vector_statistics computes correct values", {
 
   result <- compute_vector_statistics(w1, w2, pcs)
 
-  # R_i^(0) is the mean of PC^T times the Hadamard product of w1 and w2_i
+  # R_i^(0) is the centered (1/T) covariance of PC with w1 * w2_i
   hadamard <- w1 * w2[, 1]
-  expected_r_1_0 <- t(pcs) %*% hadamard / 3
+  expected_r_1_0 <- t(pcs) %*% hadamard / 3 - colMeans(pcs) * mean(hadamard)
   expect_equal(unname(result$r_i_0[, 1]), as.vector(expected_r_1_0))
 
-  # P_i^(0) is the mean of PC^T times the squared elements of w2_i
+  # P_i^(0) is the centered (1/T) covariance of PC with w2_i^2
   w2_1_sq <- w2[, 1]^2
-  expected_p_1_0 <- t(pcs) %*% w2_1_sq / 3
+  expected_p_1_0 <- t(pcs) %*% w2_1_sq / 3 - colMeans(pcs) * mean(w2_1_sq)
   expect_equal(unname(result$p_i_0[, 1]), as.vector(expected_p_1_0))
 })
 
@@ -117,8 +117,10 @@ test_that("compute_vector_statistics handles orthogonal PCs correctly", {
 
   result <- compute_vector_statistics(w1, w2, pcs)
 
-  # With these PCs, each PC picks out one element
-  # R_1^(0) should be (1/4) * [w1[1]*w2[1], w1[2]*w2[2], w1[3]*w2[3]]
-  expected_r_1_0 <- c(w1[1] * w2[1, 1], w1[2] * w2[2, 1], w1[3] * w2[3, 1]) / 4
+  # R_1^(0) is the centered (1/T) covariance of each PC with w1 * w2
+  hadamard <- w1 * w2[, 1]
+  expected_r_1_0 <- as.vector(
+    t(pcs) %*% hadamard / 4 - colMeans(pcs) * mean(hadamard)
+  )
   expect_equal(unname(result$r_i_0[, 1]), expected_r_1_0)
 })

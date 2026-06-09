@@ -25,10 +25,11 @@ A list containing:
 Computes scalar statistics S_i^(0) and sigma_i^2 for each maturity i.
 }
 \details{
-For each maturity i, computes:
-\deqn{\hat{S}_i^{(0)} = \frac{1}{T} \| W_1 \odot W_2^{(i)} \|_2^2}
-\deqn{\hat{\sigma}_i^2 = \frac{1}{T} \| (W_2^{(i)})^{\odot 2} \|_2^2 -
-  \left(\frac{1}{T} \| W_2^{(i)} \|_2^2 \right)^2}
+For each maturity i, computes the centered sample variances (1/T
+normalization; see \code{\link[=centered_cov]{centered_cov()}} and the spec sections on moment
+notation and centering):
+\deqn{\hat{S}_i^{(0)} = \widehat{\mathrm{Var}}(W_1 \odot W_2^{(i)})}
+\deqn{\hat{\sigma}_i^2 = \widehat{\mathrm{Var}}\big((W_2^{(i)})^{\odot 2}\big)}
 
 where \eqn{\odot} denotes the Hadamard (elementwise) product and
 \eqn{W_2^{(i)}} is the i-th column of W2.

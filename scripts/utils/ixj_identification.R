@@ -11,14 +11,17 @@
 # selects row/element j of each instrument-indexed moment. So the whole scheme is a
 # loop over j with concatenation; no package (R/) changes.
 #
-# Form: covariance / cross-moment (the theta-dependent-RHS constraint
-# build_quadratic_system natively produces). The literal correlation form
-# |Corr(PC_j, e1 e2_i)| <= tau_ji |Corr(PC_j, e2_i^2)| is a documented future
-# extension: recompute centered L/Q/P from PCs recentered on the aligned sample
-# (unit-variance rescale optional -- it cancels in the ratio), keep sigma_i_sq,
-# then add the centering term d_ij * (mu_i0 - mu_i1' theta)^2 with
-# mu_i0 = mean(W1 * W2_i), mu_i1 = colMeans(W2 * W2_i); validate via a fixed-theta
-# numeric check of the adjusted A/b/c.
+# Form: centered correlation. As of the centered-moment refactor, the package
+# statistics functions (compute_*_statistics) return centered 1/T covariances and
+# variances (see R/statistics_utils.R::centered_cov and the spec sections on moment
+# notation and centering), so build_quadratic_system now natively produces the
+# literal correlation form |Corr(PC_j, e1 e2_i)| <= tau_ji |Corr(PC_j, e2_i^2)|.
+# Centering the S-moments is algebraically identical to the previously-deferred
+# centering term d_ij * (mu_i0 - mu_i1' theta)^2 with mu_i0 = mean(W1 * W2_i),
+# mu_i1 = colMeans(W2 * W2_i), because
+#   theta' S2^c theta - 2 S1^c' theta + S0^c = var(U_i(theta)),
+# and centering L/Q/P turns them into true covariances. No script changes are
+# needed here -- the e_j reuse inherits the centering automatically.
 
 # J x I gamma whose every column is the j-th canonical basis vector e_j.
 make_basis_gamma <- function(j, n_pcs, n_components) {

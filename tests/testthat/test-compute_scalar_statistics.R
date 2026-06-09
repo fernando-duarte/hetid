@@ -46,11 +46,12 @@ test_that("compute_scalar_statistics computes correct values", {
 
   result <- compute_scalar_statistics(w1, w2)
 
-  # S_i^(0) is the mean of the squared Hadamard products of w1 and w2_i
-  expected_s_1_0 <- sum((w1 * w2[, 1])^2) / 3
+  # S_i^(0) is the centered (1/T) variance of the Hadamard product w1 * w2_i
+  prod_1 <- w1 * w2[, 1]
+  expected_s_1_0 <- sum(prod_1^2) / 3 - (sum(prod_1) / 3)^2
   expect_equal(unname(result$s_i_0[1]), expected_s_1_0)
 
-  # sigma_i^2 is the variance of the squared elements of w2_i
+  # sigma_i^2 is the centered (1/T) variance of the squared elements of w2_i
   w2_1_sq <- w2[, 1]^2
   term1 <- sum(w2_1_sq^2) / 3
   term2 <- (sum(w2_1_sq) / 3)^2
@@ -83,10 +84,10 @@ test_that("compute_scalar_statistics handles edge cases", {
 
   result <- compute_scalar_statistics(w1, w2)
 
-  # With a single observation, S_1^(0) is simply (w1 * w2)^2
-  expect_equal(unname(result$s_i_0[1]), 36)
+  # With a single observation, the centered variance of w1 * w2 is zero
+  expect_equal(unname(result$s_i_0[1]), 0)
 
-  # With a single observation, variance of w2^2 is zero
+  # With a single observation, centered variance of w2^2 is zero
   expect_equal(unname(result$sigma_i_sq[1]), 0)
 
   # Test with zero residuals

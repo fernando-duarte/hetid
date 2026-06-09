@@ -28,10 +28,12 @@ A list containing:
 Computes vector statistics R_i^(0), R_i^(1), and P_i^(0) for each maturity i.
 }
 \details{
-For each maturity i, computes:
-\deqn{\hat{R}_i^{(0)} = \frac{1}{T} PC^T (W_1 \odot W_2^{(i)})}
-\deqn{\hat{R}_i^{(1)} = \frac{1}{T} PC^T (W_2 \odot W_2^{(i)})}
-\deqn{\hat{P}_i^{(0)} = \frac{1}{T} PC^T (W_2^{(i)})^{\odot 2}}
+For each maturity i, computes the centered sample covariances of the
+principal components with the residual products (1/T normalization; see
+\code{\link[=centered_cov]{centered_cov()}} and the spec sections on moment notation and centering):
+\deqn{\hat{R}_i^{(0)} = \widehat{\mathrm{Cov}}(PC, W_1 \odot W_2^{(i)})}
+\deqn{\hat{R}_i^{(1)} = \widehat{\mathrm{Cov}}(PC, W_2 \odot W_2^{(i)})}
+\deqn{\hat{P}_i^{(0)} = \widehat{\mathrm{Cov}}(PC, (W_2^{(i)})^{\odot 2})}
 
 where \eqn{\odot} denotes the Hadamard (elementwise) product.
 }

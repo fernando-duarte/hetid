@@ -43,3 +43,29 @@ compute_per_maturity <- function(w1, w2, maturities,
   names(results) <- maturity_names(maturities)
   results
 }
+
+#' Centered Sample Covariance (1/T normalization)
+#'
+#' Computes the centered sample covariance between the columns of two
+#' conformable inputs (vectors or matrices), using the \eqn{1/T}
+#' normalization of the sample analog in Lewbel multivariate set
+#' identification (centered cov/var; see the package spec sections on
+#' moment notation and centering), \strong{not} the \eqn{1/(T-1)}
+#' convention of [stats::cov()]. For inputs \eqn{A} (T x a) and
+#' \eqn{B} (T x b),
+#' \deqn{\widehat{\mathrm{Cov}}(A, B) = \frac{1}{T} A^\top B -
+#'   \bar{A}\,\bar{B}^\top \in \mathbb{R}^{a \times b},}
+#' where \eqn{\bar{A}} and \eqn{\bar{B}} are the column means. Centering
+#' both arguments makes each entry a true covariance regardless of whether
+#' the inputs were already centered.
+#'
+#' @param a Numeric vector or matrix (T x a).
+#' @param b Numeric vector or matrix (T x b).
+#' @param t_obs Number of observations T used for normalization.
+#' @return An \eqn{a \times b} matrix of centered covariances.
+#' @keywords internal
+centered_cov <- function(a, b, t_obs) {
+  a <- as.matrix(a)
+  b <- as.matrix(b)
+  crossprod(a, b) / t_obs - tcrossprod(colMeans(a), colMeans(b))
+}
