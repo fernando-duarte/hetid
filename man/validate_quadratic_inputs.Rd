@@ -4,57 +4,35 @@
 \alias{validate_quadratic_inputs}
 \title{Validate inputs for the quadratic identified set computation}
 \usage{
-validate_quadratic_inputs(
-  gamma,
-  tau,
-  L_i,
-  V_i,
-  Q_i,
-  s_i_0,
-  s_i_1,
-  s_i_2,
-  sigma_i_sq,
-  maturities = NULL
-)
+validate_quadratic_inputs(tau, components, moments)
 }
 \arguments{
-\item{gamma}{Matrix (J x I) where each column gamma_i contains the
-coefficients for maturity i}
+\item{tau}{Vector of nonnegative real numbers (length I, the moments'
+\code{n_components}) containing tau_i values, indexed by system
+column. Exact zeros are allowed and correspond to the
+point-identification benchmark.}
 
-\item{tau}{Vector of nonnegative real numbers (length I) containing tau_i
-values. Exact zeros are allowed and correspond to the point-identification
-benchmark.}
+\item{components}{A \code{hetid_components} object from
+\code{\link{compute_identified_set_components}}}
 
-\item{L_i}{Named vector of L_i values from compute_identified_set_components()}
-
-\item{V_i}{Named vector of V_i values from compute_identified_set_components()}
-
-\item{Q_i}{List of vectors Q_i from compute_identified_set_components()}
-
-\item{s_i_0}{Named vector of S_i^(0) values from compute_scalar_statistics()}
-
-\item{s_i_1}{List of vectors S_i^(1) from compute_matrix_statistics()}
-
-\item{s_i_2}{List of matrices S_i^(2) from compute_matrix_statistics()}
-
-\item{sigma_i_sq}{Named vector of sigma_i^2 values from
-compute_scalar_statistics(). Must be finite and strictly
-positive (zero indicates no heteroskedasticity to exploit
-for identification).}
-
-\item{maturities}{Vector of maturity indices to compute components for.
-Default is all available.}
+\item{moments}{The \code{hetid_moments} object the components were
+computed from (see
+\code{\link{compute_identification_moments}}). Its
+\code{sigma_i_sq} values must be finite and strictly positive
+(zero indicates no heteroskedasticity to exploit for
+identification).}
 }
 \value{
 A list with components:
 \describe{
-\item{maturities}{Resolved integer vector of maturity indices}
-\item{n_components}{Number of columns in \code{gamma} (I)}
+\item{maturities}{Integer vector of maturity indices (constraint axis)}
+\item{n_components}{Theta-axis dimension (I)}
 \item{n_maturities}{Length of \code{maturities}}
 }
 }
 \description{
-Checks types, dimensions, positivity constraints, and resolves
-maturities for \code{\link{compute_identified_set_quadratic}}.
+Checks the container classes, that the components and moments carry
+identical maturity identity, and the type/dimension/positivity
+constraints for \code{\link{compute_identified_set_quadratic}}.
 }
 \keyword{internal}

@@ -4,25 +4,19 @@
 #' calculation for each maturity i.
 #'
 #' @param gamma Matrix (J x I) where each column gamma_i contains the
-#'   coefficients for maturity i
-#' @param r_i_0 Position-indexed matrix (J x n_maturities)
-#'   from \code{compute_vector_statistics()}
-#' @param r_i_1 Position-indexed list of n_maturities
-#'   matrices (each J x I) from
-#'   \code{compute_vector_statistics()}
-#' @param p_i_0 Position-indexed matrix (J x n_maturities)
-#'   from \code{compute_vector_statistics()}
-#' @param maturities Integer vector of maturity indices.
-#'   If NULL, inferred from input names via
-#'   \code{\link{resolve_maturities}}; defaults to all
-#'   columns when inputs are unnamed and full-size.
+#'   coefficients for system column i. I must equal the moments'
+#'   \code{n_components} attribute and J its instrument count.
+#' @param moments A \code{hetid_moments} object from
+#'   \code{\link{compute_identification_moments}}
 #'
-#' @return A list containing:
+#' @return An object of class \code{hetid_components}: a list containing
 #' \describe{
 #'   \item{L_i}{Named vector of L_i values for each maturity}
 #'   \item{V_i}{Named vector of V_i values for each maturity}
-#'   \item{Q_i}{List of vectors, each element i is Q_i (length I)}
+#'   \item{Q_i}{List of vectors, each element is Q_i (length n_components)}
 #' }
+#' carrying the moments' \code{maturities} and \code{n_components}
+#' attributes forward.
 #'
 #' @details
 #' For each maturity i, computes:
@@ -38,27 +32,7 @@
 #' \eqn{\hat{\mathbf{R}}_i^{(1)}} is a matrix, and \eqn{\hat{\mathbf{P}}_i^{(0)}}
 #' is a vector.
 #'
-#' @section Maturity Indexing Convention:
-#' All statistical inputs (r_i_0, r_i_1, p_i_0) are
-#' \strong{position-indexed}: their outer dimension
-#' must equal \code{length(maturities)}, with element
-#' k corresponding to \code{maturities[k]}. Each
-#' \code{r_i_1[[k]]} remains a full-size J x I matrix.
-#'
-#' \code{gamma} is \strong{full-size} (J x I), indexed
-#' by maturity value. The function uses
-#' \code{gamma[, maturities[k]]} internally.
-#'
-#' When \code{maturities = NULL}, maturity values are
-#' inferred from input names via
-#' \code{\link{resolve_maturities}}, matching the
-#' convention in
-#' \code{\link{compute_identified_set_quadratic}}.
-#'
-#' This matches the output convention of
-#' \code{\link{compute_vector_statistics}}, so
-#' statistics can be passed directly without manual
-#' subsetting.
+#' @template section-maturity-convention
 #'
 #' @export
 #'
@@ -72,68 +46,39 @@
 #' pcs <- matrix(rnorm(n_obs * J), nrow = n_obs, ncol = J)
 #' gamma <- matrix(rnorm(J * I), nrow = J, ncol = I)
 #'
-#' vec_stats <- compute_vector_statistics(w1, w2, pcs)
-#' components <- compute_identified_set_components(
-#'   gamma = gamma,
-#'   r_i_0 = vec_stats$r_i_0,
-#'   r_i_1 = vec_stats$r_i_1,
-#'   p_i_0 = vec_stats$p_i_0
-#' )
-compute_identified_set_components <- function(gamma, r_i_0, r_i_1, p_i_0,
-                                              maturities = NULL) {
-  # Validate inputs
+#' moments <- compute_identification_moments(w1, w2, pcs)
+#' components <- compute_identified_set_components(gamma, moments)
+compute_identified_set_components <- function(gamma, moments) {
+  assert_hetid_moments(moments)
   assert_bad_argument_ok(
     is.matrix(gamma),
     "gamma must be a matrix",
     arg = "gamma"
   )
-  assert_bad_argument_ok(
-    is.matrix(r_i_0),
-    "r_i_0 must be a matrix",
-    arg = "r_i_0"
+
+  maturities <- attr(moments, "maturities")
+  n_components <- attr(moments, "n_components")
+  j_rows <- nrow(moments$r_i_0)
+
+  assert_dimension_ok(
+    ncol(gamma) == n_components,
+    paste0(
+      "gamma must have n_components (", n_components,
+      ") columns to match the moments' system"
+    )
   )
-  assert_bad_argument_ok(
-    is.list(r_i_1),
-    "r_i_1 must be a list of matrices",
-    arg = "r_i_1"
-  )
-  assert_bad_argument_ok(
-    is.matrix(p_i_0),
-    "p_i_0 must be a matrix",
-    arg = "p_i_0"
+  assert_dimension_ok(
+    nrow(gamma) == j_rows,
+    paste0(
+      "gamma must have the same number of rows (J = ", j_rows,
+      ") as the moments' instruments"
+    )
   )
 
-  J <- nrow(gamma)
-  n_components <- ncol(gamma)
-
-  maturities <- resolve_maturities(
-    maturities,
-    list(r_i_1 = r_i_1),
-    n_components
-  )
-
-  assert_bad_argument_ok(
-    all(maturities >= 1) &&
-      all(maturities <= n_components),
-    "maturities must be between 1 and I",
-    arg = "maturities"
-  )
+  r_i_0 <- moments$r_i_0
+  r_i_1 <- moments$r_i_1
+  p_i_0 <- moments$p_i_0
   n_maturities <- length(maturities)
-
-  assert_dimension_ok(
-    nrow(r_i_0) == J &&
-      ncol(r_i_0) == n_maturities,
-    "r_i_0 must be J x length(maturities)"
-  )
-  assert_dimension_ok(
-    length(r_i_1) == n_maturities,
-    "r_i_1 must have length(maturities) elements"
-  )
-  assert_dimension_ok(
-    nrow(p_i_0) == J &&
-      ncol(p_i_0) == n_maturities,
-    "p_i_0 must be J x length(maturities)"
-  )
 
   L_i <- numeric(n_maturities) # nolint: object_name_linter.
   V_i <- numeric(n_maturities) # nolint: object_name_linter.
@@ -157,15 +102,6 @@ compute_identified_set_components <- function(gamma, r_i_0, r_i_1, p_i_0,
     )^2
 
     R_i_1_mat <- r_i_1[[idx]] # nolint: object_name_linter.
-    assert_dimension_ok(
-      is.matrix(R_i_1_mat) &&
-        nrow(R_i_1_mat) == J,
-      paste0(
-        "r_i_1 for maturity ", i,
-        " (position ", idx,
-        ") must be a J x I matrix"
-      )
-    )
     Q_i[[idx]] <- as.numeric( # nolint: object_name_linter.
       crossprod(gamma_i, R_i_1_mat)
     )
@@ -174,9 +110,32 @@ compute_identified_set_components <- function(gamma, r_i_0, r_i_1, p_i_0,
     )
   }
 
-  list(
-    L_i = L_i,
-    V_i = V_i,
-    Q_i = Q_i
+  new_hetid_components(
+    L_i = L_i, V_i = V_i, Q_i = Q_i,
+    maturities = maturities, n_components = n_components
+  )
+}
+
+#' Construct a hetid_components Object
+#'
+#' Low-level constructor carrying the maturity identity of the moments
+#' the components were derived from. Shape validation happens downstream
+#' in \code{validate_quadratic_inputs()}.
+#'
+#' @param L_i Named vector of L_i values
+#' @param V_i Named vector of V_i values
+#' @param Q_i List of Q_i vectors
+#' @param maturities Integer vector of w2 column indices
+#' @param n_components Theta-axis dimension
+#'
+#' @return A classed \code{hetid_components} list
+#' @keywords internal
+new_hetid_components <- function(L_i, V_i, Q_i, # nolint: object_name_linter.
+                                 maturities, n_components) {
+  structure(
+    list(L_i = L_i, V_i = V_i, Q_i = Q_i),
+    maturities = as.integer(maturities),
+    n_components = as.integer(n_components),
+    class = "hetid_components"
   )
 }

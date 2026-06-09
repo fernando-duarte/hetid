@@ -101,28 +101,10 @@ compute_identification_residuals <- function(
   result
 }
 
-#' @return list with scalar, vector, and matrix statistics
-compute_identification_moments <- function(
-  w1, w2, pcs, maturities = NULL
-) {
-  if (is.null(maturities)) maturities <- seq_len(ncol(w2))
-  cli::cli_alert_info("Computing scalar statistics...")
-  scalar <- compute_scalar_statistics(w1, w2, maturities = maturities)
-  cli::cli_alert_info("Computing vector statistics...")
-  vector <- compute_vector_statistics(w1, w2, pcs, maturities = maturities)
-  cli::cli_alert_info("Computing matrix statistics...")
-  mat <- compute_matrix_statistics(w1, w2, maturities = maturities)
-
-  list(
-    s_i_0 = scalar$s_i_0,
-    sigma_i_sq = scalar$sigma_i_sq,
-    r_i_0 = vector$r_i_0,
-    r_i_1 = vector$r_i_1,
-    p_i_0 = vector$p_i_0,
-    s_i_1 = mat$s_i_1,
-    s_i_2 = mat$s_i_2
-  )
-}
+# compute_identification_moments() and build_quadratic_system() are now
+# exported by the hetid package (loaded via common_settings.R) with the
+# same names and compatible defaults; the moments object is a validated
+# hetid_moments container carrying the maturity identity.
 
 #' Get baseline gamma matrix (VFCI unit-norm loadings)
 #' @param method label for the method (stored as attr)
@@ -163,38 +145,4 @@ get_tau_spec <- function(
     tau_point = rep(tau_point, n_components),
     tau_set = rep(tau_set, n_components)
   )
-}
-
-#' @return list with components and quadratic system
-build_quadratic_system <- function(
-  gamma, tau, moments,
-  maturities = NULL
-) {
-  if (is.null(maturities)) {
-    maturities <- seq_len(ncol(gamma))
-  }
-  cli::cli_alert_info(
-    "Computing identified set components..."
-  )
-  components <- compute_identified_set_components(
-    gamma = gamma,
-    r_i_0 = moments$r_i_0,
-    r_i_1 = moments$r_i_1,
-    p_i_0 = moments$p_i_0,
-    maturities = maturities
-  )
-  cli::cli_alert_info("Computing quadratic form...")
-  quadratic <- compute_identified_set_quadratic(
-    gamma = gamma,
-    tau = tau,
-    L_i = components$L_i,
-    V_i = components$V_i,
-    Q_i = components$Q_i,
-    s_i_0 = moments$s_i_0,
-    s_i_1 = moments$s_i_1,
-    s_i_2 = moments$s_i_2,
-    sigma_i_sq = moments$sigma_i_sq,
-    maturities = maturities
-  )
-  list(components = components, quadratic = quadratic)
 }

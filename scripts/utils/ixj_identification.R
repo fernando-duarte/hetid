@@ -31,24 +31,22 @@ make_basis_gamma <- function(j, n_pcs, n_components) {
 }
 
 # Build the intersection of I*J single-instrument quadratic constraints.
-#   moments    : output of compute_identification_moments (position-indexed)
+#   moments    : hetid_moments container from compute_identification_moments
 #   tau_matrix : J x I matrix of tolerances tau_ji (row j = instrument j)
 # Returns list(quadratic = list(A_i, b_i, c_i, d_i) each of length I*J,
 #              labels   = data.frame(constraint, component, instrument)).
 build_ixj_quadratic_system <- function(moments, tau_matrix) {
   n_pcs <- nrow(moments$r_i_0)
-  n_components <- ncol(moments$r_i_0)
+  n_components <- attr(moments, "n_components")
 
-  # The e_j reuse is exact only under the component-indexed (position) convention,
-  # i.e. moment column k corresponds to component k. Reject maturity-value-named
-  # moments (e.g. maturity_2/5/9), which would misalign gamma[, k] with the data.
-  expected <- paste0("maturity_", seq_len(n_components))
-  cn <- colnames(moments$r_i_0)
-  if (!is.null(cn) && !identical(cn, expected)) {
+  # The e_j reuse needs one constraint per system column: the inner loop
+  # pairs constraint i with gamma column i, so the container's constraint
+  # axis must cover the full system (maturities == 1..n_components).
+  if (!identical(attr(moments, "maturities"), seq_len(n_components))) {
     stop(
-      "build_ixj_quadratic_system requires position-indexed moments ",
-      "(columns maturity_1..maturity_I); got: ",
-      paste(cn, collapse = ", ")
+      "build_ixj_quadratic_system requires a full-system moments container ",
+      "(maturities 1..n_components); got maturities: ",
+      paste(attr(moments, "maturities"), collapse = ", ")
     )
   }
   if (!is.matrix(tau_matrix) ||

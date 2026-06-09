@@ -1,8 +1,10 @@
+# Numerical regression guard for the d/A/b/c arithmetic. The hand-computed
+# expectations target the internal quadratic_from_components() workhorse with
+# raw statistics, so they cannot become circular through the container chain.
+
 test_that("A_i matrices are symmetric", {
   set.seed(456)
-  J <- 4
   I <- 5
-  gamma <- matrix(rnorm(J * I), J, I)
   tau <- runif(I, 0.5, 2)
   L_i <- runif(I) # nolint: object_name_linter.
   V_i <- runif(I) # nolint: object_name_linter.
@@ -15,9 +17,10 @@ test_that("A_i matrices are symmetric", {
   })
   sigma_i_sq <- runif(I, 0.1, 1)
 
-  result <- compute_identified_set_quadratic(
-    gamma, tau, L_i, V_i, Q_i,
-    s_i_0, s_i_1, s_i_2, sigma_i_sq
+  result <- quadratic_from_components(
+    tau, L_i, V_i, Q_i,
+    s_i_0, s_i_1, s_i_2, sigma_i_sq,
+    maturities = 1:I, n_components = I
   )
 
   # Check that each A_i is symmetric
@@ -37,11 +40,9 @@ test_that("A_i matrices are symmetric", {
 })
 
 test_that(
-  "compute_identified_set_quadratic computes values correctly",
+  "quadratic_from_components computes values correctly",
   {
-    J <- 2
     I <- 2
-    gamma <- matrix(c(1, 0, 0, 1), J, I)
     tau <- c(2, 3)
     L_i <- c(5, 7) # nolint: object_name_linter.
     V_i <- c(4, 6) # nolint: object_name_linter.
@@ -54,9 +55,10 @@ test_that(
     )
     sigma_i_sq <- c(2, 3)
 
-    result <- compute_identified_set_quadratic(
-      gamma, tau, L_i, V_i, Q_i,
-      s_i_0, s_i_1, s_i_2, sigma_i_sq
+    result <- quadratic_from_components(
+      tau, L_i, V_i, Q_i,
+      s_i_0, s_i_1, s_i_2, sigma_i_sq,
+      maturities = 1:I, n_components = I
     )
 
     # d_i is tau_i squared times V_i over sigma_i squared
@@ -80,12 +82,10 @@ test_that(
 )
 
 test_that(
-  "compute_identified_set_quadratic handles subset of maturities",
+  "quadratic_from_components handles subset of maturities",
   {
     set.seed(789)
-    J <- 3
     I <- 6
-    gamma <- matrix(rnorm(J * I), J, I)
     tau <- runif(I, 0.5, 2)
     L_i <- runif(I) # nolint: object_name_linter.
     V_i <- runif(I) # nolint: object_name_linter.
@@ -100,14 +100,14 @@ test_that(
 
     # Compute for subset of maturities
     maturities <- c(1, 3, 5)
-    result <- compute_identified_set_quadratic(
-      gamma, tau,
+    result <- quadratic_from_components(
+      tau,
       L_i[maturities], V_i[maturities],
       Q_i[maturities],
       s_i_0[maturities],
       s_i_1[maturities], s_i_2[maturities],
       sigma_i_sq[maturities],
-      maturities = maturities
+      maturities = maturities, n_components = I
     )
 
     # Check results only for requested maturities
@@ -125,29 +125,19 @@ test_that(
 test_that(
   "sentinel values verify tau uses maturity value, not position",
   {
-    J <- 2
     I <- 6
-    gamma <- diag(1, J, I)
     tau <- c(1, 2, 3, 4, 5, 6)
+    maturities <- c(2, 4, 6)
 
-    mat_nms <- paste0("maturity_", c(2, 4, 6))
-    L_i <- setNames(rep(0, 3), mat_nms) # nolint: object_name_linter.
-    V_i <- setNames(rep(1, 3), mat_nms) # nolint: object_name_linter.
-    Q_i <- setNames( # nolint: object_name_linter.
-      lapply(1:3, function(k) rep(0, I)), mat_nms
-    )
-    s_i_0 <- setNames(rep(0, 3), mat_nms)
-    s_i_1 <- setNames(
-      lapply(1:3, function(k) rep(0, I)), mat_nms
-    )
-    s_i_2 <- setNames(
-      lapply(1:3, function(k) matrix(0, I, I)), mat_nms
-    )
-    sigma_i_sq <- setNames(rep(1, 3), mat_nms)
-
-    result <- compute_identified_set_quadratic(
-      gamma, tau, L_i, V_i, Q_i,
-      s_i_0, s_i_1, s_i_2, sigma_i_sq
+    result <- quadratic_from_components(
+      tau,
+      L_i = rep(0, 3), V_i = rep(1, 3),
+      Q_i = lapply(1:3, function(k) rep(0, I)),
+      s_i_0 = rep(0, 3),
+      s_i_1 = lapply(1:3, function(k) rep(0, I)),
+      s_i_2 = lapply(1:3, function(k) matrix(0, I, I)),
+      sigma_i_sq = rep(1, 3),
+      maturities = maturities, n_components = I
     )
 
     # tau[c(2,4,6)]^2 times 1/1 gives c(4, 16, 36)
@@ -155,72 +145,12 @@ test_that(
       unname(result$d_i), c(4, 16, 36),
       info = "tau must be indexed by maturity value"
     )
-    expect_named(result$d_i, mat_nms)
+    expect_named(result$d_i, paste0("maturity_", maturities))
   }
 )
 
 test_that(
-  "errors when unnamed inputs are shorter than ncol(gamma)",
-  {
-    J <- 2
-    I <- 6
-    gamma <- diag(1, J, I)
-    tau <- c(1, 2, 3, 4, 5, 6)
-
-    L_i <- rep(0, 3) # nolint: object_name_linter.
-    V_i <- rep(1, 3) # nolint: object_name_linter.
-    Q_i <- lapply(1:3, function(k) rep(0, I)) # nolint: object_name_linter.
-    s_i_0 <- rep(0, 3)
-    s_i_1 <- lapply(1:3, function(k) rep(0, I))
-    s_i_2 <- lapply(1:3, function(k) matrix(0, I, I))
-    sigma_i_sq <- rep(1, 3)
-
-    expect_error(
-      compute_identified_set_quadratic(
-        gamma, tau, L_i, V_i, Q_i,
-        s_i_0, s_i_1, s_i_2, sigma_i_sq
-      ),
-      "Cannot infer maturities"
-    )
-  }
-)
-
-test_that(
-  "errors when explicit maturities conflict with input names",
-  {
-    J <- 2
-    I <- 6
-    gamma <- diag(1, J, I)
-    tau <- c(1, 2, 3, 4, 5, 6)
-
-    nms_a <- paste0("maturity_", c(2, 4, 6))
-    L_i <- setNames(rep(0, 3), nms_a) # nolint: object_name_linter.
-    V_i <- setNames(rep(1, 3), nms_a) # nolint: object_name_linter.
-    Q_i <- setNames( # nolint: object_name_linter.
-      lapply(1:3, function(k) rep(0, I)), nms_a
-    )
-    s_i_0 <- setNames(rep(0, 3), nms_a)
-    s_i_1 <- setNames(
-      lapply(1:3, function(k) rep(0, I)), nms_a
-    )
-    s_i_2 <- setNames(
-      lapply(1:3, function(k) matrix(0, I, I)), nms_a
-    )
-    sigma_i_sq <- setNames(rep(1, 3), nms_a)
-
-    expect_error(
-      compute_identified_set_quadratic(
-        gamma, tau, L_i, V_i, Q_i,
-        s_i_0, s_i_1, s_i_2, sigma_i_sq,
-        maturities = c(1, 3, 5)
-      ),
-      "do not match maturities"
-    )
-  }
-)
-
-test_that(
-  "end-to-end pipeline: inferred matches explicit",
+  "end-to-end pipeline matches the manual d_i formula",
   {
     set.seed(2024)
     J <- 3
@@ -241,62 +171,61 @@ test_that(
       nrow = n_obs, ncol = J
     )
 
-    scalar_stats <- compute_scalar_statistics(
-      w1, w2,
-      maturities = maturities
-    )
-    vec_stats <- compute_vector_statistics(
+    moments <- compute_identification_moments(
       w1, w2, pcs,
       maturities = maturities
     )
-    mat_stats <- compute_matrix_statistics(
-      w1, w2,
-      maturities = maturities
-    )
-
-    components <- compute_identified_set_components(
-      gamma = gamma,
-      r_i_0 = vec_stats$r_i_0,
-      r_i_1 = vec_stats$r_i_1,
-      p_i_0 = vec_stats$p_i_0,
-      maturities = maturities
-    )
-
-    quad_explicit <- compute_identified_set_quadratic(
-      gamma = gamma, tau = tau,
-      L_i = components$L_i,
-      V_i = components$V_i,
-      Q_i = components$Q_i,
-      s_i_0 = scalar_stats$s_i_0,
-      s_i_1 = mat_stats$s_i_1,
-      s_i_2 = mat_stats$s_i_2,
-      sigma_i_sq = scalar_stats$sigma_i_sq,
-      maturities = maturities
-    )
-
-    quad_inferred <- compute_identified_set_quadratic(
-      gamma = gamma, tau = tau,
-      L_i = components$L_i,
-      V_i = components$V_i,
-      Q_i = components$Q_i,
-      s_i_0 = scalar_stats$s_i_0,
-      s_i_1 = mat_stats$s_i_1,
-      s_i_2 = mat_stats$s_i_2,
-      sigma_i_sq = scalar_stats$sigma_i_sq
-    )
-
-    expect_equal(
-      unname(quad_explicit$d_i),
-      unname(quad_inferred$d_i)
-    )
+    components <- compute_identified_set_components(gamma, moments)
+    quad <- compute_identified_set_quadratic(tau, components, moments)
 
     expected_d_i <- tau[maturities]^2 *
       unname(components$V_i) /
-      unname(scalar_stats$sigma_i_sq)
+      unname(moments$sigma_i_sq)
     expect_equal(
-      unname(quad_inferred$d_i), expected_d_i,
+      unname(quad$d_i), expected_d_i,
       info = "d_i must match manual formula"
     )
+  }
+)
+
+test_that(
+  "subset container results match the full-system constraints",
+  {
+    set.seed(31)
+    J <- 3
+    I <- 6
+    maturities <- c(2, 4, 5)
+
+    gamma <- matrix(rnorm(J * I), J, I)
+    tau <- runif(I, 0.5, 2)
+
+    n_obs <- 120
+    w1 <- rnorm(n_obs)
+    w2 <- matrix(rnorm(n_obs * I), nrow = n_obs, ncol = I)
+    pcs <- matrix(rnorm(n_obs * J), nrow = n_obs, ncol = J)
+
+    full_moments <- compute_identification_moments(w1, w2, pcs)
+    full_quad <- compute_identified_set_quadratic(
+      tau,
+      compute_identified_set_components(gamma, full_moments),
+      full_moments
+    )
+
+    subset_moments <- compute_identification_moments(
+      w1, w2, pcs,
+      maturities = maturities
+    )
+    subset_quad <- compute_identified_set_quadratic(
+      tau,
+      compute_identified_set_components(gamma, subset_moments),
+      subset_moments
+    )
+
+    nms <- paste0("maturity_", maturities)
+    expect_identical(subset_quad$d_i, full_quad$d_i[nms])
+    expect_identical(subset_quad$A_i, full_quad$A_i[nms])
+    expect_identical(subset_quad$b_i, full_quad$b_i[nms])
+    expect_identical(subset_quad$c_i, full_quad$c_i[nms])
   }
 )
 
@@ -304,9 +233,7 @@ test_that(
   "subset results match individual maturity computations",
   {
     set.seed(42)
-    J <- 3
     I <- 6
-    gamma <- matrix(rnorm(J * I), J, I)
     tau <- runif(I, 0.5, 2)
     L_i <- runif(I) # nolint: object_name_linter.
     V_i <- runif(I) # nolint: object_name_linter.
@@ -322,26 +249,26 @@ test_that(
     maturities <- c(2, 4, 6)
 
     # Compute with subset
-    result_batch <- compute_identified_set_quadratic(
-      gamma, tau,
+    result_batch <- quadratic_from_components(
+      tau,
       L_i[maturities], V_i[maturities],
       Q_i[maturities],
       s_i_0[maturities],
       s_i_1[maturities], s_i_2[maturities],
       sigma_i_sq[maturities],
-      maturities = maturities
+      maturities = maturities, n_components = I
     )
 
     # Compute individually for each maturity
     for (idx in seq_along(maturities)) {
       m <- maturities[idx]
-      result_single <- compute_identified_set_quadratic(
-        gamma, tau,
+      result_single <- quadratic_from_components(
+        tau,
         L_i[m], V_i[m], Q_i[m],
         s_i_0[m],
         s_i_1[m], s_i_2[m],
         sigma_i_sq[m],
-        maturities = m
+        maturities = m, n_components = I
       )
       mat_name <- paste0("maturity_", m)
       expect_equal(

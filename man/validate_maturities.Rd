@@ -25,12 +25,11 @@ error message (e.g. \code{"ncol(gamma)"} renders as \code{ncol(gamma) (4)}).}
 Invisible TRUE if valid, stops with informative error otherwise.
 }
 \description{
-Single source of truth for validating a resolved (numeric) maturity vector:
+Single source of truth for validating a numeric maturity vector:
 non-empty, finite integers, within \code{[MIN_MATURITY, max_value]}. The
-scalar analog is \code{\link{validate_maturity_index}}; resolution of named
-or implicit maturities happens earlier in \code{\link{resolve_maturities}}.
+scalar analog is \code{\link{validate_maturity_index}}.
 }
 \seealso{
-\code{\link{validate_maturity_index}}, \code{\link{resolve_maturities}}
+\code{\link{validate_maturity_index}}
 }
 \keyword{internal}

@@ -6,7 +6,8 @@
 \description{
 Validators for maturity indices: the scalar \code{validate_maturity_index}
 and the vector \code{validate_maturities}. These enforce the maturity
-contract; resolution/coercion of maturity inputs lives separately in
-\code{\link{resolve_maturities}}.
+contract; the maturity identity itself is carried by
+\code{hetid_moments} containers (see
+\code{\link{compute_identification_moments}}).
 }
 \keyword{internal}

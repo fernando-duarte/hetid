@@ -80,14 +80,18 @@ check(
   max(abs(ixj_tau$quadratic$d_i - expected_d)) < 1e-12
 )
 
-# Position-indexing guard: maturity-value-named moments are rejected.
-moments_bad <- moments
-colnames(moments_bad$r_i_0) <- c("maturity_2", "maturity_5", "maturity_9")
+# Full-system guard: a subset container (constraint axis smaller than the
+# system) cannot supply one constraint per gamma column and is rejected.
+moments_subset <- suppressMessages(
+  compute_identification_moments(w1, w2, pcs, maturities = c(1, 3))
+)
 err <- tryCatch(
-  build_ixj_quadratic_system(moments_bad, matrix(0.2, nrow = n_pcs, ncol = n_comp)),
+  build_ixj_quadratic_system(
+    moments_subset, matrix(0.2, nrow = n_pcs, ncol = n_comp)
+  ),
   error = function(e) e
 )
-check("rejects maturity-value-named moments", inherits(err, "error"))
+check("rejects subset (non-full-system) moments", inherits(err, "error"))
 
 # tau_matrix shape guard.
 err2 <- tryCatch(

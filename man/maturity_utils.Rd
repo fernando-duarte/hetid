@@ -4,6 +4,6 @@
 \alias{maturity_utils}
 \title{Maturity Utilities}
 \description{
-Helpers for resolving and validating maturity indices.
+Helpers for naming maturity-indexed objects.
 }
 \keyword{internal}

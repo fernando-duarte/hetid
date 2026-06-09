@@ -4,46 +4,23 @@
 \alias{compute_identified_set_quadratic}
 \title{Compute Quadratic Form Components for Identified Set}
 \usage{
-compute_identified_set_quadratic(
-  gamma,
-  tau,
-  L_i,
-  V_i,
-  Q_i,
-  s_i_0,
-  s_i_1,
-  s_i_2,
-  sigma_i_sq,
-  maturities = NULL
-)
+compute_identified_set_quadratic(tau, components, moments)
 }
 \arguments{
-\item{gamma}{Matrix (J x I) where each column gamma_i contains the
-coefficients for maturity i}
+\item{tau}{Vector of nonnegative real numbers (length I, the moments'
+\code{n_components}) containing tau_i values, indexed by system
+column. Exact zeros are allowed and correspond to the
+point-identification benchmark.}
 
-\item{tau}{Vector of nonnegative real numbers (length I) containing tau_i
-values. Exact zeros are allowed and correspond to the point-identification
-benchmark.}
+\item{components}{A \code{hetid_components} object from
+\code{\link{compute_identified_set_components}}}
 
-\item{L_i}{Named vector of L_i values from compute_identified_set_components()}
-
-\item{V_i}{Named vector of V_i values from compute_identified_set_components()}
-
-\item{Q_i}{List of vectors Q_i from compute_identified_set_components()}
-
-\item{s_i_0}{Named vector of S_i^(0) values from compute_scalar_statistics()}
-
-\item{s_i_1}{List of vectors S_i^(1) from compute_matrix_statistics()}
-
-\item{s_i_2}{List of matrices S_i^(2) from compute_matrix_statistics()}
-
-\item{sigma_i_sq}{Named vector of sigma_i^2 values from
-compute_scalar_statistics(). Must be finite and strictly
-positive (zero indicates no heteroskedasticity to exploit
-for identification).}
-
-\item{maturities}{Vector of maturity indices to compute components for.
-Default is all available.}
+\item{moments}{The \code{hetid_moments} object the components were
+computed from (see
+\code{\link{compute_identification_moments}}). Its
+\code{sigma_i_sq} values must be finite and strictly positive
+(zero indicates no heteroskedasticity to exploit for
+identification).}
 }
 \value{
 A list containing:
@@ -71,28 +48,39 @@ The identified set is:
 \deqn{\Theta = \{\theta \in R^I :
   \theta^\top A_i \theta + b_i^\top \theta +
   c_i \leq 0, \; i = 1, \ldots, I\}}
+
+The components and moments must carry identical \code{maturities} and
+\code{n_components} attributes (they do when the components were
+computed from these moments); a mismatch raises a structured
+dimension error. Prefer \code{\link{build_quadratic_system}}, which
+computes the components internally from \code{(gamma, moments)} and
+makes a stale pairing impossible.
 }
 \section{Maturity Indexing Convention}{
 
-The statistical inputs (\code{L_i}, \code{V_i}, \code{Q_i},
-\code{s_i_0}, \code{s_i_1}, \code{s_i_2}, \code{sigma_i_sq})
-are \strong{position-indexed}: their length must equal
-\code{length(maturities)}, with element \code{k}
-corresponding to \code{maturities[k]}.
+A moments container is bound to one system: the \code{(w1, w2, pcs)}
+it was computed from. Two axes are recorded as attributes of
+\code{hetid_moments} objects:
+\describe{
+\item{\code{n_components}}{the theta axis: \code{ncol(w2)}, the
+dimension of theta, the length of \code{tau}, and the column
+count of \code{gamma}. Immutable for a given system.}
+\item{\code{maturities}}{the constraint axis: which w2 columns (by
+column index, values in \code{1..n_components}) have their moment
+conditions computed and enforced. May be any subset, e.g.
+\code{c(2, 4, 5)} of a 6-column system.}
+}
 
-In contrast, \code{gamma} and \code{tau} are
-\strong{full-size} (length I = \code{ncol(gamma)}), indexed
-by maturity value.
-
-When \code{maturities} is omitted, the function infers
-maturity values from input names if they follow the
-\code{maturity_N} convention (as returned by
-\code{\link{compute_identified_set_components}} and the
-statistics functions). For unnamed inputs, it falls back
-to \code{1:n} only when n equals \code{ncol(gamma)};
-otherwise it errors to prevent silent misalignment.
-When \code{maturities} is provided and inputs are named,
-the names are validated against \code{maturities}.
+"Maturity" therefore means w2 column index within the system, not
+necessarily a true bond maturity; calling analyses map column indices
+to bond labels externally when the system is built from a selection
+of bonds. Per-maturity outputs are named \code{maturity_N} where N is
+the w2 column index, with element k corresponding to
+\code{maturities[k]}. Inner theta-axis dimensions (each \code{r_i_1}
+matrix, \code{s_i_1} vector, and \code{s_i_2} matrix) are always full
+\code{n_components}-sized. Downstream functions accept only validated
+containers and resolve positions internally, so cross-object maturity
+misalignment cannot occur.
 }
 
 \examples{
@@ -106,21 +94,7 @@ pcs <- matrix(rnorm(n_obs * J), nrow = n_obs, ncol = J)
 gamma <- matrix(rnorm(J * I), nrow = J, ncol = I)
 tau <- rep(1, I)
 
-vec_stats <- compute_vector_statistics(w1, w2, pcs)
-scalar_stats <- compute_scalar_statistics(w1, w2)
-matrix_stats <- compute_matrix_statistics(w1, w2)
-components <- compute_identified_set_components(
-  gamma = gamma, r_i_0 = vec_stats$r_i_0,
-  r_i_1 = vec_stats$r_i_1,
-  p_i_0 = vec_stats$p_i_0
-)
-quad <- compute_identified_set_quadratic(
-  gamma = gamma, tau = tau,
-  L_i = components$L_i, V_i = components$V_i,
-  Q_i = components$Q_i,
-  s_i_0 = scalar_stats$s_i_0,
-  s_i_1 = matrix_stats$s_i_1,
-  s_i_2 = matrix_stats$s_i_2,
-  sigma_i_sq = scalar_stats$sigma_i_sq
-)
+moments <- compute_identification_moments(w1, w2, pcs)
+components <- compute_identified_set_components(gamma, moments)
+quad <- compute_identified_set_quadratic(tau, components, moments)
 }

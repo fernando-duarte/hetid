@@ -32,14 +32,13 @@ normalize_gamma_columns <- function(gamma) {
 # profile fails the feasibility/active validity check. The penalty must stay
 # finite -- the OUTER optimizer is itself an slsqp call that needs finite values.
 objective_gamma_only <- function(par, moments, tau,
-                                 n_pcs, n_components,
-                                 maturities = NULL) {
+                                 n_pcs, n_components) {
   gamma <- unpack_gamma(par, n_pcs, n_components)
   gamma <- normalize_gamma_columns(gamma)
   tryCatch(
     {
       quad_sys <- build_quadratic_system(
-        gamma, tau, moments, maturities
+        gamma, tau, moments
       )
       quad_sys <- symmetrize_quadratic_system(quad_sys)
       bounds_tbl <- solve_all_profile_bounds(
@@ -59,7 +58,7 @@ objective_gamma_only <- function(par, moments, tau,
 
 # Is the set for this gamma unbounded OR invalid in any direction? (Either makes
 # the reported start width dishonest -- both map to Inf, never the 1e6 penalty.)
-.gamma_set_unbounded <- function(gamma, tau, moments, maturities = NULL) {
+.gamma_set_unbounded <- function(gamma, tau, moments) {
   # Match objective_gamma_only: it normalizes columns before building the system,
   # and the optimizer evaluates the normalized matrix. Normalizing here too keeps
   # the honest-start oracle and the objective looking at the SAME system.
@@ -67,7 +66,7 @@ objective_gamma_only <- function(par, moments, tau,
   bt <- tryCatch(
     {
       qs <- symmetrize_quadratic_system(
-        build_quadratic_system(gamma, tau, moments, maturities)
+        build_quadratic_system(gamma, tau, moments)
       )
       solve_all_profile_bounds(qs$quadratic)
     },
@@ -85,7 +84,6 @@ run_gamma_optimization <- function(gamma_start,
                                    tau,
                                    n_starts = 10,
                                    seed = SEED,
-                                   maturities = NULL,
                                    maxeval = 500L,
                                    xtol_rel = 1e-6) {
   set.seed(seed)
@@ -97,11 +95,11 @@ run_gamma_optimization <- function(gamma_start,
   # so downstream width-reduction metrics never read the finite 1e6 penalty as a
   # spurious ~100% improvement. The optimizer internally still uses 1e6.
   objective_start <- if (
-    .gamma_set_unbounded(gamma_start, tau, moments, maturities)
+    .gamma_set_unbounded(gamma_start, tau, moments)
   ) {
     Inf
   } else {
-    objective_gamma_only(par_start, moments, tau, n_pcs, n_comp, maturities)
+    objective_gamma_only(par_start, moments, tau, n_pcs, n_comp)
   }
 
   # Generate starting points: primary + perturbed
@@ -117,7 +115,7 @@ run_gamma_optimization <- function(gamma_start,
   # Optimize from each start
   obj_fn <- function(par) {
     objective_gamma_only(
-      par, moments, tau, n_pcs, n_comp, maturities
+      par, moments, tau, n_pcs, n_comp
     )
   }
   all_results <- lapply(seq_len(n_starts), function(s) {

@@ -2,8 +2,9 @@
 #'
 #' Validators for maturity indices: the scalar \code{validate_maturity_index}
 #' and the vector \code{validate_maturities}. These enforce the maturity
-#' contract; resolution/coercion of maturity inputs lives separately in
-#' \code{\link{resolve_maturities}}.
+#' contract; the maturity identity itself is carried by
+#' \code{hetid_moments} containers (see
+#' \code{\link{compute_identification_moments}}).
 #'
 #' @name validate_maturities_doc
 #' @keywords internal
@@ -27,10 +28,9 @@ validate_maturity_index <- function(i, max_maturity = HETID_CONSTANTS$MAX_MATURI
 
 #' Validate a Vector of Maturity Indices
 #'
-#' Single source of truth for validating a resolved (numeric) maturity vector:
+#' Single source of truth for validating a numeric maturity vector:
 #' non-empty, finite integers, within \code{[MIN_MATURITY, max_value]}. The
-#' scalar analog is \code{\link{validate_maturity_index}}; resolution of named
-#' or implicit maturities happens earlier in \code{\link{resolve_maturities}}.
+#' scalar analog is \code{\link{validate_maturity_index}}.
 #'
 #' @param maturities Numeric vector of maturity indices.
 #' @param max_value Inclusive upper bound (e.g. \code{ncol(gamma)}).
@@ -39,7 +39,7 @@ validate_maturity_index <- function(i, max_maturity = HETID_CONSTANTS$MAX_MATURI
 #' @param arg Argument name for the structured error.
 #'
 #' @return Invisible TRUE if valid, stops with informative error otherwise.
-#' @seealso \code{\link{validate_maturity_index}}, \code{\link{resolve_maturities}}
+#' @seealso \code{\link{validate_maturity_index}}
 #' @keywords internal
 validate_maturities <- function(maturities, max_value,
                                 max_label = NULL,

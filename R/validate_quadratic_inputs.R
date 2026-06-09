@@ -14,44 +14,10 @@ is_square_matrix_dim <- function(x, n_components) {
     ncol(x) == n_components
 }
 
-#' Validate argument types for quadratic inputs
-#'
-#' @inheritParams compute_identified_set_quadratic
-#' @noRd
-validate_quadratic_types <- function(gamma, tau,
-                                     L_i, V_i, Q_i, # nolint: object_name_linter.
-                                     s_i_0, s_i_1,
-                                     s_i_2,
-                                     sigma_i_sq) {
-  assert_bad_argument_ok(
-    is.matrix(gamma),
-    "gamma must be a matrix",
-    arg = "gamma"
-  )
-  validate_numeric_inputs(
-    tau = tau, L_i = L_i, V_i = V_i,
-    s_i_0 = s_i_0, sigma_i_sq = sigma_i_sq
-  )
-  assert_bad_argument_ok(
-    !any(tau < 0),
-    "All elements of tau must be nonnegative",
-    arg = "tau"
-  )
-  assert_bad_argument_ok(
-    is.list(Q_i),
-    "Q_i must be a list",
-    arg = "Q_i"
-  )
-  assert_bad_argument_ok(
-    is.list(s_i_1) && is.list(s_i_2),
-    "s_i_1 and s_i_2 must be lists"
-  )
-}
-
 #' Validate per-element dimensions of list inputs
 #'
 #' @param Q_i,s_i_1,s_i_2 List inputs to check
-#' @param maturities Resolved maturity vector
+#' @param maturities Maturity vector from the containers
 #' @param n_components Expected dimension (I)
 #' @noRd
 validate_list_element_dims <- function(Q_i, s_i_1, # nolint: object_name_linter.
@@ -88,61 +54,83 @@ validate_list_element_dims <- function(Q_i, s_i_1, # nolint: object_name_linter.
 
 #' Validate inputs for the quadratic identified set computation
 #'
-#' Checks types, dimensions, positivity constraints, and resolves
-#' maturities for \code{\link{compute_identified_set_quadratic}}.
+#' Checks the container classes, that the components and moments carry
+#' identical maturity identity, and the type/dimension/positivity
+#' constraints for \code{\link{compute_identified_set_quadratic}}.
 #'
 #' @inheritParams compute_identified_set_quadratic
 #'
 #' @return A list with components:
 #' \describe{
-#'   \item{maturities}{Resolved integer vector of maturity indices}
-#'   \item{n_components}{Number of columns in \code{gamma} (I)}
+#'   \item{maturities}{Integer vector of maturity indices (constraint axis)}
+#'   \item{n_components}{Theta-axis dimension (I)}
 #'   \item{n_maturities}{Length of \code{maturities}}
 #' }
 #'
 #' @keywords internal
-validate_quadratic_inputs <- function(gamma, tau,
-                                      L_i, V_i, Q_i, # nolint: object_name_linter.
-                                      s_i_0, s_i_1,
-                                      s_i_2, sigma_i_sq,
-                                      maturities = NULL) {
-  validate_quadratic_types(
-    gamma, tau, L_i, V_i, Q_i,
-    s_i_0, s_i_1, s_i_2, sigma_i_sq
+validate_quadratic_inputs <- function(tau, components, moments) {
+  assert_hetid_moments(moments)
+  assert_bad_argument_ok(
+    inherits(components, "hetid_components"),
+    paste0(
+      "components must be a hetid_components object created by ",
+      "compute_identified_set_components()"
+    ),
+    arg = "components"
   )
 
-  n_components <- ncol(gamma)
+  maturities <- attr(moments, "maturities")
+  n_components <- attr(moments, "n_components")
+  assert_dimension_ok(
+    identical(attr(components, "maturities"), maturities),
+    paste0(
+      "components and moments carry different maturities: components = ",
+      paste(attr(components, "maturities"), collapse = ", "),
+      "; moments = ", paste(maturities, collapse = ", "),
+      ". Both must come from the same system and constraint subset."
+    )
+  )
+  assert_dimension_ok(
+    identical(attr(components, "n_components"), n_components),
+    paste0(
+      "components and moments carry different n_components: components = ",
+      attr(components, "n_components"), "; moments = ", n_components
+    )
+  )
 
+  validate_numeric_inputs(
+    tau = tau, L_i = components$L_i, V_i = components$V_i,
+    s_i_0 = moments$s_i_0, sigma_i_sq = moments$sigma_i_sq
+  )
+  assert_bad_argument_ok(
+    !any(tau < 0),
+    "All elements of tau must be nonnegative",
+    arg = "tau"
+  )
   assert_dimension_ok(
     length(tau) == n_components,
-    "tau must have length I (number of columns in gamma)"
+    "tau must have length I (the moments' n_components)"
   )
-
-  # Resolve maturities from names or explicit parameter
-  maturities <- resolve_maturities(
-    maturities,
-    list(
-      L_i = L_i, V_i = V_i, Q_i = Q_i,
-      s_i_0 = s_i_0, s_i_1 = s_i_1,
-      s_i_2 = s_i_2, sigma_i_sq = sigma_i_sq
-    ),
-    n_components
+  assert_bad_argument_ok(
+    is.list(components$Q_i),
+    "Q_i must be a list",
+    arg = "Q_i"
   )
-
-  # Validate maturities against gamma dimensions
-  validate_maturities(
-    maturities,
-    max_value = n_components,
-    max_label = "ncol(gamma)"
+  assert_bad_argument_ok(
+    is.list(moments$s_i_1) && is.list(moments$s_i_2),
+    "s_i_1 and s_i_2 must be lists"
   )
 
   n_maturities <- length(maturities)
   validate_time_series_lengths(
-    L_i, V_i, Q_i, s_i_0, s_i_1, s_i_2, sigma_i_sq,
+    components$L_i, components$V_i, components$Q_i,
+    moments$s_i_0, moments$s_i_1, moments$s_i_2,
+    moments$sigma_i_sq,
     expected_length = n_maturities
   )
 
   # Validate sigma_i_sq
+  sigma_i_sq <- moments$sigma_i_sq
   bad_sigma <- which(
     !is.finite(sigma_i_sq) | sigma_i_sq <= 0
   )
@@ -159,7 +147,8 @@ validate_quadratic_inputs <- function(gamma, tau,
   )
 
   validate_list_element_dims(
-    Q_i, s_i_1, s_i_2, maturities, n_components
+    components$Q_i, moments$s_i_1, moments$s_i_2,
+    maturities, n_components
   )
 
   list(
