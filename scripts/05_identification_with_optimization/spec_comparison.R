@@ -6,7 +6,9 @@
 #   mode        : factors (level/slope/curvature ...) and maturities
 #   n_pcs       : number of PC instruments (VFCI loading is fixed at n_pcs=4)
 #   components  : factor subset (factors mode) or maturity subset (maturities)
-#   gamma method: vfci (n_pcs=4), reduced_form (factors mode), optimized (tau>0)
+#   gamma method: vfci (n_pcs=4), reduced_form (factors mode), optimized (tau>0),
+#                 and separate -- the I x J scheme where each PC is its own
+#                 instrument (no gamma; tau>0 only, the tau=0 point is overdetermined)
 #   tau         : 0 (point) and a set-ID grid
 #
 # Parallel + resumable: each (mode, n_pcs, components) GROUP is an independent
@@ -20,6 +22,7 @@
 # Env: HETID_SPEC_QUICK=1 runs a small subgrid (for validation).
 
 source(here::here("scripts/utils/common_settings.R"))
+source(here::here("scripts/utils/ixj_identification.R"))
 
 quick <- nzchar(Sys.getenv("HETID_SPEC_QUICK"))
 cli_h1("Specification / instrument / tau comparison")
@@ -75,6 +78,26 @@ eval_opt <- function(seed, mom, n_comp, tau) {
     kind = "set(opt)", cond = NA
   )
 }
+# --- separate I x J: each PC is its own instrument; intersection of I*J
+# single-instrument constraints, summed profile width (tau>0 only) ---
+# Honest 3-state (mirrors compute_identification_ixj.R): a certified finite box
+# (every side bounded AND valid) reports its summed width; a certified unbounded
+# set reports Inf; otherwise the SLSQP bounds are unreliable/crossed -> width NA
+# (no-certified-bound), never a stray finite/negative number reported as bounded.
+eval_ixj <- function(mom, n_comp, n_pcs, tau) {
+  qs <- build_ixj_quadratic_system(mom, matrix(tau, nrow = n_pcs, ncol = n_comp))
+  b <- solve_all_profile_bounds(qs$quadratic)
+  bounded_all <- all(b$bounded_lower & b$bounded_upper)
+  valid_all <- all(b$valid_lower & b$valid_upper)
+  width <- if (bounded_all && valid_all) {
+    sum(b$width)
+  } else if (!bounded_all && valid_all) {
+    Inf
+  } else {
+    NA_real_
+  }
+  list(width = width, bounded = bounded_all && valid_all, kind = "set(ixj)", cond = NA)
+}
 
 # --- all rows for one group: every (tau, method) combination ---
 compute_group_rows <- function(mode, n_pcs, components) {
@@ -121,6 +144,15 @@ compute_group_rows <- function(mode, n_pcs, components) {
         add_row(
           mode = mode, n_pcs = n_pcs, components = clabel, n_comp = nc,
           gamma = "optimized", tau = tau, width = r$width,
+          bounded = r$bounded, kind = r$kind, cond = r$cond
+        )
+      }
+      # separate-instrument I x J scheme (no gamma; tau>0 only)
+      r <- tryCatch(eval_ixj(mom, nc, n_pcs, tau), error = function(e) NULL)
+      if (!is.null(r)) {
+        add_row(
+          mode = mode, n_pcs = n_pcs, components = clabel, n_comp = nc,
+          gamma = "separate", tau = tau, width = r$width,
           bounded = r$bounded, kind = r$kind, cond = r$cond
         )
       }
