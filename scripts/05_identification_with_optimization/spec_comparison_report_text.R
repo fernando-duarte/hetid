@@ -13,7 +13,7 @@ build_spec_summary_lines <- function(grid, cov, bl, agg, suffix) {
     paste0("  ", utils::capture.output(print(df, row.names = FALSE)))
   }
 
-  by_mode <- spec_outcome_by_mode(grid)
+  by_mode <- spec_outcome_by_mode(grid, compact = TRUE)
   outcome_lines <- unlist(lapply(names(by_mode), function(nm) {
     c(paste0("  ", nm, ":"), txt_tbl(by_mode[[nm]]), "")
   }))
@@ -111,6 +111,7 @@ build_spec_summary_lines <- function(grid, cov, bl, agg, suffix) {
     "",
     "CERTIFICATION OUTCOMES BY WEIGHTING SCHEME",
     wrap(SPEC_DENOM_NOTE, prefix = "  "),
+    wrap(SPEC_COMPACT_CELL_NOTE, prefix = "  "),
     "",
     outcome_lines,
     "ZERO-SLACK BENCHMARK (TAU = 0)",

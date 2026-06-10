@@ -59,10 +59,12 @@ write_spec_widths_figure <- function(grid, cov, paper_dir, suffix) {
     cli_alert_warning("No certified bounded tau > 0 cells; widths figure skipped")
     return(invisible(NULL))
   }
-  # Censoring is never silent: omitted counts live in each panel's label.
+  # Censoring is never silent: omitted counts live in each panel's label
+  # (unb. = certified unbounded, no cert. = no certified bound).
   panel_label <- vapply(split(pos, pos$stratum), function(d) {
     sprintf(
-      "%s\n(omitted: %d unbounded, %d no certified bound)", d$stratum[1],
+      "%s\n(omitted: %d unb., %d no cert.)",
+      wrap_spec_text(d$stratum[1], width = 38),
       sum(d$outcome == "certified unbounded"), sum(d$outcome == "no certified bound")
     )
   }, "")
@@ -89,6 +91,9 @@ write_spec_widths_figure <- function(grid, cov, paper_dir, suffix) {
     ) +
     guides(color = guide_legend(nrow = 2)) +
     theme_minimal() +
-    theme(legend.position = "bottom", plot.title.position = "plot")
+    theme(
+      legend.position = "bottom", plot.title.position = "plot",
+      strip.text = element_text(size = 8)
+    )
   save_spec_figure(p, paper_dir, "spec_comparison_widths", suffix)
 }

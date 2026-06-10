@@ -29,6 +29,12 @@ SPEC_DENOM_NOTE <- paste(
 
 # Text-mode LaTeX needs "_" escaped and ">" set in math mode (OT1 text-mode
 # ">" prints as an inverted question mark).
+SPEC_COMPACT_CELL_NOTE <- paste(
+  "Cells report certified-bounded counts k/n over the applicable observed",
+  "cells at each tau; parentheses split the remainder into unb. (certified",
+  "unbounded) and no cert. (no certified bound)."
+)
+
 escape_latex_text <- function(x) gsub(">", "$>$", gsub("_", "\\\\_", x))
 
 # By-mode outcome data frames (shared tau columns) feeding the gt table and
@@ -115,22 +121,26 @@ write_spec_panel <- function(grid, cov, bl, paper_dir, suffix) {
     compact = TRUE, scheme_labels = SPEC_SCHEME_LABELS_SHORT
   )
   taus <- sort(unique(grid$tau))
-  cell_note <- paste(
-    "Cells report certified-bounded counts k/n over the applicable observed",
-    "cells at each tau; parentheses split the remainder into unb. (certified",
-    "unbounded) and no cert. (no certified bound)."
-  )
   lines <- build_panel_latex_table(
     panels = panels,
     col_headers = format(taus, trim = TRUE),
     caption = escape_latex_text(paste0(bl$short, ". Coverage: ", cov$label, ".")),
     label = "tab:spec_comparison_outcomes",
     notes = escape_latex_text(c(
-      cell_note, SPEC_WIDTH_LEGEND, SPEC_DENOM_NOTE,
+      SPEC_COMPACT_CELL_NOTE, SPEC_WIDTH_LEGEND, SPEC_DENOM_NOTE,
       paste0(cov$line, "; ", cov$missing_line, ".")
     )),
     col_group_label = "Slack $\\tau$",
     table_format = "1.2"
+  )
+  # Five tau columns with per-cell breakdowns exceed the text width at the
+  # body font; a font-size switch scales the tabular without the
+  # siunitx-inside-resizebox grouping breakage.
+  tab_start <- grep("^\\\\begin\\{tabular\\}", lines)[1]
+  lines <- c(
+    lines[seq_len(tab_start - 1)],
+    "\\scriptsize",
+    lines[-seq_len(tab_start - 1)]
   )
   paths <- write_latex_table(lines, paper_dir, paste0("spec_comparison_panel", suffix))
   compile_standalone_pdf(paths[2])
