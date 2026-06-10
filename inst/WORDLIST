@@ -17,6 +17,7 @@ CMD
 cmd
 codetools
 compilable
+cov
 Cov
 covr
 cpp
@@ -39,7 +40,9 @@ edu
 env
 eol
 eot
+extdata
 fernando
+finiteness
 fn
 ggplot
 gitattributes
@@ -57,7 +60,9 @@ hpp
 https
 hxx
 ico
+idx
 ik
+invariants
 iTP
 Iyer
 jpeg
@@ -95,6 +100,10 @@ pc
 PCE
 pcs
 png
+positivity
+pre
+precomputes
+precomputing
 premia
 QE
 Rbuildignore
@@ -127,6 +136,7 @@ sublicense
 Svensson
 svg
 tbl
+testability
 testthat
 tex
 th
@@ -135,6 +145,7 @@ tibble
 Tobias
 tp
 TP
+tryCatch
 ttf
 untracked
 uv

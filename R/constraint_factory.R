@@ -19,9 +19,9 @@ NULL
 #'   with length equal to \code{nrow(A_i)}
 #' @param c_i Scalar numeric constant from quadratic computation
 #'
-#' @return A function that takes a theta vector and returns
-#'   the scalar value of theta'A_i*theta + b_i'theta + c_i.
-#'   Negative values indicate theta is inside the constraint.
+#' @return A function that takes a theta vector and returns the scalar
+#'   value of \eqn{\theta' A_i \theta + b_i' \theta + c_i}. Negative
+#'   values indicate theta is inside the constraint.
 #'
 #' @export
 #'

@@ -162,6 +162,16 @@ test_that("errors without date column when return_df = TRUE", {
   )
 })
 
+test_that("returns a data frame with dates when return_df = TRUE", {
+  res <- suppressMessages(
+    compute_w1_residuals(n_pcs = 4, return_df = TRUE)
+  )
+
+  expect_s3_class(res, "data.frame")
+  expect_named(res, c("date", "residuals", "fitted"))
+  expect_equal(nrow(res), length(res$residuals))
+})
+
 test_that(
   "compute_w1_residuals errors on single-row data",
   {

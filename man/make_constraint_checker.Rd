@@ -15,9 +15,9 @@ with length equal to \code{nrow(A_i)}}
 \item{c_i}{Scalar numeric constant from quadratic computation}
 }
 \value{
-A function that takes a theta vector and returns
-the scalar value of theta'A_i*theta + b_i'theta + c_i.
-Negative values indicate theta is inside the constraint.
+A function that takes a theta vector and returns the scalar
+value of \eqn{\theta' A_i \theta + b_i' \theta + c_i}. Negative
+values indicate theta is inside the constraint.
 }
 \description{
 Factory function that precomputes constants and returns a

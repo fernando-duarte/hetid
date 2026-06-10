@@ -58,7 +58,7 @@ compute_scalar_statistics <- function(w1, w2,
 compute_scalar_statistics_impl <- function(w1, w2, maturities) {
   results <- compute_per_maturity(
     w1, w2, maturities,
-    function(w1, w2, w2_i, ...) {
+    function(w1, w2_i, ...) {
       hadamard_prod <- w1 * w2_i
       s_i_0_val <- as.numeric(
         centered_cov(hadamard_prod, hadamard_prod)

@@ -185,3 +185,18 @@ test_that(
     expect_equal(result, -(4 - 1))
   }
 )
+
+test_that("prepare_return_data builds a generic time index when dates are NULL", {
+  df <- prepare_return_data(
+    result_series = c(0.1, 0.2, 0.3),
+    return_df = TRUE,
+    dates = NULL,
+    yields = matrix(0, nrow = 3, ncol = 1),
+    series_name = "x"
+  )
+
+  expect_s3_class(df, "data.frame")
+  expect_named(df, c("date", "x"))
+  expect_equal(df$date, seq_len(3))
+  expect_equal(df$x, c(0.1, 0.2, 0.3))
+})
