@@ -99,7 +99,10 @@ test_that("use_incomplete_quarters = FALSE drops the incomplete quarter", {
         start_date = "2019-01-01", end_date = "2020-05-31",
         frequency = "quarterly", use_incomplete_quarters = FALSE
       ),
-      regexp = "dropped from the quarterly output.*use_incomplete_quarters = TRUE"
+      regexp = paste0(
+        "This quarter was dropped from the quarterly output. ",
+        "To keep it instead, set use_incomplete_quarters = TRUE"
+      )
     )
   )
 
@@ -135,4 +138,18 @@ test_that("quarter-start dated real data is re-dated and keeps its quarter colum
   )
   expect_equal(result$quarter, quarterly_vars$quarter)
   expect_equal(result$gdpc1, quarterly_vars$gdpc1)
+})
+
+test_that("dropping several incomplete quarters uses plural wording", {
+  data("variables", package = "hetid", envir = environment())
+  quarterly_vars <- variables[1:4, c("date", "quarter", "gdpc1")]
+
+  expect_message(
+    result <- convert_to_quarterly(
+      quarterly_vars,
+      use_incomplete_quarters = FALSE
+    ),
+    regexp = "These quarters were dropped.*To keep them instead"
+  )
+  expect_equal(nrow(result), 0)
 })

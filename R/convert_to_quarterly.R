@@ -82,12 +82,14 @@ convert_to_quarterly <- function(
     } else {
       # The caller opted into dropping, so an informational message
       # records which quarters were removed without raising a warning
+      dropped <- if (sum(incomplete) == 1) {
+        "This quarter was dropped from the quarterly output. To keep it"
+      } else {
+        "These quarters were dropped from the quarterly output. To keep them"
+      }
       message(paste0(
-        notice,
-        "These quarters were dropped from the quarterly output. To ",
-        "keep them instead, using each quarter's latest available ",
-        "observation re-dated to the last day of the quarter, set ",
-        "use_incomplete_quarters = TRUE."
+        notice, dropped,
+        " instead, set use_incomplete_quarters = TRUE."
       ))
       last_in_quarter <- last_in_quarter[!incomplete, , drop = FALSE]
     }
