@@ -152,6 +152,14 @@ test_that(
   }
 )
 
+test_that("validate_pcs_input rejects a zero-column pcs matrix", {
+  expect_error(
+    validate_pcs_input(matrix(numeric(0), nrow = 50, ncol = 0), 50),
+    "pcs must have at least one column",
+    class = "hetid_error_bad_argument"
+  )
+})
+
 test_that("validate_statistics_inputs rejects duplicate maturities", {
   expect_error(
     validate_statistics_inputs(

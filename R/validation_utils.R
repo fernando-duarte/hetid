@@ -53,6 +53,29 @@ assert_scalar_integer_in_range <- function(x, name, min_value, max_value,
   invisible(TRUE)
 }
 
+#' Validate Row Alignment of Yields and Term Premia
+#'
+#' Rows-only counterpart to \code{validate_data_dimensions} for the
+#' bond-pricing entry points: their frames may carry different column
+#' sets, but mismatched row counts must error, never recycle.
+#'
+#' @param yields Yields data (matrix or data frame)
+#' @param term_premia Term premia data (matrix or data frame)
+#'
+#' @return Invisible TRUE if valid, stops with informative error if invalid
+#' @keywords internal
+validate_row_alignment <- function(yields, term_premia) {
+  assert_dimension_ok(
+    nrow(yields) == nrow(term_premia),
+    paste0(
+      "yields and term_premia must have same number of ",
+      "observations. Got ", nrow(yields),
+      " vs ", nrow(term_premia), " rows."
+    )
+  )
+  invisible(TRUE)
+}
+
 #' Validate Data Dimensions
 #'
 #' Validates that yields and term premia have consistent dimensions.
@@ -63,14 +86,7 @@ assert_scalar_integer_in_range <- function(x, name, min_value, max_value,
 #' @return Invisible TRUE if valid, stops with informative error if invalid
 #' @keywords internal
 validate_data_dimensions <- function(yields, term_premia) {
-  assert_dimension_ok(
-    nrow(yields) == nrow(term_premia),
-    paste0(
-      "yields and term_premia must have same number of ",
-      "observations. Got ", nrow(yields),
-      " vs ", nrow(term_premia), " rows."
-    )
-  )
+  validate_row_alignment(yields, term_premia)
   assert_dimension_ok(
     ncol(yields) == ncol(term_premia),
     paste0(
@@ -163,6 +179,12 @@ validate_numeric_inputs <- function(...) {
 
   if (is.null(input_names)) {
     input_names <- paste0("input_", seq_along(inputs))
+  } else {
+    # Partially named calls yield "" for unnamed entries; fill only those
+    unnamed <- !nzchar(input_names)
+    input_names[unnamed] <- paste0(
+      "input_", seq_along(inputs)[unnamed]
+    )
   }
 
   for (i in seq_along(inputs)) {

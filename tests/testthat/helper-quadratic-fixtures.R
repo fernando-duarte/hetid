@@ -63,7 +63,7 @@ setup_quadratic_test_inputs <- function(
   )
 
   list(
-    tau = rep(1, n_components),
+    tau = rep(0.5, n_components),
     components = components,
     moments = moments
   )

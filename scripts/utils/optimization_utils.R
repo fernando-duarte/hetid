@@ -17,10 +17,16 @@ normalize_gamma_columns <- function(gamma) {
   sweep(gamma, 2, col_norms, FUN = "/")
 }
 
-# Total identified-set width for a gamma. FAIL CLOSED: reject (large finite
-# penalty) any gamma whose set is unbounded in any direction OR whose any bounded
-# profile fails the feasibility/active validity check. The penalty must stay
-# finite -- the OUTER optimizer is itself an slsqp call that needs finite values.
+# Steering penalty for the INNER slsqp objective only. It must be finite (the
+# outer optimizer is itself an slsqp call that needs finite values) and sit far
+# above any genuine total width, but selection and reporting NEVER read it:
+# run_gamma_optimization re-evaluates every terminal gamma with honest_width(),
+# so a real bounded width can never lose to (or be mistaken for) the penalty.
+UNBOUNDED_PENALTY <- 1e12
+
+# Total identified-set width for a gamma. FAIL CLOSED: reject (steering
+# penalty) any gamma whose set is unbounded in any direction OR whose any
+# bounded profile fails the feasibility/active validity check.
 objective_gamma_only <- function(par, moments, tau,
                                  n_pcs, n_components) {
   gamma <- unpack_gamma(par, n_pcs, n_components)
@@ -35,35 +41,35 @@ objective_gamma_only <- function(par, moments, tau,
       )
       if (any(!bounds_tbl$bounded_lower) || any(!bounds_tbl$bounded_upper) ||
         any(!bounds_tbl$valid_lower) || any(!bounds_tbl$valid_upper)) {
-        return(1e6)
+        return(UNBOUNDED_PENALTY)
       }
       compute_total_width(bounds_tbl)
     },
     error = function(e) {
-      1e6
+      UNBOUNDED_PENALTY
     }
   )
 }
 
-# Is the set for this gamma unbounded OR invalid in any direction? (Either makes
-# the reported start width dishonest -- both map to Inf, never the 1e6 penalty.)
-.gamma_set_unbounded <- function(gamma, tau, moments) {
-  # Match objective_gamma_only: it normalizes columns before building the system,
-  # and the optimizer evaluates the normalized matrix. Normalizing here too keeps
-  # the honest-start oracle and the objective looking at the SAME system.
+# Honest total identified-set width for a gamma: the finite total profile-bound
+# width when EVERY side is bounded AND valid, else Inf (never the steering
+# penalty). Columns are normalized exactly as in objective_gamma_only so this
+# oracle and the optimizer evaluate the SAME system.
+honest_width <- function(gamma, tau, moments) {
   gamma <- normalize_gamma_columns(gamma)
-  bt <- tryCatch(
+  bounds_tbl <- tryCatch(
     {
       qs <- build_quadratic_system(gamma, tau, moments)
       solve_all_profile_bounds(qs$quadratic)
     },
     error = function(e) NULL
   )
-  if (is.null(bt)) {
-    return(TRUE)
+  if (is.null(bounds_tbl) ||
+    any(!bounds_tbl$bounded_lower) || any(!bounds_tbl$bounded_upper) ||
+    any(!bounds_tbl$valid_lower) || any(!bounds_tbl$valid_upper)) {
+    return(Inf)
   }
-  any(!bt$bounded_lower) || any(!bt$bounded_upper) ||
-    any(!bt$valid_lower) || any(!bt$valid_upper)
+  compute_total_width(bounds_tbl)
 }
 
 run_gamma_optimization <- function(gamma_start,
@@ -78,16 +84,11 @@ run_gamma_optimization <- function(gamma_start,
   n_comp <- ncol(gamma_start)
   par_start <- pack_gamma(gamma_start)
 
-  # Reported start objective is HONEST: Inf when the baseline set is unbounded,
-  # so downstream width-reduction metrics never read the finite 1e6 penalty as a
-  # spurious ~100% improvement. The optimizer internally still uses 1e6.
-  objective_start <- if (
-    .gamma_set_unbounded(gamma_start, tau, moments)
-  ) {
-    Inf
-  } else {
-    objective_gamma_only(par_start, moments, tau, n_pcs, n_comp)
-  }
+  # Reported start objective is HONEST: Inf when the baseline set is unbounded
+  # or invalid in any direction, else the genuine finite width -- downstream
+  # width-reduction metrics never read the finite steering penalty as a
+  # spurious ~100% improvement.
+  objective_start <- honest_width(gamma_start, tau, moments)
 
   # Generate starting points: primary + perturbed
   starts <- vector("list", n_starts)
@@ -111,30 +112,29 @@ run_gamma_optimization <- function(gamma_start,
       control = list(xtol_rel = xtol_rel, maxeval = maxeval)
     ), error = function(e) {
       list(
-        par = starts[[s]], value = 1e6,
+        par = starts[[s]], value = UNBOUNDED_PENALTY,
         convergence = -99L, iter = 0L,
         message = e$message
       )
     })
   })
 
-  # Select best result
-  objectives <- vapply(
-    all_results, function(r) r$value, numeric(1)
-  )
-  best_idx <- which.min(objectives)
+  # Honest selection: re-evaluate every start's terminal gamma with
+  # honest_width and pick the best HONEST value (ties keep the first start).
+  # The inner objective's steering penalty sits inside the genuine width range
+  # in pathological systems, so r$value is never used for selection or
+  # reporting.
+  honest_values <- vapply(all_results, function(r) {
+    honest_width(unpack_gamma(r$par, n_pcs, n_comp), tau, moments)
+  }, numeric(1))
+  best_idx <- which.min(honest_values)
   best <- all_results[[best_idx]]
   gamma_opt <- normalize_gamma_columns(
     unpack_gamma(best$par, n_pcs, n_comp)
   )
 
-  # Honest final objective: best$value == 1e6 means NO bounded+valid gamma was
-  # found (all starts on the penalty plateau) -> report Inf, not the sentinel.
-  objective_final <- if (is.finite(best$value) && best$value < 1e6) {
-    best$value
-  } else {
-    Inf
-  }
+  # Honest final objective: Inf when no start reached a bounded+valid gamma.
+  objective_final <- honest_values[[best_idx]]
 
   list(
     gamma_optimized = gamma_opt,

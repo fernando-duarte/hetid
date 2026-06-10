@@ -229,9 +229,15 @@ write.csv(variance_bounds_df, file.path(output_dir, "variance_bounds.csv"), row.
 
 cli_h2("Economic Interpretation")
 
-# Provide economic interpretation
+# Provide economic interpretation. The lowest positive bound excludes
+# maturity 1 (zero by construction), so which.min runs on the positive
+# SUBSET; subset-then-index keeps the value and maturity aligned (indexing
+# the full vectors with the subset index would be off by one).
 max_vb_idx <- which.max(variance_bounds)
-min_vb_idx <- which.min(variance_bounds[variance_bounds > 0]) # Exclude maturity 1 if it's 0
+pos_vb <- variance_bounds > 0
+min_pos_idx <- which.min(variance_bounds[pos_vb])
+min_vb_value <- variance_bounds[pos_vb][min_pos_idx]
+min_vb_maturity <- maturities[pos_vb][min_pos_idx]
 
 cli_ul(c(
   paste(
@@ -239,11 +245,11 @@ cli_ul(c(
     "at maturity", maturities[max_vb_idx]
   ),
   paste(
-    "Lowest positive variance bound:", round(variance_bounds[min_vb_idx], 6),
-    "at maturity", maturities[min_vb_idx]
+    "Lowest positive variance bound:", round(min_vb_value, 6),
+    "at maturity", min_vb_maturity
   ),
   paste("Variance bound range:", round(
-    max(variance_bounds) - min(variance_bounds[variance_bounds > 0]),
+    max(variance_bounds) - min_vb_value,
     6
   ))
 ))

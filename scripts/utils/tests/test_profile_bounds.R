@@ -84,6 +84,49 @@ check(
     !ro$bounded_lower[1] && !ro$bounded_upper[1]
 )
 
+# Oblique unbounded rays with slope != 1: {theta1 - a*theta2 <= 0} leaves theta1
+# unbounded above along theta1 = a*theta2 (theta2 free). The target lands
+# interior to every box at a*box while theta2 rides the edge, so the old
+# target-only acceptance certified a finite bound. The honest verdicts are
+# unbounded or fail-closed -- never bounded+valid+finite.
+for (slope in c(0.5, 0.9)) {
+  rs <- solve_profile_bound(
+    quad(list(matrix(0, 2, 2)), list(c(1, -slope)), c(0)), 1, "max"
+  )
+  check(
+    sprintf("oblique slope-%.1f ray: theta1 upper not finite+valid", slope),
+    !(isTRUE(rs$bounded) && isTRUE(rs$valid) && is.finite(rs$bound))
+  )
+}
+
+# Genuinely pinned target with a free other coordinate: {theta1^2 - 1 <= 0} in
+# 2-D bounds theta1 in [-1, 1] while theta2 is unrestricted; the pinned
+# coordinate must still come back as a finite valid bound.
+q_pin <- quad(list(diag(c(1, 0))), list(rep(0, 2)), c(-1))
+rp_hi <- solve_profile_bound(q_pin, 1, "max")
+rp_lo <- solve_profile_bound(q_pin, 1, "min")
+check(
+  "pinned theta1 with free theta2: finite +/-1, valid",
+  rp_hi$bounded && rp_hi$valid && approx(rp_hi$bound, 1) &&
+    rp_lo$bounded && rp_lo$valid && approx(rp_lo$bound, -1)
+)
+
+# Asymmetric A_i must error up front: the analytic SLSQP Jacobian assumes
+# symmetric A, so the solver refuses rather than silently using a wrong gradient.
+asym_msg <- tryCatch(
+  {
+    solve_profile_bound(
+      quad(list(matrix(c(0, 1, 0, 0), 2, 2)), list(rep(0, 2)), c(-1)), 1, "max"
+    )
+    NULL
+  },
+  error = function(e) conditionMessage(e)
+)
+check(
+  "asymmetric A_i rejected with symmetrize guidance",
+  !is.null(asym_msg) && grepl("symmetric", asym_msg, fixed = TRUE)
+)
+
 # Genuine large finite bound theta1 in [-7e8, 7e8] (true bound between box1 and
 # box2): must stay BOUNDED, not be misread as unbounded.
 rl <- solve_all_profile_bounds(quad(list(diag(c((1 / 7e8)^2, 1, 1))), list(rep(0, 3)), c(-1)))

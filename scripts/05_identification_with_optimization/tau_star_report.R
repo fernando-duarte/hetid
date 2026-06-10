@@ -37,7 +37,7 @@ names(results) <- modes
 for (res in results) {
   mode <- res$mode
   write.csv(
-    res$tau_stars[, c("gamma", "tau_star")],
+    res$tau_stars[, c("gamma", "tau_star", "capped")],
     file.path(paper_dir, paste0("tau_star_comparison_", mode, ".csv")),
     row.names = FALSE
   )

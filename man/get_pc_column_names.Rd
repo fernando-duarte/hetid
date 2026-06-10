@@ -10,7 +10,7 @@ get_pc_column_names(n_pcs)
 \item{n_pcs}{Number of principal components}
 }
 \value{
-Character vector, e.g. c("pc1", "pc2", ...)
+Character vector, e.g. c("pc1", "pc2", ...); empty for zero PCs
 }
 \description{
 Build PC Column Names

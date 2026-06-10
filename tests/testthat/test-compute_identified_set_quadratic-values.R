@@ -5,7 +5,7 @@
 test_that("A_i matrices are symmetric", {
   set.seed(456)
   I <- 5
-  tau <- runif(I, 0.5, 2)
+  tau <- runif(I, 0.1, 0.9)
   L_i <- runif(I) # nolint: object_name_linter.
   V_i <- runif(I) # nolint: object_name_linter.
   Q_i <- lapply(1:I, function(i) rnorm(I)) # nolint: object_name_linter.
@@ -43,7 +43,7 @@ test_that(
   "quadratic_from_components computes values correctly",
   {
     I <- 2
-    tau <- c(2, 3)
+    tau <- c(0.4, 0.6)
     L_i <- c(5, 7) # nolint: object_name_linter.
     V_i <- c(4, 6) # nolint: object_name_linter.
     Q_i <- list(c(1, 2), c(3, 4)) # nolint: object_name_linter.
@@ -62,22 +62,24 @@ test_that(
     )
 
     # d_i is tau_i squared times V_i over sigma_i squared
-    expect_equal(unname(result$d_i[1]), 8)
-    expect_equal(unname(result$d_i[2]), 18)
+    expect_equal(unname(result$d_i[1]), 0.32)
+    expect_equal(unname(result$d_i[2]), 0.72)
 
     # A_i is the outer product of Q_i minus d_i times S_i^(2)
-    expected_A_1 <- matrix(c(-7, -2, -2, -4), 2, 2) # nolint: object_name_linter.
+    expected_A_1 <- matrix( # nolint: object_name_linter.
+      c(0.68, 1.84, 1.84, 3.68), 2, 2
+    )
     expect_equal(result$A_i[[1]], expected_A_1)
 
     # b_i is negative two L_i Q_i plus two d_i S_i^(1)
     expect_equal(
       result$b_i[[1]],
-      c(maturity_1 = -8.4, maturity_2 = -16.8)
+      c(maturity_1 = -9.936, maturity_2 = -19.872)
     )
 
     # c_i is L_i squared minus d_i times S_i^(0)
-    expect_equal(unname(result$c_i[1]), 21)
-    expect_equal(unname(result$c_i[2]), 34.6)
+    expect_equal(unname(result$c_i[1]), 24.84)
+    expect_equal(unname(result$c_i[2]), 48.424)
   }
 )
 
@@ -86,7 +88,7 @@ test_that(
   {
     set.seed(789)
     I <- 6
-    tau <- runif(I, 0.5, 2)
+    tau <- runif(I, 0.1, 0.9)
     L_i <- runif(I) # nolint: object_name_linter.
     V_i <- runif(I) # nolint: object_name_linter.
     Q_i <- lapply(1:I, function(i) rnorm(I)) # nolint: object_name_linter.
@@ -126,7 +128,7 @@ test_that(
   "sentinel values verify tau uses maturity value, not position",
   {
     I <- 6
-    tau <- c(1, 2, 3, 4, 5, 6)
+    tau <- c(0.1, 0.2, 0.3, 0.4, 0.5, 0.6)
     maturities <- c(2, 4, 6)
 
     result <- quadratic_from_components(
@@ -140,9 +142,9 @@ test_that(
       maturities = maturities, n_components = I
     )
 
-    # tau[c(2,4,6)]^2 times 1/1 gives c(4, 16, 36)
+    # tau[c(2,4,6)]^2 times 1/1 gives c(0.04, 0.16, 0.36)
     expect_equal(
-      unname(result$d_i), c(4, 16, 36),
+      unname(result$d_i), c(0.04, 0.16, 0.36),
       info = "tau must be indexed by maturity value"
     )
     expect_named(result$d_i, paste0("maturity_", maturities))
@@ -158,7 +160,7 @@ test_that(
     maturities <- c(2, 4, 6)
 
     gamma <- matrix(rnorm(J * I), J, I)
-    tau <- runif(I, 0.5, 2)
+    tau <- runif(I, 0.1, 0.9)
 
     n_obs <- 100
     w1 <- rnorm(n_obs)
@@ -197,7 +199,7 @@ test_that(
     maturities <- c(2, 4, 5)
 
     gamma <- matrix(rnorm(J * I), J, I)
-    tau <- runif(I, 0.5, 2)
+    tau <- runif(I, 0.1, 0.9)
 
     n_obs <- 120
     w1 <- rnorm(n_obs)
@@ -234,7 +236,7 @@ test_that(
   {
     set.seed(42)
     I <- 6
-    tau <- runif(I, 0.5, 2)
+    tau <- runif(I, 0.1, 0.9)
     L_i <- runif(I) # nolint: object_name_linter.
     V_i <- runif(I) # nolint: object_name_linter.
     Q_i <- lapply(seq_len(I), function(k) rnorm(I)) # nolint: object_name_linter.

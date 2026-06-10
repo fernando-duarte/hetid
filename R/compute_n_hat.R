@@ -40,6 +40,7 @@
 #'
 compute_n_hat <- function(yields, term_premia, i, return_df = FALSE, dates = NULL) {
   validate_maturity_index(i, max_maturity = HETID_CONSTANTS$EFFECTIVE_MAX_MATURITY)
+  validate_row_alignment(yields, term_premia)
 
   # Extract relevant columns
   y_i <- require_column(yields, acm_column_name("yields", i), "yields")

@@ -20,6 +20,10 @@
 # by tau_star_report.R from those bundles.
 
 source(here::here("scripts/utils/common_settings.R"))
+# Cap-aware tau* formatting (.fmt_tau_star) shared with the report builders.
+source(here::here(
+  "scripts/05_identification_with_optimization/tau_star_report_utils.R"
+))
 
 COARSE_TAUS <- seq(0, 0.2, by = 0.005)
 FINE_N <- 20L
@@ -27,7 +31,10 @@ BISECT_ITERS <- 40L
 RECESSION_N_DIR <- 8000L
 RECESSION_SEED <- 1L
 OPT_TAU_LO <- 0.2
-OPT_TAU_CAP <- 5
+# Admissible slack is tau in [0,1): the correlation-bound interpretation fails
+# at tau >= 1 (and hetid rejects it), so the optimizer search is capped
+# strictly below 1. A cap-censored tau* is displayed as ">= cap", never exact.
+OPT_TAU_CAP <- 0.99
 
 temp_dir <- file.path(OUTPUT_TEMP_DIR, "identification_optimized")
 dir.create(temp_dir, recursive = TRUE, showWarnings = FALSE)
@@ -74,7 +81,8 @@ run_tau_star_analysis <- function(mode) {
   cli_h2("tau* (fixed gammas; sweep + bisection)")
   fixed_res <- lapply(names(fixed), function(lbl) {
     r <- analyze_fixed_gamma(lbl, fixed[[lbl]], moments)
-    cli_alert_info("tau*({lbl}) = {.val {round(r$tau_star, 4)}}")
+    ts_str <- .fmt_tau_star(r$tau_star, r$capped)
+    cli_alert_info("tau*({lbl}) = {ts_str}")
     r
   })
   names(fixed_res) <- names(fixed)
@@ -89,12 +97,16 @@ run_tau_star_analysis <- function(mode) {
       "Optimizer not bounded even at tau={OPT_TAU_LO}; tau*(opt) < {OPT_TAU_LO}"
     )
   } else {
-    cli_alert_success("tau*(optimized) = {.val {round(opt$tau_star, 4)}}")
+    opt_str <- .fmt_tau_star(opt$tau_star, opt$capped)
+    cli_alert_success("tau*(optimized) = {opt_str}")
   }
   if (is.finite(opt$tau_star) && is.finite(ts_vfci) && ts_vfci > 0) {
-    cli_alert_success(
-      "Optimization extends tau* by ~{.val {round(opt$tau_star / ts_vfci, 1)}}x vs VFCI"
+    # A cap-censored tau*(opt) makes the extension factor a lower bound.
+    ratio_str <- paste0(
+      if (isTRUE(opt$capped)) ">= " else "~",
+      round(opt$tau_star / ts_vfci, 1), "x"
     )
+    cli_alert_success("Optimization extends tau* by {ratio_str} vs VFCI")
   }
 
   sweep <- do.call(rbind, lapply(fixed_res, `[[`, "sweep"))

@@ -96,8 +96,8 @@ extract_acm_data <- function(data_types = c("yields", "term_premia"),
   acm_data <- normalize_acm_date_column(acm_data)
 
   # Convert dates if provided as strings
-  start_date <- coerce_optional_date(start_date)
-  end_date <- coerce_optional_date(end_date)
+  start_date <- coerce_optional_date(start_date, "start_date")
+  end_date <- coerce_optional_date(end_date, "end_date")
 
   # Filter by date range
   acm_data <- filter_acm_date_range(

@@ -85,9 +85,12 @@ tau_star_fixed <- function(gamma, moments, coarse, iters = 40L) {
 
 # tau* for the OPTIMIZER: the largest tau at which re-optimizing gamma still
 # yields a bounded+valid set (finite final objective). Brackets upward from
-# tau_lo by doubling (capped), then bisects. tau_star is NA when even tau_lo
-# fails; capped = TRUE when the set stays bounded up to the bracket cap.
-tau_star_optimized <- function(gamma_start, moments, tau_lo = 0.2, cap = 5,
+# tau_lo by doubling, with every candidate clamped to the cap so no tau at or
+# above 1 is ever evaluated (hetid admits tau in [0,1) only -- the
+# correlation-bound interpretation fails at tau >= 1), then bisects. tau_star
+# is NA when even tau_lo fails; capped = TRUE when the set stays bounded up to
+# the cap, i.e. the reported tau* is a censored lower bound.
+tau_star_optimized <- function(gamma_start, moments, tau_lo = 0.2, cap = 0.99,
                                iters = 25L) {
   n_comp <- ncol(gamma_start)
   oracle <- function(tau) {
@@ -100,10 +103,10 @@ tau_star_optimized <- function(gamma_start, moments, tau_lo = 0.2, cap = 5,
     return(list(tau_star = NA_real_, capped = FALSE))
   }
   lo <- tau_lo
-  hi <- tau_lo * 2
+  hi <- min(tau_lo * 2, cap)
   while (oracle(hi) && hi < cap) {
     lo <- hi
-    hi <- hi * 2
+    hi <- min(hi * 2, cap)
   }
   if (oracle(hi)) {
     return(list(tau_star = hi, capped = TRUE))

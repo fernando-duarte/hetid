@@ -19,16 +19,20 @@
 # progress signal; `ls` the checkpoint dir to see how far a run got. Optimizer
 # accuracy is identical to a serial run (n_starts=12, slsqp defaults preserved).
 #
-# Env: HETID_SPEC_QUICK=1 runs a small subgrid (for validation).
+# Env: HETID_SPEC_QUICK=1 runs a small subgrid (for validation). The two
+# profiles write to separate checkpoint dirs and profile-suffixed artifacts
+# (spec_comparison_<profile>.csv/.rds), so a quick run never resumes from or
+# clobbers a full run (and vice versa).
 
 source(here::here("scripts/utils/common_settings.R"))
 source(here::here("scripts/utils/ixj_identification.R"))
 source(here::here("scripts/05_identification_with_optimization/spec_comparison_design.R"))
 
 quick <- nzchar(Sys.getenv("HETID_SPEC_QUICK"))
-cli_h1("Specification / instrument / tau comparison")
+profile <- if (quick) "quick" else "full"
+cli_h1("Specification / instrument / tau comparison ({profile} profile)")
 
-design <- spec_comparison_design(if (quick) "quick" else "full")
+design <- spec_comparison_design(profile)
 tau_grid <- design$tau_grid
 npcs_grid <- design$npcs_grid
 factor_sets <- design$factor_sets
@@ -165,8 +169,8 @@ compute_group_rows <- function(mode, n_pcs, components) {
 
 out_dir <- file.path(OUTPUT_TEMP_DIR, "identification_optimized")
 dir.create(out_dir, recursive = TRUE, showWarnings = FALSE)
-csv_path <- file.path(out_dir, "spec_comparison_full.csv")
-ckpt_dir <- file.path(OUTPUT_TEMP_DIR, "identification_optimized", "spec_comparison_ckpt")
+csv_path <- file.path(out_dir, paste0("spec_comparison_", profile, ".csv"))
+ckpt_dir <- file.path(out_dir, paste0("spec_comparison_ckpt_", profile))
 dir.create(ckpt_dir, recursive = TRUE, showWarnings = FALSE)
 
 ckpt_path <- function(key) {
@@ -240,7 +244,11 @@ if (is.null(grid) || !nrow(grid)) {
   bench <- bench[order(bench$cond), ]
   cli_h2("Benchmark: tau=0 point identification (width 0) — best-conditioned first")
   print(utils::head(bench[, c("mode", "n_pcs", "components", "gamma", "cond")], 10), digits = 5)
-  write.csv(bench, file.path(out_dir, "spec_comparison_benchmark_points.csv"), row.names = FALSE)
+  write.csv(
+    bench,
+    file.path(out_dir, paste0("spec_comparison_benchmark_points_", profile, ".csv")),
+    row.names = FALSE
+  )
 
   # Other specs = tau>0; tightest bounded sets first.
   others <- grid[grid$tau > 0, ]
@@ -254,6 +262,8 @@ if (is.null(grid) || !nrow(grid)) {
     "Bounded tau>0 specs: {.val {nrow(others_bounded)}} of {.val {nrow(others)}}; unbounded: {.val {sum(!others$bounded)}}"
   )
 
-  saveRDS(grid, file.path(OUTPUT_TEMP_DIR, "identification_optimized", "spec_comparison.rds"))
-  cli_alert_success("Saved spec_comparison_full.csv + benchmark_points.csv to {.path {out_dir}}")
+  saveRDS(grid, file.path(out_dir, paste0("spec_comparison_", profile, ".rds")))
+  cli_alert_success(
+    "Saved spec_comparison_{profile}.csv/.rds + benchmark_points_{profile}.csv to {.path {out_dir}}"
+  )
 }

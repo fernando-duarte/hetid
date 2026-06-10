@@ -9,9 +9,9 @@
 #' @param gamma Matrix (J x I) where each column gamma_i contains the
 #'   coefficients for system column i. I must equal the moments'
 #'   \code{n_components} attribute and J its instrument count.
-#' @param tau Vector of nonnegative real numbers (length I), indexed by
-#'   system column. Exact zeros correspond to the point-identification
-#'   benchmark.
+#' @param tau Vector of real numbers in \code{[0, 1)} (length I),
+#'   indexed by system column. Exact zeros correspond to the
+#'   point-identification benchmark.
 #' @param moments A \code{hetid_moments} object from
 #'   \code{\link{compute_identification_moments}}
 #'

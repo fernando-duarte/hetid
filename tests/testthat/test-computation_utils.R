@@ -113,6 +113,14 @@ test_that("apply_time_series_transform errors on wrong output length", {
   )
 })
 
+test_that("get_pc_column_names builds prefixed names", {
+  expect_identical(get_pc_column_names(3), c("pc1", "pc2", "pc3"))
+})
+
+test_that("get_pc_column_names returns an empty vector for zero PCs", {
+  expect_identical(get_pc_column_names(0), character(0))
+})
+
 test_that("run_pc_regression returns expected structure", {
   set.seed(42)
   y <- rnorm(50)

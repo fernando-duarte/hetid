@@ -9,9 +9,14 @@ NULL
 #' Build PC Column Names
 #'
 #' @param n_pcs Number of principal components
-#' @return Character vector, e.g. c("pc1", "pc2", ...)
+#' @return Character vector, e.g. c("pc1", "pc2", ...); empty for zero PCs
 #' @keywords internal
 get_pc_column_names <- function(n_pcs) {
+  # Explicit zero branch: paste0 would recycle the prefix against
+  # integer(0) and return a bare "pc"
+  if (n_pcs == 0) {
+    return(character(0))
+  }
   paste0(HETID_CONSTANTS$PC_PREFIX, seq_len(n_pcs))
 }
 
@@ -27,7 +32,7 @@ get_pc_column_names <- function(n_pcs) {
 compute_n_hat_previous <- function(yields, term_premia, i) {
   if (i == 1) {
     # For i=1, n_hat(0,t) = E_t[p_(t+0)^(1)] = p_t^(1) = -y_t^(1)
-    y1 <- require_column(yields, "y1", "yields")
+    y1 <- require_column(yields, acm_column_name("yields", 1), "yields")
     -y1 / HETID_CONSTANTS$PERCENT_TO_DECIMAL # Convert to decimal
   } else {
     compute_n_hat(yields, term_premia, i - 1, return_df = FALSE)

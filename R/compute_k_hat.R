@@ -23,14 +23,14 @@
 #' @export
 #'
 #' @examples
-#' # Extract ACM data - need maturities 1, i-1, i, i+1 for maturity i
-#' # For i=5, we need maturities 1, 4, 5, 6
+#' # Extract ACM data - need maturities 1, i-1, and i for maturity i
+#' # For i=5, we need maturities 1, 4, and 5
 #' data <- extract_acm_data(
 #'   data_types = c("yields", "term_premia"),
-#'   maturities = c(1, 4, 5, 6)
+#'   maturities = c(1, 4, 5)
 #' )
-#' yields <- data[, paste0("y", c(1, 4, 5, 6))]
-#' term_premia <- data[, paste0("tp", c(1, 4, 5, 6))]
+#' yields <- data[, paste0("y", c(1, 4, 5))]
+#' term_premia <- data[, paste0("tp", c(1, 4, 5))]
 #'
 #' # Compute k_hat for i=5
 #' k_hat_5 <- compute_k_hat(yields, term_premia, i = 5)
@@ -38,9 +38,10 @@
 compute_k_hat <- function(yields, term_premia, i) {
   # Use standardized validation
   validate_maturity_index(i)
+  validate_row_alignment(yields, term_premia)
 
   # Get y1 series
-  y1 <- require_column(yields, "y1", "yields")
+  y1 <- require_column(yields, acm_column_name("yields", 1), "yields")
 
   n_hat_i_minus_1 <- compute_n_hat_previous(
     yields, term_premia, i

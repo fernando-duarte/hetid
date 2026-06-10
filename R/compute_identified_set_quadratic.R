@@ -3,9 +3,9 @@
 #' Computes the quadratic form components d_i, A_i, b_i, and c_i for the
 #' identified set calculation for each maturity i.
 #'
-#' @param tau Vector of nonnegative real numbers (length I, the moments'
-#'   \code{n_components}) containing tau_i values, indexed by system
-#'   column. Exact zeros are allowed and correspond to the
+#' @param tau Vector of real numbers in \code{[0, 1)} (length I, the
+#'   moments' \code{n_components}) containing tau_i values, indexed by
+#'   system column. Exact zeros are allowed and correspond to the
 #'   point-identification benchmark.
 #' @param components A \code{hetid_components} object from
 #'   \code{\link{compute_identified_set_components}}
@@ -61,7 +61,7 @@
 #' w2 <- matrix(rnorm(n_obs * I), nrow = n_obs, ncol = I)
 #' pcs <- matrix(rnorm(n_obs * J), nrow = n_obs, ncol = J)
 #' gamma <- matrix(rnorm(J * I), nrow = J, ncol = I)
-#' tau <- rep(1, I)
+#' tau <- rep(0.2, I)
 #'
 #' moments <- compute_identification_moments(w1, w2, pcs)
 #' components <- compute_identified_set_components(gamma, moments)

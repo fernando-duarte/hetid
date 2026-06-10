@@ -40,6 +40,14 @@ require_column <- function(x, col_name, context = NULL) {
 #' @return Character vector of column names, e.g. \code{"y5"}
 #' @keywords internal
 acm_column_name <- function(data_type, maturity) {
+  assert_bad_argument_ok(
+    data_type %in% names(HETID_ACM_SCHEMA),
+    paste0(
+      "Unknown data type: '", data_type, "'. Must be one of: ",
+      paste(names(HETID_ACM_SCHEMA), collapse = ", ")
+    ),
+    arg = "data_type"
+  )
   sprintf(
     HETID_CONSTANTS$COL_FORMAT_SIMPLE,
     HETID_ACM_SCHEMA[[data_type]]$prefix_new,

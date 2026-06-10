@@ -49,6 +49,8 @@
 #'
 compute_sdf_innovations <- function(yields, term_premia, i,
                                     return_df = FALSE, dates = NULL) {
+  validate_row_alignment(yields, term_premia)
+
   # Shared maturity validation, n_hat(i,t) level, and price-news
   # difference. The t-alignment between exp(n_hat_i[t]) and delta_p[t]
   # holds: delta_p[t] = n_hat(i-1,t+1) - n_hat(i,t) pairs with n_hat_i[t].

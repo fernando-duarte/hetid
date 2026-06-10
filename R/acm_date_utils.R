@@ -29,14 +29,30 @@ parse_dates_c_locale <- function(x, format) {
 
 #' Coerce optional date input
 #'
+#' NULL and Date inputs pass through unchanged; character input is
+#' parsed with \code{as.Date}. Anything else (e.g. a bare number, which
+#' \code{Date >= numeric} would silently compare as days since the
+#' epoch) raises a structured error.
+#'
+#' @param x Date bound supplied by the caller
+#' @param arg Argument name for the structured error
 #' @keywords internal
 #' @noRd
-coerce_optional_date <- function(x) {
-  if (!is.null(x) && is.character(x)) {
+coerce_optional_date <- function(x, arg) {
+  if (is.null(x) || inherits(x, "Date")) {
+    return(x)
+  }
+  if (is.character(x)) {
     return(as.Date(x))
   }
-
-  x
+  stop_bad_argument(
+    paste0(
+      arg, " must be a Date or a character string in ",
+      "\"YYYY-MM-DD\" format; got an object of class ",
+      class(x)[1]
+    ),
+    arg = arg
+  )
 }
 
 #' Normalize ACM date column

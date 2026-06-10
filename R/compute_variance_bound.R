@@ -27,6 +27,7 @@
 #'
 compute_variance_bound <- function(yields, term_premia, i) {
   validate_maturity_index(i, max_maturity = HETID_CONSTANTS$EFFECTIVE_MAX_MATURITY)
+  validate_row_alignment(yields, term_premia)
 
   # Compute components
   c_hat <- compute_c_hat(yields, term_premia, i)

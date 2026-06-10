@@ -51,19 +51,24 @@ build_tau_star_summary <- function(results) {
     )
   }
 
+  # Headline tau* values are cap-aware: a cap-censored tau* renders as
+  # ">= cap (search cap reached)" and the fold factor as a lower bound.
   title <- if (is.finite(ratio_m)) {
     c(
       "IDENTIFICATION STRENGTH VIA TAU*: OPTIMIZING GAMMA EXTENDS SLACK",
       sprintf(
-        "TOLERANCE ~%.0f-FOLD (TAU* %s -> %s, MATURITIES MODE)",
-        ratio_m, .fmt_tau(vf_m$tau_star), .fmt_tau(op_m$tau_star, 3)
+        "TOLERANCE %s%.0f-FOLD (TAU* %s -> %s, MATURITIES MODE)",
+        if (isTRUE(op_m$capped)) ">= " else "~", ratio_m,
+        .fmt_tau_star(vf_m$tau_star, vf_m$capped),
+        .fmt_tau_star(op_m$tau_star, op_m$capped)
       )
     )
   } else {
     c(
       "IDENTIFICATION STRENGTH VIA TAU*: THE VFCI BASELINE TOLERATES",
       sprintf(
-        "ALMOST NO SLACK (TAU* = %s, MATURITIES MODE)", .fmt_tau(vf_m$tau_star)
+        "ALMOST NO SLACK (TAU* = %s, MATURITIES MODE)",
+        .fmt_tau_star(vf_m$tau_star, vf_m$capped)
       )
     )
   }

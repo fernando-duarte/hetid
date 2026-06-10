@@ -79,6 +79,16 @@ test_that("variance bound generally increases with maturity", {
   )
 })
 
+test_that("compute_variance_bound rejects mismatched yields and term_premia rows", {
+  syn_long <- create_synthetic_test_data(n = 30)
+  syn_short <- create_synthetic_test_data(n = 15)
+  expect_error(
+    compute_variance_bound(syn_long$yields, syn_short$term_premia, i = 5),
+    "same number of observations",
+    class = "hetid_error_dimension_mismatch"
+  )
+})
+
 test_that("compute_variance_bound rejects invalid maturity values", {
   test_env <- setup_standard_test_env()
   expect_error(

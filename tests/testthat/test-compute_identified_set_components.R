@@ -60,6 +60,38 @@ test_that("components validates gamma and moments arguments", {
   )
 })
 
+test_that("components rejects non-numeric and non-finite gamma", {
+  set.seed(123)
+  J <- 3
+  I <- 4
+  moments <- make_components_moments(
+    r_i_0 = matrix(rnorm(J * I), J, I),
+    r_i_1 = lapply(1:I, function(k) matrix(rnorm(J * I), J, I)),
+    p_i_0 = matrix(rnorm(J * I), J, I),
+    maturities = 1:I, n_components = I
+  )
+
+  expect_error(
+    compute_identified_set_components(matrix(NA_real_, J, I), moments),
+    "gamma must not contain NA, NaN, or infinite values",
+    class = "hetid_error_bad_argument"
+  )
+
+  gamma_inf <- matrix(rnorm(J * I), J, I)
+  gamma_inf[2, 3] <- Inf
+  expect_error(
+    compute_identified_set_components(gamma_inf, moments),
+    "gamma must not contain NA, NaN, or infinite values",
+    class = "hetid_error_bad_argument"
+  )
+
+  expect_error(
+    compute_identified_set_components(matrix(TRUE, J, I), moments),
+    "gamma must contain only numeric values",
+    class = "hetid_error_bad_argument"
+  )
+})
+
 test_that("compute_identified_set_components returns correct structure", {
   set.seed(123)
   J <- 4 # number of PCs

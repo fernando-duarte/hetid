@@ -29,6 +29,17 @@ convert_to_quarterly <- function(
     return(data)
   }
 
+  # Duplicate dates would fan out in the merge below and break the
+  # quarter-end invariant, so malformed input errors up front
+  assert_bad_argument_ok(
+    anyDuplicated(data$date) == 0,
+    paste0(
+      "data contains duplicated dates; each date must appear at most ",
+      "once for quarterly conversion"
+    ),
+    arg = "data"
+  )
+
   data <- data[order(data$date), , drop = FALSE]
 
   # Quarter bookkeeping lives in a scratch frame so input columns named

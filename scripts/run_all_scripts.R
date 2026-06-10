@@ -15,16 +15,29 @@ cli_rule()
 
 # Helper function to run a script with error handling
 # `env` (optional named character vector) sets environment variables for the
-# duration of this script only, then restores them, so per-script switches like
-# HETID_SPEC_QUICK do not leak into the rest of the pipeline.
+# duration of this script only, then restores each variable to its prior value
+# (unsetting ones that were previously unset), so per-script switches like
+# HETID_SPEC_QUICK neither leak into the rest of the pipeline nor wipe values
+# the user exported before launching it.
 run_script <- function(script_path, description, env = NULL) {
   script_name <- basename(script_path)
   cli_h2(description)
   cli_text("Running: {.file {script_name}}")
 
   if (length(env)) {
+    prior <- Sys.getenv(names(env), unset = NA_character_)
+    names(prior) <- names(env) # Sys.getenv drops names for a single variable
     do.call(Sys.setenv, as.list(env))
-    on.exit(Sys.unsetenv(names(env)), add = TRUE)
+    on.exit(
+      for (var in names(env)) {
+        if (is.na(prior[[var]])) {
+          Sys.unsetenv(var)
+        } else {
+          do.call(Sys.setenv, as.list(prior[var]))
+        }
+      },
+      add = TRUE
+    )
   }
 
   script_start <- Sys.time()

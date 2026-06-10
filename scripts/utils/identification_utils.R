@@ -47,6 +47,41 @@ load_identification_inputs <- function(
   )
 }
 
+# cbind-ing the per-maturity W2 residual vectors assumes row t means the SAME
+# time period in every column: no maturity dropped rows that another kept.
+# compute_w2_residuals() filters incomplete rows PER MATURITY (kept_idx), so
+# verify complete-data alignment before flattening -- equal residual lengths,
+# identical kept_idx across maturities, and kept rows forming the leading
+# block of the regression sample (so residual row t is sample row t, which the
+# downstream pcs_aligned subset also assumes).
+assert_w2_alignment <- function(w2_result) {
+  lens <- vapply(w2_result$residuals, length, integer(1))
+  if (length(unique(lens)) > 1) {
+    stop(
+      "W2 residual vectors have unequal lengths (",
+      paste(lens, collapse = ", "),
+      "); per-maturity rows were dropped, so cbind would misalign dates"
+    )
+  }
+  kept <- w2_result$kept_idx
+  if (!is.null(kept) && length(kept) > 0) {
+    ref <- kept[[1]]
+    if (!all(vapply(kept, identical, logical(1), ref))) {
+      stop(
+        "W2 kept_idx differs across maturities; ",
+        "cbind would glue residuals from different dates into one row"
+      )
+    }
+    if (!identical(which(ref), seq_len(lens[[1]]))) {
+      stop(
+        "W2 kept_idx dropped non-trailing rows of the regression sample; ",
+        "residual row t no longer corresponds to sample row t"
+      )
+    }
+  }
+  invisible(w2_result)
+}
+
 #' @param mode "maturities" or "factors"
 #' @return list with w1, w2, pcs_aligned, and n_obs
 compute_identification_residuals <- function(
@@ -79,6 +114,7 @@ compute_identification_residuals <- function(
       maturities = maturities,
       n_pcs = n_pcs, pcs = pcs_mat
     )
+    assert_w2_alignment(w2_result)
     w2_mat <- do.call(cbind, w2_result$residuals)
   }
 
@@ -108,7 +144,9 @@ compute_identification_residuals <- function(
 
 #' Get baseline gamma matrix (VFCI unit-norm loadings)
 #' @param method label for the method (stored as attr)
-#' @param n_pcs number of principal components
+#' @param n_pcs number of principal components; must equal the length of the
+#'   VFCI loading vector (4) -- the loading is defined only on pc1..pc4, so
+#'   any other value errors rather than silently recycling
 #' @param n_components number of components (NULL = infer)
 #' @return J x I matrix with identical columns
 get_baseline_gamma <- function(
@@ -127,6 +165,13 @@ get_baseline_gamma <- function(
     0.3714851, -0.5739232,
     -0.4477770, 0.5762870
   )
+  if (n_pcs != length(unit_norm)) {
+    stop(
+      "get_baseline_gamma: the VFCI unit-norm loading is defined only for ",
+      length(unit_norm), " PCs (pc1..pc4); got n_pcs = ", n_pcs,
+      " -- recycling it would produce wrong loadings"
+    )
+  }
   gamma <- matrix(unit_norm, nrow = n_pcs, ncol = n_components)
   attr(gamma, "method") <- method
   gamma

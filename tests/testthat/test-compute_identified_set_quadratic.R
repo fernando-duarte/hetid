@@ -10,14 +10,15 @@ test_that("compute_identified_set_quadratic validates inputs correctly", {
 
   expect_error(
     compute_identified_set_quadratic(
-      c(1, -1, 1, 1), inputs$components, inputs$moments
+      c(0.5, -1, 0.5, 0.5), inputs$components, inputs$moments
     ),
-    "All elements of tau must be nonnegative"
+    "All elements of tau must be in [0, 1)",
+    fixed = TRUE
   )
 
   expect_error(
     compute_identified_set_quadratic(
-      c(1, 1, 1), inputs$components, inputs$moments
+      c(0.5, 0.5, 0.5), inputs$components, inputs$moments
     ),
     "tau must have length I"
   )
@@ -208,12 +209,34 @@ test_that("d_i overflow error reports the actual offending values", {
     conditionMessage(err), "non-finite for maturity 2",
     fixed = TRUE
   )
-  expect_match(conditionMessage(err), "tau_i = 1", fixed = TRUE)
+  expect_match(conditionMessage(err), "tau_i = 0.5", fixed = TRUE)
   expect_match(conditionMessage(err), "V_i = 1", fixed = TRUE)
   expect_match(
     conditionMessage(err), "sigma_i_sq = 1e-309",
     fixed = TRUE
   )
+})
+
+test_that("rejects tau at or above one with a structured error", {
+  inputs <- setup_quadratic_test_inputs()
+  for (bad in c(1, 1.5, 100)) {
+    tau <- inputs$tau
+    tau[2] <- bad
+
+    err <- tryCatch(
+      compute_identified_set_quadratic(
+        tau, inputs$components, inputs$moments
+      ),
+      error = function(e) e
+    )
+
+    expect_s3_class(err, "hetid_error_bad_argument")
+    expect_match(
+      conditionMessage(err), "All elements of tau must be in [0, 1)",
+      fixed = TRUE
+    )
+    expect_identical(err$arg, "tau")
+  }
 })
 
 test_that("rejects non-finite tau with a structured error naming tau", {
@@ -323,7 +346,7 @@ test_that("assembled A_i matrices are exactly symmetric", {
   w2 <- matrix(rnorm(n_obs * I), n_obs, I)
   pcs <- matrix(rnorm(n_obs * J), n_obs, J)
   gamma <- matrix(rnorm(J * I), J, I)
-  tau <- runif(I, 0.5, 2)
+  tau <- runif(I, 0.1, 0.9)
 
   moments <- compute_identification_moments(w1, w2, pcs)
   components <- compute_identified_set_components(gamma, moments)
@@ -338,7 +361,7 @@ test_that("assembly symmetrizes an asymmetric hand-built s_i_2 exactly", {
   asym <- matrix(c(1, 0.25, 0.75, 1), 2, 2)
 
   result <- quadratic_from_components(
-    tau = c(1, 1),
+    tau = c(0.5, 0.5),
     L_i = c(1, 1), V_i = c(1, 1),
     Q_i = list(c(1, 2), c(3, 4)),
     s_i_0 = c(1, 1),
@@ -365,7 +388,7 @@ test_that(
     w2 <- matrix(rnorm(n_obs * I), n_obs, I)
     pcs <- matrix(rnorm(n_obs * J), n_obs, J)
     gamma <- matrix(rnorm(J * I), J, I)
-    tau <- runif(I, 0.5, 2)
+    tau <- runif(I, 0.1, 0.9)
 
     moments <- compute_identification_moments(w1, w2, pcs)
     components <- compute_identified_set_components(gamma, moments)
@@ -425,7 +448,7 @@ test_that("assembly guard fires when components yield a non-finite form", {
   # the assembled A_i non-finite, tripping the belt-and-braces guard.
   err <- tryCatch(
     quadratic_from_components(
-      tau = c(1, 1),
+      tau = c(0.5, 0.5),
       L_i = c(1, 1), V_i = c(1, 1),
       Q_i = list(c(Inf, 2), c(3, 4)),
       s_i_0 = c(1, 1),

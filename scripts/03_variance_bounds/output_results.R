@@ -198,6 +198,12 @@ writeLines(latex_code, file.path(output_paper_dir, "variance_bounds_table.tex"))
 
 cli_h2("Creating Analysis Summary")
 
+# Lowest positive bound via subset-then-index: which.min on the positive
+# SUBSET indexes that subset, so the maturity must come from the subsetted
+# Maturity vector too (maturity 1 has a zero bound by construction, making a
+# full-vector lookup off by one).
+pos_vb <- variance_bounds_df$Variance_Bound > 0
+
 # Create comprehensive analysis summary
 analysis_summary <- list(
   title = "Variance Bounds Analysis Summary",
@@ -216,12 +222,8 @@ analysis_summary <- list(
     highest_bound_maturity = variance_bounds_df$Maturity[
       which.max(variance_bounds_df$Variance_Bound)
     ],
-    lowest_positive_bound_maturity = variance_bounds_df$Maturity[
-      which.min(
-        variance_bounds_df$Variance_Bound[
-          variance_bounds_df$Variance_Bound > 0
-        ]
-      )
+    lowest_positive_bound_maturity = variance_bounds_df$Maturity[pos_vb][
+      which.min(variance_bounds_df$Variance_Bound[pos_vb])
     ],
     c_hat_k_hat_correlation = correlations$c_hat_k_hat,
     monotonicity_ratio =

@@ -46,6 +46,8 @@
 compute_price_news <- function(yields, term_premia, i,
                                return_yield_news = FALSE,
                                return_df = FALSE, dates = NULL) {
+  validate_row_alignment(yields, term_premia)
+
   # Shared maturity validation and price-news difference
   components <- compute_news_components(yields, term_premia, i)
 

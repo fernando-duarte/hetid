@@ -145,6 +145,21 @@ test_that("validate_numeric_inputs rejects non-numeric unnamed", {
   )
 })
 
+test_that("validate_numeric_inputs names unnamed entries in partially named calls", {
+  expect_error(
+    validate_numeric_inputs(x = c(1, 2), "text"),
+    "input_2 must be a numeric vector"
+  )
+  expect_error(
+    validate_numeric_inputs("text", y = c(1, 2)),
+    "input_1 must be a numeric vector"
+  )
+  expect_error(
+    validate_numeric_inputs(c(1, 2), bad = "text"),
+    "bad must be a numeric vector"
+  )
+})
+
 test_that("validate_numeric_inputs rejects logical inputs", {
   expect_error(
     validate_numeric_inputs(flag = TRUE),
@@ -221,6 +236,28 @@ test_that("validate_time_series_lengths with empty vectors", {
       integer(0), c(1, 2)
     ),
     "same length"
+  )
+})
+
+# --- validate_row_alignment ---
+
+test_that("validate_row_alignment accepts frames with different columns", {
+  y <- data.frame(y1 = 1:5, y2 = 6:10, extra = letters[1:5])
+  tp <- data.frame(tp1 = 11:15)
+  expect_true(validate_row_alignment(y, tp))
+})
+
+test_that("validate_row_alignment rejects mismatched row counts", {
+  y <- matrix(1:20, nrow = 10, ncol = 2)
+  tp <- matrix(1:10, nrow = 5, ncol = 2)
+  expect_error(
+    validate_row_alignment(y, tp),
+    "same number of observations",
+    class = "hetid_error_dimension_mismatch"
+  )
+  expect_error(
+    validate_row_alignment(y, tp),
+    "10 vs 5 rows"
   )
 })
 

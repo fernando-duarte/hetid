@@ -36,21 +36,34 @@ published_sweep <- function(sweep) {
 }
 
 # Width-vs-tau overlay across gamma choices. The bottom line -- how far
-# optimization extends the slack tolerance -- is the title.
+# optimization extends the slack tolerance -- is the title. Cap-censored tau*
+# values render via .fmt_tau_star (">= cap"), and a censored optimizer tau*
+# makes the extension factor a lower bound, never an exact claim.
 plot_tau_star_overlay <- function(sweep, tau_stars, mode) {
   df <- sweep[is.finite(sweep$total_width) & sweep$total_width > 0, ]
   ts <- stats::setNames(tau_stars$tau_star, tau_stars$gamma)
+  capped <- stats::setNames(tau_stars$capped, tau_stars$gamma)
   ts_vfci <- ts[["VFCI (rank-1)"]]
   ts_opt <- ts[["optimized"]]
+  opt_capped <- isTRUE(capped[["optimized"]])
   title <- if (is.finite(ts_opt) && is.finite(ts_vfci) && ts_vfci > 0) {
     sprintf(
-      "Optimizing gamma extends slack tolerance ~%.0fx (%s mode)",
-      ts_opt / ts_vfci, mode
+      "Optimizing gamma extends slack tolerance %s%.0fx (%s mode)",
+      if (opt_capped) ">= " else "~", ts_opt / ts_vfci, mode
     )
   } else {
     sprintf("Identified-set width vs. slack tau (%s mode)", mode)
   }
-  ts_label <- paste(sprintf("%s %.4f", names(ts), ts), collapse = ", ")
+  ts_label <- paste(
+    sprintf(
+      "%s %s", names(ts),
+      vapply(
+        names(ts),
+        function(g) .fmt_tau_star(ts[[g]], capped[[g]]), character(1)
+      )
+    ),
+    collapse = ", "
+  )
   p <- ggplot(df, aes(tau, total_width, color = gamma)) +
     geom_line() +
     geom_point(size = 1.3) +

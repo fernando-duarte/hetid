@@ -113,8 +113,8 @@ validate_quadratic_inputs <- function(tau, components, moments) {
     arg = "tau"
   )
   assert_bad_argument_ok(
-    !any(tau < 0),
-    "All elements of tau must be nonnegative",
+    all(tau >= 0 & tau < 1),
+    "All elements of tau must be in [0, 1)",
     arg = "tau"
   )
   assert_dimension_ok(

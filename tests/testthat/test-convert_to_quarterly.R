@@ -121,6 +121,19 @@ test_that("use_incomplete_quarters must be a logical flag", {
   )
 })
 
+test_that("duplicated input dates are rejected up front", {
+  dup <- data.frame(
+    date = as.Date(c("2020-01-31", "2020-01-31", "2020-02-29")),
+    y1 = c(1, 2, 3)
+  )
+
+  expect_error(
+    convert_to_quarterly(dup),
+    "duplicated dates",
+    class = "hetid_error_bad_argument"
+  )
+})
+
 test_that("quarter-start dated real data is re-dated and keeps its quarter column", {
   data("variables", package = "hetid", envir = environment())
   # Real quarterly macro data dated at quarter starts, with a genuine

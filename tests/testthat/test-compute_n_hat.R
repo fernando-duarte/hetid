@@ -101,6 +101,16 @@ test_that("n_hat date alignment when dates provided", {
   expect_equal(n_hat_df$date, test_env$data$date)
 })
 
+test_that("compute_n_hat rejects mismatched yields and term_premia rows", {
+  syn_long <- create_synthetic_test_data(n = 30)
+  syn_short <- create_synthetic_test_data(n = 15)
+  expect_error(
+    compute_n_hat(syn_long$yields, syn_short$term_premia, i = 5),
+    "same number of observations",
+    class = "hetid_error_dimension_mismatch"
+  )
+})
+
 test_that("compute_n_hat rejects invalid maturity values", {
   test_env <- setup_standard_test_env()
   expect_error(

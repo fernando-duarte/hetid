@@ -90,6 +90,11 @@ assert_numeric_finite_values <- function(x, arg) {
 validate_pcs_input <- function(pcs, t_obs) {
   assert_tabular(pcs, "pcs")
   pcs <- as.matrix(pcs)
+  assert_bad_argument_ok(
+    ncol(pcs) >= 1,
+    "pcs must have at least one column",
+    arg = "pcs"
+  )
   assert_numeric_finite_values(pcs, "pcs")
   assert_dimension_ok(
     nrow(pcs) == t_obs,

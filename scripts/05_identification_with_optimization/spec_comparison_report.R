@@ -4,9 +4,10 @@
 # artifacts whose headlines are computed from the grid -- never hard-coded
 # prose that a quick run could falsify.
 #
-# Input: temp/identification_optimized/spec_comparison.rds (falls back to
-# spec_comparison_full.csv). Override with HETID_SPEC_SOURCE=<path .rds|.csv>
-# to report on a saved grid (e.g. a preserved full run) without recomputing.
+# Input: temp/identification_optimized/spec_comparison_<profile>.rds/.csv,
+# preferring the full profile over quick. Override with
+# HETID_SPEC_SOURCE=<path .rds|.csv> to report on a saved grid (e.g. a
+# preserved full run) without recomputing.
 # Artifact names carry the coverage suffix: full grid -> canonical names;
 # quick subgrid -> _quick; anything else -> _partial. Full-grid artifacts are
 # therefore never clobbered by the pipeline's quick-mode runs.
@@ -30,7 +31,10 @@ dir.create(paper_dir, recursive = TRUE, showWarnings = FALSE)
 
 src <- Sys.getenv("HETID_SPEC_SOURCE")
 if (!nzchar(src)) {
-  candidates <- file.path(temp_dir, c("spec_comparison.rds", "spec_comparison_full.csv"))
+  candidates <- file.path(temp_dir, c(
+    "spec_comparison_full.rds", "spec_comparison_full.csv",
+    "spec_comparison_quick.rds", "spec_comparison_quick.csv"
+  ))
   src <- c(candidates[file.exists(candidates)], NA_character_)[1]
 }
 if (is.na(src) || !file.exists(src)) {

@@ -7,9 +7,9 @@
 validate_quadratic_inputs(tau, components, moments)
 }
 \arguments{
-\item{tau}{Vector of nonnegative real numbers (length I, the moments'
-\code{n_components}) containing tau_i values, indexed by system
-column. Exact zeros are allowed and correspond to the
+\item{tau}{Vector of real numbers in \code{[0, 1)} (length I, the
+moments' \code{n_components}) containing tau_i values, indexed by
+system column. Exact zeros are allowed and correspond to the
 point-identification benchmark.}
 
 \item{components}{A \code{hetid_components} object from

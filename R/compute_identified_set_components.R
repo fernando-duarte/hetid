@@ -55,6 +55,7 @@ compute_identified_set_components <- function(gamma, moments) {
     "gamma must be a matrix",
     arg = "gamma"
   )
+  assert_numeric_finite_values(gamma, "gamma")
 
   maturities <- attr(moments, "maturities")
   n_components <- attr(moments, "n_components")

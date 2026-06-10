@@ -152,6 +152,23 @@ test_that("extract_acm_data rejects empty or non-numeric maturities", {
   )
 })
 
+test_that("extract_acm_data rejects non-character non-Date date bounds", {
+  expect_error(
+    extract_acm_data(start_date = 2010),
+    "start_date must be a Date or a character string",
+    class = "hetid_error_bad_argument"
+  )
+  expect_error(
+    extract_acm_data(end_date = 2020),
+    "end_date must be a Date or a character string",
+    class = "hetid_error_bad_argument"
+  )
+  expect_error(
+    extract_acm_data(start_date = TRUE),
+    class = "hetid_error_bad_argument"
+  )
+})
+
 test_that("extract_acm_data keeps single-variable results as data frames", {
   data <- extract_acm_data(data_types = "yields", maturities = 5)
 

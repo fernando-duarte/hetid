@@ -84,9 +84,11 @@ run_check("pkgcheck", {
 unlink("hetid.Rcheck", recursive = TRUE)
 unlink(list.files(pattern = "hetid_.*[.]tar[.]gz$"), force = TRUE)
 
-run_check("rcmdcheck (strict)", {
-  library(rcmdcheck)
-  Sys.setenv(
+# The strict _R_CHECK_* flags apply to rcmdcheck only; restore the prior
+# environment on exit (success or failure) so they do not leak into later
+# groups (codetools, covr -- which runs the test suite).
+run_strict_rcmdcheck <- function() {
+  strict_env <- c(
     `_R_CHECK_LENGTH_1_CONDITION_` = "true",
     `_R_CHECK_LENGTH_1_LOGIC2_` = "true",
     `_R_CHECK_MATRIX_DATA_` = "true",
@@ -95,7 +97,25 @@ run_check("rcmdcheck (strict)", {
     `_R_CHECK_BROWSER_NONINTERACTIVE_` = "true",
     `_R_CHECK_RD_VALIDATE_RD2HTML_` = "true"
   )
-  res <- rcmdcheck(".", args = "--as-cran", quiet = TRUE)
+  prior <- Sys.getenv(names(strict_env), unset = NA_character_)
+  names(prior) <- names(strict_env)
+  on.exit(
+    for (var in names(strict_env)) {
+      if (is.na(prior[[var]])) {
+        Sys.unsetenv(var)
+      } else {
+        do.call(Sys.setenv, as.list(prior[var]))
+      }
+    },
+    add = TRUE
+  )
+  do.call(Sys.setenv, as.list(strict_env))
+  rcmdcheck::rcmdcheck(".", args = "--as-cran", quiet = TRUE)
+}
+
+run_check("rcmdcheck (strict)", {
+  library(rcmdcheck)
+  res <- run_strict_rcmdcheck()
   capture.output(res, file = file.path(
     report_dir,
     "rcmdcheck-strict.txt"
@@ -227,21 +247,19 @@ run_check("checkglobals", {
 run_check("spelling", {
   library(spelling)
   sp <- spell_check_package(".")
-  if (nrow(sp) > 0) {
-    # `found` is a list-column of file:line locations; collapse it so
-    # write.csv can serialize the frame (it errors on list columns).
-    sp_out <- data.frame(
-      word = sp$word,
-      found = vapply(sp$found, paste, character(1), collapse = "; "),
-      stringsAsFactors = FALSE
-    )
-    write.csv(sp_out, file.path(report_dir, "spelling.csv"),
-      row.names = FALSE
-    )
-    cli_text("  {nrow(sp)} potential misspelling(s)")
-  } else {
-    cli_text("  0 misspellings")
-  }
+  # `found` is a list-column of file:line locations; collapse it so
+  # write.csv can serialize the frame (it errors on list columns).
+  # Always write the CSV: a clean run produces a zero-row file instead of
+  # leaving a stale spelling.csv from a previous run as phantom findings.
+  sp_out <- data.frame(
+    word = sp$word,
+    found = vapply(sp$found, paste, character(1), collapse = "; "),
+    stringsAsFactors = FALSE
+  )
+  write.csv(sp_out, file.path(report_dir, "spelling.csv"),
+    row.names = FALSE
+  )
+  cli_text("  {nrow(sp)} potential misspelling(s)")
   sp
 })
 
