@@ -10,7 +10,7 @@ get_acm_data_path()
 Character string with full path to ACM data file
 }
 \description{
-Specialized function for ACM term premia data file path.
-Provides path for the specific dataset.
+Specialized function for the ACM term premia data file path,
+resolved with user-cache preference and bundled fallback.
 }
 \keyword{internal}

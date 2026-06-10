@@ -19,7 +19,7 @@ test_that("compute_w1_residuals returns residuals from PC regression", {
 
 test_that("R-squared matches manual regression", {
   # Load variables data
-  data("variables")
+  data("variables", package = "hetid", envir = environment())
 
   # Compute with 3 PCs
   res_y1 <- suppressMessages(compute_w1_residuals(n_pcs = 3))
@@ -55,14 +55,25 @@ test_that("R-squared matches manual regression", {
 })
 
 test_that("R-squared increases with more PCs", {
-  # Test with different numbers of PCs
+  # Nested-model monotonicity only holds on a fixed common sample, so
+  # subset to rows complete in all used columns before comparing
+  data("variables", package = "hetid", envir = environment())
+  used_cols <- c(
+    HETID_CONSTANTS$CONSUMPTION_GROWTH_COL,
+    get_pc_column_names(6)
+  )
+  common_rows <- complete.cases(
+    as.data.frame(variables[, used_cols])
+  )
+  common_data <- variables[common_rows, ]
+
   r2_values <- numeric(6)
   for (j in 1:6) {
-    res <- suppressMessages(compute_w1_residuals(n_pcs = j))
+    res <- compute_w1_residuals(n_pcs = j, data = common_data)
     r2_values[j] <- res$r_squared
   }
 
-  # R-squared should generally increase
+  # R-squared should not decrease for nested models on the same sample
   expect_true(all(diff(r2_values) >= -1e-10),
     label = "R-squared should not decrease with more PCs"
   )
@@ -70,7 +81,7 @@ test_that("R-squared increases with more PCs", {
 
 test_that("compute_w1_residuals works with custom data", {
   # Load variables data
-  data("variables")
+  data("variables", package = "hetid", envir = environment())
 
   # Use a subset
   subset_vars <- variables[50:150, ]
@@ -103,7 +114,7 @@ test_that("coefficient structure is correct", {
 
 test_that("dates are properly aligned after lagging", {
   # Load variables data
-  data("variables")
+  data("variables", package = "hetid", envir = environment())
 
   # Compute residuals
   res_y1 <- suppressMessages(compute_w1_residuals(n_pcs = 4))
@@ -121,14 +132,14 @@ test_that("message emitted when falling back to package data", {
 })
 
 test_that("no message when user provides data", {
-  data("variables")
+  data("variables", package = "hetid", envir = environment())
   expect_no_message(
     compute_w1_residuals(n_pcs = 2, data = variables)
   )
 })
 
 test_that("works without date column when return_df = FALSE", {
-  data("variables")
+  data("variables", package = "hetid", envir = environment())
   no_date <- variables[, setdiff(names(variables), "date")]
 
   res <- compute_w1_residuals(n_pcs = 2, data = no_date)
@@ -140,7 +151,7 @@ test_that("works without date column when return_df = FALSE", {
 })
 
 test_that("errors without date column when return_df = TRUE", {
-  data("variables")
+  data("variables", package = "hetid", envir = environment())
   no_date <- variables[, setdiff(names(variables), "date")]
 
   expect_error(
@@ -167,3 +178,42 @@ test_that(
     )
   }
 )
+
+test_that(
+  "compute_w1_residuals errors when observations cannot support regression",
+  {
+    # Five rows leave four usable pairs after lagging: fewer than the
+    # n_pcs + 2 needed, so this must not return a saturated fit
+    few_rows <- data.frame(
+      gr1.pcecc96 = c(0.5, 0.2, 0.1, 0.4, 0.3),
+      pc1 = c(0.1, 0.2, 0.3, 0.4, 0.5),
+      pc2 = c(0.5, 0.4, 0.3, 0.2, 0.1),
+      pc3 = c(0.1, 0.3, 0.2, 0.5, 0.4),
+      pc4 = c(0.2, 0.1, 0.4, 0.3, 0.5)
+    )
+    expect_error(
+      compute_w1_residuals(n_pcs = 4, data = few_rows),
+      class = "hetid_error_insufficient_data"
+    )
+  }
+)
+
+test_that("compute_w1_residuals rejects matrix data with a type error", {
+  mat <- cbind(
+    gr1.pcecc96 = c(0.5, 0.2, 0.1, 0.4, 0.3, 0.6, 0.2, 0.1),
+    pc1 = seq(0.1, 0.8, by = 0.1),
+    pc2 = seq(0.8, 0.1, by = -0.1)
+  )
+  expect_error(
+    compute_w1_residuals(n_pcs = 2, data = mat),
+    regexp = "data frame",
+    class = "hetid_error_bad_argument"
+  )
+})
+
+test_that("compute_w1_residuals rejects non-tabular data", {
+  expect_error(
+    compute_w1_residuals(n_pcs = 2, data = list(pc1 = 1:10)),
+    class = "hetid_error_bad_argument"
+  )
+})

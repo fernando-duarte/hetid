@@ -40,8 +40,9 @@ test_that("empty maturities returns empty mapping", {
   expect_length(mapping, 0)
 })
 
-test_that("unknown data type is silently skipped", {
-  mapping <- build_acm_col_mapping("nonexistent", c(1, 2))
-
-  expect_length(mapping, 0)
+test_that("unknown data type raises a structured error", {
+  expect_error(
+    build_acm_col_mapping("nonexistent", c(1, 2)),
+    class = "hetid_error_bad_argument"
+  )
 })

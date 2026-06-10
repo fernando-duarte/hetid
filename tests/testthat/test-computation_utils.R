@@ -134,6 +134,27 @@ test_that("run_pc_regression returns expected structure", {
   expect_true(all(result$complete_idx))
 })
 
+test_that("run_pc_regression errors when complete observations are too few", {
+  # Three complete rows with two PCs is below the n_pcs + 2 minimum,
+  # which would otherwise produce a saturated fit (R-squared of one)
+  y <- c(1, 2, 3, NA)
+  pcs <- matrix(
+    c(0.1, 0.2, 0.3, 0.4, 0.4, 0.3, 0.2, 0.1),
+    nrow = 4, ncol = 2
+  )
+  expect_error(
+    run_pc_regression(y, pcs, 2),
+    class = "hetid_error_insufficient_data"
+  )
+})
+
+test_that("compute_time_series_news errors on length mismatch", {
+  expect_error(
+    compute_time_series_news(c(1, 2, 3), c(4, 5)),
+    class = "hetid_error_dimension_mismatch"
+  )
+})
+
 test_that(
   "compute_time_series_news returns empty for single element",
   {

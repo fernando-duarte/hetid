@@ -60,7 +60,6 @@ All values are in annualized percentage points.
 By construction: Term Premium = Yield - Risk-Neutral Yield
 }
 \examples{
-\dontrun{
 # Extract all yields and term premia
 data <- extract_acm_data()
 
@@ -83,5 +82,4 @@ data <- extract_acm_data(
   data_types = c("yields", "term_premia", "risk_neutral_yields"),
   maturities = 5
 )
-}
 }

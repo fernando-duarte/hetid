@@ -4,7 +4,7 @@
 \alias{compute_n_hat_previous}
 \title{Compute Previous Period N-Hat}
 \usage{
-compute_n_hat_previous(yields, term_premia, i, dates = NULL)
+compute_n_hat_previous(yields, term_premia, i)
 }
 \arguments{
 \item{yields}{Yields data}
@@ -12,8 +12,6 @@ compute_n_hat_previous(yields, term_premia, i, dates = NULL)
 \item{term_premia}{Term premia data}
 
 \item{i}{Maturity}
-
-\item{dates}{Optional dates}
 }
 \value{
 Previous period n_hat series

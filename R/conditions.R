@@ -74,6 +74,27 @@ stop_hetid <- function(message, call = NULL) {
   stop(cnd)
 }
 
+#' Signal a Degenerate Variance Warning
+#'
+#' Classed warning for the variance positivity diagnostic so callers
+#' can dispatch on it (e.g. \code{withCallingHandlers} with class
+#' \code{hetid_warning_degenerate_variance}).
+#'
+#' @param message Warning message string
+#' @param call The call (default NULL)
+#' @keywords internal
+warn_degenerate_variance <- function(message, call = NULL) {
+  cnd <- warningCondition(
+    message,
+    class = c(
+      "hetid_warning_degenerate_variance",
+      "hetid_warning"
+    ),
+    call = call
+  )
+  warning(cnd)
+}
+
 #' Assert Bad Argument Invariant
 #'
 #' @param ok Logical scalar; if not TRUE, signals error

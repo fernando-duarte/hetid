@@ -11,7 +11,13 @@
 build_acm_col_mapping <- function(data_types, maturities) {
   mappings <- lapply(data_types, function(dtype) {
     if (!(dtype %in% names(HETID_ACM_SCHEMA))) {
-      return(NULL)
+      stop_bad_argument(
+        paste0(
+          "Unknown data type: '", dtype, "'. Must be one of: ",
+          paste(names(HETID_ACM_SCHEMA), collapse = ", ")
+        ),
+        arg = "data_types"
+      )
     }
     rule <- HETID_ACM_SCHEMA[[dtype]]
     old_cols <- sprintf(

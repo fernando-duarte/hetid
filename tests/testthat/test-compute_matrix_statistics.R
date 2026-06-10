@@ -118,6 +118,39 @@ test_that("compute_matrix_statistics produces symmetric S_i^(2)", {
   }
 })
 
+test_that("compute_matrix_statistics rejects non-finite inputs", {
+  set.seed(21)
+  w1 <- rnorm(10)
+  w2 <- matrix(rnorm(20), nrow = 10, ncol = 2)
+
+  w1_na <- replace(w1, 2, NA)
+  expect_error(
+    compute_matrix_statistics(w1_na, w2),
+    "w1 must not contain NA, NaN, or infinite values",
+    class = "hetid_error_bad_argument"
+  )
+
+  w2_na <- w2
+  w2_na[1, 1] <- NaN
+  expect_error(
+    compute_matrix_statistics(w1, w2_na),
+    "w2 must not contain NA, NaN, or infinite values",
+    class = "hetid_error_bad_argument"
+  )
+})
+
+test_that("compute_matrix_statistics rejects duplicate maturities", {
+  set.seed(22)
+  w1 <- rnorm(10)
+  w2 <- matrix(rnorm(20), nrow = 10, ncol = 2)
+
+  expect_error(
+    compute_matrix_statistics(w1, w2, maturities = c(1, 1)),
+    "must not contain duplicates",
+    class = "hetid_error_bad_argument"
+  )
+})
+
 test_that("compute_matrix_statistics handles zero residuals correctly", {
   # Test with zero w1
   w1 <- rep(0, 10)

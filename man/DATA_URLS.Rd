@@ -7,7 +7,6 @@
 List containing versioned data source URLs:
 \describe{
 \item{ACM_TERM_PREMIA}{URL for Adrian, Crump, and Moench term premia data}
-\item{FED_SVENSSON}{URL for Federal Reserve Svensson yield curve data}
 }
 }
 \usage{
@@ -21,3 +20,4 @@ These URLs are documented for data access.
 Adrian, T., Crump, R. K., and Moench, E. (2013). "Pricing the term structure
 with linear regressions." Journal of Financial Economics, 110(1), 110-138.
 }
+\keyword{internal}

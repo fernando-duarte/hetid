@@ -60,6 +60,36 @@ test_that("convert_to_quarterly does not warn on complete quarters", {
   expect_equal(result$value, 1:4)
 })
 
+test_that("convert_to_quarterly returns zero-row input unchanged", {
+  empty <- data.frame(
+    date = as.Date(character(0)),
+    value = numeric(0)
+  )
+
+  expect_no_error(result <- convert_to_quarterly(empty))
+  expect_s3_class(result, "data.frame")
+  expect_equal(nrow(result), 0)
+  expect_named(result, c("date", "value"))
+})
+
+test_that("convert_to_quarterly preserves an input quarter column", {
+  dates <- as.Date(c(
+    "2020-01-15", "2020-02-15", "2020-03-15",
+    "2020-04-15", "2020-05-15", "2020-06-15"
+  ))
+  data <- data.frame(
+    date = dates,
+    value = 1:6,
+    quarter = letters[1:6]
+  )
+
+  result <- convert_to_quarterly(data)
+
+  expect_true("quarter" %in% names(result))
+  expect_equal(result$quarter, c("c", "f"))
+  expect_equal(result$value, c(3, 6))
+})
+
 test_that("convert_to_quarterly handles year boundaries correctly", {
   # Q4 2020 complete, Q1 2021 incomplete (only Jan)
   dates <- as.Date(c(

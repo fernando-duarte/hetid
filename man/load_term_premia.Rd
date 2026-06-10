@@ -14,17 +14,14 @@ downloads it. Default is FALSE.}
 A data frame containing the term premia data, or NULL if data is not available.
 }
 \description{
-Loads the ACM term premia data from the package's data directory.
+Loads the ACM term premia data, preferring a downloaded copy in the
+per-user data directory and falling back to the bundled copy.
 If the data doesn't exist, prompts the user to download it first.
 }
 \examples{
-\dontrun{
-# Load the data (will prompt to download if not available)
+# Load the bundled data
 term_premia <- load_term_premia()
-
-# Automatically download if not available
-term_premia <- load_term_premia(auto_download = TRUE)
-}
+head(term_premia)
 
 }
 \seealso{

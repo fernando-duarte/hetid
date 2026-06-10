@@ -1,8 +1,6 @@
 Package: hetid
 Title: Identification Through Heteroskedasticity for VFCI
 Version: 0.2.0
-Author: Fernando Duarte [aut, cre] (<https://orcid.org/0000-0002-8495-6936>)
-Maintainer: Fernando Duarte <duarte@alum.mit.edu>
 Authors@R:
     person("Fernando", "Duarte", , "duarte@alum.mit.edu", role = c("aut", "cre"),
            comment = c(ORCID = "0000-0002-8495-6936"))
@@ -14,18 +12,16 @@ License: MIT + file LICENSE
 URL: https://github.com/fernando-duarte/hetid
 BugReports: https://github.com/fernando-duarte/hetid/issues
 Depends:
-    R (>= 3.5.0)
+    R (>= 4.0.0)
 Imports:
     stats,
+    tools,
     utils
 Suggests:
     curl,
-    knitr,
     readxl,
-    rmarkdown,
     testthat (>= 3.0.0),
     withr
-Additional_repositories: https://github.com/VFCI/macro_dynamics
 Config/testthat/edition: 3
 Encoding: UTF-8
 Language: en-US

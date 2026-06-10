@@ -93,7 +93,7 @@ test_that("compute_w2_residuals uses SDF innovations", {
 
 test_that("R-squared matches manual regression", {
   # Load variables data
-  data("variables")
+  data("variables", package = "hetid", envir = environment())
 
   # Load ACM quarterly data
   mats <- HETID_CONSTANTS$MIN_MATURITY:HETID_CONSTANTS$MAX_MATURITY
@@ -192,7 +192,7 @@ test_that("R-squared matches manual regression", {
 
 test_that("quarterly data alignment test", {
   # Load both datasets
-  data("variables")
+  data("variables", package = "hetid", envir = environment())
   acm_monthly <- extract_acm_data(
     data_types = c("yields", "term_premia"),
     frequency = "monthly"
@@ -475,4 +475,101 @@ test_that("load_w2_pcs returns NULL dates when no date col", {
   )
   expect_null(result$dates)
   expect_equal(ncol(result$pcs), 4)
+})
+
+# Synthetic inputs for the warn-and-skip contract tests:
+# yields/term_premia restricted to the requested column indices,
+# with user-supplied PCs to avoid the bundled-data fallback
+make_w2_skip_inputs <- function(col_indices, n = 40, seed = 123) {
+  set.seed(seed)
+  yields <- as.data.frame(
+    matrix(rnorm(n * length(col_indices), mean = 2), nrow = n)
+  )
+  names(yields) <- paste0("y", col_indices)
+  term_premia <- as.data.frame(
+    matrix(rnorm(n * length(col_indices), mean = 0.5), nrow = n)
+  )
+  names(term_premia) <- paste0("tp", col_indices)
+  list(
+    yields = yields,
+    term_premia = term_premia,
+    pcs = matrix(rnorm(n * 2), ncol = 2)
+  )
+}
+
+test_that("maturity equal to ncol(yields) skips while others succeed", {
+  inputs <- make_w2_skip_inputs(1:2)
+
+  expect_warning(
+    result <- compute_w2_residuals(
+      inputs$yields, inputs$term_premia,
+      maturities = c(1, 2), n_pcs = 2, pcs = inputs$pcs
+    ),
+    "[Ss]kipping maturity 2"
+  )
+  expect_named(result$residuals, "maturity_1")
+  expect_true(is.finite(result$r_squared[1]))
+  expect_true(is.na(result$r_squared[2]))
+})
+
+test_that("one bad maturity does not abort valid maturities", {
+  # Maturity 3 needs y4/tp4, which y1..y3 data lacks; previously
+  # this hard-errored and destroyed the maturity-2 results too
+  inputs <- make_w2_skip_inputs(1:3)
+
+  expect_warning(
+    result <- compute_w2_residuals(
+      inputs$yields, inputs$term_premia,
+      maturities = c(2, 3), n_pcs = 2, pcs = inputs$pcs
+    ),
+    "[Ss]kipping maturity 3"
+  )
+  expect_named(result$residuals, "maturity_2")
+  expect_true(length(result$residuals$maturity_2) > 0)
+  expect_true(is.finite(result$r_squared[1]))
+})
+
+test_that("non-contiguous column subsets pass validation and compute", {
+  # Maturity 5 needs only columns 4:6; y1/tp1 are extra
+  inputs <- make_w2_skip_inputs(c(1, 4, 5, 6))
+
+  result <- compute_w2_residuals(
+    inputs$yields, inputs$term_premia,
+    maturities = 5, n_pcs = 2, pcs = inputs$pcs
+  )
+  expect_named(result$residuals, "maturity_5")
+  expect_true(is.finite(result$r_squared[1]))
+  expect_true(result$n_obs[1] > 0)
+})
+
+test_that("skipped maturities report NA, not zero", {
+  inputs <- make_w2_skip_inputs(1:3)
+
+  expect_warning(
+    result <- compute_w2_residuals(
+      inputs$yields, inputs$term_premia,
+      maturities = c(2, 3), n_pcs = 2, pcs = inputs$pcs
+    ),
+    "[Ss]kipping maturity 3"
+  )
+  expect_true(is.na(result$r_squared[2]))
+  expect_true(is.na(result$n_obs[2]))
+  expect_false("maturity_3" %in% names(result$residuals))
+  expect_true(all(is.na(result$coefficients["maturity_3", ])))
+})
+
+test_that("all maturities skipped with return_df gives zero-row data frame", {
+  inputs <- make_w2_skip_inputs(1:2)
+
+  expect_warning(
+    result <- compute_w2_residuals(
+      inputs$yields, inputs$term_premia,
+      maturities = 3, n_pcs = 2, pcs = inputs$pcs,
+      return_df = TRUE
+    ),
+    "[Ss]kipping maturity 3"
+  )
+  expect_s3_class(result, "data.frame")
+  expect_equal(nrow(result), 0)
+  expect_named(result, c("date", "maturity", "residuals", "fitted"))
 })

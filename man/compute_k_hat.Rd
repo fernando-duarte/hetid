@@ -12,9 +12,12 @@ compute_k_hat(yields, term_premia, i)
 \item{term_premia}{Data frame with columns tp1, tp2, ..., containing term premia}
 
 \item{i}{Integer specifying the maturity index (column) to analyze.
-Must be between 1 and ncol(yields). Corresponds to maturity in years
-for ACM dataset (i=1 is 1-year, i=2 is 2-year, ..., i=10 is 10-year).
-The maturity index determines which yield curve point is used in the analysis.}
+Must be between 1 and the package maximum (10 for the ACM dataset;
+functions that require data at maturity \code{i + 1} accept at most 9).
+The input data must contain the columns for the maturities the function
+uses (e.g. \code{y5}/\code{tp5} plus adjacent maturities for \code{i = 5}).
+Corresponds to maturity in years for the ACM dataset (i=1 is 1-year,
+i=2 is 2-year, ..., i=10 is 10-year).}
 }
 \value{
 Numeric value of k_hat_i
@@ -29,7 +32,10 @@ the term structure model, providing information about tail risks.
 }
 \section{Mathematical Formula}{
 
-\deqn{k\_hat_i = \frac{1}{T-i} \sum_{t=1}^{T-i} (-y_{t+i}^{(1)} - n\_hat(i-1,t+1))^4}
+\deqn{k\_hat_i = \mathrm{mean}_t (-y_{t+i}^{(1)} - n\_hat(i-1,t+1))^4}
+
+The mean is taken over the valid (non-missing) terms for
+\eqn{t = 1, \dots, T-i}; with complete data the divisor is \eqn{T-i}.
 }
 
 \section{Literature Reference}{
@@ -39,7 +45,6 @@ for term structure analysis.
 }
 
 \examples{
-\dontrun{
 # Extract ACM data - need maturities 1, i-1, i, i+1 for maturity i
 # For i=5, we need maturities 1, 4, 5, 6
 data <- extract_acm_data(
@@ -51,7 +56,6 @@ term_premia <- data[, paste0("tp", c(1, 4, 5, 6))]
 
 # Compute k_hat for i=5
 k_hat_5 <- compute_k_hat(yields, term_premia, i = 5)
-}
 
 }
 \references{

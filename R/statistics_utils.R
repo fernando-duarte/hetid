@@ -8,35 +8,29 @@ NULL
 
 #' Compute Per-Maturity Statistics
 #'
-#' Validates inputs and applies a computation function to each
-#' maturity, returning a named list of results. Encapsulates the
-#' validate-then-iterate pattern shared by the statistics functions.
+#' Applies a computation function to each maturity, returning a named
+#' list of results. Trusts already-validated inputs: callers must
+#' first run \code{validate_statistics_inputs()} (the exported
+#' statistics wrappers and \code{compute_identification_moments()} do
+#' this once before delegating to the internal workers).
 #'
 #' @param w1 Numeric vector of W1 residuals
-#' @param w2 Matrix of W2 residuals (T x I)
-#' @param maturities Vector of maturity indices (NULL for all)
+#' @param w2 Numeric matrix of W2 residuals (T x I)
+#' @param maturities Vector of validated maturity indices
 #' @param compute_fn Function called for each maturity with args
-#'   (w1, w2, w2_i, t_obs, idx, i, ...)
+#'   (w1, w2, w2_i, idx, i, ...)
 #' @param ... Extra arguments forwarded to compute_fn
 #' @return Named list of per-maturity results from compute_fn
 #' @keywords internal
 compute_per_maturity <- function(w1, w2, maturities,
                                  compute_fn, ...) {
-  validated <- validate_statistics_inputs(
-    w1, w2, maturities
-  )
-  w2 <- validated$w2
-  t_obs <- validated$t_obs
-  maturities <- validated$maturities
-
   results <- lapply(
     seq_along(maturities),
     function(idx) {
       i <- maturities[idx]
-      w2_i <- w2[, i]
       compute_fn(
-        w1 = w1, w2 = w2, w2_i = w2_i,
-        t_obs = t_obs, idx = idx, i = i, ...
+        w1 = w1, w2 = w2, w2_i = w2[, i],
+        idx = idx, i = i, ...
       )
     }
   )
@@ -53,21 +47,24 @@ compute_per_maturity <- function(w1, w2, maturities,
 #' moment notation and centering), \strong{not} the \eqn{1/(T-1)}
 #' convention of [stats::cov()]. For inputs \eqn{A} (T x a) and
 #' \eqn{B} (T x b),
-#' \deqn{\widehat{\mathrm{Cov}}(A, B) = \frac{1}{T} A^\top B -
-#'   \bar{A}\,\bar{B}^\top \in \mathbb{R}^{a \times b},}
-#' where \eqn{\bar{A}} and \eqn{\bar{B}} are the column means. Centering
-#' both arguments makes each entry a true covariance regardless of whether
-#' the inputs were already centered.
+#' \deqn{\widehat{\mathrm{Cov}}(A, B) = \frac{1}{T} (A - \bar{A})^\top
+#'   (B - \bar{B}) \in \mathbb{R}^{a \times b},}
+#' where \eqn{\bar{A}} and \eqn{\bar{B}} are the column means. Both
+#' inputs are centered before the cross product, which computes the
+#' same quantity as the one-pass formula
+#' \eqn{A^\top B / T - \bar{A} \bar{B}^\top} but without its
+#' catastrophic cancellation when column means dominate the spread.
 #'
 #' @param a Numeric vector or matrix (T x a).
 #' @param b Numeric vector or matrix (T x b).
-#' @param t_obs Number of observations T used for normalization.
 #' @return An \eqn{a \times b} matrix of centered covariances.
 #' @keywords internal
-centered_cov <- function(a, b, t_obs) {
+centered_cov <- function(a, b) {
   a <- as.matrix(a)
   b <- as.matrix(b)
-  crossprod(a, b) / t_obs - tcrossprod(colMeans(a), colMeans(b))
+  a_centered <- sweep(a, 2, colMeans(a))
+  b_centered <- sweep(b, 2, colMeans(b))
+  crossprod(a_centered, b_centered) / nrow(a)
 }
 
 #' Warn When Identification Variances Are Degenerate
@@ -80,20 +77,28 @@ centered_cov <- function(a, b, t_obs) {
 #' regressing \eqn{W_1 W_{2,i}} on \eqn{W_{2,i}^2}), so a warning means
 #' the condition fails for some \eqn{\gamma}. Both checks are
 #' scale-free ratios compared against
-#' \code{HETID_CONSTANTS$DEGENERACY_TOLERANCE}. Degenerate variances
-#' make the quadratic constraint ill-defined and the identified set
+#' \code{HETID_CONSTANTS$DEGENERACY_TOLERANCE}. The relevant variances
+#' \eqn{var(W_{2,i}^2)} and \eqn{var(W_1 W_{2,i})} are exactly the
+#' scalar statistics \code{sigma_i_sq} and \code{s_i_0}, so the caller
+#' passes them in and the diagnostic judges the same numbers the
+#' \code{hetid_moments} container carries. Degenerate variances make
+#' the quadratic constraint ill-defined and the identified set
 #' degenerate or unbounded, so surfacing them here catches the problem
 #' at the moments stage instead of downstream.
 #'
 #' @param w1 Numeric vector of W1 residuals
-#' @param w2 Matrix of W2 residuals (T x I)
+#' @param w2 Numeric matrix of W2 residuals (T x I)
 #' @param maturities Integer vector of w2 column indices to check
-#' @param t_obs Number of observations T
+#' @param sigma_i_sq Numeric vector of sigma_i^2 statistics, element k
+#'   corresponding to \code{maturities[k]}
+#' @param s_i_0 Numeric vector of S_i^(0) statistics, element k
+#'   corresponding to \code{maturities[k]}
 #' @return Invisible NULL, called for its warning side effect
 #' @keywords internal
-warn_if_variance_degenerate <- function(w1, w2, maturities, t_obs) {
+warn_if_variance_degenerate <- function(w1, w2, maturities,
+                                        sigma_i_sq, s_i_0) {
   tol <- HETID_CONSTANTS$DEGENERACY_TOLERANCE
-  var_of <- function(x) centered_cov(x, x, t_obs)[1, 1]
+  var_of <- function(x) centered_cov(x, x)[1, 1]
 
   first <- logical(length(maturities))
   second <- logical(length(maturities))
@@ -101,15 +106,15 @@ warn_if_variance_degenerate <- function(w1, w2, maturities, t_obs) {
     w2_i <- w2[, maturities[k]]
     w2_sq <- w2_i^2
     prod_i <- w1 * w2_i
-    v_w2_sq <- var_of(w2_sq)
-    first[k] <- v_w2_sq <= tol * var_of(w2_i)^2
-    v_prod <- var_of(prod_i)
+    v_w2_sq <- sigma_i_sq[[k]]
+    first[k] <- isTRUE(v_w2_sq <= tol * var_of(w2_i)^2)
+    v_prod <- s_i_0[[k]]
     resid_var <- v_prod
-    if (v_w2_sq > 0) {
+    if (isTRUE(v_w2_sq > 0)) {
       resid_var <- v_prod -
-        centered_cov(prod_i, w2_sq, t_obs)[1, 1]^2 / v_w2_sq
+        centered_cov(prod_i, w2_sq)[1, 1]^2 / v_w2_sq
     }
-    second[k] <- resid_var <= tol * v_prod
+    second[k] <- isTRUE(resid_var <= tol * v_prod)
   }
 
   flag_msg <- function(flags, label) {
@@ -126,13 +131,12 @@ warn_if_variance_degenerate <- function(w1, w2, maturities, t_obs) {
     flag_msg(second, "var(W1*W2 - gamma*W2^2) is numerically degenerate")
   )
   if (length(msgs) > 0) {
-    warning(
+    warn_degenerate_variance(paste0(
       "Variance positivity diagnostic: ",
       paste(msgs, collapse = "; "),
       ". The identification regularity conditions may fail and the ",
-      "identified set may be degenerate or unbounded.",
-      call. = FALSE
-    )
+      "identified set may be degenerate or unbounded."
+    ))
   }
   invisible(NULL)
 }

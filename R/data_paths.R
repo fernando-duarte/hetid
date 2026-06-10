@@ -1,18 +1,19 @@
 #' Path Management Utilities
 #'
-#' Path resolution functions for package data
-#' that work consistently across development and installed package environments.
+#' Path resolution functions for package data. Bundled data ships
+#' read-only in the installed package's extdata directory; downloaded
+#' copies live in the per-user cache from \code{tools::R_user_dir()}.
 #'
 #' @name data_paths
 #' @keywords internal
 NULL
 
-#' Get Package Data Directory
+#' Get Bundled Package Data Directory
 #'
-#' Returns the appropriate data directory path for both development and
-#' installed package environments, ensuring reliable access to datasets.
+#' Returns the read-only extdata directory shipped with the package,
+#' for both development and installed package environments.
 #'
-#' @return Character string with path to package data directory
+#' @return Character string with path to the bundled data directory
 #' @keywords internal
 get_package_data_dir <- function() {
   # Path resolution for package data
@@ -29,10 +30,35 @@ get_package_data_dir <- function() {
   }
 }
 
+#' Get User Data Directory
+#'
+#' Returns the per-user cache directory for downloaded data files.
+#' Downloads must never write into the installed package library, so
+#' all writes target this directory instead.
+#'
+#' @param create Logical, whether to create the directory if missing
+#'
+#' @return Character string with path to the user data directory
+#' @keywords internal
+get_user_data_dir <- function(create = FALSE) {
+  user_dir <- tools::R_user_dir("hetid", which = "data")
+
+  if (create && !dir.exists(user_dir)) {
+    created <- dir.create(user_dir, recursive = TRUE, showWarnings = FALSE)
+    if (!created && !dir.exists(user_dir)) {
+      stop_hetid(paste0(
+        "Cannot create user data directory: ", user_dir
+      ))
+    }
+  }
+
+  user_dir
+}
+
 #' Get Data File Path
 #'
-#' Constructs full path to a data file in the package data directory.
-#' Provides consistent path resolution.
+#' Resolves a data filename to the per-user downloaded copy when one
+#' exists, falling back to the read-only bundled copy otherwise.
 #'
 #' @param filename Character string with filename (including extension)
 #'
@@ -46,13 +72,18 @@ get_data_file_path <- function(filename) {
     )
   }
 
+  user_path <- file.path(get_user_data_dir(), filename)
+  if (file.exists(user_path)) {
+    return(user_path)
+  }
+
   file.path(get_package_data_dir(), filename)
 }
 
 #' Check Data File Exists
 #'
-#' Checks if a data file exists in the package data directory.
-#' Useful for workflows that depend on external data.
+#' Checks if a data file exists in the user cache or the bundled
+#' package data directory.
 #'
 #' @param filename Character string with filename (including extension)
 #'
@@ -65,8 +96,8 @@ check_data_file_exists <- function(filename) {
 
 #' Get ACM Data File Path
 #'
-#' Specialized function for ACM term premia data file path.
-#' Provides path for the specific dataset.
+#' Specialized function for the ACM term premia data file path,
+#' resolved with user-cache preference and bundled fallback.
 #'
 #' @return Character string with full path to ACM data file
 #' @keywords internal
@@ -74,42 +105,16 @@ get_acm_data_path <- function() {
   get_data_file_path(HETID_CONSTANTS$ACM_DATA_FILENAME)
 }
 
-#' Validate Data Directory
+#' Get Writable ACM Download Path
 #'
-#' Ensures the data directory exists and is accessible.
-#' Creates directory if needed.
+#' Returns the user-cache path where downloads are written, creating
+#' the directory on demand. The bundled copy is never overwritten.
 #'
-#' @param create_if_missing Logical, whether to create directory if it doesn't exist
-#'
-#' @return Invisible TRUE if successful, stops with error if validation fails
+#' @return Character string with the writable ACM data file path
 #' @keywords internal
-validate_data_directory <- function(create_if_missing = TRUE) {
-  data_dir <- get_package_data_dir()
-
-  if (!dir.exists(data_dir)) {
-    if (create_if_missing) {
-      tryCatch(
-        {
-          dir.create(data_dir, recursive = TRUE)
-        },
-        error = function(e) {
-          stop_hetid(paste0(
-            "Cannot create data directory: ", data_dir,
-            "\nError: ", e$message
-          ))
-        }
-      )
-    } else {
-      stop_hetid(paste0(
-        "Data directory does not exist: ", data_dir
-      ))
-    }
-  }
-
-  # Check if directory is writable
-  if (file.access(data_dir, mode = 2) != 0) {
-    warning("Data directory may not be writable: ", data_dir, call. = FALSE)
-  }
-
-  invisible(TRUE)
+get_acm_download_path <- function() {
+  file.path(
+    get_user_data_dir(create = TRUE),
+    HETID_CONSTANTS$ACM_DATA_FILENAME
+  )
 }

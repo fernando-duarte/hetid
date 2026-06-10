@@ -17,3 +17,4 @@ HETID_ACM_SCHEMA
 Maps extraction types to ACM column-name prefixes.
 Single source of truth for the ACM naming convention.
 }
+\keyword{internal}

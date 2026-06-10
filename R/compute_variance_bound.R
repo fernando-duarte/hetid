@@ -17,7 +17,6 @@
 #' @export
 #'
 #' @examples
-#' \dontrun{
 #' # Extract ACM data
 #' data <- extract_acm_data(data_types = c("yields", "term_premia"))
 #' yields <- data[, paste0("y", 1:10)]
@@ -25,7 +24,6 @@
 #'
 #' # Compute variance bound for i=5
 #' var_bound_5 <- compute_variance_bound(yields, term_premia, i = 5)
-#' }
 #'
 compute_variance_bound <- function(yields, term_premia, i) {
   validate_maturity_index(i, max_maturity = HETID_CONSTANTS$EFFECTIVE_MAX_MATURITY)

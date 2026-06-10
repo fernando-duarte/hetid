@@ -42,11 +42,16 @@ compute_identification_moments <- function(w1, w2, pcs, maturities = NULL) {
   validated <- validate_statistics_inputs(w1, w2, maturities)
   w2 <- validated$w2
   maturities <- validated$maturities
-  warn_if_variance_degenerate(w1, w2, maturities, validated$t_obs)
+  pcs <- validate_pcs_input(pcs, validated$t_obs)
 
-  scalar_stats <- compute_scalar_statistics(w1, w2, maturities = maturities)
-  vector_stats <- compute_vector_statistics(w1, w2, pcs, maturities = maturities)
-  matrix_stats <- compute_matrix_statistics(w1, w2, maturities = maturities)
+  scalar_stats <- compute_scalar_statistics_impl(w1, w2, maturities)
+  warn_if_variance_degenerate(
+    w1, w2, maturities,
+    sigma_i_sq = scalar_stats$sigma_i_sq,
+    s_i_0 = scalar_stats$s_i_0
+  )
+  vector_stats <- compute_vector_statistics_impl(w1, w2, pcs, maturities)
+  matrix_stats <- compute_matrix_statistics_impl(w1, w2, maturities)
 
   new_hetid_moments(
     list(
@@ -92,10 +97,11 @@ new_hetid_moments <- function(stats, maturities, n_components, n_obs) {
     ),
     arg = "stats"
   )
-  assert_bad_argument_ok(
-    length(n_obs) == 1 && is.finite(n_obs) && n_obs > 0,
-    "n_obs must be a positive scalar",
-    arg = "n_obs"
+  assert_scalar_integer_in_range(
+    n_obs, "n_obs", 1, .Machine$integer.max
+  )
+  assert_scalar_integer_in_range(
+    n_components, "n_components", 1, .Machine$integer.max
   )
   n_components <- as.integer(n_components)
   validate_maturities(
@@ -103,14 +109,6 @@ new_hetid_moments <- function(stats, maturities, n_components, n_obs) {
     max_value = n_components, max_label = "n_components"
   )
   maturities <- as.integer(maturities)
-  assert_bad_argument_ok(
-    !anyDuplicated(maturities),
-    paste0(
-      "maturities must not contain duplicates; got: ",
-      paste(maturities, collapse = ", ")
-    ),
-    arg = "maturities"
-  )
 
   validate_moments_shapes(stats, maturities, n_components)
 

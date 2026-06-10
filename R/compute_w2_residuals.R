@@ -34,6 +34,14 @@
 #'   \item{fitted}{Fitted values from the regression}
 #' }
 #'
+#' Maturities whose required columns or observations are missing
+#' are skipped with a warning rather than aborting the run: their
+#' entries are absent from \code{residuals}, \code{fitted}, and
+#' \code{kept_idx}, and their \code{coefficients} rows,
+#' \code{r_squared}, and \code{n_obs} values are \code{NA}. With
+#' \code{return_df = TRUE}, skipped maturities contribute no rows;
+#' if every maturity is skipped the data frame has zero rows.
+#'
 #' @details
 #' For each maturity i, computes Y_\{2,t+1\}^\{(i)\} as the SDF
 #' innovation:
@@ -60,7 +68,6 @@
 #' @export
 #'
 #' @examples
-#' \dontrun{
 #' # Load quarterly ACM data and bundled PCs
 #' mats <- c(1, 2, 3, 4)
 #' acm_data <- extract_acm_data(
@@ -98,7 +105,6 @@
 #'   yields, tp,
 #'   maturities = c(2, 3), n_pcs = 4, pcs = pcs
 #' )
-#' }
 compute_w2_residuals <- function(yields, term_premia,
                                  maturities = NULL,
                                  n_pcs = HETID_CONSTANTS$DEFAULT_N_PCS,
@@ -128,8 +134,8 @@ compute_w2_residuals <- function(yields, term_premia,
     nrow = length(maturities),
     ncol = n_pcs + 1
   ) # +1 for intercept
-  r_squared <- numeric(length(maturities))
-  n_obs_used <- numeric(length(maturities))
+  r_squared <- rep(NA_real_, length(maturities))
+  n_obs_used <- rep(NA_real_, length(maturities))
   kept_idx_list <- list()
 
   # Process each maturity

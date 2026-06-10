@@ -73,6 +73,18 @@ format_w2_dataframe <- function(
     }
   }
 
-  # Combine all maturities
-  do.call(rbind, df_list)
+  # Combine all maturities; when every maturity was skipped,
+  # return a zero-row frame with the documented columns instead
+  # of the NULL that rbind on an empty list produces
+  combined <- do.call(rbind, df_list)
+  if (is.null(combined)) {
+    combined <- data.frame(
+      date = dates[0],
+      maturity = maturities[0],
+      residuals = numeric(0),
+      fitted = numeric(0),
+      stringsAsFactors = FALSE
+    )
+  }
+  combined
 }

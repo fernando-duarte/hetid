@@ -2,15 +2,15 @@
 % Please edit documentation in R/data_paths.R
 \name{get_package_data_dir}
 \alias{get_package_data_dir}
-\title{Get Package Data Directory}
+\title{Get Bundled Package Data Directory}
 \usage{
 get_package_data_dir()
 }
 \value{
-Character string with path to package data directory
+Character string with path to the bundled data directory
 }
 \description{
-Returns the appropriate data directory path for both development and
-installed package environments, ensuring reliable access to datasets.
+Returns the read-only extdata directory shipped with the package,
+for both development and installed package environments.
 }
 \keyword{internal}

@@ -17,8 +17,9 @@
 #'
 #' Where:
 #' - Delta_(t+1)p_(t+i)^(1) = n_hat(i-1,t+1) - n_hat(i,t)
-#' - E\\[(Delta_(t+1)p_(t+i)^(1))^2\\] = (1/(T-1)) * sum(n_hat(i-1,t+1) - n_hat(i,t))^2
-#'   for t=1 to T-1
+#' - E\\[(Delta_(t+1)p_(t+i)^(1))^2\\] is the mean of
+#'   (n_hat(i-1,t+1) - n_hat(i,t))^2 over the valid (non-missing) news
+#'   terms; with complete data this averages the T-1 available terms
 #'
 #' @note For standard ACM data (10 maturities), the effective maximum for
 #'   \code{i} is 9, because this function requires data at maturity \code{i+1}.
@@ -26,7 +27,6 @@
 #' @export
 #'
 #' @examples
-#' \dontrun{
 #' # Extract ACM data - need maturities 1, i-1, i, i+1 for maturity i
 #' # For i=5, we need maturities 1, 4, 5, 6
 #' data <- extract_acm_data(
@@ -46,23 +46,18 @@
 #'   return_df = TRUE,
 #'   dates = data$date
 #' )
-#' }
 #'
 compute_sdf_innovations <- function(yields, term_premia, i,
                                     return_df = FALSE, dates = NULL) {
   # Validate maturity parameter
   validate_maturity_index(i, max_maturity = HETID_CONSTANTS$EFFECTIVE_MAX_MATURITY)
 
-  # Compute n_hat(i,t) series
-  n_hat_i <- compute_n_hat(yields, term_premia, i,
-    return_df = FALSE, dates = dates
-  )
-
-  # Compute price news (Delta_(t+1)p_(t+i)^(1))
-  delta_p <- compute_price_news(yields, term_premia, i,
-    return_yield_news = FALSE,
-    return_df = FALSE, dates = dates
-  )
+  # Compute n_hat(i,t) once and reuse it for the price news, so the
+  # t-alignment between exp(n_hat_i[t]) and delta_p[t] is visible here:
+  # delta_p[t] = n_hat(i-1,t+1) - n_hat(i,t) pairs with n_hat_i[t]
+  n_hat_i <- compute_n_hat(yields, term_premia, i, return_df = FALSE)
+  n_hat_i_minus_1 <- compute_n_hat_previous(yields, term_premia, i)
+  delta_p <- compute_time_series_news(n_hat_i, n_hat_i_minus_1)
 
   # Compute E[(Delta_(t+1)p_(t+i)^(1))^2] using utility function
   expected_delta_p_squared <- compute_expected_squared(

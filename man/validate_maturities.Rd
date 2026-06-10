@@ -26,8 +26,9 @@ Invisible TRUE if valid, stops with informative error otherwise.
 }
 \description{
 Single source of truth for validating a numeric maturity vector:
-non-empty, finite integers, within \code{[MIN_MATURITY, max_value]}. The
-scalar analog is \code{\link{validate_maturity_index}}.
+non-empty, finite integers, within \code{[MIN_MATURITY, max_value]},
+and free of duplicates. The scalar analog is
+\code{\link{validate_maturity_index}}.
 }
 \seealso{
 \code{\link{validate_maturity_index}}

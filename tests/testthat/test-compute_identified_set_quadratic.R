@@ -192,16 +192,165 @@ test_that("accepts exact zero tau and returns the point-id benchmark form", {
   }
 })
 
-test_that("errors on d_i overflow from tiny sigma_i_sq", {
+test_that("d_i overflow error reports the actual offending values", {
   inputs <- setup_quadratic_test_inputs()
   inputs$moments$sigma_i_sq[2] <- 1e-309
 
-  expect_error(
+  err <- tryCatch(
     compute_identified_set_quadratic(
       inputs$tau, inputs$components, inputs$moments
     ),
-    "d_i overflowed to non-finite"
+    error = function(e) e
   )
+
+  expect_s3_class(err, "hetid_error")
+  expect_match(
+    conditionMessage(err), "non-finite for maturity 2",
+    fixed = TRUE
+  )
+  expect_match(conditionMessage(err), "tau_i = 1", fixed = TRUE)
+  expect_match(conditionMessage(err), "V_i = 1", fixed = TRUE)
+  expect_match(
+    conditionMessage(err), "sigma_i_sq = 1e-309",
+    fixed = TRUE
+  )
+})
+
+test_that("rejects non-finite tau with a structured error naming tau", {
+  inputs <- setup_quadratic_test_inputs()
+  for (bad in c(Inf, NA_real_, NaN)) {
+    tau <- inputs$tau
+    tau[2] <- bad
+
+    err <- tryCatch(
+      compute_identified_set_quadratic(
+        tau, inputs$components, inputs$moments
+      ),
+      error = function(e) e
+    )
+
+    expect_s3_class(err, "hetid_error_bad_argument")
+    expect_match(
+      conditionMessage(err), "tau must be finite",
+      fixed = TRUE
+    )
+    expect_identical(err$arg, "tau")
+  }
+})
+
+test_that("NA planted in moments s_i_0 raises a finiteness error", {
+  inputs <- setup_quadratic_test_inputs()
+  inputs$moments$s_i_0[3] <- NA_real_
+
+  err <- tryCatch(
+    compute_identified_set_quadratic(
+      inputs$tau, inputs$components, inputs$moments
+    ),
+    error = function(e) e
+  )
+
+  expect_s3_class(err, "hetid_error_bad_argument")
+  expect_match(
+    conditionMessage(err),
+    "s_i_0 contains non-finite (NA/NaN/Inf) values for maturity/maturities 3",
+    fixed = TRUE
+  )
+  expect_identical(err$arg, "s_i_0")
+})
+
+test_that("NA in moments at zero tau does not blame sigma_i_sq", {
+  inputs <- setup_quadratic_test_inputs()
+  inputs$moments$s_i_0[3] <- NA_real_
+
+  err <- tryCatch(
+    compute_identified_set_quadratic(
+      rep(0, length(inputs$tau)), inputs$components, inputs$moments
+    ),
+    error = function(e) e
+  )
+
+  expect_s3_class(err, "hetid_error_bad_argument")
+  expect_match(conditionMessage(err), "s_i_0", fixed = TRUE)
+  expect_false(grepl("sigma_i_sq", conditionMessage(err), fixed = TRUE))
+})
+
+test_that("NA planted in components L_i raises a finiteness error", {
+  inputs <- setup_quadratic_test_inputs()
+  inputs$components$L_i[1] <- NA_real_
+
+  err <- tryCatch(
+    compute_identified_set_quadratic(
+      inputs$tau, inputs$components, inputs$moments
+    ),
+    error = function(e) e
+  )
+
+  expect_s3_class(err, "hetid_error_bad_argument")
+  expect_match(
+    conditionMessage(err),
+    "L_i contains non-finite (NA/NaN/Inf) values for maturity/maturities 1",
+    fixed = TRUE
+  )
+  expect_identical(err$arg, "L_i")
+})
+
+test_that("Inf planted in moments s_i_2 raises a finiteness error", {
+  inputs <- setup_quadratic_test_inputs()
+  inputs$moments$s_i_2[[4]][1, 2] <- Inf
+
+  err <- tryCatch(
+    compute_identified_set_quadratic(
+      inputs$tau, inputs$components, inputs$moments
+    ),
+    error = function(e) e
+  )
+
+  expect_s3_class(err, "hetid_error_bad_argument")
+  expect_match(
+    conditionMessage(err),
+    "s_i_2 contains non-finite (NA/NaN/Inf) values for maturity/maturities 4",
+    fixed = TRUE
+  )
+  expect_identical(err$arg, "s_i_2")
+})
+
+test_that("assembled A_i matrices are exactly symmetric", {
+  set.seed(11)
+  n_obs <- 60
+  J <- 3
+  I <- 4
+  w1 <- rnorm(n_obs)
+  w2 <- matrix(rnorm(n_obs * I), n_obs, I)
+  pcs <- matrix(rnorm(n_obs * J), n_obs, J)
+  gamma <- matrix(rnorm(J * I), J, I)
+  tau <- runif(I, 0.5, 2)
+
+  moments <- compute_identification_moments(w1, w2, pcs)
+  components <- compute_identified_set_components(gamma, moments)
+  result <- compute_identified_set_quadratic(tau, components, moments)
+
+  for (a in result$A_i) {
+    expect_identical(a, t(a))
+  }
+})
+
+test_that("assembly symmetrizes an asymmetric hand-built s_i_2 exactly", {
+  asym <- matrix(c(1, 0.25, 0.75, 1), 2, 2)
+
+  result <- quadratic_from_components(
+    tau = c(1, 1),
+    L_i = c(1, 1), V_i = c(1, 1),
+    Q_i = list(c(1, 2), c(3, 4)),
+    s_i_0 = c(1, 1),
+    s_i_1 = list(c(0, 0), c(0, 0)),
+    s_i_2 = list(asym, asym),
+    sigma_i_sq = c(1, 1),
+    maturities = 1:2, n_components = 2
+  )
+
+  for (a in result$A_i) {
+    expect_identical(a, t(a))
+  }
 })
 
 test_that(

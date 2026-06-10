@@ -9,7 +9,10 @@
 #' @return Numeric value of k_hat_i
 #'
 #' @section Mathematical Formula:
-#' \deqn{k\_hat_i = \frac{1}{T-i} \sum_{t=1}^{T-i} (-y_{t+i}^{(1)} - n\_hat(i-1,t+1))^4}
+#' \deqn{k\_hat_i = \mathrm{mean}_t (-y_{t+i}^{(1)} - n\_hat(i-1,t+1))^4}
+#'
+#' The mean is taken over the valid (non-missing) terms for
+#' \eqn{t = 1, \dots, T-i}; with complete data the divisor is \eqn{T-i}.
 #'
 #' @template section-acm-methodology
 #'
@@ -20,7 +23,6 @@
 #' @export
 #'
 #' @examples
-#' \dontrun{
 #' # Extract ACM data - need maturities 1, i-1, i, i+1 for maturity i
 #' # For i=5, we need maturities 1, 4, 5, 6
 #' data <- extract_acm_data(
@@ -32,7 +34,6 @@
 #'
 #' # Compute k_hat for i=5
 #' k_hat_5 <- compute_k_hat(yields, term_premia, i = 5)
-#' }
 #'
 compute_k_hat <- function(yields, term_premia, i) {
   # Use standardized validation
@@ -59,7 +60,7 @@ compute_k_hat <- function(yields, term_premia, i) {
   valid <- !is.na(y1_shifted) & !is.na(n_hat_shifted)
 
   if (!any(valid)) {
-    return(NA)
+    return(NA_real_)
   }
 
   khat_terms <- (

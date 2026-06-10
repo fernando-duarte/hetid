@@ -37,16 +37,35 @@
 #' scalar_stats$sigma_i_sq
 compute_scalar_statistics <- function(w1, w2,
                                       maturities = NULL) {
+  validated <- validate_statistics_inputs(w1, w2, maturities)
+  compute_scalar_statistics_impl(
+    w1, validated$w2, validated$maturities
+  )
+}
+
+#' Scalar Statistics Worker on Validated Inputs
+#'
+#' Trusts inputs already validated by
+#' \code{validate_statistics_inputs()}; the exported wrapper and
+#' \code{compute_identification_moments()} validate once and delegate
+#' here.
+#'
+#' @param w1 Numeric vector of W1 residuals
+#' @param w2 Numeric matrix of W2 residuals (T x I)
+#' @param maturities Vector of validated maturity indices
+#' @return List with named vectors s_i_0 and sigma_i_sq
+#' @noRd
+compute_scalar_statistics_impl <- function(w1, w2, maturities) {
   results <- compute_per_maturity(
     w1, w2, maturities,
-    function(w1, w2, w2_i, t_obs, ...) {
+    function(w1, w2, w2_i, ...) {
       hadamard_prod <- w1 * w2_i
       s_i_0_val <- as.numeric(
-        centered_cov(hadamard_prod, hadamard_prod, t_obs)
+        centered_cov(hadamard_prod, hadamard_prod)
       )
       w2_i_sq <- w2_i^2
       sigma_i_sq_val <- as.numeric(
-        centered_cov(w2_i_sq, w2_i_sq, t_obs)
+        centered_cov(w2_i_sq, w2_i_sq)
       )
       list(
         s_i_0 = s_i_0_val,

@@ -5,45 +5,27 @@
 \alias{variables}
 \title{Quarterly Economic and Financial Variables Dataset}
 \format{
-A tibble time series (tbl_ts) with 243 observations and 186 variables:
-\describe{
-\item{date}{Date of observation (quarterly)}
-\item{yr}{Year}
-\item{quarter}{Quarter (1-4)}
-\item{gdpc1}{Real GDP (billions of chained 2012 dollars)}
-\item{gdppot}{Real potential GDP}
-\item{pcepilfe}{PCE price index less food and energy}
-\item{pcecc96}{Real personal consumption expenditures}
-\item{fedfunds}{Federal funds rate}
-\item{anfci}{Adjusted National Financial Conditions Index}
-\item{nfci}{National Financial Conditions Index}
-\item{gs10}{10-year Treasury constant maturity rate}
-\item{tb3ms}{3-month Treasury bill rate}
-\item{med3}{3-month median expected inflation}
-\item{tb3smffm}{3-month Treasury minus federal funds rate}
-\item{aaa10ym}{AAA corporate bond yield minus 10-year Treasury}
-\item{baa10ym}{BAA corporate bond yield minus 10-year Treasury}
-\item{vixcls}{VIX volatility index}
-\item{ygr}{GDP growth rate}
-\item{lgdp}{Log of real GDP}
-\item{infl_pce}{PCE inflation rate}
-\item{gap}{Output gap}
-\item{baa_aaa}{BAA-AAA spread}
-\item{t10y3m}{Term spread (10-year minus 3-month)}
-\item{gspc}{S&P 500 index}
-\item{gspc_ret}{S&P 500 returns}
-\item{gspc_vol}{S&P 500 volatility}
-\item{mp_shock_...}{Various monetary policy shock measures}
-\item{gsfci}{Goldman Sachs Financial Conditions Index}
-\item{ecy}{Excess cyclical yield}
-\item{ebp}{Excess bond premium}
-\item{gz}{Gilchrist-Zakrajsek spread}
-\item{ciss}{Composite Indicator of Systemic Stress}
-\item{pc1-pc6}{Principal components}
-\item{mu}{Expected excess returns}
-\item{vfci}{Volatility Financial Conditions Index}
-\item{vfci_lev}{VFCI level}
-\item{gr..., lgr..., fgr...}{Various growth rates and transformations}
+A data frame with 243 observations and 186 variables. Key variable
+groups include:
+\itemize{
+\item Date and period identifiers: \code{date}, \code{yr}, \code{quarter}
+\item National accounts and prices: real GDP (\code{gdpc1}), potential
+GDP (\code{gdppot}), core PCE prices (\code{pcepilfe}), real
+consumption (\code{pcecc96}), log GDP (\code{lgdp}), GDP growth
+(\code{ygr}), PCE inflation (\code{infl_pce}), output gap (\code{gap})
+\item Interest rates and spreads: \code{fedfunds}, \code{gs10},
+\code{tb3ms}, \code{tb3smffm}, \code{t10y3m}, \code{aaa10ym},
+\code{baa10ym}, \code{baa_aaa}; median expected inflation (\code{med3})
+\item Financial conditions and stress: \code{anfci}, \code{nfci},
+\code{gsfci}, \code{vixcls}, \code{ecy}, \code{ebp}, \code{gz},
+\code{ciss}
+\item Equity market: \code{gspc}, \code{gspc_ret}, \code{gspc_vol}
+\item Monetary policy shocks: columns prefixed \code{mp_shock_}
+\item Principal components: \code{pc1} through \code{pc6}
+\item VFCI measures: \code{vfci}, \code{vfci_lev}, and \code{vfci_}
+variants; expected excess returns (\code{mu})
+\item Growth-rate transformations: columns prefixed \code{gr},
+\code{lgr}, and \code{fgr}
 }
 }
 \source{
@@ -67,13 +49,11 @@ gdp_growth <- variables$ygr
 inflation <- variables$infl_pce
 
 # Time series plot
-\dontrun{
 plot(variables$date, variables$vfci,
   type = "l",
   xlab = "Date", ylab = "VFCI",
   main = "Volatility Financial Conditions Index"
 )
-}
 
 }
 \keyword{datasets}

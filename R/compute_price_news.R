@@ -22,7 +22,6 @@
 #' @export
 #'
 #' @examples
-#' \dontrun{
 #' # Extract ACM data - need maturities 1, i-1, i, i+1 for maturity i
 #' # For i=5, we need maturities 1, 4, 5, 6
 #' data <- extract_acm_data(
@@ -43,7 +42,6 @@
 #'   return_df = TRUE,
 #'   dates = data$date
 #' )
-#' }
 #'
 compute_price_news <- function(yields, term_premia, i,
                                return_yield_news = FALSE,
@@ -52,12 +50,10 @@ compute_price_news <- function(yields, term_premia, i,
   validate_maturity_index(i, max_maturity = HETID_CONSTANTS$EFFECTIVE_MAX_MATURITY)
 
   # Compute n_hat series
-  n_hat_i <- compute_n_hat(yields, term_premia, i,
-    return_df = FALSE, dates = dates
-  )
+  n_hat_i <- compute_n_hat(yields, term_premia, i, return_df = FALSE)
 
   # Compute previous period n_hat (handles special case for i=1)
-  n_hat_i_minus_1 <- compute_n_hat_previous(yields, term_premia, i, dates)
+  n_hat_i_minus_1 <- compute_n_hat_previous(yields, term_premia, i)
 
   # Compute price news using utility function
   price_news <- compute_time_series_news(n_hat_i, n_hat_i_minus_1, negate = return_yield_news)

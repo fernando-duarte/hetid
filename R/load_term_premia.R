@@ -1,6 +1,7 @@
 #' Load ACM Term Premia Data
 #'
-#' Loads the ACM term premia data from the package's data directory.
+#' Loads the ACM term premia data, preferring a downloaded copy in the
+#' per-user data directory and falling back to the bundled copy.
 #' If the data doesn't exist, prompts the user to download it first.
 #'
 #' @param auto_download Logical. If TRUE and data doesn't exist, automatically
@@ -10,32 +11,25 @@
 #' @export
 #'
 #' @examples
-#' \dontrun{
-#' # Load the data (will prompt to download if not available)
+#' # Load the bundled data
 #' term_premia <- load_term_premia()
-#'
-#' # Automatically download if not available
-#' term_premia <- load_term_premia(auto_download = TRUE)
-#' }
+#' head(term_premia)
 #'
 #' @seealso \code{\link{download_term_premia}} for downloading the data
 #'
 load_term_premia <- function(auto_download = FALSE) {
-  # Use standardized path management
-  csv_path <- get_acm_data_path()
-
-  # Check if file exists
   if (!check_data_file_exists(HETID_CONSTANTS$ACM_DATA_FILENAME)) {
     if (auto_download) {
       message("Term premia data not found. Downloading...")
       download_term_premia()
-      # Update path after download
-      csv_path <- get_acm_data_path()
     } else {
       message("Term premia data not found. Please run download_term_premia() first.")
       return(NULL)
     }
   }
+
+  # Resolve once, after any download, so a fresh user-cache copy is found
+  csv_path <- get_acm_data_path()
 
   # Load the data
   tryCatch(
@@ -44,8 +38,10 @@ load_term_premia <- function(auto_download = FALSE) {
 
       # Convert DATE column to Date class if it exists
       if ("DATE" %in% names(tp_df)) {
-        # Try ACM format first, then R's default parser (NULL),
-        # then ISO format as final fallback
+        raw_dates <- tp_df$DATE
+        # Try the locale-safe ACM format, then R's default parser (NULL),
+        # then explicit ISO: the default parser errors when the first
+        # element is malformed even if the rest of the file is valid ISO
         date_formats <- list(
           HETID_CONSTANTS$ACM_DATE_FORMAT,
           NULL,
@@ -54,13 +50,21 @@ load_term_premia <- function(auto_download = FALSE) {
         for (fmt in date_formats) {
           parsed <- tryCatch(
             if (is.null(fmt)) {
-              as.Date(tp_df$DATE)
+              as.Date(raw_dates)
             } else {
-              as.Date(tp_df$DATE, format = fmt)
+              parse_dates_c_locale(raw_dates, fmt)
             },
             error = function(e) NULL
           )
           if (!is.null(parsed) && !all(is.na(parsed))) {
+            n_new_na <- sum(is.na(parsed) & !is.na(raw_dates))
+            if (n_new_na > 0) {
+              warning(
+                n_new_na,
+                " DATE value(s) could not be parsed and became NA",
+                call. = FALSE
+              )
+            }
             tp_df$DATE <- parsed
             break
           }

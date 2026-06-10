@@ -37,7 +37,6 @@
 #' @export
 #'
 #' @examples
-#' \dontrun{
 #' # Extract all yields and term premia
 #' data <- extract_acm_data()
 #'
@@ -60,7 +59,6 @@
 #'   data_types = c("yields", "term_premia", "risk_neutral_yields"),
 #'   maturities = 5
 #' )
-#' }
 extract_acm_data <- function(data_types = c("yields", "term_premia"),
                              maturities = HETID_CONSTANTS$MIN_MATURITY:HETID_CONSTANTS$MAX_MATURITY,
                              start_date = NULL,
@@ -117,8 +115,8 @@ extract_acm_data <- function(data_types = c("yields", "term_premia"),
     result <- convert_to_quarterly(result) # nolint: object_usage_linter
   }
 
-  # Sort by date
-  result <- result[order(result$date), ]
+  # Sort by date; drop = FALSE keeps single-column results as data frames
+  result <- result[order(result$date), , drop = FALSE]
 
   # Reset row names
   rownames(result) <- NULL
@@ -133,7 +131,8 @@ extract_acm_data <- function(data_types = c("yields", "term_premia"),
 validate_acm_extract_inputs <- function(data_types, maturities) {
   valid_types <- names(HETID_ACM_SCHEMA)
   assert_bad_argument_ok(
-    all(data_types %in% valid_types),
+    is.character(data_types) && length(data_types) >= 1 &&
+      all(data_types %in% valid_types),
     paste0(
       "Invalid data_types. Must be one or more of: ",
       paste(valid_types, collapse = ", ")
@@ -141,6 +140,16 @@ validate_acm_extract_inputs <- function(data_types, maturities) {
     arg = "data_types"
   )
 
+  assert_bad_argument_ok(
+    is.numeric(maturities) && length(maturities) >= 1,
+    "maturities must be a non-empty numeric vector",
+    arg = "maturities"
+  )
+  assert_bad_argument_ok(
+    all(is.finite(maturities)) && all(maturities == trunc(maturities)),
+    "maturities must be whole numbers",
+    arg = "maturities"
+  )
   assert_bad_argument_ok(
     all(
       maturities %in%
@@ -153,46 +162,4 @@ validate_acm_extract_inputs <- function(data_types, maturities) {
     ),
     arg = "maturities"
   )
-}
-
-#' Coerce optional date input
-#'
-#' @keywords internal
-#' @noRd
-coerce_optional_date <- function(x) {
-  if (!is.null(x) && is.character(x)) {
-    return(as.Date(x))
-  }
-
-  x
-}
-
-#' Normalize ACM date column
-#'
-#' @keywords internal
-#' @noRd
-normalize_acm_date_column <- function(acm_data) {
-  if ("date" %in% names(acm_data) && !inherits(acm_data$date, "Date")) {
-    acm_data$date <- as.Date(
-      acm_data$date,
-      format = HETID_CONSTANTS$ACM_DATE_FORMAT
-    )
-  }
-
-  acm_data
-}
-
-#' Filter ACM data by optional date bounds
-#'
-#' @keywords internal
-#' @noRd
-filter_acm_date_range <- function(acm_data, start_date, end_date) {
-  if (!is.null(start_date)) {
-    acm_data <- acm_data[acm_data$date >= start_date, ]
-  }
-  if (!is.null(end_date)) {
-    acm_data <- acm_data[acm_data$date <= end_date, ]
-  }
-
-  acm_data
 }

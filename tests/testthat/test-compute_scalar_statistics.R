@@ -77,20 +77,16 @@ test_that("compute_scalar_statistics handles subset of maturities", {
   expect_named(result$sigma_i_sq, paste0("maturity_", maturities))
 })
 
-test_that("compute_scalar_statistics handles edge cases", {
-  # Test with single observation
-  w1 <- 2
-  w2 <- matrix(3, nrow = 1, ncol = 1)
+test_that("compute_scalar_statistics rejects a single observation", {
+  expect_error(
+    compute_scalar_statistics(2, matrix(3, nrow = 1, ncol = 1)),
+    "At least 2 observations",
+    class = "hetid_error_insufficient_data"
+  )
+})
 
-  result <- compute_scalar_statistics(w1, w2)
-
-  # With a single observation, the centered variance of w1 * w2 is zero
-  expect_equal(unname(result$s_i_0[1]), 0)
-
-  # With a single observation, centered variance of w2^2 is zero
-  expect_equal(unname(result$sigma_i_sq[1]), 0)
-
-  # Test with zero residuals
+test_that("compute_scalar_statistics handles zero residuals", {
+  set.seed(99)
   w1 <- rep(0, 10)
   w2 <- matrix(rnorm(20), nrow = 10, ncol = 2)
 
@@ -99,4 +95,49 @@ test_that("compute_scalar_statistics handles edge cases", {
   # S_i^(0) should be 0 when w1 is all zeros
   expect_equal(unname(result$s_i_0[1]), 0)
   expect_equal(unname(result$s_i_0[2]), 0)
+})
+
+test_that("compute_scalar_statistics rejects non-finite inputs", {
+  set.seed(31)
+  w1 <- rnorm(10)
+  w2 <- matrix(rnorm(20), nrow = 10, ncol = 2)
+
+  w1_na <- replace(w1, 3, NA)
+  expect_error(
+    compute_scalar_statistics(w1_na, w2),
+    "w1 must not contain NA, NaN, or infinite values",
+    class = "hetid_error_bad_argument"
+  )
+
+  w2_na <- w2
+  w2_na[5, 2] <- NA
+  expect_error(
+    compute_scalar_statistics(w1, w2_na),
+    "w2 must not contain NA, NaN, or infinite values",
+    class = "hetid_error_bad_argument"
+  )
+})
+
+test_that("compute_scalar_statistics rejects duplicate maturities", {
+  set.seed(32)
+  w1 <- rnorm(10)
+  w2 <- matrix(rnorm(20), nrow = 10, ncol = 2)
+
+  expect_error(
+    compute_scalar_statistics(w1, w2, maturities = c(2, 2)),
+    "must not contain duplicates",
+    class = "hetid_error_bad_argument"
+  )
+})
+
+test_that("compute_scalar_statistics rejects a character-column data frame", {
+  set.seed(33)
+  w1 <- rnorm(5)
+  w2 <- data.frame(a = rnorm(5), b = letters[1:5])
+
+  expect_error(
+    compute_scalar_statistics(w1, w2),
+    "w2 must contain only numeric values",
+    class = "hetid_error_bad_argument"
+  )
 })

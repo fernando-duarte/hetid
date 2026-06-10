@@ -23,7 +23,6 @@
 #' @export
 #'
 #' @examples
-#' \dontrun{
 #' # Extract ACM data
 #' data <- extract_acm_data(data_types = c("yields", "term_premia"))
 #' yields <- data[, paste0("y", 1:10)]
@@ -31,7 +30,6 @@
 #'
 #' # Compute c_hat for i=5
 #' c_hat_5 <- compute_c_hat(yields, term_premia, i = 5)
-#' }
 #'
 compute_c_hat <- function(yields, term_premia, i) {
   # Use standardized validation
@@ -44,7 +42,7 @@ compute_c_hat <- function(yields, term_premia, i) {
   n_hat_clean <- n_hat[!is.na(n_hat)]
 
   if (length(n_hat_clean) == 0) {
-    return(NA)
+    return(NA_real_)
   }
 
   # Compute maximum of exp(2*n_hat)

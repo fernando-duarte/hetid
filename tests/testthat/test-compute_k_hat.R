@@ -41,9 +41,9 @@ test_that("k_hat manual calculation verification", {
   # Get y at t+i
   y_t_plus_i <- c(y[-seq_len(i)], rep(NA, i))
 
-  # Compute k_hat manually
-  n_obs <- length(y)
-  k_hat_manual <- sum((-y_t_plus_i - n_hat_t_plus_1)^4, na.rm = TRUE) / (n_obs - i)
+  # Compute k_hat manually: mean over valid (non-missing) terms
+  terms <- (-y_t_plus_i - n_hat_t_plus_1)^4
+  k_hat_manual <- mean(terms[!is.na(terms)])
 
   expect_equal(k_hat_5, k_hat_manual,
     tolerance = 1e-10,
@@ -87,34 +87,79 @@ test_that("k_hat positivity - all values positive except i=1", {
   }
 })
 
-test_that("k_hat time alignment verification", {
+test_that("k_hat averages over valid terms with interior NA in y1", {
   test_env <- setup_standard_test_env()
+  i <- 5
+  yields_na <- test_env$yields
+  n <- nrow(yields_na)
 
-  # Test with i=3 for clarity
-  i <- 3
-  k_hat_3 <- compute_k_hat(test_env$yields, test_env$term_premia, i = i)
+  # Interior NA lands inside the shifted window and drops one term
+  yields_na$y1[25] <- NA
 
-  # Manual verification of time alignment
-  n_hat_2 <- compute_n_hat(test_env$yields, test_env$term_premia, i = i - 1)
-  y1 <- test_env$yields$y1 / 100
+  k_hat_na <- compute_k_hat(yields_na, test_env$term_premia, i = i)
 
-  # Time alignment check: n_hat at t+1 and y at t+i
-  n <- length(y1)
+  # Manual replication: only y1 enters as y_{t+i}, n_hat(4) is unaffected
+  n_hat <- compute_n_hat(yields_na, test_env$term_premia, i = i - 1)
+  y1 <- yields_na$y1 / 100
+  y1_shifted <- y1[(i + 1):n]
+  n_hat_shifted <- n_hat[2:(n - i + 1)]
+  terms <- (-y1_shifted - n_hat_shifted)^4
+  valid_terms <- terms[!is.na(terms)]
 
-  # For k_hat calculation, we need:
-  # - n_hat_{i-1,t+1} which is n_hat_2 shifted forward by 1
-  # - y_{t+i}^{(1)} which is y1 shifted forward by i
+  expect_length(valid_terms, n - i - 1)
+  expect_equal(k_hat_na, mean(valid_terms),
+    tolerance = 1e-12,
+    label = "k_hat should average over the valid terms only"
+  )
+  # The fixed divisor T - i (old documented formula) would understate it
+  expect_gt(k_hat_na, sum(valid_terms) / (n - i))
+})
 
-  # The valid range for computation is from t=1 to t=n-i
-  valid_range <- 1:(n - i)
+test_that("k_hat time alignment matches hand-computed synthetic value", {
+  # With y2 = tp1 = tp2 = 0, n_hat(1,t) reduces to y1[t] / 100, so
+  # k_hat(2) = mean over t of ((-y1[t+2] - y1[t+1]) / 100)^4. The y1
+  # values make consecutive-pair sums distinct, so any misalignment
+  # (e.g. a shift by 2) would average different pairs
+  y1_pct <- c(0, 1, 3, 6, 10, 15)
+  n <- length(y1_pct)
+  zeros <- numeric(n)
+  yields <- data.frame(y1 = y1_pct, y2 = zeros)
+  term_premia <- data.frame(tp1 = zeros, tp2 = zeros)
 
-  # Verify we're using the right time indices
-  # Time alignment should produce correct number of valid observations
-  expect_length(valid_range, n - i)
+  k_hat_2 <- compute_k_hat(yields, term_premia, i = 2)
 
-  # The function should handle NA values correctly
-  expect_true(is.finite(k_hat_3),
-    label = "k_hat should handle time-shifted data correctly"
+  aligned_sums <- y1_pct[3:n] + y1_pct[2:(n - 1)]
+  expected <- mean((aligned_sums / 100)^4)
+
+  misaligned_sums <- y1_pct[1:(n - 2)] + y1_pct[2:(n - 1)]
+  misaligned <- mean((misaligned_sums / 100)^4)
+
+  expect_false(isTRUE(all.equal(expected, misaligned)),
+    label = "synthetic data must distinguish aligned from misaligned"
+  )
+  expect_equal(k_hat_2, expected,
+    tolerance = 1e-12,
+    label = "k_hat should pair y1[t+2] with n_hat(1,t+1)"
+  )
+})
+
+test_that("k_hat degenerate branch returns typed numeric NA", {
+  test_env <- setup_standard_test_env()
+  yields_na <- test_env$yields
+  yields_na$y1 <- NA_real_
+
+  # vapply(..., numeric(1)) enforces a double return on the NA branch
+  k_vals <- vapply(
+    c(4, 5),
+    function(i) compute_k_hat(yields_na, test_env$term_premia, i = i),
+    numeric(1)
+  )
+
+  expect_type(k_vals, "double")
+  expect_true(all(is.na(k_vals)))
+  expect_identical(
+    compute_k_hat(yields_na, test_env$term_premia, i = 5),
+    NA_real_
   )
 })
 

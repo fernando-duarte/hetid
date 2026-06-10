@@ -1,98 +1,7 @@
 # Test file for download functions
-# Tests download_term_premia
-
-test_that("download_term_premia works correctly", {
-  # Skip if offline
-  skip_if_offline()
-
-  # Test download (force = FALSE to use cached if available)
-  expect_silent(download_term_premia(force = FALSE, quiet = TRUE))
-
-  # Check file exists after download
-  data_dir <- system.file("extdata", package = "hetid")
-  tp_file <- file.path(data_dir, "ACMTermPremium.csv")
-
-  # File should exist (either downloaded or already present)
-  expect_true(file.exists(tp_file))
-
-  # File should have content
-  if (file.exists(tp_file)) {
-    file_size <- file.info(tp_file)$size
-    expect_true(file_size > 1000) # Should be at least 1KB
-  }
-})
-
-test_that("download_term_premia handles force parameter", {
-  # Skip if offline
-  skip_if_offline()
-
-  # Get file path
-  data_dir <- system.file("extdata", package = "hetid")
-  tp_file <- file.path(data_dir, "ACMTermPremium.csv")
-
-  # If file exists, check modification time
-  if (file.exists(tp_file)) {
-    old_mtime <- file.info(tp_file)$mtime
-
-    # Download with force = FALSE (should not re-download)
-    download_term_premia(force = FALSE, quiet = TRUE)
-    new_mtime <- file.info(tp_file)$mtime
-
-    # Modification time should be unchanged
-    expect_equal(old_mtime, new_mtime)
-  }
-})
-
-test_that("load_term_premia works after download", {
-  # Skip if offline
-  skip_if_offline()
-
-  # Ensure data is downloaded
-  download_term_premia(force = FALSE, quiet = TRUE)
-
-  # Load should work
-  tp_data <- load_term_premia()
-  expect_s3_class(tp_data, "data.frame")
-  expect_true(nrow(tp_data) > 0)
-  expect_true("date" %in% names(tp_data))
-
-  # Check that ACM data contains both yields and term premia
-  yield_cols <- grep("^ACMY", names(tp_data), value = TRUE)
-  tp_cols <- grep("^ACMTP", names(tp_data), value = TRUE)
-  rny_cols <- grep("^ACMRNY", names(tp_data), value = TRUE)
-
-  expect_true(length(yield_cols) > 0)
-  expect_true(length(tp_cols) > 0)
-  expect_true(length(rny_cols) > 0)
-})
-
-test_that("download_term_premia quiet parameter", {
-  # Skip if offline
-  skip_if_offline()
-
-  # With quiet = TRUE, should not print messages
-  expect_silent(download_term_premia(force = FALSE, quiet = TRUE))
-
-  # Note: Testing quiet = FALSE would require capturing output,
-  # which is environment-dependent
-})
-
-test_that("download_term_premia file permissions", {
-  # Skip if offline
-  skip_if_offline()
-
-  # Download files
-  download_term_premia(force = FALSE, quiet = TRUE)
-
-  # Check file is readable
-  data_dir <- system.file("extdata", package = "hetid")
-  tp_file <- file.path(data_dir, "ACMTermPremium.csv")
-
-  if (file.exists(tp_file)) {
-    # Should be able to read first few lines
-    expect_silent(readLines(tp_file, n = 5))
-  }
-})
+# Tests download_term_premia and load_term_premia with mocked network
+# access and a throwaway per-user cache directory (no real downloads,
+# no writes outside tempdir)
 
 # --- load_term_premia mock-based tests ---
 
@@ -148,6 +57,58 @@ test_that("load_term_premia warns on unparseable dates", {
   })
 })
 
+test_that("load_term_premia warns when chosen format leaves some NA dates", {
+  withr::with_tempdir({
+    temp_csv <- file.path(getwd(), "ACMTermPremium.csv")
+    write.csv(
+      data.frame(
+        DATE = c("2020-01-15", "garbage"),
+        ACMY01 = c(1.5, 1.6)
+      ),
+      temp_csv,
+      row.names = FALSE
+    )
+
+    local_mocked_bindings(
+      check_data_file_exists = function(...) TRUE,
+      get_acm_data_path = function() temp_csv
+    )
+
+    expect_warning(
+      result <- load_term_premia(),
+      "could not be parsed"
+    )
+    expect_s3_class(result$date, "Date")
+    expect_equal(result$date[1], as.Date("2020-01-15"))
+    expect_true(is.na(result$date[2]))
+  })
+})
+
+test_that("load_term_premia parses ACM-format dates", {
+  withr::with_tempdir({
+    temp_csv <- file.path(getwd(), "ACMTermPremium.csv")
+    write.csv(
+      data.frame(
+        DATE = c("30-Jun-1961", "31-Jul-1961"),
+        ACMY01 = c(1.5, 1.6)
+      ),
+      temp_csv,
+      row.names = FALSE
+    )
+
+    local_mocked_bindings(
+      check_data_file_exists = function(...) TRUE,
+      get_acm_data_path = function() temp_csv
+    )
+
+    result <- load_term_premia()
+    expect_equal(
+      result$date,
+      as.Date(c("1961-06-30", "1961-07-31"))
+    )
+  })
+})
+
 test_that(
   "load_term_premia errors on read failure",
   {
@@ -196,94 +157,140 @@ test_that("load_term_premia parses ISO dates correctly", {
 
 # --- download_term_premia mock-based tests ---
 
-test_that("download_term_premia downloads and saves CSV", {
+test_that("download_term_premia writes to the user cache, not the package", {
   skip_if_not_installed("readxl")
-  withr::with_tempdir({
-    csv_path <- file.path(getwd(), "ACMTermPremium.csv")
+  user_root <- withr::local_tempdir()
+  withr::local_envvar(R_USER_DATA_DIR = user_root)
 
-    local_mocked_bindings(
-      validate_data_directory = function(...) invisible(TRUE),
-      get_acm_data_path = function() csv_path
-    )
-    local_mocked_bindings(
-      download.file = function(url, destfile, ...) {
-        writeLines("fake-xls", destfile)
-        invisible(0)
-      },
-      .package = "hetid"
-    )
-    local_mocked_bindings(
-      read_excel = function(...) {
-        data.frame(
-          DATE = c("01-Jan-2020", "01-Feb-2020"),
-          ACMY01 = c(1.5, 1.6)
-        )
-      },
-      .package = "readxl"
-    )
+  local_mocked_bindings(
+    download.file = function(url, destfile, ...) {
+      writeLines("fake-xls", destfile)
+      invisible(0)
+    },
+    .package = "hetid"
+  )
+  local_mocked_bindings(
+    read_excel = function(...) {
+      data.frame(
+        DATE = c("01-Jan-2020", "01-Feb-2020"),
+        ACMY01 = c(1.5, 1.6)
+      )
+    },
+    .package = "readxl"
+  )
 
-    result <- expect_message(
-      download_term_premia(force = TRUE, quiet = FALSE),
-      "Downloading"
-    )
+  bundled_path <- file.path(
+    get_package_data_dir(), HETID_CONSTANTS$ACM_DATA_FILENAME
+  )
+  bundled_mtime <- file.info(bundled_path)$mtime
 
-    expect_true(file.exists(csv_path))
-    saved <- read.csv(csv_path)
-    expect_equal(nrow(saved), 2)
-  })
+  expect_message(
+    result <- download_term_premia(force = TRUE, quiet = FALSE),
+    "Downloading"
+  )
+
+  user_csv <- file.path(
+    get_user_data_dir(), HETID_CONSTANTS$ACM_DATA_FILENAME
+  )
+  expect_true(file.exists(user_csv))
+  expect_equal(result, user_csv)
+  saved <- read.csv(user_csv)
+  expect_equal(nrow(saved), 2)
+
+  # The bundled copy in the package library must be untouched
+  expect_identical(file.info(bundled_path)$mtime, bundled_mtime)
 })
 
-test_that("download_term_premia skips when file exists", {
-  withr::with_tempdir({
-    csv_path <- file.path(getwd(), "ACMTermPremium.csv")
-    writeLines("existing", csv_path)
+test_that("download_term_premia skips when the bundled copy satisfies it", {
+  user_root <- withr::local_tempdir()
+  withr::local_envvar(R_USER_DATA_DIR = user_root)
 
-    local_mocked_bindings(
-      validate_data_directory = function(...) invisible(TRUE),
-      get_acm_data_path = function() csv_path
-    )
+  expect_message(
+    result <- download_term_premia(force = FALSE, quiet = FALSE),
+    "already exists"
+  )
 
-    result <- expect_message(
-      download_term_premia(force = FALSE, quiet = FALSE),
-      "already exists"
-    )
-    expect_equal(readLines(csv_path), "existing")
-  })
+  expect_true(file.exists(result))
+
+  # No download happened, so the user cache stays empty
+  user_csv <- file.path(
+    get_user_data_dir(), HETID_CONSTANTS$ACM_DATA_FILENAME
+  )
+  expect_false(file.exists(user_csv))
+})
+
+test_that("download_term_premia skips when the user copy exists", {
+  user_root <- withr::local_tempdir()
+  withr::local_envvar(R_USER_DATA_DIR = user_root)
+  user_csv <- file.path(
+    get_user_data_dir(create = TRUE), HETID_CONSTANTS$ACM_DATA_FILENAME
+  )
+  writeLines("existing", user_csv)
+
+  expect_message(
+    result <- download_term_premia(force = FALSE, quiet = FALSE),
+    "already exists"
+  )
+  expect_equal(result, user_csv)
+  expect_equal(readLines(user_csv), "existing")
 })
 
 test_that("download_term_premia quiet mode suppresses messages", {
-  withr::with_tempdir({
-    csv_path <- file.path(getwd(), "ACMTermPremium.csv")
-    writeLines("existing", csv_path)
+  user_root <- withr::local_tempdir()
+  withr::local_envvar(R_USER_DATA_DIR = user_root)
 
-    local_mocked_bindings(
-      validate_data_directory = function(...) invisible(TRUE),
-      get_acm_data_path = function() csv_path
-    )
+  expect_silent(
+    download_term_premia(force = FALSE, quiet = TRUE)
+  )
+})
 
-    expect_silent(
-      download_term_premia(force = FALSE, quiet = TRUE)
-    )
-  })
+test_that("force re-download overwrites the user copy only", {
+  skip_if_not_installed("readxl")
+  user_root <- withr::local_tempdir()
+  withr::local_envvar(R_USER_DATA_DIR = user_root)
+  user_csv <- file.path(
+    get_user_data_dir(create = TRUE), HETID_CONSTANTS$ACM_DATA_FILENAME
+  )
+  writeLines("stale", user_csv)
+
+  local_mocked_bindings(
+    download.file = function(url, destfile, ...) {
+      writeLines("fake-xls", destfile)
+      invisible(0)
+    },
+    .package = "hetid"
+  )
+  local_mocked_bindings(
+    read_excel = function(...) {
+      data.frame(DATE = "01-Jan-2020", ACMY01 = 1.5)
+    },
+    .package = "readxl"
+  )
+
+  bundled_path <- file.path(
+    get_package_data_dir(), HETID_CONSTANTS$ACM_DATA_FILENAME
+  )
+  bundled_first_line <- readLines(bundled_path, n = 1)
+
+  download_term_premia(force = TRUE, quiet = TRUE)
+
+  expect_false(identical(readLines(user_csv), "stale"))
+  expect_identical(readLines(bundled_path, n = 1), bundled_first_line)
 })
 
 test_that("download_term_premia errors on download failure", {
   skip_if_not_installed("readxl")
-  withr::with_tempdir({
-    csv_path <- file.path(getwd(), "ACMTermPremium.csv")
+  user_root <- withr::local_tempdir()
+  withr::local_envvar(R_USER_DATA_DIR = user_root)
 
-    local_mocked_bindings(
-      validate_data_directory = function(...) invisible(TRUE),
-      get_acm_data_path = function() csv_path
-    )
-    local_mocked_bindings(
-      download.file = function(...) stop("network error"),
-      .package = "hetid"
-    )
+  local_mocked_bindings(
+    download.file = function(...) stop("network error"),
+    .package = "hetid"
+  )
 
-    expect_error(
-      download_term_premia(force = TRUE, quiet = TRUE),
-      "Failed to download"
-    )
-  })
+  expect_error(
+    download_term_premia(force = TRUE, quiet = TRUE),
+    "Failed to download",
+    class = "hetid_error"
+  )
 })

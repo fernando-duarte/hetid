@@ -7,11 +7,12 @@
 make_constraint_checker(A_i, b_i, c_i)
 }
 \arguments{
-\item{A_i}{Symmetric matrix from quadratic computation}
+\item{A_i}{Symmetric numeric matrix from quadratic computation}
 
-\item{b_i}{Coefficient vector from quadratic computation}
+\item{b_i}{Numeric coefficient vector from quadratic computation,
+with length equal to \code{nrow(A_i)}}
 
-\item{c_i}{Scalar constant from quadratic computation}
+\item{c_i}{Scalar numeric constant from quadratic computation}
 }
 \value{
 A function that takes a theta vector and returns
@@ -22,6 +23,8 @@ Negative values indicate theta is inside the constraint.
 Factory function that precomputes constants and returns a
 closure for efficiently evaluating the quadratic constraint
 at many theta values (e.g., grid search or optimisation).
+Inputs are validated once at factory time; the returned closure
+performs no checks.
 }
 \examples{
 A <- matrix(c(1, 0, 0, 1), 2, 2)

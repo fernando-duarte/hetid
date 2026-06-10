@@ -8,20 +8,29 @@
 #' @return Data frame with quarterly observations
 #' @keywords internal
 convert_to_quarterly <- function(data) {
-  # Add year and month to identify quarter ends
-  data$year <- as.numeric(format(data$date, HETID_CONSTANTS$YEAR_FORMAT))
-  data$month <- as.numeric(format(data$date, HETID_CONSTANTS$MONTH_FORMAT))
-  data$quarter <- ceiling(
-    data$month / HETID_CONSTANTS$MONTHS_PER_QUARTER
-  )
+  # An empty input has no quarters; return it unchanged to mirror the
+  # monthly path's documented zero-row result
+  if (nrow(data) == 0) {
+    return(data)
+  }
 
-  # For each quarter, keep only the last observation
-  data <- data[order(data$date), ]
+  data <- data[order(data$date), , drop = FALSE]
+
+  # Quarter bookkeeping lives in a scratch frame so input columns named
+  # year/month/quarter are never clobbered
+  scratch <- data.frame(
+    date = data$date,
+    year = as.numeric(format(data$date, HETID_CONSTANTS$YEAR_FORMAT)),
+    month = as.numeric(format(data$date, HETID_CONSTANTS$MONTH_FORMAT))
+  )
+  scratch$quarter <- ceiling(
+    scratch$month / HETID_CONSTANTS$MONTHS_PER_QUARTER
+  )
 
   # Group by year-quarter and take last observation
   last_in_quarter <- aggregate(
     date ~ year + quarter,
-    data = data,
+    data = scratch,
     FUN = max
   )
 
@@ -48,12 +57,10 @@ convert_to_quarterly <- function(data) {
   }
 
   # Merge to get full data for last observation in each quarter
-  result <- merge(
+  merge(
     last_in_quarter[, "date", drop = FALSE],
-    data[, setdiff(names(data), c("year", "month", "quarter"))],
+    data,
     by = "date",
     all.x = TRUE
   )
-
-  result
 }

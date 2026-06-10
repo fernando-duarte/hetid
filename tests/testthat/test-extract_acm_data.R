@@ -1,9 +1,9 @@
 # Test file for extract_acm_data function
-# Tests ACM data extraction and filtering
+# Tests ACM data extraction and filtering using the bundled CSV
 
 test_that("extract_acm_data returns expected structure", {
   # Function returns a data frame with date column and selected variables
-  data <- extract_acm_data(auto_download = TRUE)
+  data <- extract_acm_data()
 
   # Check it's a data frame
   expect_s3_class(data, "data.frame")
@@ -22,10 +22,7 @@ test_that("extract_acm_data returns expected structure", {
 
 test_that("extract_acm_data maturity selection", {
   # Test selecting specific maturities
-  data <- extract_acm_data(
-    maturities = c(2, 5, 10),
-    auto_download = TRUE
-  )
+  data <- extract_acm_data(maturities = c(2, 5, 10))
 
   # Should have only selected maturities
   expect_true(all(c("y2", "y5", "y10") %in% names(data)))
@@ -38,8 +35,7 @@ test_that("extract_acm_data maturity selection", {
   # Single maturity
   data_single <- extract_acm_data(
     data_types = "yields",
-    maturities = 5,
-    auto_download = TRUE
+    maturities = 5
   )
   expect_true("y5" %in% names(data_single))
   expect_equal(sum(grepl("^y\\d+$", names(data_single))), 1)
@@ -52,8 +48,7 @@ test_that("extract_acm_data date filtering", {
 
   data <- extract_acm_data(
     start_date = start_date,
-    end_date = end_date,
-    auto_download = TRUE
+    end_date = end_date
   )
 
   # Check dates are within range
@@ -61,17 +56,11 @@ test_that("extract_acm_data date filtering", {
   expect_true(all(data$date <= as.Date(end_date)))
 
   # Test with only start date
-  data_start <- extract_acm_data(
-    start_date = "2020-01-01",
-    auto_download = TRUE
-  )
+  data_start <- extract_acm_data(start_date = "2020-01-01")
   expect_true(all(data_start$date >= as.Date("2020-01-01")))
 
   # Test with only end date
-  data_end <- extract_acm_data(
-    end_date = "2010-12-31",
-    auto_download = TRUE
-  )
+  data_end <- extract_acm_data(end_date = "2010-12-31")
   expect_true(all(data_end$date <= as.Date("2010-12-31")))
 })
 
@@ -79,26 +68,19 @@ test_that("extract_acm_data data types selection", {
   # Test selecting different data types
 
   # Only yields
-  data_yields <- extract_acm_data(
-    data_types = "yields",
-    auto_download = TRUE
-  )
+  data_yields <- extract_acm_data(data_types = "yields")
   expect_true(all(paste0("y", 1:10) %in% names(data_yields)))
   expect_false(any(paste0("tp", 1:10) %in% names(data_yields)))
   expect_false(any(paste0("rn", 1:10) %in% names(data_yields)))
 
   # Only term premia
-  data_tp <- extract_acm_data(
-    data_types = "term_premia",
-    auto_download = TRUE
-  )
+  data_tp <- extract_acm_data(data_types = "term_premia")
   expect_true(all(paste0("tp", 1:10) %in% names(data_tp)))
   expect_false(any(paste0("y", 1:10) %in% names(data_tp)))
 
   # All three types
   data_all <- extract_acm_data(
-    data_types = c("yields", "term_premia", "risk_neutral_yields"),
-    auto_download = TRUE
+    data_types = c("yields", "term_premia", "risk_neutral_yields")
   )
   expect_true(all(paste0("y", 1:10) %in% names(data_all)))
   expect_true(all(paste0("tp", 1:10) %in% names(data_all)))
@@ -107,21 +89,14 @@ test_that("extract_acm_data data types selection", {
 
 test_that("extract_acm_data frequency conversion", {
   # Test quarterly conversion
-  data_monthly <- extract_acm_data(
-    frequency = "monthly",
-    auto_download = TRUE
-  )
+  data_monthly <- extract_acm_data(frequency = "monthly")
 
-  data_quarterly <- extract_acm_data(
-    frequency = "quarterly",
-    auto_download = TRUE
-  )
+  data_quarterly <- extract_acm_data(frequency = "quarterly")
 
   # Quarterly should have fewer observations
   expect_lt(nrow(data_quarterly), nrow(data_monthly))
 
   # Quarterly dates should be end of quarter
-  quarters <- quarters(data_quarterly$date)
   months <- format(data_quarterly$date, "%m")
 
   # Check that dates are in March, June, September, or December
@@ -132,11 +107,18 @@ test_that("extract_acm_data handles edge cases", {
   # Empty result from impossible date range
   data_empty <- extract_acm_data(
     start_date = "2050-01-01",
-    end_date = "2051-01-01",
-    auto_download = TRUE
+    end_date = "2051-01-01"
   )
   expect_equal(nrow(data_empty), 0)
   expect_true("date" %in% names(data_empty))
+
+  # Quarterly conversion of an empty range returns a zero-row frame
+  data_empty_quarterly <- extract_acm_data(
+    start_date = "2050-01-01",
+    frequency = "quarterly"
+  )
+  expect_s3_class(data_empty_quarterly, "data.frame")
+  expect_equal(nrow(data_empty_quarterly), 0)
 
   # Invalid maturity
   expect_error(
@@ -151,12 +133,89 @@ test_that("extract_acm_data handles edge cases", {
   )
 })
 
+test_that("extract_acm_data rejects empty or non-numeric maturities", {
+  expect_error(
+    extract_acm_data(maturities = numeric(0)),
+    class = "hetid_error_bad_argument"
+  )
+  expect_error(
+    extract_acm_data(maturities = "5"),
+    class = "hetid_error_bad_argument"
+  )
+  expect_error(
+    extract_acm_data(maturities = 2.5),
+    class = "hetid_error_bad_argument"
+  )
+  expect_error(
+    extract_acm_data(data_types = character(0)),
+    class = "hetid_error_bad_argument"
+  )
+})
+
+test_that("extract_acm_data keeps single-variable results as data frames", {
+  data <- extract_acm_data(data_types = "yields", maturities = 5)
+
+  expect_s3_class(data, "data.frame")
+  expect_named(data, c("date", "y5"))
+})
+
+test_that("extract_acm_data returns a data frame when no columns match", {
+  withr::with_tempdir({
+    temp_csv <- file.path(getwd(), "ACMTermPremium.csv")
+    write.csv(
+      data.frame(
+        DATE = c("01-Jan-2020", "01-Feb-2020"),
+        ACMY01 = c(1.5, 1.6)
+      ),
+      temp_csv,
+      row.names = FALSE
+    )
+
+    local_mocked_bindings(
+      check_data_file_exists = function(...) TRUE,
+      get_acm_data_path = function() temp_csv
+    )
+
+    expect_warning(
+      result <- extract_acm_data(data_types = "yields", maturities = 5),
+      "not found in data"
+    )
+    expect_s3_class(result, "data.frame")
+    expect_named(result, "date")
+  })
+})
+
+test_that("extract_acm_data errors when the date column cannot be parsed", {
+  withr::with_tempdir({
+    temp_csv <- file.path(getwd(), "ACMTermPremium.csv")
+    write.csv(
+      data.frame(
+        DATE = c("junk-one", "junk-two"),
+        ACMY01 = c(1.5, 1.6)
+      ),
+      temp_csv,
+      row.names = FALSE
+    )
+
+    local_mocked_bindings(
+      check_data_file_exists = function(...) TRUE,
+      get_acm_data_path = function() temp_csv
+    )
+
+    expect_error(
+      suppressWarnings(
+        extract_acm_data(data_types = "yields", maturities = 1)
+      ),
+      class = "hetid_error"
+    )
+  })
+})
+
 test_that("extract_acm_data data consistency", {
   # Test that term premium = yield - risk-neutral yield
   data <- extract_acm_data(
     data_types = c("yields", "term_premia", "risk_neutral_yields"),
-    maturities = c(2, 5, 10),
-    auto_download = TRUE
+    maturities = c(2, 5, 10)
   )
 
   # Check relationship for each maturity
@@ -174,7 +233,7 @@ test_that("extract_acm_data data consistency", {
 
 test_that("extract_acm_data preserves data order", {
   # Data should be sorted by date
-  data <- extract_acm_data(auto_download = TRUE)
+  data <- extract_acm_data()
 
   expect_true(all(diff(data$date) >= 0))
 })
@@ -186,8 +245,7 @@ test_that("extract_acm_data warns on incomplete terminal quarter", {
       data_types = "yields",
       maturities = 5,
       end_date = "2020-05-15",
-      frequency = "quarterly",
-      auto_download = TRUE
+      frequency = "quarterly"
     ),
     "Incomplete quarter"
   )
@@ -230,4 +288,62 @@ test_that("normalize_acm_date_column passes through non-character cases", {
 
   no_date_col <- data.frame(y1 = c(1.5, 1.6))
   expect_identical(normalize_acm_date_column(no_date_col), no_date_col)
+})
+
+test_that("normalize_acm_date_column errors when nothing parses", {
+  acm_df <- data.frame(
+    date = c("junk-one", "junk-two"),
+    y1 = c(1.5, 1.6)
+  )
+
+  expect_error(
+    normalize_acm_date_column(acm_df),
+    class = "hetid_error"
+  )
+})
+
+test_that("normalize_acm_date_column warns on partial parse failures", {
+  acm_df <- data.frame(
+    date = c("01-Jan-2020", "junk"),
+    y1 = c(1.5, 1.6)
+  )
+
+  expect_warning(
+    result <- normalize_acm_date_column(acm_df),
+    "could not be parsed"
+  )
+  expect_equal(result$date[1], as.Date("2020-01-01"))
+  expect_true(is.na(result$date[2]))
+})
+
+test_that("ACM dates parse independently of LC_TIME locale", {
+  old_locale <- Sys.getlocale("LC_TIME")
+  withr::defer(Sys.setlocale("LC_TIME", old_locale))
+  set_result <- suppressWarnings(Sys.setlocale("LC_TIME", "fr_FR.UTF-8"))
+  skip_if(identical(set_result, ""), "fr_FR.UTF-8 locale not available")
+
+  parsed <- parse_dates_c_locale(
+    "30-Jun-1961",
+    HETID_CONSTANTS$ACM_DATE_FORMAT
+  )
+  expect_equal(parsed, as.Date("1961-06-30"))
+
+  # The caller's locale must be restored after parsing
+  expect_identical(Sys.getlocale("LC_TIME"), "fr_FR.UTF-8")
+})
+
+test_that("filter_acm_date_range drops NA dates instead of fabricating rows", {
+  acm_data <- data.frame(
+    date = as.Date(c("2020-01-01", NA, "2021-01-01")),
+    y1 = c(1, 2, 3)
+  )
+
+  filtered <- filter_acm_date_range(acm_data, as.Date("2020-06-01"), NULL)
+  expect_equal(nrow(filtered), 1)
+  expect_equal(filtered$y1, 3)
+  expect_false(anyNA(filtered$date))
+
+  filtered_end <- filter_acm_date_range(acm_data, NULL, as.Date("2020-06-01"))
+  expect_equal(nrow(filtered_end), 1)
+  expect_equal(filtered_end$y1, 1)
 })

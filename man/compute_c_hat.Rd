@@ -12,9 +12,12 @@ compute_c_hat(yields, term_premia, i)
 \item{term_premia}{Data frame with columns tp1, tp2, ..., containing term premia}
 
 \item{i}{Integer specifying the maturity index (column) to analyze.
-Must be between 1 and ncol(yields). Corresponds to maturity in years
-for ACM dataset (i=1 is 1-year, i=2 is 2-year, ..., i=10 is 10-year).
-The maturity index determines which yield curve point is used in the analysis.}
+Must be between 1 and the package maximum (10 for the ACM dataset;
+functions that require data at maturity \code{i + 1} accept at most 9).
+The input data must contain the columns for the maturities the function
+uses (e.g. \code{y5}/\code{tp5} plus adjacent maturities for \code{i = 5}).
+Corresponds to maturity in years for the ACM dataset (i=1 is 1-year,
+i=2 is 2-year, ..., i=10 is 10-year).}
 }
 \value{
 Numeric value of c_hat_i
@@ -43,7 +46,6 @@ for term structure analysis.
 }
 
 \examples{
-\dontrun{
 # Extract ACM data
 data <- extract_acm_data(data_types = c("yields", "term_premia"))
 yields <- data[, paste0("y", 1:10)]
@@ -51,7 +53,6 @@ term_premia <- data[, paste0("tp", 1:10)]
 
 # Compute c_hat for i=5
 c_hat_5 <- compute_c_hat(yields, term_premia, i = 5)
-}
 
 }
 \references{

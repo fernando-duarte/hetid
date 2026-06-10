@@ -29,8 +29,9 @@ validate_maturity_index <- function(i, max_maturity = HETID_CONSTANTS$MAX_MATURI
 #' Validate a Vector of Maturity Indices
 #'
 #' Single source of truth for validating a numeric maturity vector:
-#' non-empty, finite integers, within \code{[MIN_MATURITY, max_value]}. The
-#' scalar analog is \code{\link{validate_maturity_index}}.
+#' non-empty, finite integers, within \code{[MIN_MATURITY, max_value]},
+#' and free of duplicates. The scalar analog is
+#' \code{\link{validate_maturity_index}}.
 #'
 #' @param maturities Numeric vector of maturity indices.
 #' @param max_value Inclusive upper bound (e.g. \code{ncol(gamma)}).
@@ -69,6 +70,14 @@ validate_maturities <- function(maturities, max_value,
     paste0(
       arg, " must be between ", min_maturity, " and ", bound_desc,
       "; invalid: ", paste(unique(bad), collapse = ", ")
+    ),
+    arg = arg
+  )
+  assert_bad_argument_ok(
+    anyDuplicated(maturities) == 0,
+    paste0(
+      arg, " must not contain duplicates; got: ",
+      paste(maturities, collapse = ", ")
     ),
     arg = arg
   )

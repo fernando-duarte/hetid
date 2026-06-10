@@ -38,7 +38,6 @@
 #' @export
 #'
 #' @examples
-#' \dontrun{
 #' # Compute residuals using 4 PCs (default)
 #' res_y1 <- compute_w1_residuals()
 #'
@@ -55,7 +54,6 @@
 #'   xlab = "Date", ylab = "Residual",
 #'   main = "Reduced Form Residuals for Consumption Growth"
 #' )
-#' }
 #'
 compute_w1_residuals <- function(n_pcs = HETID_CONSTANTS$DEFAULT_N_PCS,
                                  data = NULL, return_df = FALSE) {
@@ -70,6 +68,16 @@ compute_w1_residuals <- function(n_pcs = HETID_CONSTANTS$DEFAULT_N_PCS,
     )
     data <- get_bundled_variables()
   }
+
+  # Column access below needs a data frame; assert_tabular alone
+  # admits matrices, whose names() are NULL, so require data.frame
+  # explicitly for a clear type error instead of "missing columns"
+  assert_tabular(data, "data")
+  assert_bad_argument_ok(
+    is.data.frame(data),
+    "data must be a data frame, not a matrix; convert with as.data.frame()",
+    arg = "data"
+  )
 
   # Check required columns (date is optional unless return_df)
   has_dates <- "date" %in% names(data)

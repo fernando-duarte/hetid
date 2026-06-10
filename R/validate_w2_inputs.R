@@ -20,15 +20,14 @@ validate_w2_inputs <- function(yields, term_premia, maturities) {
   # Use standardized data dimension validation
   validate_data_dimensions(yields_df, term_premia_df)
 
-  # Validate maturity values via the shared vector validator
-  max_maturity <- min(
-    HETID_CONSTANTS$EFFECTIVE_MAX_MATURITY,
-    ncol(yields_df), ncol(term_premia_df)
-  )
+  # Validate maturity values via the shared vector validator.
+  # No ncol-based cap: inputs may hold non-contiguous column
+  # subsets (e.g. y1/y4/y5/y6 for maturity 5), so column
+  # availability is checked per maturity in process_w2_maturity
   validate_maturities(
     maturities,
-    max_value = max_maturity,
-    max_label = "max available maturity"
+    max_value = HETID_CONSTANTS$EFFECTIVE_MAX_MATURITY,
+    max_label = "EFFECTIVE_MAX_MATURITY"
   )
 
   list(

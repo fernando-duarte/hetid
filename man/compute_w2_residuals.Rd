@@ -61,6 +61,14 @@ If return_df = TRUE, returns a data frame with columns:
 \item{residuals}{Residuals \eqn{W_{2,t+1}}}
 \item{fitted}{Fitted values from the regression}
 }
+
+Maturities whose required columns or observations are missing
+are skipped with a warning rather than aborting the run: their
+entries are absent from \code{residuals}, \code{fitted}, and
+\code{kept_idx}, and their \code{coefficients} rows,
+\code{r_squared}, and \code{n_obs} values are \code{NA}. With
+\code{return_df = TRUE}, skipped maturities contribute no rows;
+if every maturity is skipped the data frame has zero rows.
 }
 \description{
 Computes residuals W_\{2,t+1\}^\{(i)\} from regressing Y_\{2,t+1\}^\{(i)\} variables
@@ -88,7 +96,6 @@ pass the aligned matrix via the \code{pcs} parameter. See
 the examples below for this workflow.
 }
 \examples{
-\dontrun{
 # Load quarterly ACM data and bundled PCs
 mats <- c(1, 2, 3, 4)
 acm_data <- extract_acm_data(
@@ -126,5 +133,4 @@ res_w2 <- compute_w2_residuals(
   yields, tp,
   maturities = c(2, 3), n_pcs = 4, pcs = pcs
 )
-}
 }

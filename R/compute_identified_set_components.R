@@ -105,8 +105,8 @@ compute_identified_set_components <- function(gamma, moments) {
     Q_i[[idx]] <- as.numeric( # nolint: object_name_linter.
       crossprod(gamma_i, R_i_1_mat)
     )
-    names(Q_i[[idx]]) <- paste0( # nolint: object_name_linter.
-      "maturity_", seq_len(ncol(R_i_1_mat))
+    names(Q_i[[idx]]) <- maturity_names( # nolint: object_name_linter.
+      seq_len(ncol(R_i_1_mat))
     )
   }
 

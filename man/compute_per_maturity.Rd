@@ -9,12 +9,12 @@ compute_per_maturity(w1, w2, maturities, compute_fn, ...)
 \arguments{
 \item{w1}{Numeric vector of W1 residuals}
 
-\item{w2}{Matrix of W2 residuals (T x I)}
+\item{w2}{Numeric matrix of W2 residuals (T x I)}
 
-\item{maturities}{Vector of maturity indices (NULL for all)}
+\item{maturities}{Vector of validated maturity indices}
 
 \item{compute_fn}{Function called for each maturity with args
-(w1, w2, w2_i, t_obs, idx, i, ...)}
+(w1, w2, w2_i, idx, i, ...)}
 
 \item{...}{Extra arguments forwarded to compute_fn}
 }
@@ -22,8 +22,10 @@ compute_per_maturity(w1, w2, maturities, compute_fn, ...)
 Named list of per-maturity results from compute_fn
 }
 \description{
-Validates inputs and applies a computation function to each
-maturity, returning a named list of results. Encapsulates the
-validate-then-iterate pattern shared by the statistics functions.
+Applies a computation function to each maturity, returning a named
+list of results. Trusts already-validated inputs: callers must
+first run \code{validate_statistics_inputs()} (the exported
+statistics wrappers and \code{compute_identification_moments()} do
+this once before delegating to the internal workers).
 }
 \keyword{internal}

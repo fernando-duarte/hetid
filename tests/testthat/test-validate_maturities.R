@@ -59,7 +59,20 @@ test_that("validate_maturities renders max_label label-first", {
   )
 })
 
-# --- assert_scalar_integer_in_range (Task 1b) ---
+test_that("validate_maturities rejects duplicate values", {
+  expect_error(
+    validate_maturities(c(2, 2), max_value = 5),
+    "maturities must not contain duplicates",
+    class = "hetid_error_bad_argument"
+  )
+  expect_error(
+    validate_maturities(c(1, 3, 1), max_value = 5),
+    "must not contain duplicates; got: 1, 3, 1",
+    class = "hetid_error_bad_argument"
+  )
+})
+
+# --- assert_scalar_integer_in_range ---
 
 test_that("assert_scalar_integer_in_range accepts a valid scalar", {
   expect_invisible(

@@ -1,7 +1,9 @@
 #' Download NY Fed ACM Term Premia Data
 #'
 #' Downloads the Adrian, Crump, and Moench (ACM) term premia data from the
-#' New York Fed website and saves it as a CSV file in the package's data directory.
+#' New York Fed website and saves it as a CSV file in the per-user data
+#' directory (\code{tools::R_user_dir("hetid", "data")}). The bundled copy
+#' shipped with the package is never modified.
 #'
 #' @param force Logical. If TRUE, forces re-download even if data exists. Default is FALSE.
 #' @param quiet Logical. If TRUE, suppresses download progress messages. Default is FALSE.
@@ -9,14 +11,12 @@
 #' @return Invisibly returns the path to the saved CSV file.
 #' @export
 #'
-#' @examples
-#' \dontrun{
+#' @examplesIf interactive()
 #' # Download the data (only if not already present)
 #' download_term_premia()
 #'
 #' # Force re-download
 #' download_term_premia(force = TRUE)
-#' }
 #'
 #' @references
 #' Adrian, T., Crump, R. K., and Moench, E. (2013).
@@ -27,17 +27,17 @@ download_term_premia <- function(force = FALSE, quiet = FALSE) {
   # Use data source URL from constants
   download_url <- DATA_URLS$ACM_TERM_PREMIA
 
-  # Use standardized path management
-  validate_data_directory(create_if_missing = TRUE)
-  csv_path <- get_acm_data_path()
-
-  # Check if file already exists
-  if (file.exists(csv_path) && !force) {
+  # Skip when a copy (user cache or bundled) is already available
+  resolved_path <- get_acm_data_path()
+  if (file.exists(resolved_path) && !force) {
     if (!quiet) {
       message("Term premia data already exists. Use force = TRUE to re-download.")
     }
-    return(invisible(csv_path))
+    return(invisible(resolved_path))
   }
+
+  # Downloads always target the per-user cache, never the package library
+  csv_path <- get_acm_download_path()
 
   # Check if readxl is available before downloading
   if (!requireNamespace("readxl", quietly = TRUE)) {

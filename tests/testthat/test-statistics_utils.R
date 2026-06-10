@@ -52,3 +52,30 @@ test_that("diagnostic only checks the requested maturities", {
     )
   )
 })
+
+test_that("degeneracy warning carries the hetid warning classes", {
+  inputs <- make_diagnostic_inputs()
+  n <- length(inputs$w1)
+  inputs$w2[, 1] <- sample(c(-1, 1), n, replace = TRUE)
+
+  expect_warning(
+    compute_identification_moments(inputs$w1, inputs$w2, inputs$pcs),
+    class = "hetid_warning_degenerate_variance"
+  )
+
+  caught <- NULL
+  withCallingHandlers(
+    compute_identification_moments(inputs$w1, inputs$w2, inputs$pcs),
+    hetid_warning_degenerate_variance = function(w) {
+      caught <<- w
+      invokeRestart("muffleWarning")
+    }
+  )
+  expect_s3_class(caught, "hetid_warning_degenerate_variance")
+  expect_s3_class(caught, "hetid_warning")
+  expect_s3_class(caught, "warning")
+  expect_match(
+    conditionMessage(caught),
+    "Variance positivity diagnostic"
+  )
+})

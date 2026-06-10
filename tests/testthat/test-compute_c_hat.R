@@ -56,6 +56,28 @@ test_that("c_hat equals exp(2 * max(n_hat))", {
   }
 })
 
+test_that("c_hat degenerate branch returns typed numeric NA", {
+  test_env <- setup_standard_test_env()
+  yields_na <- test_env$yields
+
+  # All-NA y5 makes n_hat all NA for any maturity that needs y5
+  yields_na$y5 <- NA_real_
+
+  # vapply(..., numeric(1)) enforces a double return on the NA branch
+  c_vals <- vapply(
+    c(4, 5),
+    function(i) compute_c_hat(yields_na, test_env$term_premia, i = i),
+    numeric(1)
+  )
+
+  expect_type(c_vals, "double")
+  expect_true(all(is.na(c_vals)))
+  expect_identical(
+    compute_c_hat(yields_na, test_env$term_premia, i = 5),
+    NA_real_
+  )
+})
+
 test_that("compute_c_hat rejects invalid maturity values", {
   test_env <- setup_standard_test_env()
   expect_error(

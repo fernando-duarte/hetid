@@ -4,14 +4,12 @@
 \alias{centered_cov}
 \title{Centered Sample Covariance (1/T normalization)}
 \usage{
-centered_cov(a, b, t_obs)
+centered_cov(a, b)
 }
 \arguments{
 \item{a}{Numeric vector or matrix (T x a).}
 
 \item{b}{Numeric vector or matrix (T x b).}
-
-\item{t_obs}{Number of observations T used for normalization.}
 }
 \value{
 An \eqn{a \times b} matrix of centered covariances.
@@ -24,10 +22,12 @@ identification (centered cov/var; see the package spec sections on
 moment notation and centering), \strong{not} the \eqn{1/(T-1)}
 convention of \code{\link[stats:cov]{stats::cov()}}. For inputs \eqn{A} (T x a) and
 \eqn{B} (T x b),
-\deqn{\widehat{\mathrm{Cov}}(A, B) = \frac{1}{T} A^\top B -
-  \bar{A}\,\bar{B}^\top \in \mathbb{R}^{a \times b},}
-where \eqn{\bar{A}} and \eqn{\bar{B}} are the column means. Centering
-both arguments makes each entry a true covariance regardless of whether
-the inputs were already centered.
+\deqn{\widehat{\mathrm{Cov}}(A, B) = \frac{1}{T} (A - \bar{A})^\top
+  (B - \bar{B}) \in \mathbb{R}^{a \times b},}
+where \eqn{\bar{A}} and \eqn{\bar{B}} are the column means. Both
+inputs are centered before the cross product, which computes the
+same quantity as the one-pass formula
+\eqn{A^\top B / T - \bar{A} \bar{B}^\top} but without its
+catastrophic cancellation when column means dominate the spread.
 }
 \keyword{internal}

@@ -22,18 +22,15 @@ get_pc_column_names <- function(n_pcs) {
 #' @param yields Yields data
 #' @param term_premia Term premia data
 #' @param i Maturity
-#' @param dates Optional dates
 #' @return Previous period n_hat series
 #' @keywords internal
-compute_n_hat_previous <- function(yields, term_premia, i, dates = NULL) {
+compute_n_hat_previous <- function(yields, term_premia, i) {
   if (i == 1) {
     # For i=1, n_hat(0,t) = E_t[p_(t+0)^(1)] = p_t^(1) = -y_t^(1)
     y1 <- require_column(yields, "y1", "yields")
     -y1 / HETID_CONSTANTS$PERCENT_TO_DECIMAL # Convert to decimal
   } else {
-    compute_n_hat(yields, term_premia, i - 1,
-      return_df = FALSE, dates = dates
-    )
+    compute_n_hat(yields, term_premia, i - 1, return_df = FALSE)
   }
 }
 
@@ -47,6 +44,10 @@ compute_n_hat_previous <- function(yields, term_premia, i, dates = NULL) {
 #' @return News series
 #' @keywords internal
 compute_time_series_news <- function(current_series, future_series, negate = FALSE) {
+  assert_dimension_ok(
+    length(current_series) == length(future_series),
+    "current_series and future_series must have equal length"
+  )
   n_obs <- length(current_series)
 
   # Guard: need at least 2 obs for differencing
@@ -145,6 +146,15 @@ run_pc_regression <- function(y, pcs, n_pcs) {
   pcs <- pcs[, seq_len(n_pcs), drop = FALSE]
 
   complete_idx <- complete.cases(y, pcs)
+  n_complete <- sum(complete_idx)
+  min_obs_for_regression <- n_pcs + 2L
+  if (n_complete < min_obs_for_regression) {
+    stop_insufficient_data(paste0(
+      "Insufficient complete observations for PC regression: got ",
+      n_complete, ", need at least ", min_obs_for_regression,
+      " (n_pcs + 2)"
+    ))
+  }
   y_clean <- y[complete_idx]
   pcs_clean <- pcs[complete_idx, , drop = FALSE]
 

@@ -88,19 +88,16 @@ HETID_CONSTANTS <- list(
 #' @format List containing versioned data source URLs:
 #' \describe{
 #'   \item{ACM_TERM_PREMIA}{URL for Adrian, Crump, and Moench term premia data}
-#'   \item{FED_SVENSSON}{URL for Federal Reserve Svensson yield curve data}
 #' }
 #'
 #' @references
 #' Adrian, T., Crump, R. K., and Moench, E. (2013). "Pricing the term structure
 #' with linear regressions." Journal of Financial Economics, 110(1), 110-138.
 #'
-#' @export
+#' @keywords internal
 DATA_URLS <- list(
   ACM_TERM_PREMIA =
-    "https://www.newyorkfed.org/medialibrary/media/research/data_indicators/ACMTermPremium.xls",
-  FED_SVENSSON =
-    "https://www.federalreserve.gov/data/yield-curve-tables/feds200628.csv"
+    "https://www.newyorkfed.org/medialibrary/media/research/data_indicators/ACMTermPremium.xls"
 )
 
 #' ACM Data Schema
@@ -114,7 +111,7 @@ DATA_URLS <- list(
 #'   \item{prefix_new}{Short prefix used in package}
 #' }
 #'
-#' @export
+#' @keywords internal
 HETID_ACM_SCHEMA <- list(
   yields = list(
     prefix_old = "ACMY", prefix_new = "y"

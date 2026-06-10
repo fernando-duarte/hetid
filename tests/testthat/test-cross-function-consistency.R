@@ -60,15 +60,33 @@ test_that("invalid inputs produce appropriate errors", {
   test_env <- setup_standard_test_env()
 
   # Test invalid maturity
-  expect_error(compute_c_hat(test_env$yields, test_env$term_premia, i = 0))
-  expect_error(compute_k_hat(test_env$yields, test_env$term_premia, i = -1))
-  expect_error(compute_n_hat(test_env$yields, test_env$term_premia, i = 11))
-  expect_error(compute_price_news(test_env$yields, test_env$term_premia, i = 15))
-  expect_error(compute_sdf_innovations(test_env$yields, test_env$term_premia, i = 0))
-  expect_error(compute_variance_bound(test_env$yields, test_env$term_premia, i = -5))
+  expect_error(
+    compute_c_hat(test_env$yields, test_env$term_premia, i = 0),
+    class = "hetid_error_bad_argument"
+  )
+  expect_error(
+    compute_k_hat(test_env$yields, test_env$term_premia, i = -1),
+    class = "hetid_error_bad_argument"
+  )
+  expect_error(
+    compute_n_hat(test_env$yields, test_env$term_premia, i = 11),
+    class = "hetid_error_bad_argument"
+  )
+  expect_error(
+    compute_price_news(test_env$yields, test_env$term_premia, i = 15),
+    class = "hetid_error_bad_argument"
+  )
+  expect_error(
+    compute_sdf_innovations(test_env$yields, test_env$term_premia, i = 0),
+    class = "hetid_error_bad_argument"
+  )
+  expect_error(
+    compute_variance_bound(test_env$yields, test_env$term_premia, i = -5),
+    class = "hetid_error_bad_argument"
+  )
 })
 
-test_that("functions handle large datasets efficiently", {
+test_that("all functions complete without error on larger stacked data", {
   test_env <- setup_standard_test_env()
 
   # Repeat data to make it larger (but not too large for testing)

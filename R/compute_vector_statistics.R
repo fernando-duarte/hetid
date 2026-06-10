@@ -25,6 +25,10 @@
 #'
 #' where \eqn{\odot} denotes the Hadamard (elementwise) product.
 #'
+#' Row labels of \code{r_i_0}, \code{r_i_1}, and \code{p_i_0} use
+#' \code{colnames(pcs)} when present, falling back to the standard
+#' \code{pc1..pcJ} names.
+#'
 #' @export
 #'
 #' @examples
@@ -41,38 +45,48 @@
 #' vec_stats$r_i_1[[1]]
 compute_vector_statistics <- function(w1, w2, pcs,
                                       maturities = NULL) {
-  # Validate pcs type upfront, before iteration
-  assert_bad_argument_ok(
-    is.matrix(pcs) || is.data.frame(pcs),
-    "pcs must be a matrix or data frame",
-    arg = "pcs"
+  validated <- validate_statistics_inputs(w1, w2, maturities)
+  pcs <- validate_pcs_input(pcs, validated$t_obs)
+  compute_vector_statistics_impl(
+    w1, validated$w2, pcs, validated$maturities
   )
-  pcs <- as.matrix(pcs)
+}
+
+#' Vector Statistics Worker on Validated Inputs
+#'
+#' Trusts inputs already validated by
+#' \code{validate_statistics_inputs()} and \code{validate_pcs_input()};
+#' the exported wrapper and \code{compute_identification_moments()}
+#' validate once and delegate here. Instrument-axis labels come from
+#' \code{colnames(pcs)} when present, with the standard pc names as
+#' fallback.
+#'
+#' @param w1 Numeric vector of W1 residuals
+#' @param w2 Numeric matrix of W2 residuals (T x I)
+#' @param pcs Numeric matrix of principal components (T x J)
+#' @param maturities Vector of validated maturity indices
+#' @return List with r_i_0, r_i_1, and p_i_0
+#' @noRd
+compute_vector_statistics_impl <- function(w1, w2, pcs, maturities) {
+  pc_names <- colnames(pcs)
+  if (is.null(pc_names)) {
+    pc_names <- get_pc_column_names(ncol(pcs))
+  }
+  theta_names <- maturity_names(seq_len(ncol(w2)))
 
   results <- compute_per_maturity(
     w1, w2, maturities,
-    function(w1, w2, w2_i, t_obs, ...) {
-      assert_dimension_ok(
-        nrow(pcs) == t_obs,
-        paste0(
-          "pcs must have the same number of ",
-          "observations as w1 and w2"
-        )
-      )
-      J <- ncol(pcs)
-      n_mat <- ncol(w2)
+    function(w1, w2, w2_i, ...) {
       hadamard_w1_w2i <- w1 * w2_i
       r_i_0_vec <- as.vector(
-        centered_cov(pcs, hadamard_w1_w2i, t_obs)
+        centered_cov(pcs, hadamard_w1_w2i)
       )
-      r_i_1_mat <- centered_cov(pcs, w2 * w2_i, t_obs)
-      colnames(r_i_1_mat) <- paste0(
-        "maturity_", seq_len(n_mat)
-      )
-      rownames(r_i_1_mat) <- get_pc_column_names(J)
+      r_i_1_mat <- centered_cov(pcs, w2 * w2_i)
+      colnames(r_i_1_mat) <- theta_names
+      rownames(r_i_1_mat) <- pc_names
       w2_i_sq <- w2_i^2
       p_i_0_vec <- as.vector(
-        centered_cov(pcs, w2_i_sq, t_obs)
+        centered_cov(pcs, w2_i_sq)
       )
       list(
         r_i_0 = r_i_0_vec,
@@ -82,9 +96,7 @@ compute_vector_statistics <- function(w1, w2, pcs,
     }
   )
 
-  J <- ncol(pcs)
   mat_names <- names(results)
-  pc_names <- get_pc_column_names(J)
 
   r_i_0 <- do.call(
     cbind, lapply(results, `[[`, "r_i_0")

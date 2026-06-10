@@ -96,3 +96,69 @@ test_that(
     expect_equal(result$maturities, c(2, 3))
   }
 )
+
+test_that("validate_statistics_inputs rejects non-finite w1", {
+  w2 <- matrix(1:10, 5, 2)
+  expect_error(
+    validate_statistics_inputs(c(1, NA, 3, 4, 5), w2),
+    "w1 must not contain NA, NaN, or infinite values",
+    class = "hetid_error_bad_argument"
+  )
+  expect_error(
+    validate_statistics_inputs(c(1, 2, 3, 4, Inf), w2),
+    "w1 must not contain NA, NaN, or infinite values",
+    class = "hetid_error_bad_argument"
+  )
+})
+
+test_that("validate_statistics_inputs rejects non-finite w2", {
+  w2 <- matrix(as.numeric(1:10), 5, 2)
+  w2[2, 1] <- NaN
+  expect_error(
+    validate_statistics_inputs(1:5, w2),
+    "w2 must not contain NA, NaN, or infinite values",
+    class = "hetid_error_bad_argument"
+  )
+})
+
+test_that(
+  "validate_statistics_inputs requires at least two observations",
+  {
+    expect_error(
+      validate_statistics_inputs(
+        numeric(0), matrix(numeric(0), 0, 2)
+      ),
+      "At least 2 observations",
+      class = "hetid_error_insufficient_data"
+    )
+    expect_error(
+      validate_statistics_inputs(1, matrix(1:2, 1, 2)),
+      "At least 2 observations",
+      class = "hetid_error_insufficient_data"
+    )
+  }
+)
+
+test_that(
+  "validate_statistics_inputs rejects character data frame columns",
+  {
+    expect_error(
+      validate_statistics_inputs(
+        1:3, data.frame(a = 1:3, b = c("x", "y", "z"))
+      ),
+      "w2 must contain only numeric values",
+      class = "hetid_error_bad_argument"
+    )
+  }
+)
+
+test_that("validate_statistics_inputs rejects duplicate maturities", {
+  expect_error(
+    validate_statistics_inputs(
+      1:5, matrix(1:10, 5, 2),
+      maturities = c(2, 2)
+    ),
+    "must not contain duplicates",
+    class = "hetid_error_bad_argument"
+  )
+})

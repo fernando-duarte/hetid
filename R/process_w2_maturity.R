@@ -11,21 +11,21 @@
 #' @return List with regression results or NULL if skipped
 #' @keywords internal
 process_w2_maturity <- function(i, yields_df, term_premia_df, pcs, n_pcs) {
-  # Get yield column
-  y_col <- acm_column_name("yields", i)
-  if (!y_col %in% names(yields_df)) {
+  # Maturity i needs columns i and i+1 via compute_n_hat, plus
+  # column i-1 via compute_n_hat_previous when i >= 2 (for i = 1
+  # the previous-period n_hat uses only y1, which is column i)
+  needed <- if (i >= 2) (i - 1):(i + 1) else c(i, i + 1)
+  missing_cols <- c(
+    setdiff(acm_column_name("yields", needed), names(yields_df)),
+    setdiff(acm_column_name("term_premia", needed), names(term_premia_df))
+  )
+  if (length(missing_cols) > 0) {
     warning(
-      paste("Yield column", y_col, "not found. Skipping maturity", i),
-      call. = FALSE
-    )
-    return(NULL)
-  }
-
-  # Check term premium column exists
-  tp_col <- acm_column_name("term_premia", i)
-  if (!tp_col %in% names(term_premia_df)) {
-    warning(
-      paste("Term premium column", tp_col, "not found. Skipping maturity", i),
+      paste(
+        "Missing required columns:",
+        paste(missing_cols, collapse = ", "),
+        "- skipping maturity", i
+      ),
       call. = FALSE
     )
     return(NULL)

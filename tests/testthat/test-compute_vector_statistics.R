@@ -102,6 +102,78 @@ test_that("compute_vector_statistics handles subset of maturities", {
   expect_named(result$r_i_1, paste0("maturity_", maturities))
 })
 
+test_that("compute_vector_statistics rejects non-finite inputs", {
+  set.seed(11)
+  w1 <- rnorm(10)
+  w2 <- matrix(rnorm(20), nrow = 10, ncol = 2)
+  pcs <- matrix(rnorm(20), nrow = 10, ncol = 2)
+
+  w1_na <- replace(w1, 2, NA)
+  expect_error(
+    compute_vector_statistics(w1_na, w2, pcs),
+    "w1 must not contain NA, NaN, or infinite values",
+    class = "hetid_error_bad_argument"
+  )
+
+  w2_na <- w2
+  w2_na[6, 1] <- NA
+  expect_error(
+    compute_vector_statistics(w1, w2_na, pcs),
+    "w2 must not contain NA, NaN, or infinite values",
+    class = "hetid_error_bad_argument"
+  )
+
+  pcs_na <- pcs
+  pcs_na[4, 1] <- NA
+  expect_error(
+    compute_vector_statistics(w1, w2, pcs_na),
+    "pcs must not contain NA, NaN, or infinite values",
+    class = "hetid_error_bad_argument"
+  )
+})
+
+test_that("compute_vector_statistics rejects non-numeric pcs content", {
+  set.seed(12)
+  w1 <- rnorm(5)
+  w2 <- matrix(rnorm(10), nrow = 5, ncol = 2)
+  pcs <- data.frame(a = rnorm(5), b = letters[1:5])
+
+  expect_error(
+    compute_vector_statistics(w1, w2, pcs),
+    "pcs must contain only numeric values",
+    class = "hetid_error_bad_argument"
+  )
+})
+
+test_that("compute_vector_statistics rejects pcs with mismatched rows", {
+  set.seed(13)
+  w1 <- rnorm(10)
+  w2 <- matrix(rnorm(20), nrow = 10, ncol = 2)
+  pcs <- matrix(rnorm(18), nrow = 9, ncol = 2)
+
+  expect_error(
+    compute_vector_statistics(w1, w2, pcs),
+    "pcs must have the same number of observations",
+    class = "hetid_error_dimension_mismatch"
+  )
+})
+
+test_that("compute_vector_statistics propagates custom pcs column names", {
+  set.seed(14)
+  w1 <- rnorm(10)
+  w2 <- matrix(rnorm(20), nrow = 10, ncol = 2)
+  pcs <- matrix(rnorm(30), nrow = 10, ncol = 3)
+  colnames(pcs) <- c("ip_growth", "credit_spread", "slope")
+
+  result <- compute_vector_statistics(w1, w2, pcs)
+
+  expect_equal(rownames(result$r_i_0), colnames(pcs))
+  expect_equal(rownames(result$p_i_0), colnames(pcs))
+  for (mat in result$r_i_1) {
+    expect_equal(rownames(mat), colnames(pcs))
+  }
+})
+
 test_that("compute_vector_statistics handles orthogonal PCs correctly", {
   # Test with orthogonal PCs
   n_obs <- 4

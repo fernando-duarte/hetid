@@ -13,7 +13,7 @@ get_data_file_path(filename)
 Character string with full path to data file
 }
 \description{
-Constructs full path to a data file in the package data directory.
-Provides consistent path resolution.
+Resolves a data filename to the per-user downloaded copy when one
+exists, falling back to the read-only bundled copy otherwise.
 }
 \keyword{internal}

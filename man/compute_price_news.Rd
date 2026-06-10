@@ -19,9 +19,12 @@ compute_price_news(
 \item{term_premia}{Data frame with columns tp1, tp2, ..., containing term premia}
 
 \item{i}{Integer specifying the maturity index (column) to analyze.
-Must be between 1 and ncol(yields). Corresponds to maturity in years
-for ACM dataset (i=1 is 1-year, i=2 is 2-year, ..., i=10 is 10-year).
-The maturity index determines which yield curve point is used in the analysis.}
+Must be between 1 and the package maximum (10 for the ACM dataset;
+functions that require data at maturity \code{i + 1} accept at most 9).
+The input data must contain the columns for the maturities the function
+uses (e.g. \code{y5}/\code{tp5} plus adjacent maturities for \code{i = 5}).
+Corresponds to maturity in years for the ACM dataset (i=1 is 1-year,
+i=2 is 2-year, ..., i=10 is 10-year).}
 
 \item{return_yield_news}{Logical, if TRUE returns yield news instead of log price news}
 
@@ -48,7 +51,6 @@ For standard ACM data (10 maturities), the effective maximum for
 \code{i} is 9, because this function requires data at maturity \code{i+1}.
 }
 \examples{
-\dontrun{
 # Extract ACM data - need maturities 1, i-1, i, i+1 for maturity i
 # For i=5, we need maturities 1, 4, 5, 6
 data <- extract_acm_data(
@@ -69,6 +71,5 @@ yield_news_5_df <- compute_price_news(
   return_df = TRUE,
   dates = data$date
 )
-}
 
 }

@@ -50,7 +50,6 @@ where Y_\{1,t+1\} is consumption growth and PC_t are the first n_pcs
 principal components extracted from financial asset returns (pc1, ..., pc6).
 }
 \examples{
-\dontrun{
 # Compute residuals using 4 PCs (default)
 res_y1 <- compute_w1_residuals()
 
@@ -67,6 +66,5 @@ plot(res_y1$dates, res_y1$residuals,
   xlab = "Date", ylab = "Residual",
   main = "Reduced Form Residuals for Consumption Growth"
 )
-}
 
 }

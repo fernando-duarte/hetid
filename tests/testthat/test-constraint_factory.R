@@ -52,3 +52,58 @@ test_that("returns a scalar numeric for vector theta", {
   expect_type(value, "double")
   expect_length(value, 1)
 })
+
+test_that("factory rejects non-matrix or non-square A_i", {
+  expect_error(
+    make_constraint_checker("not a matrix", c(1, 2), 0),
+    "A_i must be a square numeric matrix",
+    class = "hetid_error_bad_argument"
+  )
+  expect_error(
+    make_constraint_checker(matrix(1:6, 2, 3), c(1, 2), 0),
+    "A_i must be a square numeric matrix",
+    class = "hetid_error_bad_argument"
+  )
+  expect_error(
+    make_constraint_checker(matrix("a", 2, 2), c(1, 2), 0),
+    "A_i must be a square numeric matrix",
+    class = "hetid_error_bad_argument"
+  )
+})
+
+test_that("factory rejects b_i whose length mismatches A_i", {
+  expect_error(
+    make_constraint_checker(diag(2), c(1, 1, 1, 1), 0),
+    "b_i must have length nrow(A_i) = 2; got length 4",
+    fixed = TRUE,
+    class = "hetid_error_dimension_mismatch"
+  )
+  expect_error(
+    make_constraint_checker(diag(2), "not numeric", 0),
+    "b_i must be a numeric vector",
+    class = "hetid_error_bad_argument"
+  )
+})
+
+test_that("factory rejects non-scalar c_i", {
+  expect_error(
+    make_constraint_checker(diag(2), c(1, 1), c(0, 1)),
+    "c_i must be a numeric scalar",
+    class = "hetid_error_bad_argument"
+  )
+  expect_error(
+    make_constraint_checker(diag(2), c(1, 1), "zero"),
+    "c_i must be a numeric scalar",
+    class = "hetid_error_bad_argument"
+  )
+})
+
+test_that("checker built from validated inputs still evaluates correctly", {
+  a <- diag(2)
+  b <- c(1, 1)
+  check <- make_constraint_checker(a, b, -1)
+  theta <- c(0.5, 0.25)
+  expected <- as.numeric(t(theta) %*% a %*% theta) + sum(b * theta) - 1
+
+  expect_equal(check(theta), expected, tolerance = 1e-12)
+})

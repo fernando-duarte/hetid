@@ -5,49 +5,51 @@ is_numeric_vector_dim <- function(x, n_components) {
   is.numeric(x) && length(x) == n_components
 }
 
-#' Validate square matrix dimensions
+#' Validate per-element dimensions of the components' Q_i list
 #'
-#' @noRd
-is_square_matrix_dim <- function(x, n_components) {
-  is.matrix(x) &&
-    nrow(x) == n_components &&
-    ncol(x) == n_components
-}
-
-#' Validate per-element dimensions of list inputs
-#'
-#' @param Q_i,s_i_1,s_i_2 List inputs to check
+#' @param Q_i List of theta-axis vectors from the components object
 #' @param maturities Maturity vector from the containers
 #' @param n_components Expected dimension (I)
 #' @noRd
-validate_list_element_dims <- function(Q_i, s_i_1, # nolint: object_name_linter.
-                                       s_i_2,
-                                       maturities,
-                                       n_components) {
+validate_q_i_dims <- function(Q_i, maturities, # nolint: object_name_linter.
+                              n_components) {
   for (idx in seq_along(maturities)) {
-    i <- maturities[idx]
     assert_dimension_ok(
       is_numeric_vector_dim(Q_i[[idx]], n_components),
-      paste(
-        "Q_i[[", idx,
-        "]] must be a numeric vector of length I"
-      )
-    )
-    assert_dimension_ok(
-      is_numeric_vector_dim(s_i_1[[idx]], n_components),
       paste0(
-        "s_i_1 for maturity ", i,
+        "Q_i for maturity ", maturities[idx],
         " (position ", idx,
         ") must be a numeric vector of length I"
       )
     )
-    assert_dimension_ok(
-      is_square_matrix_dim(s_i_2[[idx]], n_components),
+  }
+}
+
+#' Validate finiteness of per-maturity moment and component values
+#'
+#' Flags NA/NaN/Inf in any per-maturity value before the quadratic
+#' assembly so the error names the offending object and maturity
+#' instead of surfacing as a misleading downstream failure.
+#'
+#' @param quantities Named list of position-indexed vectors or lists
+#' @param maturities Maturity vector from the containers
+#' @noRd
+validate_finite_by_maturity <- function(quantities, maturities) {
+  for (name in names(quantities)) {
+    x <- quantities[[name]]
+    bad <- which(!vapply(
+      seq_along(x),
+      function(k) is.numeric(x[[k]]) && all(is.finite(x[[k]])),
+      logical(1)
+    ))
+    assert_bad_argument_ok(
+      length(bad) == 0,
       paste0(
-        "s_i_2 for maturity ", i,
-        " (position ", idx,
-        ") must be an I x I matrix"
-      )
+        name, " contains non-finite (NA/NaN/Inf) values ",
+        "for maturity/maturities ",
+        paste(maturities[bad], collapse = ", ")
+      ),
+      arg = name
     )
   }
 }
@@ -55,8 +57,12 @@ validate_list_element_dims <- function(Q_i, s_i_1, # nolint: object_name_linter.
 #' Validate inputs for the quadratic identified set computation
 #'
 #' Checks the container classes, that the components and moments carry
-#' identical maturity identity, and the type/dimension/positivity
-#' constraints for \code{\link{compute_identified_set_quadratic}}.
+#' identical maturity identity, the shapes of the \code{components}
+#' object (whose constructor defers shape validation here by design),
+#' and the type/finiteness/positivity constraints for
+#' \code{\link{compute_identified_set_quadratic}}. Moment shapes are
+#' class invariants guaranteed by \code{new_hetid_moments()} and are
+#' trusted rather than re-checked.
 #'
 #' @inheritParams compute_identified_set_quadratic
 #'
@@ -99,8 +105,12 @@ validate_quadratic_inputs <- function(tau, components, moments) {
   )
 
   validate_numeric_inputs(
-    tau = tau, L_i = components$L_i, V_i = components$V_i,
-    s_i_0 = moments$s_i_0, sigma_i_sq = moments$sigma_i_sq
+    tau = tau, L_i = components$L_i, V_i = components$V_i
+  )
+  assert_bad_argument_ok(
+    all(is.finite(tau)),
+    "All elements of tau must be finite (no NA, NaN, or Inf)",
+    arg = "tau"
   )
   assert_bad_argument_ok(
     !any(tau < 0),
@@ -116,20 +126,17 @@ validate_quadratic_inputs <- function(tau, components, moments) {
     "Q_i must be a list",
     arg = "Q_i"
   )
-  assert_bad_argument_ok(
-    is.list(moments$s_i_1) && is.list(moments$s_i_2),
-    "s_i_1 and s_i_2 must be lists"
-  )
 
+  # Container shape invariants are trusted from new_hetid_moments();
+  # only the components object needs shape validation here.
   n_maturities <- length(maturities)
   validate_time_series_lengths(
     components$L_i, components$V_i, components$Q_i,
-    moments$s_i_0, moments$s_i_1, moments$s_i_2,
-    moments$sigma_i_sq,
     expected_length = n_maturities
   )
+  validate_q_i_dims(components$Q_i, maturities, n_components)
 
-  # Validate sigma_i_sq
+  # Validate sigma_i_sq positivity (a quadratic-stage requirement)
   sigma_i_sq <- moments$sigma_i_sq
   bad_sigma <- which(
     !is.finite(sigma_i_sq) | sigma_i_sq <= 0
@@ -146,9 +153,12 @@ validate_quadratic_inputs <- function(tau, components, moments) {
     arg = "sigma_i_sq"
   )
 
-  validate_list_element_dims(
-    components$Q_i, moments$s_i_1, moments$s_i_2,
-    maturities, n_components
+  validate_finite_by_maturity(
+    list(
+      L_i = components$L_i, V_i = components$V_i, Q_i = components$Q_i,
+      s_i_0 = moments$s_i_0, s_i_1 = moments$s_i_1, s_i_2 = moments$s_i_2
+    ),
+    maturities
   )
 
   list(

@@ -1,4 +1,3 @@
-#' @keywords internal
 #' @importFrom utils download.file read.csv write.csv
 #' @importFrom stats aggregate
 "_PACKAGE"

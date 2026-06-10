@@ -16,17 +16,18 @@ Invisibly returns the path to the saved CSV file.
 }
 \description{
 Downloads the Adrian, Crump, and Moench (ACM) term premia data from the
-New York Fed website and saves it as a CSV file in the package's data directory.
+New York Fed website and saves it as a CSV file in the per-user data
+directory (\code{tools::R_user_dir("hetid", "data")}). The bundled copy
+shipped with the package is never modified.
 }
 \examples{
-\dontrun{
+\dontshow{if (interactive()) withAutoprint(\{ # examplesIf}
 # Download the data (only if not already present)
 download_term_premia()
 
 # Force re-download
 download_term_premia(force = TRUE)
-}
-
+\dontshow{\}) # examplesIf}
 }
 \references{
 Adrian, T., Crump, R. K., and Moench, E. (2013).

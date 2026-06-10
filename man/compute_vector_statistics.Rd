@@ -36,6 +36,10 @@ principal components with the residual products (1/T normalization; see
 \deqn{\hat{P}_i^{(0)} = \widehat{\mathrm{Cov}}(PC, (W_2^{(i)})^{\odot 2})}
 
 where \eqn{\odot} denotes the Hadamard (elementwise) product.
+
+Row labels of \code{r_i_0}, \code{r_i_1}, and \code{p_i_0} use
+\code{colnames(pcs)} when present, falling back to the standard
+\code{pc1..pcJ} names.
 }
 \examples{
 set.seed(42)

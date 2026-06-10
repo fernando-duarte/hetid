@@ -36,7 +36,10 @@
 #' The identified set is:
 #' \deqn{\Theta = \{\theta \in R^I :
 #'   \theta^\top A_i \theta + b_i^\top \theta +
-#'   c_i \leq 0, \; i = 1, \ldots, I\}}
+#'   c_i \leq 0\}}
+#' with one constraint for each \code{i} in the container's
+#' \code{maturities} (not necessarily \eqn{1, \ldots, I}; see the
+#' maturity convention below).
 #'
 #' The components and moments must carry identical \code{maturities} and
 #' \code{n_components} attributes (they do when the components were
@@ -128,32 +131,40 @@ quadratic_from_components <- function(tau,
 
     if (!is.finite(d_i[idx])) {
       stop_hetid(paste0(
-        "d_i overflowed to non-finite for maturity ", i,
-        ". sigma_i_sq may be too close to zero ",
-        "for numerically stable computation."
+        "d_i = tau_i^2 * V_i / sigma_i_sq is non-finite for maturity ",
+        i, ": tau_i = ", tau_i, ", V_i = ", V_i_val,
+        ", sigma_i_sq = ", sigma_i_sq_val, "."
       ))
     }
 
     # Compute A_i = Q_i * Q_i^T - d_i * S_i^(2)
     A_i[[idx]] <- tcrossprod(Q_i_vec) - d_i[idx] * s_i_2_mat # nolint: object_name_linter.
 
-    # Verify A_i is symmetric (it should be by construction)
-    if (!isSymmetric(A_i[[idx]],
-      tol = HETID_CONSTANTS$MATRIX_SYMMETRY_TOL
-    )) {
-      # Force exact symmetry
-      A_i[[idx]] <- (A_i[[idx]] + t(A_i[[idx]])) / 2 # nolint: object_name_linter.
-    }
+    # Symmetrize exactly: theta' A theta is invariant under
+    # (A + t(A)) / 2, and downstream consumers can rely on it
+    A_i[[idx]] <- (A_i[[idx]] + t(A_i[[idx]])) / 2 # nolint: object_name_linter.
 
     # Compute b_i = -2 * L_i * Q_i + 2 * d_i * S_i^(1)
     b_i[[idx]] <- -2 * L_i_val * Q_i_vec +
       2 * d_i[idx] * s_i_1_vec
-    names(b_i[[idx]]) <- paste0(
-      "maturity_", seq_len(n_components)
-    )
+    names(b_i[[idx]]) <- maturity_names(seq_len(n_components))
 
     # Compute c_i = L_i^2 - d_i * S_i^(0)
     c_i[idx] <- L_i_val^2 - d_i[idx] * s_i_0_val
+
+    # Belt-and-braces against tampered containers: validated inputs
+    # guarantee finite moments and components, so a non-finite
+    # assembly indicates post-construction tampering or a hetid bug
+    if (!all(
+      is.finite(d_i[idx]), is.finite(A_i[[idx]]),
+      is.finite(b_i[[idx]]), is.finite(c_i[idx])
+    )) {
+      stop_hetid(paste0(
+        "Assembled quadratic form contains non-finite values ",
+        "(d_i, A_i, b_i, or c_i) for maturity ", i,
+        "; check the moments and components for NA/NaN/Inf."
+      ))
+    }
   }
 
   list(

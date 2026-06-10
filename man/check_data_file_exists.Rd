@@ -13,7 +13,7 @@ check_data_file_exists(filename)
 Logical indicating whether file exists
 }
 \description{
-Checks if a data file exists in the package data directory.
-Useful for workflows that depend on external data.
+Checks if a data file exists in the user cache or the bundled
+package data directory.
 }
 \keyword{internal}

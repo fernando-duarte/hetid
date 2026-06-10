@@ -18,9 +18,12 @@ compute_sdf_innovations(
 \item{term_premia}{Data frame with columns tp1, tp2, ..., containing term premia}
 
 \item{i}{Integer specifying the maturity index (column) to analyze.
-Must be between 1 and ncol(yields). Corresponds to maturity in years
-for ACM dataset (i=1 is 1-year, i=2 is 2-year, ..., i=10 is 10-year).
-The maturity index determines which yield curve point is used in the analysis.}
+Must be between 1 and the package maximum (10 for the ACM dataset;
+functions that require data at maturity \code{i + 1} accept at most 9).
+The input data must contain the columns for the maturities the function
+uses (e.g. \code{y5}/\code{tp5} plus adjacent maturities for \code{i = 5}).
+Corresponds to maturity in years for the ACM dataset (i=1 is 1-year,
+i=2 is 2-year, ..., i=10 is 10-year).}
 
 \item{return_df}{Logical, if TRUE returns a data frame with dates (default FALSE)}
 
@@ -43,8 +46,9 @@ exp(n_hat(i,t)) * (Delta_(t+1)p_(t+i)^(1) + 0.5*(Delta_(t+1)p_(t+i)^(1))^2 -
 Where:
 \itemize{
 \item Delta_(t+1)p_(t+i)^(1) = n_hat(i-1,t+1) - n_hat(i,t)
-\item E\[(Delta_(t+1)p_(t+i)^(1))^2\] = (1/(T-1)) * sum(n_hat(i-1,t+1) - n_hat(i,t))^2
-for t=1 to T-1
+\item E\[(Delta_(t+1)p_(t+i)^(1))^2\] is the mean of
+(n_hat(i-1,t+1) - n_hat(i,t))^2 over the valid (non-missing) news
+terms; with complete data this averages the T-1 available terms
 }
 }
 \note{
@@ -52,7 +56,6 @@ For standard ACM data (10 maturities), the effective maximum for
 \code{i} is 9, because this function requires data at maturity \code{i+1}.
 }
 \examples{
-\dontrun{
 # Extract ACM data - need maturities 1, i-1, i, i+1 for maturity i
 # For i=5, we need maturities 1, 4, 5, 6
 data <- extract_acm_data(
@@ -72,6 +75,5 @@ sdf_innovations_5_df <- compute_sdf_innovations(
   return_df = TRUE,
   dates = data$date
 )
-}
 
 }

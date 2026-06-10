@@ -19,7 +19,6 @@
 #' @export
 #'
 #' @examples
-#' \dontrun{
 #' # Extract ACM data
 #' data <- extract_acm_data(data_types = c("yields", "term_premia"))
 #'
@@ -38,7 +37,6 @@
 #'   return_df = TRUE,
 #'   dates = data$date
 #' )
-#' }
 #'
 compute_n_hat <- function(yields, term_premia, i, return_df = FALSE, dates = NULL) {
   validate_maturity_index(i, max_maturity = HETID_CONSTANTS$EFFECTIVE_MAX_MATURITY)

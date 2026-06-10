@@ -142,6 +142,72 @@ test_that("assert_hetid_moments rejects plain lists", {
   expect_true(assert_hetid_moments(moments))
 })
 
+test_that("entry point rejects non-finite inputs with structured errors", {
+  inp <- make_moments_inputs()
+
+  w1_na <- replace(inp$w1, 5, NA)
+  expect_error(
+    compute_identification_moments(w1_na, inp$w2, inp$pcs),
+    "w1 must not contain NA, NaN, or infinite values",
+    class = "hetid_error_bad_argument"
+  )
+
+  w2_na <- inp$w2
+  w2_na[3, 2] <- NA
+  expect_error(
+    compute_identification_moments(inp$w1, w2_na, inp$pcs),
+    "w2 must not contain NA, NaN, or infinite values",
+    class = "hetid_error_bad_argument"
+  )
+
+  pcs_bad <- inp$pcs
+  pcs_bad[7, 1] <- Inf
+  expect_error(
+    compute_identification_moments(inp$w1, inp$w2, pcs_bad),
+    "pcs must not contain NA, NaN, or infinite values",
+    class = "hetid_error_bad_argument"
+  )
+})
+
+test_that("entry point rejects too few observations", {
+  expect_error(
+    compute_identification_moments(
+      numeric(0), matrix(numeric(0), 0, 2), matrix(numeric(0), 0, 2)
+    ),
+    "At least 2 observations",
+    class = "hetid_error_insufficient_data"
+  )
+  expect_error(
+    compute_identification_moments(
+      1, matrix(1:2, 1, 2), matrix(1:2, 1, 2)
+    ),
+    "At least 2 observations",
+    class = "hetid_error_insufficient_data"
+  )
+})
+
+test_that("constructor rejects non-integer n_obs and vector n_components", {
+  inp <- make_moments_inputs()
+  moments <- compute_identification_moments(inp$w1, inp$w2, inp$pcs)
+  stats <- unclass(moments)
+
+  expect_error(
+    new_hetid_moments(stats, 1:4, 4, n_obs = 60.7),
+    "n_obs must be an integer",
+    class = "hetid_error_bad_argument"
+  )
+  expect_error(
+    new_hetid_moments(stats, 1:4, 4, n_obs = TRUE),
+    "n_obs must be a single finite numeric value",
+    class = "hetid_error_bad_argument"
+  )
+  expect_error(
+    new_hetid_moments(stats, 1:4, n_components = c(4, 4), n_obs = 60),
+    "n_components must be a single finite numeric value",
+    class = "hetid_error_bad_argument"
+  )
+})
+
 test_that("non-integer maturities error instead of truncating", {
   inp <- make_moments_inputs()
   expect_error(

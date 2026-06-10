@@ -4,16 +4,20 @@
 \alias{warn_if_variance_degenerate}
 \title{Warn When Identification Variances Are Degenerate}
 \usage{
-warn_if_variance_degenerate(w1, w2, maturities, t_obs)
+warn_if_variance_degenerate(w1, w2, maturities, sigma_i_sq, s_i_0)
 }
 \arguments{
 \item{w1}{Numeric vector of W1 residuals}
 
-\item{w2}{Matrix of W2 residuals (T x I)}
+\item{w2}{Numeric matrix of W2 residuals (T x I)}
 
 \item{maturities}{Integer vector of w2 column indices to check}
 
-\item{t_obs}{Number of observations T}
+\item{sigma_i_sq}{Numeric vector of sigma_i^2 statistics, element k
+corresponding to \code{maturities[k]}}
+
+\item{s_i_0}{Numeric vector of S_i^(0) statistics, element k
+corresponding to \code{maturities[k]}}
 }
 \value{
 Invisible NULL, called for its warning side effect
@@ -27,8 +31,12 @@ at the \eqn{\gamma} that minimizes it (the residual variance of
 regressing \eqn{W_1 W_{2,i}} on \eqn{W_{2,i}^2}), so a warning means
 the condition fails for some \eqn{\gamma}. Both checks are
 scale-free ratios compared against
-\code{HETID_CONSTANTS$DEGENERACY_TOLERANCE}. Degenerate variances
-make the quadratic constraint ill-defined and the identified set
+\code{HETID_CONSTANTS$DEGENERACY_TOLERANCE}. The relevant variances
+\eqn{var(W_{2,i}^2)} and \eqn{var(W_1 W_{2,i})} are exactly the
+scalar statistics \code{sigma_i_sq} and \code{s_i_0}, so the caller
+passes them in and the diagnostic judges the same numbers the
+\code{hetid_moments} container carries. Degenerate variances make
+the quadratic constraint ill-defined and the identified set
 degenerate or unbounded, so surfacing them here catches the problem
 at the moments stage instead of downstream.
 }

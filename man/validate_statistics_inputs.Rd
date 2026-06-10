@@ -23,6 +23,8 @@ List with validated components:
 }
 \description{
 Shared validation for compute_scalar_statistics,
-compute_matrix_statistics, and compute_vector_statistics.
+compute_matrix_statistics, compute_vector_statistics, and
+compute_identification_moments. Checks types, finiteness, a minimum
+number of observations, dimension agreement, and the maturity vector.
 }
 \keyword{internal}

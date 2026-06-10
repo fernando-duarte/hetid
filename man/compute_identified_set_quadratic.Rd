@@ -47,7 +47,10 @@ where \eqn{A_i} is symmetric by construction,
 The identified set is:
 \deqn{\Theta = \{\theta \in R^I :
   \theta^\top A_i \theta + b_i^\top \theta +
-  c_i \leq 0, \; i = 1, \ldots, I\}}
+  c_i \leq 0\}}
+with one constraint for each \code{i} in the container's
+\code{maturities} (not necessarily \eqn{1, \ldots, I}; see the
+maturity convention below).
 
 The components and moments must carry identical \code{maturities} and
 \code{n_components} attributes (they do when the components were
