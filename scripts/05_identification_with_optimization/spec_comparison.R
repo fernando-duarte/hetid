@@ -161,7 +161,7 @@ compute_group_rows <- function(mode, n_pcs, components) {
   if (length(rows)) do.call(rbind, rows) else NULL
 }
 
-out_dir <- file.path(OUTPUT_PAPER_DIR, "identification")
+out_dir <- file.path(OUTPUT_TEMP_DIR, "identification_optimized")
 dir.create(out_dir, recursive = TRUE, showWarnings = FALSE)
 csv_path <- file.path(out_dir, "spec_comparison_full.csv")
 ckpt_dir <- file.path(OUTPUT_TEMP_DIR, "identification_optimized", "spec_comparison_ckpt")

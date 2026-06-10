@@ -102,8 +102,8 @@ Publication-ready outputs
 
 #### temp/
 Working outputs and intermediate results
-- `consolidated_data.rds` - Consolidated analysis dataset
-- `data.rds` - Base data
+- `data.rds` - Consolidated analysis dataset (quarterly
+  ACM data merged with variables.RData)
 - `tables/` - Draft tables
 - `figures/` - Exploratory plots
 - `other/` - Temporary files
@@ -158,6 +158,35 @@ Each script can also be run individually:
 # Example: Run only summary statistics
 Rscript 01_data_analysis/summary_statistics.R
 ```
+
+### Run the Identification Diagnostics (`02_identification_diagnostics/`)
+
+These scripts read the consolidated dataset that stage 01
+writes to `output/temp/data.rds`, so create it first by
+running `01_data_analysis/create_data.R` (or the full
+pipeline through stage 01). Then run the three scripts in
+order: both compute scripts must finish before
+`output_results.R`, which loads the `*_results.rds` files
+they save.
+
+```bash
+# From the scripts directory
+
+# Prerequisite: writes output/temp/data.rds
+Rscript 01_data_analysis/create_data.R
+
+# Stage 02, in order:
+Rscript 02_identification_diagnostics/heteroskedasticity_tests.R
+Rscript 02_identification_diagnostics/n_hat_episodes.R
+Rscript 02_identification_diagnostics/output_results.R
+```
+
+Working artifacts (RDS objects, CSVs, and paired PNG/SVG
+figures) are written to
+`output/temp/identification_diagnostics/`; the publication
+LaTeX panel (fragment + standalone), HTML mirrors, CSV
+exports, and copied figures land in
+`output/for_paper/identification_diagnostics/`.
 
 ## Notes
 

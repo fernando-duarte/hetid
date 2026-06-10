@@ -14,10 +14,18 @@ cli_text("Started at: {.timestamp {start_time}}")
 cli_rule()
 
 # Helper function to run a script with error handling
-run_script <- function(script_path, description) {
+# `env` (optional named character vector) sets environment variables for the
+# duration of this script only, then restores them, so per-script switches like
+# HETID_SPEC_QUICK do not leak into the rest of the pipeline.
+run_script <- function(script_path, description, env = NULL) {
   script_name <- basename(script_path)
   cli_h2(description)
   cli_text("Running: {.file {script_name}}")
+
+  if (length(env)) {
+    do.call(Sys.setenv, as.list(env))
+    on.exit(Sys.unsetenv(names(env)), add = TRUE)
+  }
 
   script_start <- Sys.time()
 
@@ -153,6 +161,14 @@ scripts_to_run <- list(
     ),
     desc = "Comparing Identification Strength (tau*)"
   ),
+  list(
+    path = here::here(
+      "scripts/05_identification_with_optimization",
+      "spec_comparison.R"
+    ),
+    desc = "Comparing Specifications, Instruments, and tau (quick)",
+    env = c(HETID_SPEC_QUICK = "1")
+  ),
 
   # Final results production
   list(
@@ -189,7 +205,7 @@ scripts_to_run <- list(
 cli_h1("Executing Scripts")
 
 for (script_info in scripts_to_run) {
-  run_script(script_info$path, script_info$desc)
+  run_script(script_info$path, script_info$desc, script_info$env)
 }
 
 # Summary
