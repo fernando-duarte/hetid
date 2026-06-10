@@ -32,6 +32,12 @@ Functions for heteroskedasticity testing and diagnostics:
 - `create_hetero_diagnostic_plots()` - Create diagnostic plots
 - `summarize_hetero_tests()` - Summarize test results
 
+### latex_table_utils.R
+Functions for publication LaTeX panel tables (booktabs/threeparttable/siunitx):
+- `build_panel_latex_table()` - Build a multi-panel table fragment
+- `make_standalone_latex()` - Wrap a fragment in a compilable document
+- `write_latex_table()` - Write the fragment and its standalone variant
+
 ## Usage
 
 All scripts in the analysis pipeline automatically source these utilities through `common_settings.R`. To use in a new script:

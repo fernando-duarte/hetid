@@ -7,6 +7,8 @@ ADF
 args
 aut
 behaviour
+booktabs
+Booktabs
 BugReports
 bz
 CamelCase
@@ -14,6 +16,7 @@ closable
 CMD
 cmd
 codetools
+compilable
 Cov
 covr
 cpp
@@ -43,6 +46,7 @@ gitattributes
 github
 gitignore
 gitignored
+Glejser
 graphify
 gz
 Hadamard
@@ -92,6 +96,7 @@ PCE
 pcs
 png
 premia
+QE
 Rbuildignore
 RcppExports
 rda
@@ -115,6 +120,7 @@ Rproj
 RStudio
 sdf
 SDF
+siunitx
 skedastic
 styler
 sublicense
@@ -124,6 +130,7 @@ tbl
 testthat
 tex
 th
+threeparttable
 tibble
 Tobias
 tp

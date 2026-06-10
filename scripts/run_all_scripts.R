@@ -57,6 +57,29 @@ scripts_to_run <- list(
     desc = "Analyzing Time Series Properties"
   ),
 
+  # Identification diagnostics (heteroskedasticity tests and n-hat context)
+  list(
+    path = here::here(
+      "scripts/02_identification_diagnostics",
+      "heteroskedasticity_tests.R"
+    ),
+    desc = "Testing W2 Residuals for Heteroskedasticity"
+  ),
+  list(
+    path = here::here(
+      "scripts/02_identification_diagnostics",
+      "n_hat_episodes.R"
+    ),
+    desc = "Analyzing n-hat Episodes and Economic Context"
+  ),
+  list(
+    path = here::here(
+      "scripts/02_identification_diagnostics",
+      "output_results.R"
+    ),
+    desc = "Exporting Identification Diagnostics"
+  ),
+
   # Variance bounds analysis
   list(
     path = here::here("scripts/03_variance_bounds/compute_variance_bounds.R"),
@@ -145,6 +168,13 @@ scripts_to_run <- list(
       "create_tables_and_figures.R"
     ),
     desc = "Creating Publication Tables and Figures"
+  ),
+  list(
+    path = here::here(
+      "scripts/06_results_production",
+      "create_theta_panel_table.R"
+    ),
+    desc = "Creating Theta Panel LaTeX Table"
   ),
   list(
     path = here::here(

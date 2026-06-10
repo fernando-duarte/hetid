@@ -20,6 +20,18 @@ Initial data preparation and exploratory analysis
 - `visualize_raw_data.R` - Create exploratory plots of raw
   data
 
+### 02_identification_diagnostics/
+Diagnostics of the identification-relevant objects (W2
+residuals and n-hat)
+- `heteroskedasticity_tests.R` - Test the Lewbel assumption on
+  the W2 residuals: skedastic suite plus Glejser, BP LM on
+  PCs, ARCH(1), and PC/squared-residual correlations
+- `n_hat_episodes.R` - Detect positive n-hat episodes (monthly
+  ACM data), map them to crisis/QE events, and validate the
+  implied one-year-ahead rate prediction; quarterly cross-check
+- `output_results.R` - Export the diagnostics panel table
+  (LaTeX fragment + standalone), HTML mirrors, CSVs, and figures
+
 ### 03_variance_bounds/
 Variance bound calculations for identification
 - `compute_variance_bounds.R` - Calculate theoretical variance
@@ -51,6 +63,9 @@ Publication-ready outputs assembled from stages 04 and 05
   supporting artifacts into one comparison object
 - `create_tables_and_figures.R` - Build publication tables and
   figures
+- `create_theta_panel_table.R` - Build the theta identified-set
+  and optimized-loadings panel table (LaTeX fragment +
+  standalone)
 - `output_results.R` - Export final results
 
 ### utils/
@@ -69,6 +84,8 @@ Shared utility functions
   plumbing (maturity lookups, set construction)
 - `optimization_utils.R` - Inner profile bounds and outer
   gamma optimization helpers
+- `latex_table_utils.R` - Booktabs/threeparttable/siunitx
+  panel tables with standalone compilable variants
 - `README.md` - Documentation for the utility functions
 
 ### output/
@@ -80,6 +97,8 @@ Publication-ready outputs
 - `figures/` - Publication-quality figures
 - `other/` - Supplementary materials
 - `variance_bounds/` - Variance bound results
+- `identification_diagnostics/` - Identification diagnostics
+  tables and figures
 
 #### temp/
 Working outputs and intermediate results
@@ -92,6 +111,8 @@ Working outputs and intermediate results
 - `summary_stats/` - Summary statistics output
 - `time_series_properties/` - Time series analysis output
 - `variance_bounds/` - Variance bound working results
+- `identification_diagnostics/` - Identification diagnostics
+  working results
 
 ## Top-Level Scripts
 
@@ -104,6 +125,9 @@ Working outputs and intermediate results
 
 - **Data Preparation**: Start with scripts in
   `01_data_analysis/` to prepare and explore the data
+- **Identification Diagnostics**: Run
+  `02_identification_diagnostics/` to test the identifying
+  assumption and interpret n-hat
 - **Core Computations**: Run `03_variance_bounds/` for
   fundamental calculations
 - **Identification Analysis**: Execute
