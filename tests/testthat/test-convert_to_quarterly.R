@@ -39,7 +39,10 @@ test_that("incomplete quarter warns and is re-dated to the quarter-end month", {
       start_date = "2019-01-01", end_date = "2020-05-31",
       frequency = "quarterly"
     ),
-    regexp = "2020 Q2 \\(using month 5 instead of 6\\)",
+    regexp = paste0(
+      "2020 Q2 \\(last observation in May, quarter ends in June\\)",
+      ".*USE_INCOMPLETE_QUARTERS"
+    ),
     class = "hetid_warning_incomplete_quarter"
   )
 
@@ -66,7 +69,7 @@ test_that("warning names the months when several are missing", {
       start_date = "2020-01-01", end_date = "2020-04-30",
       frequency = "quarterly"
     ),
-    regexp = "2020 Q2 \\(using month 4 instead of 6\\)",
+    regexp = "2020 Q2 \\(last observation in April, quarter ends in June\\)",
     class = "hetid_warning_incomplete_quarter"
   )
 })
@@ -78,7 +81,7 @@ test_that("incomplete first quarter of a year is re-dated across the year bounda
       start_date = "2020-10-01", end_date = "2021-01-31",
       frequency = "quarterly"
     ),
-    regexp = "2021 Q1 \\(using month 1 instead of 3\\)",
+    regexp = "2021 Q1 \\(last observation in January, quarter ends in March\\)",
     class = "hetid_warning_incomplete_quarter"
   )
 
@@ -87,14 +90,17 @@ test_that("incomplete first quarter of a year is re-dated across the year bounda
 })
 
 test_that("use_incomplete_quarters = FALSE drops the incomplete quarter", {
-  expect_warning(
-    quarterly <- extract_acm_data(
-      data_types = "yields", maturities = 1,
-      start_date = "2019-01-01", end_date = "2020-05-31",
-      frequency = "quarterly", use_incomplete_quarters = FALSE
-    ),
-    regexp = "Dropping the incomplete quarter",
-    class = "hetid_warning_incomplete_quarter"
+  # Dropping is what the caller asked for, so it is announced with an
+  # informational message naming the quarters, never a warning
+  expect_no_warning(
+    expect_message(
+      quarterly <- extract_acm_data(
+        data_types = "yields", maturities = 1,
+        start_date = "2019-01-01", end_date = "2020-05-31",
+        frequency = "quarterly", use_incomplete_quarters = FALSE
+      ),
+      regexp = "dropped from the quarterly output.*use_incomplete_quarters = TRUE"
+    )
   )
 
   expect_equal(max(quarterly$date), as.Date("2020-03-31"))

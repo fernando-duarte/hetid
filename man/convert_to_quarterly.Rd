@@ -25,9 +25,11 @@ Data frame with quarterly observations
 Internal function to convert monthly data to quarterly by keeping
 the last observation of each quarter. Quarters whose last available
 observation is not in the terminal month (March, June, September,
-December) raise a classed warning
-(\code{hetid_warning_incomplete_quarter}); they are then either kept
-with their date re-coded to the last day of the terminal month, so
-the quarterly series is uniformly dated, or dropped.
+December) are either kept with their date re-coded to the last day
+of the terminal month, so the quarterly series is uniformly dated --
+raising a classed warning
+(\code{hetid_warning_incomplete_quarter}) because incomplete data
+enters the output -- or dropped, announced by an informational
+message naming the removed quarters.
 }
 \keyword{internal}

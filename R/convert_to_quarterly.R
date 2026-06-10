@@ -3,10 +3,12 @@
 #' Internal function to convert monthly data to quarterly by keeping
 #' the last observation of each quarter. Quarters whose last available
 #' observation is not in the terminal month (March, June, September,
-#' December) raise a classed warning
-#' (\code{hetid_warning_incomplete_quarter}); they are then either kept
-#' with their date re-coded to the last day of the terminal month, so
-#' the quarterly series is uniformly dated, or dropped.
+#' December) are either kept with their date re-coded to the last day
+#' of the terminal month, so the quarterly series is uniformly dated --
+#' raising a classed warning
+#' (\code{hetid_warning_incomplete_quarter}) because incomplete data
+#' enters the output -- or dropped, announced by an informational
+#' message naming the removed quarters.
 #'
 #' @param data Data frame with a date column
 #' @param use_incomplete_quarters Logical. If TRUE (the default, from
@@ -59,19 +61,34 @@ convert_to_quarterly <- function(
     details <- paste0(
       last_in_quarter$year[incomplete],
       " Q", last_in_quarter$quarter[incomplete],
-      " (using month ", last_months[incomplete],
-      " instead of ", expected_months[incomplete], ")"
+      " (last observation in ", month.name[last_months[incomplete]],
+      ", quarter ends in ", month.name[expected_months[incomplete]], ")"
     )
-    action <- if (use_incomplete_quarters) {
-      "Keeping the latest available month for each, re-dated to quarter end."
-    } else {
-      "Dropping the incomplete quarter(s)."
-    }
-    warn_incomplete_quarter(paste0(
+    notice <- paste0(
       "Incomplete quarter(s) detected: ",
-      paste(details, collapse = "; "), ". ", action
-    ))
-    if (!use_incomplete_quarters) {
+      paste(details, collapse = "; "), ". "
+    )
+    if (use_incomplete_quarters) {
+      # Incomplete data enters the output, so this rises to a warning
+      warn_incomplete_quarter(paste0(
+        notice,
+        "These quarters are kept in the quarterly output using their ",
+        "latest available observation, re-dated to the last day of the ",
+        "quarter so that every quarterly date falls in March, June, ",
+        "September, or December. To drop incomplete quarters instead, ",
+        "set use_incomplete_quarters = FALSE (the TRUE default comes ",
+        "from HETID_CONSTANTS$USE_INCOMPLETE_QUARTERS)."
+      ))
+    } else {
+      # The caller opted into dropping, so an informational message
+      # records which quarters were removed without raising a warning
+      message(paste0(
+        notice,
+        "These quarters were dropped from the quarterly output. To ",
+        "keep them instead, using each quarter's latest available ",
+        "observation re-dated to the last day of the quarter, set ",
+        "use_incomplete_quarters = TRUE."
+      ))
       last_in_quarter <- last_in_quarter[!incomplete, , drop = FALSE]
     }
   }
