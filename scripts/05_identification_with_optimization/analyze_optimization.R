@@ -54,10 +54,12 @@ width_comparison <- baseline |>
     )
   )
 mean_red <- mean_pct_reduction(
-  width_comparison$baseline_width, width_comparison$optimized_width
+  width_comparison$baseline_width, width_comparison$optimized_width,
+  width_comparison$baseline_valid, width_comparison$optimized_valid
 )
-# NA covers three distinct cases (baseline unbounded, optimizer regressed to
-# unbounded, both unbounded); a single fixed direction would assert the wrong one.
+# NA covers several distinct cases (baseline unbounded, optimizer regressed to
+# unbounded, both unbounded, or only invalid rows); a single fixed direction
+# would assert the wrong one.
 mean_red_str <- if (is.finite(mean_red)) {
   paste0(round(mean_red, 2), "%")
 } else {

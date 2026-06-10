@@ -133,7 +133,11 @@ print(comparison_table |>
 mean_reduction <- round(
   mean_pct_reduction(
     comparison_table$baseline_width,
-    comparison_table$optimized_width
+    comparison_table$optimized_width,
+    comparison_table$baseline_valid_lower &
+      comparison_table$baseline_valid_upper,
+    comparison_table$optimized_valid_lower &
+      comparison_table$optimized_valid_upper
   ), 2
 )
 cli_alert_info(

@@ -42,13 +42,22 @@ format_reduction <- function(baseline_width, optimized_width,
   out
 }
 
-# Mean pct reduction over ONLY the finite, positive-baseline (bounded) components.
-mean_pct_reduction <- function(baseline_width, optimized_width) {
-  finite <- is.finite(baseline_width) & is.finite(optimized_width) &
-    baseline_width > 0
-  if (!any(finite)) {
+# Mean pct reduction over ONLY the finite, valid, positive-baseline (bounded)
+# components. A finite-but-invalid width (e.g. a failed feasibility check on a
+# huge baseline) must not produce a confident percentage, mirroring
+# format_reduction. Validity args default to TRUE (length-1) and are rep_len'd;
+# NA validity counts as invalid.
+mean_pct_reduction <- function(baseline_width, optimized_width,
+                               baseline_valid = TRUE, optimized_valid = TRUE) {
+  baseline_valid <- rep_len(baseline_valid, length(baseline_width))
+  optimized_valid <- rep_len(optimized_valid, length(optimized_width))
+  usable <- is.finite(baseline_width) & is.finite(optimized_width) &
+    baseline_width > 0 &
+    !is.na(baseline_valid) & baseline_valid &
+    !is.na(optimized_valid) & optimized_valid
+  if (!any(usable)) {
     return(NA_real_)
   }
-  mean((baseline_width[finite] - optimized_width[finite]) /
-    baseline_width[finite] * 100)
+  mean((baseline_width[usable] - optimized_width[usable]) /
+    baseline_width[usable] * 100)
 }

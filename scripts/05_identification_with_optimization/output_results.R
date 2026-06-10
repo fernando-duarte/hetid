@@ -121,18 +121,21 @@ mean_cosine <- mean(
   analysis$gamma_similarity$cosine_sim,
   na.rm = TRUE
 )
-# Mean reduction over bounded components only; NA when the baseline is unbounded.
-total_reduction <- mean_pct_reduction(baseline_width, optimized_width)
+# Mean reduction over bounded AND valid components only; NA when none qualify.
+total_reduction <- mean_pct_reduction(
+  baseline_width, optimized_width, base_w_valid, opt_w_valid
+)
 # Honest objective-start string: "unbounded" rather than the 1e6 penalty/Inf.
 obj_start_str <- if (is.finite(obj_start)) {
   sprintf("%.6f", obj_start)
 } else {
   "unbounded"
 }
+# Neutral when NA: the unusable rows may be unbounded OR finite-but-invalid.
 total_reduction_str <- if (is.finite(total_reduction)) {
   sprintf("%.2f", total_reduction)
 } else {
-  "baseline unbounded"
+  "n/a (no comparable bounded rows)"
 }
 tau_fixed <- results$tau_fixed
 
