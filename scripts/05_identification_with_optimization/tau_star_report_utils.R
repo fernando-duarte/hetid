@@ -28,5 +28,23 @@
       .fmt_tau_star(res$tau_stars$tau_star[i], res$tau_stars$capped[i])
     )
   }, character(1))
-  c(sprintf("  %s", label), rows)
+  c(sprintf("  %s", label), rows, .bracket_lines(res))
+}
+
+# Certified bracket around tau* for each swept (fixed) gamma: the largest tau
+# certified bounded and the smallest tau certified unbounded. Taus in between
+# came back "unreliable" -- the solver could not certify either way.
+.bracket_lines <- function(res) {
+  unlist(lapply(unique(res$sweep$gamma), function(g) {
+    sw <- res$sweep[res$sweep$gamma == g, ]
+    lb <- suppressWarnings(max(sw$tau[sw$status == "bounded"]))
+    fu <- suppressWarnings(min(sw$tau[sw$status == "unbounded"]))
+    if (!is.finite(lb) || !is.finite(fu)) {
+      return(character(0))
+    }
+    sprintf(
+      "      %s bracket: certified bounded thru %.6f, unbounded from %.6f",
+      g, lb, fu
+    )
+  }))
 }

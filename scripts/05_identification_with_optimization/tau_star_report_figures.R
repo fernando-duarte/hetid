@@ -94,11 +94,13 @@ plot_vfci_blowup <- function(sweep, tau_star, mode) {
   df <- vf[is.finite(vf$total_width) & vf$total_width > 0 & vf$tau <= xmax, ]
   title <- if (tau_star < 0.05) {
     sprintf(
-      "VFCI baseline tolerates almost no slack: set unbounded for tau >= %.4f",
+      "VFCI baseline tolerates almost no slack: unbounded beyond tau* ~= %.5f",
       tau_star
     )
   } else {
-    sprintf("VFCI baseline: identified set unbounded for tau >= %.4f", tau_star)
+    sprintf(
+      "VFCI baseline: identified set unbounded beyond tau* ~= %.5f", tau_star
+    )
   }
   ylim <- range(df$total_width) * c(0.8, 1.6)
   p <- ggplot(df, aes(tau, total_width))

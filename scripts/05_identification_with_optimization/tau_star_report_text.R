@@ -33,16 +33,21 @@ build_tau_star_summary <- function(results) {
   rec_max_num <- max(abs(rec_all), na.rm = TRUE)
   rec_max <- formatC(rec_max_num, format = "e", digits = 1)
   rec_pct <- formatC(rec_max_num * 100, format = "g", digits = 2)
-  cross_tau <- vf_rows$tau[which(vf_rows$recession_normalized < 0)[1]]
-  cross_lines <- if (is.na(cross_tau)) {
-    "  and it never crosses zero on the grid."
+  neg_tau <- vf_rows$tau[which(vf_rows$recession_normalized < 0)[1]]
+  cross_lines <- if (is.na(neg_tau)) {
+    "  the constraint scale. It never crosses zero on the grid."
   } else {
+    pos_tau <- vf_rows$tau[which(vf_rows$recession_normalized > 0 &
+      vf_rows$tau < neg_tau)]
     c(
       sprintf(
-        "  and its zero-crossing (near tau = %.3f, maturities mode) sits well",
-        cross_tau
+        "  the constraint scale. Its sign flips only between tau = %.3f and",
+        max(pos_tau)
       ),
-      sprintf("  past the empirical tau* (%s).", .fmt_tau(vf_m$tau_star))
+      sprintf(
+        "  %.3f (maturities mode), well past the empirical tau* (%s).",
+        neg_tau, .fmt_tau(vf_m$tau_star)
+      )
     )
   }
 
@@ -70,24 +75,26 @@ build_tau_star_summary <- function(results) {
     paste("Generated:", as.character(Sys.time())),
     "",
     "BOTTOM LINE",
+    "  - VFCI baseline (rank-1): the identified set stays bounded only below",
     sprintf(
-      "  - VFCI baseline (rank-1): the identified set is bounded only for tau < %s",
-      .fmt_tau(vf_m$tau_star)
+      "    tau* ~= %s (maturities mode); beyond tau* it is certified",
+      .fmt_tau(vf_m$tau_star, 5)
     ),
-    "    (maturities mode). Beyond that slack every profile bound is infinite.",
-    "  - Even below tau*, the set is enormous: total width grows from 0 (point",
-    sprintf("    identification at tau = 0) to %s.", width_path),
+    "    unbounded (some direction of theta is unrestricted).",
+    "  - Even below tau*, the set is enormous: its total width (summed across",
+    "    components of theta) grows from 0 (point identification at tau = 0)",
+    sprintf("    to %s.", width_path),
     "    Bounded does not mean informative here.",
-    "  - Curvature diagnostic: across the whole grid the normalized recession",
+    "  - Curvature diagnostic: at every coarse-grid tau tested, the normalized",
     sprintf(
-      "    metric stays within %s of zero -- a curvature margin of at most",
+      "    recession metric stays within %s of zero -- a curvature margin of",
       rec_max
     ),
     sprintf(
-      "    %s%% of the typical constraint scale. The rank-1 baseline sits",
+      "    at most %s%% of the typical constraint scale. The rank-1 baseline",
       rec_pct
     ),
-    "    essentially on the boundedness knife edge at every tau > 0.",
+    "    sits essentially on the boundedness knife edge throughout.",
     sprintf(
       "  - Optimized gamma: tau* = %s (maturities) / %s (factors) -- the",
       .fmt_tau_star(op_m$tau_star, op_m$capped),
@@ -114,13 +121,18 @@ build_tau_star_summary <- function(results) {
     "  strength without committing to any particular tau.",
     "",
     "HOW TAU* IS LOCATED",
-    "  Fixed gammas (VFCI, reduced-form): sweep tau over a coarse grid plus a",
-    "  fine grid inside the bounded region; classify each tau as bounded /",
-    "  unbounded / unreliable (unreliable = the SLSQP profile-bound solver",
-    "  failed a feasibility check, so that number is not trusted); bisect the",
-    "  bounded -> unbounded transition. Optimized gamma: re-optimize gamma at",
-    "  each candidate tau and bisect on whether a bounded, valid set is",
-    "  attainable.",
+    "  A profile bound is the smallest or largest value one component of",
+    "  theta attains over the identified set; the total width sums (upper -",
+    "  lower) across components. Fixed gammas (VFCI, reduced-form): sweep tau",
+    "  over a coarse grid plus a fine grid inside the bounded region;",
+    "  classify each tau as bounded / unbounded / unreliable (unreliable =",
+    "  the profile-bound solver failed its feasibility certificate, so that",
+    "  tau is neither finite evidence nor proof of unboundedness); bisect the",
+    "  bounded -> unbounded transition. Unreliable taus cluster right at the",
+    "  transition, so tau* is bracketed by the certified rows on each side",
+    "  (brackets reported under RESULTS BY MODE). Optimized gamma:",
+    "  re-optimize gamma at each candidate tau and bisect on whether a",
+    "  bounded, valid set is attainable.",
     "",
     "RESULTS BY MODE",
     .mode_block(mat, "MATURITIES MODE (components are bond maturities):"),
@@ -133,18 +145,19 @@ build_tau_star_summary <- function(results) {
     "  along which no constraint curves upward -- a necessary condition for",
     "  an unbounded set. For the VFCI gamma the margin is negligible at",
     sprintf(
-      "  every tau (|metric| <= %s, at most %s%% of the constraint scale)",
+      "  every coarse-grid tau tested: |metric| <= %s, at most %s%% of",
       rec_max, rec_pct
     ),
     cross_lines,
     "  It therefore cannot locate tau* and is not a second tau* estimate.",
-    "  What it does establish is degeneracy: the rank-1 set is",
-    "  borderline-unbounded at every tau > 0, consistent with the tiny",
-    "  empirical tau* and the explosive widths just below it.",
+    "  What it supports is degeneracy: the rank-1 set is borderline-unbounded",
+    "  at every tau tested, consistent with the tiny empirical tau* and the",
+    "  explosive widths just below it.",
     "",
     "RELATED ARTIFACTS (this directory; {mode} = maturities or factors)",
     "  tau_star_comparison_{mode}.csv ......... tau* per gamma choice",
-    "  tau_star_comparison_{mode}.png/.svg .... width-vs-tau overlay, all gammas",
+    "  tau_star_comparison_{mode}.png/.svg .... fixed-gamma width sweeps;",
+    "                                           verticals mark every tau*",
     "  tau_star_vfci_blowup_{mode}.png/.svg ... VFCI blow-up near tau*",
     "  tau_star_width_sweep_{mode}.csv ........ the sweep behind the figures",
     "  Raw machine-readable sweeps and settings:",
