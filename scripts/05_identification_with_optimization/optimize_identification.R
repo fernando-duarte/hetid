@@ -25,6 +25,9 @@ n_comp <- ncol(gamma_baseline)
 tau <- rep(0.2, n_comp)
 cli_alert_info("Fixed tau = {.val {tau[1]}} for all components")
 
+# Multistart count, shared by the optimizer call and its diagnostics record
+n_starts_gamma <- 30L
+
 # Run multi-start gamma optimization
 cli_h2("Running Multi-Start Optimization")
 cli_alert(
@@ -36,7 +39,7 @@ opt_result <- run_gamma_optimization(
   gamma_start = gamma_baseline,
   moments = moments,
   tau = tau,
-  n_starts = 10,
+  n_starts = n_starts_gamma,
   seed = SEED
 )
 
@@ -120,7 +123,7 @@ results <- list(
   objective_final = opt_result$objective_final,
   optimization_trace = trace,
   solver_diagnostics = list(
-    n_starts = 10,
+    n_starts = n_starts_gamma,
     best_index = opt_result$best_index,
     converged = opt_result$all_results[[
       opt_result$best_index
