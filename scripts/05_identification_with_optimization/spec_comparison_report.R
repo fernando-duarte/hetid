@@ -7,7 +7,10 @@
 # Input: temp/identification_optimized/spec_comparison_<profile>.rds/.csv,
 # preferring the full profile over quick. Override with
 # HETID_SPEC_SOURCE=<path .rds|.csv> to report on a saved grid (e.g. a
-# preserved full run) without recomputing.
+# preserved full run) without recomputing. The pipeline runner sets
+# HETID_SPEC_SOURCE to the quick grid its spec_comparison stage just
+# computed, so each pipeline pass refreshes the _quick artifacts even when
+# a full-run grid (the preferred default) exists.
 # Artifact names carry the coverage suffix: full grid -> canonical names;
 # quick subgrid -> _quick; anything else -> _partial. Full-grid artifacts are
 # therefore never clobbered by the pipeline's quick-mode runs.
