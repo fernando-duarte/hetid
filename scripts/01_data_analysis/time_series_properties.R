@@ -10,14 +10,14 @@ load_timeseries_packages() # urca, skedastic, lubridate
 load_visualization_packages() # ggplot2, gridExtra, plotly
 load_web_packages() # htmltools, knitr
 
-input_path <- file.path(OUTPUT_DIR, "temp/data.rds")
+input_path <- DATA_RDS_PATH
 data <- readRDS(input_path)
 df <- as.data.frame(data)
 
 yield_vars <- grep("^y\\d+$", names(df), value = TRUE)
 tp_vars <- grep("^tp\\d+$", names(df), value = TRUE)
 pc_lag_vars <- grep("^pc\\d+_lag1$", names(df), value = TRUE)
-macro_vars <- "gr1.pcecc96"
+macro_vars <- HETID_CONSTANTS$CONSUMPTION_GROWTH_COL
 
 ts_data <- ts(df[, -which(names(df) == "date")],
   start = c(year(min(df$date)), quarter(min(df$date))),
@@ -368,7 +368,10 @@ create_hetero_plots_wrapper <- function(var_name, y_var, predictor_vars) {
 }
 
 # Generate plots for key variables (yields, term premia, consumption growth)
-key_vars <- c("y2", "y5", "y10", "tp2", "tp5", "tp10", "gr1.pcecc96")
+key_vars <- c(
+  "y2", "y5", "y10", "tp2", "tp5", "tp10",
+  HETID_CONSTANTS$CONSUMPTION_GROWTH_COL
+)
 lapply(key_vars, function(var) {
   if (var %in% names(df)) {
     create_hetero_plots_wrapper(var, df[[var]], predictor_vars)

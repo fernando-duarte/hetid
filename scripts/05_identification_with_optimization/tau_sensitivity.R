@@ -18,9 +18,7 @@ gamma <- base$gamma_baseline # rank-1 VFCI loadings
 n_comp <- ncol(gamma)
 
 quad_at_tau <- function(tau) {
-  symmetrize_quadratic_system(
-    build_quadratic_system(gamma, rep(tau, n_comp), moments)
-  )$quadratic
+  build_quadratic_system(gamma, rep(tau, n_comp), moments)$quadratic
 }
 
 # total identified-set width and boundedness at slack tau

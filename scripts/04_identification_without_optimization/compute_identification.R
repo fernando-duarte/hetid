@@ -59,7 +59,7 @@ gamma <- if (BASELINE_GAMMA_METHOD == "reduced_form") {
   get_baseline_gamma(method = BASELINE_GAMMA_METHOD, n_components = n_comp)
 }
 tau_specs <- get_tau_spec(
-  tau_point = 0, tau_set = 0.2, n_components = n_comp
+  tau_point = 0, tau_set = BASELINE_TAU, n_components = n_comp
 )
 
 cli_alert_info(
@@ -75,17 +75,13 @@ cli_alert("Building system for tau = 0 (point ID)...")
 quad_sys_tau0 <- build_quadratic_system(
   gamma, tau_specs$tau_point, moments
 )
-quad_sys_tau0 <- symmetrize_quadratic_system(quad_sys_tau0)
 
-cli_alert("Building system for tau = 0.2 (set ID)...")
+cli_alert("Building system for tau = {BASELINE_TAU} (set ID)...")
 quad_sys_tau_set <- build_quadratic_system(
   gamma, tau_specs$tau_set, moments
 )
-quad_sys_tau_set <- symmetrize_quadratic_system(
-  quad_sys_tau_set
-)
 
-cli_alert_success("Quadratic systems built and symmetrized")
+cli_alert_success("Quadratic systems built")
 
 # Solve profile bounds
 cli_h2("Solving Profile Bounds")

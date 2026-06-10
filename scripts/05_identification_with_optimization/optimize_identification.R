@@ -1,5 +1,5 @@
 # Optimize Gamma to Minimize Total Identified-Set Width
-# Holds tau fixed at 0.2, optimizes PC loadings (gamma)
+# Holds tau fixed at BASELINE_TAU, optimizes PC loadings (gamma)
 
 source(here::here("scripts/utils/common_settings.R"))
 
@@ -22,7 +22,7 @@ cli_alert_info(
 
 # Fixed tau for set identification
 n_comp <- ncol(gamma_baseline)
-tau <- rep(0.2, n_comp)
+tau <- rep(BASELINE_TAU, n_comp)
 cli_alert_info("Fixed tau = {.val {tau[1]}} for all components")
 
 # Multistart count, shared by the optimizer call and its diagnostics record
@@ -60,7 +60,6 @@ cli_h2("Rebuilding Bounds with Optimized Gamma")
 quad_sys_opt <- build_quadratic_system(
   opt_result$gamma_optimized, tau, moments
 )
-quad_sys_opt <- symmetrize_quadratic_system(quad_sys_opt)
 optimized_bounds <- solve_all_profile_bounds(
   quad_sys_opt$quadratic
 )
@@ -73,14 +72,14 @@ optimized_bounds$component_label <- lookup$component_label
 baseline_bounds$component_label <- lookup$component_label
 
 # Display comparison
-cli_h2("Baseline Bounds (tau = 0.2, VFCI gamma)")
+cli_h2("Baseline Bounds (tau = {BASELINE_TAU}, VFCI gamma)")
 print(
   baseline_bounds[, c(
     "component_label", "lower", "upper", "width"
   )]
 )
 
-cli_h2("Optimized Bounds (tau = 0.2, optimized gamma)")
+cli_h2("Optimized Bounds (tau = {BASELINE_TAU}, optimized gamma)")
 print(
   optimized_bounds[, c(
     "component_label", "lower", "upper", "width"

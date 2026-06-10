@@ -30,7 +30,7 @@ cli_h1("Specification / instrument / tau comparison")
 tau_grid <- if (quick) c(0, 0.05, 0.2) else c(0, 0.01, 0.05, 0.1, 0.2)
 npcs_grid <- if (quick) c(4) else 2:6
 factor_sets <- if (quick) list(c(1, 2, 3)) else list(c(1, 2), c(1, 2, 3), c(1, 2, 3, 4))
-mat_sets <- list(c(2, 5, 9))
+mat_sets <- list(DEFAULT_ID_MATURITIES, c(2), c(2, 5))
 n_starts_opt <- if (quick) 6L else 12L
 
 # --- moments per (mode, n_pcs, components) ---
@@ -62,7 +62,7 @@ eval_fixed <- function(gamma, mom, n_comp, tau) {
     }
     return(list(width = 0, bounded = TRUE, kind = "point", cond = pt$cond))
   }
-  b <- solve_all_profile_bounds(symmetrize_quadratic_system(qs)$quadratic)
+  b <- solve_all_profile_bounds(qs$quadratic)
   list(
     width = sum(b$width),
     bounded = all(b$bounded_lower & b$bounded_upper),

@@ -6,7 +6,7 @@ source(here::here("scripts/utils/common_settings.R"))
 # Core packages (hetid, dplyr, tidyr, gt, DT, here, cli) loaded via common_settings.R
 
 # Load processed data
-data <- readRDS(file.path(OUTPUT_DIR, "temp/data.rds"))
+data <- readRDS(DATA_RDS_PATH)
 
 # Convert to data frame if it's a list
 if (is.list(data) && !is.data.frame(data)) {

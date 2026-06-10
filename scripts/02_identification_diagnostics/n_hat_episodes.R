@@ -162,7 +162,7 @@ if (nrow(validation_positive) > 0) {
 
 # Quarterly cross-check on the stage-01 processed data; this quarterly series is
 # the one underlying stage 03's c_hat
-quarterly <- readRDS(file.path(OUTPUT_DIR, "temp/data.rds"))
+quarterly <- readRDS(DATA_RDS_PATH)
 if (is.list(quarterly) && !is.data.frame(quarterly)) {
   quarterly <- as.data.frame(quarterly)
 }

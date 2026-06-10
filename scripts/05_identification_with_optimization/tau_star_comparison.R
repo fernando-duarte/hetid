@@ -26,9 +26,9 @@ run_tau_star_analysis <- function(mode) {
   gamma_rf <- resid$gamma_rf # NULL outside factors mode
 
   bounded_at <- function(gamma, tau) {
-    b <- solve_all_profile_bounds(symmetrize_quadratic_system(
-      build_quadratic_system(gamma, rep(tau, n_comp), moments)
-    )$quadratic)
+    b <- solve_all_profile_bounds(
+      build_quadratic_system(gamma, rep(tau, n_comp), moments)$quadratic
+    )
     list(
       total = sum(b$width),
       bounded = all(b$bounded_lower & b$bounded_upper)

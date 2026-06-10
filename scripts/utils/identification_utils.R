@@ -11,8 +11,8 @@ get_identification_maturity_lookup <- function(
   data.frame(
     component_id = seq_len(n),
     bond_maturity = maturities,
-    component_label = paste0("maturity_", seq_len(n)),
-    bond_label = paste0("y", maturities),
+    component_label = paste0(HETID_CONSTANTS$MATURITY_PREFIX, seq_len(n)),
+    bond_label = paste0(YIELD_PREFIX, maturities),
     stringsAsFactors = FALSE
   )
 }
@@ -25,7 +25,7 @@ load_identification_inputs <- function(
   mode = "maturities",
   factors = DEFAULT_ID_FACTORS
 ) {
-  data <- readRDS(file.path(OUTPUT_DIR, "temp/data.rds"))
+  data <- readRDS(DATA_RDS_PATH)
   if (is.list(data) && !is.data.frame(data)) {
     data <- as.data.frame(data)
   }
@@ -38,10 +38,10 @@ load_identification_inputs <- function(
 
   list(
     data = data,
-    yield_vars = paste0("y", 1:10),
-    tp_vars = paste0("tp", 1:10),
-    consumption_var = "gr1.pcecc96",
-    pc_vars = paste0("pc", seq_len(n_pcs)),
+    yield_vars = paste0(YIELD_PREFIX, seq_len(HETID_CONSTANTS$MAX_MATURITY)),
+    tp_vars = paste0(TP_PREFIX, seq_len(HETID_CONSTANTS$MAX_MATURITY)),
+    consumption_var = HETID_CONSTANTS$CONSUMPTION_GROWTH_COL,
+    pc_vars = paste0(HETID_CONSTANTS$PC_PREFIX, seq_len(n_pcs)),
     lookup = lookup,
     mode = mode
   )
@@ -61,9 +61,9 @@ compute_identification_residuals <- function(
     n_pcs = n_pcs, data = data
   )
 
-  yield_cols <- paste0("y", 1:10)
-  tp_cols <- paste0("tp", 1:10)
-  pc_cols <- paste0("pc", seq_len(n_pcs))
+  yield_cols <- paste0(YIELD_PREFIX, seq_len(HETID_CONSTANTS$MAX_MATURITY))
+  tp_cols <- paste0(TP_PREFIX, seq_len(HETID_CONSTANTS$MAX_MATURITY))
+  pc_cols <- paste0(HETID_CONSTANTS$PC_PREFIX, seq_len(n_pcs))
   yields_df <- data[, yield_cols]
   tp_df <- data[, tp_cols]
   pcs_mat <- as.matrix(data[, pc_cols])
@@ -113,7 +113,7 @@ compute_identification_residuals <- function(
 #' @return J x I matrix with identical columns
 get_baseline_gamma <- function(
   method = "vfci",
-  n_pcs = 4,
+  n_pcs = HETID_CONSTANTS$DEFAULT_N_PCS,
   n_components = NULL
 ) {
   if (is.null(n_components)) {
@@ -135,7 +135,7 @@ get_baseline_gamma <- function(
 #' @return list with tau_point and tau_set vectors
 get_tau_spec <- function(
   tau_point = 0,
-  tau_set = 0.2,
+  tau_set = BASELINE_TAU,
   n_components = NULL
 ) {
   if (is.null(n_components)) {

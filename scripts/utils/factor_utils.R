@@ -12,7 +12,7 @@ compute_yield_factor_loadings <- function(
   data, n_factors = 3
 ) {
   yield_cols <- paste0(
-    "y", seq_len(HETID_CONSTANTS$MAX_MATURITY)
+    YIELD_PREFIX, seq_len(HETID_CONSTANTS$MAX_MATURITY)
   )
   missing <- setdiff(yield_cols, names(data))
   if (length(missing) > 0) {

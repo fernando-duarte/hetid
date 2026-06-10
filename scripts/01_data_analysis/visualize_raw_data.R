@@ -7,7 +7,7 @@ source(here::here("scripts/utils/common_settings.R"))
 # Load specialized packages for this script
 load_visualization_packages() # ggplot2, gridExtra, corrplot, svglite
 
-input_path <- file.path(OUTPUT_DIR, "temp/data.rds")
+input_path <- DATA_RDS_PATH
 data <- readRDS(input_path)
 df <- as.data.frame(data)
 

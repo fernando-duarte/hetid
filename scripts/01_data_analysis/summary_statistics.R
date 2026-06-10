@@ -4,7 +4,7 @@
 source(here::here("scripts/utils/common_settings.R"))
 # Core packages (hetid, dplyr, tidyr, gt, DT, here, cli) loaded via common_settings.R
 
-input_path <- file.path(OUTPUT_DIR, "temp/data.rds")
+input_path <- DATA_RDS_PATH
 data <- readRDS(input_path)
 df <- as.data.frame(data)
 
@@ -138,7 +138,12 @@ saveRDS(list(
 ), file.path(output_dir, "correlation_matrices.rds"))
 
 key_vars_summary <- all_stats |>
-  filter(Variable %in% c("y2", "y10", "tp2", "tp10", "pc1", "pc2", "gr1.pcecc96")) |>
+  filter(
+    Variable %in% c(
+      "y2", "y10", "tp2", "tp10", "pc1", "pc2",
+      HETID_CONSTANTS$CONSUMPTION_GROWTH_COL
+    )
+  ) |>
   select(Variable, Mean, SD, Min, Max, Skewness, N)
 
 cli_h2("Key Variables Summary")

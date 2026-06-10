@@ -163,7 +163,7 @@ final_results <- list(
   metadata = list(
     created = Sys.time(),
     gamma_method = gamma_method,
-    tau_baseline = 0.2,
+    tau_baseline = BASELINE_TAU,
     n_components = nrow(comparison_table),
     mean_pct_reduction = mean_reduction
   )

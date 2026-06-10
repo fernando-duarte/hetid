@@ -18,7 +18,7 @@ output_dir <- file.path(OUTPUT_TEMP_DIR, "identification_diagnostics")
 dir.create(output_dir, recursive = TRUE, showWarnings = FALSE)
 
 # Load processed data (convert list payloads to a data frame)
-data <- readRDS(file.path(OUTPUT_DIR, "temp/data.rds"))
+data <- readRDS(DATA_RDS_PATH)
 if (is.list(data) && !is.data.frame(data)) {
   data <- as.data.frame(data)
 }

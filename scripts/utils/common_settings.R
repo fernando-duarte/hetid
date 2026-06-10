@@ -17,6 +17,10 @@ OUTPUT_DIR <- file.path(SCRIPTS_DIR, "output")
 OUTPUT_PAPER_DIR <- file.path(OUTPUT_DIR, "for_paper")
 OUTPUT_TEMP_DIR <- file.path(OUTPUT_DIR, "temp")
 
+# Merged quarterly dataset: written by stage 01 (create_data.R), read by all
+# later stages
+DATA_RDS_PATH <- file.path(OUTPUT_TEMP_DIR, "data.rds")
+
 # Create directories if they don't exist
 dir.create(OUTPUT_DIR, recursive = TRUE, showWarnings = FALSE)
 dir.create(OUTPUT_PAPER_DIR, recursive = TRUE, showWarnings = FALSE)
@@ -30,9 +34,15 @@ dir.create(file.path(OUTPUT_TEMP_DIR, "other"), recursive = TRUE, showWarnings =
 
 # Common parameters
 SEED <- 123 # For reproducibility
+BASELINE_TAU <- 0.2 # Baseline set-identification tolerance (shared across stages)
 TAU_STAR_N_STARTS <- 15L # Multistart count for the tau* optimizer oracle
 N_CORES <- parallel::detectCores() - 1 # Leave one core free
 MAX_N_PCS <- HETID_CONSTANTS$MAX_N_PCS # Use package constant
+
+# Column-name prefixes derived from the package's ACM schema (the single
+# source of truth for the naming convention; internal, hence the :::)
+YIELD_PREFIX <- hetid:::HETID_ACM_SCHEMA$yields$prefix_new
+TP_PREFIX <- hetid:::HETID_ACM_SCHEMA$term_premia$prefix_new
 
 # Plotting parameters
 PLOT_WIDTH <- 8

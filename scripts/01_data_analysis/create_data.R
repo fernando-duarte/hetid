@@ -111,7 +111,9 @@ summary_info <- list(
   `Term Premia` = paste0("tp", min(maturity_range), " to tp", max(maturity_range)),
   `Principal Components` = paste0("pc1 to pc", MAX_N_PCS),
   `Lagged PCs` = paste0("pc1_lag1 to pc", MAX_N_PCS, "_lag1"),
-  `Other Variables` = "gr1.pcecc96 (consumption growth)"
+  `Other Variables` = paste0(
+    HETID_CONSTANTS$CONSUMPTION_GROWTH_COL, " (consumption growth)"
+  )
 )
 
 summary_df <- data.frame(
@@ -136,6 +138,6 @@ summary_table <- create_formatted_table(
 
 print(summary_table)
 
-output_path <- file.path(OUTPUT_DIR, "temp/data.rds")
+output_path <- DATA_RDS_PATH
 dir.create(dirname(output_path), recursive = TRUE, showWarnings = FALSE)
 saveRDS(data, output_path)

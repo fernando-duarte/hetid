@@ -1,16 +1,6 @@
 # Optimization Utilities -- outer Gamma optimization. The inner profile-bounds
 # solver now lives in profile_bounds.R (sourced via common_settings.R).
 
-symmetrize_quadratic_system <- function(quad_system) {
-  q <- quad_system$quadratic
-  for (idx in seq_along(q$A_i)) {
-    ai <- q$A_i[[idx]]
-    quad_system$quadratic$A_i[[idx]] <-
-      (ai + t(ai)) / 2
-  }
-  quad_system
-}
-
 compute_total_width <- function(bounds_tbl) {
   sum(bounds_tbl$width)
 }
@@ -40,7 +30,6 @@ objective_gamma_only <- function(par, moments, tau,
       quad_sys <- build_quadratic_system(
         gamma, tau, moments
       )
-      quad_sys <- symmetrize_quadratic_system(quad_sys)
       bounds_tbl <- solve_all_profile_bounds(
         quad_sys$quadratic
       )
@@ -65,9 +54,7 @@ objective_gamma_only <- function(par, moments, tau,
   gamma <- normalize_gamma_columns(gamma)
   bt <- tryCatch(
     {
-      qs <- symmetrize_quadratic_system(
-        build_quadratic_system(gamma, tau, moments)
-      )
+      qs <- build_quadratic_system(gamma, tau, moments)
       solve_all_profile_bounds(qs$quadratic)
     },
     error = function(e) NULL

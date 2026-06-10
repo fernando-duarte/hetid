@@ -137,13 +137,13 @@ comp_detail <- vapply(
   }, character(1)
 )
 
-# Baseline status: tau=0 reports KKT validity, tau=0.2 reports boundedness (the
-# diagnostic field now carries boundedness, so FALSE means an unbounded set).
+# Baseline status: tau=0 reports KKT validity, tau=tau_set reports boundedness
+# (the diagnostic field now carries boundedness, so FALSE means an unbounded set).
 baseline_conv <- if (
   baseline_diag$all_converged_tau0 &&
     baseline_diag$all_converged_tau_set
 ) {
-  "Baseline tau=0 bounds valid; tau=0.2 set bounded."
+  paste0("Baseline tau=0 bounds valid; tau=", tau_set, " set bounded.")
 } else {
   paste0(
     "Baseline status: tau=0 ",
