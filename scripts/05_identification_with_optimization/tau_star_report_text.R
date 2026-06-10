@@ -2,38 +2,8 @@
 # reader who knows the math/econ but not the code. Bottom line first, then
 # refreshers, per-mode results, the honest reading of the curvature
 # diagnostic, artifact pointers, and numerical notes. All numbers are
-# computed from the saved results, never hard-coded.
-
-.fmt_tau <- function(x, digits = 4) {
-  if (!is.finite(x)) "n/a" else formatC(x, format = "f", digits = digits)
-}
-
-.fmt_tau_star <- function(tau_star, capped) {
-  if (!is.finite(tau_star)) {
-    return("n/a")
-  }
-  base <- .fmt_tau(tau_star)
-  if (isTRUE(capped)) paste0(">= ", base, " (search cap reached)") else base
-}
-
-.ts_of <- function(res, label) {
-  i <- match(label, res$tau_stars$gamma)
-  list(
-    tau_star = if (is.na(i)) NA_real_ else res$tau_stars$tau_star[i],
-    capped = if (is.na(i)) FALSE else res$tau_stars$capped[i]
-  )
-}
-
-.mode_block <- function(res, label) {
-  rows <- vapply(seq_len(nrow(res$tau_stars)), function(i) {
-    sprintf(
-      "    %-24s tau* = %s",
-      paste0(res$tau_stars$gamma[i], ":"),
-      .fmt_tau_star(res$tau_stars$tau_star[i], res$tau_stars$capped[i])
-    )
-  }, character(1))
-  c(sprintf("  %s", label), rows)
-}
+# computed from the saved results, never hard-coded. Formatting helpers live
+# in tau_star_report_utils.R.
 
 build_tau_star_summary <- function(results) {
   mat <- results$maturities
@@ -60,7 +30,21 @@ build_tau_star_summary <- function(results) {
     mat$sweep$recession_normalized[mat$sweep$gamma == "VFCI (rank-1)"],
     fac$sweep$recession_normalized[fac$sweep$gamma == "VFCI (rank-1)"]
   )
-  rec_max <- formatC(max(abs(rec_all), na.rm = TRUE), format = "e", digits = 1)
+  rec_max_num <- max(abs(rec_all), na.rm = TRUE)
+  rec_max <- formatC(rec_max_num, format = "e", digits = 1)
+  rec_pct <- formatC(rec_max_num * 100, format = "g", digits = 2)
+  cross_tau <- vf_rows$tau[which(vf_rows$recession_normalized < 0)[1]]
+  cross_lines <- if (is.na(cross_tau)) {
+    "  and it never crosses zero on the grid."
+  } else {
+    c(
+      sprintf(
+        "  and its zero-crossing (near tau = %.3f, maturities mode) sits well",
+        cross_tau
+      ),
+      sprintf("  past the empirical tau* (%s).", .fmt_tau(vf_m$tau_star))
+    )
+  }
 
   title <- if (is.finite(ratio_m)) {
     c(
@@ -94,12 +78,16 @@ build_tau_star_summary <- function(results) {
     "  - Even below tau*, the set is enormous: total width grows from 0 (point",
     sprintf("    identification at tau = 0) to %s.", width_path),
     "    Bounded does not mean informative here.",
-    "  - Curvature diagnostic: the normalized recession metric stays within",
+    "  - Curvature diagnostic: across the whole grid the normalized recession",
     sprintf(
-      "    %s of zero at every tau -- zero to machine precision. The rank-1",
+      "    metric stays within %s of zero -- a curvature margin of at most",
       rec_max
     ),
-    "    baseline sits on the boundedness knife edge at every tau > 0.",
+    sprintf(
+      "    %s%% of the typical constraint scale. The rank-1 baseline sits",
+      rec_pct
+    ),
+    "    essentially on the boundedness knife edge at every tau > 0.",
     sprintf(
       "  - Optimized gamma: tau* = %s (maturities) / %s (factors) -- the",
       .fmt_tau_star(op_m$tau_star, op_m$capped),
@@ -143,15 +131,16 @@ build_tau_star_summary <- function(results) {
     "  largest curvature max_i d'A_i(tau)d, normalized by the mean Frobenius",
     "  norm of the A_i. A clearly negative value would certify a direction",
     "  along which no constraint curves upward -- a necessary condition for",
-    "  an unbounded set. For the VFCI gamma the metric never separates from",
+    "  an unbounded set. For the VFCI gamma the margin is negligible at",
     sprintf(
-      "  numerical zero (|metric| <= %s), so it cannot locate tau*: its sign",
-      rec_max
+      "  every tau (|metric| <= %s, at most %s%% of the constraint scale)",
+      rec_max, rec_pct
     ),
-    "  changes are noise, not a second tau* estimate. What it does establish",
-    "  is degeneracy -- the rank-1 set is borderline-unbounded at every",
-    "  tau > 0, consistent with the tiny empirical tau* and the explosive",
-    "  widths just below it.",
+    cross_lines,
+    "  It therefore cannot locate tau* and is not a second tau* estimate.",
+    "  What it does establish is degeneracy: the rank-1 set is",
+    "  borderline-unbounded at every tau > 0, consistent with the tiny",
+    "  empirical tau* and the explosive widths just below it.",
     "",
     "RELATED ARTIFACTS (this directory; {mode} = maturities or factors)",
     "  tau_star_comparison_{mode}.csv ......... tau* per gamma choice",

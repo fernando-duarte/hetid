@@ -12,14 +12,19 @@ save_plot_pair <- function(p, dir, name) {
   invisible(TRUE)
 }
 
-# Published sweep: widths become "unbounded"/"unreliable" strings via the
-# shared formatters; the curvature diagnostic is shown in scientific notation
-# (it lives at machine-noise scale) and only where computed (coarse grid).
+# Published sweep: widths become "unbounded"/"unreliable" strings keyed to
+# the three-state status (an unbounded set is reported as unbounded even when
+# a finite side's validity certificate also failed); the curvature diagnostic
+# is shown in scientific notation and only where computed (coarse grid).
 published_sweep <- function(sweep) {
   data.frame(
     tau = sweep$tau,
     gamma = sweep$gamma,
-    total_width = format_width(sweep$total_width, sweep$all_valid),
+    total_width = ifelse(
+      sweep$status == "bounded",
+      formatC(sweep$total_width, format = "f", digits = 4),
+      sweep$status
+    ),
     status = sweep$status,
     grid = sweep$grid,
     recession_normalized = ifelse(
@@ -39,8 +44,8 @@ plot_tau_star_overlay <- function(sweep, tau_stars, mode) {
   ts_opt <- ts[["optimized"]]
   title <- if (is.finite(ts_opt) && is.finite(ts_vfci) && ts_vfci > 0) {
     sprintf(
-      "Optimizing gamma extends slack tolerance ~%.0fx: tau* %.4f -> %.3f (%s mode)",
-      ts_opt / ts_vfci, ts_vfci, ts_opt, mode
+      "Optimizing gamma extends slack tolerance ~%.0fx (%s mode)",
+      ts_opt / ts_vfci, mode
     )
   } else {
     sprintf("Identified-set width vs. slack tau (%s mode)", mode)
@@ -54,8 +59,8 @@ plot_tau_star_overlay <- function(sweep, tau_stars, mode) {
     labs(
       title = title,
       subtitle = paste0(
-        "tau* by gamma: ", ts_label,
-        ". Verticals mark tau*; log scale, finite widths only."
+        "tau* by gamma: ", ts_label, ".\n",
+        "Verticals mark tau*; log scale, finite widths only."
       ),
       x = expression(tau), y = "Total profile-bound width (log, finite only)",
       color = "gamma"
@@ -67,8 +72,12 @@ plot_tau_star_overlay <- function(sweep, tau_stars, mode) {
       xintercept = ts_opt, linetype = "dashed", color = "#1B7837"
     )
   }
-  ts_rf <- ts[["reduced-form (rank-3)"]]
-  if (!is.null(ts_rf) && is.finite(ts_rf)) {
+  ts_rf <- if ("reduced-form (rank-3)" %in% names(ts)) {
+    ts[["reduced-form (rank-3)"]]
+  } else {
+    NA_real_
+  }
+  if (is.finite(ts_rf)) {
     p <- p + geom_vline(
       xintercept = ts_rf, linetype = "dotted", color = "#B2182B"
     )
@@ -91,11 +100,14 @@ plot_vfci_blowup <- function(sweep, tau_star, mode) {
   } else {
     sprintf("VFCI baseline: identified set unbounded for tau >= %.4f", tau_star)
   }
+  ylim <- range(df$total_width) * c(0.8, 1.6)
   p <- ggplot(df, aes(tau, total_width))
   if (xmax > tau_star) {
+    # finite band bounds (clipped by coord_cartesian below) keep the log
+    # scale free of 0/Inf values
     p <- p +
       annotate("rect",
-        xmin = tau_star, xmax = xmax, ymin = -Inf, ymax = Inf,
+        xmin = tau_star, xmax = xmax, ymin = ylim[1] / 10, ymax = ylim[2] * 10,
         fill = "#B2182B", alpha = 0.08
       ) +
       annotate("text",
@@ -104,6 +116,7 @@ plot_vfci_blowup <- function(sweep, tau_star, mode) {
       )
   }
   p <- p +
+    coord_cartesian(ylim = ylim) +
     geom_line(color = "#2166AC") +
     geom_point(aes(shape = status), color = "#2166AC", size = 1.6) +
     scale_shape_manual(values = c(bounded = 16, unreliable = 4)) +
@@ -112,7 +125,7 @@ plot_vfci_blowup <- function(sweep, tau_star, mode) {
     labs(
       title = title,
       subtitle = paste0(
-        sprintf("Total width explodes as tau -> tau* (dashed; %s mode). ", mode),
+        sprintf("Total width explodes as tau -> tau* (dashed; %s mode).\n", mode),
         "tau = 0 is point-identified (width 0, not shown on the log scale)."
       ),
       x = expression(tau), y = "Total profile-bound width (log scale)",

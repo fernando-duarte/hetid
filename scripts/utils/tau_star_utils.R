@@ -119,10 +119,10 @@ tau_star_optimized <- function(gamma_start, moments, tau_lo = 0.2, cap = 5,
 # unit directions d, of the largest curvature max_i d'A_i d. A clearly
 # negative value certifies a common non-positive-curvature direction
 # (necessary for an unbounded set). Reported raw and normalized by the mean
-# Frobenius norm of the A_i, so "zero to machine precision" is well defined.
+# Frobenius norm of the A_i, so its magnitude is comparable across taus.
 # This is a DIAGNOSTIC of how close the system is to losing boundedness, not
-# a tau* locator: for a near-degenerate (rank-1) gamma it sits at numerical
-# zero on both sides of tau*.
+# a tau* locator: for a near-degenerate (rank-1) gamma its margin is
+# negligible on both sides of tau*.
 recession_metric <- function(gamma, tau, moments, n_dir = 8000L, seed = 1L) {
   a_list <- lapply(
     tau_quadratic_system(gamma, tau, moments)$A_i,

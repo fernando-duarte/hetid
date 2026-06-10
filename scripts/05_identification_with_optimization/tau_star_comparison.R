@@ -9,8 +9,8 @@
 # as tau -> tau*, every evaluation carries the house bounded / unbounded /
 # unreliable status, and the curvature (recession) metric is computed as a
 # degeneracy DIAGNOSTIC -- not a second tau* locator (for the rank-1 VFCI
-# gamma it sits at numerical zero on both sides of tau*, certifying a knife
-# edge it cannot resolve).
+# gamma its normalized margin is negligible on both sides of tau*,
+# certifying a knife edge it cannot resolve).
 # NOTE: each A_i = Q_iQ_i' - d_i S_i^(2) has at most one positive eigenvalue
 # (rank-1 PSD minus d_i>=0 times a Gram/PSD matrix); boundedness is the JOINT
 # recession condition that the positive-curvature directions cover R^I, a

@@ -12,6 +12,7 @@
 source(here::here("scripts/utils/common_settings.R"))
 load_visualization_packages()
 report_dir <- here::here("scripts/05_identification_with_optimization")
+source(file.path(report_dir, "tau_star_report_utils.R"))
 source(file.path(report_dir, "tau_star_report_figures.R"))
 source(file.path(report_dir, "tau_star_report_text.R"))
 
