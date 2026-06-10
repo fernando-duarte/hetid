@@ -23,15 +23,17 @@
 
 source(here::here("scripts/utils/common_settings.R"))
 source(here::here("scripts/utils/ixj_identification.R"))
+source(here::here("scripts/05_identification_with_optimization/spec_comparison_design.R"))
 
 quick <- nzchar(Sys.getenv("HETID_SPEC_QUICK"))
 cli_h1("Specification / instrument / tau comparison")
 
-tau_grid <- if (quick) c(0, 0.05, 0.2) else c(0, 0.01, 0.05, 0.1, 0.2)
-npcs_grid <- if (quick) c(4) else 2:6
-factor_sets <- if (quick) list(c(1, 2, 3)) else list(c(1, 2), c(1, 2, 3), c(1, 2, 3, 4))
-mat_sets <- list(DEFAULT_ID_MATURITIES, c(2), c(2, 5))
-n_starts_opt <- if (quick) 6L else 12L
+design <- spec_comparison_design(if (quick) "quick" else "full")
+tau_grid <- design$tau_grid
+npcs_grid <- design$npcs_grid
+factor_sets <- design$factor_sets
+mat_sets <- design$mat_sets
+n_starts_opt <- design$n_starts_opt
 
 # --- moments per (mode, n_pcs, components) ---
 # Pure (no shared cache): each group has a unique key, so a within-process cache

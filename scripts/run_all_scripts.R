@@ -164,9 +164,9 @@ scripts_to_run <- list(
   list(
     path = here::here(
       "scripts/05_identification_with_optimization",
-      "tau_sensitivity.R"
+      "tau_star_report.R"
     ),
-    desc = "Locating tau* (Bounded-to-Unbounded Sensitivity)"
+    desc = "Reporting Identification Strength (tau*)"
   ),
   list(
     path = here::here(
@@ -175,6 +175,13 @@ scripts_to_run <- list(
     ),
     desc = "Comparing Specifications, Instruments, and tau (quick)",
     env = c(HETID_SPEC_QUICK = "1")
+  ),
+  list(
+    path = here::here(
+      "scripts/05_identification_with_optimization",
+      "spec_comparison_report.R"
+    ),
+    desc = "Reporting Specification Comparison Results"
   ),
 
   # Final results production

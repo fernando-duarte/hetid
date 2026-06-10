@@ -122,3 +122,6 @@ if (file.exists(file.path(utils_dir, "format_utils.R"))) {
 if (file.exists(file.path(utils_dir, "latex_table_utils.R"))) {
   source(file.path(utils_dir, "latex_table_utils.R"))
 }
+if (file.exists(file.path(utils_dir, "tau_star_utils.R"))) {
+  source(file.path(utils_dir, "tau_star_utils.R"))
+}

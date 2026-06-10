@@ -1,19 +1,63 @@
-# Three-way identification-strength comparison via tau* (the slack at which the
-# identified set goes bounded -> unbounded), for three gamma choices:
-#   VFCI (rank-1 baseline), reduced-form (rank-3 benchmark), optimized.
+# Identification strength via tau* -- the slack at which the identified set
+# goes bounded -> unbounded -- compared across gamma choices:
+#   VFCI (rank-1 baseline), reduced-form (rank-3 benchmark; factors mode
+#   only), and optimized (gamma re-optimized at each candidate tau).
 # tau* is scale-free and needs no cherry-picked tau, so it is the honest
 # quantitative summary of "what optimization buys" (it EXTENDS tau*).
+# Single home of the tau* computation, including the VFCI deep dive: a fine
+# tau grid plus the recorded bisection evaluations resolve the width blow-up
+# as tau -> tau*, every evaluation carries the house bounded / unbounded /
+# unreliable status, and the curvature (recession) metric is computed as a
+# degeneracy DIAGNOSTIC -- not a second tau* locator (for the rank-1 VFCI
+# gamma it sits at numerical zero on both sides of tau*, certifying a knife
+# edge it cannot resolve).
 # NOTE: each A_i = Q_iQ_i' - d_i S_i^(2) has at most one positive eigenvalue
 # (rank-1 PSD minus d_i>=0 times a Gram/PSD matrix); boundedness is the JOINT
 # recession condition that the positive-curvature directions cover R^I, a
 # (gamma, tau) property -- not implied by rank(gamma).
-# Runs once per identification mode (maturities and factors), writing
-# mode-suffixed outputs. The reduced-form gamma benchmark exists only in
-# factors mode (rank-3, mapped from the PCA loadings), so the maturities-mode
-# summary has VFCI and optimized rows only.
+# Outputs (machine-readable, temp/identification_optimized): raw per-mode
+# sweep CSVs and self-describing rds bundles. The paper artifacts are written
+# by tau_star_report.R from those bundles.
 
 source(here::here("scripts/utils/common_settings.R"))
-load_visualization_packages()
+
+COARSE_TAUS <- seq(0, 0.2, by = 0.005)
+FINE_N <- 20L
+BISECT_ITERS <- 40L
+RECESSION_N_DIR <- 8000L
+RECESSION_SEED <- 1L
+OPT_TAU_LO <- 0.2
+OPT_TAU_CAP <- 5
+
+temp_dir <- file.path(OUTPUT_TEMP_DIR, "identification_optimized")
+dir.create(temp_dir, recursive = TRUE, showWarnings = FALSE)
+
+# Sweep + bisect one FIXED gamma: coarse grid (with the curvature diagnostic),
+# fine grid inside the bounded region, and the bisection trace, all stacked
+# into one sweep table alongside that gamma's tau*.
+analyze_fixed_gamma <- function(label, gamma, moments) {
+  coarse <- sweep_fixed_gamma(gamma, moments, COARSE_TAUS, "coarse")
+  rec <- lapply(coarse$tau, function(t) {
+    if (t == 0) {
+      return(list(raw = NA_real_, normalized = NA_real_))
+    }
+    recession_metric(gamma, t, moments,
+      n_dir = RECESSION_N_DIR, seed = RECESSION_SEED
+    )
+  })
+  coarse$recession_raw <- vapply(rec, `[[`, numeric(1), "raw")
+  coarse$recession_normalized <- vapply(rec, `[[`, numeric(1), "normalized")
+  ts <- tau_star_fixed(gamma, moments, coarse, iters = BISECT_ITERS)
+  fine <- sweep_fixed_gamma(gamma, moments, fine_tau_grid(coarse, FINE_N), "fine")
+  extra <- rbind(fine, ts$trace)
+  if (!is.null(extra)) {
+    extra$recession_raw <- NA_real_
+    extra$recession_normalized <- NA_real_
+  }
+  sweep <- rbind(coarse, extra)
+  sweep$gamma <- label
+  list(sweep = sweep, tau_star = ts$tau_star, capped = ts$capped)
+}
 
 run_tau_star_analysis <- function(mode) {
   cli_h1("Identification strength: tau* across gamma choices ({mode} mode)")
@@ -22,154 +66,77 @@ run_tau_star_analysis <- function(mode) {
   resid <- compute_identification_residuals(inp$data, mode = mode)
   moments <- compute_identification_moments(resid$w1, resid$w2, resid$pcs_aligned)
   n_comp <- nrow(inp$lookup)
-  gamma_vfci <- get_baseline_gamma("vfci", n_components = n_comp)
-  gamma_rf <- resid$gamma_rf # NULL outside factors mode
-
-  bounded_at <- function(gamma, tau) {
-    b <- solve_all_profile_bounds(
-      build_quadratic_system(gamma, rep(tau, n_comp), moments)$quadratic
-    )
-    list(
-      total = sum(b$width),
-      bounded = all(b$bounded_lower & b$bounded_upper)
-    )
+  fixed <- list("VFCI (rank-1)" = get_baseline_gamma("vfci", n_components = n_comp))
+  if (!is.null(resid$gamma_rf)) {
+    fixed[["reduced-form (rank-3)"]] <- resid$gamma_rf
   }
 
-  # tau* for a FIXED gamma: bisect the bounded -> unbounded transition.
-  tau_star_fixed <- function(gamma, grid = seq(0.005, 0.2, by = 0.005)) {
-    bnd <- vapply(grid, function(t) bounded_at(gamma, t)$bounded, logical(1))
-    if (all(bnd)) {
-      return(max(grid))
-    }
-    hi <- grid[which(!bnd)[1]]
-    lo <- if (any(bnd & grid < hi)) max(grid[bnd & grid < hi]) else 0
-    for (k in seq_len(40)) {
-      mid <- (lo + hi) / 2
-      if (bounded_at(gamma, mid)$bounded) lo <- mid else hi <- mid
-    }
-    (lo + hi) / 2
-  }
-
-  # tau* for the OPTIMIZER: largest tau where re-optimizing yields a
-  # bounded+valid set (objective_final finite). Bracket up from 0.2, bisect.
-  opt_bounded <- function(tau) {
-    is.finite(run_gamma_optimization(
-      gamma_vfci, moments, rep(tau, n_comp),
-      n_starts = TAU_STAR_N_STARTS, seed = SEED
-    )$objective_final)
-  }
-
-  cli_h2("tau* (fixed gammas)")
-  ts_vfci <- tau_star_fixed(gamma_vfci)
-  cli_alert_info("tau*(VFCI, rank {qr(gamma_vfci)$rank}) = {.val {round(ts_vfci, 4)}}")
-  ts_rf <- NA_real_
-  if (!is.null(gamma_rf)) {
-    ts_rf <- tau_star_fixed(gamma_rf)
-    cli_alert_info(
-      "tau*(reduced-form, rank {qr(gamma_rf)$rank}) = {.val {round(ts_rf, 4)}}"
-    )
-  }
+  cli_h2("tau* (fixed gammas; sweep + bisection)")
+  fixed_res <- lapply(names(fixed), function(lbl) {
+    r <- analyze_fixed_gamma(lbl, fixed[[lbl]], moments)
+    cli_alert_info("tau*({lbl}) = {.val {round(r$tau_star, 4)}}")
+    r
+  })
+  names(fixed_res) <- names(fixed)
+  ts_vfci <- fixed_res[["VFCI (rank-1)"]]$tau_star
 
   cli_h2("tau* (optimizer; bracket + bisection)")
-  lo <- 0.2
-  hi <- 0.4
-  ts_opt <- NA_real_
-  if (!opt_bounded(lo)) {
-    cli_alert_warning("Optimizer not bounded even at tau=0.2; tau*(opt) < 0.2")
+  opt <- tau_star_optimized(fixed[["VFCI (rank-1)"]], moments,
+    tau_lo = OPT_TAU_LO, cap = OPT_TAU_CAP
+  )
+  if (is.na(opt$tau_star)) {
+    cli_alert_warning(
+      "Optimizer not bounded even at tau={OPT_TAU_LO}; tau*(opt) < {OPT_TAU_LO}"
+    )
   } else {
-    while (opt_bounded(hi) && hi < 5) {
-      lo <- hi
-      hi <- hi * 2
-    }
-    if (opt_bounded(hi)) {
-      ts_opt <- hi
-      cli_alert_info("tau*(opt) >= {.val {hi}} (search cap)")
-    } else {
-      for (k in seq_len(25)) {
-        mid <- (lo + hi) / 2
-        if (opt_bounded(mid)) lo <- mid else hi <- mid
-      }
-      ts_opt <- (lo + hi) / 2
-    }
+    cli_alert_success("tau*(optimized) = {.val {round(opt$tau_star, 4)}}")
   }
-  cli_alert_success("tau*(optimized) = {.val {round(ts_opt, 4)}}")
-  cli_alert_success(
-    "Optimization extends tau* by ~{.val {round(ts_opt / ts_vfci, 1)}}x vs VFCI"
+  if (is.finite(opt$tau_star) && is.finite(ts_vfci) && ts_vfci > 0) {
+    cli_alert_success(
+      "Optimization extends tau* by ~{.val {round(opt$tau_star / ts_vfci, 1)}}x vs VFCI"
+    )
+  }
+
+  sweep <- do.call(rbind, lapply(fixed_res, `[[`, "sweep"))
+  sweep <- sweep[order(sweep$gamma, sweep$tau), c(
+    "tau", "gamma", "total_width", "all_bounded", "all_valid", "status",
+    "grid", "recession_raw", "recession_normalized"
+  )]
+  rownames(sweep) <- NULL
+  vf_rec <- abs(sweep$recession_normalized[sweep$gamma == "VFCI (rank-1)"])
+  cli_alert_info(paste0(
+    "Curvature diagnostic (VFCI, normalized): within ",
+    formatC(max(vf_rec, na.rm = TRUE), format = "e", digits = 1),
+    " of zero across the grid -- a degeneracy check, not a tau* locator"
+  ))
+
+  tau_stars <- data.frame(
+    gamma = c(names(fixed_res), "optimized"),
+    tau_star = c(vapply(fixed_res, `[[`, numeric(1), "tau_star"), opt$tau_star),
+    capped = c(vapply(fixed_res, `[[`, logical(1), "capped"), opt$capped),
+    stringsAsFactors = FALSE
+  )
+  res <- list(
+    mode = mode, tau_stars = tau_stars, sweep = sweep,
+    settings = list(
+      coarse_taus = COARSE_TAUS, fine_n = FINE_N, bisect_iters = BISECT_ITERS,
+      n_dir = RECESSION_N_DIR, recession_seed = RECESSION_SEED,
+      n_starts = TAU_STAR_N_STARTS, opt_tau_lo = OPT_TAU_LO,
+      opt_tau_cap = OPT_TAU_CAP
+    )
   )
 
-  # width-vs-tau overlay for the fixed gammas
-  grid <- seq(0, 0.2, by = 0.005)
-  sweep_one <- function(gamma, label) {
-    do.call(rbind, lapply(grid, function(t) {
-      if (t == 0) {
-        return(data.frame(tau = 0, total_width = 0, all_bounded = TRUE, gamma = label))
-      }
-      w <- bounded_at(gamma, t)
-      data.frame(tau = t, total_width = w$total, all_bounded = w$bounded, gamma = label)
-    }))
-  }
-  sweep_df <- sweep_one(gamma_vfci, "VFCI (rank-1)")
-  gammas <- "VFCI (rank-1)"
-  tau_stars <- ts_vfci
-  if (!is.null(gamma_rf)) {
-    sweep_df <- rbind(sweep_df, sweep_one(gamma_rf, "reduced-form (rank-3)"))
-    gammas <- c(gammas, "reduced-form (rank-3)")
-    tau_stars <- c(tau_stars, ts_rf)
-  }
-  gammas <- c(gammas, "optimized")
-  tau_stars <- c(tau_stars, ts_opt)
-
-  out_dir <- file.path(OUTPUT_PAPER_DIR, "identification")
-  dir.create(out_dir, recursive = TRUE, showWarnings = FALSE)
-  summary_df <- data.frame(gamma = gammas, tau_star = tau_stars)
-  write.csv(summary_df,
-    file.path(out_dir, paste0("tau_star_comparison_", mode, ".csv")),
+  write.csv(sweep, file.path(temp_dir, paste0("tau_star_sweep_", mode, ".csv")),
     row.names = FALSE
   )
-  write.csv(sweep_df,
-    file.path(out_dir, paste0("tau_star_width_sweep_", mode, ".csv")),
-    row.names = FALSE
-  )
-
-  p <- ggplot(
-    sweep_df[is.finite(sweep_df$total_width), ],
-    aes(tau, total_width, color = gamma)
-  ) +
-    geom_line() +
-    geom_point(size = 1.3) +
-    geom_vline(xintercept = ts_vfci, linetype = "dotted", color = "#2166AC") +
-    geom_vline(xintercept = ts_opt, linetype = "dashed", color = "#1B7837") +
-    scale_y_log10() +
-    labs(
-      title = sprintf(
-        "Identification strength: identified-set width vs. slack tau (%s mode)",
-        mode
-      ),
-      subtitle = sprintf(
-        "tau*: VFCI %.3f, reduced-form %.3f, optimized %.3f (green dashed)",
-        ts_vfci, ts_rf, ts_opt
-      ),
-      x = expression(tau), y = "Total profile-bound width (log, finite only)",
-      color = "gamma"
-    ) +
-    theme_minimal() +
-    theme(legend.position = "bottom")
-  if (!is.null(gamma_rf)) {
-    p <- p + geom_vline(xintercept = ts_rf, linetype = "dotted", color = "#B2182B")
-  }
-  ggsave(file.path(out_dir, paste0("tau_star_comparison_", mode, ".png")), p,
-    width = PLOT_WIDTH, height = PLOT_HEIGHT, dpi = PLOT_DPI
-  )
-  ggsave(file.path(out_dir, paste0("tau_star_comparison_", mode, ".svg")), p,
-    width = PLOT_WIDTH, height = PLOT_HEIGHT
-  )
+  saveRDS(res, file.path(temp_dir, paste0("tau_star_comparison_", mode, ".rds")))
 
   cli_h2("Summary ({mode} mode)")
-  print(summary_df, digits = 4)
+  print(tau_stars, digits = 4)
   cli_alert_success(
-    "Saved tau_star_comparison_{mode} CSV/PNG/SVG to {.path {out_dir}}"
+    "Saved {mode}-mode tau* sweep + results to {.path {temp_dir}}"
   )
-  invisible(summary_df)
+  res
 }
 
 for (id_mode in c("maturities", "factors")) {
