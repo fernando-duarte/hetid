@@ -15,7 +15,8 @@
 #'   \item{MACHINE_EPSILON}{Machine precision}
 #'   \item{MATRIX_SYMMETRY_TOL}{Tolerance for matrix symmetry
 #'     checks}
-#'   \item{MIN_OBSERVATIONS}{Minimum observations for estimation}
+#'   \item{DEGENERACY_TOLERANCE}{Scale-free threshold below which the
+#'     variance positivity diagnostic flags a maturity as degenerate}
 #'   \item{PERCENT_TO_DECIMAL}{Percentage to decimal divisor}
 #'   \item{MONTHS_PER_QUARTER}{Calendar months per quarter (3)}
 #'   \item{ACM_DATE_FORMAT}{Date format in ACM files}
@@ -54,9 +55,7 @@ HETID_CONSTANTS <- list(
   MACHINE_EPSILON = .Machine$double.eps,
   MATRIX_SYMMETRY_TOL = 1e-10, # Matrix symmetry check tol
   PERCENT_TO_DECIMAL = 100, # Divisor for percentage conversion
-
-  # Statistical requirements
-  MIN_OBSERVATIONS = 3L, # Minimum observations needed
+  DEGENERACY_TOLERANCE = 1e-8, # Variance positivity diagnostic
 
   # Calendar
   MONTHS_PER_QUARTER = 3L,

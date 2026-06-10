@@ -41,69 +41,6 @@ test_that("validate_maturity_index accepts valid inputs", {
   expect_true(validate_maturity_index(5.0))
 })
 
-# --- validate_min_observations ---
-
-test_that("validate_min_observations accepts sufficient counts", {
-  expect_true(validate_min_observations(3))
-  expect_true(validate_min_observations(100))
-  expect_true(validate_min_observations(3L))
-})
-
-test_that("validate_min_observations rejects too few observations", {
-  expect_error(
-    validate_min_observations(2),
-    "Not enough complete observations"
-  )
-  expect_error(
-    validate_min_observations(0),
-    "need at least 3"
-  )
-  expect_error(
-    validate_min_observations(1),
-    "need at least 3"
-  )
-})
-
-test_that("validate_min_observations respects custom minimum", {
-  expect_true(validate_min_observations(10, min_obs = 10))
-  expect_error(
-    validate_min_observations(9, min_obs = 10),
-    "need at least 10"
-  )
-})
-
-test_that("validate_min_observations rejects non-numeric inputs", {
-  expect_error(
-    validate_min_observations("a"),
-    "single finite numeric"
-  )
-  expect_error(
-    validate_min_observations(NA),
-    "single finite numeric"
-  )
-  expect_error(
-    validate_min_observations(Inf),
-    "single finite numeric"
-  )
-  expect_error(
-    validate_min_observations(c(5, 10)),
-    "single finite numeric"
-  )
-  expect_error(
-    validate_min_observations(NULL),
-    "single finite numeric"
-  )
-})
-
-test_that("validate_min_observations boundary at default minimum", {
-  min_obs <- HETID_CONSTANTS$MIN_OBSERVATIONS
-  expect_true(validate_min_observations(min_obs))
-  expect_error(
-    validate_min_observations(min_obs - 1),
-    "Not enough complete observations"
-  )
-})
-
 # --- validate_n_pcs ---
 
 test_that("validate_n_pcs rejects non-integer values", {

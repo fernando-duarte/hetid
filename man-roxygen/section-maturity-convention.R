@@ -15,7 +15,9 @@
 #' "Maturity" therefore means w2 column index within the system, not
 #' necessarily a true bond maturity; calling analyses map column indices
 #' to bond labels externally when the system is built from a selection
-#' of bonds. Per-maturity outputs are named \code{maturity_N} where N is
+#' of bonds. Column i of \code{gamma} and element i of \code{tau} pair
+#' with w2 column i by position; bond labels never enter the alignment.
+#' Per-maturity outputs are named \code{maturity_N} where N is
 #' the w2 column index, with element k corresponding to
 #' \code{maturities[k]}. Inner theta-axis dimensions (each \code{r_i_1}
 #' matrix, \code{s_i_1} vector, and \code{s_i_2} matrix) are always full

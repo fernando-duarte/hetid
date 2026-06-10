@@ -99,11 +99,11 @@ if (!is.finite(base_total)) {
 # Build optimization trace from all starts
 trace <- data.frame(
   start = seq_along(opt_result$all_results),
-  objective = sapply(
-    opt_result$all_results, function(r) r$value
+  objective = vapply(
+    opt_result$all_results, function(r) r$value, numeric(1)
   ),
-  convergence = sapply(
-    opt_result$all_results, function(r) r$convergence
+  convergence = vapply(
+    opt_result$all_results, function(r) r$convergence, numeric(1)
   )
 )
 

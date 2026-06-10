@@ -209,3 +209,25 @@ test_that("extract_acm_data error handling", {
     "ACM data not available"
   )
 })
+
+test_that("normalize_acm_date_column converts character ACM dates", {
+  acm_df <- data.frame(
+    date = c("01-Jan-2020", "01-Feb-2020"),
+    y1 = c(1.5, 1.6)
+  )
+
+  result <- normalize_acm_date_column(acm_df)
+  expect_s3_class(result$date, "Date")
+  expect_equal(result$date, as.Date(c("2020-01-01", "2020-02-01")))
+})
+
+test_that("normalize_acm_date_column passes through non-character cases", {
+  already_date <- data.frame(
+    date = as.Date(c("2020-01-01", "2020-02-01")),
+    y1 = c(1.5, 1.6)
+  )
+  expect_identical(normalize_acm_date_column(already_date), already_date)
+
+  no_date_col <- data.frame(y1 = c(1.5, 1.6))
+  expect_identical(normalize_acm_date_column(no_date_col), no_date_col)
+})

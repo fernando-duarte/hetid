@@ -15,7 +15,8 @@ needing i+1 (9)}
 \item{MACHINE_EPSILON}{Machine precision}
 \item{MATRIX_SYMMETRY_TOL}{Tolerance for matrix symmetry
 checks}
-\item{MIN_OBSERVATIONS}{Minimum observations for estimation}
+\item{DEGENERACY_TOLERANCE}{Scale-free threshold below which the
+variance positivity diagnostic flags a maturity as degenerate}
 \item{PERCENT_TO_DECIMAL}{Percentage to decimal divisor}
 \item{MONTHS_PER_QUARTER}{Calendar months per quarter (3)}
 \item{ACM_DATE_FORMAT}{Date format in ACM files}

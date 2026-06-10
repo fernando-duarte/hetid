@@ -142,6 +142,28 @@ test_that("assert_hetid_moments rejects plain lists", {
   expect_true(assert_hetid_moments(moments))
 })
 
+test_that("non-integer maturities error instead of truncating", {
+  inp <- make_moments_inputs()
+  expect_error(
+    compute_identification_moments(
+      inp$w1, inp$w2, inp$pcs,
+      maturities = c(1.5, 2)
+    ),
+    "finite integer values",
+    class = "hetid_error_bad_argument"
+  )
+
+  moments <- compute_identification_moments(inp$w1, inp$w2, inp$pcs)
+  expect_error(
+    new_hetid_moments(
+      unclass(moments), 1.5,
+      attr(moments, "n_components"), attr(moments, "n_obs")
+    ),
+    "finite integer values",
+    class = "hetid_error_bad_argument"
+  )
+})
+
 test_that("print method summarizes both axes", {
   inp <- make_moments_inputs()
   moments <- compute_identification_moments(

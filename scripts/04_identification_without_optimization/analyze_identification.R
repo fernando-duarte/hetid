@@ -98,9 +98,9 @@ cli_alert_info(paste0(
 ))
 
 # Eigenvalue diagnostics
-min_eig <- sapply(results$quadratic_tau_set$quadratic$A_i, function(a) {
+min_eig <- vapply(results$quadratic_tau_set$quadratic$A_i, function(a) {
   min(eigen(a, symmetric = TRUE, only.values = TRUE)$values)
-})
+}, numeric(1))
 eig_df <- data.frame(
   component = seq_along(min_eig), min_eigenvalue = min_eig
 ) |> left_join(lookup, by = join_by)

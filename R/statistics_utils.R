@@ -69,3 +69,70 @@ centered_cov <- function(a, b, t_obs) {
   b <- as.matrix(b)
   crossprod(a, b) / t_obs - tcrossprod(colMeans(a), colMeans(b))
 }
+
+#' Warn When Identification Variances Are Degenerate
+#'
+#' Diagnostic for the regularity assumption of the identification
+#' strategy: \eqn{var(W_{2,i}^2) > 0} and
+#' \eqn{var(W_1 W_{2,i} - \gamma W_{2,i}^2) > 0} at the true
+#' \eqn{\gamma}. The first is checked directly; the second is checked
+#' at the \eqn{\gamma} that minimizes it (the residual variance of
+#' regressing \eqn{W_1 W_{2,i}} on \eqn{W_{2,i}^2}), so a warning means
+#' the condition fails for some \eqn{\gamma}. Both checks are
+#' scale-free ratios compared against
+#' \code{HETID_CONSTANTS$DEGENERACY_TOLERANCE}. Degenerate variances
+#' make the quadratic constraint ill-defined and the identified set
+#' degenerate or unbounded, so surfacing them here catches the problem
+#' at the moments stage instead of downstream.
+#'
+#' @param w1 Numeric vector of W1 residuals
+#' @param w2 Matrix of W2 residuals (T x I)
+#' @param maturities Integer vector of w2 column indices to check
+#' @param t_obs Number of observations T
+#' @return Invisible NULL, called for its warning side effect
+#' @keywords internal
+warn_if_variance_degenerate <- function(w1, w2, maturities, t_obs) {
+  tol <- HETID_CONSTANTS$DEGENERACY_TOLERANCE
+  var_of <- function(x) centered_cov(x, x, t_obs)[1, 1]
+
+  first <- logical(length(maturities))
+  second <- logical(length(maturities))
+  for (k in seq_along(maturities)) {
+    w2_i <- w2[, maturities[k]]
+    w2_sq <- w2_i^2
+    prod_i <- w1 * w2_i
+    v_w2_sq <- var_of(w2_sq)
+    first[k] <- v_w2_sq <= tol * var_of(w2_i)^2
+    v_prod <- var_of(prod_i)
+    resid_var <- v_prod
+    if (v_w2_sq > 0) {
+      resid_var <- v_prod -
+        centered_cov(prod_i, w2_sq, t_obs)[1, 1]^2 / v_w2_sq
+    }
+    second[k] <- resid_var <= tol * v_prod
+  }
+
+  flag_msg <- function(flags, label) {
+    if (!any(flags)) {
+      return(NULL)
+    }
+    paste0(
+      label, " for maturity ",
+      paste(maturities[flags], collapse = ", ")
+    )
+  }
+  msgs <- c(
+    flag_msg(first, "var(W2^2) is numerically degenerate"),
+    flag_msg(second, "var(W1*W2 - gamma*W2^2) is numerically degenerate")
+  )
+  if (length(msgs) > 0) {
+    warning(
+      "Variance positivity diagnostic: ",
+      paste(msgs, collapse = "; "),
+      ". The identification regularity conditions may fail and the ",
+      "identified set may be degenerate or unbounded.",
+      call. = FALSE
+    )
+  }
+  invisible(NULL)
+}

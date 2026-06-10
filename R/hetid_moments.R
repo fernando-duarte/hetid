@@ -42,6 +42,7 @@ compute_identification_moments <- function(w1, w2, pcs, maturities = NULL) {
   validated <- validate_statistics_inputs(w1, w2, maturities)
   w2 <- validated$w2
   maturities <- validated$maturities
+  warn_if_variance_degenerate(w1, w2, maturities, validated$t_obs)
 
   scalar_stats <- compute_scalar_statistics(w1, w2, maturities = maturities)
   vector_stats <- compute_vector_statistics(w1, w2, pcs, maturities = maturities)
@@ -96,12 +97,12 @@ new_hetid_moments <- function(stats, maturities, n_components, n_obs) {
     "n_obs must be a positive scalar",
     arg = "n_obs"
   )
-  maturities <- as.integer(maturities)
   n_components <- as.integer(n_components)
   validate_maturities(
     maturities,
     max_value = n_components, max_label = "n_components"
   )
+  maturities <- as.integer(maturities)
   assert_bad_argument_ok(
     !anyDuplicated(maturities),
     paste0(

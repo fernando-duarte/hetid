@@ -44,11 +44,15 @@ compute_n_hat <- function(yields, term_premia, i, return_df = FALSE, dates = NUL
   validate_maturity_index(i, max_maturity = HETID_CONSTANTS$EFFECTIVE_MAX_MATURITY)
 
   # Extract relevant columns
-  y_i <- require_column(yields, paste0("y", i), "yields")
-  y_i_plus_1 <- require_column(yields, paste0("y", i + 1), "yields")
-  tp_i <- require_column(term_premia, paste0("tp", i), "term_premia")
+  y_i <- require_column(yields, acm_column_name("yields", i), "yields")
+  y_i_plus_1 <- require_column(
+    yields, acm_column_name("yields", i + 1), "yields"
+  )
+  tp_i <- require_column(
+    term_premia, acm_column_name("term_premia", i), "term_premia"
+  )
   tp_i_plus_1 <- require_column(
-    term_premia, paste0("tp", i + 1), "term_premia"
+    term_premia, acm_column_name("term_premia", i + 1), "term_premia"
   )
 
   # Compute n_hat

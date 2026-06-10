@@ -197,6 +197,7 @@ test_that("load_term_premia parses ISO dates correctly", {
 # --- download_term_premia mock-based tests ---
 
 test_that("download_term_premia downloads and saves CSV", {
+  skip_if_not_installed("readxl")
   withr::with_tempdir({
     csv_path <- file.path(getwd(), "ACMTermPremium.csv")
 
@@ -267,6 +268,7 @@ test_that("download_term_premia quiet mode suppresses messages", {
 })
 
 test_that("download_term_premia errors on download failure", {
+  skip_if_not_installed("readxl")
   withr::with_tempdir({
     csv_path <- file.path(getwd(), "ACMTermPremium.csv")
 

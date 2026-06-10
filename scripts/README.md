@@ -20,14 +20,6 @@ Initial data preparation and exploratory analysis
 - `visualize_raw_data.R` - Create exploratory plots of raw
   data
 
-### 02_sdf_news/
-Computation and analysis of pricing kernel innovations
-- `compute_news.R` - Calculate price news and SDF innovations
-- `analyze_news.R` - Statistical analysis of computed
-  news/innovations
-- `visualize_news.R` - Create exploratory plots of bond price
-  news and SDF news
-
 ### 03_variance_bounds/
 Variance bound calculations for identification
 - `compute_variance_bounds.R` - Calculate theoretical variance
@@ -97,7 +89,6 @@ Working outputs and intermediate results
 - `figures/` - Exploratory plots
 - `other/` - Temporary files
 - `plots/` - Working plots
-- `sdf_news/` - SDF news intermediate results
 - `summary_stats/` - Summary statistics output
 - `time_series_properties/` - Time series analysis output
 - `variance_bounds/` - Variance bound working results
@@ -113,8 +104,8 @@ Working outputs and intermediate results
 
 - **Data Preparation**: Start with scripts in
   `01_data_analysis/` to prepare and explore the data
-- **Core Computations**: Run `02_sdf_news/` and
-  `03_variance_bounds/` for fundamental calculations
+- **Core Computations**: Run `03_variance_bounds/` for
+  fundamental calculations
 - **Identification Analysis**: Execute
   `04_identification_without_optimization/` for baseline
   results

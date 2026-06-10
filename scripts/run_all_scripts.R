@@ -57,20 +57,6 @@ scripts_to_run <- list(
     desc = "Analyzing Time Series Properties"
   ),
 
-  # SDF news analysis
-  list(
-    path = here::here("scripts/02_sdf_news/compute_news.R"),
-    desc = "Computing Price News"
-  ),
-  list(
-    path = here::here("scripts/02_sdf_news/analyze_news.R"),
-    desc = "Analyzing Price News and Heteroskedasticity"
-  ),
-  list(
-    path = here::here("scripts/02_sdf_news/visualize_news.R"),
-    desc = "Creating Price News Visualizations"
-  ),
-
   # Variance bounds analysis
   list(
     path = here::here("scripts/03_variance_bounds/compute_variance_bounds.R"),
@@ -136,6 +122,13 @@ scripts_to_run <- list(
       "output_results.R"
     ),
     desc = "Exporting Optimization Results"
+  ),
+  list(
+    path = here::here(
+      "scripts/05_identification_with_optimization",
+      "tau_star_comparison.R"
+    ),
+    desc = "Comparing Identification Strength (tau*)"
   ),
 
   # Final results production

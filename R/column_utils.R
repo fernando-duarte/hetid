@@ -27,6 +27,26 @@ require_column <- function(x, col_name, context = NULL) {
   val
 }
 
+#' Build an ACM Column Name from the Schema
+#'
+#' Single source of truth for reshaped ACM column names: routes the
+#' prefix through \code{HETID_ACM_SCHEMA} and the format through
+#' \code{HETID_CONSTANTS$COL_FORMAT_SIMPLE} instead of hard-coding
+#' literals like \code{paste0("y", i)} at call sites.
+#'
+#' @param data_type Schema key: \code{"yields"}, \code{"term_premia"},
+#'   or \code{"risk_neutral_yields"}
+#' @param maturity Maturity index (or vector of indices)
+#' @return Character vector of column names, e.g. \code{"y5"}
+#' @keywords internal
+acm_column_name <- function(data_type, maturity) {
+  sprintf(
+    HETID_CONSTANTS$COL_FORMAT_SIMPLE,
+    HETID_ACM_SCHEMA[[data_type]]$prefix_new,
+    maturity
+  )
+}
+
 #' Assert Input is Tabular
 #'
 #' @param x Object to check

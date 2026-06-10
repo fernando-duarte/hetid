@@ -12,7 +12,7 @@
 #' @keywords internal
 process_w2_maturity <- function(i, yields_df, term_premia_df, pcs, n_pcs) {
   # Get yield column
-  y_col <- paste0("y", i)
+  y_col <- acm_column_name("yields", i)
   if (!y_col %in% names(yields_df)) {
     warning(
       paste("Yield column", y_col, "not found. Skipping maturity", i),
@@ -22,7 +22,7 @@ process_w2_maturity <- function(i, yields_df, term_premia_df, pcs, n_pcs) {
   }
 
   # Check term premium column exists
-  tp_col <- paste0("tp", i)
+  tp_col <- acm_column_name("term_premia", i)
   if (!tp_col %in% names(term_premia_df)) {
     warning(
       paste("Term premium column", tp_col, "not found. Skipping maturity", i),

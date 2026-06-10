@@ -97,29 +97,6 @@ validate_n_pcs <- function(n_pcs) {
   )
 }
 
-#' Validate Minimum Observations
-#'
-#' Validates that sufficient observations are available for statistical estimation.
-#'
-#' @param n Number of observations to validate
-#' @param min_obs Minimum required observations
-#'
-#' @return Invisible TRUE if valid, stops with informative error if invalid
-#' @keywords internal
-validate_min_observations <- function(n, min_obs = HETID_CONSTANTS$MIN_OBSERVATIONS) {
-  assert_scalar_finite(n, "Number of observations")
-
-  assert_insufficient_data_ok(
-    n >= min_obs,
-    paste0(
-      "Not enough complete observations (need at least ",
-      min_obs, ")"
-    )
-  )
-
-  invisible(TRUE)
-}
-
 #' Validate Equal Lengths Across Inputs
 #'
 #' Validates that multiple inputs (vectors or lists) have consistent lengths.
