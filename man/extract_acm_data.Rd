@@ -10,7 +10,8 @@ extract_acm_data(
   start_date = NULL,
   end_date = NULL,
   frequency = c("monthly", "quarterly"),
-  auto_download = FALSE
+  auto_download = FALSE,
+  use_incomplete_quarters = HETID_CONSTANTS$USE_INCOMPLETE_QUARTERS
 )
 }
 \arguments{
@@ -32,6 +33,15 @@ Quarterly data uses the last observation of each quarter.}
 
 \item{auto_download}{Logical. If TRUE and data doesn't exist, automatically
 downloads it. Default is FALSE.}
+
+\item{use_incomplete_quarters}{Logical, only used when
+\code{frequency = "quarterly"}. Quarters whose last available
+observation is not in the terminal month (March, June, September,
+December) raise a classed warning. If TRUE (the default, from
+\code{HETID_CONSTANTS$USE_INCOMPLETE_QUARTERS}), such quarters keep
+their latest observation, re-dated to the end of the terminal
+quarter month so the quarterly series is uniformly dated. If FALSE,
+such quarters are dropped.}
 }
 \value{
 A data frame with date column and selected variables.

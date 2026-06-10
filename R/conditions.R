@@ -95,6 +95,28 @@ warn_degenerate_variance <- function(message, call = NULL) {
   warning(cnd)
 }
 
+#' Signal an Incomplete Quarter Warning
+#'
+#' Classed warning raised when quarterly conversion encounters quarters
+#' whose last available observation is not in the terminal month, so
+#' callers can dispatch on class
+#' \code{hetid_warning_incomplete_quarter}.
+#'
+#' @param message Warning message string
+#' @param call The call (default NULL)
+#' @keywords internal
+warn_incomplete_quarter <- function(message, call = NULL) {
+  cnd <- warningCondition(
+    message,
+    class = c(
+      "hetid_warning_incomplete_quarter",
+      "hetid_warning"
+    ),
+    call = call
+  )
+  warning(cnd)
+}
+
 #' Assert Bad Argument Invariant
 #'
 #' @param ok Logical scalar; if not TRUE, signals error

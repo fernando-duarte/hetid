@@ -43,6 +43,7 @@
 # Testing
 ^tests/testthat/_snaps$
 ^tests/testthat/Rplots\.pdf$
+^Rplots\.pdf$
 
 # macOS
 ^\.DS_Store$

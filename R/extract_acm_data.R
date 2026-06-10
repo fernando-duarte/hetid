@@ -17,6 +17,14 @@
 #'   Quarterly data uses the last observation of each quarter.
 #' @param auto_download Logical. If TRUE and data doesn't exist, automatically
 #'   downloads it. Default is FALSE.
+#' @param use_incomplete_quarters Logical, only used when
+#'   \code{frequency = "quarterly"}. Quarters whose last available
+#'   observation is not in the terminal month (March, June, September,
+#'   December) raise a classed warning. If TRUE (the default, from
+#'   \code{HETID_CONSTANTS$USE_INCOMPLETE_QUARTERS}), such quarters keep
+#'   their latest observation, re-dated to the end of the terminal
+#'   quarter month so the quarterly series is uniformly dated. If FALSE,
+#'   such quarters are dropped.
 #'
 #' @return A data frame with date column and selected variables.
 #'   Column naming convention:
@@ -64,10 +72,12 @@ extract_acm_data <- function(data_types = c("yields", "term_premia"),
                              start_date = NULL,
                              end_date = NULL,
                              frequency = c("monthly", "quarterly"),
-                             auto_download = FALSE) {
+                             auto_download = FALSE,
+                             use_incomplete_quarters =
+                               HETID_CONSTANTS$USE_INCOMPLETE_QUARTERS) {
   # Validate inputs
   frequency <- match.arg(frequency)
-  validate_acm_extract_inputs(data_types, maturities)
+  validate_acm_extract_inputs(data_types, maturities, use_incomplete_quarters)
 
   # Load ACM data
   acm_data <- load_term_premia(auto_download = auto_download)
@@ -112,7 +122,7 @@ extract_acm_data <- function(data_types = c("yields", "term_premia"),
 
   # Convert to quarterly if requested
   if (frequency == "quarterly") {
-    result <- convert_to_quarterly(result) # nolint: object_usage_linter
+    result <- convert_to_quarterly(result, use_incomplete_quarters) # nolint: object_usage_linter
   }
 
   # Sort by date; drop = FALSE keeps single-column results as data frames
@@ -128,7 +138,14 @@ extract_acm_data <- function(data_types = c("yields", "term_premia"),
 #'
 #' @keywords internal
 #' @noRd
-validate_acm_extract_inputs <- function(data_types, maturities) {
+validate_acm_extract_inputs <- function(data_types, maturities,
+                                        use_incomplete_quarters = TRUE) {
+  assert_bad_argument_ok(
+    isTRUE(use_incomplete_quarters) || isFALSE(use_incomplete_quarters),
+    "use_incomplete_quarters must be TRUE or FALSE",
+    arg = "use_incomplete_quarters"
+  )
+
   valid_types <- names(HETID_ACM_SCHEMA)
   assert_bad_argument_ok(
     is.character(data_types) && length(data_types) >= 1 &&

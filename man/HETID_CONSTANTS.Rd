@@ -19,6 +19,9 @@ checks}
 variance positivity diagnostic flags a maturity as degenerate}
 \item{PERCENT_TO_DECIMAL}{Percentage to decimal divisor}
 \item{MONTHS_PER_QUARTER}{Calendar months per quarter (3)}
+\item{USE_INCOMPLETE_QUARTERS}{Default policy for quarters missing
+their terminal month in quarterly conversion: TRUE keeps them
+(re-dated to quarter end), FALSE drops them}
 \item{ACM_DATE_FORMAT}{Date format in ACM files}
 \item{ISO_DATE_FORMAT}{Standard ISO date format}
 \item{YEAR_FORMAT}{Year extraction format}

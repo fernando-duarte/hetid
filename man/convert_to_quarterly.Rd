@@ -4,16 +4,30 @@
 \alias{convert_to_quarterly}
 \title{Convert Monthly Data to Quarterly}
 \usage{
-convert_to_quarterly(data)
+convert_to_quarterly(
+  data,
+  use_incomplete_quarters = HETID_CONSTANTS$USE_INCOMPLETE_QUARTERS
+)
 }
 \arguments{
 \item{data}{Data frame with a date column}
+
+\item{use_incomplete_quarters}{Logical. If TRUE (the default, from
+\code{HETID_CONSTANTS$USE_INCOMPLETE_QUARTERS}), incomplete
+quarters keep their latest available observation, re-dated to the
+end of the terminal quarter month. If FALSE, incomplete quarters
+are dropped.}
 }
 \value{
 Data frame with quarterly observations
 }
 \description{
 Internal function to convert monthly data to quarterly by keeping
-the last observation of each quarter.
+the last observation of each quarter. Quarters whose last available
+observation is not in the terminal month (March, June, September,
+December) raise a classed warning
+(\code{hetid_warning_incomplete_quarter}); they are then either kept
+with their date re-coded to the last day of the terminal month, so
+the quarterly series is uniformly dated, or dropped.
 }
 \keyword{internal}

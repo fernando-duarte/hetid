@@ -247,12 +247,15 @@ test_that("extract_acm_data warns on incomplete terminal quarter", {
       end_date = "2020-05-15",
       frequency = "quarterly"
     ),
-    "Incomplete quarter"
+    regexp = "Incomplete quarter",
+    class = "hetid_warning_incomplete_quarter"
   )
 
-  # Result should still contain data
+  # Result still contains data and stays uniformly dated at quarter ends
   expect_gt(nrow(data), 0)
   expect_true("y5" %in% names(data))
+  expect_true(all(format(data$date, "%m") %in% c("03", "06", "09", "12")))
+  expect_equal(max(data$date), as.Date("2020-06-30"))
 })
 
 test_that("extract_acm_data error handling", {
