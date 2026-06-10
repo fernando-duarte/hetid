@@ -49,15 +49,12 @@
 #'
 compute_sdf_innovations <- function(yields, term_premia, i,
                                     return_df = FALSE, dates = NULL) {
-  # Validate maturity parameter
-  validate_maturity_index(i, max_maturity = HETID_CONSTANTS$EFFECTIVE_MAX_MATURITY)
-
-  # Compute n_hat(i,t) once and reuse it for the price news, so the
-  # t-alignment between exp(n_hat_i[t]) and delta_p[t] is visible here:
-  # delta_p[t] = n_hat(i-1,t+1) - n_hat(i,t) pairs with n_hat_i[t]
-  n_hat_i <- compute_n_hat(yields, term_premia, i, return_df = FALSE)
-  n_hat_i_minus_1 <- compute_n_hat_previous(yields, term_premia, i)
-  delta_p <- compute_time_series_news(n_hat_i, n_hat_i_minus_1)
+  # Shared maturity validation, n_hat(i,t) level, and price-news
+  # difference. The t-alignment between exp(n_hat_i[t]) and delta_p[t]
+  # holds: delta_p[t] = n_hat(i-1,t+1) - n_hat(i,t) pairs with n_hat_i[t].
+  components <- compute_news_components(yields, term_premia, i)
+  n_hat_i <- components$n_hat_i
+  delta_p <- components$delta_p
 
   # Compute E[(Delta_(t+1)p_(t+i)^(1))^2] using utility function
   expected_delta_p_squared <- compute_expected_squared(

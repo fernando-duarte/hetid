@@ -70,6 +70,19 @@ test_that("get_user_data_dir creates the directory on demand", {
   expect_identical(get_user_data_dir(create = TRUE), created)
 })
 
+test_that("get_user_data_dir errors when the directory cannot be created", {
+  # Point the cache under a regular file so dir.create() fails.
+  blocker <- withr::local_tempfile()
+  writeLines("", blocker)
+  withr::local_envvar(R_USER_DATA_DIR = file.path(blocker, "sub"))
+
+  expect_error(
+    get_user_data_dir(create = TRUE),
+    regexp = "Cannot create user data directory",
+    class = "hetid_error"
+  )
+})
+
 test_that("get_acm_download_path targets the user cache", {
   user_root <- withr::local_tempdir()
   withr::local_envvar(R_USER_DATA_DIR = user_root)

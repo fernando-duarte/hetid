@@ -46,17 +46,11 @@
 compute_price_news <- function(yields, term_premia, i,
                                return_yield_news = FALSE,
                                return_df = FALSE, dates = NULL) {
-  # Validate maturity parameter
-  validate_maturity_index(i, max_maturity = HETID_CONSTANTS$EFFECTIVE_MAX_MATURITY)
+  # Shared maturity validation and price-news difference
+  components <- compute_news_components(yields, term_premia, i)
 
-  # Compute n_hat series
-  n_hat_i <- compute_n_hat(yields, term_premia, i, return_df = FALSE)
-
-  # Compute previous period n_hat (handles special case for i=1)
-  n_hat_i_minus_1 <- compute_n_hat_previous(yields, term_premia, i)
-
-  # Compute price news using utility function
-  price_news <- compute_time_series_news(n_hat_i, n_hat_i_minus_1, negate = return_yield_news)
+  # Yield news is the negation of (log) price news
+  price_news <- if (return_yield_news) -components$delta_p else components$delta_p
 
   # Return data frame with dates if requested using utility function
   prepare_return_data(price_news, return_df, dates, yields, "price_news")
