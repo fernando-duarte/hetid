@@ -228,7 +228,14 @@ run_check("spelling", {
   library(spelling)
   sp <- spell_check_package(".")
   if (nrow(sp) > 0) {
-    write.csv(sp, file.path(report_dir, "spelling.csv"),
+    # `found` is a list-column of file:line locations; collapse it so
+    # write.csv can serialize the frame (it errors on list columns).
+    sp_out <- data.frame(
+      word = sp$word,
+      found = vapply(sp$found, paste, character(1), collapse = "; "),
+      stringsAsFactors = FALSE
+    )
+    write.csv(sp_out, file.path(report_dir, "spelling.csv"),
       row.names = FALSE
     )
     cli_text("  {nrow(sp)} potential misspelling(s)")
