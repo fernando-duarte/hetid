@@ -164,6 +164,13 @@ scripts_to_run <- list(
   list(
     path = here::here(
       "scripts/05_identification_with_optimization",
+      "tau_sensitivity.R"
+    ),
+    desc = "Locating tau* (Bounded-to-Unbounded Sensitivity)"
+  ),
+  list(
+    path = here::here(
+      "scripts/05_identification_with_optimization",
       "spec_comparison.R"
     ),
     desc = "Comparing Specifications, Instruments, and tau (quick)",

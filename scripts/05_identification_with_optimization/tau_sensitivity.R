@@ -84,7 +84,7 @@ if (length(unb) == 0) {
 }
 
 # save CSV + plots
-out_dir <- file.path(OUTPUT_PAPER_DIR, "identification")
+out_dir <- file.path(OUTPUT_TEMP_DIR, "identification_optimized")
 dir.create(out_dir, recursive = TRUE, showWarnings = FALSE)
 write.csv(sweep_df, file.path(out_dir, "tau_sensitivity.csv"), row.names = FALSE)
 
