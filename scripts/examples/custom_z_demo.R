@@ -61,21 +61,43 @@ opt <- run_lambda_optimization(
 )
 cat("optimized total width:", opt$objective_final, "\n")
 
-# Per-component instrument subsets are just zero rows in the weights:
-# component one uses pc1/pc2/pc1_sq, component two uses pc3/gspc_vol.
-# Fixed weights only -- optimization frees every packed element, so
-# zero rows are not preserved by run_lambda_optimization (see its
-# header note).
-lambda_subsets <- list(
-  matrix(as.numeric(
-    colnames(instruments) %in% c("pc1", "pc2", "pc1_sq")
-  ), ncol = 1),
-  matrix(as.numeric(
-    colnames(instruments) %in% c("pc3", "gspc_vol")
-  ), ncol = 1)
+# Per-component instrument subsets: align the per-component sets by
+# name, recompute the moments on the union matrix (the support
+# indexes ITS columns), zero-pad compact weights onto it, and pass
+# the same support to the optimizer's mask so the structural zeros
+# survive optimization (off-support entries stay exactly 0.0).
+aligned <- align_instrument_sets(
+  list(
+    instruments[, c("pc1", "pc2", "pc1_sq")],
+    instruments[, c("pc3", "gspc_vol")]
+  ),
+  n_components = 2
 )
-qs_sets <- build_general_quadratic_system(lambda_subsets, 0.2, moments)
+moments_sets <- compute_identification_moments(
+  w1[seq_len(t_obs)], w2[seq_len(t_obs), ],
+  aligned$instruments[seq_len(t_obs), ]
+)
+lambda_subsets <- lambda_from_support(
+  aligned$support,
+  list(matrix(1, 3, 1), matrix(1, 2, 1)),
+  j_total = ncol(aligned$instruments)
+)
+qs_sets <- build_general_quadratic_system(
+  lambda_subsets, 0.2, moments_sets
+)
 cat("per-component-subset constraints:", nrow(qs_sets$labels), "\n")
+opt_masked <- run_lambda_optimization(
+  lambda_subsets, moments_sets, 0.2,
+  n_starts = 3, seed = 123, maxeval = 100L,
+  support = aligned$support
+)
+cat(
+  "masked optimized width:", opt_masked$objective_final,
+  "| off-support exact zeros:",
+  all(opt_masked$lambda_optimized[[1]][-aligned$support[[1]], ] == 0) &&
+    all(opt_masked$lambda_optimized[[2]][-aligned$support[[2]], ] == 0),
+  "\n"
+)
 
 # Membership probe across every constraint (hin <= 0 means inside);
 # a grid where max(...) > 0 everywhere is an empty estimated set
