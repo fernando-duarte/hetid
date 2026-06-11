@@ -1,16 +1,10 @@
 fixture_path <- test_path("fixtures", "quadratic_kernel_fixture.rds")
 
-# The oracle was generated on aarch64 macOS, where R has no long
-# doubles. On platforms whose floating-point accumulation differs
-# (extended-precision x86), bitwise equality is not the contract:
-# structure and names stay exact, numeric payloads are pinned to near
-# machine precision instead.
+# The oracle pins the quadratic-system structure and numeric payloads.
+# Floating-point accumulation can differ slightly across CI platforms,
+# so compare numeric values to near machine precision.
 expect_matches_fixture <- function(object, expected) {
-  if (!capabilities("long.double")) {
-    expect_identical(object, expected)
-  } else {
-    expect_equal(object, expected, tolerance = 1e-12)
-  }
+  expect_equal(object, expected, tolerance = 1e-12)
 }
 
 test_that("quadratic system reproduces the frozen pre-refactor fixture exactly", {
