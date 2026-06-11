@@ -11,7 +11,10 @@ compute_identification_moments(w1, w2, pcs, maturities = NULL)
 
 \item{w2}{Matrix of W2 residuals (T x I) from compute_w2_residuals()}
 
-\item{pcs}{Matrix of principal components (T x J)}
+\item{pcs}{Matrix of instruments (T x J): any numeric matrix of
+exogenous time-series instruments. In the VFCI application these
+are principal components of asset returns. Column names label
+the instrument axis of the moments (falling back to pc1..pcJ).}
 
 \item{maturities}{Integer vector of w2 column indices whose moment
 conditions are computed (the constraint axis). Default is all
@@ -30,6 +33,11 @@ that carries the maturity identity through the pipeline. This is the
 entry point of the identification chain; pass the result to
 \code{\link{build_quadratic_system}} or
 \code{\link{compute_identified_set_components}}.
+}
+\details{
+Direct callers are responsible for supplying unique instrument column
+names; the validated front door for constructing instrument matrices
+is \code{\link{build_instrument_matrix}()}.
 }
 \section{Maturity Indexing Convention}{
 
@@ -75,4 +83,10 @@ subset_moments <- compute_identification_moments(
   maturities = c(2, 4)
 )
 names(subset_moments$s_i_0)
+}
+\seealso{
+\code{\link{build_instrument_matrix}} for constructing
+instrument matrices with optional transformations,
+\code{\link{build_general_quadratic_system}} for building quadratic
+constraints from arbitrary linear combinations of instruments.
 }

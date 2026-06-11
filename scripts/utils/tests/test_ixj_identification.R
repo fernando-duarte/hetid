@@ -114,5 +114,62 @@ check(
   all(w_sub >= w_full - 1e-6) && any(w_sub > w_full + 1e-3)
 )
 
+# Frozen pre-rewrite implementation: the oracle the wrapper must
+# reproduce bit for bit (guards omitted; inputs here are valid).
+legacy_ixj_oracle <- function(moments, tau_matrix) {
+  n_pcs <- nrow(moments$r_i_0)
+  n_components <- attr(moments, "n_components")
+  total <- n_pcs * n_components
+  a_list <- vector("list", total)
+  b_list <- vector("list", total)
+  c_vec <- numeric(total)
+  d_vec <- numeric(total)
+  comp_idx <- integer(total)
+  inst_idx <- integer(total)
+  pos <- 0L
+  for (j in seq_len(n_pcs)) {
+    gamma_j <- make_basis_gamma(j, n_pcs, n_components)
+    qs_j <- suppressMessages(
+      build_quadratic_system(gamma_j, tau_matrix[j, ], moments)
+    )$quadratic
+    for (i in seq_len(n_components)) {
+      pos <- pos + 1L
+      a_list[[pos]] <- qs_j$A_i[[i]]
+      b_list[[pos]] <- qs_j$b_i[[i]]
+      c_vec[pos] <- qs_j$c_i[i]
+      d_vec[pos] <- qs_j$d_i[i]
+      comp_idx[pos] <- i
+      inst_idx[pos] <- j
+    }
+  }
+  list(
+    quadratic = list(
+      A_i = a_list, b_i = b_list, c_i = c_vec, d_i = d_vec
+    ),
+    labels = data.frame(
+      constraint = seq_len(total),
+      component = comp_idx,
+      instrument = inst_idx,
+      stringsAsFactors = FALSE
+    )
+  )
+}
+
+set.seed(21)
+w1_oracle <- rnorm(60)
+w2_oracle <- matrix(rnorm(60 * 3), nrow = 60)
+z_oracle <- matrix(rnorm(60 * 4), nrow = 60)
+moments_oracle <- suppressMessages(
+  compute_identification_moments(w1_oracle, w2_oracle, z_oracle)
+)
+tau_oracle <- matrix(runif(12, 0.05, 0.5), nrow = 4)
+check(
+  "wrapper reproduces the frozen legacy ixj implementation exactly",
+  identical(
+    build_ixj_quadratic_system(moments_oracle, tau_oracle),
+    legacy_ixj_oracle(moments_oracle, tau_oracle)
+  )
+)
+
 cat(sprintf("\n%d passed, %d failed\n", .pass, .fail))
 if (.fail > 0) quit(status = 1)

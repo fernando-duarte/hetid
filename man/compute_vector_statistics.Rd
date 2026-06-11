@@ -11,7 +11,10 @@ compute_vector_statistics(w1, w2, pcs, maturities = NULL)
 
 \item{w2}{Matrix of W2 residuals (T x I) from compute_w2_residuals()}
 
-\item{pcs}{Matrix of principal components (T x J)}
+\item{pcs}{Matrix of instruments (T x J): any numeric matrix of
+exogenous time-series instruments. In the VFCI application these
+are principal components of asset returns. Column names label
+the instrument axis of the moments (falling back to pc1..pcJ).}
 
 \item{maturities}{Vector of maturity indices to compute statistics for.
 Default is all columns of w2.}

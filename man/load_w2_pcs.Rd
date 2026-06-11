@@ -19,6 +19,8 @@ List with components:
 \item{pcs}{Matrix of principal components}
 \item{dates}{Date vector from bundled data, or NULL
 if user provided PCs}
+\item{pc_names}{Character labels for the first n_pcs
+regressor columns}
 }
 }
 \description{

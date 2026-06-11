@@ -6,22 +6,28 @@
 # I*J of them. theta stays in R^I and the output is still I profile intervals;
 # only the constraint set differs.
 #
-# Reuse: setting gamma_i = e_j (the j-th canonical loading) in build_quadratic_system
-# reproduces exactly the single-instrument (i, j) constraint -- crossprod(e_j, .)
-# selects row/element j of each instrument-indexed moment. So the whole scheme is a
-# loop over j with concatenation; no package (R/) changes.
+# Design: thin wrapper over the package's general-instrument machinery.
+# hetid::separate_instruments_lambda supplies identity weights (column j = e_j),
+# so hetid::build_general_quadratic_system emits exactly the single-instrument
+# (i, j) constraints through the same shared per-constraint kernel the old
+# hand-rolled e_j loop reached via build_quadratic_system -- bit-identical
+# values, no package (R/) changes. The general builder orders constraints
+# component-major; this wrapper permutes them back to the legacy
+# instrument-major order (j outer, i inner) because the downstream SLSQP solve
+# order and the tolerance-0 gated CSVs depend on it.
 #
 # Form: centered correlation. As of the centered-moment refactor, the package
 # statistics functions (compute_*_statistics) return centered 1/T covariances and
 # variances (see R/statistics_utils.R::centered_cov and the spec sections on moment
-# notation and centering), so build_quadratic_system now natively produces the
-# literal correlation form |Corr(PC_j, e1 e2_i)| <= tau_ji |Corr(PC_j, e2_i^2)|.
+# notation and centering), so the builder natively produces the literal
+# correlation form |Corr(PC_j, e1 e2_i)| <= tau_ji |Corr(PC_j, e2_i^2)|.
 # Centering the S-moments is algebraically identical to the previously-deferred
 # centering term d_ij * (mu_i0 - mu_i1' theta)^2 with mu_i0 = mean(W1 * W2_i),
 # mu_i1 = colMeans(W2 * W2_i), because
 #   theta' S2^c theta - 2 S1^c' theta + S0^c = var(U_i(theta)),
 # and centering L/Q/P turns them into true covariances. No script changes are
-# needed here -- the e_j reuse inherits the centering automatically.
+# needed here -- the identity-lambda columns are the same e_j and inherit the
+# centering automatically.
 
 # J x I gamma whose every column is the j-th canonical basis vector e_j.
 make_basis_gamma <- function(j, n_pcs, n_components) {
@@ -39,8 +45,8 @@ build_ixj_quadratic_system <- function(moments, tau_matrix) {
   n_pcs <- nrow(moments$r_i_0)
   n_components <- attr(moments, "n_components")
 
-  # The e_j reuse needs one constraint per system column: the inner loop
-  # pairs constraint i with gamma column i, so the container's constraint
+  # The legacy ixj contract pairs each constraint with its system column
+  # (labels report component == column index), so the container's constraint
   # axis must cover the full system (maturities == 1..n_components).
   if (!identical(attr(moments, "maturities"), seq_len(n_components))) {
     stop(
@@ -57,37 +63,30 @@ build_ixj_quadratic_system <- function(moments, tau_matrix) {
     ))
   }
 
-  total <- n_pcs * n_components
-  a_list <- vector("list", total)
-  b_list <- vector("list", total)
-  c_vec <- numeric(total)
-  d_vec <- numeric(total)
-  comp_idx <- integer(total)
-  inst_idx <- integer(total)
+  lambda <- hetid::separate_instruments_lambda(moments)
+  tau_list <- lapply(
+    seq_len(n_components), function(i) tau_matrix[, i]
+  )
+  qs <- hetid::build_general_quadratic_system(lambda, tau_list, moments)
 
-  pos <- 0L
-  for (j in seq_len(n_pcs)) {
-    gamma_j <- make_basis_gamma(j, n_pcs, n_components)
-    qs_j <- suppressMessages(
-      build_quadratic_system(gamma_j, tau_matrix[j, ], moments)
-    )$quadratic
-    for (i in seq_len(n_components)) {
-      pos <- pos + 1L
-      a_list[[pos]] <- qs_j$A_i[[i]]
-      b_list[[pos]] <- qs_j$b_i[[i]]
-      c_vec[pos] <- qs_j$c_i[i]
-      d_vec[pos] <- qs_j$d_i[i]
-      comp_idx[pos] <- i
-      inst_idx[pos] <- j
-    }
-  }
+  # The general builder emits constraints component-major (i, then
+  # k = j); the legacy ixj order is instrument-major (j, then i) and
+  # the downstream SLSQP solve order plus gated CSVs depend on it.
+  # Permute back: pure reindexing of already-computed objects.
+  gen <- qs$labels
+  legacy_pos <- order(gen$combo, gen$maturity)
 
   list(
-    quadratic = list(A_i = a_list, b_i = b_list, c_i = c_vec, d_i = d_vec),
+    quadratic = list(
+      A_i = unname(qs$quadratic$A_i[legacy_pos]),
+      b_i = unname(qs$quadratic$b_i[legacy_pos]),
+      c_i = unname(qs$quadratic$c_i[legacy_pos]),
+      d_i = unname(qs$quadratic$d_i[legacy_pos])
+    ),
     labels = data.frame(
-      constraint = seq_len(total),
-      component = comp_idx,
-      instrument = inst_idx,
+      constraint = seq_len(nrow(gen)),
+      component = gen$maturity[legacy_pos],
+      instrument = gen$combo[legacy_pos],
       stringsAsFactors = FALSE
     )
   )

@@ -9,9 +9,10 @@ run_pc_regression(y, pcs, n_pcs)
 \arguments{
 \item{y}{Numeric response vector}
 
-\item{pcs}{Matrix of principal components}
+\item{pcs}{Matrix of regressors (principal components in the
+bundled workflow)}
 
-\item{n_pcs}{Number of PCs to label}
+\item{n_pcs}{Number of leading columns to use}
 }
 \value{
 List with residuals, fitted, coefficients,
@@ -19,6 +20,8 @@ r_squared, model, and complete_idx
 }
 \description{
 Shared regression core for W1 and W2 residual computation.
-Expects pre-aligned, pre-lagged inputs.
+Expects pre-aligned, pre-lagged inputs. Regressor labels come from
+the matrix's own column names (sanitized for formula use); unnamed
+or partially named input falls back to the bundled pc1..pcN names.
 }
 \keyword{internal}

@@ -4,7 +4,10 @@
 #'
 #' @param w1 Numeric vector of W1 residuals from compute_w1_residuals()
 #' @param w2 Matrix of W2 residuals (T x I) from compute_w2_residuals()
-#' @param pcs Matrix of principal components (T x J)
+#' @param pcs Matrix of instruments (T x J): any numeric matrix of
+#'   exogenous time-series instruments. In the VFCI application these
+#'   are principal components of asset returns. Column names label
+#'   the instrument axis of the moments (falling back to pc1..pcJ).
 #' @param maturities Vector of maturity indices to compute statistics for.
 #'   Default is all columns of w2.
 #'

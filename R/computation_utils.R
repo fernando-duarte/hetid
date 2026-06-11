@@ -136,11 +136,14 @@ compute_expected_squared <- function(series, error_msg = "No valid values to com
 #' Run PC Regression
 #'
 #' Shared regression core for W1 and W2 residual computation.
-#' Expects pre-aligned, pre-lagged inputs.
+#' Expects pre-aligned, pre-lagged inputs. Regressor labels come from
+#' the matrix's own column names (sanitized for formula use); unnamed
+#' or partially named input falls back to the bundled pc1..pcN names.
 #'
 #' @param y Numeric response vector
-#' @param pcs Matrix of principal components
-#' @param n_pcs Number of PCs to label
+#' @param pcs Matrix of regressors (principal components in the
+#'   bundled workflow)
+#' @param n_pcs Number of leading columns to use
 #'
 #' @return List with residuals, fitted, coefficients,
 #'   r_squared, model, and complete_idx
@@ -163,7 +166,14 @@ run_pc_regression <- function(y, pcs, n_pcs) {
   y_clean <- y[complete_idx]
   pcs_clean <- pcs[complete_idx, , drop = FALSE]
 
-  pc_names <- get_pc_column_names(n_pcs)
+  nms <- colnames(pcs)
+  pc_names <- if (is.null(nms) || anyNA(nms) || !all(nzchar(nms))) {
+    get_pc_column_names(n_pcs)
+  } else {
+    # Sanitize so the formula string and data.frame name mangling
+    # agree for non-syntactic user names ("10y rate" -> "X10y.rate")
+    make.names(nms, unique = TRUE)
+  }
   colnames(pcs_clean) <- pc_names
   formula_str <- paste(
     "y ~", paste(pc_names, collapse = " + ")

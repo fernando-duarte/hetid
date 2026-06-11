@@ -64,6 +64,8 @@ get_bundled_variables <- function() {
 #'     \item{pcs}{Matrix of principal components}
 #'     \item{dates}{Date vector from bundled data, or NULL
 #'       if user provided PCs}
+#'     \item{pc_names}{Character labels for the first n_pcs
+#'       regressor columns}
 #'   }
 #' @keywords internal
 load_w2_pcs <- function(pcs, n_pcs, n_obs) {
@@ -99,13 +101,21 @@ load_w2_pcs <- function(pcs, n_pcs, n_obs) {
 
     list(
       pcs = as.matrix(variables[, pc_cols]),
-      dates = bundled_dates
+      dates = bundled_dates,
+      pc_names = pc_cols
     )
   } else {
     # User provided PCs
+    assert_tabular(pcs, "pcs")
     pcs <- as.matrix(pcs)
+    assert_bad_argument_ok(
+      is.numeric(pcs),
+      "pcs must contain only numeric values",
+      arg = "pcs"
+    )
 
-    # Validate dimensions for user-provided PCs
+    # Validate dimensions for user-provided PCs; the n_pcs <=
+    # ncol(pcs) cap is enforced upstream in compute_w2_residuals
     assert_dimension_ok(
       nrow(pcs) == n_obs,
       paste0(
@@ -113,14 +123,12 @@ load_w2_pcs <- function(pcs, n_pcs, n_obs) {
         "must match number of rows in yields"
       )
     )
-    assert_dimension_ok(
-      ncol(pcs) >= n_pcs,
-      paste0(
-        "pcs has ", ncol(pcs), " columns but n_pcs = ",
-        n_pcs, "; supply at least ", n_pcs, " columns"
-      )
-    )
 
-    list(pcs = pcs, dates = NULL)
+    pc_names <- colnames(pcs)[seq_len(n_pcs)]
+    if (is.null(pc_names) || anyNA(pc_names) || !all(nzchar(pc_names))) {
+      pc_names <- get_pc_column_names(n_pcs)
+    }
+
+    list(pcs = pcs, dates = NULL, pc_names = pc_names)
   }
 }

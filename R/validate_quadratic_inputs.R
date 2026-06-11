@@ -107,16 +107,7 @@ validate_quadratic_inputs <- function(tau, components, moments) {
   validate_numeric_inputs(
     tau = tau, L_i = components$L_i, V_i = components$V_i
   )
-  assert_bad_argument_ok(
-    all(is.finite(tau)),
-    "All elements of tau must be finite (no NA, NaN, or Inf)",
-    arg = "tau"
-  )
-  assert_bad_argument_ok(
-    all(tau >= 0 & tau < 1),
-    "All elements of tau must be in [0, 1)",
-    arg = "tau"
-  )
+  assert_tau_values_ok(tau)
   assert_dimension_ok(
     length(tau) == n_components,
     "tau must have length I (the moments' n_components)"
@@ -138,20 +129,7 @@ validate_quadratic_inputs <- function(tau, components, moments) {
 
   # Validate sigma_i_sq positivity (a quadratic-stage requirement)
   sigma_i_sq <- moments$sigma_i_sq
-  bad_sigma <- which(
-    !is.finite(sigma_i_sq) | sigma_i_sq <= 0
-  )
-  assert_bad_argument_ok(
-    length(bad_sigma) == 0,
-    paste0(
-      "sigma_i_sq is non-positive, non-finite, or NA ",
-      "for maturity/maturities ",
-      paste(maturities[bad_sigma], collapse = ", "),
-      ". Cannot compute identified set -- ",
-      "insufficient heteroskedasticity."
-    ),
-    arg = "sigma_i_sq"
-  )
+  assert_sigma_positive(sigma_i_sq, maturities)
 
   validate_finite_by_maturity(
     list(

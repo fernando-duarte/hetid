@@ -13,7 +13,10 @@ source(here::here("scripts/utils/common_settings.R"))
 source(here::here("scripts/utils/ixj_identification.R"))
 
 ID_MODE <- "maturities" # match the baseline stage (compute_identification.R)
-TAU_GRID <- c(0.1, 0.2, 0.5, 1.0)
+# tau must lie in [0, 1): the package validator rejects 1.0 outright, so the
+# near-uninformative probe uses 0.99, mirroring OPT_TAU_CAP in
+# tau_star_comparison.R
+TAU_GRID <- c(0.1, 0.2, 0.5, 0.99)
 
 cli_h1("Computing I x J Identified Set (separate instruments)")
 

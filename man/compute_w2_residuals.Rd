@@ -24,7 +24,9 @@ NULL (default) uses the full range from
 MIN_MATURITY to EFFECTIVE_MAX_MATURITY.}
 
 \item{n_pcs}{Integer specifying the number of principal components to use.
-Must be between 1 and 6. Default is 4 following Adrian, Crump, and Moench (2013).
+Must be between 1 and 6 when using the bundled PCs; with a user-supplied
+\code{pcs} matrix, any value up to \code{ncol(pcs)} is allowed. Default is
+4 following Adrian, Crump, and Moench (2013).
 The choice of n_pcs represents a trade-off between capturing variation in
 financial asset returns and maintaining computational stability. More components
 capture more variation but may lead to overfitting in finite samples.}
@@ -33,7 +35,10 @@ capture more variation but may lead to overfitting in finite samples.}
 number of observations and J is the number of components,
 extracted from a broader set of returns of financial assets.
 If NULL, uses the bundled \code{variables} dataset (with a
-warning). Pass explicitly to use your own data.}
+warning). Pass explicitly to use your own data.
+The matrix may be any instrument set, not only principal
+components; see \code{\link{build_instrument_matrix}()} for a
+validated constructor that supports arbitrary transformations.}
 
 \item{return_df}{Logical, if TRUE returns a data frame with
 dates (default FALSE)}

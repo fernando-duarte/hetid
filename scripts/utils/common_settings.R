@@ -107,11 +107,17 @@ if (file.exists(file.path(utils_dir, "hetero_test_utils.R"))) {
 if (file.exists(file.path(utils_dir, "factor_utils.R"))) {
   source(file.path(utils_dir, "factor_utils.R"))
 }
+if (file.exists(file.path(utils_dir, "z_source.R"))) {
+  source(file.path(utils_dir, "z_source.R"))
+}
 if (file.exists(file.path(utils_dir, "identification_utils.R"))) {
   source(file.path(utils_dir, "identification_utils.R"))
 }
 if (file.exists(file.path(utils_dir, "optimization_utils.R"))) {
   source(file.path(utils_dir, "optimization_utils.R"))
+}
+if (file.exists(file.path(utils_dir, "lambda_optimization.R"))) {
+  source(file.path(utils_dir, "lambda_optimization.R"))
 }
 if (file.exists(file.path(utils_dir, "profile_bounds.R"))) {
   source(file.path(utils_dir, "profile_bounds.R"))

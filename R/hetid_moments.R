@@ -9,7 +9,10 @@
 #'
 #' @param w1 Numeric vector of W1 residuals from compute_w1_residuals()
 #' @param w2 Matrix of W2 residuals (T x I) from compute_w2_residuals()
-#' @param pcs Matrix of principal components (T x J)
+#' @param pcs Matrix of instruments (T x J): any numeric matrix of
+#'   exogenous time-series instruments. In the VFCI application these
+#'   are principal components of asset returns. Column names label
+#'   the instrument axis of the moments (falling back to pc1..pcJ).
 #' @param maturities Integer vector of w2 column indices whose moment
 #'   conditions are computed (the constraint axis). Default is all
 #'   columns of w2.
@@ -19,7 +22,17 @@
 #'   \code{p_i_0}, \code{s_i_1}, \code{s_i_2} and attributes
 #'   \code{maturities}, \code{n_components}, \code{n_obs}.
 #'
+#' @details
+#' Direct callers are responsible for supplying unique instrument column
+#' names; the validated front door for constructing instrument matrices
+#' is \code{\link{build_instrument_matrix}()}.
+#'
 #' @template section-maturity-convention
+#'
+#' @seealso \code{\link{build_instrument_matrix}} for constructing
+#'   instrument matrices with optional transformations,
+#'   \code{\link{build_general_quadratic_system}} for building quadratic
+#'   constraints from arbitrary linear combinations of instruments.
 #'
 #' @export
 #'

@@ -76,9 +76,6 @@ compute_identified_set_components <- function(gamma, moments) {
     )
   )
 
-  r_i_0 <- moments$r_i_0
-  r_i_1 <- moments$r_i_1
-  p_i_0 <- moments$p_i_0
   n_maturities <- length(maturities)
 
   L_i <- numeric(n_maturities) # nolint: object_name_linter.
@@ -93,22 +90,10 @@ compute_identified_set_components <- function(gamma, moments) {
     i <- maturities[idx]
     gamma_i <- gamma[, i, drop = FALSE]
 
-    L_i[idx] <- as.numeric( # nolint: object_name_linter.
-      crossprod(gamma_i, r_i_0[, idx])
-    )
-
-    p_i_0_vec <- p_i_0[, idx, drop = FALSE]
-    V_i[idx] <- as.numeric( # nolint: object_name_linter.
-      crossprod(gamma_i, p_i_0_vec)
-    )^2
-
-    R_i_1_mat <- r_i_1[[idx]] # nolint: object_name_linter.
-    Q_i[[idx]] <- as.numeric( # nolint: object_name_linter.
-      crossprod(gamma_i, R_i_1_mat)
-    )
-    names(Q_i[[idx]]) <- maturity_names( # nolint: object_name_linter.
-      seq_len(ncol(R_i_1_mat))
-    )
+    parts <- constraint_components(gamma_i, idx, moments)
+    L_i[idx] <- parts$L # nolint: object_name_linter.
+    V_i[idx] <- parts$V # nolint: object_name_linter.
+    Q_i[[idx]] <- parts$Q # nolint: object_name_linter.
   }
 
   new_hetid_components(

@@ -116,7 +116,13 @@ compute_w2_residuals <- function(yields, term_premia,
       HETID_CONSTANTS$EFFECTIVE_MAX_MATURITY
     )
   }
-  validate_n_pcs(n_pcs)
+  if (is.null(pcs)) {
+    validate_n_pcs(n_pcs)
+  } else {
+    assert_scalar_integer_in_range(
+      n_pcs, "n_pcs", 1, NCOL(pcs)
+    )
+  }
   validated <- validate_w2_inputs(yields, term_premia, maturities) # nolint: object_usage_linter
   yields_df <- validated$yields
   term_premia_df <- validated$term_premia
@@ -163,9 +169,7 @@ compute_w2_residuals <- function(yields, term_premia,
 
   # Set row/column names for coefficient matrix
   rownames(coef_matrix) <- maturity_names(maturities)
-  colnames(coef_matrix) <- c(
-    "(Intercept)", get_pc_column_names(n_pcs)
-  )
+  colnames(coef_matrix) <- c("(Intercept)", pc_result$pc_names)
 
   if (return_df) {
     return(format_w2_dataframe(

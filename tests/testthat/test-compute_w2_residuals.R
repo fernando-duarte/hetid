@@ -397,7 +397,8 @@ test_that("error when pcs has fewer columns than n_pcs", {
       test_env$yields, test_env$term_premia,
       maturities = 5, n_pcs = 4, pcs = bad_pcs
     ),
-    "pcs has 2 columns but n_pcs = 4"
+    "n_pcs must be between 1 and 2",
+    class = "hetid_error_bad_argument"
   )
 })
 

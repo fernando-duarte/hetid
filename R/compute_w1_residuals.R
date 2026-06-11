@@ -9,6 +9,9 @@
 #'   \code{return_df = TRUE} but optional otherwise.
 #' @param return_df Logical, if TRUE returns a data frame with dates
 #'   (default FALSE). Requires a \code{date} column in \code{data}.
+#' @param exog Optional T x K numeric matrix of exogenous regressors
+#'   that replaces the bundled PC columns in the first-stage
+#'   regression. Cannot be combined with an explicit \code{n_pcs}.
 #'
 #' @return If return_df = FALSE, returns a list containing:
 #' \describe{
@@ -34,6 +37,10 @@
 #' where Y_\{1,t+1\} is consumption growth and PC_t are the first n_pcs
 #' principal components extracted from financial asset returns (pc1, ..., pc6).
 #'
+#' When \code{exog} is supplied, its columns replace the PCs as
+#' regressors under the same one-period lag convention: row t of
+#' \code{exog} is paired with consumption growth at t+1.
+#'
 #' @importFrom stats lm residuals fitted coef as.formula complete.cases
 #' @export
 #'
@@ -56,9 +63,24 @@
 #' )
 #'
 compute_w1_residuals <- function(n_pcs = HETID_CONSTANTS$DEFAULT_N_PCS,
-                                 data = NULL, return_df = FALSE) {
+                                 data = NULL, return_df = FALSE,
+                                 exog = NULL) {
   # Validate inputs
-  validate_n_pcs(n_pcs)
+  if (is.null(exog)) {
+    validate_n_pcs(n_pcs)
+  } else {
+    assert_bad_argument_ok(
+      missing(n_pcs),
+      "supply either n_pcs (bundled PCs) or exog, not both",
+      arg = "n_pcs"
+    )
+    assert_tabular(exog, "exog")
+    exog <- as.matrix(exog)
+    assert_numeric_finite_values(exog, "exog")
+    if (is.null(colnames(exog))) {
+      colnames(exog) <- paste0("z", seq_len(ncol(exog)))
+    }
+  }
 
   # Load data if not provided
   if (is.null(data)) {
@@ -81,10 +103,10 @@ compute_w1_residuals <- function(n_pcs = HETID_CONSTANTS$DEFAULT_N_PCS,
 
   # Check required columns (date is optional unless return_df)
   has_dates <- "date" %in% names(data)
-  required_cols <- c(
-    HETID_CONSTANTS$CONSUMPTION_GROWTH_COL,
-    get_pc_column_names(n_pcs)
-  )
+  required_cols <- HETID_CONSTANTS$CONSUMPTION_GROWTH_COL
+  if (is.null(exog)) {
+    required_cols <- c(required_cols, get_pc_column_names(n_pcs))
+  }
   if (return_df && !has_dates) {
     required_cols <- c("date", required_cols)
   }
@@ -94,17 +116,26 @@ compute_w1_residuals <- function(n_pcs = HETID_CONSTANTS$DEFAULT_N_PCS,
   y1 <- data[[HETID_CONSTANTS$CONSUMPTION_GROWTH_COL]]
   dates <- if (has_dates) data$date else NULL
 
-  # Create PC matrix
-  pc_cols <- get_pc_column_names(n_pcs)
-  pc_matrix <- as.matrix(data[, pc_cols])
+  # Create regressor matrix; labels travel on its colnames
+  if (is.null(exog)) {
+    reg_matrix <- as.matrix(data[, get_pc_column_names(n_pcs)])
+    n_reg <- n_pcs
+  } else {
+    assert_dimension_ok(
+      nrow(exog) == length(y1),
+      "exog must have one row per row of data"
+    )
+    reg_matrix <- exog
+    n_reg <- ncol(exog)
+  }
 
-  # Regress Y_{t+1} on PC_t: lag PCs, lead Y1
+  # Regress Y_{t+1} on regressors: lag regressors, lead Y1
   n <- length(y1)
   assert_insufficient_data_ok(
     n >= 2,
     "Need at least 2 observations for lagging"
   )
-  pc_lagged <- pc_matrix[
+  reg_lagged <- reg_matrix[
     seq_len(n - 1), ,
     drop = FALSE
   ]
@@ -115,7 +146,7 @@ compute_w1_residuals <- function(n_pcs = HETID_CONSTANTS$DEFAULT_N_PCS,
     NULL
   }
 
-  reg <- run_pc_regression(y1_future, pc_lagged, n_pcs)
+  reg <- run_pc_regression(y1_future, reg_lagged, n_reg)
   dates_clean <- if (!is.null(dates_future)) {
     dates_future[reg$complete_idx]
   } else {

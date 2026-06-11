@@ -119,7 +119,8 @@ compute_identification_residuals <- function(
   }
 
   n_resid <- length(w1_result$residuals)
-  pcs_aligned <- pcs_mat[seq_len(n_resid), , drop = FALSE]
+  z_mat <- get_identification_z(data, pcs_mat)
+  pcs_aligned <- z_mat[seq_len(n_resid), , drop = FALSE]
 
   result <- list(
     w1 = w1_result$residuals,

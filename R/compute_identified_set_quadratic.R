@@ -116,55 +116,19 @@ quadratic_from_components <- function(tau,
   for (idx in seq_along(maturities)) {
     i <- maturities[idx]
 
-    # Extract values for maturity i
-    L_i_val <- L_i[idx] # nolint: object_name_linter.
-    V_i_val <- V_i[idx] # nolint: object_name_linter.
-    Q_i_vec <- Q_i[[idx]] # nolint: object_name_linter.
-    s_i_0_val <- s_i_0[idx]
-    s_i_1_vec <- s_i_1[[idx]]
-    s_i_2_mat <- s_i_2[[idx]]
-    sigma_i_sq_val <- sigma_i_sq[idx]
-    tau_i <- tau[i]
-
-    # Compute d_i = tau_i^2 * V_i / sigma_i^2
-    d_i[idx] <- (tau_i^2 * V_i_val) / sigma_i_sq_val
-
-    if (!is.finite(d_i[idx])) {
-      stop_hetid(paste0(
-        "d_i = tau_i^2 * V_i / sigma_i_sq is non-finite for maturity ",
-        i, ": tau_i = ", tau_i, ", V_i = ", V_i_val,
-        ", sigma_i_sq = ", sigma_i_sq_val, "."
-      ))
-    }
-
-    # Compute A_i = Q_i * Q_i^T - d_i * S_i^(2)
-    A_i[[idx]] <- tcrossprod(Q_i_vec) - d_i[idx] * s_i_2_mat # nolint: object_name_linter.
-
-    # Symmetrize exactly: theta' A theta is invariant under
-    # (A + t(A)) / 2, and downstream consumers can rely on it
-    A_i[[idx]] <- (A_i[[idx]] + t(A_i[[idx]])) / 2 # nolint: object_name_linter.
-
-    # Compute b_i = -2 * L_i * Q_i + 2 * d_i * S_i^(1)
-    b_i[[idx]] <- -2 * L_i_val * Q_i_vec +
-      2 * d_i[idx] * s_i_1_vec
-    names(b_i[[idx]]) <- maturity_names(seq_len(n_components))
-
-    # Compute c_i = L_i^2 - d_i * S_i^(0)
-    c_i[idx] <- L_i_val^2 - d_i[idx] * s_i_0_val
-
-    # Belt-and-braces against tampered containers: validated inputs
-    # guarantee finite moments and components, so a non-finite
-    # assembly indicates post-construction tampering or a hetid bug
-    if (!all(
-      is.finite(d_i[idx]), is.finite(A_i[[idx]]),
-      is.finite(b_i[[idx]]), is.finite(c_i[idx])
-    )) {
-      stop_hetid(paste0(
-        "Assembled quadratic form contains non-finite values ",
-        "(d_i, A_i, b_i, or c_i) for maturity ", i,
-        "; check the moments and components for NA/NaN/Inf."
-      ))
-    }
+    quad <- assemble_constraint_quadratic(
+      tau_ik = tau[i],
+      l_val = L_i[idx], v_val = V_i[idx], q_vec = Q_i[[idx]],
+      s_i_0_val = s_i_0[idx], s_i_1_vec = s_i_1[[idx]],
+      s_i_2_mat = s_i_2[[idx]],
+      sigma_i_sq_val = sigma_i_sq[idx],
+      n_components = n_components,
+      label = paste0("maturity ", i)
+    )
+    d_i[idx] <- quad$d
+    A_i[[idx]] <- quad$A # nolint: object_name_linter.
+    b_i[[idx]] <- quad$b
+    c_i[idx] <- quad$c
   }
 
   list(

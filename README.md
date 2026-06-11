@@ -83,6 +83,58 @@ pak::pak("fernando-duarte/hetid")
 - **Multi-maturity Analysis**: Simultaneous estimation across the yield
   curve
 
+#### Generalized instruments
+
+Any collection of time-series instruments can drive the identification:
+supply them (or transformations of them) to the moments step, then build
+constraints from one or more linear combinations per endogenous
+component — or from every instrument separately.
+
+``` r
+library(hetid)
+#> Data availability:
+#>   * ACM term premia: Available (updated 2026-06-11)
+#> 
+#> Use load_term_premia() to access the data.
+set.seed(42)
+w1 <- rnorm(100)
+w2 <- matrix(rnorm(200), nrow = 100)
+z <- matrix(rnorm(300),
+  nrow = 100,
+  dimnames = list(NULL, c("a", "b", "c"))
+)
+
+instruments <- build_instrument_matrix(
+  z,
+  transforms = list(a_sq = function(z) z[, "a"]^2)
+)
+moments <- compute_identification_moments(w1, w2, instruments)
+
+# every instrument separately: one constraint per (component, instrument)
+all_sep <- build_general_quadratic_system(
+  separate_instruments_lambda(moments),
+  tau = 0.2, moments
+)
+nrow(all_sep$labels)
+#> [1] 8
+
+# two combinations for component one, one for component two
+lambda <- list(
+  cbind(c(1, 0, 0, 0), c(0, 1, 1, 0)),
+  matrix(c(1, 1, 0, 1), ncol = 1)
+)
+mixed <- build_general_quadratic_system(lambda, tau = 0.2, moments)
+mixed$labels
+#>   constraint maturity combo               name
+#> 1          1        1     1 maturity_1_combo_1
+#> 2          2        1     2 maturity_1_combo_2
+#> 3          3        2     1         maturity_2
+```
+
+Set widths are comparable only across schemes with the same number of
+constraints, and width-minimizing optimized weights are a computational
+benchmark, not a confidence statement.
+
 ## Quick Start
 
 ### Basic Workflow
@@ -187,6 +239,15 @@ achieved through heteroskedasticity-based moment conditions.
 
 - `compute_w1_residuals()` - Primary endogenous variable residuals
 - `compute_w2_residuals()` - Secondary endogenous variable residuals
+- `compute_identification_moments()` - All seven identification moments
+- `build_instrument_matrix()` - Construct instrument matrices with
+  optional transformations
+- `build_general_quadratic_system()` - Quadratic constraints from
+  arbitrary instrument combinations
+- `separate_instruments_lambda()` - Per-instrument identity weight
+  matrices
+- `make_system_checker()` - Closure for evaluating quadratic constraint
+  satisfaction
 
 ## Data Sources
 

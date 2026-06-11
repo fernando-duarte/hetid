@@ -3,3 +3,6 @@
 #'   extracted from a broader set of returns of financial assets.
 #'   If NULL, uses the bundled \code{variables} dataset (with a
 #'   warning). Pass explicitly to use your own data.
+#'   The matrix may be any instrument set, not only principal
+#'   components; see \code{\link{build_instrument_matrix}()} for a
+#'   validated constructor that supports arbitrary transformations.

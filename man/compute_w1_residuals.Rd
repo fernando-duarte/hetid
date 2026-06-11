@@ -7,7 +7,8 @@
 compute_w1_residuals(
   n_pcs = HETID_CONSTANTS$DEFAULT_N_PCS,
   data = NULL,
-  return_df = FALSE
+  return_df = FALSE,
+  exog = NULL
 )
 }
 \arguments{
@@ -19,6 +20,10 @@ loads from package data. A \code{date} column is required when
 
 \item{return_df}{Logical, if TRUE returns a data frame with dates
 (default FALSE). Requires a \code{date} column in \code{data}.}
+
+\item{exog}{Optional T x K numeric matrix of exogenous regressors
+that replaces the bundled PC columns in the first-stage
+regression. Cannot be combined with an explicit \code{n_pcs}.}
 }
 \value{
 If return_df = FALSE, returns a list containing:
@@ -48,6 +53,10 @@ Y_\{1,t+1\} = alpha + beta' * PC_t + W_\{1,t+1\}
 
 where Y_\{1,t+1\} is consumption growth and PC_t are the first n_pcs
 principal components extracted from financial asset returns (pc1, ..., pc6).
+
+When \code{exog} is supplied, its columns replace the PCs as
+regressors under the same one-period lag convention: row t of
+\code{exog} is paired with consumption growth at t+1.
 }
 \examples{
 # Compute residuals using 4 PCs (default)
