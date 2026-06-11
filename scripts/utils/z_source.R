@@ -41,3 +41,10 @@ get_identification_z <- function(data, default) {
   }
   z
 }
+
+# TRUE when the pipeline is running on hook-supplied instruments. Display
+# layers branch on this so default artifacts keep their historical PC
+# labels byte-for-byte while custom runs are labeled honestly.
+z_source_active <- function() {
+  nzchar(Sys.getenv("HETID_Z_SOURCE", ""))
+}

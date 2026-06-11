@@ -107,18 +107,28 @@ rejection_summary <- data.frame(
 )
 print(gt(rejection_summary) |> tab_header(title = "Rejections by Significance Level"))
 
-cli_h2("Correlations Between PCs and Squared W2 Residuals")
-corr_matrix <- matrix(NA_real_, nrow = n_pcs, ncol = length(maturities))
-dimnames(corr_matrix) <- list(paste0("PC", seq_len(n_pcs)), paste0("maturity_", maturities))
-for (j in seq_len(n_pcs)) {
+cli_h2("Correlations Between Instruments and Squared W2 Residuals")
+# Size from the matrix the moments actually use: under HETID_Z_SOURCE the
+# instrument count J can differ from the first-stage n_pcs. Default labels
+# stay the historical PC names byte-for-byte; custom runs use the hook's
+# column names.
+n_inst <- ncol(pcs_aligned)
+inst_labels <- if (z_source_active()) {
+  colnames(pcs_aligned)
+} else {
+  paste0("PC", seq_len(n_inst))
+}
+corr_matrix <- matrix(NA_real_, nrow = n_inst, ncol = length(maturities))
+dimnames(corr_matrix) <- list(inst_labels, paste0("maturity_", maturities))
+for (j in seq_len(n_inst)) {
   for (k in seq_along(maturities)) {
     corr_matrix[j, k] <- abs(cor(pcs_aligned[, j], w2_resid[, k]^2, use = "complete.obs"))
   }
 }
-corr_long <- expand.grid(pc = seq_len(n_pcs), maturity = maturities)
+corr_long <- expand.grid(pc = seq_len(n_inst), maturity = maturities)
 corr_long$abs_corr <- as.vector(corr_matrix)
 
-pc_means <- sprintf("PC%d = %.3f", seq_len(n_pcs), rowMeans(corr_matrix))
+pc_means <- sprintf("%s = %.3f", inst_labels, rowMeans(corr_matrix))
 mat_means <- sprintf("m%d = %.3f", maturities, colMeans(corr_matrix))
 cli_ul(c(
   paste("Mean |corr| by PC:", paste(pc_means, collapse = ", ")),
@@ -164,7 +174,7 @@ p_pvalues <- ggplot(plot_pvals, aes(x = maturity, y = neg_log10_p, color = test)
 save_plot(p_pvalues, "hetero_pvalues_by_maturity")
 
 heatmap_df <- corr_long
-heatmap_df$pc_label <- factor(heatmap_df$pc, labels = paste0("PC", seq_len(n_pcs)))
+heatmap_df$pc_label <- factor(heatmap_df$pc, labels = inst_labels)
 p_heatmap <- ggplot(heatmap_df, aes(x = maturity, y = pc_label, fill = abs_corr)) +
   geom_tile() +
   geom_text(aes(label = sprintf("%.3f", abs_corr)), size = 3) +
