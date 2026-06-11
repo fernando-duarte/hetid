@@ -1,0 +1,129 @@
+# Simulation validation for the post-selection split (the rigor
+# gate). Synthetic DGP with known theta0 in which the moment bound
+# holds UNIFORMLY over weight directions at a closed-form level
+# (postsel_sim_dgp.R), so any coverage loss under data-selected
+# weights is a finite-sample selection effect by construction.
+# Demonstrates:
+#   selection effect  full-sample width-minimizing selection
+#                     degrades coverage of theta0 as instruments
+#                     multiply
+#   split repair      selecting on one block and evaluating on the
+#                     other restores coverage close to the
+#                     fixed-weights benchmark at the same T_eval
+# NOT part of the default pipeline. Heavy (budgeted + checkpointed):
+#   smoke: HETID_SIM_QUICK=1 Rscript scripts/post_selection/split_simulation.R
+#   pilot: HETID_SIM_REPS=25 Rscript scripts/post_selection/split_simulation.R
+#   full:  Rscript scripts/post_selection/split_simulation.R
+# One checkpoint rds per K cell (reps count in the name) supports
+# resume; remove the checkpoint directory to force a fresh compute.
+
+source(here::here("scripts/utils/common_settings.R"))
+source(here::here("scripts/utils/postsel_split_utils.R"))
+source(here::here("scripts/utils/postsel_sim_dgp.R"))
+source(here::here("scripts/post_selection/postsel_sim_rep.R"))
+
+QUICK <- nzchar(Sys.getenv("HETID_SIM_QUICK"))
+SIM_SEED <- 20260612L
+SIM_T <- 240L
+SIM_TAU <- 0.2
+SIM_PHI <- 0.5
+SIM_PROP <- 0.5
+SIM_GAP <- 4L
+SIM_K_GRID <- if (QUICK) c(2L, 8L) else c(2L, 4L, 8L)
+SIM_REPS <- as.integer(
+  Sys.getenv("HETID_SIM_REPS", if (QUICK) "8" else "200")
+)
+WIDTH_REPS <- min(if (QUICK) 2L else 50L, SIM_REPS)
+SIM_N_STARTS <- 5L
+SIM_MAXEVAL <- 200L
+SIM_CORES <- max(1L, as.integer(
+  Sys.getenv("HETID_SIM_CORES", as.character(N_CORES))
+))
+
+# Everything the worker needs, passed explicitly (no lexical capture
+# of script-level constants)
+cfg <- list(
+  sim_seed = SIM_SEED, t_obs = SIM_T, tau = SIM_TAU,
+  prop = SIM_PROP, gap = SIM_GAP, n_starts = SIM_N_STARTS,
+  maxeval = SIM_MAXEVAL, width_reps = WIDTH_REPS
+)
+
+out_dir <- file.path(OUTPUT_TEMP_DIR, "identification_postsel")
+ckpt_dir <- file.path(
+  out_dir, if (QUICK) "sim_ckpt_quick" else "sim_ckpt"
+)
+dir.create(ckpt_dir, recursive = TRUE, showWarnings = FALSE)
+
+cli_h1(paste0(
+  "Post-selection split simulation (",
+  if (QUICK) "quick smoke grid" else "full grid", ")"
+))
+cells <- lapply(seq_along(SIM_K_GRID), function(ci) {
+  k <- SIM_K_GRID[ci]
+  ck <- file.path(
+    ckpt_dir, paste0("cell_k", k, "_r", SIM_REPS, ".rds")
+  )
+  if (file.exists(ck)) {
+    cli_alert_info(paste0("cell K = ", k, ": checkpoint reused"))
+    return(readRDS(ck))
+  }
+  params <- postsel_dgp_params(k, phi = SIM_PHI)
+  # Uniform-validity certificate: the constant-in-direction relative
+  # correlation must sit well inside the slack the study uses, or
+  # the premise (pure selection effect) is wrong. Fail loudly.
+  stopifnot(max(params$rho) <= 0.6 * SIM_TAU)
+  cli_h2(paste0(
+    "cell K = ", k, ": rho = ",
+    paste(round(params$rho, 4), collapse = ", "),
+    ", sigma_nu = ", round(params$sigma_nu, 3)
+  ))
+  t_start <- Sys.time()
+  rows <- parallel::mclapply(
+    seq_len(SIM_REPS), run_one_rep,
+    cell_idx = ci, params = params, cfg = cfg,
+    mc.cores = SIM_CORES
+  )
+  ok <- vapply(rows, is.data.frame, logical(1))
+  if (!all(ok)) {
+    first_bad <- rows[[which(!ok)[1]]]
+    stop(
+      "simulation reps failed in cell K = ", k, ": ",
+      conditionMessage(attr(first_bad, "condition"))
+    )
+  }
+  cell <- do.call(rbind, rows)
+  elapsed <- as.numeric(
+    difftime(Sys.time(), t_start, units = "mins")
+  )
+  cli_alert_success(paste0(
+    "cell K = ", k, ": ", SIM_REPS, " reps in ",
+    round(elapsed, 1), " min"
+  ))
+  saveRDS(cell, ck)
+  cell
+})
+
+res <- list(
+  results = do.call(rbind, cells),
+  settings = list(
+    quick = QUICK, sim_seed = SIM_SEED, t_obs = SIM_T,
+    tau = SIM_TAU, phi = SIM_PHI, k_grid = SIM_K_GRID,
+    reps = SIM_REPS, width_reps = WIDTH_REPS,
+    n_starts = SIM_N_STARTS, maxeval = SIM_MAXEVAL,
+    prop = SIM_PROP, gap = SIM_GAP
+  ),
+  dgp = lapply(SIM_K_GRID, postsel_dgp_params, phi = SIM_PHI)
+)
+suffix <- if (QUICK) "_quick" else ""
+saveRDS(
+  res, file.path(out_dir, paste0("sim_results", suffix, ".rds"))
+)
+write.csv(
+  res$results,
+  file.path(out_dir, paste0("sim_results", suffix, ".csv")),
+  row.names = FALSE
+)
+
+cli_h2("Coverage by cell and arm (membership of theta0)")
+print(aggregate(covered ~ k_inst + arm, data = res$results, FUN = mean))
+cli_alert_success("Saved simulation results to {.path {out_dir}}")
