@@ -162,29 +162,37 @@ create_hetero_diagnostic_plots <- function(lm_model, var_name,
 }
 
 #' Summarize heteroskedasticity test results
+#'
+#' Covers the full skedastic suite computed by perform_all_hetero_tests().
+#' Rates are taken over the rows where each test actually produced a
+#' p-value (non-NA), so an errored suite row cannot deflate them.
 #' @param hetero_results data frame with test results
 #' @param significance_level significance level for tests
 #' @return data frame with summary
 summarize_hetero_tests <- function(hetero_results, significance_level = 0.05) {
-  test_names <- c("White", "BP", "GQ", "Harvey", "CW")
+  test_names <- c("White", "BP", "GQ", "Harvey", "Anscombe", "CW")
   pval_cols <- paste0(test_names, "_pval")
 
-  summary_df <- data.frame(
-    Test = test_names,
-    Rejections = NA,
-    Total = nrow(hetero_results),
-    Percentage = NA,
-    stringsAsFactors = FALSE
-  )
-
-  for (i in seq_along(test_names)) {
-    if (pval_cols[i] %in% names(hetero_results)) {
-      summary_df$Rejections[i] <- sum(hetero_results[[pval_cols[i]]] < significance_level,
-        na.rm = TRUE
-      )
-    }
+  missing_cols <- setdiff(pval_cols, names(hetero_results))
+  if (length(missing_cols) > 0) {
+    stop(
+      "summarize_hetero_tests: missing p-value column(s): ",
+      paste(missing_cols, collapse = ", ")
+    )
   }
 
-  summary_df$Percentage <- round(100 * summary_df$Rejections / summary_df$Total, 1)
-  summary_df
+  rejections <- unname(vapply(pval_cols, function(col) {
+    sum(hetero_results[[col]] < significance_level, na.rm = TRUE)
+  }, integer(1)))
+  totals <- unname(vapply(pval_cols, function(col) {
+    sum(!is.na(hetero_results[[col]]))
+  }, integer(1)))
+
+  data.frame(
+    Test = test_names,
+    Rejections = rejections,
+    Total = totals,
+    Percentage = ifelse(totals > 0, round(100 * rejections / totals, 1), NA_real_),
+    stringsAsFactors = FALSE
+  )
 }

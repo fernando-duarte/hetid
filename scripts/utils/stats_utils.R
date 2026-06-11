@@ -35,22 +35,60 @@ compute_summary_stats <- function(x, var_name, compute_ac = TRUE, max_lags = 2) 
   stats
 }
 
+#' Interpolated KPSS p-value
+#'
+#' Linearly interpolates the statistic over the KPSS (1992, Table 1)
+#' critical values reported by ur.kpss() at the 10/5/2.5/1 percent levels
+#' -- the method tseries::kpss.test uses. Clamped beyond the table: a
+#' reported 0.10 means p >= 0.10 and a reported 0.01 means p <= 0.01.
+#' @param stat KPSS test statistic
+#' @param cval critical values from ur.kpss (10/5/2.5/1 percent)
+#' @return p-value truncated to [0.01, 0.10]
+kpss_pvalue <- function(stat, cval) {
+  cv <- as.numeric(cval)
+  p <- stats::approx(cv, c(0.10, 0.05, 0.025, 0.01), xout = stat, rule = 2)$y
+  # Cross-check vs the raw critical-value bands; clamped edges are one-sided.
+  tol <- 1e-12
+  band_ok <-
+    if (stat >= cv[4]) {
+      p <= 0.01 + tol
+    } else if (stat >= cv[2]) {
+      p > 0.01 - tol && p <= 0.05 + tol
+    } else if (stat >= cv[1]) {
+      p > 0.05 - tol && p <= 0.10 + tol
+    } else {
+      p >= 0.10 - tol
+    }
+  if (!band_ok) {
+    stop("kpss_pvalue: p ", p, " contradicts the critical-value band at stat ", stat)
+  }
+  p
+}
+
 #' Perform stationarity tests
+#'
+#' ADF p-values are MacKinnon (1996) response-surface values from
+#' urca::punitroot() (lower tail, constant-only regression); KPSS
+#' p-values come from kpss_pvalue() above; Ljung-Box p-values are exact.
 #' @param x numeric vector
 #' @param var_name variable name
 #' @return data frame with test results
 perform_stationarity_tests <- function(x, var_name) {
   results <- data.frame(Variable = var_name, stringsAsFactors = FALSE)
+  n_obs <- sum(!is.na(x))
 
-  # ADF test
+  # ADF test (drift regression; tau2 statistic)
   adf_result <- urca::ur.df(x, type = "drift", selectlags = "AIC")
   results$ADF_stat <- adf_result@teststat[1]
-  results$ADF_pval <- ifelse(adf_result@teststat[1] < adf_result@cval[1, 2], 0.01, 0.1)
+  results$ADF_pval <- urca::punitroot(
+    adf_result@teststat[1],
+    N = n_obs, trend = "c", statistic = "t"
+  )
 
-  # KPSS test
+  # KPSS test (null of level stationarity)
   kpss_result <- urca::ur.kpss(x, type = "mu")
   results$KPSS_stat <- kpss_result@teststat
-  results$KPSS_pval <- ifelse(kpss_result@teststat > kpss_result@cval[2], 0.01, 0.1)
+  results$KPSS_pval <- kpss_pvalue(kpss_result@teststat, kpss_result@cval)
 
   # Ljung-Box test
   lb_test <- Box.test(x, lag = 8, type = "Ljung-Box")

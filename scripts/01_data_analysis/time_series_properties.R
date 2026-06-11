@@ -40,11 +40,16 @@ analyze_time_series <- function(x, var_name, max_lags = 8) {
   # Basic autocorrelation analysis
   acf_result <- acf(x, lag.max = max_lags, plot = FALSE, na.action = na.pass)
 
-  # Phillips-Perron test (using urca package)
+  # Phillips-Perron test (urca; Z-tau with a constant shares the
+  # Dickey-Fuller tau_mu distribution, so MacKinnon (1996)
+  # response-surface p-values apply)
   pp_result <- ur.pp(x, type = "Z-tau", model = "constant")
   pp_test <- list(
     statistic = pp_result@teststat,
-    p.value = ifelse(pp_result@teststat < pp_result@cval[2], 0.01, 0.1)
+    p.value = urca::punitroot(
+      as.numeric(pp_result@teststat),
+      N = sum(!is.na(x)), trend = "c", statistic = "t"
+    )
   )
 
   # ARCH test for heteroskedasticity (using squared residuals from AR(1))
@@ -134,13 +139,17 @@ all_ts_results <- rbind(
   macro_ts_results
 )
 
-# Format numeric columns
-numeric_cols <- c(
-  "Mean", "SD", "AC1", "AC4", "LB_stat", "LB_pval", "ADF_stat", "ADF_pval",
-  "KPSS_stat", "KPSS_pval", "PP_stat", "PP_pval", "ARCH_stat", "ARCH_pval",
-  "JB_stat", "JB_pval"
+# Format numeric columns: statistics rounded, p-values kept to three
+# significant digits so very small p-values do not collapse to zero
+stat_cols <- c(
+  "Mean", "SD", "AC1", "AC4", "LB_stat", "ADF_stat",
+  "KPSS_stat", "PP_stat", "ARCH_stat", "JB_stat"
 )
-all_ts_results[numeric_cols] <- lapply(all_ts_results[numeric_cols], function(x) round(x, 4))
+pval_cols <- c(
+  "LB_pval", "ADF_pval", "KPSS_pval", "PP_pval", "ARCH_pval", "JB_pval"
+)
+all_ts_results[stat_cols] <- lapply(all_ts_results[stat_cols], function(x) round(x, 4))
+all_ts_results[pval_cols] <- lapply(all_ts_results[pval_cols], function(x) signif(x, 3))
 
 # Display results in narrower tables
 cli_h1("Time Series Properties Summary")
@@ -180,22 +189,39 @@ cli_h3("ADF (Augmented Dickey-Fuller)")
 cli_ul(c(
   "H0: Series has a unit root (non-stationary)",
   "H1: Series is stationary",
-  "Reject H0 if p < 0.05 (evidence of stationarity)"
+  "Reject H0 if p < 0.05 (evidence of stationarity)",
+  "p-values: MacKinnon (1996) response surface (urca::punitroot)"
 ))
 cli_h3("KPSS (Kwiatkowski-Phillips-Schmidt-Shin)")
 cli_ul(c(
   "H0: Series is stationary",
   "H1: Series has a unit root (non-stationary)",
-  "Reject H0 if p < 0.05 (evidence of non-stationarity)"
+  "Reject H0 if p < 0.05 (evidence of non-stationarity)",
+  paste(
+    "p-values: interpolated from the KPSS (1992) table,",
+    "truncated to [0.01, 0.10] (0.01 means p <= 0.01; 0.10 means p >= 0.10)"
+  )
 ))
 cli_h3("Phillips-Perron (PP)")
 cli_ul(c(
   "H0: Series has a unit root (non-stationary)",
   "H1: Series is stationary",
-  "Reject H0 if p < 0.05 (evidence of stationarity)"
+  "Reject H0 if p < 0.05 (evidence of stationarity)",
+  "p-values: MacKinnon (1996) response surface (urca::punitroot)"
 ))
-# Clean the unit root stats table for console display
+# Clean the unit root stats table for console display; clamped KPSS
+# p-values are shown as one-sided bounds (the CSV keeps numeric values)
 unit_root_stats_clean <- unit_root_stats
+unit_root_stats_clean$KPSS_pval <- ifelse(
+  is.na(unit_root_stats$KPSS_pval), NA_character_,
+  ifelse(
+    unit_root_stats$KPSS_pval >= 0.10, ">= 0.10",
+    ifelse(
+      unit_root_stats$KPSS_pval <= 0.01, "<= 0.01",
+      format(unit_root_stats$KPSS_pval, digits = 3)
+    )
+  )
+)
 rownames(unit_root_stats_clean) <- NULL
 print(kable(unit_root_stats_clean, format = "simple", align = "l", digits = 4, row.names = FALSE))
 
@@ -443,9 +469,13 @@ summary_dt <- datatable(
     htmltools::br(),
     htmltools::tags$small(
       htmltools::strong("Time Series Tests:"), htmltools::br(),
-      "• ADF (Augmented Dickey-Fuller): H0 = Unit root (non-stationary)", htmltools::br(),
-      "• KPSS (Kwiatkowski-Phillips-Schmidt-Shin): H0 = Stationary", htmltools::br(),
-      "• PP (Phillips-Perron): H0 = Unit root (non-stationary)", htmltools::br(),
+      "• ADF (Augmented Dickey-Fuller): H0 = Unit root (non-stationary);",
+      " p-values from the MacKinnon (1996) response surface", htmltools::br(),
+      "• KPSS (Kwiatkowski-Phillips-Schmidt-Shin): H0 = Stationary;",
+      " p-values interpolated from the KPSS (1992) table, truncated to [0.01, 0.10]",
+      htmltools::br(),
+      "• PP (Phillips-Perron): H0 = Unit root (non-stationary);",
+      " p-values from the MacKinnon (1996) response surface", htmltools::br(),
       "• LB (Ljung-Box): H0 = No serial correlation", htmltools::br(),
       "• ARCH: H0 = No conditional heteroskedasticity", htmltools::br(),
       "• JB (Jarque-Bera): H0 = Normal distribution", htmltools::br(),
