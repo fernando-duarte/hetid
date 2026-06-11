@@ -54,6 +54,19 @@ spec_moments <- function(mode, n_pcs, components) {
     factors = if (mode == "factors") components else DEFAULT_ID_FACTORS,
     maturities = if (mode == "maturities") components else DEFAULT_ID_MATURITIES
   )
+  # The grid is a PC-design artifact: its n_pcs axis and applicability
+  # rules (vfci only at n_pcs = 4) describe PC instrument counts. A custom
+  # HETID_Z_SOURCE may only feed groups whose width matches; mismatched
+  # groups fail loudly (caught per group) instead of producing rows whose
+  # n_pcs label would be false.
+  if (ncol(resid$pcs_aligned) != n_pcs) {
+    stop(
+      "custom Z has ", ncol(resid$pcs_aligned), " columns but this grid ",
+      "group is the n_pcs = ", n_pcs, " design cell; the spec grid runs ",
+      "only width-matching groups under HETID_Z_SOURCE -- use the stage ",
+      "04/05 single-spec scripts for arbitrary-width analysis"
+    )
+  }
   mom <- compute_identification_moments(resid$w1, resid$w2, resid$pcs_aligned)
   list(moments = mom, n_comp = ncol(resid$w2), gamma_rf = resid$gamma_rf)
 }
@@ -90,8 +103,9 @@ eval_opt <- function(seed, mom, n_comp, tau) {
 # (every side bounded AND valid) reports its summed width; a certified unbounded
 # set reports Inf; otherwise the SLSQP bounds are unreliable/crossed -> width NA
 # (no-certified-bound), never a stray finite/negative number reported as bounded.
-eval_ixj <- function(mom, n_comp, n_pcs, tau) {
-  qs <- build_ixj_quadratic_system(mom, matrix(tau, nrow = n_pcs, ncol = n_comp))
+eval_ixj <- function(mom, n_comp, tau) {
+  n_inst <- nrow(mom$r_i_0)
+  qs <- build_ixj_quadratic_system(mom, matrix(tau, nrow = n_inst, ncol = n_comp))
   b <- solve_all_profile_bounds(qs$quadratic)
   bounded_all <- all(b$bounded_lower & b$bounded_upper)
   valid_all <- all(b$valid_lower & b$valid_upper)
@@ -142,8 +156,9 @@ compute_group_rows <- function(mode, n_pcs, components) {
         # No structural/reduced-form seed available -> deterministic random start.
         # set.seed here makes the fallback reproducible despite per-worker RNG
         # streams under fork (mclapply sets a distinct stream per child).
+        n_inst <- nrow(mom$r_i_0)
         set.seed(SEED)
-        matrix(stats::rnorm(n_pcs * nc), n_pcs, nc)
+        matrix(stats::rnorm(n_inst * nc), n_inst, nc)
       }
       r <- tryCatch(eval_opt(seed, mom, nc, tau), error = function(e) NULL)
       if (!is.null(r)) {
@@ -154,7 +169,7 @@ compute_group_rows <- function(mode, n_pcs, components) {
         )
       }
       # separate-instrument I x J scheme (no gamma; tau>0 only)
-      r <- tryCatch(eval_ixj(mom, nc, n_pcs, tau), error = function(e) NULL)
+      r <- tryCatch(eval_ixj(mom, nc, tau), error = function(e) NULL)
       if (!is.null(r)) {
         add_row(
           mode = mode, n_pcs = n_pcs, components = clabel, n_comp = nc,
