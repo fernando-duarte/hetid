@@ -73,9 +73,23 @@ run_tau_star_analysis <- function(mode) {
   resid <- compute_identification_residuals(inp$data, mode = mode)
   moments <- compute_identification_moments(resid$w1, resid$w2, resid$pcs_aligned)
   n_comp <- nrow(inp$lookup)
-  fixed <- list("VFCI (rank-1)" = get_baseline_gamma("vfci", n_components = n_comp))
-  if (!is.null(resid$gamma_rf)) {
+  gamma_base <- resolve_baseline_gamma(
+    baseline_gamma_method(), moments, resid$gamma_rf
+  )
+  base_label <- if (identical(attr(gamma_base, "method"), "vfci")) {
+    "VFCI (rank-1)"
+  } else {
+    paste0(attr(gamma_base, "method"), " (rank-", qr(gamma_base)$rank, ")")
+  }
+  fixed <- list()
+  fixed[[base_label]] <- gamma_base
+  n_inst <- nrow(moments$r_i_0)
+  if (!is.null(resid$gamma_rf) && nrow(resid$gamma_rf) == n_inst) {
     fixed[["reduced-form (rank-3)"]] <- resid$gamma_rf
+  } else if (!is.null(resid$gamma_rf)) {
+    cli_alert_warning(
+      "reduced-form gamma skipped: defined on the PC first stage, not on a custom-width Z"
+    )
   }
 
   cli_h2("tau* (fixed gammas; sweep + bisection)")
@@ -86,10 +100,10 @@ run_tau_star_analysis <- function(mode) {
     r
   })
   names(fixed_res) <- names(fixed)
-  ts_vfci <- fixed_res[["VFCI (rank-1)"]]$tau_star
+  ts_vfci <- fixed_res[[base_label]]$tau_star
 
   cli_h2("tau* (optimizer; bracket + bisection)")
-  opt <- tau_star_optimized(fixed[["VFCI (rank-1)"]], moments,
+  opt <- tau_star_optimized(fixed[[base_label]], moments,
     tau_lo = OPT_TAU_LO, cap = OPT_TAU_CAP
   )
   if (is.na(opt$tau_star)) {
@@ -106,7 +120,7 @@ run_tau_star_analysis <- function(mode) {
       if (isTRUE(opt$capped)) ">= " else "~",
       round(opt$tau_star / ts_vfci, 1), "x"
     )
-    cli_alert_success("Optimization extends tau* by {ratio_str} vs VFCI")
+    cli_alert_success("Optimization extends tau* by {ratio_str} vs {base_label}")
   }
 
   sweep <- do.call(rbind, lapply(fixed_res, `[[`, "sweep"))
@@ -115,7 +129,7 @@ run_tau_star_analysis <- function(mode) {
     "grid", "recession_raw", "recession_normalized"
   )]
   rownames(sweep) <- NULL
-  vf_rec <- abs(sweep$recession_normalized[sweep$gamma == "VFCI (rank-1)"])
+  vf_rec <- abs(sweep$recession_normalized[sweep$gamma == base_label])
   cli_alert_info(paste0(
     "Curvature diagnostic (VFCI, normalized): within ",
     formatC(max(vf_rec, na.rm = TRUE), format = "e", digits = 1),

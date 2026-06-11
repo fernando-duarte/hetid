@@ -51,10 +51,16 @@ for (res in results) {
     plot_tau_star_overlay(res$sweep, res$tau_stars, mode),
     paper_dir, paste0("tau_star_comparison_", mode)
   )
-  save_plot_pair(
-    plot_vfci_blowup(res$sweep, ts_vfci, mode),
-    paper_dir, paste0("tau_star_vfci_blowup_", mode)
-  )
+  if (length(ts_vfci) == 1) {
+    save_plot_pair(
+      plot_vfci_blowup(res$sweep, ts_vfci, mode),
+      paper_dir, paste0("tau_star_vfci_blowup_", mode)
+    )
+  } else {
+    cli_alert_warning(
+      "VFCI blow-up plot skipped for {mode} mode: no 'VFCI (rank-1)' sweep in this run (custom baseline gamma)"
+    )
+  }
   cli_alert_success("Wrote {mode}-mode tau* artifacts to {.path {paper_dir}}")
 }
 
