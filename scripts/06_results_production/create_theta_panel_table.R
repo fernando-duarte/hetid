@@ -35,13 +35,18 @@ panel_sets <- data.frame(
   stringsAsFactors = FALSE
 )
 
-# Optimized gamma loadings panel (rows are PCs by position; no dimnames)
+# Optimized gamma loadings panel. Rows are instruments: positional PC names
+# by default (no dimnames on default gammas), the baseline's instrument
+# rownames under the custom hooks.
 fmt_g <- function(x) formatC(x, format = "f", digits = TABLE_DIGITS)
+gamma_row_names <- rownames(final_results$optimized_results$gamma_start)
+gamma_row_labels <- if (is.null(gamma_row_names)) {
+  paste0("$\\gamma_{\\mathrm{PC", seq_len(nrow(gamma)), "}}$")
+} else {
+  paste0("$\\gamma_{\\mathrm{", gamma_row_names, "}}$")
+}
 panel_gamma <- data.frame(
-  label = c(
-    paste0("$\\gamma_{\\mathrm{PC", seq_len(nrow(gamma)), "}}$"),
-    "$\\sum_j \\gamma_j^2$"
-  ),
+  label = c(gamma_row_labels, "$\\sum_j \\gamma_j^2$"),
   rbind(t(apply(gamma, 1, fmt_g)), fmt_g(colSums(gamma^2))),
   stringsAsFactors = FALSE
 )

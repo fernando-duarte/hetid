@@ -89,7 +89,12 @@ gamma_df <- as.data.frame(gamma_mat)
 colnames(gamma_df) <- paste0(
   "Component_", seq_len(n_components)
 )
-gamma_df$PC <- paste0("PC", seq_len(n_pcs))
+gamma_row_names <- rownames(optimized_results$gamma_start)
+gamma_df$PC <- if (is.null(gamma_row_names)) {
+  paste0("PC", seq_len(n_pcs))
+} else {
+  gamma_row_names
+}
 gamma_df <- gamma_df |> select(PC, everything())
 
 gamma_tbl <- gt(gamma_df) |>

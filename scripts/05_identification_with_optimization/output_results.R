@@ -104,9 +104,14 @@ gamma_df <- as.data.frame(results$gamma_optimized)
 colnames(gamma_df) <- paste0(
   "component_", seq_len(ncol(gamma_df))
 )
-rownames(gamma_df) <- paste0(
-  "pc", seq_len(nrow(gamma_df))
-)
+# Instrument names travel on the baseline (gamma_start) rownames under the
+# custom hooks; default gammas carry none, keeping the historical pc labels.
+gamma_row_names <- rownames(results$gamma_start)
+rownames(gamma_df) <- if (is.null(gamma_row_names)) {
+  paste0("pc", seq_len(nrow(gamma_df)))
+} else {
+  gamma_row_names
+}
 gamma_path <- file.path(
   temp_dir, "optimized_gamma_matrix.csv"
 )
