@@ -3,7 +3,9 @@
 # optimization_utils.R, which stays frozen for the legacy single-
 # combination gamma path; shared pieces (normalize_gamma_columns,
 # UNBOUNDED_PENALTY, compute_total_width, solve_all_profile_bounds)
-# are reused from the sourced utils.
+# are reused from the sourced utils. Packing, start coercion,
+# masking, coordinate codecs, and honest_width_lambda live in
+# lambda_mask.R; whitening validation lives in lambda_whitening.R.
 #
 # Objective: the SAME scalar the legacy optimizer minimizes -- the sum
 # over components of profile-interval widths (compute_total_width),
@@ -24,6 +26,22 @@
 # contract with the legacy optimizer; support = NULL packs every
 # element and stays bit-identical to the pre-mask path. The canonical
 # integer support is echoed in the return value.
+#
+# Opt-in whitening (whiten != NULL): the multistart SEARCH walks
+# mu = chol(V) %*% lambda coordinates -- per-component sub-blocks
+# chol(V[s_i, s_i]) of the supported instruments under a mask --
+# implementing the spec's variance normalization
+# lambda' V lambda = 1 as the search coordinate system. A numerical
+# reparameterization within the spec's admissibility class: NOT a
+# statistical improvement; NO constraint set changes (constraints
+# depend on weights only through direction). Every evaluation, the
+# honest oracle, the returned weights, AND every all_results par
+# (decoded before return) stay in original lambda coordinates with
+# unit-Euclidean columns -- mu never leaves the search. Whitened
+# runs draw the SAME rnorm count but interpret draws in mu-space (a
+# legitimately different draw geometry); every seeded-equivalence
+# contract covers whiten = NULL only. The applied transform is
+# echoed in the return value (whitening field; NULL when off).
 
 normalize_lambda_columns <- function(lambda_list) {
   lapply(lambda_list, function(el) {
@@ -32,9 +50,9 @@ normalize_lambda_columns <- function(lambda_list) {
 }
 
 objective_lambda_only <- function(par, dims, moments, tau,
-                                  free = NULL) {
+                                  free = NULL, wctx = NULL) {
   lambda_list <- normalize_lambda_columns(
-    unpack_active(par, dims, free)
+    decode_lambda(par, dims, free, wctx)
   )
   tryCatch(
     {
@@ -61,7 +79,8 @@ run_lambda_optimization <- function(lambda_start,
                                     seed = SEED,
                                     maxeval = 500L,
                                     xtol_rel = 1e-6,
-                                    support = NULL) {
+                                    support = NULL,
+                                    whiten = NULL) {
   lambda_start <- coerce_lambda_start(lambda_start, moments)
   dims <- lambda_dims(lambda_start)
   free <- NULL
@@ -69,16 +88,30 @@ run_lambda_optimization <- function(lambda_start,
     support <- validate_support_mask(support, lambda_start, moments)
     free <- support_free_mask(dims, support)
   }
+  # Whitening context, validated BEFORE any RNG use; the lazy branch
+  # keeps the whiten = NULL path free of any lambda_whitening.R
+  # dependency (the landed test preambles stay byte-identical).
+  wctx <- if (is.null(whiten)) {
+    NULL
+  } else {
+    whiten_context(whiten, support, moments)
+  }
   set.seed(seed)
-  par_start <- pack_active(lambda_start, free)
+  par_start <- pack_active(encode_lambda(lambda_start, wctx), free)
 
   objective_start <- honest_width_lambda(lambda_start, tau, moments)
 
-  # Same multistart recipe as run_gamma_optimization: primary start
-  # plus perturbed-and-normalized random starts. The K = 1 list of a
-  # gamma matrix packs to as.vector(gamma) and draws the same rnorm
-  # count, so the legacy and general optimizers see identical start
-  # sequences under the same seed.
+  # Same multistart recipe as run_gamma_optimization: the primary
+  # start packs unnormalized, perturbed starts are normalized. By the
+  # spec's c^2 direction-invariance, normalization is only a choice
+  # of representative (slsqp itself is unconstrained -- iterates lie
+  # on no sphere). In whitened mode the packed coordinates are mu, so
+  # the perturbed-start normalization is unit mu: the spec's variance
+  # normalization restricted to the support (structural zeros kill
+  # all cross terms). A K = 1 gamma-matrix start packs to
+  # as.vector(gamma) with the same rnorm count, so the legacy and
+  # general optimizers see identical start sequences under the same
+  # seed (whiten = NULL only).
   starts <- vector("list", n_starts)
   starts[[1]] <- par_start
   for (s in seq_len(n_starts - 1) + 1) {
@@ -89,7 +122,7 @@ run_lambda_optimization <- function(lambda_start,
   }
 
   obj_fn <- function(par) {
-    objective_lambda_only(par, dims, moments, tau, free)
+    objective_lambda_only(par, dims, moments, tau, free, wctx)
   }
   all_results <- lapply(seq_len(n_starts), function(s) {
     tryCatch(
@@ -107,12 +140,26 @@ run_lambda_optimization <- function(lambda_start,
   })
 
   honest_values <- vapply(all_results, function(r) {
-    honest_width_lambda(unpack_active(r$par, dims, free), tau, moments)
+    honest_width_lambda(
+      decode_lambda(r$par, dims, free, wctx), tau, moments
+    )
   }, numeric(1))
   best_idx <- which.min(honest_values)
   lambda_opt <- normalize_lambda_columns(
-    unpack_active(all_results[[best_idx]]$par, dims, free)
+    decode_lambda(all_results[[best_idx]]$par, dims, free, wctx)
   )
+
+  # Legacy-field convention: all_results[[s]]$par is packed LAMBDA in
+  # every mode; whitened runs decode their terminal mu here, AFTER
+  # the honest re-evaluations above consumed the raw mu-space pars.
+  if (!is.null(wctx)) {
+    all_results <- lapply(all_results, function(r) {
+      r$par <- pack_active(
+        decode_lambda(r$par, dims, free, wctx), free
+      )
+      r
+    })
+  }
 
   # Near-duplicate combination columns are redundant constraints, not
   # errors; report them so users notice collapsed directions.
@@ -131,6 +178,11 @@ run_lambda_optimization <- function(lambda_start,
     all_results = all_results,
     best_index = best_idx,
     duplicate_directions = duplicate_directions,
-    support = support
+    support = support,
+    whitening = if (is.null(wctx)) {
+      NULL
+    } else {
+      wctx[c("source", "vcov", "ridge", "jitter")]
+    }
   )
 }
