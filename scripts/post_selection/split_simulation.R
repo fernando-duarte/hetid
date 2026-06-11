@@ -25,7 +25,13 @@ source(here::here("scripts/post_selection/postsel_sim_rep.R"))
 QUICK <- nzchar(Sys.getenv("HETID_SIM_QUICK"))
 SIM_SEED <- 20260612L
 SIM_T <- 240L
-SIM_TAU <- 0.2
+# D10a defaults = Stage-P winner placeholders; the premise screen may
+# move SIM_TAU within {0.30, 0.40} and the DGP knobs within the
+# pre-registered grid -- update these constants (and the DGP test's
+# membership tau literal) to the winner
+SIM_TAU <- 0.35
+SIM_SHOCK_DIST <- "uniform"
+SIM_RHO_TARGET <- 0.04
 SIM_PHI <- 0.5
 SIM_PROP <- 0.5
 SIM_GAP <- 4L
@@ -67,7 +73,11 @@ cells <- lapply(seq_along(SIM_K_GRID), function(ci) {
     cli_alert_info(paste0("cell K = ", k, ": checkpoint reused"))
     return(readRDS(ck))
   }
-  params <- postsel_dgp_params(k, phi = SIM_PHI)
+  params <- postsel_dgp_params(
+    k,
+    phi = SIM_PHI, rho_target = SIM_RHO_TARGET,
+    shock_dist = SIM_SHOCK_DIST
+  )
   # Uniform-validity certificate: the constant-in-direction relative
   # correlation must sit well inside the slack the study uses, or
   # the premise (pure selection effect) is wrong. Fail loudly.
@@ -110,9 +120,20 @@ res <- list(
     tau = SIM_TAU, phi = SIM_PHI, k_grid = SIM_K_GRID,
     reps = SIM_REPS, width_reps = WIDTH_REPS,
     n_starts = SIM_N_STARTS, maxeval = SIM_MAXEVAL,
-    prop = SIM_PROP, gap = SIM_GAP
+    prop = SIM_PROP, gap = SIM_GAP,
+    shock_dist = SIM_SHOCK_DIST,
+    kappa_eta = if (identical(SIM_SHOCK_DIST, "uniform")) 1.8 else 3,
+    rho_target = SIM_RHO_TARGET,
+    dgp_family = paste0(
+      "lognormal-het, kappa_eta shocks; amended D10a",
+      " (post-stop, user-approved)"
+    )
   ),
-  dgp = lapply(SIM_K_GRID, postsel_dgp_params, phi = SIM_PHI)
+  dgp = lapply(
+    SIM_K_GRID, postsel_dgp_params,
+    phi = SIM_PHI, rho_target = SIM_RHO_TARGET,
+    shock_dist = SIM_SHOCK_DIST
+  )
 )
 suffix <- if (QUICK) "_quick" else ""
 saveRDS(
