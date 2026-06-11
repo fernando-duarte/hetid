@@ -38,6 +38,13 @@ postsel_caveat_lines <- function(settings) {
       " post-selection inference over the admissibility class is out",
       " of scope (plan decision log)."
     ),
+    paste0(
+      "- The simulation DGP was recalibrated once after a",
+      " premise-check stop (user-approved amendment D10a; acceptance",
+      " margins frozen throughout; see the pilot log). tau_sim",
+      " differs from the application's BASELINE_TAU by design and is",
+      " printed in the simulation section."
+    ),
     ""
   )
 }
@@ -69,6 +76,20 @@ postsel_sim_lines <- function(sim, acceptance) {
     sim$settings$t_obs, sim$settings$tau, sim$settings$phi,
     sim$settings$reps
   )
+  # D10a: print the amended-DGP fields when the artifact carries them
+  # (NULL-tolerant for pre-amendment rds files; c() drops NULL)
+  dgp_line <- if (!is.null(sim$settings$shock_dist)) {
+    sprintf(
+      paste0(
+        "  DGP (amended D10a): %s shocks, kappa_eta = %.1f,",
+        " rho_target = %.2f"
+      ),
+      sim$settings$shock_dist, sim$settings$kappa_eta,
+      sim$settings$rho_target
+    )
+  } else {
+    NULL
+  }
   tab <- c(
     sprintf(
       "  %-4s %-12s %-9s %-7s %-5s", "K", "arm", "coverage", "se",
@@ -117,5 +138,5 @@ postsel_sim_lines <- function(sim, acceptance) {
       }
     )
   }
-  c(header, tab, verdict, "")
+  c(header, dgp_line, tab, verdict, "")
 }

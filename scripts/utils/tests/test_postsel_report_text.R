@@ -57,7 +57,8 @@ check(
 sim_quick <- list(
   results = postsel_good_results(),
   settings = list(
-    quick = TRUE, t_obs = 240L, tau = 0.2, phi = 0.5, reps = 8L
+    quick = TRUE, t_obs = 240L, tau = 0.35, phi = 0.5, reps = 8L,
+    shock_dist = "uniform", kappa_eta = 1.8, rho_target = 0.04
   )
 )
 txt_quick <- paste(
@@ -74,7 +75,8 @@ check(
 sim_full <- list(
   results = postsel_good_results(),
   settings = list(
-    quick = FALSE, t_obs = 240L, tau = 0.2, phi = 0.5, reps = 50L
+    quick = FALSE, t_obs = 240L, tau = 0.35, phi = 0.5, reps = 50L,
+    shock_dist = "uniform", kappa_eta = 1.8, rho_target = 0.04
   )
 )
 txt_pass <- paste(
@@ -90,7 +92,8 @@ check(
 sim_full_bad <- list(
   results = postsel_bad_results(),
   settings = list(
-    quick = FALSE, t_obs = 240L, tau = 0.2, phi = 0.5, reps = 50L
+    quick = FALSE, t_obs = 240L, tau = 0.35, phi = 0.5, reps = 50L,
+    shock_dist = "uniform", kappa_eta = 1.8, rho_target = 0.04
   )
 )
 txt_fail <- paste(
