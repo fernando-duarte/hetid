@@ -54,8 +54,10 @@ separately is \code{lambda[[i]] = diag(J)}. Each constraint
 depends on its weight column only through its direction, so any
 nonzero rescaling of a column leaves the constraint set unchanged.
 A per-component instrument SUBSET is expressed directly as zero
-rows in that component's weight matrix; no dedicated helper is
-needed. Honesty note: intersecting more sample-moment constraints
+rows in that component's weight matrix;
+\code{align_instrument_sets()} builds the union axis and
+\code{lambda_from_support()} zero-pads compact weights onto it.
+Honesty note: intersecting more sample-moment constraints
 weakly shrinks the ESTIMATED set mechanically, so widths are
 comparable only across schemes with the same constraint count.
 }
