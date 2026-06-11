@@ -46,18 +46,12 @@ moments <- compute_identification_moments(
 )
 cli_alert_success("Moments computed successfully")
 
-# Get baseline gamma and tau specifications
+# Get baseline gamma and tau specifications. resolve_baseline_gamma honors
+# HETID_BASELINE_GAMMA (vfci | reduced_form | path defining
+# build_gamma(moments)) and sizes the gamma from the moments container, so
+# a custom-width HETID_Z_SOURCE needs only a matching gamma hook.
 n_comp <- nrow(lookup)
-gamma <- if (BASELINE_GAMMA_METHOD == "reduced_form") {
-  rf <- resid$gamma_rf
-  if (is.null(rf)) {
-    stop("BASELINE_GAMMA_METHOD='reduced_form' but reduced-form gamma is unavailable")
-  }
-  attr(rf, "method") <- "reduced_form"
-  rf
-} else {
-  get_baseline_gamma(method = BASELINE_GAMMA_METHOD, n_components = n_comp)
-}
+gamma <- resolve_baseline_gamma(BASELINE_GAMMA_METHOD, moments, resid$gamma_rf)
 tau_specs <- get_tau_spec(
   tau_point = 0, tau_set = BASELINE_TAU, n_components = n_comp
 )
