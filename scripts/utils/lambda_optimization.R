@@ -14,10 +14,16 @@
 # uniform-bound caveat applies). For K_i > 1 supply distinct start
 # columns (collapsed directions are redundant constraints, reported
 # via duplicate_directions); more than J combinations per component
-# are necessarily redundant. Every packed element is free during
-# optimization, so zero rows in a start (per-component subset
-# restrictions) are NOT preserved -- subsets hold for fixed weights
-# only; a support mask is future work.
+# are necessarily redundant. Per-component instrument subsets: pass
+# support (free-row index lists, NULL at unconstrained columns -- the
+# lambda_from_support convention; helpers in lambda_mask.R).
+# Off-support entries stay exactly 0.0 through the start, every
+# perturbation, every slsqp iterate, the honest re-evaluations, and
+# the returned optimum, because only FREE elements are packed. Masked
+# runs draw fewer rnorm values and carry NO seeded-equivalence
+# contract with the legacy optimizer; support = NULL packs every
+# element and stays bit-identical to the pre-mask path. The canonical
+# integer support is echoed in the return value.
 
 lambda_dims <- function(lambda_list) {
   lapply(lambda_list, function(el) {
@@ -71,8 +77,11 @@ honest_width_lambda <- function(lambda_list, tau, moments) {
   compute_total_width(bounds_tbl)
 }
 
-objective_lambda_only <- function(par, dims, moments, tau) {
-  lambda_list <- normalize_lambda_columns(unpack_lambda(par, dims))
+objective_lambda_only <- function(par, dims, moments, tau,
+                                  free = NULL) {
+  lambda_list <- normalize_lambda_columns(
+    unpack_active(par, dims, free)
+  )
   tryCatch(
     {
       qs <- hetid::build_general_quadratic_system(
@@ -97,7 +106,8 @@ run_lambda_optimization <- function(lambda_start,
                                     n_starts = 10,
                                     seed = SEED,
                                     maxeval = 500L,
-                                    xtol_rel = 1e-6) {
+                                    xtol_rel = 1e-6,
+                                    support = NULL) {
   if (is.matrix(lambda_start)) {
     # NULL out unconstrained system columns: the strict list-form
     # validator rejects weights there, and a legacy-style full-size
@@ -114,9 +124,14 @@ run_lambda_optimization <- function(lambda_start,
       }
     )
   }
-  set.seed(seed)
   dims <- lambda_dims(lambda_start)
-  par_start <- pack_lambda(lambda_start)
+  free <- NULL
+  if (!is.null(support)) {
+    support <- validate_support_mask(support, lambda_start, moments)
+    free <- support_free_mask(dims, support)
+  }
+  set.seed(seed)
+  par_start <- pack_active(lambda_start, free)
 
   objective_start <- honest_width_lambda(lambda_start, tau, moments)
 
@@ -128,14 +143,14 @@ run_lambda_optimization <- function(lambda_start,
   starts <- vector("list", n_starts)
   starts[[1]] <- par_start
   for (s in seq_len(n_starts - 1) + 1) {
-    perturbed <- unpack_lambda(
-      par_start + rnorm(length(par_start)), dims
+    perturbed <- unpack_active(
+      par_start + rnorm(length(par_start)), dims, free
     )
-    starts[[s]] <- pack_lambda(normalize_lambda_columns(perturbed))
+    starts[[s]] <- pack_active(normalize_lambda_columns(perturbed), free)
   }
 
   obj_fn <- function(par) {
-    objective_lambda_only(par, dims, moments, tau)
+    objective_lambda_only(par, dims, moments, tau, free)
   }
   all_results <- lapply(seq_len(n_starts), function(s) {
     tryCatch(
@@ -153,11 +168,11 @@ run_lambda_optimization <- function(lambda_start,
   })
 
   honest_values <- vapply(all_results, function(r) {
-    honest_width_lambda(unpack_lambda(r$par, dims), tau, moments)
+    honest_width_lambda(unpack_active(r$par, dims, free), tau, moments)
   }, numeric(1))
   best_idx <- which.min(honest_values)
   lambda_opt <- normalize_lambda_columns(
-    unpack_lambda(all_results[[best_idx]]$par, dims)
+    unpack_active(all_results[[best_idx]]$par, dims, free)
   )
 
   # Near-duplicate combination columns are redundant constraints, not
@@ -176,6 +191,7 @@ run_lambda_optimization <- function(lambda_start,
     objective_final = honest_values[[best_idx]],
     all_results = all_results,
     best_index = best_idx,
-    duplicate_directions = duplicate_directions
+    duplicate_directions = duplicate_directions,
+    support = support
   )
 }

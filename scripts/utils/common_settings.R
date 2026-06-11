@@ -116,6 +116,9 @@ if (file.exists(file.path(utils_dir, "identification_utils.R"))) {
 if (file.exists(file.path(utils_dir, "optimization_utils.R"))) {
   source(file.path(utils_dir, "optimization_utils.R"))
 }
+if (file.exists(file.path(utils_dir, "lambda_mask.R"))) {
+  source(file.path(utils_dir, "lambda_mask.R"))
+}
 if (file.exists(file.path(utils_dir, "lambda_optimization.R"))) {
   source(file.path(utils_dir, "lambda_optimization.R"))
 }
