@@ -22,11 +22,20 @@ check(
     abs(max(params$rho) - params$rho_target) < 1e-6
 )
 
-# Large iid Monte Carlo of the epsilon-level moments (marginal
-# moments do not depend on phi, so phi = 0 draws are a clean check).
-# The eps1*eps2 products are heavy-tailed (lognormal scale, large
-# sigma_nu), so the draw is sized for the correlation noise to sit
-# well inside the constancy tolerance below.
+# kappa_eta threads the closed forms with the shock family: heavier
+# (gaussian) shocks raise var(eps2^2), so the solver needs more
+# sigma_nu for the same rho target (D10a)
+params_g <- postsel_dgp_params(4L, phi = 0.5, shock_dist = "gaussian")
+check(
+  "kappa_eta switches the closed forms with the shock family",
+  params$kappa_eta == 1.8 && params_g$kappa_eta == 3 &&
+    params_g$sigma_nu > params$sigma_nu &&
+    max(params_g$rho) <= params_g$rho_target + 1e-8
+)
+
+# Large iid Monte Carlo of the epsilon-level moments at the as-built
+# 1M draws (marginal moments do not depend on phi, so phi = 0 draws
+# are a clean check); tolerances 0.01 per the D10a amendment
 params0 <- postsel_dgp_params(4L, phi = 0)
 mc <- draw_postsel_data(params0, 1000000L, seed = 4)
 x_mc <- cbind(1, mc$z)
@@ -42,15 +51,19 @@ denom_at <- function(l) {
 }
 set.seed(11)
 dirs <- matrix(rnorm(4 * 12), 4)
-keep <- apply(dirs, 2, denom_at) > 0.05
+# Conditioning filter: the ratio estimator's noise scales as
+# 1/denominator, so only well-conditioned directions are informative
+# about constancy; 0.15 keeps the per-direction MC noise well inside
+# the 0.01 band at the amended DGP's denominator dispersion
+keep <- apply(dirs, 2, denom_at) > 0.15
 ratios <- apply(dirs[, keep, drop = FALSE], 2, ratio_at)
 check(
   "relative correlation ratio is constant across directions",
-  sum(keep) >= 6L && max(abs(ratios - mean(ratios))) < 0.02
+  sum(keep) >= 6L && max(abs(ratios - mean(ratios))) < 0.01
 )
 check(
   "closed-form rho matches the Monte Carlo ratio",
-  abs(mean(ratios) - params0$rho[1]) < 0.02
+  abs(mean(ratios) - params0$rho[1]) < 0.01
 )
 
 d1 <- draw_postsel_data(params, 100L, seed = 7)
@@ -68,13 +81,14 @@ check(
   abs(sd(big$z[, 1]) - 1) < 0.05 && abs(lag1 - params$phi) < 0.05
 )
 
-# Population-scale membership: with the uniform bound holding at
-# rho_target < tau, theta0 must sit inside the equal-weight set
-m_pop <- sim_window_moments(mc, seq_len(100000L))
+# Population-scale membership at the amended slack (the 0.35 literal
+# is tied to SIM_TAU in split_simulation.R; update both together if
+# the Stage-P winner moves tau_sim)
+m_pop <- sim_window_moments(mc, seq_len(1000000L))
 lam0 <- equal_weight_lambda(4L, 2L)
 check(
   "population-scale sample puts theta0 inside the equal-weight set",
-  covers_theta0(lam0, rep(0.2, 2), m_pop, params0$theta0)
+  covers_theta0(lam0, rep(0.35, 2), m_pop, params0$theta0)
 )
 
 # Window isolation for the simulation's per-window refit
