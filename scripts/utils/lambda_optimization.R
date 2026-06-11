@@ -25,56 +25,10 @@
 # element and stays bit-identical to the pre-mask path. The canonical
 # integer support is echoed in the return value.
 
-lambda_dims <- function(lambda_list) {
-  lapply(lambda_list, function(el) {
-    if (is.null(el)) NULL else dim(el)
-  })
-}
-
-pack_lambda <- function(lambda_list) {
-  unlist(
-    lapply(lambda_list, function(el) {
-      if (is.null(el)) numeric(0) else as.vector(el)
-    }),
-    use.names = FALSE
-  )
-}
-
-unpack_lambda <- function(par, dims) {
-  out <- vector("list", length(dims))
-  pos <- 0L
-  for (i in seq_along(dims)) {
-    if (is.null(dims[[i]])) next
-    n <- prod(dims[[i]])
-    out[[i]] <- matrix(par[pos + seq_len(n)], nrow = dims[[i]][1])
-    pos <- pos + n
-  }
-  out
-}
-
 normalize_lambda_columns <- function(lambda_list) {
   lapply(lambda_list, function(el) {
     if (is.null(el)) NULL else normalize_gamma_columns(el)
   })
-}
-
-honest_width_lambda <- function(lambda_list, tau, moments) {
-  lambda_list <- normalize_lambda_columns(lambda_list)
-  bounds_tbl <- tryCatch(
-    {
-      qs <- hetid::build_general_quadratic_system(
-        lambda_list, tau, moments
-      )
-      solve_all_profile_bounds(qs$quadratic)
-    },
-    error = function(e) NULL
-  )
-  if (is.null(bounds_tbl) ||
-    any(!bounds_tbl$bounded_lower) || any(!bounds_tbl$bounded_upper) ||
-    any(!bounds_tbl$valid_lower) || any(!bounds_tbl$valid_upper)) {
-    return(Inf)
-  }
-  compute_total_width(bounds_tbl)
 }
 
 objective_lambda_only <- function(par, dims, moments, tau,
@@ -108,22 +62,7 @@ run_lambda_optimization <- function(lambda_start,
                                     maxeval = 500L,
                                     xtol_rel = 1e-6,
                                     support = NULL) {
-  if (is.matrix(lambda_start)) {
-    # NULL out unconstrained system columns: the strict list-form
-    # validator rejects weights there, and a legacy-style full-size
-    # matrix start must keep working on subset-maturity containers
-    constrained <- attr(moments, "maturities")
-    lambda_start <- lapply(
-      seq_len(ncol(lambda_start)),
-      function(i) {
-        if (i %in% constrained) {
-          lambda_start[, i, drop = FALSE]
-        } else {
-          NULL
-        }
-      }
-    )
-  }
+  lambda_start <- coerce_lambda_start(lambda_start, moments)
   dims <- lambda_dims(lambda_start)
   free <- NULL
   if (!is.null(support)) {
