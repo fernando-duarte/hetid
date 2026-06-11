@@ -6,8 +6,11 @@
 #
 # To run the pipeline on custom instruments, set HETID_Z_SOURCE to an
 # R script that defines build_z(data) returning a numeric T x K
-# matrix with column names, where data is the stage's merged
-# quarterly data frame.
+# matrix with unique column names, any K >= 1, where data is the
+# stage's merged quarterly data frame. Baseline gammas come from
+# HETID_BASELINE_GAMMA (vfci requires K = 4, reduced_form requires
+# K = n_pcs, or a path defining build_gamma(moments)); the
+# spec-comparison grid runs only width-matching groups.
 
 get_identification_z <- function(data, default) {
   src <- Sys.getenv("HETID_Z_SOURCE", "")
@@ -30,13 +33,10 @@ get_identification_z <- function(data, default) {
       "names and one row per data row"
     )
   }
-  if (ncol(z) != ncol(default)) {
+  if (anyDuplicated(colnames(z)) > 0) {
     stop(
-      "HETID_Z_SOURCE returned ", ncol(z), " instruments but the ",
-      "pipeline's fixed-width specs (baseline gammas, tau sizing, ",
-      "optimizer seeds) are built for ", ncol(default), ". The hook ",
-      "supports same-width swaps only; for other widths use the ",
-      "package API directly (see scripts/examples/custom_z_demo.R)"
+      "build_z(data) returned duplicated column names; the moments ",
+      "labels and weight recipes key on unique instrument names"
     )
   }
   z
