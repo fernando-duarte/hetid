@@ -170,7 +170,9 @@ get_baseline_gamma <- function(
     stop(
       "get_baseline_gamma: the VFCI unit-norm loading is defined only for ",
       length(unit_norm), " PCs (pc1..pc4); got n_pcs = ", n_pcs,
-      " -- recycling it would produce wrong loadings"
+      " -- recycling it would produce wrong loadings. For a custom-width ",
+      "instrument set supply HETID_BASELINE_GAMMA=<path-to-R-file ",
+      "defining build_gamma(moments)>"
     )
   }
   gamma <- matrix(unit_norm, nrow = n_pcs, ncol = n_components)

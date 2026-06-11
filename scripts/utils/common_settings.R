@@ -110,6 +110,9 @@ if (file.exists(file.path(utils_dir, "factor_utils.R"))) {
 if (file.exists(file.path(utils_dir, "z_source.R"))) {
   source(file.path(utils_dir, "z_source.R"))
 }
+if (file.exists(file.path(utils_dir, "gamma_source.R"))) {
+  source(file.path(utils_dir, "gamma_source.R"))
+}
 if (file.exists(file.path(utils_dir, "identification_utils.R"))) {
   source(file.path(utils_dir, "identification_utils.R"))
 }
