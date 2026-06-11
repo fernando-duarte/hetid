@@ -98,6 +98,28 @@ cat(
     all(opt_masked$lambda_optimized[[2]][-aligned$support[[2]], ] == 0),
   "\n"
 )
+# Opt-in whitening: identical constraint set (weights enter only
+# through direction), different search coordinates -- the optimizer
+# walks mu = chol(Var(Z)) %*% lambda, the spec's variance-normalized
+# weights, sub-blocked to each component's supported instruments.
+# Reported weights stay in original coordinates, Euclidean-
+# normalized; the applied transform is echoed under $whitening. A
+# numerical reparameterization, not a statistical improvement.
+opt_whitened <- run_lambda_optimization(
+  lambda_subsets, moments_sets, 0.2,
+  n_starts = 3, seed = 123, maxeval = 100L,
+  support = aligned$support,
+  whiten = list(z = aligned$instruments[seq_len(t_obs), ])
+)
+cat(
+  "masked+whitened width:", opt_whitened$objective_final,
+  "| transform recorded:", !is.null(opt_whitened$whitening),
+  "| off-support exact zeros:",
+  all(opt_whitened$lambda_optimized[[1]][
+    -aligned$support[[1]],
+  ] == 0),
+  "\n"
+)
 
 # Membership probe across every constraint (hin <= 0 means inside);
 # a grid where max(...) > 0 everywhere is an empty estimated set
