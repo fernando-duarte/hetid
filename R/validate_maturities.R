@@ -26,6 +26,49 @@ validate_maturity_index <- function(i, max_maturity = HETID_CONSTANTS$MAX_MATURI
   )
 }
 
+#' Validate a News Step
+#'
+#' Validates the number of maturity-index units per news period: a
+#' positive integer no larger than half the maximum maturity, so that
+#' at least one news horizon (\code{i = step}, needing maturity
+#' \code{i + step}) fits inside the data.
+#'
+#' @template param-step
+#' @return Invisible TRUE if valid, stops with informative error otherwise
+#' @keywords internal
+validate_step <- function(step) {
+  assert_scalar_integer_in_range(
+    step, "step", 1L, HETID_CONSTANTS$MAX_MATURITY %/% 2L,
+    arg = "step"
+  )
+}
+
+#' Validate a News-Horizon Maturity Index
+#'
+#' Validates a maturity index used as a news horizon: the news at
+#' horizon \code{i} differences \code{n_hat(i, t)} against
+#' \code{n_hat(i - step, t + 1)}, so \code{i} must not exceed
+#' \code{effective_max_maturity(step)} and the previous-period index
+#' must either be the boundary case (\code{i == step}) or stay at or
+#' above \code{MIN_MATURITY}.
+#'
+#' @param i Integer maturity index to validate
+#' @template param-step
+#' @return Invisible TRUE if valid, stops with informative error otherwise
+#' @keywords internal
+validate_news_maturity_index <- function(i, step = HETID_CONSTANTS$DEFAULT_STEP) {
+  validate_maturity_index(i, max_maturity = effective_max_maturity(step))
+  assert_bad_argument_ok(
+    i == step || i - step >= HETID_CONSTANTS$MIN_MATURITY,
+    paste0(
+      "Maturity index i must equal step (", step,
+      ") or satisfy i - step >= ", HETID_CONSTANTS$MIN_MATURITY
+    ),
+    arg = "i"
+  )
+  invisible(TRUE)
+}
+
 #' Validate a Vector of Maturity Indices
 #'
 #' Single source of truth for validating a numeric maturity vector:

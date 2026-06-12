@@ -5,14 +5,23 @@
 #'
 #' @template param-yields-term-premia
 #' @template param-maturity-index
+#' @template param-step
 #'
 #' @return Numeric value of k_hat_i
 #'
 #' @section Mathematical Formula:
-#' \deqn{k\_hat_i = \mathrm{mean}_t (-y_{t+i}^{(1)} - n\_hat(i-1,t+1))^4}
+#' With h = i/step news periods and m(step) the step maturity in years:
+#' \deqn{k\_hat_i = \mathrm{mean}_t (-m(step) y_{t+h}^{(step)} - n\_hat(i-step,t+1))^4}
 #'
 #' The mean is taken over the valid (non-missing) terms for
-#' \eqn{t = 1, \dots, T-i}; with complete data the divisor is \eqn{T-i}.
+#' \eqn{t = 1, \dots, T-h}; with complete data the divisor is \eqn{T-h}.
+#'
+#' @section Time units:
+#' The realized-vs-forecast pairing shifts \code{i/step} rows. Rows are
+#' whatever observation frequency the caller supplies; the shift counts
+#' news periods, not calendar time, so row frequency must equal the
+#' intended news period. \code{i} must be a positive multiple of
+#' \code{step}.
 #'
 #' @template section-acm-methodology
 #'
@@ -35,37 +44,56 @@
 #' # Compute k_hat for i=5
 #' k_hat_5 <- compute_k_hat(yields, term_premia, i = 5)
 #'
-compute_k_hat <- function(yields, term_premia, i) {
+compute_k_hat <- function(yields, term_premia, i,
+                          step = HETID_CONSTANTS$DEFAULT_STEP) {
   # Use standardized validation
+  validate_step(step)
   validate_maturity_index(i)
+  assert_bad_argument_ok(
+    i >= step && i %% step == 0,
+    paste0(
+      "Maturity index i must be a positive multiple of step (", step,
+      "): the realized-vs-forecast pairing shifts whole news periods"
+    ),
+    arg = "i"
+  )
   validate_row_alignment(yields, term_premia)
 
-  # Get y1 series
-  y1 <- require_column(yields, acm_column_name("yields", 1), "yields")
-
-  n_hat_i_minus_1 <- compute_n_hat_previous(
-    yields, term_premia, i
+  # Realized one-period yield: the step-maturity bond
+  y_step <- require_column(
+    yields, acm_column_name("yields", step), "yields"
   )
 
+  n_hat_i_minus_1 <- compute_n_hat_previous(
+    yields, term_premia, i,
+    step = step
+  )
+
+  # Shifts count news periods (rows), not maturity units
+  horizon_periods <- i %/% step
+
   # Number of observations
-  n_obs <- length(y1)
+  n_obs <- length(y_step)
 
   assert_insufficient_data_ok(
-    n_obs > i,
-    "Not enough observations. Need T > i"
+    n_obs > horizon_periods,
+    "Not enough observations. Need T > i/step news periods"
   )
 
   # Compute the fourth moment (vectorized)
-  y1_shifted <- y1[(i + 1):n_obs]
-  n_hat_shifted <- n_hat_i_minus_1[2:(n_obs - i + 1)]
-  valid <- !is.na(y1_shifted) & !is.na(n_hat_shifted)
+  y_shifted <- y_step[(horizon_periods + 1):n_obs]
+  n_hat_shifted <- n_hat_i_minus_1[2:(n_obs - horizon_periods + 1)]
+  valid <- !is.na(y_shifted) & !is.na(n_hat_shifted)
 
   if (!any(valid)) {
     return(NA_real_)
   }
 
+  # The realized log price scales the annualized yield by the
+  # step-bond maturity in years
+  m_step <- step / HETID_CONSTANTS$MATURITY_UNITS_PER_YEAR
   khat_terms <- (
-    -y1_shifted[valid] / HETID_CONSTANTS$PERCENT_TO_DECIMAL -
+    -m_step * y_shifted[valid] / HETID_CONSTANTS$PERCENT_TO_DECIMAL -
       n_hat_shifted[valid]
   )^4
   mean(khat_terms)

@@ -71,7 +71,7 @@ compute_w2_factor_residuals <- function(
   yields_df, tp_df, pcs_mat, n_pcs, data, factors
 ) {
   all_mats <- seq_len(
-    HETID_CONSTANTS$EFFECTIVE_MAX_MATURITY
+    effective_max_maturity(HETID_CONSTANTS$DEFAULT_STEP)
   )
   cli::cli_alert_info(
     "Computing W2 for all maturities ({length(all_mats)})..."

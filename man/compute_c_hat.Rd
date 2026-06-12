@@ -4,7 +4,7 @@
 \alias{compute_c_hat}
 \title{Compute Supremum Estimator (c_hat) for Term Structure Analysis}
 \usage{
-compute_c_hat(yields, term_premia, i)
+compute_c_hat(yields, term_premia, i, step = HETID_CONSTANTS$DEFAULT_STEP)
 }
 \arguments{
 \item{yields}{Data frame with columns y1, y2, ..., containing yields}
@@ -13,11 +13,20 @@ compute_c_hat(yields, term_premia, i)
 
 \item{i}{Integer specifying the maturity index (column) to analyze.
 Must be between 1 and the package maximum (10 for the ACM dataset;
-functions that require data at maturity \code{i + 1} accept at most 9).
+functions that require data at maturity \code{i + step} accept at
+most \code{MAX_MATURITY - step}, i.e. 9 with the default step).
 The input data must contain the columns for the maturities the function
-uses (e.g. \code{y5}/\code{tp5} plus adjacent maturities for \code{i = 5}).
+uses (e.g. \code{y5}/\code{tp5} plus step-adjacent maturities for
+\code{i = 5}).
 Corresponds to maturity in years for the ACM dataset (i=1 is 1-year,
 i=2 is 2-year, ..., i=10 is 10-year).}
+
+\item{step}{Integer number of maturity-index units per news period
+(default \code{HETID_CONSTANTS$DEFAULT_STEP}). The news operator
+steps one period, so maturity arithmetic moves in multiples of
+\code{step}: \code{compute_n_hat()} pairs maturities \code{i} and
+\code{i + step}, the one-period bond is the \code{step}-maturity
+bond, and horizons must satisfy \code{i <= MAX_MATURITY - step}.}
 }
 \value{
 Numeric value of c_hat_i
@@ -31,8 +40,9 @@ The supremum estimator provides an upper bound for the exponential of twice
 the expected log price at horizon i.
 }
 \note{
-For standard ACM data (10 maturities), the effective maximum for
-\code{i} is 9, because this function requires data at maturity \code{i+1}.
+The effective maximum for \code{i} is \code{MAX_MATURITY - step}
+(9 for standard ACM data with the default step), because this
+function requires data at maturity \code{i + step}.
 }
 \section{Mathematical Formula}{
 

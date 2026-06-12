@@ -5,6 +5,7 @@
 #'
 #' @template param-yields-term-premia
 #' @template param-maturity-index
+#' @template param-step
 #'
 #' @return Numeric value of c_hat_i
 #'
@@ -17,8 +18,9 @@
 #' The supremum estimator provides an upper bound for the exponential of twice
 #' the expected log price at horizon i.
 #'
-#' @note For standard ACM data (10 maturities), the effective maximum for
-#'   \code{i} is 9, because this function requires data at maturity \code{i+1}.
+#' @note The effective maximum for \code{i} is \code{MAX_MATURITY - step}
+#'   (9 for standard ACM data with the default step), because this
+#'   function requires data at maturity \code{i + step}.
 #'
 #' @export
 #'
@@ -31,13 +33,15 @@
 #' # Compute c_hat for i=5
 #' c_hat_5 <- compute_c_hat(yields, term_premia, i = 5)
 #'
-compute_c_hat <- function(yields, term_premia, i) {
+compute_c_hat <- function(yields, term_premia, i,
+                          step = HETID_CONSTANTS$DEFAULT_STEP) {
   # Use standardized validation
-  validate_maturity_index(i, max_maturity = HETID_CONSTANTS$EFFECTIVE_MAX_MATURITY)
+  validate_step(step)
+  validate_maturity_index(i, max_maturity = effective_max_maturity(step))
   validate_row_alignment(yields, term_premia)
 
   # Compute n_hat series
-  n_hat <- compute_n_hat(yields, term_premia, i)
+  n_hat <- compute_n_hat(yields, term_premia, i, step = step)
 
   # Remove NA values
   n_hat_clean <- n_hat[!is.na(n_hat)]

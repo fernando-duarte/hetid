@@ -1,3 +1,22 @@
+#' Default W2 Maturity Horizons
+#'
+#' Step-spaced news horizons from \code{step} to
+#' \code{MAX_MATURITY - step} that satisfy the news contract: each
+#' horizon equals \code{step} (the boundary case, needing the
+#' step-maturity yield) or keeps \code{horizon - step} at or above
+#' \code{MIN_MATURITY}.
+#'
+#' @template param-step
+#' @return Integer vector of valid default maturities
+#' @keywords internal
+default_w2_maturities <- function(step = HETID_CONSTANTS$DEFAULT_STEP) {
+  validate_step(step)
+  candidates <- seq(step, HETID_CONSTANTS$MAX_MATURITY - step, by = step)
+  keep <- (candidates == step & step >= HETID_CONSTANTS$MIN_MATURITY) |
+    (candidates - step >= HETID_CONSTANTS$MIN_MATURITY)
+  candidates[keep]
+}
+
 #' Validate and Convert W2 Input Data
 #'
 #' Internal function to validate and convert yields and term_premia inputs
@@ -5,10 +24,12 @@
 #' @param yields Yields data (data frame or matrix)
 #' @param term_premia Term premia data (data frame or matrix)
 #' @param maturities Vector of maturities
+#' @template param-step
 #'
 #' @return List with converted data frames and validated maturities
 #' @keywords internal
-validate_w2_inputs <- function(yields, term_premia, maturities) {
+validate_w2_inputs <- function(yields, term_premia, maturities,
+                               step = HETID_CONSTANTS$DEFAULT_STEP) {
   # Check input types
   assert_tabular(yields, "yields")
   assert_tabular(term_premia, "term_premia")
@@ -24,10 +45,26 @@ validate_w2_inputs <- function(yields, term_premia, maturities) {
   # No ncol-based cap: inputs may hold non-contiguous column
   # subsets (e.g. y1/y4/y5/y6 for maturity 5), so column
   # availability is checked per maturity in process_w2_maturity
+  validate_step(step)
   validate_maturities(
     maturities,
-    max_value = HETID_CONSTANTS$EFFECTIVE_MAX_MATURITY,
-    max_label = "EFFECTIVE_MAX_MATURITY"
+    max_value = effective_max_maturity(step),
+    max_label = "MAX_MATURITY - step"
+  )
+
+  # Each maturity must satisfy the news contract: the previous-period
+  # index is the boundary case or stays within the data range
+  bad_news <- maturities[
+    !(maturities == step | maturities - step >= HETID_CONSTANTS$MIN_MATURITY)
+  ]
+  assert_bad_argument_ok(
+    length(bad_news) == 0,
+    paste0(
+      "maturities must equal step (", step, ") or satisfy maturity - step >= ",
+      HETID_CONSTANTS$MIN_MATURITY, "; invalid: ",
+      paste(bad_news, collapse = ", ")
+    ),
+    arg = "maturities"
   )
 
   list(

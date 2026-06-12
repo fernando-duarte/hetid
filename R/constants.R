@@ -10,8 +10,14 @@
 #'   \item{MAX_N_PCS}{Maximum principal components (6)}
 #'   \item{MIN_MATURITY}{Minimum maturity index (1)}
 #'   \item{MAX_MATURITY}{Maximum maturity index (10)}
-#'   \item{EFFECTIVE_MAX_MATURITY}{Max maturity for functions
-#'     needing i+1 (9)}
+#'   \item{DEFAULT_STEP}{Maturity-index units per news period (1).
+#'     The news operator steps one period; maturity arithmetic moves
+#'     in multiples of the step (see
+#'     \code{\link{effective_max_maturity}})}
+#'   \item{MATURITY_UNITS_PER_YEAR}{Divisor converting a maturity
+#'     index to years (1). Log bond prices scale annualized yields
+#'     by maturity in years, so the n_hat weights are
+#'     \code{i / MATURITY_UNITS_PER_YEAR}}
 #'   \item{MACHINE_EPSILON}{Machine precision}
 #'   \item{MATRIX_SYMMETRY_TOL}{Tolerance for matrix symmetry
 #'     checks}
@@ -52,7 +58,10 @@ HETID_CONSTANTS <- list(
   # Data constraints
   MIN_MATURITY = 1L, # Minimum available maturity
   MAX_MATURITY = 10L, # Maximum available maturity
-  EFFECTIVE_MAX_MATURITY = 9L, # For functions needing i+1
+
+  # News-period geometry
+  DEFAULT_STEP = 1L, # Maturity-index units per news period
+  MATURITY_UNITS_PER_YEAR = 1L, # Maturity index units in one year
 
   # Numerical parameters
   MACHINE_EPSILON = .Machine$double.eps,

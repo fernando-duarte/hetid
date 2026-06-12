@@ -4,7 +4,14 @@
 \alias{process_w2_maturity}
 \title{Process Single Maturity for W2}
 \usage{
-process_w2_maturity(i, yields_df, term_premia_df, pcs, n_pcs)
+process_w2_maturity(
+  i,
+  yields_df,
+  term_premia_df,
+  pcs,
+  n_pcs,
+  step = HETID_CONSTANTS$DEFAULT_STEP
+)
 }
 \arguments{
 \item{i}{Maturity index}
@@ -16,6 +23,13 @@ process_w2_maturity(i, yields_df, term_premia_df, pcs, n_pcs)
 \item{pcs}{Principal components matrix}
 
 \item{n_pcs}{Number of PCs}
+
+\item{step}{Integer number of maturity-index units per news period
+(default \code{HETID_CONSTANTS$DEFAULT_STEP}). The news operator
+steps one period, so maturity arithmetic moves in multiples of
+\code{step}: \code{compute_n_hat()} pairs maturities \code{i} and
+\code{i + step}, the one-period bond is the \code{step}-maturity
+bond, and horizons must satisfy \code{i <= MAX_MATURITY - step}.}
 }
 \value{
 List with regression results or NULL if skipped

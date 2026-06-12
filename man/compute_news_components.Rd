@@ -4,7 +4,12 @@
 \alias{compute_news_components}
 \title{Compute Shared Price-News Components}
 \usage{
-compute_news_components(yields, term_premia, i)
+compute_news_components(
+  yields,
+  term_premia,
+  i,
+  step = HETID_CONSTANTS$DEFAULT_STEP
+)
 }
 \arguments{
 \item{yields}{Yields data}
@@ -12,11 +17,18 @@ compute_news_components(yields, term_premia, i)
 \item{term_premia}{Term premia data}
 
 \item{i}{Maturity index}
+
+\item{step}{Integer number of maturity-index units per news period
+(default \code{HETID_CONSTANTS$DEFAULT_STEP}). The news operator
+steps one period, so maturity arithmetic moves in multiples of
+\code{step}: \code{compute_n_hat()} pairs maturities \code{i} and
+\code{i + step}, the one-period bond is the \code{step}-maturity
+bond, and horizons must satisfy \code{i <= MAX_MATURITY - step}.}
 }
 \value{
 A list with two elements: \code{n_hat_i}, the n_hat(i, t)
 level series, and \code{delta_p}, the price news (T-1 elements)
-\code{delta_p[t] = n_hat(i - 1, t + 1) - n_hat(i, t)}.
+\code{delta_p[t] = n_hat(i - step, t + 1) - n_hat(i, t)}.
 }
 \description{
 Validates the maturity index and computes the n_hat level series and

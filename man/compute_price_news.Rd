@@ -10,7 +10,8 @@ compute_price_news(
   i,
   return_yield_news = FALSE,
   return_df = FALSE,
-  dates = NULL
+  dates = NULL,
+  step = HETID_CONSTANTS$DEFAULT_STEP
 )
 }
 \arguments{
@@ -20,9 +21,11 @@ compute_price_news(
 
 \item{i}{Integer specifying the maturity index (column) to analyze.
 Must be between 1 and the package maximum (10 for the ACM dataset;
-functions that require data at maturity \code{i + 1} accept at most 9).
+functions that require data at maturity \code{i + step} accept at
+most \code{MAX_MATURITY - step}, i.e. 9 with the default step).
 The input data must contain the columns for the maturities the function
-uses (e.g. \code{y5}/\code{tp5} plus adjacent maturities for \code{i = 5}).
+uses (e.g. \code{y5}/\code{tp5} plus step-adjacent maturities for
+\code{i = 5}).
 Corresponds to maturity in years for the ACM dataset (i=1 is 1-year,
 i=2 is 2-year, ..., i=10 is 10-year).}
 
@@ -32,6 +35,13 @@ i=2 is 2-year, ..., i=10 is 10-year).}
 
 \item{dates}{Optional vector of dates corresponding to the rows in yields/term_premia.
 If not provided and return_df = TRUE, will use row indices.}
+
+\item{step}{Integer number of maturity-index units per news period
+(default \code{HETID_CONSTANTS$DEFAULT_STEP}). The news operator
+steps one period, so maturity arithmetic moves in multiples of
+\code{step}: \code{compute_n_hat()} pairs maturities \code{i} and
+\code{i + step}, the one-period bond is the \code{step}-maturity
+bond, and horizons must satisfy \code{i <= MAX_MATURITY - step}.}
 }
 \value{
 Numeric vector of computed values, or data frame with dates if return_df = TRUE
@@ -41,14 +51,15 @@ Computes the time series of price news Delta_(t+1)p_(t+i)^(1) or Delta_(t+1)y_(t
 }
 \details{
 The price news for log prices is:
-Delta_(t+1)p_(t+i)^(1) = n_hat(i-1,t+1) - n_hat(i,t)
+Delta_(t+1)p_(t+i)^(1) = n_hat(i-step,t+1) - n_hat(i,t)
 
 The price news for yields is:
 Delta_(t+1)y_(t+i)^(1) = -Delta_(t+1)p_(t+i)^(1)
 }
 \note{
-For standard ACM data (10 maturities), the effective maximum for
-\code{i} is 9, because this function requires data at maturity \code{i+1}.
+The effective maximum for \code{i} is \code{MAX_MATURITY - step}
+(9 for standard ACM data with the default step), because this
+function requires data at maturity \code{i + step}.
 }
 \examples{
 # Extract ACM data - need maturities 1, i-1, i, i+1 for maturity i

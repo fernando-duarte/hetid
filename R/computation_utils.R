@@ -20,58 +20,6 @@ get_pc_column_names <- function(n_pcs) {
   paste0(HETID_CONSTANTS$PC_PREFIX, seq_len(n_pcs))
 }
 
-#' Compute Previous Period N-Hat
-#'
-#' Handles the special case for i=1 where n_hat(0,t) = -y1
-#'
-#' @param yields Yields data
-#' @param term_premia Term premia data
-#' @param i Maturity
-#' @return Previous period n_hat series
-#' @keywords internal
-compute_n_hat_previous <- function(yields, term_premia, i) {
-  if (i == 1) {
-    # For i=1, n_hat(0,t) = E_t[p_(t+0)^(1)] = p_t^(1) = -y_t^(1)
-    y1 <- require_column(yields, acm_column_name("yields", 1), "yields")
-    -y1 / HETID_CONSTANTS$PERCENT_TO_DECIMAL # Convert to decimal
-  } else {
-    compute_n_hat(yields, term_premia, i - 1, return_df = FALSE)
-  }
-}
-
-#' Compute Time Series News
-#'
-#' Generic function to compute news as difference between future and current values
-#'
-#' @param current_series Current period series
-#' @param future_series Future period series
-#' @param negate Whether to negate the result (for yield news)
-#' @return News series
-#' @keywords internal
-compute_time_series_news <- function(current_series, future_series, negate = FALSE) {
-  assert_dimension_ok(
-    length(current_series) == length(future_series),
-    "current_series and future_series must have equal length"
-  )
-  n_obs <- length(current_series)
-
-  # Guard: need at least 2 obs for differencing
-  if (n_obs < 2) {
-    return(numeric(0))
-  }
-
-  # Compute news: future[t+1] - current[t]
-  # NAs propagate naturally via R's NA arithmetic
-  ts_news <- future_series[seq.int(2L, n_obs)] -
-    current_series[seq_len(n_obs - 1L)]
-
-  if (negate) {
-    ts_news <- -ts_news
-  }
-
-  ts_news
-}
-
 #' Prepare Return Data Frame
 #'
 #' Common logic for preparing return data frames with dates

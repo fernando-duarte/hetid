@@ -4,7 +4,7 @@
 \alias{compute_k_hat}
 \title{Compute Fourth Moment Estimator (k_hat) for Term Structure Analysis}
 \usage{
-compute_k_hat(yields, term_premia, i)
+compute_k_hat(yields, term_premia, i, step = HETID_CONSTANTS$DEFAULT_STEP)
 }
 \arguments{
 \item{yields}{Data frame with columns y1, y2, ..., containing yields}
@@ -13,11 +13,20 @@ compute_k_hat(yields, term_premia, i)
 
 \item{i}{Integer specifying the maturity index (column) to analyze.
 Must be between 1 and the package maximum (10 for the ACM dataset;
-functions that require data at maturity \code{i + 1} accept at most 9).
+functions that require data at maturity \code{i + step} accept at
+most \code{MAX_MATURITY - step}, i.e. 9 with the default step).
 The input data must contain the columns for the maturities the function
-uses (e.g. \code{y5}/\code{tp5} plus adjacent maturities for \code{i = 5}).
+uses (e.g. \code{y5}/\code{tp5} plus step-adjacent maturities for
+\code{i = 5}).
 Corresponds to maturity in years for the ACM dataset (i=1 is 1-year,
 i=2 is 2-year, ..., i=10 is 10-year).}
+
+\item{step}{Integer number of maturity-index units per news period
+(default \code{HETID_CONSTANTS$DEFAULT_STEP}). The news operator
+steps one period, so maturity arithmetic moves in multiples of
+\code{step}: \code{compute_n_hat()} pairs maturities \code{i} and
+\code{i + step}, the one-period bond is the \code{step}-maturity
+bond, and horizons must satisfy \code{i <= MAX_MATURITY - step}.}
 }
 \value{
 Numeric value of k_hat_i
@@ -32,10 +41,20 @@ the term structure model, providing information about tail risks.
 }
 \section{Mathematical Formula}{
 
-\deqn{k\_hat_i = \mathrm{mean}_t (-y_{t+i}^{(1)} - n\_hat(i-1,t+1))^4}
+With h = i/step news periods and m(step) the step maturity in years:
+\deqn{k\_hat_i = \mathrm{mean}_t (-m(step) y_{t+h}^{(step)} - n\_hat(i-step,t+1))^4}
 
 The mean is taken over the valid (non-missing) terms for
-\eqn{t = 1, \dots, T-i}; with complete data the divisor is \eqn{T-i}.
+\eqn{t = 1, \dots, T-h}; with complete data the divisor is \eqn{T-h}.
+}
+
+\section{Time units}{
+
+The realized-vs-forecast pairing shifts \code{i/step} rows. Rows are
+whatever observation frequency the caller supplies; the shift counts
+news periods, not calendar time, so row frequency must equal the
+intended news period. \code{i} must be a positive multiple of
+\code{step}.
 }
 
 \section{Literature Reference}{

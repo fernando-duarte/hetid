@@ -6,18 +6,20 @@
 #' @template param-maturity-index
 #' @param return_yield_news Logical, if TRUE returns yield news instead of log price news
 #' @template param-return-df-dates
+#' @template param-step
 #'
 #' @template return-numeric-or-dataframe
 #'
 #' @details
 #' The price news for log prices is:
-#' Delta_(t+1)p_(t+i)^(1) = n_hat(i-1,t+1) - n_hat(i,t)
+#' Delta_(t+1)p_(t+i)^(1) = n_hat(i-step,t+1) - n_hat(i,t)
 #'
 #' The price news for yields is:
 #' Delta_(t+1)y_(t+i)^(1) = -Delta_(t+1)p_(t+i)^(1)
 #'
-#' @note For standard ACM data (10 maturities), the effective maximum for
-#'   \code{i} is 9, because this function requires data at maturity \code{i+1}.
+#' @note The effective maximum for \code{i} is \code{MAX_MATURITY - step}
+#'   (9 for standard ACM data with the default step), because this
+#'   function requires data at maturity \code{i + step}.
 #'
 #' @export
 #'
@@ -45,11 +47,12 @@
 #'
 compute_price_news <- function(yields, term_premia, i,
                                return_yield_news = FALSE,
-                               return_df = FALSE, dates = NULL) {
+                               return_df = FALSE, dates = NULL,
+                               step = HETID_CONSTANTS$DEFAULT_STEP) {
   validate_row_alignment(yields, term_premia)
 
   # Shared maturity validation and price-news difference
-  components <- compute_news_components(yields, term_premia, i)
+  components <- compute_news_components(yields, term_premia, i, step = step)
 
   # Yield news is the negation of (log) price news
   price_news <- if (return_yield_news) -components$delta_p else components$delta_p

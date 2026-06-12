@@ -10,8 +10,14 @@ List containing package constants:
 \item{MAX_N_PCS}{Maximum principal components (6)}
 \item{MIN_MATURITY}{Minimum maturity index (1)}
 \item{MAX_MATURITY}{Maximum maturity index (10)}
-\item{EFFECTIVE_MAX_MATURITY}{Max maturity for functions
-needing i+1 (9)}
+\item{DEFAULT_STEP}{Maturity-index units per news period (1).
+The news operator steps one period; maturity arithmetic moves
+in multiples of the step (see
+\code{\link{effective_max_maturity}})}
+\item{MATURITY_UNITS_PER_YEAR}{Divisor converting a maturity
+index to years (1). Log bond prices scale annualized yields
+by maturity in years, so the n_hat weights are
+\code{i / MATURITY_UNITS_PER_YEAR}}
 \item{MACHINE_EPSILON}{Machine precision}
 \item{MATRIX_SYMMETRY_TOL}{Tolerance for matrix symmetry
 checks}

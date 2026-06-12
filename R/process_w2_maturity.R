@@ -7,14 +7,17 @@
 #' @param term_premia_df Term premia data frame
 #' @param pcs Principal components matrix
 #' @param n_pcs Number of PCs
+#' @template param-step
 #'
 #' @return List with regression results or NULL if skipped
 #' @keywords internal
-process_w2_maturity <- function(i, yields_df, term_premia_df, pcs, n_pcs) {
-  # Maturity i needs columns i and i+1 via compute_n_hat, plus
-  # column i-1 via compute_n_hat_previous when i >= 2 (for i = 1
-  # the previous-period n_hat uses only y1, which is column i)
-  needed <- if (i >= 2) (i - 1):(i + 1) else c(i, i + 1)
+process_w2_maturity <- function(i, yields_df, term_premia_df, pcs, n_pcs,
+                                step = HETID_CONSTANTS$DEFAULT_STEP) {
+  # Maturity i needs columns i and i+step via compute_n_hat, plus
+  # column i-step via compute_n_hat_previous when i > step (for
+  # i = step the previous-period n_hat uses only the step-maturity
+  # yield, which is column i)
+  needed <- if (i > step) c(i - step, i, i + step) else c(i, i + step)
   missing_cols <- c(
     setdiff(acm_column_name("yields", needed), names(yields_df)),
     setdiff(acm_column_name("term_premia", needed), names(term_premia_df))
@@ -33,7 +36,10 @@ process_w2_maturity <- function(i, yields_df, term_premia_df, pcs, n_pcs) {
 
   # Compute SDF innovations for this maturity
   # This gives us Y_{2,t+1}^{(i)} = E_{t+1}[SDF_{t+1+i}] - E_t[SDF_{t+1+i}]
-  sdf_innov <- compute_sdf_innovations(yields_df, term_premia_df, i = i) # nolint
+  sdf_innov <- compute_sdf_innovations( # nolint
+    yields_df, term_premia_df,
+    i = i, step = step
+  )
 
   # Create lagged PCs
   # SDF innovations have length T-1

@@ -17,7 +17,7 @@ test_that("maturities beyond the effective maximum are rejected", {
   expect_error(
     validate_w2_inputs(
       yields, term_premia,
-      maturities = HETID_CONSTANTS$EFFECTIVE_MAX_MATURITY + 1
+      maturities = effective_max_maturity(HETID_CONSTANTS$DEFAULT_STEP) + 1
     ),
     "must be between",
     class = "hetid_error_bad_argument"

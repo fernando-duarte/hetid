@@ -4,9 +4,11 @@
 #' (SDF innovations) on principal components extracted from financial asset returns and a constant.
 #'
 #' @template param-yields-term-premia
-#' @param maturities Vector of maturities to process.
-#'   NULL (default) uses the full range from
-#'   MIN_MATURITY to EFFECTIVE_MAX_MATURITY.
+#' @param maturities Vector of maturities to process. NULL (default)
+#'   uses the step-spaced horizons from \code{step} to
+#'   \code{MAX_MATURITY - step} satisfying the news contract (see
+#'   \code{\link{default_w2_maturities}}).
+#' @template param-step
 #' @template param-n-pcs
 #' @template param-pc-data
 #' @param return_df Logical, if TRUE returns a data frame with
@@ -108,13 +110,11 @@
 compute_w2_residuals <- function(yields, term_premia,
                                  maturities = NULL,
                                  n_pcs = HETID_CONSTANTS$DEFAULT_N_PCS,
-                                 pcs = NULL, return_df = FALSE, dates = NULL) {
+                                 pcs = NULL, return_df = FALSE, dates = NULL,
+                                 step = HETID_CONSTANTS$DEFAULT_STEP) {
   # Validate inputs
   if (is.null(maturities)) {
-    maturities <- seq(
-      HETID_CONSTANTS$MIN_MATURITY,
-      HETID_CONSTANTS$EFFECTIVE_MAX_MATURITY
-    )
+    maturities <- default_w2_maturities(step)
   }
   if (is.null(pcs)) {
     validate_n_pcs(n_pcs)
@@ -123,7 +123,10 @@ compute_w2_residuals <- function(yields, term_premia,
       n_pcs, "n_pcs", 1, NCOL(pcs)
     )
   }
-  validated <- validate_w2_inputs(yields, term_premia, maturities) # nolint: object_usage_linter
+  validated <- validate_w2_inputs( # nolint: object_usage_linter
+    yields, term_premia, maturities,
+    step = step
+  )
   yields_df <- validated$yields
   term_premia_df <- validated$term_premia
   maturities <- validated$maturities
@@ -150,7 +153,8 @@ compute_w2_residuals <- function(yields, term_premia,
 
     # Process single maturity
     result <- process_w2_maturity( # nolint: object_usage_linter
-      i, yields_df, term_premia_df, pcs, n_pcs
+      i, yields_df, term_premia_df, pcs, n_pcs,
+      step = step
     )
 
     # Skip if NULL result

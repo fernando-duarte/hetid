@@ -11,7 +11,8 @@ compute_w2_residuals(
   n_pcs = HETID_CONSTANTS$DEFAULT_N_PCS,
   pcs = NULL,
   return_df = FALSE,
-  dates = NULL
+  dates = NULL,
+  step = HETID_CONSTANTS$DEFAULT_STEP
 )
 }
 \arguments{
@@ -19,9 +20,10 @@ compute_w2_residuals(
 
 \item{term_premia}{Data frame with columns tp1, tp2, ..., containing term premia}
 
-\item{maturities}{Vector of maturities to process.
-NULL (default) uses the full range from
-MIN_MATURITY to EFFECTIVE_MAX_MATURITY.}
+\item{maturities}{Vector of maturities to process. NULL (default)
+uses the step-spaced horizons from \code{step} to
+\code{MAX_MATURITY - step} satisfying the news contract (see
+\code{\link{default_w2_maturities}}).}
 
 \item{n_pcs}{Integer specifying the number of principal components to use.
 Must be between 1 and 6 when using the bundled PCs; with a user-supplied
@@ -47,6 +49,13 @@ dates (default FALSE)}
 frame. If NULL and bundled PCs are used, bundled dates are
 used. If NULL and custom \code{pcs} are supplied, row
 indices are used instead.}
+
+\item{step}{Integer number of maturity-index units per news period
+(default \code{HETID_CONSTANTS$DEFAULT_STEP}). The news operator
+steps one period, so maturity arithmetic moves in multiples of
+\code{step}: \code{compute_n_hat()} pairs maturities \code{i} and
+\code{i + step}, the one-period bond is the \code{step}-maturity
+bond, and horizons must satisfy \code{i <= MAX_MATURITY - step}.}
 }
 \value{
 If return_df = FALSE, returns a list containing:
