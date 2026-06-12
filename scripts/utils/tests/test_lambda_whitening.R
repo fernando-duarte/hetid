@@ -15,6 +15,7 @@ source("scripts/utils/profile_bounds_core.R")
 source("scripts/utils/profile_bounds.R")
 source("scripts/utils/lambda_mask.R")
 source("scripts/utils/lambda_whitening.R")
+source("scripts/utils/lambda_varnorm.R")
 source("scripts/utils/lambda_optimization.R")
 
 .pass <- 0L
@@ -29,7 +30,7 @@ check <- function(label, cond) {
   }
 }
 drop_meta <- function(out) {
-  out[setdiff(names(out), c("support", "whitening"))]
+  out[setdiff(names(out), c("support", "whitening", "lambda_variance"))]
 }
 
 set.seed(33)
@@ -51,6 +52,7 @@ fixture <- readRDS(
 )
 out_unmasked <- run_lambda_optimization(
   lambda_start, moments, tau,
+  whiten = NULL,
   n_starts = 3, seed = 7, maxeval = 40L
 )
 check(
@@ -65,6 +67,7 @@ masked_start <- lambda_from_support(
 )
 out_masked <- run_lambda_optimization(
   masked_start, moments, tau,
+  whiten = NULL,
   n_starts = 3, seed = 11, maxeval = 40L, support = support
 )
 check(
@@ -103,11 +106,12 @@ out_w <- run_lambda_optimization(
   n_starts = 3, seed = 7, maxeval = 40L,
   whiten = list(vcov = v_corr)
 )
+v_q <- function(el) diag(crossprod(el, v_corr %*% el))
 check(
-  "whitened optimized columns return unit-Euclidean in lambda space",
+  "whitened optimized columns are variance-normalized in lambda space",
   is.infinite(out_w$objective_final) ||
-    (all(abs(colSums(out_w$lambda_optimized[[1]]^2) - 1) < 1e-12) &&
-      all(abs(colSums(out_w$lambda_optimized[[2]]^2) - 1) < 1e-12))
+    (all(abs(v_q(out_w$lambda_optimized[[1]]) - 1) < 1e-12) &&
+      all(abs(v_q(out_w$lambda_optimized[[2]]) - 1) < 1e-12))
 )
 check(
   "whitened honest objectives are never the steering penalty",

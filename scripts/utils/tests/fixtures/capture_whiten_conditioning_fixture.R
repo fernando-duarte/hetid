@@ -13,6 +13,7 @@ source("scripts/utils/profile_bounds_core.R")
 source("scripts/utils/profile_bounds.R")
 source("scripts/utils/lambda_mask.R")
 source("scripts/utils/lambda_whitening.R")
+source("scripts/utils/lambda_varnorm.R")
 source("scripts/utils/lambda_optimization.R")
 source("scripts/utils/tests/fixtures/whiten_conditioning_dgp.R")
 
@@ -23,6 +24,7 @@ moments_corr <- suppressMessages(
 tau <- rep(0.5, 2)
 plain <- run_lambda_optimization(
   dat$start, moments_corr, tau,
+  whiten = NULL,
   n_starts = 6, seed = 42, maxeval = 200L
 )
 white <- run_lambda_optimization(

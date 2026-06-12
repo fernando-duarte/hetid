@@ -1,4 +1,4 @@
-# Whitening Validation and Context -- opt-in search-space
+# Whitening Validation and Context -- the repo-default search
 # reparameterization for run_lambda_optimization (sourced by
 # common_settings.R; the coordinate codecs encode_lambda /
 # decode_lambda live in lambda_mask.R beside the packing family).
@@ -7,9 +7,10 @@
 # (docs/lewbel_multivariate_set_identification.tex line 479) as
 # search GEOMETRY only: the optimizer walks mu = chol(V) %*% lambda
 # -- per-component sub-blocks chol(V[s_i, s_i]) of the supported
-# instruments under a mask -- while every constraint evaluation, the
-# honest oracle, and the returned weights stay in original lambda
-# coordinates. Each constraint depends on its weight column only
+# instruments under a mask -- while constraint evaluations and the
+# honest oracle stay in original lambda coordinates; returned weights
+# are variance-normalized in lambda space (lambda_varnorm.R).
+# Each constraint depends on its weight column only
 # through direction (g(theta; c*lambda, tau) = c^2 * g(theta;
 # lambda, tau), spec lines 366-372), so whitening changes NO
 # constraint set and NO statistical property; the profile-bound

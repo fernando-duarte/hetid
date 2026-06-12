@@ -48,3 +48,24 @@ get_identification_z <- function(data, default) {
 z_source_active <- function() {
   nzchar(Sys.getenv("HETID_Z_SOURCE", ""))
 }
+
+# Consistency guard for stages that REBUILD Z from disk in a process
+# separate from the one that computed the moments (stage 05's
+# optimizer): the rebuilt matrix must reproduce the stored moments
+# EXACTLY (tolerance 0 -- same data artifact, same hook, same
+# arithmetic), else the variance normalization would whiten against
+# a different Var(Z) than the constraints were built from.
+assert_z_matches_moments <- function(z, w1, w2, moments) {
+  recomputed <- suppressMessages(
+    compute_identification_moments(w1, w2, z)
+  )
+  if (!isTRUE(all.equal(recomputed, moments, tolerance = 0))) {
+    stop(
+      "rebuilt instrument matrix does not reproduce the stored ",
+      "moments; likely cause: HETID_Z_SOURCE now differs from the ",
+      "stage-04 run that wrote the baseline RDS -- re-run stage 04 ",
+      "or restore the hook before optimizing"
+    )
+  }
+  invisible(z)
+}

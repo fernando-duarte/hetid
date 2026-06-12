@@ -1,47 +1,38 @@
-# Lambda Optimization -- outer optimization over general per-component
-# weight matrices (one or more combinations per component). Mirrors
-# optimization_utils.R, which stays frozen for the legacy single-
-# combination gamma path; shared pieces (normalize_gamma_columns,
-# UNBOUNDED_PENALTY, compute_total_width, solve_all_profile_bounds)
-# are reused from the sourced utils. Packing, start coercion,
-# masking, coordinate codecs, and honest_width_lambda live in
-# lambda_mask.R; whitening validation lives in lambda_whitening.R.
+# Lambda Optimization -- the single outer optimizer over general
+# per-component weight matrices (the legacy Euclidean
+# run_gamma_optimization is retired). Shared pieces
+# (normalize_gamma_columns, UNBOUNDED_PENALTY, compute_total_width,
+# solve_all_profile_bounds) come from the sourced utils; packing,
+# start coercion, masking, codecs, and honest_width_lambda live in
+# lambda_mask.R; whitening validation in lambda_whitening.R;
+# variance-normalization helpers in lambda_varnorm.R.
 #
-# Objective: the SAME scalar the legacy optimizer minimizes -- the sum
-# over components of profile-interval widths (compute_total_width),
-# i.e. the spec's outer weight problem. Honesty notes: this is a
-# seeded multistart LOCAL heuristic, not a certified global width
-# minimizer; widths under data-selected weights are a width-minimizing
-# computational benchmark, not a confidence statement (the spec's
-# uniform-bound caveat applies). For K_i > 1 supply distinct start
-# columns (collapsed directions are redundant constraints, reported
-# via duplicate_directions); more than J combinations per component
-# are necessarily redundant. Per-component instrument subsets: pass
-# support (free-row index lists, NULL at unconstrained columns -- the
-# lambda_from_support convention; helpers in lambda_mask.R).
-# Off-support entries stay exactly 0.0 through the start, every
-# perturbation, every slsqp iterate, the honest re-evaluations, and
-# the returned optimum, because only FREE elements are packed. Masked
-# runs draw fewer rnorm values and carry NO seeded-equivalence
-# contract with the legacy optimizer; support = NULL packs every
-# element and stays bit-identical to the pre-mask path. The canonical
-# integer support is echoed in the return value.
+# Objective: the sum over components of profile-interval widths --
+# the spec's outer weight problem. A seeded multistart LOCAL
+# heuristic, not a certified global minimizer; widths under
+# data-selected weights are a computational benchmark, not a
+# confidence statement. For K_i > 1 supply distinct start columns
+# (collapsed directions are reported via duplicate_directions).
+# Per-component subsets: pass support (lambda_from_support
+# convention); only FREE elements are packed, so off-support
+# entries stay exactly 0.0 everywhere.
 #
-# Opt-in whitening (whiten != NULL): the multistart SEARCH walks
-# mu = chol(V) %*% lambda coordinates -- per-component sub-blocks
-# chol(V[s_i, s_i]) of the supported instruments under a mask --
-# implementing the spec's variance normalization
-# lambda' V lambda = 1 as the search coordinate system. A numerical
-# reparameterization within the spec's admissibility class: NOT a
-# statistical improvement; NO constraint set changes (constraints
-# depend on weights only through direction). Every evaluation, the
-# honest oracle, the returned weights, AND every all_results par
-# (decoded before return) stay in original lambda coordinates with
-# unit-Euclidean columns -- mu never leaves the search. Whitened
-# runs draw the SAME rnorm count but interpret draws in mu-space (a
-# legitimately different draw geometry); every seeded-equivalence
-# contract covers whiten = NULL only. The applied transform is
-# echoed in the return value (whitening field; NULL when off).
+# Normalization: whiten is REQUIRED, with no default -- the caller
+# must choose. whiten = list(z = .) / list(vcov = .) is the REPO
+# DEFAULT (every production call site): the search walks
+# mu = chol(V) %*% lambda (per-component sub-blocks under a mask)
+# and returned lambda_optimized columns satisfy
+# lambda' V lambda = 1, the spec's first canonical F_i (.tex line
+# 479); zero-variance start columns are rejected up front, and
+# lambda_variance echoes the identification-strength diagnostic.
+# An EXPLICIT whiten = NULL is the Euclidean plumbing mode
+# (tests/demos only -- Var(Z) is not recoverable from the moments
+# container). By the c^2 direction-invariance (spec lines 366-372)
+# either choice changes NO identified set. all_results[[s]]$par is
+# packed LAMBDA in every mode; whitened runs draw the SAME rnorm
+# count but interpret draws in mu-space; the explicit NULL path
+# stays bit-identical to the pre-feature code (pinned by the frozen
+# fixture in test_lambda_whitening.R).
 
 normalize_lambda_columns <- function(lambda_list) {
   lapply(lambda_list, function(el) {
@@ -75,12 +66,19 @@ objective_lambda_only <- function(par, dims, moments, tau,
 run_lambda_optimization <- function(lambda_start,
                                     moments,
                                     tau,
+                                    whiten,
                                     n_starts = 10,
                                     seed = SEED,
                                     maxeval = 500L,
                                     xtol_rel = 1e-6,
-                                    support = NULL,
-                                    whiten = NULL) {
+                                    support = NULL) {
+  if (missing(whiten)) {
+    stop(
+      "whiten is required: pass list(z = .) or list(vcov = .) (the ",
+      "repo default variance normalization) or an explicit NULL ",
+      "(Euclidean plumbing path for tests/demos only)"
+    )
+  }
   lambda_start <- coerce_lambda_start(lambda_start, moments)
   dims <- lambda_dims(lambda_start)
   free <- NULL
@@ -88,30 +86,27 @@ run_lambda_optimization <- function(lambda_start,
     support <- validate_support_mask(support, lambda_start, moments)
     free <- support_free_mask(dims, support)
   }
-  # Whitening context, validated BEFORE any RNG use; the lazy branch
-  # keeps the whiten = NULL path free of any lambda_whitening.R
-  # dependency (the landed test preambles stay byte-identical).
+  # Whitening context and the zero-variance start check, both BEFORE
+  # any RNG use; the lazy branch keeps the whiten = NULL path free of
+  # any lambda_whitening.R / lambda_varnorm.R dependency.
   wctx <- if (is.null(whiten)) {
     NULL
   } else {
     whiten_context(whiten, support, moments)
+  }
+  if (!is.null(wctx)) {
+    assert_lambda_variance_nonzero(lambda_start, wctx)
   }
   set.seed(seed)
   par_start <- pack_active(encode_lambda(lambda_start, wctx), free)
 
   objective_start <- honest_width_lambda(lambda_start, tau, moments)
 
-  # Same multistart recipe as run_gamma_optimization: the primary
-  # start packs unnormalized, perturbed starts are normalized. By the
-  # spec's c^2 direction-invariance, normalization is only a choice
-  # of representative (slsqp itself is unconstrained -- iterates lie
-  # on no sphere). In whitened mode the packed coordinates are mu, so
-  # the perturbed-start normalization is unit mu: the spec's variance
-  # normalization restricted to the support (structural zeros kill
-  # all cross terms). A K = 1 gamma-matrix start packs to
-  # as.vector(gamma) with the same rnorm count, so the legacy and
-  # general optimizers see identical start sequences under the same
-  # seed (whiten = NULL only).
+  # Multistart recipe: the primary start packs unnormalized,
+  # perturbed starts are normalized. In whitened mode the packed
+  # coordinates are mu, so the perturbed-start normalization is unit
+  # mu: the variance normalization restricted to the support
+  # (structural zeros kill all cross terms).
   starts <- vector("list", n_starts)
   starts[[1]] <- par_start
   for (s in seq_len(n_starts - 1) + 1) {
@@ -145,9 +140,18 @@ run_lambda_optimization <- function(lambda_start,
     )
   }, numeric(1))
   best_idx <- which.min(honest_values)
-  lambda_opt <- normalize_lambda_columns(
-    decode_lambda(all_results[[best_idx]]$par, dims, free, wctx)
+
+  # Reported representative: variance-normalized columns
+  # (lambda' V lambda = 1, the repo default) under whitening, else
+  # unit-Euclidean.
+  lambda_opt <- decode_lambda(
+    all_results[[best_idx]]$par, dims, free, wctx
   )
+  lambda_opt <- if (is.null(wctx)) {
+    normalize_lambda_columns(lambda_opt)
+  } else {
+    normalize_lambda_columns_vcov(lambda_opt, wctx)
+  }
 
   # Legacy-field convention: all_results[[s]]$par is packed LAMBDA in
   # every mode; whitened runs decode their terminal mu here, AFTER
@@ -162,12 +166,13 @@ run_lambda_optimization <- function(lambda_start,
   }
 
   # Near-duplicate combination columns are redundant constraints, not
-  # errors; report them so users notice collapsed directions.
+  # errors; compare DIRECTION COSINES (Euclidean-unit columns) so the
+  # 0.999 threshold is invariant to the reporting normalization.
   duplicate_directions <- vapply(lambda_opt, function(el) {
     if (is.null(el) || ncol(el) < 2) {
       return(FALSE)
     }
-    cors <- abs(crossprod(el))
+    cors <- abs(crossprod(normalize_gamma_columns(el)))
     any(cors[upper.tri(cors)] > 0.999)
   }, logical(1))
 
@@ -178,6 +183,11 @@ run_lambda_optimization <- function(lambda_start,
     all_results = all_results,
     best_index = best_idx,
     duplicate_directions = duplicate_directions,
+    lambda_variance = if (is.null(wctx)) {
+      NULL
+    } else {
+      lambda_variance_report(lambda_start, lambda_opt, wctx)
+    },
     support = support,
     whitening = if (is.null(wctx)) {
       NULL

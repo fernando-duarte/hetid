@@ -29,6 +29,7 @@ tau <- rep(0.2, 2)
 
 unmasked <- run_lambda_optimization(
   lambda_start, moments, tau,
+  whiten = NULL,
   n_starts = 3, seed = 7, maxeval = 40L
 )
 support <- list(c(1L, 3L), 1:3)
@@ -39,11 +40,12 @@ masked_start <- lambda_from_support(
 )
 masked <- run_lambda_optimization(
   masked_start, moments, tau,
+  whiten = NULL,
   n_starts = 3, seed = 11, maxeval = 40L, support = support
 )
 
 drop_meta <- function(out) {
-  out[setdiff(names(out), c("support", "whitening"))]
+  out[setdiff(names(out), c("support", "whitening", "lambda_variance"))]
 }
 saveRDS(
   list(unmasked = drop_meta(unmasked), masked = drop_meta(masked)),

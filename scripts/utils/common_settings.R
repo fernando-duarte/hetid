@@ -136,6 +136,9 @@ if (file.exists(file.path(utils_dir, "lambda_mask.R"))) {
 if (file.exists(file.path(utils_dir, "lambda_whitening.R"))) {
   source(file.path(utils_dir, "lambda_whitening.R"))
 }
+if (file.exists(file.path(utils_dir, "lambda_varnorm.R"))) {
+  source(file.path(utils_dir, "lambda_varnorm.R"))
+}
 if (file.exists(file.path(utils_dir, "lambda_optimization.R"))) {
   source(file.path(utils_dir, "lambda_optimization.R"))
 }

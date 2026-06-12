@@ -41,6 +41,7 @@ legacy <- run_gamma_optimization(
 )
 general <- run_lambda_optimization(
   gamma_start, moments, tau,
+  whiten = NULL,
   n_starts = 3, seed = 99, maxeval = 50L
 )
 check(
@@ -64,6 +65,7 @@ lambda_start <- list(
 )
 out <- run_lambda_optimization(
   lambda_start, moments, rep(0.2, 2),
+  whiten = NULL,
   n_starts = 2, seed = 7, maxeval = 30L
 )
 check(
@@ -89,6 +91,7 @@ moments_sub <- suppressMessages(
 )
 general_sub <- run_lambda_optimization(
   gamma_start, moments_sub, tau,
+  whiten = NULL,
   n_starts = 2, seed = 11, maxeval = 30L
 )
 check(
@@ -109,6 +112,7 @@ moments_s <- suppressMessages(
 )
 out_s <- run_lambda_optimization(
   list(matrix(1, 1, 1)), moments_s, 0.99,
+  whiten = NULL,
   n_starts = 1, seed = 1, maxeval = 10L
 )
 check(

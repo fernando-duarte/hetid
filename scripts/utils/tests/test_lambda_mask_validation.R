@@ -47,6 +47,7 @@ expect_mask_error <- function(label, bad_support,
     {
       run_lambda_optimization(
         start, moments_in, tau,
+        whiten = NULL,
         n_starts = 2, seed = 99, maxeval = 10L,
         support = bad_support
       )
@@ -104,6 +105,7 @@ sub_start <- matrix(0, nrow = 3, ncol = 2)
 sub_start[c(1, 3), 2] <- c(0.6, 0.8)
 out_sub <- run_lambda_optimization(
   sub_start, moments_sub, tau,
+  whiten = NULL,
   n_starts = 2, seed = 11, maxeval = 30L,
   support = list(NULL, c(1, 3))
 )

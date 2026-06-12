@@ -43,10 +43,12 @@ tau <- rep(0.2, 2)
 # unmasked arithmetic.
 out_null <- run_lambda_optimization(
   gamma_start, moments, tau,
+  whiten = NULL,
   n_starts = 3, seed = 99, maxeval = 50L
 )
 out_full <- run_lambda_optimization(
   gamma_start, moments, tau,
+  whiten = NULL,
   n_starts = 3, seed = 99, maxeval = 50L,
   support = list(1:3, 1:3)
 )
@@ -70,6 +72,7 @@ masked_start <- lambda_from_support(
 )
 out_masked <- run_lambda_optimization(
   masked_start, moments, tau,
+  whiten = NULL,
   n_starts = 3, seed = 7, maxeval = 30L, support = support
 )
 dims <- lambda_dims(out_masked$lambda_optimized)

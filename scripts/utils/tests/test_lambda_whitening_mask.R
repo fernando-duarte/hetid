@@ -13,6 +13,7 @@ source("scripts/utils/profile_bounds_core.R")
 source("scripts/utils/profile_bounds.R")
 source("scripts/utils/lambda_mask.R")
 source("scripts/utils/lambda_whitening.R")
+source("scripts/utils/lambda_varnorm.R")
 source("scripts/utils/lambda_optimization.R")
 
 .pass <- 0L
@@ -63,11 +64,16 @@ check(
 )
 # all_results pars are packed LAMBDA after the return-time decode,
 # so plain unpack_active (no codec) must reproduce the optimum.
+wctx_m <- whiten_context(
+  list(vcov = v_corr), out_mw$support, moments
+)
 best_par <- out_mw$all_results[[out_mw$best_index]]$par
 check(
   "all_results pars are packed lambda under whitening",
   identical(
-    normalize_lambda_columns(unpack_active(best_par, dims_m, free_m)),
+    normalize_lambda_columns_vcov(
+      unpack_active(best_par, dims_m, free_m), wctx_m
+    ),
     out_mw$lambda_optimized
   )
 )
@@ -79,9 +85,6 @@ check(
   "off-support entries stay exact +0.0 through whitened optimization",
   all_pos_zero(out_mw$lambda_optimized[[1]][2, ]) &&
     all(per_start_zero)
-)
-wctx_m <- whiten_context(
-  list(vcov = v_corr), out_mw$support, moments
 )
 check(
   "the whitening factor is the sub-block of the supported instruments",

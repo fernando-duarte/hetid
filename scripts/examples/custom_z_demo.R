@@ -57,6 +57,7 @@ print(qs_fixed$labels)
 source(file.path("scripts", "utils", "common_settings.R"))
 opt <- run_lambda_optimization(
   lambda_fixed, moments, 0.2,
+  whiten = list(z = instruments[seq_len(t_obs), ]),
   n_starts = 5, seed = 123, maxeval = 200L
 )
 cat("optimized total width:", opt$objective_final, "\n")
@@ -92,6 +93,7 @@ qs_sets <- build_general_quadratic_system(
 cat("per-component-subset constraints:", nrow(qs_sets$labels), "\n")
 opt_masked <- run_lambda_optimization(
   lambda_subsets, moments_sets, 0.2,
+  whiten = NULL,
   n_starts = 3, seed = 123, maxeval = 100L,
   support = aligned$support
 )
