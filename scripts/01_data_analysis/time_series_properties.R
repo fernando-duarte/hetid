@@ -289,11 +289,16 @@ perform_hetero_tests_wrapper <- function(y, x_vars, var_name) {
 # Prepare predictor variables (lagged PCs)
 predictor_vars <- df[, pc_lag_vars]
 
-# Test heteroskedasticity for all variables including PCs and consumption growth
+# Test heteroskedasticity for all variables including PCs and consumption growth.
+# A lagged PC must not appear in its own predictor set: regressing a variable
+# on a set containing itself fits perfectly (R^2 = 1 exactly), so the residuals
+# are floating-point noise and every test statistic is meaningless. Each PC is
+# therefore tested against the other lagged PCs only.
 all_test_vars <- c(yield_vars, tp_vars, pc_lag_vars, macro_vars)
 hetero_results <- do.call(rbind, lapply(all_test_vars, function(v) {
   if (v %in% names(df)) {
-    perform_hetero_tests_wrapper(df[[v]], predictor_vars, v)
+    x_vars <- predictor_vars[, setdiff(names(predictor_vars), v), drop = FALSE]
+    perform_hetero_tests_wrapper(df[[v]], x_vars, v)
   }
 }))
 

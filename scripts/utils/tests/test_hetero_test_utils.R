@@ -1,5 +1,6 @@
-# Tests for summarize_hetero_tests in hetero_test_utils.R (pure-function
-# tests; the skedastic suite itself is not exercised here).
+# Tests for hetero_test_utils.R: the summarize_hetero_tests pure function,
+# plus the test-selection and Goldfeld-Quandt aiming arguments of
+# perform_all_hetero_tests (exercised on small synthetic fits).
 # Run from the package root: Rscript scripts/utils/tests/test_hetero_test_utils.R
 source("scripts/utils/hetero_test_utils.R")
 
@@ -79,6 +80,76 @@ err <- tryCatch(
 check(
   "missing p-value column errors and names the column",
   !is.null(err) && grepl("CW_pval", err, fixed = TRUE)
+)
+
+# Suite subsetting: summarize only the requested tests
+summary_sub <- summarize_hetero_tests(
+  tests_df,
+  significance_level = 0.05,
+  test_names = c("White", "BP", "GQ", "Harvey")
+)
+check("subset summary has one row per requested test", nrow(summary_sub) == 4)
+check(
+  "subset summary excludes unrequested tests",
+  !any(c("Anscombe", "CW") %in% summary_sub$Test)
+)
+err_sub <- tryCatch(
+  {
+    summarize_hetero_tests(tests_df, test_names = c("White", "Nope"))
+    NULL
+  },
+  error = function(e) conditionMessage(e)
+)
+check(
+  "requesting an absent test errors and names its column",
+  !is.null(err_sub) && grepl("Nope_pval", err_sub, fixed = TRUE)
+)
+
+# perform_all_hetero_tests: test selection and the aimed Goldfeld-Quandt
+set.seed(11)
+syn <- data.frame(y = rnorm(120), x1 = rnorm(120), x2 = rnorm(120))
+syn_fit <- lm(y ~ ., data = syn)
+reduced <- c("White", "BP", "GQ", "Harvey")
+res_sub <- perform_all_hetero_tests(
+  syn_fit, "synthetic",
+  tests = reduced,
+  gq_deflator = "x2", gq_alternative = "two.sided"
+)
+check(
+  "selected tests produce exactly their columns",
+  identical(
+    sort(setdiff(names(res_sub), "Variable")),
+    sort(paste0(rep(reduced, each = 2), c("_stat", "_pval")))
+  )
+)
+check(
+  "aimed GQ returns a proper p-value",
+  res_sub$GQ_pval > 0 && res_sub$GQ_pval < 1
+)
+res_full <- perform_all_hetero_tests(syn_fit, "synthetic")
+check(
+  "default run keeps the full six-test column set",
+  all(paste0(rep(suite, each = 2), c("_stat", "_pval")) %in% names(res_full))
+)
+res_gq_x1 <- perform_all_hetero_tests(
+  syn_fit, "synthetic",
+  tests = "GQ", gq_deflator = "x1", gq_alternative = "two.sided"
+)
+check(
+  "gq_deflator is honored (different ordering, different statistic)",
+  !isTRUE(all.equal(res_gq_x1$GQ_stat, res_sub$GQ_stat))
+)
+err_defl <- tryCatch(
+  {
+    perform_all_hetero_tests(syn_fit, tests = "GQ", gq_deflator = "zz")
+    NULL
+  },
+  error = function(e) conditionMessage(e)
+)
+check(
+  "unknown gq_deflator errors and names the available regressors",
+  !is.null(err_defl) && grepl("zz", err_defl, fixed = TRUE) &&
+    grepl("x1", err_defl, fixed = TRUE)
 )
 
 cat(sprintf("\n%d passed, %d failed\n", .pass, .fail))

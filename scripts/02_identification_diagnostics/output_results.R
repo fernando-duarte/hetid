@@ -29,14 +29,21 @@ fmt_p <- function(x) {
   ifelse(is.na(x), NA_character_, formatC(x, format = "f", digits = 3))
 }
 
+# Anscombe and Cook--Weisberg are no longer part of the stage-02 suite
+# (degenerate fitted values / duplicate of non-studentized BP; see
+# docs/reviews/hetero-test-investigation-2026-06-10.md)
+gq_label <- if (is.null(hetero$parameters$gq_deflator)) {
+  "Goldfeld--Quandt"
+} else {
+  sprintf(
+    "Goldfeld--Quandt (%s, %s)",
+    hetero$parameters$gq_deflator, hetero$parameters$gq_alternative
+  )
+}
 suite_pval_cols <- c(
-  "White_pval", "BP_pval", "GQ_pval", "Harvey_pval",
-  "Anscombe_pval", "CW_pval", "Glejser_pval"
+  "White_pval", "BP_pval", "GQ_pval", "Harvey_pval", "Glejser_pval"
 )
-suite_labels <- c(
-  "White", "Breusch--Pagan", "Goldfeld--Quandt", "Harvey",
-  "Anscombe", "Cook--Weisberg", "Glejser"
-)
+suite_labels <- c("White", "Breusch--Pagan", gq_label, "Harvey", "Glejser")
 
 panel_suite <- data.frame(
   label = suite_labels,
@@ -69,7 +76,27 @@ hetero_notes <- c(
     "The BP LM test regresses $W_{2,i}^2$ on the principal components ",
     "($nR^2$, $\\chi^2_4$); ARCH(1) regresses $W_{2,i}^2$ on its own lag."
   ),
-  "The Goldfeld--Quandt test splits the sample in observation (time) order.",
+  if (is.null(hetero$parameters$gq_deflator)) {
+    "The Goldfeld--Quandt test splits the sample in observation (time) order."
+  } else {
+    paste0(
+      "The Goldfeld--Quandt test orders observations by ",
+      hetero$parameters$gq_deflator, " (",
+      hetero$parameters$gq_alternative, ")."
+    )
+  },
+  if (!is.null(hetero$w2_cross_maturity_abs_cor_range)) {
+    sprintf(
+      paste0(
+        "Cross-maturity absolute correlations of $W_{2,i}$ span ",
+        "%.2f--%.2f, so rejections across maturities are one signal ",
+        "measured %d ways, not independent confirmations."
+      ),
+      hetero$w2_cross_maturity_abs_cor_range[1],
+      hetero$w2_cross_maturity_abs_cor_range[2],
+      nrow(tbm)
+    )
+  },
   "Panel C reports $|\\mathrm{corr}(\\mathrm{PC}_j, W_{2,i}^2)|$."
 )
 
@@ -95,10 +122,7 @@ cli_h2("Creating HTML Tables")
 
 pval_matrix <- t(as.matrix(tbm[, c(suite_pval_cols, "BPLM_pval", "ARCH_pval")]))
 pval_df <- data.frame(
-  Test = c(
-    "White", "Breusch-Pagan", "Goldfeld-Quandt", "Harvey",
-    "Anscombe", "Cook-Weisberg", "Glejser", "BP LM on PCs", "ARCH(1)"
-  ),
+  Test = c(gsub("--", "-", suite_labels), "BP LM on PCs", "ARCH(1)"),
   pval_matrix,
   check.names = FALSE,
   row.names = NULL

@@ -30,9 +30,21 @@ w2_resid <- id_resid$w2
 pcs_aligned <- id_resid$pcs_aligned
 cli_alert_info("Testing {length(maturities)} maturities, {n_pcs} PCs, {id_resid$n_obs} obs")
 
-# Test battery: the skedastic suite plus the identification-targeted LM tests
-suite_tests <- c("White", "BP", "GQ", "Harvey", "Anscombe", "CW")
+# Test battery: the skedastic suite plus the identification-targeted LM tests.
+# Anscombe is excluded: w2 is orthogonal to the regressors by construction, so
+# the refit's fitted values are floating-point noise and the statistic is 0/0.
+# Cook-Weisberg is excluded: it duplicates the non-studentized Breusch-Pagan
+# statistic and over-rejects badly under this data's heavy tails. See
+# docs/reviews/hetero-test-investigation-2026-06-10.md for the full diagnosis.
+suite_tests <- c("White", "BP", "GQ", "Harvey")
 all_tests <- c(suite_tests, "Glejser", "BPLM", "ARCH")
+
+# Goldfeld-Quandt is aimed at the strongest variance driver, two-sided. The
+# skedastic default (existing row order = time, one-sided "greater") tests a
+# rising variance time trend, not the Lewbel condition; on this data it
+# returns p ~ 1 because the variance DECLINES over the sample.
+gq_deflator <- colnames(pcs_aligned)[2] # pc2 under the default instruments
+gq_alternative <- "two.sided"
 
 source(here::here("scripts/utils/hetero_lm_tests.R"))
 
@@ -41,10 +53,17 @@ tests_by_maturity <- do.call(rbind, lapply(seq_along(maturities), function(k) {
   var_name <- paste0("w2_maturity_", maturities[k])
   reg_data <- data.frame(w2 = w2_resid[, k], pcs_aligned)
   lm_model <- lm(w2 ~ ., data = reg_data)
-  suite <- tryCatch(perform_all_hetero_tests(lm_model, var_name), error = function(e) {
-    cli_alert_warning("Skedastic suite failed for {var_name}: {conditionMessage(e)}")
-    suite_na_row(var_name)
-  })
+  suite <- tryCatch(
+    perform_all_hetero_tests(
+      lm_model, var_name,
+      tests = suite_tests,
+      gq_deflator = gq_deflator, gq_alternative = gq_alternative
+    ),
+    error = function(e) {
+      cli_alert_warning("Skedastic suite failed for {var_name}: {conditionMessage(e)}")
+      suite_na_row(var_name)
+    }
+  )
   glejser_res <- tryCatch(skedastic::glejser(lm_model), error = function(e) {
     cli_alert_warning("Glejser test failed for {var_name}: {conditionMessage(e)}")
     list(statistic = NA_real_, p.value = NA_real_)
@@ -65,9 +84,27 @@ tests_by_maturity <- do.call(rbind, lapply(seq_along(maturities), function(k) {
 rownames(tests_by_maturity) <- NULL
 
 cli_h2("Skedastic Suite Rejection Summary")
-suite_summary <- summarize_hetero_tests(tests_by_maturity, significance_level)
+cli_alert_info(
+  "GQ is ordered by {gq_deflator} ({gq_alternative}); a p-value near 1 under the
+   old time-order default meant declining variance, not homoskedasticity"
+)
+suite_summary <- summarize_hetero_tests(
+  tests_by_maturity, significance_level,
+  test_names = suite_tests
+)
 suite_title <- sprintf("Skedastic Suite Rejections (alpha = %.2f)", significance_level)
 print(gt(suite_summary) |> tab_header(title = suite_title))
+
+# Honesty caveat for any "k of N maturities" reading: the w2 residual series
+# are highly correlated across maturities, so per-maturity rejections are one
+# signal measured N ways, not N independent confirmations
+w2_abs_cor <- abs(cor(w2_resid))
+w2_cor_range <- range(w2_abs_cor[upper.tri(w2_abs_cor)])
+cli_alert_info(
+  "Cross-maturity |corr| of w2 residuals spans {round(w2_cor_range[1], 2)}
+   to {round(w2_cor_range[2], 2)}: rejections across maturities are one
+   signal measured {length(maturities)} ways, not independent confirmations"
+)
 
 cli_h2("Rejection Counts Across All Tests")
 reject_at <- function(level) {
@@ -115,6 +152,7 @@ cli_ul(sprintf(
 ))
 
 cli_h2("Creating Diagnostic Plots")
+source(here::here("scripts/utils/hetero_diag_figures.R"))
 save_plot <- function(plot, name) {
   for (ext in c("png", "svg")) {
     ggsave(file.path(output_dir, paste0(name, ".", ext)), plot,
@@ -122,55 +160,28 @@ save_plot <- function(plot, name) {
     )
   }
 }
-
-# P-values below double precision are floored for display only
-plot_pvals <- tests_by_maturity |>
-  select(maturity, all_of(paste0(all_tests, "_pval"))) |>
-  pivot_longer(-maturity, names_to = "test", values_to = "p_value") |>
-  mutate(
-    test = factor(sub("_pval$", "", test), levels = all_tests),
-    neg_log10_p = -log10(pmax(p_value, .Machine$double.eps))
-  )
-p_pvalues <- ggplot(plot_pvals, aes(x = maturity, y = neg_log10_p, color = test)) +
-  geom_line(linewidth = 1) +
-  geom_point(size = 2.5) +
-  geom_hline(yintercept = -log10(significance_level), linetype = "dashed", color = "red") +
-  geom_hline(yintercept = -log10(0.10), linetype = "dashed", color = "orange") +
-  scale_x_continuous(breaks = maturities) +
-  labs(
-    title = "Heteroskedasticity Tests for W2 Residuals",
-    x = "Maturity (months)", y = "-log10(p-value)", color = "Test",
-    caption = sprintf("Red line: p = %.2f, Orange line: p = 0.10", significance_level)
-  ) +
-  theme_minimal() +
-  theme(legend.position = "bottom")
-save_plot(p_pvalues, "hetero_pvalues_by_maturity")
-
-heatmap_df <- corr_long
-heatmap_df$pc_label <- factor(heatmap_df$pc, labels = inst_labels)
-p_heatmap <- ggplot(heatmap_df, aes(x = maturity, y = pc_label, fill = abs_corr)) +
-  geom_tile() +
-  geom_text(aes(label = sprintf("%.3f", abs_corr)), size = 3) +
-  scale_fill_gradient(low = "white", high = "darkred", name = "|Correlation|", limits = c(0, 1)) +
-  scale_x_continuous(breaks = maturities) +
-  labs(
-    title = expression(paste(
-      "Absolute Correlations: |corr(", PC[j], ", ", W[list(2, i)]^2, ")|"
-    )),
-    x = "Maturity (months)", y = "Principal Component"
-  ) +
-  theme_minimal() +
-  theme(panel.grid = element_blank())
-save_plot(p_heatmap, "hetero_correlation_heatmap")
+save_plot(
+  build_hetero_pvalue_figure(
+    tests_by_maturity, all_tests, maturities, significance_level
+  ),
+  "hetero_pvalues_by_maturity"
+)
+save_plot(
+  build_hetero_corr_heatmap(corr_long, inst_labels, maturities),
+  "hetero_correlation_heatmap"
+)
 
 # Persist results
 parameters <- list(
   n_pcs = n_pcs, maturities = maturities,
-  significance_level = significance_level, n_obs = id_resid$n_obs
+  significance_level = significance_level, n_obs = id_resid$n_obs,
+  suite_tests = suite_tests,
+  gq_deflator = gq_deflator, gq_alternative = gq_alternative
 )
 hetero_results <- list(
   parameters = parameters, tests_by_maturity = tests_by_maturity,
-  correlation_matrix = corr_matrix, rejection_summary = rejection_summary
+  correlation_matrix = corr_matrix, rejection_summary = rejection_summary,
+  w2_cross_maturity_abs_cor_range = w2_cor_range
 )
 saveRDS(hetero_results, file.path(output_dir, "hetero_test_results.rds"))
 tests_csv <- file.path(output_dir, "hetero_tests_by_maturity.csv")
