@@ -141,7 +141,8 @@ test_that("ACM data is quarterly when requested", {
 
   quarterly_data <- extract_acm_data(
     data_types = c("yields", "term_premia"),
-    frequency = "quarterly"
+    frequency = "quarterly",
+    use_incomplete_quarters = FALSE
   )
 
   # Quarterly should have fewer observations
@@ -157,7 +158,8 @@ test_that("quarterly data uses last month of quarter", {
   # Load quarterly data
   quarterly_data <- extract_acm_data(
     data_types = c("yields", "term_premia"),
-    frequency = "quarterly"
+    frequency = "quarterly",
+    use_incomplete_quarters = FALSE
   )
 
   # Check all dates are end of quarter months

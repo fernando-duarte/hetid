@@ -35,7 +35,12 @@
 #'   \item{CONSUMPTION_GROWTH_COL}{Consumption growth column name}
 #'   \item{PC_PREFIX}{Prefix for principal component columns}
 #'   \item{MATURITY_PREFIX}{Prefix for maturity label columns}
-#'   \item{ACM_DATA_FILENAME}{ACM data CSV filename}
+#'   \item{ACM_DATA_FILENAME}{Bundled/downloaded ACM data filename
+#'     (gzipped CSV from the GitHub reproduction release)}
+#'   \item{ACM_NYFED_FILENAME}{Cache filename for the opt-in NY Fed
+#'     xls fallback source}
+#'   \item{ACM_LEGACY_FILENAME}{Retired cache filename from the old
+#'     xls-to-CSV pipeline; never resolved, only flagged for cleanup}
 #'   \item{BUNDLED_VARIABLES_DATASET}{Bundled dataset name}
 #'   \item{COL_FORMAT_PADDED}{Padded column name format}
 #'   \item{COL_FORMAT_SIMPLE}{Simple column name format}
@@ -85,7 +90,9 @@ HETID_CONSTANTS <- list(
   MATURITY_PREFIX = "maturity_",
 
   # Data identity
-  ACM_DATA_FILENAME = "ACMTermPremium.csv",
+  ACM_DATA_FILENAME = "ACMTermPremium_reproduced_monthly_6m_120m.csv.gz",
+  ACM_NYFED_FILENAME = "ACMTermPremium_nyfed.csv",
+  ACM_LEGACY_FILENAME = "ACMTermPremium.csv",
   BUNDLED_VARIABLES_DATASET = "variables",
 
   # Column format patterns
@@ -100,7 +107,12 @@ HETID_CONSTANTS <- list(
 #'
 #' @format List containing versioned data source URLs:
 #' \describe{
-#'   \item{ACM_TERM_PREMIA}{URL for Adrian, Crump, and Moench term premia data}
+#'   \item{ACM_GITHUB_CSV_GZ}{Latest-release URL for the monthly-maturity
+#'     ACM reproduction (gzipped CSV)}
+#'   \item{ACM_GITHUB_RELEASE_API}{GitHub API endpoint exposing the
+#'     per-asset sha256 digests used to verify downloads}
+#'   \item{ACM_NYFED_XLS}{URL for the official NY Fed ACM workbook
+#'     (opt-in fallback source, annual maturities only)}
 #' }
 #'
 #' @references
@@ -109,7 +121,15 @@ HETID_CONSTANTS <- list(
 #'
 #' @keywords internal
 DATA_URLS <- list(
-  ACM_TERM_PREMIA =
+  ACM_GITHUB_CSV_GZ = paste0(
+    "https://github.com/fernando-duarte/ACM_term_premium/releases/",
+    "latest/download/ACMTermPremium_reproduced_monthly_6m_120m.csv.gz"
+  ),
+  ACM_GITHUB_RELEASE_API = paste0(
+    "https://api.github.com/repos/fernando-duarte/",
+    "ACM_term_premium/releases/latest"
+  ),
+  ACM_NYFED_XLS =
     "https://www.newyorkfed.org/medialibrary/media/research/data_indicators/ACMTermPremium.xls"
 )
 

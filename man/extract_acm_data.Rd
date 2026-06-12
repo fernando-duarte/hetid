@@ -11,7 +11,8 @@ extract_acm_data(
   end_date = NULL,
   frequency = c("monthly", "quarterly"),
   auto_download = FALSE,
-  use_incomplete_quarters = HETID_CONSTANTS$USE_INCOMPLETE_QUARTERS
+  use_incomplete_quarters = HETID_CONSTANTS$USE_INCOMPLETE_QUARTERS,
+  source = c("auto", "github", "nyfed")
 )
 }
 \arguments{
@@ -44,6 +45,11 @@ quarter month so the quarterly series is uniformly dated; a classed
 warning (\code{hetid_warning_incomplete_quarter}) reports them
 because incomplete data enters the output. If FALSE, such quarters
 are dropped, announced by an informational message.}
+
+\item{source}{Data source passed to \code{\link{load_term_premia}}:
+\code{"auto"} (default; GitHub user cache, then bundled copy),
+\code{"github"}, or \code{"nyfed"} (explicitly downloaded NY Fed
+cache only, annual maturities).}
 }
 \value{
 A data frame with date column and selected variables.

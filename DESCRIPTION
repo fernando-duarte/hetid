@@ -12,7 +12,7 @@ License: MIT + file LICENSE
 URL: https://github.com/fernando-duarte/hetid
 BugReports: https://github.com/fernando-duarte/hetid/issues
 Depends:
-    R (>= 4.0.0)
+    R (>= 4.5.0)
 Imports:
     stats,
     tools,

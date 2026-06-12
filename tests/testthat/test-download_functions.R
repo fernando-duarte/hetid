@@ -10,8 +10,8 @@ test_that("load_term_premia auto-downloads when file missing", {
     temp_csv <- file.path(getwd(), "ACMTermPremium.csv")
 
     local_mocked_bindings(
-      check_data_file_exists = function(...) FALSE,
-      get_acm_data_path = function() temp_csv,
+      acm_data_available = function(...) FALSE,
+      get_acm_data_path = function(...) temp_csv,
       download_term_premia = function(...) {
         write.csv(
           data.frame(
@@ -43,8 +43,8 @@ test_that("load_term_premia warns on unparseable dates", {
     )
 
     local_mocked_bindings(
-      check_data_file_exists = function(...) TRUE,
-      get_acm_data_path = function() temp_csv
+      acm_data_available = function(...) TRUE,
+      get_acm_data_path = function(...) temp_csv
     )
 
     expect_warning(
@@ -70,8 +70,8 @@ test_that("load_term_premia warns when chosen format leaves some NA dates", {
     )
 
     local_mocked_bindings(
-      check_data_file_exists = function(...) TRUE,
-      get_acm_data_path = function() temp_csv
+      acm_data_available = function(...) TRUE,
+      get_acm_data_path = function(...) temp_csv
     )
 
     expect_warning(
@@ -97,8 +97,8 @@ test_that("load_term_premia parses ACM-format dates", {
     )
 
     local_mocked_bindings(
-      check_data_file_exists = function(...) TRUE,
-      get_acm_data_path = function() temp_csv
+      acm_data_available = function(...) TRUE,
+      get_acm_data_path = function(...) temp_csv
     )
 
     result <- load_term_premia()
@@ -113,8 +113,8 @@ test_that(
   "load_term_premia errors on read failure",
   {
     local_mocked_bindings(
-      check_data_file_exists = function(...) TRUE,
-      get_acm_data_path = function() {
+      acm_data_available = function(...) TRUE,
+      get_acm_data_path = function(...) {
         "/nonexistent/path.csv"
       }
     )
@@ -142,8 +142,8 @@ test_that("load_term_premia parses ISO dates correctly", {
     )
 
     local_mocked_bindings(
-      check_data_file_exists = function(...) TRUE,
-      get_acm_data_path = function() temp_csv
+      acm_data_available = function(...) TRUE,
+      get_acm_data_path = function(...) temp_csv
     )
 
     result <- load_term_premia()
@@ -157,7 +157,7 @@ test_that("load_term_premia parses ISO dates correctly", {
 
 # --- download_term_premia mock-based tests ---
 
-test_that("download_term_premia writes to the user cache, not the package", {
+test_that("the nyfed source writes its own cache file, not the package", {
   skip_if_not_installed("readxl")
   user_root <- withr::local_tempdir()
   withr::local_envvar(R_USER_DATA_DIR = user_root)
@@ -185,12 +185,12 @@ test_that("download_term_premia writes to the user cache, not the package", {
   bundled_mtime <- file.info(bundled_path)$mtime
 
   expect_message(
-    result <- download_term_premia(force = TRUE, quiet = FALSE),
+    result <- download_term_premia(source = "nyfed", quiet = FALSE),
     "Downloading"
   )
 
   user_csv <- file.path(
-    get_user_data_dir(), HETID_CONSTANTS$ACM_DATA_FILENAME
+    get_user_data_dir(), HETID_CONSTANTS$ACM_NYFED_FILENAME
   )
   expect_true(file.exists(user_csv))
   expect_equal(result, user_csv)
@@ -199,6 +199,10 @@ test_that("download_term_premia writes to the user cache, not the package", {
 
   # The bundled copy in the package library must be untouched
   expect_identical(file.info(bundled_path)$mtime, bundled_mtime)
+
+  # The bundled github-family data never suppresses an explicit nyfed
+  # download: the call above ran even though bundled data exists
+  expect_true(acm_data_available("auto"))
 })
 
 test_that("download_term_premia skips when the bundled copy satisfies it", {
@@ -244,12 +248,12 @@ test_that("download_term_premia quiet mode suppresses messages", {
   )
 })
 
-test_that("force re-download overwrites the user copy only", {
+test_that("force re-download overwrites the nyfed cache only", {
   skip_if_not_installed("readxl")
   user_root <- withr::local_tempdir()
   withr::local_envvar(R_USER_DATA_DIR = user_root)
   user_csv <- file.path(
-    get_user_data_dir(create = TRUE), HETID_CONSTANTS$ACM_DATA_FILENAME
+    get_user_data_dir(create = TRUE), HETID_CONSTANTS$ACM_NYFED_FILENAME
   )
   writeLines("stale", user_csv)
 
@@ -272,14 +276,13 @@ test_that("force re-download overwrites the user copy only", {
   )
   bundled_first_line <- readLines(bundled_path, n = 1)
 
-  download_term_premia(force = TRUE, quiet = TRUE)
+  download_term_premia(source = "nyfed", force = TRUE, quiet = TRUE)
 
   expect_false(identical(readLines(user_csv), "stale"))
   expect_identical(readLines(bundled_path, n = 1), bundled_first_line)
 })
 
 test_that("download_term_premia errors on download failure", {
-  skip_if_not_installed("readxl")
   user_root <- withr::local_tempdir()
   withr::local_envvar(R_USER_DATA_DIR = user_root)
 
@@ -288,9 +291,59 @@ test_that("download_term_premia errors on download failure", {
     .package = "hetid"
   )
 
+  # github flow: the release-metadata fetch is the first network touch
   expect_error(
     download_term_premia(force = TRUE, quiet = TRUE),
     "Failed to download",
     class = "hetid_error"
   )
+
+  # nyfed flow fails closed too
+  skip_if_not_installed("readxl")
+  expect_error(
+    download_term_premia(source = "nyfed", force = TRUE, quiet = TRUE),
+    "Failed to download",
+    class = "hetid_error"
+  )
+})
+
+test_that("nyfed load without a cache raises a structured error", {
+  user_root <- withr::local_tempdir()
+  withr::local_envvar(R_USER_DATA_DIR = user_root)
+
+  expect_error(
+    load_term_premia(source = "nyfed"),
+    "NY Fed ACM cache not found",
+    class = "hetid_error_insufficient_data"
+  )
+})
+
+test_that("nyfed auto_download triggers despite available github data", {
+  user_root <- withr::local_tempdir()
+  withr::local_envvar(R_USER_DATA_DIR = user_root)
+  requested_source <- NULL
+
+  local_mocked_bindings(
+    download_term_premia = function(source = c("github", "nyfed"), ...) {
+      source <- match.arg(source)
+      requested_source <<- source
+      target <- get_acm_download_path(source)
+      write.csv(
+        data.frame(DATE = "2020-01-31", ACMY01 = 1.5),
+        target,
+        row.names = FALSE
+      )
+      invisible(target)
+    }
+  )
+
+  # Bundled github data is available, but the explicit nyfed request
+  # must still download the nyfed source
+  expect_true(acm_data_available("auto"))
+  expect_message(
+    result <- load_term_premia(auto_download = TRUE, source = "nyfed"),
+    "Downloading"
+  )
+  expect_identical(requested_source, "nyfed")
+  expect_s3_class(result, "data.frame")
 })

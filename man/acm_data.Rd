@@ -57,8 +57,21 @@ yield and the risk-neutral yield.
 }
 \section{Data Source}{
 
-The data is sourced from the Federal Reserve Bank of New York and is based on
-the methodology described in Adrian, Crump, and Moench (2013).
+The bundled file is the validated ACM reproduction published at
+\url{https://github.com/fernando-duarte/ACM_term_premium} (release
+\code{acm-term-premium-2026-06}, asset
+\code{ACMTermPremium_reproduced_monthly_6m_120m.csv.gz}, sha256
+\code{d95255a08200aadbf66dd33bdd54111e9f58bfab987a5683e93ec81c6b087e89}).
+It reproduces the official NY Fed workbook to within 0.0026 basis
+points at the annual nodes and extends the maturity grid to monthly
+steps from 6 to 120 months: whole-year maturities keep the official
+column names (\code{ACMY01}..\code{ACMY10}), sub-annual months use
+names like \code{ACMY006M}. Dates are ISO (\code{YYYY-MM-DD}).
+\code{download_term_premia()} refreshes the cache from the latest
+release with sha256 verification; the official NY Fed workbook
+remains available as the opt-in \code{source = "nyfed"} fallback
+(annual maturities only). The methodology is Adrian, Crump, and
+Moench (2013).
 }
 
 \section{Usage}{

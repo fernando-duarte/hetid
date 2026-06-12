@@ -1,96 +1,66 @@
-#' Download NY Fed ACM Term Premia Data
+#' Download ACM Term Premia Data
 #'
-#' Downloads the Adrian, Crump, and Moench (ACM) term premia data from the
-#' New York Fed website and saves it as a CSV file in the per-user data
-#' directory (\code{tools::R_user_dir("hetid", "data")}). The bundled copy
-#' shipped with the package is never modified.
+#' Downloads the Adrian, Crump, and Moench (ACM) term-structure data
+#' into the per-user data directory
+#' (\code{tools::R_user_dir("hetid", "data")}). The bundled copy shipped
+#' with the package is never modified.
 #'
-#' @param force Logical. If TRUE, forces re-download even if data exists. Default is FALSE.
-#' @param quiet Logical. If TRUE, suppresses download progress messages. Default is FALSE.
+#' The default \code{"github"} source fetches the monthly-maturity ACM
+#' reproduction from the fernando-duarte/ACM_term_premium release and
+#' verifies the file against the release's per-asset sha256 digest
+#' before caching it; any mismatch fails without caching. The opt-in
+#' \code{"nyfed"} source downloads the official NY Fed workbook instead
+#' (annual maturities only) and requires the \pkg{readxl} package.
 #'
-#' @return Invisibly returns the path to the saved CSV file.
+#' Unlike \code{\link{load_term_premia}}, there is no \code{"auto"}
+#' source here: a download is always source-specific. The bundled copy
+#' counts as available for the github source, but never suppresses an
+#' explicit nyfed download.
+#'
+#' @param source Data source: \code{"github"} (default,
+#'   digest-verified) or \code{"nyfed"} (official workbook fallback,
+#'   annual maturities only).
+#' @param force Logical. If TRUE, forces re-download even if data exists.
+#' @param quiet Logical. If TRUE, suppresses download progress messages.
+#'
+#' @return Invisibly returns the path to the saved data file.
 #' @export
 #'
 #' @examplesIf interactive()
 #' # Download the data (only if not already present)
 #' download_term_premia()
 #'
-#' # Force re-download
+#' # Force re-download from the GitHub release
 #' download_term_premia(force = TRUE)
+#'
+#' # Opt into the NY Fed workbook fallback
+#' download_term_premia(source = "nyfed")
 #'
 #' @references
 #' Adrian, T., Crump, R. K., and Moench, E. (2013).
 #' "Pricing the term structure with linear regressions."
 #' Journal of Financial Economics, 110(1), 110-138.
 #'
-download_term_premia <- function(force = FALSE, quiet = FALSE) {
-  # Use data source URL from constants
-  download_url <- DATA_URLS$ACM_TERM_PREMIA
+download_term_premia <- function(source = c("github", "nyfed"),
+                                 force = FALSE, quiet = FALSE) {
+  source <- match.arg(source)
 
-  # Skip when a copy (user cache or bundled) is already available
-  resolved_path <- get_acm_data_path()
-  if (file.exists(resolved_path) && !force) {
-    if (!quiet) {
-      message("Term premia data already exists. Use force = TRUE to re-download.")
-    }
-    return(invisible(resolved_path))
-  }
-
-  # Downloads always target the per-user cache, never the package library
-  csv_path <- get_acm_download_path()
-
-  # Check if readxl is available before downloading
-  if (!requireNamespace("readxl", quietly = TRUE)) {
-    stop_hetid(paste0(
-      "Package 'readxl' is required to read Excel files.",
-      " Please install it with: ",
-      "install.packages('readxl')"
-    ))
-  }
-
-  # Download to temporary file
-  temp_xls <- tempfile(fileext = ".xls")
-  on.exit(unlink(temp_xls), add = TRUE)
-
-  if (!quiet) {
-    message("Downloading ACM term premia data from NY Fed...")
-  }
-
-  tryCatch(
-    {
-      download.file(
-        url = download_url,
-        destfile = temp_xls,
-        mode = "wb",
-        quiet = quiet
-      )
-
-      # Read Excel file
+  if (!force) {
+    # Per-source skip: github resolution includes the bundled copy,
+    # the nyfed source only its own cache file
+    existing <- get_acm_data_path(source)
+    if (file.exists(existing)) {
       if (!quiet) {
-        message("Converting Excel to CSV...")
-      }
-
-      tp_df <- readxl::read_excel(temp_xls)
-
-      # Save as CSV
-      write.csv(tp_df, csv_path, row.names = FALSE)
-
-      if (!quiet) {
-        message("Term premia data saved to: ", csv_path)
         message(
-          "Data dimensions: ",
-          nrow(tp_df), " rows x ", ncol(tp_df),
-          " columns"
+          "Term premia data already exists. Use force = TRUE to re-download."
         )
       }
-
-      invisible(csv_path)
-    },
-    error = function(e) {
-      stop_hetid(paste0(
-        "Failed to download term premia data: ",
-        e$message
-      ))
+      return(invisible(existing))
     }
+  }
+
+  switch(source,
+    github = download_acm_github(quiet = quiet),
+    nyfed = download_acm_nyfed(quiet = quiet)
   )
 }

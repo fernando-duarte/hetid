@@ -55,11 +55,44 @@ coerce_optional_date <- function(x, arg) {
   )
 }
 
+#' Parse ACM dates with the shared format fallback chain
+#'
+#' Tries the locale-safe legacy ACM format, then R's default parser,
+#' then explicit ISO. The default parser errors when the first element
+#' is malformed even if the rest is valid, hence the chain.
+#'
+#' @param raw_dates Character vector of date strings
+#' @return Date vector, or NULL when no format parses any element
+#' @keywords internal
+#' @noRd
+parse_acm_dates <- function(raw_dates) {
+  date_formats <- list(
+    HETID_CONSTANTS$ACM_DATE_FORMAT,
+    NULL,
+    HETID_CONSTANTS$ISO_DATE_FORMAT
+  )
+  for (fmt in date_formats) {
+    parsed <- tryCatch(
+      if (is.null(fmt)) {
+        as.Date(raw_dates)
+      } else {
+        parse_dates_c_locale(raw_dates, fmt)
+      },
+      error = function(e) NULL
+    )
+    if (!is.null(parsed) && !all(is.na(parsed))) {
+      return(parsed)
+    }
+  }
+  NULL
+}
+
 #' Normalize ACM date column
 #'
-#' Converts a character date column to Date using the ACM format under
-#' the C locale. Errors when a non-empty column fails to parse entirely;
-#' warns when only some values become NA.
+#' Converts a character date column to Date using the shared format
+#' fallback chain (legacy ACM format, default parser, ISO). Errors when
+#' a non-empty column fails to parse entirely; warns when only some
+#' values become NA.
 #'
 #' @keywords internal
 #' @noRd
@@ -69,17 +102,16 @@ normalize_acm_date_column <- function(acm_data) {
   }
 
   raw_dates <- acm_data$date
-  parsed <- parse_dates_c_locale(
-    raw_dates,
-    HETID_CONSTANTS$ACM_DATE_FORMAT
-  )
+  parsed <- parse_acm_dates(raw_dates)
 
-  if (any(!is.na(raw_dates)) && all(is.na(parsed))) {
-    stop_hetid(paste0(
-      "Date column could not be parsed with format '",
-      HETID_CONSTANTS$ACM_DATE_FORMAT,
-      "'. Check the data file for corruption."
-    ))
+  if (is.null(parsed)) {
+    if (any(!is.na(raw_dates))) {
+      stop_hetid(paste0(
+        "Date column could not be parsed with any supported format. ",
+        "Check the data file for corruption."
+      ))
+    }
+    parsed <- as.Date(rep(NA_character_, length(raw_dates)))
   }
 
   newly_na <- is.na(parsed) & !is.na(raw_dates)

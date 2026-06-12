@@ -2,31 +2,55 @@
 % Please edit documentation in R/download_term_premia.R
 \name{download_term_premia}
 \alias{download_term_premia}
-\title{Download NY Fed ACM Term Premia Data}
+\title{Download ACM Term Premia Data}
 \usage{
-download_term_premia(force = FALSE, quiet = FALSE)
+download_term_premia(
+  source = c("github", "nyfed"),
+  force = FALSE,
+  quiet = FALSE
+)
 }
 \arguments{
-\item{force}{Logical. If TRUE, forces re-download even if data exists. Default is FALSE.}
+\item{source}{Data source: \code{"github"} (default,
+digest-verified) or \code{"nyfed"} (official workbook fallback,
+annual maturities only).}
 
-\item{quiet}{Logical. If TRUE, suppresses download progress messages. Default is FALSE.}
+\item{force}{Logical. If TRUE, forces re-download even if data exists.}
+
+\item{quiet}{Logical. If TRUE, suppresses download progress messages.}
 }
 \value{
-Invisibly returns the path to the saved CSV file.
+Invisibly returns the path to the saved data file.
 }
 \description{
-Downloads the Adrian, Crump, and Moench (ACM) term premia data from the
-New York Fed website and saves it as a CSV file in the per-user data
-directory (\code{tools::R_user_dir("hetid", "data")}). The bundled copy
-shipped with the package is never modified.
+Downloads the Adrian, Crump, and Moench (ACM) term-structure data
+into the per-user data directory
+(\code{tools::R_user_dir("hetid", "data")}). The bundled copy shipped
+with the package is never modified.
+}
+\details{
+The default \code{"github"} source fetches the monthly-maturity ACM
+reproduction from the fernando-duarte/ACM_term_premium release and
+verifies the file against the release's per-asset sha256 digest
+before caching it; any mismatch fails without caching. The opt-in
+\code{"nyfed"} source downloads the official NY Fed workbook instead
+(annual maturities only) and requires the \pkg{readxl} package.
+
+Unlike \code{\link{load_term_premia}}, there is no \code{"auto"}
+source here: a download is always source-specific. The bundled copy
+counts as available for the github source, but never suppresses an
+explicit nyfed download.
 }
 \examples{
 \dontshow{if (interactive()) withAutoprint(\{ # examplesIf}
 # Download the data (only if not already present)
 download_term_premia()
 
-# Force re-download
+# Force re-download from the GitHub release
 download_term_premia(force = TRUE)
+
+# Opt into the NY Fed workbook fallback
+download_term_premia(source = "nyfed")
 \dontshow{\}) # examplesIf}
 }
 \references{

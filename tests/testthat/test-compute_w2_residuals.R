@@ -100,7 +100,8 @@ test_that("R-squared matches manual regression", {
   acm_data <- extract_acm_data(
     data_types = c("yields", "term_premia"),
     maturities = mats,
-    frequency = "quarterly"
+    frequency = "quarterly",
+    use_incomplete_quarters = FALSE
   )
 
   # Create year-quarter identifiers for both datasets
@@ -199,7 +200,8 @@ test_that("quarterly data alignment test", {
   )
   acm_quarterly <- extract_acm_data(
     data_types = c("yields", "term_premia"),
-    frequency = "quarterly"
+    frequency = "quarterly",
+    use_incomplete_quarters = FALSE
   )
 
   # Quarterly data should have fewer rows

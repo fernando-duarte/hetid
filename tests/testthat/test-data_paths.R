@@ -44,10 +44,63 @@ test_that("check_data_file_exists returns logical", {
   expect_true(check_data_file_exists(HETID_CONSTANTS$ACM_DATA_FILENAME))
 })
 
-test_that("get_acm_data_path points to ACMTermPremium.csv", {
+test_that("get_acm_data_path resolves the bundled github-family file", {
   path <- get_acm_data_path()
 
-  expect_true(grepl("ACMTermPremium\\.csv$", path))
+  expect_true(grepl(HETID_CONSTANTS$ACM_DATA_FILENAME, path, fixed = TRUE))
+  expect_true(file.exists(path))
+})
+
+test_that("auto resolution prefers a github cache and ignores nyfed", {
+  user_root <- withr::local_tempdir()
+  withr::local_envvar(R_USER_DATA_DIR = user_root)
+  user_dir <- get_user_data_dir(create = TRUE)
+
+  # A nyfed cache alone must not shadow the bundled github data
+  writeLines("nyfed", file.path(user_dir, HETID_CONSTANTS$ACM_NYFED_FILENAME))
+  expect_true(grepl("extdata", get_acm_data_path("auto")))
+
+  # A github cache takes precedence over the bundled copy
+  github_cache <- file.path(user_dir, HETID_CONSTANTS$ACM_DATA_FILENAME)
+  writeLines("github", github_cache)
+  expect_identical(get_acm_data_path("auto"), github_cache)
+  expect_identical(get_acm_data_path("github"), github_cache)
+})
+
+test_that("nyfed resolution targets only the nyfed cache file", {
+  user_root <- withr::local_tempdir()
+  withr::local_envvar(R_USER_DATA_DIR = user_root)
+
+  path <- get_acm_data_path("nyfed")
+  expect_identical(
+    path,
+    file.path(get_user_data_dir(), HETID_CONSTANTS$ACM_NYFED_FILENAME)
+  )
+  expect_false(acm_data_available("nyfed"))
+  expect_true(acm_data_available("auto"))
+})
+
+test_that("a legacy cache file earns a one-time advisory and is never resolved", {
+  user_root <- withr::local_tempdir()
+  withr::local_envvar(R_USER_DATA_DIR = user_root)
+  user_dir <- get_user_data_dir(create = TRUE)
+  writeLines(
+    "legacy", file.path(user_dir, HETID_CONSTANTS$ACM_LEGACY_FILENAME)
+  )
+
+  # Reset the session flag so this test is order-independent
+  rm(
+    list = ls(envir = hetid:::.acm_path_state),
+    envir = hetid:::.acm_path_state
+  )
+  expect_message(
+    path <- get_acm_data_path(),
+    regexp = "legacy ACM cache"
+  )
+  expect_false(grepl(HETID_CONSTANTS$ACM_LEGACY_FILENAME, basename(path),
+    fixed = TRUE
+  ))
+  expect_no_message(get_acm_data_path())
 })
 
 test_that("get_user_data_dir respects R_USER_DATA_DIR", {
@@ -83,14 +136,19 @@ test_that("get_user_data_dir errors when the directory cannot be created", {
   )
 })
 
-test_that("get_acm_download_path targets the user cache", {
+test_that("get_acm_download_path targets the per-source user cache", {
   user_root <- withr::local_tempdir()
   withr::local_envvar(R_USER_DATA_DIR = user_root)
 
-  path <- get_acm_download_path()
+  path <- get_acm_download_path("github")
   expect_identical(
     path,
     file.path(user_root, "R", "hetid", HETID_CONSTANTS$ACM_DATA_FILENAME)
   )
   expect_true(dir.exists(dirname(path)))
+
+  expect_identical(
+    get_acm_download_path("nyfed"),
+    file.path(user_root, "R", "hetid", HETID_CONSTANTS$ACM_NYFED_FILENAME)
+  )
 })

@@ -4,13 +4,21 @@
 \alias{get_acm_data_path}
 \title{Get ACM Data File Path}
 \usage{
-get_acm_data_path()
+get_acm_data_path(source = c("auto", "github", "nyfed"))
+}
+\arguments{
+\item{source}{Data source: "auto" and "github" resolve the GitHub
+user cache then the bundled file; "nyfed" resolves the NY Fed
+cache path only}
 }
 \value{
-Character string with full path to ACM data file
+Character string with full path to the ACM data file (the
+nyfed path may not exist; callers check existence)
 }
 \description{
-Specialized function for the ACM term premia data file path,
-resolved with user-cache preference and bundled fallback.
+Resolves the ACM data file for a source. The default GitHub-family
+resolution prefers the per-user downloaded copy and falls back to
+the bundled copy; the NY Fed fallback source resolves only its own
+cache file and is never loaded implicitly.
 }
 \keyword{internal}

@@ -27,6 +27,10 @@
 #'   warning (\code{hetid_warning_incomplete_quarter}) reports them
 #'   because incomplete data enters the output. If FALSE, such quarters
 #'   are dropped, announced by an informational message.
+#' @param source Data source passed to \code{\link{load_term_premia}}:
+#'   \code{"auto"} (default; GitHub user cache, then bundled copy),
+#'   \code{"github"}, or \code{"nyfed"} (explicitly downloaded NY Fed
+#'   cache only, annual maturities).
 #'
 #' @return A data frame with date column and selected variables.
 #'   Column naming convention:
@@ -76,13 +80,15 @@ extract_acm_data <- function(data_types = c("yields", "term_premia"),
                              frequency = c("monthly", "quarterly"),
                              auto_download = FALSE,
                              use_incomplete_quarters =
-                               HETID_CONSTANTS$USE_INCOMPLETE_QUARTERS) {
+                               HETID_CONSTANTS$USE_INCOMPLETE_QUARTERS,
+                             source = c("auto", "github", "nyfed")) {
   # Validate inputs
   frequency <- match.arg(frequency)
+  source <- match.arg(source)
   validate_acm_extract_inputs(data_types, maturities, use_incomplete_quarters)
 
   # Load ACM data
-  acm_data <- load_term_premia(auto_download = auto_download)
+  acm_data <- load_term_premia(auto_download = auto_download, source = source)
   assert_insufficient_data_ok(
     !is.null(acm_data),
     paste0(

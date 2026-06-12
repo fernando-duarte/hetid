@@ -4,19 +4,28 @@
 \alias{load_term_premia}
 \title{Load ACM Term Premia Data}
 \usage{
-load_term_premia(auto_download = FALSE)
+load_term_premia(auto_download = FALSE, source = c("auto", "github", "nyfed"))
 }
 \arguments{
 \item{auto_download}{Logical. If TRUE and data doesn't exist, automatically
-downloads it. Default is FALSE.}
+downloads it (from the GitHub release for \code{"auto"}/
+\code{"github"}, from the NY Fed for \code{"nyfed"}). Default is FALSE.}
+
+\item{source}{Data source: \code{"auto"} (default; GitHub user cache,
+then bundled copy), \code{"github"} (same resolution), or
+\code{"nyfed"} (the NY Fed cache only). Note the asymmetry with
+\code{\link{download_term_premia}}, which has no \code{"auto"}: a
+download is always source-specific.}
 }
 \value{
 A data frame containing the term premia data, or NULL if data is not available.
 }
 \description{
-Loads the ACM term premia data, preferring a downloaded copy in the
-per-user data directory and falling back to the bundled copy.
-If the data doesn't exist, prompts the user to download it first.
+Loads the ACM term premia data. The default \code{"auto"} source
+prefers a downloaded GitHub-release copy in the per-user data
+directory and falls back to the bundled copy; the NY Fed fallback is
+never loaded implicitly. Pass \code{source = "nyfed"} to load an
+explicitly downloaded NY Fed cache instead.
 }
 \examples{
 # Load the bundled data

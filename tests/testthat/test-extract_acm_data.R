@@ -91,7 +91,10 @@ test_that("extract_acm_data frequency conversion", {
   # Test quarterly conversion
   data_monthly <- extract_acm_data(frequency = "monthly")
 
-  data_quarterly <- extract_acm_data(frequency = "quarterly")
+  data_quarterly <- extract_acm_data(
+    frequency = "quarterly",
+    use_incomplete_quarters = FALSE
+  )
 
   # Quarterly should have fewer observations
   expect_lt(nrow(data_quarterly), nrow(data_monthly))
@@ -189,8 +192,8 @@ test_that("extract_acm_data returns a data frame when no columns match", {
     )
 
     local_mocked_bindings(
-      check_data_file_exists = function(...) TRUE,
-      get_acm_data_path = function() temp_csv
+      acm_data_available = function(...) TRUE,
+      get_acm_data_path = function(...) temp_csv
     )
 
     expect_warning(
@@ -215,8 +218,8 @@ test_that("extract_acm_data errors when the date column cannot be parsed", {
     )
 
     local_mocked_bindings(
-      check_data_file_exists = function(...) TRUE,
-      get_acm_data_path = function() temp_csv
+      acm_data_available = function(...) TRUE,
+      get_acm_data_path = function(...) temp_csv
     )
 
     expect_error(
@@ -276,9 +279,9 @@ test_that("extract_acm_data warns on incomplete terminal quarter", {
 })
 
 test_that("extract_acm_data error handling", {
-  # Mock check_data_file_exists to simulate missing data
+  # Mock acm_data_available to simulate missing data
   local_mocked_bindings(
-    check_data_file_exists = function(...) FALSE
+    acm_data_available = function(...) FALSE
   )
 
   # Should error when data not available and auto_download = FALSE

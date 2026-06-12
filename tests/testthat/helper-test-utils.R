@@ -13,9 +13,13 @@
 #' @keywords internal
 load_standard_test_data <- function(data_types = c("yields", "term_premia"),
                                     frequency = "quarterly") {
+  # Drop the trailing incomplete quarter (the bundled data ends
+  # mid-quarter) so computation tests stay warning-free; the
+  # incomplete-quarter warning has its own dedicated tests
   extract_acm_data(
     data_types = data_types,
-    frequency = frequency
+    frequency = frequency,
+    use_incomplete_quarters = FALSE
   )
 }
 

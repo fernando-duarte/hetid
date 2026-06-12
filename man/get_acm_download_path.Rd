@@ -4,13 +4,17 @@
 \alias{get_acm_download_path}
 \title{Get Writable ACM Download Path}
 \usage{
-get_acm_download_path()
+get_acm_download_path(source = c("github", "nyfed"))
+}
+\arguments{
+\item{source}{Download source: "github" or "nyfed"}
 }
 \value{
 Character string with the writable ACM data file path
 }
 \description{
-Returns the user-cache path where downloads are written, creating
-the directory on demand. The bundled copy is never overwritten.
+Returns the per-source user-cache path where downloads are written,
+creating the directory on demand. The bundled copy is never
+overwritten.
 }
 \keyword{internal}

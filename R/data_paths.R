@@ -94,27 +94,79 @@ check_data_file_exists <- function(filename) {
   file.exists(file_path)
 }
 
+# Session-local state for one-time advisories
+.acm_path_state <- new.env(parent = emptyenv())
+
+#' Advise Once About a Legacy ACM Cache
+#'
+#' The retired xls-to-CSV pipeline cached under
+#' \code{ACM_LEGACY_FILENAME}; that file is never resolved by the
+#' current sources, so its presence only earns a one-time cleanup hint.
+#'
+#' @return Invisible NULL
+#' @keywords internal
+advise_legacy_acm_cache <- function() {
+  legacy <- file.path(
+    get_user_data_dir(), HETID_CONSTANTS$ACM_LEGACY_FILENAME
+  )
+  if (file.exists(legacy) && !isTRUE(.acm_path_state$legacy_advised)) {
+    .acm_path_state$legacy_advised <- TRUE
+    message(
+      "A legacy ACM cache from the retired NY Fed xls pipeline exists at ",
+      legacy, " and is no longer used. Delete it, or re-run ",
+      "download_term_premia() for a fresh copy."
+    )
+  }
+  invisible(NULL)
+}
+
 #' Get ACM Data File Path
 #'
-#' Specialized function for the ACM term premia data file path,
-#' resolved with user-cache preference and bundled fallback.
+#' Resolves the ACM data file for a source. The default GitHub-family
+#' resolution prefers the per-user downloaded copy and falls back to
+#' the bundled copy; the NY Fed fallback source resolves only its own
+#' cache file and is never loaded implicitly.
 #'
-#' @return Character string with full path to ACM data file
+#' @param source Data source: "auto" and "github" resolve the GitHub
+#'   user cache then the bundled file; "nyfed" resolves the NY Fed
+#'   cache path only
+#' @return Character string with full path to the ACM data file (the
+#'   nyfed path may not exist; callers check existence)
 #' @keywords internal
-get_acm_data_path <- function() {
+get_acm_data_path <- function(source = c("auto", "github", "nyfed")) {
+  source <- match.arg(source)
+  advise_legacy_acm_cache()
+  if (source == "nyfed") {
+    return(file.path(
+      get_user_data_dir(), HETID_CONSTANTS$ACM_NYFED_FILENAME
+    ))
+  }
   get_data_file_path(HETID_CONSTANTS$ACM_DATA_FILENAME)
+}
+
+#' Check ACM Data Availability
+#'
+#' @param source Data source passed to \code{get_acm_data_path}
+#' @return Logical indicating whether the resolved file exists
+#' @keywords internal
+acm_data_available <- function(source = c("auto", "github", "nyfed")) {
+  file.exists(get_acm_data_path(source))
 }
 
 #' Get Writable ACM Download Path
 #'
-#' Returns the user-cache path where downloads are written, creating
-#' the directory on demand. The bundled copy is never overwritten.
+#' Returns the per-source user-cache path where downloads are written,
+#' creating the directory on demand. The bundled copy is never
+#' overwritten.
 #'
+#' @param source Download source: "github" or "nyfed"
 #' @return Character string with the writable ACM data file path
 #' @keywords internal
-get_acm_download_path <- function() {
-  file.path(
-    get_user_data_dir(create = TRUE),
-    HETID_CONSTANTS$ACM_DATA_FILENAME
+get_acm_download_path <- function(source = c("github", "nyfed")) {
+  source <- match.arg(source)
+  filename <- switch(source,
+    github = HETID_CONSTANTS$ACM_DATA_FILENAME,
+    nyfed = HETID_CONSTANTS$ACM_NYFED_FILENAME
   )
+  file.path(get_user_data_dir(create = TRUE), filename)
 }

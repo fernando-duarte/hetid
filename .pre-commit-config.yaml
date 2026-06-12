@@ -56,7 +56,7 @@ repos:
       # Check for large files
       - id: check-added-large-files
         args: ['--maxkb=1000']
-        exclude: 'inst/extdata/feds.*\.csv$'
+        exclude: 'inst/extdata/(feds.*\.csv|ACMTermPremium_reproduced_monthly_6m_120m\.csv\.gz)$'
 
       # Fix mixed line endings
       - id: mixed-line-ending
