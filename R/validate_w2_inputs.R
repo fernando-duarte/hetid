@@ -12,8 +12,8 @@
 default_w2_maturities <- function(step = HETID_CONSTANTS$DEFAULT_STEP) {
   validate_step(step)
   candidates <- seq(step, HETID_CONSTANTS$MAX_MATURITY - step, by = step)
-  keep <- (candidates == step & step >= HETID_CONSTANTS$MIN_MATURITY) |
-    (candidates - step >= HETID_CONSTANTS$MIN_MATURITY)
+  keep <- news_contract_ok(candidates, step) &
+    (candidates != step | step >= HETID_CONSTANTS$MIN_MATURITY)
   candidates[keep]
 }
 
@@ -55,9 +55,7 @@ validate_w2_inputs <- function(yields, term_premia, maturities,
 
   # Each maturity must satisfy the news contract: the previous-period
   # index is the boundary case or stays within the data range
-  bad_news <- maturities[
-    !(maturities == step | maturities - step >= HETID_CONSTANTS$MIN_MATURITY)
-  ]
+  bad_news <- maturities[!news_contract_ok(maturities, step)]
   assert_bad_argument_ok(
     length(bad_news) == 0,
     paste0(

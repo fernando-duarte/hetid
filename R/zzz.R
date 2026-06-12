@@ -1,10 +1,9 @@
 # Package startup functions
 
 .onAttach <- function(libname, pkgname) {
-  # Check ACM data availability using standardized path management
-  if (acm_data_available()) {
-    # Get file modification time
-    csv_path <- get_acm_data_path()
+  # Resolve once: availability and the mtime lookup share the path
+  csv_path <- get_acm_data_path()
+  if (file.exists(csv_path)) {
     file_date <- file.info(csv_path)$mtime
     message_text <- paste0(
       "  * ACM term premia: Available (updated ",

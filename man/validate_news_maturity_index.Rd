@@ -24,7 +24,6 @@ Validates a maturity index used as a news horizon: the news at
 horizon \code{i} differences \code{n_hat(i, t)} against
 \code{n_hat(i - step, t + 1)}, so \code{i} must not exceed
 \code{effective_max_maturity(step)} and the previous-period index
-must either be the boundary case (\code{i == step}) or stay at or
-above \code{MIN_MATURITY}.
+must satisfy the news contract (see \code{news_contract_ok}).
 }
 \keyword{internal}

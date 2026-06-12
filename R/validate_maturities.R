@@ -43,14 +43,30 @@ validate_step <- function(step) {
   )
 }
 
+#' News-Contract Predicate
+#'
+#' Vectorized test of the news contract: a horizon's previous-period
+#' index is either the boundary case (\code{maturity == step}) or stays
+#' at or above \code{MIN_MATURITY}. Single source of truth shared by
+#' the scalar validator, the W2 vector validator, and the default-grid
+#' builder.
+#'
+#' @param maturities Numeric vector of maturity indices
+#' @template param-step
+#' @return Logical vector, TRUE where the contract holds
+#' @keywords internal
+news_contract_ok <- function(maturities, step) {
+  maturities == step |
+    maturities - step >= HETID_CONSTANTS$MIN_MATURITY
+}
+
 #' Validate a News-Horizon Maturity Index
 #'
 #' Validates a maturity index used as a news horizon: the news at
 #' horizon \code{i} differences \code{n_hat(i, t)} against
 #' \code{n_hat(i - step, t + 1)}, so \code{i} must not exceed
 #' \code{effective_max_maturity(step)} and the previous-period index
-#' must either be the boundary case (\code{i == step}) or stay at or
-#' above \code{MIN_MATURITY}.
+#' must satisfy the news contract (see \code{news_contract_ok}).
 #'
 #' @param i Integer maturity index to validate
 #' @template param-step
@@ -59,7 +75,7 @@ validate_step <- function(step) {
 validate_news_maturity_index <- function(i, step = HETID_CONSTANTS$DEFAULT_STEP) {
   validate_maturity_index(i, max_maturity = effective_max_maturity(step))
   assert_bad_argument_ok(
-    i == step || i - step >= HETID_CONSTANTS$MIN_MATURITY,
+    news_contract_ok(i, step),
     paste0(
       "Maturity index i must equal step (", step,
       ") or satisfy i - step >= ", HETID_CONSTANTS$MIN_MATURITY
