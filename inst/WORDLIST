@@ -82,6 +82,7 @@ linter
 linters
 Ljung
 lm
+mathrm
 mcp
 mcpServers
 md
@@ -94,6 +95,7 @@ na
 ncol
 nloptr
 NONINFRINGEMENT
+normalizer
 optimisation
 orcid
 ORCID
@@ -155,6 +157,7 @@ uv
 validators
 VFCI
 VIX
+widehat
 withr
 woff
 WORDLIST

@@ -1,9 +1,8 @@
 # Variance-normalization pins for run_lambda_optimization: the repo
-# default convention lambda' Vhat lambda = 1 on every returned
-# column, set invariance across reporting representatives, seeded
-# determinism, the required-whiten contract, the structured
-# zero-column rejection BEFORE any RNG use, the identification-
-# strength diagnostic echo, and the Z/moments consistency guard.
+# default lambda' Vhat lambda = 1 on every returned column, set
+# invariance, seeded determinism, the required-whiten contract, the
+# structured zero-column rejection BEFORE any RNG use, the
+# identification diagnostic echo, and the Z/moments guard.
 # Run from package root: Rscript scripts/utils/tests/test_lambda_varnorm.R
 suppressMessages({
   library(hetid)
@@ -44,10 +43,14 @@ qf <- function(el, rows) {
   diag(crossprod(sub, block %*% sub))
 }
 
-# whiten is REQUIRED: omitting it must error instructively, not fall
-# back to a silent Euclidean run.
+# whiten is REQUIRED: omitting it must error instructively (the
+# deliberate omission goes through do.call -- missing() still fires
+# -- so the parse-based named-whiten gate stays exclusion-free).
 miss_err <- tryCatch(
-  run_lambda_optimization(dat$start, moments, tau, n_starts = 2),
+  do.call(
+    run_lambda_optimization,
+    list(dat$start, moments, tau, n_starts = 2)
+  ),
   error = function(e) conditionMessage(e)
 )
 check(
@@ -73,20 +76,17 @@ check(
 )
 
 # Set invariance: bounds from the variance-normalized optimum equal
-# bounds from the Euclidean-normalized SAME directions. The c^2
-# constraint-level law is pinned exactly in
-# test_lambda_whitening_conditioning.R; solved bounds add inner-slsqp
-# wobble, so compare at 1e-6 relative (the profile solver's xtol_rel
-# scale) -- a convention error would show at O(1).
+# bounds from the Euclidean-normalized SAME directions; the exact
+# c^2 law is pinned in test_lambda_whitening_conditioning.R. Solved
+# bounds add inner-slsqp wobble, so compare at 1e-6 relative (the
+# profile solver's xtol_rel scale) -- a convention error is O(1).
 qs_var <- build_general_quadratic_system(out$lambda_optimized, tau, moments)
 qs_eu <- build_general_quadratic_system(
   normalize_lambda_columns(out$lambda_optimized), tau, moments
 )
 b_var <- solve_all_profile_bounds(qs_var$quadratic)
 b_eu <- solve_all_profile_bounds(qs_eu$quadratic)
-rel_ok <- function(x, y) {
-  all(abs(x - y) <= 1e-6 * pmax(1, abs(y)))
-}
+rel_ok <- function(x, y) all(abs(x - y) <= 1e-6 * pmax(1, abs(y)))
 check(
   "identified-set bounds are invariant to the reporting representative",
   rel_ok(b_var$lower, b_eu$lower) && rel_ok(b_var$upper, b_eu$upper)

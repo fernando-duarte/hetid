@@ -62,7 +62,14 @@ theta_notes <- c(
     "``unbounded'' means the quadratic constraint admits an infinite ",
     "interval; ``unreliable'' means the solver validity check failed."
   ),
-  "Loadings are unit norm by construction. Quarterly ACM data."
+  paste0(
+    "Optimized loadings are variance-normalized, ",
+    "$\\gamma^{\\top}\\widehat{\\mathrm{Var}}(Z)\\gamma = 1$; the ",
+    "$\\sum_j \\gamma_j^2$ row is the squared Euclidean norm of that ",
+    "representative (the reciprocal of the unit-direction instrument ",
+    "variance). Baseline VFCI loadings are unit Euclidean norm. ",
+    "Quarterly ACM data."
+  )
 )
 
 theta_table_lines <- build_panel_latex_table(

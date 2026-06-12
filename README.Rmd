@@ -122,7 +122,8 @@ mixed$labels
 
 Set widths are comparable only across schemes with the same number of
 constraints, and width-minimizing optimized weights are a computational
-benchmark, not a confidence statement.
+benchmark, not a confidence statement; optimized weights are reported under
+the spec's variance normalization $\lambda^\top \widehat{\mathrm{Var}}(Z)\lambda = 1$.
 
 ## Quick Start
 

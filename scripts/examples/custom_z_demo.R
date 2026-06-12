@@ -53,7 +53,10 @@ lambda_fixed <- list(
 qs_fixed <- build_general_quadratic_system(lambda_fixed, 0.2, moments)
 print(qs_fixed$labels)
 
-# Optimized weights (sources the pipeline utils for the solver)
+# Optimized weights (sources the pipeline utils for the solver).
+# Repo default: pass the instruments as whiten so the search walks
+# variance-normalized coordinates and the returned columns satisfy
+# lambda' Var(Z) lambda = 1.
 source(file.path("scripts", "utils", "common_settings.R"))
 opt <- run_lambda_optimization(
   lambda_fixed, moments, 0.2,
@@ -91,6 +94,8 @@ qs_sets <- build_general_quadratic_system(
   lambda_subsets, 0.2, moments_sets
 )
 cat("per-component-subset constraints:", nrow(qs_sets$labels), "\n")
+# Explicit whiten = NULL isolates the mask; without V the returned
+# columns are unit-Euclidean (the plumbing-mode convention).
 opt_masked <- run_lambda_optimization(
   lambda_subsets, moments_sets, 0.2,
   whiten = NULL,
@@ -104,13 +109,13 @@ cat(
     all(opt_masked$lambda_optimized[[2]][-aligned$support[[2]], ] == 0),
   "\n"
 )
-# Opt-in whitening: identical constraint set (weights enter only
-# through direction), different search coordinates -- the optimizer
-# walks mu = chol(Var(Z)) %*% lambda, the spec's variance-normalized
+# Whitening: identical constraint set (weights enter only through
+# direction), different search coordinates -- the optimizer walks
+# mu = chol(Var(Z)) %*% lambda, the spec's variance-normalized
 # weights, sub-blocked to each component's supported instruments.
-# Reported weights stay in original coordinates, Euclidean-
-# normalized; the applied transform is echoed under $whitening. A
-# numerical reparameterization, not a statistical improvement.
+# Reported weights stay in original coordinates, variance-normalized:
+# each returned column satisfies lambda' Var(Z) lambda = 1 on its
+# support; the applied transform is echoed under $whitening.
 opt_whitened <- run_lambda_optimization(
   lambda_subsets, moments_sets, 0.2,
   n_starts = 3, seed = 123, maxeval = 100L,

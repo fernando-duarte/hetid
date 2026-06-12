@@ -68,8 +68,9 @@ and fixed tau values
 ### 05_identification_with_optimization/
 Optimal identification by optimizing PC loadings (gamma) to
 minimize total identified-set width (tau held fixed)
-- `optimize_identification.R` - Optimize gamma via nloptr to
-  minimize set width
+- `optimize_identification.R` - Optimize instrument weights via the
+  whitened lambda optimizer (variance normalization
+  `lambda' Var(Z) lambda = 1`) to minimize total set width
 - `analyze_optimization.R` - Analyze optimization results
 - `output_results.R` - Export optimization results
 
@@ -98,8 +99,10 @@ Shared utility functions
   curvature) for identification
 - `identification_utils.R` - Non-optimization identification
   plumbing (maturity lookups, set construction)
-- `optimization_utils.R` - Inner profile bounds and outer
-  gamma optimization helpers
+- `optimization_utils.R` - Width objective + Euclidean display
+  normalizer (legacy gamma optimizer retired)
+- `lambda_varnorm.R` - Variance normalization: zero check +
+  identification diagnostic
 - `latex_table_utils.R` - Booktabs/threeparttable/siunitx
   panel tables with standalone compilable variants
 - `README.md` - Documentation for the utility functions
