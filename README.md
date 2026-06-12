@@ -142,14 +142,7 @@ mixed$labels
 
 Set widths are comparable only across schemes with the same number of
 constraints, and width-minimizing optimized weights are a computational
-benchmark, not a confidence statement. A selection-honest alternative
-ships as a non-default study in `scripts/post_selection/`: weights are
-selected on one temporal block and the set is evaluated on the other, so
-the evaluated bound uses weights fixed relative to the evaluation
-sample. Even there, validity is conditional on the maintained bound
-holding at the selected weights, and serial dependence across the block
-boundary makes the conditioning approximate; uniform post-selection
-inference over the admissibility class is out of scope.
+benchmark, not a confidence statement.
 
 ## Quick Start
 

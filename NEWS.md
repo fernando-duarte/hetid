@@ -62,8 +62,8 @@
 # hetid 0.2.0
 
 * Generalized-instruments layer: arbitrary instrument matrices with
-  optional transforms, per-instrument or combined constraints, masked
-  and whitened weight optimization, and the post-selection split study.
+  optional transforms, per-instrument or combined constraints, and
+  masked and whitened weight optimization.
 * Centered `1/T` moments throughout the identification chain.
 * Structured conditions (`hetid_error`, `hetid_warning_*`) across the
   package.

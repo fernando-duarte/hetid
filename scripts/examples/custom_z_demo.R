@@ -63,9 +63,7 @@ cat("optimized total width:", opt$objective_final, "\n")
 
 # Width-minimizing weights above are selected on the SAME sample the
 # widths are evaluated on -- a computational benchmark, not a
-# confidence statement. For the selection-honest alternative (select
-# on one temporal block, evaluate on the other), see
-# scripts/post_selection/run_split_study.R.
+# confidence statement.
 
 # Per-component instrument subsets: align the per-component sets by
 # name, recompute the moments on the union matrix (the support

@@ -42,13 +42,6 @@
 # legitimately different draw geometry); every seeded-equivalence
 # contract covers whiten = NULL only. The applied transform is
 # echoed in the return value (whitening field; NULL when off).
-# For a selection-honest report, select the weights on one temporal
-# block and evaluate the set on the other
-# (scripts/post_selection/run_split_study.R): the evaluated bound
-# then uses weights fixed relative to the evaluation sample (the
-# spec's fixed-Lambda inclusion), with serial dependence across the
-# block boundary and the maintained bound at the selected weights
-# as the remaining, stated assumptions.
 
 normalize_lambda_columns <- function(lambda_list) {
   lapply(lambda_list, function(el) {
