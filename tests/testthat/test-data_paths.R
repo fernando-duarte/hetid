@@ -80,13 +80,15 @@ test_that("nyfed resolution targets only the nyfed cache file", {
   expect_true(acm_data_available("auto"))
 })
 
-test_that("a legacy cache file earns a one-time advisory and is never resolved", {
+test_that("legacy cache files earn a one-time advisory and are never resolved", {
   user_root <- withr::local_tempdir()
   withr::local_envvar(R_USER_DATA_DIR = user_root)
   user_dir <- get_user_data_dir(create = TRUE)
-  writeLines(
-    "legacy", file.path(user_dir, HETID_CONSTANTS$ACM_LEGACY_FILENAME)
-  )
+  # Both retired names: the old xls-to-CSV cache and the superseded
+  # 6-month-floor release asset
+  for (legacy in HETID_CONSTANTS$ACM_LEGACY_FILENAMES) {
+    writeLines("legacy", file.path(user_dir, legacy))
+  }
 
   # Reset the session flag so this test is order-independent
   rm(
@@ -97,9 +99,7 @@ test_that("a legacy cache file earns a one-time advisory and is never resolved",
     path <- get_acm_data_path(),
     regexp = "legacy ACM cache"
   )
-  expect_false(grepl(HETID_CONSTANTS$ACM_LEGACY_FILENAME, basename(path),
-    fixed = TRUE
-  ))
+  expect_false(basename(path) %in% HETID_CONSTANTS$ACM_LEGACY_FILENAMES)
   expect_no_message(get_acm_data_path())
 })
 

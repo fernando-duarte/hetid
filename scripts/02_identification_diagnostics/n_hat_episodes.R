@@ -163,8 +163,9 @@ if (nrow(validation_positive) > 0) {
   print(validation_positive, row.names = FALSE)
 }
 
-# Quarterly cross-check on the stage-01 processed data; this quarterly series is
-# the one underlying stage 03's c_hat
+# Quarterly cross-check on the stage-01 processed data: the same
+# annual-horizon n_hat evaluated on quarterly rows (stage 03's bounds
+# run on the quarterly news clock and use a different n_hat)
 quarterly <- readRDS(DATA_RDS_PATH)
 if (is.list(quarterly) && !is.data.frame(quarterly)) {
   quarterly <- as.data.frame(quarterly)

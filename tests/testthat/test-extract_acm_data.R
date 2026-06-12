@@ -123,15 +123,15 @@ test_that("extract_acm_data handles edge cases", {
   expect_s3_class(data_empty_quarterly, "data.frame")
   expect_equal(nrow(data_empty_quarterly), 0)
 
-  # Invalid maturities: below the 6-month floor and above the ceiling
+  # Invalid maturities: below the 3-month floor and above the ceiling
   expect_error(
-    extract_acm_data(maturities = 5),
-    "must be between 6 and",
+    extract_acm_data(maturities = 2),
+    "must be between 3 and",
     class = "hetid_error_bad_argument"
   )
   expect_error(
     extract_acm_data(maturities = 121),
-    "must be between 6 and",
+    "must be between 3 and",
     class = "hetid_error_bad_argument"
   )
   expect_error(
@@ -384,10 +384,10 @@ test_that("filter_acm_date_range drops NA dates instead of fabricating rows", {
 test_that("sub-annual maturities extract from the bundled monthly grid", {
   data <- extract_acm_data(
     data_types = "yields",
-    maturities = c(6, 18, 119)
+    maturities = c(3, 18, 119)
   )
 
-  expect_named(data, c("date", "y6", "y18", "y119"))
+  expect_named(data, c("date", "y3", "y18", "y119"))
   expect_true(all(vapply(data[, -1], is.numeric, logical(1))))
   expect_gt(nrow(data), 0)
 })

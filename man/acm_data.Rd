@@ -8,22 +8,22 @@
 \alias{term_premia}
 \title{ACM Term Structure Data Documentation}
 \format{
-The ACM data is stored as a gzipped CSV with 346 columns:
-the date plus 115 maturities (6 to 120 months at one-month steps)
+The ACM data is stored as a gzipped CSV with 355 columns:
+the date plus 118 maturities (3 to 120 months at one-month steps)
 for each of three families:
 \describe{
 \item{date}{The business-day observation date for each row in the series
 (originally 'DATE' in source data, ISO formatted, standardized to
 lowercase)}
-\item{ACMY01-ACMY10, ACMY006M-ACMY119M}{Model-implied zero-coupon
+\item{ACMY01-ACMY10, ACMY003M-ACMY119M}{Model-implied zero-coupon
 Treasury yields from the ACM model. Whole-year maturities keep
 the official padded-year names (ACMY01 = 12 months, ...,
 ACMY10 = 120 months); sub-annual months use the three-digit
-month form (e.g. ACMY006M = 6 months)}
-\item{ACMTP01-ACMTP10, ACMTP006M-ACMTP119M}{ACM term premium
+month form (e.g. ACMY003M = 3 months)}
+\item{ACMTP01-ACMTP10, ACMTP003M-ACMTP119M}{ACM term premium
 estimates—the additional compensation investors require for
 bearing interest-rate risk—under the same dual naming}
-\item{ACMRNY01-ACMRNY10, ACMRNY006M-ACMRNY119M}{Risk-neutral yields
+\item{ACMRNY01-ACMRNY10, ACMRNY003M-ACMRNY119M}{Risk-neutral yields
 (the expected average short-rate path) as implied by the ACM
 model, under the same dual naming}
 }
@@ -39,7 +39,7 @@ risk-neutral yields for U.S. Treasury securities.
 
 Whole-year maturities carry the official two-digit year suffix
 (01-10, i.e. 12 to 120 months); all other maturities carry a
-three-digit month suffix plus "M" (006M-119M). Package-facing
+three-digit month suffix plus "M" (003M-119M). Package-facing
 columns from \code{extract_acm_data()} are always suffixed by the
 maturity in months (y12, tp60, rny119, ...).
 }
@@ -68,16 +68,16 @@ yield and the risk-neutral yield.
 }
 \section{Data Source}{
 
-The bundled file is the validated ACM reproduction published at
+The bundled file is the validated ACM replication published at
 \url{https://github.com/fernando-duarte/ACM_term_premium} (release
 \code{acm-term-premium-2026-06}, asset
-\code{ACMTermPremium_reproduced_monthly_6m_120m.csv.gz}, sha256
-\code{d95255a08200aadbf66dd33bdd54111e9f58bfab987a5683e93ec81c6b087e89}).
+\code{ACMTermPremium_replicated_monthly_3m_120m.csv.gz}, sha256
+\code{ad6fc66a0c2dba73d32f83a01a8432fc4ee1b7719ed44413351d18c61db34e29}).
 It reproduces the official NY Fed workbook to within 0.0026 basis
 points at the annual nodes and extends the maturity grid to monthly
-steps from 6 to 120 months: whole-year maturities keep the official
+steps from 3 to 120 months: whole-year maturities keep the official
 column names (\code{ACMY01}..\code{ACMY10}), sub-annual months use
-names like \code{ACMY006M}. Dates are ISO (\code{YYYY-MM-DD}).
+names like \code{ACMY003M}. Dates are ISO (\code{YYYY-MM-DD}).
 \code{download_term_premia()} refreshes the cache from the latest
 release with sha256 verification; the official NY Fed workbook
 remains available as the opt-in \code{source = "nyfed"} fallback
@@ -98,7 +98,7 @@ acm_raw <- load_term_premia()
 # Or use the convenience function for processed data
 acm_data <- extract_acm_data(
   data_types = c("yields", "term_premia"),
-  maturities = c(2, 5, 10)
+  maturities = c(24, 60, 120)
 )
 }
 }

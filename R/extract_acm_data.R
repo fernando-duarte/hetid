@@ -7,7 +7,7 @@
 #' @param data_types Character vector specifying which data to extract.
 #'   Options: "yields", "term_premia", "risk_neutral_yields".
 #'   Default is c("yields", "term_premia").
-#' @param maturities Numeric vector of maturities in months (6-120).
+#' @param maturities Numeric vector of maturities in months (3-120).
 #'   Default is the annual nodes \code{seq(12, 120, by = 12)}
 #'   (\code{HETID_CONSTANTS$DEFAULT_ACM_MATURITIES}); pass
 #'   \code{HETID_CONSTANTS$ALL_ACM_MATURITIES} for the full monthly
@@ -42,10 +42,10 @@
 #'   - Risk-neutral yields: rny12, rny24, ..., rny120
 #'
 #' @details
-#' The raw ACM data carries maturities at one-month steps from 6 to
+#' The raw ACM data carries maturities at one-month steps from 3 to
 #' 120 months. Whole-year maturities keep the official column names
 #' (ACMY01-ACMY10, ACMTP01-ACMTP10, ACMRNY01-ACMRNY10); sub-annual
-#' months use names like ACMY006M. The NY Fed fallback source provides
+#' months use names like ACMY003M. The NY Fed fallback source provides
 #' only the annual nodes; requesting sub-annual maturities against it
 #' raises a structured error.
 #'

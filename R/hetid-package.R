@@ -29,7 +29,7 @@
 #' \subsection{Data Management:}{
 #' \itemize{
 #'   \item \strong{ACM Term Structure Data}: Access to monthly yields, term premia,
-#'     and risk-neutral yields at monthly maturity steps (6-120 months) based on
+#'     and risk-neutral yields at monthly maturity steps (3-120 months) based on
 #'     Adrian, Crump, and Moench (2013)
 #'   \item \strong{Economic Variables}: Quarterly macroeconomic and financial data
 #'   \item \strong{Verified Downloads}: Functions to download the latest GitHub
@@ -98,8 +98,8 @@
 #' \describe{
 #'   \item{\strong{ACM Term Structure Data}}{Monthly data from Adrian, Crump, and
 #'     Moench (2013) including yields, term premia, and risk-neutral yields at
-#'     monthly maturity steps from 6 to 120 months. Updated from the GitHub
-#'     reproduction release; the NY Fed workbook is the opt-in fallback.}
+#'     monthly maturity steps from 3 to 120 months. Updated from the GitHub
+#'     replication release; the NY Fed workbook is the opt-in fallback.}
 #'   \item{\strong{Economic Variables}}{Quarterly macroeconomic and financial
 #'     variables including GDP, inflation, financial conditions indices, and
 #'     principal components of financial asset returns.}

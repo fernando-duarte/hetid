@@ -27,7 +27,7 @@ identification methods:
 
 > **Breaking change (0.3.0): maturity indices are now months.** Every
 > maturity argument and column suffix denotes months, not years:
-> `i = 60` and `y60` are the 5-year bond, valid maturities run 6-120,
+> `i = 60` and `y60` are the 5-year bond, valid maturities run 3-120,
 > and the old year-style names `y1`-`y5` no longer exist (they fail
 > loudly). Note that `y6`-`y10` silently changed meaning: they now
 > denote 6-10 **months**, where they used to denote 6-10 years.
@@ -64,7 +64,7 @@ pak::pak("fernando-duarte/hetid")
 ### 📊 Data Management
 
 - **ACM Term Structure Data**: Monthly yields, term premia, and
-  risk-neutral yields at one-month maturity steps from 6 to 120 months
+  risk-neutral yields at one-month maturity steps from 3 to 120 months
 - **Economic Variables**: Quarterly economic and financial data
 - **Verified Updates**: `download_term_premia()` fetches the latest
   GitHub release and verifies it against the release’s sha256 digest
@@ -264,8 +264,8 @@ The package provides access to:
 
 - **ACM Term Structure Data**: Monthly data based on Adrian, Crump, and
   Moench (2013) including yields, term premia, and risk-neutral yields
-  at one-month maturity steps from 6 to 120 months. The bundled file is
-  the validated reproduction published at
+  at one-month maturity steps from 3 to 120 months. The bundled file is
+  the validated replication published at
   [fernando-duarte/ACM_term_premium](https://github.com/fernando-duarte/ACM_term_premium)
   (it matches the official NY Fed workbook to within 0.0026 basis points
   at the annual nodes and extends the maturity grid to monthly steps);

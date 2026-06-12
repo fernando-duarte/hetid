@@ -7,7 +7,7 @@
 ## Notes for reviewers
 
 * The package bundles a ~1.9 MB gzipped CSV
-  (`inst/extdata/ACMTermPremium_reproduced_monthly_6m_120m.csv.gz`),
+  (`inst/extdata/ACMTermPremium_replicated_monthly_3m_120m.csv.gz`),
   the ACM term-structure dataset at monthly maturity steps. This may
   surface as an installed-size NOTE on some platforms; the file is the
   package's primary dataset and is already maximally compressed.

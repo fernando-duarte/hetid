@@ -8,7 +8,7 @@ List containing package constants:
 \describe{
 \item{DEFAULT_N_PCS}{Standard number of principal components (4)}
 \item{MAX_N_PCS}{Maximum principal components (6)}
-\item{MIN_MATURITY}{Minimum maturity index in months (6)}
+\item{MIN_MATURITY}{Minimum maturity index in months (3)}
 \item{MAX_MATURITY}{Maximum maturity index in months (120)}
 \item{DEFAULT_STEP}{Maturity-index units (months) per news period
 (12: an annual news clock). The news operator steps one period;
@@ -22,7 +22,7 @@ annualized yields by maturity in years, so the n_hat weights are
 (12, 24, ..., 120); the default for
 \code{\link{extract_acm_data}}}
 \item{ALL_ACM_MATURITIES}{The full monthly maturity grid
-(6:120 months) available from the GitHub source}
+(3:120 months) available from the GitHub source}
 \item{MACHINE_EPSILON}{Machine precision}
 \item{MATRIX_SYMMETRY_TOL}{Tolerance for matrix symmetry
 checks}
@@ -41,16 +41,17 @@ their terminal month in quarterly conversion: TRUE keeps them
 \item{PC_PREFIX}{Prefix for principal component columns}
 \item{MATURITY_PREFIX}{Prefix for maturity label columns}
 \item{ACM_DATA_FILENAME}{Bundled/downloaded ACM data filename
-(gzipped CSV from the GitHub reproduction release)}
+(gzipped CSV from the GitHub replication release)}
 \item{ACM_NYFED_FILENAME}{Cache filename for the opt-in NY Fed
 xls fallback source}
-\item{ACM_LEGACY_FILENAME}{Retired cache filename from the old
-xls-to-CSV pipeline; never resolved, only flagged for cleanup}
+\item{ACM_LEGACY_FILENAMES}{Retired cache filenames (the old
+xls-to-CSV pipeline and superseded release assets); never
+resolved, only flagged for cleanup}
 \item{BUNDLED_VARIABLES_DATASET}{Bundled dataset name}
 \item{COL_FORMAT_PADDED}{Padded raw column name format for
 whole-year maturities (e.g. ACMY01)}
 \item{COL_FORMAT_MONTHLY}{Raw column name format for sub-annual
-month maturities (e.g. ACMY006M)}
+month maturities (e.g. ACMY003M)}
 \item{COL_FORMAT_SIMPLE}{Package column name format, maturity in
 months (e.g. y12)}
 }

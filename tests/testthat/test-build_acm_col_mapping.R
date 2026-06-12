@@ -12,12 +12,13 @@ test_that("whole-year months map to official padded-year raw names", {
 })
 
 test_that("sub-annual months map to three-digit month raw names", {
-  mapping <- build_acm_col_mapping("yields", c(6, 18, 119))
+  mapping <- build_acm_col_mapping("yields", c(3, 6, 18, 119))
 
+  expect_equal(mapping[["y3"]], "ACMY003M")
   expect_equal(mapping[["y6"]], "ACMY006M")
   expect_equal(mapping[["y18"]], "ACMY018M")
   expect_equal(mapping[["y119"]], "ACMY119M")
-  expect_length(mapping, 3)
+  expect_length(mapping, 4)
 })
 
 test_that("the format boundary sits exactly at whole years", {

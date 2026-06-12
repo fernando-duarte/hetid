@@ -19,16 +19,15 @@ cli_h1("Computing Theoretical Variance Bounds")
 yield_vars <- grep("^y\\d+$", names(data), value = TRUE)
 tp_vars <- grep("^tp\\d+$", names(data), value = TRUE)
 
-# Get yield maturities from variable names. The variance bounds stay
-# on the annual news clock (step 12): compute_k_hat's realized leg
-# needs the step-maturity yield, and the 3-month yield sits below the
-# data's 6-month floor, so the quarterly clock is infeasible here.
-# Keep the annual nodes that admit an i + step neighbor.
+# Get yield maturities from variable names. The variance bounds run on
+# the pipeline news clock: compute_k_hat's realized leg needs the
+# step-maturity yield (y3 for the quarterly clock), which the data's
+# 3-month floor provides. Keep the step-multiple nodes that admit an
+# i + step neighbor.
 all_maturities <- as.numeric(gsub("y", "", yield_vars))
-annual_step <- HETID_CONSTANTS$DEFAULT_STEP
 maturities <- all_maturities[
-  all_maturities %% annual_step == 0 &
-    all_maturities <= hetid::effective_max_maturity(annual_step)
+  all_maturities %% NEWS_STEP == 0 &
+    all_maturities <= hetid::effective_max_maturity(NEWS_STEP)
 ]
 
 # Ensure maturities are sorted
@@ -63,11 +62,14 @@ for (idx in seq_along(maturities)) {
   cli_alert("Computing variance bound for maturity {.val {mat}}...")
 
   # Compute individual components
-  c_hat_values[idx] <- compute_c_hat(yields_df, tp_df, i = mat)
-  k_hat_values[idx] <- compute_k_hat(yields_df, tp_df, i = mat)
+  c_hat_values[idx] <- compute_c_hat(yields_df, tp_df, i = mat, step = NEWS_STEP)
+  k_hat_values[idx] <- compute_k_hat(yields_df, tp_df, i = mat, step = NEWS_STEP)
 
   # Compute variance bound: (1/4) * c_hat * k_hat
-  variance_bounds[idx] <- compute_variance_bound(yields_df, tp_df, i = mat)
+  variance_bounds[idx] <- compute_variance_bound(
+    yields_df, tp_df,
+    i = mat, step = NEWS_STEP
+  )
 
   cli_alert_success("Maturity {.val {mat}}: VB = {.val {round(variance_bounds[idx], 6)}}")
 }
@@ -103,7 +105,7 @@ variance_bounds_table <- variance_bounds_df |>
     locations = cells_body(columns = Variance_Bound)
   ) |>
   cols_label(
-    Maturity = "Maturity (years)",
+    Maturity = "Maturity (months)",
     c_hat = "ĉ",
     k_hat = "k̂",
     Variance_Bound = "Variance Bound"
@@ -263,7 +265,7 @@ cli_ul(c(
 
 if (variance_bounds[1] == 0) {
   cli_alert_info(
-    "Variance bound for maturity 12 (one news period) is zero by construction"
+    "Variance bound for maturity {maturities[1]} (one news period) is zero by construction"
   )
 }
 

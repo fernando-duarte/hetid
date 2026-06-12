@@ -125,15 +125,41 @@ test_that("price news with step = 6 differences the step-spaced n_hat series", {
   expect_equal(news, n_hat_6[2:n_obs] - n_hat_12[1:(n_obs - 1)])
 })
 
-test_that("a quarterly step fails informatively below the maturity floor", {
-  # step = 3 news at the boundary needs maturity 3, below MIN_MATURITY:
-  # the future quarterly clock starts at i = 9 months instead
+test_that("the quarterly clock is valid from the boundary; below-floor horizons fail", {
+  # With the 3-month maturity floor, step = 3 news works from the
+  # boundary horizon i = 3 upward; a horizon whose previous-period
+  # maturity falls below the floor still fails informatively
+  expect_true(validate_news_maturity_index(3, step = 3))
+  expect_true(validate_news_maturity_index(6, step = 3))
+  expect_true(validate_news_maturity_index(9, step = 3))
+
   frame <- make_step_six_frame()
   expect_error(
-    compute_price_news(frame$yields, frame$term_premia, i = 3, step = 3),
+    compute_price_news(frame$yields, frame$term_premia, i = 4, step = 3),
     class = "hetid_error_bad_argument"
   )
-  expect_true(validate_news_maturity_index(9, step = 3))
+  expect_error(
+    compute_price_news(frame$yields, frame$term_premia, i = 2, step = 1),
+    class = "hetid_error_bad_argument"
+  )
+})
+
+test_that("the quarterly boundary horizon computes on the bundled 3-month grid", {
+  acm <- extract_acm_data(
+    data_types = c("yields", "term_premia"),
+    maturities = c(3, 6),
+    frequency = "quarterly",
+    use_incomplete_quarters = FALSE
+  )
+  yields <- acm[, c("y3", "y6"), drop = FALSE]
+  tp <- acm[, c("tp3", "tp6"), drop = FALSE]
+
+  news <- compute_price_news(yields, tp, i = 3, step = 3)
+  expect_length(news, nrow(yields) - 1)
+  expect_true(all(is.finite(news)))
+
+  k_boundary <- compute_k_hat(yields, tp, i = 3, step = 3)
+  expect_true(is.finite(k_boundary))
 })
 
 test_that("validate_step rejects non-positive, fractional, and oversized steps", {

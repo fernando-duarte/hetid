@@ -37,10 +37,10 @@ dir.create(file.path(OUTPUT_TEMP_DIR, "other"), recursive = TRUE, showWarnings =
 # quarter = 3 maturity months. Stage-01 rows are quarterly, so the
 # rows-equal-period contract of the SDF-news construction holds
 # exactly. The quarterly clock needs maturities at 3-month spacing
-# (each horizon i uses i - 3 and i + 3); horizons start at 9 months
-# because i - NEWS_STEP must stay at or above the 6-month grid floor.
+# (each horizon i uses i - 3 and i + 3); the data's 3-month floor
+# makes every horizon from the boundary i = 3 upward feasible.
 NEWS_STEP <- 3L
-PIPELINE_ACM_MATURITIES <- seq(9L, 120L, by = 3L)
+PIPELINE_ACM_MATURITIES <- seq(3L, 120L, by = 3L)
 SEED <- 123 # For reproducibility
 BASELINE_TAU <- 0.2 # Baseline set-identification tolerance (shared across stages)
 TAU_STAR_N_STARTS <- 15L # Multistart count for the tau* optimizer oracle

@@ -97,23 +97,26 @@ check_data_file_exists <- function(filename) {
 # Session-local state for one-time advisories
 .acm_path_state <- new.env(parent = emptyenv())
 
-#' Advise Once About a Legacy ACM Cache
+#' Advise Once About Legacy ACM Caches
 #'
-#' The retired xls-to-CSV pipeline cached under
-#' \code{ACM_LEGACY_FILENAME}; that file is never resolved by the
-#' current sources, so its presence only earns a one-time cleanup hint.
+#' Retired pipelines cached under the names in
+#' \code{ACM_LEGACY_FILENAMES} (the old xls-to-CSV flow and superseded
+#' release assets); those files are never resolved by the current
+#' sources, so their presence only earns a one-time cleanup hint.
 #'
 #' @return Invisible NULL
 #' @keywords internal
 advise_legacy_acm_cache <- function() {
   legacy <- file.path(
-    get_user_data_dir(), HETID_CONSTANTS$ACM_LEGACY_FILENAME
+    get_user_data_dir(), HETID_CONSTANTS$ACM_LEGACY_FILENAMES
   )
-  if (file.exists(legacy) && !isTRUE(.acm_path_state$legacy_advised)) {
+  found <- legacy[file.exists(legacy)]
+  if (length(found) > 0 && !isTRUE(.acm_path_state$legacy_advised)) {
     .acm_path_state$legacy_advised <- TRUE
     message(
-      "A legacy ACM cache from the retired NY Fed xls pipeline exists at ",
-      legacy, " and is no longer used. Delete it, or re-run ",
+      "A legacy ACM cache from a retired data flow exists at ",
+      paste(found, collapse = ", "),
+      " and is no longer used. Delete it, or re-run ",
       "download_term_premia() for a fresh copy."
     )
   }

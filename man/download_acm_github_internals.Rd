@@ -4,7 +4,7 @@
 \alias{download_acm_github_internals}
 \title{GitHub-Release Download Internals for the ACM Data}
 \description{
-Digest-verified download of the monthly-maturity ACM reproduction
+Digest-verified download of the monthly-maturity ACM replication
 from the GitHub release. Every failure path is fail-closed: nothing
 is cached unless the sha256 digest from the release API matches the
 downloaded file.

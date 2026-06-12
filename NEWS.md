@@ -5,17 +5,17 @@
 * Maturity indices are now denominated in **months** everywhere. Every
   maturity argument (`i`, `maturities`) and every package column suffix
   (`y12`, `tp60`, `rny120`, ...) denotes months: `i = 60` is the 5-year
-  bond, valid maturities run 6-120, and per-maturity outputs are named
+  bond, valid maturities run 3-120, and per-maturity outputs are named
   `maturity_<months>` (e.g. `maturity_24`). The old year-style names
   `y1`-`y5` no longer exist and fail loudly; **`y6`-`y10` silently
   changed meaning** from 6-10 years to 6-10 months. The former
   `EFFECTIVE_MAX_MATURITY` constant is replaced by
   `effective_max_maturity(step)`.
 * The bundled and downloaded ACM data now come from the validated
-  reproduction released at fernando-duarte/ACM_term_premium: maturities
-  at one-month steps from 6 to 120 months (whole years keep the
+  replication released at fernando-duarte/ACM_term_premium: maturities
+  at one-month steps from 3 to 120 months (whole years keep the
   official raw names `ACMY01`-`ACMY10`; sub-annual months use names
-  like `ACMY006M`), ISO dates, and a sample through the latest release.
+  like `ACMY003M`), ISO dates, and a sample through the latest release.
   It reproduces the official NY Fed workbook to within 0.0026 basis
   points at the annual nodes; historical values also pick up the NY
   Fed's own vintage revisions relative to older snapshots.
@@ -35,8 +35,8 @@
   `step` argument: the number of maturity-index units (months) per news
   period, defaulting to 12 (an annual news clock). Sub-annual steps
   become possible wherever the maturity grid supports them; with the
-  6-month maturity floor, a quarterly clock (`step = 3`) starts at
-  horizon `i = 9`.
+  3-month maturity floor, a quarterly clock (`step = 3`) supports every
+  horizon from the boundary `i = 3` upward.
 * `load_term_premia()` and `extract_acm_data()` accept
   `source = c("auto", "github", "nyfed")`; `"auto"` resolves the GitHub
   user cache then the bundled copy and never loads the NY Fed source

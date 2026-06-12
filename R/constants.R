@@ -8,7 +8,7 @@
 #' \describe{
 #'   \item{DEFAULT_N_PCS}{Standard number of principal components (4)}
 #'   \item{MAX_N_PCS}{Maximum principal components (6)}
-#'   \item{MIN_MATURITY}{Minimum maturity index in months (6)}
+#'   \item{MIN_MATURITY}{Minimum maturity index in months (3)}
 #'   \item{MAX_MATURITY}{Maximum maturity index in months (120)}
 #'   \item{DEFAULT_STEP}{Maturity-index units (months) per news period
 #'     (12: an annual news clock). The news operator steps one period;
@@ -22,7 +22,7 @@
 #'     (12, 24, ..., 120); the default for
 #'     \code{\link{extract_acm_data}}}
 #'   \item{ALL_ACM_MATURITIES}{The full monthly maturity grid
-#'     (6:120 months) available from the GitHub source}
+#'     (3:120 months) available from the GitHub source}
 #'   \item{MACHINE_EPSILON}{Machine precision}
 #'   \item{MATRIX_SYMMETRY_TOL}{Tolerance for matrix symmetry
 #'     checks}
@@ -41,16 +41,17 @@
 #'   \item{PC_PREFIX}{Prefix for principal component columns}
 #'   \item{MATURITY_PREFIX}{Prefix for maturity label columns}
 #'   \item{ACM_DATA_FILENAME}{Bundled/downloaded ACM data filename
-#'     (gzipped CSV from the GitHub reproduction release)}
+#'     (gzipped CSV from the GitHub replication release)}
 #'   \item{ACM_NYFED_FILENAME}{Cache filename for the opt-in NY Fed
 #'     xls fallback source}
-#'   \item{ACM_LEGACY_FILENAME}{Retired cache filename from the old
-#'     xls-to-CSV pipeline; never resolved, only flagged for cleanup}
+#'   \item{ACM_LEGACY_FILENAMES}{Retired cache filenames (the old
+#'     xls-to-CSV pipeline and superseded release assets); never
+#'     resolved, only flagged for cleanup}
 #'   \item{BUNDLED_VARIABLES_DATASET}{Bundled dataset name}
 #'   \item{COL_FORMAT_PADDED}{Padded raw column name format for
 #'     whole-year maturities (e.g. ACMY01)}
 #'   \item{COL_FORMAT_MONTHLY}{Raw column name format for sub-annual
-#'     month maturities (e.g. ACMY006M)}
+#'     month maturities (e.g. ACMY003M)}
 #'   \item{COL_FORMAT_SIMPLE}{Package column name format, maturity in
 #'     months (e.g. y12)}
 #' }
@@ -70,7 +71,7 @@ HETID_CONSTANTS <- list(
   MAX_N_PCS = 6L, # Maximum for stability
 
   # Data constraints (maturity indices are months)
-  MIN_MATURITY = 6L, # Minimum available maturity (months)
+  MIN_MATURITY = 3L, # Minimum available maturity (months)
   MAX_MATURITY = 120L, # Maximum available maturity (months)
 
   # News-period geometry
@@ -79,7 +80,7 @@ HETID_CONSTANTS <- list(
 
   # Maturity grids (months)
   DEFAULT_ACM_MATURITIES = seq(12L, 120L, by = 12L), # Annual nodes
-  ALL_ACM_MATURITIES = 6L:120L, # Full monthly grid
+  ALL_ACM_MATURITIES = 3L:120L, # Full monthly grid
 
   # Numerical parameters
   MACHINE_EPSILON = .Machine$double.eps,
@@ -103,14 +104,17 @@ HETID_CONSTANTS <- list(
   MATURITY_PREFIX = "maturity_",
 
   # Data identity
-  ACM_DATA_FILENAME = "ACMTermPremium_reproduced_monthly_6m_120m.csv.gz",
+  ACM_DATA_FILENAME = "ACMTermPremium_replicated_monthly_3m_120m.csv.gz",
   ACM_NYFED_FILENAME = "ACMTermPremium_nyfed.csv",
-  ACM_LEGACY_FILENAME = "ACMTermPremium.csv",
+  ACM_LEGACY_FILENAMES = c(
+    "ACMTermPremium.csv",
+    "ACMTermPremium_reproduced_monthly_6m_120m.csv.gz"
+  ),
   BUNDLED_VARIABLES_DATASET = "variables",
 
   # Column format patterns
   COL_FORMAT_PADDED = "%s%02d", # e.g., ACMY01 (whole-year raw names)
-  COL_FORMAT_MONTHLY = "%s%03dM", # e.g., ACMY006M (sub-annual raw names)
+  COL_FORMAT_MONTHLY = "%s%03dM", # e.g., ACMY003M (sub-annual raw names)
   COL_FORMAT_SIMPLE = "%s%d" # e.g., y12 (package names, months)
 )
 
@@ -122,7 +126,7 @@ HETID_CONSTANTS <- list(
 #' @format List containing versioned data source URLs:
 #' \describe{
 #'   \item{ACM_GITHUB_CSV_GZ}{Latest-release URL for the monthly-maturity
-#'     ACM reproduction (gzipped CSV)}
+#'     ACM replication (gzipped CSV)}
 #'   \item{ACM_GITHUB_RELEASE_API}{GitHub API endpoint exposing the
 #'     per-asset sha256 digests used to verify downloads}
 #'   \item{ACM_NYFED_XLS}{URL for the official NY Fed ACM workbook
@@ -137,7 +141,7 @@ HETID_CONSTANTS <- list(
 DATA_URLS <- list(
   ACM_GITHUB_CSV_GZ = paste0(
     "https://github.com/fernando-duarte/ACM_term_premium/releases/",
-    "latest/download/ACMTermPremium_reproduced_monthly_6m_120m.csv.gz"
+    "latest/download/ACMTermPremium_replicated_monthly_3m_120m.csv.gz"
   ),
   ACM_GITHUB_RELEASE_API = paste0(
     "https://api.github.com/repos/fernando-duarte/",

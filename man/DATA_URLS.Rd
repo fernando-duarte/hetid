@@ -7,7 +7,7 @@
 List containing versioned data source URLs:
 \describe{
 \item{ACM_GITHUB_CSV_GZ}{Latest-release URL for the monthly-maturity
-ACM reproduction (gzipped CSV)}
+ACM replication (gzipped CSV)}
 \item{ACM_GITHUB_RELEASE_API}{GitHub API endpoint exposing the
 per-asset sha256 digests used to verify downloads}
 \item{ACM_NYFED_XLS}{URL for the official NY Fed ACM workbook

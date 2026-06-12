@@ -30,7 +30,7 @@ with the package is never modified.
 }
 \details{
 The default \code{"github"} source fetches the monthly-maturity ACM
-reproduction from the fernando-duarte/ACM_term_premium release and
+replication from the fernando-duarte/ACM_term_premium release and
 verifies the file against the release's per-asset sha256 digest
 before caching it; any mismatch fails without caching. The opt-in
 \code{"nyfed"} source downloads the official NY Fed workbook instead

@@ -9,7 +9,7 @@ test_that("the bundled gz matches the vendored release digest", {
   expect_true(nzchar(bundled))
   expect_identical(
     unname(tools::sha256sum(bundled)),
-    "d95255a08200aadbf66dd33bdd54111e9f58bfab987a5683e93ec81c6b087e89"
+    "ad6fc66a0c2dba73d32f83a01a8432fc4ee1b7719ed44413351d18c61db34e29"
   )
 })
 
@@ -19,9 +19,10 @@ test_that("the bundled data loads with Date dates and monthly maturities", {
   expect_s3_class(acm$date, "Date")
   expect_identical(min(acm$date), as.Date("1961-06-30"))
 
-  # Annual nodes keep the official names; sub-annual months are new
+  # Annual nodes keep the official names; sub-annual months are new,
+  # down to the 3-month floor across all three families
   expect_true(all(paste0("ACMY", sprintf("%02d", 1:10)) %in% names(acm)))
-  expect_true("ACMY006M" %in% names(acm))
+  expect_true(all(c("ACMY003M", "ACMTP003M", "ACMRNY003M") %in% names(acm)))
   expect_true("ACMTP119M" %in% names(acm))
 })
 

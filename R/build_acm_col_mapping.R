@@ -3,7 +3,7 @@
 #' Single source of truth for the raw file's dual naming convention:
 #' whole-year maturities keep the official padded-year names
 #' (\code{ACMY01}..\code{ACMY10}), sub-annual months use the
-#' three-digit month form (\code{ACMY006M}..\code{ACMY119M}).
+#' three-digit month form (\code{ACMY003M}..\code{ACMY119M}).
 #' Vectorized over \code{maturity_months}.
 #'
 #' @param data_type Schema key from \code{HETID_ACM_SCHEMA}

@@ -2,7 +2,7 @@
 % Please edit documentation in R/data_paths.R
 \name{advise_legacy_acm_cache}
 \alias{advise_legacy_acm_cache}
-\title{Advise Once About a Legacy ACM Cache}
+\title{Advise Once About Legacy ACM Caches}
 \usage{
 advise_legacy_acm_cache()
 }
@@ -10,8 +10,9 @@ advise_legacy_acm_cache()
 Invisible NULL
 }
 \description{
-The retired xls-to-CSV pipeline cached under
-\code{ACM_LEGACY_FILENAME}; that file is never resolved by the
-current sources, so its presence only earns a one-time cleanup hint.
+Retired pipelines cached under the names in
+\code{ACM_LEGACY_FILENAMES} (the old xls-to-CSV flow and superseded
+release assets); those files are never resolved by the current
+sources, so their presence only earns a one-time cleanup hint.
 }
 \keyword{internal}
