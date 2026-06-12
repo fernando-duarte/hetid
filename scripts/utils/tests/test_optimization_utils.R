@@ -6,6 +6,7 @@ suppressMessages({
   library(nloptr)
   library(hetid)
 })
+source("scripts/utils/profile_bounds_core.R")
 source("scripts/utils/profile_bounds.R")
 source("scripts/utils/optimization_utils.R")
 

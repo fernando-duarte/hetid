@@ -128,6 +128,9 @@ if (file.exists(file.path(utils_dir, "lambda_whitening.R"))) {
 if (file.exists(file.path(utils_dir, "lambda_optimization.R"))) {
   source(file.path(utils_dir, "lambda_optimization.R"))
 }
+if (file.exists(file.path(utils_dir, "profile_bounds_core.R"))) {
+  source(file.path(utils_dir, "profile_bounds_core.R"))
+}
 if (file.exists(file.path(utils_dir, "profile_bounds.R"))) {
   source(file.path(utils_dir, "profile_bounds.R"))
 }

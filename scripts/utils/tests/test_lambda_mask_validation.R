@@ -8,6 +8,7 @@ suppressMessages({
   library(nloptr)
 })
 source("scripts/utils/optimization_utils.R")
+source("scripts/utils/profile_bounds_core.R")
 source("scripts/utils/profile_bounds.R")
 source("scripts/utils/lambda_mask.R")
 source("scripts/utils/lambda_optimization.R")

@@ -1,6 +1,7 @@
 # Profile-bounds solver tests. Run from package root:
 #   Rscript scripts/utils/tests/test_profile_bounds.R
 suppressMessages(library(nloptr))
+source("scripts/utils/profile_bounds_core.R")
 source("scripts/utils/profile_bounds.R")
 source("scripts/utils/format_utils.R")
 
