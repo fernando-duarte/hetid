@@ -152,5 +152,41 @@ check(
     grepl("x1", err_defl, fixed = TRUE)
 )
 
+# Regime detection: the empirical span check used by stage 02
+source("scripts/utils/hetero_lm_tests.R")
+set.seed(7)
+z_mat <- matrix(rnorm(300), ncol = 3, dimnames = list(NULL, paste0("z", 1:3)))
+w2_regime_a <- cbind(
+  resid(lm(rnorm(100) ~ z_mat)),
+  resid(lm(rnorm(100) ~ z_mat))
+)
+check(
+  "regime A detected: residuals of a y-on-Z regression have ~zero fitted ratio",
+  w2_refit_fitted_ratio(w2_regime_a, z_mat) < 1e-10
+)
+w2_regime_b <- cbind(0.5 * z_mat[, 1] + rnorm(100, sd = 0.5), rnorm(100))
+check(
+  "regime B detected: w2 with genuine projection on Z clears the gate",
+  w2_refit_fitted_ratio(w2_regime_b, z_mat) > 1e-3
+)
+cfg_a <- select_diagnostics_suite(w2_regime_a, z_mat)
+check(
+  "regime A suite excludes Anscombe and aims GQ at column 2",
+  cfg_a$regime == "A" && !"Anscombe" %in% cfg_a$suite_tests &&
+    cfg_a$gq_deflator == colnames(z_mat)[2]
+)
+cfg_b <- select_diagnostics_suite(w2_regime_b, z_mat)
+check(
+  "regime B suite includes Anscombe and aims GQ at column 2",
+  cfg_b$regime == "B" && "Anscombe" %in% cfg_b$suite_tests &&
+    cfg_b$gq_deflator == colnames(z_mat)[2]
+)
+z_one <- z_mat[, 1, drop = FALSE]
+w2_one <- cbind(0.5 * z_one[, 1] + rnorm(100, sd = 0.5), rnorm(100))
+check(
+  "single-instrument hook falls back to column 1",
+  select_diagnostics_suite(w2_one, z_one)$gq_deflator == colnames(z_one)[1]
+)
+
 cat(sprintf("\n%d passed, %d failed\n", .pass, .fail))
 if (.fail > 0) quit(status = 1)

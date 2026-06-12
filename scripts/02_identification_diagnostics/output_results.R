@@ -29,84 +29,41 @@ fmt_p <- function(x) {
   ifelse(is.na(x), NA_character_, formatC(x, format = "f", digits = 3))
 }
 
-# Anscombe and Cook--Weisberg are no longer part of the stage-02 suite
-# (degenerate fitted values / duplicate of non-studentized BP; see
-# docs/reviews/hetero-test-investigation-2026-06-10.md)
-gq_label <- if (is.null(hetero$parameters$gq_deflator)) {
-  "Goldfeld--Quandt"
-} else {
-  sprintf(
-    "Goldfeld--Quandt (%s, %s)",
-    hetero$parameters$gq_deflator, hetero$parameters$gq_alternative
-  )
-}
-suite_pval_cols <- c(
-  "White_pval", "BP_pval", "GQ_pval", "Harvey_pval", "Glejser_pval"
-)
-suite_labels <- c("White", "Breusch--Pagan", gq_label, "Harvey", "Glejser")
+# Regime-aware panel rows, labels, and notes (suite as actually run,
+# GQ deflator label, Regime-B reading guidance) come from the shared
+# metadata helper
+source(here::here("scripts/utils/hetero_panel_meta.R"))
+meta <- hetero_suite_meta(hetero$parameters, corr_mat)
 
 panel_suite <- data.frame(
-  label = suite_labels,
-  t(vapply(tbm[, suite_pval_cols], fmt_p, character(nrow(tbm)))),
+  label = meta$suite_labels,
+  t(vapply(tbm[, meta$suite_pval_cols], fmt_p, character(nrow(tbm)))),
   stringsAsFactors = FALSE
 )
 panel_targeted <- data.frame(
-  label = c("BP LM on PCs ($nR^2$, $\\chi^2_4$)", "ARCH(1)"),
+  label = c(meta$bplm_label, "ARCH(1)"),
   rbind(fmt_p(tbm$BPLM_pval), fmt_p(tbm$ARCH_pval)),
   stringsAsFactors = FALSE
 )
 panel_corr <- data.frame(
-  label = paste0("PC", seq_len(nrow(corr_mat))),
+  label = meta$corr_labels,
   fmt_p(corr_mat),
   stringsAsFactors = FALSE
 )
 
-hetero_notes <- c(
-  paste0(
-    "$W_{2,i}$ is the residual from the maturity-$i$ yield equation ",
-    "regressed on the first ", n_pcs, " principal components (T = ",
-    n_obs, " quarterly observations)."
-  ),
-  paste0(
-    "Panels A and B report p-values; rejection of homoskedasticity ",
-    "supports the identifying assumption that ",
-    "$\\mathrm{Var}(\\varepsilon_2 \\mid Z)$ varies with $Z$."
-  ),
-  paste0(
-    "The BP LM test regresses $W_{2,i}^2$ on the principal components ",
-    "($nR^2$, $\\chi^2_4$); ARCH(1) regresses $W_{2,i}^2$ on its own lag."
-  ),
-  if (is.null(hetero$parameters$gq_deflator)) {
-    "The Goldfeld--Quandt test splits the sample in observation (time) order."
-  } else {
-    paste0(
-      "The Goldfeld--Quandt test orders observations by ",
-      hetero$parameters$gq_deflator, " (",
-      hetero$parameters$gq_alternative, ")."
-    )
-  },
-  if (!is.null(hetero$w2_cross_maturity_abs_cor_range)) {
-    sprintf(
-      paste0(
-        "Cross-maturity absolute correlations of $W_{2,i}$ span ",
-        "%.2f--%.2f, so rejections across maturities are one signal ",
-        "measured %d ways, not independent confirmations."
-      ),
-      hetero$w2_cross_maturity_abs_cor_range[1],
-      hetero$w2_cross_maturity_abs_cor_range[2],
-      nrow(tbm)
-    )
-  },
-  "Panel C reports $|\\mathrm{corr}(\\mathrm{PC}_j, W_{2,i}^2)|$."
-)
+hetero_notes <- hetero_table_notes(hetero, meta, n_pcs, n_obs, corr_mat, tbm)
 
+panel_list <- list(
+  "Conditional heteroskedasticity tests (p-values)" = panel_suite,
+  "Identification-targeted tests (p-values)" = panel_targeted,
+  panel_corr
+)
+names(panel_list)[3] <- paste0(
+  "Absolute correlation $|\\mathrm{corr}(", meta$inst_symbol,
+  "_j, W_{2,i}^2)|$"
+)
 hetero_table_lines <- build_panel_latex_table(
-  panels = list(
-    "Conditional heteroskedasticity tests (p-values)" = panel_suite,
-    "Identification-targeted tests (p-values)" = panel_targeted,
-    "Absolute correlation $|\\mathrm{corr}(\\mathrm{PC}_j, W_{2,i}^2)|$" =
-      panel_corr
-  ),
+  panels = panel_list,
   col_headers = as.character(tbm$maturity),
   caption = "Heteroskedasticity Diagnostics for Identification Residuals",
   label = "tab:hetero_diagnostics",
@@ -120,9 +77,12 @@ cli_alert_success("LaTeX panel table written (fragment + standalone)")
 # HTML mirror of the p-value matrix
 cli_h2("Creating HTML Tables")
 
-pval_matrix <- t(as.matrix(tbm[, c(suite_pval_cols, "BPLM_pval", "ARCH_pval")]))
+pval_matrix <- t(as.matrix(tbm[, c(meta$suite_pval_cols, "BPLM_pval", "ARCH_pval")]))
 pval_df <- data.frame(
-  Test = c(gsub("--", "-", suite_labels), "BP LM on PCs", "ARCH(1)"),
+  Test = c(
+    gsub("--", "-", meta$suite_labels),
+    sub(" \\(.*", "", meta$bplm_label), "ARCH(1)"
+  ),
   pval_matrix,
   check.names = FALSE,
   row.names = NULL

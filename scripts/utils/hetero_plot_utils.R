@@ -43,7 +43,7 @@ create_hetero_diagnostic_plots <- function(lm_model, var_name,
     geom_smooth(se = FALSE, color = "darkred", method = "loess") +
     labs(
       title = paste("Scale-Location Plot:", var_name),
-      x = "Fitted Values", y = "√|Residuals|"
+      x = "Fitted Values", y = "sqrt|Residuals|"
     ) +
     theme_minimal()
 

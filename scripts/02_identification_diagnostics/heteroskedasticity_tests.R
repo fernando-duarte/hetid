@@ -30,23 +30,25 @@ w2_resid <- id_resid$w2
 pcs_aligned <- id_resid$pcs_aligned
 cli_alert_info("Testing {length(maturities)} maturities, {n_pcs} PCs, {id_resid$n_obs} obs")
 
-# Test battery: the skedastic suite plus the identification-targeted LM tests.
-# Anscombe is excluded: w2 is orthogonal to the regressors by construction, so
-# the refit's fitted values are floating-point noise and the statistic is 0/0.
-# Cook-Weisberg is excluded: it duplicates the non-studentized Breusch-Pagan
-# statistic and over-rejects badly under this data's heavy tails. See
-# docs/reviews/hetero-test-investigation-2026-06-10.md for the full diagnosis.
-suite_tests <- c("White", "BP", "GQ", "Harvey")
-all_tests <- c(suite_tests, "Glejser", "BPLM", "ARCH")
-
-# Goldfeld-Quandt is aimed at the strongest variance driver, two-sided. The
-# skedastic default (existing row order = time, one-sided "greater") tests a
-# rising variance time trend, not the Lewbel condition; on this data it
-# returns p ~ 1 because the variance DECLINES over the sample.
-gq_deflator <- colnames(pcs_aligned)[2] # pc2 under the default instruments
-gq_alternative <- "two.sided"
-
 source(here::here("scripts/utils/hetero_lm_tests.R"))
+
+# Regime check, then the test battery (skedastic suite + targeted LM tests).
+# Regime A (default Z = PCs, inside the first-stage span) vs Regime B
+# (hook-supplied Z outside it); selection logic lives in hetero_lm_tests.R.
+# In Regime B the refit-residual tests diagnose the refit's variance, and
+# the BP LM row (w2^2 on Z directly) is the direct relevance test.
+suite_cfg <- select_diagnostics_suite(w2_resid, pcs_aligned)
+regime <- suite_cfg$regime
+fitted_sd_ratio <- suite_cfg$fitted_sd_ratio
+suite_tests <- suite_cfg$suite_tests
+gq_deflator <- suite_cfg$gq_deflator
+gq_alternative <- suite_cfg$gq_alternative
+all_tests <- c(suite_tests, "Glejser", "BPLM", "ARCH")
+cli_alert_info(
+  "Diagnostics regime {regime} (refit fitted-sd ratio
+   {signif(fitted_sd_ratio, 2)}): suite = {paste(suite_tests, collapse = ', ')};
+   GQ deflator = {gq_deflator}"
+)
 
 cli_h2("Running Test Battery on Every Maturity")
 tests_by_maturity <- do.call(rbind, lapply(seq_along(maturities), function(k) {
@@ -175,7 +177,8 @@ save_plot(
 parameters <- list(
   n_pcs = n_pcs, maturities = maturities,
   significance_level = significance_level, n_obs = id_resid$n_obs,
-  suite_tests = suite_tests,
+  suite_tests = suite_tests, regime = regime,
+  fitted_sd_ratio = fitted_sd_ratio,
   gq_deflator = gq_deflator, gq_alternative = gq_alternative
 )
 hetero_results <- list(
