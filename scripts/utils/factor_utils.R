@@ -68,11 +68,12 @@ get_identification_factor_lookup <- function(
 #' @param factors which factor indices to use
 #' @return T x n_factors matrix of projected W2 residuals
 compute_w2_factor_residuals <- function(
-  yields_df, tp_df, pcs_mat, n_pcs, data, factors
+  yields_df, tp_df, pcs_mat, n_pcs, data, factors,
+  step = NEWS_STEP
 ) {
   node_mats <- HETID_CONSTANTS$DEFAULT_ACM_MATURITIES
   all_mats <- node_mats[
-    node_mats <= effective_max_maturity(HETID_CONSTANTS$DEFAULT_STEP)
+    node_mats <= effective_max_maturity(step)
   ]
   # Loadings rows are the annual yield nodes; index them by position,
   # not by month value
@@ -83,7 +84,8 @@ compute_w2_factor_residuals <- function(
   w2_all <- compute_w2_residuals(
     yields = yields_df, term_premia = tp_df,
     maturities = all_mats,
-    n_pcs = n_pcs, pcs = pcs_mat
+    n_pcs = n_pcs, pcs = pcs_mat,
+    step = step
   )
   w2_all_mat <- do.call(cbind, w2_all$residuals)
 

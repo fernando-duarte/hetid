@@ -22,7 +22,10 @@ save_plot_pair <- function(plot, base_name) {
   )
 }
 
-# Monthly n-hat series (the legacy analyses ran on monthly ACM data)
+# Monthly n-hat series (the legacy analyses ran on monthly ACM data).
+# This diagnostic stays on the annual news clock by design: it
+# validates the implied 1-year-ahead short yield against realizations
+# a calendar year later, an inherently annual-horizon object.
 acm <- extract_acm_data(data_types = c("yields", "term_premia"), frequency = "monthly")
 yields <- acm[, grep("^y\\d+$", names(acm))]
 term_premia <- acm[, grep("^tp\\d+$", names(acm))]

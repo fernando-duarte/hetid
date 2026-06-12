@@ -19,10 +19,17 @@ cli_h1("Computing Theoretical Variance Bounds")
 yield_vars <- grep("^y\\d+$", names(data), value = TRUE)
 tp_vars <- grep("^tp\\d+$", names(data), value = TRUE)
 
-# Get yield maturities from variable names
-# Exclude the last maturity because compute_n_hat(i) requires y(i+1) and tp(i+1)
+# Get yield maturities from variable names. The variance bounds stay
+# on the annual news clock (step 12): compute_k_hat's realized leg
+# needs the step-maturity yield, and the 3-month yield sits below the
+# data's 6-month floor, so the quarterly clock is infeasible here.
+# Keep the annual nodes that admit an i + step neighbor.
 all_maturities <- as.numeric(gsub("y", "", yield_vars))
-maturities <- all_maturities[-length(all_maturities)]
+annual_step <- HETID_CONSTANTS$DEFAULT_STEP
+maturities <- all_maturities[
+  all_maturities %% annual_step == 0 &
+    all_maturities <= hetid::effective_max_maturity(annual_step)
+]
 
 # Ensure maturities are sorted
 if (!all(maturities == sort(maturities))) {

@@ -89,15 +89,18 @@ compute_identification_residuals <- function(
   maturities = DEFAULT_ID_MATURITIES,
   n_pcs = HETID_CONSTANTS$DEFAULT_N_PCS,
   mode = "maturities",
-  factors = DEFAULT_ID_FACTORS
+  factors = DEFAULT_ID_FACTORS,
+  step = NEWS_STEP
 ) {
   cli::cli_alert_info("Computing W1 residuals...")
   w1_result <- compute_w1_residuals(
     n_pcs = n_pcs, data = data
   )
 
-  yield_cols <- paste0(YIELD_PREFIX, HETID_CONSTANTS$DEFAULT_ACM_MATURITIES)
-  tp_cols <- paste0(TP_PREFIX, HETID_CONSTANTS$DEFAULT_ACM_MATURITIES)
+  # Carry every maturity column the data provides: the quarterly news
+  # clock needs step-adjacent sub-annual maturities around each horizon
+  yield_cols <- grep("^y[0-9]+$", names(data), value = TRUE)
+  tp_cols <- grep("^tp[0-9]+$", names(data), value = TRUE)
   pc_cols <- paste0(HETID_CONSTANTS$PC_PREFIX, seq_len(n_pcs))
   yields_df <- data[, yield_cols]
   tp_df <- data[, tp_cols]
@@ -105,14 +108,16 @@ compute_identification_residuals <- function(
 
   if (mode == "factors") {
     w2_mat <- compute_w2_factor_residuals(
-      yields_df, tp_df, pcs_mat, n_pcs, data, factors
+      yields_df, tp_df, pcs_mat, n_pcs, data, factors,
+      step = step
     )
   } else {
     cli::cli_alert_info("Computing W2 residuals...")
     w2_result <- compute_w2_residuals(
       yields = yields_df, term_premia = tp_df,
       maturities = maturities,
-      n_pcs = n_pcs, pcs = pcs_mat
+      n_pcs = n_pcs, pcs = pcs_mat,
+      step = step
     )
     assert_w2_alignment(w2_result)
     w2_mat <- do.call(cbind, w2_result$residuals)

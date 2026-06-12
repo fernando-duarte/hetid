@@ -23,7 +23,7 @@ make_fake_acm <- function(n_rows, seed) {
   fake <- data.frame(
     date = as.Date("1990-03-31") + round(91.3125 * seq_len(n_rows))
   )
-  for (m in HETID_CONSTANTS$DEFAULT_ACM_MATURITIES) {
+  for (m in PIPELINE_ACM_MATURITIES) {
     fake[[paste0(YIELD_PREFIX, m)]] <- rnorm(n_rows, mean = 3)
     fake[[paste0(TP_PREFIX, m)]] <- rnorm(n_rows, sd = 0.3)
   }
@@ -86,10 +86,8 @@ check(
 # sliced-from-full wholesale; this is the direct witness for D2's
 # claim that EVERY first stage is refit per block.
 pc_cols <- paste0(HETID_CONSTANTS$PC_PREFIX, 1:6)
-yield_cols <- paste0(
-  YIELD_PREFIX, HETID_CONSTANTS$DEFAULT_ACM_MATURITIES
-)
-tp_cols <- paste0(TP_PREFIX, HETID_CONSTANTS$DEFAULT_ACM_MATURITIES)
+yield_cols <- paste0(YIELD_PREFIX, PIPELINE_ACM_MATURITIES)
+tp_cols <- paste0(TP_PREFIX, PIPELINE_ACM_MATURITIES)
 w2_block <- compute_w2_residuals(
   yields = fake[fb$s_rows, yield_cols],
   term_premia = fake[fb$s_rows, tp_cols],

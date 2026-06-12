@@ -5,6 +5,22 @@ package, organized by workflow stage. All outputs are stored
 within the scripts directory for self-contained
 reproducibility.
 
+## News Clock
+
+The identification pipeline runs on a quarterly news clock
+(`NEWS_STEP <- 3L` in `utils/common_settings.R`): one news period
+equals one quarter, matching the quarterly rows of the stage-01
+dataset, so the rows-equal-period contract of the SDF-news
+construction holds exactly. Stage 01 therefore carries maturities at
+3-month spacing (`PIPELINE_ACM_MATURITIES`, 9 to 120 months), giving
+every horizon its step-adjacent neighbors; quarterly-clock horizons
+start at 9 months because the previous-period maturity must stay at or
+above the data's 6-month floor. Two diagnostics deliberately remain on
+the annual clock: the stage-03 variance bounds (the realized leg of
+`compute_k_hat()` needs the step-maturity yield, and the 3-month yield
+sits below the grid floor) and the stage-02 n-hat episode analysis
+(which validates an inherently 1-year-ahead prediction).
+
 ## Directory Structure
 
 ### 01_data_analysis/

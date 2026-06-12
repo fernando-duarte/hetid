@@ -8,9 +8,12 @@ source(here::here("scripts/utils/common_settings.R"))
 # Load specialized packages for this script
 library(lubridate) # Date handling
 
-acm_data <- extract_acm_data(frequency = "quarterly")
+maturity_range <- PIPELINE_ACM_MATURITIES
 
-maturity_range <- HETID_CONSTANTS$DEFAULT_ACM_MATURITIES
+acm_data <- extract_acm_data(
+  maturities = maturity_range,
+  frequency = "quarterly"
+)
 
 dates <- acm_data$date
 yield_cols <- paste0("y", maturity_range)
