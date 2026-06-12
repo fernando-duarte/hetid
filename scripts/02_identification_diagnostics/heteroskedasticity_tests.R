@@ -34,34 +34,7 @@ cli_alert_info("Testing {length(maturities)} maturities, {n_pcs} PCs, {id_resid$
 suite_tests <- c("White", "BP", "GQ", "Harvey", "Anscombe", "CW")
 all_tests <- c(suite_tests, "Glejser", "BPLM", "ARCH")
 
-# Breusch-Pagan LM: squared residuals on the PC levels, the direct check
-# that Var(e2 | Z) moves with the instruments
-bp_lm_test <- function(residuals, regressors) {
-  aux_fit <- lm(residuals^2 ~ regressors)
-  r_squared <- summary(aux_fit)$r.squared
-  lm_stat <- length(residuals) * r_squared
-  df <- ncol(regressors)
-  list(statistic = lm_stat, df = df, p_value = 1 - pchisq(lm_stat, df), r_squared = r_squared)
-}
-
-# ARCH(1) LM: squared residuals on their one-period lag
-arch1_test <- function(residuals) {
-  res_sq <- residuals^2
-  res_sq_lag <- c(NA, res_sq[-length(res_sq)])
-  valid <- !is.na(res_sq) & !is.na(res_sq_lag)
-  arch_fit <- lm(res_sq[valid] ~ res_sq_lag[valid])
-  stat <- (sum(valid) - 1) * summary(arch_fit)$r.squared
-  list(statistic = stat, p_value = 1 - pchisq(stat, df = 1))
-}
-
-# NA fallback row matching the perform_all_hetero_tests() columns
-suite_na_row <- function(var_name) {
-  na_cols <- setNames(
-    rep(list(NA_real_), 2 * length(suite_tests)),
-    paste0(rep(suite_tests, each = 2), c("_stat", "_pval"))
-  )
-  data.frame(Variable = var_name, na_cols, stringsAsFactors = FALSE)
-}
+source(here::here("scripts/utils/hetero_lm_tests.R"))
 
 cli_h2("Running Test Battery on Every Maturity")
 tests_by_maturity <- do.call(rbind, lapply(seq_along(maturities), function(k) {
