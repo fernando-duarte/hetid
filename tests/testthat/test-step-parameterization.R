@@ -2,18 +2,18 @@
 # omitted-step results exactly, and non-default steps must follow the
 # hand-computed formulas on synthetic data.
 
-# Synthetic frame with columns only at the maturities a step = 2 chain
+# Synthetic frame with columns only at the maturities a step = 6 chain
 # touches; deterministic values so expectations are hand-computable
-make_step_two_frame <- function() {
-  y2 <- c(2.0, 2.1, 2.3, 2.2, 2.4, 2.6, 2.5, 2.7)
-  y4 <- c(3.0, 3.2, 3.1, 3.3, 3.5, 3.4, 3.6, 3.8)
-  y6 <- c(4.1, 4.0, 4.2, 4.4, 4.3, 4.5, 4.7, 4.6)
-  tp2 <- c(0.20, 0.22, 0.21, 0.23, 0.25, 0.24, 0.26, 0.28)
-  tp4 <- c(0.40, 0.41, 0.43, 0.42, 0.44, 0.46, 0.45, 0.47)
-  tp6 <- c(0.60, 0.62, 0.61, 0.63, 0.65, 0.64, 0.66, 0.68)
+make_step_six_frame <- function() {
+  y6 <- c(2.0, 2.1, 2.3, 2.2, 2.4, 2.6, 2.5, 2.7)
+  y12 <- c(3.0, 3.2, 3.1, 3.3, 3.5, 3.4, 3.6, 3.8)
+  y18 <- c(4.1, 4.0, 4.2, 4.4, 4.3, 4.5, 4.7, 4.6)
+  tp6 <- c(0.20, 0.22, 0.21, 0.23, 0.25, 0.24, 0.26, 0.28)
+  tp12 <- c(0.40, 0.41, 0.43, 0.42, 0.44, 0.46, 0.45, 0.47)
+  tp18 <- c(0.60, 0.62, 0.61, 0.63, 0.65, 0.64, 0.66, 0.68)
   list(
-    yields = data.frame(y2 = y2, y4 = y4, y6 = y6),
-    term_premia = data.frame(tp2 = tp2, tp4 = tp4, tp6 = tp6)
+    yields = data.frame(y6 = y6, y12 = y12, y18 = y18),
+    term_premia = data.frame(tp6 = tp6, tp12 = tp12, tp18 = tp18)
   )
 }
 
@@ -24,28 +24,28 @@ test_that("explicit default step reproduces omitted-step results on bundled data
   s <- HETID_CONSTANTS$DEFAULT_STEP
 
   expect_identical(
-    compute_n_hat(yields, tp, i = 5, step = s),
-    compute_n_hat(yields, tp, i = 5)
+    compute_n_hat(yields, tp, i = 60, step = s),
+    compute_n_hat(yields, tp, i = 60)
   )
   expect_identical(
-    compute_price_news(yields, tp, i = 5, step = s),
-    compute_price_news(yields, tp, i = 5)
+    compute_price_news(yields, tp, i = 60, step = s),
+    compute_price_news(yields, tp, i = 60)
   )
   expect_identical(
-    compute_sdf_innovations(yields, tp, i = 5, step = s),
-    compute_sdf_innovations(yields, tp, i = 5)
+    compute_sdf_innovations(yields, tp, i = 60, step = s),
+    compute_sdf_innovations(yields, tp, i = 60)
   )
   expect_identical(
-    compute_c_hat(yields, tp, i = 5, step = s),
-    compute_c_hat(yields, tp, i = 5)
+    compute_c_hat(yields, tp, i = 60, step = s),
+    compute_c_hat(yields, tp, i = 60)
   )
   expect_identical(
-    compute_k_hat(yields, tp, i = 5, step = s),
-    compute_k_hat(yields, tp, i = 5)
+    compute_k_hat(yields, tp, i = 60, step = s),
+    compute_k_hat(yields, tp, i = 60)
   )
   expect_identical(
-    compute_variance_bound(yields, tp, i = 5, step = s),
-    compute_variance_bound(yields, tp, i = 5)
+    compute_variance_bound(yields, tp, i = 60, step = s),
+    compute_variance_bound(yields, tp, i = 60)
   )
 })
 
@@ -56,73 +56,84 @@ test_that("explicit default step reproduces omitted-step w2 residuals", {
 
   res_omitted <- compute_w2_residuals(
     test_env$yields, test_env$term_premia,
-    maturities = c(2, 3), n_pcs = 4, pcs = pcs
+    maturities = c(24, 36), n_pcs = 4, pcs = pcs
   )
   res_explicit <- compute_w2_residuals(
     test_env$yields, test_env$term_premia,
-    maturities = c(2, 3), n_pcs = 4, pcs = pcs,
+    maturities = c(24, 36), n_pcs = 4, pcs = pcs,
     step = HETID_CONSTANTS$DEFAULT_STEP
   )
   expect_identical(res_omitted, res_explicit)
 })
 
-test_that("n_hat with step = 2 matches the hand formula", {
-  frame <- make_step_two_frame()
+test_that("n_hat with step = 6 matches the hand formula", {
+  frame <- make_step_six_frame()
   pct <- HETID_CONSTANTS$PERCENT_TO_DECIMAL
   units <- HETID_CONSTANTS$MATURITY_UNITS_PER_YEAR
 
-  n_hat_2 <- compute_n_hat(frame$yields, frame$term_premia, i = 2, step = 2)
-  expected_2 <- ((2 / units) * frame$yields$y2 - (4 / units) * frame$yields$y4 +
-    (4 / units) * frame$term_premia$tp4 - (2 / units) * frame$term_premia$tp2) / pct
-  expect_equal(n_hat_2, expected_2)
+  n_hat_6 <- compute_n_hat(frame$yields, frame$term_premia, i = 6, step = 6)
+  expected_6 <- ((6 / units) * frame$yields$y6 - (12 / units) * frame$yields$y12 +
+    (12 / units) * frame$term_premia$tp12 - (6 / units) * frame$term_premia$tp6) / pct
+  expect_equal(n_hat_6, expected_6)
 
-  n_hat_4 <- compute_n_hat(frame$yields, frame$term_premia, i = 4, step = 2)
-  expected_4 <- ((4 / units) * frame$yields$y4 - (6 / units) * frame$yields$y6 +
-    (6 / units) * frame$term_premia$tp6 - (4 / units) * frame$term_premia$tp4) / pct
-  expect_equal(n_hat_4, expected_4)
+  n_hat_12 <- compute_n_hat(frame$yields, frame$term_premia, i = 12, step = 6)
+  expected_12 <- ((12 / units) * frame$yields$y12 - (18 / units) * frame$yields$y18 +
+    (18 / units) * frame$term_premia$tp18 - (12 / units) * frame$term_premia$tp12) / pct
+  expect_equal(n_hat_12, expected_12)
 })
 
 test_that("n_hat previous boundary at i == step uses the step-maturity yield", {
-  frame <- make_step_two_frame()
+  frame <- make_step_six_frame()
   pct <- HETID_CONSTANTS$PERCENT_TO_DECIMAL
   units <- HETID_CONSTANTS$MATURITY_UNITS_PER_YEAR
 
-  boundary <- compute_n_hat_previous(frame$yields, frame$term_premia, i = 2, step = 2)
-  expect_equal(boundary, -(2 / units) * frame$yields$y2 / pct)
+  boundary <- compute_n_hat_previous(frame$yields, frame$term_premia, i = 6, step = 6)
+  expect_equal(boundary, -(6 / units) * frame$yields$y6 / pct)
 })
 
-test_that("k_hat with step = 2 shifts by whole news periods", {
-  frame <- make_step_two_frame()
+test_that("k_hat with step = 6 shifts by whole news periods", {
+  frame <- make_step_six_frame()
   pct <- HETID_CONSTANTS$PERCENT_TO_DECIMAL
   units <- HETID_CONSTANTS$MATURITY_UNITS_PER_YEAR
   n_obs <- nrow(frame$yields)
 
-  k_hat <- compute_k_hat(frame$yields, frame$term_premia, i = 4, step = 2)
+  k_hat <- compute_k_hat(frame$yields, frame$term_premia, i = 12, step = 6)
 
-  n_hat_prev <- ((2 / units) * frame$yields$y2 - (4 / units) * frame$yields$y4 +
-    (4 / units) * frame$term_premia$tp4 - (2 / units) * frame$term_premia$tp2) / pct
+  n_hat_prev <- ((6 / units) * frame$yields$y6 - (12 / units) * frame$yields$y12 +
+    (12 / units) * frame$term_premia$tp12 - (6 / units) * frame$term_premia$tp6) / pct
   horizon_periods <- 2
-  realized <- -(2 / units) * frame$yields$y2[(horizon_periods + 1):n_obs] / pct
+  realized <- -(6 / units) * frame$yields$y6[(horizon_periods + 1):n_obs] / pct
   forecast <- n_hat_prev[2:(n_obs - horizon_periods + 1)]
   expect_equal(k_hat, mean((realized - forecast)^4))
 })
 
 test_that("k_hat rejects a maturity that is not a multiple of step", {
-  frame <- make_step_two_frame()
+  frame <- make_step_six_frame()
   expect_error(
-    compute_k_hat(frame$yields, frame$term_premia, i = 3, step = 2),
+    compute_k_hat(frame$yields, frame$term_premia, i = 9, step = 6),
     class = "hetid_error_bad_argument"
   )
 })
 
-test_that("price news with step = 2 differences the step-spaced n_hat series", {
-  frame <- make_step_two_frame()
+test_that("price news with step = 6 differences the step-spaced n_hat series", {
+  frame <- make_step_six_frame()
   n_obs <- nrow(frame$yields)
 
-  news <- compute_price_news(frame$yields, frame$term_premia, i = 4, step = 2)
-  n_hat_4 <- compute_n_hat(frame$yields, frame$term_premia, i = 4, step = 2)
-  n_hat_2 <- compute_n_hat(frame$yields, frame$term_premia, i = 2, step = 2)
-  expect_equal(news, n_hat_2[2:n_obs] - n_hat_4[1:(n_obs - 1)])
+  news <- compute_price_news(frame$yields, frame$term_premia, i = 12, step = 6)
+  n_hat_12 <- compute_n_hat(frame$yields, frame$term_premia, i = 12, step = 6)
+  n_hat_6 <- compute_n_hat(frame$yields, frame$term_premia, i = 6, step = 6)
+  expect_equal(news, n_hat_6[2:n_obs] - n_hat_12[1:(n_obs - 1)])
+})
+
+test_that("a quarterly step fails informatively below the maturity floor", {
+  # step = 3 news at the boundary needs maturity 3, below MIN_MATURITY:
+  # the future quarterly clock starts at i = 9 months instead
+  frame <- make_step_six_frame()
+  expect_error(
+    compute_price_news(frame$yields, frame$term_premia, i = 3, step = 3),
+    class = "hetid_error_bad_argument"
+  )
+  expect_true(validate_news_maturity_index(9, step = 3))
 })
 
 test_that("validate_step rejects non-positive, fractional, and oversized steps", {
@@ -134,7 +145,7 @@ test_that("validate_step rejects non-positive, fractional, and oversized steps",
     class = "hetid_error_bad_argument"
   )
   expect_true(validate_step(1L))
-  expect_true(validate_step(2L))
+  expect_true(validate_step(6L))
 })
 
 test_that("effective_max_maturity subtracts the step from the maximum", {
@@ -143,8 +154,8 @@ test_that("effective_max_maturity subtracts the step from the maximum", {
     HETID_CONSTANTS$MAX_MATURITY - 1L
   )
   expect_identical(
-    effective_max_maturity(2L),
-    HETID_CONSTANTS$MAX_MATURITY - 2L
+    effective_max_maturity(6L),
+    HETID_CONSTANTS$MAX_MATURITY - 6L
   )
   expect_identical(
     effective_max_maturity(),
@@ -154,10 +165,10 @@ test_that("effective_max_maturity subtracts the step from the maximum", {
 
 test_that("news maturity validator enforces the step-aware ceiling", {
   expect_true(
-    validate_news_maturity_index(HETID_CONSTANTS$MAX_MATURITY - 2L, step = 2L)
+    validate_news_maturity_index(HETID_CONSTANTS$MAX_MATURITY - 6L, step = 6L)
   )
   expect_error(
-    validate_news_maturity_index(HETID_CONSTANTS$MAX_MATURITY - 1L, step = 2L),
+    validate_news_maturity_index(HETID_CONSTANTS$MAX_MATURITY - 1L, step = 6L),
     class = "hetid_error_bad_argument"
   )
 })

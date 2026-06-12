@@ -11,15 +11,15 @@ compute_c_hat(yields, term_premia, i, step = HETID_CONSTANTS$DEFAULT_STEP)
 
 \item{term_premia}{Data frame with columns tp1, tp2, ..., containing term premia}
 
-\item{i}{Integer specifying the maturity index (column) to analyze.
-Must be between 1 and the package maximum (10 for the ACM dataset;
-functions that require data at maturity \code{i + step} accept at
-most \code{MAX_MATURITY - step}, i.e. 9 with the default step).
-The input data must contain the columns for the maturities the function
-uses (e.g. \code{y5}/\code{tp5} plus step-adjacent maturities for
-\code{i = 5}).
-Corresponds to maturity in years for the ACM dataset (i=1 is 1-year,
-i=2 is 2-year, ..., i=10 is 10-year).}
+\item{i}{Integer specifying the maturity index (column) to analyze,
+in \strong{months}. Must be between 6 and 120 (the ACM monthly
+grid); functions that require data at maturity \code{i + step}
+accept at most \code{MAX_MATURITY - step}, i.e. 108 with the
+default annual step. The input data must contain the columns for
+the maturities the function uses (e.g. \code{y60}/\code{tp60}
+plus step-adjacent maturities for \code{i = 60}). Whole years are
+multiples of 12 (i = 12 is the 1-year bond, i = 60 the 5-year,
+i = 120 the 10-year).}
 
 \item{step}{Integer number of maturity-index units per news period
 (default \code{HETID_CONSTANTS$DEFAULT_STEP}). The news operator
@@ -41,7 +41,7 @@ the expected log price at horizon i.
 }
 \note{
 The effective maximum for \code{i} is \code{MAX_MATURITY - step}
-(9 for standard ACM data with the default step), because this
+(108 for standard ACM data with the default annual step), because this
 function requires data at maturity \code{i + step}.
 }
 \section{Mathematical Formula}{
@@ -58,11 +58,11 @@ for term structure analysis.
 \examples{
 # Extract ACM data
 data <- extract_acm_data(data_types = c("yields", "term_premia"))
-yields <- data[, paste0("y", 1:10)]
-term_premia <- data[, paste0("tp", 1:10)]
+yields <- data[, paste0("y", seq(12, 120, 12))]
+term_premia <- data[, paste0("tp", seq(12, 120, 12))]
 
-# Compute c_hat for i=5
-c_hat_5 <- compute_c_hat(yields, term_premia, i = 5)
+# Compute c_hat for the 5-year (60-month) maturity
+c_hat_60 <- compute_c_hat(yields, term_premia, i = 60)
 
 }
 \references{

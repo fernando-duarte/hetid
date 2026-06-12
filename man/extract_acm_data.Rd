@@ -6,7 +6,7 @@
 \usage{
 extract_acm_data(
   data_types = c("yields", "term_premia"),
-  maturities = HETID_CONSTANTS$MIN_MATURITY:HETID_CONSTANTS$MAX_MATURITY,
+  maturities = HETID_CONSTANTS$DEFAULT_ACM_MATURITIES,
   start_date = NULL,
   end_date = NULL,
   frequency = c("monthly", "quarterly"),
@@ -20,8 +20,11 @@ extract_acm_data(
 Options: "yields", "term_premia", "risk_neutral_yields".
 Default is c("yields", "term_premia").}
 
-\item{maturities}{Numeric vector of maturities (1-10 years).
-Default is 1:10 (all maturities).}
+\item{maturities}{Numeric vector of maturities in months (6-120).
+Default is the annual nodes \code{seq(12, 120, by = 12)}
+(\code{HETID_CONSTANTS$DEFAULT_ACM_MATURITIES}); pass
+\code{HETID_CONSTANTS$ALL_ACM_MATURITIES} for the full monthly
+grid (GitHub source only).}
 
 \item{start_date}{Date or character string (YYYY-MM-DD format) for start of sample.
 Default is NULL (earliest available date).}
@@ -53,11 +56,11 @@ cache only, annual maturities).}
 }
 \value{
 A data frame with date column and selected variables.
-Column naming convention:
+Column naming convention (maturity suffix in months):
 \itemize{
-\item Yields: y1, y2, ..., y10
-\item Term premia: tp1, tp2, ..., tp10
-\item Risk-neutral yields: rny1, rny2, ..., rny10
+\item Yields: y12, y24, ..., y120 (plus e.g. y6, y18 when requested)
+\item Term premia: tp12, tp24, ..., tp120
+\item Risk-neutral yields: rny12, rny24, ..., rny120
 }
 }
 \description{
@@ -66,38 +69,44 @@ allowing selection of specific data types, maturities, and date ranges.
 Optionally converts monthly data to quarterly frequency.
 }
 \details{
-The ACM data contains:
-\itemize{
-\item ACMY01-ACMY10: Zero-coupon Treasury yields (1-10 years)
-\item ACMTP01-ACMTP10: Term premium estimates (1-10 years)
-\item ACMRNY01-ACMRNY10: Risk-neutral yields (1-10 years)
-}
+The raw ACM data carries maturities at one-month steps from 6 to
+120 months. Whole-year maturities keep the official column names
+(ACMY01-ACMY10, ACMTP01-ACMTP10, ACMRNY01-ACMRNY10); sub-annual
+months use names like ACMY006M. The NY Fed fallback source provides
+only the annual nodes; requesting sub-annual maturities against it
+raises a structured error.
 
 All values are in annualized percentage points.
 
 By construction: Term Premium = Yield - Risk-Neutral Yield
 }
 \examples{
-# Extract all yields and term premia
+# Extract yields and term premia at the annual nodes
 data <- extract_acm_data()
 
 # Extract only 2-year and 10-year yields for specific period
 data <- extract_acm_data(
   data_types = "yields",
-  maturities = c(2, 10),
+  maturities = c(24, 120),
   start_date = "2010-01-01",
   end_date = "2020-12-31"
 )
 
-# Get quarterly term premia for all maturities
+# Get quarterly term premia at the annual nodes
 data <- extract_acm_data(
   data_types = "term_premia",
   frequency = "quarterly"
 )
 
-# Extract all three data types for 5-year maturity
+# Extract all three data types for the 5-year (60-month) maturity
 data <- extract_acm_data(
   data_types = c("yields", "term_premia", "risk_neutral_yields"),
-  maturities = 5
+  maturities = 60
+)
+
+# Sub-annual maturities from the monthly grid
+data <- extract_acm_data(
+  data_types = "yields",
+  maturities = c(6, 18, 30)
 )
 }

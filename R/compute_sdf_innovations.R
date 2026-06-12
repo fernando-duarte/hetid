@@ -23,28 +23,28 @@
 #'   terms; with complete data this averages the T-1 available terms
 #'
 #' @note The effective maximum for \code{i} is \code{MAX_MATURITY - step}
-#'   (9 for standard ACM data with the default step), because this
+#'   (108 for standard ACM data with the default annual step), because this
 #'   function requires data at maturity \code{i + step}.
 #'
 #' @export
 #'
 #' @examples
-#' # Extract ACM data - need maturities 1, i-1, i, i+1 for maturity i
-#' # For i=5, we need maturities 1, 4, 5, 6
+#' # Extract ACM data - need maturities i-step, i, i+step (months)
+#' # For i = 60 with the default annual step: 48, 60, 72
 #' data <- extract_acm_data(
 #'   data_types = c("yields", "term_premia"),
-#'   maturities = c(1, 4, 5, 6)
+#'   maturities = c(48, 60, 72)
 #' )
-#' yields <- data[, paste0("y", c(1, 4, 5, 6))]
-#' term_premia <- data[, paste0("tp", c(1, 4, 5, 6))]
+#' yields <- data[, paste0("y", c(48, 60, 72))]
+#' term_premia <- data[, paste0("tp", c(48, 60, 72))]
 #'
-#' # Compute SDF innovations for i=5
-#' sdf_innovations_5 <- compute_sdf_innovations(yields, term_premia, i = 5)
+#' # Compute SDF innovations for i = 60
+#' sdf_innovations_60 <- compute_sdf_innovations(yields, term_premia, i = 60)
 #'
 #' # Compute SDF innovations with dates
-#' sdf_innovations_5_df <- compute_sdf_innovations(
+#' sdf_innovations_60_df <- compute_sdf_innovations(
 #'   yields, term_premia,
-#'   i = 5,
+#'   i = 60,
 #'   return_df = TRUE,
 #'   dates = data$date
 #' )

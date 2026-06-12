@@ -13,7 +13,7 @@
 #' Var(error(i,t+1)) <= (1/4)*c_hat_i*k_hat_i
 #'
 #' @note The effective maximum for \code{i} is \code{MAX_MATURITY - step}
-#'   (9 for standard ACM data with the default step), because this
+#'   (108 for standard ACM data with the default annual step), because this
 #'   function requires data at maturity \code{i + step}. \code{i} must be
 #'   a positive multiple of \code{step} (enforced by
 #'   \code{\link{compute_k_hat}}).
@@ -23,11 +23,11 @@
 #' @examples
 #' # Extract ACM data
 #' data <- extract_acm_data(data_types = c("yields", "term_premia"))
-#' yields <- data[, paste0("y", 1:10)]
-#' term_premia <- data[, paste0("tp", 1:10)]
+#' yields <- data[, paste0("y", seq(12, 120, 12))]
+#' term_premia <- data[, paste0("tp", seq(12, 120, 12))]
 #'
-#' # Compute variance bound for i=5
-#' var_bound_5 <- compute_variance_bound(yields, term_premia, i = 5)
+#' # Compute variance bound for the 5-year (60-month) maturity
+#' var_bound_60 <- compute_variance_bound(yields, term_premia, i = 60)
 #'
 compute_variance_bound <- function(yields, term_premia, i,
                                    step = HETID_CONSTANTS$DEFAULT_STEP) {

@@ -65,7 +65,7 @@ Federal Reserve sources
 \preformatted{
 # Data Setup: merge ACM yields with bundled PCs by quarter
 download_term_premia()
-mats <- 1:10
+mats <- seq(12, 120, by = 12)
 acm_data <- extract_acm_data(
   data_types = c("yields", "term_premia"),
   maturities = mats,
@@ -98,7 +98,7 @@ tp <- merged[, paste0("tp", mats)]
 w1 <- compute_w1_residuals(n_pcs = 4)
 w2 <- compute_w2_residuals(
   yields, tp,
-  maturities = c(2, 5, 9),
+  maturities = c(24, 60, 108),
   n_pcs = 4, pcs = pcs
 )
 }
@@ -108,8 +108,9 @@ w2 <- compute_w2_residuals(
 
 \describe{
 \item{\strong{ACM Term Structure Data}}{Monthly data from Adrian, Crump, and
-Moench (2013) including yields, term premia, and risk-neutral yields for
-1-10 year maturities. Updated regularly from Federal Reserve sources.}
+Moench (2013) including yields, term premia, and risk-neutral yields at
+monthly maturity steps from 6 to 120 months. Updated from the GitHub
+reproduction release; the NY Fed workbook is the opt-in fallback.}
 \item{\strong{Economic Variables}}{Quarterly macroeconomic and financial
 variables including GDP, inflation, financial conditions indices, and
 principal components of financial asset returns.}

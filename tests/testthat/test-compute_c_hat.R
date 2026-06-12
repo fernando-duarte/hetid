@@ -1,19 +1,19 @@
 test_that("compute_c_hat returns single numeric value for given maturity", {
   test_env <- setup_standard_test_env()
 
-  # Test for maturity 5
-  c_hat_5 <- compute_c_hat(test_env$yields, test_env$term_premia, i = 5)
+  # Test for maturity 60
+  c_hat_60 <- compute_c_hat(test_env$yields, test_env$term_premia, i = 60)
 
-  expect_type(c_hat_5, "double")
-  expect_length(c_hat_5, 1)
-  expect_true(is.finite(c_hat_5))
+  expect_type(c_hat_60, "double")
+  expect_length(c_hat_60, 1)
+  expect_true(is.finite(c_hat_60))
 })
 
 test_that("c_hat is always positive", {
   test_env <- setup_standard_test_env()
 
-  # Test for all maturities
-  for (i in 1:9) {
+  # Test across the annual nodes
+  for (i in seq(12, 108, by = 12)) {
     c_hat_i <- compute_c_hat(test_env$yields, test_env$term_premia, i = i)
     expect_gt(c_hat_i, 0,
       label = paste("c_hat should be positive for maturity", i)
@@ -24,14 +24,14 @@ test_that("c_hat is always positive", {
 test_that("c_hat bounds are correct", {
   test_env <- setup_standard_test_env()
 
-  # For maturity 1, should be < 1.02
-  c_hat_1 <- compute_c_hat(test_env$yields, test_env$term_premia, i = 1)
-  expect_lt(c_hat_1, 1.02,
-    label = "c_hat for maturity 1 should be below 1.02"
+  # For maturity 12, should be < 1.02
+  c_hat_12 <- compute_c_hat(test_env$yields, test_env$term_premia, i = 12)
+  expect_lt(c_hat_12, 1.02,
+    label = "c_hat for maturity 12 should be below 1.02"
   )
 
-  # For maturities > 1, should be < 1
-  for (i in 2:9) {
+  # For maturities > 12, should be < 1
+  for (i in seq(24, 108, by = 12)) {
     c_hat_i <- compute_c_hat(test_env$yields, test_env$term_premia, i = i)
     expect_lt(c_hat_i, 1,
       label = paste("c_hat should be below 1 for maturity", i)
@@ -43,7 +43,7 @@ test_that("c_hat equals exp(2 * max(n_hat))", {
   test_env <- setup_standard_test_env()
 
   # Test for several maturities
-  for (i in c(3, 5, 7)) {
+  for (i in c(36, 60, 84)) {
     c_hat_i <- compute_c_hat(test_env$yields, test_env$term_premia, i = i)
     n_hat_i <- compute_n_hat(test_env$yields, test_env$term_premia, i = i)
 
@@ -60,12 +60,12 @@ test_that("c_hat degenerate branch returns typed numeric NA", {
   test_env <- setup_standard_test_env()
   yields_na <- test_env$yields
 
-  # All-NA y5 makes n_hat all NA for any maturity that needs y5
-  yields_na$y5 <- NA_real_
+  # All-NA y60 makes n_hat all NA for any maturity that needs y60
+  yields_na$y60 <- NA_real_
 
   # vapply(..., numeric(1)) enforces a double return on the NA branch
   c_vals <- vapply(
-    c(4, 5),
+    c(48, 60),
     function(i) compute_c_hat(yields_na, test_env$term_premia, i = i),
     numeric(1)
   )
@@ -73,7 +73,7 @@ test_that("c_hat degenerate branch returns typed numeric NA", {
   expect_type(c_vals, "double")
   expect_true(all(is.na(c_vals)))
   expect_identical(
-    compute_c_hat(yields_na, test_env$term_premia, i = 5),
+    compute_c_hat(yields_na, test_env$term_premia, i = 60),
     NA_real_
   )
 })
@@ -82,7 +82,7 @@ test_that("compute_c_hat rejects mismatched yields and term_premia rows", {
   syn_long <- create_synthetic_test_data(n = 30)
   syn_short <- create_synthetic_test_data(n = 15)
   expect_error(
-    compute_c_hat(syn_long$yields, syn_short$term_premia, i = 5),
+    compute_c_hat(syn_long$yields, syn_short$term_premia, i = 60),
     "same number of observations",
     class = "hetid_error_dimension_mismatch"
   )
@@ -95,7 +95,7 @@ test_that("compute_c_hat rejects invalid maturity values", {
     "integer"
   )
   expect_error(
-    compute_c_hat(test_env$yields, test_env$term_premia, i = 10),
+    compute_c_hat(test_env$yields, test_env$term_premia, i = 120),
     "between"
   )
 })

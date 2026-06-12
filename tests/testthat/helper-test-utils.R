@@ -31,7 +31,7 @@ load_standard_test_data <- function(data_types = c("yields", "term_premia"),
 #' @return List with yields and term_premia data frames
 #' @keywords internal
 extract_yields_and_tp <- function(data) {
-  mats <- HETID_CONSTANTS$MIN_MATURITY:HETID_CONSTANTS$MAX_MATURITY
+  mats <- HETID_CONSTANTS$DEFAULT_ACM_MATURITIES
   list(
     yields = data[, paste0("y", mats), drop = FALSE],
     term_premia = data[, paste0("tp", mats), drop = FALSE]
@@ -88,15 +88,18 @@ expect_single_finite_value <- function(result, should_be_positive = TRUE, label 
 create_synthetic_test_data <- function(n = 100, n_maturities = 10, seed = 123) {
   set.seed(seed)
 
+  # Column names at the annual month nodes (y12, y24, ...)
+  mats <- 12L * seq_len(n_maturities)
+
   # Create correlated yield data
   yields <- matrix(rnorm(n * n_maturities), nrow = n, ncol = n_maturities)
-  colnames(yields) <- paste0("y", 1:n_maturities)
+  colnames(yields) <- paste0("y", mats)
 
   # Create term premia with some structure
   term_premia <- matrix(rnorm(n * n_maturities, mean = 0.01, sd = 0.005),
     nrow = n, ncol = n_maturities
   )
-  colnames(term_premia) <- paste0("tp", 1:n_maturities)
+  colnames(term_premia) <- paste0("tp", mats)
 
   list(
     yields = as.data.frame(yields),

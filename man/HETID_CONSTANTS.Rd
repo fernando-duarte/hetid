@@ -8,16 +8,21 @@ List containing package constants:
 \describe{
 \item{DEFAULT_N_PCS}{Standard number of principal components (4)}
 \item{MAX_N_PCS}{Maximum principal components (6)}
-\item{MIN_MATURITY}{Minimum maturity index (1)}
-\item{MAX_MATURITY}{Maximum maturity index (10)}
-\item{DEFAULT_STEP}{Maturity-index units per news period (1).
-The news operator steps one period; maturity arithmetic moves
-in multiples of the step (see
+\item{MIN_MATURITY}{Minimum maturity index in months (6)}
+\item{MAX_MATURITY}{Maximum maturity index in months (120)}
+\item{DEFAULT_STEP}{Maturity-index units (months) per news period
+(12: an annual news clock). The news operator steps one period;
+maturity arithmetic moves in multiples of the step (see
 \code{\link{effective_max_maturity}})}
 \item{MATURITY_UNITS_PER_YEAR}{Divisor converting a maturity
-index to years (1). Log bond prices scale annualized yields
-by maturity in years, so the n_hat weights are
+index to years (12: indices are months). Log bond prices scale
+annualized yields by maturity in years, so the n_hat weights are
 \code{i / MATURITY_UNITS_PER_YEAR}}
+\item{DEFAULT_ACM_MATURITIES}{Annual maturity nodes in months
+(12, 24, ..., 120); the default for
+\code{\link{extract_acm_data}}}
+\item{ALL_ACM_MATURITIES}{The full monthly maturity grid
+(6:120 months) available from the GitHub source}
 \item{MACHINE_EPSILON}{Machine precision}
 \item{MATRIX_SYMMETRY_TOL}{Tolerance for matrix symmetry
 checks}
@@ -42,8 +47,12 @@ xls fallback source}
 \item{ACM_LEGACY_FILENAME}{Retired cache filename from the old
 xls-to-CSV pipeline; never resolved, only flagged for cleanup}
 \item{BUNDLED_VARIABLES_DATASET}{Bundled dataset name}
-\item{COL_FORMAT_PADDED}{Padded column name format}
-\item{COL_FORMAT_SIMPLE}{Simple column name format}
+\item{COL_FORMAT_PADDED}{Padded raw column name format for
+whole-year maturities (e.g. ACMY01)}
+\item{COL_FORMAT_MONTHLY}{Raw column name format for sub-annual
+month maturities (e.g. ACMY006M)}
+\item{COL_FORMAT_SIMPLE}{Package column name format, maturity in
+months (e.g. y12)}
 }
 }
 \usage{

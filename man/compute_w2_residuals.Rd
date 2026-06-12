@@ -111,7 +111,7 @@ the examples below for this workflow.
 }
 \examples{
 # Load quarterly ACM data and bundled PCs
-mats <- c(1, 2, 3, 4)
+mats <- c(12, 24, 36, 48)
 acm_data <- extract_acm_data(
   data_types = c("yields", "term_premia"),
   maturities = mats,
@@ -145,6 +145,6 @@ tp <- merged[, paste0("tp", mats)]
 # Compute residuals with aligned PCs
 res_w2 <- compute_w2_residuals(
   yields, tp,
-  maturities = c(2, 3), n_pcs = 4, pcs = pcs
+  maturities = c(24, 36), n_pcs = 4, pcs = pcs
 )
 }

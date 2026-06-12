@@ -18,15 +18,15 @@ compute_sdf_innovations(
 
 \item{term_premia}{Data frame with columns tp1, tp2, ..., containing term premia}
 
-\item{i}{Integer specifying the maturity index (column) to analyze.
-Must be between 1 and the package maximum (10 for the ACM dataset;
-functions that require data at maturity \code{i + step} accept at
-most \code{MAX_MATURITY - step}, i.e. 9 with the default step).
-The input data must contain the columns for the maturities the function
-uses (e.g. \code{y5}/\code{tp5} plus step-adjacent maturities for
-\code{i = 5}).
-Corresponds to maturity in years for the ACM dataset (i=1 is 1-year,
-i=2 is 2-year, ..., i=10 is 10-year).}
+\item{i}{Integer specifying the maturity index (column) to analyze,
+in \strong{months}. Must be between 6 and 120 (the ACM monthly
+grid); functions that require data at maturity \code{i + step}
+accept at most \code{MAX_MATURITY - step}, i.e. 108 with the
+default annual step. The input data must contain the columns for
+the maturities the function uses (e.g. \code{y60}/\code{tp60}
+plus step-adjacent maturities for \code{i = 60}). Whole years are
+multiples of 12 (i = 12 is the 1-year bond, i = 60 the 5-year,
+i = 120 the 10-year).}
 
 \item{return_df}{Logical, if TRUE returns a data frame with dates (default FALSE)}
 
@@ -63,26 +63,26 @@ terms; with complete data this averages the T-1 available terms
 }
 \note{
 The effective maximum for \code{i} is \code{MAX_MATURITY - step}
-(9 for standard ACM data with the default step), because this
+(108 for standard ACM data with the default annual step), because this
 function requires data at maturity \code{i + step}.
 }
 \examples{
-# Extract ACM data - need maturities 1, i-1, i, i+1 for maturity i
-# For i=5, we need maturities 1, 4, 5, 6
+# Extract ACM data - need maturities i-step, i, i+step (months)
+# For i = 60 with the default annual step: 48, 60, 72
 data <- extract_acm_data(
   data_types = c("yields", "term_premia"),
-  maturities = c(1, 4, 5, 6)
+  maturities = c(48, 60, 72)
 )
-yields <- data[, paste0("y", c(1, 4, 5, 6))]
-term_premia <- data[, paste0("tp", c(1, 4, 5, 6))]
+yields <- data[, paste0("y", c(48, 60, 72))]
+term_premia <- data[, paste0("tp", c(48, 60, 72))]
 
-# Compute SDF innovations for i=5
-sdf_innovations_5 <- compute_sdf_innovations(yields, term_premia, i = 5)
+# Compute SDF innovations for i = 60
+sdf_innovations_60 <- compute_sdf_innovations(yields, term_premia, i = 60)
 
 # Compute SDF innovations with dates
-sdf_innovations_5_df <- compute_sdf_innovations(
+sdf_innovations_60_df <- compute_sdf_innovations(
   yields, term_premia,
-  i = 5,
+  i = 60,
   return_df = TRUE,
   dates = data$date
 )

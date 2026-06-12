@@ -18,15 +18,15 @@ compute_n_hat(
 
 \item{term_premia}{Data frame with columns tp1, tp2, ..., containing term premia}
 
-\item{i}{Integer specifying the maturity index (column) to analyze.
-Must be between 1 and the package maximum (10 for the ACM dataset;
-functions that require data at maturity \code{i + step} accept at
-most \code{MAX_MATURITY - step}, i.e. 9 with the default step).
-The input data must contain the columns for the maturities the function
-uses (e.g. \code{y5}/\code{tp5} plus step-adjacent maturities for
-\code{i = 5}).
-Corresponds to maturity in years for the ACM dataset (i=1 is 1-year,
-i=2 is 2-year, ..., i=10 is 10-year).}
+\item{i}{Integer specifying the maturity index (column) to analyze,
+in \strong{months}. Must be between 6 and 120 (the ACM monthly
+grid); functions that require data at maturity \code{i + step}
+accept at most \code{MAX_MATURITY - step}, i.e. 108 with the
+default annual step. The input data must contain the columns for
+the maturities the function uses (e.g. \code{y60}/\code{tp60}
+plus step-adjacent maturities for \code{i = 60}). Whole years are
+multiples of 12 (i = 12 is the 1-year bond, i = 60 the 5-year,
+i = 120 the 10-year).}
 
 \item{return_df}{Logical, if TRUE returns a data frame with dates (default FALSE)}
 
@@ -66,18 +66,18 @@ default step), because this function requires data at maturity
 # Extract ACM data
 data <- extract_acm_data(data_types = c("yields", "term_premia"))
 
-# Compute n_hat for i=5
-n_hat_5 <- compute_n_hat(
-  yields = data[, paste0("y", 1:10)],
-  term_premia = data[, paste0("tp", 1:10)],
-  i = 5
+# Compute n_hat for the 5-year (60-month) maturity
+n_hat_60 <- compute_n_hat(
+  yields = data[, paste0("y", seq(12, 120, 12))],
+  term_premia = data[, paste0("tp", seq(12, 120, 12))],
+  i = 60
 )
 
 # Compute n_hat with dates
-n_hat_5_df <- compute_n_hat(
-  yields = data[, paste0("y", 1:10)],
-  term_premia = data[, paste0("tp", 1:10)],
-  i = 5,
+n_hat_60_df <- compute_n_hat(
+  yields = data[, paste0("y", seq(12, 120, 12))],
+  term_premia = data[, paste0("tp", seq(12, 120, 12))],
+  i = 60,
   return_df = TRUE,
   dates = data$date
 )

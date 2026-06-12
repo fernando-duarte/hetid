@@ -3,91 +3,91 @@
 make_w2_guard_inputs <- function(n = 30, seed = 99) {
   set.seed(seed)
   list(
-    yields = data.frame(y1 = rnorm(n, 2), y2 = rnorm(n, 2.5)),
-    term_premia = data.frame(tp1 = rnorm(n, 0.5), tp2 = rnorm(n, 0.6)),
+    yields = data.frame(y12 = rnorm(n, 2), y24 = rnorm(n, 2.5)),
+    term_premia = data.frame(tp12 = rnorm(n, 0.5), tp24 = rnorm(n, 0.6)),
     pcs = matrix(rnorm(n * 4), ncol = 4)
   )
 }
 
 test_that("missing yield column warns and returns NULL", {
   inputs <- make_w2_guard_inputs()
-  yields_no_y1 <- inputs$yields[, "y2", drop = FALSE]
+  yields_no_y12 <- inputs$yields[, "y24", drop = FALSE]
 
   expect_warning(
     result <- process_w2_maturity(
-      1, yields_no_y1, inputs$term_premia, inputs$pcs,
+      12, yields_no_y12, inputs$term_premia, inputs$pcs,
       n_pcs = 4
     ),
-    "y1.*[Ss]kipping maturity 1"
+    "y12.*[Ss]kipping maturity 12"
   )
   expect_null(result)
 })
 
 test_that("missing term premium column warns and returns NULL", {
   inputs <- make_w2_guard_inputs()
-  tp_no_tp1 <- inputs$term_premia[, "tp2", drop = FALSE]
+  tp_no_tp12 <- inputs$term_premia[, "tp24", drop = FALSE]
 
   expect_warning(
     result <- process_w2_maturity(
-      1, inputs$yields, tp_no_tp1, inputs$pcs,
+      12, inputs$yields, tp_no_tp12, inputs$pcs,
       n_pcs = 4
     ),
-    "tp1.*[Ss]kipping maturity 1"
+    "tp12.*[Ss]kipping maturity 12"
   )
   expect_null(result)
 })
 
 test_that("maturity equal to highest available column warns and returns NULL", {
-  # Maturity 2 needs y3/tp3 via compute_n_hat, which the
+  # Maturity 24 needs y36/tp36 via compute_n_hat, which the
   # two-column inputs lack; must skip, not hard-error
   inputs <- make_w2_guard_inputs()
 
   expect_warning(
     result <- process_w2_maturity(
-      2, inputs$yields, inputs$term_premia, inputs$pcs,
+      24, inputs$yields, inputs$term_premia, inputs$pcs,
       n_pcs = 4
     ),
-    "y3.*[Ss]kipping maturity 2"
+    "y36.*[Ss]kipping maturity 24"
   )
   expect_null(result)
 })
 
 test_that("missing previous-maturity column warns and returns NULL", {
-  # Maturity 2 also needs y1/tp1 via compute_n_hat_previous
+  # Maturity 24 also needs y12/tp12 via compute_n_hat_previous
   inputs <- make_w2_guard_inputs()
   yields <- inputs$yields
-  yields$y3 <- yields$y2 + 0.1
+  yields$y36 <- yields$y24 + 0.1
   term_premia <- inputs$term_premia
-  term_premia$tp3 <- term_premia$tp2 + 0.01
-  yields_no_y1 <- yields[, c("y2", "y3")]
-  tp_no_tp1 <- term_premia[, c("tp2", "tp3")]
+  term_premia$tp36 <- term_premia$tp24 + 0.01
+  yields_no_y12 <- yields[, c("y24", "y36")]
+  tp_no_tp12 <- term_premia[, c("tp24", "tp36")]
 
   expect_warning(
     result <- process_w2_maturity(
-      2, yields_no_y1, tp_no_tp1, inputs$pcs,
+      24, yields_no_y12, tp_no_tp12, inputs$pcs,
       n_pcs = 4
     ),
-    "y1.*[Ss]kipping maturity 2"
+    "y12.*[Ss]kipping maturity 24"
   )
   expect_null(result)
 })
 
 test_that("non-contiguous columns covering the maturity process cleanly", {
-  # Maturity 5 needs only y4/y5/y6 and tp4/tp5/tp6; the y1/tp1
-  # columns are present but irrelevant
+  # Maturity 60 needs only y48/y60/y72 and tp48/tp60/tp72; the
+  # y12/tp12 columns are present but irrelevant
   set.seed(99)
   n <- 30
   yields <- data.frame(
-    y1 = rnorm(n, 2), y4 = rnorm(n, 2.5),
-    y5 = rnorm(n, 2.7), y6 = rnorm(n, 2.9)
+    y12 = rnorm(n, 2), y48 = rnorm(n, 2.5),
+    y60 = rnorm(n, 2.7), y72 = rnorm(n, 2.9)
   )
   term_premia <- data.frame(
-    tp1 = rnorm(n, 0.5), tp4 = rnorm(n, 0.6),
-    tp5 = rnorm(n, 0.7), tp6 = rnorm(n, 0.8)
+    tp12 = rnorm(n, 0.5), tp48 = rnorm(n, 0.6),
+    tp60 = rnorm(n, 0.7), tp72 = rnorm(n, 0.8)
   )
   pcs <- matrix(rnorm(n * 4), ncol = 4)
 
-  result <- process_w2_maturity(5, yields, term_premia, pcs, n_pcs = 4)
+  result <- process_w2_maturity(60, yields, term_premia, pcs, n_pcs = 4)
   expect_type(result, "list")
   expect_true(result$r_squared >= 0 && result$r_squared <= 1)
 })
@@ -98,10 +98,10 @@ test_that("single-row PCs warn as insufficient and return NULL", {
 
   expect_warning(
     result <- process_w2_maturity(
-      1, inputs$yields, inputs$term_premia, pcs_one_row,
+      12, inputs$yields, inputs$term_premia, pcs_one_row,
       n_pcs = 4
     ),
-    "Insufficient data for maturity 1"
+    "Insufficient data for maturity 12"
   )
   expect_null(result)
 })
@@ -113,7 +113,7 @@ test_that("too few complete observations warn and return NULL", {
 
   expect_warning(
     result <- process_w2_maturity(
-      1, inputs$yields, inputs$term_premia, inputs$pcs,
+      12, inputs$yields, inputs$term_premia, inputs$pcs,
       n_pcs = 4
     ),
     "Insufficient data for maturity"
@@ -125,7 +125,7 @@ test_that("well-formed inputs process without warnings", {
   inputs <- make_w2_guard_inputs()
 
   result <- process_w2_maturity(
-    1, inputs$yields, inputs$term_premia, inputs$pcs,
+    12, inputs$yields, inputs$term_premia, inputs$pcs,
     n_pcs = 4
   )
   expect_type(result, "list")

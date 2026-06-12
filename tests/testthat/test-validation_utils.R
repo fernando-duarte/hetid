@@ -5,7 +5,7 @@ test_that("validate_maturity_index rejects non-integer values", {
 
 test_that("validate_maturity_index rejects out-of-range values", {
   expect_error(validate_maturity_index(0), "between")
-  expect_error(validate_maturity_index(11), "between")
+  expect_error(validate_maturity_index(121), "between")
   expect_error(validate_maturity_index(-1), "between")
 })
 
@@ -35,10 +35,10 @@ test_that("validate_maturity_index respects custom max_maturity", {
 })
 
 test_that("validate_maturity_index accepts valid inputs", {
-  expect_true(validate_maturity_index(1))
-  expect_true(validate_maturity_index(10))
-  expect_true(validate_maturity_index(5L))
-  expect_true(validate_maturity_index(5.0))
+  expect_true(validate_maturity_index(6))
+  expect_true(validate_maturity_index(120))
+  expect_true(validate_maturity_index(60L))
+  expect_true(validate_maturity_index(60.0))
 })
 
 # --- validate_n_pcs ---

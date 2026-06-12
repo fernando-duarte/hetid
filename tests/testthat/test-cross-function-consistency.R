@@ -2,7 +2,7 @@ test_that("all functions handle same ACM data format", {
   test_env <- setup_standard_test_env()
 
   # Test that all functions work with the same data
-  i <- 5
+  i <- 60
 
   # All these should work without error
   expect_type(compute_c_hat(test_env$yields, test_env$term_premia, i = i), "double")
@@ -18,7 +18,7 @@ test_that("functions with date parameters align correctly", {
 
   # Test n_hat with dates
   n_hat_df <- compute_n_hat(test_env$yields, test_env$term_premia,
-    i = 5,
+    i = 60,
     return_df = TRUE, dates = test_env$data$date
   )
 
@@ -27,7 +27,7 @@ test_that("functions with date parameters align correctly", {
 
   # Test price news with dates
   price_news_df <- compute_price_news(test_env$yields, test_env$term_premia,
-    i = 5,
+    i = 60,
     return_df = TRUE, dates = test_env$data$date
   )
 
@@ -44,16 +44,16 @@ test_that("consistent NA handling across functions", {
   term_premia <- test_env$term_premia
 
   # Introduce NAs
-  yields[c(10, 20, 30), "y5"] <- NA
-  term_premia[c(15, 25), "tp5"] <- NA
+  yields[c(10, 20, 30), "y60"] <- NA
+  term_premia[c(15, 25), "tp60"] <- NA
 
   # All functions should handle NAs gracefully
-  expect_type(compute_c_hat(yields, term_premia, i = 5), "double")
-  expect_type(compute_k_hat(yields, term_premia, i = 5), "double")
-  expect_type(compute_n_hat(yields, term_premia, i = 5), "double")
-  expect_type(compute_price_news(yields, term_premia, i = 5), "double")
-  expect_type(compute_sdf_innovations(yields, term_premia, i = 5), "double")
-  expect_type(compute_variance_bound(yields, term_premia, i = 5), "double")
+  expect_type(compute_c_hat(yields, term_premia, i = 60), "double")
+  expect_type(compute_k_hat(yields, term_premia, i = 60), "double")
+  expect_type(compute_n_hat(yields, term_premia, i = 60), "double")
+  expect_type(compute_price_news(yields, term_premia, i = 60), "double")
+  expect_type(compute_sdf_innovations(yields, term_premia, i = 60), "double")
+  expect_type(compute_variance_bound(yields, term_premia, i = 60), "double")
 })
 
 test_that("invalid inputs produce appropriate errors", {
@@ -69,11 +69,11 @@ test_that("invalid inputs produce appropriate errors", {
     class = "hetid_error_bad_argument"
   )
   expect_error(
-    compute_n_hat(test_env$yields, test_env$term_premia, i = 11),
+    compute_n_hat(test_env$yields, test_env$term_premia, i = 132),
     class = "hetid_error_bad_argument"
   )
   expect_error(
-    compute_price_news(test_env$yields, test_env$term_premia, i = 15),
+    compute_price_news(test_env$yields, test_env$term_premia, i = 180),
     class = "hetid_error_bad_argument"
   )
   expect_error(
@@ -96,7 +96,7 @@ test_that("all functions complete without error on larger stacked data", {
   term_premia <- large_extracted$term_premia
 
   # All functions should complete without error
-  i <- 5
+  i <- 60
   expect_type(compute_c_hat(yields, term_premia, i = i), "double")
   expect_type(compute_k_hat(yields, term_premia, i = i), "double")
   expect_type(compute_n_hat(yields, term_premia, i = i), "double")
@@ -109,18 +109,18 @@ test_that("similar functions have consistent return structures", {
   test_env <- setup_standard_test_env()
 
   # Scalar returns: c_hat, k_hat, variance_bound
-  c_hat <- compute_c_hat(test_env$yields, test_env$term_premia, i = 5)
-  k_hat <- compute_k_hat(test_env$yields, test_env$term_premia, i = 5)
-  var_bound <- compute_variance_bound(test_env$yields, test_env$term_premia, i = 5)
+  c_hat <- compute_c_hat(test_env$yields, test_env$term_premia, i = 60)
+  k_hat <- compute_k_hat(test_env$yields, test_env$term_premia, i = 60)
+  var_bound <- compute_variance_bound(test_env$yields, test_env$term_premia, i = 60)
 
   expect_length(c_hat, 1)
   expect_length(k_hat, 1)
   expect_length(var_bound, 1)
 
   # Vector returns: n_hat, price_news, sdf_innovations
-  n_hat <- compute_n_hat(test_env$yields, test_env$term_premia, i = 5)
-  price_news <- compute_price_news(test_env$yields, test_env$term_premia, i = 5)
-  sdf_innov <- compute_sdf_innovations(test_env$yields, test_env$term_premia, i = 5)
+  n_hat <- compute_n_hat(test_env$yields, test_env$term_premia, i = 60)
+  price_news <- compute_price_news(test_env$yields, test_env$term_premia, i = 60)
+  sdf_innov <- compute_sdf_innovations(test_env$yields, test_env$term_premia, i = 60)
 
   expect_true(length(n_hat) > 1)
   expect_true(length(price_news) > 1)
@@ -186,7 +186,7 @@ test_that("quarterly data uses last month of quarter", {
 
     if (nrow(m_row) > 0 && nrow(q_row) > 0) {
       # Values should match exactly
-      expect_equal(q_row$y1, m_row$y1,
+      expect_equal(q_row$y12, m_row$y12,
         label = paste("Quarterly and monthly values should match for", date)
       )
     }

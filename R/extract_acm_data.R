@@ -7,8 +7,11 @@
 #' @param data_types Character vector specifying which data to extract.
 #'   Options: "yields", "term_premia", "risk_neutral_yields".
 #'   Default is c("yields", "term_premia").
-#' @param maturities Numeric vector of maturities (1-10 years).
-#'   Default is 1:10 (all maturities).
+#' @param maturities Numeric vector of maturities in months (6-120).
+#'   Default is the annual nodes \code{seq(12, 120, by = 12)}
+#'   (\code{HETID_CONSTANTS$DEFAULT_ACM_MATURITIES}); pass
+#'   \code{HETID_CONSTANTS$ALL_ACM_MATURITIES} for the full monthly
+#'   grid (GitHub source only).
 #' @param start_date Date or character string (YYYY-MM-DD format) for start of sample.
 #'   Default is NULL (earliest available date).
 #' @param end_date Date or character string (YYYY-MM-DD format) for end of sample.
@@ -33,16 +36,18 @@
 #'   cache only, annual maturities).
 #'
 #' @return A data frame with date column and selected variables.
-#'   Column naming convention:
-#'   - Yields: y1, y2, ..., y10
-#'   - Term premia: tp1, tp2, ..., tp10
-#'   - Risk-neutral yields: rny1, rny2, ..., rny10
+#'   Column naming convention (maturity suffix in months):
+#'   - Yields: y12, y24, ..., y120 (plus e.g. y6, y18 when requested)
+#'   - Term premia: tp12, tp24, ..., tp120
+#'   - Risk-neutral yields: rny12, rny24, ..., rny120
 #'
 #' @details
-#' The ACM data contains:
-#' - ACMY01-ACMY10: Zero-coupon Treasury yields (1-10 years)
-#' - ACMTP01-ACMTP10: Term premium estimates (1-10 years)
-#' - ACMRNY01-ACMRNY10: Risk-neutral yields (1-10 years)
+#' The raw ACM data carries maturities at one-month steps from 6 to
+#' 120 months. Whole-year maturities keep the official column names
+#' (ACMY01-ACMY10, ACMTP01-ACMTP10, ACMRNY01-ACMRNY10); sub-annual
+#' months use names like ACMY006M. The NY Fed fallback source provides
+#' only the annual nodes; requesting sub-annual maturities against it
+#' raises a structured error.
 #'
 #' All values are in annualized percentage points.
 #'
@@ -51,30 +56,36 @@
 #' @export
 #'
 #' @examples
-#' # Extract all yields and term premia
+#' # Extract yields and term premia at the annual nodes
 #' data <- extract_acm_data()
 #'
 #' # Extract only 2-year and 10-year yields for specific period
 #' data <- extract_acm_data(
 #'   data_types = "yields",
-#'   maturities = c(2, 10),
+#'   maturities = c(24, 120),
 #'   start_date = "2010-01-01",
 #'   end_date = "2020-12-31"
 #' )
 #'
-#' # Get quarterly term premia for all maturities
+#' # Get quarterly term premia at the annual nodes
 #' data <- extract_acm_data(
 #'   data_types = "term_premia",
 #'   frequency = "quarterly"
 #' )
 #'
-#' # Extract all three data types for 5-year maturity
+#' # Extract all three data types for the 5-year (60-month) maturity
 #' data <- extract_acm_data(
 #'   data_types = c("yields", "term_premia", "risk_neutral_yields"),
-#'   maturities = 5
+#'   maturities = 60
+#' )
+#'
+#' # Sub-annual maturities from the monthly grid
+#' data <- extract_acm_data(
+#'   data_types = "yields",
+#'   maturities = c(6, 18, 30)
 #' )
 extract_acm_data <- function(data_types = c("yields", "term_premia"),
-                             maturities = HETID_CONSTANTS$MIN_MATURITY:HETID_CONSTANTS$MAX_MATURITY,
+                             maturities = HETID_CONSTANTS$DEFAULT_ACM_MATURITIES,
                              start_date = NULL,
                              end_date = NULL,
                              frequency = c("monthly", "quarterly"),
@@ -96,6 +107,9 @@ extract_acm_data <- function(data_types = c("yields", "term_premia"),
       " first or set auto_download = TRUE"
     )
   )
+
+  # Annual-only sources cannot serve month-level requests
+  assert_subannual_available(acm_data, maturities)
 
   # The load_term_premia function now returns lowercase 'date' column
   # Ensure date column is properly converted to Date type
@@ -140,51 +154,4 @@ extract_acm_data <- function(data_types = c("yields", "term_premia"),
   rownames(result) <- NULL
 
   result
-}
-
-#' Validate ACM extraction inputs
-#'
-#' @keywords internal
-#' @noRd
-validate_acm_extract_inputs <- function(data_types, maturities,
-                                        use_incomplete_quarters = TRUE) {
-  assert_bad_argument_ok(
-    isTRUE(use_incomplete_quarters) || isFALSE(use_incomplete_quarters),
-    "use_incomplete_quarters must be TRUE or FALSE",
-    arg = "use_incomplete_quarters"
-  )
-
-  valid_types <- names(HETID_ACM_SCHEMA)
-  assert_bad_argument_ok(
-    is.character(data_types) && length(data_types) >= 1 &&
-      all(data_types %in% valid_types),
-    paste0(
-      "Invalid data_types. Must be one or more of: ",
-      paste(valid_types, collapse = ", ")
-    ),
-    arg = "data_types"
-  )
-
-  assert_bad_argument_ok(
-    is.numeric(maturities) && length(maturities) >= 1,
-    "maturities must be a non-empty numeric vector",
-    arg = "maturities"
-  )
-  assert_bad_argument_ok(
-    all(is.finite(maturities)) && all(maturities == trunc(maturities)),
-    "maturities must be whole numbers",
-    arg = "maturities"
-  )
-  assert_bad_argument_ok(
-    all(
-      maturities %in%
-        HETID_CONSTANTS$MIN_MATURITY:HETID_CONSTANTS$MAX_MATURITY
-    ),
-    paste0(
-      "Maturities must be integers between ",
-      HETID_CONSTANTS$MIN_MATURITY,
-      " and ", HETID_CONSTANTS$MAX_MATURITY
-    ),
-    arg = "maturities"
-  )
 }

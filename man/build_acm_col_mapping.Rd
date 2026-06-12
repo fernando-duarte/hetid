@@ -9,12 +9,13 @@ build_acm_col_mapping(data_types, maturities)
 \arguments{
 \item{data_types}{Character vector of data types}
 
-\item{maturities}{Numeric vector of maturities}
+\item{maturities}{Numeric vector of maturities in months}
 }
 \value{
 List mapping new names to old names
 }
 \description{
-Internal function to build mapping between old and new column names
+Internal function to build mapping between raw and package column
+names for the requested data types and maturities (months).
 }
 \keyword{internal}

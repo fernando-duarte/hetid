@@ -8,7 +8,8 @@ validate_maturities(
   maturities,
   max_value,
   max_label = NULL,
-  arg = "maturities"
+  arg = "maturities",
+  min_value = 1L
 )
 }
 \arguments{
@@ -20,15 +21,24 @@ validate_maturities(
 error message (e.g. \code{"ncol(gamma)"} renders as \code{ncol(gamma) (4)}).}
 
 \item{arg}{Argument name for the structured error.}
+
+\item{min_value}{Inclusive lower bound (default 1, the positional
+component-index convention).}
 }
 \value{
 Invisible TRUE if valid, stops with informative error otherwise.
 }
 \description{
 Single source of truth for validating a numeric maturity vector:
-non-empty, finite integers, within \code{[MIN_MATURITY, max_value]},
+non-empty, finite integers, within \code{[min_value, max_value]},
 and free of duplicates. The scalar analog is
 \code{\link{validate_maturity_index}}.
+}
+\details{
+The default \code{min_value = 1} serves the identification layer,
+whose "maturities" are positional w2 column indices (1..n); callers
+validating ACM bond maturities pass
+\code{min_value = HETID_CONSTANTS$MIN_MATURITY} (months).
 }
 \seealso{
 \code{\link{validate_maturity_index}}

@@ -3,7 +3,7 @@ test_that("compute_w2_residuals works for single maturity", {
 
   # Test single maturity - let the function handle PC loading internally
   res_y2 <- suppressWarnings(compute_w2_residuals(test_env$yields, test_env$term_premia,
-    maturities = 5, n_pcs = 4
+    maturities = 60, n_pcs = 4
   ))
 
   expect_type(res_y2, "list")
@@ -16,32 +16,32 @@ test_that("compute_w2_residuals works for single maturity", {
   expect_length(res_y2$r_squared, 1)
 })
 
-test_that("compute_w2_residuals works for maturity 1", {
+test_that("compute_w2_residuals works for maturity 12", {
   test_env <- setup_standard_test_env()
 
-  # Test maturity 1 specifically
-  res_y2_mat1 <- suppressWarnings(compute_w2_residuals(test_env$yields, test_env$term_premia,
-    maturities = 1, n_pcs = 4
+  # Test maturity 12 specifically
+  res_y2_mat12 <- suppressWarnings(compute_w2_residuals(test_env$yields, test_env$term_premia,
+    maturities = 12, n_pcs = 4
   ))
 
-  expect_type(res_y2_mat1, "list")
-  expect_true("residuals" %in% names(res_y2_mat1))
-  expect_true("r_squared" %in% names(res_y2_mat1))
+  expect_type(res_y2_mat12, "list")
+  expect_true("residuals" %in% names(res_y2_mat12))
+  expect_true("r_squared" %in% names(res_y2_mat12))
 
-  # Check that we get valid residuals for maturity 1
-  expect_true("maturity_1" %in% names(res_y2_mat1$residuals))
-  expect_true(length(res_y2_mat1$residuals$maturity_1) > 0)
+  # Check that we get valid residuals for maturity 12
+  expect_true("maturity_12" %in% names(res_y2_mat12$residuals))
+  expect_true(length(res_y2_mat12$residuals$maturity_12) > 0)
 
   # R-squared should be reasonable
-  expect_gt(res_y2_mat1$r_squared[1], 0)
-  expect_lt(res_y2_mat1$r_squared[1], 1)
+  expect_gt(res_y2_mat12$r_squared[1], 0)
+  expect_lt(res_y2_mat12$r_squared[1], 1)
 })
 
 test_that("compute_w2_residuals works for multiple maturities", {
   test_env <- setup_standard_test_env()
 
-  # Test multiple maturities (including maturity 1) - let the function handle PC loading internally
-  maturities <- c(1, 2, 5, 7)
+  # Test multiple maturities (including maturity 12) - internal PC loading
+  maturities <- c(12, 24, 60, 84)
   res_y2 <- suppressWarnings(compute_w2_residuals(test_env$yields, test_env$term_premia,
     maturities = maturities, n_pcs = 4
   ))
@@ -55,9 +55,9 @@ test_that("compute_w2_residuals works for multiple maturities", {
 test_that("residual properties check", {
   test_env <- setup_standard_test_env()
 
-  # Test for maturity 3 - let the function handle PC loading internally
+  # Test for maturity 36 - let the function handle PC loading internally
   res_y2 <- suppressWarnings(compute_w2_residuals(test_env$yields, test_env$term_premia,
-    maturities = 3, n_pcs = 4
+    maturities = 36, n_pcs = 4
   ))
   residuals <- res_y2$residuals[[1]]
 
@@ -72,7 +72,7 @@ test_that("compute_w2_residuals uses SDF innovations", {
   test_env <- setup_standard_test_env()
 
   # Get SDF innovations directly
-  i <- 4
+  i <- 48
   sdf_innov <- compute_sdf_innovations(test_env$yields, test_env$term_premia, i = i)
 
   # Get W2 residuals - let the function handle PC loading internally
@@ -96,7 +96,7 @@ test_that("R-squared matches manual regression", {
   data("variables", package = "hetid", envir = environment())
 
   # Load ACM quarterly data
-  mats <- HETID_CONSTANTS$MIN_MATURITY:HETID_CONSTANTS$MAX_MATURITY
+  mats <- HETID_CONSTANTS$DEFAULT_ACM_MATURITIES
   acm_data <- extract_acm_data(
     data_types = c("yields", "term_premia"),
     maturities = mats,
@@ -128,8 +128,8 @@ test_that("R-squared matches manual regression", {
   yields_merged <- merged_data[, paste0("y", mats)]
   term_premia_merged <- merged_data[, paste0("tp", mats)]
 
-  # Test for maturity 5
-  i <- 5
+  # Test for maturity 60
+  i <- 60
 
   # Compute SDF innovations
   sdf_innov <- compute_sdf_innovations(yields_merged, term_premia_merged, i = i)
@@ -217,7 +217,7 @@ test_that("length verification for output", {
   test_env <- setup_standard_test_env()
 
   # Test with multiple maturities - let the function handle PC loading internally
-  maturities <- 1:9
+  maturities <- seq(12, 108, by = 12)
   res_y2 <- suppressWarnings(compute_w2_residuals(test_env$yields, test_env$term_premia,
     maturities = maturities, n_pcs = 4
   ))
@@ -235,7 +235,7 @@ test_that("warning emitted when PCs fall back to package data", {
   test_env <- setup_standard_test_env()
 
   expect_warning(
-    compute_w2_residuals(test_env$yields, test_env$term_premia, maturities = 5, n_pcs = 2),
+    compute_w2_residuals(test_env$yields, test_env$term_premia, maturities = 60, n_pcs = 2),
     "position"
   )
 })
@@ -254,7 +254,7 @@ test_that("no message when user provides PCs", {
     expect_no_message(
       compute_w2_residuals(
         test_env$yields, test_env$term_premia,
-        maturities = 5, n_pcs = 2,
+        maturities = 60, n_pcs = 2,
         pcs = user_pcs
       )
     )
@@ -275,7 +275,7 @@ test_that("row indices used when user provides PCs but not dates", {
   result <- expect_no_message(
     compute_w2_residuals(
       test_env$yields, test_env$term_premia,
-      maturities = 5, n_pcs = 2,
+      maturities = 60, n_pcs = 2,
       pcs = user_pcs, return_df = TRUE
     )
   )
@@ -305,7 +305,7 @@ test_that("no message for dates when user provides dates", {
   result <- expect_no_message(
     compute_w2_residuals(
       test_env$yields, test_env$term_premia,
-      maturities = 5, n_pcs = 2,
+      maturities = 60, n_pcs = 2,
       pcs = user_pcs, return_df = TRUE,
       dates = user_dates
     )
@@ -324,7 +324,7 @@ test_that("variables loaded only once when PCs and dates both NULL", {
   warns <- capture_warnings(
     compute_w2_residuals(
       test_env$yields, test_env$term_premia,
-      maturities = 5, n_pcs = 2,
+      maturities = 60, n_pcs = 2,
       return_df = TRUE
     )
   )
@@ -348,7 +348,7 @@ test_that("return_df dates align correctly with interior NA in PCs", {
 
   result <- compute_w2_residuals(
     test_env$yields, test_env$term_premia,
-    maturities = 5, n_pcs = 2,
+    maturities = 60, n_pcs = 2,
     pcs = user_pcs, return_df = TRUE,
     dates = user_dates
   )
@@ -381,7 +381,7 @@ test_that("error when user pcs has wrong number of rows", {
   expect_error(
     compute_w2_residuals(
       test_env$yields, test_env$term_premia,
-      maturities = 5, n_pcs = 4, pcs = bad_pcs
+      maturities = 60, n_pcs = 4, pcs = bad_pcs
     ),
     "must match number of rows"
   )
@@ -397,7 +397,7 @@ test_that("error when pcs has fewer columns than n_pcs", {
   expect_error(
     compute_w2_residuals(
       test_env$yields, test_env$term_premia,
-      maturities = 5, n_pcs = 4, pcs = bad_pcs
+      maturities = 60, n_pcs = 4, pcs = bad_pcs
     ),
     "n_pcs must be between 1 and 2",
     class = "hetid_error_bad_argument"
@@ -429,7 +429,7 @@ test_that("error when maturities are non-integer or negative", {
   expect_error(
     suppressWarnings(compute_w2_residuals(
       test_env$yields, test_env$term_premia,
-      maturities = c(1.5, 3)
+      maturities = c(18.5, 36)
     )),
     "must be finite integer values"
   )
@@ -437,9 +437,9 @@ test_that("error when maturities are non-integer or negative", {
   expect_error(
     suppressWarnings(compute_w2_residuals(
       test_env$yields, test_env$term_premia,
-      maturities = c(-1, 2)
+      maturities = c(-1, 24)
     )),
-    "must be between 1 and"
+    "must be between 6 and"
   )
 })
 
@@ -500,77 +500,77 @@ make_w2_skip_inputs <- function(col_indices, n = 40, seed = 123) {
   )
 }
 
-test_that("maturity equal to ncol(yields) skips while others succeed", {
-  inputs <- make_w2_skip_inputs(1:2)
+test_that("maturity equal to the highest available column skips while others succeed", {
+  inputs <- make_w2_skip_inputs(c(12, 24))
 
   expect_warning(
     result <- compute_w2_residuals(
       inputs$yields, inputs$term_premia,
-      maturities = c(1, 2), n_pcs = 2, pcs = inputs$pcs
+      maturities = c(12, 24), n_pcs = 2, pcs = inputs$pcs
     ),
-    "[Ss]kipping maturity 2"
+    "[Ss]kipping maturity 24"
   )
-  expect_named(result$residuals, "maturity_1")
+  expect_named(result$residuals, "maturity_12")
   expect_true(is.finite(result$r_squared[1]))
   expect_true(is.na(result$r_squared[2]))
 })
 
 test_that("one bad maturity does not abort valid maturities", {
-  # Maturity 3 needs y4/tp4, which y1..y3 data lacks; previously
-  # this hard-errored and destroyed the maturity-2 results too
-  inputs <- make_w2_skip_inputs(1:3)
+  # Maturity 36 needs y48/tp48, which y12..y36 data lacks; previously
+  # this hard-errored and destroyed the maturity-24 results too
+  inputs <- make_w2_skip_inputs(c(12, 24, 36))
 
   expect_warning(
     result <- compute_w2_residuals(
       inputs$yields, inputs$term_premia,
-      maturities = c(2, 3), n_pcs = 2, pcs = inputs$pcs
+      maturities = c(24, 36), n_pcs = 2, pcs = inputs$pcs
     ),
-    "[Ss]kipping maturity 3"
+    "[Ss]kipping maturity 36"
   )
-  expect_named(result$residuals, "maturity_2")
-  expect_true(length(result$residuals$maturity_2) > 0)
+  expect_named(result$residuals, "maturity_24")
+  expect_true(length(result$residuals$maturity_24) > 0)
   expect_true(is.finite(result$r_squared[1]))
 })
 
 test_that("non-contiguous column subsets pass validation and compute", {
-  # Maturity 5 needs only columns 4:6; y1/tp1 are extra
-  inputs <- make_w2_skip_inputs(c(1, 4, 5, 6))
+  # Maturity 60 needs only columns 48/60/72; y12/tp12 are extra
+  inputs <- make_w2_skip_inputs(c(12, 48, 60, 72))
 
   result <- compute_w2_residuals(
     inputs$yields, inputs$term_premia,
-    maturities = 5, n_pcs = 2, pcs = inputs$pcs
+    maturities = 60, n_pcs = 2, pcs = inputs$pcs
   )
-  expect_named(result$residuals, "maturity_5")
+  expect_named(result$residuals, "maturity_60")
   expect_true(is.finite(result$r_squared[1]))
   expect_true(result$n_obs[1] > 0)
 })
 
 test_that("skipped maturities report NA, not zero", {
-  inputs <- make_w2_skip_inputs(1:3)
+  inputs <- make_w2_skip_inputs(c(12, 24, 36))
 
   expect_warning(
     result <- compute_w2_residuals(
       inputs$yields, inputs$term_premia,
-      maturities = c(2, 3), n_pcs = 2, pcs = inputs$pcs
+      maturities = c(24, 36), n_pcs = 2, pcs = inputs$pcs
     ),
-    "[Ss]kipping maturity 3"
+    "[Ss]kipping maturity 36"
   )
   expect_true(is.na(result$r_squared[2]))
   expect_true(is.na(result$n_obs[2]))
-  expect_false("maturity_3" %in% names(result$residuals))
-  expect_true(all(is.na(result$coefficients["maturity_3", ])))
+  expect_false("maturity_36" %in% names(result$residuals))
+  expect_true(all(is.na(result$coefficients["maturity_36", ])))
 })
 
 test_that("all maturities skipped with return_df gives zero-row data frame", {
-  inputs <- make_w2_skip_inputs(1:2)
+  inputs <- make_w2_skip_inputs(c(12, 24))
 
   expect_warning(
     result <- compute_w2_residuals(
       inputs$yields, inputs$term_premia,
-      maturities = 3, n_pcs = 2, pcs = inputs$pcs,
+      maturities = 36, n_pcs = 2, pcs = inputs$pcs,
       return_df = TRUE
     ),
-    "[Ss]kipping maturity 3"
+    "[Ss]kipping maturity 36"
   )
   expect_s3_class(result, "data.frame")
   expect_equal(nrow(result), 0)

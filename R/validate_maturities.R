@@ -72,23 +72,31 @@ validate_news_maturity_index <- function(i, step = HETID_CONSTANTS$DEFAULT_STEP)
 #' Validate a Vector of Maturity Indices
 #'
 #' Single source of truth for validating a numeric maturity vector:
-#' non-empty, finite integers, within \code{[MIN_MATURITY, max_value]},
+#' non-empty, finite integers, within \code{[min_value, max_value]},
 #' and free of duplicates. The scalar analog is
 #' \code{\link{validate_maturity_index}}.
+#'
+#' The default \code{min_value = 1} serves the identification layer,
+#' whose "maturities" are positional w2 column indices (1..n); callers
+#' validating ACM bond maturities pass
+#' \code{min_value = HETID_CONSTANTS$MIN_MATURITY} (months).
 #'
 #' @param maturities Numeric vector of maturity indices.
 #' @param max_value Inclusive upper bound (e.g. \code{ncol(gamma)}).
 #' @param max_label Optional human label for the bound, shown label-first in the
 #'   error message (e.g. \code{"ncol(gamma)"} renders as \code{ncol(gamma) (4)}).
 #' @param arg Argument name for the structured error.
+#' @param min_value Inclusive lower bound (default 1, the positional
+#'   component-index convention).
 #'
 #' @return Invisible TRUE if valid, stops with informative error otherwise.
 #' @seealso \code{\link{validate_maturity_index}}
 #' @keywords internal
 validate_maturities <- function(maturities, max_value,
                                 max_label = NULL,
-                                arg = "maturities") {
-  min_maturity <- HETID_CONSTANTS$MIN_MATURITY
+                                arg = "maturities",
+                                min_value = 1L) {
+  min_maturity <- min_value
   assert_bad_argument_ok(
     length(maturities) > 0,
     paste0(arg, " must not be empty"),

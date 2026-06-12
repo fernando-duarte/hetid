@@ -49,7 +49,8 @@ validate_w2_inputs <- function(yields, term_premia, maturities,
   validate_maturities(
     maturities,
     max_value = effective_max_maturity(step),
-    max_label = "MAX_MATURITY - step"
+    max_label = "MAX_MATURITY - step",
+    min_value = HETID_CONSTANTS$MIN_MATURITY
   )
 
   # Each maturity must satisfy the news contract: the previous-period

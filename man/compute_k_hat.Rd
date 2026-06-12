@@ -11,15 +11,15 @@ compute_k_hat(yields, term_premia, i, step = HETID_CONSTANTS$DEFAULT_STEP)
 
 \item{term_premia}{Data frame with columns tp1, tp2, ..., containing term premia}
 
-\item{i}{Integer specifying the maturity index (column) to analyze.
-Must be between 1 and the package maximum (10 for the ACM dataset;
-functions that require data at maturity \code{i + step} accept at
-most \code{MAX_MATURITY - step}, i.e. 9 with the default step).
-The input data must contain the columns for the maturities the function
-uses (e.g. \code{y5}/\code{tp5} plus step-adjacent maturities for
-\code{i = 5}).
-Corresponds to maturity in years for the ACM dataset (i=1 is 1-year,
-i=2 is 2-year, ..., i=10 is 10-year).}
+\item{i}{Integer specifying the maturity index (column) to analyze,
+in \strong{months}. Must be between 6 and 120 (the ACM monthly
+grid); functions that require data at maturity \code{i + step}
+accept at most \code{MAX_MATURITY - step}, i.e. 108 with the
+default annual step. The input data must contain the columns for
+the maturities the function uses (e.g. \code{y60}/\code{tp60}
+plus step-adjacent maturities for \code{i = 60}). Whole years are
+multiples of 12 (i = 12 is the 1-year bond, i = 60 the 5-year,
+i = 120 the 10-year).}
 
 \item{step}{Integer number of maturity-index units per news period
 (default \code{HETID_CONSTANTS$DEFAULT_STEP}). The news operator
@@ -64,17 +64,17 @@ for term structure analysis.
 }
 
 \examples{
-# Extract ACM data - need maturities 1, i-1, and i for maturity i
-# For i=5, we need maturities 1, 4, and 5
+# Extract ACM data - need maturities step, i-step, and i (months)
+# For i = 60 with the default annual step: 12, 48, and 60
 data <- extract_acm_data(
   data_types = c("yields", "term_premia"),
-  maturities = c(1, 4, 5)
+  maturities = c(12, 48, 60)
 )
-yields <- data[, paste0("y", c(1, 4, 5))]
-term_premia <- data[, paste0("tp", c(1, 4, 5))]
+yields <- data[, paste0("y", c(12, 48, 60))]
+term_premia <- data[, paste0("tp", c(12, 48, 60))]
 
-# Compute k_hat for i=5
-k_hat_5 <- compute_k_hat(yields, term_premia, i = 5)
+# Compute k_hat for the 5-year (60-month) maturity
+k_hat_60 <- compute_k_hat(yields, term_premia, i = 60)
 
 }
 \references{

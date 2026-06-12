@@ -8,16 +8,21 @@
 #' \describe{
 #'   \item{DEFAULT_N_PCS}{Standard number of principal components (4)}
 #'   \item{MAX_N_PCS}{Maximum principal components (6)}
-#'   \item{MIN_MATURITY}{Minimum maturity index (1)}
-#'   \item{MAX_MATURITY}{Maximum maturity index (10)}
-#'   \item{DEFAULT_STEP}{Maturity-index units per news period (1).
-#'     The news operator steps one period; maturity arithmetic moves
-#'     in multiples of the step (see
+#'   \item{MIN_MATURITY}{Minimum maturity index in months (6)}
+#'   \item{MAX_MATURITY}{Maximum maturity index in months (120)}
+#'   \item{DEFAULT_STEP}{Maturity-index units (months) per news period
+#'     (12: an annual news clock). The news operator steps one period;
+#'     maturity arithmetic moves in multiples of the step (see
 #'     \code{\link{effective_max_maturity}})}
 #'   \item{MATURITY_UNITS_PER_YEAR}{Divisor converting a maturity
-#'     index to years (1). Log bond prices scale annualized yields
-#'     by maturity in years, so the n_hat weights are
+#'     index to years (12: indices are months). Log bond prices scale
+#'     annualized yields by maturity in years, so the n_hat weights are
 #'     \code{i / MATURITY_UNITS_PER_YEAR}}
+#'   \item{DEFAULT_ACM_MATURITIES}{Annual maturity nodes in months
+#'     (12, 24, ..., 120); the default for
+#'     \code{\link{extract_acm_data}}}
+#'   \item{ALL_ACM_MATURITIES}{The full monthly maturity grid
+#'     (6:120 months) available from the GitHub source}
 #'   \item{MACHINE_EPSILON}{Machine precision}
 #'   \item{MATRIX_SYMMETRY_TOL}{Tolerance for matrix symmetry
 #'     checks}
@@ -42,8 +47,12 @@
 #'   \item{ACM_LEGACY_FILENAME}{Retired cache filename from the old
 #'     xls-to-CSV pipeline; never resolved, only flagged for cleanup}
 #'   \item{BUNDLED_VARIABLES_DATASET}{Bundled dataset name}
-#'   \item{COL_FORMAT_PADDED}{Padded column name format}
-#'   \item{COL_FORMAT_SIMPLE}{Simple column name format}
+#'   \item{COL_FORMAT_PADDED}{Padded raw column name format for
+#'     whole-year maturities (e.g. ACMY01)}
+#'   \item{COL_FORMAT_MONTHLY}{Raw column name format for sub-annual
+#'     month maturities (e.g. ACMY006M)}
+#'   \item{COL_FORMAT_SIMPLE}{Package column name format, maturity in
+#'     months (e.g. y12)}
 #' }
 #'
 #' @references
@@ -60,13 +69,17 @@ HETID_CONSTANTS <- list(
   DEFAULT_N_PCS = 4L, # Default from Adrian, Crump, Moench (2013)
   MAX_N_PCS = 6L, # Maximum for stability
 
-  # Data constraints
-  MIN_MATURITY = 1L, # Minimum available maturity
-  MAX_MATURITY = 10L, # Maximum available maturity
+  # Data constraints (maturity indices are months)
+  MIN_MATURITY = 6L, # Minimum available maturity (months)
+  MAX_MATURITY = 120L, # Maximum available maturity (months)
 
   # News-period geometry
-  DEFAULT_STEP = 1L, # Maturity-index units per news period
-  MATURITY_UNITS_PER_YEAR = 1L, # Maturity index units in one year
+  DEFAULT_STEP = 12L, # Maturity-index units (months) per news period
+  MATURITY_UNITS_PER_YEAR = 12L, # Maturity index units in one year
+
+  # Maturity grids (months)
+  DEFAULT_ACM_MATURITIES = seq(12L, 120L, by = 12L), # Annual nodes
+  ALL_ACM_MATURITIES = 6L:120L, # Full monthly grid
 
   # Numerical parameters
   MACHINE_EPSILON = .Machine$double.eps,
@@ -96,8 +109,9 @@ HETID_CONSTANTS <- list(
   BUNDLED_VARIABLES_DATASET = "variables",
 
   # Column format patterns
-  COL_FORMAT_PADDED = "%s%02d", # e.g., ACMY01
-  COL_FORMAT_SIMPLE = "%s%d" # e.g., y1
+  COL_FORMAT_PADDED = "%s%02d", # e.g., ACMY01 (whole-year raw names)
+  COL_FORMAT_MONTHLY = "%s%03dM", # e.g., ACMY006M (sub-annual raw names)
+  COL_FORMAT_SIMPLE = "%s%d" # e.g., y12 (package names, months)
 )
 
 #' Data Source URLs

@@ -30,18 +30,18 @@
 #' # Extract ACM data
 #' data <- extract_acm_data(data_types = c("yields", "term_premia"))
 #'
-#' # Compute n_hat for i=5
-#' n_hat_5 <- compute_n_hat(
-#'   yields = data[, paste0("y", 1:10)],
-#'   term_premia = data[, paste0("tp", 1:10)],
-#'   i = 5
+#' # Compute n_hat for the 5-year (60-month) maturity
+#' n_hat_60 <- compute_n_hat(
+#'   yields = data[, paste0("y", seq(12, 120, 12))],
+#'   term_premia = data[, paste0("tp", seq(12, 120, 12))],
+#'   i = 60
 #' )
 #'
 #' # Compute n_hat with dates
-#' n_hat_5_df <- compute_n_hat(
-#'   yields = data[, paste0("y", 1:10)],
-#'   term_premia = data[, paste0("tp", 1:10)],
-#'   i = 5,
+#' n_hat_60_df <- compute_n_hat(
+#'   yields = data[, paste0("y", seq(12, 120, 12))],
+#'   term_premia = data[, paste0("tp", seq(12, 120, 12))],
+#'   i = 60,
 #'   return_df = TRUE,
 #'   dates = data$date
 #' )

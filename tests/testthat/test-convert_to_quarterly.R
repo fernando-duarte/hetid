@@ -3,11 +3,11 @@
 
 test_that("quarterly conversion keeps the last monthly observation of each quarter", {
   monthly <- extract_acm_data(
-    data_types = "yields", maturities = 1,
+    data_types = "yields", maturities = 12,
     start_date = "2019-01-01", end_date = "2020-12-31"
   )
   quarterly <- extract_acm_data(
-    data_types = "yields", maturities = 1,
+    data_types = "yields", maturities = 12,
     start_date = "2019-01-01", end_date = "2020-12-31",
     frequency = "quarterly"
   )
@@ -24,7 +24,7 @@ test_that("quarterly conversion keeps the last monthly observation of each quart
 test_that("complete quarters convert without any warning", {
   expect_no_warning(
     extract_acm_data(
-      data_types = "yields", maturities = 1,
+      data_types = "yields", maturities = 12,
       start_date = "2010-01-01", end_date = "2019-12-31",
       frequency = "quarterly"
     )
@@ -35,7 +35,7 @@ test_that("incomplete quarter warns and is re-dated to the quarter-end month", {
   # end_date in May leaves Q2 2020 with only its April and May observations
   expect_warning(
     quarterly <- extract_acm_data(
-      data_types = "yields", maturities = 1,
+      data_types = "yields", maturities = 12,
       start_date = "2019-01-01", end_date = "2020-05-31",
       frequency = "quarterly"
     ),
@@ -52,12 +52,12 @@ test_that("incomplete quarter warns and is re-dated to the quarter-end month", {
 
   # The re-dated row carries the latest available (May 2020) observation
   may_2020 <- extract_acm_data(
-    data_types = "yields", maturities = 1,
+    data_types = "yields", maturities = 12,
     start_date = "2020-05-01", end_date = "2020-05-31"
   )
   expect_equal(
-    quarterly$y1[quarterly$date == as.Date("2020-06-30")],
-    may_2020$y1[nrow(may_2020)]
+    quarterly$y12[quarterly$date == as.Date("2020-06-30")],
+    may_2020$y12[nrow(may_2020)]
   )
 })
 
@@ -65,7 +65,7 @@ test_that("warning names the months when several are missing", {
   # end_date in April leaves Q2 2020 with only its April observation
   expect_warning(
     extract_acm_data(
-      data_types = "yields", maturities = 1,
+      data_types = "yields", maturities = 12,
       start_date = "2020-01-01", end_date = "2020-04-30",
       frequency = "quarterly"
     ),
@@ -77,7 +77,7 @@ test_that("warning names the months when several are missing", {
 test_that("incomplete first quarter of a year is re-dated across the year boundary", {
   expect_warning(
     quarterly <- extract_acm_data(
-      data_types = "yields", maturities = 1,
+      data_types = "yields", maturities = 12,
       start_date = "2020-10-01", end_date = "2021-01-31",
       frequency = "quarterly"
     ),
@@ -95,7 +95,7 @@ test_that("use_incomplete_quarters = FALSE drops the incomplete quarter", {
   expect_no_warning(
     expect_message(
       quarterly <- extract_acm_data(
-        data_types = "yields", maturities = 1,
+        data_types = "yields", maturities = 12,
         start_date = "2019-01-01", end_date = "2020-05-31",
         frequency = "quarterly", use_incomplete_quarters = FALSE
       ),

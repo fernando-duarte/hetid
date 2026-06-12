@@ -6,7 +6,7 @@ test_that("custom instrument matrices may exceed the bundled PC cap", {
   )
   res <- compute_w2_residuals(
     test_data$yields, test_data$term_premia,
-    maturities = c(2, 3), n_pcs = 8, pcs = wide
+    maturities = c(24, 36), n_pcs = 8, pcs = wide
   )
   expect_identical(
     colnames(res$coefficients),
@@ -20,7 +20,7 @@ test_that("non-numeric custom pcs are rejected", {
   expect_error(
     compute_w2_residuals(
       test_data$yields, test_data$term_premia,
-      maturities = 2, n_pcs = 2, pcs = bad
+      maturities = 24, n_pcs = 2, pcs = bad
     ),
     class = "hetid_error_bad_argument"
   )
@@ -32,7 +32,7 @@ test_that("n_pcs above the custom matrix width is rejected", {
   expect_error(
     compute_w2_residuals(
       test_data$yields, test_data$term_premia,
-      maturities = 2, n_pcs = 5, pcs = narrow
+      maturities = 24, n_pcs = 5, pcs = narrow
     ),
     class = "hetid_error"
   )

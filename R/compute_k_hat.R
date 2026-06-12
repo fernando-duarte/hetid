@@ -32,17 +32,17 @@
 #' @export
 #'
 #' @examples
-#' # Extract ACM data - need maturities 1, i-1, and i for maturity i
-#' # For i=5, we need maturities 1, 4, and 5
+#' # Extract ACM data - need maturities step, i-step, and i (months)
+#' # For i = 60 with the default annual step: 12, 48, and 60
 #' data <- extract_acm_data(
 #'   data_types = c("yields", "term_premia"),
-#'   maturities = c(1, 4, 5)
+#'   maturities = c(12, 48, 60)
 #' )
-#' yields <- data[, paste0("y", c(1, 4, 5))]
-#' term_premia <- data[, paste0("tp", c(1, 4, 5))]
+#' yields <- data[, paste0("y", c(12, 48, 60))]
+#' term_premia <- data[, paste0("tp", c(12, 48, 60))]
 #'
-#' # Compute k_hat for i=5
-#' k_hat_5 <- compute_k_hat(yields, term_premia, i = 5)
+#' # Compute k_hat for the 5-year (60-month) maturity
+#' k_hat_60 <- compute_k_hat(yields, term_premia, i = 60)
 #'
 compute_k_hat <- function(yields, term_premia, i,
                           step = HETID_CONSTANTS$DEFAULT_STEP) {

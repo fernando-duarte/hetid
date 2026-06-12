@@ -19,7 +19,7 @@
 #' the expected log price at horizon i.
 #'
 #' @note The effective maximum for \code{i} is \code{MAX_MATURITY - step}
-#'   (9 for standard ACM data with the default step), because this
+#'   (108 for standard ACM data with the default annual step), because this
 #'   function requires data at maturity \code{i + step}.
 #'
 #' @export
@@ -27,11 +27,11 @@
 #' @examples
 #' # Extract ACM data
 #' data <- extract_acm_data(data_types = c("yields", "term_premia"))
-#' yields <- data[, paste0("y", 1:10)]
-#' term_premia <- data[, paste0("tp", 1:10)]
+#' yields <- data[, paste0("y", seq(12, 120, 12))]
+#' term_premia <- data[, paste0("tp", seq(12, 120, 12))]
 #'
-#' # Compute c_hat for i=5
-#' c_hat_5 <- compute_c_hat(yields, term_premia, i = 5)
+#' # Compute c_hat for the 5-year (60-month) maturity
+#' c_hat_60 <- compute_c_hat(yields, term_premia, i = 60)
 #'
 compute_c_hat <- function(yields, term_premia, i,
                           step = HETID_CONSTANTS$DEFAULT_STEP) {

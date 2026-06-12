@@ -13,8 +13,8 @@ test_that("extract_acm_data returns expected structure", {
   expect_s3_class(data$date, "Date")
 
   # Check for default columns (yields and term premia)
-  expect_true(all(paste0("y", 1:10) %in% names(data)))
-  expect_true(all(paste0("tp", 1:10) %in% names(data)))
+  expect_true(all(paste0("y", seq(12, 120, 12)) %in% names(data)))
+  expect_true(all(paste0("tp", seq(12, 120, 12)) %in% names(data)))
 
   # Check data has rows
   expect_gt(nrow(data), 0)
@@ -22,22 +22,22 @@ test_that("extract_acm_data returns expected structure", {
 
 test_that("extract_acm_data maturity selection", {
   # Test selecting specific maturities
-  data <- extract_acm_data(maturities = c(2, 5, 10))
+  data <- extract_acm_data(maturities = c(24, 60, 120))
 
   # Should have only selected maturities
-  expect_true(all(c("y2", "y5", "y10") %in% names(data)))
-  expect_true(all(c("tp2", "tp5", "tp10") %in% names(data)))
+  expect_true(all(c("y24", "y60", "y120") %in% names(data)))
+  expect_true(all(c("tp24", "tp60", "tp120") %in% names(data)))
 
   # Should not have other maturities
-  expect_false("y1" %in% names(data))
-  expect_false("y3" %in% names(data))
+  expect_false("y12" %in% names(data))
+  expect_false("y36" %in% names(data))
 
   # Single maturity
   data_single <- extract_acm_data(
     data_types = "yields",
-    maturities = 5
+    maturities = 60
   )
-  expect_true("y5" %in% names(data_single))
+  expect_true("y60" %in% names(data_single))
   expect_equal(sum(grepl("^y\\d+$", names(data_single))), 1)
 })
 
@@ -69,22 +69,22 @@ test_that("extract_acm_data data types selection", {
 
   # Only yields
   data_yields <- extract_acm_data(data_types = "yields")
-  expect_true(all(paste0("y", 1:10) %in% names(data_yields)))
-  expect_false(any(paste0("tp", 1:10) %in% names(data_yields)))
-  expect_false(any(paste0("rn", 1:10) %in% names(data_yields)))
+  expect_true(all(paste0("y", seq(12, 120, 12)) %in% names(data_yields)))
+  expect_false(any(paste0("tp", seq(12, 120, 12)) %in% names(data_yields)))
+  expect_false(any(paste0("rn", seq(12, 120, 12)) %in% names(data_yields)))
 
   # Only term premia
   data_tp <- extract_acm_data(data_types = "term_premia")
-  expect_true(all(paste0("tp", 1:10) %in% names(data_tp)))
-  expect_false(any(paste0("y", 1:10) %in% names(data_tp)))
+  expect_true(all(paste0("tp", seq(12, 120, 12)) %in% names(data_tp)))
+  expect_false(any(paste0("y", seq(12, 120, 12)) %in% names(data_tp)))
 
   # All three types
   data_all <- extract_acm_data(
     data_types = c("yields", "term_premia", "risk_neutral_yields")
   )
-  expect_true(all(paste0("y", 1:10) %in% names(data_all)))
-  expect_true(all(paste0("tp", 1:10) %in% names(data_all)))
-  expect_true(all(paste0("rny", 1:10) %in% names(data_all)))
+  expect_true(all(paste0("y", seq(12, 120, 12)) %in% names(data_all)))
+  expect_true(all(paste0("tp", seq(12, 120, 12)) %in% names(data_all)))
+  expect_true(all(paste0("rny", seq(12, 120, 12)) %in% names(data_all)))
 })
 
 test_that("extract_acm_data frequency conversion", {
@@ -123,10 +123,20 @@ test_that("extract_acm_data handles edge cases", {
   expect_s3_class(data_empty_quarterly, "data.frame")
   expect_equal(nrow(data_empty_quarterly), 0)
 
-  # Invalid maturity
+  # Invalid maturities: below the 6-month floor and above the ceiling
   expect_error(
-    extract_acm_data(maturities = 11),
-    "Maturities must be integers between 1 and 10"
+    extract_acm_data(maturities = 5),
+    "must be between 6 and",
+    class = "hetid_error_bad_argument"
+  )
+  expect_error(
+    extract_acm_data(maturities = 121),
+    "must be between 6 and",
+    class = "hetid_error_bad_argument"
+  )
+  expect_error(
+    extract_acm_data(maturities = 1),
+    class = "hetid_error_bad_argument"
   )
 
   # Invalid data type
@@ -173,10 +183,10 @@ test_that("extract_acm_data rejects non-character non-Date date bounds", {
 })
 
 test_that("extract_acm_data keeps single-variable results as data frames", {
-  data <- extract_acm_data(data_types = "yields", maturities = 5)
+  data <- extract_acm_data(data_types = "yields", maturities = 60)
 
   expect_s3_class(data, "data.frame")
-  expect_named(data, c("date", "y5"))
+  expect_named(data, c("date", "y60"))
 })
 
 test_that("extract_acm_data returns a data frame when no columns match", {
@@ -197,7 +207,7 @@ test_that("extract_acm_data returns a data frame when no columns match", {
     )
 
     expect_warning(
-      result <- extract_acm_data(data_types = "yields", maturities = 5),
+      result <- extract_acm_data(data_types = "yields", maturities = 60),
       "not found in data"
     )
     expect_s3_class(result, "data.frame")
@@ -224,7 +234,7 @@ test_that("extract_acm_data errors when the date column cannot be parsed", {
 
     expect_error(
       suppressWarnings(
-        extract_acm_data(data_types = "yields", maturities = 1)
+        extract_acm_data(data_types = "yields", maturities = 12)
       ),
       class = "hetid_error"
     )
@@ -235,11 +245,11 @@ test_that("extract_acm_data data consistency", {
   # Test that term premium = yield - risk-neutral yield
   data <- extract_acm_data(
     data_types = c("yields", "term_premia", "risk_neutral_yields"),
-    maturities = c(2, 5, 10)
+    maturities = c(24, 60, 120)
   )
 
   # Check relationship for each maturity
-  for (mat in c(2, 5, 10)) {
+  for (mat in c(24, 60, 120)) {
     y_col <- paste0("y", mat)
     tp_col <- paste0("tp", mat)
     rny_col <- paste0("rny", mat)
@@ -263,7 +273,7 @@ test_that("extract_acm_data warns on incomplete terminal quarter", {
   expect_warning(
     data <- extract_acm_data(
       data_types = "yields",
-      maturities = 5,
+      maturities = 60,
       end_date = "2020-05-15",
       frequency = "quarterly"
     ),
@@ -273,7 +283,7 @@ test_that("extract_acm_data warns on incomplete terminal quarter", {
 
   # Result still contains data and stays uniformly dated at quarter ends
   expect_gt(nrow(data), 0)
-  expect_true("y5" %in% names(data))
+  expect_true("y60" %in% names(data))
   expect_true(all(format(data$date, "%m") %in% c("03", "06", "09", "12")))
   expect_equal(max(data$date), as.Date("2020-06-30"))
 })
@@ -369,4 +379,45 @@ test_that("filter_acm_date_range drops NA dates instead of fabricating rows", {
   filtered_end <- filter_acm_date_range(acm_data, NULL, as.Date("2020-06-01"))
   expect_equal(nrow(filtered_end), 1)
   expect_equal(filtered_end$y1, 1)
+})
+
+test_that("sub-annual maturities extract from the bundled monthly grid", {
+  data <- extract_acm_data(
+    data_types = "yields",
+    maturities = c(6, 18, 119)
+  )
+
+  expect_named(data, c("date", "y6", "y18", "y119"))
+  expect_true(all(vapply(data[, -1], is.numeric, logical(1))))
+  expect_gt(nrow(data), 0)
+})
+
+test_that("annual-only sources reject sub-annual maturity requests", {
+  withr::with_tempdir({
+    temp_csv <- file.path(getwd(), "annual_only.csv")
+    write.csv(
+      data.frame(
+        DATE = c("2020-01-31", "2020-02-29"),
+        ACMY01 = c(1.5, 1.6),
+        ACMY02 = c(1.7, 1.8)
+      ),
+      temp_csv,
+      row.names = FALSE
+    )
+
+    local_mocked_bindings(
+      acm_data_available = function(...) TRUE,
+      get_acm_data_path = function(...) temp_csv
+    )
+
+    expect_error(
+      extract_acm_data(data_types = "yields", maturities = c(12, 18)),
+      "only annual maturities",
+      class = "hetid_error_insufficient_data"
+    )
+
+    # Annual nodes still work against the same source
+    annual <- extract_acm_data(data_types = "yields", maturities = c(12, 24))
+    expect_named(annual, c("date", "y12", "y24"))
+  })
 })

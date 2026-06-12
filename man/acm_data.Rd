@@ -8,17 +8,24 @@
 \alias{term_premia}
 \title{ACM Term Structure Data Documentation}
 \format{
-The ACM data is stored as a CSV file with the following structure:
+The ACM data is stored as a gzipped CSV with 346 columns:
+the date plus 115 maturities (6 to 120 months at one-month steps)
+for each of three families:
 \describe{
 \item{date}{The business-day observation date for each row in the series
-(originally 'DATE' in source data, standardized to lowercase)}
-\item{ACMY01-ACMY10}{Model-implied zero-coupon Treasury yields from the ACM
-model, for maturities of 1-year up to 10-years}
-\item{ACMTP01-ACMTP10}{ACM term premium estimates for 1- to 10-year
-maturities—i.e., the additional compensation investors require for bearing
-interest-rate risk}
-\item{ACMRNY01-ACMRNY10}{Risk-neutral yields (the expected average short-rate
-path) over 1- to 10-year horizons, as implied by the ACM model}
+(originally 'DATE' in source data, ISO formatted, standardized to
+lowercase)}
+\item{ACMY01-ACMY10, ACMY006M-ACMY119M}{Model-implied zero-coupon
+Treasury yields from the ACM model. Whole-year maturities keep
+the official padded-year names (ACMY01 = 12 months, ...,
+ACMY10 = 120 months); sub-annual months use the three-digit
+month form (e.g. ACMY006M = 6 months)}
+\item{ACMTP01-ACMTP10, ACMTP006M-ACMTP119M}{ACM term premium
+estimates—the additional compensation investors require for
+bearing interest-rate risk—under the same dual naming}
+\item{ACMRNY01-ACMRNY10, ACMRNY006M-ACMRNY119M}{Risk-neutral yields
+(the expected average short-rate path) as implied by the ACM
+model, under the same dual naming}
 }
 }
 \description{
@@ -28,10 +35,13 @@ functions. This dataset contains model-implied yields, term premia, and
 risk-neutral yields for U.S. Treasury securities.
 }
 \details{
-\subsection{Maturity Suffix}{
+\subsection{Maturity Naming}{
 
-The numeric suffix 01-10 in each of the ACM fields denotes the maturity in
-years (1 = one year, ..., 10 = ten years).
+Whole-year maturities carry the official two-digit year suffix
+(01-10, i.e. 12 to 120 months); all other maturities carry a
+three-digit month suffix plus "M" (006M-119M). Package-facing
+columns from \code{extract_acm_data()} are always suffixed by the
+maturity in months (y12, tp60, rny119, ...).
 }
 
 \subsection{Units}{
@@ -43,7 +53,8 @@ annualized percentage points (i.e., percent).
 \subsection{Frequency}{
 
 The dataset is monthly frequency (one entry per month), typically using
-end-of-month observations.
+end-of-month observations. The NY Fed fallback source
+(\code{source = "nyfed"}) provides only the annual-node maturities.
 }
 
 \subsection{Relationship Between Fields}{
