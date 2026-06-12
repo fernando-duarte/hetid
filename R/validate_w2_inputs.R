@@ -43,7 +43,7 @@ validate_w2_inputs <- function(yields, term_premia, maturities,
 
   # Validate maturity values via the shared vector validator.
   # No ncol-based cap: inputs may hold non-contiguous column
-  # subsets (e.g. y1/y4/y5/y6 for maturity 5), so column
+  # subsets (e.g. y12/y48/y60/y72 for maturity 60), so column
   # availability is checked per maturity in process_w2_maturity
   validate_step(step)
   validate_maturities(

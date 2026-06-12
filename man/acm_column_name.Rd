@@ -13,7 +13,7 @@ or \code{"risk_neutral_yields"}}
 \item{maturity}{Maturity index (or vector of indices)}
 }
 \value{
-Character vector of column names, e.g. \code{"y5"}
+Character vector of column names, e.g. \code{"y60"}
 }
 \description{
 Single source of truth for reshaped ACM column names: routes the

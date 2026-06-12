@@ -25,6 +25,13 @@ identification methods:
 - **Residual Computation**: Implementation of Lewbel (2012)
   identification methods
 
+> **Breaking change (0.3.0): maturity indices are now months.** Every
+> maturity argument and column suffix denotes months, not years:
+> `i = 60` and `y60` are the 5-year bond, valid maturities run 6-120,
+> and the old year-style names `y1`-`y5` no longer exist (they fail
+> loudly). Note that `y6`-`y10` silently changed meaning: they now
+> denote 6-10 **months**, where they used to denote 6-10 years.
+
 ## Key Methodology
 
 The package implements the identification through heteroskedasticity
@@ -57,10 +64,12 @@ pak::pak("fernando-duarte/hetid")
 ### 📊 Data Management
 
 - **ACM Term Structure Data**: Monthly yields, term premia, and
-  risk-neutral yields (1-10 years)
+  risk-neutral yields at one-month maturity steps from 6 to 120 months
 - **Economic Variables**: Quarterly economic and financial data
-- **Automatic Updates**: Download latest data from Federal Reserve
-  sources
+- **Verified Updates**: `download_term_premia()` fetches the latest
+  GitHub release and verifies it against the release’s sha256 digest
+  before caching; the official NY Fed workbook remains available as the
+  opt-in `source = "nyfed"` fallback (annual maturities only)
 - **Data Validation**: Built-in checks for data consistency and
   completeness
 
@@ -93,7 +102,7 @@ component — or from every instrument separately.
 ``` r
 library(hetid)
 #> Data availability:
-#>   * ACM term premia: Available (updated 2026-06-11)
+#>   * ACM term premia: Available (updated 2026-06-12)
 #> 
 #> Use load_term_premia() to access the data.
 set.seed(42)
@@ -151,7 +160,7 @@ library(hetid)
 
 # Data Setup: merge ACM yields with bundled PCs by quarter
 download_term_premia()
-mats <- 1:10
+mats <- seq(12, 120, by = 12)
 acm_data <- extract_acm_data(
   data_types = c("yields", "term_premia"),
   maturities = mats,
@@ -184,7 +193,7 @@ tp <- merged[, paste0("tp", mats)]
 w1 <- compute_w1_residuals(n_pcs = 4)
 w2 <- compute_w2_residuals(
   yields, tp,
-  maturities = c(2, 5, 9),
+  maturities = c(24, 60, 108),
   n_pcs = 4, pcs = pcs
 )
 ```
@@ -194,24 +203,24 @@ w2 <- compute_w2_residuals(
 ``` r
 # Extract ACM data
 data <- extract_acm_data(data_types = c("yields", "term_premia"))
-yields <- data[, paste0("y", 1:10)]
-term_premia <- data[, paste0("tp", 1:10)]
+yields <- data[, paste0("y", seq(12, 120, 12))]
+term_premia <- data[, paste0("tp", seq(12, 120, 12))]
 
-# Compute expected log bond prices
-n_hat_5 <- compute_n_hat(yields, term_premia, i = 5)
+# Compute expected log bond prices (i = 60 is the 5-year bond)
+n_hat_60 <- compute_n_hat(yields, term_premia, i = 60)
 
 # Compute price news (unexpected price changes)
-price_news_5 <- compute_price_news(yields, term_premia, i = 5)
+price_news_60 <- compute_price_news(yields, term_premia, i = 60)
 
 # Compute SDF innovations
-sdf_innovations_5 <- compute_sdf_innovations(yields, term_premia, i = 5)
+sdf_innovations_60 <- compute_sdf_innovations(yields, term_premia, i = 60)
 
 # Compute moment estimators
-c_hat_5 <- compute_c_hat(yields, term_premia, i = 5) # Supremum estimator
-k_hat_5 <- compute_k_hat(yields, term_premia, i = 5) # Fourth moment estimator
+c_hat_60 <- compute_c_hat(yields, term_premia, i = 60) # Supremum estimator
+k_hat_60 <- compute_k_hat(yields, term_premia, i = 60) # Fourth moment estimator
 
 # Compute variance bound
-var_bound_5 <- compute_variance_bound(yields, term_premia, i = 5)
+var_bound_60 <- compute_variance_bound(yields, term_premia, i = 60)
 ```
 
 ## Mathematical Background
@@ -260,9 +269,16 @@ achieved through heteroskedasticity-based moment conditions.
 
 The package provides access to:
 
-- **ACM Term Structure Data**: Monthly data from Adrian, Crump, and
+- **ACM Term Structure Data**: Monthly data based on Adrian, Crump, and
   Moench (2013) including yields, term premia, and risk-neutral yields
-  for 1-10 year maturities
+  at one-month maturity steps from 6 to 120 months. The bundled file is
+  the validated reproduction published at
+  [fernando-duarte/ACM_term_premium](https://github.com/fernando-duarte/ACM_term_premium)
+  (it matches the official NY Fed workbook to within 0.0026 basis points
+  at the annual nodes and extends the maturity grid to monthly steps);
+  downloads are verified against the release’s sha256 digest. The
+  official NY Fed workbook is the opt-in `source = "nyfed"` fallback and
+  carries annual maturities only.
 - **Economic Variables**: Quarterly economic and financial variables
   including GDP, inflation, financial conditions indices, and principal
   components

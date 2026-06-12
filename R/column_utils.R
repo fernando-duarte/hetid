@@ -37,7 +37,7 @@ require_column <- function(x, col_name, context = NULL) {
 #' @param data_type Schema key: \code{"yields"}, \code{"term_premia"},
 #'   or \code{"risk_neutral_yields"}
 #' @param maturity Maturity index (or vector of indices)
-#' @return Character vector of column names, e.g. \code{"y5"}
+#' @return Character vector of column names, e.g. \code{"y60"}
 #' @keywords internal
 acm_column_name <- function(data_type, maturity) {
   assert_bad_argument_ok(

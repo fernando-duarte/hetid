@@ -52,6 +52,7 @@ gitignored
 Glejser
 graphify
 gz
+gzipped
 Hadamard
 heteroskedasticity
 Heteroskedasticity
@@ -130,6 +131,7 @@ Rproj
 RStudio
 sdf
 SDF
+sha
 siunitx
 skedastic
 styler
@@ -156,6 +158,7 @@ VIX
 withr
 woff
 WORDLIST
+xls
 xz
 yaml
 yml

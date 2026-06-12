@@ -37,10 +37,11 @@ The method is particularly useful for:
 \subsection{Data Management:}{
 \itemize{
 \item \strong{ACM Term Structure Data}: Access to monthly yields, term premia,
-and risk-neutral yields for 1-10 year maturities from Adrian, Crump, and Moench (2013)
+and risk-neutral yields at monthly maturity steps (6-120 months) based on
+Adrian, Crump, and Moench (2013)
 \item \strong{Economic Variables}: Quarterly macroeconomic and financial data
-\item \strong{Automatic Downloads}: Functions to download and update data from
-Federal Reserve sources
+\item \strong{Verified Downloads}: Functions to download the latest GitHub
+release with sha256 verification (NY Fed workbook as opt-in fallback)
 }}
 
 \subsection{Bond Pricing Calculations:}{

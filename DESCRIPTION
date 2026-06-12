@@ -1,6 +1,6 @@
 Package: hetid
 Title: Identification Through Heteroskedasticity for VFCI
-Version: 0.2.0
+Version: 0.3.0
 Authors@R:
     person("Fernando", "Duarte", , "duarte@alum.mit.edu", role = c("aut", "cre"),
            comment = c(ORCID = "0000-0002-8495-6936"))
