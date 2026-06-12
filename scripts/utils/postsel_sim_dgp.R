@@ -89,7 +89,7 @@ postsel_dgp_params <- function(k_inst,
                                delta_scale = 0.75,
                                delta_decay = 0.6,
                                a = c(0.1, -0.1),
-                               rho_target = 0.04,
+                               rho_target = 0.03,
                                theta0 = c(0.5, -0.5),
                                shock_dist = c("uniform", "gaussian")) {
   shock_dist <- match.arg(shock_dist)

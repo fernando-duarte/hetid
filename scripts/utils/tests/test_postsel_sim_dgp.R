@@ -44,14 +44,14 @@ check(
 )
 
 # Default pin: the unadorned defaults must equal the adopted Stage-P
-# winner constants. Update these literals TOGETHER with SIM_TAU /
-# SIM_SHOCK_DIST / SIM_RHO_TARGET at winner adoption (Task 5); until
-# Stage P runs they pin the documented placeholders (uniform / 0.04),
-# and forgetting the dual update fails this check by design
+# winner constants (K4 round winner: uniform / rho_target 0.03;
+# pilot log, K4 rescope section). These literals move TOGETHER with
+# SIM_TAU / SIM_SHOCK_DIST / SIM_RHO_TARGET; forgetting the dual
+# update fails this check by design
 check(
   "defaults equal the adopted winner configuration",
   identical(params$shock_dist, "uniform") &&
-    params$rho_target == 0.04
+    params$rho_target == 0.03
 )
 
 # Large iid Monte Carlo of the epsilon-level moments at the as-built
@@ -102,14 +102,14 @@ check(
   abs(sd(big$z[, 1]) - 1) < 0.05 && abs(lag1 - params$phi) < 0.05
 )
 
-# Population-scale membership at the amended slack (the 0.35 literal
-# is tied to SIM_TAU in split_simulation.R; update both together if
-# the Stage-P winner moves tau_sim)
+# Population-scale membership at the adopted winner slack (the 0.40
+# literal is tied to SIM_TAU in split_simulation.R; both move
+# together at winner adoption)
 m_pop <- sim_window_moments(mc, seq_len(1000000L))
 lam0 <- equal_weight_lambda(4L, 2L)
 check(
   "population-scale sample puts theta0 inside the equal-weight set",
-  covers_theta0(lam0, rep(0.35, 2), m_pop, params0$theta0)
+  covers_theta0(lam0, rep(0.40, 2), m_pop, params0$theta0)
 )
 
 # Window isolation for the simulation's per-window refit

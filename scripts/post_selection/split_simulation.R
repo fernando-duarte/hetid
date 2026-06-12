@@ -25,13 +25,13 @@ source(here::here("scripts/post_selection/postsel_sim_rep.R"))
 QUICK <- nzchar(Sys.getenv("HETID_SIM_QUICK"))
 SIM_SEED <- 20260612L
 SIM_T <- 240L
-# D10a defaults = Stage-P winner placeholders; the premise screen may
-# move SIM_TAU within {0.30, 0.40} and the DGP knobs within the
-# pre-registered grid -- update these constants (and the DGP test's
-# membership tau literal) to the winner
-SIM_TAU <- 0.35
+# Adopted Stage-P winner of the K4 rescope round (config: uniform
+# shocks, tau_sim 0.40, rho_target 0.03; frozen winner rule, see the
+# pilot log and docs/postsel-sim-k4-preregistration.md). The DGP
+# test's default pin and membership tau literal move WITH these.
+SIM_TAU <- 0.40
 SIM_SHOCK_DIST <- "uniform"
-SIM_RHO_TARGET <- 0.04
+SIM_RHO_TARGET <- 0.03
 SIM_PHI <- 0.5
 SIM_PROP <- 0.5
 SIM_GAP <- 4L
