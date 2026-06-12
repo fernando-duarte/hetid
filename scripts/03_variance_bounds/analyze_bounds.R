@@ -32,7 +32,7 @@ p1 <- ggplot(variance_bounds_df, aes(x = Maturity, y = Variance_Bound)) +
   labs(
     title = "Theoretical Variance Bounds Across Maturities",
     subtitle = "Upper bounds for forecast error variance",
-    x = "Maturity (years)",
+    x = "Maturity (months)",
     y = "Variance Bound"
   ) +
   theme_minimal() +
@@ -67,7 +67,7 @@ p2 <- ggplot(components_long, aes(x = Maturity, y = Value, color = Component)) +
   labs(
     title = "Variance Bound Components",
     subtitle = "ĉ and k̂ estimators across maturities",
-    x = "Maturity (years)",
+    x = "Maturity (months)",
     y = "Component Value",
     color = "Component"
   ) +
@@ -95,7 +95,7 @@ p3 <- ggplot(variance_bounds_df, aes(x = Maturity)) +
   labs(
     title = "Log Variance Bounds Across Maturities",
     subtitle = "Log-scale visualization for trend analysis",
-    x = "Maturity (years)",
+    x = "Maturity (months)",
     y = "Log(Variance Bound)"
   ) +
   theme_minimal()

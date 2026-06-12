@@ -112,7 +112,7 @@ hetero_html <- pval_df |>
     subtitle = "P-values by bond maturity (W2 residuals on principal components)"
   ) |>
   fmt_number(columns = -Test, decimals = 3) |>
-  tab_spanner(label = "Maturity (years)", columns = -Test)
+  tab_spanner(label = "Maturity (months)", columns = -Test)
 gtsave(hetero_html, file.path(paper_dir, "heteroskedasticity_tests_table.html"))
 
 episodes_html <- n_hat$episodes |>

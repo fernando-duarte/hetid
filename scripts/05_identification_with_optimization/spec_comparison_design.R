@@ -12,14 +12,14 @@ SPEC_COMPARISON_DESIGNS <- list(
     tau_grid = c(0, 0.01, 0.05, 0.1, 0.2),
     npcs_grid = 2:6,
     factor_sets = list(c(1, 2), c(1, 2, 3), c(1, 2, 3, 4)),
-    mat_sets = list(DEFAULT_ID_MATURITIES, c(2), c(2, 5)),
+    mat_sets = list(DEFAULT_ID_MATURITIES, c(24L), c(24L, 60L)),
     n_starts_opt = 12L
   ),
   quick = list(
     tau_grid = c(0, 0.05, 0.2),
     npcs_grid = c(4),
     factor_sets = list(c(1, 2, 3)),
-    mat_sets = list(DEFAULT_ID_MATURITIES, c(2), c(2, 5)),
+    mat_sets = list(DEFAULT_ID_MATURITIES, c(24L), c(24L, 60L)),
     n_starts_opt = 6L
   )
 )

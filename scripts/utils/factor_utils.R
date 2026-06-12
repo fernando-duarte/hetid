@@ -12,7 +12,7 @@ compute_yield_factor_loadings <- function(
   data, n_factors = 3
 ) {
   yield_cols <- paste0(
-    YIELD_PREFIX, seq_len(HETID_CONSTANTS$MAX_MATURITY)
+    YIELD_PREFIX, HETID_CONSTANTS$DEFAULT_ACM_MATURITIES
   )
   missing <- setdiff(yield_cols, names(data))
   if (length(missing) > 0) {
@@ -70,9 +70,13 @@ get_identification_factor_lookup <- function(
 compute_w2_factor_residuals <- function(
   yields_df, tp_df, pcs_mat, n_pcs, data, factors
 ) {
-  all_mats <- seq_len(
-    effective_max_maturity(HETID_CONSTANTS$DEFAULT_STEP)
-  )
+  node_mats <- HETID_CONSTANTS$DEFAULT_ACM_MATURITIES
+  all_mats <- node_mats[
+    node_mats <= effective_max_maturity(HETID_CONSTANTS$DEFAULT_STEP)
+  ]
+  # Loadings rows are the annual yield nodes; index them by position,
+  # not by month value
+  mat_rows <- match(all_mats, node_mats)
   cli::cli_alert_info(
     "Computing W2 for all maturities ({length(all_mats)})..."
   )
@@ -85,7 +89,7 @@ compute_w2_factor_residuals <- function(
 
   cli::cli_alert_info("Computing yield PCA loadings...")
   pca <- compute_yield_factor_loadings(data, max(factors))
-  loadings_sel <- pca$loadings[all_mats, factors,
+  loadings_sel <- pca$loadings[mat_rows, factors,
     drop = FALSE
   ]
 
@@ -97,7 +101,7 @@ compute_w2_factor_residuals <- function(
   # break the default (vfci) path, so wrap in tryCatch -> NULL; it is consumed
   # only when BASELINE_GAMMA_METHOD == "reduced_form".
   attr(w2_factors, "gamma_rf") <- tryCatch(
-    get_reduced_form_gamma(w2_all$coefficients, pca$loadings, all_mats, factors),
+    get_reduced_form_gamma(w2_all$coefficients, pca$loadings, mat_rows, factors),
     error = function(e) {
       cli::cli_alert_warning(
         "Reduced-form gamma unavailable: {conditionMessage(e)}"

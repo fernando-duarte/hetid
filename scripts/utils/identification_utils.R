@@ -1,7 +1,7 @@
 # Identification Utilities -- non-optimization plumbing
 
-# Default bond maturities for identification
-DEFAULT_ID_MATURITIES <- c(2, 5, 9)
+# Default bond maturities for identification (months)
+DEFAULT_ID_MATURITIES <- c(24L, 60L, 108L)
 
 #' @return data frame mapping component IDs to bond maturities
 get_identification_maturity_lookup <- function(
@@ -38,8 +38,8 @@ load_identification_inputs <- function(
 
   list(
     data = data,
-    yield_vars = paste0(YIELD_PREFIX, seq_len(HETID_CONSTANTS$MAX_MATURITY)),
-    tp_vars = paste0(TP_PREFIX, seq_len(HETID_CONSTANTS$MAX_MATURITY)),
+    yield_vars = paste0(YIELD_PREFIX, HETID_CONSTANTS$DEFAULT_ACM_MATURITIES),
+    tp_vars = paste0(TP_PREFIX, HETID_CONSTANTS$DEFAULT_ACM_MATURITIES),
     consumption_var = HETID_CONSTANTS$CONSUMPTION_GROWTH_COL,
     pc_vars = paste0(HETID_CONSTANTS$PC_PREFIX, seq_len(n_pcs)),
     lookup = lookup,
@@ -96,8 +96,8 @@ compute_identification_residuals <- function(
     n_pcs = n_pcs, data = data
   )
 
-  yield_cols <- paste0(YIELD_PREFIX, seq_len(HETID_CONSTANTS$MAX_MATURITY))
-  tp_cols <- paste0(TP_PREFIX, seq_len(HETID_CONSTANTS$MAX_MATURITY))
+  yield_cols <- paste0(YIELD_PREFIX, HETID_CONSTANTS$DEFAULT_ACM_MATURITIES)
+  tp_cols <- paste0(TP_PREFIX, HETID_CONSTANTS$DEFAULT_ACM_MATURITIES)
   pc_cols <- paste0(HETID_CONSTANTS$PC_PREFIX, seq_len(n_pcs))
   yields_df <- data[, yield_cols]
   tp_df <- data[, tp_cols]

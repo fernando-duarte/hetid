@@ -82,7 +82,7 @@ theta_table_lines <- build_panel_latex_table(
   ),
   label = "tab:theta_identification",
   notes = theta_notes,
-  col_group_label = "Bond maturity (years)",
+  col_group_label = "Bond maturity (months)",
   table_format = "-4.3"
 )
 

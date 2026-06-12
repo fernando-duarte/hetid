@@ -395,7 +395,7 @@ create_hetero_plots_wrapper <- function(var_name, y_var, predictor_vars) {
 
 # Generate plots for key variables (yields, term premia, consumption growth)
 key_vars <- c(
-  "y2", "y5", "y10", "tp2", "tp5", "tp10",
+  "y24", "y60", "y120", "tp24", "tp60", "tp120",
   HETID_CONSTANTS$CONSUMPTION_GROWTH_COL
 )
 lapply(key_vars, function(var) {

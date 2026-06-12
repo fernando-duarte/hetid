@@ -140,7 +140,7 @@ saveRDS(list(
 key_vars_summary <- all_stats |>
   filter(
     Variable %in% c(
-      "y2", "y10", "tp2", "tp10", "pc1", "pc2",
+      "y24", "y120", "tp24", "tp120", "pc1", "pc2",
       HETID_CONSTANTS$CONSUMPTION_GROWTH_COL
     )
   ) |>

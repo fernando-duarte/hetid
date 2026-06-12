@@ -59,10 +59,10 @@ p_term_structure <- ggplot(snapshot_data, aes(
 )) +
   geom_line(linewidth = 1) +
   geom_point(size = 2) +
-  scale_x_continuous(breaks = 1:10) +
+  scale_x_continuous(breaks = seq(12, 120, by = 12)) +
   labs(
     title = "Term Structure Snapshots",
-    x = "Maturity (years)",
+    x = "Maturity (months)",
     y = "Yield (%)",
     color = "Date"
   ) +
@@ -78,7 +78,7 @@ tp_long <- df |>
   mutate(maturity = as.numeric(gsub("tp", "", maturity)))
 
 p_tp <- ggplot(
-  tp_long |> filter(maturity %in% c(2, 5, 10)),
+  tp_long |> filter(maturity %in% c(24, 60, 120)),
   aes(x = date, y = term_premium, color = factor(maturity))
 ) +
   geom_line() +
@@ -173,7 +173,7 @@ save_correlation_heatmap(
 
 # Distribution Plots
 yield_dist_data <- df |>
-  select(all_of(c("y2", "y5", "y10"))) |>
+  select(all_of(c("y24", "y60", "y120"))) |>
   pivot_longer(everything(), names_to = "maturity", values_to = "yield")
 
 p_yield_dist <- ggplot(yield_dist_data, aes(x = yield, fill = maturity)) +
@@ -210,7 +210,7 @@ p_pc_dist <- ggplot(pc_dist_data, aes(x = value, fill = pc)) +
 display_and_save_plot(p_pc_dist, "lagged_pc_distributions.svg", dir = plot_dir)
 
 # Yield Curve Slope (10Y - 2Y)
-df$slope_10_2 <- df$y10 - df$y2
+df$slope_10_2 <- df$y120 - df$y24
 
 p_slope <- ggplot(df, aes(x = date, y = slope_10_2)) +
   geom_line(color = "darkgreen") +
@@ -228,7 +228,7 @@ p_slope <- ggplot(df, aes(x = date, y = slope_10_2)) +
 display_and_save_plot(p_slope, "yield_curve_slope.svg", dir = plot_dir, height = PLOT_HEIGHT * 0.7)
 
 # Scatterplot Matrix for Key Variables
-key_vars <- c("y2", "y10", "tp2", "tp10", "pc1_lag1", HETID_CONSTANTS$CONSUMPTION_GROWTH_COL)
+key_vars <- c("y24", "y120", "tp24", "tp120", "pc1_lag1", HETID_CONSTANTS$CONSUMPTION_GROWTH_COL)
 pairs_data <- df[key_vars]
 
 local({
@@ -247,11 +247,11 @@ local({
 window_size <- 20 # 5 years for quarterly data
 
 # Note: This will create NA values for the first (window_size - 1) observations
-df$y2_roll_mean <- zoo::rollmean(df$y2, window_size, fill = NA, align = "right")
-df$y2_roll_sd <- zoo::rollapply(df$y2, window_size, sd, fill = NA, align = "right")
+df$y2_roll_mean <- zoo::rollmean(df$y24, window_size, fill = NA, align = "right")
+df$y2_roll_sd <- zoo::rollapply(df$y24, window_size, sd, fill = NA, align = "right")
 
 p_rolling <- ggplot(df, aes(x = date)) +
-  geom_line(aes(y = y2), color = "gray70", alpha = 0.7) +
+  geom_line(aes(y = y24), color = "gray70", alpha = 0.7) +
   geom_line(aes(y = y2_roll_mean), color = "darkblue", linewidth = 1) +
   geom_ribbon(
     aes(

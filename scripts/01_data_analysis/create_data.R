@@ -10,7 +10,7 @@ library(lubridate) # Date handling
 
 acm_data <- extract_acm_data(frequency = "quarterly")
 
-maturity_range <- HETID_CONSTANTS$MIN_MATURITY:HETID_CONSTANTS$MAX_MATURITY
+maturity_range <- HETID_CONSTANTS$DEFAULT_ACM_MATURITIES
 
 dates <- acm_data$date
 yield_cols <- paste0("y", maturity_range)

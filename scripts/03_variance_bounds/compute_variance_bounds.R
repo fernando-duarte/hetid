@@ -255,7 +255,9 @@ cli_ul(c(
 ))
 
 if (variance_bounds[1] == 0) {
-  cli_alert_info("Variance bound for maturity 1 is zero by construction (no forecast error)")
+  cli_alert_info(
+    "Variance bound for maturity 12 (one news period) is zero by construction"
+  )
 }
 
 cli_alert_success("Variance bounds computation completed successfully!")

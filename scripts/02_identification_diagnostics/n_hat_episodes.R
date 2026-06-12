@@ -1,5 +1,5 @@
 # N-hat Episode Detection and Economic Context
-# Ports the legacy positive n-hat analyses: detect contiguous positive n_hat_1
+# Ports the legacy positive n-hat analyses: detect contiguous positive one-year n_hat
 # episodes, map them to crisis/QE event windows, check yield-curve inversion and
 # term-premium differentials, and validate the implied 1-year-ahead short-rate
 # prediction against realized rates
@@ -28,16 +28,16 @@ yields <- acm[, grep("^y\\d+$", names(acm))]
 term_premia <- acm[, grep("^tp\\d+$", names(acm))]
 dates <- acm$date
 
-n_hat_df <- compute_n_hat(yields, term_premia, i = 1, return_df = TRUE, dates = dates)
+n_hat_df <- compute_n_hat(yields, term_premia, i = 12, return_df = TRUE, dates = dates)
 n_hat <- n_hat_df$n_hat
 
 positive_idx <- which(n_hat > 0)
 positive_share <- sprintf("%.1f%%", 100 * length(positive_idx) / length(n_hat))
 cli_alert_info(
-  "Positive n_hat_1: {length(positive_idx)} of {length(n_hat)} observations ({positive_share})"
+  "Positive n_hat_12: {length(positive_idx)} of {length(n_hat)} observations ({positive_share})"
 )
 if (length(positive_idx) > 0) {
-  cli_h2("Dates with positive n_hat_1")
+  cli_h2("Dates with positive n_hat_12")
   cli_ul(format(dates[positive_idx], "%Y-%m-%d"))
 }
 
@@ -88,8 +88,8 @@ if (length(positive_runs) > 0) {
       n_months = runs$lengths[r],
       mean_n_hat = mean(n_hat[obs]),
       max_n_hat = max(n_hat[obs]),
-      share_inverted = mean(yields$y1[obs] > yields$y2[obs]),
-      mean_tp_spread = mean(term_premia$tp2[obs] - term_premia$tp1[obs])
+      share_inverted = mean(yields$y12[obs] > yields$y24[obs]),
+      mean_tp_spread = mean(term_premia$tp24[obs] - term_premia$tp12[obs])
     )
   }))
   # Label each episode with the first event window it overlaps, if any
@@ -115,22 +115,22 @@ if (nrow(episodes) > 0) {
 }
 
 # Term-premium differential at positive observations versus the full sample
-tp_spread_overall <- mean(term_premia$tp2 - term_premia$tp1, na.rm = TRUE)
+tp_spread_overall <- mean(term_premia$tp24 - term_premia$tp12, na.rm = TRUE)
 tp_spread_positive <- if (length(positive_idx) > 0) {
-  mean(term_premia$tp2[positive_idx] - term_premia$tp1[positive_idx])
+  mean(term_premia$tp24[positive_idx] - term_premia$tp12[positive_idx])
 } else {
   NA_real_
 }
-cli_alert_info("Mean tp2 - tp1 when n_hat_1 > 0: {sprintf('%.4f', tp_spread_positive)} pp")
-cli_alert_info("Mean tp2 - tp1 over the full sample: {sprintf('%.4f', tp_spread_overall)} pp")
+cli_alert_info("Mean tp24 - tp12 when n_hat_12 > 0: {sprintf('%.4f', tp_spread_positive)} pp")
+cli_alert_info("Mean tp24 - tp12 over the full sample: {sprintf('%.4f', tp_spread_overall)} pp")
 
-# Prediction validation over the full sample: n_hat(1,t) estimates
+# Prediction validation over the full sample: n_hat(12,t) estimates
 # -E_t[y_(t+1)^(1)] in decimals, so the implied 1-year-ahead short yield in
-# percent is -100 * n_hat; the realization is y1 at the first date >= t + 1 year
+# percent is -100 * n_hat; the realization is y12 at the first date >= t + 1 year
 future_idx <- vapply(seq_along(dates), function(t) which(dates >= dates[t] + 365)[1], integer(1))
 validation <- data.frame(
   date = dates, n_hat = n_hat, predicted_y1_pct = -100 * n_hat,
-  realized_date = dates[future_idx], realized_y1_pct = yields$y1[future_idx]
+  realized_date = dates[future_idx], realized_y1_pct = yields$y12[future_idx]
 )
 validation$error_pct <- validation$predicted_y1_pct - validation$realized_y1_pct
 validation <- validation[!is.na(validation$realized_y1_pct), ]
@@ -168,7 +168,7 @@ if (is.list(quarterly) && !is.data.frame(quarterly)) {
 }
 yields_q <- quarterly[, grep("^y\\d+$", names(quarterly))]
 tp_q <- quarterly[, grep("^tp\\d+$", names(quarterly))]
-n_hat_q <- compute_n_hat(yields_q, tp_q, i = 1)
+n_hat_q <- compute_n_hat(yields_q, tp_q, i = 12)
 positive_q <- which(n_hat_q > 0)
 quarterly_check <- list(
   n_obs = length(n_hat_q), n_positive = length(positive_q),
@@ -177,7 +177,7 @@ quarterly_check <- list(
 
 cli_h2("Quarterly cross-check (stage-01 processed data)")
 cli_alert_info(
-  "Positive quarterly n_hat_1: {quarterly_check$n_positive} of {quarterly_check$n_obs}"
+  "Positive quarterly n_hat_12: {quarterly_check$n_positive} of {quarterly_check$n_obs}"
 )
 if (quarterly_check$n_positive > 0) {
   cli_ul(format(quarterly_check$positive_dates, "%Y-%m-%d"))
@@ -195,7 +195,7 @@ p_timeline <- ggplot(plot_df, aes(x = date, y = n_hat)) +
   geom_hline(yintercept = 0, linetype = "dashed", color = "red") +
   geom_point(data = plot_df[plot_df$is_positive, ], color = "red", size = 2) +
   labs(
-    title = "Expected Log Bond Price Estimator n-hat(1) Over Time",
+    title = "Expected Log Bond Price Estimator n-hat(12) Over Time",
     subtitle = "Red points mark positive values; shading marks crisis/QE event windows",
     x = "Date", y = "n-hat (decimal)", fill = "Event window"
   ) +
@@ -215,7 +215,7 @@ p_scatter <- ggplot(validation, aes(x = predicted_y1_pct, y = realized_y1_pct)) 
   annotate("text", x = -Inf, y = Inf, label = annotation_label, hjust = -0.1, vjust = 1.3) +
   labs(
     title = "n-hat Implied 1-Year-Ahead Short Yield Versus Realized",
-    subtitle = "Prediction is -100 * n-hat(1); realization is y1 about one year later",
+    subtitle = "Prediction is -100 * n-hat(12); realization is y12 about one year later",
     x = "Predicted 1-year yield (percent)", y = "Realized 1-year yield (percent)"
   ) +
   theme_minimal()
@@ -223,9 +223,9 @@ save_plot_pair(p_scatter, "n_hat_prediction_scatter")
 
 # Persist series, episodes, validation, and summary objects
 series_csv <- data.frame(
-  date = dates, n_hat = n_hat, y1 = yields$y1, y2 = yields$y2,
-  tp1 = term_premia$tp1, tp2 = term_premia$tp2,
-  spread_y2_y1 = yields$y2 - yields$y1, is_positive = n_hat > 0
+  date = dates, n_hat = n_hat, y12 = yields$y12, y24 = yields$y24,
+  tp12 = term_premia$tp12, tp24 = term_premia$tp24,
+  spread_y24_y12 = yields$y24 - yields$y12, is_positive = n_hat > 0
 )
 write.csv(series_csv, file.path(output_dir, "n_hat_series.csv"), row.names = FALSE)
 write.csv(episodes, file.path(output_dir, "n_hat_episodes.csv"), row.names = FALSE)

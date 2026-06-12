@@ -46,7 +46,7 @@ main_table <- variance_bounds_df |>
     decimals = 2
   ) |>
   cols_label(
-    Maturity = "Maturity (years)",
+    Maturity = "Maturity (months)",
     c_hat = html("ĉ<sub>i</sub>"),
     k_hat = html("k̂<sub>i</sub>"),
     Variance_Bound = html("Variance Bound<br/>(×10<sup>-3</sup>)")
@@ -272,16 +272,16 @@ summary_text <- paste0(
   "================================\n\n",
   "Analysis Date: ", Sys.Date(), "\n",
   "Number of Maturities: ", ds$n_maturities, "\n",
-  "Maturity Range: ", ds$maturity_range, " years\n",
+  "Maturity Range: ", ds$maturity_range, " months\n",
   "Variance Bound Range: ", ds$variance_bound_range,
   "\n\n",
   "KEY FINDINGS:\n",
   "- Mean Variance Bound: ", mean_vb, "\n",
   "- Median Variance Bound: ", median_vb, "\n",
   "- Highest Bound at Maturity: ",
-  kf$highest_bound_maturity, " years\n",
+  kf$highest_bound_maturity, " months\n",
   "- Lowest Positive Bound at Maturity: ",
-  kf$lowest_positive_bound_maturity, " years\n",
+  kf$lowest_positive_bound_maturity, " months\n",
   "- Component Correlation (c-hat, k-hat): ", ck_corr, "\n",
   "- Monotonicity Ratio: ", mono_ratio, "\n\n",
   "INTERPRETATION:\n",

@@ -31,7 +31,7 @@
 #' @return character vector of LaTeX lines (table environment fragment)
 build_panel_latex_table <- function(panels, col_headers, caption, label,
                                     notes = NULL,
-                                    col_group_label = "Maturity (years)",
+                                    col_group_label = "Maturity (months)",
                                     table_format = "1.3") {
   n_cols <- length(col_headers)
   lines <- c(

@@ -27,7 +27,7 @@ pvals <- list(
   Anscombe = c(0.001, 0.04, 0.20, NA),
   CW = c(0.10, 0.049, 0.30, NA)
 )
-tests_df <- data.frame(maturity = c(2, 5, 9, 10), stringsAsFactors = FALSE)
+tests_df <- data.frame(maturity = c(24, 60, 108, 120), stringsAsFactors = FALSE)
 for (nm in suite) {
   tests_df[[paste0(nm, "_stat")]] <- c(1, 2, 3, NA)
   tests_df[[paste0(nm, "_pval")]] <- pvals[[nm]]

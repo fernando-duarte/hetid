@@ -11,7 +11,7 @@ cli_h1("Heteroskedasticity Diagnostics for W2 Residuals")
 
 # Analysis parameters
 n_pcs <- HETID_CONSTANTS$DEFAULT_N_PCS
-maturities <- 1:9
+maturities <- seq(12L, 108L, by = 12L)
 significance_level <- 0.05
 
 output_dir <- file.path(OUTPUT_TEMP_DIR, "identification_diagnostics")
@@ -139,7 +139,7 @@ p_pvalues <- ggplot(plot_pvals, aes(x = maturity, y = neg_log10_p, color = test)
   scale_x_continuous(breaks = maturities) +
   labs(
     title = "Heteroskedasticity Tests for W2 Residuals",
-    x = "Maturity (years)", y = "-log10(p-value)", color = "Test",
+    x = "Maturity (months)", y = "-log10(p-value)", color = "Test",
     caption = sprintf("Red line: p = %.2f, Orange line: p = 0.10", significance_level)
   ) +
   theme_minimal() +
@@ -157,7 +157,7 @@ p_heatmap <- ggplot(heatmap_df, aes(x = maturity, y = pc_label, fill = abs_corr)
     title = expression(paste(
       "Absolute Correlations: |corr(", PC[j], ", ", W[list(2, i)]^2, ")|"
     )),
-    x = "Maturity (years)", y = "Principal Component"
+    x = "Maturity (months)", y = "Principal Component"
   ) +
   theme_minimal() +
   theme(panel.grid = element_blank())
