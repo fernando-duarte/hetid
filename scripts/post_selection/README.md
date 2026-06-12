@@ -14,6 +14,7 @@ created `scripts/output/temp/data.rds`):
 
 ```
 Rscript scripts/post_selection/run_split_study.R
+Rscript scripts/post_selection/premise_screen.R     # Stage P gate
 Rscript scripts/post_selection/split_simulation.R   # heavy; see below
 Rscript scripts/post_selection/postsel_report.R
 ```
@@ -33,8 +34,12 @@ Honesty contract: the report prints the solver's three-state
 vocabulary per profile side (bounded / unbounded /
 no-certified-bound) and never pools widths across evaluation windows.
 The affirmative selection-honest wording is emitted only alongside a
-passing FULL simulation verdict (mechanically gated in the report
-text layer); without one the summary says NOT validated, and a
+passing FULL simulation verdict whose recorded K grid AND realized
+cells equal the registered grid {2, 4} (mechanically gated in the
+report text layer; the grid-exact scope phrase is derived from the
+verdict artifact, per docs/postsel-sim-k4-preregistration.md, and
+the K = 8 premise failure stays on record in the pilot log and
+failure report); without one the summary says NOT validated, and a
 failing full-simulation verdict makes the report process itself exit
 nonzero after writing its artifacts. Residual caveats (serial
 dependence across the block boundary; the maintained bound at the

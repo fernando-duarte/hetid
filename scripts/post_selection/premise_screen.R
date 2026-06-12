@@ -1,17 +1,24 @@
-# Premise screen for the post-selection split simulation (D10a,
-# Stage P). Verifies, BEFORE any optimizer run, that fixed ex ante
-# weights cover theta0 with high probability at T = 240 -- the
-# baseline the acceptance margins presuppose (the original
-# calibration failed this at every cell; see the pilot log).
+# Premise screen for the post-selection split simulation -- K4
+# rescope round (Stage P). Verifies, BEFORE any optimizer run, that
+# fixed ex ante weights cover theta0 with high probability at
+# T = 240 -- the baseline the acceptance margins presuppose. THIS
+# ROUND'S REGISTERED K GRID IS {2, 4} (application parity:
+# DEFAULT_N_PCS = 4; docs/postsel-sim-k4-preregistration.md). The
+# K = 8 screen of 2026-06-12 failed its gate and stays on record in
+# docs/postsel-sim-pilot-log.md and
+# docs/postsel-sim-failure-report.md -- nothing here erases it.
 # Membership only (covers_theta0; no profile solves).
 #   Rscript scripts/post_selection/premise_screen.R
-# Gate: a configuration passes iff, at BOTH K in {2, 8},
+# Gate: a configuration passes iff, at BOTH K in {2, 4},
 # fixed_full coverage >= 0.80 AND fixed_e coverage >= 0.75. Winner =
 # argmax of min-K fixed_e among passers (ties: lower tau_sim, then
 # gaussian shocks -- the least family change); adopt its values as
 # the defaults in postsel_dgp_params and the SIM_* constants. Record
 # every screened cell in docs/postsel-sim-pilot-log.md as it runs.
-# Acceptance margins are NOT touched here or anywhere (D9).
+# Seed arithmetic is byte-frozen from the prior registration, so the
+# K = 2 rows must reproduce the logged 2026-06-12 values exactly
+# (environment-drift check). Acceptance margins are NOT touched here
+# or anywhere (D9).
 
 source(here::here("scripts/utils/common_settings.R"))
 source(here::here("scripts/utils/postsel_split_utils.R"))
@@ -20,7 +27,7 @@ source(here::here("scripts/utils/postsel_sim_dgp.R"))
 SCREEN_SEED_BASE <- 20260612L + 100000L # disjoint from main cells
 SCREEN_T <- 240L
 SCREEN_REPS <- 100L
-SCREEN_K <- c(2L, 8L)
+SCREEN_K <- c(2L, 4L) # registered K4-round grid
 SCREEN_PROP <- 0.5
 SCREEN_GAP <- 4L
 
@@ -76,7 +83,7 @@ print(screen)
 out_dir <- file.path(OUTPUT_TEMP_DIR, "identification_postsel")
 dir.create(out_dir, recursive = TRUE, showWarnings = FALSE)
 write.csv(
-  screen, file.path(out_dir, "premise_screen.csv"),
+  screen, file.path(out_dir, "premise_screen_k4.csv"),
   row.names = FALSE
 )
 

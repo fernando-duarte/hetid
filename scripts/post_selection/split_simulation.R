@@ -35,7 +35,14 @@ SIM_RHO_TARGET <- 0.04
 SIM_PHI <- 0.5
 SIM_PROP <- 0.5
 SIM_GAP <- 4L
-SIM_K_GRID <- if (QUICK) c(2L, 8L) else c(2L, 4L, 8L)
+# Registered K grid (K4 rescope round,
+# docs/postsel-sim-k4-preregistration.md): the validation claim is
+# scoped to K <= 4 -- application parity (DEFAULT_N_PCS = 4). The
+# K = 8 premise failure stays on record in the pilot log and the
+# failure report; quick mode runs the same registered grid at smoke
+# size. Cell order fixes the seed arithmetic: K = 2 and K = 4 keep
+# exactly the rep seeds the prior registration assigned them.
+SIM_K_GRID <- c(2L, 4L)
 SIM_REPS <- as.integer(
   Sys.getenv("HETID_SIM_REPS", if (QUICK) "8" else "200")
 )
@@ -66,13 +73,6 @@ cli_h1(paste0(
 ))
 cells <- lapply(seq_along(SIM_K_GRID), function(ci) {
   k <- SIM_K_GRID[ci]
-  ck <- file.path(
-    ckpt_dir, paste0("cell_k", k, "_r", SIM_REPS, ".rds")
-  )
-  if (file.exists(ck)) {
-    cli_alert_info(paste0("cell K = ", k, ": checkpoint reused"))
-    return(readRDS(ck))
-  }
   params <- postsel_dgp_params(
     k,
     phi = SIM_PHI, rho_target = SIM_RHO_TARGET,
@@ -82,6 +82,27 @@ cells <- lapply(seq_along(SIM_K_GRID), function(ci) {
   # correlation must sit well inside the slack the study uses, or
   # the premise (pure selection effect) is wrong. Fail loudly.
   stopifnot(max(params$rho) <= 0.6 * SIM_TAU)
+  # Checkpoint fingerprint (K4 round): a checkpoint is reusable ONLY
+  # under the identical worker cfg and DGP parameters -- the file
+  # name carries just K and reps, so without the stamp a
+  # post-adoption run could silently reuse stale pre-adoption cells
+  # and fake determinism. Legacy raw-data.frame checkpoints carry no
+  # stamp and recompute automatically.
+  stamp <- list(cfg = cfg, params = params)
+  ck <- file.path(
+    ckpt_dir, paste0("cell_k", k, "_r", SIM_REPS, ".rds")
+  )
+  if (file.exists(ck)) {
+    ckpt <- readRDS(ck)
+    if (identical(ckpt$stamp, stamp)) {
+      cli_alert_info(paste0("cell K = ", k, ": checkpoint reused"))
+      return(ckpt$rows)
+    }
+    cli_alert_warning(paste0(
+      "cell K = ", k,
+      ": checkpoint fingerprint differs -- recomputing"
+    ))
+  }
   cli_h2(paste0(
     "cell K = ", k, ": rho = ",
     paste(round(params$rho, 4), collapse = ", "),
@@ -109,7 +130,7 @@ cells <- lapply(seq_along(SIM_K_GRID), function(ci) {
     "cell K = ", k, ": ", SIM_REPS, " reps in ",
     round(elapsed, 1), " min"
   ))
-  saveRDS(cell, ck)
+  saveRDS(list(stamp = stamp, rows = cell), ck)
   cell
 })
 
@@ -126,7 +147,8 @@ res <- list(
     rho_target = SIM_RHO_TARGET,
     dgp_family = paste0(
       "lognormal-het, kappa_eta shocks; amended D10a",
-      " (post-stop, user-approved)"
+      " (post-stop, user-approved); K grid rescoped to the",
+      " registered K <= 4 round"
     )
   ),
   dgp = lapply(
