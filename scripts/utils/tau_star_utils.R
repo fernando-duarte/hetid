@@ -1,8 +1,9 @@
 # Shared machinery for the tau* analysis. tau* is the slack at which the
 # identified set transitions bounded -> unbounded; a common slack tau is
-# applied across all components throughout. Provides the fixed-gamma sweep and
-# bisection helpers, the re-optimizing oracle for the optimized gamma, and the
-# curvature (recession) degeneracy diagnostic.
+# applied across all components throughout. Provides the fixed-gamma sweep
+# and bisection helpers, the re-optimizing oracle (the whitened lambda
+# optimizer under the repo's variance normalization; the caller supplies
+# whiten), and the curvature (recession) degeneracy diagnostic.
 
 # Quadratic system for a fixed gamma at slack tau (A_i already symmetric).
 tau_quadratic_system <- function(gamma, tau, moments) {
@@ -83,19 +84,21 @@ tau_star_fixed <- function(gamma, moments, coarse, iters = 40L) {
   list(tau_star = (lo + hi) / 2, trace = do.call(rbind, trace), capped = FALSE)
 }
 
-# tau* for the OPTIMIZER: the largest tau at which re-optimizing gamma still
-# yields a bounded+valid set (finite final objective). Brackets upward from
-# tau_lo by doubling, with every candidate clamped to the cap so no tau at or
-# above 1 is ever evaluated (hetid admits tau in [0,1) only -- the
-# correlation-bound interpretation fails at tau >= 1), then bisects. tau_star
-# is NA when even tau_lo fails; capped = TRUE when the set stays bounded up to
-# the cap, i.e. the reported tau* is a censored lower bound.
-tau_star_optimized <- function(gamma_start, moments, tau_lo = 0.2, cap = 0.99,
-                               iters = 25L) {
+# tau* for the OPTIMIZER: the largest tau at which re-optimizing the weights
+# (the whitened lambda optimizer; whiten is REQUIRED -- every caller must
+# choose) still yields a bounded+valid set (finite final objective). Brackets
+# upward from tau_lo by doubling, with every candidate clamped to the cap so
+# no tau at or above 1 is ever evaluated (hetid admits tau in [0,1) only --
+# the correlation-bound interpretation fails at tau >= 1), then bisects.
+# tau_star is NA when even tau_lo fails; capped = TRUE when the set stays
+# bounded up to the cap, i.e. the reported tau* is a censored lower bound.
+tau_star_optimized <- function(gamma_start, moments, whiten,
+                               tau_lo = 0.2, cap = 0.99, iters = 25L) {
   n_comp <- ncol(gamma_start)
   oracle <- function(tau) {
-    is.finite(run_gamma_optimization(
+    is.finite(run_lambda_optimization(
       gamma_start, moments, rep(tau, n_comp),
+      whiten = whiten,
       n_starts = TAU_STAR_N_STARTS, seed = SEED
     )$objective_final)
   }

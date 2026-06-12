@@ -20,6 +20,27 @@ cli_alert_info(
   "Loaded baseline: {.val {ncol(gamma_baseline)}} components"
 )
 
+# Rebuild the aligned instrument matrix the stage-04 moments were
+# computed from: same data artifact, same HETID_Z_SOURCE hook, same
+# leading-block alignment (residual row t is sample row t, enforced
+# by assert_w2_alignment upstream). The baseline RDS carries the
+# moments but not Z, and Var(Z) is not recoverable from the moments
+# container, so the variance normalization needs Z itself.
+inputs <- load_identification_inputs(
+  n_pcs = baseline$spec$n_pcs, mode = baseline$spec$mode
+)
+pcs_mat <- as.matrix(inputs$data[, inputs$pc_vars])
+z_aligned <- get_identification_z(inputs$data, pcs_mat)[
+  seq_len(baseline$residuals$n_obs), ,
+  drop = FALSE
+]
+# Fail closed BEFORE any optimization: the rebuilt Z must reproduce
+# the stage-04 moments exactly (tolerance 0), else the whitening
+# covariance would not be the Var(Z) the constraints were built from.
+assert_z_matches_moments(
+  z_aligned, baseline$residuals$w1, baseline$residuals$w2, moments
+)
+
 # Fixed tau for set identification
 n_comp <- ncol(gamma_baseline)
 tau <- rep(BASELINE_TAU, n_comp)
@@ -35,13 +56,16 @@ cli_alert(
 )
 cli_alert("Additional starts: random perturbations")
 
-opt_result <- run_gamma_optimization(
-  gamma_start = gamma_baseline,
+opt_result <- run_lambda_optimization(
+  lambda_start = gamma_baseline,
   moments = moments,
   tau = tau,
+  whiten = list(z = z_aligned),
   n_starts = n_starts_gamma,
   seed = SEED
 )
+# Reported columns satisfy the repo default lambda' Vhat lambda = 1.
+gamma_optimized <- do.call(cbind, opt_result$lambda_optimized)
 
 obj_start <- round(opt_result$objective_start, 4)
 obj_final <- round(opt_result$objective_final, 4)
@@ -53,12 +77,21 @@ cli_alert_success(
 cli_alert_info(
   "Objective: {.val {obj_start}} -> {.val {obj_final}}"
 )
+lv <- opt_result$lambda_variance
+cli_alert_info(paste0(
+  "Unit-direction instrument variance (baseline -> optimized): ",
+  paste(sprintf(
+    "%s: %.4g -> %.4g", lookup$component_label,
+    vapply(lv$start, `[[`, numeric(1), 1L),
+    vapply(lv$optimized, `[[`, numeric(1), 1L)
+  ), collapse = "; ")
+))
 
 # Rebuild bounds with optimized gamma
 cli_h2("Rebuilding Bounds with Optimized Gamma")
 
 quad_sys_opt <- build_quadratic_system(
-  opt_result$gamma_optimized, tau, moments
+  gamma_optimized, tau, moments
 )
 optimized_bounds <- solve_all_profile_bounds(
   quad_sys_opt$quadratic
@@ -115,7 +148,7 @@ results <- list(
   lookup = baseline$lookup,
   tau_fixed = tau,
   gamma_start = gamma_baseline,
-  gamma_optimized = opt_result$gamma_optimized,
+  gamma_optimized = gamma_optimized,
   baseline_bounds = baseline_bounds,
   optimized_bounds = optimized_bounds,
   objective_start = opt_result$objective_start,
@@ -126,7 +159,9 @@ results <- list(
     best_index = opt_result$best_index,
     converged = opt_result$all_results[[
       opt_result$best_index
-    ]]$convergence >= 0
+    ]]$convergence >= 0,
+    whitening_source = opt_result$whitening$source,
+    lambda_variance = opt_result$lambda_variance
   )
 )
 

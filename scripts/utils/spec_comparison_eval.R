@@ -34,7 +34,10 @@ spec_moments <- function(mode, n_pcs, components) {
     )
   }
   mom <- compute_identification_moments(resid$w1, resid$w2, resid$pcs_aligned)
-  list(moments = mom, n_comp = ncol(resid$w2), gamma_rf = resid$gamma_rf)
+  list(
+    moments = mom, n_comp = ncol(resid$w2),
+    gamma_rf = resid$gamma_rf, z = resid$pcs_aligned
+  )
 }
 
 # --- evaluate one (gamma, tau): point at tau=0, else the set ---
@@ -54,10 +57,12 @@ eval_fixed <- function(gamma, mom, n_comp, tau) {
     kind = "set", cond = NA
   )
 }
-eval_opt <- function(seed, mom, n_comp, tau) {
-  r <- suppressMessages(
-    run_gamma_optimization(seed, mom, rep(tau, n_comp), n_starts = n_starts_opt, seed = SEED)
-  )
+eval_opt <- function(seed, mom, n_comp, tau, z) {
+  r <- suppressMessages(run_lambda_optimization(
+    seed, mom, rep(tau, n_comp),
+    whiten = list(z = z),
+    n_starts = n_starts_opt, seed = SEED
+  ))
   list(
     width = r$objective_final, bounded = is.finite(r$objective_final),
     kind = "set(opt)", cond = NA
@@ -126,7 +131,7 @@ compute_group_rows <- function(mode, n_pcs, components) {
         set.seed(SEED)
         matrix(stats::rnorm(n_inst * nc), n_inst, nc)
       }
-      r <- tryCatch(eval_opt(seed, mom, nc, tau), error = function(e) NULL)
+      r <- tryCatch(eval_opt(seed, mom, nc, tau, sm$z), error = function(e) NULL)
       if (!is.null(r)) {
         add_row(
           mode = mode, n_pcs = n_pcs, components = clabel, n_comp = nc,

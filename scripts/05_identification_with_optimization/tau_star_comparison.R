@@ -104,6 +104,7 @@ run_tau_star_analysis <- function(mode) {
 
   cli_h2("tau* (optimizer; bracket + bisection)")
   opt <- tau_star_optimized(fixed[[base_label]], moments,
+    whiten = list(z = resid$pcs_aligned),
     tau_lo = OPT_TAU_LO, cap = OPT_TAU_CAP
   )
   if (is.na(opt$tau_star)) {
