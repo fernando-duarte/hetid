@@ -61,6 +61,12 @@ opt <- run_lambda_optimization(
 )
 cat("optimized total width:", opt$objective_final, "\n")
 
+# Width-minimizing weights above are selected on the SAME sample the
+# widths are evaluated on -- a computational benchmark, not a
+# confidence statement. For the selection-honest alternative (select
+# on one temporal block, evaluate on the other), see
+# scripts/post_selection/run_split_study.R.
+
 # Per-component instrument subsets: align the per-component sets by
 # name, recompute the moments on the union matrix (the support
 # indexes ITS columns), zero-pad compact weights onto it, and pass

@@ -88,6 +88,13 @@ Shared utility functions
   panel tables with standalone compilable variants
 - `README.md` - Documentation for the utility functions
 
+### post_selection/
+
+Non-default post-selection split study: selection-honest weight
+choice (select on one temporal block, evaluate on the other), its
+simulation validation, and the comparison report. Not registered in
+`run_all_scripts.R`; see `post_selection/README.md`.
+
 ### output/
 All script outputs organized by purpose
 
