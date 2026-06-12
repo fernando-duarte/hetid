@@ -22,10 +22,10 @@ check <- function(label, cond) {
   }
 }
 
-# Single-combination equivalence: with a K = 1 start and the same
-# seed, the general optimizer must reproduce the legacy gamma
-# optimizer exactly (same pack order, same rnorm draw count, same
-# objective surface via the builder equivalence).
+# Matrix-start convenience: a K = 1 gamma-style matrix start must be
+# identical to the equivalent one-column list start (same packing,
+# same rnorm draw count, same trajectories). This pins the surface
+# that replaced the retired legacy gamma optimizer.
 set.seed(33)
 t_obs <- 80L
 w1 <- rnorm(t_obs)
@@ -35,24 +35,34 @@ moments <- suppressMessages(compute_identification_moments(w1, w2, z))
 gamma_start <- matrix(rnorm(6), nrow = 3)
 tau <- rep(0.2, 2)
 
-legacy <- run_gamma_optimization(
-  gamma_start, moments, tau,
-  n_starts = 3, seed = 99, maxeval = 50L
-)
 general <- run_lambda_optimization(
   gamma_start, moments, tau,
   whiten = NULL,
   n_starts = 3, seed = 99, maxeval = 50L
 )
+as_list <- run_lambda_optimization(
+  list(gamma_start[, 1, drop = FALSE], gamma_start[, 2, drop = FALSE]),
+  moments, tau,
+  whiten = NULL,
+  n_starts = 3, seed = 99, maxeval = 50L
+)
 check(
-  "K=1 lambda optimization equals the legacy gamma optimizer",
-  identical(
-    do.call(cbind, general$lambda_optimized),
-    unname(legacy$gamma_optimized)
-  ) &&
-    identical(general$objective_final, legacy$objective_final) &&
-    identical(general$best_index, legacy$best_index) &&
-    identical(general$objective_start, legacy$objective_start)
+  "matrix start and equivalent list start are identical",
+  identical(general, as_list)
+)
+check(
+  "objective_final equals the honest width of the returned weights",
+  isTRUE(all.equal(
+    general$objective_final,
+    honest_width_lambda(general$lambda_optimized, tau, moments)
+  ))
+)
+check(
+  "objective_start equals the honest width of the start",
+  isTRUE(all.equal(
+    general$objective_start,
+    honest_width_lambda(coerce_lambda_start(gamma_start, moments), tau, moments)
+  ))
 )
 
 # Ragged multi-combination run: shapes survive the pack/unpack round

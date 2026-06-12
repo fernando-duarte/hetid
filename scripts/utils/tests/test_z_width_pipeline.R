@@ -101,13 +101,15 @@ check(
   length(ixj$quadratic$A_i) == 15L && setequal(ixj$labels$instrument, 1:5)
 )
 
-opt <- suppressMessages(run_gamma_optimization(
+opt <- suppressMessages(run_lambda_optimization(
   gamma5, mom, rep(BASELINE_TAU, 3L),
+  whiten = list(z = resid$pcs_aligned),
   n_starts = 2, seed = SEED, maxeval = 30L
 ))
+opt_gamma <- do.call(cbind, opt$lambda_optimized)
 check(
-  "gamma optimizer runs at the custom width with an honest objective",
-  identical(dim(opt$gamma_optimized), c(5L, 3L)) &&
+  "lambda optimizer runs at the custom width with an honest objective",
+  identical(dim(opt_gamma), c(5L, 3L)) &&
     (is.infinite(opt$objective_final) || opt$objective_final < 1e12)
 )
 

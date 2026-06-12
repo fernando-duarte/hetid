@@ -1,6 +1,6 @@
 # Lambda Optimization -- the single outer optimizer over general
-# per-component weight matrices (the legacy Euclidean
-# run_gamma_optimization is retired). Shared pieces
+# per-component weight matrices (the legacy Euclidean gamma
+# optimizer is retired). Shared pieces
 # (normalize_gamma_columns, UNBOUNDED_PENALTY, compute_total_width,
 # solve_all_profile_bounds) come from the sourced utils; packing,
 # start coercion, masking, codecs, and honest_width_lambda live in
