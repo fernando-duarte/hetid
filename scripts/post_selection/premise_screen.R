@@ -9,8 +9,8 @@
 # fixed_full coverage >= 0.80 AND fixed_e coverage >= 0.75. Winner =
 # argmax of min-K fixed_e among passers (ties: lower tau_sim, then
 # gaussian shocks -- the least family change); adopt its values as
-# the defaults in postsel_dgp_params and the SIM_* constants. Every
-# cell is appended to docs/postsel-sim-pilot-log.md by the executor.
+# the defaults in postsel_dgp_params and the SIM_* constants. Record
+# every screened cell in docs/postsel-sim-pilot-log.md as it runs.
 # Acceptance margins are NOT touched here or anywhere (D9).
 
 source(here::here("scripts/utils/common_settings.R"))
