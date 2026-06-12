@@ -111,6 +111,7 @@ postsel_sim_lines <- function(sim, acceptance) {
     )
   } else {
     checks <- acceptance$checks
+    margins_pass <- all(unlist(checks))
     c(
       paste0(
         "Acceptance (pre-specified margins; a FAIL is reported,",
@@ -122,11 +123,22 @@ postsel_sim_lines <- function(sim, acceptance) {
           if (isTRUE(checks[[nm]])) "PASS" else "FAIL"
         )
       }, character(1)),
-      if (all(unlist(checks))) {
+      if (margins_pass && sim_k_scope_ok(sim)) {
+        sprintf(
+          paste0(
+            "Verdict: PASS -- on the synthetic DGP, full-sample",
+            " selection degrades coverage of theta0 and the split",
+            " restores it to the fixed-weights benchmark at every",
+            " registered K. The claim is validated %s."
+          ),
+          postsel_k_scope_phrase(sim$settings$k_grid)
+        )
+      } else if (margins_pass) {
         paste0(
-          "Verdict: PASS -- on the synthetic DGP, full-sample",
-          " selection degrades coverage of theta0 and the split",
-          " restores it to the fixed-weights benchmark."
+          "Verdict: margins PASS, but the simulation's K grid is",
+          " outside the registered scope; the scoped",
+          " selection-honest claim is NOT validated by this",
+          " artifact (see docs/postsel-sim-k4-preregistration.md)."
         )
       } else {
         paste0(

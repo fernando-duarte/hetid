@@ -16,6 +16,51 @@ POSTSEL_ACCEPT <- list(
   repair_margin = 0.10
 )
 
+# Registered K grid for the scoped validation claim (K4 rescope
+# round, docs/postsel-sim-k4-preregistration.md). The affirmative
+# wording is gated on a FULL verdict whose recorded grid AND
+# realized cells both equal this registered grid -- fail-closed for
+# legacy artifacts (no k_grid), subsets, supersets, and grid/cell
+# mismatches. The PRINTED scope always comes from the verdict
+# artifact's own grid, never from prose.
+POSTSEL_K_SCOPE <- c(2L, 4L)
+
+# Grid-exact scope phrase derived ONLY from the verdict artifact's
+# recorded grid: names the tested grid, the application-parity
+# bound, and the explicit non-claims for untested interior K and for
+# K above the grid.
+postsel_k_scope_phrase <- function(k_grid) {
+  ks <- sort(unique(as.integer(k_grid)))
+  k_max <- max(ks)
+  untested <- setdiff(seq.int(min(ks), k_max), ks)
+  sprintf(
+    paste0(
+      "on the registered K grid {%s} (application-parity scope up",
+      " to K = %d; no claim for untested K%s, or for K > %d)"
+    ),
+    paste(ks, collapse = ", "), k_max,
+    if (length(untested) > 0L) {
+      sprintf(", e.g. K = %s", paste(untested, collapse = ", "))
+    } else {
+      ""
+    },
+    k_max
+  )
+}
+
+# TRUE iff the simulation artifact's RECORDED grid (settings$k_grid)
+# AND its REALIZED cells (results$k_inst) both equal the registered
+# scope as sorted sets. The report accepts arbitrary
+# HETID_POSTSEL_SIM_SOURCE artifacts, so the self-declared grid
+# alone is never trusted.
+sim_k_scope_ok <- function(sim) {
+  k_grid <- sim$settings$k_grid
+  k_cells <- sim$results$k_inst
+  !is.null(k_grid) && !is.null(k_cells) &&
+    identical(sort(unique(as.integer(k_grid))), POSTSEL_K_SCOPE) &&
+    identical(sort(unique(as.integer(k_cells))), POSTSEL_K_SCOPE)
+}
+
 # Mean coverage with applicable-cell denominators. Membership is
 # well-defined for unbounded sets too, so every rep contributes; n is
 # carried per (K, arm) cell rather than assumed.

@@ -28,18 +28,24 @@
   paste0("[", lo, ", ", hi, "]")
 }
 
-# Headline gated on the simulation verdict: the affirmative
-# selection-honest wording appears ONLY alongside a passing FULL
-# simulation (decision D11); every lesser artifact set says NOT
-# validated, in so many words.
-postsel_headline <- function(validated) {
+# Headline gated on the simulation verdict AND the registered K
+# scope (K4 rescope round): the affirmative selection-honest wording
+# appears ONLY alongside a passing FULL simulation whose recorded
+# grid and realized cells equal the registered scope (decision D11
+# plus the K4 round's pre-registration); the printed scope phrase is
+# built from the verdict artifact's own grid, never hard-coded.
+# Every lesser artifact set says NOT validated, in so many words.
+postsel_headline <- function(validated, k_scope_phrase = NULL) {
   c(
     "Post-selection split study: split-selected weights",
     "====================================================",
     if (validated) {
-      paste0(
-        "Status: selection-honest interpretation VALIDATED by the",
-        " full simulation (verdict below)."
+      sprintf(
+        paste0(
+          "Status: selection-honest interpretation VALIDATED %s by",
+          " the full simulation (verdict below)."
+        ),
+        k_scope_phrase
       )
     } else {
       paste0(
@@ -96,7 +102,13 @@ postsel_panel_lines <- function(grid, arms, title, note) {
 
 build_postsel_summary_lines <- function(study, sim, acceptance) {
   validated <- !is.null(acceptance) &&
-    all(unlist(acceptance$checks))
+    all(unlist(acceptance$checks)) &&
+    sim_k_scope_ok(sim)
+  k_scope_phrase <- if (validated) {
+    postsel_k_scope_phrase(sim$settings$k_grid)
+  } else {
+    NULL
+  }
   s <- study$settings
   windows <- study$windows
   window_lines <- vapply(names(windows), function(nm) {
@@ -112,16 +124,19 @@ build_postsel_summary_lines <- function(study, sim, acceptance) {
     " panel is the half-sample efficiency cost, not a method",
     " failure.",
     if (validated) {
-      paste0(
-        " Validated as selection-honest by the full simulation",
-        " (see verdict)."
+      sprintf(
+        paste0(
+          " Validated as selection-honest %s by the full simulation",
+          " (see verdict)."
+        ),
+        k_scope_phrase
       )
     } else {
       ""
     }
   )
   c(
-    postsel_headline(validated),
+    postsel_headline(validated, k_scope_phrase),
     sprintf(
       paste0(
         "tau = %.3f on BOTH blocks (fixed ex ante, never",

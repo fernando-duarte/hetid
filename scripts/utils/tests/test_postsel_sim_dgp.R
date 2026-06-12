@@ -22,15 +22,36 @@ check(
     abs(max(params$rho) - params$rho_target) < 1e-6
 )
 
-# kappa_eta threads the closed forms with the shock family: heavier
+# kappa_eta threads the closed forms with the shock family under
+# EXPLICIT arguments, so these expectations are invariant to
+# whichever Stage-P winner gets adopted as the default: heavier
 # (gaussian) shocks raise var(eps2^2), so the solver needs more
 # sigma_nu for the same rho target (D10a)
-params_g <- postsel_dgp_params(4L, phi = 0.5, shock_dist = "gaussian")
+params_u <- postsel_dgp_params(
+  4L,
+  phi = 0.5, shock_dist = "uniform"
+)
+params_g <- postsel_dgp_params(
+  4L,
+  phi = 0.5, shock_dist = "gaussian"
+)
 check(
   "kappa_eta switches the closed forms with the shock family",
-  params$kappa_eta == 1.8 && params_g$kappa_eta == 3 &&
-    params_g$sigma_nu > params$sigma_nu &&
+  params_u$kappa_eta == 1.8 && params_g$kappa_eta == 3 &&
+    params_g$sigma_nu > params_u$sigma_nu &&
+    max(params_u$rho) <= params_u$rho_target + 1e-8 &&
     max(params_g$rho) <= params_g$rho_target + 1e-8
+)
+
+# Default pin: the unadorned defaults must equal the adopted Stage-P
+# winner constants. Update these literals TOGETHER with SIM_TAU /
+# SIM_SHOCK_DIST / SIM_RHO_TARGET at winner adoption (Task 5); until
+# Stage P runs they pin the documented placeholders (uniform / 0.04),
+# and forgetting the dual update fails this check by design
+check(
+  "defaults equal the adopted winner configuration",
+  identical(params$shock_dist, "uniform") &&
+    params$rho_target == 0.04
 )
 
 # Large iid Monte Carlo of the epsilon-level moments at the as-built

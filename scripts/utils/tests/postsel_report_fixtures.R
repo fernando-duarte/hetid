@@ -46,6 +46,29 @@ postsel_bad_results <- function() {
   ))
 }
 
+# Grid where selection degrades coverage and the split repairs it on
+# the registered K <= 4 cells (passes every frozen margin with K = 4
+# as the largest registered cell)
+postsel_good_results_k4 <- function() {
+  mk_results(list(
+    "2:fixed_full" = 0.96, "2:fixed_e" = 0.94, "2:opt_full" = 0.90,
+    "2:split" = 0.92, "2:self_e" = 0.70,
+    "4:fixed_full" = 0.96, "4:fixed_e" = 0.94, "4:opt_full" = 0.70,
+    "4:split" = 0.92, "4:self_e" = 0.50
+  ))
+}
+
+# Full-simulation settings stub carrying an explicit K grid. The
+# scope gate checks BOTH settings$k_grid and the realized cells in
+# results$k_inst; legacy artifacts without a k_grid must fail closed
+postsel_full_settings <- function(k_grid) {
+  list(
+    quick = FALSE, t_obs = 240L, tau = 0.35, phi = 0.5, reps = 50L,
+    shock_dist = "uniform", kappa_eta = 1.8, rho_target = 0.04,
+    k_grid = k_grid
+  )
+}
+
 # One grid row with chosen per-side states (worst_state resolved at
 # call time, per the sourcing contract above)
 mk_grid_row <- function(arm, weights, sel, eval_w, t_eval,
