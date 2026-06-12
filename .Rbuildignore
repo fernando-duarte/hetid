@@ -64,6 +64,7 @@
 # Package development
 ^CRAN-RELEASE$
 ^CRAN-SUBMISSION$
+^\.Rlib$
 ^\.Rcheck$
 ^\.\.Rcheck$
 ^hetid\.Rcheck$
