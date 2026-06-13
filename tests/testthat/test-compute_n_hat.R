@@ -126,3 +126,42 @@ test_that("compute_n_hat rejects invalid maturity values", {
     "between"
   )
 })
+
+test_that("n_hat imposes TP^(1):=0 at the one-period maturity (i == step)", {
+  test_env <- setup_standard_test_env()
+  units <- HETID_CONSTANTS$MATURITY_UNITS_PER_YEAR
+  pct <- HETID_CONSTANTS$PERCENT_TO_DECIMAL
+
+  # At i == step (= 12) the step-maturity term premium (tp12) is dropped:
+  # the one-period bond carries no term premium by definition.
+  n_hat_12 <- compute_n_hat(test_env$yields, test_env$term_premia, i = 12)
+
+  expected <- ((12 / units) * test_env$yields$y12 -
+    (24 / units) * test_env$yields$y24 +
+    (24 / units) * test_env$term_premia$tp24) / pct
+  expect_equal(n_hat_12, expected,
+    tolerance = 1e-12,
+    label = "n_hat at i == step drops the step-maturity term premium"
+  )
+
+  # The retained-tp12 formula must differ (tp12 is nonzero in ACM data)
+  with_tp12 <- expected - (12 / units) * test_env$term_premia$tp12 / pct
+  expect_false(isTRUE(all.equal(n_hat_12, with_tp12)),
+    label = "dropping tp12 must change n_hat for nonzero tp12"
+  )
+})
+
+test_that("compute_n_hat warns when yields look like decimals, not percent", {
+  test_env <- setup_standard_test_env()
+
+  # Percentage-point inputs (max |yield| > 1): no units warning
+  expect_no_warning(
+    compute_n_hat(test_env$yields, test_env$term_premia, i = 60)
+  )
+
+  # Decimal inputs (divide by 100, max |yield| < 1): warn about units
+  expect_warning(
+    compute_n_hat(test_env$yields / 100, test_env$term_premia, i = 60),
+    "decimals"
+  )
+})

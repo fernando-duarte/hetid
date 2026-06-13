@@ -71,9 +71,11 @@ test_that("n_hat with step = 6 matches the hand formula", {
   pct <- HETID_CONSTANTS$PERCENT_TO_DECIMAL
   units <- HETID_CONSTANTS$MATURITY_UNITS_PER_YEAR
 
+  # At i == step the step-maturity term premium is normalized to zero
+  # (TP^(1):=0), so the (6 / units) * tp6 term is dropped
   n_hat_6 <- compute_n_hat(frame$yields, frame$term_premia, i = 6, step = 6)
   expected_6 <- ((6 / units) * frame$yields$y6 - (12 / units) * frame$yields$y12 +
-    (12 / units) * frame$term_premia$tp12 - (6 / units) * frame$term_premia$tp6) / pct
+    (12 / units) * frame$term_premia$tp12) / pct
   expect_equal(n_hat_6, expected_6)
 
   n_hat_12 <- compute_n_hat(frame$yields, frame$term_premia, i = 12, step = 6)
@@ -99,8 +101,10 @@ test_that("k_hat with step = 6 shifts by whole news periods", {
 
   k_hat <- compute_k_hat(frame$yields, frame$term_premia, i = 12, step = 6)
 
+  # n_hat_prev = compute_n_hat(6, step = 6) at the one-period maturity,
+  # where TP^(1):=0 drops the (6 / units) * tp6 term
   n_hat_prev <- ((6 / units) * frame$yields$y6 - (12 / units) * frame$yields$y12 +
-    (12 / units) * frame$term_premia$tp12 - (6 / units) * frame$term_premia$tp6) / pct
+    (12 / units) * frame$term_premia$tp12) / pct
   horizon_periods <- 2
   realized <- -(6 / units) * frame$yields$y6[(horizon_periods + 1):n_obs] / pct
   forecast <- n_hat_prev[2:(n_obs - horizon_periods + 1)]

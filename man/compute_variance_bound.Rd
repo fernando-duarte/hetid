@@ -2,13 +2,14 @@
 % Please edit documentation in R/compute_variance_bound.R
 \name{compute_variance_bound}
 \alias{compute_variance_bound}
-\title{Compute Variance Bound}
+\title{Compute Variance-Bound Leading Term}
 \usage{
 compute_variance_bound(
   yields,
   term_premia,
   i,
-  step = HETID_CONSTANTS$DEFAULT_STEP
+  step = HETID_CONSTANTS$DEFAULT_STEP,
+  c_bar = NULL
 )
 }
 \arguments{
@@ -32,23 +33,43 @@ steps one period, so maturity arithmetic moves in multiples of
 \code{step}: \code{compute_n_hat()} pairs maturities \code{i} and
 \code{i + step}, the one-period bond is the \code{step}-maturity
 bond, and horizons must satisfy \code{i <= MAX_MATURITY - step}.}
+
+\item{c_bar}{Optional deterministic envelope. When \code{NULL}
+(default) the sample maximum \code{\link{compute_c_hat}} is used;
+when a positive scalar is supplied it replaces the envelope, giving
+the spec's envelope-conservative variant
+\eqn{U_i^{bd} = (1/4)\,\bar C_i\,(k1 + k2)}.}
 }
 \value{
-Numeric value of the variance bound (1/4)\emph{c_hat_i}k_hat_i
+Numeric value of (1/4)\emph{c_hat_i}(k_hat_i + k2_hat_i), or
+(1/4)\emph{c_bar}(k_hat_i + k2_hat_i) when \code{c_bar} is supplied
 }
 \description{
-Computes the empirical upper bound for Var(error(i,t+1))
+Computes the plug-in leading fourth-order term of the SDF-news
+approximation-error variance bound,
+U_i = (1/4) * c_hat_i * (k_hat_i + k2_hat_i).
 }
 \details{
-The variance bound is:
-Var(error(i,t+1)) <= (1/4)\emph{c_hat_i}k_hat_i
+The leading fourth-order term is
+U_i = (1/4) * C_i * (K1_i + K2_i), estimated by the plug-in
+(1/4) * c_hat_i * (k_hat_i + k2_hat_i). It is a plug-in approximation
+to the leading part of the theoretical bound, not a literal
+finite-sample upper bound: sample fourth moments can lie below their
+population counterparts and the higher-order remainder is omitted. At
+the one-period maturity \code{i == step} the k_hat (k1) term is zero,
+so the bound is the strictly positive k2_hat contribution.
+
+Supplying \code{c_bar} substitutes a user-specified deterministic
+envelope for the sample maximum (the spec's U^bd variant); its
+population target is conservative relative to the minimal-envelope
+target when \code{c_bar} is at least the minimal envelope.
 }
 \note{
 The effective maximum for \code{i} is \code{MAX_MATURITY - step}
-(108 for standard ACM data with the default annual step), because this
-function requires data at maturity \code{i + step}. \code{i} must be
-a positive multiple of \code{step} (enforced by
-\code{\link{compute_k_hat}}).
+(108 for standard ACM data with the default annual step), because the
+envelope c_hat needs data at maturity \code{i + step}. \code{i} must
+be a positive multiple of \code{step} (enforced by
+\code{\link{compute_k_hat}} and \code{\link{compute_k2_hat}}).
 }
 \examples{
 # Extract ACM data

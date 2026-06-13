@@ -44,21 +44,28 @@ bond, and horizons must satisfy \code{i <= MAX_MATURITY - step}.}
 Numeric vector of computed values, or data frame with dates if return_df = TRUE
 }
 \description{
-Computes the time series of SDF innovations given by:
-exp(n_hat(i,t)) * (Delta_(t+1)p_(t+i)^(1) + 0.5*(Delta_(t+1)p_(t+i)^(1))^2 -
-0.5*E\[(Delta_(t+1)p_(t+i)^(1))^2\])
+Computes the time series of SDF innovations, the centered second-order
+approximation to the SDF news:
+exp(n_hat(i,t)) * (Delta_(t+1)p_(t+i)^(1) + 0.5*(Delta_(t+1)p_(t+i)^(1))^2)
+\itemize{
+\item B_i
+}
 }
 \details{
-The SDF innovation is computed as:
-exp(n_hat(i,t)) * (Delta_(t+1)p_(t+i)^(1) + 0.5*(Delta_(t+1)p_(t+i)^(1))^2 -
-0.5*E\[(Delta_(t+1)p_(t+i)^(1))^2\])
+The SDF innovation is the centered second-order approximation
+exp(n_hat(i,t)) * (Delta_(t+1)p_(t+i)^(1) + 0.5*(Delta_(t+1)p_(t+i)^(1))^2)
+\itemize{
+\item B_i
+}
 
 Where:
 \itemize{
 \item Delta_(t+1)p_(t+i)^(1) = n_hat(i-step,t+1) - n_hat(i,t)
-\item E\[(Delta_(t+1)p_(t+i)^(1))^2\] is the mean of
-(n_hat(i-step,t+1) - n_hat(i,t))^2 over the valid (non-missing) news
-terms; with complete data this averages the T-1 available terms
+\item B_i = 0.5 * mean(exp(n_hat(i,t)) * (Delta_(t+1)p_(t+i)^(1))^2) is the
+constant centering term, an exponential-weighted sample mean
+subtracted outside the exp(n_hat) factor so the population analogue
+has exactly zero unconditional mean; the mean runs over the valid
+(non-missing) news dates (T-1 terms with complete data)
 }
 }
 \note{

@@ -76,3 +76,24 @@ test_that("compute_sdf_innovations rejects invalid maturity values", {
     "between"
   )
 })
+
+test_that("SDF innovations use the constant centering B_i (subtracted outside e^mu)", {
+  test_env <- setup_standard_test_env()
+  i <- 48
+
+  sdf <- compute_sdf_innovations(test_env$yields, test_env$term_premia, i = i)
+  n_hat_i <- compute_n_hat(test_env$yields, test_env$term_premia, i = i)
+  delta_p <- compute_price_news(test_env$yields, test_env$term_premia, i = i)
+
+  # Spec centering: B_i = 0.5 * mean(e^{mu} * delta_p^2) subtracted
+  # OUTSIDE the e^{mu} factor (a constant, not a time-varying term)
+  exp_mu <- exp(n_hat_i[seq_along(delta_p)])
+  valid <- !is.na(exp_mu) & !is.na(delta_p)
+  b_hat <- 0.5 * mean(exp_mu[valid] * delta_p[valid]^2)
+  expected <- exp_mu * (delta_p + 0.5 * delta_p^2) - b_hat
+
+  expect_equal(sdf, expected,
+    tolerance = 1e-12,
+    label = "SDF innovation = e^mu(dp + 0.5 dp^2) - 0.5 mean(e^mu dp^2)"
+  )
+})

@@ -1,7 +1,7 @@
 #' Compute Supremum Estimator (c_hat) for Term Structure Analysis
 #'
-#' Computes c_hat_i which estimates sup_t exp(2*E_t\[p_(t+i)^(1)\]) following
-#' the methodology in Adrian, Crump, and Moench (2013).
+#' Computes c_hat_i which estimates sup_t exp(2*E_t\[p_(t+i)^(1)\]), the
+#' deterministic envelope of the SDF-news variance-bound construction.
 #'
 #' @template param-yields-term-premia
 #' @template param-maturity-index
@@ -10,9 +10,11 @@
 #' @return Numeric value of c_hat_i
 #'
 #' @section Mathematical Formula:
-#' \deqn{c\_hat_i = \max_t \exp(2 \cdot n\_hat(i,t))}
-#'
-#' @template section-acm-methodology
+#' \deqn{c\_hat_i = \max_{t \in T_i} \exp(2 \cdot n\_hat(i,t))}
+#' over the bound index set \eqn{T_i = \{1, \dots, T - i/step\}}, the
+#' same dates as \code{\link{compute_k_hat}} and
+#' \code{\link{compute_k2_hat}} (the realized leg needs \code{i/step}
+#' further news periods).
 #'
 #' @details
 #' The supremum estimator provides an upper bound for the exponential of twice
@@ -43,6 +45,12 @@ compute_c_hat <- function(yields, term_premia, i,
   # Compute n_hat series
   n_hat <- compute_n_hat(yields, term_premia, i, step = step)
 
+  # Restrict to the bound index set T_i = {1, ..., T - i/step}: the
+  # envelope C_i shares the dates of K1/K2, whose realized leg needs
+  # i/step further news periods (spec's common T_i for the bound).
+  horizon_periods <- i %/% step
+  n_hat <- n_hat[seq_len(length(n_hat) - horizon_periods)]
+
   # Remove NA values
   n_hat_clean <- n_hat[!is.na(n_hat)]
 
@@ -50,6 +58,6 @@ compute_c_hat <- function(yields, term_premia, i,
     return(NA_real_)
   }
 
-  # Compute maximum of exp(2*n_hat)
+  # Compute maximum of exp(2*n_hat) over T_i
   max(exp(2 * n_hat_clean))
 }

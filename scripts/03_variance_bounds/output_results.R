@@ -34,11 +34,11 @@ cli_h2("Creating Publication-Ready Tables")
 main_table <- variance_bounds_df |>
   gt() |>
   tab_header(
-    title = "Theoretical Variance Bounds for Forecast Errors",
-    subtitle = "Components and bounds across bond maturities"
+    title = "Variance-Bound Leading Term",
+    subtitle = "Plug-in components and bound across bond maturities"
   ) |>
   fmt_number(
-    columns = c(c_hat, k_hat),
+    columns = c(c_hat, k_hat, k2_hat),
     decimals = 4
   ) |>
   fmt_scientific(
@@ -48,8 +48,9 @@ main_table <- variance_bounds_df |>
   cols_label(
     Maturity = "Maturity (months)",
     c_hat = html("ĉ<sub>i</sub>"),
-    k_hat = html("k̂<sub>i</sub>"),
-    Variance_Bound = html("Variance Bound<br/>(×10<sup>-3</sup>)")
+    k_hat = html("k̂<sub>1,i</sub>"),
+    k2_hat = html("k̂<sub>2,i</sub>"),
+    Variance_Bound = html("Variance Bound")
   ) |>
   tab_style(
     style = cell_fill(color = "lightblue"),
@@ -60,16 +61,20 @@ main_table <- variance_bounds_df |>
     locations = cells_body(columns = Variance_Bound)
   ) |>
   tab_footnote(
-    footnote = "Variance bound = (1/4) × ĉᵢ × k̂ᵢ",
+    footnote = "Plug-in leading term: variance bound = (1/4) × ĉᵢ × (k̂₁ᵢ + k̂₂ᵢ)",
     locations = cells_column_labels(columns = Variance_Bound)
   ) |>
   tab_footnote(
-    footnote = "ĉᵢ = max_t exp(2 × n̂(i,t))",
+    footnote = "ĉᵢ = max_t exp(2 × n̂(i,t)) over the bound index set",
     locations = cells_column_labels(columns = c_hat)
   ) |>
   tab_footnote(
-    footnote = "k̂ᵢ = E[(p_(t+i)^(1) - E_(t+1)[p_(t+i)^(1)])^4]",
+    footnote = "k̂₁ᵢ = mean_t (-y_(t+i)^(1) - μ̂⁺_(i,t))^4",
     locations = cells_column_labels(columns = k_hat)
+  ) |>
+  tab_footnote(
+    footnote = "k̂₂ᵢ = mean_t (Δp̂_(i,t+1))^4",
+    locations = cells_column_labels(columns = k2_hat)
   )
 
 # Save main table
@@ -156,6 +161,7 @@ latex_table <- variance_bounds_df |>
   mutate(
     c_hat = sprintf("%.4f", c_hat),
     k_hat = sprintf("%.4f", k_hat),
+    k2_hat = sprintf("%.4f", k2_hat),
     Variance_Bound = sprintf("%.2e", Variance_Bound)
   )
 
@@ -163,11 +169,11 @@ latex_table <- variance_bounds_df |>
 latex_code <- paste0(
   "\\begin{table}[htbp]\n",
   "\\centering\n",
-  "\\caption{Theoretical Variance Bounds for Forecast Errors}\n",
+  "\\caption{Variance-Bound Leading Term}\n",
   "\\label{tab:variance_bounds}\n",
-  "\\begin{tabular}{cccc}\n",
+  "\\begin{tabular}{ccccc}\n",
   "\\toprule\n",
-  "Maturity & $\\hat{c}_i$ & $\\hat{k}_i$ & Variance Bound \\\\\n",
+  "Maturity & $\\hat{c}_i$ & $\\hat{k}_{1,i}$ & $\\hat{k}_{2,i}$ & Variance Bound \\\\\n",
   "\\midrule\n"
 )
 
@@ -177,6 +183,7 @@ for (i in seq_len(nrow(latex_table))) {
     latex_table$Maturity[i], " & ",
     latex_table$c_hat[i], " & ",
     latex_table$k_hat[i], " & ",
+    latex_table$k2_hat[i], " & ",
     latex_table$Variance_Bound[i], " \\\\\n"
   )
 }
@@ -187,9 +194,11 @@ latex_code <- paste0(
   "\\end{tabular}\n",
   "\\begin{tablenotes}\n",
   "\\small\n",
-  "\\item Note: Variance bound = $(1/4) \\times \\hat{c}_i \\times \\hat{k}_i$ where ",
-  "$\\hat{c}_i = \\max_t \\exp(2 \\times \\hat{n}(i,t))$ and ",
-  "$\\hat{k}_i = E[(p_{t+i}^{(1)} - E_{t+1}[p_{t+i}^{(1)}])^4]$.\n",
+  "\\item Note: plug-in leading term, variance bound = ",
+  "$(1/4) \\times \\hat{c}_i \\times (\\hat{k}_{1,i} + \\hat{k}_{2,i})$ where ",
+  "$\\hat{c}_i = \\max_t \\exp(2 \\times \\hat{n}(i,t))$, ",
+  "$\\hat{k}_{1,i} = \\mathrm{mean}_t (-y_{t+i}^{(1)} - \\hat{\\mu}^{+}_{i,t})^4$, and ",
+  "$\\hat{k}_{2,i} = \\mathrm{mean}_t (\\widehat{\\Delta p}_{i,t+1})^4$.\n",
   "\\end{tablenotes}\n",
   "\\end{table}\n"
 )
@@ -200,8 +209,8 @@ cli_h2("Creating Analysis Summary")
 
 # Lowest positive bound via subset-then-index: which.min on the positive
 # SUBSET indexes that subset, so the maturity must come from the subsetted
-# Maturity vector too (maturity 1 has a zero bound by construction, making a
-# full-vector lookup off by one).
+# Maturity vector too (the subset guards against any non-positive bound,
+# keeping a full-vector lookup from going off by one).
 pos_vb <- variance_bounds_df$Variance_Bound > 0
 
 # Create comprehensive analysis summary

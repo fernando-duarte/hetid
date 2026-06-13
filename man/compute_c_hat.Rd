@@ -32,8 +32,8 @@ bond, and horizons must satisfy \code{i <= MAX_MATURITY - step}.}
 Numeric value of c_hat_i
 }
 \description{
-Computes c_hat_i which estimates sup_t exp(2*E_t[p_(t+i)^(1)]) following
-the methodology in Adrian, Crump, and Moench (2013).
+Computes c_hat_i which estimates sup_t exp(2*E_t[p_(t+i)^(1)]), the
+deterministic envelope of the SDF-news variance-bound construction.
 }
 \details{
 The supremum estimator provides an upper bound for the exponential of twice
@@ -46,13 +46,11 @@ function requires data at maturity \code{i + step}.
 }
 \section{Mathematical Formula}{
 
-\deqn{c\_hat_i = \max_t \exp(2 \cdot n\_hat(i,t))}
-}
-
-\section{Literature Reference}{
-
-This implements the methodology from Adrian, Crump, and Moench (2013)
-for term structure analysis.
+\deqn{c\_hat_i = \max_{t \in T_i} \exp(2 \cdot n\_hat(i,t))}
+over the bound index set \eqn{T_i = \{1, \dots, T - i/step\}}, the
+same dates as \code{\link{compute_k_hat}} and
+\code{\link{compute_k2_hat}} (the realized leg needs \code{i/step}
+further news periods).
 }
 
 \examples{
@@ -64,8 +62,4 @@ term_premia <- data[, paste0("tp", seq(12, 120, 12))]
 # Compute c_hat for the 5-year (60-month) maturity
 c_hat_60 <- compute_c_hat(yields, term_premia, i = 60)
 
-}
-\references{
-Adrian, T., Crump, R. K., and Moench, E. (2013). "Pricing the term structure
-with linear regressions." Journal of Financial Economics, 110(1), 110-138.
 }

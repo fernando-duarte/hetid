@@ -51,9 +51,11 @@ cli_alert_info("Computing variance bounds for all maturities...")
 variance_bounds <- numeric(length(maturities))
 c_hat_values <- numeric(length(maturities))
 k_hat_values <- numeric(length(maturities))
+k2_hat_values <- numeric(length(maturities))
 names(variance_bounds) <- paste0("maturity_", maturities)
 names(c_hat_values) <- paste0("maturity_", maturities)
 names(k_hat_values) <- paste0("maturity_", maturities)
+names(k2_hat_values) <- paste0("maturity_", maturities)
 
 # Compute variance bounds for each maturity
 for (idx in seq_along(maturities)) {
@@ -61,11 +63,12 @@ for (idx in seq_along(maturities)) {
 
   cli_alert("Computing variance bound for maturity {.val {mat}}...")
 
-  # Compute individual components
+  # Compute individual components (k_hat = K1, k2_hat = K2)
   c_hat_values[idx] <- compute_c_hat(yields_df, tp_df, i = mat, step = NEWS_STEP)
   k_hat_values[idx] <- compute_k_hat(yields_df, tp_df, i = mat, step = NEWS_STEP)
+  k2_hat_values[idx] <- compute_k2_hat(yields_df, tp_df, i = mat, step = NEWS_STEP)
 
-  # Compute variance bound: (1/4) * c_hat * k_hat
+  # Compute variance bound: (1/4) * c_hat * (k_hat + k2_hat)
   variance_bounds[idx] <- compute_variance_bound(
     yields_df, tp_df,
     i = mat, step = NEWS_STEP
@@ -79,6 +82,7 @@ variance_bounds_df <- data.frame(
   Maturity = maturities,
   c_hat = c_hat_values,
   k_hat = k_hat_values,
+  k2_hat = k2_hat_values,
   Variance_Bound = variance_bounds,
   stringsAsFactors = FALSE
 )
@@ -89,11 +93,11 @@ cli_h2("Variance Bounds Summary")
 variance_bounds_table <- variance_bounds_df |>
   gt() |>
   tab_header(
-    title = "Theoretical Variance Bounds",
-    subtitle = "Components and bounds across maturities"
+    title = "Variance-Bound Leading Term",
+    subtitle = "Plug-in components and bound across maturities"
   ) |>
   fmt_number(
-    columns = c(c_hat, k_hat, Variance_Bound),
+    columns = c(c_hat, k_hat, k2_hat, Variance_Bound),
     decimals = 6
   ) |>
   tab_style(
@@ -107,7 +111,8 @@ variance_bounds_table <- variance_bounds_df |>
   cols_label(
     Maturity = "Maturity (months)",
     c_hat = "ĉ",
-    k_hat = "k̂",
+    k_hat = "k̂₁",
+    k2_hat = "k̂₂",
     Variance_Bound = "Variance Bound"
   )
 
@@ -238,10 +243,10 @@ write.csv(variance_bounds_df, file.path(output_dir, "variance_bounds.csv"), row.
 
 cli_h2("Economic Interpretation")
 
-# Provide economic interpretation. The lowest positive bound excludes
-# maturity 1 (zero by construction), so which.min runs on the positive
-# SUBSET; subset-then-index keeps the value and maturity aligned (indexing
-# the full vectors with the subset index would be off by one).
+# Provide economic interpretation. Every bound is strictly positive now
+# (the one-period boundary maturity is carried by the k2 term), so the
+# positive subset is defensive; subset-then-index keeps the value and
+# maturity aligned (indexing the full vectors would be off by one).
 max_vb_idx <- which.max(variance_bounds)
 pos_vb <- variance_bounds > 0
 min_pos_idx <- which.min(variance_bounds[pos_vb])
@@ -263,11 +268,11 @@ cli_ul(c(
   ))
 ))
 
-if (variance_bounds[1] == 0) {
-  cli_alert_info(
-    "Variance bound for maturity {maturities[1]} (one news period) is zero by construction"
-  )
-}
+# The one-period boundary maturity carries a strictly positive bound: the
+# k1 fourth-moment term is zero there, so the bound is the k2 term alone.
+cli_alert_info(
+  "Maturity {maturities[1]} (one news period): bound is the k2 term only (k1 = 0)"
+)
 
 cli_alert_success("Variance bounds computation completed successfully!")
 cli_alert_info("Results saved to: {.path {output_dir}}")

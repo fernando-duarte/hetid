@@ -32,8 +32,9 @@ bond, and horizons must satisfy \code{i <= MAX_MATURITY - step}.}
 Numeric value of k_hat_i
 }
 \description{
-Computes k_hat_i which estimates E[(p_(t+i)^(1) - E_(t+1)[p_(t+i)^(1)])^4]
-following the methodology in Adrian, Crump, and Moench (2013).
+Computes k_hat_i which estimates E[(p_(t+i)^(1) - E_(t+1)[p_(t+i)^(1)])^4],
+the realized-forecast-error fourth moment (K1) of the variance-bound
+construction.
 }
 \details{
 The fourth moment estimator captures the kurtosis of forecast errors in
@@ -57,12 +58,6 @@ intended news period. \code{i} must be a positive multiple of
 \code{step}.
 }
 
-\section{Literature Reference}{
-
-This implements the methodology from Adrian, Crump, and Moench (2013)
-for term structure analysis.
-}
-
 \examples{
 # Extract ACM data - need maturities step, i-step, and i (months)
 # For i = 60 with the default annual step: 12, 48, and 60
@@ -76,8 +71,4 @@ term_premia <- data[, paste0("tp", c(12, 48, 60))]
 # Compute k_hat for the 5-year (60-month) maturity
 k_hat_60 <- compute_k_hat(yields, term_premia, i = 60)
 
-}
-\references{
-Adrian, T., Crump, R. K., and Moench, E. (2013). "Pricing the term structure
-with linear regressions." Journal of Financial Economics, 110(1), 110-138.
 }

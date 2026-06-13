@@ -34,8 +34,9 @@ process_w2_maturity <- function(i, yields_df, term_premia_df, pcs, n_pcs,
     return(NULL)
   }
 
-  # Compute SDF innovations for this maturity
-  # This gives us Y_{2,t+1}^{(i)} = E_{t+1}[SDF_{t+1+i}] - E_t[SDF_{t+1+i}]
+  # Compute SDF innovations for this maturity: Y_{2,t+1}^{(i)} is the
+  # centered second-order approximation to the SDF news
+  # E_{t+1}[SDF_{t+1+i}] - E_t[SDF_{t+1+i}] (see compute_sdf_innovations)
   sdf_innov <- compute_sdf_innovations( # nolint
     yields_df, term_premia_df,
     i = i, step = step

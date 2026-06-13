@@ -46,8 +46,8 @@
 #'
 #' @details
 #' For each maturity i, computes Y_\{2,t+1\}^\{(i)\} as the SDF
-#' innovation:
-#' \eqn{Y_{2,t+1}^{(i)} = E_{t+1}[SDF_{t+1+i}] - E_t[SDF_{t+1+i}]}
+#' innovation: the centered second-order approximation to the SDF news
+#' \eqn{E_{t+1}[SDF_{t+1+i}] - E_t[SDF_{t+1+i}]}
 #'
 #' This is computed using the \code{compute_sdf_innovations()}
 #' function. Then regresses Y_\{2,t+1\}^\{(i)\} on PC_t to get

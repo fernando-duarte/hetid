@@ -53,14 +53,25 @@ the formula is:
 n_hat(i,t) = m(i)*y_t^(i) - m(i+step)*y_t^(i+step) +
 m(i+step)*TP_t^(i+step) - m(i)*TP_t^(i)
 
-Under the default step and unit (both 1) this reduces to the classic
-i*y_t^(i) - (i+1)*y_t^(i+1) + (i+1)\emph{TP_t^(i+1) - i}TP_t^(i).
+At the one-period maturity \code{i == step} the term premium of the
+step-maturity bond is zero by definition (the imposed normalization
+TP^(1):=0, since A^(step) = E_t[y^(step)]), so the m(i)*TP_t^(i)
+term is dropped: any supplied value is overwritten by zero. This
+matches the boundary leg of \code{\link{compute_n_hat_previous}}.
 }
 \note{
 The effective maximum for \code{i} is
-\code{MAX_MATURITY - step} (9 for standard ACM data with the
-default step), because this function requires data at maturity
-\code{i + step}.
+\code{MAX_MATURITY - step} (108 for standard ACM data with the
+default annual step), because this function requires data at
+maturity \code{i + step}.
+
+The supplied \code{term_premia} are taken as the step-period
+expectations-component inputs (TP^(n) = y^(n) - A^(n)). If they follow
+a different rollover convention than the news step - e.g. the published
+ACM premia are monthly-rollover objects while the default step is
+annual - a convention wedge is inherited from the input. The
+construction assumes a consistent step-period term-premium input and
+does not reconcile rollover conventions.
 }
 \examples{
 # Extract ACM data

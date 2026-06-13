@@ -1,8 +1,9 @@
 #' Compute SDF Innovations Time Series
 #'
-#' Computes the time series of SDF innovations given by:
-#' exp(n_hat(i,t)) * (Delta_(t+1)p_(t+i)^(1) + 0.5*(Delta_(t+1)p_(t+i)^(1))^2 -
-#' 0.5*E\\[(Delta_(t+1)p_(t+i)^(1))^2\\])
+#' Computes the time series of SDF innovations, the centered second-order
+#' approximation to the SDF news:
+#' exp(n_hat(i,t)) * (Delta_(t+1)p_(t+i)^(1) + 0.5*(Delta_(t+1)p_(t+i)^(1))^2)
+#' - B_i
 #'
 #' @template param-yields-term-premia
 #' @template param-maturity-index
@@ -12,15 +13,17 @@
 #' @template return-numeric-or-dataframe
 #'
 #' @details
-#' The SDF innovation is computed as:
-#' exp(n_hat(i,t)) * (Delta_(t+1)p_(t+i)^(1) + 0.5*(Delta_(t+1)p_(t+i)^(1))^2 -
-#' 0.5*E\\[(Delta_(t+1)p_(t+i)^(1))^2\\])
+#' The SDF innovation is the centered second-order approximation
+#' exp(n_hat(i,t)) * (Delta_(t+1)p_(t+i)^(1) + 0.5*(Delta_(t+1)p_(t+i)^(1))^2)
+#' - B_i
 #'
 #' Where:
 #' - Delta_(t+1)p_(t+i)^(1) = n_hat(i-step,t+1) - n_hat(i,t)
-#' - E\\[(Delta_(t+1)p_(t+i)^(1))^2\\] is the mean of
-#'   (n_hat(i-step,t+1) - n_hat(i,t))^2 over the valid (non-missing) news
-#'   terms; with complete data this averages the T-1 available terms
+#' - B_i = 0.5 * mean(exp(n_hat(i,t)) * (Delta_(t+1)p_(t+i)^(1))^2) is the
+#'   constant centering term, an exponential-weighted sample mean
+#'   subtracted outside the exp(n_hat) factor so the population analogue
+#'   has exactly zero unconditional mean; the mean runs over the valid
+#'   (non-missing) news dates (T-1 terms with complete data)
 #'
 #' @note The effective maximum for \code{i} is \code{MAX_MATURITY - step}
 #'   (108 for standard ACM data with the default annual step), because this
@@ -61,21 +64,19 @@ compute_sdf_innovations <- function(yields, term_premia, i,
   n_hat_i <- components$n_hat_i
   delta_p <- components$delta_p
 
-  # Compute E[(Delta_(t+1)p_(t+i)^(1))^2] using utility function
-  expected_delta_p_squared <- compute_expected_squared(
-    delta_p,
+  # Constant centering B_i = 0.5 * mean(exp(n_hat) * delta_p^2) over the
+  # observed news dates, subtracted OUTSIDE the exp(n_hat) factor (spec
+  # centering): the population analogue then has exactly zero mean.
+  exp_mu <- exp(n_hat_i[seq_along(delta_p)])
+  valid <- !is.na(exp_mu) & !is.na(delta_p)
+  assert_insufficient_data_ok(
+    any(valid),
     "No valid SDF news values to compute expectation"
   )
+  b_hat <- 0.5 * mean(exp_mu[valid] * delta_p[valid]^2)
 
-  # Define SDF transformation function
-  sdf_transform <- function(n_hat_val, delta_p_val, expected_sq) {
-    exp(n_hat_val) * (delta_p_val + 0.5 * delta_p_val^2 - 0.5 * expected_sq)
-  }
-
-  # Compute SDF innovations using utility function
-  sdf_innovations <- apply_time_series_transform(
-    n_hat_i[seq_along(delta_p)], delta_p, sdf_transform, expected_delta_p_squared
-  )
+  # NA in either factor propagates to NA in the centered innovation
+  sdf_innovations <- exp_mu * (delta_p + 0.5 * delta_p^2) - b_hat
 
   # Return data frame with dates if requested using utility function
   prepare_return_data(sdf_innovations, return_df, dates, yields, "sdf_innovations")

@@ -1,7 +1,8 @@
 #' Compute Fourth Moment Estimator (k_hat) for Term Structure Analysis
 #'
-#' Computes k_hat_i which estimates E\[(p_(t+i)^(1) - E_(t+1)\[p_(t+i)^(1)\])^4\]
-#' following the methodology in Adrian, Crump, and Moench (2013).
+#' Computes k_hat_i which estimates E\[(p_(t+i)^(1) - E_(t+1)\[p_(t+i)^(1)\])^4\],
+#' the realized-forecast-error fourth moment (K1) of the variance-bound
+#' construction.
 #'
 #' @template param-yields-term-premia
 #' @template param-maturity-index
@@ -22,8 +23,6 @@
 #' news periods, not calendar time, so row frequency must equal the
 #' intended news period. \code{i} must be a positive multiple of
 #' \code{step}.
-#'
-#' @template section-acm-methodology
 #'
 #' @details
 #' The fourth moment estimator captures the kurtosis of forecast errors in
