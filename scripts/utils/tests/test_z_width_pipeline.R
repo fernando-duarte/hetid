@@ -47,9 +47,9 @@ writeLines(c(
 old_z <- Sys.getenv("HETID_Z_SOURCE", unset = NA)
 Sys.setenv(HETID_Z_SOURCE = z_file)
 
-inputs <- load_identification_inputs(mode = "maturities")
+inputs <- load_identification_inputs()
 resid <- suppressMessages(
-  compute_identification_residuals(inputs$data, mode = "maturities")
+  compute_identification_residuals(inputs$data)
 )
 check(
   "hook width propagates into the aligned instrument matrix",
@@ -68,7 +68,7 @@ check(
 
 vfci_pipe_err <- tryCatch(
   {
-    resolve_baseline_gamma("vfci", mom, resid$gamma_rf)
+    resolve_baseline_gamma("vfci", mom)
     NULL
   },
   error = function(e) conditionMessage(e)
@@ -78,7 +78,7 @@ check(
   is.character(vfci_pipe_err) && grepl("HETID_BASELINE_GAMMA", vfci_pipe_err)
 )
 
-gamma5 <- resolve_baseline_gamma(gamma5_file, mom, resid$gamma_rf)
+gamma5 <- resolve_baseline_gamma(gamma5_file, mom)
 check(
   "gamma hook is honored at the custom width",
   identical(dim(gamma5), c(5L, 3L)) && grepl("^custom:", attr(gamma5, "method"))
@@ -122,7 +122,7 @@ writeLines(c(
 ), z2_file)
 Sys.setenv(HETID_Z_SOURCE = z2_file)
 resid2 <- suppressMessages(
-  compute_identification_residuals(inputs$data, mode = "maturities")
+  compute_identification_residuals(inputs$data)
 )
 mom2 <- suppressMessages(
   compute_identification_moments(resid2$w1, resid2$w2, resid2$pcs_aligned)
@@ -132,7 +132,7 @@ writeLines(
   "build_gamma <- function(m) matrix(1, nrow(m$r_i_0), attr(m, \"n_components\"))",
   gamma2_file
 )
-gamma2 <- resolve_baseline_gamma(gamma2_file, mom2, resid2$gamma_rf)
+gamma2 <- resolve_baseline_gamma(gamma2_file, mom2)
 qs2 <- suppressMessages(build_quadratic_system(gamma2, tau_specs$tau_set, mom2))
 check(
   "a narrower-than-default Z flows through residuals, moments, gamma, and the system",

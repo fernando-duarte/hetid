@@ -7,15 +7,13 @@
 
 source(here::here("scripts/utils/common_settings.R"))
 
-ID_MODE <- "maturities" # match the baseline stage (compute_identification.R)
-
 cli_h1("Generalized-Instrument Identified Set (Z = PC^2)")
 
 # Reduced-form residuals + level PCs (HETID_Z_SOURCE unset -> default level-PC
 # instruments, already aligned to w1/w2 by compute_identification_residuals).
-inputs <- load_identification_inputs(mode = ID_MODE)
+inputs <- load_identification_inputs()
 lookup <- inputs$lookup
-resid <- compute_identification_residuals(inputs$data, mode = ID_MODE)
+resid <- compute_identification_residuals(inputs$data)
 
 # Z = squared PCs, built through the exported generalized front-end.
 z_sq <- build_instrument_matrix(
@@ -57,7 +55,7 @@ print(membership$summary)
 
 results <- list(
   spec = list(
-    mode = ID_MODE,
+    mode = "maturities",
     n_pcs = ncol(resid$pcs_aligned),
     n_components = n_comp,
     instruments = colnames(z_sq),

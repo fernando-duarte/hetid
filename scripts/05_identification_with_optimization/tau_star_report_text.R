@@ -7,12 +7,12 @@
 
 build_tau_star_summary <- function(results) {
   mat <- results$maturities
-  fac <- results$factors
   vf_m <- .ts_of(mat, "VFCI (rank-1)")
   op_m <- .ts_of(mat, "optimized")
-  vf_f <- .ts_of(fac, "VFCI (rank-1)")
-  rf_f <- .ts_of(fac, "reduced-form (rank-3)")
-  op_f <- .ts_of(fac, "optimized")
+  # The reduced-form benchmark label carries a dynamic rank (rank = min(n_pcs,
+  # n_comp)); locate it by prefix rather than hard-coding "rank-3".
+  rf_label <- grep("^reduced-form", mat$tau_stars$gamma, value = TRUE)[1]
+  rf_m <- .ts_of(mat, rf_label)
   ratio_m <- op_m$tau_star / vf_m$tau_star
 
   vf_rows <- mat$sweep[
@@ -26,10 +26,7 @@ build_tau_star_summary <- function(results) {
     ),
     collapse = ", "
   )
-  rec_all <- c(
-    mat$sweep$recession_normalized[mat$sweep$gamma == "VFCI (rank-1)"],
-    fac$sweep$recession_normalized[fac$sweep$gamma == "VFCI (rank-1)"]
-  )
+  rec_all <- mat$sweep$recession_normalized[mat$sweep$gamma == "VFCI (rank-1)"]
   rec_max_num <- max(abs(rec_all), na.rm = TRUE)
   rec_max <- formatC(rec_max_num, format = "e", digits = 1)
   rec_pct <- formatC(rec_max_num * 100, format = "g", digits = 2)
@@ -101,14 +98,13 @@ build_tau_star_summary <- function(results) {
     ),
     "    sits essentially on the boundedness knife edge throughout.",
     sprintf(
-      "  - Optimized gamma: tau* = %s (maturities) / %s (factors) -- the",
-      .fmt_tau_star(op_m$tau_star, op_m$capped),
-      .fmt_tau_star(op_f$tau_star, op_f$capped)
+      "  - Optimized gamma: tau* = %s (maturities) -- the",
+      .fmt_tau_star(op_m$tau_star, op_m$capped)
     ),
     "    optimizer buys a dramatically larger slack tolerance.",
     sprintf(
-      "  - Reduced-form gamma (rank-3, factors mode): tau* = %s vs %s for VFCI",
-      .fmt_tau_star(rf_f$tau_star, rf_f$capped), .fmt_tau(vf_f$tau_star)
+      "  - %s gamma (maturities Y2-on-PC slopes): tau* = %s vs %s for VFCI",
+      rf_label, .fmt_tau_star(rf_m$tau_star, rf_m$capped), .fmt_tau(vf_m$tau_star)
     ),
     "    -- higher rank alone does not fix the fragility.",
     "",
@@ -135,13 +131,12 @@ build_tau_star_summary <- function(results) {
     "  tau is neither finite evidence nor proof of unboundedness); bisect the",
     "  bounded -> unbounded transition. Unreliable taus cluster right at the",
     "  transition, so tau* is bracketed by the certified rows on each side",
-    "  (brackets reported under RESULTS BY MODE). Optimized gamma:",
+    "  (brackets reported under RESULTS). Optimized gamma:",
     "  re-optimize gamma at each candidate tau and bisect on whether a",
     "  bounded, valid set is attainable.",
     "",
-    "RESULTS BY MODE",
-    .mode_block(mat, "MATURITIES MODE (components are bond maturities):"),
-    .mode_block(fac, "FACTORS MODE (components are yield-curve factors):"),
+    "RESULTS (components are bond maturities)",
+    .mode_block(mat, "Fixed and optimized gammas:"),
     "",
     "CURVATURE DIAGNOSTIC (HONEST READING)",
     "  For each tau we compute the smallest, over unit directions d, of the",
@@ -159,7 +154,7 @@ build_tau_star_summary <- function(results) {
     "  at every tau tested, consistent with the tiny empirical tau* and the",
     "  explosive widths just below it.",
     "",
-    "RELATED ARTIFACTS (this directory; {mode} = maturities or factors)",
+    "RELATED ARTIFACTS (this directory; {mode} = maturities)",
     "  tau_star_comparison_{mode}.csv ......... tau* per gamma choice",
     "  tau_star_comparison_{mode}.png/.svg .... fixed-gamma width sweeps;",
     "                                           verticals mark every tau*",

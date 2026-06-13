@@ -85,11 +85,8 @@ plot_tau_star_overlay <- function(sweep, tau_stars, mode) {
       xintercept = ts_opt, linetype = "dashed", color = "#1B7837"
     )
   }
-  ts_rf <- if ("reduced-form (rank-3)" %in% names(ts)) {
-    ts[["reduced-form (rank-3)"]]
-  } else {
-    NA_real_
-  }
+  rf_name <- grep("^reduced-form", names(ts), value = TRUE)[1]
+  ts_rf <- if (!is.na(rf_name)) ts[[rf_name]] else NA_real_
   if (is.finite(ts_rf)) {
     p <- p + geom_vline(
       xintercept = ts_rf, linetype = "dotted", color = "#B2182B"

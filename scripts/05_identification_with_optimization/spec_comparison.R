@@ -35,7 +35,6 @@ cli_h1("Specification / instrument / tau comparison ({profile} profile)")
 design <- spec_comparison_design(profile)
 tau_grid <- design$tau_grid
 npcs_grid <- design$npcs_grid
-factor_sets <- design$factor_sets
 mat_sets <- design$mat_sets
 n_starts_opt <- design$n_starts_opt
 
@@ -71,7 +70,7 @@ compute_group <- function(group) {
     return(readRDS(ckpt))
   }
   res <- tryCatch(
-    compute_group_rows(group$mode, group$n_pcs, group$components),
+    compute_group_rows(group$n_pcs, group$components),
     error = function(e) {
       cli_alert_warning("group failed: {key}: {conditionMessage(e)}")
       NULL
@@ -84,15 +83,10 @@ compute_group <- function(group) {
   res
 }
 
-# Enumerate every group across both modes.
-groups <- c(
-  unlist(lapply(npcs_grid, function(p) {
-    lapply(factor_sets, function(cs) list(mode = "factors", n_pcs = p, components = cs))
-  }), recursive = FALSE),
-  unlist(lapply(npcs_grid, function(p) {
-    lapply(mat_sets, function(cs) list(mode = "maturities", n_pcs = p, components = cs))
-  }), recursive = FALSE)
-)
+# Enumerate every (n_pcs, maturity-set) group.
+groups <- unlist(lapply(npcs_grid, function(p) {
+  lapply(mat_sets, function(cs) list(mode = "maturities", n_pcs = p, components = cs))
+}), recursive = FALSE)
 n_done <- sum(vapply(groups, function(g) {
   file.exists(ckpt_path(group_key(g)))
 }, logical(1)))

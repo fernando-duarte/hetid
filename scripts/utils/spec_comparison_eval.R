@@ -8,17 +8,13 @@
 # --- moments per (mode, n_pcs, components) ---
 # Pure (no shared cache): each group has a unique key, so a within-process cache
 # never produced a cross-group hit, and forked workers cannot share one anyway.
-spec_moments <- function(mode, n_pcs, components) {
+spec_moments <- function(n_pcs, components) {
   inp <- load_identification_inputs(
-    n_pcs = n_pcs, mode = mode,
-    factors = if (mode == "factors") components else DEFAULT_ID_FACTORS,
-    maturities = if (mode == "maturities") components else DEFAULT_ID_MATURITIES
+    n_pcs = n_pcs, maturities = components
   )
   resid <- compute_identification_residuals(
     inp$data,
-    n_pcs = n_pcs, mode = mode,
-    factors = if (mode == "factors") components else DEFAULT_ID_FACTORS,
-    maturities = if (mode == "maturities") components else DEFAULT_ID_MATURITIES
+    n_pcs = n_pcs, maturities = components
   )
   # The grid is a PC-design artifact: its n_pcs axis and applicability
   # rules (vfci only at n_pcs = 4) describe PC instrument counts. A custom
@@ -36,7 +32,7 @@ spec_moments <- function(mode, n_pcs, components) {
   mom <- compute_identification_moments(resid$w1, resid$w2, resid$pcs_aligned)
   list(
     moments = mom, n_comp = ncol(resid$w2),
-    gamma_rf = resid$gamma_rf, z = resid$pcs_aligned
+    z = resid$pcs_aligned
   )
 }
 
@@ -91,27 +87,23 @@ eval_ixj <- function(mom, n_comp, tau) {
 }
 
 # --- all rows for one group: every (tau, method) combination ---
-compute_group_rows <- function(mode, n_pcs, components) {
+compute_group_rows <- function(n_pcs, components) {
   clabel <- paste(components, collapse = "-")
-  sm <- spec_moments(mode, n_pcs, components)
+  sm <- spec_moments(n_pcs, components)
   mom <- sm$moments
   nc <- sm$n_comp
-  methods <- c(if (n_pcs == 4) "vfci", if (mode == "factors") "reduced_form")
+  methods <- c(if (n_pcs == 4) "vfci")
   rows <- list()
   add_row <- function(...) rows[[length(rows) + 1L]] <<- data.frame(..., stringsAsFactors = FALSE)
   for (tau in tau_grid) {
     # fixed-gamma methods
     for (meth in methods) {
-      gamma <- if (meth == "vfci") {
-        get_baseline_gamma("vfci", n_pcs = n_pcs, n_components = nc)
-      } else {
-        sm$gamma_rf
-      }
+      gamma <- get_baseline_gamma("vfci", n_pcs = n_pcs, n_components = nc)
       if (is.null(gamma)) next
       r <- tryCatch(eval_fixed(gamma, mom, nc, tau), error = function(e) NULL)
       if (!is.null(r)) {
         add_row(
-          mode = mode, n_pcs = n_pcs, components = clabel, n_comp = nc,
+          mode = "maturities", n_pcs = n_pcs, components = clabel, n_comp = nc,
           gamma = meth, tau = tau, width = r$width,
           bounded = r$bounded, kind = r$kind, cond = r$cond
         )
@@ -121,10 +113,8 @@ compute_group_rows <- function(mode, n_pcs, components) {
     if (tau > 0) {
       seed <- if (n_pcs == 4) {
         get_baseline_gamma("vfci", n_pcs = n_pcs, n_components = nc)
-      } else if (!is.null(sm$gamma_rf)) {
-        sm$gamma_rf
       } else {
-        # No structural/reduced-form seed available -> deterministic random start.
+        # No structural seed available -> deterministic random start.
         # set.seed here makes the fallback reproducible despite per-worker RNG
         # streams under fork (mclapply sets a distinct stream per child).
         n_inst <- nrow(mom$r_i_0)
@@ -134,7 +124,7 @@ compute_group_rows <- function(mode, n_pcs, components) {
       r <- tryCatch(eval_opt(seed, mom, nc, tau, sm$z), error = function(e) NULL)
       if (!is.null(r)) {
         add_row(
-          mode = mode, n_pcs = n_pcs, components = clabel, n_comp = nc,
+          mode = "maturities", n_pcs = n_pcs, components = clabel, n_comp = nc,
           gamma = "optimized", tau = tau, width = r$width,
           bounded = r$bounded, kind = r$kind, cond = r$cond
         )
@@ -143,7 +133,7 @@ compute_group_rows <- function(mode, n_pcs, components) {
       r <- tryCatch(eval_ixj(mom, nc, tau), error = function(e) NULL)
       if (!is.null(r)) {
         add_row(
-          mode = mode, n_pcs = n_pcs, components = clabel, n_comp = nc,
+          mode = "maturities", n_pcs = n_pcs, components = clabel, n_comp = nc,
           gamma = "separate", tau = tau, width = r$width,
           bounded = r$bounded, kind = r$kind, cond = r$cond
         )

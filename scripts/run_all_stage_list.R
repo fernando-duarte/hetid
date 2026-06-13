@@ -7,8 +7,8 @@
 # is pinned to its quick subgrid below). The tau* identification-strength stages
 # (tau_star_comparison.R + its report tau_star_report.R) are the most expensive
 # part of the pipeline -- a multi-start optimizer oracle bisected over a tau grid
-# for BOTH modes -- and are EXCLUDED from the quick run. Set HETID_FULL_RUN=1 to
-# include them. Stages tagged `full_only = TRUE` are dropped when quick_run.
+# -- and are EXCLUDED from the quick run. Set HETID_FULL_RUN=1 to include them.
+# Stages tagged `full_only = TRUE` are dropped when quick_run.
 quick_run <- !nzchar(Sys.getenv("HETID_FULL_RUN"))
 
 # Define the order of script execution

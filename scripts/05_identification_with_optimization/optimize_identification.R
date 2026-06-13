@@ -27,9 +27,7 @@ cli_alert_info(
 # (only correct when no Y1 lags were applied).
 z_aligned <- baseline$residuals$pcs_aligned
 if (is.null(z_aligned)) {
-  inputs <- load_identification_inputs(
-    n_pcs = baseline$spec$n_pcs, mode = baseline$spec$mode
-  )
+  inputs <- load_identification_inputs(n_pcs = baseline$spec$n_pcs)
   pcs_mat <- as.matrix(inputs$data[, inputs$pc_vars])
   z_aligned <- get_identification_z(inputs$data, pcs_mat)[
     seq_len(baseline$residuals$n_obs), ,

@@ -1,7 +1,7 @@
 # Identification strength via tau* -- the slack at which the identified set
 # goes bounded -> unbounded -- compared across gamma choices:
-#   VFCI (rank-1 baseline), reduced-form (rank-3 benchmark; factors mode
-#   only), and optimized (gamma re-optimized at each candidate tau).
+#   VFCI (rank-1 baseline), reduced-form (rank-N benchmark from the maturities
+#   Y2-on-PC slopes), and optimized (gamma re-optimized at each candidate tau).
 # tau* is scale-free and needs no cherry-picked tau, so it is the honest
 # quantitative summary of "what optimization buys" (it EXTENDS tau*).
 # Single home of the tau* computation, including the VFCI deep dive: a fine
@@ -69,12 +69,12 @@ analyze_fixed_gamma <- function(label, gamma, moments) {
 run_tau_star_analysis <- function(mode) {
   cli_h1("Identification strength: tau* across gamma choices ({mode} mode)")
 
-  inp <- load_identification_inputs(mode = mode)
-  resid <- compute_identification_residuals(inp$data, mode = mode)
+  inp <- load_identification_inputs()
+  resid <- compute_identification_residuals(inp$data)
   moments <- compute_identification_moments(resid$w1, resid$w2, resid$pcs_aligned)
   n_comp <- nrow(inp$lookup)
   gamma_base <- resolve_baseline_gamma(
-    baseline_gamma_method(), moments, resid$gamma_rf
+    baseline_gamma_method(), moments
   )
   base_label <- if (identical(attr(gamma_base, "method"), "vfci")) {
     "VFCI (rank-1)"
@@ -84,12 +84,17 @@ run_tau_star_analysis <- function(mode) {
   fixed <- list()
   fixed[[base_label]] <- gamma_base
   n_inst <- nrow(moments$r_i_0)
-  if (!is.null(resid$gamma_rf) && nrow(resid$gamma_rf) == n_inst) {
-    fixed[["reduced-form (rank-3)"]] <- resid$gamma_rf
-  } else if (!is.null(resid$gamma_rf)) {
-    cli_alert_warning(
-      "reduced-form gamma skipped: defined on the PC first stage, not on a custom-width Z"
-    )
+  # Reduced-form benchmark from the maturities Y2-on-PC slopes (beta2R), the
+  # higher-rank fixed gamma that isolates "what optimization buys beyond rank".
+  gamma_rf_mat <- build_reduced_form_gamma(resid$w2_coefficients)
+  if (nrow(gamma_rf_mat) == n_inst) {
+    rf_rank <- qr(gamma_rf_mat)$rank
+    fixed[[paste0("reduced-form (rank-", rf_rank, ")")]] <- gamma_rf_mat
+  } else {
+    cli_alert_warning(paste0(
+      "reduced-form gamma skipped: its J = ", nrow(gamma_rf_mat),
+      " rows do not match the instrument count ", n_inst
+    ))
   }
 
   cli_h2("tau* (fixed gammas; sweep + bisection)")
@@ -166,6 +171,4 @@ run_tau_star_analysis <- function(mode) {
   res
 }
 
-for (id_mode in c("maturities", "factors")) {
-  run_tau_star_analysis(id_mode)
-}
+run_tau_star_analysis("maturities")

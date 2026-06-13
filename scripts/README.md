@@ -133,8 +133,6 @@ Shared utility functions, sourced by `common_settings.R`
   directories, and constants (`NEWS_STEP = 3`, `PIPELINE_ACM_MATURITIES`
   = 3..120 by 3, `BASELINE_TAU = 0.2`, `SEED`, `N_CORES`, plot/table
   settings, `DATA_RDS_PATH`); sources every utility file below
-- `factor_utils.R` - Yield-curve PCA factors (level, slope, curvature)
-  with loadings and summaries
 - `stats_utils.R` - Summary statistics (mean/sd/quantiles/skewness/
   kurtosis, optional autocorrelation)
 - `format_utils.R` - Finite/Inf-aware formatters for bounds and
@@ -152,13 +150,13 @@ Shared utility functions, sourced by `common_settings.R`
 - `hetero_diag_figures.R` - Stage-02 figure builders (-log10 p-value
   profiles across maturities)
 - `identification_utils.R` - Identification plumbing: maturity
-  lookups, input loading, PC/factor/maturity mode dispatch
+  lookups, input loading, and W1/W2 reduced-form residuals
 - `ixj_identification.R` - I×J separate-instrument set: one quadratic
   per (component, instrument) pair, intersected
 - `z_source.R` - Z-source hook resolver (selects the instrument
   matrix; default or custom `build_z(data)`)
-- `gamma_source.R` - Baseline-gamma hook resolver (VFCI, reduced_form,
-  or custom)
+- `gamma_source.R` - Baseline-gamma hook resolver (VFCI or custom);
+  also `build_reduced_form_gamma()` (maturities Y2-on-PC slopes)
 - `optimization_utils.R` - Total-width objective, Euclidean display
   normalizer, and inner steering penalty
 - `lambda_mask.R` - Weight-optimizer helpers: packing, legacy

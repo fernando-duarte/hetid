@@ -5,18 +5,16 @@
 source(here::here("scripts/utils/common_settings.R"))
 # Core packages and utility functions loaded via common_settings.R
 
-# Selectable without editing this file: HETID_BASELINE_GAMMA=reduced_form Rscript ...
+# Selectable without editing this file: HETID_BASELINE_GAMMA=<path> Rscript ...
 BASELINE_GAMMA_METHOD <- Sys.getenv("HETID_BASELINE_GAMMA", "vfci")
-ID_MODE <- "maturities" # "maturities" or "factors"
 
 cli_h1("Computing Baseline Identified Set")
 
 # Load data and configuration
-inputs <- load_identification_inputs(mode = ID_MODE)
+inputs <- load_identification_inputs()
 lookup <- inputs$lookup
 
 cli_ul(c(
-  paste("Mode:", ID_MODE),
   paste("PCs:", paste(inputs$pc_vars, collapse = ", ")),
   paste(
     "Components:",
@@ -27,10 +25,7 @@ cli_ul(c(
 
 # Compute residuals
 cli_h2("Computing Residuals")
-resid <- compute_identification_residuals(
-  inputs$data,
-  mode = ID_MODE
-)
+resid <- compute_identification_residuals(inputs$data)
 
 cli_alert_success(
   "Residuals computed: {.val {resid$n_obs}} observations"
@@ -47,11 +42,11 @@ moments <- compute_identification_moments(
 cli_alert_success("Moments computed successfully")
 
 # Get baseline gamma and tau specifications. resolve_baseline_gamma honors
-# HETID_BASELINE_GAMMA (vfci | reduced_form | path defining
-# build_gamma(moments)) and sizes the gamma from the moments container, so
-# a custom-width HETID_Z_SOURCE needs only a matching gamma hook.
+# HETID_BASELINE_GAMMA (vfci | path defining build_gamma(moments)) and sizes
+# the gamma from the moments container, so a custom-width HETID_Z_SOURCE needs
+# only a matching gamma hook.
 n_comp <- nrow(lookup)
-gamma <- resolve_baseline_gamma(BASELINE_GAMMA_METHOD, moments, resid$gamma_rf)
+gamma <- resolve_baseline_gamma(BASELINE_GAMMA_METHOD, moments)
 tau_specs <- get_tau_spec(
   tau_point = 0, tau_set = BASELINE_TAU, n_components = n_comp
 )
@@ -149,7 +144,7 @@ print(bounds_tau_set[, display_cols])
 results <- list(
   spec = list(
     n_pcs = length(inputs$pc_vars),
-    mode = ID_MODE,
+    mode = "maturities",
     components = lookup$component_id
   ),
   lookup = lookup,
