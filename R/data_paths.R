@@ -94,35 +94,6 @@ check_data_file_exists <- function(filename) {
   file.exists(file_path)
 }
 
-# Session-local state for one-time advisories
-.acm_path_state <- new.env(parent = emptyenv())
-
-#' Advise Once About Legacy ACM Caches
-#'
-#' Retired pipelines cached under the names in
-#' \code{ACM_LEGACY_FILENAMES} (the old xls-to-CSV flow and superseded
-#' release assets); those files are never resolved by the current
-#' sources, so their presence only earns a one-time cleanup hint.
-#'
-#' @return Invisible NULL
-#' @keywords internal
-advise_legacy_acm_cache <- function() {
-  legacy <- file.path(
-    get_user_data_dir(), HETID_CONSTANTS$ACM_LEGACY_FILENAMES
-  )
-  found <- legacy[file.exists(legacy)]
-  if (length(found) > 0 && !isTRUE(.acm_path_state$legacy_advised)) {
-    .acm_path_state$legacy_advised <- TRUE
-    message(
-      "A legacy ACM cache from a retired data flow exists at ",
-      paste(found, collapse = ", "),
-      " and is no longer used. Delete it, or re-run ",
-      "download_term_premia() for a fresh copy."
-    )
-  }
-  invisible(NULL)
-}
-
 #' Get ACM Data File Path
 #'
 #' Resolves the ACM data file for a source. The default GitHub-family
@@ -138,7 +109,6 @@ advise_legacy_acm_cache <- function() {
 #' @keywords internal
 get_acm_data_path <- function(source = c("auto", "github", "nyfed")) {
   source <- match.arg(source)
-  advise_legacy_acm_cache()
   if (source == "nyfed") {
     return(file.path(
       get_user_data_dir(), HETID_CONSTANTS$ACM_NYFED_FILENAME

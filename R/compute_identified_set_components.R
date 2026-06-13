@@ -125,3 +125,29 @@ new_hetid_components <- function(L_i, V_i, Q_i, # nolint: object_name_linter.
     class = "hetid_components"
   )
 }
+
+#' Print a hetid_components Object
+#'
+#' @param x A \code{hetid_components} object
+#' @param ... Unused, for method consistency
+#'
+#' @return \code{x}, invisibly
+#' @examples
+#' set.seed(42)
+#' w1 <- rnorm(100)
+#' w2 <- matrix(rnorm(100 * 4), nrow = 100, ncol = 4)
+#' pcs <- matrix(rnorm(100 * 3), nrow = 100, ncol = 3)
+#' gamma <- matrix(rnorm(3 * 4), nrow = 3, ncol = 4)
+#' moments <- compute_identification_moments(w1, w2, pcs)
+#' print(compute_identified_set_components(gamma, moments))
+#' @export
+print.hetid_components <- function(x, ...) {
+  cat("<hetid_components>\n")
+  cat("  components (theta axis): ", attr(x, "n_components"), "\n", sep = "")
+  cat(
+    "  maturities (constraint axis): ",
+    paste(attr(x, "maturities"), collapse = ", "), "\n",
+    sep = ""
+  )
+  invisible(x)
+}

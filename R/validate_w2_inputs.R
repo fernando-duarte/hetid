@@ -55,15 +55,10 @@ validate_w2_inputs <- function(yields, term_premia, maturities,
 
   # Each maturity must satisfy the news contract: the previous-period
   # index is the boundary case or stays within the data range
-  bad_news <- maturities[!news_contract_ok(maturities, step)]
-  assert_bad_argument_ok(
-    length(bad_news) == 0,
-    paste0(
-      "maturities must equal step (", step, ") or satisfy maturity - step >= ",
-      HETID_CONSTANTS$MIN_MATURITY, "; invalid: ",
-      paste(bad_news, collapse = ", ")
-    ),
-    arg = "maturities"
+  assert_news_contract_ok(
+    maturities, step,
+    arg = "maturities", subject = "maturities", offset_label = "maturity",
+    include_invalid = TRUE
   )
 
   list(
@@ -106,13 +101,15 @@ get_bundled_variables <- function() {
 #' @keywords internal
 load_w2_pcs <- function(pcs, n_pcs, n_obs) {
   if (is.null(pcs)) {
-    warning(
-      "Using bundled 'variables' dataset for PCs. ",
-      "Bundled PCs are aligned with yields by row ",
-      "position, not by calendar date. For correct ",
-      "date alignment, merge datasets by year-quarter",
-      " and pass pcs= explicitly.",
-      call. = FALSE
+    warn_hetid(
+      paste0(
+        "Using bundled 'variables' dataset for PCs. ",
+        "Bundled PCs are aligned with yields by row ",
+        "position, not by calendar date. For correct ",
+        "date alignment, merge datasets by year-quarter",
+        " and pass pcs= explicitly."
+      ),
+      "hetid_warning_bundled_pcs"
     )
     variables <- get_bundled_variables()
 
@@ -136,7 +133,7 @@ load_w2_pcs <- function(pcs, n_pcs, n_obs) {
     }
 
     list(
-      pcs = as.matrix(variables[, pc_cols]),
+      pcs = as.matrix(variables[, pc_cols, drop = FALSE]),
       dates = bundled_dates,
       pc_names = pc_cols
     )
@@ -144,6 +141,10 @@ load_w2_pcs <- function(pcs, n_pcs, n_obs) {
     # User provided PCs
     assert_tabular(pcs, "pcs")
     pcs <- as.matrix(pcs)
+    # Only a type guard here (NOT assert_numeric_finite_values): unlike
+    # the moments path, the W2 regression tolerates interior NA in PCs
+    # and drops those rows via complete.cases in run_pc_regression (see
+    # the interior-NA alignment test), so NA must be allowed through.
     assert_bad_argument_ok(
       is.numeric(pcs),
       "pcs must contain only numeric values",

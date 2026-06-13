@@ -9,39 +9,6 @@
 #' @keywords internal
 NULL
 
-#' Fetch a URL to a File, Fail-Closed
-#'
-#' Wraps \code{download.file} with an explicit libcurl method (so the
-#' release-redirect behavior does not depend on the environment) and
-#' converts every failure mode -- error, warning, non-zero status,
-#' missing or empty result -- into a structured error.
-#'
-#' @param url Source URL
-#' @param destfile Destination path
-#' @param quiet Logical, suppress progress output
-#' @param what Human label for error messages
-#' @return Invisibly returns \code{destfile}
-#' @keywords internal
-fetch_url_to_file <- function(url, destfile, quiet, what) {
-  status <- tryCatch(
-    download.file(
-      url = url, destfile = destfile, mode = "wb",
-      quiet = quiet, method = "libcurl"
-    ),
-    error = function(e) conditionMessage(e),
-    warning = function(w) conditionMessage(w)
-  )
-  ok <- identical(status, 0L) && file.exists(destfile) &&
-    file.size(destfile) > 0
-  if (!ok) {
-    detail <- if (is.character(status)) paste0(" (", status, ")") else ""
-    stop_hetid(paste0(
-      "Failed to download ", what, " from ", url, detail
-    ))
-  }
-  invisible(destfile)
-}
-
 #' Expected sha256 Digest for the ACM Release Asset
 #'
 #' Reads the latest-release metadata from the GitHub API and extracts
@@ -123,13 +90,7 @@ download_acm_github <- function(quiet = FALSE) {
     ))
   }
 
-  # rename-onto-existing fails on Windows, so clear the target first
-  unlink(cache_path)
-  if (!file.rename(temp_gz, cache_path)) {
-    stop_hetid(paste0(
-      "Could not move the verified download into ", cache_path
-    ))
-  }
+  atomic_replace(temp_gz, cache_path, "the verified download")
 
   # Provenance sidecar: makes cached-vs-bundled differences debuggable
   writeLines(

@@ -2,8 +2,7 @@
 #'
 #' Single source of truth for the tau range rule, shared by
 #' \code{validate_quadratic_inputs()} (legacy path) and
-#' \code{as_tau_list()} (general path). Messages are byte-identical to
-#' the pre-extraction inline checks.
+#' \code{as_tau_list()} (general path).
 #'
 #' @param tau Numeric vector of slacks
 #' @return Invisible TRUE
@@ -18,6 +17,44 @@ assert_tau_values_ok <- function(tau) {
     all(tau >= 0 & tau < 1),
     "All elements of tau must be in [0, 1)",
     arg = "tau"
+  )
+  invisible(TRUE)
+}
+
+#' Assert NULL (or Empty) Entries at Unconstrained Columns
+#'
+#' Shared guard for the per-component list validators (\code{as_tau_list},
+#' \code{as_lambda_list}, \code{assert_support_list}): every column not
+#' in \code{maturities} must hold an empty entry. \code{predicate_desc}
+#' and \code{suffix} reproduce each caller's exact message;
+#' \code{is_empty} swaps the emptiness test (tau also accepts
+#' zero-length numerics, the others require NULL).
+#'
+#' @param x Candidate per-component list
+#' @param n_components System width
+#' @param maturities Constrained system columns
+#' @param arg Condition argument name
+#' @param predicate_desc Wording for the required-empty state
+#' @param suffix Trailing clause appended after the column list
+#' @param is_empty Per-element emptiness predicate
+#' @return Invisible TRUE if valid, stops otherwise
+#' @noRd
+assert_null_at_unconstrained <- function(x, n_components, maturities, arg,
+                                         predicate_desc = "NULL",
+                                         suffix = "",
+                                         is_empty = is.null) {
+  unconstrained <- setdiff(seq_len(n_components), maturities)
+  bad_extra <- unconstrained[
+    !vapply(x[unconstrained], is_empty, logical(1))
+  ]
+  assert_bad_argument_ok(
+    length(bad_extra) == 0,
+    paste0(
+      arg, " must be ", predicate_desc,
+      " at unconstrained system column(s) ",
+      paste(bad_extra, collapse = ", "), suffix
+    ),
+    arg = arg
   )
   invisible(TRUE)
 }
@@ -56,21 +93,10 @@ as_tau_list <- function(tau, lambda_list, moments) {
     ),
     arg = "tau"
   )
-  unconstrained <- setdiff(seq_len(n_components), maturities)
-  bad_extra <- unconstrained[
-    !vapply(
-      tau[unconstrained],
-      function(x) is.null(x) || length(x) == 0,
-      logical(1)
-    )
-  ]
-  assert_bad_argument_ok(
-    length(bad_extra) == 0,
-    paste0(
-      "tau must be NULL or zero-length at unconstrained system ",
-      "column(s) ", paste(bad_extra, collapse = ", ")
-    ),
-    arg = "tau"
+  assert_null_at_unconstrained(
+    tau, n_components, maturities, "tau",
+    predicate_desc = "NULL or zero-length",
+    is_empty = function(v) is.null(v) || length(v) == 0
   )
   for (i in maturities) {
     assert_bad_argument_ok(

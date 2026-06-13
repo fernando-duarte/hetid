@@ -139,10 +139,7 @@ compute_w2_residuals <- function(yields, term_premia,
   # Initialize storage
   residuals_list <- list()
   fitted_list <- list()
-  coef_matrix <- matrix(NA,
-    nrow = length(maturities),
-    ncol = n_pcs + 1
-  ) # +1 for intercept
+  coef_list <- vector("list", length(maturities))
   r_squared <- rep(NA_real_, length(maturities))
   n_obs_used <- rep(NA_real_, length(maturities))
   kept_idx_list <- list()
@@ -165,15 +162,18 @@ compute_w2_residuals <- function(yields, term_premia,
     # Store results
     residuals_list[[maturity_names(i)]] <- result$residuals
     fitted_list[[maturity_names(i)]] <- result$fitted
-    coef_matrix[idx, ] <- result$coefficients
+    coef_list[[idx]] <- result$coefficients
     r_squared[idx] <- result$r_squared
     n_obs_used[idx] <- result$n_obs
     kept_idx_list[[maturity_names(i)]] <- result$kept_idx
   }
 
-  # Set row/column names for coefficient matrix
-  rownames(coef_matrix) <- maturity_names(maturities)
-  colnames(coef_matrix) <- c("(Intercept)", pc_result$pc_names)
+  # Column names come from the lm() coefficients, not a derived n_pcs + 1
+  coef_matrix <- assemble_w2_coef_matrix(
+    coef_list,
+    row_names = maturity_names(maturities),
+    fallback_names = c("(Intercept)", pc_result$pc_names)
+  )
 
   if (return_df) {
     return(format_w2_dataframe(

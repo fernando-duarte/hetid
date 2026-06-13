@@ -13,6 +13,13 @@
 #' @keywords internal
 process_w2_maturity <- function(i, yields_df, term_premia_df, pcs, n_pcs,
                                 step = HETID_CONSTANTS$DEFAULT_STEP) {
+  # Emit a classed skip warning and return NULL so a guard can
+  # `return(skip_maturity(...))` in one line.
+  skip_maturity <- function(message) {
+    warn_skipped_maturity(message)
+    NULL
+  }
+
   # Maturity i needs columns i and i+step via compute_n_hat, plus
   # column i-step via compute_n_hat_previous when i > step (for
   # i = step the previous-period n_hat uses only the step-maturity
@@ -23,15 +30,11 @@ process_w2_maturity <- function(i, yields_df, term_premia_df, pcs, n_pcs,
     setdiff(acm_column_name("term_premia", needed), names(term_premia_df))
   )
   if (length(missing_cols) > 0) {
-    warning(
-      paste(
-        "Missing required columns:",
-        paste(missing_cols, collapse = ", "),
-        "- skipping maturity", i
-      ),
-      call. = FALSE
-    )
-    return(NULL)
+    return(skip_maturity(paste0(
+      "Missing required columns: ",
+      paste(missing_cols, collapse = ", "),
+      " - skipping maturity ", i
+    )))
   }
 
   # Compute SDF innovations for this maturity: Y_{2,t+1}^{(i)} is the
@@ -50,12 +53,9 @@ process_w2_maturity <- function(i, yields_df, term_premia_df, pcs, n_pcs,
 
   # Guard against empty/insufficient PCs
   if (n_pcs_available < 1 || n_sdf < 1) {
-    warning(
-      "Insufficient data for maturity ", i,
-      ". Skipping.",
-      call. = FALSE
-    )
-    return(NULL)
+    return(skip_maturity(paste0(
+      "Insufficient data for maturity ", i, ". Skipping."
+    )))
   }
 
   if (n_pcs_available < n_sdf) {
@@ -77,16 +77,11 @@ process_w2_maturity <- function(i, yields_df, term_premia_df, pcs, n_pcs,
   pcs_subset <- pcs_lagged[, seq_len(n_pcs), drop = FALSE]
   complete_idx <- complete.cases(sdf_innov, pcs_subset)
   n_complete <- sum(complete_idx)
-  min_obs_for_regression <- n_pcs + 2L
+  min_obs_for_regression <- min_obs_for_pc_regression(n_pcs)
   if (n_complete < min_obs_for_regression) {
-    warning(
-      paste(
-        "Insufficient data for maturity",
-        i, ". Skipping."
-      ),
-      call. = FALSE
-    )
-    return(NULL)
+    return(skip_maturity(paste0(
+      "Insufficient data for maturity ", i, ". Skipping."
+    )))
   }
 
   reg <- run_pc_regression(

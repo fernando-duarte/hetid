@@ -22,11 +22,13 @@ NULL
 validate_percent_units <- function(yields) {
   y_max <- suppressWarnings(max(abs(as.matrix(yields)), na.rm = TRUE))
   if (is.finite(y_max) && y_max < 1) {
-    warning(
-      "Yields look like decimals (max |yield| < 1). The term-structure ",
-      "formulas assume annualized percentage points; multiply decimal ",
-      "inputs by 100.",
-      call. = FALSE
+    warn_hetid(
+      paste0(
+        "Yields look like decimals (max |yield| < 1). The term-structure ",
+        "formulas assume annualized percentage points; multiply decimal ",
+        "inputs by 100."
+      ),
+      "hetid_warning_unit_scale"
     )
   }
   invisible(TRUE)

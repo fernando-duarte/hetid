@@ -41,7 +41,7 @@ print.hetid_moments <- function(x, ...) {
   maturities <- attr(x, "maturities")
   cat("<hetid_moments>\n")
   cat("  observations: ", attr(x, "n_obs"), "\n", sep = "")
-  cat("  instruments (J): ", nrow(x$r_i_0), "\n", sep = "")
+  cat("  instruments (J): ", attr(x, "n_instruments"), "\n", sep = "")
   cat("  components (theta axis): ", attr(x, "n_components"), "\n", sep = "")
   cat(
     "  maturities (constraint axis): ",

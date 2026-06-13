@@ -42,10 +42,9 @@ compute_n_hat_previous <- function(yields, term_premia, i,
 #'
 #' @param current_series Current period series
 #' @param future_series Future period series
-#' @param negate Whether to negate the result (for yield news)
 #' @return News series
 #' @keywords internal
-compute_time_series_news <- function(current_series, future_series, negate = FALSE) {
+compute_time_series_news <- function(current_series, future_series) {
   assert_dimension_ok(
     length(current_series) == length(future_series),
     "current_series and future_series must have equal length"
@@ -59,12 +58,6 @@ compute_time_series_news <- function(current_series, future_series, negate = FAL
 
   # Compute news: future[t+1] - current[t]
   # NAs propagate naturally via R's NA arithmetic
-  ts_news <- future_series[seq.int(2L, n_obs)] -
+  future_series[seq.int(2L, n_obs)] -
     current_series[seq_len(n_obs - 1L)]
-
-  if (negate) {
-    ts_news <- -ts_news
-  }
-
-  ts_news
 }

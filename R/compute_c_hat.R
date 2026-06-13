@@ -49,6 +49,10 @@ compute_c_hat <- function(yields, term_premia, i,
   # envelope C_i shares the dates of K1/K2, whose realized leg needs
   # i/step further news periods (spec's common T_i for the bound).
   horizon_periods <- i %/% step
+  assert_insufficient_data_ok(
+    length(n_hat) > horizon_periods,
+    "Not enough observations. Need T > i/step news periods"
+  )
   n_hat <- n_hat[seq_len(length(n_hat) - horizon_periods)]
 
   # Remove NA values

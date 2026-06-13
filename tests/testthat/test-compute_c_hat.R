@@ -94,6 +94,18 @@ test_that("compute_c_hat rejects mismatched yields and term_premia rows", {
   )
 })
 
+test_that("compute_c_hat raises a structured error on a short series", {
+  # T = 5 rows but i = 108, step = 12 needs i/step = 9 news periods, so the
+  # bound index set is empty: must signal hetid_error_insufficient_data,
+  # not a bare seq_len(negative) error.
+  syn <- create_synthetic_test_data(n = 5)
+  expect_error(
+    compute_c_hat(syn$yields, syn$term_premia, i = 108),
+    "Not enough observations",
+    class = "hetid_error_insufficient_data"
+  )
+})
+
 test_that("compute_c_hat rejects invalid maturity values", {
   test_env <- setup_standard_test_env()
   expect_error(

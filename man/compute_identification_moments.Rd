@@ -24,7 +24,8 @@ columns of w2.}
 An object of class \code{hetid_moments}: a list with elements
 \code{s_i_0}, \code{sigma_i_sq}, \code{r_i_0}, \code{r_i_1},
 \code{p_i_0}, \code{s_i_1}, \code{s_i_2} and attributes
-\code{maturities}, \code{n_components}, \code{n_obs}.
+\code{maturities}, \code{n_components}, \code{n_obs},
+\code{n_instruments}.
 }
 \description{
 Computes all seven statistical moments needed for the identified set

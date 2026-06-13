@@ -21,63 +21,48 @@ download_acm_nyfed <- function(quiet = FALSE) {
     ))
   }
 
-  # Download to temporary file
+  # Download to a temporary file through the shared fail-closed fetch
   temp_xls <- tempfile(fileext = ".xls")
-  on.exit(unlink(temp_xls), add = TRUE)
+  on.exit(unlink(temp_xls), add = TRUE, after = FALSE)
 
   if (!quiet) {
     message("Downloading ACM term premia data from NY Fed...")
   }
+  fetch_url_to_file(
+    download_url, temp_xls,
+    quiet = quiet, what = "term premia data"
+  )
 
-  tryCatch(
-    {
-      download.file(
-        url = download_url,
-        destfile = temp_xls,
-        mode = "wb",
-        quiet = quiet
-      )
-
-      # Read Excel file
-      if (!quiet) {
-        message("Converting Excel to CSV...")
-      }
-
-      tp_df <- readxl::read_excel(temp_xls)
-
-      # Write to a temp file in the cache directory, then rename into
-      # place so a partial write never half-overwrites the cache. Clear
-      # the target first because rename-onto-existing fails on Windows
-      # (mirrors download_acm_github())
-      temp_csv <- tempfile(
-        pattern = "acm_nyfed_", tmpdir = dirname(csv_path),
-        fileext = ".csv"
-      )
-      on.exit(unlink(temp_csv), add = TRUE)
-      write.csv(tp_df, temp_csv, row.names = FALSE)
-      unlink(csv_path)
-      if (!file.rename(temp_csv, csv_path)) {
-        stop_hetid(paste0(
-          "Could not move the converted term premia data into ", csv_path
-        ))
-      }
-
-      if (!quiet) {
-        message("Term premia data saved to: ", csv_path)
-        message(
-          "Data dimensions: ",
-          nrow(tp_df), " rows x ", ncol(tp_df),
-          " columns"
-        )
-      }
-
-      invisible(csv_path)
-    },
+  if (!quiet) {
+    message("Converting Excel to CSV...")
+  }
+  tp_df <- tryCatch(
+    readxl::read_excel(temp_xls),
     error = function(e) {
       stop_hetid(paste0(
-        "Failed to download term premia data: ",
-        e$message
+        "Failed to convert term premia data: ", conditionMessage(e)
       ))
     }
   )
+
+  # Write to a temp file in the cache directory, then atomically move it
+  # into place so a partial write never half-overwrites the cache
+  temp_csv <- tempfile(
+    pattern = "acm_nyfed_", tmpdir = dirname(csv_path),
+    fileext = ".csv"
+  )
+  on.exit(unlink(temp_csv), add = TRUE, after = FALSE)
+  write.csv(tp_df, temp_csv, row.names = FALSE)
+  atomic_replace(temp_csv, csv_path, "the converted term premia data")
+
+  if (!quiet) {
+    message("Term premia data saved to: ", csv_path)
+    message(
+      "Data dimensions: ",
+      nrow(tp_df), " rows x ", ncol(tp_df),
+      " columns"
+    )
+  }
+
+  invisible(csv_path)
 }

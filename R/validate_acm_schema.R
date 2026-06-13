@@ -13,9 +13,17 @@
 #' @return Invisible TRUE
 #' @keywords internal
 validate_acm_schema <- function(acm_data, path) {
+  # Build the prefix patterns from the schema (the SSOT for ACM naming)
+  # so a rename there propagates here instead of silently desyncing.
+  prefixes <- vapply(HETID_ACM_SCHEMA, `[[`, character(1), "prefix_old")
+  family_pattern <- paste0("^(", paste(prefixes, collapse = "|"), ")")
+
   has_date <- any(c("DATE", "date") %in% names(acm_data))
-  yield_cols <- grep("^ACMY", names(acm_data), value = TRUE)
-  family_cols <- grep("^ACM(Y|TP|RNY)", names(acm_data), value = TRUE)
+  yield_cols <- grep(
+    paste0("^", prefixes[["yields"]]), names(acm_data),
+    value = TRUE
+  )
+  family_cols <- grep(family_pattern, names(acm_data), value = TRUE)
   non_numeric <- family_cols[
     !vapply(acm_data[family_cols], is.numeric, logical(1))
   ]
