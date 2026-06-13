@@ -42,7 +42,7 @@ dir.create(file.path(OUTPUT_TEMP_DIR, "other"), recursive = TRUE, showWarnings =
 NEWS_STEP <- 3L
 PIPELINE_ACM_MATURITIES <- seq(3L, 120L, by = 3L)
 SEED <- 123 # For reproducibility
-BASELINE_TAU <- 0.2 # Baseline set-identification tolerance (shared across stages)
+BASELINE_TAU <- 0.05 # Baseline set-identification tolerance (shared across stages)
 TAU_STAR_N_STARTS <- 15L # Multistart count for the tau* optimizer oracle
 N_CORES <- parallel::detectCores() - 1 # Leave one core free
 MAX_N_PCS <- HETID_CONSTANTS$MAX_N_PCS # Use package constant

@@ -28,7 +28,7 @@ lookup <- results$lookup
 bounds_tau0 <- results$bounds_tau0
 bounds_tau_set <- results$bounds_tau_set
 
-# Compute width reduction label. tau = 0.2 is the wider/unbounded baseline spec,
+# Compute width reduction label. tau = 0.05 is the wider/unbounded baseline spec,
 # tau = 0 the point-ID target, so the reduction is measured baseline -> point.
 width_tau0 <- bounds_tau0$upper - bounds_tau0$lower
 width_tau_set <- bounds_tau_set$upper - bounds_tau_set$lower
@@ -65,8 +65,8 @@ tbl <- gt(table_df) |>
     Component_ID = "Component ID",
     Lower_tau0 = html("Lower (&tau;=0)"),
     Upper_tau0 = html("Upper (&tau;=0)"),
-    Lower_tau02 = html("Lower (&tau;=0.2)"),
-    Upper_tau02 = html("Upper (&tau;=0.2)"),
+    Lower_tau02 = html("Lower (&tau;=0.05)"),
+    Upper_tau02 = html("Upper (&tau;=0.05)"),
     Width_Reduction = "Width Reduction"
   )
 
@@ -138,13 +138,13 @@ summary_lines <- c(
   paste("Gamma method:", gamma_method),
   "",
   "CONFIGURATION:",
-  "  Tau values: 0 (point), 0.2 (set)",
+  "  Tau values: 0 (point), 0.05 (set)",
   paste("  Number of components:", n_components),
   paste("  Components:", comp_labels),
   "",
   "BOUNDS WIDTH:",
   paste("  Mean width at tau=0:", mean_w_tau0),
-  paste("  Mean width at tau=0.2:", mean_w_tau_set),
+  paste("  Mean width at tau=0.05:", mean_w_tau_set),
   "",
   "BOUNDEDNESS:",
   paste(
@@ -152,7 +152,7 @@ summary_lines <- c(
     n_bnd_tau0, "of", n_components
   ),
   paste(
-    "  Bounded components (tau=0.2):",
+    "  Bounded components (tau=0.05):",
     n_bnd_tau_set, "of", n_components
   )
 )

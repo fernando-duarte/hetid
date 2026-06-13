@@ -100,12 +100,12 @@ if (!is.null(pt_tau0)) {
   bounds_tau0 <- solve_all_profile_bounds(quad_sys_tau0$quadratic)
 }
 
-cli_alert("Solving bounds for tau = 0.2...")
+cli_alert("Solving bounds for tau = 0.05...")
 bounds_tau_set <- solve_all_profile_bounds(
   quad_sys_tau_set$quadratic
 )
 
-# Check validity (tau = 0 point ID) and boundedness (tau = 0.2 set)
+# Check validity (tau = 0 point ID) and boundedness (tau = 0.05 set)
 all_valid_tau0 <- all(bounds_tau0$valid_lower) &&
   all(bounds_tau0$valid_upper)
 all_bounded_tau_set <- all(bounds_tau_set$bounded_lower) &&
@@ -118,10 +118,10 @@ if (all_valid_tau0) {
 }
 
 if (all_bounded_tau_set) {
-  cli_alert_success("tau = 0.2 set is bounded")
+  cli_alert_success("tau = 0.05 set is bounded")
 } else {
   cli_alert_warning(
-    "tau = 0.2 set is UNBOUNDED (slack exceeds this gamma's tau*)"
+    "tau = 0.05 set is UNBOUNDED (slack exceeds this gamma's tau*)"
   )
 }
 
@@ -130,11 +130,11 @@ bounds_tau0$component_label <- lookup$component_label
 bounds_tau_set$component_label <- lookup$component_label
 
 # Constraint-checker closure membership probe (additive diagnostic) over the
-# tau = 0.2 set's profile-bound box; complements the profile-bound widths.
+# tau = 0.05 set's profile-bound box; complements the profile-bound widths.
 membership_tau_set <- probe_set_membership(
   quad_sys_tau_set$quadratic, bounds_tau_set
 )
-cli_h2("Membership Probe (tau = 0.2, closure)")
+cli_h2("Membership Probe (tau = 0.05, closure)")
 print(membership_tau_set$summary)
 
 # Display results
@@ -142,7 +142,7 @@ display_cols <- c("component_label", "lower", "upper", "width")
 cli_h2("Baseline Bounds (tau = 0)")
 print(bounds_tau0[, display_cols])
 
-cli_h2("Baseline Bounds (tau = 0.2)")
+cli_h2("Baseline Bounds (tau = 0.05)")
 print(bounds_tau_set[, display_cols])
 
 # Assemble results

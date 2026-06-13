@@ -20,7 +20,7 @@ bounds_tau0 <- results$bounds_tau0 |>
 bounds_tau_set <- results$bounds_tau_set |>
   select(-any_of(c("bond_maturity", "component_label"))) |>
   left_join(lookup, by = join_by) |>
-  mutate(tau_spec = "tau = 0.2")
+  mutate(tau_spec = "tau = 0.05")
 bounds_combined <- bind_rows(bounds_tau0, bounds_tau_set)
 
 # Width summaries
@@ -48,7 +48,7 @@ fmt_mean_width <- function(w) {
 }
 cli_ul(c(
   paste("tau=0 mean width:", fmt_mean_width(bounds_tau0$width)),
-  paste("tau=0.2 mean width:", fmt_mean_width(bounds_tau_set$width))
+  paste("tau=0.05 mean width:", fmt_mean_width(bounds_tau_set$width))
 ))
 
 # Compare point vs set identification widths
@@ -93,7 +93,7 @@ cli_alert_info(paste0(
   "valid|bounded: {.val {fmt_pct(conv_tau0$pct_valid_among_bounded)}}"
 ))
 cli_alert_info(paste0(
-  "tau=0.2 bounded: {.val {fmt_pct(conv_tset$pct_bounded)}}, ",
+  "tau=0.05 bounded: {.val {fmt_pct(conv_tset$pct_bounded)}}, ",
   "valid|bounded: {.val {fmt_pct(conv_tset$pct_valid_among_bounded)}}"
 ))
 
@@ -137,7 +137,7 @@ p_widths <- ggplot(
   aes(x = component_label, y = width, fill = tau_spec)
 ) +
   geom_col(position = position_dodge(0.7), width = 0.6) +
-  scale_fill_manual(values = c("tau = 0" = "#2166AC", "tau = 0.2" = "#B2182B")) +
+  scale_fill_manual(values = c("tau = 0" = "#2166AC", "tau = 0.05" = "#B2182B")) +
   labs(
     title = "Identified Set Widths by Maturity",
     subtitle = if (n_unbounded > 0) {

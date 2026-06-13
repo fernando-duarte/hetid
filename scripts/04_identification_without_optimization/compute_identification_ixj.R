@@ -16,7 +16,7 @@ ID_MODE <- "maturities" # match the baseline stage (compute_identification.R)
 # tau must lie in [0, 1): the package validator rejects 1.0 outright, so the
 # near-uninformative probe uses 0.99, mirroring OPT_TAU_CAP in
 # tau_star_comparison.R
-TAU_GRID <- c(0.1, 0.2, 0.5, 0.99)
+TAU_GRID <- c(0.05, 0.1, 0.5, 0.99)
 
 cli_h1("Computing I x J Identified Set (separate instruments)")
 
@@ -76,15 +76,15 @@ for (tau in TAU_GRID) {
 grid <- do.call(rbind, bounds_by_tau)
 rownames(grid) <- NULL
 
-# Side-by-side with the gamma-aggregated baseline (tau = 0.2 set), if available.
+# Side-by-side with the gamma-aggregated baseline (tau = 0.05 set), if available.
 baseline_path <- file.path(
   OUTPUT_TEMP_DIR, "identification_baseline",
   "baseline_identification_results.rds"
 )
 if (file.exists(baseline_path)) {
   base_set <- readRDS(baseline_path)$bounds_tau_set
-  ixj_02 <- bounds_by_tau[["0.2"]]
-  cli_h2("Baseline (gamma-aggregated) vs I x J  --  tau = 0.2")
+  ixj_02 <- bounds_by_tau[["0.05"]]
+  cli_h2("Baseline (gamma-aggregated) vs I x J  --  tau = 0.05")
   print(data.frame(
     component = lookup$component_label,
     baseline_width = format_bound(
@@ -105,14 +105,14 @@ if (file.exists(baseline_path)) {
 }
 
 # Constraint-checker closure membership probe (additive diagnostic) on the
-# tau = 0.2 I x J system, over its profile-bound box.
+# tau = 0.05 I x J system, over its profile-bound box.
 qs_02 <- build_ixj_quadratic_system(
-  moments, matrix(0.2, nrow = n_pcs, ncol = n_comp)
+  moments, matrix(0.05, nrow = n_pcs, ncol = n_comp)
 )
 ixj_membership <- probe_set_membership(
-  qs_02$quadratic, bounds_by_tau[["0.2"]]
+  qs_02$quadratic, bounds_by_tau[["0.05"]]
 )
-cli_h2("I x J membership probe (tau = 0.2, closure)")
+cli_h2("I x J membership probe (tau = 0.05, closure)")
 print(ixj_membership$summary)
 
 # Persist results.
