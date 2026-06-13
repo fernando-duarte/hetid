@@ -307,10 +307,11 @@ test_that("download_term_premia errors on download failure", {
   )
 })
 
-test_that("nyfed cache is written atomically to a temp file, then renamed", {
-  # Atomic temp+rename: the CSV is written to a temp file in the cache
-  # directory and renamed into place, so a failed or partial write never
-  # half-overwrites the prior cache (mirrors the github source)
+test_that("nyfed cache is written to a temp file, then renamed into place", {
+  # Temp+rename (mirrors the github source): the CSV is written to a temp
+  # file in the cache directory and renamed into place, so a partial write
+  # never half-overwrites the cache. The target is cleared first because
+  # rename-onto-existing fails on Windows.
   skip_if_not_installed("readxl")
   user_root <- withr::local_tempdir()
   withr::local_envvar(R_USER_DATA_DIR = user_root)
