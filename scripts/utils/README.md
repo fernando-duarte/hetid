@@ -117,6 +117,15 @@ I×J separate-instrument set:
 - `make_basis_gamma()` - Canonical basis-vector gamma (e_j in column j)
 - `build_ixj_quadratic_system()` - One quadratic constraint per (component, instrument) pair
 
+### closure_membership.R
+Identified-set membership probes (complements the profile-bound
+interval widths) built on the package's `make_system_checker` /
+`make_constraint_checker` closures:
+- `make_theta_grid()` - Build a theta grid over the profile-bound box
+  plus its center and corners
+- `probe_set_membership()` - Probe set membership across the grid via
+  the constraint-checker closure
+
 ## Weight optimization
 
 ### optimization_utils.R

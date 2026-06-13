@@ -115,6 +115,18 @@ Publication-ready outputs assembled from stages 03-05
 - `output_results.R` - Write final human-readable summaries and
   stable machine-readable exports (RDS, CSV, text)
 
+### 07_generalized_instruments/
+Generalized-instrument identified set on Z = PC^2 (squared
+principal components)
+- `compute_generalized_identification.R` - Build the squared-PC
+  instrument matrix and quadratic system via the exported
+  `build_instrument_matrix` / `build_general_quadratic_system` API,
+  compute the identified set, and run a constraint-checker closure
+  membership probe over a theta grid using `make_system_checker` /
+  `make_constraint_checker`
+- `output_results.R` - Export the labeled identification table and
+  membership summary
+
 ### utils/
 Shared utility functions, sourced by `common_settings.R`
 - `common_settings.R` - Central configuration: shared paths, output
