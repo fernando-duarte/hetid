@@ -79,5 +79,8 @@ compute_sdf_innovations <- function(yields, term_premia, i,
   sdf_innovations <- exp_mu * (delta_p + 0.5 * delta_p^2) - b_hat
 
   # Return data frame with dates if requested using utility function
-  prepare_return_data(sdf_innovations, return_df, dates, yields, "sdf_innovations")
+  prepare_return_data(
+    sdf_innovations, return_df, dates, yields, "sdf_innovations",
+    is_news = TRUE
+  )
 }

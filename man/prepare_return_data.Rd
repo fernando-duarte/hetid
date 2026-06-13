@@ -4,7 +4,14 @@
 \alias{prepare_return_data}
 \title{Prepare Return Data Frame}
 \usage{
-prepare_return_data(result_series, return_df, dates, yields, series_name)
+prepare_return_data(
+  result_series,
+  return_df,
+  dates,
+  yields,
+  series_name,
+  is_news = FALSE
+)
 }
 \arguments{
 \item{result_series}{The computed series}
@@ -16,6 +23,12 @@ prepare_return_data(result_series, return_df, dates, yields, series_name)
 \item{yields}{Original yields data for fallback dates}
 
 \item{series_name}{Name for the series column}
+
+\item{is_news}{Logical. If TRUE, \code{result_series} is a news series
+with one element per period change (T - 1 elements), aligned to the
+dates by prepending NA. If FALSE (the default), it is a level series
+with one element per date. The length is checked against this
+expectation rather than inferred.}
 }
 \value{
 Either the series or a data frame

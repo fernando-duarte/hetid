@@ -29,6 +29,26 @@ convert_to_quarterly <- function(
     return(data)
   }
 
+  # NA-dated rows cannot be placed in a quarter. The monthly path keeps
+  # them, but the quarterly aggregate would drop them silently, so remove
+  # them explicitly and announce the count -- before the duplicate-date
+  # check, which would otherwise read repeated NAs as duplicates.
+  na_date <- is.na(data$date)
+  if (any(na_date)) {
+    n_na <- sum(na_date)
+    warn_dropped_na_dates(sprintf(
+      paste0(
+        "Dropped %d row%s with a missing (NA) date before quarterly ",
+        "conversion; the monthly path keeps such rows."
+      ),
+      n_na, if (n_na == 1L) "" else "s"
+    ))
+    data <- data[!na_date, , drop = FALSE]
+    if (nrow(data) == 0) {
+      return(data)
+    }
+  }
+
   # Duplicate dates would fan out in the merge below and break the
   # quarter-end invariant, so malformed input errors up front
   assert_bad_argument_ok(

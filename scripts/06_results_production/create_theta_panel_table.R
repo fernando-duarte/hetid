@@ -72,6 +72,16 @@ theta_notes <- c(
   )
 )
 
+# bond_maturity is added by assemble_results.R only when the optional
+# variance bounds exist; fall back to the component ids under partial reruns
+has_bond_maturity <- "bond_maturity" %in% names(ct)
+col_headers <- if (has_bond_maturity) {
+  as.character(ct$bond_maturity)
+} else {
+  as.character(ct$component)
+}
+col_group_label <- if (has_bond_maturity) "Bond maturity (months)" else "Component"
+
 theta_table_lines <- build_panel_latex_table(
   panels = setNames(
     list(panel_sets, panel_gamma),
@@ -82,14 +92,14 @@ theta_table_lines <- build_panel_latex_table(
       "Optimized principal component loadings $\\gamma$"
     )
   ),
-  col_headers = as.character(ct$bond_maturity),
+  col_headers = col_headers,
   caption = paste(
     "Identified Sets for the Heteroskedasticity Parameter and",
     "Optimized Principal Component Loadings"
   ),
   label = "tab:theta_identification",
   notes = theta_notes,
-  col_group_label = "Bond maturity (months)",
+  col_group_label = col_group_label,
   table_format = "-4.3"
 )
 

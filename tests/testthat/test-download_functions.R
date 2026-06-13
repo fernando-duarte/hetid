@@ -307,6 +307,46 @@ test_that("download_term_premia errors on download failure", {
   )
 })
 
+test_that("nyfed cache is written atomically to a temp file, then renamed", {
+  # Atomic temp+rename: the CSV is written to a temp file in the cache
+  # directory and renamed into place, so a failed or partial write never
+  # half-overwrites the prior cache (mirrors the github source)
+  skip_if_not_installed("readxl")
+  user_root <- withr::local_tempdir()
+  withr::local_envvar(R_USER_DATA_DIR = user_root)
+  user_csv <- file.path(
+    get_user_data_dir(create = TRUE), HETID_CONSTANTS$ACM_NYFED_FILENAME
+  )
+  writeLines("OLD", user_csv)
+
+  written_path <- NULL
+  local_mocked_bindings(
+    download.file = function(url, destfile, ...) {
+      writeLines("fake-xls", destfile)
+      invisible(0)
+    },
+    write.csv = function(x, file, ...) {
+      written_path <<- file
+      utils::write.csv(x, file, ...)
+    },
+    .package = "hetid"
+  )
+  local_mocked_bindings(
+    read_excel = function(...) {
+      data.frame(DATE = "01-Jan-2020", ACMY01 = 1.5)
+    },
+    .package = "readxl"
+  )
+
+  download_term_premia(source = "nyfed", force = TRUE, quiet = TRUE)
+
+  # The write targeted a temp file in the cache dir, never the cache path
+  expect_false(identical(written_path, user_csv))
+  expect_identical(dirname(written_path), dirname(user_csv))
+  # The rename left the real cache holding the new content
+  expect_equal(nrow(read.csv(user_csv)), 1)
+})
+
 test_that("nyfed load without a cache raises a structured error", {
   user_root <- withr::local_tempdir()
   withr::local_envvar(R_USER_DATA_DIR = user_root)

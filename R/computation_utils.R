@@ -29,9 +29,15 @@ get_pc_column_names <- function(n_pcs) {
 #' @param dates Optional dates vector
 #' @param yields Original yields data for fallback dates
 #' @param series_name Name for the series column
+#' @param is_news Logical. If TRUE, \code{result_series} is a news series
+#'   with one element per period change (T - 1 elements), aligned to the
+#'   dates by prepending NA. If FALSE (the default), it is a level series
+#'   with one element per date. The length is checked against this
+#'   expectation rather than inferred.
 #' @return Either the series or a data frame
 #' @keywords internal
-prepare_return_data <- function(result_series, return_df, dates, yields, series_name) {
+prepare_return_data <- function(result_series, return_df, dates, yields,
+                                series_name, is_news = FALSE) {
   if (!return_df) {
     return(result_series)
   }
@@ -47,13 +53,22 @@ prepare_return_data <- function(result_series, return_df, dates, yields, series_
     "Length of dates must match number of rows in yields"
   )
 
-  # For news series (T-1 elements), align with dates by adding NA at beginning
-  # This represents that news[t] corresponds to change from t to t+1
-  if (length(result_series) == length(dates) - 1) {
-    result_aligned <- c(NA, result_series)
-  } else {
-    result_aligned <- result_series
-  }
+  # A news series carries one element per period change (T - 1); a level
+  # series carries one per date. Check the length against the declared
+  # kind instead of guessing, so an unexpected mismatch fails loudly.
+  expected_length <- if (is_news) length(dates) - 1L else length(dates)
+  assert_dimension_ok(
+    length(result_series) == expected_length,
+    sprintf(
+      "Length of result_series (%d) must be %d for a %s series of %d dates",
+      length(result_series), expected_length,
+      if (is_news) "news" else "level", length(dates)
+    )
+  )
+
+  # A news series aligns to the dates by prepending NA: news[t] is the
+  # change from t to t + 1.
+  result_aligned <- if (is_news) c(NA, result_series) else result_series
 
   result_df <- data.frame(
     date = dates,

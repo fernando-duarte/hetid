@@ -45,8 +45,20 @@ download_acm_nyfed <- function(quiet = FALSE) {
 
       tp_df <- readxl::read_excel(temp_xls)
 
-      # Save as CSV
-      write.csv(tp_df, csv_path, row.names = FALSE)
+      # Write to a temp file in the cache directory, then rename into
+      # place so a failed or partial write never shadows the prior cache
+      # (mirrors download_acm_github())
+      temp_csv <- tempfile(
+        pattern = "acm_nyfed_", tmpdir = dirname(csv_path),
+        fileext = ".csv"
+      )
+      on.exit(unlink(temp_csv), add = TRUE)
+      write.csv(tp_df, temp_csv, row.names = FALSE)
+      if (!file.rename(temp_csv, csv_path)) {
+        stop_hetid(paste0(
+          "Could not move the converted term premia data into ", csv_path
+        ))
+      }
 
       if (!quiet) {
         message("Term premia data saved to: ", csv_path)

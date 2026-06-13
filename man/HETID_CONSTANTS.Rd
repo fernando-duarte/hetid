@@ -23,9 +23,6 @@ annualized yields by maturity in years, so the n_hat weights are
 \code{\link{extract_acm_data}}}
 \item{ALL_ACM_MATURITIES}{The full monthly maturity grid
 (3:120 months) available from the GitHub source}
-\item{MACHINE_EPSILON}{Machine precision}
-\item{MATRIX_SYMMETRY_TOL}{Tolerance for matrix symmetry
-checks}
 \item{DEGENERACY_TOLERANCE}{Scale-free threshold below which the
 variance positivity diagnostic flags a maturity as degenerate}
 \item{PERCENT_TO_DECIMAL}{Percentage to decimal divisor}

@@ -23,9 +23,6 @@
 #'     \code{\link{extract_acm_data}}}
 #'   \item{ALL_ACM_MATURITIES}{The full monthly maturity grid
 #'     (3:120 months) available from the GitHub source}
-#'   \item{MACHINE_EPSILON}{Machine precision}
-#'   \item{MATRIX_SYMMETRY_TOL}{Tolerance for matrix symmetry
-#'     checks}
 #'   \item{DEGENERACY_TOLERANCE}{Scale-free threshold below which the
 #'     variance positivity diagnostic flags a maturity as degenerate}
 #'   \item{PERCENT_TO_DECIMAL}{Percentage to decimal divisor}
@@ -83,8 +80,6 @@ HETID_CONSTANTS <- list(
   ALL_ACM_MATURITIES = 3L:120L, # Full monthly grid
 
   # Numerical parameters
-  MACHINE_EPSILON = .Machine$double.eps,
-  MATRIX_SYMMETRY_TOL = 1e-10, # Matrix symmetry check tol
   PERCENT_TO_DECIMAL = 100, # Divisor for percentage conversion
   DEGENERACY_TOLERANCE = 1e-8, # Variance positivity diagnostic
 

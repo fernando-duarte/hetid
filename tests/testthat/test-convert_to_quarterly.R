@@ -166,3 +166,35 @@ test_that("dropping several incomplete quarters uses plural wording", {
   )
   expect_equal(nrow(result), 0)
 })
+
+test_that("NA-dated rows are dropped with a classed warning, not silently", {
+  mixed <- data.frame(
+    date = as.Date(c("2020-01-31", NA, "2020-02-29", "2020-03-31")),
+    y1 = c(1, 2, 3, 4)
+  )
+
+  expect_warning(
+    result <- convert_to_quarterly(mixed),
+    regexp = "Dropped 1 row with a missing",
+    class = "hetid_warning_dropped_na_dates"
+  )
+
+  # The NA-dated row is gone; the real Jan/Feb/Mar rows collapse to the
+  # single (complete) Q1 observation at the March month-end
+  expect_false(anyNA(result$date))
+  expect_equal(result$date, as.Date("2020-03-31"))
+  expect_equal(result$y1, 4)
+})
+
+test_that("an all-NA-date input returns an empty frame with a warning", {
+  all_na <- data.frame(
+    date = as.Date(c(NA, NA)),
+    y1 = c(1, 2)
+  )
+
+  expect_warning(
+    result <- convert_to_quarterly(all_na),
+    class = "hetid_warning_dropped_na_dates"
+  )
+  expect_equal(nrow(result), 0)
+})

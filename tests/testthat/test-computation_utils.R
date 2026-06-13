@@ -208,3 +208,55 @@ test_that("prepare_return_data builds a generic time index when dates are NULL",
   expect_equal(df$date, seq_len(3))
   expect_equal(df$x, c(0.1, 0.2, 0.3))
 })
+
+test_that("prepare_return_data prepends NA for a news series", {
+  df <- prepare_return_data(
+    result_series = c(0.2, 0.3),
+    return_df = TRUE,
+    dates = 1:3,
+    yields = matrix(0, nrow = 3, ncol = 1),
+    series_name = "x",
+    is_news = TRUE
+  )
+  expect_equal(df$x, c(NA, 0.2, 0.3))
+})
+
+test_that("prepare_return_data keeps a level series aligned one-to-one", {
+  df <- prepare_return_data(
+    result_series = c(0.1, 0.2, 0.3),
+    return_df = TRUE,
+    dates = 1:3,
+    yields = matrix(0, nrow = 3, ncol = 1),
+    series_name = "x",
+    is_news = FALSE
+  )
+  expect_equal(df$x, c(0.1, 0.2, 0.3))
+})
+
+test_that("prepare_return_data errors on a level series of the wrong length", {
+  expect_error(
+    prepare_return_data(
+      result_series = c(0.1, 0.2),
+      return_df = TRUE,
+      dates = 1:3,
+      yields = matrix(0, nrow = 3, ncol = 1),
+      series_name = "x",
+      is_news = FALSE
+    ),
+    class = "hetid_error_dimension_mismatch"
+  )
+})
+
+test_that("prepare_return_data errors on a news series of the wrong length", {
+  expect_error(
+    prepare_return_data(
+      result_series = c(0.1, 0.2, 0.3),
+      return_df = TRUE,
+      dates = 1:3,
+      yields = matrix(0, nrow = 3, ncol = 1),
+      series_name = "x",
+      is_news = TRUE
+    ),
+    class = "hetid_error_dimension_mismatch"
+  )
+})

@@ -117,6 +117,28 @@ warn_incomplete_quarter <- function(message, call = NULL) {
   warning(cnd)
 }
 
+#' Signal a Dropped NA-Date Warning
+#'
+#' Classed warning raised when quarterly conversion removes rows whose
+#' date is NA (the monthly path keeps them, but the quarterly aggregate
+#' would drop them silently), so callers can dispatch on class
+#' \code{hetid_warning_dropped_na_dates}.
+#'
+#' @param message Warning message string
+#' @param call The call (default NULL)
+#' @keywords internal
+warn_dropped_na_dates <- function(message, call = NULL) {
+  cnd <- warningCondition(
+    message,
+    class = c(
+      "hetid_warning_dropped_na_dates",
+      "hetid_warning"
+    ),
+    call = call
+  )
+  warning(cnd)
+}
+
 #' Assert Bad Argument Invariant
 #'
 #' @param ok Logical scalar; if not TRUE, signals error

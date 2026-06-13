@@ -58,5 +58,8 @@ compute_price_news <- function(yields, term_premia, i,
   price_news <- if (return_yield_news) -components$delta_p else components$delta_p
 
   # Return data frame with dates if requested using utility function
-  prepare_return_data(price_news, return_df, dates, yields, "price_news")
+  prepare_return_data(
+    price_news, return_df, dates, yields, "price_news",
+    is_news = TRUE
+  )
 }
