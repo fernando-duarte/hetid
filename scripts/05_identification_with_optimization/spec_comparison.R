@@ -51,11 +51,20 @@ ckpt_path <- function(key) {
   file.path(ckpt_dir, paste0(gsub("[|]", "__", key), ".rds"))
 }
 
+# Checkpoint key. N_Y1_LAGS is part of the spec: a lag change must invalidate
+# old checkpoints rather than silently reuse contemporaneous-W1 results.
+group_key <- function(g) {
+  paste(
+    g$mode, g$n_pcs, paste(g$components, collapse = "-"), N_Y1_LAGS,
+    sep = "|"
+  )
+}
+
 # One unit of work: resume from checkpoint if present, else compute + checkpoint.
 # A group that errors returns NULL and writes NO checkpoint, so a re-launch
 # retries it (rather than silently treating it as done).
 compute_group <- function(group) {
-  key <- paste(group$mode, group$n_pcs, paste(group$components, collapse = "-"), sep = "|")
+  key <- group_key(group)
   ckpt <- ckpt_path(key)
   if (file.exists(ckpt)) {
     cli_alert("resume (checkpoint exists): {key}")
@@ -85,7 +94,7 @@ groups <- c(
   }), recursive = FALSE)
 )
 n_done <- sum(vapply(groups, function(g) {
-  file.exists(ckpt_path(paste(g$mode, g$n_pcs, paste(g$components, collapse = "-"), sep = "|")))
+  file.exists(ckpt_path(group_key(g)))
 }, logical(1)))
 cli_alert_info(
   "Dispatching {.val {length(groups)}} groups across {.val {N_CORES}} cores ({.val {n_done}} already checkpointed)"

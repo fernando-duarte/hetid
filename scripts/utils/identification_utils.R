@@ -82,24 +82,27 @@ assert_w2_alignment <- function(w2_result) {
   invisible(w2_result)
 }
 
-# W1 residuals are position-aligned with the W2 / instrument leading block in
-# compute_identification_residuals (pcs_aligned <- z_mat[seq_len(n_resid), ]).
-# That alignment is valid only if W1's complete-case filter dropped no leading
-# or interior rows -- i.e. the kept rows form a contiguous leading block, exactly
-# as assert_w2_alignment requires of every W2 maturity. An interior NA in
-# consumption or the PCs would otherwise shift W1 residual row t off calendar
-# period t, silently misaligning W1, W2 and Z and breaking the structural-
-# coefficient identity beta1(theta) = beta1R - (beta2R)' theta.
+# W1 residuals must occupy a CONTIGUOUS calendar block so a single leading-row
+# offset realigns them with the W2 residuals and instruments in
+# compute_identification_residuals (which trims the first `offset` rows of
+# w2_mat / z_mat). Y1 own-lags legitimately drop a leading PREFIX (the first
+# H-1 rows carry lag NAs), leaving a contiguous trailing block -- that is
+# allowed. An INTERIOR gap (an NA in consumption or the PCs mid-sample) is the
+# real hazard: it would shift residual row t off its calendar period and break
+# the structural-coefficient identity beta1(theta) = beta1R - (beta2R)' theta,
+# so it is still rejected.
 assert_w1_leading_block <- function(w1_result) {
   kept <- w1_result$kept_idx
   if (is.null(kept)) {
     return(invisible(w1_result))
   }
-  if (!identical(which(kept), seq_len(sum(kept)))) {
+  k <- which(kept)
+  if (length(k) > 0L && !identical(k, seq.int(k[1L], k[length(k)]))) {
     stop(
-      "W1 (consumption) complete-case filter dropped non-leading rows; ",
-      "W1 residual row t no longer corresponds to sample row t, which would ",
-      "misalign it with the W2 residuals and instruments"
+      "W1 (consumption) complete-case filter dropped interior rows; ",
+      "the kept rows are not a contiguous block, so W1 residual row t no ",
+      "longer maps to a single calendar period and would misalign with the ",
+      "W2 residuals and instruments"
     )
   }
   invisible(w1_result)
@@ -114,11 +117,12 @@ compute_identification_residuals <- function(
   n_pcs = HETID_CONSTANTS$DEFAULT_N_PCS,
   mode = "maturities",
   factors = DEFAULT_ID_FACTORS,
-  step = NEWS_STEP
+  step = NEWS_STEP,
+  y1_lags = if (exists("N_Y1_LAGS")) N_Y1_LAGS else 0L
 ) {
   cli::cli_alert_info("Computing W1 residuals...")
   w1_result <- compute_w1_residuals(
-    n_pcs = n_pcs, data = data
+    n_pcs = n_pcs, data = data, y1_lags = y1_lags
   )
   assert_w1_leading_block(w1_result)
 
@@ -148,9 +152,30 @@ compute_identification_residuals <- function(
     w2_mat <- do.call(cbind, w2_result$residuals)
   }
 
+  # Y1 own-lags drop the first H-1 rows of W1 only; W2 and Z are not lagged, so
+  # realign them to W1's common trailing block by trimming the leading `offset`
+  # rows. Matrix subsetting drops custom attributes, so preserve gamma_rf
+  # (factors mode) across the trim. A date check fails closed on misalignment.
   n_resid <- length(w1_result$residuals)
   z_mat <- get_identification_z(data, pcs_mat)
+  n_w2 <- nrow(w2_mat)
+  offset <- n_w2 - n_resid
+  if (offset < 0L) {
+    cli::cli_abort("W1 has more rows than W2; alignment impossible")
+  }
+  if (offset > 0L) {
+    gamma_rf_attr <- attr(w2_mat, "gamma_rf")
+    w2_mat <- w2_mat[-seq_len(offset), , drop = FALSE]
+    if (!is.null(gamma_rf_attr)) attr(w2_mat, "gamma_rf") <- gamma_rf_attr
+    z_mat <- z_mat[-seq_len(offset), , drop = FALSE]
+  }
   pcs_aligned <- z_mat[seq_len(n_resid), , drop = FALSE]
+  if (!is.null(w1_result$dates) && "date" %in% names(data)) {
+    w2_dates <- utils::tail(utils::head(data$date[-1L], n_w2), n_resid)
+    if (!isTRUE(all.equal(w2_dates, w1_result$dates))) {
+      cli::cli_abort("W1/W2 date misalignment after Y1-lag trimming")
+    }
+  }
 
   result <- list(
     w1 = w1_result$residuals,

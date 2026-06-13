@@ -77,12 +77,30 @@ stopifnot(
 )
 beta1r <- resid$w1_result$coefficients
 beta2r <- resid$w2_coefficients
+n_pcs <- ncol(beta2r) - 1L
+stopifnot(nrow(beta2r) == i_dim)
+
+# Y1 own-lags add coefficients to beta1R that are absent from beta2R (the Y2
+# equation excludes lagged Y1, so their beta2R columns are structurally zero).
+# Zero-pad beta2R to beta1R's predictor width: beta1(theta) = beta1R -
+# (beta2R_full)'theta then carries the lag coefficients psi_h through unchanged,
+# and the linear-functional loop sees c_p = 0 for them -> point interval
+# [psi_h, psi_h]. The reduced-form gamma below uses the UNPADDED beta2R (the
+# PC slopes only, J = n_pcs instruments).
+n_lag <- length(beta1r) - ncol(beta2r)
+beta2r_full <- beta2r
+if (n_lag > 0L) {
+  pad <- matrix(
+    0,
+    nrow = nrow(beta2r), ncol = n_lag,
+    dimnames = list(rownames(beta2r), paste0("y1_lag", seq_len(n_lag)))
+  )
+  beta2r_full <- cbind(beta2r, pad)
+}
 stopifnot(
-  length(beta1r) == ncol(beta2r),
-  nrow(beta2r) == i_dim,
-  identical(names(beta1r), colnames(beta2r))
+  length(beta1r) == ncol(beta2r_full),
+  identical(names(beta1r), colnames(beta2r_full))
 )
-n_pcs <- length(beta1r) - 1L
 
 # === POINT IDENTIFICATION (tau = 0, reduced-form gamma) ===
 gamma_rf <- build_reduced_form_gamma(beta2r)
@@ -109,7 +127,7 @@ if (point_unreliable) {
   cond_note <- reason
 } else {
   theta_point <- pt0$theta
-  beta1_point <- recover_structural_coefficients(beta1r, beta2r, theta_point)
+  beta1_point <- recover_structural_coefficients(beta1r, beta2r_full, theta_point)
   cli_alert_info(paste0(
     "tau = 0 point identification: condition number cond(Q) = ",
     formatC(pt0$cond, format = "e", digits = 2)
@@ -139,7 +157,7 @@ beta1_hi <- numeric(p_dim)
 beta1_lo_valid <- logical(p_dim)
 beta1_hi_valid <- logical(p_dim)
 for (p in seq_len(p_dim)) {
-  c_p <- as.numeric(beta2r[, p])
+  c_p <- as.numeric(beta2r_full[, p])
   fmin <- solve_linear_functional_bound(qs_set$quadratic, c_p, "min")
   fmax <- solve_linear_functional_bound(qs_set$quadratic, c_p, "max")
   beta1_lo[p] <- beta1r[p] - fmax$bound
@@ -153,11 +171,13 @@ ob <- optimized$optimized_bounds
 ob <- ob[order(ob$component), , drop = FALSE]
 stopifnot(nrow(ob) == i_dim)
 
-# --- Assemble the 8 rows (constant, PC1..PCn, then the I SDF-news theta rows) ---
+# --- Assemble the rows: constant, PC1..PCn, the n_lag lagged-Y1 psi rows, then
+# the I SDF-news theta rows (the beta1 functional block has p_dim rows). ---
 bond_years <- lookup$bond_maturity / HETID_CONSTANTS$MATURITY_UNITS_PER_YEAR
 row_labels <- c(
   "Constant $\\bar{\\beta}$",
   paste0("$\\beta_{\\mathrm{PC}", seq_len(n_pcs), "}$"),
+  if (n_lag > 0L) paste0("$\\psi_{", seq_len(n_lag), "}$ (lagged $Y_1$)"),
   paste0("$\\theta_{", seq_len(i_dim), "}$ (SDF news, ", bond_years, "-year)")
 )
 point_col <- c(
@@ -177,6 +197,21 @@ set_col <- c(
 
 # --- Caption + notes (pdfLaTeX-safe LaTeX math, not Unicode) ---
 n_obs <- resid$n_obs
+# Lagged-Y1 terms in the displayed equation and an N-drop note (empty when off).
+lag_eq <- if (n_lag > 0L) {
+  paste0(" + \\sum_{h=1}^{", n_lag, "} \\psi_h Y_{1,t+1-h}")
+} else {
+  ""
+}
+lag_note <- if (n_lag > 0L) {
+  paste0(
+    " The ", n_lag, " lagged outcomes $Y_{1,t+1-h}$ enter only the ",
+    "consumption-growth equation as predetermined controls; lagging drops the ",
+    "first ", n_lag - 1L, " observations, so $N$ is the post-lag sample."
+  )
+} else {
+  ""
+}
 year_quarter <- function(d) {
   paste0(format(d, "%Y"), "Q", (as.integer(format(d, "%m")) - 1L) %/% 3L + 1L)
 }
@@ -194,11 +229,11 @@ notes <- c(
   paste0(
     "The table reports the coefficients of the consumption-growth ",
     "equation $Y_{1,t+1} = \\bar{\\beta} + \\sum_{n=1}^{", n_pcs,
-    "} \\beta_n \\mathrm{PC}_{n,t} + \\sum_{m=1}^{", i_dim,
+    "} \\beta_n \\mathrm{PC}_{n,t}", lag_eq, " + \\sum_{m=1}^{", i_dim,
     "} \\theta_m \\mathrm{SDFnews}_{m,t+1} + \\varepsilon_{1,t+1}$, where ",
     "$Y_1$ is consumption growth, $\\mathrm{PC}_1,\\ldots,\\mathrm{PC}_{", n_pcs,
     "}$ the principal components, and $\\mathrm{SDFnews}_m$ the ",
-    "stochastic-discount-factor news of the listed bond maturities."
+    "stochastic-discount-factor news of the listed bond maturities.", lag_note
   ),
   paste0(
     "The reduced-form projections $\\beta_1^{R}$ (consumption growth on ",

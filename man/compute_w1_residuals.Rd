@@ -8,7 +8,8 @@ compute_w1_residuals(
   n_pcs = HETID_CONSTANTS$DEFAULT_N_PCS,
   data = NULL,
   return_df = FALSE,
-  exog = NULL
+  exog = NULL,
+  y1_lags = 0L
 )
 }
 \arguments{
@@ -24,6 +25,11 @@ loads from package data. A \code{date} column is required when
 \item{exog}{Optional T x K numeric matrix of exogenous regressors
 that replaces the bundled PC columns in the first-stage
 regression. Cannot be combined with an explicit \code{n_pcs}.}
+
+\item{y1_lags}{Integer number of own-lags \eqn{H} of the outcome to include
+as predetermined regressors \eqn{Y_{1,t+1-h}}, \eqn{h = 1, \ldots, H}
+(default 0 = none). Lagging drops the first \eqn{H - 1} leading rows; the
+lag columns are appended to the PC (or \code{exog}) regressors.}
 }
 \value{
 If return_df = FALSE, returns a list containing:

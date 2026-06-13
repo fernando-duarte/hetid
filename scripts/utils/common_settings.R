@@ -43,6 +43,7 @@ NEWS_STEP <- 3L
 PIPELINE_ACM_MATURITIES <- seq(3L, 120L, by = 3L)
 SEED <- 123 # For reproducibility
 BASELINE_TAU <- 0.05 # Baseline set-identification tolerance (shared across stages)
+N_Y1_LAGS <- 4L # Own-lags of Y1 (consumption growth) in the W1 reduced form (0 = none)
 TAU_STAR_N_STARTS <- 15L # Multistart count for the tau* optimizer oracle
 N_CORES <- parallel::detectCores() - 1 # Leave one core free
 MAX_N_PCS <- HETID_CONSTANTS$MAX_N_PCS # Use package constant

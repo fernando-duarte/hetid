@@ -20,20 +20,22 @@ cli_alert_info(
   "Loaded baseline: {.val {ncol(gamma_baseline)}} components"
 )
 
-# Rebuild the aligned instrument matrix the stage-04 moments were
-# computed from: same data artifact, same HETID_Z_SOURCE hook, same
-# leading-block alignment (residual row t is sample row t, enforced
-# by assert_w2_alignment upstream). The baseline RDS carries the
-# moments but not Z, and Var(Z) is not recoverable from the moments
-# container, so the variance normalization needs Z itself.
-inputs <- load_identification_inputs(
-  n_pcs = baseline$spec$n_pcs, mode = baseline$spec$mode
-)
-pcs_mat <- as.matrix(inputs$data[, inputs$pc_vars])
-z_aligned <- get_identification_z(inputs$data, pcs_mat)[
-  seq_len(baseline$residuals$n_obs), ,
-  drop = FALSE
-]
+# The aligned instrument matrix the stage-04 moments were computed from. Var(Z)
+# is not recoverable from the moments container, so the variance normalization
+# needs Z itself. Stage 04 now persists the exact (Y1-lag-trimmed) Z, so reuse
+# it; fall back to rebuilding from the front for older lag-free baseline RDS
+# (only correct when no Y1 lags were applied).
+z_aligned <- baseline$residuals$pcs_aligned
+if (is.null(z_aligned)) {
+  inputs <- load_identification_inputs(
+    n_pcs = baseline$spec$n_pcs, mode = baseline$spec$mode
+  )
+  pcs_mat <- as.matrix(inputs$data[, inputs$pc_vars])
+  z_aligned <- get_identification_z(inputs$data, pcs_mat)[
+    seq_len(baseline$residuals$n_obs), ,
+    drop = FALSE
+  ]
+}
 # Fail closed BEFORE any optimization: the rebuilt Z must reproduce
 # the stage-04 moments exactly (tolerance 0), else the whitening
 # covariance would not be the Var(Z) the constraints were built from.

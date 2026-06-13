@@ -12,6 +12,10 @@
 #' @param exog Optional T x K numeric matrix of exogenous regressors
 #'   that replaces the bundled PC columns in the first-stage
 #'   regression. Cannot be combined with an explicit \code{n_pcs}.
+#' @param y1_lags Integer number of own-lags \eqn{H} of the outcome to include
+#'   as predetermined regressors \eqn{Y_{1,t+1-h}}, \eqn{h = 1, \ldots, H}
+#'   (default 0 = none). Lagging drops the first \eqn{H - 1} leading rows; the
+#'   lag columns are appended to the PC (or \code{exog}) regressors.
 #'
 #' @return If return_df = FALSE, returns a list containing:
 #' \describe{
@@ -68,7 +72,7 @@
 #'
 compute_w1_residuals <- function(n_pcs = HETID_CONSTANTS$DEFAULT_N_PCS,
                                  data = NULL, return_df = FALSE,
-                                 exog = NULL) {
+                                 exog = NULL, y1_lags = 0L) {
   # Validate inputs
   if (is.null(exog)) {
     validate_n_pcs(n_pcs)
@@ -119,6 +123,7 @@ compute_w1_residuals <- function(n_pcs = HETID_CONSTANTS$DEFAULT_N_PCS,
   # Extract relevant variables
   y1 <- data[[HETID_CONSTANTS$CONSUMPTION_GROWTH_COL]]
   dates <- if (has_dates) data$date else NULL
+  y1_lags <- validate_y1_lags(y1_lags, length(y1))
 
   # Create regressor matrix; labels travel on its colnames
   if (is.null(exog)) {
@@ -131,6 +136,12 @@ compute_w1_residuals <- function(n_pcs = HETID_CONSTANTS$DEFAULT_N_PCS,
     )
     reg_matrix <- exog
     n_reg <- ncol(exog)
+  }
+
+  # Append predetermined own-lags of Y1 as extra regressors (see append_y1_lags)
+  if (y1_lags > 0L) {
+    reg_matrix <- append_y1_lags(reg_matrix, y1, y1_lags)
+    n_reg <- n_reg + y1_lags
   }
 
   # Regress Y_{t+1} on regressors: lag regressors, lead Y1

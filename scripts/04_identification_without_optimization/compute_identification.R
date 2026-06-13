@@ -156,7 +156,11 @@ results <- list(
   residuals = list(
     w1 = resid$w1,
     w2 = resid$w2,
-    n_obs = resid$n_obs
+    n_obs = resid$n_obs,
+    # Persist the aligned instrument matrix so the stage-05 optimizer reuses the
+    # exact (lag-trimmed) Z the moments were built from, instead of rebuilding
+    # it from the front of the sample.
+    pcs_aligned = resid$pcs_aligned
   ),
   moments = moments,
   gamma_baseline = gamma,
