@@ -58,8 +58,11 @@ coerce_optional_date <- function(x, arg) {
 #' Parse ACM dates with the shared format fallback chain
 #'
 #' Tries the locale-safe legacy ACM format, then R's default parser,
-#' then explicit ISO. The default parser errors when the first element
-#' is malformed even if the rest is valid, hence the chain.
+#' then explicit ISO, advancing to the next format whenever the current
+#' one yields all-NA. \code{optional = TRUE} stops the default parser
+#' from erroring on a malformed leading element, so the chain falls
+#' through on a parse miss while genuinely unexpected errors (e.g. a
+#' non-character input) still propagate instead of being swallowed.
 #'
 #' @param raw_dates Character vector of date strings
 #' @return Date vector, or NULL when no format parses any element
@@ -72,15 +75,12 @@ parse_acm_dates <- function(raw_dates) {
     HETID_CONSTANTS$ISO_DATE_FORMAT
   )
   for (fmt in date_formats) {
-    parsed <- tryCatch(
-      if (is.null(fmt)) {
-        as.Date(raw_dates)
-      } else {
-        parse_dates_c_locale(raw_dates, fmt)
-      },
-      error = function(e) NULL
-    )
-    if (!is.null(parsed) && !all(is.na(parsed))) {
+    parsed <- if (is.null(fmt)) {
+      as.Date(raw_dates, optional = TRUE)
+    } else {
+      parse_dates_c_locale(raw_dates, fmt)
+    }
+    if (!all(is.na(parsed))) {
       return(parsed)
     }
   }

@@ -61,6 +61,11 @@
 #' mismeasured and endogenous regressor models." Journal of Business & Economic
 #' Statistics, 30(1), 67-80.
 #'
+#' @return A named list of package constants (the elements described in
+#'   \strong{Format}). Access individual constants with \code{$}.
+#' @examples
+#' HETID_CONSTANTS$DEFAULT_N_PCS
+#' HETID_CONSTANTS$DEFAULT_ACM_MATURITIES
 #' @export
 HETID_CONSTANTS <- list(
   # Principal component defaults

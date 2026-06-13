@@ -23,3 +23,7 @@ maturity \code{i + step} (e.g. \code{compute_n_hat}). Replaces the
 former fixed \code{EFFECTIVE_MAX_MATURITY} constant with a
 step-dependent bound.
 }
+\examples{
+effective_max_maturity()
+effective_max_maturity(step = 6)
+}

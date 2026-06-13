@@ -56,9 +56,17 @@ months (e.g. y12)}
 \usage{
 HETID_CONSTANTS
 }
+\value{
+A named list of package constants (the elements described in
+\strong{Format}). Access individual constants with \code{$}.
+}
 \description{
 Constants used for computations and data processing.
 All values are documented with their sources.
+}
+\examples{
+HETID_CONSTANTS$DEFAULT_N_PCS
+HETID_CONSTANTS$DEFAULT_ACM_MATURITIES
 }
 \references{
 Adrian, T., Crump, R. K., and Moench, E. (2013). "Pricing the term structure

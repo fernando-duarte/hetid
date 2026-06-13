@@ -17,3 +17,11 @@
 \description{
 Print a hetid_moments Object
 }
+\examples{
+set.seed(42)
+w1 <- rnorm(100)
+w2 <- matrix(rnorm(100 * 4), nrow = 100, ncol = 4)
+pcs <- matrix(rnorm(100 * 3), nrow = 100, ncol = 3)
+moments <- compute_identification_moments(w1, w2, pcs)
+print(moments)
+}

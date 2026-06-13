@@ -42,6 +42,7 @@ edu
 env
 eol
 eot
+erroring
 extdata
 fernando
 finiteness
@@ -62,6 +63,7 @@ hetid
 hpp
 https
 hxx
+i's
 ico
 idx
 ik
@@ -78,6 +80,7 @@ LazyData
 Lewbel
 lf
 LF
+libcurl
 Lifecycle
 linter
 linters
@@ -97,12 +100,16 @@ ncol
 nloptr
 NONINFRINGEMENT
 normalizer
+nyfed
 optimisation
+optimizer's
 orcid
 ORCID
 param
 pc
 PCE
+pcJ
+pcN
 pcs
 png
 positivity
@@ -110,6 +117,7 @@ pre
 precomputes
 precomputing
 premia
+prepending
 QE
 Rbuildignore
 RcppExports
@@ -155,6 +163,7 @@ tryCatch
 ttf
 untracked
 uv
+validator
 validators
 VFCI
 VIX

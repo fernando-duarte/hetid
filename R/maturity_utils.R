@@ -26,6 +26,9 @@ maturity_names <- function(maturities) {
 #'
 #' @template param-step
 #' @return Integer scalar, \code{MAX_MATURITY - step}
+#' @examples
+#' effective_max_maturity()
+#' effective_max_maturity(step = 6)
 #' @export
 effective_max_maturity <- function(step = HETID_CONSTANTS$DEFAULT_STEP) {
   validate_step(step)
