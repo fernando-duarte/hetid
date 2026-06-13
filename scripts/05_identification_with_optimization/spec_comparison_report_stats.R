@@ -64,15 +64,14 @@ spec_bottom_line <- function(grid, coverage) {
     paste0(
       "In the observed %s: tau = 0 yields an algebraic point solution (width 0) in %d/%d",
       " applicable specs (%s). With slack tau > 0, solver-certified bounded sets:",
-      " optimized weights %s, fixed VFCI weights %s, fixed reduced-form loadings %s,",
-      " per-PC instruments %s."
+      " optimized weights %s, fixed VFCI weights %s, per-PC instruments %s."
     ),
     coverage$label, sum(pt$outcome == "point"), nrow(pt), cond_str,
-    cnt("optimized"), cnt("vfci"), cnt("reduced_form"), cnt("separate")
+    cnt("optimized"), cnt("vfci"), cnt("separate")
   )
   short <- sprintf(
-    "Certified bounded sets at tau > 0: optimized %s, VFCI %s, reduced-form %s, per-PC %s",
-    cnt("optimized"), cnt("vfci"), cnt("reduced_form"), cnt("separate")
+    "Certified bounded sets at tau > 0: optimized %s, VFCI %s, per-PC %s",
+    cnt("optimized"), cnt("vfci"), cnt("separate")
   )
   list(long = long, short = short)
 }

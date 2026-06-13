@@ -16,15 +16,8 @@ source(here::here("scripts/utils/latex_simple_table.R"))
 
 cli_h1("Creating Consumption-Equation Structural-Coefficient Table")
 
-# Reduced-form gamma (maturities mode): the Y2-on-PC slope block of beta2R,
-# transposed to the J x I (instruments x components) layout build_quadratic_system
-# expects. Drops the intercept column.
-build_reduced_form_gamma <- function(beta2r) {
-  gamma <- t(beta2r[, -1, drop = FALSE])
-  stopifnot(is.matrix(gamma), all(is.finite(gamma)))
-  attr(gamma, "method") <- "reduced_form_maturities"
-  gamma
-}
+# build_reduced_form_gamma() (maturities-mode Y2-on-PC slope block of beta2R) now
+# lives in gamma_source.R, shared with the tau* benchmark; sourced via common_settings.
 
 interval_cell <- function(lo, hi, valid_lo, valid_hi) {
   paste0(
@@ -70,7 +63,7 @@ data <- readRDS(DATA_RDS_PATH)
 if (is.list(data) && !is.data.frame(data)) {
   data <- as.data.frame(data)
 }
-resid <- compute_identification_residuals(data, mode = "maturities")
+resid <- compute_identification_residuals(data)
 stopifnot(
   isTRUE(all.equal(unname(resid$w1), unname(baseline$residuals$w1))),
   isTRUE(all.equal(unname(unclass(resid$w2)), unname(unclass(baseline$residuals$w2))))

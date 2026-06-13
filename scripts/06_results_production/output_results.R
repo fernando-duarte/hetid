@@ -163,12 +163,7 @@ optimized_conv <- if (optimized_diag$converged) {
 }
 
 # Assemble summary text (method-aware baseline note)
-baseline_note <- if (identical(gamma_method, "reduced_form")) {
-  paste(
-    "  The baseline uses reduced-form per-factor loadings",
-    "(rank-3 benchmark; unbounded above its tau*)."
-  )
-} else if (identical(gamma_method, "vfci")) {
+baseline_note <- if (identical(gamma_method, "vfci")) {
   paste(
     "  The baseline uses the bundled VFCI",
     "construction by explicit implementation choice."

@@ -12,7 +12,6 @@
 source(here::here("scripts/utils/common_settings.R"))
 source(here::here("scripts/utils/ixj_identification.R"))
 
-ID_MODE <- "maturities" # match the baseline stage (compute_identification.R)
 # tau must lie in [0, 1): the package validator rejects 1.0 outright, so the
 # near-uninformative probe uses 0.99, mirroring OPT_TAU_CAP in
 # tau_star_comparison.R
@@ -21,9 +20,9 @@ TAU_GRID <- c(0.05, 0.1, 0.5, 0.99)
 cli_h1("Computing I x J Identified Set (separate instruments)")
 
 # Load data and reduced-form residuals, then the heteroskedasticity moments.
-inputs <- load_identification_inputs(mode = ID_MODE)
+inputs <- load_identification_inputs()
 lookup <- inputs$lookup
-resid <- compute_identification_residuals(inputs$data, mode = ID_MODE)
+resid <- compute_identification_residuals(inputs$data)
 moments <- compute_identification_moments(
   resid$w1, resid$w2, resid$pcs_aligned
 )
@@ -31,7 +30,6 @@ moments <- compute_identification_moments(
 n_pcs <- nrow(moments$r_i_0)
 n_comp <- ncol(moments$r_i_0)
 cli_ul(c(
-  paste("Mode:", ID_MODE),
   paste("Components (I):", n_comp),
   paste("Instruments (J):", n_pcs),
   paste("Constraints (I x J):", n_comp * n_pcs),
@@ -123,7 +121,7 @@ dir.create(paper_dir, recursive = TRUE, showWarnings = FALSE)
 
 results <- list(
   spec = list(
-    mode = ID_MODE, n_pcs = n_pcs, n_components = n_comp,
+    mode = "maturities", n_pcs = n_pcs, n_components = n_comp,
     tau_grid = TAU_GRID, form = "covariance", constraints = n_comp * n_pcs
   ),
   lookup = lookup,

@@ -5,8 +5,7 @@
 # default normalization for optimized weights is
 # lambda' Var(Z) lambda = 1 (lambda_varnorm.R). What remains here is
 # the total-width objective, the Euclidean column normalizer (the
-# search-space representative inside the optimizer and the cosmetic
-# display convention for reduced-form gammas in factor_utils.R), and
+# search-space representative inside the optimizer), and
 # the inner steering penalty. The inner profile-bounds solver lives
 # in profile_bounds.R (sourced via common_settings.R).
 

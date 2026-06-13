@@ -3,8 +3,6 @@
 #   "vfci"         -- the fixed unit-norm VFCI PC loading (default; defined
 #                     ONLY on pc1..pc4, so it errors instructively when the
 #                     instrument count J != 4),
-#   "reduced_form" -- the factors-mode Y2-on-PC slope projection (rows are
-#                     first-stage PCs, so it requires J == n_pcs),
 #   a path to an R script defining build_gamma(moments) returning a numeric
 #   J x I matrix (J = nrow(moments$r_i_0), I = attr(moments,
 #   "n_components")) -- the arbitrary-width escape hatch.
@@ -15,28 +13,22 @@ baseline_gamma_method <- function() {
   Sys.getenv("HETID_BASELINE_GAMMA", "vfci")
 }
 
-resolve_baseline_gamma <- function(method, moments, gamma_rf = NULL) {
+#' Reduced-form gamma (maturities mode): the Y2-on-PC slope block of beta2R,
+#' transposed to the J x I (instruments x components) layout build_quadratic_system
+#' expects. Drops the intercept column. Shared by the stage-06 consumption-equation
+#' table and the tau* identification-strength benchmark.
+#' @param beta2r I x (1 + n_pcs) Y2-on-PC reduced-form coefficient matrix
+#' @return n_pcs x I matrix with attr "method" = "reduced_form_maturities"
+build_reduced_form_gamma <- function(beta2r) {
+  gamma <- t(beta2r[, -1, drop = FALSE])
+  stopifnot(is.matrix(gamma), all(is.finite(gamma)))
+  attr(gamma, "method") <- "reduced_form_maturities"
+  gamma
+}
+
+resolve_baseline_gamma <- function(method, moments) {
   n_inst <- nrow(moments$r_i_0)
   n_comp <- attr(moments, "n_components")
-
-  if (identical(method, "reduced_form")) {
-    if (is.null(gamma_rf)) {
-      stop(
-        "HETID_BASELINE_GAMMA='reduced_form' but the reduced-form gamma ",
-        "is unavailable (factors mode only)"
-      )
-    }
-    if (nrow(gamma_rf) != n_inst) {
-      stop(
-        "reduced-form gamma has ", nrow(gamma_rf), " rows (it is defined ",
-        "on the PC first stage), but the instrument matrix has J = ",
-        n_inst, " columns; for a custom-width Z supply ",
-        "HETID_BASELINE_GAMMA=<path-to-R-file defining build_gamma(moments)>"
-      )
-    }
-    attr(gamma_rf, "method") <- "reduced_form"
-    return(gamma_rf)
-  }
 
   if (identical(method, "vfci")) {
     return(get_baseline_gamma(
@@ -46,7 +38,7 @@ resolve_baseline_gamma <- function(method, moments, gamma_rf = NULL) {
 
   if (!file.exists(method)) {
     stop(
-      "HETID_BASELINE_GAMMA must be 'vfci', 'reduced_form', or a path to ",
+      "HETID_BASELINE_GAMMA must be 'vfci' or a path to ",
       "an existing R file defining build_gamma(moments); got '", method, "'"
     )
   }

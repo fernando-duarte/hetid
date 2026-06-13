@@ -80,13 +80,6 @@ Identification setup plumbing:
 - `get_baseline_gamma()` - VFCI unit-norm loading matrix (J x I)
 - `get_tau_spec()` - Tolerance specification (`tau_point` and `tau_set`)
 
-### factor_utils.R
-Yield-curve PCA factors:
-- `compute_yield_factor_loadings()` - PCA loadings with variance explained
-- `get_identification_factor_lookup()` - Map component IDs to factor indices and labels
-- `compute_w2_factor_residuals()` - Project W2 residuals onto factors
-- `get_reduced_form_gamma()` - Per-factor gamma weights from levels-regression slopes
-
 ### z_source.R
 Instrument-matrix (Z) hook:
 - `get_identification_z()` - Return the instrument matrix (default or `HETID_Z_SOURCE` script)
@@ -96,7 +89,8 @@ Instrument-matrix (Z) hook:
 ### gamma_source.R
 Baseline-gamma hook:
 - `baseline_gamma_method()` - Current method from `HETID_BASELINE_GAMMA`
-- `resolve_baseline_gamma()` - Resolve the gamma matrix (vfci / reduced_form / custom file)
+- `resolve_baseline_gamma()` - Resolve the gamma matrix (vfci / custom file)
+- `build_reduced_form_gamma()` - Maturities-mode Y2-on-PC slope gamma (beta2R)
 
 ## Set construction and bounds
 

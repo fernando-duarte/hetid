@@ -22,7 +22,7 @@ temp_dir <- file.path(OUTPUT_TEMP_DIR, "identification_optimized")
 paper_dir <- file.path(OUTPUT_PAPER_DIR, "identification")
 dir.create(paper_dir, recursive = TRUE, showWarnings = FALSE)
 
-modes <- c("maturities", "factors")
+modes <- "maturities"
 paths <- file.path(temp_dir, paste0("tau_star_comparison_", modes, ".rds"))
 if (!all(file.exists(paths))) {
   stop(

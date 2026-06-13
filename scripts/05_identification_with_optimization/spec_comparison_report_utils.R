@@ -4,16 +4,14 @@
 # No artifact writing happens here.
 # Requires common_settings.R and spec_comparison_design.R to be sourced first.
 
-SPEC_SCHEME_LEVELS <- c("vfci", "reduced_form", "optimized", "separate")
+SPEC_SCHEME_LEVELS <- c("vfci", "optimized", "separate")
 SPEC_SCHEME_LABELS <- c(
   vfci = "VFCI weights (fixed, rank-1)",
-  reduced_form = "Reduced-form loadings (fixed)",
   optimized = "Optimized weights (width-minimizing)",
   separate = "Per-PC instruments (I x J)"
 )
 SPEC_SCHEME_LABELS_SHORT <- c(
   vfci = "VFCI weights (fixed)",
-  reduced_form = "Reduced-form (fixed)",
   optimized = "Optimized weights",
   separate = "Per-PC (I x J)"
 )
@@ -23,28 +21,14 @@ SPEC_OUTCOME_LEVELS <- c(
 )
 
 spec_components_label <- function(mode, components) {
-  vapply(seq_along(mode), function(i) {
+  vapply(seq_along(components), function(i) {
     idx <- as.integer(strsplit(components[i], "-", fixed = TRUE)[[1]])
-    if (mode[i] == "factors") {
-      nm <- vapply(idx, function(k) {
-        if (k <= length(FACTOR_LABELS)) {
-          tools::toTitleCase(FACTOR_LABELS[k])
-        } else {
-          paste0("PC", k)
-        }
-      }, "")
-      paste(nm, collapse = " + ")
-    } else {
-      paste(paste0(idx, "y"), collapse = ", ")
-    }
+    paste(paste0(idx, "y"), collapse = ", ")
   }, "")
 }
 
 spec_stratum_label <- function(mode, components) {
-  paste0(
-    ifelse(mode == "factors", "Yield-curve factors: ", "Bond maturities: "),
-    spec_components_label(mode, components)
-  )
+  paste0("Bond maturities: ", spec_components_label(mode, components))
 }
 
 # Fold the raw (kind, width, bounded) columns into the reader-facing outcome.
@@ -117,11 +101,6 @@ spec_coverage <- function(grid) {
       fmt_set(grid$n_pcs), fmt_set(full_cells$n_pcs)
     ),
     sprintf("tau: %s   [full design: %s]", fmt_set(grid$tau), fmt_set(full_cells$tau)),
-    sprintf(
-      "factor sets: %s   [full design: %s]",
-      fmt_set(grid$components[grid$mode == "factors"]),
-      fmt_set(full_cells$components[full_cells$mode == "factors"])
-    ),
     sprintf(
       "maturity sets: %s   [full design: %s]",
       fmt_set(grid$components[grid$mode == "maturities"]),

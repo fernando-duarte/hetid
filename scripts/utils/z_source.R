@@ -8,9 +8,9 @@
 # R script that defines build_z(data) returning a numeric T x K
 # matrix with unique column names, any K >= 1, where data is the
 # stage's merged quarterly data frame. Baseline gammas come from
-# HETID_BASELINE_GAMMA (vfci requires K = 4, reduced_form requires
-# K = n_pcs, or a path defining build_gamma(moments)); the
-# spec-comparison grid runs only width-matching groups.
+# HETID_BASELINE_GAMMA (vfci requires K = 4, or a path defining
+# build_gamma(moments)); the spec-comparison grid runs only
+# width-matching groups.
 
 get_identification_z <- function(data, default) {
   src <- Sys.getenv("HETID_Z_SOURCE", "")

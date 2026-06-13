@@ -21,10 +21,9 @@ SPEC_WIDTH_LEGEND <- paste(
 )
 SPEC_DENOM_NOTE <- paste(
   "Counts are over applicable observed cells: optimized and per-PC schemes",
-  "exist only at tau > 0; VFCI weights only at n_pcs = 4; reduced-form",
-  "loadings only in factors mode. '--' = not applicable. Optimized weights",
-  "are a width-minimizing computational benchmark, not an economically",
-  "structural weighting."
+  "exist only at tau > 0; VFCI weights only at n_pcs = 4. '--' = not",
+  "applicable. Optimized weights are a width-minimizing computational",
+  "benchmark, not an economically structural weighting."
 )
 
 # Text-mode LaTeX needs "_" escaped and ">" set in math mode (OT1 text-mode
@@ -42,7 +41,7 @@ escape_latex_text <- function(x) gsub(">", "$>$", gsub("_", "\\\\_", x))
 spec_outcome_by_mode <- function(grid, compact = FALSE,
                                  scheme_labels = SPEC_SCHEME_LABELS) {
   taus <- sort(unique(grid$tau))
-  modes <- intersect(c("factors", "maturities"), unique(grid$mode))
+  modes <- intersect("maturities", unique(grid$mode))
   stats::setNames(
     lapply(modes, function(m) {
       spec_outcome_matrix(
@@ -50,7 +49,7 @@ spec_outcome_by_mode <- function(grid, compact = FALSE,
         taus = taus, compact = compact, scheme_labels = scheme_labels
       )
     }),
-    ifelse(modes == "factors", "Yield-curve factors", "Bond maturities")
+    rep("Bond maturities", length(modes))
   )
 }
 

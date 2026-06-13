@@ -17,23 +17,14 @@ get_identification_maturity_lookup <- function(
   )
 }
 
-#' @param mode "maturities" or "factors"
 #' @return list with data, variable names, and lookup
 load_identification_inputs <- function(
   n_pcs = HETID_CONSTANTS$DEFAULT_N_PCS,
-  maturities = DEFAULT_ID_MATURITIES,
-  mode = "maturities",
-  factors = DEFAULT_ID_FACTORS
+  maturities = DEFAULT_ID_MATURITIES
 ) {
   data <- readRDS(DATA_RDS_PATH)
   if (is.list(data) && !is.data.frame(data)) {
     data <- as.data.frame(data)
-  }
-
-  lookup <- if (mode == "factors") {
-    get_identification_factor_lookup(factors)
-  } else {
-    get_identification_maturity_lookup(maturities)
   }
 
   list(
@@ -42,8 +33,8 @@ load_identification_inputs <- function(
     tp_vars = paste0(TP_PREFIX, HETID_CONSTANTS$DEFAULT_ACM_MATURITIES),
     consumption_var = HETID_CONSTANTS$CONSUMPTION_GROWTH_COL,
     pc_vars = paste0(HETID_CONSTANTS$PC_PREFIX, seq_len(n_pcs)),
-    lookup = lookup,
-    mode = mode
+    lookup = get_identification_maturity_lookup(maturities),
+    mode = "maturities"
   )
 }
 
@@ -108,15 +99,12 @@ assert_w1_leading_block <- function(w1_result) {
   invisible(w1_result)
 }
 
-#' @param mode "maturities" or "factors"
-#' @return list with w1, w2, pcs_aligned, n_obs, w1_result, and (maturities
-#'   mode) w2_coefficients = the Y2-on-PC reduced-form coefficient matrix
+#' @return list with w1, w2, pcs_aligned, n_obs, w1_result, and
+#'   w2_coefficients = the Y2-on-PC reduced-form coefficient matrix
 compute_identification_residuals <- function(
   data,
   maturities = DEFAULT_ID_MATURITIES,
   n_pcs = HETID_CONSTANTS$DEFAULT_N_PCS,
-  mode = "maturities",
-  factors = DEFAULT_ID_FACTORS,
   step = NEWS_STEP,
   y1_lags = if (exists("N_Y1_LAGS")) N_Y1_LAGS else 0L
 ) {
@@ -135,27 +123,19 @@ compute_identification_residuals <- function(
   tp_df <- data[, tp_cols]
   pcs_mat <- as.matrix(data[, pc_cols])
 
-  if (mode == "factors") {
-    w2_mat <- compute_w2_factor_residuals(
-      yields_df, tp_df, pcs_mat, n_pcs, data, factors,
-      step = step
-    )
-  } else {
-    cli::cli_alert_info("Computing W2 residuals...")
-    w2_result <- compute_w2_residuals(
-      yields = yields_df, term_premia = tp_df,
-      maturities = maturities,
-      n_pcs = n_pcs, pcs = pcs_mat,
-      step = step
-    )
-    assert_w2_alignment(w2_result)
-    w2_mat <- do.call(cbind, w2_result$residuals)
-  }
+  cli::cli_alert_info("Computing W2 residuals...")
+  w2_result <- compute_w2_residuals(
+    yields = yields_df, term_premia = tp_df,
+    maturities = maturities,
+    n_pcs = n_pcs, pcs = pcs_mat,
+    step = step
+  )
+  assert_w2_alignment(w2_result)
+  w2_mat <- do.call(cbind, w2_result$residuals)
 
   # Y1 own-lags drop the first H-1 rows of W1 only; W2 and Z are not lagged, so
   # realign them to W1's common trailing block by trimming the leading `offset`
-  # rows. Matrix subsetting drops custom attributes, so preserve gamma_rf
-  # (factors mode) across the trim. A date check fails closed on misalignment.
+  # rows. A date check fails closed on misalignment.
   n_resid <- length(w1_result$residuals)
   z_mat <- get_identification_z(data, pcs_mat)
   n_w2 <- nrow(w2_mat)
@@ -164,9 +144,7 @@ compute_identification_residuals <- function(
     cli::cli_abort("W1 has more rows than W2; alignment impossible")
   }
   if (offset > 0L) {
-    gamma_rf_attr <- attr(w2_mat, "gamma_rf")
     w2_mat <- w2_mat[-seq_len(offset), , drop = FALSE]
-    if (!is.null(gamma_rf_attr)) attr(w2_mat, "gamma_rf") <- gamma_rf_attr
     z_mat <- z_mat[-seq_len(offset), , drop = FALSE]
   }
   pcs_aligned <- z_mat[seq_len(n_resid), , drop = FALSE]
@@ -184,17 +162,10 @@ compute_identification_residuals <- function(
     w1_result = w1_result,
     n_obs = n_resid
   )
-  if (mode == "factors") {
-    result$factor_loadings <- compute_yield_factor_loadings(
-      data, max(factors)
-    )
-    result$gamma_rf <- attr(w2_mat, "gamma_rf")
-  } else {
-    # Retain beta2R (the Y2-on-PC reduced-form coefficient matrix, I x (1+n_pcs),
-    # = the point-identified beta20) for structural-coefficient recovery; it is
-    # dropped by the cbind flatten above otherwise.
-    result$w2_coefficients <- w2_result$coefficients
-  }
+  # Retain beta2R (the Y2-on-PC reduced-form coefficient matrix, I x (1+n_pcs),
+  # = the point-identified beta20) for structural-coefficient recovery; it is
+  # dropped by the cbind flatten above otherwise.
+  result$w2_coefficients <- w2_result$coefficients
   result
 }
 
