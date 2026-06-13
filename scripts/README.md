@@ -25,120 +25,201 @@ inherently 1-year-ahead prediction.
 
 ### 01_data_analysis/
 Initial data preparation and exploratory analysis
-- `create_data.R` - Load ACM data, convert to quarterly,
-  merge with variables.RData, consolidate into single dataset
-  with dates
-- `summary_statistics.R` - Generate descriptive statistics
-  for all variables
-- `time_series_properties.R` - Analyze autocorrelation,
-  stationarity, and other time series characteristics; add
-  heteroskedasticity tests from package skedastic
-- `visualize_raw_data.R` - Create exploratory plots of raw
-  data
+- `create_data.R` - Load ACM data, convert to quarterly, build
+  lagged/normalized PCs, merge with `variables.RData`, and write the
+  consolidated dataset to `output/temp/data.rds`
+- `summary_statistics.R` - Descriptive statistics (mean, SD,
+  quantiles, skewness, kurtosis, autocorrelation) and correlation
+  matrices for yields, term premia, PCs, and consumption growth
+- `time_series_properties.R` - Unit-root (ADF, KPSS, PP), serial
+  correlation (Ljung-Box, ARCH), normality (Jarque-Bera), and
+  heteroskedasticity tests across variables, with diagnostic plots
+  and HTML summaries
+- `visualize_raw_data.R` - Exploratory SVG plots of raw data (yield
+  series, term-structure snapshots, term premia, PCs, distributions,
+  correlation heatmaps, rolling statistics)
 
 ### 02_identification_diagnostics/
 Diagnostics of the identification-relevant objects (W2
 residuals and n-hat)
-- `heteroskedasticity_tests.R` - Test the Lewbel assumption on
-  the W2 residuals: skedastic suite plus Glejser, BP LM on
-  PCs, ARCH(1), and PC/squared-residual correlations
-- `n_hat_episodes.R` - Detect positive n-hat episodes (monthly
-  ACM data), map them to crisis/QE events, and validate the
-  implied one-year-ahead rate prediction; quarterly cross-check
-- `output_results.R` - Export the diagnostics panel table
-  (LaTeX fragment + standalone), HTML mirrors, CSVs, and figures
+- `heteroskedasticity_tests.R` - Test the Lewbel assumption on the
+  W2 residuals: regime-aware skedastic suite plus Glejser, BP LM,
+  ARCH(1), and squared-residual/instrument correlations; emits
+  p-value and correlation heatmaps
+- `n_hat_episodes.R` - Detect positive n-hat episodes (monthly ACM
+  data), map them to crisis/QE event windows, and validate the
+  implied one-year-ahead short-rate prediction; quarterly cross-check
+- `output_results.R` - Export the diagnostics panel (LaTeX fragment +
+  standalone), HTML mirrors, CSVs, and copied figures
 
 ### 03_variance_bounds/
 Variance bound calculations for identification
-- `compute_variance_bounds.R` - Calculate theoretical variance
-  bounds
-- `analyze_bounds.R` - Analyze computed bounds and their
-  implications
-- `output_results.R` - Export variance bound results
+- `compute_variance_bounds.R` - Compute the leading-term variance
+  bounds across maturities from plug-in `c_hat`, `k_hat`, and
+  `k2_hat` estimators; assess monotonicity and component correlations
+- `analyze_bounds.R` - Analyze computed bounds (by-maturity,
+  component, and log-scale plots; growth rates; Spearman trend tests;
+  component dominance)
+- `output_results.R` - Export variance-bound tables (HTML, optional
+  PNG, LaTeX), CSVs, summaries, and copied figures
 
 ### 04_identification_without_optimization/
 Baseline identified set using fixed PC weights (VFCI gamma)
 and fixed tau values
-- `compute_identification.R` - Compute the baseline identified
-  set from fixed gamma and tau
-- `analyze_identification.R` - Analyze the baseline identified
-  set
-- `output_results.R` - Export baseline identification results
+- `compute_identification.R` - Compute the baseline identified set
+  from fixed gamma and tau (tau=0 point ID; tau=`BASELINE_TAU` set ID)
+- `compute_identification_ixj.R` - Compute the I×J (separate-instrument)
+  identified set: one quadratic constraint per (component, instrument)
+  pair across a tau grid
+- `analyze_identification.R` - Compare tau=0 vs set-ID bounds, width
+  summaries, and eigenvalue/quadratic diagnostics, with plots
+- `output_results.R` - Export baseline identification results (HTML,
+  LaTeX, CSV)
 
 ### 05_identification_with_optimization/
-Optimal identification by optimizing PC loadings (gamma) to
+Optimal identification by optimizing instrument weights to
 minimize total identified-set width (tau held fixed)
-- `optimize_identification.R` - Optimize instrument weights via the
-  whitened lambda optimizer (variance normalization
-  `lambda' Var(Z) lambda = 1`) to minimize total set width
-- `analyze_optimization.R` - Analyze optimization results
-- `output_results.R` - Export optimization results
+- `optimize_identification.R` - Optimize PC loadings (gamma) via
+  multi-start SLSQP under variance normalization to minimize total
+  set width
+- `analyze_optimization.R` - Compare baseline vs optimized widths,
+  objective values, and gamma-similarity metrics, with plots
+- `output_results.R` - Export optimized identification results
+  (HTML, LaTeX, CSV); `output_results_summary_section.R` is its
+  in-place summary helper
+- `spec_comparison.R` - Resumable, parallel specification comparison
+  across (mode, n_pcs, components, gamma, tau) cells;
+  `spec_comparison_design.R` defines the full/quick grid profiles
+- `spec_comparison_report*.R` - Generate the spec-comparison report
+  from the grid: `_report.R` orchestrates; `_report_utils.R`,
+  `_report_stats.R`, `_report_artifacts.R`, `_report_figures.R`, and
+  `_report_text.R` supply labels/classification, aggregation,
+  table/CSV/LaTeX artifacts, plots, and narrative prose
+- `tau_star_comparison.R` - Compute identification strength via tau*
+  (the slack where the set transitions bounded→unbounded) across
+  gamma choices using coarse grid, bisection, and fine grid
+- `tau_star_report*.R` - Generate the tau* report:
+  `tau_star_report.R` orchestrates tables/sweeps/summary;
+  `_report_utils.R`, `_report_figures.R`, and `_report_text.R`
+  supply formatting helpers, overlay/blow-up figures, and prose
 
 ### 06_results_production/
-Publication-ready outputs assembled from stages 04 and 05
+Publication-ready outputs assembled from stages 03-05
 - `assemble_results.R` - Merge baseline, optimized, and
-  supporting artifacts into one comparison object
+  variance-bounds artifacts into one final comparison object
 - `create_tables_and_figures.R` - Build publication tables and
-  figures
-- `create_theta_panel_table.R` - Build the theta identified-set
-  and optimized-loadings panel table (LaTeX fragment +
-  standalone)
-- `output_results.R` - Export final results
+  figures (main table, interval plot, width-reduction chart, gamma
+  heatmap); `create_figures_section.R` is its in-place figure helper
+- `create_theta_panel_table.R` - Build the theta identified-set and
+  optimized-loadings panel table (LaTeX fragment + standalone)
+- `output_results.R` - Write final human-readable summaries and
+  stable machine-readable exports (RDS, CSV, text)
 
 ### utils/
-Shared utility functions
-- `common_settings.R` - Shared configuration, directories,
-  and parameters; sources all utility functions
-- `plotting_utils.R` - Common plotting utilities (save plots,
-  apply themes, correlation heatmaps, time series plots)
-- `stats_utils.R` - Statistical analysis and data validation
-  (summary stats, stationarity tests, formatted tables)
-- `hetero_test_utils.R` - Heteroskedasticity testing and
-  diagnostics
-- `factor_utils.R` - Yield curve PCA factors (level, slope,
-  curvature) for identification
-- `identification_utils.R` - Non-optimization identification
-  plumbing (maturity lookups, set construction)
-- `optimization_utils.R` - Width objective + Euclidean display
-  normalizer (legacy gamma optimizer retired)
-- `lambda_varnorm.R` - Variance normalization: zero check +
-  identification diagnostic
-- `latex_table_utils.R` - Booktabs/threeparttable/siunitx
-  panel tables with standalone compilable variants
+Shared utility functions, sourced by `common_settings.R`
+- `common_settings.R` - Central configuration: shared paths, output
+  directories, and constants (`NEWS_STEP = 3`, `PIPELINE_ACM_MATURITIES`
+  = 3..120 by 3, `BASELINE_TAU = 0.2`, `SEED`, `N_CORES`, plot/table
+  settings, `DATA_RDS_PATH`); sources every utility file below
+- `factor_utils.R` - Yield-curve PCA factors (level, slope, curvature)
+  with loadings and summaries
+- `stats_utils.R` - Summary statistics (mean/sd/quantiles/skewness/
+  kurtosis, optional autocorrelation)
+- `format_utils.R` - Finite/Inf-aware formatters for bounds and
+  widths (distinguishes unreliable from unbounded)
+- `plotting_utils.R` - Plot styling and SVG/PNG saving with
+  consistent ggplot2 themes and DPI
+- `hetero_test_utils.R` - Heteroskedasticity test suite (White, BP,
+  Goldfeld-Quandt, Harvey, Anscombe, Cook-Weisberg)
+- `hetero_lm_tests.R` - LM-style hetero tests (BP, ARCH(1)) and
+  regime-aware suite metadata
+- `hetero_panel_meta.R` - Regime-aware panel row labels and LaTeX
+  notes for stage-02 exports
+- `hetero_plot_utils.R` - Heteroskedasticity diagnostic plots
+  (residuals vs fitted, QQ, time-series)
+- `hetero_diag_figures.R` - Stage-02 figure builders (-log10 p-value
+  profiles across maturities)
+- `identification_utils.R` - Identification plumbing: maturity
+  lookups, input loading, PC/factor/maturity mode dispatch
+- `ixj_identification.R` - I×J separate-instrument set: one quadratic
+  per (component, instrument) pair, intersected
+- `z_source.R` - Z-source hook resolver (selects the instrument
+  matrix; default or custom `build_z(data)`)
+- `gamma_source.R` - Baseline-gamma hook resolver (VFCI, reduced_form,
+  or custom)
+- `optimization_utils.R` - Total-width objective, Euclidean display
+  normalizer, and inner steering penalty
+- `lambda_mask.R` - Weight-optimizer helpers: packing, legacy
+  matrix-start coercion, per-component support masks, coordinate codecs
+- `lambda_whitening.R` - Whitening reparameterization
+  (`lambda' Var(Z) lambda = 1` as search geometry) with validation
+- `lambda_varnorm.R` - Variance normalization of optimized weights
+  (zero check + identification diagnostic)
+- `lambda_optimization.R` - Outer optimizer over per-component weight
+  matrices (variance-normalization default, multistart)
+- `profile_bounds_core.R` - Non-dimensionalized profile-bounds solver
+  with scale-aware unbounded detection
+- `profile_bounds.R` - Profile-bounds API (coordinate-tracking solver;
+  closed-form tau=0 point ID)
+- `tau_star_utils.R` - tau* machinery: fixed-gamma sweep, bisection,
+  re-optimizing oracle, curvature degeneracy diagnostics
+- `spec_comparison_eval.R` - Spec-comparison evaluators (per-cell
+  moments, fixed/optimized/I×J widths, per-group row builder)
+- `latex_table_utils.R` - Booktabs/threeparttable/siunitx panel tables
+  with standalone compilable variants
+- `tests/` - Unit tests for the utility layer (lambda/whitening/
+  optimization, profile bounds, I×J, hetero tests, gamma sources,
+  stats) plus `fixtures/` capture scripts
 - `README.md` - Documentation for the utility functions
+
+### examples/
+Standalone demonstrations (not part of the pipeline)
+- `custom_z_demo.R` - End-to-end generalized-instrument workflow on a
+  custom Z (nonlinear PC transform + volatility); runs offline
+
+### z_sources/
+Drop-in payloads for the `z_source.R` hook
+- `pc_squared.R` - Squared principal components as instruments
+  (Regime B, outside span(1, PC); enables Anscombe in the diagnostics)
 
 ### output/
 All script outputs organized by purpose
 
 #### for_paper/
 Publication-ready outputs
-- `tables/` - Formatted tables for manuscript
-- `figures/` - Publication-quality figures
-- `other/` - Supplementary materials
-- `variance_bounds/` - Variance bound results
-- `identification_diagnostics/` - Identification diagnostics
-  tables and figures
+- `identification/` - Baseline, optimized, I×J, spec-comparison, tau*,
+  and final identification tables and figures
+- `variance_bounds/` - Variance bound tables, CSVs, and figures
+- `identification_diagnostics/` - Diagnostics tables and figures
+- `tables/`, `figures/`, `other/` - Curated manuscript materials
 
 #### temp/
 Working outputs and intermediate results
-- `data.rds` - Consolidated analysis dataset (quarterly
-  ACM data merged with variables.RData)
-- `tables/` - Draft tables
-- `figures/` - Exploratory plots
-- `other/` - Temporary files
-- `plots/` - Working plots
-- `summary_stats/` - Summary statistics output
-- `time_series_properties/` - Time series analysis output
-- `variance_bounds/` - Variance bound working results
-- `identification_diagnostics/` - Identification diagnostics
-  working results
+- `data.rds` - Consolidated analysis dataset (quarterly ACM data
+  merged with `variables.RData`), created by stage 01 and read by all
+  later stages
+- `identification_baseline/` - Stage 04 baseline results
+- `identification_ixj/` - Stage 04 I×J results
+- `identification_optimized/` - Stage 05 optimized weights,
+  spec-comparison grids, tau* sweeps
+- `identification_results/` - Stage 06 final comparison
+- `variance_bounds/` - Stage 03 working results
+- `identification_diagnostics/` - Stage 02 working results
+- `summary_stats/`, `time_series_properties/`, `plots/`, `figures/`,
+  `tables/`, `other/` - Stage-01 and assorted working artifacts
 
 ## Top-Level Scripts
 
-- `run_all_scripts.R` - Runs the complete analysis pipeline
-  in the correct order
-- `quality-check.R` - Package quality checks (spelling,
-  linting, test coverage, R CMD check)
+- `run_all_scripts.R` - Runs the complete analysis pipeline. Sources
+  `run_all_stage_list.R` for the ordered script list, runs each via a
+  `run_script()` helper (per-script env vars, error handling, timing),
+  and prints an execution summary of output file counts by type
+- `run_all_stage_list.R` - Defines `scripts_to_run`: the ordered
+  (path, description, optional env) triples that constitute the
+  pipeline; edit this to add, remove, or reorder stages
+- `quality-check.R` - Package quality suite (pkgcheck, rcmdcheck,
+  codetools, cyclocomp, dupree, CodeDepends, lintr, checkglobals,
+  spelling, urlchecker, covr); writes reports to `docs/quality-reports/`
 
 ## Workflow
 
@@ -217,4 +298,6 @@ exports, and copied figures land in
 - Scripts are numbered to indicate the recommended execution
   order
 - The main runner script (`run_all_scripts.R`) handles
-  dependencies and runs scripts in the correct order
+  dependencies and runs scripts in the correct order via the
+  list in `run_all_stage_list.R`
+</content>
