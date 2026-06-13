@@ -26,7 +26,7 @@ source(here::here(
 ))
 
 COARSE_TAUS <- seq(0, 0.2, by = 0.005)
-FINE_N <- 20L
+FINE_N <- 10L
 BISECT_ITERS <- 40L
 RECESSION_N_DIR <- 8000L
 RECESSION_SEED <- 1L

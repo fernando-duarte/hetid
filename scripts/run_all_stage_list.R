@@ -3,6 +3,14 @@
 # run_all_scripts.R, its only consumer. Editing the pipeline order means
 # editing this list.
 
+# Pipeline run profile. The default pipeline is the QUICK run (spec_comparison
+# is pinned to its quick subgrid below). The tau* identification-strength stages
+# (tau_star_comparison.R + its report tau_star_report.R) are the most expensive
+# part of the pipeline -- a multi-start optimizer oracle bisected over a tau grid
+# for BOTH modes -- and are EXCLUDED from the quick run. Set HETID_FULL_RUN=1 to
+# include them. Stages tagged `full_only = TRUE` are dropped when quick_run.
+quick_run <- !nzchar(Sys.getenv("HETID_FULL_RUN"))
+
 # Define the order of script execution
 scripts_to_run <- list(
   # Data preparation and analysis scripts
@@ -117,14 +125,16 @@ scripts_to_run <- list(
       "scripts/05_identification_with_optimization",
       "tau_star_comparison.R"
     ),
-    desc = "Comparing Identification Strength (tau*)"
+    desc = "Comparing Identification Strength (tau*)",
+    full_only = TRUE
   ),
   list(
     path = here::here(
       "scripts/05_identification_with_optimization",
       "tau_star_report.R"
     ),
-    desc = "Reporting Identification Strength (tau*)"
+    desc = "Reporting Identification Strength (tau*)",
+    full_only = TRUE
   ),
   list(
     path = here::here(
@@ -200,3 +210,12 @@ scripts_to_run <- list(
     desc = "Exporting Generalized-Instrument Results"
   )
 )
+
+# Drop full-only stages on a quick run (the default). A re-run with
+# HETID_FULL_RUN=1 keeps them.
+if (quick_run) {
+  scripts_to_run <- Filter(
+    function(stage) !isTRUE(stage$full_only),
+    scripts_to_run
+  )
+}
