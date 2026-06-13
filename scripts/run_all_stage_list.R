@@ -177,5 +177,22 @@ scripts_to_run <- list(
       "output_results.R"
     ),
     desc = "Exporting Final Results"
+  ),
+
+  # Generalized-instrument identification on Z = PC^2 (exported generalized API
+  # + constraint-checker closure membership probe)
+  list(
+    path = here::here(
+      "scripts/07_generalized_instruments",
+      "compute_generalized_identification.R"
+    ),
+    desc = "Computing Generalized-Instrument Identified Set (Z = PC^2)"
+  ),
+  list(
+    path = here::here(
+      "scripts/07_generalized_instruments",
+      "output_results.R"
+    ),
+    desc = "Exporting Generalized-Instrument Results"
   )
 )
