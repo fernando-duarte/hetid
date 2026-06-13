@@ -131,8 +131,7 @@ scripts_to_run <- list(
       "scripts/05_identification_with_optimization",
       "spec_comparison.R"
     ),
-    desc = "Comparing Specifications, Instruments, and tau (quick)",
-    env = c(HETID_SPEC_QUICK = "1")
+    desc = "Comparing Specifications, Instruments, and tau (full)"
   ),
   # Point the report at the quick grid the previous stage just computed; the
   # report's default otherwise prefers spec_comparison_full.rds when a full-run
@@ -142,11 +141,7 @@ scripts_to_run <- list(
       "scripts/05_identification_with_optimization",
       "spec_comparison_report.R"
     ),
-    desc = "Reporting Specification Comparison Results (quick grid)",
-    env = c(HETID_SPEC_SOURCE = here::here(
-      "scripts/output/temp/identification_optimized",
-      "spec_comparison_quick.rds"
-    ))
+    desc = "Reporting Specification Comparison Results (full grid)"
   ),
 
   # Final results production
@@ -170,6 +165,10 @@ scripts_to_run <- list(
       "create_theta_panel_table.R"
     ),
     desc = "Creating Theta Panel LaTeX Table"
+  ),
+  list(
+    path = here::here("scripts/06_results_production/create_consumption_equation_table.R"),
+    desc = "Creating Consumption-Equation Structural-Coefficient Table"
   ),
   list(
     path = here::here(

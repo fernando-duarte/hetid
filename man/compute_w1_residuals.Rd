@@ -34,6 +34,10 @@ If return_df = FALSE, returns a list containing:
 \item{r_squared}{R-squared of the regression}
 \item{dates}{Date vector corresponding to residuals, or NULL
 if no \code{date} column was provided}
+\item{kept_idx}{Integer indices (into the lagged/leading rows) of the
+observations retained by the regression's complete-case filter; used
+downstream to assert that \eqn{Y_1} and \eqn{Y_2} are fit on the same
+sample}
 \item{model}{The lm object from the regression}
 }
 If return_df = TRUE, returns a data frame with columns:

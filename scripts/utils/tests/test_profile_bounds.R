@@ -170,6 +170,77 @@ check(
   !is.null(pt) && approx(pt$theta, c(2, -3, 5))
 )
 
+# --- Linear-functional bound solver (solve_linear_functional_bound) ---
+
+# Parity with the coordinate solver: for a coordinate objective e_k the
+# functional bound must equal the coordinate profile bound.
+q_aniso <- quad(list(diag(c(1e-4, 1, 1))), list(rep(0, 3)), c(-1))
+for (k in 1:3) {
+  ek <- replace(numeric(3), k, 1)
+  for (dir in c("min", "max")) {
+    lf <- solve_linear_functional_bound(q_aniso, ek, dir)
+    cb <- solve_profile_bound(q_aniso, k, dir)
+    check(
+      sprintf("functional e_%d %s parity with coordinate bound", k, dir),
+      approx(lf$bound, cb$bound) && lf$bounded == is.finite(cb$bound) &&
+        lf$valid == cb$valid
+    )
+  }
+}
+
+# Linear functional over the unit ball {theta'theta <= 1}: max c'theta = |c|.
+q_ball <- quad(list(diag(3)), list(rep(0, 3)), c(-1))
+lf_diag <- solve_linear_functional_bound(q_ball, c(1, 1, 0), "max")
+check(
+  "functional (1,1,0) over unit ball max = sqrt(2)",
+  lf_diag$bounded && lf_diag$valid && approx(lf_diag$bound, sqrt(2))
+)
+lf_diag_lo <- solve_linear_functional_bound(q_ball, c(1, 1, 0), "min")
+check(
+  "functional (1,1,0) over unit ball min = -sqrt(2)",
+  lf_diag_lo$bounded && lf_diag_lo$valid && approx(lf_diag_lo$bound, -sqrt(2))
+)
+
+# Objective orthogonal to a free direction stays finite: {theta1^2 - 1 <= 0}
+# with theta2 free. The functional theta1 (=(1,0)) is pinned to [-1, 1] even
+# though theta2 rides the box edge.
+q_pin2 <- quad(list(diag(c(1, 0))), list(rep(0, 2)), c(-1))
+lf_pin_hi <- solve_linear_functional_bound(q_pin2, c(1, 0), "max")
+lf_pin_lo <- solve_linear_functional_bound(q_pin2, c(1, 0), "min")
+check(
+  "functional theta1 pinned with free theta2: finite +/-1 valid",
+  lf_pin_hi$bounded && lf_pin_hi$valid && approx(lf_pin_hi$bound, 1) &&
+    lf_pin_lo$bounded && lf_pin_lo$valid && approx(lf_pin_lo$bound, -1)
+)
+
+# Oblique set {theta1 - theta2 <= 0} (unbounded). The functional theta1-theta2
+# (=(1,-1)) is pinned to max 0 by the active constraint; theta1+theta2 (=(1,1))
+# scales to +Inf along theta1 = theta2 -> unbounded.
+q_obl <- quad(list(matrix(0, 2, 2)), list(c(1, -1)), c(0))
+lf_pinned <- solve_linear_functional_bound(q_obl, c(1, -1), "max")
+check(
+  "functional theta1-theta2 pinned to 0 (bounded valid)",
+  lf_pinned$bounded && lf_pinned$valid && approx(lf_pinned$bound, 0)
+)
+lf_oblique <- solve_linear_functional_bound(q_obl, c(1, 1), "max")
+check(
+  "functional theta1+theta2 unbounded (+Inf)",
+  is.infinite(lf_oblique$bound) && lf_oblique$bound > 0 && !lf_oblique$bounded
+)
+
+# Wrong-length objective is rejected up front.
+bad_obj_msg <- tryCatch(
+  {
+    solve_linear_functional_bound(q_ball, c(1, 1), "max")
+    NULL
+  },
+  error = function(e) conditionMessage(e)
+)
+check(
+  "wrong-length objective_vec rejected",
+  !is.null(bad_obj_msg) && grepl("theta dimension", bad_obj_msg, fixed = TRUE)
+)
+
 # format helpers: 4-state rendering
 check(
   "format_bound renders states",

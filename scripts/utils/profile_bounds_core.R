@@ -45,15 +45,26 @@
 }
 
 # Solve the scaled subproblem at a given box; return the FULL phi vector and the
-# solver convergence code.
+# solver convergence code. With objective = NULL the objective is the coordinate
+# functional e_k' phi (component bounds, byte-identical to the original path);
+# with objective = c it is the linear functional c' phi (the theta-units value is
+# delta * c' phi, recovered by .finalize_linear_bound). delta is a positive
+# constant, so scaling the objective by it would not move the argmin; it is left
+# out of the objective and applied only when recovering the bound, mirroring the
+# coordinate convention (obj in phi units, bound in theta units).
 .solve_scaled <- function(quadratic, component_index, sign_mult, delta, omega,
-                          box, xtol_rel, maxeval) {
+                          box, xtol_rel, maxeval, objective = NULL) {
   n_con <- length(quadratic$A_i)
   dim_theta <- ncol(quadratic$A_i[[1]])
-  e_k <- numeric(dim_theta)
-  e_k[component_index] <- 1
-  obj_fn <- function(phi) sign_mult * sum(e_k * phi)
-  grad_fn <- function(phi) sign_mult * e_k
+  if (is.null(objective)) {
+    e_k <- numeric(dim_theta)
+    e_k[component_index] <- 1
+    obj_fn <- function(phi) sign_mult * sum(e_k * phi)
+    grad_fn <- function(phi) sign_mult * e_k
+  } else {
+    obj_fn <- function(phi) sign_mult * sum(objective * phi)
+    grad_fn <- function(phi) sign_mult * objective
+  }
   constraint_fn <- function(phi) {
     theta <- delta * phi
     vapply(seq_len(n_con), function(i) {
@@ -108,6 +119,18 @@
   resid <- .feasibility_residual(quadratic, delta * r$phi, omega)
   list(
     bound = delta * r$phi[component_index], bounded = TRUE,
+    valid = is.finite(resid) && abs(resid) <= feas_tol
+  )
+}
+
+# Linear-functional analog of .finalize_bound: the bound is the theta-units
+# functional value delta * (objective_vec' phi) = c' theta; the valid certificate
+# is the same solver-independent feasible+active residual check.
+.finalize_linear_bound <- function(quadratic, delta, omega, r, objective_vec,
+                                   feas_tol) {
+  resid <- .feasibility_residual(quadratic, delta * r$phi, omega)
+  list(
+    bound = delta * sum(objective_vec * r$phi), bounded = TRUE,
     valid = is.finite(resid) && abs(resid) <= feas_tol
   )
 }

@@ -82,8 +82,32 @@ assert_w2_alignment <- function(w2_result) {
   invisible(w2_result)
 }
 
+# W1 residuals are position-aligned with the W2 / instrument leading block in
+# compute_identification_residuals (pcs_aligned <- z_mat[seq_len(n_resid), ]).
+# That alignment is valid only if W1's complete-case filter dropped no leading
+# or interior rows -- i.e. the kept rows form a contiguous leading block, exactly
+# as assert_w2_alignment requires of every W2 maturity. An interior NA in
+# consumption or the PCs would otherwise shift W1 residual row t off calendar
+# period t, silently misaligning W1, W2 and Z and breaking the structural-
+# coefficient identity beta1(theta) = beta1R - (beta2R)' theta.
+assert_w1_leading_block <- function(w1_result) {
+  kept <- w1_result$kept_idx
+  if (is.null(kept)) {
+    return(invisible(w1_result))
+  }
+  if (!identical(which(kept), seq_len(sum(kept)))) {
+    stop(
+      "W1 (consumption) complete-case filter dropped non-leading rows; ",
+      "W1 residual row t no longer corresponds to sample row t, which would ",
+      "misalign it with the W2 residuals and instruments"
+    )
+  }
+  invisible(w1_result)
+}
+
 #' @param mode "maturities" or "factors"
-#' @return list with w1, w2, pcs_aligned, and n_obs
+#' @return list with w1, w2, pcs_aligned, n_obs, w1_result, and (maturities
+#'   mode) w2_coefficients = the Y2-on-PC reduced-form coefficient matrix
 compute_identification_residuals <- function(
   data,
   maturities = DEFAULT_ID_MATURITIES,
@@ -96,6 +120,7 @@ compute_identification_residuals <- function(
   w1_result <- compute_w1_residuals(
     n_pcs = n_pcs, data = data
   )
+  assert_w1_leading_block(w1_result)
 
   # Carry every maturity column the data provides: the quarterly news
   # clock needs step-adjacent sub-annual maturities around each horizon
@@ -139,6 +164,11 @@ compute_identification_residuals <- function(
       data, max(factors)
     )
     result$gamma_rf <- attr(w2_mat, "gamma_rf")
+  } else {
+    # Retain beta2R (the Y2-on-PC reduced-form coefficient matrix, I x (1+n_pcs),
+    # = the point-identified beta20) for structural-coefficient recovery; it is
+    # dropped by the cbind flatten above otherwise.
+    result$w2_coefficients <- w2_result$coefficients
   }
   result
 }
