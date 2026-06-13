@@ -104,6 +104,14 @@ baseline_bounds <- baseline$bounds_tau_set
 optimized_bounds$component_label <- lookup$component_label
 baseline_bounds$component_label <- lookup$component_label
 
+# Constraint-checker closure membership probe (additive diagnostic) on the
+# optimized-gamma system, over its profile-bound box.
+optimized_membership <- probe_set_membership(
+  quad_sys_opt$quadratic, optimized_bounds
+)
+cli_h2("Optimized-gamma membership probe (closure)")
+print(optimized_membership$summary)
+
 # Display comparison
 cli_h2("Baseline Bounds (tau = {BASELINE_TAU}, VFCI gamma)")
 print(
@@ -151,6 +159,7 @@ results <- list(
   gamma_optimized = gamma_optimized,
   baseline_bounds = baseline_bounds,
   optimized_bounds = optimized_bounds,
+  optimized_membership = optimized_membership,
   objective_start = opt_result$objective_start,
   objective_final = opt_result$objective_final,
   optimization_trace = trace,
@@ -185,6 +194,12 @@ saveRDS(
 write.csv(
   trace,
   file.path(output_dir, "optimization_trace.csv"),
+  row.names = FALSE
+)
+
+write.csv(
+  optimized_membership$summary,
+  file.path(output_dir, "optimized_membership.csv"),
   row.names = FALSE
 )
 

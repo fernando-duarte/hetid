@@ -129,6 +129,14 @@ if (all_bounded_tau_set) {
 bounds_tau0$component_label <- lookup$component_label
 bounds_tau_set$component_label <- lookup$component_label
 
+# Constraint-checker closure membership probe (additive diagnostic) over the
+# tau = 0.2 set's profile-bound box; complements the profile-bound widths.
+membership_tau_set <- probe_set_membership(
+  quad_sys_tau_set$quadratic, bounds_tau_set
+)
+cli_h2("Membership Probe (tau = 0.2, closure)")
+print(membership_tau_set$summary)
+
 # Display results
 display_cols <- c("component_label", "lower", "upper", "width")
 cli_h2("Baseline Bounds (tau = 0)")
@@ -157,6 +165,7 @@ results <- list(
   quadratic_tau_set = quad_sys_tau_set,
   bounds_tau0 = bounds_tau0,
   bounds_tau_set = bounds_tau_set,
+  membership_tau_set = membership_tau_set,
   solver_diagnostics = list(
     all_converged_tau0 = all_valid_tau0,
     all_converged_tau_set = all_bounded_tau_set
@@ -186,6 +195,12 @@ write.csv(
 write.csv(
   bounds_tau_set,
   file.path(output_dir, "baseline_bounds_tau_set.csv"),
+  row.names = FALSE
+)
+
+write.csv(
+  membership_tau_set$summary,
+  file.path(output_dir, "baseline_membership_tau_set.csv"),
   row.names = FALSE
 )
 

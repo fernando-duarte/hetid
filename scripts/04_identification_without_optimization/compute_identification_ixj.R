@@ -104,6 +104,17 @@ if (file.exists(baseline_path)) {
   )
 }
 
+# Constraint-checker closure membership probe (additive diagnostic) on the
+# tau = 0.2 I x J system, over its profile-bound box.
+qs_02 <- build_ixj_quadratic_system(
+  moments, matrix(0.2, nrow = n_pcs, ncol = n_comp)
+)
+ixj_membership <- probe_set_membership(
+  qs_02$quadratic, bounds_by_tau[["0.2"]]
+)
+cli_h2("I x J membership probe (tau = 0.2, closure)")
+print(ixj_membership$summary)
+
 # Persist results.
 output_dir <- file.path(OUTPUT_TEMP_DIR, "identification_ixj")
 dir.create(output_dir, recursive = TRUE, showWarnings = FALSE)
@@ -117,7 +128,8 @@ results <- list(
   ),
   lookup = lookup,
   bounds_by_tau = bounds_by_tau,
-  grid = grid
+  grid = grid,
+  ixj_membership = ixj_membership
 )
 saveRDS(results, file.path(output_dir, "ixj_identification_results.rds"))
 
@@ -133,6 +145,11 @@ grid_csv <- grid[, c(
   "state_lower", "state_upper"
 )]
 write.csv(grid_csv, file.path(output_dir, "ixj_bounds_grid.csv"), row.names = FALSE)
+write.csv(
+  ixj_membership$summary,
+  file.path(output_dir, "ixj_membership.csv"),
+  row.names = FALSE
+)
 write.csv(grid_csv, file.path(paper_dir, "ixj_bounds_grid.csv"), row.names = FALSE)
 
 cli_alert_success("I x J identified set computed across {length(TAU_GRID)} tau values")
