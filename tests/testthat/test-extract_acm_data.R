@@ -189,7 +189,7 @@ test_that("extract_acm_data keeps single-variable results as data frames", {
   expect_named(data, c("date", "y60"))
 })
 
-test_that("extract_acm_data returns a data frame when no columns match", {
+test_that("extract_acm_data errors when a requested column is absent", {
   withr::with_tempdir({
     temp_csv <- file.path(getwd(), "ACMTermPremium.csv")
     write.csv(
@@ -206,12 +206,13 @@ test_that("extract_acm_data returns a data frame when no columns match", {
       get_acm_data_path = function(...) temp_csv
     )
 
-    expect_warning(
-      result <- extract_acm_data(data_types = "yields", maturities = 60),
-      "not found in data"
+    # The 5-year column (ACMY05) is absent: a missing required column is
+    # an incomplete/corrupt source, signalled rather than silently dropped.
+    expect_error(
+      extract_acm_data(data_types = "yields", maturities = 60),
+      "missing required column",
+      class = "hetid_error_insufficient_data"
     )
-    expect_s3_class(result, "data.frame")
-    expect_named(result, "date")
   })
 })
 

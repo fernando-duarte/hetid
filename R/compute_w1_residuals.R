@@ -118,7 +118,7 @@ compute_w1_residuals <- function(n_pcs = HETID_CONSTANTS$DEFAULT_N_PCS,
 
   # Create regressor matrix; labels travel on its colnames
   if (is.null(exog)) {
-    reg_matrix <- as.matrix(data[, get_pc_column_names(n_pcs)])
+    reg_matrix <- as.matrix(data[, get_pc_column_names(n_pcs), drop = FALSE])
     n_reg <- n_pcs
   } else {
     assert_dimension_ok(

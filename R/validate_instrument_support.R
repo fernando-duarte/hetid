@@ -78,17 +78,8 @@ assert_support_list <- function(support, j_total, n_components,
     ),
     arg = "support"
   )
-  unconstrained <- setdiff(seq_len(n_components), maturities)
-  bad_extra <- unconstrained[
-    !vapply(support[unconstrained], is.null, logical(1))
-  ]
-  assert_bad_argument_ok(
-    length(bad_extra) == 0,
-    paste0(
-      "support must be NULL at unconstrained system column(s) ",
-      paste(bad_extra, collapse = ", ")
-    ),
-    arg = "support"
+  assert_null_at_unconstrained(
+    support, n_components, maturities, "support"
   )
   for (i in maturities) {
     assert_bad_argument_ok(

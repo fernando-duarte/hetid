@@ -41,9 +41,6 @@ their terminal month in quarterly conversion: TRUE keeps them
 (gzipped CSV from the GitHub replication release)}
 \item{ACM_NYFED_FILENAME}{Cache filename for the opt-in NY Fed
 xls fallback source}
-\item{ACM_LEGACY_FILENAMES}{Retired cache filenames (the old
-xls-to-CSV pipeline and superseded release assets); never
-resolved, only flagged for cleanup}
 \item{BUNDLED_VARIABLES_DATASET}{Bundled dataset name}
 \item{COL_FORMAT_PADDED}{Padded raw column name format for
 whole-year maturities (e.g. ACMY01)}

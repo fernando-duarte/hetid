@@ -41,9 +41,6 @@
 #'     (gzipped CSV from the GitHub replication release)}
 #'   \item{ACM_NYFED_FILENAME}{Cache filename for the opt-in NY Fed
 #'     xls fallback source}
-#'   \item{ACM_LEGACY_FILENAMES}{Retired cache filenames (the old
-#'     xls-to-CSV pipeline and superseded release assets); never
-#'     resolved, only flagged for cleanup}
 #'   \item{BUNDLED_VARIABLES_DATASET}{Bundled dataset name}
 #'   \item{COL_FORMAT_PADDED}{Padded raw column name format for
 #'     whole-year maturities (e.g. ACMY01)}
@@ -106,10 +103,6 @@ HETID_CONSTANTS <- list(
   # Data identity
   ACM_DATA_FILENAME = "ACMTermPremium_replicated_monthly_3m_120m.csv.gz",
   ACM_NYFED_FILENAME = "ACMTermPremium_nyfed.csv",
-  ACM_LEGACY_FILENAMES = c(
-    "ACMTermPremium.csv",
-    "ACMTermPremium_reproduced_monthly_6m_120m.csv.gz"
-  ),
   BUNDLED_VARIABLES_DATASET = "variables",
 
   # Column format patterns

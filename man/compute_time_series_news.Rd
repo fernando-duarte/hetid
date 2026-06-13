@@ -4,14 +4,12 @@
 \alias{compute_time_series_news}
 \title{Compute Time Series News}
 \usage{
-compute_time_series_news(current_series, future_series, negate = FALSE)
+compute_time_series_news(current_series, future_series)
 }
 \arguments{
 \item{current_series}{Current period series}
 
 \item{future_series}{Future period series}
-
-\item{negate}{Whether to negate the result (for yield news)}
 }
 \value{
 News series

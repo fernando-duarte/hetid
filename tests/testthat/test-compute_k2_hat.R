@@ -48,6 +48,18 @@ test_that("compute_k2_hat rejects a maturity that is not a multiple of step", {
   )
 })
 
+test_that("compute_k2_hat raises a structured error on a short series", {
+  # T = 5 rows but i = 108, step = 12 needs i/step = 9 news periods, so the
+  # bound index set is empty: must signal hetid_error_insufficient_data,
+  # not a bare seq_len(negative) error.
+  syn <- create_synthetic_test_data(n = 5)
+  expect_error(
+    compute_k2_hat(syn$yields, syn$term_premia, i = 108),
+    "Not enough observations",
+    class = "hetid_error_insufficient_data"
+  )
+})
+
 test_that("compute_k2_hat rejects mismatched yields and term_premia rows", {
   syn_long <- create_synthetic_test_data(n = 30)
   syn_short <- create_synthetic_test_data(n = 15)

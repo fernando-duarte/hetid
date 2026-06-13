@@ -111,8 +111,8 @@ extract_acm_data <- function(data_types = c("yields", "term_premia"),
   # Annual-only sources cannot serve month-level requests
   assert_subannual_available(acm_data, maturities)
 
-  # The load_term_premia function now returns lowercase 'date' column
-  # Ensure date column is properly converted to Date type
+  # load_term_premia() returns the date column as lowercase 'date';
+  # ensure it is a Date before any filtering
   acm_data <- normalize_acm_date_column(acm_data)
 
   # Convert dates if provided as strings
@@ -126,21 +126,28 @@ extract_acm_data <- function(data_types = c("yields", "term_premia"),
     end_date
   )
 
-  # Start with date column
-  result <- data.frame(date = acm_data$date)
-
   # Build column mapping for selected data types and maturities
   col_mapping <- build_acm_col_mapping(data_types, maturities) # nolint: object_usage_linter
 
-  # Extract selected columns
-  for (new_name in names(col_mapping)) {
-    old_name <- col_mapping[[new_name]]
-    if (old_name %in% names(acm_data)) {
-      result[[new_name]] <- acm_data[[old_name]]
-    } else {
-      warning("Column ", old_name, " not found in data", call. = FALSE)
-    }
+  # A missing mapped column means an incomplete/corrupt source: fail
+  # closed rather than silently returning a narrower frame
+  old_names <- unlist(col_mapping, use.names = FALSE)
+  missing_cols <- old_names[!old_names %in% names(acm_data)]
+  if (length(missing_cols) > 0) {
+    stop_insufficient_data(paste0(
+      "ACM data is missing required column(s): ",
+      paste(missing_cols, collapse = ", "),
+      ". The source file may be incomplete or corrupt."
+    ))
   }
+
+  # Assemble every requested column at once (no growing-frame copies)
+  selected <- acm_data[old_names]
+  names(selected) <- names(col_mapping)
+  result <- data.frame(
+    date = acm_data$date, selected,
+    check.names = FALSE, stringsAsFactors = FALSE
+  )
 
   # Convert to quarterly if requested
   if (frequency == "quarterly") {

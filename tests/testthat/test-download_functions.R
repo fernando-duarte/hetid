@@ -33,7 +33,7 @@ test_that("load_term_premia auto-downloads when file missing", {
   })
 })
 
-test_that("load_term_premia warns on unparseable dates", {
+test_that("load_term_premia errors on a wholly unparseable DATE column", {
   withr::with_tempdir({
     temp_csv <- file.path(getwd(), "ACMTermPremium.csv")
     write.csv(
@@ -47,13 +47,13 @@ test_that("load_term_premia warns on unparseable dates", {
       get_acm_data_path = function(...) temp_csv
     )
 
-    expect_warning(
-      result <- load_term_premia(),
-      "Could not convert DATE"
+    # A DATE column that no supported format can parse is treated as a
+    # stale/corrupt cache (structured error), not silently kept as text.
+    expect_error(
+      load_term_premia(),
+      "could not be parsed",
+      class = "hetid_error"
     )
-    expect_s3_class(result, "data.frame")
-    expect_true("date" %in% names(result))
-    expect_type(result$date, "character")
   })
 })
 
@@ -165,7 +165,7 @@ test_that("the nyfed source writes its own cache file, not the package", {
   local_mocked_bindings(
     download.file = function(url, destfile, ...) {
       writeLines("fake-xls", destfile)
-      invisible(0)
+      invisible(0L)
     },
     .package = "hetid"
   )
@@ -260,7 +260,7 @@ test_that("force re-download overwrites the nyfed cache only", {
   local_mocked_bindings(
     download.file = function(url, destfile, ...) {
       writeLines("fake-xls", destfile)
-      invisible(0)
+      invisible(0L)
     },
     .package = "hetid"
   )
@@ -324,7 +324,7 @@ test_that("nyfed cache is written to a temp file, then renamed into place", {
   local_mocked_bindings(
     download.file = function(url, destfile, ...) {
       writeLines("fake-xls", destfile)
-      invisible(0)
+      invisible(0L)
     },
     write.csv = function(x, file, ...) {
       written_path <<- file

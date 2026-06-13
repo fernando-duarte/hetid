@@ -55,15 +55,22 @@ validate_acm_extract_inputs <- function(data_types, maturities,
 #' @return Invisible TRUE
 #' @keywords internal
 assert_subannual_available <- function(acm_data, maturities) {
-  sub_annual <- maturities[maturities %% 12L != 0L]
+  units_per_year <- HETID_CONSTANTS$MATURITY_UNITS_PER_YEAR
+  sub_annual <- maturities[maturities %% units_per_year != 0L]
   if (length(sub_annual) == 0) {
     return(invisible(TRUE))
   }
-  has_monthly_cols <- any(grepl("M$", names(acm_data)))
-  if (!has_monthly_cols) {
+  # Probe the specific requested sub-annual raw columns, not a blanket
+  # "any month-suffixed column": a source carrying some sub-annual nodes
+  # (e.g. 3M) but not the requested one (e.g. 9M) must still fail here.
+  absent <- setdiff(
+    acm_raw_column_name("yields", sub_annual), names(acm_data)
+  )
+  if (length(absent) > 0) {
     stop_insufficient_data(paste0(
-      "The loaded ACM source provides only annual maturities (12, 24, ",
-      "..., 120 months), but sub-annual months were requested: ",
+      "The loaded ACM source provides only annual maturities (",
+      paste(HETID_CONSTANTS$DEFAULT_ACM_MATURITIES, collapse = ", "),
+      " months), but sub-annual months were requested: ",
       paste(sub_annual, collapse = ", "),
       ". Month-level maturities require the GitHub source: ",
       "download_term_premia(source = \"github\")."

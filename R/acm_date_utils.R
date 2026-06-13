@@ -87,12 +87,45 @@ parse_acm_dates <- function(raw_dates) {
   NULL
 }
 
+#' Parse a Date Column and Warn on Partial Failures
+#'
+#' Shared parse-and-warn step behind \code{normalize_acm_date_column}
+#' and \code{load_term_premia}: parses \code{raw_dates} through the
+#' shared format chain, errors when a non-empty column fails to parse
+#' entirely, and raises a classed \code{warn_unparsed_dates} warning
+#' when only some values become NA.
+#'
+#' @param raw_dates Character vector of date strings
+#' @param label Column label used in messages (e.g. "date", "DATE")
+#' @return Date vector (all-NA when \code{raw_dates} is entirely NA)
+#' @keywords internal
+#' @noRd
+parse_and_warn_dates <- function(raw_dates, label = "date") {
+  parsed <- parse_acm_dates(raw_dates)
+  if (is.null(parsed)) {
+    if (any(!is.na(raw_dates))) {
+      stop_hetid(paste0(
+        "The ", label, " column could not be parsed with any supported ",
+        "format. The file may be stale or corrupt."
+      ))
+    }
+    return(as.Date(rep(NA_character_, length(raw_dates))))
+  }
+  newly_na <- is.na(parsed) & !is.na(raw_dates)
+  if (any(newly_na)) {
+    warn_unparsed_dates(paste0(
+      sum(newly_na), " ", label,
+      " value(s) could not be parsed and became NA"
+    ))
+  }
+  parsed
+}
+
 #' Normalize ACM date column
 #'
-#' Converts a character date column to Date using the shared format
-#' fallback chain (legacy ACM format, default parser, ISO). Errors when
-#' a non-empty column fails to parse entirely; warns when only some
-#' values become NA.
+#' Converts a character date column to Date via the shared
+#' \code{parse_and_warn_dates} helper (legacy ACM format, default
+#' parser, ISO).
 #'
 #' @keywords internal
 #' @noRd
@@ -100,30 +133,7 @@ normalize_acm_date_column <- function(acm_data) {
   if (!("date" %in% names(acm_data)) || inherits(acm_data$date, "Date")) {
     return(acm_data)
   }
-
-  raw_dates <- acm_data$date
-  parsed <- parse_acm_dates(raw_dates)
-
-  if (is.null(parsed)) {
-    if (any(!is.na(raw_dates))) {
-      stop_hetid(paste0(
-        "Date column could not be parsed with any supported format. ",
-        "Check the data file for corruption."
-      ))
-    }
-    parsed <- as.Date(rep(NA_character_, length(raw_dates)))
-  }
-
-  newly_na <- is.na(parsed) & !is.na(raw_dates)
-  if (any(newly_na)) {
-    warning(
-      sum(newly_na),
-      " date value(s) could not be parsed and became NA",
-      call. = FALSE
-    )
-  }
-
-  acm_data$date <- parsed
+  acm_data$date <- parse_and_warn_dates(acm_data$date, "date")
   acm_data
 }
 

@@ -1,11 +1,10 @@
 #' Per-Constraint Components from One Weight Column
 #'
 #' Internal kernel holding the L/V/Q arithmetic for a single weight
-#' column applied to the moments of one constraint maturity. Extracted
-#' verbatim from the \code{compute_identified_set_components()} loop
-#' body so the legacy matrix path and the general (component,
-#' combination) path share one implementation. Operation order is
-#' load-bearing: it must stay bit-identical to the pre-extraction code.
+#' column applied to the moments of one constraint maturity. The legacy
+#' matrix path and the general (component, combination) path share this
+#' one implementation and must produce bit-identical values (enforced by
+#' \code{test-constraint_kernel.R}). Operation order is load-bearing.
 #'
 #' @param weight_col Numeric J x 1 matrix (a single weight column)
 #' @param idx Position of the maturity within the container's
@@ -16,7 +15,7 @@
 #' @noRd
 constraint_components <- function(weight_col, idx, moments) {
   l_val <- as.numeric(
-    crossprod(weight_col, moments$r_i_0[, idx])
+    crossprod(weight_col, moments$r_i_0[, idx, drop = FALSE])
   )
 
   p_i_0_vec <- moments$p_i_0[, idx, drop = FALSE]
@@ -36,11 +35,10 @@ constraint_components <- function(weight_col, idx, moments) {
 #' Assemble One Quadratic Constraint
 #'
 #' Internal kernel holding the d/A/b/c arithmetic for a single
-#' constraint, extracted verbatim from the
-#' \code{quadratic_from_components()} loop body, including the exact
-#' symmetrization and both finite guards. Operation order is
-#' load-bearing: it must stay bit-identical to the pre-extraction
-#' code.
+#' constraint, including the exact symmetrization and both finite
+#' guards. The legacy and general paths must produce bit-identical
+#' values (enforced by \code{test-constraint_kernel.R}). Operation
+#' order is load-bearing.
 #'
 #' @param tau_ik Scalar slack for this constraint
 #' @param l_val,v_val Scalars from \code{constraint_components()}

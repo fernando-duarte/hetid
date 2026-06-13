@@ -54,6 +54,7 @@ eot
 erroring
 extdata
 fernando
+filesystem
 finiteness
 fn
 formatters
@@ -183,6 +184,8 @@ tp
 TP
 tryCatch
 ttf
+unlink
+Unparsed
 untracked
 urlchecker
 uv

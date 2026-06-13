@@ -37,6 +37,14 @@ make_constraint_checker <- function(A_i, b_i, c_i) { # nolint: object_name_linte
     "A_i must be a square numeric matrix",
     arg = "A_i"
   )
+  # The quadratic form theta' A theta relies on A being symmetric (the
+  # builders symmetrize via (A + t(A)) / 2); reject a hand-built
+  # asymmetric A rather than evaluate it asymmetrically.
+  assert_bad_argument_ok(
+    isSymmetric(A_i),
+    "A_i must be a symmetric matrix",
+    arg = "A_i"
+  )
   assert_bad_argument_ok(
     is.numeric(b_i) && is.null(dim(b_i)),
     "b_i must be a numeric vector",
@@ -54,9 +62,8 @@ make_constraint_checker <- function(A_i, b_i, c_i) { # nolint: object_name_linte
     "c_i must be a numeric scalar",
     arg = "c_i"
   )
-  force(A_i)
-  force(b_i)
-  force(c_i)
+  # A_i, b_i, c_i are already forced by the assertions above, so the
+  # returned closure captures their values, not unevaluated promises.
   function(theta) {
     as.numeric(crossprod(theta, A_i %*% theta)) +
       sum(b_i * theta) + c_i
@@ -106,12 +113,23 @@ make_system_checker <- function(quadratic) {
     ),
     arg = "quadratic"
   )
+  nms <- names(quadratic$A_i)
   checkers <- lapply(seq_along(quadratic$A_i), function(k) {
-    make_constraint_checker(
-      quadratic$A_i[[k]], quadratic$b_i[[k]], quadratic$c_i[k]
+    # Name the offending slot so a malformed per-k element reports which
+    # constraint failed, not just "b_i must be a numeric vector".
+    slot_label <- if (is.null(nms) || !nzchar(nms[k])) k else nms[k]
+    tryCatch(
+      make_constraint_checker(
+        quadratic$A_i[[k]], quadratic$b_i[[k]], quadratic$c_i[k]
+      ),
+      hetid_error = function(e) {
+        stop_hetid(paste0(
+          "constraint ", slot_label, ": ", conditionMessage(e)
+        ))
+      }
     )
   })
-  names(checkers) <- names(quadratic$A_i)
+  names(checkers) <- nms
   function(theta) {
     vapply(checkers, function(f) as.numeric(f(theta)), numeric(1))
   }

@@ -50,18 +50,9 @@ as_lambda_list <- function(lambda, moments) {
     ),
     arg = "lambda"
   )
-  unconstrained <- setdiff(seq_len(n_components), maturities)
-  bad_extra <- unconstrained[
-    !vapply(lambda[unconstrained], is.null, logical(1))
-  ]
-  assert_bad_argument_ok(
-    length(bad_extra) == 0,
-    paste0(
-      "lambda must be NULL at unconstrained system column(s) ",
-      paste(bad_extra, collapse = ", "),
-      "; weights there would be silently ignored"
-    ),
-    arg = "lambda"
+  assert_null_at_unconstrained(
+    lambda, n_components, maturities, "lambda",
+    suffix = "; weights there would be silently ignored"
   )
   for (i in maturities) {
     mat_i <- lambda[[i]]

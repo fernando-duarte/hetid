@@ -60,6 +60,37 @@ news_contract_ok <- function(maturities, step) {
     maturities - step >= HETID_CONSTANTS$MIN_MATURITY
 }
 
+#' Assert the News Contract, Owning the Shared Message
+#'
+#' Single source of the news-contract failure message for both the
+#' scalar index check (\code{validate_news_maturity_index}) and the
+#' vector check in \code{validate_w2_inputs}. \code{subject} and
+#' \code{offset_label} adapt the wording to each call site;
+#' \code{include_invalid} appends the offending values (used by the
+#' vector path).
+#'
+#' @param maturities Scalar or vector of maturity indices
+#' @template param-step
+#' @param arg Condition argument name
+#' @param subject,offset_label Wording for the subject and the
+#'   "<x> - step" offset in the message
+#' @param include_invalid Whether to append the invalid values
+#' @return Invisible TRUE if valid, stops otherwise
+#' @keywords internal
+assert_news_contract_ok <- function(maturities, step, arg,
+                                    subject = arg, offset_label = arg,
+                                    include_invalid = length(maturities) != 1L) {
+  bad <- maturities[!news_contract_ok(maturities, step)]
+  msg <- paste0(
+    subject, " must equal step (", step, ") or satisfy ",
+    offset_label, " - step >= ", HETID_CONSTANTS$MIN_MATURITY
+  )
+  if (include_invalid && length(bad) > 0L) {
+    msg <- paste0(msg, "; invalid: ", paste(bad, collapse = ", "))
+  }
+  assert_bad_argument_ok(length(bad) == 0L, msg, arg = arg)
+}
+
 #' Validate a News-Horizon Maturity Index
 #'
 #' Validates a maturity index used as a news horizon: the news at
@@ -74,13 +105,10 @@ news_contract_ok <- function(maturities, step) {
 #' @keywords internal
 validate_news_maturity_index <- function(i, step = HETID_CONSTANTS$DEFAULT_STEP) {
   validate_maturity_index(i, max_maturity = effective_max_maturity(step))
-  assert_bad_argument_ok(
-    news_contract_ok(i, step),
-    paste0(
-      "Maturity index i must equal step (", step,
-      ") or satisfy i - step >= ", HETID_CONSTANTS$MIN_MATURITY
-    ),
-    arg = "i"
+  assert_news_contract_ok(
+    i, step,
+    arg = "i", subject = "Maturity index i", offset_label = "i",
+    include_invalid = FALSE
   )
   invisible(TRUE)
 }
@@ -144,7 +172,7 @@ validate_maturities <- function(maturities, max_value,
     anyDuplicated(maturities) == 0,
     paste0(
       arg, " must not contain duplicates; got: ",
-      paste(maturities, collapse = ", ")
+      paste(unique(maturities[duplicated(maturities)]), collapse = ", ")
     ),
     arg = arg
   )

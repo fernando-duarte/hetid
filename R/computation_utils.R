@@ -20,6 +20,53 @@ get_pc_column_names <- function(n_pcs) {
   paste0(HETID_CONSTANTS$PC_PREFIX, seq_len(n_pcs))
 }
 
+#' Assemble the W2 Coefficient Matrix
+#'
+#' Builds the per-maturity coefficient matrix from the list of
+#' regression coefficient vectors, taking column names from the
+#' regression output itself (the single source). A skipped maturity
+#' (NULL entry) contributes an all-NA row; when every maturity was
+#' skipped, \code{fallback_names} supplies the columns.
+#'
+#' @param coef_list List of coefficient vectors (NULL for skipped),
+#'   one per maturity
+#' @param row_names Maturity row names
+#' @param fallback_names Column names used only when all entries are NULL
+#' @return Numeric matrix with one row per maturity
+#' @keywords internal
+assemble_w2_coef_matrix <- function(coef_list, row_names, fallback_names) {
+  fitted_coef <- Filter(Negate(is.null), coef_list)
+  coef_names <- if (length(fitted_coef) > 0) {
+    names(fitted_coef[[1]])
+  } else {
+    fallback_names
+  }
+  coef_matrix <- matrix(
+    NA_real_,
+    nrow = length(coef_list), ncol = length(coef_names),
+    dimnames = list(row_names, coef_names)
+  )
+  for (idx in seq_along(coef_list)) {
+    if (!is.null(coef_list[[idx]])) {
+      coef_matrix[idx, ] <- coef_list[[idx]]
+    }
+  }
+  coef_matrix
+}
+
+#' Minimum Complete Observations for PC Regression
+#'
+#' Single source of truth for the "need at least n_pcs + 2 complete
+#' observations" rule, shared by \code{\link{run_pc_regression}} (which
+#' errors) and the \code{process_w2_maturity} pre-check (which skips).
+#'
+#' @param n_pcs Number of principal components
+#' @return Integer minimum complete-observation count
+#' @keywords internal
+min_obs_for_pc_regression <- function(n_pcs) {
+  n_pcs + 2L
+}
+
 #' Prepare Return Data Frame
 #'
 #' Common logic for preparing return data frames with dates
@@ -79,23 +126,6 @@ prepare_return_data <- function(result_series, return_df, dates, yields,
   result_df
 }
 
-#' Compute Expected Squared Values
-#'
-#' Compute expectation of squared values, handling NA values
-#'
-#' @param series Input series
-#' @param error_msg Error message if no valid values
-#' @return Expected squared value
-#' @keywords internal
-compute_expected_squared <- function(series, error_msg = "No valid values to compute expectation") {
-  clean_series <- series[!is.na(series)]
-  assert_insufficient_data_ok(
-    length(clean_series) > 0,
-    error_msg
-  )
-  mean(clean_series^2)
-}
-
 #' Run PC Regression
 #'
 #' Shared regression core for W1 and W2 residual computation.
@@ -118,7 +148,7 @@ run_pc_regression <- function(y, pcs, n_pcs) {
 
   complete_idx <- complete.cases(y, pcs)
   n_complete <- sum(complete_idx)
-  min_obs_for_regression <- n_pcs + 2L
+  min_obs_for_regression <- min_obs_for_pc_regression(n_pcs)
   if (n_complete < min_obs_for_regression) {
     stop_insufficient_data(paste0(
       "Insufficient complete observations for PC regression: got ",

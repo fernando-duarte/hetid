@@ -65,9 +65,10 @@ test_that("validate_maturities rejects duplicate values", {
     "maturities must not contain duplicates",
     class = "hetid_error_bad_argument"
   )
+  # The message isolates the duplicated value(s), not the whole vector
   expect_error(
     validate_maturities(c(1, 3, 1), max_value = 5),
-    "must not contain duplicates; got: 1, 3, 1",
+    "must not contain duplicates; got: 1$",
     class = "hetid_error_bad_argument"
   )
 })
