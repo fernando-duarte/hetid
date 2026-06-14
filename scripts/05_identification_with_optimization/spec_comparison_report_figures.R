@@ -53,7 +53,7 @@ write_spec_outcomes_figure <- function(grid, cov, bl, paper_dir, suffix) {
 
 write_spec_widths_figure <- function(grid, cov, paper_dir, suffix) {
   pos <- grid[grid$tau > 0, ]
-  pos$stratum <- spec_stratum_label(pos$mode, pos$components)
+  pos$stratum <- spec_stratum_label(pos$components)
   fin <- pos[pos$outcome == "certified bounded", ]
   if (!nrow(fin)) {
     cli_alert_warning("No certified bounded tau > 0 cells; widths figure skipped")

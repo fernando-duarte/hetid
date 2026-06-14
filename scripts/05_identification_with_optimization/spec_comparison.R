@@ -3,15 +3,14 @@
 # specifications (tau>0 set ID across instruments) are reported alongside.
 #
 # Dimensions enumerated:
-#   mode        : factors (level/slope/curvature ...) and maturities
 #   n_pcs       : number of PC instruments (VFCI loading is fixed at n_pcs=4)
-#   components  : factor subset (factors mode) or maturity subset (maturities)
-#   gamma method: vfci (n_pcs=4), reduced_form (factors mode), optimized (tau>0),
-#                 and separate -- the I x J scheme where each PC is its own
-#                 instrument (no gamma; tau>0 only, the tau=0 point is overdetermined)
+#   components  : maturity subset of the SDF-news bonds
+#   gamma method: vfci (n_pcs=4), optimized (tau>0), and separate -- the I x J
+#                 scheme where each PC is its own instrument (no gamma; tau>0
+#                 only, the tau=0 point is overdetermined)
 #   tau         : 0 (point) and a set-ID grid
 #
-# Parallel + resumable: each (mode, n_pcs, components) GROUP is an independent
+# Parallel + resumable: each (n_pcs, components) GROUP is an independent
 # unit of work dispatched across cores via parallel::mclapply. Every finished
 # group writes a per-group RDS checkpoint, so a crash/kill loses only the groups
 # still in flight -- a re-launch reads the existing checkpoints and only computes
@@ -54,7 +53,7 @@ ckpt_path <- function(key) {
 # old checkpoints rather than silently reuse contemporaneous-W1 results.
 group_key <- function(g) {
   paste(
-    g$mode, g$n_pcs, paste(g$components, collapse = "-"), N_Y1_LAGS,
+    g$n_pcs, paste(g$components, collapse = "-"), N_Y1_LAGS,
     sep = "|"
   )
 }
@@ -85,7 +84,7 @@ compute_group <- function(group) {
 
 # Enumerate every (n_pcs, maturity-set) group.
 groups <- unlist(lapply(npcs_grid, function(p) {
-  lapply(mat_sets, function(cs) list(mode = "maturities", n_pcs = p, components = cs))
+  lapply(mat_sets, function(cs) list(n_pcs = p, components = cs))
 }), recursive = FALSE)
 n_done <- sum(vapply(groups, function(g) {
   file.exists(ckpt_path(group_key(g)))
@@ -120,7 +119,7 @@ if (is.null(grid) || !nrow(grid)) {
   bench <- grid[grid$kind == "point", ]
   bench <- bench[order(bench$cond), ]
   cli_h2("Benchmark: tau=0 point identification (width 0) — best-conditioned first")
-  print(utils::head(bench[, c("mode", "n_pcs", "components", "gamma", "cond")], 10), digits = 5)
+  print(utils::head(bench[, c("n_pcs", "components", "gamma", "cond")], 10), digits = 5)
   write.csv(
     bench,
     file.path(out_dir, paste0("spec_comparison_benchmark_points_", profile, ".csv")),
@@ -133,7 +132,7 @@ if (is.null(grid) || !nrow(grid)) {
   others_bounded <- others_bounded[order(others_bounded$width), ]
   cli_h2("Other specs (tau>0): tightest BOUNDED sets")
   print(utils::head(
-    others_bounded[, c("mode", "n_pcs", "components", "gamma", "tau", "width")], 12
+    others_bounded[, c("n_pcs", "components", "gamma", "tau", "width")], 12
   ), digits = 5)
   cli_alert_info(
     "Bounded tau>0 specs: {.val {nrow(others_bounded)}} of {.val {nrow(others)}}; unbounded: {.val {sum(!others$bounded)}}"

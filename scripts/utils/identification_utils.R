@@ -33,8 +33,7 @@ load_identification_inputs <- function(
     tp_vars = paste0(TP_PREFIX, HETID_CONSTANTS$DEFAULT_ACM_MATURITIES),
     consumption_var = HETID_CONSTANTS$CONSUMPTION_GROWTH_COL,
     pc_vars = paste0(HETID_CONSTANTS$PC_PREFIX, seq_len(n_pcs)),
-    lookup = get_identification_maturity_lookup(maturities),
-    mode = "maturities"
+    lookup = get_identification_maturity_lookup(maturities)
   )
 }
 

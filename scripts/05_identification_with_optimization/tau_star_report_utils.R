@@ -20,7 +20,7 @@
   )
 }
 
-.mode_block <- function(res, label) {
+.results_block <- function(res, label) {
   rows <- vapply(seq_len(nrow(res$tau_stars)), function(i) {
     sprintf(
       "    %-24s tau* = %s",

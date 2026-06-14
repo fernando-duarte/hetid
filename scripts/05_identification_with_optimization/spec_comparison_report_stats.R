@@ -7,11 +7,11 @@
 # bounded cells (never pooled across strata), and the matched-cell comparison
 # against the optimized scheme (rescued counts; geometric-mean width ratio).
 aggregate_spec_stats <- function(grid) {
-  opt_cols <- c("mode", "n_pcs", "components", "tau", "width", "outcome")
+  opt_cols <- c("n_pcs", "components", "tau", "width", "outcome")
   opt <- grid[grid$gamma == "optimized", opt_cols]
   names(opt)[names(opt) %in% c("width", "outcome")] <- c("opt_width", "opt_outcome")
-  m <- merge(grid, opt, by = c("mode", "n_pcs", "components", "tau"), all.x = TRUE)
-  m$stratum <- spec_stratum_label(m$mode, m$components)
+  m <- merge(grid, opt, by = c("n_pcs", "components", "tau"), all.x = TRUE)
+  m$stratum <- spec_stratum_label(m$components)
   rows <- lapply(split(m, list(m$gamma, m$tau, m$stratum), drop = TRUE), function(d) {
     fw <- d$width[d$outcome == "certified bounded"]
     opt_bnd <- !is.na(d$opt_outcome) & d$opt_outcome == "certified bounded"

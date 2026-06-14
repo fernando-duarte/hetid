@@ -144,7 +144,6 @@ print(bounds_tau_set[, display_cols])
 results <- list(
   spec = list(
     n_pcs = length(inputs$pc_vars),
-    mode = "maturities",
     components = lookup$component_id
   ),
   lookup = lookup,

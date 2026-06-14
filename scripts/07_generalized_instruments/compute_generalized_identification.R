@@ -55,7 +55,6 @@ print(membership$summary)
 
 results <- list(
   spec = list(
-    mode = "maturities",
     n_pcs = ncol(resid$pcs_aligned),
     n_components = n_comp,
     instruments = colnames(z_sq),

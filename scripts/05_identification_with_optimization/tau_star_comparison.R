@@ -1,7 +1,7 @@
 # Identification strength via tau* -- the slack at which the identified set
 # goes bounded -> unbounded -- compared across gamma choices:
-#   VFCI (rank-1 baseline), reduced-form (rank-N benchmark from the maturities
-#   Y2-on-PC slopes), and optimized (gamma re-optimized at each candidate tau).
+#   VFCI (rank-1 baseline), reduced-form (rank-N benchmark from the Y2-on-PC
+#   slopes), and optimized (gamma re-optimized at each candidate tau).
 # tau* is scale-free and needs no cherry-picked tau, so it is the honest
 # quantitative summary of "what optimization buys" (it EXTENDS tau*).
 # Single home of the tau* computation, including the VFCI deep dive: a fine
@@ -15,9 +15,9 @@
 # (rank-1 PSD minus d_i>=0 times a Gram/PSD matrix); boundedness is the JOINT
 # recession condition that the positive-curvature directions cover R^I, a
 # (gamma, tau) property -- not implied by rank(gamma).
-# Outputs (machine-readable, temp/identification_optimized): raw per-mode
-# sweep CSVs and self-describing rds bundles. The paper artifacts are written
-# by tau_star_report.R from those bundles.
+# Outputs (machine-readable, temp/identification_optimized): raw sweep CSVs
+# and self-describing rds bundles. The paper artifacts are written by
+# tau_star_report.R from those bundles.
 
 source(here::here("scripts/utils/common_settings.R"))
 # Cap-aware tau* formatting (.fmt_tau_star) shared with the report builders.
@@ -66,8 +66,8 @@ analyze_fixed_gamma <- function(label, gamma, moments) {
   list(sweep = sweep, tau_star = ts$tau_star, capped = ts$capped)
 }
 
-run_tau_star_analysis <- function(mode) {
-  cli_h1("Identification strength: tau* across gamma choices ({mode} mode)")
+run_tau_star_analysis <- function() {
+  cli_h1("Identification strength: tau* across gamma choices")
 
   inp <- load_identification_inputs()
   resid <- compute_identification_residuals(inp$data)
@@ -84,7 +84,7 @@ run_tau_star_analysis <- function(mode) {
   fixed <- list()
   fixed[[base_label]] <- gamma_base
   n_inst <- nrow(moments$r_i_0)
-  # Reduced-form benchmark from the maturities Y2-on-PC slopes (beta2R), the
+  # Reduced-form benchmark from the Y2-on-PC slopes (beta2R), the
   # higher-rank fixed gamma that isolates "what optimization buys beyond rank".
   gamma_rf_mat <- build_reduced_form_gamma(resid$w2_coefficients)
   if (nrow(gamma_rf_mat) == n_inst) {
@@ -149,7 +149,7 @@ run_tau_star_analysis <- function(mode) {
     stringsAsFactors = FALSE
   )
   res <- list(
-    mode = mode, tau_stars = tau_stars, sweep = sweep,
+    tau_stars = tau_stars, sweep = sweep,
     settings = list(
       coarse_taus = COARSE_TAUS, fine_n = FINE_N, bisect_iters = BISECT_ITERS,
       n_dir = RECESSION_N_DIR, recession_seed = RECESSION_SEED,
@@ -158,17 +158,17 @@ run_tau_star_analysis <- function(mode) {
     )
   )
 
-  write.csv(sweep, file.path(temp_dir, paste0("tau_star_sweep_", mode, ".csv")),
+  write.csv(sweep, file.path(temp_dir, "tau_star_sweep.csv"),
     row.names = FALSE
   )
-  saveRDS(res, file.path(temp_dir, paste0("tau_star_comparison_", mode, ".rds")))
+  saveRDS(res, file.path(temp_dir, "tau_star_comparison.rds"))
 
-  cli_h2("Summary ({mode} mode)")
+  cli_h2("Summary")
   print(tau_stars, digits = 4)
   cli_alert_success(
-    "Saved {mode}-mode tau* sweep + results to {.path {temp_dir}}"
+    "Saved tau* sweep + results to {.path {temp_dir}}"
   )
   res
 }
 
-run_tau_star_analysis("maturities")
+run_tau_star_analysis()

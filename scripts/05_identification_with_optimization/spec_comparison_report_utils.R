@@ -20,15 +20,15 @@ SPEC_OUTCOME_LEVELS <- c(
   "no certified bound"
 )
 
-spec_components_label <- function(mode, components) {
+spec_components_label <- function(components) {
   vapply(seq_along(components), function(i) {
     idx <- as.integer(strsplit(components[i], "-", fixed = TRUE)[[1]])
     paste(paste0(idx, "y"), collapse = ", ")
   }, "")
 }
 
-spec_stratum_label <- function(mode, components) {
-  paste0("Bond maturities: ", spec_components_label(mode, components))
+spec_stratum_label <- function(components) {
+  paste0("Bond maturities: ", spec_components_label(components))
 }
 
 # Fold the raw (kind, width, bounded) columns into the reader-facing outcome.
@@ -51,7 +51,7 @@ classify_spec_outcomes <- function(grid) {
 }
 
 spec_cell_keys <- function(df) {
-  paste(df$mode, df$n_pcs, df$components, df$gamma, df$tau, sep = "|")
+  paste(df$n_pcs, df$components, df$gamma, df$tau, sep = "|")
 }
 
 # Coverage is classified from the observed cells only (never env vars or file
@@ -77,7 +77,7 @@ spec_coverage <- function(grid) {
     "no cells missing vs the full design"
   } else {
     by_stratum <- sort(
-      table(spec_stratum_label(miss$mode, miss$components)),
+      table(spec_stratum_label(miss$components)),
       decreasing = TRUE
     )
     shown <- utils::head(by_stratum, 4)
@@ -95,7 +95,7 @@ spec_coverage <- function(grid) {
     fmt_set(grid$tau), fmt_set(grid$n_pcs), n_missing, n_extra
   )
   block <- c(
-    sprintf("Observed result cells: %d; modes: %s", length(obs), fmt_set(grid$mode)),
+    sprintf("Observed result cells: %d", length(obs)),
     sprintf(
       "n_pcs: %s   [full design: %s]",
       fmt_set(grid$n_pcs), fmt_set(full_cells$n_pcs)
@@ -103,8 +103,8 @@ spec_coverage <- function(grid) {
     sprintf("tau: %s   [full design: %s]", fmt_set(grid$tau), fmt_set(full_cells$tau)),
     sprintf(
       "maturity sets: %s   [full design: %s]",
-      fmt_set(grid$components[grid$mode == "maturities"]),
-      fmt_set(full_cells$components[full_cells$mode == "maturities"])
+      fmt_set(grid$components),
+      fmt_set(full_cells$components)
     ),
     sprintf(
       "cells missing vs full design: %d; cells outside the design: %d",
@@ -152,7 +152,7 @@ spec_outcome_cell <- function(rows, compact = FALSE) {
 }
 
 # Schemes x tau matrix of outcome-count cells (pre-formatted character).
-# Pass `taus` to keep columns aligned across subsets (e.g. by-mode panels).
+# Pass `taus` to keep columns aligned across subsets.
 spec_outcome_matrix <- function(grid, taus = sort(unique(grid$tau)),
                                 compact = FALSE,
                                 scheme_labels = SPEC_SCHEME_LABELS) {

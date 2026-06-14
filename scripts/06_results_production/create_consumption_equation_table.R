@@ -16,7 +16,7 @@ source(here::here("scripts/utils/latex_simple_table.R"))
 
 cli_h1("Creating Consumption-Equation Structural-Coefficient Table")
 
-# build_reduced_form_gamma() (maturities-mode Y2-on-PC slope block of beta2R) now
+# build_reduced_form_gamma() (the Y2-on-PC slope block of beta2R) now
 # lives in gamma_source.R, shared with the tau* benchmark; sourced via common_settings.
 
 interval_cell <- function(lo, hi, valid_lo, valid_hi) {

@@ -22,7 +22,7 @@ build_spec_summary_lines <- function(grid, cov, bl, agg, suffix) {
   bench_lines <- if (nrow(bench)) {
     bench <- utils::head(bench[order(-bench$cond), ], 10)
     txt_tbl(data.frame(
-      Specification = spec_stratum_label(bench$mode, bench$components),
+      Specification = spec_stratum_label(bench$components),
       n_pcs = bench$n_pcs,
       Weighting = unname(SPEC_SCHEME_LABELS[bench$gamma]),
       `Condition number` = ifelse(
@@ -36,7 +36,7 @@ build_spec_summary_lines <- function(grid, cov, bl, agg, suffix) {
   }
 
   pos <- grid[grid$tau > 0, ]
-  pos$stratum <- spec_stratum_label(pos$mode, pos$components)
+  pos$stratum <- spec_stratum_label(pos$components)
   stratum_lines <- unlist(lapply(split(pos, pos$stratum), function(d) {
     fin <- d[d$outcome == "certified bounded", ]
     if (!nrow(fin)) {
@@ -125,7 +125,7 @@ build_spec_summary_lines <- function(grid, cov, bl, agg, suffix) {
     "",
     "WIDTH MAGNITUDES WITHIN STRATA (TAU > 0)",
     wrap(paste(
-      "Widths are comparable only within a stratum (mode x component subset);",
+      "Widths are comparable only within a stratum (component subset);",
       "scales differ by orders of magnitude across strata, so no pooled",
       "statistics are reported. Counts cover all schemes at every tau > 0."
     ), prefix = "  "),
@@ -162,7 +162,6 @@ build_spec_summary_lines <- function(grid, cov, bl, agg, suffix) {
     "  cond       condition number of the tau = 0 linear solve",
     "",
     "DATA DICTIONARY (temp/identification_optimized/spec_comparison_<profile>.csv)",
-    "  mode        always 'maturities' (bond-maturity components)",
     "  n_pcs       number of PC instruments",
     "  components  bond-maturity subset ('2-5' = the 2y and 5y maturities)",
     "  n_comp      number of theta components in the system",

@@ -39,7 +39,7 @@ published_sweep <- function(sweep) {
 # optimization extends the slack tolerance -- is the title. Cap-censored tau*
 # values render via .fmt_tau_star (">= cap"), and a censored optimizer tau*
 # makes the extension factor a lower bound, never an exact claim.
-plot_tau_star_overlay <- function(sweep, tau_stars, mode) {
+plot_tau_star_overlay <- function(sweep, tau_stars) {
   df <- sweep[is.finite(sweep$total_width) & sweep$total_width > 0, ]
   ts <- stats::setNames(tau_stars$tau_star, tau_stars$gamma)
   capped <- stats::setNames(tau_stars$capped, tau_stars$gamma)
@@ -48,11 +48,11 @@ plot_tau_star_overlay <- function(sweep, tau_stars, mode) {
   opt_capped <- isTRUE(capped[["optimized"]])
   title <- if (is.finite(ts_opt) && is.finite(ts_vfci) && ts_vfci > 0) {
     sprintf(
-      "Optimizing gamma extends slack tolerance %s%.0fx (%s mode)",
-      if (opt_capped) ">= " else "~", ts_opt / ts_vfci, mode
+      "Optimizing gamma extends slack tolerance %s%.0fx",
+      if (opt_capped) ">= " else "~", ts_opt / ts_vfci
     )
   } else {
-    sprintf("Identified-set width vs. slack tau (%s mode)", mode)
+    "Identified-set width vs. slack tau"
   }
   ts_label <- paste(
     sprintf(
@@ -98,7 +98,7 @@ plot_tau_star_overlay <- function(sweep, tau_stars, mode) {
 # VFCI deep dive: how violently the identified set blows up as tau -> tau*.
 # Zoomed to the bounded region plus a shaded unbounded band; fine-grid and
 # bisection evaluations resolve the curve the coarse grid cannot.
-plot_vfci_blowup <- function(sweep, tau_star, mode) {
+plot_vfci_blowup <- function(sweep, tau_star) {
   vf <- sweep[sweep$gamma == "VFCI (rank-1)", ]
   xmax <- min(2 * tau_star, max(vf$tau))
   df <- vf[is.finite(vf$total_width) & vf$total_width > 0 & vf$tau <= xmax, ]
@@ -137,7 +137,7 @@ plot_vfci_blowup <- function(sweep, tau_star, mode) {
     labs(
       title = title,
       subtitle = paste0(
-        sprintf("Total width explodes as tau -> tau* (dashed; %s mode).\n", mode),
+        "Total width explodes as tau -> tau* (dashed).\n",
         "tau = 0 is point-identified (width 0, not shown on the log scale)."
       ),
       x = expression(tau), y = "Total profile-bound width (log scale)",

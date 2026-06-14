@@ -26,13 +26,13 @@ spec_comparison_design <- function(name = c("full", "quick")) {
   SPEC_COMPARISON_DESIGNS[[match.arg(name)]]
 }
 
-# Enumerate every (mode, n_pcs, components, gamma, tau) cell the compute loop
+# Enumerate every (n_pcs, components, gamma, tau) cell the compute loop
 # attempts under a design, mirroring its applicability rules exactly:
 #   - fixed "vfci" weights exist only at n_pcs = 4 (the VFCI loading),
 #   - "optimized" and "separate" (I x J) run only at tau > 0.
 spec_comparison_design_cells <- function(design) {
   groups <- expand.grid(
-    mode = "maturities", n_pcs = design$npcs_grid,
+    n_pcs = design$npcs_grid,
     components = vapply(design$mat_sets, paste, "", collapse = "-"),
     stringsAsFactors = FALSE
   )
@@ -45,7 +45,7 @@ spec_comparison_design_cells <- function(design) {
         return(NULL)
       }
       data.frame(
-        mode = g$mode, n_pcs = g$n_pcs, components = g$components,
+        n_pcs = g$n_pcs, components = g$components,
         gamma = gammas, tau = tau, stringsAsFactors = FALSE
       )
     }))

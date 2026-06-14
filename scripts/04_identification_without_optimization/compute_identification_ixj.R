@@ -121,7 +121,7 @@ dir.create(paper_dir, recursive = TRUE, showWarnings = FALSE)
 
 results <- list(
   spec = list(
-    mode = "maturities", n_pcs = n_pcs, n_components = n_comp,
+    n_pcs = n_pcs, n_components = n_comp,
     tau_grid = TAU_GRID, form = "covariance", constraints = n_comp * n_pcs
   ),
   lookup = lookup,

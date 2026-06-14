@@ -1,11 +1,11 @@
 # Spec-comparison evaluators: per-cell moments, fixed/optimized/I x J width
-# evaluation, and the per-group row builder for the (mode, n_pcs, components,
+# evaluation, and the per-group row builder for the (n_pcs, components,
 # gamma, tau) grid. Moved verbatim from spec_comparison.R (stage 05), its only
 # consumer, which sources this file after spec_comparison_design.R; the
 # functions resolve that script's globals (design grids, n_starts_opt, SEED)
 # at call time.
 
-# --- moments per (mode, n_pcs, components) ---
+# --- moments per (n_pcs, components) ---
 # Pure (no shared cache): each group has a unique key, so a within-process cache
 # never produced a cross-group hit, and forked workers cannot share one anyway.
 spec_moments <- function(n_pcs, components) {
@@ -103,7 +103,7 @@ compute_group_rows <- function(n_pcs, components) {
       r <- tryCatch(eval_fixed(gamma, mom, nc, tau), error = function(e) NULL)
       if (!is.null(r)) {
         add_row(
-          mode = "maturities", n_pcs = n_pcs, components = clabel, n_comp = nc,
+          n_pcs = n_pcs, components = clabel, n_comp = nc,
           gamma = meth, tau = tau, width = r$width,
           bounded = r$bounded, kind = r$kind, cond = r$cond
         )
@@ -124,7 +124,7 @@ compute_group_rows <- function(n_pcs, components) {
       r <- tryCatch(eval_opt(seed, mom, nc, tau, sm$z), error = function(e) NULL)
       if (!is.null(r)) {
         add_row(
-          mode = "maturities", n_pcs = n_pcs, components = clabel, n_comp = nc,
+          n_pcs = n_pcs, components = clabel, n_comp = nc,
           gamma = "optimized", tau = tau, width = r$width,
           bounded = r$bounded, kind = r$kind, cond = r$cond
         )
@@ -133,7 +133,7 @@ compute_group_rows <- function(n_pcs, components) {
       r <- tryCatch(eval_ixj(mom, nc, tau), error = function(e) NULL)
       if (!is.null(r)) {
         add_row(
-          mode = "maturities", n_pcs = n_pcs, components = clabel, n_comp = nc,
+          n_pcs = n_pcs, components = clabel, n_comp = nc,
           gamma = "separate", tau = tau, width = r$width,
           bounded = r$bounded, kind = r$kind, cond = r$cond
         )

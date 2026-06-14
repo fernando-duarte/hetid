@@ -13,17 +13,17 @@ baseline_gamma_method <- function() {
   Sys.getenv("HETID_BASELINE_GAMMA", "vfci")
 }
 
-#' Reduced-form gamma (maturities mode): the Y2-on-PC slope block of beta2R,
+#' Reduced-form gamma: the Y2-on-PC slope block of beta2R,
 #' transposed to the J x I (instruments x components) layout the pipeline
 #' quadratic builder (build_pipeline_quadratic_system) expects. Drops the
 #' intercept column. Shared by the stage-06 consumption-equation table and the
 #' tau* identification-strength benchmark.
 #' @param beta2r I x (1 + n_pcs) Y2-on-PC reduced-form coefficient matrix
-#' @return n_pcs x I matrix with attr "method" = "reduced_form_maturities"
+#' @return n_pcs x I matrix with attr "method" = "reduced_form"
 build_reduced_form_gamma <- function(beta2r) {
   gamma <- t(beta2r[, -1, drop = FALSE])
   stopifnot(is.matrix(gamma), all(is.finite(gamma)))
-  attr(gamma, "method") <- "reduced_form_maturities"
+  attr(gamma, "method") <- "reduced_form"
   gamma
 }
 

@@ -105,27 +105,13 @@ check(
   is.character(dim_err) && grepl("rows", dim_err)
 )
 
-# The factors-mode "reduced_form" baseline is retired: it is now just an unknown
-# non-path method and must error rather than resolve.
-rf_err <- tryCatch(
-  {
-    resolve_baseline_gamma("reduced_form", moments)
-    NULL
-  },
-  error = function(e) conditionMessage(e)
-)
-check(
-  "retired 'reduced_form' baseline errors as an unknown method",
-  is.character(rf_err) && grepl("reduced_form", rf_err)
-)
-
 # build_reduced_form_gamma transposes the Y2-on-PC slope block (drops intercept)
 beta2r <- matrix(seq_len(2L * 5L), nrow = 2L, ncol = 5L) # I=2 x (1 + 4 PCs)
 g_rf <- build_reduced_form_gamma(beta2r)
 check(
-  "build_reduced_form_gamma is (n_pcs x I) with the maturities method attr",
+  "build_reduced_form_gamma is (n_pcs x I) with the reduced_form method attr",
   is.matrix(g_rf) && identical(dim(g_rf), c(4L, 2L)) &&
-    identical(attr(g_rf, "method"), "reduced_form_maturities")
+    identical(attr(g_rf, "method"), "reduced_form")
 )
 
 # Misaligned supplied rownames signal row-order bugs, not display preferences

@@ -36,20 +36,16 @@ SPEC_COMPACT_CELL_NOTE <- paste(
 
 escape_latex_text <- function(x) gsub(">", "$>$", gsub("_", "\\\\_", x))
 
-# By-mode outcome data frames (shared tau columns) feeding the gt table and
-# the LaTeX panel.
+# Outcome data frames (shared tau columns) feeding the gt table and
+# the LaTeX panel, grouped under a single "Bond maturities" stratum.
 spec_outcome_by_mode <- function(grid, compact = FALSE,
                                  scheme_labels = SPEC_SCHEME_LABELS) {
   taus <- sort(unique(grid$tau))
-  modes <- intersect("maturities", unique(grid$mode))
-  stats::setNames(
-    lapply(modes, function(m) {
-      spec_outcome_matrix(
-        grid[grid$mode == m, ],
-        taus = taus, compact = compact, scheme_labels = scheme_labels
-      )
-    }),
-    rep("Bond maturities", length(modes))
+  list(
+    "Bond maturities" = spec_outcome_matrix(
+      grid,
+      taus = taus, compact = compact, scheme_labels = scheme_labels
+    )
   )
 }
 
@@ -74,7 +70,7 @@ write_spec_benchmark_table <- function(grid, cov, paper_dir, suffix) {
   }
   bench <- bench[order(-bench$cond), ]
   df <- data.frame(
-    Specification = spec_stratum_label(bench$mode, bench$components),
+    Specification = spec_stratum_label(bench$components),
     `PC instruments` = bench$n_pcs,
     Weighting = unname(SPEC_SCHEME_LABELS[bench$gamma]),
     `Condition number` = ifelse(

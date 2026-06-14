@@ -1,12 +1,12 @@
 # Combined plain-text summary for the tau* analysis, written for an economist
 # reader who knows the math/econ but not the code. Bottom line first, then
-# refreshers, per-mode results, the honest reading of the curvature
+# refreshers, results, the honest reading of the curvature
 # diagnostic, artifact pointers, and numerical notes. All numbers are
 # computed from the saved results, never hard-coded. Formatting helpers live
 # in tau_star_report_utils.R.
 
 build_tau_star_summary <- function(results) {
-  mat <- results$maturities
+  mat <- results
   vf_m <- .ts_of(mat, "VFCI (rank-1)")
   op_m <- .ts_of(mat, "optimized")
   # The reduced-form benchmark label carries a dynamic rank (rank = min(n_pcs,
@@ -42,7 +42,7 @@ build_tau_star_summary <- function(results) {
         max(pos_tau)
       ),
       sprintf(
-        "  %.3f (maturities mode), well past the empirical tau* (%s).",
+        "  %.3f, well past the empirical tau* (%s).",
         neg_tau, .fmt_tau(vf_m$tau_star)
       )
     )
@@ -54,7 +54,7 @@ build_tau_star_summary <- function(results) {
     c(
       "IDENTIFICATION STRENGTH VIA TAU*: OPTIMIZING GAMMA EXTENDS SLACK",
       sprintf(
-        "TOLERANCE %s%.0f-FOLD (TAU* %s -> %s, MATURITIES MODE)",
+        "TOLERANCE %s%.0f-FOLD (TAU* %s -> %s)",
         if (isTRUE(op_m$capped)) ">= " else "~", ratio_m,
         .fmt_tau_star(vf_m$tau_star, vf_m$capped),
         .fmt_tau_star(op_m$tau_star, op_m$capped)
@@ -64,7 +64,7 @@ build_tau_star_summary <- function(results) {
     c(
       "IDENTIFICATION STRENGTH VIA TAU*: THE VFCI BASELINE TOLERATES",
       sprintf(
-        "ALMOST NO SLACK (TAU* = %s, MATURITIES MODE)",
+        "ALMOST NO SLACK (TAU* = %s)",
         .fmt_tau_star(vf_m$tau_star, vf_m$capped)
       )
     )
@@ -79,7 +79,7 @@ build_tau_star_summary <- function(results) {
     "BOTTOM LINE",
     "  - VFCI baseline (rank-1): the identified set stays bounded only below",
     sprintf(
-      "    tau* ~= %s (maturities mode); beyond tau* it is certified",
+      "    tau* ~= %s; beyond tau* it is certified",
       .fmt_tau(vf_m$tau_star, 5)
     ),
     "    unbounded (some direction of theta is unrestricted).",
@@ -98,12 +98,12 @@ build_tau_star_summary <- function(results) {
     ),
     "    sits essentially on the boundedness knife edge throughout.",
     sprintf(
-      "  - Optimized gamma: tau* = %s (maturities) -- the",
+      "  - Optimized gamma: tau* = %s -- the",
       .fmt_tau_star(op_m$tau_star, op_m$capped)
     ),
     "    optimizer buys a dramatically larger slack tolerance.",
     sprintf(
-      "  - %s gamma (maturities Y2-on-PC slopes): tau* = %s vs %s for VFCI",
+      "  - %s gamma (Y2-on-PC slopes): tau* = %s vs %s for VFCI",
       rf_label, .fmt_tau_star(rf_m$tau_star, rf_m$capped), .fmt_tau(vf_m$tau_star)
     ),
     "    -- higher rank alone does not fix the fragility.",
@@ -136,7 +136,7 @@ build_tau_star_summary <- function(results) {
     "  bounded, valid set is attainable.",
     "",
     "RESULTS (components are bond maturities)",
-    .mode_block(mat, "Fixed and optimized gammas:"),
+    .results_block(mat, "Fixed and optimized gammas:"),
     "",
     "CURVATURE DIAGNOSTIC (HONEST READING)",
     "  For each tau we compute the smallest, over unit directions d, of the",
@@ -154,15 +154,15 @@ build_tau_star_summary <- function(results) {
     "  at every tau tested, consistent with the tiny empirical tau* and the",
     "  explosive widths just below it.",
     "",
-    "RELATED ARTIFACTS (this directory; {mode} = maturities)",
-    "  tau_star_comparison_{mode}.csv ......... tau* per gamma choice",
-    "  tau_star_comparison_{mode}.png/.svg .... fixed-gamma width sweeps;",
-    "                                           verticals mark every tau*",
-    "  tau_star_vfci_blowup_{mode}.png/.svg ... VFCI blow-up near tau*",
-    "  tau_star_width_sweep_{mode}.csv ........ the sweep behind the figures",
+    "RELATED ARTIFACTS (this directory)",
+    "  tau_star_comparison.csv ......... tau* per gamma choice",
+    "  tau_star_comparison.png/.svg .... fixed-gamma width sweeps;",
+    "                                    verticals mark every tau*",
+    "  tau_star_vfci_blowup.png/.svg ... VFCI blow-up near tau*",
+    "  tau_star_width_sweep.csv ........ the sweep behind the figures",
     "  Raw machine-readable sweeps and settings:",
-    "  scripts/output/temp/identification_optimized/tau_star_sweep_{mode}.csv",
-    "  and tau_star_comparison_{mode}.rds.",
+    "  scripts/output/temp/identification_optimized/tau_star_sweep.csv",
+    "  and tau_star_comparison.rds.",
     "",
     "NUMERICAL NOTES",
     sprintf(
