@@ -6,7 +6,7 @@ source(here::here("scripts/utils/common_settings.R"))
 # Core packages and utility functions loaded via common_settings.R
 
 # Selectable without editing this file: HETID_BASELINE_GAMMA=<path> Rscript ...
-BASELINE_GAMMA_METHOD <- Sys.getenv("HETID_BASELINE_GAMMA", "vfci")
+BASELINE_GAMMA_METHOD <- baseline_gamma_method()
 
 cli_h1("Computing Baseline Identified Set")
 
