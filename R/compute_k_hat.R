@@ -48,13 +48,9 @@ compute_k_hat <- function(yields, term_premia, i,
   # Use standardized validation
   validate_step(step)
   validate_maturity_index(i)
-  assert_bad_argument_ok(
-    i >= step && i %% step == 0,
-    paste0(
-      "Maturity index i must be a positive multiple of step (", step,
-      "): the realized-vs-forecast pairing shifts whole news periods"
-    ),
-    arg = "i"
+  validate_step_multiple(
+    i, step,
+    "the realized-vs-forecast pairing shifts whole news periods"
   )
   validate_row_alignment(yields, term_premia)
 
