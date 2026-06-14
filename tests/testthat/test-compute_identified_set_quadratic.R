@@ -467,3 +467,16 @@ test_that("assembly guard fires when components yield a non-finite form", {
     fixed = TRUE
   )
 })
+
+test_that("a dim-carrying Q_i element is rejected as not a numeric vector", {
+  inputs <- setup_quadratic_test_inputs(n_maturities = 2)
+  # A 1 x I row matrix has the same length and values but is not a vector;
+  # the tightened is_numeric_vector_dim guard must reject it.
+  inputs$components$Q_i[[1]] <- matrix(inputs$components$Q_i[[1]], nrow = 1)
+  expect_error(
+    compute_identified_set_quadratic(
+      inputs$tau, inputs$components, inputs$moments
+    ),
+    class = "hetid_error_dimension_mismatch"
+  )
+})
