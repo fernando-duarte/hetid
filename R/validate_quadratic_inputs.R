@@ -2,7 +2,7 @@
 #'
 #' @noRd
 is_numeric_vector_dim <- function(x, n_components) {
-  is.numeric(x) && length(x) == n_components
+  is.numeric(x) && is.null(dim(x)) && length(x) == n_components
 }
 
 #' Validate per-element dimensions of the components' Q_i list
