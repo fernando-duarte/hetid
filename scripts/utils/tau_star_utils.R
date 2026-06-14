@@ -7,7 +7,7 @@
 
 # Quadratic system for a fixed gamma at slack tau (A_i already symmetric).
 tau_quadratic_system <- function(gamma, tau, moments) {
-  build_quadratic_system(gamma, rep(tau, ncol(gamma)), moments)$quadratic
+  build_pipeline_quadratic_system(gamma, rep(tau, ncol(gamma)), moments)$quadratic
 }
 
 # Total profile-bound width at one tau, with the house three-state status:

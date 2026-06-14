@@ -61,12 +61,12 @@ cli_alert_info("Tau set: {.val {tau_specs$tau_set[1]}}")
 cli_h2("Building Quadratic Systems")
 
 cli_alert("Building system for tau = 0 (point ID)...")
-quad_sys_tau0 <- build_quadratic_system(
+quad_sys_tau0 <- build_pipeline_quadratic_system(
   gamma, tau_specs$tau_point, moments
 )
 
 cli_alert("Building system for tau = {BASELINE_TAU} (set ID)...")
-quad_sys_tau_set <- build_quadratic_system(
+quad_sys_tau_set <- build_pipeline_quadratic_system(
   gamma, tau_specs$tau_set, moments
 )
 

@@ -90,7 +90,7 @@ cli_alert_info(paste0(
 # Rebuild bounds with optimized gamma
 cli_h2("Rebuilding Bounds with Optimized Gamma")
 
-quad_sys_opt <- build_quadratic_system(
+quad_sys_opt <- build_pipeline_quadratic_system(
   gamma_optimized, tau, moments
 )
 optimized_bounds <- solve_all_profile_bounds(

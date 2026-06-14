@@ -97,7 +97,7 @@ stopifnot(
 
 # === POINT IDENTIFICATION (tau = 0, reduced-form gamma) ===
 gamma_rf <- build_reduced_form_gamma(beta2r)
-qs0 <- build_quadratic_system(gamma_rf, rep(0, i_dim), moments)
+qs0 <- build_pipeline_quadratic_system(gamma_rf, rep(0, i_dim), moments)
 pt0 <- solve_point_identification(qs0$components)
 
 cond_max <- 1e12
@@ -139,7 +139,7 @@ point_cell <- function(value) {
 }
 
 # === SET IDENTIFICATION (tau = tau_set, optimized gamma) ===
-qs_set <- build_quadratic_system(gamma_opt, tau_set, moments)
+qs_set <- build_pipeline_quadratic_system(gamma_opt, tau_set, moments)
 
 # beta1 (constant + PC) coefficients: exact range over Theta of the linear
 # functional beta1_p(theta) = beta1R_p - c_p' theta with c_p = beta2R[, p].

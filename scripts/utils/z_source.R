@@ -1,8 +1,15 @@
 # Z-source hook: which matrix plays the INSTRUMENT role in the
 # moments (the spec's Z_t). The structural first stage stays
 # X_t = (1, PC_t) regardless -- the VFCI application defines it; see
-# the spec's application section. Default (HETID_Z_SOURCE unset)
-# returns the supplied default matrix unchanged, byte-for-byte.
+# the spec's application section.
+#
+# Both branches funnel through the exported generalized-instrument front door
+# hetid::build_instrument_matrix(z, transforms = NULL, include_original = TRUE),
+# so every instrument matrix the pipeline uses is validated and uniquely named
+# by the same code path (the K_i = 1 baseline of subsec:general_scheme). For the
+# default named PC matrix this is a no-op on values and column names -- the
+# returned Z is identical to the supplied default -- so default artifacts keep
+# their historical PC labels and numbers exactly.
 #
 # To run the pipeline on custom instruments, set HETID_Z_SOURCE to an
 # R script that defines build_z(data) returning a numeric T x K
@@ -15,7 +22,10 @@
 get_identification_z <- function(data, default) {
   src <- Sys.getenv("HETID_Z_SOURCE", "")
   if (!nzchar(src)) {
-    return(default)
+    return(hetid::build_instrument_matrix(
+      default,
+      transforms = NULL, include_original = TRUE
+    ))
   }
   if (!file.exists(src)) {
     stop("HETID_Z_SOURCE points to a missing file: ", src)
@@ -26,6 +36,9 @@ get_identification_z <- function(data, default) {
     stop("HETID_Z_SOURCE script must define build_z(data)")
   }
   z <- env$build_z(data)
+  # Keep the strict naming/shape guard BEFORE the front door: a custom Z must
+  # supply its own column names (build_instrument_matrix would otherwise
+  # auto-name unnamed columns z1..zJ, silently relaxing this contract).
   if (!is.matrix(z) || !is.numeric(z) || is.null(colnames(z)) ||
     nrow(z) != nrow(data)) {
     stop(
@@ -39,7 +52,10 @@ get_identification_z <- function(data, default) {
       "labels and weight recipes key on unique instrument names"
     )
   }
-  z
+  hetid::build_instrument_matrix(
+    z,
+    transforms = NULL, include_original = TRUE
+  )
 }
 
 # TRUE when the pipeline is running on hook-supplied instruments. Display

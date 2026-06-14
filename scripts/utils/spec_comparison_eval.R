@@ -38,7 +38,7 @@ spec_moments <- function(n_pcs, components) {
 
 # --- evaluate one (gamma, tau): point at tau=0, else the set ---
 eval_fixed <- function(gamma, mom, n_comp, tau) {
-  qs <- suppressMessages(build_quadratic_system(gamma, rep(tau, n_comp), mom))
+  qs <- suppressMessages(build_pipeline_quadratic_system(gamma, rep(tau, n_comp), mom))
   if (tau == 0) {
     pt <- solve_point_identification(qs$components)
     if (is.null(pt)) {
