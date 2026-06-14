@@ -67,19 +67,26 @@ fine_tau_grid <- function(coarse, n_fine = 20L) {
 # bisection performs (free fine detail at the transition), and whether the
 # sweep never left the bounded region (tau* capped at the grid maximum).
 tau_star_fixed <- function(gamma, moments, coarse, iters = 40L) {
-  unb <- coarse$tau[!coarse$all_bounded]
+  # A tau counts as inside the bounded region only when its set is CERTIFIED
+  # bounded (status "bounded" = finite total width, every side bounded AND the
+  # validity certificate passed). An "unreliable" finite solve (bounded but
+  # validity-failed) is not a certified bounded set; counting it as bounded
+  # would push tau* past the true transition, so the coarse bracket and the
+  # bisection both branch on the validated status, not on the raw bounded flag.
+  certified <- coarse$status == "bounded"
+  unb <- coarse$tau[!certified]
   if (length(unb) == 0) {
     return(list(tau_star = max(coarse$tau), trace = NULL, capped = TRUE))
   }
   hi <- min(unb)
-  below <- coarse$all_bounded & coarse$tau < hi
+  below <- certified & coarse$tau < hi
   lo <- if (any(below)) max(coarse$tau[below]) else 0
   trace <- vector("list", iters)
   for (k in seq_len(iters)) {
     mid <- (lo + hi) / 2
     w <- eval_width_at_tau(gamma, mid, moments)
     trace[[k]] <- .sweep_row(mid, w, "bisection")
-    if (w$bounded) lo <- mid else hi <- mid
+    if (identical(w$status, "bounded")) lo <- mid else hi <- mid
   }
   list(tau_star = (lo + hi) / 2, trace = do.call(rbind, trace), capped = FALSE)
 }
