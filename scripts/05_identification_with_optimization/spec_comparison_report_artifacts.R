@@ -38,8 +38,8 @@ escape_latex_text <- function(x) gsub(">", "$>$", gsub("_", "\\\\_", x))
 
 # Outcome data frames (shared tau columns) feeding the gt table and
 # the LaTeX panel, grouped under a single "Bond maturities" stratum.
-spec_outcome_by_mode <- function(grid, compact = FALSE,
-                                 scheme_labels = SPEC_SCHEME_LABELS) {
+spec_outcome_by_stratum <- function(grid, compact = FALSE,
+                                    scheme_labels = SPEC_SCHEME_LABELS) {
   taus <- sort(unique(grid$tau))
   list(
     "Bond maturities" = spec_outcome_matrix(
@@ -50,11 +50,11 @@ spec_outcome_by_mode <- function(grid, compact = FALSE,
 }
 
 write_spec_outcome_table <- function(grid, cov, bl, paper_dir, suffix) {
-  by_mode <- spec_outcome_by_mode(grid)
-  df <- do.call(rbind, lapply(names(by_mode), function(nm) {
-    cbind(Mode = nm, by_mode[[nm]])
+  by_stratum <- spec_outcome_by_stratum(grid)
+  df <- do.call(rbind, lapply(names(by_stratum), function(nm) {
+    cbind(Stratum = nm, by_stratum[[nm]])
   }))
-  tbl <- gt(df, groupname_col = "Mode") |>
+  tbl <- gt(df, groupname_col = "Stratum") |>
     tab_header(title = bl$short, subtitle = cov$line) |>
     tab_source_note(SPEC_WIDTH_LEGEND) |>
     tab_source_note(SPEC_DENOM_NOTE)
@@ -111,7 +111,7 @@ compile_standalone_pdf <- function(tex_path) {
 }
 
 write_spec_panel <- function(grid, cov, bl, paper_dir, suffix) {
-  panels <- spec_outcome_by_mode(
+  panels <- spec_outcome_by_stratum(
     grid,
     compact = TRUE, scheme_labels = SPEC_SCHEME_LABELS_SHORT
   )

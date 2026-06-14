@@ -13,9 +13,9 @@ build_spec_summary_lines <- function(grid, cov, bl, agg, suffix) {
     paste0("  ", utils::capture.output(print(df, row.names = FALSE)))
   }
 
-  by_mode <- spec_outcome_by_mode(grid, compact = TRUE)
-  outcome_lines <- unlist(lapply(names(by_mode), function(nm) {
-    c(paste0("  ", nm, ":"), txt_tbl(by_mode[[nm]]), "")
+  by_stratum <- spec_outcome_by_stratum(grid, compact = TRUE)
+  outcome_lines <- unlist(lapply(names(by_stratum), function(nm) {
+    c(paste0("  ", nm, ":"), txt_tbl(by_stratum[[nm]]), "")
   }))
 
   bench <- grid[grid$outcome %in% c("point", "point failed"), ]
