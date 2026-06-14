@@ -48,13 +48,9 @@ compute_k_hat <- function(yields, term_premia, i,
   # Use standardized validation
   validate_step(step)
   validate_maturity_index(i)
-  assert_bad_argument_ok(
-    i >= step && i %% step == 0,
-    paste0(
-      "Maturity index i must be a positive multiple of step (", step,
-      "): the realized-vs-forecast pairing shifts whole news periods"
-    ),
-    arg = "i"
+  validate_step_multiple(
+    i, step,
+    "the realized-vs-forecast pairing shifts whole news periods"
   )
   validate_row_alignment(yields, term_premia)
 
@@ -80,8 +76,8 @@ compute_k_hat <- function(yields, term_premia, i,
   )
 
   # Compute the fourth moment (vectorized)
-  y_shifted <- y_step[(horizon_periods + 1):n_obs]
-  n_hat_shifted <- n_hat_i_minus_1[2:(n_obs - horizon_periods + 1)]
+  y_shifted <- y_step[seq.int(horizon_periods + 1, n_obs)]
+  n_hat_shifted <- n_hat_i_minus_1[seq.int(2, n_obs - horizon_periods + 1)]
   valid <- !is.na(y_shifted) & !is.na(n_hat_shifted)
 
   if (!any(valid)) {

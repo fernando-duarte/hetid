@@ -1,12 +1,14 @@
 # Utility Functions for hetid Scripts
 
-This directory contains reusable utility functions that consolidate common patterns across the analysis scripts, following the DRY (Don't Repeat Yourself) principle. All files are sourced through `common_settings.R`.
+_Last modified: 2026-06-13 23:10 EDT_
+
+This directory contains reusable utility functions that consolidate common patterns across the analysis scripts, following the DRY (Don't Repeat Yourself) principle. `common_settings.R` sources the core layer; the remaining `utils/` helpers (`hetero_lm_tests.R`, `hetero_panel_meta.R`, `hetero_diag_figures.R`, `ixj_identification.R`, `latex_simple_table.R`, `spec_comparison_eval.R`) are sourced directly by the stage scripts that consume them. (The spec-comparison grid design `spec_comparison_design.R` is a stage-05-local file, not a `utils/` helper.)
 
 ## Configuration
 
 ### common_settings.R
-- Defines shared config constants (`NEWS_STEP`, `PIPELINE_ACM_MATURITIES`, `SEED`, `BASELINE_TAU`, `N_CORES`, plot/table settings, `DATA_RDS_PATH`) and output directories
-- Sources every utility file below; uses package constants from hetid where available
+- Defines shared config constants (`NEWS_STEP = 3`, `PIPELINE_ACM_MATURITIES` = 3..120 by 3, `SEED = 123`, `BASELINE_TAU = 0.05`, `N_CORES`, `N_Y1_LAGS = 4`, `TAU_STAR_N_STARTS = 15`, plot/table settings, `DATA_RDS_PATH`) and output directories (`OUTPUT_DIR`, `OUTPUT_PAPER_DIR`, `OUTPUT_TEMP_DIR`)
+- Sources the core utility files (via an explicit `file.exists`-guarded block, not a loop): `plotting_utils.R`, `stats_utils.R`, `hetero_test_utils.R`, `hetero_plot_utils.R`, `z_source.R`, `gamma_source.R`, `identification_utils.R`, `optimization_utils.R`, `lambda_mask.R`, `lambda_whitening.R`, `lambda_varnorm.R`, `lambda_optimization.R`, `profile_bounds_core.R`, `profile_bounds.R`, `format_utils.R`, `latex_table_utils.R`, `tau_star_utils.R`, `closure_membership.R`; uses package constants from hetid where available
 - Helper functions: `get_timestamp()`, `set_analysis_seed()`, and the package loaders `load_visualization_packages()`, `load_timeseries_packages()`, `load_web_packages()`
 
 ## Plotting and tables
@@ -25,6 +27,16 @@ Publication LaTeX panel tables (booktabs/threeparttable/siunitx):
 - `make_standalone_latex()` - Wrap a fragment in a compilable document
 - `write_latex_table()` - Write the fragment and its standalone variant
 - `.brace_s_cell()` - Wrap non-numeric cells in braces for siunitx S columns
+
+### latex_simple_table.R
+Plain-column booktabs/threeparttable LaTeX table (`l c c ...`), the
+non-numeric-cell counterpart to `build_panel_latex_table`'s siunitx
+S-columns -- it left-aligns row labels and centers data columns so
+interval strings such as `[lo, hi]` render cleanly:
+- `build_simple_latex_table()` - Build the fragment (supports a
+  `rule_after` argument to group blocks of rows with `\midrule`);
+  reuses `make_standalone_latex()` / `write_latex_table()` from
+  `latex_table_utils.R` for the standalone variant and file writing
 
 ### format_utils.R
 Finite/Inf-aware formatting for identification results:
@@ -76,8 +88,10 @@ Identification setup plumbing:
 - `get_identification_maturity_lookup()` - Map components to bond maturities
 - `load_identification_inputs()` - Load data and construct yields/term premia/PCs inputs
 - `assert_w2_alignment()` - Validate row alignment of W2 residuals across maturities
-- `compute_identification_residuals()` - Compute W1/W2 residuals and aligned instruments
-- `get_baseline_gamma()` - VFCI unit-norm loading matrix (J x I)
+- `assert_w1_leading_block()` - Validate the W1 (consumption) complete-case filter kept a contiguous trailing block (Y1 own-lags drop only a leading prefix)
+- `compute_identification_residuals()` - Compute W1/W2 residuals and aligned instruments (also retains the Y2-on-PC `beta2R` coefficients for structural recovery)
+- `build_pipeline_quadratic_system()` - Single pipeline front door: assemble the identified-set quadratic system through the exported generalized-instrument builder `build_general_quadratic_system()`, re-attaching the `hetid_components` class/attributes; `HETID_ASSERT_EQUIV` makes it additionally assert numeric identity with the legacy `build_quadratic_system()`
+- `get_baseline_gamma()` - VFCI unit-norm loading matrix (J x I; requires 4 PCs)
 - `get_tau_spec()` - Tolerance specification (`tau_point` and `tau_set`)
 
 ### z_source.R
@@ -97,6 +111,7 @@ Baseline-gamma hook:
 ### profile_bounds.R
 Profile-bound API:
 - `solve_profile_bound()` - Solve one profile bound (min/max of theta_k) with coordinate tracking
+- `solve_linear_functional_bound()` - Min/max a linear functional of theta (e.g. a recovered structural coefficient `beta1_k(theta) = beta1R_k - c_k'theta`) over the quadratically-constrained set, with scale-aware unbounded detection; the engine behind the stage-06 consumption-equation interval bounds
 - `solve_all_profile_bounds()` - Solve all components in both directions; returns a bounds table
 - `solve_point_identification()` - Closed-form tau=0 point identification
 
@@ -125,6 +140,7 @@ interval widths) built on the package's `make_system_checker` /
 ### optimization_utils.R
 - `compute_total_width()` - Sum profile-interval widths from a bounds table
 - `normalize_gamma_columns()` - Euclidean unit-normalize gamma columns (display)
+- `UNBOUNDED_PENALTY` - Constant (`1e12`) steering penalty for the inner SLSQP objective only; selection/reporting never read it (terminal points are re-evaluated with `honest_width_lambda`)
 
 ### lambda_mask.R
 Optimizer packing and support masks:
@@ -157,7 +173,7 @@ Outer weight optimizer:
 ## Specification and tau* comparison
 
 ### spec_comparison_eval.R
-Per-cell evaluators for the (mode, n_pcs, components, gamma, tau) grid:
+Per-cell evaluators for the (n_pcs, components, gamma, tau) grid, where the gamma scheme is `vfci` / `optimized` / `separate` (I×J):
 - `spec_moments()` - Load and compute moments for one cell
 - `eval_fixed()`, `eval_opt()`, `eval_ixj()` - Width for fixed gamma, optimized lambda, and I×J
 - `compute_group_rows()` - All (gamma, tau) rows for a group
@@ -173,11 +189,11 @@ tau* machinery (slack where the set transitions bounded->unbounded):
 
 ## tests/
 
-Unit tests for the utility layer (lambda/whitening/optimization, profile bounds, I×J, hetero tests, gamma/Z sources, stats) plus a `fixtures/` directory of capture scripts.
+Unit tests for the utility layer: lambda packing/whitening/varnorm/optimization, profile bounds, I×J identification, closure membership, hetero tests, gamma sources, the Z-width pipeline, the generalized-vs-legacy pipeline equivalence (`test_pipeline_equivalence.R`, which toggles `HETID_ASSERT_EQUIV`), and stats -- plus a `fixtures/` directory of capture scripts and saved fixture RDS.
 
 ## Usage
 
-All scripts in the analysis pipeline automatically source these utilities through `common_settings.R`. To use in a new script:
+Sourcing `common_settings.R` loads the core utility layer; scripts that need a specialized helper (e.g. `ixj_identification.R`, `spec_comparison_eval.R`) source it directly in addition. To pull in the core layer from a new script:
 
 ```r
 source(here::here("scripts/utils/common_settings.R"))
@@ -190,4 +206,3 @@ source(here::here("scripts/utils/common_settings.R"))
 3. **Reliability**: Common functionality is tested and debugged once
 4. **Efficiency**: Reduces code duplication across scripts
 5. **Clarity**: Scripts focus on analysis logic rather than formatting details
-</content>

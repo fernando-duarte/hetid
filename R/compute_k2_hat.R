@@ -44,13 +44,9 @@ compute_k2_hat <- function(yields, term_premia, i,
                            step = HETID_CONSTANTS$DEFAULT_STEP) {
   validate_step(step)
   validate_maturity_index(i, max_maturity = effective_max_maturity(step))
-  assert_bad_argument_ok(
-    i >= step && i %% step == 0,
-    paste0(
-      "Maturity index i must be a positive multiple of step (", step,
-      "): the bound index set trims whole news periods"
-    ),
-    arg = "i"
+  validate_step_multiple(
+    i, step,
+    "the bound index set trims whole news periods"
   )
   validate_row_alignment(yields, term_premia)
 

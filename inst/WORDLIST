@@ -142,6 +142,7 @@ precomputing
 premia
 prepending
 QE
+quadratically
 Quandt
 Rbuildignore
 rcmdcheck
@@ -175,6 +176,7 @@ siunitx
 skedastic
 SLSQP
 styler
+subgrid
 sublicense
 Svensson
 svg
@@ -192,6 +194,7 @@ tryCatch
 ttf
 unlink
 Unparsed
+unsetting
 untracked
 urlchecker
 uv

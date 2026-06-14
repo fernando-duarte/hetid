@@ -1,5 +1,7 @@
 # Scripts Directory Structure
 
+_Last modified: 2026-06-13 23:10 EDT_
+
 This directory contains all analysis scripts for the hetid
 package, organized by workflow stage. All outputs are stored
 within the scripts directory for self-contained
@@ -88,8 +90,12 @@ minimize total identified-set width (tau held fixed)
   (HTML, LaTeX, CSV); `output_results_summary_section.R` is its
   in-place summary helper
 - `spec_comparison.R` - Resumable, parallel specification comparison
-  across (mode, n_pcs, components, gamma, tau) cells;
-  `spec_comparison_design.R` defines the full/quick grid profiles
+  across (n_pcs, components, gamma, tau) cells, with the gamma scheme
+  drawn from `vfci` / `optimized` / `separate` (I×J); honors
+  `HETID_SPEC_QUICK` to select the quick subgrid;
+  `spec_comparison_design.R` is the single source of truth for the
+  full/quick grid profiles (`spec_comparison_design()` selector,
+  `spec_comparison_design_cells()` enumerator)
 - `spec_comparison_report*.R` - Generate the spec-comparison report
   from the grid: `_report.R` orchestrates; `_report_utils.R`,
   `_report_stats.R`, `_report_artifacts.R`, `_report_figures.R`, and
@@ -112,27 +118,48 @@ Publication-ready outputs assembled from stages 03-05
   heatmap); `create_figures_section.R` is its in-place figure helper
 - `create_theta_panel_table.R` - Build the theta identified-set and
   optimized-loadings panel table (LaTeX fragment + standalone)
+- `create_consumption_equation_table.R` - Build the consumption-growth
+  equation structural-coefficient table: recovers `beta1(theta)` via
+  the exported `recover_structural_coefficients()`
+  (`beta1(theta) = beta1R - (beta2R)'theta`) and tabulates a point-ID
+  column (theta from the reduced-form gamma at tau=0) beside a set-ID
+  column (optimized gamma at tau=`BASELINE_TAU`), where each beta1
+  coefficient is an exact interval over Theta from
+  `solve_linear_functional_bound`; LaTeX fragment + standalone
 - `output_results.R` - Write final human-readable summaries and
   stable machine-readable exports (RDS, CSV, text)
 
 ### 07_generalized_instruments/
 Generalized-instrument identified set on Z = PC^2 (squared
-principal components)
-- `compute_generalized_identification.R` - Build the squared-PC
-  instrument matrix and quadratic system via the exported
-  `build_instrument_matrix` / `build_general_quadratic_system` API,
-  compute the identified set, and run a constraint-checker closure
-  membership probe over a theta grid using `make_system_checker` /
-  `make_constraint_checker`
+principal components). A demonstration of the exported generalized API
+on a non-default instrument set; not a paper deliverable. Relies on
+`HETID_Z_SOURCE` being unset so the structural first stage keeps the
+default level-PC residuals while only the instrument role is squared.
+- `compute_generalized_identification.R` - Build Z = PC^2 via the
+  exported `build_instrument_matrix(..., transforms = list(sq = ...),
+  include_original = FALSE)`, assemble identity-weight (separate-
+  instrument) quadratic systems with `build_general_quadratic_system`
+  at tau=`BASELINE_TAU` and tau=0, solve the identified set, and run a
+  closure membership probe over a theta grid via `probe_set_membership`
+  (which exercises the exported `make_system_checker` /
+  `make_constraint_checker` closures)
 - `output_results.R` - Export the labeled identification table and
   membership summary
 
 ### utils/
-Shared utility functions, sourced by `common_settings.R`
+Shared utility functions. `common_settings.R` sources the core layer
+listed first below (an explicit `file.exists`-guarded block, not a
+loop); the remaining `utils/` helpers (`hetero_lm_tests.R`,
+`hetero_panel_meta.R`, `hetero_diag_figures.R`, `ixj_identification.R`,
+`latex_simple_table.R`, `spec_comparison_eval.R`) are sourced directly
+by the stage scripts that consume them. (The spec-comparison grid
+design, `spec_comparison_design.R`, lives with stage 05, not in
+`utils/`.)
 - `common_settings.R` - Central configuration: shared paths, output
   directories, and constants (`NEWS_STEP = 3`, `PIPELINE_ACM_MATURITIES`
-  = 3..120 by 3, `BASELINE_TAU = 0.2`, `SEED`, `N_CORES`, plot/table
-  settings, `DATA_RDS_PATH`); sources every utility file below
+  = 3..120 by 3, `BASELINE_TAU = 0.05`, `SEED = 123`, `N_CORES`,
+  `N_Y1_LAGS = 4`, `TAU_STAR_N_STARTS = 15`, plot/table settings,
+  `DATA_RDS_PATH`); sources the core utility files
 - `stats_utils.R` - Summary statistics (mean/sd/quantiles/skewness/
   kurtosis, optional autocorrelation)
 - `format_utils.R` - Finite/Inf-aware formatters for bounds and
@@ -150,7 +177,11 @@ Shared utility functions, sourced by `common_settings.R`
 - `hetero_diag_figures.R` - Stage-02 figure builders (-log10 p-value
   profiles across maturities)
 - `identification_utils.R` - Identification plumbing: maturity
-  lookups, input loading, and W1/W2 reduced-form residuals
+  lookups, input loading, W1/W2 reduced-form residuals (retaining the
+  Y2-on-PC `beta2R` for structural recovery), the VFCI baseline gamma
+  and tau spec, and `build_pipeline_quadratic_system()` -- the single
+  front door that routes every quadratic-system assembly through the
+  exported generalized-instrument builder
 - `ixj_identification.R` - I×J separate-instrument set: one quadratic
   per (component, instrument) pair, intersected
 - `z_source.R` - Z-source hook resolver (selects the instrument
@@ -171,15 +202,24 @@ Shared utility functions, sourced by `common_settings.R`
   with scale-aware unbounded detection
 - `profile_bounds.R` - Profile-bounds API (coordinate-tracking solver;
   closed-form tau=0 point ID)
+- `closure_membership.R` - Identified-set membership probes built on the
+  package's `make_system_checker` / `make_constraint_checker` closures:
+  `make_theta_grid()` and `probe_set_membership()` (complements the
+  profile-bound interval widths)
 - `tau_star_utils.R` - tau* machinery: fixed-gamma sweep, bisection,
   re-optimizing oracle, curvature degeneracy diagnostics
 - `spec_comparison_eval.R` - Spec-comparison evaluators (per-cell
   moments, fixed/optimized/I×J widths, per-group row builder)
 - `latex_table_utils.R` - Booktabs/threeparttable/siunitx panel tables
   with standalone compilable variants
+- `latex_simple_table.R` - Plain-column (l c c ...) booktabs/
+  threeparttable table for cells that are not pure numbers (e.g.
+  identified-set interval strings); reuses the standalone/writer
+  helpers from `latex_table_utils.R`
 - `tests/` - Unit tests for the utility layer (lambda/whitening/
-  optimization, profile bounds, I×J, hetero tests, gamma sources,
-  stats) plus `fixtures/` capture scripts
+  optimization, profile bounds, I×J, closure membership, hetero tests,
+  gamma sources, Z-width pipeline, generalized-vs-legacy pipeline
+  equivalence, stats) plus `fixtures/` capture scripts and RDS
 - `README.md` - Documentation for the utility functions
 
 ### examples/
@@ -198,7 +238,8 @@ All script outputs organized by purpose
 #### for_paper/
 Publication-ready outputs
 - `identification/` - Baseline, optimized, I×J, spec-comparison, tau*,
-  and final identification tables and figures
+  final, consumption-equation, and generalized-instrument
+  identification tables and figures
 - `variance_bounds/` - Variance bound tables, CSVs, and figures
 - `identification_diagnostics/` - Diagnostics tables and figures
 - `tables/`, `figures/`, `other/` - Curated manuscript materials
@@ -211,8 +252,10 @@ Working outputs and intermediate results
 - `identification_baseline/` - Stage 04 baseline results
 - `identification_ixj/` - Stage 04 I×J results
 - `identification_optimized/` - Stage 05 optimized weights,
-  spec-comparison grids, tau* sweeps
+  spec-comparison grids (and per-group checkpoint dirs), tau* sweeps
 - `identification_results/` - Stage 06 final comparison
+- `identification_generalized/` - Stage 07 generalized-instrument
+  (Z = PC^2) results
 - `variance_bounds/` - Stage 03 working results
 - `identification_diagnostics/` - Stage 02 working results
 - `summary_stats/`, `time_series_properties/`, `plots/`, `figures/`,
@@ -221,15 +264,77 @@ Working outputs and intermediate results
 ## Top-Level Scripts
 
 - `run_all_scripts.R` - Runs the complete analysis pipeline. Sources
-  `run_all_stage_list.R` for the ordered script list, runs each via a
-  `run_script()` helper (per-script env vars, error handling, timing),
-  and prints an execution summary of output file counts by type
+  `run_all_stage_list.R` for the ordered script list, then runs each
+  stage via the `run_script(path, desc, env)` helper. For a stage with
+  an `env` vector, `run_script()` saves each variable's prior value,
+  sets the stage's env, sources the script, and restores the prior
+  state on exit (unsetting variables that were previously unset) -- so
+  a per-stage switch such as `HETID_SPEC_QUICK` neither leaks into
+  later stages nor wipes a value the caller exported before launching.
+  Stages are wrapped in `tryCatch`, timed, and an execution summary of
+  output file counts by type is printed at the end.
 - `run_all_stage_list.R` - Defines `scripts_to_run`: the ordered
-  (path, description, optional env) triples that constitute the
-  pipeline; edit this to add, remove, or reorder stages
+  `list(path, desc, optional env, optional full_only)` stages that
+  constitute the pipeline; edit this to add, remove, or reorder stages.
+  It also sets the run profile: `quick_run <-
+  !nzchar(Sys.getenv("HETID_FULL_RUN"))` (the default is the quick
+  run), and at the bottom it `Filter`s out every stage tagged
+  `full_only = TRUE` when `quick_run` is in effect.
 - `quality-check.R` - Package quality suite (pkgcheck, rcmdcheck,
   codetools, cyclocomp, dupree, CodeDepends, lintr, checkglobals,
   spelling, urlchecker, covr); writes reports to `docs/quality-reports/`
+
+## Run Profiles and Environment Switches
+
+The default `Rscript run_all_scripts.R` is the **quick run**. It runs
+every stage except the two `full_only` tau* stages, and pins the
+spec-comparison stage to its quick subgrid. The verified switches:
+
+- `HETID_FULL_RUN` (read in `run_all_stage_list.R:12`) - any non-empty
+  value selects the **full run**, which additionally keeps the
+  `full_only = TRUE` stages `tau_star_comparison.R` and
+  `tau_star_report.R` (the most expensive part of the pipeline: a
+  multi-start optimizer oracle bisected over a tau grid). Unset (the
+  default) drops them.
+- `HETID_SPEC_QUICK` (read in `spec_comparison.R:30`) - any non-empty
+  value selects the quick spec-comparison subgrid via
+  `spec_comparison_design("quick")` and suffixes its artifacts
+  `_quick`; otherwise the full grid (`_full`) is computed. The stage
+  list pins it on for the in-pipeline `spec_comparison.R` stage
+  (`env = c(HETID_SPEC_QUICK = "1")`).
+- `HETID_SPEC_SOURCE` (read in `spec_comparison_report.R:35`) - path to
+  the saved grid (`.rds`/`.csv`) the spec-comparison report should read
+  instead of recomputing. The stage list points it at
+  `spec_comparison_quick.rds` so the report refreshes the `_quick`
+  artifacts; unset, the report prefers `spec_comparison_full.*` when a
+  full grid exists, then falls back to the quick grid.
+- `HETID_BASELINE_GAMMA` (read in `compute_identification.R:9` and
+  `gamma_source.R:13`, default `"vfci"`) - selects the baseline gamma:
+  `"vfci"` (the fixed unit-norm VFCI PC loading, which requires exactly
+  4 instruments) or a path to an R file defining
+  `build_gamma(moments)` returning a J×I matrix (the arbitrary-width
+  escape hatch).
+- `HETID_Z_SOURCE` (read in `z_source.R:23`/`:63`) - path to an R file
+  defining `build_z(data)` returning a named numeric T×K instrument
+  matrix; unset, the pipeline uses the default level-PC instruments.
+  Both branches funnel through the exported `build_instrument_matrix`.
+- `HETID_ASSERT_EQUIV` (read in `identification_utils.R:203`) -
+  diagnostic shadow flag: when non-empty, every
+  `build_pipeline_quadratic_system()` call additionally asserts
+  numeric-leaf identity with the legacy `build_quadratic_system()`.
+  Off by default (zero overhead).
+
+Examples:
+
+```bash
+# From the scripts directory
+
+# Quick run (default): skips the tau* stages, quick spec grid
+Rscript run_all_scripts.R
+
+# Full run: adds the tau* identification-strength stages
+HETID_FULL_RUN=1 Rscript run_all_scripts.R
+```
 
 ## Workflow
 
@@ -248,16 +353,26 @@ Working outputs and intermediate results
   identification
 - **Results Production**: Use `06_results_production/` to
   generate final outputs
+- **Generalized Instruments**: Run
+  `07_generalized_instruments/` for the generalized-instrument
+  (Z = PC^2) demonstration
 
 ## Running the Scripts
 
 ### Run All Scripts
 
-To run the complete analysis pipeline:
+To run the pipeline end to end (the default is the quick run, which
+skips the `full_only` tau* stages -- see "Run Profiles and Environment
+Switches" above):
 
 ```bash
 # From the scripts directory
+
+# Quick run (default)
 Rscript run_all_scripts.R
+
+# Full run (adds the tau* identification-strength stages)
+HETID_FULL_RUN=1 Rscript run_all_scripts.R
 ```
 
 ### Run Individual Scripts
@@ -303,11 +418,11 @@ exports, and copied figures land in
 - All scripts should source necessary functions from `utils/`
 - Outputs are organized by whether they are publication-ready
   (`output/for_paper/`) or temporary (`output/temp/`)
-- Each analysis folder contains its own `output_results.R` to
-  ensure modularity
+- Each downstream stage folder (`02`-`07`) contains its own
+  `output_results.R` to ensure modularity; stage `01` writes its
+  artifacts directly from its analysis scripts
 - Scripts are numbered to indicate the recommended execution
   order
 - The main runner script (`run_all_scripts.R`) handles
   dependencies and runs scripts in the correct order via the
   list in `run_all_stage_list.R`
-</content>
