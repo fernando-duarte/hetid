@@ -73,7 +73,7 @@ news_contract_ok <- function(maturities, step) {
 #' @template param-step
 #' @param arg Condition argument name
 #' @param subject,offset_label Wording for the subject and the
-#'   "<x> - step" offset in the message
+#'   \code{<x> - step} offset in the message
 #' @param include_invalid Whether to append the invalid values
 #' @return Invisible TRUE if valid, stops otherwise
 #' @keywords internal

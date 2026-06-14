@@ -56,7 +56,7 @@ load_term_premia <- function(auto_download = FALSE,
     error = function(e) {
       stop_hetid(paste0(
         "Failed to read term premia data: ",
-        e$message
+        conditionMessage(e)
       ))
     }
   )

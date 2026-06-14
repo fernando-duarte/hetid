@@ -80,8 +80,8 @@ compute_k_hat <- function(yields, term_premia, i,
   )
 
   # Compute the fourth moment (vectorized)
-  y_shifted <- y_step[(horizon_periods + 1):n_obs]
-  n_hat_shifted <- n_hat_i_minus_1[2:(n_obs - horizon_periods + 1)]
+  y_shifted <- y_step[seq.int(horizon_periods + 1, n_obs)]
+  n_hat_shifted <- n_hat_i_minus_1[seq.int(2, n_obs - horizon_periods + 1)]
   valid <- !is.na(y_shifted) & !is.na(n_hat_shifted)
 
   if (!any(valid)) {

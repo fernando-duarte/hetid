@@ -244,3 +244,31 @@ test_that("pipeline: subset moments match full-system components", {
     full_result$Q_i[paste0("maturity_", maturities)]
   )
 })
+
+test_that("print method summarizes both axes", {
+  set.seed(123)
+  j_pcs <- 3
+  i_sys <- 4
+  maturities <- c(2, 4)
+  n_mat <- length(maturities)
+  gamma <- matrix(rnorm(j_pcs * i_sys), j_pcs, i_sys)
+  moments <- make_components_moments(
+    r_i_0 = matrix(rnorm(j_pcs * n_mat), j_pcs, n_mat),
+    r_i_1 = lapply(seq_len(n_mat), function(k) {
+      matrix(rnorm(j_pcs * i_sys), j_pcs, i_sys)
+    }),
+    p_i_0 = matrix(rnorm(j_pcs * n_mat), j_pcs, n_mat),
+    maturities = maturities, n_components = i_sys
+  )
+  # Construct the hetid_components object (not the moments) before printing,
+  # so dispatch hits print.hetid_components.
+  components <- compute_identified_set_components(gamma, moments)
+  expect_s3_class(components, "hetid_components")
+
+  printed <- capture.output(returned <- print(components))
+  expect_true(any(grepl("hetid_components", printed)))
+  expect_true(any(grepl("components \\(theta axis\\): 4", printed)))
+  expect_true(any(grepl("maturities \\(constraint axis\\): 2, 4", printed)))
+  # print returns its argument invisibly
+  expect_identical(returned, components)
+})

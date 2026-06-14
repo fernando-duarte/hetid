@@ -26,7 +26,7 @@ bond, and horizons must satisfy \code{i <= MAX_MATURITY - step}.}
 \item{arg}{Condition argument name}
 
 \item{subject, offset_label}{Wording for the subject and the
-"\if{html}{\out{<x>}} - step" offset in the message}
+\code{<x> - step} offset in the message}
 
 \item{include_invalid}{Whether to append the invalid values}
 }
