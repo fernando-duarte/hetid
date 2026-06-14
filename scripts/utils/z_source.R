@@ -22,40 +22,38 @@
 get_identification_z <- function(data, default) {
   src <- Sys.getenv("HETID_Z_SOURCE", "")
   if (!nzchar(src)) {
-    return(hetid::build_instrument_matrix(
-      default,
-      transforms = NULL, include_original = TRUE
-    ))
+    z <- default
+  } else {
+    if (!file.exists(src)) {
+      stop("HETID_Z_SOURCE points to a missing file: ", src)
+    }
+    env <- new.env(parent = globalenv())
+    sys.source(src, envir = env)
+    if (!is.function(env$build_z)) {
+      stop("HETID_Z_SOURCE script must define build_z(data)")
+    }
+    z <- env$build_z(data)
+    # Keep the strict naming/shape guard BEFORE the front door: a custom Z must
+    # supply its own column names (build_instrument_matrix would otherwise
+    # auto-name unnamed columns z1..zJ, silently relaxing this contract).
+    if (!is.matrix(z) || !is.numeric(z) || is.null(colnames(z)) ||
+      nrow(z) != nrow(data)) {
+      stop(
+        "build_z(data) must return a numeric matrix with column ",
+        "names and one row per data row"
+      )
+    }
+    if (anyDuplicated(colnames(z)) > 0) {
+      stop(
+        "build_z(data) returned duplicated column names; the moments ",
+        "labels and weight recipes key on unique instrument names"
+      )
+    }
   }
-  if (!file.exists(src)) {
-    stop("HETID_Z_SOURCE points to a missing file: ", src)
-  }
-  env <- new.env(parent = globalenv())
-  sys.source(src, envir = env)
-  if (!is.function(env$build_z)) {
-    stop("HETID_Z_SOURCE script must define build_z(data)")
-  }
-  z <- env$build_z(data)
-  # Keep the strict naming/shape guard BEFORE the front door: a custom Z must
-  # supply its own column names (build_instrument_matrix would otherwise
-  # auto-name unnamed columns z1..zJ, silently relaxing this contract).
-  if (!is.matrix(z) || !is.numeric(z) || is.null(colnames(z)) ||
-    nrow(z) != nrow(data)) {
-    stop(
-      "build_z(data) must return a numeric matrix with column ",
-      "names and one row per data row"
-    )
-  }
-  if (anyDuplicated(colnames(z)) > 0) {
-    stop(
-      "build_z(data) returned duplicated column names; the moments ",
-      "labels and weight recipes key on unique instrument names"
-    )
-  }
-  hetid::build_instrument_matrix(
-    z,
-    transforms = NULL, include_original = TRUE
-  )
+  # Single front door for both branches: one validated, uniquely named code
+  # path so the two cannot drift. A no-op on the named default PCs (identical
+  # values and names); for a custom Z it runs after the strict guard above.
+  hetid::build_instrument_matrix(z, transforms = NULL, include_original = TRUE)
 }
 
 # TRUE when the pipeline is running on hook-supplied instruments. Display
