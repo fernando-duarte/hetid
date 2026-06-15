@@ -10,6 +10,11 @@
 #     rows obtained by optimizing the linear functional beta1_k(theta) over Theta
 #     (solve_linear_functional_bound), the theta rows reused from stage 05.
 # beta2R (= beta20, the Y2 equation) is point-identified and NOT tabulated.
+# The lag coefficients psi_h are NO LONGER point-identified: the spec
+# conditions Y2 on the SAME common X_t = (1, PC, H lags of Y1) as Y1, so beta2R
+# carries nonzero lag columns and psi(theta) = psi^R - (beta2R_psi)'theta is a
+# set-valued linear image of Theta under the estimate-B (default) model. Under
+# imposed exact news (B = 0) those columns are zero and psi collapses to a point.
 
 source(here::here("scripts/utils/common_settings.R"))
 source(here::here("scripts/utils/latex_simple_table.R"))
@@ -68,71 +73,121 @@ stopifnot(
   isTRUE(all.equal(unname(resid$w1), unname(baseline$residuals$w1))),
   isTRUE(all.equal(unname(unclass(resid$w2)), unname(unclass(baseline$residuals$w2))))
 )
+# beta1R and beta2R come from INDEPENDENT full fits (existing pipeline
+# behavior). The exact recovery identity beta1(theta) = beta1R - (beta2R)'theta
+# assumes both are OLS on the SAME sample; here they are full-sample projections
+# that may differ slightly from the common date-aligned sample (resid$dates).
+# This is a PRE-EXISTING approximation, NOT introduced by the common-
+# conditioning change; do not refit here. Its magnitude is to be quantified in
+# the validation stage.
 beta1r <- resid$w1_result$coefficients
 beta2r <- resid$w2_coefficients
-n_pcs <- ncol(beta2r) - 1L
 stopifnot(nrow(beta2r) == i_dim)
 
-# Y1 own-lags add coefficients to beta1R that are absent from beta2R (the Y2
-# equation excludes lagged Y1, so their beta2R columns are structurally zero).
-# Zero-pad beta2R to beta1R's predictor width: beta1(theta) = beta1R -
-# (beta2R_full)'theta then carries the lag coefficients psi_h through unchanged,
-# and the linear-functional loop sees c_p = 0 for them -> point interval
-# [psi_h, psi_h]. The reduced-form gamma below uses the UNPADDED beta2R (the
-# PC slopes only, J = n_pcs instruments).
-n_lag <- length(beta1r) - ncol(beta2r)
-beta2r_full <- beta2r
-if (n_lag > 0L) {
-  pad <- matrix(
-    0,
-    nrow = nrow(beta2r), ncol = n_lag,
-    dimnames = list(rownames(beta2r), paste0("y1_lag", seq_len(n_lag)))
-  )
-  beta2r_full <- cbind(beta2r, pad)
+# Classify the common-design columns by NAME (not by width): the spec
+# conditions BOTH Y1 and Y2 on the same X_t = (1, PC, H lags of Y1), so beta2R
+# is now FULL-WIDTH and column-matched to beta1R. PCs are the only instruments
+# (^pc[0-9]+$); y1_lag* columns are the predetermined conditioning lags whose
+# coefficient psi_h is a set-valued linear image of Theta under estimate-B.
+pc_cols <- grep("^pc[0-9]+$", names(beta1r))
+lag_cols <- grep("^y1_lag[0-9]+$", names(beta1r))
+n_pcs <- length(pc_cols)
+n_lag <- length(lag_cols)
+
+# beta2R is full-width and column-matched to beta1R since A1-A4 routed W2
+# through the common conditioning vector. The exact recovery identity
+# beta1(theta) = beta1R - (beta2R)'theta then carries every column (constant,
+# PCs, AND lags) through directly; no zero-padding is needed. Fail loudly if a
+# legacy PC-only beta2R is ever passed -- do NOT silently re-pad, since that
+# would falsely point-identify psi.
+if (!(length(beta1r) == ncol(beta2r) &&
+  identical(names(beta1r), colnames(beta2r)))) {
+  cli_abort(c(
+    "beta2R is not column-matched to beta1R.",
+    "i" = "Expected the FULL common design (1, PC, y1_lag*) in both fits.",
+    "x" = paste0(
+      "got beta1R names {.val {names(beta1r)}} vs beta2R columns ",
+      "{.val {colnames(beta2r)}}"
+    ),
+    ">" = paste0(
+      "This requires the common-conditioning change (A1-A4): W2 must be ",
+      "regressed on the same X_t as W1."
+    )
+  ))
 }
-stopifnot(
-  length(beta1r) == ncol(beta2r_full),
-  identical(names(beta1r), colnames(beta2r_full))
-)
+beta2r_full <- beta2r
 
 # === POINT IDENTIFICATION (tau = 0, reduced-form gamma) ===
-gamma_rf <- build_reduced_form_gamma(beta2r)
-qs0 <- build_pipeline_quadratic_system(gamma_rf, rep(0, i_dim), moments)
-pt0 <- solve_point_identification(qs0$components)
-
+# Under imposed exact news (B = 0) the PC slope block of beta2R is all zeros, so
+# build_reduced_form_gamma() is undefined (it errors) and the tau = 0 point is
+# degenerate. Detect that mode and SKIP the reduced-form-gamma point block,
+# routing it through the existing point_unreliable machinery. The estimate-B
+# (default) path is unaffected.
+impose_b_zero <- impose_news_projection_zero() ||
+  all(beta2r[, pc_cols, drop = FALSE] == 0)
 cond_max <- 1e12
-point_unreliable <- is.null(pt0) || !is.finite(pt0$cond) || pt0$cond > cond_max
-if (point_unreliable) {
-  reason <- if (is.null(pt0)) {
-    "$Q\\theta = L$ is rank-deficient or inconsistent"
-  } else {
-    paste0(
-      "the linear system is near-singular ($\\kappa(Q) = ",
-      latex_sci(pt0$cond), "$)"
-    )
-  }
-  cli_alert_danger(paste0(
-    "tau = 0 reduced-form-gamma point identification is unreliable: ", reason,
-    "; reporting the point column as unreliable."
+if (impose_b_zero) {
+  cli_alert_warning(paste0(
+    "Imposed exact-news projection (B = 0): the reduced-form gamma is ",
+    "undefined (PC slopes are zero), so the tau = 0 point column is reported ",
+    "as undefined; theta stays SET-identified via the stage-05 bounds."
   ))
+  pt0 <- NULL
+  point_unreliable <- TRUE
+  reason <- paste0(
+    "the news projection is imposed exactly ($B = 0$), so the reduced-form ",
+    "$\\Gamma^{R}$ is undefined and the $\\tau = 0$ point is degenerate"
+  )
   theta_point <- NULL
-  beta1_point <- NULL
+  # Under B = 0, beta1(theta) = beta1R for ALL theta, so the beta1 rows are
+  # point cells equal to beta1R; the set-column intervals below collapse to
+  # [beta1R_p, beta1R_p] automatically (every c_p = 0).
+  beta1_point <- beta1r
   cond_note <- reason
 } else {
-  theta_point <- pt0$theta
-  beta1_point <- recover_structural_coefficients(beta1r, beta2r_full, theta_point)
-  cli_alert_info(paste0(
-    "tau = 0 point identification: condition number cond(Q) = ",
-    formatC(pt0$cond, format = "e", digits = 2)
-  ))
-  cond_note <- paste0(
-    "the point-identification linear system has condition ",
-    "number $\\kappa(Q) = ", latex_sci(pt0$cond), "$"
-  )
+  gamma_rf <- build_reduced_form_gamma(beta2r)
+  qs0 <- build_pipeline_quadratic_system(gamma_rf, rep(0, i_dim), moments)
+  pt0 <- solve_point_identification(qs0$components)
+
+  point_unreliable <- is.null(pt0) || !is.finite(pt0$cond) || pt0$cond > cond_max
+  if (point_unreliable) {
+    reason <- if (is.null(pt0)) {
+      "$Q\\theta = L$ is rank-deficient or inconsistent"
+    } else {
+      paste0(
+        "the linear system is near-singular ($\\kappa(Q) = ",
+        latex_sci(pt0$cond), "$)"
+      )
+    }
+    cli_alert_danger(paste0(
+      "tau = 0 reduced-form-gamma point identification is unreliable: ", reason,
+      "; reporting the point column as unreliable."
+    ))
+    theta_point <- NULL
+    beta1_point <- NULL
+    cond_note <- reason
+  } else {
+    theta_point <- pt0$theta
+    beta1_point <- recover_structural_coefficients(beta1r, beta2r_full, theta_point)
+    cli_alert_info(paste0(
+      "tau = 0 point identification: condition number cond(Q) = ",
+      formatC(pt0$cond, format = "e", digits = 2)
+    ))
+    cond_note <- paste0(
+      "the point-identification linear system has condition ",
+      "number $\\kappa(Q) = ", latex_sci(pt0$cond), "$"
+    )
+  }
 }
 
-point_cell <- function(value) {
-  if (point_unreliable || is.null(value) || !is.finite(value)) {
+# theta is undefined whenever the reduced-form point is unreliable OR exact news
+# is imposed; the beta1 rows, in contrast, ARE point-valued under imposed B = 0
+# (beta1(theta) = beta1R for every theta), so they render from beta1_point.
+theta_point_unreliable <- point_unreliable
+beta1_point_available <- !is.null(beta1_point)
+
+point_cell <- function(value, available = !point_unreliable) {
+  if (!available || is.null(value) || !is.finite(value)) {
     return("unreliable")
   }
   formatC(value, format = "f", digits = TABLE_DIGITS)
@@ -173,10 +228,17 @@ row_labels <- c(
   if (n_lag > 0L) paste0("$\\psi_{", seq_len(n_lag), "}$ (lagged $Y_1$)"),
   paste0("$\\theta_{", seq_len(i_dim), "}$ (SDF news, ", bond_years, "-year)")
 )
+# The beta1 rows are point-valued whenever beta1_point is available -- including
+# under imposed B = 0, where beta1(theta) = beta1R. The theta rows are point-
+# valued only when the reduced-form tau = 0 point itself is reliable.
 point_col <- c(
-  vapply(seq_len(p_dim), function(p) point_cell(beta1_point[p]), character(1)),
+  vapply(
+    seq_len(p_dim),
+    function(p) point_cell(beta1_point[p], available = beta1_point_available),
+    character(1)
+  ),
   vapply(seq_len(i_dim), function(i) {
-    if (point_unreliable) "unreliable" else point_cell(theta_point[i])
+    if (theta_point_unreliable) "unreliable" else point_cell(theta_point[i])
   }, character(1))
 )
 set_col <- c(
@@ -198,9 +260,12 @@ lag_eq <- if (n_lag > 0L) {
 }
 lag_note <- if (n_lag > 0L) {
   paste0(
-    " The ", n_lag, " lagged outcomes $Y_{1,t+1-h}$ enter only the ",
-    "consumption-growth equation as predetermined controls; lagging drops the ",
-    "first ", n_lag - 1L, " observations, so $N$ is the post-lag sample."
+    " The ", n_lag, " lagged outcomes $Y_{1,t+1-h}$ enter the common ",
+    "conditioning vector $X_t = (1, \\mathrm{PC}_t', Y_{1,t}, \\ldots)'$ of ",
+    "\\emph{both} equations, so the lag slopes $\\psi_h$ are set-valued linear ",
+    "images of $\\Theta$ (not point-identified) under the estimated-$B$ model; ",
+    "lagging drops the first ", n_lag - 1L, " observations, so $N$ is the ",
+    "post-lag sample."
   )
 } else {
   ""
@@ -229,20 +294,32 @@ notes <- c(
     "stochastic-discount-factor news of the listed bond maturities.", lag_note
   ),
   paste0(
-    "The reduced-form projections $\\beta_1^{R}$ (consumption growth on ",
-    "the PCs) and $\\beta_2^{R}$ (each SDF-news series on the PCs) are ",
-    "invariant to the instrument loadings and identical across columns; the ",
-    "structural coefficients are recovered exactly as $\\beta_1(\\theta) = ",
-    "\\beta_1^{R} - (\\beta_2^{R})'\\theta$, so all identification content ",
-    "enters through $\\theta$."
+    "The reduced-form projections $\\beta_1^{R}$ (consumption growth on the ",
+    "common $X_t$) and $\\beta_2^{R}$ (each SDF-news series on the same $X_t$) ",
+    "are invariant to the instrument loadings; the structural coefficients are ",
+    "recovered exactly as $\\beta_1(\\theta) = \\beta_1^{R} - ",
+    "(\\beta_2^{R})'\\theta$, so all identification content enters through ",
+    "$\\theta$. Because $X_t$ is common to both equations, the lag rows ",
+    "$\\psi_h$ obey the same map and are therefore set-valued, not point-",
+    "identified."
   ),
-  paste0(
-    "\\textit{Point identification} ($\\tau = 0$) identifies $\\theta$ ",
-    "from the reduced-form loadings $\\Gamma^{R}$ built from $\\beta_2^{R}$; ",
-    "each moment restriction is then a perfect square, so the identified set ",
-    "collapses to the single point solving the exactly-identified linear ",
-    "system $Q\\theta = L$, and ", cond_note, "."
-  ),
+  if (impose_b_zero) {
+    paste0(
+      "\\textit{Point identification} ($\\tau = 0$) is not available here ",
+      "because ", cond_note, "; the $\\theta$ point column is reported as ",
+      "undefined. The $\\beta_1$ rows are nonetheless point cells, since ",
+      "imposing $B = 0$ gives $\\beta_1(\\theta) = \\beta_1^{R}$ for every ",
+      "$\\theta$. $\\theta$ remains \\emph{set}-identified (the set column)."
+    )
+  } else {
+    paste0(
+      "\\textit{Point identification} ($\\tau = 0$) identifies $\\theta$ ",
+      "from the reduced-form loadings $\\Gamma^{R}$ built from $\\beta_2^{R}$; ",
+      "each moment restriction is then a perfect square, so the identified set ",
+      "collapses to the single point solving the exactly-identified linear ",
+      "system $Q\\theta = L$, and ", cond_note, "."
+    )
+  },
   paste0(
     "\\textit{Set identification} ($\\tau = ", tau_disp, "$) uses the ",
     "width-minimizing optimized loadings $\\Gamma^{\\star}$. Each reported ",
@@ -267,7 +344,11 @@ table_lines <- build_simple_latex_table(
   row_labels = row_labels,
   columns = list(point_col, set_col),
   col_headers = c(
-    "Point ID ($\\tau = 0$)",
+    if (impose_b_zero) {
+      "Imposed exact news ($B = 0$)"
+    } else {
+      "Point ID ($\\tau = 0$)"
+    },
     paste0("Set ID ($\\tau = ", tau_disp, "$)")
   ),
   caption = caption,
