@@ -43,6 +43,10 @@ NEWS_STEP <- 3L
 PIPELINE_ACM_MATURITIES <- seq(3L, 120L, by = 3L)
 SEED <- 123 # For reproducibility
 BASELINE_TAU <- 0.05 # Baseline set-identification tolerance (shared across stages)
+# Near-uninformative tau cap shared across the tau* oracle and the identified-set
+# probes: admissible slack is tau in [0, 1) (the correlation-bound interpretation
+# fails at tau >= 1 and hetid rejects it), so searches are capped strictly below 1.
+OPT_TAU_CAP <- 0.99
 N_Y1_LAGS <- 4L # Own-lags of Y1 (consumption growth) in the W1 reduced form (0 = none)
 # FALSE = estimate B from the data (default, "let the data speak"); TRUE = impose exact-news B = 0
 IMPOSE_NEWS_PROJECTION_ZERO <- FALSE

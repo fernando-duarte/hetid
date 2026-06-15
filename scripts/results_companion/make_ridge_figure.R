@@ -54,11 +54,16 @@ f02 <- project(0.02, th5, th9, th2_scan)$feasible
 proj <- project(BASELINE_TAU, th5, th9, th2_scan)
 proj$f02 <- f02
 proj <- proj[proj$feasible, , drop = FALSE]
-proj$region <- ifelse(proj$f02, "Slack tau = 0.02 (bounded)", "Extension at tau = 0.05")
-proj$region <- factor(proj$region,
-  levels = c("Slack tau = 0.02 (bounded)", "Extension at tau = 0.05")
+# Region labels generated from the baseline slack so they track BASELINE_TAU; the
+# secondary 0.02 slack has no shared constant yet, so it stays a literal here.
+lab_bounded <- "Slack tau = 0.02 (bounded)"
+lab_ext <- sprintf("Extension at tau = %s", BASELINE_TAU)
+proj$region <- ifelse(proj$f02, lab_bounded, lab_ext)
+proj$region <- factor(proj$region, levels = c(lab_bounded, lab_ext))
+cat(
+  "feasible tiles: tau<=0.02 =", sum(f02),
+  sprintf(" tau<=%s =", BASELINE_TAU), nrow(proj), "\n"
 )
-cat("feasible tiles: tau<=0.02 =", sum(f02), " tau<=0.05 =", nrow(proj), "\n")
 
 # Robustness guard: the hard-coded axes below are a deliberate viewing window on
 # a set that stretches to infinity along the ridge, not a data-derived bounding
@@ -82,10 +87,10 @@ ttl <- paste(
 )
 p <- ggplot(proj, aes(th5 / 1000, th9 / 1000, fill = region)) +
   geom_raster() +
-  scale_fill_manual(values = c(
-    "Slack tau = 0.02 (bounded)" = "#08519c",
-    "Extension at tau = 0.05" = "#9ecae1"
-  ), name = NULL) +
+  scale_fill_manual(
+    values = setNames(c("#08519c", "#9ecae1"), c(lab_bounded, lab_ext)),
+    name = NULL
+  ) +
   geom_point(
     data = point_df, aes(th5 / 1000, th9 / 1000),
     inherit.aes = FALSE, shape = 21, size = 2.6, fill = "white", color = "black", stroke = 0.7

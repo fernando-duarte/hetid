@@ -113,7 +113,10 @@ beta_set <- lapply(c(intercept_col, pc_cols), function(p) {
   )
 })
 beta_set <- do.call(rbind, beta_set)
-cat("=== beta (intercept + PC loadings) over the VFCI tau = 0.05 set ===\n")
+cat(sprintf(
+  "=== beta (intercept + PC loadings) over the VFCI tau = %s set ===\n",
+  BASELINE_TAU
+))
 print(beta_set, digits = 4, row.names = FALSE)
 cat("\n")
 

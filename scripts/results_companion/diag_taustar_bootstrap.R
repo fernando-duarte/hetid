@@ -41,7 +41,10 @@ cond0 <- solve_point_identification(
 cat("=== point estimates (fixed VFCI) ===\n")
 cat("tau* =", signif(ts0, 5), " (expect ~0.0304)\n")
 cat("cond(Q) =", signif(cond0, 6), "\n")
-cat("2y bound width at tau=0.05 =", signif(two_year_width(mom0), 5), "\n\n")
+cat(
+  sprintf("2y bound width at tau=%s =", BASELINE_TAU),
+  signif(two_year_width(mom0), 5), "\n\n"
+)
 
 # --- moving-block bootstrap ---
 b_reps <- 200L
@@ -77,7 +80,10 @@ for (b in seq_len(b_reps)) {
 qs_report <- function(x, nm) {
   x <- x[is.finite(x)]
   cat(sprintf(
-    "%-14s n=%d  median=%.4g  [p05,p95]=[%.4g, %.4g]  share(tau*<0.05)=%.2f\n",
+    paste0(
+      "%-14s n=%d  median=%.4g  [p05,p95]=[%.4g, %.4g]  ",
+      "share(tau*<", BASELINE_TAU, ")=%.2f\n"
+    ),
     nm, length(x), stats::median(x),
     stats::quantile(x, 0.05), stats::quantile(x, 0.95),
     if (nm == "tau*") mean(x < BASELINE_TAU) else NA

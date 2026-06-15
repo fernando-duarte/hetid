@@ -100,7 +100,7 @@ tau_star_fixed <- function(gamma, moments, coarse, iters = 40L) {
 # tau_star is NA when even tau_lo fails; capped = TRUE when the set stays
 # bounded up to the cap, i.e. the reported tau* is a censored lower bound.
 tau_star_optimized <- function(gamma_start, moments, whiten,
-                               tau_lo = 0.2, cap = 0.99, iters = 25L) {
+                               tau_lo = 0.2, cap = OPT_TAU_CAP, iters = 25L) {
   n_comp <- ncol(gamma_start)
   oracle <- function(tau) {
     is.finite(run_lambda_optimization(

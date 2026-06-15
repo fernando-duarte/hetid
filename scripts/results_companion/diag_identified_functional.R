@@ -61,7 +61,7 @@ cat("standardized (theta_i * sd(W2_i)/sd(W1)):", paste(signif(std_pt, 4), collap
 
 # --- Per-coordinate profile bounds at tau = 0.05 (expect 2y bounded, 5y/9y not) ---
 b05 <- solve_all_profile_bounds(qs05$quadratic)
-cat("=== per-coordinate bounds, VFCI, tau = 0.05 ===\n")
+cat(sprintf("=== per-coordinate bounds, VFCI, tau = %s ===\n", BASELINE_TAU))
 print(b05[, c("component", "lower", "upper", "width", "bounded_lower", "bounded_upper")])
 cat("\n")
 

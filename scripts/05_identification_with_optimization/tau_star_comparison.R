@@ -31,10 +31,9 @@ BISECT_ITERS <- 40L
 RECESSION_N_DIR <- 8000L
 RECESSION_SEED <- 1L
 OPT_TAU_LO <- 0.2
-# Admissible slack is tau in [0,1): the correlation-bound interpretation fails
-# at tau >= 1 (and hetid rejects it), so the optimizer search is capped
-# strictly below 1. A cap-censored tau* is displayed as ">= cap", never exact.
-OPT_TAU_CAP <- 0.99
+# OPT_TAU_CAP (the admissible tau in [0,1) near-cap) is defined once in
+# common_settings.R and shared across stages. A cap-censored tau* is displayed
+# as ">= cap", never exact.
 
 temp_dir <- file.path(OUTPUT_TEMP_DIR, "identification_optimized")
 dir.create(temp_dir, recursive = TRUE, showWarnings = FALSE)

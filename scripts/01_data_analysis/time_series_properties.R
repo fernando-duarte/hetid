@@ -10,6 +10,9 @@ load_timeseries_packages() # urca, skedastic, lubridate
 load_visualization_packages() # ggplot2, gridExtra, plotly
 load_web_packages() # htmltools, knitr
 
+# Significance level for all reject/fail decisions and the rule labels below.
+SIG_LEVEL <- 0.01
+
 input_path <- DATA_RDS_PATH
 data <- readRDS(input_path)
 df <- as.data.frame(data)
@@ -189,14 +192,14 @@ cli_h3("ADF (Augmented Dickey-Fuller)")
 cli_ul(c(
   "H0: Series has a unit root (non-stationary)",
   "H1: Series is stationary",
-  "Reject H0 if p < 0.05 (evidence of stationarity)",
+  paste0("Reject H0 if p < ", SIG_LEVEL, " (evidence of stationarity)"),
   "p-values: MacKinnon (1996) response surface (urca::punitroot)"
 ))
 cli_h3("KPSS (Kwiatkowski-Phillips-Schmidt-Shin)")
 cli_ul(c(
   "H0: Series is stationary",
   "H1: Series has a unit root (non-stationary)",
-  "Reject H0 if p < 0.05 (evidence of non-stationarity)",
+  paste0("Reject H0 if p < ", SIG_LEVEL, " (evidence of non-stationarity)"),
   paste(
     "p-values: interpolated from the KPSS (1992) table,",
     "truncated to [0.01, 0.10] (0.01 means p <= 0.01; 0.10 means p >= 0.10)"
@@ -206,7 +209,7 @@ cli_h3("Phillips-Perron (PP)")
 cli_ul(c(
   "H0: Series has a unit root (non-stationary)",
   "H1: Series is stationary",
-  "Reject H0 if p < 0.05 (evidence of stationarity)",
+  paste0("Reject H0 if p < ", SIG_LEVEL, " (evidence of stationarity)"),
   "p-values: MacKinnon (1996) response surface (urca::punitroot)"
 ))
 # Clean the unit root stats table for console display; clamped KPSS
@@ -239,19 +242,19 @@ cli_h3("Ljung-Box (LB)")
 cli_ul(c(
   "H0: No serial correlation in the series",
   "H1: Serial correlation is present",
-  "Reject H0 if p < 0.05 (evidence of serial correlation)"
+  paste0("Reject H0 if p < ", SIG_LEVEL, " (evidence of serial correlation)")
 ))
 cli_h3("ARCH")
 cli_ul(c(
   "H0: No conditional heteroskedasticity (constant variance)",
   "H1: Conditional heteroskedasticity is present (time-varying variance)",
-  "Reject H0 if p < 0.05 (evidence of ARCH effects)"
+  paste0("Reject H0 if p < ", SIG_LEVEL, " (evidence of ARCH effects)")
 ))
 cli_h3("Jarque-Bera (JB)")
 cli_ul(c(
   "H0: Series follows a normal distribution",
   "H1: Series does not follow a normal distribution",
-  "Reject H0 if p < 0.05 (evidence of non-normality)"
+  paste0("Reject H0 if p < ", SIG_LEVEL, " (evidence of non-normality)")
 ))
 # Clean the serial norm stats table for console display
 serial_norm_stats_clean <- serial_norm_stats
@@ -322,7 +325,7 @@ cli_text("{.strong All heteroskedasticity tests:}")
 cli_ul(c(
   "H0: Homoskedasticity (constant variance of residuals)",
   "H1: Heteroskedasticity (non-constant variance of residuals)",
-  "Reject H0 if p < 0.05 (evidence of heteroskedasticity)"
+  paste0("Reject H0 if p < ", SIG_LEVEL, " (evidence of heteroskedasticity)")
 ))
 cli_text("")
 cli_ul(c(
@@ -361,7 +364,7 @@ cli_h2("Heteroskedasticity Test Summary")
 # Count rejections for each test - only count columns that exist
 count_rejections <- function(col) {
   if (col %in% names(hetero_results)) {
-    sum(hetero_results[[col]] < 0.05, na.rm = TRUE)
+    sum(hetero_results[[col]] < SIG_LEVEL, na.rm = TRUE)
   } else {
     0
   }
@@ -374,7 +377,7 @@ anscombe_rejections <- count_rejections("Anscombe_pval")
 cw_rejections <- count_rejections("CW_pval")
 total_vars <- nrow(hetero_results)
 
-cli_text("Variables showing heteroskedasticity (p < 0.05):")
+cli_text(paste0("Variables showing heteroskedasticity (p < ", SIG_LEVEL, "):"))
 cli_ul(c(
   paste("White Test:", white_rejections, "/", total_vars, "variables"),
   paste("Breusch-Pagan Test:", bp_rejections, "/", total_vars, "variables"),
@@ -438,19 +441,19 @@ cli_ul(c(
 non_sep <- !grepl("---", all_ts_results$Variable)
 decide_rf <- function(col, pval_col, data) {
   if (pval_col %in% names(data)) {
-    ifelse(data[[pval_col]] < 0.05, "R", "F")
+    ifelse(data[[pval_col]] < SIG_LEVEL, "R", "F")
   } else {
     "-"
   }
 }
 summary_table <- data.frame(
   Variable = all_ts_results$Variable[non_sep],
-  ADF = ifelse(all_ts_results$ADF_pval[non_sep] < 0.05, "R", "F"),
-  KPSS = ifelse(all_ts_results$KPSS_pval[non_sep] < 0.05, "R", "F"),
-  PP = ifelse(all_ts_results$PP_pval[non_sep] < 0.05, "R", "F"),
-  LB = ifelse(all_ts_results$LB_pval[non_sep] < 0.05, "R", "F"),
-  ARCH = ifelse(all_ts_results$ARCH_pval[non_sep] < 0.05, "R", "F"),
-  JB = ifelse(all_ts_results$JB_pval[non_sep] < 0.05, "R", "F"),
+  ADF = ifelse(all_ts_results$ADF_pval[non_sep] < SIG_LEVEL, "R", "F"),
+  KPSS = ifelse(all_ts_results$KPSS_pval[non_sep] < SIG_LEVEL, "R", "F"),
+  PP = ifelse(all_ts_results$PP_pval[non_sep] < SIG_LEVEL, "R", "F"),
+  LB = ifelse(all_ts_results$LB_pval[non_sep] < SIG_LEVEL, "R", "F"),
+  ARCH = ifelse(all_ts_results$ARCH_pval[non_sep] < SIG_LEVEL, "R", "F"),
+  JB = ifelse(all_ts_results$JB_pval[non_sep] < SIG_LEVEL, "R", "F"),
   White = decide_rf("White", "White_pval", hetero_results),
   BP = decide_rf("BP", "BP_pval", hetero_results),
   GQ = decide_rf("GQ", "GQ_pval", hetero_results),

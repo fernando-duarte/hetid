@@ -13,9 +13,8 @@ source(here::here("scripts/utils/common_settings.R"))
 source(here::here("scripts/utils/ixj_identification.R"))
 
 # tau must lie in [0, 1): the package validator rejects 1.0 outright, so the
-# near-uninformative probe uses 0.99, mirroring OPT_TAU_CAP in
-# tau_star_comparison.R
-TAU_GRID <- c(0.05, 0.1, 0.5, 0.99)
+# near-uninformative probe uses the shared OPT_TAU_CAP (common_settings.R).
+TAU_GRID <- c(0.05, 0.1, 0.5, OPT_TAU_CAP)
 
 cli_h1("Computing I x J Identified Set (separate instruments)")
 
