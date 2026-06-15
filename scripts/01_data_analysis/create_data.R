@@ -67,25 +67,16 @@ for (i in 1:MAX_N_PCS) {
 # Remove first observation which has NA lags
 data <- data[-1, ]
 
-# Normalize PCs to have mean 0 and variance 1
-for (i in 1:MAX_N_PCS) {
-  pc_col <- paste0("pc", i)
-  # Calculate mean and sd
-  pc_mean <- mean(data[[pc_col]], na.rm = TRUE)
-  pc_sd <- sd(data[[pc_col]], na.rm = TRUE)
-  # Normalize
-  data[[pc_col]] <- (data[[pc_col]] - pc_mean) / pc_sd
-}
-
-# Normalize lagged PCs to have mean 0 and variance 1
-for (i in 1:MAX_N_PCS) {
-  lag_col <- paste0("l.pc", i)
-  # Calculate mean and sd
-  pc_mean <- mean(data[[lag_col]], na.rm = TRUE)
-  pc_sd <- sd(data[[lag_col]], na.rm = TRUE)
-  # Normalize
-  data[[lag_col]] <- (data[[lag_col]] - pc_mean) / pc_sd
-}
+# PCs (and their lags) are kept on their native asset-return PCA scale -- they are
+# NOT standardized to unit variance. The principal components already arrive
+# mean-centered, and standardizing each PC by its own sd would silently rescale
+# the instruments: the fixed VFCI loading holds the raw regression coefficients
+# of the VFCI index on the RAW PCs, so the combined instrument PC %*% gamma_vfci
+# equals VFCI - mean(VFCI) exactly; applying that loading to standardized PCs
+# would no longer reconstruct VFCI. Leaving the PCs at native scale keeps the
+# bundled asset data and the analysis on one scale; the optimizer's
+# variance-normalization (lambda' Var(Z) lambda = 1) absorbs the instrument
+# scale where it matters.
 
 # Convert to list format for consistency with package expectations
 data <- as.list(data)

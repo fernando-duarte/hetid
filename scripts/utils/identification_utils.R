@@ -293,7 +293,7 @@ assert_pipeline_quadratic_equiv <- function(general, legacy) {
   invisible(TRUE)
 }
 
-#' Get baseline gamma matrix (VFCI unit-norm loadings)
+#' Get baseline gamma matrix (raw VFCI PC loadings)
 #' @param method label for the method (stored as attr)
 #' @param n_pcs number of principal components; must equal the length of the
 #'   VFCI loading vector (4) -- the loading is defined only on pc1..pc4, so
@@ -308,24 +308,29 @@ get_baseline_gamma <- function(
   if (is.null(n_components)) {
     n_components <- length(DEFAULT_ID_MATURITIES)
   }
-  # Unit-norm VFCI PC loading vector
-  # From regressing variables$vfci on pc1:pc4:
-  #   vfci = 0.1095399*pc1 - 0.1692329*pc2
-  #        - 0.1320361*pc3 + 0.1699299*pc4
-  unit_norm <- c(
-    0.3714851, -0.5739232,
-    -0.4477770, 0.5762870
+  # Raw VFCI PC loading vector (the regression coefficients themselves, NOT
+  # unit-normalized). From regressing variables$vfci on the raw pc1:pc4:
+  #   vfci = mean(vfci) + 0.1095399*pc1 - 0.1692329*pc2
+  #                     - 0.1320361*pc3 + 0.1699299*pc4
+  # With these raw weights the combined instrument PC %*% gamma equals the
+  # de-meaned VFCI exactly (the PCs are kept at native scale; see create_data.R).
+  # The identified set is scale-invariant in this column, so normalizing would
+  # change no result -- the raw weights are used so the instrument literally IS
+  # VFCI - mean(VFCI) rather than a rescaled copy.
+  vfci_loading <- c(
+    0.1095399, -0.1692329,
+    -0.1320361, 0.1699299
   )
-  if (n_pcs != length(unit_norm)) {
+  if (n_pcs != length(vfci_loading)) {
     stop(
-      "get_baseline_gamma: the VFCI unit-norm loading is defined only for ",
-      length(unit_norm), " PCs (pc1..pc4); got n_pcs = ", n_pcs,
+      "get_baseline_gamma: the VFCI loading is defined only for ",
+      length(vfci_loading), " PCs (pc1..pc4); got n_pcs = ", n_pcs,
       " -- recycling it would produce wrong loadings. For a custom-width ",
       "instrument set supply HETID_BASELINE_GAMMA=<path-to-R-file ",
       "defining build_gamma(moments)>"
     )
   }
-  gamma <- matrix(unit_norm, nrow = n_pcs, ncol = n_components)
+  gamma <- matrix(vfci_loading, nrow = n_pcs, ncol = n_components)
   attr(gamma, "method") <- method
   gamma
 }

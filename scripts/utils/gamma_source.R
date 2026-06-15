@@ -1,6 +1,6 @@
 # Baseline-gamma hook: which J x I weight matrix plays the baseline
 # gamma role. HETID_BASELINE_GAMMA selects among:
-#   "vfci"         -- the fixed unit-norm VFCI PC loading (default; defined
+#   "vfci"         -- the fixed raw VFCI PC loading (default; defined
 #                     ONLY on pc1..pc4, so it errors instructively when the
 #                     instrument count J != 4),
 #   a path to an R script defining build_gamma(moments) returning a numeric

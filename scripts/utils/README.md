@@ -93,7 +93,7 @@ Identification setup plumbing:
 - `compute_identification_residuals()` - Compute W1/W2 residuals and aligned instruments (honors `impose_news_projection_zero()` for the B=0 vs estimate-B mode; also retains the Y2-on-PC `beta2R` coefficients for structural recovery)
 - `build_pipeline_quadratic_system()` - Single pipeline front door: assemble the identified-set quadratic system through the exported generalized-instrument builder `build_general_quadratic_system()`, re-attaching the `hetid_components` class/attributes; `HETID_ASSERT_EQUIV` makes it additionally assert numeric identity with the legacy `build_quadratic_system()`
 - `assert_pipeline_quadratic_equiv()` - Numeric-leaf identity check between the generalized and legacy quadratic systems (used under `HETID_ASSERT_EQUIV`)
-- `get_baseline_gamma()` - VFCI unit-norm loading matrix (J x I; requires 4 PCs)
+- `get_baseline_gamma()` - VFCI raw PC loading matrix (J x I; requires 4 PCs)
 - `get_tau_spec()` - Tolerance specification (`tau_point` and `tau_set`)
 
 ### z_source.R

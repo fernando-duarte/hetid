@@ -326,7 +326,7 @@ spec-comparison stage to its quick subgrid. The verified switches:
   full grid exists, then falls back to the quick grid.
 - `HETID_BASELINE_GAMMA` (read in `compute_identification.R:9` and
   `gamma_source.R:13`, default `"vfci"`) - selects the baseline gamma:
-  `"vfci"` (the fixed unit-norm VFCI PC loading, which requires exactly
+  `"vfci"` (the fixed raw VFCI PC loading, which requires exactly
   4 instruments) or a path to an R file defining
   `build_gamma(moments)` returning a J×I matrix (the arbitrary-width
   escape hatch).
