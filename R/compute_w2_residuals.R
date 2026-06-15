@@ -37,6 +37,8 @@
 #' \describe{
 #'   \item{residuals}{List of residual vectors, one for each maturity}
 #'   \item{fitted}{List of fitted value vectors}
+#'   \item{dates}{Per-maturity list of date (or row-index) vectors parallel to
+#'     \code{residuals}, the W2 date index subset by each maturity's \code{kept_idx}.}
 #'   \item{coefficients}{Matrix of regression coefficients (maturities x predictors)}
 #'   \item{r_squared}{Vector of R-squared values for each maturity}
 #'   \item{n_obs}{Number of observations used in each regression}
@@ -182,10 +184,13 @@ compute_w2_residuals <- function(yields, term_premia,
     ))
   }
 
-  # Return list format (original)
+  # Per-maturity date index, parallel to residuals (W2 ragged: subset by kept_idx).
+  resolved_dates <- resolve_w2_dates(dates, bundled_dates, nrow(yields_df))
+  dates_list <- lapply(kept_idx_list, function(kept) resolved_dates[which(kept)])
   list(
     residuals = residuals_list,
     fitted = fitted_list,
+    dates = dates_list,
     coefficients = coef_matrix,
     r_squared = r_squared,
     n_obs = n_obs_used,

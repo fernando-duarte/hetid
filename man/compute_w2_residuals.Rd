@@ -79,6 +79,8 @@ If return_df = FALSE, returns a list containing:
 \describe{
 \item{residuals}{List of residual vectors, one for each maturity}
 \item{fitted}{List of fitted value vectors}
+\item{dates}{Per-maturity list of date (or row-index) vectors parallel to
+\code{residuals}, the W2 date index subset by each maturity's \code{kept_idx}.}
 \item{coefficients}{Matrix of regression coefficients (maturities x predictors)}
 \item{r_squared}{Vector of R-squared values for each maturity}
 \item{n_obs}{Number of observations used in each regression}
