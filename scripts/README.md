@@ -1,6 +1,6 @@
 # Scripts Directory Structure
 
-_Last modified: 2026-06-13 23:10 EDT_
+_Last modified: 2026-06-15 15:50 EDT_
 
 This directory contains all analysis scripts for the hetid
 package, organized by workflow stage. All outputs are stored
@@ -69,14 +69,16 @@ Variance bound calculations for identification
 Baseline identified set using fixed PC weights (VFCI gamma)
 and fixed tau values
 - `compute_identification.R` - Compute the baseline identified set
-  from fixed gamma and tau (tau=0 point ID; tau=`BASELINE_TAU` set ID)
-- `compute_identification_ixj.R` - Compute the I×J (separate-instrument)
-  identified set: one quadratic constraint per (component, instrument)
-  pair across a tau grid
+  from fixed gamma and tau (tau=0 point ID; tau=`BASELINE_TAU` set ID);
+  stamps the resolved baseline `spec` (Y1 lags, news-projection mode, Z
+  source) into the saved RDS via `current_baseline_spec()`
 - `analyze_identification.R` - Compare tau=0 vs set-ID bounds, width
   summaries, and eigenvalue/quadratic diagnostics, with plots
 - `output_results.R` - Export baseline identification results (HTML,
   LaTeX, CSV)
+- `compute_identification_ixj.R` - Compute the I×J (separate-instrument)
+  identified set: one quadratic constraint per (component, instrument)
+  pair across a tau grid (runs after `output_results.R` in the pipeline)
 
 ### 05_identification_with_optimization/
 Optimal identification by optimizing instrument weights to
@@ -89,6 +91,15 @@ minimize total identified-set width (tau held fixed)
 - `output_results.R` - Export optimized identification results
   (HTML, LaTeX, CSV); `output_results_summary_section.R` is its
   in-place summary helper
+- `tau_star_comparison.R` - Compute identification strength via tau*
+  (the slack where the set transitions bounded→unbounded) across
+  gamma choices using coarse grid, bisection, and fine grid. Tagged
+  `full_only` in the stage list: it runs only on the full run
+  (`HETID_FULL_RUN=1`), not the default quick run
+- `tau_star_report*.R` - Generate the tau* report (also `full_only`):
+  `tau_star_report.R` orchestrates tables/sweeps/summary;
+  `_report_utils.R`, `_report_figures.R`, and `_report_text.R`
+  supply formatting helpers, overlay/blow-up figures, and prose
 - `spec_comparison.R` - Resumable, parallel specification comparison
   across (n_pcs, components, gamma, tau) cells, with the gamma scheme
   drawn from `vfci` / `optimized` / `separate` (I×J); honors
@@ -101,13 +112,6 @@ minimize total identified-set width (tau held fixed)
   `_report_stats.R`, `_report_artifacts.R`, `_report_figures.R`, and
   `_report_text.R` supply labels/classification, aggregation,
   table/CSV/LaTeX artifacts, plots, and narrative prose
-- `tau_star_comparison.R` - Compute identification strength via tau*
-  (the slack where the set transitions bounded→unbounded) across
-  gamma choices using coarse grid, bisection, and fine grid
-- `tau_star_report*.R` - Generate the tau* report:
-  `tau_star_report.R` orchestrates tables/sweeps/summary;
-  `_report_utils.R`, `_report_figures.R`, and `_report_text.R`
-  supply formatting helpers, overlay/blow-up figures, and prose
 
 ### 06_results_production/
 Publication-ready outputs assembled from stages 03-05
@@ -158,8 +162,9 @@ design, `spec_comparison_design.R`, lives with stage 05, not in
 - `common_settings.R` - Central configuration: shared paths, output
   directories, and constants (`NEWS_STEP = 3`, `PIPELINE_ACM_MATURITIES`
   = 3..120 by 3, `BASELINE_TAU = 0.05`, `SEED = 123`, `N_CORES`,
-  `N_Y1_LAGS = 4`, `TAU_STAR_N_STARTS = 15`, plot/table settings,
-  `DATA_RDS_PATH`); sources the core utility files
+  `N_Y1_LAGS = 4`, `IMPOSE_NEWS_PROJECTION_ZERO = FALSE`,
+  `TAU_STAR_N_STARTS = 15`, plot/table settings, `DATA_RDS_PATH`);
+  sources the core utility files
 - `stats_utils.R` - Summary statistics (mean/sd/quantiles/skewness/
   kurtosis, optional autocorrelation)
 - `format_utils.R` - Finite/Inf-aware formatters for bounds and
@@ -187,7 +192,17 @@ design, `spec_comparison_design.R`, lives with stage 05, not in
 - `z_source.R` - Z-source hook resolver (selects the instrument
   matrix; default or custom `build_z(data)`)
 - `gamma_source.R` - Baseline-gamma hook resolver (VFCI or custom);
-  also `build_reduced_form_gamma()` (maturities Y2-on-PC slopes)
+  also `build_reduced_form_gamma(beta2r)` (maturities Y2-on-PC slopes)
+- `news_projection.R` - Resolves whether the W2-residual construction
+  imposes the exact-news projection `B = 0` or estimates `B` from the
+  data: `impose_news_projection_zero()` reads the
+  `HETID_IMPOSE_NEWS_PROJECTION_ZERO` env override, falling back to the
+  `IMPOSE_NEWS_PROJECTION_ZERO` script constant (default `FALSE`)
+- `baseline_spec.R` - Stage-04 baseline spec stamp and the fail-closed
+  downstream consistency check (`current_baseline_spec()`,
+  `baseline_spec_mismatches()`, `assert_baseline_spec_current()`): stages
+  that load the baseline RDS abort if its stamped Y1-lags /
+  news-projection mode / Z source differ from the current run
 - `optimization_utils.R` - Total-width objective, Euclidean display
   normalizer, and inner steering penalty
 - `lambda_mask.R` - Weight-optimizer helpers: packing, legacy
@@ -218,7 +233,8 @@ design, `spec_comparison_design.R`, lives with stage 05, not in
   helpers from `latex_table_utils.R`
 - `tests/` - Unit tests for the utility layer (lambda/whitening/
   optimization, profile bounds, I×J, closure membership, hetero tests,
-  gamma sources, Z-width pipeline, generalized-vs-legacy pipeline
+  gamma sources, news-projection mode and Stage-04 baseline spec stamp,
+  residual alignment, Z-width pipeline, generalized-vs-legacy pipeline
   equivalence, stats) plus `fixtures/` capture scripts and RDS
 - `README.md` - Documentation for the utility functions
 
@@ -314,11 +330,18 @@ spec-comparison stage to its quick subgrid. The verified switches:
   4 instruments) or a path to an R file defining
   `build_gamma(moments)` returning a J×I matrix (the arbitrary-width
   escape hatch).
-- `HETID_Z_SOURCE` (read in `z_source.R:23`/`:63`) - path to an R file
+- `HETID_Z_SOURCE` (read in `z_source.R:25`/`:65`) - path to an R file
   defining `build_z(data)` returning a named numeric T×K instrument
   matrix; unset, the pipeline uses the default level-PC instruments.
   Both branches funnel through the exported `build_instrument_matrix`.
-- `HETID_ASSERT_EQUIV` (read in `identification_utils.R:203`) -
+- `HETID_IMPOSE_NEWS_PROJECTION_ZERO` (read in `news_projection.R:9` via
+  `impose_news_projection_zero()`) - `TRUE`/`1` imposes the exact-news
+  projection `B = 0` (residual Y2 = the raw news); `FALSE`/`0` estimates
+  `B` from the data (the default, "let the data speak"). Unset, it falls
+  back to the `IMPOSE_NEWS_PROJECTION_ZERO` script constant in
+  `common_settings.R` (default `FALSE`). The resolved value is part of
+  the Stage-04 baseline spec stamp.
+- `HETID_ASSERT_EQUIV` (read in `identification_utils.R:274`) -
   diagnostic shadow flag: when non-empty, every
   `build_pipeline_quadratic_system()` call additionally asserts
   numeric-leaf identity with the legacy `build_quadratic_system()`.

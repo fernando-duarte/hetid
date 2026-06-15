@@ -1,14 +1,14 @@
 # Utility Functions for hetid Scripts
 
-_Last modified: 2026-06-13 23:10 EDT_
+_Last modified: 2026-06-15 15:50 EDT_
 
 This directory contains reusable utility functions that consolidate common patterns across the analysis scripts, following the DRY (Don't Repeat Yourself) principle. `common_settings.R` sources the core layer; the remaining `utils/` helpers (`hetero_lm_tests.R`, `hetero_panel_meta.R`, `hetero_diag_figures.R`, `ixj_identification.R`, `latex_simple_table.R`, `spec_comparison_eval.R`) are sourced directly by the stage scripts that consume them. (The spec-comparison grid design `spec_comparison_design.R` is a stage-05-local file, not a `utils/` helper.)
 
 ## Configuration
 
 ### common_settings.R
-- Defines shared config constants (`NEWS_STEP = 3`, `PIPELINE_ACM_MATURITIES` = 3..120 by 3, `SEED = 123`, `BASELINE_TAU = 0.05`, `N_CORES`, `N_Y1_LAGS = 4`, `TAU_STAR_N_STARTS = 15`, plot/table settings, `DATA_RDS_PATH`) and output directories (`OUTPUT_DIR`, `OUTPUT_PAPER_DIR`, `OUTPUT_TEMP_DIR`)
-- Sources the core utility files (via an explicit `file.exists`-guarded block, not a loop): `plotting_utils.R`, `stats_utils.R`, `hetero_test_utils.R`, `hetero_plot_utils.R`, `z_source.R`, `gamma_source.R`, `identification_utils.R`, `optimization_utils.R`, `lambda_mask.R`, `lambda_whitening.R`, `lambda_varnorm.R`, `lambda_optimization.R`, `profile_bounds_core.R`, `profile_bounds.R`, `format_utils.R`, `latex_table_utils.R`, `tau_star_utils.R`, `closure_membership.R`; uses package constants from hetid where available
+- Defines shared config constants (`NEWS_STEP = 3`, `PIPELINE_ACM_MATURITIES` = 3..120 by 3, `SEED = 123`, `BASELINE_TAU = 0.05`, `N_CORES`, `N_Y1_LAGS = 4`, `IMPOSE_NEWS_PROJECTION_ZERO = FALSE`, `TAU_STAR_N_STARTS = 15`, plot/table settings, `DATA_RDS_PATH`) and output directories (`OUTPUT_DIR`, `OUTPUT_PAPER_DIR`, `OUTPUT_TEMP_DIR`)
+- Sources the core utility files (via an explicit `file.exists`-guarded block, not a loop): `plotting_utils.R`, `stats_utils.R`, `hetero_test_utils.R`, `hetero_plot_utils.R`, `z_source.R`, `gamma_source.R`, `news_projection.R`, `baseline_spec.R`, `identification_utils.R`, `optimization_utils.R`, `lambda_mask.R`, `lambda_whitening.R`, `lambda_varnorm.R`, `lambda_optimization.R`, `profile_bounds_core.R`, `profile_bounds.R`, `format_utils.R`, `latex_table_utils.R`, `tau_star_utils.R`, `closure_membership.R`; uses package constants from hetid where available
 - Helper functions: `get_timestamp()`, `set_analysis_seed()`, and the package loaders `load_visualization_packages()`, `load_timeseries_packages()`, `load_web_packages()`
 
 ## Plotting and tables
@@ -88,9 +88,11 @@ Identification setup plumbing:
 - `get_identification_maturity_lookup()` - Map components to bond maturities
 - `load_identification_inputs()` - Load data and construct yields/term premia/PCs inputs
 - `assert_w2_alignment()` - Validate row alignment of W2 residuals across maturities
+- `w2_response_dates()` - Recover the response-row dates kept by the W2 complete-case filter
 - `assert_w1_leading_block()` - Validate the W1 (consumption) complete-case filter kept a contiguous trailing block (Y1 own-lags drop only a leading prefix)
-- `compute_identification_residuals()` - Compute W1/W2 residuals and aligned instruments (also retains the Y2-on-PC `beta2R` coefficients for structural recovery)
+- `compute_identification_residuals()` - Compute W1/W2 residuals and aligned instruments (honors `impose_news_projection_zero()` for the B=0 vs estimate-B mode; also retains the Y2-on-PC `beta2R` coefficients for structural recovery)
 - `build_pipeline_quadratic_system()` - Single pipeline front door: assemble the identified-set quadratic system through the exported generalized-instrument builder `build_general_quadratic_system()`, re-attaching the `hetid_components` class/attributes; `HETID_ASSERT_EQUIV` makes it additionally assert numeric identity with the legacy `build_quadratic_system()`
+- `assert_pipeline_quadratic_equiv()` - Numeric-leaf identity check between the generalized and legacy quadratic systems (used under `HETID_ASSERT_EQUIV`)
 - `get_baseline_gamma()` - VFCI unit-norm loading matrix (J x I; requires 4 PCs)
 - `get_tau_spec()` - Tolerance specification (`tau_point` and `tau_set`)
 
@@ -104,7 +106,20 @@ Instrument-matrix (Z) hook:
 Baseline-gamma hook:
 - `baseline_gamma_method()` - Current method from `HETID_BASELINE_GAMMA`
 - `resolve_baseline_gamma()` - Resolve the gamma matrix (vfci / custom file)
-- `build_reduced_form_gamma()` - Maturities-mode Y2-on-PC slope gamma (beta2R)
+- `build_reduced_form_gamma(beta2r)` - Maturities-mode Y2-on-PC slope gamma from the retained `beta2R` coefficients
+- `reduced_form_gamma_or_skip()` - `build_reduced_form_gamma()` wrapper that skips gracefully when no PC slopes are available
+- `classify_common_design_cols()` - Split common-conditioning column names into PC slopes vs other (lags/intercept) blocks
+- `assert_beta_columns_matched()` - Validate that the `beta1R`/`beta2R` reduced-form coefficient blocks share aligned columns
+
+### news_projection.R
+News-projection mode hook (mirrors `baseline_gamma_method()`):
+- `impose_news_projection_zero()` - Resolve whether the W2-residual construction imposes the exact-news projection `B = 0` (TRUE) or estimates `B` from the data (FALSE, the default); reads `HETID_IMPOSE_NEWS_PROJECTION_ZERO`, falling back to the `IMPOSE_NEWS_PROJECTION_ZERO` script constant
+
+### baseline_spec.R
+Stage-04 baseline spec stamp and fail-closed consistency guard:
+- `current_baseline_spec()` - Resolve the spec the current process is configured for (Y1 lags, news-projection mode, Z source); single source of truth for both the Stage-04 stamp and the downstream check
+- `baseline_spec_mismatches()` - Pure comparison core returning human-readable mismatch lines (an absent field in an old baseline is treated as a mismatch, failing toward safety)
+- `assert_baseline_spec_current()` - Abort downstream stages (05 optimizer, 06 tables) if the loaded baseline RDS was produced under different settings
 
 ## Set construction and bounds
 
@@ -189,7 +204,7 @@ tau* machinery (slack where the set transitions bounded->unbounded):
 
 ## tests/
 
-Unit tests for the utility layer: lambda packing/whitening/varnorm/optimization, profile bounds, I×J identification, closure membership, hetero tests, gamma sources, the Z-width pipeline, the generalized-vs-legacy pipeline equivalence (`test_pipeline_equivalence.R`, which toggles `HETID_ASSERT_EQUIV`), and stats -- plus a `fixtures/` directory of capture scripts and saved fixture RDS.
+Unit tests for the utility layer: lambda packing/whitening/varnorm/optimization, profile bounds, I×J identification, closure membership, hetero tests, gamma sources, the news-projection mode (`test_news_projection.R`, `test_impose_b_zero.R`), the Stage-04 baseline spec stamp (`test_baseline_spec.R`), residual alignment and saved-residual dates (`test_identification_alignment.R`, `test_saved_residuals_dates.R`), the Z-width pipeline, the generalized-vs-legacy pipeline equivalence (`test_pipeline_equivalence.R`, which toggles `HETID_ASSERT_EQUIV`), and stats -- plus a `fixtures/` directory of capture scripts and saved fixture RDS.
 
 ## Usage
 
