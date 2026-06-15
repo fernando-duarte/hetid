@@ -18,6 +18,9 @@ baseline_analysis <- readRDS(file.path(
   "identification_baseline",
   "baseline_identification_analysis.rds"
 ))
+# Fail closed if the baseline was built under different mode settings than the
+# current run, so a stale baseline is not assembled into the final comparison.
+assert_baseline_spec_current(baseline_results$spec)
 cli_alert_success("Baseline results loaded")
 
 # Load optimized artifacts

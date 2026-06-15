@@ -7,10 +7,11 @@
 recover_structural_coefficients(beta1r, beta2r, theta)
 }
 \arguments{
-\item{beta1r}{Named numeric vector of length \eqn{p = 1 + n\_pcs}: the OLS
-coefficients of \eqn{Y_1} on \eqn{X = (1, PC')}, i.e. the
-\code{coefficients} element of \code{\link{compute_w1_residuals}}. Names
-are \code{c("(Intercept)", "pc1", ...)}.}
+\item{beta1r}{Named numeric vector of length \eqn{p}: the OLS coefficients of
+\eqn{Y_1} on the common conditioning vector \eqn{X = (1, PC', \text{own-lags})},
+i.e. the \code{coefficients} element of \code{\link{compute_w1_residuals}}.
+Names are \code{c("(Intercept)", "pc1", ..., "y1_lag1", ...)}; with no lags
+\eqn{p = 1 + n\_pcs}.}
 
 \item{beta2r}{Numeric \eqn{I \times p} matrix: the OLS coefficients of the
 \eqn{I} components of \eqn{Y_2} on the same \eqn{X}, i.e. the
@@ -49,7 +50,7 @@ The population map
   E[X(Y_1 - \boldsymbol{\theta}'Y_2)]} collapses exactly to the affine form
 above, because \eqn{(E[XX'])^{-1}E[XY_1] = \boldsymbol{\beta}_1^{R}} and
 \eqn{(E[XX'])^{-1}E[XY_2'] = (\boldsymbol{\beta}_2^{R})^{\top}}. The
-constant and principal-component coefficients therefore vary affinely with
+constant, principal-component, and own-lag coefficients therefore vary affinely with
 \eqn{\boldsymbol{\theta}}, while \eqn{\boldsymbol{\beta}_{20} =
 \boldsymbol{\beta}_2^{R}} does not depend on \eqn{\boldsymbol{\theta}}.
 }

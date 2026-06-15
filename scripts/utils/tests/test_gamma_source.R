@@ -105,13 +105,73 @@ check(
   is.character(dim_err) && grepl("rows", dim_err)
 )
 
-# build_reduced_form_gamma transposes the Y2-on-PC slope block (drops intercept)
+# build_reduced_form_gamma selects PC slopes by name (drops intercept)
+# Legacy PC-only beta2r: (Intercept, pc1..pc4), I = 2
 beta2r <- matrix(seq_len(2L * 5L), nrow = 2L, ncol = 5L) # I=2 x (1 + 4 PCs)
+colnames(beta2r) <- c("(Intercept)", paste0("pc", 1:4))
 g_rf <- build_reduced_form_gamma(beta2r)
 check(
   "build_reduced_form_gamma is (n_pcs x I) with the reduced_form method attr",
   is.matrix(g_rf) && identical(dim(g_rf), c(4L, 2L)) &&
     identical(attr(g_rf, "method"), "reduced_form")
+)
+# Backward compat: same numbers as the old t(beta2r[, -1]) on a PC-only matrix
+check(
+  "legacy PC-only beta2r yields the old t(beta2r[, -1]) values",
+  identical(unclass(`attr<-`(g_rf, "method", NULL)), t(beta2r[, -1, drop = FALSE]))
+)
+
+# Wide beta2r: (Intercept, pc1..pc4, y1_lag1..y1_lag4) -- lag slopes excluded
+lag_sentinel <- -999
+beta2r_wide <- cbind(
+  beta2r,
+  matrix(lag_sentinel,
+    nrow = 2L, ncol = 4L,
+    dimnames = list(NULL, paste0("y1_lag", 1:4))
+  )
+)
+g_rf_wide <- build_reduced_form_gamma(beta2r_wide)
+check(
+  "wide beta2r builds J x I gamma from PC slopes only (J = 4)",
+  is.matrix(g_rf_wide) && identical(dim(g_rf_wide), c(4L, 2L)) &&
+    isTRUE(all.equal(g_rf_wide, g_rf))
+)
+check(
+  "lag sentinel slopes never appear in the reduced-form gamma",
+  !any(g_rf_wide == lag_sentinel)
+)
+
+# All-zero beta2r (B = 0 imposed): undefined reduced-form gamma errors
+zero_err <- tryCatch(
+  {
+    build_reduced_form_gamma(`colnames<-`(
+      matrix(0, 2L, 5L),
+      c("(Intercept)", paste0("pc", 1:4))
+    ))
+    NULL
+  },
+  error = function(e) conditionMessage(e)
+)
+check(
+  "all-zero PC block errors instructively (mentions B = 0 / exact news)",
+  is.character(zero_err) && grepl("B = 0", zero_err) &&
+    grepl("reduced-form gamma", zero_err)
+)
+
+# No PC columns: error instead of building a degenerate gamma
+nopc_err <- tryCatch(
+  {
+    build_reduced_form_gamma(`colnames<-`(
+      matrix(1, 2L, 3L),
+      c("(Intercept)", "y1_lag1", "y1_lag2")
+    ))
+    NULL
+  },
+  error = function(e) conditionMessage(e)
+)
+check(
+  "beta2r with no ^pc columns errors instructively",
+  is.character(nopc_err) && grepl("principal-component", nopc_err)
 )
 
 # Misaligned supplied rownames signal row-order bugs, not display preferences

@@ -17,7 +17,7 @@ test_that("run_pc_regression returns expected structure", {
     result,
     c(
       "residuals", "fitted", "coefficients",
-      "r_squared", "model", "complete_idx"
+      "r_squared", "model", "complete_idx", "df_residual"
     )
   )
   expect_length(result$residuals, 50)

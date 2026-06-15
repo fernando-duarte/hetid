@@ -93,7 +93,7 @@ hetero_html <- pval_df |>
   gt() |>
   tab_header(
     title = "Heteroskedasticity Diagnostics for Identification Residuals",
-    subtitle = "P-values by bond maturity (W2 residuals on principal components)"
+    subtitle = "P-values by bond maturity (W2 residualized on the common X_t)"
   ) |>
   fmt_number(columns = -Test, decimals = 3) |>
   tab_spanner(label = "Maturity (months)", columns = -Test)

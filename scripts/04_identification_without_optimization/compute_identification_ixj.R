@@ -80,7 +80,12 @@ baseline_path <- file.path(
   "baseline_identification_results.rds"
 )
 if (file.exists(baseline_path)) {
-  base_set <- readRDS(baseline_path)$bounds_tau_set
+  baseline <- readRDS(baseline_path)
+  # Fail closed if the baseline was built under different mode settings than this
+  # run: the I x J widths below are computed under the CURRENT settings, so a
+  # mode mismatch would silently compare against a different-mode baseline width.
+  assert_baseline_spec_current(baseline$spec)
+  base_set <- baseline$bounds_tau_set
   ixj_02 <- bounds_by_tau[["0.05"]]
   cli_h2("Baseline (gamma-aggregated) vs I x J  --  tau = 0.05")
   print(data.frame(

@@ -1,13 +1,16 @@
-# Generalized-instrument identified set on squared principal components (Z = PC^2).
+# Generalized-instrument identified set on squared current instruments (Z^2,
+# default level PCs -> PC^2; a hook-supplied Z would be squared instead).
 # Exercises the exported generalized-instrument front-end (build_instrument_matrix
 # -> build_general_quadratic_system) and the constraint-checker closure
 # (make_system_checker / make_constraint_checker, via probe_set_membership).
-# Only the INSTRUMENT role is swapped to PC^2; the structural first stage is
-# unchanged. Not a paper deliverable -- a generalized-API demonstration pass.
+# Only the INSTRUMENT role is swapped to the squared instruments; the news
+# projection that produces W1/W2 (the common-X_t first stage, estimate-B by
+# default) is reused as-is. Not a paper deliverable -- a generalized-API
+# demonstration pass.
 
 source(here::here("scripts/utils/common_settings.R"))
 
-cli_h1("Generalized-Instrument Identified Set (Z = PC^2)")
+cli_h1("Generalized-Instrument Identified Set (Z^2; default PC^2)")
 
 # Reduced-form residuals + level PCs (HETID_Z_SOURCE unset -> default level-PC
 # instruments, already aligned to w1/w2 by compute_identification_residuals).

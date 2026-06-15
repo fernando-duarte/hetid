@@ -13,15 +13,35 @@ baseline_gamma_method <- function() {
   Sys.getenv("HETID_BASELINE_GAMMA", "vfci")
 }
 
-#' Reduced-form gamma: the Y2-on-PC slope block of beta2R,
-#' transposed to the J x I (instruments x components) layout the pipeline
-#' quadratic builder (build_pipeline_quadratic_system) expects. Drops the
-#' intercept column. Shared by the stage-06 consumption-equation table and the
-#' tau* identification-strength benchmark.
-#' @param beta2r I x (1 + n_pcs) Y2-on-PC reduced-form coefficient matrix
+#' Reduced-form gamma: the Y2-on-PC slope block of beta2R, transposed to the
+#' J x I (instruments x components) layout the pipeline quadratic builder
+#' (build_pipeline_quadratic_system) expects. Selects the principal-component
+#' columns by name (anchored "^pc[0-9]+$"); intercept and any y1_lag* columns
+#' are excluded because the instruments are the PCs only -- the conditioning
+#' lags never enter gamma. Shared by the stage-06 consumption-equation table
+#' and the tau* identification-strength benchmark.
+#' @param beta2r I x (1 + n_pcs [+ n_lags]) Y2-on-PC reduced-form coefficients,
+#'   with columns named (Intercept), pc1..pcJ, and optionally y1_lag1..y1_lagH
 #' @return n_pcs x I matrix with attr "method" = "reduced_form"
 build_reduced_form_gamma <- function(beta2r) {
-  gamma <- t(beta2r[, -1, drop = FALSE])
+  pc_cols <- grep("^pc[0-9]+$", colnames(beta2r))
+  if (length(pc_cols) == 0L) {
+    stop(
+      "build_reduced_form_gamma: beta2r has no principal-component columns ",
+      "matching '^pc[0-9]+$'; got columns ",
+      paste(colnames(beta2r), collapse = ", "),
+      " (instruments must be the named pc1..pcJ slopes)"
+    )
+  }
+  pc_block <- beta2r[, pc_cols, drop = FALSE]
+  if (all(pc_block == 0)) {
+    stop(
+      "build_reduced_form_gamma: the PC slope block of beta2r is all zeros, ",
+      "so the reduced-form gamma is undefined under imposed exact news ",
+      "(B = 0); callers should skip the reduced-form benchmark in this case"
+    )
+  }
+  gamma <- t(pc_block)
   stopifnot(is.matrix(gamma), all(is.finite(gamma)))
   attr(gamma, "method") <- "reduced_form"
   gamma

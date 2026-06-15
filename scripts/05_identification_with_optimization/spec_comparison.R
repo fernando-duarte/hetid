@@ -49,11 +49,13 @@ ckpt_path <- function(key) {
   file.path(ckpt_dir, paste0(gsub("[|]", "__", key), ".rds"))
 }
 
-# Checkpoint key. N_Y1_LAGS is part of the spec: a lag change must invalidate
-# old checkpoints rather than silently reuse contemporaneous-W1 results.
+# Checkpoint key. N_Y1_LAGS and the news-projection mode are part of the spec:
+# a lag change or an estimate-B/impose-B=0 flip must invalidate old checkpoints
+# rather than silently reuse results built under a different W1/W2 residual.
+news_mode_token <- if (impose_news_projection_zero()) "impose_b_zero" else "estimate_b"
 group_key <- function(g) {
   paste(
-    g$n_pcs, paste(g$components, collapse = "-"), N_Y1_LAGS,
+    g$n_pcs, paste(g$components, collapse = "-"), N_Y1_LAGS, news_mode_token,
     sep = "|"
   )
 }

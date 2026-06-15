@@ -142,9 +142,14 @@ print(bounds_tau_set[, display_cols])
 
 # Assemble results
 results <- list(
-  spec = list(
-    n_pcs = length(inputs$pc_vars),
-    components = lookup$component_id
+  spec = c(
+    list(
+      n_pcs = length(inputs$pc_vars),
+      components = lookup$component_id
+    ),
+    # Stamp the mode settings the baseline was built under, so downstream stages
+    # can fail closed if a stale baseline is combined with different settings.
+    current_baseline_spec()
   ),
   lookup = lookup,
   residuals = list(
