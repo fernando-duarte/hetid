@@ -163,22 +163,13 @@ acm_data <- extract_acm_data(
 )
 data("variables", package = "hetid")
 
-# Year-quarter keys for date alignment
-acm_data$yq <- paste0(
-  format(acm_data$date, "%Y"), "-",
-  quarters(acm_data$date)
-)
-variables$yq <- paste0(
-  format(variables$date, "%Y"), "-",
-  quarters(variables$date)
-)
-
-# Merge (covers quarters available in both datasets)
+# ACM and the bundled PCs share the period-end date convention, so they
+# merge directly by calendar date (covers dates available in both datasets)
 pc_cols <- paste0("pc", 1:4)
 merged <- merge(
-  variables[, c("yq", pc_cols)],
-  acm_data[, c("yq", paste0("y", mats), paste0("tp", mats))],
-  by = "yq"
+  variables[, c("date", pc_cols)],
+  acm_data[, c("date", paste0("y", mats), paste0("tp", mats))],
+  by = "date"
 )
 pcs <- as.matrix(merged[, pc_cols])
 yields <- merged[, paste0("y", mats)]
