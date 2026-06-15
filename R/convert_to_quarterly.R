@@ -134,33 +134,11 @@ convert_to_quarterly <- function(
     all.x = TRUE
   )
 
-  if (use_incomplete_quarters && any(incomplete)) {
-    # Re-date kept incomplete quarters to the end of the terminal month
-    # so the quarterly series is uniformly dated; chronological order is
-    # unchanged because the new date stays within the same quarter
-    idx <- match(last_in_quarter$date[incomplete], result$date)
-    result$date[idx] <- quarter_end_date(
-      last_in_quarter$year[incomplete],
-      expected_months[incomplete]
-    )
-  }
+  # Canonical period-end: every quarterly date becomes the last calendar day of
+  # its quarter (Mar 31 / Jun 30 / Sep 30 / Dec 31), regardless of the business
+  # day the last observation fell on. Chronological order is unchanged because
+  # each new date stays within the same quarter.
+  result$date <- to_period_end(result$date, "quarterly")
 
   result
-}
-
-#' Last Calendar Day of a Terminal Quarter Month
-#'
-#' @param year Numeric vector of years
-#' @param terminal_month Numeric vector of quarter-end months (3, 6, 9, 12)
-#'
-#' @return Date vector
-#' @keywords internal
-#' @noRd
-quarter_end_date <- function(year, terminal_month) {
-  first_of_next_month <- as.Date(sprintf(
-    "%04d-%02d-01",
-    as.integer(year + terminal_month %/% 12),
-    as.integer(terminal_month %% 12 + 1)
-  ))
-  first_of_next_month - 1
 }

@@ -154,6 +154,14 @@ extract_acm_data <- function(data_types = c("yields", "term_premia"),
     result <- convert_to_quarterly(result, use_incomplete_quarters) # nolint: object_usage_linter
   }
 
+  # Normalize to the canonical period-end convention so every ingested series
+  # leaves on identical calendar dates (idempotent for the quarterly path,
+  # which convert_to_quarterly already normalized).
+  result$date <- to_period_end(
+    result$date,
+    if (frequency == "quarterly") "quarterly" else "monthly"
+  )
+
   # Sort by date; drop = FALSE keeps single-column results as data frames
   result <- result[order(result$date), , drop = FALSE]
 
