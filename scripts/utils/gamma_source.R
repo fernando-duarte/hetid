@@ -27,18 +27,15 @@ classify_common_design_cols <- function(nms) {
   pc_cols <- grep("^pc[0-9]+$", nms)
   lag_cols <- grep("^l[0-9]*\\.y1$", nms) # Y1-only; matches l.y1, l2.y1, ...
   intercept_col <- which(nms == "(Intercept)")
-  unknown <- setdiff(seq_along(nms), c(intercept_col, pc_cols, lag_cols))
   if (length(intercept_col) != 1L) {
-    stop("classify_common_design_cols: expected exactly one '(Intercept)' column.",
-      call. = FALSE
-    )
+    cli_abort("classify_common_design_cols: expected exactly one '(Intercept)' column.")
   }
+  unknown <- setdiff(seq_along(nms), c(intercept_col, pc_cols, lag_cols))
   if (length(unknown) > 0L) {
-    stop("classify_common_design_cols: unrecognised columns: ",
-      paste(nms[unknown], collapse = ", "),
-      ". Expected only '(Intercept)', '^pc[0-9]+$', '^l[0-9]*\\.y1$'.",
-      call. = FALSE
-    )
+    cli_abort(c(
+      "classify_common_design_cols: unrecognised columns: {nms[unknown]}.",
+      "i" = "Expected only '(Intercept)', '^pc[0-9]+$', '^l[0-9]*\\.y1$'."
+    ))
   }
   list(
     intercept_col = intercept_col,

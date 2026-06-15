@@ -11,7 +11,10 @@ test_that("build_y1_lag_columns shifts each column and pads with leading NAs", {
 test_that("build_y1_lag_columns: lag 1 has no NA, lag h has h-1 leading NAs", {
   mat <- build_y1_lag_columns(seq_len(8), 4)
 
-  expect_equal(colSums(is.na(mat)), c(l.y1 = 0, l2.y1 = 1, l3.y1 = 2, l4.y1 = 3))
+  expect_equal(
+    colSums(is.na(mat)),
+    stats::setNames(as.numeric(0:3), lag_grammar_names("y1", 4L))
+  )
   # Column h equals the outcome shifted down by h-1
   expect_equal(mat[, 4], c(NA, NA, NA, 1, 2, 3, 4, 5))
 })

@@ -21,6 +21,8 @@ NULL
 #' @return Character vector of length \code{n_lags} with the grammar lag names.
 #' @keywords internal
 lag_grammar_names <- function(series, n_lags) {
+  # vapply (not a vectorized paste0) so n_lags = 0 yields character(0): paste0
+  # recycles a zero-length argument to "", which would wrongly return "l.<series>".
   vapply(seq_len(n_lags), function(h) {
     if (h == 1L) paste0("l.", series) else paste0("l", h, ".", series)
   }, character(1))
