@@ -127,6 +127,9 @@ if (file.exists(file.path(utils_dir, "gamma_source.R"))) {
 if (file.exists(file.path(utils_dir, "news_projection.R"))) {
   source(file.path(utils_dir, "news_projection.R"))
 }
+if (file.exists(file.path(utils_dir, "baseline_spec.R"))) {
+  source(file.path(utils_dir, "baseline_spec.R"))
+}
 if (file.exists(file.path(utils_dir, "identification_utils.R"))) {
   source(file.path(utils_dir, "identification_utils.R"))
 }

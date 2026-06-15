@@ -12,6 +12,10 @@ baseline <- readRDS(file.path(
   "baseline_identification_results.rds"
 ))
 
+# Fail closed if the loaded baseline was produced under different mode settings
+# (Y1 lags, news-projection mode, Z source) than the current run.
+assert_baseline_spec_current(baseline$spec)
+
 moments <- baseline$moments
 gamma_baseline <- baseline$gamma_baseline
 lookup <- baseline$lookup

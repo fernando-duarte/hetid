@@ -47,6 +47,11 @@ optimized <- readRDS(file.path(
   OUTPUT_TEMP_DIR, "identification_optimized",
   "optimized_identification_results.rds"
 ))
+# Fail closed if the baseline was built under different mode settings than this
+# run -- this stage recomputes residuals under the CURRENT settings to recover
+# beta1R/beta2R, so a mode mismatch would silently combine inconsistent objects.
+assert_baseline_spec_current(baseline$spec)
+
 moments <- baseline$moments
 lookup <- baseline$lookup
 gamma_opt <- optimized$gamma_optimized
