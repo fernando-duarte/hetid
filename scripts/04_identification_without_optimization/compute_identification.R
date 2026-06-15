@@ -141,6 +141,9 @@ cli_h2("Baseline Bounds (tau = 0.05)")
 print(bounds_tau_set[, display_cols])
 
 # Assemble results
+# Persist the calendar index alongside the residual series so the saved W1/W2 stay
+# date-keyed on disk (resid$dates is the common date set the aligner validated).
+stopifnot(length(resid$dates) == resid$n_obs)
 results <- list(
   spec = c(
     list(
@@ -155,6 +158,7 @@ results <- list(
   residuals = list(
     w1 = resid$w1,
     w2 = resid$w2,
+    dates = resid$dates,
     n_obs = resid$n_obs,
     # Persist the aligned instrument matrix so the stage-05 optimizer reuses the
     # exact (lag-trimmed) Z the moments were built from, instead of rebuilding
