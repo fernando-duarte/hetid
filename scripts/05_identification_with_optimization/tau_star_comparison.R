@@ -87,41 +87,21 @@ run_tau_star_analysis <- function() {
   # Reduced-form benchmark from the Y2-on-PC slopes (beta2R), the
   # higher-rank fixed gamma that isolates "what optimization buys beyond rank".
   # Under imposed exact news (B = 0) the PC slope block of beta2R is all zeros,
-  # so build_reduced_form_gamma() is undefined and errors (mirrors the stage-06
-  # consumption-table skip in create_consumption_equation_table.R). Detect that
-  # mode and SKIP the reduced-form benchmark with a clear note; the VFCI-gamma
-  # and optimizer tau* comparisons below stay well-defined. The estimate-B
-  # (default) path is unchanged. The tryCatch also catches the all-zero error
-  # defensively in case the env flag and the actual coefficients ever disagree.
-  if (impose_news_projection_zero()) {
+  # so the reduced-form gamma is undefined. reduced_form_gamma_or_skip()
+  # centralizes the skip decision (upfront impose_news_projection_zero() check
+  # + defensive all-zero "B = 0" catch), returning NULL with a clear note in
+  # that mode; the VFCI-gamma and optimizer tau* comparisons below stay
+  # well-defined. The estimate-B (default) path gets the same reduced-form
+  # gamma as before, so it is unchanged.
+  gamma_rf_mat <- reduced_form_gamma_or_skip(resid$w2_coefficients)
+  if (!is.null(gamma_rf_mat) && nrow(gamma_rf_mat) == n_inst) {
+    rf_rank <- qr(gamma_rf_mat)$rank
+    fixed[[paste0("reduced-form (rank-", rf_rank, ")")]] <- gamma_rf_mat
+  } else if (!is.null(gamma_rf_mat)) {
     cli_alert_warning(paste0(
-      "Imposed exact-news projection (B = 0): the reduced-form gamma is ",
-      "undefined (PC slopes are zero), so the reduced-form tau* benchmark is ",
-      "skipped; the VFCI and optimized tau* comparisons proceed."
+      "reduced-form gamma skipped: its J = ", nrow(gamma_rf_mat),
+      " rows do not match the instrument count ", n_inst
     ))
-  } else {
-    gamma_rf_mat <- tryCatch(
-      build_reduced_form_gamma(resid$w2_coefficients),
-      error = function(e) {
-        if (grepl("B = 0", conditionMessage(e))) {
-          cli_alert_warning(paste0(
-            "Reduced-form gamma undefined (PC slopes all zero / B = 0); ",
-            "reduced-form tau* benchmark skipped: ", conditionMessage(e)
-          ))
-          return(NULL)
-        }
-        stop(e)
-      }
-    )
-    if (!is.null(gamma_rf_mat) && nrow(gamma_rf_mat) == n_inst) {
-      rf_rank <- qr(gamma_rf_mat)$rank
-      fixed[[paste0("reduced-form (rank-", rf_rank, ")")]] <- gamma_rf_mat
-    } else if (!is.null(gamma_rf_mat)) {
-      cli_alert_warning(paste0(
-        "reduced-form gamma skipped: its J = ", nrow(gamma_rf_mat),
-        " rows do not match the instrument count ", n_inst
-      ))
-    }
   }
 
   cli_h2("tau* (fixed gammas; sweep + bisection)")

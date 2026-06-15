@@ -66,18 +66,16 @@ beta2r <- resid$w2_coefficients
 # BOTH Y1 and Y2 on the same X_t = (1, PC, H lags of Y1), so beta2R is FULL-WIDTH
 # and column-matched to beta1R. PCs are the only instruments (^pc[0-9]+$); the
 # y1_lag* columns are the predetermined conditioning lags.
-pc_cols <- grep("^pc[0-9]+$", names(beta1r))
-lag_cols <- grep("^y1_lag[0-9]+$", names(beta1r))
-n_pcs <- length(pc_cols)
-n_lag <- length(lag_cols)
+design_cols <- classify_common_design_cols(names(beta1r))
+pc_cols <- design_cols$pc_cols
+lag_cols <- design_cols$lag_cols
+n_pcs <- design_cols$n_pcs
+n_lag <- design_cols$n_lag
 # beta2R is already full-width and column-matched to beta1R; no zero-padding is
 # needed and the exact recovery identity carries every column (constant, PCs, AND
 # lags) through directly. Fail loudly if a legacy PC-only beta2R is ever passed --
 # do NOT silently re-pad, which would falsely point-identify psi.
-stopifnot(
-  length(beta1r) == ncol(beta2r),
-  identical(names(beta1r), colnames(beta2r))
-)
+assert_beta_columns_matched(beta1r, beta2r)
 gamma_vfci <- get_baseline_gamma("vfci", n_pcs = 4, n_components = i_dim)
 pt_vfci <- solve_point_identification(
   build_pipeline_quadratic_system(gamma_vfci, rep(0, i_dim), moments)$components
@@ -95,7 +93,7 @@ cat(
 # the psi rows are reported as a point at the fixed theta above).
 qs05 <- build_pipeline_quadratic_system(gamma_vfci, rep(0.05, i_dim), moments)
 p_lab <- names(beta1r)
-intercept_col <- which(!(seq_along(p_lab) %in% c(pc_cols, lag_cols)))
+intercept_col <- design_cols$intercept_col
 beta_set <- lapply(c(intercept_col, pc_cols), function(p) {
   cp <- as.numeric(beta2r[, p])
   fmn <- solve_linear_functional_bound(qs05$quadratic, cp, "min")

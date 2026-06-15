@@ -94,10 +94,11 @@ stopifnot(nrow(beta2r) == i_dim)
 # is now FULL-WIDTH and column-matched to beta1R. PCs are the only instruments
 # (^pc[0-9]+$); y1_lag* columns are the predetermined conditioning lags whose
 # coefficient psi_h is a set-valued linear image of Theta under estimate-B.
-pc_cols <- grep("^pc[0-9]+$", names(beta1r))
-lag_cols <- grep("^y1_lag[0-9]+$", names(beta1r))
-n_pcs <- length(pc_cols)
-n_lag <- length(lag_cols)
+design_cols <- classify_common_design_cols(names(beta1r))
+pc_cols <- design_cols$pc_cols
+lag_cols <- design_cols$lag_cols
+n_pcs <- design_cols$n_pcs
+n_lag <- design_cols$n_lag
 
 # beta2R is full-width and column-matched to beta1R since A1-A4 routed W2
 # through the common conditioning vector. The exact recovery identity
@@ -105,38 +106,21 @@ n_lag <- length(lag_cols)
 # PCs, AND lags) through directly; no zero-padding is needed. Fail loudly if a
 # legacy PC-only beta2R is ever passed -- do NOT silently re-pad, since that
 # would falsely point-identify psi.
-if (!(length(beta1r) == ncol(beta2r) &&
-  identical(names(beta1r), colnames(beta2r)))) {
-  cli_abort(c(
-    "beta2R is not column-matched to beta1R.",
-    "i" = "Expected the FULL common design (1, PC, y1_lag*) in both fits.",
-    "x" = paste0(
-      "got beta1R names {.val {names(beta1r)}} vs beta2R columns ",
-      "{.val {colnames(beta2r)}}"
-    ),
-    ">" = paste0(
-      "This requires the common-conditioning change (A1-A4): W2 must be ",
-      "regressed on the same X_t as W1."
-    )
-  ))
-}
+assert_beta_columns_matched(beta1r, beta2r)
 
 # === POINT IDENTIFICATION (tau = 0, reduced-form gamma) ===
 # Under imposed exact news (B = 0) the PC slope block of beta2R is all zeros, so
-# build_reduced_form_gamma() is undefined (it errors) and the tau = 0 point is
-# degenerate. Detect that mode and SKIP the reduced-form-gamma point block,
-# routing it through the existing point_unreliable machinery. The estimate-B
-# (default) path is unaffected. isTRUE() collapses an NA (any NA PC slope) to
-# FALSE so the `||` cannot yield NA and error the `if` below.
-impose_b_zero <- impose_news_projection_zero() ||
-  isTRUE(all(beta2r[, pc_cols, drop = FALSE] == 0))
+# the reduced-form gamma is undefined and the tau = 0 point is degenerate.
+# reduced_form_gamma_or_skip() centralizes that decision (upfront
+# impose_news_projection_zero() check + defensive all-zero "B = 0" catch),
+# returning NULL with one standard warning in that mode; we then SKIP the
+# reduced-form-gamma point block, routing it through the existing
+# point_unreliable machinery. The estimate-B (default) path gets the same
+# reduced-form gamma as before, so it is unaffected.
+gamma_rf <- reduced_form_gamma_or_skip(beta2r)
+impose_b_zero <- is.null(gamma_rf)
 cond_max <- 1e12
 if (impose_b_zero) {
-  cli_alert_warning(paste0(
-    "Imposed exact-news projection (B = 0): the reduced-form gamma is ",
-    "undefined (PC slopes are zero), so the tau = 0 point column is reported ",
-    "as undefined; theta stays SET-identified via the stage-05 bounds."
-  ))
   pt0 <- NULL
   point_unreliable <- TRUE
   reason <- paste0(
@@ -150,7 +134,6 @@ if (impose_b_zero) {
   beta1_point <- beta1r
   cond_note <- reason
 } else {
-  gamma_rf <- build_reduced_form_gamma(beta2r)
   qs0 <- build_pipeline_quadratic_system(gamma_rf, rep(0, i_dim), moments)
   pt0 <- solve_point_identification(qs0$components)
 
