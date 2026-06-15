@@ -41,9 +41,11 @@ load_identification_inputs <- function(
 # time period in every column: no maturity dropped rows that another kept.
 # compute_w2_residuals() filters incomplete rows PER MATURITY (kept_idx), so
 # verify complete-data alignment before flattening -- equal residual lengths,
-# identical kept_idx across maturities, and kept rows forming the leading
-# block of the regression sample (so residual row t is sample row t, which the
-# downstream pcs_aligned subset also assumes).
+# identical kept_idx across maturities, and the kept rows forming a CONTIGUOUS
+# block (a leading lag-NA prefix may drop, but no interior gap that would shift
+# residual row t off its calendar period). The date-based alignment downstream
+# no longer assumes W2 keeps MORE rows than W1: with the common conditioning
+# vector X_t, W2 drops the same H-1 leading lag rows as W1.
 assert_w2_alignment <- function(w2_result) {
   lens <- vapply(w2_result$residuals, length, integer(1))
   if (length(unique(lens)) > 1) {
@@ -62,25 +64,51 @@ assert_w2_alignment <- function(w2_result) {
         "cbind would glue residuals from different dates into one row"
       )
     }
-    if (!identical(which(ref), seq_len(lens[[1]]))) {
+    k <- which(ref)
+    if (length(k) > 0L && !identical(k, seq.int(k[1L], k[length(k)]))) {
       stop(
-        "W2 kept_idx dropped non-trailing rows of the regression sample; ",
-        "residual row t no longer corresponds to sample row t"
+        "W2 kept_idx dropped interior rows of the regression sample; ",
+        "the kept rows are not a contiguous block, so residual row t no ",
+        "longer maps to a single calendar period"
       )
     }
   }
   invisible(w2_result)
 }
 
-# W1 residuals must occupy a CONTIGUOUS calendar block so a single leading-row
-# offset realigns them with the W2 residuals and instruments in
-# compute_identification_residuals (which trims the first `offset` rows of
-# w2_mat / z_mat). Y1 own-lags legitimately drop a leading PREFIX (the first
-# H-1 rows carry lag NAs), leaving a contiguous trailing block -- that is
-# allowed. An INTERIOR gap (an NA in consumption or the PCs mid-sample) is the
-# real hazard: it would shift residual row t off its calendar period and break
-# the structural-coefficient identity beta1(theta) = beta1R - (beta2R)' theta,
-# so it is still rejected.
+# Map a W2 (or W1) per-row complete-case mask, defined over the T-1 PREDICTOR
+# rows [1:(T-1)], onto the calendar RESPONSE dates of the retained rows.
+#
+# Both reduced forms regress a leading outcome / news term (length T-1, indexed
+# by predictor row t in 1..T-1) on predictor-row regressors, so predictor row t
+# pairs with the RESPONSE realized at date[t+1]. Hence the retained response
+# dates are date[2:T][mask] -- exactly the convention compute_w1_residuals uses
+# for w1_result$dates, which lets W1, W2, and the instruments be aligned in one
+# common date space rather than by fragile length offsets.
+w2_response_dates <- function(kept_idx, panel_dates) {
+  if (is.null(kept_idx) || length(kept_idx) == 0L) {
+    return(NULL)
+  }
+  mask <- kept_idx[[1]]
+  response_dates <- panel_dates[-1L]
+  if (length(mask) != length(response_dates)) {
+    cli::cli_abort(c(
+      "W2 complete-case mask length does not match the T-1 response axis",
+      i = "mask = {length(mask)}, response dates = {length(response_dates)}"
+    ))
+  }
+  response_dates[mask]
+}
+
+# W1 residuals must occupy a CONTIGUOUS calendar block so their retained
+# response dates form a clean span that the date-based alignment in
+# compute_identification_residuals can intersect with the W2 and instrument
+# dates. Y1 own-lags legitimately drop a leading PREFIX (the first H-1 rows
+# carry lag NAs), leaving a contiguous trailing block -- that is allowed. An
+# INTERIOR gap (an NA in consumption or the PCs mid-sample) is the real hazard:
+# it would shift residual row t off its calendar period and break the
+# structural-coefficient identity beta1(theta) = beta1R - (beta2R)' theta, so it
+# is still rejected.
 assert_w1_leading_block <- function(w1_result) {
   kept <- w1_result$kept_idx
   if (is.null(kept)) {
@@ -122,44 +150,80 @@ compute_identification_residuals <- function(
   tp_df <- data[, tp_cols]
   pcs_mat <- as.matrix(data[, pc_cols])
 
+  # Condition W2 on the SAME common X_t = (1, PC_t, H lags of Y1) as W1 (or
+  # impose the exact-news projection B = 0). impose_news_projection_zero() is
+  # resolved in news_projection.R, soft-sourced by common_settings.R.
   cli::cli_alert_info("Computing W2 residuals...")
+  y1 <- data[[HETID_CONSTANTS$CONSUMPTION_GROWTH_COL]]
   w2_result <- compute_w2_residuals(
     yields = yields_df, term_premia = tp_df,
     maturities = maturities,
     n_pcs = n_pcs, pcs = pcs_mat,
-    step = step
+    step = step,
+    y1 = y1, y1_lags = y1_lags,
+    impose_b_zero = impose_news_projection_zero()
   )
   assert_w2_alignment(w2_result)
   w2_mat <- do.call(cbind, w2_result$residuals)
 
-  # Y1 own-lags drop the first H-1 rows of W1 only; W2 and Z are not lagged, so
-  # realign them to W1's common trailing block by trimming the leading `offset`
-  # rows. A date check fails closed on misalignment.
-  n_resid <- length(w1_result$residuals)
+  # Align W1, W2, and the instruments on the actual retained CALENDAR DATES, not
+  # on length offsets. With the common conditioning vector X_t both W1 and W2
+  # drop the SAME H-1 leading lag rows, so an offset-based trim (which keys on
+  # nrow(W2) - nrow(W1)) silently leaves the instruments anchored to panel row 1
+  # while the residuals start H quarters later. Date intersection is immune to
+  # that: each residual is paired with the instrument row for its OWN period.
+  if (!"date" %in% names(data)) {
+    cli::cli_abort("data must carry a 'date' column for calendar-date alignment")
+  }
+  panel_dates <- data$date
+  w1_dates <- w1_result$dates
+  w2_dates <- w2_response_dates(w2_result$kept_idx, panel_dates)
+  common_dates <- intersect(as.character(w1_dates), as.character(w2_dates))
+  common_dates <- panel_dates[match(common_dates, as.character(panel_dates))]
+  common_dates <- common_dates[order(common_dates)]
+
+  # Map the common date set into each ALREADY-COMPRESSED series' own positions
+  # (w1/w2 residuals are post-complete.cases, so an absolute panel mask would
+  # mis-index them). For the instruments, predictor row t pairs with date[t+1],
+  # so select the predictor rows [1:(T-1)] whose response date is in the set.
   z_mat <- get_identification_z(data, pcs_mat)
-  n_w2 <- nrow(w2_mat)
-  offset <- n_w2 - n_resid
-  if (offset < 0L) {
-    cli::cli_abort("W1 has more rows than W2; alignment impossible")
-  }
-  if (offset > 0L) {
-    w2_mat <- w2_mat[-seq_len(offset), , drop = FALSE]
-    z_mat <- z_mat[-seq_len(offset), , drop = FALSE]
-  }
-  pcs_aligned <- z_mat[seq_len(n_resid), , drop = FALSE]
-  if (!is.null(w1_result$dates) && "date" %in% names(data)) {
-    w2_dates <- utils::tail(utils::head(data$date[-1L], n_w2), n_resid)
-    if (!isTRUE(all.equal(w2_dates, w1_result$dates))) {
-      cli::cli_abort("W1/W2 date misalignment after Y1-lag trimming")
-    }
+  n_panel <- length(panel_dates)
+  z_response_dates <- panel_dates[-1L]
+  z_pred <- z_mat[seq_len(n_panel - 1L), , drop = FALSE]
+
+  w1_sel <- match(as.character(common_dates), as.character(w1_dates))
+  w2_sel <- match(as.character(common_dates), as.character(w2_dates))
+  z_sel <- match(as.character(common_dates), as.character(z_response_dates))
+
+  w1_aligned <- w1_result$residuals[w1_sel]
+  w2_mat <- w2_mat[w2_sel, , drop = FALSE]
+  pcs_aligned <- z_pred[z_sel, , drop = FALSE]
+  attr(pcs_aligned, "dates") <- common_dates
+
+  # Fail closed: the three retained-date vectors must be IDENTICAL after the
+  # date-keyed subset. Anything else means an instrument is paired with the
+  # wrong period (the silent shift this whole mechanism exists to prevent).
+  aligned_w1_dates <- w1_dates[w1_sel]
+  aligned_z_dates <- z_response_dates[z_sel]
+  if (!identical(as.character(aligned_w1_dates), as.character(common_dates)) ||
+    !identical(as.character(aligned_z_dates), as.character(common_dates))) {
+    cli::cli_abort(
+      "W1 / W2 / instrument dates disagree after date-keyed alignment"
+    )
   }
 
+  n_resid <- length(common_dates)
   result <- list(
-    w1 = w1_result$residuals,
+    w1 = w1_aligned,
     w2 = w2_mat,
     pcs_aligned = pcs_aligned,
     w1_result = w1_result,
-    n_obs = n_resid
+    n_obs = n_resid,
+    # The common retained dates A5 fits the structural recovery on. Under
+    # estimate-B, beta1R (w1_result$coefficients) and beta2R (w2_coefficients)
+    # come from INDEPENDENT full fits; A5 handles the common-sample recovery
+    # identity beta1(theta) = beta1R - (beta2R)' theta on these dates.
+    dates = common_dates
   )
   # Retain beta2R (the Y2-on-PC reduced-form coefficient matrix, I x (1+n_pcs),
   # = the point-identified beta20) for structural-coefficient recovery; it is
