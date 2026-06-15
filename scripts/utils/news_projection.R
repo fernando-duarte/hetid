@@ -6,15 +6,15 @@
 # W2 residuals cannot drift. Mirrors baseline_gamma_method() in gamma_source.R.
 
 impose_news_projection_zero <- function() {
-  raw <- Sys.getenv("HETID_IMPOSE_NEWS_PROJECTION_ZERO", "")
+  raw <- trimws(Sys.getenv("HETID_IMPOSE_NEWS_PROJECTION_ZERO", ""))
 
   if (identical(raw, "")) {
-    # No override: fall back to the script constant, looked up defensively from
-    # the calling scope (and its enclosures) the way N_Y1_LAGS is read at
+    # No override: fall back to the script constant (the global set by
+    # common_settings.R), read the way N_Y1_LAGS is at
     # identification_utils.R:108. Absent the constant, default to FALSE.
     const <- get0(
       "IMPOSE_NEWS_PROJECTION_ZERO",
-      envir = parent.frame(), inherits = TRUE, ifnotfound = FALSE
+      envir = globalenv(), ifnotfound = FALSE
     )
     return(isTRUE(const))
   }

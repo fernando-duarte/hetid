@@ -31,10 +31,20 @@ check(
   identical(impose_news_projection_zero(), FALSE)
 )
 
-# Env unset + script constant TRUE ⇒ TRUE (set the constant in this scope;
-# the resolver looks it up defensively in the calling frames)
+# Env unset + script constant TRUE ⇒ TRUE. The resolver reads the GLOBAL
+# constant (the production lookup path), so flip it in globalenv and restore
+# the prior value afterward -- even on failure -- to stay hermetic.
 local({
-  IMPOSE_NEWS_PROJECTION_ZERO <- TRUE
+  had_const <- exists("IMPOSE_NEWS_PROJECTION_ZERO", envir = globalenv())
+  prior <- if (had_const) get("IMPOSE_NEWS_PROJECTION_ZERO", envir = globalenv())
+  on.exit(
+    if (had_const) {
+      assign("IMPOSE_NEWS_PROJECTION_ZERO", prior, envir = globalenv())
+    } else {
+      rm("IMPOSE_NEWS_PROJECTION_ZERO", envir = globalenv())
+    }
+  )
+  assign("IMPOSE_NEWS_PROJECTION_ZERO", TRUE, envir = globalenv())
   check(
     "env unset + constant TRUE returns TRUE",
     identical(impose_news_projection_zero(), TRUE)
