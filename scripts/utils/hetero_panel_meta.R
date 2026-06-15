@@ -43,8 +43,10 @@ hetero_suite_meta <- function(parameters, corr_mat) {
 hetero_table_notes <- function(hetero, meta, n_pcs, n_obs, corr_mat, tbm) {
   c(
     paste0(
-      "$W_{2,i}$ is the residual from the maturity-$i$ yield equation ",
-      "regressed on the first ", n_pcs, " principal components (T = ",
+      "$W_{2,i}$ is the residual from the maturity-$i$ news equation ",
+      "regressed on the common conditioning vector $X_t$ (a constant, the ",
+      "first ", n_pcs, " principal components, and the consumption-growth ",
+      "own-lags under estimate-B) (T = ",
       n_obs, " quarterly observations)."
     ),
     paste0(

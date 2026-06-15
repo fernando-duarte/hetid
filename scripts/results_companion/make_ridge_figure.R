@@ -57,6 +57,21 @@ proj$region <- factor(proj$region,
 )
 cat("feasible tiles: tau<=0.02 =", sum(f02), " tau<=0.05 =", nrow(proj), "\n")
 
+# Robustness guard: the hard-coded axes below are a deliberate viewing window on
+# a set that stretches to infinity along the ridge, not a data-derived bounding
+# box. If a future model/parameter shift moves the set entirely outside this
+# window, `proj` would be empty and ggplot would silently emit a blank figure.
+# Fail loudly instead so the stale axes get noticed and retuned.
+if (nrow(proj) == 0L) {
+  stop(
+    "No feasible (theta_5y, theta_9y) tiles fall within the hard-coded axis ",
+    "window (th5 in [", min(th5), ", ", max(th5), "], th9 in [", min(th9),
+    ", ", max(th9), "]). The identified set has likely moved; retune the ",
+    "`th5`/`th9`/`th2_scan` ranges before regenerating the ridge figure.",
+    call. = FALSE
+  )
+}
+
 point_df <- data.frame(th5 = pt0[2], th9 = pt0[3])
 ttl <- paste(
   "Near-collinear bond news pins down one combination of the loadings;",

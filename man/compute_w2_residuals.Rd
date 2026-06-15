@@ -97,7 +97,11 @@ contribute no rows (zero rows if all are skipped).
 }
 \description{
 Computes residuals W_\{2,t+1\}^\{(i)\} from regressing Y_\{2,t+1\}^\{(i)\} variables
-(SDF innovations) on principal components extracted from financial asset returns and a constant.
+(SDF innovations) on the common conditioning vector \eqn{X_t}: a constant, the
+principal components extracted from financial asset returns, and (when
+\code{y1}/\code{y1_lags} are supplied) the own-lags of \code{y1}. Setting
+\code{impose_b_zero = TRUE} gives the exact-news case \eqn{B = 0}, in which the
+residual is the centered SDF news itself and all coefficients are zero.
 }
 \details{
 For each maturity i, computes Y_\{2,t+1\}^\{(i)\} as the SDF
