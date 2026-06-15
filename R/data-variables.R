@@ -27,11 +27,11 @@
 #'   \item Growth-rate and timing transformations: columns following the
 #'     naming grammar described in Details (e.g. \code{gr1.}, \code{gr4.},
 #'     \code{lgr1.}, \code{fgr4.}, \code{f2gr1.}, \code{f1.dgs1})
-#'   \item Convenience aliases (duplicate columns, identical to their
-#'     canonically-named equivalents): \code{lgdp} = \code{log.gdpc1},
-#'     \code{lpce} = \code{log.pcepilfe}, \code{ygr} = \code{gr1.gdpc1},
-#'     \code{infl_pce} = \code{gr1.pcepilfe}. Prefer the canonical
-#'     \code{log.}/\code{gr<h>.} names; the aliases are kept for readability.
+#'   \item Convenience renames: each is a readability-only duplicate, exactly
+#'     identical to the grammar-respecting column it renames -- \code{lgdp} is
+#'     \code{log.gdpc1}, \code{lpce} is \code{log.pcepilfe}, \code{ygr} is
+#'     \code{gr1.gdpc1}, and \code{infl_pce} is \code{gr1.pcepilfe}. They carry
+#'     no additional data; prefer the canonical \code{log.}/\code{gr<h>.} names.
 #' }
 #'
 #' @details
@@ -55,10 +55,6 @@
 #' @examples
 #' data(variables)
 #' head(variables)
-#'
-#' # Extract specific series
-#' gdp_growth <- variables$ygr
-#' inflation <- variables$infl_pce
 #'
 #' # Time series plot
 #' plot(variables$date, variables$vfci,
