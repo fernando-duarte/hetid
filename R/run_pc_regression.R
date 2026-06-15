@@ -57,7 +57,7 @@ run_pc_regression <- function(y, pcs, n_pcs) {
   if (anyNA(coefs)) {
     aliased <- names(coefs)[is.na(coefs)]
     stop_hetid(paste0(
-      "Rank-deficient W2 regression design: aliased coefficient(s) ",
+      "Rank-deficient regression design: aliased coefficient(s) ",
       paste(aliased, collapse = ", "),
       ". The conditioning columns are collinear."
     ))

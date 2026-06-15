@@ -121,19 +121,9 @@ compute_w2_residuals <- function(yields, term_premia,
   pcs <- pc_result$pcs
   bundled_dates <- pc_result$dates # nolint: object_usage_linter
 
-  # Common conditioning own-lags: require a length-matched y1 when requested.
+  # Common conditioning own-lags: build_common_conditioning enforces a
+  # length-matched, non-NULL y1 per maturity when y1_lags > 0.
   y1_lags <- validate_y1_lags(y1_lags, nrow(pcs))
-  if (y1_lags > 0L) {
-    assert_bad_argument_ok(
-      !is.null(y1),
-      "y1 must be supplied when y1_lags > 0",
-      arg = "y1"
-    )
-    assert_dimension_ok(
-      length(y1) == nrow(pcs),
-      "y1 must have one element per row of pcs"
-    )
-  }
   pc_lag_names <- if (y1_lags > 0L) paste0("y1_lag", seq_len(y1_lags)) else NULL
 
   # Initialize storage
