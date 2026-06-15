@@ -7,7 +7,7 @@
 load_w2_pcs(pcs, n_pcs, n_obs)
 }
 \arguments{
-\item{pcs}{Provided PCs or NULL}
+\item{pcs}{Supplied PC matrix (required; aligned to yields by date)}
 
 \item{n_pcs}{Number of PCs to use}
 
@@ -17,15 +17,11 @@ load_w2_pcs(pcs, n_pcs, n_obs)
 List with components:
 \describe{
 \item{pcs}{Matrix of principal components}
-\item{dates}{Date vector from bundled data, or NULL
-if user provided PCs}
 \item{pc_names}{Character labels for the first n_pcs
 regressor columns}
 }
 }
 \description{
-Internal function to load or validate principal components.
-When falling back to package data, also extracts dates
-to avoid a redundant second load.
+Internal function to validate the supplied principal components.
 }
 \keyword{internal}

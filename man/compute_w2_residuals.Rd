@@ -29,29 +29,26 @@ uses the step-spaced horizons from \code{step} to
 \code{\link{default_w2_maturities}}).}
 
 \item{n_pcs}{Integer specifying the number of principal components to use.
-Must be between 1 and 6 when using the bundled PCs; with a user-supplied
-\code{pcs} matrix, any value up to \code{ncol(pcs)} is allowed. Default is
+Any value up to \code{ncol(pcs)} is allowed. Default is
 4 following Adrian, Crump, and Moench (2013).
 The choice of n_pcs represents a trade-off between capturing variation in
 financial asset returns and maintaining computational stability. More components
 capture more variation but may lead to overfitting in finite samples.}
 
 \item{pcs}{Matrix of principal components (n x J) where n is the
-number of observations and J is the number of components,
+number of observations (one row per yield row, aligned to the
+yields by calendar date) and J is the number of components,
 extracted from a broader set of returns of financial assets.
-If NULL, uses the bundled \code{variables} dataset (with a
-warning). Pass explicitly to use your own data.
-The matrix may be any instrument set, not only principal
+Required: join the components to the yields by \code{date} before
+calling. The matrix may be any instrument set, not only principal
 components; see \code{\link{build_instrument_matrix}()} for a
 validated constructor that supports arbitrary transformations.}
 
 \item{return_df}{Logical, if TRUE returns a data frame with
 dates (default FALSE)}
 
-\item{dates}{Optional vector of dates for the returned data
-frame. If NULL and bundled PCs are used, bundled dates are
-used. If NULL and custom \code{pcs} are supplied, row
-indices are used instead.}
+\item{dates}{Optional vector of period-end dates for the returned
+data frame (one per yield row). If NULL, row indices are used.}
 
 \item{step}{Integer number of maturity-index units per news period
 (default \code{HETID_CONSTANTS$DEFAULT_STEP}). The news operator
@@ -113,31 +110,25 @@ second-order approximation to the SDF news
 the conditioning vector \eqn{X_t} (PC_t, optionally with
 \code{y1_lags} own-lags of \code{y1}) for residuals W_\{2,t+1\}.
 
-\strong{Bundled PCs alignment:} When \code{pcs = NULL}, bundled
-principal components are paired with yields \strong{by row position},
-not by calendar date. If the two cover different periods (e.g.
-quarterly ACM data starts 1961-Q2 while bundled PCs start 1962-Q1),
-rows mix quarters and results are invalid. For correct results, merge
-yields with the bundled PCs by year-quarter and pass the aligned
-matrix via \code{pcs}. See the examples below.
+\strong{PC alignment:} \code{pcs} must be supplied as a numeric matrix
+with one row per yield row, already aligned to the yields by calendar
+date. Join the principal components to the yields by \code{date} before
+calling (both share the package period-end convention). See the example.
 }
 \examples{
-# Load quarterly ACM data and bundled PCs, then align by year-quarter
-# before passing the merged PCs via `pcs` (see Bundled PCs alignment).
+# ACM data and the bundled PCs share the period-end date convention, so they
+# merge directly by calendar date; pass the aligned PCs via `pcs`.
 mats <- c(12, 24, 36, 48)
 acm_data <- extract_acm_data(
   data_types = c("yields", "term_premia"),
   maturities = mats, frequency = "quarterly"
 )
 data("variables", package = "hetid")
-yq <- function(d) paste0(format(d, "\%Y"), "-", quarters(d))
-acm_data$yq <- yq(acm_data$date)
-variables$yq <- yq(variables$date)
 pc_cols <- paste0("pc", 1:4)
 merged <- merge(
-  variables[, c("yq", pc_cols)],
-  acm_data[, c("yq", paste0("y", mats), paste0("tp", mats))],
-  by = "yq"
+  variables[, c("date", pc_cols)],
+  acm_data[, c("date", paste0("y", mats), paste0("tp", mats))],
+  by = "date"
 )
 res_w2 <- compute_w2_residuals(
   merged[, paste0("y", mats)], merged[, paste0("tp", mats)],

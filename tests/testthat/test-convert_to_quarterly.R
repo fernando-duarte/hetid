@@ -134,14 +134,18 @@ test_that("duplicated input dates are rejected up front", {
   )
 })
 
-test_that("quarter-start dated real data is re-dated and keeps its quarter column", {
-  data("variables", package = "hetid", envir = environment())
-  # Real quarterly macro data dated at quarter starts, with a genuine
-  # quarter column that must survive the conversion untouched
-  quarterly_vars <- variables[1:4, c("date", "quarter", "gdpc1")]
+test_that("incomplete quarters are re-dated to calendar quarter-end", {
+  # Each observation falls in the FIRST month of its quarter, so every quarter
+  # is incomplete (last obs not in the terminal month) and is re-dated to the
+  # calendar quarter-end. A genuine quarter column must survive untouched.
+  incomplete_q <- data.frame(
+    date = as.Date(c("1962-01-31", "1962-04-30", "1962-07-31", "1962-10-31")),
+    quarter = c(1, 2, 3, 4),
+    gdpc1 = c(10, 20, 30, 40)
+  )
 
   expect_warning(
-    result <- convert_to_quarterly(quarterly_vars),
+    result <- convert_to_quarterly(incomplete_q),
     class = "hetid_warning_incomplete_quarter"
   )
 
@@ -149,17 +153,20 @@ test_that("quarter-start dated real data is re-dated and keeps its quarter colum
     result$date,
     as.Date(c("1962-03-31", "1962-06-30", "1962-09-30", "1962-12-31"))
   )
-  expect_equal(result$quarter, quarterly_vars$quarter)
-  expect_equal(result$gdpc1, quarterly_vars$gdpc1)
+  expect_equal(result$quarter, incomplete_q$quarter)
+  expect_equal(result$gdpc1, incomplete_q$gdpc1)
 })
 
 test_that("dropping several incomplete quarters uses plural wording", {
-  data("variables", package = "hetid", envir = environment())
-  quarterly_vars <- variables[1:4, c("date", "quarter", "gdpc1")]
+  incomplete_q <- data.frame(
+    date = as.Date(c("1962-01-31", "1962-04-30", "1962-07-31", "1962-10-31")),
+    quarter = c(1, 2, 3, 4),
+    gdpc1 = c(10, 20, 30, 40)
+  )
 
   expect_message(
     result <- convert_to_quarterly(
-      quarterly_vars,
+      incomplete_q,
       use_incomplete_quarters = FALSE
     ),
     regexp = "These quarters were dropped.*To keep them instead"
