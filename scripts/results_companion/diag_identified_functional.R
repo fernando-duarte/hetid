@@ -36,10 +36,13 @@ cat(
 )
 
 # --- VFCI gamma and quadratic systems at three slacks ---
-gamma_vfci <- get_baseline_gamma("vfci", n_pcs = 4, n_components = i_dim)
+gamma_vfci <- get_baseline_gamma(
+  "vfci",
+  n_pcs = HETID_CONSTANTS$DEFAULT_N_PCS, n_components = i_dim
+)
 qs0 <- build_pipeline_quadratic_system(gamma_vfci, rep(0, i_dim), moments)
 qs02 <- build_pipeline_quadratic_system(gamma_vfci, rep(0.02, i_dim), moments)
-qs05 <- build_pipeline_quadratic_system(gamma_vfci, rep(0.05, i_dim), moments)
+qs05 <- build_pipeline_quadratic_system(gamma_vfci, rep(BASELINE_TAU, i_dim), moments)
 
 # --- Q, L, SVD, condition number, point solve (verify against saved artifact) ---
 qmat <- do.call(rbind, qs0$components$Q_i)
@@ -87,7 +90,7 @@ ctheta_at <- function(qs, tau_label) {
   })
   do.call(rbind, rows)
 }
-ct <- rbind(ctheta_at(qs05, 0.05), ctheta_at(qs02, 0.02))
+ct <- rbind(ctheta_at(qs05, BASELINE_TAU), ctheta_at(qs02, 0.02))
 cat("=== identified functionals c'theta over the VFCI set ===\n")
 cat("(news_pc1 rotation[,1] =", paste(signif(dirs$news_pc1, 3), collapse = ", "), ")\n")
 cat("(Q_sv1 =", paste(signif(dirs$Q_sv1, 3), collapse = ", "), ")\n")

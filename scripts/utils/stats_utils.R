@@ -27,7 +27,7 @@ compute_summary_stats <- function(x, var_name, compute_ac = TRUE, max_lags = 2) 
   # Add autocorrelations if requested
   if (compute_ac && length(x[!is.na(x)]) > max_lags) {
     acf_values <- acf(x, lag.max = max_lags, plot = FALSE, na.action = na.pass)$acf
-    for (i in 1:max_lags) {
+    for (i in seq_len(max_lags)) {
       stats[[paste0("AC", i)]] <- acf_values[i + 1]
     }
   }

@@ -13,7 +13,10 @@ dir.create(fig_dir, recursive = TRUE, showWarnings = FALSE)
 inputs <- load_identification_inputs()
 resid <- compute_identification_residuals(inputs$data)
 moments <- compute_identification_moments(resid$w1, resid$w2, resid$pcs_aligned)
-gamma_vfci <- get_baseline_gamma("vfci", n_pcs = 4, n_components = 3)
+gamma_vfci <- get_baseline_gamma(
+  "vfci",
+  n_pcs = HETID_CONSTANTS$DEFAULT_N_PCS, n_components = 3
+)
 pt0 <- solve_point_identification(
   build_pipeline_quadratic_system(gamma_vfci, rep(0, 3), moments)$components
 )$theta
@@ -48,7 +51,7 @@ th5 <- seq(-110000, 20000, length.out = n_grid)
 th9 <- seq(-20000, 185000, length.out = n_grid)
 th2_scan <- seq(-13000, 2000, length.out = 1500L)
 f02 <- project(0.02, th5, th9, th2_scan)$feasible
-proj <- project(0.05, th5, th9, th2_scan)
+proj <- project(BASELINE_TAU, th5, th9, th2_scan)
 proj$f02 <- f02
 proj <- proj[proj$feasible, , drop = FALSE]
 proj$region <- ifelse(proj$f02, "Slack tau = 0.02 (bounded)", "Extension at tau = 0.05")

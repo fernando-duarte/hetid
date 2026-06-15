@@ -15,7 +15,10 @@ w1 <- resid$w1
 w2 <- resid$w2
 pcs <- resid$pcs_aligned
 n <- length(w1)
-gamma_vfci <- get_baseline_gamma("vfci", n_pcs = 4, n_components = ncol(w2))
+gamma_vfci <- get_baseline_gamma(
+  "vfci",
+  n_pcs = HETID_CONSTANTS$DEFAULT_N_PCS, n_components = ncol(w2)
+)
 coarse_taus <- c(0.005, 0.01, 0.02, 0.03, 0.04, 0.05, 0.08, 0.12)
 
 tau_star_of <- function(mom) {
@@ -24,7 +27,7 @@ tau_star_of <- function(mom) {
 }
 two_year_width <- function(mom) {
   b <- solve_all_profile_bounds(
-    build_pipeline_quadratic_system(gamma_vfci, rep(0.05, ncol(w2)), mom)$quadratic
+    build_pipeline_quadratic_system(gamma_vfci, rep(BASELINE_TAU, ncol(w2)), mom)$quadratic
   )
   b$width[1]
 }
@@ -77,7 +80,7 @@ qs_report <- function(x, nm) {
     "%-14s n=%d  median=%.4g  [p05,p95]=[%.4g, %.4g]  share(tau*<0.05)=%.2f\n",
     nm, length(x), stats::median(x),
     stats::quantile(x, 0.05), stats::quantile(x, 0.95),
-    if (nm == "tau*") mean(x < 0.05) else NA
+    if (nm == "tau*") mean(x < BASELINE_TAU) else NA
   ))
 }
 cat("=== moving-block bootstrap (B =", b_reps, ", block =", block, ") ===\n")

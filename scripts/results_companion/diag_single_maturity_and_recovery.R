@@ -18,10 +18,13 @@ single_row <- function(m) {
   inp <- load_identification_inputs(maturities = m)
   rs <- compute_identification_residuals(inp$data, maturities = m)
   mom <- compute_identification_moments(rs$w1, rs$w2, rs$pcs_aligned)
-  g <- get_baseline_gamma("vfci", n_pcs = 4, n_components = 1)
+  g <- get_baseline_gamma(
+    "vfci",
+    n_pcs = HETID_CONSTANTS$DEFAULT_N_PCS, n_components = 1
+  )
   pt <- solve_point_identification(build_pipeline_quadratic_system(g, 0, mom)$components)
   b05 <- solve_all_profile_bounds(
-    build_pipeline_quadratic_system(g, 0.05, mom)$quadratic
+    build_pipeline_quadratic_system(g, BASELINE_TAU, mom)$quadratic
   )
   sd1 <- stats::sd(rs$w1)
   sd2 <- stats::sd(rs$w2[, 1])
@@ -42,7 +45,10 @@ nest_cond <- function(mats) {
   inp <- load_identification_inputs(maturities = mats)
   rs <- compute_identification_residuals(inp$data, maturities = mats)
   mom <- compute_identification_moments(rs$w1, rs$w2, rs$pcs_aligned)
-  g <- get_baseline_gamma("vfci", n_pcs = 4, n_components = length(mats))
+  g <- get_baseline_gamma(
+    "vfci",
+    n_pcs = HETID_CONSTANTS$DEFAULT_N_PCS, n_components = length(mats)
+  )
   pt <- solve_point_identification(build_pipeline_quadratic_system(g, rep(0, length(mats)), mom)$components)
   if (is.null(pt)) NA_real_ else pt$cond
 }
@@ -76,7 +82,10 @@ n_lag <- design_cols$n_lag
 # lags) through directly. Fail loudly if a legacy PC-only beta2R is ever passed --
 # do NOT silently re-pad, which would falsely point-identify psi.
 assert_beta_columns_matched(beta1r, beta2r)
-gamma_vfci <- get_baseline_gamma("vfci", n_pcs = 4, n_components = i_dim)
+gamma_vfci <- get_baseline_gamma(
+  "vfci",
+  n_pcs = HETID_CONSTANTS$DEFAULT_N_PCS, n_components = i_dim
+)
 pt_vfci <- solve_point_identification(
   build_pipeline_quadratic_system(gamma_vfci, rep(0, i_dim), moments)$components
 )
@@ -91,7 +100,7 @@ cat(
 # beta (intercept + PC loadings) over the VFCI tau = 0.05 SET: unbounded?
 # Sweep only the constant and the named PC columns (lags are excluded here, since
 # the psi rows are reported as a point at the fixed theta above).
-qs05 <- build_pipeline_quadratic_system(gamma_vfci, rep(0.05, i_dim), moments)
+qs05 <- build_pipeline_quadratic_system(gamma_vfci, rep(BASELINE_TAU, i_dim), moments)
 p_lab <- names(beta1r)
 intercept_col <- design_cols$intercept_col
 beta_set <- lapply(c(intercept_col, pc_cols), function(p) {
