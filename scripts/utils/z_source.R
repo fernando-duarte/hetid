@@ -1,12 +1,14 @@
 # Z-source hook: which matrix plays the INSTRUMENT role in the
-# moments (the spec's Z_t). The structural first stage stays
+# moments (the spec's instrument; the application uses the date-t predetermined
+# specialization Z_t of the general date-(t+1)-adapted instrument). The structural first stage stays
 # X_t = (1, PC_t) regardless -- the VFCI application defines it; see
 # the spec's application section.
 #
 # Both branches funnel through the exported generalized-instrument front door
 # hetid::build_instrument_matrix(z, transforms = NULL, include_original = TRUE),
 # so every instrument matrix the pipeline uses is validated and uniquely named
-# by the same code path (the K_i = 1 baseline of subsec:general_scheme). For the
+# by the same code path (the K_i = 1 baseline of the spec's "Instrument choices
+# as special cases" section). For the
 # default named PC matrix this is a no-op on values and column names -- the
 # returned Z is identical to the supplied default -- so default artifacts keep
 # their historical PC labels and numbers exactly.

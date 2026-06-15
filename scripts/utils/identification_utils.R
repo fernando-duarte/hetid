@@ -247,8 +247,9 @@ compute_identification_residuals <- function(
 # hetid::build_general_quadratic_system(), which with a J x I matrix gamma (one
 # combination per component, K_i = 1) is bit-identical on $quadratic to the
 # legacy hetid::build_quadratic_system() and exposes the same L_i/V_i/Q_i values
-# in $components. This is the K_i = 1 "General scheme (baseline)" case of
-# docs/lewbel_multivariate_set_identification.tex (subsec:general_scheme), so the
+# in $components. This is the K_i = 1 (one combination per component) date-t
+# specialization of docs/lewbel_multivariate_set_identification.tex
+# ("Instrument choices as special cases"), so the
 # whole pipeline runs on one generalized assembly path.
 #
 # The general builder returns $components as a plain list (plus a $labels frame).
