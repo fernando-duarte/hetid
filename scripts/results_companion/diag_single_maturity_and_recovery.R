@@ -1,8 +1,12 @@
 # Single-maturity sweep, nested-conditioning, and structural recovery for the
 # results companion. Shows (a) each maturity alone is well-conditioned and bounded
 # -- isolating the difficulty as JOINT collinearity -- and (b) what the data pin
-# down: the lag coefficients psi (point-identified) versus the PC loadings beta
-# (unbounded over the honest VFCI set). Deterministic (seed 123).
+# down: the structural coefficients beta1(theta) = beta1R - (beta2R)'theta at the
+# VFCI tau = 0 point (a single theta) versus the PC loadings beta over the honest
+# VFCI set (unbounded). With common conditioning, beta2R is FULL-WIDTH and carries
+# nonzero lag columns, so the lag coefficients psi are point-VALUED only at the
+# fixed theta below; over the identified set Theta they are set-valued (not
+# point-identified). Deterministic (seed 123).
 
 source(here::here("scripts/utils/common_settings.R"))
 set.seed(SEED)
@@ -50,35 +54,50 @@ cat("=== nested conditioning cond(Q) ===\n")
 print(nest, digits = 6, row.names = FALSE)
 cat("\n")
 
-# --- Structural recovery (I = 3): psi point-identified; beta over the VFCI set ---
+# --- Structural recovery (I = 3): beta1(theta) at the VFCI tau = 0 point (a
+# single theta, so psi is point-VALUED here) versus beta over the VFCI set ---
 inputs <- load_identification_inputs()
 resid <- compute_identification_residuals(inputs$data)
 moments <- compute_identification_moments(resid$w1, resid$w2, resid$pcs_aligned)
 i_dim <- attr(moments, "n_components")
 beta1r <- resid$w1_result$coefficients
 beta2r <- resid$w2_coefficients
-n_pcs <- ncol(beta2r) - 1L
-n_lag <- length(beta1r) - ncol(beta2r)
-beta2r_full <- beta2r
-if (n_lag > 0L) {
-  beta2r_full <- cbind(beta2r, matrix(0, nrow(beta2r), n_lag,
-    dimnames = list(rownames(beta2r), paste0("y1_lag", seq_len(n_lag)))
-  ))
-}
+# Classify the common-design columns by NAME (not by width): the spec conditions
+# BOTH Y1 and Y2 on the same X_t = (1, PC, H lags of Y1), so beta2R is FULL-WIDTH
+# and column-matched to beta1R. PCs are the only instruments (^pc[0-9]+$); the
+# y1_lag* columns are the predetermined conditioning lags.
+pc_cols <- grep("^pc[0-9]+$", names(beta1r))
+lag_cols <- grep("^y1_lag[0-9]+$", names(beta1r))
+n_pcs <- length(pc_cols)
+n_lag <- length(lag_cols)
+# beta2R is already full-width and column-matched to beta1R; no zero-padding is
+# needed and the exact recovery identity carries every column (constant, PCs, AND
+# lags) through directly. Fail loudly if a legacy PC-only beta2R is ever passed --
+# do NOT silently re-pad, which would falsely point-identify psi.
+stopifnot(
+  length(beta1r) == ncol(beta2r),
+  identical(names(beta1r), colnames(beta2r))
+)
 gamma_vfci <- get_baseline_gamma("vfci", n_pcs = 4, n_components = i_dim)
 pt_vfci <- solve_point_identification(
   build_pipeline_quadratic_system(gamma_vfci, rep(0, i_dim), moments)$components
 )
-beta1_point <- recover_structural_coefficients(beta1r, beta2r_full, pt_vfci$theta)
+beta1_point <- recover_structural_coefficients(beta1r, beta2r, pt_vfci$theta)
 cat("=== structural recovery at the VFCI tau = 0 point ===\n")
 print(round(beta1_point, 4))
-cat("(lag coefficients psi are the last", n_lag, "entries; invariant to theta)\n\n")
+cat(
+  "(the last", n_lag, "entries are psi at this single theta; psi is",
+  "set-valued over Theta)\n\n"
+)
 
 # beta (intercept + PC loadings) over the VFCI tau = 0.05 SET: unbounded?
+# Sweep only the constant and the named PC columns (lags are excluded here, since
+# the psi rows are reported as a point at the fixed theta above).
 qs05 <- build_pipeline_quadratic_system(gamma_vfci, rep(0.05, i_dim), moments)
 p_lab <- names(beta1r)
-beta_set <- lapply(seq_len(1L + n_pcs), function(p) {
-  cp <- as.numeric(beta2r_full[, p])
+intercept_col <- which(!(seq_along(p_lab) %in% c(pc_cols, lag_cols)))
+beta_set <- lapply(c(intercept_col, pc_cols), function(p) {
+  cp <- as.numeric(beta2r[, p])
   fmn <- solve_linear_functional_bound(qs05$quadratic, cp, "min")
   fmx <- solve_linear_functional_bound(qs05$quadratic, cp, "max")
   data.frame(
