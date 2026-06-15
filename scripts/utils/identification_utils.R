@@ -178,9 +178,15 @@ compute_identification_residuals <- function(
   panel_dates <- data$date
   w1_dates <- w1_result$dates
   w2_dates <- w2_response_dates(w2_result$kept_idx, panel_dates)
-  common_dates <- intersect(as.character(w1_dates), as.character(w2_dates))
+  # base::intersect/match/order key on the quarterly panel dates, which are
+  # unique and non-NA (one row per quarter-end); pin base::intersect so the set
+  # semantics survive dplyr (loaded by common_settings.R) masking intersect().
+  common_dates <- base::intersect(as.character(w1_dates), as.character(w2_dates))
   common_dates <- panel_dates[match(common_dates, as.character(panel_dates))]
   common_dates <- common_dates[order(common_dates)]
+  if (length(common_dates) == 0L) {
+    cli::cli_abort("W1 and W2 share no common calendar dates")
+  }
 
   # Map the common date set into each ALREADY-COMPRESSED series' own positions
   # (w1/w2 residuals are post-complete.cases, so an absolute panel mask would
