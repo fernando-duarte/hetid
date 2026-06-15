@@ -1,7 +1,7 @@
 # Fixture: simulate a common-sample triangular reduced form and return the
 # OLS reduced-form coefficient objects plus the raw data, so the affine
 # identity can be checked against an independent direct regression. When
-# n_lags > 0 the common design X also carries y1_lag* columns, mirroring the
+# n_lags > 0 the common design X also carries l.y1/l2.y1 columns, mirroring the
 # spec's common conditioning vector X_t = (1, PC, H lags of Y1); the Y2-on-X
 # fit then yields NONZERO lag slopes (estimate-B), or all-zero lag slopes when
 # zero_lag_block = TRUE (the imposed exact-news B = 0 case).
@@ -12,7 +12,7 @@ make_structural_fixture <- function(n = 200, i_dim = 2, n_pcs = 2, n_lags = 0,
   if (n_lags > 0) {
     lagm <- matrix(stats::rnorm(n * n_lags), n, n_lags)
     x <- cbind(1, pc, lagm)
-    cols <- c(cols, paste0("y1_lag", seq_len(n_lags)))
+    cols <- c(cols, lag_grammar_names("y1", n_lags))
   } else {
     x <- cbind(1, pc)
   }
@@ -30,7 +30,7 @@ make_structural_fixture <- function(n = 200, i_dim = 2, n_pcs = 2, n_lags = 0,
   rownames(beta2r) <- paste0("maturity_", seq_len(i_dim))
   colnames(beta2r) <- colnames(x)
   if (zero_lag_block && n_lags > 0) {
-    lag_cols <- grep("^y1_lag[0-9]+$", colnames(beta2r))
+    lag_cols <- grep("^l[0-9]*\\.y1$", colnames(beta2r))
     beta2r[, lag_cols] <- 0
   }
   list(x = x, y1 = y1, y2 = y2, beta1r = beta1r, beta2r = beta2r)
@@ -48,7 +48,7 @@ test_that("affine identity matches a direct OLS on a common sample", {
 test_that("nonzero lag block makes psi rows set-valued (affine in theta)", {
   set.seed(201)
   fx <- make_structural_fixture(n_lags = 3)
-  lag_cols <- grep("^y1_lag[0-9]+$", colnames(fx$beta2r))
+  lag_cols <- grep("^l[0-9]*\\.y1$", colnames(fx$beta2r))
   # The estimated lag slopes in beta2r are genuinely nonzero (estimate-B).
   expect_true(all(abs(fx$beta2r[, lag_cols]) > 0))
 
@@ -67,7 +67,7 @@ test_that("nonzero lag block makes psi rows set-valued (affine in theta)", {
 test_that("all-zero lag block (impose-B = 0) gives constant psi rows", {
   set.seed(202)
   fx <- make_structural_fixture(n_lags = 3, zero_lag_block = TRUE)
-  lag_cols <- grep("^y1_lag[0-9]+$", colnames(fx$beta2r))
+  lag_cols <- grep("^l[0-9]*\\.y1$", colnames(fx$beta2r))
   expect_true(all(fx$beta2r[, lag_cols] == 0))
 
   rec0 <- recover_structural_coefficients(fx$beta1r, fx$beta2r, c(0, 0))

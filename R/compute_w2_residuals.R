@@ -28,7 +28,7 @@
 #' @param impose_b_zero Logical; if TRUE, impose \eqn{B = 0} structurally (no
 #'   regression): \eqn{W_2} equals the SDF innovation \eqn{Y_2}, the
 #'   \code{coefficients} row is the full-width
-#'   \code{(Intercept, pc1..pcJ, y1_lag1..y1_lagH)} vector of zeros, and
+#'   \code{(Intercept, pc1..pcJ, l.y1..l<H>.y1)} vector of zeros, and
 #'   \code{r_squared} is \code{NA} (default FALSE).
 #'
 #' @return If return_df = FALSE, returns a list containing:
@@ -121,7 +121,7 @@ compute_w2_residuals <- function(yields, term_premia,
   # Common conditioning own-lags: build_common_conditioning enforces a
   # length-matched, non-NULL y1 per maturity when y1_lags > 0.
   y1_lags <- validate_y1_lags(y1_lags, nrow(pcs))
-  pc_lag_names <- if (y1_lags > 0L) paste0("y1_lag", seq_len(y1_lags)) else NULL
+  pc_lag_names <- if (y1_lags > 0L) lag_grammar_names("y1", y1_lags) else NULL
 
   # Initialize storage
   residuals_list <- list()

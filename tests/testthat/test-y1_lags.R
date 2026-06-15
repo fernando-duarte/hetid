@@ -3,7 +3,7 @@ test_that("build_y1_lag_columns shifts each column and pads with leading NAs", {
 
   expect_true(is.matrix(mat))
   expect_equal(dim(mat), c(5L, 2L))
-  expect_equal(colnames(mat), c("y1_lag1", "y1_lag2"))
+  expect_equal(colnames(mat), c("l.y1", "l2.y1"))
   expect_equal(mat[, 1], as.numeric(1:5))
   expect_equal(mat[, 2], c(NA, 1, 2, 3, 4))
 })
@@ -11,7 +11,7 @@ test_that("build_y1_lag_columns shifts each column and pads with leading NAs", {
 test_that("build_y1_lag_columns: lag 1 has no NA, lag h has h-1 leading NAs", {
   mat <- build_y1_lag_columns(seq_len(8), 4)
 
-  expect_equal(colSums(is.na(mat)), c(y1_lag1 = 0, y1_lag2 = 1, y1_lag3 = 2, y1_lag4 = 3))
+  expect_equal(colSums(is.na(mat)), c(l.y1 = 0, l2.y1 = 1, l3.y1 = 2, l4.y1 = 3))
   # Column h equals the outcome shifted down by h-1
   expect_equal(mat[, 4], c(NA, NA, NA, 1, 2, 3, 4, 5))
 })

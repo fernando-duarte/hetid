@@ -15,14 +15,31 @@ baseline_gamma_method <- function() {
 
 # Single source of truth for the common-design column regexes. The spec
 # conditions BOTH Y1 and Y2 on the same X_t = (1, PC, H lags of Y1): PCs are
-# the only instruments (anchored "^pc[0-9]+$"), y1_lag* the predetermined
-# conditioning lags (anchored "^y1_lag[0-9]+$"), and whatever remains is the
-# intercept. Returns the column indices and counts so callers never re-derive
-# the regexes (and so build_reduced_form_gamma's pc selection matches exactly).
+# the only instruments (anchored "^pc[0-9]+$"), l.y1* the predetermined
+# conditioning lags (anchored "^l[0-9]*\\.y1$", matching l.y1, l2.y1, ...), and
+# the lone remaining column is the intercept. Returns the column indices and
+# counts so callers never re-derive the regexes (and so build_reduced_form_gamma's
+# pc selection matches exactly). Hardened: any column that is neither the
+# intercept, a PC, nor a Y1 lag aborts rather than being silently absorbed.
+# Only the standard PC + Y1-lags design is accepted; exog-path coefficient
+# columns (anything outside the three patterns) abort with a named error.
 classify_common_design_cols <- function(nms) {
   pc_cols <- grep("^pc[0-9]+$", nms)
-  lag_cols <- grep("^y1_lag[0-9]+$", nms)
-  intercept_col <- which(!(seq_along(nms) %in% c(pc_cols, lag_cols)))
+  lag_cols <- grep("^l[0-9]*\\.y1$", nms) # Y1-only; matches l.y1, l2.y1, ...
+  intercept_col <- which(nms == "(Intercept)")
+  unknown <- setdiff(seq_along(nms), c(intercept_col, pc_cols, lag_cols))
+  if (length(intercept_col) != 1L) {
+    stop("classify_common_design_cols: expected exactly one '(Intercept)' column.",
+      call. = FALSE
+    )
+  }
+  if (length(unknown) > 0L) {
+    stop("classify_common_design_cols: unrecognised columns: ",
+      paste(nms[unknown], collapse = ", "),
+      ". Expected only '(Intercept)', '^pc[0-9]+$', '^l[0-9]*\\.y1$'.",
+      call. = FALSE
+    )
+  }
   list(
     intercept_col = intercept_col,
     pc_cols = pc_cols,
@@ -44,7 +61,7 @@ assert_beta_columns_matched <- function(beta1r, beta2r) {
   }
   cli_abort(c(
     "beta2R is not column-matched to beta1R.",
-    "i" = "Expected the FULL common design (1, PC, y1_lag*) in both fits.",
+    "i" = "Expected the FULL common design (1, PC, l.y1*) in both fits.",
     "x" = paste0(
       "got beta1R names {.val {names(beta1r)}} vs beta2R columns ",
       "{.val {colnames(beta2r)}}"
@@ -59,12 +76,12 @@ assert_beta_columns_matched <- function(beta1r, beta2r) {
 #' Reduced-form gamma: the Y2-on-PC slope block of beta2R, transposed to the
 #' J x I (instruments x components) layout the pipeline quadratic builder
 #' (build_pipeline_quadratic_system) expects. Selects the principal-component
-#' columns by name (anchored "^pc[0-9]+$"); intercept and any y1_lag* columns
+#' columns by name (anchored "^pc[0-9]+$"); intercept and any l.y1* columns
 #' are excluded because the instruments are the PCs only -- the conditioning
 #' lags never enter gamma. Shared by the stage-06 consumption-equation table
 #' and the tau* identification-strength benchmark.
 #' @param beta2r I x (1 + n_pcs [+ n_lags]) Y2-on-PC reduced-form coefficients,
-#'   with columns named (Intercept), pc1..pcJ, and optionally y1_lag1..y1_lagH
+#'   with columns named (Intercept), pc1..pcJ, and optionally l.y1..l<H>.y1
 #' @return n_pcs x I matrix with attr "method" = "reduced_form"
 build_reduced_form_gamma <- function(beta2r) {
   pc_cols <- classify_common_design_cols(colnames(beta2r))$pc_cols

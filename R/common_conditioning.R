@@ -14,7 +14,7 @@
 #' @param y1_lags Integer number of own-lags \eqn{H \ge 0} to append.
 #'
 #' @return Numeric matrix with the \code{n_pcs} named PC columns and, when
-#'   \code{y1_lags > 0}, \code{y1_lag1, ..., y1_lagH} appended.
+#'   \code{y1_lags > 0}, \code{l.y1, ..., l<H>.y1} appended.
 #' @keywords internal
 build_common_conditioning <- function(pcs, n_pcs, y1 = NULL, y1_lags = 0L) {
   reg_matrix <- pcs[, seq_len(n_pcs), drop = FALSE]

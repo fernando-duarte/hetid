@@ -10,7 +10,7 @@ recover_structural_coefficients(beta1r, beta2r, theta)
 \item{beta1r}{Named numeric vector of length \eqn{p}: the OLS coefficients of
 \eqn{Y_1} on the common conditioning vector \eqn{X = (1, PC', \text{own-lags})},
 i.e. the \code{coefficients} element of \code{\link{compute_w1_residuals}}.
-Names are \code{c("(Intercept)", "pc1", ..., "y1_lag1", ...)}; with no lags
+Names are \code{c("(Intercept)", "pc1", ..., "l.y1", ...)}; with no lags
 \eqn{p = 1 + n\_pcs}.}
 
 \item{beta2r}{Numeric \eqn{I \times p} matrix: the OLS coefficients of the

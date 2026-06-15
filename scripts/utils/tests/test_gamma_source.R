@@ -121,13 +121,13 @@ check(
   identical(unclass(`attr<-`(g_rf, "method", NULL)), t(beta2r[, -1, drop = FALSE]))
 )
 
-# Wide beta2r: (Intercept, pc1..pc4, y1_lag1..y1_lag4) -- lag slopes excluded
+# Wide beta2r: (Intercept, pc1..pc4, l.y1..l4.y1) -- lag slopes excluded
 lag_sentinel <- -999
 beta2r_wide <- cbind(
   beta2r,
   matrix(lag_sentinel,
     nrow = 2L, ncol = 4L,
-    dimnames = list(NULL, paste0("y1_lag", 1:4))
+    dimnames = list(NULL, hetid:::lag_grammar_names("y1", 4))
   )
 )
 g_rf_wide <- build_reduced_form_gamma(beta2r_wide)
@@ -163,7 +163,7 @@ nopc_err <- tryCatch(
   {
     build_reduced_form_gamma(`colnames<-`(
       matrix(1, 2L, 3L),
-      c("(Intercept)", "y1_lag1", "y1_lag2")
+      c("(Intercept)", "l.y1", "l2.y1")
     ))
     NULL
   },
@@ -195,6 +195,21 @@ name_err <- tryCatch(
 check(
   "mismatched build_gamma rownames are rejected as misalignment",
   is.character(name_err) && grepl("positional", name_err)
+)
+
+# classify_common_design_cols hardening: an unrecognized column (neither the
+# intercept, a PC, nor a Y1 lag) must abort rather than be silently absorbed
+# into the intercept slot.
+classify_err <- tryCatch(
+  {
+    classify_common_design_cols(c("(Intercept)", "pc1", "junk"))
+    NULL
+  },
+  error = function(e) conditionMessage(e)
+)
+check(
+  "classify_common_design_cols errors on an unknown column",
+  is.character(classify_err)
 )
 
 cat(sprintf("\n%d passed, %d failed\n", .pass, .fail))

@@ -25,14 +25,14 @@ test_that("y1_lags matches a manual regression with lagged outcomes", {
   n <- length(y1)
   lag1 <- y1 # Y_{1,t}
   lag2 <- c(NA, y1[seq_len(n - 1L)]) # Y_{1,t-1}
-  reg <- cbind(pc, y1_lag1 = lag1, y1_lag2 = lag2)
+  reg <- cbind(pc, l.y1 = lag1, l2.y1 = lag2)
   reg_lagged <- reg[seq_len(n - 1L), , drop = FALSE]
   y_future <- y1[seq.int(2L, n)]
   keep <- stats::complete.cases(y_future, reg_lagged)
   manual <- lm(y_future[keep] ~ reg_lagged[keep, ])
 
   expect_equal(res$r_squared, summary(manual)$r.squared, tolerance = 1e-10)
-  expect_true(all(c("y1_lag1", "y1_lag2") %in% names(res$coefficients)))
+  expect_true(all(c("l.y1", "l2.y1") %in% names(res$coefficients)))
   expect_equal(unname(res$residuals), unname(residuals(manual)), tolerance = 1e-10)
 })
 
@@ -54,7 +54,7 @@ test_that("y1_lags works alongside exog and keeps lag-column names", {
   res <- suppressMessages(
     compute_w1_residuals(data = variables, exog = z, y1_lags = 2L)
   )
-  expect_true(all(c("y1_lag1", "y1_lag2") %in% names(res$coefficients)))
+  expect_true(all(c("l.y1", "l2.y1") %in% names(res$coefficients)))
 })
 
 test_that("y1_lags rejects invalid values", {

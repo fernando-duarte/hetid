@@ -65,7 +65,7 @@ beta2r <- resid$w2_coefficients
 # Classify the common-design columns by NAME (not by width): the spec conditions
 # BOTH Y1 and Y2 on the same X_t = (1, PC, H lags of Y1), so beta2R is FULL-WIDTH
 # and column-matched to beta1R. PCs are the only instruments (^pc[0-9]+$); the
-# y1_lag* columns are the predetermined conditioning lags.
+# l.y1* columns are the predetermined conditioning lags.
 design_cols <- classify_common_design_cols(names(beta1r))
 pc_cols <- design_cols$pc_cols
 lag_cols <- design_cols$lag_cols

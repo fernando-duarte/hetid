@@ -68,7 +68,7 @@ Lagging drops the first \eqn{H - 1} leading rows.}
 \item{impose_b_zero}{Logical; if TRUE, impose \eqn{B = 0} structurally (no
 regression): \eqn{W_2} equals the SDF innovation \eqn{Y_2}, the
 \code{coefficients} row is the full-width
-\code{(Intercept, pc1..pcJ, y1_lag1..y1_lagH)} vector of zeros, and
+\code{(Intercept, pc1..pcJ, l.y1..l<H>.y1)} vector of zeros, and
 \code{r_squared} is \code{NA} (default FALSE).}
 }
 \value{

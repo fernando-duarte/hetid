@@ -13,7 +13,7 @@ build_y1_lag_columns(y1, n_lags)
 }
 \value{
 An \eqn{n \times H} numeric matrix with columns
-\code{y1_lag1, ..., y1_lagH}. Column \code{h} has \code{h - 1} leading
+\code{l.y1, ..., l<H>.y1}. Column \code{h} has \code{h - 1} leading
 \code{NA}s, which the regression's complete-case filter drops, removing the
 first \eqn{H - 1} rows.
 }

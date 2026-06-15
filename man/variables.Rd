@@ -50,8 +50,10 @@ indices, and various derived measures.
 \details{
 \strong{Transformed-variable naming grammar.} Many columns are logs, growth
 rates, leads, or lags of a base series, named compositionally as
-\code{[lead/lag][gr<h>].<series>} where one period is one quarter:
-\code{log.<series>} is the natural log; \code{gr<h>.<series>} is the
+\code{[lead/lag][gr<h>].<series>}. The default unit is one quarter (a
+unit-less digit counts quarters); an explicit calendar suffix
+(\code{m}=month, \code{y}=year, \code{d}=day) is used only for non-quarterly
+series. \code{log.<series>} is the natural log; \code{gr<h>.<series>} is the
 \code{h}-quarter growth rate (\code{gr1} quarterly, \code{gr4}
 year-over-year); prefixes \code{l}, \code{l2}, \code{l3} lag backward and
 \code{f}, \code{f2}, \code{f3} lead forward by that many quarters, with the
@@ -59,8 +61,11 @@ first lead/lag dropping its digit (bare \code{l}/\code{f}). Tokens stack
 lead/lag then growth then \code{.series}, so \code{lgr1.gdpc1} is quarterly
 GDP growth lagged one quarter and \code{fgr4.gdpc1} is year-over-year GDP
 growth led \emph{one} quarter (the \code{4} is the growth window, not the
-lead horizon). The \code{*_lags} columns (e.g. \code{vfci_lags}) are
-composite constructs, not simple shifts, and do not follow this grammar.
+lead horizon). A pure level lag/lead is \code{l.<series>}/\code{f.<series>};
+an off-quarter example elsewhere in the project is \code{f12m.y12} (the
+12-month-ahead 12-month yield on a monthly frame). The \code{*_lags} columns
+(e.g. \code{vfci_lags}) are composite constructs, not simple shifts, and do
+not follow this grammar.
 }
 \examples{
 data(variables)

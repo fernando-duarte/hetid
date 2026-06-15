@@ -131,17 +131,33 @@ cli_alert_info("Mean tp24 - tp12 over the full sample: {sprintf('%.4f', tp_sprea
 # -E_t[y_(t+1)^(1)] in decimals, so the implied 1-year-ahead short yield in
 # percent is -100 * n_hat; the realization is y12 at the first date >= t + 1 year
 future_idx <- vapply(seq_along(dates), function(t) which(dates >= dates[t] + 365)[1], integer(1))
+
+# Assert the retained lead is exactly a +12-calendar-month lead. The f12m.y12
+# column is named for that horizon, so guard it: for every base date with a
+# realization, the matched future date must be 12 whole months later (robust to
+# day-of-month drift in the >= dates[t] + 365 selection). months_between counts
+# full year+month steps between two Dates.
+months_between <- function(from, to) {
+  (as.integer(format(to, "%Y")) - as.integer(format(from, "%Y"))) * 12L +
+    (as.integer(format(to, "%m")) - as.integer(format(from, "%m")))
+}
+have_future <- !is.na(future_idx)
+stopifnot(all(
+  months_between(dates[have_future], dates[future_idx[have_future]]) == 12L
+))
+
 validation <- data.frame(
   date = dates, n_hat = n_hat, predicted_y1_pct = -100 * n_hat,
-  realized_date = dates[future_idx], realized_y1_pct = yields$y12[future_idx]
+  realized_date = dates[future_idx], "f12m.y12" = yields$y12[future_idx],
+  check.names = FALSE
 )
-validation$error_pct <- validation$predicted_y1_pct - validation$realized_y1_pct
-validation <- validation[!is.na(validation$realized_y1_pct), ]
+validation$error_pct <- validation$predicted_y1_pct - validation[["f12m.y12"]]
+validation <- validation[!is.na(validation[["f12m.y12"]]), ]
 
 validation_summary <- list(
   n = nrow(validation),
   correlation = if (nrow(validation) > 1) {
-    cor(validation$predicted_y1_pct, validation$realized_y1_pct)
+    cor(validation$predicted_y1_pct, validation[["f12m.y12"]])
   } else {
     NA_real_
   },
@@ -213,7 +229,10 @@ annotation_label <- sprintf(
   "Correlation: %.3f\nRMSE: %.2f pp",
   validation_summary$correlation, validation_summary$rmse
 )
-p_scatter <- ggplot(validation, aes(x = predicted_y1_pct, y = realized_y1_pct)) +
+p_scatter <- ggplot(
+  validation,
+  aes(x = predicted_y1_pct, y = .data[["f12m.y12"]])
+) +
   geom_abline(slope = 1, intercept = 0, linetype = "dashed", color = "gray40") +
   geom_point(color = "steelblue", alpha = 0.6) +
   annotate("text", x = -Inf, y = Inf, label = annotation_label, hjust = -0.1, vjust = 1.3) +

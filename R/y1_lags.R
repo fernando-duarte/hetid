@@ -11,7 +11,7 @@
 #' @param n_lags Integer number of own-lags \eqn{H \ge 1}.
 #'
 #' @return An \eqn{n \times H} numeric matrix with columns
-#'   \code{y1_lag1, ..., y1_lagH}. Column \code{h} has \code{h - 1} leading
+#'   \code{l.y1, ..., l<H>.y1}. Column \code{h} has \code{h - 1} leading
 #'   \code{NA}s, which the regression's complete-case filter drops, removing the
 #'   first \eqn{H - 1} rows.
 #' @keywords internal
@@ -21,7 +21,7 @@ build_y1_lag_columns <- function(y1, n_lags) {
     c(rep(NA_real_, h - 1L), y1[seq_len(n - (h - 1L))])
   })
   mat <- do.call(cbind, cols)
-  colnames(mat) <- paste0("y1_lag", seq_len(n_lags))
+  colnames(mat) <- lag_grammar_names("y1", n_lags)
   mat
 }
 

@@ -94,7 +94,7 @@ p_tp <- ggplot(
 display_and_save_plot(p_tp, "term_premia_time_series.svg", dir = plot_dir)
 
 # Lagged Principal Components Time Series
-pc_lag_vars <- grep("^pc\\d+_lag1$", names(df), value = TRUE)[1:3] # First 3 lagged PCs
+pc_lag_vars <- grep("^l\\.pc[0-9]+$", names(df), value = TRUE)[1:3] # First 3 lagged PCs
 pc_lag_long <- df |>
   select(date, all_of(pc_lag_vars)) |>
   pivot_longer(cols = -date, names_to = "pc", values_to = "value")
@@ -133,7 +133,7 @@ display_and_save_plot(
 )
 
 # Correlation Heatmaps
-pc_lag_vars_all <- grep("^pc\\d+_lag1$", names(df), value = TRUE)
+pc_lag_vars_all <- grep("^l\\.pc[0-9]+$", names(df), value = TRUE)
 
 # Yields correlation
 cor_yields <- cor(df[yield_vars], use = "complete.obs")
@@ -228,7 +228,7 @@ p_slope <- ggplot(df, aes(x = date, y = slope_10_2)) +
 display_and_save_plot(p_slope, "yield_curve_slope.svg", dir = plot_dir, height = PLOT_HEIGHT * 0.7)
 
 # Scatterplot Matrix for Key Variables
-key_vars <- c("y24", "y120", "tp24", "tp120", "pc1_lag1", HETID_CONSTANTS$CONSUMPTION_GROWTH_COL)
+key_vars <- c("y24", "y120", "tp24", "tp120", "l.pc1", HETID_CONSTANTS$CONSUMPTION_GROWTH_COL)
 pairs_data <- df[key_vars]
 
 local({

@@ -92,7 +92,7 @@ stopifnot(nrow(beta2r) == i_dim)
 # Classify the common-design columns by NAME (not by width): the spec
 # conditions BOTH Y1 and Y2 on the same X_t = (1, PC, H lags of Y1), so beta2R
 # is now FULL-WIDTH and column-matched to beta1R. PCs are the only instruments
-# (^pc[0-9]+$); y1_lag* columns are the predetermined conditioning lags whose
+# (^pc[0-9]+$); l.y1* columns are the predetermined conditioning lags whose
 # coefficient psi_h is a set-valued linear image of Theta under estimate-B.
 design_cols <- classify_common_design_cols(names(beta1r))
 pc_cols <- design_cols$pc_cols

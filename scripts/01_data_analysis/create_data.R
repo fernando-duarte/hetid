@@ -59,7 +59,7 @@ data <- data[order(data$date), ]
 # Create lagged PC variables
 for (i in 1:MAX_N_PCS) {
   pc_col <- paste0("pc", i)
-  lag_col <- paste0("pc", i, "_lag1")
+  lag_col <- paste0("l.pc", i)
   # Create lag with NA for first observation
   data[[lag_col]] <- c(NA, data[[pc_col]][-length(data[[pc_col]])])
 }
@@ -79,7 +79,7 @@ for (i in 1:MAX_N_PCS) {
 
 # Normalize lagged PCs to have mean 0 and variance 1
 for (i in 1:MAX_N_PCS) {
-  lag_col <- paste0("pc", i, "_lag1")
+  lag_col <- paste0("l.pc", i)
   # Calculate mean and sd
   pc_mean <- mean(data[[lag_col]], na.rm = TRUE)
   pc_sd <- sd(data[[lag_col]], na.rm = TRUE)
@@ -103,7 +103,7 @@ summary_info <- list(
   `Yields` = paste0("y", min(maturity_range), " to y", max(maturity_range)),
   `Term Premia` = paste0("tp", min(maturity_range), " to tp", max(maturity_range)),
   `Principal Components` = paste0("pc1 to pc", MAX_N_PCS),
-  `Lagged PCs` = paste0("pc1_lag1 to pc", MAX_N_PCS, "_lag1"),
+  `Lagged PCs` = paste0("l.pc1 to l.pc", MAX_N_PCS),
   `Other Variables` = paste0(
     HETID_CONSTANTS$CONSUMPTION_GROWTH_COL, " (consumption growth)"
   )

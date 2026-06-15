@@ -10,7 +10,7 @@
 # Cascade covered, with HETID_IMPOSE_NEWS_PROJECTION_ZERO=TRUE (hermetic):
 #   * compute_identification_residuals(data) returns W2 == Y2 (the SDF news) and
 #     a FULL-WIDTH all-zero w2_coefficients (beta2R) with the common-design
-#     column names (Intercept, pc1..pcJ, y1_lag1..y1_lagH).
+#     column names (Intercept, pc1..pcJ, l.y1..l<H>.y1).
 #   * build_reduced_form_gamma(w2_coefficients) raises the instructive all-zero
 #     (B = 0) error -- the condition the tau_star_comparison.R and stage-06
 #     table guards key on.

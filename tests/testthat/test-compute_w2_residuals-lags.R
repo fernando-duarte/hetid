@@ -55,7 +55,7 @@ test_that("y1_lags = H adds H named lag columns, trims rows, stays orthogonal", 
     maturities = 24, n_pcs = 4, pcs = fx$pcs,
     y1 = fx$y1, y1_lags = h
   )
-  expect_true(all(c("y1_lag1", "y1_lag2") %in% colnames(res$coefficients)))
+  expect_true(all(c("l.y1", "l2.y1") %in% colnames(res$coefficients)))
   expect_equal(ncol(res$coefficients), 1L + 4L + h)
   # Residuals orthogonal to the appended lag columns (OLS normal equations).
   resid <- res$residuals[["maturity_24"]]
@@ -90,7 +90,7 @@ test_that("impose_b_zero = TRUE yields literal W2 = Y2 with zero coefficients", 
   expect_true(is.na(fit$r_squared[[1]]))
 })
 
-test_that("unnamed custom pcs keep y1_lag* names (no relabel to pc*)", {
+test_that("unnamed custom pcs keep l.y1* names (no relabel to pc*)", {
   fx <- make_w2_fixture()
   pcs_unnamed <- fx$pcs
   colnames(pcs_unnamed) <- NULL
@@ -99,7 +99,7 @@ test_that("unnamed custom pcs keep y1_lag* names (no relabel to pc*)", {
     maturities = 24, n_pcs = 4, pcs = pcs_unnamed,
     y1 = fx$y1, y1_lags = 2L
   )
-  expect_true(all(c("y1_lag1", "y1_lag2") %in% colnames(res$coefficients)))
+  expect_true(all(c("l.y1", "l2.y1") %in% colnames(res$coefficients)))
 })
 
 test_that("y1_lags > 0 requires a length-matched y1", {

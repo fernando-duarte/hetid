@@ -16,7 +16,7 @@ df <- as.data.frame(data)
 
 yield_vars <- grep("^y\\d+$", names(df), value = TRUE)
 tp_vars <- grep("^tp\\d+$", names(df), value = TRUE)
-pc_lag_vars <- grep("^pc\\d+_lag1$", names(df), value = TRUE)
+pc_lag_vars <- grep("^l\\.pc[0-9]+$", names(df), value = TRUE)
 macro_vars <- HETID_CONSTANTS$CONSUMPTION_GROWTH_COL
 
 ts_data <- ts(df[, -which(names(df) == "date")],
