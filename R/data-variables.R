@@ -12,8 +12,7 @@
 #'     \code{quarter}
 #'   \item National accounts and prices: real GDP (\code{gdpc1}), potential
 #'     GDP (\code{gdppot}), core PCE prices (\code{pcepilfe}), real
-#'     consumption (\code{pcecc96}), log GDP (\code{lgdp}), GDP growth
-#'     (\code{ygr}), PCE inflation (\code{infl_pce}), output gap (\code{gap})
+#'     consumption (\code{pcecc96}), output gap (\code{gap})
 #'   \item Interest rates and spreads: \code{fedfunds}, \code{gs10},
 #'     \code{tb3ms}, \code{tb3smffm}, \code{t10y3m}, \code{aaa10ym},
 #'     \code{baa10ym}, \code{baa_aaa}; median expected inflation (\code{med3})
@@ -25,9 +24,30 @@
 #'   \item Principal components: \code{pc1} through \code{pc6}
 #'   \item VFCI measures: \code{vfci}, \code{vfci_lev}, and \code{vfci_}
 #'     variants; expected excess returns (\code{mu})
-#'   \item Growth-rate transformations: columns prefixed \code{gr},
-#'     \code{lgr}, and \code{fgr}
+#'   \item Growth-rate and timing transformations: columns following the
+#'     naming grammar described in Details (e.g. \code{gr1.}, \code{gr4.},
+#'     \code{lgr1.}, \code{fgr4.}, \code{f2gr1.}, \code{f1.dgs1})
+#'   \item Convenience aliases (duplicate columns, identical to their
+#'     canonically-named equivalents): \code{lgdp} = \code{log.gdpc1},
+#'     \code{lpce} = \code{log.pcepilfe}, \code{ygr} = \code{gr1.gdpc1},
+#'     \code{infl_pce} = \code{gr1.pcepilfe}. Prefer the canonical
+#'     \code{log.}/\code{gr<h>.} names; the aliases are kept for readability.
 #' }
+#'
+#' @details
+#' \strong{Transformed-variable naming grammar.} Many columns are logs, growth
+#' rates, leads, or lags of a base series, named compositionally as
+#' \code{[lead/lag][gr<h>].<series>} where one period is one quarter:
+#' \code{log.<series>} is the natural log; \code{gr<h>.<series>} is the
+#' \code{h}-quarter growth rate (\code{gr1} quarterly, \code{gr4}
+#' year-over-year); prefixes \code{l}, \code{l2}, \code{l3} lag backward and
+#' \code{f}, \code{f2}, \code{f3} lead forward by that many quarters, with the
+#' first lead/lag dropping its digit (bare \code{l}/\code{f}). Tokens stack
+#' lead/lag then growth then \code{.series}, so \code{lgr1.gdpc1} is quarterly
+#' GDP growth lagged one quarter and \code{fgr4.gdpc1} is year-over-year GDP
+#' growth led \emph{one} quarter (the \code{4} is the growth window, not the
+#' lead horizon). The \code{*_lags} columns (e.g. \code{vfci_lags}) are
+#' composite constructs, not simple shifts, and do not follow this grammar.
 #'
 #' @source Various sources including Federal Reserve Economic Data (FRED),
 #' Federal Reserve Bank of Chicago, and financial market data providers.
