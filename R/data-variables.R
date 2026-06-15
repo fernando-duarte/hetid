@@ -7,7 +7,9 @@
 #' @format A data frame with 243 observations and 186 variables. Key variable
 #' groups include:
 #' \itemize{
-#'   \item Date and period identifiers: \code{date}, \code{yr}, \code{quarter}
+#'   \item Date and period identifiers: \code{date} (calendar quarter-end, the
+#'     package-wide period-end convention, e.g. \code{1962-03-31}), \code{yr},
+#'     \code{quarter}
 #'   \item National accounts and prices: real GDP (\code{gdpc1}), potential
 #'     GDP (\code{gdppot}), core PCE prices (\code{pcepilfe}), real
 #'     consumption (\code{pcecc96}), log GDP (\code{lgdp}), GDP growth
