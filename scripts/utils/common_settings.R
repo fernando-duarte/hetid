@@ -44,6 +44,8 @@ PIPELINE_ACM_MATURITIES <- seq(3L, 120L, by = 3L)
 SEED <- 123 # For reproducibility
 BASELINE_TAU <- 0.05 # Baseline set-identification tolerance (shared across stages)
 N_Y1_LAGS <- 4L # Own-lags of Y1 (consumption growth) in the W1 reduced form (0 = none)
+# FALSE = estimate B from the data (default, "let the data speak"); TRUE = impose exact-news B = 0
+IMPOSE_NEWS_PROJECTION_ZERO <- FALSE
 TAU_STAR_N_STARTS <- 15L # Multistart count for the tau* optimizer oracle
 N_CORES <- parallel::detectCores() - 1 # Leave one core free
 MAX_N_PCS <- HETID_CONSTANTS$MAX_N_PCS # Use package constant
@@ -121,6 +123,9 @@ if (file.exists(file.path(utils_dir, "z_source.R"))) {
 }
 if (file.exists(file.path(utils_dir, "gamma_source.R"))) {
   source(file.path(utils_dir, "gamma_source.R"))
+}
+if (file.exists(file.path(utils_dir, "news_projection.R"))) {
+  source(file.path(utils_dir, "news_projection.R"))
 }
 if (file.exists(file.path(utils_dir, "identification_utils.R"))) {
   source(file.path(utils_dir, "identification_utils.R"))
