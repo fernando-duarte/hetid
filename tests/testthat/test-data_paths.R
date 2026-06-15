@@ -15,6 +15,29 @@ test_that("get_data_file_path rejects non-string input", {
   expect_error(get_data_file_path(NULL), "single character string")
 })
 
+test_that("get_data_file_path rejects NA filename", {
+  expect_error(
+    get_data_file_path(NA_character_),
+    class = "hetid_error_bad_argument"
+  )
+})
+
+test_that("get_data_file_path rejects empty filename", {
+  expect_error(
+    get_data_file_path(""),
+    class = "hetid_error_bad_argument"
+  )
+})
+
+test_that("get_data_file_path still resolves a normal filename", {
+  # Output-identity guard for the valid path: a plain name still resolves to a
+  # single path ending in that filename.
+  path <- get_data_file_path("foo.csv")
+  expect_type(path, "character")
+  expect_length(path, 1)
+  expect_identical(basename(path), "foo.csv")
+})
+
 test_that("get_data_file_path falls back to the bundled copy", {
   user_root <- withr::local_tempdir()
   withr::local_envvar(R_USER_DATA_DIR = user_root)

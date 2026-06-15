@@ -65,9 +65,10 @@ get_user_data_dir <- function(create = FALSE) {
 #' @return Character string with full path to data file
 #' @keywords internal
 get_data_file_path <- function(filename) {
-  if (!is.character(filename) || length(filename) != 1) {
+  if (!is.character(filename) || length(filename) != 1 ||
+    is.na(filename) || !nzchar(filename)) {
     stop_bad_argument(
-      "filename must be a single character string",
+      "filename must be a single character string that is not missing or empty",
       arg = "filename"
     )
   }
