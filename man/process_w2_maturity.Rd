@@ -10,7 +10,10 @@ process_w2_maturity(
   term_premia_df,
   pcs,
   n_pcs,
-  step = HETID_CONSTANTS$DEFAULT_STEP
+  step = HETID_CONSTANTS$DEFAULT_STEP,
+  y1 = NULL,
+  y1_lags = 0L,
+  impose_b_zero = FALSE
 )
 }
 \arguments{
@@ -30,6 +33,14 @@ steps one period, so maturity arithmetic moves in multiples of
 \code{step}: \code{compute_n_hat()} pairs maturities \code{i} and
 \code{i + step}, the one-period bond is the \code{step}-maturity
 bond, and horizons must satisfy \code{i <= MAX_MATURITY - step}.}
+
+\item{y1}{Optional outcome vector (length \code{nrow(pcs)}) supplying the
+own-lag block of the common conditioning vector \eqn{X_t}.}
+
+\item{y1_lags}{Integer number of own-lags \eqn{H \ge 0} to append.}
+
+\item{impose_b_zero}{Logical; if TRUE, impose \eqn{B = 0} (no regression):
+the residual is the SDF innovation itself.}
 }
 \value{
 List with regression results or NULL if skipped
