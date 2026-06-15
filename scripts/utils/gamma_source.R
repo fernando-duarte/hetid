@@ -13,6 +13,49 @@ baseline_gamma_method <- function() {
   Sys.getenv("HETID_BASELINE_GAMMA", "vfci")
 }
 
+# Single source of truth for the common-design column regexes. The spec
+# conditions BOTH Y1 and Y2 on the same X_t = (1, PC, H lags of Y1): PCs are
+# the only instruments (anchored "^pc[0-9]+$"), y1_lag* the predetermined
+# conditioning lags (anchored "^y1_lag[0-9]+$"), and whatever remains is the
+# intercept. Returns the column indices and counts so callers never re-derive
+# the regexes (and so build_reduced_form_gamma's pc selection matches exactly).
+classify_common_design_cols <- function(nms) {
+  pc_cols <- grep("^pc[0-9]+$", nms)
+  lag_cols <- grep("^y1_lag[0-9]+$", nms)
+  intercept_col <- which(!(seq_along(nms) %in% c(pc_cols, lag_cols)))
+  list(
+    intercept_col = intercept_col,
+    pc_cols = pc_cols,
+    lag_cols = lag_cols,
+    n_pcs = length(pc_cols),
+    n_lag = length(lag_cols)
+  )
+}
+
+# Assert beta2R is column-matched to beta1R (same length, identical names in
+# the same order). The exact recovery identity beta1(theta) = beta1R -
+# (beta2R)'theta carries every column through directly only when both fits
+# share the full common design; a legacy PC-only beta2R must FAIL LOUDLY
+# rather than be silently re-padded, which would falsely point-identify psi.
+assert_beta_columns_matched <- function(beta1r, beta2r) {
+  if (length(beta1r) == ncol(beta2r) &&
+    identical(names(beta1r), colnames(beta2r))) {
+    return(invisible(TRUE))
+  }
+  cli_abort(c(
+    "beta2R is not column-matched to beta1R.",
+    "i" = "Expected the FULL common design (1, PC, y1_lag*) in both fits.",
+    "x" = paste0(
+      "got beta1R names {.val {names(beta1r)}} vs beta2R columns ",
+      "{.val {colnames(beta2r)}}"
+    ),
+    ">" = paste0(
+      "This requires the common-conditioning change (A1-A4): W2 must be ",
+      "regressed on the same X_t as W1."
+    )
+  ))
+}
+
 #' Reduced-form gamma: the Y2-on-PC slope block of beta2R, transposed to the
 #' J x I (instruments x components) layout the pipeline quadratic builder
 #' (build_pipeline_quadratic_system) expects. Selects the principal-component
@@ -24,7 +67,7 @@ baseline_gamma_method <- function() {
 #'   with columns named (Intercept), pc1..pcJ, and optionally y1_lag1..y1_lagH
 #' @return n_pcs x I matrix with attr "method" = "reduced_form"
 build_reduced_form_gamma <- function(beta2r) {
-  pc_cols <- grep("^pc[0-9]+$", colnames(beta2r))
+  pc_cols <- classify_common_design_cols(colnames(beta2r))$pc_cols
   if (length(pc_cols) == 0L) {
     stop(
       "build_reduced_form_gamma: beta2r has no principal-component columns ",
@@ -45,6 +88,35 @@ build_reduced_form_gamma <- function(beta2r) {
   stopifnot(is.matrix(gamma), all(is.finite(gamma)))
   attr(gamma, "method") <- "reduced_form"
   gamma
+}
+
+# Reduced-form gamma when it is defined, or NULL (with one standard warning)
+# when it is not -- the impose-B = 0 / exact-news case where the PC slope block
+# of beta2R is all zeros. Centralizes BOTH the upfront
+# impose_news_projection_zero() check AND a defensive catch of
+# build_reduced_form_gamma's all-zero "B = 0" error (in case the env flag and
+# the actual coefficients ever disagree). Under the DEFAULT estimate-B path
+# this returns EXACTLY what build_reduced_form_gamma returns (same matrix, same
+# "method" attr); callers branch on NULL to skip the reduced-form benchmark.
+reduced_form_gamma_or_skip <- function(beta2r) {
+  skip_msg <- paste0(
+    "Imposed exact-news projection (B = 0): the reduced-form gamma is ",
+    "undefined (PC slopes are zero), so the reduced-form benchmark is skipped."
+  )
+  if (impose_news_projection_zero()) {
+    cli_alert_warning(skip_msg)
+    return(NULL)
+  }
+  tryCatch(
+    build_reduced_form_gamma(beta2r),
+    error = function(e) {
+      if (grepl("B = 0", conditionMessage(e))) {
+        cli_alert_warning(skip_msg)
+        return(NULL)
+      }
+      stop(e)
+    }
+  )
 }
 
 resolve_baseline_gamma <- function(method, moments) {

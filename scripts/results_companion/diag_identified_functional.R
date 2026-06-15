@@ -95,26 +95,43 @@ print(ct, digits = 5, row.names = FALSE)
 cat("\n")
 
 # --- tau = 0 point-solve swing across fixed weightings (VFCI vs reduced-form) ---
+# Under imposed exact news (B = 0) the reduced-form gamma is undefined, so
+# reduced_form_gamma_or_skip() returns NULL (with a standard note) and the
+# reduced-form arm of the swing is unavailable; the diagnostic still completes
+# on the VFCI arm. The estimate-B (default) path builds the same reduced-form
+# gamma as before, so it is byte-identical.
 beta2r <- resid$w2_coefficients
-gamma_rf <- build_reduced_form_gamma(beta2r)
-pt_rf <- solve_point_identification(
-  build_pipeline_quadratic_system(gamma_rf, rep(0, i_dim), moments)$components
-)
+gamma_rf <- reduced_form_gamma_or_skip(beta2r)
+if (is.null(gamma_rf)) {
+  pt_rf <- NULL
+  theta_rf_out <- rep(NA_real_, i_dim)
+} else {
+  pt_rf <- solve_point_identification(
+    build_pipeline_quadratic_system(gamma_rf, rep(0, i_dim), moments)$components
+  )
+  theta_rf_out <- pt_rf$theta
+}
 cat("=== tau = 0 point-solve swing across fixed gamma ===\n")
 cat(
   "VFCI gamma:        ", paste(signif(pt_vfci$theta, 6), collapse = ", "),
   " cond =", signif(pt_vfci$cond, 6), "\n"
 )
-cat(
-  "reduced-form gamma:", paste(signif(pt_rf$theta, 6), collapse = ", "),
-  " cond =", signif(pt_rf$cond, 6), "\n\n"
-)
+if (is.null(pt_rf)) {
+  cat(
+    "reduced-form gamma: unavailable under imposed exact news (B = 0)\n\n"
+  )
+} else {
+  cat(
+    "reduced-form gamma:", paste(signif(pt_rf$theta, 6), collapse = ", "),
+    " cond =", signif(pt_rf$cond, 6), "\n\n"
+  )
+}
 
 saveRDS(
   list(
     n_obs = n_obs, i_dim = i_dim, w2_cor = w2_cor,
     sv = sv, cond = pt_vfci$cond, theta_vfci = pt_vfci$theta,
-    theta_rf = pt_rf$theta, std_pt = std_pt, bounds_tau05 = b05,
+    theta_rf = theta_rf_out, std_pt = std_pt, bounds_tau05 = b05,
     ctheta = ct, sd_w1 = sd_w1, sd_w2 = sd_w2
   ),
   file.path(out_dir, "identified_functional.rds")
