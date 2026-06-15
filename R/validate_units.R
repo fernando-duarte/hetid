@@ -20,6 +20,7 @@ NULL
 #' @return Invisible TRUE; warns when the inputs look like decimals
 #' @keywords internal
 validate_percent_units <- function(yields) {
+  assert_tabular(yields, "yields")
   y_max <- suppressWarnings(max(abs(as.matrix(yields)), na.rm = TRUE))
   if (is.finite(y_max) && y_max < 1) {
     warn_hetid(

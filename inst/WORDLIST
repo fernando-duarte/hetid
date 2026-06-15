@@ -26,6 +26,7 @@ codecs
 CodeDepends
 codetools
 compilable
+compositionally
 cov
 Cov
 covr
@@ -122,6 +123,7 @@ na
 ncol
 nloptr
 NONINFRINGEMENT
+nonlinearly
 normalizer
 nyfed
 optimisation
