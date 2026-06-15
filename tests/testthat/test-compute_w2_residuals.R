@@ -1,9 +1,11 @@
 test_that("compute_w2_residuals works for single maturity", {
   test_env <- setup_standard_test_env()
+  set.seed(123)
+  pcs <- matrix(stats::rnorm(nrow(test_env$yields) * 4), nrow = nrow(test_env$yields))
 
-  # Test single maturity - let the function handle PC loading internally
+  # Test single maturity
   res_y2 <- suppressWarnings(compute_w2_residuals(test_env$yields, test_env$term_premia,
-    maturities = 60, n_pcs = 4
+    maturities = 60, n_pcs = 4, pcs = pcs
   ))
 
   expect_type(res_y2, "list")
@@ -18,10 +20,12 @@ test_that("compute_w2_residuals works for single maturity", {
 
 test_that("compute_w2_residuals works for maturity 12", {
   test_env <- setup_standard_test_env()
+  set.seed(123)
+  pcs <- matrix(stats::rnorm(nrow(test_env$yields) * 4), nrow = nrow(test_env$yields))
 
   # Test maturity 12 specifically
   res_y2_mat12 <- suppressWarnings(compute_w2_residuals(test_env$yields, test_env$term_premia,
-    maturities = 12, n_pcs = 4
+    maturities = 12, n_pcs = 4, pcs = pcs
   ))
 
   expect_type(res_y2_mat12, "list")
@@ -40,10 +44,13 @@ test_that("compute_w2_residuals works for maturity 12", {
 test_that("compute_w2_residuals works for multiple maturities", {
   test_env <- setup_standard_test_env()
 
-  # Test multiple maturities (including maturity 12) - internal PC loading
+  set.seed(123)
+  pcs <- matrix(stats::rnorm(nrow(test_env$yields) * 4), nrow = nrow(test_env$yields))
+
+  # Test multiple maturities (including maturity 12)
   maturities <- c(12, 24, 60, 84)
   res_y2 <- suppressWarnings(compute_w2_residuals(test_env$yields, test_env$term_premia,
-    maturities = maturities, n_pcs = 4
+    maturities = maturities, n_pcs = 4, pcs = pcs
   ))
 
   # Should have one element per maturity
@@ -54,10 +61,12 @@ test_that("compute_w2_residuals works for multiple maturities", {
 
 test_that("residual properties check", {
   test_env <- setup_standard_test_env()
+  set.seed(123)
+  pcs <- matrix(stats::rnorm(nrow(test_env$yields) * 4), nrow = nrow(test_env$yields))
 
-  # Test for maturity 36 - let the function handle PC loading internally
+  # Test for maturity 36
   res_y2 <- suppressWarnings(compute_w2_residuals(test_env$yields, test_env$term_premia,
-    maturities = 36, n_pcs = 4
+    maturities = 36, n_pcs = 4, pcs = pcs
   ))
   residuals <- res_y2$residuals[[1]]
 
@@ -71,13 +80,16 @@ test_that("residual properties check", {
 test_that("compute_w2_residuals uses SDF innovations", {
   test_env <- setup_standard_test_env()
 
+  set.seed(123)
+  pcs <- matrix(stats::rnorm(nrow(test_env$yields) * 4), nrow = nrow(test_env$yields))
+
   # Get SDF innovations directly
   i <- 48
   sdf_innov <- compute_sdf_innovations(test_env$yields, test_env$term_premia, i = i)
 
-  # Get W2 residuals - let the function handle PC loading internally
+  # Get W2 residuals
   res_y2 <- suppressWarnings(compute_w2_residuals(test_env$yields, test_env$term_premia,
-    maturities = i, n_pcs = 4
+    maturities = i, n_pcs = 4, pcs = pcs
   ))
 
   # The dependent variable in the regression should be SDF innovations
@@ -215,11 +227,13 @@ test_that("quarterly data alignment test", {
 
 test_that("length verification for output", {
   test_env <- setup_standard_test_env()
+  set.seed(123)
+  pcs <- matrix(stats::rnorm(nrow(test_env$yields) * 4), nrow = nrow(test_env$yields))
 
-  # Test with multiple maturities - let the function handle PC loading internally
+  # Test with multiple maturities
   maturities <- seq(12, 108, by = 12)
   res_y2 <- suppressWarnings(compute_w2_residuals(test_env$yields, test_env$term_premia,
-    maturities = maturities, n_pcs = 4
+    maturities = maturities, n_pcs = 4, pcs = pcs
   ))
 
   # Check dimensions
@@ -229,15 +243,6 @@ test_that("length verification for output", {
   # Each residual vector should have same length
   residual_lengths <- lengths(res_y2$residuals)
   expect_true(all(residual_lengths == residual_lengths[1]))
-})
-
-test_that("warning emitted when PCs fall back to package data", {
-  test_env <- setup_standard_test_env()
-
-  expect_warning(
-    compute_w2_residuals(test_env$yields, test_env$term_premia, maturities = 60, n_pcs = 2),
-    "position"
-  )
 })
 
 test_that("no message when user provides PCs", {
@@ -316,22 +321,6 @@ test_that("no message for dates when user provides dates", {
     sort(unique(result$date)),
     user_dates[seq_len(n_obs)]
   )
-})
-
-test_that("variables loaded only once when PCs and dates both NULL", {
-  test_env <- setup_standard_test_env()
-
-  warns <- capture_warnings(
-    compute_w2_residuals(
-      test_env$yields, test_env$term_premia,
-      maturities = 60, n_pcs = 2,
-      return_df = TRUE
-    )
-  )
-  # Only one warning about bundled PCs
-  # Dates reuse the same load -- no second warning
-  pc_warns <- grep("position", warns, value = TRUE)
-  expect_length(pc_warns, 1)
 })
 
 test_that("return_df dates align correctly with interior NA in PCs", {
@@ -441,43 +430,6 @@ test_that("error when maturities are non-integer or negative", {
     )),
     "must be between 3 and"
   )
-})
-
-test_that("load_w2_pcs errors when bundled data lacks PC columns", {
-  fake_vars <- data.frame(
-    pc1 = 1:10, pc2 = 1:10,
-    date = seq.Date(
-      as.Date("2000-01-01"),
-      by = "quarter",
-      length.out = 10
-    )
-  )
-  local_mocked_bindings(
-    get_bundled_variables = function() fake_vars
-  )
-
-  expect_error(
-    suppressWarnings(
-      load_w2_pcs(NULL, n_pcs = 6, n_obs = 10)
-    ),
-    "Missing PC columns"
-  )
-})
-
-test_that("load_w2_pcs returns NULL dates when no date col", {
-  fake_vars <- data.frame(
-    pc1 = 1:10, pc2 = 1:10,
-    pc3 = 1:10, pc4 = 1:10
-  )
-  local_mocked_bindings(
-    get_bundled_variables = function() fake_vars
-  )
-
-  result <- suppressWarnings(
-    load_w2_pcs(NULL, n_pcs = 4, n_obs = 10)
-  )
-  expect_null(result$dates)
-  expect_equal(ncol(result$pcs), 4)
 })
 
 # Synthetic inputs for the warn-and-skip contract tests:

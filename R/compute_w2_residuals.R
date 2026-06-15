@@ -17,10 +17,8 @@
 #' @template param-pc-data
 #' @param return_df Logical, if TRUE returns a data frame with
 #'   dates (default FALSE)
-#' @param dates Optional vector of dates for the returned data
-#'   frame. If NULL and bundled PCs are used, bundled dates are
-#'   used. If NULL and custom \code{pcs} are supplied, row
-#'   indices are used instead.
+#' @param dates Optional vector of period-end dates for the returned
+#'   data frame (one per yield row). If NULL, row indices are used.
 #' @param y1 Optional outcome vector (length \code{nrow(pcs)}) supplying the
 #'   own-lag block of the common conditioning vector \eqn{X_t}; required when
 #'   \code{y1_lags > 0}.
@@ -63,34 +61,28 @@
 #' the conditioning vector \eqn{X_t} (PC_t, optionally with
 #' \code{y1_lags} own-lags of \code{y1}) for residuals W_\{2,t+1\}.
 #'
-#' \strong{Bundled PCs alignment:} When \code{pcs = NULL}, bundled
-#' principal components are paired with yields \strong{by row position},
-#' not by calendar date. If the two cover different periods (e.g.
-#' quarterly ACM data starts 1961-Q2 while bundled PCs start 1962-Q1),
-#' rows mix quarters and results are invalid. For correct results, merge
-#' yields with the bundled PCs by year-quarter and pass the aligned
-#' matrix via \code{pcs}. See the examples below.
+#' \strong{PC alignment:} \code{pcs} must be supplied as a numeric matrix
+#' with one row per yield row, already aligned to the yields by calendar
+#' date. Join the principal components to the yields by \code{date} before
+#' calling (both share the package period-end convention). See the example.
 #'
 #' @importFrom stats lm residuals fitted coef
 #' @importFrom utils data
 #' @export
 #' @examples
-#' # Load quarterly ACM data and bundled PCs, then align by year-quarter
-#' # before passing the merged PCs via `pcs` (see Bundled PCs alignment).
+#' # ACM data and the bundled PCs share the period-end date convention, so they
+#' # merge directly by calendar date; pass the aligned PCs via `pcs`.
 #' mats <- c(12, 24, 36, 48)
 #' acm_data <- extract_acm_data(
 #'   data_types = c("yields", "term_premia"),
 #'   maturities = mats, frequency = "quarterly"
 #' )
 #' data("variables", package = "hetid")
-#' yq <- function(d) paste0(format(d, "%Y"), "-", quarters(d))
-#' acm_data$yq <- yq(acm_data$date)
-#' variables$yq <- yq(variables$date)
 #' pc_cols <- paste0("pc", 1:4)
 #' merged <- merge(
-#'   variables[, c("yq", pc_cols)],
-#'   acm_data[, c("yq", paste0("y", mats), paste0("tp", mats))],
-#'   by = "yq"
+#'   variables[, c("date", pc_cols)],
+#'   acm_data[, c("date", paste0("y", mats), paste0("tp", mats))],
+#'   by = "date"
 #' )
 #' res_w2 <- compute_w2_residuals(
 #'   merged[, paste0("y", mats)], merged[, paste0("tp", mats)],

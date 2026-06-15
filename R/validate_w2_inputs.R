@@ -82,90 +82,59 @@ get_bundled_variables <- function() {
 
 #' Load Principal Components (and optionally dates) for W2
 #'
-#' Internal function to load or validate principal components.
-#' When falling back to package data, also extracts dates
-#' to avoid a redundant second load.
+#' Internal function to validate the supplied principal components.
 #'
-#' @param pcs Provided PCs or NULL
+#' @param pcs Supplied PC matrix (required; aligned to yields by date)
 #' @param n_pcs Number of PCs to use
 #' @param n_obs Number of observations (for validation)
 #'
 #' @return List with components:
 #'   \describe{
 #'     \item{pcs}{Matrix of principal components}
-#'     \item{dates}{Date vector from bundled data, or NULL
-#'       if user provided PCs}
+#'     \item{dates}{NULL (kept for a stable return shape)}
 #'     \item{pc_names}{Character labels for the first n_pcs
 #'       regressor columns}
 #'   }
 #' @keywords internal
 load_w2_pcs <- function(pcs, n_pcs, n_obs) {
-  if (is.null(pcs)) {
-    warn_hetid(
-      paste0(
-        "Using bundled 'variables' dataset for PCs. ",
-        "Bundled PCs are aligned with yields by row ",
-        "position, not by calendar date. For correct ",
-        "date alignment, merge datasets by year-quarter",
-        " and pass pcs= explicitly."
-      ),
-      "hetid_warning_bundled_pcs"
+  # PCs must be supplied already aligned to the yields (one row per yield row,
+  # paired by calendar date upstream). There is no bundled-by-row-position
+  # fallback: principal components and yields are joined by date before they
+  # reach this function (see compute_identification_residuals / create_data.R).
+  assert_bad_argument_ok(
+    !is.null(pcs),
+    paste0(
+      "pcs must be supplied as a numeric matrix aligned to yields by ",
+      "calendar date (one row per yield row)."
+    ),
+    arg = "pcs"
+  )
+
+  assert_tabular(pcs, "pcs")
+  pcs <- as.matrix(pcs)
+  # Only a type guard here (NOT assert_numeric_finite_values): unlike
+  # the moments path, the W2 regression tolerates interior NA in PCs
+  # and drops those rows via complete.cases in run_pc_regression (see
+  # the interior-NA alignment test), so NA must be allowed through.
+  assert_bad_argument_ok(
+    is.numeric(pcs),
+    "pcs must contain only numeric values",
+    arg = "pcs"
+  )
+
+  # Validate dimensions; the n_pcs <= ncol(pcs) cap is enforced upstream
+  # in compute_w2_residuals
+  assert_dimension_ok(
+    nrow(pcs) == n_obs,
+    paste0(
+      "Number of rows in pcs must match number of rows in yields"
     )
-    variables <- get_bundled_variables()
+  )
 
-    # Extract PCs
-    pc_cols <- get_pc_column_names(n_pcs)
-    missing_cols <- setdiff(pc_cols, names(variables))
-
-    assert_bad_argument_ok(
-      length(missing_cols) == 0,
-      paste(
-        "Missing PC columns in variables data:",
-        paste(missing_cols, collapse = ", ")
-      )
-    )
-
-    # One-period offset: dates[2:T] aligns with T-1 innovations
-    bundled_dates <- if ("date" %in% names(variables)) {
-      variables$date[-1]
-    } else {
-      NULL
-    }
-
-    list(
-      pcs = as.matrix(variables[, pc_cols, drop = FALSE]),
-      dates = bundled_dates,
-      pc_names = pc_cols
-    )
-  } else {
-    # User provided PCs
-    assert_tabular(pcs, "pcs")
-    pcs <- as.matrix(pcs)
-    # Only a type guard here (NOT assert_numeric_finite_values): unlike
-    # the moments path, the W2 regression tolerates interior NA in PCs
-    # and drops those rows via complete.cases in run_pc_regression (see
-    # the interior-NA alignment test), so NA must be allowed through.
-    assert_bad_argument_ok(
-      is.numeric(pcs),
-      "pcs must contain only numeric values",
-      arg = "pcs"
-    )
-
-    # Validate dimensions for user-provided PCs; the n_pcs <=
-    # ncol(pcs) cap is enforced upstream in compute_w2_residuals
-    assert_dimension_ok(
-      nrow(pcs) == n_obs,
-      paste0(
-        "Number of rows in user-provided pcs ",
-        "must match number of rows in yields"
-      )
-    )
-
-    pc_names <- colnames(pcs)[seq_len(n_pcs)]
-    if (is.null(pc_names) || anyNA(pc_names) || !all(nzchar(pc_names))) {
-      pc_names <- get_pc_column_names(n_pcs)
-    }
-
-    list(pcs = pcs, dates = NULL, pc_names = pc_names)
+  pc_names <- colnames(pcs)[seq_len(n_pcs)]
+  if (is.null(pc_names) || anyNA(pc_names) || !all(nzchar(pc_names))) {
+    pc_names <- get_pc_column_names(n_pcs)
   }
+
+  list(pcs = pcs, dates = NULL, pc_names = pc_names)
 }
