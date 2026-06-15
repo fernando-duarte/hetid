@@ -114,10 +114,9 @@ compute_w2_residuals <- function(yields, term_premia,
   term_premia_df <- validated$term_premia
   maturities <- validated$maturities
 
-  # Load or validate PCs (also returns bundled dates if available)
+  # Validate the supplied PCs (required; aligned to yields by date)
   pc_result <- load_w2_pcs(pcs, n_pcs, nrow(yields_df))
   pcs <- pc_result$pcs
-  bundled_dates <- pc_result$dates # nolint: object_usage_linter
 
   # Common conditioning own-lags: build_common_conditioning enforces a
   # length-matched, non-NULL y1 per maturity when y1_lags > 0.
@@ -171,13 +170,12 @@ compute_w2_residuals <- function(yields, term_premia,
       kept_idx_list = kept_idx_list,
       maturities = maturities,
       dates = dates,
-      bundled_dates = bundled_dates,
       n_yield_rows = nrow(yields_df)
     ))
   }
 
   # Per-maturity date index, parallel to residuals (W2 ragged: subset by kept_idx).
-  resolved_dates <- resolve_w2_dates(dates, bundled_dates, nrow(yields_df))
+  resolved_dates <- resolve_w2_dates(dates, nrow(yields_df))
   dates_list <- lapply(kept_idx_list, function(kept) resolved_dates[which(kept)])
   list(
     residuals = residuals_list,

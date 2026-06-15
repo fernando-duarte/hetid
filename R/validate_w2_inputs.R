@@ -91,7 +91,6 @@ get_bundled_variables <- function() {
 #' @return List with components:
 #'   \describe{
 #'     \item{pcs}{Matrix of principal components}
-#'     \item{dates}{NULL (kept for a stable return shape)}
 #'     \item{pc_names}{Character labels for the first n_pcs
 #'       regressor columns}
 #'   }
@@ -136,5 +135,5 @@ load_w2_pcs <- function(pcs, n_pcs, n_obs) {
     pc_names <- get_pc_column_names(n_pcs)
   }
 
-  list(pcs = pcs, dates = NULL, pc_names = pc_names)
+  list(pcs = pcs, pc_names = pc_names)
 }

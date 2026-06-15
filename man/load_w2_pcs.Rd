@@ -17,7 +17,6 @@ load_w2_pcs(pcs, n_pcs, n_obs)
 List with components:
 \describe{
 \item{pcs}{Matrix of principal components}
-\item{dates}{NULL (kept for a stable return shape)}
 \item{pc_names}{Character labels for the first n_pcs
 regressor columns}
 }

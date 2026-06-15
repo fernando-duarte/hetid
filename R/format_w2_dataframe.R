@@ -12,8 +12,6 @@
 #'   indicating which rows survived complete-cases filtering.
 #' @param maturities Integer vector of maturities processed.
 #' @param dates Optional user-supplied date vector.
-#' @param bundled_dates Date vector shipped with bundled PCs
-#'   (may be NULL).
 #' @param n_yield_rows Integer, the number of rows in the
 #'   original yields data frame.
 #'
@@ -24,13 +22,13 @@
 #' @noRd
 format_w2_dataframe <- function(
   residuals_list, fitted_list, kept_idx_list,
-  maturities, dates, bundled_dates, n_yield_rows
+  maturities, dates, n_yield_rows
 ) {
   df_list <- list()
 
-  # Resolve the W2 date index (user -> bundled -> row indices), shared with
-  # the list-mode return of compute_w2_residuals.
-  dates <- resolve_w2_dates(dates, bundled_dates, n_yield_rows)
+  # Resolve the W2 date index (user dates -> row indices), shared with the
+  # list-mode return of compute_w2_residuals.
+  dates <- resolve_w2_dates(dates, n_yield_rows)
 
   # Build data frame for each maturity
   for (idx in seq_along(maturities)) {
