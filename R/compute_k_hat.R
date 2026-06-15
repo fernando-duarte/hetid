@@ -76,6 +76,7 @@ compute_k_hat <- function(yields, term_premia, i,
   )
 
   # Compute the fourth moment (vectorized)
+  # Guard above (n_obs > horizon_periods) keeps both seq.int() ranges ascending (no 1:0 inversion)
   y_shifted <- y_step[seq.int(horizon_periods + 1, n_obs)]
   n_hat_shifted <- n_hat_i_minus_1[seq.int(2, n_obs - horizon_periods + 1)]
   valid <- !is.na(y_shifted) & !is.na(n_hat_shifted)

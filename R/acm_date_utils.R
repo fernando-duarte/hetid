@@ -49,7 +49,7 @@ coerce_optional_date <- function(x, arg) {
     paste0(
       arg, " must be a Date or a character string in ",
       "\"YYYY-MM-DD\" format; got an object of class ",
-      class(x)[1]
+      paste(class(x), collapse = "/")
     ),
     arg = arg
   )

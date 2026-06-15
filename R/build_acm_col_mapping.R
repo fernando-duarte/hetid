@@ -50,5 +50,7 @@ build_acm_col_mapping <- function(data_types, maturities) {
     )
     setNames(as.list(old_cols), new_cols)
   })
-  unlist(mappings, recursive = FALSE)
+  # do.call(c, unname(...)) flattens one level keeping the inner (new-name) keys
+  # without prefixing them, even if data_types is ever passed as a named vector.
+  do.call(c, unname(mappings))
 }
