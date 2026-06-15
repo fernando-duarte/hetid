@@ -115,16 +115,16 @@ if (!(length(beta1r) == ncol(beta2r) &&
     )
   ))
 }
-beta2r_full <- beta2r
 
 # === POINT IDENTIFICATION (tau = 0, reduced-form gamma) ===
 # Under imposed exact news (B = 0) the PC slope block of beta2R is all zeros, so
 # build_reduced_form_gamma() is undefined (it errors) and the tau = 0 point is
 # degenerate. Detect that mode and SKIP the reduced-form-gamma point block,
 # routing it through the existing point_unreliable machinery. The estimate-B
-# (default) path is unaffected.
+# (default) path is unaffected. isTRUE() collapses an NA (any NA PC slope) to
+# FALSE so the `||` cannot yield NA and error the `if` below.
 impose_b_zero <- impose_news_projection_zero() ||
-  all(beta2r[, pc_cols, drop = FALSE] == 0)
+  isTRUE(all(beta2r[, pc_cols, drop = FALSE] == 0))
 cond_max <- 1e12
 if (impose_b_zero) {
   cli_alert_warning(paste0(
@@ -168,7 +168,7 @@ if (impose_b_zero) {
     cond_note <- reason
   } else {
     theta_point <- pt0$theta
-    beta1_point <- recover_structural_coefficients(beta1r, beta2r_full, theta_point)
+    beta1_point <- recover_structural_coefficients(beta1r, beta2r, theta_point)
     cli_alert_info(paste0(
       "tau = 0 point identification: condition number cond(Q) = ",
       formatC(pt0$cond, format = "e", digits = 2)
@@ -180,10 +180,10 @@ if (impose_b_zero) {
   }
 }
 
-# theta is undefined whenever the reduced-form point is unreliable OR exact news
-# is imposed; the beta1 rows, in contrast, ARE point-valued under imposed B = 0
-# (beta1(theta) = beta1R for every theta), so they render from beta1_point.
-theta_point_unreliable <- point_unreliable
+# The theta point is undefined whenever point_unreliable (reduced-form point
+# unreliable OR exact news imposed). The beta1 rows, in contrast, ARE point-
+# valued under imposed B = 0 (beta1(theta) = beta1R for every theta), so they
+# render from beta1_point whenever it was assigned.
 beta1_point_available <- !is.null(beta1_point)
 
 point_cell <- function(value, available = !point_unreliable) {
@@ -205,7 +205,7 @@ beta1_hi <- numeric(p_dim)
 beta1_lo_valid <- logical(p_dim)
 beta1_hi_valid <- logical(p_dim)
 for (p in seq_len(p_dim)) {
-  c_p <- as.numeric(beta2r_full[, p])
+  c_p <- as.numeric(beta2r[, p])
   fmin <- solve_linear_functional_bound(qs_set$quadratic, c_p, "min")
   fmax <- solve_linear_functional_bound(qs_set$quadratic, c_p, "max")
   beta1_lo[p] <- beta1r[p] - fmax$bound
@@ -238,7 +238,7 @@ point_col <- c(
     character(1)
   ),
   vapply(seq_len(i_dim), function(i) {
-    if (theta_point_unreliable) "unreliable" else point_cell(theta_point[i])
+    if (point_unreliable) "unreliable" else point_cell(theta_point[i])
   }, character(1))
 )
 set_col <- c(
