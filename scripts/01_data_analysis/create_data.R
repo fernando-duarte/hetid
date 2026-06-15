@@ -5,9 +5,6 @@
 source(here::here("scripts/utils/common_settings.R"))
 # Core packages (hetid, dplyr, tidyr, gt, DT, here, cli) loaded via common_settings.R
 
-# Load specialized packages for this script
-library(lubridate) # Date handling
-
 maturity_range <- PIPELINE_ACM_MATURITIES
 
 acm_data <- extract_acm_data(
@@ -27,21 +24,14 @@ data("variables", package = "hetid")
 pc_cols <- paste0("pc", 1:MAX_N_PCS)
 cols_to_keep <- c("date", HETID_CONSTANTS$CONSUMPTION_GROWTH_COL, pc_cols)
 
-# Prepare variables data
+# Prepare variables data (already period-end dated; merged directly by date)
 variables_df <- variables |>
   select(all_of(cols_to_keep)) |>
-  mutate(date = as.Date(date)) |>
-  # Convert to end of quarter to match ACM dates
-  mutate(date = ceiling_date(date, "quarter") - 1)
+  mutate(date = as.Date(date))
 
-# For merging, create year-quarter identifiers
-acm_yq <- paste0(year(dates), "-Q", quarter(dates))
-variables_df$year_quarter <- paste0(year(variables_df$date), "-Q", quarter(variables_df$date))
-
-# Create dataset starting with ACM dates and year-quarter
+# Create dataset starting with the canonical period-end ACM dates
 data <- data.frame(
   date = dates,
-  year_quarter = acm_yq,
   stringsAsFactors = FALSE
 )
 
@@ -55,15 +45,15 @@ for (i in seq_along(maturity_range)) {
   data[[tp_cols[i]]] <- term_premia[, i]
 }
 
-# Merge with variables data by year-quarter (only complete observations)
+# Merge with variables by calendar date (only complete observations). ACM and
+# the bundled variables now share the period-end convention, so the date keys
+# match exactly.
 variables_to_merge <- variables_df |>
-  select(-date) |>
   (\(x) filter(x, complete.cases(x)))() # Only keep complete rows before merging
 
-data <- merge(data, variables_to_merge, by = "year_quarter", all.x = FALSE)
+data <- merge(data, variables_to_merge, by = "date", all.x = FALSE)
 
-# Remove year_quarter column and ensure data is sorted by date
-data$year_quarter <- NULL
+# Ensure data is sorted by date
 data <- data[order(data$date), ]
 
 # Create lagged PC variables
