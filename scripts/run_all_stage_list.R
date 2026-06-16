@@ -208,6 +208,18 @@ scripts_to_run <- list(
       "output_results.R"
     ),
     desc = "Exporting Generalized-Instrument Results"
+  ),
+
+  # The PAPER specification (the only thing written to for_paper): one SDF-news PC
+  # (I = 1), the de-meaned VFCI as a single instrument (J = 1), three self-contained
+  # tables. Runs in BOTH the quick and full profiles (neither stage is full_only).
+  list(
+    path = here::here("scripts/08_paper_spec", "compute_paper_spec.R"),
+    desc = "Computing the Paper Specification (I=1 news PC, J=1 de-meaned VFCI)"
+  ),
+  list(
+    path = here::here("scripts/08_paper_spec", "render_paper_tables.R"),
+    desc = "Rendering the Three for_paper Tables"
   )
 )
 

@@ -109,16 +109,23 @@ episodes_html <- n_hat$episodes |>
 gtsave(episodes_html, file.path(paper_dir, "n_hat_episodes_table.html"))
 cli_alert_success("HTML tables written")
 
-# Machine-readable n-hat exports
-cli_h2("Copying n-hat CSV Exports")
-for (csv_file in c("n_hat_episodes.csv", "n_hat_prediction_validation.csv")) {
-  file.copy(
-    file.path(temp_dir, csv_file),
-    file.path(paper_dir, csv_file),
-    overwrite = TRUE
-  )
+# Machine-readable n-hat exports. The CSVs already live in temp_dir; this copy
+# mirrored them to the old for_paper location. Since both directories now resolve
+# to temp, skip the now-degenerate self-copy.
+if (!identical(
+  normalizePath(temp_dir, mustWork = FALSE),
+  normalizePath(paper_dir, mustWork = FALSE)
+)) {
+  cli_h2("Copying n-hat CSV Exports")
+  for (csv_file in c("n_hat_episodes.csv", "n_hat_prediction_validation.csv")) {
+    file.copy(
+      file.path(temp_dir, csv_file),
+      file.path(paper_dir, csv_file),
+      overwrite = TRUE
+    )
+  }
+  cli_alert_success("CSV exports copied")
 }
-cli_alert_success("CSV exports copied")
 
 # Copy figures to the paper directory
 cli_h2("Copying Figures")

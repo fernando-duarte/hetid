@@ -76,6 +76,17 @@ cli_alert_success("All scripts executed successfully!")
 cli_text("Total time: {.val {total_elapsed}} minutes")
 cli_text("Completed at: {.timestamp {end_time}}")
 
+# Fail-closed: scripts/output/for_paper must hold EXACTLY the three paper-spec
+# tables (stage 08 builds them into a staging dir and atomically replaces
+# for_paper). If anything else leaked in, a legacy writer was not redirected to
+# temp -- abort so the regression is caught immediately.
+cli_h2("Verifying the for_paper invariant")
+if (!exists("assert_for_paper_allowlist")) {
+  source(here::here("scripts/utils/common_settings.R"))
+}
+assert_for_paper_allowlist()
+cli_alert_success("for_paper holds exactly the three paper-spec tables.")
+
 # List output directories
 cli_h2("Output Files Created")
 output_dir <- here::here("scripts/output")
