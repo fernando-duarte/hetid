@@ -258,9 +258,7 @@ lag_note <- if (n_lag > 0L) {
 } else {
   ""
 }
-year_quarter <- function(d) {
-  paste0(format(d, "%Y"), "Q", (as.integer(format(d, "%m")) - 1L) %/% 3L + 1L)
-}
+# year_quarter() is shared via format_utils.R (sourced by common_settings.R).
 period <- if ("date" %in% names(data)) {
   rng <- range(as.Date(data$date))
   paste0(year_quarter(rng[1]), "--", year_quarter(rng[2]))

@@ -4,12 +4,6 @@
 # relevance moment Cov(Z, W2^2). Deterministic given seed. Reuses the
 # results-companion block-bootstrap design (block = 15, 200 reps).
 
-.mbb_index <- function(nn, bl) {
-  nblocks <- ceiling(nn / bl)
-  starts <- sample.int(nn - bl + 1L, nblocks, replace = TRUE)
-  unlist(lapply(starts, function(s) s:(s + bl - 1L)))[seq_len(nn)]
-}
-
 compute_paper_spec_bootstrap <- function(resid, tau_set = BASELINE_TAU,
                                          b_reps = 200L, block = 15L, seed = SEED) {
   set.seed(seed)
@@ -55,7 +49,7 @@ compute_paper_spec_bootstrap <- function(resid, tau_set = BASELINE_TAU,
 
   draws <- t(vapply(
     seq_len(b_reps),
-    function(b) one(.mbb_index(n, block)),
+    function(b) one(mbb_index(n, block)),
     numeric(4)
   ))
   colnames(draws) <- c("tau_star", "lower", "upper", "cov")

@@ -1,6 +1,15 @@
 # Statistics Utilities
 # Common functions for statistical analysis
 
+# Moving-block bootstrap index: resample a length-nn series in contiguous blocks
+# of length bl (wrapping to nn rows), preserving short-run dependence. Shared by
+# the paper-spec and results-companion tau* bootstraps. Seed the caller, not here.
+mbb_index <- function(nn, bl) {
+  nblocks <- ceiling(nn / bl)
+  starts <- sample.int(nn - bl + 1L, nblocks, replace = TRUE)
+  unlist(lapply(starts, function(s) s:(s + bl - 1L)))[seq_len(nn)]
+}
+
 #' Compute comprehensive summary statistics
 #' @param x numeric vector
 #' @param var_name variable name

@@ -1,6 +1,13 @@
 # Shared finite/Inf-aware formatters for identification bounds + width metrics.
 # Four-state aware: valid=FALSE/NA -> "unreliable"; !finite -> "unbounded".
 
+# Calendar quarter label "YYYYQq" for a Date (or Date vector). Shared by the
+# table builders so the sample-period labels cannot drift.
+year_quarter <- function(d) {
+  d <- as.Date(d)
+  paste0(format(d, "%Y"), "Q", (as.integer(format(d, "%m")) - 1L) %/% 3L + 1L)
+}
+
 # Vector-safe: build element-wise on length(x). (A nested ifelse() collapses to
 # the length of its scalar `valid` test, silently recycling row 1 -- avoid it.)
 format_bound <- function(x, valid = TRUE, digits = 4) {

@@ -25,10 +25,8 @@
   paste0("$[", .fmt(lo, d), ",\\,", .fmt(hi, d), "]$")
 }
 
-.qq <- function(period) {
-  p <- as.Date(period)
-  paste0(format(p, "%Y"), "Q", (as.integer(format(p, "%m")) - 1L) %/% 3L + 1L)
-}
+# Quarter labels via the shared year_quarter() (format_utils.R).
+.qq <- year_quarter
 
 # ---- Table 1: summary statistics of the set-identification variables ----
 build_table1_summary <- function(res) {

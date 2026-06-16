@@ -54,25 +54,29 @@ compute_paper_spec_estimator <- function(resid, tau_set = BASELINE_TAU) {
 
   # Coefficient table: design coefs (interval via the linear functional
   # beta1_p(theta) = beta1r_p - beta2r_p . theta) + the theta row.
+  coef_row <- function(coef, ols, point, lower, upper, bounded, valid) {
+    data.frame(
+      coef = coef, ols = unname(ols), point = unname(point),
+      set_lower = unname(lower), set_upper = unname(upper),
+      bounded = isTRUE(bounded), valid = isTRUE(valid),
+      stringsAsFactors = FALSE, row.names = NULL
+    )
+  }
   design_rows <- lapply(names(resid$beta1r), function(p) {
     cp <- unname(beta2r[p])
     fmin <- solve_linear_functional_bound(qs_set$quadratic, cp, "min")
     fmax <- solve_linear_functional_bound(qs_set$quadratic, cp, "max")
-    data.frame(
-      coef = p, ols = unname(ols_coef[p]), point = unname(beta1_point[p]),
-      set_lower = unname(resid$beta1r[p]) - fmax$bound,
-      set_upper = unname(resid$beta1r[p]) - fmin$bound,
-      bounded = isTRUE(fmin$bounded) && isTRUE(fmax$bounded),
-      valid = isTRUE(fmin$valid) && isTRUE(fmax$valid),
-      stringsAsFactors = FALSE, row.names = NULL
+    coef_row(
+      p, ols_coef[p], beta1_point[p],
+      resid$beta1r[p] - fmax$bound, resid$beta1r[p] - fmin$bound,
+      fmin$bounded && fmax$bounded, fmin$valid && fmax$valid
     )
   })
-  theta_row <- data.frame(
-    coef = "theta", ols = unname(ols_coef[".y2"]), point = theta_point,
-    set_lower = theta_bounds$lower[1], set_upper = theta_bounds$upper[1],
-    bounded = isTRUE(theta_bounds$bounded_lower[1]) && isTRUE(theta_bounds$bounded_upper[1]),
-    valid = isTRUE(theta_bounds$valid_lower[1]) && isTRUE(theta_bounds$valid_upper[1]),
-    stringsAsFactors = FALSE, row.names = NULL
+  theta_row <- coef_row(
+    "theta", ols_coef[".y2"], theta_point,
+    theta_bounds$lower[1], theta_bounds$upper[1],
+    theta_bounds$bounded_lower[1] && theta_bounds$bounded_upper[1],
+    theta_bounds$valid_lower[1] && theta_bounds$valid_upper[1]
   )
   coef_table <- rbind(do.call(rbind, design_rows), theta_row)
 

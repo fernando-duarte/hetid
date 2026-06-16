@@ -49,12 +49,7 @@ cat(
 # --- moving-block bootstrap ---
 b_reps <- 200L
 block <- 15L
-mbb_index <- function(nn, bl) {
-  nblocks <- ceiling(nn / bl)
-  starts <- sample.int(nn - bl + 1L, nblocks, replace = TRUE)
-  idx <- unlist(lapply(starts, function(s) s:(s + bl - 1L)))
-  idx[seq_len(nn)]
-}
+# mbb_index() is shared via stats_utils.R (sourced by common_settings.R).
 ts_b <- rep(NA_real_, b_reps)
 w2y_b <- rep(NA_real_, b_reps)
 cond_b <- rep(NA_real_, b_reps)
