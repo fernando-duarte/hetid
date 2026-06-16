@@ -12,7 +12,7 @@ final <- readRDS(file.path(
 ))
 
 # Set up output directory
-paper_dir <- file.path(OUTPUT_PAPER_DIR, "identification")
+paper_dir <- file.path(OUTPUT_TEMP_DIR, "identification")
 dir.create(paper_dir, recursive = TRUE, showWarnings = FALSE)
 
 # Extract components

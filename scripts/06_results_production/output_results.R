@@ -15,7 +15,7 @@ final <- readRDS(file.path(
 
 # Create output directory for paper
 paper_dir <- file.path(
-  OUTPUT_PAPER_DIR, "identification"
+  OUTPUT_TEMP_DIR, "identification"
 )
 dir.create(
   paper_dir,

@@ -7,7 +7,7 @@
 source(here::here("scripts/utils/common_settings.R"))
 suppressMessages(library(ggplot2))
 set.seed(SEED)
-fig_dir <- file.path(OUTPUT_PAPER_DIR, "identification")
+fig_dir <- file.path(OUTPUT_TEMP_DIR, "identification")
 dir.create(fig_dir, recursive = TRUE, showWarnings = FALSE)
 
 inputs <- load_identification_inputs()

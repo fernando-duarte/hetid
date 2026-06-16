@@ -19,7 +19,7 @@ source(file.path(report_dir, "tau_star_report_text.R"))
 cli_h1("tau* report")
 
 temp_dir <- file.path(OUTPUT_TEMP_DIR, "identification_optimized")
-paper_dir <- file.path(OUTPUT_PAPER_DIR, "identification")
+paper_dir <- file.path(OUTPUT_TEMP_DIR, "identification")
 dir.create(paper_dir, recursive = TRUE, showWarnings = FALSE)
 
 path <- file.path(temp_dir, "tau_star_comparison.rds")

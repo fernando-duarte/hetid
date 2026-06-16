@@ -120,7 +120,7 @@ print(ixj_membership$summary)
 # Persist results.
 output_dir <- file.path(OUTPUT_TEMP_DIR, "identification_ixj")
 dir.create(output_dir, recursive = TRUE, showWarnings = FALSE)
-paper_dir <- file.path(OUTPUT_PAPER_DIR, "identification")
+paper_dir <- file.path(OUTPUT_TEMP_DIR, "identification")
 dir.create(paper_dir, recursive = TRUE, showWarnings = FALSE)
 
 results <- list(

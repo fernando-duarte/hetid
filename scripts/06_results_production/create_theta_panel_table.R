@@ -105,12 +105,12 @@ theta_table_lines <- build_panel_latex_table(
 
 table_paths <- write_latex_table(
   theta_table_lines,
-  file.path(OUTPUT_PAPER_DIR, "identification"),
+  file.path(OUTPUT_TEMP_DIR, "identification"),
   "theta_identification_panel"
 )
 
 cli_alert_success("Theta panel table written:")
 cli_ul(basename(table_paths))
 cli_alert_info(
-  "Outputs saved to: {.path {file.path(OUTPUT_PAPER_DIR, 'identification')}}"
+  "Outputs saved to: {.path {file.path(OUTPUT_TEMP_DIR, 'identification')}}"
 )

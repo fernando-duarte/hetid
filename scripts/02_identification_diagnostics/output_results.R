@@ -12,7 +12,7 @@ temp_dir <- file.path(OUTPUT_TEMP_DIR, "identification_diagnostics")
 hetero <- readRDS(file.path(temp_dir, "hetero_test_results.rds"))
 n_hat <- readRDS(file.path(temp_dir, "n_hat_episode_results.rds"))
 
-paper_dir <- file.path(OUTPUT_PAPER_DIR, "identification_diagnostics")
+paper_dir <- file.path(OUTPUT_TEMP_DIR, "identification_diagnostics")
 figures_dir <- file.path(paper_dir, "figures")
 dir.create(figures_dir, recursive = TRUE, showWarnings = FALSE)
 

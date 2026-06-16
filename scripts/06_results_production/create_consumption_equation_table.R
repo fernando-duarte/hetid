@@ -347,12 +347,12 @@ table_lines <- build_simple_latex_table(
 
 table_paths <- write_latex_table(
   table_lines,
-  file.path(OUTPUT_PAPER_DIR, "identification"),
+  file.path(OUTPUT_TEMP_DIR, "identification"),
   "consumption_equation_structural"
 )
 
 cli_alert_success("Consumption-equation structural-coefficient table written:")
 cli_ul(basename(table_paths))
 cli_alert_info(
-  "Outputs saved to: {.path {file.path(OUTPUT_PAPER_DIR, 'identification')}}"
+  "Outputs saved to: {.path {file.path(OUTPUT_TEMP_DIR, 'identification')}}"
 )

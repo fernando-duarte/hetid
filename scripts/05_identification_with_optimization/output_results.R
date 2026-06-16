@@ -19,7 +19,7 @@ analysis <- readRDS(
 cli_h1("Exporting Optimized Identification Results")
 
 # Create output directories
-paper_dir <- file.path(OUTPUT_PAPER_DIR, "identification")
+paper_dir <- file.path(OUTPUT_TEMP_DIR, "identification")
 temp_dir <- base_dir
 dir.create(
   paper_dir,

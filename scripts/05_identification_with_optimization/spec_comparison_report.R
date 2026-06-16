@@ -29,7 +29,7 @@ source(file.path(report_dir, "spec_comparison_report_text.R"))
 cli_h1("Spec-comparison report")
 
 temp_dir <- file.path(OUTPUT_TEMP_DIR, "identification_optimized")
-paper_dir <- file.path(OUTPUT_PAPER_DIR, "identification")
+paper_dir <- file.path(OUTPUT_TEMP_DIR, "identification")
 dir.create(paper_dir, recursive = TRUE, showWarnings = FALSE)
 
 src <- Sys.getenv("HETID_SPEC_SOURCE")

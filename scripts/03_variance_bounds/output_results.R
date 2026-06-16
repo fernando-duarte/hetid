@@ -18,7 +18,7 @@ analysis_results <- readRDS(vb_analysis_path)
 cli_h1("Exporting Variance Bounds Results")
 
 # Create output directories
-output_paper_dir <- file.path(OUTPUT_DIR, "for_paper/variance_bounds")
+output_paper_dir <- file.path(OUTPUT_TEMP_DIR, "variance_bounds")
 output_temp_dir <- file.path(OUTPUT_DIR, "temp/variance_bounds")
 dir.create(output_paper_dir, recursive = TRUE, showWarnings = FALSE)
 dir.create(output_temp_dir, recursive = TRUE, showWarnings = FALSE)
