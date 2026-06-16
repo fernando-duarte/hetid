@@ -61,6 +61,20 @@ check("tau=0.5 set is at least as wide as the tau=0.05 set for theta", {
   (th$set50_upper - th$set50_lower) >= (th$set_upper - th$set_lower) - 1e-9
 })
 
+# paper_spec_set_columns reproduces the estimator's tau=0.05 set (consistency
+# guard for the reusable helper used by the tau*-lower-bound column).
+qs05 <- build_pipeline_quadratic_system(e$gamma, e$tau_set, e$moments)
+sc <- paper_spec_set_columns(qs05$quadratic, r$beta1r, r$beta2r, e$coef_table$coef)
+th_sc <- sc[sc$coef == "theta", ]
+check(
+  "paper_spec_set_columns matches the estimator's theta set at tau_set",
+  isTRUE(all.equal(
+    c(th_sc$lower, th_sc$upper),
+    c(e$theta_bounds$lower, e$theta_bounds$upper),
+    tolerance = 1e-6
+  ))
+)
+
 # tau* and the identified set.
 check("tau_star in [0, OPT_TAU_CAP]", is.finite(e$tau_star) && e$tau_star >= 0 && e$tau_star <= OPT_TAU_CAP)
 check(

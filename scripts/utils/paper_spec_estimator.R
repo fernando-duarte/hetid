@@ -22,6 +22,36 @@
   }
 }
 
+# Per-coefficient identified-set intervals at a given slack, in the supplied
+# coefficient order: theta from the profile bounds, every other coefficient via
+# the linear functional beta1_p(theta) = beta1r_p - beta2r_p . theta over the set.
+# `quad` is build_pipeline_quadratic_system(gamma, tau, moments)$quadratic. Used
+# for the tau = 0.05 / 0.5 columns and, post-bootstrap, the tau* lower-bound column.
+paper_spec_set_columns <- function(quad, beta1r, beta2r, coef_names) {
+  tb <- solve_all_profile_bounds(quad)
+  rows <- lapply(coef_names, function(cn) {
+    if (cn == "theta") {
+      lo <- tb$lower[1]
+      hi <- tb$upper[1]
+      bnd <- isTRUE(tb$bounded_lower[1]) && isTRUE(tb$bounded_upper[1])
+      vld <- isTRUE(tb$valid_lower[1]) && isTRUE(tb$valid_upper[1])
+    } else {
+      cp <- unname(beta2r[cn])
+      fmin <- solve_linear_functional_bound(quad, cp, "min")
+      fmax <- solve_linear_functional_bound(quad, cp, "max")
+      lo <- unname(beta1r[cn]) - fmax$bound
+      hi <- unname(beta1r[cn]) - fmin$bound
+      bnd <- isTRUE(fmin$bounded) && isTRUE(fmax$bounded)
+      vld <- isTRUE(fmin$valid) && isTRUE(fmax$valid)
+    }
+    data.frame(
+      coef = cn, lower = lo, upper = hi, bounded = bnd, valid = vld,
+      stringsAsFactors = FALSE
+    )
+  })
+  do.call(rbind, rows)
+}
+
 compute_paper_spec_estimator <- function(resid, tau_set = BASELINE_TAU) {
   w1 <- resid$w1
   w2v <- as.numeric(resid$w2)

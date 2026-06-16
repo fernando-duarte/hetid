@@ -130,8 +130,13 @@ build_table2_structural <- function(res) {
       character(1)
     ), "--", as.character(e$n_obs)) # R^2 = "--", N rows
   }
+  if (is.null(res$set_taulb) || !is.finite(res$tau_lb)) {
+    cli_abort("Table 2 needs res$set_taulb / res$tau_lb; re-run compute_paper_spec.R.")
+  }
+  slb <- res$set_taulb
   ols_columns <- lapply(e$ols_specs, spec_col)
   set05 <- setcol(ct$set_lower, ct$set_upper, ct$bounded, ct$valid)
+  set_lb <- setcol(slb$lower, slb$upper, slb$bounded, slb$valid)
   set50 <- setcol(ct$set50_lower, ct$set50_upper, ct$set50_bounded, ct$set50_valid)
   row_labels <- c(unname(labs[ct$coef]), "$R^2$", "$N$")
 
@@ -171,9 +176,12 @@ build_table2_structural <- function(res) {
       "Newey--West HAC standard errors (%d lags); $R^2$ is the OLS fit; ``--'' ",
       "marks a coefficient not in that specification."
     ), e$nw_lag),
-    "The last two columns give the exact identified set for each coefficient at",
-    "$\\tau=0.05$ and $\\tau=0.5$ (baseline four-lag design); non-$\\theta$",
-    "coefficients are recovered as",
+    sprintf(paste0(
+      "The last three columns give the exact identified set for each coefficient ",
+      "at $\\tau=0.05$, $\\tau=%s$, and $\\tau=0.5$ (baseline four-lag design), ",
+      "where $\\tau=%s$ is the lower bound of the bootstrap 90\\%% band for ",
+      "$\\tau^\\ast$ (Table 3). Non-$\\theta$ coefficients are recovered as"
+    ), .fmt(res$tau_lb, dg), .fmt(res$tau_lb, dg)),
     "$\\beta_1(\\theta)=\\beta_1^{R}-(\\beta_2^{R})'\\theta$ and bounded over the set.",
     sprintf(
       "Sample %s. These cells are exact identified-set ranges, not confidence",
@@ -184,10 +192,10 @@ build_table2_structural <- function(res) {
   )
   lines <- build_simple_latex_table(
     row_labels = row_labels,
-    columns = c(ols_columns, list(set05, set50)),
+    columns = c(ols_columns, list(set05, set_lb, set50)),
     col_headers = c(
       "(1)", "(2)", "(3)", "(4)", "(5)", "(6)",
-      "$\\tau{=}0.05$", "$\\tau{=}0.5$"
+      "$\\tau{=}0.05$", sprintf("$\\tau{=}%s$", .fmt(res$tau_lb, dg)), "$\\tau{=}0.5$"
     ),
     caption = title, label = "tab:paper_structural_equation",
     notes = notes, stub = "", rule_after = c(nrow(ct) - 1L, nrow(ct)),
@@ -196,12 +204,12 @@ build_table2_structural <- function(res) {
       list(label = "OLS", n = 6L),
       list(
         label = "\\shortstack{Identification through\\\\heteroskedasticity}",
-        n = 2L
+        n = 3L
       )
     )
   )
   # CSV: one row per coefficient (+ an R2 row), every spec's estimate and HAC
-  # p-value, and the two identified-set columns.
+  # p-value, and the three identified-set columns.
   spec_keys <- c(
     "with_y2_0lag", "no_y2_0lag", "with_y2_1lag",
     "no_y2_1lag", "with_y2_4lag", "no_y2_4lag"
@@ -220,6 +228,8 @@ build_table2_structural <- function(res) {
   }
   csv$set05_lower <- ct$set_lower
   csv$set05_upper <- ct$set_upper
+  csv$set_taustar_lb_lower <- slb$lower
+  csv$set_taustar_lb_upper <- slb$upper
   csv$set50_lower <- ct$set50_lower
   csv$set50_upper <- ct$set50_upper
   r2row <- csv[1, ]

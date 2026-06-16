@@ -54,8 +54,18 @@ out <- withr::with_envvar(
   }
 )
 
+# Identified set at tau = the lower bound of the bootstrap 90% band for tau*
+# (computed here because the band is only known after the bootstrap; passed, not
+# hardwired). Feeds the third Set-ID column of Table 2.
+tau_lb <- unname(out$boot$tau_star[["p05"]])
+set_taulb <- paper_spec_set_columns(
+  build_pipeline_quadratic_system(out$est$gamma, tau_lb, out$est$moments)$quadratic,
+  out$resid$beta1r, out$resid$beta2r, out$est$coef_table$coef
+)
+
 results <- list(
   resid = out$resid, est = out$est, boot = out$boot,
+  tau_lb = tau_lb, set_taulb = set_taulb,
   spec = current_paper_spec(out$resid$used_maturities),
   built_at = format(Sys.time(), "%Y-%m-%d %H:%M %Z")
 )
