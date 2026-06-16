@@ -6,6 +6,8 @@ ACMY
 ADF
 affine
 affinely
+allowlist
+allowlisted
 Anscombe
 args
 aut
@@ -113,6 +115,7 @@ mathrm
 mcp
 mcpServers
 md
+meaned
 MERCHANTABILITY
 mismeasured
 mit
@@ -136,6 +139,7 @@ PCE
 pcJ
 pcN
 pcs
+pdfLaTeX
 pkgcheck
 png
 positivity

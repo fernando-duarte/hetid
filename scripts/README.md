@@ -150,6 +150,30 @@ default level-PC residuals while only the instrument role is squared.
 - `output_results.R` - Export the labeled identification table and
   membership summary
 
+### 08_paper_spec/
+The PAPER specification -- the ONLY thing written to `output/for_paper/`.
+One single, clean instance of the identification: the SDF news collapsed
+to a single principal component (`I = 1`), the actual de-meaned VFCI as a
+single instrument (`J = 1`, via `z_sources/vfci_demeaned.R`), and the
+common design `X_t = (1, four return PCs, four consumption-growth lags)`.
+Produces exactly three self-contained tables (summary statistics; the
+structural price-of-risk equation; estimator properties), each as
+`.tex` / `_standalone.tex` / `_standalone.pdf` / `.csv`.
+- `compute_paper_spec.R` - Build the residuals (news-PC collapse via
+  `compute_paper_spec_residuals`), the estimator (`compute_paper_spec_estimator`:
+  the theta identified set, beta1(theta) intervals, tau*, the
+  heteroskedasticity-relevance tests of W2 on VFCI), and the moving-block
+  bootstrap band; save `output/temp/paper_spec/paper_spec_results.rds`. The
+  news-PC scaling (`PAPER_NEWS_PC_SCALE`, default `"correlation"`, switch to
+  `"covariance"` for the sensitivity run) and the VFCI Z-hook are scoped to
+  this stage only (`withr::with_envvar`, no env leak).
+- `paper_spec_tables.R` - The three table builders, with pdfLaTeX-safe
+  self-contained captions whose bottom-line titles are computed from the
+  result (bounded/unbounded/empty set; relevance verdict; tau*).
+- `render_paper_tables.R` - Render + compile (PDFs built in a throwaway
+  `-outdir` so no LaTeX aux leaks), validate exactly the 12 allowlisted
+  files in a staging dir, then atomically replace `output/for_paper/`.
+
 ### utils/
 Shared utility functions. `common_settings.R` sources the core layer
 listed first below (an explicit `file.exists`-guarded block, not a
@@ -252,13 +276,19 @@ Drop-in payloads for the `z_source.R` hook
 All script outputs organized by purpose
 
 #### for_paper/
-Publication-ready outputs
-- `identification/` - Baseline, optimized, I×J, spec-comparison, tau*,
-  final, consumption-equation, and generalized-instrument
-  identification tables and figures
-- `variance_bounds/` - Variance bound tables, CSVs, and figures
-- `identification_diagnostics/` - Diagnostics tables and figures
-- `tables/`, `figures/`, `other/` - Curated manuscript materials
+The three paper-spec tables -- and NOTHING else. Stage 08 owns this
+directory: it builds the tables into a staging dir and atomically
+replaces `for_paper`, and `assert_for_paper_allowlist()` (run at the end
+of `run_all_scripts.R`) fails the run if anything outside the allowlist
+appears. Every other stage now writes its tables/figures/CSVs to `temp/`.
+Exactly 12 files (3 tables x {`.tex`, `_standalone.tex`,
+`_standalone.pdf`, `.csv`}):
+- `table1_summary_statistics.*` - Summary statistics of the
+  set-identification variables (+ news-PC loadings in the CSV)
+- `table2_structural_equation.*` - The structural price-of-risk equation:
+  OLS / Point-ID (tau=0) / Set-ID (tau=0.05) intervals for every coefficient
+- `table3_estimator_properties.*` - Heteroskedasticity-relevance tests,
+  tau* with a bootstrap band, and identification diagnostics
 
 #### temp/
 Working outputs and intermediate results
@@ -272,6 +302,8 @@ Working outputs and intermediate results
 - `identification_results/` - Stage 06 final comparison
 - `identification_generalized/` - Stage 07 generalized-instrument
   (Z = PC^2) results
+- `paper_spec/` - Stage 08 results bundle
+  (`paper_spec_results.rds`) and the table staging dir
 - `variance_bounds/` - Stage 03 working results
 - `identification_diagnostics/` - Stage 02 working results
 - `summary_stats/`, `time_series_properties/`, `plots/`, `figures/`,
