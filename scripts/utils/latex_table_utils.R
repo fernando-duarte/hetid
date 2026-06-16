@@ -97,14 +97,19 @@ build_panel_latex_table <- function(panels, col_headers, caption, label,
 #'
 #' @param table_lines character vector from build_panel_latex_table()
 #' @return character vector of LaTeX lines for a complete document
-make_standalone_latex <- function(table_lines) {
+make_standalone_latex <- function(table_lines, landscape = FALSE) {
+  geometry <- if (isTRUE(landscape)) {
+    "\\usepackage[landscape,margin=1in]{geometry}"
+  } else {
+    "\\usepackage[margin=1in]{geometry}"
+  }
   c(
     "\\documentclass[11pt]{article}",
     "\\usepackage{booktabs}",
     "\\usepackage{threeparttable}",
     "\\usepackage{siunitx}",
     "\\usepackage{array}",
-    "\\usepackage[margin=1in]{geometry}",
+    geometry,
     "",
     "\\begin{document}",
     "",
@@ -123,14 +128,15 @@ make_standalone_latex <- function(table_lines) {
 #' @param base_name file name without extension
 #' @param standalone whether to also write the standalone variant
 #' @return (invisibly) character vector of paths written
-write_latex_table <- function(table_lines, dir, base_name, standalone = TRUE) {
+write_latex_table <- function(table_lines, dir, base_name, standalone = TRUE,
+                              landscape = FALSE) {
   dir.create(dir, recursive = TRUE, showWarnings = FALSE)
   fragment_path <- file.path(dir, paste0(base_name, ".tex"))
   writeLines(table_lines, fragment_path)
   paths <- fragment_path
   if (standalone) {
     standalone_path <- file.path(dir, paste0(base_name, "_standalone.tex"))
-    writeLines(make_standalone_latex(table_lines), standalone_path)
+    writeLines(make_standalone_latex(table_lines, landscape = landscape), standalone_path)
     paths <- c(paths, standalone_path)
   }
   invisible(paths)

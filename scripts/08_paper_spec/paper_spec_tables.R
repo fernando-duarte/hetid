@@ -61,7 +61,7 @@ build_table1_summary <- function(res) {
       span, r$n_obs
     ),
     "$\\mathrm{PC}_1$--$\\mathrm{PC}_4$ are principal components of a cross-section",
-    "of financial-asset returns (NOT yields), entered predetermined (date $t$) in",
+    "of financial-asset returns (not yields), entered predetermined (date $t$) in",
     "the date-$t{+}1$ equations. $\\Delta c_{t-1}$--$\\Delta c_{t-4}$ are four",
     "consumption-growth lags. $Y_2$ is the first principal component (correlation",
     sprintf(
@@ -99,19 +99,42 @@ build_table2_structural <- function(res) {
   e <- res$est
   ct <- e$coef_table
   labs <- c(
-    "(Intercept)" = "Constant $\\bar\\beta$",
+    "(Intercept)" = "$\\bar\\beta$",
     pc1 = "$\\beta_{\\mathrm{PC}1}$", pc2 = "$\\beta_{\\mathrm{PC}2}$",
     pc3 = "$\\beta_{\\mathrm{PC}3}$", pc4 = "$\\beta_{\\mathrm{PC}4}$",
     l.y1 = "$\\psi_1$", l2.y1 = "$\\psi_2$", l3.y1 = "$\\psi_3$", l4.y1 = "$\\psi_4$",
-    theta = "$\\theta$ (price of SDF-news risk)"
+    theta = "$\\theta$"
   )
-  ols <- .fmt(ct$ols, 4)
-  point <- vapply(seq_len(nrow(ct)), function(i) format_bound(ct$point[i], TRUE, 4), character(1))
-  setc <- vapply(
-    seq_len(nrow(ct)),
-    function(i) .interval(ct$set_lower[i], ct$set_upper[i], ct$bounded[i], ct$valid[i]),
-    character(1)
-  )
+  dg <- 2L # report two decimals throughout
+  stars <- function(p) {
+    if (!is.finite(p)) {
+      return("")
+    }
+    if (p < 0.01) "$^{***}$" else if (p < 0.05) "$^{**}$" else if (p < 0.10) "$^{*}$" else ""
+  }
+  # One OLS column from a fitted spec: estimate (2dp) + HAC stars per coef row,
+  # "--" for coefficients absent from that specification.
+  spec_col <- function(s) {
+    cells <- vapply(ct$coef, function(cn) {
+      key <- if (cn == "theta") ".y2" else cn
+      if (!(key %in% names(s$coef))) {
+        return("--")
+      }
+      paste0(.fmt(unname(s$coef[key]), dg), stars(unname(s$p[key])))
+    }, character(1))
+    c(unname(cells), .fmt(s$r2, dg), as.character(e$n_obs)) # R^2 and N rows
+  }
+  setcol <- function(lo, hi, bnd, vld) {
+    c(vapply(
+      seq_along(lo), function(i) .interval(lo[i], hi[i], bnd[i], vld[i], dg),
+      character(1)
+    ), "--", as.character(e$n_obs)) # R^2 = "--", N rows
+  }
+  ols_columns <- lapply(e$ols_specs, spec_col)
+  set05 <- setcol(ct$set_lower, ct$set_upper, ct$bounded, ct$valid)
+  set50 <- setcol(ct$set50_lower, ct$set50_upper, ct$set50_bounded, ct$set50_valid)
+  row_labels <- c(unname(labs[ct$coef]), "$R^2$", "$N$")
+
   span <- paste0(.qq(min(e$dates)), "--", .qq(max(e$dates)))
   th <- ct[ct$coef == "theta", ]
   boot_up <- res$boot$upper["p95"]
@@ -120,9 +143,9 @@ build_table2_structural <- function(res) {
     sprintf(
       paste0(
         "Heteroskedasticity set-identifies the price of SDF-news risk to ",
-        "$\\theta\\in[%s,%s]$ at the point estimate%s."
+        "$\\theta\\in[%s,%s]$ at $\\tau=0.05$%s."
       ),
-      .fmt(th$set_lower, 3), .fmt(th$set_upper, 3),
+      .fmt(th$set_lower, dg), .fmt(th$set_upper, dg),
       if (fragile) "; the bootstrap bounds are imprecise (cross zero)" else ""
     )
   } else if (e$set_status == "unbounded") {
@@ -137,32 +160,74 @@ build_table2_structural <- function(res) {
     "$\\Delta c_{t+1}=\\bar\\beta+\\sum_k\\beta_{\\mathrm{PC}k}\\mathrm{PC}_{k,t}+",
     "\\sum_h\\psi_h\\Delta c_{t+1-h}+\\theta\\,Y_{2,t+1}+\\varepsilon_{1,t+1}$,",
     "with the single SDF-news PC $Y_2$ instrumented by the de-meaned VFCI $Z$",
-    "(one endogenous regressor, one instrument) via Lewbel (2012)",
-    "heteroskedasticity: $\\mathrm{Cov}(Z,\\varepsilon_1\\varepsilon_2)=\\tau\\,",
-    "\\mathrm{Var}(\\varepsilon_2\\mid Z)$. OLS treats $Y_2$ as exogenous; Point ID",
-    "is $\\tau=0$ (the exactly-identified point); Set ID is the EXACT identified",
-    "set at $\\tau=0.05$. Non-$\\theta$ coefficients are recovered as",
+    "via Lewbel (2012) heteroskedasticity:",
+    "$\\mathrm{Cov}(Z,\\varepsilon_1\\varepsilon_2)=\\tau\\,\\mathrm{Var}(\\varepsilon_2\\mid Z)$.",
+    "OLS columns (treating $Y_2$ as exogenous, all on the same sample):",
+    "(1) with $Y_2$, no consumption lags; (2) without $Y_2$, no lags;",
+    "(3) with $Y_2$, one lag; (4) without $Y_2$, one lag;",
+    "(5) with $Y_2$, four lags; (6) without $Y_2$, four lags.",
+    sprintf(paste0(
+      "Stars $^{*}/^{**}/^{***}$ denote significance at $10/5/1\\%%$ using ",
+      "Newey--West HAC standard errors (%d lags); $R^2$ is the OLS fit; ``--'' ",
+      "marks a coefficient not in that specification."
+    ), e$nw_lag),
+    "The last two columns give the exact identified set for each coefficient at",
+    "$\\tau=0.05$ and $\\tau=0.5$ (baseline four-lag design); non-$\\theta$",
+    "coefficients are recovered as",
     "$\\beta_1(\\theta)=\\beta_1^{R}-(\\beta_2^{R})'\\theta$ and bounded over the set.",
     sprintf(
-      "$N=%d$, %s. Set-ID cells are exact identified-set ranges, NOT confidence",
-      e$n_obs, span
+      "Sample %s. These cells are exact identified-set ranges, not confidence",
+      span
     ),
     "intervals; sampling uncertainty is characterized by the bootstrap band in",
     "Table 3. $\\theta$ is in units of one pooled SDF-news standard deviation."
   )
   lines <- build_simple_latex_table(
-    row_labels = unname(labs[ct$coef]),
-    columns = list(ols, point, setc),
-    col_headers = c("OLS", "Point ID ($\\tau=0$)", "Set ID ($\\tau=0.05$)"),
+    row_labels = row_labels,
+    columns = c(ols_columns, list(set05, set50)),
+    col_headers = c(
+      "(1)", "(2)", "(3)", "(4)", "(5)", "(6)",
+      "$\\tau{=}0.05$", "$\\tau{=}0.5$"
+    ),
     caption = title, label = "tab:paper_structural_equation",
-    notes = notes, stub = "Coefficient", rule_after = nrow(ct) - 1L
+    notes = notes, stub = "", rule_after = c(nrow(ct) - 1L, nrow(ct)),
+    fontsize = "\\small\\setlength{\\tabcolsep}{4pt}",
+    spanners = list(
+      list(label = "OLS", n = 6L),
+      list(
+        label = "\\shortstack{Identification through\\\\heteroskedasticity}",
+        n = 2L
+      )
+    )
   )
-  csv <- data.frame(
-    coefficient = ct$coef, ols = ct$ols, point = ct$point,
-    set_lower = ct$set_lower, set_upper = ct$set_upper,
-    bounded = ct$bounded, valid = ct$valid, row.names = NULL
+  # CSV: one row per coefficient (+ an R2 row), every spec's estimate and HAC
+  # p-value, and the two identified-set columns.
+  spec_keys <- c(
+    "with_y2_0lag", "no_y2_0lag", "with_y2_1lag",
+    "no_y2_1lag", "with_y2_4lag", "no_y2_4lag"
   )
-  list(lines = lines, csv = csv, caption = title)
+  csv <- data.frame(coefficient = ct$coef, stringsAsFactors = FALSE)
+  for (j in seq_along(e$ols_specs)) {
+    s <- e$ols_specs[[j]]
+    pick <- function(tab) {
+      vapply(ct$coef, function(cn) {
+        key <- if (cn == "theta") ".y2" else cn
+        if (key %in% names(tab)) unname(tab[key]) else NA_real_
+      }, numeric(1))
+    }
+    csv[[paste0(spec_keys[j], "_est")]] <- pick(s$coef)
+    csv[[paste0(spec_keys[j], "_p")]] <- pick(s$p)
+  }
+  csv$set05_lower <- ct$set_lower
+  csv$set05_upper <- ct$set_upper
+  csv$set50_lower <- ct$set50_lower
+  csv$set50_upper <- ct$set50_upper
+  r2row <- csv[1, ]
+  r2row[] <- NA
+  r2row$coefficient <- "R2"
+  for (j in seq_along(e$ols_specs)) r2row[[paste0(spec_keys[j], "_est")]] <- e$ols_specs[[j]]$r2
+  csv <- rbind(csv, r2row)
+  list(lines = lines, csv = csv, caption = title, landscape = TRUE)
 }
 
 # ---- Table 3: estimator properties (relevance + strength), with bootstrap ----
@@ -209,11 +274,11 @@ build_table3_properties <- function(res) {
     .fmt(e$tau_star, 2), snr
   )
   notes <- c(
-    "Lewbel (2012) identification needs TWO conditions. RELEVANCE:",
+    "Lewbel (2012) identification needs two conditions. Relevance:",
     "$\\mathrm{Cov}(Z,\\varepsilon_2^2)\\neq0$ -- testable; the heteroskedasticity",
-    "tests (null: homoskedasticity of $W_2$ given $Z$) bear on THIS. The IDENTIFYING",
+    "tests (null: homoskedasticity of $W_2$ given $Z$) bear on this. The identifying",
     "restriction $\\mathrm{Cov}(Z,\\varepsilon_1\\varepsilon_2)=\\tau\\,",
-    "\\mathrm{Var}(\\varepsilon_2\\mid Z)$ is UNTESTABLE; $\\tau$ is the slack that",
+    "\\mathrm{Var}(\\varepsilon_2\\mid Z)$ is untestable; $\\tau$ is the slack that",
     "substitutes for it and, with one instrument, the system is just-identified (no",
     "over-identification test). $\\tau^\\ast$ is the largest common slack keeping the",
     "set bounded (scale-free). In this sample VFCI is exactly a linear combination of",

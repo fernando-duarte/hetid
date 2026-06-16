@@ -22,7 +22,8 @@
 #' @return character vector of LaTeX lines (table environment fragment)
 build_simple_latex_table <- function(row_labels, columns, col_headers,
                                      caption, label, notes = NULL,
-                                     stub = "", rule_after = integer(0)) {
+                                     stub = "", rule_after = integer(0),
+                                     fontsize = "", spanners = NULL) {
   n_col <- length(columns)
   n_row <- length(row_labels)
   stopifnot(
@@ -34,6 +35,28 @@ build_simple_latex_table <- function(row_labels, columns, col_headers,
     stub, " & ",
     paste(col_headers, collapse = " & "), " \\\\"
   )
+  # Optional merged spanner header row over groups of data columns. Each spanner
+  # is list(label = <LaTeX>, n = <#columns>); the n's must cover all data columns.
+  spanner_lines <- NULL
+  if (!is.null(spanners)) {
+    ns <- vapply(spanners, function(s) s$n, integer(1))
+    stopifnot(sum(ns) == n_col)
+    mc <- vapply(
+      spanners,
+      function(s) sprintf("\\multicolumn{%d}{c}{%s}", s$n, s$label),
+      character(1)
+    )
+    start <- 2L
+    cmids <- character(0)
+    for (n in ns) {
+      cmids <- c(cmids, sprintf("\\cmidrule(lr){%d-%d}", start, start + n - 1L))
+      start <- start + n
+    }
+    spanner_lines <- c(
+      paste0(" & ", paste(mc, collapse = " & "), " \\\\"),
+      paste(cmids, collapse = " ")
+    )
+  }
   body <- character(0)
   for (i in seq_len(n_row)) {
     cells <- vapply(columns, function(col) col[[i]], character(1))
@@ -51,8 +74,10 @@ build_simple_latex_table <- function(row_labels, columns, col_headers,
     "\\begin{threeparttable}",
     paste0("\\caption{", caption, "}"),
     paste0("\\label{", label, "}"),
+    if (nzchar(fontsize)) fontsize else NULL,
     paste0("\\begin{tabular}{", col_spec, "}"),
     "\\toprule",
+    spanner_lines,
     header,
     "\\midrule",
     body,
@@ -64,7 +89,7 @@ build_simple_latex_table <- function(row_labels, columns, col_headers,
       lines,
       "\\begin{tablenotes}[flushleft]",
       "\\scriptsize",
-      paste0("\\item \\textit{Notes:} ", paste(notes, collapse = " ")),
+      paste0("\\item Notes: ", paste(notes, collapse = " ")),
       "\\end{tablenotes}"
     )
   }

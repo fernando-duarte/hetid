@@ -45,6 +45,22 @@ check(
   all(c("ols", "point", "set_lower", "set_upper") %in% names(e$coef_table))
 )
 
+# Two OLS specs (incl./excl. SDF news) with HAC p-values, R^2, and the tau=0.5 set.
+check(
+  "coef_table carries both OLS specs, HAC p-values, and the tau=0.5 set",
+  all(c("ols", "ols_p", "ols_no", "ols_no_p", "set50_lower", "set50_upper") %in% names(e$coef_table))
+)
+check("ols_r2 reports both specs", all(c("incl_news", "excl_news") %in% names(e$ols_r2)))
+check(
+  "theta is omitted from the no-news OLS spec",
+  is.na(e$coef_table$ols_no[e$coef_table$coef == "theta"])
+)
+check("HAC OLS p-values are valid probabilities", all(e$coef_table$ols_p >= 0 & e$coef_table$ols_p <= 1))
+check("tau=0.5 set is at least as wide as the tau=0.05 set for theta", {
+  th <- e$coef_table[e$coef_table$coef == "theta", ]
+  (th$set50_upper - th$set50_lower) >= (th$set_upper - th$set_lower) - 1e-9
+})
+
 # tau* and the identified set.
 check("tau_star in [0, OPT_TAU_CAP]", is.finite(e$tau_star) && e$tau_star >= 0 && e$tau_star <= OPT_TAU_CAP)
 check(

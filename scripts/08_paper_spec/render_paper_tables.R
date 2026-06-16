@@ -45,7 +45,7 @@ compile_pdf <- function(stem) {
 }
 
 emit <- function(tbl, stem) {
-  write_latex_table(tbl$lines, staging, stem)
+  write_latex_table(tbl$lines, staging, stem, landscape = isTRUE(tbl$landscape))
   write.csv(tbl$csv, file.path(staging, paste0(stem, ".csv")), row.names = FALSE)
   compile_pdf(stem)
   cli_alert_success("Built {.val {stem}}")
