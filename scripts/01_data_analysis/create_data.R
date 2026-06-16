@@ -20,9 +20,25 @@ term_premia <- as.matrix(acm_data[, tp_cols])
 
 data("variables", package = "hetid")
 
-# Keep only date, consumption growth, and PCs
+# Keep date, consumption growth, PCs, and the actual VFCI. The VFCI level is
+# carried so the single-instrument paper spec (stage 08) can use the genuine
+# de-meaned VFCI (vfci - mean(vfci)) as its lone instrument, distinct from the
+# PC-projection. It is additive: every downstream stage selects columns by name.
 pc_cols <- paste0("pc", 1:MAX_N_PCS)
-cols_to_keep <- c("date", HETID_CONSTANTS$CONSUMPTION_GROWTH_COL, pc_cols)
+base_cols <- c("date", HETID_CONSTANTS$CONSUMPTION_GROWTH_COL, pc_cols)
+cols_to_keep <- c(base_cols, "vfci")
+
+# Row-count invariance: carrying vfci must not shrink the complete-case sample
+# (the merge below keeps only complete rows). The bundled vfci has no NAs, but
+# assert rather than assume so the sample never moves as a side effect.
+n_base <- sum(complete.cases(variables[, base_cols]))
+n_with_vfci <- sum(complete.cases(variables[, cols_to_keep]))
+if (n_base != n_with_vfci) {
+  stop(sprintf(
+    "Adding vfci changed the complete-case row count (%d -> %d): vfci is NA on dates the other variables cover.",
+    n_base, n_with_vfci
+  ))
+}
 
 # Prepare variables data (already period-end dated; merged directly by date)
 variables_df <- variables |>
@@ -96,7 +112,8 @@ summary_info <- list(
   `Principal Components` = paste0("pc1 to pc", MAX_N_PCS),
   `Lagged PCs` = paste0("l.pc1 to l.pc", MAX_N_PCS),
   `Other Variables` = paste0(
-    HETID_CONSTANTS$CONSUMPTION_GROWTH_COL, " (consumption growth)"
+    HETID_CONSTANTS$CONSUMPTION_GROWTH_COL,
+    " (consumption growth), vfci (instrument level)"
   )
 )
 

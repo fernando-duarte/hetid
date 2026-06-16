@@ -25,9 +25,8 @@ DATA_RDS_PATH <- file.path(OUTPUT_TEMP_DIR, "data.rds")
 dir.create(OUTPUT_DIR, recursive = TRUE, showWarnings = FALSE)
 dir.create(OUTPUT_PAPER_DIR, recursive = TRUE, showWarnings = FALSE)
 dir.create(OUTPUT_TEMP_DIR, recursive = TRUE, showWarnings = FALSE)
-dir.create(file.path(OUTPUT_PAPER_DIR, "tables"), recursive = TRUE, showWarnings = FALSE)
-dir.create(file.path(OUTPUT_PAPER_DIR, "figures"), recursive = TRUE, showWarnings = FALSE)
-dir.create(file.path(OUTPUT_PAPER_DIR, "other"), recursive = TRUE, showWarnings = FALSE)
+# NB: for_paper holds ONLY the three paper-spec tables (enforced by
+# assert_for_paper_allowlist); do NOT seed tables/figures/other subdirs under it.
 dir.create(file.path(OUTPUT_TEMP_DIR, "tables"), recursive = TRUE, showWarnings = FALSE)
 dir.create(file.path(OUTPUT_TEMP_DIR, "figures"), recursive = TRUE, showWarnings = FALSE)
 dir.create(file.path(OUTPUT_TEMP_DIR, "other"), recursive = TRUE, showWarnings = FALSE)
@@ -53,6 +52,15 @@ IMPOSE_NEWS_PROJECTION_ZERO <- FALSE
 TAU_STAR_N_STARTS <- 15L # Multistart count for the tau* optimizer oracle
 N_CORES <- parallel::detectCores() - 1 # Leave one core free
 MAX_N_PCS <- HETID_CONSTANTS$MAX_N_PCS # Use package constant
+
+# The for_paper directory holds ONLY the three paper-spec tables (stage 08).
+# Each ships as <stem>.tex / <stem>_standalone.tex / <stem>_standalone.pdf /
+# <stem>.csv; assert_for_paper_allowlist() (for_paper_guard.R) enforces this.
+FOR_PAPER_TABLE_STEMS <- c(
+  "table1_summary_statistics",
+  "table2_structural_equation", # the structural price-of-risk equation
+  "table3_estimator_properties"
+)
 
 # Column-name prefixes derived from the package's ACM schema (the single
 # source of truth for the naming convention; internal, hence the :::)
@@ -169,4 +177,23 @@ if (file.exists(file.path(utils_dir, "tau_star_utils.R"))) {
 }
 if (file.exists(file.path(utils_dir, "closure_membership.R"))) {
   source(file.path(utils_dir, "closure_membership.R"))
+}
+# Heteroskedasticity LM helpers + the plain-column LaTeX renderer are NOT sourced
+# above (stage 02 / the consumption table source them locally today). The paper
+# spec needs both, so source them here. Order: hetero_lm_tests + latex_simple
+# before the paper-spec utils that consume them.
+if (file.exists(file.path(utils_dir, "hetero_lm_tests.R"))) {
+  source(file.path(utils_dir, "hetero_lm_tests.R"))
+}
+if (file.exists(file.path(utils_dir, "latex_simple_table.R"))) {
+  source(file.path(utils_dir, "latex_simple_table.R"))
+}
+if (file.exists(file.path(utils_dir, "paper_spec_residuals.R"))) {
+  source(file.path(utils_dir, "paper_spec_residuals.R"))
+}
+if (file.exists(file.path(utils_dir, "paper_spec_estimator.R"))) {
+  source(file.path(utils_dir, "paper_spec_estimator.R"))
+}
+if (file.exists(file.path(utils_dir, "for_paper_guard.R"))) {
+  source(file.path(utils_dir, "for_paper_guard.R"))
 }
