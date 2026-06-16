@@ -194,6 +194,9 @@ if (file.exists(file.path(utils_dir, "paper_spec_residuals.R"))) {
 if (file.exists(file.path(utils_dir, "paper_spec_estimator.R"))) {
   source(file.path(utils_dir, "paper_spec_estimator.R"))
 }
+if (file.exists(file.path(utils_dir, "paper_spec_bootstrap.R"))) {
+  source(file.path(utils_dir, "paper_spec_bootstrap.R"))
+}
 if (file.exists(file.path(utils_dir, "for_paper_guard.R"))) {
   source(file.path(utils_dir, "for_paper_guard.R"))
 }
