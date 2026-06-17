@@ -134,7 +134,10 @@ build_table2_structural <- function(res) {
     cli_abort("Table 2 needs res$set_taulb / res$tau_lb; re-run compute_paper_spec.R.")
   }
   slb <- res$set_taulb
-  ols_columns <- lapply(e$ols_specs, spec_col)
+  # Display order: within each lag count, the no-Y2 spec precedes the with-Y2 one
+  # (swap of the canonical pairs). The legend and CSV keys derive from this order.
+  specs <- e$ols_specs[c(2L, 1L, 4L, 3L, 6L, 5L)]
+  ols_columns <- lapply(specs, spec_col)
   set05 <- setcol(ct$set_lower, ct$set_upper, ct$bounded, ct$valid)
   set_lb <- setcol(slb$lower, slb$upper, slb$bounded, slb$valid)
   set50 <- setcol(ct$set50_lower, ct$set50_upper, ct$set50_bounded, ct$set50_valid)
@@ -168,9 +171,13 @@ build_table2_structural <- function(res) {
     "via Lewbel (2012) heteroskedasticity:",
     "$\\mathrm{Cov}(Z,\\varepsilon_1\\varepsilon_2)=\\tau\\,\\mathrm{Var}(\\varepsilon_2\\mid Z)$.",
     "OLS columns (treating $Y_2$ as exogenous, all on the same sample):",
-    "(1) with $Y_2$, no consumption lags; (2) without $Y_2$, no lags;",
-    "(3) with $Y_2$, one lag; (4) without $Y_2$, one lag;",
-    "(5) with $Y_2$, four lags; (6) without $Y_2$, four lags.",
+    paste0(
+      paste(sprintf(
+        "(%d) %s", seq_along(specs),
+        vapply(specs, function(s) s$label, character(1))
+      ), collapse = "; "),
+      "."
+    ),
     sprintf(paste0(
       "Stars $^{*}/^{**}/^{***}$ denote significance at $10/5/1\\%%$ using ",
       "Newey--West HAC standard errors (%d lags); $R^2$ is the OLS fit; ``--'' ",
@@ -210,13 +217,12 @@ build_table2_structural <- function(res) {
   )
   # CSV: one row per coefficient (+ an R2 row), every spec's estimate and HAC
   # p-value, and the three identified-set columns.
-  spec_keys <- c(
-    "with_y2_0lag", "no_y2_0lag", "with_y2_1lag",
-    "no_y2_1lag", "with_y2_4lag", "no_y2_4lag"
-  )
+  spec_keys <- vapply(specs, function(s) {
+    paste0(if (s$with_y2) "with_y2" else "no_y2", "_", s$lags, "lag")
+  }, character(1))
   csv <- data.frame(coefficient = ct$coef, stringsAsFactors = FALSE)
-  for (j in seq_along(e$ols_specs)) {
-    s <- e$ols_specs[[j]]
+  for (j in seq_along(specs)) {
+    s <- specs[[j]]
     pick <- function(tab) {
       vapply(ct$coef, function(cn) {
         key <- if (cn == "theta") ".y2" else cn
@@ -235,7 +241,7 @@ build_table2_structural <- function(res) {
   r2row <- csv[1, ]
   r2row[] <- NA
   r2row$coefficient <- "R2"
-  for (j in seq_along(e$ols_specs)) r2row[[paste0(spec_keys[j], "_est")]] <- e$ols_specs[[j]]$r2
+  for (j in seq_along(specs)) r2row[[paste0(spec_keys[j], "_est")]] <- specs[[j]]$r2
   csv <- rbind(csv, r2row)
   list(lines = lines, csv = csv, caption = title, landscape = TRUE)
 }
