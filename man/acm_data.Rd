@@ -71,11 +71,11 @@ yield and the risk-neutral yield.
 The bundled file is the validated ACM replication published at
 \url{https://github.com/fernando-duarte/ACM_term_premium} (release
 \code{acm-term-premium-2026-06}, asset
-\code{ACMTermPremium_replicated_monthly_3m_120m.csv.gz}, sha256
-\code{ad6fc66a0c2dba73d32f83a01a8432fc4ee1b7719ed44413351d18c61db34e29}).
+\code{ACMTermPremium_replicated_monthly_1m_120m.csv.gz}, sha256
+\code{745b97c6804924fc5777aac6ecc8b952a2f11123b291e0057c3e25449e566454}).
 It reproduces the official NY Fed workbook to within 0.0026 basis
 points at the annual nodes and extends the maturity grid to monthly
-steps from 3 to 120 months: whole-year maturities keep the official
+steps from 1 to 120 months: whole-year maturities keep the official
 column names (\code{ACMY01}..\code{ACMY10}), sub-annual months use
 names like \code{ACMY003M}. Dates are ISO (\code{YYYY-MM-DD}).
 \code{download_term_premia()} refreshes the cache from the latest

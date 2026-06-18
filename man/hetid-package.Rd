@@ -37,7 +37,7 @@ The method is particularly useful for:
 \subsection{Data Management:}{
 \itemize{
 \item \strong{ACM Term Structure Data}: Access to monthly yields, term premia,
-and risk-neutral yields at monthly maturity steps (3-120 months) based on
+and risk-neutral yields at monthly maturity steps (1-120 months) based on
 Adrian, Crump, and Moench (2013)
 \item \strong{Economic Variables}: Quarterly macroeconomic and financial data
 \item \strong{Verified Downloads}: Functions to download the latest GitHub

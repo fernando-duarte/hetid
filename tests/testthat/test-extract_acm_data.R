@@ -123,21 +123,21 @@ test_that("extract_acm_data handles edge cases", {
   expect_s3_class(data_empty_quarterly, "data.frame")
   expect_equal(nrow(data_empty_quarterly), 0)
 
-  # Invalid maturities: below the 3-month floor and above the ceiling
+  # Invalid maturities: below the 1-month floor and above the ceiling
   expect_error(
-    extract_acm_data(maturities = 2),
-    "must be between 3 and",
+    extract_acm_data(maturities = 0),
+    "must be between 1 and",
     class = "hetid_error_bad_argument"
   )
   expect_error(
     extract_acm_data(maturities = 121),
-    "must be between 3 and",
+    "must be between 1 and",
     class = "hetid_error_bad_argument"
   )
-  expect_error(
-    extract_acm_data(maturities = 1),
-    class = "hetid_error_bad_argument"
-  )
+
+  # The 1- and 2-month maturities are now part of the grid
+  one_two <- extract_acm_data(data_types = "yields", maturities = c(1, 2))
+  expect_named(one_two, c("date", "y1", "y2"))
 
   # Invalid data type
   expect_error(

@@ -428,7 +428,7 @@ test_that("error when maturities are non-integer or negative", {
       test_env$yields, test_env$term_premia,
       maturities = c(-1, 24)
     )),
-    "must be between 3 and"
+    "must be between 1 and"
   )
 })
 
