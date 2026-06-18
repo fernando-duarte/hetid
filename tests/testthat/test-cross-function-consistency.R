@@ -12,6 +12,10 @@ test_that("all functions handle same ACM data format", {
   expect_type(compute_sdf_innovations(test_env$yields, test_env$term_premia, i = i), "double")
   expect_type(compute_variance_bound(test_env$yields, test_env$term_premia, i = i), "double")
   expect_type(compute_expected_sdf(test_env$yields, test_env$term_premia, i = i), "double")
+  expect_type(
+    compute_expected_sdf_variance_bound(test_env$yields, test_env$term_premia, i = i),
+    "double"
+  )
 })
 
 test_that("functions with date parameters align correctly", {
@@ -56,6 +60,10 @@ test_that("consistent NA handling across functions", {
   expect_type(compute_sdf_innovations(yields, term_premia, i = 60), "double")
   expect_type(compute_variance_bound(yields, term_premia, i = 60), "double")
   expect_type(compute_expected_sdf(yields, term_premia, i = 60), "double")
+  expect_type(
+    compute_expected_sdf_variance_bound(yields, term_premia, i = 60),
+    "double"
+  )
 })
 
 test_that("invalid inputs produce appropriate errors", {
@@ -106,6 +114,10 @@ test_that("all functions complete without error on larger stacked data", {
   expect_type(compute_sdf_innovations(yields, term_premia, i = i), "double")
   expect_type(compute_variance_bound(yields, term_premia, i = i), "double")
   expect_type(compute_expected_sdf(yields, term_premia, i = i), "double")
+  expect_type(
+    compute_expected_sdf_variance_bound(yields, term_premia, i = i),
+    "double"
+  )
 })
 
 test_that("similar functions have consistent return structures", {
@@ -115,10 +127,12 @@ test_that("similar functions have consistent return structures", {
   c_hat <- compute_c_hat(test_env$yields, test_env$term_premia, i = 60)
   k_hat <- compute_k_hat(test_env$yields, test_env$term_premia, i = 60)
   var_bound <- compute_variance_bound(test_env$yields, test_env$term_premia, i = 60)
+  esdf_bound <- compute_expected_sdf_variance_bound(test_env$yields, test_env$term_premia, i = 60)
 
   expect_length(c_hat, 1)
   expect_length(k_hat, 1)
   expect_length(var_bound, 1)
+  expect_length(esdf_bound, 1)
 
   # Vector returns: n_hat, price_news, sdf_innovations
   n_hat <- compute_n_hat(test_env$yields, test_env$term_premia, i = 60)
