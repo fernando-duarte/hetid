@@ -22,9 +22,7 @@ test_that("compute_expected_sdf_variance_bound returns a single non-negative val
     i = 60
   )
 
-  expect_type(bound, "double")
-  expect_length(bound, 1)
-  expect_true(is.finite(bound))
+  expect_single_finite_value(bound, should_be_positive = FALSE)
   expect_gte(bound, 0)
 })
 
@@ -215,12 +213,10 @@ test_that("compute_expected_sdf_variance_bound returns NA when no finite pairs",
     i = 60
   )
 
-  expect_type(bound, "double")
   expect_true(is.na(bound))
-  expect_identical(
-    compute_expected_sdf_variance_bound(yields_na, test_env$term_premia, i = 60),
-    NA_real_
-  )
+  # Typed NA contract (double, not logical NA), checked against the value
+  # already computed above rather than re-running the function
+  expect_identical(bound, NA_real_)
 })
 
 test_that("compute_expected_sdf_variance_bound raises on a short series", {
