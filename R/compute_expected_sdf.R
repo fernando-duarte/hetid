@@ -72,7 +72,8 @@
 #'   (108 for standard ACM data with the default annual step), because
 #'   \code{n_hat(i, t)} requires data at maturity \code{i + step}.
 #'
-#' @seealso \code{\link{compute_n_hat}}, \code{\link{compute_sdf_innovations}}
+#' @seealso \code{\link{compute_n_hat}}, \code{\link{compute_sdf_innovations}},
+#'   \code{\link{compute_expected_sdf_variance_bound}}
 #'
 #' @export
 #'
@@ -98,57 +99,21 @@ compute_expected_sdf <- function(yields, term_premia, i,
                                  step = HETID_CONSTANTS$DEFAULT_STEP) {
   validate_step(step)
   validate_maturity_index(i, max_maturity = effective_max_maturity(step))
-  validate_step_multiple(
-    i, step,
-    "the realized one-period yield is led whole news periods"
-  )
   validate_row_alignment(yields, term_premia)
 
-  # Expected log one-period price s periods ahead, n_hat(i, t) (decimals).
-  # compute_n_hat validates yield units and the i / i+step columns.
-  n_hat <- compute_n_hat(yields, term_premia, i, step = step)
-
-  # Realized one-period bond is the step-maturity bond, percentage points
-  y_step <- require_column(
-    yields, acm_column_name("yields", step), "yields"
-  )
-
-  # The realized one-period price is observed s = i / step news periods
-  # ahead, so the unconditional average pairs exp(n_hat(i, t)) at t with
-  # the step-bond yield at t + s over T_i = {1, ..., T - s}
-  horizon_periods <- i %/% step
-  n_obs <- length(n_hat)
+  components <- compute_expected_sdf_gap(yields, term_premia, i, step = step)
   assert_insufficient_data_ok(
-    n_obs > horizon_periods,
-    "Not enough observations. Need T > i/step news periods"
-  )
-
-  exp_n_hat <- exp(n_hat)
-  exp_n_hat_paired <- exp_n_hat[seq_len(n_obs - horizon_periods)]
-  y_step_future <- y_step[seq.int(horizon_periods + 1L, n_obs)]
-
-  # Realized one-period price e^{-y^(1)_{t+s}} = exp(p^(step)_{t+s}):
-  # the step-bond log price scales the annualized yield by its maturity
-  # in years, then converts percentage points to decimals
-  m_step <- step / HETID_CONSTANTS$MATURITY_UNITS_PER_YEAR
-  realized_price <- exp(
-    -m_step * y_step_future / HETID_CONSTANTS$PERCENT_TO_DECIMAL
-  )
-
-  # Empirical analogue of E[e^{-y^(1)} - exp(n_hat)]: average the
-  # difference over the dates where both legs are finite, so the two
-  # means share a single index set. is.finite() (not !is.na()) also
-  # drops any Inf from an exp() overflow, which would otherwise poison
-  # the scalar correction and the whole output series.
-  valid <- is.finite(realized_price) & is.finite(exp_n_hat_paired)
-  assert_insufficient_data_ok(
-    any(valid),
+    length(components$gap) > 0,
     "No valid observations to estimate the expected-SDF correction"
   )
-  correction <- mean(realized_price[valid] - exp_n_hat_paired[valid])
+
+  # Empirical analogue of E[e^{-y^(1)} - exp(n_hat)]: mean of the finite gap
+  # series (the same series whose 1/N variance is the projection bound in
+  # compute_expected_sdf_variance_bound())
+  correction <- mean(components$gap)
 
   # Conditional approximation plus the constant unconditional correction
-  expected_sdf <- exp_n_hat + correction
+  expected_sdf <- components$exp_n_hat + correction
 
   prepare_return_data(
     expected_sdf, return_df, dates, yields, "expected_sdf"

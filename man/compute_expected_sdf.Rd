@@ -133,5 +133,6 @@ expected_sdf_60_df <- compute_expected_sdf(
 
 }
 \seealso{
-\code{\link{compute_n_hat}}, \code{\link{compute_sdf_innovations}}
+\code{\link{compute_n_hat}}, \code{\link{compute_sdf_innovations}},
+\code{\link{compute_expected_sdf_variance_bound}}
 }
