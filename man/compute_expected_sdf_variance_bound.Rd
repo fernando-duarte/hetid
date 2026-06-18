@@ -54,9 +54,10 @@ with \eqn{\mathrm{Var}(q)} the sharper estimate: since
 \eqn{q}-variance is \eqn{O(\sigma^4)} rather than \eqn{O(\sigma^2)}.
 On real financial data \eqn{\mathrm{Var}(q)} binds and is several orders
 of magnitude below \eqn{\mathrm{Var}(g)}, so the returned bound is far
-smaller than a pure gap-variance bound. Taking the \eqn{\min} adds only
-a negligible downward finite-sample bias since \eqn{\mathrm{Var}(q) \ll
-  \mathrm{Var}(g)}.
+smaller than a pure gap-variance bound. The \eqn{\min} therefore
+essentially always selects \eqn{\widehat{\mathrm{Var}}(q)}: the returned
+value is the sharper bound's estimate, not a min-of-noise artifact of two
+comparably sized variances.
 
 The effective maximum for \code{i} is \code{MAX_MATURITY - step}
 (108 with the default annual step), because \code{n_hat(i, t)} requires
