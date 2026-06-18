@@ -108,7 +108,7 @@ compute_expected_sdf <- function(yields, term_premia, i,
   )
 
   # Empirical analogue of E[e^{-y^(1)} - exp(n_hat)]: mean of the finite gap
-  # series (the same series whose 1/N variance is the projection bound in
+  # series (the same series whose 1/N variance is the variance bound in
   # compute_expected_sdf_variance_bound())
   correction <- mean(components$gap)
 

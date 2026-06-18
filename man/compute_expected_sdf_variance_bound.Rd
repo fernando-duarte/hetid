@@ -2,7 +2,7 @@
 % Please edit documentation in R/compute_expected_sdf_variance_bound.R
 \name{compute_expected_sdf_variance_bound}
 \alias{compute_expected_sdf_variance_bound}
-\title{Compute the Projection Variance Bound for the Expected SDF}
+\title{Compute the Variance Bound for the Expected SDF}
 \usage{
 compute_expected_sdf_variance_bound(
   yields,
@@ -34,33 +34,52 @@ steps one period, so maturity arithmetic moves in multiples of
 bond, and horizons must satisfy \code{i <= MAX_MATURITY - step}.}
 }
 \value{
-Numeric scalar \eqn{\widehat U_{P,i}^{(0)} \ge 0}, or
+Numeric scalar \eqn{\widehat U_{i}^{(0)} \ge 0}, or
 \code{NA_real_} when no finite paired observations remain.
 }
 \description{
-Computes \eqn{\widehat U_{P,i}^{(0)}}, the empirical projection bound on
-the unconditional variance of the expected-SDF level-approximation error
+Computes \eqn{\widehat U_{i}^{(0)}}, the tighter empirical bound on the
+unconditional variance of the expected-SDF level-approximation error
 \eqn{\varepsilon_{i,t}^{(0)}} produced by \code{\link{compute_expected_sdf}}.
-It is the sample variance (divisor \eqn{N}) of the gap series
-\eqn{g_t = e^{-y^{(1)}_{t+s}} - e^{n\_hat(i,t)}}, \eqn{s = i / step}.
+It returns \eqn{\min\{\widehat{\mathrm{Var}}(g), \widehat{\mathrm{Var}}(q)\}},
+where \eqn{g_t = e^{-y^{(1)}_{t+s}} - e^{n\_hat(i,t)}} is the gap series
+and \eqn{q_t = e^{n\_hat}(e^u - 1 - u)} (with \eqn{u = x - n\_hat} the raw
+log forecast error) is the first-order-cancelled gap; both variances use
+divisor \eqn{N} via \code{\link{centered_cov}}.
 }
 \note{
+The bound estimates the population \eqn{\mathrm{Var}(\varepsilon)},
+with \eqn{\mathrm{Var}(q)} the sharper estimate: since
+\eqn{E[u_t | \mathrm{info}_t] = 0} and \eqn{q_t = O(u_t^2)}, the
+\eqn{q}-variance is \eqn{O(\sigma^4)} rather than \eqn{O(\sigma^2)}.
+On real financial data \eqn{\mathrm{Var}(q)} binds and is several orders
+of magnitude below \eqn{\mathrm{Var}(g)}, so the returned bound is far
+smaller than a pure gap-variance bound. The \eqn{\min} therefore
+essentially always selects \eqn{\widehat{\mathrm{Var}}(q)}: the returned
+value is the sharper bound's estimate, not a min-of-noise artifact of two
+comparably sized variances.
+
 The effective maximum for \code{i} is \code{MAX_MATURITY - step}
 (108 with the default annual step), because \code{n_hat(i, t)} requires
 data at maturity \code{i + step}.
 }
 \section{Mathematical Formula}{
 
-With \eqn{s = i / step} and \eqn{T_i = \{1, \dots, T - s\}},
-\deqn{\widehat U_{P,i}^{(0)}
-  = \frac{1}{N_i} \sum_{t \in T_i}
-    \left( g_t - \bar g \right)^2,
-  \qquad
-  g_t = e^{-y^{(step)}_{t+s} \cdot m(step) / 100} - e^{n\_hat(i,t)},
-  \quad \bar g = \frac{1}{N_i}\sum_{t \in T_i} g_t.}
+With \eqn{s = i / step}, \eqn{T_i = \{1, \dots, T - s\}}, and \eqn{N_i =
+|T_i|} the number of finite paired observations,
+\deqn{\widehat U_{i}^{(0)} = \min\!\left\{
+  \frac{1}{N_i}\sum_{t}(g_t - \bar g)^2,\;
+  \frac{1}{N_i}\sum_{t}(q_t - \bar q)^2
+\right\}}
+where \eqn{g_t = e^{x_t} - e^{a_t}},
+\eqn{q_t = e^{a_t}(e^{u_t} - 1 - u_t)},
+\eqn{x_t = -m(\mathrm{step}) y^{(\mathrm{step})}_{t+s}/100},
+\eqn{a_t = n\_hat(i,t)}, \eqn{u_t = x_t - a_t}.
 \eqn{\bar g} is exactly the centering correction added by
-\code{\link{compute_expected_sdf}}; the divisor is \eqn{N_i} (the spec's
-\eqn{1/N}), computed with \code{\link{centered_cov}}, not the
+\code{\link{compute_expected_sdf}}; both \eqn{g} and \eqn{q} are centered at
+their own sample means (\code{centered_cov} centers internally), and
+\eqn{E[g] = E[q]} only in population. The divisor is \eqn{N_i} (the
+spec's \eqn{1/N}), computed with \code{\link{centered_cov}}, not the
 \eqn{1/(N-1)} of \code{stats::var}.
 }
 
@@ -76,7 +95,7 @@ data <- extract_acm_data(data_types = c("yields", "term_premia"))
 yields <- data[, paste0("y", seq(12, 120, 12))]
 term_premia <- data[, paste0("tp", seq(12, 120, 12))]
 
-# Projection variance bound for the 5-year (60-month) horizon
+# Variance bound for the 5-year (60-month) horizon
 bound_60 <- compute_expected_sdf_variance_bound(yields, term_premia, i = 60)
 
 }
