@@ -53,8 +53,9 @@ test_that("the bound is the smaller of the gap and q variances", {
   vg <- var_n(gap_series(test_env$yields, test_env$term_premia, i = i))
   vq <- var_n(q_series(test_env$yields, test_env$term_premia, i = i))
   expect_equal(bound, min(vg, vq), tolerance = 1e-12)
-  expect_lte(bound, vg) # never worse than the gap bound
-  expect_lt(vq, vg) # q cancels the linear term => strictly tighter on real data
+  # bound <= vg is implied by the min above; the load-bearing empirical claim is
+  # that q is strictly tighter on real data (so the min actually selects var(q))
+  expect_lt(vq, vg)
 })
 
 test_that("the bound uses divisor N, not N - 1", {
