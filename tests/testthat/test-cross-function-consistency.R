@@ -11,6 +11,7 @@ test_that("all functions handle same ACM data format", {
   expect_type(compute_price_news(test_env$yields, test_env$term_premia, i = i), "double")
   expect_type(compute_sdf_innovations(test_env$yields, test_env$term_premia, i = i), "double")
   expect_type(compute_variance_bound(test_env$yields, test_env$term_premia, i = i), "double")
+  expect_type(compute_expected_sdf(test_env$yields, test_env$term_premia, i = i), "double")
 })
 
 test_that("functions with date parameters align correctly", {
@@ -54,6 +55,7 @@ test_that("consistent NA handling across functions", {
   expect_type(compute_price_news(yields, term_premia, i = 60), "double")
   expect_type(compute_sdf_innovations(yields, term_premia, i = 60), "double")
   expect_type(compute_variance_bound(yields, term_premia, i = 60), "double")
+  expect_type(compute_expected_sdf(yields, term_premia, i = 60), "double")
 })
 
 test_that("invalid inputs produce appropriate errors", {
@@ -103,6 +105,7 @@ test_that("all functions complete without error on larger stacked data", {
   expect_type(compute_price_news(yields, term_premia, i = i), "double")
   expect_type(compute_sdf_innovations(yields, term_premia, i = i), "double")
   expect_type(compute_variance_bound(yields, term_premia, i = i), "double")
+  expect_type(compute_expected_sdf(yields, term_premia, i = i), "double")
 })
 
 test_that("similar functions have consistent return structures", {
@@ -130,6 +133,10 @@ test_that("similar functions have consistent return structures", {
   expect_length(n_hat, nrow(test_env$yields))
   expect_length(price_news, nrow(test_env$yields) - 1)
   expect_length(sdf_innov, nrow(test_env$yields) - 1)
+
+  expected_sdf <- compute_expected_sdf(test_env$yields, test_env$term_premia, i = 60)
+  expect_true(length(expected_sdf) > 1)
+  expect_length(expected_sdf, nrow(test_env$yields))
 })
 
 test_that("ACM data is quarterly when requested", {

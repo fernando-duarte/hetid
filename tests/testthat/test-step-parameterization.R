@@ -47,6 +47,10 @@ test_that("explicit default step reproduces omitted-step results on bundled data
     compute_variance_bound(yields, tp, i = 60, step = s),
     compute_variance_bound(yields, tp, i = 60)
   )
+  expect_identical(
+    compute_expected_sdf(yields, tp, i = 60, step = s),
+    compute_expected_sdf(yields, tp, i = 60)
+  )
 })
 
 test_that("explicit default step reproduces omitted-step w2 residuals", {
