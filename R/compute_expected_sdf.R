@@ -1,0 +1,121 @@
+#' Compute Expected Stochastic Discount Factor (expected_sdf)
+#'
+#' Computes the time series approximating the conditional expectation of
+#' the one-period stochastic discount factor \code{s = i / step} news
+#' periods ahead, \eqn{E_t[\mathrm{SDF}_{t+1+s}]}, using the expected
+#' log one-period price \code{n_hat(i, t)} plus an empirical bias
+#' correction. The unconditional expectation is replaced by the sample
+#' average over the observations.
+#'
+#' @template param-yields-term-premia
+#' @template param-maturity-index
+#' @template param-return-df-dates
+#' @template param-step
+#'
+#' @template return-numeric-or-dataframe
+#'
+#' @section Mathematical Formula:
+#' With \code{s = i / step} news periods, \eqn{m(\mathrm{step})} the step
+#' maturity in years, and \code{n_hat(i, t)} the expected log one-period
+#' price from \code{\link{compute_n_hat}}, the estimator is
+#' \deqn{\exp(n\_hat(i,t)) + \frac{1}{|T_i|} \sum_{t \in T_i}
+#'   \left( e^{-m(\mathrm{step}) y^{(\mathrm{step})}_{t+s} / 100}
+#'   - \exp(n\_hat(i,t)) \right)}
+#' over the bound index set \eqn{T_i = \{1, \dots, T - s\}}. The leading
+#' term \eqn{\exp(n\_hat(i,t))} is the conditional approximation to
+#' \eqn{E_t[e^{-y^{(1)}_{t+s}}]}; the constant correction is the sample
+#' analogue of the unconditional
+#' \eqn{E[e^{-y^{(1)}_{t+s}} - \exp(n\_hat(i,t))]}. The realized
+#' one-period price \eqn{e^{-y^{(1)}_{t+s}}} equals
+#' \eqn{\exp(-m(\mathrm{step}) y^{(\mathrm{step})}_{t+s} / 100)}, the
+#' step-maturity (one-period) bond at date \eqn{t + s}.
+#'
+#' @section Time units:
+#' The realized one-period yield is led \code{i / step} rows. Rows are
+#' whatever observation frequency the caller supplies; the shift counts
+#' news periods, not calendar time, so row frequency must equal the
+#' intended news period. \code{i} must be a positive multiple of
+#' \code{step}.
+#'
+#' @details
+#' The additive constant mean-matches the estimator to the realized
+#' one-period price: with complete data, averaging the returned series
+#' over \eqn{T_i} equals the sample mean of \eqn{e^{-y^{(1)}_{t+s}}}. The
+#' two means in the correction share one index set - the dates where both
+#' legs are finite - so missing or non-finite values never misalign them.
+#'
+#' Because the correction is an unconditional additive constant, it
+#' preserves the mean but does not guarantee that every fitted value is
+#' positive: at dates where \eqn{\exp(n\_hat(i,t))} is tiny and the
+#' correction is negative, the estimator can dip below zero. This is a
+#' property of the requested additive form, not a defect.
+#'
+#' At the one-period horizon \code{i == step} (\code{s == 1}), the
+#' \code{n_hat} normalization \code{TP^(1) := 0} drops the one-period
+#' term premium, so the result does not depend on \code{tp\{step\}} (only
+#' on the \code{y\{step\}} yield used by the realized leg).
+#'
+#' The correction is estimated over the whole sample from realized future
+#' one-period prices, so the returned \eqn{E_t}-labelled series is an
+#' in-sample fitted object, not a pseudo-out-of-sample forecast; it must
+#' not be fed into a real-time backtest. The \code{is.finite()} mask
+#' guards only the scalar correction: any \code{NA}/\code{Inf} carried by
+#' \code{n_hat(i, t)} itself (e.g. at the unpaired tail dates) propagates
+#' to the corresponding output values.
+#'
+#' Besides the \code{i} and \code{i + step} columns \code{compute_n_hat}
+#' uses, the realized leg requires the one-period yield column
+#' \code{y\{step\}}; at \code{i == step} a \code{tp\{step\}} column must
+#' still be present, though its value is ignored.
+#'
+#' @note The effective maximum for \code{i} is \code{MAX_MATURITY - step}
+#'   (108 for standard ACM data with the default annual step), because
+#'   \code{n_hat(i, t)} requires data at maturity \code{i + step}.
+#'
+#' @seealso \code{\link{compute_n_hat}}, \code{\link{compute_sdf_innovations}},
+#'   \code{\link{compute_expected_sdf_variance_bound}}
+#'
+#' @export
+#'
+#' @examples
+#' # Extract ACM data
+#' data <- extract_acm_data(data_types = c("yields", "term_premia"))
+#' yields <- data[, paste0("y", seq(12, 120, 12))]
+#' term_premia <- data[, paste0("tp", seq(12, 120, 12))]
+#'
+#' # Expected SDF for the 5-year (60-month) horizon (s = 5 news periods)
+#' expected_sdf_60 <- compute_expected_sdf(yields, term_premia, i = 60)
+#'
+#' # With dates
+#' expected_sdf_60_df <- compute_expected_sdf(
+#'   yields, term_premia,
+#'   i = 60,
+#'   return_df = TRUE,
+#'   dates = data$date
+#' )
+#'
+compute_expected_sdf <- function(yields, term_premia, i,
+                                 return_df = FALSE, dates = NULL,
+                                 step = HETID_CONSTANTS$DEFAULT_STEP) {
+  validate_step(step)
+  validate_maturity_index(i, max_maturity = effective_max_maturity(step))
+  validate_row_alignment(yields, term_premia)
+
+  components <- compute_expected_sdf_gap(yields, term_premia, i, step = step)
+  assert_insufficient_data_ok(
+    length(components$gap) > 0,
+    "No valid observations to estimate the expected-SDF correction"
+  )
+
+  # Empirical analogue of E[e^{-y^(1)} - exp(n_hat)]: mean of the finite gap
+  # series (the same series whose 1/N variance is the projection bound in
+  # compute_expected_sdf_variance_bound())
+  correction <- mean(components$gap)
+
+  # Conditional approximation plus the constant unconditional correction
+  expected_sdf <- components$exp_n_hat + correction
+
+  prepare_return_data(
+    expected_sdf, return_df, dates, yields, "expected_sdf"
+  )
+}

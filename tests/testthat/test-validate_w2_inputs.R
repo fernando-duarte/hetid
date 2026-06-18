@@ -26,12 +26,12 @@ test_that("maturities beyond the effective maximum are rejected", {
 
 test_that("maturities violating the news contract are rejected", {
   # In range but neither the boundary (step) nor step-above MIN:
-  # 13 - 12 = 1 falls below MIN_MATURITY
+  # 6 != step (12) and 6 - 12 falls below MIN_MATURITY (1)
   yields <- data.frame(y12 = 1:5, y24 = 1:5)
   term_premia <- data.frame(tp12 = 1:5, tp24 = 1:5)
 
   expect_error(
-    validate_w2_inputs(yields, term_premia, maturities = 13),
+    validate_w2_inputs(yields, term_premia, maturities = 6),
     "must equal step \\(12\\) or satisfy",
     class = "hetid_error_bad_argument"
   )

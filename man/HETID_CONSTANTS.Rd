@@ -8,7 +8,7 @@ List containing package constants:
 \describe{
 \item{DEFAULT_N_PCS}{Standard number of principal components (4)}
 \item{MAX_N_PCS}{Maximum principal components (6)}
-\item{MIN_MATURITY}{Minimum maturity index in months (3)}
+\item{MIN_MATURITY}{Minimum maturity index in months (1)}
 \item{MAX_MATURITY}{Maximum maturity index in months (120)}
 \item{DEFAULT_STEP}{Maturity-index units (months) per news period
 (12: an annual news clock). The news operator steps one period;
@@ -22,7 +22,7 @@ annualized yields by maturity in years, so the n_hat weights are
 (12, 24, ..., 120); the default for
 \code{\link{extract_acm_data}}}
 \item{ALL_ACM_MATURITIES}{The full monthly maturity grid
-(3:120 months) available from the GitHub source}
+(1:120 months) available from the GitHub source}
 \item{DEGENERACY_TOLERANCE}{Scale-free threshold below which the
 variance positivity diagnostic flags a maturity as degenerate}
 \item{PERCENT_TO_DECIMAL}{Percentage to decimal divisor}

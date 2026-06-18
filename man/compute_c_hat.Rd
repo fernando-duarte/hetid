@@ -12,7 +12,7 @@ compute_c_hat(yields, term_premia, i, step = HETID_CONSTANTS$DEFAULT_STEP)
 \item{term_premia}{Data frame with columns tp1, tp2, ..., containing term premia}
 
 \item{i}{Integer specifying the maturity index (column) to analyze,
-in \strong{months}. Must be between 3 and 120 (the ACM monthly
+in \strong{months}. Must be between 1 and 120 (the ACM monthly
 grid); functions that require data at maturity \code{i + step}
 accept at most \code{MAX_MATURITY - step}, i.e. 108 with the
 default annual step. The input data must contain the columns for

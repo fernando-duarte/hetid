@@ -47,6 +47,14 @@ test_that("explicit default step reproduces omitted-step results on bundled data
     compute_variance_bound(yields, tp, i = 60, step = s),
     compute_variance_bound(yields, tp, i = 60)
   )
+  expect_identical(
+    compute_expected_sdf(yields, tp, i = 60, step = s),
+    compute_expected_sdf(yields, tp, i = 60)
+  )
+  expect_identical(
+    compute_expected_sdf_variance_bound(yields, tp, i = 60, step = s),
+    compute_expected_sdf_variance_bound(yields, tp, i = 60)
+  )
 })
 
 test_that("explicit default step reproduces omitted-step w2 residuals", {
@@ -129,23 +137,25 @@ test_that("price news with step = 6 differences the step-spaced n_hat series", {
   expect_equal(news, n_hat_6[2:n_obs] - n_hat_12[1:(n_obs - 1)])
 })
 
-test_that("the quarterly clock is valid from the boundary; below-floor horizons fail", {
-  # With the 3-month maturity floor, step = 3 news works from the
-  # boundary horizon i = 3 upward; a horizon whose previous-period
-  # maturity falls below the floor still fails informatively
+test_that("the news clock is valid from the boundary; below-floor horizons fail", {
+  # With the 1-month maturity floor, step = 3 news works from the boundary
+  # horizon i = 3 upward (the previous-period index i - step >= 1 now
+  # suffices); a horizon whose previous-period maturity falls below the
+  # 1-month floor still fails informatively.
   expect_true(validate_news_maturity_index(3, step = 3))
+  expect_true(validate_news_maturity_index(4, step = 3))
   expect_true(validate_news_maturity_index(6, step = 3))
-  expect_true(validate_news_maturity_index(9, step = 3))
 
-  frame <- make_step_six_frame()
+  # i != step and i - step < MIN_MATURITY (1) violates the contract
   expect_error(
-    compute_price_news(frame$yields, frame$term_premia, i = 4, step = 3),
+    validate_news_maturity_index(2, step = 3),
     class = "hetid_error_bad_argument"
   )
-  expect_error(
-    compute_price_news(frame$yields, frame$term_premia, i = 2, step = 1),
-    class = "hetid_error_bad_argument"
-  )
+
+  # On the monthly clock (step = 1) every horizon i >= 1 is valid: the
+  # boundary (i == step) or i - step >= 1.
+  expect_true(validate_news_maturity_index(1, step = 1))
+  expect_true(validate_news_maturity_index(2, step = 1))
 })
 
 test_that("the quarterly boundary horizon computes on the bundled 3-month grid", {

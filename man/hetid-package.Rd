@@ -37,7 +37,7 @@ The method is particularly useful for:
 \subsection{Data Management:}{
 \itemize{
 \item \strong{ACM Term Structure Data}: Access to monthly yields, term premia,
-and risk-neutral yields at monthly maturity steps (3-120 months) based on
+and risk-neutral yields at monthly maturity steps (1-120 months) based on
 Adrian, Crump, and Moench (2013)
 \item \strong{Economic Variables}: Quarterly macroeconomic and financial data
 \item \strong{Verified Downloads}: Functions to download the latest GitHub
@@ -123,6 +123,8 @@ principal components of financial asset returns.}
 \item \code{\link{compute_n_hat}()}: Expected log bond prices
 \item \code{\link{compute_price_news}()}: Unexpected price changes
 \item \code{\link{compute_sdf_innovations}()}: SDF innovations
+\item \code{\link{compute_expected_sdf}()}: Expected one-period SDF
+\item \code{\link{compute_expected_sdf_variance_bound}()}: Expected-SDF projection bound
 \item \code{\link{compute_c_hat}()}: Supremum estimator
 \item \code{\link{compute_k_hat}()}: Fourth moment estimator
 \item \code{\link{compute_variance_bound}()}: Variance bounds
