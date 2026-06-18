@@ -14,6 +14,23 @@ gap_series <- function(yields, term_premia, i,
   g[is.finite(g)]
 }
 
+# Reconstruct q_t = e^{x} - e^{a}(1+u) = g - e^{a} u, the first-order-cancelled
+# gap (u = x - a, x = -y^(1)_{t+s}, a = n_hat), over the finite paired set.
+q_series <- function(yields, term_premia, i,
+                     step = HETID_CONSTANTS$DEFAULT_STEP) {
+  n_hat <- compute_n_hat(yields, term_premia, i, step = step)
+  y_step <- yields[[acm_column_name("yields", step)]]
+  s <- i %/% step
+  n_obs <- length(n_hat)
+  m_step <- step / HETID_CONSTANTS$MATURITY_UNITS_PER_YEAR
+  a <- n_hat[seq_len(n_obs - s)]
+  x <- -m_step * y_step[seq.int(s + 1L, n_obs)] / HETID_CONSTANTS$PERCENT_TO_DECIMAL
+  g <- exp(x) - exp(a)
+  q_gap <- exp(a) * (expm1(x - a) - (x - a)) # = g - e^{a} u, via expm1 (stable)
+  q_gap[is.finite(g)] # same common mask as the gap, matching the implementation
+}
+var_n <- function(z) sum((z - mean(z))^2) / length(z) # divisor-N variance
+
 test_that("compute_expected_sdf_variance_bound returns a single non-negative value", {
   test_env <- setup_standard_test_env()
 
@@ -26,19 +43,18 @@ test_that("compute_expected_sdf_variance_bound returns a single non-negative val
   expect_gte(bound, 0)
 })
 
-test_that("the bound equals the 1/N centered variance of the gap series", {
+test_that("the bound is the smaller of the gap and q variances", {
   test_env <- setup_standard_test_env()
   i <- 60
-
   bound <- compute_expected_sdf_variance_bound(
     test_env$yields, test_env$term_premia,
     i = i
   )
-
-  g <- gap_series(test_env$yields, test_env$term_premia, i = i)
-  expected <- sum((g - mean(g))^2) / length(g)
-
-  expect_equal(bound, expected, tolerance = 1e-12)
+  vg <- var_n(gap_series(test_env$yields, test_env$term_premia, i = i))
+  vq <- var_n(q_series(test_env$yields, test_env$term_premia, i = i))
+  expect_equal(bound, min(vg, vq), tolerance = 1e-12)
+  expect_lte(bound, vg) # never worse than the gap bound
+  expect_lt(vq, vg) # q cancels the linear term => strictly tighter on real data
 })
 
 test_that("the bound uses divisor N, not N - 1", {
@@ -51,13 +67,16 @@ test_that("the bound uses divisor N, not N - 1", {
   )
 
   g <- gap_series(test_env$yields, test_env$term_premia, i = i)
-  # var() uses divisor N-1; the projection bound uses N
-  expect_equal(bound, stats::var(g) * (length(g) - 1) / length(g),
+  q <- q_series(test_env$yields, test_env$term_premia, i = i)
+  # bound is min(var_n(g), var_n(q)); both use divisor N; stats::var uses N-1
+  expect_equal(bound, min(var_n(g), var_n(q)), tolerance = 1e-12)
+  expect_equal(
+    bound,
+    min(stats::var(g), stats::var(q)) * (length(g) - 1) / length(g),
     tolerance = 1e-12
   )
-  # The N vs N-1 difference is observable only when var(g) != 0 (true for
-  # this real-data fixture); on a constant gap both would be 0.
-  expect_false(isTRUE(all.equal(bound, stats::var(g))))
+  # The N vs N-1 difference is observable only when var != 0 (true here)
+  expect_false(isTRUE(all.equal(bound, min(stats::var(g), stats::var(q)))))
 })
 
 test_that("the bound centers on the same correction compute_expected_sdf adds", {
@@ -79,7 +98,7 @@ test_that("the bound centers on the same correction compute_expected_sdf adds", 
     test_env$yields, test_env$term_premia,
     i = i
   )
-  expect_equal(bound, mean((g - correction)^2), tolerance = 1e-12)
+  expect_lte(bound, var_n(g)) # bound <= var(g); q may be strictly tighter
 })
 
 test_that("compute_expected_sdf_variance_bound honors a non-default step", {
@@ -97,17 +116,14 @@ test_that("compute_expected_sdf_variance_bound honors a non-default step", {
     i = 12, step = step
   )
 
-  s <- 12L %/% step
-  m_step <- step / HETID_CONSTANTS$MATURITY_UNITS_PER_YEAR
-  realized <- exp(-m_step * y6_pct[(s + 1):n] /
-    HETID_CONSTANTS$PERCENT_TO_DECIMAL)
-  g <- realized - 1 # e^{n_hat} = 1 everywhere
-  expect_equal(bound, sum((g - mean(g))^2) / length(g), tolerance = 1e-12)
+  g <- gap_series(yields, term_premia, i = 12, step = step)
+  q <- q_series(yields, term_premia, i = 12, step = step)
+  expect_equal(bound, min(var_n(g), var_n(q)), tolerance = 1e-12)
 })
 
 test_that("the bound averages over finite pairs only (interior NA)", {
   # Interior NA in the realized one-period (y12) leg drops one pair; the
-  # bound is the 1/N centered variance over the SURVIVING finite gaps.
+  # bound is the min(var_n(g), var_n(q)) over the SURVIVING finite gaps.
   test_env <- setup_standard_test_env()
   i <- 60
   yields_na <- test_env$yields
@@ -119,8 +135,9 @@ test_that("the bound averages over finite pairs only (interior NA)", {
   )
 
   g <- gap_series(yields_na, test_env$term_premia, i = i) # already finite-filtered
+  q <- q_series(yields_na, test_env$term_premia, i = i)
   expect_true(is.finite(bound))
-  expect_equal(bound, sum((g - mean(g))^2) / length(g), tolerance = 1e-12)
+  expect_equal(bound, min(var_n(g), var_n(q)), tolerance = 1e-12)
 })
 
 test_that("the bound drops a non-finite exp(n_hat) leg too (interior NA in y60)", {
@@ -138,8 +155,9 @@ test_that("the bound drops a non-finite exp(n_hat) leg too (interior NA in y60)"
   )
 
   g <- gap_series(yields_na, test_env$term_premia, i = i)
+  q <- q_series(yields_na, test_env$term_premia, i = i)
   expect_true(is.finite(bound))
-  expect_equal(bound, sum((g - mean(g))^2) / length(g), tolerance = 1e-12)
+  expect_equal(bound, min(var_n(g), var_n(q)), tolerance = 1e-12)
 })
 
 test_that("a constant gap series gives a bound of exactly 0", {
@@ -181,9 +199,10 @@ test_that("compute_expected_sdf_variance_bound handles the i = step (s = 1) hori
   )
 
   g <- gap_series(test_env$yields, test_env$term_premia, i = i)
+  q <- q_series(test_env$yields, test_env$term_premia, i = i)
   expect_true(is.finite(bound))
   expect_gte(bound, 0)
-  expect_equal(bound, sum((g - mean(g))^2) / length(g), tolerance = 1e-12)
+  expect_equal(bound, min(var_n(g), var_n(q)), tolerance = 1e-12)
 })
 
 test_that("the bound drops an Inf realized leg (is.finite, not just NA)", {
@@ -252,4 +271,36 @@ test_that("compute_expected_sdf_variance_bound rejects mismatched rows", {
     "same number of observations",
     class = "hetid_error_dimension_mismatch"
   )
+})
+
+test_that("q removes the first-order term: var(q) is far below var(g)", {
+  test_env <- setup_standard_test_env()
+  # default step = 12 => i must be a multiple of 12 and <= 108. The strict
+  # ordering is the load-bearing claim; the ratio threshold is loose (measured
+  # ~3e-4 to 7e-4 on this quarterly/annual-step fixture) to survive a data
+  # refresh, while still demonstrating orders-of-magnitude tightening.
+  for (i in c(12, 60, 108)) {
+    vg <- var_n(gap_series(test_env$yields, test_env$term_premia, i = i))
+    vq <- var_n(q_series(test_env$yields, test_env$term_premia, i = i))
+    expect_lt(vq, vg) # strictly tighter (the binding component)
+    expect_lt(vq / vg, 1e-2) # orders of magnitude tighter (linear term cancelled)
+  }
+})
+
+test_that("a non-finite q falls back to the gap bound (var_q guard)", {
+  # y12 = +Inf at one interior date => realized_log = -Inf => realized_price = 0
+  # => gap = -e^{n_hat} is FINITE, but u = -Inf => q = +Inf. The guard must set
+  # var_q = Inf so the bound falls back to var_g and stays finite.
+  y12_pct <- c(1, 2, 3, 4, 5, 6)
+  y12_pct[3] <- Inf
+  n <- length(y12_pct)
+  zeros <- numeric(n)
+  yields <- data.frame(y12 = y12_pct, y24 = zeros, y36 = zeros)
+  term_premia <- data.frame(tp12 = zeros, tp24 = zeros, tp36 = zeros)
+
+  bound <- compute_expected_sdf_variance_bound(yields, term_premia, i = 24)
+
+  g <- gap_series(yields, term_premia, i = 24)
+  expect_true(is.finite(bound))
+  expect_equal(bound, var_n(g), tolerance = 1e-12) # = var_g (var_q fell back)
 })

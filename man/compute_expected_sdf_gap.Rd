@@ -34,19 +34,38 @@ steps one period, so maturity arithmetic moves in multiples of
 bond, and horizons must satisfy \code{i <= MAX_MATURITY - step}.}
 }
 \value{
-A list with \code{exp_n_hat} (the full-length \eqn{T}
-\eqn{e^{n\_hat(i,t)}} series, used only by \code{compute_expected_sdf}
-for its output) and \code{gap} (the gap series \eqn{g_t} over the
-finite paired dates, length \eqn{\le T - s} after dropping any
-non-finite pair).
+A list with three elements:
+\describe{
+\item{\code{exp_n_hat}}{The full-length \eqn{T} series
+\eqn{e^{n\_hat(i,t)}}, used only by \code{compute_expected_sdf}
+for its output.}
+\item{\code{gap}}{The gap series \eqn{g_t} over the finite paired
+dates (length \eqn{\le T - s} after dropping any non-finite pair).
+Byte-identical to the previous implementation; \code{compute_expected_sdf}
+stays numerically invariant.}
+\item{\code{q}}{The first-order-cancelled gap \eqn{q_t =
+      e^{n\_hat}(e^u - 1 - u)}, \eqn{u = x - n\_hat}, aligned to
+\code{gap}'s finite paired set (one common \code{is.finite(gap)} mask).
+\code{q} shares \code{g}'s conditional mean in population
+(\eqn{E[u | \mathrm{info}] = 0}) and its \eqn{1/N} variance is a
+sharper \eqn{O(\sigma^4)} bound. \code{q} is NOT itself guaranteed
+finite: a yield \eqn{\to +\infty} gives \eqn{q = +\infty}, and an
+extreme \eqn{n\_hat} can give \eqn{0 \cdot \infty = \mathrm{NaN}}.
+The bound function guards \code{var_q} against this.}
+}
 }
 \description{
 Builds the components shared by \code{\link{compute_expected_sdf}} and
 \code{\link{compute_expected_sdf_variance_bound}}: the full-length
-\eqn{e^{n\_hat(i,t)}} series and the paired gap series
-\eqn{g_t = e^{-y^{(1)}_{t+s}} - e^{n\_hat(i,t)}} over
-\eqn{T_i = \{1, \dots, T - s\}}, \eqn{s = i / step}. The gap's mean is
-the centering correction; its 1/N variance is the projection bound.
+\eqn{e^{n\_hat(i,t)}} series, the paired gap series
+\eqn{g_t = e^{-y^{(1)}_{t+s}} - e^{n\_hat(i,t)}}, and the
+first-order-cancelled gap \eqn{q_t = e^{n\_hat}(e^u - 1 - u)} where
+\eqn{u = x - n\_hat} is the raw log forecast error (\eqn{x} the realized
+log price). Both \eqn{g} and \eqn{q} are filtered to the common finite
+paired set \eqn{T_i = \{1, \dots, T - s\}}, \eqn{s = i / step}. The
+gap's mean is the centering correction; \eqn{\min\{Var(g), Var(q)\}} is
+the variance bound returned by
+\code{\link{compute_expected_sdf_variance_bound}}.
 }
 \details{
 Callers validate \code{step}, \code{i} (within
