@@ -54,7 +54,13 @@
 #'   (108 with the default annual step), because \code{n_hat(i, t)} requires
 #'   data at maturity \code{i + step}.
 #'
-#' @seealso \code{\link{compute_expected_sdf}}, \code{\link{compute_variance_bound}}
+#' @note Calling this with \code{i = (m + j - 1) * step} returns the bound for
+#'   the shifted estimator \code{\link{compute_expected_sdf_at}}
+#'   (\eqn{E_{t-j}[\mathrm{SDF}_{t+m}]}); the bound depends only on the horizon
+#'   \eqn{s = m + j - 1} and is shift-invariant in the information lag \code{j}.
+#'
+#' @seealso \code{\link{compute_expected_sdf}}, \code{\link{compute_variance_bound}},
+#'   \code{\link{compute_expected_sdf_at}}
 #'
 #' @export
 #'

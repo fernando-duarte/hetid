@@ -45,6 +45,10 @@
 #'   not be fed into a real-time backtest. The \eqn{j}-row lag additionally
 #'   yields \code{NA} in the first \eqn{j} rows.
 #'
+#' @note A bound on this series' approximation-error variance is
+#'   \code{compute_expected_sdf_variance_bound(i = (m + j - 1) * step)} (the same
+#'   maturity index used here); the bound is shift-invariant in \code{j}.
+#'
 #' @seealso \code{\link{compute_expected_sdf}}, \code{\link{compute_n_hat}},
 #'   \code{\link{compute_expected_sdf_variance_bound}}
 #'
