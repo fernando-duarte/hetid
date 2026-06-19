@@ -11,6 +11,7 @@ allowlisted
 Anscombe
 args
 aut
+backtest
 bd
 behaviour
 Bera
@@ -20,6 +21,7 @@ Breusch
 BugReports
 bz
 CamelCase
+cancelled
 checkglobals
 closable
 CMD
@@ -117,6 +119,7 @@ mcpServers
 md
 meaned
 MERCHANTABILITY
+misalign
 mismeasured
 mit
 modularity

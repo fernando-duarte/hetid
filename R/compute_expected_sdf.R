@@ -73,7 +73,8 @@
 #'   \code{n_hat(i, t)} requires data at maturity \code{i + step}.
 #'
 #' @seealso \code{\link{compute_n_hat}}, \code{\link{compute_sdf_innovations}},
-#'   \code{\link{compute_expected_sdf_variance_bound}}
+#'   \code{\link{compute_expected_sdf_variance_bound}},
+#'   \code{\link{compute_expected_sdf_at}}
 #'
 #' @export
 #'
