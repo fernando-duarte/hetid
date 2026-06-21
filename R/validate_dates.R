@@ -6,7 +6,9 @@
 #' a fabricated integer row index) of the expected length. Character/POSIXct
 #' inputs are rejected rather than coerced, because \code{as.Date()} of a bare
 #' numeric silently reads days-since-epoch -- exactly the fake-index failure
-#' this guard exists to prevent.
+#' this guard exists to prevent. The lenient sibling \code{coerce_optional_date}
+#' (acm_date_utils.R) parses character bounds instead of rejecting them; this
+#' guard is deliberately strict.
 #'
 #' @param dates The date vector supplied by the caller.
 #' @param expected_len Integer; the required length (e.g. \code{nrow(yields)}).

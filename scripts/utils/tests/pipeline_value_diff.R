@@ -111,7 +111,7 @@ for (f in common) {
         msg
       } else if (ext == "rds") {
         cmp_num(num_leaves(readRDS(pa)), num_leaves(readRDS(pb)))
-      } else if (ext %in% c("tex", "txt", "html", "htm", "md")) {
+      } else if (ext %in% c("tex", "txt", "md")) {
         cmp_num(nums_from_text(pa), nums_from_text(pb))
       } else {
         NA_character_

@@ -87,6 +87,8 @@ min_obs_for_pc_regression <- function(n_pcs) {
 #' @keywords internal
 prepare_return_data <- function(result_series, dates, yields,
                                 series_name, is_news = FALSE) {
+  # Validated first, before the lazily-forced `result_series` promise runs its
+  # own kernel input checks, so a bad-dates error surfaces here.
   validate_dates_vector(dates, nrow(yields))
 
   # A news series carries one element per period change (T - 1); a level
