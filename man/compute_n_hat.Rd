@@ -8,7 +8,6 @@ compute_n_hat(
   yields,
   term_premia,
   i,
-  return_df = FALSE,
   dates = NULL,
   step = HETID_CONSTANTS$DEFAULT_STEP
 )
@@ -28,10 +27,10 @@ plus step-adjacent maturities for \code{i = 60}). Whole years are
 multiples of 12 (i = 12 is the 1-year bond, i = 60 the 5-year,
 i = 120 the 10-year).}
 
-\item{return_df}{Logical, if TRUE returns a data frame with dates (default FALSE)}
-
-\item{dates}{Optional vector of dates corresponding to the rows in yields/term_premia.
-If not provided and return_df = TRUE, will use row indices.}
+\item{dates}{Required \code{Date} vector of period-end calendar dates, one
+per row of \code{yields}/\code{term_premia}. A time series is never
+returned without its date index; a non-\code{Date} or wrong-length vector
+is an error.}
 
 \item{step}{Integer number of maturity-index units per news period
 (default \code{HETID_CONSTANTS$DEFAULT_STEP}). The news operator
@@ -41,7 +40,9 @@ steps one period, so maturity arithmetic moves in multiples of
 bond, and horizons must satisfy \code{i <= MAX_MATURITY - step}.}
 }
 \value{
-Numeric vector of computed values, or data frame with dates if return_df = TRUE
+A data frame whose first column \code{date} (period-end
+\code{Date}) carries the conditioning-information date of each value, plus
+the computed series.
 }
 \description{
 Computes the time series n_hat(i,t) which is an estimator for
@@ -77,19 +78,11 @@ does not reconcile rollover conventions.
 # Extract ACM data
 data <- extract_acm_data(data_types = c("yields", "term_premia"))
 
-# Compute n_hat for the 5-year (60-month) maturity
+# Compute n_hat for the 5-year (60-month) maturity (dated data frame)
 n_hat_60 <- compute_n_hat(
   yields = data[, paste0("y", seq(12, 120, 12))],
   term_premia = data[, paste0("tp", seq(12, 120, 12))],
-  i = 60
-)
-
-# Compute n_hat with dates
-n_hat_60_df <- compute_n_hat(
-  yields = data[, paste0("y", seq(12, 120, 12))],
-  term_premia = data[, paste0("tp", seq(12, 120, 12))],
   i = 60,
-  return_df = TRUE,
   dates = data$date
 )
 

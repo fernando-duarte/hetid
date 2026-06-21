@@ -1,39 +1,21 @@
-#' Resolve the W2 observation date index
+#' Resolve the W2 realization-date index from full-T input dates
 #'
-#' Internal helper shared by \code{compute_w2_residuals} (list mode) and
-#' \code{format_w2_dataframe} (data-frame mode) so both derive the W2 date
-#' index identically. Resolution order: user-supplied \code{dates}, else row
-#' indices. A user-supplied vector is validated to have \code{nrow(yields) - 1}
-#' elements (W2 is a one-step news series, so it carries one fewer observation
-#' than the yield panel).
+#' The W2 residual \eqn{W_{2,t+1}} is a one-step news object realized at
+#' \eqn{t+1}, so the caller supplies one period-end date per yield row (length
+#' \code{nrow(yields)}, the same convention as \code{compute_w1_residuals}) and
+#' this helper shifts to the lead realization dates \code{dates[-1]} =
+#' \eqn{d_2, \ldots, d_T} (length \code{nrow(yields) - 1}, the W2 news count).
+#' Real dates are mandatory: there is no row-index fallback.
 #'
-#' @param dates Optional user-supplied date vector (may be NULL).
+#' @param dates Required full-T \code{Date} vector (one per yield row).
 #' @param n_yield_rows Integer, the number of rows in the yields data frame.
 #'
-#' @return A vector (dates or row indices) indexing the W2 observations, before
-#'   any per-maturity complete-cases subsetting.
+#' @return The \eqn{t+1} realization \code{Date} index of the W2 observations,
+#'   before any per-maturity complete-cases subsetting.
 #'
 #' @keywords internal
 #' @noRd
 resolve_w2_dates <- function(dates, n_yield_rows) {
-  user_supplied_dates <- !is.null(dates)
-
-  if (is.null(dates)) {
-    # Row indices per package convention (prepare_return_data)
-    dates <- seq_len(n_yield_rows - 1)
-  }
-
-  if (user_supplied_dates) {
-    expected_len <- n_yield_rows - 1
-    assert_dimension_ok(
-      length(dates) == expected_len,
-      paste0(
-        "dates has ", length(dates),
-        " elements but nrow(yields) - 1 = ",
-        expected_len
-      )
-    )
-  }
-
-  dates
+  validate_dates_vector(dates, n_yield_rows)
+  dates[-1L]
 }

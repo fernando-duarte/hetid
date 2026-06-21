@@ -44,11 +44,13 @@ calling. The matrix may be any instrument set, not only principal
 components; see \code{\link{build_instrument_matrix}()} for a
 validated constructor that supports arbitrary transformations.}
 
-\item{return_df}{Logical, if TRUE returns a data frame with
-dates (default FALSE)}
+\item{return_df}{Logical, if TRUE returns a tidy data frame (default FALSE
+returns the richer list). Both shapes carry dates.}
 
-\item{dates}{Optional vector of period-end dates for the returned
-data frame (one per yield row). If NULL, row indices are used.}
+\item{dates}{Required vector of period-end \code{Date}s, one per yield row
+(length \code{nrow(yields)}); internally shifted to the t+1 realization
+dates \eqn{d_2, \ldots, d_T} of the W2 news (matching
+\code{compute_w1_residuals}).}
 
 \item{step}{Integer number of maturity-index units per news period
 (default \code{HETID_CONSTANTS$DEFAULT_STEP}). The news operator
@@ -76,8 +78,9 @@ If return_df = FALSE, returns a list containing:
 \describe{
 \item{residuals}{List of residual vectors, one for each maturity}
 \item{fitted}{List of fitted value vectors}
-\item{dates}{Per-maturity list of date (or row-index) vectors parallel to
-\code{residuals}, the W2 date index subset by each maturity's \code{kept_idx}.}
+\item{dates}{Per-maturity list of t+1 realization \code{Date} vectors
+parallel to \code{residuals}, the lead date index subset by each
+maturity's \code{kept_idx}.}
 \item{coefficients}{Matrix of regression coefficients (maturities x predictors)}
 \item{r_squared}{Vector of R-squared values for each maturity}
 \item{n_obs}{Number of observations used in each regression}
@@ -132,6 +135,7 @@ merged <- merge(
 )
 res_w2 <- compute_w2_residuals(
   merged[, paste0("y", mats)], merged[, paste0("tp", mats)],
-  maturities = c(24, 36), n_pcs = 4, pcs = as.matrix(merged[, pc_cols])
+  maturities = c(24, 36), n_pcs = 4, pcs = as.matrix(merged[, pc_cols]),
+  dates = merged$date
 )
 }

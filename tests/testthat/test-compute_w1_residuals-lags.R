@@ -71,6 +71,7 @@ test_that("y1_lags rejects invalid values", {
 
 test_that("oversized y1_lags errors with insufficient data", {
   few <- data.frame(
+    date = seq(as.Date("1959-03-31"), by = "quarter", length.out = 6),
     gr1.pcecc96 = c(0.5, 0.2, 0.1, 0.4, 0.3, 0.6),
     pc1 = c(0.1, 0.2, 0.3, 0.4, 0.5, 0.6),
     pc2 = c(0.6, 0.5, 0.4, 0.3, 0.2, 0.1)

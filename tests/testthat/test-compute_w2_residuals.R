@@ -5,7 +5,7 @@ test_that("compute_w2_residuals works for single maturity", {
 
   # Test single maturity
   res_y2 <- suppressWarnings(compute_w2_residuals(test_env$yields, test_env$term_premia,
-    maturities = 60, n_pcs = 4, pcs = pcs
+    maturities = 60, n_pcs = 4, pcs = pcs, dates = test_env$data$date
   ))
 
   expect_type(res_y2, "list")
@@ -25,7 +25,7 @@ test_that("compute_w2_residuals works for maturity 12", {
 
   # Test maturity 12 specifically
   res_y2_mat12 <- suppressWarnings(compute_w2_residuals(test_env$yields, test_env$term_premia,
-    maturities = 12, n_pcs = 4, pcs = pcs
+    maturities = 12, n_pcs = 4, pcs = pcs, dates = test_env$data$date
   ))
 
   expect_type(res_y2_mat12, "list")
@@ -50,7 +50,7 @@ test_that("compute_w2_residuals works for multiple maturities", {
   # Test multiple maturities (including maturity 12)
   maturities <- c(12, 24, 60, 84)
   res_y2 <- suppressWarnings(compute_w2_residuals(test_env$yields, test_env$term_premia,
-    maturities = maturities, n_pcs = 4, pcs = pcs
+    maturities = maturities, n_pcs = 4, pcs = pcs, dates = test_env$data$date
   ))
 
   # Should have one element per maturity
@@ -66,7 +66,7 @@ test_that("residual properties check", {
 
   # Test for maturity 36
   res_y2 <- suppressWarnings(compute_w2_residuals(test_env$yields, test_env$term_premia,
-    maturities = 36, n_pcs = 4, pcs = pcs
+    maturities = 36, n_pcs = 4, pcs = pcs, dates = test_env$data$date
   ))
   residuals <- res_y2$residuals[[1]]
 
@@ -83,13 +83,19 @@ test_that("compute_w2_residuals uses SDF innovations", {
   set.seed(123)
   pcs <- matrix(stats::rnorm(nrow(test_env$yields) * 4), nrow = nrow(test_env$yields))
 
-  # Get SDF innovations directly
+  # Get SDF innovations directly. compute_sdf_innovations now returns a dated
+  # data frame (length T, leading NA for the t->t+1 news alignment); drop the
+  # NA to recover the T-1 news vector this test compares lengths against.
   i <- 48
-  sdf_innov <- compute_sdf_innovations(test_env$yields, test_env$term_premia, i = i)
+  sdf_df <- compute_sdf_innovations(
+    test_env$yields, test_env$term_premia,
+    i = i, dates = test_env$data$date
+  )
+  sdf_innov <- sdf_df$sdf_innovations[-1]
 
   # Get W2 residuals
   res_y2 <- suppressWarnings(compute_w2_residuals(test_env$yields, test_env$term_premia,
-    maturities = i, n_pcs = 4, pcs = pcs
+    maturities = i, n_pcs = 4, pcs = pcs, dates = test_env$data$date
   ))
 
   # The dependent variable in the regression should be SDF innovations
@@ -143,8 +149,14 @@ test_that("R-squared matches manual regression", {
   # Test for maturity 60
   i <- 60
 
-  # Compute SDF innovations
-  sdf_innov <- compute_sdf_innovations(yields_merged, term_premia_merged, i = i)
+  # Compute SDF innovations. The dated return prepends a leading NA to align
+  # the news to t+1; drop it to recover the T-1 news vector aligned with the
+  # lagged PCs below (news[t] pairs with PC_t).
+  sdf_df <- compute_sdf_innovations(
+    yields_merged, term_premia_merged,
+    i = i, dates = merged_data$date_acm
+  )
+  sdf_innov <- sdf_df$sdf_innovations[-1]
 
   # Create lagged PCs (aligned with SDF innovations which have length T-1)
   n_obs <- nrow(merged_data)
@@ -174,7 +186,8 @@ test_that("R-squared matches manual regression", {
     term_premia_merged,
     maturities = i,
     n_pcs = 4,
-    pcs = pcs_merged
+    pcs = pcs_merged,
+    dates = merged_data$date_acm
   )
 
   # Compare R-squared values
@@ -233,7 +246,7 @@ test_that("length verification for output", {
   # Test with multiple maturities
   maturities <- seq(12, 108, by = 12)
   res_y2 <- suppressWarnings(compute_w2_residuals(test_env$yields, test_env$term_premia,
-    maturities = maturities, n_pcs = 4, pcs = pcs
+    maturities = maturities, n_pcs = 4, pcs = pcs, dates = test_env$data$date
   ))
 
   # Check dimensions
@@ -260,13 +273,13 @@ test_that("no message when user provides PCs", {
       compute_w2_residuals(
         test_env$yields, test_env$term_premia,
         maturities = 60, n_pcs = 2,
-        pcs = user_pcs
+        pcs = user_pcs, dates = test_env$data$date
       )
     )
   )
 })
 
-test_that("row indices used when user provides PCs but not dates", {
+test_that("return_df date column is the real t+1 Date when user provides PCs", {
   test_env <- setup_standard_test_env()
 
   # Synthetic PCs with correct row count
@@ -276,20 +289,18 @@ test_that("row indices used when user provides PCs but not dates", {
     ncol = 2
   )
 
-  # PCs provided, dates not -- should use row indices, no message
+  # PCs provided, dates required (full-T, one per yield row); no message
   result <- expect_no_message(
     compute_w2_residuals(
       test_env$yields, test_env$term_premia,
       maturities = 60, n_pcs = 2,
-      pcs = user_pcs, return_df = TRUE
+      pcs = user_pcs, return_df = TRUE, dates = test_env$data$date
     )
   )
-  # Dates should be row indices (1, 2, 3, ...)
-  n_expected <- length(unique(result$date))
-  expect_equal(
-    sort(unique(result$date)),
-    seq_len(n_expected)
-  )
+  # The date column is the real t+1 (lead) realization Date, drawn from the
+  # supplied full-T dates shifted by one (dates[-1]).
+  expect_s3_class(result$date, "Date")
+  expect_true(all(result$date %in% test_env$data$date[-1]))
 })
 
 test_that("no message for dates when user provides dates", {
@@ -301,9 +312,11 @@ test_that("no message for dates when user provides dates", {
     rnorm(nrow(test_env$yields) * 2),
     ncol = 2
   )
+  # Full-T dates: one per yield row (length nrow(yields)); internally shifted
+  # to the t+1 realization dates user_dates[-1].
   user_dates <- seq(
     as.Date("2000-01-01"),
-    length.out = nrow(test_env$yields) - 1,
+    length.out = nrow(test_env$yields),
     by = "quarter"
   )
 
@@ -315,12 +328,9 @@ test_that("no message for dates when user provides dates", {
       dates = user_dates
     )
   )
-  # Verify user-supplied dates are used, not bundled
-  n_obs <- length(unique(result$date))
-  expect_equal(
-    sort(unique(result$date)),
-    user_dates[seq_len(n_obs)]
-  )
+  # Verify user-supplied dates are used (shifted to t+1), not bundled
+  expect_true(all(result$date %in% user_dates[-1]))
+  expect_false(any(result$date %in% test_env$data$date))
 })
 
 test_that("return_df dates align correctly with interior NA in PCs", {
@@ -332,8 +342,9 @@ test_that("return_df dates align correctly with interior NA in PCs", {
   user_pcs <- matrix(rnorm(n * 2), ncol = 2)
   user_pcs[10, 1] <- NA
 
-  # Use sequential dates so we can verify alignment
-  user_dates <- seq_len(n - 1)
+  # Full-T real dates (one per yield row); internally shifted to the t+1
+  # realization dates user_dates[-1], so we can verify alignment.
+  user_dates <- seq(as.Date("1990-03-31"), by = "quarter", length.out = n)
 
   result <- compute_w2_residuals(
     test_env$yields, test_env$term_premia,
@@ -342,10 +353,14 @@ test_that("return_df dates align correctly with interior NA in PCs", {
     dates = user_dates
   )
 
-  # Date 10 should be MISSING (it was the NA row in PCs,
-  # which becomes lagged PC row 10 aligned with SDF
-  # innovation 10)
-  expect_false(10 %in% result$date)
+  # The realization date for lagged PC row 10 (aligned with SDF innovation 10)
+  # is user_dates[-1][10] == user_dates[11]; it must be MISSING because that
+  # row's PC was NA.
+  dropped_date <- user_dates[-1][10]
+  expect_false(dropped_date %in% result$date)
+
+  # The date column is a real Date, never integer row indices
+  expect_s3_class(result$date, "Date")
 
   # Number of dates should equal number of residuals
   expect_equal(
@@ -353,11 +368,9 @@ test_that("return_df dates align correctly with interior NA in PCs", {
     length(result$residuals)
   )
 
-  # Dates should NOT be consecutive 1:n_obs
-  # (they should skip the NA row)
-  n_obs <- nrow(result)
+  # Dates should NOT be the unbroken t+1 index (they should skip the NA row)
   expect_false(
-    identical(result$date, seq_len(n_obs))
+    identical(result$date, user_dates[-1])
   )
 })
 
@@ -370,7 +383,8 @@ test_that("error when user pcs has wrong number of rows", {
   expect_error(
     compute_w2_residuals(
       test_env$yields, test_env$term_premia,
-      maturities = 60, n_pcs = 4, pcs = bad_pcs
+      maturities = 60, n_pcs = 4, pcs = bad_pcs,
+      dates = test_env$data$date
     ),
     "must match number of rows"
   )
@@ -448,7 +462,8 @@ make_w2_skip_inputs <- function(col_indices, n = 40, seed = 123) {
   list(
     yields = yields,
     term_premia = term_premia,
-    pcs = matrix(rnorm(n * 2), ncol = 2)
+    pcs = matrix(rnorm(n * 2), ncol = 2),
+    dates = seq(as.Date("1990-03-31"), by = "quarter", length.out = n)
   )
 }
 
@@ -458,7 +473,8 @@ test_that("maturity equal to the highest available column skips while others suc
   expect_warning(
     result <- compute_w2_residuals(
       inputs$yields, inputs$term_premia,
-      maturities = c(12, 24), n_pcs = 2, pcs = inputs$pcs
+      maturities = c(12, 24), n_pcs = 2, pcs = inputs$pcs,
+      dates = inputs$dates
     ),
     "[Ss]kipping maturity 24"
   )
@@ -475,7 +491,8 @@ test_that("one bad maturity does not abort valid maturities", {
   expect_warning(
     result <- compute_w2_residuals(
       inputs$yields, inputs$term_premia,
-      maturities = c(24, 36), n_pcs = 2, pcs = inputs$pcs
+      maturities = c(24, 36), n_pcs = 2, pcs = inputs$pcs,
+      dates = inputs$dates
     ),
     "[Ss]kipping maturity 36"
   )
@@ -490,7 +507,8 @@ test_that("non-contiguous column subsets pass validation and compute", {
 
   result <- compute_w2_residuals(
     inputs$yields, inputs$term_premia,
-    maturities = 60, n_pcs = 2, pcs = inputs$pcs
+    maturities = 60, n_pcs = 2, pcs = inputs$pcs,
+    dates = inputs$dates
   )
   expect_named(result$residuals, "maturity_60")
   expect_true(is.finite(result$r_squared[1]))
@@ -503,7 +521,8 @@ test_that("skipped maturities report NA, not zero", {
   expect_warning(
     result <- compute_w2_residuals(
       inputs$yields, inputs$term_premia,
-      maturities = c(24, 36), n_pcs = 2, pcs = inputs$pcs
+      maturities = c(24, 36), n_pcs = 2, pcs = inputs$pcs,
+      dates = inputs$dates
     ),
     "[Ss]kipping maturity 36"
   )
@@ -520,7 +539,7 @@ test_that("all maturities skipped with return_df gives zero-row data frame", {
     result <- compute_w2_residuals(
       inputs$yields, inputs$term_premia,
       maturities = 36, n_pcs = 2, pcs = inputs$pcs,
-      return_df = TRUE
+      return_df = TRUE, dates = inputs$dates
     ),
     "[Ss]kipping maturity 36"
   )
@@ -531,7 +550,9 @@ test_that("all maturities skipped with return_df gives zero-row data frame", {
 
 test_that("list mode returns per-maturity dates parallel to residuals", {
   test_data <- create_synthetic_test_data(n = 40, n_maturities = 3)
-  user_dates <- seq(as.Date("2000-01-01"), by = "quarter", length.out = 39)
+  # Full-T dates: one per yield row (40); shifted internally to the t+1
+  # realization index user_dates[-1] (39 W2 news observations).
+  user_dates <- seq(as.Date("2000-01-01"), by = "quarter", length.out = 40)
 
   res <- suppressWarnings(compute_w2_residuals(
     test_data$yields, test_data$term_premia,
@@ -546,8 +567,8 @@ test_that("list mode returns per-maturity dates parallel to residuals", {
   # each maturity's dates align 1:1 with its residual vector
   for (key in names(res$residuals)) {
     expect_length(res$dates[[key]], length(res$residuals[[key]]))
-    # and equal the user dates subset by that maturity's kept_idx
-    expect_identical(res$dates[[key]], user_dates[which(res$kept_idx[[key]])])
+    # and equal the t+1 dates (user_dates[-1]) subset by that maturity's kept_idx
+    expect_identical(res$dates[[key]], user_dates[-1][which(res$kept_idx[[key]])])
   }
 })
 
@@ -557,7 +578,8 @@ test_that("list-mode dates are ragged when maturities drop different rows", {
   # maturities 12 and 36 keep every row: a flat date vector could not align all.
   test_data$yields[15, "y24"] <- NA
   test_data$term_premia[15, "tp24"] <- NA
-  user_dates <- seq(as.Date("2000-01-01"), by = "quarter", length.out = 39)
+  # Full-T dates (40); shifted internally to the t+1 realization index.
+  user_dates <- seq(as.Date("2000-01-01"), by = "quarter", length.out = 40)
 
   res <- suppressWarnings(compute_w2_residuals(
     test_data$yields, test_data$term_premia,
@@ -572,29 +594,33 @@ test_that("list-mode dates are ragged when maturities drop different rows", {
   # the dropped date is exactly the one masked by kept_idx, not a blind shift
   expect_identical(
     res$dates[["maturity_24"]],
-    user_dates[which(res$kept_idx[["maturity_24"]])]
+    user_dates[-1][which(res$kept_idx[["maturity_24"]])]
   )
 })
 
-test_that("list-mode dates fall back to row indices for custom PCs", {
+test_that("list-mode dates are real Dates per maturity for custom PCs", {
   test_data <- create_synthetic_test_data(n = 30, n_maturities = 2)
+  # Dates are mandatory now (full-T, one per yield row); there is no row-index
+  # fallback. The per-maturity dates are still a parallel named list.
+  user_dates <- seq(as.Date("2000-01-01"), by = "quarter", length.out = 30)
   res <- suppressWarnings(compute_w2_residuals(
     test_data$yields, test_data$term_premia,
     maturities = c(12, 24), n_pcs = 2,
-    pcs = matrix(rnorm(30 * 2), nrow = 30)
+    pcs = matrix(rnorm(30 * 2), nrow = 30), dates = user_dates
   ))
-  # No dates and custom PCs -> integer row-index fallback, still per maturity
   expect_type(res$dates, "list")
   for (key in names(res$residuals)) {
     expect_length(res$dates[[key]], length(res$residuals[[key]]))
-    expect_true(is.numeric(res$dates[[key]]))
+    expect_s3_class(res$dates[[key]], "Date")
+    expect_identical(res$dates[[key]], user_dates[-1][which(res$kept_idx[[key]])])
   }
 })
 
 test_that("list-mode and data-frame-mode dates agree", {
   test_data <- create_synthetic_test_data(n = 40, n_maturities = 3)
   test_data$yields[15, "y24"] <- NA
-  user_dates <- seq(as.Date("2000-01-01"), by = "quarter", length.out = 39)
+  # Full-T dates: one per yield row (40), shifted internally to t+1.
+  user_dates <- seq(as.Date("2000-01-01"), by = "quarter", length.out = 40)
   common <- list(
     test_data$yields, test_data$term_premia,
     maturities = c(12, 24, 36), n_pcs = 3,

@@ -32,7 +32,7 @@ test_that("k_hat manual calculation verification", {
   k_hat_60 <- compute_k_hat(test_env$yields, test_env$term_premia, i = i)
 
   # Manual calculation
-  n_hat <- compute_n_hat(test_env$yields, test_env$term_premia, i = i - 12)
+  n_hat <- n_hat_series(test_env$yields, test_env$term_premia, i = i - 12)
   y <- test_env$yields$y12 / 100 # Convert to decimal
 
   # The realized-vs-forecast pairing shifts i/12 news periods (rows)
@@ -108,7 +108,7 @@ test_that("k_hat averages over valid terms with interior NA in y12", {
   # Manual replication: only y12 enters as y_{t+h}, n_hat(48) is
   # unaffected; the pairing shifts h = i/12 news periods (rows)
   horizon <- i %/% 12
-  n_hat <- compute_n_hat(yields_na, test_env$term_premia, i = i - 12)
+  n_hat <- n_hat_series(yields_na, test_env$term_premia, i = i - 12)
   y12 <- yields_na$y12 / 100
   y12_shifted <- y12[(horizon + 1):n]
   n_hat_shifted <- n_hat[2:(n - horizon + 1)]

@@ -1,20 +1,22 @@
 test_that("compute_expected_sdf returns a numeric level series of length T", {
   test_env <- setup_standard_test_env()
 
-  result <- compute_expected_sdf(test_env$yields, test_env$term_premia, i = 60)
+  result <- compute_expected_sdf(
+    test_env$yields, test_env$term_premia,
+    i = 60, dates = test_env$data$date
+  )$expected_sdf
 
   expect_type(result, "double")
   expect_length(result, nrow(test_env$yields))
   expect_true(all(is.finite(result)))
 })
 
-test_that("compute_expected_sdf returns a dated data frame when requested", {
+test_that("compute_expected_sdf returns a dated data frame", {
   test_env <- setup_standard_test_env()
 
   result <- compute_expected_sdf(
     test_env$yields, test_env$term_premia,
     i = 60,
-    return_df = TRUE,
     dates = test_env$data$date
   )
 
@@ -33,8 +35,9 @@ test_that("compute_expected_sdf drops an Inf realized leg from the correction", 
   zeros <- numeric(n)
   yields <- data.frame(y12 = y12_pct, y24 = zeros, y36 = zeros)
   term_premia <- data.frame(tp12 = zeros, tp24 = zeros, tp36 = zeros)
+  dts <- seq(as.Date("1990-03-31"), by = "quarter", length.out = n)
 
-  result <- compute_expected_sdf(yields, term_premia, i = 24)
+  result <- compute_expected_sdf(yields, term_premia, i = 24, dates = dts)$expected_sdf
 
   expect_length(result, n)
   expect_true(all(is.finite(result)))
@@ -47,10 +50,10 @@ test_that("compute_expected_sdf matches manual exp(n_hat) + correction", {
 
   result <- compute_expected_sdf(
     test_env$yields, test_env$term_premia,
-    i = i, paired = TRUE
-  )
+    i = i, paired = TRUE, dates = test_env$data$date
+  )$expected_sdf
 
-  n_hat <- compute_n_hat(test_env$yields, test_env$term_premia, i = i)
+  n_hat <- n_hat_series(test_env$yields, test_env$term_premia, i = i)
   y_step <- test_env$yields$y12
   m_step <- step / HETID_CONSTANTS$MATURITY_UNITS_PER_YEAR
   s <- i %/% step
@@ -77,12 +80,12 @@ test_that("compute_expected_sdf ignores the one-period term premium at i = step"
 
   base <- compute_expected_sdf(
     test_env$yields, test_env$term_premia,
-    i = HETID_CONSTANTS$DEFAULT_STEP
-  )
+    i = HETID_CONSTANTS$DEFAULT_STEP, dates = test_env$data$date
+  )$expected_sdf
   perturbed <- compute_expected_sdf(
     test_env$yields, tp_perturbed,
-    i = HETID_CONSTANTS$DEFAULT_STEP
-  )
+    i = HETID_CONSTANTS$DEFAULT_STEP, dates = test_env$data$date
+  )$expected_sdf
 
   expect_equal(base, perturbed, tolerance = 1e-12)
 })
@@ -99,11 +102,12 @@ test_that("compute_expected_sdf honors a non-default step", {
   zeros <- numeric(n)
   yields <- data.frame(y6 = y6_pct, y12 = zeros, y18 = zeros)
   term_premia <- data.frame(tp12 = zeros, tp18 = zeros)
+  dts <- seq(as.Date("1990-03-31"), by = "quarter", length.out = n)
 
   result <- compute_expected_sdf(
     yields, term_premia,
-    i = 12, step = step, paired = TRUE
-  )
+    i = 12, step = step, paired = TRUE, dates = dts
+  )$expected_sdf
 
   s <- 12L %/% step
   m_step <- step / HETID_CONSTANTS$MATURITY_UNITS_PER_YEAR
@@ -126,10 +130,10 @@ test_that("compute_expected_sdf averages the correction over finite pairs only",
 
   result <- compute_expected_sdf(
     yields_na, test_env$term_premia,
-    i = i, paired = TRUE
-  )
+    i = i, paired = TRUE, dates = test_env$data$date
+  )$expected_sdf
 
-  n_hat <- compute_n_hat(yields_na, test_env$term_premia, i = i)
+  n_hat <- n_hat_series(yields_na, test_env$term_premia, i = i)
   m_step <- step / HETID_CONSTANTS$MATURITY_UNITS_PER_YEAR
   n_obs <- length(n_hat)
   exp_n_hat <- exp(n_hat)
@@ -151,8 +155,8 @@ test_that("expected_sdf series mean-matches realized one-period price over T_i",
 
   result <- compute_expected_sdf(
     test_env$yields, test_env$term_premia,
-    i = i, paired = TRUE
-  )
+    i = i, paired = TRUE, dates = test_env$data$date
+  )$expected_sdf
   n_obs <- length(result)
 
   y_step <- test_env$yields$y12
@@ -178,8 +182,12 @@ test_that("compute_expected_sdf leads the one-period yield by i/step rows", {
   zeros <- numeric(n)
   yields <- data.frame(y12 = y12_pct, y24 = zeros, y36 = zeros)
   term_premia <- data.frame(tp12 = zeros, tp24 = zeros, tp36 = zeros)
+  dts <- seq(as.Date("1990-03-31"), by = "quarter", length.out = n)
 
-  result <- compute_expected_sdf(yields, term_premia, i = 24, paired = TRUE)
+  result <- compute_expected_sdf(
+    yields, term_premia,
+    i = 24, paired = TRUE, dates = dts
+  )$expected_sdf
 
   s <- 24 %/% HETID_CONSTANTS$DEFAULT_STEP
   m_step <- HETID_CONSTANTS$DEFAULT_STEP / HETID_CONSTANTS$MATURITY_UNITS_PER_YEAR
@@ -259,8 +267,12 @@ test_that("compute_expected_sdf default correction uses the full sample, no lead
   zeros <- numeric(n)
   yields <- data.frame(y12 = y12_pct, y24 = zeros, y36 = zeros)
   term_premia <- data.frame(tp12 = zeros, tp24 = zeros, tp36 = zeros)
+  dts <- seq(as.Date("1990-03-31"), by = "quarter", length.out = n)
 
-  result <- compute_expected_sdf(yields, term_premia, i = 24) # default
+  result <- compute_expected_sdf(
+    yields, term_premia,
+    i = 24, dates = dts
+  )$expected_sdf # default
 
   m_step <- HETID_CONSTANTS$DEFAULT_STEP / HETID_CONSTANTS$MATURITY_UNITS_PER_YEAR
   realized_all <- exp(-m_step * y12_pct / HETID_CONSTANTS$PERCENT_TO_DECIMAL)
@@ -268,7 +280,10 @@ test_that("compute_expected_sdf default correction uses the full sample, no lead
   expect_equal(result, rep(1 + correction, n), tolerance = 1e-12)
 
   # paired averages only the t + s window => a different value
-  paired_result <- compute_expected_sdf(yields, term_premia, i = 24, paired = TRUE)
+  paired_result <- compute_expected_sdf(
+    yields, term_premia,
+    i = 24, paired = TRUE, dates = dts
+  )$expected_sdf
   expect_false(isTRUE(all.equal(result, paired_result)))
 })
 
@@ -282,7 +297,11 @@ test_that("compute_expected_sdf default admits non-multiple maturities", {
   yields <- data[, paste0("y", c(12, 18, 30))]
   term_premia <- data[, paste0("tp", c(12, 18, 30))]
 
-  result <- compute_expected_sdf(yields, term_premia, i = 18) # 18 not a multiple of 12
+  # 18 is not a multiple of 12; default correction admits it
+  result <- compute_expected_sdf(
+    yields, term_premia,
+    i = 18, dates = data$date
+  )$expected_sdf
   expect_type(result, "double")
   expect_length(result, nrow(yields))
 

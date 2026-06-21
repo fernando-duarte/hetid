@@ -42,8 +42,8 @@ compute_c_hat <- function(yields, term_premia, i,
   validate_maturity_index(i, max_maturity = effective_max_maturity(step))
   validate_row_alignment(yields, term_premia)
 
-  # Compute n_hat series
-  n_hat <- compute_n_hat(yields, term_premia, i, step = step)
+  # Compute n_hat series (bare numeric kernel)
+  n_hat <- n_hat_series(yields, term_premia, i, step = step)
 
   # Restrict to the bound index set T_i = {1, ..., T - i/step}: the
   # envelope C_i shares the dates of K1/K2, whose realized leg needs

@@ -31,7 +31,7 @@ yields <- acm[, grep("^y\\d+$", names(acm))]
 term_premia <- acm[, grep("^tp\\d+$", names(acm))]
 dates <- acm$date
 
-n_hat_df <- compute_n_hat(yields, term_premia, i = 12, return_df = TRUE, dates = dates)
+n_hat_df <- compute_n_hat(yields, term_premia, i = 12, dates = dates)
 n_hat <- n_hat_df$n_hat
 
 positive_idx <- which(n_hat > 0)
@@ -188,7 +188,7 @@ if (is.list(quarterly) && !is.data.frame(quarterly)) {
 }
 yields_q <- quarterly[, grep("^y\\d+$", names(quarterly))]
 tp_q <- quarterly[, grep("^tp\\d+$", names(quarterly))]
-n_hat_q <- compute_n_hat(yields_q, tp_q, i = 12)
+n_hat_q <- compute_n_hat(yields_q, tp_q, i = 12, dates = quarterly$date)$n_hat
 positive_q <- which(n_hat_q > 0)
 quarterly_check <- list(
   n_obs = length(n_hat_q), n_positive = length(positive_q),

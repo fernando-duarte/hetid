@@ -104,7 +104,7 @@ w1_legacy <- compute_w1_residuals(n_pcs = 4L, data = data, y1_lags = 0L)
 w2_legacy <- compute_w2_residuals(
   data[, yc], data[, tc],
   maturities = DEFAULT_ID_MATURITIES, n_pcs = 4L, pcs = pcs_mat,
-  step = NEWS_STEP
+  step = NEWS_STEP, dates = data$date
 )
 w2_legacy_mat <- do.call(cbind, w2_legacy$residuals)
 # Legacy alignment: same-length here (no lags), so the old offset trim was a

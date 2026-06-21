@@ -32,7 +32,7 @@ compute_n_hat_previous <- function(yields, term_premia, i,
     m_step <- step / HETID_CONSTANTS$MATURITY_UNITS_PER_YEAR
     -m_step * y_step / HETID_CONSTANTS$PERCENT_TO_DECIMAL
   } else {
-    compute_n_hat(yields, term_premia, i - step, return_df = FALSE, step = step)
+    n_hat_series(yields, term_premia, i - step, step = step)
   }
 }
 

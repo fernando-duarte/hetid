@@ -1,19 +1,25 @@
-test_that("compute_price_news returns time series of length n-1", {
+test_that("price-news kernel returns time series of length n-1", {
   test_env <- setup_standard_test_env()
 
-  # Test for maturity 60
-  price_news_60 <- compute_price_news(test_env$yields, test_env$term_premia, i = 60)
+  # The bare T-1 price-news series is the kernel compute_news_components()$delta_p
+  price_news_60 <- compute_news_components(
+    test_env$yields, test_env$term_premia,
+    i = 60
+  )$delta_p
 
   expect_type(price_news_60, "double")
   expect_length(price_news_60, nrow(test_env$yields) - 1)
   expect_true(all(is.finite(price_news_60) | is.na(price_news_60)))
 })
 
-test_that("compute_price_news works for maturity 12", {
+test_that("price-news kernel works for maturity 12", {
   test_env <- setup_standard_test_env()
 
-  # Test maturity 12 specifically
-  price_news_12 <- compute_price_news(test_env$yields, test_env$term_premia, i = 12)
+  # Test maturity 12 specifically (bare kernel series)
+  price_news_12 <- compute_news_components(
+    test_env$yields, test_env$term_premia,
+    i = 12
+  )$delta_p
 
   expect_type(price_news_12, "double")
   expect_length(price_news_12, nrow(test_env$yields) - 1)
@@ -29,9 +35,12 @@ test_that("compute_price_news works for maturity 12", {
 test_that("price news has mean near zero", {
   test_env <- setup_standard_test_env()
 
-  # Test for multiple maturities (including maturity 12)
+  # Test for multiple maturities (including maturity 12), bare kernel series
   for (i in c(12, 24, 60, 96)) {
-    price_news_i <- compute_price_news(test_env$yields, test_env$term_premia, i = i)
+    price_news_i <- compute_news_components(
+      test_env$yields, test_env$term_premia,
+      i = i
+    )$delta_p
 
     # Mean should be close to 0
     mean_news <- mean(price_news_i, na.rm = TRUE)
@@ -50,15 +59,15 @@ test_that("price news has mean near zero", {
 test_that("yield news equals negative of price news", {
   test_env <- setup_standard_test_env()
 
-  # Test for maturity 48
-  price_news_48 <- compute_price_news(test_env$yields, test_env$term_premia,
-    i = 48,
-    return_yield_news = FALSE
-  )
-  yield_news_48 <- compute_price_news(test_env$yields, test_env$term_premia,
-    i = 48,
-    return_yield_news = TRUE
-  )
+  # Bare kernels: price news is delta_p, yield news is its negation
+  price_news_48 <- compute_news_components(
+    test_env$yields, test_env$term_premia,
+    i = 48
+  )$delta_p
+  yield_news_48 <- -compute_news_components(
+    test_env$yields, test_env$term_premia,
+    i = 48
+  )$delta_p
 
   # Yield news should equal negative of price news
   expect_equal(yield_news_48, -price_news_48,
@@ -70,10 +79,13 @@ test_that("yield news equals negative of price news", {
 test_that("price news is negatively correlated with yield changes", {
   test_env <- setup_standard_test_env()
 
-  # Test for maturity 36
+  # Test for maturity 36 (bare kernel series)
   i <- 36
-  price_news_36 <- compute_price_news(test_env$yields, test_env$term_premia, i = i)
-  yield_changes_36 <- diff(test_env$yields[[paste0("y", i)]]) / 100 # Convert to decimal
+  price_news_36 <- compute_news_components(
+    test_env$yields, test_env$term_premia,
+    i = i
+  )$delta_p
+  yield_changes_36 <- diff(test_env$yields[[paste0("y", i)]]) / 100 # decimal
 
   # Align lengths
   min_len <- min(length(price_news_36), length(yield_changes_36))
@@ -89,13 +101,17 @@ test_that("price news is negatively correlated with yield changes", {
 test_that("price news manual verification", {
   test_env <- setup_standard_test_env()
 
-  # Test for i=36
+  # Test for i=36, bare kernel series
   i <- 36
-  price_news_36 <- compute_price_news(test_env$yields, test_env$term_premia, i = i)
+  price_news_36 <- compute_news_components(
+    test_env$yields, test_env$term_premia,
+    i = i
+  )$delta_p
 
-  # Manual calculation: price_news = n_hat(i-12,t) - n_hat(i,t-1)
-  n_hat_36 <- compute_n_hat(test_env$yields, test_env$term_premia, i = i)
-  n_hat_24 <- compute_n_hat(test_env$yields, test_env$term_premia, i = i - 12)
+  # Manual calculation: price_news = n_hat(i-12,t) - n_hat(i,t-1).
+  # Use the bare n_hat kernel n_hat_series() for the undated vector.
+  n_hat_36 <- n_hat_series(test_env$yields, test_env$term_premia, i = i)
+  n_hat_24 <- n_hat_series(test_env$yields, test_env$term_premia, i = i - 12)
 
   # Lag n_hat_36 by one period
   n_hat_36_lagged <- c(NA, n_hat_36[-length(n_hat_36)])
@@ -106,6 +122,53 @@ test_that("price news manual verification", {
   expect_equal(price_news_36, price_news_manual,
     tolerance = 1e-10,
     label = "Price news should match manual calculation"
+  )
+})
+
+test_that("compute_price_news returns a dated news data frame", {
+  test_env <- setup_standard_test_env()
+  dates <- test_env$data$date
+
+  price_news_df <- compute_price_news(
+    test_env$yields, test_env$term_premia,
+    i = 60, dates = dates
+  )
+
+  expect_s3_class(price_news_df, "data.frame")
+  expect_named(price_news_df, c("date", "price_news"))
+  expect_equal(price_news_df$date, dates)
+  # News series prepends NA: nrow == nrow(yields), row 1 value is NA
+  expect_equal(nrow(price_news_df), nrow(test_env$yields))
+  expect_true(is.na(price_news_df$price_news[1]))
+
+  # The non-NA values equal the bare T-1 kernel, value k on date[k+1]
+  kernel <- compute_news_components(
+    test_env$yields, test_env$term_premia,
+    i = 60
+  )$delta_p
+  expect_equal(price_news_df$price_news[-1], kernel, tolerance = 1e-12)
+})
+
+test_that("compute_price_news requires a valid Date vector", {
+  test_env <- setup_standard_test_env()
+  # NULL dates are rejected (a time series cannot be returned without dates)
+  expect_error(
+    compute_price_news(test_env$yields, test_env$term_premia, i = 60),
+    class = "hetid_error_bad_argument"
+  )
+  # Non-Date dates are rejected
+  expect_error(
+    compute_price_news(test_env$yields, test_env$term_premia,
+      i = 60, dates = seq_len(nrow(test_env$yields))
+    ),
+    class = "hetid_error_bad_argument"
+  )
+  # Wrong-length dates are rejected
+  expect_error(
+    compute_price_news(test_env$yields, test_env$term_premia,
+      i = 60, dates = test_env$data$date[-1]
+    ),
+    class = "hetid_error_dimension_mismatch"
   )
 })
 

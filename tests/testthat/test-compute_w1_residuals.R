@@ -138,16 +138,16 @@ test_that("no message when user provides data", {
   )
 })
 
-test_that("works without date column when return_df = FALSE", {
+test_that("errors without a date column (date is always required)", {
   data("variables", package = "hetid", envir = environment())
   no_date <- variables[, setdiff(names(variables), "date")]
 
-  res <- compute_w1_residuals(n_pcs = 2, data = no_date)
-
-  expect_type(res, "list")
-  expect_true(length(res$residuals) > 0)
-  expect_null(res$dates)
-  expect_true(is.finite(res$r_squared))
+  # The date column is now mandatory in every return shape: a time series
+  # cannot be returned without its realization dates.
+  expect_error(
+    compute_w1_residuals(n_pcs = 2, data = no_date),
+    class = "hetid_error"
+  )
 })
 
 test_that("errors without date column when return_df = TRUE", {
@@ -176,6 +176,7 @@ test_that(
   "compute_w1_residuals errors on single-row data",
   {
     one_row <- data.frame(
+      date = as.Date("1959-03-31"),
       gr1.pcecc96 = 0.5,
       pc1 = 0.1, pc2 = 0.2,
       pc3 = 0.3, pc4 = 0.4
@@ -195,6 +196,7 @@ test_that(
     # Five rows leave four usable pairs after lagging: fewer than the
     # n_pcs + 2 needed, so this must not return a saturated fit
     few_rows <- data.frame(
+      date = seq(as.Date("1959-03-31"), by = "quarter", length.out = 5),
       gr1.pcecc96 = c(0.5, 0.2, 0.1, 0.4, 0.3),
       pc1 = c(0.1, 0.2, 0.3, 0.4, 0.5),
       pc2 = c(0.5, 0.4, 0.3, 0.2, 0.1),

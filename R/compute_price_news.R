@@ -5,10 +5,10 @@
 #' @template param-yields-term-premia
 #' @template param-maturity-index
 #' @param return_yield_news Logical, if TRUE returns yield news instead of log price news
-#' @template param-return-df-dates
+#' @template param-dates-required
 #' @template param-step
 #'
-#' @template return-numeric-or-dataframe
+#' @template return-dated-dataframe
 #'
 #' @details
 #' The price news for log prices is:
@@ -33,33 +33,35 @@
 #' yields <- data[, paste0("y", c(48, 60, 72))]
 #' term_premia <- data[, paste0("tp", c(48, 60, 72))]
 #'
-#' # Compute price news for i = 60 (log price news)
-#' price_news_60 <- compute_price_news(yields, term_premia, i = 60)
+#' # Compute price news for i = 60 (log price news, dated data frame)
+#' price_news_60 <- compute_price_news(
+#'   yields, term_premia,
+#'   i = 60,
+#'   dates = data$date
+#' )
 #'
 #' # Compute yield news with dates
-#' yield_news_60_df <- compute_price_news(
+#' yield_news_60 <- compute_price_news(
 #'   yields, term_premia,
 #'   i = 60,
 #'   return_yield_news = TRUE,
-#'   return_df = TRUE,
 #'   dates = data$date
 #' )
 #'
 compute_price_news <- function(yields, term_premia, i,
-                               return_yield_news = FALSE,
-                               return_df = FALSE, dates = NULL,
+                               return_yield_news = FALSE, dates = NULL,
                                step = HETID_CONSTANTS$DEFAULT_STEP) {
   validate_row_alignment(yields, term_premia)
 
-  # Shared maturity validation and price-news difference
+  # Shared maturity validation and the bare T-1 price-news difference
+  # (compute_news_components()$delta_p is the price-news kernel)
   components <- compute_news_components(yields, term_premia, i, step = step)
 
   # Yield news is the negation of (log) price news
   price_news <- if (return_yield_news) -components$delta_p else components$delta_p
 
-  # Return data frame with dates if requested using utility function
   prepare_return_data(
-    price_news, return_df, dates, yields, "price_news",
+    price_news, dates, yields, "price_news",
     is_news = TRUE
   )
 }

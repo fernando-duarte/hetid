@@ -8,7 +8,6 @@ compute_expected_sdf(
   yields,
   term_premia,
   i,
-  return_df = FALSE,
   dates = NULL,
   step = HETID_CONSTANTS$DEFAULT_STEP,
   paired = FALSE
@@ -29,10 +28,10 @@ plus step-adjacent maturities for \code{i = 60}). Whole years are
 multiples of 12 (i = 12 is the 1-year bond, i = 60 the 5-year,
 i = 120 the 10-year).}
 
-\item{return_df}{Logical, if TRUE returns a data frame with dates (default FALSE)}
-
-\item{dates}{Optional vector of dates corresponding to the rows in yields/term_premia.
-If not provided and return_df = TRUE, will use row indices.}
+\item{dates}{Required \code{Date} vector of period-end calendar dates, one
+per row of \code{yields}/\code{term_premia}. A time series is never
+returned without its date index; a non-\code{Date} or wrong-length vector
+is an error.}
 
 \item{step}{Integer number of maturity-index units per news period
 (default \code{HETID_CONSTANTS$DEFAULT_STEP}). The news operator
@@ -51,7 +50,9 @@ rows ahead with \code{exp(n_hat(i, t))}), which requires \code{i} to be
 a positive multiple of \code{step}.}
 }
 \value{
-Numeric vector of computed values, or data frame with dates if return_df = TRUE
+A data frame whose first column \code{date} (period-end
+\code{Date}) carries the conditioning-information date of each value, plus
+the computed series.
 }
 \description{
 Computes the time series approximating the conditional expectation of
@@ -111,6 +112,17 @@ still be present, though its value is ignored.
 The effective maximum for \code{i} is \code{MAX_MATURITY - step}
 (108 for standard ACM data with the default annual step), because
 \code{n_hat(i, t)} requires data at maturity \code{i + step}.
+
+To read off the shifted-information expectation
+\eqn{E_{t-j}[\mathrm{SDF}_{t+m}]}: with \eqn{s = m + j - 1} (require
+\eqn{s \ge 1} and \eqn{s\cdot step} a valid maturity index \eqn{\le}
+\code{effective_max_maturity(step)}), it equals
+\code{compute_expected_sdf(i = (m + j - 1) * step, paired = TRUE)}
+evaluated at the formation date \eqn{t-j} -- the row whose \code{date} is
+\eqn{t-j}. The series is dated by its conditioning date, so the information
+lag \eqn{j} only selects which row to read, not a separate computation. The
+matched (\code{paired = TRUE}) correction is the estimator this identity is
+defined against.
 }
 \section{Mathematical Formula}{
 
@@ -147,19 +159,14 @@ yields <- data[, paste0("y", seq(12, 120, 12))]
 term_premia <- data[, paste0("tp", seq(12, 120, 12))]
 
 # Expected SDF for the 5-year (60-month) horizon (s = 5 news periods)
-expected_sdf_60 <- compute_expected_sdf(yields, term_premia, i = 60)
-
-# With dates
-expected_sdf_60_df <- compute_expected_sdf(
+expected_sdf_60 <- compute_expected_sdf(
   yields, term_premia,
   i = 60,
-  return_df = TRUE,
   dates = data$date
 )
 
 }
 \seealso{
 \code{\link{compute_n_hat}}, \code{\link{compute_sdf_innovations}},
-\code{\link{compute_expected_sdf_variance_bound}},
-\code{\link{compute_expected_sdf_at}}
+\code{\link{compute_expected_sdf_variance_bound}}
 }

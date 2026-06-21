@@ -5,10 +5,11 @@
 #'
 #' @param n_pcs Integer, number of principal components to use (1-6). Default is 4.
 #' @param data Optional data frame containing the variables. If NULL,
-#'   loads from package data. A \code{date} column is required when
-#'   \code{return_df = TRUE} but optional otherwise.
-#' @param return_df Logical, if TRUE returns a data frame with dates
-#'   (default FALSE). Requires a \code{date} column in \code{data}.
+#'   loads from package data. A \code{date} column (period-end \code{Date}) is
+#'   always required: the residual series carries its realization dates in both
+#'   return shapes.
+#' @param return_df Logical, if TRUE returns a tidy data frame (default FALSE
+#'   returns the richer list). Both shapes carry dates.
 #' @param exog Optional T x K numeric matrix of exogenous regressors
 #'   that replaces the bundled PC columns in the first-stage
 #'   regression. Cannot be combined with an explicit \code{n_pcs}.
@@ -23,8 +24,8 @@
 #'   \item{fitted}{Numeric vector of fitted values}
 #'   \item{coefficients}{Regression coefficients}
 #'   \item{r_squared}{R-squared of the regression}
-#'   \item{dates}{Date vector corresponding to residuals, or NULL
-#'     if no \code{date} column was provided}
+#'   \item{dates}{Date vector of the t+1 realization dates of the residuals
+#'     W_\{1,t+1\} (the lead dates subset by the complete-case filter)}
 #'   \item{kept_idx}{Integer indices (into the lagged/leading rows) of the
 #'     observations retained by the regression's complete-case filter; used
 #'     downstream to assert that \eqn{Y_1} and \eqn{Y_2} are fit on the same
@@ -109,20 +110,19 @@ compute_w1_residuals <- function(n_pcs = HETID_CONSTANTS$DEFAULT_N_PCS,
     arg = "data"
   )
 
-  # Check required columns (date is optional unless return_df)
-  has_dates <- "date" %in% names(data)
-  required_cols <- HETID_CONSTANTS$CONSUMPTION_GROWTH_COL
+  # A date column is always required: W1 residuals are a time series and are
+  # never returned without their realization dates.
+  required_cols <- c("date", HETID_CONSTANTS$CONSUMPTION_GROWTH_COL)
   if (is.null(exog)) {
     required_cols <- c(required_cols, get_pc_column_names(n_pcs))
   }
-  if (return_df && !has_dates) {
-    required_cols <- c("date", required_cols)
-  }
   assert_columns_exist(data, required_cols)
 
-  # Extract relevant variables
+  # Extract relevant variables; validate the full input dates up front (fail
+  # fast on a non-Date / NA / wrong-length column, not only the retained rows).
   y1 <- data[[HETID_CONSTANTS$CONSUMPTION_GROWTH_COL]]
-  dates <- if (has_dates) data$date else NULL
+  dates <- data$date
+  validate_dates_vector(dates, length(y1))
   y1_lags <- validate_y1_lags(y1_lags, length(y1))
 
   # Create regressor matrix; labels travel on its colnames
@@ -155,18 +155,10 @@ compute_w1_residuals <- function(n_pcs = HETID_CONSTANTS$DEFAULT_N_PCS,
     drop = FALSE
   ]
   y1_future <- y1[seq.int(2L, n)]
-  dates_future <- if (!is.null(dates)) {
-    dates[seq.int(2L, n)]
-  } else {
-    NULL
-  }
+  dates_future <- dates[seq.int(2L, n)] # lead to the t+1 realization dates
 
   reg <- run_pc_regression(y1_future, reg_lagged, n_reg)
-  dates_clean <- if (!is.null(dates_future)) {
-    dates_future[reg$complete_idx]
-  } else {
-    NULL
-  }
+  dates_clean <- dates_future[reg$complete_idx]
 
   if (return_df) {
     return(data.frame(

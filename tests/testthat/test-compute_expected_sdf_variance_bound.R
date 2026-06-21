@@ -2,7 +2,7 @@
 # matching compute_expected_sdf's construction, for manual checks.
 gap_series <- function(yields, term_premia, i,
                        step = HETID_CONSTANTS$DEFAULT_STEP) {
-  n_hat <- compute_n_hat(yields, term_premia, i, step = step)
+  n_hat <- n_hat_series(yields, term_premia, i, step = step)
   y_step <- yields[[acm_column_name("yields", step)]]
   s <- i %/% step
   n_obs <- length(n_hat)
@@ -18,7 +18,7 @@ gap_series <- function(yields, term_premia, i,
 # gap (u = x - a, x = -y^(1)_{t+s}, a = n_hat), over the finite paired set.
 q_series <- function(yields, term_premia, i,
                      step = HETID_CONSTANTS$DEFAULT_STEP) {
-  n_hat <- compute_n_hat(yields, term_premia, i, step = step)
+  n_hat <- n_hat_series(yields, term_premia, i, step = step)
   y_step <- yields[[acm_column_name("yields", step)]]
   s <- i %/% step
   n_obs <- length(n_hat)
@@ -89,9 +89,9 @@ test_that("the bound centers on the same correction compute_expected_sdf adds", 
 
   esdf <- compute_expected_sdf(
     test_env$yields, test_env$term_premia,
-    i = i, paired = TRUE
-  )
-  n_hat <- compute_n_hat(test_env$yields, test_env$term_premia, i = i)
+    i = i, paired = TRUE, dates = test_env$data$date
+  )$expected_sdf
+  n_hat <- n_hat_series(test_env$yields, test_env$term_premia, i = i)
   # esdf - exp(n_hat) is the constant correction at every finite t; take its
   # NA-robust value rather than index [1] (which could be NA on some data)
   correction <- mean(esdf - exp(n_hat), na.rm = TRUE)

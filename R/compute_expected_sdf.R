@@ -18,7 +18,7 @@
 #'
 #' @template param-yields-term-premia
 #' @template param-maturity-index
-#' @template param-return-df-dates
+#' @template param-dates-required
 #' @template param-step
 #' @param paired Logical; selects the bias-correction estimator. The
 #'   default \code{FALSE} uses the horizon-agnostic correction (a difference
@@ -29,7 +29,7 @@
 #'   rows ahead with \code{exp(n_hat(i, t))}), which requires \code{i} to be
 #'   a positive multiple of \code{step}.
 #'
-#' @template return-numeric-or-dataframe
+#' @template return-dated-dataframe
 #'
 #' @section Mathematical Formula:
 #' With \code{s = i / step} news periods, \eqn{m(\mathrm{step})} the step
@@ -96,9 +96,19 @@
 #'   (108 for standard ACM data with the default annual step), because
 #'   \code{n_hat(i, t)} requires data at maturity \code{i + step}.
 #'
+#' @note To read off the shifted-information expectation
+#'   \eqn{E_{t-j}[\mathrm{SDF}_{t+m}]}: with \eqn{s = m + j - 1} (require
+#'   \eqn{s \ge 1} and \eqn{s\cdot step} a valid maturity index \eqn{\le}
+#'   \code{effective_max_maturity(step)}), it equals
+#'   \code{compute_expected_sdf(i = (m + j - 1) * step, paired = TRUE)}
+#'   evaluated at the formation date \eqn{t-j} -- the row whose \code{date} is
+#'   \eqn{t-j}. The series is dated by its conditioning date, so the information
+#'   lag \eqn{j} only selects which row to read, not a separate computation. The
+#'   matched (\code{paired = TRUE}) correction is the estimator this identity is
+#'   defined against.
+#'
 #' @seealso \code{\link{compute_n_hat}}, \code{\link{compute_sdf_innovations}},
-#'   \code{\link{compute_expected_sdf_variance_bound}},
-#'   \code{\link{compute_expected_sdf_at}}
+#'   \code{\link{compute_expected_sdf_variance_bound}}
 #'
 #' @export
 #'
@@ -109,18 +119,13 @@
 #' term_premia <- data[, paste0("tp", seq(12, 120, 12))]
 #'
 #' # Expected SDF for the 5-year (60-month) horizon (s = 5 news periods)
-#' expected_sdf_60 <- compute_expected_sdf(yields, term_premia, i = 60)
-#'
-#' # With dates
-#' expected_sdf_60_df <- compute_expected_sdf(
+#' expected_sdf_60 <- compute_expected_sdf(
 #'   yields, term_premia,
 #'   i = 60,
-#'   return_df = TRUE,
 #'   dates = data$date
 #' )
 #'
-compute_expected_sdf <- function(yields, term_premia, i,
-                                 return_df = FALSE, dates = NULL,
+compute_expected_sdf <- function(yields, term_premia, i, dates = NULL,
                                  step = HETID_CONSTANTS$DEFAULT_STEP,
                                  paired = FALSE) {
   validate_step(step)
@@ -151,7 +156,7 @@ compute_expected_sdf <- function(yields, term_premia, i,
     # one-period price has a horizon-free unconditional mean, so the bias
     # E[e^{-y^(1)} - exp(n_hat)] is a difference of full-sample means over one
     # common finite set -- no i / step lead, so any maturity i is admissible.
-    exp_n_hat <- exp(compute_n_hat(yields, term_premia, i, step = step))
+    exp_n_hat <- exp(n_hat_series(yields, term_premia, i, step = step))
     y_step <- require_column(yields, acm_column_name("yields", step), "yields")
     m_step <- step / HETID_CONSTANTS$MATURITY_UNITS_PER_YEAR
     realized_price <- exp(-m_step * y_step / HETID_CONSTANTS$PERCENT_TO_DECIMAL)
@@ -167,6 +172,6 @@ compute_expected_sdf <- function(yields, term_premia, i,
   expected_sdf <- exp_n_hat + correction
 
   prepare_return_data(
-    expected_sdf, return_df, dates, yields, "expected_sdf"
+    expected_sdf, dates, yields, "expected_sdf"
   )
 }

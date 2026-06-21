@@ -159,7 +159,7 @@ w1 <- compute_w1_residuals(n_pcs = 4)
 w2 <- compute_w2_residuals(
   yields, tp,
   maturities = c(24, 60, 108),
-  n_pcs = 4, pcs = pcs
+  n_pcs = 4, pcs = pcs, dates = merged$date
 )
 ```
 
@@ -172,13 +172,13 @@ yields <- data[, paste0("y", seq(12, 120, 12))]
 term_premia <- data[, paste0("tp", seq(12, 120, 12))]
 
 # Compute expected log bond prices (i = 60 is the 5-year bond)
-n_hat_60 <- compute_n_hat(yields, term_premia, i = 60)
+n_hat_60 <- compute_n_hat(yields, term_premia, i = 60, dates = data$date)
 
 # Compute price news (unexpected price changes)
-price_news_60 <- compute_price_news(yields, term_premia, i = 60)
+price_news_60 <- compute_price_news(yields, term_premia, i = 60, dates = data$date)
 
 # Compute SDF innovations
-sdf_innovations_60 <- compute_sdf_innovations(yields, term_premia, i = 60)
+sdf_innovations_60 <- compute_sdf_innovations(yields, term_premia, i = 60, dates = data$date)
 
 # Compute moment estimators
 c_hat_60 <- compute_c_hat(yields, term_premia, i = 60) # Supremum estimator

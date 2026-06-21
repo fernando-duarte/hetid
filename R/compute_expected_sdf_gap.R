@@ -52,7 +52,7 @@ compute_expected_sdf_gap <- function(yields, term_premia, i,
     "the realized one-period yield is led whole news periods"
   )
 
-  n_hat <- compute_n_hat(yields, term_premia, i, step = step)
+  n_hat <- n_hat_series(yields, term_premia, i, step = step)
   y_step <- require_column(
     yields, acm_column_name("yields", step), "yields"
   )

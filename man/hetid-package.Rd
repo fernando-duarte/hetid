@@ -126,8 +126,6 @@ principal components of financial asset returns.}
 \item \code{\link{compute_expected_sdf}()}: Expected one-period SDF
 \item \code{\link{compute_expected_sdf_variance_bound}()}: Expected-SDF
 level-error variance bound
-\item \code{\link{compute_expected_sdf_at}()}: Conditional expected SDF
-at a shifted information date
 \item \code{\link{compute_c_hat}()}: Supremum estimator
 \item \code{\link{compute_k_hat}()}: Fourth moment estimator
 \item \code{\link{compute_variance_bound}()}: Variance bounds

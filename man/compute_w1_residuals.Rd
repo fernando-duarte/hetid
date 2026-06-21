@@ -16,11 +16,12 @@ compute_w1_residuals(
 \item{n_pcs}{Integer, number of principal components to use (1-6). Default is 4.}
 
 \item{data}{Optional data frame containing the variables. If NULL,
-loads from package data. A \code{date} column is required when
-\code{return_df = TRUE} but optional otherwise.}
+loads from package data. A \code{date} column (period-end \code{Date}) is
+always required: the residual series carries its realization dates in both
+return shapes.}
 
-\item{return_df}{Logical, if TRUE returns a data frame with dates
-(default FALSE). Requires a \code{date} column in \code{data}.}
+\item{return_df}{Logical, if TRUE returns a tidy data frame (default FALSE
+returns the richer list). Both shapes carry dates.}
 
 \item{exog}{Optional T x K numeric matrix of exogenous regressors
 that replaces the bundled PC columns in the first-stage
@@ -38,8 +39,8 @@ If return_df = FALSE, returns a list containing:
 \item{fitted}{Numeric vector of fitted values}
 \item{coefficients}{Regression coefficients}
 \item{r_squared}{R-squared of the regression}
-\item{dates}{Date vector corresponding to residuals, or NULL
-if no \code{date} column was provided}
+\item{dates}{Date vector of the t+1 realization dates of the residuals
+W_\{1,t+1\} (the lead dates subset by the complete-case filter)}
 \item{kept_idx}{Integer indices (into the lagged/leading rows) of the
 observations retained by the regression's complete-case filter; used
 downstream to assert that \eqn{Y_1} and \eqn{Y_2} are fit on the same

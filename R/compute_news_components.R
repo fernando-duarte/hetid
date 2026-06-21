@@ -17,7 +17,7 @@
 compute_news_components <- function(yields, term_premia, i,
                                     step = HETID_CONSTANTS$DEFAULT_STEP) {
   validate_news_maturity_index(i, step = step)
-  n_hat_i <- compute_n_hat(yields, term_premia, i, return_df = FALSE, step = step)
+  n_hat_i <- n_hat_series(yields, term_premia, i, step = step)
   n_hat_i_minus_1 <- compute_n_hat_previous(yields, term_premia, i, step = step)
   delta_p <- compute_time_series_news(n_hat_i, n_hat_i_minus_1)
   list(n_hat_i = n_hat_i, delta_p = delta_p)

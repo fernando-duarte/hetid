@@ -7,10 +7,10 @@
 #'
 #' @template param-yields-term-premia
 #' @template param-maturity-index
-#' @template param-return-df-dates
+#' @template param-dates-required
 #' @template param-step
 #'
-#' @template return-numeric-or-dataframe
+#' @template return-dated-dataframe
 #'
 #' @details
 #' The SDF innovation is the centered second-order approximation
@@ -41,20 +41,34 @@
 #' yields <- data[, paste0("y", c(48, 60, 72))]
 #' term_premia <- data[, paste0("tp", c(48, 60, 72))]
 #'
-#' # Compute SDF innovations for i = 60
-#' sdf_innovations_60 <- compute_sdf_innovations(yields, term_premia, i = 60)
-#'
-#' # Compute SDF innovations with dates
-#' sdf_innovations_60_df <- compute_sdf_innovations(
+#' # Compute SDF innovations for i = 60 (dated data frame)
+#' sdf_innovations_60 <- compute_sdf_innovations(
 #'   yields, term_premia,
 #'   i = 60,
-#'   return_df = TRUE,
 #'   dates = data$date
 #' )
 #'
-compute_sdf_innovations <- function(yields, term_premia, i,
-                                    return_df = FALSE, dates = NULL,
+compute_sdf_innovations <- function(yields, term_premia, i, dates = NULL,
                                     step = HETID_CONSTANTS$DEFAULT_STEP) {
+  prepare_return_data(
+    sdf_innovations_series(yields, term_premia, i, step = step),
+    dates, yields, "sdf_innovations",
+    is_news = TRUE
+  )
+}
+
+#' Bare SDF-innovation news series (internal numeric kernel)
+#'
+#' The undated numeric core of \code{\link{compute_sdf_innovations}}, returning
+#' the T-1 centered news vector consumed by \code{process_w2_maturity}. Holds the
+#' input validation so the bare and dated paths are checked identically.
+#'
+#' @inheritParams compute_sdf_innovations
+#' @return Numeric vector of T-1 centered SDF innovations.
+#' @keywords internal
+#' @noRd
+sdf_innovations_series <- function(yields, term_premia, i,
+                                   step = HETID_CONSTANTS$DEFAULT_STEP) {
   validate_row_alignment(yields, term_premia)
 
   # Shared maturity validation, n_hat(i,t) level, and price-news
@@ -76,11 +90,5 @@ compute_sdf_innovations <- function(yields, term_premia, i,
   b_hat <- 0.5 * mean(exp_mu[valid] * delta_p[valid]^2)
 
   # NA in either factor propagates to NA in the centered innovation
-  sdf_innovations <- exp_mu * (delta_p + 0.5 * delta_p^2) - b_hat
-
-  # Return data frame with dates if requested using utility function
-  prepare_return_data(
-    sdf_innovations, return_df, dates, yields, "sdf_innovations",
-    is_news = TRUE
-  )
+  exp_mu * (delta_p + 0.5 * delta_p^2) - b_hat
 }

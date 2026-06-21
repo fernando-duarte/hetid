@@ -67,42 +67,30 @@ min_obs_for_pc_regression <- function(n_pcs) {
   n_pcs + 2L
 }
 
-#' Prepare Return Data Frame
+#' Attach Dates to a Time-Series Output (always a dated data frame)
 #'
-#' Common logic for preparing return data frames with dates
+#' The single chokepoint by which every exported time-series function emits its
+#' result. Dates are mandatory and validated as a real \code{Date} vector (see
+#' \code{validate_dates_vector}); there is no dateless or fabricated-index path.
 #'
-#' @param result_series The computed series
-#' @param return_df Whether to return data frame
-#' @param dates Optional dates vector
-#' @param yields Original yields data for fallback dates
-#' @param series_name Name for the series column
-#' @param is_news Logical. If TRUE, \code{result_series} is a news series
-#'   with one element per period change (T - 1 elements), aligned to the
-#'   dates by prepending NA. If FALSE (the default), it is a level series
-#'   with one element per date. The length is checked against this
-#'   expectation rather than inferred.
-#' @return Either the series or a data frame
+#' @param result_series The computed series (a level series of \code{length(dates)}
+#'   elements, or a news series of \code{length(dates) - 1} when \code{is_news}).
+#' @param dates Required \code{Date} vector, one per row of \code{yields}.
+#' @param yields Original yields data, used only for the row-count check.
+#' @param series_name Name for the value column.
+#' @param is_news Logical. If TRUE, \code{result_series} is a news series with one
+#'   element per period change (T - 1 elements), aligned to the dates by
+#'   prepending NA so element \code{k} (the change from \code{k} to \code{k + 1})
+#'   carries \code{dates[k + 1]}. If FALSE (the default), it is a level series
+#'   carrying its own date.
+#' @return A data frame with a \code{date} column (period-end) and the series.
 #' @keywords internal
-prepare_return_data <- function(result_series, return_df, dates, yields,
+prepare_return_data <- function(result_series, dates, yields,
                                 series_name, is_news = FALSE) {
-  if (!return_df) {
-    return(result_series)
-  }
-
-  # Use provided dates, or create generic time index
-  if (is.null(dates)) {
-    dates <- seq_len(nrow(yields))
-  }
-
-  # Ensure dates is the same length as the data
-  assert_dimension_ok(
-    length(dates) == nrow(yields),
-    "Length of dates must match number of rows in yields"
-  )
+  validate_dates_vector(dates, nrow(yields))
 
   # A news series carries one element per period change (T - 1); a level
-  # series carries one per date. Check the length against the declared
-  # kind instead of guessing, so an unexpected mismatch fails loudly.
+  # series carries one per date. Check the length against the declared kind.
   expected_length <- if (is_news) length(dates) - 1L else length(dates)
   assert_dimension_ok(
     length(result_series) == expected_length,
@@ -114,13 +102,10 @@ prepare_return_data <- function(result_series, return_df, dates, yields,
   )
 
   # A news series aligns to the dates by prepending NA: news[t] is the
-  # change from t to t + 1.
+  # change from t to t + 1, known at t + 1.
   result_aligned <- if (is_news) c(NA, result_series) else result_series
 
-  result_df <- data.frame(
-    date = dates,
-    stringsAsFactors = FALSE
-  )
+  result_df <- data.frame(date = dates, stringsAsFactors = FALSE)
   result_df[[series_name]] <- result_aligned
 
   result_df

@@ -68,51 +68,64 @@ test_that(
   }
 )
 
-test_that("prepare_return_data builds a generic time index when dates are NULL", {
-  df <- prepare_return_data(
-    result_series = c(0.1, 0.2, 0.3),
-    return_df = TRUE,
-    dates = NULL,
-    yields = matrix(0, nrow = 3, ncol = 1),
-    series_name = "x"
+test_that("prepare_return_data rejects NULL dates (a Date index is required)", {
+  expect_error(
+    prepare_return_data(
+      result_series = c(0.1, 0.2, 0.3),
+      dates = NULL,
+      yields = matrix(0, nrow = 3, ncol = 1),
+      series_name = "x"
+    ),
+    class = "hetid_error_bad_argument"
   )
+})
 
-  expect_s3_class(df, "data.frame")
-  expect_named(df, c("date", "x"))
-  expect_equal(df$date, seq_len(3))
-  expect_equal(df$x, c(0.1, 0.2, 0.3))
+test_that("prepare_return_data rejects an integer (fabricated) index for dates", {
+  expect_error(
+    prepare_return_data(
+      result_series = c(0.1, 0.2, 0.3),
+      dates = 1:3,
+      yields = matrix(0, nrow = 3, ncol = 1),
+      series_name = "x"
+    ),
+    class = "hetid_error_bad_argument"
+  )
 })
 
 test_that("prepare_return_data prepends NA for a news series", {
+  dts <- seq(as.Date("1990-03-31"), by = "quarter", length.out = 3)
   df <- prepare_return_data(
     result_series = c(0.2, 0.3),
-    return_df = TRUE,
-    dates = 1:3,
+    dates = dts,
     yields = matrix(0, nrow = 3, ncol = 1),
     series_name = "x",
     is_news = TRUE
   )
+  expect_s3_class(df$date, "Date")
+  expect_equal(df$date, dts)
   expect_equal(df$x, c(NA, 0.2, 0.3))
 })
 
 test_that("prepare_return_data keeps a level series aligned one-to-one", {
+  dts <- seq(as.Date("1990-03-31"), by = "quarter", length.out = 3)
   df <- prepare_return_data(
     result_series = c(0.1, 0.2, 0.3),
-    return_df = TRUE,
-    dates = 1:3,
+    dates = dts,
     yields = matrix(0, nrow = 3, ncol = 1),
     series_name = "x",
     is_news = FALSE
   )
+  expect_s3_class(df$date, "Date")
+  expect_equal(df$date, dts)
   expect_equal(df$x, c(0.1, 0.2, 0.3))
 })
 
 test_that("prepare_return_data errors on a level series of the wrong length", {
+  dts <- seq(as.Date("1990-03-31"), by = "quarter", length.out = 3)
   expect_error(
     prepare_return_data(
       result_series = c(0.1, 0.2),
-      return_df = TRUE,
-      dates = 1:3,
+      dates = dts,
       yields = matrix(0, nrow = 3, ncol = 1),
       series_name = "x",
       is_news = FALSE
@@ -122,11 +135,11 @@ test_that("prepare_return_data errors on a level series of the wrong length", {
 })
 
 test_that("prepare_return_data errors on a news series of the wrong length", {
+  dts <- seq(as.Date("1990-03-31"), by = "quarter", length.out = 3)
   expect_error(
     prepare_return_data(
       result_series = c(0.1, 0.2, 0.3),
-      return_df = TRUE,
-      dates = 1:3,
+      dates = dts,
       yields = matrix(0, nrow = 3, ncol = 1),
       series_name = "x",
       is_news = TRUE

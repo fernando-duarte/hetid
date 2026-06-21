@@ -57,12 +57,12 @@
 #'   data at maturity \code{i + step}.
 #'
 #' @note Calling this with \code{i = (m + j - 1) * step} returns the bound for
-#'   the shifted estimator \code{\link{compute_expected_sdf_at}}
-#'   (\eqn{E_{t-j}[\mathrm{SDF}_{t+m}]}); the bound depends only on the horizon
+#'   the shifted-information expectation \eqn{E_{t-j}[\mathrm{SDF}_{t+m}]} (read
+#'   off \code{compute_expected_sdf(i = (m + j - 1) * step, paired = TRUE)} at the
+#'   formation date \eqn{t-j}); the bound depends only on the horizon
 #'   \eqn{s = m + j - 1} and is shift-invariant in the information lag \code{j}.
 #'
-#' @seealso \code{\link{compute_expected_sdf}}, \code{\link{compute_variance_bound}},
-#'   \code{\link{compute_expected_sdf_at}}
+#' @seealso \code{\link{compute_expected_sdf}}, \code{\link{compute_variance_bound}}
 #'
 #' @export
 #'

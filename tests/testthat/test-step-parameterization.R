@@ -21,19 +21,22 @@ test_that("explicit default step reproduces omitted-step results on bundled data
   test_env <- setup_standard_test_env()
   yields <- test_env$yields
   tp <- test_env$term_premia
+  dates <- test_env$data$date
   s <- HETID_CONSTANTS$DEFAULT_STEP
 
+  # Dated wrappers require dates on both sides; explicit step must still
+  # reproduce the omitted-step result exactly.
   expect_identical(
-    compute_n_hat(yields, tp, i = 60, step = s),
-    compute_n_hat(yields, tp, i = 60)
+    compute_n_hat(yields, tp, i = 60, step = s, dates = dates),
+    compute_n_hat(yields, tp, i = 60, dates = dates)
   )
   expect_identical(
-    compute_price_news(yields, tp, i = 60, step = s),
-    compute_price_news(yields, tp, i = 60)
+    compute_price_news(yields, tp, i = 60, step = s, dates = dates),
+    compute_price_news(yields, tp, i = 60, dates = dates)
   )
   expect_identical(
-    compute_sdf_innovations(yields, tp, i = 60, step = s),
-    compute_sdf_innovations(yields, tp, i = 60)
+    compute_sdf_innovations(yields, tp, i = 60, step = s, dates = dates),
+    compute_sdf_innovations(yields, tp, i = 60, dates = dates)
   )
   expect_identical(
     compute_c_hat(yields, tp, i = 60, step = s),
@@ -48,8 +51,8 @@ test_that("explicit default step reproduces omitted-step results on bundled data
     compute_variance_bound(yields, tp, i = 60)
   )
   expect_identical(
-    compute_expected_sdf(yields, tp, i = 60, step = s),
-    compute_expected_sdf(yields, tp, i = 60)
+    compute_expected_sdf(yields, tp, i = 60, step = s, dates = dates),
+    compute_expected_sdf(yields, tp, i = 60, dates = dates)
   )
   expect_identical(
     compute_expected_sdf_variance_bound(yields, tp, i = 60, step = s),
@@ -59,16 +62,19 @@ test_that("explicit default step reproduces omitted-step results on bundled data
 
 test_that("explicit default step reproduces omitted-step w2 residuals", {
   test_env <- setup_standard_test_env()
+  dates <- test_env$data$date
   set.seed(42)
   pcs <- matrix(rnorm(nrow(test_env$yields) * 4), ncol = 4)
 
+  # w2 residuals are a dated time series: pass the date-aligned index so the
+  # series can be returned; step invariance must still hold exactly.
   res_omitted <- compute_w2_residuals(
     test_env$yields, test_env$term_premia,
-    maturities = c(24, 36), n_pcs = 4, pcs = pcs
+    maturities = c(24, 36), n_pcs = 4, pcs = pcs, dates = dates
   )
   res_explicit <- compute_w2_residuals(
     test_env$yields, test_env$term_premia,
-    maturities = c(24, 36), n_pcs = 4, pcs = pcs,
+    maturities = c(24, 36), n_pcs = 4, pcs = pcs, dates = dates,
     step = HETID_CONSTANTS$DEFAULT_STEP
   )
   expect_identical(res_omitted, res_explicit)
@@ -80,13 +86,14 @@ test_that("n_hat with step = 6 matches the hand formula", {
   units <- HETID_CONSTANTS$MATURITY_UNITS_PER_YEAR
 
   # At i == step the step-maturity term premium is normalized to zero
-  # (TP^(1):=0), so the (6 / units) * tp6 term is dropped
-  n_hat_6 <- compute_n_hat(frame$yields, frame$term_premia, i = 6, step = 6)
+  # (TP^(1):=0), so the (6 / units) * tp6 term is dropped. The bare n_hat
+  # kernel n_hat_series() returns the undated numeric series.
+  n_hat_6 <- n_hat_series(frame$yields, frame$term_premia, i = 6, step = 6)
   expected_6 <- ((6 / units) * frame$yields$y6 - (12 / units) * frame$yields$y12 +
     (12 / units) * frame$term_premia$tp12) / pct
   expect_equal(n_hat_6, expected_6)
 
-  n_hat_12 <- compute_n_hat(frame$yields, frame$term_premia, i = 12, step = 6)
+  n_hat_12 <- n_hat_series(frame$yields, frame$term_premia, i = 12, step = 6)
   expected_12 <- ((12 / units) * frame$yields$y12 - (18 / units) * frame$yields$y18 +
     (18 / units) * frame$term_premia$tp18 - (12 / units) * frame$term_premia$tp12) / pct
   expect_equal(n_hat_12, expected_12)
@@ -131,9 +138,14 @@ test_that("price news with step = 6 differences the step-spaced n_hat series", {
   frame <- make_step_six_frame()
   n_obs <- nrow(frame$yields)
 
-  news <- compute_price_news(frame$yields, frame$term_premia, i = 12, step = 6)
-  n_hat_12 <- compute_n_hat(frame$yields, frame$term_premia, i = 12, step = 6)
-  n_hat_6 <- compute_n_hat(frame$yields, frame$term_premia, i = 6, step = 6)
+  # Compare bare kernels: the price-news series (compute_news_components()$delta_p)
+  # against the differenced bare n_hat kernel (n_hat_series).
+  news <- compute_news_components(
+    frame$yields, frame$term_premia,
+    i = 12, step = 6
+  )$delta_p
+  n_hat_12 <- n_hat_series(frame$yields, frame$term_premia, i = 12, step = 6)
+  n_hat_6 <- n_hat_series(frame$yields, frame$term_premia, i = 6, step = 6)
   expect_equal(news, n_hat_6[2:n_obs] - n_hat_12[1:(n_obs - 1)])
 })
 
@@ -168,7 +180,8 @@ test_that("the quarterly boundary horizon computes on the bundled 3-month grid",
   yields <- acm[, c("y3", "y6"), drop = FALSE]
   tp <- acm[, c("tp3", "tp6"), drop = FALSE]
 
-  news <- compute_price_news(yields, tp, i = 3, step = 3)
+  # Bare T-1 news series via the price-news kernel
+  news <- compute_news_components(yields, tp, i = 3, step = 3)$delta_p
   expect_length(news, nrow(yields) - 1)
   expect_true(all(is.finite(news)))
 

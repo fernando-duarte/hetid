@@ -1,8 +1,8 @@
 test_that("compute_n_hat returns time series of expected log bond prices", {
   test_env <- setup_standard_test_env()
 
-  # Test for maturity 60
-  n_hat_60 <- compute_n_hat(test_env$yields, test_env$term_premia, i = 60)
+  # Test for maturity 60 (bare numeric kernel)
+  n_hat_60 <- n_hat_series(test_env$yields, test_env$term_premia, i = 60)
 
   expect_type(n_hat_60, "double")
   expect_length(n_hat_60, nrow(test_env$yields))
@@ -14,7 +14,7 @@ test_that("n_hat should generally be negative", {
 
   # Test across the annual nodes (including maturity 12)
   for (i in seq(12, 108, by = 12)) {
-    n_hat_i <- compute_n_hat(test_env$yields, test_env$term_premia, i = i)
+    n_hat_i <- n_hat_series(test_env$yields, test_env$term_premia, i = i)
 
     # Most values should be negative (bonds trade below par)
     prop_negative <- sum(n_hat_i < 0, na.rm = TRUE) / sum(!is.na(n_hat_i))
@@ -29,7 +29,7 @@ test_that("n_hat formula verification", {
 
   # Test for i=36
   i <- 36
-  n_hat_36 <- compute_n_hat(test_env$yields, test_env$term_premia, i = i)
+  n_hat_36 <- n_hat_series(test_env$yields, test_env$term_premia, i = i)
 
   # Manual calculation with maturity weights in years:
   # n_hat = (i/12)*y_i - ((i+12)/12)*y_{i+12} +
@@ -53,7 +53,7 @@ test_that("n_hat works across the annual nodes", {
 
   # Test all annual-node maturities
   for (i in seq(12, 108, by = 12)) {
-    n_hat_i <- compute_n_hat(test_env$yields, test_env$term_premia, i = i)
+    n_hat_i <- n_hat_series(test_env$yields, test_env$term_premia, i = i)
 
     expect_type(n_hat_i, "double")
     expect_length(n_hat_i, nrow(test_env$yields))
@@ -68,7 +68,7 @@ test_that("n_hat lagged computation verification", {
 
   # Get n_hat for i=24
   i <- 24
-  n_hat_24 <- compute_n_hat(test_env$yields, test_env$term_premia, i = i)
+  n_hat_24 <- n_hat_series(test_env$yields, test_env$term_premia, i = i)
 
   # Manual calculation at t+1
   y_24 <- test_env$yields$y24 / 100
@@ -90,10 +90,10 @@ test_that("n_hat lagged computation verification", {
 test_that("n_hat date alignment when dates provided", {
   test_env <- setup_standard_test_env()
 
-  # Test with dates as data frame
+  # Test with dates supplied: always a dated data frame
   n_hat_df <- compute_n_hat(test_env$yields, test_env$term_premia,
     i = 60,
-    return_df = TRUE, dates = test_env$data$date
+    dates = test_env$data$date
   )
 
   expect_s3_class(n_hat_df, "data.frame")
@@ -109,7 +109,7 @@ test_that("compute_n_hat rejects mismatched yields and term_premia rows", {
   syn_long <- create_synthetic_test_data(n = 30)
   syn_short <- create_synthetic_test_data(n = 15)
   expect_error(
-    compute_n_hat(syn_long$yields, syn_short$term_premia, i = 60),
+    n_hat_series(syn_long$yields, syn_short$term_premia, i = 60),
     "same number of observations",
     class = "hetid_error_dimension_mismatch"
   )
@@ -118,11 +118,11 @@ test_that("compute_n_hat rejects mismatched yields and term_premia rows", {
 test_that("compute_n_hat rejects invalid maturity values", {
   test_env <- setup_standard_test_env()
   expect_error(
-    compute_n_hat(test_env$yields, test_env$term_premia, i = 1.5),
+    n_hat_series(test_env$yields, test_env$term_premia, i = 1.5),
     "integer"
   )
   expect_error(
-    compute_n_hat(test_env$yields, test_env$term_premia, i = 120),
+    n_hat_series(test_env$yields, test_env$term_premia, i = 120),
     "between"
   )
 })
@@ -134,7 +134,7 @@ test_that("n_hat imposes TP^(1):=0 at the one-period maturity (i == step)", {
 
   # At i == step (= 12) the step-maturity term premium (tp12) is dropped:
   # the one-period bond carries no term premium by definition.
-  n_hat_12 <- compute_n_hat(test_env$yields, test_env$term_premia, i = 12)
+  n_hat_12 <- n_hat_series(test_env$yields, test_env$term_premia, i = 12)
 
   expected <- ((12 / units) * test_env$yields$y12 -
     (24 / units) * test_env$yields$y24 +
@@ -156,12 +156,12 @@ test_that("compute_n_hat warns when yields look like decimals, not percent", {
 
   # Percentage-point inputs (max |yield| > 1): no units warning
   expect_no_warning(
-    compute_n_hat(test_env$yields, test_env$term_premia, i = 60)
+    n_hat_series(test_env$yields, test_env$term_premia, i = 60)
   )
 
   # Decimal inputs (divide by 100, max |yield| < 1): warn about units
   expect_warning(
-    compute_n_hat(test_env$yields / 100, test_env$term_premia, i = 60),
+    n_hat_series(test_env$yields / 100, test_env$term_premia, i = 60),
     "decimals"
   )
 })

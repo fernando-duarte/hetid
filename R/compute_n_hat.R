@@ -5,10 +5,10 @@
 #'
 #' @template param-yields-term-premia
 #' @template param-maturity-index
-#' @template param-return-df-dates
+#' @template param-dates-required
 #' @template param-step
 #'
-#' @template return-numeric-or-dataframe
+#' @template return-dated-dataframe
 #'
 #' @details
 #' With maturity weights in years, m(i) = i / MATURITY_UNITS_PER_YEAR,
@@ -41,24 +41,35 @@
 #' # Extract ACM data
 #' data <- extract_acm_data(data_types = c("yields", "term_premia"))
 #'
-#' # Compute n_hat for the 5-year (60-month) maturity
+#' # Compute n_hat for the 5-year (60-month) maturity (dated data frame)
 #' n_hat_60 <- compute_n_hat(
 #'   yields = data[, paste0("y", seq(12, 120, 12))],
 #'   term_premia = data[, paste0("tp", seq(12, 120, 12))],
-#'   i = 60
-#' )
-#'
-#' # Compute n_hat with dates
-#' n_hat_60_df <- compute_n_hat(
-#'   yields = data[, paste0("y", seq(12, 120, 12))],
-#'   term_premia = data[, paste0("tp", seq(12, 120, 12))],
 #'   i = 60,
-#'   return_df = TRUE,
 #'   dates = data$date
 #' )
 #'
-compute_n_hat <- function(yields, term_premia, i, return_df = FALSE, dates = NULL,
+compute_n_hat <- function(yields, term_premia, i, dates = NULL,
                           step = HETID_CONSTANTS$DEFAULT_STEP) {
+  prepare_return_data(
+    n_hat_series(yields, term_premia, i, step = step),
+    dates, yields, "n_hat"
+  )
+}
+
+#' Bare n_hat(i, t) series (internal numeric kernel)
+#'
+#' The undated numeric core of \code{\link{compute_n_hat}}, used by the internal
+#' computational chain (price news, SDF innovations, the variance-bound scalars)
+#' which need the bare vector. Holds the input validation so every caller is
+#' checked identically.
+#'
+#' @inheritParams compute_n_hat
+#' @return Numeric vector \code{n_hat(i, t)}.
+#' @keywords internal
+#' @noRd
+n_hat_series <- function(yields, term_premia, i,
+                         step = HETID_CONSTANTS$DEFAULT_STEP) {
   validate_step(step)
   validate_maturity_index(i, max_maturity = effective_max_maturity(step))
   validate_row_alignment(yields, term_premia)
@@ -89,13 +100,8 @@ compute_n_hat <- function(yields, term_premia, i, return_df = FALSE, dates = NUL
   m_i <- i / HETID_CONSTANTS$MATURITY_UNITS_PER_YEAR
   m_next <- (i + step) / HETID_CONSTANTS$MATURITY_UNITS_PER_YEAR
 
-  # Compute n_hat
+  # Compute n_hat, then convert percentages to decimals (ACM data is in
+  # percentage points)
   n_hat <- m_i * y_i - m_next * y_next + m_next * tp_next - m_i * tp_i
-
-  # Convert percentages to decimals (ACM data is in percentage points)
-  n_hat <- n_hat / HETID_CONSTANTS$PERCENT_TO_DECIMAL
-
-  prepare_return_data(
-    n_hat, return_df, dates, yields, "n_hat"
-  )
+  n_hat / HETID_CONSTANTS$PERCENT_TO_DECIMAL
 }

@@ -11,9 +11,8 @@
 #' @param kept_idx_list Named list of logical vectors
 #'   indicating which rows survived complete-cases filtering.
 #' @param maturities Integer vector of maturities processed.
-#' @param dates Optional user-supplied date vector.
-#' @param n_yield_rows Integer, the number of rows in the
-#'   original yields data frame.
+#' @param dates The already-resolved t+1 realization \code{Date} index (length
+#'   \code{nrow(yields) - 1}), as produced by \code{resolve_w2_dates}.
 #'
 #' @return A data frame with columns \code{date},
 #'   \code{maturity}, \code{residuals}, and \code{fitted}.
@@ -22,13 +21,12 @@
 #' @noRd
 format_w2_dataframe <- function(
   residuals_list, fitted_list, kept_idx_list,
-  maturities, dates, n_yield_rows
+  maturities, dates
 ) {
   df_list <- list()
 
-  # Resolve the W2 date index (user dates -> row indices), shared with the
-  # list-mode return of compute_w2_residuals.
-  dates <- resolve_w2_dates(dates, n_yield_rows)
+  # `dates` is the already-resolved t+1 realization index (length T-1), shared
+  # with the list-mode return of compute_w2_residuals.
 
   # Build data frame for each maturity
   for (idx in seq_along(maturities)) {

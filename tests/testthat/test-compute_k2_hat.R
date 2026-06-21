@@ -16,8 +16,13 @@ test_that("k2_hat matches the fourth moment of price news over the bound set", {
 
   k2 <- compute_k2_hat(test_env$yields, test_env$term_premia, i = i)
 
-  # Manual: mean of (price news)^4 over T_i = {1, ..., T - i/step}
-  delta_p <- compute_price_news(test_env$yields, test_env$term_premia, i = i)
+  # Manual: mean of (price news)^4 over T_i = {1, ..., T - i/step}.
+  # Use the bare T-1 price-news kernel (delta_p), the same series
+  # compute_k2_hat indexes -- compute_price_news now NA-prepends to length T.
+  delta_p <- compute_news_components(
+    test_env$yields, test_env$term_premia,
+    i = i
+  )$delta_p
   horizon <- i %/% step
   keep <- delta_p[seq_len(length(delta_p) - horizon + 1L)]
   keep <- keep[!is.na(keep)]

@@ -8,7 +8,6 @@ compute_sdf_innovations(
   yields,
   term_premia,
   i,
-  return_df = FALSE,
   dates = NULL,
   step = HETID_CONSTANTS$DEFAULT_STEP
 )
@@ -28,10 +27,10 @@ plus step-adjacent maturities for \code{i = 60}). Whole years are
 multiples of 12 (i = 12 is the 1-year bond, i = 60 the 5-year,
 i = 120 the 10-year).}
 
-\item{return_df}{Logical, if TRUE returns a data frame with dates (default FALSE)}
-
-\item{dates}{Optional vector of dates corresponding to the rows in yields/term_premia.
-If not provided and return_df = TRUE, will use row indices.}
+\item{dates}{Required \code{Date} vector of period-end calendar dates, one
+per row of \code{yields}/\code{term_premia}. A time series is never
+returned without its date index; a non-\code{Date} or wrong-length vector
+is an error.}
 
 \item{step}{Integer number of maturity-index units per news period
 (default \code{HETID_CONSTANTS$DEFAULT_STEP}). The news operator
@@ -41,7 +40,9 @@ steps one period, so maturity arithmetic moves in multiples of
 bond, and horizons must satisfy \code{i <= MAX_MATURITY - step}.}
 }
 \value{
-Numeric vector of computed values, or data frame with dates if return_df = TRUE
+A data frame whose first column \code{date} (period-end
+\code{Date}) carries the conditioning-information date of each value, plus
+the computed series.
 }
 \description{
 Computes the time series of SDF innovations, the centered second-order
@@ -83,14 +84,10 @@ data <- extract_acm_data(
 yields <- data[, paste0("y", c(48, 60, 72))]
 term_premia <- data[, paste0("tp", c(48, 60, 72))]
 
-# Compute SDF innovations for i = 60
-sdf_innovations_60 <- compute_sdf_innovations(yields, term_premia, i = 60)
-
-# Compute SDF innovations with dates
-sdf_innovations_60_df <- compute_sdf_innovations(
+# Compute SDF innovations for i = 60 (dated data frame)
+sdf_innovations_60 <- compute_sdf_innovations(
   yields, term_premia,
   i = 60,
-  return_df = TRUE,
   dates = data$date
 )
 

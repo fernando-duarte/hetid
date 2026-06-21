@@ -160,6 +160,7 @@ compute_identification_residuals <- function(
     maturities = maturities,
     n_pcs = n_pcs, pcs = pcs_mat,
     step = step,
+    dates = data$date, # full-T; the package shifts to the t+1 realization dates
     y1 = y1, y1_lags = y1_lags,
     impose_b_zero = impose_news_projection_zero()
   )

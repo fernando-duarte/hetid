@@ -2,38 +2,32 @@
 % Please edit documentation in R/computation_utils.R
 \name{prepare_return_data}
 \alias{prepare_return_data}
-\title{Prepare Return Data Frame}
+\title{Attach Dates to a Time-Series Output (always a dated data frame)}
 \usage{
-prepare_return_data(
-  result_series,
-  return_df,
-  dates,
-  yields,
-  series_name,
-  is_news = FALSE
-)
+prepare_return_data(result_series, dates, yields, series_name, is_news = FALSE)
 }
 \arguments{
-\item{result_series}{The computed series}
+\item{result_series}{The computed series (a level series of \code{length(dates)}
+elements, or a news series of \code{length(dates) - 1} when \code{is_news}).}
 
-\item{return_df}{Whether to return data frame}
+\item{dates}{Required \code{Date} vector, one per row of \code{yields}.}
 
-\item{dates}{Optional dates vector}
+\item{yields}{Original yields data, used only for the row-count check.}
 
-\item{yields}{Original yields data for fallback dates}
+\item{series_name}{Name for the value column.}
 
-\item{series_name}{Name for the series column}
-
-\item{is_news}{Logical. If TRUE, \code{result_series} is a news series
-with one element per period change (T - 1 elements), aligned to the
-dates by prepending NA. If FALSE (the default), it is a level series
-with one element per date. The length is checked against this
-expectation rather than inferred.}
+\item{is_news}{Logical. If TRUE, \code{result_series} is a news series with one
+element per period change (T - 1 elements), aligned to the dates by
+prepending NA so element \code{k} (the change from \code{k} to \code{k + 1})
+carries \code{dates[k + 1]}. If FALSE (the default), it is a level series
+carrying its own date.}
 }
 \value{
-Either the series or a data frame
+A data frame with a \code{date} column (period-end) and the series.
 }
 \description{
-Common logic for preparing return data frames with dates
+The single chokepoint by which every exported time-series function emits its
+result. Dates are mandatory and validated as a real \code{Date} vector (see
+\code{validate_dates_vector}); there is no dateless or fabricated-index path.
 }
 \keyword{internal}

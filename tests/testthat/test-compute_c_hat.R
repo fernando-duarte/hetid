@@ -46,7 +46,7 @@ test_that("c_hat equals exp(2 * max(n_hat)) over the bound index set", {
   # Test for several maturities
   for (i in c(36, 60, 84)) {
     c_hat_i <- compute_c_hat(test_env$yields, test_env$term_premia, i = i)
-    n_hat_i <- compute_n_hat(test_env$yields, test_env$term_premia, i = i)
+    n_hat_i <- n_hat_series(test_env$yields, test_env$term_premia, i = i)
 
     # C_i maxes over the bound index set T_i = {1, ..., T - i/step},
     # not over all dates (the realized leg of the bound needs i/step

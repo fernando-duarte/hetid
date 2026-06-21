@@ -15,10 +15,12 @@
 #' @template param-step
 #' @template param-n-pcs
 #' @template param-pc-data
-#' @param return_df Logical, if TRUE returns a data frame with
-#'   dates (default FALSE)
-#' @param dates Optional vector of period-end dates for the returned
-#'   data frame (one per yield row). If NULL, row indices are used.
+#' @param return_df Logical, if TRUE returns a tidy data frame (default FALSE
+#'   returns the richer list). Both shapes carry dates.
+#' @param dates Required vector of period-end \code{Date}s, one per yield row
+#'   (length \code{nrow(yields)}); internally shifted to the t+1 realization
+#'   dates \eqn{d_2, \ldots, d_T} of the W2 news (matching
+#'   \code{compute_w1_residuals}).
 #' @param y1 Optional outcome vector (length \code{nrow(pcs)}) supplying the
 #'   own-lag block of the common conditioning vector \eqn{X_t}; required when
 #'   \code{y1_lags > 0}.
@@ -35,8 +37,9 @@
 #' \describe{
 #'   \item{residuals}{List of residual vectors, one for each maturity}
 #'   \item{fitted}{List of fitted value vectors}
-#'   \item{dates}{Per-maturity list of date (or row-index) vectors parallel to
-#'     \code{residuals}, the W2 date index subset by each maturity's \code{kept_idx}.}
+#'   \item{dates}{Per-maturity list of t+1 realization \code{Date} vectors
+#'     parallel to \code{residuals}, the lead date index subset by each
+#'     maturity's \code{kept_idx}.}
 #'   \item{coefficients}{Matrix of regression coefficients (maturities x predictors)}
 #'   \item{r_squared}{Vector of R-squared values for each maturity}
 #'   \item{n_obs}{Number of observations used in each regression}
@@ -86,7 +89,8 @@
 #' )
 #' res_w2 <- compute_w2_residuals(
 #'   merged[, paste0("y", mats)], merged[, paste0("tp", mats)],
-#'   maturities = c(24, 36), n_pcs = 4, pcs = as.matrix(merged[, pc_cols])
+#'   maturities = c(24, 36), n_pcs = 4, pcs = as.matrix(merged[, pc_cols]),
+#'   dates = merged$date
 #' )
 compute_w2_residuals <- function(yields, term_premia,
                                  maturities = NULL,
@@ -113,6 +117,10 @@ compute_w2_residuals <- function(yields, term_premia,
   yields_df <- validated$yields
   term_premia_df <- validated$term_premia
   maturities <- validated$maturities
+
+  # Resolve the t+1 realization-date index once, up front (fail fast on bad
+  # dates before any per-maturity work): full-T input -> lead dates d_2..d_T.
+  w2_dates <- resolve_w2_dates(dates, nrow(yields_df))
 
   # Validate the supplied PCs (required; aligned to yields by date)
   pc_result <- load_w2_pcs(pcs, n_pcs, nrow(yields_df))
@@ -169,14 +177,12 @@ compute_w2_residuals <- function(yields, term_premia,
       fitted_list = fitted_list,
       kept_idx_list = kept_idx_list,
       maturities = maturities,
-      dates = dates,
-      n_yield_rows = nrow(yields_df)
+      dates = w2_dates
     ))
   }
 
   # Per-maturity date index, parallel to residuals (W2 ragged: subset by kept_idx).
-  resolved_dates <- resolve_w2_dates(dates, nrow(yields_df))
-  dates_list <- lapply(kept_idx_list, function(kept) resolved_dates[which(kept)])
+  dates_list <- lapply(kept_idx_list, function(kept) w2_dates[which(kept)])
   list(
     residuals = residuals_list,
     fitted = fitted_list,
