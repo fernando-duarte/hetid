@@ -24,8 +24,11 @@ acm_raw_column_name <- function(data_type, maturity_months) {
   rule <- HETID_ACM_SCHEMA[[data_type]]
   m <- as.integer(maturity_months)
   ifelse(
-    m %% 12L == 0L,
-    sprintf(HETID_CONSTANTS$COL_FORMAT_PADDED, rule$prefix_old, m %/% 12L),
+    m %% HETID_CONSTANTS$MATURITY_UNITS_PER_YEAR == 0L,
+    sprintf(
+      HETID_CONSTANTS$COL_FORMAT_PADDED, rule$prefix_old,
+      m %/% HETID_CONSTANTS$MATURITY_UNITS_PER_YEAR
+    ),
     sprintf(HETID_CONSTANTS$COL_FORMAT_MONTHLY, rule$prefix_old, m)
   )
 }

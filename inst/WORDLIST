@@ -23,6 +23,7 @@ bz
 CamelCase
 cancelled
 checkglobals
+chokepoint
 closable
 CMD
 cmd
@@ -205,6 +206,7 @@ ttf
 unlink
 Unparsed
 unsetting
+unshifted
 untracked
 urlchecker
 uv

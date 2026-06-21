@@ -92,10 +92,11 @@ align_instrument_sets <- function(z_sets, n_components,
     )
   )
   instruments <- unite_named_columns(mats)
+  inst_names <- colnames(instruments)
   support <- vector("list", n_components)
   for (k in seq_along(maturities)) {
     support[[maturities[k]]] <- match(
-      colnames(mats[[k]]), colnames(instruments)
+      colnames(mats[[k]]), inst_names
     )
   }
   list(instruments = instruments, support = support)
@@ -132,8 +133,9 @@ as_instrument_set <- function(z_i, label) {
 unite_named_columns <- function(mats) {
   vals <- list()
   for (m in mats) {
+    cn <- colnames(m)
     for (j in seq_len(ncol(m))) {
-      nm <- colnames(m)[j]
+      nm <- cn[j]
       column <- unname(m[, j])
       if (is.null(vals[[nm]])) {
         vals[[nm]] <- column
