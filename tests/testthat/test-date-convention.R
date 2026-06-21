@@ -23,7 +23,7 @@ sdf_calls <- list(
   }
 )
 
-test_that("req-1: SDF series cannot be emitted without a real Date index", {
+test_that("date presence: SDF series cannot be emitted without a real Date index", {
   for (nm in names(sdf_calls)) {
     f <- sdf_calls[[nm]]
     # missing dates
@@ -55,7 +55,7 @@ test_that("migration guard: an old positional return_df=TRUE call now errors", {
   )
 })
 
-test_that("req-2: levels are dated at t, news at t+1", {
+test_that("filtration alignment: levels are dated at t, news at t+1", {
   # Level: n_hat(i, t) is F_t-measurable -> dated t (1:1 with the input dates).
   nh <- compute_n_hat(yld, tpm, i = 60, dates = dts)
   expect_identical(nh$date, dts)
@@ -76,7 +76,7 @@ test_that("req-2: levels are dated at t, news at t+1", {
   expect_equal(si$sdf_innovations[-1], sdf_innovations_series(yld, tpm, i = 60))
 })
 
-test_that("req-1/req-2: W1/W2 residuals carry their t+1 realization dates", {
+test_that("presence + filtration: W1/W2 residuals carry their t+1 realization dates", {
   data("variables", package = "hetid")
   mats <- c(12, 24, 36, 48)
   # suppressWarnings: the quarterly extract emits an incomplete-quarter notice

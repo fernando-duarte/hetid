@@ -2,7 +2,7 @@
 # Value-level numeric-invariance comparator for the D4 gate.
 # Usage: Rscript pipeline_value_diff.R <dirA> <dirB>
 # Compares parsed VALUES, not bytes: numeric columns of CSVs, numeric leaves of
-# RDS (skipping volatile metadata), and ordered numeric tokens of .tex/.txt/.html.
+# RDS (skipping volatile metadata), and ordered numeric tokens of .tex/.txt/.md.
 # Skips binary/render/build-cruft (.pdf/.png/.svg/.log/.fls/.fdb_latexmk/.aux/.synctex.gz).
 args <- commandArgs(trailingOnly = TRUE)
 A <- args[[1]]

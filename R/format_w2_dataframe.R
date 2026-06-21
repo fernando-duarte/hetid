@@ -8,11 +8,10 @@
 #'   keyed by \code{"maturity_i"}.
 #' @param fitted_list Named list of fitted-value vectors,
 #'   keyed by \code{"maturity_i"}.
-#' @param kept_idx_list Named list of logical vectors
-#'   indicating which rows survived complete-cases filtering.
+#' @param dates_list Named list of per-maturity t+1 realization \code{Date}
+#'   vectors (the resolved index subset by each maturity's \code{kept_idx}),
+#'   keyed by \code{"maturity_i"} and parallel to \code{residuals_list}.
 #' @param maturities Integer vector of maturities processed.
-#' @param dates The already-resolved t+1 realization \code{Date} index (length
-#'   \code{nrow(yields) - 1}), as produced by \code{resolve_w2_dates}.
 #'
 #' @return A data frame with columns \code{date},
 #'   \code{maturity}, \code{residuals}, and \code{fitted}.
@@ -20,24 +19,19 @@
 #' @keywords internal
 #' @noRd
 format_w2_dataframe <- function(
-  residuals_list, fitted_list, kept_idx_list,
-  maturities, dates
+  residuals_list, fitted_list, dates_list, maturities
 ) {
   df_list <- list()
 
-  # `dates` is the already-resolved t+1 realization index (length T-1), shared
-  # with the list-mode return of compute_w2_residuals.
-
-  # Build data frame for each maturity
+  # Build data frame for each maturity (dates are pre-subset per maturity,
+  # the same list the list-mode return exposes).
   for (idx in seq_along(maturities)) {
     i <- maturities[idx]
     mat_key <- maturity_names(i)
 
     if (mat_key %in% names(residuals_list)) {
-      kept <- kept_idx_list[[mat_key]]
-      mat_dates <- dates[which(kept)]
       df_list[[idx]] <- data.frame(
-        date = mat_dates,
+        date = dates_list[[mat_key]],
         maturity = i,
         residuals = residuals_list[[mat_key]],
         fitted = fitted_list[[mat_key]],
@@ -52,7 +46,7 @@ format_w2_dataframe <- function(
   combined <- do.call(rbind, df_list)
   if (is.null(combined)) {
     combined <- data.frame(
-      date = dates[0],
+      date = as.Date(character(0)),
       maturity = maturities[0],
       residuals = numeric(0),
       fitted = numeric(0),

@@ -171,18 +171,20 @@ compute_w2_residuals <- function(yields, term_premia,
     fallback_names = c("(Intercept)", pc_result$pc_names, pc_lag_names)
   )
 
+  # Per-maturity t+1 realization dates, parallel to residuals (W2 ragged:
+  # subset the resolved index by each maturity's kept_idx). Computed once and
+  # shared by both return shapes.
+  dates_list <- lapply(kept_idx_list, function(kept) w2_dates[which(kept)])
+
   if (return_df) {
     return(format_w2_dataframe(
       residuals_list = residuals_list,
       fitted_list = fitted_list,
-      kept_idx_list = kept_idx_list,
-      maturities = maturities,
-      dates = w2_dates
+      dates_list = dates_list,
+      maturities = maturities
     ))
   }
 
-  # Per-maturity date index, parallel to residuals (W2 ragged: subset by kept_idx).
-  dates_list <- lapply(kept_idx_list, function(kept) w2_dates[which(kept)])
   list(
     residuals = residuals_list,
     fitted = fitted_list,
