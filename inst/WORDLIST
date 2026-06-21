@@ -30,6 +30,7 @@ cmd
 codecs
 CodeDepends
 codetools
+collinear
 compilable
 compositionally
 cov
@@ -56,6 +57,7 @@ Duarte
 duarte
 dupree
 edu
+endogeneity
 env
 eol
 eot
@@ -147,6 +149,7 @@ pdfLaTeX
 pkgcheck
 png
 positivity
+prcomp
 pre
 precomputes
 precomputing
@@ -165,6 +168,7 @@ rds
 reachability
 README
 readxl
+renderer
 renv
 Renviron
 reparameterization
@@ -187,6 +191,8 @@ siunitx
 skedastic
 SLSQP
 styler
+subdir
+subdirs
 subgrid
 sublicense
 Svensson
@@ -203,6 +209,7 @@ tp
 TP
 tryCatch
 ttf
+uncentered
 unlink
 Unparsed
 unsetting

@@ -1,14 +1,14 @@
 # Utility Functions for hetid Scripts
 
-_Last modified: 2026-06-15 15:50 EDT_
+_Last modified: 2026-06-21 08:44 EDT_
 
-This directory contains reusable utility functions that consolidate common patterns across the analysis scripts, following the DRY (Don't Repeat Yourself) principle. `common_settings.R` sources the core layer; the remaining `utils/` helpers (`hetero_lm_tests.R`, `hetero_panel_meta.R`, `hetero_diag_figures.R`, `ixj_identification.R`, `latex_simple_table.R`, `spec_comparison_eval.R`) are sourced directly by the stage scripts that consume them. (The spec-comparison grid design `spec_comparison_design.R` is a stage-05-local file, not a `utils/` helper.)
+This directory contains reusable utility functions that consolidate common patterns across the analysis scripts, following the DRY (Don't Repeat Yourself) principle. `common_settings.R` sources the core layer and then sources the heteroskedasticity LM helpers (`hetero_lm_tests.R`), the plain-column LaTeX renderer (`latex_simple_table.R`), the stage-08 paper-spec layer (`paper_spec_residuals.R`, `paper_spec_estimator.R`, `paper_spec_bootstrap.R`), and the `for_paper` guard (`for_paper_guard.R`) -- the paper spec needs all of these. The remaining `utils/` helpers (`hetero_panel_meta.R`, `hetero_diag_figures.R`, `ixj_identification.R`, `spec_comparison_eval.R`) are NOT sourced by `common_settings.R`; the stage scripts that consume them source them directly. (The spec-comparison grid design `spec_comparison_design.R` is a stage-05-local file, not a `utils/` helper.)
 
 ## Configuration
 
 ### common_settings.R
-- Defines shared config constants (`NEWS_STEP = 3`, `PIPELINE_ACM_MATURITIES` = 3..120 by 3, `SEED = 123`, `BASELINE_TAU = 0.05`, `N_CORES`, `N_Y1_LAGS = 4`, `IMPOSE_NEWS_PROJECTION_ZERO = FALSE`, `TAU_STAR_N_STARTS = 15`, plot/table settings, `DATA_RDS_PATH`) and output directories (`OUTPUT_DIR`, `OUTPUT_PAPER_DIR`, `OUTPUT_TEMP_DIR`)
-- Sources the core utility files (via an explicit `file.exists`-guarded block, not a loop): `plotting_utils.R`, `stats_utils.R`, `hetero_test_utils.R`, `hetero_plot_utils.R`, `z_source.R`, `gamma_source.R`, `news_projection.R`, `baseline_spec.R`, `identification_utils.R`, `optimization_utils.R`, `lambda_mask.R`, `lambda_whitening.R`, `lambda_varnorm.R`, `lambda_optimization.R`, `profile_bounds_core.R`, `profile_bounds.R`, `format_utils.R`, `latex_table_utils.R`, `tau_star_utils.R`, `closure_membership.R`; uses package constants from hetid where available
+- Defines shared config constants (`NEWS_STEP = 3`, `PIPELINE_ACM_MATURITIES` = 3..120 by 3, `SEED = 123`, `BASELINE_TAU = 0.05`, `OPT_TAU_CAP = 0.99` (the near-uninformative slack cap shared across the tau* oracle and the set probes; admissible slack is tau in [0, 1)), `N_Y1_LAGS = 4`, `IMPOSE_NEWS_PROJECTION_ZERO = FALSE`, `TAU_STAR_N_STARTS = 15`, `N_CORES` (= `parallel::detectCores() - 1`), `MAX_N_PCS`, `FOR_PAPER_TABLE_STEMS`, plot/table settings, `DATA_RDS_PATH`) and output directories (`OUTPUT_DIR`, `OUTPUT_PAPER_DIR`, `OUTPUT_TEMP_DIR`)
+- Sources the core utility files (via an explicit `file.exists`-guarded block, not a loop): `plotting_utils.R`, `stats_utils.R`, `hetero_test_utils.R`, `hetero_plot_utils.R`, `z_source.R`, `gamma_source.R`, `news_projection.R`, `baseline_spec.R`, `identification_utils.R`, `optimization_utils.R`, `lambda_mask.R`, `lambda_whitening.R`, `lambda_varnorm.R`, `lambda_optimization.R`, `profile_bounds_core.R`, `profile_bounds.R`, `format_utils.R`, `latex_table_utils.R`, `tau_star_utils.R`, `closure_membership.R`; then sources the paper-spec layer `hetero_lm_tests.R`, `latex_simple_table.R`, `paper_spec_residuals.R`, `paper_spec_estimator.R`, `paper_spec_bootstrap.R`, and the `for_paper` guard `for_paper_guard.R`; uses package constants from hetid where available
 - Helper functions: `get_timestamp()`, `set_analysis_seed()`, and the package loaders `load_visualization_packages()`, `load_timeseries_packages()`, `load_web_packages()`
 
 ## Plotting and tables
@@ -202,9 +202,48 @@ tau* machinery (slack where the set transitions bounded->unbounded):
 - `tau_star_optimized()` - tau* by re-optimizing lambda at each candidate
 - `recession_metric()` - Curvature-degeneracy diagnostic
 
+## Paper specification (stage 08)
+
+### paper_spec_residuals.R
+Collapse the per-maturity SDF news into ONE principal component (Y2, I = 1)
+and align the single de-meaned VFCI instrument (Z, J = 1):
+- `compute_paper_spec_residuals()` - Reuses `compute_identification_residuals()`
+  for all date alignment; the news factor is the RAW (uncentered) PC1
+  projection (`news_mat %*% combo`), NOT prcomp scores, so the reduced-form
+  intercept and `b2R` stay correct with no intercept correction (an internal
+  `.reconcile_maturities()` matches the news / residual / `beta2R` objects by
+  maturity name)
+
+### paper_spec_estimator.R
+From the I = 1 / J = 1 residuals, assemble everything the three `for_paper`
+tables need:
+- `compute_paper_spec_estimator()` - The theta identified set, the `beta1(theta)`
+  structural intervals, tau*, the heteroskedasticity-relevance tests of W2 on the
+  VFCI instrument, the relevance diagnostics that replace the vacuous kappa(Q) at
+  I = J = 1, the endogeneity correlation, and the OLS benchmark
+- `paper_spec_set_columns()` - Per-coefficient identified-set intervals at a given
+  slack (theta from profile bounds; every other coefficient via the linear
+  functional `beta1_p(theta) = beta1r_p - beta2r_p . theta`)
+
+### paper_spec_bootstrap.R
+- `compute_paper_spec_bootstrap()` - Moving-block bootstrap band (block = 15,
+  200 reps, deterministic given `SEED`): resamples quarters, recomputes the
+  moments under the fixed unit gamma, and re-derives tau*, the set endpoints at
+  `tau_set`, and the relevance moment Cov(Z, W2^2)
+
+### for_paper_guard.R
+Fail-closed invariant for `output/for_paper/` (exactly the three paper-spec
+tables, no aux, no subdirs):
+- `for_paper_allowlist()` - The 12 exact basenames permitted
+  (`FOR_PAPER_TABLE_STEMS` x {`.tex`, `_standalone.tex`, `_standalone.pdf`,
+  `.csv`})
+- `assert_for_paper_allowlist()` - Abort if `for_paper` has any unexpected or
+  missing file, or any subdir; run both to validate the stage-08 staging dir
+  before publishing and to re-check `for_paper` at the end of `run_all_scripts.R`
+
 ## tests/
 
-Unit tests for the utility layer: lambda packing/whitening/varnorm/optimization, profile bounds, I×J identification, closure membership, hetero tests, gamma sources, the news-projection mode (`test_news_projection.R`, `test_impose_b_zero.R`), the Stage-04 baseline spec stamp (`test_baseline_spec.R`), residual alignment and saved-residual dates (`test_identification_alignment.R`, `test_saved_residuals_dates.R`), the Z-width pipeline, the generalized-vs-legacy pipeline equivalence (`test_pipeline_equivalence.R`, which toggles `HETID_ASSERT_EQUIV`), and stats -- plus a `fixtures/` directory of capture scripts and saved fixture RDS.
+Unit tests for the utility layer: lambda packing/whitening/varnorm/optimization, profile bounds, I×J identification, closure membership, hetero tests, gamma sources, the news-projection mode (`test_news_projection.R`, `test_impose_b_zero.R`), the Stage-04 baseline spec stamp (`test_baseline_spec.R`), residual alignment and saved-residual dates (`test_identification_alignment.R`, `test_saved_residuals_dates.R`), the Z-width pipeline, the generalized-vs-legacy pipeline equivalence (`test_pipeline_equivalence.R`, which toggles `HETID_ASSERT_EQUIV`), the tau* utils (`test_tau_star_utils.R`), the stage-08 paper-spec residuals/estimator (`test_paper_spec_residuals.R`, `test_paper_spec_estimator.R`), and stats -- plus the `pipeline_value_diff.R` before/after value-comparison harness and a `fixtures/` directory of capture scripts and saved fixture RDS.
 
 ## Usage
 
