@@ -9,6 +9,11 @@ make_diagnostic_inputs <- function(n = 200, seed = 123) {
   )
 }
 
+test_that("centered_var equals the diagonal of centered_cov", {
+  x <- rnorm(50)
+  expect_identical(centered_var(x), centered_cov(x, x)[1, 1])
+})
+
 test_that("well-conditioned residuals produce no warning", {
   inputs <- make_diagnostic_inputs()
 

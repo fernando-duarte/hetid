@@ -90,6 +90,21 @@ assert_bad_argument_ok <- function(ok, message,
   invisible(TRUE)
 }
 
+#' Assert a Value Is a Single TRUE/FALSE Flag
+#'
+#' @param x Value to check
+#' @param arg Argument name, used in both the message and the condition
+#'
+#' @return Invisible TRUE when valid
+#' @noRd
+assert_flag <- function(x, arg) {
+  assert_bad_argument_ok(
+    isTRUE(x) || isFALSE(x),
+    paste0(arg, " must be TRUE or FALSE"),
+    arg = arg
+  )
+}
+
 #' Assert Dimension Invariant
 #'
 #' @param ok Logical scalar; if not TRUE, signals error

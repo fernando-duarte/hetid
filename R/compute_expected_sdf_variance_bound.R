@@ -98,7 +98,7 @@ compute_expected_sdf_variance_bound <- function(yields, term_premia, i,
   # bound"). q is over the same paired set as gap (one common mask); guard the
   # never-real case of a non-finite q entry so min() cannot be wiped to NA.
   q_gap <- components$q
-  var_g <- centered_cov(gap, gap)[1, 1]
+  var_g <- centered_var(gap)
   # var_q defaults to Inf so a non-finite q (pathological: a yield -> +Inf
   # makes q = +Inf; a finite but extreme n_hat can underflow e^{n_hat} to 0
   # while expm1(u) overflows, giving 0*Inf = NaN) -- or a non-finite variance
@@ -106,7 +106,7 @@ compute_expected_sdf_variance_bound <- function(yields, term_premia, i,
   # common mask + the length(gap)==0 guard above), so no length check is needed.
   var_q <- Inf
   if (all(is.finite(q_gap))) {
-    candidate <- centered_cov(q_gap, q_gap)[1, 1]
+    candidate <- centered_var(q_gap)
     if (is.finite(candidate)) {
       var_q <- candidate
     }

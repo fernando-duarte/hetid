@@ -67,6 +67,19 @@ centered_cov <- function(a, b) {
   crossprod(a_centered, b_centered) / nrow(a)
 }
 
+#' Centered Sample Variance (1/T normalization)
+#'
+#' Scalar diagonal of \code{\link{centered_cov}}: the 1/T centered
+#' variance of a single numeric vector, sharing its centering and
+#' divisor.
+#'
+#' @param x Numeric vector.
+#' @return Numeric scalar centered variance.
+#' @noRd
+centered_var <- function(x) {
+  centered_cov(x, x)[1, 1]
+}
+
 #' Warn When Identification Variances Are Degenerate
 #'
 #' Diagnostic for the regularity assumption of the identification
@@ -98,7 +111,6 @@ centered_cov <- function(a, b) {
 warn_if_variance_degenerate <- function(w1, w2, maturities,
                                         sigma_i_sq, s_i_0) {
   tol <- HETID_CONSTANTS$DEGENERACY_TOLERANCE
-  var_of <- function(x) centered_cov(x, x)[1, 1]
 
   first <- logical(length(maturities))
   second <- logical(length(maturities))
@@ -107,7 +119,7 @@ warn_if_variance_degenerate <- function(w1, w2, maturities,
     w2_sq <- w2_i^2
     prod_i <- w1 * w2_i
     v_w2_sq <- sigma_i_sq[[k]]
-    first[k] <- isTRUE(v_w2_sq <= tol * var_of(w2_i)^2)
+    first[k] <- isTRUE(v_w2_sq <= tol * centered_var(w2_i)^2)
     v_prod <- s_i_0[[k]]
     resid_var <- v_prod
     if (isTRUE(v_w2_sq > 0)) {

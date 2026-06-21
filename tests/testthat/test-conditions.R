@@ -120,3 +120,21 @@ test_that("assertion helpers have expected formals", {
     c("ok", "message")
   )
 })
+
+# --- assert_flag ---
+
+test_that("assert_flag accepts a single TRUE/FALSE and rejects everything else", {
+  expect_true(assert_flag(TRUE, "x"))
+  expect_true(assert_flag(FALSE, "x"))
+
+  for (bad in list(NA, "yes", c(TRUE, TRUE), 1, logical(0))) {
+    expect_error(
+      assert_flag(bad, "x"),
+      class = "hetid_error_bad_argument"
+    )
+  }
+
+  err <- tryCatch(assert_flag(NA, "paired"), error = function(e) e)
+  expect_match(conditionMessage(err), "paired must be TRUE or FALSE", fixed = TRUE)
+  expect_identical(err$arg, "paired")
+})

@@ -131,11 +131,7 @@ compute_expected_sdf <- function(yields, term_premia, i, dates = NULL,
   validate_step(step)
   validate_maturity_index(i, max_maturity = effective_max_maturity(step))
   validate_row_alignment(yields, term_premia)
-  assert_bad_argument_ok(
-    isTRUE(paired) || isFALSE(paired),
-    "paired must be TRUE or FALSE",
-    arg = "paired"
-  )
+  assert_flag(paired, "paired")
 
   if (paired) {
     # previous version: matched forecast-error correction. The gap pairs the

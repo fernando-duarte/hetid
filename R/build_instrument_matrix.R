@@ -90,12 +90,16 @@ build_instrument_matrix <- function(z, transforms = NULL,
     arg = "include_original"
   )
 
-  blocks <- if (include_original) list(z) else list()
-  for (t_idx in seq_along(transforms)) {
-    nm <- names(transforms)[t_idx]
-    blocks[[length(blocks) + 1L]] <- as_transform_block(
-      transforms[[t_idx]](z), nm, nrow(z)
+  transform_names <- names(transforms)
+  transform_blocks <- lapply(seq_along(transforms), function(t_idx) {
+    as_transform_block(
+      transforms[[t_idx]](z), transform_names[t_idx], nrow(z)
     )
+  })
+  blocks <- if (include_original) {
+    c(list(z), transform_blocks)
+  } else {
+    transform_blocks
   }
 
   instruments <- do.call(cbind, blocks)
