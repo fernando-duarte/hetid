@@ -45,7 +45,10 @@ test_that("compute_expected_sdf matches manual exp(n_hat) + correction", {
   step <- HETID_CONSTANTS$DEFAULT_STEP
   i <- 60
 
-  result <- compute_expected_sdf(test_env$yields, test_env$term_premia, i = i)
+  result <- compute_expected_sdf(
+    test_env$yields, test_env$term_premia,
+    i = i, paired = TRUE
+  )
 
   n_hat <- compute_n_hat(test_env$yields, test_env$term_premia, i = i)
   y_step <- test_env$yields$y12
@@ -99,7 +102,7 @@ test_that("compute_expected_sdf honors a non-default step", {
 
   result <- compute_expected_sdf(
     yields, term_premia,
-    i = 12, step = step
+    i = 12, step = step, paired = TRUE
   )
 
   s <- 12L %/% step
@@ -121,7 +124,10 @@ test_that("compute_expected_sdf averages the correction over finite pairs only",
   yields_na <- test_env$yields
   yields_na$y12[40] <- NA_real_
 
-  result <- compute_expected_sdf(yields_na, test_env$term_premia, i = i)
+  result <- compute_expected_sdf(
+    yields_na, test_env$term_premia,
+    i = i, paired = TRUE
+  )
 
   n_hat <- compute_n_hat(yields_na, test_env$term_premia, i = i)
   m_step <- step / HETID_CONSTANTS$MATURITY_UNITS_PER_YEAR
@@ -143,7 +149,10 @@ test_that("expected_sdf series mean-matches realized one-period price over T_i",
   i <- 48
   s <- i %/% step
 
-  result <- compute_expected_sdf(test_env$yields, test_env$term_premia, i = i)
+  result <- compute_expected_sdf(
+    test_env$yields, test_env$term_premia,
+    i = i, paired = TRUE
+  )
   n_obs <- length(result)
 
   y_step <- test_env$yields$y12
@@ -170,7 +179,7 @@ test_that("compute_expected_sdf leads the one-period yield by i/step rows", {
   yields <- data.frame(y12 = y12_pct, y24 = zeros, y36 = zeros)
   term_premia <- data.frame(tp12 = zeros, tp24 = zeros, tp36 = zeros)
 
-  result <- compute_expected_sdf(yields, term_premia, i = 24)
+  result <- compute_expected_sdf(yields, term_premia, i = 24, paired = TRUE)
 
   s <- 24 %/% HETID_CONSTANTS$DEFAULT_STEP
   m_step <- HETID_CONSTANTS$DEFAULT_STEP / HETID_CONSTANTS$MATURITY_UNITS_PER_YEAR
@@ -202,7 +211,7 @@ test_that("compute_expected_sdf raises a structured error on a short series", {
   # paired index set is empty: must signal hetid_error_insufficient_data.
   syn <- create_synthetic_test_data(n = 5)
   expect_error(
-    compute_expected_sdf(syn$yields, syn$term_premia, i = 108),
+    compute_expected_sdf(syn$yields, syn$term_premia, i = 108, paired = TRUE),
     "Not enough observations",
     class = "hetid_error_insufficient_data"
   )
@@ -220,9 +229,13 @@ test_that("compute_expected_sdf rejects invalid maturity values", {
     compute_expected_sdf(test_env$yields, test_env$term_premia, i = 120),
     "between"
   )
-  # Not a positive multiple of step (the realized leg shifts whole rows)
+  # Not a positive multiple of step (the realized leg shifts whole rows);
+  # only paired = TRUE enforces this -- the default admits any maturity
   expect_error(
-    compute_expected_sdf(test_env$yields, test_env$term_premia, i = 18),
+    compute_expected_sdf(
+      test_env$yields, test_env$term_premia,
+      i = 18, paired = TRUE
+    ),
     "multiple of step"
   )
 })
@@ -234,5 +247,47 @@ test_that("compute_expected_sdf rejects mismatched yields and term_premia rows",
     compute_expected_sdf(syn_long$yields, syn_short$term_premia, i = 60),
     "same number of observations",
     class = "hetid_error_dimension_mismatch"
+  )
+})
+
+test_that("compute_expected_sdf default correction uses the full sample, no lead", {
+  # y24 = y36 = tp* = 0 => n_hat(24) = 0 => exp(n_hat) = 1, so the default
+  # correction is mean(exp(-y12/100)) - 1 over all rows (no i / step lead),
+  # unlike the paired estimator's t + s window.
+  y12_pct <- c(0, 1, 3, 6, 10, 15, 21)
+  n <- length(y12_pct)
+  zeros <- numeric(n)
+  yields <- data.frame(y12 = y12_pct, y24 = zeros, y36 = zeros)
+  term_premia <- data.frame(tp12 = zeros, tp24 = zeros, tp36 = zeros)
+
+  result <- compute_expected_sdf(yields, term_premia, i = 24) # default
+
+  m_step <- HETID_CONSTANTS$DEFAULT_STEP / HETID_CONSTANTS$MATURITY_UNITS_PER_YEAR
+  realized_all <- exp(-m_step * y12_pct / HETID_CONSTANTS$PERCENT_TO_DECIMAL)
+  correction <- mean(realized_all) - 1 # exp(n_hat) = 1 over all rows
+  expect_equal(result, rep(1 + correction, n), tolerance = 1e-12)
+
+  # paired averages only the t + s window => a different value
+  paired_result <- compute_expected_sdf(yields, term_premia, i = 24, paired = TRUE)
+  expect_false(isTRUE(all.equal(result, paired_result)))
+})
+
+test_that("compute_expected_sdf default admits non-multiple maturities", {
+  # The horizon-agnostic correction needs no i / step lead, so a non-multiple
+  # of step is admissible; paired = TRUE rejects it. Needs monthly columns.
+  data <- extract_acm_data(
+    data_types = c("yields", "term_premia"),
+    maturities = c(12, 18, 30)
+  )
+  yields <- data[, paste0("y", c(12, 18, 30))]
+  term_premia <- data[, paste0("tp", c(12, 18, 30))]
+
+  result <- compute_expected_sdf(yields, term_premia, i = 18) # 18 not a multiple of 12
+  expect_type(result, "double")
+  expect_length(result, nrow(yields))
+
+  expect_error(
+    compute_expected_sdf(yields, term_premia, i = 18, paired = TRUE),
+    "multiple of step"
   )
 })

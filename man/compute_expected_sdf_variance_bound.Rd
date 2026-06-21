@@ -40,7 +40,9 @@ Numeric scalar \eqn{\widehat U_{i}^{(0)} \ge 0}, or
 \description{
 Computes \eqn{\widehat U_{i}^{(0)}}, the tighter empirical bound on the
 unconditional variance of the expected-SDF level-approximation error
-\eqn{\varepsilon_{i,t}^{(0)}} produced by \code{\link{compute_expected_sdf}}.
+\eqn{\varepsilon_{i,t}^{(0)}} produced by
+\code{compute_expected_sdf(paired = TRUE)} (the bound is built from the
+paired gap, so it pairs with that estimator, not the decoupled default).
 It returns \eqn{\min\{\widehat{\mathrm{Var}}(g), \widehat{\mathrm{Var}}(q)\}},
 where \eqn{g_t = e^{-y^{(1)}_{t+s}} - e^{n\_hat(i,t)}} is the gap series
 and \eqn{q_t = e^{n\_hat}(e^u - 1 - u)} (with \eqn{u = x - n\_hat} the raw
@@ -81,7 +83,7 @@ where \eqn{g_t = e^{x_t} - e^{a_t}},
 \eqn{x_t = -m(\mathrm{step}) y^{(\mathrm{step})}_{t+s}/100},
 \eqn{a_t = n\_hat(i,t)}, \eqn{u_t = x_t - a_t}.
 \eqn{\bar g} is exactly the centering correction added by
-\code{\link{compute_expected_sdf}}; both \eqn{g} and \eqn{q} are centered at
+\code{compute_expected_sdf(paired = TRUE)}; both \eqn{g} and \eqn{q} are centered at
 their own sample means (\code{centered_cov} centers internally), and
 \eqn{E[g] = E[q]} only in population. The divisor is \eqn{N_i} (the
 spec's \eqn{1/N}), computed with \code{\link{centered_cov}}, not the

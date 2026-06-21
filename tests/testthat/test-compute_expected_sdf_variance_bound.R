@@ -81,12 +81,16 @@ test_that("the bound uses divisor N, not N - 1", {
 })
 
 test_that("the bound centers on the same correction compute_expected_sdf adds", {
-  # The spec ties the two: mean(gap) is compute_expected_sdf's additive
-  # correction, and the bound is the centered variance of that same gap.
+  # The spec ties the two: mean(gap) is compute_expected_sdf's paired
+  # additive correction, and the bound is the centered variance of that same
+  # gap (the bound is built from the paired gap, so compare against paired).
   test_env <- setup_standard_test_env()
   i <- 60
 
-  esdf <- compute_expected_sdf(test_env$yields, test_env$term_premia, i = i)
+  esdf <- compute_expected_sdf(
+    test_env$yields, test_env$term_premia,
+    i = i, paired = TRUE
+  )
   n_hat <- compute_n_hat(test_env$yields, test_env$term_premia, i = i)
   # esdf - exp(n_hat) is the constant correction at every finite t; take its
   # NA-robust value rather than index [1] (which could be NA on some data)

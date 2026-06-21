@@ -7,10 +7,27 @@
 #' correction. The unconditional expectation is replaced by the sample
 #' average over the observations.
 #'
+#' Two corrections are available. The default (\code{paired = FALSE}) is
+#' horizon-agnostic: it estimates the bias as a difference of full-sample
+#' means and admits any \code{i} on the \code{i + step} grid (no
+#' multiple-of-step requirement). The \code{Mathematical Formula},
+#' \code{Time units}, and \code{Details} sections below describe the previous
+#' \code{paired = TRUE} matched-forecast-error correction, which leads the
+#' realized leg \code{i / step} rows and so requires \code{i} to be a
+#' positive multiple of \code{step}.
+#'
 #' @template param-yields-term-premia
 #' @template param-maturity-index
 #' @template param-return-df-dates
 #' @template param-step
+#' @param paired Logical; selects the bias-correction estimator. The
+#'   default \code{FALSE} uses the horizon-agnostic correction (a difference
+#'   of full-sample means over one common finite set), admitting any
+#'   \code{i} on the \code{i + step} grid. \code{TRUE} restores the previous
+#'   matched-forecast-error
+#'   correction (the mean gap pairing the realized price \code{i / step}
+#'   rows ahead with \code{exp(n_hat(i, t))}), which requires \code{i} to be
+#'   a positive multiple of \code{step}.
 #'
 #' @template return-numeric-or-dataframe
 #'
@@ -31,13 +48,20 @@
 #' step-maturity (one-period) bond at date \eqn{t + s}.
 #'
 #' @section Time units:
-#' The realized one-period yield is led \code{i / step} rows. Rows are
-#' whatever observation frequency the caller supplies; the shift counts
-#' news periods, not calendar time, so row frequency must equal the
-#' intended news period. \code{i} must be a positive multiple of
-#' \code{step}.
+#' With \code{paired = TRUE} the realized one-period yield is led
+#' \code{i / step} rows. Rows are whatever observation frequency the caller
+#' supplies; the shift counts news periods, not calendar time, so row
+#' frequency must equal the intended news period. In that mode \code{i}
+#' must be a positive multiple of \code{step}; the default
+#' \code{paired = FALSE} uses no lead and accepts any \code{i}.
 #'
 #' @details
+#' These details describe \code{paired = TRUE}. The default
+#' (\code{paired = FALSE}) instead mean-matches over the common finite set
+#' to the unshifted one-period price \eqn{e^{-y^{(1)}_t}}, not over
+#' \eqn{T_i} to the led \eqn{e^{-y^{(1)}_{t+s}}}; the two corrections differ
+#' in finite samples even on multiples of \code{step}.
+#'
 #' The additive constant mean-matches the estimator to the realized
 #' one-period price: with complete data, averaging the returned series
 #' over \eqn{T_i} equals the sample mean of \eqn{e^{-y^{(1)}_{t+s}}}. The
@@ -97,24 +121,50 @@
 #'
 compute_expected_sdf <- function(yields, term_premia, i,
                                  return_df = FALSE, dates = NULL,
-                                 step = HETID_CONSTANTS$DEFAULT_STEP) {
+                                 step = HETID_CONSTANTS$DEFAULT_STEP,
+                                 paired = FALSE) {
   validate_step(step)
   validate_maturity_index(i, max_maturity = effective_max_maturity(step))
   validate_row_alignment(yields, term_premia)
-
-  components <- compute_expected_sdf_gap(yields, term_premia, i, step = step)
-  assert_insufficient_data_ok(
-    length(components$gap) > 0,
-    "No valid observations to estimate the expected-SDF correction"
+  assert_bad_argument_ok(
+    isTRUE(paired) || isFALSE(paired),
+    "paired must be TRUE or FALSE",
+    arg = "paired"
   )
 
-  # Empirical analogue of E[e^{-y^(1)} - exp(n_hat)]: mean of the finite gap
-  # series (the same series whose 1/N variance is the variance bound in
-  # compute_expected_sdf_variance_bound())
-  correction <- mean(components$gap)
+  if (paired) {
+    # previous version: matched forecast-error correction. The gap pairs the
+    # realized one-period price i / step rows ahead with exp(n_hat(i, t)) on
+    # the same forecast dates (the gap helper owns the multiple-of-step
+    # contract), so mean(gap) is the per-date forecast-error mean. That gap
+    # series is also the one whose 1/N variance is the variance bound in
+    # compute_expected_sdf_variance_bound().
+    components <- compute_expected_sdf_gap(yields, term_premia, i, step = step)
+    assert_insufficient_data_ok(
+      length(components$gap) > 0,
+      "No valid observations to estimate the expected-SDF correction"
+    )
+    exp_n_hat <- components$exp_n_hat
+    correction <- mean(components$gap)
+  } else {
+    # default: horizon-agnostic correction. Under stationarity the realized
+    # one-period price has a horizon-free unconditional mean, so the bias
+    # E[e^{-y^(1)} - exp(n_hat)] is a difference of full-sample means over one
+    # common finite set -- no i / step lead, so any maturity i is admissible.
+    exp_n_hat <- exp(compute_n_hat(yields, term_premia, i, step = step))
+    y_step <- require_column(yields, acm_column_name("yields", step), "yields")
+    m_step <- step / HETID_CONSTANTS$MATURITY_UNITS_PER_YEAR
+    realized_price <- exp(-m_step * y_step / HETID_CONSTANTS$PERCENT_TO_DECIMAL)
+    common <- is.finite(realized_price) & is.finite(exp_n_hat)
+    assert_insufficient_data_ok(
+      any(common),
+      "No valid observations to estimate the expected-SDF correction"
+    )
+    correction <- mean(realized_price[common]) - mean(exp_n_hat[common])
+  }
 
-  # Conditional approximation plus the constant unconditional correction
-  expected_sdf <- components$exp_n_hat + correction
+  # conditional approximation plus the constant unconditional correction
+  expected_sdf <- exp_n_hat + correction
 
   prepare_return_data(
     expected_sdf, return_df, dates, yields, "expected_sdf"

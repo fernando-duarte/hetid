@@ -6,7 +6,11 @@ test_that("j = 0 reduces exactly to compute_expected_sdf(i = (m-1)*step)", {
     test_env$yields, test_env$term_premia,
     j = 0, m = 6
   )
-  want <- compute_expected_sdf(test_env$yields, test_env$term_premia, i = 60)
+  # G_s is the paired (matched) estimator, so the baseline must request it
+  want <- compute_expected_sdf(
+    test_env$yields, test_env$term_premia,
+    i = 60, paired = TRUE
+  )
 
   expect_equal(got, want)
 })
@@ -19,7 +23,10 @@ test_that("a positive info-lag j is exactly the base series lagged j rows", {
     test_env$yields, test_env$term_premia,
     j = 1, m = 5
   )
-  base <- compute_expected_sdf(test_env$yields, test_env$term_premia, i = 60)
+  base <- compute_expected_sdf(
+    test_env$yields, test_env$term_premia,
+    i = 60, paired = TRUE
+  )
 
   n <- length(base)
   want <- rep(NA_real_, n)
@@ -47,7 +54,10 @@ test_that("s = 1 lower boundary (m + j = 2) is supported", {
   # j = 1, m = 1 -> s = 1 -> i = 12 (one-period horizon; exercises the
   # i == step n_hat normalization through the wrapper)
   got <- compute_expected_sdf_at(test_env$yields, test_env$term_premia, j = 1, m = 1)
-  base <- compute_expected_sdf(test_env$yields, test_env$term_premia, i = 12)
+  base <- compute_expected_sdf(
+    test_env$yields, test_env$term_premia,
+    i = 12, paired = TRUE
+  )
   n <- length(base)
   want <- rep(NA_real_, n)
   want[2:n] <- base[seq_len(n - 1L)]
@@ -68,7 +78,7 @@ test_that("step is plumbed through (non-default step = 6)", {
 
   # j = 0, m = 2 -> s = 1 -> i = 6 with step = 6
   got <- compute_expected_sdf_at(yields, term_premia, j = 0, m = 2, step = 6L)
-  want <- compute_expected_sdf(yields, term_premia, i = 6L, step = 6L)
+  want <- compute_expected_sdf(yields, term_premia, i = 6L, step = 6L, paired = TRUE)
   expect_equal(got, want)
 })
 
@@ -91,7 +101,10 @@ test_that("max in-sample lag (j = T - 1) leaves exactly one valid value", {
   j <- n - 1L
   m <- 2L - j # s = m + j - 1 = 1 stays on the grid (i = 12); exercises m <= 0
   got <- compute_expected_sdf_at(test_env$yields, test_env$term_premia, j = j, m = m)
-  base <- compute_expected_sdf(test_env$yields, test_env$term_premia, i = 12)
+  base <- compute_expected_sdf(
+    test_env$yields, test_env$term_premia,
+    i = 12, paired = TRUE
+  )
   want <- rep(NA_real_, n)
   want[n] <- base[1] # the one survivor sits at the last row, = G_1(row 1)
   expect_equal(got, want)
@@ -115,7 +128,10 @@ test_that("integer-valued doubles for j, m, step flow through", {
     test_env$yields, test_env$term_premia,
     j = 1.0, m = 5.0, step = 12.0
   )
-  base <- compute_expected_sdf(test_env$yields, test_env$term_premia, i = 60)
+  base <- compute_expected_sdf(
+    test_env$yields, test_env$term_premia,
+    i = 60, paired = TRUE
+  )
   n <- length(base)
   want <- rep(NA_real_, n)
   want[2:n] <- base[seq_len(n - 1L)]

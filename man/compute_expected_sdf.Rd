@@ -10,7 +10,8 @@ compute_expected_sdf(
   i,
   return_df = FALSE,
   dates = NULL,
-  step = HETID_CONSTANTS$DEFAULT_STEP
+  step = HETID_CONSTANTS$DEFAULT_STEP,
+  paired = FALSE
 )
 }
 \arguments{
@@ -39,6 +40,15 @@ steps one period, so maturity arithmetic moves in multiples of
 \code{step}: \code{compute_n_hat()} pairs maturities \code{i} and
 \code{i + step}, the one-period bond is the \code{step}-maturity
 bond, and horizons must satisfy \code{i <= MAX_MATURITY - step}.}
+
+\item{paired}{Logical; selects the bias-correction estimator. The
+default \code{FALSE} uses the horizon-agnostic correction (a difference
+of full-sample means over one common finite set), admitting any
+\code{i} on the \code{i + step} grid. \code{TRUE} restores the previous
+matched-forecast-error
+correction (the mean gap pairing the realized price \code{i / step}
+rows ahead with \code{exp(n_hat(i, t))}), which requires \code{i} to be
+a positive multiple of \code{step}.}
 }
 \value{
 Numeric vector of computed values, or data frame with dates if return_df = TRUE
@@ -52,6 +62,21 @@ correction. The unconditional expectation is replaced by the sample
 average over the observations.
 }
 \details{
+Two corrections are available. The default (\code{paired = FALSE}) is
+horizon-agnostic: it estimates the bias as a difference of full-sample
+means and admits any \code{i} on the \code{i + step} grid (no
+multiple-of-step requirement). The \code{Mathematical Formula},
+\code{Time units}, and \code{Details} sections below describe the previous
+\code{paired = TRUE} matched-forecast-error correction, which leads the
+realized leg \code{i / step} rows and so requires \code{i} to be a
+positive multiple of \code{step}.
+
+These details describe \code{paired = TRUE}. The default
+(\code{paired = FALSE}) instead mean-matches over the common finite set
+to the unshifted one-period price \eqn{e^{-y^{(1)}_t}}, not over
+\eqn{T_i} to the led \eqn{e^{-y^{(1)}_{t+s}}}; the two corrections differ
+in finite samples even on multiples of \code{step}.
+
 The additive constant mean-matches the estimator to the realized
 one-period price: with complete data, averaging the returned series
 over \eqn{T_i} equals the sample mean of \eqn{e^{-y^{(1)}_{t+s}}}. The
@@ -107,11 +132,12 @@ step-maturity (one-period) bond at date \eqn{t + s}.
 
 \section{Time units}{
 
-The realized one-period yield is led \code{i / step} rows. Rows are
-whatever observation frequency the caller supplies; the shift counts
-news periods, not calendar time, so row frequency must equal the
-intended news period. \code{i} must be a positive multiple of
-\code{step}.
+With \code{paired = TRUE} the realized one-period yield is led
+\code{i / step} rows. Rows are whatever observation frequency the caller
+supplies; the shift counts news periods, not calendar time, so row
+frequency must equal the intended news period. In that mode \code{i}
+must be a positive multiple of \code{step}; the default
+\code{paired = FALSE} uses no lead and accepts any \code{i}.
 }
 
 \examples{

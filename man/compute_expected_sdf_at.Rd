@@ -21,7 +21,7 @@ compute_expected_sdf_at(
 
 \item{j}{Integer information lag (\eqn{\ge 0}); the expectation
 conditions on \eqn{\mathcal{F}_{t-j}}. \code{j = 0} is the contemporaneous
-\code{\link{compute_expected_sdf}} case.}
+\code{compute_expected_sdf(paired = TRUE)} case.}
 
 \item{m}{Integer SDF date offset; the discount factor is dated \eqn{t+m}.
 May be zero or negative provided \eqn{m + j \ge 2} (see Valid range). Note
@@ -48,8 +48,9 @@ Convenience wrapper computing the in-sample fitted series
 \eqn{E_{t-j}[\mathrm{SDF}_{t+m}]}: the expectation of the one-period
 stochastic discount factor at calendar date \eqn{t+m}, conditional on
 information available at the earlier date \eqn{t-j}. It re-bases the
-time-\eqn{t} estimator \code{\link{compute_expected_sdf}} by the
-identity below; no new modeling is introduced.
+time-\eqn{t} estimator \code{compute_expected_sdf(paired = TRUE)} by the
+identity below; no new modeling is introduced. The matched (paired)
+estimator is used because \eqn{G_s} is defined against it.
 }
 \note{
 Inherits the in-sample-fitted caveat of
@@ -68,8 +69,8 @@ With \eqn{s = m + j - 1} news periods and maturity index
 \eqn{i = s\cdot\mathrm{step}},
 \deqn{E_{t-j}[\mathrm{SDF}_{t+m}] = G_s(t-j), \qquad
   G_s(\tau) = E_\tau[\mathrm{SDF}_{\tau+1+s}],}
-where \eqn{G_s} is exactly \code{\link{compute_expected_sdf}} at maturity
-index \eqn{i}. As a series indexed by the reference row \eqn{t}, the result
+where \eqn{G_s} is exactly \code{compute_expected_sdf(paired = TRUE)} at
+maturity index \eqn{i}. As a series indexed by the reference row \eqn{t}, the result
 is \eqn{G_s} lagged by \eqn{j} rows; the first \eqn{j} rows are \code{NA}.
 At \eqn{j = 0} this is \eqn{E_t[\mathrm{SDF}_{t+m}]} with no shift.
 }
