@@ -16,6 +16,20 @@ test_that("acm_column_name rejects unknown data types", {
   )
 })
 
+test_that("acm_raw_column_name rejects unknown data types with its own arg", {
+  err <- tryCatch(
+    acm_raw_column_name("not_a_type", 12),
+    error = function(e) e
+  )
+
+  expect_s3_class(err, "hetid_error_bad_argument")
+  expect_match(
+    conditionMessage(err), "Unknown data type: 'not_a_type'",
+    fixed = TRUE
+  )
+  expect_identical(err$arg, "data_types")
+})
+
 test_that("assert_columns_exist names the context when columns are missing", {
   err <- tryCatch(
     assert_columns_exist(

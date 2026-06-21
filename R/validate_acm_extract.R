@@ -17,11 +17,7 @@ NULL
 #' @keywords internal
 validate_acm_extract_inputs <- function(data_types, maturities,
                                         use_incomplete_quarters = TRUE) {
-  assert_bad_argument_ok(
-    isTRUE(use_incomplete_quarters) || isFALSE(use_incomplete_quarters),
-    "use_incomplete_quarters must be TRUE or FALSE",
-    arg = "use_incomplete_quarters"
-  )
+  assert_flag(use_incomplete_quarters, "use_incomplete_quarters")
 
   valid_types <- names(HETID_ACM_SCHEMA)
   assert_bad_argument_ok(

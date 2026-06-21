@@ -12,15 +12,7 @@
 #' @return Character vector of raw column names
 #' @keywords internal
 acm_raw_column_name <- function(data_type, maturity_months) {
-  if (!(data_type %in% names(HETID_ACM_SCHEMA))) {
-    stop_bad_argument(
-      paste0(
-        "Unknown data type: '", data_type, "'. Must be one of: ",
-        paste(names(HETID_ACM_SCHEMA), collapse = ", ")
-      ),
-      arg = "data_types"
-    )
-  }
+  assert_acm_data_type(data_type, arg = "data_types")
   rule <- HETID_ACM_SCHEMA[[data_type]]
   m <- as.integer(maturity_months)
   ifelse(

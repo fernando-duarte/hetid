@@ -27,6 +27,27 @@ require_column <- function(x, col_name, context = NULL) {
   val
 }
 
+#' Assert a Data Type Is a Known ACM Schema Key
+#'
+#' Scalar key guard shared by \code{acm_column_name} and
+#' \code{acm_raw_column_name}; \code{arg} preserves each call site's
+#' condition field (\code{"data_type"} vs \code{"data_types"}).
+#'
+#' @param data_type Candidate schema key
+#' @param arg Condition argument name
+#' @return Invisible TRUE when valid
+#' @noRd
+assert_acm_data_type <- function(data_type, arg = "data_type") {
+  assert_bad_argument_ok(
+    data_type %in% names(HETID_ACM_SCHEMA),
+    paste0(
+      "Unknown data type: '", data_type, "'. Must be one of: ",
+      paste(names(HETID_ACM_SCHEMA), collapse = ", ")
+    ),
+    arg = arg
+  )
+}
+
 #' Build an ACM Column Name from the Schema
 #'
 #' Single source of truth for reshaped ACM column names: routes the
@@ -40,14 +61,7 @@ require_column <- function(x, col_name, context = NULL) {
 #' @return Character vector of column names, e.g. \code{"y60"}
 #' @keywords internal
 acm_column_name <- function(data_type, maturity) {
-  assert_bad_argument_ok(
-    data_type %in% names(HETID_ACM_SCHEMA),
-    paste0(
-      "Unknown data type: '", data_type, "'. Must be one of: ",
-      paste(names(HETID_ACM_SCHEMA), collapse = ", ")
-    ),
-    arg = "data_type"
-  )
+  assert_acm_data_type(data_type, arg = "data_type")
   sprintf(
     HETID_CONSTANTS$COL_FORMAT_SIMPLE,
     HETID_ACM_SCHEMA[[data_type]]$prefix_new,
