@@ -46,3 +46,28 @@ test_that("assert_columns_exist names the context when columns are missing", {
   )
   expect_match(conditionMessage(err), "in input frame", fixed = TRUE)
 })
+
+test_that("assert_acm_data_types validates a non-empty vector of schema keys", {
+  expect_true(assert_acm_data_types(c("yields", "term_premia")))
+
+  err <- tryCatch(
+    assert_acm_data_types(c("yields", "not_a_type")),
+    error = function(e) e
+  )
+  expect_s3_class(err, "hetid_error_bad_argument")
+  expect_match(
+    conditionMessage(err), "Invalid data_types. Must be one or more of:",
+    fixed = TRUE
+  )
+  expect_identical(err$arg, "data_types")
+
+  # Empty and non-character inputs are rejected too
+  expect_error(
+    assert_acm_data_types(character(0)),
+    class = "hetid_error_bad_argument"
+  )
+  expect_error(
+    assert_acm_data_types(1L),
+    class = "hetid_error_bad_argument"
+  )
+})

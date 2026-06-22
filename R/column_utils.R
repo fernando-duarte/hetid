@@ -48,6 +48,29 @@ assert_acm_data_type <- function(data_type, arg = "data_type") {
   )
 }
 
+#' Assert Data Types Are Known ACM Schema Keys (vector form)
+#'
+#' Vector sibling of \code{assert_acm_data_type}: the non-empty
+#' character-vector contract for \code{validate_acm_extract_inputs}.
+#' Shares the schema-key source of truth (\code{names(HETID_ACM_SCHEMA)});
+#' keeps the vector message distinct from the scalar one.
+#'
+#' @param data_types Candidate schema keys (character vector)
+#' @param arg Condition argument name
+#' @return Invisible TRUE when valid
+#' @noRd
+assert_acm_data_types <- function(data_types, arg = "data_types") {
+  assert_bad_argument_ok(
+    is.character(data_types) && length(data_types) >= 1 &&
+      all(data_types %in% names(HETID_ACM_SCHEMA)),
+    paste0(
+      "Invalid data_types. Must be one or more of: ",
+      paste(names(HETID_ACM_SCHEMA), collapse = ", ")
+    ),
+    arg = arg
+  )
+}
+
 #' Build an ACM Column Name from the Schema
 #'
 #' Single source of truth for reshaped ACM column names: routes the

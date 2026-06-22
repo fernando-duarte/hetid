@@ -117,3 +117,16 @@ test_that("compute_c_hat rejects invalid maturity values", {
     "between"
   )
 })
+
+test_that("compute_c_hat rejects a non-step-multiple maturity", {
+  # i = 18 is a valid in-range integer but not a multiple of step = 12, so
+  # i/step is not a whole number of news periods; the bound index set is
+  # ill-defined. Must error (parity with compute_k_hat / compute_k2_hat)
+  # rather than silently flooring i %/% step.
+  test_env <- setup_standard_test_env()
+  expect_error(
+    compute_c_hat(test_env$yields, test_env$term_premia, i = 18, step = 12),
+    "positive multiple of step",
+    class = "hetid_error_bad_argument"
+  )
+})

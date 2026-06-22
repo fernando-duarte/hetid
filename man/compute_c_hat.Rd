@@ -50,7 +50,8 @@ function requires data at maturity \code{i + step}.
 over the bound index set \eqn{T_i = \{1, \dots, T - i/step\}}, the
 same dates as \code{\link{compute_k_hat}} and
 \code{\link{compute_k2_hat}} (the realized leg needs \code{i/step}
-further news periods).
+further news periods). \code{i} must be a positive multiple of
+\code{step}.
 }
 
 \examples{
