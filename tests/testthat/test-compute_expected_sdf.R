@@ -225,6 +225,55 @@ test_that("compute_expected_sdf raises a structured error on a short series", {
   )
 })
 
+test_that("compute_expected_sdf at i = 0 returns the exact realized one-period price", {
+  test_env <- setup_standard_test_env()
+  step <- HETID_CONSTANTS$DEFAULT_STEP
+
+  expect_warning(
+    result <- compute_expected_sdf(
+      test_env$yields, test_env$term_premia,
+      i = 0, dates = test_env$data$date
+    ),
+    class = "hetid_warning_horizon_zero"
+  )
+
+  m_step <- step / HETID_CONSTANTS$MATURITY_UNITS_PER_YEAR
+  realized <- exp(-m_step * test_env$yields$y12 /
+    HETID_CONSTANTS$PERCENT_TO_DECIMAL)
+
+  expect_named(result, c("date", "expected_sdf"))
+  expect_equal(nrow(result), nrow(test_env$yields))
+  expect_equal(result$expected_sdf, realized, tolerance = 1e-12)
+})
+
+test_that("compute_expected_sdf at i = 0 uses only y{step}, never the term premium", {
+  # Horizon 0 is the realized price exp(-m_step * y_step / 100); it must NOT
+  # route through n_hat(0), which would carry the step-bond term premium that
+  # the TP^(1) := 0 normalization removes. Perturbing tp12 must change nothing.
+  test_env <- setup_standard_test_env()
+  tp_perturbed <- test_env$term_premia
+  tp_perturbed$tp12 <- tp_perturbed$tp12 + 5
+
+  base <- suppressWarnings(compute_expected_sdf(
+    test_env$yields, test_env$term_premia,
+    i = 0, dates = test_env$data$date
+  )$expected_sdf)
+  perturbed <- suppressWarnings(compute_expected_sdf(
+    test_env$yields, tp_perturbed,
+    i = 0, dates = test_env$data$date
+  )$expected_sdf)
+
+  expect_equal(base, perturbed, tolerance = 1e-12)
+})
+
+test_that("compute_expected_sdf still rejects negative maturities", {
+  test_env <- setup_standard_test_env()
+  expect_error(
+    compute_expected_sdf(test_env$yields, test_env$term_premia, i = -12),
+    "between"
+  )
+})
+
 test_that("compute_expected_sdf rejects invalid maturity values", {
   test_env <- setup_standard_test_env()
 

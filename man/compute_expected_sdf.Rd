@@ -113,6 +113,12 @@ The effective maximum for \code{i} is \code{MAX_MATURITY - step}
 (108 for standard ACM data with the default annual step), because
 \code{n_hat(i, t)} requires data at maturity \code{i + step}.
 
+Passing \code{i = 0} returns the horizon-zero boundary
+\eqn{E_t[\mathrm{SDF}_{t+1}] = P^{(1)}_t = e^{-y^{(1)}_t}}, the realized
+one-period price observed at \eqn{t}. It is exact: no forecast, no
+approximation, and no bias correction (\code{paired} is ignored). A
+\code{hetid_warning_horizon_zero} warning is signalled to flag this.
+
 To read off the shifted-information expectation
 \eqn{E_{t-j}[\mathrm{SDF}_{t+m}]}: with \eqn{s = m + j - 1} (require
 \eqn{s \ge 1} and \eqn{s\cdot step} a valid maturity index \eqn{\le}

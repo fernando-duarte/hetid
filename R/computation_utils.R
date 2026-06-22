@@ -113,7 +113,7 @@ prepare_return_data <- function(result_series, dates, yields,
   result_df
 }
 
-#' Trim a Series to the Bound Index Set T_i = {1, ..., T - i/step}
+#' Trim a Series to the Bound Index Set T_i = \{1, ..., T - i/step\}
 #'
 #' Shared trim for the variance-bound kernels: drops the trailing
 #' \code{i/step} news periods (the realized leg's horizon) and the NA

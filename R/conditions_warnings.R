@@ -95,3 +95,17 @@ warn_unparsed_dates <- function(message, call = NULL) {
 warn_skipped_maturity <- function(message, call = NULL) {
   warn_hetid(message, "hetid_warning_skipped_maturity", call = call)
 }
+
+#' Signal a Horizon-Zero Expected-SDF Warning
+#'
+#' Classed warning raised when \code{\link{compute_expected_sdf}} is called
+#' with \code{i = 0}: the horizon-zero expected SDF is the realized
+#' one-period price, returned exactly (not a forecast, no approximation), so
+#' callers can dispatch on class \code{hetid_warning_horizon_zero}.
+#'
+#' @param message Warning message string
+#' @param call The call (default NULL)
+#' @keywords internal
+warn_horizon_zero <- function(message, call = NULL) {
+  warn_hetid(message, "hetid_warning_horizon_zero", call = call)
+}

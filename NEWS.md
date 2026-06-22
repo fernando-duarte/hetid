@@ -48,6 +48,12 @@
   structured error naming the fix.
 * Loading gained a post-read schema guard against stale or corrupt
   caches, and character-date repair accepts ISO dates.
+* `compute_expected_sdf()` and `compute_expected_sdf_variance_bound()`
+  now accept the horizon-zero index `i = 0`. The expected SDF returns the
+  realized one-period price `exp(-y^(1)_t)` exactly (observed at `t`, not a
+  forecast, no bias correction); the variance bound returns `0` (no
+  approximation error to bound). Both signal a classed
+  `hetid_warning_horizon_zero` warning.
 
 ## Notes
 

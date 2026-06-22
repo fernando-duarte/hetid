@@ -2,7 +2,7 @@
 % Please edit documentation in R/computation_utils.R
 \name{trim_to_bound_index_set}
 \alias{trim_to_bound_index_set}
-\title{Trim a Series to the Bound Index Set T_i = {1, ..., T - i/step}}
+\title{Trim a Series to the Bound Index Set T_i = \{1, ..., T - i/step\}}
 \usage{
 trim_to_bound_index_set(series, i, step, len_offset = 0L)
 }

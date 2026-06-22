@@ -65,6 +65,12 @@ The effective maximum for \code{i} is \code{MAX_MATURITY - step}
 (108 with the default annual step), because \code{n_hat(i, t)} requires
 data at maturity \code{i + step}.
 
+Passing \code{i = 0} returns \code{0}: the horizon-0 expected SDF is
+the realized one-period price (exact, no approximation), so its
+error-variance bound is identically zero. A
+\code{hetid_warning_horizon_zero} warning is signalled, mirroring
+\code{\link{compute_expected_sdf}}.
+
 Calling this with \code{i = (m + j - 1) * step} returns the bound for
 the shifted-information expectation \eqn{E_{t-j}[\mathrm{SDF}_{t+m}]} (read
 off \code{compute_expected_sdf(i = (m + j - 1) * step, paired = TRUE)} at the

@@ -43,6 +43,22 @@ test_that("compute_expected_sdf_variance_bound returns a single non-negative val
   expect_gte(bound, 0)
 })
 
+test_that("compute_expected_sdf_variance_bound is identically 0 at i = 0", {
+  # Horizon 0 is exact (no approximation), so the error-variance bound is 0,
+  # mirroring compute_expected_sdf(i = 0).
+  test_env <- setup_standard_test_env()
+
+  expect_warning(
+    bound <- compute_expected_sdf_variance_bound(
+      test_env$yields, test_env$term_premia,
+      i = 0
+    ),
+    class = "hetid_warning_horizon_zero"
+  )
+
+  expect_identical(bound, 0)
+})
+
 test_that("the bound is the smaller of the gap and q variances", {
   test_env <- setup_standard_test_env()
   i <- 60

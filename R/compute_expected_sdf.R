@@ -96,6 +96,12 @@
 #'   (108 for standard ACM data with the default annual step), because
 #'   \code{n_hat(i, t)} requires data at maturity \code{i + step}.
 #'
+#' @note Passing \code{i = 0} returns the horizon-zero boundary
+#'   \eqn{E_t[\mathrm{SDF}_{t+1}] = P^{(1)}_t = e^{-y^{(1)}_t}}, the realized
+#'   one-period price observed at \eqn{t}. It is exact: no forecast, no
+#'   approximation, and no bias correction (\code{paired} is ignored). A
+#'   \code{hetid_warning_horizon_zero} warning is signalled to flag this.
+#'
 #' @note To read off the shifted-information expectation
 #'   \eqn{E_{t-j}[\mathrm{SDF}_{t+m}]}: with \eqn{s = m + j - 1} (require
 #'   \eqn{s \ge 1} and \eqn{s\cdot step} a valid maturity index \eqn{\le}
@@ -129,9 +135,32 @@ compute_expected_sdf <- function(yields, term_premia, i, dates = NULL,
                                  step = HETID_CONSTANTS$DEFAULT_STEP,
                                  paired = FALSE) {
   validate_step(step)
-  validate_maturity_index(i, max_maturity = effective_max_maturity(step))
+  # Lower bound 0 (not MIN_MATURITY) admits the horizon-0 boundary below;
+  # i >= 1 still gets the usual [1, effective_max] contract once i == 0
+  # returns early.
+  assert_scalar_integer_in_range(
+    i, "Maturity index i", 0L, effective_max_maturity(step),
+    arg = "i"
+  )
   validate_row_alignment(yields, term_premia)
   assert_flag(paired, "paired")
+
+  if (i == 0) {
+    # Horizon 0 is the boundary M^(0)_{0,t} = E_t[SDF_{t+1}] = P^(1)_t, the
+    # realized one-period price observed at t: exact, with no Jensen gap, so
+    # the correction is identically zero (paired is irrelevant). Reuse
+    # compute_n_hat_previous, which owns n_hat(0, t) = -m_step y_step / 100 with
+    # the TP^(1) := 0 normalization already imposed; n_hat_series(0) would
+    # instead carry the step-bond term premium that normalization drops.
+    warn_horizon_zero(
+      paste0(
+        "i = 0 returns the realized one-period price (observed at t), exact ",
+        "-- not a forecast, no approximation or bias correction."
+      )
+    )
+    n_hat_0 <- compute_n_hat_previous(yields, term_premia, step, step = step)
+    return(prepare_return_data(exp(n_hat_0), dates, yields, "expected_sdf"))
+  }
 
   if (paired) {
     # previous version: matched forecast-error correction. The gap pairs the

@@ -56,6 +56,12 @@
 #'   (108 with the default annual step), because \code{n_hat(i, t)} requires
 #'   data at maturity \code{i + step}.
 #'
+#' @note Passing \code{i = 0} returns \code{0}: the horizon-0 expected SDF is
+#'   the realized one-period price (exact, no approximation), so its
+#'   error-variance bound is identically zero. A
+#'   \code{hetid_warning_horizon_zero} warning is signalled, mirroring
+#'   \code{\link{compute_expected_sdf}}.
+#'
 #' @note Calling this with \code{i = (m + j - 1) * step} returns the bound for
 #'   the shifted-information expectation \eqn{E_{t-j}[\mathrm{SDF}_{t+m}]} (read
 #'   off \code{compute_expected_sdf(i = (m + j - 1) * step, paired = TRUE)} at the
@@ -77,8 +83,26 @@
 compute_expected_sdf_variance_bound <- function(yields, term_premia, i,
                                                 step = HETID_CONSTANTS$DEFAULT_STEP) {
   validate_step(step)
-  validate_maturity_index(i, max_maturity = effective_max_maturity(step))
+  # Lower bound 0 admits the horizon-0 boundary below; i >= 1 keeps the usual
+  # [1, effective_max] contract once i == 0 returns early.
+  assert_scalar_integer_in_range(
+    i, "Maturity index i", 0L, effective_max_maturity(step),
+    arg = "i"
+  )
   validate_row_alignment(yields, term_premia)
+
+  if (i == 0) {
+    # Horizon 0 is exact (M^(0)_{0,t} = P^(1)_t, the realized one-period price):
+    # no approximation error, so the bound is identically 0. Mirrors the i == 0
+    # boundary of compute_expected_sdf().
+    warn_horizon_zero(
+      paste0(
+        "i = 0: the horizon-0 expected SDF is exact (the realized one-period ",
+        "price), so its approximation-error variance bound is identically 0."
+      )
+    )
+    return(0)
+  }
 
   # compute_expected_sdf_gap owns the multiple-of-step contract (it does
   # the i/step row shift), so it is validated there, not here. It returns
