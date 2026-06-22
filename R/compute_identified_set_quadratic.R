@@ -16,12 +16,17 @@
 #'   (zero indicates no heteroskedasticity to exploit for
 #'   identification).
 #'
-#' @return A list containing:
+#' @return A list (per-maturity elements keyed maturity_N, M =
+#' \code{length(maturities)}; n_components the theta axis):
 #' \describe{
-#'   \item{d_i}{Named vector of d_i values for each maturity}
-#'   \item{A_i}{List of symmetric matrices A_i for each maturity}
-#'   \item{b_i}{List of vectors b_i for each maturity}
-#'   \item{c_i}{Named vector of c_i values for each maturity}
+#'   \item{d_i}{Named numeric vector of length M; element k is d_i for
+#'     maturity \code{maturities[k]}}
+#'   \item{A_i}{Named list of length M; element k is the n_components x
+#'     n_components symmetric matrix A_i for maturity \code{maturities[k]}}
+#'   \item{b_i}{Named list of length M; element k is the length-n_components
+#'     vector b_i for maturity \code{maturities[k]}}
+#'   \item{c_i}{Named numeric vector of length M; element k is c_i for
+#'     maturity \code{maturities[k]}}
 #' }
 #'
 #' @details

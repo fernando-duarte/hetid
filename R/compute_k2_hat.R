@@ -8,7 +8,8 @@
 #' @template param-maturity-index
 #' @template param-step
 #'
-#' @return Numeric value of k2_hat_i
+#' @return Numeric value of k2_hat_i, or \code{NA_real_} when no valid
+#'   observations remain after trimming.
 #'
 #' @section Mathematical Formula:
 #' \deqn{k2\_hat_i = \mathrm{mean}_t (\Delta_{t+1} p_{t+i}^{(1)})^4}

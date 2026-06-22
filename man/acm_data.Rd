@@ -8,22 +8,22 @@
 \alias{term_premia}
 \title{ACM Term Structure Data Documentation}
 \format{
-The ACM data is stored as a gzipped CSV with 355 columns:
-the date plus 118 maturities (3 to 120 months at one-month steps)
+The ACM data is stored as a gzipped CSV with 361 columns:
+the date plus 120 maturities (1 to 120 months at one-month steps)
 for each of three families:
 \describe{
 \item{date}{The business-day observation date for each row in the series
 (originally 'DATE' in source data, ISO formatted, standardized to
 lowercase)}
-\item{ACMY01-ACMY10, ACMY003M-ACMY119M}{Model-implied zero-coupon
+\item{ACMY01-ACMY10, ACMY001M-ACMY119M}{Model-implied zero-coupon
 Treasury yields from the ACM model. Whole-year maturities keep
 the official padded-year names (ACMY01 = 12 months, ...,
 ACMY10 = 120 months); sub-annual months use the three-digit
-month form (e.g. ACMY003M = 3 months)}
-\item{ACMTP01-ACMTP10, ACMTP003M-ACMTP119M}{ACM term premium
+month form (e.g. ACMY001M = 1 month)}
+\item{ACMTP01-ACMTP10, ACMTP001M-ACMTP119M}{ACM term premium
 estimates—the additional compensation investors require for
 bearing interest-rate risk—under the same dual naming}
-\item{ACMRNY01-ACMRNY10, ACMRNY003M-ACMRNY119M}{Risk-neutral yields
+\item{ACMRNY01-ACMRNY10, ACMRNY001M-ACMRNY119M}{Risk-neutral yields
 (the expected average short-rate path) as implied by the ACM
 model, under the same dual naming}
 }

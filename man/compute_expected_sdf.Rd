@@ -159,10 +159,13 @@ must be a positive multiple of \code{step}; the default
 }
 
 \examples{
-# Extract ACM data
-data <- extract_acm_data(data_types = c("yields", "term_premia"))
-yields <- data[, paste0("y", seq(12, 120, 12))]
-term_premia <- data[, paste0("tp", seq(12, 120, 12))]
+# Extract ACM data (the i = 60 horizon needs maturities 12, 60, and 72)
+data <- extract_acm_data(
+  data_types = c("yields", "term_premia"),
+  maturities = c(12, 60, 72)
+)
+yields <- data[, paste0("y", c(12, 60, 72))]
+term_premia <- data[, paste0("tp", c(12, 60, 72))]
 
 # Expected SDF for the 5-year (60-month) horizon (s = 5 news periods)
 expected_sdf_60 <- compute_expected_sdf(

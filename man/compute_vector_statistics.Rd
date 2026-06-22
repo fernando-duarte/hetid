@@ -20,11 +20,15 @@ the instrument axis of the moments (falling back to pc1..pcJ).}
 Default is all columns of w2.}
 }
 \value{
-A list containing:
+A list (with J the instrument count, n_components the theta axis
+= \code{ncol(w2)}, and M = \code{length(maturities)} the constraint axis):
 \describe{
-\item{r_i_0}{Matrix (J x I) where column i contains R_i^(0)}
-\item{r_i_1}{List of matrices, each element i is R_i^(1) (J x I)}
-\item{p_i_0}{Matrix (J x I) where column i contains P_i^(0)}
+\item{r_i_0}{Matrix (J x M); column k holds R_i^(0) for maturity
+\code{maturities[k]} (columns named maturity_N)}
+\item{r_i_1}{Named list of length M (keys maturity_N); element k is the
+J x n_components matrix R_i^(1) for maturity \code{maturities[k]}}
+\item{p_i_0}{Matrix (J x M); column k holds P_i^(0) for maturity
+\code{maturities[k]} (columns named maturity_N)}
 }
 }
 \description{

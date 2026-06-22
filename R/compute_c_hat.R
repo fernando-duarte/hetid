@@ -7,7 +7,8 @@
 #' @template param-maturity-index
 #' @template param-step
 #'
-#' @return Numeric value of c_hat_i
+#' @return Numeric value of c_hat_i, or \code{NA_real_} when no valid
+#'   paired observations remain.
 #'
 #' @section Mathematical Formula:
 #' \deqn{c\_hat_i = \max_{t \in T_i} \exp(2 \cdot n\_hat(i,t))}

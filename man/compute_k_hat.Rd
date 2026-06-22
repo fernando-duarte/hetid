@@ -29,7 +29,8 @@ steps one period, so maturity arithmetic moves in multiples of
 bond, and horizons must satisfy \code{i <= MAX_MATURITY - step}.}
 }
 \value{
-Numeric value of k_hat_i
+Numeric value of k_hat_i, or \code{NA_real_} when no valid
+paired observations remain.
 }
 \description{
 Computes k_hat_i which estimates E[(p_(t+i)^(1) - E_(t+1)[p_(t+i)^(1)])^4],

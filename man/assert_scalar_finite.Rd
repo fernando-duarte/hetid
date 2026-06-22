@@ -12,7 +12,7 @@ assert_scalar_finite(x, name)
 \item{name}{Parameter name for the error message}
 }
 \value{
-Invisible NULL; stops with error if invalid
+Invisible TRUE if valid, stops with informative error otherwise.
 }
 \description{
 Internal guard for parameters that must be a single

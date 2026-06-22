@@ -58,7 +58,7 @@ At the one-period maturity \code{i == step} the term premium of the
 step-maturity bond is zero by definition (the imposed normalization
 TP^(1):=0, since A^(step) = E_t[y^(step)]), so the m(i)*TP_t^(i)
 term is dropped: any supplied value is overwritten by zero. This
-matches the boundary leg of \code{\link{compute_n_hat_previous}}.
+matches the boundary leg of \code{compute_n_hat_previous()}.
 }
 \note{
 The effective maximum for \code{i} is

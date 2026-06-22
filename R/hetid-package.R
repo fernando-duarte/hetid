@@ -89,7 +89,7 @@
 #' \describe{
 #'   \item{\strong{ACM Term Structure Data}}{Monthly data from Adrian, Crump, and
 #'     Moench (2013) including yields, term premia, and risk-neutral yields at
-#'     monthly maturity steps from 3 to 120 months. Updated from the GitHub
+#'     monthly maturity steps from 1 to 120 months. Updated from the GitHub
 #'     replication release; the NY Fed workbook is the opt-in fallback.}
 #'   \item{\strong{Economic Variables}}{Quarterly macroeconomic and financial
 #'     variables including GDP, inflation, financial conditions indices, and
@@ -114,6 +114,7 @@
 #'     level-error variance bound
 #'   \item \code{\link{compute_c_hat}()}: Supremum estimator
 #'   \item \code{\link{compute_k_hat}()}: Fourth moment estimator
+#'   \item \code{\link{compute_k2_hat}()}: Price-news fourth moment estimator
 #'   \item \code{\link{compute_variance_bound}()}: Variance bounds
 #' }}
 #'
@@ -121,6 +122,18 @@
 #' \itemize{
 #'   \item \code{\link{compute_w1_residuals}()}: Primary endogenous variable residuals
 #'   \item \code{\link{compute_w2_residuals}()}: Secondary endogenous variable residuals
+#'   \item \code{\link{compute_identification_moments}()}: The seven moments
+#'   \item \code{\link{build_instrument_matrix}()}: Construct instruments
+#'   \item \code{\link{separate_instruments_lambda}()}: Per-instrument weights
+#'   \item \code{\link{compute_identified_set_components}()}: L_i, V_i, Q_i
+#'   \item \code{\link{build_quadratic_system}()}: Quadratic constraints (preferred)
+#'   \item \code{\link{build_general_quadratic_system}()}: Generalized constraints
+#'   \item \code{\link{compute_identified_set_quadratic}()}: d_i, A_i, b_i, c_i
+#'   \item \code{\link{make_constraint_checker}()}: Per-maturity constraint closure
+#'   \item \code{\link{make_system_checker}()}: Full-system constraint closure
+#'   \item \code{\link{align_instrument_sets}()}: Align instrument sets
+#'   \item \code{\link{lambda_from_support}()}: Weights from a support pattern
+#'   \item \code{\link{recover_structural_coefficients}()}: Recover beta1(theta)
 #' }}
 #'
 #'

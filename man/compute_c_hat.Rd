@@ -29,7 +29,8 @@ steps one period, so maturity arithmetic moves in multiples of
 bond, and horizons must satisfy \code{i <= MAX_MATURITY - step}.}
 }
 \value{
-Numeric value of c_hat_i
+Numeric value of c_hat_i, or \code{NA_real_} when no valid
+paired observations remain.
 }
 \description{
 Computes c_hat_i which estimates sup_t exp(2*E_t[p_(t+i)^(1)]), the

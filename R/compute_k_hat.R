@@ -8,7 +8,8 @@
 #' @template param-maturity-index
 #' @template param-step
 #'
-#' @return Numeric value of k_hat_i
+#' @return Numeric value of k_hat_i, or \code{NA_real_} when no valid
+#'   paired observations remain.
 #'
 #' @section Mathematical Formula:
 #' With h = i/step news periods and m(step) the step maturity in years:

@@ -9,11 +9,16 @@
 #' @param moments A \code{hetid_moments} object from
 #'   \code{\link{compute_identification_moments}}
 #'
-#' @return An object of class \code{hetid_components}: a list containing
+#' @return An object of class \code{hetid_components}: a list (with
+#' M = \code{length(maturities)} the active constraint maturities and
+#' n_components the theta axis) containing
 #' \describe{
-#'   \item{L_i}{Named vector of L_i values for each maturity}
-#'   \item{V_i}{Named vector of V_i values for each maturity}
-#'   \item{Q_i}{List of vectors, each element is Q_i (length n_components)}
+#'   \item{L_i}{Named numeric vector of length M (keys maturity_N); element k
+#'     is L_i for maturity \code{maturities[k]}}
+#'   \item{V_i}{Named numeric vector of length M (keys maturity_N); element k
+#'     is V_i for maturity \code{maturities[k]}}
+#'   \item{Q_i}{Named list of length M (keys maturity_N); element k is the
+#'     length-n_components vector Q_i for maturity \code{maturities[k]}}
 #' }
 #' carrying the moments' \code{maturities} and \code{n_components}
 #' attributes forward.

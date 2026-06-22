@@ -60,6 +60,14 @@
 #' # Use only first 2 PCs
 #' res_y1_2pc <- compute_w1_residuals(n_pcs = 2)
 #'
+#' # Include one own-lag of the outcome as a predetermined regressor
+#' res_y1_lag <- compute_w1_residuals(y1_lags = 1L)
+#'
+#' # Replace the PCs with custom exogenous regressors (not combined with n_pcs)
+#' data("variables", package = "hetid")
+#' exog <- as.matrix(variables[, c("pc1", "pc2", "pc3")])
+#' res_y1_exog <- compute_w1_residuals(exog = exog)
+#'
 #' # Get results as data frame
 #' res_y1_df <- compute_w1_residuals(n_pcs = 4, return_df = TRUE)
 #' head(res_y1_df)

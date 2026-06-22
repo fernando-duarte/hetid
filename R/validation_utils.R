@@ -14,7 +14,7 @@ NULL
 #' @param x Value to check
 #' @param name Parameter name for the error message
 #'
-#' @return Invisible NULL; stops with error if invalid
+#' @return Invisible TRUE if valid, stops with informative error otherwise.
 #' @keywords internal
 assert_scalar_finite <- function(x, name) {
   if (!is.numeric(x) || length(x) != 1 || !is.finite(x)) {
@@ -23,6 +23,7 @@ assert_scalar_finite <- function(x, name) {
       arg = name
     )
   }
+  invisible(TRUE)
 }
 
 #' Assert a Scalar is an Integer Within a Closed Range

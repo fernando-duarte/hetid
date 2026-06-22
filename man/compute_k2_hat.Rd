@@ -29,7 +29,8 @@ steps one period, so maturity arithmetic moves in multiples of
 bond, and horizons must satisfy \code{i <= MAX_MATURITY - step}.}
 }
 \value{
-Numeric value of k2_hat_i
+Numeric value of k2_hat_i, or \code{NA_real_} when no valid
+observations remain after trimming.
 }
 \description{
 Computes k2_hat_i, the fourth moment of the price-news term that, with
