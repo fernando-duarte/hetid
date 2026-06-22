@@ -1,6 +1,6 @@
 # Scripts Directory Structure
 
-_Last modified: 2026-06-15 15:50 EDT_
+_Last modified: 2026-06-22 15:53 EDT_
 
 This directory contains all analysis scripts for the hetid
 package, organized by workflow stage. All outputs are stored
@@ -373,7 +373,7 @@ spec-comparison stage to its quick subgrid. The verified switches:
   back to the `IMPOSE_NEWS_PROJECTION_ZERO` script constant in
   `common_settings.R` (default `FALSE`). The resolved value is part of
   the Stage-04 baseline spec stamp.
-- `HETID_ASSERT_EQUIV` (read in `identification_utils.R:274`) -
+- `HETID_ASSERT_EQUIV` (read in `identification_utils.R:275`) -
   diagnostic shadow flag: when non-empty, every
   `build_pipeline_quadratic_system()` call additionally asserts
   numeric-leaf identity with the legacy `build_quadratic_system()`.
