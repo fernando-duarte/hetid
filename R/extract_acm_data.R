@@ -93,12 +93,10 @@ extract_acm_data <- function(data_types = c("yields", "term_premia"),
                              use_incomplete_quarters =
                                HETID_CONSTANTS$USE_INCOMPLETE_QUARTERS,
                              source = c("auto", "github", "nyfed")) {
-  # Validate inputs
   frequency <- match.arg(frequency)
   source <- match.arg(source)
   validate_acm_extract_inputs(data_types, maturities, use_incomplete_quarters)
 
-  # Load ACM data
   acm_data <- load_term_premia(auto_download = auto_download, source = source)
   assert_insufficient_data_ok(
     !is.null(acm_data),
@@ -111,26 +109,20 @@ extract_acm_data <- function(data_types = c("yields", "term_premia"),
   # Annual-only sources cannot serve month-level requests
   assert_subannual_available(acm_data, maturities)
 
-  # load_term_premia() returns the date column as lowercase 'date';
-  # ensure it is a Date before any filtering
   acm_data <- normalize_acm_date_column(acm_data)
 
-  # Convert dates if provided as strings
   start_date <- coerce_optional_date(start_date, "start_date")
   end_date <- coerce_optional_date(end_date, "end_date")
 
-  # Filter by date range
   acm_data <- filter_acm_date_range(
     acm_data,
     start_date,
     end_date
   )
 
-  # Build column mapping for selected data types and maturities
   col_mapping <- build_acm_col_mapping(data_types, maturities) # nolint: object_usage_linter
 
-  # A missing mapped column means an incomplete/corrupt source: fail
-  # closed rather than silently returning a narrower frame
+  # Fail closed rather than silently returning a narrower frame
   old_names <- unlist(col_mapping, use.names = FALSE)
   missing_cols <- old_names[!old_names %in% names(acm_data)]
   if (length(missing_cols) > 0) {
@@ -141,7 +133,6 @@ extract_acm_data <- function(data_types = c("yields", "term_premia"),
     ))
   }
 
-  # Assemble every requested column at once (no growing-frame copies)
   selected <- acm_data[old_names]
   names(selected) <- names(col_mapping)
   result <- data.frame(
@@ -149,23 +140,17 @@ extract_acm_data <- function(data_types = c("yields", "term_premia"),
     check.names = FALSE, stringsAsFactors = FALSE
   )
 
-  # Convert to quarterly if requested
   if (frequency == "quarterly") {
     result <- convert_to_quarterly(result, use_incomplete_quarters) # nolint: object_usage_linter
   }
 
-  # Normalize to the canonical period-end convention so every ingested series
-  # leaves on identical calendar dates (idempotent for the quarterly path,
-  # which convert_to_quarterly already normalized).
+  # Idempotent for the quarterly path (convert_to_quarterly already normalized).
   result$date <- to_period_end(
     result$date,
     if (frequency == "quarterly") "quarterly" else "monthly"
   )
 
-  # Sort by date; drop = FALSE keeps single-column results as data frames
   result <- result[order(result$date), , drop = FALSE]
-
-  # Reset row names
   rownames(result) <- NULL
 
   result

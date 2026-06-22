@@ -53,11 +53,7 @@ compute_price_news <- function(yields, term_premia, i,
                                step = HETID_CONSTANTS$DEFAULT_STEP) {
   validate_row_alignment(yields, term_premia)
 
-  # Shared maturity validation and the bare T-1 price-news difference
-  # (compute_news_components()$delta_p is the price-news kernel)
   components <- compute_news_components(yields, term_premia, i, step = step)
-
-  # Yield news is the negation of (log) price news
   price_news <- if (return_yield_news) -components$delta_p else components$delta_p
 
   prepare_return_data(

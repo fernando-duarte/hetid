@@ -23,16 +23,12 @@ convert_to_quarterly <- function(
   data,
   use_incomplete_quarters = HETID_CONSTANTS$USE_INCOMPLETE_QUARTERS
 ) {
-  # An empty input has no quarters; return it unchanged to mirror the
-  # monthly path's documented zero-row result
   if (nrow(data) == 0) {
     return(data)
   }
 
-  # NA-dated rows cannot be placed in a quarter. The monthly path keeps
-  # them, but the quarterly aggregate would drop them silently, so remove
-  # them explicitly and announce the count -- before the duplicate-date
-  # check, which would otherwise read repeated NAs as duplicates.
+  # Remove NA-dated rows explicitly before the duplicate check (repeated
+  # NAs would otherwise be read as duplicates).
   na_date <- is.na(data$date)
   if (any(na_date)) {
     n_na <- sum(na_date)
@@ -49,8 +45,6 @@ convert_to_quarterly <- function(
     }
   }
 
-  # Duplicate dates would fan out in the merge below and break the
-  # quarter-end invariant, so malformed input errors up front
   assert_bad_argument_ok(
     anyDuplicated(data$date) == 0,
     paste0(
@@ -62,8 +56,7 @@ convert_to_quarterly <- function(
 
   data <- data[order(data$date), , drop = FALSE]
 
-  # Quarter bookkeeping lives in a scratch frame so input columns named
-  # year/month/quarter are never clobbered
+  # Scratch frame avoids clobbering any input columns named year/month/quarter
   scratch <- data.frame(
     date = data$date,
     year = as.numeric(format(data$date, HETID_CONSTANTS$YEAR_FORMAT)),
@@ -73,14 +66,12 @@ convert_to_quarterly <- function(
     scratch$month / HETID_CONSTANTS$MONTHS_PER_QUARTER
   )
 
-  # Group by year-quarter and take last observation
   last_in_quarter <- aggregate(
     date ~ year + quarter,
     data = scratch,
     FUN = max
   )
 
-  # Quarters whose last observation is not in the terminal month
   last_months <- as.numeric(
     format(last_in_quarter$date, HETID_CONSTANTS$MONTH_FORMAT)
   )
@@ -100,7 +91,6 @@ convert_to_quarterly <- function(
       paste(details, collapse = "; "), ". "
     )
     if (use_incomplete_quarters) {
-      # Incomplete data enters the output, so this rises to a warning
       warn_incomplete_quarter(paste0(
         notice,
         "These quarters are kept in the quarterly output using their ",
@@ -111,8 +101,6 @@ convert_to_quarterly <- function(
         "from HETID_CONSTANTS$USE_INCOMPLETE_QUARTERS)."
       ))
     } else {
-      # The caller opted into dropping, so an informational message
-      # records which quarters were removed without raising a warning
       dropped <- if (sum(incomplete) == 1) {
         "This quarter was dropped from the quarterly output. To keep it"
       } else {
@@ -126,7 +114,6 @@ convert_to_quarterly <- function(
     }
   }
 
-  # Merge to get full data for last observation in each quarter
   result <- merge(
     last_in_quarter[, "date", drop = FALSE],
     data,
@@ -134,10 +121,8 @@ convert_to_quarterly <- function(
     all.x = TRUE
   )
 
-  # Canonical period-end: every quarterly date becomes the last calendar day of
-  # its quarter (Mar 31 / Jun 30 / Sep 30 / Dec 31), regardless of the business
-  # day the last observation fell on. Chronological order is unchanged because
-  # each new date stays within the same quarter.
+  # Period-end: shift to the last calendar day of the quarter (Mar 31 / Jun 30 /
+  # Sep 30 / Dec 31) regardless of which business day the last observation fell on.
   result$date <- to_period_end(result$date, "quarterly")
 
   result

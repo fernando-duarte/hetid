@@ -67,9 +67,8 @@ build_instrument_matrix <- function(z, transforms = NULL,
     arg = "transforms"
   )
   if (!is.null(transforms)) {
-    # Backfill missing names by INDEX: list(named = f, g) carries
-    # names c("named", ""), and indexing a list by "" silently
-    # returns the first unnamed element -- never iterate by name
+    # Backfill missing names by index position: "" names cause silent
+    # lookup of the first element when iterating by name
     if (is.null(names(transforms))) {
       names(transforms) <- paste0("h", seq_along(transforms))
     } else {
@@ -133,8 +132,7 @@ as_transform_block <- function(out, nm, t_obs) {
       " rows to align with z"
     )
   )
-  # Label unconditionally from the transform name: arithmetic on z
-  # (e.g. z^2) keeps z's dimnames, which would alias the originals
+  # Label from transform name: arithmetic on z keeps z's dimnames, aliasing originals
   colnames(out) <- if (ncol(out) == 1) {
     nm
   } else {

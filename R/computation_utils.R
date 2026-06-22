@@ -12,8 +12,7 @@ NULL
 #' @return Character vector, e.g. c("pc1", "pc2", ...); empty for zero PCs
 #' @keywords internal
 get_pc_column_names <- function(n_pcs) {
-  # Explicit zero branch: paste0 would recycle the prefix against
-  # integer(0) and return a bare "pc"
+  # paste0 against integer(0) returns "pc", not character(0)
   if (n_pcs == 0) {
     return(character(0))
   }
@@ -87,12 +86,9 @@ min_obs_for_pc_regression <- function(n_pcs) {
 #' @keywords internal
 prepare_return_data <- function(result_series, dates, yields,
                                 series_name, is_news = FALSE) {
-  # Validated first, before the lazily-forced `result_series` promise runs its
-  # own kernel input checks, so a bad-dates error surfaces here.
+  # Validate dates first so a bad-dates error surfaces before kernel checks run
   validate_dates_vector(dates, nrow(yields))
 
-  # A news series carries one element per period change (T - 1); a level
-  # series carries one per date. Check the length against the declared kind.
   expected_length <- if (is_news) length(dates) - 1L else length(dates)
   assert_dimension_ok(
     length(result_series) == expected_length,
@@ -103,8 +99,7 @@ prepare_return_data <- function(result_series, dates, yields,
     )
   )
 
-  # A news series aligns to the dates by prepending NA: news[t] is the
-  # change from t to t + 1, known at t + 1.
+  # News series: prepend NA so news[t] (change t→t+1) carries dates[t+1]
   result_aligned <- if (is_news) c(NA, result_series) else result_series
 
   result_df <- data.frame(date = dates, stringsAsFactors = FALSE)

@@ -99,7 +99,6 @@ compute_w2_residuals <- function(yields, term_premia,
                                  step = HETID_CONSTANTS$DEFAULT_STEP,
                                  y1 = NULL, y1_lags = 0L,
                                  impose_b_zero = FALSE) {
-  # Validate inputs
   if (is.null(maturities)) {
     maturities <- default_w2_maturities(step)
   }
@@ -118,20 +117,13 @@ compute_w2_residuals <- function(yields, term_premia,
   term_premia_df <- validated$term_premia
   maturities <- validated$maturities
 
-  # Resolve the t+1 realization-date index once, up front (fail fast on bad
-  # dates before any per-maturity work): full-T input -> lead dates d_2..d_T.
   w2_dates <- resolve_w2_dates(dates, nrow(yields_df))
-
-  # Validate the supplied PCs (required; aligned to yields by date)
   pc_result <- load_w2_pcs(pcs, n_pcs, nrow(yields_df))
   pcs <- pc_result$pcs
 
-  # Common conditioning own-lags: build_common_conditioning enforces a
-  # length-matched, non-NULL y1 per maturity when y1_lags > 0.
   y1_lags <- validate_y1_lags(y1_lags, nrow(pcs))
   pc_lag_names <- if (y1_lags > 0L) lag_grammar_names("y1", y1_lags) else NULL
 
-  # Initialize storage
   residuals_list <- list()
   fitted_list <- list()
   coef_list <- vector("list", length(maturities))
@@ -139,23 +131,17 @@ compute_w2_residuals <- function(yields, term_premia,
   n_obs_used <- rep(NA_real_, length(maturities))
   kept_idx_list <- list()
 
-  # Process each maturity
   for (idx in seq_along(maturities)) {
     i <- maturities[idx]
-
-    # Process single maturity
     result <- process_w2_maturity( # nolint: object_usage_linter
       i, yields_df, term_premia_df, pcs, n_pcs,
       step = step, y1 = y1, y1_lags = y1_lags,
       impose_b_zero = impose_b_zero
     )
 
-    # Skip if NULL result
     if (is.null(result)) {
       next
     }
-
-    # Store results
     residuals_list[[maturity_names(i)]] <- result$residuals
     fitted_list[[maturity_names(i)]] <- result$fitted
     coef_list[[idx]] <- result$coefficients
@@ -164,16 +150,13 @@ compute_w2_residuals <- function(yields, term_premia,
     kept_idx_list[[maturity_names(i)]] <- result$kept_idx
   }
 
-  # Column names come from the lm() coefficients, not a derived n_pcs + 1
+  # Column names from lm() coefficients, not derived from n_pcs + 1
   coef_matrix <- assemble_w2_coef_matrix(
     coef_list,
     row_names = maturity_names(maturities),
     fallback_names = c("(Intercept)", pc_result$pc_names, pc_lag_names)
   )
 
-  # Per-maturity t+1 realization dates, parallel to residuals (W2 ragged:
-  # subset the resolved index by each maturity's kept_idx). Computed once and
-  # shared by both return shapes.
   dates_list <- lapply(kept_idx_list, function(kept) w2_dates[which(kept)])
 
   if (return_df) {

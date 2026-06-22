@@ -81,24 +81,13 @@ compute_expected_sdf_gap <- function(yields, term_premia, i,
   # numerically invariant.
   gap <- realized_price - exp_n_hat_paired
 
-  # First-order-cancelled gap q = e^{n_hat}(e^u - 1 - u), u = x - n_hat (raw
-  # forecast error, no log(0) hazard). expm1() removes the e^u - 1 cancellation;
-  # the remaining `- u` is numerically irrelevant here (var(q) >> machine eps).
-  # E[u | info] = 0, so q shares g's conditional mean; its 1/N variance is a
-  # sharper (O(sigma^4)) bound.
+  # expm1() removes the e^u - 1 cancellation; the trailing `- u` is numerically
+  # irrelevant here (var(q) >> machine eps).
   u <- realized_log - n_hat_paired
   q_gap <- exp_n_hat_paired * (expm1(u) - u)
 
-  # ONE common mask (gap's finite set) so g and q are aligned over the same
-  # paired dates and min{Var(g),Var(q)} compares like-for-like. is.finite(gap)
-  # equals the per-leg mask is.finite(realized_price) & is.finite(exp_n_hat_paired):
-  # both legs are exp() (nonnegative, no finite-minus-finite overflow), so the
-  # difference is non-finite iff a leg is. gap[mask] is byte-identical to before
-  # (compute_expected_sdf invariant). q[mask] is only ALIGNED to that mask, not
-  # independently finite: it can still be non-finite for non-finite or extreme
-  # inputs (a yield -> +Inf gives q = +Inf; a finite but extreme n_hat can
-  # underflow e^{n_hat} to 0 while expm1(u) overflows, giving 0*Inf = NaN). The
-  # bound function guards var_q against this.
+  # is.finite(gap) is the common finite mask for g and q: each leg is exp(), so
+  # the difference is non-finite iff a leg is.
   mask <- is.finite(gap)
   list(exp_n_hat = exp_n_hat, gap = gap[mask], q = q_gap[mask])
 }

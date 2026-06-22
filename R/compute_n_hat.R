@@ -75,7 +75,6 @@ n_hat_series <- function(yields, term_premia, i,
   validate_row_alignment(yields, term_premia)
   validate_percent_units(yields)
 
-  # Extract relevant columns
   y_i <- require_column(yields, acm_column_name("yields", i), "yields")
   y_next <- require_column(
     yields, acm_column_name("yields", i + step), "yields"
@@ -87,21 +86,15 @@ n_hat_series <- function(yields, term_premia, i,
     term_premia, acm_column_name("term_premia", i + step), "term_premia"
   )
 
-  # Impose the spec normalization TP^(1) := 0 at the one-period
-  # (step-maturity) bond: its term premium is zero by definition, so any
-  # supplied value is overwritten by zero. This is the only point in the
-  # chain where the step-maturity term premium enters.
+  # TP^(1) := 0 normalization: overwrite any supplied step-maturity term premium.
   if (i == step) {
     tp_i <- 0
   }
 
-  # Maturity weights in years: annualized yields scale by maturity in
-  # years to form log prices
   m_i <- i / HETID_CONSTANTS$MATURITY_UNITS_PER_YEAR
   m_next <- (i + step) / HETID_CONSTANTS$MATURITY_UNITS_PER_YEAR
 
-  # Compute n_hat, then convert percentages to decimals (ACM data is in
-  # percentage points)
+  # ACM data is in percentage points; divide by PERCENT_TO_DECIMAL after
   n_hat <- m_i * y_i - m_next * y_next + m_next * tp_next - m_i * tp_i
   n_hat / HETID_CONSTANTS$PERCENT_TO_DECIMAL
 }

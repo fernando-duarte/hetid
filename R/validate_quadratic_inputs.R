@@ -118,8 +118,6 @@ validate_quadratic_inputs <- function(tau, components, moments) {
     arg = "Q_i"
   )
 
-  # Container shape invariants are trusted from new_hetid_moments();
-  # only the components object needs shape validation here.
   n_maturities <- length(maturities)
   validate_time_series_lengths(
     components$L_i, components$V_i, components$Q_i,
@@ -127,7 +125,6 @@ validate_quadratic_inputs <- function(tau, components, moments) {
   )
   validate_q_i_dims(components$Q_i, maturities, n_components)
 
-  # Validate sigma_i_sq positivity (a quadratic-stage requirement)
   sigma_i_sq <- moments$sigma_i_sq
   assert_sigma_positive(sigma_i_sq, maturities)
 

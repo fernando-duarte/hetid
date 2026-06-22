@@ -12,7 +12,6 @@ download_acm_nyfed <- function(quiet = FALSE) {
   download_url <- DATA_URLS$ACM_NYFED_XLS
   csv_path <- get_acm_download_path("nyfed")
 
-  # Check if readxl is available before downloading
   if (!requireNamespace("readxl", quietly = TRUE)) {
     stop_hetid(paste0(
       "Package 'readxl' is required to read Excel files.",
@@ -21,7 +20,6 @@ download_acm_nyfed <- function(quiet = FALSE) {
     ))
   }
 
-  # Download to a temporary file through the shared fail-closed fetch
   temp_xls <- tempfile(fileext = ".xls")
   on.exit(unlink(temp_xls), add = TRUE, after = FALSE)
 
@@ -45,8 +43,7 @@ download_acm_nyfed <- function(quiet = FALSE) {
     }
   )
 
-  # Write to a temp file in the cache directory, then atomically move it
-  # into place so a partial write never half-overwrites the cache
+  # Atomic write: a partial write never half-overwrites the cache.
   temp_csv <- tempfile(
     pattern = "acm_nyfed_", tmpdir = dirname(csv_path),
     fileext = ".csv"

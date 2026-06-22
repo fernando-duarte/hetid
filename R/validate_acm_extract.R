@@ -21,8 +21,6 @@ validate_acm_extract_inputs <- function(data_types, maturities,
 
   assert_acm_data_types(data_types)
 
-  # Bond maturities are months: bounds come from the ACM grid, not the
-  # positional component-index convention
   validate_maturities(
     maturities,
     max_value = HETID_CONSTANTS$MAX_MATURITY,
@@ -47,9 +45,8 @@ assert_subannual_available <- function(acm_data, maturities) {
   if (length(sub_annual) == 0) {
     return(invisible(TRUE))
   }
-  # Probe the specific requested sub-annual raw columns, not a blanket
-  # "any month-suffixed column": a source carrying some sub-annual nodes
-  # (e.g. 3M) but not the requested one (e.g. 9M) must still fail here.
+  # Probe the exact requested columns: a source with some sub-annual nodes (e.g. 3M)
+  # but not the requested one (e.g. 9M) must still fail here.
   absent <- setdiff(
     acm_raw_column_name("yields", sub_annual), names(acm_data)
   )

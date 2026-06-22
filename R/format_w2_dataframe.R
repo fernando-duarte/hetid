@@ -23,8 +23,6 @@ format_w2_dataframe <- function(
 ) {
   df_list <- list()
 
-  # Build data frame for each maturity (dates are pre-subset per maturity,
-  # the same list the list-mode return exposes).
   for (idx in seq_along(maturities)) {
     i <- maturities[idx]
     mat_key <- maturity_names(i)
@@ -40,9 +38,7 @@ format_w2_dataframe <- function(
     }
   }
 
-  # Combine all maturities; when every maturity was skipped,
-  # return a zero-row frame with the documented columns instead
-  # of the NULL that rbind on an empty list produces
+  # rbind on an empty list returns NULL; return a typed zero-row frame instead
   combined <- do.call(rbind, df_list)
   if (is.null(combined)) {
     combined <- data.frame(

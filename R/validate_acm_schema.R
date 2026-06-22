@@ -13,8 +13,7 @@
 #' @return Invisible TRUE
 #' @keywords internal
 validate_acm_schema <- function(acm_data, path) {
-  # Build the prefix patterns from the schema (the SSOT for ACM naming)
-  # so a rename there propagates here instead of silently desyncing.
+  # Derive patterns from HETID_ACM_SCHEMA so a rename there propagates here.
   prefixes <- vapply(HETID_ACM_SCHEMA, `[[`, character(1), "prefix_old")
   family_pattern <- paste0("^(", paste(prefixes, collapse = "|"), ")")
 

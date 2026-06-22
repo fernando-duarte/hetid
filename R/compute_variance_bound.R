@@ -55,8 +55,6 @@ compute_variance_bound <- function(yields, term_premia, i,
   validate_maturity_index(i, max_maturity = effective_max_maturity(step))
   validate_row_alignment(yields, term_premia)
 
-  # Envelope: the sample maximum c_hat (default), or a caller-supplied
-  # deterministic envelope c_bar (the spec's U^bd).
   if (is.null(c_bar)) {
     c_hat <- compute_c_hat(yields, term_premia, i, step = step)
   } else {
@@ -68,10 +66,7 @@ compute_variance_bound <- function(yields, term_premia, i,
     c_hat <- c_bar
   }
 
-  # Fourth-moment components of the leading term U_i = (1/4) * C_i * (K1 + K2)
   k_hat <- compute_k_hat(yields, term_premia, i, step = step)
   k2_hat <- compute_k2_hat(yields, term_premia, i, step = step)
-
-  # Return the plug-in leading variance-bound term
   0.25 * c_hat * (k_hat + k2_hat)
 }

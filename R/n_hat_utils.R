@@ -24,8 +24,7 @@ compute_n_hat_previous <- function(yields, term_premia, i,
                                    step = HETID_CONSTANTS$DEFAULT_STEP) {
   validate_step(step)
   if (i == step) {
-    # Boundary: the realized log price of the step-maturity bond,
-    # -m(step) * y_t^(step), already observable at date t
+    # Boundary: realized log price of the step-maturity bond, observable at t
     y_step <- require_column(
       yields, acm_column_name("yields", step), "yields"
     )
@@ -51,13 +50,10 @@ compute_time_series_news <- function(current_series, future_series) {
   )
   n_obs <- length(current_series)
 
-  # Guard: need at least 2 obs for differencing
   if (n_obs < 2) {
     return(numeric(0))
   }
 
-  # Compute news: future[t+1] - current[t]
-  # NAs propagate naturally via R's NA arithmetic
   future_series[seq.int(2L, n_obs)] -
     current_series[seq_len(n_obs - 1L)]
 }

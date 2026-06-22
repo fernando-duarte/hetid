@@ -80,9 +80,7 @@ build_general_quadratic_system <- function(lambda, tau, moments) {
   b_i <- vector("list", n_total)
   c_i <- numeric(n_total)
 
-  # The labels frame is the single definition of constraint order:
-  # the assembly loop is driven off its rows, so labels and
-  # constraints cannot drift apart
+  # Labels frame drives the loop; labels and constraints cannot drift apart
   nms <- label_df$name
   idx_vec <- match(label_df$maturity, maturities)
   for (pos in seq_len(n_total)) {

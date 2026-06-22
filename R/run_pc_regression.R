@@ -15,8 +15,6 @@
 #' @importFrom stats lm residuals fitted coef as.formula complete.cases
 #' @keywords internal
 run_pc_regression <- function(y, pcs, n_pcs) {
-  # Subset to first n_pcs columns to avoid name
-  # recycling when user supplies extra columns
   pcs <- pcs[, seq_len(n_pcs), drop = FALSE]
 
   complete_idx <- complete.cases(y, pcs)
@@ -36,8 +34,7 @@ run_pc_regression <- function(y, pcs, n_pcs) {
   pc_names <- if (is.null(nms) || anyNA(nms) || !all(nzchar(nms))) {
     get_pc_column_names(n_pcs)
   } else {
-    # Sanitize so the formula string and data.frame name mangling
-    # agree for non-syntactic user names ("10y rate" -> "X10y.rate")
+    # sanitize non-syntactic names so formula and data.frame agree
     make.names(nms, unique = TRUE)
   }
   colnames(pcs_clean) <- pc_names

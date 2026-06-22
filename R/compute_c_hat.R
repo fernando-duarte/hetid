@@ -38,7 +38,6 @@
 #'
 compute_c_hat <- function(yields, term_premia, i,
                           step = HETID_CONSTANTS$DEFAULT_STEP) {
-  # Use standardized validation
   validate_step(step)
   validate_maturity_index(i, max_maturity = effective_max_maturity(step))
   validate_step_multiple(
@@ -47,18 +46,13 @@ compute_c_hat <- function(yields, term_premia, i,
   )
   validate_row_alignment(yields, term_premia)
 
-  # Compute n_hat series (bare numeric kernel)
   n_hat <- n_hat_series(yields, term_premia, i, step = step)
-
-  # Restrict to the bound index set T_i = {1, ..., T - i/step}: the
-  # envelope C_i shares the dates of K1/K2, whose realized leg needs
-  # i/step further news periods (spec's common T_i for the bound).
+  # Trim to T_i so C_i shares dates with K1/K2 (realized leg needs i/step more periods)
   n_hat_clean <- trim_to_bound_index_set(n_hat, i, step)
 
   if (length(n_hat_clean) == 0) {
     return(NA_real_)
   }
 
-  # Compute maximum of exp(2*n_hat) over T_i
   max(exp(2 * n_hat_clean))
 }

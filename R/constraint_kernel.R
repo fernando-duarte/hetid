@@ -68,8 +68,7 @@ assemble_constraint_quadratic <- function(tau_ik, l_val, v_val, q_vec,
 
   a_mat <- tcrossprod(q_vec) - d_val * s_i_2_mat
 
-  # Symmetrize exactly: theta' A theta is invariant under
-  # (A + t(A)) / 2, and downstream consumers can rely on it
+  # Symmetrize: downstream consumers rely on exact symmetry
   a_mat <- (a_mat + t(a_mat)) / 2
 
   b_vec <- -2 * l_val * q_vec +
@@ -78,9 +77,7 @@ assemble_constraint_quadratic <- function(tau_ik, l_val, v_val, q_vec,
 
   c_val <- l_val^2 - d_val * s_i_0_val
 
-  # Belt-and-braces against tampered containers: validated inputs
-  # guarantee finite moments and components, so a non-finite
-  # assembly indicates post-construction tampering or a hetid bug
+  # Non-finite assembly after validated inputs indicates tampering or a hetid bug
   if (!all(
     is.finite(d_val), is.finite(a_mat),
     is.finite(b_vec), is.finite(c_val)

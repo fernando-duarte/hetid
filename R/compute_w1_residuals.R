@@ -74,7 +74,6 @@
 compute_w1_residuals <- function(n_pcs = HETID_CONSTANTS$DEFAULT_N_PCS,
                                  data = NULL, return_df = FALSE,
                                  exog = NULL, y1_lags = 0L) {
-  # Validate inputs
   if (is.null(exog)) {
     validate_n_pcs(n_pcs)
   } else {
@@ -91,7 +90,6 @@ compute_w1_residuals <- function(n_pcs = HETID_CONSTANTS$DEFAULT_N_PCS,
     }
   }
 
-  # Load data if not provided
   if (is.null(data)) {
     message(
       "Using bundled 'variables' dataset. ",
@@ -100,9 +98,7 @@ compute_w1_residuals <- function(n_pcs = HETID_CONSTANTS$DEFAULT_N_PCS,
     data <- get_bundled_variables()
   }
 
-  # Column access below needs a data frame; assert_tabular alone
-  # admits matrices, whose names() are NULL, so require data.frame
-  # explicitly for a clear type error instead of "missing columns"
+  # assert_tabular alone admits matrices (NULL names); require data.frame for clear errors
   assert_tabular(data, "data")
   assert_bad_argument_ok(
     is.data.frame(data),
@@ -110,22 +106,17 @@ compute_w1_residuals <- function(n_pcs = HETID_CONSTANTS$DEFAULT_N_PCS,
     arg = "data"
   )
 
-  # A date column is always required: W1 residuals are a time series and are
-  # never returned without their realization dates.
   required_cols <- c("date", HETID_CONSTANTS$CONSUMPTION_GROWTH_COL)
   if (is.null(exog)) {
     required_cols <- c(required_cols, get_pc_column_names(n_pcs))
   }
   assert_columns_exist(data, required_cols)
 
-  # Extract relevant variables; validate the full input dates up front (fail
-  # fast on a non-Date / NA / wrong-length column, not only the retained rows).
   y1 <- data[[HETID_CONSTANTS$CONSUMPTION_GROWTH_COL]]
   dates <- data$date
   validate_dates_vector(dates, length(y1))
   y1_lags <- validate_y1_lags(y1_lags, length(y1))
 
-  # Create regressor matrix; labels travel on its colnames
   if (is.null(exog)) {
     reg_matrix <- as.matrix(data[, get_pc_column_names(n_pcs), drop = FALSE])
     n_reg <- n_pcs
@@ -138,13 +129,11 @@ compute_w1_residuals <- function(n_pcs = HETID_CONSTANTS$DEFAULT_N_PCS,
     n_reg <- ncol(exog)
   }
 
-  # Append predetermined own-lags of Y1 as extra regressors (see append_y1_lags)
   if (y1_lags > 0L) {
     reg_matrix <- append_y1_lags(reg_matrix, y1, y1_lags)
     n_reg <- n_reg + y1_lags
   }
 
-  # Regress Y_{t+1} on regressors: lag regressors, lead Y1
   n <- length(y1)
   assert_insufficient_data_ok(
     n >= 2,
@@ -155,7 +144,7 @@ compute_w1_residuals <- function(n_pcs = HETID_CONSTANTS$DEFAULT_N_PCS,
     drop = FALSE
   ]
   y1_future <- y1[seq.int(2L, n)]
-  dates_future <- dates[seq.int(2L, n)] # lead to the t+1 realization dates
+  dates_future <- dates[seq.int(2L, n)]
 
   reg <- run_pc_regression(y1_future, reg_lagged, n_reg)
   dates_clean <- dates_future[reg$complete_idx]

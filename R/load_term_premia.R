@@ -47,10 +47,8 @@ load_term_premia <- function(auto_download = FALSE,
     }
   }
 
-  # Resolve once, after any download, so a fresh user-cache copy is found
+  # Resolve after any download so a fresh user-cache copy is found.
   csv_path <- get_acm_data_path(source)
-
-  # Load the data
   tp_df <- tryCatch(
     read.csv(csv_path, stringsAsFactors = FALSE),
     error = function(e) {
@@ -61,14 +59,10 @@ load_term_premia <- function(auto_download = FALSE,
     }
   )
 
-  # Stale/corrupt caches fail here, not downstream
   validate_acm_schema(tp_df, csv_path)
 
-  # Convert DATE column to Date via the shared parse-and-warn helper
-  # (errors on a wholly unparseable column, matching the schema policy)
   if ("DATE" %in% names(tp_df)) {
     tp_df$DATE <- parse_and_warn_dates(tp_df$DATE, "DATE")
-    # Standardize column name to lowercase 'date'
     names(tp_df)[names(tp_df) == "DATE"] <- "date"
   }
 

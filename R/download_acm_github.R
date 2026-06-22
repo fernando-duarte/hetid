@@ -65,8 +65,7 @@ download_acm_github <- function(quiet = FALSE) {
   expected_sha <- acm_release_expected_sha256(quiet = quiet)
   cache_path <- get_acm_download_path("github")
 
-  # Same directory as the cache so the final rename stays one
-  # filesystem operation
+  # Same directory as the cache so the rename is a single filesystem operation.
   temp_gz <- tempfile(
     pattern = "acm_download_", tmpdir = dirname(cache_path),
     fileext = ".csv.gz"
@@ -92,7 +91,7 @@ download_acm_github <- function(quiet = FALSE) {
 
   atomic_replace(temp_gz, cache_path, "the verified download")
 
-  # Provenance sidecar: makes cached-vs-bundled differences debuggable
+  # Provenance sidecar for debugging cached-vs-bundled differences
   writeLines(
     c(
       paste0("sha256: ", actual_sha),

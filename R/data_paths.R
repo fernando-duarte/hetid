@@ -16,16 +16,13 @@ NULL
 #' @return Character string with path to the bundled data directory
 #' @keywords internal
 get_package_data_dir <- function() {
-  # Path resolution for package data
   pkg_dir <- system.file(package = "hetid")
 
   if (pkg_dir == "") {
     # nocov start
-    # Dev mode only — unreachable under pkgload::load_all()
     file.path("inst", "extdata")
     # nocov end
   } else {
-    # Installed package
     file.path(pkg_dir, "extdata")
   }
 }

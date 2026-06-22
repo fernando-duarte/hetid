@@ -46,8 +46,6 @@ download_term_premia <- function(source = c("github", "nyfed"),
   source <- match.arg(source)
 
   if (!force) {
-    # Per-source skip: github resolution includes the bundled copy,
-    # the nyfed source only its own cache file
     existing <- get_acm_data_path(source)
     if (file.exists(existing)) {
       if (!quiet) {

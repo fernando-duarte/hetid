@@ -33,9 +33,7 @@ as_lambda_list <- function(lambda, moments) {
         ") as the moments' instruments"
       )
     )
-    # Canonicalize to the list form (unused columns become NULL, the
-    # legacy unused-column semantics) and fall through to the single
-    # per-element validation loop below
+    # Canonicalize to list; unused columns become NULL (legacy semantics)
     lambda <- lapply(seq_len(n_components), function(i) {
       if (i %in% maturities) lambda[, i, drop = FALSE] else NULL
     })

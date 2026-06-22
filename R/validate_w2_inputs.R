@@ -30,21 +30,16 @@ default_w2_maturities <- function(step = HETID_CONSTANTS$DEFAULT_STEP) {
 #' @keywords internal
 validate_w2_inputs <- function(yields, term_premia, maturities,
                                step = HETID_CONSTANTS$DEFAULT_STEP) {
-  # Check input types
   assert_tabular(yields, "yields")
   assert_tabular(term_premia, "term_premia")
 
-  # Convert to data frames
   yields_df <- as.data.frame(yields)
   term_premia_df <- as.data.frame(term_premia)
 
-  # Use standardized data dimension validation
   validate_data_dimensions(yields_df, term_premia_df)
 
-  # Validate maturity values via the shared vector validator.
-  # No ncol-based cap: inputs may hold non-contiguous column
-  # subsets (e.g. y12/y48/y60/y72 for maturity 60), so column
-  # availability is checked per maturity in process_w2_maturity
+  # No ncol-based cap: inputs may hold non-contiguous column subsets,
+  # so column availability is checked per maturity in process_w2_maturity
   validate_step(step)
   validate_maturities(
     maturities,
@@ -53,8 +48,6 @@ validate_w2_inputs <- function(yields, term_premia, maturities,
     min_value = HETID_CONSTANTS$MIN_MATURITY
   )
 
-  # Each maturity must satisfy the news contract: the previous-period
-  # index is the boundary case or stays within the data range
   assert_news_contract_ok(
     maturities, step,
     arg = "maturities", subject = "maturities", offset_label = "maturity",
@@ -96,10 +89,7 @@ get_bundled_variables <- function() {
 #'   }
 #' @keywords internal
 load_w2_pcs <- function(pcs, n_pcs, n_obs) {
-  # PCs must be supplied already aligned to the yields (one row per yield row,
-  # paired by calendar date upstream). There is no bundled-by-row-position
-  # fallback: principal components and yields are joined by date before they
-  # reach this function (see compute_identification_residuals / create_data.R).
+  # No bundled-by-position fallback: PCs must be date-aligned to yields upstream
   assert_bad_argument_ok(
     !is.null(pcs),
     paste0(
@@ -111,18 +101,14 @@ load_w2_pcs <- function(pcs, n_pcs, n_obs) {
 
   assert_tabular(pcs, "pcs")
   pcs <- as.matrix(pcs)
-  # Only a type guard here (NOT assert_numeric_finite_values): unlike
-  # the moments path, the W2 regression tolerates interior NA in PCs
-  # and drops those rows via complete.cases in run_pc_regression (see
-  # the interior-NA alignment test), so NA must be allowed through.
+  # Type guard only: W2 regression tolerates interior NA in PCs
+  # (dropped via complete.cases in run_pc_regression), so no finite check
   assert_bad_argument_ok(
     is.numeric(pcs),
     "pcs must contain only numeric values",
     arg = "pcs"
   )
 
-  # Validate dimensions; the n_pcs <= ncol(pcs) cap is enforced upstream
-  # in compute_w2_residuals
   assert_dimension_ok(
     nrow(pcs) == n_obs,
     paste0(

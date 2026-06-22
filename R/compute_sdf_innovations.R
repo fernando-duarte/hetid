@@ -71,16 +71,11 @@ sdf_innovations_series <- function(yields, term_premia, i,
                                    step = HETID_CONSTANTS$DEFAULT_STEP) {
   validate_row_alignment(yields, term_premia)
 
-  # Shared maturity validation, n_hat(i,t) level, and price-news
-  # difference. The t-alignment between exp(n_hat_i[t]) and delta_p[t]
-  # holds: delta_p[t] = n_hat(i-step,t+1) - n_hat(i,t) pairs with n_hat_i[t].
   components <- compute_news_components(yields, term_premia, i, step = step)
   n_hat_i <- components$n_hat_i
   delta_p <- components$delta_p
 
-  # Constant centering B_i = 0.5 * mean(exp(n_hat) * delta_p^2) over the
-  # observed news dates, subtracted OUTSIDE the exp(n_hat) factor (spec
-  # centering): the population analogue then has exactly zero mean.
+  # B_i subtracted outside exp(n_hat): population analogue has exactly zero mean.
   exp_mu <- exp(n_hat_i[seq_along(delta_p)])
   valid <- !is.na(exp_mu) & !is.na(delta_p)
   assert_insufficient_data_ok(
@@ -89,6 +84,5 @@ sdf_innovations_series <- function(yields, term_premia, i,
   )
   b_hat <- 0.5 * mean(exp_mu[valid] * delta_p[valid]^2)
 
-  # NA in either factor propagates to NA in the centered innovation
   exp_mu * (delta_p + 0.5 * delta_p^2) - b_hat
 }

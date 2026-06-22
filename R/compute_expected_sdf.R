@@ -135,9 +135,7 @@ compute_expected_sdf <- function(yields, term_premia, i, dates = NULL,
                                  step = HETID_CONSTANTS$DEFAULT_STEP,
                                  paired = FALSE) {
   validate_step(step)
-  # Lower bound 0 (not MIN_MATURITY) admits the horizon-0 boundary below;
-  # i >= 1 still gets the usual [1, effective_max] contract once i == 0
-  # returns early.
+  # Lower bound 0 (not MIN_MATURITY): admits the horizon-0 boundary below.
   assert_scalar_integer_in_range(
     i, "Maturity index i", 0L, effective_max_maturity(step),
     arg = "i"
@@ -146,12 +144,8 @@ compute_expected_sdf <- function(yields, term_premia, i, dates = NULL,
   assert_flag(paired, "paired")
 
   if (i == 0) {
-    # Horizon 0 is the boundary M^(0)_{0,t} = E_t[SDF_{t+1}] = P^(1)_t, the
-    # realized one-period price observed at t: exact, with no Jensen gap, so
-    # the correction is identically zero (paired is irrelevant). Reuse
-    # compute_n_hat_previous, which owns n_hat(0, t) = -m_step y_step / 100 with
-    # the TP^(1) := 0 normalization already imposed; n_hat_series(0) would
-    # instead carry the step-bond term premium that normalization drops.
+    # Reuse compute_n_hat_previous: it applies the TP^(1) := 0 normalization
+    # that n_hat_series(0) would skip.
     warn_horizon_zero(
       paste0(
         "i = 0 returns the realized one-period price (observed at t), exact ",
@@ -163,12 +157,7 @@ compute_expected_sdf <- function(yields, term_premia, i, dates = NULL,
   }
 
   if (paired) {
-    # previous version: matched forecast-error correction. The gap pairs the
-    # realized one-period price i / step rows ahead with exp(n_hat(i, t)) on
-    # the same forecast dates (the gap helper owns the multiple-of-step
-    # contract), so mean(gap) is the per-date forecast-error mean. That gap
-    # series is also the one whose 1/N variance is the variance bound in
-    # compute_expected_sdf_variance_bound().
+    # Gap series also drives compute_expected_sdf_variance_bound().
     components <- compute_expected_sdf_gap(yields, term_premia, i, step = step)
     assert_insufficient_data_ok(
       length(components$gap) > 0,
@@ -177,10 +166,7 @@ compute_expected_sdf <- function(yields, term_premia, i, dates = NULL,
     exp_n_hat <- components$exp_n_hat
     correction <- mean(components$gap)
   } else {
-    # default: horizon-agnostic correction. Under stationarity the realized
-    # one-period price has a horizon-free unconditional mean, so the bias
-    # E[e^{-y^(1)} - exp(n_hat)] is a difference of full-sample means over one
-    # common finite set -- no i / step lead, so any maturity i is admissible.
+    # No lead, so any maturity i (not just multiples of step) is admissible.
     exp_n_hat <- exp(n_hat_series(yields, term_premia, i, step = step))
     y_step <- require_column(yields, acm_column_name("yields", step), "yields")
     m_step <- step / HETID_CONSTANTS$MATURITY_UNITS_PER_YEAR
@@ -193,7 +179,6 @@ compute_expected_sdf <- function(yields, term_premia, i, dates = NULL,
     correction <- mean(realized_price[common]) - mean(exp_n_hat[common])
   }
 
-  # conditional approximation plus the constant unconditional correction
   expected_sdf <- exp_n_hat + correction
 
   prepare_return_data(

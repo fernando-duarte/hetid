@@ -20,17 +20,12 @@ process_w2_maturity <- function(i, yields_df, term_premia_df, pcs, n_pcs,
                                 step = HETID_CONSTANTS$DEFAULT_STEP,
                                 y1 = NULL, y1_lags = 0L,
                                 impose_b_zero = FALSE) {
-  # Emit a classed skip warning and return NULL so a guard can
-  # `return(skip_maturity(...))` in one line.
   skip_maturity <- function(msg) {
     warn_skipped_maturity(msg)
     NULL
   }
 
-  # Maturity i needs columns i and i+step via compute_n_hat, plus
-  # column i-step via compute_n_hat_previous when i > step (for
-  # i = step the previous-period n_hat uses only the step-maturity
-  # yield, which is column i)
+  # i == step: previous-period n_hat uses only the step-maturity yield
   needed <- if (i > step) c(i - step, i, i + step) else c(i, i + step)
   missing_cols <- c(
     setdiff(acm_column_name("yields", needed), names(yields_df)),
@@ -44,20 +39,15 @@ process_w2_maturity <- function(i, yields_df, term_premia_df, pcs, n_pcs,
     )))
   }
 
-  # Compute SDF innovations for this maturity: Y_{2,t+1}^{(i)} is the
-  # centered second-order approximation to the SDF news
-  # E_{t+1}[SDF_{t+1+i}] - E_t[SDF_{t+1+i}] (see compute_sdf_innovations)
   sdf_innov <- sdf_innovations_series(
     yields_df, term_premia_df,
     i = i, step = step
   )
 
-  # Build the common conditioning matrix X_t on the FULL-T series (so lag
-  # columns line up before any news-row subsetting), then align to news rows.
+  # Build conditioning matrix on full-T series (lag columns must align before
+  # news-row subsetting).
   n_reg <- n_pcs + y1_lags
   reg_full <- build_common_conditioning(pcs, n_pcs, y1, y1_lags)
-
-  # SDF innovations have length T-1; pair regressor row t with sdf_innov[t].
   n_sdf <- length(sdf_innov)
   n_reg_rows <- nrow(reg_full) - 1
   if (n_reg_rows < 1 || n_sdf < 1) {
@@ -69,8 +59,7 @@ process_w2_maturity <- function(i, yields_df, term_premia_df, pcs, n_pcs,
   reg_lagged <- reg_full[seq_len(n_align), , drop = FALSE]
   sdf_innov <- sdf_innov[seq_len(n_align)]
 
-  # Completeness over (sdf_innov, regressors-including-lags); leading lag-NA
-  # rows drop here consistently for both the fitted and imposed paths.
+  # leading lag-NA rows drop consistently for both the fitted and imposed paths
   complete_idx <- complete.cases(sdf_innov, reg_lagged)
   n_complete <- sum(complete_idx)
   min_obs_for_regression <- min_obs_for_pc_regression(n_reg)

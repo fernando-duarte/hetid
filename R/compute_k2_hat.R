@@ -50,11 +50,7 @@ compute_k2_hat <- function(yields, term_premia, i,
   )
   validate_row_alignment(yields, term_premia)
 
-  # Price news Delta_(t+1) p_(t+i)^(1), positionally indexed by t (the bare
-  # T-1 kernel shared with compute_price_news)
   delta_p <- compute_news_components(yields, term_premia, i, step = step)$delta_p
-
-  # Trim to the bound index set T_i = {1, ..., T - i/step}
   keep <- trim_to_bound_index_set(delta_p, i, step, len_offset = 1L)
 
   if (length(keep) == 0) {
