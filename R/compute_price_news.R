@@ -17,9 +17,8 @@
 #' The price news for yields is:
 #' Delta_(t+1)y_(t+i)^(1) = -Delta_(t+1)p_(t+i)^(1)
 #'
-#' @note The effective maximum for \code{i} is \code{MAX_MATURITY - step}
-#'   (108 for standard ACM data with the default annual step), because this
-#'   function requires data at maturity \code{i + step}.
+#' @note The effective maximum for \code{i} is \code{MAX_MATURITY - step},
+#'   because this function requires data at maturity \code{i + step}.
 #'
 #' @export
 #'

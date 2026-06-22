@@ -15,7 +15,6 @@ test_that("price-news kernel returns time series of length n-1", {
 test_that("price-news kernel works for maturity 12", {
   test_env <- setup_standard_test_env()
 
-  # Test maturity 12 specifically (bare kernel series)
   price_news_12 <- compute_news_components(
     test_env$yields, test_env$term_premia,
     i = 12
@@ -35,7 +34,6 @@ test_that("price-news kernel works for maturity 12", {
 test_that("price news has mean near zero", {
   test_env <- setup_standard_test_env()
 
-  # Test for multiple maturities (including maturity 12), bare kernel series
   for (i in c(12, 24, 60, 96)) {
     price_news_i <- compute_news_components(
       test_env$yields, test_env$term_premia,
@@ -44,11 +42,8 @@ test_that("price news has mean near zero", {
 
     # Mean should be close to 0
     mean_news <- mean(price_news_i, na.rm = TRUE)
-    # Maturities 12 and 24 inherit the one-period normalization TP^(1):=0
-    # (the step-maturity term premium tp12 is dropped from n_hat(12),
-    # which is the mu-hat leg at i=12 and the mu-plus leg at i=24). This
-    # is a small level shift of mean(tp12)/100 ~ 0.002; deeper maturities
-    # do not touch n_hat(12) and keep the tighter tolerance.
+    # Maturities 12/24 inherit the TP^(1):=0 normalization (tp12 dropped from
+    # n_hat(12)), a ~mean(tp12)/100 level shift, so they get a looser tolerance
     tolerance <- if (i %in% c(12, 24)) 0.01 else 0.001
     expect_lt(abs(mean_news), tolerance,
       label = paste("Price news mean should be near 0 for maturity", i)
@@ -79,7 +74,6 @@ test_that("yield news equals negative of price news", {
 test_that("price news is negatively correlated with yield changes", {
   test_env <- setup_standard_test_env()
 
-  # Test for maturity 36 (bare kernel series)
   i <- 36
   price_news_36 <- compute_news_components(
     test_env$yields, test_env$term_premia,
@@ -101,7 +95,6 @@ test_that("price news is negatively correlated with yield changes", {
 test_that("price news manual verification", {
   test_env <- setup_standard_test_env()
 
-  # Test for i=36, bare kernel series
   i <- 36
   price_news_36 <- compute_news_components(
     test_env$yields, test_env$term_premia,

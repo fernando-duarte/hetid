@@ -91,9 +91,10 @@ assert_news_contract_ok <- function(maturities, step, arg,
   assert_bad_argument_ok(length(bad) == 0L, msg, arg = arg)
 }
 
-#' Validate that a maturity index is a positive multiple of the step.
+#' Validate That a Maturity Index Is a Positive Multiple of the Step
+#'
 #' Single source of the guard shared by compute_k_hat / compute_k2_hat,
-#' whose news-period arithmetic shifts whole steps; `reason` adapts the
+#' whose news-period arithmetic shifts whole steps; \code{reason} adapts the
 #' trailing clause to each call site. Stops with hetid_error_bad_argument.
 #' @noRd
 validate_step_multiple <- function(i, step, reason) {

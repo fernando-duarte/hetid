@@ -2,7 +2,6 @@ test_that("all functions handle same ACM data format", {
   test_env <- setup_standard_test_env()
   dates <- test_env$data$date
 
-  # Test that all functions work with the same data
   i <- 60
 
   # Scalar functions return doubles directly
@@ -14,10 +13,8 @@ test_that("all functions handle same ACM data format", {
     "double"
   )
 
-  # The series functions now return dated data frames; their bare numeric
-  # cores are the kernels (n_hat_series, compute_news_components()$delta_p,
-  # sdf_innovations_series). compute_expected_sdf has no kernel, so take the
-  # value column of its dated data frame.
+  # Series functions return dated frames; use their bare kernels (n_hat_series,
+  # news delta_p, sdf_innovations_series). expected_sdf has none: take its column
   expect_type(n_hat_series(test_env$yields, test_env$term_premia, i = i), "double")
   expect_type(
     compute_news_components(test_env$yields, test_env$term_premia, i = i)$delta_p,
@@ -97,7 +94,6 @@ test_that("consistent NA handling across functions", {
 test_that("invalid inputs produce appropriate errors", {
   test_env <- setup_standard_test_env()
 
-  # Test invalid maturity
   expect_error(
     compute_c_hat(test_env$yields, test_env$term_premia, i = 0),
     class = "hetid_error_bad_argument"
@@ -127,7 +123,6 @@ test_that("invalid inputs produce appropriate errors", {
 test_that("all functions complete without error on larger stacked data", {
   test_env <- setup_standard_test_env()
 
-  # Repeat data to make it larger (but not too large for testing)
   large_data <- rbind(test_env$data, test_env$data, test_env$data)
   large_extracted <- extract_yields_and_tp(large_data)
   yields <- large_extracted$yields
@@ -160,7 +155,6 @@ test_that("similar functions have consistent return structures", {
   test_env <- setup_standard_test_env()
   dates <- test_env$data$date
 
-  # Scalar returns: c_hat, k_hat, variance_bound
   c_hat <- compute_c_hat(test_env$yields, test_env$term_premia, i = 60)
   k_hat <- compute_k_hat(test_env$yields, test_env$term_premia, i = 60)
   var_bound <- compute_variance_bound(test_env$yields, test_env$term_premia, i = 60)
@@ -201,7 +195,6 @@ test_that("similar functions have consistent return structures", {
 })
 
 test_that("ACM data is quarterly when requested", {
-  # Test monthly vs quarterly
   monthly_data <- extract_acm_data(
     data_types = c("yields", "term_premia"),
     frequency = "monthly"
@@ -213,7 +206,6 @@ test_that("ACM data is quarterly when requested", {
     use_incomplete_quarters = FALSE
   )
 
-  # Quarterly should have fewer observations
   expect_lt(nrow(quarterly_data), nrow(monthly_data))
 
   # Ratio should be approximately 3:1
@@ -223,37 +215,29 @@ test_that("ACM data is quarterly when requested", {
 })
 
 test_that("quarterly data uses last month of quarter", {
-  # Load quarterly data
   quarterly_data <- extract_acm_data(
     data_types = c("yields", "term_premia"),
     frequency = "quarterly",
     use_incomplete_quarters = FALSE
   )
 
-  # Check all dates are end of quarter months
   months <- as.numeric(format(quarterly_data$date, "%m"))
   expect_true(all(months %in% c(3, 6, 9, 12)))
 
-  # Load monthly data to verify
   monthly_data <- extract_acm_data(
     data_types = c("yields", "term_premia"),
     frequency = "monthly"
   )
 
-  # Find matching dates
   matching_dates <- quarterly_data$date %in% monthly_data$date
   expect_true(all(matching_dates))
 
-  # For a sample of quarterly dates, verify they match the monthly data
   sample_dates <- quarterly_data$date[seq_len(min(10, nrow(quarterly_data)))]
   for (date in sample_dates) {
-    # Find the quarterly value
     q_row <- quarterly_data[quarterly_data$date == date, ]
-    # Find the monthly value
     m_row <- monthly_data[monthly_data$date == date, ]
 
     if (nrow(m_row) > 0 && nrow(q_row) > 0) {
-      # Values should match exactly
       expect_equal(q_row$y12, m_row$y12,
         label = paste("Quarterly and monthly values should match for", date)
       )

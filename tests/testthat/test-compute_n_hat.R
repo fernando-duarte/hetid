@@ -1,7 +1,6 @@
 test_that("compute_n_hat returns time series of expected log bond prices", {
   test_env <- setup_standard_test_env()
 
-  # Test for maturity 60 (bare numeric kernel)
   n_hat_60 <- n_hat_series(test_env$yields, test_env$term_premia, i = 60)
 
   expect_type(n_hat_60, "double")
@@ -12,7 +11,6 @@ test_that("compute_n_hat returns time series of expected log bond prices", {
 test_that("n_hat should generally be negative", {
   test_env <- setup_standard_test_env()
 
-  # Test across the annual nodes (including maturity 12)
   for (i in seq(12, 108, by = 12)) {
     n_hat_i <- n_hat_series(test_env$yields, test_env$term_premia, i = i)
 
@@ -51,7 +49,6 @@ test_that("n_hat formula verification", {
 test_that("n_hat works across the annual nodes", {
   test_env <- setup_standard_test_env()
 
-  # Test all annual-node maturities
   for (i in seq(12, 108, by = 12)) {
     n_hat_i <- n_hat_series(test_env$yields, test_env$term_premia, i = i)
 

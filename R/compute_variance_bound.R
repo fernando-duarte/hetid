@@ -14,7 +14,11 @@
 #'   \eqn{U_i^{bd} = (1/4)\,\bar C_i\,(k1 + k2)}.
 #'
 #' @return Numeric value of (1/4)*c_hat_i*(k_hat_i + k2_hat_i), or
-#'   (1/4)*c_bar*(k_hat_i + k2_hat_i) when \code{c_bar} is supplied
+#'   (1/4)*c_bar*(k_hat_i + k2_hat_i) when \code{c_bar} is supplied, or
+#'   \code{NA_real_} when a required component estimator
+#'   (\code{\link{compute_c_hat}} when \code{c_bar} is \code{NULL},
+#'   \code{\link{compute_k_hat}}, or \code{\link{compute_k2_hat}}) has no
+#'   valid paired observations.
 #'
 #' @details
 #' The leading fourth-order term is
@@ -31,9 +35,9 @@
 #' population target is conservative relative to the minimal-envelope
 #' target when \code{c_bar} is at least the minimal envelope.
 #'
-#' @note The effective maximum for \code{i} is \code{MAX_MATURITY - step}
-#'   (108 for standard ACM data with the default annual step), because the
-#'   envelope c_hat needs data at maturity \code{i + step}. \code{i} must
+#' @note The effective maximum for \code{i} is \code{MAX_MATURITY - step},
+#'   because the envelope c_hat needs data at maturity \code{i + step}.
+#'   \code{i} must
 #'   be a positive multiple of \code{step} (enforced by
 #'   \code{\link{compute_k_hat}} and \code{\link{compute_k2_hat}}).
 #'

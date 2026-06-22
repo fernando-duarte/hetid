@@ -5,9 +5,8 @@
 #' \code{compute_sdf_innovations}, so the delta_p definition lives in a
 #' single place.
 #'
-#' @param yields Yields data
-#' @param term_premia Term premia data
-#' @param i Maturity index
+#' @template param-yields-term-premia
+#' @template param-maturity-index
 #' @template param-step
 #'
 #' @return A list with two elements: \code{n_hat_i}, the n_hat(i, t)

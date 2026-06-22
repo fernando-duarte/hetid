@@ -1,7 +1,6 @@
 test_that("compute_c_hat returns single numeric value for given maturity", {
   test_env <- setup_standard_test_env()
 
-  # Test for maturity 60
   c_hat_60 <- compute_c_hat(test_env$yields, test_env$term_premia, i = 60)
 
   expect_type(c_hat_60, "double")
@@ -12,7 +11,6 @@ test_that("compute_c_hat returns single numeric value for given maturity", {
 test_that("c_hat is always positive", {
   test_env <- setup_standard_test_env()
 
-  # Test across the annual nodes
   for (i in seq(12, 108, by = 12)) {
     c_hat_i <- compute_c_hat(test_env$yields, test_env$term_premia, i = i)
     expect_gt(c_hat_i, 0,
@@ -24,13 +22,11 @@ test_that("c_hat is always positive", {
 test_that("c_hat bounds are correct", {
   test_env <- setup_standard_test_env()
 
-  # For maturity 12, should be < 1.02
   c_hat_12 <- compute_c_hat(test_env$yields, test_env$term_premia, i = 12)
   expect_lt(c_hat_12, 1.02,
     label = "c_hat for maturity 12 should be below 1.02"
   )
 
-  # For maturities > 12, should be < 1
   for (i in seq(24, 108, by = 12)) {
     c_hat_i <- compute_c_hat(test_env$yields, test_env$term_premia, i = i)
     expect_lt(c_hat_i, 1,
@@ -95,9 +91,8 @@ test_that("compute_c_hat rejects mismatched yields and term_premia rows", {
 })
 
 test_that("compute_c_hat raises a structured error on a short series", {
-  # T = 5 rows but i = 108, step = 12 needs i/step = 9 news periods, so the
-  # bound index set is empty: must signal hetid_error_insufficient_data,
-  # not a bare seq_len(negative) error.
+  # T = 5 but i = 108, step = 12 needs i/step = 9 news periods, so the bound
+  # index set is empty: signal insufficient_data, not a seq_len(negative) crash
   syn <- create_synthetic_test_data(n = 5)
   expect_error(
     compute_c_hat(syn$yields, syn$term_premia, i = 108),
@@ -119,10 +114,8 @@ test_that("compute_c_hat rejects invalid maturity values", {
 })
 
 test_that("compute_c_hat rejects a non-step-multiple maturity", {
-  # i = 18 is a valid in-range integer but not a multiple of step = 12, so
-  # i/step is not a whole number of news periods; the bound index set is
-  # ill-defined. Must error (parity with compute_k_hat / compute_k2_hat)
-  # rather than silently flooring i %/% step.
+  # i = 18 is in range but not a multiple of step = 12, so i/step is not a
+  # whole number of news periods and the bound index set is ill-defined; error
   test_env <- setup_standard_test_env()
   expect_error(
     compute_c_hat(test_env$yields, test_env$term_premia, i = 18, step = 12),

@@ -1,6 +1,6 @@
 # Scripts Directory Structure
 
-_Last modified: 2026-06-22 15:53 EDT_
+_Last modified: 2026-06-22 17:18 EDT_
 
 This directory contains all analysis scripts for the hetid
 package, organized by workflow stage. All outputs are stored
@@ -162,7 +162,8 @@ structural price-of-risk equation; estimator properties), each as
 - `compute_paper_spec.R` - Build the residuals (news-PC collapse via
   `compute_paper_spec_residuals`), the estimator (`compute_paper_spec_estimator`:
   the theta identified set, beta1(theta) intervals, tau*, the
-  heteroskedasticity-relevance tests of W2 on VFCI), and the moving-block
+  heteroskedasticity-relevance tests of W2 on VFCI, and a single exogenous-Y2
+  OLS benchmark -- `ols_coef`/`ols_r2`), and the moving-block
   bootstrap band; save `output/temp/paper_spec/paper_spec_results.rds`. The
   news-PC scaling (`PAPER_NEWS_PC_SCALE`, default `"correlation"`, switch to
   `"covariance"` for the sensitivity run) and the VFCI Z-hook are scoped to
@@ -177,9 +178,11 @@ structural price-of-risk equation; estimator properties), each as
 ### utils/
 Shared utility functions. `common_settings.R` sources the core layer
 listed first below (an explicit `file.exists`-guarded block, not a
-loop); the remaining `utils/` helpers (`hetero_lm_tests.R`,
-`hetero_panel_meta.R`, `hetero_diag_figures.R`, `ixj_identification.R`,
-`latex_simple_table.R`, `spec_comparison_eval.R`) are sourced directly
+loop), then the stage-08 paper-spec layer (`hetero_lm_tests.R`,
+`latex_simple_table.R`, `paper_spec_residuals.R`, `paper_spec_estimator.R`,
+`paper_spec_bootstrap.R`, `for_paper_guard.R`); the remaining `utils/`
+helpers (`hetero_panel_meta.R`, `hetero_diag_figures.R`,
+`ixj_identification.R`, `spec_comparison_eval.R`) are sourced directly
 by the stage scripts that consume them. (The spec-comparison grid
 design, `spec_comparison_design.R`, lives with stage 05, not in
 `utils/`.)
@@ -255,11 +258,24 @@ design, `spec_comparison_design.R`, lives with stage 05, not in
   threeparttable table for cells that are not pure numbers (e.g.
   identified-set interval strings); reuses the standalone/writer
   helpers from `latex_table_utils.R`
+- `paper_spec_residuals.R` - Stage-08 residuals: collapse the
+  per-maturity SDF news into one principal component (Y2, I = 1) and
+  align the single de-meaned VFCI instrument (Z, J = 1)
+- `paper_spec_estimator.R` - Stage-08 estimator: from the I = 1 / J = 1
+  residuals, the theta identified set, beta1(theta) intervals, tau*, the
+  W2-on-VFCI heteroskedasticity-relevance tests, the relevance/endogeneity
+  diagnostics, and a single exogenous-Y2 OLS benchmark
+- `paper_spec_bootstrap.R` - Stage-08 moving-block bootstrap band
+  (block = 15, 200 reps, deterministic given `SEED`)
+- `for_paper_guard.R` - Fail-closed allowlist guard for
+  `output/for_paper/` (the 12 exact paper-spec table basenames, no aux,
+  no subdirs)
 - `tests/` - Unit tests for the utility layer (lambda/whitening/
   optimization, profile bounds, I×J, closure membership, hetero tests,
   gamma sources, news-projection mode and Stage-04 baseline spec stamp,
   residual alignment, Z-width pipeline, generalized-vs-legacy pipeline
-  equivalence, stats) plus `fixtures/` capture scripts and RDS
+  equivalence, stage-08 paper-spec residuals/estimator, stats) plus
+  `fixtures/` capture scripts and RDS
 - `README.md` - Documentation for the utility functions
 
 ### examples/
@@ -271,6 +287,9 @@ Standalone demonstrations (not part of the pipeline)
 Drop-in payloads for the `z_source.R` hook
 - `pc_squared.R` - Squared principal components as instruments
   (Regime B, outside span(1, PC); enables Anscombe in the diagnostics)
+- `vfci_demeaned.R` - The de-meaned VFCI as the single instrument
+  (`vfci_dm`, J = 1); the stage-08 paper spec scopes `HETID_Z_SOURCE` to
+  this payload via `withr::with_envvar`
 
 ### output/
 All script outputs organized by purpose
@@ -286,7 +305,8 @@ Exactly 12 files (3 tables x {`.tex`, `_standalone.tex`,
 - `table1_summary_statistics.*` - Summary statistics of the
   set-identification variables (+ news-PC loadings in the CSV)
 - `table2_structural_equation.*` - The structural price-of-risk equation:
-  OLS / Point-ID (tau=0) / Set-ID (tau=0.05) intervals for every coefficient
+  two columns -- a single exogenous-Y2 OLS benchmark and the exact tau=`BASELINE_TAU`
+  (0.05) identified-set interval for every coefficient
 - `table3_estimator_properties.*` - Heteroskedasticity-relevance tests,
   tau* with a bootstrap band, and identification diagnostics
 

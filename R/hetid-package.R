@@ -123,6 +123,9 @@
 #'   \item \code{\link{compute_w1_residuals}()}: Primary endogenous variable residuals
 #'   \item \code{\link{compute_w2_residuals}()}: Secondary endogenous variable residuals
 #'   \item \code{\link{compute_identification_moments}()}: The seven moments
+#'   \item \code{\link{compute_scalar_statistics}()}: Scalar moment statistics
+#'   \item \code{\link{compute_vector_statistics}()}: Vector moment statistics
+#'   \item \code{\link{compute_matrix_statistics}()}: Matrix moment statistics
 #'   \item \code{\link{build_instrument_matrix}()}: Construct instruments
 #'   \item \code{\link{separate_instruments_lambda}()}: Per-instrument weights
 #'   \item \code{\link{compute_identified_set_components}()}: L_i, V_i, Q_i
@@ -134,6 +137,12 @@
 #'   \item \code{\link{align_instrument_sets}()}: Align instrument sets
 #'   \item \code{\link{lambda_from_support}()}: Weights from a support pattern
 #'   \item \code{\link{recover_structural_coefficients}()}: Recover beta1(theta)
+#' }}
+#'
+#' \subsection{Constants and Utilities:}{
+#' \itemize{
+#'   \item \code{\link{effective_max_maturity}()}: Largest usable maturity index
+#'   \item \code{\link{HETID_CONSTANTS}}: Package-wide constant defaults
 #' }}
 #'
 #'

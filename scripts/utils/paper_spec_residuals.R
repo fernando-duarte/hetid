@@ -79,7 +79,7 @@ compute_paper_spec_residuals <- function(data,
   news_res <- compute_w2_residuals(
     yields = data[, yield_cols], term_premia = data[, tp_cols],
     maturities = feasible, n_pcs = n_pcs, pcs = pcs_mat, step = step,
-    y1 = y1, y1_lags = y1_lags, impose_b_zero = TRUE
+    y1 = y1, y1_lags = y1_lags, dates = data$date, impose_b_zero = TRUE
   )
   assert_w2_alignment(news_res)
   news_full <- do.call(cbind, news_res$residuals)

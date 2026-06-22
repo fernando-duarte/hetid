@@ -1,5 +1,3 @@
-# --- assert_bad_argument_ok ---
-
 test_that("assert_bad_argument_ok passes on TRUE", {
   expect_invisible(assert_bad_argument_ok(TRUE, "msg"))
   expect_true(assert_bad_argument_ok(TRUE, "msg"))
@@ -53,8 +51,6 @@ test_that(
   }
 )
 
-# --- assert_dimension_ok ---
-
 test_that("assert_dimension_ok passes on TRUE", {
   expect_true(assert_dimension_ok(TRUE, "msg"))
 })
@@ -72,8 +68,6 @@ test_that("assert_dimension_ok errors on NA", {
     class = "hetid_error_dimension_mismatch"
   )
 })
-
-# --- assert_insufficient_data_ok ---
 
 test_that(
   "assert_insufficient_data_ok passes on TRUE",
@@ -104,8 +98,6 @@ test_that(
   }
 )
 
-# --- Runtime signature stability ---
-
 test_that("assertion helpers have expected formals", {
   expect_equal(
     names(formals(assert_bad_argument_ok)),
@@ -120,8 +112,6 @@ test_that("assertion helpers have expected formals", {
     c("ok", "message")
   )
 })
-
-# --- assert_flag ---
 
 test_that("assert_flag accepts a single TRUE/FALSE and rejects everything else", {
   expect_true(assert_flag(TRUE, "x"))

@@ -22,9 +22,8 @@
 #' The supremum estimator provides an upper bound for the exponential of twice
 #' the expected log price at horizon i.
 #'
-#' @note The effective maximum for \code{i} is \code{MAX_MATURITY - step}
-#'   (108 for standard ACM data with the default annual step), because this
-#'   function requires data at maturity \code{i + step}.
+#' @note The effective maximum for \code{i} is \code{MAX_MATURITY - step},
+#'   because this function requires data at maturity \code{i + step}.
 #'
 #' @export
 #'

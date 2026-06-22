@@ -1,11 +1,8 @@
 test_that("compute_k_hat returns single positive value (fourth moment)", {
-  # Setup standard test environment
   test_env <- setup_standard_test_env()
 
-  # Test for maturity 60
   k_hat_60 <- compute_k_hat(test_env$yields, test_env$term_premia, i = 60)
 
-  # Apply standard expectations for single positive value
   expect_single_finite_value(k_hat_60,
     should_be_positive = TRUE,
     label = "k_hat should be positive (fourth moment)"
@@ -13,10 +10,8 @@ test_that("compute_k_hat returns single positive value (fourth moment)", {
 })
 
 test_that("special case i=12 returns 0", {
-  # Setup standard test environment
   test_env <- setup_standard_test_env()
 
-  # For i=12, k_hat should be 0
   k_hat_12 <- compute_k_hat(test_env$yields, test_env$term_premia, i = 12)
 
   expect_equal(k_hat_12, 0,
@@ -27,11 +22,9 @@ test_that("special case i=12 returns 0", {
 test_that("k_hat manual calculation verification", {
   test_env <- setup_standard_test_env()
 
-  # Test for i=60
   i <- 60
   k_hat_60 <- compute_k_hat(test_env$yields, test_env$term_premia, i = i)
 
-  # Manual calculation
   n_hat <- n_hat_series(test_env$yields, test_env$term_premia, i = i - 12)
   y <- test_env$yields$y12 / 100 # Convert to decimal
 
@@ -57,7 +50,6 @@ test_that("k_hat manual calculation verification", {
 test_that("k_hat monotonicity - generally increases with maturity", {
   test_env <- setup_standard_test_env()
 
-  # Compute k_hat for the annual nodes
   maturities <- seq(12, 108, by = 12)
   k_values <- numeric(length(maturities))
   for (k in seq_along(maturities)) {
@@ -78,7 +70,6 @@ test_that("k_hat monotonicity - generally increases with maturity", {
 test_that("k_hat positivity - all values positive except i=12", {
   test_env <- setup_standard_test_env()
 
-  # Test all annual-node maturities
   for (i in seq(12, 108, by = 12)) {
     k_hat_i <- compute_k_hat(test_env$yields, test_env$term_premia, i = i)
 
@@ -125,10 +116,8 @@ test_that("k_hat averages over valid terms with interior NA in y12", {
 })
 
 test_that("k_hat time alignment matches hand-computed synthetic value", {
-  # With y24 = tp12 = tp24 = 0, n_hat(12,t) reduces to y12[t] / 100, so
-  # k_hat(24) = mean over t of ((-y12[t+2] - y12[t+1]) / 100)^4. The y12
-  # values make consecutive-pair sums distinct, so any misalignment
-  # (e.g. a shift by 2) would average different pairs
+  # y24=tp12=tp24=0 makes k_hat(24) = mean(((-y12[t+2]-y12[t+1])/100)^4); y12
+  # values make pair-sums distinct, so any misalignment averages different pairs
   y12_pct <- c(0, 1, 3, 6, 10, 15)
   n <- length(y12_pct)
   zeros <- numeric(n)
@@ -191,5 +180,44 @@ test_that("compute_k_hat rejects non-integer but accepts i=120", {
   # k_hat legitimately supports i=120 (uses n_hat(i-12), not n_hat(i))
   expect_no_error(
     compute_k_hat(test_env$yields, test_env$term_premia, i = 120)
+  )
+})
+
+test_that("compute_k_hat warns on decimal units exactly once (no double-warn)", {
+  test_env <- setup_standard_test_env()
+  decimal_yields <- test_env$yields / 100
+
+  count_unit_warnings <- function(expr) {
+    n <- 0L
+    withCallingHandlers(
+      force(expr),
+      hetid_warning_unit_scale = function(w) {
+        n <<- n + 1L
+        invokeRestart("muffleWarning")
+      }
+    )
+    n
+  }
+
+  # boundary i == step warns via the compute_n_hat_previous direct branch
+  expect_identical(
+    count_unit_warnings(
+      compute_k_hat(decimal_yields, test_env$term_premia, i = 12)
+    ),
+    1L
+  )
+  # non-boundary i > step warns via n_hat_series, never twice
+  expect_identical(
+    count_unit_warnings(
+      compute_k_hat(decimal_yields, test_env$term_premia, i = 24)
+    ),
+    1L
+  )
+  # percentage-point yields raise no warning
+  expect_identical(
+    count_unit_warnings(
+      compute_k_hat(test_env$yields, test_env$term_premia, i = 12)
+    ),
+    0L
   )
 })

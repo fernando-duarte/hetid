@@ -3,8 +3,6 @@
 # access and a throwaway per-user cache directory (no real downloads,
 # no writes outside tempdir)
 
-# --- load_term_premia mock-based tests ---
-
 test_that("load_term_premia auto-downloads when file missing", {
   withr::with_tempdir({
     temp_csv <- file.path(getwd(), "ACMTermPremium.csv")
@@ -155,7 +153,32 @@ test_that("load_term_premia parses ISO dates correctly", {
   })
 })
 
-# --- download_term_premia mock-based tests ---
+test_that("load_term_premia parses a lowercase date header", {
+  withr::with_tempdir({
+    temp_csv <- file.path(getwd(), "ACMTermPremium.csv")
+    write.csv(
+      data.frame(
+        date = c("2020-01-15", "2020-02-15"),
+        ACMY01 = c(1.5, 1.6)
+      ),
+      temp_csv,
+      row.names = FALSE
+    )
+
+    local_mocked_bindings(
+      acm_data_available = function(...) TRUE,
+      get_acm_data_path = function(...) temp_csv
+    )
+
+    # lowercase `date` is admitted by validate_acm_schema and must parse to Date
+    result <- load_term_premia()
+    expect_s3_class(result$date, "Date")
+    expect_equal(
+      result$date,
+      as.Date(c("2020-01-15", "2020-02-15"))
+    )
+  })
+})
 
 test_that("the nyfed source writes its own cache file, not the package", {
   skip_if_not_installed("readxl")

@@ -28,9 +28,7 @@
 #'       \eqn{e^{n\_hat(i,t)}}, used only by \code{compute_expected_sdf}
 #'       for its output.}
 #'     \item{\code{gap}}{The gap series \eqn{g_t} over the finite paired
-#'       dates (length \eqn{\le T - s} after dropping any non-finite pair).
-#'       Byte-identical to the previous implementation; \code{compute_expected_sdf}
-#'       stays numerically invariant.}
+#'       dates (length \eqn{\le T - s} after dropping any non-finite pair).}
 #'     \item{\code{q}}{The first-order-cancelled gap \eqn{q_t =
 #'       e^{n\_hat}(e^u - 1 - u)}, \eqn{u = x - n\_hat}, aligned to
 #'       \code{gap}'s finite paired set (one common \code{is.finite(gap)} mask).

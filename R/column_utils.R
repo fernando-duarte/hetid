@@ -8,23 +8,23 @@ NULL
 
 #' Extract and Validate a Required Column
 #'
-#' @param x Data frame or list to extract from
+#' @param x Data frame, matrix, or list to extract from
 #' @param col_name Column name to extract
 #' @param context Description for error message
-#' @return The extracted column value
+#' @return The extracted column value (unnamed)
 #' @keywords internal
 require_column <- function(x, col_name, context = NULL) {
-  val <- x[[col_name]]
+  has_col <- if (is.matrix(x)) {
+    col_name %in% colnames(x)
+  } else {
+    col_name %in% names(x)
+  }
   msg <- paste0(col_name, " column not found")
   if (!is.null(context)) {
     msg <- paste0(msg, " in ", context)
   }
-  assert_bad_argument_ok(
-    !is.null(val),
-    msg,
-    arg = col_name
-  )
-  val
+  assert_bad_argument_ok(has_col, msg, arg = col_name)
+  if (is.matrix(x)) unname(x[, col_name, drop = TRUE]) else x[[col_name]]
 }
 
 #' Assert a Data Type Is a Known ACM Schema Key
@@ -66,6 +66,14 @@ assert_acm_data_types <- function(data_types, arg = "data_types") {
     paste0(
       "Invalid data_types. Must be one or more of: ",
       paste(names(HETID_ACM_SCHEMA), collapse = ", ")
+    ),
+    arg = arg
+  )
+  assert_bad_argument_ok(
+    anyDuplicated(data_types) == 0L,
+    paste0(
+      "data_types must not contain duplicates; got: ",
+      paste(unique(data_types[duplicated(data_types)]), collapse = ", ")
     ),
     arg = arg
   )

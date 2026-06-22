@@ -25,9 +25,8 @@
 #'   has exactly zero unconditional mean; the mean runs over the valid
 #'   (non-missing) news dates (T-1 terms with complete data)
 #'
-#' @note The effective maximum for \code{i} is \code{MAX_MATURITY - step}
-#'   (108 for standard ACM data with the default annual step), because this
-#'   function requires data at maturity \code{i + step}.
+#' @note The effective maximum for \code{i} is \code{MAX_MATURITY - step},
+#'   because this function requires data at maturity \code{i + step}.
 #'
 #' @export
 #'

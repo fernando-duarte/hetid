@@ -52,9 +52,8 @@
 #'   value is the sharper bound's estimate, not a min-of-noise artifact of two
 #'   comparably sized variances.
 #'
-#' @note The effective maximum for \code{i} is \code{MAX_MATURITY - step}
-#'   (108 with the default annual step), because \code{n_hat(i, t)} requires
-#'   data at maturity \code{i + step}.
+#' @note The effective maximum for \code{i} is \code{MAX_MATURITY - step},
+#'   because \code{n_hat(i, t)} requires data at maturity \code{i + step}.
 #'
 #' @note Passing \code{i = 0} returns \code{0}: the horizon-0 expected SDF is
 #'   the realized one-period price (exact, no approximation), so its

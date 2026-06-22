@@ -106,41 +106,24 @@ build_table2_structural <- function(res) {
     theta = "$\\theta$"
   )
   dg <- 2L # report two decimals throughout
-  stars <- function(p) {
-    if (!is.finite(p)) {
-      return("")
-    }
-    if (p < 0.01) "$^{***}$" else if (p < 0.05) "$^{**}$" else if (p < 0.10) "$^{*}$" else ""
-  }
-  # One OLS column from a fitted spec: estimate (2dp) + HAC stars per coef row,
-  # "--" for coefficients absent from that specification.
-  spec_col <- function(s) {
-    cells <- vapply(ct$coef, function(cn) {
-      key <- if (cn == "theta") ".y2" else cn
-      if (!(key %in% names(s$coef))) {
-        return("--")
-      }
-      paste0(.fmt(unname(s$coef[key]), dg), stars(unname(s$p[key])))
-    }, character(1))
-    c(unname(cells), .fmt(s$r2, dg), as.character(e$n_obs)) # R^2 and N rows
-  }
-  setcol <- function(lo, hi, bnd, vld) {
-    c(vapply(
-      seq_along(lo), function(i) .interval(lo[i], hi[i], bnd[i], vld[i], dg),
+  tau_lab <- .fmt(e$tau_set, dg)
+
+  # Single exogenous-Y2 OLS benchmark: point estimate (2dp) per coef row, then
+  # the OLS fit R^2 and N. theta's OLS estimate is the Y2 coefficient.
+  ols_col <- c(
+    vapply(seq_len(nrow(ct)), function(i) .fmt(ct$ols[i], dg), character(1)),
+    .fmt(e$ols_r2, dg), as.character(e$n_obs)
+  )
+  # Exact identified set at the baseline slack tau = tau_set: interval per coef
+  # row, then "--" for R^2 and N.
+  set_col <- c(
+    vapply(
+      seq_len(nrow(ct)),
+      function(i) .interval(ct$set_lower[i], ct$set_upper[i], ct$bounded[i], ct$valid[i], dg),
       character(1)
-    ), "--", as.character(e$n_obs)) # R^2 = "--", N rows
-  }
-  if (is.null(res$set_taulb) || !is.finite(res$tau_lb)) {
-    cli_abort("Table 2 needs res$set_taulb / res$tau_lb; re-run compute_paper_spec.R.")
-  }
-  slb <- res$set_taulb
-  # Display order: within each lag count, the no-Y2 spec precedes the with-Y2 one
-  # (swap of the canonical pairs). The legend and CSV keys derive from this order.
-  specs <- e$ols_specs[c(2L, 1L, 4L, 3L, 6L, 5L)]
-  ols_columns <- lapply(specs, spec_col)
-  set05 <- setcol(ct$set_lower, ct$set_upper, ct$bounded, ct$valid)
-  set_lb <- setcol(slb$lower, slb$upper, slb$bounded, slb$valid)
-  set50 <- setcol(ct$set50_lower, ct$set50_upper, ct$set50_bounded, ct$set50_valid)
+    ),
+    "--", as.character(e$n_obs)
+  )
   row_labels <- c(unname(labs[ct$coef]), "$R^2$", "$N$")
 
   span <- paste0(.qq(min(e$dates)), "--", .qq(max(e$dates)))
@@ -151,17 +134,26 @@ build_table2_structural <- function(res) {
     sprintf(
       paste0(
         "Heteroskedasticity set-identifies the price of SDF-news risk to ",
-        "$\\theta\\in[%s,%s]$ at $\\tau=0.05$%s."
+        "$\\theta\\in[%s,%s]$ at $\\tau=%s$%s."
       ),
-      .fmt(th$set_lower, dg), .fmt(th$set_upper, dg),
+      .fmt(th$set_lower, dg), .fmt(th$set_upper, dg), tau_lab,
       if (fragile) "; the bootstrap bounds are imprecise (cross zero)" else ""
     )
   } else if (e$set_status == "unbounded") {
-    "The identified set for the price of SDF-news risk $\\theta$ is unbounded at $\\tau=0.05$ (weak identification)."
+    sprintf(
+      "The identified set for the price of SDF-news risk $\\theta$ is unbounded at $\\tau=%s$ (weak identification).",
+      tau_lab
+    )
   } else if (e$set_status == "empty") {
-    "No $\\theta$ satisfies the estimated restrictions at $\\tau=0.05$ (estimated set empty)."
+    sprintf(
+      "No $\\theta$ satisfies the estimated restrictions at $\\tau=%s$ (estimated set empty).",
+      tau_lab
+    )
   } else {
-    "The price of SDF-news risk $\\theta$ is not reliably identified at $\\tau=0.05$."
+    sprintf(
+      "The price of SDF-news risk $\\theta$ is not reliably identified at $\\tau=%s$.",
+      tau_lab
+    )
   }
   notes <- c(
     "Coefficients of the structural consumption-growth (Euler) equation",
@@ -170,25 +162,14 @@ build_table2_structural <- function(res) {
     "with the single SDF-news PC $Y_2$ instrumented by the de-meaned VFCI $Z$",
     "via Lewbel (2012) heteroskedasticity:",
     "$\\mathrm{Cov}(Z,\\varepsilon_1\\varepsilon_2)=\\tau\\,\\mathrm{Var}(\\varepsilon_2\\mid Z)$.",
-    "OLS columns (treating $Y_2$ as exogenous, all on the same sample):",
-    paste0(
-      paste(sprintf(
-        "(%d) %s", seq_along(specs),
-        vapply(specs, function(s) s$label, character(1))
-      ), collapse = "; "),
-      "."
-    ),
+    "The OLS column is the benchmark that treats $Y_2$ as exogenous: a single",
+    "ordinary least squares fit of the equation on the estimation sample, with its",
+    "fit $R^2$ and sample size $N$.",
     sprintf(paste0(
-      "Stars $^{*}/^{**}/^{***}$ denote significance at $10/5/1\\%%$ using ",
-      "Newey--West HAC standard errors (%d lags); $R^2$ is the OLS fit; ``--'' ",
-      "marks a coefficient not in that specification."
-    ), e$nw_lag),
-    sprintf(paste0(
-      "The last three columns give the exact identified set for each coefficient ",
-      "at $\\tau=0.05$, $\\tau=%s$, and $\\tau=0.5$ (baseline four-lag design), ",
-      "where $\\tau=%s$ is the lower bound of the bootstrap 90\\%% band for ",
-      "$\\tau^\\ast$ (Table 3). Non-$\\theta$ coefficients are recovered as"
-    ), .fmt(res$tau_lb, dg), .fmt(res$tau_lb, dg)),
+      "The $\\tau{=}%s$ column gives the exact identified set for each coefficient ",
+      "at the baseline slack (four-lag design). Non-$\\theta$ coefficients are ",
+      "recovered as"
+    ), tau_lab),
     "$\\beta_1(\\theta)=\\beta_1^{R}-(\\beta_2^{R})'\\theta$ and bounded over the set.",
     sprintf(
       "Sample %s. These cells are exact identified-set ranges, not confidence",
@@ -199,51 +180,28 @@ build_table2_structural <- function(res) {
   )
   lines <- build_simple_latex_table(
     row_labels = row_labels,
-    columns = c(ols_columns, list(set05, set_lb, set50)),
-    col_headers = c(
-      "(1)", "(2)", "(3)", "(4)", "(5)", "(6)",
-      "$\\tau{=}0.05$", sprintf("$\\tau{=}%s$", .fmt(res$tau_lb, dg)), "$\\tau{=}0.5$"
-    ),
+    columns = list(ols_col, set_col),
+    col_headers = c("OLS", sprintf("$\\tau{=}%s$", tau_lab)),
     caption = title, label = "tab:paper_structural_equation",
     notes = notes, stub = "", rule_after = c(nrow(ct) - 1L, nrow(ct)),
-    fontsize = "\\small\\setlength{\\tabcolsep}{4pt}",
-    spanners = list(
-      list(label = "OLS", n = 6L),
-      list(
-        label = "\\shortstack{Identification through\\\\heteroskedasticity}",
-        n = 3L
-      )
-    )
+    fontsize = "\\small\\setlength{\\tabcolsep}{4pt}"
   )
-  # CSV: one row per coefficient (+ an R2 row), every spec's estimate and HAC
-  # p-value, and the three identified-set columns.
-  spec_keys <- vapply(specs, function(s) {
-    paste0(if (s$with_y2) "with_y2" else "no_y2", "_", s$lags, "lag")
-  }, character(1))
-  csv <- data.frame(coefficient = ct$coef, stringsAsFactors = FALSE)
-  for (j in seq_along(specs)) {
-    s <- specs[[j]]
-    pick <- function(tab) {
-      vapply(ct$coef, function(cn) {
-        key <- if (cn == "theta") ".y2" else cn
-        if (key %in% names(tab)) unname(tab[key]) else NA_real_
-      }, numeric(1))
-    }
-    csv[[paste0(spec_keys[j], "_est")]] <- pick(s$coef)
-    csv[[paste0(spec_keys[j], "_p")]] <- pick(s$p)
-  }
-  csv$set05_lower <- ct$set_lower
-  csv$set05_upper <- ct$set_upper
-  csv$set_taustar_lb_lower <- slb$lower
-  csv$set_taustar_lb_upper <- slb$upper
-  csv$set50_lower <- ct$set50_lower
-  csv$set50_upper <- ct$set50_upper
-  r2row <- csv[1, ]
-  r2row[] <- NA
-  r2row$coefficient <- "R2"
-  for (j in seq_along(specs)) r2row[[paste0(spec_keys[j], "_est")]] <- specs[[j]]$r2
+  # CSV: one row per coefficient (+ an R2 row): the OLS estimate and the
+  # tau = tau_set identified-set interval.
+  csv <- data.frame(
+    coefficient = ct$coef,
+    ols_est = unname(ct$ols),
+    set_lower = ct$set_lower,
+    set_upper = ct$set_upper,
+    stringsAsFactors = FALSE
+  )
+  r2row <- data.frame(
+    coefficient = "R2", ols_est = e$ols_r2,
+    set_lower = NA_real_, set_upper = NA_real_,
+    stringsAsFactors = FALSE
+  )
   csv <- rbind(csv, r2row)
-  list(lines = lines, csv = csv, caption = title, landscape = TRUE)
+  list(lines = lines, csv = csv, caption = title)
 }
 
 # ---- Table 3: estimator properties (relevance + strength), with bootstrap ----

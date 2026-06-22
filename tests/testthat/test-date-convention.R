@@ -1,7 +1,5 @@
-# Canonical lock for the package date convention (req-1 presence + req-2
-# filtration alignment). Per-function tests cover the details; this file is the
-# single, durable guarantee that the convention holds across the time-series
-# surface and is the regression guard if any function regresses.
+# Canonical regression lock for the date convention (presence + filtration
+# alignment) across the whole time-series surface; per-function tests do details.
 
 acm <- extract_acm_data(data_types = c("yields", "term_premia"))
 yld <- acm[, paste0("y", seq(12, 120, 12))]
@@ -26,7 +24,6 @@ sdf_calls <- list(
 test_that("date presence: SDF series cannot be emitted without a real Date index", {
   for (nm in names(sdf_calls)) {
     f <- sdf_calls[[nm]]
-    # missing dates
     expect_error(f(NULL), class = "hetid_error_bad_argument", info = nm)
     # fabricated integer index (the old fallback) is rejected
     expect_error(f(seq_len(n)), class = "hetid_error_bad_argument", info = nm)
@@ -35,7 +32,6 @@ test_that("date presence: SDF series cannot be emitted without a real Date index
       f(as.character(dts)),
       class = "hetid_error_bad_argument", info = nm
     )
-    # wrong length
     expect_error(f(dts[-1]), class = "hetid_error_dimension_mismatch", info = nm)
     # valid: a dated data frame whose first column is a Date named `date`
     out <- f(dts)

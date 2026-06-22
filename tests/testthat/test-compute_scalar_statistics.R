@@ -13,7 +13,6 @@ test_that("compute_scalar_statistics validates w2 input", {
 })
 
 test_that("compute_scalar_statistics returns correct structure", {
-  # Create test data
   set.seed(123)
   n_obs <- 100
   I <- 3
@@ -22,25 +21,20 @@ test_that("compute_scalar_statistics returns correct structure", {
 
   result <- compute_scalar_statistics(w1, w2)
 
-  # Check structure
   expect_type(result, "list")
   expect_named(result, c("s_i_0", "sigma_i_sq"))
 
-  # Check dimensions
   expect_length(result$s_i_0, I)
   expect_length(result$sigma_i_sq, I)
 
-  # Check names
   expect_named(result$s_i_0, paste0("maturity_", 1:I))
   expect_named(result$sigma_i_sq, paste0("maturity_", 1:I))
 
-  # Check all values are numeric
   expect_true(all(is.numeric(result$s_i_0)))
   expect_true(all(is.numeric(result$sigma_i_sq)))
 })
 
 test_that("compute_scalar_statistics computes correct values", {
-  # Simple test case with known values
   w1 <- c(1, 2, 3)
   w2 <- matrix(c(2, 3, 4, 5, 6, 7), nrow = 3, ncol = 2)
 
@@ -66,11 +60,9 @@ test_that("compute_scalar_statistics handles subset of maturities", {
   w1 <- rnorm(n_obs)
   w2 <- matrix(rnorm(n_obs * I), n_obs, I)
 
-  # Test with subset of maturities
   maturities <- c(2, 4)
   result <- compute_scalar_statistics(w1, w2, maturities = maturities)
 
-  # Check only requested maturities are computed
   expect_length(result$s_i_0, length(maturities))
   expect_length(result$sigma_i_sq, length(maturities))
   expect_named(result$s_i_0, paste0("maturity_", maturities))

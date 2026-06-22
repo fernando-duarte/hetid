@@ -61,9 +61,10 @@ load_term_premia <- function(auto_download = FALSE,
 
   validate_acm_schema(tp_df, csv_path)
 
-  if ("DATE" %in% names(tp_df)) {
-    tp_df$DATE <- parse_and_warn_dates(tp_df$DATE, "DATE")
-    names(tp_df)[names(tp_df) == "DATE"] <- "date"
+  date_col <- intersect(c("DATE", "date"), names(tp_df))[1]
+  if (!is.na(date_col)) {
+    tp_df[[date_col]] <- parse_and_warn_dates(tp_df[[date_col]], date_col)
+    names(tp_df)[names(tp_df) == date_col] <- "date"
   }
 
   tp_df

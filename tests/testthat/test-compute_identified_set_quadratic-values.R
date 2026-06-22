@@ -1,6 +1,5 @@
-# Numerical regression guard for the d/A/b/c arithmetic. The hand-computed
-# expectations target the internal quadratic_from_components() workhorse with
-# raw statistics, so they cannot become circular through the container chain.
+# Regression guard for the d/A/b/c arithmetic: hand-computed expectations hit
+# the internal quadratic_from_components() with raw statistics, so not circular
 
 test_that("A_i matrices are symmetric", {
   set.seed(456)
@@ -23,7 +22,6 @@ test_that("A_i matrices are symmetric", {
     maturities = 1:I, n_components = I
   )
 
-  # Check that each A_i is symmetric
   for (i in 1:I) {
     A_i_mat <- result$A_i[[i]] # nolint: object_name_linter.
     expect_true(
@@ -112,7 +110,6 @@ test_that(
       maturities = maturities, n_components = I
     )
 
-    # Check results only for requested maturities
     expect_length(result$d_i, 3)
     expect_length(result$A_i, 3)
     expect_length(result$b_i, 3)
@@ -261,7 +258,6 @@ test_that(
       maturities = maturities, n_components = I
     )
 
-    # Compute individually for each maturity
     for (idx in seq_along(maturities)) {
       m <- maturities[idx]
       result_single <- quadratic_from_components(

@@ -17,7 +17,6 @@ test_that("compute_vector_statistics validates w2 input", {
 })
 
 test_that("compute_vector_statistics returns correct structure", {
-  # Create test data
   set.seed(123)
   n_obs <- 100
   I <- 3
@@ -28,22 +27,18 @@ test_that("compute_vector_statistics returns correct structure", {
 
   result <- compute_vector_statistics(w1, w2, pcs)
 
-  # Check structure
   expect_type(result, "list")
   expect_named(result, c("r_i_0", "r_i_1", "p_i_0"))
 
-  # Check r_i_0 dimensions and structure
   expect_true(is.matrix(result$r_i_0))
   expect_equal(dim(result$r_i_0), c(J, I))
   expect_equal(rownames(result$r_i_0), get_pc_column_names(J))
   expect_equal(colnames(result$r_i_0), paste0("maturity_", 1:I))
 
-  # Check r_i_1 structure
   expect_type(result$r_i_1, "list")
   expect_length(result$r_i_1, I)
   expect_named(result$r_i_1, paste0("maturity_", 1:I))
 
-  # Check each r_i_1 matrix
   for (i in 1:I) {
     mat <- result$r_i_1[[i]]
     expect_true(is.matrix(mat))
@@ -52,7 +47,6 @@ test_that("compute_vector_statistics returns correct structure", {
     expect_equal(colnames(mat), paste0("maturity_", 1:I))
   }
 
-  # Check p_i_0 dimensions and structure
   expect_true(is.matrix(result$p_i_0))
   expect_equal(dim(result$p_i_0), c(J, I))
   expect_equal(rownames(result$p_i_0), get_pc_column_names(J))
@@ -60,10 +54,9 @@ test_that("compute_vector_statistics returns correct structure", {
 })
 
 test_that("compute_vector_statistics computes correct values", {
-  # Simple test case with known values
   w1 <- c(1, 2, 3)
   w2 <- matrix(c(2, 3, 4, 5, 6, 7), nrow = 3, ncol = 2)
-  pcs <- matrix(c(1, 0, 0, 0, 1, 0), nrow = 3, ncol = 2) # Simple PC matrix
+  pcs <- matrix(c(1, 0, 0, 0, 1, 0), nrow = 3, ncol = 2)
 
   result <- compute_vector_statistics(w1, w2, pcs)
 
@@ -87,16 +80,13 @@ test_that("compute_vector_statistics handles subset of maturities", {
   w2 <- matrix(rnorm(n_obs * I), n_obs, I)
   pcs <- matrix(rnorm(n_obs * J), n_obs, J)
 
-  # Test with subset of maturities
   maturities <- c(2, 4)
   result <- compute_vector_statistics(w1, w2, pcs, maturities = maturities)
 
-  # Check dimensions
   expect_equal(ncol(result$r_i_0), length(maturities))
   expect_equal(ncol(result$p_i_0), length(maturities))
   expect_length(result$r_i_1, length(maturities))
 
-  # Check names
   expect_equal(colnames(result$r_i_0), paste0("maturity_", maturities))
   expect_equal(colnames(result$p_i_0), paste0("maturity_", maturities))
   expect_named(result$r_i_1, paste0("maturity_", maturities))
@@ -175,12 +165,10 @@ test_that("compute_vector_statistics propagates custom pcs column names", {
 })
 
 test_that("compute_vector_statistics handles orthogonal PCs correctly", {
-  # Test with orthogonal PCs
   n_obs <- 4
   w1 <- c(1, 2, 3, 4)
   w2 <- matrix(c(2, 3, 4, 5), nrow = n_obs, ncol = 1)
 
-  # Orthogonal PCs
   pcs <- matrix(c(
     1, 0, 0, 0,
     0, 1, 0, 0,

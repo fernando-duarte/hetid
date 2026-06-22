@@ -1,10 +1,5 @@
-# Fixture: simulate a common-sample triangular reduced form and return the
-# OLS reduced-form coefficient objects plus the raw data, so the affine
-# identity can be checked against an independent direct regression. When
-# n_lags > 0 the common design X also carries l.y1/l2.y1 columns, mirroring the
-# spec's common conditioning vector X_t = (1, PC, H lags of Y1); the Y2-on-X
-# fit then yields NONZERO lag slopes (estimate-B), or all-zero lag slopes when
-# zero_lag_block = TRUE (the imposed exact-news B = 0 case).
+# Fixture: triangular reduced form; n_lags > 0 gives spec X_t = (1, PC, H lags
+# of Y1). zero_lag_block = TRUE imposes exact-news B = 0, else B is estimated
 make_structural_fixture <- function(n = 200, i_dim = 2, n_pcs = 2, n_lags = 0,
                                     zero_lag_block = FALSE) {
   pc <- matrix(stats::rnorm(n * n_pcs), n, n_pcs)
