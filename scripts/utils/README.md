@@ -1,6 +1,6 @@
 # Utility Functions for hetid Scripts
 
-_Last modified: 2026-06-21 08:44 EDT_
+_Last modified: 2026-06-22 17:18 EDT_
 
 This directory contains reusable utility functions that consolidate common patterns across the analysis scripts, following the DRY (Don't Repeat Yourself) principle. `common_settings.R` sources the core layer and then sources the heteroskedasticity LM helpers (`hetero_lm_tests.R`), the plain-column LaTeX renderer (`latex_simple_table.R`), the stage-08 paper-spec layer (`paper_spec_residuals.R`, `paper_spec_estimator.R`, `paper_spec_bootstrap.R`), and the `for_paper` guard (`for_paper_guard.R`) -- the paper spec needs all of these. The remaining `utils/` helpers (`hetero_panel_meta.R`, `hetero_diag_figures.R`, `ixj_identification.R`, `spec_comparison_eval.R`) are NOT sourced by `common_settings.R`; the stage scripts that consume them source them directly. (The spec-comparison grid design `spec_comparison_design.R` is a stage-05-local file, not a `utils/` helper.)
 
@@ -218,12 +218,13 @@ and align the single de-meaned VFCI instrument (Z, J = 1):
 From the I = 1 / J = 1 residuals, assemble everything the three `for_paper`
 tables need:
 - `compute_paper_spec_estimator()` - The theta identified set, the `beta1(theta)`
-  structural intervals, tau*, the heteroskedasticity-relevance tests of W2 on the
-  VFCI instrument, the relevance diagnostics that replace the vacuous kappa(Q) at
-  I = J = 1, the endogeneity correlation, and the OLS benchmark
-- `paper_spec_set_columns()` - Per-coefficient identified-set intervals at a given
-  slack (theta from profile bounds; every other coefficient via the linear
-  functional `beta1_p(theta) = beta1r_p - beta2r_p . theta`)
+  structural intervals at the baseline slack `tau_set` (each per-coefficient
+  interval recovered via the linear functional
+  `beta1_p(theta) = beta1r_p - beta2r_p . theta`, assembled into `coef_table`),
+  tau*, the heteroskedasticity-relevance tests of W2 on the VFCI instrument, the
+  relevance diagnostics that replace the vacuous kappa(Q) at I = J = 1, the
+  endogeneity correlation, and a single exogenous-Y2 OLS benchmark
+  (`ols_coef` / `ols_r2`, the theta OLS estimate being the Y2 coefficient)
 
 ### paper_spec_bootstrap.R
 - `compute_paper_spec_bootstrap()` - Moving-block bootstrap band (block = 15,

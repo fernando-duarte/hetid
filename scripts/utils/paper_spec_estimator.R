@@ -41,7 +41,8 @@ compute_paper_spec_estimator <- function(resid, tau_set = BASELINE_TAU) {
 
   # OLS benchmark: structural equation treating Y2 as exogenous.
   ols_df <- data.frame(.y1 = resid$y1_level, resid$design_aligned, .y2 = resid$y2)
-  ols_coef <- coef(lm(.y1 ~ ., data = ols_df))
+  ols_fit <- lm(.y1 ~ ., data = ols_df)
+  ols_coef <- coef(ols_fit)
 
   # beta1(theta) point recovery (tau = 0).
   beta2r <- resid$beta2r
@@ -129,6 +130,7 @@ compute_paper_spec_estimator <- function(resid, tau_set = BASELINE_TAU) {
     hetero_pvals = hetero_pvals, hetero_regime = suite_cfg$regime,
     significance_level = 0.05,
     relevance = relevance, theta_ols = unname(ols_coef[".y2"]),
+    ols_r2 = summary(ols_fit)$r.squared,
     r2_w1 = resid$r2_w1, r2_y2 = resid$r2_y2,
     pc_var_explained = resid$pc_var_explained,
     news_loadings = resid$news_loadings, news_weights = resid$news_weights,
