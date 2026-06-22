@@ -1,6 +1,6 @@
 # Scripts Directory Structure
 
-_Last modified: 2026-06-21 08:44 EDT_
+_Last modified: 2026-06-15 15:50 EDT_
 
 This directory contains all analysis scripts for the hetid
 package, organized by workflow stage. All outputs are stored
@@ -177,30 +177,18 @@ structural price-of-risk equation; estimator properties), each as
 ### utils/
 Shared utility functions. `common_settings.R` sources the core layer
 listed first below (an explicit `file.exists`-guarded block, not a
-loop), and then sources the heteroskedasticity LM helpers
-(`hetero_lm_tests.R`), the plain-column LaTeX renderer
-(`latex_simple_table.R`), the stage-08 paper-spec layer
-(`paper_spec_residuals.R`, `paper_spec_estimator.R`,
-`paper_spec_bootstrap.R`), and the `for_paper` allowlist guard
-(`for_paper_guard.R`) -- the paper spec needs all of these
-(`common_settings.R:185-202`). The remaining `utils/` helpers
-(`hetero_panel_meta.R`, `hetero_diag_figures.R`, `ixj_identification.R`,
-`spec_comparison_eval.R`) are NOT sourced by `common_settings.R`; the
-stage scripts that consume them source them directly. (The
-spec-comparison grid design, `spec_comparison_design.R`, lives with
-stage 05, not in `utils/`.)
+loop); the remaining `utils/` helpers (`hetero_lm_tests.R`,
+`hetero_panel_meta.R`, `hetero_diag_figures.R`, `ixj_identification.R`,
+`latex_simple_table.R`, `spec_comparison_eval.R`) are sourced directly
+by the stage scripts that consume them. (The spec-comparison grid
+design, `spec_comparison_design.R`, lives with stage 05, not in
+`utils/`.)
 - `common_settings.R` - Central configuration: shared paths, output
-  directories (`OUTPUT_DIR`, `OUTPUT_PAPER_DIR`, `OUTPUT_TEMP_DIR`,
-  `DATA_RDS_PATH`), and constants (`NEWS_STEP = 3`,
-  `PIPELINE_ACM_MATURITIES` = 3..120 by 3, `BASELINE_TAU = 0.05`,
-  `OPT_TAU_CAP = 0.99` (the near-uninformative slack cap; admissible
-  tau in [0, 1)), `SEED = 123`, `N_CORES` (= `detectCores() - 1`),
+  directories, and constants (`NEWS_STEP = 3`, `PIPELINE_ACM_MATURITIES`
+  = 3..120 by 3, `BASELINE_TAU = 0.05`, `SEED = 123`, `N_CORES`,
   `N_Y1_LAGS = 4`, `IMPOSE_NEWS_PROJECTION_ZERO = FALSE`,
-  `TAU_STAR_N_STARTS = 15`, `FOR_PAPER_TABLE_STEMS`, plot/table
-  settings); sources the core utility files plus the paper-spec layer
-  (`hetero_lm_tests.R`, `latex_simple_table.R`, `paper_spec_residuals.R`,
-  `paper_spec_estimator.R`, `paper_spec_bootstrap.R`) and
-  `for_paper_guard.R`
+  `TAU_STAR_N_STARTS = 15`, plot/table settings, `DATA_RDS_PATH`);
+  sources the core utility files
 - `stats_utils.R` - Summary statistics (mean/sd/quantiles/skewness/
   kurtosis, optional autocorrelation)
 - `format_utils.R` - Finite/Inf-aware formatters for bounds and
@@ -214,8 +202,7 @@ stage 05, not in `utils/`.)
 - `hetero_panel_meta.R` - Regime-aware panel row labels and LaTeX
   notes for stage-02 exports
 - `hetero_plot_utils.R` - Heteroskedasticity diagnostic plots
-  (residuals vs fitted, scale-location, squared-residual, and
-  residual-vs-index)
+  (residuals vs fitted, QQ, time-series)
 - `hetero_diag_figures.R` - Stage-02 figure builders (-log10 p-value
   profiles across maturities)
 - `identification_utils.R` - Identification plumbing: maturity
@@ -268,58 +255,12 @@ stage 05, not in `utils/`.)
   threeparttable table for cells that are not pure numbers (e.g.
   identified-set interval strings); reuses the standalone/writer
   helpers from `latex_table_utils.R`
-- `paper_spec_residuals.R` - Stage-08 residual builder
-  (`compute_paper_spec_residuals()`): collapses the per-maturity SDF
-  news into one principal component (Y2, I=1) and aligns the single
-  de-meaned VFCI instrument (Z, J=1), reusing
-  `compute_identification_residuals()` for all date alignment; the news
-  factor is the RAW (uncentered) PC1 projection (not prcomp scores) so
-  the reduced-form intercept stays correct
-- `paper_spec_estimator.R` - Stage-08 estimator
-  (`compute_paper_spec_estimator()`, `paper_spec_set_columns()`):
-  assembles the theta identified set, the `beta1(theta)` structural
-  intervals, tau*, the heteroskedasticity-relevance tests of W2 on the
-  VFCI instrument, and the relevance diagnostics that replace the
-  vacuous kappa(Q) at I=J=1
-- `paper_spec_bootstrap.R` - Stage-08 moving-block bootstrap
-  (`compute_paper_spec_bootstrap()`, block = 15, 200 reps,
-  deterministic given seed): resamples quarters and re-derives tau*,
-  the set endpoints at tau_set, and the relevance moment Cov(Z, W2^2)
-- `for_paper_guard.R` - The `for_paper` fail-closed invariant
-  (`for_paper_allowlist()`, `assert_for_paper_allowlist()`): builds the
-  12-name allowlist (3 `FOR_PAPER_TABLE_STEMS` x {`.tex`,
-  `_standalone.tex`, `_standalone.pdf`, `.csv`}) and aborts if
-  `output/for_paper/` has any unexpected/missing file or any subdir
 - `tests/` - Unit tests for the utility layer (lambda/whitening/
   optimization, profile bounds, I×J, closure membership, hetero tests,
   gamma sources, news-projection mode and Stage-04 baseline spec stamp,
-  residual alignment and saved-residual dates, Z-width pipeline,
-  generalized-vs-legacy pipeline equivalence, tau* utils, the stage-08
-  paper-spec residuals/estimator, stats) plus the `pipeline_value_diff.R`
-  before/after value-comparison harness and a `fixtures/` directory of
-  capture scripts and RDS
+  residual alignment, Z-width pipeline, generalized-vs-legacy pipeline
+  equivalence, stats) plus `fixtures/` capture scripts and RDS
 - `README.md` - Documentation for the utility functions
-
-### results_companion/
-Standalone diagnostics for the results-companion `.tex` (NOT part of
-`run_all_scripts.R`; run individually, deterministic at `SEED = 123`,
-recompute from `output/temp/data.rds`). They write to
-`output/temp/results_companion/` and `output/temp/identification/`.
-- `diag_identified_functional.R` - Which linear combinations `c'theta`
-  of the SDF-news loadings are identified over the fixed-VFCI set, and
-  the near-rank-one geometry of Q that drives the weak-identification
-  result
-- `diag_single_maturity_and_recovery.R` - Single-maturity sweep
-  (each maturity alone is bounded/well-conditioned, isolating the joint
-  collinearity) plus structural recovery: `beta1(theta)` at the VFCI
-  tau=0 point vs the PC loadings over the honest VFCI set
-- `diag_taustar_bootstrap.R` - tau* (critical slack) for the fixed VFCI
-  weights with a moving-block bootstrap band (honest sampling
-  uncertainty without selecting weights on the data)
-- `make_ridge_figure.R` - Headline figure: the identified set for the
-  5- and 9-year SDF-news loadings projected onto the
-  (theta_5y, theta_9y) plane, overlaying two slacks to show the set
-  stretching along the near-collinear ridge
 
 ### examples/
 Standalone demonstrations (not part of the pipeline)
@@ -327,14 +268,9 @@ Standalone demonstrations (not part of the pipeline)
   custom Z (nonlinear PC transform + volatility); runs offline
 
 ### z_sources/
-Drop-in payloads for the `z_source.R` hook (each defines `build_z(data)`)
+Drop-in payloads for the `z_source.R` hook
 - `pc_squared.R` - Squared principal components as instruments
   (Regime B, outside span(1, PC); enables Anscombe in the diagnostics)
-- `vfci_demeaned.R` - The actual de-meaned VFCI as a single instrument
-  (J = 1): `Z = vfci - mean(vfci)`. Wired into stage 08 via
-  `HETID_Z_SOURCE` (set with `withr::with_envvar` in
-  `compute_paper_spec.R`). De-meaning leaves the identified set unchanged
-  because the pipeline's moments are centered covariances
 
 ### output/
 All script outputs organized by purpose
@@ -359,22 +295,13 @@ Working outputs and intermediate results
 - `data.rds` - Consolidated analysis dataset (quarterly ACM data
   merged with `variables.RData`), created by stage 01 and read by all
   later stages
-- `identification_baseline/` - Stage 04 baseline working results (RDS)
+- `identification_baseline/` - Stage 04 baseline results
 - `identification_ixj/` - Stage 04 I×J results
 - `identification_optimized/` - Stage 05 optimized weights,
   spec-comparison grids (and per-group checkpoint dirs), tau* sweeps
-- `identification_results/` - Stage 06 final comparison (RDS)
+- `identification_results/` - Stage 06 final comparison
 - `identification_generalized/` - Stage 07 generalized-instrument
   (Z = PC^2) results
-- `identification/` - The SHARED rendered-output directory (HTML / LaTeX
-  fragment + standalone / PNG / SVG / CSV / TXT) that stages 04-07 all
-  write their publication-style tables and figures into (the `paper_dir`
-  in each stage's `output_results.R`): the baseline, optimized,
-  spec-comparison, final, and generalized identification tables, the
-  theta-panel and consumption-equation tables, the interval / width /
-  gamma-heatmap figures, and -- on a full run -- the tau* sweep tables
-  and figures. (Distinct from the per-stage `identification_*/` RDS
-  bundles above.)
 - `paper_spec/` - Stage 08 results bundle
   (`paper_spec_results.rds`) and the table staging dir
 - `variance_bounds/` - Stage 03 working results
@@ -429,9 +356,8 @@ spec-comparison stage to its quick subgrid. The verified switches:
   `spec_comparison_quick.rds` so the report refreshes the `_quick`
   artifacts; unset, the report prefers `spec_comparison_full.*` when a
   full grid exists, then falls back to the quick grid.
-- `HETID_BASELINE_GAMMA` (read in `gamma_source.R:13` via the
-  `baseline_gamma_method()` resolver, which `compute_identification.R:9`
-  calls, default `"vfci"`) - selects the baseline gamma:
+- `HETID_BASELINE_GAMMA` (read in `compute_identification.R:9` and
+  `gamma_source.R:13`, default `"vfci"`) - selects the baseline gamma:
   `"vfci"` (the fixed raw VFCI PC loading, which requires exactly
   4 instruments) or a path to an R file defining
   `build_gamma(moments)` returning a J×I matrix (the arbitrary-width
@@ -447,7 +373,7 @@ spec-comparison stage to its quick subgrid. The verified switches:
   back to the `IMPOSE_NEWS_PROJECTION_ZERO` script constant in
   `common_settings.R` (default `FALSE`). The resolved value is part of
   the Stage-04 baseline spec stamp.
-- `HETID_ASSERT_EQUIV` (read in `identification_utils.R:275`) -
+- `HETID_ASSERT_EQUIV` (read in `identification_utils.R:274`) -
   diagnostic shadow flag: when non-empty, every
   `build_pipeline_quadratic_system()` call additionally asserts
   numeric-leaf identity with the legacy `build_quadratic_system()`.
@@ -535,14 +461,12 @@ Rscript 02_identification_diagnostics/n_hat_episodes.R
 Rscript 02_identification_diagnostics/output_results.R
 ```
 
-All stage-02 artifacts now land in
-`output/temp/identification_diagnostics/` -- the working RDS objects,
-CSVs, and paired PNG/SVG figures alongside the publication LaTeX panel
-(fragment + standalone), HTML mirrors, and copied figures (under its
-`figures/` subdir). Nothing goes to `for_paper` anymore: that directory
-holds ONLY the three stage-08 paper-spec tables, and `output_results.R`
-points its `paper_dir` at the same temp directory (see the in-script
-note that both paths "now resolve" to temp).
+Working artifacts (RDS objects, CSVs, and paired PNG/SVG
+figures) are written to
+`output/temp/identification_diagnostics/`; the publication
+LaTeX panel (fragment + standalone), HTML mirrors, CSV
+exports, and copied figures land in
+`output/for_paper/identification_diagnostics/`.
 
 ## Notes
 

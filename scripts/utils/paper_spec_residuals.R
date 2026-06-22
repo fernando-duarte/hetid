@@ -79,7 +79,6 @@ compute_paper_spec_residuals <- function(data,
   news_res <- compute_w2_residuals(
     yields = data[, yield_cols], term_premia = data[, tp_cols],
     maturities = feasible, n_pcs = n_pcs, pcs = pcs_mat, step = step,
-    dates = data$date, # full-T; package shifts to t+1 realization dates
     y1 = y1, y1_lags = y1_lags, impose_b_zero = TRUE
   )
   assert_w2_alignment(news_res)
@@ -154,6 +153,7 @@ compute_paper_spec_residuals <- function(data,
     r2_y2 = 1 - stats::var(w2_single) / stats::var(y2),
     news_loadings = stats::setNames(w, used_maturities),
     news_weights = stats::setNames(combo, used_maturities),
+    news_sd = stats::setNames(news_sd, used_maturities),
     feasible_maturities = feasible,
     used_maturities = used_maturities,
     news_pc_scale = news_pc_scale,

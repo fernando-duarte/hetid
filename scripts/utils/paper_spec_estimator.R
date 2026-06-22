@@ -22,36 +22,6 @@
   }
 }
 
-# Per-coefficient identified-set intervals at a given slack, in the supplied
-# coefficient order: theta from the profile bounds, every other coefficient via
-# the linear functional beta1_p(theta) = beta1r_p - beta2r_p . theta over the set.
-# `quad` is build_pipeline_quadratic_system(gamma, tau, moments)$quadratic. Used
-# for the tau = 0.05 / 0.5 columns and, post-bootstrap, the tau* lower-bound column.
-paper_spec_set_columns <- function(quad, beta1r, beta2r, coef_names) {
-  tb <- solve_all_profile_bounds(quad)
-  rows <- lapply(coef_names, function(cn) {
-    if (cn == "theta") {
-      lo <- tb$lower[1]
-      hi <- tb$upper[1]
-      bnd <- isTRUE(tb$bounded_lower[1]) && isTRUE(tb$bounded_upper[1])
-      vld <- isTRUE(tb$valid_lower[1]) && isTRUE(tb$valid_upper[1])
-    } else {
-      cp <- unname(beta2r[cn])
-      fmin <- solve_linear_functional_bound(quad, cp, "min")
-      fmax <- solve_linear_functional_bound(quad, cp, "max")
-      lo <- unname(beta1r[cn]) - fmax$bound
-      hi <- unname(beta1r[cn]) - fmin$bound
-      bnd <- isTRUE(fmin$bounded) && isTRUE(fmax$bounded)
-      vld <- isTRUE(fmin$valid) && isTRUE(fmax$valid)
-    }
-    data.frame(
-      coef = cn, lower = lo, upper = hi, bounded = bnd, valid = vld,
-      stringsAsFactors = FALSE
-    )
-  })
-  do.call(rbind, rows)
-}
-
 compute_paper_spec_estimator <- function(resid, tau_set = BASELINE_TAU) {
   w1 <- resid$w1
   w2v <- as.numeric(resid$w2)
@@ -69,51 +39,11 @@ compute_paper_spec_estimator <- function(resid, tau_set = BASELINE_TAU) {
   theta_point <- if (is.null(pt0)) NA_real_ else pt0$theta
   set_status <- .classify_set_status(theta_bounds[1, ], !is.null(pt0))
 
-  # OLS benchmarks: the structural equation under several specifications that
-  # vary (a) whether the SDF-news PC Y2 enters and (b) the number of consumption
-  # lags (0, 1, or the baseline 4). All on the SAME aligned sample (nested
-  # regressors). Significance stars use Newey-West HAC standard errors (the
-  # time-series standard for a quarterly regression).
-  # Newey-West HAC lag via the standard floor(4 (T/100)^(2/9)) rule (fixed across
-  # specs so it is reportable in the caption).
-  nw_lag <- floor(4 * (length(w1) / 100)^(2 / 9))
-  hac_p <- function(fit) {
-    ct <- lmtest::coeftest(
-      fit,
-      vcov. = sandwich::NeweyWest(fit, lag = nw_lag, prewhite = FALSE)
-    )
-    stats::setNames(ct[, "Pr(>|t|)"], rownames(ct))
-  }
-  lag_cols <- c("l.y1", "l2.y1", "l3.y1", "l4.y1")
-  make_ols_spec <- function(label, with_y2, lags) {
-    preds <- paste0("pc", 1:4)
-    if (lags >= 1L) preds <- c(preds, lag_cols[seq_len(lags)])
-    df <- data.frame(.y1 = resid$y1_level, resid$design_aligned[, preds, drop = FALSE])
-    if (with_y2) df$.y2 <- resid$y2
-    fit <- lm(.y1 ~ ., data = df)
-    list(
-      label = label, with_y2 = with_y2, lags = lags,
-      coef = coef(fit), p = hac_p(fit), r2 = summary(fit)$r.squared
-    )
-  }
-  ols_specs <- list(
-    make_ols_spec("with $Y_2$, 0 lags", TRUE, 0L),
-    make_ols_spec("no $Y_2$, 0 lags", FALSE, 0L),
-    make_ols_spec("with $Y_2$, 1 lag", TRUE, 1L),
-    make_ols_spec("no $Y_2$, 1 lag", FALSE, 1L),
-    make_ols_spec("with $Y_2$, 4 lags", TRUE, 4L),
-    make_ols_spec("no $Y_2$, 4 lags", FALSE, 4L)
-  )
-  # The 4-lag specs feed the per-coefficient table and the round-trip identity.
-  s_incl <- ols_specs[[5]]
-  s_excl <- ols_specs[[6]]
-  ols_incl <- s_incl$coef
-  ols_incl_p <- s_incl$p
-  ols_excl <- s_excl$coef
-  ols_excl_p <- s_excl$p
-  ols_r2 <- c(incl_news = s_incl$r2, excl_news = s_excl$r2)
+  # OLS benchmark: structural equation treating Y2 as exogenous.
+  ols_df <- data.frame(.y1 = resid$y1_level, resid$design_aligned, .y2 = resid$y2)
+  ols_coef <- coef(lm(.y1 ~ ., data = ols_df))
 
-  # beta1(theta) point recovery (tau = 0); kept for the round-trip identity.
+  # beta1(theta) point recovery (tau = 0).
   beta2r <- resid$beta2r
   beta2r_mat <- matrix(beta2r, nrow = 1, dimnames = list("news_pc", names(beta2r)))
   beta1_point <- if (is.null(pt0)) {
@@ -122,55 +52,31 @@ compute_paper_spec_estimator <- function(resid, tau_set = BASELINE_TAU) {
     recover_structural_coefficients(resid$beta1r, beta2r_mat, theta_point)
   }
 
-  # Set ID at two slacks: tau = tau_set (0.05) and tau = 0.5.
-  tau_set2 <- 0.5
-  qs_set50 <- build_pipeline_quadratic_system(gamma, tau_set2, moments)
-  theta_bounds50 <- solve_all_profile_bounds(qs_set50$quadratic)
-  # beta1_p interval over the set defined by `quad`: [beta1r - fmax, beta1r - fmin].
-  beta1_interval <- function(quad, p) {
-    cp <- unname(beta2r[p])
-    fmin <- solve_linear_functional_bound(quad, cp, "min")
-    fmax <- solve_linear_functional_bound(quad, cp, "max")
-    list(
-      lower = unname(resid$beta1r[p]) - fmax$bound,
-      upper = unname(resid$beta1r[p]) - fmin$bound,
-      bounded = isTRUE(fmin$bounded) && isTRUE(fmax$bounded),
-      valid = isTRUE(fmin$valid) && isTRUE(fmax$valid)
-    )
-  }
-  theta_interval <- function(b) {
-    list(
-      lower = b$lower[1], upper = b$upper[1],
-      bounded = isTRUE(b$bounded_lower[1]) && isTRUE(b$bounded_upper[1]),
-      valid = isTRUE(b$valid_lower[1]) && isTRUE(b$valid_upper[1])
-    )
-  }
-
-  # Coefficient table: two OLS columns (incl./excl. SDF news, with HAC p-values
-  # for stars), the recovered point (tau = 0, kept for the identity), and the
-  # identified-set intervals at tau = 0.05 and tau = 0.5.
-  coef_row <- function(coef, oi, oip, oe, oep, point, s05, s50) {
+  # Coefficient table: design coefs (interval via the linear functional
+  # beta1_p(theta) = beta1r_p - beta2r_p . theta) + the theta row.
+  coef_row <- function(coef, ols, point, lower, upper, bounded, valid) {
     data.frame(
-      coef = coef,
-      ols = unname(oi), ols_p = unname(oip),
-      ols_no = unname(oe), ols_no_p = unname(oep),
-      point = unname(point),
-      set_lower = s05$lower, set_upper = s05$upper,
-      bounded = isTRUE(s05$bounded), valid = isTRUE(s05$valid),
-      set50_lower = s50$lower, set50_upper = s50$upper,
-      set50_bounded = isTRUE(s50$bounded), set50_valid = isTRUE(s50$valid),
+      coef = coef, ols = unname(ols), point = unname(point),
+      set_lower = unname(lower), set_upper = unname(upper),
+      bounded = isTRUE(bounded), valid = isTRUE(valid),
       stringsAsFactors = FALSE, row.names = NULL
     )
   }
   design_rows <- lapply(names(resid$beta1r), function(p) {
+    cp <- unname(beta2r[p])
+    fmin <- solve_linear_functional_bound(qs_set$quadratic, cp, "min")
+    fmax <- solve_linear_functional_bound(qs_set$quadratic, cp, "max")
     coef_row(
-      p, ols_incl[p], ols_incl_p[p], ols_excl[p], ols_excl_p[p], beta1_point[p],
-      beta1_interval(qs_set$quadratic, p), beta1_interval(qs_set50$quadratic, p)
+      p, ols_coef[p], beta1_point[p],
+      resid$beta1r[p] - fmax$bound, resid$beta1r[p] - fmin$bound,
+      fmin$bounded && fmax$bounded, fmin$valid && fmax$valid
     )
   })
   theta_row <- coef_row(
-    "theta", ols_incl[".y2"], ols_incl_p[".y2"], NA_real_, NA_real_, theta_point,
-    theta_interval(theta_bounds), theta_interval(theta_bounds50)
+    "theta", ols_coef[".y2"], theta_point,
+    theta_bounds$lower[1], theta_bounds$upper[1],
+    theta_bounds$bounded_lower[1] && theta_bounds$bounded_upper[1],
+    theta_bounds$valid_lower[1] && theta_bounds$valid_upper[1]
   )
   coef_table <- rbind(do.call(rbind, design_rows), theta_row)
 
@@ -222,8 +128,7 @@ compute_paper_spec_estimator <- function(resid, tau_set = BASELINE_TAU) {
     tau_star = ts$tau_star, tau_star_capped = ts$capped, tau_sweep = coarse,
     hetero_pvals = hetero_pvals, hetero_regime = suite_cfg$regime,
     significance_level = 0.05,
-    relevance = relevance, theta_ols = unname(ols_incl[".y2"]),
-    ols_r2 = ols_r2, ols_specs = ols_specs, nw_lag = nw_lag, tau_set2 = tau_set2,
+    relevance = relevance, theta_ols = unname(ols_coef[".y2"]),
     r2_w1 = resid$r2_w1, r2_y2 = resid$r2_y2,
     pc_var_explained = resid$pc_var_explained,
     news_loadings = resid$news_loadings, news_weights = resid$news_weights,
