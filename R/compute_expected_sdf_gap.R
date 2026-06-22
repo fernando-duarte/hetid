@@ -61,7 +61,7 @@ compute_expected_sdf_gap <- function(yields, term_premia, i,
   n_obs <- length(n_hat)
   assert_insufficient_data_ok(
     n_obs > horizon_periods,
-    "Not enough observations. Need T > i/step news periods"
+    HETID_CONSTANTS$INSUFFICIENT_NEWS_MSG
   )
 
   exp_n_hat <- exp(n_hat)

@@ -19,16 +19,7 @@ validate_acm_extract_inputs <- function(data_types, maturities,
                                         use_incomplete_quarters = TRUE) {
   assert_flag(use_incomplete_quarters, "use_incomplete_quarters")
 
-  valid_types <- names(HETID_ACM_SCHEMA)
-  assert_bad_argument_ok(
-    is.character(data_types) && length(data_types) >= 1 &&
-      all(data_types %in% valid_types),
-    paste0(
-      "Invalid data_types. Must be one or more of: ",
-      paste(valid_types, collapse = ", ")
-    ),
-    arg = "data_types"
-  )
+  assert_acm_data_types(data_types)
 
   # Bond maturities are months: bounds come from the ACM grid, not the
   # positional component-index convention

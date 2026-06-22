@@ -14,7 +14,8 @@
 #' over the bound index set \eqn{T_i = \{1, \dots, T - i/step\}}, the
 #' same dates as \code{\link{compute_k_hat}} and
 #' \code{\link{compute_k2_hat}} (the realized leg needs \code{i/step}
-#' further news periods).
+#' further news periods). \code{i} must be a positive multiple of
+#' \code{step}.
 #'
 #' @details
 #' The supremum estimator provides an upper bound for the exponential of twice
@@ -40,6 +41,10 @@ compute_c_hat <- function(yields, term_premia, i,
   # Use standardized validation
   validate_step(step)
   validate_maturity_index(i, max_maturity = effective_max_maturity(step))
+  validate_step_multiple(
+    i, step,
+    "the bound index set trims whole news periods"
+  )
   validate_row_alignment(yields, term_premia)
 
   # Compute n_hat series (bare numeric kernel)
@@ -48,15 +53,7 @@ compute_c_hat <- function(yields, term_premia, i,
   # Restrict to the bound index set T_i = {1, ..., T - i/step}: the
   # envelope C_i shares the dates of K1/K2, whose realized leg needs
   # i/step further news periods (spec's common T_i for the bound).
-  horizon_periods <- i %/% step
-  assert_insufficient_data_ok(
-    length(n_hat) > horizon_periods,
-    "Not enough observations. Need T > i/step news periods"
-  )
-  n_hat <- n_hat[seq_len(length(n_hat) - horizon_periods)]
-
-  # Remove NA values
-  n_hat_clean <- n_hat[!is.na(n_hat)]
+  n_hat_clean <- trim_to_bound_index_set(n_hat, i, step)
 
   if (length(n_hat_clean) == 0) {
     return(NA_real_)

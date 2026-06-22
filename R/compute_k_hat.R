@@ -72,7 +72,7 @@ compute_k_hat <- function(yields, term_premia, i,
 
   assert_insufficient_data_ok(
     n_obs > horizon_periods,
-    "Not enough observations. Need T > i/step news periods"
+    HETID_CONSTANTS$INSUFFICIENT_NEWS_MSG
   )
 
   # Compute the fourth moment (vectorized)

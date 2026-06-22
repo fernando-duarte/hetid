@@ -48,6 +48,8 @@
 #'     month maturities (e.g. ACMY003M)}
 #'   \item{COL_FORMAT_SIMPLE}{Package column name format, maturity in
 #'     months (e.g. y12)}
+#'   \item{INSUFFICIENT_NEWS_MSG}{Shared error message for the
+#'     news-period data-sufficiency guard in the variance-bound kernels}
 #' }
 #'
 #' @references
@@ -76,6 +78,9 @@ HETID_CONSTANTS <- list(
   # News-period geometry
   DEFAULT_STEP = 12L, # Maturity-index units (months) per news period
   MATURITY_UNITS_PER_YEAR = 12L, # Maturity index units in one year
+
+  # Shared guard message for the news-period kernels (c_hat/k_hat/k2_hat/gap)
+  INSUFFICIENT_NEWS_MSG = "Not enough observations. Need T > i/step news periods",
 
   # Maturity grids (months)
   DEFAULT_ACM_MATURITIES = seq(12L, 120L, by = 12L), # Annual nodes

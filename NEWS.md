@@ -58,6 +58,11 @@
 * With the default `step = 12`, all numerical results are bit-identical
   to 0.2.0 on the same data: `i = 12k` reproduces the old `i = k`
   exactly.
+* `compute_c_hat()` now requires `i` to be a positive multiple of
+  `step` (matching `compute_k_hat()` and `compute_k2_hat()`), raising
+  `hetid_error_bad_argument` instead of silently flooring `i/step` for a
+  non-multiple `i`. Results on the step-multiple maturity grids the
+  pipeline uses are unchanged.
 
 # hetid 0.2.0
 

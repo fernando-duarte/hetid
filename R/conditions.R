@@ -7,6 +7,27 @@
 #' @keywords internal
 NULL
 
+#' Construct a Structured hetid Condition
+#'
+#' Single source of the \code{hetid_error} class vector and condition
+#' layout shared by every \code{stop_*} constructor (the error-side
+#' mirror of \code{warn_hetid}). \code{subclass} prepends the specific
+#' error class; \code{...} carries any extra condition fields (e.g.
+#' \code{arg}).
+#'
+#' @param message Error message string
+#' @param subclass Optional specific condition class, prepended
+#' @param call The call (default NULL)
+#' @param ... Extra named fields stored on the condition
+#' @return A condition object (not signalled)
+#' @keywords internal
+new_hetid_error <- function(message, subclass = NULL, call = NULL, ...) {
+  structure(
+    class = c(subclass, "hetid_error", "error", "condition"),
+    list(message = message, call = call, ...)
+  )
+}
+
 #' Signal a Bad Argument Error
 #'
 #' @param message Error message string
@@ -15,14 +36,10 @@ NULL
 #' @keywords internal
 stop_bad_argument <- function(message, arg = NULL,
                               call = NULL) {
-  cnd <- structure(
-    class = c(
-      "hetid_error_bad_argument",
-      "hetid_error", "error", "condition"
-    ),
-    list(message = message, call = call, arg = arg)
-  )
-  stop(cnd)
+  stop(new_hetid_error(
+    message, "hetid_error_bad_argument", call,
+    arg = arg
+  ))
 }
 
 #' Signal a Dimension Mismatch Error
@@ -32,14 +49,7 @@ stop_bad_argument <- function(message, arg = NULL,
 #' @keywords internal
 stop_dimension_mismatch <- function(message,
                                     call = NULL) {
-  cnd <- structure(
-    class = c(
-      "hetid_error_dimension_mismatch",
-      "hetid_error", "error", "condition"
-    ),
-    list(message = message, call = call)
-  )
-  stop(cnd)
+  stop(new_hetid_error(message, "hetid_error_dimension_mismatch", call))
 }
 
 #' Signal an Insufficient Data Error
@@ -49,14 +59,7 @@ stop_dimension_mismatch <- function(message,
 #' @keywords internal
 stop_insufficient_data <- function(message,
                                    call = NULL) {
-  cnd <- structure(
-    class = c(
-      "hetid_error_insufficient_data",
-      "hetid_error", "error", "condition"
-    ),
-    list(message = message, call = call)
-  )
-  stop(cnd)
+  stop(new_hetid_error(message, "hetid_error_insufficient_data", call))
 }
 
 #' Signal a Generic hetid Error
@@ -65,13 +68,7 @@ stop_insufficient_data <- function(message,
 #' @param call The call (default NULL)
 #' @keywords internal
 stop_hetid <- function(message, call = NULL) {
-  cnd <- structure(
-    class = c(
-      "hetid_error", "error", "condition"
-    ),
-    list(message = message, call = call)
-  )
-  stop(cnd)
+  stop(new_hetid_error(message, call = call))
 }
 
 #' Assert Bad Argument Invariant

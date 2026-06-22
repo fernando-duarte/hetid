@@ -22,8 +22,8 @@ process_w2_maturity <- function(i, yields_df, term_premia_df, pcs, n_pcs,
                                 impose_b_zero = FALSE) {
   # Emit a classed skip warning and return NULL so a guard can
   # `return(skip_maturity(...))` in one line.
-  skip_maturity <- function(message) {
-    warn_skipped_maturity(message)
+  skip_maturity <- function(msg) {
+    warn_skipped_maturity(msg)
     NULL
   }
 

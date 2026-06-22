@@ -55,13 +55,7 @@ compute_k2_hat <- function(yields, term_premia, i,
   delta_p <- compute_news_components(yields, term_premia, i, step = step)$delta_p
 
   # Trim to the bound index set T_i = {1, ..., T - i/step}
-  horizon_periods <- i %/% step
-  assert_insufficient_data_ok(
-    length(delta_p) + 1L > horizon_periods,
-    "Not enough observations. Need T > i/step news periods"
-  )
-  keep <- delta_p[seq_len(length(delta_p) - horizon_periods + 1L)]
-  keep <- keep[!is.na(keep)]
+  keep <- trim_to_bound_index_set(delta_p, i, step, len_offset = 1L)
 
   if (length(keep) == 0) {
     return(NA_real_)

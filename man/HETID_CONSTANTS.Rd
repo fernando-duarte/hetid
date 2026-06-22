@@ -48,6 +48,8 @@ whole-year maturities (e.g. ACMY01)}
 month maturities (e.g. ACMY003M)}
 \item{COL_FORMAT_SIMPLE}{Package column name format, maturity in
 months (e.g. y12)}
+\item{INSUFFICIENT_NEWS_MSG}{Shared error message for the
+news-period data-sufficiency guard in the variance-bound kernels}
 }
 }
 \usage{

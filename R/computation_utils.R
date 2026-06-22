@@ -112,3 +112,31 @@ prepare_return_data <- function(result_series, dates, yields,
 
   result_df
 }
+
+#' Trim a Series to the Bound Index Set T_i = {1, ..., T - i/step}
+#'
+#' Shared trim for the variance-bound kernels: drops the trailing
+#' \code{i/step} news periods (the realized leg's horizon) and the NA
+#' entries, leaving each caller its own reduction. \code{len_offset}
+#' adapts the length bookkeeping for a length-T level series
+#' (\code{n_hat}, offset 0) versus a T-1 news series (\code{delta_p},
+#' offset 1). Callers validate \code{i} as a positive multiple of
+#' \code{step} so \code{i/step} is a whole number of periods.
+#'
+#' @param series Numeric series to trim.
+#' @param i Maturity index (a positive multiple of \code{step}).
+#' @template param-step
+#' @param len_offset Added to the effective length and the kept range
+#'   (0 for a length-T series, 1L for a T-1 news series).
+#' @return The trimmed, NA-dropped numeric vector (possibly empty).
+#' @keywords internal
+trim_to_bound_index_set <- function(series, i, step, len_offset = 0L) {
+  horizon_periods <- i %/% step
+  n <- length(series)
+  assert_insufficient_data_ok(
+    n + len_offset > horizon_periods,
+    HETID_CONSTANTS$INSUFFICIENT_NEWS_MSG
+  )
+  trimmed <- series[seq_len(n - horizon_periods + len_offset)]
+  trimmed[!is.na(trimmed)]
+}

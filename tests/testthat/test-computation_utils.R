@@ -41,6 +41,21 @@ test_that("run_pc_regression errors when complete observations are too few", {
   )
 })
 
+test_that("run_pc_regression errors on a rank-deficient (collinear) design", {
+  # Two identical regressors make lm() alias one term to an NA coefficient;
+  # the guard must fail loudly instead of propagating an under-ranked fit.
+  set.seed(1)
+  n <- 50
+  x <- rnorm(n)
+  pcs <- cbind(pc1 = x, pc2 = x)
+  y <- x + rnorm(n)
+  expect_error(
+    run_pc_regression(y, pcs, n_pcs = 2),
+    "Rank-deficient regression design",
+    class = "hetid_error"
+  )
+})
+
 test_that("compute_time_series_news errors on length mismatch", {
   expect_error(
     compute_time_series_news(c(1, 2, 3), c(4, 5)),
