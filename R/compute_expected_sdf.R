@@ -92,9 +92,8 @@
 #' \code{y\{step\}}; at \code{i == step} a \code{tp\{step\}} column must
 #' still be present, though its value is ignored.
 #'
-#' @note The effective maximum for \code{i} is \code{MAX_MATURITY - step}
-#'   (108 for standard ACM data with the default annual step), because
-#'   \code{n_hat(i, t)} requires data at maturity \code{i + step}.
+#' @note The effective maximum for \code{i} is \code{MAX_MATURITY - step},
+#'   because \code{n_hat(i, t)} requires data at maturity \code{i + step}.
 #'
 #' @note Passing \code{i = 0} returns the horizon-zero boundary
 #'   \eqn{E_t[\mathrm{SDF}_{t+1}] = P^{(1)}_t = e^{-y^{(1)}_t}}, the realized

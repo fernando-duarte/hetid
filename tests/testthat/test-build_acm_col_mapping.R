@@ -1,6 +1,5 @@
-# Tests for the dual raw-name convention: whole-year months map to the
-# official padded-year names, sub-annual months to the 3-digit-month
-# form, and package names always carry the month suffix.
+# Dual raw-name convention: whole-year months map to official padded-year names
+# (ACMY01), sub-annual months to the 3-digit-month form; package names suffixed
 
 test_that("whole-year months map to official padded-year raw names", {
   mapping <- build_acm_col_mapping("yields", c(12, 60, 120))

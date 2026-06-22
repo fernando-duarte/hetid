@@ -41,8 +41,6 @@ test_that("validate_maturity_index accepts valid inputs", {
   expect_true(validate_maturity_index(60.0))
 })
 
-# --- validate_n_pcs ---
-
 test_that("validate_n_pcs rejects non-integer values", {
   expect_error(validate_n_pcs(1.5), "integer")
   expect_error(validate_n_pcs(2.7), "integer")
@@ -101,8 +99,6 @@ test_that("validate_n_pcs boundary at max", {
     "n_pcs must be between"
   )
 })
-
-# --- validate_numeric_inputs ---
 
 test_that("validate_numeric_inputs accepts numeric vectors", {
   expect_true(
@@ -175,8 +171,6 @@ test_that("validate_numeric_inputs handles single input", {
   )
 })
 
-# --- validate_time_series_lengths ---
-
 test_that("validate_time_series_lengths accepts matching lengths", {
   expect_true(
     validate_time_series_lengths(
@@ -239,8 +233,6 @@ test_that("validate_time_series_lengths with empty vectors", {
   )
 })
 
-# --- validate_row_alignment ---
-
 test_that("validate_row_alignment accepts frames with different columns", {
   y <- data.frame(y1 = 1:5, y2 = 6:10, extra = letters[1:5])
   tp <- data.frame(tp1 = 11:15)
@@ -260,8 +252,6 @@ test_that("validate_row_alignment rejects mismatched row counts", {
     "10 vs 5 rows"
   )
 })
-
-# --- validate_data_dimensions ---
 
 test_that("validate_data_dimensions accepts matching dims", {
   syn <- create_synthetic_test_data(n = 50, n_maturities = 5)
@@ -316,8 +306,6 @@ test_that("validate_data_dimensions checks rows before cols", {
     "same number of observations"
   )
 })
-
-# --- assert_scalar_finite ---
 
 test_that("assert_scalar_finite rejects non-numeric input", {
   expect_error(

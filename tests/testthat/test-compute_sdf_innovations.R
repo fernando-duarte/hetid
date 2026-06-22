@@ -15,7 +15,6 @@ test_that("sdf-innovations kernel returns time series", {
 test_that("SDF innovations have mean near zero", {
   test_env <- setup_standard_test_env()
 
-  # Test for multiple maturities (including maturity 12), bare kernel series
   for (i in c(12, 24, 60, 96)) {
     sdf_innov_i <- sdf_innovations_series(
       test_env$yields, test_env$term_premia,
@@ -57,7 +56,6 @@ test_that("SDF innovations highly correlated with price news", {
 test_that("SDF innovations length is n-1", {
   test_env <- setup_standard_test_env()
 
-  # Test across the annual nodes (bare kernel series)
   for (i in seq(12, 108, by = 12)) {
     sdf_innov_i <- sdf_innovations_series(
       test_env$yields, test_env$term_premia,
@@ -159,7 +157,7 @@ test_that("SDF innovations use the constant centering B_i (subtracted outside e^
   )$delta_p
 
   # Spec centering: B_i = 0.5 * mean(e^{mu} * delta_p^2) subtracted
-  # OUTSIDE the e^{mu} factor (a constant, not a time-varying term)
+  # outside the e^{mu} factor (a constant, not a time-varying term)
   exp_mu <- exp(n_hat_i[seq_along(delta_p)])
   valid <- !is.na(exp_mu) & !is.na(delta_p)
   b_hat <- 0.5 * mean(exp_mu[valid] * delta_p[valid]^2)

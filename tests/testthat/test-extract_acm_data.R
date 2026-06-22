@@ -2,37 +2,28 @@
 # Tests ACM data extraction and filtering using the bundled CSV
 
 test_that("extract_acm_data returns expected structure", {
-  # Function returns a data frame with date column and selected variables
   data <- extract_acm_data()
 
-  # Check it's a data frame
   expect_s3_class(data, "data.frame")
 
-  # Check for date column
   expect_true("date" %in% names(data))
   expect_s3_class(data$date, "Date")
 
-  # Check for default columns (yields and term premia)
   expect_true(all(paste0("y", seq(12, 120, 12)) %in% names(data)))
   expect_true(all(paste0("tp", seq(12, 120, 12)) %in% names(data)))
 
-  # Check data has rows
   expect_gt(nrow(data), 0)
 })
 
 test_that("extract_acm_data maturity selection", {
-  # Test selecting specific maturities
   data <- extract_acm_data(maturities = c(24, 60, 120))
 
-  # Should have only selected maturities
   expect_true(all(c("y24", "y60", "y120") %in% names(data)))
   expect_true(all(c("tp24", "tp60", "tp120") %in% names(data)))
 
-  # Should not have other maturities
   expect_false("y12" %in% names(data))
   expect_false("y36" %in% names(data))
 
-  # Single maturity
   data_single <- extract_acm_data(
     data_types = "yields",
     maturities = 60
@@ -139,7 +130,6 @@ test_that("extract_acm_data handles edge cases", {
   one_two <- extract_acm_data(data_types = "yields", maturities = c(1, 2))
   expect_named(one_two, c("date", "y1", "y2"))
 
-  # Invalid data type
   expect_error(
     extract_acm_data(data_types = "invalid"),
     "Invalid data_types"
@@ -263,7 +253,6 @@ test_that("extract_acm_data data consistency", {
 })
 
 test_that("extract_acm_data preserves data order", {
-  # Data should be sorted by date
   data <- extract_acm_data()
 
   expect_true(all(diff(data$date) >= 0))

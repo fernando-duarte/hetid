@@ -23,8 +23,7 @@
 #' matches the boundary leg of \code{compute_n_hat_previous()}.
 #'
 #' @note The effective maximum for \code{i} is
-#'   \code{MAX_MATURITY - step} (108 for standard ACM data with the
-#'   default annual step), because this function requires data at
+#'   \code{MAX_MATURITY - step}, because this function requires data at
 #'   maturity \code{i + step}.
 #'
 #' @note The supplied \code{term_premia} are taken as the step-period

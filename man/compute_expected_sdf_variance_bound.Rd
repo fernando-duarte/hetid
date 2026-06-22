@@ -19,12 +19,11 @@ compute_expected_sdf_variance_bound(
 \item{i}{Integer specifying the maturity index (column) to analyze,
 in \strong{months}. Must be between 1 and 120 (the ACM monthly
 grid); functions that require data at maturity \code{i + step}
-accept at most \code{MAX_MATURITY - step}, i.e. 108 with the
-default annual step. The input data must contain the columns for
-the maturities the function uses (e.g. \code{y60}/\code{tp60}
-plus step-adjacent maturities for \code{i = 60}). Whole years are
-multiples of 12 (i = 12 is the 1-year bond, i = 60 the 5-year,
-i = 120 the 10-year).}
+accept at most \code{MAX_MATURITY - step}. The input data must
+contain the columns for the maturities the function uses
+(e.g. \code{y60}/\code{tp60} plus step-adjacent maturities for
+\code{i = 60}). Whole years are multiples of 12 (i = 12 is the
+1-year bond, i = 60 the 5-year, i = 120 the 10-year).}
 
 \item{step}{Integer number of maturity-index units per news period
 (default \code{HETID_CONSTANTS$DEFAULT_STEP}). The news operator
@@ -61,9 +60,8 @@ essentially always selects \eqn{\widehat{\mathrm{Var}}(q)}: the returned
 value is the sharper bound's estimate, not a min-of-noise artifact of two
 comparably sized variances.
 
-The effective maximum for \code{i} is \code{MAX_MATURITY - step}
-(108 with the default annual step), because \code{n_hat(i, t)} requires
-data at maturity \code{i + step}.
+The effective maximum for \code{i} is \code{MAX_MATURITY - step},
+because \code{n_hat(i, t)} requires data at maturity \code{i + step}.
 
 Passing \code{i = 0} returns \code{0}: the horizon-0 expected SDF is
 the realized one-period price (exact, no approximation), so its

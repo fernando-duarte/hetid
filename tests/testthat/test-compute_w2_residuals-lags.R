@@ -58,7 +58,7 @@ test_that("y1_lags = H adds H named lag columns, trims rows, stays orthogonal", 
   )
   expect_true(all(c("l.y1", "l2.y1") %in% colnames(res$coefficients)))
   expect_equal(ncol(res$coefficients), 1L + 4L + h)
-  # Residuals orthogonal to the appended lag columns (OLS normal equations).
+  # Residuals orthogonal to the appended lag columns (OLS normal equations)
   resid <- res$residuals[["maturity_24"]]
   kept <- res$kept_idx[["maturity_24"]]
   n <- length(fx$y1)
@@ -79,7 +79,7 @@ test_that("impose_b_zero = TRUE yields literal W2 = Y2 with zero coefficients", 
   )
   # Recover the raw SDF innovation and the complete rows for maturity 24. The
   # dated return prepends a leading NA (news realized at t+1); drop it to get the
-  # bare T-1 news vector that kept_idx (a mask over the W2 rows) indexes into.
+  # bare T-1 news vector that kept_idx (a mask over the W2 rows) indexes into
   sdf_df <- compute_sdf_innovations(
     as.data.frame(fx$yields), as.data.frame(fx$tp),
     i = 24, dates = fx$dates, step = 12

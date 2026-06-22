@@ -9,8 +9,12 @@
 #'
 #' @return A list containing:
 #' \describe{
-#'   \item{s_i_1}{List of vectors, each element i is S_i^(1) (length I)}
-#'   \item{s_i_2}{List of matrices, each element i is S_i^(2) (I x I)}
+#'   \item{s_i_1}{List of S_i^(1) vectors (each length I, the theta axis),
+#'     keyed \code{maturity_N} (N = the w2 column index, not necessarily a
+#'     bond maturity) with one entry per element of \code{maturities}.}
+#'   \item{s_i_2}{List of S_i^(2) matrices (each I x I, the theta axis),
+#'     keyed \code{maturity_N} with one entry per element of
+#'     \code{maturities}.}
 #' }
 #'
 #' @details

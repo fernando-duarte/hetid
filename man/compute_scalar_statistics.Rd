@@ -17,8 +17,11 @@ Default is all columns of w2.}
 \value{
 A list containing:
 \describe{
-\item{s_i_0}{Named vector of S_i^(0) values for each maturity}
-\item{sigma_i_sq}{Named vector of sigma_i^2 values for each maturity}
+\item{s_i_0}{Named vector of S_i^(0) values, keyed \code{maturity_N}
+(N = the w2 column index, not necessarily a bond maturity) with
+one entry per element of \code{maturities}.}
+\item{sigma_i_sq}{Named vector of sigma_i^2 values, keyed
+\code{maturity_N} with one entry per element of \code{maturities}.}
 }
 }
 \description{

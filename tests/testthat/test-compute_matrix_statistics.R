@@ -13,7 +13,6 @@ test_that("compute_matrix_statistics validates w2 input", {
 })
 
 test_that("compute_matrix_statistics returns correct structure", {
-  # Create test data
   set.seed(123)
   n_obs <- 100
   I <- 3
@@ -22,16 +21,13 @@ test_that("compute_matrix_statistics returns correct structure", {
 
   result <- compute_matrix_statistics(w1, w2)
 
-  # Check structure
   expect_type(result, "list")
   expect_named(result, c("s_i_1", "s_i_2"))
 
-  # Check s_i_1 structure
   expect_type(result$s_i_1, "list")
   expect_length(result$s_i_1, I)
   expect_named(result$s_i_1, paste0("maturity_", 1:I))
 
-  # Check each s_i_1 vector
   for (i in 1:I) {
     vec <- result$s_i_1[[i]]
     expect_type(vec, "double")
@@ -39,12 +35,10 @@ test_that("compute_matrix_statistics returns correct structure", {
     expect_named(vec, paste0("maturity_", 1:I))
   }
 
-  # Check s_i_2 structure
   expect_type(result$s_i_2, "list")
   expect_length(result$s_i_2, I)
   expect_named(result$s_i_2, paste0("maturity_", 1:I))
 
-  # Check each s_i_2 matrix
   for (i in 1:I) {
     mat <- result$s_i_2[[i]]
     expect_true(is.matrix(mat))
@@ -55,7 +49,6 @@ test_that("compute_matrix_statistics returns correct structure", {
 })
 
 test_that("compute_matrix_statistics computes correct values", {
-  # Simple test case with known values
   w1 <- c(1, 2, 3)
   w2 <- matrix(c(2, 3, 4, 5, 6, 7), nrow = 3, ncol = 2)
 
@@ -87,11 +80,9 @@ test_that("compute_matrix_statistics handles subset of maturities", {
   w1 <- rnorm(n_obs)
   w2 <- matrix(rnorm(n_obs * I), n_obs, I)
 
-  # Test with subset of maturities
   maturities <- c(2, 4)
   result <- compute_matrix_statistics(w1, w2, maturities = maturities)
 
-  # Check only requested maturities are computed
   expect_length(result$s_i_1, length(maturities))
   expect_length(result$s_i_2, length(maturities))
   expect_named(result$s_i_1, paste0("maturity_", maturities))
@@ -152,7 +143,6 @@ test_that("compute_matrix_statistics rejects duplicate maturities", {
 })
 
 test_that("compute_matrix_statistics handles zero residuals correctly", {
-  # Test with zero w1
   w1 <- rep(0, 10)
   w2 <- matrix(rnorm(20), nrow = 10, ncol = 2)
 
@@ -165,7 +155,6 @@ test_that("compute_matrix_statistics handles zero residuals correctly", {
   # S_i^(2) should still be non-zero
   expect_false(all(result$s_i_2[[1]] == 0))
 
-  # Test with zero column in w2
   w1 <- rnorm(10)
   w2 <- matrix(c(rep(0, 10), rnorm(10)), nrow = 10, ncol = 2)
 

@@ -73,8 +73,6 @@ test_that("validate_maturities rejects duplicate values", {
   )
 })
 
-# --- assert_scalar_integer_in_range ---
-
 test_that("assert_scalar_integer_in_range accepts a valid scalar", {
   expect_invisible(
     assert_scalar_integer_in_range(3, "x", 1, 5)

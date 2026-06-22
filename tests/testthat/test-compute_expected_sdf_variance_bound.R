@@ -144,7 +144,7 @@ test_that("compute_expected_sdf_variance_bound honors a non-default step", {
 
 test_that("the bound averages over finite pairs only (interior NA)", {
   # Interior NA in the realized one-period (y12) leg drops one pair; the
-  # bound is the min(var_n(g), var_n(q)) over the SURVIVING finite gaps.
+  # bound is the min(var_n(g), var_n(q)) over the surviving finite gaps.
   test_env <- setup_standard_test_env()
   i <- 60
   yields_na <- test_env$yields
@@ -310,7 +310,7 @@ test_that("q removes the first-order term: var(q) is far below var(g)", {
 
 test_that("a non-finite q falls back to the gap bound (var_q guard)", {
   # y12 = +Inf at one interior date => realized_log = -Inf => realized_price = 0
-  # => gap = -e^{n_hat} is FINITE, but u = -Inf => q = +Inf. The guard must set
+  # => gap = -e^{n_hat} is finite, but u = -Inf => q = +Inf. The guard must set
   # var_q = Inf so the bound falls back to var_g and stays finite.
   y12_pct <- c(1, 2, 3, 4, 5, 6)
   y12_pct[3] <- Inf

@@ -3,7 +3,6 @@ test_that("compute_w2_residuals works for single maturity", {
   set.seed(123)
   pcs <- matrix(stats::rnorm(nrow(test_env$yields) * 4), nrow = nrow(test_env$yields))
 
-  # Test single maturity
   res_y2 <- suppressWarnings(compute_w2_residuals(test_env$yields, test_env$term_premia,
     maturities = 60, n_pcs = 4, pcs = pcs, dates = test_env$data$date
   ))
@@ -23,7 +22,6 @@ test_that("compute_w2_residuals works for maturity 12", {
   set.seed(123)
   pcs <- matrix(stats::rnorm(nrow(test_env$yields) * 4), nrow = nrow(test_env$yields))
 
-  # Test maturity 12 specifically
   res_y2_mat12 <- suppressWarnings(compute_w2_residuals(test_env$yields, test_env$term_premia,
     maturities = 12, n_pcs = 4, pcs = pcs, dates = test_env$data$date
   ))
@@ -32,11 +30,9 @@ test_that("compute_w2_residuals works for maturity 12", {
   expect_true("residuals" %in% names(res_y2_mat12))
   expect_true("r_squared" %in% names(res_y2_mat12))
 
-  # Check that we get valid residuals for maturity 12
   expect_true("maturity_12" %in% names(res_y2_mat12$residuals))
   expect_true(length(res_y2_mat12$residuals$maturity_12) > 0)
 
-  # R-squared should be reasonable
   expect_gt(res_y2_mat12$r_squared[1], 0)
   expect_lt(res_y2_mat12$r_squared[1], 1)
 })
@@ -47,13 +43,11 @@ test_that("compute_w2_residuals works for multiple maturities", {
   set.seed(123)
   pcs <- matrix(stats::rnorm(nrow(test_env$yields) * 4), nrow = nrow(test_env$yields))
 
-  # Test multiple maturities (including maturity 12)
   maturities <- c(12, 24, 60, 84)
   res_y2 <- suppressWarnings(compute_w2_residuals(test_env$yields, test_env$term_premia,
     maturities = maturities, n_pcs = 4, pcs = pcs, dates = test_env$data$date
   ))
 
-  # Should have one element per maturity
   expect_length(res_y2$residuals, length(maturities))
   expect_length(res_y2$r_squared, length(maturities))
   expect_equal(nrow(res_y2$coefficients), length(maturities))
@@ -64,16 +58,13 @@ test_that("residual properties check", {
   set.seed(123)
   pcs <- matrix(stats::rnorm(nrow(test_env$yields) * 4), nrow = nrow(test_env$yields))
 
-  # Test for maturity 36
   res_y2 <- suppressWarnings(compute_w2_residuals(test_env$yields, test_env$term_premia,
     maturities = 36, n_pcs = 4, pcs = pcs, dates = test_env$data$date
   ))
   residuals <- res_y2$residuals[[1]]
 
-  # Mean should be near 0
   expect_lt(abs(mean(residuals, na.rm = TRUE)), 1e-10)
 
-  # Should have finite values
   expect_true(all(is.finite(residuals) | is.na(residuals)))
 })
 
@@ -83,9 +74,8 @@ test_that("compute_w2_residuals uses SDF innovations", {
   set.seed(123)
   pcs <- matrix(stats::rnorm(nrow(test_env$yields) * 4), nrow = nrow(test_env$yields))
 
-  # Get SDF innovations directly. compute_sdf_innovations now returns a dated
-  # data frame (length T, leading NA for the t->t+1 news alignment); drop the
-  # NA to recover the T-1 news vector this test compares lengths against.
+  # compute_sdf_innovations returns a dated frame (length T, leading NA for the
+  # t->t+1 alignment); drop the NA for the T-1 news vector compared here
   i <- 48
   sdf_df <- compute_sdf_innovations(
     test_env$yields, test_env$term_premia,
@@ -149,9 +139,8 @@ test_that("R-squared matches manual regression", {
   # Test for maturity 60
   i <- 60
 
-  # Compute SDF innovations. The dated return prepends a leading NA to align
-  # the news to t+1; drop it to recover the T-1 news vector aligned with the
-  # lagged PCs below (news[t] pairs with PC_t).
+  # Dated return prepends a leading NA to align news to t+1; drop it for the
+  # T-1 news vector aligned with the lagged PCs below (news[t] pairs with PC_t)
   sdf_df <- compute_sdf_innovations(
     yields_merged, term_premia_merged,
     i = i, dates = merged_data$date_acm
@@ -243,17 +232,14 @@ test_that("length verification for output", {
   set.seed(123)
   pcs <- matrix(stats::rnorm(nrow(test_env$yields) * 4), nrow = nrow(test_env$yields))
 
-  # Test with multiple maturities
   maturities <- seq(12, 108, by = 12)
   res_y2 <- suppressWarnings(compute_w2_residuals(test_env$yields, test_env$term_premia,
     maturities = maturities, n_pcs = 4, pcs = pcs, dates = test_env$data$date
   ))
 
-  # Check dimensions
   expect_length(res_y2$residuals, 9)
   expect_length(res_y2$r_squared, 9)
 
-  # Each residual vector should have same length
   residual_lengths <- lengths(res_y2$residuals)
   expect_true(all(residual_lengths == residual_lengths[1]))
 })
@@ -261,7 +247,6 @@ test_that("length verification for output", {
 test_that("no message when user provides PCs", {
   test_env <- setup_standard_test_env()
 
-  # Synthetic PCs with correct row count
   set.seed(42)
   user_pcs <- matrix(
     rnorm(nrow(test_env$yields) * 2),
@@ -282,7 +267,6 @@ test_that("no message when user provides PCs", {
 test_that("return_df date column is the real t+1 Date when user provides PCs", {
   test_env <- setup_standard_test_env()
 
-  # Synthetic PCs with correct row count
   set.seed(42)
   user_pcs <- matrix(
     rnorm(nrow(test_env$yields) * 2),
@@ -298,7 +282,7 @@ test_that("return_df date column is the real t+1 Date when user provides PCs", {
     )
   )
   # The date column is the real t+1 (lead) realization Date, drawn from the
-  # supplied full-T dates shifted by one (dates[-1]).
+  # supplied full-T dates shifted by one (dates[-1])
   expect_s3_class(result$date, "Date")
   expect_true(all(result$date %in% test_env$data$date[-1]))
 })
@@ -313,7 +297,7 @@ test_that("no message for dates when user provides dates", {
     ncol = 2
   )
   # Full-T dates: one per yield row (length nrow(yields)); internally shifted
-  # to the t+1 realization dates user_dates[-1].
+  # to the t+1 realization dates user_dates[-1]
   user_dates <- seq(
     as.Date("2000-01-01"),
     length.out = nrow(test_env$yields),
@@ -343,7 +327,7 @@ test_that("return_df dates align correctly with interior NA in PCs", {
   user_pcs[10, 1] <- NA
 
   # Full-T real dates (one per yield row); internally shifted to the t+1
-  # realization dates user_dates[-1], so we can verify alignment.
+  # realization dates user_dates[-1], so we can verify alignment
   user_dates <- seq(as.Date("1990-03-31"), by = "quarter", length.out = n)
 
   result <- compute_w2_residuals(
@@ -354,8 +338,8 @@ test_that("return_df dates align correctly with interior NA in PCs", {
   )
 
   # The realization date for lagged PC row 10 (aligned with SDF innovation 10)
-  # is user_dates[-1][10] == user_dates[11]; it must be MISSING because that
-  # row's PC was NA.
+  # is user_dates[-1][10] == user_dates[11]; it must be missing because that
+  # row's PC was NA
   dropped_date <- user_dates[-1][10]
   expect_false(dropped_date %in% result$date)
 
@@ -368,7 +352,7 @@ test_that("return_df dates align correctly with interior NA in PCs", {
     length(result$residuals)
   )
 
-  # Dates should NOT be the unbroken t+1 index (they should skip the NA row)
+  # Dates should not be the unbroken t+1 index (they should skip the NA row)
   expect_false(
     identical(result$date, user_dates[-1])
   )
@@ -601,7 +585,7 @@ test_that("list-mode dates are ragged when maturities drop different rows", {
 test_that("list-mode dates are real Dates per maturity for custom PCs", {
   test_data <- create_synthetic_test_data(n = 30, n_maturities = 2)
   # Dates are mandatory now (full-T, one per yield row); there is no row-index
-  # fallback. The per-maturity dates are still a parallel named list.
+  # fallback. The per-maturity dates are still a parallel named list
   user_dates <- seq(as.Date("2000-01-01"), by = "quarter", length.out = 30)
   res <- suppressWarnings(compute_w2_residuals(
     test_data$yields, test_data$term_premia,

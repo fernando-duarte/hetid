@@ -1,6 +1,5 @@
-# Tests for download_utils internals (atomic_replace). Hermetic: no network,
-# no writes outside tempdir. Covers the fail-closed rename branch that the
-# mocked download tests do not reach.
+# atomic_replace internals, hermetic (no network, tempdir-only); covers the
+# fail-closed rename branch the mocked download tests do not reach
 
 test_that("atomic_replace errors when the rename fails", {
   # A nonexistent source makes file.rename() return FALSE deterministically

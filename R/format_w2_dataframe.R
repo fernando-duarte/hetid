@@ -21,7 +21,7 @@
 format_w2_dataframe <- function(
   residuals_list, fitted_list, dates_list, maturities
 ) {
-  df_list <- list()
+  df_list <- vector("list", length(maturities))
 
   for (idx in seq_along(maturities)) {
     i <- maturities[idx]

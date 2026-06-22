@@ -3,8 +3,6 @@
 # access and a throwaway per-user cache directory (no real downloads,
 # no writes outside tempdir)
 
-# --- load_term_premia mock-based tests ---
-
 test_that("load_term_premia auto-downloads when file missing", {
   withr::with_tempdir({
     temp_csv <- file.path(getwd(), "ACMTermPremium.csv")
@@ -154,8 +152,6 @@ test_that("load_term_premia parses ISO dates correctly", {
     )
   })
 })
-
-# --- download_term_premia mock-based tests ---
 
 test_that("the nyfed source writes its own cache file, not the package", {
   skip_if_not_installed("readxl")

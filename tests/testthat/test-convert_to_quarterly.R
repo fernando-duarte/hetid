@@ -135,9 +135,8 @@ test_that("duplicated input dates are rejected up front", {
 })
 
 test_that("incomplete quarters are re-dated to calendar quarter-end", {
-  # Each observation falls in the FIRST month of its quarter, so every quarter
-  # is incomplete (last obs not in the terminal month) and is re-dated to the
-  # calendar quarter-end. A genuine quarter column must survive untouched.
+  # Each obs is in the first month of its quarter, so every quarter is
+  # incomplete and re-dated to quarter-end; a genuine quarter column survives
   incomplete_q <- data.frame(
     date = as.Date(c("1962-01-31", "1962-04-30", "1962-07-31", "1962-10-31")),
     quarter = c(1, 2, 3, 4),

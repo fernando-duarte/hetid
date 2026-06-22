@@ -21,12 +21,11 @@ compute_expected_sdf(
 \item{i}{Integer specifying the maturity index (column) to analyze,
 in \strong{months}. Must be between 1 and 120 (the ACM monthly
 grid); functions that require data at maturity \code{i + step}
-accept at most \code{MAX_MATURITY - step}, i.e. 108 with the
-default annual step. The input data must contain the columns for
-the maturities the function uses (e.g. \code{y60}/\code{tp60}
-plus step-adjacent maturities for \code{i = 60}). Whole years are
-multiples of 12 (i = 12 is the 1-year bond, i = 60 the 5-year,
-i = 120 the 10-year).}
+accept at most \code{MAX_MATURITY - step}. The input data must
+contain the columns for the maturities the function uses
+(e.g. \code{y60}/\code{tp60} plus step-adjacent maturities for
+\code{i = 60}). Whole years are multiples of 12 (i = 12 is the
+1-year bond, i = 60 the 5-year, i = 120 the 10-year).}
 
 \item{dates}{Required \code{Date} vector of period-end calendar dates, one
 per row of \code{yields}/\code{term_premia}. A time series is never
@@ -109,9 +108,8 @@ uses, the realized leg requires the one-period yield column
 still be present, though its value is ignored.
 }
 \note{
-The effective maximum for \code{i} is \code{MAX_MATURITY - step}
-(108 for standard ACM data with the default annual step), because
-\code{n_hat(i, t)} requires data at maturity \code{i + step}.
+The effective maximum for \code{i} is \code{MAX_MATURITY - step},
+because \code{n_hat(i, t)} requires data at maturity \code{i + step}.
 
 Passing \code{i = 0} returns the horizon-zero boundary
 \eqn{E_t[\mathrm{SDF}_{t+1}] = P^{(1)}_t = e^{-y^{(1)}_t}}, the realized

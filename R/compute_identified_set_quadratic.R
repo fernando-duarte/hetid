@@ -106,7 +106,6 @@ quadratic_from_components <- function(tau,
                                       maturities, n_components) {
   n_maturities <- length(maturities)
 
-  # Initialize storage
   d_i <- numeric(n_maturities)
   A_i <- vector("list", n_maturities) # nolint: object_name_linter.
   b_i <- vector("list", n_maturities)
@@ -117,7 +116,6 @@ quadratic_from_components <- function(tau,
   names(b_i) <- maturity_names(maturities)
   names(c_i) <- maturity_names(maturities)
 
-  # Compute quadratic form components for each maturity
   for (idx in seq_along(maturities)) {
     i <- maturities[idx]
 

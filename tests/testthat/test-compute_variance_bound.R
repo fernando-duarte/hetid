@@ -1,7 +1,6 @@
 test_that("compute_variance_bound returns single positive value", {
   test_env <- setup_standard_test_env()
 
-  # Test for maturity 60
   var_bound_60 <- compute_variance_bound(test_env$yields, test_env$term_premia, i = 60)
 
   expect_type(var_bound_60, "double")
@@ -41,11 +40,9 @@ test_that("variance bound is positive across the annual nodes", {
 test_that("variance bound formula verification", {
   test_env <- setup_standard_test_env()
 
-  # Test for i=48
   i <- 48
   var_bound_48 <- compute_variance_bound(test_env$yields, test_env$term_premia, i = i)
 
-  # Compute components
   c_hat_48 <- compute_c_hat(test_env$yields, test_env$term_premia, i = i)
   k_hat_48 <- compute_k_hat(test_env$yields, test_env$term_premia, i = i)
   k2_hat_48 <- compute_k2_hat(test_env$yields, test_env$term_premia, i = i)
@@ -62,7 +59,6 @@ test_that("variance bound formula verification", {
 test_that("variance bound generally increases with maturity", {
   test_env <- setup_standard_test_env()
 
-  # Compute variance bounds for the annual nodes
   maturities <- seq(12, 108, by = 12)
   var_bounds <- numeric(length(maturities))
   for (k in seq_along(maturities)) {
