@@ -70,4 +70,33 @@ test_that("assert_acm_data_types validates a non-empty vector of schema keys", {
     assert_acm_data_types(1L),
     class = "hetid_error_bad_argument"
   )
+
+  # Duplicates are rejected (mirrors validate_maturities)
+  dup_err <- tryCatch(
+    assert_acm_data_types(c("yields", "yields")),
+    error = function(e) e
+  )
+  expect_s3_class(dup_err, "hetid_error_bad_argument")
+  expect_match(
+    conditionMessage(dup_err), "must not contain duplicates",
+    fixed = TRUE
+  )
+})
+
+test_that("require_column extracts from data frames and matrices", {
+  expect_identical(require_column(data.frame(y12 = 3), "y12"), 3)
+
+  # matrix column extraction returns the same unnamed shape as a data frame
+  m <- matrix(1:2, nrow = 1, dimnames = list(NULL, c("y12", "y24")))
+  expect_identical(require_column(m, "y24"), 2L)
+
+  # missing column raises the structured error on both shapes
+  expect_error(
+    require_column(data.frame(a = 1), "y12"),
+    class = "hetid_error_bad_argument"
+  )
+  expect_error(
+    require_column(matrix(1, 1, 1, dimnames = list(NULL, "a")), "y12"),
+    class = "hetid_error_bad_argument"
+  )
 })

@@ -7,14 +7,14 @@
 require_column(x, col_name, context = NULL)
 }
 \arguments{
-\item{x}{Data frame or list to extract from}
+\item{x}{Data frame, matrix, or list to extract from}
 
 \item{col_name}{Column name to extract}
 
 \item{context}{Description for error message}
 }
 \value{
-The extracted column value
+The extracted column value (unnamed)
 }
 \description{
 Extract and Validate a Required Column

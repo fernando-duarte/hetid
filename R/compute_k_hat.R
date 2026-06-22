@@ -25,6 +25,12 @@
 #' intended news period. \code{i} must be a positive multiple of
 #' \code{step}.
 #'
+#' @note Unlike \code{compute_c_hat}, \code{compute_k2_hat}, and
+#'   \code{compute_variance_bound} (capped at \code{MAX_MATURITY - step}),
+#'   \code{i} here may run up to \code{MAX_MATURITY}: this estimator reads
+#'   only maturities \code{step} and \code{i} (via
+#'   \code{compute_n_hat_previous(i - step)}), never \code{i + step}.
+#'
 #' @details
 #' The fourth moment estimator captures the kurtosis of forecast errors in
 #' the term structure model, providing information about tail risks.
@@ -53,6 +59,11 @@ compute_k_hat <- function(yields, term_premia, i,
     "the realized-vs-forecast pairing shifts whole news periods"
   )
   validate_row_alignment(yields, term_premia)
+  if (i == step) {
+    # i > step validates units transitively via n_hat_series; the i == step
+    # boundary (compute_n_hat_previous direct branch) is the one gap
+    validate_percent_units(yields)
+  }
 
   y_step <- require_column(
     yields, acm_column_name("yields", step), "yields"
