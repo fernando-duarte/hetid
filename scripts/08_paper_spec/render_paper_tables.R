@@ -52,9 +52,9 @@ emit <- function(tbl, stem) {
 }
 
 cli_h1("Stage 08: rendering the three for_paper tables")
-emit(build_table1_summary(res), "table1_summary_statistics")
-emit(build_table2_structural(res), "table2_structural_equation")
-emit(build_table3_properties(res), "table3_estimator_properties")
+emit(build_table1_summary(res), FOR_PAPER_TABLE_STEMS[[1]])
+emit(build_table2_structural(res), FOR_PAPER_TABLE_STEMS[[2]])
+emit(build_table3_properties(res), FOR_PAPER_TABLE_STEMS[[3]])
 
 # Validate the staging dir holds EXACTLY the 12 allowlisted files, then
 # atomically replace for_paper (so a mid-pipeline failure never empties it).

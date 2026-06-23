@@ -5,6 +5,7 @@
 # of length bl (wrapping to nn rows), preserving short-run dependence. Shared by
 # the paper-spec and results-companion tau* bootstraps. Seed the caller, not here.
 mbb_index <- function(nn, bl) {
+  bl <- min(bl, nn) # a block longer than the series collapses to one full block
   nblocks <- ceiling(nn / bl)
   starts <- sample.int(nn - bl + 1L, nblocks, replace = TRUE)
   unlist(lapply(starts, function(s) s:(s + bl - 1L)))[seq_len(nn)]

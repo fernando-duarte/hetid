@@ -55,7 +55,7 @@ save_correlation_heatmap <- function(cor_matrix, title, filename, dir = plot_dir
     filename <- paste0(filename, ".svg")
   }
 
-  svglite::svglite(file.path(dir, filename), width = 8, height = 7)
+  svglite::svglite(file.path(dir, filename), width = PLOT_WIDTH, height = PLOT_HEIGHT)
   on.exit(dev.off(), add = TRUE)
   corrplot::corrplot(cor_matrix,
     method = "color", type = "upper",

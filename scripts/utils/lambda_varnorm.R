@@ -12,13 +12,13 @@
 # the per-component support rows, so off-support entries stay exact
 # +0.0 (dividing +0.0 by a positive scalar is +0.0).
 
-# Relative floor for the admissibility check, deliberately equal to
-# the whitening eigenvalue gate (WHITEN_EIGEN_RTOL): the sub-block PD
-# gate already guarantees lambda' V lambda >= min_eig * ||lambda||^2
-# for any nonzero lambda, so this check fires only for genuinely
-# inadmissible (zero or denormal) start columns -- the F_i exclusion
-# of lambda = 0 that the to-do asked to enforce.
-VARNORM_ZERO_RTOL <- 1e-10
+# Relative floor for the admissibility check. References the whitening
+# eigenvalue gate (WHITEN_EIGEN_RTOL, sourced first) so the two stay equal by
+# construction: the sub-block PD gate already guarantees
+# lambda' V lambda >= min_eig * ||lambda||^2 for any nonzero lambda, so this
+# check fires only for genuinely inadmissible (zero or denormal) start columns
+# -- the F_i exclusion of lambda = 0 that the to-do asked to enforce.
+VARNORM_ZERO_RTOL <- WHITEN_EIGEN_RTOL
 
 # Per-column lambda' V lambda of one component's weight matrix,
 # computed on its support rows. The colSums(sub * (block %*% sub))

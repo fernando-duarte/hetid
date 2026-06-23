@@ -70,6 +70,9 @@ TP_PREFIX <- hetid:::HETID_ACM_SCHEMA$term_premia$prefix_new
 # Plotting parameters
 PLOT_WIDTH <- 8
 PLOT_HEIGHT <- 6
+# Wider/taller canvas for multi-panel figures (e.g. the 2x2 diagnostics grid)
+PLOT_WIDTH_WIDE <- 12
+PLOT_HEIGHT_TALL <- 10
 PLOT_DPI <- 300
 
 # Table formatting
