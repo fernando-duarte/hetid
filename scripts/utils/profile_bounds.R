@@ -2,6 +2,15 @@
 # wrapper, and closed-form tau = 0 point identification. The scaled-solve
 # internals live in profile_bounds_core.R, which must be sourced first.
 
+# Coordinate-tracking thresholds. Named once here; the values are load-bearing
+# (this is a pure rename -- keep them byte-identical). BOX_EDGE_RTOL: a coordinate
+# within this fraction of the box rode the edge. BOUND_STABILITY_RTOL: relative
+# change below which a tracked bound counts as stable. UNBOUNDED_SCALING_FACTOR:
+# a bound growing by at least this factor with the box is an unbounded ray.
+BOX_EDGE_RTOL <- 0.99
+BOUND_STABILITY_RTOL <- 1e-3
+UNBOUNDED_SCALING_FACTOR <- 5
+
 # Profile bound (min or max of theta_k). Returns list(bound, bounded, valid):
 #   (TRUE , TRUE ) finite feasible+active bound -> the value
 #   (TRUE , FALSE) finite but feasibility/convergence check failed -> "unreliable"
@@ -55,7 +64,7 @@ solve_profile_bound <- function(quadratic, component_index,
   # Fast path: accept box1 only if it is a clean solve with NO coordinate on the
   # box edge (an edge-riding coordinate -- target or not -- means the box, not a
   # constraint, stopped the optimum, so fall through to coordinate tracking).
-  if (.solve_finite(r1) && all(abs(r1$phi) < 0.99 * box1)) {
+  if (.solve_finite(r1) && all(abs(r1$phi) < BOX_EDGE_RTOL * box1)) {
     return(.finalize_bound(quadratic, delta, omega, r1, component_index, feas_tol))
   }
 
@@ -77,11 +86,11 @@ solve_profile_bound <- function(quadratic, component_index,
       # No feasible point at this box (empty set / runaway) -> fail closed.
       return(list(bound = NA_real_, bounded = FALSE, valid = FALSE))
     }
-    if (all(abs(r$phi) < 0.99 * bx)) {
+    if (all(abs(r$phi) < BOX_EDGE_RTOL * bx)) {
       # Every coordinate interior -> a constraint stopped the solve -> accept.
       return(.finalize_bound(quadratic, delta, omega, r, component_index, feas_tol))
     }
-    target_interior <- abs(r$phi[component_index]) < 0.99 * bx
+    target_interior <- abs(r$phi[component_index]) < BOX_EDGE_RTOL * bx
     if (!target_interior) {
       # Target itself rides the edge: no trustworthy value to track.
       bound_prev <- NULL
@@ -91,12 +100,12 @@ solve_profile_bound <- function(quadratic, component_index,
     # is trustworthy only if it has stopped moving as the box grows.
     bound_now <- delta * r$phi[component_index]
     if (!is.null(bound_prev)) {
-      if (abs(bound_now - bound_prev) <= 1e-3 * max(1, abs(bound_now))) {
+      if (abs(bound_now - bound_prev) <= BOUND_STABILITY_RTOL * max(1, abs(bound_now))) {
         # Stable across boxes -> a constraint pins the target even though the
         # set is unbounded in another direction -> genuine finite bound.
         return(.finalize_bound(quadratic, delta, omega, r, component_index, feas_tol))
       }
-      if (abs(bound_now) >= 5 * max(abs(bound_prev), delta)) {
+      if (abs(bound_now) >= UNBOUNDED_SCALING_FACTOR * max(abs(bound_prev), delta)) {
         # Target scales with the box -> oblique unbounded ray.
         return(list(bound = inf_bound, bounded = FALSE, valid = TRUE))
       }
@@ -164,7 +173,7 @@ solve_linear_functional_bound <- function(quadratic, objective_vec,
   funcval <- function(r) delta * sum(objective_vec * r$phi)
 
   r1 <- scaled(box1)
-  if (.solve_finite(r1) && all(abs(r1$phi) < 0.99 * box1)) {
+  if (.solve_finite(r1) && all(abs(r1$phi) < BOX_EDGE_RTOL * box1)) {
     return(.finalize_linear_bound(quadratic, delta, omega, r1, objective_vec, feas_tol))
   }
 
@@ -178,17 +187,17 @@ solve_linear_functional_bound <- function(quadratic, objective_vec,
     if (!is.finite(resid) || resid > feas_tol) {
       return(list(bound = NA_real_, bounded = FALSE, valid = FALSE))
     }
-    if (all(abs(r$phi) < 0.99 * bx)) {
+    if (all(abs(r$phi) < BOX_EDGE_RTOL * bx)) {
       return(.finalize_linear_bound(quadratic, delta, omega, r, objective_vec, feas_tol))
     }
     # A coordinate rides the edge: the functional value is trustworthy only if it
     # has stopped moving (a constraint pins it) and is unbounded if it scales.
     bound_now <- funcval(r)
     if (!is.null(bound_prev)) {
-      if (abs(bound_now - bound_prev) <= 1e-3 * max(1, abs(bound_now))) {
+      if (abs(bound_now - bound_prev) <= BOUND_STABILITY_RTOL * max(1, abs(bound_now))) {
         return(.finalize_linear_bound(quadratic, delta, omega, r, objective_vec, feas_tol))
       }
-      if (abs(bound_now) >= 5 * max(abs(bound_prev), delta)) {
+      if (abs(bound_now) >= UNBOUNDED_SCALING_FACTOR * max(abs(bound_prev), delta)) {
         return(list(bound = inf_bound, bounded = FALSE, valid = TRUE))
       }
     }

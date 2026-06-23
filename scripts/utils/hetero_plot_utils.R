@@ -83,19 +83,19 @@ create_hetero_diagnostic_plots <- function(lm_model, var_name,
     # Save individual plots
     ggsave(file.path(plot_dir, paste0(var_name, "_residuals_vs_fitted.svg")),
       p1,
-      width = 8, height = 6
+      width = PLOT_WIDTH, height = PLOT_HEIGHT
     )
     ggsave(file.path(plot_dir, paste0(var_name, "_scale_location.svg")),
       p2,
-      width = 8, height = 6
+      width = PLOT_WIDTH, height = PLOT_HEIGHT
     )
     ggsave(file.path(plot_dir, paste0(var_name, "_squared_residuals.svg")),
       p3,
-      width = 8, height = 6
+      width = PLOT_WIDTH, height = PLOT_HEIGHT
     )
     ggsave(file.path(plot_dir, paste0(var_name, "_residuals_vs_index.svg")),
       p4,
-      width = 8, height = 6
+      width = PLOT_WIDTH, height = PLOT_HEIGHT
     )
 
     # Create and save combined plot
@@ -107,7 +107,7 @@ create_hetero_diagnostic_plots <- function(lm_model, var_name,
 
     ggsave(file.path(plot_dir, paste0(var_name, "_combined_diagnostics.svg")),
       combined_plot,
-      width = 12, height = 10
+      width = PLOT_WIDTH_WIDE, height = PLOT_HEIGHT_TALL
     )
   }
 
