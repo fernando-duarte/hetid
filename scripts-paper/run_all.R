@@ -55,6 +55,7 @@ source("scripts-paper/fix_fred_download.R")
 # Pipeline -----------------------------------------------------------------
 source("scripts-paper/sdf_series.R")
 source("scripts-paper/consumption_growth.R")
+source("scripts-paper/yield_vol.R")
 source("scripts-paper/sdf_pcs.R")
 source("scripts-paper/ols_mean_eq_regression.R")
 source("scripts-paper/set_id_mean_eq.R")

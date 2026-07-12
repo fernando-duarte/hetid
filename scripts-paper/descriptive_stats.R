@@ -1,9 +1,10 @@
-# Descriptive statistics for consumption growth, the SDF PCs, and the SDF news
-# and expected SDF series at selected maturities: merge the series over the
-# date_begin ~ date_end window, report missing date+variable combinations,
-# write the summary-statistics, regression, and correlation LaTeX tables and
-# the time-series and histogram figures to scripts-paper/output/, then compile
-# everything into descriptive_stats.pdf via latexmk.
+# Descriptive statistics for consumption growth, the SDF PCs, the SDF news
+# and expected SDF series and realized yield vols at selected maturities:
+# merge the series over the date_begin ~ date_end window, report missing
+# date+variable combinations, write the summary-statistics, regression, and
+# correlation LaTeX tables and the time-series and histogram figures to
+# scripts-paper/output/, then compile everything into descriptive_stats.pdf
+# via latexmk.
 # Run via run_all.R after the data scripts.
 
 # sources of the merged panel, named by series group (the names drive the
@@ -14,7 +15,8 @@ panel_sources <- list(
   "lagged expected SDF PCs" = lag_expected_sdf_pc,
   "SDF news PCs" = sdf_news_pc,
   "expected SDF" = expected_sdf[, c("qtr", paste0(expected_prefix, show_mats))],
-  "SDF news" = sdf_news[, c("qtr", paste0(news_prefix, show_mats))]
+  "SDF news" = sdf_news[, c("qtr", paste0(news_prefix, show_mats))],
+  "yield vols" = yield_vol[, c("qtr", paste0("y", show_mats, "_vol"))]
 )
 panel <- panel_sources |>
   purrr::reduce(dplyr::full_join, by = "qtr") |>
@@ -81,7 +83,8 @@ group_colors <- c(
   "SDF news PCs" = "#eda100",
   "expected SDF" = "#008300",
   "SDF news" = "#4a3aa7",
-  "lagged expected SDF PCs" = "#e34948"
+  "lagged expected SDF PCs" = "#e34948",
+  "yield vols" = "#c2439c"
 )
 # each variable's group comes from the panel_sources frame it belongs to
 variable_group <- purrr::list_c(purrr::imap(
