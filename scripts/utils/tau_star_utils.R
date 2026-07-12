@@ -29,6 +29,48 @@ eval_width_at_tau <- function(gamma, tau, moments) {
   list(total = total, bounded = bounded, valid = valid, status = status)
 }
 
+# Per-coefficient intervals of the joint identified set at one common slack:
+# theta profile bounds plus exact linear-functional bounds for the affine
+# recovery beta1_p(theta) = beta1r_p - beta2r[, p]' theta, returned as
+# list(beta1, theta) of data.frames (coef, set_lower, set_upper, status).
+# A zero beta2r column is a constant functional (beta1_p = beta1r_p exactly,
+# no solve), certified only when no theta side failed closed (an NA side can
+# flag an empty or solver-failed set).
+coef_interval_tables <- function(gamma, tau, moments, beta1r, beta2r) {
+  stopifnot(nrow(beta2r) == ncol(gamma), ncol(beta2r) == length(beta1r))
+  stopifnot(identical(colnames(beta2r), names(beta1r)))
+  qs <- tau_quadratic_system(gamma, tau, moments)
+  status3 <- function(bounded, valid) {
+    if (!bounded) "unbounded" else if (valid) "bounded" else "unreliable"
+  }
+  tb <- solve_all_profile_bounds(qs)
+  theta_fail_closed <- anyNA(c(tb$lower, tb$upper))
+  theta <- data.frame(
+    coef = rownames(beta2r),
+    set_lower = tb$lower, set_upper = tb$upper,
+    status = mapply(
+      status3, tb$bounded_lower & tb$bounded_upper, tb$valid_lower & tb$valid_upper
+    ),
+    row.names = NULL, stringsAsFactors = FALSE
+  )
+  beta1 <- do.call(rbind, lapply(names(beta1r), function(p) {
+    if (all(beta2r[, p] == 0)) {
+      fmin <- fmax <- list(bound = 0, bounded = TRUE, valid = !theta_fail_closed)
+    } else {
+      fmin <- solve_linear_functional_bound(qs, beta2r[, p], "min")
+      fmax <- solve_linear_functional_bound(qs, beta2r[, p], "max")
+    }
+    data.frame(
+      coef = p,
+      set_lower = unname(beta1r[p]) - fmax$bound,
+      set_upper = unname(beta1r[p]) - fmin$bound,
+      status = status3(fmin$bounded && fmax$bounded, fmin$valid && fmax$valid),
+      row.names = NULL, stringsAsFactors = FALSE
+    )
+  }))
+  list(beta1 = beta1, theta = theta)
+}
+
 .sweep_row <- function(tau, w, grid_label) {
   data.frame(
     tau = tau, total_width = w$total, all_bounded = w$bounded,

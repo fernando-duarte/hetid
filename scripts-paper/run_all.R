@@ -26,6 +26,11 @@ show_mats <- c(
 lag_qtrs <- 1L
 # principal components kept from each SDF panel
 n_pc <- 3L
+# news-block orthogonality null: TRUE imposes beta2R = 0 exactly (the news
+# PCs are population-orthogonal to X_t, so they enter unresidualized and the
+# design coefficients are point identified at beta1R); FALSE estimates
+# beta2R by OLS on X_t from the sample as before
+impose_beta2r_null <- TRUE
 # column-name prefixes shared by the data scripts and their consumers
 news_prefix <- "sdf_news_m"
 expected_prefix <- "expected_sdf_m"

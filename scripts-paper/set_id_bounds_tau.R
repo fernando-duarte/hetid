@@ -4,6 +4,10 @@
 # set_id_mean_eq.R (profile bounds for the news coefficients, linear-
 # functional bounds beta1(theta) = beta1R - beta2R' theta for the design
 # coefficients), with the closed-form tau = 0 point as the left endpoint.
+# A warm-started refinement re-solves each news bound from the previous grid
+# point's argmax: the shared solver starts every solve at the origin and can
+# drop into a lower local vertex mid-grid (a dip in the pc2 upper bound near
+# tau = 0.3), while continuation along the grid tracks the true branch.
 # Writes set_id_bounds_tau.pdf to scripts-paper/output/.
 # Run via run_all.R after set_id_mean_eq.R.
 
@@ -15,27 +19,104 @@ source("scripts/utils/tau_star_utils.R")
 theta_coefs <- set_id_mean_eq$theta_table$coef
 beta_coefs <- set_id_mean_eq$beta1_table$coef
 
-# per-coefficient interval of the joint identified set at one tau; a row is
-# certified only when both sides are finite and feasibility-valid
-bounds_at_tau <- function(tau) {
-  qs <- tau_quadratic_system(set_id_mean_eq$gamma, tau, set_id_mean_eq$moments)
-  tb <- solve_all_profile_bounds(qs)
-  beta_rows <- do.call(rbind, lapply(beta_coefs, function(p) {
-    fmin <- solve_linear_functional_bound(qs, set_id_mean_eq$beta2r[, p], "min")
-    fmax <- solve_linear_functional_bound(qs, set_id_mean_eq$beta2r[, p], "max")
-    data.frame(
-      tau = tau, coef = p,
-      lower = set_id_mean_eq$beta1r[[p]] - fmax$bound,
-      upper = set_id_mean_eq$beta1r[[p]] - fmin$bound,
-      certified = fmin$bounded && fmax$bounded && fmin$valid && fmax$valid
-    )
-  }))
-  theta_rows <- data.frame(
-    tau = tau, coef = theta_coefs, lower = tb$lower, upper = tb$upper,
-    certified = tb$bounded_lower & tb$bounded_upper &
-      tb$valid_lower & tb$valid_upper
+# SLSQP extremization of theta_k from an arbitrary feasible start, in the
+# shared solver's scaling (mirrors .solve_scaled, which pins the start at the
+# origin); returns the theta-units bound and argmax, or NULL when the solve
+# fails or the endpoint misses the feasible+active certificate
+solve_theta_bound_from <- function(qs, k, direction, theta_start,
+                                   box = 1e6, feas_tol = 1e-4) {
+  if (is.null(theta_start)) {
+    return(NULL)
+  }
+  delta <- .derive_theta_scale(qs)
+  omega <- .derive_constraint_scales(qs, delta)
+  sgn <- if (direction == "min") 1 else -1
+  dim_theta <- ncol(qs$A_i[[1]])
+  e_k <- numeric(dim_theta)
+  e_k[k] <- 1
+  res <- tryCatch(
+    nloptr::slsqp(
+      x0 = pmin(pmax(theta_start / delta, -box), box),
+      fn = function(phi) sgn * sum(e_k * phi),
+      gr = function(phi) sgn * e_k,
+      lower = rep(-box, dim_theta), upper = rep(box, dim_theta),
+      hin = function(phi) {
+        theta <- delta * phi
+        vapply(seq_along(qs$A_i), function(i) {
+          (drop(t(theta) %*% qs$A_i[[i]] %*% theta) +
+            sum(qs$b_i[[i]] * theta) + qs$c_i[i]) / omega[i]
+        }, numeric(1))
+      },
+      hinjac = function(phi) {
+        theta <- delta * phi
+        t(vapply(seq_along(qs$A_i), function(i) {
+          (delta * (2 * drop(qs$A_i[[i]] %*% theta) + qs$b_i[[i]])) / omega[i]
+        }, numeric(dim_theta)))
+      },
+      control = list(xtol_rel = 1e-8, maxeval = 1000),
+      deprecatedBehavior = FALSE
+    ),
+    error = function(e) NULL
   )
-  rbind(beta_rows, theta_rows)
+  if (is.null(res) || any(!is.finite(res$par))) {
+    return(NULL)
+  }
+  theta <- delta * res$par
+  resid <- .feasibility_residual(qs, theta, omega)
+  if (!is.finite(resid) || abs(resid) > feas_tol) {
+    return(NULL)
+  }
+  list(bound = theta[k], theta = theta)
+}
+
+# warm-start state, seeded with the tau = 0 closed-form point (the whole set
+# at tau = 0): each successful solve hands its argmax to the next grid tau,
+# where it is still feasible because the set grows with tau
+seed_theta <- set_id_mean_eq$theta_table$point
+if (anyNA(seed_theta)) seed_theta <- NULL
+warm <- list(
+  min = rep(list(seed_theta), length(theta_coefs)),
+  max = rep(list(seed_theta), length(theta_coefs))
+)
+refined_n <- 0L
+
+# warm-started refinement of the news intervals at one grid tau: re-solve
+# each side from the previous grid point's argmax and keep a certified value
+# only when it extends the origin-start solve
+refine_theta_intervals <- function(tau, theta_tab) {
+  qs <- tau_quadratic_system(set_id_mean_eq$gamma, tau, set_id_mean_eq$moments)
+  for (k in seq_along(theta_coefs)) {
+    for (side in c("min", "max")) {
+      cand <- solve_theta_bound_from(qs, k, side, warm[[side]][[k]])
+      if (is.null(cand)) next
+      warm[[side]][[k]] <<- cand$theta
+      if (theta_tab$status[k] != "bounded") next
+      if (side == "max" && cand$bound > theta_tab$set_upper[k]) {
+        theta_tab$set_upper[k] <- cand$bound
+        refined_n <<- refined_n + 1L
+      } else if (side == "min" && cand$bound < theta_tab$set_lower[k]) {
+        theta_tab$set_lower[k] <- cand$bound
+        refined_n <<- refined_n + 1L
+      }
+    }
+  }
+  theta_tab
+}
+
+# per-coefficient interval of the joint identified set at one tau (the shared
+# coef_interval_tables recipe); a row is certified only when both sides are
+# finite and feasibility-valid, i.e. status "bounded"
+bounds_at_tau <- function(tau) {
+  it <- coef_interval_tables(
+    set_id_mean_eq$gamma, tau, set_id_mean_eq$moments,
+    set_id_mean_eq$beta1r, set_id_mean_eq$beta2r
+  )
+  it$theta <- refine_theta_intervals(tau, it$theta)
+  tab <- rbind(it$beta1, it$theta)
+  data.frame(
+    tau = tau, coef = tab$coef, lower = tab$set_lower, upper = tab$set_upper,
+    certified = tab$status == "bounded"
+  )
 }
 
 # rows recovered from the stored tables rather than re-solved: the tau = 0
@@ -56,7 +137,7 @@ stored_rows <- rbind(
 
 # solved tau grid, strictly inside (0, tau*): tau = 0 and the baseline come
 # from the stored rows, and the tau* endpoint is excluded (the width diverges
-# right at the transition, crushing every facet's scale; the vline marks it)
+# right at the transition, crushing every facet's scale)
 tau_grid <- seq(0, set_id_mean_eq$tau_star, length.out = 25)
 tau_grid <- tau_grid[tau_grid > 0 & tau_grid < set_id_mean_eq$tau_star]
 bounds_df <- rbind(stored_rows, do.call(rbind, lapply(tau_grid, bounds_at_tau)))
@@ -67,14 +148,8 @@ plot_df <- bounds_df[bounds_df$certified, ]
 plot_df$coef <- factor(plot_df$coef, levels = c(beta_coefs, theta_coefs))
 
 ref_lines <- data.frame(
-  tau = c(set_id_mean_eq$tau_baseline, set_id_mean_eq$tau_star),
-  line = c(
-    sprintf("baseline tau = %.2g", set_id_mean_eq$tau_baseline),
-    sprintf(
-      "tau* = %.3g%s", set_id_mean_eq$tau_star,
-      if (set_id_mean_eq$tau_star_capped) " (capped)" else ""
-    )
-  )
+  tau = set_id_mean_eq$tau_baseline,
+  line = sprintf("baseline tau = %.2g", set_id_mean_eq$tau_baseline)
 )
 bounds_plot <- ggplot2::ggplot(plot_df, ggplot2::aes(tau)) +
   ggplot2::geom_ribbon(
@@ -98,10 +173,12 @@ grDevices::dev.off()
 cat(
   "set-id bounds-by-tau figure:", length(unique(bounds_df$tau)),
   "tau values in [0,", paste0(signif(max(bounds_df$tau), 3), "];"),
-  sum(!bounds_df$certified), "uncertified coefficient-tau rows dropped\n"
+  sum(!bounds_df$certified), "uncertified coefficient-tau rows dropped;",
+  refined_n, "sides extended by warm-start refinement\n"
 )
 
 rm(
-  theta_coefs, beta_coefs, bounds_at_tau, tables, stored_rows, tau_grid,
-  bounds_df, plot_df, ref_lines, bounds_plot
+  theta_coefs, beta_coefs, solve_theta_bound_from, seed_theta, warm,
+  refined_n, refine_theta_intervals, bounds_at_tau, tables, stored_rows,
+  tau_grid, bounds_df, plot_df, ref_lines, bounds_plot
 )
