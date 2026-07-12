@@ -13,11 +13,16 @@
 #' \code{1962-03-30} and a period-start \code{1962-01-01} both become the
 #' calendar quarter-end \code{1962-03-31}).
 #'
+#' The bundled \code{\link{variables}} dataset ships exactly as imported from
+#' its source repository with quarter-start date labels; apply this function
+#' to its \code{date} column before merging it with package ACM extracts.
+#'
 #' @param dates A \code{Date} (or character coercible by \code{as.Date}) vector.
 #' @param frequency One of \code{"monthly"}, \code{"quarterly"}, \code{"annual"}.
 #' @return A \code{Date} vector of the same length, each the calendar period-end.
-#' @keywords internal
-#' @noRd
+#' @examples
+#' to_period_end(as.Date(c("1962-01-01", "1962-03-30")), "quarterly")
+#' @export
 to_period_end <- function(dates, frequency = c("monthly", "quarterly", "annual")) {
   frequency <- match.arg(frequency)
   dates <- as.Date(dates)

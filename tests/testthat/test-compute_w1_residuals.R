@@ -101,7 +101,9 @@ test_that("dates are properly aligned after lagging", {
 
   res_y1 <- suppressMessages(compute_w1_residuals(n_pcs = 4))
 
-  expect_equal(res_y1$dates, variables$date[-1])
+  # the bundled fallback normalizes the as-imported quarter-start labels to
+  # period-end at ingestion, so compare against the normalized dates
+  expect_equal(res_y1$dates, to_period_end(variables$date, "quarterly")[-1])
   expect_length(res_y1$dates, length(res_y1$residuals))
 })
 

@@ -74,6 +74,9 @@ test_that("filtration alignment: levels are dated at t, news at t+1", {
 
 test_that("presence + filtration: W1/W2 residuals carry their t+1 realization dates", {
   data("variables", package = "hetid")
+  # the bundled file ships as imported (quarter-start labels); normalize to
+  # the package period-end convention before merging with ACM by date
+  variables$date <- to_period_end(variables$date, "quarterly")
   mats <- c(12, 24, 36, 48)
   # suppressWarnings: the quarterly extract emits an incomplete-quarter notice
   # for the trailing partial quarter -- a data property, not part of this test.

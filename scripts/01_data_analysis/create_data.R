@@ -19,6 +19,9 @@ yields <- as.matrix(acm_data[, yield_cols])
 term_premia <- as.matrix(acm_data[, tp_cols])
 
 data("variables", package = "hetid")
+# The bundled file ships as imported (quarter-start labels); normalize to the
+# package period-end convention so the merge with ACM by date keys exactly.
+variables$date <- hetid::to_period_end(variables$date, "quarterly")
 
 # Keep date, consumption growth, PCs, and the actual VFCI. The VFCI level is
 # carried so the single-instrument paper spec (stage 08) can use the genuine
@@ -40,7 +43,8 @@ if (n_base != n_with_vfci) {
   ))
 }
 
-# Prepare variables data (already period-end dated; merged directly by date)
+# Prepare variables data (period-end dated after the normalization above;
+# merged directly by date)
 variables_df <- variables |>
   select(all_of(cols_to_keep)) |>
   mutate(date = as.Date(date))
@@ -62,7 +66,7 @@ for (i in seq_along(maturity_range)) {
 }
 
 # Merge with variables by calendar date (only complete observations). ACM and
-# the bundled variables now share the period-end convention, so the date keys
+# the normalized variables share the period-end convention, so the date keys
 # match exactly.
 variables_to_merge <- variables_df |>
   (\(x) filter(x, complete.cases(x)))() # Only keep complete rows before merging

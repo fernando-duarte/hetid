@@ -63,14 +63,19 @@ validate_w2_inputs <- function(yields, term_premia, maturities,
 
 #' Get Bundled Variables Dataset
 #'
-#' Loads the bundled variables dataset from package data.
+#' Loads the bundled variables dataset from package data and normalizes its
+#' dates to the package-wide period-end convention. The shipped file is
+#' imported verbatim from its source repository with quarter-start labels,
+#' so normalization happens here, at ingestion.
 #' Extracted as a separate function for testability.
 #'
-#' @return Data frame containing the variables dataset
+#' @return Data frame containing the variables dataset, period-end dated
 #' @keywords internal
 get_bundled_variables <- function() {
   data("variables", package = "hetid", envir = environment())
-  get("variables", envir = environment())
+  variables <- get("variables", envir = environment())
+  variables$date <- to_period_end(variables$date, "quarterly")
+  variables
 }
 
 #' Load Principal Components (and optionally dates) for W2

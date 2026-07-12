@@ -4,12 +4,13 @@
 #' from 1962 to present, including GDP, inflation, interest rates, financial conditions
 #' indices, and various derived measures.
 #'
-#' @format A data frame with 243 observations and 186 variables. Key variable
+#' @format A data frame with 256 observations and 452 variables. Key variable
 #' groups include:
 #' \itemize{
-#'   \item Date and period identifiers: \code{date} (calendar quarter-end, the
-#'     package-wide period-end convention, e.g. \code{1962-03-31}), \code{yr},
-#'     \code{quarter}
+#'   \item Date and period identifiers: \code{date} (calendar quarter-start as
+#'     imported from the source repository, e.g. \code{1962-01-01}; see
+#'     Details for aligning with the package-wide period-end convention),
+#'     \code{yr}, \code{quarter}
 #'   \item National accounts and prices: real GDP (\code{gdpc1}), potential
 #'     GDP (\code{gdppot}), core PCE prices (\code{pcepilfe}), real
 #'     consumption (\code{pcecc96}), output gap (\code{gap})
@@ -24,9 +25,15 @@
 #'   \item Principal components: \code{pc1} through \code{pc6}
 #'   \item VFCI measures: \code{vfci}, \code{vfci_lev}, and \code{vfci_}
 #'     variants; expected excess returns (\code{mu})
+#'   \item SDF panels: per-maturity expected SDF and SDF news
+#'     (\code{expected_sdf_m3} through \code{expected_sdf_m117},
+#'     \code{sdf_news_m3} through \code{sdf_news_m117}, maturity in months)
+#'     and their principal components (\code{expected_sdf_pc1}--\code{pc3},
+#'     \code{sdf_news_pc1}--\code{pc3})
 #'   \item Growth-rate and timing transformations: columns following the
 #'     naming grammar described in Details (e.g. \code{gr1.}, \code{gr4.},
-#'     \code{lgr1.}, \code{fgr4.}, \code{f2gr1.}, \code{f1.dgs1})
+#'     \code{lgr1.}, \code{fgr4.}, \code{f2gr1.}), including quarterly growth
+#'     lags out to \code{l12gr1.} for GDP and consumption
 #'   \item Convenience renames: each is a readability-only duplicate, exactly
 #'     identical to the grammar-respecting column it renames -- \code{lgdp} is
 #'     \code{log.gdpc1}, \code{lpce} is \code{log.pcepilfe}, \code{ygr} is
@@ -35,6 +42,15 @@
 #' }
 #'
 #' @details
+#' \strong{Date convention.} The dataset is imported verbatim from its source
+#' repository and ships unmodified, so \code{date} carries quarter-start
+#' labels (\code{1962-01-01}, \code{1962-04-01}, ...). The package-wide
+#' convention is calendar period-end; normalize with
+#' \code{\link{to_period_end}} before merging with ACM extracts (e.g.
+#' \code{variables$date <- to_period_end(variables$date, "quarterly")}).
+#' Package functions that fall back to the bundled dataset internally
+#' apply this normalization at ingestion.
+#'
 #' \strong{Transformed-variable naming grammar.} Many columns are logs, growth
 #' rates, leads, or lags of a base series, named compositionally as
 #' \code{[lead/lag][gr<h>].<series>}. The default unit is one quarter (a
@@ -54,8 +70,10 @@
 #' (e.g. \code{vfci_lags}) are composite constructs, not simple shifts, and do
 #' not follow this grammar.
 #'
-#' @source Various sources including Federal Reserve Economic Data (FRED),
-#' Federal Reserve Bank of Chicago, and financial market data providers.
+#' @source Imported unmodified from the VFCI macro_dynamics repository,
+#' \url{https://github.com/VFCI/macro_dynamics}. Underlying sources include
+#' Federal Reserve Economic Data (FRED), the Federal Reserve Bank of Chicago,
+#' and financial market data providers.
 #'
 #' @examples
 #' data(variables)
