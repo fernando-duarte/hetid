@@ -164,8 +164,8 @@ set_id_boot <- list(
   point_se = apply(point_draws, 2, function(x) stats::sd(x[is.finite(x)])),
   tau_star_draws = tau_star_draws,
   tau_star_band = boot_band(tau_star_draws),
-  tau_star_share_below = mean(
-    tau_star_draws < set_id_mean_eq$tau_baseline,
+  tau_star_share_bounded = mean(
+    tau_star_draws > set_id_mean_eq$tau_baseline,
     na.rm = TRUE
   ),
   n_capped = sum(vapply(boot_raw, `[[`, logical(1), "capped")),
@@ -184,7 +184,7 @@ cat(sprintf(
 cat(sprintf(
   "  %d failed draws, %d capped tau* draws; bounded at baseline in %.0f%% of draws\n",
   set_id_boot$n_failed, set_id_boot$n_capped,
-  100 * (1 - set_id_boot$tau_star_share_below)
+  100 * set_id_boot$tau_star_share_bounded
 ))
 print(set_id_boot$inference[[1]], digits = 3)
 

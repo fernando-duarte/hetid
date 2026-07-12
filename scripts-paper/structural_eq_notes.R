@@ -97,9 +97,14 @@ build_structural_notes <- function() {
       set_id_boot$b_reps
     ),
     sprintf(
-      "block $=%d$ quarters%s).", set_id_boot$block,
+      "block $=%d$ quarters%s%s).", set_id_boot$block,
       if (set_id_boot$n_capped > 0) {
         sprintf("; %d draws censored at the sweep cap", set_id_boot$n_capped)
+      } else {
+        ""
+      },
+      if (set_id_boot$n_failed > 0) {
+        sprintf("; %d failed draws excluded", set_id_boot$n_failed)
       } else {
         ""
       }
@@ -120,7 +125,7 @@ build_structural_notes <- function() {
     "$\\tau^{*}$ average only over draws whose set stays bounded.",
     sprintf(
       "The joint set stays bounded at the baseline slack in %.0f\\%% of draws.",
-      100 * (1 - set_id_boot$tau_star_share_below)
+      100 * set_id_boot$tau_star_share_bounded
     )
   )
 }
