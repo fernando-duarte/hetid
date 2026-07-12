@@ -142,6 +142,8 @@ set_id_mean_eq <- list(
   w1 = w1, y1 = set_id_data[[y1_col]], y2 = as.matrix(set_id_data[y2_cols]), z = z,
   moments = moments,
   gamma = gamma,
+  # reduced-form coefficients, kept for the bounds-by-tau figure
+  beta1r = beta1r, beta2r = beta2r,
   ols_fit = ols_fit
 )
 
