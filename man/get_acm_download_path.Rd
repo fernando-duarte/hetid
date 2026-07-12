@@ -4,10 +4,15 @@
 \alias{get_acm_download_path}
 \title{Get Writable ACM Download Path}
 \usage{
-get_acm_download_path(source = c("github", "nyfed"))
+get_acm_download_path(
+  source = c("github", "nyfed"),
+  frequency = c("monthly", "daily")
+)
 }
 \arguments{
 \item{source}{Download source: "github" or "nyfed"}
+
+\item{frequency}{"monthly" (default) or "daily" (github only)}
 }
 \value{
 Character string with the writable ACM data file path

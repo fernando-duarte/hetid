@@ -1,41 +1,6 @@
 # Mocked tests for the digest-verified GitHub download flow: release
 # metadata parsing, checksum verification, and the cache move. No real
-# network access.
-
-# Build a gz fixture plus matching release-API JSON; the digest can be
-# corrupted or the JSON malformed per scenario
-make_github_fixture <- function(dir, digest = NULL, json = NULL) {
-  gz_path <- file.path(dir, "fixture.csv.gz")
-  con <- gzfile(gz_path, "wb")
-  writeLines(c("DATE,ACMY01", "2020-01-31,1.5"), con)
-  close(con)
-  true_sha <- unname(tools::sha256sum(gz_path))
-  if (is.null(digest)) {
-    digest <- true_sha
-  }
-  if (is.null(json)) {
-    json <- sprintf(
-      paste0(
-        '{"tag_name":"test-tag","name":"Test Release","assets":[',
-        '{"name":"other_asset.xls","digest":"sha256:%s"},',
-        '{"name":"%s","digest":"sha256:%s"}]}'
-      ),
-      strrep("0", 64), HETID_CONSTANTS$ACM_DATA_FILENAME, digest
-    )
-  }
-  list(gz = gz_path, sha = true_sha, json = json)
-}
-
-mock_github_download <- function(fixture) {
-  function(url, destfile, ...) {
-    if (grepl("api.github.com", url, fixed = TRUE)) {
-      writeLines(fixture$json, destfile)
-    } else {
-      file.copy(fixture$gz, destfile, overwrite = TRUE)
-    }
-    invisible(0L)
-  }
-}
+# network access; the fixture builders live in helper-github-fixture.R.
 
 test_that("github download verifies the digest and caches the file", {
   user_root <- withr::local_tempdir()
@@ -162,4 +127,38 @@ test_that("force re-download replaces an existing github cache", {
   result <- download_term_premia(force = TRUE, quiet = TRUE)
   expect_identical(result, cache_path)
   expect_identical(unname(tools::sha256sum(cache_path)), fixture$sha)
+})
+
+test_that("the release digest is selected per asset", {
+  monthly_sha <- strrep("1", 64)
+  daily_sha <- strrep("2", 64)
+  release_json <- sprintf(
+    paste0(
+      '{"assets":[{"name":"%s","digest":"sha256:%s"},',
+      '{"name":"%s","digest":"sha256:%s"}]}'
+    ),
+    HETID_CONSTANTS$ACM_DATA_FILENAME, monthly_sha,
+    HETID_CONSTANTS$ACM_DAILY_DATA_FILENAME, daily_sha
+  )
+
+  local_mocked_bindings(
+    download.file = function(url, destfile, ...) {
+      writeLines(release_json, destfile)
+      invisible(0L)
+    },
+    .package = "hetid"
+  )
+
+  expect_identical(
+    acm_release_expected_sha256(
+      quiet = TRUE, filename = HETID_CONSTANTS$ACM_DATA_FILENAME
+    ),
+    monthly_sha
+  )
+  expect_identical(
+    acm_release_expected_sha256(
+      quiet = TRUE, filename = HETID_CONSTANTS$ACM_DAILY_DATA_FILENAME
+    ),
+    daily_sha
+  )
 })

@@ -4,10 +4,12 @@
 \alias{acm_release_expected_sha256}
 \title{Expected sha256 Digest for the ACM Release Asset}
 \usage{
-acm_release_expected_sha256(quiet = FALSE)
+acm_release_expected_sha256(quiet = FALSE, filename)
 }
 \arguments{
 \item{quiet}{Logical, suppress progress output}
+
+\item{filename}{Release asset filename whose digest to extract}
 }
 \value{
 Lower-case 64-character sha256 string

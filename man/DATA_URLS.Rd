@@ -6,8 +6,6 @@
 \format{
 List containing versioned data source URLs:
 \describe{
-\item{ACM_GITHUB_CSV_GZ}{Latest-release URL for the monthly-maturity
-ACM replication (gzipped CSV)}
 \item{ACM_GITHUB_RELEASE_API}{GitHub API endpoint exposing the
 per-asset sha256 digests used to verify downloads}
 \item{ACM_NYFED_XLS}{URL for the official NY Fed ACM workbook
@@ -19,7 +17,10 @@ DATA_URLS
 }
 \description{
 URLs for external data sources.
-These URLs are documented for data access.
+These URLs are documented for data access. The release-asset
+download URLs are composed at the call site from
+\code{ACM_RELEASE_DOWNLOAD_PREFIX} plus the \code{HETID_CONSTANTS}
+asset filenames.
 }
 \references{
 Adrian, T., Crump, R. K., and Moench, E. (2013). "Pricing the term structure

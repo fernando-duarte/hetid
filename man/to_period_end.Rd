@@ -4,12 +4,13 @@
 \alias{to_period_end}
 \title{Normalize dates to the calendar period-end convention}
 \usage{
-to_period_end(dates, frequency = c("monthly", "quarterly", "annual"))
+to_period_end(dates, frequency = c("monthly", "quarterly", "annual", "daily"))
 }
 \arguments{
 \item{dates}{A \code{Date} (or character coercible by \code{as.Date}) vector.}
 
-\item{frequency}{One of \code{"monthly"}, \code{"quarterly"}, \code{"annual"}.}
+\item{frequency}{One of \code{"monthly"}, \code{"quarterly"}, \code{"annual"},
+\code{"daily"}.}
 }
 \value{
 A \code{Date} vector of the same length, each the calendar period-end.
@@ -18,7 +19,9 @@ A \code{Date} vector of the same length, each the calendar period-end.
 Maps each date to the \strong{last calendar day} of its period at the given
 frequency: month-end for \code{"monthly"}, quarter-end
 (Mar 31 / Jun 30 / Sep 30 / Dec 31) for \code{"quarterly"}, and Dec 31 for
-\code{"annual"}. This is the single date convention used throughout the
+\code{"annual"}. For \code{"daily"} the dates are returned unchanged (after
+Date coercion and the missing-value check): each observation is its own
+period. This is the single date convention used throughout the
 package: every time series is normalized to period-end at ingestion so that
 series of any frequency align on identical calendar dates and merge by date.
 }

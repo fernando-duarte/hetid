@@ -37,8 +37,10 @@
 #'   \item{CONSUMPTION_GROWTH_COL}{Consumption growth column name}
 #'   \item{PC_PREFIX}{Prefix for principal component columns}
 #'   \item{MATURITY_PREFIX}{Prefix for maturity label columns}
-#'   \item{ACM_DATA_FILENAME}{Bundled/downloaded ACM data filename
+#'   \item{ACM_DATA_FILENAME}{Bundled/downloaded monthly ACM data filename
 #'     (gzipped CSV from the GitHub replication release)}
+#'   \item{ACM_DAILY_DATA_FILENAME}{Downloaded daily ACM data filename
+#'     (gzipped CSV, GitHub release only, never bundled)}
 #'   \item{ACM_NYFED_FILENAME}{Cache filename for the opt-in NY Fed
 #'     xls fallback source}
 #'   \item{BUNDLED_VARIABLES_DATASET}{Bundled dataset name}
@@ -107,6 +109,7 @@ HETID_CONSTANTS <- list(
 
   # Data identity
   ACM_DATA_FILENAME = "ACMTermPremium_replicated_monthly_1m_120m.csv.gz",
+  ACM_DAILY_DATA_FILENAME = "ACMTermPremium_replicated_daily_1m_120m.csv.gz",
   ACM_NYFED_FILENAME = "ACMTermPremium_nyfed.csv",
   BUNDLED_VARIABLES_DATASET = "variables",
 
@@ -116,15 +119,22 @@ HETID_CONSTANTS <- list(
   COL_FORMAT_SIMPLE = "%s%d" # e.g., y12 (package names, months)
 )
 
+# Release-asset download URLs are composed as prefix + asset filename
+ACM_RELEASE_DOWNLOAD_PREFIX <- paste0(
+  "https://github.com/fernando-duarte/ACM_term_premium/releases/",
+  "latest/download/"
+)
+
 #' Data Source URLs
 #'
 #' URLs for external data sources.
-#' These URLs are documented for data access.
+#' These URLs are documented for data access. The release-asset
+#' download URLs are composed at the call site from
+#' \code{ACM_RELEASE_DOWNLOAD_PREFIX} plus the \code{HETID_CONSTANTS}
+#' asset filenames.
 #'
 #' @format List containing versioned data source URLs:
 #' \describe{
-#'   \item{ACM_GITHUB_CSV_GZ}{Latest-release URL for the monthly-maturity
-#'     ACM replication (gzipped CSV)}
 #'   \item{ACM_GITHUB_RELEASE_API}{GitHub API endpoint exposing the
 #'     per-asset sha256 digests used to verify downloads}
 #'   \item{ACM_NYFED_XLS}{URL for the official NY Fed ACM workbook
@@ -137,10 +147,6 @@ HETID_CONSTANTS <- list(
 #'
 #' @keywords internal
 DATA_URLS <- list(
-  ACM_GITHUB_CSV_GZ = paste0(
-    "https://github.com/fernando-duarte/ACM_term_premium/releases/",
-    "latest/download/ACMTermPremium_replicated_monthly_1m_120m.csv.gz"
-  ),
   ACM_GITHUB_RELEASE_API = paste0(
     "https://api.github.com/repos/fernando-duarte/",
     "ACM_term_premium/releases/latest"

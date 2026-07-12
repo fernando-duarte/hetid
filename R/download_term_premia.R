@@ -8,9 +8,11 @@
 #' The default \code{"github"} source fetches the monthly-maturity ACM
 #' replication from the fernando-duarte/ACM_term_premium release and
 #' verifies the file against the release's per-asset sha256 digest
-#' before caching it; any mismatch fails without caching. The opt-in
-#' \code{"nyfed"} source downloads the official NY Fed workbook instead
-#' (annual maturities only) and requires the \pkg{readxl} package.
+#' before caching it; any mismatch fails without caching. Pass
+#' \code{frequency = "daily"} for the release's business-day asset. The
+#' opt-in \code{"nyfed"} source downloads the official NY Fed workbook
+#' instead (annual maturities only, monthly frequency only) and requires
+#' the \pkg{readxl} package.
 #'
 #' Unlike \code{\link{load_term_premia}}, there is no \code{"auto"}
 #' source here: a download is always source-specific. The bundled copy
@@ -22,6 +24,8 @@
 #'   annual maturities only).
 #' @param force Logical. If TRUE, forces re-download even if data exists.
 #' @param quiet Logical. If TRUE, suppresses download progress messages.
+#' @param frequency Data frequency: \code{"monthly"} (default) or
+#'   \code{"daily"} (the ~40 MB business-day asset; GitHub source only).
 #'
 #' @return Invisibly returns the path to the saved data file.
 #' @export
@@ -36,29 +40,33 @@
 #' # Opt into the NY Fed workbook fallback
 #' download_term_premia(source = "nyfed")
 #'
+#' # Download the daily (business-day) series
+#' download_term_premia(frequency = "daily")
+#'
 #' @references
 #' Adrian, T., Crump, R. K., and Moench, E. (2013).
 #' "Pricing the term structure with linear regressions."
 #' Journal of Financial Economics, 110(1), 110-138.
 #'
 download_term_premia <- function(source = c("github", "nyfed"),
-                                 force = FALSE, quiet = FALSE) {
+                                 force = FALSE, quiet = FALSE,
+                                 frequency = c("monthly", "daily")) {
   source <- match.arg(source)
+  frequency <- match.arg(frequency)
 
-  if (!force) {
-    existing <- get_acm_data_path(source)
-    if (file.exists(existing)) {
-      if (!quiet) {
-        message(
-          "Term premia data already exists. Use force = TRUE to re-download."
-        )
-      }
-      return(invisible(existing))
+  # Path resolution also rejects nyfed + daily, even when force = TRUE.
+  existing <- get_acm_data_path(source, frequency)
+  if (!force && file.exists(existing)) {
+    if (!quiet) {
+      message(
+        "Term premia data already exists. Use force = TRUE to re-download."
+      )
     }
+    return(invisible(existing))
   }
 
   switch(source,
-    github = download_acm_github(quiet = quiet),
+    github = download_acm_github(quiet = quiet, frequency = frequency),
     nyfed = download_acm_nyfed(quiet = quiet)
   )
 }

@@ -28,9 +28,9 @@
 #' @section Key Features:
 #' \subsection{Data Management:}{
 #' \itemize{
-#'   \item \strong{ACM Term Structure Data}: Access to monthly yields, term premia,
-#'     and risk-neutral yields at monthly maturity steps (1-120 months) based on
-#'     Adrian, Crump, and Moench (2013)
+#'   \item \strong{ACM Term Structure Data}: Access to monthly and daily
+#'     (business-day) yields, term premia, and risk-neutral yields at monthly
+#'     maturity steps (1-120 months) based on Adrian, Crump, and Moench (2013)
 #'   \item \strong{Economic Variables}: Quarterly macroeconomic and financial data
 #'   \item \strong{Verified Downloads}: Functions to download the latest GitHub
 #'     release with sha256 verification (NY Fed workbook as opt-in fallback)
@@ -87,10 +87,11 @@
 #'
 #' @section Data Sources:
 #' \describe{
-#'   \item{\strong{ACM Term Structure Data}}{Monthly data from Adrian, Crump, and
-#'     Moench (2013) including yields, term premia, and risk-neutral yields at
-#'     monthly maturity steps from 1 to 120 months. Updated from the GitHub
-#'     replication release; the NY Fed workbook is the opt-in fallback.}
+#'   \item{\strong{ACM Term Structure Data}}{Monthly and daily (business-day)
+#'     data from Adrian, Crump, and Moench (2013) including yields, term premia,
+#'     and risk-neutral yields at monthly maturity steps from 1 to 120 months.
+#'     Updated from the GitHub replication release (the daily series is
+#'     download-only); the NY Fed workbook is the opt-in fallback.}
 #'   \item{\strong{Economic Variables}}{Quarterly macroeconomic and financial
 #'     variables including GDP, inflation, financial conditions indices, and
 #'     principal components of financial asset returns.}

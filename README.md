@@ -63,8 +63,9 @@ pak::pak("fernando-duarte/hetid")
 
 ### 📊 Data Management
 
-- **ACM Term Structure Data**: Monthly yields, term premia, and
-  risk-neutral yields at one-month maturity steps from 1 to 120 months
+- **ACM Term Structure Data**: Monthly and daily (business-day) yields,
+  term premia, and risk-neutral yields at one-month maturity steps from
+  1 to 120 months
 - **Economic Variables**: Quarterly economic and financial data
 - **Verified Updates**: `download_term_premia()` fetches the latest
   GitHub release and verifies it against the release’s sha256 digest
@@ -256,16 +257,18 @@ achieved through heteroskedasticity-based moment conditions.
 
 The package provides access to:
 
-- **ACM Term Structure Data**: Monthly data based on Adrian, Crump, and
-  Moench (2013) including yields, term premia, and risk-neutral yields
-  at one-month maturity steps from 1 to 120 months. The bundled file is
-  the validated replication published at
+- **ACM Term Structure Data**: Monthly and daily (business-day) data
+  based on Adrian, Crump, and Moench (2013) including yields, term
+  premia, and risk-neutral yields at one-month maturity steps from 1 to
+  120 months. The bundled file is the validated replication published at
   [fernando-duarte/ACM_term_premium](https://github.com/fernando-duarte/ACM_term_premium)
   (it matches the official NY Fed workbook to within 0.0026 basis points
   at the annual nodes and extends the maturity grid to monthly steps);
-  downloads are verified against the release’s sha256 digest. The
-  official NY Fed workbook is the opt-in `source = "nyfed"` fallback and
-  carries annual maturities only.
+  downloads are verified against the release’s sha256 digest. The daily
+  series is download-only via
+  `download_term_premia(frequency = "daily")`. The official NY Fed
+  workbook is the opt-in `source = "nyfed"` fallback and carries annual
+  maturities only.
 - **Economic Variables**: Quarterly economic and financial variables
   including GDP, inflation, financial conditions indices, and principal
   components

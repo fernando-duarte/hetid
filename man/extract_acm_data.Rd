@@ -9,7 +9,7 @@ extract_acm_data(
   maturities = HETID_CONSTANTS$DEFAULT_ACM_MATURITIES,
   start_date = NULL,
   end_date = NULL,
-  frequency = c("monthly", "quarterly"),
+  frequency = c("monthly", "quarterly", "daily"),
   auto_download = FALSE,
   use_incomplete_quarters = HETID_CONSTANTS$USE_INCOMPLETE_QUARTERS,
   source = c("auto", "github", "nyfed")
@@ -32,8 +32,13 @@ Default is NULL (earliest available date).}
 \item{end_date}{Date or character string (YYYY-MM-DD format) for end of sample.
 Default is NULL (latest available date).}
 
-\item{frequency}{Character string, either "monthly" (default) or "quarterly".
-Quarterly data uses the last observation of each quarter.}
+\item{frequency}{Character string: "monthly" (default), "quarterly",
+or "daily". Quarterly data uses the last observation of each
+quarter (derived from the monthly source asset). "daily" extracts
+the release's business-day asset instead; it is download-only
+(~40 MB; run \code{download_term_premia(frequency = "daily")} or
+set \code{auto_download = TRUE}) and not available from the NY Fed
+source.}
 
 \item{auto_download}{Logical. If TRUE and data doesn't exist, automatically
 downloads it. Default is FALSE.}
@@ -74,7 +79,9 @@ The raw ACM data carries maturities at one-month steps from 1 to
 (ACMY01-ACMY10, ACMTP01-ACMTP10, ACMRNY01-ACMRNY10); sub-annual
 months use names like ACMY003M. The NY Fed fallback source provides
 only the annual nodes; requesting sub-annual maturities against it
-raises a structured error.
+raises a structured error. The daily asset carries the identical
+column schema at business-day frequency; there is no daily-to-monthly
+or daily-to-quarterly aggregation.
 
 All values are in annualized percentage points.
 

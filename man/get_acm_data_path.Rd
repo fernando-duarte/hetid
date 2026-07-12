@@ -4,21 +4,29 @@
 \alias{get_acm_data_path}
 \title{Get ACM Data File Path}
 \usage{
-get_acm_data_path(source = c("auto", "github", "nyfed"))
+get_acm_data_path(
+  source = c("auto", "github", "nyfed"),
+  frequency = c("monthly", "daily")
+)
 }
 \arguments{
 \item{source}{Data source: "auto" and "github" resolve the GitHub
 user cache then the bundled file; "nyfed" resolves the NY Fed
 cache path only}
+
+\item{frequency}{"monthly" (default) or "daily" (GitHub-only, user
+cache only)}
 }
 \value{
 Character string with full path to the ACM data file (the
-nyfed path may not exist; callers check existence)
+nyfed and daily paths may not exist; callers check existence)
 }
 \description{
 Resolves the ACM data file for a source. The default GitHub-family
 resolution prefers the per-user downloaded copy and falls back to
 the bundled copy; the NY Fed fallback source resolves only its own
-cache file and is never loaded implicitly.
+cache file and is never loaded implicitly. The daily-frequency asset
+is GitHub-only and cache-only: it has no bundled copy, and the
+bundled monthly file never satisfies a daily request.
 }
 \keyword{internal}

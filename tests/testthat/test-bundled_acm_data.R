@@ -33,3 +33,13 @@ test_that("the bundled data's mid-quarter tail raises the classed warning", {
     class = "hetid_warning_incomplete_quarter"
   )
 })
+
+test_that("the daily asset is never bundled", {
+  expect_identical(
+    system.file(
+      "extdata", HETID_CONSTANTS$ACM_DAILY_DATA_FILENAME,
+      package = "hetid"
+    ),
+    ""
+  )
+})

@@ -4,10 +4,12 @@
 \alias{download_acm_github}
 \title{Download and Verify the ACM Data from the GitHub Release}
 \usage{
-download_acm_github(quiet = FALSE)
+download_acm_github(quiet = FALSE, frequency = c("monthly", "daily"))
 }
 \arguments{
 \item{quiet}{Logical, suppress progress output}
+
+\item{frequency}{"monthly" (default) or "daily" release asset}
 }
 \value{
 Invisibly returns the cached file path

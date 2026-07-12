@@ -41,9 +41,22 @@ test_that("to_period_end preserves length and accepts character input", {
   )
 })
 
+test_that("to_period_end daily is the identity on the dates", {
+  d <- as.Date(c("2020-01-02", "2020-02-14", "2020-12-31"))
+  expect_identical(to_period_end(d, "daily"), d)
+  expect_identical(
+    to_period_end(c("2020-01-02", "2020-02-29"), "daily"),
+    as.Date(c("2020-01-02", "2020-02-29"))
+  )
+})
+
 test_that("to_period_end rejects missing dates", {
   expect_error(
     to_period_end(as.Date(c("2020-01-01", NA)), "quarterly"),
+    class = "hetid_error"
+  )
+  expect_error(
+    to_period_end(as.Date(c("2020-01-01", NA)), "daily"),
     class = "hetid_error"
   )
 })

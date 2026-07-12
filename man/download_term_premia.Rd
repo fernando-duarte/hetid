@@ -7,7 +7,8 @@
 download_term_premia(
   source = c("github", "nyfed"),
   force = FALSE,
-  quiet = FALSE
+  quiet = FALSE,
+  frequency = c("monthly", "daily")
 )
 }
 \arguments{
@@ -18,6 +19,9 @@ annual maturities only).}
 \item{force}{Logical. If TRUE, forces re-download even if data exists.}
 
 \item{quiet}{Logical. If TRUE, suppresses download progress messages.}
+
+\item{frequency}{Data frequency: \code{"monthly"} (default) or
+\code{"daily"} (the ~40 MB business-day asset; GitHub source only).}
 }
 \value{
 Invisibly returns the path to the saved data file.
@@ -32,9 +36,11 @@ with the package is never modified.
 The default \code{"github"} source fetches the monthly-maturity ACM
 replication from the fernando-duarte/ACM_term_premium release and
 verifies the file against the release's per-asset sha256 digest
-before caching it; any mismatch fails without caching. The opt-in
-\code{"nyfed"} source downloads the official NY Fed workbook instead
-(annual maturities only) and requires the \pkg{readxl} package.
+before caching it; any mismatch fails without caching. Pass
+\code{frequency = "daily"} for the release's business-day asset. The
+opt-in \code{"nyfed"} source downloads the official NY Fed workbook
+instead (annual maturities only, monthly frequency only) and requires
+the \pkg{readxl} package.
 
 Unlike \code{\link{load_term_premia}}, there is no \code{"auto"}
 source here: a download is always source-specific. The bundled copy
@@ -51,6 +57,9 @@ download_term_premia(force = TRUE)
 
 # Opt into the NY Fed workbook fallback
 download_term_premia(source = "nyfed")
+
+# Download the daily (business-day) series
+download_term_premia(frequency = "daily")
 \dontshow{\}) # examplesIf}
 }
 \references{

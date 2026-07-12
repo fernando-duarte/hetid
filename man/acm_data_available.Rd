@@ -4,10 +4,15 @@
 \alias{acm_data_available}
 \title{Check ACM Data Availability}
 \usage{
-acm_data_available(source = c("auto", "github", "nyfed"))
+acm_data_available(
+  source = c("auto", "github", "nyfed"),
+  frequency = c("monthly", "daily")
+)
 }
 \arguments{
 \item{source}{Data source passed to \code{get_acm_data_path}}
+
+\item{frequency}{Data frequency passed to \code{get_acm_data_path}}
 }
 \value{
 Logical indicating whether the resolved file exists

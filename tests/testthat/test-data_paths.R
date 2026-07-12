@@ -152,3 +152,30 @@ test_that("get_acm_download_path targets the per-source user cache", {
     file.path(user_root, "R", "hetid", HETID_CONSTANTS$ACM_NYFED_FILENAME)
   )
 })
+
+test_that("daily ACM paths resolve the user cache only, never the bundled file", {
+  user_root <- withr::local_tempdir()
+  withr::local_envvar(R_USER_DATA_DIR = user_root)
+
+  path <- get_acm_data_path("auto", "daily")
+  expect_identical(
+    path,
+    file.path(user_root, "R", "hetid", HETID_CONSTANTS$ACM_DAILY_DATA_FILENAME)
+  )
+
+  # The bundled monthly file never satisfies a daily request
+  expect_false(acm_data_available("auto", "daily"))
+  expect_true(acm_data_available("auto"))
+
+  expect_identical(
+    basename(get_acm_download_path("github", "daily")),
+    HETID_CONSTANTS$ACM_DAILY_DATA_FILENAME
+  )
+})
+
+test_that("daily ACM paths reject the nyfed source", {
+  expect_error(
+    get_acm_data_path("nyfed", "daily"),
+    class = "hetid_error_bad_argument"
+  )
+})

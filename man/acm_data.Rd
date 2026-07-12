@@ -52,9 +52,13 @@ annualized percentage points (i.e., percent).
 
 \subsection{Frequency}{
 
-The dataset is monthly frequency (one entry per month), typically using
-end-of-month observations. The NY Fed fallback source
-(\code{source = "nyfed"}) provides only the annual-node maturities.
+The bundled dataset is monthly frequency (one entry per month), typically
+using end-of-month observations. The GitHub replication project also
+publishes a daily (business-day) series starting 1961-06-14 with the
+identical column schema;
+it is download-only (~40 MB, never bundled, GitHub source only) via
+\code{download_term_premia(frequency = "daily")}. The NY Fed fallback
+source (\code{source = "nyfed"}) provides only the annual-node maturities.
 }
 
 \subsection{Relationship Between Fields}{

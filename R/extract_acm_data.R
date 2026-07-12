@@ -16,8 +16,13 @@
 #'   Default is NULL (earliest available date).
 #' @param end_date Date or character string (YYYY-MM-DD format) for end of sample.
 #'   Default is NULL (latest available date).
-#' @param frequency Character string, either "monthly" (default) or "quarterly".
-#'   Quarterly data uses the last observation of each quarter.
+#' @param frequency Character string: "monthly" (default), "quarterly",
+#'   or "daily". Quarterly data uses the last observation of each
+#'   quarter (derived from the monthly source asset). "daily" extracts
+#'   the release's business-day asset instead; it is download-only
+#'   (~40 MB; run \code{download_term_premia(frequency = "daily")} or
+#'   set \code{auto_download = TRUE}) and not available from the NY Fed
+#'   source.
 #' @param auto_download Logical. If TRUE and data doesn't exist, automatically
 #'   downloads it. Default is FALSE.
 #' @param use_incomplete_quarters Logical, only used when
@@ -47,7 +52,9 @@
 #' (ACMY01-ACMY10, ACMTP01-ACMTP10, ACMRNY01-ACMRNY10); sub-annual
 #' months use names like ACMY003M. The NY Fed fallback source provides
 #' only the annual nodes; requesting sub-annual maturities against it
-#' raises a structured error.
+#' raises a structured error. The daily asset carries the identical
+#' column schema at business-day frequency; there is no daily-to-monthly
+#' or daily-to-quarterly aggregation.
 #'
 #' All values are in annualized percentage points.
 #'
@@ -88,7 +95,7 @@ extract_acm_data <- function(data_types = c("yields", "term_premia"),
                              maturities = HETID_CONSTANTS$DEFAULT_ACM_MATURITIES,
                              start_date = NULL,
                              end_date = NULL,
-                             frequency = c("monthly", "quarterly"),
+                             frequency = c("monthly", "quarterly", "daily"),
                              auto_download = FALSE,
                              use_incomplete_quarters =
                                HETID_CONSTANTS$USE_INCOMPLETE_QUARTERS,
@@ -97,12 +104,16 @@ extract_acm_data <- function(data_types = c("yields", "term_premia"),
   source <- match.arg(source)
   validate_acm_extract_inputs(data_types, maturities, use_incomplete_quarters)
 
-  acm_data <- load_term_premia(auto_download = auto_download, source = source)
+  acm_data <- load_term_premia(
+    auto_download = auto_download, source = source,
+    frequency = if (frequency == "daily") "daily" else "monthly"
+  )
   assert_insufficient_data_ok(
     !is.null(acm_data),
     paste0(
-      "ACM data not available. Run download_term_premia()",
-      " first or set auto_download = TRUE"
+      "ACM data not available. Run download_term_premia(",
+      if (frequency == "daily") "frequency = \"daily\"" else "",
+      ") first or set auto_download = TRUE"
     )
   )
 
@@ -144,11 +155,9 @@ extract_acm_data <- function(data_types = c("yields", "term_premia"),
     result <- convert_to_quarterly(result, use_incomplete_quarters) # nolint: object_usage_linter
   }
 
-  # Idempotent for the quarterly path (convert_to_quarterly already normalized).
-  result$date <- to_period_end(
-    result$date,
-    if (frequency == "quarterly") "quarterly" else "monthly"
-  )
+  # Idempotent for the quarterly path (convert_to_quarterly already
+  # normalized); the identity for the daily path.
+  result$date <- to_period_end(result$date, frequency)
 
   result <- result[order(result$date), , drop = FALSE]
   rownames(result) <- NULL

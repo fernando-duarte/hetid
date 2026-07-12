@@ -4,7 +4,9 @@
 #' prefers a downloaded GitHub-release copy in the per-user data
 #' directory and falls back to the bundled copy; the NY Fed fallback is
 #' never loaded implicitly. Pass \code{source = "nyfed"} to load an
-#' explicitly downloaded NY Fed cache instead.
+#' explicitly downloaded NY Fed cache instead. The daily-frequency
+#' series is cache-only (no bundled copy): it must be downloaded first
+#' unless \code{auto_download = TRUE}.
 #'
 #' @param auto_download Logical. If TRUE and data doesn't exist, automatically
 #'   downloads it (from the GitHub release for \code{"auto"}/
@@ -14,6 +16,8 @@
 #'   \code{"nyfed"} (the NY Fed cache only). Note the asymmetry with
 #'   \code{\link{download_term_premia}}, which has no \code{"auto"}: a
 #'   download is always source-specific.
+#' @param frequency Data frequency: \code{"monthly"} (default) or
+#'   \code{"daily"} (GitHub source only; user cache only).
 #'
 #' @return A data frame containing the term premia data, or NULL if data is not available.
 #' @export
@@ -26,13 +30,16 @@
 #' @seealso \code{\link{download_term_premia}} for downloading the data
 #'
 load_term_premia <- function(auto_download = FALSE,
-                             source = c("auto", "github", "nyfed")) {
+                             source = c("auto", "github", "nyfed"),
+                             frequency = c("monthly", "daily")) {
   source <- match.arg(source)
-  if (!acm_data_available(source)) {
+  frequency <- match.arg(frequency)
+  if (!acm_data_available(source, frequency)) {
     if (auto_download) {
       message("Term premia data not found. Downloading...")
       download_term_premia(
-        source = if (source == "nyfed") "nyfed" else "github"
+        source = if (source == "nyfed") "nyfed" else "github",
+        frequency = frequency
       )
     } else if (source == "nyfed") {
       stop_insufficient_data(paste0(
@@ -40,15 +47,17 @@ load_term_premia <- function(auto_download = FALSE,
         "download_term_premia(source = \"nyfed\") first."
       ))
     } else {
+      hint <- if (frequency == "daily") "frequency = \"daily\"" else ""
       message(
-        "Term premia data not found. Please run download_term_premia() first."
+        "Term premia data not found. Please run download_term_premia(",
+        hint, ") first."
       )
       return(NULL)
     }
   }
 
   # Resolve after any download so a fresh user-cache copy is found.
-  csv_path <- get_acm_data_path(source)
+  csv_path <- get_acm_data_path(source, frequency)
   tp_df <- tryCatch(
     read.csv(csv_path, stringsAsFactors = FALSE),
     error = function(e) {

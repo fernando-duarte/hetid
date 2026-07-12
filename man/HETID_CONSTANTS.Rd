@@ -37,8 +37,10 @@ their terminal month in quarterly conversion: TRUE keeps them
 \item{CONSUMPTION_GROWTH_COL}{Consumption growth column name}
 \item{PC_PREFIX}{Prefix for principal component columns}
 \item{MATURITY_PREFIX}{Prefix for maturity label columns}
-\item{ACM_DATA_FILENAME}{Bundled/downloaded ACM data filename
+\item{ACM_DATA_FILENAME}{Bundled/downloaded monthly ACM data filename
 (gzipped CSV from the GitHub replication release)}
+\item{ACM_DAILY_DATA_FILENAME}{Downloaded daily ACM data filename
+(gzipped CSV, GitHub release only, never bundled)}
 \item{ACM_NYFED_FILENAME}{Cache filename for the opt-in NY Fed
 xls fallback source}
 \item{BUNDLED_VARIABLES_DATASET}{Bundled dataset name}

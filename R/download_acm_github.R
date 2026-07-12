@@ -1,7 +1,8 @@
 #' GitHub-Release Download Internals for the ACM Data
 #'
-#' Digest-verified download of the monthly-maturity ACM replication
-#' from the GitHub release. Every failure path is fail-closed: nothing
+#' Digest-verified download of the ACM replication (the monthly- or
+#' daily-frequency asset, both on the monthly maturity grid) from the
+#' GitHub release. Every failure path is fail-closed: nothing
 #' is cached unless the sha256 digest from the release API matches the
 #' downloaded file.
 #'
@@ -19,9 +20,10 @@ NULL
 #' malformed digest) fails closed.
 #'
 #' @param quiet Logical, suppress progress output
+#' @param filename Release asset filename whose digest to extract
 #' @return Lower-case 64-character sha256 string
 #' @keywords internal
-acm_release_expected_sha256 <- function(quiet = FALSE) {
+acm_release_expected_sha256 <- function(quiet = FALSE, filename) {
   json_file <- tempfile(pattern = "acm_release_", fileext = ".json")
   on.exit(unlink(json_file), add = TRUE)
   fetch_url_to_file(
@@ -31,12 +33,12 @@ acm_release_expected_sha256 <- function(quiet = FALSE) {
 
   json_text <- paste(readLines(json_file, warn = FALSE), collapse = "\n")
   json_chunks <- strsplit(json_text, '"name"[[:space:]]*:')[[1]]
-  target_prefix <- paste0('"', HETID_CONSTANTS$ACM_DATA_FILENAME, '"')
+  target_prefix <- paste0('"', filename, '"')
   hits <- which(startsWith(trimws(json_chunks), target_prefix))
   if (length(hits) != 1) {
     stop_hetid(paste0(
       "Release metadata does not identify exactly one asset named ",
-      HETID_CONSTANTS$ACM_DATA_FILENAME, " (found ", length(hits),
+      filename, " (found ", length(hits),
       "); refusing to download without a verifiable digest."
     ))
   }
@@ -49,7 +51,7 @@ acm_release_expected_sha256 <- function(quiet = FALSE) {
   if (length(digest_match) != 1) {
     stop_hetid(paste0(
       "Release metadata has no usable sha256 digest for ",
-      HETID_CONSTANTS$ACM_DATA_FILENAME,
+      filename,
       "; refusing to download without a verifiable digest."
     ))
   }
@@ -59,11 +61,18 @@ acm_release_expected_sha256 <- function(quiet = FALSE) {
 #' Download and Verify the ACM Data from the GitHub Release
 #'
 #' @param quiet Logical, suppress progress output
+#' @param frequency "monthly" (default) or "daily" release asset
 #' @return Invisibly returns the cached file path
 #' @keywords internal
-download_acm_github <- function(quiet = FALSE) {
-  expected_sha <- acm_release_expected_sha256(quiet = quiet)
-  cache_path <- get_acm_download_path("github")
+download_acm_github <- function(quiet = FALSE,
+                                frequency = c("monthly", "daily")) {
+  frequency <- match.arg(frequency)
+  asset_filename <- acm_asset_filename("github", frequency)
+  asset_url <- paste0(ACM_RELEASE_DOWNLOAD_PREFIX, asset_filename)
+  expected_sha <- acm_release_expected_sha256(
+    quiet = quiet, filename = asset_filename
+  )
+  cache_path <- get_acm_download_path("github", frequency)
 
   # Same directory as the cache so the rename is a single filesystem operation.
   temp_gz <- tempfile(
@@ -76,7 +85,7 @@ download_acm_github <- function(quiet = FALSE) {
     message("Downloading ACM data from the GitHub release...")
   }
   fetch_url_to_file(
-    DATA_URLS$ACM_GITHUB_CSV_GZ, temp_gz,
+    asset_url, temp_gz,
     quiet = quiet, what = "ACM data file"
   )
 
@@ -95,7 +104,7 @@ download_acm_github <- function(quiet = FALSE) {
   writeLines(
     c(
       paste0("sha256: ", actual_sha),
-      paste0("source_url: ", DATA_URLS$ACM_GITHUB_CSV_GZ),
+      paste0("source_url: ", asset_url),
       paste0(
         "retrieved: ",
         format(Sys.time(), HETID_CONSTANTS$ISO_DATE_FORMAT)
