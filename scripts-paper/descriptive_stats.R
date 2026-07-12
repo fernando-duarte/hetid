@@ -7,6 +7,8 @@
 # via latexmk.
 # Run via run_all.R after the data scripts.
 
+source("scripts/utils/latex_table_utils.R")
+
 # sources of the merged panel, named by series group (the names drive the
 # facet colors below)
 panel_sources <- list(
@@ -145,18 +147,10 @@ writeLines(c(
   paste0("\\noindent\\includegraphics[width=\\textwidth,page=2]{", figures_pdf, "}"),
   "\\end{document}"
 ), wrapper_tex)
-status <- system2(
-  "latexmk", c("-cd", "-pdf", "-silent", wrapper_tex),
-  stdout = FALSE, stderr = FALSE
-)
-if (status != 0) stop("latexmk failed on ", wrapper_tex, " (status ", status, ")")
-invisible(system2(
-  "latexmk", c("-cd", "-c", wrapper_tex),
-  stdout = FALSE, stderr = FALSE
-))
+compile_latex_pdf(wrapper_tex)
 
 rm(
   panel_sources, variable_group, panel_long, nas, group_colors, plot_df,
   ts_plot, hist_plot, reg_summary, write_kable, summary_tex, correlations_tex,
-  regression_tex, figures_pdf, wrapper_tex, status
+  regression_tex, figures_pdf, wrapper_tex
 )

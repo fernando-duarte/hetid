@@ -235,16 +235,7 @@ hetero_table <- build_panel_latex_table(
 write_latex_table(hetero_table, out_dir, "hetero_tests")
 
 # compile the standalone variant so a LaTeX regression fails the pipeline
-standalone_tex <- file.path(out_dir, "hetero_tests_standalone.tex")
-status <- system2(
-  "latexmk", c("-cd", "-pdf", "-silent", standalone_tex),
-  stdout = FALSE, stderr = FALSE
-)
-if (status != 0) stop("latexmk failed on ", standalone_tex, " (status ", status, ")")
-invisible(system2(
-  "latexmk", c("-cd", "-c", standalone_tex),
-  stdout = FALSE, stderr = FALSE
-))
+compile_latex_pdf(file.path(out_dir, "hetero_tests_standalone.tex"))
 
 cat(
   sprintf("hetero tests (Z = %s): regime", z_col),
@@ -260,6 +251,5 @@ rm(
   w1, y1, y2, z, z_mat, fmt, pcell, suite_cfg, run_battery, pvals, test_labels,
   test_names, column_cells, cells, rk, fmt_sci, joint_cells, row_labels, sig,
   reject, n_pc_tested,
-  caption, n_obs, span, notes, panel_rows, arch_row, panels, hetero_table,
-  standalone_tex, status
+  caption, n_obs, span, notes, panel_rows, arch_row, panels, hetero_table
 )

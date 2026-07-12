@@ -109,6 +109,7 @@ make_standalone_latex <- function(table_lines, landscape = FALSE) {
     "\\usepackage{threeparttable}",
     "\\usepackage{siunitx}",
     "\\usepackage{array}",
+    "\\usepackage{amssymb}",
     geometry,
     "",
     "\\begin{document}",
@@ -117,6 +118,23 @@ make_standalone_latex <- function(table_lines, landscape = FALSE) {
     "",
     "\\end{document}"
   )
+}
+
+#' Compile a LaTeX document with latexmk and clean its auxiliary files
+#'
+#' Stops on failure, so a LaTeX regression fails the calling pipeline.
+#'
+#' @param tex_path path to the .tex document to compile
+compile_latex_pdf <- function(tex_path) {
+  status <- system2(
+    "latexmk", c("-cd", "-pdf", "-silent", tex_path),
+    stdout = FALSE, stderr = FALSE
+  )
+  if (status != 0) stop("latexmk failed on ", tex_path, " (status ", status, ")")
+  invisible(system2(
+    "latexmk", c("-cd", "-c", tex_path),
+    stdout = FALSE, stderr = FALSE
+  ))
 }
 
 #' Write a table fragment and (optionally) its standalone document variant
