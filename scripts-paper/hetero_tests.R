@@ -1,5 +1,5 @@
 # Heteroskedasticity (Lewbel relevance) tests of the SDF-news PCs against the
-# asset-return instrument Z, run on the news PCs directly -- they are
+# instrument Z (z_col in run_all.R), run on the news PCs directly -- they are
 # orthogonal to the lagged expected-SDF design in the population, so no
 # residualization step -- with the stage-08 battery (regime-selected skedastic
 # suite plus Glejser, Breusch-Pagan LM, and ARCH(1)), one table column per
@@ -127,7 +127,7 @@ n_pc_tested <- ncol(y2)
 caption <- if (any(reject)) {
   sprintf(
     paste0(
-      "The asset-return instrument drives significant conditional ",
+      "The instrument drives significant conditional ",
       "heteroskedasticity in %d of %d SDF-news PCs (Lewbel relevance)."
     ),
     sum(reject), n_pc_tested
@@ -136,7 +136,7 @@ caption <- if (any(reject)) {
   sprintf(
     paste0(
       "The %d SDF-news PCs show no significant conditional ",
-      "heteroskedasticity against the asset-return instrument (weak Lewbel relevance)."
+      "heteroskedasticity against the instrument (weak Lewbel relevance)."
     ),
     n_pc_tested
   )
@@ -151,9 +151,7 @@ notes <- c(
   "$Y_{2,i}$ is SDF-news",
   "PC $i$, tested directly: the news PCs are orthogonal to the lagged",
   "expected-SDF design in the population, so no residualization is needed. $Z$ is",
-  "the de-meaned principal component of a cross-section of financial-asset",
-  sprintf("returns (hetid \\texttt{variables} %s), the single", z_col),
-  "heteroskedasticity driver.",
+  sprintf("%s, the single heteroskedasticity driver.", z_desc),
   "Every test starts from the OLS mean regression of $Y_2$ on a constant and $Z$",
   "and probes its residuals: Goldfeld--Quandt orders by $Z$, two-sided; the",
   "Breusch--Pagan LM regresses the squared residuals on $Z$; ARCH(1) regresses",

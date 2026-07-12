@@ -30,8 +30,15 @@ n_pc <- 3L
 news_prefix <- "sdf_news_m"
 expected_prefix <- "expected_sdf_m"
 # heteroskedasticity instrument Z for set identification and the hetero tests:
-# a column of hetid::variables (PCs of asset returns)
-z_col <- "pc1"
+# column z_col of the qtr-keyed frame z_source() returns (a function, so the
+# data scripts sourced below can build the frame first); z_desc is the
+# hetero-tests table note's description of Z
+z_col <- "y60_vol"
+z_source <- function() yield_vol[c("qtr", z_col)]
+z_desc <- paste(
+  "the de-meaned realized quarterly volatility of the five-year yield",
+  "(\\texttt{y60\\_vol}, \\texttt{yield\\_vol.R})"
+)
 
 # output folder for tables and figures
 out_dir <- "scripts-paper/output"

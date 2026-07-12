@@ -3,8 +3,8 @@
 # docs/lewbel_multivariate_set_identification.tex and the stage-08 paper-spec
 # pattern. Same specification as ols_mean_eq_regression.R -- Y1 = consumption
 # growth, common conditioning X_t = (1, lagged expected-SDF PCs), Y2 = the
-# three SDF-news PCs, now treated as endogenous -- with an asset-return PC
-# from hetid::variables (z_col in run_all.R) as the single heteroskedasticity
+# three SDF-news PCs, now treated as endogenous -- with the run_all.R
+# instrument (column z_col of z_source()) as the single heteroskedasticity
 # driver Z, applied to every news component (pair set = {news PC i} x {Z}).
 # The quadratic-system assembly, profile-bound solver, and tau* sweep are
 # reused from scripts/utils.
@@ -21,15 +21,12 @@ tau_baseline <- 0.05
 tau_cap <- 0.99
 
 # aligned estimation frame; complete cases truncate the sample to the
-# instrument's span (pc1 ends 2022 Q3)
+# instrument's span
 set_id_data <- list(
   gr1_pcecc96,
   lag_expected_sdf_pc,
   sdf_news_pc,
-  dplyr::transmute(
-    hetid::variables,
-    qtr = tsibble::yearquarter(date), dplyr::across(dplyr::all_of(z_col))
-  )
+  z_source()
 ) |>
   purrr::reduce(dplyr::full_join, by = "qtr") |>
   filter_window() |>
