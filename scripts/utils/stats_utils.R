@@ -2,7 +2,8 @@
 # Common functions for statistical analysis
 
 # Moving-block bootstrap index: resample a length-nn series in contiguous blocks
-# of length bl (wrapping to nn rows), preserving short-run dependence. Shared by
+# of length bl (concatenated, truncated to nn rows), preserving short-run
+# dependence. Shared by
 # the paper-spec and results-companion tau* bootstraps. Seed the caller, not here.
 mbb_index <- function(nn, bl) {
   bl <- min(bl, nn) # a block longer than the series collapses to one full block
