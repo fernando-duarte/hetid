@@ -148,6 +148,10 @@ set_id_mean_eq <- list(
   w2_cor = stats::cor(w2),
   # aligned system pieces, kept for the downstream heteroskedasticity tests
   w1 = w1, y1 = set_id_data[[y1_col]], y2 = as.matrix(set_id_data[y2_cols]), z = z,
+  # aligned estimation frame, column roles, and sweep cap, kept for the
+  # endpoint bootstrap
+  data = set_id_data, y1_col = y1_col, x_cols = x_cols, y2_cols = y2_cols,
+  tau_cap = tau_cap,
   moments = moments,
   gamma = gamma,
   # reduced-form coefficients, kept for the bounds-by-tau figure
