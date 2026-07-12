@@ -95,9 +95,34 @@ cells <- do.call(cbind, lapply(seq_len(ncol(y2)), column_cells))
 m_z <- crossprod(y2, y2 * (z - mean(z))) / nrow(y2)
 m_z_sv <- svd(m_z)$d
 fmt_sci <- function(x) sprintf("{\\num{%s}}", formatC(x, format = "g", digits = 3))
+
+# KP-style underidentification test: null rank(M_Z) = I - 1 against full rank
+# I. With one rank deficiency the rk statistic is a Newey-West t-test that
+# Cov(Z, (u'Y2)^2) = 0 at the least-moved combination u-hat (the eigenvector
+# of M_Z-hat's smallest eigenvalue); chi-sq(1) under the null
+rk_rank_test <- function(m_z, y2, z) {
+  es <- eigen(m_z, symmetric = TRUE)
+  u <- es$vectors[, which.min(abs(es$values))]
+  h <- as.vector(y2 %*% u)^2
+  s <- (z - mean(z)) * (h - mean(h))
+  n <- length(s)
+  lag <- floor(4 * (n / 100)^(2 / 9))
+  sc <- s - mean(s)
+  gam <- vapply(0:lag, function(k) {
+    sum(sc[seq_len(n - k)] * sc[seq_len(n - k) + k]) / n
+  }, numeric(1))
+  lrv <- gam[1] + 2 * sum((1 - seq_len(lag) / (lag + 1)) * gam[-1])
+  stat <- n * mean(s)^2 / lrv
+  list(stat = stat, p = stats::pchisq(stat, df = 1, lower.tail = FALSE), lag = lag)
+}
+rk <- rk_rank_test(m_z, y2, z)
+
 cells <- rbind(cells, cbind(
-  vapply(c(det(m_z), max(m_z_sv) / min(m_z_sv), min(m_z_sv)), fmt_sci, character(1)),
-  matrix("", 3L, ncol(y2) - 1L)
+  c(
+    vapply(c(det(m_z), max(m_z_sv) / min(m_z_sv), min(m_z_sv)), fmt_sci, character(1)),
+    pcell(rk$p)
+  ),
+  matrix("", 4L, ncol(y2) - 1L)
 ))
 
 row_labels <- c(
@@ -107,7 +132,8 @@ row_labels <- c(
   "$[\\mathrm{Cov}(W_1,Y_2)/\\mathrm{Var}(Y_2)]\\cdot\\mathrm{sd}(Y_2)/\\mathrm{sd}(\\Delta c)$",
   "$[\\mathrm{Cov}(W_1,Y_2)/\\mathrm{Var}(Y_2)]\\cdot\\mathrm{sd}(Y_2)$",
   "$\\det\\widehat{M}_Z$", "$\\kappa(\\widehat{M}_Z)$",
-  "$\\sigma_{\\min}(\\widehat{M}_Z)$"
+  "$\\sigma_{\\min}(\\widehat{M}_Z)$",
+  "Kleibergen--Paap $\\mathrm{rk}$ ($p$)"
 )
 
 # caption computed from the results, using the stage-08 rejection rule
@@ -168,7 +194,20 @@ notes <- c(
   "only within a lower-dimensional subspace. $\\kappa(\\widehat{M}_Z)$, the largest",
   "singular value over the smallest, measures how uneven relevance is across",
   "directions; a large value warns that the identified set is much wider along",
-  "the weakly moved combinations. $W_1$ is consumption",
+  "the weakly moved combinations.",
+  "The Kleibergen--Paap $\\mathrm{rk}$ row makes $\\sigma_{\\min}$ inferential: it",
+  "tests the null that $\\widehat{M}_Z$ estimates a matrix of rank one less than",
+  "the number of news PCs (underidentification: the volatility of some",
+  "combination $u'Y_2$ does not respond to $Z$ at all) against full rank. With",
+  "one rank deficiency the $\\mathrm{rk}$ statistic reduces to a Newey--West",
+  "$t$-test of $\\mathrm{Cov}(Z,(\\hat{u}'Y_2)^2)=0$ at the least-moved",
+  sprintf("combination $\\hat{u}$ (Bartlett kernel, %d lags), and is", rk$lag),
+  "$\\chi^2(1)$ under the null. A small $p$ rejects underidentification, so $Z$",
+  "moves the news covariance in every direction and the joint Lewbel rank",
+  "condition holds; a large $p$ means rank deficiency cannot be ruled out.",
+  "Rejection alone does not imply strong identification: a significant $p$",
+  "with tiny $\\sigma_{\\min}$ still gives wide identified sets.",
+  "$W_1$ is consumption",
   "growth residualized on the lagged expected-SDF design, so the structural",
   "equation reads $W_1=\\theta'Y_2+\\varepsilon_1$ and $\\mathrm{Cov}(W_1,Y_2)$",
   "mixes the causal effect $\\theta$ with the shock correlation",
@@ -222,14 +261,18 @@ invisible(system2(
 
 cat(
   sprintf("hetero tests (Z = %s): regime", z_col),
-  suite_cfg$regime, "suite,", n_obs, "obs\n"
+  suite_cfg$regime, "suite,", n_obs, "obs\n",
+  sprintf(
+    " KP rk underidentification: stat = %.3g, p = %.3g (NW lag %d)\n",
+    rk$stat, rk$p, rk$lag
+  )
 )
 print(do.call(cbind, pvals), digits = 3)
 
 rm(
   w1, y1, y2, z, z_mat, fmt, pcell, suite_cfg, run_battery, pvals, test_labels,
-  test_names, column_cells, cells, m_z, m_z_sv, fmt_sci, row_labels, sig,
-  reject, n_pc_tested,
+  test_names, column_cells, cells, m_z, m_z_sv, fmt_sci, rk_rank_test, rk,
+  row_labels, sig, reject, n_pc_tested,
   caption, n_obs, span, notes, panel_rows, arch_row, panels, hetero_table,
   standalone_tex, status
 )
