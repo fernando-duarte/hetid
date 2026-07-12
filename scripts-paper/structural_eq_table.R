@@ -51,6 +51,19 @@ ols_cells <- ifelse(
 )
 ols_tstats <- sprintf("(%.2f)", nw_t)
 
+# sampling uncertainty from the endpoint bootstrap (set_id_bootstrap.R):
+# bootstrap t statistics under the tau = 0 point, Imbens-Manski 90% intervals
+# for the true coefficient under the set cells; blank cells stay blank
+stopifnot(identical(names(set_id_boot$point_se), coef_tab$coef))
+point_t <- coef_tab$point / set_id_boot$point_se[coef_tab$coef]
+point_tstats <- ifelse(is.finite(point_t), sprintf("(%.2f)", point_t), "")
+im_cell <- function(cell, im_lo, im_hi) {
+  ifelse(
+    cell == "" | !is.finite(im_lo) | !is.finite(im_hi), "",
+    sprintf("$(%.3f,\\,%.3f)$", im_lo, im_hi)
+  )
+}
+
 # coefficient rows interleaved with the OLS t-statistic rows (blank in the
 # identification columns)
 interleave <- function(a, b) as.vector(rbind(a, b))
@@ -60,19 +73,25 @@ coef_labels <- c(
   sprintf("$b_{%d,N}$", seq_len(n_pc))
 )
 row_labels <- c(interleave(coef_labels, ""), "$R^2$", "$N$")
-# one identified-set column per display slack, from the stored per-tau tables
-set_columns <- lapply(set_id_mean_eq$set_tables, function(st) {
+# one identified-set column per display slack: the exact range with its
+# Imbens-Manski interval beneath, from the stored per-tau tables and the
+# endpoint bootstrap
+set_columns <- lapply(names(set_id_mean_eq$set_tables), function(nm) {
+  st <- set_id_mean_eq$set_tables[[nm]]
   tab <- rbind(st$beta1, st$theta)
   stopifnot(identical(tab$coef, coef_tab$coef))
+  inf <- set_id_boot$inference[[nm]]
+  stopifnot(identical(inf$coef, coef_tab$coef))
+  cells <- set_cell(tab$set_lower, tab$set_upper, tab$status)
   c(
-    interleave(set_cell(tab$set_lower, tab$set_upper, tab$status), ""),
+    interleave(cells, im_cell(cells, inf$im_lower, inf$im_upper)),
     "--", sprintf("%d", n_obs)
   )
 })
 columns <- c(
   list(
     c(interleave(ols_cells, ols_tstats), sprintf("%.2f", r2), sprintf("%d", n_obs)),
-    c(interleave(fmt(coef_tab$point), ""), "--", sprintf("%d", n_obs))
+    c(interleave(fmt(coef_tab$point), point_tstats), "--", sprintf("%d", n_obs))
   ),
   unname(set_columns)
 )
@@ -117,5 +136,6 @@ cat(
 rm(
   coef_tab, fmt, set_cell, n_obs, r2, tau_base, row_labels, columns,
   set_columns, nw_se, nw_t, nw_p, nw_stars, ols_cells, ols_tstats, interleave,
-  coef_labels, n_excl, caption, build_structural_notes, notes, structural_table
+  coef_labels, n_excl, caption, build_structural_notes, notes, structural_table,
+  point_t, point_tstats, im_cell
 )

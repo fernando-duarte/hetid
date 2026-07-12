@@ -87,13 +87,40 @@ build_structural_notes <- function() {
     "per-coefficient range of the joint identified set. $b_{0}$ and $b_{E}$ are",
     recovery_note,
     sprintf(
-      "The joint set remains bounded up to $\\tau^{*}=%.3g$%s.",
+      "The joint set remains bounded up to $\\tau^{*}=%.3g$%s",
       set_id_mean_eq$tau_star,
       if (set_id_mean_eq$tau_star_capped) " (capped at the sweep maximum)" else ""
+    ),
+    sprintf(
+      "(90\\%% moving-block bootstrap band $[%.2g,\\,%.2g]$, $B=%d$,",
+      set_id_boot$tau_star_band[["p05"]], set_id_boot$tau_star_band[["p95"]],
+      set_id_boot$b_reps
+    ),
+    sprintf(
+      "block $=%d$ quarters%s).", set_id_boot$block,
+      if (set_id_boot$n_capped > 0) {
+        sprintf("; %d draws censored at the sweep cap", set_id_boot$n_capped)
+      } else {
+        ""
+      }
     ),
     sprintf("$N=%d$, %s.", n_obs, span),
     "Set cells are exact identified-set ranges, not confidence intervals;",
     "a blank set cell marks a point-identified coefficient, whose set equals",
-    "the $\\tau{=}0$ point at every displayed $\\tau$."
+    "the $\\tau{=}0$ point at every displayed $\\tau$.",
+    "Parentheses beneath the $\\tau{=}0$ estimates are $t$ statistics from the",
+    "same bootstrap's standard errors; parenthesized intervals beneath the set",
+    "cells are 90\\% Imbens--Manski (2004) confidence intervals for the true",
+    "coefficient, anchoring the exact set endpoints with their bootstrap",
+    "standard errors. The intervals are componentwise, not a joint confidence",
+    "region, and are conditional on the estimated SDF panels, their principal",
+    "components, and the realized instrument, all constructed once from the",
+    "full sample. An interval row is omitted when fewer than half the draws",
+    "produce a certified bounded set at that $\\tau$; intervals shown near",
+    "$\\tau^{*}$ average only over draws whose set stays bounded.",
+    sprintf(
+      "The joint set stays bounded at the baseline slack in %.0f\\%% of draws.",
+      100 * (1 - set_id_boot$tau_star_share_below)
+    )
   )
 }
