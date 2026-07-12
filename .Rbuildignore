@@ -34,6 +34,7 @@
 ^inst/examples$
 ^inst/hooks/claude-check\.sh$
 ^scripts$
+^scripts-paper$
 ^scripts_old$
 ^revdep$
 ^tools$

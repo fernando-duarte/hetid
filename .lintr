@@ -35,6 +35,7 @@ exclusions: list(
     "tests/testthat.R",
     "tests/testthat/helper-*.R",
     "scripts",
+    "scripts-paper",
     "renv.lock",
     "README.html"
   )

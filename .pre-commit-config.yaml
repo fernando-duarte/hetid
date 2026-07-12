@@ -39,7 +39,7 @@ repos:
       # Dependencies are used (scripts/ and data-raw/ are .Rbuildignore'd,
       # dev-only directories, not part of the installed package)
       - id: deps-in-desc
-        exclude: '^(scripts|data-raw)/'
+        exclude: '^(scripts|scripts-paper|data-raw)/'
 
   # Standard pre-commit hooks
   - repo: https://github.com/pre-commit/pre-commit-hooks
