@@ -88,46 +88,23 @@ column_cells <- function(k) {
 }
 cells <- do.call(cbind, lapply(seq_len(ncol(y2)), column_cells))
 
-# joint relevance: M_Z-hat = (1/T) sum_t (Z_t - Zbar) Y2_t Y2_t' estimates
-# E[(Z - EZ) Var_t(Y2)] when the news have mean zero given Z (raw Y2, so the
-# level effect of Z also enters); its diagonal is the Cov(Z, Y2^2) row. det,
-# condition number, and smallest singular value gauge whether Z moves the news
-# covariance in every direction; matrix-level scalars, shown in one column
-m_z <- crossprod(y2, y2 * (z - mean(z))) / nrow(y2)
-m_z_sv <- svd(m_z)$d
-# separation of the two smallest singular values; the rk chi-sq(1) reference
-# needs the deficient direction unique, i.e. this ratio well above one
-m_z_sep <- m_z_sv[length(m_z_sv) - 1L] / m_z_sv[length(m_z_sv)]
+# joint relevance (rk_rank_test, hetero_lm_tests.R): M_Z-hat = (1/T) sum_t
+# (Z_t - Zbar) Y2_t Y2_t' estimates E[(Z - EZ) Var_t(Y2)] when the news have
+# mean zero given Z (raw Y2, so the level effect of Z also enters); its
+# diagonal is the Cov(Z, Y2^2) row. det, condition number, and smallest
+# singular value gauge whether Z moves the news covariance in every
+# direction, the rk p-value tests the rank-deficient null; matrix-level
+# scalars, shown in one column
+rk <- rk_rank_test(y2, z)
 fmt_sci <- function(x) sprintf("{\\num{%s}}", formatC(x, format = "g", digits = 3))
-
-# KP-style underidentification test: null rank(M_Z) = I - 1 against full rank
-# I. With one rank deficiency the rk statistic is a Newey-West t-test that
-# Cov(Z, (u'Y2)^2) = 0 at the least-moved combination u-hat (the eigenvector
-# of M_Z-hat's smallest eigenvalue); chi-sq(1) under the null
-rk_rank_test <- function(m_z, y2, z) {
-  es <- eigen(m_z, symmetric = TRUE)
-  u <- es$vectors[, which.min(abs(es$values))]
-  h <- as.vector(y2 %*% u)^2
-  s <- (z - mean(z)) * (h - mean(h))
-  n <- length(s)
-  lag <- floor(4 * (n / 100)^(2 / 9))
-  sc <- s - mean(s)
-  gam <- vapply(0:lag, function(k) {
-    sum(sc[seq_len(n - k)] * sc[seq_len(n - k) + k]) / n
-  }, numeric(1))
-  lrv <- gam[1] + 2 * sum((1 - seq_len(lag) / (lag + 1)) * gam[-1])
-  stat <- n * mean(s)^2 / lrv
-  list(stat = stat, p = stats::pchisq(stat, df = 1, lower.tail = FALSE), lag = lag)
-}
-rk <- rk_rank_test(m_z, y2, z)
-
-cells <- rbind(cells, cbind(
-  c(
-    vapply(c(det(m_z), max(m_z_sv) / min(m_z_sv), min(m_z_sv)), fmt_sci, character(1)),
-    pcell(rk$p)
-  ),
-  matrix("", 4L, ncol(y2) - 1L)
-))
+joint_cells <- c(
+  vapply(c(rk$det, rk$kappa, rk$sv_min), fmt_sci, character(1)),
+  pcell(rk$p)
+)
+cells <- rbind(
+  cells,
+  cbind(joint_cells, matrix("", length(joint_cells), ncol(y2) - 1L))
+)
 
 row_labels <- c(
   unname(test_labels[test_names]),
@@ -191,12 +168,11 @@ notes <- c(
   "$\\mathrm{E}[(Z_t-\\mathrm{E}Z_t)\\,\\mathrm{Var}_t(Y_2)]$, the effect of $Z$ on",
   "the full conditional covariance matrix of the news PCs; its diagonal is the",
   "$\\mathrm{Cov}(Z,Y_2^2)$ row, its off-diagonals are",
-  "$\\mathrm{Cov}(Z,Y_{2,i}Y_{2,j})$. Like those rows, $\\widehat{M}_Z$ and the",
-  "$\\mathrm{rk}$ test below use raw $Y_2$, so the level effect of $Z$ enters",
-  "them through the squared conditional mean: the $\\mathrm{Var}_t$ reading is",
-  "exact only if the news have mean zero given $Z$, and a full-rank finding can",
-  "partly reflect $Z$ moving the level of the news rather than their",
-  "volatility. Joint relevance is directional.",
+  "$\\mathrm{Cov}(Z,Y_{2,i}Y_{2,j})$. $\\widehat{M}_Z$ and the $\\mathrm{rk}$ test",
+  "also use raw $Y_2$, so the same level-effect caveat applies: the",
+  "$\\mathrm{Var}_t$ reading is exact only if the news have mean zero given $Z$,",
+  "and a full-rank finding can partly reflect $Z$ moving the level of the news.",
+  "Joint relevance is directional.",
   "$\\sigma_{\\min}(\\widehat{M}_Z)$ near zero means some linear combination of the",
   "news PCs has volatility that $Z$ barely moves, so identification is weak in",
   "that direction. $\\det\\widehat{M}_Z$ near zero means $Z$ shifts the covariance",
@@ -213,7 +189,7 @@ notes <- c(
   sprintf("combination $\\hat{u}$ (Bartlett kernel, %d lags), and is", rk$lag),
   "$\\chi^2(1)$ under the null. The reference distribution also needs the",
   "deficient direction to be unique: the second-smallest singular value of",
-  sprintf("$\\widehat{M}_Z$ is %.1f times the smallest, and a ratio near one", m_z_sep),
+  sprintf("$\\widehat{M}_Z$ is %.1f times the smallest, and a ratio near one", rk$sep),
   "would make $\\hat{u}$ ill-determined and the $p$-value unreliable.",
   "A small $p$ rejects underidentification, so $Z$",
   "moves the news covariance in every direction and the joint Lewbel rank",
@@ -276,16 +252,16 @@ cat(
   sprintf("hetero tests (Z = %s): regime", z_col),
   suite_cfg$regime, "suite,", n_obs, "obs\n",
   sprintf(
-    " KP rk underidentification: stat = %.3g, p = %.3g (NW lag %d, sv sep %.2g)\n",
-    rk$stat, rk$p, rk$lag, m_z_sep
+    "KP rk underidentification: stat = %.3g, p = %.3g (NW lag %d, sv sep %.2g)\n",
+    rk$stat, rk$p, rk$lag, rk$sep
   )
 )
 print(do.call(cbind, pvals), digits = 3)
 
 rm(
   w1, y1, y2, z, z_mat, fmt, pcell, suite_cfg, run_battery, pvals, test_labels,
-  test_names, column_cells, cells, m_z, m_z_sv, m_z_sep, fmt_sci, rk_rank_test,
-  rk, row_labels, sig, reject, n_pc_tested,
+  test_names, column_cells, cells, rk, fmt_sci, joint_cells, row_labels, sig,
+  reject, n_pc_tested,
   caption, n_obs, span, notes, panel_rows, arch_row, panels, hetero_table,
   standalone_tex, status
 )

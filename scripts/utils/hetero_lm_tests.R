@@ -1,7 +1,7 @@
-# LM-style heteroskedasticity tests and the NA fallback row for the W2
-# diagnostics battery. Moved verbatim from heteroskedasticity_tests.R
-# (stage 02), its only consumer; suite_na_row resolves that script's
-# suite_tests vector at call time.
+# LM-style heteroskedasticity tests, the NA fallback row for the W2
+# diagnostics battery, and the joint-relevance rank test. Core tests moved
+# verbatim from heteroskedasticity_tests.R (stage 02); suite_na_row resolves
+# that script's suite_tests vector at call time.
 
 # Breusch-Pagan LM: squared residuals on the PC levels, the direct check
 # that Var(e2 | Z) moves with the instruments
@@ -65,6 +65,40 @@ select_diagnostics_suite <- function(w2_resid, z_mat) {
     regime = regime, fitted_sd_ratio = ratio, suite_tests = suite,
     gq_deflator = colnames(z_mat)[min(2L, ncol(z_mat))],
     gq_alternative = "two.sided"
+  )
+}
+
+# KP-style joint-relevance rank test of a scalar driver z for the columns of
+# y2: builds M_Z = (1/T) sum_t (z_t - zbar) y2_t y2_t' and tests the null
+# rank(M_Z) = I - 1 (underidentification) against full rank I. With one rank
+# deficiency the rk statistic is a Newey-West t-test that Cov(z, (u'y2)^2) = 0
+# at the least-moved direction u (eigenvector of M_Z's smallest |eigenvalue|);
+# chi-sq(1) under the null. One eigendecomposition also yields the spectrum
+# summaries the joint-relevance table rows use: det, condition number,
+# smallest singular value, and the separation ratio of the two smallest
+# singular values (the chi-sq(1) reference needs the deficient direction
+# unique, i.e. separation well above one).
+rk_rank_test <- function(y2, z) {
+  zc <- z - mean(z)
+  m_z <- crossprod(y2, y2 * zc) / nrow(y2)
+  es <- eigen(m_z, symmetric = TRUE)
+  sv <- sort(abs(es$values), decreasing = TRUE)
+  sv_min <- sv[[length(sv)]]
+  u <- es$vectors[, which.min(abs(es$values))]
+  h <- as.vector(y2 %*% u)^2
+  s <- zc * (h - mean(h))
+  n <- length(s)
+  lag <- floor(4 * (n / 100)^(2 / 9))
+  sc <- s - mean(s)
+  gam <- vapply(0:lag, function(k) {
+    sum(sc[seq_len(n - k)] * sc[seq_len(n - k) + k]) / n
+  }, numeric(1))
+  lrv <- gam[1] + 2 * sum((1 - seq_len(lag) / (lag + 1)) * gam[-1])
+  stat <- n * mean(s)^2 / lrv
+  list(
+    m_z = m_z, det = prod(es$values), kappa = sv[[1L]] / sv_min,
+    sv_min = sv_min, sep = sv[[length(sv) - 1L]] / sv_min,
+    stat = stat, p = pchisq(stat, df = 1, lower.tail = FALSE), lag = lag
   )
 }
 
