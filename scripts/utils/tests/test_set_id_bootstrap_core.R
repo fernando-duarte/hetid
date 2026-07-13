@@ -97,6 +97,11 @@ check(
   "uncertified full-sample rows carry a reason",
   diag_df$reason[diag_df$coef == "a" & diag_df$tau == 0.2] != "reported"
 )
+check(
+  "endpoint t columns exist and go NA on degenerate scales",
+  all(c("t_lower", "t_upper") %in% names(diag_df)) &&
+    all(is.na(diag_df$t_lower[!is.finite(diag_df$se_lower)]))
+)
 
 # one-draw evaluator on a simulated heteroskedastic system (I = 2, null mode)
 set.seed(7)

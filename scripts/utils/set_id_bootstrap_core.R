@@ -128,8 +128,10 @@ set_id_boot_collect <- function(boot_raw, spec) {
 }
 
 # One diagnostics row per coefficient-tau pair: the full-sample set, per-
-# status draw counts, robust scales and correlation, the calibrated interval,
-# and the reason a table cell renders blank.
+# status draw counts, robust scales and correlation, per-endpoint t
+# statistics (endpoint over its robust scale; the upper-endpoint t backs a
+# negative set's excludes-zero claim, the lower-endpoint t a positive set's),
+# the calibrated interval, and the reason a table cell renders blank.
 set_id_boot_diagnostics <- function(collected, inference, set_tables, taus,
                                     min_reps = boot_min_reps(
                                       nrow(collected$endpoint_draws[[1]]$status)
@@ -166,7 +168,16 @@ set_id_boot_diagnostics <- function(collected, inference, set_tables, taus,
       set_lower = tab$set_lower, set_upper = tab$set_upper,
       set_status = tab$status, counts,
       n_finite = inf$n_finite, min_reps = min_reps,
-      se_lower = inf$se_lower, se_upper = inf$se_upper, rho = inf$rho,
+      se_lower = inf$se_lower, se_upper = inf$se_upper,
+      t_lower = ifelse(
+        is.finite(inf$se_lower) & inf$se_lower > 0,
+        tab$set_lower / inf$se_lower, NA_real_
+      ),
+      t_upper = ifelse(
+        is.finite(inf$se_upper) & inf$se_upper > 0,
+        tab$set_upper / inf$se_upper, NA_real_
+      ),
+      rho = inf$rho,
       c_stoye = inf$c_stoye, c_im = inf$c_im,
       ci_lower = inf$ci_lower, ci_upper = inf$ci_upper,
       reason = reason, row.names = NULL, stringsAsFactors = FALSE
