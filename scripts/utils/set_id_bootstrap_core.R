@@ -165,7 +165,7 @@ set_id_boot_diagnostics <- function(collected, inference, set_tables, taus,
     )
     data.frame(
       coef = tab$coef, tau = taus[j],
-      set_lower = tab$set_lower, set_upper = tab$set_upper,
+      set_lower = tab$set_lower, set_upper = tab$set_upper, width = width,
       set_status = tab$status, counts,
       n_finite = inf$n_finite, min_reps = min_reps,
       se_lower = inf$se_lower, se_upper = inf$se_upper,
@@ -177,6 +177,8 @@ set_id_boot_diagnostics <- function(collected, inference, set_tables, taus,
         is.finite(inf$se_upper) & inf$se_upper > 0,
         tab$set_upper / inf$se_upper, NA_real_
       ),
+      se_width = inf$se_width, width_p05 = inf$width_p05,
+      width_p95 = inf$width_p95,
       rho = inf$rho,
       c_stoye = inf$c_stoye, c_im = inf$c_im,
       ci_lower = inf$ci_lower, ci_upper = inf$ci_upper,

@@ -141,6 +141,11 @@ endpoint_inference <- function(lower, upper, set_table, alpha = 0.10,
     ok <- is.finite(lower[, k]) & is.finite(upper[, k])
     se_lo <- robust_scale(lower[ok, k])
     se_up <- robust_scale(upper[ok, k])
+    # width uncertainty from the paired draws, so the endpoint correlation
+    # is handled exactly (correlated endpoints shift more than they stretch)
+    width_draws <- upper[ok, k] - lower[ok, k]
+    se_w <- robust_scale(width_draws)
+    width_band <- boot_band(width_draws)
     rho <- robust_endpoint_cor(lower[, k], upper[, k])
     width <- set_table$set_upper[k] - set_table$set_lower[k]
     usable <- set_table$status[k] == "bounded" && is.finite(width) &&
@@ -163,6 +168,8 @@ endpoint_inference <- function(lower, upper, set_table, alpha = 0.10,
     }
     data.frame(
       coef = set_table$coef[k], se_lower = se_lo, se_upper = se_up,
+      se_width = se_w, width_p05 = width_band[["p05"]],
+      width_p95 = width_band[["p95"]],
       rho = rho, n_finite = sum(ok), c_im = c_im, c_stoye = c_st,
       ci_lower = ci_lo, ci_upper = ci_up,
       row.names = NULL, stringsAsFactors = FALSE

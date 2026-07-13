@@ -144,6 +144,27 @@ check(
   is.na(endpoint_inference(degen_draws, degen_draws, degen, 0.10)$ci_lower)
 )
 
+# width uncertainty comes from the paired draws: a rigid set has zero width
+# scale and a degenerate width band even when both endpoints move together
+set.seed(5)
+rigid_l <- rnorm(60)
+rigid <- endpoint_inference(
+  cbind(rigid_l), cbind(rigid_l + 2),
+  data.frame(
+    coef = "r", set_lower = 0, set_upper = 2, status = "bounded",
+    stringsAsFactors = FALSE
+  ),
+  alpha = 0.10
+)
+check(
+  "paired width scale is zero for a rigid set",
+  rigid$se_width == 0 && rigid$se_lower > 0
+)
+check(
+  "width band collapses to the rigid width",
+  abs(rigid$width_p05 - 2) < 1e-9 && abs(rigid$width_p95 - 2) < 1e-9
+)
+
 # point_inference: robust two-sided interval for the tau = 0 point draws,
 # suppressed below the shared half-the-draws gate
 set.seed(4)
