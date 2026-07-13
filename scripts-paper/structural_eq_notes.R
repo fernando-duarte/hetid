@@ -142,7 +142,14 @@ build_structural_notes <- function(with_ci = FALSE) {
         "the full sample. An interval row is omitted when fewer than half",
         "the draws produce a certified bounded set at that $\\tau$ or the",
         "endpoint scale is degenerate; per-cell draw counts and omission",
-        "reasons are in set\\_id\\_inference\\_diagnostics.csv."
+        "reasons are in set\\_id\\_inference\\_diagnostics.csv.",
+        # block-length sensitivity result for the current data vintage
+        # (same B and seed, blocks of 8, 15, and 24 quarters)
+        "Results are nearly identical with 15- or 8-quarter blocks (same $B$",
+        "and seed): endpoint correlations, width scales, and the $\\tau^{*}$",
+        "range move only marginally, except that 8-quarter blocks enlarge",
+        "the $b_{3,N}$ endpoint scales enough for its intervals to extend",
+        "past zero."
       )
     } else {
       c(

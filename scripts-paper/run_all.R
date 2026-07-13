@@ -47,11 +47,14 @@ z_desc <- paste(
   "the de-meaned realized quarterly volatility of the five-year yield",
   "(\\texttt{y60\\_vol}, \\texttt{yield\\_vol.R})"
 )
-# moving-block bootstrap for the identified-set endpoints and tau* (the
-# stage-08 design: 15-quarter blocks, 200 replications, deterministic seed);
+# moving-block bootstrap for the identified-set endpoints and tau*
+# (24-quarter blocks preserve the persistent volatility episodes that give
+# Z its leverage; 8- and 15-quarter blocks give nearly identical results
+# except the shortest, which widens the b3N endpoint scales -- documented in
+# the inference-table notes); 200 replications, deterministic seed;
 # HETID_BOOT_REPS overrides the replication count for quick smoke runs
 boot_reps <- as.integer(Sys.getenv("HETID_BOOT_REPS", unset = "200"))
-boot_block <- 15L
+boot_block <- 24L
 boot_seed <- 123L
 
 # output folder for tables and figures
