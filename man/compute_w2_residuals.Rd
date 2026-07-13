@@ -119,14 +119,16 @@ date. Join the principal components to the yields by \code{date} before
 calling (both share the package period-end convention). See the example.
 }
 \examples{
-# ACM data and the bundled PCs share the period-end date convention, so they
-# merge directly by calendar date; pass the aligned PCs via `pcs`.
+# The bundled dataset ships as imported (quarter-start dates); normalize to
+# the package period-end convention so it merges with ACM by calendar date,
+# then pass the aligned PCs via `pcs`.
 mats <- c(12, 24, 36, 48)
 acm_data <- extract_acm_data(
   data_types = c("yields", "term_premia"),
   maturities = mats, frequency = "quarterly"
 )
 data("variables", package = "hetid")
+variables$date <- to_period_end(variables$date, "quarterly")
 pc_cols <- paste0("pc", 1:4)
 merged <- merge(
   variables[, c("date", pc_cols)],

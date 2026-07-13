@@ -64,8 +64,9 @@
 #' )
 #' data("variables", package = "hetid")
 #'
-#' # ACM and the bundled PCs share the period-end date convention, so they
-#' # merge directly by calendar date (covers dates available in both datasets)
+#' # The bundled dataset ships as imported (quarter-start dates); normalize to
+#' # the package period-end convention so it merges with ACM by calendar date
+#' variables$date <- to_period_end(variables$date, "quarterly")
 #' pc_cols <- paste0("pc", 1:4)
 #' merged <- merge(
 #'   variables[, c("date", pc_cols)],
