@@ -90,6 +90,17 @@ caption <- sprintf(
   n_excl, n_pc, tau_base
 )
 
+# per-tau exact cells, interval frames, and integrity guards, computed once
+# and shared by both variants
+set_data <- lapply(names(set_id_mean_eq$set_tables), function(nm) {
+  st <- set_id_mean_eq$set_tables[[nm]]
+  tab <- rbind(st$beta1, st$theta)
+  stopifnot(identical(tab$coef, coef_tab$coef))
+  inf <- set_id_boot$inference[[nm]]
+  stopifnot(identical(inf$coef, coef_tab$coef))
+  list(cells = set_cell(tab$set_lower, tab$set_upper, tab$status), inf = inf)
+})
+
 # both variants share every cell except the interval rows under the set
 # cells; the conservative variant keeps the manuscript's include filename,
 # and both carry the same label -- the manuscript includes exactly one of
@@ -99,19 +110,15 @@ variants <- list(
   list(stub = "structural_eq_inference", with_ci = TRUE)
 )
 for (v in variants) {
-  set_columns <- lapply(names(set_id_mean_eq$set_tables), function(nm) {
-    st <- set_id_mean_eq$set_tables[[nm]]
-    tab <- rbind(st$beta1, st$theta)
-    stopifnot(identical(tab$coef, coef_tab$coef))
-    inf <- set_id_boot$inference[[nm]]
-    stopifnot(identical(inf$coef, coef_tab$coef))
-    cells <- set_cell(tab$set_lower, tab$set_upper, tab$status)
+  set_columns <- lapply(set_data, function(cell_dat) {
     sub <- if (v$with_ci) {
-      interval_cell(inf$ci_lower, inf$ci_upper, cells == "")
+      interval_cell(
+        cell_dat$inf$ci_lower, cell_dat$inf$ci_upper, cell_dat$cells == ""
+      )
     } else {
-      rep("", length(cells))
+      rep("", length(cell_dat$cells))
     }
-    c(interleave(cells, sub), "--", sprintf("%d", n_obs))
+    c(interleave(cell_dat$cells, sub), "--", sprintf("%d", n_obs))
   })
   columns <- c(
     list(
@@ -150,5 +157,5 @@ rm(
   coef_tab, fmt, set_cell, n_obs, r2, tau_base, row_labels, columns,
   set_columns, nw_se, nw_t, nw_p, nw_stars, ols_cells, ols_tstats, interleave,
   coef_labels, n_excl, caption, build_structural_notes, structural_table,
-  interval_cell, point_ci_cells, variants, v
+  interval_cell, point_ci_cells, set_data, variants, v
 )

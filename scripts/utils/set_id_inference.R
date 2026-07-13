@@ -119,6 +119,12 @@ robust_endpoint_cor <- function(lower, upper) {
   stats::cor(l[keep], u[keep])
 }
 
+# Half-the-draws reliability threshold shared by every rendering gate (the
+# set cells, the tau = 0 point interval, and the diagnostics table).
+boot_min_reps <- function(b) {
+  b %/% 2L
+}
+
 # Robust endpoint scales and a Stoye-calibrated nominal interval for every
 # coefficient at one display tau. lower/upper are B x n_coef matrices of
 # endpoint draws (NA marks a failed or uncertified draw); set_table is the
@@ -129,7 +135,7 @@ robust_endpoint_cor <- function(lower, upper) {
 # When the endpoint correlation cannot be estimated the Imbens-Manski
 # interpolation is used in place of the Stoye calibration.
 endpoint_inference <- function(lower, upper, set_table, alpha = 0.10,
-                               min_reps = nrow(lower) %/% 2L) {
+                               min_reps = boot_min_reps(nrow(lower))) {
   stopifnot(identical(dim(lower), dim(upper)), ncol(lower) == nrow(set_table))
   rows <- lapply(seq_len(nrow(set_table)), function(k) {
     ok <- is.finite(lower[, k]) & is.finite(upper[, k])
@@ -163,4 +169,24 @@ endpoint_inference <- function(lower, upper, set_table, alpha = 0.10,
     )
   })
   do.call(rbind, rows)
+}
+
+# Robust nominal interval for the tau = 0 point estimates: the closed-form
+# point plus/minus the two-sided normal quantile times the robust scale of
+# the point draws. The interval is suppressed when the point or its scale is
+# degenerate or fewer than min_reps draws deliver a finite point (an interval
+# built from a full-rank minority would hide the deficiency it rides on).
+point_inference <- function(point_hat, point_draws, alpha = 0.10,
+                            min_reps = boot_min_reps(nrow(point_draws))) {
+  stopifnot(length(point_hat) == ncol(point_draws), alpha > 0, alpha < 1)
+  se <- apply(point_draws, 2, robust_scale)
+  n_finite <- colSums(is.finite(point_draws))
+  ok <- is.finite(point_hat) & is.finite(se) & se > 0 & n_finite >= min_reps
+  z <- stats::qnorm(1 - alpha / 2)
+  data.frame(
+    coef = colnames(point_draws), se = se, n_finite = n_finite,
+    lower = ifelse(ok, point_hat - z * se, NA_real_),
+    upper = ifelse(ok, point_hat + z * se, NA_real_),
+    row.names = NULL, stringsAsFactors = FALSE
+  )
 }

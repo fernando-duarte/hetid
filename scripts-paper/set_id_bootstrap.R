@@ -86,21 +86,14 @@ inference <- lapply(seq_along(boot_spec$taus), function(j) {
 })
 names(inference) <- names(set_id_mean_eq$set_tables)
 
-# robust tau = 0 point inference: closed-form point plus/minus the one-sided
-# normal quantile times the robust scale of the point draws, gated by the
-# same half-the-draws rule as the set cells (a point interval built from a
-# minority of full-rank resamples would hide the deficiency it rides on)
+# robust tau = 0 point inference (point_inference, set_id_inference.R):
+# closed-form point plus/minus the two-sided normal quantile times the robust
+# scale of the point draws, gated by the same half-the-draws rule as the
+# set cells
 point_hat <- c(set_id_mean_eq$beta1_table$point, set_id_mean_eq$theta_table$point)
-point_se <- apply(collected$point_draws, 2, robust_scale)
-n_point_finite <- colSums(is.finite(collected$point_draws))
-point_ok <- is.finite(point_hat) & is.finite(point_se) & point_se > 0 &
-  n_point_finite >= boot_reps %/% 2L
-point_ci <- data.frame(
-  coef = boot_spec$coefs,
-  lower = ifelse(point_ok, point_hat - stats::qnorm(0.95) * point_se, NA_real_),
-  upper = ifelse(point_ok, point_hat + stats::qnorm(0.95) * point_se, NA_real_),
-  row.names = NULL, stringsAsFactors = FALSE
-)
+point_tab <- point_inference(point_hat, collected$point_draws, alpha = 0.10)
+point_se <- stats::setNames(point_tab$se, point_tab$coef)
+point_ci <- point_tab[c("coef", "lower", "upper")]
 
 set_id_boot <- c(
   list(
@@ -148,5 +141,5 @@ print(set_id_boot$inference[[1]], digits = 3)
 
 rm(
   boot_spec, boot_idx, boot_t0, boot_raw, collected, inference, point_hat,
-  point_se, n_point_finite, point_ok, point_ci, diagnostics, b
+  point_tab, point_se, point_ci, diagnostics, b
 )

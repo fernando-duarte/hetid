@@ -144,5 +144,20 @@ check(
   is.na(endpoint_inference(degen_draws, degen_draws, degen, 0.10)$ci_lower)
 )
 
+# point_inference: robust two-sided interval for the tau = 0 point draws,
+# suppressed below the shared half-the-draws gate
+set.seed(4)
+pd <- cbind(a = rnorm(100, 1, 0.2), b = c(rnorm(30), rep(NA_real_, 70)))
+pt <- point_inference(c(1, 0), pd, alpha = 0.10)
+check(
+  "point interval is the two-sided robust interval",
+  abs(pt$lower[1] - (1 - qnorm(0.95) * mad(pd[, "a"]))) < 1e-12
+)
+check(
+  "point interval is suppressed below the half-draws gate",
+  is.na(pt$lower[2]) && pt$n_finite[2] == 30 && is.finite(pt$se[2])
+)
+check("half-draws threshold is integer division", boot_min_reps(9L) == 4L)
+
 cat(sprintf("\n%d passed, %d failed\n", .pass, .fail))
 if (.fail > 0L) stop("test_set_id_inference failures")
