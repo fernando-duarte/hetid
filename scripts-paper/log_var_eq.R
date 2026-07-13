@@ -122,15 +122,17 @@ logvar_set_at_tau <- function(tau, b_tab) {
       qs, b_tab$set_lower, b_tab$set_upper, 2L * logvar_grid_n - 1L
     )
   }
+  # an empty lattice fails closed before the tau = 0 seed is added: one
+  # certified point cannot stand in for a set the grid could not resolve
+  if (nrow(b_feas) == 0L) {
+    return(out(na_table("unreliable"), n_cross = length(census$cross), n_feasible = 0L))
+  }
   if (!anyNA(b_point)) {
     g_point <- vapply(seq_along(qs$A_i), function(i) {
       drop(t(b_point) %*% qs$A_i[[i]] %*% b_point) +
         sum(qs$b_i[[i]] * b_point) + qs$c_i[i]
     }, numeric(1))
     if (all(g_point <= 0)) b_feas <- rbind(b_feas, b_point)
-  }
-  if (nrow(b_feas) == 0L) {
-    return(out(na_table("unreliable"), n_cross = length(census$cross), n_feasible = 0L))
   }
   scan <- logvar_grid_scan(b_feas, w1_lv, w2_lv, proj)
 
