@@ -110,14 +110,15 @@ logvar_grid_scan <- function(b_feas, w1, w2, proj, chunk = 5000L) {
   best_min <- rep(Inf, n_coef)
   best_max <- rep(-Inf, n_coef)
   arg_min <- arg_max <- matrix(NA_real_, n_coef, ncol(b_feas))
-  sign_lo <- rep(1, length(w1))
-  sign_hi <- rep(-1, length(w1))
+  any_nonpos <- rep(FALSE, length(w1))
+  any_nonneg <- rep(FALSE, length(w1))
   for (s in seq(1L, nrow(b_feas), by = chunk)) {
     rows <- s:min(s + chunk - 1L, nrow(b_feas))
     eps <- w1 - w2 %*% t(b_feas[rows, , drop = FALSE])
-    eps_sign <- sign(eps)
-    sign_lo <- pmin(sign_lo, apply(eps_sign, 1, min))
-    sign_hi <- pmax(sign_hi, apply(eps_sign, 1, max))
+    # rowSums comparisons are the C-level form of the both-signs tracker
+    # (an exact zero satisfies both, so it still counts as a crossing)
+    any_nonpos <- any_nonpos | (rowSums(eps <= 0) > 0)
+    any_nonneg <- any_nonneg | (rowSums(eps >= 0) > 0)
     th <- proj %*% log(eps^2)
     th[is.nan(th)] <- NA
     for (j in seq_len(n_coef)) {
@@ -135,7 +136,7 @@ logvar_grid_scan <- function(b_feas, w1, w2, proj, chunk = 5000L) {
   }
   list(
     min = best_min, max = best_max, arg_min = arg_min, arg_max = arg_max,
-    cross_grid = which(sign_lo * sign_hi <= 0)
+    cross_grid = which(any_nonpos & any_nonneg)
   )
 }
 

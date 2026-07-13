@@ -130,11 +130,11 @@ logvar_set_at_tau <- function(tau, b_tab) {
     return(out(na_table("unreliable"), n_cross = length(census$cross), n_feasible = 0L))
   }
   if (!anyNA(b_point)) {
-    g_point <- vapply(seq_along(qs$A_i), function(i) {
-      drop(t(b_point) %*% qs$A_i[[i]] %*% b_point) +
-        sum(qs$b_i[[i]] * b_point) + qs$c_i[i]
-    }, numeric(1))
-    if (all(g_point <= 0)) b_feas <- rbind(b_feas, b_point)
+    # unit omega makes the shared residual the raw max_i g_i(b_point), so
+    # <= 0 is exactly the all-constraints-satisfied check
+    if (.feasibility_residual(qs, b_point, rep(1, length(qs$A_i))) <= 0) {
+      b_feas <- rbind(b_feas, b_point)
+    }
   }
   scan <- logvar_grid_scan(b_feas, w1_lv, w2_lv, proj)
 
