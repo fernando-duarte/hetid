@@ -26,6 +26,9 @@ show_mats <- c(
 lag_qtrs <- 1L
 # principal components kept from each SDF panel
 n_pc <- 3L
+# principal components of financial asset returns kept as the log-variance
+# equation's conditioning variables PC_R (bundled `variables` pc columns)
+n_pc_r <- 4L
 # news-block orthogonality null: TRUE imposes beta2R = 0 exactly (the news
 # PCs are population-orthogonal to X_t, so they enter unresidualized and the
 # design coefficients are point identified at beta1R); FALSE estimates
@@ -68,6 +71,7 @@ source("scripts-paper/fix_fred_download.R")
 source("scripts-paper/sdf_series.R")
 source("scripts-paper/consumption_growth.R")
 source("scripts-paper/yield_vol.R")
+source("scripts-paper/asset_return_pcs.R")
 source("scripts-paper/sdf_pcs.R")
 source("scripts-paper/ols_mean_eq_regression.R")
 source("scripts-paper/set_id_mean_eq.R")
