@@ -60,20 +60,27 @@ constraint_jac <- function(th, quad) {
   ))
 }
 
-# one SLSQP descent of sign_mult * share from a feasible x0, within the box
-# and the joint constraints (hin <= 0, the repo's nloptr convention, as in
-# profile_bounds_core.R); returns the share at the solution when it stays
-# feasible, NA otherwise (crashed solves screened as in the core solver)
-polish_extreme <- function(x0, quad, sq, box, sign_mult) {
+# one SLSQP descent of sign_mult * share from a feasible x0, run in the
+# shared solver's scaling (theta = delta * phi, constraints normalized by
+# omega -- the profile_bounds_core.R internals already in scope via
+# set_id_mean_eq.R, the same pattern as logvar_polish_bound); returns the
+# share at the solution when it stays feasible, NA otherwise. A nonlinear
+# extremum can sit strictly inside the set, so the certificate is
+# feasibility only, not feasibility + activity.
+polish_extreme <- function(x0, quad, sq, box, sign_mult, delta, omega) {
   res <- tryCatch(
     nloptr::slsqp(
-      x0 = x0,
-      fn = function(th) sign_mult * sq$value(matrix(th, 1)),
-      gr = function(th) sign_mult * sq$grad(th),
-      lower = box$set_lower, upper = box$set_upper,
-      hin = function(th) drop(constraint_vals(matrix(th, 1), quad)),
-      hinjac = function(th) constraint_jac(th, quad),
-      control = list(xtol_rel = 1e-12, maxeval = 5000),
+      x0 = x0 / delta,
+      fn = function(phi) sign_mult * sq$value(matrix(delta * phi, 1)),
+      gr = function(phi) sign_mult * delta * sq$grad(delta * phi),
+      lower = box$set_lower / delta, upper = box$set_upper / delta,
+      hin = function(phi) {
+        drop(constraint_vals(matrix(delta * phi, 1), quad)) / omega
+      },
+      hinjac = function(phi) {
+        constraint_jac(delta * phi, quad) * (delta / omega)
+      },
+      control = list(xtol_rel = 1e-8, maxeval = 1000),
       deprecatedBehavior = FALSE
     ),
     error = function(e) list(par = rep(NA_real_, length(x0)))
@@ -81,9 +88,9 @@ polish_extreme <- function(x0, quad, sq, box, sign_mult) {
   if (!all(is.finite(res$par))) {
     return(NA_real_)
   }
-  th <- matrix(pmin(pmax(res$par, box$set_lower), box$set_upper), 1)
-  feasible <- constraint_vals(th, quad) <= 1e-8 * (1 + abs(unlist(quad$c_i)))
-  if (all(feasible)) sq$value(th) else NA_real_
+  th <- pmin(pmax(delta * res$par, box$set_lower), box$set_upper)
+  resid <- .feasibility_residual(quad, th, omega)
+  if (is.finite(resid) && resid <= 1e-4) sq$value(matrix(th, 1)) else NA_real_
 }
 
 # min and max of a block share over the joint set. The share is convex in
@@ -97,11 +104,14 @@ set_share_range <- function(box, quad, sq) {
   if (any(!is.finite(c(box$set_lower, box$set_upper)))) {
     return(c(NA_real_, NA_real_))
   }
+  delta <- .derive_theta_scale(quad)
+  omega <- .derive_constraint_scales(quad, delta)
   axes <- Map(
     \(l, h) seq(l, h, length.out = 101L), box$set_lower, box$set_upper
   )
   pts <- as.matrix(expand.grid(axes))
-  pts <- pts[rowSums(constraint_vals(pts, quad) > 1e-10) == 0, , drop = FALSE]
+  feas <- rowSums(sweep(constraint_vals(pts, quad), 2, 1e-10 * omega, `>`)) == 0
+  pts <- pts[feas, , drop = FALSE]
   stopifnot("no feasible grid point in the box" = nrow(pts) > 0)
   vals <- sq$value(pts)
   starts <- pts[unique(c(
@@ -110,7 +120,8 @@ set_share_range <- function(box, quad, sq) {
   )), , drop = FALSE]
   polished <- function(sign_mult) {
     cand <- apply(
-      starts, 1, \(x0) polish_extreme(x0, quad, sq, box, sign_mult)
+      starts, 1,
+      \(x0) polish_extreme(x0, quad, sq, box, sign_mult, delta, omega)
     )
     cand[is.finite(cand)]
   }
@@ -161,9 +172,17 @@ quads <- lapply(set_id_mean_eq$tau_display, function(tau) {
     set_id_mean_eq$moments
   )$quadratic
 })
+# under the maintained null b_E does not vary over the set, so its share is
+# the constant at beta1R and needs no optimizer; otherwise it ranges over
+# the same joint set as the news block
+e_const <- block_share(matrix(beta1r_e, 1), s_e)
 set_share_cols <- Map(function(nm, quad) {
   st <- set_id_mean_eq$set_tables[[nm]]
-  e_rng <- set_share_range(st$theta, quad, e_quad_share)
+  e_rng <- if (impose_beta2r_null) {
+    rep(e_const, 2)
+  } else {
+    set_share_range(st$theta, quad, e_quad_share)
+  }
   news_rng <- set_share_range(st$theta, quad, news_quad_share)
   e_comp <- component_share_range(st$beta1[e_rows, ], s_e)
   n_comp <- component_share_range(st$theta, s_n)
@@ -208,7 +227,7 @@ cat(sprintf(
 
 rm(
   centered_cov_t, s_e, s_n, var_c, block_share, share_quad, beta1r_e,
-  beta2r_e, b_map, news_quad_share, e_quad_share, constraint_vals,
+  beta2r_e, b_map, news_quad_share, e_quad_share, e_const, constraint_vals,
   constraint_jac, polish_extreme, set_share_range, component_share_range,
   e_rows, fixed_shares, quads, set_share_cols, news_row, cc, block_row, comps
 )

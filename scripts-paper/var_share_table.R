@@ -28,7 +28,7 @@ round_preserving_sum <- function(v, digits = 2L) {
   c(block, base) / scale
 }
 align_blocks <- function(v) {
-  for (block_row in c(1L, n_pc + 2L)) {
+  for (block_row in c(1L, var_share$news_row)) {
     idx <- c(block_row, block_row + seq_len(n_pc))
     if (all(is.finite(v[idx]))) {
       v[idx] <- round_preserving_sum(v[idx])
