@@ -52,17 +52,20 @@ ols_cells <- ifelse(
 ols_tstats <- sprintf("(%.2f)", nw_t)
 
 # sampling uncertainty from the endpoint bootstrap (set_id_bootstrap.R):
-# bootstrap t statistics under the tau = 0 point, Imbens-Manski 90% intervals
-# for the true coefficient under the set cells; blank cells stay blank
-stopifnot(identical(names(set_id_boot$point_se), coef_tab$coef))
-point_t <- coef_tab$point / set_id_boot$point_se[coef_tab$coef]
-point_tstats <- ifelse(is.finite(point_t), sprintf("(%.2f)", point_t), "")
-im_cell <- function(cell, im_lo, im_hi) {
+# robust nominal 90% intervals under the tau = 0 points in both variants,
+# Stoye-calibrated nominal intervals under the set cells in the inference
+# variant only; blank cells stay blank
+stopifnot(identical(set_id_boot$point_ci$coef, coef_tab$coef))
+interval_cell <- function(lo, hi, blank) {
   ifelse(
-    cell == "" | !is.finite(im_lo) | !is.finite(im_hi), "",
-    sprintf("$(%.3f,\\,%.3f)$", im_lo, im_hi)
+    blank | !is.finite(lo) | !is.finite(hi), "",
+    sprintf("$(%.3f,\\,%.3f)$", lo, hi)
   )
 }
+point_ci_cells <- interval_cell(
+  set_id_boot$point_ci$lower, set_id_boot$point_ci$upper,
+  !is.finite(coef_tab$point)
+)
 
 # coefficient rows interleaved with the OLS t-statistic rows (blank in the
 # identification columns)
@@ -73,28 +76,6 @@ coef_labels <- c(
   sprintf("$b_{%d,N}$", seq_len(n_pc))
 )
 row_labels <- c(interleave(coef_labels, ""), "$R^2$", "$N$")
-# one identified-set column per display slack: the exact range with its
-# Imbens-Manski interval beneath, from the stored per-tau tables and the
-# endpoint bootstrap
-set_columns <- lapply(names(set_id_mean_eq$set_tables), function(nm) {
-  st <- set_id_mean_eq$set_tables[[nm]]
-  tab <- rbind(st$beta1, st$theta)
-  stopifnot(identical(tab$coef, coef_tab$coef))
-  inf <- set_id_boot$inference[[nm]]
-  stopifnot(identical(inf$coef, coef_tab$coef))
-  cells <- set_cell(tab$set_lower, tab$set_upper, tab$status)
-  c(
-    interleave(cells, im_cell(cells, inf$im_lower, inf$im_upper)),
-    "--", sprintf("%d", n_obs)
-  )
-})
-columns <- c(
-  list(
-    c(interleave(ols_cells, ols_tstats), sprintf("%.2f", r2), sprintf("%d", n_obs)),
-    c(interleave(fmt(coef_tab$point), point_tstats), "--", sprintf("%d", n_obs))
-  ),
-  unname(set_columns)
-)
 
 # data-derived caption: how many news-coefficient sets exclude zero
 n_excl <- sum(with(
@@ -109,24 +90,56 @@ caption <- sprintf(
   n_excl, n_pc, tau_base
 )
 
-# caption-notes text (notation paragraph, estimation description, and the
-# mode-dependent clauses) from structural_eq_notes.R
-notes <- build_structural_notes()
-
-structural_table <- build_simple_latex_table(
-  row_labels, columns,
-  col_headers = c(
-    "OLS", "$\\tau{=}0$",
-    sprintf("$\\tau{=}%.2g$", set_id_mean_eq$tau_display)
-  ),
-  caption = caption, label = "tab:structural_eq_set_id",
-  notes = notes, fontsize = "\\footnotesize\\setlength{\\tabcolsep}{3pt}",
-  rule_after = c(2L * (1L + n_pc), 2L * (1L + 2L * n_pc))
+# both variants share every cell except the interval rows under the set
+# cells; the conservative variant keeps the manuscript's include filename,
+# and both carry the same label -- the manuscript includes exactly one of
+# the two files, and a shared label keeps every \ref valid across the swap
+variants <- list(
+  list(stub = "structural_eq", with_ci = FALSE),
+  list(stub = "structural_eq_inference", with_ci = TRUE)
 )
-write_latex_table(structural_table, out_dir, "structural_eq")
-
-# compile the standalone variant so a LaTeX regression fails the pipeline
-compile_latex_pdf(file.path(out_dir, "structural_eq_standalone.tex"))
+for (v in variants) {
+  set_columns <- lapply(names(set_id_mean_eq$set_tables), function(nm) {
+    st <- set_id_mean_eq$set_tables[[nm]]
+    tab <- rbind(st$beta1, st$theta)
+    stopifnot(identical(tab$coef, coef_tab$coef))
+    inf <- set_id_boot$inference[[nm]]
+    stopifnot(identical(inf$coef, coef_tab$coef))
+    cells <- set_cell(tab$set_lower, tab$set_upper, tab$status)
+    sub <- if (v$with_ci) {
+      interval_cell(inf$ci_lower, inf$ci_upper, cells == "")
+    } else {
+      rep("", length(cells))
+    }
+    c(interleave(cells, sub), "--", sprintf("%d", n_obs))
+  })
+  columns <- c(
+    list(
+      c(
+        interleave(ols_cells, ols_tstats),
+        sprintf("%.2f", r2), sprintf("%d", n_obs)
+      ),
+      c(
+        interleave(fmt(coef_tab$point), point_ci_cells),
+        "--", sprintf("%d", n_obs)
+      )
+    ),
+    unname(set_columns)
+  )
+  structural_table <- build_simple_latex_table(
+    row_labels, columns,
+    col_headers = c(
+      "OLS", "$\\tau{=}0$",
+      sprintf("$\\tau{=}%.2g$", set_id_mean_eq$tau_display)
+    ),
+    caption = caption, label = "tab:structural_eq_set_id",
+    notes = build_structural_notes(with_ci = v$with_ci),
+    fontsize = "\\footnotesize\\setlength{\\tabcolsep}{3pt}",
+    rule_after = c(2L * (1L + n_pc), 2L * (1L + 2L * n_pc))
+  )
+  write_latex_table(structural_table, out_dir, v$stub)
+  compile_latex_pdf(file.path(out_dir, paste0(v$stub, "_standalone.tex")))
+}
 
 cat(
   sprintf("structural equation table: %d of %d b_N sets exclude zero", n_excl, n_pc),
@@ -136,6 +149,6 @@ cat(
 rm(
   coef_tab, fmt, set_cell, n_obs, r2, tau_base, row_labels, columns,
   set_columns, nw_se, nw_t, nw_p, nw_stars, ols_cells, ols_tstats, interleave,
-  coef_labels, n_excl, caption, build_structural_notes, notes, structural_table,
-  point_t, point_tstats, im_cell
+  coef_labels, n_excl, caption, build_structural_notes, structural_table,
+  interval_cell, point_ci_cells, variants, v
 )
