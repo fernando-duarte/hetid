@@ -135,6 +135,7 @@ relevance <- data.frame(
 
 set_id_mean_eq <- list(
   sample = list(n = nrow(set_id_data), span = range(set_id_data$qtr)),
+  qtr = set_id_data$qtr,
   tau_baseline = tau_baseline,
   tau_display = tau_display,
   set_tables = set_tables,
@@ -147,7 +148,9 @@ set_id_mean_eq <- list(
   relevance = relevance,
   w2_cor = stats::cor(w2),
   # aligned system pieces, kept for the downstream heteroskedasticity tests
+  # and the log-variance equation (w2 = y2 under the orthogonality null)
   w1 = w1, y1 = set_id_data[[y1_col]], y2 = as.matrix(set_id_data[y2_cols]), z = z,
+  w2 = w2,
   moments = moments,
   gamma = gamma,
   # reduced-form coefficients, kept for the bounds-by-tau figure
