@@ -110,7 +110,12 @@ run_strict_rcmdcheck <- function() {
     add = TRUE
   )
   do.call(Sys.setenv, as.list(strict_env))
-  rcmdcheck::rcmdcheck(".", args = "--as-cran", quiet = TRUE)
+  # --resave-data recompresses data/ inside the built tarball; the repo keeps
+  # data/variables.RData byte-verbatim from macro_dynamics
+  rcmdcheck::rcmdcheck(
+    ".",
+    args = "--as-cran", build_args = "--resave-data", quiet = TRUE
+  )
 }
 
 run_check("rcmdcheck (strict)", {

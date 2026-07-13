@@ -6,7 +6,10 @@
 # artifact that repository produces. In particular its `date` column carries
 # quarter-START labels (1962-01-01, ...); the package-wide period-end
 # convention is applied by consumers at ingestion (get_bundled_variables()
-# internally, to_period_end() for users merging with ACM extracts).
+# internally, to_period_end() for users merging with ACM extracts). The
+# upstream file is gzip-compressed; R CMD check's compression warning is
+# handled by building with --resave-data (CI workflow and quality-check.R),
+# which recompresses inside the tarball without touching this artifact.
 #
 # To update: copy the new variables.RData from macro_dynamics into data/,
 # then run this script from the package root as a sanity check:
