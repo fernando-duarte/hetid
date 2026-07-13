@@ -14,6 +14,7 @@ source("scripts/utils/identification_utils.R")
 source("scripts/utils/profile_bounds_core.R")
 source("scripts/utils/profile_bounds.R")
 source("scripts/utils/tau_star_utils.R")
+source("scripts/utils/set_id_bootstrap_core.R")
 
 # baseline slack and sweep cap (the pipeline's BASELINE_TAU / OPT_TAU_CAP
 # values; admissible slack is [0, 1))
@@ -42,36 +43,23 @@ y1_col <- hetid::HETID_CONSTANTS$CONSUMPTION_GROWTH_COL
 x_cols <- value_cols(lag_expected_sdf_pc)
 y2_cols <- value_cols(sdf_news_pc)
 
-# residualize Y1 on X_t: W1 = Y1 - X'beta1R
-fit_w1 <- stats::lm(stats::reformulate(x_cols, response = y1_col), data = set_id_data)
-beta1r <- stats::coef(fit_w1)
-w1 <- stats::residuals(fit_w1)
-# news block: under the orthogonality null (impose_beta2r_null, run_all.R)
-# the news PCs are population-orthogonal to X_t, so beta2R = 0 exactly and
-# W2 is the raw news; otherwise W2 = Y2 - beta2R X, the sample residualization
-if (impose_beta2r_null) {
-  fit_w2 <- NULL
-  w2 <- as.matrix(set_id_data[y2_cols])
-  beta2r <- matrix(
-    0, length(y2_cols), length(beta1r),
-    dimnames = list(y2_cols, names(beta1r))
-  )
-} else {
-  fit_w2 <- stats::lm(as.matrix(set_id_data[y2_cols]) ~ ., data = set_id_data[x_cols])
-  w2 <- stats::residuals(fit_w2)
-  beta2r <- t(stats::coef(fit_w2)) # I x p; rows = news PCs, cols match beta1r
-}
-
-# single de-meaned instrument with unit weight for every component
-z <- set_id_data[[z_col]] - mean(set_id_data[[z_col]])
-moments <- hetid::compute_identification_moments(
-  w1, w2, matrix(z, ncol = 1, dimnames = list(NULL, z_col))
+# reduced-form fits, de-meaned single instrument with unit weight, moments,
+# and the closed-form tau = 0 point, via the shared estimator
+# (set_id_bootstrap_core.R) -- the endpoint bootstrap re-runs the identical
+# recipe per draw, so the two cannot drift apart
+sys_spec <- list(
+  y1_col = y1_col, x_cols = x_cols, y2_cols = y2_cols, z_col = z_col,
+  gamma = matrix(1, 1, length(y2_cols)), impose_null = impose_beta2r_null
 )
-gamma <- matrix(1, 1, length(y2_cols))
-
-# closed-form point identification at tau = 0
-qs0 <- build_pipeline_quadratic_system(gamma, rep(0, length(y2_cols)), moments)
-point0 <- solve_point_identification(qs0$components)
+est <- estimate_set_id_system(set_id_data, sys_spec)
+beta1r <- est$beta1r
+w1 <- est$w1
+beta2r <- est$beta2r # I x p; rows = news PCs, cols match beta1r
+w2 <- est$w2
+z <- est$z
+moments <- est$moments
+gamma <- sys_spec$gamma
+point0 <- est$point0
 
 # critical slack tau*: the bounded -> unbounded transition of the joint set
 tau_sweep <- sweep_fixed_gamma(gamma, moments, seq(0, tau_cap, by = 0.005), "coarse")
@@ -148,6 +136,10 @@ set_id_mean_eq <- list(
   w2_cor = stats::cor(w2),
   # aligned system pieces, kept for the downstream heteroskedasticity tests
   w1 = w1, y1 = set_id_data[[y1_col]], y2 = as.matrix(set_id_data[y2_cols]), z = z,
+  # aligned estimation frame, column roles, and sweep cap, kept for the
+  # endpoint bootstrap
+  data = set_id_data, y1_col = y1_col, x_cols = x_cols, y2_cols = y2_cols,
+  tau_cap = tau_cap,
   moments = moments,
   gamma = gamma,
   # reduced-form coefficients, kept for the bounds-by-tau figure
@@ -168,8 +160,8 @@ print(set_id_mean_eq$theta_table, digits = 3)
 print(set_id_mean_eq$relevance, digits = 3)
 
 rm(
-  set_id_data, y1_col, x_cols, y2_cols, fit_w1, beta1r, w1, fit_w2, w2, beta2r,
-  z, moments, gamma, qs0, point0, tau_sweep, tau_star, ols_fit, set_tables,
+  set_id_data, y1_col, x_cols, y2_cols, sys_spec, est, beta1r, w1, w2, beta2r,
+  z, moments, gamma, point0, tau_sweep, tau_star, ols_fit, set_tables,
   theta_table, beta1_point, beta1_table, relevance, tau_baseline, tau_cap,
   tau_display
 )

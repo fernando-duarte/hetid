@@ -44,6 +44,12 @@ z_desc <- paste(
   "the de-meaned realized quarterly volatility of the five-year yield",
   "(\\texttt{y60\\_vol}, \\texttt{yield\\_vol.R})"
 )
+# moving-block bootstrap for the identified-set endpoints and tau* (the
+# stage-08 design: 15-quarter blocks, 200 replications, deterministic seed);
+# HETID_BOOT_REPS overrides the replication count for quick smoke runs
+boot_reps <- as.integer(Sys.getenv("HETID_BOOT_REPS", unset = "200"))
+boot_block <- 15L
+boot_seed <- 123L
 
 # output folder for tables and figures
 out_dir <- "scripts-paper/output"
@@ -71,6 +77,7 @@ source("scripts-paper/yield_vol.R")
 source("scripts-paper/sdf_pcs.R")
 source("scripts-paper/ols_mean_eq_regression.R")
 source("scripts-paper/set_id_mean_eq.R")
+source("scripts-paper/set_id_bootstrap.R")
 source("scripts-paper/structural_eq_table.R")
 source("scripts-paper/set_id_bounds_tau.R")
 source("scripts-paper/hetero_tests.R")

@@ -4,6 +4,8 @@
 # relevance moment Cov(Z, W2^2). Deterministic given seed. Reuses the
 # results-companion block-bootstrap design (block = 15, 200 reps).
 
+source("scripts/utils/set_id_inference.R")
+
 compute_paper_spec_bootstrap <- function(resid, tau_set = BASELINE_TAU,
                                          b_reps = 200L, block = 15L, seed = SEED) {
   set.seed(seed)
@@ -54,25 +56,12 @@ compute_paper_spec_bootstrap <- function(resid, tau_set = BASELINE_TAU,
   ))
   colnames(draws) <- c("tau_star", "lower", "upper", "cov")
 
-  band <- function(x) {
-    x <- x[is.finite(x)]
-    if (!length(x)) {
-      return(c(median = NA_real_, p05 = NA_real_, p95 = NA_real_, n = 0))
-    }
-    c(
-      median = stats::median(x),
-      p05 = unname(stats::quantile(x, 0.05)),
-      p95 = unname(stats::quantile(x, 0.95)),
-      n = length(x)
-    )
-  }
-
   list(
     draws = draws, b_reps = b_reps, block = block,
-    tau_star = band(draws[, "tau_star"]),
-    lower = band(draws[, "lower"]),
-    upper = band(draws[, "upper"]),
-    cov_z_w2sq = band(draws[, "cov"]),
+    tau_star = boot_band(draws[, "tau_star"]),
+    lower = boot_band(draws[, "lower"]),
+    upper = boot_band(draws[, "upper"]),
+    cov_z_w2sq = boot_band(draws[, "cov"]),
     cov_se = stats::sd(draws[, "cov"], na.rm = TRUE)
   )
 }

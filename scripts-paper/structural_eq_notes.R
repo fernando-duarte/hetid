@@ -2,9 +2,10 @@
 # paragraph, the estimation description, and the mode-dependent clauses.
 # Sourced at the top of structural_eq_table.R; reads the run_all.R constants
 # (n_pc, mats_qtr, step_qtr, z_desc, impose_beta2r_null) and the
-# set_id_mean_eq result list at call time.
+# set_id_mean_eq result list at call time. with_ci selects the closing
+# paragraph for the conservative (FALSE) or inference (TRUE) variant.
 
-build_structural_notes <- function() {
+build_structural_notes <- function(with_ci = FALSE) {
   n_obs <- set_id_mean_eq$sample$n
   span <- paste(format(set_id_mean_eq$sample$span), collapse = "--")
 
@@ -87,13 +88,68 @@ build_structural_notes <- function() {
     "per-coefficient range of the joint identified set. $b_{0}$ and $b_{E}$ are",
     recovery_note,
     sprintf(
-      "The joint set remains bounded up to $\\tau^{*}=%.3g$%s.",
+      "The joint set remains bounded up to $\\tau^{*}=%.3g$%s",
       set_id_mean_eq$tau_star,
       if (set_id_mean_eq$tau_star_capped) " (capped at the sweep maximum)" else ""
+    ),
+    sprintf(
+      "(5th--95th moving-block bootstrap percentile range $[%.2g,\\,%.2g]$,",
+      set_id_boot$tau_star_band[["p05"]], set_id_boot$tau_star_band[["p95"]]
+    ),
+    sprintf(
+      "$B=%d$, block $=%d$ quarters%s%s), and stays bounded at the baseline",
+      set_id_boot$b_reps, set_id_boot$block,
+      if (set_id_boot$n_capped > 0) {
+        sprintf("; %d draws censored at the sweep cap", set_id_boot$n_capped)
+      } else {
+        ""
+      },
+      if (set_id_boot$n_failed > 0) {
+        sprintf("; %d failed draws excluded", set_id_boot$n_failed)
+      } else {
+        ""
+      }
+    ),
+    sprintf(
+      "slack in %.0f\\%% of draws.",
+      100 * set_id_boot$tau_star_share_bounded
     ),
     sprintf("$N=%d$, %s.", n_obs, span),
     "Set cells are exact identified-set ranges, not confidence intervals;",
     "a blank set cell marks a point-identified coefficient, whose set equals",
-    "the $\\tau{=}0$ point at every displayed $\\tau$."
+    "the $\\tau{=}0$ point at every displayed $\\tau$.",
+    "Parentheses beneath the $\\tau{=}0$ estimates are nominal 90\\% intervals:",
+    "the closed-form point plus or minus the one-sided 90\\% normal quantile",
+    "times a robust bootstrap standard error (median-absolute-deviation scale",
+    "of the moving-block point draws); nominal under maintained regular",
+    "asymptotics for the point estimator, and omitted when fewer than half",
+    "the draws yield a full-rank $\\tau{=}0$ system.",
+    if (with_ci) {
+      c(
+        "Parenthesized intervals beneath the set cells are nominal 90\\%",
+        "Stoye (2009) intervals for the true coefficient: the exact set",
+        "endpoints padded by robust (median-absolute-deviation) bootstrap",
+        "endpoint standard errors, with the critical value calibrated",
+        "against the joint normal distribution of the endpoint estimators",
+        "at the correlation estimated from the draws (it coincides with the",
+        "Imbens--Manski (2004) interpolation at the estimated correlations",
+        "while not requiring the Imbens--Manski superefficient-width",
+        "assumption).",
+        "These are diagnostics under maintained regular endpoint asymptotics,",
+        "componentwise rather than a joint confidence region, and",
+        "conditional on the estimated SDF panels, their principal",
+        "components, and the realized instrument, all constructed once from",
+        "the full sample. An interval row is omitted when fewer than half",
+        "the draws produce a certified bounded set at that $\\tau$ or the",
+        "endpoint scale is degenerate; per-cell draw counts and omission",
+        "reasons are in set\\_id\\_inference\\_diagnostics.csv."
+      )
+    } else {
+      c(
+        "Confidence statements for the $\\tau{>}0$ sets await a coverage",
+        "validation study; nominal interval diagnostics are reported in the",
+        "companion inference table and set\\_id\\_inference\\_diagnostics.csv."
+      )
+    }
   )
 }
