@@ -104,6 +104,8 @@ logvar_set_at_tau <- function(tau, b_tab) {
     )
   }
   if (any(b_tab$status != "bounded")) {
+    # a certified-unbounded b_N axis is the firmer fact, so it wins here,
+    # unlike the per-coefficient ladder below where unreliable fails closed
     status <- if (any(b_tab$status == "unbounded")) "unbounded" else "unreliable"
     return(out(na_table(status)))
   }
@@ -136,7 +138,8 @@ logvar_set_at_tau <- function(tau, b_tab) {
   }
   scan <- logvar_grid_scan(b_feas, w1_lv, w2_lv, proj)
 
-  # union of the two sound crossing detectors; a crossing at observation t
+  # union of the two crossing detectors (exact on a connected set, biased
+  # toward flagging on a disconnected one); a crossing at observation t
   # makes theta_hat_j diverge to -Inf where proj[j, t] > 0 and to +Inf
   # where proj[j, t] < 0
   cross_all <- sort(union(census$cross, scan$cross_grid))

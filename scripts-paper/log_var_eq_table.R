@@ -110,6 +110,9 @@ caption <- if (all(coef_tab$status == "bounded")) {
   )
 }
 
+# rule_after separates the intercept pair from the theta_R block; the value
+# is position-invariant in n_pc_r (one coefficient row plus its t-stat row
+# precede the block), unlike the structural table's 2L * (1L + n_pc)
 logvar_latex <- build_simple_latex_table(
   row_labels, columns,
   col_headers = c(

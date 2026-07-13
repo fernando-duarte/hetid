@@ -35,12 +35,15 @@ logvar_theta_grad <- function(b, w1, w2, proj_row) {
 }
 
 # residual-zero census over the joint set: observation t's hyperplane
-# w2_t' b = w1_t intersects the set iff w1_t lies inside the range of the
-# linear functional w2_t' b over it. The closed-form range over the bounding
-# box is a sound outer screen (outside it, no crossing is possible); each
-# remaining ambiguous row gets functional bounds over the set itself, sound
-# for found crossings and solver-certified for no-crossing verdicts. cross
-# collects the certified crossings, unresolved the rows whose solves failed
+# w2_t' b = w1_t intersects the set iff w1_t lies inside the image of the
+# linear functional w2_t' b over it -- an interval when the set is
+# connected, so the [min, max] range test below is exact there and errs
+# only toward flagging a crossing on a disconnected set. The closed-form
+# range over the bounding box is a sound outer screen (outside it, no
+# crossing is possible); each remaining ambiguous row gets functional
+# bounds over the set itself, exact up to connectedness for found
+# crossings and solver-certified for no-crossing verdicts. cross collects
+# the certified crossings, unresolved the rows whose solves failed
 # (callers must fail closed on those).
 logvar_crossing_census <- function(qs, lower, upper, w1, w2) {
   w2_pos <- pmax(w2, 0)
