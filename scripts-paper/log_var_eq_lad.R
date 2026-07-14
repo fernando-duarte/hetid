@@ -13,14 +13,19 @@ source("scripts-paper/log_var_eq_lad_hooks.R")
 
 # Engine configuration (Plan 3 design decision five): the lattice traversal
 # removes the O(m^2) nearest-neighbor ordering, so the dense-grid recommendation
-# binds and the grid cap rises to 20000 within a 40000 per-tau fit budget. Phase
-# caps reserve scan/probe/refinement and a combined polish/nonunique/cold pool
-# (nonunique <= 2000); the global budget bounds the total.
+# binds and the grid cap rises to 20000 within a 45000 per-tau fit budget. The
+# phase split is median-specific. The map is nonsmooth, so the engine polishes all
+# ten endpoints with derivative-free COBYLA and -- unlike the smooth estimators,
+# which skip a divergent side -- never skips one; and the probe phase carries a
+# crossing trace for every verified witness (214 of them at tau = 0.4). The caps
+# the smooth plans use (probe 10000, polish 4000) starve exactly those two phases
+# and fail a tau closed on a budget artifact rather than on evidence, so both rise
+# above the measured worst case with headroom (departure D3.1).
 logvar_lad_grid_cap <- 20000L
-logvar_lad_fit_budget <- 40000L
+logvar_lad_fit_budget <- 45000L
 logvar_lad_phase_caps <- c(
-  scan = 20000L, probe = 10000L, refinement = 6000L,
-  nonunique = 2000L, polish = 4000L, cold_start = 4000L
+  scan = 20000L, probe = 16000L, refinement = 6000L,
+  nonunique = 2000L, polish = 26000L, cold_start = 4000L
 )
 
 # The numerical guard ratio logvar_lad_guard_ratio (= 1e-12) is single-sourced in
@@ -30,9 +35,12 @@ logvar_lad_phase_caps <- c(
 # is always loaded before the estimator is constructed or a hook runs.
 
 # The deterministic second-pass refinement radii (times the frozen b_scales):
-# tensor offsets {-r, 0, r}^K around every arg-extremum and verified witness.
-# Defined here with the other constants; the schedule in log_var_eq_lad_refine.R
-# consumes it, and it enters spec_id so a radius change re-stamps the fit.
+# tensor offsets {-r, 0, r}^K around every arg-extremum and verified witness. The
+# schedule in log_var_eq_lad_refine.R consumes them, but the driver runs a single
+# pass and does not invoke it: each of the 786-9889 lattice points the schedule
+# emits becomes another COBYLA start on every endpoint, and for a nonsmooth map
+# that floods the polish phase (D3.1). The radii stay defined, tested and folded
+# into spec_id, so turning the schedule back on re-stamps the fit and the cache.
 logvar_lad_refine_radii <- c(0.05, 0.0125)
 
 # Median normalization constants, single-sourced as exact expressions and used

@@ -1,9 +1,11 @@
 # M-scale tail classifier for the median (LAD) log-variance estimator: reads a
 # per-path probe trace in the coordinate M = -2 log(|e_i,s| / e_scale_ref) and
 # returns per-coefficient operational evidence, not an LP recession certificate.
-# Sibling of log_var_eq_lad_domain.R (which sources this file). The three
-# predicates (stable_finite / persistent_divergent_evidence / unresolved) and the
-# eligibility gate follow the plan's crossing-classification contract verbatim.
+# Sibling of log_var_eq_lad_domain.R (which sources this file). The predicates
+# (stable_finite / persistent_divergent_evidence / unresolved, plus uninformative
+# for a probe too thin to hold any window) and the eligibility gate follow the
+# plan's crossing-classification contract; uninformative splits the no-evidence
+# case off "unresolved" so a degenerate probe cannot fail a coefficient closed.
 
 # OLS slope and R^2 of y on a single regressor x with intercept. A constant x or
 # a constant y leaves the slope at zero and reports R^2 = 1 (only consulted in the
@@ -32,10 +34,18 @@
 
 # Classify one coefficient column. Order matters: stable is tested first on the
 # six-point window, divergence next on the eight-point window, else unresolved.
+# A trace too short to hold even the six-point window is uninformative (a thin or
+# near-tangent probe that yielded no tail evidence either way), which the caller
+# skips -- it is missing data, not the genuine ambiguity "unresolved" fails closed
+# on. An eligible-but-inconclusive window (present but neither stable nor
+# divergent) still returns "unresolved".
 .lad_classify_one <- function(cvals, m, fit_status, sig) {
   n <- length(m)
   out <- function(status, endpoint = NA_character_, extra = list()) {
     c(list(status = status, endpoint = endpoint), extra)
+  }
+  if (n < 6L) {
+    return(out("uninformative"))
   }
   if (n >= 6L) {
     i6 <- (n - 5L):n

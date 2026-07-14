@@ -158,6 +158,24 @@ source("scripts-paper/log_var_eq_joint_null_math.R")
 source("scripts-paper/log_var_eq_joint_null_search.R")
 source("scripts-paper/log_var_eq_joint_null_stability.R")
 source("scripts-paper/log_var_eq_joint_null.R")
+# median (LAD) map: gated on the quantreg dependency decision. Source the tri-state
+# DCF reader, then source the driver only when the decision is approved and the
+# package is installed at the recorded version. A missing, declined, or unanswered
+# decision sources no LAD code and adds no registry stub (pre-LAD path unchanged);
+# an approved decision with quantreg absent or version-mismatched hard-fails in the
+# reader. Runs after the joint-null driver and before the panels table.
+source("scripts-paper/log_var_eq_lad_gate.R")
+lad_available <- requireNamespace("quantreg", quietly = TRUE)
+lad_gate <- logvar_lad_gate_read(
+  "docs/execution-ledgers/2026-07-13-logvar-lad-gate.dcf",
+  available = lad_available,
+  installed_version = if (lad_available) {
+    as.character(utils::packageVersion("quantreg"))
+  } else {
+    ""
+  }
+)
+if (isTRUE(lad_gate$source_lad)) source("scripts-paper/log_var_eq_lad_sets.R")
 source("scripts-paper/log_var_eq_ppml_table.R")
 # vol set-endpoint bootstrap: reads the frozen PPML/Harvey caches and the lagged
 # asset-return PCs, re-runs the whole set map per resample, and writes the outer

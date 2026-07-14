@@ -6,14 +6,12 @@
 # logvar_lad_augment_ctx before calling the domain module. The census reuses the
 # benchmark logvar_crossing_census (from log_var_eq_map.R); witnesses, anchors
 # and probes come from log_var_eq_lad_domain.R, both resolved at call time.
-# Budget-exhausted conditions are re-raised so the engine fails the tau closed
-# with disclosed counts. Definitions only; sourced by log_var_eq_lad.R.
+# Definitions only; sourced by log_var_eq_lad.R.
 
 # Re-raise a budget-exhausted condition (so the engine fails the tau closed with
 # counts) while turning any other witness/probe error into a fallback value. This
-# MUST be the tryCatch's only handler: with a sibling error handler, a stop(e) in
-# a logvar_budget_exhausted handler is caught by that sibling and silently
-# swallowed, so the budget signal would never reach the engine.
+# MUST be the tryCatch's only handler: a sibling error handler would catch the
+# stop(e) below and swallow the budget signal before it ever reaches the engine.
 logvar_lad_pass_budget <- function(e, fallback) {
   if (inherits(e, "logvar_budget_exhausted")) {
     stop(e)
@@ -26,8 +24,8 @@ logvar_lad_pass_budget <- function(e, fallback) {
 # kept for the sides phase; an unverified witness, or a census row the functional
 # solve could not certify, becomes an unresolved entry so the engine fails closed
 # over every endpoint the region could hide. n_flagged reports the crossing count
-# (the engine forwards it as n_cross when the precheck passes). It also stashes the
-# per-tau cached evaluator and box degeneracy into geom for coef_objective.
+# (the engine forwards it as n_cross when the precheck passes); geom collects the
+# per-tau cached evaluator and box degeneracy for coef_objective.
 logvar_lad_precheck_hook <- function(w1, w2, x_mat, e_scale_ref, geom) {
   function(qs, b_tab, ctx) {
     geom$evaluate_fit <- ctx$evaluate_fit
@@ -64,12 +62,11 @@ logvar_lad_precheck_hook <- function(w1, w2, x_mat, e_scale_ref, geom) {
   }
 }
 
-# coef_objective: NULL on a full-dimensional box so the engine builds its own
-# budgeted, budget-exhaustion-aware objective (identical to supplying none). On a
-# degenerate box (empty interior) it pins the objective to the box center through
-# the same cached evaluator, so the derivative-free COBYLA polish cannot exploit
-# the 1e-4 feasibility slack to widen a measure-zero set. geom is filled by the
-# precheck each tau.
+# coef_objective: NULL on a full-dimensional box, so the engine builds its own
+# budgeted, exhaustion-aware objective. On a degenerate box (empty interior) it
+# pins the objective to the box center through the same cached evaluator (geom,
+# filled by the precheck each tau), so the derivative-free COBYLA polish cannot
+# exploit the 1e-4 feasibility slack to widen a measure-zero set.
 logvar_lad_coef_objective <- function(geom) {
   function(j) {
     if (!isTRUE(geom$degenerate) || is.null(geom$evaluate_fit)) {
@@ -87,11 +84,9 @@ logvar_lad_coef_objective <- function(geom) {
 }
 
 # sides: probe each verified path from precheck through the cached, budget
-# debiting evaluator and classify the coefficient traces in the M coordinate.
-# Per coefficient a persistent divergent slope sets one endpoint unbounded, a
-# stable finite limit is retained as a separate closure diagnostic, and anything
-# else (including an unclassifiable path) leaves both of that coefficient's
-# endpoints unresolved -> wired to unreliable by the engine.
+# debiting evaluator, classify the coefficient traces in the M coordinate, and
+# fold each verdict into the side state through logvar_lad_side_update (whose
+# comment states the per-verdict rules).
 logvar_lad_sides_hook <- function(w1, w2, x_mat, e_scale_ref) {
   function(qs, b_tab, scan, ctx) {
     labels <- colnames(x_mat)
@@ -128,9 +123,12 @@ logvar_lad_sides_hook <- function(w1, w2, x_mat, e_scale_ref) {
 }
 
 # fold one classified path into the running side state: divergence sets the named
-# endpoint unbounded, a stable finite one-sided limit appends a closure record
-# (the classifier sub-result stored verbatim, provenance labelled), and every
-# other verdict marks both of that coefficient's endpoints unresolved.
+# endpoint unbounded, a stable finite one-sided limit appends a closure record (the
+# classifier sub-result stored verbatim, provenance labelled), an uninformative
+# (too-thin) probe is skipped as missing data, and every other verdict marks both
+# of that coefficient's endpoints unresolved -> wired to unreliable by the engine.
+# Skipping the uninformative case is what stops one degenerate probe path from
+# failing an otherwise stably-classified coefficient closed.
 logvar_lad_side_update <- function(st, cls, labels, wid, path_id) {
   both <- function(j) c(sprintf("%s:min", labels[j]), sprintf("%s:max", labels[j]))
   if (is.null(cls) || is.null(cls$coef)) {
@@ -152,6 +150,8 @@ logvar_lad_side_update <- function(st, cls, labels, wid, path_id) {
         coef = labels[j], witness = wid, path_id = path_id,
         classification = cj, provenance = "one-sided crossing-limit approximation"
       )
+    } else if (identical(cj$status, "uninformative")) {
+      next
     } else {
       st$unresolved <- c(st$unresolved, both(j))
     }

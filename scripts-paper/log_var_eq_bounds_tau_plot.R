@@ -98,10 +98,6 @@ logvar_bounds_tau_render <- function(rows, metadata, tau_baseline, tau_star,
       data = ref_line, ggplot2::aes(xintercept = tau, linetype = line),
       color = "grey35", linewidth = 0.35
     ) +
-    ggplot2::scale_shape_manual(
-      values = c(up = 24, down = 25),
-      labels = c(up = "upper side diverges", down = "lower side diverges")
-    ) +
     ggplot2::scale_fill_manual(values = c(
       "two-sided" = "#2a78d6", "one-sided" = "#b3541e",
       "unbounded" = "grey55", "unreliable" = "#c23b22"
@@ -120,6 +116,16 @@ logvar_bounds_tau_render <- function(rows, metadata, tau_baseline, tau_star,
       )
     ) +
     ggplot2::theme(legend.position = "bottom")
+  # the divergence-marker scale has nothing to match on a map where no side
+  # diverges (the median map, and the variance maps at these taus): a manual
+  # scale over an empty aesthetic warns on every build and is then dropped, so
+  # add it only when the one-sided layer actually carries rows
+  if (nrow(one) > 0L) {
+    fig <- fig + ggplot2::scale_shape_manual(
+      values = c(up = 24, down = 25),
+      labels = c(up = "upper side diverges", down = "lower side diverges")
+    )
+  }
   built <- ggplot2::ggplot_build(fig)
   layer_rows <- vapply(built$data, nrow, integer(1))
   # the reference line's one data row is replicated into every facet panel

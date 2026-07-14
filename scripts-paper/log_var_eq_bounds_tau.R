@@ -55,12 +55,16 @@ logvar_bounds_tau_entry <- function(entry) {
       opts
     ))
   }
+  # an entry may opt out of the warm chain (warm_chain = FALSE): for a nonsmooth
+  # map every warm arg is another derivative-free polish start on every endpoint,
+  # so the chain is both the dominant cost and a second search protocol -- the
+  # grid rows would be searched harder than the display rows drawn beside them
   res <- list()
   warm <- NULL
   for (tau in fig_tau_grid) {
     r <- run_tau(tau, warm)
     res[[sprintf("%.17g", tau)]] <- r
-    warm <- fig_args(r$schema)
+    warm <- if (identical(entry$warm_chain, FALSE)) NULL else fig_args(r$schema)
   }
   grid_rows <- function() {
     do.call(rbind, lapply(res, function(r) {

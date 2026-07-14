@@ -78,7 +78,8 @@ logvar_make_evaluator <- function(est, cache, bs) {
         "max_fit_evals = %s reached", format(bs$max_fit_evals)
       ))
     }
-    cap <- bs$phase_caps[[phase]]
+    # an absent phase key means uncapped ([[ ]] on a missing name would abort)
+    cap <- if (phase %in% names(bs$phase_caps)) bs$phase_caps[[phase]] else NULL
     if (!is.null(cap) && bs$counters[[phase]] >= cap) {
       logvar_budget_stop(phase, sprintf("phase cap %d reached", cap))
     }
