@@ -39,6 +39,9 @@ if (file.exists(here::here("scripts/utils/tests/test_logvar_ppml_spec.R"))) {
 }
 source(here::here("scripts/utils/tests/test_logvar_ppml_engine.R"))
 source(here::here("scripts/utils/tests/test_logvar_ppml_table.R"))
+if (file.exists(here::here("scripts-paper/log_var_eq_ppml_driver_helpers.R"))) {
+  source(here::here("scripts/utils/tests/test_logvar_ppml_coverage.R"))
+}
 
 cat(sprintf("\n%d passed, %d failed\n", .pass, .fail))
 if (.fail > 0L) quit(status = 1L)

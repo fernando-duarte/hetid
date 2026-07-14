@@ -166,6 +166,8 @@ logvar_ppml_estimator <- function(w1, w2, pcr, qtr, b_point = NULL,
       scale_anchor_b = scale_anchor_b, scale_anchor_source = scale_anchor_source,
       spec_id = spec_id, cold_start_rtol = 1e-6
     ),
+    # explicit axis so fail-closed engine results keep the theta_var labels
+    coef_labels = colnames(x_mat),
     start_bundle = start_bundle,
     scale_anchor_bundle = scale_anchor_bundle,
     fit_at_b = function(b, start = NULL) {

@@ -49,9 +49,9 @@ cat(sprintf(
   pilot$n_fits, pilot$n_triggered, response_scale
 ))
 
-# estimator with the frozen response_scale; the Lewbel point fit (and its start
-# bundle) exists only when b_point is finite
-b_point_arg <- if (anyNA(b_point)) NULL else b_point
+# estimator with the frozen response_scale; the Lewbel point fit (and its
+# start bundle) exists only when b_point is finite and certified feasible
+b_point_arg <- if (point_feasible) b_point else NULL
 est_ppml <- logvar_ppml_estimator(
   w1, w2, pcr, qtr,
   b_point = b_point_arg,
