@@ -117,6 +117,15 @@ check("primary table parts use PPML reference, point, and display-tau hulls", {
     ptbl_parts$columns[[4]][3] == "$[0.160,\\,0.200]$" &&
     all(vapply(ptbl_parts$columns, `[[`, character(1), length(ptbl_parts$rows) - 1L) == "--")
 })
+ptbl_note_fixture <- list(
+  estimator = list(metadata = list(response_scale_value = 1)),
+  coverage_audit = list(meta = list(grid_cap = 2L, fit_budget = 3L))
+)
+ptbl_notes <- paste(build_ppml_table_notes(ptbl_note_fixture, 0.05, 1L, 2L), collapse = " ")
+check("PPML notes model the squared-residual level, not its first difference", {
+  grepl("$\\varepsilon_{t+1}^{2}=", ptbl_notes, fixed = TRUE) &&
+    !grepl("$\\Delta\\varepsilon_{t+1}^{2}=", ptbl_notes, fixed = TRUE)
+})
 
 # an as_selected selector handing back an 8000-row grid reaches the scan without
 # the 5000-point nearest-neighbor cap and scans in callback order

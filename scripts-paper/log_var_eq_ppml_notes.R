@@ -13,7 +13,7 @@ build_ppml_notes <- function(ppml, tau_baseline, grid_cap, fit_budget,
       "The estimated mean equation is",
       "$\\Delta c_{t+1}=b_{0}+PC_{E,t}^{T}b_{E}+",
       "PC_{N,t+1}^{T}b_{N}+\\varepsilon_{t+1}$, and the estimated",
-      "variance equation is $\\Delta\\varepsilon_{t+1}^{2}=",
+      "variance equation is $\\varepsilon_{t+1}^{2}=",
       "\\exp(\\theta_{0}+PC_{R,t}^{T}\\theta_{R}+\\xi_{t+1})$."
     ),
     paste(
