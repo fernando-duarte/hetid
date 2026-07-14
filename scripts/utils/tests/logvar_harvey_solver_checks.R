@@ -84,9 +84,11 @@ check("hs a zero-rate response is unresolved, never nonexistence", hs_try({
     identical(fit$diagnostics$error_class, "zero_recession_unresolved")
 }))
 
+# the dossier sanctions either verdict here: a certified collapse direction
+# is genuine nonexistence, an uncertified one fails closed as nonconvergence
 check("hs rank-deficient positive rows fail closed without huge coefficients", hs_try({
   fit <- logvar_harvey_fit_response(hs_fx("y_rd", "y_rankdef"), hs_fx("x_rd", "x_rankdef"))
-  identical(fit$fit_status, "nonconvergence") && !isTRUE(fit$converged)
+  fit$fit_status %in% c("nonconvergence", "nonexistence") && !isTRUE(fit$converged)
 }))
 
 check("hs an all-zero response fails closed as a negative intercept recession", hs_try({

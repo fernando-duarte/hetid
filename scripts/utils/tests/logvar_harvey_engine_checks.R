@@ -114,12 +114,14 @@ check("he grid-only endpoints survive a broken polish objective", he_try({
     isTRUE(all.equal(res$table$set_upper, apply(mp, 2L, max)))
 }))
 
-# analyze_domain dispatch: the precheck returns the exact self-test schema and
-# the sides hook returns named all-false fit-level recession vectors
+# analyze_domain dispatch: the precheck returns the engine's vector contract
+# (an empty unresolved vector on a passing self-test, matching the log-OLS
+# reference and the engine's length-based gate) and the sides hook returns
+# named all-false fit-level recession vectors
 check("he analyze_domain precheck returns the exact self-test schema", he_try({
   ad <- he_mk(NULL)$analyze_domain
   pre <- logvar_call_precheck(ad$precheck, he_qs, he_btab, NULL)
-  isFALSE(pre$unresolved) && pre$n_flagged == 0 && !is.null(pre$info)
+  length(pre$unresolved) == 0L && pre$n_flagged == 0 && !is.null(pre$info)
 }))
 
 check("he analyze_domain sides returns named all-false recession flags", he_try({
