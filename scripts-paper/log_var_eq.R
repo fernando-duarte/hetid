@@ -21,6 +21,8 @@ source("scripts/utils/profile_bounds_core.R")
 source("scripts/utils/profile_bounds.R")
 source("scripts/utils/tau_star_utils.R")
 source("scripts-paper/log_var_eq_map.R")
+source("scripts-paper/log_var_eq_engine.R")
+source("scripts-paper/log_var_eq_logols.R")
 
 # grid resolution per b_N axis for the feasible-grid scan, and the feasible
 # count below which the grid is densified once (a thin joint set can thread
@@ -80,107 +82,31 @@ theta_point <- if (anyNA(b_point)) {
   logvar_theta_hat(b_point, w1_lv, w2_lv, proj)
 }
 
+# the log-OLS map packaged as the shared engine's first estimator object
+# (closures over the frozen aligned sample; log_var_eq_logols.R)
+logvar_est <- logvar_logols_estimator(w1_lv, w2_lv, proj, logvar_rows$qtr, pcr)
+
 # identified-set intervals of every log-variance coefficient at one display
-# slack: crossing census, then a joint-set feasible-grid scan (bounding box
-# from the stored per-coefficient b_N intervals, densified once when the set
-# threads the lattice, seeded with the tau = 0 point -- feasible at every
-# tau by constraint nesting) and a two-start polish per finite side; the
-# divergence bookkeeping unions the census with the scan's sign tracker.
-# Fails closed: any upstream non-bounded b_N side, an unresolved census row,
-# an empty feasible grid, a suspect polish, or a side with no accepted polish
+# slack, through the shared engine in the explicit, complete benchmark
+# configuration: scan_grid fast path, no extra starts, no coarsening, no
+# budget, no cache, and no cold-start check (the closed-form map needs no
+# replication). Census, feasible grid, tau = 0 seed injection, two-start
+# polish, divergence bookkeeping, and the fail-closed ladder all run inside
+# the engine exactly as the old inline closure did; crossing indices map
+# back to sample quarters here
 logvar_set_at_tau <- function(tau, b_tab) {
   stopifnot(identical(b_tab$coef, colnames(w2_lv)))
-  na_table <- function(status) {
-    data.frame(
-      coef = logvar_coefs, set_lower = NA_real_, set_upper = NA_real_,
-      status = status, row.names = NULL
-    )
-  }
-  out <- function(table, n_cross = NA_integer_, n_feasible = NA_integer_,
-                  cross_qtr = NULL) {
-    list(
-      table = table, n_cross = n_cross, n_feasible = n_feasible,
-      cross_qtr = cross_qtr
-    )
-  }
-  if (any(b_tab$status != "bounded")) {
-    # a certified-unbounded b_N axis is the firmer fact, so it wins here,
-    # unlike the per-coefficient ladder below where unreliable fails closed
-    status <- if (any(b_tab$status == "unbounded")) "unbounded" else "unreliable"
-    return(out(na_table(status)))
-  }
   qs <- tau_quadratic_system(set_id_mean_eq$gamma, tau, set_id_mean_eq$moments)
-
-  census <- logvar_crossing_census(
-    qs, b_tab$set_lower, b_tab$set_upper, w1_lv, w2_lv
+  res <- logvar_engine_set_at_tau(
+    logvar_est, qs, b_tab,
+    b_seed = b_point, grid_n = logvar_grid_n, grid_floor = logvar_grid_floor,
+    cold_start_check = FALSE, tau = tau
   )
-  if (length(census$unresolved) > 0L) {
-    return(out(na_table("unreliable"), n_cross = length(census$cross)))
-  }
-
-  b_feas <- logvar_feasible_grid(qs, b_tab$set_lower, b_tab$set_upper, logvar_grid_n)
-  if (nrow(b_feas) < logvar_grid_floor) {
-    b_feas <- logvar_feasible_grid(
-      qs, b_tab$set_lower, b_tab$set_upper, 2L * logvar_grid_n - 1L
-    )
-  }
-  # an empty lattice fails closed before the tau = 0 seed is added: one
-  # certified point cannot stand in for a set the grid could not resolve
-  if (nrow(b_feas) == 0L) {
-    return(out(na_table("unreliable"), n_cross = length(census$cross), n_feasible = 0L))
-  }
-  if (!anyNA(b_point)) {
-    # unit omega makes the shared residual the raw max_i g_i(b_point), so
-    # <= 0 is exactly the all-constraints-satisfied check
-    if (.feasibility_residual(qs, b_point, rep(1, length(qs$A_i))) <= 0) {
-      b_feas <- rbind(b_feas, b_point)
-    }
-  }
-  scan <- logvar_grid_scan(b_feas, w1_lv, w2_lv, proj)
-
-  # union of the two crossing detectors (exact on a connected set, biased
-  # toward flagging on a disconnected one); a crossing at observation t
-  # makes theta_hat_j diverge to -Inf where proj[j, t] > 0 and to +Inf
-  # where proj[j, t] < 0
-  cross_all <- sort(union(census$cross, scan$cross_grid))
-  lower_unb <- apply(proj[, cross_all, drop = FALSE] > 0, 1, any)
-  upper_unb <- apply(proj[, cross_all, drop = FALSE] < 0, 1, any)
-
-  lower <- ifelse(lower_unb, -Inf, scan$min)
-  upper <- ifelse(upper_unb, Inf, scan$max)
-  unreliable <- rep(FALSE, length(logvar_coefs))
-  for (j in seq_along(logvar_coefs)) {
-    # blow-guard scale from the finite scan endpoints only (a divergent side
-    # leaves an Inf in the scan), floored so a near-zero range still guards
-    scan_j <- c(scan$min[j], scan$max[j])
-    scale_j <- max(1, abs(scan_j[is.finite(scan_j)]))
-    for (side in c("min", "max")) {
-      if (if (side == "min") lower_unb[j] else upper_unb[j]) next
-      starts <- list(if (side == "min") scan$arg_min[j, ] else scan$arg_max[j, ])
-      if (!anyNA(b_point)) starts <- c(starts, list(b_point))
-      accepted <- FALSE
-      for (b_start in starts) {
-        pol <- logvar_polish_bound(qs, side, b_start, scale_j, w1_lv, w2_lv, proj[j, ])
-        if (pol$suspect) unreliable[j] <- TRUE
-        if (is.null(pol$bound)) next
-        accepted <- TRUE
-        if (side == "min" && pol$bound < lower[j]) lower[j] <- pol$bound
-        if (side == "max" && pol$bound > upper[j]) upper[j] <- pol$bound
-      }
-      if (!accepted) unreliable[j] <- TRUE
-    }
-  }
-  status <- ifelse(
-    unreliable, "unreliable",
-    ifelse(lower_unb | upper_unb, "unbounded", "bounded")
-  )
-  out(
-    data.frame(
-      coef = logvar_coefs, set_lower = lower, set_upper = upper, status = status,
-      row.names = NULL
-    ),
-    n_cross = length(cross_all), n_feasible = nrow(b_feas),
-    cross_qtr = logvar_rows$qtr[cross_all]
+  cross <- res$domain_info$cross_all
+  list(
+    table = res$table, n_cross = res$n_cross, n_feasible = res$n_feasible,
+    cross_qtr = if (is.null(cross)) NULL else logvar_rows$qtr[cross],
+    schema = res$schema
   )
 }
 
@@ -218,7 +144,14 @@ log_var_eq <- list(
     NA_real_
   } else {
     min(abs(drop(w1_lv - w2_lv %*% b_point)))
-  }
+  },
+  # additive engine-era fields: the per-tau side-specific schema tables, the
+  # estimator object itself (closures + metadata, consumed by the figure),
+  # the tau = 0 seed, and the sample guard
+  schema = lapply(logvar_sets, `[[`, "schema"),
+  estimator = logvar_est,
+  b_seed = b_point,
+  sample_id = logvar_est$metadata$sample_id
 )
 
 cat(
@@ -235,5 +168,5 @@ print(log_var_eq$table, digits = 3)
 rm(
   logvar_grid_n, logvar_grid_floor, logvar_rows, w1_lv, w2_lv, pcr, proj,
   logvar_coefs, lv_ols, fit_logvar_ols, b_point, theta_point,
-  logvar_set_at_tau, logvar_sets, logvar_table
+  logvar_est, logvar_set_at_tau, logvar_sets, logvar_table
 )
