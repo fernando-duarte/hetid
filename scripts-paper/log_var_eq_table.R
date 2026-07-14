@@ -11,35 +11,14 @@
 source("scripts/utils/latex_table_utils.R")
 source("scripts/utils/latex_simple_table.R")
 source("scripts-paper/log_var_eq_notes.R")
+# the fmt / set_cell / interleave cell formatters, shared with the combined
+# estimator panels table
+source("scripts-paper/log_var_eq_table_utils.R")
 
 coef_tab <- log_var_eq$table
 stopifnot(identical(
   coef_tab$coef, c("(Intercept)", paste0("l.pc", seq_len(n_pc_r)))
 ))
-
-# NA and non-finite render "--" (a non-finite tau = 0 point means the Lewbel
-# point sits on a residual-zero hyperplane; the driver's min_abs_eps_point
-# diagnostic surfaces it)
-fmt <- function(x) ifelse(!is.finite(x), "--", sprintf("%.3f", x))
-# an unreliable or upstream-propagated (NA-endpoint) cell renders its status
-# word; certified one-sided divergence renders a half-infinite range; a
-# degenerate interval (point-identified) is left blank as in the structural
-# table
-set_cell <- function(lo, hi, status) {
-  ifelse(
-    status == "unreliable" | is.na(lo) | is.na(hi), status,
-    ifelse(
-      is.infinite(lo) & is.infinite(hi), "unbounded",
-      ifelse(
-        is.infinite(lo), sprintf("$(-\\infty,\\,%.3f]$", hi),
-        ifelse(
-          is.infinite(hi), sprintf("$[%.3f,\\,\\infty)$", lo),
-          ifelse(lo == hi, "", sprintf("$[%.3f,\\,%.3f]$", lo, hi))
-        )
-      )
-    )
-  )
-}
 
 n_obs <- log_var_eq$sample$n
 r2 <- summary(log_var_eq$fit_ols)$r.squared
@@ -63,9 +42,6 @@ ols_cells <- ifelse(
 )
 ols_tstats <- sprintf("(%.2f)", nw_t)
 
-# coefficient rows interleaved with the OLS t-statistic rows (blank in the
-# identification columns)
-interleave <- function(a, b) as.vector(rbind(a, b))
 coef_labels <- c("$\\theta_0$", sprintf("$\\theta_{%d,R}$", seq_len(n_pc_r)))
 row_labels <- c(interleave(coef_labels, ""), "$R^2$", "$N$")
 set_columns <- lapply(log_var_eq$sets, function(st) {
@@ -136,8 +112,9 @@ cat(
   )
 )
 
+# fmt / set_cell / interleave stay defined for the combined panels table
 rm(
-  coef_tab, fmt, set_cell, n_obs, r2, nw_se, nw_t, nw_p, nw_stars, ols_cells,
-  ols_tstats, interleave, coef_labels, row_labels, set_columns, columns,
+  coef_tab, n_obs, r2, nw_se, nw_t, nw_p, nw_stars, ols_cells,
+  ols_tstats, coef_labels, row_labels, set_columns, columns,
   theta_r_rows, n_excl, caption, build_logvar_notes, logvar_latex
 )

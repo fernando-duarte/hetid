@@ -85,3 +85,62 @@ check("an all-zero anchor response fails closed", tryCatch(
   },
   error = function(e) TRUE
 ))
+
+# The one preparation path errors before any fit on a corrupted key universe
+# or a drifted sample: duplicate or missing qtr keys, wrong PC names, and a
+# sample_id mismatch all stop; the intact contract passes unchanged.
+contract_of <- function(q) {
+  list(
+    qtr = q, n = fx$n, pc_names = colnames(pcr),
+    sample_id = logvar_sample_id(q, w1, w2, pcr)
+  )
+}
+inputs_of <- function(q) list(w1 = w1, w2 = w2, pcr = pcr, qtr = q)
+guard_errors <- function(inputs, contract) {
+  tryCatch(
+    {
+      logvar_ppml_validate_inputs(inputs, contract)
+      FALSE
+    },
+    error = function(e) TRUE
+  )
+}
+check("valid inputs pass the preparation-path validator", tryCatch(
+  {
+    logvar_ppml_validate_inputs(inputs_of(qtr), contract_of(qtr))
+    TRUE
+  },
+  error = function(e) FALSE
+))
+check("duplicate qtr keys error before fitting", tryCatch(
+  {
+    qtr_dup <- qtr
+    qtr_dup[2] <- qtr_dup[1]
+    guard_errors(inputs_of(qtr_dup), contract_of(qtr))
+  },
+  error = function(e) FALSE
+))
+check("missing qtr keys error before fitting", tryCatch(
+  {
+    qtr_na <- qtr
+    qtr_na[1] <- NA
+    guard_errors(inputs_of(qtr_na), contract_of(qtr))
+  },
+  error = function(e) FALSE
+))
+check("renamed PC columns error before fitting", tryCatch(
+  {
+    bad <- inputs_of(qtr)
+    colnames(bad$pcr) <- c("l.pc1", "l.pc2", "l.pc3", "pc4")
+    guard_errors(bad, contract_of(qtr))
+  },
+  error = function(e) FALSE
+))
+check("a drifted sample_id errors before fitting", tryCatch(
+  {
+    drifted <- contract_of(qtr)
+    drifted$sample_id <- paste0(drifted$sample_id, "x")
+    guard_errors(inputs_of(qtr), drifted)
+  },
+  error = function(e) FALSE
+))

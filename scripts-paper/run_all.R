@@ -101,6 +101,7 @@ source("scripts-paper/set_id_bounds_tau.R")
 # set_id_bounds_tau.R and must register its figure entry before the
 # bounds-by-tau driver renders the registry
 source("scripts-paper/log_var_eq_ppml_sets.R")
+source("scripts-paper/log_var_eq_ppml_table.R")
 # the log-variance figures consume mean_eq_bounds_tau and the registry, so
 # this runs after both producers
 source("scripts-paper/log_var_eq_bounds_tau.R")
