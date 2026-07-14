@@ -56,6 +56,12 @@ z_desc <- paste(
 boot_reps <- as.integer(Sys.getenv("HETID_BOOT_REPS", unset = "200"))
 boot_block <- 24L
 boot_seed <- 123L
+# PPML set-map budgets: the primary grid/fit caps and the independent
+# Morton-coverage audit's larger caps (counts of inner fits, not wall clock)
+logvar_ppml_grid_cap <- 4000L
+logvar_ppml_fit_budget <- 20000L
+logvar_ppml_coverage_grid_cap <- 8000L
+logvar_ppml_coverage_fit_budget <- 40000L
 
 # output folder for tables and figures
 out_dir <- "scripts-paper/output"
@@ -91,8 +97,12 @@ source("scripts-paper/var_share_table.R")
 source("scripts-paper/log_var_eq.R")
 source("scripts-paper/log_var_eq_table.R")
 source("scripts-paper/set_id_bounds_tau.R")
-# the log-variance figure consumes mean_eq_bounds_tau, the warm-refined b_N
-# boxes set_id_bounds_tau.R stores, so it must run after that script
+# the PPML set map needs the warm-refined display-tau boxes from
+# set_id_bounds_tau.R and must register its figure entry before the
+# bounds-by-tau driver renders the registry
+source("scripts-paper/log_var_eq_ppml_sets.R")
+# the log-variance figures consume mean_eq_bounds_tau and the registry, so
+# this runs after both producers
 source("scripts-paper/log_var_eq_bounds_tau.R")
 source("scripts-paper/set_id_region_common.R")
 source("scripts-paper/set_id_projections.R")
