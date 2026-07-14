@@ -67,23 +67,34 @@
   )
 }
 
+# provenance tag of a separated start from its start_type attribute (grid or
+# carry in this diagnostic; defaults to grid when the attribute is unset)
+.jn_start_source <- function(s0) {
+  t <- attr(s0, "start_type")
+  if (is.null(t) || !length(t)) "grid" else as.character(t)[1L]
+}
+
 # Conditional sup-norm sensitivity: over the attained candidate pool retain the
 # L2 winner (b_hat) and the smallest-d_inf candidate, with each candidate's rank
 # under the other metric. Trigger only when the two differ and the pinned
 # absolute-plus-relative gap is exceeded, then defer the refinement to the search
-# module's epigraph program (a failed solve degrades to attained_start_only).
-.jn_linf_sensitivity <- function(b_hat, scaled_linf, scan, polish, qs, w1, w2, proj,
-                                 d_inv2, root_tol) {
+# module's epigraph program (a failed solve degrades to attained_start_only). Each
+# candidate carries its provenance so the two metric-winner sources are recorded
+# from the actual winner, not a hardcoded guess.
+.jn_linf_sensitivity <- function(b_hat, scaled_linf, argmin_source, scan, polish,
+                                 qs, w1, w2, proj, d_inv2, root_tol) {
   cand <- list(b_hat)
-  add <- function(x) {
+  src <- argmin_source
+  add <- function(x, s) {
     if (!is.null(x) && length(x) == length(b_hat) && all(is.finite(x))) {
       cand[[length(cand) + 1L]] <<- as.numeric(x)
+      src[[length(src) + 1L]] <<- s
     }
   }
-  add(scan$best$b)
-  for (s0 in scan$starts) add(as.numeric(s0))
-  add(polish$best$b)
-  for (rec in polish$records) if (!is.null(rec)) add(rec$par)
+  add(scan$best$b, scan$best$source)
+  for (s0 in scan$starts) add(as.numeric(s0), .jn_start_source(s0))
+  add(polish$best$b, "polish")
+  for (rec in polish$records) if (!is.null(rec)) add(rec$par, "polish")
   qv <- dv <- numeric(length(cand))
   for (i in seq_along(cand)) {
     o <- logvar_joint_null_objective(cand[[i]], w1, w2, proj, d_inv2)
@@ -111,7 +122,8 @@
   }
   list(
     trigger = trigger, status = status, gap_abs = gap_abs, gap_rel = gap_rel,
-    dinf_l2 = dv[1L], dinf_grid = dinf_grid, l2_src = "polish", linf_src = "grid",
+    dinf_l2 = dv[1L], dinf_grid = dinf_grid,
+    l2_src = src[[1L]], linf_src = src[[best_i]],
     l2_rank = as.integer(rank(dv, ties.method = "min")[1L]),
     linf_rank = as.integer(rank(qv, ties.method = "min")[best_i])
   )
@@ -149,7 +161,10 @@
     membership <- "compatibility_not_demonstrated"
   }
   span <- pmax(abs(upper - lower), 1)
-  box_active <- any(abs(b - lower) <= 1e-6 * span) || any(abs(b - upper) <= 1e-6 * span)
+  # a degenerate singleton box has span 0, so |b - bound| = 0 would spuriously read
+  # as an edge-riding arg-min; the tau = 0 point is never box-limited
+  box_active <- !all(upper == lower) &&
+    (any(abs(b - lower) <= 1e-6 * span) || any(abs(b - upper) <= 1e-6 * span))
   .jn_assemble_row(list(
     tau_display = as.numeric(tau_display), tau_internal = 0,
     scaled_l2 = sqrt(2 * q), scaled_linf = scaled_linf,

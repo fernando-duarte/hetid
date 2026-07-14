@@ -95,6 +95,16 @@ check("jn one collapsing perturbation direction fails the candidate", jn_try({
   )
   identical(s$perturbation_status, "fail") || jn_unreliable(s)
 }))
+# In-band puncture: an active near-crossing (min|e| above the machine-adjacency
+# gate) whose scaled distance and min|e| both collapse as the radius shrinks is
+# caught by the two-endpoint signature, not short-circuited before it.
+check("jn an in-band puncture signature classifies unreliable", jn_try({
+  s <- jn_stab(
+    fx$b_cross_can, fx$w1_pnc, fx$w2_can, fx$proj_can,
+    jn_ball(fx$b_cross_can, 0.2), rep(1.5, nrow(fx$pcr_can))
+  )
+  identical(s$reason, "puncture_signature") && jn_unreliable(s)
+}))
 # A rank-deficient direction set must not round up to full coverage (rank_dir 3).
 check("jn a rank-deficient direction set fails the SVD coverage threshold", jn_try({
   s <- jn_stab(

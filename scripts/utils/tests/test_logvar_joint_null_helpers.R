@@ -169,6 +169,14 @@ jn_fx <- local({
     sum(g1 * g2) / sqrt(sum(g1^2) * sum(g2^2)) < -0.99,
     d2_can < 10 * root_tol, min(abs(e_can)) < 1e-6 * median(abs(e_can))
   )
+  # Puncture in the band: the same anti-parallel _can design but with the crossing
+  # offset lifted into (1e-8, 1e-6] * e_scale_ref (median|eps_ref| = 1.5), so the
+  # machine-adjacency gate no longer pre-empts the two-endpoint puncture signature.
+  w1_pnc <- w1_can
+  w1_pnc[i_can1] <- drop(w2_can[i_can1, ] %*% b_cross_can) + 1e-6
+  w1_pnc[i_can2] <- drop(w2_can[i_can2, ] %*% b_cross_can) + 1e-6
+  e_pnc <- drop(w1_pnc - w2_can %*% b_cross_can)
+  stopifnot(min(abs(e_pnc)) > 1e-8 * 1.5, min(abs(e_pnc)) <= 1e-6 * 1.5)
   # Return the fixture environment so every binding above is reachable as fx$*.
   environment()
 })

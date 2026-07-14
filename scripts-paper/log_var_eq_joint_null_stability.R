@@ -29,8 +29,10 @@ source("scripts-paper/log_var_eq_joint_null_at_tau.R")
 }
 
 # feasibility, Euclidean slope norm d_2, sup slope norm d_inf, and min|e| at every
-# (direction, radius); an infeasible or non-finite-map point stays NA so it never
-# enters the matched-direction set
+# (direction, radius) through the shared zero-safe response, so a tiny nonzero
+# residual stays a huge-but-finite slope rather than a faked puncture; an
+# infeasible, exact-zero, or non-finite-map point stays NA and never enters the
+# matched-direction set
 .jn_perturb_eval <- function(b, w1, w2, proj, qs, omega, dirs, radii, feas_tol) {
   nd <- ncol(dirs)
   nr <- length(radii)
@@ -42,10 +44,13 @@ source("scripts-paper/log_var_eq_joint_null_at_tau.R")
       if (.feasibility_residual(qs, cand, omega) <= feas_tol) {
         feasible[j, ri] <- TRUE
         e <- drop(w1 - w2 %*% cand)
-        s <- drop(proj %*% log(e^2))[-1]
-        if (all(is.finite(s))) {
-          d2[j, ri] <- sqrt(sum(s^2))
-          dinf[j, ri] <- max(abs(s))
+        resp <- logvar_joint_null_response(e)
+        if (length(resp$available_ids)) {
+          s <- drop(proj %*% resp$log_sq)[-1]
+          if (all(is.finite(s))) {
+            d2[j, ri] <- sqrt(sum(s^2))
+            dinf[j, ri] <- max(abs(s))
+          }
         }
         mae[j, ri] <- min(abs(e))
       }

@@ -87,10 +87,19 @@ if (exists("log_var_eq") && exists("set_id_mean_eq") &&
       jn_qs_fn(jn_tau), jn_prior
     ))
     jn_row$tau_order <- jn_idx + 1L
+    # carry every successful polished minimum forward (not just the arg-min) so an
+    # expanding tau reseeds each prior basin; the attribute stays off the artifact
+    jn_minima <- attr(jn_row, "minima")
+    attr(jn_row, "minima") <- NULL
     jn_rows[[length(jn_rows) + 1L]] <- jn_row
-    jn_win <- c(jn_row$b1, jn_row$b2, jn_row$b3)
-    attr(jn_win, "q_reported") <- jn_qrep(jn_win)
-    jn_prior <- c(jn_prior, list(jn_win))
+    if (is.null(jn_minima) || !length(jn_minima)) {
+      jn_minima <- list(c(jn_row$b1, jn_row$b2, jn_row$b3))
+    }
+    jn_prior <- c(jn_prior, lapply(jn_minima, function(bb) {
+      bb <- as.numeric(bb)
+      attr(bb, "q_reported") <- jn_qrep(bb)
+      bb
+    }))
   }
 
   # provenance stamp for the deferred inference round; a read-only git call,
@@ -129,7 +138,7 @@ if (exists("log_var_eq") && exists("set_id_mean_eq") &&
   rm(
     jn_inputs, jn_proj, jn_scales, jn_d_inv2, jn_w1, jn_w2, jn_eps_ref,
     jn_qs_fn, jn_grid_opt, jn_fill, jn_qrep, jn_b_point, jn_box0, jn_row0, jn_rows,
-    jn_taus, jn_prior, jn_idx, jn_tau, jn_key, jn_box, jn_row, jn_win,
+    jn_taus, jn_prior, jn_idx, jn_tau, jn_key, jn_box, jn_row, jn_minima,
     jn_commit, jn_out, jn_csv, jn_rds
   )
 }

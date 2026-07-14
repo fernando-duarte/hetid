@@ -137,7 +137,8 @@ logvar_joint_null_scan <- function(qs, b_tab, w1, w2, proj, d_inv2, grid_n,
 # Multi-start SLSQP polish of q from the separated starts through the shared
 # logvar_polish_objective seam. guard_scale defaults internally to the least
 # start objective; every polished point is directly recomputed and discarded
-# unless it is Lewbel-feasible, so the returned best always sits in the set.
+# unless it is Lewbel-feasible, so the returned best always sits in the set. The
+# feasible polished minima are returned too, for the at-tau nesting carry.
 logvar_joint_null_polish <- function(qs, starts, w1, w2, proj, d_inv2) {
   k <- length(as.numeric(starts[[1L]]))
   omega <- .jn_omega(qs)
@@ -151,6 +152,7 @@ logvar_joint_null_polish <- function(qs, starts, w1, w2, proj, d_inv2) {
   guard_scale <- if (length(finite_q)) max(1, min(finite_q)) else 1
   records <- vector("list", length(starts))
   cands <- list()
+  polished <- list()
   successful <- 0L
   for (i in seq_along(starts)) {
     b0 <- as.numeric(starts[[i]])
@@ -169,12 +171,13 @@ logvar_joint_null_polish <- function(qs, starts, w1, w2, proj, d_inv2) {
     rp <- .feasibility_residual(qs, bp, omega)
     if (is.finite(op$q) && is.finite(rp) && rp <= 1e-4) {
       cands[[length(cands) + 1L]] <- list(b = bp, q = as.numeric(op$q))
+      polished[[length(polished) + 1L]] <- bp
       if (isFALSE(pol$suspect)) successful <- successful + 1L
     }
   }
   list(
     best = .jn_polish_best(cands, k, w1, w2, proj, d_inv2),
-    records = records, successful_polishes = successful
+    records = records, successful_polishes = successful, minima = polished
   )
 }
 

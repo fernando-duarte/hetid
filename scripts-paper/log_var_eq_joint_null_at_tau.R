@@ -135,7 +135,7 @@ logvar_joint_null_at_tau <- function(tau, tau_display, b_tab, w1, w2, proj, d_in
     .jn_linf_untriggered(scaled_linf, argmin_source)
   } else {
     .jn_linf_sensitivity(
-      b_hat, scaled_linf, scan, polish, qs, w1, w2, proj,
+      b_hat, scaled_linf, argmin_source, scan, polish, qs, w1, w2, proj,
       d_inv2, root_tol
     )
   }
@@ -144,7 +144,14 @@ logvar_joint_null_at_tau <- function(tau, tau_display, b_tab, w1, w2, proj, d_in
   span <- pmax(abs(upper - lower), 1)
   box_active <- any(abs(b_hat - lower) <= 1e-6 * span) ||
     any(abs(b_hat - upper) <= 1e-6 * span)
-  .jn_assemble_row(list(
+  # every successful polished local minimum plus the arg-min, carried as an
+  # attribute so the driver reseeds each prior basin without touching the
+  # flat-row/$-field interface (the deferred inference round reads $-fields only)
+  jn_minima <- Filter(
+    function(bb) length(bb) == length(b_hat) && all(is.finite(bb)),
+    c(list(as.numeric(b_hat)), lapply(polish$minima, as.numeric))
+  )
+  structure(.jn_assemble_row(list(
     tau_display = as.numeric(tau_display), tau_internal = as.numeric(tau),
     scaled_l2 = scaled_l2, scaled_linf = scaled_linf,
     b1 = b_hat[1], b2 = b_hat[2], b3 = b_hat[3], theta0 = theta[1],
@@ -168,5 +175,5 @@ logvar_joint_null_at_tau <- function(tau, tau_display, b_tab, w1, w2, proj, d_in
     d_inf_l2 = linf$dinf_l2, d_inf_grid_best = linf$dinf_grid,
     linf_gap_abs = linf$gap_abs, linf_gap_rel = linf$gap_rel,
     linf_trigger = linf$trigger, linf_sensitivity_status = linf$status
-  ))
+  )), minima = jn_minima)
 }

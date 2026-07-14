@@ -23,12 +23,13 @@ check("jn projection ownership returns the owned 5 x n matrix", jn_try({
   identical(dim(p), c(5L, fx$n)) && max(abs(p - fx$proj)) < 1e-12 &&
     identical(rownames(p)[-1], colnames(fx$pcr))
 }))
-# Projection ownership fails closed on a shuffled, misaligned design.
+# Projection ownership fails closed on an unsorted qtr key (a stateless check:
+# the wrapper owns no cache, so a descending qtr is caught on its own terms).
 check("jn projection ownership fails closed on a misaligned design", jn_try({
   stopifnot(exists("logvar_joint_null_projection"))
   bad <- tryCatch(
     {
-      logvar_joint_null_projection(fx$pcr[sample(fx$n), ], fx$qtr, fx$sample_id)
+      logvar_joint_null_projection(fx$pcr, rev(fx$qtr), fx$sample_id)
       "ok"
     },
     error = function(e) "stopped"

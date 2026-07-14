@@ -7,15 +7,11 @@
 # scripts/utils/tests/test_logvar_joint_null_helpers.R. No clamping, no epsilon
 # inside a log, no residual floor.
 
-# provenance registry so the driver's single projection is owned once per
-# sample_id: a later call presenting a different qtr-aligned design under the same
-# id is a misalignment and fails closed rather than silently returning a permuted
-# projection matrix
-.logvar_joint_null_proj_registry <- new.env(parent = emptyenv())
-
-# owned projection P = (R'R)^{-1} R', R = (1, PC_R): calls logvar_projection once,
-# asserts shape/finiteness/column identity and qtr length, and records the design
-# under sample_id so a mismatched later design under the same id stops
+# owned projection P = (R'R)^{-1} R', R = (1, PC_R): calls logvar_projection once
+# and asserts shape, finiteness, column identity, and an ascending qtr key. The
+# wrapper is stateless -- the driver aligns its one design by qtr and asserts the
+# frozen sample_id, so ownership needs no cache; sample_id stays in the signature
+# as the provenance label the RDS records.
 logvar_joint_null_projection <- function(pcr, qtr, sample_id) {
   pcr <- as.matrix(pcr)
   expected <- paste0("l.pc", seq_len(ncol(pcr)))
@@ -25,20 +21,14 @@ logvar_joint_null_projection <- function(pcr, qtr, sample_id) {
   if (length(qtr) != nrow(pcr)) {
     stop("qtr length must equal nrow(pcr) for the joint-null projection")
   }
+  if (is.unsorted(qtr)) {
+    stop("qtr must be ascending for the joint-null projection")
+  }
   proj <- logvar_projection(pcr)
   if (!identical(dim(proj), c(ncol(pcr) + 1L, nrow(pcr))) ||
     any(!is.finite(proj))) {
     stop("joint-null projection must be a finite (ncol(pcr)+1) x nrow(pcr) matrix")
   }
-  key <- as.character(sample_id)
-  prior <- .logvar_joint_null_proj_registry[[key]]
-  if (!is.null(prior)) {
-    if (!identical(prior$pcr, pcr) || !identical(prior$qtr, qtr)) {
-      stop("misaligned design: sample_id already owns a different qtr-aligned pcr")
-    }
-    return(prior$proj)
-  }
-  .logvar_joint_null_proj_registry[[key]] <- list(pcr = pcr, qtr = qtr, proj = proj)
   proj
 }
 
