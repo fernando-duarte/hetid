@@ -91,10 +91,15 @@ check("Harvey panel keeps set columns free of statistic cells", {
   any(hvt_lines_se == " & (-2.00) & (-1.85) &  &  \\\\")
 })
 
-check("Harvey panel stays blank when se_type is NULL (back-compat)", {
-  # hvt_lines (built earlier without se_type) has blank statistic rows
+check("Harvey panel stays blank and notes stay deferred when se_type is NULL", {
+  # hvt_lines (built earlier without se_type) has blank statistic rows AND the
+  # notes keep the deferred line -- render and notes agree that NULL means
+  # standard errors are genuinely absent
   any(hvt_lines == "$N$ & 12 & 12 & 12 & 12 \\\\") &&
-    !any(grepl("(-2.00)", hvt_lines, fixed = TRUE))
+    !any(grepl("(-2.00)", hvt_lines, fixed = TRUE)) &&
+    any(grepl("No Harvey standard errors are reported (deferred)", hvt_lines,
+      fixed = TRUE
+    ))
 })
 
 check("Harvey notes describe the hac SE variation and keep the caveat", {
@@ -102,6 +107,32 @@ check("Harvey notes describe the hac SE variation and keep the caveat", {
   grepl("Newey", notes) && grepl("QMLE", notes) &&
     grepl("condition on the plug-in", notes) &&
     !grepl("No Harvey standard errors", notes, fixed = TRUE)
+})
+
+check("Harvey panel fails loud when se_type is set but the se frame is absent", {
+  tryCatch(
+    {
+      logvar_harvey_append_panel(
+        character(0), hvt_harvey, 12L, c(0.05, 0.1), 0.05, 4000L, 20000L,
+        include_ordering = FALSE, se_type = "hac", se_hac_lags = 4L
+      )
+      FALSE
+    },
+    error = function(e) TRUE
+  )
+})
+
+check("Harvey panel rejects an unknown se_type", {
+  tryCatch(
+    {
+      logvar_harvey_append_panel(
+        character(0), hvt_harvey_se, 12L, c(0.05, 0.1), 0.05, 4000L, 20000L,
+        include_ordering = FALSE, se_type = "bogus", se_hac_lags = 4L
+      )
+      FALSE
+    },
+    error = function(e) TRUE
+  )
 })
 
 rm(
