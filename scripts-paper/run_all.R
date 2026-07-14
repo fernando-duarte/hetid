@@ -95,12 +95,14 @@ source("scripts-paper/structural_eq_table.R")
 source("scripts-paper/var_share.R")
 source("scripts-paper/var_share_table.R")
 source("scripts-paper/log_var_eq.R")
-source("scripts-paper/log_var_eq_table.R")
 source("scripts-paper/set_id_bounds_tau.R")
 # the PPML set map needs the warm-refined display-tau boxes from
 # set_id_bounds_tau.R and must register its figure entry before the
 # bounds-by-tau driver renders the registry
 source("scripts-paper/log_var_eq_ppml_sets.R")
+# the primary table consumes the completed PPML hulls; the combined table then
+# adds the mean-log robustness panel without recomputing either estimator
+source("scripts-paper/log_var_eq_table.R")
 source("scripts-paper/log_var_eq_ppml_table.R")
 # the log-variance figures consume mean_eq_bounds_tau and the registry, so
 # this runs after both producers

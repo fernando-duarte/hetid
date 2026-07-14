@@ -1,9 +1,8 @@
-# Caption-notes builder for the log-variance-equation table: notation,
-# construction of the two-step estimator, the set-mapping description, and
-# the honesty clauses (theta_0 normalization, per-side divergence at residual
-# sign crossings, certification semantics). Sourced at the top of
-# log_var_eq_table.R; reads the run_all.R constants (n_pc_r) and the
-# set_id_mean_eq / log_var_eq result lists at call time.
+# Caption-notes builder retained for the legacy mean-log OLS robustness table:
+# notation, two-step construction, set mapping, and honesty clauses for
+# residual sign crossings. The primary log_var_eq table now uses PPML notes;
+# this builder reads the run_all.R constants and legacy log_var_eq results at
+# call time if a separate mean-log table needs the full notes.
 
 build_logvar_notes <- function() {
   n_obs <- log_var_eq$sample$n

@@ -1,67 +1,34 @@
-# Publication table for the log-variance equation estimated in log_var_eq.R:
-# one row per coefficient of
-# log eps_{t+1}^2 = theta_0 + PC_{R,t}' theta_R + xi_{t+1},
-# with the naive OLS benchmark (Newey-West t statistics), the two-step map at
-# the closed-form Lewbel point (tau = 0), and the identified set at each
-# tau_display slack (half-infinite ranges where a certified residual-zero
-# crossing makes a side diverge). Writes log_var_eq.tex, the standalone
-# variant, and its compiled PDF to scripts-paper/output/.
-# Run via run_all.R after log_var_eq.R.
+# Publication table for the PPML log-variance equation estimated in
+# log_var_eq_ppml_sets.R: the quasi-Poisson log-link reference, the PPML map at
+# the closed-form Lewbel point (tau = 0), and its identified hull at every
+# tau_display slack. Writes log_var_eq.tex, the standalone variant, and its
+# compiled PDF to scripts-paper/output/. Run via run_all.R after
+# log_var_eq_ppml_sets.R.
 
 source("scripts/utils/latex_table_utils.R")
 source("scripts/utils/latex_simple_table.R")
-source("scripts-paper/log_var_eq_notes.R")
-# the fmt / set_cell / interleave cell formatters, shared with the combined
-# estimator panels table
 source("scripts-paper/log_var_eq_table_utils.R")
+source("scripts-paper/log_var_eq_ppml_notes.R")
 
-coef_tab <- log_var_eq$table
-stopifnot(identical(
-  coef_tab$coef, c("(Intercept)", paste0("l.pc", seq_len(n_pc_r)))
-))
-
-n_obs <- log_var_eq$sample$n
-r2 <- summary(log_var_eq$fit_ols)$r.squared
-
-# Newey-West (4 lags, Bartlett kernel, no prewhitening) t statistics and
-# significance stars for the OLS column
-nw_se <- sqrt(diag(sandwich::NeweyWest(
-  log_var_eq$fit_ols,
-  lag = 4, prewhite = FALSE
-)))[coef_tab$coef]
-stopifnot(!anyNA(nw_se))
-nw_t <- coef_tab$ols / nw_se
-nw_p <- 2 * stats::pt(-abs(nw_t), df = stats::df.residual(log_var_eq$fit_ols))
-nw_stars <- ifelse(
-  nw_p < 0.01, "^{***}",
-  ifelse(nw_p < 0.05, "^{**}", ifelse(nw_p < 0.10, "^{*}", ""))
+parts <- logvar_ppml_table_parts(
+  log_var_eq_ppml, set_id_mean_eq$tau_display, n_pc_r
 )
-ols_cells <- ifelse(
-  nw_stars == "", fmt(coef_tab$ols),
-  sprintf("%s$%s$", fmt(coef_tab$ols), nw_stars)
-)
-ols_tstats <- sprintf("(%.2f)", nw_t)
-
-coef_labels <- c("$\\theta_0$", sprintf("$\\theta_{%d,R}$", seq_len(n_pc_r)))
-row_labels <- c(interleave(coef_labels, ""), "$R^2$", "$N$")
-set_columns <- lapply(log_var_eq$sets, function(st) {
-  stopifnot(identical(st$coef, coef_tab$coef))
-  c(
-    interleave(set_cell(st$set_lower, st$set_upper, st$status), ""),
-    "--", sprintf("%d", n_obs)
-  )
-})
-columns <- c(
-  list(
-    c(interleave(ols_cells, ols_tstats), sprintf("%.2f", r2), sprintf("%d", n_obs)),
-    c(interleave(fmt(coef_tab$point), ""), "--", sprintf("%d", n_obs))
-  ),
-  unname(set_columns)
+coef_tab <- parts$table
+set_tables <- parts$sets
+n_obs <- parts$n_obs
+baseline_table <- set_tables[[sprintf("%.17g", set_id_mean_eq$tau_baseline)]]
+stopifnot(
+  !is.null(baseline_table),
+  identical(log_var_eq_ppml$sample_id, log_var_eq$sample_id),
+  identical(n_obs, log_var_eq$sample$n),
+  identical(coef_tab$set_lower, baseline_table$set_lower),
+  identical(coef_tab$set_upper, baseline_table$set_upper),
+  identical(coef_tab$status, baseline_table$status)
 )
 
-# data-derived caption: bounded theta_R sets excluding zero at the baseline
-# slack, or the divergence disclosure when the baseline image is not fully
-# bounded
+# Data-derived caption: bounded theta_R hulls excluding zero at the baseline
+# slack, or the fail-closed disclosure when the baseline image is not fully
+# bounded and reliable.
 theta_r_rows <- coef_tab$coef != "(Intercept)"
 n_excl <- sum(
   coef_tab$status[theta_r_rows] == "bounded" &
@@ -70,51 +37,46 @@ n_excl <- sum(
 caption <- if (all(coef_tab$status == "bounded")) {
   sprintf(
     paste0(
-      "Identified sets for the log-variance equation: %d of %d components ",
-      "of $\\theta_R$ have computed identified ranges excluding zero at ",
-      "$\\tau{=}%.2g$."
+      "Quasi-Poisson PPML identified sets for the log-variance equation: ",
+      "%d of %d components of $\\theta_R$ have computed ranges ",
+      "excluding zero at $\\tau{=}%.2g$."
     ),
     n_excl, n_pc_r, set_id_mean_eq$tau_baseline
   )
 } else {
   sprintf(
     paste0(
-      "Identified sets for the log-variance equation: at $\\tau{=}%.2g$ the ",
-      "log benchmark's finite-sample range is not bounded on every side."
+      "Quasi-Poisson PPML identified sets for the log-variance equation: ",
+      "at $\\tau{=}%.2g$ the computed image is not reliable on every side."
     ),
     set_id_mean_eq$tau_baseline
   )
 }
 
-# rule_after separates the intercept pair from the theta_R block; the value
-# is position-invariant in n_pc_r (one coefficient row plus its t-stat row
-# precede the block), unlike the structural table's 2L * (1L + n_pc)
 logvar_latex <- build_simple_latex_table(
-  row_labels, columns,
-  col_headers = c(
-    "OLS", "$\\tau{=}0$",
-    sprintf("$\\tau{=}%.2g$", set_id_mean_eq$tau_display)
-  ),
+  parts$rows, parts$columns,
+  col_headers = parts$headers,
   caption = caption, label = "tab:log_var_eq_set_id",
-  notes = build_logvar_notes(),
+  notes = build_ppml_table_notes(
+    log_var_eq_ppml, set_id_mean_eq$tau_baseline,
+    logvar_ppml_grid_cap, logvar_ppml_fit_budget
+  ),
   fontsize = "\\footnotesize\\setlength{\\tabcolsep}{3pt}",
   rule_after = 2L
 )
 write_latex_table(logvar_latex, out_dir, "log_var_eq")
 
-# compile the standalone variant so a LaTeX regression fails the pipeline
+# Compile the standalone variant so a LaTeX regression fails the pipeline.
 compile_latex_pdf(file.path(out_dir, "log_var_eq_standalone.tex"))
 
-cat(
-  sprintf(
-    "log-variance table: %d of %d theta_R sets exclude zero at tau = %.2g\n",
-    n_excl, n_pc_r, set_id_mean_eq$tau_baseline
-  )
-)
+cat(sprintf(
+  "PPML log-variance table: %d of %d theta_R sets exclude zero at tau = %.2g\n",
+  n_excl, n_pc_r, set_id_mean_eq$tau_baseline
+))
 
-# fmt / set_cell / interleave stay defined for the combined panels table
+# The shared formatters and panel-notes builder remain available to the
+# combined table sourced next in run_all.R.
 rm(
-  coef_tab, n_obs, r2, nw_se, nw_t, nw_p, nw_stars, ols_cells,
-  ols_tstats, coef_labels, row_labels, set_columns, columns,
-  theta_r_rows, n_excl, caption, build_logvar_notes, logvar_latex
+  parts, coef_tab, set_tables, n_obs, baseline_table, theta_r_rows, n_excl,
+  caption, build_ppml_table_notes, logvar_latex
 )

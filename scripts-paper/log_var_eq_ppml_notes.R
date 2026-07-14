@@ -1,16 +1,21 @@
-# Notes builders for the combined log-variance estimator panels
-# (log_var_eq_ppml_table.R): one marker-wrapped block per estimator, each
-# note its own line so later estimator plans can append and diff blocks.
-# The PPML block states the estimand, normalization, comparability, zero and
-# existence handling, search-resolution disclosure, the editorial ordering
-# rule, and the hull honesty clauses; the log-OLS block defers to the
-# benchmark table's own notes and states the panel's fragile-benchmark role.
-# Definitions only; sourced by log_var_eq_ppml_table.R.
+# Notes builders for the primary PPML table and combined log-variance estimator
+# panels. The shared PPML core states the estimand, column construction,
+# normalization, comparability, zero and existence handling, search-resolution
+# disclosure, and hull honesty clauses. Only the combined panel adds the
+# editorial-ordering disclosure. Definitions only.
 
-build_ppml_panel_notes <- function(ppml, tau_baseline, grid_cap, fit_budget) {
+build_ppml_notes <- function(ppml, tau_baseline, grid_cap, fit_budget,
+                             include_ordering) {
   scale_val <- ppml$estimator$metadata$response_scale_value
   meta <- ppml$coverage_audit$meta
   c(
+    paste(
+      "The estimated mean equation is",
+      "$\\Delta c_{t+1}=b_{0}+PC_{E,t}^{T}b_{E}+",
+      "PC_{N,t+1}^{T}b_{N}+\\varepsilon_{t+1}$, and the estimated",
+      "variance equation is $\\Delta\\varepsilon_{t+1}^{2}=",
+      "\\exp(\\theta_{0}+PC_{R,t}^{T}\\theta_{R}+\\xi_{t+1})$."
+    ),
     paste(
       "PPML models $E[\\varepsilon^2 \\mid PC_R]$, not",
       "$E[\\log \\varepsilon^2 \\mid PC_R]$; the reported coefficients are",
@@ -18,14 +23,20 @@ build_ppml_panel_notes <- function(ppml, tau_baseline, grid_cap, fit_budget) {
       "restriction."
     ),
     paste(
-      "The intercept $\\theta^{var}_0$ is on the log conditional-variance",
-      "scale and absorbs $2\\log|m_0|$; it is not comparable to the",
-      "mean-log intercept $\\theta^{log}_0$."
+      "The OLS column applies PPML to squared residuals from the",
+      "exogenous-news OLS mean equation; $\\tau{=}0$ evaluates the PPML map",
+      "at the Lewbel point, and each $\\tau{>}0$ cell ranges that map over",
+      "the joint identified news set."
     ),
     paste(
-      "Slopes are comparable across the two panels only under an",
-      "$R$-invariant innovation shape; the intercepts then differ by the",
-      "Jensen gap $\\log E[e^{\\xi}]$ ($\\approx 1.270$ under normality)."
+      "The intercept $\\theta_0$ is on the log conditional-variance",
+      "scale and absorbs $2\\log|m_0|$; it is not comparable to the",
+      "mean-log intercept."
+    ),
+    paste(
+      "PPML and mean-log slopes are comparable only under an $R$-invariant",
+      "innovation shape; the intercepts then differ by the Jensen gap",
+      "$\\log E[e^{\\xi}]$ ($\\approx 1.270$ under normality)."
     ),
     paste(
       "Zero squared residuals are admissible responses;",
@@ -42,20 +53,38 @@ build_ppml_panel_notes <- function(ppml, tau_baseline, grid_cap, fit_budget) {
       ),
       grid_cap, fit_budget, meta$grid_cap, meta$fit_budget, scale_val
     ),
-    sprintf(
-      paste(
-        "Panel order is an editorial rule keyed to the benchmark crossing",
-        "count at $\\tau{=}%.2g$, not a selection between estimators of one",
-        "parameter."
-      ),
-      tau_baseline
-    ),
+    if (isTRUE(include_ordering)) {
+      sprintf(
+        paste(
+          "Panel order is an editorial rule keyed to the benchmark crossing",
+          "count at $\\tau{=}%.2g$, not a selection between estimators of one",
+          "parameter."
+        ),
+        tau_baseline
+      )
+    } else {
+      NULL
+    },
     paste(
       "Set cells are projection hulls of an estimated plug-in image:",
       "certified feasible attained values, inner approximations; interior",
       "attainment is not established."
     ),
     "No PPML standard errors are reported (deferred)."
+  )
+}
+
+build_ppml_table_notes <- function(ppml, tau_baseline, grid_cap, fit_budget) {
+  build_ppml_notes(
+    ppml, tau_baseline, grid_cap, fit_budget,
+    include_ordering = FALSE
+  )
+}
+
+build_ppml_panel_notes <- function(ppml, tau_baseline, grid_cap, fit_budget) {
+  build_ppml_notes(
+    ppml, tau_baseline, grid_cap, fit_budget,
+    include_ordering = TRUE
   )
 }
 
@@ -77,9 +106,9 @@ build_logols_panel_notes <- function(tau_baseline, n_cross_base) {
   }
   c(
     paste(
-      "The log-OLS panel re-renders the benchmark table's cells (Newey-West",
-      "$t$ statistics in parentheses); see the benchmark log-variance table",
-      "for its full notes."
+      "The log-OLS panel reports the mean-log robustness benchmark; its OLS",
+      "column has Newey-West $t$ statistics in parentheses, and its set cells",
+      "map the mean-log estimator over the joint identified news sets."
     ),
     role
   )

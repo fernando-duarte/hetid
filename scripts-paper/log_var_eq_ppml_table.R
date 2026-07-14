@@ -1,4 +1,4 @@
-# Combined log-variance estimator panels: the PPML panel (theta^var, the
+# Combined log-variance estimator panels: the PPML panel (theta, the
 # exponential-mean QMLE map) and the benchmark log-OLS panel (theta^log,
 # re-rendered from the stored benchmark cells), in the mechanical editorial
 # order from logvar_panel_order -- the benchmark crossing count at the fixed
@@ -6,8 +6,8 @@
 # Flipping order never recomputes a number. Every panel and notes block is
 # wrapped in stable LaTeX comment markers at creation so later estimator
 # plans can append and gate on block-extracted diffs. Writes
-# log_var_eq_panels.tex + compiled standalone; the benchmark log_var_eq.tex
-# is untouched. Run via run_all.R after log_var_eq_ppml_sets.R.
+# log_var_eq_panels.tex + compiled standalone; the primary log_var_eq.tex is
+# the PPML-only publication table. Run via run_all.R after log_var_eq_table.R.
 
 source("scripts/utils/latex_table_utils.R")
 source("scripts/utils/latex_simple_table.R")
@@ -32,7 +32,7 @@ ordering_note <- function(est) {
   )
 }
 panels_headers <- c(
-  "Reference", "$\\tau{=}0$",
+  "OLS", "$\\tau{=}0$",
   sprintf("$\\tau{=}%.2g$", set_id_mean_eq$tau_display)
 )
 
@@ -58,32 +58,19 @@ panel_block <- function(fragment, notes_lines, est) {
 
 # the PPML panel: reference and Lewbel-point columns plus the per-tau hulls,
 # t-statistic slots blank by construction, R^2 not defined for QMLE
-ppml_tab <- log_var_eq_ppml$table
-ppml_sets <- log_var_eq_ppml$sets[sprintf("%.17g", set_id_mean_eq$tau_display)]
-stopifnot(!any(vapply(ppml_sets, is.null, logical(1))))
-ppml_labels <- c(
-  "$\\theta^{var}_0$", sprintf("$\\theta^{var}_{%d,R}$", seq_len(n_pc_r))
+ppml_parts <- logvar_ppml_table_parts(
+  log_var_eq_ppml, set_id_mean_eq$tau_display, n_pc_r
 )
-ppml_rows <- c(interleave(ppml_labels, ""), "$R^2$", "$N$")
-ppml_cols <- c(
-  list(
-    c(interleave(fmt(ppml_tab$reference), ""), "--", sprintf("%d", panels_n_obs)),
-    c(interleave(fmt(ppml_tab$point), ""), "--", sprintf("%d", panels_n_obs))
-  ),
-  unname(lapply(ppml_sets, function(st) {
-    stopifnot(identical(st$coef, ppml_tab$coef))
-    c(
-      interleave(set_cell(st$set_lower, st$set_upper, st$status), ""),
-      "--", sprintf("%d", panels_n_obs)
-    )
-  }))
+stopifnot(
+  identical(ppml_parts$n_obs, panels_n_obs),
+  identical(ppml_parts$headers, panels_headers)
 )
 ppml_fragment <- build_simple_latex_table(
-  ppml_rows, ppml_cols,
+  ppml_parts$rows, ppml_parts$columns,
   col_headers = panels_headers,
   caption = paste0(
     paste(
-      "PPML panel: $\\theta^{var}$, the exponential conditional-variance",
+      "PPML panel: $\\theta$, the exponential conditional-variance",
       "map over the identified news sets."
     ),
     ordering_note("ppml")
@@ -176,8 +163,9 @@ cat(sprintf(
 
 rm(
   panels_order, panels_n_base, panels_n_obs, panels_headers, ordering_note,
-  panel_block, ppml_tab, ppml_sets, ppml_labels, ppml_rows, ppml_cols,
-  ppml_fragment, lo_tab, lo_nw_se, lo_nw_t, lo_nw_p, lo_stars, lo_cells,
+  panel_block, ppml_parts, ppml_fragment, lo_tab, lo_nw_se, lo_nw_t, lo_nw_p,
+  lo_stars, lo_cells,
   lo_labels, lo_rows, lo_r2, lo_cols, lo_fragment, panels_blocks,
-  panels_lines, build_ppml_panel_notes, build_logols_panel_notes
+  panels_lines, build_ppml_notes, build_ppml_table_notes,
+  build_ppml_panel_notes, build_logols_panel_notes
 )

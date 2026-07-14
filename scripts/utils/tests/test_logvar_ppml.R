@@ -19,6 +19,7 @@ source(here::here("scripts-paper/log_var_eq_ppml.R"))
 if (file.exists(here::here("scripts-paper/log_var_eq_ppml_driver_helpers.R"))) {
   source(here::here("scripts-paper/log_var_eq_ppml_driver_helpers.R"))
 }
+source(here::here("scripts-paper/log_var_eq_table_utils.R"))
 
 .pass <- 0L
 .fail <- 0L
