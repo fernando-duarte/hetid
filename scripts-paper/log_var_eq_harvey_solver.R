@@ -1,7 +1,8 @@
 # The zero-safe Fisher-scoring solver for the Harvey multiplicative-variance
 # likelihood: the response-level fit, the residual-forming b wrapper, and the
-# pure no-fit stability precheck. The scoring update is theta + solve(X'X,
-# X'(r - 1)) through the constructor's Cholesky of X'X, driven by a monotone
+# pure no-fit stability precheck. The update is an
+# observed-Newton step (Fisher-scoring fallback when the observed information
+# is ill conditioned), driven by a monotone
 # backtracking line search that accepts a strict criterion decrease or, on an
 # exact criterion tie, only a strict scaled-score improvement. Convergence is a
 # passed scaled score plus a relative criterion or parameter change, with the
@@ -16,6 +17,7 @@
 # fit, wrapper, and precheck. Sourced by log_var_eq_harvey.R after math/recession.
 
 source("scripts-paper/log_var_eq_harvey_solver_accept.R")
+source("scripts-paper/log_var_eq_harvey_solver_result.R")
 
 # The core solver on an arbitrary nonnegative response. Programming errors (bad
 # dimensions, negative y) stop(); every modelled failure returns a typed result.

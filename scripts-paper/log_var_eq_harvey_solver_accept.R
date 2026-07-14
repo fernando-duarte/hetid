@@ -4,7 +4,9 @@
 # backtracking line search, the scoring loop, the fresh post-stop acceptance
 # gate, the result skeleton, the recession map, and the stability-pair check. No
 # full-vector y * exp(-eta), y / mu, or e / mu ever forms; a nonfinite quantity
-# is a hard trial failure, never a clamp. Sourced by the solver before the fit.
+# is a hard trial failure, never a clamp. The result skeleton, recession map,
+# and stability-pair check live in log_var_eq_harvey_solver_result.R. Sourced
+# by the solver before the fit.
 
 # Upper Cholesky of X'X, recomputed only when the constructor passes none, so the
 # factor-once contract is enforced by the signature rather than by convention.
@@ -43,18 +45,27 @@ hv_eval <- function(theta, y, x_mat, pos, col_abs) {
   list(theta = theta, eta = eta, r = r, q = q, moment = moment, score_norm = score_norm)
 }
 
-# Backtracking line search along dir from cur: accept a strict criterion decrease
-# or, on an exact tie, only a scaled-score improvement past the pinned margin.
-# Returns NULL (line-search stall) after 30 halvings without an accepted trial.
+# Backtracking line search along dir from cur: accept a strict criterion
+# decrease or, on a criterion tie, only a scaled-score improvement past the
+# pinned margin. A tie is any difference within the criterion's summation
+# rounding error (eps times the absolute-term sums of Q), not literal
+# equality of the stored doubles: near the optimum the scoring step's true
+# decrease sits below that noise floor, so two evaluations cannot be
+# distinguished by Q and the score is the only meaningful signal (the score
+# check, not descent alone, decides convergence). The mandatory strict score
+# progress keeps every tie acceptance monotone in the score, so the search
+# cannot cycle. Returns NULL (stall) after 30 halvings with no acceptance.
 hv_line_search <- function(cur, dir, y, x_mat, pos, col_abs) {
   step <- 1
+  q_noise <- 4 * .Machine$double.eps *
+    (1 + sum(abs(cur$eta)) + sum(cur$r[pos]))
   for (halves in 0:30) {
     trial <- hv_eval(cur$theta + step * dir, y, x_mat, pos, col_abs)
     if (!is.null(trial)) {
       if (trial$q < cur$q) {
         return(list(eval = trial, halves = halves))
       }
-      if (trial$q == cur$q) {
+      if (abs(trial$q - cur$q) <= q_noise) {
         margin <- 10 * .Machine$double.eps * max(1, cur$score_norm)
         if (cur$score_norm - trial$score_norm > margin) {
           return(list(eval = trial, halves = halves))
@@ -66,18 +77,52 @@ hv_line_search <- function(cur, dir, y, x_mat, pos, col_abs) {
   NULL
 }
 
-# Full scoring solve from one preflighted start eval. The initial-start shortcut
-# exits converged with code 0 when the scaled score already passes; otherwise
-# iterate to maxit, converging only on a passed score plus a relative change.
+# Observed-Newton direction (X' diag(r) X)^-1 X'(r - 1) when the observed
+# information is well conditioned, else NULL so the caller falls back to the
+# constant-information Fisher direction. Newton is quadratically convergent
+# near the solution; Fisher (constant 0.5 X'X, always positive definite) is
+# the globally safe direction far from it. This adaptive hybrid is the dossier
+# section 2 / section 13 observed-Newton acceleration, needed because
+# expected-information scoring alone is only linearly convergent and crawls
+# (or hits the cap) on the estimation sample's heavy-tailed identified-set
+# responses -- the plan deferred it on the premise that scoring converges in a
+# handful of iterations, which the real data falsifies.
+hv_newton_dir <- function(cur, x_mat) {
+  obs <- crossprod(x_mat, cur$r * x_mat)
+  if (!all(is.finite(obs))) {
+    return(NULL)
+  }
+  dg <- sqrt(diag(obs))
+  if (any(!is.finite(dg)) || any(dg <= 0) || rcond(obs / tcrossprod(dg)) < 1e-12) {
+    return(NULL)
+  }
+  r_chol <- tryCatch(chol(obs), error = function(cond) NULL)
+  if (is.null(r_chol)) {
+    return(NULL)
+  }
+  backsolve(r_chol, forwardsolve(r_chol, cur$moment, upper.tri = TRUE, transpose = TRUE))
+}
+
+# Full solve from one preflighted start eval. The initial-start shortcut exits
+# converged with code 0 when the scaled score already passes; otherwise each
+# iteration prefers the observed-Newton direction and falls back to the Fisher
+# direction when the observed information is ill conditioned or its line search
+# stalls, converging only on a passed score plus a relative change. maxit is a
+# safety ceiling: Newton reaches score 1e-8 in a handful of iterations, but the
+# Fisher fallback on a pathological point may need many more.
 hv_scoring <- function(cur, y, x_mat, pos, col_abs, chol_xx, tol_score = 1e-8,
-                       maxit = 200L) {
+                       maxit = 1000L) {
   if (cur$score_norm <= tol_score) {
     return(list(eval = cur, iters = 0L, halves = 0L, status = "converged"))
   }
   total_halves <- 0L
   for (it in seq_len(maxit)) {
-    dir <- hv_chol_solve(chol_xx, cur$moment)
-    ls <- hv_line_search(cur, dir, y, x_mat, pos, col_abs)
+    dir_n <- hv_newton_dir(cur, x_mat)
+    ls <- if (!is.null(dir_n)) hv_line_search(cur, dir_n, y, x_mat, pos, col_abs) else NULL
+    if (is.null(ls)) {
+      dir_f <- hv_chol_solve(chol_xx, cur$moment)
+      ls <- hv_line_search(cur, dir_f, y, x_mat, pos, col_abs)
+    }
     if (is.null(ls)) {
       return(list(
         eval = cur, iters = -it, halves = total_halves,
@@ -122,78 +167,4 @@ hv_post_stop <- function(theta, y, x_mat, pos, col_abs) {
     return(NULL)
   }
   list(eval = ev, info = info, rcond = rc)
-}
-
-# Complete fit-result skeleton: every Plan 7 field is always present so success
-# and each fail-closed branch share one shape.
-hv_result <- function(coef = NULL, fit_status, converged = FALSE,
-                      objective = NA_real_, score_norm = NA_real_,
-                      convergence_code = -1L, warm_start = NULL,
-                      error_class = NA_character_, n_zero = 0L,
-                      rank_x_pos = NA_integer_, rcond_info = NA_real_,
-                      n_halvings = NA_integer_, start_attempts = list(),
-                      per_start_criteria = NULL, recession = NULL,
-                      info_matrix = NULL) {
-  list(
-    coef = coef, fit_status = fit_status, converged = converged,
-    objective = objective, score_norm = score_norm,
-    convergence_code = convergence_code,
-    diagnostics = list(
-      warnings = character(0), messages = character(0), error_class = error_class,
-      start_attempts = start_attempts, n_zero_response = n_zero,
-      rank_x_pos = rank_x_pos, rcond_info = rcond_info, n_halvings = n_halvings,
-      per_start_criteria = per_start_criteria, recession_certificate = recession,
-      info_matrix = info_matrix
-    ),
-    warm_start = warm_start
-  )
-}
-
-# Map a nonpassing recession classification to its fit status and error class.
-hv_recession_map <- list(
-  negative_recession = c("nonexistence", "negative_recession"),
-  zero_recession = c("nonconvergence", "zero_recession_unresolved"),
-  certificate_failure = c("nonconvergence", "recession_certificate_failed")
-)
-
-# Evaluate one stability pair without fitting: validate the response and start,
-# require finite eta and strictly positive variance, a finite safe ratio, score,
-# and information, then take one backtracked scoring proposal (the first trial).
-hv_precheck_pair <- function(pair, label, x_mat, n, p, col_abs, chol_xx) {
-  rec <- function(ok, reason, objective = NA_real_, score_norm = NA_real_,
-                  proposal_ok = FALSE) {
-    list(
-      label = label, ok = ok, objective = objective, score_norm = score_norm,
-      proposal_ok = proposal_ok, reason = reason
-    )
-  }
-  y <- if (!is.null(pair$response)) pair$response else pair$y
-  start <- pair$start
-  if (!is.numeric(y) || length(y) != n || anyNA(y) || any(!is.finite(y)) ||
-    any(y < 0)) {
-    return(rec(FALSE, "invalid_response"))
-  }
-  if (!is.numeric(start) || length(start) != p || !all(is.finite(start))) {
-    return(rec(FALSE, "invalid_start"))
-  }
-  pos <- y > 0
-  cur <- hv_eval(start, y, x_mat, pos, col_abs)
-  if (is.null(cur)) {
-    return(rec(FALSE, "nonfinite_start_eval"))
-  }
-  mu <- exp(cur$eta)
-  if (!all(is.finite(mu)) || !all(mu > 0)) {
-    return(rec(FALSE, "nonpositive_mu", cur$q, cur$score_norm))
-  }
-  info <- 0.5 * crossprod(x_mat, cur$r * x_mat)
-  if (!all(is.finite(info))) {
-    return(rec(FALSE, "nonfinite_info", cur$q, cur$score_norm))
-  }
-  dir <- hv_chol_solve(chol_xx, cur$moment)
-  trial <- hv_eval(start + dir, y, x_mat, pos, col_abs)
-  proposal_ok <- !is.null(trial)
-  rec(
-    proposal_ok, if (proposal_ok) NA_character_ else "proposal_nonfinite",
-    cur$q, cur$score_norm, proposal_ok
-  )
 }

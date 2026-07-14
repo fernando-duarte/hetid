@@ -138,6 +138,37 @@ check("he analyze_domain sides returns named all-false recession flags", he_try(
     identical(sd$info$method, "fit_level_recession")
 }))
 
+# Heavy-tailed multiplicative-variance responses at the estimation sample's
+# scale and dynamic range (a t_3 innovation gives the naive OLS-residual
+# response's ~7-order spread) must converge from a cold intercept-only start,
+# and quickly. Two things this pins: (a) near the optimum the scoring step's
+# true criterion decrease sits below Q's summation-noise floor, so acceptance
+# must treat a noise-band criterion tie as equality (with the mandatory strict
+# score progress), not stall the line search on a last-bit rounding; and (b)
+# the observed-Newton direction is quadratically convergent, so every case must
+# converge in well under a hundred iterations -- pure expected-information
+# scoring is only linearly convergent and crawls past a thousand iterations
+# here, so a regression that drops the Newton acceleration fails this check in
+# a second rather than the pipeline in an hour.
+check("he heavy-tailed responses converge fast from a cold start", he_try({
+  ok <- TRUE
+  max_iters <- 0L
+  for (s in 1:20) {
+    set.seed(s)
+    pcr_s <- scale(matrix(rnorm(255L * 4L), 255L, 4L,
+      dimnames = list(NULL, paste0("l.pc", 1:4))
+    ), center = TRUE, scale = FALSE)
+    x_s <- cbind(1, pcr_s)
+    colnames(x_s) <- c("(Intercept)", colnames(pcr_s))
+    y_s <- exp(-2 + drop(pcr_s %*% c(0.2, -0.3, 0.25, 0.6))) *
+      stats::rt(255L, df = 3)^2
+    f_s <- logvar_harvey_fit_response(y_s, x_s)
+    ok <- ok && isTRUE(f_s$converged) && f_s$score_norm <= 1e-8
+    max_iters <- max(max_iters, abs(f_s$convergence_code))
+  }
+  ok && max_iters < 100L
+}))
+
 # A joint row permutation of (w1, w2, pcr, qtr) leaves the point fit unchanged
 check("he a joint row permutation leaves the point fit coefficients fixed", he_try({
   b0 <- c(0.15, -0.1)

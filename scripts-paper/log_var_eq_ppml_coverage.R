@@ -134,7 +134,8 @@ logvar_ppml_coverage_run <- function(est_cov, taus, b_tabs, b_seed,
 logvar_ppml_apply_coverage <- function(primary, coverage, tol = 1e-4,
                                        grid_cap = NA_integer_,
                                        fit_budget = NA_integer_,
-                                       cache_stamp = NA_character_) {
+                                       cache_stamp = NA_character_,
+                                       selector_id = "morton-v1") {
   results <- list()
   audit_rows <- list()
   for (key in names(primary)) {
@@ -177,7 +178,7 @@ logvar_ppml_apply_coverage <- function(primary, coverage, tol = 1e-4,
     results = results,
     audit = if (length(audit_rows)) do.call(rbind, audit_rows) else NULL,
     metadata = list(
-      version = "1.0.0", selector_id = "morton-v1", grid_cap = grid_cap,
+      version = "1.0.0", selector_id = selector_id, grid_cap = grid_cap,
       fit_budget = fit_budget, cache_stamp = cache_stamp
     )
   )

@@ -103,6 +103,8 @@ source("scripts-paper/log_var_eq_ppml_sets.R")
 # the primary table consumes the completed PPML hulls; the combined table then
 # adds the mean-log robustness panel without recomputing either estimator
 source("scripts-paper/log_var_eq_table.R")
+# Harvey constants and driver (the wrapper keeps this to one source line)
+source("scripts-paper/log_var_eq_harvey_run.R")
 source("scripts-paper/log_var_eq_ppml_table.R")
 # the log-variance figures consume mean_eq_bounds_tau and the registry, so
 # this runs after both producers
