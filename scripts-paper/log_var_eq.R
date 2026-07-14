@@ -153,6 +153,22 @@ log_var_eq <- list(
   b_seed = b_point,
   sample_id = logvar_est$metadata$sample_id
 )
+# frozen inputs and the explicit post-trim sample contract: the one
+# preparation path every later estimator consumes (additive only)
+log_var_eq$inputs <- list(
+  w1 = w1_lv, w2 = w2_lv, pcr = pcr, qtr = logvar_rows$qtr
+)
+log_var_eq$sample_contract <- list(
+  qtr = logvar_rows$qtr, n = nrow(logvar_rows), pc_names = colnames(pcr),
+  sample_id = log_var_eq$sample_id
+)
+# the bounds-by-tau figure renders one estimator-stamped PDF per registry
+# entry; the benchmark is entry one
+logvar_bounds_tau_registry <- list(list(
+  estimator = logvar_est, schema = log_var_eq$schema, sets = log_var_eq$sets,
+  b_seed = b_point, engine_opts = list(),
+  output_path = logvar_bounds_tau_path(out_dir, logvar_est$metadata)
+))
 
 cat(
   "log-variance equation: N =", log_var_eq$sample$n,

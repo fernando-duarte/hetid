@@ -30,6 +30,7 @@ source(here::here("scripts/utils/tests/logvar_engine_schema_checks.R"))
 source(here::here("scripts/utils/tests/logvar_engine_service_checks.R"))
 source(here::here("scripts/utils/tests/logvar_engine_context_checks.R"))
 source(here::here("scripts/utils/tests/logvar_engine_hook_checks.R"))
+source(here::here("scripts/utils/tests/logvar_engine_seam_checks.R"))
 
 cat(sprintf("\n%d passed, %d failed\n", .pass, .fail))
 if (.fail > 0L) quit(status = 1L)

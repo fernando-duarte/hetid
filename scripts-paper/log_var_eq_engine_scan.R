@@ -36,8 +36,14 @@ logvar_order_grid_nn <- function(b_feas, b_seed = NULL) {
 # ones left for the engine's fail-closed rule), and track per-coefficient
 # extremes with their attaining points; st collects labels as discovered so
 # a budget stop mid-scan still knows the coefficient axis
-logvar_engine_scan <- function(est, b_feas, evaluate_fit, b_seed, claim_fn, st) {
-  traversal <- est$metadata$traversal
+logvar_engine_scan <- function(est, b_feas, evaluate_fit, b_seed, claim_fn, st,
+                               traversal_override = NULL, pool_k = 1L,
+                               pool_sep = Inf) {
+  traversal <- if (is.null(traversal_override)) {
+    est$metadata$traversal
+  } else {
+    traversal_override
+  }
   ord <- if (identical(traversal, "lattice")) {
     seq_len(nrow(b_feas))
   } else {
@@ -48,6 +54,8 @@ logvar_engine_scan <- function(est, b_feas, evaluate_fit, b_seed, claim_fn, st) 
   failures <- list()
   claimed <- list()
   fit_statuses <- character(length(ord))
+  vals <- list()
+  pts <- list()
   for (k in seq_along(ord)) {
     b <- b_feas[ord[k], ]
     fit <- evaluate_fit(b, phase = "scan", start = warm)
@@ -68,6 +76,10 @@ logvar_engine_scan <- function(est, b_feas, evaluate_fit, b_seed, claim_fn, st) 
     warm <- fit$warm_start
     if (is.null(st$labels)) st$labels <- names(fit$coef)
     v <- unname(fit$coef)
+    if (pool_k > 1L) {
+      vals[[length(vals) + 1L]] <- v
+      pts[[length(pts) + 1L]] <- b
+    }
     if (is.null(best_min)) {
       best_min <- rep(Inf, length(v))
       best_max <- rep(-Inf, length(v))
@@ -84,8 +96,14 @@ logvar_engine_scan <- function(est, b_feas, evaluate_fit, b_seed, claim_fn, st) 
       }
     }
   }
+  pools <- if (pool_k > 1L && length(vals) > 0L) {
+    logvar_engine_scan_pools(do.call(rbind, vals), pts, pool_k, pool_sep)
+  } else {
+    NULL
+  }
   list(
     min = best_min, max = best_max, arg_min = arg_min, arg_max = arg_max,
+    arg_min_pool = pools$arg_min_pool, arg_max_pool = pools$arg_max_pool,
     domain_info = NULL, n_fit_failures = length(failures) + length(claimed),
     fit_statuses = fit_statuses, failures = failures,
     claimed_failures = claimed

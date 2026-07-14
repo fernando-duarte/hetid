@@ -110,22 +110,39 @@ logvar_make_ctx <- function(evaluate_fit, qs, delta, omega, cache, bs) {
   )
 }
 
-# deterministic lattice-order coarsening to at most max_pts retained rows;
-# runs before any ordering, never after (coarsening must not require the
-# quadratic ordering it exists to make affordable)
-logvar_coarsen_grid <- function(b_feas, max_pts) {
-  m <- nrow(b_feas)
-  if (is.null(max_pts) || m <= max_pts) {
-    return(b_feas)
-  }
-  b_feas[seq(1L, m, by = ceiling(m / max_pts)), , drop = FALSE]
-}
-
 # one shared definition of a usable fit: ok status, converged, and a
 # finite coefficient vector
 logvar_fit_ok <- function(fit) {
   identical(fit$fit_status, "ok") && isTRUE(fit$converged) &&
     !is.null(fit$coef) && all(is.finite(fit$coef))
+}
+
+# selector seam: a caller-supplied grid_selector(b_feas, max_grid_points)
+# must return exactly list(grid, selector_id, traversal); the grid must be a
+# unique rowwise subset of the freshly checked feasible grid (no invented
+# points), and traversal is "engine_default" (normal ordering) or
+# "as_selected" (scan in callback order, bypassing the nearest-neighbor cap)
+logvar_engine_apply_selector <- function(sel_fn, b_feas, max_grid_points) {
+  sel <- sel_fn(b_feas, max_grid_points)
+  if (!is.list(sel) || !setequal(names(sel), c("grid", "selector_id", "traversal"))) {
+    stop("grid_selector must return list(grid, selector_id, traversal)")
+  }
+  if (!sel$traversal %in% c("engine_default", "as_selected")) {
+    stop("grid_selector traversal must be engine_default or as_selected")
+  }
+  g <- sel$grid
+  if (!is.matrix(g) || nrow(g) < 1L || ncol(g) != ncol(b_feas)) {
+    stop("grid_selector returned a malformed grid")
+  }
+  keys_out <- apply(g, 1L, logvar_b_key)
+  if (anyDuplicated(keys_out) > 0L) stop("grid_selector returned duplicate rows")
+  if (!all(keys_out %in% apply(b_feas, 1L, logvar_b_key))) {
+    stop("grid_selector invented rows outside the feasible grid")
+  }
+  list(grid = g, traversal = sel$traversal, info = list(
+    selector_id = sel$selector_id, n_selector_input = nrow(b_feas),
+    n_selector_output = nrow(g)
+  ))
 }
 
 # arity adapters: Plan 7's original two-/three-argument hooks keep working

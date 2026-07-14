@@ -92,3 +92,36 @@ logvar_engine_cold_check <- function(meta, labels, lower, upper, arg_lo,
   }
   list(records = records, lo_unrel = lo_unrel, up_unrel = up_unrel)
 }
+# deterministic lattice-order coarsening to at most max_pts retained rows;
+# runs before any ordering, never after (coarsening must not require the
+# quadratic ordering it exists to make affordable)
+logvar_coarsen_grid <- function(b_feas, max_pts) {
+  m <- nrow(b_feas)
+  if (is.null(max_pts) || m <= max_pts) {
+    return(b_feas)
+  }
+  b_feas[seq(1L, m, by = ceiling(m / max_pts)), , drop = FALSE]
+}
+
+# k-best separated start pools from the generic scan: per coefficient and
+# side, rank candidates by extremeness and accept greedily only when the
+# candidate sits farther than sep from every accepted member, so a pool of
+# three is never three copies of one corner; the primary arg-extreme is the
+# first acceptance and is excluded from the returned pool
+logvar_engine_scan_pools <- function(vals, pts, pool_k, sep) {
+  pick <- function(ord) {
+    kept <- list()
+    for (i in ord) {
+      b <- pts[[i]]
+      far <- all(vapply(kept, function(a) sqrt(sum((a - b)^2)) > sep, logical(1)))
+      if (length(kept) == 0L || far) kept[[length(kept) + 1L]] <- b
+      if (length(kept) >= pool_k) break
+    }
+    kept[-1L]
+  }
+  n_coef <- ncol(vals)
+  list(
+    arg_min_pool = lapply(seq_len(n_coef), function(j) pick(order(vals[, j]))),
+    arg_max_pool = lapply(seq_len(n_coef), function(j) pick(order(-vals[, j])))
+  )
+}

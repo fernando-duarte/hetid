@@ -61,9 +61,9 @@ peng_dummy <- function(cold_disagree = FALSE, objective_fail = FALSE) {
   }
   list(est = est, cc = cc)
 }
-peng_run <- function(est, ...) {
+peng_run <- function(est, cold = FALSE, ...) {
   logvar_engine_set_at_tau(est, peng_qs, peng_btab,
-    b_seed = NULL, grid_n = 7L, grid_floor = 1L, cold_start_check = FALSE, ...
+    b_seed = NULL, grid_n = 7L, grid_floor = 1L, cold_start_check = cold, ...
   )
 }
 
@@ -93,9 +93,12 @@ peng_pv <- tryCatch(
     res_s <- logvar_engine_set_at_tau(mk(b0), qs_s, btab_s,
       b_seed = NULL, grid_n = 5L, grid_floor = 1L, cold_start_check = FALSE
     )
+    # the endpoint certificate is feasibility at the normalized 1e-4
+    # tolerance, so polish may wander that far inside the singleton's slack;
+    # agreement is certificate-scaled, not exact
     singleton <-
-      isTRUE(all.equal(res_s$table$set_lower, unname(fit0$coef), tolerance = 1e-6)) &&
-        isTRUE(all.equal(res_s$table$set_upper, unname(fit0$coef), tolerance = 1e-6))
+      isTRUE(all.equal(res_s$table$set_lower, unname(fit0$coef), tolerance = 5e-4)) &&
+        isTRUE(all.equal(res_s$table$set_upper, unname(fit0$coef), tolerance = 5e-4))
     est <- mk(c(0, 0))
     sc <- logvar_engine_set_at_tau(est, peng_qs, peng_btab,
       b_seed = NULL, grid_n = 5L, grid_floor = 1L, cold_start_check = FALSE,
@@ -150,7 +153,7 @@ local({
 
 # Cold-start replication flags a warm-dependent pathological dummy unreliable
 check("peng cold-start replication flags a warm-dependent dummy", peng_try({
-  sd <- peng_run(peng_dummy(cold_disagree = TRUE)$est, cold_start_check = TRUE)$schema
+  sd <- peng_run(peng_dummy(cold_disagree = TRUE)$est, cold = TRUE)$schema
   any(c(sd$lower_status, sd$upper_status) == "unreliable")
 }))
 
