@@ -4,6 +4,25 @@
 # driver log_var_eq_joint_null.R (which the offline suite sources too), so these
 # functions are available whether or not the pipeline objects exist.
 
+# The marker-wrapped panels-table note (LaTeX comments) documenting the
+# diagnostic; the byte-identity gate excludes exactly this block and the numbers
+# live in the CSV and RDS artifacts. Appended by log_var_eq_ppml_table.R.
+logvar_joint_null_panel_note <- function() {
+  c(
+    "% BEGIN LOGVAR JOINT NULL NOTE",
+    paste(
+      "% Benchmark log-OLS joint-zero diagnostic (joint_null_theta_r) reports",
+      "the smallest attained scaled distance over the joint Lewbel set."
+    ),
+    paste(
+      "% 'Witness' means one feasible coefficient vector makes all four slopes",
+      "numerically zero; 'not demonstrated' is not a test rejection or a",
+      "globally certified exclusion."
+    ),
+    "% END LOGVAR JOINT NULL NOTE"
+  )
+}
+
 # Compact console summary: the frozen sd-effect scales once, then one block per
 # tau with the attained scaled distance, numerical status, membership verdict,
 # and soft warnings (edge-riding arg-min, sparse grid, L-infinity sensitivity)

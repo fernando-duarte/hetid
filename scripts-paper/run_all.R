@@ -151,6 +151,13 @@ source("scripts-paper/log_var_eq_ppml_se.R")
 source("scripts-paper/log_var_eq_table.R")
 # Harvey sets and dedicated table (the wrapper keeps this to one source line)
 source("scripts-paper/log_var_eq_harvey_run.R")
+# joint-null theta_R = 0 distance diagnostic: math, search, stability, then the
+# guarded driver (inputs is sourced by log_var_eq.R; the split modules are
+# self-sourced by their named parents), before the panels table appends its note
+source("scripts-paper/log_var_eq_joint_null_math.R")
+source("scripts-paper/log_var_eq_joint_null_search.R")
+source("scripts-paper/log_var_eq_joint_null_stability.R")
+source("scripts-paper/log_var_eq_joint_null.R")
 source("scripts-paper/log_var_eq_ppml_table.R")
 # vol set-endpoint bootstrap: reads the frozen PPML/Harvey caches and the lagged
 # asset-return PCs, re-runs the whole set map per resample, and writes the outer

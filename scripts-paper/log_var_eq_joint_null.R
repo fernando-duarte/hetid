@@ -47,6 +47,12 @@ if (exists("log_var_eq") && exists("set_id_mean_eq") &&
     }
     row
   }
+  # the carried nesting floor's q_reported must be the DIRECT objective q at the
+  # arg-min, bit-identical to the scan's re-evaluation; 0.5 * scaled_l2^2 would
+  # round-trip through sqrt and miss the exact monotonicity check by one ULP
+  jn_qrep <- function(b) {
+    logvar_joint_null_objective(b, jn_w1, jn_w2, jn_proj, jn_d_inv2)$q
+  }
 
   # tau = 0 singleton: evaluate the closed-form Lewbel point through a
   # degenerate box, prepended as the first row (single-point evaluation, so no
@@ -67,7 +73,7 @@ if (exists("log_var_eq") && exists("set_id_mean_eq") &&
   # report a larger distance (the monotonicity integration check).
   jn_taus <- set_id_mean_eq$tau_display
   jn_prior <- if (is.finite(jn_row0$scaled_l2)) {
-    list(structure(jn_b_point, q_reported = 0.5 * jn_row0$scaled_l2^2))
+    list(structure(jn_b_point, q_reported = jn_qrep(jn_b_point)))
   } else {
     list()
   }
@@ -83,7 +89,7 @@ if (exists("log_var_eq") && exists("set_id_mean_eq") &&
     jn_row$tau_order <- jn_idx + 1L
     jn_rows[[length(jn_rows) + 1L]] <- jn_row
     jn_win <- c(jn_row$b1, jn_row$b2, jn_row$b3)
-    attr(jn_win, "q_reported") <- 0.5 * jn_row$scaled_l2^2
+    attr(jn_win, "q_reported") <- jn_qrep(jn_win)
     jn_prior <- c(jn_prior, list(jn_win))
   }
 
@@ -122,7 +128,7 @@ if (exists("log_var_eq") && exists("set_id_mean_eq") &&
   options(jn_grid_opt)
   rm(
     jn_inputs, jn_proj, jn_scales, jn_d_inv2, jn_w1, jn_w2, jn_eps_ref,
-    jn_qs_fn, jn_grid_opt, jn_fill, jn_b_point, jn_box0, jn_row0, jn_rows,
+    jn_qs_fn, jn_grid_opt, jn_fill, jn_qrep, jn_b_point, jn_box0, jn_row0, jn_rows,
     jn_taus, jn_prior, jn_idx, jn_tau, jn_key, jn_box, jn_row, jn_win,
     jn_commit, jn_out, jn_csv, jn_rds
   )
