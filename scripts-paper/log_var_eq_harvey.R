@@ -45,9 +45,7 @@ logvar_harvey_estimator <- function(w1, w2, pcr, qtr, b_point = NULL,
     }
   }
   point_warm <- if (accepted) raw_point_fit$warm_start else NULL
-  base_ladder <- Filter(Negate(is.null), list(
-    ladder$ppml, point_warm, ladder$logols_shifted
-  ))
+  base_ladder <- Filter(Negate(is.null), list(ladder$ppml, ladder$logols_shifted))
   metadata <- list(
     estimator = "harvey", target_functional = "theta_var_gaussian",
     intercept_normalization =
@@ -88,6 +86,12 @@ logvar_harvey_estimator <- function(w1, w2, pcr, qtr, b_point = NULL,
           auto_intercept = auto
         )
       }
+      tagged <- function(f, lbl) {
+        lapply(f$diagnostics$start_attempts, function(a) {
+          a$source <- paste0(lbl, a$source)
+          a
+        })
+      }
       # warm -> ppml -> standalone: the cheap warm attempt runs without the
       # auto-salvage rung so a failed chain genuinely falls through, the
       # arbitrary-b PPML rung is consulted lazily (only on that failure),
@@ -97,19 +101,19 @@ logvar_harvey_estimator <- function(w1, w2, pcr, qtr, b_point = NULL,
       trail <- list()
       if (!is.null(warm)) {
         best <- hv(warm, list(), FALSE)
-        trail <- best$diagnostics$start_attempts
+        trail <- tagged(best, "warm:")
       }
       if (!logvar_harvey_accepted(best) && !is.null(ppml_start_at_b)) {
         pf <- tryCatch(ppml_start_at_b(b), error = function(cond) NULL)
         if (logvar_harvey_accepted(pf)) {
           second <- hv(pf$coef, list(), FALSE)
-          trail <- c(trail, second$diagnostics$start_attempts)
+          trail <- c(trail, tagged(second, "ppml:"))
           if (logvar_harvey_accepted(second)) best <- second
         }
       }
       if (!logvar_harvey_accepted(best)) {
         third <- hv(NULL, base_ladder, TRUE)
-        trail <- c(trail, third$diagnostics$start_attempts)
+        trail <- c(trail, tagged(third, "standalone:"))
         best <- third
       }
       best$diagnostics$start_attempts <- trail
