@@ -59,7 +59,8 @@ logvar_ppml_vcov <- function(coef, y, x_mat, hac_lags) {
   if (!all(is.finite(d_scale)) || any(d_scale <= 0)) {
     return(na_out)
   }
-  a_s <- a_mat / tcrossprod(d_scale) # D^-1 A D^-1
+  dd <- tcrossprod(d_scale)
+  a_s <- a_mat / dd # D^-1 A D^-1
   if (!all(is.finite(a_s)) || rcond(a_s) < 1e-10) {
     return(na_out)
   }
@@ -67,7 +68,7 @@ logvar_ppml_vcov <- function(coef, y, x_mat, hac_lags) {
   if (is.null(r_chol)) {
     return(na_out)
   }
-  a_inv <- chol2inv(r_chol) / tcrossprod(d_scale) # A^-1 = D^-1 A_s^-1 D^-1
+  a_inv <- chol2inv(r_chol) / dd # A^-1 = D^-1 A_s^-1 D^-1
   dimnames(a_inv) <- dimnames(a_mat)
   r <- y - mu
   u <- x_mat * r
