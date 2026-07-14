@@ -11,11 +11,14 @@
 source("scripts-paper/log_var_eq_harvey_notes.R")
 
 # Build the Harvey panel fragment: reference and Lewbel-point columns plus the
-# per-display-tau hulls, t-statistic slots blank by construction, R^2 not
-# defined for the variance MLE. Row labels come from the fitted coefficient
-# vector (length minus one intercept), never a run_all global.
+# per-display-tau hulls, R^2 not defined for the variance MLE. Row labels come
+# from the fitted coefficient vector (length minus one intercept), never a
+# run_all global. The point columns render t-statistics/stars when se_type is
+# set (a transposition of logvar_ppml_table_parts's point_col); stat slots
+# stay blank by construction when se_type is NULL (back-compat).
 logvar_harvey_build_fragment <- function(harvey, n_obs, tau_display,
-                                         caption = NULL, label = NULL) {
+                                         caption = NULL, label = NULL,
+                                         se_type = NULL, se_hac_lags = NULL) {
   tab <- harvey$table
   n_pc_r <- length(tab$coef) - 1L
   sets <- harvey$sets[sprintf("%.17g", tau_display)]
@@ -24,10 +27,33 @@ logvar_harvey_build_fragment <- function(harvey, n_obs, tau_display,
     "$\\theta^{H}_0$", sprintf("$\\theta^{H}_{%d,R}$", seq_len(n_pc_r))
   )
   rows <- c(interleave(labels, ""), "$R^2$", "$N$")
+  # a point column: se_type NULL (default) keeps the stat rows blank exactly as
+  # before; se_type set requires the stored, aligned SE frame (fail loud rather
+  # than silently blank while the notes claim SEs are reported) and prints
+  # t = coef/se with standard-normal (QMLE) stars.
+  point_col <- function(vals, se_frame) {
+    if (is.null(se_type)) {
+      return(c(interleave(fmt(vals), ""), "--", sprintf("%d", n_obs)))
+    }
+    key <- match.arg(se_type, LOGVAR_HARVEY_SE_TYPES)
+    stopifnot(
+      !is.null(se_frame), key %in% names(se_frame),
+      identical(se_frame$coef, tab$coef)
+    )
+    se <- se_frame[[key]]
+    t_stat <- vals / se
+    stars <- sig_stars(2 * stats::pnorm(-abs(t_stat)))
+    cells <- ifelse(
+      stars == "" | !is.finite(t_stat), fmt(vals),
+      sprintf("%s$%s$", fmt(vals), stars)
+    )
+    stat_row <- ifelse(is.finite(t_stat), sprintf("(%.2f)", t_stat), "")
+    c(interleave(cells, stat_row), "--", sprintf("%d", n_obs))
+  }
   cols <- c(
     list(
-      c(interleave(fmt(tab$reference), ""), "--", sprintf("%d", n_obs)),
-      c(interleave(fmt(tab$point), ""), "--", sprintf("%d", n_obs))
+      point_col(tab$reference, harvey$se$reference),
+      point_col(tab$point, harvey$se$point)
     ),
     unname(lapply(sets, function(st) {
       stopifnot(identical(st$coef, tab$coef))
@@ -63,7 +89,8 @@ logvar_harvey_build_fragment <- function(harvey, n_obs, tau_display,
 logvar_harvey_append_panel <- function(panels_lines, harvey, n_obs,
                                        tau_display, tau_baseline,
                                        grid_cap, fit_budget, caption = NULL,
-                                       label = NULL, include_ordering = TRUE) {
+                                       label = NULL, include_ordering = TRUE,
+                                       se_type = NULL, se_hac_lags = NULL) {
   splice_block <- function(fragment, notes_lines) {
     cut <- match("\\end{threeparttable}", fragment)
     stopifnot(!is.na(cut))
@@ -82,10 +109,11 @@ logvar_harvey_append_panel <- function(panels_lines, harvey, n_obs,
     )
   }
   harvey_fragment <- logvar_harvey_build_fragment(
-    harvey, n_obs, tau_display, caption, label
+    harvey, n_obs, tau_display, caption, label, se_type, se_hac_lags
   )
   harvey_notes <- build_harvey_panel_notes(
-    harvey, tau_baseline, grid_cap, fit_budget, include_ordering
+    harvey, tau_baseline, grid_cap, fit_budget, include_ordering,
+    se_type, se_hac_lags
   )
   c(panels_lines, splice_block(harvey_fragment, harvey_notes))
 }

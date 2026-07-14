@@ -21,7 +21,8 @@ harvey_table_lines <- logvar_harvey_append_panel(
     "Harvey MLE/QMLE identified sets for the log-variance equation:",
     "$\\theta^{H}$, the Gaussian multiplicative-variance map."
   ),
-  label = "tab:log_var_eq_harvey", include_ordering = FALSE
+  label = "tab:log_var_eq_harvey", include_ordering = FALSE,
+  se_type = logvar_harvey_se_type, se_hac_lags = logvar_harvey_se_hac_lags
 )
 stopifnot(
   sum(harvey_table_lines == "% BEGIN LOGVAR PANEL harvey") == 1L,

@@ -160,7 +160,8 @@ if (exists("log_var_eq_harvey")) {
   panels_lines <- logvar_harvey_append_panel(
     panels_lines, log_var_eq_harvey, panels_n_obs,
     set_id_mean_eq$tau_display, set_id_mean_eq$tau_baseline,
-    logvar_harvey_grid_cap, logvar_harvey_fit_budget
+    logvar_harvey_grid_cap, logvar_harvey_fit_budget,
+    se_type = logvar_harvey_se_type, se_hac_lags = logvar_harvey_se_hac_lags
   )
 }
 write_latex_table(panels_lines, out_dir, "log_var_eq_panels")

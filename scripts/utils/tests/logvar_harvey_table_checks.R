@@ -60,4 +60,51 @@ check("Harvey standalone renderer uses dedicated context and headers", {
     ))
 })
 
-rm(hvt_coef, hvt_set, hvt_harvey, hvt_lines)
+hvt_se_frame <- function(se_col) {
+  data.frame(
+    coef = hvt_coef, expected = se_col, observed = se_col, opg = se_col,
+    robust = se_col, hac = c(0.65, 0.05), check.names = FALSE
+  )
+}
+hvt_harvey_se <- c(hvt_harvey, list(se = list(
+  reference = hvt_se_frame(c(0.5, 0.05)),
+  point = hvt_se_frame(c(0.6, 0.05)),
+  hac_lags = 4L
+)))
+hvt_lines_se <- logvar_harvey_append_panel(
+  character(0), hvt_harvey_se, 12L, c(0.05, 0.1), 0.05, 4000L, 20000L,
+  caption = "Dedicated Harvey MLE/QMLE table.", label = "tab:log_var_eq_harvey",
+  include_ordering = FALSE, se_type = "hac", se_hac_lags = 4L
+)
+
+check("Harvey panel renders hac t-stats/stars and selects the hac column", {
+  joined <- paste(hvt_lines_se, collapse = "\n")
+  # reference theta_0 = -1.3 / hac se 0.65 = -2.00 -> ** (observed 0.5 -> ***)
+  grepl("-1.300$^{**}$", joined, fixed = TRUE) &&
+    !grepl("-1.300$^{***}$", joined, fixed = TRUE) &&
+    grepl("(-2.00)", joined, fixed = TRUE)
+})
+
+check("Harvey panel keeps set columns free of statistic cells", {
+  # the theta_0 statistic row carries the two point-column t's and blank set
+  # cells; pin it to confirm no endpoint statistics were emitted
+  any(hvt_lines_se == " & (-2.00) & (-1.85) &  &  \\\\")
+})
+
+check("Harvey panel stays blank when se_type is NULL (back-compat)", {
+  # hvt_lines (built earlier without se_type) has blank statistic rows
+  any(hvt_lines == "$N$ & 12 & 12 & 12 & 12 \\\\") &&
+    !any(grepl("(-2.00)", hvt_lines, fixed = TRUE))
+})
+
+check("Harvey notes describe the hac SE variation and keep the caveat", {
+  notes <- paste(hvt_lines_se, collapse = " ")
+  grepl("Newey", notes) && grepl("QMLE", notes) &&
+    grepl("condition on the plug-in", notes) &&
+    !grepl("No Harvey standard errors", notes, fixed = TRUE)
+})
+
+rm(
+  hvt_coef, hvt_set, hvt_harvey, hvt_lines, hvt_se_frame, hvt_harvey_se,
+  hvt_lines_se
+)
