@@ -73,6 +73,14 @@ logvar_ppml_coverage_fit_budget <- 40000L
 # count matches the log-OLS benchmark's 4 lags.
 logvar_ppml_se_type <- "hac"
 logvar_ppml_se_hac_lags <- 4L
+# Harvey Gaussian multiplicative-variance QMLE standard errors, the same
+# selection knob for the Harvey module (log_var_eq_harvey_se.R): one of
+# "expected"/"observed" (Gaussian working-model Fisher / observed information),
+# "opg" (outer product of gradients), "robust" (Eicker-White QMLE sandwich), or
+# "hac" (Newey-West Bartlett). The default matches the PPML and log-OLS panels'
+# Newey-West lag-4 inference.
+logvar_harvey_se_type <- "hac"
+logvar_harvey_se_hac_lags <- 4L
 
 # output folder for tables and figures
 out_dir <- "scripts-paper/output"
