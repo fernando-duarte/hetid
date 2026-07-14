@@ -74,7 +74,9 @@ logvar_engine_run <- function(est, qs, b_tab, b_seed, grid_n, grid_floor,
         n_pts, format(bs$max_fit_evals)
       ))
     }
-    scan_cap <- bs$phase_caps[["scan"]]
+    # absent key means uncapped, matching logvar_make_evaluator ([[ ]] on a
+    # missing name would abort on a partial caps vector)
+    scan_cap <- if ("scan" %in% names(bs$phase_caps)) bs$phase_caps[["scan"]] else NULL
     if (!is.null(scan_cap) && bs$counters[["scan"]] + n_pts > scan_cap) {
       logvar_budget_stop("scan", sprintf("phase cap %d reached", scan_cap))
     }

@@ -107,10 +107,17 @@ build_lad_panel_notes <- function(lad, tau_baseline, grid_cap, fit_budget) {
       "applied and no row is dropped."
     ),
     paste(
-      "The reported cells are the attained punctured-domain hulls; the one-sided",
-      "closure limits are an explicitly approximate diagnostic, kept separate in",
-      "\\texttt{log\\_var\\_eq\\_lad\\_closure.csv} and never folded into a cell.",
-      "Side-dependent finite limits are retained as separate closure rows."
+      "The reported cells are single-pass attained inner approximations of the",
+      "punctured-domain hulls: every endpoint is a fitted coefficient at a feasible",
+      "$b_N$, and the engine's multi-start search only ever extends an endpoint",
+      "outward, so the cell is a subset of the true image. An offline refinement",
+      "search (up to $10^4$ extra starts per $\\tau$) moved no endpoint on this",
+      "sample, so the single-pass cell coincides with the denser search here."
+    ),
+    paste(
+      "The one-sided closure limits are an explicitly approximate diagnostic, kept",
+      "separate in \\texttt{log\\_var\\_eq\\_lad\\_closure.csv} and never folded into a",
+      "cell; side-dependent finite limits are retained as separate closure rows."
     ),
     sprintf(
       paste(

@@ -16,6 +16,10 @@ logvar_lad_console_block <- function(lad, taus) {
     "  quantreg %s; guard ratio %.0e; e_scale_ref = %.4g\n",
     lad$quantreg_version, lad$guard$ratio, lad$guard$e_scale_ref
   ))
+  cat(paste(
+    "  cells are single-pass attained inner approximations (the engine only",
+    "extends endpoints outward); an offline refinement search moved no endpoint\n"
+  ))
   keys <- names(lad$sets)
   for (i in seq_along(keys)) {
     k <- keys[i]

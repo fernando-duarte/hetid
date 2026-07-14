@@ -1,17 +1,14 @@
 # analyze_domain hooks for the median (LAD) log-variance estimator: the census
-# reuse + witness verification precheck, the verified-path probe protocol sides
-# phase, and the exact/guarded claim rule. Split from log_var_eq_lad.R for the
-# repository line cap; each builder closes over the frozen geometry (w1, w2,
-# x_mat, e_scale_ref) and adds it to the engine's hook context via
-# logvar_lad_augment_ctx before calling the domain module. The census reuses the
-# benchmark logvar_crossing_census (from log_var_eq_map.R); witnesses, anchors
-# and probes come from log_var_eq_lad_domain.R, both resolved at call time.
-# Definitions only; sourced by log_var_eq_lad.R.
+# reuse + witness verification precheck, the verified-path probe sides phase, and
+# the exact/guarded claim rule. Split from log_var_eq_lad.R for the line cap; each
+# builder closes over the frozen geometry (w1, w2, x_mat, e_scale_ref) and adds it
+# to the hook context via logvar_lad_augment_ctx before calling the domain module.
+# The census reuses logvar_crossing_census (log_var_eq_map.R); witnesses, anchors
+# and probes come from log_var_eq_lad_domain.R. Sourced by log_var_eq_lad.R.
 
-# Re-raise a budget-exhausted condition (so the engine fails the tau closed with
-# counts) while turning any other witness/probe error into a fallback value. This
-# MUST be the tryCatch's only handler: a sibling error handler would catch the
-# stop(e) below and swallow the budget signal before it ever reaches the engine.
+# Re-raise a budget-exhausted condition (engine then fails the tau closed with
+# counts); any other witness/probe error becomes a fallback value. MUST be the
+# tryCatch's ONLY handler, else a sibling catches the stop(e) and eats the signal.
 logvar_lad_pass_budget <- function(e, fallback) {
   if (inherits(e, "logvar_budget_exhausted")) {
     stop(e)
@@ -21,11 +18,10 @@ logvar_lad_pass_budget <- function(e, fallback) {
 
 # precheck: locate candidate crossing rows with the shared census, then verify a
 # constrained witness and feasible anchors for every one. A verified witness is
-# kept for the sides phase; an unverified witness, or a census row the functional
-# solve could not certify, becomes an unresolved entry so the engine fails closed
-# over every endpoint the region could hide. n_flagged reports the crossing count
-# (the engine forwards it as n_cross when the precheck passes); geom collects the
-# per-tau cached evaluator and box degeneracy for coef_objective.
+# kept for the sides phase; an unverified witness or an uncertified census row
+# becomes an unresolved entry so the engine fails closed over every endpoint the
+# region could hide. n_flagged reports the crossing count (forwarded as n_cross
+# when the precheck passes); geom collects the cached evaluator and box degeneracy.
 logvar_lad_precheck_hook <- function(w1, w2, x_mat, e_scale_ref, geom) {
   function(qs, b_tab, ctx) {
     geom$evaluate_fit <- ctx$evaluate_fit
@@ -62,11 +58,10 @@ logvar_lad_precheck_hook <- function(w1, w2, x_mat, e_scale_ref, geom) {
   }
 }
 
-# coef_objective: NULL on a full-dimensional box, so the engine builds its own
-# budgeted, exhaustion-aware objective. On a degenerate box (empty interior) it
-# pins the objective to the box center through the same cached evaluator (geom,
-# filled by the precheck each tau), so the derivative-free COBYLA polish cannot
-# exploit the 1e-4 feasibility slack to widen a measure-zero set.
+# coef_objective: NULL on a full-dimensional box (engine builds its own budgeted
+# objective). On a degenerate box (empty interior) it pins the objective to the box
+# center through the cached evaluator (geom, filled by the precheck each tau), so
+# the derivative-free COBYLA polish cannot exploit the 1e-4 slack to widen it.
 logvar_lad_coef_objective <- function(geom) {
   function(j) {
     if (!isTRUE(geom$degenerate) || is.null(geom$evaluate_fit)) {
@@ -83,10 +78,10 @@ logvar_lad_coef_objective <- function(geom) {
   }
 }
 
-# sides: probe each verified path from precheck through the cached, budget
-# debiting evaluator, classify the coefficient traces in the M coordinate, and
-# fold each verdict into the side state through logvar_lad_side_update (whose
-# comment states the per-verdict rules).
+# sides: probe each verified path, classify the traces in the M coordinate, fold
+# each verdict via logvar_lad_side_update. After the loop, a coefficient probed
+# (witnesses present) but never given an informative verdict -- every path
+# uninformative -- is failed closed as unresolved, not left silently bounded.
 logvar_lad_sides_hook <- function(w1, w2, x_mat, e_scale_ref) {
   function(qs, b_tab, scan, ctx) {
     labels <- colnames(x_mat)
@@ -94,6 +89,7 @@ logvar_lad_sides_hook <- function(w1, w2, x_mat, e_scale_ref) {
     st <- list(
       lower_unb = stats::setNames(rep(FALSE, n_coef), labels),
       upper_unb = stats::setNames(rep(FALSE, n_coef), labels),
+      informative = stats::setNames(rep(FALSE, n_coef), labels),
       unresolved = character(0), closure = list()
     )
     witnesses <- ctx$precheck$info$witnesses
@@ -110,6 +106,13 @@ logvar_lad_sides_hook <- function(w1, w2, x_mat, e_scale_ref) {
         st <- logvar_lad_side_update(st, cls, labels, wid, path_id)
       }
     }
+    idle <- which(!st$informative & !st$lower_unb & !st$upper_unb)
+    if (length(witnesses) > 0L && length(idle) > 0L) {
+      st$unresolved <- c(
+        st$unresolved,
+        sprintf("%s:min", labels[idle]), sprintf("%s:max", labels[idle])
+      )
+    }
     list(
       lower_unbounded = st$lower_unb, upper_unbounded = st$upper_unb,
       unresolved_endpoints = unique(st$unresolved),
@@ -122,13 +125,11 @@ logvar_lad_sides_hook <- function(w1, w2, x_mat, e_scale_ref) {
   }
 }
 
-# fold one classified path into the running side state: divergence sets the named
-# endpoint unbounded, a stable finite one-sided limit appends a closure record (the
-# classifier sub-result stored verbatim, provenance labelled), an uninformative
-# (too-thin) probe is skipped as missing data, and every other verdict marks both
-# of that coefficient's endpoints unresolved -> wired to unreliable by the engine.
-# Skipping the uninformative case is what stops one degenerate probe path from
-# failing an otherwise stably-classified coefficient closed.
+# fold one classified path into the side state. An uninformative (too-thin) probe is
+# skipped and leaves $informative untouched, so one degenerate path cannot fail a
+# stable coefficient closed (the caller catches a coef that is ONLY uninformative).
+# Otherwise mark informative: divergence -> endpoint unbounded; stable -> closure
+# record; anything else -> both of that coefficient's endpoints unresolved.
 logvar_lad_side_update <- function(st, cls, labels, wid, path_id) {
   both <- function(j) c(sprintf("%s:min", labels[j]), sprintf("%s:max", labels[j]))
   if (is.null(cls) || is.null(cls$coef)) {
@@ -137,6 +138,8 @@ logvar_lad_side_update <- function(st, cls, labels, wid, path_id) {
   }
   for (j in seq_along(labels)) {
     cj <- cls$coef[[j]]
+    if (identical(cj$status, "uninformative")) next
+    st$informative[j] <- TRUE
     if (identical(cj$status, "persistent_divergent_evidence")) {
       if (identical(cj$endpoint, "lower")) {
         st$lower_unb[j] <- TRUE
@@ -150,8 +153,6 @@ logvar_lad_side_update <- function(st, cls, labels, wid, path_id) {
         coef = labels[j], witness = wid, path_id = path_id,
         classification = cj, provenance = "one-sided crossing-limit approximation"
       )
-    } else if (identical(cj$status, "uninformative")) {
-      next
     } else {
       st$unresolved <- c(st$unresolved, both(j))
     }
@@ -159,12 +160,11 @@ logvar_lad_side_update <- function(st, cls, labels, wid, path_id) {
   st
 }
 
-# claim_failure: distinguish an exact residual zero (mathematically outside the
-# log domain) from a guarded near-crossing (available but numerically unresolved).
-# Implicated rows are recomputed from the geometry so the rule never depends on
-# the fit's internal fields. Either is claimed only when every implicated row is
-# a verified census crossing; an off-census domain failure is left unclaimed and
-# the engine fails the tau closed.
+# claim_failure: distinguish an exact residual zero (outside the log domain) from a
+# guarded near-crossing (available but numerically unresolved). Rows are recomputed
+# from the geometry, so the rule never reads the fit's internal fields. Either is
+# claimed only when every implicated row is a verified census crossing; an
+# off-census domain failure is left unclaimed and the engine fails the tau closed.
 logvar_lad_claim_hook <- function(w1, w2, e_scale_ref) {
   function(b, fit, precheck, ctx) {
     if (!identical(fit$fit_status, "domain_failure")) {

@@ -1,12 +1,11 @@
 # The median (LAD) log-variance inner fit: the b-indexed response map minimizing
-# sum |z_t - x_t' coef|, z = 2 log|w1 - W2 b|, on the punctured domain, packaged
-# in the Plan 7 fit contract. Holds the br response fit, the positive scale
-# reference, the b wrapper with its exact/guarded domain split, the fn
-# nonuniqueness probe, and the deterministic fn schedule. Inner solver is
-# quantreg::rq.fit(method = "br") -- the br vertex is the selection rule, fn the
-# probe, never the map. No residual floor, no log(pmax()), no epsilon in the log.
-# quantreg is called lazily so the file sources without the package. Naming: b is
-# the outer length-3 news coefficient, coef the inner length-5 LAD coefficient.
+# sum |z_t - x_t' coef|, z = 2 log|w1 - W2 b|, on the punctured domain, in the Plan
+# 7 fit contract. Holds the br response fit, the positive scale reference, the b
+# wrapper with its exact/guarded domain split, the fn nonuniqueness probe, and the
+# fn schedule. Inner solver quantreg::rq.fit(method = "br") -- the br vertex is the
+# selection rule, fn the probe, never the map. No residual floor, no log(pmax()), no
+# epsilon in the log; quantreg is called lazily. Naming: b the outer length-3 news
+# coef, coef the inner length-5 LAD one.
 
 # Pinned probe tolerances, the fn interior-point step, and the numerical crossing
 # guard, single-sourced here so the estimator spec_id can cite them verbatim.
@@ -41,11 +40,10 @@ logvar_lad_diag <- function(...) {
   utils::modifyList(base, list(...))
 }
 
-# The br-selected response fit wrapped in the Plan 7 contract. Warnings and
-# messages are captured (not silenced): the br "Solution may be nonunique" flag
-# becomes the free first-pass multiple_solution_sensitive marker, and "Premature
-# end" downgrades to nonconvergence. x_mat must already carry the intercept
-# column -- rq.fit does not add one, unlike the rq() formula interface.
+# The br-selected response fit wrapped in the Plan 7 contract. Warnings and messages
+# are captured (not silenced): the br "Solution may be nonunique" flag becomes the
+# free first-pass multiple_solution_sensitive marker, "Premature end" downgrades to
+# nonconvergence. x_mat must already carry the intercept column (rq.fit adds none).
 logvar_lad_fit_response <- function(z, x_mat) {
   warns <- character(0)
   msgs <- character(0)
@@ -97,10 +95,9 @@ logvar_lad_fit_response <- function(z, x_mat) {
   )
 }
 
-# A finite, strictly positive, scale-equivariant residual reference. Any nonfinite
+# A finite, strictly positive, scale-equivariant residual reference. Nonfinite
 # e_ref fails construction. Otherwise median(|e_ref|); if zero, the median of the
-# strictly positive |e_ref|; if still unavailable, max(|e_ref|); if no positive
-# finite residual exists, fail closed rather than invent a scale.
+# positive |e_ref|; else max(|e_ref|); if no positive finite residual, fail closed.
 logvar_lad_scale_reference <- function(e_ref) {
   if (!is.numeric(e_ref) || length(e_ref) == 0L || any(!is.finite(e_ref))) {
     stop("logvar_lad_scale_reference: e_ref must be finite and non-empty")
@@ -158,14 +155,19 @@ logvar_lad_fit <- function(b, w1, w2, x_mat, e_scale_ref) {
 # The fn nonuniqueness probe: an independent Frisch-Newton refit at pinned
 # tolerances. Objectives tie iff |obj_br - obj_fn| <= obj_rtol * max(1, |obj_br|);
 # selections differ materially iff the max coefficient gap exceeds coef_rtol *
-# max(1, max|coef_br|). Both flag sensitivity. Coefficients are never averaged:
-# the br result stays the map, the fn fit is only evidence.
+# max(1, max|coef_br|). Both flag sensitivity. Coefficients are never averaged: br
+# stays the map, fn is only evidence. fn warnings are muffled but CAPTURED into
+# fn_warnings (never discarded) so a warning with close coefficients still surfaces.
 logvar_lad_nonunique_probe <- function(fit, z, x_mat) {
   coef_br <- fit$coef
   obj_br <- sum(abs(z - drop(x_mat %*% coef_br)))
+  fn_warnings <- character(0)
   fn <- withCallingHandlers(
     quantreg::rq.fit(x = x_mat, y = z, tau = 0.5, method = "fn", eps = logvar_lad_fn_eps),
-    warning = function(w) invokeRestart("muffleWarning")
+    warning = function(w) {
+      fn_warnings <<- c(fn_warnings, conditionMessage(w))
+      invokeRestart("muffleWarning")
+    }
   )
   coef_fn <- as.numeric(fn$coefficients)
   obj_fn <- sum(abs(z - drop(x_mat %*% coef_fn)))
@@ -174,26 +176,6 @@ logvar_lad_nonunique_probe <- function(fit, z, x_mat) {
   coef_apart <- coef_max_diff > logvar_lad_coef_rtol * max(1, max(abs(coef_br)))
   list(
     objective_br = obj_br, objective_fn = obj_fn, coef_max_diff = coef_max_diff,
-    multiple_solution_sensitive = obj_tie && coef_apart
-  )
-}
-
-# The deterministic fn schedule: the always-probed point classes (benchmark,
-# attained endpoints, promoted endpoint candidates) and, for a crossing path of n
-# valid points, the entry / midpoint / tail indices. A br warning or coefficient
-# jump escalates that path to full fn coverage. Consumed by the driver under the
-# nonunique phase cap; no endpoint-relevant point is silently skipped.
-logvar_lad_nonunique_schedule <- function() {
-  list(
-    always = c("benchmark", "endpoint", "promoted"),
-    path_positions = function(n) {
-      n <- as.integer(n)
-      if (n < 1L) {
-        return(integer(0))
-      }
-      unique(c(1L, as.integer(floor((n + 1L) / 2L)), n))
-    },
-    escalate_after = c("br_warning", "coef_jump"),
-    phase = "nonunique"
+    fn_warnings = fn_warnings, multiple_solution_sensitive = obj_tie && coef_apart
   )
 }
