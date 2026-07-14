@@ -74,7 +74,14 @@ search_seed <- if (point_feasible) b_point else anchor_b
 # reference column (coefficients only; SEs deferred) and the Lewbel-point column
 # read straight off the estimator so no duplicate point solve happens; a missing
 # point renders NA (the panel prints "--")
-theta_reference <- logvar_harvey_fit_response(y_ref, x_mat)$coef
+ref_fit <- logvar_harvey_fit_response(y_ref, x_mat)
+if (!logvar_harvey_accepted(ref_fit)) {
+  stop(sprintf(
+    "log_var_eq_harvey_sets: reference Harvey fit failed (%s/%s)",
+    ref_fit$fit_status, ref_fit$diagnostics$error_class
+  ))
+}
+theta_reference <- ref_fit$coef
 na_coef <- stats::setNames(rep(NA_real_, ncol(x_mat)), colnames(x_mat))
 theta_point_harvey <- if (!is.null(est_harvey$point_fit)) {
   est_harvey$point_fit$coef

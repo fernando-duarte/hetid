@@ -44,6 +44,33 @@ check("hs one exact zero residual yields an ok fit and finite Jacobian", hs_try(
     !is.null(jz) && all(is.finite(jz))
 }))
 
+# the analytic implicit Jacobian D_b theta_H matches a central finite difference
+# of independently converged fits over a step-size sweep, both at a clean
+# all-positive candidate and at a candidate with one exact-zero residual (whose
+# direct response derivative is zero); the error falls then flattens at noise
+hs_fd_jac <- function(b, w1) {
+  fit <- logvar_harvey_fit(b, w1, hs_w2, hs_x)
+  jac <- logvar_harvey_jacobian(fit, b, w1, hs_w2, hs_x)
+  denom <- max(1, max(abs(jac)))
+  best <- min(vapply(c(1e-3, 3e-4, 1e-4, 3e-5), function(fr) {
+    fd <- vapply(seq_along(b), function(k) {
+      e <- replace(numeric(length(b)), k, fr * max(1, abs(b[k])))
+      (logvar_harvey_fit(b + e, w1, hs_w2, hs_x)$coef -
+        logvar_harvey_fit(b - e, w1, hs_w2, hs_x)$coef) / (2 * e[k])
+    }, numeric(ncol(hs_x)))
+    max(abs(jac - fd)) / denom
+  }, numeric(1)))
+  identical(dim(jac), c(ncol(hs_x), length(b))) && best <= 1e-5
+}
+check(
+  "hs the Harvey Jacobian matches central FD at a clean candidate",
+  hs_try(hs_fd_jac(hs_b, fx$w1))
+)
+check(
+  "hs the Harvey Jacobian matches central FD at an exact-zero candidate",
+  hs_try(hs_fd_jac(hs_b, fx$w1_zero))
+)
+
 check("hs a very negative eta start never leaks NaN and keeps mu positive", hs_try({
   fz <- logvar_harvey_fit(hs_b, fx$w1_zero, hs_w2, hs_x, start = hs_neg)
   no_nan <- hs_no_nan(fz$coef) && hs_no_nan(fz$objective) && hs_no_nan(fz$score_norm)
