@@ -91,6 +91,9 @@ source("scripts-paper/var_share_table.R")
 source("scripts-paper/log_var_eq.R")
 source("scripts-paper/log_var_eq_table.R")
 source("scripts-paper/set_id_bounds_tau.R")
+# the log-variance figure consumes mean_eq_bounds_tau, the warm-refined b_N
+# boxes set_id_bounds_tau.R stores, so it must run after that script
+source("scripts-paper/log_var_eq_bounds_tau.R")
 source("scripts-paper/set_id_region_common.R")
 source("scripts-paper/set_id_projections.R")
 source("scripts-paper/set_id_region_3d.R")

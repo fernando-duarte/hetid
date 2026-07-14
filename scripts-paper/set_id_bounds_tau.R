@@ -105,13 +105,18 @@ refine_theta_intervals <- function(tau, theta_tab) {
 
 # per-coefficient interval of the joint identified set at one tau (the shared
 # coef_interval_tables recipe); a row is certified only when both sides are
-# finite and feasibility-valid, i.e. status "bounded"
+# finite and feasibility-valid, i.e. status "bounded". The refined theta
+# tables are kept per tau (full three-state status) as mean_eq_bounds_tau
+# for the log-variance bounds-by-tau figure, whose census needs these exact
+# warm-refined boxes as its sound outer screen
+mean_eq_bounds_tau <- list()
 bounds_at_tau <- function(tau) {
   it <- coef_interval_tables(
     set_id_mean_eq$gamma, tau, set_id_mean_eq$moments,
     set_id_mean_eq$beta1r, set_id_mean_eq$beta2r
   )
   it$theta <- refine_theta_intervals(tau, it$theta)
+  mean_eq_bounds_tau[[sprintf("%.17g", tau)]] <<- it$theta
   tab <- rbind(it$beta1, it$theta)
   data.frame(
     tau = tau, coef = tab$coef, lower = tab$set_lower, upper = tab$set_upper,
