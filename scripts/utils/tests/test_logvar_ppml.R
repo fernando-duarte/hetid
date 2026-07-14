@@ -21,6 +21,9 @@ if (file.exists(here::here("scripts-paper/log_var_eq_ppml_driver_helpers.R"))) {
 }
 source(here::here("scripts-paper/log_var_eq_table_utils.R"))
 source(here::here("scripts-paper/log_var_eq_ppml_notes.R"))
+# the SE module before the check files so LOGVAR_PPML_SE_TYPES / the note helper
+# resolve when a builder is called with se_type set (the driver block is guarded)
+source(here::here("scripts-paper/log_var_eq_ppml_se.R"))
 
 .pass <- 0L
 .fail <- 0L
@@ -41,6 +44,7 @@ if (file.exists(here::here("scripts/utils/tests/test_logvar_ppml_spec.R"))) {
 }
 source(here::here("scripts/utils/tests/test_logvar_ppml_engine.R"))
 source(here::here("scripts/utils/tests/test_logvar_ppml_table.R"))
+source(here::here("scripts/utils/tests/test_logvar_ppml_se.R"))
 if (file.exists(here::here("scripts-paper/log_var_eq_ppml_driver_helpers.R"))) {
   source(here::here("scripts/utils/tests/test_logvar_ppml_coverage.R"))
 }

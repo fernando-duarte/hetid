@@ -17,6 +17,10 @@ source(here::here("scripts-paper/log_var_eq_engine.R"))
 source(here::here("scripts-paper/log_var_eq_logols.R"))
 source(here::here("scripts-paper/log_var_eq_ppml.R"))
 source(here::here("scripts-paper/log_var_eq_harvey.R"))
+source(here::here("scripts/utils/latex_table_utils.R"))
+source(here::here("scripts/utils/latex_simple_table.R"))
+source(here::here("scripts-paper/log_var_eq_table_utils.R"))
+source(here::here("scripts-paper/log_var_eq_harvey_panel.R"))
 
 .pass <- 0L
 .fail <- 0L
@@ -35,6 +39,7 @@ source(here::here("scripts/utils/tests/logvar_harvey_math_checks.R"))
 source(here::here("scripts/utils/tests/logvar_harvey_solver_checks.R"))
 source(here::here("scripts/utils/tests/logvar_harvey_recession_checks.R"))
 source(here::here("scripts/utils/tests/logvar_harvey_engine_checks.R"))
+source(here::here("scripts/utils/tests/logvar_harvey_table_checks.R"))
 
 cat(sprintf("\n%d passed, %d failed\n", .pass, .fail))
 if (.fail > 0L) quit(status = 1L)

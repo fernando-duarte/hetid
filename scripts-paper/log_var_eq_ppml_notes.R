@@ -5,7 +5,8 @@
 # editorial-ordering disclosure. Definitions only.
 
 build_ppml_notes <- function(ppml, tau_baseline, grid_cap, fit_budget,
-                             include_ordering) {
+                             include_ordering, se_type = "hac",
+                             se_hac_lags = 4L) {
   scale_val <- ppml$estimator$metadata$response_scale_value
   meta <- ppml$coverage_audit$meta
   c(
@@ -70,21 +71,65 @@ build_ppml_notes <- function(ppml, tau_baseline, grid_cap, fit_budget,
       "certified feasible attained values, inner approximations; interior",
       "attainment is not established."
     ),
-    "No PPML standard errors are reported (deferred)."
+    logvar_ppml_se_note(se_type, se_hac_lags)
   )
 }
 
-build_ppml_table_notes <- function(ppml, tau_baseline, grid_cap, fit_budget) {
-  build_ppml_notes(
-    ppml, tau_baseline, grid_cap, fit_budget,
-    include_ordering = FALSE
+# the SE computation clause: describes each stored variant by the assumption it
+# makes, names which variant is printed, and states the point-column
+# conditioning caveat. The framing is neutral -- assumptions, not advice -- so it
+# reads correctly whatever logvar_ppml_se_type selects.
+logvar_ppml_se_note <- function(se_type, se_hac_lags) {
+  key <- match.arg(se_type, LOGVAR_PPML_SE_TYPES)
+  default_name <- switch(key,
+    naive = "the model-based $\\hat\\varphi A^{-1}$",
+    hc0 = "the Eicker--White HC0 sandwich",
+    hc1 = "the Eicker--White HC1 sandwich",
+    hac = sprintf("the Newey--West HAC sandwich (Bartlett, %d lags)", se_hac_lags)
+  )
+  c(
+    sprintf(
+      paste(
+        "Standard errors for the OLS and $\\tau{=}0$ point columns are",
+        "quasi-Poisson QMLE variances with $A = X'\\mathrm{diag}(\\hat\\mu)X$ and",
+        "score residual $\\hat r = \\varepsilon^2 - \\hat\\mu$. Four variants are",
+        "computed: the model-based $\\hat\\varphi A^{-1}$ ($\\hat\\varphi =",
+        "(n{-}p)^{-1}\\sum_t \\hat r_t^2/\\hat\\mu_t$), valid only if",
+        "$\\mathrm{Var}(\\varepsilon^2 \\mid PC_R) \\propto \\hat\\mu$; the",
+        "heteroskedasticity-robust Eicker--White sandwich $A^{-1}(\\sum_t \\hat",
+        "r_t^2 x_t x_t')A^{-1}$ (HC0, and HC1 with the $n/(n{-}p)$ factor); and",
+        "its Newey--West Bartlett HAC extension over %d lags, consistent also",
+        "under serially correlated scores. The reported statistics use %s;",
+        "parenthetical values are $\\hat\\theta/\\mathrm{SE}$ with stars from the",
+        # the LaTeX literal percent must be doubled in this sprintf FORMAT string:
+        # `\\%%` emits `\%`, while a lone `%)` aborts sprintf
+        "standard-normal (QMLE) approximation ($^{*}$/$^{**}$/$^{***}$ at 10/5/1\\%%)."
+      ),
+      se_hac_lags, default_name
+    ),
+    paste(
+      "The $\\tau{=}0$ statistics condition on the plug-in Lewbel news vector",
+      "$b_N$ and do not propagate its first-stage sampling error; $\\tau{>}0$",
+      "set columns are identified-set ranges, not point estimates, so no",
+      "standard error is attached (the moving-block bootstrap for set-endpoint",
+      "uncertainty is deferred)."
+    )
   )
 }
 
-build_ppml_panel_notes <- function(ppml, tau_baseline, grid_cap, fit_budget) {
+build_ppml_table_notes <- function(ppml, tau_baseline, grid_cap, fit_budget,
+                                   se_type = "hac", se_hac_lags = 4L) {
   build_ppml_notes(
     ppml, tau_baseline, grid_cap, fit_budget,
-    include_ordering = TRUE
+    include_ordering = FALSE, se_type = se_type, se_hac_lags = se_hac_lags
+  )
+}
+
+build_ppml_panel_notes <- function(ppml, tau_baseline, grid_cap, fit_budget,
+                                   se_type = "hac", se_hac_lags = 4L) {
+  build_ppml_notes(
+    ppml, tau_baseline, grid_cap, fit_budget,
+    include_ordering = TRUE, se_type = se_type, se_hac_lags = se_hac_lags
   )
 }
 

@@ -59,7 +59,8 @@ panel_block <- function(fragment, notes_lines, est) {
 # the PPML panel: reference and Lewbel-point columns plus the per-tau hulls,
 # t-statistic slots blank by construction, R^2 not defined for QMLE
 ppml_parts <- logvar_ppml_table_parts(
-  log_var_eq_ppml, set_id_mean_eq$tau_display, n_pc_r
+  log_var_eq_ppml, set_id_mean_eq$tau_display, n_pc_r,
+  se_type = logvar_ppml_se_type
 )
 stopifnot(
   identical(ppml_parts$n_obs, panels_n_obs),
@@ -90,10 +91,7 @@ lo_nw_se <- sqrt(diag(sandwich::NeweyWest(
 stopifnot(!anyNA(lo_nw_se))
 lo_nw_t <- lo_tab$ols / lo_nw_se
 lo_nw_p <- 2 * stats::pt(-abs(lo_nw_t), df = stats::df.residual(log_var_eq$fit_ols))
-lo_stars <- ifelse(
-  lo_nw_p < 0.01, "^{***}",
-  ifelse(lo_nw_p < 0.05, "^{**}", ifelse(lo_nw_p < 0.10, "^{*}", ""))
-)
+lo_stars <- sig_stars(lo_nw_p)
 lo_cells <- ifelse(
   lo_stars == "", fmt(lo_tab$ols),
   sprintf("%s$%s$", fmt(lo_tab$ols), lo_stars)
@@ -142,7 +140,8 @@ panels_blocks <- list(
     ppml_fragment,
     build_ppml_panel_notes(
       log_var_eq_ppml, set_id_mean_eq$tau_baseline,
-      logvar_ppml_grid_cap, logvar_ppml_fit_budget
+      logvar_ppml_grid_cap, logvar_ppml_fit_budget,
+      se_type = logvar_ppml_se_type, se_hac_lags = logvar_ppml_se_hac_lags
     ),
     "ppml"
   ),

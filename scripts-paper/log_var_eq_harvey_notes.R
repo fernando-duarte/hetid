@@ -4,16 +4,17 @@
 # log-OLS notes-builder voice. The block states the estimand, the intercept
 # scale, the normality normalization identity, the zero-safe existence
 # handling, the hull honesty and failed-fit clauses, the search-resolution
-# disclosure, the deferred standard errors, and the ordering-independence
-# rule (Harvey never drives the log-OLS/PPML headline swap). Definitions only;
-# sourced by log_var_eq_harvey_panel.R.
+# disclosure and the deferred standard errors. Combined panels optionally add
+# the ordering-independence rule (Harvey never drives the log-OLS/PPML headline
+# swap). Definitions only; sourced by log_var_eq_harvey_panel.R.
 
 # `harvey` mirrors build_ppml_panel_notes()'s object-first signature for a
 # predictable call site; guarded here so notes are never emitted for a missing
-# panel object.
-build_harvey_panel_notes <- function(harvey, tau_baseline, grid_cap, fit_budget) {
+# panel object. Dedicated tables omit the combined-panels ordering note.
+build_harvey_panel_notes <- function(harvey, tau_baseline, grid_cap, fit_budget,
+                                     include_ordering = TRUE) {
   stopifnot(is.list(harvey), !is.null(harvey$table))
-  c(
+  notes <- c(
     paste(
       "The Harvey panel is the Gaussian multiplicative-variance MLE/QMLE of",
       "$E[\\varepsilon^2 \\mid PC_R] = \\exp(R'\\theta^{H})$, fit on the fixed",
@@ -47,14 +48,17 @@ build_harvey_panel_notes <- function(harvey, tau_baseline, grid_cap, fit_budget)
       ),
       grid_cap, fit_budget
     ),
-    "No Harvey standard errors are reported (deferred).",
-    sprintf(
+    "No Harvey standard errors are reported (deferred)."
+  )
+  if (include_ordering) {
+    notes <- c(notes, sprintf(
       paste(
         "The log-OLS/PPML panel order is governed by the benchmark crossing",
         "rule at $\\tau{=}%.2g$; the Harvey panel is a fixed robustness panel",
         "appended after that ordered pair and never influences it."
       ),
       tau_baseline
-    )
-  )
+    ))
+  }
+  notes
 }

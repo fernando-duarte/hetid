@@ -62,6 +62,17 @@ logvar_ppml_grid_cap <- 4000L
 logvar_ppml_fit_budget <- 20000L
 logvar_ppml_coverage_grid_cap <- 8000L
 logvar_ppml_coverage_fit_budget <- 40000L
+# PPML QMLE standard errors under the point columns (OLS, tau = 0) of the
+# log-variance panels. Every non-bootstrap variant is computed and stored; this
+# picks which prints, one of "naive" (Pearson-dispersion model information;
+# valid only if Var(eps^2 | PC_R) is proportional to the mean), "hc0"/"hc1"
+# (Eicker-White heteroskedasticity-robust), or "hac" (Newey-West Bartlett HAC).
+# The default is "hac" to match the log-OLS panel's Newey-West lag-4 inference
+# and to stay valid under the heteroskedastic, serially correlated scores of a
+# squared-residual response. The moving-block bootstrap is deferred; the HAC lag
+# count matches the log-OLS benchmark's 4 lags.
+logvar_ppml_se_type <- "hac"
+logvar_ppml_se_hac_lags <- 4L
 
 # output folder for tables and figures
 out_dir <- "scripts-paper/output"
@@ -100,10 +111,13 @@ source("scripts-paper/set_id_bounds_tau.R")
 # set_id_bounds_tau.R and must register its figure entry before the
 # bounds-by-tau driver renders the registry
 source("scripts-paper/log_var_eq_ppml_sets.R")
+# analytic PPML QMLE standard errors for the point columns; must run after the
+# frozen PPML object exists and before either table renders it
+source("scripts-paper/log_var_eq_ppml_se.R")
 # the primary table consumes the completed PPML hulls; the combined table then
 # adds the mean-log robustness panel without recomputing either estimator
 source("scripts-paper/log_var_eq_table.R")
-# Harvey constants and driver (the wrapper keeps this to one source line)
+# Harvey sets and dedicated table (the wrapper keeps this to one source line)
 source("scripts-paper/log_var_eq_harvey_run.R")
 source("scripts-paper/log_var_eq_ppml_table.R")
 # the log-variance figures consume mean_eq_bounds_tau and the registry, so

@@ -5,8 +5,8 @@
 # wraps the result in the creation-time LaTeX comment markers so later plans
 # can append and diff blocks. The appender only appends: it never touches or
 # reorders the log-OLS/PPML pair, so Harvey never influences the headline
-# swap. Definitions only; sourced by log_var_eq_ppml_table.R, which supplies
-# the shared cell formatters (log_var_eq_table_utils.R) and latex builders.
+# swap. Definitions only; callers supply the shared cell formatters
+# (log_var_eq_table_utils.R) and LaTeX builders.
 
 source("scripts-paper/log_var_eq_harvey_notes.R")
 
@@ -14,7 +14,8 @@ source("scripts-paper/log_var_eq_harvey_notes.R")
 # per-display-tau hulls, t-statistic slots blank by construction, R^2 not
 # defined for the variance MLE. Row labels come from the fitted coefficient
 # vector (length minus one intercept), never a run_all global.
-logvar_harvey_build_fragment <- function(harvey, n_obs, tau_display) {
+logvar_harvey_build_fragment <- function(harvey, n_obs, tau_display,
+                                         caption = NULL, label = NULL) {
   tab <- harvey$table
   n_pc_r <- length(tab$coef) - 1L
   sets <- harvey$sets[sprintf("%.17g", tau_display)]
@@ -36,16 +37,20 @@ logvar_harvey_build_fragment <- function(harvey, n_obs, tau_display) {
       )
     }))
   )
+  if (is.null(caption)) {
+    caption <- paste(
+      "Harvey panel: $\\theta^{H}$, the Gaussian multiplicative-variance map",
+      "(fixed robustness panel)."
+    )
+  }
+  if (is.null(label)) label <- "tab:log_var_eq_panel_harvey"
   build_simple_latex_table(
     rows, cols,
     col_headers = c(
       "Reference", "$\\tau{=}0$", sprintf("$\\tau{=}%.2g$", tau_display)
     ),
-    caption = paste(
-      "Harvey panel: $\\theta^{H}$, the Gaussian multiplicative-variance map",
-      "(fixed robustness panel)."
-    ),
-    label = "tab:log_var_eq_panel_harvey",
+    caption = caption,
+    label = label,
     fontsize = "\\footnotesize\\setlength{\\tabcolsep}{3pt}",
     rule_after = 2L
   )
@@ -57,7 +62,8 @@ logvar_harvey_build_fragment <- function(harvey, n_obs, tau_display) {
 # unchanged with the Harvey block appended.
 logvar_harvey_append_panel <- function(panels_lines, harvey, n_obs,
                                        tau_display, tau_baseline,
-                                       grid_cap, fit_budget) {
+                                       grid_cap, fit_budget, caption = NULL,
+                                       label = NULL, include_ordering = TRUE) {
   splice_block <- function(fragment, notes_lines) {
     cut <- match("\\end{threeparttable}", fragment)
     stopifnot(!is.na(cut))
@@ -75,9 +81,11 @@ logvar_harvey_append_panel <- function(panels_lines, harvey, n_obs,
       "% END LOGVAR PANEL harvey"
     )
   }
-  harvey_fragment <- logvar_harvey_build_fragment(harvey, n_obs, tau_display)
+  harvey_fragment <- logvar_harvey_build_fragment(
+    harvey, n_obs, tau_display, caption, label
+  )
   harvey_notes <- build_harvey_panel_notes(
-    harvey, tau_baseline, grid_cap, fit_budget
+    harvey, tau_baseline, grid_cap, fit_budget, include_ordering
   )
   c(panels_lines, splice_block(harvey_fragment, harvey_notes))
 }

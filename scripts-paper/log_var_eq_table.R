@@ -11,7 +11,8 @@ source("scripts-paper/log_var_eq_table_utils.R")
 source("scripts-paper/log_var_eq_ppml_notes.R")
 
 parts <- logvar_ppml_table_parts(
-  log_var_eq_ppml, set_id_mean_eq$tau_display, n_pc_r
+  log_var_eq_ppml, set_id_mean_eq$tau_display, n_pc_r,
+  se_type = logvar_ppml_se_type
 )
 coef_tab <- parts$table
 set_tables <- parts$sets
@@ -59,7 +60,8 @@ logvar_latex <- build_simple_latex_table(
   caption = caption, label = "tab:log_var_eq_set_id",
   notes = build_ppml_table_notes(
     log_var_eq_ppml, set_id_mean_eq$tau_baseline,
-    logvar_ppml_grid_cap, logvar_ppml_fit_budget
+    logvar_ppml_grid_cap, logvar_ppml_fit_budget,
+    se_type = logvar_ppml_se_type, se_hac_lags = logvar_ppml_se_hac_lags
   ),
   fontsize = "\\footnotesize\\setlength{\\tabcolsep}{3pt}",
   rule_after = 2L
