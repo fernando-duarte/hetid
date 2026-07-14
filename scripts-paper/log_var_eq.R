@@ -23,6 +23,7 @@ source("scripts/utils/tau_star_utils.R")
 source("scripts-paper/log_var_eq_map.R")
 source("scripts-paper/log_var_eq_engine.R")
 source("scripts-paper/log_var_eq_logols.R")
+source("scripts-paper/log_var_eq_joint_null_inputs.R")
 
 # grid resolution per b_N axis for the feasible-grid scan, and the feasible
 # count below which the grid is densified once (a thin joint set can thread
@@ -157,6 +158,13 @@ log_var_eq <- list(
 # preparation path every later estimator consumes (additive only)
 log_var_eq$inputs <- list(
   w1 = w1_lv, w2 = w2_lv, pcr = pcr, qtr = logvar_rows$qtr
+)
+# joint-null diagnostic seam: attach the qtr-aligned naive-fit residual reference
+# eps_ref (additive only; supplies the crossing-stability median(abs(eps_ref)))
+log_var_eq$inputs <- logvar_joint_null_extend_inputs(
+  log_var_eq$inputs,
+  stats::residuals(set_id_mean_eq$ols_fit)[logvar_rows$row],
+  logvar_rows$qtr
 )
 log_var_eq$sample_contract <- list(
   qtr = logvar_rows$qtr, n = nrow(logvar_rows), pc_names = colnames(pcr),
