@@ -91,5 +91,27 @@ source("scripts-paper/var_share_table.R")
 source("scripts-paper/log_var_eq.R")
 source("scripts-paper/log_var_eq_table.R")
 source("scripts-paper/set_id_bounds_tau.R")
+source("scripts-paper/set_id_region_export.R")
 source("scripts-paper/hetero_tests.R")
 source("scripts-paper/descriptive_stats.R")
+
+# Region figures (Python/matplotlib): the 3D wire-mesh renderings are
+# matplotlib-specific, so a small R -> JSON -> Python step draws them from
+# set_id_region.json. Skipped with a message if python3 is unavailable.
+region_scripts <- c("plot_set_id_projections.py", "plot_set_id_region_3d.py")
+if (nzchar(Sys.which("python3"))) {
+  for (region_script in region_scripts) {
+    status <- system2("python3", file.path("scripts-paper", region_script))
+    if (status != 0L) {
+      stop(sprintf(
+        "python3 scripts-paper/%s failed (status %d)", region_script, status
+      ))
+    }
+  }
+} else {
+  message(
+    "python3 not found; skipping the region figures ",
+    "(set_id_projections_sd.pdf, set_id_region_3d.pdf). ",
+    "They need python3 with numpy, scipy and matplotlib."
+  )
+}
