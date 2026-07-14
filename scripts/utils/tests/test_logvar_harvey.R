@@ -33,6 +33,7 @@ check <- function(label, cond) {
 source(here::here("scripts/utils/tests/logvar_harvey_fixtures.R"))
 source(here::here("scripts/utils/tests/logvar_harvey_math_checks.R"))
 source(here::here("scripts/utils/tests/logvar_harvey_solver_checks.R"))
+source(here::here("scripts/utils/tests/logvar_harvey_recession_checks.R"))
 source(here::here("scripts/utils/tests/logvar_harvey_engine_checks.R"))
 
 cat(sprintf("\n%d passed, %d failed\n", .pass, .fail))

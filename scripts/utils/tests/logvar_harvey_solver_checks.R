@@ -28,6 +28,19 @@ hs_fx <- function(...) {
 
 # intercept-only start c(log(mean(y)), 0, ...) and a NaN-free field scan helper
 hs_io <- function(y) c(log(mean(y)), rep(0, hs_p - 1L))
+
+# an overflow-eta start (mu = exp(eta) would be Inf) is a hard trial failure
+# per the finiteness discipline, so its rung is skipped and the fit converges
+# from the intercept-only rung rather than accepting a nonfinite-variance trial
+check("hs an overflow-eta start is rejected and the fit still converges", hs_try({
+  y <- drop(fx$w1 - fx$w2 %*% fx$b_ref)^2
+  fit <- logvar_harvey_fit_response(y, hs_x, start = c(800, rep(0, hs_p - 1L)))
+  isTRUE(fit$converged) && identical(fit$fit_status, "ok") &&
+    all(is.finite(exp(drop(hs_x %*% fit$coef)))) &&
+    any(vapply(fit$diagnostics$start_attempts, function(a) {
+      identical(a$error_class, "invalid_start")
+    }, logical(1)))
+}))
 hs_no_nan <- function(x) !any(is.nan(x))
 hs_neg <- c(-30, rep(0, hs_p - 1L))
 hs_inf <- c(Inf, rep(0, hs_p - 1L))
@@ -82,47 +95,6 @@ check("hs a very negative eta start never leaks NaN and keeps mu positive", hs_t
   no_nan && mu_ok
 }))
 
-# Recession certificate and existence block ----------------------------------
-
-check("hs the full-rank counterexample certifies a negative recession", hs_try({
-  cert <- logvar_harvey_recession_certificate(hs_fx("y_rec", "y_neg"), hs_fx("x_rec", "x_neg"))
-  fit <- logvar_harvey_fit_response(hs_fx("y_rec", "y_neg"), hs_fx("x_rec", "x_neg"))
-  identical(cert$classification, "negative_recession") &&
-    identical(fit$fit_status, "nonexistence") &&
-    identical(fit$diagnostics$error_class, "negative_recession")
-}))
-
-check("hs the direct two-column objective reproduces the recession rates", hs_try({
-  x2 <- rbind(c(1, 0), c(1, 1), c(1, 100))
-  y2 <- c(1, 1, 0)
-  d <- c(1, -1)
-  want <- c(1, -48.316, -489.500, -4899.5)
-  got <- vapply(c(0, 1, 10, 100), function(cc) {
-    logvar_harvey_objective(cc * d, y2, x2)
-  }, numeric(1))
-  max(abs(got - want)) <= 1e-2
-}))
-
-check("hs a zero-rate response is unresolved, never nonexistence", hs_try({
-  cert <- logvar_harvey_recession_certificate(hs_fx("y_zr", "y_zrate"), hs_fx("x_zr", "x_zrate"))
-  fit <- logvar_harvey_fit_response(hs_fx("y_zr", "y_zrate"), hs_fx("x_zr", "x_zrate"))
-  identical(cert$classification, "zero_recession") &&
-    identical(fit$fit_status, "nonconvergence") &&
-    identical(fit$diagnostics$error_class, "zero_recession_unresolved")
-}))
-
-# the dossier sanctions either verdict here: a certified collapse direction
-# is genuine nonexistence, an uncertified one fails closed as nonconvergence
-check("hs rank-deficient positive rows fail closed without huge coefficients", hs_try({
-  fit <- logvar_harvey_fit_response(hs_fx("y_rd", "y_rankdef"), hs_fx("x_rd", "x_rankdef"))
-  fit$fit_status %in% c("nonconvergence", "nonexistence") && !isTRUE(fit$converged)
-}))
-
-check("hs an all-zero response fails closed as a negative intercept recession", hs_try({
-  fit <- logvar_harvey_fit_response(numeric(nrow(hs_x)), hs_x)
-  identical(fit$fit_status, "nonexistence") &&
-    identical(fit$diagnostics$error_class, "negative_recession_all_zero")
-}))
 
 # Line search and start-ladder block -----------------------------------------
 

@@ -28,7 +28,10 @@ hv_eval <- function(theta, y, x_mat, pos, col_abs) {
     return(NULL)
   }
   eta <- drop(x_mat %*% theta)
-  if (!all(is.finite(eta))) {
+  # a finite eta can still overflow the fitted variance mu = exp(eta); reject
+  # it as a hard trial failure so the finite strictly-positive-variance
+  # invariant holds at every iterate, not only at the accepted fit
+  if (!all(is.finite(eta)) || any(eta > log(.Machine$double.xmax))) {
     return(NULL)
   }
   r <- tryCatch(logvar_harvey_ratio(theta, y, x_mat), error = function(cond) NULL)
