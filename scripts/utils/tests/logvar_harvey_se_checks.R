@@ -73,7 +73,7 @@ check("harvey vcov fails closed on non-finite coef", {
 check("harvey vcov fails closed on a rank-deficient design", {
   xd <- cbind(hse_fx$x_mat, hse_fx$x_mat[, 2]) # duplicate column -> singular H
   v <- logvar_harvey_vcov(rep(0, ncol(xd)), hse_fx$y, xd, 4L)
-  all(is.na(v$observed)) && all(is.na(v$hac))
+  all(vapply(v, function(m) all(is.na(m)), logical(1)))
 })
 
 check("harvey vcov fails closed when n <= p", {

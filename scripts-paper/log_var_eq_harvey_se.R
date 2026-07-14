@@ -24,11 +24,11 @@ LOGVAR_HARVEY_SE_TYPES <- c("expected", "observed", "opg", "robust", "hac")
 
 # QMLE covariance variants at an accepted fit. hac_lags is a programmer contract
 # (loud on a malformed value). Each variant fails closed to an all-NA matrix on a
-# conditioning problem in ITS bread: a non-finite coefficient, invalid response,
+# conditioning problem in its bread: a non-finite coefficient, invalid response,
 # nonpositive mu, n <= p, or a column-normalized bread failing the rcond gate.
-# The inversion mirrors logvar_harvey_jacobian: normalize a symmetric bread by
-# its diagonal, gate rcond, chol-invert, transform back. Returns a named list of
-# p x p matrices keyed by LOGVAR_HARVEY_SE_TYPES.
+# The inversion mirrors logvar_ppml_se.R (and logvar_ppml_jacobian): normalize a
+# symmetric bread by its diagonal, gate rcond, chol-invert, transform back.
+# Returns a named list of p x p matrices keyed by LOGVAR_HARVEY_SE_TYPES.
 logvar_harvey_vcov <- function(coef, y, x_mat, hac_lags) {
   stopifnot(
     is.matrix(x_mat),
