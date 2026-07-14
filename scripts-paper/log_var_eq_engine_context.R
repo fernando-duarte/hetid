@@ -121,6 +121,13 @@ logvar_coarsen_grid <- function(b_feas, max_pts) {
   b_feas[seq(1L, m, by = ceiling(m / max_pts)), , drop = FALSE]
 }
 
+# one shared definition of a usable fit: ok status, converged, and a
+# finite coefficient vector
+logvar_fit_ok <- function(fit) {
+  identical(fit$fit_status, "ok") && isTRUE(fit$converged) &&
+    !is.null(fit$coef) && all(is.finite(fit$coef))
+}
+
 # arity adapters: Plan 7's original two-/three-argument hooks keep working
 logvar_call_precheck <- function(hook, qs, b_tab, ctx) {
   if (length(formals(hook)) >= 3L) hook(qs, b_tab, ctx) else hook(qs, b_tab)

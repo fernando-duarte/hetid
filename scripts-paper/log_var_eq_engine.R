@@ -12,7 +12,9 @@
 #     changes the fitted object (estimator version, package, seed policy,
 #     fixed scale) and joins sample_id in the cache stamp; optionally
 #     traversal ("nearest_neighbor" default, "lattice" bypasses the NN cap)
-#   coef_labels: optional coefficient axis labels (else from the first fit)
+#   coef_labels: coefficient axis labels; optional on the generic path
+#     (inferred from the first successful fit) but required by estimators
+#     that supply a batch scan_grid, where no per-point fit runs
 #   fit_at_b(b, start = NULL) -> list(coef, fit_status, converged, objective,
 #     score_norm, convergence_code, diagnostics, warm_start)
 #     fit_at_b owns its retry/start ladder; diagnostics is a slim list (no
@@ -44,6 +46,7 @@
 
 source("scripts-paper/log_var_eq_engine_context.R")
 source("scripts-paper/log_var_eq_engine_scan.R")
+source("scripts-paper/log_var_eq_engine_result.R")
 source("scripts-paper/log_var_eq_engine_sides.R")
 
 logvar_engine_set_at_tau <- function(est, qs, b_tab, b_seed = NULL,
@@ -153,14 +156,28 @@ logvar_engine_run <- function(est, qs, b_tab, b_seed, grid_n, grid_floor,
     }
   }
   scan <- if (use_fast) {
-    bs$n_attempted <- bs$n_attempted + nrow(b_feas)
-    bs$n_evaluated <- bs$n_evaluated + nrow(b_feas)
+    n_pts <- nrow(b_feas)
+    if (bs$n_evaluated + n_pts > bs$max_fit_evals) {
+      logvar_budget_stop("scan", sprintf(
+        "batch scan of %d points exceeds max_fit_evals = %s",
+        n_pts, format(bs$max_fit_evals)
+      ))
+    }
+    scan_cap <- bs$phase_caps[["scan"]]
+    if (!is.null(scan_cap) && bs$counters[["scan"]] + n_pts > scan_cap) {
+      logvar_budget_stop("scan", sprintf("phase cap %d reached", scan_cap))
+    }
+    bs$counters[["scan"]] <- bs$counters[["scan"]] + n_pts
+    bs$n_attempted <- bs$n_attempted + n_pts
+    bs$n_evaluated <- bs$n_evaluated + n_pts
     est$scan_grid(b_feas)
   } else {
     logvar_engine_scan(est, b_feas, evaluate_fit, b_seed, claim_fn, st)
   }
   st$n_fail <- if (is.null(scan$n_fit_failures)) 0L else scan$n_fit_failures
-  n_unclaimed <- length(scan$failures)
+  # unclaimed = total failures net of estimator-claimed ones, on either scan
+  # path -- a batch scan cannot claim, so its failures always fail closed
+  n_unclaimed <- st$n_fail - length(scan$claimed_failures)
   if (n_unclaimed > 0L) {
     return(fail_closed(
       "unreliable", pre_cross, st$n_feasible, NULL,

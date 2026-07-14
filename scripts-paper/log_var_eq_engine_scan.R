@@ -130,62 +130,24 @@ logvar_extra_candidates <- function(starts, evaluate_fit, check_feasible) {
   list(points = points, values = values, skipped = skipped)
 }
 
-# shared table/schema assembly: the legacy table is byte-identical to the
-# benchmark driver's; the schema adds the side-specific contract columns,
-# tau, provenance, and the attaining points as list columns
-logvar_engine_result <- function(labels, lower, upper, lo_st, up_st,
-                                 prov_lo, prov_up, arg_lo, arg_up,
-                                 meta, tau, qs, omega, n_fail,
-                                 n_cross, n_feasible, domain_info, diag) {
-  status <- ifelse(
-    lo_st == "unreliable" | up_st == "unreliable", "unreliable",
-    ifelse(lo_st == "unbounded" | up_st == "unbounded", "unbounded", "bounded")
-  )
-  resid_at <- function(arg, val) {
-    if (anyNA(arg) || !is.finite(val)) {
-      return(NA_real_)
+# fold extra-start attained candidates into the running endpoints: a value
+# beyond the current extreme moves the endpoint, its point, and the
+# provenance label on every non-divergent side
+logvar_apply_extra_candidates <- function(ec, state, lower_unb, upper_unb) {
+  for (i in seq_along(ec$points)) {
+    v <- ec$values[[i]]
+    for (j in seq_along(state$lower)) {
+      if (!lower_unb[j] && v[j] < state$lower[j]) {
+        state$lower[j] <- v[j]
+        state$arg_lo[j, ] <- ec$points[[i]]
+        state$prov_lo[j] <- "extra-start"
+      }
+      if (!upper_unb[j] && v[j] > state$upper[j]) {
+        state$upper[j] <- v[j]
+        state$arg_up[j, ] <- ec$points[[i]]
+        state$prov_up[j] <- "extra-start"
+      }
     }
-    .feasibility_residual(qs, arg, omega)
   }
-  n <- length(labels)
-  schema <- data.frame(
-    coef = labels, lower = lower, upper = upper,
-    lower_status = lo_st, upper_status = up_st,
-    lower_fit_status = ifelse(lo_st == "bounded", "ok", NA_character_),
-    upper_fit_status = ifelse(up_st == "bounded", "ok", NA_character_),
-    fit_failure_count = rep(n_fail, n),
-    lower_constraint_residual = vapply(
-      seq_len(n), function(j) resid_at(arg_lo[j, ], lower[j]), numeric(1)
-    ),
-    upper_constraint_residual = vapply(
-      seq_len(n), function(j) resid_at(arg_up[j, ], upper[j]), numeric(1)
-    ),
-    estimator = meta$estimator, target_functional = meta$target_functional,
-    sample_id = meta$sample_id, tau = tau,
-    lower_provenance = prov_lo, upper_provenance = prov_up,
-    row.names = NULL
-  )
-  schema$arg_lower <- I(lapply(seq_len(n), function(j) arg_lo[j, ]))
-  schema$arg_upper <- I(lapply(seq_len(n), function(j) arg_up[j, ]))
-  list(
-    table = data.frame(
-      coef = labels, set_lower = lower, set_upper = upper, status = status,
-      row.names = NULL
-    ),
-    schema = schema, n_cross = n_cross, n_feasible = n_feasible,
-    domain_info = domain_info, diagnostics = diag
-  )
-}
-
-# fail-closed variant: every endpoint NA under one propagated status word
-logvar_engine_result_na <- function(labels, word, meta, tau, qs, omega,
-                                    n_fail, n_cross, n_feasible,
-                                    domain_info, diag) {
-  n <- length(labels)
-  na_arg <- matrix(NA_real_, n, length(qs$b_i[[1]]))
-  logvar_engine_result(
-    labels, rep(NA_real_, n), rep(NA_real_, n), rep(word, n), rep(word, n),
-    rep(NA_character_, n), rep(NA_character_, n), na_arg, na_arg,
-    meta, tau, qs, omega, n_fail, n_cross, n_feasible, domain_info, diag
-  )
+  state
 }

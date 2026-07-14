@@ -11,7 +11,7 @@
 # signature and return as a thin wrapper passing the log-OLS closures.
 # Definitions only; sourced by log_var_eq_map.R.
 
-# Returns list(bound, par, feas_resid, suspect): bound and par are NULL when
+# Returns list(bound, par, feas_resid, suspect, convergence): bound and par are NULL when
 # the solve fails or the endpoint is infeasible; suspect = TRUE (with a NULL
 # bound) when the polished value explodes past blow_factor x the guard scale
 # -- the optimizer diving toward a residual-zero singularity or an
@@ -66,19 +66,25 @@ logvar_polish_objective <- function(qs, direction, b_start, guard_scale,
     },
     error = function(e) NULL
   )
+  out <- function(bound, par, feas_resid, suspect) {
+    list(
+      bound = bound, par = par, feas_resid = feas_resid, suspect = suspect,
+      convergence = if (is.null(res)) NA_integer_ else res$convergence
+    )
+  }
   if (is.null(res) || any(!is.finite(res$par))) {
-    return(list(bound = NULL, par = NULL, feas_resid = NA_real_, suspect = FALSE))
+    return(out(NULL, NULL, NA_real_, FALSE))
   }
   b_pol <- delta * res$par
   resid <- .feasibility_residual(qs, b_pol, omega)
   if (!is.finite(resid) || resid > feas_tol) {
-    return(list(bound = NULL, par = b_pol, feas_resid = resid, suspect = FALSE))
+    return(out(NULL, b_pol, resid, FALSE))
   }
   bound <- fn(b_pol)
   if (!is.finite(bound) || abs(bound) > blow_factor * max(1, guard_scale)) {
-    return(list(bound = NULL, par = b_pol, feas_resid = resid, suspect = TRUE))
+    return(out(NULL, b_pol, resid, TRUE))
   }
-  list(bound = bound, par = b_pol, feas_resid = resid, suspect = FALSE)
+  out(bound, b_pol, resid, FALSE)
 }
 
 # SLSQP polish of one theta_hat side from a feasible start (the benchmark

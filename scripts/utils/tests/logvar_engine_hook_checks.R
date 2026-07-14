@@ -94,3 +94,37 @@ check(
   is.data.frame(r_dup$table)
 )
 check("duplicated extra starts are evaluated once", n_half == 1L)
+# The engine-built gradient routes through the cached evaluator: the
+# jacobian hook receives the fit object, and polish still succeeds
+jrec <- new.env(parent = emptyenv())
+jrec$got_fit <- FALSE
+jd <- new_dummy()
+jd$est$jacobian_at_b <- function(b, fit = NULL) {
+  if (!is.null(fit)) jrec$got_fit <- TRUE
+  matrix(c(1, 1, 1, -1), 2L, 2L, byrow = TRUE)
+}
+r_jac <- run_engine(jd$est)
+check(
+  "the engine-built gradient hands the cached fit to the jacobian hook",
+  jrec$got_fit && is.data.frame(r_jac$table)
+)
+# scan_grid multi-start pools are consumed as additional polish starts: the
+# pool point is fit during polish even though the fast path skips the grid
+pl <- new_dummy()
+pool_pt <- c(0.11, 0.13)
+pl$est$scan_grid <- function(b_feas) {
+  list(
+    min = c(-1.2, -1.2), max = c(1.2, 1.2),
+    arg_min = matrix(-0.5, 2L, 2L), arg_max = matrix(0.5, 2L, 2L),
+    arg_min_pool = list(list(pool_pt), list()),
+    arg_max_pool = list(list(), list()),
+    domain_info = NULL, n_fit_failures = 0L, fit_statuses = NULL
+  )
+}
+pl$est$coef_labels <- c("t0", "t1")
+invisible(run_engine(pl$est))
+key_pool <- bkey(pool_pt)
+check(
+  "a scan-grid pool point is used as a polish start",
+  any(vapply(pl$cc$order, function(b) bkey(b) == key_pool, logical(1)))
+)

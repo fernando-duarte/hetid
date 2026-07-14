@@ -118,6 +118,41 @@ local({
   )
 })
 
+# a batch scan_grid that reports fit failures without a structured failures
+# list must still fail the tau closed, and a batch scan larger than the fit
+# budget must trip the budget preflight -- both with full disclosure
+svc_fast_est <- function(n_fail = 0L) {
+  est <- svc_dummy_est()
+  est$scan_grid <- function(b_feas) {
+    list(
+      min = c(-1, -1), max = c(1, 1),
+      arg_min = matrix(0, 2L, ncol(b_feas)),
+      arg_max = matrix(0, 2L, ncol(b_feas)),
+      domain_info = NULL, n_fit_failures = n_fail, fit_statuses = NULL
+    )
+  }
+  est$coef_labels <- c("m1", "m2")
+  est
+}
+svc_fastfail <- logvar_engine_set_at_tau(
+  svc_fast_est(n_fail = 2L), svc_qs, svc_btab,
+  grid_n = 7L, cold_start_check = FALSE
+)
+check(
+  "fast-path fit failures without a failures list still fail closed",
+  all(svc_fastfail$table$status == "unreliable") &&
+    all(svc_fastfail$schema$fit_failure_count == 2L)
+)
+svc_fastbudget <- logvar_engine_set_at_tau(
+  svc_fast_est(), svc_qs, svc_btab,
+  grid_n = 7L, max_fit_evals = 3L, cold_start_check = FALSE
+)
+check(
+  "a batch scan larger than the fit budget trips the preflight",
+  all(svc_fastbudget$table$status == "unreliable") &&
+    isTRUE(svc_fastbudget$diagnostics$budget_exhausted)
+)
+
 # nesting helper: a nested band sequence passes; a lower endpoint that rises
 # with tau is flagged with its side and magnitude
 svc_nested <- data.frame(

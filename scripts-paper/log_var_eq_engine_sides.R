@@ -46,29 +46,25 @@ logvar_engine_endpoints <- function(est, qs, b_tab, b_seed, extra_starts,
     ec <- logvar_extra_candidates(extra_starts, evaluate_fit, ctx$check_feasible)
     extra_skipped <- ec$skipped
     extra_pool <- ec$points
-    for (i in seq_along(ec$points)) {
-      v <- ec$values[[i]]
-      for (j in seq_len(n_coef)) {
-        if (!lower_unb[j] && v[j] < lower[j]) {
-          lower[j] <- v[j]
-          arg_lo[j, ] <- ec$points[[i]]
-          prov_lo[j] <- "extra-start"
-        }
-        if (!upper_unb[j] && v[j] > upper[j]) {
-          upper[j] <- v[j]
-          arg_up[j, ] <- ec$points[[i]]
-          prov_up[j] <- "extra-start"
-        }
-      }
-    }
+    state <- logvar_apply_extra_candidates(
+      ec,
+      list(
+        lower = lower, upper = upper, arg_lo = arg_lo, arg_up = arg_up,
+        prov_lo = prov_lo, prov_up = prov_up
+      ),
+      lower_unb, upper_unb
+    )
+    lower <- state$lower
+    upper <- state$upper
+    arg_lo <- state$arg_lo
+    arg_up <- state$arg_up
+    prov_lo <- state$prov_lo
+    prov_up <- state$prov_up
   }
   seed_start <- !is.null(b_seed) && !anyNA(b_seed)
   budget_hit <- new.env(parent = emptyenv())
   budget_hit$cond <- NULL
-  fit_ok <- function(fit) {
-    identical(fit$fit_status, "ok") && isTRUE(fit$converged) &&
-      !is.null(fit$coef) && all(is.finite(fit$coef))
-  }
+  polish_recs <- list()
   for (j in seq_len(n_coef)) {
     scan_j <- c(scan$min[j], scan$max[j])
     scale_j <- max(1, abs(scan_j[is.finite(scan_j)]))
@@ -80,7 +76,7 @@ logvar_engine_endpoints <- function(est, qs, b_tab, b_seed, extra_starts,
           tryCatch(
             {
               fit <- evaluate_fit(b, phase = "polish")
-              if (!fit_ok(fit)) NaN else unname(fit$coef[[jj]])
+              if (!logvar_fit_ok(fit)) NaN else unname(fit$coef[[jj]])
             },
             logvar_budget_exhausted = function(e) {
               budget_hit$cond <- e
@@ -89,12 +85,29 @@ logvar_engine_endpoints <- function(est, qs, b_tab, b_seed, extra_starts,
           )
         }
       })
+      # the gradient runs through the same cached, budgeted evaluator as the
+      # objective, and the jacobian hook sees the converged fit it needs
       gr <- if (is.null(est$jacobian_at_b)) {
         NULL
       } else {
         local({
           jj <- j
-          function(b) est$jacobian_at_b(b)[jj, ]
+          function(b) {
+            tryCatch(
+              {
+                fit <- evaluate_fit(b, phase = "polish")
+                if (!logvar_fit_ok(fit)) {
+                  rep(NaN, length(b))
+                } else {
+                  est$jacobian_at_b(b, fit)[jj, ]
+                }
+              },
+              logvar_budget_exhausted = function(e) {
+                budget_hit$cond <- e
+                rep(NaN, length(b))
+              }
+            )
+          }
         })
       }
     } else {
@@ -109,9 +122,12 @@ logvar_engine_endpoints <- function(est, qs, b_tab, b_seed, extra_starts,
     for (side in c("min", "max")) {
       if (if (side == "min") lower_unb[j] else upper_unb[j]) next
       starts <- list(if (side == "min") scan$arg_min[j, ] else scan$arg_max[j, ])
+      pool <- if (side == "min") scan$arg_min_pool else scan$arg_max_pool
+      if (!is.null(pool) && length(pool) >= j) starts <- c(starts, pool[[j]])
       if (seed_start) starts <- c(starts, list(b_seed))
       starts <- c(starts, extra_pool)
       accepted <- FALSE
+      opt_code <- NA_integer_
       for (b_start in starts) {
         pol <- logvar_polish_objective(
           qs, side, b_start, scale_j,
@@ -127,39 +143,34 @@ logvar_engine_endpoints <- function(est, qs, b_tab, b_seed, extra_starts,
           lower[j] <- pol$bound
           arg_lo[j, ] <- pol$par
           prov_lo[j] <- "polish"
+          opt_code <- pol$convergence
         }
         if (side == "max" && pol$bound > upper[j]) {
           upper[j] <- pol$bound
           arg_up[j, ] <- pol$par
           prov_up[j] <- "polish"
+          opt_code <- pol$convergence
         }
       }
       if (!accepted) {
         if (side == "min") lo_unrel[j] <- TRUE else up_unrel[j] <- TRUE
       }
+      polish_recs[[length(polish_recs) + 1L]] <- list(
+        coef = labels[j], side = side, n_trials = length(starts),
+        accepted = accepted, opt_code = opt_code
+      )
     }
   }
-  cold_recs <- list()
-  if (isTRUE(cold_start_check)) {
-    rtol <- if (is.null(meta$cold_start_rtol)) 1e-8 else meta$cold_start_rtol
-    for (j in seq_len(n_coef)) {
-      for (side in c("min", "max")) {
-        unb <- if (side == "min") lower_unb[j] else upper_unb[j]
-        unrel <- if (side == "min") lo_unrel[j] else up_unrel[j]
-        val <- if (side == "min") lower[j] else upper[j]
-        arg <- if (side == "min") arg_lo[j, ] else arg_up[j, ]
-        if (unb || unrel || !is.finite(val) || anyNA(arg)) next
-        fitc <- evaluate_fit(arg, phase = "cold_start", start = NULL, use_cache = FALSE)
-        vc <- if (fit_ok(fitc)) unname(fitc$coef[[j]]) else NaN
-        if (!is.finite(vc) || abs(vc - val) > rtol * max(1, abs(val))) {
-          if (side == "min") lo_unrel[j] <- TRUE else up_unrel[j] <- TRUE
-          cold_recs[[length(cold_recs) + 1L]] <- list(
-            coef = labels[j], side = side, value = val, cold_value = vc
-          )
-        }
-      }
-    }
+  cold_recs <- if (isTRUE(cold_start_check)) {
+    logvar_engine_cold_check(
+      meta, labels, lower, upper, arg_lo, arg_up,
+      lower_unb, upper_unb, lo_unrel, up_unrel, evaluate_fit
+    )
+  } else {
+    list(records = list(), lo_unrel = lo_unrel, up_unrel = up_unrel)
   }
+  lo_unrel <- cold_recs$lo_unrel
+  up_unrel <- cold_recs$up_unrel
   lo_st <- ifelse(lo_unrel, "unreliable", ifelse(lower_unb, "unbounded", "bounded"))
   up_st <- ifelse(up_unrel, "unreliable", ifelse(upper_unb, "unbounded", "bounded"))
   n_cross <- if (!is.null(sides$info$cross_all)) {
@@ -177,6 +188,9 @@ logvar_engine_endpoints <- function(est, qs, b_tab, b_seed, extra_starts,
   logvar_engine_result(
     labels, lower, upper, lo_st, up_st, prov_lo, prov_up, arg_lo, arg_up,
     meta, tau, qs, omega, st$n_fail, n_cross, st$n_feasible, domain_info,
-    diag_of(list(extra_start_skipped = extra_skipped, cold_start = cold_recs))
+    diag_of(list(
+      extra_start_skipped = extra_skipped, cold_start = cold_recs$records,
+      polish = polish_recs
+    ))
   )
 }
