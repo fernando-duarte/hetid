@@ -34,6 +34,13 @@ logvar_theta_grad <- function(b, w1, w2, proj_row) {
   -2 * drop(crossprod(w2, proj_row / drop(w1 - w2 %*% b)))
 }
 
+# full Jacobian of the map, J(b) = -2 P diag(1/eps_hat(b)) W2: dividing the
+# n x K matrix w2 by the n-vector eps recycles down columns (row-wise), so
+# row j equals logvar_theta_grad(b, w1, w2, proj[j, ])
+logvar_theta_jacobian <- function(b, w1, w2, proj) {
+  -2 * (proj %*% (w2 / drop(w1 - w2 %*% b)))
+}
+
 # residual-zero census over the joint set: observation t's hyperplane
 # w2_t' b = w1_t intersects the set iff w1_t lies inside the image of the
 # linear functional w2_t' b over it -- an interval when the set is
@@ -140,63 +147,8 @@ logvar_grid_scan <- function(b_feas, w1, w2, proj, chunk = 5000L) {
   )
 }
 
-# SLSQP polish of one theta_hat side from a feasible start, in the shared
-# solver's scaling (same normalized-constraint pattern as
-# set_id_bounds_tau.R). Unlike the linear profile bounds, a nonlinear
-# extremum can sit strictly inside the set, so the endpoint certificate is
-# feasibility only (resid <= feas_tol), not feasibility+activity. Returns
-# list(bound, suspect): bound is NULL when the solve fails or the endpoint
-# is infeasible; suspect = TRUE (with a NULL bound) when the polished value
-# explodes past blow_factor x the grid scale -- the optimizer diving toward
-# a residual-zero singularity or an uncertifiably wild side.
-logvar_polish_bound <- function(qs, direction, b_start, grid_scale,
-                                w1, w2, proj_row,
-                                box = 1e6, feas_tol = 1e-4, blow_factor = 5) {
-  # a non-finite scale would disable the blow guard (or make it error)
-  if (!is.finite(grid_scale)) grid_scale <- 1
-  delta <- .derive_theta_scale(qs)
-  omega <- .derive_constraint_scales(qs, delta)
-  sgn <- if (direction == "min") 1 else -1
-  dim_b <- ncol(qs$A_i[[1]])
-  res <- tryCatch(
-    nloptr::slsqp(
-      x0 = pmin(pmax(b_start / delta, -box), box),
-      fn = function(phi) {
-        sgn * sum(proj_row * log(drop(w1 - w2 %*% (delta * phi))^2))
-      },
-      gr = function(phi) {
-        sgn * delta * logvar_theta_grad(delta * phi, w1, w2, proj_row)
-      },
-      lower = rep(-box, dim_b), upper = rep(box, dim_b),
-      hin = function(phi) {
-        b <- delta * phi
-        vapply(seq_along(qs$A_i), function(i) {
-          (drop(t(b) %*% qs$A_i[[i]] %*% b) +
-            sum(qs$b_i[[i]] * b) + qs$c_i[i]) / omega[i]
-        }, numeric(1))
-      },
-      hinjac = function(phi) {
-        b <- delta * phi
-        t(vapply(seq_along(qs$A_i), function(i) {
-          (delta * (2 * drop(qs$A_i[[i]] %*% b) + qs$b_i[[i]])) / omega[i]
-        }, numeric(dim_b)))
-      },
-      control = list(xtol_rel = 1e-8, maxeval = 1000),
-      deprecatedBehavior = FALSE
-    ),
-    error = function(e) NULL
-  )
-  if (is.null(res) || any(!is.finite(res$par))) {
-    return(list(bound = NULL, suspect = FALSE))
-  }
-  b_pol <- delta * res$par
-  resid <- .feasibility_residual(qs, b_pol, omega)
-  if (!is.finite(resid) || resid > feas_tol) {
-    return(list(bound = NULL, suspect = FALSE))
-  }
-  bound <- sum(proj_row * log(drop(w1 - w2 %*% b_pol)^2))
-  if (!is.finite(bound) || abs(bound) > blow_factor * max(1, grid_scale)) {
-    return(list(bound = NULL, suspect = TRUE))
-  }
-  list(bound = bound, suspect = FALSE)
-}
+# the endpoint polish (generalized objective seam plus the legacy
+# logvar_polish_bound wrapper) lives in its own module so this file stays
+# below the repository line cap; sourced here so existing callers see the
+# same definitions
+source("scripts-paper/log_var_eq_polish.R")
