@@ -153,6 +153,17 @@ panels_blocks <- list(
   )
 )
 panels_lines <- unlist(panels_blocks[panels_order], use.names = FALSE)
+# the Harvey robustness panel appends after the ordered pair and never
+# influences the pair's mechanical order (the panel module sources its own
+# notes builder)
+if (exists("log_var_eq_harvey")) {
+  source("scripts-paper/log_var_eq_harvey_panel.R")
+  panels_lines <- logvar_harvey_append_panel(
+    panels_lines, log_var_eq_harvey, panels_n_obs,
+    set_id_mean_eq$tau_display, set_id_mean_eq$tau_baseline,
+    logvar_harvey_grid_cap, logvar_harvey_fit_budget
+  )
+}
 write_latex_table(panels_lines, out_dir, "log_var_eq_panels")
 compile_latex_pdf(file.path(out_dir, "log_var_eq_panels_standalone.tex"))
 
