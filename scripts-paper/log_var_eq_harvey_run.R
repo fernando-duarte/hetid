@@ -7,4 +7,5 @@ logvar_harvey_grid_cap <- 4000L
 logvar_harvey_fit_budget <- 20000L
 logvar_harvey_sensitivity_fit_budget <- 40000L
 source("scripts-paper/log_var_eq_harvey_sets.R")
+source("scripts-paper/log_var_eq_harvey_se.R")
 source("scripts-paper/log_var_eq_harvey_table.R")
