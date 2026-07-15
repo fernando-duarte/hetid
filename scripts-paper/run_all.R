@@ -225,6 +225,9 @@ source("scripts-paper/log_var_eq_set_inference_table.R")
 source("scripts-paper/log_var_eq_bounds_tau.R")
 # consume the completed estimator caches only after their existing figures
 source("scripts-paper/log_var_eq_fitted_vol.R")
+# the median (LAD) fitted-|residual| envelope: grid-sampled inner hull, rendered
+# only when the quantreg-gated LAD map ran (guarded on log_var_eq_lad)
+source("scripts-paper/log_var_eq_fitted_vol_lad.R")
 source("scripts-paper/set_id_region_common.R")
 source("scripts-paper/set_id_projections.R")
 source("scripts-paper/set_id_region_3d.R")

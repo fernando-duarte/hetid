@@ -58,7 +58,7 @@ logvar_fitted_vol_stats_note <- function(stats) {
   )
 }
 
-logvar_fitted_vol_caption <- function(has_point, stats = NULL) {
+logvar_fitted_vol_caption <- function(has_point, stats = NULL, polished = TRUE) {
   point_note <- if (has_point) {
     "The red line is the tau = 0 Lewbel-point fit."
   } else {
@@ -69,10 +69,18 @@ logvar_fitted_vol_caption <- function(has_point, stats = NULL) {
   } else {
     paste0("\n", logvar_fitted_vol_stats_note(stats))
   }
+  # engine-profiled envelopes (grid scan then local polish) versus the grid-only
+  # inner hull used for nonsmooth estimators, so the caption names how endpoints
+  # were actually attained
+  attainment <- if (polished) {
+    "from grid scan and local polish"
+  } else {
+    "from a grid scan of the identified set"
+  }
   paste0(
     "Shading is the pointwise projection hull of the estimated plug-in ",
     "variance-equation image.\n", point_note, " Finite plotted endpoints are ",
-    "attained inner approximations\nfrom grid scan and local polish. This is ",
+    "attained inner approximations\n", attainment, ". This is ",
     "not a confidence or simultaneous path band; interior attainment is ",
     "not asserted.", stats_note
   )
@@ -102,6 +110,20 @@ logvar_fitted_vol_render <- function(envelope, path) {
     harvey = "Harvey",
     toupper(meta$estimator)
   )
+  # variance-scale estimators map the linear predictor to a conditional SD; the
+  # median (log-scale) estimator maps it to the conditional median |residual|, so
+  # the title and axis name the quantity actually plotted
+  is_median_scale <- identical(meta$response_scale, "log")
+  title_quantity <- if (is_median_scale) {
+    "fitted conditional residual scale (median)"
+  } else {
+    "fitted conditional residual volatility"
+  }
+  y_label <- if (is_median_scale) {
+    "Conditional median |consumption-growth residual| (percentage points)"
+  } else {
+    "Conditional SD of consumption-growth residual (percentage points)"
+  }
   subtitle <- sprintf(
     "Pointwise envelope over the joint identified set at tau = %.2g",
     meta$tau
@@ -136,10 +158,13 @@ logvar_fitted_vol_render <- function(envelope, path) {
       color = "#b2182b", linewidth = 0.55
     ) +
     ggplot2::labs(
-      title = paste(estimator_label, "fitted conditional residual volatility"),
+      title = paste(estimator_label, title_quantity),
       subtitle = subtitle, x = NULL,
-      y = "Conditional SD of consumption-growth residual (percentage points)",
-      caption = logvar_fitted_vol_caption(nrow(point) > 0L, band_stats)
+      y = y_label,
+      caption = logvar_fitted_vol_caption(
+        nrow(point) > 0L, band_stats,
+        polished = !isTRUE(meta$grid_only)
+      )
     ) +
     ggplot2::theme_minimal() +
     ggplot2::theme(
