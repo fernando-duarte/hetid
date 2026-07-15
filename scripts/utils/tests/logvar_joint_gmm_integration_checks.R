@@ -167,8 +167,8 @@ check("the comparison note is language-guarded and names the residualized instru
   !grepl(forbidden, txt, ignore.case = TRUE) &&
     grepl("orthogonal to the static variance regressors", txt)
 }))
-# Stage C is gated: an empty ratified delta prints the disabled reason, never a region.
-check("stage C projection prints the disabled reason without a ratified delta", jg_try({
+# Stage C is gated: an empty ratified delta returns the disabled reason, never a region.
+check("stage C projection returns the disabled reason without a ratified delta", jg_try({
   jg_need("logvar_joint_project_set")
   out <- logvar_joint_project_set(list(), numeric(0))
   grepl("projection disabled", paste(unlist(out), collapse = " "), ignore.case = TRUE)

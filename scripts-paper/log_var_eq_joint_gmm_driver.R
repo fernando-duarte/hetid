@@ -106,7 +106,7 @@ if (exists("log_var_eq") && exists("set_id_mean_eq")) {
   jg_projection <- logvar_joint_project_set(
     list(block = "none", n_slope = ncol(jg_w2)), jg_dec$moment_delta
   )
-  jg_object <- list(
+  log_var_eq_joint_gmm <- list(
     schema_version = "2.0.0", diagnostic = "joint_gmm", sample_id = jg_sid,
     joint_input_id = jg_iid, decision_spec_id = jg_dec$decision_spec_id,
     spec_id = jg_spec$spec_id, inference_status = "deferred", decision = jg_dec,
@@ -117,7 +117,7 @@ if (exists("log_var_eq") && exists("set_id_mean_eq")) {
   jg_csv <- file.path(jg_out, "log_var_eq_joint_gmm.csv")
   jg_rds <- file.path(jg_out, "log_var_eq_joint_gmm.rds")
   unlink(c(jg_csv, jg_rds))
-  write_joint_gmm_artifacts(jg_object, jg_csv, jg_rds)
+  write_joint_gmm_artifacts(log_var_eq_joint_gmm, jg_csv, jg_rds)
 
   cat("[BEGIN LOGVAR JOINT GMM]\n")
   cat(build_joint_gmm_comparison(list(moment_block = "none")), sep = "\n")
@@ -136,6 +136,6 @@ if (exists("log_var_eq") && exists("set_id_mean_eq")) {
   rm(
     jg_dec, jg_sid, jg_in, jg_qtr, jg_w1, jg_w2, jg_pcr, jg_x, jg_proj, jg_z,
     jg_systems, jg_iid, jg_spec, jg_blocks, jg_repl, jg_rows, jg_projection,
-    jg_object, jg_out, jg_csv, jg_rds
+    jg_out, jg_csv, jg_rds
   )
 }

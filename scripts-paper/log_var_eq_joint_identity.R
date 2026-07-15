@@ -61,16 +61,20 @@ logvar_joint_input_id <- function(sample_id, qtr, z, gamma, tau, mean_systems) {
   unname(tools::md5sum(tmp))
 }
 
-# Realign z to the qtr order by key: assert a one-to-one join (each qtr appears once in
-# other_qtr and vice versa), then reindex the rows of z with match(). Never aligns by row
-# position, so a shuffled input recovers the original ordering exactly.
+# Realign z (whose rows are keyed by other_qtr) to the qtr order: assert each qtr appears
+# exactly once in other_qtr -- a one-to-one match that allows other_qtr to carry extra rows
+# the qtr sample dropped (the variance sample is a qtr-subset of the mean sample, so the
+# mean instrument is restricted to the variance quarters), then reindex the rows of z with
+# match(). Never aligns by row position, so a shuffled input recovers the original order.
 logvar_joint_align_inputs <- function(qtr, other_qtr, z) {
   z <- as.matrix(z)
-  if (length(qtr) != length(other_qtr) || nrow(z) != length(other_qtr)) {
-    logvar_joint_identity_stop("misaligned_join", "qtr, other_qtr, z lengths differ")
+  if (nrow(z) != length(other_qtr)) {
+    logvar_joint_identity_stop("misaligned_join", "z rows do not match other_qtr")
   }
-  if (anyDuplicated(qtr) || anyDuplicated(other_qtr) || !setequal(qtr, other_qtr)) {
-    logvar_joint_identity_stop("misaligned_join", "qtr join is not one-to-one")
+  if (anyDuplicated(qtr) || anyDuplicated(other_qtr) || !all(qtr %in% other_qtr)) {
+    logvar_joint_identity_stop(
+      "misaligned_join", "qtr is not a one-to-one subset of other_qtr"
+    )
   }
   z[match(qtr, other_qtr), , drop = FALSE]
 }

@@ -158,6 +158,10 @@ source("scripts-paper/log_var_eq_joint_null_math.R")
 source("scripts-paper/log_var_eq_joint_null_search.R")
 source("scripts-paper/log_var_eq_joint_null_stability.R")
 source("scripts-paper/log_var_eq_joint_null.R")
+# joint moment-compatibility (joint_gmm): one ordered wrapper sources the stacked
+# Lewbel + variance moment layer and runs the guarded driver (Stage A graph
+# replication under the no-answer default); the panels table appends its note
+source("scripts-paper/log_var_eq_joint_gmm_run.R")
 # median (LAD) map: gated on the quantreg dependency decision. Source the tri-state
 # DCF reader, then source the driver only when the decision is approved and the
 # package is installed at the recorded version. A missing, declined, or unanswered

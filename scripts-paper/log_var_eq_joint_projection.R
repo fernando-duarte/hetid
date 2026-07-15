@@ -64,12 +64,11 @@ logvar_joint_project_hull <- function(lo, hi) {
 
 # Gated Stage C entry point: disabled without a ratified delta, otherwise a
 # per-target/side/delta search over the smooth tolerance rows. The disabled
-# branch prints and returns the exact reason so the caller records a tolerance,
-# never a region.
+# branch returns the exact reason (the joint-gmm driver prints it) so the caller
+# records a tolerance, never a region.
 logvar_joint_project_set <- function(spec, moment_delta) {
   if (length(moment_delta) == 0L) {
     reason <- "projection disabled: no ratified moment_delta"
-    message(reason)
     return(invisible(list(status = "disabled", reason = reason, rows = list())))
   }
   targets <- logvar_joint_project_targets(spec$block, spec$n_slope)
