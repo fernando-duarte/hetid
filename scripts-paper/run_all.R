@@ -162,6 +162,14 @@ source("scripts-paper/log_var_eq_joint_null.R")
 # Lewbel + variance moment layer and runs the guarded driver (Stage A graph
 # replication under the no-answer default); the panels table appends its note
 source("scripts-paper/log_var_eq_joint_gmm_run.R")
+# base-R residual-dynamics gate for the log-variance equation: the predeclared
+# lag-4 Ljung-Box screen on the tau = 0 benchmark residual decides whether any
+# downstream volatility-dynamics workstream opens. Base R only, always runs, and
+# writes the gate record plus the status manifest. The core chain-sources its
+# record/sensitivity modules; the exists()-guarded driver runs after log_var_eq
+# and set_id_mean_eq are built.
+source("scripts-paper/log_var_eq_dynamics_gate_core.R")
+source("scripts-paper/log_var_eq_dynamics_gate.R")
 # median (LAD) map: gated on the quantreg dependency decision. Source the tri-state
 # DCF reader, then source the driver only when the decision is approved and the
 # package is installed at the recorded version. A missing, declined, or unanswered
