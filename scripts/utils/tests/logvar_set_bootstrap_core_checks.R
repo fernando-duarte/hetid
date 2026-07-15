@@ -161,6 +161,13 @@ check(
   }, logical(1)))
 )
 
+# build_harvey warm-starts from the draw's ppml_obj (ppml_bundle/ppml_start_at_b)
+check(
+  "harvey warm-starts from the draw PPML fit (not cold-start mass-failure)",
+  !any(unlist(lapply(lbd_draw$ppml, `[`, c("lower_status", "upper_status"))) != "failed") ||
+    any(unlist(lapply(lbd_draw$harvey, `[`, c("lower_status", "upper_status"))) != "failed")
+)
+
 # a point-deficient draw (z has no variation -> moments carry no
 # identifying heteroskedasticity signal) yields all-"failed"/NA without erroring
 lbd_dat_deficient <- lbd_dat
