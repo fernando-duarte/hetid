@@ -3,9 +3,6 @@
 # Run from the package root: Rscript scripts-paper/run_all.R
 
 # Shared constants ---------------------------------------------------------
-# L'Ecuyer-CMRG streams so the forked set-endpoint bootstrap draws reproduce
-# regardless of any upstream C/Fortran RNG; set unconditionally before any draw
-RNGkind("L'Ecuyer-CMRG")
 # FRED pull window (calendar dates for tq_get; 1947 start so early lags exist)
 fred_from <- "1947-01-01"
 fred_to <- "2026-06-19"
@@ -158,7 +155,12 @@ source("scripts-paper/log_var_eq_ppml_table.R")
 # vol set-endpoint bootstrap: reads the frozen PPML/Harvey caches and the lagged
 # asset-return PCs, re-runs the whole set map per resample, and writes the outer
 # confidence envelopes to output/ (mutates no upstream cache)
+# L'Ecuyer-CMRG only for the forked vol bootstrap (mclapply mc.set.seed); the
+# serial structural bootstrap above and the region figures below stay under the
+# default RNG so their published numbers do not move
+logvar_boot_rng <- RNGkind("L'Ecuyer-CMRG")
 source("scripts-paper/log_var_eq_set_bootstrap.R")
+RNGkind(logvar_boot_rng[1L], logvar_boot_rng[2L])
 # the inference variant of the combined panels: same PPML/log-OLS/Harvey
 # panels and labels as log_var_eq_ppml_table.R, with the bootstrap envelope
 # threaded beneath the PPML and Harvey set cells
