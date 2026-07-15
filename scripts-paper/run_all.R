@@ -202,6 +202,10 @@ lad_gate <- logvar_lad_gate_read(
   }
 )
 if (isTRUE(lad_gate$source_lad)) source("scripts-paper/log_var_eq_lad_sets.R")
+# standalone median (LAD) panel table (theta^0.5): its own .tex + PDF, guarded on
+# log_var_eq_lad so it renders only when the LAD map ran; main's combined panels
+# table below stays untouched
+source("scripts-paper/log_var_eq_lad_table.R")
 source("scripts-paper/log_var_eq_ppml_table.R")
 # vol set-endpoint bootstrap: reads the frozen PPML/Harvey caches and the lagged
 # asset-return PCs, re-runs the whole set map per resample, and writes the outer
