@@ -3,6 +3,9 @@
 # Run from the package root: Rscript scripts-paper/run_all.R
 
 # Shared constants ---------------------------------------------------------
+# L'Ecuyer-CMRG streams so the forked set-endpoint bootstrap draws reproduce
+# regardless of any upstream C/Fortran RNG; set unconditionally before any draw
+RNGkind("L'Ecuyer-CMRG")
 # FRED pull window (calendar dates for tq_get; 1947 start so early lags exist)
 fred_from <- "1947-01-01"
 fred_to <- "2026-06-19"
@@ -62,6 +65,22 @@ logvar_ppml_grid_cap <- 4000L
 logvar_ppml_fit_budget <- 20000L
 logvar_ppml_coverage_grid_cap <- 8000L
 logvar_ppml_coverage_fit_budget <- 40000L
+# vol set-endpoint bootstrap: reduced caps per draw (primary pass only, no cold-
+# start, no coverage/sensitivity second pass) keep B = boot_reps tractable
+logvar_boot_grid_cap <- 1500L
+logvar_boot_fit_budget <- 8000L
+# a certified side must be bounded in >= this fraction of non-failed draws
+logvar_boot_stability <- 0.85
+# ell=8 block sensitivity pass (reports mandate it); NULL disables. Runs at reduced
+# reps for cost; envelopes go to diagnostics, not the headline table
+logvar_boot_block_sens <- 8L
+# m-out-of-n subsampling size (NULL = full n). Deferred fallback for when the
+# regularity gate fails widely; leaving the hook live per the reports
+logvar_boot_m <- NULL
+# draw-level parallel cores; serial lapply when this resolves to 1
+logvar_boot_cores <- as.integer(
+  Sys.getenv("HETID_BOOT_CORES", unset = as.character(max(1L, parallel::detectCores() - 1L)))
+)
 # search controls for each date-indexed fitted-volatility envelope. Each dated
 # objective gets its grid extreme, shared seed, local polish, and cold
 # replication; auxiliary polish paths are omitted because one suspect path
@@ -136,6 +155,10 @@ source("scripts-paper/log_var_eq_table.R")
 # Harvey sets and dedicated table (the wrapper keeps this to one source line)
 source("scripts-paper/log_var_eq_harvey_run.R")
 source("scripts-paper/log_var_eq_ppml_table.R")
+# vol set-endpoint bootstrap: reads the frozen PPML/Harvey caches and the lagged
+# asset-return PCs, re-runs the whole set map per resample, and writes the outer
+# confidence envelopes to output/ (mutates no upstream cache)
+source("scripts-paper/log_var_eq_set_bootstrap.R")
 # the log-variance figures consume mean_eq_bounds_tau and the registry, so
 # this runs after both producers
 source("scripts-paper/log_var_eq_bounds_tau.R")
