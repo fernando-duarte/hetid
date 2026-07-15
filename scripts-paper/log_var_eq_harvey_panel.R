@@ -27,28 +27,10 @@ logvar_harvey_build_fragment <- function(harvey, n_obs, tau_display,
     "$\\theta^{H}_0$", sprintf("$\\theta^{H}_{%d,R}$", seq_len(n_pc_r))
   )
   rows <- c(interleave(labels, ""), "$R^2$", "$N$")
-  # a point column: se_type NULL (default) keeps the stat rows blank exactly as
-  # before; se_type set requires the stored, aligned SE frame (fail loud rather
-  # than silently blank while the notes claim SEs are reported) and prints
-  # t = coef/se with standard-normal (QMLE) stars.
   point_col <- function(vals, se_frame) {
-    if (is.null(se_type)) {
-      return(c(interleave(fmt(vals), ""), "--", sprintf("%d", n_obs)))
-    }
-    key <- match.arg(se_type, LOGVAR_HARVEY_SE_TYPES)
-    stopifnot(
-      !is.null(se_frame), key %in% names(se_frame),
-      identical(se_frame$coef, tab$coef)
+    logvar_se_point_col(
+      vals, se_frame, se_type, LOGVAR_HARVEY_SE_TYPES, tab$coef, n_obs
     )
-    se <- se_frame[[key]]
-    t_stat <- vals / se
-    stars <- sig_stars(2 * stats::pnorm(-abs(t_stat)))
-    cells <- ifelse(
-      stars == "" | !is.finite(t_stat), fmt(vals),
-      sprintf("%s$%s$", fmt(vals), stars)
-    )
-    stat_row <- ifelse(is.finite(t_stat), sprintf("(%.2f)", t_stat), "")
-    c(interleave(cells, stat_row), "--", sprintf("%d", n_obs))
   }
   cols <- c(
     list(

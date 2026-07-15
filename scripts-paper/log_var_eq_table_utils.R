@@ -39,6 +39,35 @@ set_cell <- function(lo, hi, status) {
 # not reported)
 interleave <- function(a, b) as.vector(rbind(a, b))
 
+# A point-estimate table column shared by the PPML parts and the Harvey panel:
+# with se_type NULL (default) the interleaved statistic rows stay blank, exactly
+# as before SEs. With se_type set, the stored SE frame must be present and
+# aligned to tab_coef (fail loud rather than silently blank while the notes claim
+# SEs are reported); values then carry t = coef/se in the stat row with stars
+# from the standard-normal (QMLE) approximation. An all-NA frame (a point not
+# certified feasible) keeps the key column and renders a blank stat row per cell.
+# se_types is the estimator's validated variant vector.
+logvar_se_point_col <- function(vals, se_frame, se_type, se_types, tab_coef,
+                                n_obs) {
+  if (is.null(se_type)) {
+    return(c(interleave(fmt(vals), ""), "--", sprintf("%d", n_obs)))
+  }
+  key <- match.arg(se_type, se_types) # loud on an unknown type
+  stopifnot(
+    !is.null(se_frame), key %in% names(se_frame),
+    identical(se_frame$coef, tab_coef) # row order aligned to coefs
+  )
+  se <- se_frame[[key]]
+  t_stat <- vals / se
+  stars <- sig_stars(2 * stats::pnorm(-abs(t_stat)))
+  cells <- ifelse(
+    stars == "" | !is.finite(t_stat), fmt(vals),
+    sprintf("%s$%s$", fmt(vals), stars)
+  )
+  stat_row <- ifelse(is.finite(t_stat), sprintf("(%.2f)", t_stat), "")
+  c(interleave(cells, stat_row), "--", sprintf("%d", n_obs))
+}
+
 # Canonical PPML table parts: the quasi-Poisson reference and Lewbel-point
 # columns followed by exact-keyed display-tau hulls. Both the primary table and
 # the combined panels consume this one assembly path so their PPML cells cannot
@@ -59,31 +88,10 @@ logvar_ppml_table_parts <- function(ppml, tau_display, n_pc_r, se_type = NULL) {
     "$\\theta_0$", sprintf("$\\theta_{%d,R}$", seq_len(n_pc_r))
   )
   rows <- c(interleave(coef_labels, ""), "$R^2$", "$N$")
-  # a point column: with se_type NULL (default) the stat rows are blank, exactly
-  # as before. With se_type set, the stored SE frame must be present and aligned
-  # (fail loud rather than silently blank while the notes claim SEs are
-  # reported); values then carry t = coef/se in the interleaved stat row with
-  # stars from the standard-normal approximation. An all-NA frame (tau = 0 point
-  # not feasible) keeps the key column and renders a blank stat row per cell.
   point_col <- function(vals, se_frame) {
-    if (is.null(se_type)) {
-      return(c(interleave(fmt(vals), ""), "--", sprintf("%d", n_obs)))
-    }
-    key <- match.arg(se_type, LOGVAR_PPML_SE_TYPES) # loud on an unknown type
-    stopifnot(
-      !is.null(se_frame), key %in% names(se_frame),
-      identical(se_frame$coef, tab$coef) # row order aligned to coefs
+    logvar_se_point_col(
+      vals, se_frame, se_type, LOGVAR_PPML_SE_TYPES, tab$coef, n_obs
     )
-    se <- se_frame[[key]]
-    t_stat <- vals / se
-    p_val <- 2 * stats::pnorm(-abs(t_stat))
-    stars <- sig_stars(p_val)
-    cells <- ifelse(
-      stars == "" | !is.finite(t_stat), fmt(vals),
-      sprintf("%s$%s$", fmt(vals), stars)
-    )
-    stat_row <- ifelse(is.finite(t_stat), sprintf("(%.2f)", t_stat), "")
-    c(interleave(cells, stat_row), "--", sprintf("%d", n_obs))
   }
   columns <- c(
     list(
