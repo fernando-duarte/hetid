@@ -73,7 +73,11 @@ logvar_egarch_object_sha256 <- function(obj) {
 logvar_egarch_string_sha256 <- function(s) {
   .logvar_egarch_sha256_raw(charToRaw(enc2utf8(s)))
 }
-logvar_egarch_file_sha256 <- function(path) unname(tools::sha256sum(path))
+logvar_egarch_file_sha256 <- function(path) {
+  h <- unname(tools::sha256sum(path))
+  if (is.na(h)) logvar_egarch_decision_stop("unreadable_file_hash", path)
+  h
+}
 
 # Raise a classed condition so the driver and the tests can dispatch on the exact
 # failure family; every validation and routing failure uses this.
@@ -85,6 +89,19 @@ logvar_egarch_decision_stop <- function(reason, detail = "") {
       call = NULL
     )
   ))
+}
+
+# The canonical provenance a decision pair implies, which the validator enforces:
+# no question -> not_asked_default; an unanswered question -> no_answer_default;
+# any user answer (approved or declined) -> user_response.
+logvar_egarch_expected_provenance <- function(decisions) {
+  if (all(decisions == "not_asked")) {
+    "not_asked_default"
+  } else if (any(decisions == "no_answer")) {
+    "no_answer_default"
+  } else {
+    "user_response"
+  }
 }
 
 # The checked-in default record: read the freshly regenerated gate record, freeze

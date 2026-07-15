@@ -25,8 +25,19 @@ logvar_egarch_validate_decisions <- function(rec) {
       "the dependency was answered without an approved estimand"
     )
   }
+  # verdict ladder: approvals exist only on a rejecting gate, so any non-reject
+  # or unreliable verdict must carry both decisions not_asked (the ladder is law)
+  if (!identical(rec$gate_verdict, "reject") && !all(d == "not_asked")) {
+    logvar_egarch_decision_stop(
+      "inconsistent_decision_ladder", "approvals recorded but the gate did not reject"
+    )
+  }
   if (!rec$decision_provenance %in% LOGVAR_EGARCH_PROVENANCE_VALUES) {
     logvar_egarch_decision_stop("malformed_decision_record", "provenance enum")
+  }
+  # provenance must match the decisions (single-sourced with the builder's stamp)
+  if (!identical(rec$decision_provenance, logvar_egarch_expected_provenance(d))) {
+    logvar_egarch_decision_stop("inconsistent_provenance", rec$decision_provenance)
   }
   if (!is.character(rec$decided_at_utc) || length(rec$decided_at_utc) != 1L ||
     !nzchar(rec$decided_at_utc)) {
@@ -167,8 +178,11 @@ logvar_egarch_route <- function(decision, dep_available, dep_version,
       "the dynamic stage stays closed until they are."
     )))
   }
-  if (!isTRUE(dep_available) ||
-    !identical(as.character(dep_version), approved_version)) {
+  version_ok <- isTRUE(dep_available) && !is.na(dep_version) && identical(
+    as.character(numeric_version(dep_version, strict = FALSE)),
+    as.character(numeric_version(approved_version))
+  )
+  if (!version_ok) {
     logvar_egarch_decision_stop("approved_but_missing_package", sprintf(
       "both approvals landed but the approved version %s is required; found %s",
       approved_version,

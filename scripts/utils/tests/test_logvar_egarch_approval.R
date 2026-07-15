@@ -20,6 +20,10 @@ check("inline estimand prompt is canonical", identical(
 check("inline dependency prompt is canonical", identical(
   logvar_egarch_string_sha256(dep_prompt), LOGVAR_EGARCH_DEPENDENCY_PROMPT_SHA256
 ))
+check("file hash fails closed on a missing file", expect_stop(
+  logvar_egarch_file_sha256(file.path(tempdir(), "no_such_plan_file.md")),
+  "unreadable_file_hash"
+))
 
 # Router ladder branches (pure; no package access) --------------------------
 g_nr <- mk_gate("non_reject", q = 3, p = 0.30)
@@ -76,6 +80,9 @@ check("both approved + missing package: hard fail", expect_stop(
 check("both approved + version mismatch: hard fail", expect_stop(
   logvar_egarch_route(d_ap, TRUE, "1.4-9"), "approved_but_missing_package"
 ))
+check("both approved + dotted 1.5.5 normalizes to the dashed 1.5-5", isTRUE(
+  logvar_egarch_route(d_ap, TRUE, "1.5.5")$run_dynamic
+))
 
 # Strict validator: binding and staleness -----------------------------------
 check("valid record validates against its gate", {
@@ -117,6 +124,18 @@ d_ladder$decisions <- c(estimand = "declined", dependency = "approved")
 check("broken ladder invalidates", expect_stop(
   logvar_egarch_decision_validate(d_ladder, g_rj, plan_sha256 = test_plan_sha),
   "inconsistent_decision_ladder"
+))
+check("approvals on a non-reject gate invalidate", expect_stop(
+  logvar_egarch_decision_validate(
+    mk_dec(g_nr, "approved", "approved", "user_response"), g_nr,
+    plan_sha256 = test_plan_sha
+  ), "inconsistent_decision_ladder"
+))
+check("approved decisions with not_asked_default provenance invalidate", expect_stop(
+  logvar_egarch_decision_validate(
+    mk_dec(g_rj, "approved", "approved", "not_asked_default"), g_rj,
+    plan_sha256 = test_plan_sha
+  ), "inconsistent_provenance"
 ))
 check("noncanonical prompt fails the builder", expect_stop(
   logvar_egarch_decision_default(
