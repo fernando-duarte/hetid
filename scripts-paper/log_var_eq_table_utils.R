@@ -39,6 +39,27 @@ set_cell <- function(lo, hi, status) {
 # not reported)
 interleave <- function(a, b) as.vector(rbind(a, b))
 
+# Side-aware confidence-envelope cell: the moving-block bootstrap outer
+# containment interval for one set endpoint (log_var_eq_set_boot), rendered on
+# the row beneath its set_cell. A genuinely one-sided set (side "upper"/
+# "lower") keeps its live endpoint bracket-closed and the unattained infinite
+# endpoint parenthesized, exactly like set_cell's own infinite-bound cells; a
+# suppressed cell (side "none", or a non-finite endpoint) renders blank.
+# Vectorized like set_cell.
+envelope_cell <- function(ci_lo, ci_hi, side) {
+  side <- ifelse(is.na(side), "none", side)
+  ifelse(
+    side == "none" | is.na(ci_lo) | is.na(ci_hi), "",
+    ifelse(
+      side == "upper", sprintf("$(-\\infty,\\,%.3f]$", ci_hi),
+      ifelse(
+        side == "lower", sprintf("$[%.3f,\\,\\infty)$", ci_lo),
+        sprintf("$[%.3f,\\,%.3f]$", ci_lo, ci_hi)
+      )
+    )
+  )
+}
+
 # A point-estimate table column shared by the PPML parts and the Harvey panel:
 # with se_type NULL (default) the interleaved statistic rows stay blank, exactly
 # as before SEs. With se_type set, the stored SE frame must be present and
@@ -85,8 +106,13 @@ logvar_se_note_caveat <- function() {
 # Canonical PPML table parts: the quasi-Poisson reference and Lewbel-point
 # columns followed by exact-keyed display-tau hulls. Both the primary table and
 # the combined panels consume this one assembly path so their PPML cells cannot
-# drift. The statistic slots and R-squared row are blank by construction.
-logvar_ppml_table_parts <- function(ppml, tau_display, n_pc_r, se_type = NULL) {
+# drift. The statistic slots and R-squared row are blank by construction, unless
+# envelope supplies a per-tau (sprintf("%.17g", tau)-keyed) confidence-envelope
+# frame (log_var_eq_set_boot$ppml), in which case the blank row beneath each set
+# cell instead renders that tau's per-coef envelope_cell. NULL (the default)
+# keeps every column byte-identical to the pre-envelope renderer.
+logvar_ppml_table_parts <- function(ppml, tau_display, n_pc_r, se_type = NULL,
+                                    envelope = NULL) {
   tab <- ppml$table
   expected_coef <- c("(Intercept)", paste0("l.pc", seq_len(n_pc_r)))
   keys <- sprintf("%.17g", tau_display)
@@ -96,6 +122,13 @@ logvar_ppml_table_parts <- function(ppml, tau_display, n_pc_r, se_type = NULL) {
     length(sets) == length(tau_display),
     !any(vapply(sets, is.null, logical(1))),
     all(vapply(sets, function(st) identical(st$coef, tab$coef), logical(1)))
+  )
+  env <- if (is.null(envelope)) vector("list", length(sets)) else envelope[keys]
+  stopifnot(
+    length(env) == length(sets),
+    is.null(envelope) ||
+      (!any(vapply(env, is.null, logical(1))) &&
+        all(vapply(env, function(e) identical(e$coef, tab$coef), logical(1))))
   )
   n_obs <- ppml$sample$n
   coef_labels <- c(
@@ -107,17 +140,19 @@ logvar_ppml_table_parts <- function(ppml, tau_display, n_pc_r, se_type = NULL) {
       vals, se_frame, se_type, LOGVAR_PPML_SE_TYPES, tab$coef, n_obs
     )
   }
+  set_col <- function(st, e) {
+    stat_row <- if (is.null(e)) "" else envelope_cell(e$ci_lower, e$ci_upper, e$side)
+    c(
+      interleave(set_cell(st$set_lower, st$set_upper, st$status), stat_row),
+      "--", sprintf("%d", n_obs)
+    )
+  }
   columns <- c(
     list(
       point_col(tab$reference, ppml$se$reference),
       point_col(tab$point, ppml$se$point)
     ),
-    unname(lapply(sets, function(st) {
-      c(
-        interleave(set_cell(st$set_lower, st$set_upper, st$status), ""),
-        "--", sprintf("%d", n_obs)
-      )
-    }))
+    unname(Map(set_col, sets, env))
   )
   list(
     table = tab, sets = sets, rows = rows, columns = columns,

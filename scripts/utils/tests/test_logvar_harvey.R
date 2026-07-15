@@ -42,6 +42,7 @@ source(here::here("scripts/utils/tests/logvar_harvey_solver_checks.R"))
 source(here::here("scripts/utils/tests/logvar_harvey_recession_checks.R"))
 source(here::here("scripts/utils/tests/logvar_harvey_engine_checks.R"))
 source(here::here("scripts/utils/tests/logvar_harvey_table_checks.R"))
+source(here::here("scripts/utils/tests/logvar_envelope_cell_checks.R"))
 source(here::here("scripts/utils/tests/logvar_harvey_se_checks.R"))
 
 cat(sprintf("\n%d passed, %d failed\n", .pass, .fail))

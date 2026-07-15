@@ -15,14 +15,25 @@ source("scripts-paper/log_var_eq_harvey_notes.R")
 # from the fitted coefficient vector (length minus one intercept), never a
 # run_all global. The point columns render t-statistics/stars when se_type is
 # set (via the shared logvar_se_point_col); stat slots stay blank by
-# construction when se_type is NULL (back-compat).
+# construction when se_type is NULL (back-compat). envelope threads a per-tau
+# (sprintf("%.17g", tau)-keyed) confidence-envelope frame (log_var_eq_set_boot
+# $harvey) the same way logvar_ppml_table_parts does: NULL (the default) keeps
+# every column byte-identical to the pre-envelope renderer.
 logvar_harvey_build_fragment <- function(harvey, n_obs, tau_display,
                                          caption = NULL, label = NULL,
-                                         se_type = NULL) {
+                                         se_type = NULL, envelope = NULL) {
   tab <- harvey$table
   n_pc_r <- length(tab$coef) - 1L
-  sets <- harvey$sets[sprintf("%.17g", tau_display)]
+  keys <- sprintf("%.17g", tau_display)
+  sets <- harvey$sets[keys]
   stopifnot(!any(vapply(sets, is.null, logical(1))))
+  env <- if (is.null(envelope)) vector("list", length(sets)) else envelope[keys]
+  stopifnot(
+    length(env) == length(sets),
+    is.null(envelope) ||
+      (!any(vapply(env, is.null, logical(1))) &&
+        all(vapply(env, function(e) identical(e$coef, tab$coef), logical(1))))
+  )
   labels <- c(
     "$\\theta^{H}_0$", sprintf("$\\theta^{H}_{%d,R}$", seq_len(n_pc_r))
   )
@@ -32,18 +43,20 @@ logvar_harvey_build_fragment <- function(harvey, n_obs, tau_display,
       vals, se_frame, se_type, LOGVAR_HARVEY_SE_TYPES, tab$coef, n_obs
     )
   }
+  set_col <- function(st, e) {
+    stopifnot(identical(st$coef, tab$coef))
+    stat_row <- if (is.null(e)) "" else envelope_cell(e$ci_lower, e$ci_upper, e$side)
+    c(
+      interleave(set_cell(st$set_lower, st$set_upper, st$status), stat_row),
+      "--", sprintf("%d", n_obs)
+    )
+  }
   cols <- c(
     list(
       point_col(tab$reference, harvey$se$reference),
       point_col(tab$point, harvey$se$point)
     ),
-    unname(lapply(sets, function(st) {
-      stopifnot(identical(st$coef, tab$coef))
-      c(
-        interleave(set_cell(st$set_lower, st$set_upper, st$status), ""),
-        "--", sprintf("%d", n_obs)
-      )
-    }))
+    unname(Map(set_col, sets, env))
   )
   if (is.null(caption)) {
     caption <- paste(

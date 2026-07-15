@@ -159,6 +159,10 @@ source("scripts-paper/log_var_eq_ppml_table.R")
 # asset-return PCs, re-runs the whole set map per resample, and writes the outer
 # confidence envelopes to output/ (mutates no upstream cache)
 source("scripts-paper/log_var_eq_set_bootstrap.R")
+# the inference variant of the combined panels: same PPML/log-OLS/Harvey
+# panels and labels as log_var_eq_ppml_table.R, with the bootstrap envelope
+# threaded beneath the PPML and Harvey set cells
+source("scripts-paper/log_var_eq_set_inference_table.R")
 # the log-variance figures consume mean_eq_bounds_tau and the registry, so
 # this runs after both producers
 source("scripts-paper/log_var_eq_bounds_tau.R")

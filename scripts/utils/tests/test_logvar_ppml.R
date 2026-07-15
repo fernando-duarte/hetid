@@ -47,6 +47,7 @@ if (file.exists(here::here("scripts/utils/tests/test_logvar_ppml_spec.R"))) {
 }
 source(here::here("scripts/utils/tests/test_logvar_ppml_engine.R"))
 source(here::here("scripts/utils/tests/test_logvar_ppml_table.R"))
+source(here::here("scripts/utils/tests/logvar_envelope_cell_checks.R"))
 source(here::here("scripts/utils/tests/test_logvar_ppml_se.R"))
 if (file.exists(here::here("scripts-paper/log_var_eq_ppml_driver_helpers.R"))) {
   source(here::here("scripts/utils/tests/test_logvar_ppml_coverage.R"))
