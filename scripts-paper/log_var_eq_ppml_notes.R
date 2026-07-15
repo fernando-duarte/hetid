@@ -107,13 +107,7 @@ logvar_ppml_se_note <- function(se_type, se_hac_lags) {
       ),
       se_hac_lags, default_name
     ),
-    paste(
-      "The $\\tau{=}0$ statistics condition on the plug-in Lewbel news vector",
-      "$b_N$ and do not propagate its first-stage sampling error; $\\tau{>}0$",
-      "set columns are identified-set ranges, not point estimates, so no",
-      "standard error is attached (the moving-block bootstrap for set-endpoint",
-      "uncertainty is deferred)."
-    )
+    logvar_se_note_caveat()
   )
 }
 

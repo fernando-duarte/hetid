@@ -14,11 +14,11 @@ source("scripts-paper/log_var_eq_harvey_notes.R")
 # per-display-tau hulls, R^2 not defined for the variance MLE. Row labels come
 # from the fitted coefficient vector (length minus one intercept), never a
 # run_all global. The point columns render t-statistics/stars when se_type is
-# set (a transposition of logvar_ppml_table_parts's point_col); stat slots
-# stay blank by construction when se_type is NULL (back-compat).
+# set (via the shared logvar_se_point_col); stat slots stay blank by
+# construction when se_type is NULL (back-compat).
 logvar_harvey_build_fragment <- function(harvey, n_obs, tau_display,
                                          caption = NULL, label = NULL,
-                                         se_type = NULL, se_hac_lags = NULL) {
+                                         se_type = NULL) {
   tab <- harvey$table
   n_pc_r <- length(tab$coef) - 1L
   sets <- harvey$sets[sprintf("%.17g", tau_display)]
@@ -91,7 +91,7 @@ logvar_harvey_append_panel <- function(panels_lines, harvey, n_obs,
     )
   }
   harvey_fragment <- logvar_harvey_build_fragment(
-    harvey, n_obs, tau_display, caption, label, se_type, se_hac_lags
+    harvey, n_obs, tau_display, caption, label, se_type
   )
   harvey_notes <- build_harvey_panel_notes(
     harvey, tau_baseline, grid_cap, fit_budget, include_ordering,

@@ -68,6 +68,20 @@ logvar_se_point_col <- function(vals, se_frame, se_type, se_types, tab_coef,
   c(interleave(cells, stat_row), "--", sprintf("%d", n_obs))
 }
 
+# The point-column conditioning caveat shared verbatim by both estimators' SE
+# notes: the tau = 0 statistics condition on the plug-in Lewbel news vector and
+# the tau > 0 set columns carry no standard error (the moving-block bootstrap is
+# deferred).
+logvar_se_note_caveat <- function() {
+  paste(
+    "The $\\tau{=}0$ statistics condition on the plug-in Lewbel news vector",
+    "$b_N$ and do not propagate its first-stage sampling error; $\\tau{>}0$",
+    "set columns are identified-set ranges, not point estimates, so no",
+    "standard error is attached (the moving-block bootstrap for set-endpoint",
+    "uncertainty is deferred)."
+  )
+}
+
 # Canonical PPML table parts: the quasi-Poisson reference and Lewbel-point
 # columns followed by exact-keyed display-tau hulls. Both the primary table and
 # the combined panels consume this one assembly path so their PPML cells cannot
