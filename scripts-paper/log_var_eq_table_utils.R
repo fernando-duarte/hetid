@@ -60,6 +60,33 @@ envelope_cell <- function(ci_lo, ci_hi, side) {
   )
 }
 
+# The identified-set table columns shared by logvar_ppml_table_parts and the
+# Harvey panel: each column is set_cell over one tau's hull with the bootstrap
+# envelope_cell on the row beneath when an envelope frame is supplied. The
+# slicing and coef-alignment validation live here so the two estimator panels
+# cannot drift on the envelope-column rule (as logvar_se_point_col does for the
+# point column). envelope NULL keeps every column byte-identical to the
+# pre-envelope renderer; a supplied envelope keys on the same taus and aligns to
+# tab_coef.
+logvar_set_envelope_cols <- function(sets, envelope, keys, tab_coef, n_obs) {
+  env <- if (is.null(envelope)) vector("list", length(sets)) else envelope[keys]
+  stopifnot(
+    length(env) == length(sets),
+    is.null(envelope) ||
+      (!any(vapply(env, is.null, logical(1))) &&
+        all(vapply(env, function(e) identical(e$coef, tab_coef), logical(1))))
+  )
+  set_col <- function(st, e) {
+    stopifnot(identical(st$coef, tab_coef))
+    stat_row <- if (is.null(e)) "" else envelope_cell(e$ci_lower, e$ci_upper, e$side)
+    c(
+      interleave(set_cell(st$set_lower, st$set_upper, st$status), stat_row),
+      "--", sprintf("%d", n_obs)
+    )
+  }
+  unname(Map(set_col, sets, env))
+}
+
 # A point-estimate table column shared by the PPML parts and the Harvey panel:
 # with se_type NULL (default) the interleaved statistic rows stay blank, exactly
 # as before SEs. With se_type set, the stored SE frame must be present and
@@ -123,13 +150,6 @@ logvar_ppml_table_parts <- function(ppml, tau_display, n_pc_r, se_type = NULL,
     !any(vapply(sets, is.null, logical(1))),
     all(vapply(sets, function(st) identical(st$coef, tab$coef), logical(1)))
   )
-  env <- if (is.null(envelope)) vector("list", length(sets)) else envelope[keys]
-  stopifnot(
-    length(env) == length(sets),
-    is.null(envelope) ||
-      (!any(vapply(env, is.null, logical(1))) &&
-        all(vapply(env, function(e) identical(e$coef, tab$coef), logical(1))))
-  )
   n_obs <- ppml$sample$n
   coef_labels <- c(
     "$\\theta_0$", sprintf("$\\theta_{%d,R}$", seq_len(n_pc_r))
@@ -140,19 +160,12 @@ logvar_ppml_table_parts <- function(ppml, tau_display, n_pc_r, se_type = NULL,
       vals, se_frame, se_type, LOGVAR_PPML_SE_TYPES, tab$coef, n_obs
     )
   }
-  set_col <- function(st, e) {
-    stat_row <- if (is.null(e)) "" else envelope_cell(e$ci_lower, e$ci_upper, e$side)
-    c(
-      interleave(set_cell(st$set_lower, st$set_upper, st$status), stat_row),
-      "--", sprintf("%d", n_obs)
-    )
-  }
   columns <- c(
     list(
       point_col(tab$reference, ppml$se$reference),
       point_col(tab$point, ppml$se$point)
     ),
-    unname(Map(set_col, sets, env))
+    logvar_set_envelope_cols(sets, envelope, keys, tab$coef, n_obs)
   )
   list(
     table = tab, sets = sets, rows = rows, columns = columns,

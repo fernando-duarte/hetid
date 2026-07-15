@@ -109,7 +109,7 @@ c_sim <- lapply(ests, function(est) {
   stats::setNames(vapply(seq_along(display_taus), function(d) {
     logvar_simultaneous_critical(
       collected[[est]][[disp_idx[d]]], full[[est]][[disp_idx[d]]],
-      alpha = 0.10
+      alpha = 0.10, stability = logvar_boot_stability
     )
   }, numeric(1)), disp_key)
 })
