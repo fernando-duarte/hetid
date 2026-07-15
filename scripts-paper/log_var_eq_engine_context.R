@@ -64,6 +64,7 @@ logvar_b_key <- function(b) {
 # cache miss, enforces the global and per-phase caps, and tallies failures;
 # use_cache = FALSE (cold-start replication) always refits and never stores
 logvar_make_evaluator <- function(est, cache, bs) {
+  accepts_phase <- "phase" %in% names(formals(est$fit_at_b))
   function(b, phase, start = NULL, use_cache = TRUE) {
     key <- logvar_b_key(b)
     if (use_cache && !is.null(cache$store[[key]])) {
@@ -84,7 +85,11 @@ logvar_make_evaluator <- function(est, cache, bs) {
     bs$counters[[phase]] <- bs$counters[[phase]] + 1L
     bs$n_attempted <- bs$n_attempted + 1L
     bs$n_evaluated <- bs$n_evaluated + 1L
-    fit <- est$fit_at_b(b, start = start)
+    fit <- if (accepts_phase) {
+      est$fit_at_b(b, start = start, phase = phase)
+    } else {
+      est$fit_at_b(b, start = start)
+    }
     ok <- identical(fit$fit_status, "ok") && isTRUE(fit$converged)
     if (!ok) bs$n_failed <- bs$n_failed + 1L
     if (use_cache) cache$store[[key]] <- fit

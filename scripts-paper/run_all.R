@@ -62,6 +62,12 @@ logvar_ppml_grid_cap <- 4000L
 logvar_ppml_fit_budget <- 20000L
 logvar_ppml_coverage_grid_cap <- 8000L
 logvar_ppml_coverage_fit_budget <- 40000L
+# search controls for each date-indexed fitted-volatility envelope. Each dated
+# objective gets its grid extreme, shared seed, local polish, and cold
+# replication; auxiliary polish paths are omitted because one suspect path
+# correctly demotes an endpoint under the engine's fail-closed contract.
+logvar_fitted_vol_fit_budget <- 80000L
+logvar_fitted_vol_starts_per_side <- 1L
 # PPML QMLE standard errors under the point columns (OLS, tau = 0) of the
 # log-variance panels. Every non-bootstrap variant is computed and stored; this
 # picks which prints, one of "naive" (Pearson-dispersion model information;
@@ -133,6 +139,8 @@ source("scripts-paper/log_var_eq_ppml_table.R")
 # the log-variance figures consume mean_eq_bounds_tau and the registry, so
 # this runs after both producers
 source("scripts-paper/log_var_eq_bounds_tau.R")
+# consume the completed estimator caches only after their existing figures
+source("scripts-paper/log_var_eq_fitted_vol.R")
 source("scripts-paper/set_id_region_common.R")
 source("scripts-paper/set_id_projections.R")
 source("scripts-paper/set_id_region_3d.R")

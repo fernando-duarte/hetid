@@ -15,10 +15,12 @@
 #   coef_labels: coefficient axis labels; optional on the generic path
 #     (inferred from the first successful fit) but required by estimators
 #     that supply a batch scan_grid, where no per-point fit runs
-#   fit_at_b(b, start = NULL) -> list(coef, fit_status, converged, objective,
+#   fit_at_b(b, start = NULL, phase = NULL) -> list(coef, fit_status, converged, objective,
 #     score_norm, convergence_code, diagnostics, warm_start)
 #     fit_at_b owns its retry/start ladder; diagnostics is a slim list (no
-#     raw package objects -- cache entries must stay small) with standardized
+#     raw package objects -- cache entries must stay small). The optional phase
+#     argument receives the engine service phase; two-argument closures retain
+#     their legacy call. Diagnostics use standardized
 #     fields where applicable: warnings, messages, error_class,
 #     start_attempts, plus estimator-specific entries
 #   coef_objective(j) -> list(fn = function(b) scalar, gr = function(b)
