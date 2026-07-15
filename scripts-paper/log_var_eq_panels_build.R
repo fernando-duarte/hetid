@@ -1,0 +1,178 @@
+# Shared builder for the combined log-variance estimator panels: the PPML +
+# log-OLS ordered pair (mechanical order from logvar_panel_order) plus the
+# appended Harvey robustness panel. Consumed by BOTH the conservative table
+# (log_var_eq_ppml_table.R, no envelope) and the inference variant
+# (log_var_eq_set_inference_table.R, bootstrap envelope frames + set-boot
+# notes). Every panel/notes block is wrapped in stable LaTeX comment markers.
+# Parameterizing envelope/notes/caption/out_name here is what stops the two
+# published tables from drifting. Definitions only; run via run_all.R.
+
+source("scripts/utils/latex_table_utils.R")
+source("scripts/utils/latex_simple_table.R")
+source("scripts-paper/log_var_eq_table_utils.R")
+source("scripts-paper/log_var_eq_ppml_notes.R")
+source("scripts-paper/log_var_eq_harvey_panel.R")
+
+# wrap a built panel fragment in its markers and splice the marker-wrapped
+# notes block (one \item per note line) before \end{threeparttable}
+logvar_panel_block <- function(fragment, notes_lines, est) {
+  cut <- match("\\end{threeparttable}", fragment)
+  stopifnot(!is.na(cut))
+  notes_block <- c(
+    sprintf("%% BEGIN LOGVAR NOTES %s", est),
+    "\\begin{tablenotes}[flushleft]",
+    "\\scriptsize",
+    paste0("\\item ", notes_lines),
+    "\\end{tablenotes}",
+    sprintf("%% END LOGVAR NOTES %s", est)
+  )
+  c(
+    sprintf("%% BEGIN LOGVAR PANEL %s", est),
+    fragment[seq_len(cut - 1L)], notes_block, fragment[cut:length(fragment)],
+    sprintf("%% END LOGVAR PANEL %s", est)
+  )
+}
+
+# the log-OLS benchmark panel fragment: the stored mean-log cells with
+# Newey-West lag-4 t-statistics recomputed from the stored fit. Point
+# identified, so no envelope ever applies; identical in both panel files, kept
+# here so its label stays valid across the manuscript's \input swap.
+logvar_logols_fragment <- function(headers, n_obs, ordering_note) {
+  tab <- log_var_eq$table
+  nw_se <- sqrt(diag(sandwich::NeweyWest(
+    log_var_eq$fit_ols,
+    lag = 4, prewhite = FALSE
+  )))[tab$coef]
+  stopifnot(!anyNA(nw_se))
+  nw_t <- tab$ols / nw_se
+  nw_p <- 2 * stats::pt(-abs(nw_t), df = stats::df.residual(log_var_eq$fit_ols))
+  stars <- sig_stars(nw_p)
+  cells <- ifelse(
+    stars == "", fmt(tab$ols),
+    sprintf("%s$%s$", fmt(tab$ols), stars)
+  )
+  labels <- c(
+    "$\\theta^{log}_0$", sprintf("$\\theta^{log}_{%d,R}$", seq_len(n_pc_r))
+  )
+  rows <- c(interleave(labels, ""), "$R^2$", "$N$")
+  r2 <- summary(log_var_eq$fit_ols)$r.squared
+  cols <- c(
+    list(
+      c(
+        interleave(cells, sprintf("(%.2f)", nw_t)),
+        sprintf("%.2f", r2), sprintf("%d", n_obs)
+      ),
+      c(interleave(fmt(tab$point), ""), "--", sprintf("%d", n_obs))
+    ),
+    unname(lapply(log_var_eq$sets, function(st) {
+      stopifnot(identical(st$coef, tab$coef))
+      c(
+        interleave(set_cell(st$set_lower, st$set_upper, st$status), ""),
+        "--", sprintf("%d", n_obs)
+      )
+    }))
+  )
+  build_simple_latex_table(
+    rows, cols,
+    col_headers = headers,
+    caption = paste0(
+      paste(
+        "log-OLS panel: $\\theta^{log}$, the benchmark mean-log map",
+        "(fragile robustness benchmark)."
+      ),
+      ordering_note("logols")
+    ),
+    label = "tab:log_var_eq_panel_logols",
+    fontsize = "\\footnotesize\\setlength{\\tabcolsep}{3pt}",
+    rule_after = 2L
+  )
+}
+
+# Build and write the combined panels. out_name names the .tex; the PPML caption
+# suffix, the PPML/Harvey envelope frames, and the appended set-boot notes are
+# the only things that differ between the conservative and inference variants.
+build_logvar_panels <- function(out_name, ppml_caption_suffix = ".",
+                                envelope_ppml = NULL, envelope_harvey = NULL,
+                                extra_notes = NULL) {
+  order <- logvar_panel_order(log_var_eq$n_cross, set_id_mean_eq$tau_display)
+  n_base <- log_var_eq$n_cross[[which(set_id_mean_eq$tau_display == 0.05)]]
+  n_obs <- log_var_eq$sample$n
+  headers <- c(
+    "OLS", "$\\tau{=}0$", sprintf("$\\tau{=}%.2g$", set_id_mean_eq$tau_display)
+  )
+  ordering_note <- function(est) {
+    if (order[1] != est) {
+      return("")
+    }
+    sprintf(
+      paste(
+        " Panel order is editorial, keyed to the benchmark crossing count",
+        "(%d) at $\\tau{=}0.05$, not a selection between estimators."
+      ),
+      n_base
+    )
+  }
+  ppml_parts <- logvar_ppml_table_parts(
+    log_var_eq_ppml, set_id_mean_eq$tau_display, n_pc_r,
+    se_type = logvar_ppml_se_type, envelope = envelope_ppml
+  )
+  stopifnot(
+    identical(ppml_parts$n_obs, n_obs),
+    identical(ppml_parts$headers, headers)
+  )
+  ppml_fragment <- build_simple_latex_table(
+    ppml_parts$rows, ppml_parts$columns,
+    col_headers = headers,
+    caption = paste0(
+      paste(
+        "PPML panel: $\\theta$, the exponential conditional-variance map over",
+        "the identified news sets"
+      ),
+      ppml_caption_suffix, ordering_note("ppml")
+    ),
+    label = "tab:log_var_eq_panel_ppml",
+    fontsize = "\\footnotesize\\setlength{\\tabcolsep}{3pt}",
+    rule_after = 2L
+  )
+  blocks <- list(
+    ppml = logvar_panel_block(
+      ppml_fragment,
+      c(
+        build_ppml_panel_notes(
+          log_var_eq_ppml, set_id_mean_eq$tau_baseline,
+          logvar_ppml_grid_cap, logvar_ppml_fit_budget,
+          se_type = logvar_ppml_se_type, se_hac_lags = logvar_ppml_se_hac_lags
+        ),
+        extra_notes
+      ),
+      "ppml"
+    ),
+    logols = logvar_panel_block(
+      logvar_logols_fragment(headers, n_obs, ordering_note),
+      build_logols_panel_notes(set_id_mean_eq$tau_baseline, n_base),
+      "logols"
+    )
+  )
+  lines <- unlist(blocks[order], use.names = FALSE)
+  if (exists("log_var_eq_harvey")) {
+    harvey_fragment <- logvar_harvey_build_fragment(
+      log_var_eq_harvey, n_obs, set_id_mean_eq$tau_display,
+      se_type = logvar_harvey_se_type, envelope = envelope_harvey
+    )
+    harvey_notes <- c(
+      build_harvey_panel_notes(
+        log_var_eq_harvey, set_id_mean_eq$tau_baseline,
+        logvar_harvey_grid_cap, logvar_harvey_fit_budget,
+        se_type = logvar_harvey_se_type, se_hac_lags = logvar_harvey_se_hac_lags
+      ),
+      extra_notes
+    )
+    lines <- c(lines, logvar_panel_block(harvey_fragment, harvey_notes, "harvey"))
+  }
+  write_latex_table(lines, out_dir, out_name)
+  compile_latex_pdf(file.path(out_dir, paste0(out_name, "_standalone.tex")))
+  cat(sprintf(
+    "log-variance panels%s: %s first (n_cross[0.05] = %d); wrote %s.tex\n",
+    if (is.null(envelope_ppml)) "" else " (inference)", order[1], n_base, out_name
+  ))
+}
