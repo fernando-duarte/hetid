@@ -162,6 +162,13 @@ source("scripts-paper/log_var_eq_joint_null.R")
 # Lewbel + variance moment layer and runs the guarded driver (Stage A graph
 # replication under the no-answer default); the panels table appends its note
 source("scripts-paper/log_var_eq_joint_gmm_run.R")
+# unconditional base-R cleanup of the four dynamic-only EGARCH-X artifacts before
+# the gate runs, so a stale pilot / CSV / RDS / bounds PDF can never masquerade
+# as a fresh dynamic result behind a non-rejecting gate. The audit of
+# existed/deleted flags is stored in the routing status manifest; it never
+# touches the decision file, the gate record, or the status manifest.
+source("scripts-paper/log_var_eq_egarch_cleanup.R")
+logvar_egarch_cleanup_audit <- logvar_egarch_cleanup(out_dir)
 # base-R residual-dynamics gate for the log-variance equation: the predeclared
 # lag-4 Ljung-Box screen on the tau = 0 benchmark residual decides whether any
 # downstream volatility-dynamics workstream opens. Base R only, always runs, and
@@ -170,6 +177,13 @@ source("scripts-paper/log_var_eq_joint_gmm_run.R")
 # and set_id_mean_eq are built.
 source("scripts-paper/log_var_eq_dynamics_gate_core.R")
 source("scripts-paper/log_var_eq_dynamics_gate.R")
+# EGARCH-X decision core and the unconditionally-sourced router driver: validate
+# the committed scope decision against the freshly regenerated gate record, route
+# every ladder branch, rewrite the status manifest with the routing outcome, and
+# expose logvar_egarch_run_dynamic. This run's gate is non_reject, so the router
+# stops the dynamic workstream and sources no dynamic module (Task 5 adds those).
+source("scripts-paper/log_var_eq_egarch_decision_core.R")
+source("scripts-paper/log_var_eq_egarch_route.R")
 # median (LAD) map: gated on the quantreg dependency decision. Source the tri-state
 # DCF reader, then source the driver only when the decision is approved and the
 # package is installed at the recorded version. A missing, declined, or unanswered
