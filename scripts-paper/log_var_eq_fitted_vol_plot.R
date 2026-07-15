@@ -25,18 +25,56 @@ logvar_fitted_vol_path <- function(out_dir, estimator) {
   )
 }
 
-logvar_fitted_vol_caption <- function(has_point) {
+logvar_fitted_vol_band_stats <- function(band) {
+  width <- band$volatility_upper - band$volatility_lower
+  stopifnot(length(width) > 0L, all(is.finite(width)))
+  point <- band$volatility_point
+  relative <- width[is.finite(point) & point != 0] / abs(point[is.finite(point) &
+    point != 0])
+  imax <- which.max(width)
+  list(
+    median_width = stats::median(width),
+    mean_width = mean(width),
+    max_width = width[imax],
+    max_qtr = as.character(band$qtr[imax]),
+    median_relative = if (length(relative) > 0L) stats::median(relative) else NA_real_,
+    max_relative = if (length(relative) > 0L) max(relative) else NA_real_
+  )
+}
+
+logvar_fitted_vol_stats_note <- function(stats) {
+  base <- sprintf(
+    paste0(
+      "Band width: median %.4f pp, mean %.4f pp, max %.4f pp at %s"
+    ),
+    stats$median_width, stats$mean_width, stats$max_width, stats$max_qtr
+  )
+  if (!is.finite(stats$median_relative) || !is.finite(stats$max_relative)) {
+    return(paste0(base, "."))
+  }
+  sprintf(
+    paste0("%s; relative to the red fit, median %.1f%% and max %.1f%%."),
+    base, 100 * stats$median_relative, 100 * stats$max_relative
+  )
+}
+
+logvar_fitted_vol_caption <- function(has_point, stats = NULL) {
   point_note <- if (has_point) {
     "The red line is the tau = 0 Lewbel-point fit."
   } else {
     "The tau = 0 Lewbel-point fit is unavailable, so no red line is drawn."
+  }
+  stats_note <- if (is.null(stats)) {
+    ""
+  } else {
+    paste0("\n", logvar_fitted_vol_stats_note(stats))
   }
   paste0(
     "Shading is the pointwise projection hull of the estimated plug-in ",
     "variance-equation image.\n", point_note, " Finite plotted endpoints are ",
     "attained inner approximations\nfrom grid scan and local polish. This is ",
     "not a confidence or simultaneous path band; interior attainment is ",
-    "not asserted."
+    "not asserted.", stats_note
   )
 }
 
@@ -74,6 +112,7 @@ logvar_fitted_vol_render <- function(envelope, path) {
       " unavailable date(s) omitted"
     )
   }
+  band_stats <- logvar_fitted_vol_band_stats(band)
   fig <- ggplot2::ggplot(rows, ggplot2::aes(date)) +
     ggplot2::geom_ribbon(
       data = band,
@@ -100,17 +139,17 @@ logvar_fitted_vol_render <- function(envelope, path) {
       title = paste(estimator_label, "fitted conditional residual volatility"),
       subtitle = subtitle, x = NULL,
       y = "Conditional SD of consumption-growth residual (percentage points)",
-      caption = logvar_fitted_vol_caption(nrow(point) > 0L)
+      caption = logvar_fitted_vol_caption(nrow(point) > 0L, band_stats)
     ) +
     ggplot2::theme_minimal() +
     ggplot2::theme(
-      plot.caption = ggplot2::element_text(hjust = 0, size = 8),
+      plot.caption = ggplot2::element_text(hjust = 0, size = 7.5),
       plot.margin = ggplot2::margin(8, 10, 8, 10)
     )
   built <- ggplot2::ggplot_build(fig)
   expected <- c(nrow(band), nrow(band), nrow(band), nrow(point))
   stopifnot(identical(vapply(built$data, nrow, integer(1)), expected))
-  grDevices::pdf(path, width = 10, height = 6.1)
+  grDevices::pdf(path, width = 10, height = 6.25)
   print(fig)
   grDevices::dev.off()
   invisible(path)
