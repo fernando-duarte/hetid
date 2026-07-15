@@ -71,8 +71,8 @@ logvar_joint_candidate_table <- function(grid_b, beta_seeds) {
 # then up to extra_cap extras farther than min_sep in normalized coordinates.
 # Coverage is incomplete when more patterns exist than the cap admits.
 logvar_joint_select_starts <- function(coords, pattern_ids, score,
-                                       pattern_cap = 256L, extra_cap = 5L,
-                                       min_sep = 0.25) {
+                                       pattern_cap = logvar_joint_gmm_constants$pattern_start_cap,
+                                       extra_cap = 5L, min_sep = 0.25) {
   coords <- as.matrix(coords)
   uniq_pat <- unique(pattern_ids)
   best_per_pattern <- unname(vapply(uniq_pat, function(p) {

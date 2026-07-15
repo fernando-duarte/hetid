@@ -76,6 +76,20 @@ check("stage C is enabled only with a request and a nonempty ratified delta", jg
     isTRUE(sc(mk_decision(sc = TRUE, delta = c(0.05, 0.1)))) &&
     isFALSE(sc(mk_decision(sc = FALSE, delta = 0.05)))
 }))
+# Only the no-answer default clears the driver's wired-runner guard: any enabled
+# block, a Stage C delta (even without the request flag), or a non-a_L target fails.
+check("only the no-answer-default config clears the driver wired-runner guard", jg_try({
+  jg_need("logvar_joint_gmm_default_config_only")
+  ok <- logvar_joint_gmm_default_config_only
+  a_p <- mk_decision()
+  a_p$intercept_target <- "a_P"
+  isTRUE(ok(mk_decision())) &&
+    isFALSE(ok(mk_decision(z = TRUE))) &&
+    isFALSE(ok(mk_decision(lp = TRUE))) &&
+    isFALSE(ok(mk_decision(sc = TRUE, delta = c(0.05)))) &&
+    isFALSE(ok(mk_decision(delta = 0.05))) &&
+    isFALSE(ok(a_p))
+}))
 # An all-redundant z block fails closed and is never reported as overidentification.
 check("an all-redundant z block fails closed, never overidentification", jg_try({
   jg_need("logvar_residualize_moment_basis")

@@ -20,10 +20,13 @@ logvar_joint_gmm_dim_fields <- function(block, q = NA_integer_, k = NA_integer_)
       n_moments_profiled = NA_integer_, n_parameters_profiled = NA_integer_
     )
   } else if (identical(block, "log_ppml")) {
+    kk <- logvar_joint_gmm_constants
     list(
       n_added_moments = NA_integer_, n_search_parameters = NA_integer_,
-      n_moments_unprofiled = 10L, n_parameters_unprofiled = 9L,
-      n_moments_profiled = 8L, n_parameters_profiled = 7L
+      n_moments_unprofiled = kk$n_moments_unprofiled,
+      n_parameters_unprofiled = kk$n_parameters_unprofiled,
+      n_moments_profiled = kk$n_moments_profiled,
+      n_parameters_profiled = kk$n_parameters_profiled
     )
   } else {
     stop(sprintf("logvar_joint_gmm_dim_fields: unknown block '%s'", block))

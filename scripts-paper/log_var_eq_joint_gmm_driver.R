@@ -66,6 +66,15 @@
 
 if (exists("log_var_eq") && exists("set_id_mean_eq")) {
   jg_dec <- logvar_joint_decision_validate(logvar_joint_gmm_decision)
+  # This round the driver implements only the no-answer default (Stage A at a_L);
+  # a ratified empirical block, Stage C tolerance, or a_P/both target has no wired
+  # runner, so refuse it loudly rather than silently omit, stub, or fall back to a_L.
+  if (!logvar_joint_gmm_default_config_only(jg_dec)) {
+    logvar_joint_decision_stop(
+      "unwired_joint_branch",
+      "the driver implements only the no-answer default this round"
+    )
+  }
   jg_sid <- log_var_eq$sample_id
   stopifnot(
     is.character(jg_sid), length(jg_sid) == 1L, nzchar(jg_sid),

@@ -101,6 +101,7 @@ logvar_joint_epigraph_solve <- function(spec, x0, box_half_width,
     ))
   }
   u0 <- (x0 - spec$center) / spec$scale
+  solver_error <- NULL
   res <- tryCatch(
     nloptr::slsqp(
       x0 = c(u0, init$r_start), fn = prog$fn, gr = prog$gr,
@@ -112,8 +113,16 @@ logvar_joint_epigraph_solve <- function(spec, x0, box_half_width,
       ),
       deprecatedBehavior = FALSE
     ),
-    error = function(e) NULL
+    error = function(e) {
+      solver_error <<- conditionMessage(e)
+      NULL
+    }
   )
+  # surface the optimizer's own message rather than discarding it, so a structural
+  # failure is diagnosable instead of hiding inside a generic solve_failed verdict
+  if (!is.null(solver_error)) {
+    warning("logvar_joint_epigraph_solve: SLSQP error -- ", solver_error)
+  }
   if (is.null(res) || any(!is.finite(res$par))) {
     return(logvar_joint_epigraph_result(
       spec, x0, rep(NA_real_, k), NA_real_, box_half_width, box_tol,

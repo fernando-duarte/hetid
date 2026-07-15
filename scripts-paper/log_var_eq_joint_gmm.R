@@ -29,6 +29,17 @@ logvar_joint_gmm_stage_c_enabled <- function(decision) {
   isTRUE(decision$stage_c_requested) && length(decision$moment_delta) > 0L
 }
 
+# TRUE only for the no-answer-default scientific configuration the driver actually
+# implements this round: no empirical block, no Stage C tolerance, a_L intercept.
+# Any other schema-valid choice has no wired driver runner, so the driver refuses
+# it rather than silently omitting a block, stubbing a projection, or using a_L.
+logvar_joint_gmm_default_config_only <- function(decision) {
+  !isTRUE(decision$enable_z) && !isTRUE(decision$enable_log_ppml) &&
+    !isTRUE(decision$stage_c_requested) &&
+    length(decision$moment_delta) == 0L &&
+    identical(decision$intercept_target, "a_L")
+}
+
 # Canonical 17-significant-digit serialization for the spec-ID numeric parts, so
 # the stamp is representation-stable across runs (mirrors the decision spec-ID).
 .jg_fmt17 <- function(x) {
@@ -100,7 +111,7 @@ logvar_joint_gmm_spec <- function(decision, sample_id, joint_input_id,
 # (a_L, beta) = theta_hat(b), so the stacked moment layer reproduces the benchmark
 # two-step map. attained only when every finite point clears root_tol.
 logvar_joint_gmm_graph_replication <- function(b_points, w1, w2, proj, x_mat,
-                                               root_tol = 1e-8) {
+                                               root_tol = logvar_joint_gmm_constants$root_tol) {
   b_points <- as.matrix(b_points)
   max_resid <- 0
   n_finite <- 0L
