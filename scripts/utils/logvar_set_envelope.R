@@ -70,6 +70,10 @@ logvar_endpoint_envelope_row <- function(lo, up, lo_st, up_st, f, alpha,
   reason <- NA_character_
   if (identical(ls, "bounded") && identical(us, "bounded")) {
     if (lc$gate && uc$gate) {
+      # both-bounded pool: the joint two-side critical value needs D_L/s_L
+      # and D_U/s_U both defined on a draw; divergent draws stay counted in
+      # frac above (never dropped from the gate), just excluded from this
+      # root's pool.
       common <- lc$ok & uc$ok
       cval <- logvar_root_critical(pmax(0, lc$z, uc$z)[common], alpha)
       ci_lo <- f$set_lower - cval * lc$se
@@ -119,6 +123,8 @@ logvar_endpoint_envelope <- function(draws, full, alpha = 0.10,
                                      stability = 0.85) {
   stopifnot(
     identical(dim(draws$lower), dim(draws$upper)),
+    identical(dim(draws$lower_status), dim(draws$lower)),
+    identical(dim(draws$upper_status), dim(draws$upper)),
     ncol(draws$lower) == nrow(full)
   )
   rows <- lapply(seq_len(nrow(full)), function(k) {
@@ -140,6 +146,7 @@ logvar_simultaneous_critical <- function(draws, full, alpha = 0.10,
                                          stability = 0.85) {
   b <- nrow(draws$lower)
   root <- rep(0, b)
+  # same both/all-bounded pool logic as the two-sided branch above.
   common <- rep(TRUE, b)
   any_live <- FALSE
   for (k in seq_len(nrow(full))) {

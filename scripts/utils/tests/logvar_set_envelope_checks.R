@@ -101,3 +101,46 @@ check("simultaneous critical value is >= the max coefficientwise value", {
   cs <- logvar_simultaneous_critical(lse_two, lse_full2, alpha = 0.10)
   is.finite(cs) && cs >= max(e$c_value) - 1e-9
 })
+
+# two-sided, distinct 10-draw dropouts per side: each side's own pool stays
+# at 90% bounded (gate passes), even though the two-sided common pool (both
+# sides bounded on the same draw) is smaller -- divergent draws are counted
+# in frac, never dropped from the gate.
+set.seed(2L)
+lse_two_partial <- list(
+  lower = matrix(rnorm(100, -2, 0.10), 100, 1),
+  upper = matrix(rnorm(100, -1, 0.10), 100, 1),
+  lower_status = matrix("bounded", 100, 1),
+  upper_status = matrix("bounded", 100, 1)
+)
+lse_two_partial$lower[1:10, 1] <- Inf
+lse_two_partial$lower_status[1:10, 1] <- "unbounded"
+lse_two_partial$upper[11:20, 1] <- Inf
+lse_two_partial$upper_status[11:20, 1] <- "unbounded"
+lse_full2_partial <- data.frame(
+  coef = "a", set_lower = -2, set_upper = -1,
+  lower_status = "bounded", upper_status = "bounded", stringsAsFactors = FALSE
+)
+check("envelope two-sided gate passes with 10 distinct divergent draws per side", {
+  e <- logvar_endpoint_envelope(lse_two_partial, lse_full2_partial, alpha = 0.10)
+  e$side == "two-sided" && e$gate_lower && e$gate_upper &&
+    isTRUE(all.equal(e$frac_lower, 0.90)) && isTRUE(all.equal(e$frac_upper, 0.90)) &&
+    e$ci_lower < -2 && e$ci_upper > -1 && is.finite(e$c_value)
+})
+
+check("envelope fails the gate for too few bounded draws (insufficient reason)", {
+  # one-sided upper-live cell: only 5 of 100 draws bounded on the upper
+  # side, well under boot_min_reps(100) = 50 -> "insufficient" gate reason.
+  d <- list(
+    lower = matrix(-Inf, 100, 1),
+    upper = matrix(c(rnorm(5, -2, 0.10), rep(Inf, 95)), 100, 1),
+    lower_status = matrix("unbounded", 100, 1),
+    upper_status = matrix(c(rep("bounded", 5), rep("unbounded", 95)), 100, 1)
+  )
+  f <- data.frame(
+    coef = "a", set_lower = -Inf, set_upper = -2,
+    lower_status = "unbounded", upper_status = "bounded", stringsAsFactors = FALSE
+  )
+  e <- logvar_endpoint_envelope(d, f, alpha = 0.10)
+  e$side == "none" && !e$gate_upper && grepl("insufficient", e$reason)
+})
