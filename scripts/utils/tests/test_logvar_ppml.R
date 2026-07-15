@@ -21,8 +21,10 @@ if (file.exists(here::here("scripts-paper/log_var_eq_ppml_driver_helpers.R"))) {
 }
 source(here::here("scripts-paper/log_var_eq_table_utils.R"))
 source(here::here("scripts-paper/log_var_eq_ppml_notes.R"))
+# the shared SE scaffolding before the SE module (which routes through it), and
 # the SE module before the check files so LOGVAR_PPML_SE_TYPES / the note helper
 # resolve when a builder is called with se_type set (the driver block is guarded)
+source(here::here("scripts-paper/log_var_eq_se_utils.R"))
 source(here::here("scripts-paper/log_var_eq_ppml_se.R"))
 
 .pass <- 0L
@@ -37,6 +39,7 @@ check <- function(label, cond) {
   }
 }
 
+source(here::here("scripts/utils/tests/logvar_se_utils_checks.R"))
 source(here::here("scripts/utils/tests/logvar_ppml_fixtures.R"))
 source(here::here("scripts/utils/tests/test_logvar_ppml_fit.R"))
 if (file.exists(here::here("scripts/utils/tests/test_logvar_ppml_spec.R"))) {

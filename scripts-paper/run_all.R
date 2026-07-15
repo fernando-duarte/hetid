@@ -119,6 +119,8 @@ source("scripts-paper/set_id_bounds_tau.R")
 # set_id_bounds_tau.R and must register its figure entry before the
 # bounds-by-tau driver renders the registry
 source("scripts-paper/log_var_eq_ppml_sets.R")
+# shared SE scaffolding both estimators route through; before either *_se module
+source("scripts-paper/log_var_eq_se_utils.R")
 # analytic PPML QMLE standard errors for the point columns; must run after the
 # frozen PPML object exists and before either table renders it
 source("scripts-paper/log_var_eq_ppml_se.R")
