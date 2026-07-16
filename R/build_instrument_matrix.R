@@ -83,6 +83,7 @@ build_instrument_matrix <- function(z, transforms = NULL,
     )
   }
 
+  assert_flag(include_original, "include_original")
   assert_bad_argument_ok(
     include_original || length(transforms) > 0,
     "include_original = FALSE requires at least one transform",

@@ -84,6 +84,7 @@
 compute_w1_residuals <- function(n_pcs = HETID_CONSTANTS$DEFAULT_N_PCS,
                                  data = NULL, return_df = FALSE,
                                  exog = NULL, y1_lags = 0L) {
+  assert_flag(return_df, "return_df")
   if (is.null(exog)) {
     validate_n_pcs(n_pcs)
   } else {

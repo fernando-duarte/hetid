@@ -53,6 +53,8 @@ download_term_premia <- function(source = c("github", "nyfed"),
                                  frequency = c("monthly", "daily")) {
   source <- match.arg(source)
   frequency <- match.arg(frequency)
+  assert_flag(force, "force")
+  assert_flag(quiet, "quiet")
 
   # Path resolution also rejects nyfed + daily, even when force = TRUE
   existing <- get_acm_data_path(source, frequency)

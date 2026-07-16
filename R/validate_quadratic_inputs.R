@@ -13,6 +13,7 @@ is_numeric_vector_dim <- function(x, n_components) {
 #' @param Q_i List of theta-axis vectors from the components object
 #' @param maturities Maturity vector from the containers
 #' @param n_components Expected dimension (I)
+#' @return Invisible TRUE
 #' @noRd
 validate_q_i_dims <- function(Q_i, maturities, # nolint: object_name_linter.
                               n_components) {
@@ -26,6 +27,7 @@ validate_q_i_dims <- function(Q_i, maturities, # nolint: object_name_linter.
       )
     )
   }
+  invisible(TRUE)
 }
 
 #' Validate Finiteness of Per-Maturity Moment and Component Values
@@ -36,6 +38,7 @@ validate_q_i_dims <- function(Q_i, maturities, # nolint: object_name_linter.
 #'
 #' @param quantities Named list of position-indexed vectors or lists
 #' @param maturities Maturity vector from the containers
+#' @return Invisible TRUE
 #' @noRd
 validate_finite_by_maturity <- function(quantities, maturities) {
   for (name in names(quantities)) {
@@ -55,6 +58,7 @@ validate_finite_by_maturity <- function(quantities, maturities) {
       arg = name
     )
   }
+  invisible(TRUE)
 }
 
 #' Validate a hetid_components Object

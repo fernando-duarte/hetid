@@ -50,6 +50,7 @@
 compute_price_news <- function(yields, term_premia, i,
                                return_yield_news = FALSE, dates = NULL,
                                step = HETID_CONSTANTS$DEFAULT_STEP) {
+  assert_flag(return_yield_news, "return_yield_news")
   validate_row_alignment(yields, term_premia)
 
   components <- compute_news_components(yields, term_premia, i, step = step)

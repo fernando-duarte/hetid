@@ -30,7 +30,7 @@
 #' ## Maturity Naming
 #' Whole-year maturities carry the official two-digit year suffix
 #' (01-10, i.e. 12 to 120 months); all other maturities carry a
-#' three-digit month suffix plus "M" (003M-119M). Package-facing
+#' three-digit month suffix plus "M" (001M-119M). Package-facing
 #' columns from \code{extract_acm_data()} are always suffixed by the
 #' maturity in months (y12, tp60, rny119, ...).
 #'

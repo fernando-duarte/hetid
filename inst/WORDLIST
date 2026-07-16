@@ -31,6 +31,7 @@ cmd
 codecs
 CodeDepends
 codetools
+coercions
 collinear
 compilable
 compositionally

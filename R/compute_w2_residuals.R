@@ -107,15 +107,15 @@ compute_w2_residuals <- function(yields, term_premia,
                                  step = HETID_CONSTANTS$DEFAULT_STEP,
                                  y1 = NULL, y1_lags = 0L,
                                  impose_b_zero = FALSE) {
+  assert_flag(return_df, "return_df")
+  assert_flag(impose_b_zero, "impose_b_zero")
   if (is.null(maturities)) {
     maturities <- default_w2_maturities(step)
   }
   if (is.null(pcs)) {
     validate_n_pcs(n_pcs)
   } else {
-    assert_scalar_integer_in_range(
-      n_pcs, "n_pcs", 1, NCOL(pcs)
-    )
+    assert_scalar_integer_in_range(n_pcs, "n_pcs", 1, NCOL(pcs))
   }
   validated <- validate_w2_inputs( # nolint: object_usage_linter
     yields, term_premia, maturities,

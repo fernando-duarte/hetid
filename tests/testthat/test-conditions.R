@@ -128,3 +128,46 @@ test_that("assert_flag accepts a single TRUE/FALSE and rejects everything else",
   expect_match(conditionMessage(err), "paired must be TRUE or FALSE", fixed = TRUE)
   expect_identical(err$arg, "paired")
 })
+
+test_that("exported logical flags are guarded at the boundary", {
+  expect_error(
+    compute_price_news(return_yield_news = NA),
+    regexp = "return_yield_news must be TRUE or FALSE",
+    class = "hetid_error_bad_argument"
+  )
+  expect_error(
+    build_instrument_matrix(matrix(rnorm(20), nrow = 10), include_original = NA),
+    regexp = "include_original must be TRUE or FALSE",
+    class = "hetid_error_bad_argument"
+  )
+  expect_error(
+    compute_w1_residuals(return_df = NA),
+    regexp = "return_df must be TRUE or FALSE",
+    class = "hetid_error_bad_argument"
+  )
+  expect_error(
+    compute_w2_residuals(return_df = NA),
+    regexp = "return_df must be TRUE or FALSE",
+    class = "hetid_error_bad_argument"
+  )
+  expect_error(
+    compute_w2_residuals(impose_b_zero = NA),
+    regexp = "impose_b_zero must be TRUE or FALSE",
+    class = "hetid_error_bad_argument"
+  )
+  expect_error(
+    download_term_premia(force = NA),
+    regexp = "force must be TRUE or FALSE",
+    class = "hetid_error_bad_argument"
+  )
+  expect_error(
+    download_term_premia(quiet = NA),
+    regexp = "quiet must be TRUE or FALSE",
+    class = "hetid_error_bad_argument"
+  )
+  expect_error(
+    load_term_premia(auto_download = NA),
+    regexp = "auto_download must be TRUE or FALSE",
+    class = "hetid_error_bad_argument"
+  )
+})

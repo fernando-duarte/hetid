@@ -86,8 +86,8 @@ test_that("compute_w2_residuals uses SDF innovations", {
     maturities = i, n_pcs = 4, pcs = pcs, dates = test_env$data$date
   ))
 
-  # The residuals length will be limited by the shorter of SDF innovations
-  # and available PCs (from variables data)
+  # The residual count is the T-1 news rows less any dropped by complete.cases
+  # (the PCs are row-locked to the yields, so they cannot bind first)
   expect_true(length(res_y2$residuals[[1]]) <= length(sdf_innov))
   expect_true(length(res_y2$residuals[[1]]) > 0)
 
@@ -405,9 +405,8 @@ test_that("error when maturities are non-integer or negative", {
   )
 })
 
-# Synthetic inputs for the warn-and-skip contract tests:
-# yields/term_premia restricted to the requested column indices,
-# with user-supplied PCs to avoid the bundled-data fallback
+# Synthetic inputs for the warn-and-skip contract tests: yields/term_premia
+# restricted to the requested column indices, with the required PCs supplied
 make_w2_skip_inputs <- function(col_indices, n = 40, seed = 123) {
   set.seed(seed)
   yields <- as.data.frame(

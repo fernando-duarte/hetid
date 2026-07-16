@@ -37,6 +37,7 @@ load_term_premia <- function(auto_download = FALSE,
                              frequency = c("monthly", "daily")) {
   source <- match.arg(source)
   frequency <- match.arg(frequency)
+  assert_flag(auto_download, "auto_download")
   if (!acm_data_available(source, frequency)) {
     if (auto_download) {
       message("Term premia data not found. Downloading...")

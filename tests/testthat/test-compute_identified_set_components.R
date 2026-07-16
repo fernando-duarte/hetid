@@ -296,6 +296,21 @@ test_that("constructor rejects wrong component types and lengths", {
   )
 })
 
+test_that("new_hetid_components rejects non-integer maturities before coercing", {
+  nms <- paste0("maturity_", 1:2)
+  l_ok <- stats::setNames(c(1, 2), nms)
+  q_ok <- stats::setNames(list(c(1, 2), c(3, 4)), nms)
+
+  expect_error(
+    new_hetid_components(
+      L_i = l_ok, V_i = l_ok, Q_i = q_ok,
+      maturities = c(1, 2.9), n_components = 2
+    ),
+    regexp = "maturities must be finite integer values",
+    class = "hetid_error_bad_argument"
+  )
+})
+
 test_that("validate_hetid_components returns a valid object invisibly", {
   inputs <- setup_quadratic_test_inputs(n_maturities = 2)
   expect_invisible(validate_hetid_components(inputs$components))
