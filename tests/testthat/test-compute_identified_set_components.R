@@ -264,3 +264,54 @@ test_that("print method summarizes both axes", {
   # print returns its argument invisibly
   expect_identical(returned, components)
 })
+
+test_that("constructor rejects wrong component types and lengths", {
+  nms <- paste0("maturity_", 1:2)
+  l_ok <- stats::setNames(c(1, 2), nms)
+  q_ok <- stats::setNames(list(c(1, 2), c(3, 4)), nms)
+
+  expect_error(
+    new_hetid_components(
+      L_i = "a", V_i = l_ok, Q_i = q_ok,
+      maturities = 1:2, n_components = 2
+    ),
+    "L_i must be a numeric vector",
+    class = "hetid_error_bad_argument"
+  )
+  expect_error(
+    new_hetid_components(
+      L_i = l_ok, V_i = l_ok[1], Q_i = q_ok,
+      maturities = 1:2, n_components = 2
+    ),
+    "V_i must be a numeric vector",
+    class = "hetid_error_bad_argument"
+  )
+  expect_error(
+    new_hetid_components(
+      L_i = l_ok, V_i = l_ok, Q_i = c(1, 2),
+      maturities = 1:2, n_components = 2
+    ),
+    "Q_i must be a list",
+    class = "hetid_error_bad_argument"
+  )
+})
+
+test_that("validate_hetid_components returns a valid object invisibly", {
+  inputs <- setup_quadratic_test_inputs(n_maturities = 2)
+  expect_invisible(validate_hetid_components(inputs$components))
+  expect_identical(
+    validate_hetid_components(inputs$components), inputs$components
+  )
+
+  renamed <- inputs$components
+  names(renamed$L_i) <- c("a", "b")
+  expect_error(
+    validate_hetid_components(renamed),
+    "names must equal maturity_N",
+    class = "hetid_error_bad_argument"
+  )
+  expect_error(
+    validate_hetid_components(unclass(inputs$components)),
+    class = "hetid_error_bad_argument"
+  )
+})

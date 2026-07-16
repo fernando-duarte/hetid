@@ -271,7 +271,8 @@ test_that("extract_acm_data error handling", {
   # Should error when data not available and auto_download = FALSE
   expect_error(
     extract_acm_data(auto_download = FALSE),
-    "ACM data not available"
+    "Term premia data not found",
+    class = "hetid_error_insufficient_data"
   )
 })
 

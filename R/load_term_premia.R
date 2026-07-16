@@ -19,7 +19,10 @@
 #' @param frequency Data frequency: \code{"monthly"} (default) or
 #'   \code{"daily"} (GitHub source only; user cache only).
 #'
-#' @return A data frame containing the term premia data, or NULL if data is not available.
+#' @return A data frame containing the term premia data. Raises a
+#'   \code{hetid_error_insufficient_data} condition when the data is not
+#'   available (every source now fails the same way; the \code{"auto"}/
+#'   \code{"github"} path formerly returned NULL).
 #' @export
 #'
 #' @examples
@@ -48,11 +51,10 @@ load_term_premia <- function(auto_download = FALSE,
       ))
     } else {
       hint <- if (frequency == "daily") "frequency = \"daily\"" else ""
-      message(
-        "Term premia data not found. Please run download_term_premia(",
-        hint, ") first."
-      )
-      return(NULL)
+      stop_insufficient_data(paste0(
+        "Term premia data not found. Run download_term_premia(",
+        hint, ") first or set auto_download = TRUE."
+      ))
     }
   }
 

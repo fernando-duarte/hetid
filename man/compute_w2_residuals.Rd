@@ -86,16 +86,22 @@ maturity's \code{kept_idx}.}
 \item{n_obs}{Number of observations used in each regression}
 \item{kept_idx}{List of logical vectors indicating which
 rows survived complete.cases filtering, one per maturity}
+\item{skipped}{Named character vector of skip reasons, one element
+per skipped maturity (named \code{maturity_N}); zero-length when
+nothing was skipped}
 }
 If return_df = TRUE, returns a data frame with columns \code{date},
-\code{maturity}, \code{residuals} (\eqn{W_{2,t+1}}), and \code{fitted}.
+\code{maturity}, \code{residuals} (\eqn{W_{2,t+1}}), and \code{fitted},
+carrying the same skip reasons as a \code{skipped_maturities} attribute.
 
 Maturities whose required columns or observations are missing are
 skipped with a warning rather than aborting the run: their entries
 are absent from \code{residuals}, \code{fitted}, and \code{kept_idx},
 and their \code{coefficients} rows, \code{r_squared}, and \code{n_obs}
 are \code{NA}. With \code{return_df = TRUE}, skipped maturities
-contribute no rows (zero rows if all are skipped).
+contribute no rows (zero rows if all are skipped). Each skip removes
+a constraint and can only widen the identified set, so check the
+returned skip set rather than the warning stream.
 }
 \description{
 Computes residuals W_\{2,t+1\}^\{(i)\} from regressing Y_\{2,t+1\}^\{(i)\} variables

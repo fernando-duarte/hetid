@@ -67,7 +67,7 @@ compute_identification_moments <- function(w1, w2, pcs, maturities = NULL) {
   vector_stats <- compute_vector_statistics_impl(w1, w2, pcs, maturities)
   matrix_stats <- compute_matrix_statistics_impl(w1, w2, maturities)
 
-  new_hetid_moments(
+  moments <- new_hetid_moments(
     list(
       s_i_0 = scalar_stats$s_i_0,
       sigma_i_sq = scalar_stats$sigma_i_sq,
@@ -81,14 +81,19 @@ compute_identification_moments <- function(w1, w2, pcs, maturities = NULL) {
     n_components = ncol(w2),
     n_obs = validated$t_obs
   )
+  validate_hetid_moments(moments)
+  moments
 }
 
-#' Construct a Validated hetid_moments Object
+#' Construct a hetid_moments Object
 #'
-#' Low-level constructor and single structural-alignment gate for the
-#' \code{hetid_moments} class. Validates every outer (constraint-axis)
-#' shape and name against \code{maturity_names(maturities)} and every
-#' inner (theta-axis) dimension against \code{n_components}.
+#' Low-level cheap constructor for the \code{hetid_moments} class: type,
+#' scalar, and maturity-vector checks with lossless coercions, trusting
+#' the shapes of the statistics themselves. The per-maturity
+#' structural-alignment sweep lives in \code{validate_hetid_moments()},
+#' which the public boundary \code{compute_identification_moments()}
+#' always runs; hot paths rebuilding containers from known-good parts
+#' may call this constructor directly and skip it.
 #'
 #' @param stats List with the seven statistics (\code{s_i_0},
 #'   \code{sigma_i_sq}, \code{r_i_0}, \code{r_i_1}, \code{p_i_0},
@@ -123,8 +128,6 @@ new_hetid_moments <- function(stats, maturities, n_components, n_obs) {
     max_value = n_components, max_label = "n_components"
   )
   maturities <- as.integer(maturities)
-
-  validate_moments_shapes(stats, maturities, n_components)
 
   structure(
     stats[required],

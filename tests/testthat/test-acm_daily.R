@@ -74,16 +74,16 @@ test_that("load_term_premia daily reads the daily cache", {
   expect_identical(result$date, daily_dates)
 })
 
-test_that("load_term_premia daily missing hints at the daily download", {
+test_that("load_term_premia daily missing errors with the daily hint", {
   user_root <- withr::local_tempdir()
   withr::local_envvar(R_USER_DATA_DIR = user_root)
 
-  expect_message(
-    result <- load_term_premia(frequency = "daily"),
+  expect_error(
+    load_term_premia(frequency = "daily"),
     'frequency = "daily"',
-    fixed = TRUE
+    fixed = TRUE,
+    class = "hetid_error_insufficient_data"
   )
-  expect_null(result)
 })
 
 test_that("load_term_premia auto-download propagates the daily frequency", {

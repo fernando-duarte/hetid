@@ -21,8 +21,12 @@ new_hetid_components(L_i, V_i, Q_i, maturities, n_components)
 A classed \code{hetid_components} list
 }
 \description{
-Low-level constructor carrying the maturity identity of the moments
-the components were derived from. Shape validation happens downstream
-in \code{validate_quadratic_inputs()}.
+Low-level cheap constructor carrying the maturity identity of the
+moments the components were derived from: type and length checks
+only. The full shape sweep lives in
+\code{validate_hetid_components()}, which the public boundary
+\code{compute_identified_set_components()} always runs; hot paths
+assembling components from known-good parts may call this
+constructor directly and skip it.
 }
 \keyword{internal}

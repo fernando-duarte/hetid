@@ -489,6 +489,8 @@ test_that("skipped maturities report NA, not zero", {
   expect_true(is.na(result$n_obs[2]))
   expect_false("maturity_36" %in% names(result$residuals))
   expect_true(all(is.na(result$coefficients["maturity_36", ])))
+  expect_named(result$skipped, "maturity_36")
+  expect_match(result$skipped[["maturity_36"]], "[Ss]kipping maturity 36")
 })
 
 test_that("all maturities skipped with return_df gives zero-row data frame", {
@@ -505,6 +507,7 @@ test_that("all maturities skipped with return_df gives zero-row data frame", {
   expect_s3_class(result, "data.frame")
   expect_equal(nrow(result), 0)
   expect_named(result, c("date", "maturity", "residuals", "fitted"))
+  expect_named(attr(result, "skipped_maturities"), "maturity_36")
 })
 
 test_that("list mode returns per-maturity dates parallel to residuals", {

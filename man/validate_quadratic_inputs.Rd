@@ -33,10 +33,11 @@ A list with components:
 \description{
 Checks the container classes, that the components and moments carry
 identical maturity identity, the shapes of the \code{components}
-object (whose constructor defers shape validation here by design),
-and the type/finiteness/positivity constraints for
+object (via \code{validate_hetid_components()}), and the
+type/finiteness/positivity constraints for
 \code{\link{compute_identified_set_quadratic}}. Moment shapes are
-class invariants guaranteed by \code{new_hetid_moments()} and are
-trusted rather than re-checked.
+class invariants guaranteed by the
+\code{compute_identification_moments()} boundary and are trusted
+rather than re-checked.
 }
 \keyword{internal}
