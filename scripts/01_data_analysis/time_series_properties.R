@@ -449,7 +449,9 @@ decide_rf <- function(col, pval_col, data) {
 summary_table <- data.frame(
   Variable = all_ts_results$Variable[non_sep],
   ADF = ifelse(all_ts_results$ADF_pval[non_sep] < SIG_LEVEL, "R", "F"),
-  KPSS = ifelse(all_ts_results$KPSS_pval[non_sep] < SIG_LEVEL, "R", "F"),
+  # KPSS p is clamped into [0.01, 0.10] (stats_utils.R), so its reject test is
+  # <=, not the < the continuous p-values use
+  KPSS = ifelse(all_ts_results$KPSS_pval[non_sep] <= SIG_LEVEL, "R", "F"),
   PP = ifelse(all_ts_results$PP_pval[non_sep] < SIG_LEVEL, "R", "F"),
   LB = ifelse(all_ts_results$LB_pval[non_sep] < SIG_LEVEL, "R", "F"),
   ARCH = ifelse(all_ts_results$ARCH_pval[non_sep] < SIG_LEVEL, "R", "F"),
