@@ -67,8 +67,7 @@ theta_notes <- c(
     "$\\gamma^{\\top}\\widehat{\\mathrm{Var}}(Z)\\gamma = 1$; the ",
     "$\\sum_j \\gamma_j^2$ row is the squared Euclidean norm of that ",
     "representative (the reciprocal of the unit-direction instrument ",
-    "variance). Baseline VFCI loadings are unit Euclidean norm. ",
-    "Quarterly ACM data."
+    "variance). Quarterly ACM data."
   )
 )
 
