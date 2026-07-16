@@ -15,7 +15,7 @@
   finite <- is.finite(b$lower) && is.finite(b$upper)
   if (bounded && valid && finite) {
     if (b$width <= 1e-8) "point" else "interval"
-  } else if (!bounded) {
+  } else if (!bounded && valid) {
     "unbounded"
   } else {
     "unreliable"
