@@ -1,6 +1,5 @@
-# Locks the migrated outcome-lag naming grammar so a regression to the legacy
-# `y1_lag<h>` column names is caught. This is a narrow conformance check, not a
-# general naming validator.
+# Locks the migrated outcome-lag naming grammar so a regression to legacy
+# `y1_lag<h>` column names is caught; narrow check, not a general validator
 
 test_that("lag_grammar_names follows default-unit drop-first-digit grammar", {
   expect_identical(lag_grammar_names("y1", 1L), "l.y1")

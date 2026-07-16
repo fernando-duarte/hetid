@@ -44,17 +44,17 @@ test_that("nonzero lag block makes psi rows set-valued (affine in theta)", {
   set.seed(201)
   fx <- make_structural_fixture(n_lags = 3)
   lag_cols <- grep("^l[0-9]*\\.y1$", colnames(fx$beta2r))
-  # The estimated lag slopes in beta2r are genuinely nonzero (estimate-B).
+  # The estimated lag slopes in beta2r are genuinely nonzero (estimate-B)
   expect_true(all(abs(fx$beta2r[, lag_cols]) > 0))
 
   # Recovered psi rows match a direct OLS of (y1 - y2'theta) on the common X,
-  # i.e. psi is a set-valued linear image of theta, not a fixed point.
+  # i.e. psi is a set-valued linear image of theta, not a fixed point
   theta <- c(0.6, -0.5)
   direct <- coef(stats::lm((fx$y1 - fx$y2 %*% theta) ~ fx$x - 1))
   recovered <- recover_structural_coefficients(fx$beta1r, fx$beta2r, theta)
   expect_equal(unname(recovered), unname(direct))
 
-  # The psi rows actually vary with theta (affine, not constant).
+  # The psi rows actually vary with theta (affine, not constant)
   rec0 <- recover_structural_coefficients(fx$beta1r, fx$beta2r, c(0, 0))
   expect_true(all(abs((recovered - rec0)[lag_cols]) > 0))
 })
@@ -67,10 +67,10 @@ test_that("all-zero lag block (impose-B = 0) gives constant psi rows", {
 
   rec0 <- recover_structural_coefficients(fx$beta1r, fx$beta2r, c(0, 0))
   rec1 <- recover_structural_coefficients(fx$beta1r, fx$beta2r, c(1.3, -2.1))
-  # Lag rows do not move with theta; they equal beta1r exactly.
+  # Lag rows do not move with theta; they equal beta1r exactly
   expect_equal(rec1[lag_cols], rec0[lag_cols])
   expect_equal(unname(rec1[lag_cols]), unname(fx$beta1r[lag_cols]))
-  # The PC rows still move (their beta2r block is nonzero).
+  # The PC rows still move (their beta2r block is nonzero)
   pc_cols <- grep("^pc[0-9]+$", colnames(fx$beta2r))
   expect_true(all(abs((rec1 - rec0)[pc_cols]) > 0))
 })
@@ -131,7 +131,7 @@ test_that("names propagate to vector and matrix outputs", {
   expect_identical(colnames(mat_out), colnames(theta_set))
 })
 
-test_that("a predictor-axis dimension mismatch is signalled", {
+test_that("a predictor-axis dimension mismatch is signaled", {
   set.seed(107)
   fx <- make_structural_fixture()
   err <- expect_error(
@@ -143,7 +143,7 @@ test_that("a predictor-axis dimension mismatch is signalled", {
   expect_match(conditionMessage(err), "predictor axis", fixed = TRUE)
 })
 
-test_that("a vector-theta component-axis mismatch is signalled", {
+test_that("a vector-theta component-axis mismatch is signaled", {
   set.seed(108)
   fx <- make_structural_fixture()
   expect_error(
@@ -152,7 +152,7 @@ test_that("a vector-theta component-axis mismatch is signalled", {
   )
 })
 
-test_that("a matrix-theta component-axis mismatch is signalled", {
+test_that("a matrix-theta component-axis mismatch is signaled", {
   set.seed(109)
   fx <- make_structural_fixture()
   expect_error(
@@ -200,7 +200,7 @@ test_that("beta2r must be a matrix and beta1r must be a vector", {
   )
 })
 
-test_that("mismatched predictor names are signalled", {
+test_that("mismatched predictor names are signaled", {
   set.seed(113)
   fx <- make_structural_fixture()
   bad_beta2 <- fx$beta2r

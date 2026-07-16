@@ -1,5 +1,5 @@
 # Canonical regression lock for the date convention (presence + filtration
-# alignment) across the whole time-series surface; per-function tests do details.
+# alignment) across the whole time-series surface; per-function tests do details
 
 acm <- extract_acm_data(data_types = c("yields", "term_premia"))
 yld <- acm[, paste0("y", seq(12, 120, 12))]
@@ -7,7 +7,7 @@ tpm <- acm[, paste0("tp", seq(12, 120, 12))]
 dts <- acm$date
 n <- nrow(yld)
 
-# The four SDF time-series functions and a representative call for each.
+# The four SDF time-series functions and a representative call for each
 sdf_calls <- list(
   compute_n_hat = function(dates) compute_n_hat(yld, tpm, i = 60, dates = dates),
   compute_expected_sdf = function(dates) {
@@ -44,7 +44,7 @@ test_that("date presence: SDF series cannot be emitted without a real Date index
 
 test_that("migration guard: an old positional return_df=TRUE call now errors", {
   # The 4th positional slot of compute_n_hat is now `dates`; the legacy
-  # `compute_n_hat(y, tp, i, TRUE)` binds TRUE into dates and is rejected.
+  # `compute_n_hat(y, tp, i, TRUE)` binds TRUE into dates and is rejected
   expect_error(
     compute_n_hat(yld, tpm, 60, TRUE),
     class = "hetid_error_bad_argument"
@@ -52,13 +52,13 @@ test_that("migration guard: an old positional return_df=TRUE call now errors", {
 })
 
 test_that("filtration alignment: levels are dated at t, news at t+1", {
-  # Level: n_hat(i, t) is F_t-measurable -> dated t (1:1 with the input dates).
+  # Level: n_hat(i, t) is F_t-measurable -> dated t (1:1 with the input dates)
   nh <- compute_n_hat(yld, tpm, i = 60, dates = dts)
   expect_identical(nh$date, dts)
   expect_equal(nh$n_hat, n_hat_series(yld, tpm, i = 60))
 
   # News: delta_{t+1} p is realized at t+1 -> the (T-1) news values are
-  # NA-prepended so value k sits on date[k+1], and row 1 is NA.
+  # NA-prepended so value k sits on date[k+1], and row 1 is NA
   pn <- compute_price_news(yld, tpm, i = 60, dates = dts)
   expect_identical(pn$date, dts)
   expect_true(is.na(pn$price_news[1]))
@@ -79,7 +79,7 @@ test_that("presence + filtration: W1/W2 residuals carry their t+1 realization da
   variables$date <- to_period_end(variables$date, "quarterly")
   mats <- c(12, 24, 36, 48)
   # suppressWarnings: the quarterly extract emits an incomplete-quarter notice
-  # for the trailing partial quarter -- a data property, not part of this test.
+  # for the trailing partial quarter -- a data property, not part of this test
   acm_q <- suppressWarnings(extract_acm_data(
     data_types = c("yields", "term_premia"),
     maturities = mats, frequency = "quarterly"
@@ -90,7 +90,7 @@ test_that("presence + filtration: W1/W2 residuals carry their t+1 realization da
     by = "date"
   )
 
-  # W1: data must carry a date column; residual W_{1,t+1} is dated at t+1.
+  # W1: data must carry a date column; residual W_{1,t+1} is dated at t+1
   w1 <- compute_w1_residuals(n_pcs = 4, data = variables)
   expect_s3_class(w1$dates, "Date")
   expect_false(anyNA(w1$dates))
@@ -103,7 +103,7 @@ test_that("presence + filtration: W1/W2 residuals carry their t+1 realization da
     class = "hetid_error"
   )
 
-  # W2: dates are full-T (one per yield row); residual W_{2,t+1} dated at t+1.
+  # W2: dates are full-T (one per yield row); residual W_{2,t+1} dated at t+1
   w2 <- compute_w2_residuals(
     merged[, paste0("y", mats)], merged[, paste0("tp", mats)],
     maturities = c(24, 36), n_pcs = 4,

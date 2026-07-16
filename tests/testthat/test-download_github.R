@@ -1,6 +1,5 @@
-# Mocked tests for the digest-verified GitHub download flow: release
-# metadata parsing, checksum verification, and the cache move. No real
-# network access; the fixture builders live in helper-github-fixture.R.
+# Mocked tests for the digest-verified GitHub download flow: release metadata,
+# checksum, cache move. No network; fixture builders in helper-github-fixture.R
 
 test_that("github download verifies the digest and caches the file", {
   user_root <- withr::local_tempdir()

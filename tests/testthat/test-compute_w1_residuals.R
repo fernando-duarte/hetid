@@ -126,7 +126,7 @@ test_that("errors without a date column (date is always required)", {
   no_date <- variables[, setdiff(names(variables), "date")]
 
   # The date column is now mandatory in every return shape: a time series
-  # cannot be returned without its realization dates.
+  # cannot be returned without its realization dates
   expect_error(
     compute_w1_residuals(n_pcs = 2, data = no_date),
     class = "hetid_error"

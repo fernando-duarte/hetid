@@ -1,5 +1,3 @@
-# Tests for input validation and the bundled-PC fallback branches
-
 test_that("non-contiguous column subsets pass validation", {
   # Maturity 60 only needs columns 48/60/72 downstream; the ncol of
   # the inputs is not a bound on admissible maturities

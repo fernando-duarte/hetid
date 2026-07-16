@@ -13,9 +13,8 @@
 #' @keywords internal
 load_standard_test_data <- function(data_types = c("yields", "term_premia"),
                                     frequency = "quarterly") {
-  # Drop the trailing incomplete quarter (the bundled data ends
-  # mid-quarter) so computation tests stay warning-free; the
-  # incomplete-quarter warning has its own dedicated tests
+  # Drop the trailing incomplete quarter so computation tests stay
+  # warning-free; that warning has its own dedicated tests
   extract_acm_data(
     data_types = data_types,
     frequency = frequency,
@@ -91,11 +90,9 @@ create_synthetic_test_data <- function(n = 100, n_maturities = 10, seed = 123) {
   # Column names at the annual month nodes (y12, y24, ...)
   mats <- 12L * seq_len(n_maturities)
 
-  # Create correlated yield data
   yields <- matrix(rnorm(n * n_maturities), nrow = n, ncol = n_maturities)
   colnames(yields) <- paste0("y", mats)
 
-  # Create term premia with some structure
   term_premia <- matrix(rnorm(n * n_maturities, mean = 0.01, sd = 0.005),
     nrow = n, ncol = n_maturities
   )

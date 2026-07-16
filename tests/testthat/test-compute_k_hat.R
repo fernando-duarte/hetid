@@ -26,15 +26,13 @@ test_that("k_hat manual calculation verification", {
   k_hat_60 <- compute_k_hat(test_env$yields, test_env$term_premia, i = i)
 
   n_hat <- n_hat_series(test_env$yields, test_env$term_premia, i = i - 12)
-  y <- test_env$yields$y12 / 100 # Convert to decimal
+  y <- test_env$yields$y12 / 100
 
   # The realized-vs-forecast pairing shifts i/12 news periods (rows)
   horizon <- i %/% 12
 
-  # Get n_hat at t+1
   n_hat_t_plus_1 <- c(n_hat[-1], NA)
 
-  # Get y at t+horizon
   y_t_plus_h <- c(y[-seq_len(horizon)], rep(NA, horizon))
 
   # Compute k_hat manually: mean over valid (non-missing) terms
@@ -60,7 +58,6 @@ test_that("k_hat monotonicity - generally increases with maturity", {
   }
 
   # Check general increasing trend (allowing for some non-monotonicity)
-  # Count how many increases vs decreases
   increases <- sum(diff(k_values[2:9]) > 0) # Exclude i=12 which is 0
   expect_gte(increases, 4,
     label = "k_hat should generally increase with maturity"

@@ -1,5 +1,3 @@
-# Tests for make_constraint_checker
-
 test_that("checker value matches the quadratic form computed directly", {
   a <- matrix(c(2, 0.5, 0.5, 1), 2, 2)
   b <- c(-1, 2)

@@ -1,5 +1,5 @@
 # All tests use real package data: bundled ACM term-structure data through
-# extract_acm_data() and the bundled quarterly `variables` dataset.
+# extract_acm_data() and the bundled quarterly `variables` dataset
 
 test_that("quarterly conversion keeps the last monthly observation of each quarter", {
   monthly <- extract_acm_data(

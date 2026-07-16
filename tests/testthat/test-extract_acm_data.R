@@ -1,4 +1,3 @@
-# Test file for extract_acm_data function
 # Tests ACM data extraction and filtering using the bundled CSV
 
 test_that("extract_acm_data returns expected structure", {
@@ -33,7 +32,6 @@ test_that("extract_acm_data maturity selection", {
 })
 
 test_that("extract_acm_data date filtering", {
-  # Test date range filtering
   start_date <- "2010-01-01"
   end_date <- "2015-12-31"
 
@@ -42,34 +40,26 @@ test_that("extract_acm_data date filtering", {
     end_date = end_date
   )
 
-  # Check dates are within range
   expect_true(all(data$date >= as.Date(start_date)))
   expect_true(all(data$date <= as.Date(end_date)))
 
-  # Test with only start date
   data_start <- extract_acm_data(start_date = "2020-01-01")
   expect_true(all(data_start$date >= as.Date("2020-01-01")))
 
-  # Test with only end date
   data_end <- extract_acm_data(end_date = "2010-12-31")
   expect_true(all(data_end$date <= as.Date("2010-12-31")))
 })
 
 test_that("extract_acm_data data types selection", {
-  # Test selecting different data types
-
-  # Only yields
   data_yields <- extract_acm_data(data_types = "yields")
   expect_true(all(paste0("y", seq(12, 120, 12)) %in% names(data_yields)))
   expect_false(any(paste0("tp", seq(12, 120, 12)) %in% names(data_yields)))
   expect_false(any(paste0("rn", seq(12, 120, 12)) %in% names(data_yields)))
 
-  # Only term premia
   data_tp <- extract_acm_data(data_types = "term_premia")
   expect_true(all(paste0("tp", seq(12, 120, 12)) %in% names(data_tp)))
   expect_false(any(paste0("y", seq(12, 120, 12)) %in% names(data_tp)))
 
-  # All three types
   data_all <- extract_acm_data(
     data_types = c("yields", "term_premia", "risk_neutral_yields")
   )
@@ -79,7 +69,6 @@ test_that("extract_acm_data data types selection", {
 })
 
 test_that("extract_acm_data frequency conversion", {
-  # Test quarterly conversion
   data_monthly <- extract_acm_data(frequency = "monthly")
 
   data_quarterly <- extract_acm_data(
@@ -87,13 +76,10 @@ test_that("extract_acm_data frequency conversion", {
     use_incomplete_quarters = FALSE
   )
 
-  # Quarterly should have fewer observations
   expect_lt(nrow(data_quarterly), nrow(data_monthly))
 
-  # Quarterly dates should be end of quarter
   months <- format(data_quarterly$date, "%m")
 
-  # Check that dates are in March, June, September, or December
   expect_true(all(months %in% c("03", "06", "09", "12")))
 })
 
@@ -197,7 +183,7 @@ test_that("extract_acm_data errors when a requested column is absent", {
     )
 
     # The 5-year column (ACMY05) is absent: a missing required column is
-    # an incomplete/corrupt source, signalled rather than silently dropped.
+    # an incomplete/corrupt source, signaled rather than silently dropped
     expect_error(
       extract_acm_data(data_types = "yields", maturities = 60),
       "missing required column",
@@ -233,19 +219,17 @@ test_that("extract_acm_data errors when the date column cannot be parsed", {
 })
 
 test_that("extract_acm_data data consistency", {
-  # Test that term premium = yield - risk-neutral yield
+  # term premium = yield - risk-neutral yield
   data <- extract_acm_data(
     data_types = c("yields", "term_premia", "risk_neutral_yields"),
     maturities = c(24, 60, 120)
   )
 
-  # Check relationship for each maturity
   for (mat in c(24, 60, 120)) {
     y_col <- paste0("y", mat)
     tp_col <- paste0("tp", mat)
     rny_col <- paste0("rny", mat)
 
-    # Term premium should equal yield minus risk-neutral yield
     # Allow small tolerance for rounding
     calculated_tp <- data[[y_col]] - data[[rny_col]]
     expect_equal(data[[tp_col]], calculated_tp, tolerance = 1e-6)

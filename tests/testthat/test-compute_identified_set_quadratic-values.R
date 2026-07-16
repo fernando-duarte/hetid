@@ -98,7 +98,6 @@ test_that(
     })
     sigma_i_sq <- runif(I, 0.1, 1)
 
-    # Compute for subset of maturities
     maturities <- c(1, 3, 5)
     result <- quadratic_from_components(
       tau,
@@ -247,7 +246,6 @@ test_that(
 
     maturities <- c(2, 4, 6)
 
-    # Compute with subset
     result_batch <- quadratic_from_components(
       tau,
       L_i[maturities], V_i[maturities],

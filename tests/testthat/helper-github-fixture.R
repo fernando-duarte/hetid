@@ -1,7 +1,5 @@
-# Shared fixtures for the digest-verified GitHub download flow: a gz
-# asset plus matching release-API JSON, and a download.file mock that
-# serves both. Used by the github download tests and the daily-asset
-# tests; no real network access anywhere.
+# Fixtures for the digest-verified GitHub download flow: gz asset,
+# release-API JSON, and a download.file mock; no real network
 
 # Build a gz fixture plus matching release-API JSON; the digest can be
 # corrupted, the JSON malformed, or the asset renamed per scenario

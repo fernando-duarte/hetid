@@ -43,7 +43,7 @@ test_that("run_pc_regression errors when complete observations are too few", {
 
 test_that("run_pc_regression errors on a rank-deficient (collinear) design", {
   # Two identical regressors make lm() alias one term to an NA coefficient;
-  # the guard must fail loudly instead of propagating an under-ranked fit.
+  # the guard must fail loudly instead of propagating an under-ranked fit
   set.seed(1)
   n <- 50
   x <- rnorm(n)

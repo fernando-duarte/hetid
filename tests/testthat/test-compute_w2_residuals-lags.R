@@ -1,9 +1,8 @@
-# Tests for the y1_lags / impose_b_zero (common-conditioning) features of
-# compute_w2_residuals. Backward-compatibility, lag-column naming and trimming,
-# OLS orthogonality, the literal B=0 projection, and validation errors.
+# y1_lags / impose_b_zero (common-conditioning) features of compute_w2_residuals:
+# lag-column naming and trimming, OLS orthogonality, the literal B=0 projection
 
 # Shared aligned fixture: bundled PCs merged with quarterly ACM yields/tp by
-# year-quarter, plus consumption growth on the same rows (the X_t conditioning).
+# year-quarter, plus consumption growth on the same rows (the X_t conditioning)
 make_w2_fixture <- function() {
   mats <- c(12, 24, 36, 48, 60)
   acm <- suppressWarnings(extract_acm_data(
@@ -77,9 +76,8 @@ test_that("impose_b_zero = TRUE yields literal W2 = Y2 with zero coefficients", 
     maturities = 24, n_pcs = 4, pcs = fx$pcs,
     y1 = fx$y1, y1_lags = 2L, impose_b_zero = TRUE, dates = fx$dates
   )
-  # Recover the raw SDF innovation and the complete rows for maturity 24. The
-  # dated return prepends a leading NA (news realized at t+1); drop it to get the
-  # bare T-1 news vector that kept_idx (a mask over the W2 rows) indexes into
+  # dated return prepends a leading NA (news realized at t+1); drop it so kept_idx
+  # (a mask over the W2 rows) indexes the bare T-1 news vector
   sdf_df <- compute_sdf_innovations(
     as.data.frame(fx$yields), as.data.frame(fx$tp),
     i = 24, dates = fx$dates, step = 12

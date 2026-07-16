@@ -2,9 +2,8 @@
 # fail-closed rename branch the mocked download tests do not reach
 
 test_that("atomic_replace errors when the rename fails", {
-  # A nonexistent source makes file.rename() return FALSE deterministically
-  # on every platform, exercising the stop_hetid branch without any network
-  # or fixture.
+  # A nonexistent source makes file.rename() return FALSE on every platform,
+  # exercising the stop_hetid branch without network or fixture
   missing_src <- file.path(tempdir(), "hetid-atomic-replace-absent.tmp")
   unlink(missing_src)
   dest <- tempfile()

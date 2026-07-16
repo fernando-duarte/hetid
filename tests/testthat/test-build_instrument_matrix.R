@@ -126,6 +126,6 @@ test_that("the default (no transforms) returns the originals unchanged", {
   set.seed(7)
   z <- matrix(rnorm(40), nrow = 20, dimnames = list(NULL, c("a", "b")))
   # transforms = NULL, include_original = TRUE: blocks is exactly list(z),
-  # so the result is z up to cbind's attribute handling.
+  # so the result is z up to cbind's attribute handling
   expect_equal(build_instrument_matrix(z), z)
 })

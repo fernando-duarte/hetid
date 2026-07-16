@@ -16,9 +16,8 @@ test_that("k2_hat matches the fourth moment of price news over the bound set", {
 
   k2 <- compute_k2_hat(test_env$yields, test_env$term_premia, i = i)
 
-  # Manual: mean of (price news)^4 over T_i = {1, ..., T - i/step}.
-  # Use the bare T-1 price-news kernel (delta_p), the same series
-  # compute_k2_hat indexes -- compute_price_news now NA-prepends to length T.
+  # Manual: mean of (price news)^4 over T_i = {1, ..., T - i/step}, using the
+  # bare T-1 delta_p kernel compute_k2_hat indexes, not the NA-prepended one
   delta_p <- compute_news_components(
     test_env$yields, test_env$term_premia,
     i = i
@@ -37,7 +36,7 @@ test_that("k2_hat is positive at the one-period maturity where k1 vanishes", {
   test_env <- setup_standard_test_env()
 
   # At i = step the realized forecast error is zero (k1 = 0), but the
-  # price news is not, so k2 carries the one-period bound.
+  # price news is not, so k2 carries the one-period bound
   k2_12 <- compute_k2_hat(test_env$yields, test_env$term_premia, i = 12)
   k1_12 <- compute_k_hat(test_env$yields, test_env$term_premia, i = 12)
 
@@ -54,9 +53,8 @@ test_that("compute_k2_hat rejects a maturity that is not a multiple of step", {
 })
 
 test_that("compute_k2_hat raises a structured error on a short series", {
-  # T = 5 rows but i = 108, step = 12 needs i/step = 9 news periods, so the
-  # bound index set is empty: must signal hetid_error_insufficient_data,
-  # not a bare seq_len(negative) error.
+  # T = 5 rows but i = 108, step = 12 needs 9 news periods, so the bound index
+  # set is empty: must signal hetid_error_insufficient_data, not seq_len(negative)
   syn <- create_synthetic_test_data(n = 5)
   expect_error(
     compute_k2_hat(syn$yields, syn$term_premia, i = 108),

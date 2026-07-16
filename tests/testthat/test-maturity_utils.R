@@ -1,5 +1,3 @@
-# Tests for maturity naming helpers
-
 test_that("maturity_names builds the maturity_N labels", {
   expect_identical(
     maturity_names(c(24, 48, 72)),

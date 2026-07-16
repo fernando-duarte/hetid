@@ -40,7 +40,6 @@ test_that("price news has mean near zero", {
       i = i
     )$delta_p
 
-    # Mean should be close to 0
     mean_news <- mean(price_news_i, na.rm = TRUE)
     # Maturities 12/24 inherit the TP^(1):=0 normalization (tp12 dropped from
     # n_hat(12)), a ~mean(tp12)/100 level shift, so they get a looser tolerance
@@ -64,7 +63,6 @@ test_that("yield news equals negative of price news", {
     i = 48
   )$delta_p
 
-  # Yield news should equal negative of price news
   expect_equal(yield_news_48, -price_news_48,
     tolerance = 1e-10,
     label = "Yield news should be negative of price news"
@@ -81,7 +79,6 @@ test_that("price news is negatively correlated with yield changes", {
   )$delta_p
   yield_changes_36 <- diff(test_env$yields[[paste0("y", i)]]) / 100 # decimal
 
-  # Align lengths
   min_len <- min(length(price_news_36), length(yield_changes_36))
   correlation <- cor(price_news_36[1:min_len], yield_changes_36[1:min_len],
     use = "complete.obs"
@@ -102,11 +99,10 @@ test_that("price news manual verification", {
   )$delta_p
 
   # Manual calculation: price_news = n_hat(i-12,t) - n_hat(i,t-1).
-  # Use the bare n_hat kernel n_hat_series() for the undated vector.
+  # Use the bare n_hat kernel n_hat_series() for the undated vector
   n_hat_36 <- n_hat_series(test_env$yields, test_env$term_premia, i = i)
   n_hat_24 <- n_hat_series(test_env$yields, test_env$term_premia, i = i - 12)
 
-  # Lag n_hat_36 by one period
   n_hat_36_lagged <- c(NA, n_hat_36[-length(n_hat_36)])
 
   # Manual price news (removing first observation due to lagging)

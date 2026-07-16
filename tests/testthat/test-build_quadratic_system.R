@@ -62,9 +62,8 @@ test_that("constraint checker preserves the hin <= 0 sign convention", {
   moments <- compute_identification_moments(inp$w1, inp$w2, inp$pcs)
   system <- build_quadratic_system(inp$gamma, rep(0, 4), moments)
 
-  # At tau = 0 the constraint is (Q_i' theta - L_i)^2 <= 0, so the
-  # point-identification solution theta* solves Q_i' theta = L_i and
-  # any theta with Q_i' theta != L_i evaluates strictly positive.
+  # At tau = 0 the constraint is (Q_i' theta - L_i)^2 <= 0, so theta*
+  # solves Q_i' theta = L_i and anything else evaluates strictly positive
   quadratic <- system$quadratic
   check <- make_constraint_checker(
     quadratic$A_i[[1]], quadratic$b_i[[1]], quadratic$c_i[[1]]
