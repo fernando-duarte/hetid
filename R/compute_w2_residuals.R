@@ -45,16 +45,22 @@
 #'   \item{n_obs}{Number of observations used in each regression}
 #'   \item{kept_idx}{List of logical vectors indicating which
 #'     rows survived complete.cases filtering, one per maturity}
+#'   \item{skipped}{Named character vector of skip reasons, one element
+#'     per skipped maturity (named \code{maturity_N}); zero-length when
+#'     nothing was skipped}
 #' }
 #' If return_df = TRUE, returns a data frame with columns \code{date},
-#' \code{maturity}, \code{residuals} (\eqn{W_{2,t+1}}), and \code{fitted}.
+#' \code{maturity}, \code{residuals} (\eqn{W_{2,t+1}}), and \code{fitted},
+#' carrying the same skip reasons as a \code{skipped_maturities} attribute.
 #'
 #' Maturities whose required columns or observations are missing are
 #' skipped with a warning rather than aborting the run: their entries
 #' are absent from \code{residuals}, \code{fitted}, and \code{kept_idx},
 #' and their \code{coefficients} rows, \code{r_squared}, and \code{n_obs}
 #' are \code{NA}. With \code{return_df = TRUE}, skipped maturities
-#' contribute no rows (zero rows if all are skipped).
+#' contribute no rows (zero rows if all are skipped). Each skip removes
+#' a constraint and can only widen the identified set, so check the
+#' returned skip set rather than the warning stream.
 #'
 #' @details
 #' For each maturity i, computes Y_\{2,t+1\}^\{(i)\} as the SDF
@@ -132,16 +138,24 @@ compute_w2_residuals <- function(yields, term_premia,
   r_squared <- rep(NA_real_, length(maturities))
   n_obs_used <- rep(NA_real_, length(maturities))
   kept_idx_list <- list()
+  skipped <- character(0)
 
   for (idx in seq_along(maturities)) {
     i <- maturities[idx]
-    result <- process_w2_maturity( # nolint: object_usage_linter
-      i, yields_df, term_premia_df, pcs, n_pcs,
-      step = step, y1 = y1, y1_lags = y1_lags,
-      impose_b_zero = impose_b_zero
+    skip_reason <- NA_character_
+    withCallingHandlers(
+      result <- process_w2_maturity( # nolint: object_usage_linter
+        i, yields_df, term_premia_df, pcs, n_pcs,
+        step = step, y1 = y1, y1_lags = y1_lags,
+        impose_b_zero = impose_b_zero
+      ),
+      hetid_warning_skipped_maturity = function(w) {
+        skip_reason <<- conditionMessage(w)
+      }
     )
 
     if (is.null(result)) {
+      skipped[maturity_names(i)] <- skip_reason
       next
     }
     residuals_list[[maturity_names(i)]] <- result$residuals
@@ -162,12 +176,14 @@ compute_w2_residuals <- function(yields, term_premia,
   dates_list <- lapply(kept_idx_list, function(kept) w2_dates[which(kept)])
 
   if (return_df) {
-    return(format_w2_dataframe(
+    w2_df <- format_w2_dataframe(
       residuals_list = residuals_list,
       fitted_list = fitted_list,
       dates_list = dates_list,
       maturities = maturities
-    ))
+    )
+    attr(w2_df, "skipped_maturities") <- skipped
+    return(w2_df)
   }
 
   list(
@@ -177,6 +193,7 @@ compute_w2_residuals <- function(yields, term_premia,
     coefficients = coef_matrix,
     r_squared = r_squared,
     n_obs = n_obs_used,
-    kept_idx = kept_idx_list
+    kept_idx = kept_idx_list,
+    skipped = skipped
   )
 }
