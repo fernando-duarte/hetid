@@ -2,10 +2,10 @@
 # resampling frame, then on one resampled frame re-estimate the mean equation,
 # rebuild the log-var inputs, and re-run BOTH estimators' set endpoints at every
 # tau. The reports require the whole pipeline (mean eq -> Lewbel set -> map ->
-# endpoints) to run every draw; the set is never held fixed. Reuses
-# estimate_set_id_system (set_id_bootstrap_core.R) / coef_interval_tables /
-# tau_quadratic_system (tau_star_utils.R) so the mean-eq recipe cannot drift
-# from set_id_bootstrap_core.R. Consumed by run_set_bootstrap.R.
+# endpoints) to run every draw; the set is never held fixed. Reuses the
+# paper-owned estimate_set_id_system / coef_interval_tables /
+# tau_quadratic_system definitions so the mean-eq recipe cannot drift.
+# Consumed by run_set_bootstrap.R.
 
 # Augment the mean-eq frame with the lagged asset-return PC columns (join by qtr),
 # so one moving-block resample carries everything the mean-eq re-estimation and the

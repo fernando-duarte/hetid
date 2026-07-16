@@ -3,7 +3,7 @@
 # tau), then form the centered max-root OUTER confidence envelope for whole-set
 # containment; tau = 0 is carried first as a point-SE acceptance diagnostic.
 # Deterministic given boot_seed. Writes draws RDS and diagnostics via run_pipeline.R.
-source(repo_path("scripts", "utils", "stats_utils.R")) # mbb_index (already loaded upstream)
+source(paper_path("support", "statistics", "api.R")) # mbb_index (already loaded upstream)
 source(paper_path("log_variance", "inference", "set_envelope.R"))
 source(paper_path("log_variance", "inference", "set_bootstrap_core.R")) # prepare/draw/collect
 stopifnot(is.finite(boot_reps), boot_reps >= 2L)

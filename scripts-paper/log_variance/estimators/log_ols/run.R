@@ -16,10 +16,10 @@
 # "unreliable".
 # Run via run_pipeline.R after estimate_identified_set.R and build_asset_return_pcs.R.
 
-source(repo_path("scripts", "utils", "identification_utils.R"))
-source(repo_path("scripts", "utils", "profile_bounds_core.R"))
-source(repo_path("scripts", "utils", "profile_bounds.R"))
-source(repo_path("scripts", "utils", "tau_star_utils.R"))
+source(paper_path("support", "identification", "api.R"))
+source(paper_path("support", "identification", "profile_solver_core.R"))
+source(paper_path("support", "identification", "profile_bounds_api.R"))
+source(paper_path("support", "identification", "tau_star.R"))
 source(paper_path("log_variance", "core", "residual_map.R"))
 source(paper_path("log_variance", "engine", "api.R"))
 source(paper_path("log_variance", "estimators", "log_ols", "estimator.R"))

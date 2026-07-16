@@ -6,15 +6,15 @@
 # three SDF-news PCs, now treated as endogenous -- with the run_pipeline.R
 # instrument (column z_col of z_source()) as the single heteroskedasticity
 # driver Z, applied to every news component (pair set = {news PC i} x {Z}).
-# The quadratic-system assembly, profile-bound solver, and tau* sweep are
-# reused from scripts/utils.
+# The quadratic-system assembly, profile-bound solver, and tau* sweep come
+# from the paper-owned support layer.
 # Run via run_pipeline.R after build_consumption_growth.R and build_sdf_pcs.R.
 
-source(repo_path("scripts", "utils", "identification_utils.R"))
-source(repo_path("scripts", "utils", "profile_bounds_core.R"))
-source(repo_path("scripts", "utils", "profile_bounds.R"))
-source(repo_path("scripts", "utils", "tau_star_utils.R"))
-source(repo_path("scripts", "utils", "set_id_bootstrap_core.R"))
+source(paper_path("support", "identification", "api.R"))
+source(paper_path("support", "identification", "profile_solver_core.R"))
+source(paper_path("support", "identification", "profile_bounds_api.R"))
+source(paper_path("support", "identification", "tau_star.R"))
+source(paper_path("support", "identification", "identified_set_bootstrap.R"))
 
 # baseline slack and sweep cap (the pipeline's BASELINE_TAU / OPT_TAU_CAP
 # values; admissible slack is [0, 1))
@@ -44,8 +44,8 @@ x_cols <- value_cols(lag_expected_sdf_pc)
 y2_cols <- value_cols(sdf_news_pc)
 
 # reduced-form fits, de-meaned single instrument with unit weight, moments,
-# and the closed-form tau = 0 point, via the shared estimator
-# (set_id_bootstrap_core.R) -- the endpoint bootstrap re-runs the identical
+# and the closed-form tau = 0 point, via the paper-owned shared estimator --
+# the endpoint bootstrap re-runs the identical
 # recipe per draw, so the two cannot drift apart
 sys_spec <- list(
   y1_col = y1_col, x_cols = x_cols, y2_cols = y2_cols, z_col = z_col,
@@ -73,7 +73,7 @@ ols_fit <- stats::lm(
 
 # per-coefficient intervals of the joint identified set at each display
 # slack (theta profile bounds + beta1 functional bounds, the shared
-# coef_interval_tables recipe from tau_star_utils.R)
+# coef_interval_tables recipe from support/identification/tau_star.R)
 set_tables <- lapply(
   tau_display, \(tau) coef_interval_tables(gamma, tau, moments, beta1r, beta2r)
 )

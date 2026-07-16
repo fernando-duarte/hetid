@@ -1,18 +1,18 @@
 # Core machinery for the set-identification endpoint bootstrap: the one-draw
 # re-estimation, the draw collection, and the diagnostics table, all
-# parameterized by a spec list so the paper driver stays thin and the pieces
-# are testable on synthetic systems. Statuses are decoupled: a rank-deficient
+# parameterized by a spec list so drivers stay thin and the pieces are testable
+# on synthetic systems. Statuses are decoupled: a rank-deficient
 # tau = 0 system yields an NA point without discarding the draw's endpoint
 # evaluations, every display tau is solved regardless of the draw's tau*, and
 # each coefficient-tau side carries the shared solvers' own three-state
-# status. Consumed by scripts-paper/mean_equation/inference/run_bootstrap.R; tested in
-# scripts/utils/tests/test_set_id_bootstrap_core.R.
+# status. This numbered-pipeline copy is tested in
+# scripts/utils/tests/test_set_id_bootstrap_core.R; scripts-paper owns an
+# independent implementation under scripts-paper/support/identification/.
 
 # Re-estimate the mean-equation system on one data frame: the W1/W2
 # residualizations, the de-meaned instrument, the identification moments, and
-# the closed-form tau = 0 point. Shared by the full-sample estimation
-# (scripts-paper/mean_equation/estimate_identified_set.R) and the per-draw
-# bootstrap so the two recipes cannot drift apart.
+# the closed-form tau = 0 point. Its full-sample and per-draw callers should use
+# this same implementation so their recipes cannot drift apart.
 estimate_set_id_system <- function(dat, spec) {
   fit1 <- stats::lm(
     stats::reformulate(spec$x_cols, response = spec$y1_col),

@@ -8,8 +8,8 @@
 # have appended, reused verbatim. Run via run_pipeline.R after run_sets.R.
 
 if (exists("log_var_eq_lad")) {
-  source(repo_path("scripts", "utils", "latex_table_utils.R"))
-  source(repo_path("scripts", "utils", "latex_simple_table.R"))
+  source(paper_path("support", "latex", "table_pipeline.R"))
+  source(paper_path("support", "latex", "simple_table.R"))
   source(paper_path("log_variance", "tables", "table_formatting.R"))
   source(paper_path("log_variance", "tables", "lad_panel_builder.R"))
 

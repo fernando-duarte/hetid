@@ -10,10 +10,10 @@
 # tau = 0.3), while continuation along the grid tracks the true branch.
 # Writes the bounds PDF to the typed figure directory after mean-set estimation.
 
-source(repo_path("scripts", "utils", "identification_utils.R"))
-source(repo_path("scripts", "utils", "profile_bounds_core.R"))
-source(repo_path("scripts", "utils", "profile_bounds.R"))
-source(repo_path("scripts", "utils", "tau_star_utils.R"))
+source(paper_path("support", "identification", "api.R"))
+source(paper_path("support", "identification", "profile_solver_core.R"))
+source(paper_path("support", "identification", "profile_bounds_api.R"))
+source(paper_path("support", "identification", "tau_star.R"))
 source(paper_path("mean_equation", "inference", "refine_bounds_by_tau.R"))
 
 theta_coefs <- set_id_mean_eq$theta_table$coef

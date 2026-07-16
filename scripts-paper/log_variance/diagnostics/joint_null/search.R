@@ -7,7 +7,7 @@
 # is monotone across nested taus. logvar_joint_null_objective and _gradient (the
 # math module) supply the map and its slope gradient; logvar_feasible_grid (the
 # map module) the joint lattice; .derive_theta_scale, .derive_constraint_scales,
-# and .feasibility_residual (profile_bounds_core.R) the constraint scaling.
+# and .feasibility_residual (profile_solver_core.R) the constraint scaling.
 # Definitions only; sourced by run.R and the joint-null tests.
 # The candidate-evaluation helper and the L-infinity epigraph sensitivity live in
 # the companion file, sourced at the end.

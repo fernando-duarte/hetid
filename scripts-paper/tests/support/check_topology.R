@@ -72,16 +72,20 @@ source_targets <- function(file) {
   walk(parse(file))
   unique(targets)
 }
-# Literal source targets must exist.
+# Literal sources must exist and stay inside the paper tree.
 source_map <- stats::setNames(lapply(r_files, source_targets), r_files)
+paper_prefix <- paste0(paper_root, "/")
+record_paths <- function(label, paths) {
+  if (!length(paths)) {
+    return()
+  }
+  record_problem("%s: %s", label, paste(paths, collapse = ", "))
+}
 for (file in names(source_map)) {
   missing <- source_map[[file]][!file.exists(source_map[[file]])]
-  if (length(missing)) {
-    record_problem(
-      "Missing source target from %s: %s", relative_paper(file),
-      paste(missing, collapse = ", ")
-    )
-  }
+  external <- source_map[[file]][!startsWith(source_map[[file]], paper_prefix)]
+  record_paths(sprintf("Missing source targets from %s", relative_paper(file)), missing)
+  record_paths(sprintf("External source targets from %s", relative_paper(file)), external)
 }
 # Removed entrypoints, flat paper-source paths, and old test paths must stay gone.
 text_files <- list.files(
@@ -100,7 +104,6 @@ for (file in text_files) {
     }
   }
 }
-
 # Source filenames named in comments and documentation must still exist somewhere
 # in the repository. This catches stale bare basenames after semantic moves.
 known_r_basenames <- basename(list.files(
@@ -120,7 +123,6 @@ for (file in text_files) {
     )
   }
 }
-
 # Every active production module is reachable from the sole entrypoint.
 entrypoint <- paper_path("run_pipeline.R")
 reachable <- entrypoint

@@ -4,8 +4,8 @@
 # tau_display slack. Writes the table fragment, standalone source, and compiled
 # PDF to the typed table directory after the PPML set map is complete.
 
-source(repo_path("scripts", "utils", "latex_table_utils.R"))
-source(repo_path("scripts", "utils", "latex_simple_table.R"))
+source(paper_path("support", "latex", "table_pipeline.R"))
+source(paper_path("support", "latex", "simple_table.R"))
 source(paper_path("log_variance", "tables", "table_formatting.R"))
 source(paper_path("log_variance", "tables", "ppml_captions.R"))
 

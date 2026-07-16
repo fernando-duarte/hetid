@@ -3,9 +3,9 @@
 # coefficient anchored at the exact identified-set endpoints with robust
 # (MAD-based) endpoint scales. The interval uses a Stoye (2009)-style joint
 # calibration when the endpoint correlation is estimable, falling back to the
-# Imbens-Manski (2004) interpolation otherwise. Consumed by
-# scripts-paper/mean_equation/inference/run_bootstrap.R; tested in
-# scripts/utils/tests/test_set_id_inference.R.
+# Imbens-Manski (2004) interpolation otherwise. Consumed by paper_spec_bootstrap.R; tested in
+# scripts/utils/tests/test_set_id_inference.R; scripts-paper owns an independent
+# implementation under scripts-paper/support/identification/.
 
 # Median and 90% percentile band of the finite draws (the house p05/p95 form).
 boot_band <- function(x) {

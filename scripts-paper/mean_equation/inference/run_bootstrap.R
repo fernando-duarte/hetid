@@ -1,7 +1,7 @@
 # Moving-block bootstrap for the set-identified mean equation: resample the
 # aligned estimation frame of estimate_identified_set.R in boot_block-quarter blocks,
-# re-run the full estimation per draw (core machinery in
-# scripts/utils/set_id_bootstrap_core.R), and summarize with robust endpoint
+# re-run the full estimation per draw using the paper-owned bootstrap core,
+# and summarize with robust endpoint
 # scales, Stoye-calibrated nominal intervals, a robust tau = 0 point
 # interval, and a tau* percentile range. Deterministic given boot_seed
 # (run_pipeline.R constants). Every display tau is evaluated in every draw; the
@@ -10,13 +10,13 @@
 # table to the typed state and diagnostics directories.
 # Run after mean-set estimation.
 
-source(repo_path("scripts", "utils", "identification_utils.R"))
-source(repo_path("scripts", "utils", "profile_bounds_core.R"))
-source(repo_path("scripts", "utils", "profile_bounds.R"))
-source(repo_path("scripts", "utils", "tau_star_utils.R"))
-source(repo_path("scripts", "utils", "stats_utils.R"))
-source(repo_path("scripts", "utils", "set_id_inference.R"))
-source(repo_path("scripts", "utils", "set_id_bootstrap_core.R"))
+source(paper_path("support", "identification", "api.R"))
+source(paper_path("support", "identification", "profile_solver_core.R"))
+source(paper_path("support", "identification", "profile_bounds_api.R"))
+source(paper_path("support", "identification", "tau_star.R"))
+source(paper_path("support", "statistics", "api.R"))
+source(paper_path("support", "identification", "identified_set_inference.R"))
+source(paper_path("support", "identification", "identified_set_bootstrap.R"))
 
 stopifnot(is.finite(boot_reps), boot_reps >= 2L)
 # moving blocks assume a gapless quarterly index; a dropped interior quarter
@@ -86,7 +86,7 @@ inference <- lapply(seq_along(boot_spec$taus), function(j) {
 })
 names(inference) <- names(set_id_mean_eq$set_tables)
 
-# robust tau = 0 point inference (point_inference, set_id_inference.R):
+# robust tau = 0 point inference (point_inference, identified_set_inference.R):
 # closed-form point plus/minus the two-sided normal quantile times the robust
 # scale of the point draws, gated by the same half-the-draws rule as the
 # set cells

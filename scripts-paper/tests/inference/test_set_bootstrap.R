@@ -1,8 +1,8 @@
 # Offline checks for the vol-equation set-endpoint bootstrap inference layer.
 # A thin entrypoint mirroring the PPML suite: source the envelope module
-# (which itself sources set_id_inference.R for robust_scale/boot_min_reps), the
-# mean-eq recipe (identification_utils/profile_bounds/tau_star_utils/
-# set_id_bootstrap_core -- estimate_set_id_system/coef_interval_tables/
+# (which sources the paper-owned robust-scale and minimum-repetition functions),
+# the paper-owned mean-equation support recipe (estimate_set_id_system /
+# coef_interval_tables /
 # tau_quadratic_system) and the log-var engine/estimator chain (map/engine/
 # log-OLS/PPML/Harvey) the per-draw re-estimator drives, then the per-draw
 # core module itself. Define the shared check() counter, and source the
@@ -12,11 +12,11 @@
 source(file.path("scripts-paper", "config", "paths.R"))
 source(paper_path("config", "artifacts.R"))
 source(paper_path("log_variance", "inference", "set_envelope.R"))
-source(repo_path("scripts", "utils", "identification_utils.R"))
-source(repo_path("scripts", "utils", "profile_bounds_core.R"))
-source(repo_path("scripts", "utils", "profile_bounds.R"))
-source(repo_path("scripts", "utils", "tau_star_utils.R"))
-source(repo_path("scripts", "utils", "set_id_bootstrap_core.R"))
+source(paper_path("support", "identification", "api.R"))
+source(paper_path("support", "identification", "profile_solver_core.R"))
+source(paper_path("support", "identification", "profile_bounds_api.R"))
+source(paper_path("support", "identification", "tau_star.R"))
+source(paper_path("support", "identification", "identified_set_bootstrap.R"))
 source(paper_path("log_variance", "core", "residual_map.R"))
 source(paper_path("log_variance", "engine", "api.R"))
 source(paper_path("log_variance", "estimators", "log_ols", "estimator.R"))

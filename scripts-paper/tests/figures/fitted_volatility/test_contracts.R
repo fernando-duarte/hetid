@@ -3,8 +3,8 @@
 
 source(file.path("scripts-paper", "config", "paths.R"))
 source(paper_path("config", "artifacts.R"))
-source(repo_path("scripts", "utils", "profile_bounds_core.R"))
-source(repo_path("scripts", "utils", "profile_bounds.R"))
+source(paper_path("support", "identification", "profile_solver_core.R"))
+source(paper_path("support", "identification", "profile_bounds_api.R"))
 source(paper_path("log_variance", "core", "residual_map.R"))
 source(paper_path("log_variance", "engine", "api.R"))
 source(paper_path("log_variance", "figures", "fitted_volatility", "adapter.R"))

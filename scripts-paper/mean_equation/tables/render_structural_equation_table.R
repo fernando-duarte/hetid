@@ -6,8 +6,8 @@
 # Writes both structural-equation table variants and their standalone PDFs to
 # the typed table directory after mean-set estimation.
 
-source(repo_path("scripts", "utils", "latex_table_utils.R"))
-source(repo_path("scripts", "utils", "latex_simple_table.R"))
+source(paper_path("support", "latex", "table_pipeline.R"))
+source(paper_path("support", "latex", "simple_table.R"))
 source(paper_path("mean_equation", "tables", "structural_equation_caption.R"))
 
 # coefficient rows: design block (b_0, b_E) then the news block (b_N); the

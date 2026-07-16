@@ -15,8 +15,8 @@
 # z = L (bottom) and z = H (top). This is exact and vectorized -- no optimizer.
 # Run via run_pipeline.R after estimate_identified_set.R.
 
-source(repo_path("scripts", "utils", "identification_utils.R"))
-source(repo_path("scripts", "utils", "tau_star_utils.R"))
+source(paper_path("support", "identification", "api.R"))
+source(paper_path("support", "identification", "tau_star.R"))
 
 # news-PC standard deviations that define the SD-unit axes (Y2 = w2 = PC_N under
 # the beta2R = 0 null, so sd(w2[, i]) = sd(PC_{N,i}))

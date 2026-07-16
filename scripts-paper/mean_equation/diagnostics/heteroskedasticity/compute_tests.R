@@ -1,9 +1,9 @@
 # Compute the heteroskedasticity battery and Lewbel relevance diagnostics.
 
-source(repo_path("scripts", "utils", "hetero_test_utils.R"))
-source(repo_path("scripts", "utils", "hetero_lm_tests.R"))
-source(repo_path("scripts", "utils", "latex_table_utils.R"))
-source(repo_path("scripts", "utils", "latex_simple_table.R"))
+source(paper_path("support", "diagnostics", "heteroskedasticity_tests.R"))
+source(paper_path("support", "diagnostics", "identification_diagnostics.R"))
+source(paper_path("support", "latex", "table_pipeline.R"))
+source(paper_path("support", "latex", "simple_table.R"))
 
 w1 <- set_id_mean_eq$w1
 y1 <- set_id_mean_eq$y1

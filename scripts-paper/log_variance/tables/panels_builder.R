@@ -7,8 +7,8 @@
 # Parameterizing envelope/notes/caption/out_name here is what stops the two
 # published tables from drifting. Definitions only; run via run_pipeline.R.
 
-source(repo_path("scripts", "utils", "latex_table_utils.R"))
-source(repo_path("scripts", "utils", "latex_simple_table.R"))
+source(paper_path("support", "latex", "table_pipeline.R"))
+source(paper_path("support", "latex", "simple_table.R"))
 source(paper_path("log_variance", "tables", "table_formatting.R"))
 source(paper_path("log_variance", "tables", "ppml_captions.R"))
 source(paper_path("log_variance", "tables", "harvey_panel.R"))

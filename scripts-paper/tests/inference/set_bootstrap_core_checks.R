@@ -3,8 +3,7 @@
 # logvar_box_seed/logvar_side_record/logvar_set_boot_collect/logvar_set_boot_prepare
 # are pure functions exercised on hand-built inputs. logvar_set_boot_draw needs a
 # real estimate_set_id_system + PPML/Harvey engine call, so it is exercised on a
-# small synthetic heteroskedastic system (same style as
-# test_set_id_bootstrap_core.R's spec_sim) to assert the return SHAPE and status
+# small synthetic heteroskedastic system to assert the return SHAPE and status
 # vocabulary, not particular numeric bounds.
 
 # logvar_box_seed -----------------------------------------------------------
@@ -107,8 +106,7 @@ check(
 )
 
 # logvar_set_boot_draw --------------------------------------------------------
-# a small synthetic triangular system, same style as
-# test_set_id_bootstrap_core.R's spec_sim: a heteroskedastic Y2 (news) block
+# a small synthetic triangular system: a heteroskedastic Y2 (news) block
 # drives the Lewbel identification, plus two independent PC columns feed the
 # auxiliary log-variance regression.
 set.seed(20260714L)

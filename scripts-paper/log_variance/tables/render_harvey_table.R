@@ -3,8 +3,8 @@
 # log_var_eq_panels.tex, with a dedicated caption, label, and notes context.
 # Run through run.R after the identified news-set map.
 
-source(repo_path("scripts", "utils", "latex_table_utils.R"))
-source(repo_path("scripts", "utils", "latex_simple_table.R"))
+source(paper_path("support", "latex", "table_pipeline.R"))
+source(paper_path("support", "latex", "simple_table.R"))
 source(paper_path("log_variance", "tables", "table_formatting.R"))
 source(paper_path("log_variance", "tables", "harvey_panel.R"))
 

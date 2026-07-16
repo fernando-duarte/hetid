@@ -10,7 +10,8 @@ suite_manifest <- data.frame(
     "lad_dependency_gate", "lad_inner_fit", "lad_outer_map", "ppml",
     "dynamics_gate", "egarch_approval", "joint_gmm", "joint_gmm_epigraph_solver",
     "joint_null", "fitted_volatility", "fitted_volatility_contracts",
-    "set_bootstrap"
+    "set_bootstrap", "support_statistics", "support_heteroskedasticity",
+    "support_identification_diagnostics"
   ),
   path = c(
     "engine/test_engine.R",
@@ -29,13 +30,16 @@ suite_manifest <- data.frame(
     "diagnostics/joint_null/test_joint_null.R",
     "figures/fitted_volatility/test_fitted_volatility.R",
     "figures/fitted_volatility/test_contracts.R",
-    "inference/test_set_bootstrap.R"
+    "inference/test_set_bootstrap.R",
+    "support/test_statistics.R",
+    "support/test_heteroskedasticity.R",
+    "support/test_identification_diagnostics.R"
   ),
   stringsAsFactors = FALSE
 )
 
 stopifnot(
-  nrow(suite_manifest) == 17L,
+  nrow(suite_manifest) == 20L,
   !anyDuplicated(suite_manifest$id),
   !anyDuplicated(suite_manifest$path)
 )

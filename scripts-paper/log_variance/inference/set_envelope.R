@@ -3,12 +3,12 @@
 # set containment P{[L_j,U_j] subset [C_L,C_U]} >= 1-alpha, NOT point coverage
 # (so NOT Imbens-Manski/Stoye) and NOT percentiles/BCa (both endpoints can move
 # inward in one draw). Reuses only robust_scale (MAD, sd-consistent, location-
-# invariant) and boot_min_reps from set_id_inference.R. Half-infinite vol sets use
+# invariant) and boot_min_reps from identified_set_inference.R. Half-infinite sets use
 # the single live side; a divergent-draw fraction or a degenerate scale fails the
 # regularity gate (divergent draws are counted, never dropped). Consumed by
 # scripts-paper/log_variance/inference/run_set_bootstrap.R.
 
-source(repo_path("scripts", "utils", "set_id_inference.R"))
+source(paper_path("support", "identification", "identified_set_inference.R"))
 
 # Conservative (1-alpha) order statistic of the bootstrap max-root, rank
 # ceil((B+1)(1-alpha)) capped at B (Politis-Romano-Wolf).

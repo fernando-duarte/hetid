@@ -6,9 +6,9 @@ This directory contains reusable utility functions that consolidate common patte
 
 ## Pipeline boundaries
 
-These utilities primarily support the numbered `scripts/` analysis pipeline. The separate
-paper pipeline owns its paper-only log-variance inference and plot-data support under
-`scripts-paper/`; run it from the package root with:
+These utilities support the numbered `scripts/` analysis pipeline. The separate paper
+pipeline owns independent copies of every support function it needs under
+`scripts-paper/support/` and never sources this directory. Run it from the package root with:
 
 ```sh
 Rscript scripts-paper/run_pipeline.R

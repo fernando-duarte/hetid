@@ -6,8 +6,8 @@
 # slack.
 # The fragment, standalone source, and compiled PDF share a typed table folder.
 
-source(repo_path("scripts", "utils", "latex_table_utils.R"))
-source(repo_path("scripts", "utils", "latex_simple_table.R"))
+source(paper_path("support", "latex", "table_pipeline.R"))
+source(paper_path("support", "latex", "simple_table.R"))
 source(paper_path("mean_equation", "variance_shares", "variance_share_caption.R"))
 
 fmt <- function(x) ifelse(is.na(x), "--", sprintf("%.2f", x))
