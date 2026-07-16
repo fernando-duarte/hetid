@@ -22,6 +22,7 @@ BugReports
 bz
 CamelCase
 cancelled
+canonicalizes
 checkglobals
 chokepoint
 closable
@@ -47,6 +48,7 @@ cyclocomp
 data's
 de
 DeHaven
+desync
 dev
 df
 diag
@@ -175,6 +177,7 @@ renderer
 renv
 Renviron
 reparameterization
+resolvers
 Resumable
 rmarkdown
 Rmd
