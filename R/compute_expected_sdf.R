@@ -154,7 +154,7 @@ compute_expected_sdf <- function(yields, term_premia, i, dates = NULL,
         "-- not a forecast, no approximation or bias correction."
       )
     )
-    n_hat_0 <- compute_n_hat_previous(yields, term_premia, step, step = step)
+    n_hat_0 <- compute_n_hat_previous(yields, term_premia, i = step, step = step)
     return(prepare_return_data(exp(n_hat_0), dates, yields, "expected_sdf"))
   }
 

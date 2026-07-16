@@ -53,6 +53,54 @@ assert_pipeline_quadratic_equiv <- function(general, legacy) {
   invisible(TRUE)
 }
 
+#' Raw VFCI loading on pc1..pc4, recovered from the bundled data
+#'
+#' The VFCI is exactly a linear combination of the raw PCs, so this loading is
+#' an identity rather than an estimate: it is the coordinates of vfci in the
+#' pc1..pc4 basis. It is recomputed here instead of being frozen as a literal
+#' because a literal silently goes stale the moment the upstream import
+#' re-estimates the PCs. That is what happened at 0d9d812 ("Import variables
+#' dataset verbatim from macro_dynamics"): the pre-import weights survived and
+#' the baseline instrument they build correlated 0.36 with the VFCI it claimed
+#' to reproduce. Coverage of the identified set is instrument-specific, so that
+#' is not a labelling slip -- the sets no longer answer the VFCI specification.
+#'
+#' The weights are the regression coefficients themselves, NOT unit-normalized,
+#' so the combined instrument PC %*% gamma literally IS VFCI - mean(VFCI).
+#' @param n_pcs number of leading PCs the loading is defined on
+#' @return numeric vector of length n_pcs
+vfci_pc_loading <- function(n_pcs) {
+  data("variables", package = "hetid", envir = environment())
+  pc_cols <- paste0("pc", seq_len(n_pcs))
+  keep <- stats::complete.cases(variables[, c(pc_cols, "vfci")])
+  pcs <- as.matrix(variables[keep, pc_cols, drop = FALSE])
+  vfci <- variables$vfci[keep]
+
+  fit <- stats::lm(vfci ~ pcs)
+  loading <- unname(stats::coef(fit)[-1])
+  if (anyNA(loading)) {
+    stop(
+      "vfci_pc_loading: pc1..pc", n_pcs, " is rank deficient, so the VFCI ",
+      "loading is not identified"
+    )
+  }
+  # Abort rather than let the baseline instrument silently degrade from "the
+  # VFCI" into "the best linear projection of the VFCI". Tolerance is relative
+  # to the VFCI's own scale; the exact fit sits at ~1e-15.
+  rel_resid <- max(abs(stats::residuals(fit))) / stats::sd(vfci)
+  if (!is.finite(rel_resid) || rel_resid > 1e-8) {
+    stop(sprintf(
+      paste(
+        "vfci_pc_loading: vfci is no longer an exact combination of pc1..pc%d",
+        "(relative residual %.3g); the baseline instrument would stop being the",
+        "VFCI. Refit the loading upstream or supply HETID_BASELINE_GAMMA."
+      ),
+      n_pcs, rel_resid
+    ))
+  }
+  loading
+}
+
 #' Get baseline gamma matrix (raw VFCI PC loadings)
 #' @param method label for the method (stored as attr)
 #' @param n_pcs number of principal components; must equal the length of the
@@ -68,19 +116,7 @@ get_baseline_gamma <- function(
   if (is.null(n_components)) {
     n_components <- length(DEFAULT_ID_MATURITIES)
   }
-  # Raw VFCI PC loading vector (the regression coefficients themselves, NOT
-  # unit-normalized). From regressing variables$vfci on the raw pc1:pc4:
-  #   vfci = mean(vfci) + 0.1095399*pc1 - 0.1692329*pc2
-  #                     - 0.1320361*pc3 + 0.1699299*pc4
-  # With these raw weights the combined instrument PC %*% gamma equals the
-  # de-meaned VFCI exactly (the PCs are kept at native scale).
-  # The identified set is scale-invariant in this column, so normalizing would
-  # change no result -- the raw weights are used so the instrument literally IS
-  # VFCI - mean(VFCI) rather than a rescaled copy.
-  vfci_loading <- c(
-    0.1095399, -0.1692329,
-    -0.1320361, 0.1699299
-  )
+  vfci_loading <- vfci_pc_loading(HETID_CONSTANTS$DEFAULT_N_PCS)
   if (n_pcs != length(vfci_loading)) {
     stop(
       "get_baseline_gamma: the VFCI loading is defined only for ",

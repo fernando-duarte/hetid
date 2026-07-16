@@ -112,9 +112,9 @@ compute_identified_set_components <- function(gamma, moments) {
 #' Construct a hetid_components Object
 #'
 #' Low-level cheap constructor carrying the maturity identity of the
-#' moments the components were derived from: type and length checks
-#' only. The full shape sweep lives in
-#' \code{validate_hetid_components()}, which the public boundary
+#' moments the components were derived from: type, scalar, and
+#' maturity-vector checks with lossless coercions. The full shape sweep
+#' lives in \code{validate_hetid_components()}, which the public boundary
 #' \code{compute_identified_set_components()} always runs; hot paths
 #' assembling components from known-good parts may call this
 #' constructor directly and skip it.
@@ -129,6 +129,15 @@ compute_identified_set_components <- function(gamma, moments) {
 #' @keywords internal
 new_hetid_components <- function(L_i, V_i, Q_i, # nolint: object_name_linter.
                                  maturities, n_components) {
+  assert_scalar_integer_in_range(
+    n_components, "n_components", 1, .Machine$integer.max
+  )
+  n_components <- as.integer(n_components)
+  validate_maturities(
+    maturities,
+    max_value = n_components, max_label = "n_components"
+  )
+  maturities <- as.integer(maturities)
   n <- length(maturities)
   assert_bad_argument_ok(
     is.numeric(L_i) && length(L_i) == n,
@@ -147,8 +156,8 @@ new_hetid_components <- function(L_i, V_i, Q_i, # nolint: object_name_linter.
   )
   structure(
     list(L_i = L_i, V_i = V_i, Q_i = Q_i),
-    maturities = as.integer(maturities),
-    n_components = as.integer(n_components),
+    maturities = maturities,
+    n_components = n_components,
     class = "hetid_components"
   )
 }

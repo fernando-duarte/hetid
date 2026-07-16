@@ -36,8 +36,8 @@ build_table1_summary <- function(res) {
     "$\\Delta c$ (consumption growth)" = r$y1_level,
     "$\\mathrm{PC}_1$" = d[, "pc1"], "$\\mathrm{PC}_2$" = d[, "pc2"],
     "$\\mathrm{PC}_3$" = d[, "pc3"], "$\\mathrm{PC}_4$" = d[, "pc4"],
-    "$\\Delta c_{t-1}$" = d[, "l.y1"], "$\\Delta c_{t-2}$" = d[, "l2.y1"],
-    "$\\Delta c_{t-3}$" = d[, "l3.y1"], "$\\Delta c_{t-4}$" = d[, "l4.y1"],
+    "$\\Delta c_{t}$" = d[, "l.y1"], "$\\Delta c_{t-1}$" = d[, "l2.y1"],
+    "$\\Delta c_{t-2}$" = d[, "l3.y1"], "$\\Delta c_{t-3}$" = d[, "l4.y1"],
     "$Y_2$ (SDF-news PC)" = r$y2, "$W_2$ (news residual)" = r$w2,
     "$Z$ (de-meaned VFCI)" = r$z
   )
@@ -62,7 +62,7 @@ build_table1_summary <- function(res) {
     ),
     "$\\mathrm{PC}_1$--$\\mathrm{PC}_4$ are principal components of a cross-section",
     "of financial-asset returns (not yields), entered predetermined (date $t$) in",
-    "the date-$t{+}1$ equations. $\\Delta c_{t-1}$--$\\Delta c_{t-4}$ are four",
+    "the date-$t{+}1$ equations. $\\Delta c_{t}$--$\\Delta c_{t-3}$ are four",
     "consumption-growth lags. $Y_2$ is the first principal component (correlation",
     sprintf(
       "PCA) of the SDF news across %d maturities (%d--%d months), explaining %.1f\\%%",
@@ -70,7 +70,7 @@ build_table1_summary <- function(res) {
     ),
     "of the standardized news cross-section; the per-maturity loadings are in the",
     "companion CSV. $W_2$ is $Y_2$ residualized on $X_t=(1,\\mathrm{PC}_{1:4},",
-    "\\Delta c_{t-1:t-4})$; under correlation PCA $Y_2$ (and hence $\\theta$) is in",
+    "\\Delta c_{t:t-3})$; under correlation PCA $Y_2$ (and hence $\\theta$) is in",
     "units of one pooled SDF-news standard deviation. $Z=\\mathrm{VFCI}-",
     "\\overline{\\mathrm{VFCI}}$; VFCI is the Volatility Financial Conditions Index",
     "of Adrian, DeHaven, Duarte and Iyer. AC(1) is the first-order autocorrelation."
@@ -213,6 +213,15 @@ build_table3_properties <- function(res) {
   sig <- e$significance_level
   pcell <- function(nm) if (nm %in% names(pv) && is.finite(pv[[nm]])) .fmt(pv[[nm]], 3) else "--"
   band <- function(x) sprintf("$[%s,\\,%s]$", .fmt(x["p05"], 3), .fmt(x["p95"], 3))
+  # A sweep that never left the bounded region censors tau* at the grid cap, so
+  # the cell reports a bound rather than a discovered transition.
+  tstar <- function() {
+    if (isTRUE(e$tau_star_capped)) {
+      sprintf("$\\ge%s$ (search cap reached)", .fmt(e$tau_star, 3))
+    } else {
+      .fmt(e$tau_star, 3)
+    }
+  }
   span <- paste0(.qq(min(e$dates)), "--", .qq(max(e$dates)))
   snr <- rel$cov_z_w2sq / b$cov_se
 
@@ -231,21 +240,35 @@ build_table3_properties <- function(res) {
     pcell("Glejser"), pcell("BPLM"), pcell("ARCH"),
     sprintf("%s (%.2f)", .fmt(rel$cov_z_w2sq, 3), snr), .fmt(rel$cor_z_w2sq, 3),
     .fmt(rel$mean_slope_t, 3), .fmt(rel$cor_w1_w2, 3),
-    sprintf("%s %s", .fmt(e$tau_star, 3), band(b$tau_star)),
+    sprintf("%s %s", tstar(), band(b$tau_star)),
     if (is.finite(e$width)) .fmt(e$width, 4) else "unbounded",
     e$set_status, .fmt(e$r2_w1, 3), .fmt(e$r2_y2, 3),
     sprintf("%.1f\\%%", 100 * e$pc_var_explained), as.character(e$n_obs), span
   )
   hetero_reject <- isTRUE(pv[["BP"]] < sig) || isTRUE(pv[["ARCH"]] < sig) ||
     isTRUE(pv[["GQ"]] < sig)
+  tau_clause <- if (isTRUE(e$tau_star_capped)) {
+    sprintf(
+      paste0(
+        "the price of risk stays bounded across the whole slack sweep ",
+        "($\\tau^\\ast\\ge%s$, search cap reached)"
+      ),
+      .fmt(e$tau_star, 2)
+    )
+  } else {
+    sprintf(
+      "the price of risk stays bounded up to $\\tau^\\ast=%s$",
+      .fmt(e$tau_star, 2)
+    )
+  }
   title <- sprintf(
     paste0(
       "VFCI %s conditional heteroskedasticity in the news residual ",
-      "(relevance), and the price of risk stays bounded up to $\\tau^\\ast=%s$, ",
-      "but the bootstrap shows the identifying moment is imprecise (SNR$\\approx%.1f$)."
+      "(relevance), and %s, but the bootstrap shows the identifying moment is ",
+      "imprecise (SNR$\\approx%.1f$)."
     ),
     if (hetero_reject) "exhibits significant" else "shows weak",
-    .fmt(e$tau_star, 2), snr
+    tau_clause, snr
   )
   notes <- c(
     "Lewbel (2012) identification needs two conditions. Relevance:",

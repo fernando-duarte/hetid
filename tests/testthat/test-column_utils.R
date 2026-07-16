@@ -48,10 +48,8 @@ test_that("assert_columns_exist names the context when columns are missing", {
 })
 
 test_that("assert_columns_exist keys on colnames for matrix input", {
-  # bug-trigger regression: a matrix carrying every required column in colnames()
-  # must pass. The old names()-based code reported all columns missing here
-  # (names(m) is NULL), so this fixture fails on the buggy code and passes on the
-  # fix, mirroring require_column's matrix branch
+  # bug-trigger regression: names(m) is NULL for a matrix -> the old names()-based
+  # code called every column missing. Keys on colnames(), like require_column
   m <- matrix(
     1:4,
     nrow = 2,

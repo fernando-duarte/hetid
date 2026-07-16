@@ -111,9 +111,17 @@ if (file.exists(baseline_path)) {
 qs_02 <- build_ixj_quadratic_system(
   moments, matrix(0.05, nrow = n_pcs, ncol = n_comp)
 )
-ixj_membership <- probe_set_membership(
-  qs_02$quadratic, bounds_by_tau[["0.05"]]
-)
+# The profile bounds are a box only where the solver certified them, so void
+# uncertified or inverted sides before the probe reads them (the same mask the
+# CSV export applies below). NA is what make_theta_grid's fallback expects, and
+# it flags the axis; passing the raw solver points instead lets a failed solve
+# read as a well-defined box that the set happens to miss.
+box_02 <- bounds_by_tau[["0.05"]]
+ordered_02 <- !is.na(box_02$lower) & !is.na(box_02$upper) &
+  box_02$upper >= box_02$lower
+box_02$lower <- ifelse(box_02$valid_lower & ordered_02, box_02$lower, NA_real_)
+box_02$upper <- ifelse(box_02$valid_upper & ordered_02, box_02$upper, NA_real_)
+ixj_membership <- probe_set_membership(qs_02$quadratic, box_02)
 cli_h2("I x J membership probe (tau = 0.05, closure)")
 print(ixj_membership$summary)
 
