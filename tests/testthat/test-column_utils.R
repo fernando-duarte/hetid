@@ -47,6 +47,32 @@ test_that("assert_columns_exist names the context when columns are missing", {
   expect_match(conditionMessage(err), "in input frame", fixed = TRUE)
 })
 
+test_that("assert_columns_exist keys on colnames for matrix input", {
+  # bug-trigger regression: a matrix carrying every required column in colnames()
+  # must pass. The old names()-based code reported all columns missing here
+  # (names(m) is NULL), so this fixture fails on the buggy code and passes on the
+  # fix, mirroring require_column's matrix branch
+  m <- matrix(
+    1:4,
+    nrow = 2,
+    dimnames = list(NULL, c("date", "pc1"))
+  )
+  expect_true(assert_columns_exist(m, c("date", "pc1")))
+
+  # error-path coverage: a matrix with no column names still reports the columns
+  # absent (colnames(m) is NULL -> every required column is missing)
+  m_unnamed <- matrix(1:4, nrow = 2)
+  err <- tryCatch(
+    assert_columns_exist(m_unnamed, c("date", "pc1")),
+    error = function(e) e
+  )
+  expect_s3_class(err, "hetid_error_bad_argument")
+  expect_match(
+    conditionMessage(err), "Missing required columns: date, pc1",
+    fixed = TRUE
+  )
+})
+
 test_that("assert_acm_data_types validates a non-empty vector of schema keys", {
   expect_true(assert_acm_data_types(c("yields", "term_premia")))
 

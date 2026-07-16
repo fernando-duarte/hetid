@@ -125,7 +125,8 @@ assert_tabular <- function(x, name) {
 #' @keywords internal
 assert_columns_exist <- function(df, required_cols,
                                  context = NULL, arg = "df") {
-  missing_cols <- setdiff(required_cols, names(df))
+  cols <- if (is.matrix(df)) colnames(df) else names(df)
+  missing_cols <- setdiff(required_cols, cols)
   msg <- paste(
     "Missing required columns:",
     paste(missing_cols, collapse = ", ")
