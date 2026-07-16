@@ -47,11 +47,16 @@ eval_fixed <- function(gamma, mom, n_comp, tau) {
     return(list(width = 0, bounded = TRUE, kind = "point", cond = pt$cond))
   }
   b <- solve_all_profile_bounds(qs$quadratic)
-  list(
-    width = sum(b$width),
-    bounded = all(b$bounded_lower & b$bounded_upper),
-    kind = "set", cond = NA
-  )
+  bounded_all <- all(b$bounded_lower & b$bounded_upper)
+  valid_all <- all(b$valid_lower & b$valid_upper)
+  width <- if (bounded_all && valid_all) {
+    sum(b$width)
+  } else if (!bounded_all && valid_all) {
+    Inf
+  } else {
+    NA_real_
+  }
+  list(width = width, bounded = bounded_all && valid_all, kind = "set", cond = NA)
 }
 eval_opt <- function(seed, mom, n_comp, tau, z) {
   r <- suppressMessages(run_lambda_optimization(
