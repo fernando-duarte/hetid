@@ -35,7 +35,9 @@
     "log_variance/extensions/egarch/run_route.R",
     sep = ";"
   ),
-  w = "log_variance/extensions/egarch"
+  w = "log_variance/extensions/egarch",
+  x = "variance_bounds/figures/render_bounds.R",
+  y = "variance_bounds/tables/render_summary_table.R"
 )
 .artifact_consumers <- c(
   A = "reports/descriptive_stats.tex",
@@ -111,7 +113,11 @@
   "egarch_pilot_state|log_var_eq_egarch_pilot.rds|7|w|J|e",
   "egarch_results_csv|log_var_eq_egarch_x.csv|6|w|J|e",
   "egarch_results_rds|log_var_eq_egarch_x.rds|6|w|J|e",
-  "egarch_bounds_figure|log_var_eq_bounds_tau_egarch_x.pdf|3|w|J|e"
+  "egarch_bounds_figure|log_var_eq_bounds_tau_egarch_x.pdf|3|w|J|e",
+  "variance_bound_figure|variance_bounds_log.svg|3|x|B|r",
+  "variance_bound_summary_table|variance_bounds_summary.tex|2|y|B|r",
+  "variance_bound_summary_standalone_tex|variance_bounds_summary_standalone.tex|2|y|B|r",
+  "variance_bound_summary_standalone_pdf|variance_bounds_summary_standalone.pdf|2|y|B|r"
 )
 .artifact_specs <- do.call(rbind, strsplit(.artifact_specs, "|", fixed = TRUE))
 stopifnot(ncol(.artifact_specs) == 6L)
@@ -171,7 +177,7 @@ create_artifact_directories <- function() {
   ))
 }
 stopifnot(
-  nrow(artifact_manifest) == 58L, !anyNA(artifact_manifest),
+  nrow(artifact_manifest) == 62L, !anyNA(artifact_manifest),
   !anyDuplicated(artifact_manifest$id), !anyDuplicated(artifact_manifest$basename),
   all(artifact_manifest$status %in% c(
     "required", "conditional_lad", "conditional_egarch"

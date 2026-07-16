@@ -1,0 +1,124 @@
+% BEGIN LOGVAR PANEL ppml
+\begin{table}[!htbp]
+\centering
+\begin{threeparttable}
+\caption{PPML panel: $\theta$, the exponential conditional-variance map over the identified news sets. Panel order is editorial, keyed to the benchmark crossing count (22) at $\tau{=}0.05$, not a selection between estimators.}
+\label{tab:log_var_eq_panel_ppml}
+\footnotesize\setlength{\tabcolsep}{3pt}
+\begin{tabular}{lcccccc}
+\toprule
+ & OLS & $\tau{=}0$ & $\tau{=}0.05$ & $\tau{=}0.1$ & $\tau{=}0.2$ & $\tau{=}0.4$ \\
+\midrule
+$\theta_0$ & -1.302$^{***}$ & -1.245$^{***}$ & $[-1.265,\,-1.202]$ & $[-1.277,\,-1.129]$ & $[-1.292,\,-0.870]$ & $[-1.297,\,1.679]$ \\
+ & (-5.65) & (-5.56) &  &  &  &  \\
+\midrule
+$\theta_{1,R}$ & 0.182$^{*}$ & 0.184$^{*}$ & $[0.183,\,0.185]$ & $[0.182,\,0.186]$ & $[0.181,\,0.190]$ & $[0.176,\,0.207]$ \\
+ & (1.78) & (1.85) &  &  &  &  \\
+$\theta_{2,R}$ & -0.007 & -0.018 & $[-0.022,\,-0.016]$ & $[-0.026,\,-0.014]$ & $[-0.036,\,-0.009]$ & $[-0.071,\,0.036]$ \\
+ & (-0.03) & (-0.08) &  &  &  &  \\
+$\theta_{3,R}$ & 0.792$^{***}$ & 0.766$^{***}$ & $[0.758,\,0.772]$ & $[0.750,\,0.778]$ & $[0.714,\,0.786]$ & unreliable \\
+ & (4.17) & (4.18) &  &  &  &  \\
+$\theta_{4,R}$ & 1.346$^{***}$ & 1.330$^{***}$ & $[1.312,\,1.342]$ & $[1.278,\,1.349]$ & $[1.155,\,1.353]$ & $[0.128,\,1.354]$ \\
+ & (3.73) & (3.65) &  &  &  &  \\
+$R^2$ & -- & -- & -- & -- & -- & -- \\
+$N$ & 255 & 255 & 255 & 255 & 255 & 255 \\
+\bottomrule
+\end{tabular}
+% BEGIN LOGVAR NOTES ppml
+\begin{tablenotes}[flushleft]
+\scriptsize
+\item The estimated mean equation is $\Delta c_{t+1}=b_{0}+PC_{E,t}^{T}b_{E}+ PC_{N,t+1}^{T}b_{N}+\varepsilon_{t+1}$, and the estimated variance equation is $\varepsilon_{t+1}^{2}= \exp(\theta_{0}+PC_{R,t}^{T}\theta_{R}+\xi_{t+1})$.
+\item PPML models $E[\varepsilon^2 \mid PC_R]$, not $E[\log \varepsilon^2 \mid PC_R]$; the reported coefficients are quasi-Poisson (log link) QMLE under the exponential conditional-mean restriction.
+\item The OLS column applies PPML to squared residuals from the exogenous-news OLS mean equation; $\tau{=}0$ evaluates the PPML map at the Lewbel point, and each $\tau{>}0$ cell ranges that map over the joint identified news set.
+\item The intercept $\theta_0$ is on the log conditional-variance scale and absorbs $2\log|m_0|$; it is not comparable to the mean-log intercept.
+\item PPML and mean-log slopes are comparable only under an $R$-invariant innovation shape; the intercepts then differ by the Jensen gap $\log E[e^{\xi}]$ ($\approx 1.270$ under normality).
+\item Zero squared residuals are admissible responses; separation/existence is checked through the positive-response rank and conditioning gates, and unresolved fits fail closed.
+\item Search resolution: primary grid capped at 4000 points with a 20000-fit budget per slack; an independent Morton-ordered coverage audit (cap 8000, budget 40000) reruns every display slack before any cell ships, and disagreements demote cells to unreliable. The scaling pilot froze the response scale at 1.
+\item Panel order is an editorial rule keyed to the benchmark crossing count at $\tau{=}0.05$, not a selection between estimators of one parameter.
+\item Set cells are projection hulls of an estimated plug-in image: certified feasible attained values, inner approximations; interior attainment is not established.
+\item Standard errors for the OLS and $\tau{=}0$ point columns are quasi-Poisson QMLE variances with $A = X'\mathrm{diag}(\hat\mu)X$ and score residual $\hat r = \varepsilon^2 - \hat\mu$. Four variants are computed: the model-based $\hat\varphi A^{-1}$ ($\hat\varphi = (n{-}p)^{-1}\sum_t \hat r_t^2/\hat\mu_t$), valid only if $\mathrm{Var}(\varepsilon^2 \mid PC_R) \propto \hat\mu$; the heteroskedasticity-robust Eicker--White sandwich $A^{-1}(\sum_t \hat r_t^2 x_t x_t')A^{-1}$ (HC0, and HC1 with the $n/(n{-}p)$ factor); and its Newey--West Bartlett HAC extension over 4 lags, consistent also under serially correlated scores. The reported statistics use the Newey--West HAC sandwich (Bartlett, 4 lags); parenthetical values are $\hat\theta/\mathrm{SE}$ with stars from the standard-normal (QMLE) approximation ($^{*}$/$^{**}$/$^{***}$ at 10/5/1\%).
+\item The $\tau{=}0$ statistics condition on the plug-in Lewbel news vector $b_N$ and do not propagate its first-stage sampling error; $\tau{>}0$ set columns are identified-set ranges, not point estimates, so no standard error is attached (the moving-block bootstrap for set-endpoint uncertainty is deferred).
+\end{tablenotes}
+% END LOGVAR NOTES ppml
+\end{threeparttable}
+\end{table}
+% END LOGVAR PANEL ppml
+% BEGIN LOGVAR PANEL logols
+\begin{table}[!htbp]
+\centering
+\begin{threeparttable}
+\caption{log-OLS panel: $\theta^{log}$, the benchmark mean-log map (fragile robustness benchmark).}
+\label{tab:log_var_eq_panel_logols}
+\footnotesize\setlength{\tabcolsep}{3pt}
+\begin{tabular}{lcccccc}
+\toprule
+ & OLS & $\tau{=}0$ & $\tau{=}0.05$ & $\tau{=}0.1$ & $\tau{=}0.2$ & $\tau{=}0.4$ \\
+\midrule
+$\theta^{log}_0$ & -2.460$^{***}$ & -2.428 & $(-\infty,\,-2.335]$ & $(-\infty,\,-2.287]$ & $(-\infty,\,-2.117]$ & $(-\infty,\,-0.436]$ \\
+ & (-15.90) &  &  &  &  &  \\
+\midrule
+$\theta^{log}_{1,R}$ & 0.063 & 0.033 & unbounded & unbounded & unbounded & unbounded \\
+ & (0.58) &  &  &  &  &  \\
+$\theta^{log}_{2,R}$ & -0.156$^{*}$ & -0.095 & unbounded & unbounded & unbounded & unbounded \\
+ & (-1.87) &  &  &  &  &  \\
+$\theta^{log}_{3,R}$ & 0.168 & 0.073 & unbounded & unbounded & unbounded & unbounded \\
+ & (1.07) &  &  &  &  &  \\
+$\theta^{log}_{4,R}$ & 0.163 & 0.276 & unbounded & unbounded & unbounded & unbounded \\
+ & (0.73) &  &  &  &  &  \\
+$R^2$ & 0.02 & -- & -- & -- & -- & -- \\
+$N$ & 255 & 255 & 255 & 255 & 255 & 255 \\
+\bottomrule
+\end{tabular}
+% BEGIN LOGVAR NOTES logols
+\begin{tablenotes}[flushleft]
+\scriptsize
+\item The log-OLS panel reports the mean-log robustness benchmark; its OLS column has Newey-West $t$ statistics in parentheses, and its set cells map the mean-log estimator over the joint identified news sets.
+\item Residual-zero crossings inside the identified news sets make log-scale sides diverge (22 crossings at $\tau{=}0.05$), so this panel is the fragile robustness benchmark.
+\end{tablenotes}
+% END LOGVAR NOTES logols
+\end{threeparttable}
+\end{table}
+% END LOGVAR PANEL logols
+% BEGIN LOGVAR PANEL harvey
+\begin{table}[!htbp]
+\centering
+\begin{threeparttable}
+\caption{Harvey panel: $\theta^{H}$, the Gaussian multiplicative-variance map (fixed robustness panel).}
+\label{tab:log_var_eq_panel_harvey}
+\footnotesize\setlength{\tabcolsep}{3pt}
+\begin{tabular}{lcccccc}
+\toprule
+ & Reference & $\tau{=}0$ & $\tau{=}0.05$ & $\tau{=}0.1$ & $\tau{=}0.2$ & $\tau{=}0.4$ \\
+\midrule
+$\theta^{H}_0$ & -0.837$^{***}$ & -0.794$^{***}$ & $[-0.810,\,-0.755]$ & $[-0.820,\,-0.691]$ & $[-0.835,\,-0.477]$ & $[-0.843,\,1.667]$ \\
+ & (-4.71) & (-4.50) &  &  &  &  \\
+\midrule
+$\theta^{H}_{1,R}$ & 0.176$^{*}$ & 0.178$^{*}$ & $[0.175,\,0.183]$ & $[0.173,\,0.192]$ & $[0.169,\,0.221]$ & $[0.156,\,0.316]$ \\
+ & (1.70) & (1.74) &  &  &  &  \\
+$\theta^{H}_{2,R}$ & -0.139$^{*}$ & -0.151$^{**}$ & $[-0.161,\,-0.133]$ & $[-0.167,\,-0.111]$ & $[-0.181,\,-0.063]$ & $[-0.212,\,0.035]$ \\
+ & (-1.84) & (-1.99) &  &  &  &  \\
+$\theta^{H}_{3,R}$ & 0.481$^{***}$ & 0.474$^{***}$ & $[0.462,\,0.485]$ & $[0.448,\,0.496]$ & $[0.380,\,0.518]$ & $[-0.030,\,0.561]$ \\
+ & (3.97) & (3.84) &  &  &  &  \\
+$\theta^{H}_{4,R}$ & 0.635$^{***}$ & 0.616$^{***}$ & $[0.592,\,0.628]$ & $[0.560,\,0.631]$ & $[0.475,\,0.634]$ & $[0.097,\,0.643]$ \\
+ & (3.42) & (3.31) &  &  &  &  \\
+$R^2$ & -- & -- & -- & -- & -- & -- \\
+$N$ & 255 & 255 & 255 & 255 & 255 & 255 \\
+\bottomrule
+\end{tabular}
+% BEGIN LOGVAR NOTES harvey
+\begin{tablenotes}[flushleft]
+\scriptsize
+\item The Harvey panel is the Gaussian multiplicative-variance MLE/QMLE of $E[\varepsilon^2 \mid PC_R] = \exp(R'\theta^{H})$, fit on the fixed squared residuals $\varepsilon^2(b_N)$ at each news vector $b_N$.
+\item The intercept $\theta^{H}_0$ is on the log conditional-variance scale and absorbs $2\log|m_0|$ under a rescaling of the residuals.
+\item Under conditional normality $\theta^{H}_0 = \theta^{log}_0 + 1.270362845$; the general offset is $-E[\log u^2]$ for a standardized innovation with an $R$-invariant shape.
+\item Zero squared residuals are handled by the direct parameter-dependent likelihood, not by adding a constant; existence is guarded by a recession-cone certificate, never by a benchmark residual crossing.
+\item Finite endpoints are certified feasible attained inner values -- projection hulls of an estimated plug-in image, with interior attainment not established -- and failed fits make results unreliable.
+\item Search resolution: the grid is capped at 4000 points with a 20000-fit budget per slack, and a five-start sensitivity re-polish reruns every side before any cell ships; disagreements demote the cell to unreliable.
+\item Standard errors for the reference and $\tau{=}0$ point columns are Gaussian multiplicative-variance QMLE variances with $H = \frac{1}{2}R'\mathrm{diag}(\hat r)R$, $R_t = (1, PC_{R,t}')'$ and $\hat r_t = \hat\varepsilon_t^2 / \exp(R_t'\hat\theta^{H})$. Five variants are computed: the working-model Fisher $(\frac{1}{2}R'R)^{-1}$ and observed $H^{-1}$ information (valid only if the Gaussian model holds); the outer-product BHHH; the Eicker--White QMLE sandwich $H^{-1} (\sum_t \hat g_t \hat g_t')H^{-1}$ with $\hat g_t = \frac{1}{2}(1 - \hat r_t)R_t$; and its Newey--West Bartlett HAC extension over 4 lags, consistent also under serially correlated scores. The reported statistics use the Newey--West HAC sandwich (Bartlett, 4 lags); parenthetical values are $\hat\theta/\mathrm{SE}$ with stars from the standard-normal (QMLE) approximation ($^{*}$/$^{**}$/$^{***}$ at 10/5/1\%).
+\item The $\tau{=}0$ statistics condition on the plug-in Lewbel news vector $b_N$ and do not propagate its first-stage sampling error; $\tau{>}0$ set columns are identified-set ranges, not point estimates, so no standard error is attached (the moving-block bootstrap for set-endpoint uncertainty is deferred).
+\item The log-OLS/PPML panel order is governed by the benchmark crossing rule at $\tau{=}0.05$; the Harvey panel is a fixed robustness panel appended after that ordered pair and never influences it.
+\end{tablenotes}
+% END LOGVAR NOTES harvey
+\end{threeparttable}
+\end{table}
+% END LOGVAR PANEL harvey

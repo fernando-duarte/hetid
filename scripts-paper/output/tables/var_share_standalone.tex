@@ -1,0 +1,43 @@
+\documentclass[11pt]{article}
+\usepackage{booktabs}
+\usepackage{threeparttable}
+\usepackage{siunitx}
+\usepackage{array}
+\usepackage{amssymb}
+\usepackage[margin=1in]{geometry}
+
+\begin{document}
+
+\begin{table}[!htbp]
+\centering
+\begin{threeparttable}
+\caption{SDF news accounts for 3.6--7.6\% of the variance of consumption growth at $\tau{=}0.05$.}
+\label{tab:var_share}
+\footnotesize\setlength{\tabcolsep}{4pt}
+\begin{tabular}{lcccccc}
+\toprule
+ & \multicolumn{6}{c}{Share of $\widehat{\mathrm{Var}}(\Delta c_{t+1})$ (\%)} \\
+\cmidrule(lr){2-7}
+ & OLS & $\tau{=}0$ & $\tau{=}0.05$ & $\tau{=}0.1$ & $\tau{=}0.2$ & $\tau{=}0.4$ \\
+\midrule
+$PC_{E,t}^{T}b_{E}$ & 7.08 & 6.72 &  &  &  &  \\
+\quad $b_{1,E}$ & 0.00 & 0.01 &  &  &  &  \\
+\quad $b_{2,E}$ & 3.90 & 4.13 &  &  &  &  \\
+\quad $b_{3,E}$ & 3.18 & 2.58 &  &  &  &  \\
+\midrule
+$PC_{N,t+1}^{T}b_{N}$ & 3.17 & 5.22 & $[3.65,\,7.55]$ & $[2.73,\,10.89]$ & $[1.68,\,22.80]$ & $[0.31,\,296.68]$ \\
+\quad $b_{1,N}$ & 2.63 & 2.56 & $[1.33,\,4.19]$ & $[0.47,\,6.32]$ & $[0.00,\,13.24]$ & $[0.00,\,280.91]$ \\
+\quad $b_{2,N}$ & 0.12 & 0.02 & $[0.00,\,0.28]$ & $[0.00,\,0.97]$ & $[0.00,\,4.54]$ & $[0.00,\,179.94]$ \\
+\quad $b_{3,N}$ & 0.42 & 2.64 & $[1.71,\,3.81]$ & $[0.98,\,5.26]$ & $[0.12,\,9.29]$ & $[0.00,\,28.09]$ \\
+\midrule
+$N$ & 256 & 256 & 256 & 256 & 256 & 256 \\
+\bottomrule
+\end{tabular}
+\begin{tablenotes}[flushleft]
+\scriptsize
+\item Notes: Shares, in percent, of the variance of quarterly log consumption growth $\Delta c_{t+1}$ attributable to the expected-SDF block $PC_{E,t}^{T}b_{E}$ and the SDF-news block $PC_{N,t+1}^{T}b_{N}$ of the structural equation $\Delta c_{t+1}=b_{0}+PC_{E,t}^{T}b_{E}+PC_{N,t+1}^{T}b_{N}+\varepsilon_{t+1}$ of Table~\ref{tab:structural_eq_set_id}, whose notes define the notation, data, and estimation. Block rows report $100\,\widehat{\mathrm{Var}}(PC^{T}b)/\widehat{\mathrm{Var}}(\Delta c_{t+1})$, with $\widehat{\mathrm{Var}}$ the centered $1/T$ sample moment on the estimation sample; component rows report $100\,b_{k}^{2}\widehat{\mathrm{Var}}(PC_{k})/\widehat{\mathrm{Var}}(\Delta c_{t+1})$ for one component alone. Principal components are unconditionally orthogonal in sample, so at any fixed coefficient vector the component rows add up to their block row; in the OLS and $\tau{=}0$ columns the displayed component cells are rounded by largest remainder so they also add up exactly to the displayed block cell, each within one $0.01$ step of its unconstrained rounding. The OLS column evaluates the shares at the least-squares coefficients (news PCs treated as exogenous) and the $\tau{=}0$ column at the closed-form Lewbel point. The $\tau{>}0$ columns report the range of each share as the coefficients vary over the joint identified set at slack $\tau$: component rows map the exact per-coefficient ranges of Table~\ref{tab:structural_eq_set_id} through the square (the minimum is zero when the range covers zero), and block rows minimize and maximize the quadratic share over the joint set (a feasibility grid of 101 points per axis over the per-coefficient box, checked against the joint quadratic constraints, seeds a multistart SLSQP polish along the constraint boundary, with the grid extremes kept as a feasible fallback envelope), accurate well past the displayed precision. $b_{E}$ is point identified under the maintained $\beta_{2}^{R}=0$ null, so its set cells are blank: the share equals the $\tau{=}0$ value at every displayed $\tau$. Shares are relative to the total variance of consumption growth, not an $R^{2}$ decomposition: away from the least-squares fit the implied residual $\varepsilon_{t+1}$ co-moves with the regressor blocks, so shares can exceed 100 as $\tau$ approaches $\tau^{*}=0.415$. Set cells are exact identified-set ranges, not confidence intervals. For scale, $\widehat{\mathrm{sd}}(\Delta c_{t+1})=1.03$ percent per quarter. $N=256$, 1962 Q1--2025 Q4.
+\end{tablenotes}
+\end{threeparttable}
+\end{table}
+
+\end{document}

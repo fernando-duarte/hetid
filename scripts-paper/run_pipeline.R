@@ -121,5 +121,10 @@ source(paper_path("mean_equation", "figures", "prepare_region_geometry.R"))
 source(paper_path("mean_equation", "figures", "render_projections.R"))
 source(paper_path("mean_equation", "figures", "render_region_3d.R"))
 source(paper_path("mean_equation", "diagnostics", "heteroskedasticity", "render_table.R"))
+# per-maturity SDF-news variance bounds: compute once from the offline ACM load,
+# then render the log-scale figure and the summary-statistics table
+source(paper_path("variance_bounds", "compute_bounds.R"))
+source(paper_path("variance_bounds", "figures", "render_bounds.R"))
+source(paper_path("variance_bounds", "tables", "render_summary_table.R"))
 source(paper_path("reports", "build_descriptive_statistics.R"))
 clean_latex_sidecars(out_dir)

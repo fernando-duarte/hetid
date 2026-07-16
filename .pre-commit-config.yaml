@@ -94,5 +94,6 @@ exclude: |
     inst/doc/.*|
     man/.*|
     NAMESPACE|
-    README\.md
+    README\.md|
+    scripts-paper/output/.*
   )$

@@ -11,7 +11,7 @@ suite_manifest <- data.frame(
     "dynamics_gate", "egarch_approval", "joint_gmm", "joint_gmm_epigraph_solver",
     "joint_null", "fitted_volatility", "fitted_volatility_contracts",
     "set_bootstrap", "support_statistics", "support_heteroskedasticity",
-    "support_identification_diagnostics"
+    "support_identification_diagnostics", "variance_bounds"
   ),
   path = c(
     "engine/test_engine.R",
@@ -33,13 +33,14 @@ suite_manifest <- data.frame(
     "inference/test_set_bootstrap.R",
     "support/test_statistics.R",
     "support/test_heteroskedasticity.R",
-    "support/test_identification_diagnostics.R"
+    "support/test_identification_diagnostics.R",
+    "variance_bounds/test_variance_bounds.R"
   ),
   stringsAsFactors = FALSE
 )
 
 stopifnot(
-  nrow(suite_manifest) == 20L,
+  nrow(suite_manifest) == 21L,
   !anyDuplicated(suite_manifest$id),
   !anyDuplicated(suite_manifest$path)
 )

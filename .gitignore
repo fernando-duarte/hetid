@@ -116,7 +116,10 @@ yarn-error.log*
 scripts_old/
 results/
 scripts/output/
-scripts-paper/output/
+# scripts-paper/output: track generated .tex/.svg, ignore generated data (.rds/.csv) and .pdf
+scripts-paper/output/**/*.rds
+scripts-paper/output/**/*.pdf
+scripts-paper/output/**/*.csv
 
 # graphify knowledge graph (generated output) + local rebuild tooling
 graphify-out/

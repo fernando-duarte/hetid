@@ -36,6 +36,7 @@ scripts-paper/
 │   ├── inference/          set bootstrap, envelopes, and standard-error utilities
 │   ├── figures/            bounds and fitted-volatility figures
 │   └── tables/             estimator panels, notes, and renderers
+├── variance_bounds/        per-maturity SDF-news variance bounds figure and table
 ├── reports/                descriptive-statistics report builder
 ├── support/                paper-owned identification, statistics, LaTeX, and diagnostics
 ├── tests/                  isolated suites, topology checks, and comparison support
