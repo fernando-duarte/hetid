@@ -1,5 +1,5 @@
 # Bounds-by-tau figures for the log-variance equation, one estimator-stamped
-# PDF per logvar_bounds_tau_registry entry (entry one is the benchmark
+# SVG per logvar_bounds_tau_registry entry (entry one is the benchmark
 # log-OLS map, whose output is the regression contract). Per entry: engine
 # runs over the mean-equation figure's warm-refined b_N boxes
 # (mean_eq_bounds_tau, compute_bounds_by_tau.R) with a warm chain and a

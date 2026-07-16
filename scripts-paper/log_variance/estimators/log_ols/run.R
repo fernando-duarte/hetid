@@ -170,7 +170,7 @@ log_var_eq$sample_contract <- list(
   qtr = logvar_rows$qtr, n = nrow(logvar_rows), pc_names = colnames(pcr),
   sample_id = log_var_eq$sample_id
 )
-# the bounds-by-tau figure renders one estimator-stamped PDF per registry
+# the bounds-by-tau figure renders one estimator-stamped SVG per registry
 # entry; the benchmark is entry one
 logvar_bounds_tau_registry <- list(list(
   estimator = logvar_est, schema = log_var_eq$schema, sets = log_var_eq$sets,

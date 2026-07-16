@@ -2,7 +2,7 @@
 # The closed triangular shell and its coordinate-wall shadows follow the visual
 # construction of the paper's reference rendering. The set envelope itself is
 # evaluated analytically by prepare_region_geometry.R.
-# Writes the region PDF to the typed figure directory.
+# Writes the region SVG to the typed figure directory.
 
 local({
   source(paper_path("mean_equation", "figures", "build_region_3d_geometry.R"), local = TRUE)
@@ -30,7 +30,7 @@ local({
   tick_labels <- lapply(ticks, formatC, format = "f", digits = 2)
   mesh <- build_region_mesh(sys, natural_lims, seed = 15599L)
 
-  grDevices::cairo_pdf(
+  grDevices::svg(
     filename = artifact_path("mean_region_figure"),
     width = 9.6,
     height = 8.4,

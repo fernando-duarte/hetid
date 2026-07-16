@@ -1,6 +1,7 @@
 #!/usr/bin/env Rscript
 # Compare a pre-migration flat output root with a post-migration typed output root.
-# Values are exact. PDF rendering is verified separately; this check requires each PDF.
+# Values are exact. Rendered figures (PDF/SVG) are verified separately; this check only
+# requires each figure file to exist and be nonempty.
 
 source(file.path("scripts-paper", "config", "paths.R"))
 source(paper_path("config", "artifacts.R"))
@@ -102,7 +103,7 @@ if (length(unexpected_new)) {
 }
 
 compare_value <- function(old_path, new_path, extension, artifact_id) {
-  if (extension == "pdf") {
+  if (extension %in% c("pdf", "svg")) {
     sizes <- file.info(c(old_path, new_path))$size
     if (any(is.na(sizes)) || any(sizes <= 0)) {
       return("PDF is empty")

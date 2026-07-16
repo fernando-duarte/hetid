@@ -154,7 +154,7 @@ empty_envelope <- list(
 )
 empty_message <- tryCatch(
   {
-    logvar_fitted_vol_render(empty_envelope, tempfile(fileext = ".pdf"))
+    logvar_fitted_vol_render(empty_envelope, tempfile(fileext = ".svg"))
     ""
   },
   error = conditionMessage

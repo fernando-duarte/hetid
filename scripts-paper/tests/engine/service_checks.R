@@ -192,7 +192,7 @@ check(
     logvar_bounds_tau_path("out", list(estimator = "logols")),
     logvar_bounds_tau_path("out", list(estimator = "ppml"))
   ) && grepl(
-    "log_var_eq_bounds_tau_logols\\.pdf$",
+    "log_var_eq_bounds_tau_logols\\.svg$",
     logvar_bounds_tau_path("out", list(estimator = "logols"))
   )
 )

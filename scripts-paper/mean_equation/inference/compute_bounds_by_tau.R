@@ -8,7 +8,7 @@
 # point's argmax: the shared solver starts every solve at the origin and can
 # drop into a lower local vertex mid-grid (a dip in the pc2 upper bound near
 # tau = 0.3), while continuation along the grid tracks the true branch.
-# Writes the bounds PDF to the typed figure directory after mean-set estimation.
+# Writes the bounds SVG to the typed figure directory after mean-set estimation.
 
 source(paper_path("support", "identification", "api.R"))
 source(paper_path("support", "identification", "profile_solver_core.R"))
@@ -121,7 +121,7 @@ bounds_plot <- ggplot2::ggplot(plot_df, ggplot2::aes(tau)) +
   ggplot2::labs(x = expression(tau), y = NULL, linetype = NULL) +
   ggplot2::theme(legend.position = "bottom")
 
-grDevices::pdf(artifact_path("mean_bounds_figure"), width = 10, height = 5.5)
+grDevices::svg(artifact_path("mean_bounds_figure"), width = 10, height = 5.5)
 print(bounds_plot)
 grDevices::dev.off()
 

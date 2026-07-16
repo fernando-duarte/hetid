@@ -8,7 +8,7 @@
 # that is drawn, so it always contains the region -- the reported profile-bound
 # intervals come from a local solver that can undershoot the true extent of this
 # non-convex plate, which would let the region cross a solver-derived box.
-# Writes the projected-set PDF to the typed figure directory.
+# Writes the projected-set SVG to the typed figure directory.
 # Run after the identified set and shared region geometry are available.
 
 local({
@@ -57,7 +57,7 @@ local({
     mm
   })
 
-  grDevices::pdf(artifact_path("mean_projections_figure"),
+  grDevices::svg(artifact_path("mean_projections_figure"),
     width = 11, height = 4.7
   )
   on.exit(grDevices::dev.off(), add = TRUE)

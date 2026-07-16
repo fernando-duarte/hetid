@@ -165,7 +165,7 @@ logvar_call_sides <- function(hook, qs, b_tab, scan, ctx) {
 
 # estimator-stamped figure path so two estimators' figures coexist
 logvar_bounds_tau_path <- function(out_dir, metadata) {
-  basename <- sprintf("log_var_eq_bounds_tau_%s.pdf", metadata$estimator)
+  basename <- sprintf("log_var_eq_bounds_tau_%s.svg", metadata$estimator)
   artifact_path(artifact_id(basename))
 }
 

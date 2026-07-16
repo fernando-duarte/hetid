@@ -134,7 +134,7 @@ logvar_bounds_tau_render <- function(rows, metadata, tau_baseline, tau_star,
     nlevels(rows$coef)
   )
   stopifnot(identical(layer_rows, expected))
-  grDevices::pdf(path, width = 10, height = 6.5)
+  grDevices::svg(path, width = 10, height = 6.5)
   print(fig)
   grDevices::dev.off()
   invisible(path)

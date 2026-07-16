@@ -158,14 +158,14 @@ check(
   )
 )
 
-# The renderer produces a nonempty PDF from the generic envelope object.
-pdf_path <- tempfile(fileext = ".pdf")
-logvar_fitted_vol_render(envelope, pdf_path)
+# The renderer produces a nonempty SVG from the generic envelope object.
+svg_path <- tempfile(fileext = ".svg")
+logvar_fitted_vol_render(envelope, svg_path)
 check(
-  "generic renderer writes a nonempty fitted-volatility PDF",
-  file.exists(pdf_path) && file.info(pdf_path)$size > 0
+  "generic renderer writes a nonempty fitted-volatility SVG",
+  file.exists(svg_path) && file.info(svg_path)$size > 0
 )
-unlink(pdf_path)
+unlink(svg_path)
 
 # Design columns are a hard contract with the source estimator coefficient axis.
 bad_x <- x_mat

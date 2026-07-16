@@ -19,7 +19,7 @@ logvar_fitted_vol_plot_data <- function(rows) {
 }
 
 logvar_fitted_vol_path <- function(out_dir, estimator) {
-  basename <- sprintf("log_var_eq_fitted_volatility_%s.pdf", estimator)
+  basename <- sprintf("log_var_eq_fitted_volatility_%s.svg", estimator)
   artifact_path(artifact_id(basename))
 }
 
@@ -172,7 +172,7 @@ logvar_fitted_vol_render <- function(envelope, path) {
   built <- ggplot2::ggplot_build(fig)
   expected <- c(nrow(band), nrow(band), nrow(band), nrow(point))
   stopifnot(identical(vapply(built$data, nrow, integer(1)), expected))
-  grDevices::pdf(path, width = 10, height = 6.25)
+  grDevices::svg(path, width = 10, height = 6.25)
   print(fig)
   grDevices::dev.off()
   invisible(path)
