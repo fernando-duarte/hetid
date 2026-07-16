@@ -31,15 +31,34 @@ pc_cols <- paste0("pc", 1:MAX_N_PCS)
 base_cols <- c("date", HETID_CONSTANTS$CONSUMPTION_GROWTH_COL, pc_cols)
 cols_to_keep <- c(base_cols, "vfci")
 
-# Row-count invariance: carrying vfci must not shrink the complete-case sample
-# (the merge below keeps only complete rows). The bundled vfci has no NAs, but
-# assert rather than assume so the sample never moves as a side effect.
-n_base <- sum(complete.cases(variables[, base_cols]))
-n_with_vfci <- sum(complete.cases(variables[, cols_to_keep]))
-if (n_base != n_with_vfci) {
-  stop(sprintf(
-    "Adding vfci changed the complete-case row count (%d -> %d): vfci is NA on dates the other variables cover.",
-    n_base, n_with_vfci
+# vfci reaches the bundled file a quarter or so behind the other series, so the
+# newest rows can be NA and the complete-case merge below ends the sample at
+# vfci's last finite quarter -- for every stage, not just the paper spec that
+# reads the column. That is forced, not chosen: an instrument matrix must be
+# finite on every panel row (hetid::build_instrument_matrix), so a carried NA
+# cannot survive to the row where it would be discarded. Missing vfci anywhere
+# but the newest rows is a data defect rather than a publication lag, and a lag
+# of more than a year means the upstream import broke; abort on both.
+MAX_VFCI_LAG_QUARTERS <- 4L
+na_rows <- which(is.na(variables$vfci))
+if (length(na_rows) > 0) {
+  n_var <- nrow(variables)
+  if (!identical(na_rows, seq.int(n_var - length(na_rows) + 1L, n_var))) {
+    stop(sprintf(
+      "vfci is NA on interior rows (%s); expected missing values only at the newest quarters.",
+      paste(format(variables$date[na_rows]), collapse = ", ")
+    ))
+  }
+  if (length(na_rows) > MAX_VFCI_LAG_QUARTERS) {
+    stop(sprintf(
+      "vfci is NA for %d trailing quarters (max %d): the upstream variables import looks broken.",
+      length(na_rows), MAX_VFCI_LAG_QUARTERS
+    ))
+  }
+  cli_alert_warning(paste(
+    "vfci is unavailable for {length(na_rows)} trailing quarter(s)",
+    "({format(max(variables$date[na_rows]))}); every stage's sample ends at",
+    "{format(max(variables$date[-na_rows]))}."
   ))
 }
 
