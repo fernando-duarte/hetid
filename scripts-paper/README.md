@@ -6,10 +6,17 @@ descriptive report. It is separate from both the R package and the numbered `scr
 pipeline. Its R source graph is entirely contained within `scripts-paper/`; it never sources
 the sibling `scripts/` tree. Run it only from the package root.
 
-The sole entrypoint is:
+The paper pipeline's sole entrypoint is:
 
 ```sh
 Rscript scripts-paper/run_pipeline.R
+```
+
+The separate package quality suite lives under `docs/` and is not part of the paper source
+graph. Run it from the package root:
+
+```sh
+Rscript docs/quality-check.R
 ```
 
 There are intentionally no compatibility wrappers for the former flat source paths or

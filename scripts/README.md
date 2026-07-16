@@ -1,6 +1,6 @@
 # Scripts Directory Structure
 
-_Last modified: 2026-06-22 17:18 EDT_
+_Last modified: 2026-07-16 00:00 EDT_
 
 This directory contains all analysis scripts for the hetid
 package, organized by workflow stage. All outputs are stored
@@ -348,10 +348,6 @@ Working outputs and intermediate results
   !nzchar(Sys.getenv("HETID_FULL_RUN"))` (the default is the quick
   run), and at the bottom it `Filter`s out every stage tagged
   `full_only = TRUE` when `quick_run` is in effect.
-- `quality-check.R` - Package quality suite (pkgcheck, rcmdcheck,
-  codetools, cyclocomp, dupree, CodeDepends, lintr, checkglobals,
-  spelling, urlchecker, covr); writes reports to `docs/quality-reports/`
-
 ## Run Profiles and Environment Switches
 
 The default `Rscript run_all_scripts.R` is the **quick run**. It runs
