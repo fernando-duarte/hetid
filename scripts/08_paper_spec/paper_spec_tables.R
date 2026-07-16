@@ -36,8 +36,8 @@ build_table1_summary <- function(res) {
     "$\\Delta c$ (consumption growth)" = r$y1_level,
     "$\\mathrm{PC}_1$" = d[, "pc1"], "$\\mathrm{PC}_2$" = d[, "pc2"],
     "$\\mathrm{PC}_3$" = d[, "pc3"], "$\\mathrm{PC}_4$" = d[, "pc4"],
-    "$\\Delta c_{t-1}$" = d[, "l.y1"], "$\\Delta c_{t-2}$" = d[, "l2.y1"],
-    "$\\Delta c_{t-3}$" = d[, "l3.y1"], "$\\Delta c_{t-4}$" = d[, "l4.y1"],
+    "$\\Delta c_{t}$" = d[, "l.y1"], "$\\Delta c_{t-1}$" = d[, "l2.y1"],
+    "$\\Delta c_{t-2}$" = d[, "l3.y1"], "$\\Delta c_{t-3}$" = d[, "l4.y1"],
     "$Y_2$ (SDF-news PC)" = r$y2, "$W_2$ (news residual)" = r$w2,
     "$Z$ (de-meaned VFCI)" = r$z
   )
@@ -62,7 +62,7 @@ build_table1_summary <- function(res) {
     ),
     "$\\mathrm{PC}_1$--$\\mathrm{PC}_4$ are principal components of a cross-section",
     "of financial-asset returns (not yields), entered predetermined (date $t$) in",
-    "the date-$t{+}1$ equations. $\\Delta c_{t-1}$--$\\Delta c_{t-4}$ are four",
+    "the date-$t{+}1$ equations. $\\Delta c_{t}$--$\\Delta c_{t-3}$ are four",
     "consumption-growth lags. $Y_2$ is the first principal component (correlation",
     sprintf(
       "PCA) of the SDF news across %d maturities (%d--%d months), explaining %.1f\\%%",
@@ -70,7 +70,7 @@ build_table1_summary <- function(res) {
     ),
     "of the standardized news cross-section; the per-maturity loadings are in the",
     "companion CSV. $W_2$ is $Y_2$ residualized on $X_t=(1,\\mathrm{PC}_{1:4},",
-    "\\Delta c_{t-1:t-4})$; under correlation PCA $Y_2$ (and hence $\\theta$) is in",
+    "\\Delta c_{t:t-3})$; under correlation PCA $Y_2$ (and hence $\\theta$) is in",
     "units of one pooled SDF-news standard deviation. $Z=\\mathrm{VFCI}-",
     "\\overline{\\mathrm{VFCI}}$; VFCI is the Volatility Financial Conditions Index",
     "of Adrian, DeHaven, Duarte and Iyer. AC(1) is the first-order autocorrelation."
