@@ -158,8 +158,8 @@ logvar_harvey_report(log_var_eq_harvey, taus)
 # remove only scratch locals: keep log_var_eq_harvey, logvar_bounds_tau_registry,
 # harvey_cache (registry-referenced), and every sourced function
 rm(
-  w1, w2, pcr, qtr, x_mat, chol_xx, b_point, tau_base, qs_base,
-  b_tab_base, point_feasible, grid_base, anchor_b, ref_rows, ref_resid, y_ref,
+  w1, w2, pcr, qtr, x_mat, chol_xx, b_point,
+  point_feasible, grid_base, anchor_b, ref_rows, ref_resid, y_ref,
   pairs, res_pre, logols_coef, est_harvey, search_seed, theta_reference,
   na_coef, theta_point_harvey, taus, qs_fn, primary_results, b_tab_list,
   primary_diag, warm_extra, idx, tau_i, key_i, b_tab_i, qs_i, harvey_bs, res_i,

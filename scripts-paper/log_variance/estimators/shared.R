@@ -74,9 +74,10 @@ logvar_prepare_map_context <- function(inputs, contract, mean_eq, bounds_tau,
     grid_cap
   )
   stopifnot(nrow(grid_base) > 0L)
+  # tau_base/qs_base/b_tab_base stay local scratch: only point_feasible and
+  # grid_base (already returned) depend on them, and no driver reads them
   list(
     w1 = v$w1, w2 = v$w2, pcr = v$pcr, qtr = v$qtr, x_mat = x_mat,
-    b_point = b_point, tau_base = tau_base, qs_base = qs_base,
-    b_tab_base = b_tab_base, point_feasible = point_feasible, grid_base = grid_base
+    b_point = b_point, point_feasible = point_feasible, grid_base = grid_base
   )
 }

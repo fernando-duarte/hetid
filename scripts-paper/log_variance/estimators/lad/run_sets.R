@@ -178,8 +178,8 @@ if (exists("log_var_eq") && exists("set_id_mean_eq") && exists("mean_eq_bounds_t
   # lad_cache (registry-referenced), and every sourced function
   rm(
     w1, w2, pcr, qtr, x_mat, ref_rows, ref_resid, e_scale_ref, est_lad,
-    ref_fit, theta_reference, na_coef, b_point, pfit, theta_point, tau_base,
-    qs_base, b_tab_base, point_feasible, grid_base, search_seed, taus, qs_fn, cfg,
+    ref_fit, theta_reference, na_coef, b_point, pfit, theta_point,
+    point_feasible, grid_base, search_seed, taus, qs_fn, cfg,
     final_res, final_diag, wit_cov, sens_audit, tail_cls, closure_by_tau, min_eps,
     idx, tau_i, key_i, b_tab_i, qs_i, mt, res_i, delta_i, omega_i,
     geom_i, paths_i, pc, wl, base_tab, lad_out, lad_csv
