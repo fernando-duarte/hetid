@@ -377,6 +377,12 @@ only its own test (`utils/tests/test_set_id_bootstrap_core.R:11`) exercises it. 
 spec-comparison grid design, `spec_comparison_design.R`, lives with stage 05, not in
 `utils/`.)
 
+`utils/tests/` holds the assertion suites for those helpers. Run them all with
+`Rscript scripts/utils/tests/run_tests.R` from the package root: it discovers every
+`test_*.R` in that directory, runs each in a fresh R process, and exits non-zero naming
+any file that failed. The suites are not a pipeline stage and `run_all_scripts.R` does
+not invoke them, so they have to be run deliberately.
+
 ### examples/
 Standalone demonstrations (not part of the pipeline).
 - `custom_z_demo.R` - End-to-end generalized-instrument workflow on a custom Z
