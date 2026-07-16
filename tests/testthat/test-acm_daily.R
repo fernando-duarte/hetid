@@ -1,6 +1,5 @@
-# Daily-frequency ACM asset: the download, load, and extract paths.
-# The daily asset is GitHub-only and cache-only (never bundled); all
-# tests are hermetic, with network access mocked.
+# Daily-frequency ACM asset: download, load, extract paths. GitHub-only
+# and cache-only (never bundled); network mocked
 
 # Write a tiny business-day csv.gz to the daily cache path
 write_daily_cache <- function() {

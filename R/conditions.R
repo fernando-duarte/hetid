@@ -19,7 +19,7 @@ NULL
 #' @param subclass Optional specific condition class, prepended
 #' @param call The call (default NULL)
 #' @param ... Extra named fields stored on the condition
-#' @return A condition object (not signalled)
+#' @return A condition object (not signaled)
 #' @keywords internal
 new_hetid_error <- function(message, subclass = NULL, call = NULL, ...) {
   structure(

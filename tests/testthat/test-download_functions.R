@@ -1,7 +1,5 @@
-# Test file for download functions
-# Tests download_term_premia and load_term_premia with mocked network
-# access and a throwaway per-user cache directory (no real downloads,
-# no writes outside tempdir)
+# download_term_premia and load_term_premia with mocked network access and a
+# throwaway per-user cache dir (no real downloads, no writes outside tempdir)
 
 test_that("load_term_premia auto-downloads when file missing", {
   withr::with_tempdir({
@@ -46,7 +44,7 @@ test_that("load_term_premia errors on a wholly unparseable DATE column", {
     )
 
     # A DATE column that no supported format can parse is treated as a
-    # stale/corrupt cache (structured error), not silently kept as text.
+    # stale/corrupt cache (structured error), not silently kept as text
     expect_error(
       load_term_premia(),
       "could not be parsed",
@@ -331,10 +329,8 @@ test_that("download_term_premia errors on download failure", {
 })
 
 test_that("nyfed cache is written to a temp file, then renamed into place", {
-  # Temp+rename (mirrors the github source): the CSV is written to a temp
-  # file in the cache directory and renamed into place, so a partial write
-  # never half-overwrites the cache. The target is cleared first because
-  # rename-onto-existing fails on Windows.
+  # Temp+rename (mirrors the github source): a partial write never half-overwrites
+  # the cache; target cleared first because rename-onto-existing fails on Windows
   skip_if_not_installed("readxl")
   user_root <- withr::local_tempdir()
   withr::local_envvar(R_USER_DATA_DIR = user_root)

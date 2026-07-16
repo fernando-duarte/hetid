@@ -33,10 +33,13 @@ build_harvey_panel_notes <- function(harvey, tau_baseline, grid_cap, fit_budget,
       "The intercept $\\theta^{H}_0$ is on the log conditional-variance scale",
       "and absorbs $2\\log|m_0|$ under a rescaling of the residuals."
     ),
-    paste(
-      "Under conditional normality $\\theta^{H}_0 = \\theta^{log}_0 +",
-      "1.270362845$; the general offset is $-E[\\log u^2]$ for a standardized",
-      "innovation with an $R$-invariant shape."
+    sprintf(
+      paste(
+        "Under conditional normality $\\theta^{H}_0 = \\theta^{log}_0 +",
+        "%.9f$; the general offset is $-E[\\log u^2]$ for a standardized",
+        "innovation with an $R$-invariant shape."
+      ),
+      logvar_normal_lnchisq_gap
     ),
     paste(
       "Zero squared residuals are handled by the direct parameter-dependent",

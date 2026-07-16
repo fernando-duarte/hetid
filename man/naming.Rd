@@ -2,7 +2,7 @@
 % Please edit documentation in R/naming.R
 \name{naming}
 \alias{naming}
-\title{Transformed-variable naming grammar helpers}
+\title{Transformed-Variable Naming Grammar Helpers}
 \description{
 Internal helpers that build column/coefficient names following the package's
 transformed-variable naming grammar. The default unit is a quarter; a pure

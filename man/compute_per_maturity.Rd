@@ -19,7 +19,10 @@ compute_per_maturity(w1, w2, maturities, compute_fn, ...)
 \item{...}{Extra arguments forwarded to compute_fn}
 }
 \value{
-Named list of per-maturity results from compute_fn
+Named list of per-maturity results from compute_fn, one element per
+entry of \code{maturities} in order, named \code{maturity_N} where
+\code{N} is the w2 column index (\code{maturity_names()}), so element
+\code{k} corresponds to \code{maturities[k]}.
 }
 \description{
 Applies a computation function to each maturity, returning a named

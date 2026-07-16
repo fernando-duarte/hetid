@@ -66,7 +66,7 @@ because \code{n_hat(i, t)} requires data at maturity \code{i + step}.
 Passing \code{i = 0} returns \code{0}: the horizon-0 expected SDF is
 the realized one-period price (exact, no approximation), so its
 error-variance bound is identically zero. A
-\code{hetid_warning_horizon_zero} warning is signalled, mirroring
+\code{hetid_warning_horizon_zero} warning is signaled, mirroring
 \code{\link{compute_expected_sdf}}.
 
 Calling this with \code{i = (m + j - 1) * step} returns the bound for
@@ -103,9 +103,13 @@ of \code{step} and the row frequency must equal the news period.
 }
 
 \examples{
-data <- extract_acm_data(data_types = c("yields", "term_premia"))
-yields <- data[, paste0("y", seq(12, 120, 12))]
-term_premia <- data[, paste0("tp", seq(12, 120, 12))]
+# Extract ACM data (the i = 60 horizon needs maturities 12, 60, and 72)
+data <- extract_acm_data(
+  data_types = c("yields", "term_premia"),
+  maturities = c(12, 60, 72)
+)
+yields <- data[, paste0("y", c(12, 60, 72))]
+term_premia <- data[, paste0("tp", c(12, 60, 72))]
 
 # Variance bound for the 5-year (60-month) horizon
 bound_60 <- compute_expected_sdf_variance_bound(yields, term_premia, i = 60)

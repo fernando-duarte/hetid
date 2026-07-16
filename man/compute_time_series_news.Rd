@@ -12,7 +12,8 @@ compute_time_series_news(current_series, future_series)
 \item{future_series}{Future period series}
 }
 \value{
-News series
+News series (\code{length(current_series) - 1}), or
+\code{numeric(0)} when the inputs have fewer than two observations.
 }
 \description{
 Generic function to compute news as difference between future and current values

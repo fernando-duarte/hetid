@@ -1,6 +1,5 @@
-# Step parameterization: explicit step = DEFAULT_STEP must reproduce the
-# omitted-step results exactly, and non-default steps must follow the
-# hand-computed formulas on synthetic data.
+# Explicit step = DEFAULT_STEP must reproduce the omitted-step results exactly;
+# non-default steps follow the hand-computed formulas on synthetic data
 
 # Synthetic frame with columns only at the maturities a step = 6 chain
 # touches; deterministic values so expectations are hand-computable
@@ -25,7 +24,7 @@ test_that("explicit default step reproduces omitted-step results on bundled data
   s <- HETID_CONSTANTS$DEFAULT_STEP
 
   # Dated wrappers require dates on both sides; explicit step must still
-  # reproduce the omitted-step result exactly.
+  # reproduce the omitted-step result exactly
   expect_identical(
     compute_n_hat(yields, tp, i = 60, step = s, dates = dates),
     compute_n_hat(yields, tp, i = 60, dates = dates)
@@ -67,7 +66,7 @@ test_that("explicit default step reproduces omitted-step w2 residuals", {
   pcs <- matrix(rnorm(nrow(test_env$yields) * 4), ncol = 4)
 
   # w2 residuals are a dated time series: pass the date-aligned index so the
-  # series can be returned; step invariance must still hold exactly.
+  # series can be returned; step invariance must still hold exactly
   res_omitted <- compute_w2_residuals(
     test_env$yields, test_env$term_premia,
     maturities = c(24, 36), n_pcs = 4, pcs = pcs, dates = dates
@@ -85,9 +84,8 @@ test_that("n_hat with step = 6 matches the hand formula", {
   pct <- HETID_CONSTANTS$PERCENT_TO_DECIMAL
   units <- HETID_CONSTANTS$MATURITY_UNITS_PER_YEAR
 
-  # At i == step the step-maturity term premium is normalized to zero
-  # (TP^(1):=0), so the (6 / units) * tp6 term is dropped. The bare n_hat
-  # kernel n_hat_series() returns the undated numeric series.
+  # At i == step the step-maturity term premium is zero (TP^(1):=0), so the
+  # (6 / units) * tp6 term drops; n_hat_series() is the bare undated kernel
   n_hat_6 <- n_hat_series(frame$yields, frame$term_premia, i = 6, step = 6)
   expected_6 <- ((6 / units) * frame$yields$y6 - (12 / units) * frame$yields$y12 +
     (12 / units) * frame$term_premia$tp12) / pct
@@ -139,7 +137,7 @@ test_that("price news with step = 6 differences the step-spaced n_hat series", {
   n_obs <- nrow(frame$yields)
 
   # Compare bare kernels: the price-news series (compute_news_components()$delta_p)
-  # against the differenced bare n_hat kernel (n_hat_series).
+  # against the differenced bare n_hat kernel (n_hat_series)
   news <- compute_news_components(
     frame$yields, frame$term_premia,
     i = 12, step = 6
@@ -150,10 +148,8 @@ test_that("price news with step = 6 differences the step-spaced n_hat series", {
 })
 
 test_that("the news clock is valid from the boundary; below-floor horizons fail", {
-  # With the 1-month maturity floor, step = 3 news works from the boundary
-  # horizon i = 3 upward (the previous-period index i - step >= 1 now
-  # suffices); a horizon whose previous-period maturity falls below the
-  # 1-month floor still fails informatively.
+  # With the 1-month floor, step = 3 news works from horizon i = 3 up; a
+  # previous-period maturity below the floor still fails informatively
   expect_true(validate_news_maturity_index(3, step = 3))
   expect_true(validate_news_maturity_index(4, step = 3))
   expect_true(validate_news_maturity_index(6, step = 3))
@@ -165,7 +161,7 @@ test_that("the news clock is valid from the boundary; below-floor horizons fail"
   )
 
   # On the monthly clock (step = 1) every horizon i >= 1 is valid: the
-  # boundary (i == step) or i - step >= 1.
+  # boundary (i == step) or i - step >= 1
   expect_true(validate_news_maturity_index(1, step = 1))
   expect_true(validate_news_maturity_index(2, step = 1))
 })

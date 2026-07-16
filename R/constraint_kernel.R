@@ -43,9 +43,10 @@ constraint_components <- function(weight_col, idx, moments) {
 #' @param tau_ik Scalar slack for this constraint
 #' @param l_val,v_val Scalars from \code{constraint_components()}
 #' @param q_vec Length-I vector from \code{constraint_components()}
-#' @param s_i_0_val,sigma_i_sq_val Scalars for this maturity
+#' @param s_i_0_val Scalar for this maturity
 #' @param s_i_1_vec Length-I vector for this maturity
 #' @param s_i_2_mat I x I matrix for this maturity
+#' @param sigma_i_sq_val Scalar for this maturity
 #' @param n_components Theta-axis dimension (I)
 #' @param label Constraint label used in error messages (the legacy
 #'   path passes \code{paste0("maturity ", i)} so messages are

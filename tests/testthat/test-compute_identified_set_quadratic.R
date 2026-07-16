@@ -445,7 +445,7 @@ test_that("container construction rejects maturities beyond the system", {
 
 test_that("assembly guard fires when components yield a non-finite form", {
   # d_i stays finite (tau_i^2 * V_i / sigma_i_sq), but an Inf in Q_i makes
-  # the assembled A_i non-finite, tripping the belt-and-braces guard.
+  # the assembled A_i non-finite, tripping the belt-and-braces guard
   err <- tryCatch(
     quadratic_from_components(
       tau = c(0.5, 0.5),
@@ -471,7 +471,7 @@ test_that("assembly guard fires when components yield a non-finite form", {
 test_that("a dim-carrying Q_i element is rejected as not a numeric vector", {
   inputs <- setup_quadratic_test_inputs(n_maturities = 2)
   # A 1 x I row matrix has the same length and values but is not a vector;
-  # the tightened is_numeric_vector_dim guard must reject it.
+  # the tightened is_numeric_vector_dim guard must reject it
   inputs$components$Q_i[[1]] <- matrix(inputs$components$Q_i[[1]], nrow = 1)
   expect_error(
     compute_identified_set_quadratic(

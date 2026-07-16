@@ -19,9 +19,7 @@ Integer scalar, \code{MAX_MATURITY - step}
 }
 \description{
 Largest maturity index usable by functions that need data at
-maturity \code{i + step} (e.g. \code{compute_n_hat}). Replaces the
-former fixed \code{EFFECTIVE_MAX_MATURITY} constant with a
-step-dependent bound.
+maturity \code{i + step} (e.g. \code{compute_n_hat}).
 }
 \examples{
 effective_max_maturity()

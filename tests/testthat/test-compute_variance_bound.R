@@ -13,7 +13,7 @@ test_that("one-period bound (i=12) is the strictly positive k2 term", {
   test_env <- setup_standard_test_env()
 
   # At the one-period maturity i = step the k_hat (k1) term is 0, but the
-  # bound is the strictly positive k2_hat contribution (spec U_step).
+  # bound is the strictly positive k2_hat contribution (spec U_step)
   var_bound_12 <- compute_variance_bound(test_env$yields, test_env$term_premia, i = 12)
   c_hat_12 <- compute_c_hat(test_env$yields, test_env$term_premia, i = 12)
   k_hat_12 <- compute_k_hat(test_env$yields, test_env$term_premia, i = 12)
@@ -28,7 +28,7 @@ test_that("variance bound is positive across the annual nodes", {
   test_env <- setup_standard_test_env()
 
   # Every node, including the one-period boundary i = 12, has a strictly
-  # positive bound (the boundary is carried entirely by the k2 term).
+  # positive bound (the boundary is carried entirely by the k2 term)
   for (i in seq(12, 108, by = 12)) {
     var_bound_i <- compute_variance_bound(test_env$yields, test_env$term_premia, i = i)
     expect_gt(var_bound_i, 0,
@@ -69,7 +69,6 @@ test_that("variance bound generally increases with maturity", {
   }
 
   # Check general increasing trend (allowing for some non-monotonicity)
-  # Count how many increases vs decreases
   increases <- sum(diff(var_bounds[2:9]) > 0) # Compare the non-boundary nodes
   expect_gte(increases, 4,
     label = "Variance bound should generally increase with maturity"

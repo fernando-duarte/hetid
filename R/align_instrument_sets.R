@@ -8,7 +8,7 @@
 #' and silently uniting two different series under one name is the
 #' exact misalignment this validator exists to catch. Compute the
 #' moments from \code{instruments} -- the returned \code{support}
-#' indexes ITS columns -- then feed \code{support} to
+#' indexes the columns of \code{instruments} -- then feed \code{support} to
 #' \code{\link{lambda_from_support}} (and to the scripts-layer
 #' optimizer's support mask).
 #'

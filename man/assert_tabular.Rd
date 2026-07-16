@@ -11,6 +11,9 @@ assert_tabular(x, name)
 
 \item{name}{Argument name for error message}
 }
+\value{
+Invisible TRUE; stops with a structured error otherwise
+}
 \description{
 Assert Input is Tabular
 }

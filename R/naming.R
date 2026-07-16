@@ -1,4 +1,4 @@
-#' Transformed-variable naming grammar helpers
+#' Transformed-Variable Naming Grammar Helpers
 #'
 #' Internal helpers that build column/coefficient names following the package's
 #' transformed-variable naming grammar. The default unit is a quarter; a pure
@@ -9,7 +9,7 @@
 #' @name naming
 NULL
 
-#' Grammar names for own-lag columns of a series
+#' Grammar Names for Own-Lag Columns of a Series
 #'
 #' Builds the grammar lag-column names for a base series, dropping the first
 #' digit: lag 1 is \code{l.<series>}, lag \code{h} (for \code{h >= 2}) is
@@ -22,7 +22,7 @@ NULL
 #' @keywords internal
 lag_grammar_names <- function(series, n_lags) {
   # vapply (not a vectorized paste0) so n_lags = 0 yields character(0): paste0
-  # recycles a zero-length argument to "", which would wrongly return "l.<series>".
+  # recycles a zero-length argument to "", which would wrongly return "l.<series>"
   vapply(seq_len(n_lags), function(h) {
     if (h == 1L) paste0("l.", series) else paste0("l", h, ".", series)
   }, character(1))

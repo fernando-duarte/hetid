@@ -27,9 +27,8 @@ test_that("compute_expected_sdf returns a dated data frame", {
 })
 
 test_that("compute_expected_sdf drops an Inf realized leg from the correction", {
-  # A wildly negative one-period yield overflows exp() to Inf. is.finite()
-  # masking must drop that pair; a !is.na() implementation would keep the
-  # Inf and poison the scalar correction (and the whole output series).
+  # A wildly negative one-period yield overflows exp() to Inf; is.finite()
+  # masking must drop that pair -- !is.na() would keep it and poison the series
   y12_pct <- c(0, 0, -1e5, 2) # -1e5% -> exp(+1000) = Inf in the realized leg
   n <- length(y12_pct)
   zeros <- numeric(n)
@@ -71,9 +70,8 @@ test_that("compute_expected_sdf matches manual exp(n_hat) + correction", {
 })
 
 test_that("compute_expected_sdf ignores the one-period term premium at i = step", {
-  # At i = step the n_hat normalization TP^(1) := 0 drops tp{step}; the
-  # realized leg uses the y{step} yield, not tp{step}, so perturbing tp12
-  # must leave the result unchanged.
+  # At i = step the n_hat normalization TP^(1) := 0 drops tp{step}, and the
+  # realized leg uses y{step}, so perturbing tp12 must leave the result alone
   test_env <- setup_standard_test_env()
   tp_perturbed <- test_env$term_premia
   tp_perturbed$tp12 <- tp_perturbed$tp12 + 1
@@ -91,11 +89,8 @@ test_that("compute_expected_sdf ignores the one-period term premium at i = step"
 })
 
 test_that("compute_expected_sdf honors a non-default step", {
-  # step = 6: the one-period bond is y6, and the lead is s = i/step = 2
-  # rows. y12 = y18 = tp12 = tp18 = 0 => n_hat(12, step = 6) = 0 =>
-  # exp(n_hat) = 1, so the correction isolates the y6 lead with a
-  # non-unit m_step = step / MATURITY_UNITS_PER_YEAR = 0.5. A y12- or
-  # step=12-hardcoded implementation cannot pass this.
+  # step = 6: the one-period bond is y6 and the lead is s = i/step = 2 rows
+  # y12 = y18 = tp12 = tp18 = 0 => n_hat(12, step = 6) = 0 => exp(n_hat) = 1
   step <- 6L
   y6_pct <- c(0, 2, 5, 9, 14, 20, 27)
   n <- length(y6_pct)
@@ -110,6 +105,8 @@ test_that("compute_expected_sdf honors a non-default step", {
   )$expected_sdf
 
   s <- 12L %/% step
+  # the non-unit m_step = 0.5 isolates the y6 lead; a y12- or step=12-hardcoded
+  # implementation cannot pass this
   m_step <- step / HETID_CONSTANTS$MATURITY_UNITS_PER_YEAR
   realized <- exp(-m_step * y6_pct[(s + 1):n] /
     HETID_CONSTANTS$PERCENT_TO_DECIMAL)
@@ -124,7 +121,7 @@ test_that("compute_expected_sdf averages the correction over finite pairs only",
   s <- i %/% step
 
   # Interior NA in the realized one-period (y12) leg only; n_hat(60) does
-  # not use y12, so exp(n_hat) stays finite and one paired term drops out.
+  # not use y12, so exp(n_hat) stays finite and one paired term drops out
   yields_na <- test_env$yields
   yields_na$y12[40] <- NA_real_
 
@@ -173,10 +170,8 @@ test_that("expected_sdf series mean-matches realized one-period price over T_i",
 })
 
 test_that("compute_expected_sdf leads the one-period yield by i/step rows", {
-  # y24 = y36 = tp24 = tp36 = 0 => n_hat(24, t) = 0 => exp(n_hat) = 1, so
-  # the correction reduces to mean(exp(-y12[t+2]/100)) - 1 over t = 1..T-2,
-  # i.e. the last T-2 of the y12 series. Distinct y12 values make that
-  # window distinguishable from any other row shift.
+  # y24 = y36 = tp24 = tp36 = 0 => n_hat(24) = 0 => exp(n_hat) = 1, so the
+  # correction is mean(exp(-y12[t+2]/100)) - 1; distinct y12 values pin the shift
   y12_pct <- c(0, 1, 3, 6, 10, 15, 21)
   n <- length(y12_pct)
   zeros <- numeric(n)
@@ -216,7 +211,7 @@ test_that("compute_expected_sdf raises when no valid correction pairs", {
 
 test_that("compute_expected_sdf raises a structured error on a short series", {
   # T = 5 rows but i = 108, step = 12 needs s = 9 news periods, so the
-  # paired index set is empty: must signal hetid_error_insufficient_data.
+  # paired index set is empty: must signal hetid_error_insufficient_data
   syn <- create_synthetic_test_data(n = 5)
   expect_error(
     compute_expected_sdf(syn$yields, syn$term_premia, i = 108, paired = TRUE),
@@ -247,9 +242,8 @@ test_that("compute_expected_sdf at i = 0 returns the exact realized one-period p
 })
 
 test_that("compute_expected_sdf at i = 0 uses only y{step}, never the term premium", {
-  # Horizon 0 is the realized price exp(-m_step * y_step / 100); it must not
-  # route through n_hat(0), which would carry the step-bond term premium that
-  # the TP^(1) := 0 normalization removes. Perturbing tp12 must change nothing.
+  # Horizon 0 must not route through n_hat(0), which would carry the step-bond
+  # term premium the TP^(1) := 0 normalization removes, so tp12 changes nothing
   test_env <- setup_standard_test_env()
   tp_perturbed <- test_env$term_premia
   tp_perturbed$tp12 <- tp_perturbed$tp12 + 5
@@ -309,8 +303,7 @@ test_that("compute_expected_sdf rejects mismatched yields and term_premia rows",
 
 test_that("compute_expected_sdf default correction uses the full sample, no lead", {
   # y24 = y36 = tp* = 0 => n_hat(24) = 0 => exp(n_hat) = 1, so the default
-  # correction is mean(exp(-y12/100)) - 1 over all rows (no i / step lead),
-  # unlike the paired estimator's t + s window.
+  # correction averages all rows (no i / step lead), not the paired t + s window
   y12_pct <- c(0, 1, 3, 6, 10, 15, 21)
   n <- length(y12_pct)
   zeros <- numeric(n)
@@ -338,7 +331,7 @@ test_that("compute_expected_sdf default correction uses the full sample, no lead
 
 test_that("compute_expected_sdf default admits non-multiple maturities", {
   # The horizon-agnostic correction needs no i / step lead, so a non-multiple
-  # of step is admissible; paired = TRUE rejects it. Needs monthly columns.
+  # of step is admissible; paired = TRUE rejects it. Needs monthly columns
   data <- extract_acm_data(
     data_types = c("yields", "term_premia"),
     maturities = c(12, 18, 30)

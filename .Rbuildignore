@@ -73,6 +73,7 @@
 ^\.Rhistory$
 ^\.worktrees$
 ^\.claude$
+^\.superpowers$
 ^CLAUDE\.md$
 ^CLAUDE\.local\.md$
 ^AGENTS\.md$

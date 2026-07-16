@@ -58,7 +58,7 @@
 #' @note Passing \code{i = 0} returns \code{0}: the horizon-0 expected SDF is
 #'   the realized one-period price (exact, no approximation), so its
 #'   error-variance bound is identically zero. A
-#'   \code{hetid_warning_horizon_zero} warning is signalled, mirroring
+#'   \code{hetid_warning_horizon_zero} warning is signaled, mirroring
 #'   \code{\link{compute_expected_sdf}}.
 #'
 #' @note Calling this with \code{i = (m + j - 1) * step} returns the bound for
@@ -72,9 +72,13 @@
 #' @export
 #'
 #' @examples
-#' data <- extract_acm_data(data_types = c("yields", "term_premia"))
-#' yields <- data[, paste0("y", seq(12, 120, 12))]
-#' term_premia <- data[, paste0("tp", seq(12, 120, 12))]
+#' # Extract ACM data (the i = 60 horizon needs maturities 12, 60, and 72)
+#' data <- extract_acm_data(
+#'   data_types = c("yields", "term_premia"),
+#'   maturities = c(12, 60, 72)
+#' )
+#' yields <- data[, paste0("y", c(12, 60, 72))]
+#' term_premia <- data[, paste0("tp", c(12, 60, 72))]
 #'
 #' # Variance bound for the 5-year (60-month) horizon
 #' bound_60 <- compute_expected_sdf_variance_bound(yields, term_premia, i = 60)
@@ -83,7 +87,7 @@ compute_expected_sdf_variance_bound <- function(yields, term_premia, i,
                                                 step = HETID_CONSTANTS$DEFAULT_STEP) {
   validate_step(step)
   # Lower bound 0 admits the horizon-0 boundary below; i >= 1 keeps the usual
-  # [1, effective_max] contract once i == 0 returns early.
+  # [1, effective_max] contract once i == 0 returns early
   assert_scalar_integer_in_range(
     i, "Maturity index i", 0L, effective_max_maturity(step),
     arg = "i"
@@ -91,9 +95,8 @@ compute_expected_sdf_variance_bound <- function(yields, term_premia, i,
   validate_row_alignment(yields, term_premia)
 
   if (i == 0) {
-    # Horizon 0 is exact (M^(0)_{0,t} = P^(1)_t, the realized one-period price):
-    # no approximation error, so the bound is identically 0. Mirrors the i == 0
-    # boundary of compute_expected_sdf().
+    # Horizon 0 is exact (M^(0)_{0,t} = P^(1)_t): no approximation error, so the
+    # bound is identically 0
     warn_horizon_zero(
       paste0(
         "i = 0: the horizon-0 expected SDF is exact (the realized one-period ",
@@ -103,14 +106,13 @@ compute_expected_sdf_variance_bound <- function(yields, term_premia, i,
     return(0)
   }
 
-  # compute_expected_sdf_gap owns the multiple-of-step contract (it does
-  # the i/step row shift), so it is validated there, not here. It returns
-  # the gap series already filtered to finite paired observations.
+  # compute_expected_sdf_gap owns the multiple-of-step contract (it does the
+  # i/step row shift), so it is validated there, not here
   components <- compute_expected_sdf_gap(yields, term_premia, i, step = step)
   gap <- components$gap
 
   # Degenerate data (no finite paired observations): no bound to estimate.
-  # Matches the NA_real_ contract of compute_c_hat / compute_k_hat.
+  # Matches the NA_real_ contract of compute_c_hat / compute_k_hat
   if (length(gap) == 0) {
     return(NA_real_)
   }
@@ -118,8 +120,7 @@ compute_expected_sdf_variance_bound <- function(yields, term_premia, i,
   q_gap <- components$q
   var_g <- centered_var(gap)
   # var_q defaults to Inf so a non-finite q or variance cannot turn min() into
-  # NA. length(q) == length(gap) > 0 here (common mask + the length-0 guard
-  # above), so no length check is needed.
+  # NA; length(q) == length(gap) > 0 here, so no length check is needed
   var_q <- Inf
   if (all(is.finite(q_gap))) {
     candidate <- centered_var(q_gap)

@@ -1,5 +1,3 @@
-# Package startup functions
-
 .onAttach <- function(libname, pkgname) {
   # Resolve once: availability and the mtime lookup share the path
   csv_path <- get_acm_data_path()
@@ -13,7 +11,6 @@
     message_text <- "  * ACM term premia: Not found. Run download_term_premia()"
   }
 
-  # Display startup message
   packageStartupMessage(
     "Data availability:\n",
     message_text,

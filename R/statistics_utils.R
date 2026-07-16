@@ -20,7 +20,10 @@ NULL
 #' @param compute_fn Function called for each maturity with args
 #'   (w1, w2, w2_i, idx, i, ...)
 #' @param ... Extra arguments forwarded to compute_fn
-#' @return Named list of per-maturity results from compute_fn
+#' @return Named list of per-maturity results from compute_fn, one element per
+#'   entry of \code{maturities} in order, named \code{maturity_N} where
+#'   \code{N} is the w2 column index (\code{maturity_names()}), so element
+#'   \code{k} corresponds to \code{maturities[k]}.
 #' @keywords internal
 compute_per_maturity <- function(w1, w2, maturities,
                                  compute_fn, ...) {

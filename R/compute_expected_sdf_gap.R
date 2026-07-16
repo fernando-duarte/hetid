@@ -34,7 +34,7 @@
 #'       \code{gap}'s finite paired set (one common \code{is.finite(gap)} mask).
 #'       \code{q} shares \code{g}'s conditional mean in population
 #'       (\eqn{E[u | \mathrm{info}] = 0}) and its \eqn{1/N} variance is a
-#'       sharper \eqn{O(\sigma^4)} bound. \code{q} is NOT itself guaranteed
+#'       sharper \eqn{O(\sigma^4)} bound. \code{q} is \strong{not} itself guaranteed
 #'       finite: a yield \eqn{\to +\infty} gives \eqn{q = +\infty}, and an
 #'       extreme \eqn{n\_hat} can give \eqn{0 \cdot \infty = \mathrm{NaN}}.
 #'       The bound function guards \code{var_q} against this.}
@@ -42,9 +42,8 @@
 #' @keywords internal
 compute_expected_sdf_gap <- function(yields, term_premia, i,
                                      step = HETID_CONSTANTS$DEFAULT_STEP) {
-  # The helper performs the i/step row shift, so the multiple-of-step
-  # contract is intrinsic to it: validate here (single source of truth) so
-  # the shared helper can never silently misalign for any caller.
+  # This helper does the i/step row shift, so it owns the multiple-of-step
+  # contract: validate here so no caller can silently misalign
   validate_step_multiple(
     i, step,
     "the realized one-period yield is led whole news periods"
@@ -68,24 +67,23 @@ compute_expected_sdf_gap <- function(yields, term_premia, i,
   n_hat_paired <- n_hat[paired]
   y_step_future <- y_step[seq.int(horizon_periods + 1L, n_obs)]
 
-  # Realized one-period log price x = -y^(1)_{t+s} and price e^x: the step-bond
-  # log price scales the annualized yield by its maturity in years, then
-  # percent to decimal.
+  # Realized one-period log price x = -y^(1)_{t+s}: scale the annualized yield
+  # by its maturity in years, then percent to decimal
   m_step <- step / HETID_CONSTANTS$MATURITY_UNITS_PER_YEAR
   realized_log <- -m_step * y_step_future / HETID_CONSTANTS$PERCENT_TO_DECIMAL
   realized_price <- exp(realized_log)
 
   # Gap g = e^x - e^{n_hat}. Left byte-identical so compute_expected_sdf stays
-  # numerically invariant.
+  # numerically invariant
   gap <- realized_price - exp_n_hat_paired
 
   # expm1() removes the e^u - 1 cancellation; the trailing `- u` is numerically
-  # irrelevant here (var(q) >> machine eps).
+  # irrelevant here (var(q) >> machine eps)
   u <- realized_log - n_hat_paired
   q_gap <- exp_n_hat_paired * (expm1(u) - u)
 
   # is.finite(gap) is the common finite mask for g and q: each leg is exp(), so
-  # the difference is non-finite iff a leg is.
+  # the difference is non-finite iff a leg is
   mask <- is.finite(gap)
   list(exp_n_hat = exp_n_hat, gap = gap[mask], q = q_gap[mask])
 }

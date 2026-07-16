@@ -7,7 +7,9 @@
 #' @param data_types Character vector specifying which data to extract.
 #'   Options: "yields", "term_premia", "risk_neutral_yields".
 #'   Default is c("yields", "term_premia").
-#' @param maturities Numeric vector of maturities in months (1-120).
+#' @param maturities Numeric vector of maturities in months
+#'   (\code{HETID_CONSTANTS$MIN_MATURITY} to
+#'   \code{HETID_CONSTANTS$MAX_MATURITY}).
 #'   Default is the annual nodes \code{seq(12, 120, by = 12)}
 #'   (\code{HETID_CONSTANTS$DEFAULT_ACM_MATURITIES}); pass
 #'   \code{HETID_CONSTANTS$ALL_ACM_MATURITIES} for the full monthly
@@ -47,9 +49,11 @@
 #'   - Risk-neutral yields: rny12, rny24, ..., rny120
 #'
 #' @details
-#' The raw ACM data carries maturities at one-month steps from 1 to
-#' 120 months. Whole-year maturities keep the official column names
-#' (ACMY01-ACMY10, ACMTP01-ACMTP10, ACMRNY01-ACMRNY10); sub-annual
+#' The raw ACM data carries maturities at one-month steps from
+#' \code{HETID_CONSTANTS$MIN_MATURITY} to
+#' \code{HETID_CONSTANTS$MAX_MATURITY} months. Whole-year maturities keep
+#' the official column names (ACMY01-ACMY10, ACMTP01-ACMTP10,
+#' ACMRNY01-ACMRNY10); sub-annual
 #' months use names like ACMY003M. The NY Fed fallback source provides
 #' only the annual nodes; requesting sub-annual maturities against it
 #' raises a structured error. The daily asset carries the identical
@@ -156,7 +160,7 @@ extract_acm_data <- function(data_types = c("yields", "term_premia"),
   }
 
   # Idempotent for the quarterly path (convert_to_quarterly already
-  # normalized); the identity for the daily path.
+  # normalized); the identity for the daily path
   result$date <- to_period_end(result$date, frequency)
 
   result <- result[order(result$date), , drop = FALSE]

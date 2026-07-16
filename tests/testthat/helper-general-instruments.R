@@ -1,5 +1,5 @@
 # Synthetic inputs for the general-instrument tests. Deterministic via
-# an explicit seed so equivalence assertions are stable.
+# an explicit seed so equivalence assertions are stable
 make_general_test_system <- function(seed = 42, n_obs = 80,
                                      i_dim = 3, j_dim = 4,
                                      maturities = NULL) {

@@ -1,8 +1,7 @@
 fixture_path <- test_path("fixtures", "quadratic_kernel_fixture.rds")
 
-# The oracle pins the quadratic-system structure and numeric payloads.
-# Floating-point accumulation can differ slightly across CI platforms,
-# so compare numeric values to near machine precision.
+# Floating-point accumulation differs slightly across CI platforms, so the oracle
+# compares numeric payloads to near machine precision
 expect_matches_fixture <- function(object, expected) {
   expect_equal(object, expected, tolerance = 1e-12)
 }

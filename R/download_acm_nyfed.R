@@ -43,7 +43,7 @@ download_acm_nyfed <- function(quiet = FALSE) {
     }
   )
 
-  # Atomic write: a partial write never half-overwrites the cache.
+  # Atomic write: a partial write never half-overwrites the cache
   temp_csv <- tempfile(
     pattern = "acm_nyfed_", tmpdir = dirname(csv_path),
     fileext = ".csv"

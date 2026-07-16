@@ -50,7 +50,7 @@ For each maturity i, computes:
 where \eqn{A_i} is symmetric by construction,
 \eqn{b_i} is a vector, and \eqn{c_i} is a scalar.
 The identified set is:
-\deqn{\Theta = \{\theta \in R^I :
+\deqn{\Theta = \{\theta \in \mathbb{R}^I :
   \theta^\top A_i \theta + b_i^\top \theta +
   c_i \leq 0\}}
 with one constraint for each \code{i} in the container's

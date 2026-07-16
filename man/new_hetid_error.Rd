@@ -16,7 +16,7 @@ new_hetid_error(message, subclass = NULL, call = NULL, ...)
 \item{...}{Extra named fields stored on the condition}
 }
 \value{
-A condition object (not signalled)
+A condition object (not signaled)
 }
 \description{
 Single source of the \code{hetid_error} class vector and condition

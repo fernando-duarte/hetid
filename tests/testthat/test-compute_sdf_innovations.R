@@ -21,7 +21,6 @@ test_that("SDF innovations have mean near zero", {
       i = i
     )
 
-    # Mean should be close to 0
     mean_innov <- mean(sdf_innov_i, na.rm = TRUE)
     expect_lt(abs(mean_innov), 0.01,
       label = paste("SDF innovations mean should be near 0 for maturity", i)
@@ -43,10 +42,8 @@ test_that("SDF innovations highly correlated with price news", {
     i = i
   )
 
-  # Should have same length
   expect_equal(length(sdf_innov_48), length(price_news_48))
 
-  # Should be highly correlated
   correlation <- cor(price_news_48, sdf_innov_48, use = "complete.obs")
   expect_gt(correlation, 0.8,
     label = "SDF innovations should be highly correlated with price news"
@@ -116,7 +113,7 @@ test_that("compute_sdf_innovations rejects mismatched yields and term_premia row
   syn_long <- create_synthetic_test_data(n = 30)
   syn_short <- create_synthetic_test_data(n = 15)
   # Supply valid dates (length nrow(yields)) so execution reaches the
-  # row-alignment check that this test targets.
+  # row-alignment check that this test targets
   dts <- seq(as.Date("1990-03-31"), by = "quarter", length.out = 30)
   expect_error(
     compute_sdf_innovations(syn_long$yields, syn_short$term_premia,

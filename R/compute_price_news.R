@@ -11,11 +11,11 @@
 #' @template return-dated-dataframe
 #'
 #' @details
-#' The price news for log prices is:
-#' Delta_(t+1)p_(t+i)^(1) = n_hat(i-step,t+1) - n_hat(i,t)
+#' The price news for log prices is
+#' \deqn{\Delta_{t+1} p_{t+i}^{(1)} = n\_hat(i-step,t+1) - n\_hat(i,t)}
 #'
-#' The price news for yields is:
-#' Delta_(t+1)y_(t+i)^(1) = -Delta_(t+1)p_(t+i)^(1)
+#' The price news for yields is
+#' \deqn{\Delta_{t+1} y_{t+i}^{(1)} = -\Delta_{t+1} p_{t+i}^{(1)}}
 #'
 #' @note The effective maximum for \code{i} is \code{MAX_MATURITY - step},
 #'   because this function requires data at maturity \code{i + step}.

@@ -43,8 +43,9 @@ no additional data; prefer the canonical \code{log.}/\code{gr<h>.} names.
 }
 }
 \source{
-Imported unmodified from the VFCI macro_dynamics repository,
-\url{https://github.com/VFCI/macro_dynamics}. Underlying sources include
+Imported unmodified from the VFCI macro_dynamics repository
+(\code{https://github.com/VFCI/macro_dynamics} -- a private repository, so
+the URL returns 404 to unauthenticated visitors). Underlying sources include
 Federal Reserve Economic Data (FRED), the Federal Reserve Bank of Chicago,
 and financial market data providers.
 }

@@ -2,7 +2,7 @@
 % Please edit documentation in R/y1_lags.R
 \name{validate_y1_lags}
 \alias{validate_y1_lags}
-\title{Validate the y1_lags argument}
+\title{Validate the y1_lags Argument}
 \usage{
 validate_y1_lags(y1_lags, n_obs)
 }

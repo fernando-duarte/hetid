@@ -9,6 +9,10 @@
 #' (\code{hetid_warning_incomplete_quarter}) because incomplete data
 #' enters the output -- or dropped, announced by an informational
 #' message naming the removed quarters.
+#' Rows with a missing (NA) date are dropped first, with a classed warning
+#' (\code{hetid_warning_dropped_na_dates}); the monthly path keeps them.
+#' Duplicated dates are rejected up front with a structured error, since each
+#' date must appear at most once for the conversion to be well defined.
 #'
 #' @param data Data frame with a date column
 #' @param use_incomplete_quarters Logical. If TRUE (the default, from
@@ -28,8 +32,8 @@ convert_to_quarterly <- function(
   }
 
   # Remove NA-dated rows explicitly before the duplicate check (repeated
-  # NAs would otherwise be read as duplicates).
-  na_date <- is.na(data$date)
+  # NAs would otherwise be read as duplicates)
+  na_date <- is.na(data[["date"]])
   if (any(na_date)) {
     n_na <- sum(na_date)
     warn_dropped_na_dates(sprintf(
@@ -46,7 +50,7 @@ convert_to_quarterly <- function(
   }
 
   assert_bad_argument_ok(
-    anyDuplicated(data$date) == 0,
+    anyDuplicated(data[["date"]]) == 0,
     paste0(
       "data contains duplicated dates; each date must appear at most ",
       "once for quarterly conversion"
@@ -54,13 +58,13 @@ convert_to_quarterly <- function(
     arg = "data"
   )
 
-  data <- data[order(data$date), , drop = FALSE]
+  data <- data[order(data[["date"]]), , drop = FALSE]
 
   # Scratch frame avoids clobbering any input columns named year/month/quarter
   scratch <- data.frame(
-    date = data$date,
-    year = as.numeric(format(data$date, HETID_CONSTANTS$YEAR_FORMAT)),
-    month = as.numeric(format(data$date, HETID_CONSTANTS$MONTH_FORMAT))
+    date = data[["date"]],
+    year = as.numeric(format(data[["date"]], HETID_CONSTANTS$YEAR_FORMAT)),
+    month = as.numeric(format(data[["date"]], HETID_CONSTANTS$MONTH_FORMAT))
   )
   scratch$quarter <- ceiling(
     scratch$month / HETID_CONSTANTS$MONTHS_PER_QUARTER
@@ -122,7 +126,7 @@ convert_to_quarterly <- function(
   )
 
   # Period-end: shift to the last calendar day of the quarter (Mar 31 / Jun 30 /
-  # Sep 30 / Dec 31) regardless of which business day the last observation fell on.
+  # Sep 30 / Dec 31) regardless of which business day the last observation fell on
   result$date <- to_period_end(result$date, "quarterly")
 
   result

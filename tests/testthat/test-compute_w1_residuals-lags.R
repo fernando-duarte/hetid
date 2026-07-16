@@ -1,6 +1,5 @@
-# Tests for the y1_lags (lagged-outcome regressors) feature of
-# compute_w1_residuals. Backward-compatibility, numerical correctness against a
-# manual lm, sample trimming, date alignment, and validation errors.
+# Tests for the y1_lags (lagged-outcome regressors) feature of compute_w1_residuals:
+# backward compatibility, manual-lm correctness, sample trimming, dates, validation errors
 
 test_that("y1_lags = 0 is identical to the default (backward compatible)", {
   data("variables", package = "hetid", envir = environment())
@@ -19,7 +18,7 @@ test_that("y1_lags matches a manual regression with lagged outcomes", {
     compute_w1_residuals(n_pcs = 3, data = variables, y1_lags = h)
   )
 
-  # Manual build: regress Y1_{t+1} on PC_t and Y1_t, Y1_{t-1}.
+  # Manual build: regress Y1_{t+1} on PC_t and Y1_t, Y1_{t-1}
   y1 <- variables$gr1.pcecc96
   pc <- as.matrix(variables[, get_pc_column_names(3)])
   n <- length(y1)
@@ -43,7 +42,7 @@ test_that("lagging drops exactly H-1 leading rows and trims dates", {
     compute_w1_residuals(n_pcs = 4, data = variables, y1_lags = 4L)
   )
   expect_equal(length(lagged$residuals), length(base$residuals) - 3L)
-  # Dates are the trailing block of the no-lag dates (first H-1 dropped).
+  # Dates are the trailing block of the no-lag dates (first H-1 dropped)
   expect_equal(lagged$dates, utils::tail(base$dates, length(lagged$dates)))
 })
 

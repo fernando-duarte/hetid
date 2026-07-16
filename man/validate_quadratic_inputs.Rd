@@ -2,7 +2,7 @@
 % Please edit documentation in R/validate_quadratic_inputs.R
 \name{validate_quadratic_inputs}
 \alias{validate_quadratic_inputs}
-\title{Validate inputs for the quadratic identified set computation}
+\title{Validate Inputs for the Quadratic Identified Set Computation}
 \usage{
 validate_quadratic_inputs(tau, components, moments)
 }

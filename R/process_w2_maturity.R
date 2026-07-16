@@ -2,10 +2,10 @@
 #'
 #' Internal function to process regression for a single maturity
 #'
-#' @param i Maturity index
+#' @template param-maturity-index
 #' @param yields_df Yields data frame
 #' @param term_premia_df Term premia data frame
-#' @param pcs Principal components matrix
+#' @template param-pc-data
 #' @param n_pcs Number of PCs
 #' @template param-step
 #' @param y1 Optional outcome vector (length \code{nrow(pcs)}) supplying the
@@ -45,7 +45,7 @@ process_w2_maturity <- function(i, yields_df, term_premia_df, pcs, n_pcs,
   )
 
   # Build conditioning matrix on full-T series (lag columns must align before
-  # news-row subsetting).
+  # news-row subsetting)
   n_reg <- n_pcs + y1_lags
   reg_full <- build_common_conditioning(pcs, n_pcs, y1, y1_lags)
   n_sdf <- length(sdf_innov)
@@ -99,7 +99,8 @@ process_w2_maturity <- function(i, yields_df, term_premia_df, pcs, n_pcs,
 #' @param complete_idx Logical complete-case mask over the news rows.
 #' @param n_complete Number of complete rows.
 #' @return List mirroring the fitted-path result, with zero coefficients,
-#'   zero fitted values, and \code{r_squared = NA}.
+#'   zero fitted values, and \code{r_squared} / \code{df_residual} both
+#'   \code{NA_real_}.
 #' @keywords internal
 impose_b_zero_result <- function(sdf_innov, reg_lagged, complete_idx,
                                  n_complete) {

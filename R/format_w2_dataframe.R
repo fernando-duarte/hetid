@@ -1,4 +1,4 @@
-#' Format W2 residuals as a tidy data frame
+#' Format W2 Residuals as a Tidy Data Frame
 #'
 #' Internal helper that converts the list-based output of
 #' \code{compute_w2_residuals} into a long-format data frame
@@ -16,7 +16,6 @@
 #' @return A data frame with columns \code{date},
 #'   \code{maturity}, \code{residuals}, and \code{fitted}.
 #'
-#' @keywords internal
 #' @noRd
 format_w2_dataframe <- function(
   residuals_list, fitted_list, dates_list, maturities

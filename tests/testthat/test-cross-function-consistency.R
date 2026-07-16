@@ -4,7 +4,6 @@ test_that("all functions handle same ACM data format", {
 
   i <- 60
 
-  # Scalar functions return doubles directly
   expect_type(compute_c_hat(test_env$yields, test_env$term_premia, i = i), "double")
   expect_type(compute_k_hat(test_env$yields, test_env$term_premia, i = i), "double")
   expect_type(compute_variance_bound(test_env$yields, test_env$term_premia, i = i), "double")
@@ -37,7 +36,7 @@ test_that("functions with date parameters align correctly", {
   test_env <- setup_standard_test_env()
   dates <- test_env$data$date
 
-  # Test n_hat with dates (level series: one row per date, no NA prepend)
+  # level series: one row per date, no NA prepend
   n_hat_df <- compute_n_hat(test_env$yields, test_env$term_premia,
     i = 60, dates = dates
   )
@@ -46,14 +45,13 @@ test_that("functions with date parameters align correctly", {
   expect_equal(n_hat_df$date, dates)
   expect_equal(nrow(n_hat_df), length(dates))
 
-  # Test price news with dates (news series: NA-prepended to length nrow)
+  # news series: NA-prepended to length nrow
   price_news_df <- compute_price_news(test_env$yields, test_env$term_premia,
     i = 60, dates = dates
   )
 
   expect_s3_class(price_news_df, "data.frame")
   expect_equal(price_news_df$date, dates)
-  # Price news returns a data frame with same number of rows as input
   # The first row has NA because price news can't be computed for t=0
   expect_equal(nrow(price_news_df), length(dates))
   expect_true(is.na(price_news_df$price_news[1]))
@@ -65,13 +63,11 @@ test_that("consistent NA handling across functions", {
   term_premia <- test_env$term_premia
   dates <- test_env$data$date
 
-  # Introduce NAs
   yields[c(10, 20, 30), "y60"] <- NA
   term_premia[c(15, 25), "tp60"] <- NA
 
-  # All functions should handle NAs gracefully. Scalars return doubles;
-  # series functions are exercised via their bare kernels (and the dated
-  # expected-SDF data frame, which has no kernel).
+  # series functions are exercised via their bare kernels; expected_sdf has no
+  # kernel, so it goes through its dated data frame
   expect_type(compute_c_hat(yields, term_premia, i = 60), "double")
   expect_type(compute_k_hat(yields, term_premia, i = 60), "double")
   expect_type(n_hat_series(yields, term_premia, i = 60), "double")
@@ -130,7 +126,7 @@ test_that("all functions complete without error on larger stacked data", {
   dates <- large_data$date
 
   # All functions should complete without error. Series functions via the
-  # bare kernels; expected_sdf via its dated data frame.
+  # bare kernels; expected_sdf via its dated data frame
   i <- 60
   expect_type(compute_c_hat(yields, term_premia, i = i), "double")
   expect_type(compute_k_hat(yields, term_premia, i = i), "double")
@@ -166,7 +162,7 @@ test_that("similar functions have consistent return structures", {
   expect_length(esdf_bound, 1)
 
   # Series returns: n_hat (level), price_news / sdf_innovations (news).
-  # Bare kernels carry the undated numeric series.
+  # Bare kernels carry the undated numeric series
   n_hat <- n_hat_series(test_env$yields, test_env$term_premia, i = 60)
   price_news <- compute_news_components(
     test_env$yields, test_env$term_premia,
@@ -208,7 +204,6 @@ test_that("ACM data is quarterly when requested", {
 
   expect_lt(nrow(quarterly_data), nrow(monthly_data))
 
-  # Ratio should be approximately 3:1
   ratio <- nrow(monthly_data) / nrow(quarterly_data)
   expect_gt(ratio, 2.8)
   expect_lt(ratio, 3.2)

@@ -74,7 +74,7 @@ download_acm_github <- function(quiet = FALSE,
   )
   cache_path <- get_acm_download_path("github", frequency)
 
-  # Same directory as the cache so the rename is a single filesystem operation.
+  # Same directory as the cache so the rename is a single filesystem operation
   temp_gz <- tempfile(
     pattern = "acm_download_", tmpdir = dirname(cache_path),
     fileext = ".csv.gz"

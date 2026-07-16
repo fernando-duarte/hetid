@@ -31,5 +31,9 @@ raising a classed warning
 (\code{hetid_warning_incomplete_quarter}) because incomplete data
 enters the output -- or dropped, announced by an informational
 message naming the removed quarters.
+Rows with a missing (NA) date are dropped first, with a classed warning
+(\code{hetid_warning_dropped_na_dates}); the monthly path keeps them.
+Duplicated dates are rejected up front with a structured error, since each
+date must appear at most once for the conversion to be well defined.
 }
 \keyword{internal}

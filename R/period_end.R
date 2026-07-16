@@ -1,4 +1,4 @@
-#' Normalize dates to the calendar period-end convention
+#' Normalize Dates to the Calendar Period-End Convention
 #'
 #' Maps each date to the **last calendar day** of its period at the given
 #' frequency: month-end for \code{"monthly"}, quarter-end
@@ -47,7 +47,7 @@ to_period_end <- function(dates,
     annual = 12L
   )
 
-  # Last calendar day of terminal_month = first day of the next month minus 1.
+  # Last calendar day of terminal_month = first day of the next month minus 1
   first_of_next_month <- as.Date(sprintf(
     "%04d-%02d-01",
     as.integer(year + terminal_month %/% 12L),

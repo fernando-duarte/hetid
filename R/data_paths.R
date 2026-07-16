@@ -97,7 +97,7 @@ check_data_file_exists <- function(filename) {
 #' Single source of the (source, frequency) to filename mapping and of
 #' the rule that daily data is GitHub-only. Both path resolvers below
 #' derive from it, so the read and write paths cannot desync. Callers
-#' pass match.arg-validated values.
+#' pass \code{match.arg()}-validated values.
 #'
 #' @param source Data source: "auto", "github", or "nyfed"
 #' @param frequency Data frequency: "monthly" or "daily"

@@ -25,13 +25,11 @@ test_that("n_hat should generally be negative", {
 test_that("n_hat formula verification", {
   test_env <- setup_standard_test_env()
 
-  # Test for i=36
   i <- 36
   n_hat_36 <- n_hat_series(test_env$yields, test_env$term_premia, i = i)
 
-  # Manual calculation with maturity weights in years:
-  # n_hat = (i/12)*y_i - ((i+12)/12)*y_{i+12} +
-  #         ((i+12)/12)*TP_{i+12} - (i/12)*TP_i
+  # maturity weights in years:
+  # n_hat = (i/12)*y_i - ((i+12)/12)*y_{i+12} + ((i+12)/12)*TP_{i+12} - (i/12)*TP_i
   y_36 <- test_env$yields$y36 / 100
   y_48 <- test_env$yields$y48 / 100
   tp_36 <- test_env$term_premia$tp36 / 100
@@ -63,11 +61,9 @@ test_that("n_hat works across the annual nodes", {
 test_that("n_hat lagged computation verification", {
   test_env <- setup_standard_test_env()
 
-  # Get n_hat for i=24
   i <- 24
   n_hat_24 <- n_hat_series(test_env$yields, test_env$term_premia, i = i)
 
-  # Manual calculation at t+1
   y_24 <- test_env$yields$y24 / 100
   y_36 <- test_env$yields$y36 / 100
   tp_24 <- test_env$term_premia$tp24 / 100
@@ -77,7 +73,6 @@ test_that("n_hat lagged computation verification", {
   n_hat_manual <- (i / 12) * y_24 - ((i + 12) / 12) * y_36 +
     ((i + 12) / 12) * tp_36 - (i / 12) * tp_24
 
-  # Check consistency (formula should give same result)
   expect_equal(n_hat_24, n_hat_manual,
     tolerance = 1e-10,
     label = "n_hat computation should be consistent"
@@ -98,7 +93,6 @@ test_that("n_hat date alignment when dates provided", {
   expect_true("n_hat" %in% names(n_hat_df))
   expect_equal(nrow(n_hat_df), nrow(test_env$yields))
 
-  # Dates should match input dates
   expect_equal(n_hat_df$date, test_env$data$date)
 })
 
@@ -130,7 +124,7 @@ test_that("n_hat imposes TP^(1):=0 at the one-period maturity (i == step)", {
   pct <- HETID_CONSTANTS$PERCENT_TO_DECIMAL
 
   # At i == step (= 12) the step-maturity term premium (tp12) is dropped:
-  # the one-period bond carries no term premium by definition.
+  # the one-period bond carries no term premium by definition
   n_hat_12 <- n_hat_series(test_env$yields, test_env$term_premia, i = 12)
 
   expected <- ((12 / units) * test_env$yields$y12 -

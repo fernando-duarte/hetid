@@ -1,4 +1,4 @@
-#' Build lagged-outcome regressor columns
+#' Build Lagged-Outcome Regressor Columns
 #'
 #' Constructs the predetermined lag block for the W1 reduced form. Column
 #' \code{h} holds \eqn{Y_{1,t+1-h}} at predictor row \code{t}: the outcome
@@ -25,7 +25,7 @@ build_y1_lag_columns <- function(y1, n_lags) {
   mat
 }
 
-#' Append Y1 own-lag columns to a regressor matrix
+#' Append Y1 Own-Lag Columns to a Regressor Matrix
 #'
 #' Sanitizes any blank/\code{NA} regressor label first (so
 #' \code{run_pc_regression}'s name fallback cannot relabel the lag columns) with
@@ -48,7 +48,7 @@ append_y1_lags <- function(reg_matrix, y1, n_lags) {
   cbind(reg_matrix, build_y1_lag_columns(y1, n_lags))
 }
 
-#' Validate the y1_lags argument
+#' Validate the y1_lags Argument
 #'
 #' Type/range check only. The substantive sufficiency requirement (the
 #' regression needs \code{n_reg + 2} complete observations, where

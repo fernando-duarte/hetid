@@ -3,7 +3,7 @@
 #' Single source of truth for the raw file's dual naming convention:
 #' whole-year maturities keep the official padded-year names
 #' (\code{ACMY01}..\code{ACMY10}), sub-annual months use the
-#' three-digit month form (\code{ACMY003M}..\code{ACMY119M}).
+#' three-digit month form (\code{ACMY001M}..\code{ACMY119M}).
 #' Vectorized over \code{maturity_months}.
 #'
 #' @param data_type Schema key from \code{HETID_ACM_SCHEMA}
@@ -45,6 +45,6 @@ build_acm_col_mapping <- function(data_types, maturities) {
     )
     setNames(as.list(old_cols), new_cols)
   })
-  # unname() prevents data_types names from prefixing the inner (new-name) keys.
+  # unname() prevents data_types names from prefixing the inner (new-name) keys
   do.call(c, unname(mappings))
 }

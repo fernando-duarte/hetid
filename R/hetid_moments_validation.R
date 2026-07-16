@@ -11,7 +11,6 @@ NULL
 
 #' Validate the Seven Moment Shapes
 #'
-#' @keywords internal
 #' @noRd
 validate_moments_shapes <- function(stats, maturities, n_components) {
   expected <- maturity_names(maturities)
@@ -62,7 +61,6 @@ validate_moments_shapes <- function(stats, maturities, n_components) {
 
 #' Validate the Theta-Axis Dimensions of Each Moment Element
 #'
-#' @keywords internal
 #' @noRd
 validate_moments_inner_dims <- function(stats, maturities,
                                         n_components, j_rows) {

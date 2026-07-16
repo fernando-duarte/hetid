@@ -36,7 +36,7 @@ columns are the non-NULL positions of \code{support};
 \code{weights} must be NULL exactly where \code{support} is NULL.
 }
 \details{
-All-zero weight COLUMNS are not rejected here; they are rejected
+Weight columns that are entirely zero are not rejected here; they are rejected
 by \code{\link{build_general_quadratic_system}} when the padded
 weights are used, so the nonzero-direction rule lives in one
 place.

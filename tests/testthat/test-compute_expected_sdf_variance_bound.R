@@ -1,5 +1,5 @@
 # Reconstruct the gap series e^{-y^(1)_{t+s}} - e^{n_hat(i,t)} over T_i,
-# matching compute_expected_sdf's construction, for manual checks.
+# matching compute_expected_sdf's construction, for manual checks
 gap_series <- function(yields, term_premia, i,
                        step = HETID_CONSTANTS$DEFAULT_STEP) {
   n_hat <- n_hat_series(yields, term_premia, i, step = step)
@@ -15,7 +15,7 @@ gap_series <- function(yields, term_premia, i,
 }
 
 # Reconstruct q_t = e^{x} - e^{a}(1+u) = g - e^{a} u, the first-order-cancelled
-# gap (u = x - a, x = -y^(1)_{t+s}, a = n_hat), over the finite paired set.
+# gap (u = x - a, x = -y^(1)_{t+s}, a = n_hat), over the finite paired set
 q_series <- function(yields, term_premia, i,
                      step = HETID_CONSTANTS$DEFAULT_STEP) {
   n_hat <- n_hat_series(yields, term_premia, i, step = step)
@@ -45,7 +45,7 @@ test_that("compute_expected_sdf_variance_bound returns a single non-negative val
 
 test_that("compute_expected_sdf_variance_bound is identically 0 at i = 0", {
   # Horizon 0 is exact (no approximation), so the error-variance bound is 0,
-  # mirroring compute_expected_sdf(i = 0).
+  # mirroring compute_expected_sdf(i = 0)
   test_env <- setup_standard_test_env()
 
   expect_warning(
@@ -97,9 +97,8 @@ test_that("the bound uses divisor N, not N - 1", {
 })
 
 test_that("the bound centers on the same correction compute_expected_sdf adds", {
-  # The spec ties the two: mean(gap) is compute_expected_sdf's paired
-  # additive correction, and the bound is the centered variance of that same
-  # gap (the bound is built from the paired gap, so compare against paired).
+  # mean(gap) is compute_expected_sdf's paired additive correction, and the
+  # bound is the centered variance of that same gap, so compare against paired
   test_env <- setup_standard_test_env()
   i <- 60
 
@@ -124,7 +123,7 @@ test_that("the bound centers on the same correction compute_expected_sdf adds", 
 
 test_that("compute_expected_sdf_variance_bound honors a non-default step", {
   # step = 6: one-period bond is y6, lead s = i/step = 2; y12=y18=tp12=tp18=0
-  # => n_hat(12, step=6) = 0 => e^{n_hat} = 1, m_step = 0.5.
+  # => n_hat(12, step=6) = 0 => e^{n_hat} = 1, m_step = 0.5
   step <- 6L
   y6_pct <- c(0, 2, 5, 9, 14, 20, 27)
   n <- length(y6_pct)
@@ -144,7 +143,7 @@ test_that("compute_expected_sdf_variance_bound honors a non-default step", {
 
 test_that("the bound averages over finite pairs only (interior NA)", {
   # Interior NA in the realized one-period (y12) leg drops one pair; the
-  # bound is the min(var_n(g), var_n(q)) over the surviving finite gaps.
+  # bound is the min(var_n(g), var_n(q)) over the surviving finite gaps
   test_env <- setup_standard_test_env()
   i <- 60
   yields_na <- test_env$yields
@@ -162,9 +161,8 @@ test_that("the bound averages over finite pairs only (interior NA)", {
 })
 
 test_that("the bound drops a non-finite exp(n_hat) leg too (interior NA in y60)", {
-  # n_hat(60) uses y60/y72/tp60/tp72, so an NA in y60 makes the exp(n_hat)
-  # leg of a pair non-finite. The gap filter must drop it (both legs masked,
-  # not just the realized one-period y12 leg).
+  # an NA in y60 makes the exp(n_hat) leg of a pair non-finite; the gap filter
+  # must drop it, masking both legs, not just the realized one-period y12 leg
   test_env <- setup_standard_test_env()
   i <- 60
   yields_na <- test_env$yields
@@ -182,9 +180,8 @@ test_that("the bound drops a non-finite exp(n_hat) leg too (interior NA in y60)"
 })
 
 test_that("a constant gap series gives a bound of exactly 0", {
-  # y24 = y36 = tp24 = tp36 = 0 => n_hat(24) = 0 => e^{n_hat} = 1; a
-  # constant one-period yield makes the realized leg constant too, so the
-  # gap is constant and its 1/N variance is exactly 0 (not NA, not an error).
+  # y24 = y36 = tp24 = tp36 = 0 => n_hat(24) = 0 => e^{n_hat} = 1; a constant
+  # one-period yield makes the gap constant, so its 1/N variance is exactly 0
   k <- 8
   y12_pct <- rep(2, k)
   zeros <- numeric(k)
@@ -198,7 +195,7 @@ test_that("a constant gap series gives a bound of exactly 0", {
 
 test_that("a single valid pair gives a bound of exactly 0 (divisor N)", {
   # T = 3, i = 24, step = 12 => s = 2 => exactly one paired date (T - s = 1).
-  # The 1/N centered variance of one point is 0; stats::var would give NA.
+  # The 1/N centered variance of one point is 0; stats::var would give NA
   y12_pct <- c(1, 2, 3)
   zeros <- numeric(3)
   yields <- data.frame(y12 = y12_pct, y24 = zeros, y36 = zeros)
@@ -210,7 +207,7 @@ test_that("a single valid pair gives a bound of exactly 0 (divisor N)", {
 })
 
 test_that("compute_expected_sdf_variance_bound handles the i = step (s = 1) horizon", {
-  # Smallest horizon: i = step => s = 1, the n_hat boundary where TP^(1):=0.
+  # Smallest horizon: i = step => s = 1, the n_hat boundary where TP^(1):=0
   test_env <- setup_standard_test_env()
   i <- HETID_CONSTANTS$DEFAULT_STEP
 
@@ -228,7 +225,7 @@ test_that("compute_expected_sdf_variance_bound handles the i = step (s = 1) hori
 
 test_that("the bound drops an Inf realized leg (is.finite, not just NA)", {
   # A wildly negative one-period yield overflows exp() to Inf; that pair
-  # must be dropped, leaving a finite bound over the remaining gaps.
+  # must be dropped, leaving a finite bound over the remaining gaps
   y12_pct <- c(0, 0, -1e5, 2, 5) # -1e5% -> exp(+1000) = Inf
   n <- length(y12_pct)
   zeros <- numeric(n)
@@ -243,7 +240,7 @@ test_that("the bound drops an Inf realized leg (is.finite, not just NA)", {
 
 test_that("compute_expected_sdf_variance_bound returns NA when no finite pairs", {
   # Unlike compute_expected_sdf (which errors), the scalar bound returns
-  # NA_real_ on degenerate data, matching compute_c_hat / compute_k_hat.
+  # NA_real_ on degenerate data, matching compute_c_hat / compute_k_hat
   test_env <- setup_standard_test_env()
   yields_na <- test_env$yields
   yields_na$y12 <- NA_real_ # realized one-period leg all NA
@@ -296,10 +293,8 @@ test_that("compute_expected_sdf_variance_bound rejects mismatched rows", {
 
 test_that("q removes the first-order term: var(q) is far below var(g)", {
   test_env <- setup_standard_test_env()
-  # default step = 12 => i must be a multiple of 12 and <= 108. The strict
-  # ordering is the load-bearing claim; the ratio threshold is loose (measured
-  # ~3e-4 to 7e-4 on this quarterly/annual-step fixture) to survive a data
-  # refresh, while still demonstrating orders-of-magnitude tightening.
+  # default step = 12 => i must be a multiple of 12 and <= 108; the ratio
+  # threshold is loose (measured ~3e-4 to 7e-4 here) to survive a data refresh
   for (i in c(12, 60, 108)) {
     vg <- var_n(gap_series(test_env$yields, test_env$term_premia, i = i))
     vq <- var_n(q_series(test_env$yields, test_env$term_premia, i = i))
@@ -309,9 +304,8 @@ test_that("q removes the first-order term: var(q) is far below var(g)", {
 })
 
 test_that("a non-finite q falls back to the gap bound (var_q guard)", {
-  # y12 = +Inf at one interior date => realized_log = -Inf => realized_price = 0
-  # => gap = -e^{n_hat} is finite, but u = -Inf => q = +Inf. The guard must set
-  # var_q = Inf so the bound falls back to var_g and stays finite.
+  # y12 = +Inf at one interior date leaves gap = -e^{n_hat} finite but u = -Inf
+  # => q = +Inf; the guard must set var_q = Inf so the bound falls back to var_g
   y12_pct <- c(1, 2, 3, 4, 5, 6)
   y12_pct[3] <- Inf
   n <- length(y12_pct)

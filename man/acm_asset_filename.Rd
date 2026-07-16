@@ -18,6 +18,6 @@ Character string with the asset filename
 Single source of the (source, frequency) to filename mapping and of
 the rule that daily data is GitHub-only. Both path resolvers below
 derive from it, so the read and write paths cannot desync. Callers
-pass match.arg-validated values.
+pass \code{match.arg()}-validated values.
 }
 \keyword{internal}

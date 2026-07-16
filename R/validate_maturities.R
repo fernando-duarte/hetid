@@ -33,7 +33,7 @@ validate_maturity_index <- function(i, max_maturity = HETID_CONSTANTS$MAX_MATURI
 #' at least one news horizon (\code{i = step}, needing maturity
 #' \code{i + step}) fits inside the data.
 #'
-#' @template param-step
+#' @param step Integer number of maturity-index units per news period.
 #' @return Invisible TRUE if valid, stops with informative error otherwise
 #' @keywords internal
 validate_step <- function(step) {
@@ -52,7 +52,7 @@ validate_step <- function(step) {
 #' builder.
 #'
 #' @param maturities Numeric vector of maturity indices
-#' @template param-step
+#' @param step Integer number of maturity-index units per news period.
 #' @return Logical vector, TRUE where the contract holds
 #' @keywords internal
 news_contract_ok <- function(maturities, step) {
@@ -70,7 +70,7 @@ news_contract_ok <- function(maturities, step) {
 #' vector path).
 #'
 #' @param maturities Scalar or vector of maturity indices
-#' @template param-step
+#' @param step Integer number of maturity-index units per news period.
 #' @param arg Condition argument name
 #' @param subject,offset_label Wording for the subject and the
 #'   \code{<x> - step} offset in the message
@@ -78,8 +78,7 @@ news_contract_ok <- function(maturities, step) {
 #' @return Invisible TRUE if valid, stops otherwise
 #' @keywords internal
 assert_news_contract_ok <- function(maturities, step, arg,
-                                    subject = arg, offset_label = arg,
-                                    include_invalid = length(maturities) != 1L) {
+                                    subject, offset_label, include_invalid) {
   bad <- maturities[!news_contract_ok(maturities, step)]
   msg <- paste0(
     subject, " must equal step (", step, ") or satisfy ",

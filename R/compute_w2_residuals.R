@@ -12,7 +12,6 @@
 #'   uses the step-spaced horizons from \code{step} to
 #'   \code{MAX_MATURITY - step} satisfying the news contract (see
 #'   \code{\link{default_w2_maturities}}).
-#' @template param-step
 #' @template param-n-pcs
 #' @template param-pc-data
 #' @param return_df Logical, if TRUE returns a tidy data frame (default FALSE
@@ -21,6 +20,7 @@
 #'   (length \code{nrow(yields)}); internally shifted to the t+1 realization
 #'   dates \eqn{d_2, \ldots, d_T} of the W2 news (matching
 #'   \code{compute_w1_residuals}).
+#' @template param-step
 #' @param y1 Optional outcome vector (length \code{nrow(pcs)}) supplying the
 #'   own-lag block of the common conditioning vector \eqn{X_t}; required when
 #'   \code{y1_lags > 0}.

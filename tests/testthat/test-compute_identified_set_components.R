@@ -124,7 +124,6 @@ test_that("compute_identified_set_components returns correct structure", {
   expect_length(result$Q_i, I)
   expect_named(result$Q_i, paste0("maturity_", 1:I))
 
-  # Each Q_i element should be a vector of length I
   for (i in 1:I) {
     expect_type(result$Q_i[[i]], "double")
     expect_length(result$Q_i[[i]], I)
@@ -133,7 +132,6 @@ test_that("compute_identified_set_components returns correct structure", {
 })
 
 test_that("compute_identified_set_components computes values correctly", {
-  # Create simple test case with known values
   J <- 2
   I <- 2
 
@@ -157,24 +155,18 @@ test_that("compute_identified_set_components computes values correctly", {
   # gamma_2 = [0, 1], r_i_0[,2] = [4, 5] => L_2 = 5
   expect_equal(unname(result$L_i[2]), 5)
 
-  # Test V_i = gamma_i^T * (p_i_0[,i] * p_i_0[,i]^T) * gamma_i
-  # For i=1: p_i_0[,1] = [1, 2]^T
-  # P_outer = [1, 2] * [1, 2]^T = [[1, 2], [2, 4]]
-  # V_1 = [1, 0] * [[1, 2], [2, 4]] * [1, 0]^T = 1
+  # For maturity i, V_i is gamma_i^T (p_i_0[,i] p_i_0[,i]^T) gamma_i
+  # For i=1: p_i_0[,1] = [1, 2] => outer [[1, 2], [2, 4]] => V_1 = 1
   expect_equal(unname(result$V_i[1]), 1)
 
-  # For i=2: p_i_0[,2] = [3, 4]^T
-  # P_outer = [3, 4] * [3, 4]^T = [[9, 12], [12, 16]]
-  # V_2 = [0, 1] * [[9, 12], [12, 16]] * [0, 1]^T = 16
+  # For i=2: p_i_0[,2] = [3, 4] => outer [[9, 12], [12, 16]] => V_2 = 16
   expect_equal(unname(result$V_i[2]), 16)
 
-  # Test Q_i = gamma_i^T * R_i^(1)
-  # For i=1: gamma_1 = [1, 0]^T, R_1^(1) = [[1, 3], [2, 4]]
-  # Q_1 = [1, 0] * [[1, 3], [2, 4]] = [1, 3]
+  # For maturity i, Q_i is gamma_i^T R_i^(1)
+  # For i=1: gamma_1 = [1, 0], R_1^(1) = [[1, 3], [2, 4]] => Q_1 = [1, 3]
   expect_equal(result$Q_i[[1]], c(maturity_1 = 1, maturity_2 = 3))
 
-  # For i=2: gamma_2 = [0, 1]^T, R_2^(1) = [[5, 7], [6, 8]]
-  # Q_2 = [0, 1] * [[5, 7], [6, 8]] = [6, 8]
+  # For i=2: gamma_2 = [0, 1], R_2^(1) = [[5, 7], [6, 8]] => Q_2 = [6, 8]
   expect_equal(result$Q_i[[2]], c(maturity_1 = 6, maturity_2 = 8))
 })
 
@@ -261,7 +253,7 @@ test_that("print method summarizes both axes", {
     maturities = maturities, n_components = i_sys
   )
   # Construct the hetid_components object (not the moments) before printing,
-  # so dispatch hits print.hetid_components.
+  # so dispatch hits print.hetid_components
   components <- compute_identified_set_components(gamma, moments)
   expect_s3_class(components, "hetid_components")
 

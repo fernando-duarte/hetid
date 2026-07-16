@@ -3,7 +3,9 @@
 #' Computes the residual W_\{1,t+1\} from regressing consumption growth (Y_\{1,t+1\})
 #' on principal components extracted from financial asset returns (PC_t) and a constant.
 #'
-#' @param n_pcs Integer, number of principal components to use (1-6). Default is 4.
+#' @param n_pcs Integer, number of principal components to use (1 to
+#'   \code{HETID_CONSTANTS$MAX_N_PCS}). Default is
+#'   \code{HETID_CONSTANTS$DEFAULT_N_PCS}.
 #' @param data Optional data frame containing the variables. If NULL,
 #'   loads from package data. A \code{date} column (period-end \code{Date}) is
 #'   always required: the residual series carries its realization dates in both
@@ -41,7 +43,7 @@
 #'
 #' @details
 #' The function performs the regression:
-#' Y_\{1,t+1\} = alpha + beta' * PC_t + W_\{1,t+1\}
+#' \deqn{Y_{1,t+1} = \alpha + \beta^{\top} PC_t + W_{1,t+1}}
 #'
 #' where Y_\{1,t+1\} is consumption growth and PC_t are the first n_pcs
 #' principal components extracted from financial asset returns (pc1, ..., pc6).
@@ -118,7 +120,7 @@ compute_w1_residuals <- function(n_pcs = HETID_CONSTANTS$DEFAULT_N_PCS,
   if (is.null(exog)) {
     required_cols <- c(required_cols, get_pc_column_names(n_pcs))
   }
-  assert_columns_exist(data, required_cols)
+  assert_columns_exist(data, required_cols, arg = "data")
 
   y1 <- data[[HETID_CONSTANTS$CONSUMPTION_GROWTH_COL]]
   dates <- data$date

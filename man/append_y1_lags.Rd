@@ -2,7 +2,7 @@
 % Please edit documentation in R/y1_lags.R
 \name{append_y1_lags}
 \alias{append_y1_lags}
-\title{Append Y1 own-lag columns to a regressor matrix}
+\title{Append Y1 Own-Lag Columns to a Regressor Matrix}
 \usage{
 append_y1_lags(reg_matrix, y1, n_lags)
 }

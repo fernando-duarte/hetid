@@ -8,20 +8,15 @@ assert_news_contract_ok(
   maturities,
   step,
   arg,
-  subject = arg,
-  offset_label = arg,
-  include_invalid = length(maturities) != 1L
+  subject,
+  offset_label,
+  include_invalid
 )
 }
 \arguments{
 \item{maturities}{Scalar or vector of maturity indices}
 
-\item{step}{Integer number of maturity-index units per news period
-(default \code{HETID_CONSTANTS$DEFAULT_STEP}). The news operator
-steps one period, so maturity arithmetic moves in multiples of
-\code{step}: \code{compute_n_hat()} pairs maturities \code{i} and
-\code{i + step}, the one-period bond is the \code{step}-maturity
-bond, and horizons must satisfy \code{i <= MAX_MATURITY - step}.}
+\item{step}{Integer number of maturity-index units per news period.}
 
 \item{arg}{Condition argument name}
 

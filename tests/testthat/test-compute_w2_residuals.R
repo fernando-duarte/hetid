@@ -12,7 +12,6 @@ test_that("compute_w2_residuals works for single maturity", {
   expect_true("r_squared" %in% names(res_y2))
   expect_true("coefficients" %in% names(res_y2))
 
-  # Should have one element in residuals list
   expect_length(res_y2$residuals, 1)
   expect_length(res_y2$r_squared, 1)
 })
@@ -83,27 +82,22 @@ test_that("compute_w2_residuals uses SDF innovations", {
   )
   sdf_innov <- sdf_df$sdf_innovations[-1]
 
-  # Get W2 residuals
   res_y2 <- suppressWarnings(compute_w2_residuals(test_env$yields, test_env$term_premia,
     maturities = i, n_pcs = 4, pcs = pcs, dates = test_env$data$date
   ))
 
-  # The dependent variable in the regression should be SDF innovations
   # The residuals length will be limited by the shorter of SDF innovations
   # and available PCs (from variables data)
   expect_true(length(res_y2$residuals[[1]]) <= length(sdf_innov))
   expect_true(length(res_y2$residuals[[1]]) > 0)
 
-  # Check that we have the expected structure
   expect_type(res_y2$residuals[[1]], "double")
   expect_true(all(is.finite(res_y2$residuals[[1]]) | is.na(res_y2$residuals[[1]])))
 })
 
 test_that("R-squared matches manual regression", {
-  # Load variables data
   data("variables", package = "hetid", envir = environment())
 
-  # Load ACM quarterly data
   mats <- HETID_CONSTANTS$DEFAULT_ACM_MATURITIES
   acm_data <- extract_acm_data(
     data_types = c("yields", "term_premia"),
@@ -112,7 +106,6 @@ test_that("R-squared matches manual regression", {
     use_incomplete_quarters = FALSE
   )
 
-  # Create year-quarter identifiers for both datasets
   # Variables: Q1=Jan, Q2=Apr, Q3=Jul, Q4=Oct
   variables$year <- as.numeric(format(variables$date, "%Y"))
   variables$quarter <- ceiling(as.numeric(format(variables$date, "%m")) / 3)
@@ -123,7 +116,6 @@ test_that("R-squared matches manual regression", {
   acm_data$quarter <- ceiling(as.numeric(format(acm_data$date, "%m")) / 3)
   acm_data$year_quarter <- paste(acm_data$year, acm_data$quarter, sep = "-Q")
 
-  # Merge datasets by year-quarter
   merged_data <- merge(
     variables[, c("year_quarter", "date", get_pc_column_names(4))],
     acm_data[, c("year_quarter", "date", paste0("y", mats), paste0("tp", mats))],
@@ -131,12 +123,10 @@ test_that("R-squared matches manual regression", {
     suffixes = c("_var", "_acm")
   )
 
-  # Extract merged components
   pcs_merged <- as.matrix(merged_data[, get_pc_column_names(4)])
   yields_merged <- merged_data[, paste0("y", mats)]
   term_premia_merged <- merged_data[, paste0("tp", mats)]
 
-  # Test for maturity 60
   i <- 60
 
   # Dated return prepends a leading NA to align news to t+1; drop it for the
@@ -151,12 +141,10 @@ test_that("R-squared matches manual regression", {
   n_obs <- nrow(merged_data)
   pcs_lagged <- pcs_merged[1:(n_obs - 1), ]
 
-  # Align SDF innovations and PCs
   complete_idx <- complete.cases(sdf_innov, pcs_lagged)
   y_clean <- sdf_innov[complete_idx]
   pcs_clean <- pcs_lagged[complete_idx, ]
 
-  # Run manual regression
   reg_data_manual <- data.frame(
     y = y_clean,
     pc1 = pcs_clean[, 1],
@@ -169,7 +157,6 @@ test_that("R-squared matches manual regression", {
   manual_r2 <- summary(manual_model)$r.squared
   manual_coefs <- coef(manual_model)
 
-  # Run function with the merged data
   res_w2 <- compute_w2_residuals(
     yields_merged,
     term_premia_merged,
@@ -179,13 +166,11 @@ test_that("R-squared matches manual regression", {
     dates = merged_data$date_acm
   )
 
-  # Compare R-squared values
   expect_equal(res_w2$r_squared[1], manual_r2,
     tolerance = 1e-10,
     label = "R-squared should match manual calculation"
   )
 
-  # Compare coefficients
   function_coefs <- res_w2$coefficients[1, ]
   names(function_coefs) <- names(manual_coefs)
 
@@ -194,19 +179,16 @@ test_that("R-squared matches manual regression", {
     label = "Coefficients should match manual calculation"
   )
 
-  # Verify residuals have the same properties
   expect_equal(length(res_w2$residuals[[1]]), length(residuals(manual_model)),
     label = "Residuals should have same length"
   )
 
-  # Check that residuals have near-zero mean
   expect_lt(abs(mean(res_w2$residuals[[1]])), 1e-10,
     label = "Residuals should have near-zero mean"
   )
 })
 
 test_that("quarterly data alignment test", {
-  # Load both datasets
   data("variables", package = "hetid", envir = environment())
   acm_monthly <- extract_acm_data(
     data_types = c("yields", "term_premia"),
@@ -218,11 +200,8 @@ test_that("quarterly data alignment test", {
     use_incomplete_quarters = FALSE
   )
 
-  # Quarterly data should have fewer rows
   expect_lt(nrow(acm_quarterly), nrow(acm_monthly))
 
-  # Quarterly data should be end-of-quarter values
-  # Check that quarterly dates are end-of-quarter
   quarterly_months <- format(acm_quarterly$date, "%m")
   expect_true(all(quarterly_months %in% c("03", "06", "09", "12")))
 })
@@ -290,7 +269,6 @@ test_that("return_df date column is the real t+1 Date when user provides PCs", {
 test_that("no message for dates when user provides dates", {
   test_env <- setup_standard_test_env()
 
-  # Synthetic PCs with correct row count
   set.seed(42)
   user_pcs <- matrix(
     rnorm(nrow(test_env$yields) * 2),
@@ -320,7 +298,6 @@ test_that("no message for dates when user provides dates", {
 test_that("return_df dates align correctly with interior NA in PCs", {
   test_env <- setup_standard_test_env()
 
-  # Create PCs with an interior NA at row 10
   set.seed(42)
   n <- nrow(test_env$yields)
   user_pcs <- matrix(rnorm(n * 2), ncol = 2)
@@ -337,16 +314,14 @@ test_that("return_df dates align correctly with interior NA in PCs", {
     dates = user_dates
   )
 
-  # The realization date for lagged PC row 10 (aligned with SDF innovation 10)
-  # is user_dates[-1][10] == user_dates[11]; it must be missing because that
-  # row's PC was NA
+  # The realization date for lagged PC row 10 is user_dates[-1][10] ==
+  # user_dates[11]; it must be missing because that row's PC was NA
   dropped_date <- user_dates[-1][10]
   expect_false(dropped_date %in% result$date)
 
   # The date column is a real Date, never integer row indices
   expect_s3_class(result$date, "Date")
 
-  # Number of dates should equal number of residuals
   expect_equal(
     length(result$date),
     length(result$residuals)
@@ -535,7 +510,7 @@ test_that("all maturities skipped with return_df gives zero-row data frame", {
 test_that("list mode returns per-maturity dates parallel to residuals", {
   test_data <- create_synthetic_test_data(n = 40, n_maturities = 3)
   # Full-T dates: one per yield row (40); shifted internally to the t+1
-  # realization index user_dates[-1] (39 W2 news observations).
+  # realization index user_dates[-1] (39 W2 news observations)
   user_dates <- seq(as.Date("2000-01-01"), by = "quarter", length.out = 40)
 
   res <- suppressWarnings(compute_w2_residuals(
@@ -559,10 +534,10 @@ test_that("list mode returns per-maturity dates parallel to residuals", {
 test_that("list-mode dates are ragged when maturities drop different rows", {
   test_data <- create_synthetic_test_data(n = 40, n_maturities = 3)
   # Punch an interior NA into maturity 24 only -> its kept_idx shrinks while
-  # maturities 12 and 36 keep every row: a flat date vector could not align all.
+  # maturities 12 and 36 keep every row: a flat date vector could not align all
   test_data$yields[15, "y24"] <- NA
   test_data$term_premia[15, "tp24"] <- NA
-  # Full-T dates (40); shifted internally to the t+1 realization index.
+  # Full-T dates (40); shifted internally to the t+1 realization index
   user_dates <- seq(as.Date("2000-01-01"), by = "quarter", length.out = 40)
 
   res <- suppressWarnings(compute_w2_residuals(
@@ -603,7 +578,7 @@ test_that("list-mode dates are real Dates per maturity for custom PCs", {
 test_that("list-mode and data-frame-mode dates agree", {
   test_data <- create_synthetic_test_data(n = 40, n_maturities = 3)
   test_data$yields[15, "y24"] <- NA
-  # Full-T dates: one per yield row (40), shifted internally to t+1.
+  # Full-T dates: one per yield row (40), shifted internally to t+1
   user_dates <- seq(as.Date("2000-01-01"), by = "quarter", length.out = 40)
   common <- list(
     test_data$yields, test_data$term_premia,
