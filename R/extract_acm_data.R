@@ -108,17 +108,10 @@ extract_acm_data <- function(data_types = c("yields", "term_premia"),
   source <- match.arg(source)
   validate_acm_extract_inputs(data_types, maturities, use_incomplete_quarters)
 
+  # load_term_premia raises hetid_error_insufficient_data when unavailable
   acm_data <- load_term_premia(
     auto_download = auto_download, source = source,
     frequency = if (frequency == "daily") "daily" else "monthly"
-  )
-  assert_insufficient_data_ok(
-    !is.null(acm_data),
-    paste0(
-      "ACM data not available. Run download_term_premia(",
-      if (frequency == "daily") "frequency = \"daily\"" else "",
-      ") first or set auto_download = TRUE"
-    )
   )
 
   # Annual-only sources cannot serve month-level requests

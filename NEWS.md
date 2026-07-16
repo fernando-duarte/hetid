@@ -1,3 +1,28 @@
+# hetid (development version)
+
+## Breaking changes
+
+* `load_term_premia()` now raises a `hetid_error_insufficient_data`
+  condition when the data is not available, matching the `"nyfed"`
+  source's existing behavior; the `"auto"`/`"github"` path formerly
+  emitted a message and returned `NULL`. Callers that tested the return
+  value for `NULL` should `tryCatch` on the condition class instead.
+
+## Improvements
+
+* `compute_w2_residuals()` now surfaces skipped maturities in its return
+  value: list mode gains a `skipped` element (named character vector of
+  skip reasons) and data-frame mode carries the same information as a
+  `skipped_maturities` attribute. Each skip removes a constraint and can
+  only widen the identified set, so the skip set can now be checked
+  programmatically instead of parsing the warning stream.
+* The `hetid_moments` and `hetid_components` containers now share one
+  constructor/validator structure: a cheap `new_*()` constructor (type
+  and length checks) plus a full `validate_*()` shape sweep that the
+  public boundaries always run. `new_hetid_components()` no longer
+  accepts malformed parts silently, and validated containers can be
+  rebuilt on hot paths without re-running the per-maturity sweep.
+
 # hetid 0.3.0
 
 ## Breaking changes
