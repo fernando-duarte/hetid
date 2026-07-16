@@ -41,7 +41,7 @@ coef_interval_tables <- function(gamma, tau, moments, beta1r, beta2r) {
   stopifnot(identical(colnames(beta2r), names(beta1r)))
   qs <- tau_quadratic_system(gamma, tau, moments)
   status3 <- function(bounded, valid) {
-    if (!bounded) "unbounded" else if (valid) "bounded" else "unreliable"
+    if (!valid) "unreliable" else if (bounded) "bounded" else "unbounded"
   }
   tb <- solve_all_profile_bounds(qs)
   theta_fail_closed <- anyNA(c(tb$lower, tb$upper))
