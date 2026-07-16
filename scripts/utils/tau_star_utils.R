@@ -116,7 +116,9 @@ tau_star_fixed <- function(gamma, moments, coarse, iters = 40L) {
   # would push tau* past the true transition, so the coarse bracket and the
   # bisection both branch on the validated status, not on the raw bounded flag.
   certified <- coarse$status == "bounded"
-  unb <- coarse$tau[!certified]
+  # "unreliable" is neither evidence of boundedness nor of unboundedness, so it
+  # cannot define the transition; only a certified-unbounded tau brackets it.
+  unb <- coarse$tau[coarse$status == "unbounded"]
   if (length(unb) == 0) {
     return(list(tau_star = max(coarse$tau), trace = NULL, capped = TRUE))
   }
@@ -128,7 +130,14 @@ tau_star_fixed <- function(gamma, moments, coarse, iters = 40L) {
     mid <- (lo + hi) / 2
     w <- eval_width_at_tau(gamma, mid, moments)
     trace[[k]] <- .sweep_row(mid, w, "bisection")
-    if (identical(w$status, "bounded")) lo <- mid else hi <- mid
+    if (identical(w$status, "bounded")) {
+      lo <- mid
+    } else if (identical(w$status, "unbounded")) {
+      hi <- mid
+    } else {
+      # an unreliable midpoint carries no evidence; refine no further
+      break
+    }
   }
   list(tau_star = (lo + hi) / 2, trace = do.call(rbind, trace), capped = FALSE)
 }

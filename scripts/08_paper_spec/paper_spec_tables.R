@@ -213,6 +213,15 @@ build_table3_properties <- function(res) {
   sig <- e$significance_level
   pcell <- function(nm) if (nm %in% names(pv) && is.finite(pv[[nm]])) .fmt(pv[[nm]], 3) else "--"
   band <- function(x) sprintf("$[%s,\\,%s]$", .fmt(x["p05"], 3), .fmt(x["p95"], 3))
+  # A sweep that never left the bounded region censors tau* at the grid cap, so
+  # the cell reports a bound rather than a discovered transition.
+  tstar <- function() {
+    if (isTRUE(e$tau_star_capped)) {
+      sprintf("$\\ge%s$ (search cap reached)", .fmt(e$tau_star, 3))
+    } else {
+      .fmt(e$tau_star, 3)
+    }
+  }
   span <- paste0(.qq(min(e$dates)), "--", .qq(max(e$dates)))
   snr <- rel$cov_z_w2sq / b$cov_se
 
@@ -231,21 +240,35 @@ build_table3_properties <- function(res) {
     pcell("Glejser"), pcell("BPLM"), pcell("ARCH"),
     sprintf("%s (%.2f)", .fmt(rel$cov_z_w2sq, 3), snr), .fmt(rel$cor_z_w2sq, 3),
     .fmt(rel$mean_slope_t, 3), .fmt(rel$cor_w1_w2, 3),
-    sprintf("%s %s", .fmt(e$tau_star, 3), band(b$tau_star)),
+    sprintf("%s %s", tstar(), band(b$tau_star)),
     if (is.finite(e$width)) .fmt(e$width, 4) else "unbounded",
     e$set_status, .fmt(e$r2_w1, 3), .fmt(e$r2_y2, 3),
     sprintf("%.1f\\%%", 100 * e$pc_var_explained), as.character(e$n_obs), span
   )
   hetero_reject <- isTRUE(pv[["BP"]] < sig) || isTRUE(pv[["ARCH"]] < sig) ||
     isTRUE(pv[["GQ"]] < sig)
+  tau_clause <- if (isTRUE(e$tau_star_capped)) {
+    sprintf(
+      paste0(
+        "the price of risk stays bounded across the whole slack sweep ",
+        "($\\tau^\\ast\\ge%s$, search cap reached)"
+      ),
+      .fmt(e$tau_star, 2)
+    )
+  } else {
+    sprintf(
+      "the price of risk stays bounded up to $\\tau^\\ast=%s$",
+      .fmt(e$tau_star, 2)
+    )
+  }
   title <- sprintf(
     paste0(
       "VFCI %s conditional heteroskedasticity in the news residual ",
-      "(relevance), and the price of risk stays bounded up to $\\tau^\\ast=%s$, ",
-      "but the bootstrap shows the identifying moment is imprecise (SNR$\\approx%.1f$)."
+      "(relevance), and %s, but the bootstrap shows the identifying moment is ",
+      "imprecise (SNR$\\approx%.1f$)."
     ),
     if (hetero_reject) "exhibits significant" else "shows weak",
-    .fmt(e$tau_star, 2), snr
+    tau_clause, snr
   )
   notes <- c(
     "Lewbel (2012) identification needs two conditions. Relevance:",

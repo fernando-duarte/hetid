@@ -1,6 +1,7 @@
 # Tests for tau_star_fixed bracket logic: only a CERTIFIED-bounded tau
-# (status == "bounded") counts as inside the bounded region. An "unreliable"
-# finite solve (bounded flag TRUE but validity failed) must NOT inflate tau*.
+# (status == "bounded") counts as inside the bounded region, and only a
+# CERTIFIED-unbounded tau brackets the transition. An "unreliable" finite solve
+# (bounded flag TRUE but validity failed) is evidence of neither and is skipped.
 # iters = 0 skips the bisection so the bracket is tested without solving.
 # Run from the package root: Rscript scripts/utils/tests/test_tau_star_utils.R
 source("scripts/utils/tau_star_utils.R")
@@ -26,8 +27,10 @@ mk_coarse <- function(tau, status, all_bounded, all_valid) {
 }
 
 # An unreliable finite solve sits between a certified-bounded and an unbounded
-# tau. The transition must be bracketed at the unreliable tau (hi = 0.02), not
-# past it: branching on the raw bounded flag would wrongly give lo = 0.02.
+# tau. The certificates are at 0.01 (bounded) and 0.03 (unbounded) and there is
+# no information at 0.02, so the honest bracket is [0.01, 0.03] -> 0.02. Closing
+# it at the unreliable tau instead would assert tau* < 0.02 on the strength of a
+# solve that established nothing.
 coarse_unreliable <- mk_coarse(
   tau = c(0.01, 0.02, 0.03),
   status = c("bounded", "unreliable", "unbounded"),
@@ -36,8 +39,8 @@ coarse_unreliable <- mk_coarse(
 )
 res <- tau_star_fixed(gamma = NULL, moments = NULL, coarse_unreliable, iters = 0L)
 check(
-  "unreliable tau is not counted as bounded (brackets 0.01-0.02 -> 0.015)",
-  isTRUE(all.equal(res$tau_star, 0.015)) && isFALSE(res$capped)
+  "unreliable tau carries no evidence and is skipped (brackets 0.01-0.03 -> 0.02)",
+  isTRUE(all.equal(res$tau_star, 0.02)) && isFALSE(res$capped)
 )
 
 # Every tau certified bounded -> tau* is censored at the grid maximum.
