@@ -24,16 +24,10 @@ logvar_lad_build_fragment <- function(lad, n_obs, tau_display) {
   rows <- c(interleave(labels, ""), "$R^2$", "$N$")
   cols <- c(
     list(
-      c(interleave(fmt(tab$reference), ""), "--", sprintf("%d", n_obs)),
-      c(interleave(fmt(tab$point), ""), "--", sprintf("%d", n_obs))
+      logvar_se_point_col(tab$reference, NULL, NULL, NULL, tab$coef, n_obs),
+      logvar_se_point_col(tab$point, NULL, NULL, NULL, tab$coef, n_obs)
     ),
-    unname(lapply(sets, function(st) {
-      stopifnot(identical(st$coef, tab$coef))
-      c(
-        interleave(set_cell(st$set_lower, st$set_upper, st$status), ""),
-        "--", sprintf("%d", n_obs)
-      )
-    }))
+    logvar_set_envelope_cols(sets, NULL, names(sets), tab$coef, n_obs)
   )
   build_simple_latex_table(
     rows, cols,
@@ -143,10 +137,13 @@ build_lad_panel_notes <- function(lad, tau_baseline, grid_cap, fit_budget) {
       ),
       lad$quantreg_version
     ),
-    paste(
-      "Under conditional normality the median slopes equal the variance slopes",
-      "and $\\theta^{0.5}_0 = \\theta^{log}_0 + 0.482765246 = \\theta^{var}_0 -",
-      "0.787597599$; these constants are interpretive checks only, never imposed."
+    sprintf(
+      paste(
+        "Under conditional normality the median slopes equal the variance slopes",
+        "and $\\theta^{0.5}_0 = \\theta^{log}_0 + %.9f = \\theta^{var}_0 -",
+        "%.9f$; these constants are interpretive checks only, never imposed."
+      ),
+      logvar_lad_median_meanlog_gap, -logvar_lad_median_lnchisq_gap
     ),
     sprintf(
       paste(
