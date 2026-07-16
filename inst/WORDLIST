@@ -48,8 +48,10 @@ cxx
 cyclocomp
 data's
 de
+deflator
 DeHaven
 desync
+det
 dev
 df
 diag
@@ -82,10 +84,12 @@ gitignored
 Glejser
 GMM
 Goldfeld
+GQ
 graphify
 gz
 gzipped
 Hadamard
+hardcoded
 heteroskedasticity
 Heteroskedasticity
 hetid
@@ -96,6 +100,8 @@ i's
 ico
 idx
 ik
+Imbens
+interpretability
 invariants
 iTP
 ixj
@@ -111,6 +117,7 @@ labelled
 lag
 lagged
 lags
+latexmk
 LazyData
 Lewbel
 lf
@@ -122,12 +129,14 @@ linters
 lintr
 Ljung
 lm
+Manski
 mathrm
 mcp
 mcpServers
 md
 meaned
 MERCHANTABILITY
+minimizer
 misalign
 mismeasured
 mit
@@ -136,6 +145,7 @@ Moench
 multistart
 na
 ncol
+Newey
 nloptr
 NONINFRINGEMENT
 nonlinearly
@@ -145,6 +155,7 @@ optimisation
 optimizer's
 orcid
 ORCID
+orthant
 param
 pc
 PCE
@@ -178,6 +189,7 @@ renderer
 renv
 Renviron
 reparameterization
+residualizations
 resolvers
 Resumable
 rmarkdown
@@ -194,10 +206,12 @@ schemas
 sd
 sdf
 SDF
+setdiff
 sha
 siunitx
 skedastic
 SLSQP
+Stoye
 styler
 subdir
 subdirs
@@ -232,6 +246,7 @@ varnorm
 vcov
 VFCI
 vfci
+vfci's
 VIX
 Weisberg
 widehat
