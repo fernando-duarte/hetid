@@ -19,56 +19,6 @@ source(paper_path("mean_equation", "inference", "refine_bounds_by_tau.R"))
 theta_coefs <- set_id_mean_eq$theta_table$coef
 beta_coefs <- set_id_mean_eq$beta1_table$coef
 
-# SLSQP extremization of theta_k from an arbitrary feasible start, in the
-# shared solver's scaling (mirrors .solve_scaled, which pins the start at the
-# origin); returns the theta-units bound and argmax, or NULL when the solve
-# fails or the endpoint misses the feasible+active certificate
-solve_theta_bound_from <- function(qs, k, direction, theta_start,
-                                   box = 1e6, feas_tol = 1e-4) {
-  if (is.null(theta_start)) {
-    return(NULL)
-  }
-  delta <- .derive_theta_scale(qs)
-  omega <- .derive_constraint_scales(qs, delta)
-  sgn <- if (direction == "min") 1 else -1
-  dim_theta <- ncol(qs$A_i[[1]])
-  e_k <- numeric(dim_theta)
-  e_k[k] <- 1
-  res <- tryCatch(
-    nloptr::slsqp(
-      x0 = pmin(pmax(theta_start / delta, -box), box),
-      fn = function(phi) sgn * sum(e_k * phi),
-      gr = function(phi) sgn * e_k,
-      lower = rep(-box, dim_theta), upper = rep(box, dim_theta),
-      hin = function(phi) {
-        theta <- delta * phi
-        vapply(seq_along(qs$A_i), function(i) {
-          (drop(t(theta) %*% qs$A_i[[i]] %*% theta) +
-            sum(qs$b_i[[i]] * theta) + qs$c_i[i]) / omega[i]
-        }, numeric(1))
-      },
-      hinjac = function(phi) {
-        theta <- delta * phi
-        t(vapply(seq_along(qs$A_i), function(i) {
-          (delta * (2 * drop(qs$A_i[[i]] %*% theta) + qs$b_i[[i]])) / omega[i]
-        }, numeric(dim_theta)))
-      },
-      control = list(xtol_rel = 1e-8, maxeval = 1000),
-      deprecatedBehavior = FALSE
-    ),
-    error = function(e) NULL
-  )
-  if (is.null(res) || any(!is.finite(res$par))) {
-    return(NULL)
-  }
-  theta <- delta * res$par
-  resid <- .feasibility_residual(qs, theta, omega)
-  if (!is.finite(resid) || abs(resid) > feas_tol) {
-    return(NULL)
-  }
-  list(bound = theta[k], theta = theta)
-}
-
 # warm-start state, seeded with the tau = 0 closed-form point (the whole set
 # at tau = 0): each successful solve hands its argmax to the next grid tau,
 # where it is still feasible because the set grows with tau

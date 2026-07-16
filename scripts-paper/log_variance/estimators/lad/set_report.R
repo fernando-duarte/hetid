@@ -56,17 +56,6 @@ logvar_lad_nonunique_demote <- function(est, res, cfg, promoted) {
   )
 }
 
-# The fragility line: the smallest pointwise min_t |eps_hat_t(b)| over each bounded
-# endpoint arg and the search seed -- how close the attained set gets to a crossing.
-logvar_lad_min_feasible_eps <- function(schema, w1, w2, seed) {
-  args <- logvar_lad_bounded_args(schema)
-  if (!is.null(seed) && !anyNA(seed)) args <- c(args, list(seed))
-  if (length(args) == 0L) {
-    return(NA_real_)
-  }
-  min(vapply(args, function(a) min(abs(drop(w1 - w2 %*% a))), numeric(1)))
-}
-
 # Re-derive the per-path, per-coefficient tail classification for a tau by probing
 # every verified witness cold through the committed crossing probe and classifier.
 # Returns one row per (witness, path, coefficient) with the classification status,

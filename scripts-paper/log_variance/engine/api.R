@@ -51,6 +51,9 @@ source(paper_path("log_variance", "engine", "grid_scan.R"))
 source(paper_path("log_variance", "engine", "results.R"))
 source(paper_path("log_variance", "engine", "endpoints.R"))
 source(paper_path("log_variance", "engine", "execute.R"))
+# cross-estimator science helpers (spec_id, bounded-args, fragility, map-context
+# preamble): the front door is common to the pipeline and every estimator test
+source(paper_path("log_variance", "estimators", "shared.R"))
 
 logvar_engine_set_at_tau <- function(est, qs, b_tab, b_seed = NULL,
                                      grid_n = 41L, grid_floor = 100L,

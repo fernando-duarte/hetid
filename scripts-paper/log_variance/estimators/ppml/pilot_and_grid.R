@@ -97,13 +97,3 @@ logvar_ppml_pilot <- function(w1, w2, x_mat, anchor_b, grid_pts) {
     n_fits = length(records), n_triggered = n_triggered, records = records
   )
 }
-
-# a schema's certified bounded endpoint args, the warm-chain extra-start idiom
-# shared with the bounds-by-tau figure driver
-logvar_ppml_bounded_args <- function(s) {
-  a <- c(
-    s$arg_lower[s$lower_status == "bounded"],
-    s$arg_upper[s$upper_status == "bounded"]
-  )
-  a[!vapply(a, anyNA, logical(1))]
-}

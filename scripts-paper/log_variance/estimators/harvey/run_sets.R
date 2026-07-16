@@ -12,33 +12,17 @@ source(paper_path("log_variance", "estimators", "harvey", "estimator.R"))
 source(paper_path("log_variance", "estimators", "harvey", "sensitivity_and_reporting.R"))
 
 # one preparation path: validate the frozen inputs and the mean-zero PC_R
-# convention before any precheck or fit
-harvey_inputs <- logvar_ppml_validate_inputs(
-  log_var_eq$inputs, log_var_eq$sample_contract
+# convention, then derive the anchor/seed base at the Harvey grid cap; the
+# w1/w2/pcr/qtr/x_mat and anchor pieces are injected as locals for the driver
+list2env(
+  logvar_prepare_map_context(
+    log_var_eq$inputs, log_var_eq$sample_contract, set_id_mean_eq,
+    mean_eq_bounds_tau, logvar_harvey_grid_cap
+  ),
+  environment()
 )
-stopifnot(max(abs(colMeans(harvey_inputs$pcr))) < 1e-8)
-w1 <- harvey_inputs$w1
-w2 <- harvey_inputs$w2
-pcr <- harvey_inputs$pcr
-qtr <- harvey_inputs$qtr
-x_mat <- cbind(1, pcr)
-colnames(x_mat) <- c("(Intercept)", colnames(pcr))
 chol_xx <- chol(crossprod(x_mat))
-
-# search anchor and seed: the Lewbel point when finite and unit-omega feasible in
-# the baseline box, else the first coarsened baseline-grid point
-b_point <- set_id_mean_eq$theta_table$point
-tau_base <- set_id_mean_eq$tau_display[1]
-qs_base <- tau_quadratic_system(set_id_mean_eq$gamma, tau_base, set_id_mean_eq$moments)
-b_tab_base <- mean_eq_bounds_tau[[sprintf("%.17g", tau_base)]]
-stopifnot(!is.null(b_tab_base))
-point_feasible <- !anyNA(b_point) &&
-  .feasibility_residual(qs_base, b_point, rep(1, length(qs_base$A_i))) <= 0
-grid_base <- logvar_coarsen_grid(
-  logvar_feasible_grid(qs_base, b_tab_base$set_lower, b_tab_base$set_upper, 41L),
-  logvar_harvey_grid_cap
-)
-stopifnot(nrow(grid_base) > 0L)
+# search anchor: the Lewbel point when feasible, else the first coarsened grid pt
 anchor_b <- if (point_feasible) b_point else grid_base[1, ]
 
 # naive reference squared residuals (matched by qtr), shared by the reference
@@ -117,7 +101,7 @@ for (idx in seq_along(taus)) {
   primary_results[[key_i]] <- res_i
   b_tab_list[[key_i]] <- b_tab_i
   primary_diag[[key_i]] <- res_i$diagnostics
-  warm_extra <- logvar_ppml_bounded_args(res_i$schema)
+  warm_extra <- logvar_bounded_args(res_i$schema)
 }
 
 # reduced sensitivity gate before anything renders: a five-start re-polish of the
@@ -129,17 +113,6 @@ gate <- logvar_harvey_sensitivity_gate(
   qs_fn, primary_results
 )
 final_res <- gate$results
-
-# fragility: min over each tau's bounded endpoint args and the seed of the
-# pointwise min_t |eps_hat_t(b)| (the PPML-driver idiom)
-min_feasible_eps <- function(schema) {
-  args <- c(
-    schema$arg_lower[schema$lower_status == "bounded"],
-    schema$arg_upper[schema$upper_status == "bounded"]
-  )
-  args <- c(args[!vapply(args, anyNA, logical(1))], list(search_seed))
-  min(vapply(args, function(a) min(abs(drop(w1 - w2 %*% a))), numeric(1)))
-}
 
 base_tab <- final_res[[sprintf("%.17g", taus[1])]]$table
 stopifnot(identical(base_tab$coef, colnames(x_mat)))
@@ -156,7 +129,10 @@ log_var_eq_harvey <- list(
   n_feasible = vapply(primary_results, function(r) r$n_feasible, integer(1)),
   counts = primary_diag,
   fit_failures = vapply(primary_results, function(r) r$diagnostics$n_failed, integer(1)),
-  min_feasible_abs_eps = vapply(final_res, function(r) min_feasible_eps(r$schema), numeric(1)),
+  min_feasible_abs_eps = vapply(
+    final_res, function(r) logvar_min_feasible_eps(r$schema, w1, w2, search_seed),
+    numeric(1)
+  ),
   estimator = est_harvey, start_bundle_used = est_harvey$start_bundle,
   point_start_rung = est_harvey$point_start_rung,
   sensitivity_audit = list(audit = gate$audit, meta = gate$metadata),
@@ -182,10 +158,10 @@ logvar_harvey_report(log_var_eq_harvey, taus)
 # remove only scratch locals: keep log_var_eq_harvey, logvar_bounds_tau_registry,
 # harvey_cache (registry-referenced), and every sourced function
 rm(
-  harvey_inputs, w1, w2, pcr, qtr, x_mat, chol_xx, b_point, tau_base, qs_base,
+  w1, w2, pcr, qtr, x_mat, chol_xx, b_point, tau_base, qs_base,
   b_tab_base, point_feasible, grid_base, anchor_b, ref_rows, ref_resid, y_ref,
   pairs, res_pre, logols_coef, est_harvey, search_seed, theta_reference,
   na_coef, theta_point_harvey, taus, qs_fn, primary_results, b_tab_list,
   primary_diag, warm_extra, idx, tau_i, key_i, b_tab_i, qs_i, harvey_bs, res_i,
-  gate, final_res, min_feasible_eps, base_tab
+  gate, final_res, base_tab
 )

@@ -11,15 +11,6 @@
 # engine and the committed LAD fit modules are consumed, never modified.
 # Definitions only; sourced by the driver before the guarded orchestration.
 
-# A schema's certified bounded endpoint args; the fragility line reads them.
-logvar_lad_bounded_args <- function(s) {
-  a <- c(
-    s$arg_lower[s$lower_status == "bounded"],
-    s$arg_upper[s$upper_status == "bounded"]
-  )
-  a[!vapply(a, anyNA, logical(1))]
-}
-
 # The five-start re-polish on a fresh cache and fresh budget: an independent
 # verification of the same box. A failed rerun returns NULL and the comparison
 # then demotes every bounded primary side.

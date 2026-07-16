@@ -53,7 +53,7 @@ logvar_harvey_estimator <- function(w1, w2, pcr, qtr, b_point = NULL,
     sample_id = logvar_sample_id(qtr, w1, w2, pcr), smoothness = "smooth",
     inner_solver = "observed-Newton (Fisher fallback) + backtracking", response_scale = "variance",
     response_scale_value = 1, scale_reference = "none",
-    spec_id = logvar_harvey_spec_id(list(
+    spec_id = logvar_spec_id(list(
       estimator_version = "harvey-v1", score_tol = 1e-8, rank_tol = 1e-8,
       rcond_tol = 1e-10,
       recession_rate_tol_rule = "1e-9*max(1,sum(abs(colSums(Z))))",

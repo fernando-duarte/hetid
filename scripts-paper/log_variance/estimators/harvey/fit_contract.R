@@ -1,24 +1,9 @@
-# Pure helpers for the Harvey estimator object: the canonical spec_id
-# serializer, the accepted-fit predicate, the analytic implicit Jacobian,
-# and the metadata-stamped cross-estimator start bundle. Split from the
-# constructor module for the repository line cap. Definitions only;
-# sourced by estimator.R after the math/recession/solver modules.
+# Pure helpers for the Harvey estimator object: the accepted-fit predicate, the
+# analytic implicit Jacobian, and the metadata-stamped cross-estimator start
+# bundle. Split from the constructor module for the repository line cap.
+# Definitions only; sourced by estimator.R after the math/recession/solver
+# modules. The canonical spec_id serializer is the shared logvar_spec_id.
 
-# Canonical fit-identity string, mirroring the PPML recipe: bytewise-sorted
-# key=value records, numerics at full 17-digit precision (independent of
-# options(digits)), vectors comma-joined, records newline-joined.
-logvar_harvey_spec_id <- function(fields) {
-  render <- function(x) {
-    if (is.numeric(x)) {
-      x <- formatC(x, digits = 17, format = "fg", flag = "#")
-    } else {
-      x <- as.character(x)
-    }
-    paste(x, collapse = ",")
-  }
-  records <- vapply(names(fields), function(k) paste0(k, "=", render(fields[[k]])), character(1))
-  paste(sort(records, method = "radix"), collapse = "\n")
-}
 # A fit is accepted when it is a converged "ok" solution (NULL/failed rejected).
 logvar_harvey_accepted <- function(fit) {
   !is.null(fit) && identical(fit$fit_status, "ok") && isTRUE(fit$converged)

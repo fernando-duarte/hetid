@@ -9,31 +9,17 @@ source(paper_path("log_variance", "estimators", "ppml", "estimator.R"))
 source(paper_path("log_variance", "estimators", "ppml", "pilot_and_grid.R"))
 
 # one preparation path: validate the frozen inputs and the mean-zero PC_R
-# convention before any pilot, scale decision, or fit
-ppml_inputs <- logvar_ppml_validate_inputs(
-  log_var_eq$inputs, log_var_eq$sample_contract
+# convention, then derive the scale anchor/seed base at the PPML grid cap; the
+# w1/w2/pcr/qtr/x_mat and anchor pieces are injected as locals for the driver
+list2env(
+  logvar_prepare_map_context(
+    log_var_eq$inputs, log_var_eq$sample_contract, set_id_mean_eq,
+    mean_eq_bounds_tau, logvar_ppml_grid_cap
+  ),
+  environment()
 )
-stopifnot(max(abs(colMeans(ppml_inputs$pcr))) < 1e-8)
-w1 <- ppml_inputs$w1
-w2 <- ppml_inputs$w2
-pcr <- ppml_inputs$pcr
-qtr <- ppml_inputs$qtr
-x_mat <- cbind(1, pcr)
-colnames(x_mat) <- c("(Intercept)", colnames(pcr))
 # scale anchor and search seed: the Lewbel point when finite and unit-omega
 # feasible in the baseline set, else the first coarsened baseline-grid point
-b_point <- set_id_mean_eq$theta_table$point
-tau_base <- set_id_mean_eq$tau_display[1]
-qs_base <- tau_quadratic_system(set_id_mean_eq$gamma, tau_base, set_id_mean_eq$moments)
-b_tab_base <- mean_eq_bounds_tau[[sprintf("%.17g", tau_base)]]
-stopifnot(!is.null(b_tab_base))
-point_feasible <- !anyNA(b_point) &&
-  .feasibility_residual(qs_base, b_point, rep(1, length(qs_base$A_i))) <= 0
-grid_base <- logvar_coarsen_grid(
-  logvar_feasible_grid(qs_base, b_tab_base$set_lower, b_tab_base$set_upper, 41L),
-  logvar_ppml_grid_cap
-)
-stopifnot(nrow(grid_base) > 0L)
 scale_anchor_b <- if (point_feasible) b_point else grid_base[1, ]
 scale_anchor_source <- if (point_feasible) "lewbel_point" else "baseline_grid_first"
 
@@ -102,7 +88,7 @@ for (idx in seq_along(taus)) {
   primary_results[[key_i]] <- res_i
   b_tab_list[[key_i]] <- b_tab_i
   primary_diag[[key_i]] <- res_i$diagnostics
-  warm_extra <- logvar_ppml_bounded_args(res_i$schema)
+  warm_extra <- logvar_bounded_args(res_i$schema)
 }
 
 # independent coverage gate: a second estimator over an up-to-8000 Morton grid,
@@ -126,17 +112,8 @@ adjusted <- logvar_ppml_apply_coverage(
 )
 final_res <- adjusted$results
 
-# fragility (a): min over each tau's bounded endpoint args and the seed of
-# min_t |eps_hat_t(b)| -- how close the set gets to a crossing pointwise
-min_feasible_eps <- function(schema) {
-  args <- c(
-    schema$arg_lower[schema$lower_status == "bounded"],
-    schema$arg_upper[schema$upper_status == "bounded"]
-  )
-  args <- c(args[!vapply(args, anyNA, logical(1))], list(search_seed))
-  min(vapply(args, function(a) min(abs(drop(w1 - w2 %*% a))), numeric(1)))
-}
-# fragility (b): the benchmark's divergence directions from log_var_eq$schema
+# fragility: the benchmark's divergence directions from log_var_eq$schema (the
+# pointwise crossing-nearness measure is min_feasible_abs_eps in the list below)
 benchmark_divergence <- lapply(log_var_eq$schema, function(s) {
   data.frame(
     coef = s$coef, lower_unbounded = s$lower_status == "unbounded",
@@ -159,7 +136,10 @@ log_var_eq_ppml <- list(
   n_feasible = vapply(primary_results, function(r) r$n_feasible, integer(1)),
   counts = primary_diag,
   fit_failures = vapply(primary_results, function(r) r$diagnostics$n_failed, integer(1)),
-  min_feasible_abs_eps = vapply(final_res, function(r) min_feasible_eps(r$schema), numeric(1)),
+  min_feasible_abs_eps = vapply(
+    final_res, function(r) logvar_min_feasible_eps(r$schema, w1, w2, search_seed),
+    numeric(1)
+  ),
   cond_weighted_xx = cond_weighted_xx,
   benchmark_divergence = benchmark_divergence,
   estimator = est_ppml, start_bundle = est_ppml$start_bundle,
@@ -186,12 +166,12 @@ source(paper_path("log_variance", "estimators", "ppml", "console_report.R"))
 # remove only scratch locals: keep log_var_eq_ppml, logvar_bounds_tau_registry,
 # ppml_cache (registry-referenced), and every sourced function
 rm(
-  ppml_inputs, w1, w2, pcr, qtr, x_mat, b_point, tau_base, qs_base, b_tab_base,
+  w1, w2, pcr, qtr, x_mat, b_point, tau_base, qs_base, b_tab_base,
   point_feasible, grid_base, scale_anchor_b, scale_anchor_source, anchor_key,
   grid_keys, pilot_pts, pilot, response_scale, b_point_arg, est_ppml, point_fit,
   search_seed, na_coef, theta_point_ppml, cond_fit, cond_weighted_xx, ref_rows,
   ref_resid, theta_reference, taus, primary_results,
   b_tab_list, primary_diag, warm_extra, idx, tau_i, key_i, b_tab_i, qs_i, ppml_bs,
-  res_i, est_cov, qs_fn, coverage, adjusted, final_res, min_feasible_eps,
+  res_i, est_cov, qs_fn, coverage, adjusted, final_res,
   benchmark_divergence, base_tab
 )

@@ -104,25 +104,20 @@ logvar_egarch_decision_validate <- function(rec, fresh_gate_record,
       "stale_upstream_plans_hash", "upstream-plans hash changed"
     )
   }
-  if (!identical(
-    rec$estimand_prompt_sha256, logvar_egarch_string_sha256(rec$estimand_prompt)
-  ) || !identical(
-    rec$estimand_prompt_sha256,
-    LOGVAR_EGARCH_ESTIMAND_PROMPT_SHA256
-  )) {
-    logvar_egarch_decision_stop("estimand_prompt_hash_mismatch", "prompt edited")
+  check_prompt <- function(sha, text, pinned, reason) {
+    if (!identical(sha, logvar_egarch_string_sha256(text)) ||
+      !identical(sha, pinned)) {
+      logvar_egarch_decision_stop(reason, "prompt edited")
+    }
   }
-  if (!identical(
-    rec$dependency_prompt_sha256,
-    logvar_egarch_string_sha256(rec$dependency_prompt)
-  ) || !identical(
-    rec$dependency_prompt_sha256,
-    LOGVAR_EGARCH_DEPENDENCY_PROMPT_SHA256
-  )) {
-    logvar_egarch_decision_stop(
-      "dependency_prompt_hash_mismatch", "prompt edited"
-    )
-  }
+  check_prompt(
+    rec$estimand_prompt_sha256, rec$estimand_prompt,
+    LOGVAR_EGARCH_ESTIMAND_PROMPT_SHA256, "estimand_prompt_hash_mismatch"
+  )
+  check_prompt(
+    rec$dependency_prompt_sha256, rec$dependency_prompt,
+    LOGVAR_EGARCH_DEPENDENCY_PROMPT_SHA256, "dependency_prompt_hash_mismatch"
+  )
   logvar_egarch_validate_decisions(rec)
   invisible(rec)
 }

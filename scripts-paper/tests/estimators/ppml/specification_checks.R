@@ -18,7 +18,7 @@ anchor_b <- c(0.2, -0.1)
 old_digits <- getOption("digits")
 
 # The estimator's canonical spec_id, addressed through the constructor so the
-# test does not depend on logvar_ppml_spec_id's private argument order.
+# test does not depend on logvar_spec_id's private argument order.
 spec_of <- function(scale = 1, b_point = NULL,
                     anchor = anchor_b, source = "baseline_grid_first") {
   logvar_ppml_estimator(

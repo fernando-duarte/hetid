@@ -90,27 +90,6 @@ logvar_ppml_jacobian <- function(fit, b, w1, w2, x_mat, response_scale = 1) {
   out
 }
 
-# Canonical fit-identity string: bytewise-sorted key=value records over every
-# fit-changing field, each numeric rendered at full 17-digit precision so the
-# stamp is deterministic and independent of options(digits); non-numerics via
-# as.character. Vectors collapse with ",". Records join with a literal newline.
-logvar_ppml_spec_id <- function(fields) {
-  render <- function(x) {
-    if (is.numeric(x)) {
-      x <- formatC(x, digits = 17, format = "fg", flag = "#")
-    } else {
-      x <- as.character(x)
-    }
-    paste(x, collapse = ",")
-  }
-  records <- vapply(
-    names(fields),
-    function(k) paste0(k, "=", render(fields[[k]])),
-    character(1)
-  )
-  paste(sort(records, method = "radix"), collapse = "\n")
-}
-
 # The estimator-engine estimator object. At construction it fits the scale anchor once
 # (failing closed when the anchor response has no positive value) and the Lewbel
 # point once when b_point is a finite numeric vector, closing over the single
@@ -144,7 +123,7 @@ logvar_ppml_estimator <- function(w1, w2, pcr, qtr, b_point = NULL,
   }
   realized_branch <- if (!is.null(start_bundle)) "point" else "anchor"
   realized_b_point <- if (!is.null(b_point) && !anyNA(b_point)) b_point else "null"
-  spec_id <- logvar_ppml_spec_id(list(
+  spec_id <- logvar_spec_id(list(
     estimator_version = "ppml-v1", response_scale = response_scale,
     glm_epsilon = 1e-10, glm_maxit = 100L, score_tol = 1e-8,
     rank_tol = 1e-10, rcond_tol = 1e-10, boundary_switch = TRUE,

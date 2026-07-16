@@ -1,3 +1,55 @@
+# SLSQP extremization of theta_k from an arbitrary feasible start, in the shared
+# solver's scaling (mirrors .solve_scaled, which pins the start at the origin);
+# returns the theta-units bound and argmax, or NULL when the solve fails or the
+# endpoint misses the feasible+active certificate. Sourced by
+# compute_bounds_by_tau.R after profile_solver_core.R, so the .derive_* and
+# .feasibility_residual helpers resolve at call time.
+solve_theta_bound_from <- function(qs, k, direction, theta_start,
+                                   box = 1e6, feas_tol = 1e-4) {
+  if (is.null(theta_start)) {
+    return(NULL)
+  }
+  delta <- .derive_theta_scale(qs)
+  omega <- .derive_constraint_scales(qs, delta)
+  sgn <- if (direction == "min") 1 else -1
+  dim_theta <- ncol(qs$A_i[[1]])
+  e_k <- numeric(dim_theta)
+  e_k[k] <- 1
+  res <- tryCatch(
+    nloptr::slsqp(
+      x0 = pmin(pmax(theta_start / delta, -box), box),
+      fn = function(phi) sgn * sum(e_k * phi),
+      gr = function(phi) sgn * e_k,
+      lower = rep(-box, dim_theta), upper = rep(box, dim_theta),
+      hin = function(phi) {
+        theta <- delta * phi
+        vapply(seq_along(qs$A_i), function(i) {
+          (drop(t(theta) %*% qs$A_i[[i]] %*% theta) +
+            sum(qs$b_i[[i]] * theta) + qs$c_i[i]) / omega[i]
+        }, numeric(1))
+      },
+      hinjac = function(phi) {
+        theta <- delta * phi
+        t(vapply(seq_along(qs$A_i), function(i) {
+          (delta * (2 * drop(qs$A_i[[i]] %*% theta) + qs$b_i[[i]])) / omega[i]
+        }, numeric(dim_theta)))
+      },
+      control = list(xtol_rel = 1e-8, maxeval = 1000),
+      deprecatedBehavior = FALSE
+    ),
+    error = function(e) NULL
+  )
+  if (is.null(res) || any(!is.finite(res$par))) {
+    return(NULL)
+  }
+  theta <- delta * res$par
+  resid <- .feasibility_residual(qs, theta, omega)
+  if (!is.finite(resid) || abs(resid) > feas_tol) {
+    return(NULL)
+  }
+  list(bound = theta[k], theta = theta)
+}
+
 # Pure display-tau refinement of the mean-equation theta intervals, factored
 # out of compute_bounds_by_tau.R so the figure's display taus can be warm-start
 # refined without disturbing the main grid walk. The main walk carries its warm
@@ -12,8 +64,8 @@
 # next larger tau. It reads and writes no global, prints nothing, and leaves its
 # inputs untouched.
 #
-# solve_fn is compute_bounds_by_tau.R's solve_theta_bound_from, passed in rather
-# than reimplemented: solve_fn(qs, k, direction, theta_start) returns
+# solve_fn is solve_theta_bound_from (defined above), passed in rather than
+# reimplemented: solve_fn(qs, k, direction, theta_start) returns
 # list(bound, theta) or NULL, and NULL on a NULL start -- the same cold-start
 # rule the main walk relies on when the tau = 0 point is unavailable.
 set_id_display_tau_refinement <- function(tau_display, seed_theta, solve_fn,

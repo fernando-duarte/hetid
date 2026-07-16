@@ -53,27 +53,6 @@ logvar_lad_median_lnchisq_gap <- log(stats::qchisq(0.5, 1))
 logvar_lad_median_meanlog_gap <-
   log(stats::qchisq(0.5, 1)) - (digamma(0.5) + log(2))
 
-# Canonical fit-identity string: bytewise-sorted key=value records over every
-# fit-changing field, numerics at 17 digits so the stamp is deterministic and
-# independent of options(digits); vectors join with ",". Mirrors the PPML and
-# Harvey renderers but kept local so this module needs neither sourced.
-logvar_lad_spec_id <- function(fields) {
-  render <- function(x) {
-    if (is.numeric(x)) {
-      x <- formatC(x, digits = 17, format = "fg", flag = "#")
-    } else {
-      x <- as.character(x)
-    }
-    paste(x, collapse = ",")
-  }
-  records <- vapply(
-    names(fields),
-    function(k) paste0(k, "=", render(fields[[k]])),
-    character(1)
-  )
-  paste(sort(records, method = "radix"), collapse = "\n")
-}
-
 # The augmented context the domain functions read: the engine's hook context
 # plus the geometry members (w1, w2, x_mat, e_scale_ref) the witness, anchor and
 # probe solves need. The engine hands analyze_domain only the generic seam, so
@@ -109,7 +88,7 @@ logvar_lad_estimator <- function(w1, w2, pcr, qtr, e_ref = NULL) {
   geom$evaluate_fit <- NULL
   geom$degenerate <- FALSE
   geom$center <- NULL
-  spec_id <- logvar_lad_spec_id(list(
+  spec_id <- logvar_spec_id(list(
     estimator_version = "lad-v1",
     quantreg_version = as.character(utils::packageVersion("quantreg")),
     inner_method = "br", nonunique_method = "fn",

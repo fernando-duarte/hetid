@@ -20,16 +20,15 @@ source(paper_path("log_variance", "estimators", "lad", "closure_diagnostics.R"))
 # Guarded orchestration: runs only with the upstream benchmark objects present, so
 # sourcing this offline (the estimator test suites) defines the helpers only.
 if (exists("log_var_eq") && exists("set_id_mean_eq") && exists("mean_eq_bounds_tau")) {
-  lad_inputs <- logvar_ppml_validate_inputs(
-    log_var_eq$inputs, log_var_eq$sample_contract
+  # one preparation path (validate + scale anchor/seed base at the LAD grid cap);
+  # the w1/w2/pcr/qtr/x_mat and anchor pieces are injected as locals here
+  list2env(
+    logvar_prepare_map_context(
+      log_var_eq$inputs, log_var_eq$sample_contract, set_id_mean_eq,
+      mean_eq_bounds_tau, logvar_lad_grid_cap
+    ),
+    environment()
   )
-  stopifnot(max(abs(colMeans(lad_inputs$pcr))) < 1e-8)
-  w1 <- lad_inputs$w1
-  w2 <- lad_inputs$w2
-  pcr <- lad_inputs$pcr
-  qtr <- lad_inputs$qtr
-  x_mat <- cbind(1, pcr)
-  colnames(x_mat) <- c("(Intercept)", colnames(pcr))
 
   # naive reference residuals (by qtr): the reference column, the frozen scale, est
   ref_rows <- match(qtr, set_id_mean_eq$qtr)
@@ -51,9 +50,8 @@ if (exists("log_var_eq") && exists("set_id_mean_eq") && exists("mean_eq_bounds_t
   theta_reference <- ref_fit$coef
   na_coef <- stats::setNames(rep(NA_real_, ncol(x_mat)), colnames(x_mat))
 
-  # Lewbel-point column: br fit at b_point; NA (panel "--") when undefined, and NA
-  # with a printed reason when the point sits on a residual crossing
-  b_point <- set_id_mean_eq$theta_table$point
+  # Lewbel-point column: br fit at b_point (from the context above); NA (panel
+  # "--") when undefined, and NA with a reason when the point sits on a crossing
   pfit <- NULL
   theta_point <- na_coef
   if (!anyNA(b_point)) {
@@ -68,17 +66,7 @@ if (exists("log_var_eq") && exists("set_id_mean_eq") && exists("mean_eq_bounds_t
     }
   }
 
-  tau_base <- set_id_mean_eq$tau_display[1]
-  qs_base <- tau_quadratic_system(set_id_mean_eq$gamma, tau_base, set_id_mean_eq$moments)
-  b_tab_base <- mean_eq_bounds_tau[[sprintf("%.17g", tau_base)]]
-  stopifnot(!is.null(b_tab_base))
-  point_feasible <- !anyNA(b_point) &&
-    .feasibility_residual(qs_base, b_point, rep(1, length(qs_base$A_i))) <= 0
-  grid_base <- logvar_coarsen_grid(
-    logvar_feasible_grid(qs_base, b_tab_base$set_lower, b_tab_base$set_upper, 41L),
-    logvar_lad_grid_cap
-  )
-  stopifnot(nrow(grid_base) > 0L)
+  # search seed: the Lewbel point when feasible, else the first coarsened grid pt
   search_seed <- if (point_feasible) b_point else grid_base[1, ]
 
   # per display tau: one cache across taus, a fresh budget per tau, no warm chain
@@ -130,7 +118,7 @@ if (exists("log_var_eq") && exists("set_id_mean_eq") && exists("mean_eq_bounds_t
       n_unresolved = if (is.null(pc)) 0L else length(pc$unresolved),
       n_paths = sum(vapply(wl, function(wv) length(wv$anchors), integer(1)))
     )
-    min_eps[idx] <- logvar_lad_min_feasible_eps(res_i$schema, w1, w2, search_seed)
+    min_eps[idx] <- logvar_min_feasible_eps(res_i$schema, w1, w2, search_seed)
   }
 
   base_tab <- final_res[[sprintf("%.17g", taus[1])]]$table
@@ -189,7 +177,7 @@ if (exists("log_var_eq") && exists("set_id_mean_eq") && exists("mean_eq_bounds_t
   # remove only scratch locals: keep log_var_eq_lad, logvar_bounds_tau_registry,
   # lad_cache (registry-referenced), and every sourced function
   rm(
-    lad_inputs, w1, w2, pcr, qtr, x_mat, ref_rows, ref_resid, e_scale_ref, est_lad,
+    w1, w2, pcr, qtr, x_mat, ref_rows, ref_resid, e_scale_ref, est_lad,
     ref_fit, theta_reference, na_coef, b_point, pfit, theta_point, tau_base,
     qs_base, b_tab_base, point_feasible, grid_base, search_seed, taus, qs_fn, cfg,
     final_res, final_diag, wit_cov, sens_audit, tail_cls, closure_by_tau, min_eps,

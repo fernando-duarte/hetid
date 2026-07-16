@@ -169,31 +169,3 @@ tau_star_optimized <- function(gamma_start, moments, whiten,
   }
   list(tau_star = (lo + hi) / 2, capped = FALSE)
 }
-
-# Curvature (recession) degeneracy diagnostic at one tau: the smallest, over
-# unit directions d, of the largest curvature max_i d'A_i d. A clearly
-# negative value certifies a common non-positive-curvature direction
-# (necessary for an unbounded set). Reported raw and normalized by the mean
-# Frobenius norm of the A_i, so its magnitude is comparable across taus.
-# This is a DIAGNOSTIC of how close the system is to losing boundedness, not
-# a tau* locator: for a near-degenerate (rank-1) gamma its margin is
-# negligible on both sides of tau*.
-recession_metric <- function(gamma, tau, moments, n_dir = 8000L, seed = 1L) {
-  a_list <- lapply(
-    tau_quadratic_system(gamma, tau, moments)$A_i,
-    function(a) (a + t(a)) / 2
-  )
-  n_comp <- ncol(gamma)
-  set.seed(seed)
-  dirs <- cbind(
-    diag(n_comp), -diag(n_comp),
-    matrix(rnorm(n_comp * n_dir), n_comp)
-  )
-  dirs <- sweep(dirs, 2, sqrt(colSums(dirs^2)), "/")
-  vals <- apply(dirs, 2, function(d) {
-    max(vapply(a_list, function(m) drop(t(d) %*% m %*% d), numeric(1)))
-  })
-  fro <- mean(vapply(a_list, function(m) norm(m, "F"), numeric(1)))
-  raw <- min(vals)
-  list(raw = raw, normalized = raw / fro)
-}
