@@ -2,9 +2,9 @@
 % Please edit documentation in R/hetid_moments_validation.R
 \name{hetid_moments_validation}
 \alias{hetid_moments_validation}
-\title{Shape Validation for hetid_moments Construction}
+\title{Shape Validation for hetid_moments Objects}
 \description{
-Internal helpers behind \code{new_hetid_moments()}: every outer
+Internal helpers behind \code{validate_hetid_moments()}: every outer
 (constraint-axis) shape and name is checked against
 \code{maturity_names(maturities)} and every inner (theta-axis)
 dimension against \code{n_components}.

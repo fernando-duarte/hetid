@@ -1,6 +1,6 @@
-#' Shape Validation for hetid_moments Construction
+#' Shape Validation for hetid_moments Objects
 #'
-#' Internal helpers behind \code{new_hetid_moments()}: every outer
+#' Internal helpers behind \code{validate_hetid_moments()}: every outer
 #' (constraint-axis) shape and name is checked against
 #' \code{maturity_names(maturities)} and every inner (theta-axis)
 #' dimension against \code{n_components}.
@@ -8,6 +8,29 @@
 #' @name hetid_moments_validation
 #' @keywords internal
 NULL
+
+#' Validate a hetid_moments Object
+#'
+#' Full structural-alignment gate for the \code{hetid_moments} class,
+#' checked against the object's own attributes. Run by the public
+#' boundary \code{compute_identification_moments()} on every object it
+#' returns; call it directly on containers assembled via
+#' \code{new_hetid_moments()} from parts that are not known-good.
+#'
+#' @param x A classed \code{hetid_moments} object
+#' @return \code{x}, invisibly
+#' @keywords internal
+validate_hetid_moments <- function(x) {
+  assert_hetid_moments(x, arg = "x")
+  n_components <- attr(x, "n_components")
+  maturities <- attr(x, "maturities")
+  validate_maturities(
+    maturities,
+    max_value = n_components, max_label = "n_components"
+  )
+  validate_moments_shapes(x, maturities, n_components)
+  invisible(x)
+}
 
 #' Validate the Seven Moment Shapes
 #'

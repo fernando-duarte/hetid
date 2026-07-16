@@ -2,7 +2,7 @@
 % Please edit documentation in R/hetid_moments.R
 \name{new_hetid_moments}
 \alias{new_hetid_moments}
-\title{Construct a Validated hetid_moments Object}
+\title{Construct a hetid_moments Object}
 \usage{
 new_hetid_moments(stats, maturities, n_components, n_obs)
 }
@@ -21,9 +21,12 @@ new_hetid_moments(stats, maturities, n_components, n_obs)
 A classed \code{hetid_moments} list
 }
 \description{
-Low-level constructor and single structural-alignment gate for the
-\code{hetid_moments} class. Validates every outer (constraint-axis)
-shape and name against \code{maturity_names(maturities)} and every
-inner (theta-axis) dimension against \code{n_components}.
+Low-level cheap constructor for the \code{hetid_moments} class: type,
+scalar, and maturity-vector checks with lossless coercions, trusting
+the shapes of the statistics themselves. The per-maturity
+structural-alignment sweep lives in \code{validate_hetid_moments()},
+which the public boundary \code{compute_identification_moments()}
+always runs; hot paths rebuilding containers from known-good parts
+may call this constructor directly and skip it.
 }
 \keyword{internal}

@@ -82,14 +82,14 @@ test_that("validator rejects misaligned outer shapes and names", {
   truncated <- stats
   truncated$s_i_0 <- truncated$s_i_0[1:3]
   expect_error(
-    new_hetid_moments(truncated, 1:4, 4, 60),
+    validate_hetid_moments(new_hetid_moments(truncated, 1:4, 4, 60)),
     class = "hetid_error_dimension_mismatch"
   )
 
   renamed <- stats
   names(renamed$sigma_i_sq) <- paste0("m", 1:4)
   expect_error(
-    new_hetid_moments(renamed, 1:4, 4, 60),
+    validate_hetid_moments(new_hetid_moments(renamed, 1:4, 4, 60)),
     "names must equal maturity_N",
     class = "hetid_error_bad_argument"
   )
@@ -109,7 +109,7 @@ test_that("validator rejects wrong inner theta-axis dimensions", {
   trimmed <- stats
   trimmed$r_i_1[[2]] <- trimmed$r_i_1[[2]][, 1:3]
   expect_error(
-    new_hetid_moments(trimmed, 1:4, 4, 60),
+    validate_hetid_moments(new_hetid_moments(trimmed, 1:4, 4, 60)),
     "r_i_1 for maturity 2",
     class = "hetid_error_dimension_mismatch"
   )
@@ -117,7 +117,7 @@ test_that("validator rejects wrong inner theta-axis dimensions", {
   shortened <- stats
   shortened$s_i_1[[1]] <- shortened$s_i_1[[1]][1:2]
   expect_error(
-    new_hetid_moments(shortened, 1:4, 4, 60),
+    validate_hetid_moments(new_hetid_moments(shortened, 1:4, 4, 60)),
     "s_i_1 for maturity 1",
     class = "hetid_error_dimension_mismatch"
   )
@@ -125,9 +125,20 @@ test_that("validator rejects wrong inner theta-axis dimensions", {
   shrunk <- stats
   shrunk$s_i_2[[3]] <- shrunk$s_i_2[[3]][1:2, 1:2]
   expect_error(
-    new_hetid_moments(shrunk, 1:4, 4, 60),
+    validate_hetid_moments(new_hetid_moments(shrunk, 1:4, 4, 60)),
     "s_i_2 for maturity 3",
     class = "hetid_error_dimension_mismatch"
+  )
+})
+
+test_that("validate_hetid_moments returns a valid object invisibly", {
+  inp <- make_moments_inputs()
+  moments <- compute_identification_moments(inp$w1, inp$w2, inp$pcs)
+  expect_invisible(validate_hetid_moments(moments))
+  expect_identical(validate_hetid_moments(moments), moments)
+  expect_error(
+    validate_hetid_moments(unclass(moments)),
+    class = "hetid_error_bad_argument"
   )
 })
 

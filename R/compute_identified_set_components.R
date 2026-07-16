@@ -101,17 +101,23 @@ compute_identified_set_components <- function(gamma, moments) {
     Q_i[[idx]] <- parts$Q # nolint: object_name_linter.
   }
 
-  new_hetid_components(
+  components <- new_hetid_components(
     L_i = L_i, V_i = V_i, Q_i = Q_i,
     maturities = maturities, n_components = n_components
   )
+  validate_hetid_components(components)
+  components
 }
 
 #' Construct a hetid_components Object
 #'
-#' Low-level constructor carrying the maturity identity of the moments
-#' the components were derived from. Shape validation happens downstream
-#' in \code{validate_quadratic_inputs()}.
+#' Low-level cheap constructor carrying the maturity identity of the
+#' moments the components were derived from: type and length checks
+#' only. The full shape sweep lives in
+#' \code{validate_hetid_components()}, which the public boundary
+#' \code{compute_identified_set_components()} always runs; hot paths
+#' assembling components from known-good parts may call this
+#' constructor directly and skip it.
 #'
 #' @param L_i Named vector of L_i values
 #' @param V_i Named vector of V_i values
@@ -123,6 +129,22 @@ compute_identified_set_components <- function(gamma, moments) {
 #' @keywords internal
 new_hetid_components <- function(L_i, V_i, Q_i, # nolint: object_name_linter.
                                  maturities, n_components) {
+  n <- length(maturities)
+  assert_bad_argument_ok(
+    is.numeric(L_i) && length(L_i) == n,
+    "L_i must be a numeric vector of length(maturities)",
+    arg = "L_i"
+  )
+  assert_bad_argument_ok(
+    is.numeric(V_i) && length(V_i) == n,
+    "V_i must be a numeric vector of length(maturities)",
+    arg = "V_i"
+  )
+  assert_bad_argument_ok(
+    is.list(Q_i) && length(Q_i) == n,
+    "Q_i must be a list of length(maturities) elements",
+    arg = "Q_i"
+  )
   structure(
     list(L_i = L_i, V_i = V_i, Q_i = Q_i),
     maturities = as.integer(maturities),

@@ -57,15 +57,58 @@ validate_finite_by_maturity <- function(quantities, maturities) {
   }
 }
 
+#' Validate a hetid_components Object
+#'
+#' Full shape gate for the \code{hetid_components} class, checked
+#' against the object's own attributes: element lengths, per-maturity
+#' names, and the theta-axis dimension of every \code{Q_i} entry. Run by
+#' the public boundary \code{compute_identified_set_components()} on
+#' every object it returns and by \code{validate_quadratic_inputs()} on
+#' every object it receives; call it directly on containers assembled
+#' via \code{new_hetid_components()} from parts that are not known-good.
+#'
+#' @param x A classed \code{hetid_components} object
+#' @return \code{x}, invisibly
+#' @keywords internal
+validate_hetid_components <- function(x) {
+  assert_bad_argument_ok(
+    inherits(x, "hetid_components"),
+    "x must be a hetid_components object",
+    arg = "x"
+  )
+  maturities <- attr(x, "maturities")
+  n_components <- attr(x, "n_components")
+  expected <- maturity_names(maturities)
+  assert_bad_argument_ok(
+    is.list(x$Q_i),
+    "Q_i must be a list of length(maturities) elements",
+    arg = "Q_i"
+  )
+  validate_time_series_lengths(
+    x$L_i, x$V_i, x$Q_i,
+    expected_length = length(maturities)
+  )
+  for (name in c("L_i", "V_i", "Q_i")) {
+    assert_bad_argument_ok(
+      identical(names(x[[name]]), expected),
+      paste0(name, " names must equal maturity_N for maturities"),
+      arg = name
+    )
+  }
+  validate_q_i_dims(x$Q_i, maturities, n_components)
+  invisible(x)
+}
+
 #' Validate Inputs for the Quadratic Identified Set Computation
 #'
 #' Checks the container classes, that the components and moments carry
 #' identical maturity identity, the shapes of the \code{components}
-#' object (whose constructor defers shape validation here by design),
-#' and the type/finiteness/positivity constraints for
+#' object (via \code{validate_hetid_components()}), and the
+#' type/finiteness/positivity constraints for
 #' \code{\link{compute_identified_set_quadratic}}. Moment shapes are
-#' class invariants guaranteed by \code{new_hetid_moments()} and are
-#' trusted rather than re-checked.
+#' class invariants guaranteed by the
+#' \code{compute_identification_moments()} boundary and are trusted
+#' rather than re-checked.
 #'
 #' @inheritParams compute_identified_set_quadratic
 #'
@@ -118,18 +161,8 @@ validate_quadratic_inputs <- function(tau, components, moments) {
       length(tau), "; n_components = ", n_components
     )
   )
-  assert_bad_argument_ok(
-    is.list(components$Q_i),
-    "Q_i must be a list",
-    arg = "Q_i"
-  )
-
+  validate_hetid_components(components)
   n_maturities <- length(maturities)
-  validate_time_series_lengths(
-    components$L_i, components$V_i, components$Q_i,
-    expected_length = n_maturities
-  )
-  validate_q_i_dims(components$Q_i, maturities, n_components)
 
   sigma_i_sq <- moments$sigma_i_sq
   assert_sigma_positive(sigma_i_sq, maturities)
