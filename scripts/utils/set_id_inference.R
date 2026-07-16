@@ -4,7 +4,7 @@
 # (MAD-based) endpoint scales. The interval uses a Stoye (2009)-style joint
 # calibration when the endpoint correlation is estimable, falling back to the
 # Imbens-Manski (2004) interpolation otherwise. Consumed by
-# scripts-paper/set_id_bootstrap.R; tested in
+# scripts-paper/mean_equation/inference/run_bootstrap.R; tested in
 # scripts/utils/tests/test_set_id_inference.R.
 
 # Median and 90% percentile band of the finite draws (the house p05/p95 form).

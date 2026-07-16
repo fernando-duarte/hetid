@@ -1,8 +1,21 @@
 # Utility Functions for hetid Scripts
 
-_Last modified: 2026-06-22 17:18 EDT_
+_Last modified: 2026-07-15 EDT_
 
 This directory contains reusable utility functions that consolidate common patterns across the analysis scripts, following the DRY (Don't Repeat Yourself) principle. `common_settings.R` sources the core layer and then sources the heteroskedasticity LM helpers (`hetero_lm_tests.R`), the plain-column LaTeX renderer (`latex_simple_table.R`), the stage-08 paper-spec layer (`paper_spec_residuals.R`, `paper_spec_estimator.R`, `paper_spec_bootstrap.R`), and the `for_paper` guard (`for_paper_guard.R`) -- the paper spec needs all of these. The remaining `utils/` helpers (`hetero_panel_meta.R`, `hetero_diag_figures.R`, `ixj_identification.R`, `spec_comparison_eval.R`) are NOT sourced by `common_settings.R`; the stage scripts that consume them source them directly. (The spec-comparison grid design `spec_comparison_design.R` is a stage-05-local file, not a `utils/` helper.)
+
+## Pipeline boundaries
+
+These utilities primarily support the numbered `scripts/` analysis pipeline. The separate
+paper pipeline owns its paper-only log-variance inference and plot-data support under
+`scripts-paper/`; run it from the package root with:
+
+```sh
+Rscript scripts-paper/run_pipeline.R
+```
+
+See `scripts-paper/README.md` for that pipeline's semantic modules, tests, gates, and typed
+artifact layout.
 
 ## Configuration
 
@@ -244,7 +257,7 @@ tables, no aux, no subdirs):
 
 ## tests/
 
-Unit tests for the utility layer: lambda packing/whitening/varnorm/optimization, profile bounds, I×J identification, closure membership, hetero tests, gamma sources, the news-projection mode (`test_news_projection.R`, `test_impose_b_zero.R`), the Stage-04 baseline spec stamp (`test_baseline_spec.R`), residual alignment and saved-residual dates (`test_identification_alignment.R`, `test_saved_residuals_dates.R`), the Z-width pipeline, the generalized-vs-legacy pipeline equivalence (`test_pipeline_equivalence.R`, which toggles `HETID_ASSERT_EQUIV`), the tau* utils (`test_tau_star_utils.R`), the stage-08 paper-spec residuals/estimator (`test_paper_spec_residuals.R`, `test_paper_spec_estimator.R`), and stats -- plus the `pipeline_value_diff.R` before/after value-comparison harness and a `fixtures/` directory of capture scripts and saved fixture RDS.
+Unit tests for the utility layer: lambda packing/whitening/varnorm/optimization, profile bounds, I×J identification, closure membership, hetero tests, gamma sources, the news-projection mode (`test_news_projection.R`, `test_impose_b_zero.R`), the Stage-04 baseline spec stamp (`test_baseline_spec.R`), residual alignment and saved-residual dates (`test_identification_alignment.R`, `test_saved_residuals_dates.R`), the Z-width pipeline, the generalized-vs-legacy pipeline equivalence (`test_pipeline_equivalence.R`, which toggles `HETID_ASSERT_EQUIV`), the tau* utils (`test_tau_star_utils.R`), the stage-08 paper-spec residuals/estimator (`test_paper_spec_residuals.R`, `test_paper_spec_estimator.R`), and stats -- plus the paper pipeline's `scripts-paper/tests/support/compare_pipeline_artifacts.R` before/after value-comparison harness and a `fixtures/` directory of capture scripts and saved fixture RDS.
 
 ## Usage
 

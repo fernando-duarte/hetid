@@ -5,14 +5,14 @@
 # tau = 0 system yields an NA point without discarding the draw's endpoint
 # evaluations, every display tau is solved regardless of the draw's tau*, and
 # each coefficient-tau side carries the shared solvers' own three-state
-# status. Consumed by scripts-paper/set_id_bootstrap.R; tested in
+# status. Consumed by scripts-paper/mean_equation/inference/run_bootstrap.R; tested in
 # scripts/utils/tests/test_set_id_bootstrap_core.R.
 
 # Re-estimate the mean-equation system on one data frame: the W1/W2
 # residualizations, the de-meaned instrument, the identification moments, and
 # the closed-form tau = 0 point. Shared by the full-sample estimation
-# (set_id_mean_eq.R) and the per-draw bootstrap so the two recipes cannot
-# drift apart.
+# (scripts-paper/mean_equation/estimate_identified_set.R) and the per-draw
+# bootstrap so the two recipes cannot drift apart.
 estimate_set_id_system <- function(dat, spec) {
   fit1 <- stats::lm(
     stats::reformulate(spec$x_cols, response = spec$y1_col),

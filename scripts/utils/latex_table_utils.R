@@ -131,10 +131,45 @@ compile_latex_pdf <- function(tex_path) {
     stdout = FALSE, stderr = FALSE
   )
   if (status != 0) stop("latexmk failed on ", tex_path, " (status ", status, ")")
-  invisible(system2(
+  cleanup_status <- system2(
     "latexmk", c("-cd", "-c", tex_path),
     stdout = FALSE, stderr = FALSE
-  ))
+  )
+  stem <- tools::file_path_sans_ext(tex_path)
+  sidecars <- paste0(
+    stem,
+    c(
+      ".aux", ".log", ".fls", ".fdb_latexmk", ".out", ".toc",
+      ".nav", ".snm", ".vrb", ".synctex.gz"
+    )
+  )
+  unlink(sidecars)
+  remaining <- sidecars[file.exists(sidecars)]
+  if (length(remaining)) {
+    stop(
+      "LaTeX sidecar cleanup failed: ", paste(remaining, collapse = ", ")
+    )
+  }
+  invisible(cleanup_status)
+}
+
+# Remove delayed LaTeX sidecars, retrying for file-provider synchronization.
+clean_latex_sidecars <- function(root, attempts = 8L, wait_seconds = 0.25) {
+  pattern <- "[.](aux|log|fls|fdb_latexmk|synctex[.]gz|out|toc|nav|snm|vrb)$"
+  removed <- character()
+  for (attempt in seq_len(attempts)) {
+    sidecars <- list.files(root, pattern = pattern, recursive = TRUE, full.names = TRUE)
+    if (length(sidecars)) {
+      unlink(sidecars)
+      removed <- union(removed, sidecars)
+    }
+    Sys.sleep(wait_seconds)
+  }
+  remaining <- list.files(root, pattern = pattern, recursive = TRUE, full.names = TRUE)
+  if (length(remaining)) {
+    stop("LaTeX sidecar cleanup failed: ", paste(remaining, collapse = ", "))
+  }
+  invisible(removed)
 }
 
 #' Write a table fragment and (optionally) its standalone document variant
