@@ -2,7 +2,7 @@
 % Please edit documentation in R/validate_acm_extract.R
 \name{validate_acm_extract_inputs}
 \alias{validate_acm_extract_inputs}
-\title{Validate ACM extraction inputs}
+\title{Validate ACM Extraction Inputs}
 \usage{
 validate_acm_extract_inputs(
   data_types,
@@ -21,6 +21,6 @@ validate_acm_extract_inputs(
 Invisible TRUE if valid, stops with informative error otherwise
 }
 \description{
-Validate ACM extraction inputs
+Validate ACM Extraction Inputs
 }
 \keyword{internal}

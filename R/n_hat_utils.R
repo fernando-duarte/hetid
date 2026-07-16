@@ -14,9 +14,8 @@ NULL
 #' one-period bond: n_hat(0,t) = E_t\[p_t^(step)\] = p_t^(step), the
 #' log price of the step-maturity bond.
 #'
-#' @param yields Yields data
-#' @param term_premia Term premia data
-#' @param i Maturity
+#' @template param-yields-term-premia
+#' @template param-maturity-index
 #' @template param-step
 #' @return Previous period n_hat series
 #' @keywords internal
@@ -41,7 +40,8 @@ compute_n_hat_previous <- function(yields, term_premia, i,
 #'
 #' @param current_series Current period series
 #' @param future_series Future period series
-#' @return News series
+#' @return News series (\code{length(current_series) - 1}), or
+#'   \code{numeric(0)} when the inputs have fewer than two observations.
 #' @keywords internal
 compute_time_series_news <- function(current_series, future_series) {
   assert_dimension_ok(

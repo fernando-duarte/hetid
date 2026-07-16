@@ -32,8 +32,8 @@
 #'   \code{compute_n_hat_previous(i - step)}), never \code{i + step}.
 #'
 #' @details
-#' The fourth moment estimator captures the kurtosis of forecast errors in
-#' the term structure model, providing information about tail risks.
+#' The fourth moment estimator summarizes the tail thickness of forecast errors
+#' in the term structure model, providing information about tail risks.
 #'
 #' @export
 #'

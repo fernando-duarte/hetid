@@ -4,7 +4,7 @@
 \alias{assert_columns_exist}
 \title{Assert Required Columns Exist}
 \usage{
-assert_columns_exist(df, required_cols, context = NULL)
+assert_columns_exist(df, required_cols, context = NULL, arg = "df")
 }
 \arguments{
 \item{df}{Data frame or matrix}
@@ -12,6 +12,11 @@ assert_columns_exist(df, required_cols, context = NULL)
 \item{required_cols}{Character vector of required column names}
 
 \item{context}{Description for error message}
+
+\item{arg}{Condition argument name}
+}
+\value{
+Invisible TRUE; stops with a structured error otherwise
 }
 \description{
 Assert Required Columns Exist

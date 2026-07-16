@@ -2,7 +2,7 @@
 % Please edit documentation in R/period_end.R
 \name{to_period_end}
 \alias{to_period_end}
-\title{Normalize dates to the calendar period-end convention}
+\title{Normalize Dates to the Calendar Period-End Convention}
 \usage{
 to_period_end(dates, frequency = c("monthly", "quarterly", "annual", "daily"))
 }

@@ -2,7 +2,7 @@
 % Please edit documentation in R/y1_lags.R
 \name{build_y1_lag_columns}
 \alias{build_y1_lag_columns}
-\title{Build lagged-outcome regressor columns}
+\title{Build Lagged-Outcome Regressor Columns}
 \usage{
 build_y1_lag_columns(y1, n_lags)
 }

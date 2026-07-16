@@ -14,6 +14,5 @@ Loads the bundled variables dataset from package data and normalizes its
 dates to the package-wide period-end convention. The shipped file is
 imported verbatim from its source repository with quarter-start labels,
 so normalization happens here, at ingestion.
-Extracted as a separate function for testability.
 }
 \keyword{internal}

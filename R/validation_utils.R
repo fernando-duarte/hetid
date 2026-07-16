@@ -26,7 +26,7 @@ assert_scalar_finite <- function(x, name) {
   invisible(TRUE)
 }
 
-#' Assert a Scalar is an Integer Within a Closed Range
+#' Assert a Scalar Is an Integer Within a Closed Range
 #'
 #' Shared core for scalar integer-index validators. The \code{arg} defaults to
 #' \code{name} so callers can keep a distinct condition \code{arg} field.

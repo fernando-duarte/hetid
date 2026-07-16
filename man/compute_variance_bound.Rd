@@ -54,8 +54,9 @@ U_i = (1/4) * c_hat_i * (k_hat_i + k2_hat_i).
 }
 \details{
 The leading fourth-order term is
-U_i = (1/4) * C_i * (K1_i + K2_i), estimated by the plug-in
-(1/4) * c_hat_i * (k_hat_i + k2_hat_i). It is a plug-in approximation
+\deqn{U_i = \frac{1}{4} C_i (K1_i + K2_i)}
+estimated by the plug-in \eqn{\frac{1}{4} c\_hat_i (k\_hat_i +
+k2\_hat_i)}. It is a plug-in approximation
 to the leading part of the theoretical bound, not a literal
 finite-sample upper bound: sample fourth moments can lie below their
 population counterparts and the higher-order remainder is omitted. At
@@ -75,10 +76,14 @@ be a positive multiple of \code{step} (enforced by
 \code{\link{compute_k_hat}} and \code{\link{compute_k2_hat}}).
 }
 \examples{
-# Extract ACM data
-data <- extract_acm_data(data_types = c("yields", "term_premia"))
-yields <- data[, paste0("y", seq(12, 120, 12))]
-term_premia <- data[, paste0("tp", seq(12, 120, 12))]
+# Extract ACM data - need maturities step, i-step, i, i+step (months)
+# For i = 60 with the default annual step: 12, 48, 60, and 72
+data <- extract_acm_data(
+  data_types = c("yields", "term_premia"),
+  maturities = c(12, 48, 60, 72)
+)
+yields <- data[, paste0("y", c(12, 48, 60, 72))]
+term_premia <- data[, paste0("tp", c(12, 48, 60, 72))]
 
 # Compute variance bound for the 5-year (60-month) maturity
 var_bound_60 <- compute_variance_bound(yields, term_premia, i = 60)

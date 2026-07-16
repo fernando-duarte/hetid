@@ -47,9 +47,8 @@ run_pc_regression <- function(y, pcs, n_pcs) {
     data = reg_data
   )
 
-  # Aliasing guard: collinear regressors (e.g. own-lags nearly collinear with
-  # PCs) make lm() drop terms to NA. Fail here with a clear error instead of
-  # silently propagating an under-ranked design downstream.
+  # collinear regressors make lm() drop terms to NA; fail here instead of
+  # propagating an under-ranked design downstream
   coefs <- coef(model)
   if (anyNA(coefs)) {
     aliased <- names(coefs)[is.na(coefs)]
@@ -64,9 +63,9 @@ run_pc_regression <- function(y, pcs, n_pcs) {
     residuals = residuals(model),
     fitted = fitted(model),
     coefficients = coefs,
-    r_squared = summary(model)$r.squared,
+    r_squared = summary(model)[["r.squared"]],
     model = model,
     complete_idx = complete_idx,
-    df_residual = model$df.residual
+    df_residual = model[["df.residual"]]
   )
 }

@@ -11,10 +11,10 @@
 #' @template return-dated-dataframe
 #'
 #' @details
-#' With maturity weights in years, m(i) = i / MATURITY_UNITS_PER_YEAR,
-#' the formula is:
-#' n_hat(i,t) = m(i)*y_t^(i) - m(i+step)*y_t^(i+step) +
-#' m(i+step)*TP_t^(i+step) - m(i)*TP_t^(i)
+#' With maturity weights in years, \eqn{m(i) = i /
+#' \mathrm{MATURITY\_UNITS\_PER\_YEAR}}, the formula is
+#' \deqn{n\_hat(i,t) = m(i) y_t^{(i)} - m(i+step) y_t^{(i+step)} +
+#'   m(i+step) TP_t^{(i+step)} - m(i) TP_t^{(i)}}
 #'
 #' At the one-period maturity \code{i == step} the term premium of the
 #' step-maturity bond is zero by definition (the imposed normalization
@@ -37,13 +37,17 @@
 #' @export
 #'
 #' @examples
-#' # Extract ACM data
-#' data <- extract_acm_data(data_types = c("yields", "term_premia"))
+#' # Extract ACM data - need maturities i and i+step (months)
+#' # For i = 60 with the default annual step: 60 and 72
+#' data <- extract_acm_data(
+#'   data_types = c("yields", "term_premia"),
+#'   maturities = c(60, 72)
+#' )
 #'
 #' # Compute n_hat for the 5-year (60-month) maturity (dated data frame)
 #' n_hat_60 <- compute_n_hat(
-#'   yields = data[, paste0("y", seq(12, 120, 12))],
-#'   term_premia = data[, paste0("tp", seq(12, 120, 12))],
+#'   yields = data[, paste0("y", c(60, 72))],
+#'   term_premia = data[, paste0("tp", c(60, 72))],
 #'   i = 60,
 #'   dates = data$date
 #' )
@@ -65,7 +69,6 @@ compute_n_hat <- function(yields, term_premia, i, dates = NULL,
 #'
 #' @inheritParams compute_n_hat
 #' @return Numeric vector \code{n_hat(i, t)}.
-#' @keywords internal
 #' @noRd
 n_hat_series <- function(yields, term_premia, i,
                          step = HETID_CONSTANTS$DEFAULT_STEP) {
@@ -85,7 +88,6 @@ n_hat_series <- function(yields, term_premia, i,
     term_premia, acm_column_name("term_premia", i + step), "term_premia"
   )
 
-  # TP^(1) := 0 normalization: overwrite any supplied step-maturity term premium.
   if (i == step) {
     tp_i <- 0
   }

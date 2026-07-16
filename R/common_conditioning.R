@@ -19,8 +19,6 @@
 build_common_conditioning <- function(pcs, n_pcs, y1 = NULL, y1_lags = 0L) {
   reg_matrix <- pcs[, seq_len(n_pcs), drop = FALSE]
 
-  # Name PCs before lag append: a blank name triggers run_pc_regression's
-  # full-column relabel fallback, which would rename lag columns too.
   nms <- colnames(reg_matrix)
   if (is.null(nms) || anyNA(nms) || !all(nzchar(nms))) {
     colnames(reg_matrix) <- get_pc_column_names(n_pcs)

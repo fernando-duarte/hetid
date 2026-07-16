@@ -17,7 +17,8 @@ impose_b_zero_result(sdf_innov, reg_lagged, complete_idx, n_complete)
 }
 \value{
 List mirroring the fitted-path result, with zero coefficients,
-zero fitted values, and \code{r_squared = NA}.
+zero fitted values, and \code{r_squared} / \code{df_residual} both
+\code{NA_real_}.
 }
 \description{
 Imposes \eqn{B = 0} literally: no regression is fit, the residual is the SDF

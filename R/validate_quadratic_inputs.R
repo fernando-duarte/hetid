@@ -1,11 +1,14 @@
-#' Validate numeric vector dimensions
+#' Validate Numeric Vector Dimensions
 #'
+#' @param x Object to check
+#' @param n_components Expected length
+#' @return TRUE when \code{x} is a dimensionless numeric vector of length \code{n_components}
 #' @noRd
 is_numeric_vector_dim <- function(x, n_components) {
   is.numeric(x) && is.null(dim(x)) && length(x) == n_components
 }
 
-#' Validate per-element dimensions of the components' Q_i list
+#' Validate Per-Element Dimensions of the Components' Q_i List
 #'
 #' @param Q_i List of theta-axis vectors from the components object
 #' @param maturities Maturity vector from the containers
@@ -25,7 +28,7 @@ validate_q_i_dims <- function(Q_i, maturities, # nolint: object_name_linter.
   }
 }
 
-#' Validate finiteness of per-maturity moment and component values
+#' Validate Finiteness of Per-Maturity Moment and Component Values
 #'
 #' Flags NA/NaN/Inf in any per-maturity value before the quadratic
 #' assembly so the error names the offending object and maturity
@@ -54,7 +57,7 @@ validate_finite_by_maturity <- function(quantities, maturities) {
   }
 }
 
-#' Validate inputs for the quadratic identified set computation
+#' Validate Inputs for the Quadratic Identified Set Computation
 #'
 #' Checks the container classes, that the components and moments carry
 #' identical maturity identity, the shapes of the \code{components}
@@ -110,7 +113,10 @@ validate_quadratic_inputs <- function(tau, components, moments) {
   assert_tau_values_ok(tau)
   assert_dimension_ok(
     length(tau) == n_components,
-    "tau must have length I (the moments' n_components)"
+    paste0(
+      "tau must have length I (the moments' n_components): tau = ",
+      length(tau), "; n_components = ", n_components
+    )
   )
   assert_bad_argument_ok(
     is.list(components$Q_i),

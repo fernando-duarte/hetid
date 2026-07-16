@@ -11,12 +11,7 @@ trim_to_bound_index_set(series, i, step, len_offset = 0L)
 
 \item{i}{Maturity index (a positive multiple of \code{step}).}
 
-\item{step}{Integer number of maturity-index units per news period
-(default \code{HETID_CONSTANTS$DEFAULT_STEP}). The news operator
-steps one period, so maturity arithmetic moves in multiples of
-\code{step}: \code{compute_n_hat()} pairs maturities \code{i} and
-\code{i + step}, the one-period bond is the \code{step}-maturity
-bond, and horizons must satisfy \code{i <= MAX_MATURITY - step}.}
+\item{step}{Integer number of maturity-index units per news period.}
 
 \item{len_offset}{Added to the effective length and the kept range
 (0 for a length-T series, 1L for a T-1 news series).}

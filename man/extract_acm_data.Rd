@@ -20,7 +20,9 @@ extract_acm_data(
 Options: "yields", "term_premia", "risk_neutral_yields".
 Default is c("yields", "term_premia").}
 
-\item{maturities}{Numeric vector of maturities in months (1-120).
+\item{maturities}{Numeric vector of maturities in months
+(\code{HETID_CONSTANTS$MIN_MATURITY} to
+\code{HETID_CONSTANTS$MAX_MATURITY}).
 Default is the annual nodes \code{seq(12, 120, by = 12)}
 (\code{HETID_CONSTANTS$DEFAULT_ACM_MATURITIES}); pass
 \code{HETID_CONSTANTS$ALL_ACM_MATURITIES} for the full monthly
@@ -74,9 +76,11 @@ allowing selection of specific data types, maturities, and date ranges.
 Optionally converts monthly data to quarterly frequency.
 }
 \details{
-The raw ACM data carries maturities at one-month steps from 1 to
-120 months. Whole-year maturities keep the official column names
-(ACMY01-ACMY10, ACMTP01-ACMTP10, ACMRNY01-ACMRNY10); sub-annual
+The raw ACM data carries maturities at one-month steps from
+\code{HETID_CONSTANTS$MIN_MATURITY} to
+\code{HETID_CONSTANTS$MAX_MATURITY} months. Whole-year maturities keep
+the official column names (ACMY01-ACMY10, ACMTP01-ACMTP10,
+ACMRNY01-ACMRNY10); sub-annual
 months use names like ACMY003M. The NY Fed fallback source provides
 only the annual nodes; requesting sub-annual maturities against it
 raises a structured error. The daily asset carries the identical

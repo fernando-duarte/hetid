@@ -54,10 +54,14 @@ further news periods). \code{i} must be a positive multiple of
 }
 
 \examples{
-# Extract ACM data
-data <- extract_acm_data(data_types = c("yields", "term_premia"))
-yields <- data[, paste0("y", seq(12, 120, 12))]
-term_premia <- data[, paste0("tp", seq(12, 120, 12))]
+# Extract ACM data - need maturities i and i+step (months)
+# For i = 60 with the default annual step: 60 and 72
+data <- extract_acm_data(
+  data_types = c("yields", "term_premia"),
+  maturities = c(60, 72)
+)
+yields <- data[, paste0("y", c(60, 72))]
+term_premia <- data[, paste0("tp", c(60, 72))]
 
 # Compute c_hat for the 5-year (60-month) maturity
 c_hat_60 <- compute_c_hat(yields, term_premia, i = 60)

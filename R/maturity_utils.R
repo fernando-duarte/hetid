@@ -20,9 +20,7 @@ maturity_names <- function(maturities) {
 #' Effective Maximum Maturity for a News Step
 #'
 #' Largest maturity index usable by functions that need data at
-#' maturity \code{i + step} (e.g. \code{compute_n_hat}). Replaces the
-#' former fixed \code{EFFECTIVE_MAX_MATURITY} constant with a
-#' step-dependent bound.
+#' maturity \code{i + step} (e.g. \code{compute_n_hat}).
 #'
 #' @template param-step
 #' @return Integer scalar, \code{MAX_MATURITY - step}

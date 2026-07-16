@@ -158,6 +158,7 @@ level-error variance bound
 \subsection{Constants and Utilities:}{
 \itemize{
 \item \code{\link{effective_max_maturity}()}: Largest usable maturity index
+\item \code{\link{to_period_end}()}: Normalize dates to the period-end convention
 \item \code{\link{HETID_CONSTANTS}}: Package-wide constant defaults
 }}
 }

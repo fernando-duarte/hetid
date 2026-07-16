@@ -18,7 +18,6 @@ NULL
 #' @param format Date format string passed to \code{as.Date}
 #'
 #' @return Date vector with NA for unparseable elements
-#' @keywords internal
 #' @noRd
 parse_dates_c_locale <- function(x, format) {
   old_locale <- Sys.getlocale("LC_TIME")
@@ -27,7 +26,7 @@ parse_dates_c_locale <- function(x, format) {
   as.Date(x, format = format)
 }
 
-#' Coerce optional date input
+#' Coerce Optional Date Input
 #'
 #' NULL and Date inputs pass through unchanged; character input is
 #' parsed with \code{as.Date}. Anything else (e.g. a bare number, which
@@ -36,7 +35,6 @@ parse_dates_c_locale <- function(x, format) {
 #'
 #' @param x Date bound supplied by the caller
 #' @param arg Argument name for the structured error
-#' @keywords internal
 #' @noRd
 coerce_optional_date <- function(x, arg) {
   if (is.null(x) || inherits(x, "Date")) {
@@ -55,7 +53,7 @@ coerce_optional_date <- function(x, arg) {
   )
 }
 
-#' Parse ACM dates with the shared format fallback chain
+#' Parse ACM Dates With the Shared Format Fallback Chain
 #'
 #' Tries the locale-safe legacy ACM format, then R's default parser,
 #' then explicit ISO, advancing to the next format whenever the current
@@ -66,7 +64,6 @@ coerce_optional_date <- function(x, arg) {
 #'
 #' @param raw_dates Character vector of date strings
 #' @return Date vector, or NULL when no format parses any element
-#' @keywords internal
 #' @noRd
 parse_acm_dates <- function(raw_dates) {
   date_formats <- list(
@@ -98,7 +95,6 @@ parse_acm_dates <- function(raw_dates) {
 #' @param raw_dates Character vector of date strings
 #' @param label Column label used in messages (e.g. "date", "DATE")
 #' @return Date vector (all-NA when \code{raw_dates} is entirely NA)
-#' @keywords internal
 #' @noRd
 parse_and_warn_dates <- function(raw_dates, label = "date") {
   parsed <- parse_acm_dates(raw_dates)
@@ -121,13 +117,14 @@ parse_and_warn_dates <- function(raw_dates, label = "date") {
   parsed
 }
 
-#' Normalize ACM date column
+#' Normalize ACM Date Column
 #'
 #' Converts a character date column to Date via the shared
 #' \code{parse_and_warn_dates} helper (legacy ACM format, default
 #' parser, ISO).
 #'
-#' @keywords internal
+#' @param acm_data ACM data frame
+#' @return ACM data frame with a Date \code{date} column
 #' @noRd
 normalize_acm_date_column <- function(acm_data) {
   if (!("date" %in% names(acm_data)) || inherits(acm_data$date, "Date")) {
@@ -137,12 +134,14 @@ normalize_acm_date_column <- function(acm_data) {
   acm_data
 }
 
-#' Filter ACM data by optional date bounds
+#' Filter ACM Data by Optional Date Bounds
 #'
 #' Rows with NA dates are dropped explicitly; NA subscripts would
 #' otherwise fabricate all-NA rows.
 #'
-#' @keywords internal
+#' @param acm_data ACM data frame
+#' @param start_date,end_date Optional inclusive Date bounds (\code{NULL} = unbounded)
+#' @return ACM data frame filtered to the bounds, NA-dated rows dropped
 #' @noRd
 filter_acm_date_range <- function(acm_data, start_date, end_date) {
   if (!is.null(start_date)) {

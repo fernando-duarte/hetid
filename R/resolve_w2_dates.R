@@ -13,7 +13,6 @@
 #' @return The \eqn{t+1} realization \code{Date} index of the W2 observations,
 #'   before any per-maturity complete-cases subsetting.
 #'
-#' @keywords internal
 #' @noRd
 resolve_w2_dates <- function(dates, n_yield_rows) {
   validate_dates_vector(dates, n_yield_rows)

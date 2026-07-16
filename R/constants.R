@@ -74,33 +74,33 @@ HETID_CONSTANTS <- list(
   MAX_N_PCS = 6L, # Maximum for stability
 
   # Data constraints (maturity indices are months)
-  MIN_MATURITY = 1L, # Minimum available maturity (months)
-  MAX_MATURITY = 120L, # Maximum available maturity (months)
+  MIN_MATURITY = 1L,
+  MAX_MATURITY = 120L,
 
   # News-period geometry
-  DEFAULT_STEP = 12L, # Maturity-index units (months) per news period
-  MATURITY_UNITS_PER_YEAR = 12L, # Maturity index units in one year
+  DEFAULT_STEP = 12L,
+  MATURITY_UNITS_PER_YEAR = 12L,
 
   # Shared guard message for the news-period kernels (c_hat/k_hat/k2_hat/gap)
   INSUFFICIENT_NEWS_MSG = "Not enough observations. Need T > i/step news periods",
 
   # Maturity grids (months)
-  DEFAULT_ACM_MATURITIES = seq(12L, 120L, by = 12L), # Annual nodes
-  ALL_ACM_MATURITIES = 1L:120L, # Full monthly grid
+  DEFAULT_ACM_MATURITIES = seq(12L, 120L, by = 12L),
+  ALL_ACM_MATURITIES = 1L:120L,
 
   # Numerical parameters
-  PERCENT_TO_DECIMAL = 100, # Divisor for percentage conversion
-  DEGENERACY_TOLERANCE = 1e-8, # Variance positivity diagnostic
+  PERCENT_TO_DECIMAL = 100,
+  DEGENERACY_TOLERANCE = 1e-8,
 
   # Calendar
   MONTHS_PER_QUARTER = 3L,
-  USE_INCOMPLETE_QUARTERS = TRUE, # Keep (re-dated) vs drop incomplete quarters
+  USE_INCOMPLETE_QUARTERS = TRUE,
 
   # Date formats
-  ACM_DATE_FORMAT = "%d-%b-%Y", # ACM data date format
-  ISO_DATE_FORMAT = "%Y-%m-%d", # ISO standard date format
-  YEAR_FORMAT = "%Y", # Year extraction format
-  MONTH_FORMAT = "%m", # Month extraction format
+  ACM_DATE_FORMAT = "%d-%b-%Y",
+  ISO_DATE_FORMAT = "%Y-%m-%d",
+  YEAR_FORMAT = "%Y",
+  MONTH_FORMAT = "%m",
 
   # Column names
   CONSUMPTION_GROWTH_COL = "gr1.pcecc96",
@@ -114,9 +114,9 @@ HETID_CONSTANTS <- list(
   BUNDLED_VARIABLES_DATASET = "variables",
 
   # Column format patterns
-  COL_FORMAT_PADDED = "%s%02d", # e.g., ACMY01 (whole-year raw names)
-  COL_FORMAT_MONTHLY = "%s%03dM", # e.g., ACMY003M (sub-annual raw names)
-  COL_FORMAT_SIMPLE = "%s%d" # e.g., y12 (package names, months)
+  COL_FORMAT_PADDED = "%s%02d",
+  COL_FORMAT_MONTHLY = "%s%03dM",
+  COL_FORMAT_SIMPLE = "%s%d"
 )
 
 # Release-asset download URLs are composed as prefix + asset filename

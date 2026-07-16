@@ -2,7 +2,7 @@
 % Please edit documentation in R/naming.R
 \name{lag_grammar_names}
 \alias{lag_grammar_names}
-\title{Grammar names for own-lag columns of a series}
+\title{Grammar Names for Own-Lag Columns of a Series}
 \usage{
 lag_grammar_names(series, n_lags)
 }

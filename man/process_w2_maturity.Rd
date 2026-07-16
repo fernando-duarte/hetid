@@ -17,13 +17,27 @@ process_w2_maturity(
 )
 }
 \arguments{
-\item{i}{Maturity index}
+\item{i}{Integer specifying the maturity index (column) to analyze,
+in \strong{months}. Must be between 1 and 120 (the ACM monthly
+grid); functions that require data at maturity \code{i + step}
+accept at most \code{MAX_MATURITY - step}. The input data must
+contain the columns for the maturities the function uses
+(e.g. \code{y60}/\code{tp60} plus step-adjacent maturities for
+\code{i = 60}). Whole years are multiples of 12 (i = 12 is the
+1-year bond, i = 60 the 5-year, i = 120 the 10-year).}
 
 \item{yields_df}{Yields data frame}
 
 \item{term_premia_df}{Term premia data frame}
 
-\item{pcs}{Principal components matrix}
+\item{pcs}{Matrix of principal components (n x J) where n is the
+number of observations (one row per yield row, aligned to the
+yields by calendar date) and J is the number of components,
+extracted from a broader set of returns of financial assets.
+Required: join the components to the yields by \code{date} before
+calling. The matrix may be any instrument set, not only principal
+components; see \code{\link{build_instrument_matrix}()} for a
+validated constructor that supports arbitrary transformations.}
 
 \item{n_pcs}{Number of PCs}
 

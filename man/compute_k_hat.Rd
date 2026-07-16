@@ -37,8 +37,8 @@ the realized-forecast-error fourth moment (K1) of the variance-bound
 construction.
 }
 \details{
-The fourth moment estimator captures the kurtosis of forecast errors in
-the term structure model, providing information about tail risks.
+The fourth moment estimator summarizes the tail thickness of forecast errors
+in the term structure model, providing information about tail risks.
 }
 \note{
 Unlike \code{compute_c_hat}, \code{compute_k2_hat}, and

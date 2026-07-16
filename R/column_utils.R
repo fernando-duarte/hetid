@@ -104,6 +104,7 @@ acm_column_name <- function(data_type, maturity) {
 #'
 #' @param x Object to check
 #' @param name Argument name for error message
+#' @return Invisible TRUE; stops with a structured error otherwise
 #' @keywords internal
 assert_tabular <- function(x, name) {
   assert_bad_argument_ok(
@@ -119,9 +120,11 @@ assert_tabular <- function(x, name) {
 #' @param df Data frame or matrix
 #' @param required_cols Character vector of required column names
 #' @param context Description for error message
+#' @param arg Condition argument name
+#' @return Invisible TRUE; stops with a structured error otherwise
 #' @keywords internal
 assert_columns_exist <- function(df, required_cols,
-                                 context = NULL) {
+                                 context = NULL, arg = "df") {
   missing_cols <- setdiff(required_cols, names(df))
   msg <- paste(
     "Missing required columns:",
@@ -132,7 +135,8 @@ assert_columns_exist <- function(df, required_cols,
   }
   assert_bad_argument_ok(
     length(missing_cols) == 0,
-    msg
+    msg,
+    arg = arg
   )
   invisible(TRUE)
 }

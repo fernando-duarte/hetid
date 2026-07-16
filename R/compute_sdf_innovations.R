@@ -64,7 +64,6 @@ compute_sdf_innovations <- function(yields, term_premia, i, dates = NULL,
 #'
 #' @inheritParams compute_sdf_innovations
 #' @return Numeric vector of T-1 centered SDF innovations.
-#' @keywords internal
 #' @noRd
 sdf_innovations_series <- function(yields, term_premia, i,
                                    step = HETID_CONSTANTS$DEFAULT_STEP) {
@@ -74,7 +73,6 @@ sdf_innovations_series <- function(yields, term_premia, i,
   n_hat_i <- components$n_hat_i
   delta_p <- components$delta_p
 
-  # B_i subtracted outside exp(n_hat): population analogue has exactly zero mean.
   exp_mu <- exp(n_hat_i[seq_along(delta_p)])
   valid <- !is.na(exp_mu) & !is.na(delta_p)
   assert_insufficient_data_ok(

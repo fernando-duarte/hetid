@@ -2,7 +2,7 @@
 % Please edit documentation in R/validate_w2_inputs.R
 \name{load_w2_pcs}
 \alias{load_w2_pcs}
-\title{Load Principal Components (and optionally dates) for W2}
+\title{Validate Principal Components for W2}
 \usage{
 load_w2_pcs(pcs, n_pcs, n_obs)
 }

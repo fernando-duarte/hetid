@@ -122,7 +122,7 @@ recover_structural_coefficients <- function(beta1r, beta2r, theta) {
     )
   }
 
-  # beta1(theta) = beta1r - (beta2r)' theta ; crossprod(beta2r, theta) = t(beta2r) %*% theta
+  # crossprod(beta2r, theta) computes t(beta2r) %*% theta
   out <- beta1r - crossprod(beta2r, theta)
   if (theta_is_matrix) {
     rownames(out) <- names(beta1r)

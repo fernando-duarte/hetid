@@ -2,7 +2,7 @@
 % Please edit documentation in R/validation_utils.R
 \name{assert_scalar_integer_in_range}
 \alias{assert_scalar_integer_in_range}
-\title{Assert a Scalar is an Integer Within a Closed Range}
+\title{Assert a Scalar Is an Integer Within a Closed Range}
 \usage{
 assert_scalar_integer_in_range(x, name, min_value, max_value, arg = name)
 }

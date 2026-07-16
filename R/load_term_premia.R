@@ -56,7 +56,7 @@ load_term_premia <- function(auto_download = FALSE,
     }
   }
 
-  # Resolve after any download so a fresh user-cache copy is found.
+  # Resolve after any download so a fresh user-cache copy is found
   csv_path <- get_acm_data_path(source, frequency)
   tp_df <- tryCatch(
     read.csv(csv_path, stringsAsFactors = FALSE),

@@ -99,7 +99,7 @@
 #'   \eqn{E_t[\mathrm{SDF}_{t+1}] = P^{(1)}_t = e^{-y^{(1)}_t}}, the realized
 #'   one-period price observed at \eqn{t}. It is exact: no forecast, no
 #'   approximation, and no bias correction (\code{paired} is ignored). A
-#'   \code{hetid_warning_horizon_zero} warning is signalled to flag this.
+#'   \code{hetid_warning_horizon_zero} warning is signaled to flag this.
 #'
 #' @note To read off the shifted-information expectation
 #'   \eqn{E_{t-j}[\mathrm{SDF}_{t+m}]}: with \eqn{s = m + j - 1} (require
@@ -137,7 +137,7 @@ compute_expected_sdf <- function(yields, term_premia, i, dates = NULL,
                                  step = HETID_CONSTANTS$DEFAULT_STEP,
                                  paired = FALSE) {
   validate_step(step)
-  # Lower bound 0 (not MIN_MATURITY): admits the horizon-0 boundary below.
+  # Lower bound 0 (not MIN_MATURITY): admits the horizon-0 boundary below
   assert_scalar_integer_in_range(
     i, "Maturity index i", 0L, effective_max_maturity(step),
     arg = "i"
@@ -147,7 +147,7 @@ compute_expected_sdf <- function(yields, term_premia, i, dates = NULL,
 
   if (i == 0) {
     # Reuse compute_n_hat_previous: it applies the TP^(1) := 0 normalization
-    # that n_hat_series(0) would skip.
+    # that n_hat_series(0) would skip
     warn_horizon_zero(
       paste0(
         "i = 0 returns the realized one-period price (observed at t), exact ",
@@ -159,7 +159,7 @@ compute_expected_sdf <- function(yields, term_premia, i, dates = NULL,
   }
 
   if (paired) {
-    # Gap series also drives compute_expected_sdf_variance_bound().
+    # Gap series also drives compute_expected_sdf_variance_bound()
     components <- compute_expected_sdf_gap(yields, term_premia, i, step = step)
     assert_insufficient_data_ok(
       length(components$gap) > 0,
@@ -168,7 +168,7 @@ compute_expected_sdf <- function(yields, term_premia, i, dates = NULL,
     exp_n_hat <- components$exp_n_hat
     correction <- mean(components$gap)
   } else {
-    # No lead, so any maturity i (not just multiples of step) is admissible.
+    # No lead, so any maturity i (not just multiples of step) is admissible
     exp_n_hat <- exp(n_hat_series(yields, term_premia, i, step = step))
     y_step <- require_column(yields, acm_column_name("yields", step), "yields")
     m_step <- step / HETID_CONSTANTS$MATURITY_UNITS_PER_YEAR

@@ -120,7 +120,7 @@ prepare_return_data <- function(result_series, dates, yields,
 #'
 #' @param series Numeric series to trim.
 #' @param i Maturity index (a positive multiple of \code{step}).
-#' @template param-step
+#' @param step Integer number of maturity-index units per news period.
 #' @param len_offset Added to the effective length and the kept range
 #'   (0 for a length-T series, 1L for a T-1 news series).
 #' @return The trimmed, NA-dropped numeric vector (possibly empty).

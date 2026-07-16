@@ -45,7 +45,7 @@ dates (length \eqn{\le T - s} after dropping any non-finite pair).}
 \code{gap}'s finite paired set (one common \code{is.finite(gap)} mask).
 \code{q} shares \code{g}'s conditional mean in population
 (\eqn{E[u | \mathrm{info}] = 0}) and its \eqn{1/N} variance is a
-sharper \eqn{O(\sigma^4)} bound. \code{q} is NOT itself guaranteed
+sharper \eqn{O(\sigma^4)} bound. \code{q} is \strong{not} itself guaranteed
 finite: a yield \eqn{\to +\infty} gives \eqn{q = +\infty}, and an
 extreme \eqn{n\_hat} can give \eqn{0 \cdot \infty = \mathrm{NaN}}.
 The bound function guards \code{var_q} against this.}

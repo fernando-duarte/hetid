@@ -8,7 +8,7 @@
 #' @keywords internal
 NULL
 
-#' Validate ACM extraction inputs
+#' Validate ACM Extraction Inputs
 #'
 #' @param data_types Character vector of data type keys
 #' @param maturities Numeric vector of maturities in months
@@ -46,7 +46,7 @@ assert_subannual_available <- function(acm_data, maturities) {
     return(invisible(TRUE))
   }
   # Probe the exact requested columns: a source with some sub-annual nodes (e.g. 3M)
-  # but not the requested one (e.g. 9M) must still fail here.
+  # but not the requested one (e.g. 9M) must still fail here
   absent <- setdiff(
     acm_raw_column_name("yields", sub_annual), names(acm_data)
   )

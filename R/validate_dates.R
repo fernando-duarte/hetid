@@ -15,7 +15,6 @@
 #' @param arg Argument name used in the structured error.
 #'
 #' @return Invisible \code{TRUE} when valid; otherwise a \code{hetid_error}.
-#' @keywords internal
 #' @noRd
 validate_dates_vector <- function(dates, expected_len, arg = "dates") {
   assert_bad_argument_ok(
