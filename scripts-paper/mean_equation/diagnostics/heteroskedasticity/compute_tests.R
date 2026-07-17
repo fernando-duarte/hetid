@@ -131,29 +131,53 @@ row_labels <- c(
 )
 
 sig <- 0.05
+# A PC "rejects" only on a p-value that is a real number below sig. An NA/NaN
+# means the test did not run (a caught supplementary failure, or a degenerate
+# non-throwing NaN), which is neither rejection nor its opposite -- isTRUE()
+# used to fold it into "did not reject" and caption the inverse finding. Keep
+# only the finite p-values per PC, so a PC counts as tested only if at least
+# one of the caption-driving tests produced a verdict.
 reject <- vapply(pvals, function(pv) {
-  isTRUE(pv[["BP"]] < sig) ||
-    isTRUE(pv[["GQ"]] < sig) ||
-    isTRUE(pv[["ARCH"]] < sig)
+  any(Filter(is.finite, c(pv[["BP"]], pv[["GQ"]], pv[["ARCH"]])) < sig)
 }, logical(1))
 n_pc_tested <- ncol(y2)
-caption <- if (any(reject)) {
-  sprintf(
-    paste0(
-      "The instrument drives significant conditional ",
-      "heteroskedasticity in %d of %d SDF-news PCs (Lewbel relevance)."
-    ),
-    sum(reject),
-    n_pc_tested
-  )
-} else {
-  sprintf(
-    paste0(
-      "The %d SDF-news PCs show no significant conditional ",
-      "heteroskedasticity against the instrument (weak Lewbel relevance)."
-    ),
-    n_pc_tested
-  )
-}
+caption <- local({
+  tested <- vapply(pvals, function(pv) {
+    length(Filter(is.finite, c(pv[["BP"]], pv[["GQ"]], pv[["ARCH"]]))) > 0L
+  }, logical(1))
+  n_tested <- sum(tested)
+  n_reject <- sum(reject)
+  untested <- n_pc_tested - n_tested
+  note <- if (untested > 0L) {
+    sprintf(" The battery did not run on %d of %d PCs.", untested, n_pc_tested)
+  } else {
+    ""
+  }
+  if (n_tested == 0L) {
+    sprintf(
+      paste0(
+        "The conditional-heteroskedasticity battery did not run on any of ",
+        "the %d SDF-news PCs, so Lewbel relevance is undetermined."
+      ),
+      n_pc_tested
+    )
+  } else if (n_reject > 0L) {
+    sprintf(
+      paste0(
+        "The instrument drives significant conditional heteroskedasticity ",
+        "in %d of %d SDF-news PCs (Lewbel relevance).%s"
+      ),
+      n_reject, n_tested, note
+    )
+  } else {
+    sprintf(
+      paste0(
+        "The %d SDF-news PCs show no significant conditional heteroskedasticity ",
+        "against the instrument (weak Lewbel relevance).%s"
+      ),
+      n_tested, note
+    )
+  }
+})
 n_obs <- set_id_mean_eq$sample$n
 span <- paste(format(set_id_mean_eq$sample$span), collapse = "--")
