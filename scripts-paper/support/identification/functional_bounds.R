@@ -117,8 +117,12 @@ solve_point_identification <- function(components, tol = 1e-8) {
     qr(qmat, tol = tol)$rank < ncol(qmat)) {
     return(NULL)
   }
-  pt <- tryCatch(qr.solve(qmat, lvec), error = function(e) NULL)
-  if (is.null(pt) || any(!is.finite(pt))) {
+  # Pass the same tol the guard used: on qr.solve's own default of 1e-7 a matrix
+  # this guard admits at 1e-8 can still be called singular, and the blanket catch
+  # that stood here hid that disagreement by reporting the miss as "no point".
+  # Sharing the tolerance makes the rank guard above the only gate.
+  pt <- qr.solve(qmat, lvec, tol = tol)
+  if (any(!is.finite(pt))) {
     return(NULL)
   }
   if (max(abs(qmat %*% pt - lvec)) > tol * max(1, max(abs(lvec)))) {
