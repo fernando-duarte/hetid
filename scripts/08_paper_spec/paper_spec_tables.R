@@ -222,6 +222,31 @@ build_table3_properties <- function(res) {
       .fmt(e$tau_star, 3)
     }
   }
+  # tau* point estimate with its bootstrap band. When every bootstrap draw is
+  # censored at the search cap, the draws are lower bounds, not located
+  # transitions, so their percentile spread is not a sampling band -- printing
+  # [cap, cap] would read as a transition pinned with zero sampling uncertainty.
+  # Report the censoring instead, matching the point cell's convention.
+  tstar_cell <- function() {
+    n_ts <- b$tau_star[["n"]]
+    if (n_ts > 0 && isTRUE(b$n_capped >= n_ts)) {
+      sprintf("$\\ge%s$ (all %d bootstrap draws censored)", .fmt(e$tau_star, 3), n_ts)
+    } else {
+      sprintf("%s %s", tstar(), band(b$tau_star))
+    }
+  }
+  # The status decides the width cell, not is.finite(): an NA width is a
+  # fail-closed solve that established nothing rather than an infinite one, and
+  # a finite width whose validity certificate failed is not a set measurement.
+  # .classify_set_status already separates the four cases; branch on it so this
+  # cell cannot contradict the status cell below.
+  wcell <- function() {
+    switch(e$set_status,
+      unbounded = "unbounded",
+      unreliable = "unreliable",
+      .fmt(e$width, 4)
+    )
+  }
   span <- paste0(.qq(min(e$dates)), "--", .qq(max(e$dates)))
   snr <- rel$cov_z_w2sq / b$cov_se
 
@@ -240,13 +265,20 @@ build_table3_properties <- function(res) {
     pcell("Glejser"), pcell("BPLM"), pcell("ARCH"),
     sprintf("%s (%.2f)", .fmt(rel$cov_z_w2sq, 3), snr), .fmt(rel$cor_z_w2sq, 3),
     .fmt(rel$mean_slope_t, 3), .fmt(rel$cor_w1_w2, 3),
-    sprintf("%s %s", tstar(), band(b$tau_star)),
-    if (is.finite(e$width)) .fmt(e$width, 4) else "unbounded",
+    tstar_cell(),
+    wcell(),
     e$set_status, .fmt(e$r2_w1, 3), .fmt(e$r2_y2, 3),
     sprintf("%.1f\\%%", 100 * e$pc_var_explained), as.character(e$n_obs), span
   )
-  hetero_reject <- isTRUE(pv[["BP"]] < sig) || isTRUE(pv[["ARCH"]] < sig) ||
-    isTRUE(pv[["GQ"]] < sig)
+  # A test counts toward the relevance verdict only if it produced a finite
+  # p-value: an absent name (the suite threw) or an NA (a test's own failure) is
+  # "did not run", not "did not reject". isTRUE(NA < sig) is FALSE, so reading
+  # these raw would caption a battery that never ran as weak Lewbel relevance --
+  # the b933e58 defect, on the diagnostic that speaks to whether Lewbel
+  # identification applies at all. Mirrors pcell()'s present-and-finite guard.
+  battery <- c("BP", "ARCH", "GQ")
+  ran <- Filter(function(nm) nm %in% names(pv) && is.finite(pv[[nm]]), battery)
+  hetero_reject <- any(vapply(ran, function(nm) pv[[nm]] < sig, logical(1)))
   tau_clause <- if (isTRUE(e$tau_star_capped)) {
     sprintf(
       paste0(
@@ -261,14 +293,33 @@ build_table3_properties <- function(res) {
       .fmt(e$tau_star, 2)
     )
   }
-  title <- sprintf(
-    paste0(
-      "VFCI %s conditional heteroskedasticity in the news residual ",
-      "(relevance), and %s, but the bootstrap shows the identifying moment is ",
-      "imprecise (SNR$\\approx%.1f$)."
+  hetero_phrase <- if (length(ran) == 0L) {
+    "could not be assessed for"
+  } else if (hetero_reject) {
+    "exhibits significant"
+  } else {
+    "shows weak"
+  }
+  # Disclose partial evidence: when the verdict rests on some but not all of the
+  # relevance tests (a NaN from a degenerate bp_lm_test arrives non-throwing, so
+  # is.finite -- not a throw guard -- is what filters it), say how many did not
+  # run, mirroring compute_tests.R's untested-count note. Empty when all ran.
+  untested <- length(battery) - length(ran)
+  hetero_note <- if (length(ran) > 0L && untested > 0L) {
+    sprintf(" %d of %d relevance tests did not run.", untested, length(battery))
+  } else {
+    ""
+  }
+  title <- paste0(
+    sprintf(
+      paste0(
+        "VFCI %s conditional heteroskedasticity in the news residual ",
+        "(relevance), and %s, but the bootstrap shows the identifying moment is ",
+        "imprecise (SNR$\\approx%.1f$)."
+      ),
+      hetero_phrase, tau_clause, snr
     ),
-    if (hetero_reject) "exhibits significant" else "shows weak",
-    tau_clause, snr
+    hetero_note
   )
   notes <- c(
     "Lewbel (2012) identification needs two conditions. Relevance:",

@@ -141,16 +141,23 @@ run_lambda_optimization <- function(lambda_start,
   }, numeric(1))
   best_idx <- which.min(honest_values)
 
+  # Status of the winning set on the SAME solve that produced objective_final:
+  # honest_width_lambda collapses unbounded and uncertified both to Inf, so a
+  # bare is.finite(objective_final) cannot tell a set that runs to infinity from
+  # one the solver never certified. Read it here off the raw best decode (the
+  # exact input honest_values[[best_idx]] solved, before the reporting-
+  # normalization below), so the status agrees with objective_final's finiteness
+  # bit-for-bit and objective_final itself is untouched.
+  best_raw <- decode_lambda(all_results[[best_idx]]$par, dims, free, wctx)
+  set_status <- lambda_status(best_raw, tau, moments)
+
   # Reported representative: variance-normalized columns
   # (lambda' V lambda = 1, the repo default) under whitening, else
   # unit-Euclidean.
-  lambda_opt <- decode_lambda(
-    all_results[[best_idx]]$par, dims, free, wctx
-  )
   lambda_opt <- if (is.null(wctx)) {
-    normalize_lambda_columns(lambda_opt)
+    normalize_lambda_columns(best_raw)
   } else {
-    normalize_lambda_columns_vcov(lambda_opt, wctx)
+    normalize_lambda_columns_vcov(best_raw, wctx)
   }
 
   # Legacy-field convention: all_results[[s]]$par is packed LAMBDA in
@@ -180,6 +187,7 @@ run_lambda_optimization <- function(lambda_start,
     lambda_optimized = lambda_opt,
     objective_start = objective_start,
     objective_final = honest_values[[best_idx]],
+    set_status = set_status,
     all_results = all_results,
     best_index = best_idx,
     duplicate_directions = duplicate_directions,

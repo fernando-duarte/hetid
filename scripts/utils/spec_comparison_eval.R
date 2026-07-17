@@ -64,10 +64,18 @@ eval_opt <- function(seed, mom, n_comp, tau, z) {
     whiten = list(z = z),
     n_starts = n_starts_opt, seed = SEED
   ))
-  list(
-    width = r$objective_final, bounded = is.finite(r$objective_final),
-    kind = "set(opt)", cond = NA
-  )
+  # objective_final is finite ONLY for a certified bounded+valid optimum, so use
+  # it directly as the width (byte-identical to before). honest_width_lambda
+  # collapses unbounded and uncertified both to Inf; set_status splits them, so
+  # an uncertified optimum reports NA ("no certified bound") -- the same 3-state
+  # as eval_fixed/eval_ixj -- rather than the Inf that classify_spec_outcomes
+  # would read as certified unbounded.
+  if (is.finite(r$objective_final)) {
+    list(width = r$objective_final, bounded = TRUE, kind = "set(opt)", cond = NA)
+  } else {
+    width <- if (identical(r$set_status, "unbounded")) Inf else NA_real_
+    list(width = width, bounded = FALSE, kind = "set(opt)", cond = NA)
+  }
 }
 # --- separate I x J: each PC is its own instrument; intersection of I*J
 # single-instrument constraints, summed profile width (tau>0 only) ---
