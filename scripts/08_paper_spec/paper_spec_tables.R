@@ -270,8 +270,15 @@ build_table3_properties <- function(res) {
     e$set_status, .fmt(e$r2_w1, 3), .fmt(e$r2_y2, 3),
     sprintf("%.1f\\%%", 100 * e$pc_var_explained), as.character(e$n_obs), span
   )
-  hetero_reject <- isTRUE(pv[["BP"]] < sig) || isTRUE(pv[["ARCH"]] < sig) ||
-    isTRUE(pv[["GQ"]] < sig)
+  # A test counts toward the relevance verdict only if it produced a finite
+  # p-value: an absent name (the suite threw) or an NA (a test's own failure) is
+  # "did not run", not "did not reject". isTRUE(NA < sig) is FALSE, so reading
+  # these raw would caption a battery that never ran as weak Lewbel relevance --
+  # the b933e58 defect, on the diagnostic that speaks to whether Lewbel
+  # identification applies at all. Mirrors pcell()'s present-and-finite guard.
+  battery <- c("BP", "ARCH", "GQ")
+  ran <- Filter(function(nm) nm %in% names(pv) && is.finite(pv[[nm]]), battery)
+  hetero_reject <- any(vapply(ran, function(nm) pv[[nm]] < sig, logical(1)))
   tau_clause <- if (isTRUE(e$tau_star_capped)) {
     sprintf(
       paste0(
@@ -286,14 +293,20 @@ build_table3_properties <- function(res) {
       .fmt(e$tau_star, 2)
     )
   }
+  hetero_phrase <- if (length(ran) == 0L) {
+    "could not be assessed for"
+  } else if (hetero_reject) {
+    "exhibits significant"
+  } else {
+    "shows weak"
+  }
   title <- sprintf(
     paste0(
       "VFCI %s conditional heteroskedasticity in the news residual ",
       "(relevance), and %s, but the bootstrap shows the identifying moment is ",
       "imprecise (SNR$\\approx%.1f$)."
     ),
-    if (hetero_reject) "exhibits significant" else "shows weak",
-    tau_clause, snr
+    hetero_phrase, tau_clause, snr
   )
   notes <- c(
     "Lewbel (2012) identification needs two conditions. Relevance:",
