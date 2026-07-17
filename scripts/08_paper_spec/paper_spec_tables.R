@@ -300,13 +300,26 @@ build_table3_properties <- function(res) {
   } else {
     "shows weak"
   }
-  title <- sprintf(
-    paste0(
-      "VFCI %s conditional heteroskedasticity in the news residual ",
-      "(relevance), and %s, but the bootstrap shows the identifying moment is ",
-      "imprecise (SNR$\\approx%.1f$)."
+  # Disclose partial evidence: when the verdict rests on some but not all of the
+  # relevance tests (a NaN from a degenerate bp_lm_test arrives non-throwing, so
+  # is.finite -- not a throw guard -- is what filters it), say how many did not
+  # run, mirroring compute_tests.R's untested-count note. Empty when all ran.
+  untested <- length(battery) - length(ran)
+  hetero_note <- if (length(ran) > 0L && untested > 0L) {
+    sprintf(" %d of %d relevance tests did not run.", untested, length(battery))
+  } else {
+    ""
+  }
+  title <- paste0(
+    sprintf(
+      paste0(
+        "VFCI %s conditional heteroskedasticity in the news residual ",
+        "(relevance), and %s, but the bootstrap shows the identifying moment is ",
+        "imprecise (SNR$\\approx%.1f$)."
+      ),
+      hetero_phrase, tau_clause, snr
     ),
-    hetero_phrase, tau_clause, snr
+    hetero_note
   )
   notes <- c(
     "Lewbel (2012) identification needs two conditions. Relevance:",
