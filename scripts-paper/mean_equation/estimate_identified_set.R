@@ -15,6 +15,7 @@ source(paper_path("support", "identification", "profile_solver_core.R"))
 source(paper_path("support", "identification", "profile_bounds_api.R"))
 source(paper_path("support", "identification", "tau_star.R"))
 source(paper_path("support", "identification", "identified_set_bootstrap.R"))
+source(paper_path("mean_equation", "inference", "refine_bounds_by_tau.R"))
 
 # baseline slack and sweep cap (the pipeline's BASELINE_TAU / OPT_TAU_CAP
 # values; admissible slack is [0, 1))
@@ -78,6 +79,20 @@ set_tables <- lapply(
   tau_display, \(tau) coef_interval_tables(gamma, tau, moments, beta1r, beta2r)
 )
 names(set_tables) <- sprintf("tau_%.2g", tau_display)
+
+# coef_interval_tables starts every profile solve at the origin and can settle
+# on a local vertex short of the true extreme, so the news intervals are
+# re-solved from a warm chain seeded at the tau = 0 point and walked up the
+# display taus. An endpoint moves only when the warm solve certifies a feasible
+# theta outside the origin-start interval, so this only ever adds points the set
+# provably contains. These are the sound boxes: every set_tables consumer, and
+# the log-variance census reading them through mean_eq_bounds_tau, needs a box
+# that contains the set rather than one that clips it.
+refined_theta <- set_id_display_tau_refinement(
+  tau_display, if (is.null(point0)) NULL else point0$theta,
+  solve_theta_bound_from, gamma, moments, beta1r, beta2r
+)
+for (j in seq_along(set_tables)) set_tables[[j]]$theta <- refined_theta[[j]]
 
 theta_table <- cbind(
   data.frame(
@@ -165,6 +180,6 @@ print(set_id_mean_eq$relevance, digits = 3)
 rm(
   set_id_data, y1_col, x_cols, y2_cols, sys_spec, est, beta1r, w1, w2, beta2r,
   z, moments, gamma, point0, tau_sweep, tau_star, ols_fit, set_tables,
-  theta_table, beta1_point, beta1_table, relevance, tau_baseline, tau_cap,
-  tau_display
+  refined_theta, j, theta_table, beta1_point, beta1_table, relevance,
+  tau_baseline, tau_cap, tau_display
 )
