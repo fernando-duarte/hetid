@@ -49,7 +49,7 @@ check(
 check("tau_star in [0, OPT_TAU_CAP]", is.finite(e$tau_star) && e$tau_star >= 0 && e$tau_star <= OPT_TAU_CAP)
 check(
   "set_status is one of the four states",
-  e$set_status %in% c("interval", "unbounded", "empty", "point")
+  e$set_status %in% c("interval", "unbounded", "point", "unreliable")
 )
 check(
   "width finite when set_status == interval",
@@ -73,17 +73,18 @@ check(
   all(c("cov_z_w2sq", "cor_z_w2sq", "mean_slope", "cor_w1_w2") %in% names(e$relevance))
 )
 
-# An uncertified, fail-closed solve is handled by the status classifier
-# without error.
+# An uncertified, fail-closed solve establishes nothing about the set, so it
+# must classify as "unreliable", never as the substantive claim "unbounded".
+# %in% c("unbounded", "unreliable") passed under both, pinning nothing.
 check(
-  "set-status classifier handles a fail-closed solve",
+  "fail-closed solve classifies as unreliable, not unbounded",
   .classify_set_status(
     data.frame(
       lower = NA, upper = NA, width = NA,
       bounded_lower = FALSE, bounded_upper = FALSE,
       valid_lower = FALSE, valid_upper = FALSE
     )
-  ) %in% c("unbounded", "unreliable")
+  ) == "unreliable"
 )
 
 # Bootstrap band runs (small reps) and returns finite summaries.
