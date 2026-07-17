@@ -66,7 +66,10 @@ polish_extreme <- function(x0, quad, sq, box, sign_mult, delta, omega) {
   }
 }
 
-# Bound a convex block share over the joint identified set.
+# Bound a convex block share over the joint identified set. A non-finite side
+# cannot be gridded, so the range is not computed; the caller decides what that
+# means from box$status, because the endpoints cannot say -- an uncertified
+# solve can return finite ones and a certified-unbounded set infinite ones.
 set_share_range <- function(box, quad, sq) {
   if (any(!is.finite(c(box$set_lower, box$set_upper)))) {
     return(c(NA_real_, NA_real_))
@@ -100,6 +103,8 @@ set_share_range <- function(box, quad, sq) {
   c(min(vals, polished(1)), max(vals, polished(-1)))
 }
 
+# The mapped interval carries its row's status so the two cannot come apart on
+# the way to the cell.
 component_share_range <- function(tab, s_block) {
   scale <- 100 * diag(s_block) / var_c
   lo <- ifelse(
@@ -109,7 +114,8 @@ component_share_range <- function(tab, s_block) {
   )
   data.frame(
     lo = scale * lo,
-    hi = scale * pmax(tab$set_lower^2, tab$set_upper^2)
+    hi = scale * pmax(tab$set_lower^2, tab$set_upper^2),
+    status = tab$status
   )
 }
 
