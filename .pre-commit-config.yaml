@@ -1,5 +1,13 @@
 # See https://pre-commit.com for more information
 # See https://pre-commit.com/hooks.html for more hooks
+
+# A merge commit's content is never checked: `git merge --no-ff` fires pre-merge-commit
+# (not installed), and completing a merge via `git commit` makes pre-commit narrow to
+# merge-conflict files only, so a clean merge skips every file-based hook. Installing the
+# pre-push hook too means the suite runs on the pushed range regardless of how the commit
+# was made.
+default_install_hook_types: [pre-commit, pre-push]
+
 repos:
   - repo: https://github.com/lorenzwalthert/precommit
     rev: v0.4.3.9025
