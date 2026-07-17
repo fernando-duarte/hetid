@@ -143,6 +143,16 @@ check("ppml parts stay blank when se_type is NULL (back-compat)", {
   pr <- logvar_ppml_table_parts(ptbl_ppml, c(0.05, 0.1), 1L)
   identical(pr$columns[[1]][2], "") && identical(pr$columns[[2]][2], "")
 })
+# a finite coefficient whose SE failed the conditioning gate must show its value
+# with a "--" stat row (SE unavailable), never a blank row that would read as a
+# tested-but-insignificant coefficient
+check("ppml parts mark an unavailable SE with -- , not a blank stat row", {
+  se_ppml_na <- se_ppml_fix
+  se_ppml_na$se$reference$hac[1] <- NA_real_
+  pr <- logvar_ppml_table_parts(se_ppml_na, c(0.05, 0.1), 1L, se_type = "hac")
+  identical(pr$columns[[1]][1], "-1.300") && # coefficient value still printed
+    identical(pr$columns[[1]][2], "--") # stat row marks the SE unavailable
+})
 check("ppml parts fail loud when se_type is set but se is absent", {
   tryCatch(
     {

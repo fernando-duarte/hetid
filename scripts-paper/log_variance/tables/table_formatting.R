@@ -112,7 +112,13 @@ logvar_se_point_col <- function(vals, se_frame, se_type, se_types, tab_coef,
     stars == "" | !is.finite(t_stat), fmt(vals),
     sprintf("%s$%s$", fmt(vals), stars)
   )
-  stat_row <- ifelse(is.finite(t_stat), sprintf("(%.2f)", t_stat), "")
+  # a finite coefficient whose SE failed the conditioning gate has no t-stat:
+  # mark it "--" (SE unavailable), never a blank stat row, which beside the
+  # star-less coefficient would read as "tested, not significant"
+  stat_row <- ifelse(
+    is.finite(t_stat), sprintf("(%.2f)", t_stat),
+    ifelse(is.finite(vals) & !is.finite(se), "--", "")
+  )
   c(interleave(cells, stat_row), "--", sprintf("%d", n_obs))
 }
 
