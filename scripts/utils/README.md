@@ -68,7 +68,8 @@ see `scripts-paper/support/README.md:16-17` for the mapping.
 
 ### common_settings.R
 - Defines shared config constants: `NEWS_STEP = 3L` (`:41`),
-  `PIPELINE_ACM_MATURITIES = seq(3L, 120L, by = 3L)` (`:42`), `SEED = 123` (`:43`),
+  `PIPELINE_ACM_MATURITIES` (`:42` — derived as every multiple of `NEWS_STEP` up to
+  `HETID_CONSTANTS$MAX_MATURITY`), `SEED = 123` (`:43`),
   `BASELINE_TAU = 0.05` (`:44`), `OPT_TAU_CAP = 0.99` (`:48` — the near-uninformative
   slack cap shared across the tau* oracle and the set probes; admissible slack is tau
   in [0, 1)), `N_Y1_LAGS = 4L` (`:49`), `IMPOSE_NEWS_PROJECTION_ZERO = FALSE` (`:51`),
