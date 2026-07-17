@@ -222,6 +222,19 @@ build_table3_properties <- function(res) {
       .fmt(e$tau_star, 3)
     }
   }
+  # tau* point estimate with its bootstrap band. When every bootstrap draw is
+  # censored at the search cap, the draws are lower bounds, not located
+  # transitions, so their percentile spread is not a sampling band -- printing
+  # [cap, cap] would read as a transition pinned with zero sampling uncertainty.
+  # Report the censoring instead, matching the point cell's convention.
+  tstar_cell <- function() {
+    n_ts <- b$tau_star[["n"]]
+    if (n_ts > 0 && isTRUE(b$n_capped >= n_ts)) {
+      sprintf("$\\ge%s$ (all %d bootstrap draws censored)", .fmt(e$tau_star, 3), n_ts)
+    } else {
+      sprintf("%s %s", tstar(), band(b$tau_star))
+    }
+  }
   # The status decides the width cell, not is.finite(): an NA width is a
   # fail-closed solve that established nothing rather than an infinite one, and
   # a finite width whose validity certificate failed is not a set measurement.
@@ -252,7 +265,7 @@ build_table3_properties <- function(res) {
     pcell("Glejser"), pcell("BPLM"), pcell("ARCH"),
     sprintf("%s (%.2f)", .fmt(rel$cov_z_w2sq, 3), snr), .fmt(rel$cor_z_w2sq, 3),
     .fmt(rel$mean_slope_t, 3), .fmt(rel$cor_w1_w2, 3),
-    sprintf("%s %s", tstar(), band(b$tau_star)),
+    tstar_cell(),
     wcell(),
     e$set_status, .fmt(e$r2_w1, 3), .fmt(e$r2_y2, 3),
     sprintf("%.1f\\%%", 100 * e$pc_var_explained), as.character(e$n_obs), span
