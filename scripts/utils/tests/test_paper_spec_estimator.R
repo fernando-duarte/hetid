@@ -73,16 +73,16 @@ check(
   all(c("cov_z_w2sq", "cor_z_w2sq", "mean_slope", "cor_w1_w2") %in% names(e$relevance))
 )
 
-# NULL point-ID is handled by the status classifier without error.
+# An uncertified, fail-closed solve is handled by the status classifier
+# without error.
 check(
-  "set-status classifier handles a failed point ID",
+  "set-status classifier handles a fail-closed solve",
   .classify_set_status(
     data.frame(
       lower = NA, upper = NA, width = NA,
       bounded_lower = FALSE, bounded_upper = FALSE,
       valid_lower = FALSE, valid_upper = FALSE
-    ),
-    point_ok = FALSE
+    )
   ) %in% c("unbounded", "unreliable")
 )
 
