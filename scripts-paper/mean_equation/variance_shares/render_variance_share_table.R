@@ -67,16 +67,28 @@ columns <- c(
   )
 )
 
-# data-derived caption: the baseline news-block share range
+# data-derived caption: the baseline news-block share range. State a numeric
+# range only when the baseline joint set is certified bounded; an unbounded or
+# fail-closed (unreliable) set has no range to report, and printing one would
+# assert a finding the solve never established -- range_cell already defers to
+# status, and the headline must agree
 base_rng <- var_share$set_cols[[1]]
-caption <- sprintf(
-  paste0(
-    "SDF news accounts for %.1f--%.1f\\%% of the variance of consumption ",
-    "growth at $\\tau{=}%.2g$."
-  ),
-  base_rng$lo[var_share$news_row], base_rng$hi[var_share$news_row],
-  set_id_mean_eq$tau_baseline
-)
+base_status <- base_rng$status[var_share$news_row]
+caption <- if (identical(base_status, "bounded")) {
+  sprintf(
+    paste0(
+      "SDF news accounts for %.1f--%.1f\\%% of the variance of consumption ",
+      "growth at $\\tau{=}%.2g$."
+    ),
+    base_rng$lo[var_share$news_row], base_rng$hi[var_share$news_row],
+    set_id_mean_eq$tau_baseline
+  )
+} else {
+  sprintf(
+    "The SDF-news share of consumption-growth variance at $\\tau{=}%.2g$ is %s.",
+    set_id_mean_eq$tau_baseline, base_status
+  )
+}
 
 var_share_table <- build_simple_latex_table(
   row_labels, unname(columns),
@@ -112,6 +124,6 @@ cat(
 
 rm(
   fmt, round_preserving_sum, align_blocks, range_cell, n_obs, row_labels,
-  columns, base_rng, caption, var_share_table, var_share_dir, var_share_stem,
-  build_var_share_notes
+  columns, base_rng, base_status, caption, var_share_table, var_share_dir,
+  var_share_stem, build_var_share_notes
 )
