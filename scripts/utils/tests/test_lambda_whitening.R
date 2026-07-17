@@ -30,7 +30,13 @@ check <- function(label, cond) {
   }
 }
 drop_meta <- function(out) {
-  out[setdiff(names(out), c("support", "whitening", "lambda_variance"))]
+  # set_status is an additive field (the optimum's 3-state, read by eval_opt and
+  # tau_star_optimized); strip it so the frozen fixture still checks the core
+  # numeric outputs (objective_final, lambda_optimized, ...) are byte-identical.
+  out[setdiff(
+    names(out),
+    c("support", "whitening", "lambda_variance", "set_status")
+  )]
 }
 
 set.seed(33)

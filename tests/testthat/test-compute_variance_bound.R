@@ -118,6 +118,45 @@ test_that("compute_variance_bound accepts a user envelope c_bar (U^bd)", {
   expect_false(isTRUE(all.equal(vb_bd, vb_default)))
 })
 
+test_that("compute_variance_bound returns typed numeric NA on a degenerate component", {
+  test_env <- setup_standard_test_env()
+  yields_na <- test_env$yields
+
+  # All-NA y60 leaves c_hat without a valid paired observation at both nodes,
+  # so the assembled bound must stay NA rather than report a number
+  yields_na$y60 <- NA_real_
+
+  # vapply(..., numeric(1)) enforces a double return on the NA branch
+  vb_vals <- vapply(
+    c(48, 60),
+    function(i) compute_variance_bound(yields_na, test_env$term_premia, i = i),
+    numeric(1)
+  )
+
+  expect_type(vb_vals, "double")
+  expect_true(all(is.na(vb_vals)))
+  expect_identical(
+    compute_variance_bound(yields_na, test_env$term_premia, i = 60),
+    NA_real_
+  )
+})
+
+test_that("a supplied c_bar does not rescue a degenerate k component", {
+  test_env <- setup_standard_test_env()
+  yields_na <- test_env$yields
+  yields_na$y60 <- NA_real_
+
+  # c_bar replaces the envelope only; k_hat and k2_hat still have no valid
+  # observations, so the bound stays NA instead of collapsing to 0.25 * c_bar * 0
+  expect_identical(
+    compute_variance_bound(
+      yields_na, test_env$term_premia,
+      i = 60, c_bar = 1.05
+    ),
+    NA_real_
+  )
+})
+
 test_that("compute_variance_bound rejects an invalid c_bar", {
   test_env <- setup_standard_test_env()
   expect_error(

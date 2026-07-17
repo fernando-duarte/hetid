@@ -153,28 +153,54 @@ tau_star_fixed <- function(gamma, moments, coarse, iters = 40L) {
 tau_star_optimized <- function(gamma_start, moments, whiten,
                                tau_lo = 0.2, cap = OPT_TAU_CAP, iters = 25L) {
   n_comp <- ncol(gamma_start)
-  oracle <- function(tau) {
-    is.finite(run_lambda_optimization(
+  # 3-state set status at tau under re-optimized weights. is.finite(objective_
+  # final) alone folded uncertified into not-bounded, so a solver stall below the
+  # real transition read as the transition (d203074, same defect as the fixed-
+  # gamma sweep). Read set_status: only a certified-unbounded tau is evidence the
+  # set has left the bounded region; an uncertified tau carries no evidence.
+  status <- function(tau) {
+    run_lambda_optimization(
       gamma_start, moments, rep(tau, n_comp),
       whiten = whiten,
       n_starts = TAU_STAR_N_STARTS, seed = SEED
-    )$objective_final)
+    )$set_status
   }
-  if (!oracle(tau_lo)) {
+  # Need a certified-bounded start to bracket upward from.
+  if (!identical(status(tau_lo), "bounded")) {
     return(list(tau_star = NA_real_, capped = FALSE))
   }
   lo <- tau_lo
   hi <- min(tau_lo * 2, cap)
-  while (oracle(hi) && hi < cap) {
-    lo <- hi
-    hi <- min(hi * 2, cap)
+  # Double up while the set stays certified bounded. Only a certified-unbounded
+  # hi brackets the transition; an uncertified hi carries no evidence, so stop
+  # without moving an endpoint onto it and report the last certified-bounded tau
+  # as a censored lower bound.
+  repeat {
+    s <- status(hi)
+    if (identical(s, "bounded")) {
+      if (hi >= cap) {
+        return(list(tau_star = hi, capped = TRUE))
+      }
+      lo <- hi
+      hi <- min(hi * 2, cap)
+    } else if (identical(s, "unbounded")) {
+      break
+    } else {
+      return(list(tau_star = lo, capped = TRUE))
+    }
   }
-  if (oracle(hi)) {
-    return(list(tau_star = hi, capped = TRUE))
-  }
+  # Bracket [lo bounded, hi unbounded]; bisect, refining no further on an
+  # uncertified midpoint (it carries no evidence, mirroring tau_star_fixed).
   for (k in seq_len(iters)) {
     mid <- (lo + hi) / 2
-    if (oracle(mid)) lo <- mid else hi <- mid
+    s <- status(mid)
+    if (identical(s, "bounded")) {
+      lo <- mid
+    } else if (identical(s, "unbounded")) {
+      hi <- mid
+    } else {
+      break
+    }
   }
   list(tau_star = (lo + hi) / 2, capped = FALSE)
 }
