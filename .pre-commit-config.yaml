@@ -44,10 +44,10 @@ repos:
       # Ensure no merge conflicts markers
       - id: no-browser-statement
 
-      # Dependencies are used (scripts/ and data-raw/ are .Rbuildignore'd,
+      # Dependencies are used (scripts-paper/ and data-raw/ are .Rbuildignore'd,
       # dev-only directories, not part of the installed package)
       - id: deps-in-desc
-        exclude: '^(scripts|scripts-paper|data-raw)/'
+        exclude: '^(scripts-paper|data-raw)/'
 
   # Standard pre-commit hooks
   - repo: https://github.com/pre-commit/pre-commit-hooks

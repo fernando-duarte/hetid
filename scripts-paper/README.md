@@ -2,9 +2,8 @@
 
 `scripts-paper/` is the reproducible analysis used to build the paper's consumption-growth
 mean equation, identified sets, log-variance estimators, diagnostics, tables, figures, and
-descriptive report. It is separate from both the R package and the numbered `scripts/`
-pipeline. Its R source graph is entirely contained within `scripts-paper/`; it never sources
-the sibling `scripts/` tree. Run it only from the package root.
+descriptive report. It is separate from the R package, and its R source graph is entirely
+contained within `scripts-paper/`. Run it only from the package root.
 
 The paper pipeline's sole entrypoint is:
 
@@ -50,9 +49,8 @@ scripts-paper/
 └── run_pipeline.R          ordered source orchestrator
 ```
 
-The support layer contains independent paper-owned implementations. The numbered pipeline
-retains its own copies under `scripts/utils/`; neither pipeline sources the other's copy.
-See `support/README.md` for the source-to-module extraction map.
+The support layer contains paper-owned implementations. See `support/README.md` for the
+current module catalog.
 
 ## Dependency flow
 
