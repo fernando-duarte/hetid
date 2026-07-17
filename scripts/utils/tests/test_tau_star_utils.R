@@ -63,5 +63,38 @@ check(
   isTRUE(all.equal(res_clean$tau_star, 0.03))
 )
 
+# tau_star_optimized 3-state oracle: like the fixed sweep above, only a
+# CERTIFIED-unbounded tau brackets the transition; an uncertified tau carries no
+# evidence. Live data never hits an uncertified optimum, so stub
+# run_lambda_optimization to return a controlled set_status per tau and exercise
+# the branch. run_tests.R runs each file in its own process, so the stub is
+# local to this run.
+with_status <- function(status_of) {
+  run_lambda_optimization <<- function(gamma_start, moments, tau, ...) {
+    list(set_status = status_of(tau[[1]]))
+  }
+}
+g1 <- matrix(1) # ncol 1 -> n_comp 1
+
+with_status(function(t) "uncertified")
+check(
+  "optimizer: uncertified start leaves tau* unlocated (NA)",
+  is.na(tau_star_optimized(g1, NULL, whiten = NULL, tau_lo = 0.2, cap = 0.99)$tau_star)
+)
+
+with_status(function(t) if (t <= 0.4) "bounded" else "uncertified")
+r_stall <- tau_star_optimized(g1, NULL, whiten = NULL, tau_lo = 0.2, cap = 0.99)
+check(
+  "optimizer: an uncertified stall censors tau* at the last certified-bounded tau",
+  isTRUE(r_stall$capped) && r_stall$tau_star >= 0.4
+)
+
+with_status(function(t) if (t < 0.5) "bounded" else "unbounded")
+r_trans <- tau_star_optimized(g1, NULL, whiten = NULL, tau_lo = 0.2, cap = 0.99, iters = 30L)
+check(
+  "optimizer: a certified-unbounded tau brackets the transition (~0.5)",
+  isFALSE(r_trans$capped) && abs(r_trans$tau_star - 0.5) < 0.05
+)
+
 cat(sprintf("\n%d passed, %d failed\n", .pass, .fail))
 if (.fail > 0L) quit(status = 1L)

@@ -192,3 +192,35 @@ honest_width_lambda <- function(lambda_list, tau, moments) {
   }
   compute_total_width(bounds_tbl)
 }
+
+# 3-state set status at a lambda, on the SAME plain-normalized solve
+# honest_width_lambda runs. honest_width_lambda collapses unbounded and
+# uncertified both to Inf; a caller that must tell them apart (a set label vs a
+# tau* bracket) reads this instead: "bounded" (every side bounded AND valid),
+# "unbounded" (a side unbounded, all valid), "uncertified" (a solve failed or a
+# validity certificate failed -- neither boundedness established). Deliberately
+# parallels the solve above rather than refactoring the hot-path objective.
+lambda_status <- function(lambda_list, tau, moments) {
+  lambda_list <- normalize_lambda_columns(lambda_list)
+  bounds_tbl <- tryCatch(
+    {
+      qs <- hetid::build_general_quadratic_system(
+        lambda_list, tau, moments
+      )
+      solve_all_profile_bounds(qs$quadratic)
+    },
+    error = function(e) NULL
+  )
+  if (is.null(bounds_tbl)) {
+    return("uncertified")
+  }
+  bounded_all <- all(bounds_tbl$bounded_lower & bounds_tbl$bounded_upper)
+  valid_all <- all(bounds_tbl$valid_lower & bounds_tbl$valid_upper)
+  if (bounded_all && valid_all) {
+    "bounded"
+  } else if (!bounded_all && valid_all) {
+    "unbounded"
+  } else {
+    "uncertified"
+  }
+}
