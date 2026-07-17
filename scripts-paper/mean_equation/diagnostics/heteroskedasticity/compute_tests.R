@@ -35,25 +35,19 @@ suite_cfg <- select_diagnostics_suite(y2, z_mat)
 run_battery <- function(y2_i) {
   fit <- stats::lm(y2_i ~ z, data = data.frame(y2_i = y2_i, z = z))
   mean_resid <- stats::residuals(fit)
-  suite <- tryCatch(
-    perform_all_hetero_tests(
-      fit,
-      "news_pc",
-      tests = suite_cfg$suite_tests,
-      gq_deflator = suite_cfg$gq_deflator,
-      gq_alternative = suite_cfg$gq_alternative
-    ),
-    error = function(e) NULL
+  # select_diagnostics_suite already pinned a suite and deflator that apply to
+  # this design, so a throw here is a defect, not a verdict. It must not be
+  # swallowed: an NA p-value reads as "not significant" at the reject test
+  # below, so a broken battery would caption the table "weak Lewbel relevance".
+  suite <- perform_all_hetero_tests(
+    fit,
+    "news_pc",
+    tests = suite_cfg$suite_tests,
+    gq_deflator = suite_cfg$gq_deflator,
+    gq_alternative = suite_cfg$gq_alternative
   )
-  suite_pvals <- if (is.null(suite)) {
-    stats::setNames(
-      rep(NA_real_, length(suite_cfg$suite_tests)),
-      suite_cfg$suite_tests
-    )
-  } else {
-    cols <- grep("_pval$", names(suite), value = TRUE)
-    stats::setNames(as.numeric(suite[1, cols]), sub("_pval$", "", cols))
-  }
+  cols <- grep("_pval$", names(suite), value = TRUE)
+  suite_pvals <- stats::setNames(as.numeric(suite[1, cols]), sub("_pval$", "", cols))
   c(
     suite_pvals,
     Glejser = tryCatch(

@@ -60,7 +60,7 @@ compute_n_hat <- function(yields, term_premia, i, dates = NULL,
   )
 }
 
-#' Bare n_hat(i, t) series (internal numeric kernel)
+#' Bare n_hat(i, t) Series (internal numeric kernel)
 #'
 #' The undated numeric core of \code{\link{compute_n_hat}}, used by the internal
 #' computational chain (price news, SDF innovations, the variance-bound scalars)

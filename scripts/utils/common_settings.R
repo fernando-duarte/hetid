@@ -34,12 +34,12 @@ dir.create(file.path(OUTPUT_TEMP_DIR, "other"), recursive = TRUE, showWarnings =
 # Common parameters
 # News clock for the identification pipeline: one news period = one
 # quarter = 3 maturity months. Stage-01 rows are quarterly, so the
-# rows-equal-period contract of the SDF-news construction holds
-# exactly. The quarterly clock needs maturities at 3-month spacing
-# (each horizon i uses i - 3 and i + 3); the data's 3-month floor
-# makes every horizon from the boundary i = 3 upward feasible.
+# rows-equal-period contract of the SDF-news construction holds exactly.
+# The quarterly clock needs maturities at 3-month spacing (each horizon
+# i uses i - 3 and i + 3), so the grid is every multiple of the step.
+# The spacing is a pipeline choice: the bundled ACM grid is monthly.
 NEWS_STEP <- 3L
-PIPELINE_ACM_MATURITIES <- seq(3L, 120L, by = 3L)
+PIPELINE_ACM_MATURITIES <- seq(NEWS_STEP, HETID_CONSTANTS$MAX_MATURITY, by = NEWS_STEP)
 SEED <- 123 # For reproducibility
 BASELINE_TAU <- 0.05 # Baseline set-identification tolerance (shared across stages)
 # Near-uninformative tau cap shared across the tau* oracle and the identified-set

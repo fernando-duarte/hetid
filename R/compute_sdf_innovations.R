@@ -56,7 +56,7 @@ compute_sdf_innovations <- function(yields, term_premia, i, dates = NULL,
   )
 }
 
-#' Bare SDF-innovation news series (internal numeric kernel)
+#' Bare SDF-Innovation News Series (internal numeric kernel)
 #'
 #' The undated numeric core of \code{\link{compute_sdf_innovations}}, returning
 #' the T-1 centered news vector consumed by \code{process_w2_maturity}. Holds the

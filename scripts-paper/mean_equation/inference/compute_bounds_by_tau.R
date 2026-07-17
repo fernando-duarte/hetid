@@ -132,17 +132,15 @@ cat(
   refined_n, "sides extended by warm-start refinement\n"
 )
 
-# warm-refined boxes at the display taus for the PPML set map (pure helper
-# with its own tau = 0-seeded warm chain; the walk above is untouched)
-display_boxes <- set_id_display_tau_refinement(
-  set_id_mean_eq$tau_display, set_id_mean_eq$theta_table$point,
-  solve_theta_bound_from, set_id_mean_eq$gamma, set_id_mean_eq$moments,
-  set_id_mean_eq$beta1r, set_id_mean_eq$beta2r
-)
-mean_eq_bounds_tau[names(display_boxes)] <- display_boxes
+# warm-refined boxes at the display taus for the PPML set map: the estimator
+# already refined these into set_tables with the same tau = 0-seeded warm chain,
+# so they are re-keyed here rather than re-solved (the grid above is strictly
+# inside (0, tau*) and never lands on a display tau)
+mean_eq_bounds_tau[sprintf("%.17g", set_id_mean_eq$tau_display)] <-
+  lapply(set_id_mean_eq$set_tables, `[[`, "theta")
 
 rm(
   theta_coefs, beta_coefs, solve_theta_bound_from, seed_theta, warm,
   refined_n, refine_theta_intervals, bounds_at_tau, tables, stored_rows,
-  tau_grid, bounds_df, plot_df, ref_lines, bounds_plot, display_boxes
+  tau_grid, bounds_df, plot_df, ref_lines, bounds_plot
 )

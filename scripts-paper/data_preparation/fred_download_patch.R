@@ -52,9 +52,16 @@ local({
         }
       )
       if (identical(st, 0L) && file.exists(tmp) && file.size(tmp) > 0) {
-        js <- tryCatch(jsonlite::fromJSON(tmp), error = function(e) NULL)
+        # A truncated or non-JSON body is the transient failure this loop retries,
+        # so it is caught -- but the parser's message is the only thing that says
+        # which, and the stop() at exhaustion reports last_err, so keep it.
+        parse_err <- NULL
+        js <- tryCatch(jsonlite::fromJSON(tmp), error = function(e) {
+          parse_err <<- conditionMessage(e)
+          NULL
+        })
         if (is.null(js)) {
-          last_err <- "unparseable JSON response"
+          last_err <- paste(c("unparseable JSON response", parse_err), collapse = ": ")
         } else if (!is.null(js$error_code)) {
           stop("FRED API error for ", symbol, ": ", js$error_message, call. = FALSE)
         } else if (!is.null(js$observations) && NROW(js$observations) > 0) {

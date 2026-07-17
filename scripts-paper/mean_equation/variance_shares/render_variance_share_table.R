@@ -35,11 +35,14 @@ align_blocks <- function(v) {
   v
 }
 # a degenerate range (point-identified quantity) is left blank, matching the
-# structural-equation table's blank-cell convention; a non-finite box marks
-# an unbounded set
-range_cell <- function(lo, hi) {
+# structural-equation table's blank-cell convention; an uncertified row prints
+# its status, like that table's set_cell. Status decides, not is.finite(): a
+# fail-closed solve and a certified-unbounded set both arrive as a non-finite
+# endpoint, and only "unbounded" is a claim about the share -- "unreliable"
+# says the solve established nothing, which is neither a range nor a claim
+range_cell <- function(lo, hi, status) {
   ifelse(
-    !is.finite(lo) | !is.finite(hi), "unbounded",
+    status != "bounded", status,
     ifelse(
       abs(hi - lo) <= 1e-9 * (1 + abs(hi)), "",
       sprintf("$[%.2f,\\,%.2f]$", lo, hi)
@@ -60,7 +63,7 @@ columns <- c(
   ),
   lapply(
     var_share$set_cols,
-    \(cc) c(range_cell(cc$lo, cc$hi), sprintf("%d", n_obs))
+    \(cc) c(range_cell(cc$lo, cc$hi, cc$status), sprintf("%d", n_obs))
   )
 )
 

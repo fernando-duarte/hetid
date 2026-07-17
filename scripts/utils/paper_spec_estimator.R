@@ -9,7 +9,7 @@
 # Scalar (I=1) identified-set status from the one-row profile bounds. The set
 # grows from the tau=0 point, so when point ID exists it is non-empty; "empty"
 # is therefore folded into "unreliable" (a failed/invalid solve) defensively.
-.classify_set_status <- function(b, point_ok) {
+.classify_set_status <- function(b) {
   bounded <- isTRUE(b$bounded_lower) && isTRUE(b$bounded_upper)
   valid <- isTRUE(b$valid_lower) && isTRUE(b$valid_upper)
   finite <- is.finite(b$lower) && is.finite(b$upper)
@@ -37,7 +37,7 @@ compute_paper_spec_estimator <- function(resid, tau_set = BASELINE_TAU) {
   theta_bounds <- solve_all_profile_bounds(qs_set$quadratic) # one row (I=1)
   pt0 <- solve_point_identification(qs0$components) # NULL on rank failure
   theta_point <- if (is.null(pt0)) NA_real_ else pt0$theta
-  set_status <- .classify_set_status(theta_bounds[1, ], !is.null(pt0))
+  set_status <- .classify_set_status(theta_bounds[1, ])
 
   # OLS benchmark: structural equation treating Y2 as exogenous.
   ols_df <- data.frame(.y1 = resid$y1_level, resid$design_aligned, .y2 = resid$y2)

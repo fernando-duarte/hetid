@@ -2,7 +2,7 @@
 % Please edit documentation in R/process_w2_maturity.R
 \name{impose_b_zero_result}
 \alias{impose_b_zero_result}
-\title{Assemble the imposed B = 0 result for one W2 maturity}
+\title{Assemble the Imposed B = 0 Result for One W2 Maturity}
 \usage{
 impose_b_zero_result(sdf_innov, reg_lagged, complete_idx, n_complete)
 }

@@ -15,31 +15,35 @@ solve_theta_bound_from <- function(qs, k, direction, theta_start,
   dim_theta <- ncol(qs$A_i[[1]])
   e_k <- numeric(dim_theta)
   e_k[k] <- 1
-  res <- tryCatch(
-    nloptr::slsqp(
-      x0 = pmin(pmax(theta_start / delta, -box), box),
-      fn = function(phi) sgn * sum(e_k * phi),
-      gr = function(phi) sgn * e_k,
-      lower = rep(-box, dim_theta), upper = rep(box, dim_theta),
-      hin = function(phi) {
-        theta <- delta * phi
-        vapply(seq_along(qs$A_i), function(i) {
-          (drop(t(theta) %*% qs$A_i[[i]] %*% theta) +
-            sum(qs$b_i[[i]] * theta) + qs$c_i[i]) / omega[i]
-        }, numeric(1))
-      },
-      hinjac = function(phi) {
-        theta <- delta * phi
-        t(vapply(seq_along(qs$A_i), function(i) {
-          (delta * (2 * drop(qs$A_i[[i]] %*% theta) + qs$b_i[[i]])) / omega[i]
-        }, numeric(dim_theta)))
-      },
-      control = list(xtol_rel = 1e-8, maxeval = 1000),
-      deprecatedBehavior = FALSE
-    ),
-    error = function(e) NULL
+  # Unwrapped: slsqp reports an ordinary failure -- an infeasible start, an
+  # unbounded objective -- through $convergence, never by raising, so the only
+  # conditions it can raise are contract breaches (a nonfinite x0, a nonfinite
+  # objective at x0, a jacobian of the wrong shape). None is reachable here:
+  # .derive_theta_scale returns a finite positive delta and .derive_constraint_
+  # scales a finite positive omega, theta_start is finite by the caller's guard,
+  # and the objective is linear in phi. A catch would only mask a defect.
+  res <- nloptr::slsqp(
+    x0 = pmin(pmax(theta_start / delta, -box), box),
+    fn = function(phi) sgn * sum(e_k * phi),
+    gr = function(phi) sgn * e_k,
+    lower = rep(-box, dim_theta), upper = rep(box, dim_theta),
+    hin = function(phi) {
+      theta <- delta * phi
+      vapply(seq_along(qs$A_i), function(i) {
+        (drop(t(theta) %*% qs$A_i[[i]] %*% theta) +
+          sum(qs$b_i[[i]] * theta) + qs$c_i[i]) / omega[i]
+      }, numeric(1))
+    },
+    hinjac = function(phi) {
+      theta <- delta * phi
+      t(vapply(seq_along(qs$A_i), function(i) {
+        (delta * (2 * drop(qs$A_i[[i]] %*% theta) + qs$b_i[[i]])) / omega[i]
+      }, numeric(dim_theta)))
+    },
+    control = list(xtol_rel = 1e-8, maxeval = 1000),
+    deprecatedBehavior = FALSE
   )
-  if (is.null(res) || any(!is.finite(res$par))) {
+  if (any(!is.finite(res$par))) {
     return(NULL)
   }
   theta <- delta * res$par
@@ -50,19 +54,19 @@ solve_theta_bound_from <- function(qs, k, direction, theta_start,
   list(bound = theta[k], theta = theta)
 }
 
-# Pure display-tau refinement of the mean-equation theta intervals, factored
-# out of compute_bounds_by_tau.R so the figure's display taus can be warm-start
-# refined without disturbing the main grid walk. The main walk carries its warm
-# state in a closure it mutates through `<<-`, and that state's final argmax
-# args live at the *largest* grid tau; because the identified set grows with
-# tau (nesting), a start feasible at the largest tau can be infeasible at a
-# smaller display tau, so reusing the walk's warm args here would violate the
-# solver's feasible-start contract. This helper instead keeps its own local
-# warm chain, seeded from the tau = 0 Lewbel point (the whole set at tau = 0,
-# hence feasible at every tau by nesting), and walks the display taus in
-# *increasing* order so each accepted argmax hands a still-feasible start to the
-# next larger tau. It reads and writes no global, prints nothing, and leaves its
-# inputs untouched.
+# Pure display-tau refinement of the mean-equation theta intervals, called by
+# estimate_identified_set.R to widen set_tables onto the boxes the paper
+# publishes and compute_bounds_by_tau.R re-keys for the log-variance census.
+# It keeps its own warm chain rather than borrowing the grid walk's: that walk
+# carries warm state in a closure it mutates through `<<-`, and that state's
+# final argmax args live at the *largest* grid tau; because the identified set
+# grows with tau (nesting), a start feasible at the largest tau can be
+# infeasible at a smaller display tau, so reusing the walk's warm args would
+# violate the solver's feasible-start contract. The chain here is seeded from
+# the tau = 0 Lewbel point (the whole set at tau = 0, hence feasible at every
+# tau by nesting) and walks the display taus in *increasing* order so each
+# accepted argmax hands a still-feasible start to the next larger tau. It reads
+# and writes no global, prints nothing, and leaves its inputs untouched.
 #
 # solve_fn is solve_theta_bound_from (defined above), passed in rather than
 # reimplemented: solve_fn(qs, k, direction, theta_start) returns

@@ -11,7 +11,7 @@
 #' @keywords internal
 default_w2_maturities <- function(step = HETID_CONSTANTS$DEFAULT_STEP) {
   validate_step(step)
-  candidates <- seq(step, HETID_CONSTANTS$MAX_MATURITY - step, by = step)
+  candidates <- seq(step, effective_max_maturity(step), by = step)
   keep <- news_contract_ok(candidates, step) &
     (candidates != step | step >= HETID_CONSTANTS$MIN_MATURITY)
   candidates[keep]

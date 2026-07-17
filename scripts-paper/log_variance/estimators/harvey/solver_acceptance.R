@@ -34,8 +34,13 @@ hv_eval <- function(theta, y, x_mat, pos, col_abs) {
   if (!all(is.finite(eta)) || any(eta > log(.Machine$double.xmax))) {
     return(NULL)
   }
-  r <- tryCatch(logvar_harvey_ratio(theta, y, x_mat), error = function(cond) NULL)
-  if (is.null(r) || !is.numeric(r) || length(r) != length(y) || anyNA(r) ||
+  # Unwrapped: the ratio's only condition is its y precondition, and every path
+  # into hv_eval has already screened y at least as strictly -- the solver at its
+  # door, hv_precheck_pair into an "invalid_response" record. y is fixed across a
+  # solve, so a catch here could only mask a caller that skipped that screen, and
+  # would report it as a per-trial failure rather than as the bad response it is.
+  r <- logvar_harvey_ratio(theta, y, x_mat)
+  if (!is.numeric(r) || length(r) != length(y) || anyNA(r) ||
     !all(is.finite(r[pos]))) {
     return(NULL)
   }
@@ -153,17 +158,16 @@ hv_post_stop <- function(theta, y, x_mat, pos, col_abs) {
   if (is.null(ev)) {
     return(NULL)
   }
-  mu <- tryCatch(logvar_harvey_mu(theta, x_mat), error = function(cond) NULL)
-  if (is.null(mu) || !is.numeric(mu)) {
-    mu <- exp(ev$eta)
-  }
+  # Neither call is wrapped. hv_eval above has already formed x_mat %*% theta and
+  # the ratio at this same y, so mu and the information cannot raise here, and
+  # the hand-rolled fallbacks that used to stand in for them (exp(ev$eta) and
+  # 0.5 * crossprod(x_mat, ev$r * x_mat)) were unreachable restatements of the
+  # very expressions the two module functions evaluate.
+  mu <- logvar_harvey_mu(theta, x_mat)
   if (!all(is.finite(mu)) || !all(mu > 0)) {
     return(NULL)
   }
-  info <- tryCatch(logvar_harvey_info(theta, y, x_mat), error = function(cond) NULL)
-  if (is.null(info)) {
-    info <- 0.5 * crossprod(x_mat, ev$r * x_mat)
-  }
+  info <- logvar_harvey_info(theta, y, x_mat)
   dg <- sqrt(diag(info))
   rc <- tryCatch(rcond(info / tcrossprod(dg)), error = function(cond) 0)
   if (!is.finite(rc) || rc < 1e-10) {

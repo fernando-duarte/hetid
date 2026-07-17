@@ -67,8 +67,13 @@ download_term_premia <- function(source = c("github", "nyfed"),
     return(invisible(existing))
   }
 
+  # match.arg gates source; the default catches a choice added without a handler
   switch(source,
     github = download_acm_github(quiet = quiet, frequency = frequency),
-    nyfed = download_acm_nyfed(quiet = quiet)
+    nyfed = download_acm_nyfed(quiet = quiet),
+    stop_bad_argument(
+      paste0("source has no download handler: ", source),
+      arg = "source"
+    )
   )
 }
