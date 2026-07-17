@@ -21,17 +21,23 @@ variance_bounds <- vapply(
   \(i) hetid::compute_variance_bound(yields, term_premia, i = i, step = step_qtr),
   numeric(1)
 )
+# Fail loud on a missing bound: na.rm below would summarise over a silently
+# smaller grid than the "across maturities" caption claims. Matches the
+# load_term_premia contract of raising rather than returning a sentinel.
+stopifnot(
+  "variance bound is NA for at least one maturity" = !anyNA(variance_bounds)
+)
 
 variance_bounds_df <- data.frame(
   Maturity = vb_mats,
   Variance_Bound = variance_bounds
 )
 variance_bounds_summary <- c(
-  Mean = mean(variance_bounds, na.rm = TRUE),
-  Median = stats::median(variance_bounds, na.rm = TRUE),
-  Minimum = min(variance_bounds, na.rm = TRUE),
-  Maximum = max(variance_bounds, na.rm = TRUE),
-  "Standard Deviation" = stats::sd(variance_bounds, na.rm = TRUE)
+  Mean = mean(variance_bounds),
+  Median = stats::median(variance_bounds),
+  Minimum = min(variance_bounds),
+  Maximum = max(variance_bounds),
+  "Standard Deviation" = stats::sd(variance_bounds)
 )
 
 # the ACM inputs were only function arguments here
