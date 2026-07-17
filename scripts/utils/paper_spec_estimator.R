@@ -85,23 +85,21 @@ compute_paper_spec_estimator <- function(resid, tau_set = BASELINE_TAU) {
   coarse <- sweep_fixed_gamma(gamma, moments, seq(0, OPT_TAU_CAP, by = 0.005), "coarse")
   ts <- tau_star_fixed(gamma, moments, coarse)
 
-  # Heteroskedasticity (relevance) tests of W2 on the VFCI instrument; mirror
-  # stage 02's calling convention, each wrapped so a failure renders NA.
+  # Heteroskedasticity (relevance) tests of W2 on the VFCI instrument, mirroring
+  # stage 02's calling convention. select_diagnostics_suite has pinned a suite
+  # and deflator that apply to this design, so a throw from the battery is a
+  # defect, not a verdict, and must not be swallowed: a NULL suite would drop
+  # BP/GQ from hetero_pvals, and the stage-08 Table 3 title reads a missing
+  # p-value as "shows weak" relevance. The supplementary trio below stays
+  # wrapped so a single failed test renders NA rather than losing the row.
   suite_cfg <- select_diagnostics_suite(w2mat, zmat)
   lm_w2 <- lm(w2 ~ ., data = data.frame(w2 = w2v, vfci_dm = zv))
-  suite <- tryCatch(
-    perform_all_hetero_tests(lm_w2, "news_pc",
-      tests = suite_cfg$suite_tests,
-      gq_deflator = suite_cfg$gq_deflator, gq_alternative = suite_cfg$gq_alternative
-    ),
-    error = function(e) NULL
+  suite <- perform_all_hetero_tests(lm_w2, "news_pc",
+    tests = suite_cfg$suite_tests,
+    gq_deflator = suite_cfg$gq_deflator, gq_alternative = suite_cfg$gq_alternative
   )
-  suite_pvals <- if (is.null(suite)) {
-    NULL
-  } else {
-    cols <- grep("_pval$", names(suite), value = TRUE)
-    stats::setNames(as.numeric(suite[1, cols]), sub("_pval$", "", cols))
-  }
+  cols <- grep("_pval$", names(suite), value = TRUE)
+  suite_pvals <- stats::setNames(as.numeric(suite[1, cols]), sub("_pval$", "", cols))
   hetero_pvals <- c(
     suite_pvals,
     Glejser = tryCatch(skedastic::glejser(lm_w2)$p.value, error = function(e) NA_real_),
