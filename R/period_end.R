@@ -40,11 +40,16 @@ to_period_end <- function(dates,
   year <- as.integer(format(dates, HETID_CONSTANTS$YEAR_FORMAT))
   month <- as.integer(format(dates, HETID_CONSTANTS$MONTH_FORMAT))
 
+  # match.arg gates frequency; the default catches a choice added without a rule
   terminal_month <- switch(frequency,
     monthly = month,
     quarterly = ceiling(month / HETID_CONSTANTS$MONTHS_PER_QUARTER) *
       HETID_CONSTANTS$MONTHS_PER_QUARTER,
-    annual = 12L
+    annual = 12L,
+    stop_bad_argument(
+      paste0("frequency has no period-end rule: ", frequency),
+      arg = "frequency"
+    )
   )
 
   # Last calendar day of terminal_month = first day of the next month minus 1
