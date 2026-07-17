@@ -21,8 +21,9 @@ The identification pipeline runs on a quarterly news clock (`NEWS_STEP <- 3L`,
 `utils/common_settings.R:41`): one news period equals one quarter, matching the
 quarterly rows of the stage-01 dataset, so the rows-equal-period contract of the
 SDF-news construction holds exactly. Stage 01 therefore carries maturities at
-3-month spacing (`PIPELINE_ACM_MATURITIES <- seq(3L, 120L, by = 3L)`,
-`utils/common_settings.R:42` — 40 maturities), so that a horizon `i` has its
+3-month spacing (`PIPELINE_ACM_MATURITIES`, `utils/common_settings.R:42` — every
+multiple of `NEWS_STEP` up to `HETID_CONSTANTS$MAX_MATURITY`, 40 maturities), so
+that a horizon `i` has its
 step-adjacent neighbors `i - 3` and `i + 3` on the grid. The top of the grid has no
 `i + 3` neighbor, so stage 03 filters to the effective maximum
 (`03_variance_bounds/compute_variance_bounds.R:27-31`).
