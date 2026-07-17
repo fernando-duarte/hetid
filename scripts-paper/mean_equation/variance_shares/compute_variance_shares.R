@@ -57,6 +57,17 @@ quads <- lapply(set_id_mean_eq$tau_display, function(tau) {
 e_const <- block_share(matrix(beta1r_e, 1), s_e)
 set_share_cols <- Map(function(nm, quad) {
   st <- set_id_mean_eq$set_tables[[nm]]
+  # a block share ranges over the whole joint theta set, so it is only as
+  # established as the least-established row of that set: an uncertified row
+  # makes the block share uncertified too, and validity outranks boundedness
+  # exactly as in the solvers' own status3
+  joint_status <- if (any(st$theta$status == "unreliable")) {
+    "unreliable"
+  } else if (any(st$theta$status == "unbounded")) {
+    "unbounded"
+  } else {
+    "bounded"
+  }
   e_rng <- if (impose_beta2r_null) {
     rep(e_const, 2)
   } else {
@@ -67,7 +78,13 @@ set_share_cols <- Map(function(nm, quad) {
   n_comp <- component_share_range(st$theta, s_n)
   list(
     lo = c(e_rng[1], e_comp$lo, news_rng[1], n_comp$lo),
-    hi = c(e_rng[2], e_comp$hi, news_rng[2], n_comp$hi)
+    hi = c(e_rng[2], e_comp$hi, news_rng[2], n_comp$hi),
+    # under the null b_E is a constant, so its block share is the value at
+    # beta1R and stays certified whatever the theta set does
+    status = c(
+      if (impose_beta2r_null) "bounded" else joint_status,
+      e_comp$status, joint_status, n_comp$status
+    )
   )
 }, names(set_id_mean_eq$set_tables), quads)
 
