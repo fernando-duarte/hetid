@@ -222,6 +222,18 @@ build_table3_properties <- function(res) {
       .fmt(e$tau_star, 3)
     }
   }
+  # The status decides the width cell, not is.finite(): an NA width is a
+  # fail-closed solve that established nothing rather than an infinite one, and
+  # a finite width whose validity certificate failed is not a set measurement.
+  # .classify_set_status already separates the four cases; branch on it so this
+  # cell cannot contradict the status cell below.
+  wcell <- function() {
+    switch(e$set_status,
+      unbounded = "unbounded",
+      unreliable = "unreliable",
+      .fmt(e$width, 4)
+    )
+  }
   span <- paste0(.qq(min(e$dates)), "--", .qq(max(e$dates)))
   snr <- rel$cov_z_w2sq / b$cov_se
 
@@ -241,7 +253,7 @@ build_table3_properties <- function(res) {
     sprintf("%s (%.2f)", .fmt(rel$cov_z_w2sq, 3), snr), .fmt(rel$cor_z_w2sq, 3),
     .fmt(rel$mean_slope_t, 3), .fmt(rel$cor_w1_w2, 3),
     sprintf("%s %s", tstar(), band(b$tau_star)),
-    if (is.finite(e$width)) .fmt(e$width, 4) else "unbounded",
+    wcell(),
     e$set_status, .fmt(e$r2_w1, 3), .fmt(e$r2_y2, 3),
     sprintf("%.1f\\%%", 100 * e$pc_var_explained), as.character(e$n_obs), span
   )
