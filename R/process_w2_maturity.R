@@ -87,7 +87,7 @@ process_w2_maturity <- function(i, yields_df, term_premia_df, pcs, n_pcs,
   )
 }
 
-#' Assemble the imposed B = 0 result for one W2 maturity
+#' Assemble the Imposed B = 0 Result for One W2 Maturity
 #'
 #' Imposes \eqn{B = 0} literally: no regression is fit, the residual is the SDF
 #' innovation itself (already nonlinearly centered upstream), and the

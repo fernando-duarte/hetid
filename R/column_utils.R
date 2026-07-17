@@ -100,7 +100,7 @@ acm_column_name <- function(data_type, maturity) {
   )
 }
 
-#' Assert Input is Tabular
+#' Assert Input Is Tabular
 #'
 #' @param x Object to check
 #' @param name Argument name for error message

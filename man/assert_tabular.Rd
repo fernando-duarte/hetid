@@ -2,7 +2,7 @@
 % Please edit documentation in R/column_utils.R
 \name{assert_tabular}
 \alias{assert_tabular}
-\title{Assert Input is Tabular}
+\title{Assert Input Is Tabular}
 \usage{
 assert_tabular(x, name)
 }
@@ -15,6 +15,6 @@ assert_tabular(x, name)
 Invisible TRUE; stops with a structured error otherwise
 }
 \description{
-Assert Input is Tabular
+Assert Input Is Tabular
 }
 \keyword{internal}

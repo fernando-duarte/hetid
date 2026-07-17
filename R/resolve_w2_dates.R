@@ -1,4 +1,4 @@
-#' Resolve the W2 realization-date index from full-T input dates
+#' Resolve the W2 Realization-Date Index from Full-T Input Dates
 #'
 #' The W2 residual \eqn{W_{2,t+1}} is a one-step news object realized at
 #' \eqn{t+1}, so the caller supplies one period-end date per yield row (length
