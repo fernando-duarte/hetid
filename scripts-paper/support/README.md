@@ -12,7 +12,7 @@ automatically and must be ported deliberately when both implementations should e
 | `identification_utils.R` | `identification/{inputs_and_alignment,residual_construction,quadratic_system}.R` via `identification/api.R` |
 | `profile_bounds_core.R` | `identification/profile_solver_core.R` |
 | `profile_bounds.R` | `identification/{coordinate_bounds,functional_bounds}.R` via `identification/profile_bounds_api.R` |
-| `tau_star_utils.R` | `identification/tau_star.R` |
+| `tau_star_utils.R` | `identification/tau_star.R` (excludes `tau_star_optimized`: scripts/-only, its lambda-optimization dependencies are not extracted here) |
 | `set_id_bootstrap_core.R` | `identification/identified_set_bootstrap.R` |
 | `set_id_inference.R` | `identification/identified_set_inference.R` |
 | `stats_utils.R` | `statistics/{bootstrap_and_stationarity,reporting_and_validation}.R` via `statistics/api.R` |
