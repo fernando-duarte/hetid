@@ -12,7 +12,7 @@
 #'   \code{n_components} indexed by system column with a numeric
 #'   J x K_i weight matrix at every constrained column (NULL required
 #'   at unconstrained columns). All-zero weight columns are rejected.
-#' @param tau Scalar in [0, 1), numeric vector of length
+#' @param tau Scalar in \code{[0, 1)}, numeric vector of length
 #'   \code{n_components} (replicated across each component's
 #'   combinations), or list of length \code{n_components} whose
 #'   element i is a length-K_i numeric vector of slacks
