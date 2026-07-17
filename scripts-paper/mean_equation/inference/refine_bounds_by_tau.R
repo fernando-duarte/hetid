@@ -15,31 +15,35 @@ solve_theta_bound_from <- function(qs, k, direction, theta_start,
   dim_theta <- ncol(qs$A_i[[1]])
   e_k <- numeric(dim_theta)
   e_k[k] <- 1
-  res <- tryCatch(
-    nloptr::slsqp(
-      x0 = pmin(pmax(theta_start / delta, -box), box),
-      fn = function(phi) sgn * sum(e_k * phi),
-      gr = function(phi) sgn * e_k,
-      lower = rep(-box, dim_theta), upper = rep(box, dim_theta),
-      hin = function(phi) {
-        theta <- delta * phi
-        vapply(seq_along(qs$A_i), function(i) {
-          (drop(t(theta) %*% qs$A_i[[i]] %*% theta) +
-            sum(qs$b_i[[i]] * theta) + qs$c_i[i]) / omega[i]
-        }, numeric(1))
-      },
-      hinjac = function(phi) {
-        theta <- delta * phi
-        t(vapply(seq_along(qs$A_i), function(i) {
-          (delta * (2 * drop(qs$A_i[[i]] %*% theta) + qs$b_i[[i]])) / omega[i]
-        }, numeric(dim_theta)))
-      },
-      control = list(xtol_rel = 1e-8, maxeval = 1000),
-      deprecatedBehavior = FALSE
-    ),
-    error = function(e) NULL
+  # Unwrapped: slsqp reports an ordinary failure -- an infeasible start, an
+  # unbounded objective -- through $convergence, never by raising, so the only
+  # conditions it can raise are contract breaches (a nonfinite x0, a nonfinite
+  # objective at x0, a jacobian of the wrong shape). None is reachable here:
+  # .derive_theta_scale returns a finite positive delta and .derive_constraint_
+  # scales a finite positive omega, theta_start is finite by the caller's guard,
+  # and the objective is linear in phi. A catch would only mask a defect.
+  res <- nloptr::slsqp(
+    x0 = pmin(pmax(theta_start / delta, -box), box),
+    fn = function(phi) sgn * sum(e_k * phi),
+    gr = function(phi) sgn * e_k,
+    lower = rep(-box, dim_theta), upper = rep(box, dim_theta),
+    hin = function(phi) {
+      theta <- delta * phi
+      vapply(seq_along(qs$A_i), function(i) {
+        (drop(t(theta) %*% qs$A_i[[i]] %*% theta) +
+          sum(qs$b_i[[i]] * theta) + qs$c_i[i]) / omega[i]
+      }, numeric(1))
+    },
+    hinjac = function(phi) {
+      theta <- delta * phi
+      t(vapply(seq_along(qs$A_i), function(i) {
+        (delta * (2 * drop(qs$A_i[[i]] %*% theta) + qs$b_i[[i]])) / omega[i]
+      }, numeric(dim_theta)))
+    },
+    control = list(xtol_rel = 1e-8, maxeval = 1000),
+    deprecatedBehavior = FALSE
   )
-  if (is.null(res) || any(!is.finite(res$par))) {
+  if (any(!is.finite(res$par))) {
     return(NULL)
   }
   theta <- delta * res$par

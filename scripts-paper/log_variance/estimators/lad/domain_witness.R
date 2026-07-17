@@ -157,8 +157,11 @@
   cones <- list()
   for (r in seq_len(nrow(pats))) {
     s <- pats[r, ]
-    d <- tryCatch(as.numeric(t(wj) %*% solve(gram + ridge, -s)), error = function(e) NULL)
-    nd <- if (is.null(d)) 0 else sqrt(sum(d^2))
+    # Unwrapped: gram is PSD and the ridge is a positive multiple of I, so
+    # rcond(gram + ridge) >= 1e-12 / q >= 1.25e-13 for the capped q <= 8 -- three
+    # orders above the double.eps threshold at which solve() calls it singular.
+    d <- as.numeric(t(wj) %*% solve(gram + ridge, -s))
+    nd <- sqrt(sum(d^2))
     if (nd <= 0) next
     b <- b_cross + step * d / nd
     resj <- rj - as.numeric(wj %*% b)
