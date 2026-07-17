@@ -64,10 +64,11 @@ lad_lp <- function(x, y) {
   best <- NULL
   obj <- Inf
   for (cc in seq_len(ncol(cb))) {
-    co <- tryCatch(solve(x[cb[, cc], , drop = FALSE], y[cb[, cc]]),
-      error = function(e) NULL
-    )
-    if (is.null(co)) next
+    # a collinear subset spans no vertex; skip it on a rank probe rather than on
+    # a caught error, so a real mistake in the subset algebra still surfaces
+    qx <- qr(x[cb[, cc], , drop = FALSE])
+    if (qx$rank < ncol(x)) next
+    co <- qr.coef(qx, y[cb[, cc]])
     o <- sum(abs(y - x %*% co))
     if (o < obj - 1e-12) {
       obj <- o

@@ -186,10 +186,13 @@ check("peng grid_selector accepts a valid subset and records its id", peng_try({
     "sel-subset" %in% unlist(res$diagnostics)
 }))
 check("peng grid_selector rejects duplicate or invented rows", peng_try({
-  bad <- function(sel) {
-    is.null(tryCatch(peng_run(peng_dummy()$est, grid_selector = sel),
-      error = function(e) NULL
-    ))
+  # match the rejection's own message, not merely "something raised": a catch-all
+  # would score an unrelated failure as the rejection under test
+  bad <- function(sel, want) {
+    msg <- tryCatch(peng_run(peng_dummy()$est, grid_selector = sel),
+      error = conditionMessage
+    )
+    is.character(msg) && grepl(want, msg, fixed = TRUE)
   }
-  bad(peng_dup) && bad(peng_invent)
+  bad(peng_dup, "duplicate rows") && bad(peng_invent, "invented rows")
 }))

@@ -172,10 +172,10 @@ check("hs the stability precheck fails closed on a negative response", hs_try({
   y_bad <- hs_yref
   y_bad[1] <- -1
   pairs <- list(bad = list(response = y_bad, start = hs_io(hs_yref)))
-  res <- tryCatch(logvar_harvey_stability_precheck(pairs, hs_x),
-    error = function(e) NULL
-  )
-  is.null(res) || !all(vapply(res, hs_pass_flag, logical(1)))
+  # "Fails closed" is a non-passing record, not a raised condition: screening the
+  # pair is the precheck's job, and hs_try already fails this check on a throw.
+  res <- logvar_harvey_stability_precheck(pairs, hs_x)
+  !all(vapply(res, hs_pass_flag, logical(1)))
 }))
 
 check("hs the recession self-test reports named checks with passed all", hs_try({
