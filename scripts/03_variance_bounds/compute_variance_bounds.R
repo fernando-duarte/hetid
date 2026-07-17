@@ -77,6 +77,26 @@ for (idx in seq_along(maturities)) {
   cli_alert_success("Maturity {.val {mat}}: VB = {.val {round(variance_bounds[idx], 6)}}")
 }
 
+# The summary statistics, monotonicity counts, correlations, and normalizations
+# below use na.rm/complete.obs, which would each silently compute over fewer
+# maturities than the table claims if any per-maturity quantity came back NA.
+# Every maturity is computed unconditionally above, so none of these is a
+# legitimately-optional value -- a NA is a broken computation, not a missing
+# datum. Guard all four vectors here (one gate all the reducers route through)
+# and fail loud naming the offenders, rather than publish a statistic over a
+# smaller, unstated set.
+components <- list(
+  variance_bound = variance_bounds, c_hat = c_hat_values,
+  k_hat = k_hat_values, k2_hat = k2_hat_values
+)
+bad <- Filter(function(v) anyNA(v), components)
+if (length(bad)) {
+  detail <- vapply(names(bad), function(nm) {
+    paste0(nm, " (", paste(names(bad[[nm]])[is.na(bad[[nm]])], collapse = ", "), ")")
+  }, character(1))
+  stop("Variance-bound component is NA for: ", paste(detail, collapse = "; "))
+}
+
 # Create comprehensive results data frame
 variance_bounds_df <- data.frame(
   Maturity = maturities,
