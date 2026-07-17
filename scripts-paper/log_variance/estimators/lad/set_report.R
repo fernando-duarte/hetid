@@ -41,10 +41,14 @@ logvar_lad_nonunique_demote <- function(est, res, cfg, promoted) {
       if (isTRUE(it$rel)) truncated <- TRUE
       next
     }
-    fit <- tryCatch(est$fit_at_b(it$a), error = function(e) NULL)
+    # Neither call is wrapped: both signal an ordinary rejection by returning a
+    # non-"ok" fit or a NULL probe, so a raised condition is a defect. Swallowing
+    # one skips the point silently and leaves `sensitive` empty, which reports the
+    # tau as reliable -- the exact inverse of this schedule's fail-closed rule.
+    fit <- est$fit_at_b(it$a)
     if (is.null(fit) || !identical(fit$fit_status, "ok")) next
     z <- 2 * log(abs(drop(cfg$w1 - cfg$w2 %*% it$a)))
-    pr <- tryCatch(logvar_lad_nonunique_probe(fit, z, cfg$x_mat), error = function(e) NULL)
+    pr <- logvar_lad_nonunique_probe(fit, z, cfg$x_mat)
     count <- count + 1L
     if (!is.null(pr) && isTRUE(pr$multiple_solution_sensitive) && isTRUE(it$rel)) {
       sensitive[[length(sensitive) + 1L]] <- list(tag = it$tag, coef_max_diff = pr$coef_max_diff)
