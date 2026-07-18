@@ -16,12 +16,12 @@
 
 if (file.exists(.egarch_gate_rds)) {
   if (!exists("logvar_egarch_route")) {
-    source(paper_path("log_variance", "extensions", "egarch", "decision_core.R"))
+    paper_source_once(paper_path("log_variance", "extensions", "egarch", "decision_core.R"))
   }
   if (!exists("logvar_egarch_dynamic_artifacts")) {
-    source(paper_path("log_variance", "extensions", "egarch", "cleanup.R"))
+    paper_source_once(paper_path("log_variance", "extensions", "egarch", "cleanup.R"))
   }
-  source(paper_path("config", "decisions", "egarch.R"))
+  paper_source_once(paper_path("config", "decisions", "egarch.R"))
 
   # validate the committed decision against the fresh gate record; a mismatch
   # raises a classed condition here, before any routing or dependency lookup
@@ -49,8 +49,8 @@ if (file.exists(.egarch_gate_rds)) {
   # prove the four dynamic-only artifacts are absent (cleanup removed them and no
   # dynamic module has run); a stray artifact is a hard stop
   .egarch_dyn_paths <- logvar_egarch_dynamic_artifacts()
+  assert_artifacts_absent("conditional_egarch")
   .egarch_absent <- !file.exists(.egarch_dyn_paths)
-  stopifnot(all(.egarch_absent))
 
   .egarch_audit <- if (exists("logvar_egarch_cleanup_audit")) {
     logvar_egarch_cleanup_audit
@@ -79,7 +79,11 @@ if (file.exists(.egarch_gate_rds)) {
   cat("[END LOGVAR EGARCH ROUTE]\n")
 
   unlink(.egarch_status_rds)
-  saveRDS(log_var_eq_egarch_status, .egarch_status_rds, version = 3)
+  paper_write_exact_rds(
+    log_var_eq_egarch_status,
+    .egarch_status_rds,
+    "egarch_status"
+  )
 
   rm(
     .egarch_gate, .egarch_dep_available, .egarch_dep_version,

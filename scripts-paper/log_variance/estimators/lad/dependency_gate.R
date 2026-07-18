@@ -27,11 +27,12 @@ logvar_lad_gate_consents <- c("not_asked", "not_needed", "declined", "approved")
 
 # Raise a classed condition so callers can dispatch on the gate error family.
 logvar_lad_gate_stop <- function(message, subclass) {
-  cond <- structure(
-    class = c(subclass, "logvar_lad_gate_error", "error", "condition"),
-    list(message = message, call = NULL)
+  paper_stop_condition(
+    subclass,
+    "logvar_lad_gate_error",
+    message,
+    message = message
   )
-  stop(cond)
 }
 
 # Assemble the deterministic result list returned to the caller.

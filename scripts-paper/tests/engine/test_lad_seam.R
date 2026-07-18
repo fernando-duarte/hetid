@@ -8,19 +8,15 @@
 #   Rscript scripts-paper/tests/engine/test_lad_seam.R
 
 source(file.path("scripts-paper", "config", "paths.R"))
-source(paper_path("config", "artifacts.R"))
-source(paper_path("support", "identification", "profile_solver_core.R"))
-source(paper_path("support", "identification", "profile_bounds_api.R"))
-source(paper_path("log_variance", "core", "residual_map.R"))
-source(paper_path("log_variance", "engine", "api.R"))
+paper_source_once(paper_path("config", "artifacts.R"))
+paper_source_once(paper_path("support", "identification", "profile_solver_core.R"))
+paper_source_once(paper_path("support", "identification", "profile_bounds_api.R"))
+paper_source_once(paper_path("log_variance", "core", "residual_map.R"))
+paper_source_once(paper_path("log_variance", "engine", "api.R"))
 
-.pass <- 0L
-.fail <- 0L
-check <- function(label, cond) {
-  ok <- isTRUE(tryCatch(cond, error = function(e) FALSE))
-  if (ok) .pass <<- .pass + 1L else .fail <<- .fail + 1L
-  cat(sprintf("%s  %s\n", if (ok) "PASS" else "FAIL", label))
-}
+paper_source_once(paper_path("tests", "support", "harness.R"))
+.test <- paper_test_harness()
+check <- .test$check
 
 # A LAD-shaped dummy over a K = 2 ball: nonsmooth metadata, lattice traversal, no
 # jacobian. fit_at_b domain-fails at the flagged grid point and returns an ok
@@ -176,5 +172,4 @@ check("lad seam discloses budget exhaustion signalled from a sides probe", {
     !is.null(res$diagnostics$counters) && all(res$table$status == "unreliable")
 })
 
-cat(sprintf("\n%d passed, %d failed\n", .pass, .fail))
-if (.fail > 0L) quit(status = 1L)
+.test$finish()

@@ -52,9 +52,15 @@ logvar_joint_project_side <- function(spec, target, side, delta) {
 # Assemble the min/max hull for one target and delta from its two side searches.
 # Equal attained endpoints are described only as an attained projection unchanged
 # within search, never as a globally unchanged region.
-logvar_joint_project_hull <- function(lo, hi) {
+logvar_joint_project_hull <- function(
+  lo,
+  hi,
+  tolerance = logvar_joint_gmm_constants$projection_equality_rtol
+) {
   bounded <- identical(lo$status, "bounded") && identical(hi$status, "bounded")
-  if (bounded && isTRUE(abs(hi$endpoint - lo$endpoint) <= 1e-9 * max(1, abs(lo$endpoint)))) {
+  equal_within_tolerance <- abs(hi$endpoint - lo$endpoint) <=
+    tolerance * max(1, abs(lo$endpoint))
+  if (bounded && isTRUE(equal_within_tolerance)) {
     return(list(width = 0, status = "attained projection unchanged within search"))
   }
   width <- if (bounded) hi$endpoint - lo$endpoint else NA_real_

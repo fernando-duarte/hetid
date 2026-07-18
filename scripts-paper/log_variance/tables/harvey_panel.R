@@ -8,7 +8,7 @@
 # swap. Definitions only; callers supply the shared cell formatters
 # (table_formatting.R) and LaTeX builders.
 
-source(paper_path("log_variance", "tables", "harvey_caption.R"))
+paper_source_once(paper_path("log_variance", "tables", "harvey_caption.R"))
 
 # Build the Harvey panel fragment: reference and Lewbel-point columns plus the
 # per-display-tau hulls, R^2 not defined for the variance MLE. Row labels come
@@ -16,7 +16,7 @@ source(paper_path("log_variance", "tables", "harvey_caption.R"))
 # runner global. The point columns render t-statistics/stars when se_type is
 # set (via the shared logvar_se_point_col); stat slots stay blank by
 # construction when se_type is NULL (back-compat). envelope threads a per-tau
-# (sprintf("%.17g", tau)-keyed) confidence-envelope frame (log_var_eq_set_boot
+# (paper_tau_key-keyed) confidence-envelope frame (log_var_eq_set_boot
 # $harvey) the same way logvar_ppml_table_parts does: NULL (the default) keeps
 # every column byte-identical to the pre-envelope renderer.
 logvar_harvey_build_fragment <- function(harvey, n_obs, tau_display,
@@ -24,7 +24,7 @@ logvar_harvey_build_fragment <- function(harvey, n_obs, tau_display,
                                          se_type = NULL, envelope = NULL) {
   tab <- harvey$table
   n_pc_r <- length(tab$coef) - 1L
-  keys <- sprintf("%.17g", tau_display)
+  keys <- vapply(tau_display, paper_tau_key, character(1))
   sets <- harvey$sets[keys]
   stopifnot(!any(vapply(sets, is.null, logical(1))))
   labels <- c(
@@ -70,30 +70,24 @@ logvar_harvey_append_panel <- function(panels_lines, harvey, n_obs,
                                        tau_display, tau_baseline,
                                        grid_cap, fit_budget, caption = NULL,
                                        label = NULL, include_ordering = TRUE,
-                                       se_type = NULL, se_hac_lags = NULL) {
-  splice_block <- function(fragment, notes_lines) {
-    cut <- match("\\end{threeparttable}", fragment)
-    stopifnot(!is.na(cut))
-    notes_block <- c(
-      "% BEGIN LOGVAR NOTES harvey",
-      "\\begin{tablenotes}[flushleft]",
-      "\\scriptsize",
-      paste0("\\item ", notes_lines),
-      "\\end{tablenotes}",
-      "% END LOGVAR NOTES harvey"
-    )
-    c(
-      "% BEGIN LOGVAR PANEL harvey",
-      fragment[seq_len(cut - 1L)], notes_block, fragment[cut:length(fragment)],
-      "% END LOGVAR PANEL harvey"
-    )
-  }
+                                       se_type = NULL, se_hac_lags = NULL,
+                                       set_endpoint_inference = FALSE) {
   harvey_fragment <- logvar_harvey_build_fragment(
     harvey, n_obs, tau_display, caption, label, se_type
   )
   harvey_notes <- build_harvey_panel_notes(
-    harvey, tau_baseline, grid_cap, fit_budget, include_ordering,
-    se_type, se_hac_lags
+    harvey, tau_baseline, grid_cap, fit_budget,
+    se_type = se_type,
+    se_hac_lags = se_hac_lags,
+    set_endpoint_inference = set_endpoint_inference,
+    include_ordering = include_ordering
   )
-  c(panels_lines, splice_block(harvey_fragment, harvey_notes))
+  c(
+    panels_lines,
+    logvar_panel_block(
+      harvey_fragment,
+      harvey_notes,
+      "harvey"
+    )
+  )
 }

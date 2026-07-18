@@ -2,8 +2,8 @@
 # (Mean/Median/Minimum/Maximum/SD) booktabs fragment whose values render in siunitx
 # scientific notation. Sourced by the driver and by the contract test.
 
-source(paper_path("support", "latex", "table_pipeline.R"))
-source(paper_path("support", "latex", "simple_table.R"))
+paper_source_once(paper_path("support", "latex", "table_pipeline.R"))
+paper_source_once(paper_path("support", "latex", "simple_table.R"))
 
 variance_bounds_table_lines <- function(summary_stats) {
   stopifnot(is.numeric(summary_stats), length(summary_stats) == 5L)

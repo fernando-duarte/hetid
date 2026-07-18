@@ -189,10 +189,10 @@ check(
 check(
   "figure path is estimator-stamped",
   !identical(
-    logvar_bounds_tau_path("out", list(estimator = "logols")),
-    logvar_bounds_tau_path("out", list(estimator = "ppml"))
+    logvar_bounds_tau_path(list(estimator = "logols")),
+    logvar_bounds_tau_path(list(estimator = "ppml"))
   ) && grepl(
     "log_var_eq_bounds_tau_logols\\.svg$",
-    logvar_bounds_tau_path("out", list(estimator = "logols"))
+    logvar_bounds_tau_path(list(estimator = "logols"))
   )
 )

@@ -8,7 +8,7 @@
 # claim. Bands are projection hulls of an estimated plug-in image; interior
 # attainment is not established. Run via run_pipeline.R after compute_bounds_by_tau.R.
 
-source(paper_path("log_variance", "figures", "bounds_by_tau_plot.R"))
+paper_source_once(paper_path("log_variance", "figures", "bounds_by_tau_plot.R"))
 
 # fresh sample-id recomputation from the same qtr-joined sample; every
 # registry estimator must carry this id
@@ -31,7 +31,11 @@ stopifnot(
   identical(log_var_eq$sample_id, fig_fresh_id)
 )
 
-fig_tau_grid <- seq(0, set_id_mean_eq$tau_star, length.out = 25)
+fig_tau_grid <- seq(
+  0,
+  set_id_mean_eq$tau_star,
+  length.out = PAPER_ANALYSIS_CONTRACT$tau$figure_grid_n
+)
 fig_tau_grid <- fig_tau_grid[fig_tau_grid > 0 & fig_tau_grid < set_id_mean_eq$tau_star]
 fig_args <- function(s) {
   a <- c(s$arg_lower[s$lower_status == "bounded"], s$arg_upper[s$upper_status == "bounded"])
@@ -47,7 +51,7 @@ logvar_bounds_tau_entry <- function(entry) {
   if (is.null(opts$cache)) opts$cache <- new.env(parent = emptyenv())
   if (is.null(opts$budget_state)) opts$budget_state <- logvar_budget_state()
   run_tau <- function(tau, extra) {
-    b_tab <- mean_eq_bounds_tau[[sprintf("%.17g", tau)]]
+    b_tab <- mean_eq_bounds_tau[[paper_tau_key(tau)]]
     stopifnot(!is.null(b_tab))
     qs <- tau_quadratic_system(set_id_mean_eq$gamma, tau, set_id_mean_eq$moments)
     do.call(logvar_engine_set_at_tau, c(
@@ -63,7 +67,7 @@ logvar_bounds_tau_entry <- function(entry) {
   warm <- NULL
   for (tau in fig_tau_grid) {
     r <- run_tau(tau, warm)
-    res[[sprintf("%.17g", tau)]] <- r
+    res[[paper_tau_key(tau)]] <- r
     warm <- if (identical(entry$warm_chain, FALSE)) NULL else fig_args(r$schema)
   }
   grid_rows <- function() {
@@ -74,7 +78,7 @@ logvar_bounds_tau_entry <- function(entry) {
   viol <- logvar_check_nesting(grid_rows())
   if (nrow(viol) > 0L) {
     for (tv in unique(viol$tau)) {
-      k <- match(sprintf("%.17g", tv), names(res))
+      k <- match(paper_tau_key(tv), names(res))
       near <- c(
         if (k > 1L) fig_args(res[[k - 1L]]$schema),
         fig_args(res[[k]]$schema),
@@ -85,7 +89,7 @@ logvar_bounds_tau_entry <- function(entry) {
     viol <- logvar_check_nesting(grid_rows())
     for (i in seq_len(nrow(viol))) {
       v <- viol[i, ]
-      k <- match(sprintf("%.17g", v$tau), names(res))
+      k <- match(paper_tau_key(v$tau), names(res))
       col <- paste0(v$side, "_status")
       j <- match(v$coef, res[[k]]$schema$coef)
       res[[k]]$schema[[col]][j] <- "unreliable"

@@ -14,6 +14,6 @@
 # this record (exact schema, branch consistency, fresh spec ID) before any moment
 # evaluation. decided_on is a fixed ISO date, not Sys.Date().
 
-source(paper_path("log_variance", "diagnostics", "joint_gmm", "decision_schema.R"))
+paper_source_once(paper_path("log_variance", "diagnostics", "joint_gmm", "decision_schema.R"))
 
 logvar_joint_gmm_decision <- logvar_joint_decision_default("2026-07-14")

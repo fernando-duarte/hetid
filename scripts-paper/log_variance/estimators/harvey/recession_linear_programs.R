@@ -8,7 +8,10 @@
 # solve min fn = obj'x over box [lo, hi] with hin(x) <= 0 rows gmat x - hvec
 # and equalities emat x = evec, via the shared nloptr SLSQP; returns the
 # point and nothing else -- callers recompute every certificate quantity
-.logvar_lp_solve <- function(obj, gmat, hvec, emat, evec, lo, hi, x0) {
+.logvar_lp_solve <- function(
+  obj, gmat, hvec, emat, evec, lo, hi, x0,
+  control = LOGVAR_HARVEY_CONTROL
+) {
   res <- tryCatch(
     nloptr::slsqp(
       x0 = x0,
@@ -19,7 +22,10 @@
       hinjac = function(x) gmat,
       heq = function(x) drop(emat %*% x) - evec,
       heqjac = function(x) emat,
-      control = list(xtol_rel = 1e-12, maxeval = 2000),
+      control = list(
+        xtol_rel = control$lp_xtol_rel,
+        maxeval = control$lp_maxeval
+      ),
       deprecatedBehavior = FALSE
     ),
     error = function(e) NULL
@@ -32,7 +38,10 @@
 
 # the primal facet problem: min colSums(Z)' u over Z_p u >= 0, u_j = sign,
 # -1 <= u <= 1; returns the candidate direction and its feasibility record
-logvar_harvey_facet_primal <- function(c_vec, z_pos, j, sign_j) {
+logvar_harvey_facet_primal <- function(
+  c_vec, z_pos, j, sign_j,
+  control = LOGVAR_HARVEY_CONTROL
+) {
   p <- length(c_vec)
   x0 <- numeric(p)
   x0[j] <- sign_j
@@ -41,7 +50,8 @@ logvar_harvey_facet_primal <- function(c_vec, z_pos, j, sign_j) {
   emat <- matrix(0, 1, p)
   emat[1, j] <- 1
   u <- .logvar_lp_solve(
-    c_vec, gmat, hvec, emat, sign_j, rep(-1, p), rep(1, p), x0
+    c_vec, gmat, hvec, emat, sign_j, rep(-1, p), rep(1, p), x0,
+    control
   )
   if (is.null(u)) {
     return(list(ok = FALSE))
@@ -56,7 +66,10 @@ logvar_harvey_facet_primal <- function(c_vec, z_pos, j, sign_j) {
 # projected multipliers with the recomputed stationarity residual:
 # L = -h'lambda_plus - sign*nu - sum(abs(q)), the exact support correction
 # implied by the unit box
-logvar_harvey_facet_dual <- function(c_vec, z_pos, j, sign_j) {
+logvar_harvey_facet_dual <- function(
+  c_vec, z_pos, j, sign_j,
+  control = LOGVAR_HARVEY_CONTROL
+) {
   p <- length(c_vec)
   n_pos <- nrow(z_pos)
   gmat <- rbind(-z_pos, diag(p), -diag(p))
@@ -69,7 +82,10 @@ logvar_harvey_facet_dual <- function(c_vec, z_pos, j, sign_j) {
   emat <- cbind(t(gmat), e_j)
   sol <- .logvar_lp_solve(
     obj, matrix(0, 1, m + 1), 0, emat, -c_vec,
-    c(rep(0, m), -1e6), rep(1e6, m + 1), rep(0, m + 1)
+    c(rep(0, m), -control$lp_bound),
+    rep(control$lp_bound, m + 1),
+    rep(0, m + 1),
+    control
   )
   if (is.null(sol)) {
     return(list(ok = FALSE))
@@ -88,7 +104,10 @@ logvar_harvey_facet_dual <- function(c_vec, z_pos, j, sign_j) {
 # phase-I pair for an apparently infeasible facet: minimize t subject to
 # -Z_p u <= t, u_j = sign, -1 <= u <= 1, 0 <= t <= t_max; its dual bound
 # L_I adds the t-residual correction t_max * |q_I[t]|
-logvar_harvey_facet_phase1 <- function(z_pos, j, sign_j, t_max) {
+logvar_harvey_facet_phase1 <- function(
+  z_pos, j, sign_j, t_max,
+  control = LOGVAR_HARVEY_CONTROL
+) {
   p <- ncol(z_pos)
   n_pos <- nrow(z_pos)
   obj <- c(numeric(p), 1)
@@ -100,7 +119,7 @@ logvar_harvey_facet_phase1 <- function(z_pos, j, sign_j, t_max) {
   x0[j] <- sign_j
   v <- .logvar_lp_solve(
     obj, gmat, hvec, emat, sign_j,
-    c(rep(-1, p), 0), c(rep(1, p), t_max), x0
+    c(rep(-1, p), 0), c(rep(1, p), t_max), x0, control
   )
   if (is.null(v)) {
     return(list(ok = FALSE))
@@ -119,7 +138,10 @@ logvar_harvey_facet_phase1 <- function(z_pos, j, sign_j, t_max) {
   dual <- .logvar_lp_solve(
     c(h_full, sign_j), matrix(0, 1, m + 1), 0,
     cbind(t(g_full), e_full), -obj,
-    c(rep(0, m), -1e6), rep(1e6, m + 1), rep(0, m + 1)
+    c(rep(0, m), -control$lp_bound),
+    rep(control$lp_bound, m + 1),
+    rep(0, m + 1),
+    control
   )
   if (is.null(dual)) {
     return(list(ok = TRUE, t_min = t_min, v = v, dual_ok = FALSE))

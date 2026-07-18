@@ -137,7 +137,9 @@ lbd_spec <- list(
     logvar_harvey_estimator(
       w1, w2, pcr, qtr, b_point,
       ppml_bundle = if (!is.null(ppml_obj)) ppml_obj$start_bundle else NULL,
-      ppml_start_at_b = if (!is.null(ppml_obj)) ppml_obj$fit_at_b else NULL
+      ppml_start_at_b = if (!is.null(ppml_obj)) ppml_obj$fit_at_b else NULL,
+      ppml_bundle_source_id = ppml_obj$metadata$spec_id,
+      ppml_start_at_b_source_id = ppml_obj$metadata$spec_id
     )
   }
 )

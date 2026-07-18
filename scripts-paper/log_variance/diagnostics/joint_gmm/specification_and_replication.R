@@ -3,15 +3,15 @@
 # Definitions only. The enabled-block and ratified-projection predicates read the validated
 # decision record; the spec core stamps a canonical spec_id over the sample and
 # joint identities, the decision spec_id, the module policy versions, the frozen
-# scales, the pinned tolerance controls, the search budgets, and the enabled
-# blocks; the graph-replication core proves the stacked just-identified moment
+# scales, the complete executed constants object, and the enabled blocks; the
+# graph-replication core proves the stacked just-identified moment
 # layer reproduces the benchmark two-step map at feasible b -- a software-
 # invariance check, not new identification. The artifact and projection modules
 # and the guarded pipeline driver are sourced here. Sourced by
 # tests/diagnostics/joint_gmm/test_joint_gmm.R and, at pipeline time, by run_pipeline.R.
 
-source(paper_path("log_variance", "diagnostics", "joint_gmm", "artifact_schema.R"))
-source(paper_path("log_variance", "diagnostics", "joint_gmm", "projection.R"))
+paper_source_once(paper_path("log_variance", "diagnostics", "joint_gmm", "artifact_schema.R"))
+paper_source_once(paper_path("log_variance", "diagnostics", "joint_gmm", "projection.R"))
 
 # Enabled moment blocks from the decision record: the z block when enable_z, the
 # log/PPML block when enable_log_ppml, both when both, and none when neither (the
@@ -43,13 +43,13 @@ logvar_joint_gmm_default_config_only <- function(decision) {
 # Canonical 17-significant-digit serialization for the spec-ID numeric parts, so
 # the stamp is representation-stable across runs (mirrors the decision spec-ID).
 .jg_fmt17 <- function(x) {
-  formatC(as.numeric(x), digits = 17, format = "fg", flag = "#")
+  paper_numeric_key(as.numeric(x))
 }
 
 # Canonical spec_id over the sample/joint identities, the decision spec_id, the
-# module policy versions, the frozen moment/coordinate scales, the tolerance
-# controls, the search budgets, and the enabled blocks. Written with the pinned
-# RDS version and hashed with base tools, so any substantive change re-stamps it.
+# module policy versions, frozen moment/coordinate scales, complete executed
+# constants object, and enabled blocks. Written with the canonical object hash,
+# so any substantive change re-stamps it.
 logvar_joint_gmm_spec_id <- function(parts) {
   payload <- list(
     sample_id = as.character(parts$sample_id),
@@ -61,14 +61,12 @@ logvar_joint_gmm_spec_id <- function(parts) {
     enabled_blocks = as.character(parts$enabled_blocks),
     moment_scales = .jg_fmt17(parts$moment_scales),
     coord_scales = .jg_fmt17(parts$coord_scales),
+    execution_constants = lapply(parts$execution_constants, .jg_fmt17),
     controls = .jg_fmt17(parts$controls),
     budgets = .jg_fmt17(parts$budgets),
     moment_delta = .jg_fmt17(sort(unique(as.numeric(parts$moment_delta))))
   )
-  tmp <- tempfile(fileext = ".rds")
-  on.exit(unlink(tmp), add = TRUE)
-  saveRDS(payload, tmp, version = 3)
-  unname(tools::md5sum(tmp))
+  paper_md5_rds(payload)
 }
 
 # The pure joint_gmm_spec core: assemble the deterministic specification the
@@ -81,12 +79,11 @@ logvar_joint_gmm_spec <- function(decision, sample_id, joint_input_id,
                                   moment_scales = numeric(0)) {
   k <- logvar_joint_gmm_constants
   controls <- c(
-    param_xtol_rel = k$param_xtol_rel, objective_tol = k$objective_tol,
-    constraint_tol = k$constraint_tol, root_tol = k$root_tol
+    param_xtol_rel = k$param_xtol_rel,
+    constraint_tol = k$constraint_tol,
+    root_tol = k$root_tol
   )
   budgets <- c(
-    grid_n = k$grid_n, grid_floor = k$grid_floor, gmm_grid_cap = k$gmm_grid_cap,
-    candidate_eval_cap = k$candidate_eval_cap,
     pattern_start_cap = k$pattern_start_cap,
     per_solve_maxeval = k$per_solve_maxeval, box_h1 = k$box_half_widths[1L],
     box_h2 = k$box_half_widths[2L], box_h3 = k$box_half_widths[3L]
@@ -98,6 +95,7 @@ logvar_joint_gmm_spec <- function(decision, sample_id, joint_input_id,
     candidate_version = "candidate-v1",
     enabled_blocks = logvar_joint_gmm_enabled_blocks(decision),
     moment_scales = moment_scales, coord_scales = coord_scales,
+    execution_constants = k,
     controls = controls, budgets = budgets, moment_delta = decision$moment_delta,
     combine_blocks = FALSE,
     stage_c_enabled = logvar_joint_gmm_stage_c_enabled(decision)
@@ -141,4 +139,4 @@ logvar_joint_gmm_graph_replication <- function(b_points, w1, w2, proj, x_mat,
 }
 
 # The guarded pipeline driver (joins, validation, artifact writes, prints).
-source(paper_path("log_variance", "diagnostics", "joint_gmm", "pipeline_driver.R"))
+paper_source_once(paper_path("log_variance", "diagnostics", "joint_gmm", "pipeline_driver.R"))

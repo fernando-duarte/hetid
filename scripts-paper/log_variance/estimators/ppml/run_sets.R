@@ -5,8 +5,8 @@
 # independent Morton-grid coverage gate before any result ships. Console block in
 # console_report.R. Run via run_pipeline.R after compute_bounds_by_tau.R.
 
-source(paper_path("log_variance", "estimators", "ppml", "estimator.R"))
-source(paper_path("log_variance", "estimators", "ppml", "pilot_and_grid.R"))
+paper_source_once(paper_path("log_variance", "estimators", "ppml", "estimator.R"))
+paper_source_once(paper_path("log_variance", "estimators", "ppml", "pilot_and_grid.R"))
 
 # one preparation path: validate the frozen inputs and the mean-zero PC_R
 # convention, then derive the scale anchor/seed base at the PPML grid cap; the
@@ -23,12 +23,19 @@ list2env(
 scale_anchor_b <- if (point_feasible) b_point else grid_base[1, ]
 scale_anchor_source <- if (point_feasible) "lewbel_point" else "baseline_grid_first"
 
-# pre-mapping scaling pilot at response_scale = 1: anchor plus the first ten
-# other coarsened grid points; response_scale freezes here, before any fit/cache
+# pre-mapping scaling pilot at response_scale = 1: anchor plus the configured
+# number of other grid points; response_scale freezes before any fit/cache
 anchor_key <- logvar_b_key(scale_anchor_b)
 grid_keys <- apply(grid_base, 1L, logvar_b_key)
-pilot_pts <- utils::head(grid_base[grid_keys != anchor_key, , drop = FALSE], 10L)
-pilot <- logvar_ppml_pilot(w1, w2, x_mat, scale_anchor_b, pilot_pts)
+pilot_pts <- grid_base[grid_keys != anchor_key, , drop = FALSE]
+pilot <- logvar_ppml_pilot(
+  w1,
+  w2,
+  x_mat,
+  scale_anchor_b,
+  pilot_pts,
+  LOGVAR_PPML_CONTROL
+)
 response_scale <- pilot$response_scale
 cat(sprintf(
   "  PPML pilot: %d fits, %d triggered; response_scale = %g\n",
@@ -42,7 +49,8 @@ est_ppml <- logvar_ppml_estimator(
   w1, w2, pcr, qtr,
   b_point = b_point_arg,
   scale_anchor_b = scale_anchor_b, scale_anchor_source = scale_anchor_source,
-  response_scale = response_scale
+  response_scale = response_scale,
+  control = LOGVAR_PPML_CONTROL
 )
 stopifnot(identical(est_ppml$metadata$sample_id, log_var_eq$sample_id))
 search_seed <- if (point_feasible) b_point else scale_anchor_b
@@ -55,41 +63,38 @@ cond_fit <- if (!is.null(point_fit)) point_fit else est_ppml$fit_at_b(scale_anch
 cond_weighted_xx <- cond_fit$diagnostics$condition_weighted_scaled
 # naive reference column: PPML on the exogenous-news OLS fit's squared
 # residuals, same rows (matched by qtr) and the same frozen response_scale
-ref_rows <- match(qtr, set_id_mean_eq$qtr)
-stopifnot(!anyNA(ref_rows))
-ref_resid <- as.numeric(stats::residuals(set_id_mean_eq$ols_fit)[ref_rows])
+ref_resid <- logvar_reference_residuals(qtr, set_id_mean_eq)
 theta_reference <- logvar_ppml_fit_response(
   ref_resid^2, x_mat,
-  response_scale = response_scale
+  response_scale = response_scale,
+  control = LOGVAR_PPML_CONTROL
 )$coef
-# per display tau (keyed sprintf("%.17g", tau) so the coverage helpers and cache
+# per display tau (keyed by paper_tau_key so the coverage helpers and cache
 # align): scan the warm-refined display box through the shared engine with three
 # separated starts per side, one shared cache, a fresh per-tau budget, warm extras
 taus <- set_id_mean_eq$tau_display
 ppml_cache <- new.env(parent = emptyenv())
-primary_results <- list()
-b_tab_list <- list()
-primary_diag <- list()
-warm_extra <- NULL
-for (idx in seq_along(taus)) {
-  tau_i <- taus[idx]
-  key_i <- sprintf("%.17g", tau_i)
-  b_tab_i <- mean_eq_bounds_tau[[key_i]]
-  stopifnot(!is.null(b_tab_i))
-  qs_i <- tau_quadratic_system(set_id_mean_eq$gamma, tau_i, set_id_mean_eq$moments)
-  ppml_bs <- logvar_budget_state(logvar_ppml_fit_budget)
-  res_i <- logvar_engine_set_at_tau(
-    est_ppml, qs_i, b_tab_i,
-    b_seed = search_seed,
-    max_grid_points = logvar_ppml_grid_cap, starts_per_side = 3L,
-    cache = ppml_cache, budget_state = ppml_bs, extra_starts = warm_extra,
-    cold_start_check = TRUE, tau = tau_i
+qs_fn <- function(tau) {
+  tau_quadratic_system(
+    set_id_mean_eq$gamma,
+    tau,
+    set_id_mean_eq$moments
   )
-  primary_results[[key_i]] <- res_i
-  b_tab_list[[key_i]] <- b_tab_i
-  primary_diag[[key_i]] <- res_i$diagnostics
-  warm_extra <- logvar_bounded_args(res_i$schema)
 }
+mapped <- logvar_map_display_taus(
+  taus = taus,
+  bounds_tau = mean_eq_bounds_tau,
+  quadratic_at_tau = qs_fn,
+  map_one = logvar_engine_tau_mapper(
+    estimator = est_ppml,
+    b_seed = search_seed,
+    max_grid_points = logvar_ppml_grid_cap,
+    max_fit_evals = logvar_ppml_fit_budget,
+    cache = ppml_cache
+  )
+)
+primary_results <- mapped$results
+b_tab_list <- mapped$boxes
 
 # independent coverage gate: a second estimator over an up-to-8000 Morton grid,
 # five starts, fresh cache/budget; apply_coverage unions endpoints, demotes sides
@@ -97,9 +102,9 @@ est_cov <- logvar_ppml_estimator(
   w1, w2, pcr, qtr,
   b_point = b_point_arg,
   scale_anchor_b = scale_anchor_b, scale_anchor_source = scale_anchor_source,
-  response_scale = response_scale
+  response_scale = response_scale,
+  control = LOGVAR_PPML_CONTROL
 )
-qs_fn <- function(tau) tau_quadratic_system(set_id_mean_eq$gamma, tau, set_id_mean_eq$moments)
 coverage <- logvar_ppml_coverage_run(
   est_cov, taus, b_tab_list, search_seed,
   logvar_ppml_coverage_grid_cap, logvar_ppml_coverage_fit_budget, qs_fn
@@ -108,7 +113,8 @@ adjusted <- logvar_ppml_apply_coverage(
   primary_results, coverage,
   grid_cap = logvar_ppml_coverage_grid_cap,
   fit_budget = logvar_ppml_coverage_fit_budget,
-  cache_stamp = est_cov$metadata$spec_id
+  cache_stamp = est_cov$metadata$spec_id,
+  selector_protocol = LOGVAR_PPML_COVERAGE_PROTOCOL
 )
 final_res <- adjusted$results
 
@@ -121,20 +127,20 @@ benchmark_divergence <- lapply(log_var_eq$schema, function(s) {
   )
 })
 
-base_tab <- final_res[[sprintf("%.17g", taus[1])]]$table
-stopifnot(identical(base_tab$coef, colnames(x_mat)))
-log_var_eq_ppml <- list(
-  sample = list(n = length(qtr), span = range(qtr)),
+core <- logvar_set_result_core(
+  qtr = qtr,
   sample_id = log_var_eq$sample_id,
-  table = data.frame(
-    coef = colnames(x_mat), reference = unname(theta_reference),
-    point = unname(theta_point_ppml), set_lower = base_tab$set_lower,
-    set_upper = base_tab$set_upper, status = base_tab$status, row.names = NULL
-  ),
-  sets = lapply(final_res, function(r) r$table),
-  schema = lapply(final_res, function(r) r$schema),
-  n_feasible = vapply(primary_results, function(r) r$n_feasible, integer(1)),
-  counts = primary_diag,
+  coef_labels = colnames(x_mat),
+  reference = theta_reference,
+  point = theta_point_ppml,
+  baseline_tau = set_id_mean_eq$tau_baseline,
+  primary_results = primary_results,
+  final_results = final_res,
+  w1 = w1,
+  w2 = w2,
+  search_seed = search_seed
+)
+log_var_eq_ppml <- c(core, list(
   fit_failures = vapply(primary_results, function(r) r$diagnostics$n_failed, integer(1)),
   min_feasible_abs_eps = vapply(
     final_res, function(r) logvar_min_feasible_eps(r$schema, w1, w2, search_seed),
@@ -146,22 +152,25 @@ log_var_eq_ppml <- list(
   scale_anchor_bundle = est_ppml$scale_anchor_bundle,
   coverage_audit = list(audit = adjusted$audit, meta = adjusted$metadata),
   pilot = pilot
-)
+))
 
 # register the PPML figure entry (engine opts and the shared cache included);
 # this entry and ppml_cache must survive cleanup
-logvar_bounds_tau_registry[[length(logvar_bounds_tau_registry) + 1L]] <- list(
+registry_entry <- logvar_bounds_registry_entry(
   estimator = est_ppml,
-  schema = lapply(final_res, function(r) r$schema),
-  sets = lapply(final_res, function(r) r$table), b_seed = search_seed,
+  results = final_res,
+  b_seed = search_seed,
   engine_opts = list(
-    max_grid_points = logvar_ppml_grid_cap, max_fit_evals = logvar_ppml_fit_budget,
-    starts_per_side = 3L, cache = ppml_cache
-  ),
-  output_path = logvar_bounds_tau_path(out_dir, est_ppml$metadata)
+    max_grid_points = logvar_ppml_grid_cap,
+    max_fit_evals = logvar_ppml_fit_budget,
+    starts_per_side = LOGVAR_SEARCH_CONTROL$primary_starts_per_side,
+    cache = ppml_cache
+  )
 )
+logvar_bounds_tau_registry[[length(logvar_bounds_tau_registry) + 1L]] <-
+  registry_entry
 
-source(paper_path("log_variance", "estimators", "ppml", "console_report.R"))
+paper_source_once(paper_path("log_variance", "estimators", "ppml", "console_report.R"))
 
 # remove only scratch locals: keep log_var_eq_ppml, logvar_bounds_tau_registry,
 # ppml_cache (registry-referenced), and every sourced function
@@ -169,9 +178,8 @@ rm(
   w1, w2, pcr, qtr, x_mat, b_point,
   point_feasible, grid_base, scale_anchor_b, scale_anchor_source, anchor_key,
   grid_keys, pilot_pts, pilot, response_scale, b_point_arg, est_ppml, point_fit,
-  search_seed, na_coef, theta_point_ppml, cond_fit, cond_weighted_xx, ref_rows,
-  ref_resid, theta_reference, taus, primary_results,
-  b_tab_list, primary_diag, warm_extra, idx, tau_i, key_i, b_tab_i, qs_i, ppml_bs,
-  res_i, est_cov, qs_fn, coverage, adjusted, final_res,
-  benchmark_divergence, base_tab
+  search_seed, na_coef, theta_point_ppml, cond_fit, cond_weighted_xx,
+  ref_resid, theta_reference, taus, mapped, primary_results,
+  b_tab_list, est_cov, qs_fn, coverage, adjusted, final_res,
+  benchmark_divergence, core, registry_entry
 )

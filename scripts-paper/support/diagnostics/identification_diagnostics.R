@@ -2,6 +2,8 @@
 # diagnostics battery, and the joint-relevance rank test. suite_na_row resolves
 # the caller's suite_tests vector at call time.
 
+paper_source_once(paper_path("config", "diagnostics.R"))
+
 # Breusch-Pagan LM: squared residuals on the PC levels, the direct check
 # that Var(e2 | Z) moves with the instruments
 bp_lm_test <- function(residuals, regressors) {
@@ -52,18 +54,25 @@ w2_refit_fitted_ratio <- function(w2_resid, z_mat) {
 # trend, not the Lewbel condition. See
 # docs/reviews/hetero-test-investigation-2026-06-10.md and
 # docs/heteroskedasticity_tests_general_instruments.tex.
-select_diagnostics_suite <- function(w2_resid, z_mat) {
+select_diagnostics_suite <- function(
+  w2_resid,
+  z_mat,
+  control = PAPER_HETEROSKEDASTICITY_CONTROL
+) {
+  stopifnot(
+    ncol(z_mat) >= 1L,
+    control$gq_deflator_position >= 1L,
+    identical(names(control$suites), c("A", "B"))
+  )
   ratio <- w2_refit_fitted_ratio(w2_resid, z_mat)
-  regime <- if (ratio > 1e-3) "B" else "A"
-  suite <- if (regime == "B") {
-    c("White", "BP", "GQ", "Harvey", "Anscombe")
-  } else {
-    c("White", "BP", "GQ", "Harvey")
-  }
+  regime <- if (ratio > control$fitted_sd_ratio_cutoff) "B" else "A"
+  gq_position <- min(control$gq_deflator_position, ncol(z_mat))
   list(
-    regime = regime, fitted_sd_ratio = ratio, suite_tests = suite,
-    gq_deflator = colnames(z_mat)[min(2L, ncol(z_mat))],
-    gq_alternative = "two.sided"
+    regime = regime,
+    fitted_sd_ratio = ratio,
+    suite_tests = control$suites[[regime]],
+    gq_deflator = colnames(z_mat)[gq_position],
+    gq_alternative = control$gq_alternative
   )
 }
 

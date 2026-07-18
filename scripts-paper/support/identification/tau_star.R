@@ -96,7 +96,10 @@ sweep_fixed_gamma <- function(gamma, moments, taus, grid_label) {
 # Evenly spaced fine taus strictly inside the bounded region (0, first
 # unbounded coarse tau), skipping values already on the coarse grid. Resolves
 # the width blow-up that the coarse grid renders as only a few points.
-fine_tau_grid <- function(coarse, n_fine = 20L) {
+fine_tau_grid <- function(
+  coarse,
+  n_fine = PAPER_INFERENCE_SEARCH_CONTROL$tau_star$fine_grid_points
+) {
   unb <- coarse$tau[!coarse$all_bounded]
   hi <- if (length(unb)) min(unb) else max(coarse$tau)
   taus <- seq(0, hi, length.out = n_fine + 2L)
@@ -108,7 +111,10 @@ fine_tau_grid <- function(coarse, n_fine = 20L) {
 # by the coarse sweep. Returns the threshold, the (tau, width) evaluations the
 # bisection performs (free fine detail at the transition), and whether the
 # sweep never left the bounded region (tau* capped at the grid maximum).
-tau_star_fixed <- function(gamma, moments, coarse, iters = 40L) {
+tau_star_fixed <- function(
+  gamma, moments, coarse,
+  iters = PAPER_INFERENCE_SEARCH_CONTROL$tau_star$bisection_iterations
+) {
   # A tau counts as inside the bounded region only when its set is CERTIFIED
   # bounded (status "bounded" = finite total width, every side bounded AND the
   # validity certificate passed). An "unreliable" finite solve (bounded but

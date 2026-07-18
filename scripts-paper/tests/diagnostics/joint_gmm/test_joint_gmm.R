@@ -16,15 +16,15 @@
 #   Rscript scripts-paper/tests/diagnostics/joint_gmm/test_joint_gmm.R
 
 source(file.path("scripts-paper", "config", "paths.R"))
-source(paper_path("config", "artifacts.R"))
-source(paper_path("support", "identification", "profile_solver_core.R"))
-source(paper_path("support", "identification", "profile_bounds_api.R"))
-source(paper_path("log_variance", "core", "residual_map.R"))
-source(paper_path("log_variance", "estimators", "log_ols", "estimator.R"))
+paper_source_once(paper_path("config", "artifacts.R"))
+paper_source_once(paper_path("support", "identification", "profile_solver_core.R"))
+paper_source_once(paper_path("support", "identification", "profile_bounds_api.R"))
+paper_source_once(paper_path("log_variance", "core", "residual_map.R"))
+paper_source_once(paper_path("log_variance", "estimators", "log_ols", "estimator.R"))
 # The ratification gate is committed, so its pure helpers and the checked-in
 # record source cleanly and the decision-layer checks may pass.
-source(paper_path("log_variance", "diagnostics", "joint_gmm", "decision_schema.R"))
-source(paper_path("config", "decisions", "joint_gmm.R"))
+paper_source_once(paper_path("log_variance", "diagnostics", "joint_gmm", "decision_schema.R"))
+paper_source_once(paper_path("config", "decisions", "joint_gmm.R"))
 
 # The required numerical and artifact-schema modules.
 jg_modules <- vapply(c(
@@ -38,28 +38,22 @@ for (file in jg_modules) {
   source(file)
 }
 
-.pass <- 0L
-.fail <- 0L
-check <- function(label, cond) {
-  if (isTRUE(cond)) {
-    .pass <<- .pass + 1L
-    cat(sprintf("PASS  %s\n", label))
-  } else {
-    .fail <<- .fail + 1L
-    cat(sprintf("FAIL  %s\n", label))
-  }
-}
+paper_source_once(paper_path("tests", "support", "harness.R"))
+.test <- paper_test_harness()
+check <- .test$check
 # Fail a check closed when a required joint-GMM function is absent or errors.
 jg_try <- function(expr) tryCatch(isTRUE(expr), error = function(e) FALSE)
 # Assert a required symbol exists, so an absent module fails the check for the
 # right reason (function not found) rather than passing on an unrelated coincidence.
 jg_need <- function(...) stopifnot(vapply(c(...), exists, logical(1)))
 
-source(paper_path("tests", "diagnostics", "joint_gmm", "fixtures.R"))
-source(paper_path("tests", "diagnostics", "joint_gmm", "moment_checks.R"))
-source(paper_path("tests", "diagnostics", "joint_gmm", "profile_checks.R"))
-source(paper_path("tests", "diagnostics", "joint_gmm", "search_checks.R"))
-source(paper_path("tests", "diagnostics", "joint_gmm", "integration_checks.R"))
+paper_source_once(paper_path("tests", "diagnostics", "joint_gmm", "fixtures.R"))
+paper_source_once(paper_path("tests", "diagnostics", "joint_gmm", "moment_checks.R"))
+paper_source_once(paper_path("tests", "diagnostics", "joint_gmm", "profile_checks.R"))
+paper_source_once(paper_path("tests", "diagnostics", "joint_gmm", "search_checks.R"))
+paper_source_once(paper_path("tests", "diagnostics", "joint_gmm", "integration_checks.R"))
+paper_source_once(paper_path(
+  "tests", "diagnostics", "joint_gmm", "schema_contract_checks.R"
+))
 
-cat(sprintf("\n%d passed, %d failed\n", .pass, .fail))
-if (.fail > 0L) quit(status = 1L)
+.test$finish()

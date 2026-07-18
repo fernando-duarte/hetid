@@ -129,6 +129,7 @@ linters
 lintr
 Ljung
 lm
+logvar
 Manski
 mathrm
 mcp
@@ -175,6 +176,7 @@ prepending
 QE
 quadratically
 Quandt
+quantreg
 Rbuildignore
 rcmdcheck
 RcppExports

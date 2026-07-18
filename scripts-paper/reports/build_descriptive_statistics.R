@@ -6,7 +6,7 @@
 # then compile the report with latexmk.
 # Run via run_pipeline.R after the data scripts.
 
-source(paper_path("support", "latex", "table_pipeline.R"))
+paper_source_once(paper_path("support", "latex", "table_pipeline.R"))
 
 # sources of the merged panel, named by series group (the names drive the
 # facet colors below)

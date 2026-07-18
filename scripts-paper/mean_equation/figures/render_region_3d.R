@@ -1,24 +1,45 @@
-# The joint identified set for b_N at tau = 0.05 in standard-deviation units.
+# The joint baseline identified set for b_N in standard-deviation units.
 # The closed triangular shell and its coordinate-wall shadows follow the visual
 # construction of the paper's reference rendering. The set envelope itself is
 # evaluated analytically by prepare_region_geometry.R.
 # Writes the region SVG to the typed figure directory.
 
 local({
-  source(paper_path("mean_equation", "figures", "build_region_3d_geometry.R"), local = TRUE)
-  source(paper_path("mean_equation", "figures", "draw_region_3d.R"), local = TRUE)
+  baseline_tau <- PAPER_ANALYSIS_CONTRACT$tau$baseline
+  dimension <- PAPER_ANALYSIS_CONTRACT$figure$region_dimension
+  stopifnot(
+    identical(dimension, 3L),
+    identical(PAPER_ANALYSIS_CONTRACT$model$n_mean_pc, dimension)
+  )
+  paper_source_once(
+    paper_path(
+      "mean_equation",
+      "figures",
+      "build_region_3d_geometry.R"
+    ),
+    envir = environment()
+  )
+  paper_source_once(
+    paper_path(
+      "mean_equation",
+      "figures",
+      "draw_region_3d.R"
+    ),
+    envir = environment()
+  )
 
   elevation <- 23.1
   azimuth <- 152.8
   theta_view <- azimuth + 90
   n_wall <- 440L
-  sys <- region_sd_system(0.05)
-  box0 <- region_sd_box(0.05)
+  sys <- region_sd_system(baseline_tau)
+  box0 <- region_sd_box(baseline_tau)
   expand_limit <- function(k) {
     values <- c(box0$lo[k], box0$hi[k])
     values + c(-1, 1) * 0.25 * diff(values)
   }
-  natural_lims <- lapply(1:3, expand_limit)
+  axes <- seq_len(dimension)
+  natural_lims <- lapply(axes, expand_limit)
   lims <- natural_lims
   lims[[1]][2] <- 0.28
   lims[[2]][1] <- -0.08
@@ -60,15 +81,15 @@ local({
   hi <- vapply(lims, `[`, numeric(1), 2)
   offsets <- c(hi[1], lo[2], lo[3])
   wall_fill <- grDevices::adjustcolor("#9dc3e6", alpha.f = 0.4)
-  for (perp in 1:3) {
-    keep <- setdiff(1:3, perp)
+  for (perp in axes) {
+    keep <- setdiff(axes, perp)
     first <- seq(lims[[keep[1]]][1], lims[[keep[1]]][2], length.out = n_wall)
     second <- seq(lims[[keep[2]]][1], lims[[keep[2]]][2], length.out = n_wall)
     grid <- region_grid(first, second)
     margin <- region_envelope(sys, perp, grid$X, grid$Y)$M
     contours <- grDevices::contourLines(first, second, margin, levels = 0)
     for (contour in contours) {
-      xyz <- matrix(0, length(contour$x), 3)
+      xyz <- matrix(0, length(contour$x), dimension)
       xyz[, perp] <- offsets[perp]
       xyz[, keep[1]] <- contour$x
       xyz[, keep[2]] <- contour$y
@@ -82,7 +103,7 @@ local({
 
   point0 <- unname(region_sd_point())
   projection_col <- grDevices::adjustcolor("#dc143c", alpha.f = 0.65)
-  for (perp in 1:3) {
+  for (perp in axes) {
     wall_point <- point0
     wall_point[perp] <- offsets[perp]
     draw_projected_line(
@@ -145,10 +166,10 @@ local({
 
   title_x <- graphics::grconvertX(0.5, from = "ndc", to = "user")
   graphics::mtext(
-    expression(paste(
-      "Identified region ", Theta, " for ", b[N], " at ", tau,
-      " = 0.05, SD units"
-    )),
+    bquote(
+      "Identified region " * Theta * " for " * b[N] * " at " *
+        tau * " = " * .(format(baseline_tau)) * ", SD units"
+    ),
     side = 3, line = 4.3, at = title_x, cex = 1.02
   )
   graphics::mtext(

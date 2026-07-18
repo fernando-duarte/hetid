@@ -5,8 +5,8 @@
 # is a pure function of the accepted coefficient, the squared-residual response
 # y, and the design X (no fit object needed; the map reproduces mu = exp(X
 # theta)). Five variants are computed and stored; run_pipeline.R's
-# logvar_harvey_se_type picks which prints (the HAC default matches the PPML and
-# log-OLS panels' Newey-West lag-4 inference):
+# logvar_harvey_se_type picks which prints (the configured HAC choice matches
+# the PPML and log-OLS panel inference):
 #   expected  0.5 X'X inverse           Gaussian working-model Fisher information
 #   observed  0.5 X'diag(r)X inverse    Gaussian working-model observed info
 #   opg       (G'G) inverse             outer-product-of-gradients (BHHH)
@@ -29,7 +29,13 @@ LOGVAR_HARVEY_SE_TYPES <- c("expected", "observed", "opg", "robust", "hac")
 # nonpositive mu, n <= p, or a bread the shared normalized gate
 # (logvar_se_norm_inv) rejects. Returns a named list of p x p matrices keyed by
 # LOGVAR_HARVEY_SE_TYPES.
-logvar_harvey_vcov <- function(coef, y, x_mat, hac_lags) {
+logvar_harvey_vcov <- function(
+  coef,
+  y,
+  x_mat,
+  hac_lags,
+  rcond_tol = LOGVAR_HARVEY_CONTROL$rcond_tol
+) {
   stopifnot(
     is.matrix(x_mat),
     length(hac_lags) == 1L, is.finite(hac_lags), hac_lags >= 0
@@ -54,10 +60,13 @@ logvar_harvey_vcov <- function(coef, y, x_mat, hac_lags) {
   }
   r <- y / mu # zero-safe: y >= 0, mu > 0 (a zero response gives r = 0)
   g <- 0.5 * (1 - r) * x_mat # per-observation score rows
-  h_inv <- logvar_se_norm_inv(0.5 * crossprod(x_mat, r * x_mat)) # observed info
-  ex_inv <- logvar_se_norm_inv(0.5 * crossprod(x_mat)) # expected information
+  h_inv <- logvar_se_norm_inv(
+    0.5 * crossprod(x_mat, r * x_mat),
+    rcond_tol
+  )
+  ex_inv <- logvar_se_norm_inv(0.5 * crossprod(x_mat), rcond_tol)
   meat_opg <- crossprod(g)
-  opg_inv <- logvar_se_norm_inv(meat_opg)
+  opg_inv <- logvar_se_norm_inv(meat_opg, rcond_tol)
   sandwich_v <- function(bread, meat) {
     if (is.null(bread)) na_mat else bread %*% meat %*% bread
   }
@@ -83,8 +92,12 @@ logvar_harvey_se_na_frame <- function(coef_names) {
 # pipeline objects (reference = OLS-residual fit, point = tau = 0 Lewbel fit);
 # the shared reconstruction rebuilds each column's squared-residual response.
 logvar_harvey_se_columns <- function(harvey, inputs, mean_eq, hac_lags) {
+  rcond_tol <- harvey$estimator$metadata$fit_control$rcond_tol
+  vcov_fn <- function(coef, y, x_mat, hac_lags) {
+    logvar_harvey_vcov(coef, y, x_mat, hac_lags, rcond_tol)
+  }
   logvar_se_columns(
-    logvar_harvey_vcov, harvey$table, inputs, mean_eq, hac_lags,
+    vcov_fn, harvey$table, inputs, mean_eq, hac_lags,
     LOGVAR_HARVEY_SE_TYPES
   )
 }

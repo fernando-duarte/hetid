@@ -1,7 +1,7 @@
 # Render the heteroskedasticity diagnostics as a fragment, standalone source,
 # and compiled standalone PDF.
 
-source(paper_path(
+paper_source_once(paper_path(
   "mean_equation",
   "diagnostics",
   "heteroskedasticity",
@@ -78,7 +78,7 @@ notes <- c(
   "$\\Delta c$: percentage points of quarterly consumption growth per one-sd move",
   "in the news PC.",
   sprintf("$N=%d$, %s.", n_obs, span),
-  "$^{*}$: $p<0.10$; $^{**}$: $p<0.05$; $^{***}$: $p<0.01$."
+  paste0(paper_significance_legend("ascending_colon"), ".")
 )
 
 panel_rows <- function(idx) {
@@ -124,7 +124,8 @@ print(do.call(cbind, pvals), digits = 3)
 
 rm(
   w1, y1, y2, z, z_mat, fmt, pcell, suite_cfg, run_battery, pvals, test_labels,
-  test_names, column_cells, cells, rk, fmt_sci, joint_cells, row_labels, sig,
-  reject, n_pc_tested, caption, n_obs, span, notes, panel_rows, arch_row, panels,
-  hetero_table, hetero_dir, hetero_stem
+  test_names, column_cells, cells, rk, fmt_sci, joint_cells, row_labels,
+  caption_tests, rejection_alpha, caption_p_values, reject, n_pc_tested,
+  caption, n_obs, span, notes, panel_rows, arch_row,
+  panels, hetero_table, hetero_dir, hetero_stem
 )

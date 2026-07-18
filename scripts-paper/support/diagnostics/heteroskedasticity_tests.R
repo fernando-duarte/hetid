@@ -1,6 +1,9 @@
 # Heteroskedasticity Testing Utilities
 # Common functions for heteroskedasticity analysis
 
+paper_source_once(paper_path("config", "diagnostics.R"))
+paper_source_once(paper_path("support", "reporting", "inference.R"))
+
 #' Perform comprehensive heteroskedasticity tests
 #'
 #' Runs the requested subset of the skedastic suite. Callers whose design
@@ -86,11 +89,15 @@ perform_all_hetero_tests <- function(lm_model, var_name = "Variable",
 #' @param test_names which tests to summarize (must match the suite the
 #'   caller actually ran; a missing column errors rather than silently NA)
 #' @return data frame with summary
-summarize_hetero_tests <- function(hetero_results, significance_level = 0.05,
-                                   test_names = c(
-                                     "White", "BP", "GQ",
-                                     "Harvey", "Anscombe", "CW"
-                                   )) {
+summarize_hetero_tests <- function(
+  hetero_results,
+  significance_level = paper_significance_level(
+    PAPER_HETEROSKEDASTICITY_CONTROL$rejection_level
+  ),
+  test_names = c(
+    "White", "BP", "GQ", "Harvey", "Anscombe", "CW"
+  )
+) {
   pval_cols <- paste0(test_names, "_pval")
 
   missing_cols <- setdiff(pval_cols, names(hetero_results))

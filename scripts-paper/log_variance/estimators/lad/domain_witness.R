@@ -15,20 +15,23 @@
   kdim <- ncol(w2)
   n_con <- length(qs$A_i)
   gvals <- function(b) {
-    vapply(seq_len(n_con), function(k) {
-      (drop(t(b) %*% qs$A_i[[k]] %*% b) + sum(qs$b_i[[k]] * b) +
-        qs$c_i[k]) / omega[k]
-    }, numeric(1))
+    quadratic_constraint_values(b, qs, omega)
   }
   gjac <- function(b) {
-    matrix(t(vapply(seq_len(n_con), function(k) {
-      (2 * drop(qs$A_i[[k]] %*% b) + qs$b_i[[k]]) / omega[k]
-    }, numeric(kdim))), nrow = n_con, ncol = kdim)
+    quadratic_constraint_jacobian(b, qs, omega)
+  }
+  control <- if (is.null(ctx$control)) {
+    LOGVAR_LAD_CONTROL
+  } else {
+    ctx$control
   }
   list(
     normal = normal, rhs = rhs, esc = ctx$e_scale_ref,
     b_sc = ctx$b_scales$delta, kdim = kdim, n_con = n_con,
-    resid = function(b) rhs - sum(normal * b), gvals = gvals, gjac = gjac
+    control = control,
+    resid = function(b) rhs - sum(normal * b),
+    gvals = gvals,
+    gjac = gjac
   )
 }
 
@@ -44,7 +47,7 @@
   mid <- (lo + hi) / 2
   half <- (hi - lo) / 2
   base <- list(mid, lo, hi)
-  for (s in c(-0.5, 0.5)) {
+  for (s in geom$control$witness_edge_fractions) {
     for (k in seq_len(geom$kdim)) {
       b <- mid
       b[k] <- mid[k] + s * half[k]
@@ -67,11 +70,18 @@
   for (x0 in starts) {
     r <- tryCatch(nloptr::slsqp(
       x0 = x0, fn = obj, gr = gobj, hin = geom$gvals, hinjac = geom$gjac,
-      control = list(xtol_rel = 1e-10, maxeval = 2000L), deprecatedBehavior = FALSE
+      control = list(
+        xtol_rel = PAPER_QUADRATIC_CONTROL$solver_xtol_rel,
+        maxeval = geom$control$witness_maxeval
+      ),
+      deprecatedBehavior = FALSE
     ), error = function(e) NULL)
     if (is.null(r) || any(!is.finite(r$par))) next
     b <- r$par
-    if (max(geom$gvals(b)) > 1e-8) next
+    if (max(geom$gvals(b)) >
+      geom$control$witness_constraint_tol) {
+      next
+    }
     v <- abs(geom$resid(b)) / esc
     if (v < best_val) {
       best_val <- v
@@ -103,7 +113,7 @@
   }
   lo <- 0
   hi <- 1
-  for (it in seq_len(50L)) {
+  for (it in seq_len(geom$control$witness_bisection_steps)) {
     mid <- (lo + hi) / 2
     if (max(geom$gvals(b_cross + mid * (b - b_cross))) <= 0) lo <- mid else hi <- mid
   }
@@ -115,22 +125,30 @@
 # Accept only when the signed residual takes side s with magnitude at least
 # 1e-8 * e_scale_ref, so a thin component yields no anchor and stays unresolved.
 .lad_anchor <- function(geom, b_cross, s) {
-  thr <- 1e-8 * geom$esc
-  ball <- function(b) sum(((b - b_cross) / geom$b_sc)^2) - 0.05^2
+  thr <- geom$control$witness_constraint_tol * geom$esc
+  ball <- function(b) {
+    sum(((b - b_cross) / geom$b_sc)^2) -
+      geom$control$anchor_radius^2
+  }
   ball_j <- function(b) 2 * (b - b_cross) / (geom$b_sc^2)
   hin <- function(b) c(geom$gvals(b), ball(b))
   hinj <- function(b) rbind(geom$gjac(b), ball_j(b))
   r <- tryCatch(nloptr::slsqp(
     x0 = b_cross, fn = function(b) s * sum(geom$normal * b),
     gr = function(b) s * geom$normal, hin = hin, hinjac = hinj,
-    control = list(xtol_rel = 1e-10, maxeval = 1000L), deprecatedBehavior = FALSE
+    control = list(
+      xtol_rel = PAPER_QUADRATIC_CONTROL$solver_xtol_rel,
+      maxeval = geom$control$anchor_maxeval
+    ),
+    deprecatedBehavior = FALSE
   ), error = function(e) NULL)
   if (is.null(r) || any(!is.finite(r$par))) {
     return(NULL)
   }
   b <- .lad_pull_feasible(geom, b_cross, r$par)
   sr <- geom$resid(b)
-  if (ball(b) > 1e-8 || sign(sr) != s || abs(sr) < thr) {
+  if (ball(b) > geom$control$witness_constraint_tol ||
+    sign(sr) != s || abs(sr) < thr) {
     return(NULL)
   }
   list(b = b, sign = s, residual = sr)
@@ -143,16 +161,21 @@
 .lad_sign_cones <- function(geom, b_cross, ctx, i) {
   w2 <- ctx$w2
   all_res <- (ctx$w1 - as.numeric(w2 %*% b_cross)) / geom$esc
-  simul <- which(abs(all_res) <= 1e-8)
+  simul <- which(
+    abs(all_res) <= geom$control$witness_constraint_tol
+  )
   if (length(simul) == 0L) simul <- i
-  if (length(simul) > 8L) simul <- simul[seq_len(8L)]
+  cap <- geom$control$witness_simultaneous_cap
+  if (length(simul) > cap) simul <- simul[seq_len(cap)]
   q <- length(simul)
   wj <- w2[simul, , drop = FALSE]
   rj <- ctx$w1[simul]
-  thr <- 1e-8 * geom$esc
-  step <- 0.02 * min(geom$b_sc)
+  thr <- geom$control$witness_constraint_tol * geom$esc
+  step <- geom$control$witness_cone_step_fraction *
+    min(geom$b_sc)
   gram <- wj %*% t(wj)
-  ridge <- 1e-12 * (mean(diag(gram)) + 1) * diag(q)
+  ridge <- geom$control$guard_ratio *
+    (mean(diag(gram)) + 1) * diag(q)
   pats <- as.matrix(expand.grid(rep(list(c(-1, 1)), q)))
   cones <- list()
   for (r in seq_len(nrow(pats))) {
@@ -165,7 +188,9 @@
     if (nd <= 0) next
     b <- b_cross + step * d / nd
     resj <- rj - as.numeric(wj %*% b)
-    if (max(geom$gvals(b)) <= 1e-8 && all(sign(resj) == s) && all(abs(resj) >= thr)) {
+    feasible <- max(geom$gvals(b)) <=
+      geom$control$witness_constraint_tol
+    if (feasible && all(sign(resj) == s) && all(abs(resj) >= thr)) {
       cones[[length(cones) + 1L]] <- list(signs = as.integer(s), b = b)
     }
   }

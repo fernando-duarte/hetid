@@ -6,9 +6,9 @@
 # slack.
 # The fragment, standalone source, and compiled PDF share a typed table folder.
 
-source(paper_path("support", "latex", "table_pipeline.R"))
-source(paper_path("support", "latex", "simple_table.R"))
-source(paper_path("mean_equation", "variance_shares", "variance_share_caption.R"))
+paper_source_once(paper_path("support", "latex", "table_pipeline.R"))
+paper_source_once(paper_path("support", "latex", "simple_table.R"))
+paper_source_once(paper_path("mean_equation", "variance_shares", "variance_share_caption.R"))
 
 fmt <- function(x) ifelse(is.na(x), "--", sprintf("%.2f", x))
 # largest-remainder (Hamilton) rounding for the fixed-coefficient columns:
@@ -44,7 +44,10 @@ range_cell <- function(lo, hi, status) {
   ifelse(
     status != "bounded", status,
     ifelse(
-      abs(hi - lo) <= 1e-9 * (1 + abs(hi)), "",
+      abs(hi - lo) <=
+        PAPER_ANALYSIS_CONTRACT$variance_share$render_degenerate_rtol *
+          (1 + abs(hi)),
+      "",
       sprintf("$[%.2f,\\,%.2f]$", lo, hi)
     )
   )

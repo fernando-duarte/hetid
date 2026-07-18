@@ -46,24 +46,30 @@
 #
 # Sourced by run.R after residual_map.R.
 
-source(paper_path("log_variance", "engine", "context.R"))
-source(paper_path("log_variance", "engine", "grid_scan.R"))
-source(paper_path("log_variance", "engine", "results.R"))
-source(paper_path("log_variance", "engine", "endpoints.R"))
-source(paper_path("log_variance", "engine", "execute.R"))
+paper_source_once(paper_path("log_variance", "engine", "context.R"))
+paper_source_once(paper_path("log_variance", "engine", "grid_scan.R"))
+paper_source_once(paper_path("log_variance", "engine", "results.R"))
+paper_source_once(paper_path("log_variance", "engine", "endpoints.R"))
+paper_source_once(paper_path("log_variance", "engine", "execute.R"))
+paper_source_once(paper_path(
+  "log_variance", "estimators", "set_orchestration.R"
+))
 # cross-estimator science helpers (spec_id, bounded-args, fragility, map-context
 # preamble): the front door is common to the pipeline and every estimator test
-source(paper_path("log_variance", "estimators", "shared.R"))
+paper_source_once(paper_path("log_variance", "estimators", "shared.R"))
 
 logvar_engine_set_at_tau <- function(est, qs, b_tab, b_seed = NULL,
-                                     grid_n = 41L, grid_floor = 100L,
+                                     grid_n = LOGVAR_SEARCH_CONTROL$grid_n,
+                                     grid_floor = LOGVAR_SEARCH_CONTROL$grid_floor,
                                      extra_starts = NULL,
                                      max_grid_points = NULL,
                                      max_fit_evals = Inf, cache = NULL,
                                      budget_state = NULL,
-                                     cold_start_check = TRUE,
+                                     cold_start_check =
+                                       LOGVAR_SEARCH_CONTROL$cold_start_check,
                                      tau = NA_real_,
-                                     starts_per_side = 1L,
+                                     starts_per_side =
+                                       LOGVAR_SEARCH_CONTROL$primary_starts_per_side,
                                      grid_selector = NULL) {
   meta <- est$metadata
   bs <- if (is.null(budget_state)) logvar_budget_state(max_fit_evals) else budget_state

@@ -5,6 +5,6 @@
 # log_var_eq.tex is the PPML-only publication table. Run via run_pipeline.R after
 # render_ppml_table.R.
 
-source(paper_path("log_variance", "tables", "panels_builder.R"))
+paper_source_once(paper_path("log_variance", "tables", "panels_builder.R"))
 
 build_logvar_panels("log_var_eq_panels")

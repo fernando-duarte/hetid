@@ -3,34 +3,22 @@
 # tau), then form the centered max-root OUTER confidence envelope for whole-set
 # containment; tau = 0 is carried first as a point-SE acceptance diagnostic.
 # Deterministic given boot_seed. Writes draws RDS and diagnostics via run_pipeline.R.
-source(paper_path("support", "statistics", "api.R")) # mbb_index (already loaded upstream)
-source(paper_path("log_variance", "inference", "set_envelope.R"))
-source(paper_path("log_variance", "inference", "set_bootstrap_core.R")) # prepare/draw/collect
+paper_source_once(paper_path("support", "statistics", "api.R"))
+paper_source_once(paper_path("log_variance", "inference", "set_envelope.R"))
+paper_source_once(paper_path("log_variance", "inference", "set_bootstrap_core.R"))
+paper_source_once(paper_path("log_variance", "inference", "set_bootstrap_builders.R"))
 stopifnot(is.finite(boot_reps), boot_reps >= 2L)
+inference_alpha <- PAPER_ANALYSIS_CONTRACT$inference$nominal_alpha
 # Builders reuse the frozen PPML response scale and Harvey log-OLS start from run_sets.R.
 scale_val <- log_var_eq_ppml$estimator$metadata$response_scale_value
 logols_val <- stats::setNames(log_var_eq$table$ols, log_var_eq$table$coef)
-build_ppml <- function(w1, w2, pcr, qtr, b_point) {
-  anchor <- if (!is.null(b_point)) b_point else rep(0, ncol(w2))
-  logvar_ppml_estimator(
-    w1, w2, pcr, qtr,
-    b_point = b_point,
-    scale_anchor_b = anchor, scale_anchor_source = "boot", response_scale = scale_val
-  )
-}
-build_harvey <- function(w1, w2, pcr, qtr, b_point, ppml_obj) {
-  logvar_harvey_estimator(
-    w1, w2, pcr, qtr,
-    b_point = b_point,
-    ppml_bundle = if (!is.null(ppml_obj)) ppml_obj$start_bundle else NULL,
-    ppml_start_at_b = if (!is.null(ppml_obj)) ppml_obj$fit_at_b else NULL,
-    logols_coef = logols_val
-  )
-}
+builders <- logvar_set_boot_builders(scale_val, logols_val)
+build_ppml <- builders$ppml
+build_harvey <- builders$harvey
 prep <- logvar_set_boot_prepare(set_id_mean_eq, lag_asset_return_pc)
 display_taus <- set_id_mean_eq$tau_display
 ests <- c("ppml", "harvey")
-disp_key <- sprintf("%.17g", display_taus)
+disp_key <- vapply(display_taus, paper_tau_key, character(1))
 disp_idx <- seq_along(display_taus) + 1L # slots in spec$taus for the display taus
 spec <- list(
   coefs = log_var_eq$table$coef, gamma = set_id_mean_eq$gamma,
@@ -51,8 +39,14 @@ anchor_live <- function(est) {
 }
 stopifnot(
   anchor_live("ppml"), anchor_live("harvey"),
-  identical(log_var_eq_ppml$sets[[1]]$coef, spec$coefs),
-  identical(log_var_eq_harvey$sets[[1]]$coef, spec$coefs)
+  identical(
+    log_var_eq_ppml$sets[[paper_tau_key(set_id_mean_eq$tau_baseline)]]$coef,
+    spec$coefs
+  ),
+  identical(
+    log_var_eq_harvey$sets[[paper_tau_key(set_id_mean_eq$tau_baseline)]]$coef,
+    spec$coefs
+  )
 )
 full <- lapply(ests, function(est) {
   lapply(anchor[[est]], function(rec) {
@@ -86,16 +80,18 @@ boot_t0 <- Sys.time()
 raw <- run_draws(boot_idx)
 # a large errored share means the resampling is broken (not unboundedness), so stop
 n_failed <- sum(vapply(raw, is.character, logical(1)))
-if (n_failed > boot_reps %/% 4L) {
+if (n_failed > paper_bootstrap_failure_limit(boot_reps)) {
   stop("vol set-endpoint bootstrap: ", n_failed, " of ", boot_reps, " draws failed")
 }
 collected <- logvar_set_boot_collect(raw, spec)
+endpoint_stability <-
+  PAPER_INFERENCE_SEARCH_CONTROL$logvar_endpoint$stability_share
 envelope <- function(coll) {
   e <- lapply(ests, function(est) {
     ee <- lapply(seq_along(display_taus), function(d) {
       logvar_endpoint_envelope(
         coll[[est]][[disp_idx[d]]], full[[est]][[disp_idx[d]]],
-        alpha = 0.10, stability = logvar_boot_stability
+        alpha = inference_alpha, stability = endpoint_stability
       )
     })
     names(ee) <- disp_key
@@ -109,7 +105,7 @@ c_sim <- lapply(ests, function(est) {
   stats::setNames(vapply(seq_along(display_taus), function(d) {
     logvar_simultaneous_critical(
       collected[[est]][[disp_idx[d]]], full[[est]][[disp_idx[d]]],
-      alpha = 0.10, stability = logvar_boot_stability
+      alpha = inference_alpha, stability = endpoint_stability
     )
   }, numeric(1)), disp_key)
 })
@@ -139,7 +135,8 @@ names(tau0) <- ests
 sens_env <- NULL
 if (!is.null(logvar_boot_block_sens)) {
   set.seed(boot_seed)
-  sens_idx <- lapply(seq_len(max(50L, boot_reps %/% 4L)), function(b) {
+  sensitivity_reps <- paper_bootstrap_sensitivity_reps(boot_reps)
+  sens_idx <- lapply(seq_len(sensitivity_reps), function(b) {
     mbb_index(n, logvar_boot_block_sens)[seq_len(m)]
   })
   sens_env <- envelope(logvar_set_boot_collect(run_draws(sens_idx), spec))
@@ -173,17 +170,18 @@ for (est in ests) {
     )
   }
 }
-utils::write.csv(
+paper_write_typed_csv(
   do.call(rbind, diag_rows),
   artifact_path("log_variance_inference_diagnostics"),
-  row.names = FALSE
+  "log_variance_inference_diagnostics"
 )
-saveRDS(
+paper_write_exact_rds(
   list(
     b_reps = boot_reps, block = boot_block, seed = boot_seed, m = m,
     taus = spec$taus, coefs = spec$coefs, collected = collected, full = full
   ),
-  artifact_path("log_variance_bootstrap_draws")
+  artifact_path("log_variance_bootstrap_draws"),
+  "log_variance_bootstrap_draws"
 )
 cat(sprintf(
   "vol set-endpoint bootstrap: B = %d, block = %d, %d failed, %d reported cells, %.1f min\n",
@@ -191,9 +189,10 @@ cat(sprintf(
   as.numeric(difftime(Sys.time(), boot_t0, units = "mins"))
 ))
 rm(list = intersect(ls(), c(
-  "scale_val", "logols_val", "build_ppml", "build_harvey", "prep", "display_taus",
+  "scale_val", "logols_val", "builders", "build_ppml", "build_harvey", "prep", "display_taus",
   "ests", "disp_key", "disp_idx", "spec", "anchor", "anchor_live", "full", "n", "m",
   "run_draws", "boot_idx", "boot_t0", "raw", "n_failed", "collected", "envelope",
   "prim_env", "c_sim", "n_reported", "se_type", "se_obj", "tau0", "sens_env",
-  "sens_idx", "diag_rows", "est", "d", "key", "pub", "sci"
+  "sensitivity_reps", "sens_idx", "diag_rows", "inference_alpha", "est", "d",
+  "key", "pub", "sci", "endpoint_stability"
 )))

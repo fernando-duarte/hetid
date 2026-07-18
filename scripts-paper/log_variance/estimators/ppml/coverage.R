@@ -14,7 +14,7 @@
 logvar_ppml_coverage_run <- function(est_cov, taus, b_tabs, b_seed,
                                      grid_cap, fit_budget, qs_fn) {
   cov_cache <- new.env(parent = emptyenv())
-  keys <- vapply(taus, function(tau) sprintf("%.17g", tau), character(1))
+  keys <- vapply(taus, paper_tau_key, character(1))
   out <- vector("list", length(taus))
   names(out) <- keys
   for (i in seq_along(taus)) {
@@ -24,10 +24,13 @@ logvar_ppml_coverage_run <- function(est_cov, taus, b_tabs, b_seed,
     out[[key]] <- tryCatch(
       list(ok = TRUE, res = logvar_engine_set_at_tau(
         est_cov, qs_fn(tau), b_tabs[[key]],
-        b_seed = b_seed, max_grid_points = grid_cap, starts_per_side = 5L,
+        b_seed = b_seed,
+        max_grid_points = grid_cap,
+        starts_per_side = LOGVAR_SEARCH_CONTROL$audit_starts_per_side,
         cache = cov_cache, budget_state = bs,
         grid_selector = logvar_ppml_morton_select,
-        cold_start_check = TRUE, tau = tau
+        cold_start_check = LOGVAR_SEARCH_CONTROL$cold_start_check,
+        tau = tau
       )),
       error = function(e) list(ok = FALSE, error = conditionMessage(e))
     )
@@ -131,11 +134,16 @@ logvar_ppml_coverage_run <- function(est_cov, taus, b_tabs, b_seed,
 # the updated per-tau engine results, the typed audit frame, and version-stamped
 # metadata (selector id, cap, budget, cache stamp). No result view is left in a
 # pre-audit state, so a newly found more-extreme candidate is never discarded.
-logvar_ppml_apply_coverage <- function(primary, coverage, tol = 1e-4,
-                                       grid_cap = NA_integer_,
-                                       fit_budget = NA_integer_,
-                                       cache_stamp = NA_character_,
-                                       selector_id = "morton-v1") {
+logvar_ppml_apply_coverage <- function(
+  primary,
+  coverage,
+  tol = LOGVAR_SEARCH_CONTROL$endpoint_agreement_rtol,
+  grid_cap = NA_integer_,
+  fit_budget = NA_integer_,
+  cache_stamp = NA_character_,
+  selector_protocol = NULL
+) {
+  selector <- .logvar_ppml_selector_provenance(coverage, selector_protocol)
   results <- list()
   audit_rows <- list()
   for (key in names(primary)) {
@@ -178,8 +186,12 @@ logvar_ppml_apply_coverage <- function(primary, coverage, tol = 1e-4,
     results = results,
     audit = if (length(audit_rows)) do.call(rbind, audit_rows) else NULL,
     metadata = list(
-      version = "1.0.0", selector_id = selector_id, grid_cap = grid_cap,
-      fit_budget = fit_budget, cache_stamp = cache_stamp
+      version = LOGVAR_PPML_COVERAGE_PROTOCOL$schema_version,
+      selector_id = selector$selector_id,
+      selector_traversal = selector$traversal,
+      selector_provenance_status = selector$status,
+      selector_runs_verified = selector$n_verified,
+      grid_cap = grid_cap, fit_budget = fit_budget, cache_stamp = cache_stamp
     )
   )
 }

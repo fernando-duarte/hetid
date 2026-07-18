@@ -6,34 +6,24 @@
 # return shapes are asserted inline. Run: Rscript <this file> from the root.
 
 source(file.path("scripts-paper", "config", "paths.R"))
-source(paper_path("config", "artifacts.R"))
-source(paper_path("support", "identification", "profile_solver_core.R"))
-source(paper_path("support", "identification", "profile_bounds_api.R"))
-source(paper_path("log_variance", "core", "residual_map.R"))
-source(paper_path("log_variance", "engine", "api.R"))
-source(paper_path("log_variance", "estimators", "log_ols", "estimator.R"))
+paper_source_once(paper_path("config", "artifacts.R"))
+paper_source_once(paper_path("support", "identification", "profile_solver_core.R"))
+paper_source_once(paper_path("support", "identification", "profile_bounds_api.R"))
+paper_source_once(paper_path("log_variance", "core", "residual_map.R"))
+paper_source_once(paper_path("log_variance", "engine", "api.R"))
+paper_source_once(paper_path("log_variance", "estimators", "log_ols", "estimator.R"))
 
-source(paper_path("log_variance", "estimators", "lad", "estimator.R"))
-source(paper_path("log_variance", "estimators", "lad", "fit.R"))
-source(paper_path("log_variance", "estimators", "lad", "crossing_domain.R"))
+paper_source_once(paper_path("log_variance", "estimators", "lad", "estimator.R"))
+paper_source_once(paper_path("log_variance", "estimators", "lad", "fit.R"))
+paper_source_once(paper_path("log_variance", "estimators", "lad", "crossing_domain.R"))
 
-.pass <- 0L
-.fail <- 0L
-.skip <- 0L
-check <- function(label, cond) {
-  if (isTRUE(cond)) {
-    .pass <<- .pass + 1L
-    cat(sprintf("PASS  %s\n", label))
-  } else {
-    .fail <<- .fail + 1L
-    cat(sprintf("FAIL  %s\n", label))
-  }
-}
+paper_source_once(paper_path("tests", "support", "harness.R"))
+.test <- paper_test_harness()
+check <- .test$check
 have_qr <- requireNamespace("quantreg", quietly = TRUE)
 qr_check <- function(label, cond) {
   if (!have_qr) {
-    .skip <<- .skip + 1L
-    cat(sprintf("SKIP  %s (quantreg unavailable)\n", label))
+    .test$skip(label, "quantreg unavailable")
     return(invisible())
   }
   check(label, isTRUE(tryCatch(cond, error = function(e) FALSE)))
@@ -194,5 +184,4 @@ qr_check("lad witness coverage: verified, tangent, simultaneous, thin", {
     isTRUE(length(ws$sign_cones) >= 2L) && identical(wth$status, "unresolved_witness")
 })
 
-cat(sprintf("\n%d passed, %d failed, %d skipped\n", .pass, .fail, .skip))
-if (.fail > 0L) quit(status = 1L)
+.test$finish()

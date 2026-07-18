@@ -7,7 +7,10 @@
 # interfaces logvar_joint_null_projection/_scales/_at_tau are consumed, never
 # reimplemented. Run via run_pipeline.R.
 
-source(paper_path("log_variance", "diagnostics", "joint_null", "report.R"))
+paper_source_once(paper_path("log_variance", "diagnostics", "joint_null", "report.R"))
+paper_source_once(paper_path(
+  "log_variance", "diagnostics", "protocols.R"
+))
 
 # Guarded pipeline orchestration: it runs only when the upstream benchmark
 # objects are present, so sourcing this file in the offline suite defines the
@@ -34,16 +37,20 @@ if (exists("log_var_eq") && exists("set_id_mean_eq") &&
   jn_qs_fn <- function(tau) {
     tau_quadratic_system(set_id_mean_eq$gamma, tau, set_id_mean_eq$moments)
   }
-  # scan at the benchmark grid resolution (at_tau reads this option; left unset
-  # it defaults to a coarse 13-grid), and fill the driver-owned per-row fields
-  # (sample_id, nearest crossing qtr) the sample-agnostic at_tau leaves NA
-  jn_grid_opt <- options(logvar_joint_null_grid_n = log_var_eq$grid_n)
+  jn_control <- utils::modifyList(
+    LOGVAR_JOINT_NULL_CONTROL,
+    list(grid_n = log_var_eq$grid_n)
+  )
+  jn_fields <- PAPER_ANALYSIS_CONTRACT$model$artifact_fields
   jn_fill <- function(row) {
     row$sample_id <- log_var_eq$sample_id
-    b <- c(row$b1, row$b2, row$b3)
+    b <- paper_record_doubles(row, jn_fields$mean)
     if (all(is.finite(b))) {
       e <- drop(jn_w1 - jn_w2 %*% b)
-      row$nearest_crossing_qtr <- format(jn_inputs$qtr[which.min(abs(e))], "%Y Q%q")
+      row$nearest_crossing_qtr <- format(
+        jn_inputs$qtr[which.min(abs(e))],
+        PAPER_SERIALIZATION_CONTROL$yearquarter_format
+      )
     }
     row
   }
@@ -62,7 +69,9 @@ if (exists("log_var_eq") && exists("set_id_mean_eq") &&
     coef = colnames(jn_w2), set_lower = jn_b_point, set_upper = jn_b_point
   )
   jn_row0 <- jn_fill(logvar_joint_null_at_tau(
-    0, 0, jn_box0, jn_w1, jn_w2, jn_proj, jn_d_inv2, jn_eps_ref, jn_qs_fn(0)
+    0, 0, jn_box0, jn_w1, jn_w2, jn_proj, jn_d_inv2,
+    jn_eps_ref, jn_qs_fn(0),
+    control = jn_control
   ))
   jn_row0$tau_order <- 1L
   jn_rows <- list(jn_row0)
@@ -79,12 +88,13 @@ if (exists("log_var_eq") && exists("set_id_mean_eq") &&
   }
   for (jn_idx in seq_along(jn_taus)) {
     jn_tau <- jn_taus[[jn_idx]]
-    jn_key <- sprintf("%.17g", jn_tau)
+    jn_key <- paper_tau_key(jn_tau)
     jn_box <- mean_eq_bounds_tau[[jn_key]]
     stopifnot(!is.null(jn_box))
     jn_row <- jn_fill(logvar_joint_null_at_tau(
       jn_tau, jn_tau, jn_box, jn_w1, jn_w2, jn_proj, jn_d_inv2, jn_eps_ref,
-      jn_qs_fn(jn_tau), jn_prior
+      jn_qs_fn(jn_tau), jn_prior,
+      control = jn_control
     ))
     jn_row$tau_order <- jn_idx + 1L
     # carry every successful polished minimum forward (not just the arg-min) so an
@@ -93,7 +103,7 @@ if (exists("log_var_eq") && exists("set_id_mean_eq") &&
     attr(jn_row, "minima") <- NULL
     jn_rows[[length(jn_rows) + 1L]] <- jn_row
     if (is.null(jn_minima) || !length(jn_minima)) {
-      jn_minima <- list(c(jn_row$b1, jn_row$b2, jn_row$b3))
+      jn_minima <- list(paper_record_doubles(jn_row, jn_fields$mean))
     }
     jn_prior <- c(jn_prior, lapply(jn_minima, function(bb) {
       bb <- as.numeric(bb)
@@ -111,16 +121,19 @@ if (exists("log_var_eq") && exists("set_id_mean_eq") &&
     error = function(e) NA_character_
   )
   if (length(jn_commit) != 1L || !nzchar(jn_commit)) jn_commit <- NA_character_
-  log_var_eq_joint_null <- list(
-    schema_version = "1.0.0", estimator = "logols",
-    diagnostic = "joint_null_theta_r", sample_id = log_var_eq$sample_id,
-    inference_status = "deferred", benchmark_commit = jn_commit,
-    root_tol = 1e-6,
-    scales = list(
-      d = jn_scales$d, d_inv2 = jn_scales$d_inv2,
-      names = colnames(jn_inputs$pcr)
-    ),
-    rows = jn_rows
+  log_var_eq_joint_null <- c(
+    logvar_joint_null_schema_header(),
+    list(
+      sample_id = log_var_eq$sample_id,
+      benchmark_commit = jn_commit,
+      root_tol = jn_control$root_tol,
+      protocol = jn_control,
+      scales = list(
+        d = jn_scales$d, d_inv2 = jn_scales$d_inv2,
+        names = colnames(jn_inputs$pcr)
+      ),
+      rows = jn_rows
+    )
   )
 
   # delete any stale artifacts, then require both to be regenerated this run
@@ -134,10 +147,10 @@ if (exists("log_var_eq") && exists("set_id_mean_eq") &&
   print_logvar_joint_null(jn_rows, jn_scales)
   cat("[END LOGVAR JOINT NULL]\n")
 
-  options(jn_grid_opt)
   rm(
     jn_inputs, jn_proj, jn_scales, jn_d_inv2, jn_w1, jn_w2, jn_eps_ref,
-    jn_qs_fn, jn_grid_opt, jn_fill, jn_qrep, jn_b_point, jn_box0, jn_row0, jn_rows,
+    jn_qs_fn, jn_control, jn_fields, jn_fill, jn_qrep, jn_b_point, jn_box0,
+    jn_row0, jn_rows,
     jn_taus, jn_prior, jn_idx, jn_tau, jn_key, jn_box, jn_row, jn_minima,
     jn_commit, jn_out, jn_csv, jn_rds
   )

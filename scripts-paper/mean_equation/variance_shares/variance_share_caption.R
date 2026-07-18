@@ -6,6 +6,8 @@
 build_var_share_notes <- function(sd_c) {
   n_obs <- set_id_mean_eq$sample$n
   span <- paste(format(set_id_mean_eq$sample$span), collapse = "--")
+  grid_points <-
+    PAPER_ANALYSIS_CONTRACT$variance_share$grid_points_per_axis
 
   # mode-dependent clause: under the orthogonality null b_E is point
   # identified, so its set cells degenerate to blanks
@@ -49,7 +51,10 @@ build_var_share_notes <- function(sd_c) {
     "Table~\\ref{tab:structural_eq_set_id} through the square (the minimum",
     "is zero when the range covers zero), and block rows minimize and",
     "maximize the quadratic share over the joint set (a feasibility grid of",
-    "101 points per axis over the per-coefficient box, checked against the",
+    sprintf(
+      "%d points per axis over the per-coefficient box, checked against the",
+      grid_points
+    ),
     "joint quadratic constraints, seeds a multistart SLSQP polish along the",
     "constraint boundary, with the grid extremes kept as a feasible",
     "fallback envelope), accurate well past the displayed precision.",

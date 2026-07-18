@@ -18,9 +18,8 @@ logvar_fitted_vol_plot_data <- function(rows) {
   list(band = band, point = point, n_omitted = sum(!valid))
 }
 
-logvar_fitted_vol_path <- function(out_dir, estimator) {
-  basename <- sprintf("log_var_eq_fitted_volatility_%s.svg", estimator)
-  artifact_path(artifact_id(basename))
+logvar_fitted_vol_path <- function(estimator) {
+  artifact_variant_path("fitted_volatility", estimator)
 }
 
 logvar_fitted_vol_band_stats <- function(band) {

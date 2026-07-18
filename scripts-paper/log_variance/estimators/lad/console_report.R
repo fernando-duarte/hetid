@@ -6,6 +6,10 @@
 # nonuniqueness outcome, and the closure count. Reads only the assembled result
 # list. Definitions only; sourced by the driver.
 
+paper_source_once(paper_path(
+  "log_variance", "tables", "console_formatting.R"
+))
+
 logvar_lad_console_block <- function(lad, taus) {
   cat("[BEGIN LOGVAR LAD]\n")
   cat(sprintf(
@@ -28,13 +32,7 @@ logvar_lad_console_block <- function(lad, taus) {
     wc <- lad$witness_coverage[[k]]
     au <- lad$sensitivity_audit[[k]]
     pr <- lad$tail_classifications[[k]]
-    hull <- vapply(seq_len(nrow(tb)), function(j) {
-      if (identical(tb$status[j], "bounded")) {
-        sprintf("[%.3g,%.3g]", tb$set_lower[j], tb$set_upper[j])
-      } else {
-        tb$status[j]
-      }
-    }, character(1))
+    hull <- logvar_hull_text(tb)
     cat(sprintf("  tau = %.2g: %s\n", taus[i], paste(hull, collapse = " ")))
     cat(sprintf(
       "    phase: scan %d probe %d nonunique %d polish %d cold %d cache %d | eval %d fail %d\n",

@@ -7,17 +7,27 @@
 # tests/diagnostics/joint_null/test_joint_null.R. No clamping, no epsilon inside
 # a log, no residual floor.
 
+paper_source_once(paper_path("config", "analysis_contract.R"))
+
+logvar_joint_null_validate_pcr <- function(pcr) {
+  pcr <- as.matrix(pcr)
+  expected <- PAPER_ANALYSIS_CONTRACT$model$return_pc_cols
+  if (!is.numeric(pcr) || !identical(colnames(pcr), expected)) {
+    stop(sprintf(
+      "pcr columns must be the canonical joint-null axis: %s",
+      paste(expected, collapse = ", ")
+    ))
+  }
+  pcr
+}
+
 # owned projection P = (R'R)^{-1} R', R = (1, PC_R): calls logvar_projection once
 # and asserts shape, finiteness, column identity, and an ascending qtr key. The
 # wrapper is stateless -- the driver aligns its one design by qtr and asserts the
 # frozen sample_id, so ownership needs no cache; sample_id stays in the signature
 # as the provenance label the RDS records.
 logvar_joint_null_projection <- function(pcr, qtr, sample_id) {
-  pcr <- as.matrix(pcr)
-  expected <- paste0("l.pc", seq_len(ncol(pcr)))
-  if (is.null(colnames(pcr)) || !identical(colnames(pcr), expected)) {
-    stop("pcr columns must be named l.pc1..l.pcK for the joint-null projection")
-  }
+  pcr <- logvar_joint_null_validate_pcr(pcr)
   if (length(qtr) != nrow(pcr)) {
     stop("qtr length must equal nrow(pcr) for the joint-null projection")
   }
@@ -35,11 +45,7 @@ logvar_joint_null_projection <- function(pcr, qtr, sample_id) {
 # frozen slope scales d_j = 1 / sd(PC_{R,j}) and d_inv2 = d^-2, derived once from
 # the predeclared de-meaned design; strictly positive and finite or a hard stop
 logvar_joint_null_scales <- function(pcr) {
-  pcr <- as.matrix(pcr)
-  expected <- paste0("l.pc", seq_len(ncol(pcr)))
-  if (is.null(colnames(pcr)) || !identical(colnames(pcr), expected)) {
-    stop("pcr columns must be named l.pc1..l.pcK for the joint-null scales")
-  }
+  pcr <- logvar_joint_null_validate_pcr(pcr)
   d <- 1 / apply(pcr, 2L, stats::sd)
   if (any(!is.finite(d)) || any(d <= 0)) {
     stop("joint-null scales d = 1 / sd(pcr) must be finite and strictly positive")

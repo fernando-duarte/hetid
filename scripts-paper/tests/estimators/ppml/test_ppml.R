@@ -10,44 +10,41 @@
 #   Rscript scripts-paper/tests/estimators/ppml/test_ppml.R
 
 source(file.path("scripts-paper", "config", "paths.R"))
-source(paper_path("config", "artifacts.R"))
-source(paper_path("support", "identification", "profile_solver_core.R"))
-source(paper_path("support", "identification", "profile_bounds_api.R"))
-source(paper_path("log_variance", "core", "residual_map.R"))
-source(paper_path("log_variance", "engine", "api.R"))
-source(paper_path("log_variance", "estimators", "log_ols", "estimator.R"))
-source(paper_path("log_variance", "figures", "bounds_by_tau_test_support.R"))
-source(paper_path("log_variance", "estimators", "ppml", "estimator.R"))
-source(paper_path("log_variance", "estimators", "ppml", "pilot_and_grid.R"))
-source(paper_path("log_variance", "tables", "table_formatting.R"))
-source(paper_path("log_variance", "tables", "ppml_captions.R"))
+paper_source_once(paper_path("config", "artifacts.R"))
+paper_source_once(paper_path("support", "identification", "profile_solver_core.R"))
+paper_source_once(paper_path("support", "identification", "profile_bounds_api.R"))
+paper_source_once(paper_path("log_variance", "core", "residual_map.R"))
+paper_source_once(paper_path("log_variance", "engine", "api.R"))
+paper_source_once(paper_path("log_variance", "estimators", "log_ols", "estimator.R"))
+paper_source_once(paper_path("log_variance", "figures", "bounds_by_tau_test_support.R"))
+paper_source_once(paper_path("log_variance", "estimators", "ppml", "estimator.R"))
+paper_source_once(paper_path("log_variance", "estimators", "ppml", "pilot_and_grid.R"))
+paper_source_once(paper_path("log_variance", "tables", "table_formatting.R"))
+paper_source_once(paper_path("log_variance", "tables", "ppml_captions.R"))
 # the shared SE scaffolding before the SE module (which routes through it), and
 # the SE module before the check files so LOGVAR_PPML_SE_TYPES / the note helper
 # resolve when a builder is called with se_type set (the driver block is guarded)
-source(paper_path("log_variance", "inference", "standard_error_estimators.R"))
-source(paper_path("log_variance", "estimators", "ppml", "standard_errors.R"))
+paper_source_once(paper_path("log_variance", "inference", "standard_error_estimators.R"))
+paper_source_once(paper_path("log_variance", "estimators", "ppml", "standard_errors.R"))
 
-.pass <- 0L
-.fail <- 0L
-check <- function(label, cond) {
-  if (isTRUE(cond)) {
-    .pass <<- .pass + 1L
-    cat(sprintf("PASS  %s\n", label))
-  } else {
-    .fail <<- .fail + 1L
-    cat(sprintf("FAIL  %s\n", label))
-  }
-}
+paper_source_once(paper_path("tests", "support", "harness.R"))
+.test <- paper_test_harness()
+check <- .test$check
 
-source(paper_path("tests", "inference", "standard_error_estimators_checks.R"))
-source(paper_path("tests", "estimators", "ppml", "fixtures.R"))
-source(paper_path("tests", "estimators", "ppml", "fit_checks.R"))
-source(paper_path("tests", "estimators", "ppml", "specification_checks.R"))
-source(paper_path("tests", "estimators", "ppml", "engine_checks.R"))
-source(paper_path("tests", "estimators", "ppml", "table_checks.R"))
-source(paper_path("tests", "support", "envelope_cell_checks.R"))
-source(paper_path("tests", "estimators", "ppml", "standard_error_checks.R"))
-source(paper_path("tests", "estimators", "ppml", "coverage_checks.R"))
+paper_source_once(paper_path("tests", "inference", "standard_error_estimators_checks.R"))
+paper_source_once(paper_path("tests", "estimators", "ppml", "fixtures.R"))
+paper_source_once(paper_path("tests", "estimators", "ppml", "fit_checks.R"))
+paper_source_once(paper_path("tests", "estimators", "ppml", "specification_checks.R"))
+paper_source_once(paper_path(
+  "tests", "estimators", "ppml", "control_identity_checks.R"
+))
+paper_source_once(paper_path("tests", "estimators", "ppml", "engine_checks.R"))
+paper_source_once(paper_path("tests", "estimators", "ppml", "table_checks.R"))
+paper_source_once(paper_path("tests", "support", "envelope_cell_checks.R"))
+paper_source_once(paper_path("tests", "estimators", "ppml", "standard_error_checks.R"))
+paper_source_once(paper_path("tests", "estimators", "ppml", "coverage_checks.R"))
+paper_source_once(paper_path(
+  "tests", "estimators", "ppml", "coverage_provenance_checks.R"
+))
 
-cat(sprintf("\n%d passed, %d failed\n", .pass, .fail))
-if (.fail > 0L) quit(status = 1L)
+.test$finish()

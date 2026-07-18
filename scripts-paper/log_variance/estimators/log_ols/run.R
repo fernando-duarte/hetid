@@ -16,22 +16,28 @@
 # "unreliable".
 # Run via run_pipeline.R after estimate_identified_set.R and build_asset_return_pcs.R.
 
-source(paper_path("support", "identification", "api.R"))
-source(paper_path("support", "identification", "profile_solver_core.R"))
-source(paper_path("support", "identification", "profile_bounds_api.R"))
-source(paper_path("support", "identification", "tau_star.R"))
-source(paper_path("log_variance", "core", "residual_map.R"))
-source(paper_path("log_variance", "engine", "api.R"))
-source(paper_path("log_variance", "estimators", "log_ols", "estimator.R"))
-source(paper_path("log_variance", "diagnostics", "joint_null", "inputs.R"))
+paper_source_once(paper_path("support", "identification", "api.R"))
+paper_source_once(paper_path("support", "identification", "profile_solver_core.R"))
+paper_source_once(paper_path("support", "identification", "profile_bounds_api.R"))
+paper_source_once(paper_path("support", "identification", "tau_star.R"))
+paper_source_once(paper_path("log_variance", "core", "residual_map.R"))
+paper_source_once(paper_path("log_variance", "engine", "api.R"))
+paper_source_once(paper_path("log_variance", "estimators", "log_ols", "estimator.R"))
+paper_source_once(paper_path(
+  "log_variance", "estimators", "log_ols", "set_mapping.R"
+))
+paper_source_once(paper_path("log_variance", "diagnostics", "joint_null", "inputs.R"))
 
 # grid resolution per b_N axis for the feasible-grid scan, and the feasible
 # count below which the grid is densified once (a thin joint set can thread
 # between lattice points of a box-tight grid); the size guard covers the
 # densified retry, the largest grid ever built
-logvar_grid_n <- 41L
-logvar_grid_floor <- 100L
-stopifnot((2L * logvar_grid_n - 1L)^ncol(set_id_mean_eq$w2) <= 1e6)
+logvar_grid_n <- LOGVAR_SEARCH_CONTROL$grid_n
+logvar_grid_floor <- LOGVAR_SEARCH_CONTROL$grid_floor
+stopifnot(
+  (2L * logvar_grid_n - 1L)^ncol(set_id_mean_eq$w2) <=
+    LOGVAR_SEARCH_CONTROL$logols_full_grid_safety_cap
+)
 
 # mean-equation sample rows with the lagged asset-return PCs available;
 # `row` indexes into the stored aligned system pieces (join by qtr, never
@@ -85,7 +91,14 @@ theta_point <- if (anyNA(b_point)) {
 
 # the log-OLS map packaged as the shared engine's first estimator object
 # (closures over the frozen aligned sample; estimator.R)
-logvar_est <- logvar_logols_estimator(w1_lv, w2_lv, proj, logvar_rows$qtr, pcr)
+logvar_est <- logvar_logols_estimator(
+  w1_lv,
+  w2_lv,
+  proj,
+  logvar_rows$qtr,
+  pcr,
+  control = LOGVAR_LOGOLS_CONTROL
+)
 
 # identified-set intervals of every log-variance coefficient at one display
 # slack, through the shared engine in the explicit, complete benchmark
@@ -95,28 +108,15 @@ logvar_est <- logvar_logols_estimator(w1_lv, w2_lv, proj, logvar_rows$qtr, pcr)
 # polish, divergence bookkeeping, and the fail-closed ladder all run inside
 # the engine exactly as the old inline closure did; crossing indices map
 # back to sample quarters here
-logvar_set_at_tau <- function(tau, b_tab) {
-  stopifnot(identical(b_tab$coef, colnames(w2_lv)))
-  qs <- tau_quadratic_system(set_id_mean_eq$gamma, tau, set_id_mean_eq$moments)
-  res <- logvar_engine_set_at_tau(
-    logvar_est, qs, b_tab,
-    b_seed = b_point, grid_n = logvar_grid_n, grid_floor = logvar_grid_floor,
-    cold_start_check = FALSE, tau = tau
-  )
-  cross <- res$domain_info$cross_all
-  list(
-    table = res$table, n_cross = res$n_cross, n_feasible = res$n_feasible,
-    cross_qtr = if (is.null(cross)) NULL else logvar_rows$qtr[cross],
-    schema = res$schema
-  )
-}
-
-logvar_sets <- Map(
-  logvar_set_at_tau,
-  set_id_mean_eq$tau_display,
-  lapply(set_id_mean_eq$set_tables, `[[`, "theta")
+logvar_sets <- logvar_logols_sets(
+  logvar_est,
+  set_id_mean_eq,
+  b_point,
+  logvar_grid_n,
+  logvar_grid_floor,
+  logvar_rows$qtr,
+  colnames(w2_lv)
 )
-names(logvar_sets) <- names(set_id_mean_eq$set_tables)
 
 logvar_table <- cbind(
   data.frame(
@@ -125,7 +125,9 @@ logvar_table <- cbind(
     point = unname(theta_point),
     row.names = NULL
   ),
-  logvar_sets[[1]]$table[c("set_lower", "set_upper", "status")]
+  logvar_sets[[paper_tau_key(set_id_mean_eq$tau_baseline)]]$table[
+    c("set_lower", "set_upper", "status")
+  ]
 )
 
 log_var_eq <- list(
@@ -139,6 +141,7 @@ log_var_eq <- list(
   cross_qtr = lapply(logvar_sets, `[[`, "cross_qtr"),
   fit_ols = fit_logvar_ols,
   grid_n = logvar_grid_n,
+  tau_baseline = set_id_mean_eq$tau_baseline,
   # smallest absolute residual at the Lewbel point: how much slack there is
   # before some b_N in a neighborhood flips a residual sign
   min_abs_eps_point = if (anyNA(b_point)) {
@@ -175,7 +178,7 @@ log_var_eq$sample_contract <- list(
 logvar_bounds_tau_registry <- list(list(
   estimator = logvar_est, schema = log_var_eq$schema, sets = log_var_eq$sets,
   b_seed = b_point, engine_opts = list(),
-  output_path = logvar_bounds_tau_path(out_dir, logvar_est$metadata)
+  output_path = logvar_bounds_tau_path(logvar_est$metadata)
 ))
 
 cat(
@@ -192,5 +195,5 @@ print(log_var_eq$table, digits = 3)
 rm(
   logvar_grid_n, logvar_grid_floor, logvar_rows, w1_lv, w2_lv, pcr, proj,
   logvar_coefs, lv_ols, fit_logvar_ols, b_point, theta_point,
-  logvar_est, logvar_set_at_tau, logvar_sets, logvar_table
+  logvar_est, logvar_sets, logvar_table
 )

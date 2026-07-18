@@ -36,19 +36,23 @@ logvar_ppml_diag <- function(error_class, start_attempts, ...) {
 # Positive-response rank diagnostic: scale each nonzero column of the positive
 # rows by its Euclidean norm and count singular values above 1e-10 * d[1]. A
 # zero column keeps its zero singular value and fails. Returns the rank count.
-logvar_ppml_pos_rank <- function(y_scaled, x_mat) {
+logvar_ppml_pos_rank <- function(
+  y_scaled, x_mat, control = LOGVAR_PPML_CONTROL
+) {
   x_pos <- x_mat[y_scaled > 0, , drop = FALSE]
   col_norms <- sqrt(colSums(x_pos^2))
   divisor <- ifelse(col_norms > 0, col_norms, 1)
   d <- svd(sweep(x_pos, 2, divisor, "/"))$d
-  sum(d > 1e-10 * d[1])
+  sum(d > control$rank_tol * d[1])
 }
 
 # Post-fit acceptance for one converged glm.fit rung on the scaled response.
 # Returns the scaled coefficients, fitted means, score diagnostics, and the
 # accept verdict; short-circuits with a reason on any failed gate so ill-posed
 # fits never reach the score / conditioning computations.
-logvar_ppml_accept <- function(fit, y_scaled, x_mat) {
+logvar_ppml_accept <- function(
+  fit, y_scaled, x_mat, control = LOGVAR_PPML_CONTROL
+) {
   coef <- fit$coefficients
   bad <- function(reason) {
     list(
@@ -60,13 +64,14 @@ logvar_ppml_accept <- function(fit, y_scaled, x_mat) {
     return(bad("nonfinite_coef"))
   }
   mu <- exp(drop(x_mat %*% coef))
-  if (any(!is.finite(mu)) || any(mu <= 0)) {
+  if (isTRUE(control$finite_mean_switch) &&
+    (any(!is.finite(mu)) || any(mu <= 0))) {
     return(bad("nonpositive_mu"))
   }
   if (!isTRUE(fit$converged)) {
     return(bad("irls_not_converged"))
   }
-  if (isTRUE(fit$boundary)) {
+  if (isTRUE(control$boundary_switch) && isTRUE(fit$boundary)) {
     return(bad("boundary"))
   }
   pos <- y_scaled > 0
@@ -79,9 +84,9 @@ logvar_ppml_accept <- function(fit, y_scaled, x_mat) {
   }
   rcond_scaled <- rcond(crossprod(sweep(sqrt(mu) * x_mat, 2, info_col_scale, "/")))
   reason <- NA_character_
-  if (!(score_norm <= 1e-8)) {
+  if (!(score_norm <= control$score_tol)) {
     reason <- "score_tolerance"
-  } else if (!(rcond_scaled >= 1e-10)) {
+  } else if (!(rcond_scaled >= control$rcond_tol)) {
     reason <- "ill_conditioned"
   }
   list(
@@ -95,31 +100,31 @@ logvar_ppml_accept <- function(fit, y_scaled, x_mat) {
 
 # One glm.fit rung with the ratified control, recording (never silencing)
 # warnings and messages and returning NULL fit on an IRLS error.
-logvar_ppml_run <- function(cand, y_scaled, x_mat) {
-  warns <- character(0)
-  msgs <- character(0)
-  fit <- tryCatch(
-    withCallingHandlers(
-      stats::glm.fit(
-        x = x_mat, y = y_scaled,
-        family = stats::quasipoisson(link = "log"), start = cand,
-        control = stats::glm.control(maxit = 100L, epsilon = 1e-10)
-      ),
-      warning = function(w) {
-        warns[[length(warns) + 1L]] <<- conditionMessage(w)
-        invokeRestart("muffleWarning")
-      },
-      message = function(m) {
-        msgs[[length(msgs) + 1L]] <<- conditionMessage(m)
-        invokeRestart("muffleMessage")
-      }
-    ),
-    error = function(e) {
-      warns[[length(warns) + 1L]] <<- paste0("error: ", conditionMessage(e))
-      NULL
-    }
+logvar_ppml_run <- function(
+  cand, y_scaled, x_mat, control = LOGVAR_PPML_CONTROL
+) {
+  captured <- paper_capture_conditions(
+    stats::glm.fit(
+      x = x_mat, y = y_scaled,
+      family = stats::quasipoisson(link = "log"), start = cand,
+      control = stats::glm.control(
+        maxit = control$glm_maxit,
+        epsilon = control$glm_epsilon
+      )
+    )
   )
-  list(fit = fit, warnings = warns, messages = msgs)
+  error_warning <- if (is.na(captured$error_message)) {
+    character(0)
+  } else {
+    captured$error_message
+  }
+  list(
+    fit = captured$value,
+    warnings = c(captured$warnings, error_warning),
+    messages = captured$messages,
+    error_class = captured$error_class,
+    error_message = captured$error_message
+  )
 }
 
 # Assemble the accepted-fit contract: recover the original-scale coefficients

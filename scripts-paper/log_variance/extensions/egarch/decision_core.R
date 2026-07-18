@@ -16,9 +16,13 @@
 # approvals plus a present, version-matched package let run_dynamic be TRUE.
 
 # Pinned provenance/version constants and the closed enums -------------------
-LOGVAR_EGARCH_SCHEMA_VERSION <- "1.0.0"
-LOGVAR_EGARCH_PLAN_PATH <-
-  "docs/superpowers/plans/2026-07-13-logvar-egarch-x.md"
+paper_source_once(paper_path(
+  "log_variance", "diagnostics", "protocols.R"
+))
+
+LOGVAR_EGARCH_SCHEMA_VERSION <- "1.1.0"
+LOGVAR_EGARCH_PLAN_SHA256 <-
+  "978939283a5b6541adf0e448789c77863961359dbb008c4f40f0728500759fb9"
 LOGVAR_EGARCH_GATE_RECORD_PATH <-
   artifact_path("dynamics_gate")
 LOGVAR_EGARCH_UPSTREAM_PLANS_HASH <-
@@ -49,46 +53,34 @@ LOGVAR_EGARCH_DEPENDENCY_PROMPT_SHA256 <-
 # provenance hashes, the two prompt texts and their SHA-256, the ordered
 # decisions, the response provenance, and the fixed UTC timestamp.
 logvar_egarch_decision_fields <- c(
-  "schema_version", "gate_record_sha256", "gate_record_path", "sample_id",
+  "schema_version", "gate_science_sha256", "gate_record_path", "sample_id",
   "gate_lag", "gate_alpha", "gate_q", "gate_p", "gate_verdict",
-  "benchmark_commit", "plan_sha256", "upstream_plans_hash", "estimand_prompt",
+  "plan_sha256", "upstream_plans_hash", "estimand_prompt",
   "estimand_prompt_sha256", "dependency_prompt", "dependency_prompt_sha256",
   "decisions", "decision_provenance", "decided_at_utc"
 )
 
-# Canonical SHA-256 via base tools only: hash a raw byte vector by writing it to
-# a tempfile and calling tools::sha256sum (no digest/openssl, no md5). Objects
-# hash through a version-3 uncompressed serialization so the digest is stable for
-# an identical object; strings hash their exact UTF-8 bytes; files hash directly
-# (so plan_sha256 matches `sha256sum <plan>` on the command line).
-.logvar_egarch_sha256_raw <- function(bytes) {
-  tmp <- tempfile()
-  on.exit(unlink(tmp), add = TRUE)
-  writeBin(bytes, tmp)
-  unname(tools::sha256sum(tmp))
-}
+# Canonical hashes delegate to the paper runtime primitives.
 logvar_egarch_object_sha256 <- function(obj) {
-  .logvar_egarch_sha256_raw(serialize(obj, NULL, version = 3L))
+  paper_sha256_object(obj)
 }
 logvar_egarch_string_sha256 <- function(s) {
-  .logvar_egarch_sha256_raw(charToRaw(enc2utf8(s)))
+  paper_sha256_string(s)
 }
-logvar_egarch_file_sha256 <- function(path) {
-  h <- unname(tools::sha256sum(path))
-  if (is.na(h)) logvar_egarch_decision_stop("unreadable_file_hash", path)
-  h
+logvar_egarch_gate_science_sha256 <- function(gate_record) {
+  scientific <- gate_record
+  scientific$benchmark_commit <- NULL
+  logvar_egarch_object_sha256(scientific)
 }
 
 # Raise a classed condition so the driver and the tests can dispatch on the exact
 # failure family; every validation and routing failure uses this.
 logvar_egarch_decision_stop <- function(reason, detail = "") {
-  stop(structure(
-    class = c(reason, "logvar_egarch_decision_error", "error", "condition"),
-    list(
-      message = if (nzchar(detail)) paste0(reason, ": ", detail) else reason,
-      call = NULL
-    )
-  ))
+  paper_stop_condition(
+    reason,
+    "logvar_egarch_decision_error",
+    detail
+  )
 }
 
 # The canonical provenance a decision pair implies, which the validator enforces:
@@ -104,20 +96,15 @@ logvar_egarch_expected_provenance <- function(decisions) {
   }
 }
 
-# The checked-in default record: read the freshly regenerated gate record, freeze
-# its canonical SHA-256 and the gate/sample/version fields, and set both ordered
-# decisions to `not_asked` (no question is asked until the gate rejects). The
-# caller supplies the verbatim prompt texts, which must match their pinned
-# canonical hashes (fail fast on any drift). decided_at_utc is a fixed literal,
-# never Sys.time(), so the committed record is stable across runs.
+# Deterministic builder for tests and future approval updates. It freezes the
+# supplied gate's scientific hash and fields, validates canonical prompts, and
+# defaults both ordered decisions to `not_asked`.
 logvar_egarch_decision_default <- function(gate_record, decided_at_utc,
                                            estimand_prompt, dependency_prompt,
                                            gate_record_path =
                                              LOGVAR_EGARCH_GATE_RECORD_PATH,
                                            plan_sha256 =
-                                             logvar_egarch_file_sha256(
-                                               LOGVAR_EGARCH_PLAN_PATH
-                                             )) {
+                                             LOGVAR_EGARCH_PLAN_SHA256) {
   e_sha <- logvar_egarch_string_sha256(estimand_prompt)
   d_sha <- logvar_egarch_string_sha256(dependency_prompt)
   if (!identical(e_sha, LOGVAR_EGARCH_ESTIMAND_PROMPT_SHA256) ||
@@ -130,14 +117,15 @@ logvar_egarch_decision_default <- function(gate_record, decided_at_utc,
   lag_name <- sprintf("lag%d", as.integer(gate_record$gate_lag))
   list(
     schema_version = LOGVAR_EGARCH_SCHEMA_VERSION,
-    gate_record_sha256 = logvar_egarch_object_sha256(gate_record),
+    gate_science_sha256 =
+      logvar_egarch_gate_science_sha256(gate_record),
     gate_record_path = gate_record_path, sample_id = gate_record$sample_id,
     gate_lag = as.integer(gate_record$gate_lag),
     gate_alpha = gate_record$gate_alpha,
     gate_q = unname(gate_record$q_stats[[lag_name]]),
     gate_p = unname(gate_record$p_values[[lag_name]]),
     gate_verdict = gate_record$verdict,
-    benchmark_commit = gate_record$benchmark_commit, plan_sha256 = plan_sha256,
+    plan_sha256 = plan_sha256,
     upstream_plans_hash = LOGVAR_EGARCH_UPSTREAM_PLANS_HASH,
     estimand_prompt = estimand_prompt, estimand_prompt_sha256 = e_sha,
     dependency_prompt = dependency_prompt, dependency_prompt_sha256 = d_sha,
@@ -154,15 +142,21 @@ logvar_egarch_route_status <- function(gate_record, route, decision,
                                        dynamic_artifacts_absent,
                                        cleanup_audit = NULL) {
   lag_name <- sprintf("lag%d", as.integer(gate_record$gate_lag))
+  protocol <- gate_record$protocol
+  if (is.null(protocol)) {
+    protocol <- LOGVAR_DYNAMICS_GATE_PROTOCOL
+  }
   list(
-    schema_version = LOGVAR_EGARCH_SCHEMA_VERSION, stage = "egarch_route",
+    schema_version = LOGVAR_EGARCH_SCHEMA_VERSION,
+    protocol = protocol,
+    stage = "egarch_route",
     plan = "logvar-egarch-x", sample_id = gate_record$sample_id,
     benchmark_commit = gate_record$benchmark_commit,
     gate_verdict = gate_record$verdict,
     gate_lag = as.integer(gate_record$gate_lag),
     gate_alpha = gate_record$gate_alpha,
-    gate_q_lag4 = unname(gate_record$q_stats[[lag_name]]),
-    gate_p_lag4 = unname(gate_record$p_values[[lag_name]]),
+    gate_q = unname(gate_record$q_stats[[lag_name]]),
+    gate_p = unname(gate_record$p_values[[lag_name]]),
     min_abs_eps = gate_record$min_abs_eps,
     crossing_status = gate_record$crossing_status,
     estimand_decision = decision$decisions[["estimand"]],
@@ -180,4 +174,4 @@ logvar_egarch_route_status <- function(gate_record, route, decision,
 }
 
 # the strict decision/gate-binding validator and the pure branch router
-source(paper_path("log_variance", "extensions", "egarch", "route_core.R"))
+paper_source_once(paper_path("log_variance", "extensions", "egarch", "route_core.R"))

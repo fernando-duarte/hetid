@@ -3,6 +3,10 @@
 # Invariance: theta = delta * phi preserves the feasible set for ANY delta > 0,
 # and dividing each constraint g_i <= 0 by omega_i > 0 leaves it unchanged.
 
+paper_source_once(paper_path(
+  "support", "identification", "quadratic_evaluation.R"
+))
+
 # Variable scale delta ~ natural theta length-scale sqrt(|c| / rho(A)).
 .derive_theta_scale <- function(quadratic) {
   spectral <- vapply(quadratic$A_i, function(a) {
@@ -38,7 +42,12 @@
   }, numeric(1))
   raw[!is.finite(raw)] <- 0
   pos <- raw[raw > 0]
-  floor_val <- if (length(pos)) 1e-12 * stats::median(pos) else 0
+  floor_val <- if (length(pos)) {
+    PAPER_QUADRATIC_CONTROL$constraint_scale_floor_rtol *
+      stats::median(pos)
+  } else {
+    0
+  }
   w <- pmax(raw, floor_val)
   w[!is.finite(w) | w <= 0] <- 1
   w
@@ -54,7 +63,6 @@
 # coordinate convention (obj in phi units, bound in theta units).
 .solve_scaled <- function(quadratic, component_index, sign_mult, delta, omega,
                           box, xtol_rel, maxeval, objective = NULL) {
-  n_con <- length(quadratic$A_i)
   dim_theta <- ncol(quadratic$A_i[[1]])
   if (is.null(objective)) {
     e_k <- numeric(dim_theta)
@@ -66,25 +74,24 @@
     grad_fn <- function(phi) sign_mult * objective
   }
   constraint_fn <- function(phi) {
-    theta <- delta * phi
-    vapply(seq_len(n_con), function(i) {
-      (drop(t(theta) %*% quadratic$A_i[[i]] %*% theta) +
-        sum(quadratic$b_i[[i]] * theta) + quadratic$c_i[i]) / omega[i]
-    }, numeric(1))
+    quadratic_constraint_values(
+      delta * phi,
+      quadratic,
+      omega
+    )
   }
-  constraint_jac <- function(phi) {
-    theta <- delta * phi
-    jac <- matrix(0, n_con, dim_theta)
-    for (i in seq_len(n_con)) {
-      jac[i, ] <- (delta * (2 * drop(quadratic$A_i[[i]] %*% theta) +
-        quadratic$b_i[[i]])) / omega[i]
-    }
-    jac
+  constraint_jacobian_fn <- function(phi) {
+    quadratic_constraint_jacobian(
+      delta * phi,
+      quadratic,
+      omega,
+      theta_scale = delta
+    )
   }
   res <- tryCatch(nloptr::slsqp(
     x0 = rep(0, dim_theta), fn = obj_fn, gr = grad_fn,
     lower = rep(-box, dim_theta), upper = rep(box, dim_theta),
-    hin = constraint_fn, hinjac = constraint_jac,
+    hin = constraint_fn, hinjac = constraint_jacobian_fn,
     control = list(xtol_rel = xtol_rel, maxeval = maxeval),
     deprecatedBehavior = FALSE
   ), error = function(e) {
@@ -98,10 +105,7 @@
 # NOT certify global optimality (no stationarity / multiplier check); on
 # non-convex (indefinite A_i) sets a premature boundary stall can still pass.
 .feasibility_residual <- function(quadratic, theta, omega) {
-  max(vapply(seq_along(quadratic$A_i), function(i) {
-    (drop(t(theta) %*% quadratic$A_i[[i]] %*% theta) +
-      sum(quadratic$b_i[[i]] * theta) + quadratic$c_i[i]) / omega[i]
-  }, numeric(1)))
+  quadratic_constraint_residual(theta, quadratic, omega)
 }
 
 # A scaled solve is usable for a bound/track decision only if every coordinate is

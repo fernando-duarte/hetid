@@ -6,9 +6,10 @@
 # Writes both structural-equation table variants and their standalone PDFs to
 # the typed table directory after mean-set estimation.
 
-source(paper_path("support", "latex", "table_pipeline.R"))
-source(paper_path("support", "latex", "simple_table.R"))
-source(paper_path("mean_equation", "tables", "structural_equation_caption.R"))
+paper_source_once(paper_path("support", "latex", "table_pipeline.R"))
+paper_source_once(paper_path("support", "latex", "simple_table.R"))
+paper_source_once(paper_path("support", "reporting", "inference.R"))
+paper_source_once(paper_path("mean_equation", "tables", "structural_equation_caption.R"))
 
 # coefficient rows: design block (b_0, b_E) then the news block (b_N); the
 # guard pins the row order the labels below assume
@@ -32,23 +33,18 @@ n_obs <- set_id_mean_eq$sample$n
 r2 <- summary(set_id_mean_eq$ols_fit)$r.squared
 tau_base <- set_id_mean_eq$tau_baseline
 
-# Newey-West (4 lags, Bartlett kernel, no prewhitening) t statistics and
-# significance stars for the OLS column
-nw_se <- sqrt(diag(sandwich::NeweyWest(
+# Newey-West t statistics and significance stars for the OLS column.
+nw <- paper_newey_west_statistics(
   set_id_mean_eq$ols_fit,
-  lag = 4, prewhite = FALSE
-)))[coef_tab$coef]
-nw_t <- coef_tab$ols / nw_se
-nw_p <- 2 * stats::pt(-abs(nw_t), df = stats::df.residual(set_id_mean_eq$ols_fit))
-nw_stars <- ifelse(
-  nw_p < 0.01, "^{***}",
-  ifelse(nw_p < 0.05, "^{**}", ifelse(nw_p < 0.10, "^{*}", ""))
+  coef_tab$ols,
+  coef_tab$coef,
+  PAPER_REPORTING_CONTROL$mean_ols
 )
 ols_cells <- ifelse(
-  nw_stars == "", fmt(coef_tab$ols),
-  sprintf("%s$%s$", fmt(coef_tab$ols), nw_stars)
+  nw$stars == "", fmt(coef_tab$ols),
+  sprintf("%s$%s$", fmt(coef_tab$ols), nw$stars)
 )
-ols_tstats <- sprintf("(%.2f)", nw_t)
+ols_tstats <- sprintf("(%.2f)", nw$statistic)
 
 # sampling uncertainty from the endpoint bootstrap (run_bootstrap.R):
 # robust nominal 90% intervals under the tau = 0 points in both variants,
@@ -66,9 +62,6 @@ point_ci_cells <- interval_cell(
   !is.finite(coef_tab$point)
 )
 
-# coefficient rows interleaved with the OLS t-statistic rows (blank in the
-# identification columns)
-interleave <- function(a, b) as.vector(rbind(a, b))
 coef_labels <- c(
   "$b_0$",
   sprintf("$b_{%d,E}$", seq_len(n_pc)),
@@ -159,7 +152,7 @@ cat(
 
 rm(
   coef_tab, fmt, set_cell, n_obs, r2, tau_base, row_labels, columns,
-  set_columns, nw_se, nw_t, nw_p, nw_stars, ols_cells, ols_tstats, interleave,
+  set_columns, nw, ols_cells, ols_tstats,
   coef_labels, n_excl, caption, build_structural_notes, structural_table,
   interval_cell, point_ci_cells, set_data, variants, v, table_id, standalone_id
 )

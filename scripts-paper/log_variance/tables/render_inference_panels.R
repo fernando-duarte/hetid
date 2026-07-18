@@ -7,8 +7,8 @@
 # the two files the manuscript \input's. Writes log_var_eq_panels_inference.tex
 # + compiled standalone. Run via run_pipeline.R after run_set_bootstrap.R.
 
-source(paper_path("log_variance", "tables", "panels_builder.R"))
-source(paper_path("log_variance", "tables", "set_inference_caption.R"))
+paper_source_once(paper_path("log_variance", "tables", "panels_builder.R"))
+paper_source_once(paper_path("log_variance", "tables", "set_inference_caption.R"))
 
 build_logvar_panels(
   "log_var_eq_panels_inference",

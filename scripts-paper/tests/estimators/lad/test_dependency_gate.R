@@ -16,20 +16,12 @@
 # adjust read_gate() if so.
 
 source(file.path("scripts-paper", "config", "paths.R"))
-source(paper_path("config", "artifacts.R"))
-source(paper_path("log_variance", "estimators", "lad", "dependency_gate.R"))
+paper_source_once(paper_path("config", "artifacts.R"))
+paper_source_once(paper_path("log_variance", "estimators", "lad", "dependency_gate.R"))
 
-.pass <- 0L
-.fail <- 0L
-check <- function(label, cond) {
-  if (isTRUE(cond)) {
-    .pass <<- .pass + 1L
-    cat(sprintf("PASS  %s\n", label))
-  } else {
-    .fail <<- .fail + 1L
-    cat(sprintf("FAIL  %s\n", label))
-  }
-}
+paper_source_once(paper_path("tests", "support", "harness.R"))
+.test <- paper_test_harness()
+check <- .test$check
 # Fail a check closed when the required reader errors or is absent.
 gate_try <- function(expr) tryCatch(isTRUE(expr), error = function(e) FALSE)
 
@@ -68,6 +60,17 @@ rejects <- function(lines, available = TRUE, version = "6.1") {
     "stopped"
   )
 }
+
+# The production decision is tracked, schema-valid, and authorizes its version.
+tracked_gate_path <- paper_path("config", "decisions", "lad.dcf")
+tracked_version <- read.dcf(
+  tracked_gate_path,
+  fields = "quantreg_version"
+)[1L, 1L]
+check("tracked LAD decision authorizes its recorded version", gate_try({
+  gate <- read_gate(tracked_gate_path, version = tracked_version)
+  identical(gate$decision, "approved") && isTRUE(gate$source_lad)
+}))
 
 # A missing file reads as unanswered, never an error, and sources no LAD code.
 check("gate a missing DCF reads as unanswered", gate_try({
@@ -153,5 +156,4 @@ check("gate reads are deterministic and non-interactive", gate_try({
   identical(read_gate(p), read_gate(p))
 }))
 
-cat(sprintf("\n%d passed, %d failed\n", .pass, .fail))
-if (.fail > 0L) quit(status = 1L)
+.test$finish()

@@ -12,16 +12,15 @@ w2 <- fx$w2
 b_fd <- fx$b_fd
 e_fd <- drop(w1 - w2 %*% b_fd)
 
-# Pinned constants and separated numerical controls (dossier section 5): four
-# controls, box schedule, budgets, and the Option-B dimension counts; moment_delta is
-# never one of the numerical controls.
+# Pinned executable constants and separated numerical controls (dossier section
+# 5): solver controls, box schedule, budgets, and the Option-B dimension counts;
+# moment_delta is never one of the numerical controls.
 check("the pinned constants block carries the frozen values and control separation", jg_try({
   jg_need("logvar_joint_gmm_constants")
   k <- logvar_joint_gmm_constants
-  k$param_xtol_rel == 1e-9 && k$objective_tol == 1e-10 && k$constraint_tol == 1e-8 &&
-    k$root_tol == 1e-8 && identical(as.numeric(k$box_half_widths), c(4, 8, 16)) &&
-    k$pattern_start_cap == 256L && k$gmm_grid_cap == 4000L &&
-    k$candidate_eval_cap == 60000L && k$grid_n == 41L && k$grid_floor == 100L &&
+  k$param_xtol_rel == 1e-9 && k$constraint_tol == 1e-8 && k$root_tol == 1e-8 &&
+    identical(as.numeric(k$box_half_widths), c(4, 8, 16)) &&
+    k$pattern_start_cap == 256L &&
     k$n_moments_unprofiled == 10L && k$n_parameters_unprofiled == 9L &&
     k$n_moments_profiled == 8L && k$n_parameters_profiled == 7L &&
     !("moment_delta" %in% names(k))

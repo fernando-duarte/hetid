@@ -18,7 +18,10 @@
 # Shared scan helper kept here so the search module stays under the line cap:
 # individual points (tau = 0 seeds, carried prior minima) evaluated through the
 # map, keeping the qs-feasible finite-q ones tagged with their provenance.
-.jn_extra_candidates <- function(points, type, qs, w1, w2, proj, d_inv2) {
+.jn_extra_candidates <- function(
+  points, type, qs, w1, w2, proj, d_inv2,
+  control = LOGVAR_JOINT_NULL_CONTROL
+) {
   if (!length(points)) {
     return(list())
   }
@@ -27,7 +30,9 @@
   for (pt in points) {
     b <- as.numeric(pt)
     resid <- .feasibility_residual(qs, b, omega)
-    if (!is.finite(resid) || resid > 1e-4) next
+    if (!is.finite(resid) || resid > control$feasibility_tol) {
+      next
+    }
     o <- logvar_joint_null_objective(b, w1, w2, proj, d_inv2)
     if (!is.finite(o$q)) next
     out[[length(out) + 1L]] <- list(
@@ -40,24 +45,26 @@
 # COBYLA epigraph solve from one admitted start; NULL unless the recomputed
 # point is Lewbel-feasible and every epigraph inequality holds to tolerance
 .jn_epigraph_solve <- function(b0, qs, omega, b_scale, r_scale,
-                               w1, w2, proj, d_inv2) {
+                               w1, w2, proj, d_inv2, control) {
   k <- length(b0)
   r0 <- max(abs(.jn_scaled_slopes(b0, w1, w2, proj, d_inv2)))
   hin <- function(x) {
     b <- b_scale * x[seq_len(k)]
     r <- r_scale * x[k + 1L]
-    lew <- vapply(seq_along(qs$A_i), function(i) {
-      (drop(t(b) %*% qs$A_i[[i]] %*% b) + sum(qs$b_i[[i]] * b) + qs$c_i[i]) /
-        omega[i]
-    }, numeric(1))
+    lew <- quadratic_constraint_values(b, qs, omega)
     sc <- .jn_scaled_slopes(b, w1, w2, proj, d_inv2)
     c(lew, -x[k + 1L], (sc - r) / r_scale, (-sc - r) / r_scale)
   }
   res <- tryCatch(
     nloptr::cobyla(
       x0 = c(b0 / b_scale, r0 / r_scale), fn = function(x) x[k + 1L],
-      lower = rep(-1e6, k + 1L), upper = rep(1e6, k + 1L), hin = hin,
-      control = list(xtol_rel = 1e-10, maxeval = 500L),
+      lower = rep(-control$epigraph_bound, k + 1L),
+      upper = rep(control$epigraph_bound, k + 1L),
+      hin = hin,
+      control = list(
+        xtol_rel = control$epigraph_xtol_rel,
+        maxeval = control$epigraph_maxeval
+      ),
       deprecatedBehavior = FALSE
     ),
     error = function(e) NULL
@@ -69,8 +76,11 @@
   r_pol <- r_scale * res$par[k + 1L]
   d_inf <- max(abs(.jn_scaled_slopes(b_pol, w1, w2, proj, d_inv2)))
   feas <- .feasibility_residual(qs, b_pol, omega)
-  ok <- is.finite(feas) && feas <= 1e-4 && is.finite(d_inf) &&
-    is.finite(r_pol) && r_pol >= -1e-8 && d_inf <= r_pol + 1e-8 * max(1, r_pol)
+  constraint_tol <- control$epigraph_constraint_tol
+  ok <- is.finite(feas) && feas <= control$feasibility_tol &&
+    is.finite(d_inf) && is.finite(r_pol) &&
+    r_pol >= -constraint_tol &&
+    d_inf <= r_pol + constraint_tol * max(1, r_pol)
   if (!ok) {
     return(NULL)
   }
@@ -85,7 +95,8 @@
 # starts is the two-element list (L2 winner, best grid sup-norm candidate), each
 # already a feasible attained point.
 logvar_joint_null_epigraph <- function(qs, starts, w1, w2, proj, d_inv2,
-                                       root_tol = 1e-6) {
+                                       control = LOGVAR_JOINT_NULL_CONTROL) {
+  root_tol <- control$root_tol
   omega <- .jn_omega(qs)
   delta <- .derive_theta_scale(qs)
   r_start <- vapply(starts, function(b) {
@@ -102,7 +113,8 @@ logvar_joint_null_epigraph <- function(qs, starts, w1, w2, proj, d_inv2,
   r_scale <- max(root_tol, min(r_start))
   for (s0 in starts) {
     res <- .jn_epigraph_solve(
-      as.numeric(s0), qs, omega, b_scale, r_scale, w1, w2, proj, d_inv2
+      as.numeric(s0), qs, omega, b_scale, r_scale, w1, w2, proj,
+      d_inv2, control
     )
     if (!is.null(res) && res$d_inf < best$d_inf) {
       best <- res

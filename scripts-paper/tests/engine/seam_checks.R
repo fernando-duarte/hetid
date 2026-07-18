@@ -61,8 +61,14 @@ seam_trials <- function(res) {
   vapply(res$diagnostics$polish, function(r) r$n_trials, integer(1))
 }
 check(
-  "the default start count keeps one polish trial per side",
-  all(seam_trials(seam_run()) == 1L)
+  "the default start count uses the primary search control",
+  identical(
+    seam_trials(seam_run()),
+    seam_trials(seam_run(
+      starts_per_side =
+        LOGVAR_SEARCH_CONTROL$primary_starts_per_side
+    ))
+  )
 )
 check(
   "starts_per_side = 3 feeds separated pool starts into the polish",

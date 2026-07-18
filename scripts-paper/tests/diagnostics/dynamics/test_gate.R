@@ -9,28 +9,22 @@
 #   Rscript scripts-paper/tests/diagnostics/dynamics/test_gate.R
 
 source(file.path("scripts-paper", "config", "paths.R"))
-source(paper_path("config", "artifacts.R"))
-source(paper_path("support", "identification", "profile_solver_core.R"))
-source(paper_path("support", "identification", "profile_bounds_api.R"))
-source(paper_path("log_variance", "core", "residual_map.R"))
-source(paper_path("log_variance", "diagnostics", "dynamics", "gate_core.R"))
+paper_source_once(paper_path("config", "artifacts.R"))
+paper_source_once(paper_path("support", "identification", "profile_solver_core.R"))
+paper_source_once(paper_path("support", "identification", "profile_bounds_api.R"))
+paper_source_once(paper_path("log_variance", "core", "residual_map.R"))
+paper_source_once(paper_path("log_variance", "diagnostics", "dynamics", "gate_core.R"))
 
-.pass <- 0L
-.fail <- 0L
-check <- function(label, cond) {
-  if (isTRUE(cond)) {
-    .pass <<- .pass + 1L
-    cat(sprintf("PASS  %s\n", label))
-  } else {
-    .fail <<- .fail + 1L
-    cat(sprintf("FAIL  %s\n", label))
-  }
-}
+paper_source_once(paper_path("tests", "support", "harness.R"))
+.test <- paper_test_harness()
+check <- .test$check
 grepl_any <- function(x, pat) any(grepl(pat, x, fixed = TRUE))
 df_named <- function(d, nm) is.data.frame(d) && identical(names(d), nm)
-lag3 <- c("lag1", "lag4", "lag8")
-lag8n <- sprintf("lag%d", 1:8)
-na_named <- function(x) all(is.na(x)) && identical(names(x), lag3)
+gate_protocol <- LOGVAR_DYNAMICS_GATE_PROTOCOL
+gate_lags <- sprintf("lag%d", gate_protocol$tested_lags)
+gate_name <- sprintf("lag%d", gate_protocol$gate_lag)
+gate_acf_lags <- sprintf("lag%d", seq_len(gate_protocol$acf_max))
+na_named <- function(x) all(is.na(x)) && identical(names(x), gate_lags)
 approx <- "approximate specification diagnostic"
 gate_rds <- "log_var_eq_dynamics_gate.rds"
 
@@ -64,25 +58,28 @@ eval_fin <- function(sys, schema = NULL, b_point = sys$b_point) {
 # The pure decision: white-noise, AR(1), and the lag-4-only rule ------------
 set.seed(20260713)
 d_wn <- logvar_gate_decide(stats::rnorm(240))
-check("white-noise lag4 p > 0.20", d_wn$p_values[["lag4"]] > 0.20)
+check("white-noise gate-lag p > 0.20", d_wn$p_values[[gate_name]] > 0.20)
 check("white-noise verdict non_reject", identical(d_wn$verdict, "non_reject"))
-check("decide q_stats named lag1/lag4/lag8", identical(names(d_wn$q_stats), lag3))
-check("decide p_values named lag1/lag4/lag8", identical(names(d_wn$p_values), lag3))
-check("decide acf runs through lag 8", identical(names(d_wn$acf), lag8n))
+check("decide q_stats use protocol lags", identical(names(d_wn$q_stats), gate_lags))
+check("decide p_values use protocol lags", identical(names(d_wn$p_values), gate_lags))
+check("decide ACF uses protocol horizon", identical(names(d_wn$acf), gate_acf_lags))
 
 set.seed(20260714)
 xi_ar <- numeric(240)
 for (t in 2:240) xi_ar[t] <- 0.8 * xi_ar[t - 1L] + stats::rnorm(1L)
 d_ar <- logvar_gate_decide(xi_ar)
-check("AR(1) lag4 p < 1e-6", d_ar$p_values[["lag4"]] < 1e-6)
+check("AR(1) gate-lag p < 1e-6", d_ar$p_values[[gate_name]] < 1e-6)
 check("AR(1) verdict reject", identical(d_ar$verdict, "reject"))
 
 set.seed(20260014)
 xi_l4 <- numeric(240)
 for (t in 2:240) xi_l4[t] <- 0.12 * xi_l4[t - 1L] + stats::rnorm(1L)
 d_l4 <- logvar_gate_decide(xi_l4)
-check("lag-4-only: lag 1 rejects", d_l4$p_values[["lag1"]] < 0.05)
-check("lag-4-only: lag 4 does not reject", d_l4$p_values[["lag4"]] >= 0.05)
+check("lag-4-only: lag 1 rejects", d_l4$p_values[["lag1"]] < gate_protocol$alpha)
+check(
+  "lag-4-only: gate lag does not reject",
+  d_l4$p_values[[gate_name]] >= gate_protocol$alpha
+)
 check("lag-4-only: verdict non_reject (lag 4 sole gate)", identical(d_l4$verdict, "non_reject"))
 
 # Finite-system record shape and types -------------------------------------
@@ -96,14 +93,17 @@ req <- c(
 )
 check("record carries every section-2.4 field", all(req %in% names(g)))
 check("verdict is reject or non_reject", g$verdict %in% c("reject", "non_reject"))
-check("tested_lags identical c(1L,4L,8L)", identical(g$tested_lags, c(1L, 4L, 8L)))
-check("gate_lag identical 4L integer", identical(g$gate_lag, 4L))
-check("gate_alpha is 0.05", identical(g$gate_alpha, 0.05))
+check(
+  "tested_lags equal the protocol axis",
+  identical(g$tested_lags, gate_protocol$tested_lags)
+)
+check("gate_lag equals the protocol lag", identical(g$gate_lag, gate_protocol$gate_lag))
+check("gate_alpha equals the protocol alpha", identical(g$gate_alpha, gate_protocol$alpha))
 check("q_stats and p_values names aligned", identical(names(g$q_stats), names(g$p_values)))
-check("q/p vectors named lag1/lag4/lag8", identical(names(g$q_stats), lag3))
+check("q/p vectors use protocol lags", identical(names(g$q_stats), gate_lags))
 check("xi_hat keyed by qtr", df_named(g$xi_hat, c("qtr", "xi_hat")))
 check("xi_hat has one row per observation", nrow(g$xi_hat) == length(sys$inputs$w1))
-check("acf field runs through lag 8", identical(names(g$acf), lag8n))
+check("acf field uses protocol horizon", identical(names(g$acf), gate_acf_lags))
 check("notes carry approx-diagnostic caveat", grepl_any(g$notes, approx))
 
 # Exact-zero fail-closed ----------------------------------------------------
@@ -166,7 +166,10 @@ sc$arg_lower <- I(list(sysS$b_point + c(1e-3, 0), c(NA_real_, 0)))
 sc$arg_upper <- I(list(c(0, 0), sysS$b_point - c(0, 1e-3)))
 sens <- logvar_gate_sensitivity(sysS$inputs, sysS$proj, list(tau_0.05 = sc), sysS$b_point)
 check("sensitivity evaluates >= 1 witness row", nrow(sens$rows) >= 1L)
-check("sensitivity rows carry the lag-4 p-value", "p_lag4" %in% names(sens$rows))
+check(
+  "sensitivity rows carry the gate-lag p-value",
+  paste0("p_", gate_name) %in% names(sens$rows)
+)
 check("sensitivity includes the b_seed witness", "b_seed" %in% sens$rows$source)
 check("sensitivity logs excluded witness", any(sens$exclusions$reason == "nonfinite_or_dim"))
 
@@ -179,18 +182,8 @@ check("manifest verdict matches the record", identical(man$gate_verdict, g$verdi
 check("manifest decision_pending is logical", is.logical(man$decision_pending))
 check("manifest points at gate record path", grepl_any(man$gate_record_path, gate_rds))
 
-# The base-R promise is executable: no heavy-dependency reference -----------
-gate_files <- c(
-  paper_path("log_variance", "diagnostics", "dynamics", "gate_core.R"),
-  paper_path("log_variance", "diagnostics", "dynamics", "gate_record.R"),
-  paper_path("log_variance", "diagnostics", "dynamics", "gate_sensitivity.R"),
-  paper_path("log_variance", "diagnostics", "dynamics", "run_gate.R"),
-  paper_path("log_variance", "extensions", "egarch", "cleanup.R")
-)
-has_dep <- any(vapply(gate_files, function(f) {
-  grepl_any(readLines(f), "rugarch")
-}, logical(1)))
-check("no heavy-dependency reference in the gate + cleanup files", !has_dep)
+paper_source_once(paper_path(
+  "tests", "diagnostics", "dynamics", "protocol_checks.R"
+))
 
-cat(sprintf("\n%d passed, %d failed\n", .pass, .fail))
-if (.fail > 0L) quit(status = 1L)
+.test$finish()

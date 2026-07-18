@@ -161,7 +161,10 @@ logvar_engine_endpoints <- function(est, qs, b_tab, b_seed, extra_starts,
       )
     }
   }
-  cold_recs <- if (isTRUE(cold_start_check)) {
+  estimator_cold_switch <- meta$fit_control$cold_switch
+  cold_enabled <- isTRUE(cold_start_check) &&
+    !identical(estimator_cold_switch, FALSE)
+  cold_recs <- if (cold_enabled) {
     logvar_engine_cold_check(
       meta, labels, lower, upper, arg_lo, arg_up,
       lower_unb, upper_unb, lo_unrel, up_unrel, evaluate_fit

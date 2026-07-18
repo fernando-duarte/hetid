@@ -3,18 +3,17 @@
 # formatter, the status-aware identified-set cell, the coefficient/statistic
 # row interleaver, and the canonical PPML rows and columns. Definitions only.
 
+paper_source_once(paper_path(
+  "log_variance", "tables", "panel_block.R"
+))
+paper_source_once(paper_path(
+  "support", "reporting", "inference.R"
+))
+
 # NA and non-finite values render "--"; upstream diagnostics retain the reason
 # a value is unavailable rather than hiding it behind a numeric token.
 fmt <- function(x) ifelse(!is.finite(x), "--", sprintf("%.3f", x))
 
-# significance stars from a p-value at the shared 10/5/1% thresholds
-sig_stars <- function(p) {
-  ifelse(!is.finite(p), "",
-    ifelse(p < 0.01, "^{***}",
-      ifelse(p < 0.05, "^{**}", ifelse(p < 0.10, "^{*}", ""))
-    )
-  )
-}
 # an unreliable or upstream-propagated (NA-endpoint) cell renders its status
 # word; certified one-sided divergence renders a half-infinite range; a
 # degenerate interval (point-identified) is left blank as in the structural
@@ -34,10 +33,6 @@ set_cell <- function(lo, hi, status) {
     )
   )
 }
-
-# coefficient rows interleaved with statistic rows (blank where inference is
-# not reported)
-interleave <- function(a, b) as.vector(rbind(a, b))
 
 # Side-aware confidence-envelope cell: the moving-block bootstrap outer
 # containment interval for one set endpoint (log_var_eq_set_boot), rendered on
@@ -123,16 +118,25 @@ logvar_se_point_col <- function(vals, se_frame, se_type, se_types, tab_coef,
 }
 
 # The point-column conditioning caveat shared verbatim by both estimators' SE
-# notes: the tau = 0 statistics condition on the plug-in Lewbel news vector and
-# the tau > 0 set columns carry no standard error (the moving-block bootstrap is
-# deferred).
-logvar_se_note_caveat <- function() {
-  paste(
+# notes: tau = 0 conditions on the plug-in news vector, while the set columns
+# carry either a separate endpoint envelope or an explicit deferral.
+logvar_se_note_caveat <- function(set_endpoint_inference = FALSE) {
+  prefix <- paste(
     "The $\\tau{=}0$ statistics condition on the plug-in Lewbel news vector",
     "$b_N$ and do not propagate its first-stage sampling error; $\\tau{>}0$",
-    "set columns are identified-set ranges, not point estimates, so no",
-    "standard error is attached (the moving-block bootstrap for set-endpoint",
-    "uncertainty is deferred)."
+    "set columns are identified-set ranges, not point estimates."
+  )
+  if (isTRUE(set_endpoint_inference)) {
+    return(paste(
+      prefix,
+      "Their moving-block-bootstrap outer confidence envelopes are reported",
+      "separately beneath the set cells."
+    ))
+  }
+  paste(
+    prefix,
+    "No standard error is attached; moving-block-bootstrap set-endpoint",
+    "uncertainty is deferred."
   )
 }
 
@@ -140,7 +144,7 @@ logvar_se_note_caveat <- function() {
 # columns followed by exact-keyed display-tau hulls. Both the primary table and
 # the combined panels consume this one assembly path so their PPML cells cannot
 # drift. The statistic slots and R-squared row are blank by construction, unless
-# envelope supplies a per-tau (sprintf("%.17g", tau)-keyed) confidence-envelope
+# envelope supplies a per-tau (paper_tau_key-keyed) confidence-envelope
 # frame (log_var_eq_set_boot$ppml), in which case the blank row beneath each set
 # cell instead renders that tau's per-coef envelope_cell. NULL (the default)
 # keeps every column byte-identical to the pre-envelope renderer.
@@ -148,7 +152,7 @@ logvar_ppml_table_parts <- function(ppml, tau_display, n_pc_r, se_type = NULL,
                                     envelope = NULL) {
   tab <- ppml$table
   expected_coef <- c("(Intercept)", paste0("l.pc", seq_len(n_pc_r)))
-  keys <- sprintf("%.17g", tau_display)
+  keys <- vapply(tau_display, paper_tau_key, character(1))
   sets <- ppml$sets[keys]
   stopifnot(
     identical(tab$coef, expected_coef),

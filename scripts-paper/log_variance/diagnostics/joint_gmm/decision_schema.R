@@ -1,9 +1,15 @@
 # Pure decision-record helpers for the joint moment-compatibility gate (joint-GMM,
 # logvar-joint-gmm): the canonical spec-ID, the checked-in no-answer default, and
 # the exact-schema validator the driver runs before any substantive work. No
-# side effects, no I/O beyond the house tempfile + tools::md5sum spec-ID pattern
+# side effects, no I/O beyond the canonical paper_md5_rds spec-ID helper
 # (mirrors logvar_sample_id). Sourced by scripts-paper/config/decisions/joint_gmm.R
 # and by the tests before the record itself. Definitions only.
+
+paper_source_once(paper_path(
+  "support", "statistics", "normalizations.R"
+))
+
+LOGVAR_JOINT_DECISION_SCHEMA_VERSION <- "1.0.0"
 
 # The ordered schema: the schema version, the canonical spec ID, the six scientific
 # choice fields, and the provenance/date/rationale bookkeeping.
@@ -33,13 +39,10 @@ logvar_joint_decision_spec_id <- function(fields) {
     enable_log_ppml = as.logical(fields$enable_log_ppml),
     intercept_target = as.character(fields$intercept_target),
     stage_c_requested = as.logical(fields$stage_c_requested),
-    moment_delta = formatC(delta, digits = 17, format = "fg", flag = "#"),
+    moment_delta = paper_numeric_key(delta),
     gaussian_gap_restriction = as.logical(fields$gaussian_gap_restriction)
   )
-  tmp <- tempfile(fileext = ".rds")
-  on.exit(unlink(tmp), add = TRUE)
-  saveRDS(payload, tmp, version = 3)
-  unname(tools::md5sum(tmp))
+  paper_md5_rds(payload)
 }
 
 # The checked-in no-answer default: an all-FALSE record with the recommended a_L
@@ -48,7 +51,8 @@ logvar_joint_decision_spec_id <- function(fields) {
 # spec ID is computed from the choices so the record is self-consistent.
 logvar_joint_decision_default <- function(decided_on) {
   rec <- list(
-    schema_version = "1.0.0", decision_spec_id = NA_character_,
+    schema_version = LOGVAR_JOINT_DECISION_SCHEMA_VERSION,
+    decision_spec_id = NA_character_,
     enable_z = FALSE, enable_log_ppml = FALSE, intercept_target = "a_L",
     stage_c_requested = FALSE, moment_delta = numeric(0),
     gaussian_gap_restriction = FALSE, decided_on = decided_on,
@@ -72,7 +76,10 @@ logvar_joint_decision_default <- function(decided_on) {
         "defined (a tolerance is never relabeled an identified set)."
       ),
       gaussian_gap = paste(
-        "The a_P - a_L = 1.270362845 Gaussian-gap restriction is a distributional",
+        sprintf(
+          "The a_P - a_L = %s Gaussian-gap restriction is a distributional",
+          logvar_normal_gap_text(9L)
+        ),
         "robustness exercise, never the baseline, and is not implemented this round."
       )
     )
@@ -84,13 +91,11 @@ logvar_joint_decision_default <- function(decided_on) {
 # Stop with a classed joint-gmm decision error (mirrors the house structured
 # conditions) so tests can dispatch on the exact reason string.
 logvar_joint_decision_stop <- function(reason, detail = "") {
-  stop(structure(
-    class = c(reason, "logvar_joint_decision_error", "error", "condition"),
-    list(
-      message = if (nzchar(detail)) paste0(reason, ": ", detail) else reason,
-      call = NULL
-    )
-  ))
+  paper_stop_condition(
+    reason,
+    "logvar_joint_decision_error",
+    detail
+  )
 }
 
 # Exact-schema validation the driver runs before any substantive work: field
@@ -101,7 +106,10 @@ logvar_joint_decision_validate <- function(rec) {
   if (!is.list(rec) || !identical(names(rec), logvar_joint_decision_fields)) {
     logvar_joint_decision_stop("malformed_decision_record", "field names/order")
   }
-  if (!identical(rec$schema_version, "1.0.0")) {
+  if (!identical(
+    rec$schema_version,
+    LOGVAR_JOINT_DECISION_SCHEMA_VERSION
+  )) {
     logvar_joint_decision_stop("unsupported_schema_version", rec$schema_version)
   }
   for (f in c(

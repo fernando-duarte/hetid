@@ -2,19 +2,14 @@
 # Rscript scripts-paper/tests/support/test_heteroskedasticity.R
 
 source(file.path("scripts-paper", "config", "paths.R"))
-source(paper_path("support", "diagnostics", "heteroskedasticity_tests.R"))
+paper_source_once(paper_path("support", "diagnostics", "heteroskedasticity_tests.R"))
 
-.pass <- 0L
-.fail <- 0L
-check <- function(label, condition) {
-  if (isTRUE(condition)) {
-    .pass <<- .pass + 1L
-    cat(sprintf("PASS  %s\n", label))
-  } else {
-    .fail <<- .fail + 1L
-    cat(sprintf("FAIL  %s\n", label))
-  }
-}
+paper_source_once(paper_path("tests", "support", "harness.R"))
+.test <- paper_test_harness()
+check <- .test$check
+rejection_alpha <- paper_significance_level(
+  PAPER_HETEROSKEDASTICITY_CONTROL$rejection_level
+)
 
 suite <- c("White", "BP", "GQ", "Harvey", "Anscombe", "CW")
 pvals <- list(
@@ -31,7 +26,10 @@ for (name in suite) {
   tests_df[[paste0(name, "_pval")]] <- pvals[[name]]
 }
 
-summary_df <- summarize_hetero_tests(tests_df, significance_level = 0.05)
+summary_df <- summarize_hetero_tests(
+  tests_df,
+  significance_level = rejection_alpha
+)
 check("summary covers the full test suite", nrow(summary_df) == 6L)
 check("Anscombe row is present", "Anscombe" %in% summary_df$Test)
 check(
@@ -75,7 +73,7 @@ check(
 
 summary_sub <- summarize_hetero_tests(
   tests_df,
-  significance_level = 0.05,
+  significance_level = rejection_alpha,
   test_names = c("White", "BP", "GQ", "Harvey")
 )
 check("subset summary has one row per requested test", nrow(summary_sub) == 4L)
@@ -93,6 +91,39 @@ subset_error <- tryCatch(
 check(
   "an absent requested test produces an informative error",
   !is.null(subset_error) && grepl("Nope_pval", subset_error, fixed = TRUE)
+)
+
+threshold_fixture <- data.frame(
+  White_pval = rejection_alpha * c(0.5, 1.5)
+)
+threshold_summary <- summarize_hetero_tests(
+  threshold_fixture,
+  test_names = "White"
+)
+check(
+  "default rejection decisions derive from the named reporting level",
+  threshold_summary$Rejections == 1L
+)
+
+compute_source <- paste(readLines(paper_path(
+  "mean_equation",
+  "diagnostics",
+  "heteroskedasticity",
+  "compute_tests.R"
+), warn = FALSE), collapse = "\n")
+render_source <- paste(readLines(paper_path(
+  "mean_equation",
+  "diagnostics",
+  "heteroskedasticity",
+  "render_table.R"
+), warn = FALSE), collapse = "\n")
+check(
+  "result scripts contain no private significance thresholds",
+  grepl("sig_stars\\(x\\)", compute_source) &&
+    grepl("paper_significance_level", compute_source) &&
+    grepl("paper_significance_legend", render_source) &&
+    !grepl("sig <- 0\\.05|x < 0\\.0", compute_source) &&
+    !grepl("p<0\\.10.*p<0\\.05.*p<0\\.01", render_source)
 )
 
 # A synthetic fit exercises suite selection and Goldfeld-Quandt aiming.
@@ -147,5 +178,4 @@ check(
     grepl("x1", deflator_error, fixed = TRUE)
 )
 
-cat(sprintf("\n%d passed, %d failed\n", .pass, .fail))
-if (.fail > 0L) quit(status = 1L)
+.test$finish()

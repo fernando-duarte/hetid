@@ -1,23 +1,28 @@
 # Quarterly expected SDF and SDF news series across all ACM maturities.
 # Run via run_pipeline.R, which defines the shared maturity grids.
 
-acm <- hetid::extract_acm_data(
-  data_types = c("yields", "term_premia"),
-  maturities = all_mats,
-  frequency = "quarterly",
-  auto_download = FALSE,
-  source = "auto"
-)
-yields <- acm[, paste0("y", all_mats)]
-term_premia <- acm[, paste0("tp", all_mats)]
+acm <- quarterly_acm_inputs$data
+yields <- quarterly_acm_inputs$yields
+term_premia <- quarterly_acm_inputs$term_premia
 
 #' Helper function: panel of an SDF series, one column per maturity in mats_qtr
 sdf_panel <- function(fn, prefix) {
   mats_qtr |>
     purrr::set_names(paste0(prefix, mats_qtr)) |>
-    purrr::map(\(i) fn(yields, term_premia, i = i, step = step_qtr, dates = acm$date)[[2]]) |>
+    purrr::map(\(i) {
+      fn(
+        yields,
+        term_premia,
+        i = i,
+        step = step_qtr,
+        dates = quarterly_acm_inputs$dates
+      )[[2]]
+    }) |>
     tibble::as_tibble() |>
-    dplyr::mutate(qtr = tsibble::yearquarter(acm$date), .before = 1)
+    dplyr::mutate(
+      qtr = tsibble::yearquarter(quarterly_acm_inputs$dates),
+      .before = 1
+    )
 }
 
 sdf_news <- sdf_panel(hetid::compute_sdf_innovations, news_prefix)

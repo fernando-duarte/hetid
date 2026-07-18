@@ -4,10 +4,10 @@
 # tau_display slack. Writes the table fragment, standalone source, and compiled
 # PDF to the typed table directory after the PPML set map is complete.
 
-source(paper_path("support", "latex", "table_pipeline.R"))
-source(paper_path("support", "latex", "simple_table.R"))
-source(paper_path("log_variance", "tables", "table_formatting.R"))
-source(paper_path("log_variance", "tables", "ppml_captions.R"))
+paper_source_once(paper_path("support", "latex", "table_pipeline.R"))
+paper_source_once(paper_path("support", "latex", "simple_table.R"))
+paper_source_once(paper_path("log_variance", "tables", "table_formatting.R"))
+paper_source_once(paper_path("log_variance", "tables", "ppml_captions.R"))
 
 parts <- logvar_ppml_table_parts(
   log_var_eq_ppml, set_id_mean_eq$tau_display, n_pc_r,
@@ -16,7 +16,9 @@ parts <- logvar_ppml_table_parts(
 coef_tab <- parts$table
 set_tables <- parts$sets
 n_obs <- parts$n_obs
-baseline_table <- set_tables[[sprintf("%.17g", set_id_mean_eq$tau_baseline)]]
+baseline_table <- set_tables[[
+  paper_tau_key(set_id_mean_eq$tau_baseline)
+]]
 stopifnot(
   !is.null(baseline_table),
   identical(log_var_eq_ppml$sample_id, log_var_eq$sample_id),

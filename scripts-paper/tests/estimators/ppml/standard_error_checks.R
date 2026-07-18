@@ -179,3 +179,11 @@ check("ppml notes explain the SE computation, name the default, keep the caveat"
     grepl("condition on the plug-in", nt) &&
     !grepl("No PPML standard errors are reported", nt, fixed = TRUE)
 })
+check("ppml inference notes do not claim endpoint inference is deferred", {
+  nt <- paste(build_ppml_panel_notes(ptbl_note_fixture, 0.05, 1L, 2L,
+    se_type = "hac", se_hac_lags = test_hac_lags,
+    set_endpoint_inference = TRUE
+  ), collapse = " ")
+  grepl("outer confidence envelopes", nt, fixed = TRUE) &&
+    !grepl("uncertainty is deferred", nt, fixed = TRUE)
+})

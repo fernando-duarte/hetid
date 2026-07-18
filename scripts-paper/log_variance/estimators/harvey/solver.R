@@ -16,8 +16,8 @@
 # solver_acceptance.R (line-count split); this file owns the public
 # fit, wrapper, and precheck. Sourced by estimator.R after math/recession.
 
-source(paper_path("log_variance", "estimators", "harvey", "solver_acceptance.R"))
-source(paper_path("log_variance", "estimators", "harvey", "solver_result.R"))
+paper_source_once(paper_path("log_variance", "estimators", "harvey", "solver_acceptance.R"))
+paper_source_once(paper_path("log_variance", "estimators", "harvey", "solver_result.R"))
 
 # The core solver on an arbitrary nonnegative response. Programming errors (bad
 # dimensions, negative y) stop(); every modelled failure returns a typed result.
@@ -26,7 +26,8 @@ source(paper_path("log_variance", "estimators", "harvey", "solver_result.R"))
 # PPML and standalone escalation stages.
 logvar_harvey_fit_response <- function(y, x_mat, start = NULL,
                                        fallback_starts = list(), chol_xx = NULL,
-                                       auto_intercept = TRUE) {
+                                       auto_intercept = TRUE,
+                                       control = LOGVAR_HARVEY_CONTROL) {
   if (!is.matrix(x_mat) || !is.numeric(x_mat)) {
     stop("x_mat must be a numeric matrix")
   }
@@ -45,7 +46,14 @@ logvar_harvey_fit_response <- function(y, x_mat, start = NULL,
   pos <- y > 0
   n_zero <- sum(!pos)
   col_abs <- colSums(abs(x_mat))
-  rank_x_pos <- if (any(pos)) qr(x_mat[pos, , drop = FALSE], tol = 1e-8)$rank else 0L
+  rank_x_pos <- if (any(pos)) {
+    qr(
+      x_mat[pos, , drop = FALSE],
+      tol = control$response_rank_tol
+    )$rank
+  } else {
+    0L
+  }
   if (!any(pos)) {
     return(hv_result(
       fit_status = "nonexistence",
@@ -55,7 +63,9 @@ logvar_harvey_fit_response <- function(y, x_mat, start = NULL,
   }
   recession <- NULL
   if (n_zero > 0L) {
-    recession <- logvar_harvey_recession_certificate(y, x_mat)
+    recession <- logvar_harvey_recession_certificate(
+      y, x_mat, control
+    )
     cls <- recession$classification
     if (!identical(cls, "pass")) {
       mapped <- hv_recession_map[[cls]]
@@ -94,7 +104,9 @@ logvar_harvey_fit_response <- function(y, x_mat, start = NULL,
       last_ec <- "invalid_start"
       next
     }
-    sc <- hv_scoring(cur, y, x_mat, pos, col_abs, chol_xx)
+    sc <- hv_scoring(
+      cur, y, x_mat, pos, col_abs, chol_xx, control
+    )
     crit <- c(crit, list(list(
       source = src, status = sc$status,
       score_norm = sc$eval$score_norm, objective = sc$eval$q
@@ -104,7 +116,9 @@ logvar_harvey_fit_response <- function(y, x_mat, start = NULL,
       last_ec <- sc$status
       next
     }
-    ps <- hv_post_stop(sc$eval$theta, y, x_mat, pos, col_abs)
+    ps <- hv_post_stop(
+      sc$eval$theta, y, x_mat, pos, col_abs, control
+    )
     if (is.null(ps)) {
       attempts <- c(attempts, list(list(source = src, error_class = "post_stop_reject")))
       last_ec <- "post_stop_reject"
@@ -135,12 +149,14 @@ logvar_harvey_fit_response <- function(y, x_mat, start = NULL,
 # including the shared Cholesky, and record the minimum absolute residual.
 logvar_harvey_fit <- function(b, w1, w2, x_mat, start = NULL,
                               fallback_starts = list(), chol_xx = NULL,
-                              auto_intercept = TRUE) {
+                              auto_intercept = TRUE,
+                              control = LOGVAR_HARVEY_CONTROL) {
   eps <- drop(w1 - w2 %*% b)
   fit <- logvar_harvey_fit_response(eps^2, x_mat,
     start = start,
     fallback_starts = fallback_starts, chol_xx = chol_xx,
-    auto_intercept = auto_intercept
+    auto_intercept = auto_intercept,
+    control = control
   )
   fit$diagnostics$min_abs_eps <- min(abs(eps))
   fit
@@ -149,7 +165,8 @@ logvar_harvey_fit <- function(b, w1, w2, x_mat, start = NULL,
 # The pure driver-level precheck over the named response/start pairs. Returns one
 # typed record per pair (with a `passed` attribute); it never fits or constructs.
 logvar_harvey_stability_precheck <- function(response_start_pairs, x_mat,
-                                             chol_xx = NULL) {
+                                             chol_xx = NULL,
+                                             control = LOGVAR_HARVEY_CONTROL) {
   if (!is.matrix(x_mat) || !is.numeric(x_mat)) {
     stop("x_mat must be a numeric matrix")
   }

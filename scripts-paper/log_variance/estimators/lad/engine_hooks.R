@@ -22,13 +22,27 @@ logvar_lad_pass_budget <- function(e, fallback) {
 # becomes an unresolved entry so the engine fails closed over every endpoint the
 # region could hide. n_flagged reports the crossing count (forwarded as n_cross
 # when the precheck passes); geom collects the cached evaluator and box degeneracy.
-logvar_lad_precheck_hook <- function(w1, w2, x_mat, e_scale_ref, geom) {
+logvar_lad_precheck_hook <- function(
+  w1,
+  w2,
+  x_mat,
+  e_scale_ref,
+  geom,
+  control
+) {
   function(qs, b_tab, ctx) {
     geom$evaluate_fit <- ctx$evaluate_fit
     geom$degenerate <- isTRUE(all(b_tab$set_lower == b_tab$set_upper))
     geom$center <- (b_tab$set_lower + b_tab$set_upper) / 2
     census <- logvar_crossing_census(qs, b_tab$set_lower, b_tab$set_upper, w1, w2)
-    ctx_g <- logvar_lad_augment_ctx(ctx, w1, w2, x_mat, e_scale_ref)
+    ctx_g <- logvar_lad_augment_ctx(
+      ctx,
+      w1,
+      w2,
+      x_mat,
+      e_scale_ref,
+      control
+    )
     witnesses <- list()
     unresolved <- character(0)
     for (i in census$cross) {
@@ -78,122 +92,6 @@ logvar_lad_coef_objective <- function(geom) {
   }
 }
 
-# sides: probe each verified path, classify the traces in the M coordinate, fold
-# each verdict via logvar_lad_side_update. After the loop, a coefficient probed
-# (witnesses present) but never given an informative verdict -- every path
-# uninformative -- is failed closed as unresolved, not left silently bounded.
-logvar_lad_sides_hook <- function(w1, w2, x_mat, e_scale_ref) {
-  function(qs, b_tab, scan, ctx) {
-    labels <- colnames(x_mat)
-    n_coef <- length(labels)
-    st <- list(
-      lower_unb = stats::setNames(rep(FALSE, n_coef), labels),
-      upper_unb = stats::setNames(rep(FALSE, n_coef), labels),
-      informative = stats::setNames(rep(FALSE, n_coef), labels),
-      unresolved = character(0), closure = list()
-    )
-    witnesses <- ctx$precheck$info$witnesses
-    ctx_g <- logvar_lad_augment_ctx(ctx, w1, w2, x_mat, e_scale_ref)
-    for (wid in names(witnesses)) {
-      wit <- witnesses[[wid]]
-      for (path_id in seq_len(length(wit$anchors))) {
-        cls <- tryCatch(
-          logvar_lad_tail_classify(
-            logvar_lad_crossing_probe(wit, path_id, ctx_g)
-          ),
-          error = function(e) logvar_lad_pass_budget(e, NULL)
-        )
-        st <- logvar_lad_side_update(st, cls, labels, wid, path_id)
-      }
-    }
-    idle <- which(!st$informative & !st$lower_unb & !st$upper_unb)
-    if (length(witnesses) > 0L && length(idle) > 0L) {
-      st$unresolved <- c(
-        st$unresolved,
-        sprintf("%s:min", labels[idle]), sprintf("%s:max", labels[idle])
-      )
-    }
-    list(
-      lower_unbounded = st$lower_unb, upper_unbounded = st$upper_unb,
-      unresolved_endpoints = unique(st$unresolved),
-      closure_diagnostics = if (length(st$closure) == 0L) NULL else st$closure,
-      info = list(
-        cross_all = ctx$precheck$info$cross, method = "lad_crossing_probe",
-        n_witnesses = length(witnesses)
-      )
-    )
-  }
-}
-
-# fold one classified path into the side state. An uninformative (too-thin) probe is
-# skipped and leaves $informative untouched, so one degenerate path cannot fail a
-# stable coefficient closed (the caller catches a coef that is ONLY uninformative).
-# Otherwise mark informative: divergence -> endpoint unbounded; stable -> closure
-# record; anything else -> both of that coefficient's endpoints unresolved.
-logvar_lad_side_update <- function(st, cls, labels, wid, path_id) {
-  both <- function(j) c(sprintf("%s:min", labels[j]), sprintf("%s:max", labels[j]))
-  if (is.null(cls) || is.null(cls$coef)) {
-    st$unresolved <- c(st$unresolved, unlist(lapply(seq_along(labels), both)))
-    return(st)
-  }
-  for (j in seq_along(labels)) {
-    cj <- cls$coef[[j]]
-    if (identical(cj$status, "uninformative")) next
-    st$informative[j] <- TRUE
-    if (identical(cj$status, "persistent_divergent_evidence")) {
-      if (identical(cj$endpoint, "lower")) {
-        st$lower_unb[j] <- TRUE
-      } else if (identical(cj$endpoint, "upper")) {
-        st$upper_unb[j] <- TRUE
-      } else {
-        st$unresolved <- c(st$unresolved, both(j))
-      }
-    } else if (identical(cj$status, "stable_finite")) {
-      st$closure[[length(st$closure) + 1L]] <- list(
-        coef = labels[j], witness = wid, path_id = path_id,
-        classification = cj, provenance = "one-sided crossing-limit approximation"
-      )
-    } else {
-      st$unresolved <- c(st$unresolved, both(j))
-    }
-  }
-  st
-}
-
-# claim_failure: distinguish an exact residual zero (outside the log domain) from a
-# guarded near-crossing (available but numerically unresolved). Rows are recomputed
-# from the geometry, so the rule never reads the fit's internal fields. Either is
-# claimed only when every implicated row is a verified census crossing; an
-# off-census domain failure is left unclaimed and the engine fails the tau closed.
-logvar_lad_claim_hook <- function(w1, w2, e_scale_ref) {
-  function(b, fit, precheck, ctx) {
-    if (!identical(fit$fit_status, "domain_failure")) {
-      return(list(
-        claimed = FALSE, domain_state = NA_character_,
-        reason = "not a domain failure", probe_targets = NULL
-      ))
-    }
-    e <- drop(w1 - w2 %*% b)
-    guard <- logvar_lad_guard_ratio * e_scale_ref
-    exact <- which(e == 0)
-    rows <- sort(c(exact, which(abs(e) <= guard & e != 0)))
-    census_rows <- if (is.null(precheck)) integer(0) else precheck$info$cross
-    on_census <- length(rows) > 0L && all(rows %in% census_rows)
-    ds <- if (length(exact) > 0L) {
-      "exact_domain_failure"
-    } else {
-      "numerically_unresolved_near_crossing"
-    }
-    reason <- if (!on_census) {
-      "domain failure off the verified census: fail closed"
-    } else if (identical(ds, "exact_domain_failure")) {
-      "certified exclusion at an exact residual zero on a census crossing"
-    } else {
-      "guarded near-crossing on a census row: available but numerically unresolved"
-    }
-    list(
-      claimed = on_census, domain_state = ds, reason = reason,
-      probe_targets = if (on_census) rows else NULL
-    )
-  }
-}
+paper_source_once(paper_path(
+  "log_variance", "estimators", "lad", "engine_side_hooks.R"
+))

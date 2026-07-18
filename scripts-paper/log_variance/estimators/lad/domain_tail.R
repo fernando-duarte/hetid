@@ -39,21 +39,33 @@
 # skips -- it is missing data, not the genuine ambiguity "unresolved" fails closed
 # on. An eligible-but-inconclusive window (present but neither stable nor
 # divergent) still returns "unresolved".
-.lad_classify_one <- function(cvals, m, fit_status, sig) {
+.lad_classify_one <- function(
+  cvals,
+  m,
+  fit_status,
+  sig,
+  control
+) {
   n <- length(m)
+  stable_window <- control$tail_stable_window
+  divergent_window <- control$tail_divergent_window
   out <- function(status, endpoint = NA_character_, extra = list()) {
     c(list(status = status, endpoint = endpoint), extra)
   }
-  if (n < 6L) {
+  if (n < stable_window) {
     return(out("uninformative"))
   }
-  if (n >= 6L) {
-    i6 <- (n - 5L):n
+  if (n >= stable_window) {
+    i6 <- (n - stable_window + 1L):n
     if (.lad_window_ok(i6, m, cvals, fit_status, sig)) {
       c6 <- cvals[i6]
       m6 <- m[i6]
-      stol <- 1e-6 * max(1, max(abs(c6)))
-      last4 <- utils::tail(diff(c6), 4L)
+      stol <- control$tail_stability_rtol *
+        max(1, max(abs(c6)))
+      last4 <- utils::tail(
+        diff(c6),
+        control$tail_increment_count
+      )
       f6 <- .lad_tail_ols(m6, c6)
       move6 <- abs(f6$slope) * diff(range(m6))
       if (all(abs(last4) <= stol) && move6 < stol) {
@@ -63,9 +75,9 @@
       }
     }
   }
-  if (n >= 8L) {
-    i8 <- (n - 7L):n
-    i6 <- (n - 5L):n
+  if (n >= divergent_window) {
+    i8 <- (n - divergent_window + 1L):n
+    i6 <- (n - stable_window + 1L):n
     if (.lad_window_ok(i8, m, cvals, fit_status, sig)) {
       c8 <- cvals[i8]
       m8 <- m[i8]
@@ -73,16 +85,30 @@
       m6 <- m[i6]
       f6 <- .lad_tail_ols(m6, c6)
       f8 <- .lad_tail_ols(m8, c8)
-      stol <- 1e-6 * max(1, max(abs(c8)))
-      denom <- max(abs(f6$slope), abs(f8$slope), 1e-12)
+      stol <- control$tail_stability_rtol *
+        max(1, max(abs(c8)))
+      denom <- max(
+        abs(f6$slope),
+        abs(f8$slope),
+        control$tail_slope_floor
+      )
       same_sign <- f6$slope != 0 && sign(f6$slope) == sign(f8$slope)
-      slope_stab <- abs(f6$slope - f8$slope) / denom <= 0.20
+      slope_stab <- abs(f6$slope - f8$slope) / denom <=
+        control$tail_slope_agreement_rtol
       mono <- all(sign(diff(c6)) == sign(f6$slope))
       move6 <- abs(f6$slope) * diff(range(m6))
-      move_ok <- move6 > 10 * stol &&
-        move6 > 0.05 * max(1, stats::median(abs(c8)))
-      if (diff(range(m8)) >= 12 && same_sign && slope_stab &&
-        f8$r2 >= 0.98 && mono && move_ok) {
+      move_ok <-
+        move6 > control$tail_move_tolerance_multiplier * stol &&
+          move6 > control$tail_relative_move_floor *
+            max(1, stats::median(abs(c8)))
+      if (
+        diff(range(m8)) >= control$tail_min_m_span &&
+          same_sign &&
+          slope_stab &&
+          f8$r2 >= control$tail_min_r_squared &&
+          mono &&
+          move_ok
+      ) {
         return(out("persistent_divergent_evidence",
           endpoint = if (f6$slope > 0) "upper" else "lower",
           extra = list(
@@ -100,7 +126,10 @@
 # coefficient], fit_status, active_signature). Returns list(coef = per-coefficient
 # list(status, endpoint, metrics)). Missing status/signature default to a single
 # ok basis so a bare (m, coef) trace still classifies.
-logvar_lad_tail_classify <- function(trace) {
+logvar_lad_tail_classify <- function(
+  trace,
+  control = LOGVAR_LAD_CONTROL
+) {
   m <- trace$m
   coef <- trace$coef
   if (is.null(dim(coef))) coef <- matrix(coef, ncol = 1L)
@@ -110,7 +139,13 @@ logvar_lad_tail_classify <- function(trace) {
   fit_status <- rep_len(as.character(fit_status), n)
   sig <- rep_len(as.character(sig), n)
   per <- lapply(seq_len(ncol(coef)), function(j) {
-    .lad_classify_one(coef[, j], m, fit_status, sig)
+    .lad_classify_one(
+      coef[, j],
+      m,
+      fit_status,
+      sig,
+      control
+    )
   })
   names(per) <- colnames(coef)
   list(coef = per)

@@ -4,7 +4,7 @@
 # requires each figure file to exist and be nonempty.
 
 source(file.path("scripts-paper", "config", "paths.R"))
-source(paper_path("config", "artifacts.R"))
+paper_source_once(paper_path("config", "artifacts.R"))
 
 args <- commandArgs(trailingOnly = TRUE)
 if (length(args) != 2L) {

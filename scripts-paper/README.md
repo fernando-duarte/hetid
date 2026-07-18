@@ -25,7 +25,7 @@ entrypoint.
 
 ```text
 scripts-paper/
-├── config/                 paths, artifact manifest, analysis settings, decisions
+├── config/                 paths, contracts, artifact registry/lifecycle, decisions
 ├── data_preparation/       FRED patch and construction of all analysis series
 ├── mean_equation/
 │   ├── inference/          bootstrap and bounds-by-tau inference
@@ -76,13 +76,16 @@ registry `logvar_bounds_tau_registry`, `log_var_eq_set_boot`, joint-diagnostic o
 dynamics-gate records, fitted-volatility envelopes, and the final table/report objects.
 Their names and serialized schemas are part of the pipeline contract.
 
+Production dependencies are loaded through `paper_source_once()`; direct
+`source(paper_path(...))` calls are rejected by the topology check.
+
 ## Gates and decisions
 
 - `config/decisions/joint_gmm.R` records the committed joint-GMM scope decision.
 - The base-R residual-dynamics diagnostic always runs and writes its gate record.
 - `config/decisions/egarch.R` is validated against the fresh gate and pinned protocol
   hashes. The EGARCH router does not activate an estimator after a non-rejecting gate.
-- LAD runs only when the external decision DCF approves it and the installed `quantreg`
+- LAD runs only when the tracked decision DCF approves it and the installed `quantreg`
   version matches the recorded version.
 
 Do not weaken or bypass these scientific and dependency gates. The EGARCH cleanup runs
@@ -90,10 +93,11 @@ before the gate so stale conditional artifacts cannot look like current results.
 
 ## Generated artifacts
 
-`config/artifacts.R` is the authoritative artifact registry. The runner creates missing
-directories and preserves existing output except for the four conditional EGARCH artifacts,
-which the pre-gate cleanup removes to prevent stale results. Writers and readers use these
-typed roots:
+`config/artifact_manifest_data.R` is the artifact metadata owner;
+`config/artifacts.R` exposes its query API, and
+`config/artifact_lifecycle.R` owns conditional cleanup/status. The runner creates missing
+directories and preserves existing output except for conditional artifacts, which are
+removed before routing to prevent stale results. Writers and readers use these typed roots:
 
 ```text
 scripts-paper/output/

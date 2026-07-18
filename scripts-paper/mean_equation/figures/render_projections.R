@@ -1,5 +1,5 @@
-# Projected identified sets for b_N in standard-deviation units: the three
-# coordinate-plane projections of the joint set at tau = 0.05, 0.1, 0.2, each
+# Projected identified sets for b_N in standard-deviation units: coordinate-plane
+# projections at the contract's projection slack values, each
 # with its bounding box (the marginal identified interval per coefficient -- the
 # tight axis-aligned bounding box of the projected set) and the tau = 0 point.
 # Panels share one x-range and one y-range and are drawn square. The projected
@@ -12,22 +12,25 @@
 # Run after the identified set and shared region geometry are available.
 
 local({
-  taus <- c(0.05, 0.1, 0.2)
+  taus <- PAPER_ANALYSIS_CONTRACT$tau$projection
+  dimension <- PAPER_ANALYSIS_CONTRACT$figure$region_dimension
   # viridis at the same fractions as the original (0.12, 0.435, 0.75):
   # purple / teal / green
   tcols <- c("#472B7A", "#26818E", "#5DC863")
   m <- 300L
-  labs <- lapply(1:3, function(k) bquote(tilde(b)[.(k) * "," * N]))
-  panels <- lapply(1:3, function(perp) {
-    keep <- setdiff(1:3, perp)
+  axes <- seq_len(dimension)
+  labs <- lapply(axes, function(k) bquote(tilde(b)[.(k) * "," * N]))
+  panels <- lapply(axes, function(perp) {
+    keep <- setdiff(axes, perp)
     list(perp = perp, x = keep[1], y = keep[2])
   })
 
   systems <- lapply(taus, region_sd_system)
   point0 <- region_sd_point()
 
-  # shared axis ranges: x holds b1, b2; y holds b2, b3 (widest set, tau = 0.2)
-  box2 <- region_sd_box(0.2)
+  # Shared ranges use the widest displayed projection slack.
+  widest_tau <- max(taus)
+  box2 <- region_sd_box(widest_tau)
   pad <- function(r) r + c(-1, 1) * 0.06 * diff(r)
   xr <- pad(range(box2$lo[1:2], box2$hi[1:2]))
   yr <- pad(range(box2$lo[2:3], box2$hi[2:3]))
@@ -44,7 +47,7 @@ local({
   # extents over both projections exposing that coordinate, so a single interval
   # is shown for each coefficient and it contains the region in every panel
   marg <- lapply(seq_along(taus), function(ti) {
-    mm <- matrix(NA_real_, 3, 2)
+    mm <- matrix(NA_real_, dimension, 2L)
     for (pi in seq_along(panels)) {
       p <- panels[[pi]]
       cl <- grDevices::contourLines(xg, yg, envs[[pi]][[ti]]$M, levels = 0)

@@ -33,7 +33,7 @@ pcov_res <- function(schema) {
     diagnostics = list()
   )
 }
-pcov_key <- sprintf("%.17g", 0.05)
+pcov_key <- paper_tau_key(0.05)
 pcov_primary <- setNames(
   list(pcov_res(pcov_schema(c(-1, -2), c(1, 2), "bounded", "bounded", 0.05))),
   pcov_key
@@ -45,7 +45,16 @@ pcov_primary <- setNames(
 pcov_find <- setNames(list(list(ok = TRUE, res = pcov_res(
   pcov_schema(c(-1.5, -2), c(1, 2), "bounded", "bounded", 0.05)
 ))), pcov_key)
-pcov_a <- logvar_ppml_apply_coverage(pcov_primary, pcov_find)
+pcov_find[[pcov_key]]$res$diagnostics$selector <- list(
+  selector_id = LOGVAR_PPML_COVERAGE_PROTOCOL$selector_id,
+  traversal = LOGVAR_PPML_COVERAGE_PROTOCOL$traversal,
+  n_selector_input = 20L,
+  n_selector_output = 10L
+)
+pcov_a <- logvar_ppml_apply_coverage(
+  pcov_primary, pcov_find,
+  selector_protocol = LOGVAR_PPML_COVERAGE_PROTOCOL
+)
 pcov_row <- pcov_a$audit[pcov_a$audit$coef == "t0" & pcov_a$audit$side == "lower", ]
 check(
   "a coverage-found more-extreme endpoint is unioned and demoted",
@@ -67,7 +76,10 @@ check(
 # a failed coverage run demotes every bounded primary side without
 # fabricating a candidate value
 pcov_fail <- setNames(list(list(ok = FALSE, error = "budget")), pcov_key)
-pcov_b <- logvar_ppml_apply_coverage(pcov_primary, pcov_fail)
+pcov_b <- logvar_ppml_apply_coverage(
+  pcov_primary, pcov_fail,
+  selector_protocol = LOGVAR_PPML_COVERAGE_PROTOCOL
+)
 check(
   "a failed coverage run demotes bounded sides and keeps primary values",
   all(pcov_b$results[[pcov_key]]$schema$lower_status == "unreliable") &&
@@ -75,7 +87,6 @@ check(
     identical(pcov_b$results[[pcov_key]]$schema$lower, c(-1, -2)) &&
     all(pcov_b$audit$reason == "coverage_run_failed")
 )
-
 # a status mismatch (primary bounded, coverage unbounded) demotes and keeps
 # the primary value; a non-bounded primary side keeps its own status word
 pcov_mix <- pcov_schema(

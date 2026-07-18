@@ -9,22 +9,14 @@
 #   Rscript scripts-paper/tests/engine/test_residual_map.R
 
 source(file.path("scripts-paper", "config", "paths.R"))
-source(paper_path("config", "artifacts.R"))
-source(paper_path("support", "identification", "profile_solver_core.R"))
-source(paper_path("support", "identification", "profile_bounds_api.R"))
-source(paper_path("log_variance", "core", "residual_map.R"))
+paper_source_once(paper_path("config", "artifacts.R"))
+paper_source_once(paper_path("support", "identification", "profile_solver_core.R"))
+paper_source_once(paper_path("support", "identification", "profile_bounds_api.R"))
+paper_source_once(paper_path("log_variance", "core", "residual_map.R"))
 
-.pass <- 0L
-.fail <- 0L
-check <- function(label, cond) {
-  if (isTRUE(cond)) {
-    .pass <<- .pass + 1L
-    cat(sprintf("PASS  %s\n", label))
-  } else {
-    .fail <<- .fail + 1L
-    cat(sprintf("FAIL  %s\n", label))
-  }
-}
+paper_source_once(paper_path("tests", "support", "harness.R"))
+.test <- paper_test_harness()
+check <- .test$check
 
 set.seed(42)
 n <- 160L
@@ -169,6 +161,11 @@ check(
   "polish tightens or matches the coarse grid scan",
   pol_min$bound <= scan_1$min[1] + 1e-10 && pol_max$bound >= scan_1$max[1] - 1e-10
 )
+pol_default <- logvar_polish_bound(
+  qs_1, "min", scan_1$arg_min[1, ], scale_1, w1_2, w2_1, proj_1[1, ],
+  blow_factor = PAPER_QUADRATIC_CONTROL$polish_blow_factor
+)
+check("polish default uses the canonical blow guard", identical(pol_min, pol_default))
 
 # Blow-up guard: an artificially tiny blow_factor makes any finite bound
 # read as an explosion, exercising the suspect branch
@@ -181,5 +178,4 @@ check(
   is.null(pol_guard$bound) && isTRUE(pol_guard$suspect)
 )
 
-cat(sprintf("\n%d passed, %d failed\n", .pass, .fail))
-if (.fail > 0L) quit(status = 1L)
+.test$finish()

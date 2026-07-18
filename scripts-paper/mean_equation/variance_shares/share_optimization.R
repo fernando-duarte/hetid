@@ -18,22 +18,6 @@ share_quad <- function(p_mat, q_vec, r_val) {
   )
 }
 
-constraint_vals <- function(pts, quad) {
-  vals <- vapply(seq_along(quad$A_i), function(i) {
-    rowSums((pts %*% quad$A_i[[i]]) * pts) +
-      drop(pts %*% quad$b_i[[i]]) + quad$c_i[[i]]
-  }, numeric(nrow(pts)))
-  matrix(vals, nrow = nrow(pts))
-}
-
-constraint_jac <- function(th, quad) {
-  t(vapply(
-    seq_along(quad$A_i),
-    \(i) drop(2 * (quad$A_i[[i]] %*% th) + quad$b_i[[i]]),
-    numeric(length(th))
-  ))
-}
-
 # Polish one share extreme in the identified-set solver's native scaling.
 polish_extreme <- function(x0, quad, sq, box, sign_mult, delta, omega) {
   res <- tryCatch(
@@ -44,12 +28,20 @@ polish_extreme <- function(x0, quad, sq, box, sign_mult, delta, omega) {
       lower = box$set_lower / delta,
       upper = box$set_upper / delta,
       hin = function(phi) {
-        drop(constraint_vals(matrix(delta * phi, 1), quad)) / omega
+        quadratic_constraint_values(delta * phi, quad, omega)
       },
       hinjac = function(phi) {
-        constraint_jac(delta * phi, quad) * (delta / omega)
+        quadratic_constraint_jacobian(
+          delta * phi,
+          quad,
+          omega,
+          theta_scale = delta
+        )
       },
-      control = list(xtol_rel = 1e-8, maxeval = 1000),
+      control = list(
+        xtol_rel = PAPER_QUADRATIC_CONTROL$solver_xtol_rel,
+        maxeval = PAPER_QUADRATIC_CONTROL$solver_maxeval
+      ),
       deprecatedBehavior = FALSE
     ),
     error = function(e) list(par = rep(NA_real_, length(x0)))
@@ -59,7 +51,8 @@ polish_extreme <- function(x0, quad, sq, box, sign_mult, delta, omega) {
   }
   th <- pmin(pmax(delta * res$par, box$set_lower), box$set_upper)
   resid <- .feasibility_residual(quad, th, omega)
-  if (is.finite(resid) && resid <= 1e-4) {
+  if (is.finite(resid) &&
+    resid <= PAPER_QUADRATIC_CONTROL$feasibility_tolerance) {
     sq$value(matrix(th, 1))
   } else {
     NA_real_
@@ -77,12 +70,21 @@ set_share_range <- function(box, quad, sq) {
   delta <- .derive_theta_scale(quad)
   omega <- .derive_constraint_scales(quad, delta)
   axes <- Map(
-    \(l, h) seq(l, h, length.out = 101L),
+    \(l, h) seq(
+      l,
+      h,
+      length.out =
+        PAPER_ANALYSIS_CONTRACT$variance_share$grid_points_per_axis
+    ),
     box$set_lower,
     box$set_upper
   )
   pts <- as.matrix(expand.grid(axes))
-  feas <- rowSums(sweep(constraint_vals(pts, quad), 2, 1e-10 * omega, `>`)) == 0
+  constraint_values <- quadratic_constraint_values(pts, quad, omega)
+  feas <- rowSums(
+    constraint_values >
+      PAPER_QUADRATIC_CONTROL$admission_tolerance
+  ) == 0
   pts <- pts[feas, , drop = FALSE]
   stopifnot("no feasible grid point in the box" = nrow(pts) > 0)
   vals <- sq$value(pts)

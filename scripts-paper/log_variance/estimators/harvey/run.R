@@ -6,6 +6,6 @@
 logvar_harvey_grid_cap <- 4000L
 logvar_harvey_fit_budget <- 20000L
 logvar_harvey_sensitivity_fit_budget <- 40000L
-source(paper_path("log_variance", "estimators", "harvey", "run_sets.R"))
-source(paper_path("log_variance", "estimators", "harvey", "standard_errors.R"))
-source(paper_path("log_variance", "tables", "render_harvey_table.R"))
+paper_source_once(paper_path("log_variance", "estimators", "harvey", "run_sets.R"))
+paper_source_once(paper_path("log_variance", "estimators", "harvey", "standard_errors.R"))
+paper_source_once(paper_path("log_variance", "tables", "render_harvey_table.R"))

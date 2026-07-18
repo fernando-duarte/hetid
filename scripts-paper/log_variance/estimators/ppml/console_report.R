@@ -7,6 +7,10 @@
 # verdict from an exact numeric-tau lookup. Sourced by run_sets.R
 # before its cleanup; prints only, defines no persistent object.
 
+paper_source_once(paper_path(
+  "log_variance", "tables", "console_formatting.R"
+))
+
 cat(sprintf(
   "PPML log-variance map: N = %d over %s to %s\n",
   log_var_eq_ppml$sample$n,
@@ -22,13 +26,7 @@ for (i in seq_along(ppml_tau_names)) {
   nm <- ppml_tau_names[i]
   tb <- log_var_eq_ppml$sets[[nm]]
   d <- log_var_eq_ppml$counts[[nm]]
-  hull <- vapply(seq_len(nrow(tb)), function(j) {
-    if (identical(tb$status[j], "bounded")) {
-      sprintf("[%.3g,%.3g]", tb$set_lower[j], tb$set_upper[j])
-    } else {
-      tb$status[j]
-    }
-  }, character(1))
+  hull <- logvar_hull_text(tb)
   cat(sprintf(
     "  tau = %.2g: %s | attempted %d evaluated %d cached %d failed %d\n",
     ppml_taus[i], paste(hull, collapse = " "),
@@ -60,11 +58,20 @@ cat(sprintf(
 
 # editorial ordering verdict: PPML first when the benchmark's tau = 0.05
 # crossing count is positive, by exact numeric-tau lookup
-ord <- logvar_panel_order(log_var_eq$n_cross, set_id_mean_eq$tau_display)
-n_base <- log_var_eq$n_cross[[which(set_id_mean_eq$tau_display == 0.05)]]
+ord <- logvar_panel_order(
+  log_var_eq$n_cross,
+  set_id_mean_eq$tau_display,
+  log_var_eq$tau_baseline
+)
+n_base <- log_var_eq$n_cross[[
+  which(set_id_mean_eq$tau_display == log_var_eq$tau_baseline)
+]]
 cat(sprintf(
-  "  ordering: n_cross[tau = 0.05] = %d %s 0 -> %s panel first\n",
-  n_base, if (n_base > 0) ">" else "<=", ord[1]
+  "  ordering: n_cross[tau = %s] = %d %s 0 -> %s panel first\n",
+  format(log_var_eq$tau_baseline),
+  n_base,
+  if (n_base > 0) ">" else "<=",
+  ord[1]
 ))
 
 rm(ppml_tau_names, ppml_taus, i, nm, tb, d, hull, div_dirs, ord, n_base)

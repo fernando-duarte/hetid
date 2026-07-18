@@ -5,7 +5,10 @@
 # compute_bounds_by_tau.R after profile_solver_core.R, so the .derive_* and
 # .feasibility_residual helpers resolve at call time.
 solve_theta_bound_from <- function(qs, k, direction, theta_start,
-                                   box = 1e6, feas_tol = 1e-4) {
+                                   box =
+                                     PAPER_QUADRATIC_CONTROL$solver_boxes[[1L]],
+                                   feas_tol =
+                                     PAPER_QUADRATIC_CONTROL$feasibility_tolerance) {
   if (is.null(theta_start)) {
     return(NULL)
   }
@@ -28,19 +31,20 @@ solve_theta_bound_from <- function(qs, k, direction, theta_start,
     gr = function(phi) sgn * e_k,
     lower = rep(-box, dim_theta), upper = rep(box, dim_theta),
     hin = function(phi) {
-      theta <- delta * phi
-      vapply(seq_along(qs$A_i), function(i) {
-        (drop(t(theta) %*% qs$A_i[[i]] %*% theta) +
-          sum(qs$b_i[[i]] * theta) + qs$c_i[i]) / omega[i]
-      }, numeric(1))
+      quadratic_constraint_values(delta * phi, qs, omega)
     },
     hinjac = function(phi) {
-      theta <- delta * phi
-      t(vapply(seq_along(qs$A_i), function(i) {
-        (delta * (2 * drop(qs$A_i[[i]] %*% theta) + qs$b_i[[i]])) / omega[i]
-      }, numeric(dim_theta)))
+      quadratic_constraint_jacobian(
+        delta * phi,
+        qs,
+        omega,
+        theta_scale = delta
+      )
     },
-    control = list(xtol_rel = 1e-8, maxeval = 1000),
+    control = list(
+      xtol_rel = PAPER_QUADRATIC_CONTROL$solver_xtol_rel,
+      maxeval = PAPER_QUADRATIC_CONTROL$solver_maxeval
+    ),
     deprecatedBehavior = FALSE
   )
   if (any(!is.finite(res$par))) {
@@ -109,9 +113,9 @@ set_id_display_tau_refinement <- function(tau_display, seed_theta, solve_fn,
         }
       }
     }
-    refined[[sprintf("%.17g", tau)]] <- theta_tab
+    refined[[paper_tau_key(tau)]] <- theta_tab
   }
-  # return keyed by each tau's own %.17g key in the caller's input order;
+  # Return keyed by each tau's canonical key in the caller's input order;
   # consumers index by name, so the ordering itself is immaterial
-  refined[sprintf("%.17g", tau_display)]
+  refined[vapply(tau_display, paper_tau_key, character(1))]
 }

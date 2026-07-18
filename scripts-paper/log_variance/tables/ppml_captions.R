@@ -4,9 +4,16 @@
 # disclosure, and hull honesty clauses. Only the combined panel adds the
 # editorial-ordering disclosure. Definitions only.
 
+paper_source_once(paper_path(
+  "support", "statistics", "normalizations.R"
+))
+paper_source_once(paper_path(
+  "support", "reporting", "inference.R"
+))
+
 build_ppml_notes <- function(ppml, tau_baseline, grid_cap, fit_budget,
-                             include_ordering, se_type = "hac",
-                             se_hac_lags = 4L) {
+                             include_ordering, se_type, se_hac_lags,
+                             set_endpoint_inference = FALSE) {
   scale_val <- ppml$estimator$metadata$response_scale_value
   meta <- ppml$coverage_audit$meta
   c(
@@ -37,7 +44,10 @@ build_ppml_notes <- function(ppml, tau_baseline, grid_cap, fit_budget,
     paste(
       "PPML and mean-log slopes are comparable only under an $R$-invariant",
       "innovation shape; the intercepts then differ by the Jensen gap",
-      "$\\log E[e^{\\xi}]$ ($\\approx 1.270$ under normality)."
+      sprintf(
+        "$\\log E[e^{\\xi}]$ ($\\approx %s$ under normality).",
+        logvar_normal_gap_text(3L)
+      )
     ),
     paste(
       "Zero squared residuals are admissible responses;",
@@ -71,7 +81,11 @@ build_ppml_notes <- function(ppml, tau_baseline, grid_cap, fit_budget,
       "certified feasible attained values, inner approximations; interior",
       "attainment is not established."
     ),
-    logvar_ppml_se_note(se_type, se_hac_lags)
+    logvar_ppml_se_note(
+      se_type,
+      se_hac_lags,
+      set_endpoint_inference
+    )
   )
 }
 
@@ -79,7 +93,11 @@ build_ppml_notes <- function(ppml, tau_baseline, grid_cap, fit_budget,
 # makes, names which variant is printed, and states the point-column
 # conditioning caveat. The framing is neutral -- assumptions, not advice -- so it
 # reads correctly whatever logvar_ppml_se_type selects.
-logvar_ppml_se_note <- function(se_type, se_hac_lags) {
+logvar_ppml_se_note <- function(
+  se_type,
+  se_hac_lags,
+  set_endpoint_inference = FALSE
+) {
   key <- match.arg(se_type, LOGVAR_PPML_SE_TYPES)
   default_name <- switch(key,
     naive = "the model-based $\\hat\\varphi A^{-1}$",
@@ -101,18 +119,18 @@ logvar_ppml_se_note <- function(se_type, se_hac_lags) {
         "its Newey--West Bartlett HAC extension over %d lags, consistent also",
         "under serially correlated scores. The reported statistics use %s;",
         "parenthetical values are $\\hat\\theta/\\mathrm{SE}$ with stars from the",
-        # the LaTeX literal percent must be doubled in this sprintf FORMAT string:
-        # `\\%%` emits `\%`, while a lone `%)` aborts sprintf
-        "standard-normal (QMLE) approximation ($^{*}$/$^{**}$/$^{***}$ at 10/5/1\\%%)."
+        "standard-normal (QMLE) approximation (%s)."
       ),
-      se_hac_lags, default_name
+      se_hac_lags,
+      default_name,
+      paper_significance_legend("ascending_percent")
     ),
-    logvar_se_note_caveat()
+    logvar_se_note_caveat(set_endpoint_inference)
   )
 }
 
 build_ppml_table_notes <- function(ppml, tau_baseline, grid_cap, fit_budget,
-                                   se_type = "hac", se_hac_lags = 4L) {
+                                   se_type, se_hac_lags) {
   build_ppml_notes(
     ppml, tau_baseline, grid_cap, fit_budget,
     include_ordering = FALSE, se_type = se_type, se_hac_lags = se_hac_lags
@@ -120,10 +138,12 @@ build_ppml_table_notes <- function(ppml, tau_baseline, grid_cap, fit_budget,
 }
 
 build_ppml_panel_notes <- function(ppml, tau_baseline, grid_cap, fit_budget,
-                                   se_type = "hac", se_hac_lags = 4L) {
+                                   se_type, se_hac_lags,
+                                   set_endpoint_inference = FALSE) {
   build_ppml_notes(
     ppml, tau_baseline, grid_cap, fit_budget,
-    include_ordering = TRUE, se_type = se_type, se_hac_lags = se_hac_lags
+    include_ordering = TRUE, se_type = se_type, se_hac_lags = se_hac_lags,
+    set_endpoint_inference = set_endpoint_inference
   )
 }
 

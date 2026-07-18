@@ -15,13 +15,27 @@
 .jg_replication_points <- function(mean_eq) {
   pt <- as.numeric(mean_eq$theta_table$point)
   pts <- if (length(pt) && all(is.finite(pt))) list(pt) else list()
-  base_tab <- mean_eq$set_tables[[1L]]$theta
+  base_tab <- mean_eq$set_tables[[
+    paper_tau_key(mean_eq$tau_baseline)
+  ]]$theta
   lower <- as.numeric(base_tab$set_lower)
   upper <- as.numeric(base_tab$set_upper)
   if (all(is.finite(c(lower, upper))) && all(upper >= lower)) {
-    qs <- tau_quadratic_system(mean_eq$gamma, mean_eq$tau_display[1L], mean_eq$moments)
-    grid <- logvar_feasible_grid(qs, lower, upper, 3L)
-    for (i in seq_len(min(nrow(grid), 8L))) pts[[length(pts) + 1L]] <- grid[i, ]
+    qs <- tau_quadratic_system(
+      mean_eq$gamma,
+      mean_eq$tau_baseline,
+      mean_eq$moments
+    )
+    grid <- logvar_feasible_grid(
+      qs,
+      lower,
+      upper,
+      logvar_joint_gmm_constants$replication_grid_n
+    )
+    point_cap <- logvar_joint_gmm_constants$replication_point_cap
+    for (i in seq_len(min(nrow(grid), point_cap))) {
+      pts[[length(pts) + 1L]] <- grid[i, ]
+    }
   }
   if (!length(pts)) stop("log_var_eq_joint_gmm: no finite feasible replication point")
   do.call(rbind, pts)
@@ -33,15 +47,14 @@
 .jg_manifest_row <- function(spec, repl, n_obs) {
   ct <- spec$controls
   list(
-    schema_version = "2.0.0", diagnostic = "joint_gmm", sample_id = spec$sample_id,
+    sample_id = spec$sample_id,
     joint_input_id = spec$joint_input_id, decision_spec_id = spec$decision_spec_id,
-    spec_id = spec$spec_id, inference_status = "deferred",
+    spec_id = spec$spec_id,
     moment_block = "graph_replication", numerical_status = repl$replication_status,
     search_status = "not_applicable", coverage_status = "not_applicable",
     fresh_moment_residual = repl$max_moment_residual, min_abs_eps = repl$min_abs_eps,
     n_obs = as.integer(n_obs), param_xtol_rel = ct[["param_xtol_rel"]],
-    objective_tol = ct[["objective_tol"]], constraint_tol = ct[["constraint_tol"]],
-    root_tol = ct[["root_tol"]]
+    constraint_tol = ct[["constraint_tol"]], root_tol = ct[["root_tol"]]
   )
 }
 
@@ -52,13 +65,12 @@
   ct <- spec$controls
   c(
     list(
-      schema_version = "2.0.0", diagnostic = "joint_gmm", sample_id = spec$sample_id,
+      sample_id = spec$sample_id,
       joint_input_id = spec$joint_input_id, decision_spec_id = spec$decision_spec_id,
-      spec_id = spec$spec_id, inference_status = "deferred", moment_block = block,
+      spec_id = spec$spec_id, moment_block = block,
       numerical_status = "skipped", coverage_status = "not_applicable",
       skip_reason = reason, param_xtol_rel = ct[["param_xtol_rel"]],
-      objective_tol = ct[["objective_tol"]], constraint_tol = ct[["constraint_tol"]],
-      root_tol = ct[["root_tol"]]
+      constraint_tol = ct[["constraint_tol"]], root_tol = ct[["root_tol"]]
     ),
     logvar_joint_gmm_dim_fields(block)
   )
@@ -115,12 +127,19 @@ if (exists("log_var_eq") && exists("set_id_mean_eq")) {
   jg_projection <- logvar_joint_project_set(
     list(block = "none", n_slope = ncol(jg_w2)), jg_dec$moment_delta
   )
-  log_var_eq_joint_gmm <- list(
-    schema_version = "2.0.0", diagnostic = "joint_gmm", sample_id = jg_sid,
-    joint_input_id = jg_iid, decision_spec_id = jg_dec$decision_spec_id,
-    spec_id = jg_spec$spec_id, inference_status = "deferred", decision = jg_dec,
-    spec = jg_spec, graph_replication = jg_repl, projection = jg_projection,
-    rows = jg_rows
+  log_var_eq_joint_gmm <- c(
+    logvar_joint_gmm_schema_header(),
+    list(
+      sample_id = jg_sid,
+      joint_input_id = jg_iid,
+      decision_spec_id = jg_dec$decision_spec_id,
+      spec_id = jg_spec$spec_id,
+      decision = jg_dec,
+      spec = jg_spec,
+      graph_replication = jg_repl,
+      projection = jg_projection,
+      rows = jg_rows
+    )
   )
   jg_out <- out_dir
   jg_csv <- artifact_path("joint_gmm_csv")

@@ -10,12 +10,12 @@
 # Sourced by the crossing tests and the LAD driver; load the sibling solves and
 # the tail classifier into the same environment when not already present.
 if (!exists(".lad_domain_geom")) {
-  source(paper_path(
+  paper_source_once(paper_path(
     "log_variance", "estimators", "lad", "domain_witness.R"
   ))
 }
 if (!exists("logvar_lad_tail_classify")) {
-  source(paper_path(
+  paper_source_once(paper_path(
     "log_variance", "estimators", "lad", "domain_tail.R"
   ))
 }
@@ -43,10 +43,12 @@ if (!exists("logvar_lad_tail_classify")) {
 # 1e-13 and normalized violation <= 1e-8.
 logvar_lad_crossing_witness <- function(i, qs, b_tab, ctx) {
   geom <- .lad_domain_geom(i, qs, ctx)
+  control <- geom$control
   esc <- geom$esc
   nrm <- sqrt(sum(geom$normal^2))
-  if (nrm <= 1e-12 * max(1, max(abs(ctx$w2)))) {
-    if (abs(geom$rhs) <= 1e-12 * esc) {
+  if (nrm <= control$guard_ratio *
+    max(1, max(abs(ctx$w2)))) {
+    if (abs(geom$rhs) <= control$guard_ratio * esc) {
       return(list(
         status = "domain_unavailable", row = i, reason =
           "zero row normal with zero residual: H_i covers the feasible domain"
@@ -67,7 +69,10 @@ logvar_lad_crossing_witness <- function(i, qs, b_tab, ctx) {
   b_cross <- .lad_project_metric(geom, best)
   absres <- abs(geom$resid(b_cross)) / esc
   viol <- max(geom$gvals(b_cross))
-  if (!(is.finite(absres) && absres <= 1e-13 && is.finite(viol) && viol <= 1e-8)) {
+  if (!(is.finite(absres) &&
+    absres <= control$witness_hyperplane_tol &&
+    is.finite(viol) &&
+    viol <= control$witness_constraint_tol)) {
     return(list(
       status = "unresolved_witness", row = i, reason =
         "candidate fails the hyperplane or feasibility acceptance tolerance"
@@ -109,18 +114,25 @@ logvar_lad_crossing_probe <- function(witness, path_id, ctx) {
   normal <- as.numeric(ctx$w2[i, ])
   rhs <- ctx$w1[i]
   esc <- ctx$e_scale_ref
+  control <- if (is.null(ctx$control)) {
+    LOGVAR_LAD_CONTROL
+  } else {
+    ctx$control
+  }
   ms <- numeric(0)
   coefs <- list()
   slack <- numeric(0)
   sigs <- character(0)
   guard <- numeric(0)
   statuses <- character(0)
-  for (s in seq_len(40L)) {
-    b <- b_cross + 0.5^(s - 1L) * (anchor$b - b_cross)
+  for (s in seq_len(control$probe_max_steps)) {
+    b <- b_cross +
+      control$probe_ratio^(s - 1L) *
+        (anchor$b - b_cross)
     feas <- ctx$check_feasible(b)
     if (!isTRUE(feas$feasible)) break
     e_is <- rhs - sum(normal * b)
-    if (abs(e_is) <= 1e-12 * esc) break
+    if (abs(e_is) <= control$guard_ratio * esc) break
     fit <- ctx$evaluate_fit(b, phase = "probe", use_cache = TRUE)
     st <- if (is.null(fit$fit_status)) "ok" else fit$fit_status
     if (!identical(st, "ok") || any(!is.finite(fit$coef))) break

@@ -7,6 +7,11 @@
 # regularity gate. NOT IM/Stoye, NOT percentiles.
 set.seed(1L)
 
+check("bootstrap bands derive both tails from the supplied alpha", {
+  band <- boot_band(seq_len(100L), alpha = 0.20)
+  isTRUE(all.equal(unname(band[c("p05", "p95")]), c(10.9, 90.1)))
+})
+
 # two-sided: draws tight around a finite [-2, -1] set -> envelope pads OUTWARD
 lse_two <- list(
   lower = matrix(rnorm(200, -2, 0.10), 100),

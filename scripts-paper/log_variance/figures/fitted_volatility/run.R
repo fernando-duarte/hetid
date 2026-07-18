@@ -2,12 +2,12 @@
 # baseline mean-equation slack. The computation and rendering stay generic;
 # this driver only registers the two already-computed estimator objects.
 
-source(paper_path("log_variance", "figures", "fitted_volatility", "adapter.R"))
-source(paper_path("log_variance", "figures", "fitted_volatility", "envelope.R"))
-source(paper_path("log_variance", "figures", "fitted_volatility", "plot.R"))
+paper_source_once(paper_path("log_variance", "figures", "fitted_volatility", "adapter.R"))
+paper_source_once(paper_path("log_variance", "figures", "fitted_volatility", "envelope.R"))
+paper_source_once(paper_path("log_variance", "figures", "fitted_volatility", "plot.R"))
 
 fitted_vol_tau <- set_id_mean_eq$tau_baseline
-fitted_vol_key <- sprintf("%.17g", fitted_vol_tau)
+fitted_vol_key <- paper_tau_key(fitted_vol_tau)
 fitted_vol_b_tab <- mean_eq_bounds_tau[[fitted_vol_key]]
 stopifnot(!is.null(fitted_vol_b_tab))
 fitted_vol_qs <- tau_quadratic_system(
@@ -54,9 +54,10 @@ log_var_eq_fitted_volatility <- stats::setNames(
       expected_sample_id = fitted_vol_sample_id,
       max_grid_points = entry$engine_opts$max_grid_points,
       max_fit_evals = logvar_fitted_vol_fit_budget,
-      starts_per_side = logvar_fitted_vol_starts_per_side
+      starts_per_side =
+        LOGVAR_SEARCH_CONTROL$fitted_vol_starts_per_side
     )
-    path <- logvar_fitted_vol_path(out_dir, estimator)
+    path <- logvar_fitted_vol_path(estimator)
     logvar_fitted_vol_render(envelope, path)
     envelope$output_path <- path
     cat(sprintf(

@@ -16,7 +16,8 @@
 logvar_lad_build_fragment <- function(lad, n_obs, tau_display) {
   tab <- lad$table
   n_pc_r <- length(tab$coef) - 1L
-  sets <- lad$sets[sprintf("%.17g", tau_display)]
+  keys <- vapply(tau_display, paper_tau_key, character(1))
+  sets <- lad$sets[keys]
   stopifnot(!any(vapply(sets, is.null, logical(1))))
   labels <- c(
     "$\\theta^{0.5}_0$", sprintf("$\\theta^{0.5}_{%d,R}$", seq_len(n_pc_r))
@@ -50,26 +51,17 @@ logvar_lad_build_fragment <- function(lad, n_obs, tau_display) {
 logvar_lad_append_panel <- function(panels_lines, lad, n_obs,
                                     tau_display, tau_baseline,
                                     grid_cap, fit_budget) {
-  splice_block <- function(fragment, notes_lines) {
-    cut <- match("\\end{threeparttable}", fragment)
-    stopifnot(!is.na(cut))
-    notes_block <- c(
-      "% BEGIN LOGVAR NOTES lad",
-      "\\begin{tablenotes}[flushleft]",
-      "\\scriptsize",
-      paste0("\\item ", notes_lines),
-      "\\end{tablenotes}",
-      "% END LOGVAR NOTES lad"
-    )
-    c(
-      "% BEGIN LOGVAR LAD PANEL",
-      fragment[seq_len(cut - 1L)], notes_block, fragment[cut:length(fragment)],
-      "% END LOGVAR LAD PANEL"
-    )
-  }
   fragment <- logvar_lad_build_fragment(lad, n_obs, tau_display)
   notes <- build_lad_panel_notes(lad, tau_baseline, grid_cap, fit_budget)
-  c(panels_lines, splice_block(fragment, notes))
+  c(
+    panels_lines,
+    logvar_panel_block(
+      fragment,
+      notes,
+      "lad",
+      panel_marker = "LOGVAR LAD PANEL"
+    )
+  )
 }
 
 # The median panel notes (dossier section nine): the estimand, the br convention
@@ -143,7 +135,7 @@ build_lad_panel_notes <- function(lad, tau_baseline, grid_cap, fit_budget) {
         "and $\\theta^{0.5}_0 = \\theta^{log}_0 + %.9f = \\theta^{var}_0 -",
         "%.9f$; these constants are interpretive checks only, never imposed."
       ),
-      logvar_lad_median_meanlog_gap, -logvar_lad_median_lnchisq_gap
+      LOGVAR_NORMAL_MEDIAN_MEANLOG_GAP, -LOGVAR_NORMAL_LOG_SQUARE_MEDIAN
     ),
     sprintf(
       paste(

@@ -8,10 +8,15 @@
 # components).
 # Run from run_pipeline.R after the identified-set estimator.
 
-source(paper_path(
+paper_source_once(paper_path(
   "mean_equation",
   "variance_shares",
   "share_optimization.R"
+))
+paper_source_once(paper_path(
+  "support",
+  "identification",
+  "quadratic_system.R"
 ))
 
 # Centered 1/T second moments use the identification moments' convention.
@@ -46,7 +51,7 @@ e_rows <- match(set_id_mean_eq$x_cols, set_id_mean_eq$beta1_table$coef)
 
 # share ranges over the joint identified set at each display slack
 quads <- lapply(set_id_mean_eq$tau_display, function(tau) {
-  hetid::build_quadratic_system(
+  build_pipeline_quadratic_system(
     set_id_mean_eq$gamma, rep(tau, ncol(set_id_mean_eq$gamma)),
     set_id_mean_eq$moments
   )$quadratic
@@ -99,9 +104,14 @@ for (cc in set_share_cols) {
     if (all(is.finite(c(cc$lo[c(block_row, comps)], cc$hi[c(block_row, comps)])))) {
       stopifnot(
         "block share max below a component max" =
-          cc$hi[block_row] >= 0.98 * max(cc$hi[comps]),
+          cc$hi[block_row] >=
+            PAPER_ANALYSIS_CONTRACT$variance_share$coherence_ratio *
+              max(cc$hi[comps]),
         "block share min below a component min" =
-          cc$lo[block_row] >= 0.98 * max(cc$lo[comps]) - 1e-9
+          cc$lo[block_row] >=
+            PAPER_ANALYSIS_CONTRACT$variance_share$coherence_ratio *
+              max(cc$lo[comps]) -
+              PAPER_ANALYSIS_CONTRACT$variance_share$coherence_slack
       )
     }
   }
@@ -123,7 +133,7 @@ cat(sprintf(
 
 rm(
   centered_cov_t, s_e, s_n, var_c, block_share, share_quad, beta1r_e,
-  beta2r_e, b_map, news_quad_share, e_quad_share, e_const, constraint_vals,
-  constraint_jac, polish_extreme, set_share_range, component_share_range,
+  beta2r_e, b_map, news_quad_share, e_quad_share, e_const,
+  polish_extreme, set_share_range, component_share_range,
   e_rows, fixed_shares, quads, set_share_cols, news_row, cc, block_row, comps
 )

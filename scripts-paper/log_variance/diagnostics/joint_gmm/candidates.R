@@ -32,11 +32,11 @@ logvar_joint_guard_slack <- function(b, w1, w2, signs, eps_floor) {
   min(signs * drop(w1 - w2 %*% b)) - eps_floor
 }
 
-# Deduplicate a list of numeric vectors by canonical 17-digit serialization,
+# Deduplicate a list of numeric vectors by canonical serialization,
 # preserving first-occurrence order so replay is deterministic.
 logvar_joint_dedupe_vectors <- function(vectors) {
   keys <- vapply(vectors, function(v) {
-    paste(formatC(v, digits = 17L, format = "g"), collapse = "|")
+    paste(paper_numeric_key(v), collapse = "|")
   }, character(1))
   vectors[!duplicated(keys)]
 }
@@ -72,7 +72,10 @@ logvar_joint_candidate_table <- function(grid_b, beta_seeds) {
 # Coverage is incomplete when more patterns exist than the cap admits.
 logvar_joint_select_starts <- function(coords, pattern_ids, score,
                                        pattern_cap = logvar_joint_gmm_constants$pattern_start_cap,
-                                       extra_cap = 5L, min_sep = 0.25) {
+                                       extra_cap =
+                                         logvar_joint_gmm_constants$candidate_extra_start_cap,
+                                       min_sep =
+                                         logvar_joint_gmm_constants$candidate_min_separation) {
   coords <- as.matrix(coords)
   uniq_pat <- unique(pattern_ids)
   best_per_pattern <- unname(vapply(uniq_pat, function(p) {

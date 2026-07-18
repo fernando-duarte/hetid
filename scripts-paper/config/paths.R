@@ -45,3 +45,40 @@ paper_path <- function(...) {
 }
 
 out_dir <- file.path("scripts-paper", "output")
+
+.paper_source_registry <- new.env(parent = emptyenv())
+
+paper_source_once <- function(path, envir = .GlobalEnv) {
+  path <- normalizePath(path, winslash = "/", mustWork = TRUE)
+  state <- get0(
+    path,
+    envir = .paper_source_registry,
+    inherits = FALSE
+  )
+  if (isTRUE(state)) {
+    return(invisible(FALSE))
+  }
+  if (identical(state, FALSE)) {
+    stop(
+      sprintf("Circular paper source dependency: %s", path),
+      call. = FALSE
+    )
+  }
+  assign(path, FALSE, envir = .paper_source_registry)
+  loaded <- FALSE
+  on.exit(
+    {
+      if (!loaded) {
+        rm(list = path, envir = .paper_source_registry)
+      }
+    },
+    add = TRUE
+  )
+  base::sys.source(path, envir = envir)
+  assign(path, TRUE, envir = .paper_source_registry)
+  loaded <- TRUE
+  invisible(TRUE)
+}
+
+paper_source_once(paper_path("support", "runtime", "core.R"))
+paper_source_once(paper_path("config", "analysis_contract.R"))

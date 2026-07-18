@@ -1,55 +1,8 @@
-# Fixed-schema row assembler, the conditional L-infinity epigraph trigger, and the
-# tau == 0 singleton row for the joint-null diagnostic. The template pins every
-# column's type (identifiers/enums character, counts/ranks integer, flags logical,
-# coefficients/distances/tolerances double) so the CSV and RDS artifacts round-
-# trip under a declared manifest; sample_id, tau_order, and nearest_crossing_qtr
-# stay typed NA for the driver to fill. The L-infinity refinement is a predeclared
-# sensitivity: it fires only on the pinned absolute-plus-relative gap and defers
-# the solve to the search module's epigraph program. Definitions only; sourced by
-# the at-tau orchestration.
+# Fixed-schema row assembly and L-infinity sensitivity for joint-null.
 
-# fixed-schema template with the manifest's column types as typed NA defaults
-.jn_row_template <- function() {
-  list(
-    schema_version = "1.0.0", estimator = "logols",
-    diagnostic = "joint_null_theta_r", sample_id = NA_character_,
-    inference_status = "deferred", tau_order = NA_integer_,
-    tau_display = NA_real_, tau_internal = NA_real_,
-    scaled_l2 = NA_real_, scaled_linf = NA_real_,
-    b1 = NA_real_, b2 = NA_real_, b3 = NA_real_,
-    theta0 = NA_real_, thetaR1 = NA_real_, thetaR2 = NA_real_,
-    thetaR3 = NA_real_, thetaR4 = NA_real_,
-    min_abs_eps = NA_real_, nearest_crossing_qtr = NA_character_,
-    constraint_residual = NA_real_, raw_gradient_norm = NA_real_,
-    grid_points = NA_integer_, n_unavailable_grid = NA_integer_,
-    polish_starts = NA_integer_, successful_polishes = NA_integer_,
-    argmin_source = NA_character_, winning_start_type = NA_character_,
-    n_agreeing_starts = NA_integer_, start_agreement_max_scaled = NA_real_,
-    basin_count = NA_integer_, replication_status = NA_character_,
-    perturbation_status = NA_character_, stability_status = NA_character_,
-    n_near_crossing_rows = NA_integer_, status = NA_character_,
-    membership_result = NA_character_, root_tol = NA_real_,
-    scale1 = NA_real_, scale2 = NA_real_, scale3 = NA_real_, scale4 = NA_real_,
-    box_active = NA, sparse_grid = NA,
-    metric_l2_source = NA_character_, metric_linf_source = NA_character_,
-    l2_rank_under_linf = NA_integer_, linf_rank_under_l2 = NA_integer_,
-    d_inf_l2 = NA_real_, d_inf_grid_best = NA_real_,
-    linf_gap_abs = NA_real_, linf_gap_rel = NA_real_, linf_trigger = NA,
-    linf_sensitivity_status = NA_character_
-  )
-}
-
-# fill the template, failing closed on any unexpected column name and stripping
-# stray element names so the flat row round-trips byte-for-byte
-.jn_assemble_row <- function(vals) {
-  row <- .jn_row_template()
-  unknown <- setdiff(names(vals), names(row))
-  if (length(unknown)) {
-    stop(sprintf("joint-null row: unknown field(s) %s", paste(unknown, collapse = ", ")))
-  }
-  for (nm in names(vals)) row[[nm]] <- unname(vals[[nm]])
-  row
-}
+paper_source_once(paper_path(
+  "log_variance", "diagnostics", "joint_null", "schema.R"
+))
 
 # map the scan's winning-start tag onto the closed winning_start_type enum
 .jn_win_type <- function(t) {
@@ -82,7 +35,7 @@
 # candidate carries its provenance so the two metric-winner sources are recorded
 # from the actual winner, not a hardcoded guess.
 .jn_linf_sensitivity <- function(b_hat, scaled_linf, argmin_source, scan, polish,
-                                 qs, w1, w2, proj, d_inv2, root_tol) {
+                                 qs, w1, w2, proj, d_inv2, root_tol, control) {
   cand <- list(b_hat)
   src <- argmin_source
   add <- function(x, s) {
@@ -104,17 +57,22 @@
   }
   best_i <- which.min(dv)
   dinf_grid <- dv[best_i]
-  differ <- sqrt(sum((cand[[best_i]] - b_hat)^2)) > 1e-12
+  differ <- sqrt(sum((cand[[best_i]] - b_hat)^2)) >
+    control$perturbation_dedupe_tol
   gap_abs <- dv[1L] - dinf_grid
   gap_rel <- gap_abs / max(root_tol, dinf_grid)
-  trigger <- isTRUE(differ && is.finite(gap_abs) && gap_abs > 10 * root_tol &&
-    gap_rel > 0.10)
+  trigger <- isTRUE(
+    differ &&
+      is.finite(gap_abs) &&
+      gap_abs > control$linf_gap_root_multiplier * root_tol &&
+      gap_rel > control$linf_gap_rel_tol
+  )
   status <- "not_triggered"
   if (trigger) {
     epi <- tryCatch(
       logvar_joint_null_epigraph(
         qs, list(b_hat, cand[[best_i]]), w1, w2, proj,
-        d_inv2, root_tol
+        d_inv2, control
       ),
       error = function(e) NULL
     )
@@ -133,7 +91,7 @@
 # centre with an explicit fail-closed rule (finite off-crossing map, feasibility,
 # root-tolerance sup-norm) and not_applicable start/perturbation fields.
 .jn_singleton_row <- function(tau_display, b_tab, w1, w2, proj, d_inv2, qs, omega,
-                              scales, e_scale_ref, root_tol) {
+                              scales, e_scale_ref, root_tol, control) {
   lower <- as.numeric(b_tab$set_lower)
   upper <- as.numeric(b_tab$set_upper)
   b <- (lower + upper) / 2
@@ -148,8 +106,10 @@
   grad <- tryCatch(logvar_joint_null_gradient(b, w1, w2, proj, d_inv2),
     error = function(e) NA_real_
   )
-  crossing <- any(e == 0) || min_abs_e <= 1e-6 * e_scale_ref || !is.finite(q)
-  feasible <- is.finite(feas) && feas <= 1e-4
+  crossing <- any(e == 0) ||
+    min_abs_e <= control$crossing_rel_tol * e_scale_ref ||
+    !is.finite(q)
+  feasible <- is.finite(feas) && feas <= control$feasibility_tol
   if (crossing || !feasible) {
     status <- "unreliable"
     membership <- "compatibility_not_demonstrated"
@@ -164,23 +124,34 @@
   # a degenerate singleton box has span 0, so |b - bound| = 0 would spuriously read
   # as an edge-riding arg-min; the tau = 0 point is never box-limited
   box_active <- !all(upper == lower) &&
-    (any(abs(b - lower) <= 1e-6 * span) || any(abs(b - upper) <= 1e-6 * span))
-  .jn_assemble_row(list(
-    tau_display = as.numeric(tau_display), tau_internal = 0,
-    scaled_l2 = sqrt(2 * q), scaled_linf = scaled_linf,
-    b1 = b[1], b2 = b[2], b3 = b[3], theta0 = theta[1],
-    thetaR1 = theta[2], thetaR2 = theta[3], thetaR3 = theta[4], thetaR4 = theta[5],
-    min_abs_eps = min_abs_e, constraint_residual = feas,
-    raw_gradient_norm = if (all(is.finite(grad))) sqrt(sum(grad^2)) else NA_real_,
-    argmin_source = "grid", winning_start_type = "b_seed",
-    replication_status = "not_applicable_singleton",
-    perturbation_status = "not_applicable_singleton",
-    stability_status = "not_applicable_singleton",
-    n_near_crossing_rows = as.integer(sum(abs(e) <= 1e-6 * e_scale_ref)),
-    status = status, membership_result = membership, root_tol = root_tol,
-    scale1 = scales[1], scale2 = scales[2], scale3 = scales[3], scale4 = scales[4],
-    box_active = box_active, sparse_grid = FALSE, metric_l2_source = "grid",
-    d_inf_l2 = scaled_linf, linf_trigger = FALSE,
-    linf_sensitivity_status = "not_triggered"
+    (
+      any(abs(b - lower) <= control$box_active_rel_tol * span) ||
+        any(abs(b - upper) <= control$box_active_rel_tol * span)
+    )
+  .jn_assemble_row(c(
+    list(
+      tau_display = as.numeric(tau_display), tau_internal = 0,
+      scaled_l2 = sqrt(2 * q), scaled_linf = scaled_linf
+    ),
+    .jn_parameter_fields(b, theta, scales),
+    list(
+      min_abs_eps = min_abs_e, constraint_residual = feas,
+      raw_gradient_norm = if (all(is.finite(grad))) {
+        sqrt(sum(grad^2))
+      } else {
+        NA_real_
+      },
+      argmin_source = "grid", winning_start_type = "b_seed",
+      replication_status = "not_applicable_singleton",
+      perturbation_status = "not_applicable_singleton",
+      stability_status = "not_applicable_singleton",
+      n_near_crossing_rows = as.integer(sum(
+        abs(e) <= control$crossing_rel_tol * e_scale_ref
+      )),
+      status = status, membership_result = membership, root_tol = root_tol,
+      box_active = box_active, sparse_grid = FALSE,
+      metric_l2_source = "grid", d_inf_l2 = scaled_linf,
+      linf_trigger = FALSE, linf_sensitivity_status = "not_triggered"
+    )
   ))
 }

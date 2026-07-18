@@ -17,7 +17,11 @@
 # assembly serves the solver and the synthetic exact-Jacobian checks. The spec
 # supplies center/scale, moment scales s_g, moment(x)/moment_jac(x) as an m x k
 # matrix, and optional lewbel and guard blocks.
-logvar_joint_epigraph_program <- function(spec, box_half_width, r_upper = 1e6) {
+logvar_joint_epigraph_program <- function(
+  spec,
+  box_half_width,
+  r_upper = logvar_joint_gmm_constants$epigraph_r_upper
+) {
   k <- length(spec$center)
   center <- spec$center
   scale <- spec$scale
@@ -90,7 +94,8 @@ logvar_joint_epigraph_result <- function(spec, x, u, r, box_half_width,
 # the domain constraints already pass, otherwise run SLSQP and re-verify the
 # returned point. A failed or unverified solve is numerical_status "unreliable".
 logvar_joint_epigraph_solve <- function(spec, x0, box_half_width,
-                                        box_tol = 1e-6) {
+                                        box_tol =
+                                          logvar_joint_gmm_constants$box_interior_tol) {
   k <- length(spec$center)
   prog <- logvar_joint_epigraph_program(spec, box_half_width)
   init <- logvar_joint_epigraph_start(spec$moment(x0) / spec$s_g)

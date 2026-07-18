@@ -86,11 +86,15 @@ logvar_engine_scan <- function(est, b_feas, evaluate_fit, b_seed, claim_fn, st,
       arg_min <- arg_max <- matrix(NA_real_, length(v), ncol(b_feas))
     }
     for (j in seq_along(v)) {
-      if (v[j] < best_min[j]) {
+      min_tie <- v[j] == best_min[j] &&
+        logvar_point_precedes(b, arg_min[j, ])
+      max_tie <- v[j] == best_max[j] &&
+        logvar_point_precedes(b, arg_max[j, ])
+      if (v[j] < best_min[j] || min_tie) {
         best_min[j] <- v[j]
         arg_min[j, ] <- b
       }
-      if (v[j] > best_max[j]) {
+      if (v[j] > best_max[j] || max_tie) {
         best_max[j] <- v[j]
         arg_max[j, ] <- b
       }

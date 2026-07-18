@@ -1,7 +1,7 @@
 # Thin driver for the base-R log-variance dynamics gate (dynamics-gate protocol). It
-# pulls the frozen benchmark objects, evaluates the predeclared lag-4 Ljung-Box
-# screen on the tau = 0 residual xi_hat, prints the verdict with lags 1/4/8, the
-# ACF through lag 8, the min |eps*| fragility, and the largest |xi_hat|, then
+# pulls the frozen benchmark objects, evaluates the protocol-owned Ljung-Box
+# screen on the tau = 0 residual xi_hat, prints the configured statistics and
+# ACF, the min |eps*| fragility, and the largest |xi_hat|, then
 # writes the section-2.4 gate record and the always-present status manifest. The
 # gate ships regardless of any approval and uses base R only. Sourcing this file
 # offline (without log_var_eq / set_id_mean_eq) is a no-op: the exists() guard
@@ -47,7 +47,8 @@ if (exists("log_var_eq") && exists("set_id_mean_eq")) {
     ))
   }
   cat(sprintf(
-    "  residual ACF (lag 1..8): %s\n",
+    "  residual ACF (lag 1..%d): %s\n",
+    dyn_g$protocol$acf_max,
     paste(sprintf("%.3f", dyn_g$acf), collapse = " ")
   ))
   cat(sprintf(
@@ -70,8 +71,16 @@ if (exists("log_var_eq") && exists("set_id_mean_eq")) {
   dyn_gate_rds <- artifact_path("dynamics_gate")
   dyn_status_rds <- artifact_path("egarch_status")
   unlink(c(dyn_gate_rds, dyn_status_rds))
-  saveRDS(log_var_eq_dynamics_gate, dyn_gate_rds, version = 3)
-  saveRDS(log_var_eq_egarch_status, dyn_status_rds, version = 3)
+  paper_write_exact_rds(
+    log_var_eq_dynamics_gate,
+    dyn_gate_rds,
+    "dynamics_gate"
+  )
+  paper_write_exact_rds(
+    log_var_eq_egarch_status,
+    dyn_status_rds,
+    "egarch_status"
+  )
 
   rm(
     dyn_inputs, dyn_b_point, dyn_proj, dyn_commit, dyn_g, dyn_out,

@@ -6,13 +6,19 @@ to synchronize.
 
 | Paper-owned module | Responsibility |
 |---|---|
-| `identification/api.R` | Input alignment, residual construction, and quadratic assembly |
+| `identification/api.R` | Active quadratic assembly for the paper identification path |
+| `identification/quadratic_evaluation.R` | Canonical quadratic values and gradients |
+| `identification/bound_search_classifier.R` | Shared bound-growth classification |
 | `identification/profile_solver_core.R` | Scaled profile optimization primitives |
 | `identification/profile_bounds_api.R` | Coordinate and functional bound facade |
 | `identification/tau_star.R` | Fixed-gamma bounded/unbounded sweep and threshold search |
 | `identification/identified_set_bootstrap.R` | Identified-set bootstrap draws |
 | `identification/identified_set_inference.R` | Endpoint inference and calibration |
 | `statistics/api.R` | Bootstrap, stationarity, reporting, and validation helpers |
+| `statistics/normalizations.R` | Named distribution normalization constants |
+| `artifacts/typed_artifacts.R` | Typed CSV and exact-RDS serialization |
+| `data/acm_inputs.R` | Validated quarterly ACM acquisition |
+| `runtime/core.R` | Serialization, hashing, conditions, and condition capture |
 | `latex/table_pipeline.R` | Shared LaTeX table writing and compilation |
 | `latex/simple_table.R` | Simple table builder |
 | `diagnostics/heteroskedasticity_tests.R` | Heteroskedasticity test implementations |

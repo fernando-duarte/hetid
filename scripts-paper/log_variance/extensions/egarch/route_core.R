@@ -55,8 +55,7 @@ logvar_egarch_check_gate_fields <- function(rec, fresh_gate_record) {
     gate_alpha = fresh_gate_record$gate_alpha,
     gate_q = unname(fresh_gate_record$q_stats[[lag_name]]),
     gate_p = unname(fresh_gate_record$p_values[[lag_name]]),
-    gate_verdict = fresh_gate_record$verdict,
-    benchmark_commit = fresh_gate_record$benchmark_commit
+    gate_verdict = fresh_gate_record$verdict
   )
   for (f in names(fresh)) {
     if (!identical(rec[[f]], fresh[[f]])) {
@@ -67,16 +66,13 @@ logvar_egarch_check_gate_fields <- function(rec, fresh_gate_record) {
 }
 
 # Strict decision/gate binding, run before any dependency access. Recompute the
-# gate record's canonical hash from the fresh gate object and match it; match the
-# copied gate fields; recompute and match the plan hash, the upstream-plans hash,
-# and each prompt's self-consistent and canonical SHA-256; then check the schema
-# and the decision shapes. Any mismatch raises a classed condition, so both
-# approvals are invalidated before the router or any requireNamespace() call.
+# gate record's scientific hash from the fresh gate object and match it; match
+# the copied gate fields, tracked plan approval, upstream-plans hash, and each
+# prompt's canonical SHA-256; then check the schema and decision shapes. Any
+# mismatch invalidates both approvals before routing or dependency access.
 logvar_egarch_decision_validate <- function(rec, fresh_gate_record,
                                             plan_sha256 =
-                                              logvar_egarch_file_sha256(
-                                                LOGVAR_EGARCH_PLAN_PATH
-                                              ),
+                                              LOGVAR_EGARCH_PLAN_SHA256,
                                             upstream_plans_hash =
                                               LOGVAR_EGARCH_UPSTREAM_PLANS_HASH) {
   if (!is.list(rec) || !identical(names(rec), logvar_egarch_decision_fields)) {
@@ -89,10 +85,12 @@ logvar_egarch_decision_validate <- function(rec, fresh_gate_record,
     logvar_egarch_decision_stop("gate_record_path_mismatch", rec$gate_record_path)
   }
   if (!identical(
-    rec$gate_record_sha256, logvar_egarch_object_sha256(fresh_gate_record)
+    rec$gate_science_sha256,
+    logvar_egarch_gate_science_sha256(fresh_gate_record)
   )) {
     logvar_egarch_decision_stop(
-      "gate_record_hash_mismatch", "committed gate hash != fresh gate record"
+      "gate_record_hash_mismatch",
+      "committed scientific gate hash != fresh gate record"
     )
   }
   logvar_egarch_check_gate_fields(rec, fresh_gate_record)
@@ -148,7 +146,11 @@ logvar_egarch_route <- function(decision, dep_available, dep_version,
   }
   if (!identical(verdict, "reject")) {
     return(out(FALSE, "gate_non_reject", paste(
-      "The predeclared lag-4 screen did not reject; the dynamic workstream stops",
+      sprintf(
+        "The predeclared lag-%d screen did not reject;",
+        decision$gate_lag
+      ),
+      "the dynamic workstream stops",
       "as a complete deliverable and no approval is requested."
     )))
   }

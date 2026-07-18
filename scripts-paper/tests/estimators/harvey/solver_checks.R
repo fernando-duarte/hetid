@@ -134,7 +134,8 @@ check("hs the retry ladder calls the PPML rung and consumes its coef", hs_try({
   counter$n <- 0L
   est <- logvar_harvey_estimator(fx$w1, hs_w2, fx$pcr, fx$qtr,
     b_point = NULL, ppml_bundle = NULL,
-    ppml_start_at_b = hs_fake_ppml(counter), logols_coef = NULL
+    ppml_start_at_b = hs_fake_ppml(counter),
+    ppml_start_at_b_source_id = "fixture-ppml-v1", logols_coef = NULL
   )
   fit <- est$fit_at_b(hs_b, start = hs_inf)
   counter$n >= 1L && isTRUE(fit$converged) && all(is.finite(fit$coef))
@@ -146,7 +147,7 @@ check("hs a failed PPML rung is skipped and the standalone rungs converge", hs_t
   est <- logvar_harvey_estimator(fx$w1, hs_w2, fx$pcr, fx$qtr,
     b_point = NULL, ppml_bundle = NULL,
     ppml_start_at_b = hs_fake_ppml(counter, status = "nonconvergence", conv = FALSE),
-    logols_coef = NULL
+    ppml_start_at_b_source_id = "fixture-ppml-v1", logols_coef = NULL
   )
   fit <- est$fit_at_b(hs_b, start = hs_inf)
   counter$n >= 1L && isTRUE(fit$converged)

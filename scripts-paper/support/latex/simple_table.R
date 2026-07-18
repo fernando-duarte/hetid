@@ -68,30 +68,21 @@ build_simple_latex_table <- function(row_labels, columns, col_headers,
       body <- c(body, "\\midrule")
     }
   }
-  lines <- c(
-    "\\begin{table}[!htbp]",
-    "\\centering",
-    "\\begin{threeparttable}",
-    paste0("\\caption{", caption, "}"),
-    paste0("\\label{", label, "}"),
-    if (nzchar(fontsize)) fontsize else NULL,
-    paste0("\\begin{tabular}{", col_spec, "}"),
-    "\\toprule",
-    spanner_lines,
-    header,
-    "\\midrule",
-    body,
-    "\\bottomrule",
-    "\\end{tabular}"
+  latex_table_environment(
+    tabular_lines = c(
+      paste0("\\begin{tabular}{", col_spec, "}"),
+      "\\toprule",
+      spanner_lines,
+      header,
+      "\\midrule",
+      body,
+      "\\bottomrule",
+      "\\end{tabular}"
+    ),
+    caption = caption,
+    label = label,
+    notes = notes,
+    notes_label = "Notes:",
+    fontsize = fontsize
   )
-  if (!is.null(notes)) {
-    lines <- c(
-      lines,
-      "\\begin{tablenotes}[flushleft]",
-      "\\scriptsize",
-      paste0("\\item Notes: ", paste(notes, collapse = " ")),
-      "\\end{tablenotes}"
-    )
-  }
-  c(lines, "\\end{threeparttable}", "\\end{table}")
 }

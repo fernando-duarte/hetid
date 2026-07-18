@@ -1,6 +1,6 @@
 # Inactive offline second-pass refinement schedule for the median (LAD) map.
 # Around every pass-one arg-extremum and every verified crossing witness,
-# form the tensor offsets {-r, 0, r}^K at r = logvar_lad_refine_radii times the
+# form tensor offsets at the offline control's radii times the
 # frozen b_scales, clip to the box, keep the normalized-feasible rows plus the
 # verified anchor/path points, deduplicate at full precision, and order
 # lexicographically by center type, row, radius and offset. These lattices enter
@@ -47,13 +47,16 @@ logvar_lad_refine_anchors <- function(witnesses = list()) {
 }
 
 # The pinned lattice: centers ordered by (type, row), then per center the radii
-# in logvar_lad_refine_radii, then the {-1,0,1}^K offsets in expand.grid order.
+# from the offline refinement control, then the {-1,0,1}^K offsets in
+# expand.grid order.
 # Clipped to [lower, upper], filtered by the normalized feasibility check, with
 # the verified anchors retained; full-precision deduplication keeps the first
 # occurrence so the lexicographic order survives. Returns a list of b vectors
 # suitable for the engine's extra_starts.
 logvar_lad_refinement_points <- function(centers, b_scales, lower, upper,
-                                         check_feasible, anchors = list()) {
+                                         check_feasible, anchors = list(),
+                                         control =
+                                           LOGVAR_LAD_OFFLINE_REFINEMENT_CONTROL) {
   scale_vec <- b_scales$delta
   k <- length(scale_vec)
   types <- vapply(centers, function(ct) as.character(ct$type), character(1))
@@ -75,7 +78,7 @@ logvar_lad_refinement_points <- function(centers, b_scales, lower, upper,
     pts[[length(pts) + 1L]] <<- b
   }
   for (ctr in centers) {
-    for (r in logvar_lad_refine_radii) {
+    for (r in control$refine_radii) {
       for (oi in seq_len(nrow(offsets))) {
         b <- pmin(pmax(ctr$b + offsets[oi, ] * r * scale_vec, lower), upper)
         if (isTRUE(check_feasible(b)$feasible)) add(b)

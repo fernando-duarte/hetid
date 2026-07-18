@@ -4,19 +4,16 @@
 # per the ladder stops the dynamic workstream as a complete success: neither the
 # changed-estimand nor the dependency approval is asked, both ordered decisions
 # are `not_asked`, and no heavy package is touched. The record still binds the
-# fresh gate record's canonical SHA-256, the sample id and gate fields, the
-# current-plan and upstream-plans hashes, and the two verbatim prompt texts with
+# fresh gate record's scientific SHA-256, the sample id and gate fields, the
+# approved-plan and upstream-plans hashes, and the two prompt texts with
 # their SHA-256, so a future rejecting run cannot reuse a stale approval or
 # silently reword a question the approvals answered.
 #
-# The two verbatim approval prompt texts live here (not in the dependency-
-# agnostic core) and are passed to the builder, which fails fast unless each
-# matches its pinned canonical hash. decided_at_utc is a fixed literal (never
-# Sys.time()) so the record is stable across runs. If a future run rejects and
-# both approvals are obtained, build the record from the real answers with
-# decision_provenance = "user_response" rather than sourcing this default.
+# The immutable record is self-contained and never reads an ignored plan or a
+# generated gate while it is constructed. The validator binds it to the freshly
+# generated gate before routing.
 
-source(paper_path("log_variance", "extensions", "egarch", "decision_core.R"))
+paper_source_once(paper_path("log_variance", "extensions", "egarch", "decision_core.R"))
 
 # The exact changed-estimand question (recorded for the binding; shown only on a
 # rejecting gate). Mirrors the plan's section-1 recursion and changed-estimand
@@ -38,17 +35,45 @@ logvar_egarch_estimand_prompt <- paste(
 # the plan's Tech-stack and Global-Constraints dependency framing.
 logvar_egarch_dependency_prompt <- paste(
   "The dynamic EGARCH-X stage requires the rugarch package (heavy: it imports",
-  "Rsolnp, xts, zoo, numDeriv, and nloptr; CRAN 1.5-5 as of 2026-03-15) and is an",
+  sprintf(
+    "Rsolnp, xts, zoo, numDeriv, and nloptr; CRAN %s as of 2026-03-15) and is an",
+    LOGVAR_EGARCH_DEP_VERSION
+  ),
   "explicit user decision, never installed silently. If declined, the deliverable",
   "is the gate diagnostic plus this recorded decision; the hand-rolled recursion",
   "fallback is built only if the dependency is declined and the user explicitly",
-  "requests it, with validation time budgeted. Approve adding the rugarch 1.5-5",
+  sprintf(
+    "requests it, with validation time budgeted. Approve adding the rugarch %s",
+    LOGVAR_EGARCH_DEP_VERSION
+  ),
   "dependency for the dynamic stage?"
 )
 
-logvar_egarch_decision <- logvar_egarch_decision_default(
-  gate_record = readRDS(LOGVAR_EGARCH_GATE_RECORD_PATH),
-  decided_at_utc = "2026-07-15T04:35:40Z",
+logvar_egarch_decision <- list(
+  schema_version = LOGVAR_EGARCH_SCHEMA_VERSION,
+  gate_science_sha256 =
+    "7890f2f95b7ac1358788fefdbbdc6f9d3edd41ced70ae40187f3b753f0dd5c22",
+  gate_record_path = LOGVAR_EGARCH_GATE_RECORD_PATH,
+  sample_id = "n255_1962 Q2_2025 Q4_24138f4ddc2adda6de40372667337c10",
+  gate_lag = 4L,
+  gate_alpha = 0.05,
+  gate_q = 0x1.8d50411d73a96p+2,
+  gate_p = 0x1.791f928a88b58p-3,
+  gate_verdict = "non_reject",
+  plan_sha256 = LOGVAR_EGARCH_PLAN_SHA256,
+  upstream_plans_hash = LOGVAR_EGARCH_UPSTREAM_PLANS_HASH,
   estimand_prompt = logvar_egarch_estimand_prompt,
-  dependency_prompt = logvar_egarch_dependency_prompt
+  estimand_prompt_sha256 = LOGVAR_EGARCH_ESTIMAND_PROMPT_SHA256,
+  dependency_prompt = logvar_egarch_dependency_prompt,
+  dependency_prompt_sha256 = LOGVAR_EGARCH_DEPENDENCY_PROMPT_SHA256,
+  decisions = c(
+    estimand = "not_asked",
+    dependency = "not_asked"
+  ),
+  decision_provenance = "not_asked_default",
+  decided_at_utc = "2026-07-15T04:35:40Z"
 )
+stopifnot(identical(
+  names(logvar_egarch_decision),
+  logvar_egarch_decision_fields
+))

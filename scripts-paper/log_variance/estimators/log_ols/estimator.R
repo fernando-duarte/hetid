@@ -12,10 +12,12 @@
 # sample-drift check (pinned RDS version 3, tempfile unlinked, base tools
 # only). Prefixed with the sample size and qtr span so a mismatch is legible.
 logvar_sample_id <- function(qtr, w1, w2, pcr) {
-  tmp <- tempfile(fileext = ".rds")
-  on.exit(unlink(tmp), add = TRUE)
-  saveRDS(list(qtr = qtr, w1 = w1, w2 = w2, pcr = pcr), tmp, version = 3)
-  md5 <- tools::md5sum(tmp)
+  md5 <- paper_md5_rds(list(
+    qtr = qtr,
+    w1 = w1,
+    w2 = w2,
+    pcr = pcr
+  ))
   sprintf(
     "n%d_%s_%s_%s", length(w1),
     format(min(qtr)), format(max(qtr)), unname(md5)
@@ -29,7 +31,14 @@ logvar_sample_id <- function(qtr, w1, w2, pcr) {
 # closures the driver used; scan_grid wraps the vectorized grid scan; and
 # analyze_domain packages the census + sign-tracker union that the engine defers
 # to the estimator for divergence certification.
-logvar_logols_estimator <- function(w1, w2, proj, qtr, pcr) {
+logvar_logols_estimator <- function(
+  w1,
+  w2,
+  proj,
+  qtr,
+  pcr,
+  control = LOGVAR_LOGOLS_CONTROL
+) {
   list(
     metadata = list(
       estimator = "logols",
@@ -39,8 +48,11 @@ logvar_logols_estimator <- function(w1, w2, proj, qtr, pcr) {
       smoothness = "smooth",
       inner_solver = "closed-form projection",
       response_scale = "log",
-      spec_id = "logols-v1",
-      cold_start_rtol = 1e-8
+      spec_id = logvar_spec_id(
+        logvar_flatten_spec(control, "control")
+      ),
+      fit_control = control,
+      cold_start_rtol = control$cold_start_rtol
     ),
     coef_labels = rownames(proj),
     fit_at_b = function(b, start = NULL) {

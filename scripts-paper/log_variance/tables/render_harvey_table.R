@@ -3,10 +3,10 @@
 # log_var_eq_panels.tex, with a dedicated caption, label, and notes context.
 # Run through run.R after the identified news-set map.
 
-source(paper_path("support", "latex", "table_pipeline.R"))
-source(paper_path("support", "latex", "simple_table.R"))
-source(paper_path("log_variance", "tables", "table_formatting.R"))
-source(paper_path("log_variance", "tables", "harvey_panel.R"))
+paper_source_once(paper_path("support", "latex", "table_pipeline.R"))
+paper_source_once(paper_path("support", "latex", "simple_table.R"))
+paper_source_once(paper_path("log_variance", "tables", "table_formatting.R"))
+paper_source_once(paper_path("log_variance", "tables", "harvey_panel.R"))
 
 stopifnot(
   identical(log_var_eq_harvey$sample_id, log_var_eq$sample_id),

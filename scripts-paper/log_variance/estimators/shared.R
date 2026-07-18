@@ -7,6 +7,19 @@
 # (validators, grid helpers, the quadratic-system builder) resolve at call
 # time, after the estimator modules that supply them have been sourced.
 
+paper_source_once(paper_path(
+  "log_variance", "estimators", "controls.R"
+))
+
+logvar_flatten_spec <- function(value, prefix = NULL) {
+  stopifnot(is.list(value), !is.null(names(value)))
+  out <- unlist(value, recursive = TRUE, use.names = TRUE)
+  if (!is.null(prefix)) {
+    names(out) <- paste(prefix, names(out), sep = ".")
+  }
+  as.list(out)
+}
+
 # Canonical fit-identity string: bytewise-sorted key=value records over every
 # fit-changing field, each numeric rendered at full 17-digit precision so the
 # stamp is deterministic and independent of options(digits); non-numerics via
@@ -14,7 +27,7 @@
 logvar_spec_id <- function(fields) {
   render <- function(x) {
     if (is.numeric(x)) {
-      x <- formatC(x, digits = 17, format = "fg", flag = "#")
+      x <- paper_numeric_key(x)
     } else {
       x <- as.character(x)
     }
@@ -59,18 +72,26 @@ logvar_min_feasible_eps <- function(schema, w1, w2, seed) {
 logvar_prepare_map_context <- function(inputs, contract, mean_eq, bounds_tau,
                                        grid_cap) {
   v <- logvar_ppml_validate_inputs(inputs, contract)
-  stopifnot(max(abs(colMeans(v$pcr))) < 1e-8)
+  stopifnot(
+    max(abs(colMeans(v$pcr))) <
+      LOGVAR_SEARCH_CONTROL$pcr_mean_tolerance
+  )
   x_mat <- cbind(1, v$pcr)
   colnames(x_mat) <- c("(Intercept)", colnames(v$pcr))
   b_point <- mean_eq$theta_table$point
-  tau_base <- mean_eq$tau_display[1]
+  tau_base <- mean_eq$tau_baseline
   qs_base <- tau_quadratic_system(mean_eq$gamma, tau_base, mean_eq$moments)
-  b_tab_base <- bounds_tau[[sprintf("%.17g", tau_base)]]
+  b_tab_base <- bounds_tau[[paper_tau_key(tau_base)]]
   stopifnot(!is.null(b_tab_base))
   point_feasible <- !anyNA(b_point) &&
     .feasibility_residual(qs_base, b_point, rep(1, length(qs_base$A_i))) <= 0
   grid_base <- logvar_coarsen_grid(
-    logvar_feasible_grid(qs_base, b_tab_base$set_lower, b_tab_base$set_upper, 41L),
+    logvar_feasible_grid(
+      qs_base,
+      b_tab_base$set_lower,
+      b_tab_base$set_upper,
+      LOGVAR_SEARCH_CONTROL$grid_n
+    ),
     grid_cap
   )
   stopifnot(nrow(grid_base) > 0L)

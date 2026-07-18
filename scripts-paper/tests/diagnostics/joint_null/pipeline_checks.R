@@ -11,8 +11,21 @@ di2 <- fx$d^-2
 sd_mnj <- (1 / apply(fx$pcr_mnj, 2, stats::sd))^2
 er_mnj <- rep(1.5, nrow(fx$pcr_mnj))
 jn_at_tau <- function(b_tab, w1, w2, proj, d_inv2, eps_ref, qs, prior = list(),
-                      tau = 0.05) {
-  logvar_joint_null_at_tau(tau, tau, b_tab, w1, w2, proj, d_inv2, eps_ref, qs, prior)
+                      tau = 0.05,
+                      control = LOGVAR_JOINT_NULL_CONTROL) {
+  logvar_joint_null_at_tau(
+    tau,
+    tau,
+    b_tab,
+    w1,
+    w2,
+    proj,
+    d_inv2,
+    eps_ref,
+    qs,
+    prior,
+    control = control
+  )
 }
 jn_box <- function(center, rad) {
   list(set_lower = center - rad, set_upper = center + rad)
@@ -36,6 +49,20 @@ check("jn projection ownership fails closed on a misaligned design", jn_try({
   )
   identical(bad, "stopped")
 }))
+check("jn projection rejects a locally consistent but noncanonical PC count", {
+  pcr <- fx$pcr[, -ncol(fx$pcr), drop = FALSE]
+  inherits(
+    try(
+      logvar_joint_null_projection(pcr, fx$qtr, fx$sample_id),
+      silent = TRUE
+    ),
+    "try-error"
+  )
+})
+check("jn scales reject a locally consistent but noncanonical PC count", {
+  pcr <- fx$pcr[, -ncol(fx$pcr), drop = FALSE]
+  inherits(try(logvar_joint_null_scales(pcr), silent = TRUE), "try-error")
+})
 # Input seam: eps_ref is qtr-aligned, finite, positive-median, additive-only.
 check("jn input producer adds a qtr-aligned finite eps_ref additively", jn_try({
   inp <- list(w1 = fx$w1, w2 = fx$w2, pcr = fx$pcr, qtr = fx$qtr)

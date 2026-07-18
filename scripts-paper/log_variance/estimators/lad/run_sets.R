@@ -9,13 +9,14 @@
 # estimator/fit/domain and the diagnostics/console/closure helpers are sourced here
 # so run_pipeline.R gains one line; run after run.R, before the panels.
 
-source(paper_path("log_variance", "estimators", "lad", "estimator.R"))
-source(paper_path("log_variance", "estimators", "lad", "fit.R"))
-source(paper_path("log_variance", "estimators", "lad", "crossing_domain.R"))
-source(paper_path("log_variance", "estimators", "lad", "set_mapping.R"))
-source(paper_path("log_variance", "estimators", "lad", "set_report.R"))
-source(paper_path("log_variance", "estimators", "lad", "console_report.R"))
-source(paper_path("log_variance", "estimators", "lad", "closure_diagnostics.R"))
+paper_source_once(paper_path("log_variance", "estimators", "lad", "estimator.R"))
+paper_source_once(paper_path("log_variance", "estimators", "lad", "fit.R"))
+paper_source_once(paper_path("log_variance", "estimators", "lad", "crossing_domain.R"))
+paper_source_once(paper_path("log_variance", "estimators", "lad", "set_mapping.R"))
+paper_source_once(paper_path("log_variance", "estimators", "lad", "display_mapping.R"))
+paper_source_once(paper_path("log_variance", "estimators", "lad", "set_report.R"))
+paper_source_once(paper_path("log_variance", "estimators", "lad", "console_report.R"))
+paper_source_once(paper_path("log_variance", "estimators", "lad", "closure_diagnostics.R"))
 
 # Guarded orchestration: runs only with the upstream benchmark objects present, so
 # sourcing this offline (the estimator test suites) defines the helpers only.
@@ -25,22 +26,31 @@ if (exists("log_var_eq") && exists("set_id_mean_eq") && exists("mean_eq_bounds_t
   list2env(
     logvar_prepare_map_context(
       log_var_eq$inputs, log_var_eq$sample_contract, set_id_mean_eq,
-      mean_eq_bounds_tau, logvar_lad_grid_cap
+      mean_eq_bounds_tau, LOGVAR_LAD_CONTROL$grid_cap
     ),
     environment()
   )
 
   # naive reference residuals (by qtr): the reference column, the frozen scale, est
-  ref_rows <- match(qtr, set_id_mean_eq$qtr)
-  stopifnot(!anyNA(ref_rows))
-  ref_resid <- as.numeric(stats::residuals(set_id_mean_eq$ols_fit)[ref_rows])
+  ref_resid <- logvar_reference_residuals(qtr, set_id_mean_eq)
   e_scale_ref <- logvar_lad_scale_reference(ref_resid)
 
-  est_lad <- logvar_lad_estimator(w1, w2, pcr, qtr, e_ref = ref_resid)
+  est_lad <- logvar_lad_estimator(
+    w1,
+    w2,
+    pcr,
+    qtr,
+    e_ref = ref_resid,
+    control = LOGVAR_LAD_CONTROL
+  )
   stopifnot(identical(est_lad$metadata$sample_id, log_var_eq$sample_id))
 
   # reference column: the br median fit on the log-squared naive residuals
-  ref_fit <- logvar_lad_fit_response(2 * log(abs(ref_resid)), x_mat)
+  ref_fit <- logvar_lad_fit_response(
+    2 * log(abs(ref_resid)),
+    x_mat,
+    LOGVAR_LAD_CONTROL
+  )
   if (!identical(ref_fit$fit_status, "ok")) {
     stop(sprintf(
       "log_var_eq_lad_sets: reference LAD fit failed (%s)",
@@ -71,86 +81,81 @@ if (exists("log_var_eq") && exists("set_id_mean_eq") && exists("mean_eq_bounds_t
 
   # per display tau: one cache across taus, a fresh budget per tau, no warm chain
   taus <- set_id_mean_eq$tau_display
-  qs_fn <- function(tau) tau_quadratic_system(set_id_mean_eq$gamma, tau, set_id_mean_eq$moments)
+  qs_fn <- function(tau) {
+    tau_quadratic_system(
+      set_id_mean_eq$gamma,
+      tau,
+      set_id_mean_eq$moments
+    )
+  }
   cfg <- list(
-    grid_cap = logvar_lad_grid_cap, fit_budget = logvar_lad_fit_budget,
-    phase_caps = logvar_lad_phase_caps, b_seed = search_seed,
+    grid_cap = LOGVAR_LAD_CONTROL$grid_cap,
+    fit_budget = LOGVAR_LAD_CONTROL$fit_budget,
+    phase_caps = LOGVAR_LAD_CONTROL$phase_caps,
+    b_seed = search_seed,
     w1 = w1, w2 = w2, x_mat = x_mat, e_scale_ref = e_scale_ref
   )
   lad_cache <- new.env(parent = emptyenv())
-  final_res <- final_diag <- wit_cov <- sens_audit <- tail_cls <- closure_by_tau <- list()
-  min_eps <- numeric(length(taus))
-  for (idx in seq_along(taus)) {
-    tau_i <- taus[idx]
-    key_i <- sprintf("%.17g", tau_i)
-    b_tab_i <- mean_eq_bounds_tau[[key_i]]
-    stopifnot(!is.null(b_tab_i))
-    qs_i <- qs_fn(tau_i)
-    mt <- logvar_lad_map_tau(est_lad, qs_i, b_tab_i, tau_i, cfg, lad_cache)
-    res_i <- mt$res
-    final_res[[key_i]] <- res_i
-    final_diag[[key_i]] <- res_i$diagnostics
-    sens_audit[[key_i]] <- mt$audit
-    delta_i <- .derive_theta_scale(qs_i)
-    omega_i <- .derive_constraint_scales(qs_i, delta_i)
-    geom_i <- list(
-      w1 = w1, w2 = w2, x_mat = x_mat, e_scale_ref = e_scale_ref,
-      delta = delta_i, omega = omega_i,
-      check_feasible = local({
-        qq <- qs_i
-        om <- omega_i
-        function(b) {
-          v <- .feasibility_residual(qq, b, om)
-          list(feasible = v <= 1e-10, max_violation = v)
-        }
-      })
-    )
-    paths_i <- logvar_lad_probe_report(res_i, tau_i, est_lad, geom_i, colnames(x_mat), qtr)
-    tail_cls[[key_i]] <- paths_i
-    closure_by_tau[[key_i]] <- logvar_lad_closure_rows(
-      paths_i, "lad", log_var_eq$sample_id, est_lad$metadata$spec_id
-    )
-    pc <- res_i$domain_info$precheck
-    wl <- if (is.null(pc)) list() else .lad_or(pc$info$witnesses, list())
-    wit_cov[[key_i]] <- list(
-      n_witnesses = length(wl),
-      n_flagged = if (is.na(res_i$n_cross)) 0L else res_i$n_cross,
-      n_unresolved = if (is.null(pc)) 0L else length(pc$unresolved),
-      n_paths = sum(vapply(wl, function(wv) length(wv$anchors), integer(1)))
-    )
-    min_eps[idx] <- logvar_min_feasible_eps(res_i$schema, w1, w2, search_seed)
-  }
-
-  base_tab <- final_res[[sprintf("%.17g", taus[1])]]$table
-  stopifnot(identical(base_tab$coef, colnames(x_mat)))
-  log_var_eq_lad <- list(
-    sample = list(n = length(qtr), span = range(qtr)),
+  map_one <- logvar_lad_display_mapper(
+    estimator = est_lad,
+    config = cfg,
+    cache = lad_cache,
+    w1 = w1,
+    w2 = w2,
+    x_mat = x_mat,
+    e_scale_ref = e_scale_ref,
+    coef_labels = colnames(x_mat),
+    qtr = qtr,
     sample_id = log_var_eq$sample_id,
-    table = data.frame(
-      coef = colnames(x_mat), reference = unname(theta_reference),
-      point = unname(theta_point), set_lower = base_tab$set_lower,
-      set_upper = base_tab$set_upper, status = base_tab$status, row.names = NULL
-    ),
-    sets = lapply(final_res, function(r) r$table),
-    schema = lapply(final_res, function(r) r$schema),
+    spec_id = est_lad$metadata$spec_id,
+    search_seed = search_seed
+  )
+  mapped <- logvar_map_display_taus(
+    taus = taus,
+    bounds_tau = mean_eq_bounds_tau,
+    quadratic_at_tau = qs_fn,
+    map_one = map_one
+  )
+  final_res <- mapped$results
+  details <- lapply(mapped$records, `[[`, "detail")
+  sens_audit <- lapply(details, `[[`, "audit")
+  tail_cls <- lapply(details, `[[`, "paths")
+  closure_by_tau <- lapply(details, `[[`, "closure")
+  wit_cov <- lapply(details, `[[`, "witness_coverage")
+  min_eps <- vapply(details, `[[`, numeric(1), "min_eps")
+
+  core <- logvar_set_result_core(
+    qtr = qtr,
+    sample_id = log_var_eq$sample_id,
+    coef_labels = colnames(x_mat),
+    reference = theta_reference,
+    point = theta_point,
+    baseline_tau = set_id_mean_eq$tau_baseline,
+    primary_results = final_res,
+    final_results = final_res,
+    w1 = w1,
+    w2 = w2,
+    search_seed = search_seed
+  )
+  log_var_eq_lad <- c(core, list(
     attained_hull = lapply(final_res, function(r) r$table),
     closure_diagnostics = closure_by_tau,
-    counts = final_diag,
-    n_feasible = vapply(final_res, function(r) r$n_feasible, integer(1)),
     min_feasible_abs_eps = stats::setNames(min_eps, names(final_res)),
     witness_coverage = wit_cov,
     tail_classifications = tail_cls,
     sensitivity_audit = sens_audit,
-    guard = list(ratio = logvar_lad_guard_ratio, e_scale_ref = e_scale_ref),
+    guard = list(
+      ratio = LOGVAR_LAD_CONTROL$guard_ratio,
+      e_scale_ref = e_scale_ref
+    ),
     estimator = est_lad, start_bundle = NULL,
     quantreg_version = as.character(utils::packageVersion("quantreg")),
     census_comparability = log_var_eq$n_cross
-  )
+  ))
 
-  # closure artifact: delete any stale copy, then require a round-tripping CSV
+  # closure artifact: startup lifecycle cleanup guarantees an absent target
   lad_out <- out_dir
   lad_csv <- artifact_path("lad_closure_diagnostics")
-  unlink(lad_csv)
   write_logvar_lad_closure_csv(
     do.call(rbind, c(list(logvar_lad_closure_schema()), unname(closure_by_tau))),
     lad_csv
@@ -160,28 +165,30 @@ if (exists("log_var_eq") && exists("set_id_mean_eq") && exists("mean_eq_bounds_t
   # this entry and lad_cache must survive cleanup. warm_chain = FALSE holds the
   # grid-tau walk to the same single-pass, no-extra-start protocol the display taus
   # use, so the two row sets on one figure are searched alike (D3.1)
-  logvar_bounds_tau_registry[[length(logvar_bounds_tau_registry) + 1L]] <- list(
+  registry_entry <- logvar_bounds_registry_entry(
     estimator = est_lad,
-    schema = lapply(final_res, function(r) r$schema),
-    sets = lapply(final_res, function(r) r$table), b_seed = search_seed,
+    results = final_res,
+    b_seed = search_seed,
     warm_chain = FALSE,
     engine_opts = list(
-      max_grid_points = logvar_lad_grid_cap, max_fit_evals = logvar_lad_fit_budget,
-      starts_per_side = 3L, cache = lad_cache
-    ),
-    output_path = logvar_bounds_tau_path(out_dir, est_lad$metadata)
+      max_grid_points = LOGVAR_LAD_CONTROL$grid_cap,
+      max_fit_evals = LOGVAR_LAD_CONTROL$fit_budget,
+      starts_per_side = LOGVAR_SEARCH_CONTROL$primary_starts_per_side,
+      cache = lad_cache
+    )
   )
+  logvar_bounds_tau_registry[[length(logvar_bounds_tau_registry) + 1L]] <-
+    registry_entry
 
   logvar_lad_console_block(log_var_eq_lad, taus)
 
   # remove only scratch locals: keep log_var_eq_lad, logvar_bounds_tau_registry,
   # lad_cache (registry-referenced), and every sourced function
   rm(
-    w1, w2, pcr, qtr, x_mat, ref_rows, ref_resid, e_scale_ref, est_lad,
+    w1, w2, pcr, qtr, x_mat, ref_resid, e_scale_ref, est_lad,
     ref_fit, theta_reference, na_coef, b_point, pfit, theta_point,
     point_feasible, grid_base, search_seed, taus, qs_fn, cfg,
-    final_res, final_diag, wit_cov, sens_audit, tail_cls, closure_by_tau, min_eps,
-    idx, tau_i, key_i, b_tab_i, qs_i, mt, res_i, delta_i, omega_i,
-    geom_i, paths_i, pc, wl, base_tab, lad_out, lad_csv
+    map_one, mapped, final_res, details, wit_cov, sens_audit, tail_cls,
+    closure_by_tau, min_eps, core, lad_out, lad_csv, registry_entry
   )
 }

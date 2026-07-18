@@ -12,7 +12,7 @@
 # skeleton, diagnostics, rank check, acceptance, glm.fit runner, assembler)
 # lives in acceptance.R to keep both files under the 200-line cap.
 
-source(paper_path("log_variance", "estimators", "ppml", "acceptance.R"))
+paper_source_once(paper_path("log_variance", "estimators", "ppml", "acceptance.R"))
 
 # Quasi-Poisson score X'(y - mu) and information X' diag(mu) X at theta on the
 # scaled response, factored so the acceptance check, the Jacobian, and joint-GMM
@@ -32,7 +32,8 @@ logvar_ppml_info <- function(theta_scaled, x_mat) {
 # error class and every start attempt).
 logvar_ppml_fit_response <- function(y, x_mat, start = NULL,
                                      fallback_starts = list(),
-                                     response_scale = 1) {
+                                     response_scale = 1,
+                                     control = LOGVAR_PPML_CONTROL) {
   if (!(is.numeric(response_scale) && length(response_scale) == 1L &&
     is.finite(response_scale) && response_scale > 0)) {
     stop("response_scale must be one finite positive scalar")
@@ -53,29 +54,38 @@ logvar_ppml_fit_response <- function(y, x_mat, start = NULL,
     return(fail("all_zero_response"))
   }
   y_scaled <- y / response_scale
-  rank_x_pos <- logvar_ppml_pos_rank(y_scaled, x_mat)
-  if (rank_x_pos != p) {
+  rank_x_pos <- logvar_ppml_pos_rank(y_scaled, x_mat, control)
+  if (isTRUE(control$rank_switch) && rank_x_pos != p) {
     return(fail("rank_unresolved",
       rank_x_pos = rank_x_pos,
       min_pos_response = min(y_scaled[y_scaled > 0])
     ))
   }
-  candidates <- list()
-  labels <- character(0)
-  if (!is.null(start)) {
-    candidates <- c(candidates, list(start))
-    labels <- c(labels, "supplied")
+  intercept_start <- if (mean(y_scaled) > 0) {
+    list(c(log(mean(y_scaled)), rep(0, p - 1L)))
+  } else {
+    list()
   }
-  if (length(fallback_starts) > 0L) {
-    candidates <- c(candidates, fallback_starts)
-    labels <- c(labels, rep("fallback", length(fallback_starts)))
+  groups <- list(
+    supplied_start = if (is.null(start)) list() else list(start),
+    fallback_starts = fallback_starts,
+    intercept_only = intercept_start,
+    glm_default = list(NULL)
+  )
+  sources <- c(
+    supplied_start = "supplied",
+    fallback_starts = "fallback",
+    intercept_only = "intercept_only",
+    glm_default = "glm_default"
+  )
+  policy <- strsplit(control$fallback_order, ",", fixed = TRUE)[[1L]]
+  if (!setequal(policy, names(groups)) || anyDuplicated(policy)) {
+    stop("PPML fallback_order must name each supported start group once")
   }
-  if (mean(y_scaled) > 0) {
-    candidates <- c(candidates, list(c(log(mean(y_scaled)), rep(0, p - 1L))))
-    labels <- c(labels, "intercept_only")
-  }
-  candidates <- c(candidates, list(NULL))
-  labels <- c(labels, "glm_default")
+  candidates <- unlist(groups[policy], recursive = FALSE)
+  labels <- unlist(lapply(policy, function(name) {
+    rep(sources[[name]], length(groups[[name]]))
+  }), use.names = FALSE)
   attempts <- list()
   last <- list(
     warnings = character(0), messages = character(0),
@@ -92,7 +102,7 @@ logvar_ppml_fit_response <- function(y, x_mat, start = NULL,
       last$error_class <- "invalid_start"
       next
     }
-    run <- logvar_ppml_run(cand, y_scaled, x_mat)
+    run <- logvar_ppml_run(cand, y_scaled, x_mat, control)
     last$warnings <- run$warnings
     last$messages <- run$messages
     if (is.null(run$fit)) {
@@ -103,7 +113,7 @@ logvar_ppml_fit_response <- function(y, x_mat, start = NULL,
       last$error_class <- "fit_error"
       next
     }
-    acc <- logvar_ppml_accept(run$fit, y_scaled, x_mat)
+    acc <- logvar_ppml_accept(run$fit, y_scaled, x_mat, control)
     attempts <- c(attempts, list(list(
       source = labels[i],
       error_class = if (acc$accepted) NA_character_ else acc$reason

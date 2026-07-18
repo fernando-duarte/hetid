@@ -11,13 +11,13 @@
 # Reuses logvar_fitted_vol_data / _render / _path. Run via run_pipeline.R after
 # run.R.
 
-source(paper_path("log_variance", "figures", "fitted_volatility", "envelope.R"))
-source(paper_path("log_variance", "figures", "fitted_volatility", "plot.R"))
+paper_source_once(paper_path("log_variance", "figures", "fitted_volatility", "envelope.R"))
+paper_source_once(paper_path("log_variance", "figures", "fitted_volatility", "plot.R"))
 
 if (exists("log_var_eq_lad")) {
   lad_vol_est <- log_var_eq_lad$estimator
   lad_vol_tau <- set_id_mean_eq$tau_baseline
-  lad_vol_key <- sprintf("%.17g", lad_vol_tau)
+  lad_vol_key <- paper_tau_key(lad_vol_tau)
   lad_vol_b_tab <- mean_eq_bounds_tau[[lad_vol_key]]
   stopifnot(!is.null(lad_vol_b_tab))
   lad_vol_qs <- tau_quadratic_system(
@@ -33,9 +33,12 @@ if (exists("log_var_eq_lad")) {
   # sits inside the hull by construction
   lad_vol_grid <- logvar_coarsen_grid(
     logvar_feasible_grid(
-      lad_vol_qs, lad_vol_b_tab$set_lower, lad_vol_b_tab$set_upper, 31L
+      lad_vol_qs,
+      lad_vol_b_tab$set_lower,
+      lad_vol_b_tab$set_upper,
+      LOGVAR_SEARCH_CONTROL$fitted_lad_grid_n
     ),
-    3000L
+    LOGVAR_SEARCH_CONTROL$fitted_lad_grid_cap
   )
   stopifnot(nrow(lad_vol_grid) > 0L)
   lad_vol_bpoint <- set_id_mean_eq$theta_table$point
@@ -83,6 +86,8 @@ if (exists("log_var_eq_lad")) {
     metadata = list(
       estimator = "lad", sample_id = log_var_eq_lad$sample_id,
       tau = lad_vol_tau, response_scale = "log", grid_only = TRUE,
+      grid_n = LOGVAR_SEARCH_CONTROL$fitted_lad_grid_n,
+      grid_cap = LOGVAR_SEARCH_CONTROL$fitted_lad_grid_cap,
       estimand = paste(
         "fitted conditional median absolute value of the consumption-growth",
         "structural residual"
@@ -90,7 +95,7 @@ if (exists("log_var_eq_lad")) {
       envelope = "grid-sampled inner hull of the fitted median-|residual| path"
     )
   )
-  lad_vol_path <- logvar_fitted_vol_path(out_dir, "lad")
+  lad_vol_path <- logvar_fitted_vol_path("lad")
   logvar_fitted_vol_render(lad_vol_envelope, lad_vol_path)
   lad_vol_envelope$output_path <- lad_vol_path
   log_var_eq_fitted_volatility_lad <- lad_vol_envelope

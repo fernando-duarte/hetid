@@ -8,50 +8,9 @@
 # and stability-pair check live in solver_result.R. Sourced
 # by the solver before the fit.
 
-# Upper Cholesky of X'X, recomputed only when the constructor passes none, so the
-# factor-once contract is enforced by the signature rather than by convention.
-hv_chol_xx <- function(x_mat, chol_xx) {
-  if (is.null(chol_xx)) chol(crossprod(x_mat)) else chol_xx
-}
-
-# Solve (X'X) d = m from the upper factor R (R'R = X'X) with triangular solves
-# only, mirroring the Harvey no-LU convention.
-hv_chol_solve <- function(chol_xx, m) {
-  backsolve(chol_xx, forwardsolve(chol_xx, m, upper.tri = TRUE, transpose = TRUE))
-}
-
-# One guarded evaluation at theta: returns NULL on any nonfinite required
-# quantity (a hard trial failure), else the safe ratio, criterion, moment, and
-# scaled score. The ratio's positive rows may be Inf; that is caught here.
-hv_eval <- function(theta, y, x_mat, pos, col_abs) {
-  if (!all(is.finite(theta))) {
-    return(NULL)
-  }
-  eta <- drop(x_mat %*% theta)
-  # a finite eta can still overflow the fitted variance mu = exp(eta); reject
-  # it as a hard trial failure so the finite strictly-positive-variance
-  # invariant holds at every iterate, not only at the accepted fit
-  if (!all(is.finite(eta)) || any(eta > log(.Machine$double.xmax))) {
-    return(NULL)
-  }
-  # Unwrapped: the ratio's only condition is its y precondition, and every path
-  # into hv_eval has already screened y at least as strictly -- the solver at its
-  # door, hv_precheck_pair into an "invalid_response" record. y is fixed across a
-  # solve, so a catch here could only mask a caller that skipped that screen, and
-  # would report it as a per-trial failure rather than as the bad response it is.
-  r <- logvar_harvey_ratio(theta, y, x_mat)
-  if (!is.numeric(r) || length(r) != length(y) || anyNA(r) ||
-    !all(is.finite(r[pos]))) {
-    return(NULL)
-  }
-  q <- 0.5 * (sum(eta) + sum(r[pos]))
-  moment <- drop(crossprod(x_mat, r - 1))
-  score_norm <- max(abs(moment) / col_abs)
-  if (!is.finite(q) || !is.finite(score_norm)) {
-    return(NULL)
-  }
-  list(theta = theta, eta = eta, r = r, q = q, moment = moment, score_norm = score_norm)
-}
+paper_source_once(paper_path(
+  "log_variance", "estimators", "harvey", "solver_primitives.R"
+))
 
 # Backtracking line search along dir from cur: accept a strict criterion
 # decrease or, on a criterion tie, only a scaled-score improvement past the
@@ -63,18 +22,22 @@ hv_eval <- function(theta, y, x_mat, pos, col_abs) {
 # check, not descent alone, decides convergence). The mandatory strict score
 # progress keeps every tie acceptance monotone in the score, so the search
 # cannot cycle. Returns NULL (stall) after 30 halvings with no acceptance.
-hv_line_search <- function(cur, dir, y, x_mat, pos, col_abs) {
+hv_line_search <- function(
+  cur, dir, y, x_mat, pos, col_abs,
+  control = LOGVAR_HARVEY_CONTROL
+) {
   step <- 1
-  q_noise <- 4 * .Machine$double.eps *
+  q_noise <- control$q_noise_multiplier * .Machine$double.eps *
     (1 + sum(abs(cur$eta)) + sum(cur$r[pos]))
-  for (halves in 0:30) {
+  for (halves in 0:control$line_search_halvings) {
     trial <- hv_eval(cur$theta + step * dir, y, x_mat, pos, col_abs)
     if (!is.null(trial)) {
       if (trial$q < cur$q) {
         return(list(eval = trial, halves = halves))
       }
       if (abs(trial$q - cur$q) <= q_noise) {
-        margin <- 10 * .Machine$double.eps * max(1, cur$score_norm)
+        margin <- control$score_progress_multiplier *
+          .Machine$double.eps * max(1, cur$score_norm)
         if (cur$score_norm - trial$score_norm > margin) {
           return(list(eval = trial, halves = halves))
         }
@@ -95,13 +58,16 @@ hv_line_search <- function(cur, dir, y, x_mat, pos, col_abs) {
 # (or hits the cap) on the estimation sample's heavy-tailed identified-set
 # responses -- the plan deferred it on the premise that scoring converges in a
 # handful of iterations, which the real data falsifies.
-hv_newton_dir <- function(cur, x_mat) {
+hv_newton_dir <- function(
+  cur, x_mat, control = LOGVAR_HARVEY_CONTROL
+) {
   obs <- crossprod(x_mat, cur$r * x_mat)
   if (!all(is.finite(obs))) {
     return(NULL)
   }
   dg <- sqrt(diag(obs))
-  if (any(!is.finite(dg)) || any(dg <= 0) || rcond(obs / tcrossprod(dg)) < 1e-12) {
+  if (any(!is.finite(dg)) || any(dg <= 0) ||
+    rcond(obs / tcrossprod(dg)) < control$newton_rcond_tol) {
     return(NULL)
   }
   r_chol <- tryCatch(chol(obs), error = function(cond) NULL)
@@ -118,18 +84,28 @@ hv_newton_dir <- function(cur, x_mat) {
 # stalls, converging only on a passed score plus a relative change. maxit is a
 # safety ceiling: Newton reaches score 1e-8 in a handful of iterations, but the
 # Fisher fallback on a pathological point may need many more.
-hv_scoring <- function(cur, y, x_mat, pos, col_abs, chol_xx, tol_score = 1e-8,
-                       maxit = 1000L) {
+hv_scoring <- function(
+  cur, y, x_mat, pos, col_abs, chol_xx,
+  control = LOGVAR_HARVEY_CONTROL
+) {
+  tol_score <- control$score_tol
+  maxit <- control$maxit
   if (cur$score_norm <= tol_score) {
     return(list(eval = cur, iters = 0L, halves = 0L, status = "converged"))
   }
   total_halves <- 0L
   for (it in seq_len(maxit)) {
-    dir_n <- hv_newton_dir(cur, x_mat)
-    ls <- if (!is.null(dir_n)) hv_line_search(cur, dir_n, y, x_mat, pos, col_abs) else NULL
+    dir_n <- hv_newton_dir(cur, x_mat, control)
+    ls <- if (!is.null(dir_n)) {
+      hv_line_search(cur, dir_n, y, x_mat, pos, col_abs, control)
+    } else {
+      NULL
+    }
     if (is.null(ls)) {
       dir_f <- hv_chol_solve(chol_xx, cur$moment)
-      ls <- hv_line_search(cur, dir_f, y, x_mat, pos, col_abs)
+      ls <- hv_line_search(
+        cur, dir_f, y, x_mat, pos, col_abs, control
+      )
     }
     if (is.null(ls)) {
       return(list(
@@ -139,8 +115,10 @@ hv_scoring <- function(cur, y, x_mat, pos, col_abs, chol_xx, tol_score = 1e-8,
     }
     total_halves <- total_halves + ls$halves
     new <- ls$eval
-    rel_q <- abs(new$q - cur$q) <= 1e-10 * max(1, abs(new$q))
-    rel_t <- max(abs(new$theta - cur$theta)) <= 1e-10 * max(1, max(abs(new$theta)))
+    rel_q <- abs(new$q - cur$q) <=
+      control$rel_change_tol * max(1, abs(new$q))
+    rel_t <- max(abs(new$theta - cur$theta)) <=
+      control$rel_change_tol * max(1, max(abs(new$theta)))
     if (new$score_norm <= tol_score && (rel_q || rel_t)) {
       return(list(eval = new, iters = it, halves = total_halves, status = "converged"))
     }
@@ -153,7 +131,10 @@ hv_scoring <- function(cur, y, x_mat, pos, col_abs, chol_xx, tol_score = 1e-8,
 # finite strictly positive variance and a diagonally-normalized information rcond
 # (scale-invariant, still catches genuine rank deficiency); store the observed
 # information. NULL rejects.
-hv_post_stop <- function(theta, y, x_mat, pos, col_abs) {
+hv_post_stop <- function(
+  theta, y, x_mat, pos, col_abs,
+  control = LOGVAR_HARVEY_CONTROL
+) {
   ev <- hv_eval(theta, y, x_mat, pos, col_abs)
   if (is.null(ev)) {
     return(NULL)
@@ -170,7 +151,7 @@ hv_post_stop <- function(theta, y, x_mat, pos, col_abs) {
   info <- logvar_harvey_info(theta, y, x_mat)
   dg <- sqrt(diag(info))
   rc <- tryCatch(rcond(info / tcrossprod(dg)), error = function(cond) 0)
-  if (!is.finite(rc) || rc < 1e-10) {
+  if (!is.finite(rc) || rc < control$rcond_tol) {
     return(NULL)
   }
   list(eval = ev, info = info, rcond = rc)

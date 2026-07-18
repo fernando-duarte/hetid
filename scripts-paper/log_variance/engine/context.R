@@ -1,10 +1,6 @@
-# Context and budget services for the estimator-generic set engine
-# (api.R): the shared per-phase evaluation budget, the exact-b
-# memoization cache around fit_at_b, the versioned hook context handed to
-# analyze_domain phases, arity adapters for legacy hooks, and the figure-path
-# and nesting helpers shared by the bounds-by-tau drivers. Definitions only;
-# sourced by api.R.
-
+# Context and budget services for the estimator-generic set engine: budgets,
+# exact-b caching, hook context/adapters, manifest paths, and nesting checks.
+# Definitions only; sourced by api.R.
 # reference-semantics budget shared across engine calls: a global fit-eval
 # cap, optional per-phase caps, and a named counter per service phase
 logvar_budget_state <- function(max_fit_evals = Inf, phase_caps = NULL) {
@@ -22,19 +18,20 @@ logvar_budget_state <- function(max_fit_evals = Inf, phase_caps = NULL) {
   bs$n_failed <- 0L
   bs
 }
-
 # exhaustion is a classed condition the engine catches at the tau level:
 # fail closed with full disclosure, never a silently narrowed range
 logvar_budget_stop <- function(phase, reason) {
-  stop(structure(
-    class = c("logvar_budget_exhausted", "error", "condition"),
-    list(
-      message = sprintf("fit budget exhausted (%s): %s", phase, reason),
-      call = NULL, phase = phase
-    )
-  ))
+  paper_stop_condition(
+    "logvar_budget_exhausted",
+    "logvar_engine_error",
+    message = sprintf(
+      "fit budget exhausted (%s): %s",
+      phase,
+      reason
+    ),
+    fields = list(phase = phase)
+  )
 }
-
 # a cache environment belongs to one estimator, sample, and spec: stamped on
 # first use, asserted ever after, so a caller cannot share one across any of
 # the three (the spec-keyed cache requirement, enforced not encoded)
@@ -52,14 +49,10 @@ logvar_cache_bind <- function(cache, meta) {
   )
   cache
 }
-
 # full-precision cache key, insensitive to options(digits)
 logvar_b_key <- function(b) {
-  paste(formatC(unname(b), digits = 17, format = "fg", flag = "#"),
-    collapse = "|"
-  )
+  paste(paper_numeric_key(unname(b)), collapse = "|")
 }
-
 # cached evaluator around est$fit_at_b: debits the named phase only on a
 # cache miss, enforces the global and per-phase caps, and tallies failures;
 # use_cache = FALSE (cold-start replication) always refits and never stores
@@ -102,11 +95,12 @@ logvar_make_evaluator <- function(est, cache, bs) {
 # the normalized constraint values (house hin <= 0, grid-admission scale)
 logvar_make_ctx <- function(evaluate_fit, qs, delta, omega, cache, bs) {
   check_feasible <- function(b) {
-    hin <- vapply(seq_along(qs$A_i), function(i) {
-      (drop(t(b) %*% qs$A_i[[i]] %*% b) +
-        sum(qs$b_i[[i]] * b) + qs$c_i[i]) / omega[i]
-    }, numeric(1))
-    list(feasible = max(hin) <= 1e-10, max_violation = max(hin), hin = hin)
+    hin <- quadratic_constraint_values(b, qs, omega)
+    list(
+      feasible = max(hin) <= PAPER_QUADRATIC_CONTROL$admission_tolerance,
+      max_violation = max(hin),
+      hin = hin
+    )
   }
   list(
     schema_version = "1.0.0", evaluate_fit = evaluate_fit,
@@ -146,7 +140,8 @@ logvar_engine_apply_selector <- function(sel_fn, b_feas, max_grid_points) {
     stop("grid_selector invented rows outside the feasible grid")
   }
   list(grid = g, traversal = sel$traversal, info = list(
-    selector_id = sel$selector_id, n_selector_input = nrow(b_feas),
+    selector_id = sel$selector_id, traversal = sel$traversal,
+    n_selector_input = nrow(b_feas),
     n_selector_output = nrow(g)
   ))
 }
@@ -163,10 +158,12 @@ logvar_call_sides <- function(hook, qs, b_tab, scan, ctx) {
   }
 }
 
-# estimator-stamped figure path so two estimators' figures coexist
-logvar_bounds_tau_path <- function(out_dir, metadata) {
-  basename <- sprintf("log_var_eq_bounds_tau_%s.svg", metadata$estimator)
-  artifact_path(artifact_id(basename))
+# Manifest-owned estimator variant path.
+logvar_bounds_tau_path <- function(metadata) {
+  artifact_variant_path(
+    "logvar_bounds_tau",
+    metadata$estimator
+  )
 }
 
 # nesting check over engine-computed grid rows: as tau grows a certified
@@ -174,7 +171,10 @@ logvar_bounds_tau_path <- function(out_dir, metadata) {
 # beyond tol * max(1, |endpoint|); comparisons run per coefficient and side
 # over consecutive retained (bounded) rows, so they span unreliable or
 # unbounded gaps; returns the violation rows
-logvar_check_nesting <- function(rows, tol = 1e-6) {
+logvar_check_nesting <- function(
+  rows,
+  tol = LOGVAR_SEARCH_CONTROL$nesting_rtol
+) {
   viol <- data.frame(
     coef = character(0), side = character(0), tau = numeric(0),
     violation = numeric(0)

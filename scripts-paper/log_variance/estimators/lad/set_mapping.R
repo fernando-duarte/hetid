@@ -21,18 +21,26 @@ logvar_lad_gate_repolish <- function(est, qs, b_tab, tau, cfg) {
     logvar_engine_set_at_tau(
       est, qs, b_tab,
       b_seed = cfg$b_seed, max_grid_points = cfg$grid_cap,
-      max_fit_evals = cfg$fit_budget, starts_per_side = 5L, cache = gcache,
-      budget_state = gbs, cold_start_check = TRUE, tau = tau
+      max_fit_evals = cfg$fit_budget,
+      starts_per_side = LOGVAR_SEARCH_CONTROL$audit_starts_per_side,
+      cache = gcache,
+      budget_state = gbs,
+      cold_start_check = LOGVAR_SEARCH_CONTROL$cold_start_check,
+      tau = tau
     ),
     error = function(e) NULL
   )
 }
 
-# Compare bounded sides at 1e-4 relative. A gate side strictly more extreme yields
-# a better candidate arg (fed back through the engine); a bounded side the gate
+# Compare bounded sides at the shared relative tolerance. A gate side strictly
+# more extreme yields a better candidate arg; a bounded side the gate
 # reproduces materially less extreme, or fails to hold bounded, is sensitive and is
 # demoted. A NULL gate cannot verify anything, so every bounded side is sensitive.
-logvar_lad_gate_compare <- function(primary, gate, tol = 1e-4) {
+logvar_lad_gate_compare <- function(
+  primary,
+  gate,
+  tol = LOGVAR_SEARCH_CONTROL$endpoint_agreement_rtol
+) {
   ps <- primary$schema
   tag <- function(coef, side) sprintf("%s:%s", coef, if (side == "lower") "min" else "max")
   better <- list()
@@ -105,8 +113,13 @@ logvar_lad_map_tau <- function(est, qs, b_tab, tau, cfg, cache) {
     logvar_engine_set_at_tau(
       est, qs, b_tab,
       b_seed = cfg$b_seed, max_grid_points = cfg$grid_cap,
-      max_fit_evals = cfg$fit_budget, starts_per_side = 3L, cache = cache,
-      budget_state = bs, extra_starts = extra, cold_start_check = TRUE, tau = tau
+      max_fit_evals = cfg$fit_budget,
+      starts_per_side = LOGVAR_SEARCH_CONTROL$primary_starts_per_side,
+      cache = cache,
+      budget_state = bs,
+      extra_starts = extra,
+      cold_start_check = LOGVAR_SEARCH_CONTROL$cold_start_check,
+      tau = tau
     )
   }
   res <- run(NULL)

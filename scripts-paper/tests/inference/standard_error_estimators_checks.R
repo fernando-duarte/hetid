@@ -16,20 +16,29 @@ seu_g <- matrix(
 )
 
 check("se norm_inv inverts an SPD bread (m %*% inv == I)", {
-  inv <- logvar_se_norm_inv(seu_m)
+  inv <- logvar_se_norm_inv(seu_m, LOGVAR_PPML_CONTROL$rcond_tol)
   !is.null(inv) && seu_d(seu_m %*% inv, diag(3)) < 1e-10
 })
 check("se norm_inv accepts a column-rescaled bread a raw rcond would reject", {
   s <- diag(c(1, 1e6, 1))
   m <- s %*% seu_m %*% s # raw rcond(m) ~ 1e-12, normalized is well conditioned
-  inv <- logvar_se_norm_inv(m)
+  inv <- logvar_se_norm_inv(m, LOGVAR_PPML_CONTROL$rcond_tol)
   rcond(m) < 1e-10 && !is.null(inv) && seu_d(m %*% inv, diag(3)) < 1e-6
 })
 check("se norm_inv returns NULL on a singular bread", {
-  is.null(logvar_se_norm_inv(matrix(c(1, 1, 1, 1), 2)))
+  is.null(logvar_se_norm_inv(
+    matrix(c(1, 1, 1, 1), 2),
+    LOGVAR_PPML_CONTROL$rcond_tol
+  ))
 })
 check("se norm_inv returns NULL on a non-finite bread", {
-  is.null(logvar_se_norm_inv(matrix(c(1, NA, NA, 1), 2)))
+  is.null(logvar_se_norm_inv(
+    matrix(c(1, NA, NA, 1), 2),
+    LOGVAR_PPML_CONTROL$rcond_tol
+  ))
+})
+check("se norm_inv obeys the supplied conditioning tolerance", {
+  is.null(logvar_se_norm_inv(seu_m, 1))
 })
 
 check("se bartlett meat at lag 0 is the outer-product meat", {

@@ -5,6 +5,8 @@
 # set_id_mean_eq result list at call time. with_ci selects the closing
 # paragraph for the conservative (FALSE) or inference (TRUE) variant.
 
+paper_source_once(paper_path("support", "reporting", "inference.R"))
+
 build_structural_notes <- function(with_ci = FALSE) {
   n_obs <- set_id_mean_eq$sample$n
   span <- paste(format(set_id_mean_eq$sample$span), collapse = "--")
@@ -72,9 +74,11 @@ build_structural_notes <- function(with_ci = FALSE) {
     "The OLS column treats $PC_{N,t+1}$ as exogenous: a single least-squares",
     "fit of the equation on the estimation sample, with its $R^2$ and sample",
     "size $N$. Numbers in parentheses below the OLS estimates are $t$",
-    "statistics based on Newey--West heteroskedasticity- and",
-    "autocorrelation-consistent standard errors with 4 lags (Bartlett kernel,",
-    "no prewhitening); $^{***}p<0.01$, $^{**}p<0.05$, $^{*}p<0.10$.",
+    sprintf(
+      "statistics based on %s; %s.",
+      paper_newey_west_description(PAPER_REPORTING_CONTROL$mean_ols),
+      paper_significance_legend("descending_p")
+    ),
     "The identification columns treat $PC_{N,t+1}$ as endogenous,",
     sprintf("with %s as the single heteroskedasticity instrument $Z$", z_desc),
     "(Lewbel 2012). At $\\tau{=}0$ the moment conditions",

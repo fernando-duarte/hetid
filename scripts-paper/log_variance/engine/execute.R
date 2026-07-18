@@ -42,7 +42,8 @@ logvar_engine_run <- function(est, qs, b_tab, b_seed, grid_n, grid_floor,
   use_fast <- !is.null(est$scan_grid)
   if (!use_fast && !identical(meta$traversal, "lattice") &&
     !identical(sel_traversal, "as_selected") &&
-    is.null(max_grid_points) && nrow(b_feas) > 5000L) {
+    is.null(max_grid_points) &&
+    nrow(b_feas) > LOGVAR_SEARCH_CONTROL$nearest_neighbor_limit) {
     stop(
       "generic nearest-neighbor scan over ", nrow(b_feas), " points; set ",
       "max_grid_points (deterministic coarsening) or metadata$traversal ",
@@ -93,7 +94,8 @@ logvar_engine_run <- function(est, qs, b_tab, b_seed, grid_n, grid_floor,
         NULL
       },
       pool_k = starts_per_side,
-      pool_sep = 0.05 * sqrt(sum((b_tab$set_upper - b_tab$set_lower)^2))
+      pool_sep = LOGVAR_SEARCH_CONTROL$start_separation_fraction *
+        sqrt(sum((b_tab$set_upper - b_tab$set_lower)^2))
     )
   }
   st$n_fail <- if (is.null(scan$n_fit_failures)) 0L else scan$n_fit_failures

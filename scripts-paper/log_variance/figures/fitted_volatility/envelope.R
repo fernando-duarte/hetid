@@ -53,13 +53,16 @@ logvar_fitted_vol_data <- function(qtr, schema, point_eta) {
   )
 }
 
-logvar_fitted_vol_envelope <- function(est, qtr, x_mat, qs, b_tab,
-                                       b_seed, b_point, tau,
-                                       source_cache = NULL,
-                                       expected_sample_id = NULL,
-                                       max_grid_points = NULL,
-                                       max_fit_evals = Inf,
-                                       starts_per_side = 1L) {
+logvar_fitted_vol_envelope <- function(
+  est, qtr, x_mat, qs, b_tab,
+  b_seed, b_point, tau,
+  source_cache = NULL,
+  expected_sample_id = NULL,
+  max_grid_points = NULL,
+  max_fit_evals = Inf,
+  starts_per_side =
+    LOGVAR_SEARCH_CONTROL$fitted_vol_starts_per_side
+) {
   stopifnot(
     length(qtr) == nrow(x_mat), !anyNA(qtr), !anyDuplicated(qtr),
     identical(order(qtr), seq_along(qtr)), is.finite(tau), tau >= 0,
@@ -78,7 +81,8 @@ logvar_fitted_vol_envelope <- function(est, qtr, x_mat, qs, b_tab,
     b_seed = b_seed,
     max_grid_points = max_grid_points, max_fit_evals = max_fit_evals,
     starts_per_side = starts_per_side, cache = cache, budget_state = budget,
-    cold_start_check = TRUE, tau = tau
+    cold_start_check = LOGVAR_SEARCH_CONTROL$cold_start_check,
+    tau = tau
   )
   stopifnot(identical(result$schema$coef, labels))
   point_eta <- logvar_fitted_vol_point(adapter, b_point, length(qtr))
@@ -86,7 +90,8 @@ logvar_fitted_vol_envelope <- function(est, qtr, x_mat, qs, b_tab,
   two_sided <- data$lower_status == "bounded" &
     data$upper_status == "bounded"
   has_point <- is.finite(data$volatility_point)
-  tol <- 1e-6 * pmax(1, abs(data$volatility_point))
+  tol <- LOGVAR_SEARCH_CONTROL$point_containment_rtol *
+    pmax(1, abs(data$volatility_point))
   stopifnot(all(
     data$volatility_point[two_sided & has_point] >=
       data$volatility_lower[two_sided & has_point] - tol[two_sided & has_point] &

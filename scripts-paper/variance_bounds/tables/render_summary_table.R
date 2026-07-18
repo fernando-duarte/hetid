@@ -2,7 +2,7 @@
 # standalone document, then compile the standalone PDF. Mirrors the write/compile
 # tail of render_variance_share_table.R.
 
-source(paper_path("variance_bounds", "tables", "build_summary.R"))
+paper_source_once(paper_path("variance_bounds", "tables", "build_summary.R"))
 
 variance_bounds_table <- variance_bounds_table_lines(variance_bounds_summary)
 write_latex_table(

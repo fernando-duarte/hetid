@@ -14,6 +14,10 @@
 # sourced by the log-OLS orchestrator after the profile-bound internals and by
 # tests/engine/test_residual_map.R.
 
+paper_source_once(paper_path(
+  "log_variance", "estimators", "controls.R"
+))
+
 # projection rows P = (R'R)^{-1} R' of the log-variance regression; row j
 # gives theta_hat_j(b) = P[j, ] %*% log((w1 - W2 b)^2)
 logvar_projection <- function(pcr) {
@@ -67,7 +71,8 @@ logvar_crossing_census <- function(qs, lower, upper, w1, w2) {
     }
     # relative slack biased toward flagging a crossing, so roundoff at the
     # functional endpoints never certifies a false negative
-    slack <- 1e-8 * max(1, abs(w1[t_row]))
+    slack <- PAPER_QUADRATIC_CONTROL$crossing_range_rtol *
+      max(1, abs(w1[t_row]))
     fmin <- solve_linear_functional_bound(qs, w2[t_row, ], "min")
     if (!(fmin$bounded && fmin$valid)) {
       unresolved <- c(unresolved, t_row)
@@ -87,18 +92,18 @@ logvar_crossing_census <- function(qs, lower, upper, w1, w2) {
 # axis-product grid over the per-coefficient bounding box, filtered to the
 # points satisfying every quadratic constraint at a roundoff-scale normalized
 # tolerance (a hard g <= 0 would shed exact-boundary lattice points of a thin
-# set; 1e-10 is far inside the solvers' 1e-4 feasibility certificate)
+# set; the admission tolerance is stricter than the solver certificate)
 logvar_feasible_grid <- function(qs, lower, upper, n_axis) {
   axes <- Map(function(lo, hi) seq(lo, hi, length.out = n_axis), lower, upper)
   b_grid <- as.matrix(expand.grid(axes, KEEP.OUT.ATTRS = FALSE))
   dimnames(b_grid) <- NULL
   omega <- .derive_constraint_scales(qs, .derive_theta_scale(qs))
-  feas <- rep(TRUE, nrow(b_grid))
-  for (i in seq_along(qs$A_i)) {
-    g <- rowSums((b_grid %*% qs$A_i[[i]]) * b_grid) +
-      drop(b_grid %*% qs$b_i[[i]]) + qs$c_i[i]
-    feas <- feas & (g <= 1e-10 * omega[i])
-  }
+  values <- quadratic_constraint_values(b_grid, qs, omega)
+  feas <- apply(
+    values <= PAPER_QUADRATIC_CONTROL$admission_tolerance,
+    1L,
+    all
+  )
   b_grid[feas, , drop = FALSE]
 }
 
@@ -109,7 +114,13 @@ logvar_feasible_grid <- function(qs, lower, upper, n_axis) {
 # value (a zero-weight times log(0) coincidence at a lattice point) is
 # treated as missing; +/-Inf values are kept, since divergent sides are
 # handled by the caller's crossing bookkeeping.
-logvar_grid_scan <- function(b_feas, w1, w2, proj, chunk = 5000L) {
+logvar_grid_scan <- function(
+  b_feas,
+  w1,
+  w2,
+  proj,
+  chunk = LOGVAR_SEARCH_CONTROL$scan_chunk_size
+) {
   stopifnot(nrow(b_feas) > 0L)
   n_coef <- nrow(proj)
   best_min <- rep(Inf, n_coef)
@@ -149,4 +160,4 @@ logvar_grid_scan <- function(b_feas, w1, w2, proj, chunk = 5000L) {
 # logvar_polish_bound wrapper) lives in its own module so this file stays
 # below the repository line cap; sourced here so existing callers see the
 # same definitions
-source(paper_path("log_variance", "core", "endpoint_polish.R"))
+paper_source_once(paper_path("log_variance", "core", "endpoint_polish.R"))

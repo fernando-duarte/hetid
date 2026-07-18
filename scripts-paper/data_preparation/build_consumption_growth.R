@@ -5,7 +5,7 @@
 # Run via run_pipeline.R, which defines the pull window and patches the FRED download.
 
 gr1_pcecc96 <- tidyquant::tq_get(
-  "PCECC96",
+  PAPER_ANALYSIS_CONTRACT$input$consumption$fred_series,
   get = "economic.data",
   from = fred_from,
   to = fred_to

@@ -3,15 +3,8 @@
 # U_i = (1/4) * c_hat_i * (k_hat_i + k2_hat_i) is computed by compute_variance_bound
 # from the ACM yields and term premia alone; every intermediate is internal.
 
-acm <- hetid::extract_acm_data(
-  data_types = c("yields", "term_premia"),
-  maturities = all_mats,
-  frequency = "quarterly",
-  auto_download = FALSE,
-  source = "auto"
-)
-yields <- acm[, paste0("y", all_mats)]
-term_premia <- acm[, paste0("tp", all_mats)]
+yields <- quarterly_acm_inputs$yields
+term_premia <- quarterly_acm_inputs$term_premia
 
 # Valid bound indices are positive multiples of the quarterly step up to the
 # step-trimmed maximum: seq(3, 117, 3) = 39 maturities under the quarterly clock.
@@ -41,4 +34,4 @@ variance_bounds_summary <- c(
 )
 
 # the ACM inputs were only function arguments here
-rm(acm, yields, term_premia, variance_bounds, vb_mats)
+rm(yields, term_premia, variance_bounds, vb_mats)

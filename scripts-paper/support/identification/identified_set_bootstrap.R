@@ -77,7 +77,13 @@ set_id_boot_draw <- function(dat, spec) {
     )
   })
   coarse <- sweep_fixed_gamma(spec$gamma, est$moments, spec$tau_grid, "boot")
-  ts <- tau_star_fixed(spec$gamma, est$moments, coarse, iters = 15L)
+  ts <- tau_star_fixed(
+    spec$gamma,
+    est$moments,
+    coarse,
+    iters =
+      PAPER_INFERENCE_SEARCH_CONTROL$tau_star$bootstrap_bisection_iterations
+  )
   list(
     point = point, point_ok = !is.null(est$point0),
     bounds = bounds, tau_star = ts$tau_star, capped = ts$capped

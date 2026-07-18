@@ -1,7 +1,7 @@
 # Canonical joint-input identity and qtr-keyed alignment for the joint moment-
 # compatibility layer (joint-GMM, logvar-joint-gmm). logvar_joint_input_id hashes the
 # ordered (sample_id, qtr, aligned z, gamma, display-tau, mean-system geometry) tuple
-# with the house tempfile/tools::md5sum pattern (mirrors logvar_joint_decision_spec_id),
+# with paper_md5_rds (mirrors logvar_joint_decision_spec_id),
 # validating finiteness first so a nonfinite input stops rather than silently poisoning
 # the stamp. logvar_joint_align_inputs realigns z to the qtr order by key, never by row
 # position, asserting a one-to-one qtr join first. Definitions only; sourced by
@@ -10,13 +10,11 @@
 # Stop with a classed joint-identity error mirroring the house structured conditions so
 # callers can dispatch on the reason string.
 logvar_joint_identity_stop <- function(reason, detail = "") {
-  stop(structure(
-    class = c(reason, "logvar_joint_identity_error", "error", "condition"),
-    list(
-      message = if (nzchar(detail)) paste0(reason, ": ", detail) else reason,
-      call = NULL
-    )
-  ))
+  paper_stop_condition(
+    reason,
+    "logvar_joint_identity_error",
+    detail
+  )
 }
 
 # Flatten one mean-set quadratic system to its canonical numeric content and dimensions,
@@ -55,10 +53,7 @@ logvar_joint_input_id <- function(sample_id, qtr, z, gamma, tau, mean_systems) {
     z = as.numeric(z), z_dim = dim(z), gamma = as.numeric(gamma),
     gamma_dim = dim(gamma), tau = as.numeric(tau), mean_systems = ms_payload
   )
-  tmp <- tempfile(fileext = ".rds")
-  on.exit(unlink(tmp), add = TRUE)
-  saveRDS(payload, tmp, version = 3)
-  unname(tools::md5sum(tmp))
+  paper_md5_rds(payload)
 }
 
 # Realign z (whose rows are keyed by other_qtr) to the qtr order: assert each qtr appears

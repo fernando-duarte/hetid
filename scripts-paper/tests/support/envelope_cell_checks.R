@@ -33,7 +33,7 @@ ecc_env_frame <- function(ci_lo, ci_hi, side) {
 # tau = 0.05: coef1 two-sided, coef2 upper (unbounded lower). tau = 0.1: coef1
 # lower (unbounded upper), coef2 none (suppressed) -- exercises all four
 # envelope_cell forms through the real table-assembly path, per coef and tau.
-ecc_keys <- sprintf("%.17g", c(0.05, 0.1))
+ecc_keys <- vapply(c(0.05, 0.1), paper_tau_key, character(1))
 ecc_envelope <- stats::setNames(
   list(
     ecc_env_frame(c(-1.28, -Inf), c(-1.12, 0.21), c("two-sided", "upper")),

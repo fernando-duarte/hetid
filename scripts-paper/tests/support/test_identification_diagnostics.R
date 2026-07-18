@@ -2,19 +2,14 @@
 # Rscript scripts-paper/tests/support/test_identification_diagnostics.R
 
 source(file.path("scripts-paper", "config", "paths.R"))
-source(paper_path("support", "diagnostics", "identification_diagnostics.R"))
+paper_source_once(paper_path("support", "diagnostics", "identification_diagnostics.R"))
+paper_source_once(paper_path("support", "identification", "profile_solver_core.R"))
+paper_source_once(paper_path("support", "identification", "profile_bounds_api.R"))
 
-.pass <- 0L
-.fail <- 0L
-check <- function(label, condition) {
-  if (isTRUE(condition)) {
-    .pass <<- .pass + 1L
-    cat(sprintf("PASS  %s\n", label))
-  } else {
-    .fail <<- .fail + 1L
-    cat(sprintf("FAIL  %s\n", label))
-  }
-}
+paper_source_once(paper_path("tests", "support", "harness.R"))
+.test <- paper_test_harness()
+check <- .test$check
+diagnostics_control <- PAPER_HETEROSKEDASTICITY_CONTROL
 
 # Scalar LM helpers preserve their documented auxiliary-regression formulas.
 set.seed(19)
@@ -65,25 +60,58 @@ check(
 w2_regime_b <- cbind(0.5 * z_mat[, 1L] + rnorm(100, sd = 0.5), rnorm(100))
 check(
   "residuals projected on instruments clear the fitted-value gate",
-  w2_refit_fitted_ratio(w2_regime_b, z_mat) > 1e-3
+  w2_refit_fitted_ratio(w2_regime_b, z_mat) >
+    diagnostics_control$fitted_sd_ratio_cutoff
 )
 config_a <- select_diagnostics_suite(w2_regime_a, z_mat)
+expected_gq <- colnames(z_mat)[diagnostics_control$gq_deflator_position]
 check(
   "orthogonal regime excludes Anscombe and aims GQ at the second instrument",
   config_a$regime == "A" && !"Anscombe" %in% config_a$suite_tests &&
-    config_a$gq_deflator == colnames(z_mat)[2L]
+    config_a$gq_deflator == expected_gq
 )
 config_b <- select_diagnostics_suite(w2_regime_b, z_mat)
 check(
   "projected regime includes Anscombe and aims GQ at the second instrument",
   config_b$regime == "B" && "Anscombe" %in% config_b$suite_tests &&
-    config_b$gq_deflator == colnames(z_mat)[2L]
+    config_b$gq_deflator == expected_gq
 )
 z_one <- z_mat[, 1L, drop = FALSE]
 w2_one <- cbind(0.5 * z_one[, 1L] + rnorm(100, sd = 0.5), rnorm(100))
 check(
   "single-instrument suite aims GQ at the available instrument",
   select_diagnostics_suite(w2_one, z_one)$gq_deflator == colnames(z_one)[1L]
+)
+first_deflator_control <- diagnostics_control
+first_deflator_control$gq_deflator_position <- 1L
+check(
+  "the named GQ position policy controls deflator selection",
+  select_diagnostics_suite(
+    w2_regime_b,
+    z_mat,
+    first_deflator_control
+  )$gq_deflator == colnames(z_mat)[1L]
+)
+high_cutoff_control <- diagnostics_control
+high_cutoff_control$fitted_sd_ratio_cutoff <- 1
+check(
+  "the named fitted-ratio cutoff controls regime selection",
+  select_diagnostics_suite(
+    w2_regime_b,
+    z_mat,
+    high_cutoff_control
+  )$regime == "A"
+)
+
+diagnostics_source <- paste(readLines(
+  paper_path("support", "diagnostics", "identification_diagnostics.R"),
+  warn = FALSE
+), collapse = "\n")
+check(
+  "suite selection contains no private cutoff or GQ-position policy",
+  grepl("control\\$fitted_sd_ratio_cutoff", diagnostics_source) &&
+    grepl("control\\$gq_deflator_position", diagnostics_source) &&
+    !grepl("ratio > 1e-3|min\\(2L, ncol\\(z_mat\\)\\)", diagnostics_source)
 )
 
 # The joint-rank diagnostic preserves its moment, spectrum, and scaling contracts.
@@ -125,5 +153,7 @@ y2_deficient <- cbind(volatility * rnorm(n), volatility * rnorm(n), rnorm(n))
 rk_deficient <- rk_rank_test(y2_deficient, z)
 check("rank-deficient null is not rejected", rk_deficient$p > 0.05)
 
-cat(sprintf("\n%d passed, %d failed\n", .pass, .fail))
-if (.fail > 0L) quit(status = 1L)
+paper_source_once(paper_path("tests", "support", "quadratic_helper_checks.R"))
+paper_source_once(paper_path("tests", "support", "profile_classifier_checks.R"))
+
+.test$finish()

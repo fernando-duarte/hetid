@@ -71,7 +71,11 @@ logvar_engine_result_na <- function(labels, word, meta, tau, qs, omega,
 logvar_engine_cold_check <- function(meta, labels, lower, upper, arg_lo,
                                      arg_up, lower_unb, upper_unb,
                                      lo_unrel, up_unrel, evaluate_fit) {
-  rtol <- if (is.null(meta$cold_start_rtol)) 1e-8 else meta$cold_start_rtol
+  rtol <- if (is.null(meta$cold_start_rtol)) {
+    LOGVAR_SEARCH_CONTROL$cold_start_rtol_fallback
+  } else {
+    meta$cold_start_rtol
+  }
   records <- list()
   for (j in seq_along(labels)) {
     for (side in c("min", "max")) {
@@ -108,7 +112,24 @@ logvar_coarsen_grid <- function(b_feas, max_pts) {
 # candidate sits farther than sep from every accepted member, so a pool of
 # three is never three copies of one corner; the primary arg-extreme is the
 # first acceptance and is excluded from the returned pool
+logvar_point_precedes <- function(x, y) {
+  if (anyNA(y)) {
+    return(TRUE)
+  }
+  differing <- which(unname(x) != unname(y))
+  length(differing) > 0L && x[differing[1L]] < y[differing[1L]]
+}
+
 logvar_engine_scan_pools <- function(vals, pts, pool_k, sep) {
+  point_matrix <- do.call(rbind, pts)
+  rank_candidates <- function(value) {
+    order_args <- c(
+      list(value),
+      lapply(seq_len(ncol(point_matrix)), function(j) point_matrix[, j]),
+      list(method = "radix")
+    )
+    do.call(order, order_args)
+  }
   pick <- function(ord) {
     kept <- list()
     for (i in ord) {
@@ -121,7 +142,11 @@ logvar_engine_scan_pools <- function(vals, pts, pool_k, sep) {
   }
   n_coef <- ncol(vals)
   list(
-    arg_min_pool = lapply(seq_len(n_coef), function(j) pick(order(vals[, j]))),
-    arg_max_pool = lapply(seq_len(n_coef), function(j) pick(order(-vals[, j])))
+    arg_min_pool = lapply(seq_len(n_coef), function(j) {
+      pick(rank_candidates(vals[, j]))
+    }),
+    arg_max_pool = lapply(seq_len(n_coef), function(j) {
+      pick(rank_candidates(-vals[, j]))
+    })
   )
 }

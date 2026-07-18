@@ -83,8 +83,8 @@ check("hm_moment equals minus twice the score", safe({
 }))
 
 check("hm_normal log-chi-square gap equals -log2 - digamma(1/2)", safe({
-  abs(logvar_normal_lnchisq_gap - (-log(2) - digamma(0.5))) < 1e-12 &&
-    abs(logvar_normal_lnchisq_gap - 1.270362845) < 1e-9
+  abs(LOGVAR_NORMAL_LOG_SQUARE_GAP - (-log(2) - digamma(0.5))) < 1e-12 &&
+    abs(LOGVAR_NORMAL_LOG_SQUARE_GAP - 1.270362845) < 1e-9
 }))
 
 check("hm_objective adds only eta/2 on the zero row", safe({

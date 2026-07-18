@@ -2,19 +2,15 @@
 # Rscript scripts-paper/tests/support/test_statistics.R
 
 source(file.path("scripts-paper", "config", "paths.R"))
-source(paper_path("support", "statistics", "api.R"))
-
-.pass <- 0L
-.fail <- 0L
-check <- function(label, condition) {
-  if (isTRUE(condition)) {
-    .pass <<- .pass + 1L
-    cat(sprintf("PASS  %s\n", label))
-  } else {
-    .fail <<- .fail + 1L
-    cat(sprintf("FAIL  %s\n", label))
-  }
-}
+paper_source_once(paper_path("tests", "support", "harness.R"))
+.test <- paper_test_harness()
+check <- .test$check
+paper_source_once(paper_path("support", "statistics", "api.R"))
+paper_source_once(paper_path("config", "artifacts.R"))
+paper_source_once(paper_path("support", "latex", "table_environment.R"))
+paper_source_once(paper_path("log_variance", "tables", "panel_block.R"))
+paper_source_once(paper_path("log_variance", "tables", "console_formatting.R"))
+paper_source_once(paper_path("tests", "support", "reporting_checks.R"))
 
 # Moving blocks retain their requested length, range, and within-block order.
 set.seed(91)
@@ -110,5 +106,9 @@ check(
   is.character(missing_error) && grepl("x", missing_error, fixed = TRUE)
 )
 
-cat(sprintf("\n%d passed, %d failed\n", .pass, .fail))
-if (.fail > 0L) quit(status = 1L)
+paper_source_once(paper_path("tests", "support", "analysis_contract_checks.R"))
+paper_source_once(paper_path("tests", "support", "inference_control_checks.R"))
+paper_source_once(paper_path("tests", "support", "artifact_lifecycle_checks.R"))
+paper_source_once(paper_path("tests", "support", "shared_artifact_checks.R"))
+
+.test$finish()

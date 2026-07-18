@@ -8,8 +8,13 @@
 # re-polishes before any result ships. Console block in the driver helpers. Run
 # via run_pipeline.R after run_sets.R, before render_panels.R.
 
-source(paper_path("log_variance", "estimators", "harvey", "estimator.R"))
-source(paper_path("log_variance", "estimators", "harvey", "sensitivity_and_reporting.R"))
+paper_source_once(paper_path("log_variance", "estimators", "harvey", "estimator.R"))
+paper_source_once(paper_path(
+  "log_variance",
+  "estimators",
+  "harvey",
+  "sensitivity_and_reporting.R"
+))
 
 # one preparation path: validate the frozen inputs and the mean-zero PC_R
 # convention, then derive the anchor/seed base at the Harvey grid cap; the
@@ -27,9 +32,7 @@ anchor_b <- if (point_feasible) b_point else grid_base[1, ]
 
 # naive reference squared residuals (matched by qtr), shared by the reference
 # column and the precheck's reference pair
-ref_rows <- match(qtr, set_id_mean_eq$qtr)
-stopifnot(!anyNA(ref_rows))
-ref_resid <- as.numeric(stats::residuals(set_id_mean_eq$ols_fit)[ref_rows])
+ref_resid <- logvar_reference_residuals(qtr, set_id_mean_eq)
 y_ref <- ref_resid^2
 
 # stability precheck first: the pure no-fit evaluation over the exact three
@@ -38,7 +41,9 @@ y_ref <- ref_resid^2
 pairs <- logvar_harvey_precheck_pairs(
   y_ref, anchor_b, w1, w2, x_mat, log_var_eq_ppml$start_bundle
 )
-res_pre <- logvar_harvey_stability_precheck(pairs, x_mat, chol_xx)
+res_pre <- logvar_harvey_stability_precheck(
+  pairs, x_mat, chol_xx, LOGVAR_HARVEY_CONTROL
+)
 stopifnot(isTRUE(attr(res_pre, "passed")))
 
 # estimator, guarded by the precheck: PPML seeds rung one, PPML's own cached
@@ -49,8 +54,11 @@ est_harvey <- logvar_harvey_estimator(
   w1, w2, pcr, qtr,
   b_point = if (point_feasible) b_point else NULL,
   ppml_bundle = log_var_eq_ppml$start_bundle,
+  ppml_bundle_source_id = log_var_eq_ppml$estimator$metadata$spec_id,
   ppml_start_at_b = log_var_eq_ppml$estimator$fit_at_b,
-  logols_coef = logols_coef
+  ppml_start_at_b_source_id = log_var_eq_ppml$estimator$metadata$spec_id,
+  logols_coef = logols_coef,
+  control = LOGVAR_HARVEY_CONTROL
 )
 stopifnot(identical(est_harvey$metadata$sample_id, log_var_eq$sample_id))
 search_seed <- if (point_feasible) b_point else anchor_b
@@ -58,7 +66,10 @@ search_seed <- if (point_feasible) b_point else anchor_b
 # reference column (coefficients only; SEs deferred) and the Lewbel-point column
 # read straight off the estimator so no duplicate point solve happens; a missing
 # point renders NA (the panel prints "--")
-ref_fit <- logvar_harvey_fit_response(y_ref, x_mat)
+ref_fit <- logvar_harvey_fit_response(
+  y_ref, x_mat,
+  control = LOGVAR_HARVEY_CONTROL
+)
 if (!logvar_harvey_accepted(ref_fit)) {
   stop(sprintf(
     "log_var_eq_harvey_sets: reference Harvey fit failed (%s/%s)",
@@ -73,36 +84,32 @@ theta_point_harvey <- if (!is.null(est_harvey$point_fit)) {
   na_coef
 }
 
-# per display tau (keyed sprintf("%.17g", tau) so the gate and cache align): scan
+# per display tau (keyed by paper_tau_key so the gate and cache align): scan
 # the warm-refined display box through the shared engine with three separated
 # starts per side, one cache, a fresh per-tau budget, and prior-tau warm extras
 taus <- set_id_mean_eq$tau_display
-qs_fn <- function(tau) tau_quadratic_system(set_id_mean_eq$gamma, tau, set_id_mean_eq$moments)
+qs_fn <- function(tau) {
+  tau_quadratic_system(
+    set_id_mean_eq$gamma,
+    tau,
+    set_id_mean_eq$moments
+  )
+}
 harvey_cache <- new.env(parent = emptyenv())
-primary_results <- list()
-b_tab_list <- list()
-primary_diag <- list()
-warm_extra <- NULL
-for (idx in seq_along(taus)) {
-  tau_i <- taus[idx]
-  key_i <- sprintf("%.17g", tau_i)
-  b_tab_i <- mean_eq_bounds_tau[[key_i]]
-  stopifnot(!is.null(b_tab_i))
-  qs_i <- qs_fn(tau_i)
-  harvey_bs <- logvar_budget_state(logvar_harvey_fit_budget)
-  res_i <- logvar_engine_set_at_tau(
-    est_harvey, qs_i, b_tab_i,
+mapped <- logvar_map_display_taus(
+  taus = taus,
+  bounds_tau = mean_eq_bounds_tau,
+  quadratic_at_tau = qs_fn,
+  map_one = logvar_engine_tau_mapper(
+    estimator = est_harvey,
     b_seed = search_seed,
     max_grid_points = logvar_harvey_grid_cap,
-    max_fit_evals = logvar_harvey_fit_budget, starts_per_side = 3L,
-    cache = harvey_cache, budget_state = harvey_bs, extra_starts = warm_extra,
-    cold_start_check = TRUE, tau = tau_i
+    max_fit_evals = logvar_harvey_fit_budget,
+    cache = harvey_cache
   )
-  primary_results[[key_i]] <- res_i
-  b_tab_list[[key_i]] <- b_tab_i
-  primary_diag[[key_i]] <- res_i$diagnostics
-  warm_extra <- logvar_bounded_args(res_i$schema)
-}
+)
+primary_results <- mapped$results
+b_tab_list <- mapped$boxes
 
 # reduced sensitivity gate before anything renders: a five-start re-polish of the
 # same warm-refined boxes over a fresh cache and budget, applied through Harvey's
@@ -114,20 +121,20 @@ gate <- logvar_harvey_sensitivity_gate(
 )
 final_res <- gate$results
 
-base_tab <- final_res[[sprintf("%.17g", taus[1])]]$table
-stopifnot(identical(base_tab$coef, colnames(x_mat)))
-log_var_eq_harvey <- list(
-  sample = list(n = length(qtr), span = range(qtr)),
+core <- logvar_set_result_core(
+  qtr = qtr,
   sample_id = log_var_eq$sample_id,
-  table = data.frame(
-    coef = colnames(x_mat), reference = unname(theta_reference),
-    point = unname(theta_point_harvey), set_lower = base_tab$set_lower,
-    set_upper = base_tab$set_upper, status = base_tab$status, row.names = NULL
-  ),
-  sets = lapply(final_res, function(r) r$table),
-  schema = lapply(final_res, function(r) r$schema),
-  n_feasible = vapply(primary_results, function(r) r$n_feasible, integer(1)),
-  counts = primary_diag,
+  coef_labels = colnames(x_mat),
+  reference = theta_reference,
+  point = theta_point_harvey,
+  baseline_tau = set_id_mean_eq$tau_baseline,
+  primary_results = primary_results,
+  final_results = final_res,
+  w1 = w1,
+  w2 = w2,
+  search_seed = search_seed
+)
+log_var_eq_harvey <- c(core, list(
   fit_failures = vapply(primary_results, function(r) r$diagnostics$n_failed, integer(1)),
   min_feasible_abs_eps = vapply(
     final_res, function(r) logvar_min_feasible_eps(r$schema, w1, w2, search_seed),
@@ -137,21 +144,23 @@ log_var_eq_harvey <- list(
   point_start_rung = est_harvey$point_start_rung,
   sensitivity_audit = list(audit = gate$audit, meta = gate$metadata),
   census_comparability = log_var_eq$n_cross
-)
+))
 
 # register the Harvey figure entry (engine opts and the shared cache included);
 # this entry and harvey_cache must survive cleanup
-logvar_bounds_tau_registry[[length(logvar_bounds_tau_registry) + 1L]] <- list(
+registry_entry <- logvar_bounds_registry_entry(
   estimator = est_harvey,
-  schema = lapply(final_res, function(r) r$schema),
-  sets = lapply(final_res, function(r) r$table), b_seed = search_seed,
+  results = final_res,
+  b_seed = search_seed,
   engine_opts = list(
     max_grid_points = logvar_harvey_grid_cap,
     max_fit_evals = logvar_harvey_fit_budget,
-    starts_per_side = 3L, cache = harvey_cache
-  ),
-  output_path = logvar_bounds_tau_path(out_dir, est_harvey$metadata)
+    starts_per_side = LOGVAR_SEARCH_CONTROL$primary_starts_per_side,
+    cache = harvey_cache
+  )
 )
+logvar_bounds_tau_registry[[length(logvar_bounds_tau_registry) + 1L]] <-
+  registry_entry
 
 logvar_harvey_report(log_var_eq_harvey, taus)
 
@@ -159,9 +168,8 @@ logvar_harvey_report(log_var_eq_harvey, taus)
 # harvey_cache (registry-referenced), and every sourced function
 rm(
   w1, w2, pcr, qtr, x_mat, chol_xx, b_point,
-  point_feasible, grid_base, anchor_b, ref_rows, ref_resid, y_ref,
+  point_feasible, grid_base, anchor_b, ref_resid, y_ref,
   pairs, res_pre, logols_coef, est_harvey, search_seed, theta_reference,
-  na_coef, theta_point_harvey, taus, qs_fn, primary_results, b_tab_list,
-  primary_diag, warm_extra, idx, tau_i, key_i, b_tab_i, qs_i, harvey_bs, res_i,
-  gate, final_res, base_tab
+  na_coef, theta_point_harvey, taus, qs_fn, mapped, primary_results,
+  b_tab_list, gate, final_res, core, registry_entry
 )

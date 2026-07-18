@@ -13,6 +13,10 @@
 # capping -- a nonfinite positive-row ratio is the caller's hard trial failure,
 # never a value this layer silences.
 
+paper_source_once(paper_path(
+  "support", "statistics", "normalizations.R"
+))
+
 # Zero-safe ratio r = y / exp(x' theta). The evaluation order is contractual:
 # validate a finite nonnegative response, form eta, mark the positive rows, seed
 # r with zeros, and only then fill the positive rows on the log scale. Zero rows
@@ -70,11 +74,6 @@ logvar_harvey_moment <- function(theta, y, x_mat) {
 logvar_harvey_info <- function(theta, y, x_mat) {
   0.5 * crossprod(x_mat, logvar_harvey_ratio(theta, y, x_mat) * x_mat)
 }
-
-# The exact -E[log chi^2_1] = -log 2 - digamma(1/2) = 1.27036284546..., the
-# Gaussian gap theta_0^H - theta_0^log. Single-sourced here so the notes, the
-# ladder shift, metadata, and tests reference one value with no truncated literal.
-logvar_normal_lnchisq_gap <- -log(2) - digamma(0.5)
 
 # Zero-safe Jacobian row factor e / mu = sign(e) * exp(log|e| - eta), evaluated
 # on the log scale so an exact-zero residual stays an exact zero without forming

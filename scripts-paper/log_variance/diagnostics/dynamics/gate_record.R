@@ -13,7 +13,13 @@
 # the fixed diagnostic caveats plus the verdict-specific stop/continue note. The
 # approximate-diagnostic and (on a non-rejection) insufficient-evidence wording
 # is mandatory, and both directions of the caveat are stated.
-logvar_gate_notes <- function(verdict, reason = "ok") {
+logvar_gate_notes <- function(
+  verdict,
+  reason = "ok",
+  protocol = LOGVAR_DYNAMICS_GATE_PROTOCOL
+) {
+  lag_text <- as.character(protocol$gate_lag)
+  alpha_text <- format(100 * protocol$alpha, trim = TRUE)
   base <- c(
     paste(
       "Ljung-Box p-values ignore mean-equation estimation uncertainty; treat",
@@ -28,12 +34,18 @@ logvar_gate_notes <- function(verdict, reason = "ok") {
   )
   tail <- switch(verdict,
     non_reject = paste(
-      "The predeclared lag-4 screen found insufficient evidence of quarterly",
+      sprintf("The predeclared lag-%s screen found insufficient", lag_text),
+      "evidence of quarterly",
       "serial correlation to open the dynamics workstream; stopping with this",
       "diagnostic."
     ),
     reject = paste(
-      "The predeclared lag-4 screen rejected at the 5 percent level; the",
+      sprintf(
+        "The predeclared lag-%s screen rejected at the %s percent level;",
+        lag_text,
+        alpha_text
+      ),
+      "the",
       "changed-estimand and dependency approvals gate any downstream dynamic",
       "fitting."
     ),
@@ -47,13 +59,14 @@ logvar_gate_notes <- function(verdict, reason = "ok") {
 }
 
 # the full section-2.4 gate record on a computable series (verdict reject or
-# non_reject): every field in the pinned order, the ACF through lag 8, and the
+# non_reject): every field in the pinned order, the configured ACF, and the
 # full xi_hat series keyed by qtr
 logvar_gate_record <- function(con, dec, sample_id, benchmark_commit,
-                               b_point, n, sens) {
+                               b_point, n, sens, protocol) {
   k <- which.max(abs(con$xi_hat))
   list(
-    schema_version = "1.0.0", sample_id = sample_id,
+    schema_version = protocol$version, protocol = protocol,
+    sample_id = sample_id,
     benchmark_commit = benchmark_commit, b_point = b_point, n = as.integer(n),
     tested_lags = dec$tested_lags, q_stats = dec$q_stats,
     p_values = dec$p_values, gate_lag = dec$gate_lag,
@@ -62,7 +75,8 @@ logvar_gate_record <- function(con, dec, sample_id, benchmark_commit,
     crossing_qtr = con$crossing_qtr, max_abs_xi = abs(con$xi_hat[k]),
     max_abs_xi_qtr = con$qtr[k], acf = dec$acf,
     xi_hat = data.frame(qtr = con$qtr, xi_hat = con$xi_hat),
-    sensitivity = sens, notes = logvar_gate_notes(dec$verdict, con$reason)
+    sensitivity = sens,
+    notes = logvar_gate_notes(dec$verdict, con$reason, protocol)
   )
 }
 
@@ -70,21 +84,28 @@ logvar_gate_record <- function(con, dec, sample_id, benchmark_commit,
 # quantities are undefined, verdict "unreliable"
 logvar_gate_unreliable_record <- function(con, sample_id, benchmark_commit,
                                           b_point, n, sens, tested_lags,
-                                          gate_lag, alpha) {
+                                          gate_lag, alpha, protocol) {
   nm <- .logvar_gate_lag_names(tested_lags)
   na_lag <- stats::setNames(rep(NA_real_, length(tested_lags)), nm)
-  acf_na <- stats::setNames(rep(NA_real_, 8L), .logvar_gate_lag_names(seq_len(8L)))
+  acf_lags <- seq_len(protocol$acf_max)
+  acf_na <- stats::setNames(
+    rep(NA_real_, length(acf_lags)),
+    .logvar_gate_lag_names(acf_lags)
+  )
   empty_qtr <- if (!is.null(con$qtr)) con$qtr[0L] else integer(0)
+  unreliable <- .logvar_gate_verdict(protocol, "unreliable")
   list(
-    schema_version = "1.0.0", sample_id = sample_id,
+    schema_version = protocol$version, protocol = protocol,
+    sample_id = sample_id,
     benchmark_commit = benchmark_commit, b_point = b_point, n = as.integer(n),
     tested_lags = as.integer(tested_lags), q_stats = na_lag,
     p_values = na_lag, gate_lag = as.integer(gate_lag), gate_alpha = alpha,
-    verdict = "unreliable", min_abs_eps = con$min_abs_eps,
+    verdict = unreliable, min_abs_eps = con$min_abs_eps,
     crossing_status = con$crossing_status, crossing_qtr = con$crossing_qtr,
     max_abs_xi = NA_real_, max_abs_xi_qtr = empty_qtr[NA_integer_], acf = acf_na,
     xi_hat = data.frame(qtr = empty_qtr, xi_hat = numeric(0)),
-    sensitivity = sens, notes = logvar_gate_notes("unreliable", con$reason)
+    sensitivity = sens,
+    notes = logvar_gate_notes(unreliable, con$reason, protocol)
   )
 }
 
@@ -94,35 +115,61 @@ logvar_gate_unreliable_record <- function(con, sample_id, benchmark_commit,
 # tau = 0 construction, so it is evaluated on either branch.
 logvar_gate_evaluate <- function(inputs, b_point, proj, table_point, schema,
                                  b_seed, sample_id, benchmark_commit,
-                                 tested_lags = c(1L, 4L, 8L), gate_lag = 4L,
-                                 alpha = 0.05, tie_tol = 1e-10) {
+                                 protocol = LOGVAR_DYNAMICS_GATE_PROTOCOL) {
+  tested_lags <- protocol$tested_lags
+  gate_lag <- protocol$gate_lag
+  alpha <- protocol$alpha
   b_point <- .logvar_gate_name_b(b_point, colnames(inputs$w2))
   n <- length(inputs$w1)
   sens <- logvar_gate_sensitivity(
-    inputs, proj, schema, b_seed, tested_lags, gate_lag, alpha
+    inputs, proj, schema, b_seed, protocol
   )
-  con <- logvar_gate_construct(inputs, b_point, proj, table_point, tie_tol)
+  con <- logvar_gate_construct(
+    inputs,
+    b_point,
+    proj,
+    table_point,
+    protocol$tie_tol
+  )
   if (identical(con$status, "unreliable")) {
     return(logvar_gate_unreliable_record(
       con, sample_id, benchmark_commit, b_point, n, sens,
-      tested_lags, gate_lag, alpha
+      tested_lags, gate_lag, alpha, protocol
     ))
   }
-  dec <- logvar_gate_decide(con$xi_hat, tested_lags, gate_lag, alpha)
-  logvar_gate_record(con, dec, sample_id, benchmark_commit, b_point, n, sens)
+  dec <- logvar_gate_decide(con$xi_hat, protocol)
+  logvar_gate_record(
+    con,
+    dec,
+    sample_id,
+    benchmark_commit,
+    b_point,
+    n,
+    sens,
+    protocol
+  )
 }
 
 # the always-written status manifest: the gate verdict and its decision inputs,
 # whether a downstream approval is now pending, and the gate-record path. The
 # routing layer rewrites this on every terminal branch.
 logvar_gate_status_manifest <- function(record) {
-  reject <- identical(record$verdict, "reject")
+  protocol <- record$protocol
+  reject <- identical(
+    record$verdict,
+    .logvar_gate_verdict(protocol, "reject")
+  )
+  gate_key <- sprintf("lag%d", protocol$gate_lag)
   list(
-    schema_version = "1.0.0", stage = "dynamics_gate", plan = "logvar-egarch-x",
+    schema_version = protocol$version,
+    protocol = protocol,
+    stage = "dynamics_gate",
+    plan = "logvar-egarch-x",
     sample_id = record$sample_id, benchmark_commit = record$benchmark_commit,
     gate_verdict = record$verdict, gate_lag = record$gate_lag,
-    gate_alpha = record$gate_alpha, gate_q_lag4 = unname(record$q_stats[["lag4"]]),
-    gate_p_lag4 = unname(record$p_values[["lag4"]]),
+    gate_alpha = record$gate_alpha,
+    gate_q = unname(record$q_stats[[gate_key]]),
+    gate_p = unname(record$p_values[[gate_key]]),
     min_abs_eps = record$min_abs_eps, crossing_status = record$crossing_status,
     decision_pending = reject,
     workstream_status = if (reject) "gate_rejected" else "stopped_after_diagnostic",
@@ -131,4 +178,4 @@ logvar_gate_status_manifest <- function(record) {
 }
 
 # the descriptive sensitivity set over representative feasible b_N witnesses
-source(paper_path("log_variance", "diagnostics", "dynamics", "gate_sensitivity.R"))
+paper_source_once(paper_path("log_variance", "diagnostics", "dynamics", "gate_sensitivity.R"))

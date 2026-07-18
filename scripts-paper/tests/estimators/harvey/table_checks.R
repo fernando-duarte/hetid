@@ -19,7 +19,7 @@ hvt_harvey <- list(
       hvt_set(c(-1.25, 0.17), c(-1.15, 0.19)),
       hvt_set(c(-1.3, 0.16), c(-1.1, 0.2))
     ),
-    sprintf("%.17g", c(0.05, 0.1))
+    vapply(c(0.05, 0.1), paper_tau_key, character(1))
   )
 )
 hvt_lines <- logvar_harvey_append_panel(

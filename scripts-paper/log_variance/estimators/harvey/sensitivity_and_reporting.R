@@ -10,6 +10,10 @@
 # only; the engine, budget state, and apply are resolved at call time. Sourced by
 # run_sets.R after estimator.R and the PPML modules.
 
+paper_source_once(paper_path(
+  "log_variance", "tables", "console_formatting.R"
+))
+
 # The reduced sensitivity gate: for every display tau, a five-start re-polish of
 # the same warm-refined box over one fresh cache (nesting reuse across taus) and
 # a fresh per-tau budget. A failed rerun records list(ok = FALSE, error = ...) so
@@ -19,7 +23,7 @@
 logvar_harvey_sensitivity_gate <- function(est, taus, b_tabs, b_seed,
                                            grid_cap, fit_budget, qs_fn, primary) {
   gate_cache <- new.env(parent = emptyenv())
-  keys <- vapply(taus, function(tau) sprintf("%.17g", tau), character(1))
+  keys <- vapply(taus, paper_tau_key, character(1))
   gate_results <- vector("list", length(taus))
   names(gate_results) <- keys
   for (i in seq_along(taus)) {
@@ -29,19 +33,21 @@ logvar_harvey_sensitivity_gate <- function(est, taus, b_tabs, b_seed,
     gate_results[[key]] <- tryCatch(
       list(ok = TRUE, res = logvar_engine_set_at_tau(
         est, qs_fn(tau), b_tabs[[key]],
-        b_seed = b_seed, max_grid_points = grid_cap, starts_per_side = 5L,
+        b_seed = b_seed,
+        max_grid_points = grid_cap,
+        starts_per_side = LOGVAR_SEARCH_CONTROL$audit_starts_per_side,
         cache = gate_cache, budget_state = bs,
-        cold_start_check = TRUE, tau = tau
+        cold_start_check = LOGVAR_SEARCH_CONTROL$cold_start_check,
+        tau = tau
       )),
       error = function(e) list(ok = FALSE, error = conditionMessage(e))
     )
   }
   logvar_ppml_apply_coverage(
     primary, gate_results,
-    tol = 1e-4,
+    tol = LOGVAR_SEARCH_CONTROL$endpoint_agreement_rtol,
     grid_cap = grid_cap, fit_budget = fit_budget,
-    cache_stamp = est$metadata$spec_id,
-    selector_id = "five-start-repolish-v1"
+    cache_stamp = est$metadata$spec_id
   )
 }
 
@@ -85,13 +91,7 @@ logvar_harvey_report <- function(hv, taus) {
   for (i in seq_along(tau_names)) {
     tb <- hv$sets[[tau_names[i]]]
     d <- hv$counts[[tau_names[i]]]
-    hull <- vapply(seq_len(nrow(tb)), function(j) {
-      if (identical(tb$status[j], "bounded")) {
-        sprintf("[%.3g,%.3g]", tb$set_lower[j], tb$set_upper[j])
-      } else {
-        tb$status[j]
-      }
-    }, character(1))
+    hull <- logvar_hull_text(tb)
     cat(sprintf(
       "  tau = %.2g: %s | attempted %d evaluated %d cached %d failed %d\n",
       taus[i], paste(hull, collapse = " "),

@@ -8,7 +8,7 @@
 # regularity gate (divergent draws are counted, never dropped). Consumed by
 # scripts-paper/log_variance/inference/run_set_bootstrap.R.
 
-source(paper_path("support", "identification", "identified_set_inference.R"))
+paper_source_once(paper_path("support", "identification", "identified_set_inference.R"))
 
 # Conservative (1-alpha) order statistic of the bootstrap max-root, rank
 # ceil((B+1)(1-alpha)) capped at B (Politis-Romano-Wolf).
@@ -118,9 +118,13 @@ logvar_endpoint_envelope_row <- function(lo, up, lo_st, up_st, f, alpha,
   )
 }
 
-logvar_endpoint_envelope <- function(draws, full, alpha = 0.10,
+logvar_endpoint_envelope <- function(draws, full,
+                                     alpha =
+                                       PAPER_ANALYSIS_CONTRACT$inference$nominal_alpha,
                                      min_reps = boot_min_reps(nrow(draws$lower)),
-                                     stability = 0.85) {
+                                     stability =
+                                       PAPER_INFERENCE_SEARCH_CONTROL$
+                                         logvar_endpoint$stability_share) {
   stopifnot(
     identical(dim(draws$lower), dim(draws$upper)),
     identical(dim(draws$lower_status), dim(draws$lower)),
@@ -141,9 +145,13 @@ logvar_endpoint_envelope <- function(draws, full, alpha = 0.10,
 # One joint critical value: the max-root maximized over all coefficients' live
 # (gate-passing) sides, on draws where every contributing side is bounded. Written
 # to diagnostics so the report can state coefficientwise-vs-simultaneous coverage.
-logvar_simultaneous_critical <- function(draws, full, alpha = 0.10,
+logvar_simultaneous_critical <- function(draws, full,
+                                         alpha =
+                                           PAPER_ANALYSIS_CONTRACT$inference$nominal_alpha,
                                          min_reps = boot_min_reps(nrow(draws$lower)),
-                                         stability = 0.85) {
+                                         stability =
+                                           PAPER_INFERENCE_SEARCH_CONTROL$
+                                             logvar_endpoint$stability_share) {
   b <- nrow(draws$lower)
   root <- rep(0, b)
   # same both/all-bounded pool logic as the two-sided branch above.

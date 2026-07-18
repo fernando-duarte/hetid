@@ -15,6 +15,7 @@
 # fails the whole tau closed. Probes fit cold (never averaged), as the schedule
 # requires; the cap is enforced here since these refits bypass the engine cache.
 logvar_lad_nonunique_demote <- function(est, res, cfg, promoted) {
+  control <- est$metadata$fit_control
   cap <- cfg$phase_caps[["nonunique"]]
   sc <- res$schema
   args <- list()
@@ -48,7 +49,12 @@ logvar_lad_nonunique_demote <- function(est, res, cfg, promoted) {
     fit <- est$fit_at_b(it$a)
     if (is.null(fit) || !identical(fit$fit_status, "ok")) next
     z <- 2 * log(abs(drop(cfg$w1 - cfg$w2 %*% it$a)))
-    pr <- logvar_lad_nonunique_probe(fit, z, cfg$x_mat)
+    pr <- logvar_lad_nonunique_probe(
+      fit,
+      z,
+      cfg$x_mat,
+      control
+    )
     count <- count + 1L
     if (!is.null(pr) && isTRUE(pr$multiple_solution_sensitive) && isTRUE(it$rel)) {
       sensitive[[length(sensitive) + 1L]] <- list(tag = it$tag, coef_max_diff = pr$coef_max_diff)
@@ -64,15 +70,17 @@ logvar_lad_nonunique_demote <- function(est, res, cfg, promoted) {
 # every verified witness cold through the committed crossing probe and classifier.
 # Returns one row per (witness, path, coefficient) with the classification status,
 # endpoint direction, M-span, tail slope, stability, tail-limit value, and a
-# 17-digit path summary; NULL when the tau has no verified crossing paths.
+# canonical path summary; NULL when the tau has no verified crossing paths.
 logvar_lad_probe_report <- function(res, tau, est, geom, labels, qtr) {
+  control <- est$metadata$fit_control
   pc <- res$domain_info$precheck
   wits <- if (is.null(pc)) list() else .lad_or(pc$info$witnesses, list())
-  fmt17 <- function(x) formatC(x, digits = 17, format = "fg", flag = "#")
+  fmt17 <- paper_numeric_key
   ctx <- list(
     evaluate_fit = function(b, phase, start = NULL, use_cache = TRUE) est$fit_at_b(b),
     check_feasible = geom$check_feasible, w1 = geom$w1, w2 = geom$w2,
     e_scale_ref = geom$e_scale_ref, x_mat = geom$x_mat,
+    control = control,
     b_scales = list(delta = geom$delta, omega = geom$omega)
   )
   rows <- list()
@@ -82,7 +90,11 @@ logvar_lad_probe_report <- function(res, tau, est, geom, labels, qtr) {
       tr <- tryCatch(logvar_lad_crossing_probe(wit, path_id, ctx), error = function(e) NULL)
       cm <- if (is.null(tr)) NULL else tr$coef
       have <- !is.null(cm) && !is.null(dim(cm)) && nrow(cm) >= 1L
-      cls <- if (have) logvar_lad_tail_classify(tr)$coef else list()
+      cls <- if (have) {
+        logvar_lad_tail_classify(tr, control)$coef
+      } else {
+        list()
+      }
       side <- if (identical(wit$anchors[[path_id]]$sign, 1)) "+" else "-"
       for (j in seq_along(labels)) {
         cj <- .lad_or(cls[[labels[j]]], list(status = "unresolved"))
@@ -99,7 +111,11 @@ logvar_lad_probe_report <- function(res, tau, est, geom, labels, qtr) {
         if (is.na(ep)) ep <- NA_character_
         rows[[length(rows) + 1L]] <- data.frame(
           coef = labels[j], tau = tau, crossing_row = as.integer(wit$row),
-          crossing_qtr = format(qtr[wit$row], "%Y Q%q"), residual_side = side,
+          crossing_qtr = format(
+            qtr[wit$row],
+            PAPER_SERIALIZATION_CONTROL$yearquarter_format
+          ),
+          residual_side = side,
           path_id = as.integer(path_id), witness_status = "verified",
           status = .lad_or(cj$status, "unresolved"), endpoint = ep,
           m_span = .lad_or(cj$m_span, NA_real_), tail_slope = .lad_or(cj$slope6, NA_real_),

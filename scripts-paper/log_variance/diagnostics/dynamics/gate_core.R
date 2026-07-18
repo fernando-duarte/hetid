@@ -1,5 +1,5 @@
 # Base-R residual-dynamics gate for the log-variance equation (dynamics-gate protocol).
-# The predeclared lag-4 Ljung-Box screen on the tau = 0 benchmark log-variance
+# The protocol-owned Ljung-Box screen on the tau = 0 benchmark log-variance
 # residual xi_hat decides whether any downstream volatility-dynamics workstream
 # opens: it ships regardless of any approval and uses base R only (no heavy
 # dependency is referenced here). This file holds the pure gate functions --
@@ -13,11 +13,25 @@
 #   theta_hat = proj %*% log_e2                  (the two-step log-variance map)
 #   xi_hat  = log_e2 - x_mat %*% theta_hat       (the benchmark residual, eq. 2)
 # fail closed (verdict "unreliable") on a missing Lewbel point, an exact residual
-# zero, or any nonfinite xi_hat; lag 4 is the sole decision at alpha = 0.05, with
+# zero, or any nonfinite xi_hat; one configured lag is the sole decision, with
 # lags 1 and 8 printed as sensitivity context only.
+
+paper_source_once(paper_path(
+  "log_variance", "diagnostics", "protocols.R"
+))
+
+LOGVAR_DYNAMICS_GATE_SCHEMA_VERSION <-
+  LOGVAR_DYNAMICS_GATE_PROTOCOL$version
 
 # lag column labels shared by the Q, p, and ACF vectors
 .logvar_gate_lag_names <- function(lags) sprintf("lag%d", as.integer(lags))
+
+.logvar_gate_verdict <- function(protocol, name) {
+  verdicts <- stats::setNames(protocol$verdicts, protocol$verdicts)
+  verdict <- verdicts[[name]]
+  stopifnot(length(verdict) == 1L)
+  unname(verdict)
+}
 
 # canonical qtr order for every series, with proj's columns (one per
 # observation) permuted the same way, so the gate is a qtr join and never a
@@ -64,7 +78,8 @@
 # log-variance point (log_var_eq$table$point), so recomputing proj is a fixed
 # linear-algebra recompute and not a re-estimation on a drifted sample.
 logvar_gate_construct <- function(inputs, b_point, proj, table_point,
-                                  tie_tol = 1e-10) {
+                                  tie_tol =
+                                    LOGVAR_DYNAMICS_GATE_PROTOCOL$tie_tol) {
   bad <- function(reason, status, min_eps, cq, qtr = NULL) {
     list(
       status = "unreliable", reason = reason, crossing_status = status,
@@ -101,10 +116,16 @@ logvar_gate_construct <- function(inputs, b_point, proj, table_point,
 }
 
 # the pure decision on a prescribed finite series: Ljung-Box Q/p at the tested
-# lags, the residual ACF through lag 8, and the single lag-4 verdict. Lags 1 and
+# lags, the configured residual ACF, and the single protocol-owned verdict.
 # 8 are context, never additional chances to pass the gate.
-logvar_gate_decide <- function(xi_hat, tested_lags = c(1L, 4L, 8L),
-                               gate_lag = 4L, alpha = 0.05, acf_max = 8L) {
+logvar_gate_decide <- function(
+  xi_hat,
+  protocol = LOGVAR_DYNAMICS_GATE_PROTOCOL
+) {
+  tested_lags <- protocol$tested_lags
+  gate_lag <- protocol$gate_lag
+  alpha <- protocol$alpha
+  acf_max <- protocol$acf_max
   stopifnot(
     all(is.finite(xi_hat)), length(xi_hat) > gate_lag,
     is.numeric(tested_lags), as.integer(gate_lag) %in% as.integer(tested_lags)
@@ -113,14 +134,21 @@ logvar_gate_decide <- function(xi_hat, tested_lags = c(1L, 4L, 8L),
   acf_v <- drop(stats::acf(xi_hat, lag.max = acf_max, plot = FALSE)$acf)[-1L]
   names(acf_v) <- .logvar_gate_lag_names(seq_len(acf_max))
   gate_name <- sprintf("lag%d", as.integer(gate_lag))
+  reject <- .logvar_gate_verdict(protocol, "reject")
+  non_reject <- .logvar_gate_verdict(protocol, "non_reject")
   list(
     tested_lags = as.integer(tested_lags), q_stats = box$q_stats,
     p_values = box$p_values, acf = acf_v, gate_lag = as.integer(gate_lag),
     gate_alpha = alpha,
-    verdict = if (box$p_values[[gate_name]] < alpha) "reject" else "non_reject"
+    verdict = if (box$p_values[[gate_name]] < alpha) {
+      reject
+    } else {
+      non_reject
+    },
+    protocol = protocol
   )
 }
 
 # the record assembly, descriptive sensitivity set, unreliable-record builder,
 # composing evaluate(), and status-manifest builder
-source(paper_path("log_variance", "diagnostics", "dynamics", "gate_record.R"))
+paper_source_once(paper_path("log_variance", "diagnostics", "dynamics", "gate_record.R"))

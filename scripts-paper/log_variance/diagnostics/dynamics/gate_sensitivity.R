@@ -7,9 +7,9 @@
 # verdict, and a crossing witness is logged as excluded rather than dropped
 # silently to make the diagnostic run. Base R only.
 
-# representation-stable 17-digit key so exact-duplicate witnesses collapse
+# representation-stable numeric key so exact-duplicate witnesses collapse
 .logvar_gate_key <- function(b) {
-  paste(formatC(as.numeric(b), digits = 17, format = "fg", flag = "#"), collapse = "|")
+  paste(paper_numeric_key(as.numeric(b)), collapse = "|")
 }
 
 # an empty rows frame carrying the source label, one p-value column per tested
@@ -52,9 +52,14 @@
 # evaluate the gate p-values at each witness b_N: recheck the sample dimension
 # and finiteness, exclude (with reason) any crossing or nonfinite witness, and
 # record the tested-lag p-values otherwise
-logvar_gate_sensitivity <- function(inputs, proj, schema, b_seed,
-                                    tested_lags = c(1L, 4L, 8L), gate_lag = 4L,
-                                    alpha = 0.05) {
+logvar_gate_sensitivity <- function(
+  inputs,
+  proj,
+  schema,
+  b_seed,
+  protocol = LOGVAR_DYNAMICS_GATE_PROTOCOL
+) {
+  tested_lags <- protocol$tested_lags
   p_names <- paste0("p_", .logvar_gate_lag_names(tested_lags))
   empty <- list(
     rows = .logvar_gate_empty_rows(p_names),

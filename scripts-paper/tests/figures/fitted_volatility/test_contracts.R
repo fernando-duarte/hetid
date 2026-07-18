@@ -2,26 +2,18 @@
 # package root: Rscript scripts-paper/tests/figures/fitted_volatility/test_contracts.R
 
 source(file.path("scripts-paper", "config", "paths.R"))
-source(paper_path("config", "artifacts.R"))
-source(paper_path("support", "identification", "profile_solver_core.R"))
-source(paper_path("support", "identification", "profile_bounds_api.R"))
-source(paper_path("log_variance", "core", "residual_map.R"))
-source(paper_path("log_variance", "engine", "api.R"))
-source(paper_path("log_variance", "figures", "fitted_volatility", "adapter.R"))
-source(paper_path("log_variance", "figures", "fitted_volatility", "envelope.R"))
-source(paper_path("log_variance", "figures", "fitted_volatility", "plot.R"))
+paper_source_once(paper_path("config", "artifacts.R"))
+paper_source_once(paper_path("support", "identification", "profile_solver_core.R"))
+paper_source_once(paper_path("support", "identification", "profile_bounds_api.R"))
+paper_source_once(paper_path("log_variance", "core", "residual_map.R"))
+paper_source_once(paper_path("log_variance", "engine", "api.R"))
+paper_source_once(paper_path("log_variance", "figures", "fitted_volatility", "adapter.R"))
+paper_source_once(paper_path("log_variance", "figures", "fitted_volatility", "envelope.R"))
+paper_source_once(paper_path("log_variance", "figures", "fitted_volatility", "plot.R"))
 
-.pass <- 0L
-.fail <- 0L
-check <- function(label, cond) {
-  if (isTRUE(cond)) {
-    .pass <<- .pass + 1L
-    cat(sprintf("PASS  %s\n", label))
-  } else {
-    .fail <<- .fail + 1L
-    cat(sprintf("FAIL  %s\n", label))
-  }
-}
+paper_source_once(paper_path("tests", "support", "harness.R"))
+.test <- paper_test_harness()
+check <- .test$check
 
 phase_seen <- character(0)
 phase_est <- list(
@@ -164,5 +156,4 @@ check(
   grepl("no two-sided bounded dates", empty_message, fixed = TRUE)
 )
 
-cat(sprintf("\n%d passed, %d failed\n", .pass, .fail))
-if (.fail > 0L) quit(status = 1L)
+.test$finish()

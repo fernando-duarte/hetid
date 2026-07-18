@@ -10,11 +10,11 @@
 # tau = 0.3), while continuation along the grid tracks the true branch.
 # Writes the bounds SVG to the typed figure directory after mean-set estimation.
 
-source(paper_path("support", "identification", "api.R"))
-source(paper_path("support", "identification", "profile_solver_core.R"))
-source(paper_path("support", "identification", "profile_bounds_api.R"))
-source(paper_path("support", "identification", "tau_star.R"))
-source(paper_path("mean_equation", "inference", "refine_bounds_by_tau.R"))
+paper_source_once(paper_path("support", "identification", "api.R"))
+paper_source_once(paper_path("support", "identification", "profile_solver_core.R"))
+paper_source_once(paper_path("support", "identification", "profile_bounds_api.R"))
+paper_source_once(paper_path("support", "identification", "tau_star.R"))
+paper_source_once(paper_path("mean_equation", "inference", "refine_bounds_by_tau.R"))
 
 theta_coefs <- set_id_mean_eq$theta_table$coef
 beta_coefs <- set_id_mean_eq$beta1_table$coef
@@ -66,7 +66,7 @@ bounds_at_tau <- function(tau) {
     set_id_mean_eq$beta1r, set_id_mean_eq$beta2r
   )
   it$theta <- refine_theta_intervals(tau, it$theta)
-  mean_eq_bounds_tau[[sprintf("%.17g", tau)]] <<- it$theta
+  mean_eq_bounds_tau[[paper_tau_key(tau)]] <<- it$theta
   tab <- rbind(it$beta1, it$theta)
   data.frame(
     tau = tau, coef = tab$coef, lower = tab$set_lower, upper = tab$set_upper,
@@ -93,7 +93,11 @@ stored_rows <- rbind(
 # solved tau grid, strictly inside (0, tau*): tau = 0 and the baseline come
 # from the stored rows, and the tau* endpoint is excluded (the width diverges
 # right at the transition, crushing every facet's scale)
-tau_grid <- seq(0, set_id_mean_eq$tau_star, length.out = 25)
+tau_grid <- seq(
+  0,
+  set_id_mean_eq$tau_star,
+  length.out = PAPER_ANALYSIS_CONTRACT$tau$figure_grid_n
+)
 tau_grid <- tau_grid[tau_grid > 0 & tau_grid < set_id_mean_eq$tau_star]
 bounds_df <- rbind(stored_rows, do.call(rbind, lapply(tau_grid, bounds_at_tau)))
 
@@ -136,7 +140,9 @@ cat(
 # already refined these into set_tables with the same tau = 0-seeded warm chain,
 # so they are re-keyed here rather than re-solved (the grid above is strictly
 # inside (0, tau*) and never lands on a display tau)
-mean_eq_bounds_tau[sprintf("%.17g", set_id_mean_eq$tau_display)] <-
+mean_eq_bounds_tau[
+  vapply(set_id_mean_eq$tau_display, paper_tau_key, character(1))
+] <-
   lapply(set_id_mean_eq$set_tables, `[[`, "theta")
 
 rm(

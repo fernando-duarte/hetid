@@ -19,8 +19,12 @@
 logvar_polish_objective <- function(qs, direction, b_start, guard_scale,
                                     fn, gr = NULL,
                                     method = c("slsqp", "cobyla"),
-                                    box = 1e6, feas_tol = 1e-4,
-                                    blow_factor = 5) {
+                                    box =
+                                      PAPER_QUADRATIC_CONTROL$solver_boxes[[1L]],
+                                    feas_tol =
+                                      PAPER_QUADRATIC_CONTROL$feasibility_tolerance,
+                                    blow_factor =
+                                      PAPER_QUADRATIC_CONTROL$polish_blow_factor) {
   method <- match.arg(method)
   # a non-finite scale would disable the blow guard (or make it error)
   if (!is.finite(guard_scale)) guard_scale <- 1
@@ -31,11 +35,7 @@ logvar_polish_objective <- function(qs, direction, b_start, guard_scale,
   x0 <- pmin(pmax(b_start / delta, -box), box)
   obj_fn <- function(phi) sgn * fn(delta * phi)
   hin_fn <- function(phi) {
-    b <- delta * phi
-    vapply(seq_along(qs$A_i), function(i) {
-      (drop(t(b) %*% qs$A_i[[i]] %*% b) +
-        sum(qs$b_i[[i]] * b) + qs$c_i[i]) / omega[i]
-    }, numeric(1))
+    quadratic_constraint_values(delta * phi, qs, omega)
   }
   res <- tryCatch(
     if (method == "slsqp") {
@@ -46,12 +46,17 @@ logvar_polish_objective <- function(qs, direction, b_start, guard_scale,
         lower = rep(-box, dim_b), upper = rep(box, dim_b),
         hin = hin_fn,
         hinjac = function(phi) {
-          b <- delta * phi
-          t(vapply(seq_along(qs$A_i), function(i) {
-            (delta * (2 * drop(qs$A_i[[i]] %*% b) + qs$b_i[[i]])) / omega[i]
-          }, numeric(dim_b)))
+          quadratic_constraint_jacobian(
+            delta * phi,
+            qs,
+            omega,
+            theta_scale = delta
+          )
         },
-        control = list(xtol_rel = 1e-8, maxeval = 1000),
+        control = list(
+          xtol_rel = PAPER_QUADRATIC_CONTROL$solver_xtol_rel,
+          maxeval = PAPER_QUADRATIC_CONTROL$solver_maxeval
+        ),
         deprecatedBehavior = FALSE
       )
     } else {
@@ -60,7 +65,10 @@ logvar_polish_objective <- function(qs, direction, b_start, guard_scale,
         fn = obj_fn,
         lower = rep(-box, dim_b), upper = rep(box, dim_b),
         hin = hin_fn,
-        control = list(xtol_rel = 1e-8, maxeval = 1000),
+        control = list(
+          xtol_rel = PAPER_QUADRATIC_CONTROL$solver_xtol_rel,
+          maxeval = PAPER_QUADRATIC_CONTROL$solver_maxeval
+        ),
         deprecatedBehavior = FALSE
       )
     },
@@ -92,7 +100,12 @@ logvar_polish_objective <- function(qs, direction, b_start, guard_scale,
 # generalized seam above, with the legacy list(bound, suspect) return
 logvar_polish_bound <- function(qs, direction, b_start, grid_scale,
                                 w1, w2, proj_row,
-                                box = 1e6, feas_tol = 1e-4, blow_factor = 5) {
+                                box =
+                                  PAPER_QUADRATIC_CONTROL$solver_boxes[[1L]],
+                                feas_tol =
+                                  PAPER_QUADRATIC_CONTROL$feasibility_tolerance,
+                                blow_factor =
+                                  PAPER_QUADRATIC_CONTROL$polish_blow_factor) {
   pol <- logvar_polish_objective(
     qs, direction, b_start, grid_scale,
     fn = function(b) sum(proj_row * log(drop(w1 - w2 %*% b)^2)),

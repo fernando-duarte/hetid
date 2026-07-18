@@ -14,14 +14,21 @@
 # se_type NULL means genuinely no SEs are attached (mirrors the renderer's
 # blank point columns), so the note stays the deferred line; a validated key
 # describes the printed variant via logvar_harvey_se_note.
+paper_source_once(paper_path("support", "reporting", "inference.R"))
+
 build_harvey_panel_notes <- function(harvey, tau_baseline, grid_cap, fit_budget,
-                                     include_ordering = TRUE, se_type = "hac",
-                                     se_hac_lags = 4L) {
+                                     se_type, se_hac_lags,
+                                     set_endpoint_inference = FALSE,
+                                     include_ordering = TRUE) {
   stopifnot(is.list(harvey), !is.null(harvey$table))
   se_note <- if (is.null(se_type)) {
     "No Harvey standard errors are reported (deferred)."
   } else {
-    logvar_harvey_se_note(se_type, se_hac_lags)
+    logvar_harvey_se_note(
+      se_type,
+      se_hac_lags,
+      set_endpoint_inference
+    )
   }
   notes <- c(
     paste(
@@ -39,7 +46,7 @@ build_harvey_panel_notes <- function(harvey, tau_baseline, grid_cap, fit_budget,
         "%.9f$; the general offset is $-E[\\log u^2]$ for a standardized",
         "innovation with an $R$-invariant shape."
       ),
-      logvar_normal_lnchisq_gap
+      LOGVAR_NORMAL_LOG_SQUARE_GAP
     ),
     paste(
       "Zero squared residuals are handled by the direct parameter-dependent",
@@ -79,7 +86,11 @@ build_harvey_panel_notes <- function(harvey, tau_baseline, grid_cap, fit_budget,
 # names which variant is printed, and states the point-column conditioning
 # caveat and the set-column no-SE rule. Neutral framing (assumptions, not
 # advice) so it reads correctly whatever logvar_harvey_se_type selects.
-logvar_harvey_se_note <- function(se_type, se_hac_lags) {
+logvar_harvey_se_note <- function(
+  se_type,
+  se_hac_lags,
+  set_endpoint_inference = FALSE
+) {
   key <- match.arg(se_type, LOGVAR_HARVEY_SE_TYPES)
   default_name <- switch(key,
     expected = "the Gaussian working-model Fisher information $(\\frac{1}{2}R'R)^{-1}$",
@@ -106,10 +117,12 @@ logvar_harvey_se_note <- function(se_type, se_hac_lags) {
         "consistent also under serially correlated scores. The reported",
         "statistics use %s; parenthetical values are $\\hat\\theta/\\mathrm{SE}$",
         "with stars from the standard-normal (QMLE) approximation",
-        "($^{*}$/$^{**}$/$^{***}$ at 10/5/1\\%%)."
+        "(%s)."
       ),
-      se_hac_lags, default_name
+      se_hac_lags,
+      default_name,
+      paper_significance_legend("ascending_percent")
     ),
-    logvar_se_note_caveat()
+    logvar_se_note_caveat(set_endpoint_inference)
   )
 }

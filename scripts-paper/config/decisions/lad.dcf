@@ -1,0 +1,7 @@
+schema_version: 1.0.0
+gate: logvar-lad-quantreg
+decision: approved
+decided_at: 2026-07-14T13:45:40-0400
+rationale: User approved relying on quantreg as a scripts-paper analysis-layer dependency and approved installing it; quantreg 6.1 was installed and verified.
+install_consent: approved
+quantreg_version: 6.1

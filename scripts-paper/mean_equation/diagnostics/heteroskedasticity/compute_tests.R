@@ -1,9 +1,10 @@
 # Compute the heteroskedasticity battery and Lewbel relevance diagnostics.
 
-source(paper_path("support", "diagnostics", "heteroskedasticity_tests.R"))
-source(paper_path("support", "diagnostics", "identification_diagnostics.R"))
-source(paper_path("support", "latex", "table_pipeline.R"))
-source(paper_path("support", "latex", "simple_table.R"))
+paper_source_once(paper_path("support", "diagnostics", "heteroskedasticity_tests.R"))
+paper_source_once(paper_path("support", "diagnostics", "identification_diagnostics.R"))
+paper_source_once(paper_path("support", "latex", "table_pipeline.R"))
+paper_source_once(paper_path("support", "latex", "simple_table.R"))
+paper_source_once(paper_path("support", "reporting", "inference.R"))
 
 w1 <- set_id_mean_eq$w1
 y1 <- set_id_mean_eq$y1
@@ -17,16 +18,8 @@ pcell <- function(x) {
   if (!is.finite(x)) {
     return("--")
   }
-  stars <- if (x < 0.01) {
-    "***"
-  } else if (x < 0.05) {
-    "**"
-  } else if (x < 0.10) {
-    "*"
-  } else {
-    ""
-  }
-  paste0("{", fmt(x), if (nzchar(stars)) paste0("$^{", stars, "}$"), "}")
+  stars <- sig_stars(x)
+  paste0("{", fmt(x), if (nzchar(stars)) paste0("$", stars, "$"), "}")
 }
 
 # Use one diagnostics regime and deflator choice for every news component.
@@ -130,20 +123,27 @@ row_labels <- c(
   "Kleibergen--Paap $\\mathrm{rk}$ ($p$)"
 )
 
-sig <- 0.05
-# A PC "rejects" only on a p-value that is a real number below sig. An NA/NaN
+# A PC "rejects" only on a p-value that is a real number below the named
+# rejection level. An NA/NaN
 # means the test did not run (a caught supplementary failure, or a degenerate
 # non-throwing NaN), which is neither rejection nor its opposite -- isTRUE()
 # used to fold it into "did not reject" and caption the inverse finding. Keep
 # only the finite p-values per PC, so a PC counts as tested only if at least
 # one of the caption-driving tests produced a verdict.
+caption_tests <- PAPER_HETEROSKEDASTICITY_CONTROL$caption_tests
+rejection_alpha <- paper_significance_level(
+  PAPER_HETEROSKEDASTICITY_CONTROL$rejection_level
+)
+caption_p_values <- function(pv) {
+  unname(unlist(pv[caption_tests], use.names = FALSE))
+}
 reject <- vapply(pvals, function(pv) {
-  any(Filter(is.finite, c(pv[["BP"]], pv[["GQ"]], pv[["ARCH"]])) < sig)
+  any(Filter(is.finite, caption_p_values(pv)) < rejection_alpha)
 }, logical(1))
 n_pc_tested <- ncol(y2)
 caption <- local({
   tested <- vapply(pvals, function(pv) {
-    length(Filter(is.finite, c(pv[["BP"]], pv[["GQ"]], pv[["ARCH"]]))) > 0L
+    length(Filter(is.finite, caption_p_values(pv))) > 0L
   }, logical(1))
   n_tested <- sum(tested)
   n_reject <- sum(reject)

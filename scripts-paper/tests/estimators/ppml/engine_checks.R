@@ -151,48 +151,6 @@ local({
   check("peng permuted feasible grid leaves scan extremes unchanged", ok)
 })
 
-# Cold-start replication flags a warm-dependent pathological dummy unreliable
-check("peng cold-start replication flags a warm-dependent dummy", peng_try({
-  sd <- peng_run(peng_dummy(cold_disagree = TRUE)$est, cold = TRUE)$schema
-  any(c(sd$lower_status, sd$upper_status) == "unreliable")
-}))
-
-# starts_per_side: the default path equals an explicit 1L (exact reproduction),
-# and the generic scan accepts a pool request of 3L
-check("peng starts_per_side default reproduces an explicit 1L", peng_try(identical(
-  peng_run(peng_dummy()$est)$table, peng_run(peng_dummy()$est, starts_per_side = 1L)$table
-)))
-check("peng generic scan accepts starts_per_side = 3L", peng_try({
-  res <- peng_run(peng_dummy()$est, starts_per_side = 3L)
-  is.data.frame(res$table) && nrow(res$table) == 2L
-}))
-
-# grid_selector seam: NULL preserves the default output; a valid subset in
-# engine_default traversal is accepted with its id recorded; duplicate and
-# invented rows are rejected
-peng_subset <- peng_sel("sel-subset", "engine_default", function(g) {
-  g[seq_len(max(1L, ceiling(nrow(g) / 2L))), , drop = FALSE]
-})
-peng_dup <- peng_sel("sel-dup", "engine_default", function(g) {
-  g[c(1L, seq_len(nrow(g))), , drop = FALSE]
-})
-peng_invent <- peng_sel("sel-invent", "engine_default", function(g) rbind(g, c(5, 5)))
-check("peng grid_selector = NULL preserves the default table", peng_try(identical(
-  peng_run(peng_dummy()$est)$table, peng_run(peng_dummy()$est, grid_selector = NULL)$table
-)))
-check("peng grid_selector accepts a valid subset and records its id", peng_try({
-  res <- peng_run(peng_dummy()$est, grid_selector = peng_subset)
-  is.data.frame(res$table) && nrow(res$table) == 2L &&
-    "sel-subset" %in% unlist(res$diagnostics)
-}))
-check("peng grid_selector rejects duplicate or invented rows", peng_try({
-  # match the rejection's own message, not merely "something raised": a catch-all
-  # would score an unrelated failure as the rejection under test
-  bad <- function(sel, want) {
-    msg <- tryCatch(peng_run(peng_dummy()$est, grid_selector = sel),
-      error = conditionMessage
-    )
-    is.character(msg) && grepl(want, msg, fixed = TRUE)
-  }
-  bad(peng_dup, "duplicate rows") && bad(peng_invent, "invented rows")
-}))
+paper_source_once(paper_path(
+  "tests", "estimators", "ppml", "engine_seam_checks.R"
+))

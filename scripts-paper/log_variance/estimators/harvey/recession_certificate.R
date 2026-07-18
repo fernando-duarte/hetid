@@ -10,11 +10,14 @@
 # bounds. Raw solver codes and raw dual objectives are never evidence.
 # Definitions only; sourced by estimator.R.
 
-source(paper_path("log_variance", "estimators", "harvey", "recession_linear_programs.R"))
-
+paper_source_once(paper_path(
+  "log_variance", "estimators", "harvey", "recession_linear_programs.R"
+))
 # column-scaled numerical rank of the positive-response rows (an information
 # diagnostic, never an existence certificate by itself)
-logvar_harvey_pos_rank <- function(x_pos) {
+logvar_harvey_pos_rank <- function(
+  x_pos, control = LOGVAR_HARVEY_CONTROL
+) {
   if (nrow(x_pos) == 0L) {
     return(0L)
   }
@@ -23,16 +26,21 @@ logvar_harvey_pos_rank <- function(x_pos) {
   nz <- norms > 0
   scaled[, nz] <- sweep(x_pos[, nz, drop = FALSE], 2, norms[nz], "/")
   d <- svd(scaled)$d
-  sum(d > 1e-10 * d[1])
+  sum(d > control$recession_rank_tol * d[1])
 }
 
 # classify one facet: negative witness, zero witness, certified positive,
 # certified infeasible, or unresolved -- with every raw and projected
 # quantity persisted
-.logvar_facet_classify <- function(c_vec, z_pos, j, sign_j, rate_tol, t_max) {
-  prim <- logvar_harvey_facet_primal(c_vec, z_pos, j, sign_j)
+.logvar_facet_classify <- function(
+  c_vec, z_pos, j, sign_j, rate_tol, t_max,
+  control = LOGVAR_HARVEY_CONTROL
+) {
+  prim <- logvar_harvey_facet_primal(
+    c_vec, z_pos, j, sign_j, control
+  )
   rec <- list(j = j, sign = sign_j, primal = prim)
-  if (prim$ok && prim$feas_viol <= 1e-8) {
+  if (prim$ok && prim$feas_viol <= control$certificate_tol) {
     if (prim$value < -rate_tol) {
       rec$status <- "negative_witness"
       return(rec)
@@ -41,11 +49,14 @@ logvar_harvey_pos_rank <- function(x_pos) {
       rec$status <- "zero_witness"
       return(rec)
     }
-    dual <- logvar_harvey_facet_dual(c_vec, z_pos, j, sign_j)
+    dual <- logvar_harvey_facet_dual(
+      c_vec, z_pos, j, sign_j, control
+    )
     rec$dual <- dual
     gap_ok <- dual$ok &&
       abs(prim$value - dual$bound) /
-        max(1, abs(prim$value), abs(dual$bound)) <= 1e-8
+        max(1, abs(prim$value), abs(dual$bound)) <=
+        control$certificate_tol
     if (dual$ok && dual$bound > rate_tol && gap_ok) {
       rec$status <- "certified_positive"
     } else {
@@ -54,23 +65,32 @@ logvar_harvey_pos_rank <- function(x_pos) {
     return(rec)
   }
   # no feasible primal point: certify infeasibility through phase I
-  ph <- logvar_harvey_facet_phase1(z_pos, j, sign_j, t_max)
+  ph <- logvar_harvey_facet_phase1(
+    z_pos, j, sign_j, t_max, control
+  )
   rec$phase1 <- ph
-  if (ph$ok && ph$t_min <= 1e-8) {
+  if (ph$ok && ph$t_min <= control$certificate_tol) {
     # the facet is feasible after all; re-solve the primal from the
     # phase-I direction
-    prim2 <- logvar_harvey_facet_primal(c_vec, z_pos, j, sign_j)
+    prim2 <- logvar_harvey_facet_primal(
+      c_vec, z_pos, j, sign_j, control
+    )
     rec$primal <- prim2
-    if (prim2$ok && prim2$feas_viol <= 1e-8 && prim2$value < -rate_tol) {
+    if (prim2$ok &&
+      prim2$feas_viol <= control$certificate_tol &&
+      prim2$value < -rate_tol) {
       rec$status <- "negative_witness"
-    } else if (prim2$ok && prim2$feas_viol <= 1e-8 && prim2$value <= rate_tol) {
+    } else if (prim2$ok &&
+      prim2$feas_viol <= control$certificate_tol &&
+      prim2$value <= rate_tol) {
       rec$status <- "zero_witness"
     } else {
       rec$status <- "unresolved"
     }
     return(rec)
   }
-  if (ph$ok && isTRUE(ph$dual_ok) && ph$bound > 1e-8) {
+  if (ph$ok && isTRUE(ph$dual_ok) &&
+    ph$bound > control$certificate_tol) {
     rec$status <- "certified_infeasible"
   } else {
     rec$status <- "unresolved"
@@ -81,15 +101,20 @@ logvar_harvey_pos_rank <- function(x_pos) {
 # the exhaustive facet certificate; the all-positive full-rank shortcut
 # agrees with the facet routine (X d >= 0 with 1'X d <= 0 forces X d = 0)
 # and is tagged so tests can compare both paths
-logvar_harvey_recession_certificate <- function(y, x_mat) {
+logvar_harvey_recession_certificate <- function(
+  y, x_mat, control = LOGVAR_HARVEY_CONTROL
+) {
   p <- ncol(x_mat)
   s <- pmax(1, sqrt(colSums(x_mat^2)))
   z_mat <- sweep(x_mat, 2, s, "/")
   pos <- y > 0
   z_pos <- z_mat[pos, , drop = FALSE]
-  rank_x_pos <- logvar_harvey_pos_rank(x_mat[pos, , drop = FALSE])
+  rank_x_pos <- logvar_harvey_pos_rank(
+    x_mat[pos, , drop = FALSE], control
+  )
   c_vec <- colSums(z_mat)
-  rate_tol <- 1e-9 * max(1, sum(abs(c_vec)))
+  rate_tol <- control$recession_rate_multiplier *
+    max(1, sum(abs(c_vec)))
   out <- list(
     rank_x_pos = rank_x_pos, col_scales = s, rate_tol = rate_tol,
     facets = list(), worst_direction = NULL, worst_rate = NA_real_,
@@ -113,7 +138,9 @@ logvar_harvey_recession_certificate <- function(y, x_mat) {
   statuses <- character(0)
   for (j in seq_len(p)) {
     for (sign_j in c(-1, 1)) {
-      rec <- .logvar_facet_classify(c_vec, z_pos, j, sign_j, rate_tol, t_max)
+      rec <- .logvar_facet_classify(
+        c_vec, z_pos, j, sign_j, rate_tol, t_max, control
+      )
       out$facets[[length(out$facets) + 1L]] <- rec
       statuses <- c(statuses, rec$status)
       if (rec$status %in% c("negative_witness", "zero_witness")) {
@@ -139,32 +166,6 @@ logvar_harvey_recession_certificate <- function(y, x_mat) {
   out
 }
 
-# deterministic machinery self-test for the analyze_domain precheck hook: a
-# strictly positive response must pass, an all-zero response must return the
-# known negative recession, and an injected slightly stationarity-infeasible
-# dual must be rejected by the residual-adjusted conservative bound
-logvar_harvey_recession_self_test <- function(x_mat) {
-  n <- nrow(x_mat)
-  pos_cert <- logvar_harvey_recession_certificate(rep(1, n), x_mat)
-  zero_cert <- logvar_harvey_recession_certificate(rep(0, n), x_mat)
-  # a fake dual whose raw objective clears rate_tol but whose stationarity
-  # residual q wipes the margin: the conservative bound must reject it
-  fake_raw <- 5e-9
-  fake_q <- rep(1e-3, ncol(x_mat))
-  fake_bound <- fake_raw - sum(abs(fake_q))
-  checks <- c(
-    positive = identical(pos_cert$classification, "pass"),
-    all_zero = identical(zero_cert$classification, "negative_recession"),
-    residual_adjust = !(fake_bound > pos_cert$rate_tol)
-  )
-  list(
-    checks = checks, passed = all(checks),
-    records = list(
-      positive = pos_cert, all_zero = zero_cert,
-      residual_adjust = list(
-        raw = fake_raw, residual = fake_q, bound = fake_bound,
-        rate_tol = pos_cert$rate_tol
-      )
-    )
-  )
-}
+paper_source_once(paper_path(
+  "log_variance", "estimators", "harvey", "recession_self_test.R"
+))

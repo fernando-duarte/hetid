@@ -1,5 +1,10 @@
 # Shared scientific and computational settings for the paper pipeline.
 
+paper_source_once(paper_path("config", "analysis_contract.R"))
+paper_source_once(paper_path("config", "reporting.R"))
+analysis_contract <- PAPER_ANALYSIS_CONTRACT
+reporting_contract <- PAPER_REPORTING_CONTROL
+
 # FRED pull window; the early start supplies the lags used downstream.
 fred_from <- "1947-01-01"
 fred_to <- "2026-06-19"
@@ -19,19 +24,16 @@ show_mats <- c(
 )
 
 lag_qtrs <- 1L
-n_pc <- 3L
-n_pc_r <- 4L
+n_pc <- analysis_contract$model$n_mean_pc
+n_pc_r <- analysis_contract$model$n_return_pc
 impose_beta2r_null <- TRUE
 news_prefix <- "sdf_news_m"
 expected_prefix <- "expected_sdf_m"
 
 # Heteroskedasticity instrument used for identification and diagnostics.
-z_col <- "y60_vol"
+z_col <- analysis_contract$input$instrument$column
 z_source <- function() yield_vol[c("qtr", z_col)]
-z_desc <- paste(
-  "the de-meaned realized quarterly volatility of the five-year yield",
-  "(\\texttt{y60\\_vol}, \\texttt{yield\\_vol.R})"
-)
+z_desc <- paper_instrument_description()
 
 # Moving-block bootstrap controls for mean-equation set endpoints.
 boot_reps <- as.integer(Sys.getenv("HETID_BOOT_REPS", unset = "200"))
@@ -47,7 +49,6 @@ logvar_ppml_coverage_fit_budget <- 40000L
 # Reduced budgets and stability controls for each log-variance bootstrap draw.
 logvar_boot_grid_cap <- 1500L
 logvar_boot_fit_budget <- 8000L
-logvar_boot_stability <- 0.85
 logvar_boot_block_sens <- 8L
 logvar_boot_m <- NULL
 logvar_boot_cores <- as.integer(Sys.getenv(
@@ -55,15 +56,14 @@ logvar_boot_cores <- as.integer(Sys.getenv(
   unset = as.character(max(1L, parallel::detectCores() - 1L))
 ))
 
-# Search controls for date-indexed fitted-volatility envelopes.
+# Fit budget for date-indexed fitted-volatility envelopes.
 logvar_fitted_vol_fit_budget <- 80000L
-logvar_fitted_vol_starts_per_side <- 1L
 
 # Analytic standard errors printed beneath PPML and Harvey point estimates.
-logvar_ppml_se_type <- "hac"
-logvar_ppml_se_hac_lags <- 4L
-logvar_harvey_se_type <- "hac"
-logvar_harvey_se_hac_lags <- 4L
+logvar_ppml_se_type <- reporting_contract$ppml$se_type
+logvar_ppml_se_hac_lags <- reporting_contract$ppml$hac_lags
+logvar_harvey_se_type <- reporting_contract$harvey$se_type
+logvar_harvey_se_hac_lags <- reporting_contract$harvey$hac_lags
 
 # Restrict a qtr-keyed frame to the common analysis window.
 filter_window <- function(df) {

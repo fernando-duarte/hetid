@@ -8,17 +8,18 @@
 # have appended, reused verbatim. Run via run_pipeline.R after run_sets.R.
 
 if (exists("log_var_eq_lad")) {
-  source(paper_path("support", "latex", "table_pipeline.R"))
-  source(paper_path("support", "latex", "simple_table.R"))
-  source(paper_path("log_variance", "tables", "table_formatting.R"))
-  source(paper_path("log_variance", "tables", "lad_panel_builder.R"))
+  paper_source_once(paper_path("support", "latex", "table_pipeline.R"))
+  paper_source_once(paper_path("support", "latex", "simple_table.R"))
+  paper_source_once(paper_path("log_variance", "tables", "table_formatting.R"))
+  paper_source_once(paper_path("log_variance", "tables", "lad_panel_builder.R"))
 
   # appending the median block to an empty line set returns exactly the marker-
   # wrapped theta^0.5 panel with its notes, ready to stand alone
   lad_panel_lines <- logvar_lad_append_panel(
     character(0), log_var_eq_lad, log_var_eq_lad$sample$n,
     set_id_mean_eq$tau_display, set_id_mean_eq$tau_baseline,
-    logvar_lad_grid_cap, logvar_lad_fit_budget
+    LOGVAR_LAD_CONTROL$grid_cap,
+    LOGVAR_LAD_CONTROL$fit_budget
   )
   write_latex_table(
     lad_panel_lines,

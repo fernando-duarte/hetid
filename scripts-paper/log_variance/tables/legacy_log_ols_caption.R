@@ -4,6 +4,8 @@
 # this builder reads the run_pipeline.R constants and legacy log_var_eq results at
 # call time if a separate mean-log table needs the full notes.
 
+paper_source_once(paper_path("support", "reporting", "inference.R"))
+
 build_logvar_notes <- function() {
   n_obs <- log_var_eq$sample$n
   span <- paste(format(log_var_eq$sample$span), collapse = "--")
@@ -33,9 +35,14 @@ build_logvar_notes <- function() {
     "fit of $\\log\\hat{\\varepsilon}_{t+1}^{2}(b_{N})$ on a constant and",
     "$PC_{R,t}$. The OLS column is instead the naive benchmark: the residuals",
     "of the exogenous-news least-squares fit of the mean equation itself,",
-    "log-squared and regressed the same way; numbers in parentheses are $t$",
-    "statistics from Newey--West standard errors with 4 lags (Bartlett",
-    "kernel, no prewhitening); $^{***}p<0.01$, $^{**}p<0.05$, $^{*}p<0.10$.",
+    sprintf(
+      paste(
+        "log-squared and regressed the same way; numbers in parentheses are",
+        "$t$ statistics from %s; %s."
+      ),
+      paper_newey_west_description(PAPER_REPORTING_CONTROL$logvar_logols),
+      paper_significance_legend("descending_p")
+    ),
     "These $t$ statistics condition on the fitted first-stage residuals (no",
     "generated-regressor correction), matching the column's naive reading.",
     "The $\\tau{=}0$ column evaluates the two-step map at the closed-form",

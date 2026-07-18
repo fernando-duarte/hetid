@@ -6,14 +6,14 @@
 #   Rscript scripts-paper/tests/diagnostics/joint_null/test_joint_null.R
 
 source(file.path("scripts-paper", "config", "paths.R"))
-source(paper_path("config", "artifacts.R"))
-source(paper_path("support", "identification", "profile_solver_core.R"))
-source(paper_path("support", "identification", "profile_bounds_api.R"))
-source(paper_path("support", "identification", "tau_star.R"))
-source(paper_path("log_variance", "core", "residual_map.R"))
-source(paper_path("log_variance", "engine", "api.R"))
-source(paper_path("log_variance", "estimators", "log_ols", "estimator.R"))
-source(paper_path("log_variance", "core", "endpoint_polish.R"))
+paper_source_once(paper_path("config", "artifacts.R"))
+paper_source_once(paper_path("support", "identification", "profile_solver_core.R"))
+paper_source_once(paper_path("support", "identification", "profile_bounds_api.R"))
+paper_source_once(paper_path("support", "identification", "tau_star.R"))
+paper_source_once(paper_path("log_variance", "core", "residual_map.R"))
+paper_source_once(paper_path("log_variance", "engine", "api.R"))
+paper_source_once(paper_path("log_variance", "estimators", "log_ols", "estimator.R"))
+paper_source_once(paper_path("log_variance", "core", "endpoint_polish.R"))
 
 # The required joint-null modules.
 jn_modules <- vapply(c(
@@ -25,17 +25,9 @@ for (file in jn_modules) {
   source(file)
 }
 
-.pass <- 0L
-.fail <- 0L
-check <- function(label, cond) {
-  if (isTRUE(cond)) {
-    .pass <<- .pass + 1L
-    cat(sprintf("PASS  %s\n", label))
-  } else {
-    .fail <<- .fail + 1L
-    cat(sprintf("FAIL  %s\n", label))
-  }
-}
+paper_source_once(paper_path("tests", "support", "harness.R"))
+.test <- paper_test_harness()
+check <- .test$check
 # Fail a check closed when a required joint-null function errors.
 jn_try <- function(expr) tryCatch(isTRUE(expr), error = function(e) FALSE)
 
@@ -182,8 +174,10 @@ jn_fx <- local({
   environment()
 })
 
-source(paper_path("tests", "diagnostics", "joint_null", "crossing_checks.R"))
-source(paper_path("tests", "diagnostics", "joint_null", "pipeline_checks.R"))
+paper_source_once(paper_path("tests", "diagnostics", "joint_null", "crossing_checks.R"))
+paper_source_once(paper_path("tests", "diagnostics", "joint_null", "pipeline_checks.R"))
+paper_source_once(paper_path(
+  "tests", "diagnostics", "joint_null", "schema_contract_checks.R"
+))
 
-cat(sprintf("\n%d passed, %d failed\n", .pass, .fail))
-if (.fail > 0L) quit(status = 1L)
+.test$finish()

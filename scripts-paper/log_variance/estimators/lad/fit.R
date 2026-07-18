@@ -7,13 +7,6 @@
 # epsilon in the log; quantreg is called lazily. Naming: b the outer length-3 news
 # coef, coef the inner length-5 LAD one.
 
-# Pinned probe tolerances, the fn interior-point step, and the numerical crossing
-# guard, single-sourced here so the estimator spec_id can cite them verbatim.
-logvar_lad_obj_rtol <- 1e-8
-logvar_lad_coef_rtol <- 1e-4
-logvar_lad_fn_eps <- 1e-6
-logvar_lad_guard_ratio <- 1e-12
-
 # Complete fit-result skeleton: every estimator-engine field is present so the ok,
 # nonconvergence, and domain-failure branches share one shape (nonsmooth map).
 logvar_lad_result <- function(coef, fit_status, converged, objective,
@@ -44,26 +37,20 @@ logvar_lad_diag <- function(...) {
 # are captured (not silenced): the br "Solution may be nonunique" flag becomes the
 # free first-pass multiple_solution_sensitive marker, "Premature end" downgrades to
 # nonconvergence. x_mat must already carry the intercept column (rq.fit adds none).
-logvar_lad_fit_response <- function(z, x_mat) {
-  warns <- character(0)
-  msgs <- character(0)
-  fit <- tryCatch(
-    withCallingHandlers(
-      quantreg::rq.fit(x = x_mat, y = z, tau = 0.5, method = "br"),
-      warning = function(w) {
-        warns[[length(warns) + 1L]] <<- conditionMessage(w)
-        invokeRestart("muffleWarning")
-      },
-      message = function(m) {
-        msgs[[length(msgs) + 1L]] <<- conditionMessage(m)
-        invokeRestart("muffleMessage")
-      }
-    ),
-    error = function(e) {
-      warns[[length(warns) + 1L]] <<- paste0("error: ", conditionMessage(e))
-      NULL
-    }
+logvar_lad_fit_response <- function(
+  z,
+  x_mat,
+  control = LOGVAR_LAD_CONTROL
+) {
+  captured <- paper_capture_conditions(
+    quantreg::rq.fit(x = x_mat, y = z, tau = 0.5, method = "br")
   )
+  fit <- captured$value
+  warns <- captured$warnings
+  if (!is.na(captured$error_message)) {
+    warns <- c(warns, captured$error_message)
+  }
+  msgs <- captured$messages
   p <- ncol(x_mat)
   if (is.null(fit) || any(!is.finite(fit$coefficients))) {
     co <- stats::setNames(rep(NA_real_, p), colnames(x_mat))
@@ -120,11 +107,18 @@ logvar_lad_scale_reference <- function(e_ref) {
 # (exact_domain_failure) while a guarded near-zero (0 < |e_i| <= guard * scale) is
 # in-domain but refused at this resolution (numerically_unresolved_near_crossing).
 # Both return named NA coefficients and the implicated rows; nothing is clamped.
-logvar_lad_fit <- function(b, w1, w2, x_mat, e_scale_ref) {
+logvar_lad_fit <- function(
+  b,
+  w1,
+  w2,
+  x_mat,
+  e_scale_ref,
+  control = LOGVAR_LAD_CONTROL
+) {
   e <- drop(w1 - w2 %*% b)
   abs_e <- abs(e)
   min_abs <- min(abs_e)
-  guard <- logvar_lad_guard_ratio * e_scale_ref
+  guard <- control$guard_ratio * e_scale_ref
   fail_domain <- function(state, rows) {
     co <- stats::setNames(rep(NA_real_, ncol(x_mat)), colnames(x_mat))
     logvar_lad_result(
@@ -145,7 +139,11 @@ logvar_lad_fit <- function(b, w1, w2, x_mat, e_scale_ref) {
   if (length(near_rows) > 0L) {
     return(fail_domain("numerically_unresolved_near_crossing", near_rows))
   }
-  fit <- logvar_lad_fit_response(2 * log(abs_e), x_mat)
+  fit <- logvar_lad_fit_response(
+    2 * log(abs_e),
+    x_mat,
+    control
+  )
   fit$diagnostics$min_abs_eps <- min_abs
   fit$diagnostics$guard_ratio <- min_abs / e_scale_ref
   fit$diagnostics$domain_state <- "in_domain"
@@ -158,22 +156,33 @@ logvar_lad_fit <- function(b, w1, w2, x_mat, e_scale_ref) {
 # max(1, max|coef_br|). Both flag sensitivity. Coefficients are never averaged: br
 # stays the map, fn is only evidence. fn warnings are muffled but CAPTURED into
 # fn_warnings (never discarded) so a warning with close coefficients still surfaces.
-logvar_lad_nonunique_probe <- function(fit, z, x_mat) {
+logvar_lad_nonunique_probe <- function(
+  fit,
+  z,
+  x_mat,
+  control = LOGVAR_LAD_CONTROL
+) {
   coef_br <- fit$coef
   obj_br <- sum(abs(z - drop(x_mat %*% coef_br)))
-  fn_warnings <- character(0)
-  fn <- withCallingHandlers(
-    quantreg::rq.fit(x = x_mat, y = z, tau = 0.5, method = "fn", eps = logvar_lad_fn_eps),
-    warning = function(w) {
-      fn_warnings <<- c(fn_warnings, conditionMessage(w))
-      invokeRestart("muffleWarning")
-    }
+  captured <- paper_capture_conditions(
+    quantreg::rq.fit(
+      x = x_mat,
+      y = z,
+      tau = 0.5,
+      method = "fn",
+      eps = control$fn_epsilon
+    )
   )
+  if (!is.null(captured$error)) stop(captured$error)
+  fn <- captured$value
+  fn_warnings <- captured$warnings
   coef_fn <- as.numeric(fn$coefficients)
   obj_fn <- sum(abs(z - drop(x_mat %*% coef_fn)))
-  obj_tie <- abs(obj_br - obj_fn) <= logvar_lad_obj_rtol * max(1, abs(obj_br))
+  obj_tie <- abs(obj_br - obj_fn) <=
+    control$objective_rtol * max(1, abs(obj_br))
   coef_max_diff <- max(abs(as.numeric(coef_br) - coef_fn))
-  coef_apart <- coef_max_diff > logvar_lad_coef_rtol * max(1, max(abs(coef_br)))
+  coef_apart <- coef_max_diff >
+    control$coefficient_rtol * max(1, max(abs(coef_br)))
   list(
     objective_br = obj_br, objective_fn = obj_fn, coef_max_diff = coef_max_diff,
     fn_warnings = fn_warnings, multiple_solution_sensitive = obj_tie && coef_apart

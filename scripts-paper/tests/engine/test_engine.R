@@ -8,32 +8,28 @@
 #   Rscript scripts-paper/tests/engine/test_engine.R
 
 source(file.path("scripts-paper", "config", "paths.R"))
-source(paper_path("config", "artifacts.R"))
-source(paper_path("support", "identification", "profile_solver_core.R"))
-source(paper_path("support", "identification", "profile_bounds_api.R"))
-source(paper_path("log_variance", "core", "residual_map.R"))
-source(paper_path("log_variance", "engine", "api.R"))
-source(paper_path("log_variance", "estimators", "log_ols", "estimator.R"))
+paper_source_once(paper_path("config", "artifacts.R"))
+paper_source_once(paper_path("support", "identification", "profile_solver_core.R"))
+paper_source_once(paper_path("support", "identification", "profile_bounds_api.R"))
+paper_source_once(paper_path("log_variance", "core", "residual_map.R"))
+paper_source_once(paper_path("log_variance", "engine", "api.R"))
+paper_source_once(paper_path("log_variance", "estimators", "log_ols", "estimator.R"))
+paper_source_once(paper_path(
+  "log_variance", "estimators", "set_orchestration.R"
+))
 
-.pass <- 0L
-.fail <- 0L
-check <- function(label, cond) {
-  if (isTRUE(cond)) {
-    .pass <<- .pass + 1L
-    cat(sprintf("PASS  %s\n", label))
-  } else {
-    .fail <<- .fail + 1L
-    cat(sprintf("FAIL  %s\n", label))
-  }
-}
+paper_source_once(paper_path("tests", "support", "harness.R"))
+.test <- paper_test_harness()
+check <- .test$check
 
-source(paper_path("tests", "engine", "map_checks.R"))
-source(paper_path("tests", "engine", "oracle_checks.R"))
-source(paper_path("tests", "engine", "schema_checks.R"))
-source(paper_path("tests", "engine", "service_checks.R"))
-source(paper_path("tests", "engine", "context_checks.R"))
-source(paper_path("tests", "engine", "hook_checks.R"))
-source(paper_path("tests", "engine", "seam_checks.R"))
+paper_source_once(paper_path("tests", "engine", "map_checks.R"))
+paper_source_once(paper_path("tests", "engine", "oracle_checks.R"))
+paper_source_once(paper_path("tests", "engine", "schema_checks.R"))
+paper_source_once(paper_path("tests", "engine", "service_checks.R"))
+paper_source_once(paper_path("tests", "engine", "context_checks.R"))
+paper_source_once(paper_path("tests", "engine", "hook_checks.R"))
+paper_source_once(paper_path("tests", "engine", "seam_checks.R"))
+paper_source_once(paper_path("tests", "engine", "orchestration_checks.R"))
+paper_source_once(paper_path("tests", "engine", "search_control_checks.R"))
 
-cat(sprintf("\n%d passed, %d failed\n", .pass, .fail))
-if (.fail > 0L) quit(status = 1L)
+.test$finish()

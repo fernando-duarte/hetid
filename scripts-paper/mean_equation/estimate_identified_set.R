@@ -10,22 +10,18 @@
 # from the paper-owned support layer.
 # Run via run_pipeline.R after build_consumption_growth.R and build_sdf_pcs.R.
 
-source(paper_path("support", "identification", "api.R"))
-source(paper_path("support", "identification", "profile_solver_core.R"))
-source(paper_path("support", "identification", "profile_bounds_api.R"))
-source(paper_path("support", "identification", "tau_star.R"))
-source(paper_path("support", "identification", "identified_set_bootstrap.R"))
-source(paper_path("mean_equation", "inference", "refine_bounds_by_tau.R"))
+paper_source_once(paper_path("support", "identification", "api.R"))
+paper_source_once(paper_path("support", "identification", "profile_solver_core.R"))
+paper_source_once(paper_path("support", "identification", "profile_bounds_api.R"))
+paper_source_once(paper_path("support", "identification", "tau_star.R"))
+paper_source_once(paper_path("support", "identification", "identified_set_bootstrap.R"))
+paper_source_once(paper_path("mean_equation", "inference", "refine_bounds_by_tau.R"))
 
-# baseline slack and sweep cap (the pipeline's BASELINE_TAU / OPT_TAU_CAP
-# values; admissible slack is [0, 1))
-tau_baseline <- 0.05
-tau_cap <- 0.99
-# slacks displayed as identified-set columns in the structural-equation
-# table; the first must be the baseline (set_tables[[1]] feeds the baseline
-# theta_table/beta1_table below)
-tau_display <- c(tau_baseline, 0.10, 0.20, 0.40)
-stopifnot(tau_display[1] == tau_baseline)
+# Baseline, display, and sweep policy share the analysis contract.
+tau_contract <- PAPER_ANALYSIS_CONTRACT$tau
+tau_baseline <- tau_contract$baseline
+tau_cap <- tau_contract$cap
+tau_display <- tau_contract$display
 
 # aligned estimation frame; complete cases truncate the sample to the
 # instrument's span
@@ -63,7 +59,12 @@ gamma <- sys_spec$gamma
 point0 <- est$point0
 
 # critical slack tau*: the bounded -> unbounded transition of the joint set
-tau_sweep <- sweep_fixed_gamma(gamma, moments, seq(0, tau_cap, by = 0.005), "coarse")
+tau_sweep <- sweep_fixed_gamma(
+  gamma,
+  moments,
+  seq(0, tau_cap, by = tau_contract$sweep_step),
+  "coarse"
+)
 tau_star <- tau_star_fixed(gamma, moments, tau_sweep)
 
 # OLS benchmark on the identical sample (Y2 treated as exogenous)
@@ -78,7 +79,11 @@ ols_fit <- stats::lm(
 set_tables <- lapply(
   tau_display, \(tau) coef_interval_tables(gamma, tau, moments, beta1r, beta2r)
 )
-names(set_tables) <- sprintf("tau_%.2g", tau_display)
+names(set_tables) <- vapply(
+  tau_display,
+  paper_tau_key,
+  character(1)
+)
 
 # coef_interval_tables starts every profile solve at the origin and can settle
 # on a local vertex short of the true extreme, so the news intervals are
@@ -101,7 +106,9 @@ theta_table <- cbind(
     point = if (is.null(point0)) NA_real_ else point0$theta,
     row.names = NULL
   ),
-  set_tables[[1]]$theta[c("set_lower", "set_upper", "status")]
+  set_tables[[paper_tau_key(tau_baseline)]]$theta[
+    c("set_lower", "set_upper", "status")
+  ]
 )
 
 # design-coefficient recovery beta1(theta) = beta1R - beta2R' theta: point at
@@ -118,7 +125,9 @@ beta1_table <- cbind(
     point = unname(beta1_point),
     row.names = NULL
   ),
-  set_tables[[1]]$beta1[c("set_lower", "set_upper", "status")]
+  set_tables[[paper_tau_key(tau_baseline)]]$beta1[
+    c("set_lower", "set_upper", "status")
+  ]
 )
 
 # relevance and conditioning diagnostics: Cov(Z, W2_i^2) is what gives the
@@ -141,6 +150,7 @@ set_id_mean_eq <- list(
   qtr = set_id_data$qtr,
   tau_baseline = tau_baseline,
   tau_display = tau_display,
+  tau_contract = tau_contract,
   set_tables = set_tables,
   theta_table = theta_table,
   beta1_table = beta1_table,
@@ -181,5 +191,5 @@ rm(
   set_id_data, y1_col, x_cols, y2_cols, sys_spec, est, beta1r, w1, w2, beta2r,
   z, moments, gamma, point0, tau_sweep, tau_star, ols_fit, set_tables,
   refined_theta, j, theta_table, beta1_point, beta1_table, relevance,
-  tau_baseline, tau_cap, tau_display
+  tau_baseline, tau_cap, tau_display, tau_contract
 )

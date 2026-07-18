@@ -3,21 +3,13 @@
 # Rscript scripts-paper/tests/variance_bounds/test_variance_bounds.R
 
 source(file.path("scripts-paper", "config", "paths.R"))
-source(paper_path("config", "artifacts.R"))
-source(paper_path("variance_bounds", "figures", "plot.R"))
-source(paper_path("variance_bounds", "tables", "build_summary.R"))
+paper_source_once(paper_path("config", "artifacts.R"))
+paper_source_once(paper_path("variance_bounds", "figures", "plot.R"))
+paper_source_once(paper_path("variance_bounds", "tables", "build_summary.R"))
 
-.pass <- 0L
-.fail <- 0L
-check <- function(label, cond) {
-  if (isTRUE(cond)) {
-    .pass <<- .pass + 1L
-    cat(sprintf("PASS  %s\n", label))
-  } else {
-    .fail <<- .fail + 1L
-    cat(sprintf("FAIL  %s\n", label))
-  }
-}
+paper_source_once(paper_path("tests", "support", "harness.R"))
+.test <- paper_test_harness()
+check <- .test$check
 
 fixture_df <- data.frame(
   Maturity = c(3, 6, 9),
@@ -82,5 +74,4 @@ bad_len_message <- tryCatch(
 )
 check("table builder rejects a wrong-length summary", nzchar(bad_len_message))
 
-cat(sprintf("\n%d passed, %d failed\n", .pass, .fail))
-if (.fail > 0L) quit(status = 1L)
+.test$finish()

@@ -10,11 +10,12 @@
 
 # Invert a symmetric bread with the estimator's conditioning gate: normalize by
 # the diagonal, gate rcond, chol-invert, transform back. Returns NULL on a
-# non-finite matrix, a nonpositive/NA diagonal scale, an rcond below 1e-10, or a
-# failed Cholesky, so SE availability tracks the estimator's own acceptance of a
+# non-finite matrix, a nonpositive/NA diagonal scale, an rcond below the supplied
+# estimator tolerance, or a failed Cholesky, so SE availability tracks acceptance of a
 # column-rescaled fit (do NOT simplify the gate to a raw rcond(m)). Mirrors the
 # inversion in logvar_ppml_jacobian / logvar_harvey_jacobian.
-logvar_se_norm_inv <- function(m) {
+logvar_se_norm_inv <- function(m, rcond_tol) {
+  stopifnot(length(rcond_tol) == 1L, is.finite(rcond_tol), rcond_tol > 0)
   if (!all(is.finite(m))) {
     return(NULL)
   }
@@ -23,7 +24,7 @@ logvar_se_norm_inv <- function(m) {
     return(NULL)
   }
   ms <- m / tcrossprod(d)
-  if (!all(is.finite(ms)) || rcond(ms) < 1e-10) {
+  if (!all(is.finite(ms)) || rcond(ms) < rcond_tol) {
     return(NULL)
   }
   ch <- tryCatch(chol(ms), error = function(cond) NULL)

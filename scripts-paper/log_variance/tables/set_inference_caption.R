@@ -3,7 +3,7 @@
 # confidence-envelope disclosure appended after each estimator's own panel
 # notes (ppml_captions.R and harvey_caption.R, both unchanged).
 # Definitions only; reads log_var_eq_set_boot (run_set_bootstrap.R) and
-# the run_pipeline.R constant logvar_boot_stability at call time.
+# the canonical endpoint-stability control at call time.
 
 build_logvar_set_inference_notes <- function(boot) {
   c(
@@ -33,7 +33,7 @@ build_logvar_set_inference_notes <- function(boot) {
         "degenerate; divergent draws are always counted toward these",
         "fractions, never dropped from the draw pool."
       ),
-      100 * logvar_boot_stability
+      100 * PAPER_INFERENCE_SEARCH_CONTROL$logvar_endpoint$stability_share
     ),
     paste(
       "A genuinely one-sided identified set (one side certified unbounded at",

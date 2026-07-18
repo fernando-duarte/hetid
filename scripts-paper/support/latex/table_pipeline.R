@@ -3,6 +3,8 @@
 # spanner, and tablenotes, replicating the legacy publication format. Also
 # provides a standalone compilable document variant for quick PDF checks.
 
+paper_source_once(paper_path("support", "latex", "table_environment.R"))
+
 # Brace-wrap any cell a siunitx S column cannot parse as a plain number
 # (e.g. "unbounded", "unreliable", "--"); leave numbers and already-braced
 # cells untouched.
@@ -34,23 +36,15 @@ build_panel_latex_table <- function(panels, col_headers, caption, label,
                                     col_group_label = "Maturity (months)",
                                     table_format = "1.3") {
   n_cols <- length(col_headers)
-  lines <- c(
-    "\\begin{table}[!htbp]",
-    "\\centering",
-    "\\begin{threeparttable}",
-    paste0("\\caption{", caption, "}"),
-    paste0("\\label{", label, "}"),
+  header_lines <- c(
     paste0(
-      "\\begin{tabular}{l@{\\hskip 0.5in}*{", n_cols,
-      "}{S[table-format=", table_format, "]}}"
+      "& \\multicolumn{", n_cols, "}{c}{", col_group_label, "} \\\\"
     ),
-    "\\toprule",
-    paste0("& \\multicolumn{", n_cols, "}{c}{", col_group_label, "} \\\\"),
     paste0("\\cmidrule(lr){2-", n_cols + 1, "}"),
-    paste0("& ", paste0("{", col_headers, "}", collapse = " & "), " \\\\"),
-    "\\midrule"
+    paste0("& ", paste0("{", col_headers, "}", collapse = " & "), " \\\\")
   )
 
+  body <- character()
   for (panel_idx in seq_along(panels)) {
     panel_df <- panels[[panel_idx]]
     stopifnot(ncol(panel_df) == n_cols + 1)
@@ -59,8 +53,8 @@ build_panel_latex_table <- function(panels, col_headers, caption, label,
     } else {
       "\\addlinespace[1em]"
     }
-    lines <- c(
-      lines,
+    body <- c(
+      body,
       spacing,
       paste0(
         "\\multicolumn{", n_cols + 1, "}{l}{\\textbf{Panel ",
@@ -70,8 +64,8 @@ build_panel_latex_table <- function(panels, col_headers, caption, label,
     )
     for (row_idx in seq_len(nrow(panel_df))) {
       cells <- .brace_s_cell(unlist(panel_df[row_idx, -1]))
-      lines <- c(
-        lines,
+      body <- c(
+        body,
         paste0(
           "\\quad ", as.character(panel_df[row_idx, 1]), " & ",
           paste(cells, collapse = " & "), " \\\\"
@@ -80,17 +74,25 @@ build_panel_latex_table <- function(panels, col_headers, caption, label,
     }
   }
 
-  lines <- c(lines, "\\bottomrule", "\\end{tabular}")
-  if (!is.null(notes)) {
-    lines <- c(
-      lines,
-      "\\begin{tablenotes}[flushleft]",
-      "\\scriptsize",
-      paste0("\\item \\textit{Notes:} ", paste(notes, collapse = " ")),
-      "\\end{tablenotes}"
-    )
-  }
-  c(lines, "\\end{threeparttable}", "\\end{table}")
+  col_spec <- paste0(
+    "l@{\\hskip 0.5in}*{", n_cols,
+    "}{S[table-format=", table_format, "]}"
+  )
+  latex_table_environment(
+    tabular_lines = c(
+      paste0("\\begin{tabular}{", col_spec, "}"),
+      "\\toprule",
+      header_lines,
+      "\\midrule",
+      body,
+      "\\bottomrule",
+      "\\end{tabular}"
+    ),
+    caption = caption,
+    label = label,
+    notes = notes,
+    notes_label = "\\textit{Notes:}"
+  )
 }
 
 #' Wrap a table fragment in a compilable standalone LaTeX document

@@ -14,13 +14,11 @@
 # Stop with a classed moment-layer error (mirrors logvar_joint_decision_stop) so
 # tests and callers dispatch on the exact reason string.
 logvar_moment_stop <- function(reason, detail = "") {
-  stop(structure(
-    class = c(reason, "logvar_moment_error", "error", "condition"),
-    list(
-      message = if (nzchar(detail)) paste0(reason, ": ", detail) else reason,
-      call = NULL
-    )
-  ))
+  paper_stop_condition(
+    reason,
+    "logvar_moment_error",
+    detail
+  )
 }
 
 # Log-variance moment X'{log(e^2) - X (a_L, beta)} / n at the residual e(b).
@@ -93,14 +91,18 @@ logvar_jac_ppml_theta <- function(b, a_P, beta, w1, w2, x_mat) {
 # cutoff = cutoff_factor * max(dim) * sigma_1; a retained singular value exceeds
 # it, and a smallest retained value within ten cutoffs is flagged weak even when
 # the formal rank is full.
-logvar_jacobian_rank <- function(jac, cutoff_factor = 1e-8) {
+logvar_jacobian_rank <- function(
+  jac,
+  cutoff_factor = logvar_joint_gmm_constants$jacobian_rank_tol
+) {
   sv <- svd(jac, nu = 0, nv = 0)$d
   sigma_1 <- if (length(sv) > 0L) sv[1L] else 0
   cutoff <- cutoff_factor * max(dim(jac)) * sigma_1
   retained <- sv > cutoff
   rank <- sum(retained)
   min_retained <- if (rank > 0L) min(sv[retained]) else 0
-  weak_jacobian <- rank > 0L && min_retained <= 10 * cutoff
+  weak_gap <- logvar_joint_gmm_constants$jacobian_weak_gap_factor
+  weak_jacobian <- rank > 0L && min_retained <= weak_gap * cutoff
   status <- if (rank == 0L) {
     "degenerate"
   } else if (rank < length(sv)) {
@@ -120,7 +122,10 @@ logvar_jacobian_rank <- function(jac, cutoff_factor = 1e-8) {
 # Euclidean norm and require full numerical column rank. A nonfinite entry, a
 # zero-norm column, or a deficient scaled rank stops before any projection or
 # graph replication with input_rank_deficient.
-logvar_joint_check_design <- function(x_mat, x_rank_tol = 1e-10) {
+logvar_joint_check_design <- function(
+  x_mat,
+  x_rank_tol = logvar_joint_gmm_constants$design_rank_tol
+) {
   if (any(!is.finite(x_mat))) {
     logvar_moment_stop("input_rank_deficient", "nonfinite design entry")
   }

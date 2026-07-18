@@ -13,9 +13,12 @@
 # when its norm clears the pinned axis tolerance. Each accepted vector is normalized and
 # oriented so its first nonvanishing element is positive, which makes the basis a
 # deterministic, sign-canonical function of the projector rather than of the SVD.
-logvar_project_canonical_basis <- function(projector, q) {
+logvar_project_canonical_basis <- function(
+  projector,
+  q,
+  axis_tol = logvar_joint_gmm_constants$basis_axis_tol
+) {
   n <- nrow(projector)
-  axis_tol <- sqrt(.Machine$double.eps)
   basis <- matrix(0, n, q)
   axes <- integer(0)
   filled <- 0L
@@ -46,7 +49,11 @@ logvar_project_canonical_basis <- function(projector, q) {
 # for rank assessment preserves col(A), so the retained projector and the basis are stable
 # under well-conditioned right transforms of z. A retained/discarded singular-value gap
 # that is not clearly separated is reported "unreliable".
-logvar_residualize_moment_basis <- function(z, x_mat, basis_rank_tol = 1e-8) {
+logvar_residualize_moment_basis <- function(
+  z,
+  x_mat,
+  basis_rank_tol = logvar_joint_gmm_constants$basis_rank_tol
+) {
   z <- as.matrix(z)
   n <- nrow(z)
   coef <- solve(crossprod(x_mat), crossprod(x_mat, z))
@@ -75,8 +82,10 @@ logvar_residualize_moment_basis <- function(z, x_mat, basis_rank_tol = 1e-8) {
   cutoff <- basis_rank_tol * s_max
   q <- sum(sv > cutoff)
   first_discarded <- if (q < length(sv)) sv[q + 1L] else 0
-  clear_gap <- sv[q] > 10 * cutoff &&
-    (q == length(sv) || first_discarded < 0.1 * cutoff)
+  retained_gap <- logvar_joint_gmm_constants$basis_retained_gap_factor
+  discarded_gap <- logvar_joint_gmm_constants$basis_discarded_gap_factor
+  clear_gap <- sv[q] > retained_gap * cutoff &&
+    (q == length(sv) || first_discarded < discarded_gap * cutoff)
   u_q <- decomp$u[, seq_len(q), drop = FALSE]
   projector <- u_q %*% t(u_q)
   built <- logvar_project_canonical_basis(projector, q)

@@ -5,8 +5,8 @@
 # function of the accepted coefficient, the squared-residual response y, and the
 # design X -- no fit object or response_scale is needed (the map is
 # scale-invariant and the original-scale coef reproduces mu). Four variants are
-# computed and stored; run_pipeline.R's logvar_ppml_se_type picks which prints (the
-# HAC default matches the log-OLS panel's Newey-West lag-4 inference):
+# computed and stored; run_pipeline.R's logvar_ppml_se_type picks which prints
+# (the configured HAC choice matches the log-OLS panel inference):
 #   naive  Pearson-dispersion-scaled model information  phi_hat * A^-1
 #   hc0    Eicker-White sandwich                         A^-1 (X'diag(r^2)X) A^-1
 #   hc1    hc0 with the n/(n-p) factor
@@ -32,7 +32,13 @@ LOGVAR_PPML_SE_TYPES <- c("naive", "hc0", "hc1", "hac")
 # an all-NA matrix, exactly as the prologue does for a bad coefficient, response,
 # or nonpositive mu. Returns a named list of p x p matrices keyed by
 # LOGVAR_PPML_SE_TYPES.
-logvar_ppml_vcov <- function(coef, y, x_mat, hac_lags) {
+logvar_ppml_vcov <- function(
+  coef,
+  y,
+  x_mat,
+  hac_lags,
+  rcond_tol = LOGVAR_PPML_CONTROL$rcond_tol
+) {
   stopifnot(
     is.matrix(x_mat),
     length(hac_lags) == 1L, is.finite(hac_lags), hac_lags >= 0
@@ -55,7 +61,10 @@ logvar_ppml_vcov <- function(coef, y, x_mat, hac_lags) {
   if (any(!is.finite(mu)) || any(mu <= 0)) {
     return(na_out)
   }
-  a_inv <- logvar_se_norm_inv(crossprod(x_mat, mu * x_mat)) # NULL -> variants NA
+  a_inv <- logvar_se_norm_inv(
+    crossprod(x_mat, mu * x_mat),
+    rcond_tol
+  )
   r <- y - mu
   u <- x_mat * r # per-observation score rows
   meat_hc0 <- crossprod(u)
@@ -85,8 +94,12 @@ logvar_ppml_se_na_frame <- function(coef_names) {
 # objects (reference = OLS-residual fit, point = tau = 0 Lewbel fit); the shared
 # reconstruction rebuilds each column's squared-residual response.
 logvar_ppml_se_columns <- function(ppml, inputs, mean_eq, hac_lags) {
+  rcond_tol <- ppml$estimator$metadata$fit_control$rcond_tol
+  vcov_fn <- function(coef, y, x_mat, hac_lags) {
+    logvar_ppml_vcov(coef, y, x_mat, hac_lags, rcond_tol)
+  }
   logvar_se_columns(
-    logvar_ppml_vcov, ppml$table, inputs, mean_eq, hac_lags, LOGVAR_PPML_SE_TYPES
+    vcov_fn, ppml$table, inputs, mean_eq, hac_lags, LOGVAR_PPML_SE_TYPES
   )
 }
 

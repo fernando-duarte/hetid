@@ -7,49 +7,28 @@
 # Parameterizing envelope/notes/caption/out_name here is what stops the two
 # published tables from drifting. Definitions only; run via run_pipeline.R.
 
-source(paper_path("support", "latex", "table_pipeline.R"))
-source(paper_path("support", "latex", "simple_table.R"))
-source(paper_path("log_variance", "tables", "table_formatting.R"))
-source(paper_path("log_variance", "tables", "ppml_captions.R"))
-source(paper_path("log_variance", "tables", "harvey_panel.R"))
-
-# wrap a built panel fragment in its markers and splice the marker-wrapped
-# notes block (one \item per note line) before \end{threeparttable}
-logvar_panel_block <- function(fragment, notes_lines, est) {
-  cut <- match("\\end{threeparttable}", fragment)
-  stopifnot(!is.na(cut))
-  notes_block <- c(
-    sprintf("%% BEGIN LOGVAR NOTES %s", est),
-    "\\begin{tablenotes}[flushleft]",
-    "\\scriptsize",
-    paste0("\\item ", notes_lines),
-    "\\end{tablenotes}",
-    sprintf("%% END LOGVAR NOTES %s", est)
-  )
-  c(
-    sprintf("%% BEGIN LOGVAR PANEL %s", est),
-    fragment[seq_len(cut - 1L)], notes_block, fragment[cut:length(fragment)],
-    sprintf("%% END LOGVAR PANEL %s", est)
-  )
-}
+paper_source_once(paper_path("support", "latex", "table_pipeline.R"))
+paper_source_once(paper_path("support", "latex", "simple_table.R"))
+paper_source_once(paper_path("log_variance", "tables", "table_formatting.R"))
+paper_source_once(paper_path("log_variance", "tables", "ppml_captions.R"))
+paper_source_once(paper_path("log_variance", "tables", "harvey_panel.R"))
 
 # the log-OLS benchmark panel fragment: the stored mean-log cells with
-# Newey-West lag-4 t-statistics recomputed from the stored fit. Point
+# Newey-West t-statistics recomputed from the stored fit. Point
 # identified, so no envelope ever applies; identical in both panel files, kept
 # here so its label stays valid across the manuscript's \input swap.
 logvar_logols_fragment <- function(headers, n_obs, ordering_note) {
   tab <- log_var_eq$table
-  nw_se <- sqrt(diag(sandwich::NeweyWest(
+  nw <- paper_newey_west_statistics(
     log_var_eq$fit_ols,
-    lag = 4, prewhite = FALSE
-  )))[tab$coef]
-  stopifnot(!anyNA(nw_se))
-  nw_t <- tab$ols / nw_se
-  nw_p <- 2 * stats::pt(-abs(nw_t), df = stats::df.residual(log_var_eq$fit_ols))
-  stars <- sig_stars(nw_p)
+    tab$ols,
+    tab$coef,
+    PAPER_REPORTING_CONTROL$logvar_logols
+  )
+  stopifnot(!anyNA(nw$se))
   cells <- ifelse(
-    stars == "", fmt(tab$ols),
-    sprintf("%s$%s$", fmt(tab$ols), stars)
+    nw$stars == "", fmt(tab$ols),
+    sprintf("%s$%s$", fmt(tab$ols), nw$stars)
   )
   labels <- c(
     "$\\theta^{log}_0$", sprintf("$\\theta^{log}_{%d,R}$", seq_len(n_pc_r))
@@ -59,7 +38,7 @@ logvar_logols_fragment <- function(headers, n_obs, ordering_note) {
   cols <- c(
     list(
       c(
-        interleave(cells, sprintf("(%.2f)", nw_t)),
+        interleave(cells, sprintf("(%.2f)", nw$statistic)),
         sprintf("%.2f", r2), sprintf("%d", n_obs)
       ),
       c(interleave(fmt(tab$point), ""), "--", sprintf("%d", n_obs))
@@ -94,8 +73,15 @@ logvar_logols_fragment <- function(headers, n_obs, ordering_note) {
 build_logvar_panels <- function(out_name, ppml_caption_suffix = ".",
                                 envelope_ppml = NULL, envelope_harvey = NULL,
                                 extra_notes = NULL) {
-  order <- logvar_panel_order(log_var_eq$n_cross, set_id_mean_eq$tau_display)
-  n_base <- log_var_eq$n_cross[[which(set_id_mean_eq$tau_display == 0.05)]]
+  baseline_tau <- log_var_eq$tau_baseline
+  order <- logvar_panel_order(
+    log_var_eq$n_cross,
+    set_id_mean_eq$tau_display,
+    baseline_tau
+  )
+  n_base <- log_var_eq$n_cross[[
+    which(set_id_mean_eq$tau_display == baseline_tau)
+  ]]
   n_obs <- log_var_eq$sample$n
   headers <- c(
     "OLS", "$\\tau{=}0$", sprintf("$\\tau{=}%.2g$", set_id_mean_eq$tau_display)
@@ -107,9 +93,10 @@ build_logvar_panels <- function(out_name, ppml_caption_suffix = ".",
     sprintf(
       paste(
         " Panel order is editorial, keyed to the benchmark crossing count",
-        "(%d) at $\\tau{=}0.05$, not a selection between estimators."
+        "(%d) at $\\tau{=}%s$, not a selection between estimators."
       ),
-      n_base
+      n_base,
+      format(baseline_tau)
     )
   }
   ppml_parts <- logvar_ppml_table_parts(
@@ -141,7 +128,9 @@ build_logvar_panels <- function(out_name, ppml_caption_suffix = ".",
         build_ppml_panel_notes(
           log_var_eq_ppml, set_id_mean_eq$tau_baseline,
           logvar_ppml_grid_cap, logvar_ppml_fit_budget,
-          se_type = logvar_ppml_se_type, se_hac_lags = logvar_ppml_se_hac_lags
+          se_type = logvar_ppml_se_type,
+          se_hac_lags = logvar_ppml_se_hac_lags,
+          set_endpoint_inference = !is.null(envelope_ppml)
         ),
         extra_notes
       ),
@@ -163,7 +152,9 @@ build_logvar_panels <- function(out_name, ppml_caption_suffix = ".",
       build_harvey_panel_notes(
         log_var_eq_harvey, set_id_mean_eq$tau_baseline,
         logvar_harvey_grid_cap, logvar_harvey_fit_budget,
-        se_type = logvar_harvey_se_type, se_hac_lags = logvar_harvey_se_hac_lags
+        se_type = logvar_harvey_se_type,
+        se_hac_lags = logvar_harvey_se_hac_lags,
+        set_endpoint_inference = !is.null(envelope_harvey)
       ),
       extra_notes
     )
@@ -177,7 +168,11 @@ build_logvar_panels <- function(out_name, ppml_caption_suffix = ".",
   )
   compile_latex_pdf(artifact_path(standalone_id))
   cat(sprintf(
-    "log-variance panels%s: %s first (n_cross[0.05] = %d); wrote %s.tex\n",
-    if (is.null(envelope_ppml)) "" else " (inference)", order[1], n_base, out_name
+    "log-variance panels%s: %s first (n_cross[%s] = %d); wrote %s.tex\n",
+    if (is.null(envelope_ppml)) "" else " (inference)",
+    order[1],
+    format(baseline_tau),
+    n_base,
+    out_name
   ))
 }
