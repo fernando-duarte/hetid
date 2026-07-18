@@ -1,0 +1,537 @@
+\documentclass[11pt]{article}
+
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb}
+\usepackage{booktabs}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage{microtype}
+\usepackage{hyperref}
+\usepackage{enumitem}
+\usepackage{tabularx}
+
+\hypersetup{
+  colorlinks=true,
+  linkcolor=blue,
+  urlcolor=blue
+}
+
+\newcommand{\ThetaSet}{\Theta(\tau)}
+\newcommand{\Varhat}{\widehat{\operatorname{Var}}}
+\newcommand{\Covhat}{\widehat{\operatorname{Cov}}}
+
+\title{The Current \texttt{scripts-paper} Workflow Explained}
+\author{}
+\date{18 July 2026}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+This note describes the current source in \path{scripts-paper/}, including its
+current fail-closed numerical policy and its present execution failure. The
+sole production entrypoint, \path{scripts-paper/run_pipeline.R}, has 49
+explicit \texttt{paper\_source\_once()} calls. Those calls enter a transitive
+graph of 194 reachable production R modules. The tree currently contains 297
+R files in total: 194 reachable production modules, 100 test modules, and
+three documented inactive or test-support modules.
+
+The workflow builds fitted stochastic-discount-factor (SDF) proxies, estimates
+a consumption-growth mean equation, and is designed to map several
+log-variance estimators over the mean equation's identified set. The current
+backend, however, has no global solver for the positive-slack indefinite
+quadratically constrained problems. It therefore marks every positive-slack
+news-coefficient profile as \texttt{unreliable}. Only the closed-form
+$\tau=0$ mean-equation point remains certified. The live tau-star search
+therefore returns a typed \texttt{unresolved} status with lower floor zero and
+no certified upper transition. The runner then stops in the structural-table
+caption because that consumer still requests the removed scalar tau-star
+field. A later selector-provenance mismatch also remains latent in PPML
+coverage. Consequently, the current source does not produce a complete run,
+final route record, or current set of downstream empirical results.
+\end{abstract}
+
+\tableofcontents
+
+\section{Snapshot and scope}
+
+This document describes the shared working tree as inspected on 18 July 2026.
+That tree contains changes beyond \texttt{HEAD} commit
+\texttt{cb7c8c6cad920db3fc6d718f9439fbb09f7f3465}, including the new modules
+\path{support/data_transformations.R} and
+\path{mean_equation/figures/region_availability.R}, and the new typed
+tau helpers \path{support/identification/tau_formatting.R} and
+\path{support/identification/interval_tables.R}. The
+current source inventory is 297 R files: 194 reachable production modules,
+100 test modules, and three explicitly inactive or test-support modules. The
+companion
+\path{docs/run_all_scripts_results.tex} reports the result of executing an
+isolated snapshot of this source and distinguishes completed upstream
+calculations from unavailable downstream results.
+
+The package and paper layers remain separate:
+
+\begin{itemize}[leftmargin=1.5em]
+  \item \path{R/}, \path{tests/}, \path{man/}, \path{data/}, and \path{inst/}
+    form the reusable R package.
+  \item \path{scripts-paper/} is a self-contained paper workflow. It may call
+    exported package functions, but paper-specific orchestration, solvers,
+    diagnostics, tables, and figures live under \path{scripts-paper/}.
+\end{itemize}
+
+\section{Source graph and runtime architecture}
+
+\subsection{One entrypoint and a load-once graph}
+
+The runner first loads \path{config/paths.R} with one ordinary
+\texttt{source()} call, because the path and load-once machinery does not yet
+exist. Every later source edge uses \texttt{paper\_source\_once()}. The loader
+normalizes paths, records loaded modules, rejects circular source chains, and
+unregisters a module whose evaluation fails. A module can declare its own
+dependencies, which is why the 49 explicit runner calls expand to 194
+reachable production modules.
+
+All modules evaluate in one shared global environment. That convention makes
+execution order important, but the load-once registry prevents accidental
+double evaluation. Topology tests reject direct
+\texttt{source(paper\_path(...))} calls and unreachable production modules.
+The current topology suite passes for all 297 R files and the 63-record
+artifact manifest.
+
+\subsection{Major layers}
+
+\begin{table}[ht]
+\centering
+\small
+\begin{tabularx}{\textwidth}{@{}lX@{}}
+\toprule
+Layer & Current responsibility \\
+\midrule
+\path{config/} &
+  Analysis, reporting, diagnostics, artifact, and decision contracts. \\
+\path{support/} &
+  Runtime loading, typed artifacts, shared ACM input, data transformations,
+  statistics, identification adapters, numerical search, and \LaTeX{} helpers. \\
+\path{data_preparation/} &
+  SDF proxies, consumption log growth, yield volatility, asset-return PCs,
+  and expected-SDF/news PCs. \\
+\path{mean_equation/} &
+  OLS, the Lewbel system, point and positive-slack calculations, bootstrap,
+  variance shares, tables, diagnostics, and region figures. \\
+\path{log_variance/} &
+  Estimator-neutral mapping plus log-OLS, PPML, Harvey, gated LAD, inference,
+  diagnostics, panels, and figures. \\
+\path{variance_bounds/} and \path{reports/} &
+  Approximation-error summaries and descriptive reporting, both scheduled
+  late in the runner. \\
+\bottomrule
+\end{tabularx}
+\caption{The current paper-pipeline layers.}
+\end{table}
+
+\subsection{Configuration ownership}
+
+Scientific and numerical settings are centralized rather than repeated:
+
+\begin{sloppypar}
+\begin{itemize}[leftmargin=1.5em]
+  \item \path{config/analysis_contract.R} owns dimensions, tau grids,
+    inference search controls, variance-share settings, and input contracts.
+  \item \path{config/analysis.R} derives dates, maturity grids, PC dimensions,
+    bootstrap budgets, worker counts, and the maintained
+    \texttt{impose\_beta2r\_null} restriction.
+  \item \path{config/reporting.R} and \path{config/diagnostics.R} own reporting
+    and heteroskedasticity-diagnostic policies.
+  \item \path{log_variance/estimators/controls.R} and
+    \path{log_variance/diagnostics/protocols.R} own log-variance search and
+    diagnostic protocols.
+\end{itemize}
+\end{sloppypar}
+
+Three \texttt{HETID\_*} variables affect execution:
+\path{HETID_BOOT_REPS}, \path{HETID_BOOT_CORES}, and
+\path{HETID_ASSERT_EQUIV}. \path{FRED_API_KEY} separately changes the FRED
+transport. The runner temporarily selects \texttt{L'Ecuyer-CMRG} around the
+forked log-variance bootstrap and restores the caller's RNG kind. It does not
+restore the previous \texttt{.Random.seed}.
+
+\section{Artifact contract and startup lifecycle}
+
+\begin{sloppypar}
+\path{config/artifact_manifest_data.R} owns a 63-row artifact manifest:
+53 \texttt{required}, six \texttt{conditional\_lad}, and four
+\texttt{conditional\_egarch}. \path{config/artifacts.R} is the lookup facade;
+\path{config/artifact_lifecycle.R} owns conditional cleanup and route-state
+validation. CSV and RDS outputs use the typed serialization layer in
+\path{support/artifacts/typed_artifacts.R}.
+\end{sloppypar}
+
+At startup the runner:
+
+\begin{enumerate}[leftmargin=1.5em]
+  \item loads artifact and analysis contracts;
+  \item creates output directories;
+  \item deletes all ten conditional LAD and EGARCH paths;
+  \item loads and validates one quarterly ACM object for reuse by SDF
+    construction and variance-bound calculations; and
+  \item applies the FRED download patch before requesting consumption data.
+\end{enumerate}
+
+A successful run would finish by validating conditional branch presence and
+writing \path{output/state/conditional_route_status.rds}. The current run
+stops before that finalization step. Thus ``63 declared artifacts'' must not
+be confused with a current, verified materialization of 53 or 59 artifacts.
+
+\section{Data construction}
+
+\subsection{ACM and SDF proxy panels}
+
+The runner loads quarterly ACM yields and term premia once. For maturity $i$
+and the three-month news step $s$, the package constructs the expected log
+one-period price proxy $\hat n(i,t)$ and price revision
+\[
+  \Delta_{t+1}p_{t+i}^{(1)}
+  = \hat n(i-s,t+1)-\hat n(i,t).
+\]
+The paper then calls exported package functions to build:
+
+\begin{itemize}[leftmargin=1.5em]
+  \item an in-sample fitted expected-SDF proxy; and
+  \item a centered second-order SDF-news proxy
+    \[
+    \exp\{\hat n(i,t)\}
+      \left[\Delta p+\tfrac12(\Delta p)^2\right]-B_i.
+    \]
+\end{itemize}
+
+These labels do not make the series exact observed conditional expectations
+or revisions. Their principal components are generated regressors.
+
+\subsection{Consumption growth}
+
+\path{data_preparation/build_consumption_growth.R} obtains quarterly real
+personal consumption expenditures, FRED series \texttt{PCECC96}, and calls
+\path{support/data_transformations.R}. The current transform is
+\[
+  \Delta c_t
+  =100\{\log(\text{PCECC96}_t)-\log(\text{PCECC96}_{t-1})\},
+\]
+quarterly log growth in percent, not annualized. The helper rejects
+nonfinite or nonpositive observed levels. This replaces the arithmetic
+$100(P_t/P_{t-1}-1)$ transform used by the older tracked outputs.
+
+\subsection{The three PC families}
+
+The workflow uses three distinct families:
+
+\begin{itemize}[leftmargin=1.5em]
+  \item $PC_E$: three PCs from the lagged fitted expected-SDF panel;
+  \item $PC_N$: three PCs from the second-order SDF-news proxy panel; and
+  \item $PC_R$: four precomputed PCs of a cross-section of financial asset
+    returns, relabeled as \texttt{l.pc1} through \texttt{l.pc4}.
+\end{itemize}
+
+The asset-return PCs are never PCs of yields. Yields and term premia enter the
+SDF proxy construction, not the $PC_R$ construction. An unlagged expected-SDF
+PCA supplies only a sign-alignment reference; a separate lagged fit supplies
+the structural $PC_E$ scores.
+
+\section{Mean equation}
+
+\subsection{Model and maintained restriction}
+
+The mean equation is
+\[
+  \Delta c_{t+1}
+  = b_0+PC_{E,t}'b_E+PC_{N,t+1}'\theta+\varepsilon_{t+1}.
+\]
+Regressing $\Delta c_{t+1}$ on $(1,PC_{E,t})$ gives $W_1$. The current
+specification maintains $\beta_2^R=0$ for the reduced-form projection of
+$PC_N$ on that specified common design, so $W_2=PC_N$. This is a
+proxy-level identifying restriction. It is not implied by unconditional PCA
+orthogonality or by the fitted SDF formulas.
+
+The single instrument is de-meaned five-year realized yield volatility,
+$Z=\texttt{y60\_vol}-\overline{\texttt{y60\_vol}}$. With one instrument,
+the weight matrix is fixed and there is no weight optimization.
+
+\subsection{Lewbel quadratic system}
+
+The package computes the identification moments and returns one quadratic
+constraint for each news component:
+\[
+  \ThetaSet
+  =\{\theta:\theta'A_i(\tau)\theta+b_i(\tau)'\theta+c_i(\tau)\leq0,
+    \ i=1,2,3\}.
+\]
+At $\tau=0$ the constraints collapse to a linear system $Q\theta=L$. When
+$Q$ has full column rank and is consistent,
+\texttt{solve\_point\_identification()} returns the closed-form point. This
+is the only currently certified news-coefficient result.
+
+\subsection{Current positive-slack certification policy}
+
+For $\tau>0$, the feasible set is defined by indefinite quadratic
+inequalities. The available SLSQP backend supplies local feasible candidates,
+not global extrema. Current code makes that limitation operational:
+
+\begin{itemize}[leftmargin=1.5em]
+  \item \path{support/identification/profile_solver_core.R} assigns
+    \texttt{valid=FALSE} to every finite local coordinate or linear-functional
+    candidate.
+  \item \path{support/identification/bound_search_classifier.R} also assigns
+    \texttt{valid=FALSE} to an apparent box-growth infinity.
+  \item \texttt{coef\_interval\_tables()} consequently marks every
+    positive-slack $\theta$ row \texttt{unreliable}.
+  \item Under the maintained $\beta_2^R=0$ restriction, $b_0$ and $b_E$ are
+    separately known constants. Their positive-slack table cells remain
+    blank rather than displaying repeated values.
+\end{itemize}
+
+Warm continuation from the $\tau=0$ point remains a numerical contradiction
+diagnostic. It carries feasible starts forward, but it cannot upgrade a row:
+replacement is guarded by \texttt{status == "bounded"}, which the current
+local backend cannot produce for a positive-slack news coefficient.
+
+\subsection{The typed \texorpdfstring{$\tau^\ast$}{tau-star} status}
+
+\texttt{eval\_width\_at\_tau()} classifies an invalid solve as
+\texttt{unreliable} before considering boundedness. Because all
+positive-slack sides are invalid, the current tau-star sweep has one certified
+bounded point, $\tau=0$, but neither a certified positive-slack bounded point
+nor a certified unbounded point. \texttt{tau\_star\_fixed()} now returns a
+typed result:
+\[
+  \texttt{status=unresolved},\qquad
+  \texttt{lower=0},\qquad
+  \texttt{upper=NA}.
+\]
+This is a certified floor at zero and no certified transition; it is not a
+capped estimate. The former scalar \texttt{tau\_star} and Boolean
+\texttt{tau\_star\_capped} fields no longer exist.
+
+The 200-draw verification produced \texttt{unresolved} in every draw, a
+lower-bound band $[0,0]$, and zero draws whose certified lower floor reached
+the $0.05$ baseline. These are status diagnostics, not evidence that a
+positive-slack set is bounded or unbounded.
+
+\subsection{Bootstrap and rendering consequences}
+
+The moving-block bootstrap still re-estimates the closed-form $\tau=0$ point,
+so robust point intervals remain available. For positive slack, draw endpoints
+are retained only when their status is \texttt{bounded}. There are therefore
+no finite news-endpoint draws, and the symmetric joint-normal endpoint
+calibration is suppressed. The implemented common-critical-value calibration
+is bespoke; it is not Stoye's CI2 or CI3. If endpoint correlation were
+unavailable, it would fall back to the Imbens--Manski interpolation.
+
+The structural renderer is designed to print \texttt{unreliable} for each
+positive-slack news coefficient, and variance-share rows derived from those
+profiles are likewise unavailable. The current runner does not reach either
+completed table, however, because its structural caption still requests the
+removed scalar tau-star field; Section~\ref{sec:first-failure} gives the exact
+failure. If execution reached the new region gate, the two mean-region SVGs
+would contain explicit ``Unavailable'' placeholders instead of uncertified
+geometry.
+
+No local grid-and-polish result is now exposed as a block-share range. A
+constant expected-SDF block can be certified under the maintained
+$\beta_2^R=0$ restriction when the $\tau=0$ point certifies nonemptiness;
+every nonconstant block range is withheld. The component-share mapper also
+fails closed on disconnected projections. A coordinate interval that strictly
+straddles zero does not prove that zero is feasible for an indefinite
+quadratic system. Unless an endpoint is literally zero, such an otherwise
+bounded straddle is downgraded to \texttt{unreliable} rather than assigned a
+zero minimum share.
+
+\section{Log-variance layer}
+
+\subsection{Intended estimands}
+
+For a candidate $\theta$, define
+\[
+  \varepsilon_t(\theta)=W_{1,t}-W_{2,t}'\theta.
+\]
+The intended log-variance maps use four lagged asset-return PCs:
+
+\begin{align*}
+ E[\log\varepsilon_t(\theta)^2\mid PC_{R,t-1}]
+   &=\vartheta_0^L(\theta)+PC_{R,t-1}'\vartheta_R^L(\theta),\\
+ E[\varepsilon_t(\theta)^2\mid PC_{R,t-1}]
+   &=\exp\{\vartheta_0^V(\theta)+PC_{R,t-1}'\vartheta_R^V(\theta)\}.
+\end{align*}
+
+Log-OLS and LAD use the log-squared target; PPML and Harvey use the
+level-scale second moment. The estimator-neutral engine is designed to scan a
+certified mean-equation box, evaluate feasible points, and locally polish
+coordinate extrema. Such attained values would be inner approximations, not
+global projection hulls.
+
+\subsection{Fail-closed propagation}
+
+\path{log_variance/engine/api.R} checks the upstream mean box before scanning.
+When any required mean side is \texttt{unreliable}, it returns all-NA
+log-variance endpoints with \texttt{unreliable} status. It does not run the
+Morton grid selector. This is the correct fail-closed response to the current
+mean-set policy.
+
+This behavior is verified at the module level and was observed in an earlier
+isolated snapshot. The final live runner now stops at the structural-table
+caption before log-OLS is loaded, so it produces no current log-variance
+diagnostic, residual-crossing count, or positive-slack range.
+
+\subsection{Current first hard stop}
+\label{sec:first-failure}
+
+After data preparation, mean estimation, and the mean bootstrap, runner
+line~38 loads the structural-table renderer. The estimated object stores the
+new fields
+\texttt{tau\_star\_status}, \texttt{tau\_star\_lower}, and
+\texttt{tau\_star\_upper}. Its caption still passes the removed
+\texttt{set\_id\_mean\_eq\$tau\_star} field to
+\texttt{tau\_transition\_range\_label()}. That value is \texttt{NULL}, so the
+formatter's \texttt{switch()} stops with:
+\begin{quote}
+\texttt{EXPR must be a length 1 vector}
+\end{quote}
+
+The call path is
+\begin{quote}
+\path{run_pipeline.R:38}\\
+$\longrightarrow$
+\path{mean_equation/tables/render_structural_equation_table.R}\\
+$\longrightarrow$
+\path{mean_equation/tables/structural_equation_caption.R}\\
+$\longrightarrow$ \texttt{tau\_transition\_range\_label()}.
+\end{quote}
+
+There is also a later, latent PPML mismatch. In the immediately preceding
+snapshot, which reached PPML, the fail-closed engine returned completed
+records without selector diagnostics and coverage stopped with
+\texttt{coverage selector provenance is absent from a completed engine run}.
+That remains a source-level inconsistency, but it is not the first failure of
+the final live tree.
+
+\subsection{Modules not reached}
+
+The hard stop occurs before:
+
+\begin{itemize}[leftmargin=1.5em]
+  \item completed structural-equation tables and all variance-share outputs;
+  \item log-OLS and the mean bounds-by-tau figure;
+  \item PPML estimation, standard errors, and tables;
+  \item Harvey estimation;
+  \item joint-null and joint-GMM diagnostics;
+  \item the residual-dynamics gate and EGARCH router;
+  \item the gated LAD estimator;
+  \item log-variance set bootstrap, panels, and fitted-volatility figures;
+  \item mean-region placeholder rendering;
+  \item heteroskedasticity table rendering, variance-bound rendering,
+    descriptive reports, and final conditional-route validation.
+\end{itemize}
+
+The joint-null module contains a truthful unavailable-state branch for
+uncertified boxes, and the fitted-volatility and region renderers contain
+unavailable placeholders. They describe intended fail-closed behavior if
+reached; they are not current-run artifacts.
+
+\section{Conditional branches}
+
+LAD and EGARCH use different controls:
+
+\begin{sloppypar}
+\begin{itemize}[leftmargin=1.5em]
+  \item LAD reads the tracked DCF record
+    \path{config/decisions/lad.dcf}, currently approved for
+    \texttt{quantreg} 6.1.
+  \item EGARCH validates a hash-bound R decision against the regenerated
+    dynamics gate, fixed plan digest, upstream-plan digest, and prompt hashes.
+    No EGARCH estimator is currently wired.
+\end{itemize}
+\end{sloppypar}
+
+These controls remain part of the architecture, but the current runner stops
+before either route executes. Startup still removes their ten conditional
+artifacts. Because final route validation is not reached, there is no current
+authoritative claim that LAD was requested or ran, nor that a 59-file route
+was materialized.
+
+\section{Current inconsistencies and how to read the tree}
+
+\begin{table}[ht]
+\centering
+\small
+\begin{tabularx}{\textwidth}{@{}p{0.28\textwidth}X@{}}
+\toprule
+Current symptom & Correct interpretation \\
+\midrule
+Tracked tables contain positive-slack ranges and old consumption statistics &
+They were generated by an older arithmetic-growth, locally certified-box
+workflow and are stale relative to current source. \\
+Tau-star estimation is typed, but the structural caption requests the removed
+scalar field &
+The live status is \texttt{unresolved} with lower floor zero and no upper
+transition. Passing the absent field to the formatter is the current first
+hard failure. \\
+Variance-share output is scheduled after the current failure &
+If reached, the mapper would certify only a constant block on a certified
+nonempty set, withhold every nonconstant block range, and downgrade a strict
+component straddle without a literal zero endpoint. \\
+Manifest declares 63 paths &
+This is a declaration, not evidence of a completed current run. \\
+Downstream modules contain unavailable-state logic &
+The structural-caption error occurs earlier, so the full runner does not
+reach those handlers. A second selector-provenance mismatch remains latent in
+PPML coverage. \\
+\bottomrule
+\end{tabularx}
+\caption{Important distinctions in the present working tree.}
+\end{table}
+
+\section{Reproducing the present behavior}
+
+From the package root, the full command remains:
+\begin{verbatim}
+Rscript scripts-paper/run_pipeline.R
+\end{verbatim}
+
+For the verification described here, the isolated run used:
+\begin{verbatim}
+HETID_BOOT_REPS=200 HETID_BOOT_CORES=2 HETID_ASSERT_EQUIV=1 \
+  Rscript scripts-paper/run_pipeline.R
+\end{verbatim}
+
+It completed data preparation, mean estimation, and all 200 mean-bootstrap
+draws, then stopped while building the structural-table caption with the exact
+message quoted above. A successful exit should not be expected until the
+caption consumes the typed tau-star fields. Reaching the later log-variance
+path would still expose the selector-free PPML coverage mismatch described
+above.
+
+\section{Bottom line}
+
+The current design is deliberately conservative about global numerical
+claims. It correctly refuses to promote local positive-slack QCQP candidates
+to identified-set bounds. That policy leaves the closed-form $\tau=0$ mean
+point as the only certified structural result. The current runner first fails
+because its structural caption has not been migrated to the typed tau-star
+object. A later PPML coverage path also treats a selector-free fail-closed
+result as an error. Until both control-flow mismatches are repaired and a
+complete run regenerates the manifest, older positive-slack, log-variance,
+dynamics, and route artifacts are historical rather than current results.
+
+\section*{References}
+
+\begin{itemize}[leftmargin=1.5em]
+  \item Imbens, G. W., and Manski, C. F. (2004). Confidence intervals for
+    partially identified parameters. \emph{Econometrica}, 72(6), 1845--1857.
+  \item Lewbel, A. (2012). Using heteroscedasticity to identify and estimate
+    mismeasured and endogenous regressor models.
+    \emph{Journal of Business \& Economic Statistics}, 30(1), 67--80.
+  \item Stoye, J. (2009). More on confidence intervals for partially
+    identified parameters. \emph{Econometrica}, 77(4), 1299--1315.
+\end{itemize}
+
+\end{document}

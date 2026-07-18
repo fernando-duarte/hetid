@@ -1,0 +1,363 @@
+\documentclass[11pt]{article}
+
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb}
+\usepackage{booktabs}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage{microtype}
+\usepackage{hyperref}
+\usepackage{enumitem}
+\usepackage{tabularx}
+
+\hypersetup{
+  colorlinks=true,
+  linkcolor=blue,
+  urlcolor=blue
+}
+
+\title{Current Results and Execution Status of
+  \texttt{scripts-paper/run\_pipeline.R}}
+\author{}
+\date{18 July 2026}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+The current paper pipeline does not complete, so it has no current
+positive-slack identified-set result, log-variance result, dynamics result, or
+validated final artifact route. This is not a matter of missing files in the
+report. The current numerical policy deliberately marks every
+positive-slack mean-equation profile as \texttt{unreliable}, because the
+available local solver cannot certify a global optimum for the indefinite
+quadratic problem. Its tau-star search now reports the typed status
+\texttt{unresolved}, with certified lower floor zero and no certified upper
+transition. The runner then stops while building the structural-table caption:
+that caption requests a removed scalar tau-star field, and the typed formatter
+receives \texttt{NULL}.
+
+An isolated run of the current source did reach the upstream mean calculation.
+With quarterly log consumption growth, the mean sample has $N=256$ quarters,
+1962~Q1--2025~Q4. The closed-form $\tau=0$ news-loading point is approximately
+$(0.0156,0.0073,-0.4314)$. All three news-loading rows at every displayed
+positive slack are \texttt{unreliable}; no positive-slack endpoint
+calibration is available. All 200 bootstrap tau-star statuses were
+\texttt{unresolved}, with lower-floor band $[0,0]$. Structural tables,
+variance shares, log-OLS, PPML, and every later stage are not reached, so no
+later empirical headline is a current pipeline result.
+\end{abstract}
+
+\tableofcontents
+
+\section{Provenance and the meaning of ``current''}
+
+This note reports an isolated execution of the shared working tree inspected
+on 18 July 2026. The tree contains changes beyond \texttt{HEAD} commit
+\texttt{cb7c8c6cad920db3fc6d718f9439fbb09f7f3465}. Its current topology is 297
+R files: 194 reachable production modules, 100 test modules, and three
+inactive or test-support modules; topology checks pass against the 63-record
+artifact manifest. In particular, consumption growth now uses
+\[
+  100\{\log(P_t)-\log(P_{t-1})\},
+\]
+not $100(P_t/P_{t-1}-1)$, and positive-slack profile candidates now require a
+global certificate that the local backend cannot provide.
+
+The verification command was:
+\begin{verbatim}
+HETID_BOOT_REPS=200 HETID_BOOT_CORES=2 HETID_ASSERT_EQUIV=1 \
+  Rscript scripts-paper/run_pipeline.R
+\end{verbatim}
+
+The run was performed outside the main working tree so it could not modify
+the repository's tracked or ignored paper outputs. It reproduced the current
+hard stop described in Section~\ref{sec:failure}.
+
+\section{Execution summary}
+
+\begin{table}[ht]
+\centering
+\small
+\begin{tabularx}{\textwidth}{@{}p{0.29\textwidth}p{0.18\textwidth}X@{}}
+\toprule
+Stage & Current status & What is reportable \\
+\midrule
+Data preparation & Completed before halt &
+  Quarterly ACM reuse, fitted SDF proxies, consumption log growth, yield
+  volatility, and the three PC families were constructed. \\
+Mean OLS and $\tau=0$ system & Completed before halt &
+  OLS diagnostics, the closed-form $\tau=0$ point, and its point-bootstrap
+  intervals are available as pre-halt diagnostics. \\
+Positive-slack mean profiles & Unavailable &
+  Every news-coefficient row is \texttt{unreliable}; local candidate values
+  are deliberately withheld from tables. \\
+Positive-slack mean inference & Unavailable &
+  No finite certified news-endpoint draws exist, so no endpoint calibration
+  is reported. \\
+Tau-star status & Completed diagnostic &
+  The full sample and all 200 draws are \texttt{unresolved}; their certified
+  lower floor is zero, with no certified upper transition. \\
+Structural-table caption & Hard failure &
+  It passes the removed scalar tau-star field to the typed formatter, which
+  receives \texttt{NULL}. \\
+Variance shares, mean regions, log-OLS, PPML, and Harvey &
+  Not reached &
+  No current-run findings from these stages are available. \\
+LAD, joint diagnostics, dynamics, EGARCH, log-variance bootstrap &
+  Not reached &
+  No current-run findings or route claims are available. \\
+Final route validation & Not reached &
+  No current \texttt{conditional\_route\_status.rds} was written. \\
+\bottomrule
+\end{tabularx}
+\caption{What the current runner did and did not produce.}
+\end{table}
+
+\section{Current scientific contract}
+
+The mean equation is
+\[
+  \Delta c_{t+1}
+  =b_0+PC_{E,t}'b_E+PC_{N,t+1}'b_N+\varepsilon_{t+1}.
+\]
+$PC_E$ comes from a lagged, in-sample fitted expected-SDF proxy, and $PC_N$
+from a centered second-order SDF-news proxy. They are generated regressors,
+not exact observed conditional expectations or revisions. The specification
+maintains $\beta_2^R=0$ for the projection of the news PCs on the specified
+common design $(1,PC_E)$. That is an identifying restriction, not a
+consequence of unconditional PCA orthogonality.
+
+The single heteroskedasticity instrument is de-meaned five-year realized yield
+volatility, \texttt{y60\_vol}. At $\tau=0$, the moment system point-identifies
+$b_N$ through a full-rank linear system. At $\tau>0$, the target becomes the
+intersection of three indefinite quadratic inequalities. The current local
+backend does not certify their coordinate extrema, so every positive-slack
+news row fails closed as \texttt{unreliable}.
+
+\section{Results available before the halt}
+
+\subsection{Mean equation}
+
+The mean sample contains 256 quarters, 1962~Q1--2025~Q4. Table
+\ref{tab:mean-current} reports only objects that were available before the
+failure. The $\tau=0$ intervals are nominal point diagnostics: the closed-form
+point plus or minus the standard-normal 95th percentile times the
+median-absolute-deviation scale of 200 moving-block point draws. They are not
+a joint confidence region and are conditional on the generated SDF panels and
+instrument.
+
+\begin{table}[ht]
+\centering
+\small
+\begin{tabular}{lrrrr}
+\toprule
+Coefficient & OLS & OLS $t$ & $\tau=0$ point & Nominal 90\% point interval \\
+\midrule
+$b_0$       & 0.787 & 14.41 & 0.787  & $(0.687,\,0.888)$ \\
+$b_{1,E}$   & 0.001 & 0.13  & 0.001  & $(-0.007,\,0.009)$ \\
+$b_{2,E}$   & -0.461 & -4.52 & -0.475 & $(-0.744,\,-0.206)$ \\
+$b_{3,E}$   & 0.903 & 3.07  & 0.810  & $(0.066,\,1.553)$ \\
+\midrule
+$b_{1,N}$   & 0.0158 & 4.13  & 0.0156 & $(-0.000,\,0.031)$ \\
+$b_{2,N}$   & 0.0268 & 0.98  & 0.0073 & $(-0.142,\,0.157)$ \\
+$b_{3,N}$   & -0.1820 & -1.70 & -0.4314 & $(-0.756,\,-0.107)$ \\
+\bottomrule
+\end{tabular}
+\caption{Current pre-halt mean-equation diagnostics. OLS has $R^2\approx0.10$
+and $N=256$. The $\tau=0$ column is the closed-form identified point. No
+positive-slack range is certified.}
+\label{tab:mean-current}
+\end{table}
+
+The instrument-relevance diagnostics computed before the halt were:
+\[
+\begin{array}{c|ccc}
+ & PC_{N,1} & PC_{N,2} & PC_{N,3}\\
+\hline
+\operatorname{Cor}(Z,W_{2,i}^2) & 0.567 & 0.484 & 0.275\\
+t\text{-statistic in }W_{2,i}^2\text{ on }Z & 10.97 & 8.81 & 4.56\\
+\operatorname{Cor}(W_1,W_{2,i}) & 0.168 & 0.035 & -0.062
+\end{array}
+\]
+These describe the aligned sample. They do not turn a local positive-slack
+profile into a globally certified bound.
+
+\subsection{What is not a mean-equation result}
+
+The local solver internally found finite baseline candidates, but current code
+correctly labels them \texttt{unreliable}. They are not reported here as
+identified-set ranges. In particular:
+
+\begin{itemize}[leftmargin=1.5em]
+  \item there is no certified statement that any positive-slack news-loading
+    range excludes zero;
+  \item there is no positive-slack endpoint calibration;
+  \item there is no certified news-block or news-component variance-share
+    range;
+  \item there is no certified pairwise or three-dimensional region; and
+  \item there is no estimated boundedness transition $\widehat\tau^\ast$.
+\end{itemize}
+
+The tau-star routine now returns
+\[
+  \texttt{status=unresolved},\qquad
+  \texttt{lower=0},\qquad
+  \texttt{upper=NA}.
+\]
+All 200 moving-block draws had the same status and lower floor, so the reported
+lower-floor band is $[0,0]$ and zero percent reach the $0.05$ baseline. This
+certifies only the $\tau=0$ point. It supplies neither a transition estimate
+nor evidence about positive-slack boundedness.
+
+\subsection{No current log-variance diagnostic}
+
+The final live runner stops before loading log-OLS. It therefore produces no
+current log-variance sample, point column, residual-crossing census, or mapped
+positive-slack range. Log-OLS numbers generated by an immediately preceding
+snapshot are historical diagnostics, not results of the source state
+documented here.
+
+\section{Current hard failure}
+\label{sec:failure}
+
+The failure occurs at runner line~38, immediately after the mean bootstrap,
+while the structural-table caption is being built:
+\begin{quote}
+\path{run_pipeline.R:38}\\
+$\longrightarrow$
+\path{mean_equation/tables/render_structural_equation_table.R}\\
+$\longrightarrow$
+\path{mean_equation/tables/structural_equation_caption.R}\\
+$\longrightarrow$ \texttt{tau\_transition\_range\_label()}.
+\end{quote}
+
+The estimated result stores \texttt{tau\_star\_status},
+\texttt{tau\_star\_lower}, and \texttt{tau\_star\_upper}. The caption instead
+passes the removed \texttt{set\_id\_mean\_eq\$tau\_star} field to the typed
+formatter. The absent field evaluates to \texttt{NULL}, and the formatter's
+\texttt{switch()} stops with:
+
+\begin{quote}
+\texttt{EXPR must be a length 1 vector}
+\end{quote}
+
+The correct tau-star statement is ``unresolved, certified only through
+$\tau=0$.'' The current control flow cannot render that statement because the
+producer and caption use different object shapes.
+
+A second, later incompatibility remains in PPML. An immediately preceding
+snapshot reached the fail-closed log-variance engine, which returned completed
+NA/\texttt{unreliable} records without selector diagnostics. PPML coverage
+then stopped with
+\texttt{coverage selector provenance is absent from a completed engine run}.
+That error remains relevant source evidence, but the final live runner does
+not reach it.
+
+\section{Downstream findings are unavailable}
+
+Because the runner stops in structural-table rendering, the following old
+numerical claims are not current results:
+
+\begin{itemize}[leftmargin=1.5em]
+  \item completed structural-table output or variance-share ranges;
+  \item log-OLS coefficients or residual-zero crossing counts;
+  \item PPML or Harvey attained ranges, standard errors, or bootstrap
+    envelopes;
+  \item LAD ranges or a claim that the LAD branch ran;
+  \item joint-null distances or joint-GMM replication residuals;
+  \item Ljung--Box dynamics $p$-values or an EGARCH routing verdict;
+  \item log-variance block-length sensitivities;
+  \item fitted-volatility envelopes; and
+  \item a final conditional route state.
+\end{itemize}
+
+The live joint-null code would write an
+\texttt{unavailable/not\_evaluated\_uncertified\_boxes} record if reached.
+The live region and fitted-volatility code would render ``Unavailable''
+placeholders. Those are intended future control-flow outcomes, not artifacts
+from the current failed run.
+
+\section{Artifact status}
+
+The manifest still declares 63 paths: 53 required, six conditional on LAD,
+and four conditional on EGARCH. The current execution does not validate a
+53-file or 59-file materialization. Startup removes all ten conditional paths,
+and the hard stop occurs before
+\path{output/state/conditional_route_status.rds} is written.
+
+Tracked TeX and SVG outputs in \path{scripts-paper/output/} were produced by
+an older workflow that used arithmetic consumption growth and promoted local
+positive-slack candidates. Ignored CSV, RDS, and PDF files may also predate
+the current source. They must not be used as evidence for current empirical
+claims merely because they exist on disk.
+
+\begin{table}[ht]
+\centering
+\small
+\begin{tabularx}{\textwidth}{@{}p{0.34\textwidth}X@{}}
+\toprule
+Existing artifact family & Current interpretation \\
+\midrule
+\texttt{structural\_eq*.tex} &
+  Historical if it contains positive-slack numbers or old arithmetic-growth
+  values. The live renderer is intended to show \texttt{unreliable}, but its
+  caption currently fails before the table is completed. \\
+\texttt{var\_share*.tex} &
+  Historical if it reports positive-slack share ranges; current inputs are
+  uncertified. \\
+\texttt{log\_var\_eq*}, Harvey, LAD, and inference panels &
+  Historical and not regenerated by a completed current run. \\
+Descriptive reports &
+  Consumption-dependent rows are stale until regenerated from log growth by a
+  complete or separately validated current run. \\
+Variance-bound summary &
+  Its formula is independent of consumption growth, but it was not reached in
+  the current run; moreover, it is a leading plug-in approximation, not a
+  literal finite-sample upper bound on an omitted remainder. \\
+\bottomrule
+\end{tabularx}
+\caption{How to interpret files left by earlier executions.}
+\end{table}
+
+\section{Publication conclusion}
+
+There is no defensible current positive-slack or log-variance headline. The
+only structural result presently certified by the code is the closed-form
+$\tau=0$ mean point, and even its nominal point intervals remain conditional
+diagnostics rather than a joint confidence statement. The current OLS and
+$\tau=0$ numbers in Table~\ref{tab:mean-current} may be used to diagnose the
+new log-growth specification, but they should not be presented as the output
+of a successful end-to-end paper pipeline.
+
+Before publication, three distinct issues must be resolved:
+
+\begin{enumerate}[leftmargin=1.5em]
+  \item make the structural caption consume the typed tau-star status and
+    endpoints, rather than the removed scalar field;
+  \item supply a rigorous global certificate for any positive-slack bound that
+    is to be called an identified-set endpoint, or continue reporting those
+    objects as unavailable; and
+  \item make PPML coverage accept the selector-free fail-closed engine state,
+    so the runner can reach truthful downstream unavailable handlers and final
+    artifact validation.
+\end{enumerate}
+
+After that change, the full current-source workflow must be rerun and all
+required and conditional artifacts regenerated before PPML, Harvey, LAD,
+joint, dynamics, routing, sensitivity, or region statements can re-enter a
+results document.
+
+\section*{References}
+
+\begin{itemize}[leftmargin=1.5em]
+  \item Imbens, G. W., and Manski, C. F. (2004). Confidence intervals for
+    partially identified parameters. \emph{Econometrica}, 72(6), 1845--1857.
+  \item Lewbel, A. (2012). Using heteroscedasticity to identify and estimate
+    mismeasured and endogenous regressor models.
+    \emph{Journal of Business \& Economic Statistics}, 30(1), 67--80.
+\end{itemize}
+
+\end{document}
