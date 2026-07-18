@@ -53,6 +53,10 @@ paper_source_once(paper_path(
   w
 }
 
+paper_source_once(paper_path(
+  "support", "identification", "scaled_quadratic_program.R"
+))
+
 # Solve the scaled subproblem at a given box; return the FULL phi vector and the
 # solver convergence code. With objective = NULL the objective is the coordinate
 # functional e_k' phi (component bounds, byte-identical to the original path);
@@ -64,40 +68,33 @@ paper_source_once(paper_path(
 .solve_scaled <- function(quadratic, component_index, sign_mult, delta, omega,
                           box, xtol_rel, maxeval, objective = NULL) {
   dim_theta <- ncol(quadratic$A_i[[1]])
-  if (is.null(objective)) {
+  objective_vec <- if (is.null(objective)) {
     e_k <- numeric(dim_theta)
     e_k[component_index] <- 1
-    obj_fn <- function(phi) sign_mult * sum(e_k * phi)
-    grad_fn <- function(phi) sign_mult * e_k
+    e_k
   } else {
-    obj_fn <- function(phi) sign_mult * sum(objective * phi)
-    grad_fn <- function(phi) sign_mult * objective
+    objective
   }
-  constraint_fn <- function(phi) {
-    quadratic_constraint_values(
-      delta * phi,
-      quadratic,
-      omega
-    )
-  }
-  constraint_jacobian_fn <- function(phi) {
-    quadratic_constraint_jacobian(
-      delta * phi,
-      quadratic,
-      omega,
-      theta_scale = delta
-    )
-  }
-  res <- tryCatch(nloptr::slsqp(
-    x0 = rep(0, dim_theta), fn = obj_fn, gr = grad_fn,
-    lower = rep(-box, dim_theta), upper = rep(box, dim_theta),
-    hin = constraint_fn, hinjac = constraint_jacobian_fn,
-    control = list(xtol_rel = xtol_rel, maxeval = maxeval),
-    deprecatedBehavior = FALSE
-  ), error = function(e) {
-    list(par = rep(NA_real_, dim_theta), convergence = -99L)
-  })
-  list(phi = res$par, convergence = res$convergence)
+  result <- solve_scaled_quadratic_program(
+    quadratic = quadratic,
+    x0 = rep(0, dim_theta),
+    objective = function(theta) {
+      sign_mult * sum(objective_vec * theta)
+    },
+    gradient = function(theta) {
+      sign_mult * objective_vec
+    },
+    lower = rep(-delta * box, dim_theta),
+    upper = rep(delta * box, dim_theta),
+    method = "slsqp",
+    objective_scale = "variable",
+    xtol_rel = xtol_rel,
+    maxeval = maxeval
+  )
+  list(
+    phi = result$phi,
+    convergence = result$convergence
+  )
 }
 
 # Most-binding normalized constraint value at theta (~0 at a feasible+active

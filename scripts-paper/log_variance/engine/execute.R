@@ -16,7 +16,7 @@ logvar_engine_run <- function(est, qs, b_tab, b_seed, grid_n, grid_floor,
     pre <- logvar_call_precheck(ad$precheck, qs, b_tab, ctx)
     ctx$precheck <- pre
     if (length(pre$unresolved) > 0L) {
-      return(fail_closed("unreliable", pre$n_flagged, NA_integer_))
+      return(fail_closed(PAPER_ENDPOINT_STATUS[["unreliable"]], pre$n_flagged, NA_integer_))
     }
   }
   pre_cross <- if (is.null(pre)) NA_integer_ else pre$n_flagged
@@ -27,7 +27,7 @@ logvar_engine_run <- function(est, qs, b_tab, b_seed, grid_n, grid_floor,
     )
   }
   if (nrow(b_feas) == 0L) {
-    return(fail_closed("unreliable", pre_cross, 0L))
+    return(fail_closed(PAPER_ENDPOINT_STATUS[["unreliable"]], pre_cross, 0L))
   }
   sel_info <- NULL
   sel_traversal <- NULL
@@ -61,8 +61,8 @@ logvar_engine_run <- function(est, qs, b_tab, b_seed, grid_n, grid_floor,
     claim_fn <- function(b, fit) {
       cl <- ad$claim_failure(b, fit, ctx$precheck, ctx)
       if (isTRUE(cl$claimed)) {
-        bs$counters[["claimed_domain_failure"]] <-
-          bs$counters[["claimed_domain_failure"]] + 1L
+        bs$counters[[LOGVAR_ENGINE_PHASES[["claimed_domain_failure"]]]] <-
+          bs$counters[[LOGVAR_ENGINE_PHASES[["claimed_domain_failure"]]]] + 1L
       }
       cl
     }
@@ -70,18 +70,26 @@ logvar_engine_run <- function(est, qs, b_tab, b_seed, grid_n, grid_floor,
   scan <- if (use_fast) {
     n_pts <- nrow(b_feas)
     if (bs$n_evaluated + n_pts > bs$max_fit_evals) {
-      logvar_budget_stop("scan", sprintf(
+      logvar_budget_stop(LOGVAR_ENGINE_PHASES[["scan"]], sprintf(
         "batch scan of %d points exceeds max_fit_evals = %s",
         n_pts, format(bs$max_fit_evals)
       ))
     }
     # absent key means uncapped, matching logvar_make_evaluator ([[ ]] on a
     # missing name would abort on a partial caps vector)
-    scan_cap <- if ("scan" %in% names(bs$phase_caps)) bs$phase_caps[["scan"]] else NULL
-    if (!is.null(scan_cap) && bs$counters[["scan"]] + n_pts > scan_cap) {
-      logvar_budget_stop("scan", sprintf("phase cap %d reached", scan_cap))
+    scan_phase <- LOGVAR_ENGINE_PHASES[["scan"]]
+    scan_cap <- if (scan_phase %in% names(bs$phase_caps)) {
+      bs$phase_caps[[scan_phase]]
+    } else {
+      NULL
     }
-    bs$counters[["scan"]] <- bs$counters[["scan"]] + n_pts
+    if (!is.null(scan_cap) && bs$counters[[scan_phase]] + n_pts > scan_cap) {
+      logvar_budget_stop(
+        scan_phase,
+        sprintf("phase cap %d reached", scan_cap)
+      )
+    }
+    bs$counters[[scan_phase]] <- bs$counters[[scan_phase]] + n_pts
     bs$n_attempted <- bs$n_attempted + n_pts
     bs$n_evaluated <- bs$n_evaluated + n_pts
     est$scan_grid(b_feas)
@@ -104,13 +112,13 @@ logvar_engine_run <- function(est, qs, b_tab, b_seed, grid_n, grid_floor,
   n_unclaimed <- st$n_fail - length(scan$claimed_failures)
   if (n_unclaimed > 0L) {
     return(fail_closed(
-      "unreliable", pre_cross, st$n_feasible, NULL,
+      PAPER_ENDPOINT_STATUS[["unreliable"]], pre_cross, st$n_feasible, NULL,
       list(unclaimed_fit_failures = n_unclaimed)
     ))
   }
   if (is.null(scan$min) || is.null(st$labels)) {
     return(fail_closed(
-      "unreliable", pre_cross, st$n_feasible, NULL,
+      PAPER_ENDPOINT_STATUS[["unreliable"]], pre_cross, st$n_feasible, NULL,
       list(no_successful_fits = TRUE)
     ))
   }

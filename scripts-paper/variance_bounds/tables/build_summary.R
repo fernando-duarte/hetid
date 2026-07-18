@@ -17,7 +17,7 @@ variance_bounds_table_lines <- function(summary_stats) {
       "Variance Bounds Summary Statistics.",
       "Distributional properties across maturities."
     ),
-    label = "tab:variance_bounds_summary",
+    label = artifact_latex_label("variance_bound_summary_table"),
     notes = paste(
       "$U_i = \\frac{1}{4}\\,\\hat c_i(\\hat k_i + \\hat k_{2,i})$ is the",
       "SDF-news approximation-error variance bound, summarized across the",

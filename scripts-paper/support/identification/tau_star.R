@@ -10,6 +10,22 @@ tau_quadratic_system <- function(gamma, tau, moments) {
   build_pipeline_quadratic_system(gamma, rep(tau, ncol(gamma)), moments)$quadratic
 }
 
+mean_quadratic_system_factory <- function(
+  mean_eq,
+  builder = tau_quadratic_system
+) {
+  stopifnot(
+    is.list(mean_eq),
+    !is.null(mean_eq$gamma),
+    !is.null(mean_eq$moments),
+    is.function(builder)
+  )
+  gamma <- mean_eq$gamma
+  moments <- mean_eq$moments
+  force(builder)
+  function(tau) builder(gamma, tau, moments)
+}
+
 # Total profile-bound width at one tau, with the house three-state status:
 #   bounded    -- every side finite and feasibility-valid
 #   unbounded  -- some side infinite (total width Inf)
@@ -20,11 +36,11 @@ eval_width_at_tau <- function(gamma, tau, moments) {
   bounded <- all(b$bounded_lower & b$bounded_upper)
   valid <- all(b$valid_lower & b$valid_upper)
   status <- if (is.na(total) || (bounded && !valid)) {
-    "unreliable"
+    PAPER_ENDPOINT_STATUS[["unreliable"]]
   } else if (!bounded) {
-    "unbounded"
+    PAPER_ENDPOINT_STATUS[["unbounded"]]
   } else {
-    "bounded"
+    PAPER_ENDPOINT_STATUS[["bounded"]]
   }
   list(total = total, bounded = bounded, valid = valid, status = status)
 }
@@ -40,16 +56,14 @@ coef_interval_tables <- function(gamma, tau, moments, beta1r, beta2r) {
   stopifnot(nrow(beta2r) == ncol(gamma), ncol(beta2r) == length(beta1r))
   stopifnot(identical(colnames(beta2r), names(beta1r)))
   qs <- tau_quadratic_system(gamma, tau, moments)
-  status3 <- function(bounded, valid) {
-    if (!valid) "unreliable" else if (bounded) "bounded" else "unbounded"
-  }
   tb <- solve_all_profile_bounds(qs)
   theta_fail_closed <- anyNA(c(tb$lower, tb$upper))
   theta <- data.frame(
     coef = rownames(beta2r),
     set_lower = tb$lower, set_upper = tb$upper,
-    status = mapply(
-      status3, tb$bounded_lower & tb$bounded_upper, tb$valid_lower & tb$valid_upper
+    status = paper_endpoint_status_from_flags(
+      tb$bounded_lower & tb$bounded_upper,
+      tb$valid_lower & tb$valid_upper
     ),
     row.names = NULL, stringsAsFactors = FALSE
   )
@@ -64,7 +78,10 @@ coef_interval_tables <- function(gamma, tau, moments, beta1r, beta2r) {
       coef = p,
       set_lower = unname(beta1r[p]) - fmax$bound,
       set_upper = unname(beta1r[p]) - fmin$bound,
-      status = status3(fmin$bounded && fmax$bounded, fmin$valid && fmax$valid),
+      status = paper_endpoint_status_from_flags(
+        fmin$bounded && fmax$bounded,
+        fmin$valid && fmax$valid
+      ),
       row.names = NULL, stringsAsFactors = FALSE
     )
   }))
@@ -84,7 +101,10 @@ coef_interval_tables <- function(gamma, tau, moments, beta1r, beta2r) {
 sweep_fixed_gamma <- function(gamma, moments, taus, grid_label) {
   rows <- lapply(taus, function(t) {
     if (t == 0) {
-      w <- list(total = 0, bounded = TRUE, valid = TRUE, status = "bounded")
+      w <- list(
+        total = 0, bounded = TRUE, valid = TRUE,
+        status = PAPER_ENDPOINT_STATUS[["bounded"]]
+      )
     } else {
       w <- eval_width_at_tau(gamma, t, moments)
     }
@@ -121,10 +141,10 @@ tau_star_fixed <- function(
   # validity-failed) is not a certified bounded set; counting it as bounded
   # would push tau* past the true transition, so the coarse bracket and the
   # bisection both branch on the validated status, not on the raw bounded flag.
-  certified <- coarse$status == "bounded"
+  certified <- coarse$status == PAPER_ENDPOINT_STATUS[["bounded"]]
   # "unreliable" is neither evidence of boundedness nor of unboundedness, so it
   # cannot define the transition; only a certified-unbounded tau brackets it.
-  unb <- coarse$tau[coarse$status == "unbounded"]
+  unb <- coarse$tau[coarse$status == PAPER_ENDPOINT_STATUS[["unbounded"]]]
   if (length(unb) == 0) {
     return(list(tau_star = max(coarse$tau), trace = NULL, capped = TRUE))
   }
@@ -136,9 +156,9 @@ tau_star_fixed <- function(
     mid <- (lo + hi) / 2
     w <- eval_width_at_tau(gamma, mid, moments)
     trace[[k]] <- .sweep_row(mid, w, "bisection")
-    if (identical(w$status, "bounded")) {
+    if (identical(w$status, PAPER_ENDPOINT_STATUS[["bounded"]])) {
       lo <- mid
-    } else if (identical(w$status, "unbounded")) {
+    } else if (identical(w$status, PAPER_ENDPOINT_STATUS[["unbounded"]])) {
       hi <- mid
     } else {
       # an unreliable midpoint carries no evidence; refine no further

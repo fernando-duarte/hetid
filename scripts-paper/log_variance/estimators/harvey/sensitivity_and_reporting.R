@@ -22,27 +22,15 @@ paper_source_once(paper_path(
 # union-extreme provenance), so no result view is left in a pre-audit state.
 logvar_harvey_sensitivity_gate <- function(est, taus, b_tabs, b_seed,
                                            grid_cap, fit_budget, qs_fn, primary) {
-  gate_cache <- new.env(parent = emptyenv())
-  keys <- vapply(taus, paper_tau_key, character(1))
-  gate_results <- vector("list", length(taus))
-  names(gate_results) <- keys
-  for (i in seq_along(taus)) {
-    tau <- taus[[i]]
-    key <- keys[[i]]
-    bs <- logvar_budget_state(fit_budget)
-    gate_results[[key]] <- tryCatch(
-      list(ok = TRUE, res = logvar_engine_set_at_tau(
-        est, qs_fn(tau), b_tabs[[key]],
-        b_seed = b_seed,
-        max_grid_points = grid_cap,
-        starts_per_side = LOGVAR_SEARCH_CONTROL$audit_starts_per_side,
-        cache = gate_cache, budget_state = bs,
-        cold_start_check = LOGVAR_SEARCH_CONTROL$cold_start_check,
-        tau = tau
-      )),
-      error = function(e) list(ok = FALSE, error = conditionMessage(e))
-    )
-  }
+  gate_results <- logvar_audit_display_taus(
+    estimator = est,
+    taus = taus,
+    boxes = b_tabs,
+    seed = b_seed,
+    grid_cap = grid_cap,
+    fit_budget = fit_budget,
+    quadratic_at_tau = qs_fn
+  )
   logvar_ppml_apply_coverage(
     primary, gate_results,
     tol = LOGVAR_SEARCH_CONTROL$endpoint_agreement_rtol,
@@ -83,25 +71,13 @@ logvar_harvey_precheck_pairs <- function(y_ref, b_anchor, w1, w2, x_mat,
 # winning point start rung, the sensitivity-gate outcome, and the Harvey-vs-PPML
 # Lewbel-point slope comparison with a soft flag on any slope sign disagreement.
 logvar_harvey_report <- function(hv, taus) {
-  cat(sprintf(
-    "Harvey log-variance map: N = %d over %s to %s\n",
-    hv$sample$n, format(hv$sample$span[1]), format(hv$sample$span[2])
-  ))
-  tau_names <- names(hv$sets)
-  for (i in seq_along(tau_names)) {
-    tb <- hv$sets[[tau_names[i]]]
-    d <- hv$counts[[tau_names[i]]]
-    hull <- logvar_hull_text(tb)
-    cat(sprintf(
-      "  tau = %.2g: %s | attempted %d evaluated %d cached %d failed %d\n",
-      taus[i], paste(hull, collapse = " "),
-      d$n_attempted, d$n_evaluated, d$n_cached, d$n_failed
-    ))
-  }
-  cat(sprintf(
-    "  census comparability (benchmark n_cross by tau): %s\n",
-    paste(sprintf("%.2g=%d", taus, hv$census_comparability), collapse = " ")
-  ))
+  logvar_print_map_summary(
+    "Harvey log-variance map",
+    hv,
+    taus,
+    census = hv$census_comparability,
+    census_label = "census comparability (benchmark n_cross by tau)"
+  )
   cat(sprintf(
     "  Lewbel-point start rung: %s\n",
     if (is.na(hv$point_start_rung)) "-- (no point fit)" else hv$point_start_rung
@@ -125,11 +101,12 @@ logvar_harvey_report <- function(hv, taus) {
   # Harvey-vs-PPML Lewbel-point slopes: the shape-dependence diagnostic; a soft
   # flag when a slope sign flips (economics can move magnitudes, but two
   # estimators of one conditional variance flipping a loading sign reads as a bug)
-  if (exists("log_var_eq_ppml", inherits = TRUE)) {
+  ppml_result <- paper_logvar_result("ppml", required = FALSE)
+  if (!is.null(ppml_result)) {
     coefs <- hv$table$coef
     h <- hv$table$point
-    p <- log_var_eq_ppml$table$point
-    slope <- coefs != "(Intercept)"
+    p <- ppml_result$table$point
+    slope <- coefs != PAPER_ANALYSIS_CONTRACT$model$intercept_col
     cat("  Harvey vs PPML Lewbel-point slopes:\n")
     for (j in which(slope)) {
       cat(sprintf("    %-10s Harvey %8.4f  PPML %8.4f\n", coefs[j], h[j], p[j]))

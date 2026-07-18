@@ -2,6 +2,9 @@
 # Unavailable dates split the ribbon and point curve into separate runs, so
 # ggplot never bridges a fail-closed gap.
 
+paper_source_once(paper_path("support", "graphics", "device.R"))
+paper_source_once(paper_path("support", "reporting", "cells.R"))
+
 logvar_fitted_vol_run_id <- function(valid) {
   runs <- rle(valid)
   rep(seq_along(runs$lengths), runs$lengths)
@@ -84,6 +87,8 @@ logvar_fitted_vol_caption <- function(has_point, stats = NULL, polished = TRUE) 
 }
 
 logvar_fitted_vol_render <- function(envelope, path) {
+  figure_style <- PAPER_FIGURE_STYLE$identified_set
+  logvar_style <- PAPER_FIGURE_STYLE$log_variance
   rows <- envelope$data
   meta <- envelope$metadata
   plot_data <- logvar_fitted_vol_plot_data(rows)
@@ -102,28 +107,30 @@ logvar_fitted_vol_render <- function(envelope, path) {
       meta$estimator, budget_note
     ))
   }
-  estimator_label <- switch(meta$estimator,
-    ppml = "PPML",
-    harvey = "Harvey",
-    toupper(meta$estimator)
-  )
-  # variance-scale estimators map the linear predictor to a conditional SD; the
-  # median (log-scale) estimator maps it to the conditional median |residual|, so
-  # the title and axis name the quantity actually plotted
-  is_median_scale <- identical(meta$response_scale, "log")
-  title_quantity <- if (is_median_scale) {
-    "fitted conditional residual scale (median)"
-  } else {
-    "fitted conditional residual volatility"
+  estimator_spec <- PAPER_LOGVAR_ESTIMATORS[[meta$estimator]]
+  if (is.null(estimator_spec)) {
+    estimator_spec <- list(
+      response_scale = meta$response_scale,
+      display_name = meta$estimator,
+      display = list(
+        title_quantity = "fitted conditional residual volatility",
+        y_label = "Conditional residual volatility"
+      )
+    )
   }
-  y_label <- if (is_median_scale) {
-    "Conditional median |consumption-growth residual| (percentage points)"
-  } else {
-    "Conditional SD of consumption-growth residual (percentage points)"
-  }
+  stopifnot(identical(
+    meta$response_scale,
+    estimator_spec$response_scale
+  ))
+  estimator_label <- estimator_spec$display_name
+  title_quantity <- estimator_spec$display$title_quantity
+  y_label <- estimator_spec$display$y_label
   subtitle <- sprintf(
-    "Pointwise envelope over the joint identified set at tau = %.2g",
-    meta$tau
+    "Pointwise envelope over the joint identified set at tau = %s",
+    paper_format_general(
+      meta$tau,
+      PAPER_REPORTING_CONTROL$precision$tau_significant
+    )
   )
   if (plot_data$n_omitted > 0L) {
     subtitle <- paste0(
@@ -138,21 +145,25 @@ logvar_fitted_vol_render <- function(envelope, path) {
       ggplot2::aes(
         ymin = volatility_lower, ymax = volatility_upper, group = run
       ),
-      fill = "#2a78d6", alpha = 0.35
+      fill = figure_style$primary,
+      alpha = figure_style$ribbon_alpha
     ) +
     ggplot2::geom_line(
       data = band,
       ggplot2::aes(y = volatility_lower, group = run),
-      color = "#2a78d6", linewidth = 0.4
+      color = figure_style$primary,
+      linewidth = figure_style$boundary_linewidth
     ) +
     ggplot2::geom_line(
       data = band,
       ggplot2::aes(y = volatility_upper, group = run),
-      color = "#2a78d6", linewidth = 0.4
+      color = figure_style$primary,
+      linewidth = figure_style$boundary_linewidth
     ) +
     ggplot2::geom_line(
       data = point, ggplot2::aes(y = volatility_point, group = run),
-      color = "#b2182b", linewidth = 0.55
+      color = logvar_style$point,
+      linewidth = logvar_style$point_linewidth
     ) +
     ggplot2::labs(
       title = paste(estimator_label, title_quantity),
@@ -171,8 +182,11 @@ logvar_fitted_vol_render <- function(envelope, path) {
   built <- ggplot2::ggplot_build(fig)
   expected <- c(nrow(band), nrow(band), nrow(band), nrow(point))
   stopifnot(identical(vapply(built$data, nrow, integer(1)), expected))
-  grDevices::svg(path, width = 10, height = 6.25)
-  print(fig)
-  grDevices::dev.off()
-  invisible(path)
+  device <- PAPER_FIGURE_RENDER_CONTROL$devices$fitted_volatility
+  write_svg(
+    path,
+    device[["width"]],
+    device[["height"]],
+    function() print(fig)
+  )
 }

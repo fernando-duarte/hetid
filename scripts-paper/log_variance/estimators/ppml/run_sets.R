@@ -74,13 +74,7 @@ theta_reference <- logvar_ppml_fit_response(
 # separated starts per side, one shared cache, a fresh per-tau budget, warm extras
 taus <- set_id_mean_eq$tau_display
 ppml_cache <- new.env(parent = emptyenv())
-qs_fn <- function(tau) {
-  tau_quadratic_system(
-    set_id_mean_eq$gamma,
-    tau,
-    set_id_mean_eq$moments
-  )
-}
+qs_fn <- mean_quadratic_system_factory(set_id_mean_eq)
 mapped <- logvar_map_display_taus(
   taus = taus,
   bounds_tau = mean_eq_bounds_tau,
@@ -122,8 +116,8 @@ final_res <- adjusted$results
 # pointwise crossing-nearness measure is min_feasible_abs_eps in the list below)
 benchmark_divergence <- lapply(log_var_eq$schema, function(s) {
   data.frame(
-    coef = s$coef, lower_unbounded = s$lower_status == "unbounded",
-    upper_unbounded = s$upper_status == "unbounded", row.names = NULL
+    coef = s$coef, lower_unbounded = s$lower_status == PAPER_ENDPOINT_STATUS[["unbounded"]],
+    upper_unbounded = s$upper_status == PAPER_ENDPOINT_STATUS[["unbounded"]], row.names = NULL
   )
 })
 

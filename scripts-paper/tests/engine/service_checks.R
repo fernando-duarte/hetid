@@ -8,15 +8,10 @@ set.seed(7)
 # small deterministic dummy estimator over a K = 2 system; fail_when(b)
 # marks the grid points whose inner fit must fail (unclaimed)
 svc_dummy_est <- function(fail_when = NULL, spec_id = "svc-dummy-v1") {
-  ok_fit <- list(
-    coef = NULL, fit_status = "ok", converged = TRUE, objective = 0,
-    score_norm = 0, convergence_code = 0L, diagnostics = list(),
-    warm_start = NULL
-  )
-  bad_fit <- list(
-    coef = NULL, fit_status = "nonconvergence", converged = FALSE,
-    objective = NA_real_, score_norm = NA_real_, convergence_code = 5L,
-    diagnostics = list(), warm_start = NULL
+  ok_fit <- paper_test_fit_result(warm_start = NULL)
+  bad_fit <- paper_test_fit_result(
+    fit_status = "nonconvergence",
+    convergence_code = 5L
   )
   list(
     metadata = list(

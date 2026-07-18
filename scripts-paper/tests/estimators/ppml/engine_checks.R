@@ -8,7 +8,7 @@
 # than aborting the run.
 
 set.seed(101)
-peng_try <- function(expr) tryCatch(isTRUE(expr), error = function(e) FALSE)
+peng_try <- .test$safe
 
 # a K = 2 ball b1^2 + b2^2 <= 1, its bounded box, constraint scales, and a
 # small positive synthetic PPML sample (w2 has K = 2 columns to match the ball)
@@ -45,10 +45,7 @@ peng_dummy <- function(cold_disagree = FALSE, objective_fail = FALSE) {
     cc$order[[length(cc$order) + 1L]] <- unname(b)
     val <- c(sum(b), b[1] - b[2]) + if (cold_disagree && is.null(start)) 10 else 0
     names(val) <- peng_labels
-    list(
-      coef = val, fit_status = "ok", converged = TRUE, objective = 0,
-      score_norm = 0, convergence_code = 0L, diagnostics = list(), warm_start = val
-    )
+    paper_test_fit_result(val)
   }
   est <- list(metadata = list(
     estimator = "peng", target_functional = "theta_peng",

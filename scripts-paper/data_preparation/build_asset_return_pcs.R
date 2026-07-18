@@ -8,13 +8,15 @@
 # Run via run_pipeline.R, which defines n_pc_r.
 
 utils::data("variables", package = "hetid")
-pc_r_src <- paste0("pc", seq_len(n_pc_r))
+pc_r_src <- PAPER_ANALYSIS_CONTRACT$model$return_pc_source_cols
+pc_r_out <- PAPER_ANALYSIS_CONTRACT$model$return_pc_cols
+stopifnot(length(pc_r_src) == n_pc_r, length(pc_r_out) == n_pc_r)
 stopifnot(all(pc_r_src %in% names(variables)))
 lag_asset_return_pc <- dplyr::bind_cols(
   tibble::tibble(
     qtr = tsibble::yearquarter(hetid::to_period_end(variables$date, "quarterly")) + 1L
   ),
-  stats::setNames(variables[pc_r_src], paste0("l.", pc_r_src))
+  stats::setNames(variables[pc_r_src], pc_r_out)
 )
 
-rm(variables, pc_r_src)
+rm(variables, pc_r_src, pc_r_out)

@@ -78,9 +78,24 @@ logvar_joint_null_response <- function(eps) {
 # algebra, vectorized over rows of b (grid) or a length-K vector (scalar -> one
 # column); returns q, the slope vector s, the full coefficient theta, and the
 # domain mask, re-expanded to every b row with typed NA for unavailable columns
-logvar_joint_null_objective <- function(b, w1, w2, proj, d_inv2) {
+logvar_joint_null_objective <- function(
+  b,
+  w1,
+  w2,
+  proj,
+  d_inv2,
+  chunk_size = LOGVAR_JOINT_NULL_CONTROL$objective_chunk_size
+) {
   b_mat <- if (is.null(dim(b))) matrix(b, nrow = 1L) else as.matrix(b)
-  stopifnot(ncol(b_mat) == ncol(w2), length(d_inv2) == nrow(proj) - 1L)
+  stopifnot(
+    ncol(b_mat) == ncol(w2),
+    length(d_inv2) == nrow(proj) - 1L,
+    length(chunk_size) == 1L,
+    is.finite(chunk_size),
+    chunk_size >= 1L,
+    chunk_size == as.integer(chunk_size)
+  )
+  chunk_size <- as.integer(chunk_size)
   nb <- nrow(b_mat)
   n_slope <- length(d_inv2)
   sqrt_dinv2 <- sqrt(d_inv2)
@@ -88,9 +103,8 @@ logvar_joint_null_objective <- function(b, w1, w2, proj, d_inv2) {
   s <- matrix(NA_real_, n_slope, nb)
   theta <- matrix(NA_real_, nrow(proj), nb)
   unavailable <- rep(TRUE, nb)
-  chunk <- 5000L
-  for (from in seq(1L, nb, by = chunk)) {
-    cols <- from:min(from + chunk - 1L, nb)
+  for (from in seq(1L, nb, by = chunk_size)) {
+    cols <- from:min(from + chunk_size - 1L, nb)
     eps <- w1 - w2 %*% t(b_mat[cols, , drop = FALSE])
     response <- logvar_joint_null_response(eps)
     unavailable[cols] <- response$unavailable

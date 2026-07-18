@@ -1,5 +1,8 @@
 # Canonical scientific axes, slack policy, generated names, and input metadata.
 
+paper_source_once(paper_path("config", "figure_rendering.R"))
+paper_source_once(paper_path("config", "inference_search_control.R"))
+
 paper_named_doubles <- function(fields,
                                 values = rep(NA_real_, length(fields))) {
   stopifnot(length(fields) == length(values), !anyDuplicated(fields))
@@ -13,54 +16,6 @@ paper_record_doubles <- function(record, fields) {
 
 paper_tau_key <- function(tau) paper_numeric_key(tau)
 
-PAPER_INFERENCE_SEARCH_CONTROL <- list(
-  im_root = list(
-    bracket_lower = 0,
-    bracket_upper = 10,
-    tolerance = 1e-10
-  ),
-  stoye_root = list(
-    bracket_lower = 1e-6,
-    bracket_upper = 8,
-    tolerance = 1e-8
-  ),
-  bvn = list(
-    degenerate_correlation = 0.999,
-    integration_relative_tolerance = 1e-9
-  ),
-  robust_endpoint_correlation = list(
-    minimum_pairs = 8L,
-    mad_trim_multiple = 6
-  ),
-  tau_star = list(
-    fine_grid_points = 20L,
-    bisection_iterations = 40L,
-    bootstrap_bisection_iterations = 15L
-  ),
-  bootstrap = list(
-    fatal_failure_share = 0.25,
-    sensitivity_min_reps = 50L,
-    sensitivity_reps_share = 0.25,
-    progress_report_every = 25L
-  ),
-  logvar_endpoint = list(stability_share = 0.85)
-)
-
-paper_bootstrap_failure_limit <- function(
-  reps, control = PAPER_INFERENCE_SEARCH_CONTROL
-) {
-  floor(reps * control$bootstrap$fatal_failure_share)
-}
-
-paper_bootstrap_sensitivity_reps <- function(
-  reps, control = PAPER_INFERENCE_SEARCH_CONTROL
-) {
-  max(
-    control$bootstrap$sensitivity_min_reps,
-    floor(reps * control$bootstrap$sensitivity_reps_share)
-  )
-}
-
 PAPER_ANALYSIS_CONTRACT <- local({
   n_mean_pc <- 3L
   n_return_pc <- 4L
@@ -71,11 +26,17 @@ PAPER_ANALYSIS_CONTRACT <- local({
     model = list(
       n_mean_pc = n_mean_pc,
       n_return_pc = n_return_pc,
+      key_col = "qtr",
+      intercept_col = "(Intercept)",
       expected_pc_cols = paste0("expected_sdf_pc", mean_index),
       lag_expected_pc_cols = paste0("lag_expected_sdf_pc", mean_index),
       news_pc_cols = paste0("sdf_news_pc", mean_index),
       return_pc_source_cols = paste0("pc", return_index),
       return_pc_cols = paste0("l.pc", return_index),
+      preprocessing = list(
+        sdf_pc = list(center = TRUE, scale = TRUE),
+        return_pc = list(center = TRUE, scale = FALSE)
+      ),
       artifact_fields = list(
         mean = paste0("b", mean_index),
         return = paste0("thetaR", return_index),
@@ -110,7 +71,11 @@ PAPER_ANALYSIS_CONTRACT <- local({
       coherence_slack = 1e-9,
       render_degenerate_rtol = 1e-9
     ),
-    inference = list(nominal_alpha = 0.10),
+    inference = list(
+      version = "1.1.0",
+      nominal_alpha = 0.10,
+      minimum_valid_draw_share = 0.50
+    ),
     figure = list(region_dimension = 3L),
     input = list(
       acm = list(
@@ -119,7 +84,16 @@ PAPER_ANALYSIS_CONTRACT <- local({
         auto_download = FALSE,
         source = "auto"
       ),
-      consumption = list(fred_series = "PCECC96"),
+      yield_volatility = list(
+        data_types = "yields",
+        frequency = "daily",
+        auto_download = TRUE,
+        source = "auto"
+      ),
+      consumption = list(
+        fred_series = "PCECC96",
+        fetch_kind = "economic.data"
+      ),
       instrument = list(
         column = "y60_vol",
         label = paste(
@@ -135,28 +109,6 @@ PAPER_ANALYSIS_CONTRACT <- local({
 })
 
 stopifnot(
-  PAPER_INFERENCE_SEARCH_CONTROL$im_root$bracket_lower <
-    PAPER_INFERENCE_SEARCH_CONTROL$im_root$bracket_upper,
-  PAPER_INFERENCE_SEARCH_CONTROL$stoye_root$bracket_lower <
-    PAPER_INFERENCE_SEARCH_CONTROL$stoye_root$bracket_upper,
-  PAPER_INFERENCE_SEARCH_CONTROL$im_root$tolerance > 0,
-  PAPER_INFERENCE_SEARCH_CONTROL$stoye_root$tolerance > 0,
-  PAPER_INFERENCE_SEARCH_CONTROL$bvn$degenerate_correlation > 0,
-  PAPER_INFERENCE_SEARCH_CONTROL$bvn$degenerate_correlation < 1,
-  PAPER_INFERENCE_SEARCH_CONTROL$bvn$integration_relative_tolerance > 0,
-  PAPER_INFERENCE_SEARCH_CONTROL$robust_endpoint_correlation$minimum_pairs >= 2L,
-  PAPER_INFERENCE_SEARCH_CONTROL$robust_endpoint_correlation$mad_trim_multiple > 0,
-  PAPER_INFERENCE_SEARCH_CONTROL$tau_star$fine_grid_points >= 1L,
-  PAPER_INFERENCE_SEARCH_CONTROL$tau_star$bisection_iterations >= 1L,
-  PAPER_INFERENCE_SEARCH_CONTROL$tau_star$bootstrap_bisection_iterations >= 1L,
-  PAPER_INFERENCE_SEARCH_CONTROL$bootstrap$fatal_failure_share > 0,
-  PAPER_INFERENCE_SEARCH_CONTROL$bootstrap$fatal_failure_share < 1,
-  PAPER_INFERENCE_SEARCH_CONTROL$bootstrap$sensitivity_min_reps >= 1L,
-  PAPER_INFERENCE_SEARCH_CONTROL$bootstrap$sensitivity_reps_share > 0,
-  PAPER_INFERENCE_SEARCH_CONTROL$bootstrap$sensitivity_reps_share <= 1,
-  PAPER_INFERENCE_SEARCH_CONTROL$bootstrap$progress_report_every >= 1L,
-  PAPER_INFERENCE_SEARCH_CONTROL$logvar_endpoint$stability_share > 0,
-  PAPER_INFERENCE_SEARCH_CONTROL$logvar_endpoint$stability_share < 1,
   identical(
     PAPER_ANALYSIS_CONTRACT$tau$display[[1L]],
     PAPER_ANALYSIS_CONTRACT$tau$baseline
@@ -173,6 +125,8 @@ stopifnot(
   PAPER_ANALYSIS_CONTRACT$variance_share$render_degenerate_rtol > 0,
   PAPER_ANALYSIS_CONTRACT$inference$nominal_alpha > 0,
   PAPER_ANALYSIS_CONTRACT$inference$nominal_alpha < 1,
+  PAPER_ANALYSIS_CONTRACT$inference$minimum_valid_draw_share > 0,
+  PAPER_ANALYSIS_CONTRACT$inference$minimum_valid_draw_share <= 1,
   !anyDuplicated(unlist(
     PAPER_ANALYSIS_CONTRACT$model$artifact_fields
   ))
@@ -183,4 +137,32 @@ paper_instrument_description <- function(
 ) {
   latex_column <- gsub("_", "\\_", spec$column, fixed = TRUE)
   sprintf("%s (\\texttt{%s})", spec$label, latex_column)
+}
+
+paper_normalize_model_matrix <- function(x, policy) {
+  stopifnot(
+    is.list(policy),
+    identical(names(policy), c("center", "scale")),
+    is.logical(policy$center),
+    length(policy$center) == 1L,
+    is.logical(policy$scale),
+    length(policy$scale) == 1L
+  )
+  scale(
+    as.matrix(x),
+    center = policy$center,
+    scale = policy$scale
+  )
+}
+
+paper_model_pca <- function(x, policy) {
+  stopifnot(
+    is.list(policy),
+    identical(names(policy), c("center", "scale"))
+  )
+  stats::prcomp(
+    as.matrix(x),
+    center = policy$center,
+    scale. = policy$scale
+  )
 }

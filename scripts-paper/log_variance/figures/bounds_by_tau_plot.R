@@ -5,8 +5,12 @@
 # and the built layers are asserted after (a layer silently dropping to zero
 # rows fails the run). Definitions only; sourced by render_bounds_by_tau.R.
 
+paper_source_once(paper_path("support", "graphics", "device.R"))
+
 logvar_bounds_tau_render <- function(rows, metadata, tau_baseline, tau_star,
                                      path) {
+  figure_style <- PAPER_FIGURE_STYLE$identified_set
+  logvar_style <- PAPER_FIGURE_STYLE$log_variance
   rows$category <- ifelse(
     rows$lower_status == "bounded" & rows$upper_status == "bounded",
     "two-sided",
@@ -66,28 +70,40 @@ logvar_bounds_tau_render <- function(rows, metadata, tau_baseline, tau_star,
   strip$coef <- factor(strip$coef, levels = levels(rows$coef))
   ref_line <- data.frame(
     tau = tau_baseline,
-    line = sprintf("baseline tau = %.2g", tau_baseline)
+    line = sprintf(
+      "baseline tau = %s",
+      paper_format_general(
+        tau_baseline,
+        PAPER_REPORTING_CONTROL$precision$tau_significant
+      )
+    )
   )
   fig <- ggplot2::ggplot(rows, ggplot2::aes(tau)) +
     ggplot2::geom_ribbon(
       data = two, ggplot2::aes(ymin = lower, ymax = upper),
-      fill = "#2a78d6", alpha = 0.35
+      fill = figure_style$primary,
+      alpha = figure_style$ribbon_alpha
     ) +
     ggplot2::geom_line(
       data = two, ggplot2::aes(y = lower),
-      color = "#2a78d6", linewidth = 0.4
+      color = figure_style$primary,
+      linewidth = figure_style$boundary_linewidth
     ) +
     ggplot2::geom_line(
       data = two, ggplot2::aes(y = upper),
-      color = "#2a78d6", linewidth = 0.4
+      color = figure_style$primary,
+      linewidth = figure_style$boundary_linewidth
     ) +
     ggplot2::geom_line(
       data = one, ggplot2::aes(y = finite_side),
-      color = "#b3541e", linewidth = 0.4
+      color = logvar_style$one_sided,
+      linewidth = figure_style$boundary_linewidth
     ) +
     ggplot2::geom_point(
       data = one, ggplot2::aes(y = finite_side, shape = direction),
-      color = "#b3541e", fill = NA, size = 1.6
+      color = logvar_style$one_sided,
+      fill = NA,
+      size = logvar_style$one_sided_point_size
     ) +
     ggplot2::geom_tile(
       data = strip,
@@ -96,11 +112,14 @@ logvar_bounds_tau_render <- function(rows, metadata, tau_baseline, tau_star,
     ) +
     ggplot2::geom_vline(
       data = ref_line, ggplot2::aes(xintercept = tau, linetype = line),
-      color = "grey35", linewidth = 0.35
+      color = figure_style$reference,
+      linewidth = figure_style$reference_linewidth
     ) +
     ggplot2::scale_fill_manual(values = c(
-      "two-sided" = "#2a78d6", "one-sided" = "#b3541e",
-      "unbounded" = "grey55", "unreliable" = "#c23b22"
+      "two-sided" = figure_style$primary,
+      "one-sided" = logvar_style$one_sided,
+      "unbounded" = logvar_style$unbounded,
+      "unreliable" = logvar_style$unreliable
     )) +
     ggplot2::facet_wrap(~coef, scales = "free_y", ncol = 3) +
     ggplot2::labs(
@@ -111,7 +130,11 @@ logvar_bounds_tau_render <- function(rows, metadata, tau_baseline, tau_star,
         metadata$target_functional, ". Bands are projection hulls of an ",
         "estimated plug-in image; interior attainment is not established; ",
         "finite endpoints are inner approximations. tau* = ",
-        signif(tau_star, 3), " is the mean-equation set's ",
+        signif(
+          tau_star,
+          PAPER_REPORTING_CONTROL$precision$figure_annotation
+        ),
+        " is the mean-equation set's ",
         "bounded-unbounded transition and is excluded from the grid."
       )
     ) +
@@ -134,8 +157,11 @@ logvar_bounds_tau_render <- function(rows, metadata, tau_baseline, tau_star,
     nlevels(rows$coef)
   )
   stopifnot(identical(layer_rows, expected))
-  grDevices::svg(path, width = 10, height = 6.5)
-  print(fig)
-  grDevices::dev.off()
-  invisible(path)
+  device <- PAPER_FIGURE_RENDER_CONTROL$devices$logvar_bounds
+  write_svg(
+    path,
+    device[["width"]],
+    device[["height"]],
+    function() print(fig)
+  )
 }

@@ -16,7 +16,12 @@ mbb_index <- function(nn, bl) {
 #' @param compute_ac whether to compute autocorrelations
 #' @param max_lags maximum lags for ACF
 #' @return data frame with statistics
-compute_summary_stats <- function(x, var_name, compute_ac = TRUE, max_lags = 2) {
+compute_summary_stats <- function(
+  x,
+  var_name,
+  compute_ac = TRUE,
+  max_lags = PAPER_STATIONARITY_CONTROL$summary_acf_max
+) {
   # Basic statistics
   stats <- data.frame(
     Variable = var_name,
@@ -82,27 +87,43 @@ kpss_pvalue <- function(stat, cval) {
 #' @param x numeric vector
 #' @param var_name variable name
 #' @return data frame with test results
-perform_stationarity_tests <- function(x, var_name) {
+perform_stationarity_tests <- function(
+  x,
+  var_name,
+  control = PAPER_STATIONARITY_CONTROL
+) {
   results <- data.frame(Variable = var_name, stringsAsFactors = FALSE)
   n_obs <- sum(!is.na(x))
 
   # ADF test (drift regression; tau2 statistic)
-  adf_result <- urca::ur.df(x, type = "drift", selectlags = "AIC")
+  adf_result <- urca::ur.df(
+    x,
+    type = control$adf$type,
+    selectlags = control$adf$select_lags
+  )
   results$ADF_stat <- adf_result@teststat[1]
   results$ADF_pval <- urca::punitroot(
     adf_result@teststat[1],
-    N = n_obs, trend = "c", statistic = "t"
+    N = n_obs,
+    trend = control$adf$response_surface_trend,
+    statistic = control$adf$response_surface_statistic
   )
 
   # KPSS test (null of level stationarity)
-  kpss_result <- urca::ur.kpss(x, type = "mu")
+  kpss_result <-
+    urca::ur.kpss(x, type = control$kpss$type)
   results$KPSS_stat <- kpss_result@teststat
   results$KPSS_pval <- kpss_pvalue(kpss_result@teststat, kpss_result@cval)
 
   # Ljung-Box test
-  lb_test <- Box.test(x, lag = 8, type = "Ljung-Box")
+  lb_test <- Box.test(
+    x,
+    lag = control$ljung_box$lag,
+    type = control$ljung_box$type
+  )
   results$LB_stat <- lb_test$statistic
   results$LB_pval <- lb_test$p.value
 
   results
 }
+paper_source_once(paper_path("config", "statistics.R"))

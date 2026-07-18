@@ -39,28 +39,20 @@ logvar_ppml_vcov <- function(
   hac_lags,
   rcond_tol = LOGVAR_PPML_CONTROL$rcond_tol
 ) {
-  stopifnot(
-    is.matrix(x_mat),
-    length(hac_lags) == 1L, is.finite(hac_lags), hac_lags >= 0
+  pre <- logvar_se_preflight(
+    coef,
+    y,
+    x_mat,
+    hac_lags,
+    LOGVAR_PPML_SE_TYPES
   )
-  hac_lags <- as.integer(hac_lags)
-  p <- ncol(x_mat)
-  n <- nrow(x_mat)
-  na_mat <- matrix(
-    NA_real_, p, p,
-    dimnames = list(colnames(x_mat), colnames(x_mat))
-  )
-  na_out <- stats::setNames(
-    rep(list(na_mat), length(LOGVAR_PPML_SE_TYPES)), LOGVAR_PPML_SE_TYPES
-  )
-  if (n <= p || length(coef) != p || any(!is.finite(coef)) || !is.numeric(y) ||
-    length(y) != n || any(!is.finite(y)) || any(y < 0)) {
-    return(na_out)
+  if (!pre$ok) {
+    return(pre$na_out)
   }
-  mu <- exp(drop(x_mat %*% coef))
-  if (any(!is.finite(mu)) || any(mu <= 0)) {
-    return(na_out)
-  }
+  n <- pre$n
+  p <- pre$p
+  mu <- pre$mu
+  na_mat <- pre$na_mat
   a_inv <- logvar_se_norm_inv(
     crossprod(x_mat, mu * x_mat),
     rcond_tol
@@ -77,7 +69,9 @@ logvar_ppml_vcov <- function(
     naive = if (is.null(a_inv)) na_mat else phi * a_inv,
     hc0 = v_hc0,
     hc1 = (n / (n - p)) * v_hc0,
-    hac = sandwich_v(logvar_se_bartlett_meat(u, hac_lags))
+    hac = sandwich_v(
+      logvar_se_bartlett_meat(u, pre$hac_lags)
+    )
   )
 }
 
@@ -107,12 +101,14 @@ logvar_ppml_se_columns <- function(ppml, inputs, mean_eq, hac_lags) {
 # logvar_ppml_se_type at render time). Guarded so the offline test can source
 # this module for definitions only. The diagnostic ratio contrasts the HAC and
 # naive reference SEs (see logvar_se_report).
-if (exists("log_var_eq_ppml")) {
-  log_var_eq_ppml$se <- logvar_ppml_se_columns(
-    log_var_eq_ppml, log_var_eq$inputs, set_id_mean_eq, logvar_ppml_se_hac_lags
+ppml_result <- paper_logvar_result("ppml", required = FALSE)
+if (!is.null(ppml_result)) {
+  ppml_result$se <- logvar_ppml_se_columns(
+    ppml_result, log_var_eq$inputs, set_id_mean_eq, logvar_ppml_se_hac_lags
   )
   logvar_se_report(
-    log_var_eq_ppml$se, "PPML", LOGVAR_PPML_SE_TYPES,
+    ppml_result$se, "PPML", LOGVAR_PPML_SE_TYPES,
     logvar_ppml_se_type, logvar_ppml_se_hac_lags, c("hac", "naive")
   )
+  paper_logvar_assign_result("ppml", ppml_result)
 }

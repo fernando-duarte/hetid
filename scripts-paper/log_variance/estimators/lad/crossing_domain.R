@@ -133,9 +133,9 @@ logvar_lad_crossing_probe <- function(witness, path_id, ctx) {
     if (!isTRUE(feas$feasible)) break
     e_is <- rhs - sum(normal * b)
     if (abs(e_is) <= control$guard_ratio * esc) break
-    fit <- ctx$evaluate_fit(b, phase = "probe", use_cache = TRUE)
-    st <- if (is.null(fit$fit_status)) "ok" else fit$fit_status
-    if (!identical(st, "ok") || any(!is.finite(fit$coef))) break
+    fit <- ctx$evaluate_fit(b, phase = LOGVAR_ENGINE_PHASES[["probe"]], use_cache = TRUE)
+    st <- if (is.null(fit$fit_status)) LOGVAR_FIT_STATUS[["ok"]] else fit$fit_status
+    if (!identical(st, LOGVAR_FIT_STATUS[["ok"]]) || any(!is.finite(fit$coef))) break
     ms <- c(ms, -2 * log(abs(e_is) / esc))
     coefs[[length(coefs) + 1L]] <- fit$coef
     slack <- c(slack, -feas$max_violation)

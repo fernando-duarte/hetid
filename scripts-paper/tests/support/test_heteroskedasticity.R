@@ -28,7 +28,8 @@ for (name in suite) {
 
 summary_df <- summarize_hetero_tests(
   tests_df,
-  significance_level = rejection_alpha
+  significance_level = rejection_alpha,
+  test_names = suite
 )
 check("summary covers the full test suite", nrow(summary_df) == 6L)
 check("Anscombe row is present", "Anscombe" %in% summary_df$Test)
@@ -51,7 +52,10 @@ check(
 
 tests_all_na <- tests_df
 tests_all_na$GQ_pval <- NA_real_
-summary_na <- summarize_hetero_tests(tests_all_na)
+summary_na <- summarize_hetero_tests(
+  tests_all_na,
+  test_names = suite
+)
 check(
   "an all-missing test has zero total and missing percentage",
   summary_na$Total[summary_na$Test == "GQ"] == 0L &&
@@ -61,7 +65,7 @@ check(
 tests_missing <- tests_df[, setdiff(names(tests_df), "CW_pval")]
 missing_error <- tryCatch(
   {
-    summarize_hetero_tests(tests_missing)
+    summarize_hetero_tests(tests_missing, test_names = suite)
     NULL
   },
   error = function(error) conditionMessage(error)
@@ -151,8 +155,14 @@ check(
 )
 result_full <- perform_all_hetero_tests(synthetic_fit, "synthetic")
 check(
-  "default run retains the full test column set",
-  all(paste0(rep(suite, each = 2), c("_stat", "_pval")) %in% names(result_full))
+  "default run follows the canonical paper test catalog",
+  all(
+    paste0(
+      rep(paper_hetero_test_catalog(), each = 2),
+      c("_stat", "_pval")
+    ) %in% names(result_full)
+  ) &&
+    !any(grepl("^CW_", names(result_full)))
 )
 result_gq_x1 <- perform_all_hetero_tests(
   synthetic_fit,

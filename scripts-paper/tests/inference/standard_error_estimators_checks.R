@@ -71,4 +71,33 @@ check("se na frame is all-NA with the given types", {
   identical(fr$coef, c("x1", "x2")) && all(is.na(fr$p)) && all(is.na(fr$q))
 })
 
+check("se preflight returns dimensions, means, and variant names", {
+  x <- cbind("(Intercept)" = 1, x = c(-1, 0, 1, 2))
+  coef <- c(0.2, -0.1)
+  y <- c(1, 2, 3, 4)
+  pre <- logvar_se_preflight(coef, y, x, 2L, c("a", "b"))
+  pre$ok &&
+    identical(c(pre$n, pre$p), c(4L, 2L)) &&
+    identical(names(pre$na_out), c("a", "b")) &&
+    identical(pre$hac_lags, 2L) &&
+    isTRUE(all.equal(pre$mu, exp(drop(x %*% coef))))
+})
+check("se preflight fails closed with named all-NA matrices", {
+  x <- cbind("(Intercept)" = 1, x = c(-1, 0, 1, 2))
+  pre <- logvar_se_preflight(
+    c(0, 0),
+    c(1, -1, 2, 3),
+    x,
+    0L,
+    c("a", "b")
+  )
+  !pre$ok &&
+    identical(names(pre$na_out), c("a", "b")) &&
+    all(vapply(
+      pre$na_out,
+      function(value) all(is.na(value)),
+      logical(1)
+    ))
+})
+
 rm(seu_d, seu_m, seu_g)

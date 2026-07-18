@@ -6,6 +6,37 @@ interleave <- function(a, b) {
   as.vector(rbind(a, b))
 }
 
+paper_inference_labels <- function(
+  inference = PAPER_ANALYSIS_CONTRACT$inference
+) {
+  alpha <- inference$nominal_alpha
+  stopifnot(alpha > 0, alpha < 1)
+  probs <- 100 * c(lower = alpha / 2, upper = 1 - alpha / 2)
+  list(
+    coverage_percent = 100 * (1 - alpha),
+    lower_percent = unname(probs[["lower"]]),
+    upper_percent = unname(probs[["upper"]]),
+    minimum_valid_draw_percent =
+      100 * inference$minimum_valid_draw_share
+  )
+}
+
+paper_inference_metadata_frame <- function(
+  rows,
+  inference = PAPER_ANALYSIS_CONTRACT$inference
+) {
+  stopifnot(rows >= 0L)
+  data.frame(
+    inference_version = rep(inference$version, rows),
+    nominal_alpha = rep(inference$nominal_alpha, rows),
+    minimum_valid_draw_share = rep(
+      inference$minimum_valid_draw_share,
+      rows
+    ),
+    stringsAsFactors = FALSE
+  )
+}
+
 paper_significance_level <- function(
   level,
   thresholds = PAPER_REPORTING_CONTROL$significance
@@ -32,12 +63,40 @@ paper_significance_legend <- function(
   three <- thresholds[["three_stars"]]
   switch(style,
     descending_p = sprintf(
-      "$^{***}p<%.2f$, $^{**}p<%.2f$, $^{*}p<%.2f$",
-      three, two, one
+      "$^{***}p<%s$, $^{**}p<%s$, $^{*}p<%s$",
+      paper_format_number(
+        three,
+        PAPER_REPORTING_CONTROL$cells$statistic_digits,
+        "na"
+      ),
+      paper_format_number(
+        two,
+        PAPER_REPORTING_CONTROL$cells$statistic_digits,
+        "na"
+      ),
+      paper_format_number(
+        one,
+        PAPER_REPORTING_CONTROL$cells$statistic_digits,
+        "na"
+      )
     ),
     ascending_colon = sprintf(
-      "$^{*}$: $p<%.2f$; $^{**}$: $p<%.2f$; $^{***}$: $p<%.2f$",
-      one, two, three
+      "$^{*}$: $p<%s$; $^{**}$: $p<%s$; $^{***}$: $p<%s$",
+      paper_format_number(
+        one,
+        PAPER_REPORTING_CONTROL$cells$statistic_digits,
+        "na"
+      ),
+      paper_format_number(
+        two,
+        PAPER_REPORTING_CONTROL$cells$statistic_digits,
+        "na"
+      ),
+      paper_format_number(
+        three,
+        PAPER_REPORTING_CONTROL$cells$statistic_digits,
+        "na"
+      )
     ),
     ascending_percent = sprintf(
       "$^{*}$/$^{**}$/$^{***}$ at %s\\%%",

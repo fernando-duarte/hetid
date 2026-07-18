@@ -97,7 +97,7 @@ if (exists("log_var_eq") && exists("set_id_mean_eq")) {
   jg_w1 <- jg_in$w1
   jg_w2 <- jg_in$w2
   jg_pcr <- jg_in$pcr
-  jg_x <- cbind("(Intercept)" = 1, jg_pcr)
+  jg_x <- logvar_design_matrix(jg_pcr)
   logvar_joint_check_design(jg_x)
   jg_proj <- logvar_projection(jg_pcr)
   # align the instrument to the log-variance qtr order (never by row position)
@@ -150,8 +150,13 @@ if (exists("log_var_eq") && exists("set_id_mean_eq")) {
   cat("[BEGIN LOGVAR JOINT GMM]\n")
   cat(build_joint_gmm_comparison(list(moment_block = "none")), sep = "\n")
   cat(sprintf(
-    "\n  graph replication: %s (max scaled moment residual %.3g over %d of %d points)\n",
-    jg_repl$replication_status, jg_repl$max_moment_residual, jg_repl$n_finite,
+    "\n  graph replication: %s (max scaled moment residual %s over %d of %d points)\n",
+    jg_repl$replication_status,
+    paper_format_general(
+      jg_repl$max_moment_residual,
+      PAPER_REPORTING_CONTROL$precision$console_significant
+    ),
+    jg_repl$n_finite,
     jg_repl$n_points
   ))
   cat(sprintf(

@@ -39,13 +39,10 @@ have_qr <- requireNamespace("quantreg", quietly = TRUE)
 # Run a quantreg-dependent check, forcing the condition inside a tryCatch so a
 # missing LAD module fails the check closed instead of aborting the suite; when
 # quantreg is absent, print a skip line and move on.
-qr_check <- function(label, cond) {
-  if (!have_qr) {
-    .test$skip(label, "quantreg unavailable")
-    return(invisible())
-  }
-  check(label, isTRUE(tryCatch(cond, error = function(e) FALSE)))
-}
+qr_check <- .test$optional_check(
+  have_qr,
+  "quantreg unavailable"
+)
 
 # Direct linear-program minimizer: the br vertex equals an exact fit through p
 # rows minimizing the summed absolute deviation, so enumerate the p-subsets.
@@ -95,6 +92,26 @@ lad_fx <- local({
 qr_check("lad br equals the direct LP minimizer on the tiny design", {
   fit <- quantreg::rq.fit(lad_fx$x_tiny, lad_fx$z_tiny, tau = 0.5, method = "br")
   max(abs(unname(fit$coef) - lad_lp(lad_fx$x_tiny, lad_fx$z_tiny)$coef)) < 1e-6
+})
+
+qr_check("LAD response fitting uses the configured quantile", {
+  control <- LOGVAR_LAD_CONTROL
+  control$quantile <- 0.25
+  actual <- logvar_lad_fit_response(
+    lad_fx$z_tiny,
+    lad_fx$x_tiny,
+    control
+  )
+  expected <- quantreg::rq.fit(
+    lad_fx$x_tiny,
+    lad_fx$z_tiny,
+    tau = control$quantile,
+    method = control$primary_method
+  )
+  isTRUE(all.equal(
+    unname(actual$coef),
+    unname(expected$coefficients)
+  ))
 })
 
 # Pure oracle: the even intercept-only sample is genuinely nonunique.

@@ -22,43 +22,32 @@ paper_source_once(paper_path("log_variance", "tables", "harvey_caption.R"))
 logvar_harvey_build_fragment <- function(harvey, n_obs, tau_display,
                                          caption = NULL, label = NULL,
                                          se_type = NULL, envelope = NULL) {
-  tab <- harvey$table
-  n_pc_r <- length(tab$coef) - 1L
-  keys <- vapply(tau_display, paper_tau_key, character(1))
-  sets <- harvey$sets[keys]
-  stopifnot(!any(vapply(sets, is.null, logical(1))))
-  labels <- c(
-    "$\\theta^{H}_0$", sprintf("$\\theta^{H}_{%d,R}$", seq_len(n_pc_r))
-  )
-  rows <- c(interleave(labels, ""), "$R^2$", "$N$")
-  point_col <- function(vals, se_frame) {
-    logvar_se_point_col(
-      vals, se_frame, se_type, LOGVAR_HARVEY_SE_TYPES, tab$coef, n_obs
-    )
-  }
-  cols <- c(
-    list(
-      point_col(tab$reference, harvey$se$reference),
-      point_col(tab$point, harvey$se$point)
-    ),
-    logvar_set_envelope_cols(sets, envelope, keys, tab$coef, n_obs)
-  )
   if (is.null(caption)) {
     caption <- paste(
       "Harvey panel: $\\theta^{H}$, the Gaussian multiplicative-variance map",
       "(fixed robustness panel)."
     )
   }
-  if (is.null(label)) label <- "tab:log_var_eq_panel_harvey"
-  build_simple_latex_table(
-    rows, cols,
-    col_headers = c(
-      "Reference", "$\\tau{=}0$", sprintf("$\\tau{=}%.2g$", tau_display)
+  if (is.null(label)) {
+    label <- artifact_latex_label(
+      "log_variance_panels_table",
+      "harvey"
+    )
+  }
+  logvar_estimator_panel_fragment(
+    harvey,
+    n_obs,
+    tau_display,
+    list(
+      intercept_label = "$\\theta^{H}_0$",
+      slope_template = "$\\theta^{H}_{%d,R}$",
+      reference_header = "Reference"
     ),
-    caption = caption,
-    label = label,
-    fontsize = "\\footnotesize\\setlength{\\tabcolsep}{3pt}",
-    rule_after = 2L
+    caption,
+    label,
+    se_type = se_type,
+    se_types = LOGVAR_HARVEY_SE_TYPES,
+    envelope = envelope
   )
 }
 
@@ -82,12 +71,10 @@ logvar_harvey_append_panel <- function(panels_lines, harvey, n_obs,
     set_endpoint_inference = set_endpoint_inference,
     include_ordering = include_ordering
   )
-  c(
+  logvar_append_panel(
     panels_lines,
-    logvar_panel_block(
-      harvey_fragment,
-      harvey_notes,
-      "harvey"
-    )
+    harvey_fragment,
+    harvey_notes,
+    "harvey"
   )
 }

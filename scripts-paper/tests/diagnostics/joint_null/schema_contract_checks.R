@@ -23,6 +23,27 @@ check("joint-null generated coefficient fields follow contract order", jn_try({
   identical(actual, expected)
 }))
 
+check("joint-null objective chunking is contract-driven", jn_try({
+  points <- rbind(fx$b_star, fx$b_nonwit, fx$b_star)
+  one_at_a_time <- logvar_joint_null_objective(
+    points,
+    fx$w1,
+    fx$w2,
+    fx$proj,
+    di2,
+    chunk_size = 1L
+  )
+  one_chunk <- logvar_joint_null_objective(
+    points,
+    fx$w1,
+    fx$w2,
+    fx$proj,
+    di2,
+    chunk_size = nrow(points)
+  )
+  identical(one_at_a_time, one_chunk)
+}))
+
 check("joint-null CSV and RDS share a header and exact protocol", jn_try({
   test_control <- LOGVAR_JOINT_NULL_CONTROL
   test_control$grid_n <- test_control$grid_n - 2L

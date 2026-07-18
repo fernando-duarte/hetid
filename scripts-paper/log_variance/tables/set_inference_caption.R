@@ -5,18 +5,29 @@
 # Definitions only; reads log_var_eq_set_boot (run_set_bootstrap.R) and
 # the canonical endpoint-stability control at call time.
 
+paper_source_once(paper_path("support", "reporting", "cells.R"))
+
 build_logvar_set_inference_notes <- function(boot) {
+  inference_labels <- paper_inference_labels(boot$inference_contract)
   c(
     sprintf(
       paste(
-        "Parenthetical rows beneath the $\\tau{>}0$ set cells are a 90\\%%",
+        paste0(
+          "Parenthetical rows beneath the $\\tau{>}0$ set cells are a ",
+          "%s\\%%"
+        ),
         "moving-block bootstrap ($B=%d$ replications, %d-quarter blocks)",
         "OUTER confidence envelope covering the entire population identified",
         "interval, conditional on the delivered principal-component series;",
         "coordinatewise intervals do not describe the joint geometry of the",
         "identified set."
       ),
-      boot$b_reps, boot$block
+      paper_format_general(
+        inference_labels$coverage_percent,
+        PAPER_REPORTING_CONTROL$precision$caption_percent
+      ),
+      boot$b_reps,
+      boot$block
     ),
     paste(
       "The envelope is a centered one-sided max-root construction: each live",

@@ -1,5 +1,9 @@
 # Canonical marker and tablenote splicing for log-variance panels.
 
+paper_source_once(paper_path(
+  "support", "latex", "table_environment.R"
+))
+
 logvar_panel_block <- function(
   fragment,
   notes_lines,
@@ -22,10 +26,11 @@ logvar_panel_block <- function(
   )
   notes_block <- c(
     sprintf("%% BEGIN %s", notes_marker),
-    "\\begin{tablenotes}[flushleft]",
-    "\\scriptsize",
-    paste0("\\item ", notes_lines),
-    "\\end{tablenotes}",
+    latex_tablenotes(
+      notes_lines,
+      notes_label = "",
+      separate_items = TRUE
+    ),
     sprintf("%% END %s", notes_marker)
   )
   c(
@@ -34,5 +39,23 @@ logvar_panel_block <- function(
     notes_block,
     fragment[cut:length(fragment)],
     sprintf("%% END %s", panel_marker)
+  )
+}
+
+logvar_append_panel <- function(
+  lines,
+  fragment,
+  notes,
+  estimator,
+  panel_marker = sprintf("LOGVAR PANEL %s", estimator)
+) {
+  c(
+    lines,
+    logvar_panel_block(
+      fragment,
+      notes,
+      estimator,
+      panel_marker = panel_marker
+    )
   )
 }

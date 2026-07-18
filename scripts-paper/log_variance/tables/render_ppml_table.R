@@ -9,8 +9,9 @@ paper_source_once(paper_path("support", "latex", "simple_table.R"))
 paper_source_once(paper_path("log_variance", "tables", "table_formatting.R"))
 paper_source_once(paper_path("log_variance", "tables", "ppml_captions.R"))
 
+ppml_result <- paper_logvar_result("ppml")
 parts <- logvar_ppml_table_parts(
-  log_var_eq_ppml, set_id_mean_eq$tau_display, n_pc_r,
+  ppml_result, set_id_mean_eq$tau_display, n_pc_r,
   se_type = logvar_ppml_se_type
 )
 coef_tab <- parts$table
@@ -21,7 +22,7 @@ baseline_table <- set_tables[[
 ]]
 stopifnot(
   !is.null(baseline_table),
-  identical(log_var_eq_ppml$sample_id, log_var_eq$sample_id),
+  identical(ppml_result$sample_id, log_var_eq$sample_id),
   identical(n_obs, log_var_eq$sample$n),
   identical(coef_tab$set_lower, baseline_table$set_lower),
   identical(coef_tab$set_upper, baseline_table$set_upper),
@@ -31,7 +32,8 @@ stopifnot(
 # Data-derived caption: bounded theta_R hulls excluding zero at the baseline
 # slack, or the fail-closed disclosure when the baseline image is not fully
 # bounded and reliable.
-theta_r_rows <- coef_tab$coef != "(Intercept)"
+theta_r_rows <-
+  coef_tab$coef != PAPER_ANALYSIS_CONTRACT$model$intercept_col
 n_excl <- sum(
   coef_tab$status[theta_r_rows] == "bounded" &
     (coef_tab$set_lower[theta_r_rows] > 0 | coef_tab$set_upper[theta_r_rows] < 0)
@@ -41,44 +43,54 @@ caption <- if (all(coef_tab$status == "bounded")) {
     paste0(
       "Quasi-Poisson PPML identified sets for the log-variance equation: ",
       "%d of %d components of $\\theta_R$ have computed ranges ",
-      "excluding zero at $\\tau{=}%.2g$."
+      "excluding zero at $\\tau{=}%s$."
     ),
-    n_excl, n_pc_r, set_id_mean_eq$tau_baseline
+    n_excl,
+    n_pc_r,
+    paper_format_general(
+      set_id_mean_eq$tau_baseline,
+      PAPER_REPORTING_CONTROL$precision$tau_significant
+    )
   )
 } else {
   sprintf(
     paste0(
       "Quasi-Poisson PPML identified sets for the log-variance equation: ",
-      "at $\\tau{=}%.2g$ the computed image is not reliable on every side."
+      "at $\\tau{=}%s$ the computed image is not reliable on every side."
     ),
-    set_id_mean_eq$tau_baseline
+    paper_format_general(
+      set_id_mean_eq$tau_baseline,
+      PAPER_REPORTING_CONTROL$precision$tau_significant
+    )
   )
 }
 
 logvar_latex <- build_simple_latex_table(
   parts$rows, parts$columns,
   col_headers = parts$headers,
-  caption = caption, label = "tab:log_var_eq_set_id",
+  caption = caption,
+  label = artifact_latex_label("log_variance_ppml_table"),
   notes = build_ppml_table_notes(
-    log_var_eq_ppml, set_id_mean_eq$tau_baseline,
+    ppml_result, set_id_mean_eq$tau_baseline,
     logvar_ppml_grid_cap, logvar_ppml_fit_budget,
     se_type = logvar_ppml_se_type, se_hac_lags = logvar_ppml_se_hac_lags
   ),
-  fontsize = "\\footnotesize\\setlength{\\tabcolsep}{3pt}",
-  rule_after = 2L
+  fontsize = PAPER_TABLE_STYLE$coefficient$fontsize,
+  rule_after = PAPER_TABLE_STYLE$coefficient$row_stride
 )
-write_latex_table(
-  logvar_latex,
-  artifact_dir("log_variance_ppml_table"),
-  tools::file_path_sans_ext(artifact_basename("log_variance_ppml_table"))
+publish_latex_artifact(
+  "log_variance_ppml_table",
+  logvar_latex
 )
-
-# Compile the standalone variant so a LaTeX regression fails the pipeline.
-compile_latex_pdf(artifact_path("log_variance_ppml_standalone_tex"))
 
 cat(sprintf(
-  "PPML log-variance table: %d of %d theta_R sets exclude zero at tau = %.2g\n",
-  n_excl, n_pc_r, set_id_mean_eq$tau_baseline
+  "PPML log-variance table: %d of %d theta_R sets exclude zero at tau = %s\n",
+  n_excl,
+  n_pc_r,
+  paper_format_general(
+    set_id_mean_eq$tau_baseline,
+    PAPER_REPORTING_CONTROL$precision$tau_significant
+  )
 ))
 
 # The shared formatters and panel-notes builder remain available to the

@@ -13,35 +13,26 @@
 # a quantile fit. Row labels are the conditional-median coefficient vector, never a
 # runner global; the intercept theta^0.5_0 is the median normalization, never
 # shared with theta^log_0 / theta^var_0 / theta^H_0.
-logvar_lad_build_fragment <- function(lad, n_obs, tau_display) {
-  tab <- lad$table
-  n_pc_r <- length(tab$coef) - 1L
-  keys <- vapply(tau_display, paper_tau_key, character(1))
-  sets <- lad$sets[keys]
-  stopifnot(!any(vapply(sets, is.null, logical(1))))
-  labels <- c(
-    "$\\theta^{0.5}_0$", sprintf("$\\theta^{0.5}_{%d,R}$", seq_len(n_pc_r))
-  )
-  rows <- c(interleave(labels, ""), "$R^2$", "$N$")
-  cols <- c(
+logvar_lad_build_fragment <- function(
+  lad,
+  n_obs,
+  tau_display,
+  label = artifact_latex_label("log_variance_lad_table")
+) {
+  logvar_estimator_panel_fragment(
+    lad,
+    n_obs,
+    tau_display,
     list(
-      logvar_se_point_col(tab$reference, NULL, NULL, NULL, tab$coef, n_obs),
-      logvar_se_point_col(tab$point, NULL, NULL, NULL, tab$coef, n_obs)
+      intercept_label = "$\\theta^{0.5}_0$",
+      slope_template = "$\\theta^{0.5}_{%d,R}$",
+      reference_header = "Reference"
     ),
-    logvar_set_envelope_cols(sets, NULL, names(sets), tab$coef, n_obs)
-  )
-  build_simple_latex_table(
-    rows, cols,
-    col_headers = c(
-      "Reference", "$\\tau{=}0$", sprintf("$\\tau{=}%.2g$", tau_display)
-    ),
-    caption = paste(
+    paste(
       "LAD panel: $\\theta^{0.5}$, the conditional-median map over the identified",
       "news sets (attained punctured-domain hulls; closure diagnostics separate)."
     ),
-    label = "tab:log_var_eq_panel_lad",
-    fontsize = "\\footnotesize\\setlength{\\tabcolsep}{3pt}",
-    rule_after = 2L
+    label
   )
 }
 
@@ -53,14 +44,12 @@ logvar_lad_append_panel <- function(panels_lines, lad, n_obs,
                                     grid_cap, fit_budget) {
   fragment <- logvar_lad_build_fragment(lad, n_obs, tau_display)
   notes <- build_lad_panel_notes(lad, tau_baseline, grid_cap, fit_budget)
-  c(
+  logvar_append_panel(
     panels_lines,
-    logvar_panel_block(
-      fragment,
-      notes,
-      "lad",
-      panel_marker = "LOGVAR LAD PANEL"
-    )
+    fragment,
+    notes,
+    "lad",
+    panel_marker = "LOGVAR LAD PANEL"
   )
 }
 
@@ -73,18 +62,34 @@ logvar_lad_append_panel <- function(panels_lines, lad, n_obs,
 build_lad_panel_notes <- function(lad, tau_baseline, grid_cap, fit_budget) {
   stopifnot(is.list(lad), !is.null(lad$table))
   caps <- lad$estimator$metadata
+  fit_control <- caps$fit_control
+  primary_method <- fit_control$primary_method
+  probe_method <- fit_control$nonunique_method
+  primary_label <- unname(
+    fit_control$method_labels[[primary_method]]
+  )
   c(
-    paste(
-      "The median panel fits the conditional median of $\\log \\varepsilon^2$,",
-      "$Q_{0.5}(\\log \\varepsilon^2 \\mid PC_R) = R'\\theta^{0.5}$, at each news",
-      "vector $b_N$; the intercept $\\theta^{0.5}_0$ is the median normalization,",
-      "not the mean-log or log-mean intercept."
+    sprintf(
+      paste(
+        "The median panel fits the conditional quantile of",
+        "$\\log \\varepsilon^2$,",
+        "$Q_{%s}(\\log \\varepsilon^2 \\mid PC_R)",
+        "= R'\\theta^{0.5}$, at each news vector $b_N$;",
+        "the intercept $\\theta^{0.5}_0$ is the quantile normalization,",
+        "not the mean-log or log-mean intercept."
+      ),
+      format(fit_control$quantile, trim = TRUE)
     ),
-    paste(
-      "The inner map uses the Barrodale-Roberts (\\texttt{br}) vertex as the",
-      "pre-specified selection rule, so the map stays single-valued and",
-      "reproducible where the median is non-unique; \\texttt{fn} is the",
-      "nonuniqueness probe, never the map, and coefficients are never averaged."
+    sprintf(
+      paste(
+        "The inner map uses the %s (\\texttt{%s}) vertex as the",
+        "pre-specified selection rule, so the map stays single-valued and",
+        "reproducible where the quantile is non-unique; \\texttt{%s} is the",
+        "nonuniqueness probe, never the map, and coefficients are never averaged."
+      ),
+      primary_label,
+      primary_method,
+      probe_method
     ),
     paste(
       "The domain is punctured at the residual-crossing hyperplanes: an exact",
@@ -96,9 +101,7 @@ build_lad_panel_notes <- function(lad, tau_baseline, grid_cap, fit_budget) {
       "The reported cells are single-pass attained inner approximations of the",
       "punctured-domain hulls: every endpoint is a fitted coefficient at a feasible",
       "$b_N$, and the engine's multi-start search only ever extends an endpoint",
-      "outward, so the cell is a subset of the true image. An offline refinement",
-      "search (up to $10^4$ extra starts per $\\tau$) moved no endpoint on this",
-      "sample, so the single-pass cell coincides with the denser search here."
+      "outward, so the cell is a subset of the true image."
     ),
     paste(
       "The one-sided closure limits are an explicitly approximate diagnostic, kept",
@@ -108,12 +111,15 @@ build_lad_panel_notes <- function(lad, tau_baseline, grid_cap, fit_budget) {
     sprintf(
       paste(
         "Search resolution: the grid is capped at %d points within a %d-fit",
-        "per-slack budget with phase caps; a five-start re-polish verifies each",
+        "per-slack budget with phase caps; a %d-start re-polish verifies each",
         "bounded side, feeding a more extreme candidate back through the engine",
         "and demoting an unreproducible side to unreliable, and the deterministic",
-        "\\texttt{fn} schedule fails a nonunique endpoint-relevant tau closed."
+        "\\texttt{%s} schedule fails a nonunique endpoint-relevant tau closed."
       ),
-      grid_cap, fit_budget
+      grid_cap,
+      fit_budget,
+      LOGVAR_SEARCH_CONTROL$audit_starts_per_side,
+      probe_method
     ),
     paste(
       "Statuses are operational: bounded, unbounded, unreliable, or unresolved;",
@@ -140,10 +146,13 @@ build_lad_panel_notes <- function(lad, tau_baseline, grid_cap, fit_budget) {
     sprintf(
       paste(
         "The panel order is governed by the benchmark crossing rule at",
-        "$\\tau{=}%.2g$; the median panel is appended after that ordered set and",
+        "$\\tau{=}%s$; the median panel is appended after that ordered set and",
         "never influences it. %s"
       ),
-      tau_baseline,
+      paper_format_general(
+        tau_baseline,
+        PAPER_REPORTING_CONTROL$precision$tau_significant
+      ),
       if (is.null(caps)) "" else "Cells are inner projection hulls, not point estimates."
     )
   )

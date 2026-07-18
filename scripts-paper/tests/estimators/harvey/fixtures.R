@@ -11,33 +11,18 @@
 # that reads `harvey_fx`.
 
 harvey_fx <- local({
-  set.seed(20260713L)
-  n <- 120L
-  k <- 2L
-  w2 <- matrix(rnorm(n * k), n, k)
-  pcr <- scale(matrix(rnorm(n * 4L), n, 4L), center = TRUE, scale = FALSE)
-  colnames(pcr) <- paste0("l.pc", 1:4)
-  x_mat <- cbind(1, pcr)
-  colnames(x_mat) <- c("(Intercept)", colnames(pcr))
+  list2env(
+    paper_test_variance_fixture(),
+    environment()
+  )
 
   # Reference point with a genuine exponential-variance signal in the PCs. A
   # tiny floor keeps every reference residual nonzero, so y(b_ref) > 0 and both
   # the Gamma-log oracle and the log-OLS normalization identity are well posed.
-  b_ref <- c(0.4, -0.25)
-  log_h <- 0.3 + drop(pcr %*% c(0.5, -0.3, 0.2, -0.1))
-  e_ref <- sqrt(exp(log_h)) * rnorm(n)
-  e_ref[abs(e_ref) < 1e-3] <- 1e-3
-  w1 <- drop(w2 %*% b_ref) + e_ref
-  y <- drop(w1 - w2 %*% b_ref)^2
 
   # Exact-zero-residual variants at b_ref: forcing w1 to the fitted value on a
   # row makes e there exactly zero, y exactly zero, while the remaining
   # positive-response rows keep full column rank (single zero and three zeros).
-  b_zero <- b_ref
-  w1_zero <- w1
-  w1_zero[1] <- drop(w2[1, ] %*% b_zero)
-  w1_zeros_multi <- w1
-  w1_zeros_multi[1:3] <- drop(w2[1:3, ] %*% b_zero)
   y_zero <- drop(w1_zero - w2 %*% b_zero)^2
   y_zeros_multi <- drop(w1_zeros_multi - w2 %*% b_zero)^2
 
@@ -79,11 +64,6 @@ harvey_fx <- local({
   # Rank-deficient positive rows: the only positive responses sit on a collinear
   # block (intercept plus one shared direction), so rank(X[y > 0, ]) = 2 < 5 and
   # existence cannot be certified by the positive-row rank alone.
-  x_rankdef <- x_mat
-  y_rankdef <- rep(0, n)
-  pos <- 1:8
-  x_rankdef[pos, ] <- cbind(1, outer(seq_along(pos) * 0.5, pcr[1, ]))
-  y_rankdef[pos] <- seq_along(pos) * 0.2 + 0.5
 
   # All-zero and heavy-tailed responses: the former must fail loudly; the latter
   # must converge via backtracking despite one element ~1e6 times the rest.

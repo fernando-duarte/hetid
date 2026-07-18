@@ -16,7 +16,7 @@
 # requires; the cap is enforced here since these refits bypass the engine cache.
 logvar_lad_nonunique_demote <- function(est, res, cfg, promoted) {
   control <- est$metadata$fit_control
-  cap <- cfg$phase_caps[["nonunique"]]
+  cap <- cfg$phase_caps[[LOGVAR_ENGINE_PHASES[["nonunique"]]]]
   sc <- res$schema
   args <- list()
   add <- function(a, tag, rel) {
@@ -25,10 +25,10 @@ logvar_lad_nonunique_demote <- function(est, res, cfg, promoted) {
     }
   }
   for (j in seq_len(nrow(sc))) {
-    if (identical(sc$lower_status[j], "bounded")) {
+    if (identical(sc$lower_status[j], PAPER_ENDPOINT_STATUS[["bounded"]])) {
       add(sc$arg_lower[[j]], sprintf("%s:min", sc$coef[j]), TRUE)
     }
-    if (identical(sc$upper_status[j], "bounded")) {
+    if (identical(sc$upper_status[j], PAPER_ENDPOINT_STATUS[["bounded"]])) {
       add(sc$arg_upper[[j]], sprintf("%s:max", sc$coef[j]), TRUE)
     }
   }
@@ -42,12 +42,12 @@ logvar_lad_nonunique_demote <- function(est, res, cfg, promoted) {
       if (isTRUE(it$rel)) truncated <- TRUE
       next
     }
-    # Neither call is wrapped: both signal an ordinary rejection by returning a
-    # non-"ok" fit or a NULL probe, so a raised condition is a defect. Swallowing
+    # Neither call is wrapped: both signal an ordinary rejection through a
+    # non-usable fit or a NULL probe, so a raised condition is a defect. Swallowing
     # one skips the point silently and leaves `sensitive` empty, which reports the
     # tau as reliable -- the exact inverse of this schedule's fail-closed rule.
     fit <- est$fit_at_b(it$a)
-    if (is.null(fit) || !identical(fit$fit_status, "ok")) next
+    if (!logvar_fit_ok(fit)) next
     z <- 2 * log(abs(drop(cfg$w1 - cfg$w2 %*% it$a)))
     pr <- logvar_lad_nonunique_probe(
       fit,

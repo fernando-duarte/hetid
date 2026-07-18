@@ -39,7 +39,10 @@ for (file in text_files) {
     text,
     gregexpr("[A-Za-z0-9_./*-]+[.]R\\b", text)
   )
-  references <- unique(unlist(matches, use.names = FALSE))
+  references <- as.character(unique(unlist(
+    matches,
+    use.names = FALSE
+  )))
   missing <- references[
     !basename(references) %in% known_r_basenames
   ]

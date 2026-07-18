@@ -1,6 +1,7 @@
 # Shared scientific and computational settings for the paper pipeline.
 
 paper_source_once(paper_path("config", "analysis_contract.R"))
+paper_source_once(paper_path("config", "logvar_estimators.R"))
 paper_source_once(paper_path("config", "reporting.R"))
 analysis_contract <- PAPER_ANALYSIS_CONTRACT
 reporting_contract <- PAPER_REPORTING_CONTROL
@@ -41,14 +42,20 @@ boot_block <- 24L
 boot_seed <- 123L
 
 # PPML set-map and independent coverage-audit budgets.
-logvar_ppml_grid_cap <- 4000L
-logvar_ppml_fit_budget <- 20000L
-logvar_ppml_coverage_grid_cap <- 8000L
-logvar_ppml_coverage_fit_budget <- 40000L
+logvar_ppml_grid_cap <-
+  paper_logvar_budget("ppml", "grid_cap")
+logvar_ppml_fit_budget <-
+  paper_logvar_budget("ppml", "fit_budget")
+logvar_ppml_coverage_grid_cap <-
+  PAPER_LOGVAR_BUDGETS$ppml_coverage$grid_cap
+logvar_ppml_coverage_fit_budget <-
+  PAPER_LOGVAR_BUDGETS$ppml_coverage$fit_budget
 
 # Reduced budgets and stability controls for each log-variance bootstrap draw.
-logvar_boot_grid_cap <- 1500L
-logvar_boot_fit_budget <- 8000L
+logvar_boot_grid_cap <-
+  PAPER_LOGVAR_BUDGETS$bootstrap$grid_cap
+logvar_boot_fit_budget <-
+  PAPER_LOGVAR_BUDGETS$bootstrap$fit_budget
 logvar_boot_block_sens <- 8L
 logvar_boot_m <- NULL
 logvar_boot_cores <- as.integer(Sys.getenv(
@@ -57,7 +64,8 @@ logvar_boot_cores <- as.integer(Sys.getenv(
 ))
 
 # Fit budget for date-indexed fitted-volatility envelopes.
-logvar_fitted_vol_fit_budget <- 80000L
+logvar_fitted_vol_fit_budget <-
+  PAPER_LOGVAR_BUDGETS$fitted_volatility$fit_budget
 
 # Analytic standard errors printed beneath PPML and Harvey point estimates.
 logvar_ppml_se_type <- reporting_contract$ppml$se_type

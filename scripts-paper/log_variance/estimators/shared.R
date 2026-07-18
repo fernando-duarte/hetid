@@ -76,8 +76,10 @@ logvar_prepare_map_context <- function(inputs, contract, mean_eq, bounds_tau,
     max(abs(colMeans(v$pcr))) <
       LOGVAR_SEARCH_CONTROL$pcr_mean_tolerance
   )
-  x_mat <- cbind(1, v$pcr)
-  colnames(x_mat) <- c("(Intercept)", colnames(v$pcr))
+  x_mat <- logvar_design_matrix(
+    v$pcr,
+    PAPER_ANALYSIS_CONTRACT$model$return_pc_cols
+  )
   b_point <- mean_eq$theta_table$point
   tau_base <- mean_eq$tau_baseline
   qs_base <- tau_quadratic_system(mean_eq$gamma, tau_base, mean_eq$moments)

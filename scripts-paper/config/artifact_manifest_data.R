@@ -15,9 +15,13 @@ PAPER_ARTIFACT_STATUS_CODES <- c(
   e = "conditional_egarch"
 )
 PAPER_ARTIFACT_STATUSES <- unname(PAPER_ARTIFACT_STATUS_CODES)
+PAPER_ARTIFACT_STATUS <- as.list(stats::setNames(
+  PAPER_ARTIFACT_STATUSES,
+  PAPER_ARTIFACT_STATUSES
+))
 PAPER_CONDITIONAL_ARTIFACT_STATUSES <- setdiff(
   PAPER_ARTIFACT_STATUSES,
-  "required"
+  PAPER_ARTIFACT_STATUS$required
 )
 
 .artifact_producers <- c(
@@ -143,7 +147,11 @@ PAPER_CONDITIONAL_ARTIFACT_STATUSES <- setdiff(
   "egarch_bounds_figure|logvar_bounds_tau|egarch_x",
   "ppml_fitted_volatility_figure|fitted_volatility|ppml",
   "harvey_fitted_volatility_figure|fitted_volatility|harvey",
-  "lad_fitted_volatility_figure|fitted_volatility|lad"
+  "lad_fitted_volatility_figure|fitted_volatility|lad",
+  "log_variance_panels_table|logvar_panels|conservative",
+  "log_variance_inference_table|logvar_panels|inference",
+  "structural_equation_table|structural_equation|conservative",
+  "structural_equation_inference_table|structural_equation|inference"
 )
 
 .artifact_specs <- do.call(rbind, strsplit(.artifact_specs, "|", fixed = TRUE))

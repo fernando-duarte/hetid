@@ -8,20 +8,22 @@ paper_source_once(paper_path("support", "latex", "simple_table.R"))
 paper_source_once(paper_path("log_variance", "tables", "table_formatting.R"))
 paper_source_once(paper_path("log_variance", "tables", "harvey_panel.R"))
 
+harvey_result <- paper_logvar_result("harvey")
 stopifnot(
-  identical(log_var_eq_harvey$sample_id, log_var_eq$sample_id),
-  identical(log_var_eq_harvey$sample$n, log_var_eq$sample$n)
+  identical(harvey_result$sample_id, log_var_eq$sample_id),
+  identical(harvey_result$sample$n, log_var_eq$sample$n)
 )
 
 harvey_table_lines <- logvar_harvey_append_panel(
-  character(0), log_var_eq_harvey, log_var_eq_harvey$sample$n,
+  character(0), harvey_result, harvey_result$sample$n,
   set_id_mean_eq$tau_display, set_id_mean_eq$tau_baseline,
   logvar_harvey_grid_cap, logvar_harvey_fit_budget,
   caption = paste(
     "Harvey MLE/QMLE identified sets for the log-variance equation:",
     "$\\theta^{H}$, the Gaussian multiplicative-variance map."
   ),
-  label = "tab:log_var_eq_harvey", include_ordering = FALSE,
+  label = artifact_latex_label("log_variance_harvey_table"),
+  include_ordering = FALSE,
   se_type = logvar_harvey_se_type, se_hac_lags = logvar_harvey_se_hac_lags
 )
 stopifnot(
@@ -29,12 +31,10 @@ stopifnot(
   sum(harvey_table_lines == "% END LOGVAR PANEL harvey") == 1L
 )
 
-write_latex_table(
-  harvey_table_lines,
-  artifact_dir("log_variance_harvey_table"),
-  tools::file_path_sans_ext(artifact_basename("log_variance_harvey_table"))
+publish_latex_artifact(
+  "log_variance_harvey_table",
+  harvey_table_lines
 )
-compile_latex_pdf(artifact_path("log_variance_harvey_standalone_tex"))
 
 cat("Harvey log-variance table: wrote log_var_eq_harvey.tex\n")
 

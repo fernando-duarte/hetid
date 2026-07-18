@@ -1,5 +1,4 @@
 # Rules exercised by check_contract_ownership.R.
-
 forbid(
   "ignored docs route",
   "docs/(execution-ledgers|superpowers/plans)"
@@ -147,14 +146,9 @@ forbid(
   "artifact_manifest <- data.frame",
   "config/artifact_manifest_data.R"
 )
-
-removed <- c(
-  "support/identification/inputs_and_alignment.R",
-  "support/identification/residual_construction.R"
-)
-if (any(file.exists(file.path(paper_root, removed)))) {
-  violations <- c(
-    violations,
-    "removed identification modules exist"
-  )
-}
+source(file.path(
+  "scripts-paper",
+  "tests",
+  "support",
+  "contract_ownership_audit_rules.R"
+))

@@ -1,6 +1,9 @@
 # Fixed schema and generated parameter fields for joint-null rows.
 
 paper_source_once(paper_path("config", "analysis_contract.R"))
+paper_source_once(paper_path(
+  "support", "artifacts", "diagnostic_schema.R"
+))
 
 LOGVAR_JOINT_NULL_SCHEMA <- list(
   schema_version = "1.0.0",
@@ -53,24 +56,18 @@ logvar_joint_null_schema_header <- function() {
   )
 }
 
+LOGVAR_JOINT_NULL_ROW_SCHEMA <- paper_diagnostic_schema(
+  .jn_row_template(),
+  names(logvar_joint_null_schema_header()),
+  "joint-null"
+)
+
 .jn_assemble_row <- function(vals) {
-  row <- .jn_row_template()
-  fixed <- intersect(names(vals), names(LOGVAR_JOINT_NULL_SCHEMA))
-  if (length(fixed)) {
-    stop(sprintf(
-      "joint-null row: fixed field override(s) %s",
-      paste(fixed, collapse = ", ")
-    ))
-  }
-  unknown <- setdiff(names(vals), names(row))
-  if (length(unknown)) {
-    stop(sprintf(
-      "joint-null row: unknown field(s) %s",
-      paste(unknown, collapse = ", ")
-    ))
-  }
-  for (nm in names(vals)) row[[nm]] <- unname(vals[[nm]])
-  row
+  paper_diagnostic_row(
+    LOGVAR_JOINT_NULL_ROW_SCHEMA,
+    vals,
+    unknown = "error"
+  )
 }
 
 .jn_parameter_fields <- function(b, theta, scales) {

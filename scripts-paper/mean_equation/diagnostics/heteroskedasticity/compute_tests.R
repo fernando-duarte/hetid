@@ -92,7 +92,15 @@ column_cells <- function(k) {
 cells <- do.call(cbind, lapply(seq_len(ncol(y2)), column_cells))
 rk <- rk_rank_test(y2, z)
 fmt_sci <- function(x) {
-  sprintf("{\\num{%s}}", formatC(x, format = "g", digits = 3))
+  sprintf(
+    "{\\num{%s}}",
+    formatC(
+      x,
+      format = "g",
+      digits =
+        PAPER_REPORTING_CONTROL$precision$diagnostic_table
+    )
+  )
 }
 joint_cells <- c(
   vapply(c(rk$det, rk$kappa, rk$sv_min), fmt_sci, character(1)),

@@ -15,6 +15,7 @@ paper_source_once(paper_path("support", "identification", "profile_solver_core.R
 paper_source_once(paper_path("support", "identification", "profile_bounds_api.R"))
 paper_source_once(paper_path("support", "identification", "tau_star.R"))
 paper_source_once(paper_path("support", "statistics", "api.R"))
+paper_source_once(paper_path("support", "reporting", "inference.R"))
 paper_source_once(paper_path("support", "identification", "identified_set_inference.R"))
 paper_source_once(paper_path("support", "identification", "identified_set_bootstrap.R"))
 
@@ -48,26 +49,36 @@ boot_spec <- list(
 # indices drawn up front: the resampling stream cannot be perturbed if a
 # solver ever consumes random numbers mid-draw, and a parallel lapply over
 # boot_idx stays a drop-in change
-set.seed(boot_seed)
-boot_idx <- lapply(
-  seq_len(boot_reps),
-  function(b) mbb_index(set_id_mean_eq$sample$n, boot_block)
-)
-boot_t0 <- Sys.time()
-boot_raw <- vector("list", boot_reps)
 report_every <- PAPER_INFERENCE_SEARCH_CONTROL$bootstrap$progress_report_every
-for (b in seq_len(boot_reps)) {
-  boot_raw[[b]] <- tryCatch(
-    set_id_boot_draw(set_id_mean_eq$data[boot_idx[[b]], ], boot_spec),
-    error = function(e) conditionMessage(e)
-  )
-  if (b %% report_every == 0L) {
-    cat(sprintf(
-      "  endpoint bootstrap draw %d of %d (%.1f min elapsed)\n", b, boot_reps,
-      as.numeric(difftime(Sys.time(), boot_t0, units = "mins"))
-    ))
+boot_run <- paper_run_mbb_draws(
+  n_draws = boot_reps,
+  sample_size = set_id_mean_eq$sample$n,
+  block_length = boot_block,
+  draw = function(index, draw_id) {
+    set_id_boot_draw(
+      set_id_mean_eq$data[index, ],
+      boot_spec
+    )
+  },
+  seed = boot_seed,
+  progress = function(draw_id, n_draws, started_at) {
+    if (draw_id %% report_every == 0L) {
+      cat(sprintf(
+        "  endpoint bootstrap draw %d of %d (%.1f min elapsed)\n",
+        draw_id,
+        n_draws,
+        as.numeric(difftime(
+          Sys.time(),
+          started_at,
+          units = "mins"
+        ))
+      ))
+    }
   }
-}
+)
+boot_idx <- boot_run$indices
+boot_t0 <- boot_run$started_at
+boot_raw <- boot_run$draws
 
 collected <- set_id_boot_collect(boot_raw, boot_spec)
 # a large failure share means the resampling itself is broken, not
@@ -112,6 +123,7 @@ point_ci <- point_tab[c("coef", "lower", "upper")]
 set_id_boot <- c(
   list(
     b_reps = boot_reps, block = boot_block, seed = boot_seed,
+    inference_contract = PAPER_ANALYSIS_CONTRACT$inference,
     point_se = point_se, point_ci = point_ci,
     point_band = apply(
       collected$point_draws,
@@ -132,6 +144,10 @@ set_id_boot <- c(
 diagnostics <- set_id_boot_diagnostics(
   collected, inference, set_id_mean_eq$set_tables, boot_spec$taus
 )
+diagnostics <- cbind(
+  paper_inference_metadata_frame(nrow(diagnostics)),
+  diagnostics
+)
 paper_write_typed_csv(
   diagnostics,
   artifact_path("mean_inference_diagnostics"),
@@ -139,18 +155,25 @@ paper_write_typed_csv(
 )
 paper_write_exact_rds(
   set_id_boot[c(
-    "b_reps", "block", "seed", "point_draws", "endpoint_draws",
-    "tau_star_draws"
+    "b_reps", "block", "seed", "inference_contract", "point_draws",
+    "endpoint_draws", "tau_star_draws"
   )],
   artifact_path("mean_bootstrap_draws"),
   "mean_bootstrap_draws"
 )
 
 cat(sprintf(
-  "endpoint bootstrap: B = %d, block = %d, %.1f min; tau* range [%.3g, %.3g] (n = %d)\n",
+  "endpoint bootstrap: B = %d, block = %d, %.1f min; tau* range [%s, %s] (n = %d)\n",
   boot_reps, boot_block,
   as.numeric(difftime(Sys.time(), boot_t0, units = "mins")),
-  set_id_boot$tau_star_band[["p05"]], set_id_boot$tau_star_band[["p95"]],
+  paper_format_general(
+    set_id_boot$tau_star_band[["lower"]],
+    PAPER_REPORTING_CONTROL$precision$console_significant
+  ),
+  paper_format_general(
+    set_id_boot$tau_star_band[["upper"]],
+    PAPER_REPORTING_CONTROL$precision$console_significant
+  ),
   set_id_boot$tau_star_band[["n"]]
 ))
 cat(sprintf(
@@ -158,9 +181,14 @@ cat(sprintf(
   set_id_boot$n_failed, set_id_boot$n_capped, set_id_boot$n_point_deficient,
   100 * set_id_boot$tau_star_share_bounded
 ))
-print(set_id_boot$inference[[1]], digits = 3)
+print(
+  set_id_boot$inference[[1]],
+  digits =
+    PAPER_REPORTING_CONTROL$precision$console_significant
+)
 
 rm(
-  boot_spec, boot_idx, boot_t0, boot_raw, collected, inference, point_hat,
-  point_tab, point_se, point_ci, diagnostics, inference_alpha, report_every, b
+  boot_spec, boot_run, boot_idx, boot_t0, boot_raw, collected,
+  inference, point_hat, point_tab, point_se, point_ci, diagnostics,
+  inference_alpha, report_every
 )

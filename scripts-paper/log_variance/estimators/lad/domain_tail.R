@@ -28,7 +28,7 @@
 # slope rule is considered.
 .lad_window_ok <- function(idx, m, cvals, fit_status, sig) {
   all(is.finite(m[idx])) && all(is.finite(cvals[idx])) &&
-    all(diff(m[idx]) > 0) && all(fit_status[idx] == "ok") &&
+    all(diff(m[idx]) > 0) && all(fit_status[idx] == LOGVAR_FIT_STATUS[["ok"]]) &&
     length(unique(sig[idx])) == 1L
 }
 
@@ -134,7 +134,11 @@ logvar_lad_tail_classify <- function(
   coef <- trace$coef
   if (is.null(dim(coef))) coef <- matrix(coef, ncol = 1L)
   n <- length(m)
-  fit_status <- if (is.null(trace$fit_status)) rep("ok", n) else trace$fit_status
+  fit_status <- if (is.null(trace$fit_status)) {
+    rep(LOGVAR_FIT_STATUS[["ok"]], n)
+  } else {
+    trace$fit_status
+  }
   sig <- if (is.null(trace$active_signature)) rep("s", n) else trace$active_signature
   fit_status <- rep_len(as.character(fit_status), n)
   sig <- rep_len(as.character(sig), n)

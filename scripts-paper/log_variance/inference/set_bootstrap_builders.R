@@ -1,7 +1,7 @@
 # Estimator builders used by each moving-block bootstrap draw.
 
 logvar_set_boot_builders <- function(scale_value, logols_coef) {
-  build_ppml <- function(w1, w2, pcr, qtr, b_point) {
+  build_ppml <- function(w1, w2, pcr, qtr, b_point, built) {
     anchor <- if (!is.null(b_point)) b_point else rep(0, ncol(w2))
     logvar_ppml_estimator(
       w1, w2, pcr, qtr,
@@ -12,7 +12,8 @@ logvar_set_boot_builders <- function(scale_value, logols_coef) {
       control = LOGVAR_PPML_CONTROL
     )
   }
-  build_harvey <- function(w1, w2, pcr, qtr, b_point, ppml_obj) {
+  build_harvey <- function(w1, w2, pcr, qtr, b_point, built) {
+    ppml_obj <- built[["ppml"]]
     ppml_source_id <- if (!is.null(ppml_obj)) {
       ppml_obj$metadata$spec_id
     } else {
@@ -29,5 +30,11 @@ logvar_set_boot_builders <- function(scale_value, logols_coef) {
       control = LOGVAR_HARVEY_CONTROL
     )
   }
-  list(ppml = build_ppml, harvey = build_harvey)
+  builders <- list(ppml = build_ppml, harvey = build_harvey)
+  ids <- paper_logvar_estimator_ids(
+    capability = "set_bootstrap",
+    primary = TRUE
+  )
+  stopifnot(all(ids %in% names(builders)))
+  builders[ids]
 }

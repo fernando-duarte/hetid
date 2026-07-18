@@ -7,4 +7,6 @@
 
 paper_source_once(paper_path("log_variance", "tables", "panels_builder.R"))
 
-build_logvar_panels("log_var_eq_panels")
+build_logvar_panels(
+  artifact_variant_id("logvar_panels", "conservative")
+)

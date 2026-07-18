@@ -20,7 +20,7 @@ y <- fx$y
 y_zero <- fx$y_zero
 
 # Return FALSE instead of aborting when a required Harvey function errors.
-safe <- function(expr) tryCatch(expr, error = function(e) FALSE)
+safe <- .test$safe
 
 # Central-difference gradient of the objective, per coordinate, from the module.
 fd_grad <- function(theta, yv, x, h = 1e-5) {

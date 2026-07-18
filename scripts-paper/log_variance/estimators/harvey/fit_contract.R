@@ -4,9 +4,9 @@
 # Definitions only; sourced by estimator.R after the math/recession/solver
 # modules. The canonical spec_id serializer is the shared logvar_spec_id.
 
-# A fit is accepted when it is a converged "ok" solution (NULL/failed rejected).
+# A fit is accepted only for the canonical converged status.
 logvar_harvey_accepted <- function(fit) {
-  !is.null(fit) && identical(fit$fit_status, "ok") && isTRUE(fit$converged)
+  logvar_fit_ok(fit)
 }
 
 logvar_harvey_validate_policy <- function(control) {
@@ -82,7 +82,7 @@ logvar_harvey_start_identity <- function(
 }
 
 # Analytic implicit Jacobian D_b theta_hat_H(b), returned only for an accepted
-# "ok" fit with strictly positive finite variances and well-conditioned
+# LOGVAR_FIT_STATUS[["ok"]] fit with strictly positive finite variances and well-conditioned
 # observed information; else NULL so the engine's derivative-free path takes
 # over. Explicit Cholesky of X' diag(r) X (= 2 * observed information), never an
 # inverse; the RHS row-scales -2 e/mu (zero-safe on the log scale) down W2.
@@ -90,7 +90,7 @@ logvar_harvey_jacobian <- function(
   fit, b, w1, w2, x_mat,
   control = LOGVAR_HARVEY_CONTROL
 ) {
-  if (!isTRUE(fit$converged) || !identical(fit$fit_status, "ok")) {
+  if (!logvar_fit_ok(fit)) {
     return(NULL)
   }
   theta <- fit$warm_start
@@ -119,7 +119,7 @@ logvar_harvey_jacobian <- function(
 # accepted Harvey point fit, else a typed bundle with original-scale
 # coefficients (no scaling) and sample_id/spec_id copied from metadata.
 logvar_harvey_start_bundle <- function(fit, metadata) {
-  if (!(identical(fit$fit_status, "ok") && isTRUE(fit$converged))) {
+  if (!logvar_fit_ok(fit)) {
     return(NULL)
   }
   if (is.null(metadata$sample_id) || is.null(metadata$spec_id)) {

@@ -32,7 +32,7 @@ logvar_ppml_fit <- function(b, w1, w2, x_mat, start = NULL,
 }
 
 # Analytic implicit Jacobian D_b theta_hat_P(b), returned only when the fit is an
-# accepted "ok" solution (a bare coefficient vector cannot certify acceptance)
+# accepted LOGVAR_FIT_STATUS[["ok"]] solution (a bare coefficient vector cannot certify acceptance)
 # and the column-normalized information is well conditioned; otherwise NULL so
 # the engine's derivative-free path takes over. The scaled-fit coefficients
 # (warm_start) supply mu_star; the (-2/s) factor keeps the response derivative on
@@ -42,7 +42,7 @@ logvar_ppml_jacobian <- function(
   fit, b, w1, w2, x_mat, response_scale = 1,
   control = LOGVAR_PPML_CONTROL
 ) {
-  if (!isTRUE(fit$converged) || !identical(fit$fit_status, "ok")) {
+  if (!logvar_fit_ok(fit)) {
     return(NULL)
   }
   mu_star <- exp(drop(x_mat %*% fit$warm_start))
@@ -78,8 +78,7 @@ logvar_ppml_estimator <- function(w1, w2, pcr, qtr, b_point = NULL,
                                   scale_anchor_b, scale_anchor_source,
                                   response_scale = 1,
                                   control = LOGVAR_PPML_CONTROL) {
-  x_mat <- cbind(1, pcr)
-  colnames(x_mat) <- c("(Intercept)", colnames(pcr))
+  x_mat <- logvar_design_matrix(pcr)
   anchor_y <- drop(w1 - w2 %*% scale_anchor_b)^2
   if (!any(anchor_y > 0)) {
     stop("logvar_ppml_estimator: scale anchor response has no positive value")
@@ -126,7 +125,13 @@ logvar_ppml_estimator <- function(w1, w2, pcr, qtr, b_point = NULL,
       intercept_normalization =
         "log conditional variance (absorbs 2 log|m_0|; Jensen gap vs mean-log)",
       sample_id = logvar_sample_id(qtr, w1, w2, pcr), smoothness = "smooth",
-      inner_solver = "glm.fit quasipoisson IRLS", response_scale = "variance",
+      inner_solver = sprintf(
+        "%s %s(%s) IRLS",
+        control$fit_function,
+        control$family,
+        control$link
+      ),
+      response_scale = "variance",
       response_scale_value = response_scale,
       scale_reference = "median positive y at the scale anchor",
       scale_anchor_b = scale_anchor_b, scale_anchor_source = scale_anchor_source,

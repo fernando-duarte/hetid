@@ -20,10 +20,10 @@ logvar_lad_refine_centers <- function(schema, witnesses = list()) {
     centers[[length(centers) + 1L]] <<- list(type = type, row = row, b = unname(b))
   }
   for (j in seq_len(nrow(schema))) {
-    if (identical(schema$lower_status[j], "bounded")) {
+    if (identical(schema$lower_status[j], PAPER_ENDPOINT_STATUS[["bounded"]])) {
       add("extremum", j, schema$arg_lower[[j]])
     }
-    if (identical(schema$upper_status[j], "bounded")) {
+    if (identical(schema$upper_status[j], PAPER_ENDPOINT_STATUS[["bounded"]])) {
       add("extremum", j, schema$arg_upper[[j]])
     }
   }

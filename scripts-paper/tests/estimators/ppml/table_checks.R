@@ -11,7 +11,7 @@
 # guarded evaluation: FALSE unless the helper exists and expr is TRUE
 ptbl_baseline <- PAPER_ANALYSIS_CONTRACT$tau$baseline
 ptbl_order <- function(expr) {
-  exists("logvar_panel_order") && tryCatch(isTRUE(expr), error = function(e) FALSE)
+  exists("logvar_panel_order") && .test$safe(expr)
 }
 
 # The editorial rule puts the PPML panel first when the tau = 0.05 crossing

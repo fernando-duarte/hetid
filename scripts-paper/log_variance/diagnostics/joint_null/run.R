@@ -34,9 +34,8 @@ if (exists("log_var_eq") && exists("set_id_mean_eq") &&
   jn_w1 <- jn_inputs$w1
   jn_w2 <- jn_inputs$w2
   jn_eps_ref <- jn_inputs$eps_ref
-  jn_qs_fn <- function(tau) {
-    tau_quadratic_system(set_id_mean_eq$gamma, tau, set_id_mean_eq$moments)
-  }
+  jn_qs_fn <-
+    mean_quadratic_system_factory(set_id_mean_eq)
   jn_control <- utils::modifyList(
     LOGVAR_JOINT_NULL_CONTROL,
     list(grid_n = log_var_eq$grid_n)

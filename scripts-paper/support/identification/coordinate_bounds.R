@@ -13,54 +13,17 @@ solve_profile_bound <- function(
   xtol_rel = PAPER_QUADRATIC_CONTROL$solver_xtol_rel,
   maxeval = PAPER_QUADRATIC_CONTROL$solver_maxeval
 ) {
-  direction <- match.arg(direction)
-  assert_quadratic_symmetric(quadratic)
-
-  delta <- .derive_theta_scale(quadratic)
-  omega <- .derive_constraint_scales(quadratic, delta)
-  sign_mult <- if (direction == "min") 1 else -1
-  unbounded_value <- if (direction == "min") -Inf else Inf
-  solve_box <- function(box) {
-    .solve_scaled(
-      quadratic,
-      component_index,
-      sign_mult,
-      delta,
-      omega,
-      box,
-      xtol_rel,
-      maxeval
-    )
-  }
-  value_at <- function(result) {
-    delta * result$phi[component_index]
-  }
-  finalize <- function(result) {
-    .finalize_bound(
-      quadratic,
-      delta,
-      omega,
-      result,
-      component_index,
-      feas_tol
-    )
-  }
-  trusted_at <- function(result, box) {
-    abs(result$phi[component_index]) <
-      PAPER_QUADRATIC_CONTROL$bound_edge_rtol * box
-  }
-
-  .classify_profile_search(
-    quadratic = quadratic,
-    delta = delta,
-    omega = omega,
-    boxes = c(box1, box2, box3),
-    solve_box = solve_box,
-    value_at = value_at,
-    finalize = finalize,
-    trusted_at = trusted_at,
-    unbounded_value = unbounded_value,
-    target_edge_is_unbounded = TRUE,
-    feasibility_tolerance = feas_tol
+  dimension <- ncol(quadratic$A_i[[1L]])
+  objective_vec <- numeric(dimension)
+  objective_vec[[component_index]] <- 1
+  .solve_linear_objective_bound(
+    quadratic,
+    objective_vec,
+    direction,
+    c(box1, box2, box3),
+    feas_tol,
+    xtol_rel,
+    maxeval,
+    coordinate_index = component_index
   )
 }

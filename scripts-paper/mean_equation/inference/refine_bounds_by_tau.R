@@ -12,8 +12,6 @@ solve_theta_bound_from <- function(qs, k, direction, theta_start,
   if (is.null(theta_start)) {
     return(NULL)
   }
-  delta <- .derive_theta_scale(qs)
-  omega <- .derive_constraint_scales(qs, delta)
   sgn <- if (direction == "min") 1 else -1
   dim_theta <- ncol(qs$A_i[[1]])
   e_k <- numeric(dim_theta)
@@ -25,33 +23,25 @@ solve_theta_bound_from <- function(qs, k, direction, theta_start,
   # .derive_theta_scale returns a finite positive delta and .derive_constraint_
   # scales a finite positive omega, theta_start is finite by the caller's guard,
   # and the objective is linear in phi. A catch would only mask a defect.
-  res <- nloptr::slsqp(
-    x0 = pmin(pmax(theta_start / delta, -box), box),
-    fn = function(phi) sgn * sum(e_k * phi),
-    gr = function(phi) sgn * e_k,
-    lower = rep(-box, dim_theta), upper = rep(box, dim_theta),
-    hin = function(phi) {
-      quadratic_constraint_values(delta * phi, qs, omega)
+  delta <- .derive_theta_scale(qs)
+  res <- solve_scaled_quadratic_program(
+    quadratic = qs,
+    x0 = theta_start,
+    objective = function(theta) {
+      sgn * sum(e_k * theta)
     },
-    hinjac = function(phi) {
-      quadratic_constraint_jacobian(
-        delta * phi,
-        qs,
-        omega,
-        theta_scale = delta
-      )
-    },
-    control = list(
-      xtol_rel = PAPER_QUADRATIC_CONTROL$solver_xtol_rel,
-      maxeval = PAPER_QUADRATIC_CONTROL$solver_maxeval
-    ),
-    deprecatedBehavior = FALSE
+    gradient = function(theta) sgn * e_k,
+    lower = rep(-delta * box, dim_theta),
+    upper = rep(delta * box, dim_theta),
+    method = "slsqp",
+    objective_scale = "variable",
+    catch_errors = FALSE
   )
-  if (any(!is.finite(res$par))) {
+  if (any(!is.finite(res$theta))) {
     return(NULL)
   }
-  theta <- delta * res$par
-  resid <- .feasibility_residual(qs, theta, omega)
+  theta <- res$theta
+  resid <- res$feasibility_residual
   if (!is.finite(resid) || abs(resid) > feas_tol) {
     return(NULL)
   }
@@ -103,7 +93,7 @@ set_id_display_tau_refinement <- function(tau_display, seed_theta, solve_fn,
         # carry the argmax forward even when the row is not certified bounded,
         # so the next larger tau still gets a feasible warm start
         warm[[side]][[k]] <- cand$theta
-        if (theta_tab$status[k] != "bounded") next
+        if (theta_tab$status[k] != PAPER_ENDPOINT_STATUS[["bounded"]]) next
         # keep-if-extends: replace an endpoint only when the warm solve widens
         # the interval, exactly the main grid walk's acceptance rule
         if (side == "max" && cand$bound > theta_tab$set_upper[k]) {

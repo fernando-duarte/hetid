@@ -56,7 +56,7 @@ logvar_harvey_fit_response <- function(y, x_mat, start = NULL,
   }
   if (!any(pos)) {
     return(hv_result(
-      fit_status = "nonexistence",
+      fit_status = LOGVAR_FIT_STATUS[["nonexistence"]],
       error_class = "negative_recession_all_zero", n_zero = n_zero,
       rank_x_pos = rank_x_pos
     ))
@@ -70,7 +70,7 @@ logvar_harvey_fit_response <- function(y, x_mat, start = NULL,
     if (!identical(cls, "pass")) {
       mapped <- hv_recession_map[[cls]]
       if (is.null(mapped)) {
-        mapped <- c("nonconvergence", "recession_certificate_failed")
+        mapped <- c(LOGVAR_FIT_STATUS[["nonconvergence"]], "recession_certificate_failed")
       }
       return(hv_result(
         fit_status = mapped[[1]], error_class = mapped[[2]],
@@ -95,7 +95,7 @@ logvar_harvey_fit_response <- function(y, x_mat, start = NULL,
   }
   attempts <- list()
   crit <- list()
-  last_ec <- "nonconvergence"
+  last_ec <- LOGVAR_FIT_STATUS[["nonconvergence"]]
   for (i in seq_along(rungs)) {
     src <- sources[i]
     cur <- hv_eval(rungs[[i]], y, x_mat, pos, col_abs)
@@ -128,7 +128,7 @@ logvar_harvey_fit_response <- function(y, x_mat, start = NULL,
     coef <- ps$eval$theta
     names(coef) <- cn
     return(hv_result(
-      coef = coef, fit_status = "ok", converged = TRUE,
+      coef = coef, fit_status = LOGVAR_FIT_STATUS[["ok"]], converged = TRUE,
       objective = ps$eval$q, score_norm = ps$eval$score_norm,
       convergence_code = as.integer(sc$iters), warm_start = ps$eval$theta,
       n_zero = n_zero, rank_x_pos = rank_x_pos, rcond_info = ps$rcond,
@@ -138,7 +138,7 @@ logvar_harvey_fit_response <- function(y, x_mat, start = NULL,
     ))
   }
   hv_result(
-    fit_status = "nonconvergence", error_class = last_ec, n_zero = n_zero,
+    fit_status = LOGVAR_FIT_STATUS[["nonconvergence"]], error_class = last_ec, n_zero = n_zero,
     rank_x_pos = rank_x_pos, start_attempts = attempts,
     per_start_criteria = if (length(crit) > 0L) crit else NULL,
     recession = recession

@@ -40,11 +40,15 @@ e_quad_share <- share_quad(
 # row-order guards, as in render_structural_equation_table.R
 stopifnot(
   identical(
-    set_id_mean_eq$theta_table$coef, paste0("sdf_news_pc", seq_len(n_pc))
+    set_id_mean_eq$theta_table$coef,
+    PAPER_ANALYSIS_CONTRACT$model$news_pc_cols
   ),
   identical(
     set_id_mean_eq$beta1_table$coef,
-    c("(Intercept)", paste0("lag_expected_sdf_pc", seq_len(n_pc)))
+    c(
+      PAPER_ANALYSIS_CONTRACT$model$intercept_col,
+      PAPER_ANALYSIS_CONTRACT$model$lag_expected_pc_cols
+    )
   )
 )
 e_rows <- match(set_id_mean_eq$x_cols, set_id_mean_eq$beta1_table$coef)
@@ -66,13 +70,7 @@ set_share_cols <- Map(function(nm, quad) {
   # established as the least-established row of that set: an uncertified row
   # makes the block share uncertified too, and validity outranks boundedness
   # exactly as in the solvers' own status3
-  joint_status <- if (any(st$theta$status == "unreliable")) {
-    "unreliable"
-  } else if (any(st$theta$status == "unbounded")) {
-    "unbounded"
-  } else {
-    "bounded"
-  }
+  joint_status <- paper_endpoint_status_worst(st$theta$status)
   e_rng <- if (impose_beta2r_null) {
     rep(e_const, 2)
   } else {
@@ -87,7 +85,7 @@ set_share_cols <- Map(function(nm, quad) {
     # under the null b_E is a constant, so its block share is the value at
     # beta1R and stays certified whatever the theta set does
     status = c(
-      if (impose_beta2r_null) "bounded" else joint_status,
+      if (impose_beta2r_null) PAPER_ENDPOINT_STATUS[["bounded"]] else joint_status,
       e_comp$status, joint_status, n_comp$status
     )
   )
@@ -126,9 +124,21 @@ var_share <- list(
 )
 
 cat(sprintf(
-  "variance shares: news block %.2f--%.2f%% of Var(dc) at tau = %.2g\n",
-  var_share$set_cols[[1]]$lo[news_row], var_share$set_cols[[1]]$hi[news_row],
-  set_id_mean_eq$tau_baseline
+  "variance shares: news block %s--%s%% of Var(dc) at tau = %s\n",
+  paper_format_number(
+    var_share$set_cols[[1]]$lo[news_row],
+    PAPER_REPORTING_CONTROL$cells$variance_share$digits,
+    "na"
+  ),
+  paper_format_number(
+    var_share$set_cols[[1]]$hi[news_row],
+    PAPER_REPORTING_CONTROL$cells$variance_share$digits,
+    "na"
+  ),
+  paper_format_general(
+    set_id_mean_eq$tau_baseline,
+    PAPER_REPORTING_CONTROL$precision$tau_significant
+  )
 ))
 
 rm(

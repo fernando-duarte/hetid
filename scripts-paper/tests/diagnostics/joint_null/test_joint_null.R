@@ -29,7 +29,7 @@ paper_source_once(paper_path("tests", "support", "harness.R"))
 .test <- paper_test_harness()
 check <- .test$check
 # Fail a check closed when a required joint-null function errors.
-jn_try <- function(expr) tryCatch(isTRUE(expr), error = function(e) FALSE)
+jn_try <- .test$safe
 
 root_tol <- 1e-6
 # One-constraint ball qs: ||b - center|| <= radius (feasible => residual < 0).

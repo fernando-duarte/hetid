@@ -25,13 +25,10 @@ paper_source_once(paper_path("tests", "support", "harness.R"))
 .test <- paper_test_harness()
 check <- .test$check
 have_qr <- requireNamespace("quantreg", quietly = TRUE)
-qr_check <- function(label, cond) {
-  if (!have_qr) {
-    .test$skip(label, "quantreg unavailable")
-    return(invisible())
-  }
-  check(label, isTRUE(tryCatch(cond, error = function(e) FALSE)))
-}
+qr_check <- .test$optional_check(
+  have_qr,
+  "quantreg unavailable"
+)
 
 # A counting dummy estimator over a K = 2 ball (LAD-shaped metadata, switchable
 # traversal, no warm start); the pure-engine anchors ride on it.

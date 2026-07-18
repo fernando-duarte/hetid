@@ -46,6 +46,9 @@
 #
 # Sourced by run.R after residual_map.R.
 
+paper_source_once(paper_path(
+  "log_variance", "engine", "contracts.R"
+))
 paper_source_once(paper_path("log_variance", "engine", "context.R"))
 paper_source_once(paper_path("log_variance", "engine", "grid_scan.R"))
 paper_source_once(paper_path("log_variance", "engine", "results.R"))
@@ -53,6 +56,9 @@ paper_source_once(paper_path("log_variance", "engine", "endpoints.R"))
 paper_source_once(paper_path("log_variance", "engine", "execute.R"))
 paper_source_once(paper_path(
   "log_variance", "estimators", "set_orchestration.R"
+))
+paper_source_once(paper_path(
+  "log_variance", "estimators", "audit_orchestration.R"
 ))
 # cross-estimator science helpers (spec_id, bounded-args, fragility, map-context
 # preamble): the front door is common to the pipeline and every estimator test
@@ -99,8 +105,14 @@ logvar_engine_set_at_tau <- function(est, qs, b_tab, b_seed = NULL,
       n_cross, n_feasible, dinfo, diag_of(extra)
     )
   }
-  if (any(b_tab$status != "bounded")) {
-    word <- if (any(b_tab$status == "unbounded")) "unbounded" else "unreliable"
+  if (any(b_tab$status != PAPER_ENDPOINT_STATUS[["bounded"]])) {
+    word <- if (
+      any(b_tab$status == PAPER_ENDPOINT_STATUS[["unbounded"]])
+    ) {
+      PAPER_ENDPOINT_STATUS[["unbounded"]]
+    } else {
+      PAPER_ENDPOINT_STATUS[["unreliable"]]
+    }
     return(fail_closed(word, NA_integer_, NA_integer_))
   }
   tryCatch(
@@ -112,7 +124,7 @@ logvar_engine_set_at_tau <- function(est, qs, b_tab, b_seed = NULL,
     ),
     logvar_budget_exhausted = function(e) {
       fail_closed(
-        "unreliable", NA_integer_, st$n_feasible, NULL,
+        PAPER_ENDPOINT_STATUS[["unreliable"]], NA_integer_, st$n_feasible, NULL,
         list(budget_exhausted = TRUE, budget_message = conditionMessage(e))
       )
     }

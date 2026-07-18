@@ -11,35 +11,29 @@ paper_source_once(paper_path(
   "log_variance", "tables", "console_formatting.R"
 ))
 
-cat(sprintf(
-  "PPML log-variance map: N = %d over %s to %s\n",
-  log_var_eq_ppml$sample$n,
-  format(log_var_eq_ppml$sample$span[1]),
-  format(log_var_eq_ppml$sample$span[2])
-))
-
-# per display tau: the five coefficient hulls (or side statuses) and the tau's
-# budget counters
-ppml_tau_names <- names(log_var_eq_ppml$sets)
 ppml_taus <- set_id_mean_eq$tau_display
-for (i in seq_along(ppml_tau_names)) {
-  nm <- ppml_tau_names[i]
-  tb <- log_var_eq_ppml$sets[[nm]]
-  d <- log_var_eq_ppml$counts[[nm]]
-  hull <- logvar_hull_text(tb)
-  cat(sprintf(
-    "  tau = %.2g: %s | attempted %d evaluated %d cached %d failed %d\n",
-    ppml_taus[i], paste(hull, collapse = " "),
-    d$n_attempted, d$n_evaluated, d$n_cached, d$n_failed
-  ))
-}
+logvar_print_map_summary(
+  "PPML log-variance map",
+  log_var_eq_ppml,
+  ppml_taus
+)
 
 # the three fragility diagnostics accompanying the ordering rule
 cat("  fragility diagnostics:\n")
 cat(sprintf(
   "    min feasible |eps| by tau: %s\n",
   paste(
-    sprintf("%.2g=%.3g", ppml_taus, log_var_eq_ppml$min_feasible_abs_eps),
+    paste0(
+      paper_format_general(
+        ppml_taus,
+        PAPER_REPORTING_CONTROL$precision$tau_significant
+      ),
+      "=",
+      paper_format_general(
+        log_var_eq_ppml$min_feasible_abs_eps,
+        PAPER_REPORTING_CONTROL$precision$console_significant
+      )
+    ),
     collapse = " "
   )
 ))
@@ -74,4 +68,4 @@ cat(sprintf(
   ord[1]
 ))
 
-rm(ppml_tau_names, ppml_taus, i, nm, tb, d, hull, div_dirs, ord, n_base)
+rm(ppml_taus, div_dirs, ord, n_base)

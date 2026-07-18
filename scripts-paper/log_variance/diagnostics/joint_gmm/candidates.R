@@ -55,10 +55,14 @@ logvar_joint_candidate_table <- function(grid_b, beta_seeds) {
   b_idx <- rep(seq_len(n_b), times = n_s)
   s_idx <- rep(seq_len(n_s), each = n_b)
   b_block <- grid_b[b_idx, , drop = FALSE]
-  colnames(b_block) <- paste0("b", seq_len(ncol(grid_b)))
+  b_fields <- PAPER_ANALYSIS_CONTRACT$model$artifact_fields$mean
+  stopifnot(length(b_fields) == ncol(grid_b))
+  colnames(b_block) <- b_fields
   seed_full <- matrix(unlist(seeds), nrow = n_s, byrow = TRUE)
   seed_block <- seed_full[s_idx, , drop = FALSE]
-  colnames(seed_block) <- paste0("beta", seq_len(ncol(seed_block)))
+  beta_fields <- PAPER_ANALYSIS_CONTRACT$model$artifact_fields$variance
+  stopifnot(length(beta_fields) == ncol(seed_block))
+  colnames(seed_block) <- beta_fields
   data.frame(
     b_block, seed_block,
     seed_index = s_idx,

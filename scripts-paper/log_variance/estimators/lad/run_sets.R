@@ -51,7 +51,7 @@ if (exists("log_var_eq") && exists("set_id_mean_eq") && exists("mean_eq_bounds_t
     x_mat,
     LOGVAR_LAD_CONTROL
   )
-  if (!identical(ref_fit$fit_status, "ok")) {
+  if (!logvar_fit_ok(ref_fit)) {
     stop(sprintf(
       "log_var_eq_lad_sets: reference LAD fit failed (%s)",
       ref_fit$diagnostics$error_class
@@ -66,12 +66,16 @@ if (exists("log_var_eq") && exists("set_id_mean_eq") && exists("mean_eq_bounds_t
   theta_point <- na_coef
   if (!anyNA(b_point)) {
     pfit <- est_lad$fit_at_b(b_point)
-    if (identical(pfit$fit_status, "ok")) {
+    if (logvar_fit_ok(pfit)) {
       theta_point <- pfit$coef
     } else {
       cat(sprintf(
-        "  LAD Lewbel point unavailable: %s (min|eps| at point = %.3g); rendering --\n",
-        pfit$diagnostics$domain_state, log_var_eq$min_abs_eps_point
+        "  LAD Lewbel point unavailable: %s (min|eps| at point = %s); rendering --\n",
+        pfit$diagnostics$domain_state,
+        paper_format_general(
+          log_var_eq$min_abs_eps_point,
+          PAPER_REPORTING_CONTROL$precision$console_significant
+        )
       ))
     }
   }
@@ -81,13 +85,7 @@ if (exists("log_var_eq") && exists("set_id_mean_eq") && exists("mean_eq_bounds_t
 
   # per display tau: one cache across taus, a fresh budget per tau, no warm chain
   taus <- set_id_mean_eq$tau_display
-  qs_fn <- function(tau) {
-    tau_quadratic_system(
-      set_id_mean_eq$gamma,
-      tau,
-      set_id_mean_eq$moments
-    )
-  }
+  qs_fn <- mean_quadratic_system_factory(set_id_mean_eq)
   cfg <- list(
     grid_cap = LOGVAR_LAD_CONTROL$grid_cap,
     fit_budget = LOGVAR_LAD_CONTROL$fit_budget,

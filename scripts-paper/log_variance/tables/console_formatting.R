@@ -2,7 +2,8 @@
 
 logvar_hull_text <- function(
   table,
-  digits = 3L,
+  digits =
+    PAPER_REPORTING_CONTROL$precision$console_significant,
   separator = ","
 ) {
   stopifnot(all(c(
@@ -25,4 +26,70 @@ logvar_hull_text <- function(
       table$status[[index]]
     }
   }, character(1))
+}
+
+logvar_print_map_summary <- function(
+  title,
+  map,
+  taus,
+  census = NULL,
+  census_label = NULL
+) {
+  stopifnot(
+    is.character(title),
+    length(title) == 1L,
+    length(map$sets) == length(taus),
+    length(map$counts) == length(taus)
+  )
+  cat(sprintf(
+    "%s: N = %d over %s to %s\n",
+    title,
+    map$sample$n,
+    format(map$sample$span[[1L]]),
+    format(map$sample$span[[2L]])
+  ))
+  keys <- names(map$sets)
+  for (index in seq_along(keys)) {
+    table <- map$sets[[keys[[index]]]]
+    counts <- map$counts[[keys[[index]]]]
+    hull <- logvar_hull_text(table)
+    cat(sprintf(
+      paste0(
+        "  tau = %s: %s | attempted %d evaluated %d ",
+        "cached %d failed %d\n"
+      ),
+      paper_format_general(
+        taus[[index]],
+        PAPER_REPORTING_CONTROL$precision$tau_significant
+      ),
+      paste(hull, collapse = " "),
+      counts$n_attempted,
+      counts$n_evaluated,
+      counts$n_cached,
+      counts$n_failed
+    ))
+  }
+  if (!is.null(census)) {
+    stopifnot(
+      length(census) == length(taus),
+      is.character(census_label),
+      length(census_label) == 1L
+    )
+    cat(sprintf(
+      "  %s: %s\n",
+      census_label,
+      paste(
+        paste0(
+          paper_format_general(
+            taus,
+            PAPER_REPORTING_CONTROL$precision$tau_significant
+          ),
+          "=",
+          census
+        ),
+        collapse = " "
+      )
+    ))
+  }
+  invisible(map)
 }

@@ -59,3 +59,33 @@ check(
     orc_zero$engine$schema$lower_status[orc_iz] != "bounded" &&
     !is.finite(orc_zero$engine$table$set_lower[orc_iz])
 )
+bad_fit_status <- try(
+  new_logvar_fit_result(
+    numeric(0), "typo", FALSE, NA_real_, NA_real_,
+    NA_integer_, NULL, list()
+  ),
+  silent = TRUE
+)
+stopifnot(
+  inherits(bad_fit_status, "try-error"),
+  identical(
+    paper_endpoint_status_reduce(
+      c(
+        PAPER_ENDPOINT_STATUS[["bounded"]],
+        PAPER_ENDPOINT_STATUS[["unbounded"]]
+      ),
+      c(
+        PAPER_ENDPOINT_STATUS[["unreliable"]],
+        PAPER_ENDPOINT_STATUS[["bounded"]]
+      )
+    ),
+    c(
+      PAPER_ENDPOINT_STATUS[["unreliable"]],
+      PAPER_ENDPOINT_STATUS[["unbounded"]]
+    )
+  ),
+  inherits(
+    try(paper_endpoint_status_worst("typo"), silent = TRUE),
+    "try-error"
+  )
+)

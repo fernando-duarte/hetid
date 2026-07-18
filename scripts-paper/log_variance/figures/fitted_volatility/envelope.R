@@ -13,7 +13,7 @@ logvar_fitted_vol_point <- function(adapter, b_point, n) {
   if (is.null(b_point) || anyNA(b_point)) {
     return(rep(NA_real_, n))
   }
-  fit <- adapter$fit_at_b(b_point, phase = "extra_start")
+  fit <- adapter$fit_at_b(b_point, phase = LOGVAR_ENGINE_PHASES[["extra_start"]])
   if (!logvar_fit_ok(fit)) {
     return(rep(NA_real_, n))
   }

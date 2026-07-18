@@ -42,6 +42,24 @@ bad_cols_message <- tryCatch(
 )
 check("figure builder rejects a mis-columned frame", nzchar(bad_cols_message))
 
+device_before <- grDevices::dev.cur()
+failed_svg <- tempfile(fileext = ".svg")
+svg_error <- try(
+  write_svg(
+    failed_svg,
+    2,
+    2,
+    function() stop("fixture draw error")
+  ),
+  silent = TRUE
+)
+check(
+  "SVG wrapper closes its device when drawing fails",
+  inherits(svg_error, "try-error") &&
+    identical(grDevices::dev.cur(), device_before)
+)
+unlink(failed_svg)
+
 fixture_summary <- c(
   Mean = 2.48e-9, Median = 2.77e-9, Minimum = 1.29e-10,
   Maximum = 4.56e-9, "Standard Deviation" = 1.32e-9

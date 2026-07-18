@@ -44,31 +44,25 @@ new_dummy <- function(spec_id = "dummy-v1", cold_disagree = FALSE,
   cc <- new.env(parent = emptyenv())
   cc$n <- 0L
   cc$order <- list()
-  meta <- list(
-    estimator = "dummy", target_functional = "theta_dummy",
-    intercept_normalization = "none", sample_id = "sample-1",
-    smoothness = "smooth", inner_solver = "closed-form",
-    response_scale = "identity", spec_id = spec_id, cold_start_rtol = 1e-8
+  meta <- paper_test_estimator_metadata(
+    "dummy",
+    "theta_dummy",
+    "sample-1",
+    spec_id
   )
   if (!is.null(traversal)) meta$traversal <- traversal
   fit_at_b <- function(b, start = NULL) {
     cc$n <- cc$n + 1L
     cc$order[[length(cc$order) + 1L]] <- unname(b)
     if (!is.null(fail_at) && isTRUE(all.equal(unname(b), fail_at))) {
-      return(list(
-        coef = NULL, fit_status = "domain_failure", converged = FALSE,
-        objective = NA_real_, score_norm = NA_real_, convergence_code = 1L,
-        diagnostics = list(), warm_start = NULL
+      return(paper_test_fit_result(
+        fit_status = "domain_failure"
       ))
     }
     val <- c(sum(b), diff(range(b)))
     if (cold_disagree && is.null(start)) val <- val + 10
     names(val) <- coef_labels
-    list(
-      coef = val, fit_status = "ok", converged = TRUE, objective = 0,
-      score_norm = 0, convergence_code = 0L, diagnostics = list(),
-      warm_start = val
-    )
+    paper_test_fit_result(val)
   }
   est <- list(metadata = meta, fit_at_b = fit_at_b)
   if (objective_fail) {

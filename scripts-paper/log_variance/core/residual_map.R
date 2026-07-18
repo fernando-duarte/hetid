@@ -18,10 +18,38 @@ paper_source_once(paper_path(
   "log_variance", "estimators", "controls.R"
 ))
 
+logvar_design_matrix <- function(pcr, expected_pc_cols = NULL) {
+  pcr <- as.matrix(pcr)
+  if (is.null(colnames(pcr))) {
+    stopifnot(ncol(pcr) <= length(
+      PAPER_ANALYSIS_CONTRACT$model$return_pc_cols
+    ))
+    colnames(pcr) <-
+      PAPER_ANALYSIS_CONTRACT$model$return_pc_cols[
+        seq_len(ncol(pcr))
+      ]
+  }
+  stopifnot(
+    is.numeric(pcr),
+    !anyNA(colnames(pcr)),
+    all(nzchar(colnames(pcr))),
+    !anyDuplicated(colnames(pcr))
+  )
+  if (!is.null(expected_pc_cols)) {
+    stopifnot(identical(colnames(pcr), expected_pc_cols))
+  }
+  out <- cbind(rep(1, nrow(pcr)), pcr)
+  colnames(out) <- c(
+    PAPER_ANALYSIS_CONTRACT$model$intercept_col,
+    colnames(pcr)
+  )
+  out
+}
+
 # projection rows P = (R'R)^{-1} R' of the log-variance regression; row j
 # gives theta_hat_j(b) = P[j, ] %*% log((w1 - W2 b)^2)
 logvar_projection <- function(pcr) {
-  r_mat <- cbind("(Intercept)" = 1, pcr)
+  r_mat <- logvar_design_matrix(pcr)
   solve(crossprod(r_mat), t(r_mat))
 }
 

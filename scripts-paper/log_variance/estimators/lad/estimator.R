@@ -57,8 +57,7 @@ logvar_lad_estimator <- function(
   e_ref = NULL,
   control = LOGVAR_LAD_CONTROL
 ) {
-  x_mat <- cbind(1, pcr)
-  colnames(x_mat) <- c("(Intercept)", colnames(pcr))
+  x_mat <- logvar_design_matrix(pcr)
   if (is.null(e_ref)) {
     e_ref <- stats::lm.fit(cbind(1, w2), w1)$residuals
   }
@@ -75,8 +74,6 @@ logvar_lad_estimator <- function(
     list(
       quantreg_version =
         as.character(utils::packageVersion("quantreg")),
-      inner_method = "br",
-      nonunique_method = "fn",
       scale_source =
         "median_abs_naive_ols_resid_positive_fallback",
       refine_order = "type,row,radius,offset"
@@ -92,7 +89,11 @@ logvar_lad_estimator <- function(
       format(LOGVAR_NORMAL_MEDIAN_MEANLOG_GAP, digits = 4L)
     ),
     sample_id = logvar_sample_id(qtr, w1, w2, pcr), smoothness = "nonsmooth",
-    inner_solver = "quantreg rq.fit br", response_scale = "log",
+    inner_solver = sprintf(
+      "quantreg rq.fit %s",
+      control$primary_method
+    ),
+    response_scale = "log",
     response_scale_value = 1,
     scale_reference = "naive OLS absolute-residual scale with positive fallback",
     spec_id = spec_id,

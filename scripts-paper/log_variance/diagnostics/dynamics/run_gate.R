@@ -37,8 +37,14 @@ if (exists("log_var_eq") && exists("set_id_mean_eq")) {
   dyn_g <- log_var_eq_dynamics_gate
   cat("[BEGIN LOGVAR DYNAMICS GATE]\n")
   cat(sprintf(
-    "  verdict: %s (gate lag %d, alpha %.2f)\n",
-    dyn_g$verdict, dyn_g$gate_lag, dyn_g$gate_alpha
+    "  verdict: %s (gate lag %d, alpha %s)\n",
+    dyn_g$verdict,
+    dyn_g$gate_lag,
+    paper_format_number(
+      dyn_g$gate_alpha,
+      PAPER_REPORTING_CONTROL$cells$statistic_digits,
+      "na"
+    )
   ))
   for (nm in names(dyn_g$q_stats)) {
     cat(sprintf(

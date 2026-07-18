@@ -20,6 +20,13 @@ check(
   "interleave has one canonical row-order implementation",
   identical(interleave(c("a", "b"), c("A", "B")), c("a", "A", "b", "B"))
 )
+check(
+  "LaTeX sidecar matcher derives from extension control",
+  all(grepl(
+    paper_latex_sidecar_pattern(),
+    paste0("fixture.", PAPER_LATEX_CONTROL$sidecar_extensions)
+  ))
+)
 
 reporting_alt_thresholds <- c(
   one_star = 0.20,
@@ -80,6 +87,15 @@ check(
   length(reporting_nw$statistic) == length(reporting_coef) &&
     length(reporting_nw$stars) == length(reporting_coef) &&
     identical(names(reporting_nw$se), names(reporting_coef))
+)
+check(
+  "coefficient-table layout has one reporting-policy owner",
+  PAPER_TABLE_STYLE$coefficient$row_stride == 2L &&
+    grepl(
+      "tabcolsep",
+      PAPER_TABLE_STYLE$coefficient$fontsize,
+      fixed = TRUE
+    )
 )
 
 rm(

@@ -20,7 +20,7 @@ y <- fx$y
 s <- fx$scale_s
 
 # Return FALSE instead of aborting when a required PPML function errors.
-safe <- function(expr) tryCatch(expr, error = function(e) FALSE)
+safe <- .test$safe
 
 # Central-difference Jacobian from independently converged cold-start fits at
 # b +/- h e_k, with the per-coordinate relative step frac * max(1, |b[k]|).
