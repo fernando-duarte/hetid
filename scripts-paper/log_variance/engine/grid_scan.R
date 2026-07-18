@@ -58,10 +58,9 @@ logvar_engine_scan <- function(est, b_feas, evaluate_fit, b_seed, claim_fn, st,
   pts <- list()
   for (k in seq_along(ord)) {
     b <- b_feas[ord[k], ]
-    fit <- evaluate_fit(b, phase = "scan", start = warm)
+    fit <- evaluate_fit(b, phase = LOGVAR_ENGINE_PHASES[["scan"]], start = warm)
     fit_statuses[k] <- if (is.null(fit$fit_status)) NA_character_ else fit$fit_status
-    ok <- identical(fit$fit_status, "ok") && isTRUE(fit$converged) &&
-      !is.null(fit$coef) && all(is.finite(fit$coef))
+    ok <- logvar_fit_ok(fit)
     if (!ok) {
       rec <- list(b = b, fit = fit)
       cl <- if (is.null(claim_fn)) NULL else claim_fn(b, fit)
@@ -139,9 +138,8 @@ logvar_extra_candidates <- function(starts, evaluate_fit, check_feasible) {
       )
       next
     }
-    fit <- evaluate_fit(b, phase = "extra_start")
-    ok <- identical(fit$fit_status, "ok") && isTRUE(fit$converged) &&
-      !is.null(fit$coef) && all(is.finite(fit$coef))
+    fit <- evaluate_fit(b, phase = LOGVAR_ENGINE_PHASES[["extra_start"]])
+    ok <- logvar_fit_ok(fit)
     if (!ok) {
       skipped[[length(skipped) + 1L]] <- list(b = b, reason = "fit_failure")
       next

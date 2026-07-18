@@ -13,7 +13,10 @@ build_logvar_notes <- function() {
     "The estimated equation is",
     "$\\log\\varepsilon_{t+1}^{2}=\\theta_{0}+PC_{R,t}^{T}\\theta_{R}+\\xi_{t+1}$",
     "with $\\varepsilon_{t+1}$ the structural residual of the",
-    "consumption-growth equation (Table \\ref{tab:structural_eq_set_id}),",
+    sprintf(
+      "consumption-growth equation (Table \\ref{%s}),",
+      artifact_latex_label("structural_equation_table")
+    ),
     sprintf("$\\theta_{R}$ a $%d\\times1$ vector of constant parameters, and", n_pc_r),
     "$\\xi_{t+1}$ a mean-zero error term.",
     sprintf("$PC_{R,t}$ is the $%d\\times1$ vector of the first %d principal", n_pc_r, n_pc_r),

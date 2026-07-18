@@ -27,6 +27,9 @@ LOGVAR_LOGOLS_CONTROL <- list(
 
 LOGVAR_PPML_CONTROL <- list(
   estimator_version = "ppml-v1",
+  fit_function = "glm.fit",
+  family = "quasipoisson",
+  link = "log",
   glm_epsilon = 1e-10,
   glm_maxit = 100L,
   score_tol = 1e-8,
@@ -82,6 +85,13 @@ LOGVAR_HARVEY_CONTROL <- list(
 
 LOGVAR_LAD_CONTROL <- list(
   estimator_version = "lad-v1",
+  quantile = 0.5,
+  primary_method = "br",
+  nonunique_method = "fn",
+  method_labels = c(
+    br = "Barrodale--Roberts",
+    fn = "Frisch--Newton"
+  ),
   grid_cap = 20000L,
   fit_budget = 45000L,
   phase_caps = c(
@@ -131,8 +141,19 @@ stopifnot(
   LOGVAR_SEARCH_CONTROL$fitted_vol_starts_per_side >= 1L,
   LOGVAR_SEARCH_CONTROL$logols_full_grid_safety_cap >= 1,
   LOGVAR_LOGOLS_CONTROL$cold_start_rtol > 0,
+  identical(LOGVAR_PPML_CONTROL$fit_function, "glm.fit"),
+  identical(LOGVAR_PPML_CONTROL$family, "quasipoisson"),
+  identical(LOGVAR_PPML_CONTROL$link, "log"),
   LOGVAR_PPML_CONTROL$glm_epsilon > 0,
   LOGVAR_HARVEY_CONTROL$line_search_halvings >= 0L,
+  LOGVAR_LAD_CONTROL$quantile > 0,
+  LOGVAR_LAD_CONTROL$quantile < 1,
+  LOGVAR_LAD_CONTROL$primary_method %in%
+    names(LOGVAR_LAD_CONTROL$method_labels),
+  LOGVAR_LAD_CONTROL$nonunique_method %in%
+    names(LOGVAR_LAD_CONTROL$method_labels),
+  LOGVAR_LAD_CONTROL$primary_method !=
+    LOGVAR_LAD_CONTROL$nonunique_method,
   sum(LOGVAR_LAD_CONTROL$phase_caps) >=
     LOGVAR_LAD_CONTROL$fit_budget
 )

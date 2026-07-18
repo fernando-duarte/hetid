@@ -15,6 +15,7 @@ paper_source_once(paper_path("support", "identification", "profile_solver_core.R
 paper_source_once(paper_path("support", "identification", "profile_bounds_api.R"))
 paper_source_once(paper_path("support", "identification", "tau_star.R"))
 paper_source_once(paper_path("mean_equation", "inference", "refine_bounds_by_tau.R"))
+paper_source_once(paper_path("support", "graphics", "device.R"))
 
 theta_coefs <- set_id_mean_eq$theta_table$coef
 beta_coefs <- set_id_mean_eq$beta1_table$coef
@@ -40,7 +41,7 @@ refine_theta_intervals <- function(tau, theta_tab) {
       cand <- solve_theta_bound_from(qs, k, side, warm[[side]][[k]])
       if (is.null(cand)) next
       warm[[side]][[k]] <<- cand$theta
-      if (theta_tab$status[k] != "bounded") next
+      if (theta_tab$status[k] != PAPER_ENDPOINT_STATUS[["bounded"]]) next
       if (side == "max" && cand$bound > theta_tab$set_upper[k]) {
         theta_tab$set_upper[k] <- cand$bound
         refined_n <<- refined_n + 1L
@@ -70,7 +71,7 @@ bounds_at_tau <- function(tau) {
   tab <- rbind(it$beta1, it$theta)
   data.frame(
     tau = tau, coef = tab$coef, lower = tab$set_lower, upper = tab$set_upper,
-    certified = tab$status == "bounded"
+    certified = tab$status == PAPER_ENDPOINT_STATUS[["bounded"]]
   )
 }
 
@@ -86,7 +87,7 @@ stored_rows <- rbind(
   data.frame(
     tau = set_id_mean_eq$tau_baseline, coef = tables$coef,
     lower = tables$set_lower, upper = tables$set_upper,
-    certified = tables$status == "bounded"
+    certified = tables$status == PAPER_ENDPOINT_STATUS[["bounded"]]
   )
 )
 
@@ -108,30 +109,58 @@ plot_df$coef <- factor(plot_df$coef, levels = c(beta_coefs, theta_coefs))
 
 ref_lines <- data.frame(
   tau = set_id_mean_eq$tau_baseline,
-  line = sprintf("baseline tau = %.2g", set_id_mean_eq$tau_baseline)
+  line = sprintf(
+    "baseline tau = %s",
+    paper_format_general(
+      set_id_mean_eq$tau_baseline,
+      PAPER_REPORTING_CONTROL$precision$tau_significant
+    )
+  )
 )
+figure_style <- PAPER_FIGURE_STYLE$identified_set
 bounds_plot <- ggplot2::ggplot(plot_df, ggplot2::aes(tau)) +
   ggplot2::geom_ribbon(
     ggplot2::aes(ymin = lower, ymax = upper),
-    fill = "#2a78d6", alpha = 0.35
+    fill = figure_style$primary,
+    alpha = figure_style$ribbon_alpha
   ) +
-  ggplot2::geom_line(ggplot2::aes(y = lower), color = "#2a78d6", linewidth = 0.4) +
-  ggplot2::geom_line(ggplot2::aes(y = upper), color = "#2a78d6", linewidth = 0.4) +
+  ggplot2::geom_line(
+    ggplot2::aes(y = lower),
+    color = figure_style$primary,
+    linewidth = figure_style$boundary_linewidth
+  ) +
+  ggplot2::geom_line(
+    ggplot2::aes(y = upper),
+    color = figure_style$primary,
+    linewidth = figure_style$boundary_linewidth
+  ) +
   ggplot2::geom_vline(
     data = ref_lines, ggplot2::aes(xintercept = tau, linetype = line),
-    color = "grey35", linewidth = 0.35
+    color = figure_style$reference,
+    linewidth = figure_style$reference_linewidth
   ) +
   ggplot2::facet_wrap(~coef, scales = "free_y", ncol = length(beta_coefs)) +
   ggplot2::labs(x = expression(tau), y = NULL, linetype = NULL) +
   ggplot2::theme(legend.position = "bottom")
 
-grDevices::svg(artifact_path("mean_bounds_figure"), width = 10, height = 5.5)
-print(bounds_plot)
-grDevices::dev.off()
+device <- PAPER_FIGURE_RENDER_CONTROL$devices$mean_bounds
+write_svg(
+  artifact_path("mean_bounds_figure"),
+  device[["width"]],
+  device[["height"]],
+  function() print(bounds_plot)
+)
 
 cat(
   "set-id bounds-by-tau figure:", length(unique(bounds_df$tau)),
-  "tau values in [0,", paste0(signif(max(bounds_df$tau), 3), "];"),
+  "tau values in [0,",
+  paste0(
+    signif(
+      max(bounds_df$tau),
+      PAPER_REPORTING_CONTROL$precision$figure_annotation
+    ),
+    "];"
+  ),
   sum(!bounds_df$certified), "uncertified coefficient-tau rows dropped;",
   refined_n, "sides extended by warm-start refinement\n"
 )
@@ -148,5 +177,5 @@ mean_eq_bounds_tau[
 rm(
   theta_coefs, beta_coefs, solve_theta_bound_from, seed_theta, warm,
   refined_n, refine_theta_intervals, bounds_at_tau, tables, stored_rows,
-  tau_grid, bounds_df, plot_df, ref_lines, bounds_plot
+  tau_grid, bounds_df, plot_df, ref_lines, figure_style, bounds_plot, device
 )

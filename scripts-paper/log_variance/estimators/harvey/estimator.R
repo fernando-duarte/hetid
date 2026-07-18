@@ -19,8 +19,7 @@ logvar_harvey_estimator <- function(w1, w2, pcr, qtr, b_point = NULL,
                                     logols_coef = NULL,
                                     control = LOGVAR_HARVEY_CONTROL) {
   logvar_harvey_validate_policy(control)
-  x_mat <- cbind(1, pcr)
-  colnames(x_mat) <- c("(Intercept)", colnames(pcr))
+  x_mat <- logvar_design_matrix(pcr)
   chol_xx <- chol(crossprod(x_mat))
   ladder <- list()
   if (!is.null(ppml_bundle) && "variance_start" %in% ppml_bundle$valid_for) {
@@ -118,7 +117,7 @@ logvar_harvey_estimator <- function(w1, w2, pcr, qtr, b_point = NULL,
       # through to the next named stage and successful stages stop the ladder.
       warm <- if (!is.null(start)) start else point_warm
       best <- hv_result(
-        fit_status = "nonconvergence",
+        fit_status = LOGVAR_FIT_STATUS[["nonconvergence"]],
         error_class = "start_policy_exhausted"
       )
       trail <- list()

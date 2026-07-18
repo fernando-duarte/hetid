@@ -9,16 +9,7 @@
 
 # Complete fit-result skeleton: every estimator-engine field is present so the ok,
 # nonconvergence, and domain-failure branches share one shape (nonsmooth map).
-logvar_lad_result <- function(coef, fit_status, converged, objective,
-                              score_norm, convergence_code, warm_start,
-                              diagnostics) {
-  list(
-    coef = coef, fit_status = fit_status, converged = converged,
-    objective = objective, score_norm = score_norm,
-    convergence_code = convergence_code, diagnostics = diagnostics,
-    warm_start = warm_start
-  )
-}
+logvar_lad_result <- new_logvar_fit_result
 
 # Slim diagnostics container with NA / empty defaults; callers override only the
 # fields they can populate, keeping every fail-closed return field-compatible.
@@ -43,7 +34,12 @@ logvar_lad_fit_response <- function(
   control = LOGVAR_LAD_CONTROL
 ) {
   captured <- paper_capture_conditions(
-    quantreg::rq.fit(x = x_mat, y = z, tau = 0.5, method = "br")
+    quantreg::rq.fit(
+      x = x_mat,
+      y = z,
+      tau = control$quantile,
+      method = control$primary_method
+    )
   )
   fit <- captured$value
   warns <- captured$warnings
@@ -55,7 +51,7 @@ logvar_lad_fit_response <- function(
   if (is.null(fit) || any(!is.finite(fit$coefficients))) {
     co <- stats::setNames(rep(NA_real_, p), colnames(x_mat))
     return(logvar_lad_result(
-      coef = co, fit_status = "nonconvergence", converged = FALSE,
+      coef = co, fit_status = LOGVAR_FIT_STATUS[["nonconvergence"]], converged = FALSE,
       objective = NA_real_, score_norm = NA_real_, convergence_code = NA_integer_,
       warm_start = NULL,
       diagnostics = logvar_lad_diag(
@@ -70,7 +66,12 @@ logvar_lad_fit_response <- function(
   if (any(grepl("Premature end", warns, fixed = TRUE))) solver_flag <- 2L
   converged <- solver_flag != 2L
   logvar_lad_result(
-    coef = coef, fit_status = if (converged) "ok" else "nonconvergence",
+    coef = coef,
+    fit_status = if (converged) {
+      LOGVAR_FIT_STATUS[["ok"]]
+    } else {
+      LOGVAR_FIT_STATUS[["nonconvergence"]]
+    },
     converged = converged, objective = sum(abs(resid)), score_norm = NA_real_,
     convergence_code = solver_flag, warm_start = NULL,
     diagnostics = logvar_lad_diag(
@@ -122,7 +123,7 @@ logvar_lad_fit <- function(
   fail_domain <- function(state, rows) {
     co <- stats::setNames(rep(NA_real_, ncol(x_mat)), colnames(x_mat))
     logvar_lad_result(
-      coef = co, fit_status = "domain_failure", converged = FALSE,
+      coef = co, fit_status = LOGVAR_FIT_STATUS[["domain_failure"]], converged = FALSE,
       objective = NA_real_, score_norm = NA_real_, convergence_code = NA_integer_,
       warm_start = NULL,
       diagnostics = logvar_lad_diag(
@@ -168,8 +169,8 @@ logvar_lad_nonunique_probe <- function(
     quantreg::rq.fit(
       x = x_mat,
       y = z,
-      tau = 0.5,
-      method = "fn",
+      tau = control$quantile,
+      method = control$nonunique_method,
       eps = control$fn_epsilon
     )
   )

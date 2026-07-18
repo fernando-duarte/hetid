@@ -7,7 +7,8 @@
 # panel fragment, notes, and formatters are the same ones the combined table would
 # have appended, reused verbatim. Run via run_pipeline.R after run_sets.R.
 
-if (exists("log_var_eq_lad")) {
+lad_result <- paper_logvar_result("lad", required = FALSE)
+if (!is.null(lad_result)) {
   paper_source_once(paper_path("support", "latex", "table_pipeline.R"))
   paper_source_once(paper_path("support", "latex", "simple_table.R"))
   paper_source_once(paper_path("log_variance", "tables", "table_formatting.R"))
@@ -16,21 +17,19 @@ if (exists("log_var_eq_lad")) {
   # appending the median block to an empty line set returns exactly the marker-
   # wrapped theta^0.5 panel with its notes, ready to stand alone
   lad_panel_lines <- logvar_lad_append_panel(
-    character(0), log_var_eq_lad, log_var_eq_lad$sample$n,
+    character(0), lad_result, lad_result$sample$n,
     set_id_mean_eq$tau_display, set_id_mean_eq$tau_baseline,
     LOGVAR_LAD_CONTROL$grid_cap,
     LOGVAR_LAD_CONTROL$fit_budget
   )
-  write_latex_table(
-    lad_panel_lines,
-    artifact_dir("log_variance_lad_table"),
-    tools::file_path_sans_ext(artifact_basename("log_variance_lad_table"))
+  publish_latex_artifact(
+    "log_variance_lad_table",
+    lad_panel_lines
   )
-  compile_latex_pdf(artifact_path("log_variance_lad_standalone_tex"))
 
   cat(sprintf(
     "LAD median panel table: wrote log_var_eq_lad_panel.tex (theta^0.5, N = %d)\n",
-    log_var_eq_lad$sample$n
+    lad_result$sample$n
   ))
 
   rm(lad_panel_lines)

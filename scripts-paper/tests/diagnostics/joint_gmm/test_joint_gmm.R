@@ -42,7 +42,7 @@ paper_source_once(paper_path("tests", "support", "harness.R"))
 .test <- paper_test_harness()
 check <- .test$check
 # Fail a check closed when a required joint-GMM function is absent or errors.
-jg_try <- function(expr) tryCatch(isTRUE(expr), error = function(e) FALSE)
+jg_try <- .test$safe
 # Assert a required symbol exists, so an absent module fails the check for the
 # right reason (function not found) rather than passing on an unrelated coincidence.
 jg_need <- function(...) stopifnot(vapply(c(...), exists, logical(1)))

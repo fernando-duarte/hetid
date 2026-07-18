@@ -13,9 +13,12 @@ hv_result <- function(coef = NULL, fit_status, converged = FALSE,
                       n_halvings = NA_integer_, start_attempts = list(),
                       per_start_criteria = NULL, recession = NULL,
                       info_matrix = NULL) {
-  list(
-    coef = coef, fit_status = fit_status, converged = converged,
-    objective = objective, score_norm = score_norm,
+  new_logvar_fit_result(
+    coef = coef,
+    fit_status = fit_status,
+    converged = converged,
+    objective = objective,
+    score_norm = score_norm,
     convergence_code = convergence_code,
     diagnostics = list(
       warnings = character(0), messages = character(0), error_class = error_class,
@@ -30,9 +33,9 @@ hv_result <- function(coef = NULL, fit_status, converged = FALSE,
 
 # Map a nonpassing recession classification to its fit status and error class.
 hv_recession_map <- list(
-  negative_recession = c("nonexistence", "negative_recession"),
-  zero_recession = c("nonconvergence", "zero_recession_unresolved"),
-  certificate_failure = c("nonconvergence", "recession_certificate_failed")
+  negative_recession = c(LOGVAR_FIT_STATUS[["nonexistence"]], "negative_recession"),
+  zero_recession = c(LOGVAR_FIT_STATUS[["nonconvergence"]], "zero_recession_unresolved"),
+  certificate_failure = c(LOGVAR_FIT_STATUS[["nonconvergence"]], "recession_certificate_failed")
 )
 
 # Evaluate one stability pair without fitting: validate the response and start,

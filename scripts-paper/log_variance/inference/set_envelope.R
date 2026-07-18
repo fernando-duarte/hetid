@@ -29,8 +29,8 @@ logvar_root_critical <- function(root, alpha) {
 # stability (divergent draws counted, not dropped), and a positive finite scale.
 logvar_side_stat <- function(vals, status, anchor, inward_sign, min_reps,
                              stability) {
-  ok <- is.finite(vals) & status == "bounded"
-  n_valid <- sum(status != "failed")
+  ok <- is.finite(vals) & status == PAPER_ENDPOINT_STATUS[["bounded"]]
+  n_valid <- sum(status != PAPER_ENDPOINT_STATUS[["failed"]])
   frac <- if (n_valid > 0L) sum(ok) / n_valid else 0
   se <- if (sum(ok) >= 2L) robust_scale(vals[ok]) else NA_real_
   reason <- NA_character_
@@ -68,7 +68,10 @@ logvar_endpoint_envelope_row <- function(lo, up, lo_st, up_st, f, alpha,
   ci_up <- NA_real_
   cval <- NA_real_
   reason <- NA_character_
-  if (identical(ls, "bounded") && identical(us, "bounded")) {
+  if (
+    identical(ls, PAPER_ENDPOINT_STATUS[["bounded"]]) &&
+      identical(us, PAPER_ENDPOINT_STATUS[["bounded"]])
+  ) {
     if (lc$gate && uc$gate) {
       # both-bounded pool: the joint two-side critical value needs D_L/s_L
       # and D_U/s_U both defined on a draw; divergent draws stay counted in
@@ -83,7 +86,10 @@ logvar_endpoint_envelope_row <- function(lo, up, lo_st, up_st, f, alpha,
     } else {
       reason <- if (!lc$gate) lc$reason else uc$reason
     }
-  } else if (identical(ls, "unbounded") && identical(us, "bounded")) {
+  } else if (
+    identical(ls, PAPER_ENDPOINT_STATUS[["unbounded"]]) &&
+      identical(us, PAPER_ENDPOINT_STATUS[["bounded"]])
+  ) {
     if (uc$gate) {
       cval <- logvar_root_critical(pmax(0, uc$z)[uc$ok], alpha)
       ci_lo <- -Inf
@@ -93,7 +99,10 @@ logvar_endpoint_envelope_row <- function(lo, up, lo_st, up_st, f, alpha,
     } else {
       reason <- uc$reason
     }
-  } else if (identical(ls, "bounded") && identical(us, "unbounded")) {
+  } else if (
+    identical(ls, PAPER_ENDPOINT_STATUS[["bounded"]]) &&
+      identical(us, PAPER_ENDPOINT_STATUS[["unbounded"]])
+  ) {
     if (lc$gate) {
       cval <- logvar_root_critical(pmax(0, lc$z)[lc$ok], alpha)
       ci_lo <- f$set_lower - cval * lc$se
@@ -103,7 +112,10 @@ logvar_endpoint_envelope_row <- function(lo, up, lo_st, up_st, f, alpha,
     } else {
       reason <- lc$reason
     }
-  } else if (identical(ls, "unbounded") && identical(us, "unbounded")) {
+  } else if (
+    identical(ls, PAPER_ENDPOINT_STATUS[["unbounded"]]) &&
+      identical(us, PAPER_ENDPOINT_STATUS[["unbounded"]])
+  ) {
     reason <- "full-sample set unbounded on both sides"
   } else {
     reason <- "full-sample side not certified bounded (unreliable)"
@@ -167,12 +179,12 @@ logvar_simultaneous_critical <- function(draws, full,
       draws$upper[, k], draws$upper_status[, k],
       f$set_upper, -1, min_reps, stability
     )
-    if (identical(f$lower_status, "bounded") && lc$gate) {
+    if (identical(f$lower_status, PAPER_ENDPOINT_STATUS[["bounded"]]) && lc$gate) {
       root <- pmax(root, lc$z)
       common <- common & lc$ok
       any_live <- TRUE
     }
-    if (identical(f$upper_status, "bounded") && uc$gate) {
+    if (identical(f$upper_status, PAPER_ENDPOINT_STATUS[["bounded"]]) && uc$gate) {
       root <- pmax(root, uc$z)
       common <- common & uc$ok
       any_live <- TRUE

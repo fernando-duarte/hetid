@@ -14,6 +14,12 @@ PAPER_HETEROSKEDASTICITY_CONTROL <- list(
   caption_tests = c("BP", "GQ", "ARCH")
 )
 
+paper_hetero_test_catalog <- function(
+  control = PAPER_HETEROSKEDASTICITY_CONTROL
+) {
+  unique(unname(unlist(control$suites, use.names = FALSE)))
+}
+
 stopifnot(
   is.numeric(PAPER_HETEROSKEDASTICITY_CONTROL$fitted_sd_ratio_cutoff),
   length(PAPER_HETEROSKEDASTICITY_CONTROL$fitted_sd_ratio_cutoff) == 1L,
@@ -25,5 +31,6 @@ stopifnot(
     c("greater", "less", "two.sided"),
   PAPER_HETEROSKEDASTICITY_CONTROL$rejection_level %in%
     names(PAPER_REPORTING_CONTROL$significance),
-  length(PAPER_HETEROSKEDASTICITY_CONTROL$caption_tests) > 0L
+  length(PAPER_HETEROSKEDASTICITY_CONTROL$caption_tests) > 0L,
+  !"CW" %in% paper_hetero_test_catalog()
 )

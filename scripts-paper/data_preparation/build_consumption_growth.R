@@ -6,7 +6,8 @@
 
 gr1_pcecc96 <- tidyquant::tq_get(
   PAPER_ANALYSIS_CONTRACT$input$consumption$fred_series,
-  get = "economic.data",
+  get =
+    PAPER_ANALYSIS_CONTRACT$input$consumption$fetch_kind,
   from = fred_from,
   to = fred_to
 ) |>

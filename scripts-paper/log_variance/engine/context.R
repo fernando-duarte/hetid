@@ -1,16 +1,16 @@
-# Context and budget services for the estimator-generic set engine: budgets,
-# exact-b caching, hook context/adapters, manifest paths, and nesting checks.
-# Definitions only; sourced by api.R.
-# reference-semantics budget shared across engine calls: a global fit-eval
-# cap, optional per-phase caps, and a named counter per service phase
 logvar_budget_state <- function(max_fit_evals = Inf, phase_caps = NULL) {
+  if (!is.null(phase_caps)) {
+    stopifnot(
+      !is.null(names(phase_caps)),
+      all(names(phase_caps) %in% LOGVAR_ENGINE_FIT_PHASES)
+    )
+  }
   bs <- new.env(parent = emptyenv())
   bs$max_fit_evals <- max_fit_evals
   bs$phase_caps <- phase_caps
-  bs$counters <- c(
-    scan = 0L, probe = 0L, refinement = 0L, extra_start = 0L, polish = 0L,
-    nonunique = 0L, cold_start = 0L, cache_hit = 0L,
-    claimed_domain_failure = 0L
+  bs$counters <- stats::setNames(
+    integer(length(LOGVAR_ENGINE_PHASES)),
+    unname(LOGVAR_ENGINE_PHASES)
   )
   bs$n_attempted <- 0L
   bs$n_evaluated <- 0L
@@ -18,8 +18,6 @@ logvar_budget_state <- function(max_fit_evals = Inf, phase_caps = NULL) {
   bs$n_failed <- 0L
   bs
 }
-# exhaustion is a classed condition the engine catches at the tau level:
-# fail closed with full disclosure, never a silently narrowed range
 logvar_budget_stop <- function(phase, reason) {
   paper_stop_condition(
     "logvar_budget_exhausted",
@@ -32,9 +30,6 @@ logvar_budget_stop <- function(phase, reason) {
     fields = list(phase = phase)
   )
 }
-# a cache environment belongs to one estimator, sample, and spec: stamped on
-# first use, asserted ever after, so a caller cannot share one across any of
-# the three (the spec-keyed cache requirement, enforced not encoded)
 logvar_cache_bind <- function(cache, meta) {
   if (is.null(cache$estimator)) {
     cache$estimator <- meta$estimator
@@ -49,19 +44,22 @@ logvar_cache_bind <- function(cache, meta) {
   )
   cache
 }
-# full-precision cache key, insensitive to options(digits)
 logvar_b_key <- function(b) {
   paste(paper_numeric_key(unname(b)), collapse = "|")
 }
-# cached evaluator around est$fit_at_b: debits the named phase only on a
-# cache miss, enforces the global and per-phase caps, and tallies failures;
-# use_cache = FALSE (cold-start replication) always refits and never stores
 logvar_make_evaluator <- function(est, cache, bs) {
   accepts_phase <- "phase" %in% names(formals(est$fit_at_b))
   function(b, phase, start = NULL, use_cache = TRUE) {
+    stopifnot(
+      is.character(phase),
+      length(phase) == 1L,
+      phase %in% LOGVAR_ENGINE_FIT_PHASES
+    )
     key <- logvar_b_key(b)
     if (use_cache && !is.null(cache$store[[key]])) {
-      bs$counters[["cache_hit"]] <- bs$counters[["cache_hit"]] + 1L
+      cache_phase <- LOGVAR_ENGINE_PHASES[["cache_hit"]]
+      bs$counters[[cache_phase]] <-
+        bs$counters[[cache_phase]] + 1L
       bs$n_attempted <- bs$n_attempted + 1L
       bs$n_cached <- bs$n_cached + 1L
       return(cache$store[[key]])
@@ -71,7 +69,6 @@ logvar_make_evaluator <- function(est, cache, bs) {
         "max_fit_evals = %s reached", format(bs$max_fit_evals)
       ))
     }
-    # an absent phase key means uncapped ([[ ]] on a missing name would abort)
     cap <- if (phase %in% names(bs$phase_caps)) bs$phase_caps[[phase]] else NULL
     if (!is.null(cap) && bs$counters[[phase]] >= cap) {
       logvar_budget_stop(phase, sprintf("phase cap %d reached", cap))
@@ -84,15 +81,12 @@ logvar_make_evaluator <- function(est, cache, bs) {
     } else {
       est$fit_at_b(b, start = start)
     }
-    ok <- identical(fit$fit_status, "ok") && isTRUE(fit$converged)
+    ok <- logvar_fit_ok(fit)
     if (!ok) bs$n_failed <- bs$n_failed + 1L
     if (use_cache) cache$store[[key]] <- fit
     fit
   }
 }
-
-# versioned context handed to analyze_domain hooks; check_feasible reports
-# the normalized constraint values (house hin <= 0, grid-admission scale)
 logvar_make_ctx <- function(evaluate_fit, qs, delta, omega, cache, bs) {
   check_feasible <- function(b) {
     hin <- quadratic_constraint_values(b, qs, omega)
@@ -109,19 +103,6 @@ logvar_make_ctx <- function(evaluate_fit, qs, delta, omega, cache, bs) {
     cache = cache, budget_state = bs, precheck = NULL
   )
 }
-
-# one shared definition of a usable fit: ok status, converged, and a
-# finite coefficient vector
-logvar_fit_ok <- function(fit) {
-  identical(fit$fit_status, "ok") && isTRUE(fit$converged) &&
-    !is.null(fit$coef) && all(is.finite(fit$coef))
-}
-
-# selector seam: a caller-supplied grid_selector(b_feas, max_grid_points)
-# must return exactly list(grid, selector_id, traversal); the grid must be a
-# unique rowwise subset of the freshly checked feasible grid (no invented
-# points), and traversal is "engine_default" (normal ordering) or
-# "as_selected" (scan in callback order, bypassing the nearest-neighbor cap)
 logvar_engine_apply_selector <- function(sel_fn, b_feas, max_grid_points) {
   sel <- sel_fn(b_feas, max_grid_points)
   if (!is.list(sel) || !setequal(names(sel), c("grid", "selector_id", "traversal"))) {
@@ -145,8 +126,6 @@ logvar_engine_apply_selector <- function(sel_fn, b_feas, max_grid_points) {
     n_selector_output = nrow(g)
   ))
 }
-
-# arity adapters: estimator-engine's original two-/three-argument hooks keep working
 logvar_call_precheck <- function(hook, qs, b_tab, ctx) {
   if (length(formals(hook)) >= 3L) hook(qs, b_tab, ctx) else hook(qs, b_tab)
 }
@@ -157,20 +136,12 @@ logvar_call_sides <- function(hook, qs, b_tab, scan, ctx) {
     hook(qs, b_tab, scan)
   }
 }
-
-# Manifest-owned estimator variant path.
 logvar_bounds_tau_path <- function(metadata) {
   artifact_variant_path(
     "logvar_bounds_tau",
     metadata$estimator
   )
 }
-
-# nesting check over engine-computed grid rows: as tau grows a certified
-# lower endpoint must not rise and a certified upper endpoint must not fall
-# beyond tol * max(1, |endpoint|); comparisons run per coefficient and side
-# over consecutive retained (bounded) rows, so they span unreliable or
-# unbounded gaps; returns the violation rows
 logvar_check_nesting <- function(
   rows,
   tol = LOGVAR_SEARCH_CONTROL$nesting_rtol
@@ -181,7 +152,10 @@ logvar_check_nesting <- function(
   )
   for (cf in unique(rows$coef)) {
     for (side in c("lower", "upper")) {
-      sub <- rows[rows$coef == cf & rows[[paste0(side, "_status")]] == "bounded", ]
+      bounded <- PAPER_ENDPOINT_STATUS[["bounded"]]
+      sub <- rows[
+        rows$coef == cf & rows[[paste0(side, "_status")]] == bounded,
+      ]
       sub <- sub[order(sub$tau), ]
       if (nrow(sub) < 2L) next
       vals <- sub[[side]]

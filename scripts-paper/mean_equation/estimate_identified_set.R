@@ -9,20 +9,17 @@
 # The quadratic-system assembly, profile-bound solver, and tau* sweep come
 # from the paper-owned support layer.
 # Run via run_pipeline.R after build_consumption_growth.R and build_sdf_pcs.R.
-
 paper_source_once(paper_path("support", "identification", "api.R"))
 paper_source_once(paper_path("support", "identification", "profile_solver_core.R"))
 paper_source_once(paper_path("support", "identification", "profile_bounds_api.R"))
 paper_source_once(paper_path("support", "identification", "tau_star.R"))
 paper_source_once(paper_path("support", "identification", "identified_set_bootstrap.R"))
 paper_source_once(paper_path("mean_equation", "inference", "refine_bounds_by_tau.R"))
-
 # Baseline, display, and sweep policy share the analysis contract.
 tau_contract <- PAPER_ANALYSIS_CONTRACT$tau
 tau_baseline <- tau_contract$baseline
 tau_cap <- tau_contract$cap
 tau_display <- tau_contract$display
-
 # aligned estimation frame; complete cases truncate the sample to the
 # instrument's span
 set_id_data <- list(
@@ -35,11 +32,9 @@ set_id_data <- list(
   filter_window() |>
   tidyr::drop_na() |>
   dplyr::arrange(qtr)
-
 y1_col <- hetid::HETID_CONSTANTS$CONSUMPTION_GROWTH_COL
 x_cols <- value_cols(lag_expected_sdf_pc)
 y2_cols <- value_cols(sdf_news_pc)
-
 # reduced-form fits, de-meaned single instrument with unit weight, moments,
 # and the closed-form tau = 0 point, via the paper-owned shared estimator --
 # the endpoint bootstrap re-runs the identical
@@ -57,7 +52,6 @@ z <- est$z
 moments <- est$moments
 gamma <- sys_spec$gamma
 point0 <- est$point0
-
 # critical slack tau*: the bounded -> unbounded transition of the joint set
 tau_sweep <- sweep_fixed_gamma(
   gamma,
@@ -66,13 +60,11 @@ tau_sweep <- sweep_fixed_gamma(
   "coarse"
 )
 tau_star <- tau_star_fixed(gamma, moments, tau_sweep)
-
 # OLS benchmark on the identical sample (Y2 treated as exogenous)
 ols_fit <- stats::lm(
   stats::reformulate(c(x_cols, y2_cols), response = y1_col),
   data = set_id_data
 )
-
 # per-coefficient intervals of the joint identified set at each display
 # slack (theta profile bounds + beta1 functional bounds, the shared
 # coef_interval_tables recipe from support/identification/tau_star.R)
@@ -84,7 +76,6 @@ names(set_tables) <- vapply(
   paper_tau_key,
   character(1)
 )
-
 # coef_interval_tables starts every profile solve at the origin and can settle
 # on a local vertex short of the true extreme, so the news intervals are
 # re-solved from a warm chain seeded at the tau = 0 point and walked up the
@@ -98,7 +89,6 @@ refined_theta <- set_id_display_tau_refinement(
   solve_theta_bound_from, gamma, moments, beta1r, beta2r
 )
 for (j in seq_along(set_tables)) set_tables[[j]]$theta <- refined_theta[[j]]
-
 theta_table <- cbind(
   data.frame(
     coef = y2_cols,
@@ -110,7 +100,6 @@ theta_table <- cbind(
     c("set_lower", "set_upper", "status")
   ]
 )
-
 # design-coefficient recovery beta1(theta) = beta1R - beta2R' theta: point at
 # tau = 0, baseline-slack interval from the display tables
 beta1_point <- if (is.null(point0)) {
@@ -129,7 +118,6 @@ beta1_table <- cbind(
     c("set_lower", "set_upper", "status")
   ]
 )
-
 # relevance and conditioning diagnostics: Cov(Z, W2_i^2) is what gives the
 # constraints curvature (the het-tests note's "fuel"), kappa(Q) the joint
 # conditioning of the tau = 0 system, cor(W1, W2) the endogeneity motivation
@@ -144,7 +132,6 @@ relevance <- data.frame(
   cor_w1_w2 = vapply(y2_cols, \(i) stats::cor(w1, w2[, i]), numeric(1)),
   row.names = NULL
 )
-
 set_id_mean_eq <- list(
   sample = list(n = nrow(set_id_data), span = range(set_id_data$qtr)),
   qtr = set_id_data$qtr,
@@ -174,19 +161,31 @@ set_id_mean_eq <- list(
   beta1r = beta1r, beta2r = beta2r,
   ols_fit = ols_fit
 )
-
 cat(
   sprintf("set identification (Z = %s): N =", z_col), set_id_mean_eq$sample$n,
   "over", format(set_id_mean_eq$sample$span[1]), "to",
   format(set_id_mean_eq$sample$span[2]),
-  "\n  tau* =", signif(set_id_mean_eq$tau_star, 3),
+  "\n  tau* =", signif(
+    set_id_mean_eq$tau_star,
+    PAPER_REPORTING_CONTROL$precision$console_significant
+  ),
   if (set_id_mean_eq$tau_star_capped) "(capped at sweep max)" else "",
-  " kappa(Q) =", signif(set_id_mean_eq$theta_point_cond, 3),
+  " kappa(Q) =", signif(
+    set_id_mean_eq$theta_point_cond,
+    PAPER_REPORTING_CONTROL$precision$console_significant
+  ),
   " beta2R:", if (impose_beta2r_null) "null (= 0)" else "sample", "\n"
 )
-print(set_id_mean_eq$theta_table, digits = 3)
-print(set_id_mean_eq$relevance, digits = 3)
-
+print(
+  set_id_mean_eq$theta_table,
+  digits =
+    PAPER_REPORTING_CONTROL$precision$console_significant
+)
+print(
+  set_id_mean_eq$relevance,
+  digits =
+    PAPER_REPORTING_CONTROL$precision$console_significant
+)
 rm(
   set_id_data, y1_col, x_cols, y2_cols, sys_spec, est, beta1r, w1, w2, beta2r,
   z, moments, gamma, point0, tau_sweep, tau_star, ols_fit, set_tables,

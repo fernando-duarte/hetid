@@ -5,11 +5,14 @@
 # Run via run_pipeline.R, which defines the shared maturity grids. The daily ACM
 # asset (~40 MB) is cache-only; the first run downloads it from GitHub.
 
+yield_volatility_input <-
+  PAPER_ANALYSIS_CONTRACT$input$yield_volatility
 acm_daily <- hetid::extract_acm_data(
-  data_types = "yields",
+  data_types = yield_volatility_input$data_types,
   maturities = all_mats,
-  frequency = "daily",
-  auto_download = TRUE
+  frequency = yield_volatility_input$frequency,
+  auto_download = yield_volatility_input$auto_download,
+  source = yield_volatility_input$source
 )
 
 yield_vol <- acm_daily |>
@@ -23,4 +26,4 @@ yield_vol <- acm_daily |>
   ) |>
   dplyr::rename_with(\(x) paste0(x, "_vol"), !qtr)
 
-rm(acm_daily)
+rm(acm_daily, yield_volatility_input)

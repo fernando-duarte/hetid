@@ -11,7 +11,7 @@ paper_source_once(paper_path("log_variance", "tables", "panels_builder.R"))
 paper_source_once(paper_path("log_variance", "tables", "set_inference_caption.R"))
 
 build_logvar_panels(
-  "log_var_eq_panels_inference",
+  artifact_variant_id("logvar_panels", "inference"),
   ppml_caption_suffix =
     ", with a bootstrap outer confidence envelope beneath each set cell.",
   envelope_ppml = log_var_eq_set_boot$ppml,

@@ -58,9 +58,13 @@ logvar_logols_estimator <- function(
     fit_at_b = function(b, start = NULL) {
       eps <- drop(w1 - w2 %*% b)
       th <- logvar_theta_hat(b, w1, w2, proj)
-      list(
+      new_logvar_fit_result(
         coef = th,
-        fit_status = if (any(eps == 0)) "domain_failure" else "ok",
+        fit_status = if (any(eps == 0)) {
+          LOGVAR_FIT_STATUS[["domain_failure"]]
+        } else {
+          LOGVAR_FIT_STATUS[["ok"]]
+        },
         converged = TRUE, objective = 0, score_norm = 0,
         convergence_code = 0L,
         diagnostics = list(min_abs_eps = min(abs(eps))),

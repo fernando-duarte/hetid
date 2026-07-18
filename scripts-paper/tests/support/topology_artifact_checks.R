@@ -1,5 +1,7 @@
 # Artifact-schema and output-tree topology checks.
 
+paper_source_once(paper_path("config", "reporting.R"))
+
 required_columns <- c(
   "id",
   "basename",
@@ -76,12 +78,7 @@ if (dir.exists(out_dir)) {
   output_files <- output_files[
     basename(output_files) != ".DS_Store"
   ]
-  sidecar <- paste0(
-    "[.](",
-    "aux|log|fls|fdb_latexmk|synctex[.]gz|",
-    "out|toc",
-    ")$"
-  )
+  sidecar <- paper_latex_sidecar_pattern()
   if (any(grepl(
     sidecar,
     output_files,

@@ -5,3 +5,6 @@ paper_source_once(paper_path(
 ))
 paper_source_once(paper_path("support", "identification", "coordinate_bounds.R"))
 paper_source_once(paper_path("support", "identification", "functional_bounds.R"))
+paper_source_once(paper_path(
+  "support", "identification", "linear_objective_bounds.R"
+))

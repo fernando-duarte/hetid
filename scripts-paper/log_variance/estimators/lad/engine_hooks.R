@@ -84,7 +84,7 @@ logvar_lad_coef_objective <- function(geom) {
     force(j)
     list(
       fn = function(b) {
-        fit <- geom$evaluate_fit(geom$center, phase = "polish")
+        fit <- geom$evaluate_fit(geom$center, phase = LOGVAR_ENGINE_PHASES[["polish"]])
         if (!logvar_fit_ok(fit)) NaN else unname(fit$coef[[j]])
       },
       gr = NULL

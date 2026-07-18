@@ -36,28 +36,18 @@ logvar_harvey_vcov <- function(
   hac_lags,
   rcond_tol = LOGVAR_HARVEY_CONTROL$rcond_tol
 ) {
-  stopifnot(
-    is.matrix(x_mat),
-    length(hac_lags) == 1L, is.finite(hac_lags), hac_lags >= 0
+  pre <- logvar_se_preflight(
+    coef,
+    y,
+    x_mat,
+    hac_lags,
+    LOGVAR_HARVEY_SE_TYPES
   )
-  hac_lags <- as.integer(hac_lags)
-  p <- ncol(x_mat)
-  n <- nrow(x_mat)
-  na_mat <- matrix(
-    NA_real_, p, p,
-    dimnames = list(colnames(x_mat), colnames(x_mat))
-  )
-  na_out <- stats::setNames(
-    rep(list(na_mat), length(LOGVAR_HARVEY_SE_TYPES)), LOGVAR_HARVEY_SE_TYPES
-  )
-  if (n <= p || length(coef) != p || any(!is.finite(coef)) || !is.numeric(y) ||
-    length(y) != n || any(!is.finite(y)) || any(y < 0)) {
-    return(na_out)
+  if (!pre$ok) {
+    return(pre$na_out)
   }
-  mu <- exp(drop(x_mat %*% coef))
-  if (any(!is.finite(mu)) || any(mu <= 0)) {
-    return(na_out)
-  }
+  mu <- pre$mu
+  na_mat <- pre$na_mat
   r <- y / mu # zero-safe: y >= 0, mu > 0 (a zero response gives r = 0)
   g <- 0.5 * (1 - r) * x_mat # per-observation score rows
   h_inv <- logvar_se_norm_inv(
@@ -75,7 +65,10 @@ logvar_harvey_vcov <- function(
     observed = if (is.null(h_inv)) na_mat else h_inv,
     opg = if (is.null(opg_inv)) na_mat else opg_inv,
     robust = sandwich_v(h_inv, meat_opg),
-    hac = sandwich_v(h_inv, logvar_se_bartlett_meat(g, hac_lags))
+    hac = sandwich_v(
+      h_inv,
+      logvar_se_bartlett_meat(g, pre$hac_lags)
+    )
   )
 }
 
@@ -106,12 +99,14 @@ logvar_harvey_se_columns <- function(harvey, inputs, mean_eq, hac_lags) {
 # logvar_harvey_se_type at render time). Guarded so the offline test can source
 # this module for definitions only. The diagnostic ratio contrasts the HAC and
 # observed reference SEs (see logvar_se_report).
-if (exists("log_var_eq_harvey")) {
-  log_var_eq_harvey$se <- logvar_harvey_se_columns(
-    log_var_eq_harvey, log_var_eq$inputs, set_id_mean_eq, logvar_harvey_se_hac_lags
+harvey_result <- paper_logvar_result("harvey", required = FALSE)
+if (!is.null(harvey_result)) {
+  harvey_result$se <- logvar_harvey_se_columns(
+    harvey_result, log_var_eq$inputs, set_id_mean_eq, logvar_harvey_se_hac_lags
   )
   logvar_se_report(
-    log_var_eq_harvey$se, "Harvey", LOGVAR_HARVEY_SE_TYPES,
+    harvey_result$se, "Harvey", LOGVAR_HARVEY_SE_TYPES,
     logvar_harvey_se_type, logvar_harvey_se_hac_lags, c("hac", "observed")
   )
+  paper_logvar_assign_result("harvey", harvey_result)
 }

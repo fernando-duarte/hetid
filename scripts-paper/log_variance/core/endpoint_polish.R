@@ -28,63 +28,34 @@ logvar_polish_objective <- function(qs, direction, b_start, guard_scale,
   method <- match.arg(method)
   # a non-finite scale would disable the blow guard (or make it error)
   if (!is.finite(guard_scale)) guard_scale <- 1
-  delta <- .derive_theta_scale(qs)
-  omega <- .derive_constraint_scales(qs, delta)
   sgn <- if (direction == "min") 1 else -1
   dim_b <- ncol(qs$A_i[[1]])
-  x0 <- pmin(pmax(b_start / delta, -box), box)
-  obj_fn <- function(phi) sgn * fn(delta * phi)
-  hin_fn <- function(phi) {
-    quadratic_constraint_values(delta * phi, qs, omega)
-  }
-  res <- tryCatch(
-    if (method == "slsqp") {
-      nloptr::slsqp(
-        x0 = x0,
-        fn = obj_fn,
-        gr = function(phi) sgn * delta * gr(delta * phi),
-        lower = rep(-box, dim_b), upper = rep(box, dim_b),
-        hin = hin_fn,
-        hinjac = function(phi) {
-          quadratic_constraint_jacobian(
-            delta * phi,
-            qs,
-            omega,
-            theta_scale = delta
-          )
-        },
-        control = list(
-          xtol_rel = PAPER_QUADRATIC_CONTROL$solver_xtol_rel,
-          maxeval = PAPER_QUADRATIC_CONTROL$solver_maxeval
-        ),
-        deprecatedBehavior = FALSE
-      )
+  delta <- .derive_theta_scale(qs)
+  res <- solve_scaled_quadratic_program(
+    quadratic = qs,
+    x0 = b_start,
+    objective = function(b) sgn * fn(b),
+    gradient = if (is.null(gr)) {
+      NULL
     } else {
-      nloptr::cobyla(
-        x0 = x0,
-        fn = obj_fn,
-        lower = rep(-box, dim_b), upper = rep(box, dim_b),
-        hin = hin_fn,
-        control = list(
-          xtol_rel = PAPER_QUADRATIC_CONTROL$solver_xtol_rel,
-          maxeval = PAPER_QUADRATIC_CONTROL$solver_maxeval
-        ),
-        deprecatedBehavior = FALSE
-      )
+      function(b) sgn * gr(b)
     },
-    error = function(e) NULL
+    lower = rep(-delta * box, dim_b),
+    upper = rep(delta * box, dim_b),
+    method = method,
+    objective_scale = "none"
   )
   out <- function(bound, par, feas_resid, suspect) {
     list(
       bound = bound, par = par, feas_resid = feas_resid, suspect = suspect,
-      convergence = if (is.null(res)) NA_integer_ else res$convergence
+      convergence = res$convergence
     )
   }
-  if (is.null(res) || any(!is.finite(res$par))) {
+  if (any(!is.finite(res$theta))) {
     return(out(NULL, NULL, NA_real_, FALSE))
   }
-  b_pol <- delta * res$par
-  resid <- .feasibility_residual(qs, b_pol, omega)
+  b_pol <- res$theta
+  resid <- res$feasibility_residual
   if (!is.finite(resid) || resid > feas_tol) {
     return(out(NULL, b_pol, resid, FALSE))
   }

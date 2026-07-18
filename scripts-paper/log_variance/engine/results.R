@@ -11,10 +11,9 @@ logvar_engine_result <- function(labels, lower, upper, lo_st, up_st,
                                  prov_lo, prov_up, arg_lo, arg_up,
                                  meta, tau, qs, omega, n_fail,
                                  n_cross, n_feasible, domain_info, diag) {
-  status <- ifelse(
-    lo_st == "unreliable" | up_st == "unreliable", "unreliable",
-    ifelse(lo_st == "unbounded" | up_st == "unbounded", "unbounded", "bounded")
-  )
+  paper_endpoint_status_validate(lo_st, allow_failed = FALSE)
+  paper_endpoint_status_validate(up_st, allow_failed = FALSE)
+  status <- paper_endpoint_status_reduce(lo_st, up_st)
   resid_at <- function(arg, val) {
     if (anyNA(arg) || !is.finite(val)) {
       return(NA_real_)
@@ -25,8 +24,16 @@ logvar_engine_result <- function(labels, lower, upper, lo_st, up_st,
   schema <- data.frame(
     coef = labels, lower = lower, upper = upper,
     lower_status = lo_st, upper_status = up_st,
-    lower_fit_status = ifelse(lo_st == "bounded", "ok", NA_character_),
-    upper_fit_status = ifelse(up_st == "bounded", "ok", NA_character_),
+    lower_fit_status = ifelse(
+      lo_st == PAPER_ENDPOINT_STATUS[["bounded"]],
+      LOGVAR_FIT_STATUS[["ok"]],
+      NA_character_
+    ),
+    upper_fit_status = ifelse(
+      up_st == PAPER_ENDPOINT_STATUS[["bounded"]],
+      LOGVAR_FIT_STATUS[["ok"]],
+      NA_character_
+    ),
     fit_failure_count = rep(n_fail, n),
     lower_constraint_residual = vapply(
       seq_len(n), function(j) resid_at(arg_lo[j, ], lower[j]), numeric(1)
@@ -84,7 +91,12 @@ logvar_engine_cold_check <- function(meta, labels, lower, upper, arg_lo,
       val <- if (side == "min") lower[j] else upper[j]
       arg <- if (side == "min") arg_lo[j, ] else arg_up[j, ]
       if (unb || unrel || !is.finite(val) || anyNA(arg)) next
-      fitc <- evaluate_fit(arg, phase = "cold_start", start = NULL, use_cache = FALSE)
+      fitc <- evaluate_fit(
+        arg,
+        phase = LOGVAR_ENGINE_PHASES[["cold_start"]],
+        start = NULL,
+        use_cache = FALSE
+      )
       vc <- if (logvar_fit_ok(fitc)) unname(fitc$coef[[j]]) else NaN
       if (!is.finite(vc) || abs(vc - val) > rtol * max(1, abs(val))) {
         if (side == "min") lo_unrel[j] <- TRUE else up_unrel[j] <- TRUE

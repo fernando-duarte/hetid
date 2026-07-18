@@ -4,6 +4,7 @@
 # provides a standalone compilable document variant for quick PDF checks.
 
 paper_source_once(paper_path("support", "latex", "table_environment.R"))
+paper_source_once(paper_path("config", "reporting.R"))
 
 # Brace-wrap any cell a siunitx S column cannot parse as a plain number
 # (e.g. "unbounded", "unreliable", "--"); leave numbers and already-braced
@@ -140,10 +141,8 @@ compile_latex_pdf <- function(tex_path) {
   stem <- tools::file_path_sans_ext(tex_path)
   sidecars <- paste0(
     stem,
-    c(
-      ".aux", ".log", ".fls", ".fdb_latexmk", ".out", ".toc",
-      ".nav", ".snm", ".vrb", ".synctex.gz"
-    )
+    ".",
+    PAPER_LATEX_CONTROL$sidecar_extensions
   )
   unlink(sidecars)
   remaining <- sidecars[file.exists(sidecars)]
@@ -156,8 +155,12 @@ compile_latex_pdf <- function(tex_path) {
 }
 
 # Remove delayed LaTeX sidecars, retrying for file-provider synchronization.
-clean_latex_sidecars <- function(root, attempts = 8L, wait_seconds = 0.25) {
-  pattern <- "[.](aux|log|fls|fdb_latexmk|synctex[.]gz|out|toc|nav|snm|vrb)$"
+clean_latex_sidecars <- function(
+  root,
+  attempts = PAPER_LATEX_CONTROL$cleanup_attempts,
+  wait_seconds = PAPER_LATEX_CONTROL$cleanup_wait_seconds
+) {
+  pattern <- paper_latex_sidecar_pattern()
   removed <- character()
   for (attempt in seq_len(attempts)) {
     sidecars <- list.files(root, pattern = pattern, recursive = TRUE, full.names = TRUE)
@@ -174,25 +177,6 @@ clean_latex_sidecars <- function(root, attempts = 8L, wait_seconds = 0.25) {
   invisible(removed)
 }
 
-#' Write a table fragment and (optionally) its standalone document variant
-#'
-#' Writes <dir>/<base_name>.tex and <dir>/<base_name>_standalone.tex.
-#'
-#' @param table_lines character vector from build_panel_latex_table()
-#' @param dir output directory (created if missing)
-#' @param base_name file name without extension
-#' @param standalone whether to also write the standalone variant
-#' @return (invisibly) character vector of paths written
-write_latex_table <- function(table_lines, dir, base_name, standalone = TRUE,
-                              landscape = FALSE) {
-  dir.create(dir, recursive = TRUE, showWarnings = FALSE)
-  fragment_path <- file.path(dir, paste0(base_name, ".tex"))
-  writeLines(table_lines, fragment_path)
-  paths <- fragment_path
-  if (standalone) {
-    standalone_path <- file.path(dir, paste0(base_name, "_standalone.tex"))
-    writeLines(make_standalone_latex(table_lines, landscape = landscape), standalone_path)
-    paths <- c(paths, standalone_path)
-  }
-  invisible(paths)
-}
+paper_source_once(paper_path(
+  "support", "latex", "artifact_publication.R"
+))

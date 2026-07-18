@@ -15,7 +15,6 @@
 # still computed, and any uncertifiable side fails the row closed as
 # "unreliable".
 # Run via run_pipeline.R after estimate_identified_set.R and build_asset_return_pcs.R.
-
 paper_source_once(paper_path("support", "identification", "api.R"))
 paper_source_once(paper_path("support", "identification", "profile_solver_core.R"))
 paper_source_once(paper_path("support", "identification", "profile_bounds_api.R"))
@@ -27,7 +26,6 @@ paper_source_once(paper_path(
   "log_variance", "estimators", "log_ols", "set_mapping.R"
 ))
 paper_source_once(paper_path("log_variance", "diagnostics", "joint_null", "inputs.R"))
-
 # grid resolution per b_N axis for the feasible-grid scan, and the feasible
 # count below which the grid is densified once (a thin joint set can thread
 # between lattice points of a box-tight grid); the size guard covers the
@@ -38,14 +36,13 @@ stopifnot(
   (2L * logvar_grid_n - 1L)^ncol(set_id_mean_eq$w2) <=
     LOGVAR_SEARCH_CONTROL$logols_full_grid_safety_cap
 )
-
 # mean-equation sample rows with the lagged asset-return PCs available;
 # `row` indexes into the stored aligned system pieces (join by qtr, never
 # by position)
 logvar_rows <- dplyr::inner_join(
   tibble::tibble(qtr = set_id_mean_eq$qtr, row = seq_along(set_id_mean_eq$qtr)),
   lag_asset_return_pc,
-  by = "qtr"
+  by = PAPER_ANALYSIS_CONTRACT$model$key_col
 ) |>
   dplyr::arrange(qtr)
 stopifnot(
@@ -56,18 +53,16 @@ stopifnot(
   # the b_N axis order every matrix product below assumes
   identical(colnames(set_id_mean_eq$w2), set_id_mean_eq$theta_table$coef)
 )
-
 w1_lv <- set_id_mean_eq$w1[logvar_rows$row]
 w2_lv <- set_id_mean_eq$w2[logvar_rows$row, , drop = FALSE]
 # de-meaned over the estimation sample, honoring the model's mean-zero PC_R;
 # only theta_0's value depends on this convention
-pcr <- scale(
+pcr <- paper_normalize_model_matrix(
   as.matrix(logvar_rows[value_cols(lag_asset_return_pc)]),
-  center = TRUE, scale = FALSE
+  PAPER_ANALYSIS_CONTRACT$model$preprocessing$return_pc
 )
 proj <- logvar_projection(pcr)
 logvar_coefs <- rownames(proj)
-
 # naive-analyst OLS column: the residuals of the exogenous-news OLS fit
 # itself (its own jointly-estimated design coefficients, not the beta1(b_N)
 # recovery), log-squared and regressed on the de-meaned PC_R; an lm fit so
@@ -79,7 +74,6 @@ fit_logvar_ols <- stats::lm(
   data = cbind(data.frame(lv = lv_ols), as.data.frame(pcr))
 )
 stopifnot(identical(names(stats::coef(fit_logvar_ols)), logvar_coefs))
-
 # closed-form Lewbel point column (tau = 0); NA when point identification
 # failed upstream
 b_point <- set_id_mean_eq$theta_table$point
@@ -88,7 +82,6 @@ theta_point <- if (anyNA(b_point)) {
 } else {
   logvar_theta_hat(b_point, w1_lv, w2_lv, proj)
 }
-
 # the log-OLS map packaged as the shared engine's first estimator object
 # (closures over the frozen aligned sample; estimator.R)
 logvar_est <- logvar_logols_estimator(
@@ -99,7 +92,6 @@ logvar_est <- logvar_logols_estimator(
   pcr,
   control = LOGVAR_LOGOLS_CONTROL
 )
-
 # identified-set intervals of every log-variance coefficient at one display
 # slack, through the shared engine in the explicit, complete benchmark
 # configuration: scan_grid fast path, no extra starts, no coarsening, no
@@ -117,7 +109,6 @@ logvar_sets <- logvar_logols_sets(
   logvar_rows$qtr,
   colnames(w2_lv)
 )
-
 logvar_table <- cbind(
   data.frame(
     coef = logvar_coefs,
@@ -129,7 +120,6 @@ logvar_table <- cbind(
     c("set_lower", "set_upper", "status")
   ]
 )
-
 log_var_eq <- list(
   sample = list(n = nrow(logvar_rows), span = range(logvar_rows$qtr)),
   coefs = logvar_coefs,
@@ -180,7 +170,6 @@ logvar_bounds_tau_registry <- list(list(
   b_seed = b_point, engine_opts = list(),
   output_path = logvar_bounds_tau_path(logvar_est$metadata)
 ))
-
 cat(
   "log-variance equation: N =", log_var_eq$sample$n,
   "over", format(log_var_eq$sample$span[1]), "to",
@@ -188,10 +177,17 @@ cat(
   "\n  crossings by tau:",
   paste(names(log_var_eq$n_cross), log_var_eq$n_cross, sep = "=", collapse = " "),
   "\n  min |eps_hat| at the tau = 0 point:",
-  signif(log_var_eq$min_abs_eps_point, 3), "\n"
+  signif(
+    log_var_eq$min_abs_eps_point,
+    PAPER_REPORTING_CONTROL$precision$console_significant
+  ),
+  "\n"
 )
-print(log_var_eq$table, digits = 3)
-
+print(
+  log_var_eq$table,
+  digits =
+    PAPER_REPORTING_CONTROL$precision$console_significant
+)
 rm(
   logvar_grid_n, logvar_grid_floor, logvar_rows, w1_lv, w2_lv, pcr, proj,
   logvar_coefs, lv_ols, fit_logvar_ols, b_point, theta_point,

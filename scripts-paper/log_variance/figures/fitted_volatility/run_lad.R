@@ -14,8 +14,9 @@
 paper_source_once(paper_path("log_variance", "figures", "fitted_volatility", "envelope.R"))
 paper_source_once(paper_path("log_variance", "figures", "fitted_volatility", "plot.R"))
 
-if (exists("log_var_eq_lad")) {
-  lad_vol_est <- log_var_eq_lad$estimator
+lad_result <- paper_logvar_result("lad", required = FALSE)
+if (!is.null(lad_result)) {
+  lad_vol_est <- lad_result$estimator
   lad_vol_tau <- set_id_mean_eq$tau_baseline
   lad_vol_key <- paper_tau_key(lad_vol_tau)
   lad_vol_b_tab <- mean_eq_bounds_tau[[lad_vol_key]]
@@ -24,8 +25,10 @@ if (exists("log_var_eq_lad")) {
     set_id_mean_eq$gamma, lad_vol_tau, set_id_mean_eq$moments
   )
   lad_vol_qtr <- log_var_eq$inputs$qtr
-  lad_vol_x <- cbind(1, log_var_eq$inputs$pcr)
-  colnames(lad_vol_x) <- c("(Intercept)", colnames(log_var_eq$inputs$pcr))
+  lad_vol_x <- logvar_design_matrix(
+    log_var_eq$inputs$pcr,
+    PAPER_ANALYSIS_CONTRACT$model$return_pc_cols
+  )
   stopifnot(identical(colnames(lad_vol_x), lad_vol_est$coef_labels))
 
   # feasible b_N grid over the joint identified set (the LAD map's grid builder);
@@ -54,7 +57,7 @@ if (exists("log_var_eq_lad")) {
     seq_len(nrow(lad_vol_grid)), function(i) lad_vol_est$fit_at_b(lad_vol_grid[i, ])
   )
   lad_vol_ok <- vapply(
-    lad_vol_fits, function(f) identical(f$fit_status, "ok"), logical(1)
+    lad_vol_fits, logvar_fit_ok, logical(1)
   )
   stopifnot(any(lad_vol_ok))
   lad_vol_theta <- vapply(
@@ -68,7 +71,7 @@ if (exists("log_var_eq_lad")) {
   lad_vol_point_eta <- rep(NA_real_, length(lad_vol_qtr))
   if (lad_vol_point_ok) {
     lad_vol_pfit <- lad_vol_est$fit_at_b(lad_vol_bpoint)
-    if (identical(lad_vol_pfit$fit_status, "ok")) {
+    if (logvar_fit_ok(lad_vol_pfit)) {
       lad_vol_point_eta <- drop(
         lad_vol_x %*% unname(lad_vol_pfit$coef[colnames(lad_vol_x)])
       )
@@ -84,7 +87,7 @@ if (exists("log_var_eq_lad")) {
   lad_vol_envelope <- list(
     data = logvar_fitted_vol_data(lad_vol_qtr, lad_vol_schema, lad_vol_point_eta),
     metadata = list(
-      estimator = "lad", sample_id = log_var_eq_lad$sample_id,
+      estimator = "lad", sample_id = lad_result$sample_id,
       tau = lad_vol_tau, response_scale = "log", grid_only = TRUE,
       grid_n = LOGVAR_SEARCH_CONTROL$fitted_lad_grid_n,
       grid_cap = LOGVAR_SEARCH_CONTROL$fitted_lad_grid_cap,

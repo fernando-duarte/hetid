@@ -34,6 +34,9 @@ check <- .test$check
 paper_source_once(paper_path("tests", "inference", "standard_error_estimators_checks.R"))
 paper_source_once(paper_path("tests", "estimators", "ppml", "fixtures.R"))
 paper_source_once(paper_path("tests", "estimators", "ppml", "fit_checks.R"))
+paper_source_once(paper_path(
+  "tests", "estimators", "ppml", "control_checks.R"
+))
 paper_source_once(paper_path("tests", "estimators", "ppml", "specification_checks.R"))
 paper_source_once(paper_path(
   "tests", "estimators", "ppml", "control_identity_checks.R"

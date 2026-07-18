@@ -45,7 +45,7 @@ logvar_ppml_fit_response <- function(y, x_mat, start = NULL,
   p <- ncol(x_mat)
   fail <- function(error_class, ...) {
     logvar_ppml_result(
-      coef = NULL, fit_status = "nonconvergence", converged = FALSE,
+      coef = NULL, fit_status = LOGVAR_FIT_STATUS[["nonconvergence"]], converged = FALSE,
       objective = NA_real_, score_norm = NA_real_, convergence_code = -1L,
       warm_start = NULL, diagnostics = logvar_ppml_diag(error_class, list(), ...)
     )
@@ -89,7 +89,7 @@ logvar_ppml_fit_response <- function(y, x_mat, start = NULL,
   attempts <- list()
   last <- list(
     warnings = character(0), messages = character(0),
-    error_class = "nonconvergence"
+    error_class = LOGVAR_FIT_STATUS[["nonconvergence"]]
   )
   for (i in seq_along(candidates)) {
     cand <- candidates[[i]]
@@ -127,7 +127,7 @@ logvar_ppml_fit_response <- function(y, x_mat, start = NULL,
     last$error_class <- acc$reason
   }
   logvar_ppml_result(
-    coef = NULL, fit_status = "nonconvergence", converged = FALSE,
+    coef = NULL, fit_status = LOGVAR_FIT_STATUS[["nonconvergence"]], converged = FALSE,
     objective = NA_real_, score_norm = NA_real_, convergence_code = -1L,
     warm_start = NULL,
     diagnostics = logvar_ppml_diag(
@@ -143,7 +143,7 @@ logvar_ppml_fit_response <- function(y, x_mat, start = NULL,
 # accepted point fit, else a typed bundle whose coef_original is the recovered
 # vector and coef_scaled the raw scaled-fit warm start.
 logvar_ppml_start_bundle <- function(fit, response_scale, source, b) {
-  if (!(identical(fit$fit_status, "ok") && isTRUE(fit$converged))) {
+  if (!logvar_fit_ok(fit)) {
     return(NULL)
   }
   list(

@@ -18,9 +18,13 @@ conditional_cleanup_audits <- stats::setNames(
   PAPER_CONDITIONAL_ARTIFACT_STATUSES
 )
 logvar_lad_cleanup_audit <-
-  conditional_cleanup_audits[["conditional_lad"]]
+  conditional_cleanup_audits[[
+    PAPER_ARTIFACT_STATUS$conditional_lad
+  ]]
 logvar_egarch_cleanup_audit <-
-  conditional_cleanup_audits[["conditional_egarch"]]
+  conditional_cleanup_audits[[
+    PAPER_ARTIFACT_STATUS$conditional_egarch
+  ]]
 quarterly_acm_inputs <- paper_load_quarterly_acm(all_mats)
 
 # patch quantmod's FRED download (HTTP/2 stream errors, stalls) before tq_get

@@ -49,7 +49,9 @@ if (file.exists(.egarch_gate_rds)) {
   # prove the four dynamic-only artifacts are absent (cleanup removed them and no
   # dynamic module has run); a stray artifact is a hard stop
   .egarch_dyn_paths <- logvar_egarch_dynamic_artifacts()
-  assert_artifacts_absent("conditional_egarch")
+  assert_artifacts_absent(
+    PAPER_ARTIFACT_STATUS$conditional_egarch
+  )
   .egarch_absent <- !file.exists(.egarch_dyn_paths)
 
   .egarch_audit <- if (exists("logvar_egarch_cleanup_audit")) {

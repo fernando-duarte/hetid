@@ -4,10 +4,22 @@ contract <- PAPER_ANALYSIS_CONTRACT
 model <- contract$model
 tau <- contract$tau
 variance_share <- contract$variance_share
+figure_render <- PAPER_FIGURE_RENDER_CONTROL
 
 check(
   "analysis contract baseline is the first display slack",
   identical(tau$baseline, tau$display[[1L]])
+)
+check(
+  "figure render controls own reproducible grids and devices",
+  is.integer(figure_render$region_3d$seed) &&
+    figure_render$region_3d$wall_grid_points >= 2L &&
+    figure_render$projections$grid_points >= 2L &&
+    all(vapply(
+      figure_render$devices,
+      function(device) all(device > 0),
+      logical(1)
+    ))
 )
 check(
   "projection slacks are named display slacks",
@@ -135,4 +147,47 @@ check(
     paper_instrument_description(),
     fixed = TRUE
   )
+)
+check(
+  "model key and intercept schema are explicit",
+  identical(model$key_col, "qtr") &&
+    identical(model$intercept_col, "(Intercept)")
+)
+check(
+  "all PC axes have their declared cardinality",
+  length(model$expected_pc_cols) == model$n_mean_pc &&
+    length(model$lag_expected_pc_cols) == model$n_mean_pc &&
+    length(model$news_pc_cols) == model$n_mean_pc &&
+    length(model$return_pc_source_cols) == model$n_return_pc &&
+    length(model$return_pc_cols) == model$n_return_pc
+)
+check(
+  "PCA preprocessing policies are explicit",
+  identical(
+    model$preprocessing$sdf_pc,
+    list(center = TRUE, scale = TRUE)
+  ) &&
+    identical(
+      model$preprocessing$return_pc,
+      list(center = TRUE, scale = FALSE)
+    )
+)
+primary <- paper_logvar_estimator_ids(primary = TRUE)
+check(
+  "primary estimator membership is registry-owned",
+  identical(primary, c("ppml", "harvey")) &&
+    all(vapply(primary, function(id) {
+      spec <- paper_logvar_estimator_spec(id)
+      identical(
+        spec$response_scale,
+        PAPER_LOGVAR_RESPONSE_SCALES[["variance"]]
+      ) &&
+        all(c(
+          "set_bootstrap", "fitted_volatility"
+        ) %in% spec$capabilities)
+    }, logical(1))) &&
+    identical(
+      paper_logvar_estimator_ids(primary = FALSE),
+      "lad"
+    )
 )

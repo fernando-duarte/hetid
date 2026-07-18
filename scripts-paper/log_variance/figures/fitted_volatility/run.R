@@ -13,8 +13,10 @@ stopifnot(!is.null(fitted_vol_b_tab))
 fitted_vol_qs <- tau_quadratic_system(
   set_id_mean_eq$gamma, fitted_vol_tau, set_id_mean_eq$moments
 )
-fitted_vol_x <- cbind(1, log_var_eq$inputs$pcr)
-colnames(fitted_vol_x) <- c("(Intercept)", colnames(log_var_eq$inputs$pcr))
+fitted_vol_x <- logvar_design_matrix(
+  log_var_eq$inputs$pcr,
+  PAPER_ANALYSIS_CONTRACT$model$return_pc_cols
+)
 fitted_vol_sample_id <- logvar_sample_id(
   log_var_eq$inputs$qtr, log_var_eq$inputs$w1,
   log_var_eq$inputs$w2, log_var_eq$inputs$pcr
@@ -40,7 +42,10 @@ fitted_vol_entry <- function(estimator) {
   logvar_bounds_tau_registry[[which(hit)]]
 }
 
-fitted_vol_estimators <- c("ppml", "harvey")
+fitted_vol_estimators <- paper_logvar_estimator_ids(
+  capability = "fitted_volatility",
+  primary = TRUE
+)
 log_var_eq_fitted_volatility <- stats::setNames(
   lapply(fitted_vol_estimators, function(estimator) {
     entry <- fitted_vol_entry(estimator)

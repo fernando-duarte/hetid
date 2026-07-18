@@ -35,8 +35,7 @@ check(
 )
 check("ARCH p-value is a probability", arch$p_value >= 0 && arch$p_value <= 1)
 
-suite_tests <- c("White", "BP")
-na_row <- suite_na_row("maturity_1")
+na_row <- suite_na_row("maturity_1", c("White", "BP"))
 check("fallback row preserves its label", identical(na_row$Variable, "maturity_1"))
 check(
   "fallback row follows the caller-selected suite schema",

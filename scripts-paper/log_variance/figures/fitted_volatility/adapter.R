@@ -25,7 +25,7 @@ logvar_fitted_vol_source <- function(est, source_cache = NULL) {
   source_budget <- logvar_budget_state()
   evaluate <- logvar_make_evaluator(est, source_cache, source_budget)
   list(
-    fit = function(b, start = NULL, phase = "scan") {
+    fit = function(b, start = NULL, phase = LOGVAR_ENGINE_PHASES[["scan"]]) {
       cold <- identical(phase, "cold_start")
       evaluate(
         b,
@@ -109,7 +109,7 @@ logvar_fitted_vol_adapter <- function(est, x_mat, labels,
     meta$spec_id, "derived_functional=fitted-log-variance-path-v1",
     sep = "\n"
   )
-  project_fit <- function(b, start = NULL, phase = "scan") {
+  project_fit <- function(b, start = NULL, phase = LOGVAR_ENGINE_PHASES[["scan"]]) {
     fit <- source$fit(b, start = start, phase = phase)
     fit$functional_source_coef <- fit$coef
     if (!logvar_fit_ok(fit)) {
@@ -117,7 +117,7 @@ logvar_fitted_vol_adapter <- function(est, x_mat, labels,
     }
     eta <- drop(x_mat %*% fit$functional_source_coef)
     if (length(eta) != nrow(x_mat) || any(!is.finite(eta))) {
-      fit$fit_status <- "nonfinite_fitted_log_variance"
+      fit$fit_status <- LOGVAR_FIT_STATUS[["nonfinite_fitted_log_variance"]]
       fit$converged <- FALSE
       fit$coef <- stats::setNames(rep(NA_real_, nrow(x_mat)), labels)
       return(fit)

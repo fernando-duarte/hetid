@@ -94,38 +94,43 @@ hetero_table <- build_panel_latex_table(
   panels,
   col_headers = as.character(seq_len(n_pc_tested)),
   caption = caption,
-  label = "tab:sdf_news_hetero_tests",
+  label = artifact_latex_label("heteroskedasticity_table"),
   notes = notes,
   col_group_label = "SDF-news PC",
   table_format = "-2.3"
 )
-hetero_dir <- artifact_dir("heteroskedasticity_table")
-hetero_stem <- tools::file_path_sans_ext(
-  artifact_basename("heteroskedasticity_table")
-)
-stopifnot(
-  identical(hetero_dir, artifact_dir("heteroskedasticity_standalone_tex")),
-  identical(hetero_dir, artifact_dir("heteroskedasticity_standalone_pdf"))
-)
-write_latex_table(hetero_table, hetero_dir, hetero_stem)
-
-# Compile the standalone source so a LaTeX regression fails the pipeline.
-compile_latex_pdf(artifact_path("heteroskedasticity_standalone_tex"))
+publish_latex_artifact("heteroskedasticity_table", hetero_table)
 
 cat(
   sprintf("hetero tests (Z = %s): regime", z_col),
   suite_cfg$regime, "suite,", n_obs, "obs\n",
   sprintf(
-    "KP rk underidentification: stat = %.3g, p = %.3g (NW lag %d, sv sep %.2g)\n",
-    rk$stat, rk$p, rk$lag, rk$sep
+    "KP rk underidentification: stat = %s, p = %s (NW lag %d, sv sep %s)\n",
+    paper_format_general(
+      rk$stat,
+      PAPER_REPORTING_CONTROL$precision$console_significant
+    ),
+    paper_format_general(
+      rk$p,
+      PAPER_REPORTING_CONTROL$precision$console_significant
+    ),
+    rk$lag,
+    paper_format_general(
+      rk$sep,
+      PAPER_REPORTING_CONTROL$precision$tau_significant
+    )
   )
 )
-print(do.call(cbind, pvals), digits = 3)
+print(
+  do.call(cbind, pvals),
+  digits =
+    PAPER_REPORTING_CONTROL$precision$diagnostic_table
+)
 
 rm(
   w1, y1, y2, z, z_mat, fmt, pcell, suite_cfg, run_battery, pvals, test_labels,
   test_names, column_cells, cells, rk, fmt_sci, joint_cells, row_labels,
   caption_tests, rejection_alpha, caption_p_values, reject, n_pc_tested,
   caption, n_obs, span, notes, panel_rows, arch_row,
-  panels, hetero_table, hetero_dir, hetero_stem
+  panels, hetero_table
 )

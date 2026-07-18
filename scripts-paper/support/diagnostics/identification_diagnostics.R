@@ -1,6 +1,6 @@
 # LM-style heteroskedasticity tests, the NA fallback row for the W2
-# diagnostics battery, and the joint-relevance rank test. suite_na_row resolves
-# the caller's suite_tests vector at call time.
+# diagnostics battery, and the joint-relevance rank test. suite_na_row receives
+# an explicit test vector or derives it from the canonical paper policy.
 
 paper_source_once(paper_path("config", "diagnostics.R"))
 
@@ -111,10 +111,10 @@ rk_rank_test <- function(y2, z) {
 }
 
 # NA fallback row matching the perform_all_hetero_tests() columns
-suite_na_row <- function(var_name) {
+suite_na_row <- function(var_name, tests = paper_hetero_test_catalog()) {
   na_cols <- setNames(
-    rep(list(NA_real_), 2 * length(suite_tests)),
-    paste0(rep(suite_tests, each = 2), c("_stat", "_pval"))
+    rep(list(NA_real_), 2 * length(tests)),
+    paste0(rep(tests, each = 2), c("_stat", "_pval"))
   )
   data.frame(Variable = var_name, na_cols, stringsAsFactors = FALSE)
 }

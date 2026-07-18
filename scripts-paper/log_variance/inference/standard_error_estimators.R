@@ -53,6 +53,61 @@ logvar_se_bartlett_meat <- function(scores, hac_lags) {
   meat
 }
 
+# Validate estimator-neutral inputs and construct the canonical named all-NA
+# result. Estimator modules retain their own bread, score, and meat.
+logvar_se_preflight <- function(coef, y, x_mat, hac_lags, se_types) {
+  stopifnot(
+    is.matrix(x_mat),
+    length(hac_lags) == 1L,
+    is.finite(hac_lags),
+    hac_lags >= 0,
+    length(se_types) > 0L,
+    !anyDuplicated(se_types)
+  )
+  hac_lags <- as.integer(hac_lags)
+  n <- nrow(x_mat)
+  p <- ncol(x_mat)
+  coef_names <- colnames(x_mat)
+  na_mat <- matrix(
+    NA_real_,
+    p,
+    p,
+    dimnames = list(coef_names, coef_names)
+  )
+  na_out <- stats::setNames(
+    rep(list(na_mat), length(se_types)),
+    se_types
+  )
+  out <- list(
+    ok = FALSE,
+    n = n,
+    p = p,
+    hac_lags = hac_lags,
+    na_mat = na_mat,
+    na_out = na_out
+  )
+  invalid <- n <= p ||
+    !is.numeric(x_mat) ||
+    any(!is.finite(x_mat)) ||
+    !is.numeric(coef) ||
+    length(coef) != p ||
+    any(!is.finite(coef)) ||
+    !is.numeric(y) ||
+    length(y) != n ||
+    any(!is.finite(y)) ||
+    any(y < 0)
+  if (invalid) {
+    return(out)
+  }
+  mu <- exp(drop(x_mat %*% coef))
+  if (any(!is.finite(mu)) || any(mu <= 0)) {
+    return(out)
+  }
+  out$ok <- TRUE
+  out$mu <- mu
+  out
+}
+
 # SE data.frame from a named vcov list (one row per coefficient, one numeric
 # column per variant). A nonpositive or NA diagonal renders NA; pmax(d, 0) keeps
 # sqrt off negatives so no spurious "NaNs produced" warning is raised.
@@ -83,8 +138,7 @@ logvar_se_na_frame <- function(coef_names, se_types) {
 # (inputs$qtr is arrange(qtr)-ordered), so the HAC lag structure is well defined.
 # Returns list(reference, point, hac_lags).
 logvar_se_columns <- function(vcov_fn, tab, inputs, mean_eq, hac_lags, se_types) {
-  x_mat <- cbind(1, inputs$pcr)
-  colnames(x_mat) <- c("(Intercept)", colnames(inputs$pcr))
+  x_mat <- logvar_design_matrix(inputs$pcr)
   stopifnot(identical(colnames(x_mat), tab$coef))
   ref_rows <- match(inputs$qtr, mean_eq$qtr)
   stopifnot(!anyNA(ref_rows))
@@ -110,7 +164,7 @@ logvar_se_report <- function(se, label, se_types, se_type, hac_lags, ratio_keys)
   cat(sprintf(
     paste0(
       "  %s SEs: %s for reference%s (printed: %s; %d HAC lags; ",
-      "%s/%s ref ratio max = %.2f)\n"
+      "%s/%s ref ratio max = %s)\n"
     ),
     label,
     paste(se_types, collapse = "/"),
@@ -118,6 +172,10 @@ logvar_se_report <- function(se, label, se_types, se_type, hac_lags, ratio_keys)
     match.arg(se_type, se_types),
     hac_lags,
     ratio_keys[1], ratio_keys[2],
-    if (all(is.na(ratio))) NA_real_ else max(ratio, na.rm = TRUE)
+    paper_format_number(
+      if (all(is.na(ratio))) NA_real_ else max(ratio, na.rm = TRUE),
+      PAPER_REPORTING_CONTROL$cells$statistic_digits,
+      "na"
+    )
   ))
 }

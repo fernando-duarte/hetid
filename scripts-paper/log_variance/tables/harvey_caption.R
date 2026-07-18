@@ -73,10 +73,13 @@ build_harvey_panel_notes <- function(harvey, tau_baseline, grid_cap, fit_budget,
     notes <- c(notes, sprintf(
       paste(
         "The log-OLS/PPML panel order is governed by the benchmark crossing",
-        "rule at $\\tau{=}%.2g$; the Harvey panel is a fixed robustness panel",
+        "rule at $\\tau{=}%s$; the Harvey panel is a fixed robustness panel",
         "appended after that ordered pair and never influences it."
       ),
-      tau_baseline
+      paper_format_general(
+        tau_baseline,
+        PAPER_REPORTING_CONTROL$precision$tau_significant
+      )
     ))
   }
   notes

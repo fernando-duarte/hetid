@@ -1,10 +1,8 @@
 # Per-display-tau orchestration of the joint-null distance diagnostic.
-
 paper_source_once(paper_path("log_variance", "diagnostics", "joint_null", "row.R"))
 paper_source_once(paper_path(
   "log_variance", "diagnostics", "protocols.R"
 ))
-
 # count independent polished starts that reproduce b_hat: per-coordinate
 # coefficient agreement (tolerance scaled by the theta-scale, robust near the
 # origin where witnesses live) and freshly recomputed objective agreement. A
@@ -27,7 +25,13 @@ paper_source_once(paper_path(
     if (!is.finite(fr) || fr > control$feasibility_tol) next
     o <- logvar_joint_null_objective(bb, w1, w2, proj, d_inv2)
     if (!is.finite(o$q)) next
-    q_tol <- max(64 * .Machine$double.eps * max(1, abs(o$q), abs(q_hat)), 4 * root_tol^2)
+    q_tol <- max(
+      control$objective_machine_epsilon_multiplier *
+        .Machine$double.eps *
+        max(1, abs(o$q), abs(q_hat)),
+      control$objective_root_tolerance_multiplier *
+        root_tol^2
+    )
     coord_gap <- abs(bb - b_hat)
     if (all(coord_gap <= tol_b) && abs(as.numeric(o$q) - q_hat) <= q_tol) {
       agree <- agree + 1L
@@ -42,7 +46,6 @@ paper_source_once(paper_path(
     max_scaled = max_scaled
   )
 }
-
 # the crossing-honest six-condition witness gate (dossier 6.1): a finite off-
 # crossing map, root-tolerance sup-norm, Lewbel feasibility, a bit-stable fresh
 # recomputation, the stability protocol, and one reproducing independent start.
@@ -52,7 +55,6 @@ paper_source_once(paper_path(
     is.finite(feas) && feas <= control$feasibility_tol && fresh_ok && rep$agree &&
     all(is.finite(e_hat)) && all(e_hat != 0)
 }
-
 # One per-display-tau result row. See the frozen signature: the driver adds
 # tau_order and sample_id when it assembles the artifact, so those stay typed NA.
 logvar_joint_null_at_tau <- function(tau, tau_display, b_tab, w1, w2, proj, d_inv2,

@@ -30,6 +30,9 @@ paper_source_once(paper_path("tests", "engine", "context_checks.R"))
 paper_source_once(paper_path("tests", "engine", "hook_checks.R"))
 paper_source_once(paper_path("tests", "engine", "seam_checks.R"))
 paper_source_once(paper_path("tests", "engine", "orchestration_checks.R"))
+paper_source_once(paper_path(
+  "tests", "engine", "audit_orchestration_checks.R"
+))
 paper_source_once(paper_path("tests", "engine", "search_control_checks.R"))
 
 .test$finish()

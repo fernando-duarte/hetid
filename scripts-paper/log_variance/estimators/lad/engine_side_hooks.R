@@ -146,7 +146,7 @@ logvar_lad_claim_hook <- function(
   control
 ) {
   function(b, fit, precheck, ctx) {
-    if (!identical(fit$fit_status, "domain_failure")) {
+    if (!identical(fit$fit_status, LOGVAR_FIT_STATUS[["domain_failure"]])) {
       return(list(
         claimed = FALSE,
         domain_state = NA_character_,

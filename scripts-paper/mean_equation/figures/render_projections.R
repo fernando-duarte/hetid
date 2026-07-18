@@ -14,10 +14,10 @@
 local({
   taus <- PAPER_ANALYSIS_CONTRACT$tau$projection
   dimension <- PAPER_ANALYSIS_CONTRACT$figure$region_dimension
-  # viridis at the same fractions as the original (0.12, 0.435, 0.75):
-  # purple / teal / green
-  tcols <- c("#472B7A", "#26818E", "#5DC863")
-  m <- 300L
+  render <- PAPER_FIGURE_RENDER_CONTROL$projections
+  tcols <- render$tau_colors
+  stopifnot(length(tcols) == length(taus))
+  m <- render$grid_points
   axes <- seq_len(dimension)
   labs <- lapply(axes, function(k) bquote(tilde(b)[.(k) * "," * N]))
   panels <- lapply(axes, function(perp) {
@@ -31,7 +31,9 @@ local({
   # Shared ranges use the widest displayed projection slack.
   widest_tau <- max(taus)
   box2 <- region_sd_box(widest_tau)
-  pad <- function(r) r + c(-1, 1) * 0.06 * diff(r)
+  pad <- function(r) {
+    r + c(-1, 1) * render$range_padding * diff(r)
+  }
   xr <- pad(range(box2$lo[1:2], box2$hi[1:2]))
   yr <- pad(range(box2$lo[2:3], box2$hi[2:3]))
   xg <- seq(xr[1], xr[2], length.out = m)
@@ -61,11 +63,13 @@ local({
   })
 
   grDevices::svg(artifact_path("mean_projections_figure"),
-    width = 11, height = 4.7
+    width = render$device[["width"]],
+    height = render$device[["height"]]
   )
   on.exit(grDevices::dev.off(), add = TRUE)
-  graphics::layout(matrix(c(1, 2, 3, 4, 4, 4), 2, 3, byrow = TRUE),
-    heights = c(6, 1)
+  graphics::layout(
+    render$layout,
+    heights = render$layout_heights
   )
   graphics::par(oma = c(0, 0, 2, 0)) # device-scoped; dies at dev.off
 

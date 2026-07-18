@@ -1,16 +1,24 @@
 # Minimal counter and reporting harness for fresh-process paper tests.
 
+paper_source_once(paper_path(
+  "tests", "support", "logvar_fixtures.R"
+))
+
 paper_test_harness <- function() {
   state <- new.env(parent = emptyenv())
   state$passed <- 0L
   state$failed <- 0L
   state$skipped <- 0L
 
-  check <- function(label, condition) {
-    ok <- isTRUE(tryCatch(
+  safe <- function(condition) {
+    isTRUE(tryCatch(
       condition,
       error = function(error) FALSE
     ))
+  }
+
+  check <- function(label, condition) {
+    ok <- safe(condition)
     field <- if (ok) "passed" else "failed"
     state[[field]] <- state[[field]] + 1L
     cat(
@@ -27,6 +35,17 @@ paper_test_harness <- function() {
     state$skipped <- state$skipped + 1L
     cat(sprintf("SKIP  %s (%s)\n", label, reason))
     invisible(NULL)
+  }
+
+  optional_check <- function(available, reason) {
+    force(available)
+    force(reason)
+    function(label, condition) {
+      if (!isTRUE(available)) {
+        return(skip(label, reason))
+      }
+      check(label, condition)
+    }
   }
 
   finish <- function() {
@@ -49,7 +68,9 @@ paper_test_harness <- function() {
 
   list(
     check = check,
+    safe = safe,
     skip = skip,
+    optional_check = optional_check,
     finish = finish,
     counts = function() as.list(state)
   )

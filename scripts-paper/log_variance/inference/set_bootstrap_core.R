@@ -11,8 +11,9 @@
 # so one moving-block resample carries everything the mean-eq re-estimation and the
 # log-var inputs need. The PCs are conditioned on (resampled, not re-estimated).
 logvar_set_boot_prepare <- function(mean_eq, lag_pc) {
-  pc_cols <- setdiff(names(lag_pc), "qtr")
-  aug <- dplyr::left_join(mean_eq$data, lag_pc, by = "qtr")
+  key_col <- PAPER_ANALYSIS_CONTRACT$model$key_col
+  pc_cols <- setdiff(names(lag_pc), key_col)
+  aug <- dplyr::left_join(mean_eq$data, lag_pc, by = key_col)
   stopifnot(
     nrow(aug) == nrow(mean_eq$data),
     all(diff(as.numeric(aug$qtr)) == 1L) # gapless: blocks assume adjacency
@@ -60,21 +61,35 @@ logvar_set_boot_draw <- function(dat, spec) {
   w1 <- est$w1[lv]
   w2 <- est$w2[lv, , drop = FALSE]
   qtr <- dat$qtr[lv]
-  pcr <- scale(as.matrix(dat[lv, spec$pc_cols]), center = TRUE, scale = FALSE)
+  pcr <- paper_normalize_model_matrix(
+    dat[lv, spec$pc_cols],
+    PAPER_ANALYSIS_CONTRACT$model$preprocessing$return_pc
+  )
   colnames(pcr) <- spec$pc_cols
   b_point <- if (is.null(est$point0)) NULL else est$point0$theta
   boxes <- lapply(spec$taus, function(tau) {
     coef_interval_tables(spec$gamma, tau, est$moments, est$beta1r, est$beta2r)$theta
   })
   qss <- lapply(spec$taus, function(tau) tau_quadratic_system(spec$gamma, tau, est$moments))
-  ppml_obj <- tryCatch(spec$build_ppml(w1, w2, pcr, qtr, b_point), error = function(e) NULL)
-  harvey_obj <- tryCatch(
-    spec$build_harvey(w1, w2, pcr, qtr, b_point, ppml_obj),
-    error = function(e) NULL
-  )
-  list(
-    ppml = logvar_run_estimator(ppml_obj, spec, boxes, qss, b_point),
-    harvey = logvar_run_estimator(harvey_obj, spec, boxes, qss, b_point)
+  built <- list()
+  for (id in spec$estimator_ids) {
+    dependencies <-
+      paper_logvar_estimator_spec(id)$dependencies
+    stopifnot(all(dependencies %in% names(built)))
+    built[[id]] <- tryCatch(
+      spec$builders[[id]](
+        w1, w2, pcr, qtr, b_point, built
+      ),
+      error = function(e) NULL
+    )
+  }
+  stats::setNames(
+    lapply(spec$estimator_ids, function(id) {
+      logvar_run_estimator(
+        built[[id]], spec, boxes, qss, b_point
+      )
+    }),
+    spec$estimator_ids
   )
 }
 
@@ -84,7 +99,8 @@ logvar_side_record <- function(sch, coefs) {
     n <- length(coefs)
     return(list(
       lower = rep(NA_real_, n), upper = rep(NA_real_, n),
-      lower_status = rep("failed", n), upper_status = rep("failed", n)
+      lower_status = rep(PAPER_ENDPOINT_STATUS[["failed"]], n),
+      upper_status = rep(PAPER_ENDPOINT_STATUS[["failed"]], n)
     ))
   }
   list(
@@ -98,7 +114,15 @@ logvar_side_record <- function(sch, coefs) {
 # all-"failed" rows -- never dropped.
 logvar_set_boot_collect <- function(raw, spec) {
   na_est <- lapply(spec$taus, function(...) logvar_side_record(NULL, spec$coefs))
-  fix <- function(d) if (is.character(d)) list(ppml = na_est, harvey = na_est) else d
+  fix <- function(d) {
+    if (!is.character(d)) {
+      return(d)
+    }
+    stats::setNames(
+      rep(list(na_est), length(spec$estimator_ids)),
+      spec$estimator_ids
+    )
+  }
   raw <- lapply(raw, fix)
   stack <- function(which_est, j, field) {
     out <- do.call(rbind, lapply(raw, function(d) d[[which_est]][[j]][[field]]))
@@ -115,5 +139,8 @@ logvar_set_boot_collect <- function(raw, spec) {
       )
     })
   }
-  list(ppml = per_est("ppml"), harvey = per_est("harvey"))
+  stats::setNames(
+    lapply(spec$estimator_ids, per_est),
+    spec$estimator_ids
+  )
 }

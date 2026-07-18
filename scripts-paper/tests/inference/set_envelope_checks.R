@@ -9,7 +9,11 @@ set.seed(1L)
 
 check("bootstrap bands derive both tails from the supplied alpha", {
   band <- boot_band(seq_len(100L), alpha = 0.20)
-  isTRUE(all.equal(unname(band[c("p05", "p95")]), c(10.9, 90.1)))
+  identical(names(band), c("median", "lower", "upper", "n")) &&
+    isTRUE(all.equal(
+      unname(band[c("lower", "upper")]),
+      c(10.9, 90.1)
+    ))
 })
 
 # two-sided: draws tight around a finite [-2, -1] set -> envelope pads OUTWARD

@@ -25,6 +25,8 @@ paper_source_once(paper_path("config", "artifact_manifest_data.R"))
   row
 }
 
+paper_source_once(paper_path("config", "artifact_latex.R"))
+
 paper_source_once(paper_path(
   "config", "artifact_registry_queries.R"
 ))

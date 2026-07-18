@@ -30,10 +30,9 @@ check(
 # default of one start per side stays at a single trial
 seam_est <- function() {
   fit_at_b <- function(b, start = NULL) {
-    list(
-      coef = c(m1 = sum(b), m2 = b[1] - b[2]), fit_status = "ok",
-      converged = TRUE, objective = 0, score_norm = 0,
-      convergence_code = 0L, diagnostics = list(), warm_start = NULL
+    paper_test_fit_result(
+      c(m1 = sum(b), m2 = b[1] - b[2]),
+      warm_start = NULL
     )
   }
   list(

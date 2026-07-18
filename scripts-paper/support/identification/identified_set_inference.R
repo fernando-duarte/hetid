@@ -15,19 +15,27 @@ boot_band <- function(x, alpha = PAPER_ANALYSIS_CONTRACT$inference$nominal_alpha
   stopifnot(alpha > 0, alpha < 1)
   x <- x[is.finite(x)]
   if (!length(x)) {
-    return(c(median = NA_real_, p05 = NA_real_, p95 = NA_real_, n = 0))
+    return(c(
+      median = NA_real_,
+      lower = NA_real_,
+      upper = NA_real_,
+      n = 0
+    ))
   }
   c(
     median = stats::median(x),
-    p05 = unname(stats::quantile(x, alpha / 2)),
-    p95 = unname(stats::quantile(x, 1 - alpha / 2)),
+    lower = unname(stats::quantile(x, alpha / 2)),
+    upper = unname(stats::quantile(x, 1 - alpha / 2)),
     n = length(x)
   )
 }
-# Half-the-draws reliability threshold shared by every rendering gate (the
+# Contract-owned reliability threshold shared by every rendering gate (the
 # set cells, the tau = 0 point interval, and the diagnostics table).
-boot_min_reps <- function(b) {
-  b %/% 2L
+boot_min_reps <- function(
+  b,
+  inference = PAPER_ANALYSIS_CONTRACT$inference
+) {
+  ceiling(b * inference$minimum_valid_draw_share)
 }
 # Robust endpoint scales and a Stoye-calibrated nominal interval for every
 # coefficient at one display tau. lower/upper are B x n_coef matrices of
@@ -55,7 +63,7 @@ endpoint_inference <- function(lower, upper, set_table,
     width_band <- boot_band(width_draws, alpha)
     rho <- robust_endpoint_cor(lower[, k], upper[, k], control)
     width <- set_table$set_upper[k] - set_table$set_lower[k]
-    usable <- set_table$status[k] == "bounded" && is.finite(width) &&
+    usable <- set_table$status[k] == PAPER_ENDPOINT_STATUS[["bounded"]] && is.finite(width) &&
       width > 0 && sum(ok) >= min_reps &&
       is.finite(se_lo) && is.finite(se_up) && se_lo > 0 && se_up > 0
     if (usable) {
@@ -75,8 +83,8 @@ endpoint_inference <- function(lower, upper, set_table,
     }
     data.frame(
       coef = set_table$coef[k], se_lower = se_lo, se_upper = se_up,
-      se_width = se_w, width_p05 = width_band[["p05"]],
-      width_p95 = width_band[["p95"]],
+      se_width = se_w, width_lower = width_band[["lower"]],
+      width_upper = width_band[["upper"]],
       rho = rho, n_finite = sum(ok), c_im = c_im, c_stoye = c_st,
       ci_lower = ci_lo, ci_upper = ci_up,
       row.names = NULL, stringsAsFactors = FALSE

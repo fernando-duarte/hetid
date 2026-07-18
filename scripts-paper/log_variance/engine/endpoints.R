@@ -1,12 +1,3 @@
-# Endpoint stage of the estimator-generic set engine: the sides phase of
-# analyze_domain, extra-start attained candidates, the per-coefficient
-# per-side polish loop (SLSQP or COBYLA via the generalized objective seam),
-# cold-start replication, and side-specific status assembly. The benchmark
-# configuration reproduces the driver closure's arithmetic exactly: same
-# start order (grid arg-extreme, then seed), same acceptance, same blow
-# guard, same status ladder. Definitions only; sourced by
-# api.R.
-
 logvar_engine_endpoints <- function(est, qs, b_tab, b_seed, extra_starts,
                                     cold_start_check, tau, meta, bs,
                                     evaluate_fit, ctx, st, omega, scan,
@@ -75,7 +66,7 @@ logvar_engine_endpoints <- function(est, qs, b_tab, b_seed, extra_starts,
         function(b) {
           tryCatch(
             {
-              fit <- evaluate_fit(b, phase = "polish")
+              fit <- evaluate_fit(b, phase = LOGVAR_ENGINE_PHASES[["polish"]])
               if (!logvar_fit_ok(fit)) NaN else unname(fit$coef[[jj]])
             },
             logvar_budget_exhausted = function(e) {
@@ -85,8 +76,6 @@ logvar_engine_endpoints <- function(est, qs, b_tab, b_seed, extra_starts,
           )
         }
       })
-      # the gradient runs through the same cached, budgeted evaluator as the
-      # objective, and the jacobian hook sees the converged fit it needs
       gr <- if (is.null(est$jacobian_at_b)) {
         NULL
       } else {
@@ -95,7 +84,7 @@ logvar_engine_endpoints <- function(est, qs, b_tab, b_seed, extra_starts,
           function(b) {
             tryCatch(
               {
-                fit <- evaluate_fit(b, phase = "polish")
+                fit <- evaluate_fit(b, phase = LOGVAR_ENGINE_PHASES[["polish"]])
                 if (!logvar_fit_ok(fit)) {
                   rep(NaN, length(b))
                 } else {
@@ -174,8 +163,19 @@ logvar_engine_endpoints <- function(est, qs, b_tab, b_seed, extra_starts,
   }
   lo_unrel <- cold_recs$lo_unrel
   up_unrel <- cold_recs$up_unrel
-  lo_st <- ifelse(lo_unrel, "unreliable", ifelse(lower_unb, "unbounded", "bounded"))
-  up_st <- ifelse(up_unrel, "unreliable", ifelse(upper_unb, "unbounded", "bounded"))
+  endpoint_status <- function(unreliable, unbounded) {
+    ifelse(
+      unreliable,
+      PAPER_ENDPOINT_STATUS[["unreliable"]],
+      ifelse(
+        unbounded,
+        PAPER_ENDPOINT_STATUS[["unbounded"]],
+        PAPER_ENDPOINT_STATUS[["bounded"]]
+      )
+    )
+  }
+  lo_st <- endpoint_status(lo_unrel, lower_unb)
+  up_st <- endpoint_status(up_unrel, upper_unb)
   n_cross <- if (!is.null(sides$info$cross_all)) {
     length(sides$info$cross_all)
   } else {

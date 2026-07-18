@@ -69,7 +69,7 @@ set_id_boot_draw <- function(dat, spec) {
       spec$gamma, tau, est$moments, est$beta1r, est$beta2r
     )
     tab <- rbind(it$beta1, it$theta)
-    ok <- tab$status == "bounded"
+    ok <- tab$status == PAPER_ENDPOINT_STATUS[["bounded"]]
     list(
       lower = ifelse(ok, tab$set_lower, NA_real_),
       upper = ifelse(ok, tab$set_upper, NA_real_),
@@ -103,7 +103,7 @@ set_id_boot_collect <- function(boot_raw, spec) {
       list(list(
         lower = rep(NA_real_, n_coef),
         upper = rep(NA_real_, n_coef),
-        status = rep("failed", n_coef)
+        status = rep(PAPER_ENDPOINT_STATUS[["failed"]], n_coef)
       )),
       length(spec$taus)
     ),
@@ -149,15 +149,15 @@ set_id_boot_diagnostics <- function(collected, inference, set_tables, taus,
     status <- collected$endpoint_draws[[j]]$status
     counts <- t(apply(status, 2, function(s) {
       c(
-        n_bounded = sum(s == "bounded"),
-        n_unbounded = sum(s == "unbounded"),
-        n_unreliable = sum(s == "unreliable"),
-        n_failed = sum(s == "failed")
+        n_bounded = sum(s == PAPER_ENDPOINT_STATUS[["bounded"]]),
+        n_unbounded = sum(s == PAPER_ENDPOINT_STATUS[["unbounded"]]),
+        n_unreliable = sum(s == PAPER_ENDPOINT_STATUS[["unreliable"]]),
+        n_failed = sum(s == PAPER_ENDPOINT_STATUS[["failed"]])
       )
     }))
     width <- tab$set_upper - tab$set_lower
     reason <- ifelse(
-      tab$status != "bounded", "full-sample set not certified bounded",
+      tab$status != PAPER_ENDPOINT_STATUS[["bounded"]], "full-sample set not certified bounded",
       ifelse(
         is.finite(width) & width <= 0, "point-identified (width 0)",
         ifelse(
@@ -183,8 +183,8 @@ set_id_boot_diagnostics <- function(collected, inference, set_tables, taus,
         is.finite(inf$se_upper) & inf$se_upper > 0,
         tab$set_upper / inf$se_upper, NA_real_
       ),
-      se_width = inf$se_width, width_p05 = inf$width_p05,
-      width_p95 = inf$width_p95,
+      se_width = inf$se_width, width_lower = inf$width_lower,
+      width_upper = inf$width_upper,
       rho = inf$rho,
       c_stoye = inf$c_stoye, c_im = inf$c_im,
       ci_lower = inf$ci_lower, ci_upper = inf$ci_upper,

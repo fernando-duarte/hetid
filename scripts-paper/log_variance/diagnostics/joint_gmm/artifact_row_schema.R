@@ -1,5 +1,9 @@
 # Typed row schema for the joint-GMM artifact.
 
+paper_source_once(paper_path(
+  "support", "artifacts", "diagnostic_schema.R"
+))
+
 .jg_csv_template <- function() {
   fields <- PAPER_ANALYSIS_CONTRACT$model$artifact_fields
   c(
@@ -73,24 +77,21 @@
   )
 }
 
-logvar_joint_gmm_csv_fields <- names(.jg_csv_template())
+LOGVAR_JOINT_GMM_ROW_SCHEMA <- paper_diagnostic_schema(
+  .jg_csv_template(),
+  names(logvar_joint_gmm_schema_header()),
+  "joint-GMM"
+)
+
+logvar_joint_gmm_csv_fields <- names(
+  LOGVAR_JOINT_GMM_ROW_SCHEMA$template
+)
 
 logvar_joint_gmm_csv_row <- function(result) {
-  row <- .jg_csv_template()
-  fixed <- names(logvar_joint_gmm_schema_header())
-  attempted <- intersect(names(result), fixed)
-  if (length(attempted)) {
-    stop(
-      sprintf(
-        "joint-GMM row cannot override fixed fields: %s",
-        paste(attempted, collapse = ", ")
-      ),
-      call. = FALSE
-    )
-  }
-  for (nm in setdiff(names(row), fixed)) {
-    v <- result[[nm]]
-    if (!is.null(v) && length(v) == 1L) row[[nm]] <- v
-  }
-  as.data.frame(row, stringsAsFactors = FALSE, check.names = FALSE)
+  paper_diagnostic_row(
+    LOGVAR_JOINT_GMM_ROW_SCHEMA,
+    result,
+    unknown = "ignore",
+    as_frame = TRUE
+  )
 }

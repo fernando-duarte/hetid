@@ -3,6 +3,7 @@
 paper_source_once(
   paper_path("support", "artifacts", "typed_artifacts.R")
 )
+paper_source_once(paper_path("config", "logvar_estimators.R"))
 
 PAPER_CONDITIONAL_ROUTE_SCHEMA_VERSION <- "1.1.0"
 
@@ -63,22 +64,28 @@ build_conditional_route_status <- function(
       PAPER_CONDITIONAL_ARTIFACT_STATUSES, ,
     drop = FALSE
   ]
-  routes <- list(
-    conditional_lad = list(
-      decision = lad_gate$decision,
-      requested = isTRUE(lad_gate$source_lad),
-      ran = exists(
-        "log_var_eq_lad",
-        envir = .GlobalEnv,
-        inherits = FALSE
+  routes <- stats::setNames(
+    list(
+      list(
+        decision = lad_gate$decision,
+        requested = isTRUE(lad_gate$source_lad),
+        ran = paper_logvar_result_exists("lad")
+      ),
+      list(
+        decision = egarch_route$terminal_status,
+        requested = isTRUE(egarch_route$run_dynamic),
+        ran = isTRUE(egarch_producer_ran)
       )
     ),
-    conditional_egarch = list(
-      decision = egarch_route$terminal_status,
-      requested = isTRUE(egarch_route$run_dynamic),
-      ran = isTRUE(egarch_producer_ran)
+    c(
+      PAPER_ARTIFACT_STATUS$conditional_lad,
+      PAPER_ARTIFACT_STATUS$conditional_egarch
     )
   )
+  stopifnot(setequal(
+    names(routes),
+    PAPER_CONDITIONAL_ARTIFACT_STATUSES
+  ))
   artifacts <- data.frame(
     id = conditional$id,
     status = conditional$status,

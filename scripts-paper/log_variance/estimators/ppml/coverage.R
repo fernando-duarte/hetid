@@ -5,47 +5,27 @@
 # downgrades a side to unreliable on any status mismatch, endpoint movement, or
 # coverage-run failure. Sourced by pilot_and_grid.R; the
 # selector (logvar_ppml_morton_select) and the engine are resolved at call time.
-# Definitions only; no globals are read -- the caller supplies qs_fn(tau).
-
+# The caller supplies qs_fn(tau); no globals are read.
 # Run the coverage scan for every display tau over the same fresh cache (nesting
 # reuse across taus) but a fresh budget per tau, driving the engine with the
 # Morton selector, five starts per side, and the recorded search seed. A failed
 # tau records list(ok = FALSE, error = message) rather than aborting the gate.
 logvar_ppml_coverage_run <- function(est_cov, taus, b_tabs, b_seed,
                                      grid_cap, fit_budget, qs_fn) {
-  cov_cache <- new.env(parent = emptyenv())
-  keys <- vapply(taus, paper_tau_key, character(1))
-  out <- vector("list", length(taus))
-  names(out) <- keys
-  for (i in seq_along(taus)) {
-    tau <- taus[[i]]
-    key <- keys[[i]]
-    bs <- logvar_budget_state(fit_budget)
-    out[[key]] <- tryCatch(
-      list(ok = TRUE, res = logvar_engine_set_at_tau(
-        est_cov, qs_fn(tau), b_tabs[[key]],
-        b_seed = b_seed,
-        max_grid_points = grid_cap,
-        starts_per_side = LOGVAR_SEARCH_CONTROL$audit_starts_per_side,
-        cache = cov_cache, budget_state = bs,
-        grid_selector = logvar_ppml_morton_select,
-        cold_start_check = LOGVAR_SEARCH_CONTROL$cold_start_check,
-        tau = tau
-      )),
-      error = function(e) list(ok = FALSE, error = conditionMessage(e))
-    )
-  }
-  out
+  logvar_audit_display_taus(
+    estimator = est_cov,
+    taus = taus,
+    boxes = b_tabs,
+    seed = b_seed,
+    grid_cap = grid_cap,
+    fit_budget = fit_budget,
+    quadratic_at_tau = qs_fn,
+    grid_selector = logvar_ppml_morton_select
+  )
 }
 
 # per-coefficient aggregate status via the legacy ladder unreliable > unbounded
 # > bounded (a side of the worse kind sets the coefficient status)
-.logvar_status_ladder <- function(lo_st, up_st) {
-  ifelse(lo_st == "unreliable" | up_st == "unreliable", "unreliable",
-    ifelse(lo_st == "unbounded" | up_st == "unbounded", "unbounded", "bounded")
-  )
-}
-
 # suffix a provenance string with the source it came from; a missing provenance
 # collapses to the bare source label
 .logvar_prov_suffix <- function(prov, source) {
@@ -61,8 +41,17 @@ logvar_ppml_coverage_run <- function(est_cov, taus, b_tabs, b_seed,
 # value so an unbounded or unreliable side is never fabricated into a number
 .logvar_union_extreme <- function(side, prim, cov) {
   cand <- list()
-  if (identical(prim$status, "bounded") && is.finite(prim$value)) cand$primary <- prim
-  if (!is.null(cov) && identical(cov$status, "bounded") && is.finite(cov$value)) {
+  if (
+    identical(prim$status, PAPER_ENDPOINT_STATUS[["bounded"]]) &&
+      is.finite(prim$value)
+  ) {
+    cand$primary <- prim
+  }
+  if (
+    !is.null(cov) &&
+      identical(cov$status, PAPER_ENDPOINT_STATUS[["bounded"]]) &&
+      is.finite(cov$value)
+  ) {
     cand$coverage <- cov
   }
   if (length(cand) == 0L) {
@@ -99,26 +88,36 @@ logvar_ppml_coverage_run <- function(est_cov, taus, b_tabs, b_seed,
 .logvar_cov_resolve <- function(side, j, sch, cov_sch, cov_failed, tol) {
   prim <- .logvar_side_read(sch, side, j)
   if (cov_failed) {
-    bounded <- identical(prim$status, "bounded")
+    bounded <- identical(prim$status, PAPER_ENDPOINT_STATUS[["bounded"]])
     pick <- .logvar_union_extreme(side, prim, NULL)
     return(c(pick, list(
-      final_status = if (bounded) "unreliable" else prim$status,
+      final_status = if (bounded) {
+        PAPER_ENDPOINT_STATUS[["unreliable"]]
+      } else {
+        prim$status
+      },
       primary_status = prim$status, coverage_status = "coverage_run_failed",
       primary_value = prim$value, coverage_value = NA_real_, delta = NA_real_,
       reason = if (bounded) "coverage_run_failed" else NA_character_
     )))
   }
   cov <- .logvar_side_read(cov_sch, side, j)
-  both <- identical(prim$status, "bounded") && identical(cov$status, "bounded")
+  both <-
+    identical(prim$status, PAPER_ENDPOINT_STATUS[["bounded"]]) &&
+      identical(cov$status, PAPER_ENDPOINT_STATUS[["bounded"]])
   delta <- if (both) abs(prim$value - cov$value) else NA_real_
   moved <- both && is.finite(delta) &&
     delta > tol * max(1, abs(prim$value), abs(cov$value))
   verdict <- if (both) {
-    if (moved) list("unreliable", "endpoint_moved") else list("bounded", NA_character_)
+    if (moved) {
+      list(PAPER_ENDPOINT_STATUS[["unreliable"]], "endpoint_moved")
+    } else {
+      list(PAPER_ENDPOINT_STATUS[["bounded"]], NA_character_)
+    }
   } else if (identical(prim$status, cov$status)) {
     list(prim$status, NA_character_)
   } else {
-    list("unreliable", "status_mismatch")
+    list(PAPER_ENDPOINT_STATUS[["unreliable"]], "status_mismatch")
   }
   pick <- .logvar_union_extreme(side, prim, cov)
   c(pick, list(
@@ -177,7 +176,10 @@ logvar_ppml_apply_coverage <- function(
     upd$schema <- sch
     upd$table <- data.frame(
       coef = sch$coef, set_lower = sch$lower, set_upper = sch$upper,
-      status = .logvar_status_ladder(sch$lower_status, sch$upper_status),
+      status = paper_endpoint_status_reduce(
+        sch$lower_status,
+        sch$upper_status
+      ),
       row.names = NULL, stringsAsFactors = FALSE
     )
     results[[key]] <- upd

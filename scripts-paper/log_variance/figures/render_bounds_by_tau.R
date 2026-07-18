@@ -15,12 +15,12 @@ paper_source_once(paper_path("log_variance", "figures", "bounds_by_tau_plot.R"))
 fig_rows <- dplyr::inner_join(
   tibble::tibble(qtr = set_id_mean_eq$qtr, row = seq_along(set_id_mean_eq$qtr)),
   lag_asset_return_pc,
-  by = "qtr"
+  by = PAPER_ANALYSIS_CONTRACT$model$key_col
 ) |>
   dplyr::arrange(qtr)
-fig_pcr <- scale(
+fig_pcr <- paper_normalize_model_matrix(
   as.matrix(fig_rows[value_cols(lag_asset_return_pc)]),
-  center = TRUE, scale = FALSE
+  PAPER_ANALYSIS_CONTRACT$model$preprocessing$return_pc
 )
 fig_fresh_id <- logvar_sample_id(
   fig_rows$qtr, set_id_mean_eq$w1[fig_rows$row],
@@ -37,10 +37,6 @@ fig_tau_grid <- seq(
   length.out = PAPER_ANALYSIS_CONTRACT$tau$figure_grid_n
 )
 fig_tau_grid <- fig_tau_grid[fig_tau_grid > 0 & fig_tau_grid < set_id_mean_eq$tau_star]
-fig_args <- function(s) {
-  a <- c(s$arg_lower[s$lower_status == "bounded"], s$arg_upper[s$upper_status == "bounded"])
-  a[!vapply(a, anyNA, logical(1))]
-}
 
 # one figure per registry entry: engine grid walk, nesting guard with a warm
 # retry and disclosed downgrades, plot assembly, and the render
@@ -68,7 +64,11 @@ logvar_bounds_tau_entry <- function(entry) {
   for (tau in fig_tau_grid) {
     r <- run_tau(tau, warm)
     res[[paper_tau_key(tau)]] <- r
-    warm <- if (identical(entry$warm_chain, FALSE)) NULL else fig_args(r$schema)
+    warm <- if (identical(entry$warm_chain, FALSE)) {
+      NULL
+    } else {
+      logvar_bounded_args(r$schema)
+    }
   }
   grid_rows <- function() {
     do.call(rbind, lapply(res, function(r) {
@@ -94,8 +94,14 @@ logvar_bounds_tau_entry <- function(entry) {
       j <- match(v$coef, res[[k]]$schema$coef)
       res[[k]]$schema[[col]][j] <- "unreliable"
       cat(sprintf(
-        "  nesting violation retained: %s %s side at tau = %.4g (gap %.3g); downgraded\n",
-        v$coef, v$side, v$tau, v$violation
+        "  nesting violation retained: %s %s side at tau = %.4g (gap %s); downgraded\n",
+        v$coef,
+        v$side,
+        v$tau,
+        paper_format_general(
+          v$violation,
+          PAPER_REPORTING_CONTROL$precision$console_significant
+        )
       ))
     }
   }
@@ -122,7 +128,7 @@ logvar_bounds_tau_entry <- function(entry) {
     "log-variance bounds-by-tau figure (", est$metadata$estimator, "): ",
     length(fig_tau_grid), " grid taus; crossings ",
     paste(vapply(res, function(r) r$n_cross, integer(1)), collapse = " "),
-    "; cache hits ", opts$budget_state$counters[["cache_hit"]],
+    "; cache hits ", opts$budget_state$counters[[LOGVAR_ENGINE_PHASES[["cache_hit"]]]],
     "; nesting downgrades ", nrow(viol), "\n",
     sep = ""
   )

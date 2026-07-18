@@ -7,16 +7,7 @@
 
 # Complete fit-result skeleton: every field the estimator-engine fit contract names is
 # always present so success and every fail-closed branch share one shape.
-logvar_ppml_result <- function(coef, fit_status, converged, objective,
-                               score_norm, convergence_code, warm_start,
-                               diagnostics) {
-  list(
-    coef = coef, fit_status = fit_status, converged = converged,
-    objective = objective, score_norm = score_norm,
-    convergence_code = convergence_code, diagnostics = diagnostics,
-    warm_start = warm_start
-  )
-}
+logvar_ppml_result <- new_logvar_fit_result
 
 # Slim diagnostics container with NA / empty defaults; callers override only the
 # fields they can populate, keeping early fail-closed returns and accepted fits
@@ -103,10 +94,18 @@ logvar_ppml_accept <- function(
 logvar_ppml_run <- function(
   cand, y_scaled, x_mat, control = LOGVAR_PPML_CONTROL
 ) {
+  fit_function <- getExportedValue(
+    "stats",
+    control$fit_function
+  )
+  family_function <- getExportedValue(
+    "stats",
+    control$family
+  )
   captured <- paper_capture_conditions(
-    stats::glm.fit(
+    fit_function(
       x = x_mat, y = y_scaled,
-      family = stats::quasipoisson(link = "log"), start = cand,
+      family = family_function(link = control$link), start = cand,
       control = stats::glm.control(
         maxit = control$glm_maxit,
         epsilon = control$glm_epsilon
@@ -136,7 +135,7 @@ logvar_ppml_success <- function(acc, run, y_scaled, response_scale,
   coef[1] <- coef[1] + log(response_scale)
   objective <- sum(acc$mu) - sum(y_scaled[acc$pos] * log(acc$mu[acc$pos]))
   logvar_ppml_result(
-    coef = coef, fit_status = "ok", converged = TRUE, objective = objective,
+    coef = coef, fit_status = LOGVAR_FIT_STATUS[["ok"]], converged = TRUE, objective = objective,
     score_norm = acc$score_norm, convergence_code = as.integer(run$fit$iter),
     warm_start = acc$coef_scaled,
     diagnostics = logvar_ppml_diag(

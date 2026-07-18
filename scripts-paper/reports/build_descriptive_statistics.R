@@ -5,9 +5,7 @@
 # correlation LaTeX tables and figures to their typed artifact directories,
 # then compile the report with latexmk.
 # Run via run_pipeline.R after the data scripts.
-
 paper_source_once(paper_path("support", "latex", "table_pipeline.R"))
-
 # sources of the merged panel, named by series group (the names drive the
 # facet colors below)
 panel_sources <- list(
@@ -23,11 +21,9 @@ panel <- panel_sources |>
   purrr::reduce(dplyr::full_join, by = "qtr") |>
   filter_window() |>
   dplyr::arrange(qtr)
-
 panel_long <- panel |>
   tidyr::pivot_longer(-qtr, names_to = "variable") |>
   dplyr::mutate(variable = factor(variable, levels = value_cols(panel)))
-
 # report date+variable combinations with missing values
 nas <- dplyr::filter(panel_long, is.na(value))
 if (nrow(nas) == 0) {
@@ -36,7 +32,6 @@ if (nrow(nas) == 0) {
   cat("missing date+variable combinations:\n")
   print(dplyr::select(nas, qtr, variable), n = Inf)
 }
-
 # summary statistics, one row per series
 summary_stats <- panel_long |>
   dplyr::summarise(
@@ -54,13 +49,11 @@ correlations_tex <- artifact_path("correlations_table")
 regression_tex <- artifact_path("ols_mean_equation_table")
 figures_pdf <- artifact_path("descriptive_figures")
 wrapper_tex <- artifact_path("descriptive_report_tex")
-
 # latexmk compiles from reports/, one directory below the typed output root.
 report_reference <- function(path) {
   relative <- sub(paste0("^", out_dir, "/"), "", path)
   file.path("..", relative)
 }
-
 # Write a data frame as a booktabs LaTeX table at its manifested path.
 write_kable <- function(x, path, digits) {
   writeLines(
@@ -68,31 +61,34 @@ write_kable <- function(x, path, digits) {
     path
   )
 }
-
-write_kable(summary_stats, summary_tex, digits = 3)
-
+write_kable(
+  summary_stats,
+  summary_tex,
+  digits =
+    PAPER_REPORTING_CONTROL$precision$descriptive_summary
+)
 # correlation matrix
 corr <- stats::cor(panel[value_cols(panel)], use = "pairwise.complete.obs")
-write_kable(corr, correlations_tex, digits = 2)
-
+write_kable(
+  corr,
+  correlations_tex,
+  digits =
+    PAPER_REPORTING_CONTROL$precision$descriptive_correlation
+)
 # regression of consumption growth on the lagged expected-SDF and news PCs
 reg_summary <- summary(ols_mean_eq)
 regression_stats <- tibble::as_tibble(reg_summary$coefficients, rownames = "term")
 names(regression_stats) <- c("term", "estimate", "std. error", "t", "p value")
-write_kable(regression_stats, regression_tex, digits = 3)
-
+write_kable(
+  regression_stats,
+  regression_tex,
+  digits =
+    PAPER_REPORTING_CONTROL$precision$descriptive_summary
+)
 # figures: one page of time series, one page of histograms, colored by series
 # group (palette hues validated for colorblind separation; facet strips name
 # each series, so no legend is needed)
-group_colors <- c(
-  "consumption growth" = "#2a78d6",
-  "expected SDF PCs" = "#1baf7a",
-  "SDF news PCs" = "#eda100",
-  "expected SDF" = "#008300",
-  "SDF news" = "#4a3aa7",
-  "lagged expected SDF PCs" = "#e34948",
-  "yield vols" = "#c2439c"
-)
+group_colors <- PAPER_FIGURE_STYLE$descriptive$group_colors
 # each variable's group comes from the panel_sources frame it belongs to
 variable_group <- purrr::list_c(purrr::imap(
   panel_sources,
@@ -117,7 +113,6 @@ grDevices::pdf(figures_pdf, width = 11, height = 8.5)
 print(ts_plot)
 print(hist_plot)
 grDevices::dev.off()
-
 # assemble tables and figures into one pdf
 writeLines(c(
   "\\documentclass{article}",
@@ -137,8 +132,17 @@ writeLines(c(
   paste0(
     "\\noindent Dependent variable: quarterly real consumption growth (percent). ",
     "$N = ", stats::nobs(ols_mean_eq),
-    "$, $R^2 = ", round(reg_summary$r.squared, 3),
-    "$, adjusted $R^2 = ", round(reg_summary$adj.r.squared, 3), "$."
+    "$, $R^2 = ",
+    round(
+      reg_summary$r.squared,
+      PAPER_REPORTING_CONTROL$precision$descriptive_summary
+    ),
+    "$, adjusted $R^2 = ",
+    round(
+      reg_summary$adj.r.squared,
+      PAPER_REPORTING_CONTROL$precision$descriptive_summary
+    ),
+    "$."
   ),
   "\\begin{landscape}",
   "\\section*{Correlation matrix}",
@@ -162,7 +166,6 @@ writeLines(c(
   "\\end{document}"
 ), wrapper_tex)
 compile_latex_pdf(wrapper_tex)
-
 rm(
   panel_sources, variable_group, panel_long, nas, group_colors, plot_df,
   ts_plot, hist_plot, reg_summary, write_kable, summary_tex, correlations_tex,

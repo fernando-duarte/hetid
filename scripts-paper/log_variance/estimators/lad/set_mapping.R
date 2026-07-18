@@ -49,11 +49,11 @@ logvar_lad_gate_compare <- function(
   for (j in seq_len(nrow(ps))) {
     gj <- if (is.null(gs)) NA_integer_ else match(ps$coef[j], gs$coef)
     for (side in c("lower", "upper")) {
-      if (!identical(ps[[paste0(side, "_status")]][j], "bounded")) next
+      if (!identical(ps[[paste0(side, "_status")]][j], PAPER_ENDPOINT_STATUS[["bounded"]])) next
       pval <- ps[[side]][j]
       tolj <- tol * max(1, abs(pval))
       gstat <- if (is.na(gj)) NA_character_ else gs[[paste0(side, "_status")]][gj]
-      if (!identical(gstat, "bounded")) {
+      if (!identical(gstat, PAPER_ENDPOINT_STATUS[["bounded"]])) {
         sensitive <- c(sensitive, tag(ps$coef[j], side))
         next
       }
@@ -74,10 +74,7 @@ logvar_lad_gate_compare <- function(
 logvar_lad_refresh_status <- function(res) {
   lo <- res$schema$lower_status
   up <- res$schema$upper_status
-  res$table$status <- ifelse(
-    lo == "unreliable" | up == "unreliable", "unreliable",
-    ifelse(lo == "unbounded" | up == "unbounded", "unbounded", "bounded")
-  )
+  res$table$status <- paper_endpoint_status_reduce(lo, up)
   res
 }
 
@@ -89,7 +86,7 @@ logvar_lad_apply_downgrades <- function(res, sensitive) {
     j <- match(parts[1], res$schema$coef)
     if (is.na(j) || length(parts) != 2L) next
     side <- if (parts[2] == "min") "lower" else "upper"
-    res$schema[[paste0(side, "_status")]][j] <- "unreliable"
+    res$schema[[paste0(side, "_status")]][j] <- PAPER_ENDPOINT_STATUS[["unreliable"]]
   }
   logvar_lad_refresh_status(res)
 }
@@ -97,8 +94,8 @@ logvar_lad_apply_downgrades <- function(res, sensitive) {
 # Whole-tau demotion: every side unreliable (values kept), used when the fn
 # schedule finds an endpoint-relevant nonunique or cap-truncated point.
 logvar_lad_demote_all <- function(res) {
-  res$schema$lower_status <- rep("unreliable", nrow(res$schema))
-  res$schema$upper_status <- rep("unreliable", nrow(res$schema))
+  res$schema$lower_status <- rep(PAPER_ENDPOINT_STATUS[["unreliable"]], nrow(res$schema))
+  res$schema$upper_status <- rep(PAPER_ENDPOINT_STATUS[["unreliable"]], nrow(res$schema))
   logvar_lad_refresh_status(res)
 }
 

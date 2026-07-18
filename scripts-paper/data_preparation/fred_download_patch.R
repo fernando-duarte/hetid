@@ -24,6 +24,7 @@
 # Remove this file's source() once quantmod ships a fix upstream.
 
 local({
+  fred_control <- PAPER_FRED_DOWNLOAD_CONTROL
   if (!requireNamespace("quantmod", quietly = TRUE)) {
     return(invisible())
   }
@@ -31,18 +32,22 @@ local({
   # Fetch one series from the FRED API as a 2-column data.frame (date, value),
   # matching the shape read.csv() produced from the CSV endpoint. Retries a few
   # times; errors carry the series id but never the URL (which holds the key).
-  fred_fetch_api <- function(symbol, key, attempts = 4L) {
+  fred_fetch_api <- function(
+    symbol,
+    key,
+    control = fred_control$api
+  ) {
     url <- paste0(
-      "https://api.stlouisfed.org/fred/series/observations",
+      fred_control$endpoints$api,
       "?series_id=", utils::URLencode(symbol, reserved = TRUE),
       "&api_key=", key,
       "&file_type=json"
     )
     last_err <- NULL
-    for (k in seq_len(attempts)) {
+    for (k in seq_len(control$attempts)) {
       tmp <- tempfile(fileext = ".json")
       on.exit(unlink(tmp), add = TRUE)
-      old_to <- options(timeout = 60)
+      old_to <- options(timeout = control$timeout_seconds)
       on.exit(options(old_to), add = TRUE)
       st <- tryCatch(
         suppressWarnings(utils::download.file(url, tmp, method = "libcurl", quiet = TRUE)),
@@ -78,23 +83,46 @@ local({
       } else {
         last_err <- paste0("download status ", st)
       }
-      Sys.sleep(min(2 * k, 8))
+      Sys.sleep(min(
+        control$backoff_seconds * k,
+        control$backoff_cap_seconds
+      ))
     }
     stop("FRED API fetch failed for ", symbol, " (", last_err, ")", call. = FALSE)
   }
 
   # Fallback: curl CLI against the CSV endpoint, HTTP/1.1 + retries + stall timeout.
-  fred_fetch_csv <- function(symbol) {
-    URL <- paste0("https://fred.stlouisfed.org/graph/fredgraph.csv?id=", symbol)
+  fred_curl_extra <- function(control) {
+    paste(
+      control$transfer_flags,
+      sprintf(
+        "--retry %d --retry-delay %d %s",
+        control$retries,
+        control$retry_delay_seconds,
+        control$retry_flags
+      ),
+      sprintf(
+        "--connect-timeout %d --max-time %d",
+        control$connect_timeout_seconds,
+        control$max_time_seconds
+      ),
+      sprintf(
+        "--speed-limit %d --speed-time %d",
+        control$speed_limit,
+        control$speed_time_seconds
+      ),
+      control$output_flags
+    )
+  }
+
+  fred_fetch_csv <- function(
+    symbol,
+    control = fred_control$csv
+  ) {
+    URL <- paste0(fred_control$endpoints$csv, symbol)
     tmp <- tempfile(fileext = ".csv")
     on.exit(unlink(tmp), add = TRUE)
-    curl_extra <- paste(
-      "--location --http1.1",
-      "--retry 5 --retry-delay 2 --retry-connrefused",
-      "--connect-timeout 20 --max-time 180",
-      "--speed-limit 1 --speed-time 30",
-      "--silent --show-error"
-    )
+    curl_extra <- fred_curl_extra(control)
     status <- utils::download.file(URL, tmp, method = "curl", extra = curl_extra, quiet = TRUE)
     if (!identical(status, 0L) || file.size(tmp) == 0) {
       stop("FRED CSV download failed for ", symbol, " (curl status ", status, ")", call. = FALSE)
@@ -111,7 +139,7 @@ local({
     if (!hasArg("warnings")) warnings <- TRUE
     if (!hasArg("from")) from <- ""
     if (!hasArg("to")) to <- ""
-    key <- Sys.getenv("FRED_API_KEY")
+    key <- Sys.getenv(fred_control$api_key_environment)
     returnSym <- Symbols
     noDataSym <- NULL
     for (i in seq_along(Symbols)) {
@@ -160,6 +188,7 @@ local({
   patch_env <- new.env(parent = asNamespace("quantmod"))
   patch_env$fred_fetch_api <- fred_fetch_api
   patch_env$fred_fetch_csv <- fred_fetch_csv
+  patch_env$fred_control <- fred_control
   environment(patched_getSymbols.FRED) <- patch_env
   utils::assignInNamespace("getSymbols.FRED", patched_getSymbols.FRED, ns = "quantmod")
 })

@@ -1,5 +1,38 @@
 # Shared artifact, table, and console helper boundary checks.
-
+paper_source_once(paper_path(
+  "support", "artifacts", "diagnostic_schema.R"
+))
+diagnostic_schema <- paper_diagnostic_schema(
+  list(
+    version = "1",
+    value = NA_real_,
+    status = NA_character_
+  ),
+  "version",
+  "fixture-diagnostic"
+)
+diagnostic_row <- paper_diagnostic_row(
+  diagnostic_schema,
+  list(value = 2, status = "ok")
+)
+check(
+  "diagnostic schema owns fixed fields and typed row order",
+  identical(
+    diagnostic_row,
+    list(version = "1", value = 2, status = "ok")
+  ) &&
+    inherits(
+      try(
+        paper_diagnostic_row(
+          diagnostic_schema,
+          list(version = "stale")
+        ),
+        silent = TRUE
+      ),
+      "try-error"
+    )
+)
+rm(diagnostic_schema, diagnostic_row)
 local({
   csv_path <- tempfile(fileext = ".csv")
   collision_path <- tempfile(fileext = ".csv")
@@ -9,7 +42,6 @@ local({
     unlink(c(csv_path, collision_path, empty_path, rds_path)),
     add = TRUE
   )
-
   frame <- data.frame(
     logical = c(TRUE, FALSE, NA, TRUE, FALSE),
     integer = c(1L, NA_integer_, 3L, 4L, 5L),
@@ -43,7 +75,6 @@ local({
         fixed = TRUE
       ))
   )
-
   collision <- data.frame(
     character = c(NA_character_, "NA", "\\NA", "\\leading"),
     stringsAsFactors = FALSE
@@ -61,7 +92,6 @@ local({
         collision
       )
   )
-
   empty <- frame[0L, , drop = FALSE]
   check(
     "typed CSV supports a header-only frame",
@@ -74,7 +104,6 @@ local({
       empty
     )
   )
-
   mismatch <- tryCatch(
     {
       paper_check_typed_roundtrip(
@@ -90,7 +119,6 @@ local({
     "typed round-trip errors retain their caller prefix",
     grepl("typed-prefix", mismatch, fixed = TRUE)
   )
-
   exact <- list(
     doubles = c(NA_real_, NaN, Inf, -Inf),
     nested = list(flag = TRUE, text = "fixture")
@@ -107,7 +135,6 @@ local({
     ) &&
       identical(readRDS(rds_path), exact)
   )
-
   check(
     "year-quarter validator accepts its owned syntax",
     identical(
@@ -134,47 +161,9 @@ local({
     )
   )
 })
-
-table_lines <- latex_table_environment(
-  tabular_lines = c("\\begin{tabular}{c}", "x", "\\end{tabular}"),
-  caption = "Fixture",
-  label = "tab:fixture",
-  notes = c("first", "second"),
-  notes_label = "\\textit{Notes:}"
-)
-check(
-  "table environment helper owns one notes wrapper",
-  sum(table_lines == "\\begin{table}[!htbp]") == 1L &&
-    sum(table_lines == "\\begin{tablenotes}[flushleft]") == 1L &&
-    any(grepl("first second", table_lines, fixed = TRUE))
-)
-
-panel_lines <- logvar_panel_block(
-  c(
-    "\\begin{threeparttable}",
-    "body",
-    "\\end{threeparttable}"
-  ),
-  "note",
-  "fixture"
-)
-check(
-  "panel helper owns stable panel and notes markers",
-  identical(panel_lines[[1L]], "% BEGIN LOGVAR PANEL fixture") &&
-    identical(
-      panel_lines[[length(panel_lines)]],
-      "% END LOGVAR PANEL fixture"
-    ) &&
-    sum(grepl("LOGVAR NOTES fixture", panel_lines, fixed = TRUE)) == 2L
-)
-
-hull <- logvar_hull_text(data.frame(
-  set_lower = c(-1, NA_real_),
-  set_upper = c(2, NA_real_),
-  status = c("bounded", "unreliable"),
-  stringsAsFactors = FALSE
+source(file.path(
+  "scripts-paper",
+  "tests",
+  "support",
+  "publication_helper_checks.R"
 ))
-check(
-  "console hull helper formats bounded and status rows",
-  identical(hull, c("[-1,2]", "unreliable"))
-)

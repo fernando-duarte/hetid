@@ -88,13 +88,7 @@ theta_point_harvey <- if (!is.null(est_harvey$point_fit)) {
 # the warm-refined display box through the shared engine with three separated
 # starts per side, one cache, a fresh per-tau budget, and prior-tau warm extras
 taus <- set_id_mean_eq$tau_display
-qs_fn <- function(tau) {
-  tau_quadratic_system(
-    set_id_mean_eq$gamma,
-    tau,
-    set_id_mean_eq$moments
-  )
-}
+qs_fn <- mean_quadratic_system_factory(set_id_mean_eq)
 harvey_cache <- new.env(parent = emptyenv())
 mapped <- logvar_map_display_taus(
   taus = taus,

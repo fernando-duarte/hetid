@@ -23,7 +23,7 @@ paper_source_once(paper_path("tests", "support", "harness.R"))
 .test <- paper_test_harness()
 check <- .test$check
 # Fail a check closed when the required reader errors or is absent.
-gate_try <- function(expr) tryCatch(isTRUE(expr), error = function(e) FALSE)
+gate_try <- .test$safe
 
 # Write a DCF record (one key: value per line) to a fresh temp path.
 gate_dcf <- function(lines) {

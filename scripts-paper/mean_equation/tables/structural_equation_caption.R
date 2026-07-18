@@ -6,10 +6,16 @@
 # paragraph for the conservative (FALSE) or inference (TRUE) variant.
 
 paper_source_once(paper_path("support", "reporting", "inference.R"))
+paper_source_once(paper_path(
+  "mean_equation", "tables", "structural_inference_note.R"
+))
 
 build_structural_notes <- function(with_ci = FALSE) {
   n_obs <- set_id_mean_eq$sample$n
   span <- paste(format(set_id_mean_eq$sample$span), collapse = "--")
+  inference_labels <- paper_inference_labels(
+    set_id_boot$inference_contract
+  )
 
   # mode-dependent clauses: under the orthogonality null the news block enters
   # unresidualized (beta2R = 0), the design coefficients degenerate to beta1R
@@ -86,19 +92,46 @@ build_structural_notes <- function(with_ci = FALSE) {
     eps2_note,
     sprintf(
       "$\\tau{>}0$ columns ($\\tau\\in\\{%s\\}$) relax each condition to an",
-      paste(sprintf("%.2g", set_id_mean_eq$tau_display), collapse = ",\\,")
+      paste(
+        paper_format_general(
+          set_id_mean_eq$tau_display,
+          PAPER_REPORTING_CONTROL$precision$tau_significant
+        ),
+        collapse = ",\\,"
+      )
     ),
     "absolute centered correlation of at most $\\tau$ and report the exact",
     "per-coefficient range of the joint identified set. $b_{0}$ and $b_{E}$ are",
     recovery_note,
     sprintf(
-      "The joint set remains bounded up to $\\tau^{*}=%.3g$%s",
-      set_id_mean_eq$tau_star,
+      "The joint set remains bounded up to $\\tau^{*}=%s$%s",
+      paper_format_general(
+        set_id_mean_eq$tau_star,
+        PAPER_REPORTING_CONTROL$precision$caption_endpoint
+      ),
       if (set_id_mean_eq$tau_star_capped) " (capped at the sweep maximum)" else ""
     ),
     sprintf(
-      "(5th--95th moving-block bootstrap percentile range $[%.2g,\\,%.2g]$,",
-      set_id_boot$tau_star_band[["p05"]], set_id_boot$tau_star_band[["p95"]]
+      paste0(
+        "(%sth--%sth moving-block bootstrap percentile range ",
+        "$[%s,\\,%s]$,"
+      ),
+      paper_format_general(
+        inference_labels$lower_percent,
+        PAPER_REPORTING_CONTROL$precision$caption_percent
+      ),
+      paper_format_general(
+        inference_labels$upper_percent,
+        PAPER_REPORTING_CONTROL$precision$caption_percent
+      ),
+      paper_format_general(
+        set_id_boot$tau_star_band[["lower"]],
+        PAPER_REPORTING_CONTROL$precision$caption_endpoint
+      ),
+      paper_format_general(
+        set_id_boot$tau_star_band[["upper"]],
+        PAPER_REPORTING_CONTROL$precision$caption_endpoint
+      )
     ),
     sprintf(
       "$B=%d$, block $=%d$ quarters%s%s), and stays bounded at the baseline",
@@ -122,45 +155,35 @@ build_structural_notes <- function(with_ci = FALSE) {
     "Set cells are exact identified-set ranges, not confidence intervals;",
     "a blank set cell marks a point-identified coefficient, whose set equals",
     "the $\\tau{=}0$ point at every displayed $\\tau$.",
-    "Parentheses beneath the $\\tau{=}0$ estimates are nominal 90\\% intervals:",
-    "the closed-form point plus or minus the one-sided 90\\% normal quantile",
+    sprintf(
+      "Parentheses beneath the $\\tau{=}0$ estimates are nominal %s\\%% intervals:",
+      paper_format_general(
+        inference_labels$coverage_percent,
+        PAPER_REPORTING_CONTROL$precision$caption_percent
+      )
+    ),
+    sprintf(
+      paste(
+        "the closed-form point plus or minus the one-sided %s\\%%",
+        "normal quantile"
+      ),
+      paper_format_general(
+        inference_labels$coverage_percent,
+        PAPER_REPORTING_CONTROL$precision$caption_percent
+      )
+    ),
     "times a robust bootstrap standard error (median-absolute-deviation scale",
     "of the moving-block point draws); nominal under maintained regular",
-    "asymptotics for the point estimator, and omitted when fewer than half",
-    "the draws yield a full-rank $\\tau{=}0$ system.",
-    if (with_ci) {
-      c(
-        "Parenthesized intervals beneath the set cells are nominal 90\\%",
-        "Stoye (2009) intervals for the true coefficient: the exact set",
-        "endpoints padded by robust (median-absolute-deviation) bootstrap",
-        "endpoint standard errors, with the critical value calibrated",
-        "against the joint normal distribution of the endpoint estimators",
-        "at the correlation estimated from the draws (it coincides with the",
-        "Imbens--Manski (2004) interpolation at the estimated correlations",
-        "while not requiring the Imbens--Manski superefficient-width",
-        "assumption).",
-        "These are diagnostics under maintained regular endpoint asymptotics,",
-        "componentwise rather than a joint confidence region, and",
-        "conditional on the estimated SDF panels, their principal",
-        "components, and the realized instrument, all constructed once from",
-        "the full sample. An interval row is omitted when fewer than half",
-        "the draws produce a certified bounded set at that $\\tau$ or the",
-        "endpoint scale is degenerate; per-cell draw counts and omission",
-        "reasons are in set\\_id\\_inference\\_diagnostics.csv.",
-        # block-length sensitivity result for the current data vintage
-        # (same B and seed, blocks of 8, 15, and 24 quarters)
-        "Results are nearly identical with 15- or 8-quarter blocks (same $B$",
-        "and seed): endpoint correlations, width scales, and the $\\tau^{*}$",
-        "range move only marginally, except that 8-quarter blocks enlarge",
-        "the $b_{3,N}$ endpoint scales enough for its intervals to extend",
-        "past zero."
+    sprintf(
+      paste(
+        "asymptotics for the point estimator, and omitted when fewer than",
+        "%s\\%% of the draws yield a full-rank $\\tau{=}0$ system."
+      ),
+      paper_format_general(
+        inference_labels$minimum_valid_draw_percent,
+        PAPER_REPORTING_CONTROL$precision$caption_percent
       )
-    } else {
-      c(
-        "Confidence statements for the $\\tau{>}0$ sets await a coverage",
-        "validation study; nominal interval diagnostics are reported in the",
-        "companion inference table and set\\_id\\_inference\\_diagnostics.csv."
-      )
-    }
+    ),
+    structural_inference_note(with_ci, inference_labels)
   )
 }

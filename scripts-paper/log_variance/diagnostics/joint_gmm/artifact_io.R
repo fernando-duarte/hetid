@@ -10,28 +10,21 @@
 paper_source_once(paper_path(
   "support", "artifacts", "typed_artifacts.R"
 ))
-
-# Flatten the per-row result lists to one typed data.frame through the fixed
-# schema assembler, so every row carries every column at its declared type.
-.jg_flatten <- function(rows) {
-  do.call(rbind, lapply(rows, logvar_joint_gmm_csv_row))
-}
+paper_source_once(paper_path(
+  "support", "artifacts", "diagnostic_schema.R"
+))
 
 # Write the versioned RDS and the flat CSV, then require both to round-trip:
 # identical() for the whole RDS object and column-wise agreement for the CSV
 # read back under the manifest colClasses. Only character columns are quoted so
 # an id or enum with a comma stays protected while numeric fields stay bare.
 write_joint_gmm_artifacts <- function(object, csv_path, rds_path) {
-  paper_write_exact_rds(
+  paper_write_diagnostic_artifacts(
     object,
-    rds_path,
-    "log_var_eq_joint_gmm"
-  )
-  flat <- .jg_flatten(object$rows)
-  paper_write_typed_csv(
-    flat,
+    LOGVAR_JOINT_GMM_ROW_SCHEMA,
     csv_path,
-    "log_var_eq_joint_gmm"
+    rds_path,
+    "log_var_eq_joint_gmm",
+    unknown = "ignore"
   )
-  invisible(object)
 }

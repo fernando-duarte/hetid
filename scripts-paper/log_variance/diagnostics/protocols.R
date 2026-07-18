@@ -12,6 +12,9 @@ LOGVAR_DYNAMICS_GATE_PROTOCOL <- list(
 
 LOGVAR_JOINT_NULL_CONTROL <- list(
   version = "1.0.0",
+  objective_chunk_size = 5000L,
+  objective_machine_epsilon_multiplier = 64,
+  objective_root_tolerance_multiplier = 4,
   grid_n = 13L,
   grid_floor = 100L,
   root_tol = 1e-6,
@@ -41,6 +44,11 @@ LOGVAR_JOINT_NULL_CONTROL <- list(
 stopifnot(
   LOGVAR_DYNAMICS_GATE_PROTOCOL$gate_lag %in%
     LOGVAR_DYNAMICS_GATE_PROTOCOL$tested_lags,
+  LOGVAR_JOINT_NULL_CONTROL$objective_chunk_size >= 1L,
+  LOGVAR_JOINT_NULL_CONTROL$objective_chunk_size ==
+    as.integer(LOGVAR_JOINT_NULL_CONTROL$objective_chunk_size),
+  LOGVAR_JOINT_NULL_CONTROL$objective_machine_epsilon_multiplier > 0,
+  LOGVAR_JOINT_NULL_CONTROL$objective_root_tolerance_multiplier > 0,
   LOGVAR_JOINT_NULL_CONTROL$root_tol > 0,
   LOGVAR_JOINT_NULL_CONTROL$feasibility_tol > 0
 )

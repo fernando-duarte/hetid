@@ -7,6 +7,7 @@
 local({
   baseline_tau <- PAPER_ANALYSIS_CONTRACT$tau$baseline
   dimension <- PAPER_ANALYSIS_CONTRACT$figure$region_dimension
+  render <- PAPER_FIGURE_RENDER_CONTROL$region_3d
   stopifnot(
     identical(dimension, 3L),
     identical(PAPER_ANALYSIS_CONTRACT$model$n_mean_pc, dimension)
@@ -28,34 +29,39 @@ local({
     envir = environment()
   )
 
-  elevation <- 23.1
-  azimuth <- 152.8
-  theta_view <- azimuth + 90
-  n_wall <- 440L
+  elevation <- render$camera$elevation
+  azimuth <- render$camera$azimuth
+  theta_view <- azimuth + render$camera$azimuth_offset
+  n_wall <- render$wall_grid_points
   sys <- region_sd_system(baseline_tau)
   box0 <- region_sd_box(baseline_tau)
   expand_limit <- function(k) {
     values <- c(box0$lo[k], box0$hi[k])
-    values + c(-1, 1) * 0.25 * diff(values)
+    values + c(-1, 1) * render$limit_padding * diff(values)
   }
   axes <- seq_len(dimension)
   natural_lims <- lapply(axes, expand_limit)
   lims <- natural_lims
-  lims[[1]][2] <- 0.28
-  lims[[2]][1] <- -0.08
-  ticks <- list(
-    c(0.15, 0.20, 0.25),
-    c(-0.05, 0, 0.05),
-    c(-0.20, -0.16, -0.12)
+  lims[[1]][2] <- render$manual_limits$x_upper
+  lims[[2]][1] <- render$manual_limits$y_lower
+  stopifnot(all(vapply(axes, function(axis) {
+    box0$lo[[axis]] >= lims[[axis]][1L] &&
+      box0$hi[[axis]] <= lims[[axis]][2L]
+  }, logical(1))))
+  ticks <- render$ticks
+  tick_labels <- lapply(
+    ticks,
+    formatC,
+    format = "f",
+    digits = render$tick_digits
   )
-  tick_labels <- lapply(ticks, formatC, format = "f", digits = 2)
-  mesh <- build_region_mesh(sys, natural_lims, seed = 15599L)
+  mesh <- build_region_mesh(sys, natural_lims, seed = render$seed)
 
   grDevices::svg(
     filename = artifact_path("mean_region_figure"),
-    width = 9.6,
-    height = 8.4,
-    family = "DejaVu Sans"
+    width = render$device$width,
+    height = render$device$height,
+    family = render$device$family
   )
   on.exit(grDevices::dev.off(), add = TRUE)
   graphics::par(mar = c(3.2, 4.5, 6.2, 2.2), xpd = NA, family = "sans")
@@ -66,10 +72,10 @@ local({
     zlim = lims[[3]],
     theta = theta_view,
     phi = elevation,
-    r = 14.8,
-    d = 1,
+    r = render$camera$radius,
+    d = render$camera$distance,
     scale = TRUE,
-    expand = 0.75,
+    expand = render$camera$expand,
     col = NA,
     border = NA,
     axes = FALSE,

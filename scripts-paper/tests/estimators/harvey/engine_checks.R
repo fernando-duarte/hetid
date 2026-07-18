@@ -8,7 +8,7 @@
 # aborting on a missing required module. Sourced by test_harvey.R after the fixtures.
 
 set.seed(414)
-he_try <- function(expr) tryCatch(isTRUE(expr), error = function(e) FALSE)
+he_try <- .test$safe
 
 # a K = 2 ball b1^2 + b2^2 <= 1, its bounded box, constraint scales, and a small
 # positive synthetic system (w2 has two columns to match the ball; pcr carries
@@ -46,10 +46,7 @@ he_dummy <- function(objective_fail = FALSE) {
     cc$n <- cc$n + 1L
     val <- c(sum(b), b[1] - b[2])
     names(val) <- he_labels
-    list(
-      coef = val, fit_status = "ok", converged = TRUE, objective = 0,
-      score_norm = 0, convergence_code = 0L, diagnostics = list(), warm_start = val
-    )
+    paper_test_fit_result(val)
   }
   est <- list(metadata = list(
     estimator = "harvey", target_functional = "theta_var_gaussian",

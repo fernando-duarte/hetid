@@ -1,12 +1,3 @@
-# Offline checks for the vol-equation set-endpoint bootstrap's per-draw
-# full-pipeline re-estimator and collector from the set-bootstrap core.
-# logvar_box_seed/logvar_side_record/logvar_set_boot_collect/logvar_set_boot_prepare
-# are pure functions exercised on hand-built inputs. logvar_set_boot_draw needs a
-# real estimate_set_id_system + PPML/Harvey engine call, so it is exercised on a
-# small synthetic heteroskedastic system to assert the return SHAPE and status
-# vocabulary, not particular numeric bounds.
-
-# logvar_box_seed -----------------------------------------------------------
 check(
   "box seed is the midpoint of a finite box",
   identical(
@@ -21,8 +12,6 @@ check(
     c(0, 0)
   )
 )
-
-# logvar_side_record ---------------------------------------------------------
 lsr_sch <- data.frame(
   coef = c("a", "b"), lower = c(-1, -2), upper = c(1, 2),
   lower_status = c("bounded", "unbounded"), upper_status = c("bounded", "bounded"),
@@ -48,9 +37,11 @@ check(
   identical(lsr_mismatch$lower_status, c("failed", "failed")) &&
     length(lsr_mismatch$lower) == 2L
 )
-
-# logvar_set_boot_collect ----------------------------------------------------
-lsc_spec <- list(coefs = c("a", "b"), taus = c(0.05, 0.2))
+lsc_spec <- list(
+  coefs = c("a", "b"),
+  taus = c(0.05, 0.2),
+  estimator_ids = c("ppml", "harvey")
+)
 lsc_rec <- function(lo, up, lst, ust) {
   list(lower = lo, upper = up, lower_status = lst, upper_status = ust)
 }
@@ -81,8 +72,6 @@ check(
     all(lsc_collected$ppml[[1]]$lower_status[2, ] == "failed") &&
     all(lsc_collected$harvey[[2]]$upper_status[2, ] == "failed")
 )
-
-# logvar_set_boot_prepare -----------------------------------------------------
 lbp_data <- data.frame(qtr = 1:6, y = rnorm(6))
 lbp_lag <- data.frame(qtr = 1:6, l.pc1 = rnorm(6), l.pc2 = rnorm(6))
 lbp_out <- logvar_set_boot_prepare(list(data = lbp_data), lbp_lag)
@@ -104,11 +93,6 @@ check(
     "error"
   )
 )
-
-# logvar_set_boot_draw --------------------------------------------------------
-# a small synthetic triangular system: a heteroskedastic Y2 (news) block
-# drives the Lewbel identification, plus two independent PC columns feed the
-# auxiliary log-variance regression.
 set.seed(20260714L)
 lbd_n <- 150L
 lbd_z <- exp(rnorm(lbd_n, 0, 0.4))
@@ -126,22 +110,36 @@ lbd_spec <- list(
   gamma = matrix(1, 1, 2), taus = c(0, 0.05, 0.2),
   x_cols = "x", y1_col = "y1", y2_cols = c("w2a", "w2b"), z_col = "z",
   impose_null = TRUE, pc_cols = c("l.pc1", "l.pc2"),
-  grid_cap = 5L, fit_budget = 300,
-  build_ppml = function(w1, w2, pcr, qtr, b_point) {
-    logvar_ppml_estimator(
-      w1, w2, pcr, qtr, b_point,
-      scale_anchor_b = c(0, 0), scale_anchor_source = "test"
-    )
-  },
-  build_harvey = function(w1, w2, pcr, qtr, b_point, ppml_obj) {
-    logvar_harvey_estimator(
-      w1, w2, pcr, qtr, b_point,
-      ppml_bundle = if (!is.null(ppml_obj)) ppml_obj$start_bundle else NULL,
-      ppml_start_at_b = if (!is.null(ppml_obj)) ppml_obj$fit_at_b else NULL,
-      ppml_bundle_source_id = ppml_obj$metadata$spec_id,
-      ppml_start_at_b_source_id = ppml_obj$metadata$spec_id
-    )
-  }
+  grid_cap = 5L,
+  fit_budget = 300,
+  estimator_ids = c("ppml", "harvey"),
+  builders = list(
+    ppml = function(w1, w2, pcr, qtr, b_point, built) {
+      logvar_ppml_estimator(
+        w1, w2, pcr, qtr, b_point,
+        scale_anchor_b = c(0, 0),
+        scale_anchor_source = "test"
+      )
+    },
+    harvey = function(w1, w2, pcr, qtr, b_point, built) {
+      ppml_obj <- built[["ppml"]]
+      logvar_harvey_estimator(
+        w1, w2, pcr, qtr, b_point,
+        ppml_bundle = if (!is.null(ppml_obj)) {
+          ppml_obj$start_bundle
+        } else {
+          NULL
+        },
+        ppml_start_at_b = if (!is.null(ppml_obj)) {
+          ppml_obj$fit_at_b
+        } else {
+          NULL
+        },
+        ppml_bundle_source_id = ppml_obj$metadata$spec_id,
+        ppml_start_at_b_source_id = ppml_obj$metadata$spec_id
+      )
+    }
+  )
 )
 lbd_draw <- logvar_set_boot_draw(lbd_dat, lbd_spec)
 lbd_allowed <- c("bounded", "unbounded", "unreliable", "failed")
@@ -160,16 +158,11 @@ check(
     }, logical(1)))
   }, logical(1)))
 )
-
-# build_harvey warm-starts from the draw's ppml_obj (ppml_bundle/ppml_start_at_b)
 check(
   "harvey warm-starts from the draw PPML fit (not cold-start mass-failure)",
   !any(unlist(lapply(lbd_draw$ppml, `[`, c("lower_status", "upper_status"))) != "failed") ||
     any(unlist(lapply(lbd_draw$harvey, `[`, c("lower_status", "upper_status"))) != "failed")
 )
-
-# a point-deficient draw (z has no variation -> moments carry no
-# identifying heteroskedasticity signal) yields all-"failed"/NA without erroring
 lbd_dat_deficient <- lbd_dat
 lbd_dat_deficient$z <- 0
 lbd_draw_deficient <- tryCatch(
@@ -188,8 +181,6 @@ check(
     }, logical(1)))
   }, logical(1)))
 )
-
-# collecting real draws from logvar_set_boot_draw stacks cleanly
 lbd_collected <- logvar_set_boot_collect(list(lbd_draw, "boom"), lbd_spec)
 check(
   "collect stacks real logvar_set_boot_draw output into B x p matrices",

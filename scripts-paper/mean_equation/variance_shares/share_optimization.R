@@ -20,37 +20,28 @@ share_quad <- function(p_mat, q_vec, r_val) {
 
 # Polish one share extreme in the identified-set solver's native scaling.
 polish_extreme <- function(x0, quad, sq, box, sign_mult, delta, omega) {
-  res <- tryCatch(
-    nloptr::slsqp(
-      x0 = x0 / delta,
-      fn = function(phi) sign_mult * sq$value(matrix(delta * phi, 1)),
-      gr = function(phi) sign_mult * delta * sq$grad(delta * phi),
-      lower = box$set_lower / delta,
-      upper = box$set_upper / delta,
-      hin = function(phi) {
-        quadratic_constraint_values(delta * phi, quad, omega)
-      },
-      hinjac = function(phi) {
-        quadratic_constraint_jacobian(
-          delta * phi,
-          quad,
-          omega,
-          theta_scale = delta
-        )
-      },
-      control = list(
-        xtol_rel = PAPER_QUADRATIC_CONTROL$solver_xtol_rel,
-        maxeval = PAPER_QUADRATIC_CONTROL$solver_maxeval
-      ),
-      deprecatedBehavior = FALSE
-    ),
-    error = function(e) list(par = rep(NA_real_, length(x0)))
+  res <- solve_scaled_quadratic_program(
+    quadratic = quad,
+    x0 = x0,
+    objective = function(theta) {
+      sign_mult * sq$value(matrix(theta, 1))
+    },
+    gradient = function(theta) {
+      sign_mult * sq$grad(theta)
+    },
+    lower = box$set_lower,
+    upper = box$set_upper,
+    method = "slsqp",
+    objective_scale = "none"
   )
-  if (!all(is.finite(res$par))) {
+  if (!all(is.finite(res$theta))) {
     return(NA_real_)
   }
-  th <- pmin(pmax(delta * res$par, box$set_lower), box$set_upper)
-  resid <- .feasibility_residual(quad, th, omega)
+  th <- pmin(
+    pmax(res$theta, box$set_lower),
+    box$set_upper
+  )
+  resid <- res$feasibility_residual
   if (is.finite(resid) &&
     resid <= PAPER_QUADRATIC_CONTROL$feasibility_tolerance) {
     sq$value(matrix(th, 1))

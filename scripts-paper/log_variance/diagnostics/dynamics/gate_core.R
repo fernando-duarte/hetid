@@ -51,7 +51,7 @@ LOGVAR_DYNAMICS_GATE_SCHEMA_VERSION <-
 .logvar_gate_resid <- function(e_star, pcr, proj) {
   log_e2 <- 2 * log(abs(e_star))
   theta_hat <- drop(proj %*% log_e2)
-  x_mat <- cbind("(Intercept)" = 1, pcr)
+  x_mat <- logvar_design_matrix(pcr)
   list(
     log_e2 = log_e2, theta_hat = theta_hat,
     xi_hat = drop(log_e2 - x_mat %*% theta_hat)

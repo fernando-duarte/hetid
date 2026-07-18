@@ -114,3 +114,16 @@ rm(
   inference_control, threaded_fields, threaded_code, threaded,
   retired_literals
 )
+stopifnot(
+  identical(
+    names(boot_band(c(1, 2, 3))),
+    c("median", "lower", "upper", "n")
+  ),
+  identical(
+    boot_min_reps(200L),
+    ceiling(
+      200L *
+        PAPER_ANALYSIS_CONTRACT$inference$minimum_valid_draw_share
+    )
+  )
+)

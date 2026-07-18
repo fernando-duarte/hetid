@@ -19,12 +19,11 @@ paper_source_once(paper_path("support", "reporting", "inference.R"))
 #' @param gq_alternative alternative hypothesis for Goldfeld-Quandt
 #' @return data frame with stat/pval columns for the selected tests
 perform_all_hetero_tests <- function(lm_model, var_name = "Variable",
-                                     tests = c(
-                                       "White", "BP", "GQ",
-                                       "Harvey", "Anscombe", "CW"
-                                     ),
+                                     tests = paper_hetero_test_catalog(),
                                      gq_deflator = NULL,
-                                     gq_alternative = "greater") {
+                                     gq_alternative =
+                                       PAPER_HETEROSKEDASTICITY_CONTROL$
+                                         gq_alternative) {
   results <- data.frame(Variable = var_name, stringsAsFactors = FALSE)
 
   if ("White" %in% tests) {
@@ -94,9 +93,7 @@ summarize_hetero_tests <- function(
   significance_level = paper_significance_level(
     PAPER_HETEROSKEDASTICITY_CONTROL$rejection_level
   ),
-  test_names = c(
-    "White", "BP", "GQ", "Harvey", "Anscombe", "CW"
-  )
+  test_names = paper_hetero_test_catalog()
 ) {
   pval_cols <- paste0(test_names, "_pval")
 

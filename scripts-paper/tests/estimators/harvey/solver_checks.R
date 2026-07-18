@@ -16,7 +16,7 @@ hs_b <- fx$b_ref
 hs_p <- ncol(hs_x)
 
 # Return FALSE instead of aborting when a required Harvey function errors.
-hs_try <- function(expr) tryCatch(isTRUE(expr), error = function(e) FALSE)
+hs_try <- .test$safe
 
 # resolve a fixture field by the first name the fixtures file actually defines,
 # so the pathology fixtures bind whether they are named recession-style or neg-style

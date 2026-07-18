@@ -51,7 +51,7 @@ ca$est$analyze_domain <- list(
 )
 check(
   "a legacy two-argument precheck hook is adapted, not rejected",
-  tryCatch(is.data.frame(run_engine(ca$est)$table), error = function(e) FALSE)
+  .test$safe(is.data.frame(run_engine(ca$est)$table))
 )
 # A claimed domain failure routes to sides and stays reliable; an unclaimed one is tau-fatal
 fail_pt <- unname(bf[1, ])

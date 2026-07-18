@@ -31,7 +31,10 @@ build_var_share_notes <- function(sd_c) {
     "$PC_{E,t}^{T}b_{E}$ and the SDF-news block $PC_{N,t+1}^{T}b_{N}$ of",
     "the structural equation",
     "$\\Delta c_{t+1}=b_{0}+PC_{E,t}^{T}b_{E}+PC_{N,t+1}^{T}b_{N}+\\varepsilon_{t+1}$",
-    "of Table~\\ref{tab:structural_eq_set_id}, whose notes define the",
+    sprintf(
+      "of Table~\\ref{%s}, whose notes define the",
+      artifact_latex_label("structural_equation_table")
+    ),
     "notation, data, and estimation. Block rows report",
     "$100\\,\\widehat{\\mathrm{Var}}(PC^{T}b)/\\widehat{\\mathrm{Var}}(\\Delta c_{t+1})$,",
     "with $\\widehat{\\mathrm{Var}}$ the centered $1/T$ sample moment on the",
@@ -48,7 +51,10 @@ build_var_share_notes <- function(sd_c) {
     "closed-form Lewbel point. The $\\tau{>}0$ columns report the range of",
     "each share as the coefficients vary over the joint identified set at",
     "slack $\\tau$: component rows map the exact per-coefficient ranges of",
-    "Table~\\ref{tab:structural_eq_set_id} through the square (the minimum",
+    sprintf(
+      "Table~\\ref{%s} through the square (the minimum",
+      artifact_latex_label("structural_equation_table")
+    ),
     "is zero when the range covers zero), and block rows minimize and",
     "maximize the quadratic share over the joint set (a feasibility grid of",
     sprintf(
@@ -63,13 +69,20 @@ build_var_share_notes <- function(sd_c) {
     "an $R^{2}$ decomposition: away from the least-squares fit the implied",
     "residual $\\varepsilon_{t+1}$ co-moves with the regressor blocks, so",
     sprintf(
-      "shares can exceed 100 as $\\tau$ approaches $\\tau^{*}=%.3g$.",
-      set_id_mean_eq$tau_star
+      "shares can exceed 100 as $\\tau$ approaches $\\tau^{*}=%s$.",
+      paper_format_general(
+        set_id_mean_eq$tau_star,
+        PAPER_REPORTING_CONTROL$precision$caption_endpoint
+      )
     ),
     "Set cells are exact identified-set ranges, not confidence intervals.",
     sprintf(
-      "For scale, $\\widehat{\\mathrm{sd}}(\\Delta c_{t+1})=%.2f$ percent",
-      sd_c
+      "For scale, $\\widehat{\\mathrm{sd}}(\\Delta c_{t+1})=%s$ percent",
+      paper_format_number(
+        sd_c,
+        PAPER_REPORTING_CONTROL$cells$statistic_digits,
+        "na"
+      )
     ),
     sprintf("per quarter. $N=%d$, %s.", n_obs, span)
   )
