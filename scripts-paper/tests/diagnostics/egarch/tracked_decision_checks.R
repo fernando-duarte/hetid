@@ -9,7 +9,7 @@ expected_estimand_prompt_sha <-
 expected_dependency_prompt_sha <-
   "f2fdf49bf1a45e7c6899299798db93512597dc096b39b2494d9b3d888134a4c8"
 expected_gate_science_sha <-
-  "ccb92931d63a33e01c157006dd1bb6bc9800ff68455d325d7079247faad76b7d"
+  "f7e7b8028ce79fbedac7c3863105be93df93379ddb12aece48e0cbcf4ca5b861"
 
 check("tracked plan digest is the exact approved digest", identical(
   LOGVAR_EGARCH_PLAN_SHA256,
@@ -51,6 +51,22 @@ check("tracked decision validates against the matching synthetic gate", {
   logvar_egarch_decision_validate(logvar_egarch_decision, committed_gate)
   TRUE
 })
+
+# the decision-evidence hash drops the descriptive sensitivity witnesses but
+# still binds the residual evidence: changing sensitivity keeps validation
+# passing, while changing xi_hat breaks it with the hash reason
+gate_sensitivity_changed <- committed_gate
+gate_sensitivity_changed$sensitivity <- list(rows = "changed", exclusions = "changed")
+check("validation ignores descriptive sensitivity changes", {
+  logvar_egarch_decision_validate(logvar_egarch_decision, gate_sensitivity_changed)
+  TRUE
+})
+gate_residual_changed <- committed_gate
+gate_residual_changed$xi_hat$xi_hat[1L] <- gate_residual_changed$xi_hat$xi_hat[1L] + 1
+check("validation still binds the residual evidence", expect_stop(
+  logvar_egarch_decision_validate(logvar_egarch_decision, gate_residual_changed),
+  "gate_record_hash_mismatch"
+))
 
 tampered_values <- list(
   schema_version = "tampered",
