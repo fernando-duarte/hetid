@@ -85,14 +85,7 @@
 #'
 compute_expected_sdf_variance_bound <- function(yields, term_premia, i,
                                                 step = HETID_CONSTANTS$DEFAULT_STEP) {
-  validate_step(step)
-  # Lower bound 0 admits the horizon-0 boundary below; i >= 1 keeps the usual
-  # [1, effective_max] contract once i == 0 returns early
-  assert_scalar_integer_in_range(
-    i, "Maturity index i", 0L, effective_max_maturity(step),
-    arg = "i"
-  )
-  validate_row_alignment(yields, term_premia)
+  validate_expected_sdf_inputs(yields, term_premia, i, step)
 
   if (i == 0) {
     # Horizon 0 is exact (M^(0)_{0,t} = P^(1)_t): no approximation error, so the
