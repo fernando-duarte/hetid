@@ -80,9 +80,9 @@ logvar_bounds_tau_entry <- function(entry) {
     for (tv in unique(viol$tau)) {
       k <- match(paper_tau_key(tv), names(res))
       near <- c(
-        if (k > 1L) fig_args(res[[k - 1L]]$schema),
-        fig_args(res[[k]]$schema),
-        if (k < length(res)) fig_args(res[[k + 1L]]$schema)
+        if (k > 1L) logvar_bounded_args(res[[k - 1L]]$schema),
+        logvar_bounded_args(res[[k]]$schema),
+        if (k < length(res)) logvar_bounded_args(res[[k + 1L]]$schema)
       )
       res[[k]] <- run_tau(tv, near)
     }
@@ -137,6 +137,6 @@ logvar_bounds_tau_entry <- function(entry) {
 for (fig_entry in logvar_bounds_tau_registry) logvar_bounds_tau_entry(fig_entry)
 
 rm(
-  fig_rows, fig_pcr, fig_fresh_id, fig_tau_grid, fig_args,
+  fig_rows, fig_pcr, fig_fresh_id, fig_tau_grid,
   logvar_bounds_tau_entry, fig_entry
 )

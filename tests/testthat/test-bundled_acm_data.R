@@ -1,5 +1,5 @@
 # Guards on the vendored data file: integrity against the release
-# digest, the monthly-maturity raw schema, and the mid-quarter tail.
+# digest, the monthly-maturity raw schema, and the mid-quarter tail
 
 test_that("the bundled gz matches the vendored release digest", {
   bundled <- system.file(

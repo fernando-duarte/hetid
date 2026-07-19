@@ -9,16 +9,16 @@
 \toprule
  & Reference & $\tau{=}0$ & $\tau{=}0.05$ & $\tau{=}0.1$ & $\tau{=}0.2$ & $\tau{=}0.4$ \\
 \midrule
-$\theta^{0.5}_0$ & -2.004 & -1.973 & $[-2.070,\,-1.858]$ & $[-2.084,\,-1.750]$ & $[-2.171,\,-1.688]$ & $[-2.202,\,0.678]$ \\
+$\theta^{0.5}_0$ & -2.004 & -1.973 & $[-2.070,\,-1.858]$ & $[-2.083,\,-1.750]$ & $[-2.171,\,-1.688]$ & $[-2.200,\,0.678]$ \\
  &  &  &  &  &  &  \\
 \midrule
-$\theta^{0.5}_{1,R}$ & 0.033 & 0.051 & $[-0.016,\,0.121]$ & $[-0.056,\,0.137]$ & $[-0.079,\,0.157]$ & $[-0.108,\,0.205]$ \\
+$\theta^{0.5}_{1,R}$ & 0.033 & 0.051 & $[-0.016,\,0.121]$ & $[-0.037,\,0.137]$ & $[-0.079,\,0.157]$ & $[-0.112,\,0.205]$ \\
  &  &  &  &  &  &  \\
 $\theta^{0.5}_{2,R}$ & -0.120 & -0.160 & unreliable & $[-0.302,\,-0.005]$ & $[-0.343,\,0.031]$ & $[-0.356,\,0.053]$ \\
  &  &  &  &  &  &  \\
-$\theta^{0.5}_{3,R}$ & 0.124 & 0.211 & unreliable & $[0.008,\,0.307]$ & $[-0.125,\,0.348]$ & $[-0.290,\,0.462]$ \\
+$\theta^{0.5}_{3,R}$ & 0.124 & 0.211 & unreliable & $[0.008,\,0.312]$ & $[-0.125,\,0.348]$ & $[-0.290,\,0.468]$ \\
  &  &  &  &  &  &  \\
-$\theta^{0.5}_{4,R}$ & -0.079 & 0.012 & $[-0.147,\,0.158]$ & $[-0.193,\,0.224]$ & $[-0.198,\,0.304]$ & $[-0.238,\,0.443]$ \\
+$\theta^{0.5}_{4,R}$ & -0.079 & 0.012 & $[-0.147,\,0.158]$ & $[-0.193,\,0.222]$ & $[-0.198,\,0.304]$ & $[-0.238,\,0.415]$ \\
  &  &  &  &  &  &  \\
 $R^2$ & -- & -- & -- & -- & -- & -- \\
 $N$ & 255 & 255 & 255 & 255 & 255 & 255 \\
@@ -27,12 +27,12 @@ $N$ & 255 & 255 & 255 & 255 & 255 & 255 \\
 % BEGIN LOGVAR NOTES lad
 \begin{tablenotes}[flushleft]
 \scriptsize
-\item The median panel fits the conditional median of $\log \varepsilon^2$, $Q_{0.5}(\log \varepsilon^2 \mid PC_R) = R'\theta^{0.5}$, at each news vector $b_N$; the intercept $\theta^{0.5}_0$ is the median normalization, not the mean-log or log-mean intercept.
-\item The inner map uses the Barrodale-Roberts (\texttt{br}) vertex as the pre-specified selection rule, so the map stays single-valued and reproducible where the median is non-unique; \texttt{fn} is the nonuniqueness probe, never the map, and coefficients are never averaged.
+\item The median panel fits the conditional quantile of $\log \varepsilon^2$, $Q_{0.5}(\log \varepsilon^2 \mid PC_R) = R'\theta^{0.5}$, at each news vector $b_N$; the intercept $\theta^{0.5}_0$ is the quantile normalization, not the mean-log or log-mean intercept.
+\item The inner map uses the Barrodale--Roberts (\texttt{br}) vertex as the pre-specified selection rule, so the map stays single-valued and reproducible where the quantile is non-unique; \texttt{fn} is the nonuniqueness probe, never the map, and coefficients are never averaged.
 \item The domain is punctured at the residual-crossing hyperplanes: an exact residual zero is outside the $\log$ domain, while a guarded nonzero residual is in-domain but numerically unresolved. No residual floor is applied and no row is dropped.
-\item The reported cells are single-pass attained inner approximations of the punctured-domain hulls: every endpoint is a fitted coefficient at a feasible $b_N$, and the engine's multi-start search only ever extends an endpoint outward, so the cell is a subset of the true image. An offline refinement search (up to $10^4$ extra starts per $\tau$) moved no endpoint on this sample, so the single-pass cell coincides with the denser search here.
+\item The reported cells are single-pass attained inner approximations of the punctured-domain hulls: every endpoint is a fitted coefficient at a feasible $b_N$, and the engine's multi-start search only ever extends an endpoint outward, so the cell is a subset of the true image.
 \item The one-sided closure limits are an explicitly approximate diagnostic, kept separate in \texttt{log\_var\_eq\_lad\_closure.csv} and never folded into a cell; side-dependent finite limits are retained as separate closure rows.
-\item Search resolution: the grid is capped at 20000 points within a 45000-fit per-slack budget with phase caps; a five-start re-polish verifies each bounded side, feeding a more extreme candidate back through the engine and demoting an unreproducible side to unreliable, and the deterministic \texttt{fn} schedule fails a nonunique endpoint-relevant tau closed.
+\item Search resolution: the grid is capped at 20000 points within a 45000-fit per-slack budget with phase caps; a 5-start re-polish verifies each bounded side, feeding a more extreme candidate back through the engine and demoting an unreproducible side to unreliable, and the deterministic \texttt{fn} schedule fails a nonunique endpoint-relevant tau closed.
 \item Statuses are operational: bounded, unbounded, unreliable, or unresolved; no finite probe trace is a certified exclusion, and the crossing witnesses, path coverage, guard ratio, and $M$-slope metrics are disclosed in the console block.
 \item \texttt{quantreg} 6.1 is a scripts-paper analysis dependency (not in \texttt{DESCRIPTION}); no standard errors or quantile-regression confidence intervals are reported (deferred).
 \item Under conditional normality the median slopes equal the variance slopes and $\theta^{0.5}_0 = \theta^{log}_0 + 0.482765246 = \theta^{var}_0 - 0.787597599$; these constants are interpretive checks only, never imposed.

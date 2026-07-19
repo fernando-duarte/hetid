@@ -9,7 +9,7 @@ expected_estimand_prompt_sha <-
 expected_dependency_prompt_sha <-
   "f2fdf49bf1a45e7c6899299798db93512597dc096b39b2494d9b3d888134a4c8"
 expected_gate_science_sha <-
-  "7890f2f95b7ac1358788fefdbbdc6f9d3edd41ced70ae40187f3b753f0dd5c22"
+  "ccb92931d63a33e01c157006dd1bb6bc9800ff68455d325d7079247faad76b7d"
 
 check("tracked plan digest is the exact approved digest", identical(
   LOGVAR_EGARCH_PLAN_SHA256,

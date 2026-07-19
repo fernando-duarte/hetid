@@ -52,7 +52,7 @@ logvar_egarch_dependency_prompt <- paste(
 logvar_egarch_decision <- list(
   schema_version = LOGVAR_EGARCH_SCHEMA_VERSION,
   gate_science_sha256 =
-    "7890f2f95b7ac1358788fefdbbdc6f9d3edd41ced70ae40187f3b753f0dd5c22",
+    "ccb92931d63a33e01c157006dd1bb6bc9800ff68455d325d7079247faad76b7d",
   gate_record_path = LOGVAR_EGARCH_GATE_RECORD_PATH,
   sample_id = "n255_1962 Q2_2025 Q4_24138f4ddc2adda6de40372667337c10",
   gate_lag = 4L,
