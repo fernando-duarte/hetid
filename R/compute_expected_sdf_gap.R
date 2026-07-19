@@ -50,9 +50,7 @@ compute_expected_sdf_gap <- function(yields, term_premia, i,
   )
 
   n_hat <- n_hat_series(yields, term_premia, i, step = step)
-  y_step <- require_column(
-    yields, acm_column_name("yields", step), "yields"
-  )
+  y_step <- require_acm_col(yields, "yields", step)
 
   horizon_periods <- i %/% step
   n_obs <- length(n_hat)

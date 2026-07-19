@@ -170,7 +170,7 @@ compute_expected_sdf <- function(yields, term_premia, i, dates = NULL,
   } else {
     # No lead, so any maturity i (not just multiples of step) is admissible
     exp_n_hat <- exp(n_hat_series(yields, term_premia, i, step = step))
-    y_step <- require_column(yields, acm_column_name("yields", step), "yields")
+    y_step <- require_acm_col(yields, "yields", step)
     m_step <- step / HETID_CONSTANTS$MATURITY_UNITS_PER_YEAR
     realized_price <- exp(-m_step * y_step / HETID_CONSTANTS$PERCENT_TO_DECIMAL)
     common <- is.finite(realized_price) & is.finite(exp_n_hat)

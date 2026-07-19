@@ -27,6 +27,8 @@
 #'     variance positivity diagnostic flags a maturity as degenerate}
 #'   \item{PERCENT_TO_DECIMAL}{Percentage to decimal divisor}
 #'   \item{MONTHS_PER_QUARTER}{Calendar months per quarter (3)}
+#'   \item{MONTHS_PER_YEAR}{Calendar months per year (12), used for
+#'     period-end month arithmetic}
 #'   \item{USE_INCOMPLETE_QUARTERS}{Default policy for quarters missing
 #'     their terminal month in quarterly conversion: TRUE keeps them
 #'     (re-dated to quarter end), FALSE drops them}
@@ -52,6 +54,8 @@
 #'     months (e.g. y12)}
 #'   \item{INSUFFICIENT_NEWS_MSG}{Shared error message for the
 #'     news-period data-sufficiency guard in the variance-bound kernels}
+#'   \item{BOUND_INDEX_TRIM_MSG}{Shared step-multiple reason string for the
+#'     bound-index-set kernels (c_hat/k2_hat)}
 #' }
 #'
 #' @references
@@ -83,6 +87,7 @@ HETID_CONSTANTS <- list(
 
   # Shared guard message for the news-period kernels (c_hat/k_hat/k2_hat/gap)
   INSUFFICIENT_NEWS_MSG = "Not enough observations. Need T > i/step news periods",
+  BOUND_INDEX_TRIM_MSG = "the bound index set trims whole news periods",
 
   # Maturity grids (months)
   DEFAULT_ACM_MATURITIES = seq(12L, 120L, by = 12L),
@@ -94,6 +99,7 @@ HETID_CONSTANTS <- list(
 
   # Calendar
   MONTHS_PER_QUARTER = 3L,
+  MONTHS_PER_YEAR = 12L,
   USE_INCOMPLETE_QUARTERS = TRUE,
 
   # Date formats

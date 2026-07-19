@@ -21,4 +21,6 @@ prefix through \code{HETID_ACM_SCHEMA} and the format through
 \code{HETID_CONSTANTS$COL_FORMAT_SIMPLE} instead of hard-coding
 literals like \code{paste0("y", i)} at call sites.
 }
-\keyword{internal}
+\examples{
+acm_column_name("yields", c(12, 60))
+}

@@ -43,13 +43,10 @@
 #'
 compute_k2_hat <- function(yields, term_premia, i,
                            step = HETID_CONSTANTS$DEFAULT_STEP) {
-  validate_step(step)
-  validate_maturity_index(i, max_maturity = effective_max_maturity(step))
-  validate_step_multiple(
-    i, step,
-    "the bound index set trims whole news periods"
+  validate_news_kernel_inputs(
+    yields, term_premia, i, step,
+    step_multiple_reason = HETID_CONSTANTS$BOUND_INDEX_TRIM_MSG
   )
-  validate_row_alignment(yields, term_premia)
 
   delta_p <- compute_news_components(yields, term_premia, i, step = step)$delta_p
   keep <- trim_to_bound_index_set(delta_p, i, step, len_offset = 1L)

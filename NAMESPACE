@@ -3,6 +3,7 @@
 S3method(print,hetid_components)
 S3method(print,hetid_moments)
 export(HETID_CONSTANTS)
+export(acm_column_name)
 export(align_instrument_sets)
 export(build_general_quadratic_system)
 export(build_instrument_matrix)

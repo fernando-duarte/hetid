@@ -60,9 +60,7 @@
 compute_variance_bound <- function(yields, term_premia, i,
                                    step = HETID_CONSTANTS$DEFAULT_STEP,
                                    c_bar = NULL) {
-  validate_step(step)
-  validate_maturity_index(i, max_maturity = effective_max_maturity(step))
-  validate_row_alignment(yields, term_premia)
+  validate_news_kernel_inputs(yields, term_premia, i, step)
 
   if (is.null(c_bar)) {
     c_hat <- compute_c_hat(yields, term_premia, i, step = step)

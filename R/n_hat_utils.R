@@ -7,6 +7,39 @@
 #' @keywords internal
 NULL
 
+#' Validate the Shared News-Kernel Input Contract
+#'
+#' The common preamble for the variance-bound news kernels: a valid
+#' \code{step}, a maturity index within the estimator's ceiling, an
+#' optional whole-news-period (step-multiple) check, and row-aligned
+#' yields and term premia, in the historical call order.
+#'
+#' @template param-yields-term-premia
+#' @template param-maturity-index
+#' @template param-step
+#' @param step_multiple_reason Reason string for the step-multiple check,
+#'   or \code{NULL} to skip it.
+#' @param max_index When \code{TRUE}, cap \code{i} at
+#'   \code{effective_max_maturity(step)}; when \code{FALSE} only require a
+#'   positive index (the k_hat estimator reads no \code{i + step} column).
+#' @return Invisible \code{TRUE}; stops with a structured error otherwise.
+#' @keywords internal
+validate_news_kernel_inputs <- function(yields, term_premia, i, step,
+                                        step_multiple_reason = NULL,
+                                        max_index = TRUE) {
+  validate_step(step)
+  if (isTRUE(max_index)) {
+    validate_maturity_index(i, max_maturity = effective_max_maturity(step))
+  } else {
+    validate_maturity_index(i)
+  }
+  if (!is.null(step_multiple_reason)) {
+    validate_step_multiple(i, step, step_multiple_reason)
+  }
+  validate_row_alignment(yields, term_premia)
+  invisible(TRUE)
+}
+
 #' Compute Previous Period N-Hat
 #'
 #' Handles the boundary case \code{i == step}, where the
@@ -24,9 +57,7 @@ compute_n_hat_previous <- function(yields, term_premia, i,
   validate_step(step)
   if (i == step) {
     # Boundary: realized log price of the step-maturity bond, observable at t
-    y_step <- require_column(
-      yields, acm_column_name("yields", step), "yields"
-    )
+    y_step <- require_acm_col(yields, "yields", step)
     m_step <- step / HETID_CONSTANTS$MATURITY_UNITS_PER_YEAR
     -m_step * y_step / HETID_CONSTANTS$PERCENT_TO_DECIMAL
   } else {
