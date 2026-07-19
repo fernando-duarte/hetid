@@ -14,11 +14,9 @@ svc_dummy_est <- function(fail_when = NULL, spec_id = "svc-dummy-v1") {
     convergence_code = 5L
   )
   list(
-    metadata = list(
-      estimator = "svc-dummy", target_functional = "theta_test",
-      intercept_normalization = "none", sample_id = "svc-sample",
-      smoothness = "smooth", inner_solver = "closed form",
-      response_scale = "level", spec_id = spec_id, cold_start_rtol = 1e-8
+    metadata = paper_test_estimator_metadata(
+      "svc-dummy", "theta_test", "svc-sample", spec_id,
+      response_scale = "level"
     ),
     fit_at_b = function(b, start = NULL) {
       if (!is.null(fail_when) && fail_when(b)) {

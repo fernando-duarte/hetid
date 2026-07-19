@@ -17,12 +17,9 @@ check <- .test$check
 
 phase_seen <- character(0)
 phase_est <- list(
-  metadata = list(
-    estimator = "phase-fixture", target_functional = "theta_var",
-    intercept_normalization = "fixture", sample_id = "sample-a",
-    smoothness = "smooth", inner_solver = "closed form",
-    response_scale = "variance", spec_id = "phase-fixture-v1",
-    cold_start_rtol = 1e-8
+  metadata = paper_test_estimator_metadata(
+    "phase-fixture", "theta_var", "sample-a", "phase-fixture-v1",
+    intercept_normalization = "fixture", response_scale = "variance"
   ),
   coef_labels = "a",
   fit_at_b = function(b, start = NULL, phase = NULL) {

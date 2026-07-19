@@ -132,3 +132,27 @@ paper_test_estimator <- function(
   }
   estimator
 }
+
+# Center a PC matrix and give it the l.pc1.. names the moment layer expects.
+centered_pc_design <- function(mat) {
+  out <- scale(mat, center = TRUE, scale = FALSE)
+  attr(out, "scaled:center") <- NULL
+  colnames(out) <- paste0("l.pc", seq_len(ncol(out)))
+  out
+}
+
+# A seeded centered PC design plus its intercept-augmented model matrix.
+paper_test_pc_design <- function(n, p, seed) {
+  set.seed(seed)
+  pcr <- scale(matrix(rnorm(n * p), n, p), center = TRUE, scale = FALSE)
+  colnames(pcr) <- paste0("l.pc", seq_len(p))
+  list(pcr = pcr, x_mat = cbind("(Intercept)" = 1, pcr))
+}
+
+# Central-difference Jacobian of a scalar- or vector-valued map f at x.
+fd_jacobian <- function(f, x, h = 1e-6) {
+  vapply(seq_along(x), function(k) {
+    e <- replace(numeric(length(x)), k, h)
+    (f(x + e) - f(x - e)) / (2 * h)
+  }, numeric(length(f(x))))
+}

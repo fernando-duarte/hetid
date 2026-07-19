@@ -2,7 +2,7 @@
 # checks for the joint-null diagnostic (search.R and the
 # driver run.R), plus the projection-ownership and input-seam
 # checks. Sourced by test_joint_null.R, which owns check(),
-# jn_try, jn_fx, and the jn_ball/jn_fd_grad helpers. Every check is
+# jn_try, jn_fx, and the jn_ball helper. Every check is
 # module-dependent and fails closed until the search and driver land. Error-path
 # checks guard on exists() first so a missing module fails the check rather than
 # passing on the wrong error.

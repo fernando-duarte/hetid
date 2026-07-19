@@ -16,20 +16,6 @@ jg_ball <- function(center, radius) {
     c_i = sum(center^2) - radius^2
   )
 }
-# Exactly centered PC design with the l.pc1..l.pc4 names the moment layer expects.
-jg_centered <- function(mat) {
-  out <- scale(mat, center = TRUE, scale = FALSE)
-  attr(out, "scaled:center") <- NULL
-  colnames(out) <- paste0("l.pc", seq_len(ncol(out)))
-  out
-}
-# Central-difference gradient of a scalar objective f at x.
-jg_fd_grad <- function(f, x, h = 1e-6) {
-  vapply(seq_along(x), function(k) {
-    e <- replace(numeric(length(x)), k, h)
-    (f(x + e) - f(x - e)) / (2 * h)
-  }, numeric(1))
-}
 # Residual span check: fraction of z outside span(X) (base R, no joint module).
 jg_span_resid <- function(z, x_mat) {
   fit <- lm.fit(x_mat, z)
@@ -90,7 +76,10 @@ jg_fx <- local({
   jen_u <- stats::qnorm((seq_len(4096L) - 0.5) / 4096L)
   jen_u <- jen_u / sqrt(mean(jen_u^2))
   jen_gap <- log(mean(jen_u^2)) - mean(log(jen_u^2))
-  stopifnot(abs(mean(jen_u^2) - 1) < 1e-12, abs(jen_gap - 1.270362845) < 0.01)
+  stopifnot(
+    abs(mean(jen_u^2) - 1) < 1e-12,
+    abs(jen_gap - LOGVAR_NORMAL_LOG_SQUARE_GAP) < 0.01
+  )
 
   # Residualized-z cases on the balanced X: redundant (in span X), a genuine two
   # column instrument, its well-conditioned transforms, and a near-tied pair.

@@ -45,10 +45,10 @@ check("the four profiled intercept derivatives match finite differences", jg_try
   nb <- fx$nc_b
   nbeta <- fx$nc_beta
   jac <- logvar_profile_jacobian(nb, nbeta, nw1, nw2, nx)
-  dlb <- jg_fd_grad(function(bb) logvar_profile_a_L(bb, nbeta, nw1, nw2, nx), nb)
-  dlbe <- jg_fd_grad(function(be) logvar_profile_a_L(nb, be, nw1, nw2, nx), nbeta)
-  dpb <- jg_fd_grad(function(bb) logvar_profile_a_P(bb, nbeta, nw1, nw2, nx), nb)
-  dpbe <- jg_fd_grad(function(be) logvar_profile_a_P(nb, be, nw1, nw2, nx), nbeta)
+  dlb <- fd_jacobian(function(bb) logvar_profile_a_L(bb, nbeta, nw1, nw2, nx), nb)
+  dlbe <- fd_jacobian(function(be) logvar_profile_a_L(nb, be, nw1, nw2, nx), nbeta)
+  dpb <- fd_jacobian(function(bb) logvar_profile_a_P(bb, nbeta, nw1, nw2, nx), nb)
+  dpbe <- fd_jacobian(function(be) logvar_profile_a_P(nb, be, nw1, nw2, nx), nbeta)
   max(abs(jac$da_L_db - dlb)) < 1e-6 && max(abs(jac$da_L_dbeta - dlbe)) < 1e-6 &&
     max(abs(jac$da_P_db - dpb)) < 1e-6 && max(abs(jac$da_P_dbeta - dpbe)) < 1e-6
 }))
@@ -108,5 +108,5 @@ check("the midpoint-normal grid reproduces the Gaussian Jensen gap within 0.01",
   jg_need("logvar_logsumexp")
   y <- fx$jen_u^2
   aP <- logvar_logsumexp(log(y)) - log(length(y))
-  abs((aP - mean(log(y))) - 1.270362845) < 0.01
+  abs((aP - mean(log(y))) - LOGVAR_NORMAL_LOG_SQUARE_GAP) < 0.01
 }))

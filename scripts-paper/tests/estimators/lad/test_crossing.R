@@ -58,11 +58,10 @@ lad_ctx <- function(qs, w1, w2, x_mat, esc) {
 }
 
 cx_fx <- local({
-  set.seed(414L)
   n <- 40L
-  pcr <- scale(matrix(rnorm(n * 4L), n, 4L), center = TRUE, scale = FALSE)
-  colnames(pcr) <- paste0("l.pc", 1:4)
-  x_mat <- cbind("(Intercept)" = 1, pcr)
+  d <- paper_test_pc_design(n, 4L, 414L)
+  pcr <- d$pcr
+  x_mat <- d$x_mat
   w2 <- matrix(rnorm(n * 3L), n, 3L)
   b_ref <- c(0.3, -0.2, 0.15)
   e_ref <- 1.4 * sample(c(-1, 1), n, TRUE) + rnorm(n, sd = 0.3)

@@ -21,12 +21,9 @@ check <- .test$check
 # not a valid fitted-value envelope.
 base_calls <- 0L
 base_est <- list(
-  metadata = list(
-    estimator = "fixture", target_functional = "theta_var",
-    intercept_normalization = "fixture", sample_id = "fixture-sample",
-    smoothness = "smooth", inner_solver = "closed form",
-    response_scale = "variance", spec_id = "fixture-v1",
-    cold_start_rtol = 1e-8
+  metadata = paper_test_estimator_metadata(
+    "fixture", "theta_var", "fixture-sample", "fixture-v1",
+    intercept_normalization = "fixture", response_scale = "variance"
   ),
   coef_labels = c("a", "b"),
   fit_at_b = function(b, start = NULL) {

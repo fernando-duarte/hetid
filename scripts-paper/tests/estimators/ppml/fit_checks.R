@@ -191,5 +191,5 @@ check("PPML minus log-OLS intercept matches the Gaussian identity", safe({
   ols <- stats::lm.fit(xg, log(e^2))$coefficients
   gap <- unname(ppml$coef[1]) - unname(ols[1])
   slope <- unname(ppml$coef[-1]) - unname(ols[-1])
-  abs(gap - 1.270362845) <= 0.04 && max(abs(slope)) <= 0.03
+  abs(gap - LOGVAR_NORMAL_LOG_SQUARE_GAP) <= 0.04 && max(abs(slope)) <= 0.03
 }))
