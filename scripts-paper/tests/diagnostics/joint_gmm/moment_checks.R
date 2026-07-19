@@ -14,14 +14,6 @@ proj <- fx$proj
 b_star <- fx$b_star
 b_fd <- fx$b_fd
 
-# Central-difference Jacobian of a vector-valued moment f at the parameter x.
-jg_fd_jac <- function(f, x, h) {
-  vapply(seq_along(x), function(k) {
-    e <- replace(numeric(length(x)), k, h)
-    (f(x + e) - f(x - e)) / (2 * h)
-  }, numeric(length(f(x))))
-}
-
 # Graph equivalence (dossier section 1): the just-identified log block recovers
 # theta_hat = P log(e^2); the benchmark moment vanishes there.
 check("just-identified log moment vanishes at the benchmark map theta_hat", jg_try({
@@ -94,12 +86,12 @@ check("analytic moment Jacobians match central differences over the step sweep",
   jpt <- logvar_jac_ppml_theta(b_fd, aP, beta, w1, w2, x_mat)
   ok <- TRUE
   for (h in c(1e-4, 3e-5, 1e-5)) {
-    fl <- jg_fd_jac(function(bb) logvar_moment_log(bb, aL, beta, w1, w2, x_mat), b_fd, h)
-    fp <- jg_fd_jac(function(bb) logvar_moment_ppml(bb, aP, beta, w1, w2, x_mat), b_fd, h)
-    ft <- jg_fd_jac(function(th) {
+    fl <- fd_jacobian(function(bb) logvar_moment_log(bb, aL, beta, w1, w2, x_mat), b_fd, h)
+    fp <- fd_jacobian(function(bb) logvar_moment_ppml(bb, aP, beta, w1, w2, x_mat), b_fd, h)
+    ft <- fd_jacobian(function(th) {
       logvar_moment_log(b_fd, th[1L], th[-1L], w1, w2, x_mat)
     }, c(aL, beta), h)
-    fq <- jg_fd_jac(function(th) {
+    fq <- fd_jacobian(function(th) {
       logvar_moment_ppml(b_fd, th[1L], th[-1L], w1, w2, x_mat)
     }, c(aP, beta), h)
     ok <- ok && max(abs(fl - jlb)) < 1e-6 && max(abs(fp - jpb)) < 1e-6 &&

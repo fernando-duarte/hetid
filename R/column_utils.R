@@ -90,7 +90,9 @@ assert_acm_data_types <- function(data_types, arg = "data_types") {
 #'   or \code{"risk_neutral_yields"}
 #' @param maturity Maturity index (or vector of indices)
 #' @return Character vector of column names, e.g. \code{"y60"}
-#' @keywords internal
+#' @examples
+#' acm_column_name("yields", c(12, 60))
+#' @export
 acm_column_name <- function(data_type, maturity) {
   assert_acm_data_type(data_type, arg = "data_type")
   sprintf(
@@ -98,6 +100,22 @@ acm_column_name <- function(data_type, maturity) {
     HETID_ACM_SCHEMA[[data_type]]$prefix_new,
     maturity
   )
+}
+
+#' Fetch an ACM Column by Schema Type and Maturity
+#'
+#' Thin wrapper for the repeated \code{require_column(data,
+#' acm_column_name(data_type, maturity), data_type)} fetch idiom in the
+#' news-kernel and SDF chain.
+#'
+#' @param data ACM data frame or matrix
+#' @param data_type Schema key: \code{"yields"}, \code{"term_premia"},
+#'   or \code{"risk_neutral_yields"}
+#' @param maturity Maturity index (single value)
+#' @return The requested column vector (see \code{\link{require_column}})
+#' @keywords internal
+require_acm_col <- function(data, data_type, maturity) {
+  require_column(data, acm_column_name(data_type, maturity), data_type)
 }
 
 #' Assert Input Is Tabular

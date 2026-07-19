@@ -41,11 +41,11 @@ seam_dummy <- function(analyze_domain = NULL, fail_at = NULL, traversal = "latti
     )
   }
   list(
-    metadata = list(
-      estimator = "lad", target_functional = "theta_median",
-      intercept_normalization = "median", sample_id = "seam", smoothness = "nonsmooth",
-      inner_solver = "quantreg rq.fit br", response_scale = "log",
-      spec_id = "seam-v1", cold_start_rtol = 1e-9, traversal = traversal
+    metadata = paper_test_estimator_metadata(
+      "lad", "theta_median", "seam", "seam-v1",
+      smoothness = "nonsmooth", inner_solver = "quantreg rq.fit br",
+      response_scale = "log", intercept_normalization = "median",
+      cold_start_rtol = 1e-9, extra = list(traversal = traversal)
     ),
     coef_labels = c("t0", "t1"), fit_at_b = fit_at_b, analyze_domain = analyze_domain
   )

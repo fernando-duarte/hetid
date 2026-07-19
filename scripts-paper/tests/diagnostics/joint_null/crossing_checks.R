@@ -3,7 +3,7 @@
 # slope-leverage divergence, the zero-leverage and cancellation cases, the
 # perturbation aggregation, and the response/objective/gradient/scales
 # primitives. Sourced by test_joint_null.R, which owns check(),
-# jn_try, jn_fx, and the jn_ball/jn_fd_grad helpers. The leverage and
+# jn_try, jn_fx, and the jn_ball helper and shared fd_jacobian. The leverage and
 # zero-leverage checks are pure algebra on logvar_theta_hat and may pass before
 # the module lands; the rest fail closed.
 fx <- jn_fx
@@ -154,7 +154,7 @@ check("jn objective q equals half the summed squared scaled slopes", jn_try({
 check("jn analytic gradient matches central finite differences", jn_try({
   qf <- function(b) logvar_joint_null_objective(b, fx$w1, fx$w2, fx$proj, di2)$q
   an <- logvar_joint_null_gradient(fx$b_nonwit, fx$w1, fx$w2, fx$proj, di2)
-  max(abs(an - jn_fd_grad(qf, fx$b_nonwit))) < 1e-6 * max(1, max(abs(an)))
+  max(abs(an - fd_jacobian(qf, fx$b_nonwit))) < 1e-6 * max(1, max(abs(an)))
 }))
 # Scales are 1/sd, strictly positive, with d_inv2 = d^-2.
 check("jn scales are 1/sd, strictly positive, with d_inv2 = d^-2", jn_try({

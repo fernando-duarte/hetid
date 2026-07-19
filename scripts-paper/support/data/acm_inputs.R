@@ -17,8 +17,8 @@ paper_load_quarterly_acm <- function(
     auto_download = contract$auto_download,
     source = contract$source
   )
-  yield_cols <- paste0("y", maturities)
-  term_premium_cols <- paste0("tp", maturities)
+  yield_cols <- hetid::acm_column_name("yields", maturities)
+  term_premium_cols <- hetid::acm_column_name("term_premia", maturities)
   required <- c("date", yield_cols, term_premium_cols)
   missing <- setdiff(required, names(acm))
   if (length(missing)) {

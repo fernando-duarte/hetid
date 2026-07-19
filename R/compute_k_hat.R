@@ -52,22 +52,19 @@
 #'
 compute_k_hat <- function(yields, term_premia, i,
                           step = HETID_CONSTANTS$DEFAULT_STEP) {
-  validate_step(step)
-  validate_maturity_index(i)
-  validate_step_multiple(
-    i, step,
-    "the realized-vs-forecast pairing shifts whole news periods"
+  validate_news_kernel_inputs(
+    yields, term_premia, i, step,
+    step_multiple_reason =
+      "the realized-vs-forecast pairing shifts whole news periods",
+    max_index = FALSE
   )
-  validate_row_alignment(yields, term_premia)
   if (i == step) {
     # i > step validates units transitively via n_hat_series; the i == step
     # boundary (compute_n_hat_previous direct branch) is the one gap
     validate_percent_units(yields)
   }
 
-  y_step <- require_column(
-    yields, acm_column_name("yields", step), "yields"
-  )
+  y_step <- require_acm_col(yields, "yields", step)
 
   n_hat_i_minus_1 <- compute_n_hat_previous(
     yields, term_premia, i,

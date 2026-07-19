@@ -445,7 +445,7 @@ test_that("container construction rejects maturities beyond the system", {
 
 test_that("assembly guard fires when components yield a non-finite form", {
   # d_i stays finite (tau_i^2 * V_i / sigma_i_sq), but an Inf in Q_i makes
-  # the assembled A_i non-finite, tripping the belt-and-braces guard
+  # the assembled A_i non-finite, tripping the redundant finiteness guard
   err <- tryCatch(
     quadratic_from_components(
       tau = c(0.5, 0.5),

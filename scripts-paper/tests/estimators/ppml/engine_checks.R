@@ -47,11 +47,9 @@ peng_dummy <- function(cold_disagree = FALSE, objective_fail = FALSE) {
     names(val) <- peng_labels
     paper_test_fit_result(val)
   }
-  est <- list(metadata = list(
-    estimator = "peng", target_functional = "theta_peng",
-    intercept_normalization = "none", sample_id = "peng-sample", smoothness = "smooth",
-    inner_solver = "cf", response_scale = "identity", spec_id = "peng-v1",
-    cold_start_rtol = 1e-8
+  est <- list(metadata = paper_test_estimator_metadata(
+    "peng", "theta_peng", "peng-sample", "peng-v1",
+    inner_solver = "cf"
   ), fit_at_b = fit_at_b)
   if (objective_fail) {
     est$coef_objective <- function(j) list(fn = function(b) stop("boom"), gr = NULL)

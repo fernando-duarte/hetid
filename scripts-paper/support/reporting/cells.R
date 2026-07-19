@@ -6,11 +6,28 @@ paper_source_once(paper_path("config", "reporting.R"))
   paste0("%.", as.integer(digits), "f")
 }
 
+# One rendering of an identified-set / confidence interval in LaTeX, shared by
+# the set, confidence, and endpoint-envelope cell formatters below. `marks`
+# selects the finite-interval brackets; `side` renders a half-infinite interval
+# ("upper" reports the finite upper bound, "lower" the finite lower bound).
+.interval_latex <- function(lower, upper, digits, marks = c("[", "]"),
+                            side = "none") {
+  fmt <- .paper_fixed_format(digits)
+  switch(side,
+    upper = sprintf(paste0("$(-\\infty,\\,", fmt, "]$"), upper),
+    lower = sprintf(paste0("$[", fmt, ",\\,\\infty)$"), lower),
+    none = sprintf(
+      paste0("$", marks[[1L]], fmt, ",\\,", fmt, marks[[2L]], "$"),
+      lower, upper
+    )
+  )
+}
+
 paper_format_number <- function(
   value,
   digits,
   missing = c("nonfinite", "na"),
-  missing_token = "--"
+  missing_token = PAPER_NA_TOKEN
 ) {
   missing <- match.arg(missing)
   unavailable <- if (missing == "nonfinite") {
@@ -48,30 +65,17 @@ paper_format_set_interval <- function(
   } else {
     abs(upper - lower) <= degenerate_rtol * (1 + abs(upper))
   }
-  fixed <- sprintf(
-    paste0(
-      "$[", .paper_fixed_format(digits), ",\\,",
-      .paper_fixed_format(digits), "]$"
-    ),
-    lower,
-    upper
-  )
+  fixed <- .interval_latex(lower, upper, digits)
   interval <- if (isTRUE(infinite_bounds)) {
     ifelse(
       is.infinite(lower) & is.infinite(upper),
       PAPER_ENDPOINT_STATUS[["unbounded"]],
       ifelse(
         is.infinite(lower),
-        sprintf(
-          paste0("$(-\\infty,\\,", .paper_fixed_format(digits), "]$"),
-          upper
-        ),
+        .interval_latex(lower, upper, digits, side = "upper"),
         ifelse(
           is.infinite(upper),
-          sprintf(
-            paste0("$[", .paper_fixed_format(digits), ",\\,\\infty)$"),
-            lower
-          ),
+          .interval_latex(lower, upper, digits, side = "lower"),
           fixed
         )
       )
@@ -91,14 +95,7 @@ paper_format_confidence_interval <- function(
 ) {
   brackets <- match.arg(brackets)
   marks <- if (brackets == "open") c("(", ")") else c("[", "]")
-  value <- sprintf(
-    paste0(
-      "$", marks[[1L]], .paper_fixed_format(digits), ",\\,",
-      .paper_fixed_format(digits), marks[[2L]], "$"
-    ),
-    lower,
-    upper
-  )
+  value <- .interval_latex(lower, upper, digits, marks = marks)
   ifelse(blank | !is.finite(lower) | !is.finite(upper), "", value)
 }
 
@@ -109,25 +106,21 @@ paper_format_endpoint_envelope <- function(lower, upper, side, digits) {
     "",
     ifelse(
       side == "upper",
-      sprintf(
-        paste0("$(-\\infty,\\,", .paper_fixed_format(digits), "]$"),
-        upper
-      ),
+      .interval_latex(lower, upper, digits, side = "upper"),
       ifelse(
         side == "lower",
-        sprintf(
-          paste0("$[", .paper_fixed_format(digits), ",\\,\\infty)$"),
-          lower
-        ),
-        sprintf(
-          paste0(
-            "$[", .paper_fixed_format(digits), ",\\,",
-            .paper_fixed_format(digits), "]$"
-          ),
-          lower,
-          upper
-        )
+        .interval_latex(lower, upper, digits, side = "lower"),
+        .interval_latex(lower, upper, digits)
       )
     )
+  )
+}
+
+# Shared column headers for the exact-set tables: the OLS and tau = 0 columns
+# followed by one header per displayed slack.
+paper_tau_col_headers <- function(tau_display) {
+  c(
+    "OLS", "$\\tau{=}0$",
+    sprintf("$\\tau{=}%s$", paper_format_tau(tau_display))
   )
 }

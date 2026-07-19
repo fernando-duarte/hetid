@@ -157,7 +157,7 @@ check("hm_Harvey minus log-OLS intercept is the +1.270362845 gap", safe({
   fh <- logvar_harvey_fit_response(norm_dat$e2, norm_dat$xg)
   ols <- stats::lm.fit(norm_dat$xg, log(norm_dat$e2))$coefficients
   gap <- unname(fh$coef[1]) - unname(ols[1])
-  abs(gap - 1.270362845) <= 0.02 && gap > 0
+  abs(gap - LOGVAR_NORMAL_LOG_SQUARE_GAP) <= 0.02 && gap > 0
 }))
 
 # Score-unit block -----------------------------------------------------------

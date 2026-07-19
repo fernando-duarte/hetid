@@ -15,7 +15,7 @@ panel_sources <- list(
   "SDF news PCs" = sdf_news_pc,
   "expected SDF" = expected_sdf[, c("qtr", paste0(expected_prefix, show_mats))],
   "SDF news" = sdf_news[, c("qtr", paste0(news_prefix, show_mats))],
-  "yield vols" = yield_vol[, c("qtr", paste0("y", show_mats, "_vol"))]
+  "yield vols" = yield_vol[, c("qtr", paper_yield_vol_col(show_mats))]
 )
 panel <- panel_sources |>
   purrr::reduce(dplyr::full_join, by = "qtr") |>
@@ -109,7 +109,12 @@ hist_plot <- ggplot2::ggplot(plot_df, ggplot2::aes(value, fill = group)) +
   ggplot2::scale_fill_manual(values = group_colors, guide = "none") +
   ggplot2::facet_wrap(~variable, scales = "free", ncol = 3) +
   ggplot2::labs(x = NULL, y = NULL)
-grDevices::pdf(figures_pdf, width = 11, height = 8.5)
+descriptive_device <- PAPER_FIGURE_RENDER_CONTROL$devices$descriptive
+grDevices::pdf(
+  figures_pdf,
+  width = descriptive_device[["width"]],
+  height = descriptive_device[["height"]]
+)
 print(ts_plot)
 print(hist_plot)
 grDevices::dev.off()
@@ -169,5 +174,5 @@ compile_latex_pdf(wrapper_tex)
 rm(
   panel_sources, variable_group, panel_long, nas, group_colors, plot_df,
   ts_plot, hist_plot, reg_summary, write_kable, summary_tex, correlations_tex,
-  regression_tex, figures_pdf, wrapper_tex, report_reference
+  regression_tex, figures_pdf, wrapper_tex, report_reference, descriptive_device
 )

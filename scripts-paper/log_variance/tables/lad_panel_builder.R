@@ -149,10 +149,7 @@ build_lad_panel_notes <- function(lad, tau_baseline, grid_cap, fit_budget) {
         "$\\tau{=}%s$; the median panel is appended after that ordered set and",
         "never influences it. %s"
       ),
-      paper_format_general(
-        tau_baseline,
-        PAPER_REPORTING_CONTROL$precision$tau_significant
-      ),
+      paper_format_tau(tau_baseline),
       if (is.null(caps)) "" else "Cells are inner projection hulls, not point estimates."
     )
   )

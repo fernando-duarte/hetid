@@ -80,10 +80,7 @@ logvar_estimator_panel_parts <- function(
       "$\\tau{=}0$",
       sprintf(
         "$\\tau{=}%s$",
-        paper_format_general(
-          tau_display,
-          PAPER_REPORTING_CONTROL$precision$tau_significant
-        )
+        paper_format_tau(tau_display)
       )
     ),
     n_obs = n_obs

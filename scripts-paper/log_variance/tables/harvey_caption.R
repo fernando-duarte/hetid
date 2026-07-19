@@ -76,10 +76,7 @@ build_harvey_panel_notes <- function(harvey, tau_baseline, grid_cap, fit_budget,
         "rule at $\\tau{=}%s$; the Harvey panel is a fixed robustness panel",
         "appended after that ordered pair and never influences it."
       ),
-      paper_format_general(
-        tau_baseline,
-        PAPER_REPORTING_CONTROL$precision$tau_significant
-      )
+      paper_format_tau(tau_baseline)
     ))
   }
   notes

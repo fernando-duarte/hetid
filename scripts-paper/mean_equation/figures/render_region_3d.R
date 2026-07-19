@@ -86,7 +86,8 @@ local({
   lo <- vapply(lims, `[`, numeric(1), 1)
   hi <- vapply(lims, `[`, numeric(1), 2)
   offsets <- c(hi[1], lo[2], lo[3])
-  wall_fill <- grDevices::adjustcolor("#9dc3e6", alpha.f = 0.4)
+  palette <- PAPER_FIGURE_STYLE$region
+  wall_fill <- grDevices::adjustcolor(palette$wall_fill, alpha.f = 0.4)
   for (perp in axes) {
     keep <- setdiff(axes, perp)
     first <- seq(lims[[keep[1]]][1], lims[[keep[1]]][2], length.out = n_wall)
@@ -108,7 +109,7 @@ local({
   }
 
   point0 <- unname(region_sd_point())
-  projection_col <- grDevices::adjustcolor("#dc143c", alpha.f = 0.65)
+  projection_col <- grDevices::adjustcolor(palette$tau0_point, alpha.f = 0.65)
   for (perp in axes) {
     wall_point <- point0
     wall_point[perp] <- offsets[perp]
@@ -120,14 +121,14 @@ local({
     graphics::points(
       projected[, "x"], projected[, "y"],
       pch = 21, bg = "white",
-      col = "#dc143c", cex = 1.1, lwd = 1.8
+      col = palette$tau0_point, cex = 1.1, lwd = 1.8
     )
   }
 
   face_depth <- vapply(mesh$faces, function(face) {
     mean(project_region_3d(face, pmat)[, "depth"])
   }, numeric(1))
-  face_fill <- grDevices::adjustcolor("#4a90d9", alpha.f = 0.10)
+  face_fill <- grDevices::adjustcolor(palette$face_fill, alpha.f = 0.10)
   for (face in mesh$faces[order(face_depth, decreasing = TRUE)]) {
     projected <- project_region_3d(face, pmat)
     graphics::polygon(
@@ -139,13 +140,13 @@ local({
     mean(project_region_3d(segment, pmat)[, "depth"])
   }, numeric(1))
   for (segment in mesh$segments[order(segment_depth, decreasing = TRUE)]) {
-    draw_projected_line(segment, pmat, col = "#112233", lwd = 0.9)
+    draw_projected_line(segment, pmat, col = palette$mesh_segment, lwd = 0.9)
   }
   projected_point <- project_region_3d(matrix(point0, nrow = 1), pmat)
   graphics::points(
     projected_point[, "x"], projected_point[, "y"],
     pch = 21,
-    bg = "#dc143c", col = "black", cex = 1.35, lwd = 0.5
+    bg = palette$tau0_point, col = "black", cex = 1.35, lwd = 0.5
   )
 
   center <- (lo + hi) / 2

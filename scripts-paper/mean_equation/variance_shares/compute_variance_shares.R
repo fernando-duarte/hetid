@@ -135,10 +135,7 @@ cat(sprintf(
     PAPER_REPORTING_CONTROL$cells$variance_share$digits,
     "na"
   ),
-  paper_format_general(
-    set_id_mean_eq$tau_baseline,
-    PAPER_REPORTING_CONTROL$precision$tau_significant
-  )
+  paper_format_tau(set_id_mean_eq$tau_baseline)
 ))
 
 rm(

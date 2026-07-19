@@ -36,11 +36,9 @@ seam_est <- function() {
     )
   }
   list(
-    metadata = list(
-      estimator = "seam-dummy", target_functional = "theta_seam",
-      intercept_normalization = "none", sample_id = "seam-sample",
-      smoothness = "smooth", inner_solver = "closed form",
-      response_scale = "level", spec_id = "seam-v1", cold_start_rtol = 1e-8
+    metadata = paper_test_estimator_metadata(
+      "seam-dummy", "theta_seam", "seam-sample", "seam-v1",
+      response_scale = "level"
     ),
     fit_at_b = fit_at_b
   )

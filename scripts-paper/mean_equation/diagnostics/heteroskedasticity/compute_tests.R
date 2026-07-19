@@ -12,11 +12,13 @@ y2 <- set_id_mean_eq$y2
 z <- set_id_mean_eq$z
 z_mat <- matrix(z, ncol = 1, dimnames = list(NULL, "z"))
 
-fmt <- function(x, d = 3) formatC(x, format = "f", digits = d)
+fmt <- function(x, d = PAPER_REPORTING_CONTROL$precision$diagnostic_table) {
+  formatC(x, format = "f", digits = d)
+}
 
 pcell <- function(x) {
   if (!is.finite(x)) {
-    return("--")
+    return(PAPER_NA_TOKEN)
   }
   stars <- sig_stars(x)
   paste0("{", fmt(x), if (nzchar(stars)) paste0("$", stars, "$"), "}")
@@ -91,19 +93,13 @@ column_cells <- function(k) {
 
 cells <- do.call(cbind, lapply(seq_len(ncol(y2)), column_cells))
 rk <- rk_rank_test(y2, z)
-fmt_sci <- function(x) {
-  sprintf(
-    "{\\num{%s}}",
-    formatC(
-      x,
-      format = "g",
-      digits =
-        PAPER_REPORTING_CONTROL$precision$diagnostic_table
-    )
-  )
-}
 joint_cells <- c(
-  vapply(c(rk$det, rk$kappa, rk$sv_min), fmt_sci, character(1)),
+  paper_format_sci(
+    c(rk$det, rk$kappa, rk$sv_min),
+    digits = PAPER_REPORTING_CONTROL$precision$diagnostic_table,
+    format = "g",
+    braces = TRUE
+  ),
   pcell(rk$p)
 )
 cells <- rbind(
@@ -188,4 +184,4 @@ caption <- local({
   }
 })
 n_obs <- set_id_mean_eq$sample$n
-span <- paste(format(set_id_mean_eq$sample$span), collapse = "--")
+span <- paper_sample_span(set_id_mean_eq$sample)

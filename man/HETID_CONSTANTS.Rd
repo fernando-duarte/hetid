@@ -27,6 +27,8 @@ annualized yields by maturity in years, so the n_hat weights are
 variance positivity diagnostic flags a maturity as degenerate}
 \item{PERCENT_TO_DECIMAL}{Percentage to decimal divisor}
 \item{MONTHS_PER_QUARTER}{Calendar months per quarter (3)}
+\item{MONTHS_PER_YEAR}{Calendar months per year (12), used for
+period-end month arithmetic}
 \item{USE_INCOMPLETE_QUARTERS}{Default policy for quarters missing
 their terminal month in quarterly conversion: TRUE keeps them
 (re-dated to quarter end), FALSE drops them}
@@ -52,6 +54,8 @@ month maturities (e.g. ACMY003M)}
 months (e.g. y12)}
 \item{INSUFFICIENT_NEWS_MSG}{Shared error message for the
 news-period data-sufficiency guard in the variance-bound kernels}
+\item{BOUND_INDEX_TRIM_MSG}{Shared step-multiple reason string for the
+bound-index-set kernels (c_hat/k2_hat)}
 }
 }
 \usage{

@@ -40,12 +40,11 @@ lad_dummy <- function(traversal = "lattice", objective_fail = FALSE) {
       diagnostics = list(), warm_start = NULL
     )
   }
-  est <- list(metadata = list(
-    estimator = "lad", target_functional = "theta_median",
-    intercept_normalization = "median", sample_id = "lad-dummy",
+  est <- list(metadata = paper_test_estimator_metadata(
+    "lad", "theta_median", "lad-dummy", "lad-dummy-v1",
     smoothness = "nonsmooth", inner_solver = "quantreg rq.fit br",
-    response_scale = "log", spec_id = "lad-dummy-v1", cold_start_rtol = 1e-9,
-    traversal = traversal
+    response_scale = "log", intercept_normalization = "median",
+    cold_start_rtol = 1e-9, extra = list(traversal = traversal)
   ), fit_at_b = fit_at_b)
   if (objective_fail) {
     est$coef_objective <- function(j) list(fn = function(b) stop("boom"), gr = NULL)
@@ -53,11 +52,10 @@ lad_dummy <- function(traversal = "lattice", objective_fail = FALSE) {
   est
 }
 ox_fx <- local({
-  set.seed(919L)
   n <- 60L
-  pcr <- scale(matrix(rnorm(n * 4L), n, 4L), center = TRUE, scale = FALSE)
-  colnames(pcr) <- paste0("l.pc", 1:4)
-  x_mat <- cbind("(Intercept)" = 1, pcr)
+  d <- paper_test_pc_design(n, 4L, 919L)
+  pcr <- d$pcr
+  x_mat <- d$x_mat
   qtr <- seq_len(n)
   w2 <- matrix(rnorm(n * 2L), n, 2L)
   b0 <- c(0.15, -0.1)
@@ -175,8 +173,8 @@ qr_check("lad normalization simulation tracks variance slopes and intercept gaps
   vint <- unname(logvar_ppml_fit_response(e^2, xg)$coef[1])
   mint <- unname(stats::lm.fit(xg, log(e^2))$coefficients[1])
   max(abs(unname(lad$coef[-1]) - beta)) <= 0.05 &&
-    abs((unname(lad$coef[1]) - mint) - 0.482765246) <= 0.05 &&
-    abs((unname(lad$coef[1]) - vint) - (-0.787597599)) <= 0.05
+    abs((unname(lad$coef[1]) - mint) - LOGVAR_NORMAL_MEDIAN_MEANLOG_GAP) <= 0.05 &&
+    abs((unname(lad$coef[1]) - vint) - LOGVAR_NORMAL_LOG_SQUARE_MEDIAN) <= 0.05
 })
 
 .test$finish()

@@ -52,7 +52,7 @@ print_logvar_joint_null <- function(rows, scales) {
     ))
     qtr_txt <- if (is.null(row$nearest_crossing_qtr) ||
       is.na(row$nearest_crossing_qtr)) {
-      "--"
+      PAPER_NA_TOKEN
     } else {
       row$nearest_crossing_qtr
     }

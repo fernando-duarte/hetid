@@ -71,10 +71,7 @@ build_ppml_notes <- function(ppml, tau_baseline, grid_cap, fit_budget,
           "count at $\\tau{=}%s$, not a selection between estimators of one",
           "parameter."
         ),
-        paper_format_general(
-          tau_baseline,
-          PAPER_REPORTING_CONTROL$precision$tau_significant
-        )
+        paper_format_tau(tau_baseline)
       )
     } else {
       NULL
@@ -159,18 +156,12 @@ build_logols_panel_notes <- function(tau_baseline, n_cross_base) {
         "panel is the fragile robustness benchmark."
       ),
       n_cross_base,
-      paper_format_general(
-        tau_baseline,
-        PAPER_REPORTING_CONTROL$precision$tau_significant
-      )
+      paper_format_tau(tau_baseline)
     )
   } else {
     sprintf(
       "No residual-zero crossing at $\\tau{=}%s$: the log benchmark leads.",
-      paper_format_general(
-        tau_baseline,
-        PAPER_REPORTING_CONTROL$precision$tau_significant
-      )
+      paper_format_tau(tau_baseline)
     )
   }
   c(

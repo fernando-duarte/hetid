@@ -72,21 +72,13 @@ compute_n_hat <- function(yields, term_premia, i, dates = NULL,
 #' @noRd
 n_hat_series <- function(yields, term_premia, i,
                          step = HETID_CONSTANTS$DEFAULT_STEP) {
-  validate_step(step)
-  validate_maturity_index(i, max_maturity = effective_max_maturity(step))
-  validate_row_alignment(yields, term_premia)
+  validate_news_kernel_inputs(yields, term_premia, i, step)
   validate_percent_units(yields)
 
-  y_i <- require_column(yields, acm_column_name("yields", i), "yields")
-  y_next <- require_column(
-    yields, acm_column_name("yields", i + step), "yields"
-  )
-  tp_i <- require_column(
-    term_premia, acm_column_name("term_premia", i), "term_premia"
-  )
-  tp_next <- require_column(
-    term_premia, acm_column_name("term_premia", i + step), "term_premia"
-  )
+  y_i <- require_acm_col(yields, "yields", i)
+  y_next <- require_acm_col(yields, "yields", i + step)
+  tp_i <- require_acm_col(term_premia, "term_premia", i)
+  tp_next <- require_acm_col(term_premia, "term_premia", i + step)
 
   if (i == step) {
     tp_i <- 0

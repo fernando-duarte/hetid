@@ -24,6 +24,6 @@ yield_vol <- acm_daily |>
     dplyr::across(dplyr::starts_with("y"), \(d2) sqrt(sum(d2, na.rm = TRUE))),
     .by = qtr
   ) |>
-  dplyr::rename_with(\(x) paste0(x, "_vol"), !qtr)
+  dplyr::rename_with(\(x) paste0(x, PAPER_YIELD_VOL_SUFFIX), !qtr)
 
 rm(acm_daily, yield_volatility_input)

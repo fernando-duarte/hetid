@@ -39,20 +39,6 @@ jn_ball <- function(center, radius) {
     c_i = sum(center^2) - radius^2
   )
 }
-# Exactly centered PC design with the l.pc1..l.pc4 names the helpers assert.
-jn_centered <- function(mat) {
-  out <- scale(mat, center = TRUE, scale = FALSE)
-  attr(out, "scaled:center") <- NULL
-  colnames(out) <- paste0("l.pc", seq_len(ncol(out)))
-  out
-}
-# Central-difference gradient of a scalar objective f at b.
-jn_fd_grad <- function(f, b, h = 1e-6) {
-  vapply(seq_along(b), function(k) {
-    e <- replace(numeric(length(b)), k, h)
-    (f(b + e) - f(b - e)) / (2 * h)
-  }, numeric(1))
-}
 
 # Shared deterministic fixtures. Each sub-fixture asserts its defining invariant
 # so a broken construction errors loudly at source time (correct, not a red).
@@ -65,7 +51,7 @@ jn_fx <- local({
   k <- 3L
   qtr <- seq_len(n)
   sample_id <- "jn-fixture-v1"
-  pcr <- jn_centered(matrix(rnorm(n * 4L), n, 4L))
+  pcr <- centered_pc_design(matrix(rnorm(n * 4L), n, 4L))
   proj <- logvar_projection(pcr)
   d <- d_of(pcr)
   b_star <- c(0.3, -0.2, 0.15)
@@ -87,7 +73,7 @@ jn_fx <- local({
   # joint scaled sup-norm stays away from zero (seed 38).
   set.seed(38L)
   n_mnj <- 40L
-  pcr_mnj <- jn_centered(matrix(rnorm(n_mnj * 4L), n_mnj, 4L))
+  pcr_mnj <- centered_pc_design(matrix(rnorm(n_mnj * 4L), n_mnj, 4L))
   proj_mnj <- logvar_projection(pcr_mnj)
   w2_mnj <- matrix(rnorm(n_mnj * 3L), n_mnj, 3L)
   b_c_mnj <- c(0.2, -0.1, 0.15)
@@ -106,7 +92,7 @@ jn_fx <- local({
   # Leverage crossing: row i_lev crosses exactly with nonzero slope leverage.
   set.seed(24L)
   n_lev <- 45L
-  pcr_lev <- jn_centered(matrix(rnorm(n_lev * 4L), n_lev, 4L))
+  pcr_lev <- centered_pc_design(matrix(rnorm(n_lev * 4L), n_lev, 4L))
   proj_lev <- logvar_projection(pcr_lev)
   w2_lev <- matrix(rnorm(n_lev * 3L), n_lev, 3L)
   b_cross_lev <- c(0.3, -0.2, 0.15)

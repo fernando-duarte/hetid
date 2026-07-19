@@ -104,6 +104,7 @@
 #'   \item \code{\link{download_term_premia}()}: Download ACM data
 #'   \item \code{\link{extract_acm_data}()}: Extract and process ACM data
 #'   \item \code{\link{load_term_premia}()}: Load cached ACM data
+#'   \item \code{\link{acm_column_name}()}: Build a reshaped ACM column name
 #' }}
 #'
 #' \subsection{Bond Pricing Functions:}{

@@ -48,11 +48,9 @@ he_dummy <- function(objective_fail = FALSE) {
     names(val) <- he_labels
     paper_test_fit_result(val)
   }
-  est <- list(metadata = list(
-    estimator = "harvey", target_functional = "theta_var_gaussian",
-    intercept_normalization = "none", sample_id = "he-sample", smoothness = "smooth",
-    inner_solver = "scoring", response_scale = "variance", spec_id = "he-v1",
-    cold_start_rtol = 1e-8
+  est <- list(metadata = paper_test_estimator_metadata(
+    "harvey", "theta_var_gaussian", "he-sample", "he-v1",
+    inner_solver = "scoring", response_scale = "variance"
   ), fit_at_b = fit_at_b)
   if (objective_fail) {
     est$coef_objective <- function(j) list(fn = function(b) stop("boom"), gr = NULL)
