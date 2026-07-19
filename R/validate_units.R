@@ -21,7 +21,13 @@ NULL
 #' @keywords internal
 validate_percent_units <- function(yields) {
   assert_tabular(yields, "yields")
-  y_max <- suppressWarnings(max(abs(as.matrix(yields)), na.rm = TRUE))
+  mat <- as.matrix(yields)
+  assert_bad_argument_ok(
+    is.numeric(mat),
+    "yields must contain only numeric columns",
+    arg = "yields"
+  )
+  y_max <- suppressWarnings(max(abs(mat), na.rm = TRUE))
   if (is.finite(y_max) && y_max < 1) {
     warn_hetid(
       paste0(

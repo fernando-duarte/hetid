@@ -33,7 +33,7 @@ build_var_share_notes <- function(sd_c) {
     "$\\Delta c_{t+1}=b_{0}+PC_{E,t}^{T}b_{E}+PC_{N,t+1}^{T}b_{N}+\\varepsilon_{t+1}$",
     sprintf(
       "of Table~\\ref{%s}, whose notes define the",
-      artifact_latex_label("structural_equation_table")
+      artifact_latex_label("structural_equation_inference_table")
     ),
     "notation, data, and estimation. Block rows report",
     "$100\\,\\widehat{\\mathrm{Var}}(PC^{T}b)/\\widehat{\\mathrm{Var}}(\\Delta c_{t+1})$,",
@@ -53,7 +53,7 @@ build_var_share_notes <- function(sd_c) {
     "slack $\\tau$: component rows map the exact per-coefficient ranges of",
     sprintf(
       "Table~\\ref{%s} through the square (the minimum",
-      artifact_latex_label("structural_equation_table")
+      artifact_latex_label("structural_equation_inference_table")
     ),
     "is zero when the range covers zero), and block rows minimize and",
     "maximize the quadratic share over the joint set (a feasibility grid of",

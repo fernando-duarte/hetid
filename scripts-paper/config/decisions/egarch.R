@@ -4,7 +4,7 @@
 # per the ladder stops the dynamic workstream as a complete success: neither the
 # changed-estimand nor the dependency approval is asked, both ordered decisions
 # are `not_asked`, and no heavy package is touched. The record still binds the
-# fresh gate record's scientific SHA-256, the sample id and gate fields, the
+# fresh gate record's decision-evidence SHA-256, the sample id and gate fields, the
 # approved-plan and upstream-plans hashes, and the two prompt texts with
 # their SHA-256, so a future rejecting run cannot reuse a stale approval or
 # silently reword a question the approvals answered.
@@ -52,7 +52,7 @@ logvar_egarch_dependency_prompt <- paste(
 logvar_egarch_decision <- list(
   schema_version = LOGVAR_EGARCH_SCHEMA_VERSION,
   gate_science_sha256 =
-    "ccb92931d63a33e01c157006dd1bb6bc9800ff68455d325d7079247faad76b7d",
+    "f7e7b8028ce79fbedac7c3863105be93df93379ddb12aece48e0cbcf4ca5b861",
   gate_record_path = LOGVAR_EGARCH_GATE_RECORD_PATH,
   sample_id = "n255_1962 Q2_2025 Q4_24138f4ddc2adda6de40372667337c10",
   gate_lag = 4L,

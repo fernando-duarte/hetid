@@ -1,13 +1,6 @@
-# Mode-dependent inference note for the structural-equation table.
+# Inference note for the structural-equation table's Stoye interval rows.
 
-structural_inference_note <- function(with_ci, inference_labels) {
-  if (!with_ci) {
-    return(c(
-      "Confidence statements for the $\\tau{>}0$ sets await a coverage",
-      "validation study; nominal interval diagnostics are reported in the",
-      "companion inference table and set\\_id\\_inference\\_diagnostics.csv."
-    ))
-  }
+structural_inference_note <- function(inference_labels) {
   c(
     sprintf(
       paste(

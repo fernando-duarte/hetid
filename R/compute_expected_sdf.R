@@ -136,13 +136,7 @@
 compute_expected_sdf <- function(yields, term_premia, i, dates = NULL,
                                  step = HETID_CONSTANTS$DEFAULT_STEP,
                                  paired = FALSE) {
-  validate_step(step)
-  # Lower bound 0 (not MIN_MATURITY): admits the horizon-0 boundary below
-  assert_scalar_integer_in_range(
-    i, "Maturity index i", 0L, effective_max_maturity(step),
-    arg = "i"
-  )
-  validate_row_alignment(yields, term_premia)
+  validate_expected_sdf_inputs(yields, term_premia, i, step)
   assert_flag(paired, "paired")
 
   if (i == 0) {

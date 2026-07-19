@@ -32,7 +32,7 @@ limit while preserving the original definition order and global symbols.
 
 | Module | Responsibility |
 |---|---|
-| `api.R` | Facade for statistics helpers (sources the three modules below) |
+| `api.R` | Facade for statistics helpers (sources `bootstrap_and_stationarity.R`, `mbb_runner.R`, and `reporting_and_validation.R`; `normalizations.R` is sourced directly by its consumers, not here) |
 | `bootstrap_and_stationarity.R` | Bootstrap sampling, summary statistics, and stationarity tests |
 | `mbb_runner.R` | Deterministic moving-block draw orchestration; indices are drawn up front, then run through a serial loop or `parallel::mclapply` |
 | `reporting_and_validation.R` | Statistical reporting and data-validation functions |

@@ -67,9 +67,12 @@ logvar_egarch_object_sha256 <- function(obj) {
 logvar_egarch_string_sha256 <- function(s) {
   paper_sha256_string(s)
 }
+# decision-evidence hash: exclude benchmark_commit (provenance) and the
+# descriptive sensitivity witnesses, which never affect the tau = 0 verdict
 logvar_egarch_gate_science_sha256 <- function(gate_record) {
   scientific <- gate_record
   scientific$benchmark_commit <- NULL
+  scientific$sensitivity <- NULL
   logvar_egarch_object_sha256(scientific)
 }
 

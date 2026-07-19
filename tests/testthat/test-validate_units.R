@@ -7,6 +7,14 @@ test_that("validate_percent_units rejects non-tabular input", {
   )
 })
 
+test_that("validate_percent_units rejects a non-numeric tabular input", {
+  y <- data.frame(a = c("x", "y"), b = c("z", "w"), stringsAsFactors = FALSE)
+  expect_error(
+    validate_percent_units(y),
+    class = "hetid_error_bad_argument"
+  )
+})
+
 test_that("validate_percent_units warns on decimal-looking yields", {
   y <- matrix(c(0.02, 0.03, 0.04, 0.05), ncol = 2)
   expect_warning(

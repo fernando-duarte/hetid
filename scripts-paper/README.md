@@ -31,7 +31,7 @@ scripts-paper/
 │   ├── inference/          bootstrap and bounds-by-tau inference
 │   ├── variance_shares/    share definitions, computation, and tables
 │   ├── figures/            projections and three-dimensional region rendering
-│   ├── tables/             structural-equation table and caption
+│   ├── tables/             structural-equation inference table, caption, and note
 │   └── diagnostics/heteroskedasticity/
 ├── log_variance/
 │   ├── core/               residual map and endpoint polishing

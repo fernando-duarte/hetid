@@ -40,6 +40,29 @@ validate_news_kernel_inputs <- function(yields, term_premia, i, step,
   invisible(TRUE)
 }
 
+#' Validate the Shared Expected-SDF Input Contract
+#'
+#' The common preamble for the expected-SDF kernels: a valid \code{step},
+#' a maturity index in \code{[0, effective_max_maturity(step)]} (the lower
+#' bound of 0 admits the horizon-0 boundary the callers handle), and
+#' row-aligned yields and term premia.
+#'
+#' @template param-yields-term-premia
+#' @param i Maturity index; the horizon-0 boundary (\code{i == 0}) is
+#'   admitted here and handled by the callers.
+#' @template param-step
+#' @return Invisible \code{TRUE}; stops with a structured error otherwise.
+#' @keywords internal
+validate_expected_sdf_inputs <- function(yields, term_premia, i, step) {
+  validate_step(step)
+  assert_scalar_integer_in_range(
+    i, "Maturity index i", 0L, effective_max_maturity(step),
+    arg = "i"
+  )
+  validate_row_alignment(yields, term_premia)
+  invisible(TRUE)
+}
+
 #' Compute Previous Period N-Hat
 #'
 #' Handles the boundary case \code{i == step}, where the
