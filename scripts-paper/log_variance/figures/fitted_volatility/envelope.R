@@ -111,6 +111,7 @@ logvar_fitted_vol_envelope <- function(
   list(
     metadata = list(
       estimator = est$metadata$estimator,
+      response_scale = est$metadata$response_scale,
       sample_id = est$metadata$sample_id, tau = tau,
       estimand = paste(
         "fitted conditional standard deviation of the consumption-growth",
