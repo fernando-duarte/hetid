@@ -44,7 +44,7 @@ scripts-paper/
 │   └── tables/             estimator panels, notes, and renderers
 ├── variance_bounds/        per-maturity SDF-news variance bounds figure and table
 ├── reports/                descriptive-statistics report builder
-├── support/                paper-owned identification, statistics, LaTeX, and diagnostics
+├── support/                paper-owned identification, statistics, LaTeX, reporting, runtime, and diagnostics helpers
 ├── tests/                  isolated suites, topology checks, and comparison support
 └── run_pipeline.R          ordered source orchestrator
 ```
@@ -81,15 +81,33 @@ Production dependencies are loaded through `paper_source_once()`; direct
 
 ## Gates and decisions
 
-- `config/decisions/joint_gmm.R` records the committed joint-GMM scope decision.
-- The base-R residual-dynamics diagnostic always runs and writes its gate record.
-- `config/decisions/egarch.R` is validated against the fresh gate and pinned protocol
-  hashes. The EGARCH router does not activate an estimator after a non-rejecting gate.
-- LAD runs only when the tracked decision DCF approves it and the installed `quantreg`
-  version matches the recorded version.
+Three distinct decision points guard the conditional log-variance workstreams. They are
+not interchangeable:
 
-Do not weaken or bypass these scientific and dependency gates. The EGARCH cleanup runs
-before the gate so stale conditional artifacts cannot look like current results.
+- **Joint-GMM: always-run diagnostic, not a run/skip gate.** `config/decisions/joint_gmm.R`
+  is the committed no-answer-default record; `log_variance/diagnostics/joint_gmm/run.R`
+  always evaluates the moment-specification and graph-replication checks and writes its
+  artifacts. Nothing downstream is skipped based on it.
+- **Residual-dynamics diagnostic: always runs.** The base-R Ljung-Box screen on the
+  `tau = 0` benchmark residual (`log_variance/diagnostics/dynamics/run_gate.R`) always runs,
+  uses base R only, and writes both the gate record and the always-present status manifest.
+  It sources no dynamic estimator; it only supplies the gate verdict.
+- **EGARCH: routing/status gate.** `config/decisions/egarch.R` binds a scientific SHA-256 of
+  the freshly regenerated dynamics-gate record, plus the sample id, gate fields, plan hashes,
+  and recorded prompt hashes. The router (`log_variance/extensions/egarch/run_route.R`)
+  validates that record against the fresh gate, routes every ladder branch, and rewrites the
+  status manifest. On the committed non-rejecting gate it closes the dynamic workstream
+  without sourcing any extension estimator.
+- **LAD: the one actually-gated executable optional estimator.** The tri-state DCF
+  `config/decisions/lad.dcf` is read by `log_variance/estimators/lad/dependency_gate.R`; the
+  median (LAD) set map is sourced only when the decision is `approved` and the installed
+  `quantreg` version matches the recorded `quantreg_version`. A missing, declined, or
+  unanswered decision sources no LAD code and adds no registry stub; an approved decision
+  with `quantreg` absent or version-mismatched hard-fails in the reader.
+
+Do not weaken or bypass these scientific and dependency gates. The conditional-artifact
+cleanup runs before routing (for both the LAD and EGARCH statuses) so stale conditional
+outputs cannot look like current results.
 
 ## Generated artifacts
 
@@ -108,14 +126,14 @@ scripts-paper/output/
 └── state/        bootstrap draws, gate/status records, and conditional pilot state
 ```
 
-Descriptive component tables and figures have their own subdirectories. LaTeX sidecars,
-`.DS_Store`, and the obsolete `set_id_region.json` are not artifacts.
+Descriptive component tables and figures have their own subdirectories. LaTeX sidecars and
+`.DS_Store` files are not artifacts.
 
 ## Prerequisites
 
 Use an installed `hetid` package and the analysis dependencies already required by the
 paper scripts, including the tidyverse/time-series packages, `nloptr`, `skedastic`,
-`ggplot2`, `gt`, and `sandwich`. LAD additionally requires the approved `quantreg`
+`ggplot2`, and `sandwich`. LAD additionally requires the approved `quantreg`
 version. A working LaTeX installation with `latexmk` is required for standalone tables and
 the descriptive report. The daily ACM asset must be available in the package cache or be
 downloadable; FRED access is needed for fresh data pulls.
@@ -133,6 +151,14 @@ Run the full pipeline serially:
 ```sh
 HETID_BOOT_REPS=200 HETID_BOOT_CORES=1 Rscript scripts-paper/run_pipeline.R
 ```
+
+`HETID_BOOT_REPS` (default 200) sets the replication count for both the mean-equation and
+the log-variance set bootstraps. `HETID_BOOT_CORES` (default `detectCores() - 1`)
+parallelizes only the log-variance set bootstrap, which forks its draws through
+`parallel::mclapply`; the mean-equation endpoint bootstrap always runs serially. Because the
+moving-block resampling indices are drawn deterministically up front, the log-variance set
+bootstrap yields identical results at any core count — `HETID_BOOT_CORES` changes runtime,
+not the published numbers.
 
 Run topology checks and all isolated paper suites:
 

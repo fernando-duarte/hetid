@@ -52,6 +52,7 @@ deflator
 DeHaven
 desync
 det
+deterministically
 dev
 df
 diag
@@ -124,6 +125,7 @@ lf
 LF
 libcurl
 Lifecycle
+lifecycle
 linter
 linters
 lintr
@@ -232,6 +234,7 @@ tidyverse
 Tobias
 tp
 TP
+tri
 tryCatch
 ttf
 uncentered
@@ -255,6 +258,8 @@ widehat
 withr
 woff
 WORDLIST
+workstream
+workstreams
 xls
 xz
 yaml
