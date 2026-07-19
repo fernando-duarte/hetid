@@ -2,7 +2,7 @@
 
 latex_tablenotes <- function(
   notes,
-  notes_label = "Notes:",
+  notes_label = PAPER_TABLE_NOTES_LABEL,
   separate_items = FALSE
 ) {
   prefix <- if (nzchar(notes_label)) {
@@ -28,7 +28,7 @@ latex_table_environment <- function(
   caption,
   label,
   notes = NULL,
-  notes_label = "Notes:",
+  notes_label = PAPER_TABLE_NOTES_LABEL,
   fontsize = ""
 ) {
   lines <- c(

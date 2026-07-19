@@ -33,6 +33,14 @@ PAPER_FIGURE_STYLE <- list(
       "lagged expected SDF PCs" = "#e34948",
       "yield vols" = "#c2439c"
     )
+  ),
+  # Identified-region figures (render_region_3d.R, render_projections.R). The
+  # tau = 0 point marker is one crimson shared by both figures.
+  region = list(
+    tau0_point = "#dc143c",
+    wall_fill = "#9dc3e6",
+    face_fill = "#4a90d9",
+    mesh_segment = "#112233"
   )
 )
 
@@ -42,7 +50,8 @@ PAPER_FIGURE_RENDER_CONTROL <- list(
     mean_bounds = c(width = 10, height = 5.5),
     logvar_bounds = c(width = 10, height = 6.5),
     fitted_volatility = c(width = 10, height = 6.25),
-    variance_bounds = c(width = 10, height = 6)
+    variance_bounds = c(width = 10, height = 6),
+    descriptive = c(width = 11, height = 8.5)
   ),
   region_3d = list(
     seed = 15599L,

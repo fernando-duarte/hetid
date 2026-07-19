@@ -58,10 +58,7 @@ logvar_print_map_summary <- function(
         "  tau = %s: %s | attempted %d evaluated %d ",
         "cached %d failed %d\n"
       ),
-      paper_format_general(
-        taus[[index]],
-        PAPER_REPORTING_CONTROL$precision$tau_significant
-      ),
+      paper_format_tau(taus[[index]]),
       paste(hull, collapse = " "),
       counts$n_attempted,
       counts$n_evaluated,
@@ -80,10 +77,7 @@ logvar_print_map_summary <- function(
       census_label,
       paste(
         paste0(
-          paper_format_general(
-            taus,
-            PAPER_REPORTING_CONTROL$precision$tau_significant
-          ),
+          paper_format_tau(taus),
           "=",
           census
         ),

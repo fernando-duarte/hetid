@@ -7,10 +7,15 @@ paper_source_once(paper_path("support", "latex", "simple_table.R"))
 
 variance_bounds_table_lines <- function(summary_stats) {
   stopifnot(is.numeric(summary_stats), length(summary_stats) == 5L)
-  fmt_sci <- function(x) ifelse(is.finite(x), sprintf("\\num{%.2e}", x), "--")
+  cells <- paper_format_sci(
+    summary_stats,
+    digits = PAPER_REPORTING_CONTROL$precision$variance_bound_sci,
+    format = "e",
+    na_token = PAPER_NA_TOKEN
+  )
   build_simple_latex_table(
     row_labels = names(summary_stats),
-    columns = list(vapply(summary_stats, fmt_sci, character(1))),
+    columns = list(cells),
     col_headers = "Value",
     stub = "Statistic",
     caption = paste(

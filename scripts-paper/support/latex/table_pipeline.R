@@ -92,7 +92,7 @@ build_panel_latex_table <- function(panels, col_headers, caption, label,
     caption = caption,
     label = label,
     notes = notes,
-    notes_label = "\\textit{Notes:}"
+    notes_label = sprintf("\\textit{%s}", PAPER_TABLE_NOTES_LABEL)
   )
 }
 
@@ -123,6 +123,17 @@ make_standalone_latex <- function(table_lines, landscape = FALSE) {
   )
 }
 
+# Stop when any sidecar remains after an unlink pass. Shared by both cleanup
+# paths so the failure contract stays in one place.
+.stop_if_sidecars_remain <- function(remaining) {
+  if (length(remaining)) {
+    stop(
+      "LaTeX sidecar cleanup failed: ", paste(remaining, collapse = ", ")
+    )
+  }
+  invisible(remaining)
+}
+
 #' Compile a LaTeX document with latexmk and clean its auxiliary files
 #'
 #' Stops on failure, so a LaTeX regression fails the calling pipeline.
@@ -145,12 +156,7 @@ compile_latex_pdf <- function(tex_path) {
     PAPER_LATEX_CONTROL$sidecar_extensions
   )
   unlink(sidecars)
-  remaining <- sidecars[file.exists(sidecars)]
-  if (length(remaining)) {
-    stop(
-      "LaTeX sidecar cleanup failed: ", paste(remaining, collapse = ", ")
-    )
-  }
+  .stop_if_sidecars_remain(sidecars[file.exists(sidecars)])
   invisible(cleanup_status)
 }
 
@@ -170,10 +176,9 @@ clean_latex_sidecars <- function(
     }
     Sys.sleep(wait_seconds)
   }
-  remaining <- list.files(root, pattern = pattern, recursive = TRUE, full.names = TRUE)
-  if (length(remaining)) {
-    stop("LaTeX sidecar cleanup failed: ", paste(remaining, collapse = ", "))
-  }
+  .stop_if_sidecars_remain(
+    list.files(root, pattern = pattern, recursive = TRUE, full.names = TRUE)
+  )
   invisible(removed)
 }
 

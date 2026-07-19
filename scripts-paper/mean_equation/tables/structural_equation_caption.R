@@ -12,7 +12,7 @@ paper_source_once(paper_path(
 
 build_structural_notes <- function(with_ci = FALSE) {
   n_obs <- set_id_mean_eq$sample$n
-  span <- paste(format(set_id_mean_eq$sample$span), collapse = "--")
+  span <- paper_sample_span(set_id_mean_eq$sample)
   inference_labels <- paper_inference_labels(
     set_id_boot$inference_contract
   )
@@ -93,10 +93,7 @@ build_structural_notes <- function(with_ci = FALSE) {
     sprintf(
       "$\\tau{>}0$ columns ($\\tau\\in\\{%s\\}$) relax each condition to an",
       paste(
-        paper_format_general(
-          set_id_mean_eq$tau_display,
-          PAPER_REPORTING_CONTROL$precision$tau_significant
-        ),
+        paper_format_tau(set_id_mean_eq$tau_display),
         collapse = ",\\,"
       )
     ),

@@ -5,7 +5,7 @@
 
 build_var_share_notes <- function(sd_c) {
   n_obs <- set_id_mean_eq$sample$n
-  span <- paste(format(set_id_mean_eq$sample$span), collapse = "--")
+  span <- paper_sample_span(set_id_mean_eq$sample)
   grid_points <-
     PAPER_ANALYSIS_CONTRACT$variance_share$grid_points_per_axis
 

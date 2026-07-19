@@ -59,9 +59,15 @@ PAPER_REPORTING_CONTROL <- list(
     diagnostic_table = 3L,
     figure_annotation = 3L,
     caption_percent = 3L,
-    caption_endpoint = 2L
+    caption_endpoint = 2L,
+    variance_bound_sci = 2L
   )
 )
+
+# Shared presentation tokens: the missing/not-applicable cell placeholder and
+# the table-notes label, so a single edit retargets every consumer.
+PAPER_NA_TOKEN <- "--"
+PAPER_TABLE_NOTES_LABEL <- "Notes:"
 
 PAPER_TABLE_STYLE <- list(
   coefficient = list(
@@ -124,6 +130,36 @@ paper_format_general <- function(value, digits) {
     paste0("%.", as.integer(digits), "g"),
     value
   )
+}
+
+# Canonical slack (tau) rendering: the significant-digit idiom repeated across
+# every table, caption, and figure annotation that prints a tau value.
+paper_format_tau <- function(tau) {
+  paper_format_general(
+    tau,
+    PAPER_REPORTING_CONTROL$precision$tau_significant
+  )
+}
+
+# The estimation-sample date span, formatted as "start--end" for a caption's
+# sample note. Takes the result's `$sample` sub-list.
+paper_sample_span <- function(sample) {
+  paste(format(sample$span), collapse = "--")
+}
+
+# siunitx scientific-notation cell shared by the diagnostics and variance-bound
+# summary tables. `braces` wraps the token for an S column; `na_token` (when not
+# NULL) substitutes for non-finite inputs, otherwise every value is formatted.
+paper_format_sci <- function(value, digits, format = "e", braces = FALSE,
+                             na_token = NULL) {
+  cell <- sprintf("\\num{%s}", formatC(value, format = format, digits = digits))
+  if (isTRUE(braces)) {
+    cell <- sprintf("{%s}", cell)
+  }
+  if (is.null(na_token)) {
+    return(cell)
+  }
+  ifelse(is.finite(value), cell, na_token)
 }
 
 paper_latex_sidecar_pattern <- function(

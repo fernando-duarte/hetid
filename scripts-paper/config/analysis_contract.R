@@ -139,6 +139,18 @@ paper_instrument_description <- function(
   sprintf("%s (\\texttt{%s})", spec$label, latex_column)
 }
 
+# Realized-volatility column suffix and the generated yield-vol column name.
+# One derivation of "y<maturity>_vol" for the producer (which appends the
+# suffix) and every consumer that reads a specific maturity's column.
+PAPER_YIELD_VOL_SUFFIX <- "_vol"
+
+paper_yield_vol_col <- function(maturity) {
+  paste0(
+    hetid::acm_column_name("yields", maturity),
+    PAPER_YIELD_VOL_SUFFIX
+  )
+}
+
 paper_normalize_model_matrix <- function(x, policy) {
   stopifnot(
     is.list(policy),

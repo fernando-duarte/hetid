@@ -96,10 +96,7 @@ caption <- sprintf(
   ),
   n_excl,
   n_pc,
-  paper_format_general(
-    tau_base,
-    PAPER_REPORTING_CONTROL$precision$tau_significant
-  )
+  paper_format_tau(tau_base)
 )
 # per-tau exact cells, interval frames, and integrity guards, computed once
 # and shared by both variants
@@ -140,7 +137,7 @@ for (v in variants) {
     } else {
       rep("", length(cell_dat$cells))
     }
-    c(interleave(cell_dat$cells, sub), "--", sprintf("%d", n_obs))
+    c(interleave(cell_dat$cells, sub), PAPER_NA_TOKEN, sprintf("%d", n_obs))
   })
   columns <- c(
     list(
@@ -155,23 +152,14 @@ for (v in variants) {
       ),
       c(
         interleave(fmt(coef_tab$point), point_ci_cells),
-        "--", sprintf("%d", n_obs)
+        PAPER_NA_TOKEN, sprintf("%d", n_obs)
       )
     ),
     unname(set_columns)
   )
   structural_table <- build_simple_latex_table(
     row_labels, columns,
-    col_headers = c(
-      "OLS", "$\\tau{=}0$",
-      sprintf(
-        "$\\tau{=}%s$",
-        paper_format_general(
-          set_id_mean_eq$tau_display,
-          PAPER_REPORTING_CONTROL$precision$tau_significant
-        )
-      )
-    ),
+    col_headers = paper_tau_col_headers(set_id_mean_eq$tau_display),
     caption = caption,
     label = artifact_latex_label(v$artifact_id),
     notes = build_structural_notes(with_ci = v$with_ci),
@@ -184,10 +172,7 @@ cat(
   sprintf("structural equation table: %d of %d b_N sets exclude zero", n_excl, n_pc),
   sprintf(
     "at tau = %s\n",
-    paper_format_general(
-      tau_base,
-      PAPER_REPORTING_CONTROL$precision$tau_significant
-    )
+    paper_format_tau(tau_base)
   )
 )
 rm(

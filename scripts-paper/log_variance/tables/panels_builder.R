@@ -42,13 +42,13 @@ logvar_logols_fragment <- function(headers, n_obs, ordering_note, label) {
         ),
         sprintf("%d", n_obs)
       ),
-      c(interleave(fmt(tab$point), ""), "--", sprintf("%d", n_obs))
+      c(interleave(fmt(tab$point), ""), PAPER_NA_TOKEN, sprintf("%d", n_obs))
     ),
     unname(lapply(log_var_eq$sets, function(st) {
       stopifnot(identical(st$coef, tab$coef))
       c(
         interleave(set_cell(st$set_lower, st$set_upper, st$status), ""),
-        "--", sprintf("%d", n_obs)
+        PAPER_NA_TOKEN, sprintf("%d", n_obs)
       )
     }))
   )
@@ -82,17 +82,7 @@ build_logvar_panels <- function(table_id, ppml_caption_suffix = ".",
     which(set_id_mean_eq$tau_display == baseline_tau)
   ]]
   n_obs <- log_var_eq$sample$n
-  headers <- c(
-    "OLS",
-    "$\\tau{=}0$",
-    sprintf(
-      "$\\tau{=}%s$",
-      paper_format_general(
-        set_id_mean_eq$tau_display,
-        PAPER_REPORTING_CONTROL$precision$tau_significant
-      )
-    )
-  )
+  headers <- paper_tau_col_headers(set_id_mean_eq$tau_display)
   ordering_note <- function(est) {
     if (order[1] != est) {
       return("")

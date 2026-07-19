@@ -82,7 +82,7 @@ build_simple_latex_table <- function(row_labels, columns, col_headers,
     caption = caption,
     label = label,
     notes = notes,
-    notes_label = "Notes:",
+    notes_label = PAPER_TABLE_NOTES_LABEL,
     fontsize = fontsize
   )
 }

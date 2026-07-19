@@ -111,10 +111,7 @@ ref_lines <- data.frame(
   tau = set_id_mean_eq$tau_baseline,
   line = sprintf(
     "baseline tau = %s",
-    paper_format_general(
-      set_id_mean_eq$tau_baseline,
-      PAPER_REPORTING_CONTROL$precision$tau_significant
-    )
+    paper_format_tau(set_id_mean_eq$tau_baseline)
   )
 )
 figure_style <- PAPER_FIGURE_STYLE$identified_set

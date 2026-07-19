@@ -73,7 +73,7 @@ logvar_set_envelope_cols <- function(sets, envelope, keys, tab_coef, n_obs) {
     stat_row <- if (is.null(e)) "" else envelope_cell(e$ci_lower, e$ci_upper, e$side)
     c(
       interleave(set_cell(st$set_lower, st$set_upper, st$status), stat_row),
-      "--", sprintf("%d", n_obs)
+      PAPER_NA_TOKEN, sprintf("%d", n_obs)
     )
   }
   unname(Map(set_col, sets, env))
@@ -90,7 +90,7 @@ logvar_set_envelope_cols <- function(sets, envelope, keys, tab_coef, n_obs) {
 logvar_se_point_col <- function(vals, se_frame, se_type, se_types, tab_coef,
                                 n_obs) {
   if (is.null(se_type)) {
-    return(c(interleave(fmt(vals), ""), "--", sprintf("%d", n_obs)))
+    return(c(interleave(fmt(vals), ""), PAPER_NA_TOKEN, sprintf("%d", n_obs)))
   }
   key <- match.arg(se_type, se_types) # loud on an unknown type
   stopifnot(
@@ -109,9 +109,9 @@ logvar_se_point_col <- function(vals, se_frame, se_type, se_types, tab_coef,
   # star-less coefficient would read as "tested, not significant"
   stat_row <- ifelse(
     is.finite(t_stat), sprintf("(%.2f)", t_stat),
-    ifelse(is.finite(vals) & !is.finite(se), "--", "")
+    ifelse(is.finite(vals) & !is.finite(se), PAPER_NA_TOKEN, "")
   )
-  c(interleave(cells, stat_row), "--", sprintf("%d", n_obs))
+  c(interleave(cells, stat_row), PAPER_NA_TOKEN, sprintf("%d", n_obs))
 }
 
 # The point-column conditioning caveat shared verbatim by both estimators' SE

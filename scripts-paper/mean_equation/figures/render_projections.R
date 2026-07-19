@@ -16,6 +16,7 @@ local({
   dimension <- PAPER_ANALYSIS_CONTRACT$figure$region_dimension
   render <- PAPER_FIGURE_RENDER_CONTROL$projections
   tcols <- render$tau_colors
+  tau0_col <- PAPER_FIGURE_STYLE$region$tau0_point
   stopifnot(length(tcols) == length(taus))
   m <- render$grid_points
   axes <- seq_len(dimension)
@@ -94,7 +95,7 @@ local({
     }
     graphics::points(point0[p$x], point0[p$y],
       pch = 21, bg = "white",
-      col = "#d81b3f", cex = 1.3, lwd = 1.6
+      col = tau0_col, cex = 1.3, lwd = 1.6
     )
   }
 
@@ -107,7 +108,7 @@ local({
   legend("center",
     horiz = TRUE, bty = "n", cex = 1.0,
     legend = legend_items,
-    col = c(tcols, "grey40", "#d81b3f"),
+    col = c(tcols, "grey40", tau0_col),
     lty = c(1, 1, 1, 2, NA), lwd = c(2, 2, 2, 1, NA),
     pch = c(NA, NA, NA, NA, 21), pt.bg = "white", pt.lwd = 1.6
   )

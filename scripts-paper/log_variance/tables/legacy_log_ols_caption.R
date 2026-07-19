@@ -8,7 +8,7 @@ paper_source_once(paper_path("support", "reporting", "inference.R"))
 
 build_logvar_notes <- function() {
   n_obs <- log_var_eq$sample$n
-  span <- paste(format(log_var_eq$sample$span), collapse = "--")
+  span <- paper_sample_span(log_var_eq$sample)
   c(
     "The estimated equation is",
     "$\\log\\varepsilon_{t+1}^{2}=\\theta_{0}+PC_{R,t}^{T}\\theta_{R}+\\xi_{t+1}$",

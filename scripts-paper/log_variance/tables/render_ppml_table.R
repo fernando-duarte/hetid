@@ -47,10 +47,7 @@ caption <- if (all(coef_tab$status == "bounded")) {
     ),
     n_excl,
     n_pc_r,
-    paper_format_general(
-      set_id_mean_eq$tau_baseline,
-      PAPER_REPORTING_CONTROL$precision$tau_significant
-    )
+    paper_format_tau(set_id_mean_eq$tau_baseline)
   )
 } else {
   sprintf(
@@ -58,10 +55,7 @@ caption <- if (all(coef_tab$status == "bounded")) {
       "Quasi-Poisson PPML identified sets for the log-variance equation: ",
       "at $\\tau{=}%s$ the computed image is not reliable on every side."
     ),
-    paper_format_general(
-      set_id_mean_eq$tau_baseline,
-      PAPER_REPORTING_CONTROL$precision$tau_significant
-    )
+    paper_format_tau(set_id_mean_eq$tau_baseline)
   )
 }
 
@@ -87,10 +81,7 @@ cat(sprintf(
   "PPML log-variance table: %d of %d theta_R sets exclude zero at tau = %s\n",
   n_excl,
   n_pc_r,
-  paper_format_general(
-    set_id_mean_eq$tau_baseline,
-    PAPER_REPORTING_CONTROL$precision$tau_significant
-  )
+  paper_format_tau(set_id_mean_eq$tau_baseline)
 ))
 
 # The shared formatters and panel-notes builder remain available to the

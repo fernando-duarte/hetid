@@ -94,34 +94,19 @@ caption <- if (identical(base_status, PAPER_ENDPOINT_STATUS[["bounded"]])) {
       "growth at $\\tau{=}%s$."
     ),
     base_rng$lo[var_share$news_row], base_rng$hi[var_share$news_row],
-    paper_format_general(
-      set_id_mean_eq$tau_baseline,
-      PAPER_REPORTING_CONTROL$precision$tau_significant
-    )
+    paper_format_tau(set_id_mean_eq$tau_baseline)
   )
 } else {
   sprintf(
     "The SDF-news share of consumption-growth variance at $\\tau{=}%s$ is %s.",
-    paper_format_general(
-      set_id_mean_eq$tau_baseline,
-      PAPER_REPORTING_CONTROL$precision$tau_significant
-    ),
+    paper_format_tau(set_id_mean_eq$tau_baseline),
     base_status
   )
 }
 
 var_share_table <- build_simple_latex_table(
   row_labels, unname(columns),
-  col_headers = c(
-    "OLS", "$\\tau{=}0$",
-    sprintf(
-      "$\\tau{=}%s$",
-      paper_format_general(
-        set_id_mean_eq$tau_display,
-        PAPER_REPORTING_CONTROL$precision$tau_significant
-      )
-    )
-  ),
+  col_headers = paper_tau_col_headers(set_id_mean_eq$tau_display),
   caption = caption,
   label = artifact_latex_label("variance_share_table"),
   notes = build_var_share_notes(sd_c = var_share$sd_c),
