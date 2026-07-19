@@ -4,9 +4,8 @@
 \alias{validate_instrument_support}
 \title{Validation for Instrument Support Index Lists}
 \description{
-Internal validators shared by \code{\link{lambda_from_support}},
-\code{\link{align_instrument_sets}}, and (via \code{:::}) the
-scripts-layer optimizer support mask. A support is a list with one
+Internal validators shared by \code{\link{lambda_from_support}} and
+\code{\link{align_instrument_sets}}. A support is a list with one
 integer vector of free instrument rows per constrained system
 column and NULL at every unconstrained column -- the same
 positional convention as the lambda weight lists themselves.

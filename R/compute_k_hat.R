@@ -13,7 +13,7 @@
 #'
 #' @section Mathematical Formula:
 #' With h = i/step news periods and m(step) the step maturity in years:
-#' \deqn{k\_hat_i = \mathrm{mean}_t (-m(step) y_{t+h}^{(step)} - n\_hat(i-step,t+1))^4}
+#' \deqn{k\_hat_i = \mathrm{mean}_t (-m(step) y_{t+h}^{(step)} / 100 - n\_hat(i-step,t+1))^4}
 #'
 #' The mean is taken over the valid (non-missing) terms for
 #' \eqn{t = 1, \dots, T-h}; with complete data the divisor is \eqn{T-h}.

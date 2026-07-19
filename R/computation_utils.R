@@ -100,7 +100,7 @@ prepare_return_data <- function(result_series, dates, yields,
   )
 
   # News series: prepend NA so news[t] (change t→t+1) carries dates[t+1]
-  result_aligned <- if (is_news) c(NA, result_series) else result_series
+  result_aligned <- if (is_news) c(NA_real_, result_series) else result_series
 
   result_df <- data.frame(date = dates, stringsAsFactors = FALSE)
   result_df[[series_name]] <- result_aligned

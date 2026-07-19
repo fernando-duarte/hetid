@@ -27,8 +27,7 @@ download is always source-specific.}
 \value{
 A data frame containing the term premia data. Raises a
 \code{hetid_error_insufficient_data} condition when the data is not
-available (every source now fails the same way; the \code{"auto"}/
-\code{"github"} path formerly returned NULL).
+available (every source fails the same way).
 }
 \description{
 Loads the ACM term premia data. The default \code{"auto"} source

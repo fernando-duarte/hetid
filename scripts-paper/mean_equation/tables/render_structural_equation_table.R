@@ -3,7 +3,7 @@
 # Delta c_{t+1} = b_0 + PC_{E,t}' b_E + PC_{N,t+1}' b_N + eps_{t+1},
 # with the OLS benchmark (Newey-West t statistics), the closed-form Lewbel
 # point at tau = 0, and the exact identified set at each tau_display slack.
-# Writes both structural-equation table variants and their standalone PDFs to
+# Writes the structural-equation inference table and its standalone PDF to
 # the typed table directory after mean-set estimation.
 paper_source_once(paper_path("support", "latex", "table_pipeline.R"))
 paper_source_once(paper_path("support", "latex", "simple_table.R"))
@@ -98,7 +98,7 @@ caption <- sprintf(
   paper_format_tau(tau_base)
 )
 # per-tau exact cells, interval frames, and integrity guards, computed once
-# and shared by both variants
+# for the inference table and its standalone
 set_data <- lapply(names(set_id_mean_eq$set_tables), function(nm) {
   st <- set_id_mean_eq$set_tables[[nm]]
   tab <- rbind(st$beta1, st$theta)
