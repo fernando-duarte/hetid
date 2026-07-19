@@ -95,9 +95,6 @@ PAPER_CONDITIONAL_ARTIFACT_STATUSES <- setdiff(
   "log_variance_inference_table|log_var_eq_panels_inference.tex|2|g|B|r",
   "log_variance_inference_standalone_tex|log_var_eq_panels_inference_standalone.tex|2|g|B|r",
   "log_variance_inference_standalone_pdf|log_var_eq_panels_inference_standalone.pdf|2|g|B|r",
-  "structural_equation_table|structural_eq.tex|2|h|B|r",
-  "structural_equation_standalone_tex|structural_eq_standalone.tex|2|h|B|r",
-  "structural_equation_standalone_pdf|structural_eq_standalone.pdf|2|h|B|r",
   "structural_equation_inference_table|structural_eq_inference.tex|2|h|B|r",
   "structural_equation_inference_standalone_tex|structural_eq_inference_standalone.tex|2|h|B|r",
   "structural_equation_inference_standalone_pdf|structural_eq_inference_standalone.pdf|2|h|B|r",
@@ -150,7 +147,6 @@ PAPER_CONDITIONAL_ARTIFACT_STATUSES <- setdiff(
   "lad_fitted_volatility_figure|fitted_volatility|lad",
   "log_variance_panels_table|logvar_panels|conservative",
   "log_variance_inference_table|logvar_panels|inference",
-  "structural_equation_table|structural_equation|conservative",
   "structural_equation_inference_table|structural_equation|inference"
 )
 

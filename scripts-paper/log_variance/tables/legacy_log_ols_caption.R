@@ -15,7 +15,7 @@ build_logvar_notes <- function() {
     "with $\\varepsilon_{t+1}$ the structural residual of the",
     sprintf(
       "consumption-growth equation (Table \\ref{%s}),",
-      artifact_latex_label("structural_equation_table")
+      artifact_latex_label("structural_equation_inference_table")
     ),
     sprintf("$\\theta_{R}$ a $%d\\times1$ vector of constant parameters, and", n_pc_r),
     "$\\xi_{t+1}$ a mean-zero error term.",

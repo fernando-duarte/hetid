@@ -60,9 +60,8 @@ ols_tstats <- sprintf(
   )
 )
 # sampling uncertainty from the endpoint bootstrap (run_bootstrap.R):
-# robust nominal 90% intervals under the tau = 0 points in both variants,
-# Stoye-calibrated nominal intervals under the set cells in the inference
-# variant only; blank cells stay blank
+# robust nominal 90% intervals under the tau = 0 points, and Stoye-calibrated
+# nominal intervals under the set cells; blank cells stay blank
 stopifnot(identical(set_id_boot$point_ci$coef, coef_tab$coef))
 interval_cell <- function(lo, hi, blank) {
   policy <- PAPER_REPORTING_CONTROL$cells$structural
@@ -108,66 +107,41 @@ set_data <- lapply(names(set_id_mean_eq$set_tables), function(nm) {
   stopifnot(identical(inf$coef, coef_tab$coef))
   list(cells = set_cell(tab$set_lower, tab$set_upper, tab$status), inf = inf)
 })
-# both variants share every cell except the interval rows under the set
-# cells; the conservative variant keeps the manuscript's include filename,
-# and both carry the same label -- the manuscript includes exactly one of
-# the two files, and a shared label keeps every \ref valid across the swap
-variants <- list(
-  list(
-    artifact_id = artifact_variant_id(
-      "structural_equation",
-      "conservative"
-    ),
-    with_ci = FALSE
-  ),
-  list(
-    artifact_id = artifact_variant_id(
-      "structural_equation",
-      "inference"
-    ),
-    with_ci = TRUE
+artifact_id <- artifact_variant_id("structural_equation", "inference")
+set_columns <- lapply(set_data, function(cell_dat) {
+  sub <- interval_cell(
+    cell_dat$inf$ci_lower, cell_dat$inf$ci_upper, cell_dat$cells == ""
   )
-)
-for (v in variants) {
-  set_columns <- lapply(set_data, function(cell_dat) {
-    sub <- if (v$with_ci) {
-      interval_cell(
-        cell_dat$inf$ci_lower, cell_dat$inf$ci_upper, cell_dat$cells == ""
-      )
-    } else {
-      rep("", length(cell_dat$cells))
-    }
-    c(interleave(cell_dat$cells, sub), PAPER_NA_TOKEN, sprintf("%d", n_obs))
-  })
-  columns <- c(
-    list(
-      c(
-        interleave(ols_cells, ols_tstats),
-        paper_format_number(
-          r2,
-          PAPER_REPORTING_CONTROL$cells$statistic_digits,
-          "na"
-        ),
-        sprintf("%d", n_obs)
+  c(interleave(cell_dat$cells, sub), PAPER_NA_TOKEN, sprintf("%d", n_obs))
+})
+columns <- c(
+  list(
+    c(
+      interleave(ols_cells, ols_tstats),
+      paper_format_number(
+        r2,
+        PAPER_REPORTING_CONTROL$cells$statistic_digits,
+        "na"
       ),
-      c(
-        interleave(fmt(coef_tab$point), point_ci_cells),
-        PAPER_NA_TOKEN, sprintf("%d", n_obs)
-      )
+      sprintf("%d", n_obs)
     ),
-    unname(set_columns)
-  )
-  structural_table <- build_simple_latex_table(
-    row_labels, columns,
-    col_headers = paper_tau_col_headers(set_id_mean_eq$tau_display),
-    caption = caption,
-    label = artifact_latex_label(v$artifact_id),
-    notes = build_structural_notes(with_ci = v$with_ci),
-    fontsize = PAPER_TABLE_STYLE$coefficient$fontsize,
-    rule_after = c(2L * (1L + n_pc), 2L * (1L + 2L * n_pc))
-  )
-  publish_latex_artifact(v$artifact_id, structural_table)
-}
+    c(
+      interleave(fmt(coef_tab$point), point_ci_cells),
+      PAPER_NA_TOKEN, sprintf("%d", n_obs)
+    )
+  ),
+  unname(set_columns)
+)
+structural_table <- build_simple_latex_table(
+  row_labels, columns,
+  col_headers = paper_tau_col_headers(set_id_mean_eq$tau_display),
+  caption = caption,
+  label = artifact_latex_label(artifact_id),
+  notes = build_structural_notes(),
+  fontsize = PAPER_TABLE_STYLE$coefficient$fontsize,
+  rule_after = c(2L * (1L + n_pc), 2L * (1L + 2L * n_pc))
+)
+publish_latex_artifact(artifact_id, structural_table)
 cat(
   sprintf("structural equation table: %d of %d b_N sets exclude zero", n_excl, n_pc),
   sprintf(
@@ -179,5 +153,5 @@ rm(
   coef_tab, fmt, set_cell, n_obs, r2, tau_base, row_labels, columns,
   set_columns, nw, ols_cells, ols_tstats,
   coef_labels, n_excl, caption, build_structural_notes, structural_table,
-  interval_cell, point_ci_cells, set_data, variants, v
+  interval_cell, point_ci_cells, set_data, artifact_id
 )

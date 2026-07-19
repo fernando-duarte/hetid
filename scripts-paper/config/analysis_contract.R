@@ -59,7 +59,7 @@ PAPER_ANALYSIS_CONTRACT <- local({
     tau = list(
       baseline = 0.05,
       cap = 0.99,
-      display = c(0.05, 0.10, 0.20, 0.40),
+      display = c(0.05, 0.10, 0.20),
       projection = c(0.05, 0.10, 0.20),
       sweep_step = 0.005,
       bootstrap_step = 0.05,

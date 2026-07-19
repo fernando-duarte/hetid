@@ -1,16 +1,15 @@
 # Caption-notes builder for the structural-equation table: the notation
-# paragraph, the estimation description, and the mode-dependent clauses.
+# paragraph, the estimation description, and the Stoye interval clause.
 # Sourced at the top of render_structural_equation_table.R; reads the run_pipeline.R constants
 # (n_pc, mats_qtr, step_qtr, z_desc, impose_beta2r_null) and the
-# set_id_mean_eq result list at call time. with_ci selects the closing
-# paragraph for the conservative (FALSE) or inference (TRUE) variant.
+# set_id_mean_eq result list at call time.
 
 paper_source_once(paper_path("support", "reporting", "inference.R"))
 paper_source_once(paper_path(
   "mean_equation", "tables", "structural_inference_note.R"
 ))
 
-build_structural_notes <- function(with_ci = FALSE) {
+build_structural_notes <- function() {
   n_obs <- set_id_mean_eq$sample$n
   span <- paper_sample_span(set_id_mean_eq$sample)
   inference_labels <- paper_inference_labels(
@@ -181,6 +180,6 @@ build_structural_notes <- function(with_ci = FALSE) {
         PAPER_REPORTING_CONTROL$precision$caption_percent
       )
     ),
-    structural_inference_note(with_ci, inference_labels)
+    structural_inference_note(inference_labels)
   )
 }
