@@ -144,6 +144,9 @@ normalize_acm_date_column <- function(acm_data) {
 #' @return ACM data frame filtered to the bounds, NA-dated rows dropped
 #' @noRd
 filter_acm_date_range <- function(acm_data, start_date, end_date) {
+  # unparsed dates arrive as NA; drop them here so an unbounded call still
+  # honours the warn-and-continue contract instead of aborting in to_period_end
+  acm_data <- acm_data[!is.na(acm_data$date), , drop = FALSE]
   if (!is.null(start_date)) {
     acm_data <- acm_data[which(acm_data$date >= start_date), , drop = FALSE]
   }
