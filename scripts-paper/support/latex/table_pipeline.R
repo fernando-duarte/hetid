@@ -1,23 +1,16 @@
 # LaTeX panel-table helpers
-# Booktabs/threeparttable/siunitx layout with bold panel rows, a column-group
-# spanner, and tablenotes, replicating the legacy publication format. Also
+# Booktabs tabular with bold panel rows and a column-group spanner, emitted as
+# a bare fragment; the paper supplies the float, caption, and notes. Also
 # provides a standalone compilable document variant for quick PDF checks.
 
 paper_source_once(paper_path("support", "latex", "table_environment.R"))
 paper_source_once(paper_path("config", "reporting.R"))
 
-# Brace-wrap any cell a siunitx S column cannot parse as a plain number
-# (e.g. "unbounded", "unreliable", "--"); leave numbers and already-braced
-# cells untouched.
-.brace_s_cell <- function(x) {
-  x <- as.character(x)
-  x[is.na(x)] <- "--"
-  needs_brace <- !grepl("^[-+]?[0-9]*\\.?[0-9]+$", x) & !grepl("^\\{.*\\}$", x)
-  x[needs_brace] <- paste0("{", x[needs_brace], "}")
-  x
-}
-
-#' Build a booktabs/threeparttable/siunitx multi-panel LaTeX table
+#' Build the bare booktabs tabular for a multi-panel table
+#'
+#' The panel analog of simple_tabular_lines: plain centered data columns,
+#' without any float/threeparttable/caption/notes wrapper, so the published
+#' fragment is only \\begin{tabular} ... \\end{tabular}.
 #'
 #' @param panels named list; names are panel titles rendered as bold
 #'   "Panel <letter>: <title>" rows (letter assigned by position). Each
@@ -25,24 +18,18 @@ paper_source_once(paper_path("config", "reporting.R"))
 #'   may contain math) and whose remaining length(col_headers) columns hold
 #'   pre-formatted character cell values.
 #' @param col_headers character vector of column headers (e.g. maturities)
-#' @param caption table caption
-#' @param label LaTeX label key
-#' @param notes character vector for the tablenotes block (NULL to omit);
-#'   elements are concatenated into a single Notes item
 #' @param col_group_label spanner text over the numeric columns
-#' @param table_format siunitx S-column table-format specification
-#' @return character vector of LaTeX lines (table environment fragment)
-build_panel_latex_table <- function(panels, col_headers, caption, label,
-                                    notes = NULL,
-                                    col_group_label = "Maturity (months)",
-                                    table_format = "1.3") {
+#' @return character vector of LaTeX lines from \\begin{tabular} to
+#'   \\end{tabular}
+panel_tabular_lines <- function(panels, col_headers,
+                                col_group_label = "Maturity (months)") {
   n_cols <- length(col_headers)
   header_lines <- c(
     paste0(
       "& \\multicolumn{", n_cols, "}{c}{", col_group_label, "} \\\\"
     ),
     paste0("\\cmidrule(lr){2-", n_cols + 1, "}"),
-    paste0("& ", paste0("{", col_headers, "}", collapse = " & "), " \\\\")
+    paste0("& ", paste(col_headers, collapse = " & "), " \\\\")
   )
 
   body <- character()
@@ -64,7 +51,8 @@ build_panel_latex_table <- function(panels, col_headers, caption, label,
       "\\addlinespace[0.3em]"
     )
     for (row_idx in seq_len(nrow(panel_df))) {
-      cells <- .brace_s_cell(unlist(panel_df[row_idx, -1]))
+      cells <- as.character(unlist(panel_df[row_idx, -1]))
+      cells[is.na(cells)] <- "--"
       body <- c(
         body,
         paste0(
@@ -75,30 +63,21 @@ build_panel_latex_table <- function(panels, col_headers, caption, label,
     }
   }
 
-  col_spec <- paste0(
-    "l@{\\hskip 0.5in}*{", n_cols,
-    "}{S[table-format=", table_format, "]}"
-  )
-  latex_table_environment(
-    tabular_lines = c(
-      paste0("\\begin{tabular}{", col_spec, "}"),
-      "\\toprule",
-      header_lines,
-      "\\midrule",
-      body,
-      "\\bottomrule",
-      "\\end{tabular}"
-    ),
-    caption = caption,
-    label = label,
-    notes = notes,
-    notes_label = sprintf("\\textit{%s}", PAPER_TABLE_NOTES_LABEL)
+  col_spec <- paste0("l@{\\hskip 0.5in}", strrep("c", n_cols))
+  c(
+    paste0("\\begin{tabular}{", col_spec, "}"),
+    "\\toprule",
+    header_lines,
+    "\\midrule",
+    body,
+    "\\bottomrule",
+    "\\end{tabular}"
   )
 }
 
 #' Wrap a table fragment in a compilable standalone LaTeX document
 #'
-#' @param table_lines character vector from build_panel_latex_table()
+#' @param table_lines character vector of LaTeX table lines
 #' @return character vector of LaTeX lines for a complete document
 make_standalone_latex <- function(table_lines, landscape = FALSE) {
   geometry <- if (isTRUE(landscape)) {

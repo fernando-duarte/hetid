@@ -1,9 +1,9 @@
 # Simple booktabs/threeparttable LaTeX table with plain (l c c ...) columns.
-# Unlike build_panel_latex_table (siunitx S-columns for numeric panels), this
-# left-aligns row labels and centers each data column, so cells that are not
-# pure numbers -- e.g. identified-set interval strings "[lo, hi]" -- render
-# cleanly. Reuses make_standalone_latex / publish_latex_artifact from
-# table_pipeline.R for the standalone variant and manifest-directed writing.
+# Unlike panel_tabular_lines (bold panel rows, column-group spanner), this is
+# a flat rows-by-columns layout; cells that are not pure numbers -- e.g.
+# identified-set interval strings "[lo, hi]" -- render cleanly. Reuses
+# make_standalone_latex / publish_latex_artifact from table_pipeline.R for
+# the standalone variant and manifest-directed writing.
 
 #' Build the bare booktabs tabular for a plain-column table
 #'
