@@ -89,7 +89,6 @@ make_standalone_latex <- function(table_lines, landscape = FALSE) {
     "\\documentclass[11pt]{article}",
     "\\usepackage{booktabs}",
     "\\usepackage{threeparttable}",
-    "\\usepackage{siunitx}",
     "\\usepackage{array}",
     "\\usepackage{amssymb}",
     geometry,
