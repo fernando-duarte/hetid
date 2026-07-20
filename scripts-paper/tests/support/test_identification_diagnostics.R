@@ -28,7 +28,7 @@ arch_residuals <- rnorm(120)
 arch <- arch1_test(arch_residuals)
 arch_sq <- arch_residuals^2
 arch_fit <- lm(arch_sq[-1L] ~ arch_sq[-length(arch_sq)])
-arch_expected <- (length(arch_residuals) - 2L) * summary(arch_fit)$r.squared
+arch_expected <- (length(arch_residuals) - 1L) * summary(arch_fit)$r.squared
 check(
   "ARCH statistic matches the lagged-square auxiliary regression",
   isTRUE(all.equal(arch$statistic, arch_expected))
