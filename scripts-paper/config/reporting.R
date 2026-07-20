@@ -147,15 +147,20 @@ paper_sample_span <- function(sample) {
   paste(format(sample$span), collapse = "--")
 }
 
-# siunitx scientific-notation cell shared by the diagnostics and variance-bound
-# summary tables. `braces` wraps the token for an S column; `na_token` (when not
-# NULL) substitutes for non-finite inputs, otherwise every value is formatted.
-paper_format_sci <- function(value, digits, format = "e", braces = FALSE,
+# Plain-math scientific-notation cell (no siunitx \num) shared by the
+# diagnostics and variance-bound summary tables. `na_token` (when not NULL)
+# substitutes for non-finite inputs, otherwise every value is formatted.
+paper_format_sci <- function(value, digits, format = "e",
                              na_token = NULL) {
-  cell <- sprintf("\\num{%s}", formatC(value, format = format, digits = digits))
-  if (isTRUE(braces)) {
-    cell <- sprintf("{%s}", cell)
-  }
+  txt <- formatC(value, format = format, digits = digits)
+  has_e <- grepl("e", txt, fixed = TRUE)
+  mant <- sub("e.*", "", txt)
+  expo <- suppressWarnings(as.integer(sub(".*e", "", txt)))
+  cell <- ifelse(
+    has_e,
+    sprintf("$%s \\times 10^{%d}$", mant, expo),
+    txt
+  )
   if (is.null(na_token)) {
     return(cell)
   }

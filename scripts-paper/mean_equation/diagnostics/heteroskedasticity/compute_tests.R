@@ -21,7 +21,7 @@ pcell <- function(x) {
     return(PAPER_NA_TOKEN)
   }
   stars <- sig_stars(x)
-  paste0("{", fmt(x), if (nzchar(stars)) paste0("$", stars, "$"), "}")
+  paste0(fmt(x), if (nzchar(stars)) paste0("$", stars, "$"))
 }
 
 # Use one diagnostics regime and deflator choice for every news component.
@@ -97,8 +97,7 @@ joint_cells <- c(
   paper_format_sci(
     c(rk$det, rk$kappa, rk$sv_min),
     digits = PAPER_REPORTING_CONTROL$precision$diagnostic_table,
-    format = "g",
-    braces = TRUE
+    format = "g"
   ),
   pcell(rk$p)
 )

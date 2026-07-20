@@ -74,8 +74,9 @@ check(
   ))
 )
 check(
-  "table formats values in siunitx scientific notation",
-  any(grepl("\\num{", table_lines, fixed = TRUE))
+  "table formats values in plain-math scientific notation without siunitx",
+  any(grepl("\\times 10^{", table_lines, fixed = TRUE)) &&
+    !any(grepl("\\num{", table_lines, fixed = TRUE))
 )
 check(
   "table is a bare tabular fragment without a float or caption",
