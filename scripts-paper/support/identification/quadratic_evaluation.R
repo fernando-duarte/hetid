@@ -83,6 +83,16 @@ quadratic_constraint_residual <- function(
   max(quadratic_constraint_values(theta, quadratic, omega))
 }
 
+# membership at unit constraint weights: coordinates non-missing (an infinite
+# coordinate is decided by the residual, not by this guard) and the
+# most-binding constraint satisfied. Stricter than logvar_feasible_grid's
+# admission test, which normalizes by .derive_constraint_scales and admits at a
+# roundoff tolerance -- this certifies a point the pipeline publishes or seeds
+# a search from
+quadratic_point_feasible <- function(quadratic, theta) {
+  !anyNA(theta) && quadratic_constraint_residual(theta, quadratic) <= 0
+}
+
 assert_quadratic_symmetric <- function(
   quadratic,
   tolerance = PAPER_QUADRATIC_CONTROL$symmetry_rtol

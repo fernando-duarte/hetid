@@ -20,8 +20,7 @@ logvar_fitted_vol_baseline_context <- function(mean_eq, bounds_tau, inputs) {
     PAPER_ANALYSIS_CONTRACT$model$return_pc_cols
   )
   b_point <- mean_eq$theta_table$point
-  point_feasible <- !anyNA(b_point) &&
-    .feasibility_residual(qs, b_point, rep(1, length(qs$A_i))) <= 0
+  point_feasible <- quadratic_point_feasible(qs, b_point)
   list(
     tau = tau, b_tab = b_tab, qs = qs, x_mat = x_mat,
     b_point = b_point, point_feasible = point_feasible
