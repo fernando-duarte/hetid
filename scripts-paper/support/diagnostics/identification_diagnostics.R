@@ -14,13 +14,14 @@ bp_lm_test <- function(residuals, regressors) {
   list(statistic = lm_stat, df = df, p_value = 1 - pchisq(lm_stat, df), r_squared = r_squared)
 }
 
-# ARCH(1) LM: squared residuals on their one-period lag
+# ARCH(1) LM: squared residuals on their one-period lag. Engle statistic
+# n_aux * R^2, n_aux = auxiliary-regression rows (sum(valid))
 arch1_test <- function(residuals) {
   res_sq <- residuals^2
   res_sq_lag <- c(NA, res_sq[-length(res_sq)])
   valid <- !is.na(res_sq) & !is.na(res_sq_lag)
   arch_fit <- lm(res_sq[valid] ~ res_sq_lag[valid])
-  stat <- (sum(valid) - 1) * summary(arch_fit)$r.squared
+  stat <- sum(valid) * summary(arch_fit)$r.squared
   list(statistic = stat, p_value = 1 - pchisq(stat, df = 1))
 }
 
