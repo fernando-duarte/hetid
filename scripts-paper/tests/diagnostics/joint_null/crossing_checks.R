@@ -111,7 +111,7 @@ check("jn a rank-deficient direction set fails the SVD coverage threshold", jn_t
     fx$b_cross_zlev, fx$w1_zlev, fx$w2_zlev, fx$proj_zlev,
     jn_ball(fx$b_cross_zlev, 0.3), rep(1.3, nrow(fx$pcr_zlev))
   )
-  is.null(s$rank_dir) || s$rank_dir == 3L || jn_unreliable(s)
+  is.null(s$rank_dir) || isTRUE(s$rank_dir < 3L) || jn_unreliable(s)
 }))
 # Known witness: b_star attains zero slopes and classifies compatible_witness.
 check("jn known witness at b_star classifies compatible_witness", jn_try({

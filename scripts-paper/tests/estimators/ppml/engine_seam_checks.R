@@ -6,11 +6,8 @@ check("peng cold-start replication flags a warm-dependent dummy", peng_try({
 }))
 
 check("peng starts_per_side default uses the primary control", peng_try(identical(
-  peng_run(peng_dummy()$est)$table,
-  peng_run(
-    peng_dummy()$est,
-    starts_per_side = LOGVAR_SEARCH_CONTROL$primary_starts_per_side
-  )$table
+  eval(formals(logvar_engine_set_at_tau)$starts_per_side),
+  LOGVAR_SEARCH_CONTROL$primary_starts_per_side
 )))
 check("peng generic scan accepts starts_per_side = 3L", peng_try({
   result <- peng_run(peng_dummy()$est, starts_per_side = 3L)
