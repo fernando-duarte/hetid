@@ -38,8 +38,12 @@ repos:
         additional_dependencies:
           - cyclocomp
 
-      # Check that README.Rmd hasn't changed without updating README.md
+      # Check that README.Rmd hasn't changed without updating README.md.
+      # Scope to the top-level README pair only: the hook's default pattern is
+      # unanchored and wrongly fires on nested READMEs (scripts-paper/README.md,
+      # tests/README.md), which have no .Rmd source.
       - id: readme-rmd-rendered
+        files: '^README\.[Rr]?md$'
 
       # Ensure no merge conflicts markers
       - id: no-browser-statement
