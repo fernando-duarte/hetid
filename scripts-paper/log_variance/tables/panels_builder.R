@@ -45,7 +45,7 @@ logvar_logols_fragment <- function(headers, n_obs, ordering_note, label) {
       c(interleave(fmt(tab$point), ""), PAPER_NA_TOKEN, sprintf("%d", n_obs))
     ),
     unname(lapply(log_var_eq$sets, function(st) {
-      stopifnot(identical(st$coef, tab$coef))
+      logvar_assert_coef_aligned(st$coef, tab$coef)
       c(
         interleave(set_cell(st$set_lower, st$set_upper, st$status), ""),
         PAPER_NA_TOKEN, sprintf("%d", n_obs)
@@ -82,7 +82,7 @@ build_logvar_panels <- function(table_id, ppml_caption_suffix = ".",
     which(set_id_mean_eq$tau_display == baseline_tau)
   ]]
   n_obs <- log_var_eq$sample$n
-  headers <- paper_tau_col_headers(set_id_mean_eq$tau_display)
+  headers <- logvar_estimator_headers("OLS", set_id_mean_eq$tau_display)
   ordering_note <- function(est) {
     if (order[1] != est) {
       return("")
@@ -100,10 +100,7 @@ build_logvar_panels <- function(table_id, ppml_caption_suffix = ".",
     ppml_result, set_id_mean_eq$tau_display, n_pc_r,
     se_type = logvar_ppml_se_type, envelope = envelope_ppml
   )
-  stopifnot(
-    identical(ppml_parts$n_obs, n_obs),
-    identical(ppml_parts$headers, headers)
-  )
+  stopifnot(identical(ppml_parts$n_obs, n_obs))
   ppml_fragment <- build_simple_latex_table(
     ppml_parts$rows, ppml_parts$columns,
     col_headers = headers,

@@ -81,7 +81,7 @@ if (exists("log_var_eq") && exists("set_id_mean_eq") && exists("mean_eq_bounds_t
   }
 
   # search seed: the Lewbel point when feasible, else the first coarsened grid pt
-  search_seed <- if (point_feasible) b_point else grid_base[1, ]
+  search_seed <- logvar_map_anchor(point_feasible, b_point, grid_base)
 
   # per display tau: one cache across taus, a fresh budget per tau, no warm chain
   taus <- set_id_mean_eq$tau_display

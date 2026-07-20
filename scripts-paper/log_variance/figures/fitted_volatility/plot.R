@@ -11,7 +11,8 @@ logvar_fitted_vol_run_id <- function(valid) {
 }
 
 logvar_fitted_vol_plot_data <- function(rows) {
-  valid <- rows$lower_status == "bounded" & rows$upper_status == "bounded" &
+  valid <- rows$lower_status == PAPER_ENDPOINT_STATUS[["bounded"]] &
+    rows$upper_status == PAPER_ENDPOINT_STATUS[["bounded"]] &
     is.finite(rows$volatility_lower) & is.finite(rows$volatility_upper)
   band <- rows[valid, , drop = FALSE]
   band$run <- logvar_fitted_vol_run_id(valid)[valid]

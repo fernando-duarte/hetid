@@ -17,18 +17,18 @@ paper_source_once(paper_path("log_variance", "figures", "fitted_volatility", "pl
 lad_result <- paper_logvar_result("lad", required = FALSE)
 if (!is.null(lad_result)) {
   lad_vol_est <- lad_result$estimator
-  lad_vol_tau <- set_id_mean_eq$tau_baseline
-  lad_vol_key <- paper_tau_key(lad_vol_tau)
-  lad_vol_b_tab <- mean_eq_bounds_tau[[lad_vol_key]]
-  stopifnot(!is.null(lad_vol_b_tab))
-  lad_vol_qs <- tau_quadratic_system(
-    set_id_mean_eq$gamma, lad_vol_tau, set_id_mean_eq$moments
+  # baseline mean-equation-slack context (shared with run.R): tau, warm-refined
+  # news box, quadratic system, (1, PC_R) design matrix, Lewbel point + feasibility
+  lad_vol_ctx <- logvar_fitted_vol_baseline_context(
+    set_id_mean_eq, mean_eq_bounds_tau, log_var_eq$inputs
   )
+  lad_vol_tau <- lad_vol_ctx$tau
+  lad_vol_b_tab <- lad_vol_ctx$b_tab
+  lad_vol_qs <- lad_vol_ctx$qs
   lad_vol_qtr <- log_var_eq$inputs$qtr
-  lad_vol_x <- logvar_design_matrix(
-    log_var_eq$inputs$pcr,
-    PAPER_ANALYSIS_CONTRACT$model$return_pc_cols
-  )
+  lad_vol_x <- lad_vol_ctx$x_mat
+  lad_vol_bpoint <- lad_vol_ctx$b_point
+  lad_vol_point_ok <- lad_vol_ctx$point_feasible
   stopifnot(identical(colnames(lad_vol_x), lad_vol_est$coef_labels))
 
   # feasible b_N grid over the joint identified set (the LAD map's grid builder);
@@ -44,11 +44,6 @@ if (!is.null(lad_result)) {
     LOGVAR_SEARCH_CONTROL$fitted_lad_grid_cap
   )
   stopifnot(nrow(lad_vol_grid) > 0L)
-  lad_vol_bpoint <- set_id_mean_eq$theta_table$point
-  lad_vol_point_ok <- !anyNA(lad_vol_bpoint) &&
-    .feasibility_residual(
-      lad_vol_qs, lad_vol_bpoint, rep(1, length(lad_vol_qs$A_i))
-    ) <= 0
   if (lad_vol_point_ok) lad_vol_grid <- rbind(lad_vol_bpoint, lad_vol_grid)
 
   # fit the LAD at each feasible b_N; keep the coefficient vectors of the ok fits
@@ -80,7 +75,8 @@ if (!is.null(lad_result)) {
 
   lad_vol_schema <- data.frame(
     lower = apply(lad_vol_eta, 1, min), upper = apply(lad_vol_eta, 1, max),
-    lower_status = "bounded", upper_status = "bounded",
+    lower_status = PAPER_ENDPOINT_STATUS[["bounded"]],
+    upper_status = PAPER_ENDPOINT_STATUS[["bounded"]],
     lower_provenance = "grid_inner_hull", upper_provenance = "grid_inner_hull",
     stringsAsFactors = FALSE
   )
@@ -108,7 +104,7 @@ if (!is.null(lad_result)) {
   ))
 
   rm(
-    lad_vol_est, lad_vol_tau, lad_vol_key, lad_vol_b_tab, lad_vol_qs,
+    lad_vol_ctx, lad_vol_est, lad_vol_tau, lad_vol_b_tab, lad_vol_qs,
     lad_vol_qtr, lad_vol_x, lad_vol_grid, lad_vol_bpoint, lad_vol_point_ok,
     lad_vol_fits, lad_vol_ok, lad_vol_theta, lad_vol_eta, lad_vol_point_eta,
     lad_vol_schema, lad_vol_envelope, lad_vol_path

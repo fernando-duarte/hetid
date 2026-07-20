@@ -6,17 +6,15 @@ paper_source_once(paper_path("log_variance", "figures", "fitted_volatility", "ad
 paper_source_once(paper_path("log_variance", "figures", "fitted_volatility", "envelope.R"))
 paper_source_once(paper_path("log_variance", "figures", "fitted_volatility", "plot.R"))
 
-fitted_vol_tau <- set_id_mean_eq$tau_baseline
-fitted_vol_key <- paper_tau_key(fitted_vol_tau)
-fitted_vol_b_tab <- mean_eq_bounds_tau[[fitted_vol_key]]
-stopifnot(!is.null(fitted_vol_b_tab))
-fitted_vol_qs <- tau_quadratic_system(
-  set_id_mean_eq$gamma, fitted_vol_tau, set_id_mean_eq$moments
+# baseline mean-equation-slack context (shared with run_lad.R): tau, warm-refined
+# news box, quadratic system, (1, PC_R) design matrix, Lewbel point + feasibility
+fitted_vol_ctx <- logvar_fitted_vol_baseline_context(
+  set_id_mean_eq, mean_eq_bounds_tau, log_var_eq$inputs
 )
-fitted_vol_x <- logvar_design_matrix(
-  log_var_eq$inputs$pcr,
-  PAPER_ANALYSIS_CONTRACT$model$return_pc_cols
-)
+fitted_vol_tau <- fitted_vol_ctx$tau
+fitted_vol_b_tab <- fitted_vol_ctx$b_tab
+fitted_vol_qs <- fitted_vol_ctx$qs
+fitted_vol_x <- fitted_vol_ctx$x_mat
 fitted_vol_sample_id <- logvar_sample_id(
   log_var_eq$inputs$qtr, log_var_eq$inputs$w1,
   log_var_eq$inputs$w2, log_var_eq$inputs$pcr
@@ -25,14 +23,8 @@ stopifnot(
   identical(fitted_vol_sample_id, log_var_eq$sample_id),
   identical(log_var_eq$inputs$qtr, log_var_eq$sample_contract$qtr)
 )
-fitted_vol_point <- set_id_mean_eq$theta_table$point
-if (anyNA(fitted_vol_point) ||
-  .feasibility_residual(
-    fitted_vol_qs, fitted_vol_point,
-    rep(1, length(fitted_vol_qs$A_i))
-  ) > 0) {
-  fitted_vol_point <- NULL
-}
+# render the Lewbel point only when feasible in the baseline set (else "--")
+fitted_vol_point <- if (fitted_vol_ctx$point_feasible) fitted_vol_ctx$b_point else NULL
 
 fitted_vol_entry <- function(estimator) {
   hit <- vapply(logvar_bounds_tau_registry, function(entry) {
@@ -69,8 +61,8 @@ log_var_eq_fitted_volatility <- stats::setNames(
       "fitted-volatility envelope (%s): %d dates, %d two-sided; wrote %s\n",
       estimator, nrow(envelope$data),
       sum(
-        envelope$data$lower_status == "bounded" &
-          envelope$data$upper_status == "bounded"
+        envelope$data$lower_status == PAPER_ENDPOINT_STATUS[["bounded"]] &
+          envelope$data$upper_status == PAPER_ENDPOINT_STATUS[["bounded"]]
       ),
       path
     ))
@@ -80,7 +72,7 @@ log_var_eq_fitted_volatility <- stats::setNames(
 )
 
 rm(
-  fitted_vol_tau, fitted_vol_key, fitted_vol_b_tab, fitted_vol_qs,
+  fitted_vol_ctx, fitted_vol_tau, fitted_vol_b_tab, fitted_vol_qs,
   fitted_vol_x, fitted_vol_sample_id, fitted_vol_point, fitted_vol_entry,
   fitted_vol_estimators
 )

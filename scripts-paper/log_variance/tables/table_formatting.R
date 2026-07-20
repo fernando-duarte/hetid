@@ -52,6 +52,26 @@ envelope_cell <- function(ci_lo, ci_hi, side) {
   )
 }
 
+# One coefficient vector must match the reference row order exactly, so every
+# rendered cell lines up with its coefficient label; a mismatch is a wiring bug,
+# never data. Shared by the estimator panel, the log-OLS fragment, and the
+# envelope columns so the row-order invariant has a single owner.
+logvar_assert_coef_aligned <- function(coef, reference) {
+  stopifnot(identical(coef, reference))
+}
+
+# The combined estimator-panel column headers: the estimator's reference column,
+# the tau = 0 Lewbel-point column, then one header per displayed slack. The lone
+# builder for the panel path, so the header vector is never assembled twice and
+# reconciled at runtime.
+logvar_estimator_headers <- function(reference_header, tau_display) {
+  c(
+    reference_header,
+    "$\\tau{=}0$",
+    sprintf("$\\tau{=}%s$", paper_format_tau(tau_display))
+  )
+}
+
 # The identified-set table columns shared by logvar_ppml_table_parts and the
 # Harvey panel: each column is set_cell over one tau's hull with the bootstrap
 # envelope_cell on the row beneath when an envelope frame is supplied. The
@@ -69,7 +89,7 @@ logvar_set_envelope_cols <- function(sets, envelope, keys, tab_coef, n_obs) {
         all(vapply(env, function(e) identical(e$coef, tab_coef), logical(1))))
   )
   set_col <- function(st, e) {
-    stopifnot(identical(st$coef, tab_coef))
+    logvar_assert_coef_aligned(st$coef, tab_coef)
     stat_row <- if (is.null(e)) "" else envelope_cell(e$ci_lower, e$ci_upper, e$side)
     c(
       interleave(set_cell(st$set_lower, st$set_upper, st$status), stat_row),

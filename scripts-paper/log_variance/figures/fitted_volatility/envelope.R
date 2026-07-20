@@ -2,6 +2,32 @@
 # identified set. The engine profiles fitted log variance directly at every
 # date; monotonic transformations then give conditional variance and volatility.
 
+# Baseline mean-equation-slack context shared by the two fitted-volatility
+# drivers (run.R, run_lad.R): the baseline tau, its warm-refined news box, the
+# baseline quadratic system, the (1, PC_R) design matrix, and the Lewbel point
+# with its unit-omega baseline feasibility flag. A pure read of the shared
+# products, so both figure drivers assemble one identical baseline context.
+# (logvar_prepare_map_context is the set-map analog, but it also builds a
+# feasibility grid at a map grid_cap and does not return qs/b_tab/tau, so it is
+# not a drop-in for these figure drivers.)
+logvar_fitted_vol_baseline_context <- function(mean_eq, bounds_tau, inputs) {
+  tau <- mean_eq$tau_baseline
+  b_tab <- bounds_tau[[paper_tau_key(tau)]]
+  stopifnot(!is.null(b_tab))
+  qs <- tau_quadratic_system(mean_eq$gamma, tau, mean_eq$moments)
+  x_mat <- logvar_design_matrix(
+    inputs$pcr,
+    PAPER_ANALYSIS_CONTRACT$model$return_pc_cols
+  )
+  b_point <- mean_eq$theta_table$point
+  point_feasible <- !anyNA(b_point) &&
+    .feasibility_residual(qs, b_point, rep(1, length(qs$A_i))) <= 0
+  list(
+    tau = tau, b_tab = b_tab, qs = qs, x_mat = x_mat,
+    b_point = b_point, point_feasible = point_feasible
+  )
+}
+
 logvar_fitted_vol_transform <- function(eta, power) {
   out <- exp(power * eta)
   out[is.na(eta)] <- NA_real_
@@ -31,12 +57,12 @@ logvar_fitted_vol_data <- function(qtr, schema, point_eta) {
   variance_upper <- logvar_fitted_vol_transform(upper, 1)
   volatility_lower <- logvar_fitted_vol_transform(lower, 0.5)
   volatility_upper <- logvar_fitted_vol_transform(upper, 0.5)
-  lower_bad <- lower_status == "bounded" &
+  lower_bad <- lower_status == PAPER_ENDPOINT_STATUS[["bounded"]] &
     (is.na(variance_lower) | is.na(volatility_lower))
-  upper_bad <- upper_status == "bounded" &
+  upper_bad <- upper_status == PAPER_ENDPOINT_STATUS[["bounded"]] &
     (is.na(variance_upper) | is.na(volatility_upper))
-  lower_status[lower_bad] <- "unreliable"
-  upper_status[upper_bad] <- "unreliable"
+  lower_status[lower_bad] <- PAPER_ENDPOINT_STATUS[["unreliable"]]
+  upper_status[upper_bad] <- PAPER_ENDPOINT_STATUS[["unreliable"]]
   data.frame(
     qtr = qtr, date = as.Date(qtr),
     log_variance_lower = lower, log_variance_upper = upper,
@@ -87,8 +113,8 @@ logvar_fitted_vol_envelope <- function(
   stopifnot(identical(result$schema$coef, labels))
   point_eta <- logvar_fitted_vol_point(adapter, b_point, length(qtr))
   data <- logvar_fitted_vol_data(qtr, result$schema, point_eta)
-  two_sided <- data$lower_status == "bounded" &
-    data$upper_status == "bounded"
+  two_sided <- data$lower_status == PAPER_ENDPOINT_STATUS[["bounded"]] &
+    data$upper_status == PAPER_ENDPOINT_STATUS[["bounded"]]
   has_point <- is.finite(data$volatility_point)
   tol <- LOGVAR_SEARCH_CONTROL$point_containment_rtol *
     pmax(1, abs(data$volatility_point))

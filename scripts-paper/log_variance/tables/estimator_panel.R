@@ -24,7 +24,7 @@ logvar_estimator_panel_parts <- function(
   )
   tab <- result$table
   if (!is.null(spec$expected_coef)) {
-    stopifnot(identical(tab$coef, spec$expected_coef))
+    logvar_assert_coef_aligned(tab$coef, spec$expected_coef)
   }
   keys <- vapply(tau_display, paper_tau_key, character(1))
   sets <- result$sets[keys]
@@ -75,14 +75,7 @@ logvar_estimator_panel_parts <- function(
     sets = sets,
     rows = rows,
     columns = columns,
-    headers = c(
-      spec$reference_header,
-      "$\\tau{=}0$",
-      sprintf(
-        "$\\tau{=}%s$",
-        paper_format_tau(tau_display)
-      )
-    ),
+    headers = logvar_estimator_headers(spec$reference_header, tau_display),
     n_obs = n_obs
   )
 }

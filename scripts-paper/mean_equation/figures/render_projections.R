@@ -102,7 +102,7 @@ local({
   graphics::par(mar = c(0, 0, 0, 0), pty = "m")
   plot.new()
   legend_items <- c(
-    sprintf("tau = %g set boundary", taus),
+    sprintf("tau = %s set boundary", paper_format_tau(taus)),
     "marginal interval (per tau)", "tau = 0 point"
   )
   legend("center",

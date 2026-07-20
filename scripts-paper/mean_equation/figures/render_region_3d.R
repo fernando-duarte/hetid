@@ -175,7 +175,7 @@ local({
   graphics::mtext(
     bquote(
       "Identified region " * Theta * " for " * b[N] * " at " *
-        tau * " = " * .(format(baseline_tau)) * ", SD units"
+        tau * " = " * .(paper_format_tau(baseline_tau)) * ", SD units"
     ),
     side = 3, line = 4.3, at = title_x, cex = 1.02
   )
