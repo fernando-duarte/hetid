@@ -78,9 +78,11 @@ check(
   any(grepl("\\num{", table_lines, fixed = TRUE))
 )
 check(
-  "table carries the caption and label",
-  any(grepl("Variance Bounds Summary Statistics", table_lines, fixed = TRUE)) &&
-    any(grepl("tab:variance_bounds_summary", table_lines, fixed = TRUE))
+  "table is a bare tabular fragment without a float or caption",
+  identical(table_lines[[1L]], "\\begin{tabular}{lc}") &&
+    identical(table_lines[[length(table_lines)]], "\\end{tabular}") &&
+    !any(grepl("\\begin{table}", table_lines, fixed = TRUE)) &&
+    !any(grepl("\\caption", table_lines, fixed = TRUE))
 )
 
 bad_len_message <- tryCatch(

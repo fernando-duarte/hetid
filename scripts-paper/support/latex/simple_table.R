@@ -5,25 +5,26 @@
 # cleanly. Reuses make_standalone_latex / publish_latex_artifact from
 # table_pipeline.R for the standalone variant and manifest-directed writing.
 
-#' Build a plain-column booktabs/threeparttable LaTeX table fragment
+#' Build the bare booktabs tabular for a plain-column table
+#'
+#' The tabular half of build_simple_latex_table, without any
+#' float/threeparttable/caption/notes wrapper, so a caller can publish a
+#' fragment that is only \\begin{tabular} ... \\end{tabular} (or wrap it itself).
 #'
 #' @param row_labels character vector of left-column row labels (may contain
 #'   inline math)
 #' @param columns list of character vectors (one per data column); each must
 #'   have length(row_labels) entries, pre-formatted
 #' @param col_headers character vector of column headers (length == length(columns))
-#' @param caption table caption (LaTeX; pdfLaTeX-safe macros, not Unicode)
-#' @param label LaTeX label key
-#' @param notes character vector for the tablenotes block (NULL to omit);
-#'   elements are concatenated into a single Notes item
 #' @param stub header text over the row-label column (default empty)
 #' @param rule_after integer row indices after which to insert a \\midrule
 #'   (for visually grouping blocks of rows)
-#' @return character vector of LaTeX lines (table environment fragment)
-build_simple_latex_table <- function(row_labels, columns, col_headers,
-                                     caption, label, notes = NULL,
-                                     stub = "", rule_after = integer(0),
-                                     fontsize = "", spanners = NULL) {
+#' @param spanners optional list of list(label, n) merged headers over column
+#'   groups; the n's must cover all data columns
+#' @return character vector of LaTeX lines from \\begin{tabular} to \\end{tabular}
+simple_tabular_lines <- function(row_labels, columns, col_headers,
+                                 stub = "", rule_after = integer(0),
+                                 spanners = NULL) {
   n_col <- length(columns)
   n_row <- length(row_labels)
   stopifnot(
@@ -68,16 +69,37 @@ build_simple_latex_table <- function(row_labels, columns, col_headers,
       body <- c(body, "\\midrule")
     }
   }
+  c(
+    paste0("\\begin{tabular}{", col_spec, "}"),
+    "\\toprule",
+    spanner_lines,
+    header,
+    "\\midrule",
+    body,
+    "\\bottomrule",
+    "\\end{tabular}"
+  )
+}
+
+#' Build a plain-column booktabs/threeparttable LaTeX table fragment
+#'
+#' Wraps simple_tabular_lines() in the shared float/threeparttable/caption/notes
+#' environment. Callers wanting only the tabular call simple_tabular_lines().
+#'
+#' @inheritParams simple_tabular_lines
+#' @param caption table caption (LaTeX; pdfLaTeX-safe macros, not Unicode)
+#' @param label LaTeX label key
+#' @param notes character vector for the tablenotes block (NULL to omit);
+#'   elements are concatenated into a single Notes item
+#' @param fontsize optional size command emitted before the tabular
+#' @return character vector of LaTeX lines (table environment fragment)
+build_simple_latex_table <- function(row_labels, columns, col_headers,
+                                     caption, label, notes = NULL,
+                                     stub = "", rule_after = integer(0),
+                                     fontsize = "", spanners = NULL) {
   latex_table_environment(
-    tabular_lines = c(
-      paste0("\\begin{tabular}{", col_spec, "}"),
-      "\\toprule",
-      spanner_lines,
-      header,
-      "\\midrule",
-      body,
-      "\\bottomrule",
-      "\\end{tabular}"
+    tabular_lines = simple_tabular_lines(
+      row_labels, columns, col_headers, stub, rule_after, spanners
     ),
     caption = caption,
     label = label,

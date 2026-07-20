@@ -9,7 +9,6 @@
 paper_source_once(paper_path("support", "latex", "table_pipeline.R"))
 paper_source_once(paper_path("support", "latex", "simple_table.R"))
 paper_source_once(paper_path("support", "reporting", "cells.R"))
-paper_source_once(paper_path("mean_equation", "variance_shares", "variance_share_caption.R"))
 
 fmt <- function(x) {
   policy <- PAPER_REPORTING_CONTROL$cells$variance_share
@@ -80,42 +79,21 @@ columns <- c(
   )
 )
 
-# data-derived caption: the baseline news-block share range. State a numeric
-# range only when the baseline joint set is certified bounded; an unbounded or
-# fail-closed (unreliable) set has no range to report, and printing one would
-# assert a finding the solve never established -- range_cell already defers to
-# status, and the headline must agree
-base_rng <- var_share$set_cols[[1]]
-base_status <- base_rng$status[var_share$news_row]
-caption <- if (identical(base_status, PAPER_ENDPOINT_STATUS[["bounded"]])) {
-  sprintf(
-    paste0(
-      "SDF news accounts for %.1f--%.1f\\%% of the variance of consumption ",
-      "growth at $\\tau{=}%s$."
-    ),
-    base_rng$lo[var_share$news_row], base_rng$hi[var_share$news_row],
-    paper_format_tau(set_id_mean_eq$tau_baseline)
-  )
-} else {
-  sprintf(
-    "The SDF-news share of consumption-growth variance at $\\tau{=}%s$ is %s.",
-    paper_format_tau(set_id_mean_eq$tau_baseline),
-    base_status
-  )
-}
-
-var_share_table <- build_simple_latex_table(
-  row_labels, unname(columns),
-  col_headers = paper_tau_col_headers(set_id_mean_eq$tau_display),
-  caption = caption,
-  label = artifact_latex_label("variance_share_table"),
-  notes = build_var_share_notes(sd_c = var_share$sd_c),
-  fontsize = PAPER_TABLE_STYLE$variance_share$fontsize,
-  rule_after = c(1L + n_pc, 2L * (1L + n_pc)),
-  spanners = list(list(
-    label = "Share of $\\widehat{\\mathrm{Var}}(\\Delta c_{t+1})$ (\\%)",
-    n = length(columns)
-  ))
+# Emit only the tabular, wrapped in a \begingroup that scopes the font size and
+# column separation; the paper supplies the float, caption, and notes.
+var_share_table <- c(
+  "\\begingroup",
+  PAPER_TABLE_STYLE$variance_share$fontsize,
+  simple_tabular_lines(
+    row_labels, unname(columns),
+    col_headers = paper_tau_col_headers(set_id_mean_eq$tau_display),
+    rule_after = c(1L + n_pc, 2L * (1L + n_pc)),
+    spanners = list(list(
+      label = "Share of $\\widehat{\\mathrm{Var}}(\\Delta c_{t+1})$ (\\%)",
+      n = length(columns)
+    ))
+  ),
+  "\\endgroup"
 )
 publish_latex_artifact("variance_share_table", var_share_table)
 
@@ -127,6 +105,5 @@ cat(
 
 rm(
   fmt, round_preserving_sum, align_blocks, range_cell, n_obs, row_labels,
-  columns, base_rng, base_status, caption, var_share_table,
-  build_var_share_notes
+  columns, var_share_table
 )
