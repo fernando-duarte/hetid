@@ -92,6 +92,9 @@ pak::pak("fernando-duarte/hetid")
   identification
 - **Multi-maturity Analysis**: Simultaneous estimation across the yield
   curve
+- **Identified Set**: Assemble and check the quadratic constraint system
+  defining the identified set for the structural parameter across
+  maturities
 
 #### Generalized instruments
 
@@ -103,7 +106,7 @@ component — or from every instrument separately.
 ``` r
 library(hetid)
 #> Data availability:
-#>   * ACM term premia: Available (updated 2026-07-11)
+#>   * ACM term premia: Available (updated 2026-07-16)
 #> 
 #> Use load_term_premia() to access the data.
 set.seed(42)
@@ -237,7 +240,11 @@ achieved through heteroskedasticity-based moment conditions.
 - `compute_sdf_innovations()` - SDF innovations
 - `compute_c_hat()` - Supremum estimator
 - `compute_k_hat()` - Fourth moment estimator
+- `compute_k2_hat()` - Fourth-moment news estimator
 - `compute_variance_bound()` - Variance bounds
+- `compute_expected_sdf()` - Expected stochastic discount factor
+- `compute_expected_sdf_variance_bound()` - Variance bound for the
+  expected SDF
 
 ### Identification Functions
 
@@ -250,8 +257,31 @@ achieved through heteroskedasticity-based moment conditions.
   arbitrary instrument combinations
 - `separate_instruments_lambda()` - Per-instrument identity weight
   matrices
+- `align_instrument_sets()` / `lambda_from_support()` - Combine ragged
+  per-component instrument sets onto a shared axis
 - `make_system_checker()` - Closure for evaluating quadratic constraint
   satisfaction
+
+### Identified Set Functions
+
+- `compute_identified_set_components()` - Basic components (L_i, V_i,
+  Q_i) per maturity
+- `build_quadratic_system()` - Assemble the identified-set quadratic
+  system (preferred entry point)
+- `compute_identified_set_quadratic()` - Quadratic form coefficients
+  (d_i, A_i, b_i, c_i)
+- `make_constraint_checker()` - Closure for grid search / optimisation
+  over the set
+- `recover_structural_coefficients()` - Recover the Y1-equation
+  first-stage coefficients
+
+### Utilities
+
+- `to_period_end()` - Normalize dates to the calendar period-end
+  convention
+- `effective_max_maturity()` - Largest usable maturity for a given step
+- `HETID_CONSTANTS` - Package-wide constants (maturity grid, tolerances,
+  defaults)
 
 ## Data Sources
 

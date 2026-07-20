@@ -14,44 +14,29 @@ Each test file corresponds to a specific function and includes:
 
 ## Test Files
 
-### Core Computation Functions
-- `test-compute_c_hat.R` - Tests supremum estimator
-- `test-compute_k_hat.R` - Tests fourth moment estimator
-- `test-compute_n_hat.R` - Tests expected log bond price estimator
-- `test-compute_price_news.R` - Tests unexpected bond price changes
-- `test-compute_sdf_innovations.R` - Tests SDF innovation computation
-- `test-compute_variance_bound.R` - Tests variance bound computation
+Test files follow the convention `test-<name>.R`, where `<name>` matches the
+function or module under test (see `tests/testthat/` for the full list). They
+group into the following areas:
 
-### Residual Functions
-- `test-compute_w1_residuals.R` - Tests consumption growth residuals
-- `test-compute_w2_residuals.R` - Tests SDF innovation residuals
-
-### Identification Functions
-- `test-compute_identified_set_components.R` - Tests identified
-  set component calculations
-- `test-compute_identified_set_quadratic.R` - Tests identified
-  set quadratic solver
-- `test-compute_identified_set_quadratic-values.R` - Tests
-  identified set quadratic values
-
-### Statistics Functions
-- `test-compute_matrix_statistics.R` - Tests matrix statistics
-- `test-compute_scalar_statistics.R` - Tests scalar statistics
-- `test-compute_vector_statistics.R` - Tests vector statistics
-
-### Data Functions
-- `test-extract_acm_data.R` - Tests ACM data extraction
-- `test-download_functions.R` - Tests data download functions
-- `test-build_acm_col_mapping.R` - Tests ACM column mapping
-- `test-data_paths.R` - Tests data path utilities
-
-### Utility Functions
-- `test-convert_to_quarterly.R` - Tests quarterly conversion
-- `test-validation_utils.R` - Tests validation utilities
-
-### Integration Tests
-- `test-cross-function-consistency.R` - Tests consistency
-  across related functions
+- **Bond pricing and moments**: supremum (`compute_c_hat`), fourth-moment
+  (`compute_k_hat`, `compute_k2_hat`), expected log bond prices (`compute_n_hat`),
+  price news, SDF innovations, expected SDF and its variance bound, and variance
+  bounds.
+- **Reduced-form residuals**: `compute_w1_residuals` and `compute_w2_residuals`,
+  including their lagged-outcome, exogenous-predictor, and custom-PC variants.
+- **Identification and identified set**: `hetid_moments`, quadratic-system
+  builders (`build_quadratic_system`, `build_general_quadratic_system`),
+  identified-set components and quadratic values, constraint checkers/factories,
+  generalized instruments, and structural-coefficient recovery.
+- **Statistics**: scalar, vector, and matrix statistics plus statistics
+  utilities.
+- **Data and download**: ACM extraction, column mapping, schema and unit
+  validation, the bundled and daily ACM assets, and the download helpers.
+- **Conventions and utilities**: period-end / date normalization, quarterly
+  conversion, maturity and step parameterization, naming conformance, and the
+  structured-condition helpers.
+- **Integration**: `test-cross-function-consistency.R` checks consistency across
+  related functions.
 
 ## Running Tests
 
