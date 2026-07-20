@@ -123,7 +123,10 @@ check("lad unclaimed failure and a budget cap both fail closed with disclosure",
 check("lad normalization constants match their single-sourced expressions", {
   abs(log(qchisq(0.5, 1)) - (-0.787597599)) < 1e-9 &&
     abs((log(qchisq(0.5, 1)) - (digamma(0.5) + log(2))) - 0.482765246) < 1e-9 &&
-    abs(qchisq(0.5, 1) - 0.4549364231) < 1e-9
+    abs(qchisq(0.5, 1) - 0.4549364231) < 1e-9 &&
+    abs(LOGVAR_NORMAL_LOG_SQUARE_MEDIAN - log(qchisq(0.5, 1))) < 1e-12 &&
+    abs(LOGVAR_NORMAL_MEDIAN_MEANLOG_GAP -
+      (log(qchisq(0.5, 1)) - (digamma(0.5) + log(2)))) < 1e-12
 })
 # Singleton reproduces the direct fit plus the nonsmooth hooks (no jacobian).
 qr_check("lad singleton reproduces the direct fit and exposes the nonsmooth hooks", {

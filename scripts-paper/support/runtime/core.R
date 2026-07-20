@@ -99,3 +99,14 @@ paper_capture_conditions <- function(expression, error_prefix = "error: ") {
     }
   )
 }
+
+# read-only git HEAD provenance stamp, fully captured so it never reaches the
+# console regression; NA when the git call is unavailable
+paper_git_head_or_na <- function() {
+  tryCatch(
+    suppressWarnings(
+      system2("git", c("rev-parse", "HEAD"), stdout = TRUE, stderr = FALSE)
+    ),
+    error = function(e) NA_character_
+  )
+}

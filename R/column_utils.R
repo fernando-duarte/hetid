@@ -6,6 +6,25 @@
 #' @keywords internal
 NULL
 
+#' Column Labels of a Matrix or Data Frame
+#'
+#' @param x Matrix or data frame
+#' @return \code{colnames(x)} for a matrix, else \code{names(x)}
+#' @noRd
+column_labels <- function(x) {
+  if (is.matrix(x)) colnames(x) else names(x)
+}
+
+#' Append an Optional Context Clause to a Message
+#'
+#' @param msg Base message
+#' @param context Optional context string, or \code{NULL}
+#' @return \code{msg} with \code{" in <context>"} appended when context is set
+#' @noRd
+with_context <- function(msg, context = NULL) {
+  if (!is.null(context)) paste0(msg, " in ", context) else msg
+}
+
 #' Extract and Validate a Required Column
 #'
 #' @param x Data frame, matrix, or list to extract from
@@ -14,15 +33,8 @@ NULL
 #' @return The extracted column value (unnamed)
 #' @keywords internal
 require_column <- function(x, col_name, context = NULL) {
-  has_col <- if (is.matrix(x)) {
-    col_name %in% colnames(x)
-  } else {
-    col_name %in% names(x)
-  }
-  msg <- paste0(col_name, " column not found")
-  if (!is.null(context)) {
-    msg <- paste0(msg, " in ", context)
-  }
+  has_col <- col_name %in% column_labels(x)
+  msg <- with_context(paste0(col_name, " column not found"), context)
   assert_bad_argument_ok(has_col, msg, arg = col_name)
   if (is.matrix(x)) unname(x[, col_name, drop = TRUE]) else x[[col_name]]
 }
@@ -143,15 +155,13 @@ assert_tabular <- function(x, name) {
 #' @keywords internal
 assert_columns_exist <- function(df, required_cols,
                                  context = NULL, arg = "df") {
-  cols <- if (is.matrix(df)) colnames(df) else names(df)
+  cols <- column_labels(df)
   missing_cols <- setdiff(required_cols, cols)
   msg <- paste(
     "Missing required columns:",
     paste(missing_cols, collapse = ", ")
   )
-  if (!is.null(context)) {
-    msg <- paste0(msg, " in ", context)
-  }
+  msg <- with_context(msg, context)
   assert_bad_argument_ok(
     length(missing_cols) == 0,
     msg,

@@ -111,14 +111,7 @@ if (exists("log_var_eq") && exists("set_id_mean_eq") &&
     }))
   }
 
-  # provenance stamp for the deferred inference round; a read-only git call,
-  # fully captured so it never reaches the console regression
-  jn_commit <- tryCatch(
-    suppressWarnings(
-      system2("git", c("rev-parse", "HEAD"), stdout = TRUE, stderr = FALSE)
-    ),
-    error = function(e) NA_character_
-  )
+  jn_commit <- paper_git_head_or_na()
   if (length(jn_commit) != 1L || !nzchar(jn_commit)) jn_commit <- NA_character_
   log_var_eq_joint_null <- c(
     logvar_joint_null_schema_header(),

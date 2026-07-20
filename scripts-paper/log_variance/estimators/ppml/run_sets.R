@@ -20,7 +20,7 @@ list2env(
 )
 # scale anchor and search seed: the Lewbel point when finite and unit-omega
 # feasible in the baseline set, else the first coarsened baseline-grid point
-scale_anchor_b <- if (point_feasible) b_point else grid_base[1, ]
+scale_anchor_b <- logvar_map_anchor(point_feasible, b_point, grid_base)
 scale_anchor_source <- if (point_feasible) "lewbel_point" else "baseline_grid_first"
 
 # pre-mapping scaling pilot at response_scale = 1: anchor plus the configured
@@ -58,17 +58,22 @@ search_seed <- if (point_feasible) b_point else scale_anchor_b
 # point (or anchor) fit
 point_fit <- if (point_feasible) est_ppml$fit_at_b(search_seed) else NULL
 na_coef <- stats::setNames(rep(NA_real_, ncol(x_mat)), colnames(x_mat))
-theta_point_ppml <- if (!is.null(point_fit)) point_fit$coef else na_coef
+theta_point_ppml <- if (!is.null(point_fit) && logvar_fit_ok(point_fit)) {
+  point_fit$coef
+} else {
+  na_coef
+}
 cond_fit <- if (!is.null(point_fit)) point_fit else est_ppml$fit_at_b(scale_anchor_b)
 cond_weighted_xx <- cond_fit$diagnostics$condition_weighted_scaled
 # naive reference column: PPML on the exogenous-news OLS fit's squared
 # residuals, same rows (matched by qtr) and the same frozen response_scale
 ref_resid <- logvar_reference_residuals(qtr, set_id_mean_eq)
-theta_reference <- logvar_ppml_fit_response(
+ref_fit <- logvar_ppml_fit_response(
   ref_resid^2, x_mat,
   response_scale = response_scale,
   control = LOGVAR_PPML_CONTROL
-)$coef
+)
+theta_reference <- if (logvar_fit_ok(ref_fit)) ref_fit$coef else na_coef
 # per display tau (keyed by paper_tau_key so the coverage helpers and cache
 # align): scan the warm-refined display box through the shared engine with three
 # separated starts per side, one shared cache, a fresh per-tau budget, warm extras
@@ -173,7 +178,7 @@ rm(
   point_feasible, grid_base, scale_anchor_b, scale_anchor_source, anchor_key,
   grid_keys, pilot_pts, pilot, response_scale, b_point_arg, est_ppml, point_fit,
   search_seed, na_coef, theta_point_ppml, cond_fit, cond_weighted_xx,
-  ref_resid, theta_reference, taus, mapped, primary_results,
+  ref_resid, ref_fit, theta_reference, taus, mapped, primary_results,
   b_tab_list, est_cov, qs_fn, coverage, adjusted, final_res,
   benchmark_divergence, core, registry_entry
 )

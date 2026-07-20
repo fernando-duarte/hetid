@@ -16,14 +16,7 @@ if (exists("log_var_eq") && exists("set_id_mean_eq")) {
   dyn_b_point <- set_id_mean_eq$theta_table$point
   # deterministically recomputed fixed projection (not a re-estimation)
   dyn_proj <- logvar_projection(dyn_inputs$pcr)
-  # read-only provenance stamp, fully captured so it never hits the console
-  # regression; NA when the git call is unavailable
-  dyn_commit <- tryCatch(
-    suppressWarnings(
-      system2("git", c("rev-parse", "HEAD"), stdout = TRUE, stderr = FALSE)
-    ),
-    error = function(e) NA_character_
-  )
+  dyn_commit <- paper_git_head_or_na()
   if (length(dyn_commit) != 1L || !nzchar(dyn_commit)) dyn_commit <- NA_character_
 
   log_var_eq_dynamics_gate <- logvar_gate_evaluate(

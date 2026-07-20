@@ -86,7 +86,7 @@ row_labels <- c(interleave(coef_labels, ""), "$R^2$", "$N$")
 # data-derived caption: how many news-coefficient sets exclude zero
 n_excl <- sum(with(
   set_id_mean_eq$theta_table,
-  status == "bounded" & (set_lower > 0 | set_upper < 0)
+  status == PAPER_ENDPOINT_STATUS[["bounded"]] & (set_lower > 0 | set_upper < 0)
 ))
 caption <- sprintf(
   paste0(

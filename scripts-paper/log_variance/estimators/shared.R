@@ -104,3 +104,11 @@ logvar_prepare_map_context <- function(inputs, contract, mean_eq, bounds_tau,
     b_point = b_point, point_feasible = point_feasible, grid_base = grid_base
   )
 }
+
+# Scale anchor / search seed shared by the three estimator set drivers: the
+# Lewbel point when finite and unit-omega feasible in the baseline set, else the
+# first coarsened baseline-grid point. A pure select over the prepared map
+# context, so all three drivers derive one identical anchor.
+logvar_map_anchor <- function(point_feasible, b_point, grid_base) {
+  if (point_feasible) b_point else grid_base[1, ]
+}

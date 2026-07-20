@@ -35,10 +35,10 @@ stopifnot(
 theta_r_rows <-
   coef_tab$coef != PAPER_ANALYSIS_CONTRACT$model$intercept_col
 n_excl <- sum(
-  coef_tab$status[theta_r_rows] == "bounded" &
+  coef_tab$status[theta_r_rows] == PAPER_ENDPOINT_STATUS[["bounded"]] &
     (coef_tab$set_lower[theta_r_rows] > 0 | coef_tab$set_upper[theta_r_rows] < 0)
 )
-caption <- if (all(coef_tab$status == "bounded")) {
+caption <- if (all(coef_tab$status == PAPER_ENDPOINT_STATUS[["bounded"]])) {
   sprintf(
     paste0(
       "Quasi-Poisson PPML identified sets for the log-variance equation: ",

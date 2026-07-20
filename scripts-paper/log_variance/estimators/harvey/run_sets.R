@@ -28,7 +28,7 @@ list2env(
 )
 chol_xx <- chol(crossprod(x_mat))
 # search anchor: the Lewbel point when feasible, else the first coarsened grid pt
-anchor_b <- if (point_feasible) b_point else grid_base[1, ]
+anchor_b <- logvar_map_anchor(point_feasible, b_point, grid_base)
 
 # naive reference squared residuals (matched by qtr), shared by the reference
 # column and the precheck's reference pair
