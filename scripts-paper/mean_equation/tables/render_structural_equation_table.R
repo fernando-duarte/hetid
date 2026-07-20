@@ -9,7 +9,6 @@ paper_source_once(paper_path("support", "latex", "table_pipeline.R"))
 paper_source_once(paper_path("support", "latex", "simple_table.R"))
 paper_source_once(paper_path("support", "reporting", "inference.R"))
 paper_source_once(paper_path("support", "reporting", "cells.R"))
-paper_source_once(paper_path("mean_equation", "tables", "structural_equation_caption.R"))
 # coefficient rows: design block (b_0, b_E) then the news block (b_N); the
 # guard pins the row order the labels below assume
 coef_tab <- rbind(set_id_mean_eq$beta1_table, set_id_mean_eq$theta_table)
@@ -83,20 +82,11 @@ coef_labels <- c(
   sprintf("$b_{%d,N}$", seq_len(n_pc))
 )
 row_labels <- c(interleave(coef_labels, ""), "$R^2$", "$N$")
-# data-derived caption: how many news-coefficient sets exclude zero
+# how many news-coefficient sets exclude zero, for the console summary
 n_excl <- sum(with(
   set_id_mean_eq$theta_table,
   status == PAPER_ENDPOINT_STATUS[["bounded"]] & (set_lower > 0 | set_upper < 0)
 ))
-caption <- sprintf(
-  paste0(
-    "Heteroskedasticity set-identifies the SDF-news coefficients: %d of %d ",
-    "components of $b_N$ have identified sets excluding zero at $\\tau{=}%s$."
-  ),
-  n_excl,
-  n_pc,
-  paper_format_tau(tau_base)
-)
 # per-tau exact cells, interval frames, and integrity guards, computed once
 # for the inference table and its standalone
 set_data <- lapply(names(set_id_mean_eq$set_tables), function(nm) {
@@ -132,14 +122,17 @@ columns <- c(
   ),
   unname(set_columns)
 )
-structural_table <- build_simple_latex_table(
-  row_labels, columns,
-  col_headers = paper_tau_col_headers(set_id_mean_eq$tau_display),
-  caption = caption,
-  label = artifact_latex_label(artifact_id),
-  notes = build_structural_notes(),
-  fontsize = PAPER_TABLE_STYLE$coefficient$fontsize,
-  rule_after = c(2L * (1L + n_pc), 2L * (1L + 2L * n_pc))
+# Emit only the tabular, wrapped in a \begingroup that scopes the font size and
+# column separation; the paper supplies the float, caption, and notes.
+structural_table <- c(
+  "\\begingroup",
+  PAPER_TABLE_STYLE$coefficient$fontsize,
+  simple_tabular_lines(
+    row_labels, columns,
+    col_headers = paper_tau_col_headers(set_id_mean_eq$tau_display),
+    rule_after = c(2L * (1L + n_pc), 2L * (1L + 2L * n_pc))
+  ),
+  "\\endgroup"
 )
 publish_latex_artifact(artifact_id, structural_table)
 cat(
@@ -152,6 +145,6 @@ cat(
 rm(
   coef_tab, fmt, set_cell, n_obs, r2, tau_base, row_labels, columns,
   set_columns, nw, ols_cells, ols_tstats,
-  coef_labels, n_excl, caption, build_structural_notes, structural_table,
+  coef_labels, n_excl, structural_table,
   interval_cell, point_ci_cells, set_data, artifact_id
 )

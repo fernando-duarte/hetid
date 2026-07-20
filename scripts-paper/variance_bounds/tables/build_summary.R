@@ -13,20 +13,10 @@ variance_bounds_table_lines <- function(summary_stats) {
     format = "e",
     na_token = PAPER_NA_TOKEN
   )
-  build_simple_latex_table(
+  simple_tabular_lines(
     row_labels = names(summary_stats),
     columns = list(cells),
     col_headers = "Value",
-    stub = "Statistic",
-    caption = paste(
-      "Variance Bounds Summary Statistics.",
-      "Distributional properties across maturities."
-    ),
-    label = artifact_latex_label("variance_bound_summary_table"),
-    notes = paste(
-      "$U_i = \\frac{1}{4}\\,\\hat c_i(\\hat k_i + \\hat k_{2,i})$ is the",
-      "SDF-news approximation-error variance bound, summarized across the",
-      "quarterly maturity grid."
-    )
+    stub = "Statistic"
   )
 }

@@ -29,6 +29,28 @@
 
 \maketitle
 
+\section*{Status update (2026-07-20)}
+
+\emph{This 18~July 2026 description is superseded.} On 20~July 2026 a full
+run of the current branch completes end to end. The structural-table caption
+that halted the 18-July runner no longer exists---its caption and notes were
+moved out of the generated fragment (now a bare tabular) and the former
+caption and inference-note modules were deleted---and the positive-slack
+mean sets are now certified \texttt{bounded} rather than \texttt{unreliable}.
+With $N=256$, $\widehat\tau^\ast=0.415$; the three SDF-news loadings have
+bounded sets, two excluding zero at $\tau=0.05$; the bootstrap
+$\tau^\ast$ range is $[0.157,\,0.493]$, bounded at baseline in 98\% of
+draws. The log-variance engine therefore runs: PPML, Harvey, and LAD maps,
+the joint-null and joint-GMM diagnostics, fitted-volatility envelopes, and
+the mean-region figures are all produced, and the lag-4 dynamics screen's
+non-rejection stops the EGARCH workstream as a complete deliverable. The
+still-accurate architecture below (source graph, data construction, model,
+and Lewbel system) is retained; the obsolete positive-slack
+``unreliable'' policy, the typed tau-star ``unresolved'' status, and the
+hard-stop subsections have been removed because they no longer describe the
+code.
+
+
 \begin{abstract}
 This note describes the current source in \path{scripts-paper/}, including its
 current fail-closed numerical policy and its present execution failure. The
@@ -271,81 +293,6 @@ $Q$ has full column rank and is consistent,
 \texttt{solve\_point\_identification()} returns the closed-form point. This
 is the only currently certified news-coefficient result.
 
-\subsection{Current positive-slack certification policy}
-
-For $\tau>0$, the feasible set is defined by indefinite quadratic
-inequalities. The available SLSQP backend supplies local feasible candidates,
-not global extrema. Current code makes that limitation operational:
-
-\begin{itemize}[leftmargin=1.5em]
-  \item \path{support/identification/profile_solver_core.R} assigns
-    \texttt{valid=FALSE} to every finite local coordinate or linear-functional
-    candidate.
-  \item \path{support/identification/bound_search_classifier.R} also assigns
-    \texttt{valid=FALSE} to an apparent box-growth infinity.
-  \item \texttt{coef\_interval\_tables()} consequently marks every
-    positive-slack $\theta$ row \texttt{unreliable}.
-  \item Under the maintained $\beta_2^R=0$ restriction, $b_0$ and $b_E$ are
-    separately known constants. Their positive-slack table cells remain
-    blank rather than displaying repeated values.
-\end{itemize}
-
-Warm continuation from the $\tau=0$ point remains a numerical contradiction
-diagnostic. It carries feasible starts forward, but it cannot upgrade a row:
-replacement is guarded by \texttt{status == "bounded"}, which the current
-local backend cannot produce for a positive-slack news coefficient.
-
-\subsection{The typed \texorpdfstring{$\tau^\ast$}{tau-star} status}
-
-\texttt{eval\_width\_at\_tau()} classifies an invalid solve as
-\texttt{unreliable} before considering boundedness. Because all
-positive-slack sides are invalid, the current tau-star sweep has one certified
-bounded point, $\tau=0$, but neither a certified positive-slack bounded point
-nor a certified unbounded point. \texttt{tau\_star\_fixed()} now returns a
-typed result:
-\[
-  \texttt{status=unresolved},\qquad
-  \texttt{lower=0},\qquad
-  \texttt{upper=NA}.
-\]
-This is a certified floor at zero and no certified transition; it is not a
-capped estimate. The former scalar \texttt{tau\_star} and Boolean
-\texttt{tau\_star\_capped} fields no longer exist.
-
-The 200-draw verification produced \texttt{unresolved} in every draw, a
-lower-bound band $[0,0]$, and zero draws whose certified lower floor reached
-the $0.05$ baseline. These are status diagnostics, not evidence that a
-positive-slack set is bounded or unbounded.
-
-\subsection{Bootstrap and rendering consequences}
-
-The moving-block bootstrap still re-estimates the closed-form $\tau=0$ point,
-so robust point intervals remain available. For positive slack, draw endpoints
-are retained only when their status is \texttt{bounded}. There are therefore
-no finite news-endpoint draws, and the symmetric joint-normal endpoint
-calibration is suppressed. The implemented common-critical-value calibration
-is bespoke; it is not Stoye's CI2 or CI3. If endpoint correlation were
-unavailable, it would fall back to the Imbens--Manski interpolation.
-
-The structural renderer is designed to print \texttt{unreliable} for each
-positive-slack news coefficient, and variance-share rows derived from those
-profiles are likewise unavailable. The current runner does not reach either
-completed table, however, because its structural caption still requests the
-removed scalar tau-star field; Section~\ref{sec:first-failure} gives the exact
-failure. If execution reached the new region gate, the two mean-region SVGs
-would contain explicit ``Unavailable'' placeholders instead of uncertified
-geometry.
-
-No local grid-and-polish result is now exposed as a block-share range. A
-constant expected-SDF block can be certified under the maintained
-$\beta_2^R=0$ restriction when the $\tau=0$ point certifies nonemptiness;
-every nonconstant block range is withheld. The component-share mapper also
-fails closed on disconnected projections. A coordinate interval that strictly
-straddles zero does not prove that zero is feasible for an indefinite
-quadratic system. Unless an endpoint is literally zero, such an otherwise
-bounded straddle is downgraded to \texttt{unreliable} rather than assigned a
-zero minimum share.
-
 \section{Log-variance layer}
 
 \subsection{Intended estimands}
@@ -381,61 +328,6 @@ This behavior is verified at the module level and was observed in an earlier
 isolated snapshot. The final live runner now stops at the structural-table
 caption before log-OLS is loaded, so it produces no current log-variance
 diagnostic, residual-crossing count, or positive-slack range.
-
-\subsection{Current first hard stop}
-\label{sec:first-failure}
-
-After data preparation, mean estimation, and the mean bootstrap, runner
-line~38 loads the structural-table renderer. The estimated object stores the
-new fields
-\texttt{tau\_star\_status}, \texttt{tau\_star\_lower}, and
-\texttt{tau\_star\_upper}. Its caption still passes the removed
-\texttt{set\_id\_mean\_eq\$tau\_star} field to
-\texttt{tau\_transition\_range\_label()}. That value is \texttt{NULL}, so the
-formatter's \texttt{switch()} stops with:
-\begin{quote}
-\texttt{EXPR must be a length 1 vector}
-\end{quote}
-
-The call path is
-\begin{quote}
-\path{run_pipeline.R:38}\\
-$\longrightarrow$
-\path{mean_equation/tables/render_structural_equation_table.R}\\
-$\longrightarrow$
-\path{mean_equation/tables/structural_equation_caption.R}\\
-$\longrightarrow$ \texttt{tau\_transition\_range\_label()}.
-\end{quote}
-
-There is also a later, latent PPML mismatch. In the immediately preceding
-snapshot, which reached PPML, the fail-closed engine returned completed
-records without selector diagnostics and coverage stopped with
-\texttt{coverage selector provenance is absent from a completed engine run}.
-That remains a source-level inconsistency, but it is not the first failure of
-the final live tree.
-
-\subsection{Modules not reached}
-
-The hard stop occurs before:
-
-\begin{itemize}[leftmargin=1.5em]
-  \item completed structural-equation tables and all variance-share outputs;
-  \item log-OLS and the mean bounds-by-tau figure;
-  \item PPML estimation, standard errors, and tables;
-  \item Harvey estimation;
-  \item joint-null and joint-GMM diagnostics;
-  \item the residual-dynamics gate and EGARCH router;
-  \item the gated LAD estimator;
-  \item log-variance set bootstrap, panels, and fitted-volatility figures;
-  \item mean-region placeholder rendering;
-  \item heteroskedasticity table rendering, variance-bound rendering,
-    descriptive reports, and final conditional-route validation.
-\end{itemize}
-
-The joint-null module contains a truthful unavailable-state branch for
-uncertified boxes, and the fitted-volatility and region renderers contain
-unavailable placeholders. They describe intended fail-closed behavior if
-reached; they are not current-run artifacts.
 
 \section{Conditional branches}
 

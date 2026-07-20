@@ -87,9 +87,6 @@ share_files <- c(
   ),
   rendering = paper_path(
     "mean_equation", "variance_shares", "render_variance_share_table.R"
-  ),
-  caption = paper_path(
-    "mean_equation", "variance_shares", "variance_share_caption.R"
   )
 )
 share_code <- vapply(
@@ -100,8 +97,7 @@ share_code <- vapply(
 share_fields <- c(
   optimization = "grid_points_per_axis",
   computation = "coherence_ratio",
-  rendering = "render_degenerate_rtol",
-  caption = "grid_points_per_axis"
+  rendering = "render_degenerate_rtol"
 )
 check(
   "variance-share consumers reference their named contract fields",
@@ -118,28 +114,9 @@ check(
   "variance-share consumers do not restate their control literals",
   !grepl("length.out = 101L", share_code[["optimization"]], fixed = TRUE) &&
     !grepl(">= 0.98", share_code[["computation"]], fixed = TRUE) &&
-    !grepl("<= 1e-9", share_code[["rendering"]], fixed = TRUE) &&
-    !grepl("101 points per axis", share_code[["caption"]], fixed = TRUE)
+    !grepl("<= 1e-9", share_code[["rendering"]], fixed = TRUE)
 )
-paper_source_once(share_files[["caption"]])
-set_id_mean_eq <- list(
-  sample = list(n = 10L, span = as.Date(c("2000-01-01", "2002-04-01"))),
-  tau_star = 0.5
-)
-impose_beta2r_null <- TRUE
-share_notes <- build_var_share_notes(sd_c = 1)
-check(
-  "variance-share caption interpolates the configured grid resolution",
-  grepl(
-    sprintf("%d points per axis", variance_share$grid_points_per_axis),
-    paste(share_notes, collapse = " "),
-    fixed = TRUE
-  )
-)
-rm(
-  share_files, share_code, share_fields, share_notes,
-  set_id_mean_eq, impose_beta2r_null
-)
+rm(share_files, share_code, share_fields)
 check(
   "instrument prose derives its canonical column",
   grepl(
