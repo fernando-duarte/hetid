@@ -85,8 +85,7 @@ logvar_prepare_map_context <- function(inputs, contract, mean_eq, bounds_tau,
   qs_base <- tau_quadratic_system(mean_eq$gamma, tau_base, mean_eq$moments)
   b_tab_base <- bounds_tau[[paper_tau_key(tau_base)]]
   stopifnot(!is.null(b_tab_base))
-  point_feasible <- !anyNA(b_point) &&
-    .feasibility_residual(qs_base, b_point, rep(1, length(qs_base$A_i))) <= 0
+  point_feasible <- quadratic_point_feasible(qs_base, b_point)
   grid_base <- logvar_coarsen_grid(
     logvar_feasible_grid(
       qs_base,

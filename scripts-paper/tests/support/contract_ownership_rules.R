@@ -108,6 +108,10 @@ forbid(
   "constraint_(vals|jac) <- function"
 )
 forbid(
+  "secondary unit-omega point feasibility",
+  "rep\\(1,\\s*length\\("
+)
+forbid(
   "direct legacy quadratic-system builder",
   "hetid::build_quadratic_system\\(",
   "support/identification/quadratic_system.R"

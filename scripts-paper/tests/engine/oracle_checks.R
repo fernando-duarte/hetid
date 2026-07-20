@@ -37,6 +37,8 @@ oracle_set_at_tau <- function(qs, b_tab, w1, w2, proj, b_point, grid_n,
   if (nrow(b_feas) == 0L) {
     return(out(na_table("unreliable"), n_cross = length(census$cross), n_feasible = 0L))
   }
+  # kept verbatim on purpose: production shares this via quadratic_point_feasible,
+  # and routing the oracle through it would make the equivalence checks vacuous
   if (!anyNA(b_point)) {
     if (.feasibility_residual(qs, b_point, rep(1, length(qs$A_i))) <= 0) {
       b_feas <- rbind(b_feas, b_point)

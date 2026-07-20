@@ -50,10 +50,8 @@ logvar_engine_run <- function(est, qs, b_tab, b_seed, grid_n, grid_floor,
       "= \"lattice\""
     )
   }
-  if (!is.null(b_seed) && !anyNA(b_seed)) {
-    if (.feasibility_residual(qs, b_seed, rep(1, length(qs$A_i))) <= 0) {
-      b_feas <- rbind(b_feas, b_seed)
-    }
+  if (!is.null(b_seed) && quadratic_point_feasible(qs, b_seed)) {
+    b_feas <- rbind(b_feas, b_seed)
   }
   st$n_feasible <- nrow(b_feas)
   claim_fn <- NULL
