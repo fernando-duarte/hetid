@@ -7,7 +7,6 @@ paper_run_mbb_draws <- function(
   block_length,
   draw,
   seed,
-  truncation = sample_size,
   cores = 1L,
   progress = NULL,
   is_failure = is.character
@@ -23,10 +22,6 @@ paper_run_mbb_draws <- function(
     length(block_length) == 1L,
     is.finite(block_length),
     block_length >= 1L,
-    length(truncation) == 1L,
-    is.finite(truncation),
-    truncation >= 1L,
-    truncation <= sample_size,
     length(cores) == 1L,
     is.finite(cores),
     cores >= 1L,
@@ -38,7 +33,6 @@ paper_run_mbb_draws <- function(
   n_draws <- as.integer(n_draws)
   sample_size <- as.integer(sample_size)
   block_length <- as.integer(block_length)
-  truncation <- as.integer(truncation)
   cores <- as.integer(cores)
 
   # the runner owns the generator so every bootstrap draws indices under one
@@ -50,7 +44,7 @@ paper_run_mbb_draws <- function(
   rng_kind <- RNGkind()
   set.seed(seed)
   indices <- lapply(seq_len(n_draws), function(draw_id) {
-    mbb_index(sample_size, block_length)[seq_len(truncation)]
+    mbb_index(sample_size, block_length)
   })
   started_at <- Sys.time()
   run_one <- function(draw_id) {

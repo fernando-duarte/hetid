@@ -128,7 +128,6 @@ mbb_run_a <- paper_run_mbb_draws(
   n_draws = 4L,
   sample_size = 11L,
   block_length = 4L,
-  truncation = 8L,
   seed = 333L,
   draw = function(index, draw_id) {
     c(draw_id = draw_id, total = sum(index))
@@ -138,7 +137,6 @@ mbb_run_b <- paper_run_mbb_draws(
   n_draws = 4L,
   sample_size = 11L,
   block_length = 4L,
-  truncation = 8L,
   seed = 333L,
   draw = function(index, draw_id) {
     c(draw_id = draw_id, total = sum(index))
@@ -148,7 +146,7 @@ check(
   "moving-block runner pre-draws a reproducible index stream",
   identical(mbb_run_a$indices, mbb_run_b$indices) &&
     identical(mbb_run_a$draws, mbb_run_b$draws) &&
-    all(lengths(mbb_run_a$indices) == 8L)
+    all(lengths(mbb_run_a$indices) == 11L)
 )
 mbb_progress <- integer()
 mbb_failed <- paper_run_mbb_draws(
