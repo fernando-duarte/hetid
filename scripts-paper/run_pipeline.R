@@ -110,12 +110,8 @@ paper_source_once(paper_path("log_variance", "tables", "render_panels.R"))
 # vol set-endpoint bootstrap: reads the frozen PPML/Harvey caches and the lagged
 # asset-return PCs, re-runs the whole set map per resample, and writes the outer
 # confidence-envelope state and diagnostics to their typed output groups
-# L'Ecuyer-CMRG only for the forked vol bootstrap (mclapply mc.set.seed); the
-# serial structural bootstrap above and the region figures below stay under the
-# default RNG so their published numbers do not move
-logvar_boot_rng <- RNGkind("L'Ecuyer-CMRG")
+# the MBB runner owns and restores the RNG kind (support/statistics/mbb_runner.R)
 paper_source_once(paper_path("log_variance", "inference", "run_set_bootstrap.R"))
-RNGkind(logvar_boot_rng[1L], logvar_boot_rng[2L])
 # The inference variant retains the combined panels and labels while threading
 # the bootstrap envelope beneath the PPML and Harvey set cells.
 paper_source_once(paper_path("log_variance", "tables", "render_inference_panels.R"))

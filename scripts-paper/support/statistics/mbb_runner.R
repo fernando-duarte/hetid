@@ -41,6 +41,11 @@ paper_run_mbb_draws <- function(
   truncation <- as.integer(truncation)
   cores <- as.integer(cores)
 
+  # the runner owns the generator so every bootstrap draws indices under one
+  # documented RNG regardless of ambient state
+  old_kind <- RNGkind()
+  on.exit(do.call(RNGkind, as.list(old_kind)), add = TRUE)
+  RNGkind("Mersenne-Twister")
   set.seed(seed)
   indices <- lapply(seq_len(n_draws), function(draw_id) {
     mbb_index(sample_size, block_length)[seq_len(truncation)]
@@ -53,13 +58,25 @@ paper_run_mbb_draws <- function(
     )
   }
   if (cores > 1L) {
-    stopifnot(is.null(progress))
-    draws <- parallel::mclapply(
-      seq_len(n_draws),
-      run_one,
-      mc.cores = cores,
-      mc.set.seed = TRUE
-    )
+    # dispatch in chunks (about 20 heartbeats per run) so progress can
+    # report under parallelism too; results match a single mclapply call
+    # because the indices above are already fixed before any chunk runs
+    chunk_size <- max(cores, ceiling(n_draws / 20L))
+    chunks <- split(seq_len(n_draws), ceiling(seq_len(n_draws) / chunk_size))
+    draws <- vector("list", n_draws)
+    n_done <- 0L
+    for (chunk in chunks) {
+      draws[chunk] <- parallel::mclapply(
+        chunk,
+        run_one,
+        mc.cores = cores,
+        mc.set.seed = TRUE
+      )
+      n_done <- n_done + length(chunk)
+      if (!is.null(progress)) {
+        progress(n_done, n_draws, started_at)
+      }
+    }
   } else {
     draws <- vector("list", n_draws)
     for (draw_id in seq_len(n_draws)) {
