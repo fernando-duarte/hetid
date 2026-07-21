@@ -63,6 +63,15 @@ check(
   "RNG kind is restored after a successful run",
   identical(RNGkind(), ambient_kind)
 )
+kind_run <- paper_run_mbb_draws(
+  n_draws = 3L, sample_size = 8L, block_length = 3L, seed = 21L,
+  draw = function(index, draw_id) sum(index)
+)
+check(
+  "returned rng_kind reports Mersenne-Twister regardless of ambient kind",
+  identical(ambient_kind[1], "Wichmann-Hill") &&
+    identical(kind_run$rng_kind[1], "Mersenne-Twister")
+)
 run_error <- tryCatch(
   {
     paper_run_mbb_draws(

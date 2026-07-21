@@ -46,6 +46,8 @@ paper_run_mbb_draws <- function(
   old_kind <- RNGkind()
   on.exit(do.call(RNGkind, as.list(old_kind)), add = TRUE)
   RNGkind("Mersenne-Twister")
+  # the kind the indices were drawn under, recorded before the exit restore
+  rng_kind <- RNGkind()
   set.seed(seed)
   indices <- lapply(seq_len(n_draws), function(draw_id) {
     mbb_index(sample_size, block_length)[seq_len(truncation)]
@@ -95,7 +97,8 @@ paper_run_mbb_draws <- function(
       difftime(Sys.time(), started_at, units = "mins")
     ),
     n_failed = sum(failed),
-    failed = failed
+    failed = failed,
+    rng_kind = rng_kind
   )
 }
 

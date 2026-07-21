@@ -118,7 +118,7 @@ set_id_boot <- local({
     resampler = "circular_mbb",
     sample_size = set_id_mean_eq$sample$n,
     b_reps = boot_reps, block = block, seed = boot_seed,
-    rng_kind = RNGkind(),
+    rng_kind = boot_run$rng_kind,
     block_rule = "ceiling(1.5*T^(1/3))",
     index_sha256 = paper_sha256_object(boot_idx)
   )
