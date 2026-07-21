@@ -98,3 +98,18 @@ paper_run_mbb_draws <- function(
     failed = failed
   )
 }
+
+# Standard console heartbeat for a paper_run_mbb_draws() progress callback:
+# the %% report_every guard reports every draw when serial and every chunk
+# when parallel, since draw_id already carries that meaning in both regimes.
+paper_mbb_console_progress <- function(report_every, label) {
+  function(draw_id, n_draws, started_at) {
+    if (draw_id %% report_every == 0L) {
+      cat(sprintf(
+        "  %s draw %d of %d (%.1f min elapsed)\n",
+        label, draw_id, n_draws,
+        as.numeric(difftime(Sys.time(), started_at, units = "mins"))
+      ))
+    }
+  }
+}
