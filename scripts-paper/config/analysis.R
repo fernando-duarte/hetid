@@ -40,17 +40,17 @@ z_source <- function() yield_vol[c("qtr", z_col)]
 z_desc <- paper_instrument_description()
 
 # Moving-block bootstrap controls shared by every bootstrap in the paper.
-# Env overrides are checked as raw strings before coercion so a typo fails
-# loudly instead of silently coercing to NA.
-validate_whole_number_env <- function(var) {
+# Env overrides are parsed as whole numbers; a typo fails loudly instead of
+# silently coercing to NA. An explicitly-empty value behaves like unset.
+resolve_whole_number_env <- function(var, default) {
   raw <- Sys.getenv(var, unset = "")
   if (nzchar(raw) && !grepl("^[0-9]+$", trimws(raw))) {
     stop(sprintf("%s must be a whole number, got: %s", var, raw), call. = FALSE)
   }
+  if (nzchar(raw)) as.integer(trimws(raw)) else default
 }
 
-validate_whole_number_env("HETID_BOOT_REPS")
-boot_reps <- as.integer(Sys.getenv("HETID_BOOT_REPS", unset = "10000"))
+boot_reps <- resolve_whole_number_env("HETID_BOOT_REPS", 10000L)
 stopifnot(boot_reps >= 2L)
 if (boot_reps != 10000L) {
   message(sprintf("boot_reps overridden to %d via HETID_BOOT_REPS", boot_reps))
@@ -59,15 +59,12 @@ if (boot_reps != 10000L) {
 # One seed across every bootstrap in the paper, matching macro_dynamics.
 boot_seed <- 20260708L
 
-validate_whole_number_env("HETID_BOOT_CORES")
 detected_cores <- parallel::detectCores()
 default_cores <- max(1L, if (is.na(detected_cores)) 1L else detected_cores - 1L)
-boot_cores <- as.integer(
-  Sys.getenv("HETID_BOOT_CORES", unset = as.character(default_cores))
-)
+boot_cores <- resolve_whole_number_env("HETID_BOOT_CORES", default_cores)
 stopifnot(boot_cores >= 1L)
 
-# TEMPORARY back-compat shims pinning the new semantics until the runners
+# temporary back-compat shims pinning the new semantics until the runners
 # adopt them directly (Tasks 3-4); each is deleted with its caller.
 boot_block <- paper_mbb_block_len(256L) # removed in the runner tasks
 logvar_boot_cores <- boot_cores # removed in the runner tasks
