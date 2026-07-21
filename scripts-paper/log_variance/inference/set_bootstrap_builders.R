@@ -1,4 +1,5 @@
-# Estimator builders used by each moving-block bootstrap draw.
+# Estimator builders used by each moving-block bootstrap draw, plus the
+# tau = 0 bootstrap-vs-analytic-SE diagnostic run once per estimator.
 
 logvar_set_boot_builders <- function(scale_value, logols_coef) {
   build_ppml <- function(w1, w2, pcr, qtr, b_point, built) {
@@ -37,4 +38,31 @@ logvar_set_boot_builders <- function(scale_value, logols_coef) {
   )
   stopifnot(all(ids %in% names(builders)))
   builders[ids]
+}
+
+# tau = 0 point diagnostic: bootstrap SD of the point draws against each
+# estimator's analytic SE, printed as a sanity ratio and returned for the
+# diagnostics CSV.
+logvar_boot_tau0_diagnostics <- function(ests, collected, se_obj, se_type, spec) {
+  tau0 <- lapply(ests, function(est) {
+    sd_boot <- apply(collected[[est]][[1]]$upper, 2, function(v) {
+      ok <- is.finite(v)
+      if (sum(ok) >= 2L) robust_scale(v[ok]) else NA_real_
+    })
+    se_df <- se_obj[[est]]$se$point
+    se_an <- stats::setNames(se_df[[se_type[[est]]]], se_df$coef)[spec$coefs]
+    message(sprintf(
+      "  %s tau=0 bootstrap SD / analytic %s SE: %s", est, se_type[[est]],
+      paste(
+        paper_format_general(
+          sd_boot / se_an,
+          PAPER_REPORTING_CONTROL$precision$console_significant
+        ),
+        collapse = " "
+      )
+    ))
+    data.frame(coef = spec$coefs, sd_boot = sd_boot, se_analytic = se_an, ratio = sd_boot / se_an)
+  })
+  names(tau0) <- ests
+  tau0
 }

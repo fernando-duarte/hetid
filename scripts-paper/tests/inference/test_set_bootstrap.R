@@ -23,6 +23,7 @@ paper_source_once(paper_path("log_variance", "estimators", "log_ols", "estimator
 paper_source_once(paper_path("log_variance", "estimators", "ppml", "estimator.R"))
 paper_source_once(paper_path("log_variance", "estimators", "harvey", "estimator.R"))
 paper_source_once(paper_path("log_variance", "inference", "set_bootstrap_core.R"))
+paper_source_once(paper_path("log_variance", "inference", "set_bootstrap_gate.R"))
 
 paper_source_once(paper_path("tests", "support", "harness.R"))
 .test <- paper_test_harness()
@@ -30,5 +31,6 @@ check <- .test$check
 
 paper_source_once(paper_path("tests", "inference", "set_envelope_checks.R"))
 paper_source_once(paper_path("tests", "inference", "set_bootstrap_core_checks.R"))
+paper_source_once(paper_path("tests", "inference", "set_bootstrap_gate_checks.R"))
 
 .test$finish()

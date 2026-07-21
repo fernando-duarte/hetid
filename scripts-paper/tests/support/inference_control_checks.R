@@ -70,7 +70,10 @@ threaded_fields <- list(
     "paper_bootstrap_failure_limit", "progress_report_every"
   ),
   "log_variance/inference/run_set_bootstrap.R" = c(
-    "paper_bootstrap_failure_limit", "stability_share"
+    "paper_bootstrap_failure_limit", "stability_share", "progress_report_every"
+  ),
+  "log_variance/inference/set_bootstrap_gate.R" = c(
+    "fatal_failure_share", "progress_report_every"
   ),
   "log_variance/inference/set_envelope.R" = "stability_share"
 )

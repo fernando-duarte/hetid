@@ -13,15 +13,20 @@ write_logvar_set_boot_artifacts <- function(
   tau0,
   spec,
   collected,
+  prim_cells,
+  sens_cells,
   boot_reps,
-  boot_block,
+  block,
   boot_seed,
-  m
+  sens_block,
+  sens_reps,
+  provenance
 ) {
   diag_rows <- list()
   for (est in ests) {
     for (d in seq_along(display_taus)) {
       key <- disp_key[d]
+      j <- disp_idx[d]
       pub <- se_obj[[est]]$sets[[key]]
       stopifnot(identical(pub$coef, spec$coefs))
       sci <- if (is.null(sens_env)) {
@@ -44,6 +49,8 @@ write_logvar_set_boot_artifacts <- function(
         tau0_sd_boot = tau0[[est]]$sd_boot,
         tau0_se_analytic = tau0[[est]]$se_analytic,
         tau0_ratio = tau0[[est]]$ratio,
+        failed_count = prim_cells[[est]][j, "count"],
+        sens_failed_count = sens_cells[[est]][j, "count"],
         row.names = NULL,
         stringsAsFactors = FALSE
       )
@@ -60,14 +67,16 @@ write_logvar_set_boot_artifacts <- function(
   paper_write_exact_rds(
     list(
       b_reps = boot_reps,
-      block = boot_block,
+      block = block,
       seed = boot_seed,
-      m = m,
+      sens_block = sens_block,
+      sens_reps = sens_reps,
       inference_contract = PAPER_ANALYSIS_CONTRACT$inference,
       taus = spec$taus,
       coefs = spec$coefs,
       collected = collected,
-      full = full
+      full = full,
+      provenance = provenance
     ),
     artifact_path("log_variance_bootstrap_draws"),
     "log_variance_bootstrap_draws"
