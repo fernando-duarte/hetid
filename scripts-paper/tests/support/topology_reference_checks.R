@@ -30,6 +30,10 @@ known_r_basenames <- basename(list.files(
   recursive = TRUE,
   full.names = TRUE
 ))
+# quality-check.R is a real, current command (see the package CLAUDE.md) that
+# lives under the permanently gitignored docs/ tree, so no checkout ever has
+# it on disk; exempt its basename from the stale-reference scan below.
+known_r_basenames <- c(known_r_basenames, "quality-check.R")
 for (file in text_files) {
   text <- readLines(file, warn = FALSE)
   if (grepl("[.]R$", file)) {
@@ -68,6 +72,8 @@ while (length(frontier)) {
   frontier <- setdiff(children, reachable)
   reachable <- unique(c(reachable, frontier))
 }
+# test-only definitions plus the standalone quoted-numbers regenerator, none
+# of which run_pipeline.R ever reaches
 inactive <- c(
   paper_path(
     "log_variance",
@@ -84,6 +90,10 @@ inactive <- c(
     "log_variance",
     "figures",
     "bounds_by_tau_test_support.R"
+  ),
+  paper_path(
+    "variance_bounds",
+    "quoted_numbers.R"
   )
 )
 production <- r_files[

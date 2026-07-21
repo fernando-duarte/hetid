@@ -29,8 +29,16 @@ sample_txt <- sprintf(
 # plug-in and the no-Taylor-expansion plug-in, on the quarterly grid
 vb_mats <- seq(step_qtr, effective_max_maturity(step_qtr), by = step_qtr)
 ub_news <- pmin(
-  vapply(vb_mats, \(i) compute_variance_bound(yields, term_premia, i = i, step = step_qtr), numeric(1)),
-  vapply(vb_mats, \(i) compute_news_q_bound(yields, term_premia, i = i, step = step_qtr), numeric(1))
+  vapply(
+    vb_mats,
+    \(i) compute_variance_bound(yields, term_premia, i = i, step = step_qtr),
+    numeric(1)
+  ),
+  vapply(
+    vb_mats,
+    \(i) compute_news_q_bound(yields, term_premia, i = i, step = step_qtr),
+    numeric(1)
+  )
 )
 ub_expected <- vapply(
   vb_mats,
@@ -113,7 +121,10 @@ desc <- c(
   "  compute_variance_bound(), and the no-Taylor-expansion plug-in",
   "  (sd(w_hat) + sd(q_hat) + sd(z_hat))^2, from compute_news_q_bound().",
   sprintf(
-    "  The no-Taylor bound is the smaller one only at the shortest maturity; the maximum is attained at %d months.",
+    paste0(
+      "  The no-Taylor bound is the smaller one only at the shortest maturity; ",
+      "the maximum is attained at %d months."
+    ),
     vb_mats[which.max(ub_news)]
   ),
   "",

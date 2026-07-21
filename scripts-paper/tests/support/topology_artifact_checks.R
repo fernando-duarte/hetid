@@ -94,6 +94,16 @@ if (dir.exists(out_dir)) {
     "",
     artifact_manifest$new_path
   )
+  # variance_bounds/quoted_numbers.R is a standalone, non-pipeline script; its
+  # csv and self-documenting markdown note are not manifest entries.
+  standalone_outputs <- file.path(
+    "quoted_numbers",
+    c(
+      "approximation_error_quoted_numbers.csv",
+      "approximation_error_quoted_numbers.md"
+    )
+  )
+  expected <- c(expected, standalone_outputs)
   extra <- setdiff(output_files, expected)
   if (length(extra)) {
     record_problem(

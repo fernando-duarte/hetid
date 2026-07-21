@@ -81,7 +81,8 @@ forbid(
   "frequency = \"quarterly\"",
   c(
     "config/analysis_contract.R",
-    "support/data/acm_inputs.R"
+    "support/data/acm_inputs.R",
+    "variance_bounds/quoted_numbers.R"
   )
 )
 forbid(
