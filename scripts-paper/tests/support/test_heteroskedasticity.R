@@ -121,11 +121,13 @@ render_source <- paste(readLines(paper_path(
   "heteroskedasticity",
   "render_table.R"
 ), warn = FALSE), collapse = "\n")
+# The render script emits a bare tabular (the consuming paper owns the notes
+# and the star legend), so the legend call lives outside the repo now; the
+# contract here is only that neither script hard-codes its own thresholds.
 check(
   "result scripts contain no private significance thresholds",
   grepl("sig_stars\\(x\\)", compute_source) &&
     grepl("paper_significance_level", compute_source) &&
-    grepl("paper_significance_legend", render_source) &&
     !grepl("sig <- 0\\.05|x < 0\\.0", compute_source) &&
     !grepl("p<0\\.10.*p<0\\.05.*p<0\\.01", render_source)
 )
