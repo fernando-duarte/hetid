@@ -1,12 +1,31 @@
-# hetid (development version)
+# hetid 0.4.0
 
 ## Breaking changes
 
+* `compute_expected_sdf_variance_bound()` now returns
+  `min{(1/4) * C_hat * K_hat, Var(q)}`: the fourth-order component of the
+  envelope/Taylor bound (envelope `max(exp(2 * n_hat))` times the sample
+  fourth moment of the log forecast error) paired with the
+  first-order-cancelled q-bound. The projection (gap-variance) arm is no
+  longer part of the returned min; on the shipped ACM data the q arm binds
+  at every maturity, so reported values are unchanged there, but the two
+  contracts differ on other data. The function can now also return `Inf`
+  when both arms overflow on a nonempty paired sample (`NA_real_` remains
+  reserved for an empty sample).
 * `load_term_premia()` now raises a `hetid_error_insufficient_data`
   condition when the data is not available, matching the `"nyfed"`
   source's existing behavior; the `"auto"`/`"github"` path formerly
   emitted a message and returned `NULL`. Callers that tested the return
   value for `NULL` should `tryCatch` on the condition class instead.
+
+## New features
+
+* New `compute_news_q_bound()`: the two-leg first-order-cancelled
+  (Minkowski) bound on the variance of the centered quadratic SDF-news
+  approximation error, `[sd(q1) + sd(q0) + sd(g)]^2` over the paired news
+  sample. Neither it nor the envelope bound of `compute_variance_bound()`
+  dominates the other, so the reported news bound is their pointwise
+  minimum, taken by the caller.
 
 ## Improvements
 
