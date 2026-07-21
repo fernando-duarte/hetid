@@ -6,10 +6,13 @@
 #' \eqn{g_t = e^{-y^{(1)}_{t+s}} - e^{n\_hat(i,t)}}, and the
 #' first-order-cancelled gap \eqn{q_t = e^{n\_hat}(e^u - 1 - u)} where
 #' \eqn{u = x - n\_hat} is the raw log forecast error (\eqn{x} the realized
-#' log price). Both \eqn{g} and \eqn{q} are filtered to the common finite
-#' paired set \eqn{T_i = \{1, \dots, T - s\}}, \eqn{s = i / step}. The
-#' gap's mean is the centering correction; \eqn{\min\{Var(g), Var(q)\}} is
-#' the variance bound returned by
+#' log price), plus the masked \eqn{u} and \eqn{n\_hat} series themselves.
+#' All series are filtered to the common finite paired set
+#' \eqn{T_i = \{1, \dots, T - s\}}, \eqn{s = i / step}, under ONE mask, so
+#' the estimator's centering and every bound arm share a single sample. The
+#' gap's mean is the centering correction; the q variance and the
+#' fourth-order component \eqn{(1/4)\max(e^{2 n\_hat})\,\mathrm{mean}(u^4)}
+#' are the two arms of the min returned by
 #' \code{\link{compute_expected_sdf_variance_bound}}.
 #'
 #' Callers validate \code{step}, \code{i} (within
@@ -37,7 +40,13 @@
 #'       sharper \eqn{O(\sigma^4)} bound. \code{q} is \strong{not} itself guaranteed
 #'       finite: a yield \eqn{\to +\infty} gives \eqn{q = +\infty}, and an
 #'       extreme \eqn{n\_hat} can give \eqn{0 \cdot \infty = \mathrm{NaN}}.
-#'       The bound function guards \code{var_q} against this.}
+#'       The bound function guards its variance against this.}
+#'     \item{\code{u}}{The raw log forecast error \eqn{u = x - n\_hat} on the
+#'       same mask; \eqn{\mathrm{mean}(u^4)} is the fourth-moment factor of
+#'       the component arm.}
+#'     \item{\code{n_hat}}{The paired forecast series on the same mask;
+#'       \eqn{\max(e^{2 n\_hat})} is the envelope factor of the component
+#'       arm.}
 #'   }
 #' @keywords internal
 compute_expected_sdf_gap <- function(yields, term_premia, i,
@@ -75,13 +84,35 @@ compute_expected_sdf_gap <- function(yields, term_premia, i,
   # numerically invariant
   gap <- realized_price - exp_n_hat_paired
 
-  # expm1() removes the e^u - 1 cancellation; the trailing `- u` is numerically
-  # irrelevant here (var(q) >> machine eps)
   u <- realized_log - n_hat_paired
-  q_gap <- exp_n_hat_paired * (expm1(u) - u)
+  q_gap <- q_kernel(n_hat_paired, u)
 
-  # is.finite(gap) is the common finite mask for g and q: each leg is exp(), so
-  # the difference is non-finite iff a leg is
+  # is.finite(gap) is the ONE mask for every returned series: each gap leg is
+  # exp(), so the difference is non-finite iff a leg is, and the bound arms
+  # must share the estimator's sample (overflow safety lives in the guarded
+  # variance arms, never in extra row-dropping)
   mask <- is.finite(gap)
-  list(exp_n_hat = exp_n_hat, gap = gap[mask], q = q_gap[mask])
+  list(
+    exp_n_hat = exp_n_hat,
+    gap = gap[mask],
+    q = q_gap[mask],
+    u = u[mask],
+    n_hat = n_hat_paired[mask]
+  )
+}
+
+#' First-Order-Cancelled Gap Kernel
+#'
+#' The numerically delicate kernel \eqn{q = e^{n\_hat}(e^u - 1 - u)},
+#' shared by the level gap and both legs of the news q-bound so the three
+#' uses cannot drift. \code{expm1()} keeps the \eqn{e^u - 1} cancellation
+#' exact; the trailing \code{- u} is numerically irrelevant at the scales
+#' where the variance is used (var(q) >> machine eps).
+#'
+#' @param n_hat Numeric vector of log-price forecasts.
+#' @param u Numeric vector of log forecast errors, conformable.
+#' @return Numeric vector \eqn{e^{n\_hat}(\mathrm{expm1}(u) - u)}.
+#' @noRd
+q_kernel <- function(n_hat, u) {
+  exp(n_hat) * (expm1(u) - u)
 }

@@ -83,6 +83,29 @@ centered_var <- function(x) {
   centered_cov(x, x)[1, 1]
 }
 
+#' Guarded Centered Variance for Bound Arms
+#'
+#' The shared overflow policy of the variance-bound arms: a series that
+#' is not entirely finite yields \code{Inf} (the arm loses the min it
+#' feeds; observations are never dropped, which would understate a
+#' variance bound), and a finite series yields its
+#' \code{\link{centered_var}} clamped at zero (divisor-N arithmetic can
+#' produce a tiny negative value on a near-constant series, and callers
+#' take square roots). Non-finite inputs here arise only from
+#' \code{exp()} overflow at astronomically large log prices, so the
+#' \code{Inf} branch errs conservative, never sharp.
+#'
+#' @param x Numeric vector.
+#' @return Numeric scalar: \code{max(0, centered_var(x))}, or \code{Inf}
+#'   when any element of \code{x} is non-finite.
+#' @noRd
+guarded_centered_var <- function(x) {
+  if (!all(is.finite(x))) {
+    return(Inf)
+  }
+  max(0, centered_var(x))
+}
+
 #' Warn When Identification Variances Are Degenerate
 #'
 #' Diagnostic for the regularity assumption of the identification

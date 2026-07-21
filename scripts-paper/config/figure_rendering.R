@@ -1,7 +1,7 @@
 # Versioned publication style and render geometry for paper figures.
 
 PAPER_FIGURE_STYLE <- list(
-  version = "1.0.0",
+  version = "1.1.0",
   identified_set = list(
     primary = "#2a78d6",
     reference = "grey35",
@@ -18,8 +18,10 @@ PAPER_FIGURE_STYLE <- list(
     point_linewidth = 0.55
   ),
   variance_bound = list(
-    line = "blue",
-    point = "darkblue",
+    series_colors = c(
+      "SDF news" = "#4a3aa7",
+      "expected SDF" = "#008300"
+    ),
     line_width = 1.2,
     point_size = 3
   ),

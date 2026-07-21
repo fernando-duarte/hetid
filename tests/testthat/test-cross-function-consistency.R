@@ -7,6 +7,7 @@ test_that("all functions handle same ACM data format", {
   expect_type(compute_c_hat(test_env$yields, test_env$term_premia, i = i), "double")
   expect_type(compute_k_hat(test_env$yields, test_env$term_premia, i = i), "double")
   expect_type(compute_variance_bound(test_env$yields, test_env$term_premia, i = i), "double")
+  expect_type(compute_news_q_bound(test_env$yields, test_env$term_premia, i = i), "double")
   expect_type(
     compute_expected_sdf_variance_bound(test_env$yields, test_env$term_premia, i = i),
     "double"

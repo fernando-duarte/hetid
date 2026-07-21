@@ -36,32 +36,42 @@ steps one period, so maturity arithmetic moves in multiples of
 bond, and horizons must satisfy \code{i <= MAX_MATURITY - step}.}
 }
 \value{
-Numeric scalar \eqn{\widehat U_{i}^{(0)} \ge 0}, or
-\code{NA_real_} when no finite paired observations remain.
+Numeric scalar \eqn{\widehat U_{i}^{(0)} \ge 0}; \code{Inf} when
+both arms overflow on a nonempty paired sample (conservative, never
+sharp); \code{NA_real_} only when no finite paired observations remain.
 }
 \description{
-Computes \eqn{\widehat U_{i}^{(0)}}, the tighter empirical bound on the
+Computes \eqn{\widehat U_{i}^{(0)}}, the reported bound on the
 unconditional variance of the expected-SDF level-approximation error
 \eqn{\varepsilon_{i,t}^{(0)}} produced by
 \code{compute_expected_sdf(paired = TRUE)} (the bound is built from the
 paired gap, so it pairs with that estimator, not the decoupled default).
-It returns \eqn{\min\{\widehat{\mathrm{Var}}(g), \widehat{\mathrm{Var}}(q)\}},
-where \eqn{g_t = e^{-y^{(1)}_{t+s}} - e^{n\_hat(i,t)}} is the gap series
-and \eqn{q_t = e^{n\_hat}(e^u - 1 - u)} (with \eqn{u = x - n\_hat} the raw
-log forecast error) is the first-order-cancelled gap; both variances use
-divisor \eqn{N} via \code{\link{centered_cov}}.
+It returns \eqn{\min\{(1/4)\,\widehat C\,\widehat K,\;
+\widehat{\mathrm{Var}}(q)\}}: the fourth-order component of the
+envelope/Taylor bound paired with the first-order-cancelled
+\eqn{q}-bound, where \eqn{q_t = e^{n\_hat}(e^u - 1 - u)} (with
+\eqn{u = x - n\_hat} the raw log forecast error),
+\eqn{\widehat C = \max_t e^{2 n\_hat}}, and
+\eqn{\widehat K = \mathrm{mean}(u^4)}. The variance uses divisor
+\eqn{N} via \code{\link{centered_cov}}.
 }
 \note{
-The bound estimates the population \eqn{\mathrm{Var}(\varepsilon)},
-with \eqn{\mathrm{Var}(q)} the sharper estimate: since
-\eqn{E[u_t | \mathrm{info}_t] = 0} and \eqn{q_t = O(u_t^2)}, the
-\eqn{q}-variance is \eqn{O(\sigma^4)} rather than \eqn{O(\sigma^2)}.
-On real financial data \eqn{\mathrm{Var}(q)} binds and is several orders
-of magnitude below \eqn{\mathrm{Var}(g)}, so the returned bound is far
-smaller than a pure gap-variance bound. The \eqn{\min} therefore
-essentially always selects \eqn{\widehat{\mathrm{Var}}(q)}: the returned
-value is the sharper bound's estimate, not a min-of-noise artifact of two
-comparably sized variances.
+The projection (gap-variance) bound \eqn{\widehat{\mathrm{Var}}(g)}
+is no longer part of the returned min: on financial data it exceeds the
+q arm by orders of magnitude and never binds. The component arm
+replaces it because the two remaining arms are NOT ordered: the
+truncated \eqn{(1/4) C K} can fall below \eqn{\mathrm{Var}(q)}, so the
+min is not redundant.
+
+The component arm is the plug-in leading fourth-order term of the
+envelope/Taylor bound, not a literal finite-sample upper bound: the
+full bound adds the remainder moment and a cross term, and sample
+moments can lie below their population counterparts. When the
+component arm wins the min, the reported value carries the same
+leading-term status as the SDF-news bound of
+\code{\link{compute_variance_bound}}; when the q arm wins (every
+maturity on the shipped ACM data), the reported value is the exact
+first-order-cancelled bound estimate.
 
 The effective maximum for \code{i} is \code{MAX_MATURITY - step},
 because \code{n_hat(i, t)} requires data at maturity \code{i + step}.
@@ -83,18 +93,16 @@ formation date \eqn{t-j}); the bound depends only on the horizon
 With \eqn{s = i / step}, \eqn{T_i = \{1, \dots, T - s\}}, and \eqn{N_i =
 |T_i|} the number of finite paired observations,
 \deqn{\widehat U_{i}^{(0)} = \min\!\left\{
-  \frac{1}{N_i}\sum_{t}(g_t - \bar g)^2,\;
+  \frac{1}{4}\,\Big(\max_t e^{2 a_t}\Big)\,\frac{1}{N_i}\sum_t u_t^4,\;
   \frac{1}{N_i}\sum_{t}(q_t - \bar q)^2
 \right\}}
-where \eqn{g_t = e^{x_t} - e^{a_t}},
-\eqn{q_t = e^{a_t}(e^{u_t} - 1 - u_t)},
+where \eqn{q_t = e^{a_t}(e^{u_t} - 1 - u_t)},
 \eqn{x_t = -m(\mathrm{step}) y^{(\mathrm{step})}_{t+s}/100},
-\eqn{a_t = n\_hat(i,t)}, \eqn{u_t = x_t - a_t}.
-\eqn{\bar g} is exactly the centering correction added by
-\code{compute_expected_sdf(paired = TRUE)}; both \eqn{g} and \eqn{q} are centered at
-their own sample means (\code{centered_cov} centers internally), and
-\eqn{E[g] = E[q]} only in population. The divisor is \eqn{N_i} (the
-spec's \eqn{1/N}), computed with \code{\link{centered_cov}}, not the
+\eqn{a_t = n\_hat(i,t)}, \eqn{u_t = x_t - a_t}. Every ingredient is
+computed on the estimator's own finite paired mask (one sample for the
+point estimate, the centering, and both bound arms). The q variance is
+centered at its own sample mean with divisor \eqn{N_i} (the spec's
+\eqn{1/N}), computed with \code{\link{centered_cov}}, not the
 \eqn{1/(N-1)} of \code{stats::var}.
 }
 
@@ -119,5 +127,6 @@ bound_60 <- compute_expected_sdf_variance_bound(yields, term_premia, i = 60)
 
 }
 \seealso{
-\code{\link{compute_expected_sdf}}, \code{\link{compute_variance_bound}}
+\code{\link{compute_expected_sdf}},
+\code{\link{compute_variance_bound}}, \code{\link{compute_news_q_bound}}
 }

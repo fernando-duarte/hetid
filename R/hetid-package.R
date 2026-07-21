@@ -119,6 +119,8 @@
 #'   \item \code{\link{compute_k_hat}()}: Fourth moment estimator
 #'   \item \code{\link{compute_k2_hat}()}: Price-news fourth moment estimator
 #'   \item \code{\link{compute_variance_bound}()}: Variance bounds
+#'   \item \code{\link{compute_news_q_bound}()}: First-order-cancelled
+#'     news-error variance bound
 #' }}
 #'
 #' \subsection{Identification Functions:}{

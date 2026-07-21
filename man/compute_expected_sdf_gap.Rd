@@ -51,7 +51,13 @@ dates (length \eqn{\le T - s} after dropping any non-finite pair).}
 sharper \eqn{O(\sigma^4)} bound. \code{q} is \strong{not} itself guaranteed
 finite: a yield \eqn{\to +\infty} gives \eqn{q = +\infty}, and an
 extreme \eqn{n\_hat} can give \eqn{0 \cdot \infty = \mathrm{NaN}}.
-The bound function guards \code{var_q} against this.}
+The bound function guards its variance against this.}
+\item{\code{u}}{The raw log forecast error \eqn{u = x - n\_hat} on the
+same mask; \eqn{\mathrm{mean}(u^4)} is the fourth-moment factor of
+the component arm.}
+\item{\code{n_hat}}{The paired forecast series on the same mask;
+\eqn{\max(e^{2 n\_hat})} is the envelope factor of the component
+arm.}
 }
 }
 \description{
@@ -61,10 +67,13 @@ Builds the components shared by \code{\link{compute_expected_sdf}} and
 \eqn{g_t = e^{-y^{(1)}_{t+s}} - e^{n\_hat(i,t)}}, and the
 first-order-cancelled gap \eqn{q_t = e^{n\_hat}(e^u - 1 - u)} where
 \eqn{u = x - n\_hat} is the raw log forecast error (\eqn{x} the realized
-log price). Both \eqn{g} and \eqn{q} are filtered to the common finite
-paired set \eqn{T_i = \{1, \dots, T - s\}}, \eqn{s = i / step}. The
-gap's mean is the centering correction; \eqn{\min\{Var(g), Var(q)\}} is
-the variance bound returned by
+log price), plus the masked \eqn{u} and \eqn{n\_hat} series themselves.
+All series are filtered to the common finite paired set
+\eqn{T_i = \{1, \dots, T - s\}}, \eqn{s = i / step}, under ONE mask, so
+the estimator's centering and every bound arm share a single sample. The
+gap's mean is the centering correction; the q variance and the
+fourth-order component \eqn{(1/4)\max(e^{2 n\_hat})\,\mathrm{mean}(u^4)}
+are the two arms of the min returned by
 \code{\link{compute_expected_sdf_variance_bound}}.
 }
 \details{

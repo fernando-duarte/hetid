@@ -242,6 +242,7 @@ achieved through heteroskedasticity-based moment conditions.
 - `compute_k_hat()` - Fourth moment estimator
 - `compute_k2_hat()` - Fourth-moment news estimator
 - `compute_variance_bound()` - Variance bounds
+- `compute_news_q_bound()` - First-order-cancelled news variance bound
 - `compute_expected_sdf()` - Expected stochastic discount factor
 - `compute_expected_sdf_variance_bound()` - Variance bound for the
   expected SDF
