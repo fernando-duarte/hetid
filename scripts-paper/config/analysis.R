@@ -64,13 +64,6 @@ default_cores <- max(1L, if (is.na(detected_cores)) 1L else detected_cores - 1L)
 boot_cores <- resolve_whole_number_env("HETID_BOOT_CORES", default_cores)
 stopifnot(boot_cores >= 1L)
 
-# temporary back-compat shims pinning the new semantics until the runners
-# adopt them directly (Tasks 3-4); each is deleted with its caller.
-boot_block <- paper_mbb_block_len(256L) # removed in the runner tasks
-logvar_boot_cores <- boot_cores # removed in the runner tasks
-logvar_boot_block_sens <- 2L * boot_block # removed in the runner tasks
-logvar_boot_m <- NULL # removed in the runner tasks
-
 # PPML set-map and independent coverage-audit budgets.
 logvar_ppml_grid_cap <-
   paper_logvar_budget("ppml", "grid_cap")
