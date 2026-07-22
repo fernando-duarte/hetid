@@ -10,10 +10,10 @@
 # before this file's functions are called.
 
 # Assemble set_id_boot from one bootstrap's collected draws. `provenance` is
-# built by the caller (it needs the resample's rng_kind and draw indices,
-# which only exist after the resample) and passed through unchanged; b_reps,
-# block, and seed are read off provenance rather than off the runner's own
-# locals, so the assembly has no dependency on anything but its arguments.
+# built by the caller via mean_boot_provenance, recomputed independently of any
+# resample, and passed through unchanged; b_reps, block, and seed are read off
+# provenance rather than off the runner's own locals, so the assembly has no
+# dependency on anything but its arguments.
 mean_boot_results <- function(collected, set_id_mean_eq, inference_alpha,
                               control, provenance) {
   names(collected$endpoint_draws) <- names(set_id_mean_eq$set_tables)

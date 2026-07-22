@@ -61,8 +61,8 @@ set_id_boot <- local({
     ),
     run_fn = function() {
       # indices drawn up front: the resampling stream cannot be perturbed if a
-      # solver ever consumes random numbers mid-draw, and a parallel lapply
-      # over boot_idx stays a drop-in change
+      # solver ever consumes random numbers mid-draw, and parallelizing the
+      # per-draw work stays a drop-in change
       boot_run <- paper_run_mbb_draws(
         n_draws = boot_reps,
         sample_size = set_id_mean_eq$sample$n,
