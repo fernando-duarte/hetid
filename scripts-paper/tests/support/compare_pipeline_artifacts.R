@@ -114,7 +114,8 @@ compare_value <- function(old_path, new_path, extension, artifact_id) {
     switch(extension,
       csv = normalize_object(utils::read.csv(old_path, stringsAsFactors = FALSE)),
       rds = normalize_object(readRDS(old_path)),
-      tex = normalize_text(readLines(old_path, warn = FALSE), artifact_id),
+      tex = ,
+      md = normalize_text(readLines(old_path, warn = FALSE), artifact_id),
       stop(sprintf("Unsupported manifested extension: %s", extension))
     ),
     error = function(e) e
@@ -123,7 +124,8 @@ compare_value <- function(old_path, new_path, extension, artifact_id) {
     switch(extension,
       csv = normalize_object(utils::read.csv(new_path, stringsAsFactors = FALSE)),
       rds = normalize_object(readRDS(new_path)),
-      tex = normalize_text(readLines(new_path, warn = FALSE), artifact_id),
+      tex = ,
+      md = normalize_text(readLines(new_path, warn = FALSE), artifact_id),
       stop(sprintf("Unsupported manifested extension: %s", extension))
     ),
     error = function(e) e

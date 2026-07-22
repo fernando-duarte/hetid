@@ -12,7 +12,8 @@ suite_manifest <- data.frame(
     "joint_gmm", "joint_gmm_epigraph_solver",
     "joint_null", "fitted_volatility", "fitted_volatility_contracts",
     "set_bootstrap", "support_statistics", "support_heteroskedasticity",
-    "support_identification_diagnostics", "variance_bounds"
+    "support_identification_diagnostics", "variance_bounds",
+    "variance_bounds_quoted"
   ),
   path = c(
     "engine/test_engine.R",
@@ -36,7 +37,8 @@ suite_manifest <- data.frame(
     "support/test_statistics.R",
     "support/test_heteroskedasticity.R",
     "support/test_identification_diagnostics.R",
-    "variance_bounds/test_variance_bounds.R"
+    "variance_bounds/test_variance_bounds.R",
+    "variance_bounds/test_quoted_numbers.R"
   ),
   stringsAsFactors = FALSE
 )

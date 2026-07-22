@@ -115,7 +115,7 @@ yarn-error.log*
 # Scripts and outputs
 scripts_old/
 results/
-# scripts-paper/output: track generated .tex/.svg, ignore generated data (.rds/.csv) and .pdf
+# scripts-paper/output: track generated .tex/.svg/.md, ignore generated data (.rds/.csv) and .pdf
 scripts-paper/output/**/*.rds
 scripts-paper/output/**/*.pdf
 scripts-paper/output/**/*.csv

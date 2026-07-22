@@ -139,6 +139,9 @@ paper_source_once(paper_path(
 # per-maturity SDF-news variance bounds: compute once from the offline ACM load,
 # then render the log-scale figure and the summary-statistics table
 paper_source_once(paper_path("variance_bounds", "compute_bounds.R"))
+# regenerate and assert the paper's quoted approximation-error numbers before
+# the renderers so a broken quote halts the stage with no artifact overwritten
+paper_source_once(paper_path("variance_bounds", "quoted", "run.R"))
 paper_source_once(paper_path("variance_bounds", "figures", "render_bounds.R"))
 paper_source_once(paper_path("variance_bounds", "tables", "render_summary_table.R"))
 paper_source_once(paper_path("reports", "build_descriptive_statistics.R"))

@@ -4,7 +4,8 @@
 # U_i = (1/4) * c_hat_i * (k_hat_i + k2_hat_i) and the two-leg
 # first-order-cancelled bound of compute_news_q_bound; the expected-SDF bound
 # is the min{(1/4) C K, Var(q)} of compute_expected_sdf_variance_bound. Every
-# bound is computed from the ACM yields and term premia alone.
+# bound is computed from the ACM yields and term premia alone. The two news
+# arms ride along as frame columns for the quoted-numbers module.
 
 yields <- quarterly_acm_inputs$yields
 term_premia <- quarterly_acm_inputs$term_premia
@@ -47,7 +48,9 @@ cat(
 variance_bounds_df <- data.frame(
   Maturity = vb_mats,
   Variance_Bound = news_min,
-  Expected_SDF_Bound = esdf_bounds
+  Expected_SDF_Bound = esdf_bounds,
+  News_Envelope_Bound = news_env,
+  News_Q_Bound = news_q
 )
 vb_summary_stats <- function(x) {
   c(

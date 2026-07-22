@@ -54,7 +54,9 @@ PAPER_CONDITIONAL_ARTIFACT_STATUSES <- setdiff(
   w = "log_variance/extensions/egarch",
   x = "variance_bounds/figures/render_bounds.R",
   y = "variance_bounds/tables/render_summary_table.R",
-  z = "run_pipeline.R"
+  z = "run_pipeline.R",
+  # single letters are exhausted; multi-character keys are exact-lookup-safe
+  aa = "variance_bounds/quoted/run.R"
 )
 .artifact_consumers <- c(
   A = "reports/descriptive_stats.tex",
@@ -133,7 +135,9 @@ PAPER_CONDITIONAL_ARTIFACT_STATUSES <- setdiff(
   "variance_bound_figure|variance_bounds_log.svg|3|x|B|r",
   "variance_bound_summary_table|variance_bounds_summary.tex|2|y|B|r",
   "variance_bound_summary_standalone_tex|variance_bounds_summary_standalone.tex|2|y|B|r",
-  "variance_bound_summary_standalone_pdf|variance_bounds_summary_standalone.pdf|2|y|B|r"
+  "variance_bound_summary_standalone_pdf|variance_bounds_summary_standalone.pdf|2|y|B|r",
+  "quoted_numbers_csv|approximation_error_quoted_numbers.csv|6|aa|B|r",
+  "quoted_numbers_md|approximation_error_quoted_numbers.md|5|aa|B|r"
 )
 
 .artifact_variant_specs <- c(

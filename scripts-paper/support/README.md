@@ -42,7 +42,7 @@ limit while preserving the original definition order and global symbols.
 
 | Module | Responsibility |
 |---|---|
-| `table_pipeline.R` | Booktabs/threeparttable/siunitx multi-panel table builder and standalone-document variant (sources `table_environment.R`, `artifact_publication.R`) |
+| `table_pipeline.R` | Booktabs multi-panel bare-tabular builder (plain-math scientific notation, no siunitx; the paper supplies float, caption, and notes) and standalone-document variant (sources `table_environment.R`, `artifact_publication.R`) |
 | `table_environment.R` | Shared table/threeparttable environment and notes renderer |
 | `artifact_publication.R` | Manifest-directed fragment, standalone-source, and PDF publication |
 | `simple_table.R` | Simple booktabs/threeparttable table with plain `l c c ...` columns for non-numeric cells (e.g. interval strings) |

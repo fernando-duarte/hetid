@@ -82,7 +82,8 @@ PAPER_ANALYSIS_CONTRACT <- local({
         data_types = c("yields", "term_premia"),
         frequency = "quarterly",
         auto_download = FALSE,
-        source = "auto"
+        source = "auto",
+        use_incomplete_quarters = TRUE
       ),
       yield_volatility = list(
         data_types = "yields",

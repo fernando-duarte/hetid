@@ -15,7 +15,8 @@ paper_load_quarterly_acm <- function(
     maturities = maturities,
     frequency = contract$frequency,
     auto_download = contract$auto_download,
-    source = contract$source
+    source = contract$source,
+    use_incomplete_quarters = contract$use_incomplete_quarters
   )
   yield_cols <- hetid::acm_column_name("yields", maturities)
   term_premium_cols <- hetid::acm_column_name("term_premia", maturities)

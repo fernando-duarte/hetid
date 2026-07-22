@@ -42,7 +42,7 @@ scripts-paper/
 │   ├── inference/          set bootstrap, envelopes, and standard-error utilities
 │   ├── figures/            bounds and fitted-volatility figures
 │   └── tables/             estimator panels, notes, and renderers
-├── variance_bounds/        per-maturity SDF-news and expected-SDF variance bounds figure and table
+├── variance_bounds/        per-maturity SDF-news and expected-SDF variance bounds figure, table, and quoted-numbers note
 ├── reports/                descriptive-statistics report builder
 ├── support/                paper-owned identification, statistics, LaTeX, reporting, runtime, and diagnostics helpers
 ├── tests/                  isolated suites, topology checks, and comparison support
@@ -121,8 +121,8 @@ removed before routing to prevent stale results. Writers and readers use these t
 scripts-paper/output/
 ├── tables/       fragments, standalone TeX, and standalone table PDFs
 ├── figures/      analytical and descriptive figures
-├── reports/      descriptive report TeX and PDF
-├── diagnostics/  inference, joint-diagnostic, LAD, and EGARCH diagnostics
+├── reports/      descriptive report TeX and PDF, quoted-numbers markdown note
+├── diagnostics/  inference, joint-diagnostic, LAD, EGARCH, and quoted-numbers diagnostics
 └── state/        bootstrap draws, gate/status records, and conditional pilot state
 ```
 
