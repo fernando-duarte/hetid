@@ -132,6 +132,18 @@ paper_format_general <- function(value, digits) {
   )
 }
 
+# Integer with a LaTeX math-mode thousands separator, e.g. a B=10{,}000
+# bootstrap replication count in a caption. "{,}" groups digits without the
+# wide list-separator spacing a bare comma gets in math mode.
+paper_format_thousands <- function(value) {
+  stopifnot(
+    length(value) == 1L,
+    is.finite(value),
+    value == as.integer(value)
+  )
+  gsub(",", "{,}", formatC(as.integer(value), format = "d", big.mark = ","), fixed = TRUE)
+}
+
 # Canonical slack (tau) rendering: the significant-digit idiom repeated across
 # every table, caption, and figure annotation that prints a tau value.
 paper_format_tau <- function(tau) {

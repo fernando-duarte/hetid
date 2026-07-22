@@ -27,6 +27,14 @@ check(
     paste0("fixture.", PAPER_LATEX_CONTROL$sidecar_extensions)
   ))
 )
+check(
+  "thousands formatting groups a caption replication count",
+  identical(paper_format_thousands(10000L), "10{,}000")
+)
+check(
+  "thousands formatting leaves a sub-thousand count alone",
+  identical(paper_format_thousands(25L), "25")
+)
 
 reporting_alt_thresholds <- c(
   one_star = 0.20,
