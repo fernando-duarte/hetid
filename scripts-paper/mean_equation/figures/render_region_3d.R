@@ -57,14 +57,13 @@ local({
   )
   mesh <- build_region_mesh(sys, natural_lims, seed = render$seed)
 
-  grDevices::svg(
+  svglite::svglite(
     filename = artifact_path("mean_region_figure"),
     width = render$device$width,
-    height = render$device$height,
-    family = render$device$family
+    height = render$device$height
   )
   on.exit(grDevices::dev.off(), add = TRUE)
-  graphics::par(mar = c(3.2, 4.5, 6.2, 2.2), xpd = NA, family = "sans")
+  graphics::par(mar = c(3.2, 4.5, 2.0, 2.2), xpd = NA, family = "sans")
   pmat <- graphics::persp(
     x = lims[[1]],
     y = lims[[2]],
@@ -169,19 +168,6 @@ local({
     pmat, c(lo[1], lo[2], lo[3]), c(lo[1], lo[2], hi[3]),
     ticks[[3]], tick_labels[[3]], axis_labels[[3]], center,
     tick_gap = 0.008
-  )
-
-  title_x <- graphics::grconvertX(0.5, from = "ndc", to = "user")
-  graphics::mtext(
-    bquote(
-      "Identified region " * Theta * " for " * b[N] * " at " *
-        tau * " = " * .(paper_format_tau(baseline_tau)) * ", SD units"
-    ),
-    side = 3, line = 4.3, at = title_x, cex = 1.02
-  )
-  graphics::mtext(
-    "wire mesh + lightly filled interior;  each wall = its shadow",
-    side = 3, line = 3.55, at = title_x, cex = 1.02
   )
 })
 
