@@ -214,6 +214,7 @@ schemas
 sd
 sdf
 SDF
+serializable
 setdiff
 sha
 siunitx

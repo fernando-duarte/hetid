@@ -167,6 +167,25 @@ resampled. Whether the reported numbers also match at every core count further d
 the draw callback itself consuming no additional randomness; `mbb_checks.R` tests that
 directly rather than relying on index determinism alone.
 
+`HETID_BOOT_MODE` (default `reuse`; overriding it prints a message naming the mode) governs
+both bootstraps. `reuse` loads a bootstrap's cached per-draw estimates when every freshness
+fingerprint matches the current run: the regenerated resample-index hashes (the log-variance
+bootstrap carries both its primary and its doubled-block sensitivity index), the estimation
+frame, the serializable draw spec, the expensive per-draw estimation source code, the runtime
+(R and package versions, including `hetid`), and the cache schema version. Any mismatch — or
+a missing, unreadable, or structurally invalid cache — warns and resamples instead; `rerun`
+always resamples. Only the expensive per-draw estimates are ever reused; anchors, set tables,
+envelopes, and provenance are recomputed from current state on every run. Failures inside the
+resample itself propagate rather than falling back to a stale cache.
+
+`rerun` reproduces today's published numbers exactly, and `reuse` reproduces a `rerun`
+byte-for-byte: the RNG protocol is fully pinned, so the resample indices depend only on the
+seed regardless of whether the run resampled or loaded a cache.
+
+```sh
+HETID_BOOT_MODE=rerun Rscript scripts-paper/run_pipeline.R
+```
+
 Run topology checks and all isolated paper suites:
 
 ```sh
