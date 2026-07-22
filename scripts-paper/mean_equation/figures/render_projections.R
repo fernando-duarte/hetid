@@ -20,7 +20,8 @@ local({
   stopifnot(length(tcols) == length(taus))
   m <- render$grid_points
   axes <- seq_len(dimension)
-  labs <- lapply(axes, function(k) bquote(sigma(PC[.(k) * "," * N]) * b[.(k) * "," * N]))
+  labs <- lapply(axes, function(k) sprintf("$\\sigma(PC_{%d,N})\\, b_{%d,N}$", k, k))
+  math_num <- function(v) paste0("$", formatC(v, format = "f", digits = 1), "$")
   panels <- lapply(axes, function(perp) {
     keep <- setdiff(axes, perp)
     list(perp = perp, x = keep[1], y = keep[2])
@@ -76,12 +77,16 @@ local({
 
   for (pi in seq_along(panels)) {
     p <- panels[[pi]]
-    graphics::par(mar = c(4, 4.6, 3.4, 1), pty = "s")
+    xt <- pretty(xr, 4); xt <- xt[xt > xr[1] & xt < xr[2]]
+    yt <- pretty(yr, 4); yt <- yt[yt > yr[1] & yt < yr[2]]
+    graphics::par(mar = c(4.6, 5, 1.2, 0.8), pty = "s", cex.lab = 0.8)
     plot(NA,
       xlim = xr, ylim = yr, xlab = labs[[p$x]], ylab = labs[[p$y]],
-      main = bquote(atop("project out", sigma(PC[.(p$perp) * "," * N]) * b[.(p$perp) * "," * N])),
-      cex.main = 1
+      main = "", axes = FALSE
     )
+    graphics::box()
+    graphics::axis(1, at = xt, labels = math_num(xt), cex.axis = 0.8)
+    graphics::axis(2, at = yt, labels = math_num(yt), cex.axis = 0.8)
     for (ti in seq_along(taus)) {
       graphics::contour(xg, yg, envs[[pi]][[ti]]$M,
         levels = 0, add = TRUE,
@@ -101,11 +106,11 @@ local({
   graphics::par(mar = c(0, 0, 0, 0), pty = "m")
   plot.new()
   legend_items <- c(
-    sprintf("tau = %s set boundary", paper_format_tau(taus)),
-    "marginal interval (per tau)", "tau = 0 point"
+    sprintf("$\\tau = %s$", paper_format_tau(taus)),
+    "marginal interval", "$\\tau = 0$"
   )
   legend("center",
-    ncol = 3, bty = "n", cex = 1.0,
+    ncol = 3, bty = "n", cex = 1.0, y.intersp = 1.5,
     legend = legend_items,
     col = c(tcols, "grey40", tau0_col),
     lty = c(1, 1, 1, 2, NA), lwd = c(2, 2, 2, 1, NA),

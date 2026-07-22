@@ -67,7 +67,8 @@ draw_region_panes <- function(pmat, lims, ticks) {
 
 draw_region_axis <- function(pmat, start, end, at, labels, title, center,
                              tick_side = 1, tick_gap = 0.005,
-                             title_nudge = c(0, 0), title_gap = 0.013) {
+                             title_nudge = c(0, 0), title_gap = 0.013,
+                             title_angle = NULL) {
   axis_points <- t(vapply(at, function(value) {
     start + (end - start) * (value - start[which(start != end)]) /
       (end[which(start != end)] - start[which(start != end)])
@@ -97,6 +98,6 @@ draw_region_axis <- function(pmat, start, end, at, labels, title, center,
   title_position <- midpoint + title_gap * normal + title_nudge
   graphics::text(
     title_position[1], title_position[2], title,
-    srt = angle, cex = 0.9
+    srt = if (is.null(title_angle)) angle else title_angle, cex = 0.9
   )
 }

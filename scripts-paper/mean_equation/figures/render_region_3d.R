@@ -49,12 +49,9 @@ local({
       box0$hi[[axis]] <= lims[[axis]][2L]
   }, logical(1))))
   ticks <- render$ticks
-  tick_labels <- lapply(
-    ticks,
-    formatC,
-    format = "f",
-    digits = render$tick_digits
-  )
+  tick_labels <- lapply(ticks, function(t) {
+    paste0("$", formatC(t, format = "f", digits = render$tick_digits), "$")
+  })
   mesh <- build_region_mesh(sys, natural_lims, seed = render$seed)
 
   svglite::svglite(
@@ -150,24 +147,24 @@ local({
 
   center <- (lo + hi) / 2
   axis_labels <- list(
-    expression(sigma(PC[1 * "," * N]) * b[1 * "," * N]),
-    expression(sigma(PC[2 * "," * N]) * b[2 * "," * N]),
-    expression(sigma(PC[3 * "," * N]) * b[3 * "," * N])
+    "$\\sigma(PC_{1,N})\\, b_{1,N}$",
+    "$\\sigma(PC_{2,N})\\, b_{2,N}$",
+    "$\\sigma(PC_{3,N})\\, b_{3,N}$"
   )
   draw_region_axis(
     pmat, c(lo[1], hi[2], lo[3]), c(hi[1], hi[2], lo[3]),
     ticks[[1]], tick_labels[[1]], axis_labels[[1]], center,
-    tick_gap = 0.006, title_nudge = c(-0.005, 0)
+    tick_gap = 0.009, title_gap = 0.034, title_angle = 0
   )
   draw_region_axis(
     pmat, c(lo[1], lo[2], lo[3]), c(lo[1], hi[2], lo[3]),
     ticks[[2]], tick_labels[[2]], axis_labels[[2]], center,
-    tick_side = 1
+    tick_side = 1, tick_gap = 0.009, title_gap = 0.022, title_angle = 0, title_nudge = c(0.004, 0.004)
   )
   draw_region_axis(
     pmat, c(lo[1], lo[2], lo[3]), c(lo[1], lo[2], hi[3]),
     ticks[[3]], tick_labels[[3]], axis_labels[[3]], center,
-    tick_gap = 0.008, title_gap = 0.022
+    tick_gap = 0.011, title_gap = 0.028
   )
 })
 
