@@ -181,9 +181,6 @@ Rscript scripts-paper/tests/run_tests.R
   by its owning test.
 - `log_variance/figures/bounds_by_tau_test_support.R` is test support for bounds plot data
   and is not production-reachable.
-- `variance_bounds/quoted_numbers.R` is a standalone script, run directly rather than sourced
-  by `run_pipeline.R`; see its header for how it regenerates the paper's quoted SDF
-  approximation-error numbers.
 
 These exclusions are documented in the topology audit; do not wire them into production
 without an explicit scientific change.
