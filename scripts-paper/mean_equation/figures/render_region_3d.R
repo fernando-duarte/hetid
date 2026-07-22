@@ -59,11 +59,11 @@ local({
 
   svglite::svglite(
     filename = artifact_path("mean_region_figure"),
-    width = render$device$width,
-    height = render$device$height
+    width = 7,
+    height = 6.1
   )
   on.exit(grDevices::dev.off(), add = TRUE)
-  graphics::par(mar = c(3.2, 4.5, 2.0, 2.2), xpd = NA, family = "sans")
+  graphics::par(mar = c(3.2, 4.5, 2.0, 3.6), xpd = NA, family = "sans")
   pmat <- graphics::persp(
     x = lims[[1]],
     y = lims[[2]],
@@ -150,9 +150,9 @@ local({
 
   center <- (lo + hi) / 2
   axis_labels <- list(
-    expression(tilde(b)[1 * "," * N]),
-    expression(tilde(b)[2 * "," * N]),
-    expression(tilde(b)[3 * "," * N])
+    expression(sigma(PC[1 * "," * N]) * b[1 * "," * N]),
+    expression(sigma(PC[2 * "," * N]) * b[2 * "," * N]),
+    expression(sigma(PC[3 * "," * N]) * b[3 * "," * N])
   )
   draw_region_axis(
     pmat, c(lo[1], hi[2], lo[3]), c(hi[1], hi[2], lo[3]),
@@ -167,7 +167,7 @@ local({
   draw_region_axis(
     pmat, c(lo[1], lo[2], lo[3]), c(lo[1], lo[2], hi[3]),
     ticks[[3]], tick_labels[[3]], axis_labels[[3]], center,
-    tick_gap = 0.008
+    tick_gap = 0.008, title_gap = 0.022
   )
 })
 

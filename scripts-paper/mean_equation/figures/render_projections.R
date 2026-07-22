@@ -20,7 +20,7 @@ local({
   stopifnot(length(tcols) == length(taus))
   m <- render$grid_points
   axes <- seq_len(dimension)
-  labs <- lapply(axes, function(k) bquote(tilde(b)[.(k) * "," * N]))
+  labs <- lapply(axes, function(k) bquote(sigma(PC[.(k) * "," * N]) * b[.(k) * "," * N]))
   panels <- lapply(axes, function(perp) {
     keep <- setdiff(axes, perp)
     list(perp = perp, x = keep[1], y = keep[2])
@@ -64,8 +64,8 @@ local({
   })
 
   svglite::svglite(artifact_path("mean_projections_figure"),
-    width = render$device[["width"]],
-    height = render$device[["height"]]
+    width = 8,
+    height = 3.8
   )
   on.exit(grDevices::dev.off(), add = TRUE)
   graphics::layout(
@@ -76,10 +76,10 @@ local({
 
   for (pi in seq_along(panels)) {
     p <- panels[[pi]]
-    graphics::par(mar = c(4, 4.2, 2.2, 1), pty = "s")
+    graphics::par(mar = c(4, 4.6, 3.4, 1), pty = "s")
     plot(NA,
       xlim = xr, ylim = yr, xlab = labs[[p$x]], ylab = labs[[p$y]],
-      main = bquote("project out " * tilde(b)[.(p$perp) * "," * N]),
+      main = bquote(atop("project out", sigma(PC[.(p$perp) * "," * N]) * b[.(p$perp) * "," * N])),
       cex.main = 1
     )
     for (ti in seq_along(taus)) {
@@ -105,7 +105,7 @@ local({
     "marginal interval (per tau)", "tau = 0 point"
   )
   legend("center",
-    horiz = TRUE, bty = "n", cex = 1.0,
+    ncol = 3, bty = "n", cex = 1.0,
     legend = legend_items,
     col = c(tcols, "grey40", tau0_col),
     lty = c(1, 1, 1, 2, NA), lwd = c(2, 2, 2, 1, NA),

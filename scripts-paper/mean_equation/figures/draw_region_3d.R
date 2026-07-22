@@ -67,7 +67,7 @@ draw_region_panes <- function(pmat, lims, ticks) {
 
 draw_region_axis <- function(pmat, start, end, at, labels, title, center,
                              tick_side = 1, tick_gap = 0.005,
-                             title_nudge = c(0, 0)) {
+                             title_nudge = c(0, 0), title_gap = 0.013) {
   axis_points <- t(vapply(at, function(value) {
     start + (end - start) * (value - start[which(start != end)]) /
       (end[which(start != end)] - start[which(start != end)])
@@ -94,7 +94,7 @@ draw_region_axis <- function(pmat, start, end, at, labels, title, center,
   angle <- atan2(direction[2], direction[1]) * 180 / pi
   if (angle > 90) angle <- angle - 180
   if (angle < -90) angle <- angle + 180
-  title_position <- midpoint + 0.013 * normal + title_nudge
+  title_position <- midpoint + title_gap * normal + title_nudge
   graphics::text(
     title_position[1], title_position[2], title,
     srt = angle, cex = 0.9
