@@ -169,3 +169,31 @@ check(
     identical(mbb_progress, 1:3)
 )
 rm(mbb_run_a, mbb_run_b, mbb_progress, mbb_failed)
+
+# RNG protocol is fully pinned, not just the base generator
+local({
+  old <- RNGkind()
+  on.exit(do.call(RNGkind, as.list(old)), add = TRUE)
+  RNGkind("Mersenne-Twister", "Inversion", "Rounding") # hostile ambient sample.kind
+  run <- paper_run_mbb_draws(4L, 11L, 3L, function(idx, id) sum(idx), seed = 1L)
+  check(
+    "runner pins sample.kind to Rejection regardless of ambient",
+    identical(run$rng_kind, c("Mersenne-Twister", "Inversion", "Rejection"))
+  )
+})
+# ambient .Random.seed and RNGkind survive a successful run and a mid-run error
+local({
+  old_kind <- RNGkind()
+  on.exit(do.call(RNGkind, as.list(old_kind)), add = TRUE)
+  set.seed(999L)
+  before <- .Random.seed
+  paper_run_mbb_draws(4L, 11L, 3L, function(idx, id) sum(idx), seed = 1L)
+  check("ambient .Random.seed restored after a successful run", identical(.Random.seed, before))
+  check("ambient RNGkind restored after a successful run", identical(RNGkind(), old_kind))
+  boom <- function(...) stop("boom")
+  tryCatch(
+    paper_run_mbb_draws(4L, 11L, 3L, function(idx, id) sum(idx), seed = 1L, progress = boom),
+    error = function(e) NULL
+  )
+  check("ambient .Random.seed restored after a mid-run error", identical(.Random.seed, before))
+})

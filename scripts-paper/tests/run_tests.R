@@ -11,8 +11,8 @@ suite_manifest <- data.frame(
     "dynamics_gate", "egarch_approval", "decision_clean_checkout",
     "joint_gmm", "joint_gmm_epigraph_solver",
     "joint_null", "fitted_volatility", "fitted_volatility_contracts",
-    "set_bootstrap", "support_statistics", "support_heteroskedasticity",
-    "support_identification_diagnostics", "variance_bounds",
+    "set_bootstrap", "mean_boot_results", "support_statistics", "support_heteroskedasticity",
+    "support_identification_diagnostics", "boot_freshness", "boot_cache", "variance_bounds",
     "variance_bounds_quoted"
   ),
   path = c(
@@ -34,9 +34,12 @@ suite_manifest <- data.frame(
     "figures/fitted_volatility/test_fitted_volatility.R",
     "figures/fitted_volatility/test_contracts.R",
     "inference/test_set_bootstrap.R",
+    "inference/mean_boot_results_checks.R",
     "support/test_statistics.R",
     "support/test_heteroskedasticity.R",
     "support/test_identification_diagnostics.R",
+    "support/boot_freshness_checks.R",
+    "support/boot_cache_checks.R",
     "variance_bounds/test_variance_bounds.R",
     "variance_bounds/test_quoted_numbers.R"
   ),

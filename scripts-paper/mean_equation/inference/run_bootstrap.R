@@ -19,6 +19,7 @@ set_id_boot <- local({
   paper_source_once(paper_path("support", "reporting", "inference.R"))
   paper_source_once(paper_path("support", "identification", "identified_set_inference.R"))
   paper_source_once(paper_path("support", "identification", "identified_set_bootstrap.R"))
+  paper_source_once(paper_path("mean_equation", "inference", "boot_results.R"))
 
   stopifnot(is.finite(boot_reps), boot_reps >= 2L)
   inference_alpha <- PAPER_ANALYSIS_CONTRACT$inference$nominal_alpha
@@ -48,105 +49,69 @@ set_id_boot <- local({
     impose_null = impose_beta2r_null
   )
 
-  # indices drawn up front: the resampling stream cannot be perturbed if a
-  # solver ever consumes random numbers mid-draw, and a parallel lapply over
-  # boot_idx stays a drop-in change
-  boot_run <- paper_run_mbb_draws(
-    n_draws = boot_reps,
-    sample_size = set_id_mean_eq$sample$n,
-    block_length = block,
-    draw = function(index, draw_id) {
-      set_id_boot_draw(
-        set_id_mean_eq$data[index, ],
-        boot_spec
-      )
-    },
-    seed = boot_seed,
-    cores = boot_cores,
-    progress = paper_mbb_console_progress(
-      PAPER_INFERENCE_SEARCH_CONTROL$bootstrap$progress_report_every,
-      "endpoint bootstrap"
-    )
-  )
-  boot_idx <- boot_run$indices
-  boot_t0 <- boot_run$started_at
-  boot_raw <- boot_run$draws
-
-  collected <- set_id_boot_collect(boot_raw, boot_spec)
-  # a large failure share means the resampling itself is broken, not
-  # statistical unboundedness, so the pipeline stops rather than reporting
-  # scales built from the surviving minority
-  if (collected$n_failed > 0L) {
-    cat("  failed draws by cause:\n")
-    print(collected$failure_causes)
-  }
-  if (collected$n_failed > paper_bootstrap_failure_limit(boot_reps)) {
-    stop(
-      "endpoint bootstrap: ", collected$n_failed, " of ", boot_reps,
-      " draws failed"
-    )
-  }
-  names(collected$endpoint_draws) <- names(set_id_mean_eq$set_tables)
-
-  inference <- lapply(seq_along(boot_spec$taus), function(j) {
-    st <- set_id_mean_eq$set_tables[[j]]
-    endpoint_inference(
-      collected$endpoint_draws[[j]]$lower, collected$endpoint_draws[[j]]$upper,
-      rbind(st$beta1, st$theta),
-      alpha = inference_alpha,
-      control = PAPER_INFERENCE_SEARCH_CONTROL
-    )
-  })
-  names(inference) <- names(set_id_mean_eq$set_tables)
-
-  # robust tau = 0 point inference (point_inference, identified_set_inference.R):
-  # closed-form point plus/minus the two-sided normal quantile times the robust
-  # scale of the point draws, gated by the same half-the-draws rule as the
-  # set cells
-  point_hat <- c(set_id_mean_eq$beta1_table$point, set_id_mean_eq$theta_table$point)
-  point_tab <- point_inference(
-    point_hat,
-    collected$point_draws,
-    alpha = inference_alpha
-  )
-  point_se <- stats::setNames(point_tab$se, point_tab$coef)
-  point_ci <- point_tab[c("coef", "lower", "upper")]
-
-  # referee-facing reproducibility metadata: the exact resampler, block rule,
-  # and draw-index fingerprint behind every number this file reports
-  provenance <- list(
-    resampler = "circular_mbb",
-    sample_size = set_id_mean_eq$sample$n,
-    b_reps = boot_reps, block = block, seed = boot_seed,
-    rng_kind = boot_run$rng_kind,
-    block_rule = "ceiling(1.5*T^(1/3))",
-    index_sha256 = paper_sha256_object(boot_idx)
-  )
-
-  set_id_boot <- c(
-    list(
-      b_reps = boot_reps, block = block, seed = boot_seed,
-      inference_contract = PAPER_ANALYSIS_CONTRACT$inference,
-      point_se = point_se, point_ci = point_ci,
-      point_band = apply(
-        collected$point_draws,
-        2,
-        boot_band,
-        alpha = inference_alpha
-      ),
-      tau_star_band = boot_band(collected$tau_star_draws, inference_alpha),
-      tau_star_share_bounded = mean(
-        collected$tau_star_draws > set_id_mean_eq$tau_baseline,
-        na.rm = TRUE
-      ),
-      inference = inference,
-      provenance = provenance
+  freshness <- mean_boot_freshness(set_id_mean_eq, boot_spec, boot_reps, block, boot_seed)
+  t0 <- Sys.time()
+  disp <- paper_boot_cached_or_run(
+    mode = PAPER_BOOT_MODE,
+    artifact_key = "mean_bootstrap_draws",
+    freshness = freshness,
+    fields = c(
+      "index_sha", "input_sha", "draw_spec_sha", "code_sha",
+      "runtime_sha", "cache_schema_version"
     ),
-    collected
+    run_fn = function() {
+      # indices drawn up front: the resampling stream cannot be perturbed if a
+      # solver ever consumes random numbers mid-draw, and parallelizing the
+      # per-draw work stays a drop-in change
+      boot_run <- paper_run_mbb_draws(
+        n_draws = boot_reps,
+        sample_size = set_id_mean_eq$sample$n,
+        block_length = block,
+        draw = function(index, draw_id) {
+          set_id_boot_draw(
+            set_id_mean_eq$data[index, ],
+            boot_spec
+          )
+        },
+        seed = boot_seed,
+        cores = boot_cores,
+        progress = paper_mbb_console_progress(
+          PAPER_INFERENCE_SEARCH_CONTROL$bootstrap$progress_report_every,
+          "endpoint bootstrap"
+        )
+      )
+      collected <- set_id_boot_collect(boot_run$draws, boot_spec)
+      # a large failure share means the resampling itself is broken, not
+      # statistical unboundedness, so the pipeline stops rather than reporting
+      # scales built from the surviving minority
+      if (collected$n_failed > 0L) {
+        cat("  failed draws by cause:\n")
+        print(collected$failure_causes)
+      }
+      if (collected$n_failed > paper_bootstrap_failure_limit(boot_reps)) {
+        stop(
+          "endpoint bootstrap: ", collected$n_failed, " of ", boot_reps,
+          " draws failed"
+        )
+      }
+      collected # gate passes BEFORE this is cached
+    },
+    validate_fn = mean_boot_cache_validate, warn_label = "endpoint bootstrap"
+  )
+  collected <- disp$draws
+  # referee-facing reproducibility metadata: the exact resampler, block rule,
+  # and draw-index fingerprint behind every number this file reports;
+  # recomputed rather than read off the resample so reuse and rerun agree
+  # byte for byte
+  provenance <- mean_boot_provenance(set_id_mean_eq, boot_reps, block, boot_seed)
+
+  set_id_boot <- mean_boot_results(
+    collected, set_id_mean_eq, inference_alpha,
+    PAPER_INFERENCE_SEARCH_CONTROL, provenance
   )
 
   diagnostics <- set_id_boot_diagnostics(
-    collected, inference, set_id_mean_eq$set_tables, boot_spec$taus
+    set_id_boot, set_id_boot$inference, set_id_mean_eq$set_tables, boot_spec$taus
   )
   diagnostics <- cbind(
     paper_inference_metadata_frame(nrow(diagnostics)),
@@ -157,19 +122,10 @@ set_id_boot <- local({
     artifact_path("mean_inference_diagnostics"),
     "mean_inference_diagnostics"
   )
-  paper_write_exact_rds(
-    set_id_boot[c(
-      "b_reps", "block", "seed", "inference_contract", "point_draws",
-      "endpoint_draws", "tau_star_draws", "provenance"
-    )],
-    artifact_path("mean_bootstrap_draws"),
-    "mean_bootstrap_draws"
-  )
-
   cat(sprintf(
-    "endpoint bootstrap: B = %d, block = %d, %.1f min; tau* range [%s, %s] (n = %d)\n",
-    boot_reps, block,
-    as.numeric(difftime(Sys.time(), boot_t0, units = "mins")),
+    "endpoint bootstrap [%s]: B = %d, block = %d, %.1f min; tau* range [%s, %s] (n = %d)\n",
+    disp$source, boot_reps, block,
+    as.numeric(difftime(Sys.time(), t0, units = "mins")),
     paper_format_general(
       set_id_boot$tau_star_band[["lower"]],
       PAPER_REPORTING_CONTROL$precision$console_significant

@@ -64,6 +64,24 @@ default_cores <- max(1L, if (is.na(detected_cores)) 1L else detected_cores - 1L)
 boot_cores <- resolve_whole_number_env("HETID_BOOT_CORES", default_cores)
 stopifnot(boot_cores >= 1L)
 
+# Bootstrap execution mode: "reuse" (default) loads cached per-draw estimates
+# when nothing that determines them changed; "rerun" always resamples.
+resolve_boot_mode_env <- function(var, default) {
+  raw <- Sys.getenv(var, unset = "")
+  if (!nzchar(raw)) {
+    return(default)
+  }
+  mode <- tolower(trimws(raw))
+  if (!mode %in% c("rerun", "reuse")) {
+    stop(sprintf("%s must be 'rerun' or 'reuse', got: %s", var, raw), call. = FALSE)
+  }
+  mode
+}
+PAPER_BOOT_MODE <- resolve_boot_mode_env("HETID_BOOT_MODE", "reuse")
+if (!identical(PAPER_BOOT_MODE, "reuse")) {
+  message(sprintf("bootstrap execution mode: %s (default reuse overridden)", PAPER_BOOT_MODE))
+}
+
 # PPML set-map and independent coverage-audit budgets.
 logvar_ppml_grid_cap <-
   paper_logvar_budget("ppml", "grid_cap")

@@ -1,5 +1,6 @@
 # Execution and ownership checks for the canonical inference/search control.
 
+paper_source_once(paper_path("config", "analysis.R"))
 paper_source_once(paper_path(
   "support", "identification", "identified_set_inference.R"
 ))
@@ -57,6 +58,24 @@ check(
       inference_control$logvar_endpoint$stability_share
 )
 
+check("boot mode resolves the reuse default when unset", {
+  prev <- Sys.getenv("HETID_BOOT_MODE", unset = NA)
+  Sys.unsetenv("HETID_BOOT_MODE")
+  on.exit(if (!is.na(prev)) Sys.setenv(HETID_BOOT_MODE = prev), add = TRUE)
+  identical(resolve_boot_mode_env("HETID_BOOT_MODE", "reuse"), "reuse")
+})
+check("boot mode accepts a valid override (case/space-insensitive)", {
+  Sys.setenv(HETID_BOOT_MODE = " Rerun ")
+  on.exit(Sys.unsetenv("HETID_BOOT_MODE"), add = TRUE)
+  identical(resolve_boot_mode_env("HETID_BOOT_MODE", "reuse"), "rerun")
+})
+check("boot mode rejects garbage with a clear error", {
+  Sys.setenv(HETID_BOOT_MODE = "sometimes")
+  on.exit(Sys.unsetenv("HETID_BOOT_MODE"), add = TRUE)
+  res <- tryCatch(resolve_boot_mode_env("HETID_BOOT_MODE", "reuse"), error = conditionMessage)
+  is.character(res) && grepl("HETID_BOOT_MODE", res) && grepl("sometimes", res)
+})
+
 threaded_fields <- list(
   "support/identification/inference_calibration.R" = c(
     "im_root", "stoye_root", "bvn", "robust_endpoint_correlation"
@@ -69,8 +88,9 @@ threaded_fields <- list(
   "mean_equation/inference/run_bootstrap.R" = c(
     "paper_bootstrap_failure_limit", "progress_report_every"
   ),
-  "log_variance/inference/run_set_bootstrap.R" = c(
-    "paper_bootstrap_failure_limit", "stability_share", "progress_report_every"
+  "log_variance/inference/run_set_bootstrap.R" = "stability_share",
+  "log_variance/inference/set_bootstrap_reuse.R" = c(
+    "paper_bootstrap_failure_limit", "progress_report_every"
   ),
   "log_variance/inference/set_bootstrap_gate.R" = c(
     "fatal_failure_share", "progress_report_every"

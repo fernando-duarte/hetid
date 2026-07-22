@@ -32,11 +32,13 @@ limit while preserving the original definition order and global symbols.
 
 | Module | Responsibility |
 |---|---|
-| `api.R` | Facade for statistics helpers (sources `bootstrap_and_stationarity.R`, `mbb_runner.R`, and `reporting_and_validation.R`; `normalizations.R` is sourced directly by its consumers, not here) |
+| `api.R` | Facade for statistics helpers (sources `bootstrap_and_stationarity.R`, `mbb_runner.R`, `boot_freshness.R`, `boot_cache.R`, and `reporting_and_validation.R`; `normalizations.R` is sourced directly by its consumers, not here) |
 | `bootstrap_and_stationarity.R` | Bootstrap sampling, summary statistics, stationarity tests, and the circular moving-block index with its automatic block-length rule (`paper_mbb_block_len`) |
 | `mbb_runner.R` | Deterministic moving-block draw orchestration: indices are drawn up front under a pinned Mersenne-Twister (the caller's RNG kind is restored afterward), then run through a serial loop or chunked `parallel::mclapply`, reporting progress under either |
 | `reporting_and_validation.R` | Statistical reporting and data-validation functions |
 | `normalizations.R` | Named distributional normalization constants shared by execution and prose |
+| `boot_freshness.R` | Freshness fingerprints for the bootstrap draw caches (resample-index, code, runtime, and draw-spec hashes, plus the field-by-field freshness comparison) that gate cache reuse |
+| `boot_cache.R` | Crash-safe reuse-or-run dispatcher for the expensive bootstrap draw caches: atomic promote of the cache write, structural validation, freshness match, and a warn-and-rerun fallback on any cache problem, while errors inside the run propagate |
 
 ## `latex/`
 

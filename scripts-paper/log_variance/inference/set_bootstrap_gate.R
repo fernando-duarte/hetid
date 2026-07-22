@@ -53,3 +53,61 @@ logvar_boot_failure_gate <- function(collected, ests, run_label) {
   }
   cells
 }
+
+# TRUE, or a reason string, for whether a cached vol set-endpoint bootstrap
+# payload carries what a reuse needs to stand in for a fresh resample: the
+# primary and sensitivity collected draw sets (the expensive per-draw
+# endpoint estimates), matched across the same estimators and tau axis, with
+# a closed status vocabulary and the row counts the provenance records. full,
+# anchors, and envelopes are recomputed on reuse, so they are not required here.
+logvar_boot_cache_validate <- function(cached) {
+  need <- c("collected", "sens_collected", "provenance")
+  miss <- setdiff(need, names(cached))
+  if (length(miss)) {
+    return(sprintf("missing cache fields: %s", paste(miss, collapse = ", ")))
+  }
+  ests <- names(cached$collected)
+  if (!length(ests) || !identical(names(cached$sens_collected), ests)) {
+    return("primary and sensitivity collections disagree on estimators")
+  }
+  reps_ok <- function(coll, reps) {
+    if (!is.numeric(reps) || length(reps) != 1L || is.na(reps)) {
+      return(FALSE)
+    }
+    all(vapply(ests, function(est) {
+      cells <- coll[[est]]
+      length(cells) > 0L && all(vapply(cells, function(cell) {
+        is.matrix(cell$lower) && nrow(cell$lower) == reps
+      }, logical(1)))
+    }, logical(1)))
+  }
+  if (!reps_ok(cached$collected, cached$provenance$b_reps)) {
+    return("primary draws do not match b_reps")
+  }
+  if (!reps_ok(cached$sens_collected, cached$provenance$sens_reps)) {
+    return("sensitivity draws do not match sens_reps")
+  }
+  same_tau <- all(vapply(ests, function(est) {
+    length(cached$collected[[est]]) == length(cached$sens_collected[[est]])
+  }, logical(1)))
+  if (!same_tau) {
+    return("primary and sensitivity tau axes disagree")
+  }
+  status_ok <- tryCatch(
+    {
+      for (coll in list(cached$collected, cached$sens_collected)) {
+        for (est in ests) {
+          for (cell in coll[[est]]) {
+            paper_endpoint_status_validate(c(cell$lower_status, cell$upper_status))
+          }
+        }
+      }
+      TRUE
+    },
+    error = function(e) FALSE
+  )
+  if (!status_ok) {
+    return("endpoint status vocabulary invalid")
+  }
+  TRUE
+}
