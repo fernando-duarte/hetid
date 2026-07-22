@@ -6,6 +6,7 @@
 
 source(file.path("scripts-paper", "config", "paths.R"))
 paper_source_once(paper_path("support", "identification", "identified_set_inference.R"))
+paper_source_once(paper_path("support", "statistics", "api.R"))
 paper_source_once(paper_path("mean_equation", "inference", "boot_results.R"))
 paper_source_once(paper_path("tests", "support", "harness.R"))
 .test <- paper_test_harness()
@@ -90,10 +91,6 @@ check(
   identical(mbr_out$n_failed, 0L)
 )
 check(
-  "mean_boot_results stamps cache_schema_version 1L",
-  identical(mbr_out$cache_schema_version, 1L)
-)
-check(
   "mean_boot_results carries b_reps/block/seed from provenance, not stray locals",
   mbr_out$b_reps == mbr_provenance$b_reps &&
     mbr_out$block == mbr_provenance$block &&
@@ -102,7 +99,7 @@ check(
 
 mbr_complete <- mbr_out[c(
   "point_draws", "endpoint_draws", "tau_star_draws", "n_failed",
-  "n_capped", "n_point_deficient", "cache_schema_version", "provenance"
+  "n_capped", "n_point_deficient", "provenance"
 )]
 check(
   "a complete cache payload validates TRUE",
@@ -115,17 +112,59 @@ check(
   is.character(mean_boot_cache_validate(mbr_missing)) &&
     grepl("endpoint_draws", mean_boot_cache_validate(mbr_missing))
 )
-mbr_stale_schema <- mbr_complete
-mbr_stale_schema$cache_schema_version <- 2L
-check(
-  "a schema-version mismatch returns a reason string",
-  is.character(mean_boot_cache_validate(mbr_stale_schema))
-)
 mbr_bad_rows <- mbr_complete
 mbr_bad_rows$point_draws <- mbr_bad_rows$point_draws[1:5, , drop = FALSE]
 check(
   "a point_draws row count mismatched to b_reps returns a reason string",
   is.character(mean_boot_cache_validate(mbr_bad_rows))
+)
+
+check(
+  "mean_boot_code_manifest includes the draw path and excludes cheap inference",
+  {
+    files <- basename(mean_boot_code_manifest())
+    all(c("identified_set_bootstrap.R", "tau_star.R") %in% files) &&
+      !any(c("identified_set_inference.R", "inference_calibration.R") %in% files)
+  }
+)
+
+# a minimal fixture with only the fields mean_boot_freshness and
+# mean_boot_provenance actually read: sample size and the raw data/spec they hash
+mbr_fresh_eq <- list(sample = list(n = 256L), data = data.frame(x = 1:256))
+mbr_fresh_spec <- list(
+  coefs = c("b1", "th1"), gamma = matrix(1, 1, 1), taus = 0.05,
+  tau_grid = c(0, 0.05), y1_col = "y1", x_cols = "x1", y2_cols = "y2",
+  z_col = "z", impose_null = TRUE
+)
+mbr_fresh_reps <- 200L
+mbr_fresh_block <- 5L
+mbr_fresh_seed <- 999L
+
+mbr_freshness <- mean_boot_freshness(
+  mbr_fresh_eq, mbr_fresh_spec, mbr_fresh_reps, mbr_fresh_block, mbr_fresh_seed
+)
+check(
+  "mean_boot_freshness returns all six matched fields as non-NA scalars",
+  paper_boot_cache_freshness_ok(
+    mbr_freshness,
+    c(
+      "index_sha", "input_sha", "draw_spec_sha", "code_sha",
+      "runtime_sha", "cache_schema_version"
+    )
+  )
+)
+
+mbr_prov <- mean_boot_provenance(
+  mbr_fresh_eq, mbr_fresh_reps, mbr_fresh_block, mbr_fresh_seed
+)
+check(
+  "mean_boot_provenance's index_sha256 matches a direct paper_boot_index_sha call",
+  identical(
+    mbr_prov$index_sha256,
+    paper_boot_index_sha(
+      mbr_fresh_eq$sample$n, mbr_fresh_block, mbr_fresh_reps, mbr_fresh_seed
+    )
+  )
 )
 
 .test$finish()

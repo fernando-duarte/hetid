@@ -3,7 +3,7 @@
 # draw spec, the expensive-path code, or the runtime forces a fresh resample.
 
 paper_boot_runtime_sha <- function() {
-  pkgs <- c("nloptr", "quantreg", "rugarch", "sandwich")
+  pkgs <- c("hetid", "nloptr", "quantreg", "rugarch", "sandwich")
   vers <- vapply(pkgs, function(p) as.character(utils::packageVersion(p)), character(1))
   paper_sha256_object(list(r = as.character(getRversion()), pkgs = stats::setNames(vers, pkgs)))
 }
