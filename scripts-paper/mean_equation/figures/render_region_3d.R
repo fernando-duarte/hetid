@@ -154,12 +154,12 @@ local({
   draw_region_axis(
     pmat, c(lo[1], hi[2], lo[3]), c(hi[1], hi[2], lo[3]),
     ticks[[1]], tick_labels[[1]], axis_labels[[1]], center,
-    tick_gap = 0.009, title_gap = 0.030
+    tick_gap = 0.009, title_gap = 0.024
   )
   draw_region_axis(
     pmat, c(lo[1], lo[2], lo[3]), c(lo[1], hi[2], lo[3]),
     ticks[[2]], tick_labels[[2]], axis_labels[[2]], center,
-    tick_side = 1, tick_gap = 0.009, title_gap = 0.030
+    tick_side = 1, tick_gap = 0.009, title_gap = 0.024
   )
   draw_region_axis(
     pmat, c(lo[1], lo[2], lo[3]), c(lo[1], lo[2], hi[3]),
