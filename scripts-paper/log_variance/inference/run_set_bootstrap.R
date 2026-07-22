@@ -173,6 +173,7 @@ log_var_eq_set_boot <- local({
     tau0 = tau0,
     spec = spec,
     collected = collected,
+    sens_collected = sens_collected,
     prim_cells = prim_cells,
     sens_cells = sens_cells,
     boot_reps = boot_reps,

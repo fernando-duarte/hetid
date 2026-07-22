@@ -13,6 +13,7 @@ write_logvar_set_boot_artifacts <- function(
   tau0,
   spec,
   collected,
+  sens_collected,
   prim_cells,
   sens_cells,
   boot_reps,
@@ -75,8 +76,10 @@ write_logvar_set_boot_artifacts <- function(
       taus = spec$taus,
       coefs = spec$coefs,
       collected = collected,
+      sens_collected = sens_collected,
       full = full,
-      provenance = provenance
+      provenance = provenance,
+      cache_schema_version = 1L
     ),
     artifact_path("log_variance_bootstrap_draws"),
     "log_variance_bootstrap_draws"
