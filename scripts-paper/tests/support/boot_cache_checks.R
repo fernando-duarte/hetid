@@ -62,6 +62,23 @@ local({
   )
 })
 
+# reuse hit: draws shape matches run_fn's return, no provenance leak
+local({
+  cc <- make_case()
+  path <- file.path(cc$dir, "m.rds")
+  saveRDS(c(list(x = 1L, y = 2L), list(provenance = cc$fresh)), path)
+  out <- paper_boot_cached_or_run_at(path, "reuse", cc$fresh, cc$fields,
+    run_fn = function() list(x = 1L, y = 2L),
+    validate_fn = function(c) TRUE, warn_label = "t",
+    writer = function(o, p) saveRDS(c(o, list(provenance = p)), path),
+    reader = function() readRDS(path)
+  )
+  check(
+    "reuse hit draws carry no provenance leak and match run_fn's shape",
+    identical(sort(names(out$draws)), c("x", "y")) && is.null(out$draws$provenance)
+  )
+})
+
 # reuse miss: stale field → warn + rerun
 local({
   cc <- make_case()

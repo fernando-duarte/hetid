@@ -41,7 +41,12 @@ paper_boot_cached_or_run_at <- function(path, mode, freshness, fields,
       }
     }
     if (is.null(reason)) {
-      return(list(draws = reader(), source = "reuse"))
+      # cached is already read+validated above; reuse it instead of a second reader()
+      # call, and strip the dispatcher-owned provenance key so draws has the same
+      # shape as run_fn()'s return (run_fn must never itself return that top-level key).
+      draws <- cached
+      draws$provenance <- NULL
+      return(list(draws = draws, source = "reuse"))
     }
     warning(sprintf("%s: reusing cache not possible (%s); rerunning", warn_label, reason),
       call. = FALSE
