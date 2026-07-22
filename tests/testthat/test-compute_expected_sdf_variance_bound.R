@@ -108,8 +108,10 @@ test_that("the bound centers on the same correction compute_expected_sdf adds", 
     test_env$yields, test_env$term_premia,
     i = i
   )
-  # min <= q arm structurally
-  expect_lte(bound, var_n(q_series(test_env$yields, test_env$term_premia, i = i)))
+  # min <= q arm structurally; allow crossprod() and sum() to differ by
+  # floating-point summation order across BLAS implementations
+  vq <- var_n(q_series(test_env$yields, test_env$term_premia, i = i))
+  expect_lte(bound, vq + 1e-12 * abs(vq))
 })
 
 test_that("compute_expected_sdf_variance_bound honors a non-default step", {
