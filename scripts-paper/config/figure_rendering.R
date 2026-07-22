@@ -19,11 +19,11 @@ PAPER_FIGURE_STYLE <- list(
   ),
   variance_bound = list(
     series_colors = c(
-      "SDF news" = "#4a3aa7",
-      "expected SDF" = "#008300"
+      "SDF news" = "#B01513",
+      "expected SDF" = "#7F7F7F"
     ),
-    line_width = 1.2,
-    point_size = 3
+    line_width = 0.8,
+    point_size = 1.6
   ),
   descriptive = list(
     group_colors = c(
@@ -52,7 +52,7 @@ PAPER_FIGURE_RENDER_CONTROL <- list(
     mean_bounds = c(width = 10, height = 5.5),
     logvar_bounds = c(width = 10, height = 6.5),
     fitted_volatility = c(width = 10, height = 6.25),
-    variance_bounds = c(width = 10, height = 6),
+    variance_bounds = c(width = 5.5, height = 5.5 / 1.618),
     descriptive = c(width = 11, height = 8.5)
   ),
   region_3d = list(

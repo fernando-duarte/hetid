@@ -32,18 +32,34 @@ variance_bounds_render_figure <- function(df, path) {
     ggplot2::geom_point(size = figure_style$point_size) +
     ggplot2::scale_color_manual(values = figure_style$series_colors) +
     ggplot2::labs(
-      title = "Log Variance Bounds Across Maturities",
-      subtitle = "Log-scale visualization for trend analysis",
       x = "Maturity (months)",
       y = "Log(Variance Bound)",
       color = NULL
     ) +
-    ggplot2::theme_minimal()
+    # Match the paper's svglite / theme_classic figure standard: no in-figure
+    # title (the LaTeX \caption supplies it), base font 11, white panel with a
+    # thin border, and a top-left in-panel legend, as in the macro_dynamics
+    # sibling figures. Rendered through svglite (below) so the text stays real
+    # <text> that LaTeX's \includesvg can re-typeset, not baked path glyphs.
+    ggplot2::theme_classic(base_size = 11) +
+    ggplot2::theme(
+      legend.title = ggplot2::element_blank(),
+      legend.background = ggplot2::element_blank(),
+      legend.position = c(0.025, 0.975),
+      legend.justification = c(0, 1),
+      legend.direction = "vertical",
+      legend.text = ggplot2::element_text(margin = ggplot2::margin(0, 6, 0, 3)),
+      panel.border = ggplot2::element_rect(colour = "black", fill = NA, linewidth = 1),
+      axis.line = ggplot2::element_blank(),
+      axis.text.x = ggplot2::element_text(margin = ggplot2::margin(5, 0, 0, 0, unit = "pt")),
+      axis.text.y = ggplot2::element_text(margin = ggplot2::margin(0, 5, 0, 0, unit = "pt")),
+      axis.title.y = ggplot2::element_text(margin = ggplot2::margin(r = 8, unit = "pt"))
+    )
   device <- PAPER_FIGURE_RENDER_CONTROL$devices$variance_bounds
-  write_svg(
+  ggplot2::ggsave(
     path,
-    device[["width"]],
-    device[["height"]],
-    function() print(fig)
+    fig,
+    width = device[["width"]],
+    height = device[["height"]]
   )
 }
