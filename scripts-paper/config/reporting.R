@@ -74,6 +74,9 @@ PAPER_TABLE_STYLE <- list(
     fontsize = "\\footnotesize\\setlength{\\tabcolsep}{3pt}",
     row_stride = 2L
   ),
+  combined_inference = list(
+    fontsize = "\\scriptsize\\setlength{\\tabcolsep}{3pt}"
+  ),
   variance_share = list(
     fontsize = "\\footnotesize\\setlength{\\tabcolsep}{4pt}"
   )

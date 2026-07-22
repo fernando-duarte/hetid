@@ -115,6 +115,10 @@ paper_source_once(paper_path("log_variance", "inference", "run_set_bootstrap.R")
 # The inference variant retains the combined panels and labels while threading
 # the bootstrap envelope beneath the PPML and Harvey set cells.
 paper_source_once(paper_path("log_variance", "tables", "render_inference_panels.R"))
+# the merged mean-over-PPML two-panel table; consumes the mean-set estimate, its
+# endpoint bootstrap, and the PPML set-endpoint envelope, so it runs after both
+# the structural table and the inference panels are frozen
+paper_source_once(paper_path("log_variance", "tables", "render_combined_inference_table.R"))
 # the log-variance figures consume mean_eq_bounds_tau and the registry, so
 # this runs after both producers
 paper_source_once(paper_path("log_variance", "figures", "render_bounds_by_tau.R"))
