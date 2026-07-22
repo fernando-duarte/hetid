@@ -1,5 +1,6 @@
 # Execution and ownership checks for the canonical inference/search control.
 
+paper_source_once(paper_path("config", "analysis.R"))
 paper_source_once(paper_path(
   "support", "identification", "identified_set_inference.R"
 ))
@@ -56,6 +57,24 @@ check(
     eval(formals(logvar_endpoint_envelope)$stability) ==
       inference_control$logvar_endpoint$stability_share
 )
+
+check("boot mode resolves the reuse default when unset", {
+  prev <- Sys.getenv("HETID_BOOT_MODE", unset = NA)
+  Sys.unsetenv("HETID_BOOT_MODE")
+  on.exit(if (!is.na(prev)) Sys.setenv(HETID_BOOT_MODE = prev), add = TRUE)
+  identical(resolve_boot_mode_env("HETID_BOOT_MODE", "reuse"), "reuse")
+})
+check("boot mode accepts a valid override (case/space-insensitive)", {
+  Sys.setenv(HETID_BOOT_MODE = " Rerun ")
+  on.exit(Sys.unsetenv("HETID_BOOT_MODE"), add = TRUE)
+  identical(resolve_boot_mode_env("HETID_BOOT_MODE", "reuse"), "rerun")
+})
+check("boot mode rejects garbage with a clear error", {
+  Sys.setenv(HETID_BOOT_MODE = "sometimes")
+  on.exit(Sys.unsetenv("HETID_BOOT_MODE"), add = TRUE)
+  res <- tryCatch(resolve_boot_mode_env("HETID_BOOT_MODE", "reuse"), error = conditionMessage)
+  is.character(res) && grepl("HETID_BOOT_MODE", res) && grepl("sometimes", res)
+})
 
 threaded_fields <- list(
   "support/identification/inference_calibration.R" = c(
