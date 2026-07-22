@@ -56,7 +56,8 @@ PAPER_CONDITIONAL_ARTIFACT_STATUSES <- setdiff(
   y = "variance_bounds/tables/render_summary_table.R",
   z = "run_pipeline.R",
   # single letters are exhausted; multi-character keys are exact-lookup-safe
-  aa = "variance_bounds/quoted/run.R"
+  aa = "variance_bounds/quoted/run.R",
+  ab = "log_variance/tables/render_combined_inference_table.R"
 )
 .artifact_consumers <- c(
   A = "reports/descriptive_stats.tex",
@@ -100,6 +101,9 @@ PAPER_CONDITIONAL_ARTIFACT_STATUSES <- setdiff(
   "structural_equation_inference_table|structural_eq_inference.tex|2|h|B|r",
   "structural_equation_inference_standalone_tex|structural_eq_inference_standalone.tex|2|h|B|r",
   "structural_equation_inference_standalone_pdf|structural_eq_inference_standalone.pdf|2|h|B|r",
+  "structural_var_inference_table|structural_var_inference.tex|2|ab|B|r",
+  "structural_var_inference_standalone_tex|structural_var_inference_standalone.tex|2|ab|B|r",
+  "structural_var_inference_standalone_pdf|structural_var_inference_standalone.pdf|2|ab|B|r",
   "variance_share_table|var_share.tex|2|i|B|r",
   "variance_share_standalone_tex|var_share_standalone.tex|2|i|B|r",
   "variance_share_standalone_pdf|var_share_standalone.pdf|2|i|B|r",
