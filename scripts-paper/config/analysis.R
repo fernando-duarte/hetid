@@ -3,6 +3,9 @@
 paper_source_once(paper_path("config", "analysis_contract.R"))
 paper_source_once(paper_path("config", "logvar_estimators.R"))
 paper_source_once(paper_path("config", "reporting.R"))
+paper_source_once(paper_path(
+  "support", "statistics", "bootstrap_and_stationarity.R"
+))
 analysis_contract <- PAPER_ANALYSIS_CONTRACT
 reporting_contract <- PAPER_REPORTING_CONTROL
 
@@ -36,10 +39,30 @@ z_col <- analysis_contract$input$instrument$column
 z_source <- function() yield_vol[c("qtr", z_col)]
 z_desc <- paper_instrument_description()
 
-# Moving-block bootstrap controls for mean-equation set endpoints.
-boot_reps <- as.integer(Sys.getenv("HETID_BOOT_REPS", unset = "200"))
-boot_block <- 24L
-boot_seed <- 123L
+# Moving-block bootstrap controls shared by every bootstrap in the paper.
+# Env overrides are parsed as whole numbers; a typo fails loudly instead of
+# silently coercing to NA. An explicitly-empty value behaves like unset.
+resolve_whole_number_env <- function(var, default) {
+  raw <- Sys.getenv(var, unset = "")
+  if (nzchar(raw) && !grepl("^[0-9]+$", trimws(raw))) {
+    stop(sprintf("%s must be a whole number, got: %s", var, raw), call. = FALSE)
+  }
+  if (nzchar(raw)) as.integer(trimws(raw)) else default
+}
+
+boot_reps <- resolve_whole_number_env("HETID_BOOT_REPS", 10000L)
+stopifnot(boot_reps >= 2L)
+if (boot_reps != 10000L) {
+  message(sprintf("boot_reps overridden to %d via HETID_BOOT_REPS", boot_reps))
+}
+
+# One seed across every bootstrap in the paper, matching macro_dynamics.
+boot_seed <- 20260708L
+
+detected_cores <- parallel::detectCores()
+default_cores <- max(1L, if (is.na(detected_cores)) 1L else detected_cores - 1L)
+boot_cores <- resolve_whole_number_env("HETID_BOOT_CORES", default_cores)
+stopifnot(boot_cores >= 1L)
 
 # PPML set-map and independent coverage-audit budgets.
 logvar_ppml_grid_cap <-
@@ -56,12 +79,6 @@ logvar_boot_grid_cap <-
   PAPER_LOGVAR_BUDGETS$bootstrap$grid_cap
 logvar_boot_fit_budget <-
   PAPER_LOGVAR_BUDGETS$bootstrap$fit_budget
-logvar_boot_block_sens <- 8L
-logvar_boot_m <- NULL
-logvar_boot_cores <- as.integer(Sys.getenv(
-  "HETID_BOOT_CORES",
-  unset = as.character(max(1L, parallel::detectCores() - 1L))
-))
 
 # Fit budget for date-indexed fitted-volatility envelopes.
 logvar_fitted_vol_fit_budget <-

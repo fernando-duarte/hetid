@@ -72,7 +72,7 @@ PAPER_ANALYSIS_CONTRACT <- local({
       render_degenerate_rtol = 1e-9
     ),
     inference = list(
-      version = "1.1.0",
+      version = "1.2.0",
       nominal_alpha = 0.10,
       minimum_valid_draw_share = 0.50
     ),

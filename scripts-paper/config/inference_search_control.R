@@ -26,8 +26,6 @@ PAPER_INFERENCE_SEARCH_CONTROL <- list(
   ),
   bootstrap = list(
     fatal_failure_share = 0.25,
-    sensitivity_min_reps = 50L,
-    sensitivity_reps_share = 0.25,
     progress_report_every = 25L
   ),
   logvar_endpoint = list(stability_share = 0.85)
@@ -70,15 +68,6 @@ paper_bootstrap_failure_limit <- function(
   floor(reps * control$bootstrap$fatal_failure_share)
 }
 
-paper_bootstrap_sensitivity_reps <- function(
-  reps, control = PAPER_INFERENCE_SEARCH_CONTROL
-) {
-  max(
-    control$bootstrap$sensitivity_min_reps,
-    floor(reps * control$bootstrap$sensitivity_reps_share)
-  )
-}
-
 stopifnot(
   PAPER_INFERENCE_SEARCH_CONTROL$im_root$bracket_lower <
     PAPER_INFERENCE_SEARCH_CONTROL$im_root$bracket_upper,
@@ -96,9 +85,6 @@ stopifnot(
   PAPER_INFERENCE_SEARCH_CONTROL$tau_star$bootstrap_bisection_iterations >= 1L,
   PAPER_INFERENCE_SEARCH_CONTROL$bootstrap$fatal_failure_share > 0,
   PAPER_INFERENCE_SEARCH_CONTROL$bootstrap$fatal_failure_share < 1,
-  PAPER_INFERENCE_SEARCH_CONTROL$bootstrap$sensitivity_min_reps >= 1L,
-  PAPER_INFERENCE_SEARCH_CONTROL$bootstrap$sensitivity_reps_share > 0,
-  PAPER_INFERENCE_SEARCH_CONTROL$bootstrap$sensitivity_reps_share <= 1,
   PAPER_INFERENCE_SEARCH_CONTROL$bootstrap$progress_report_every >= 1L,
   PAPER_INFERENCE_SEARCH_CONTROL$logvar_endpoint$stability_share > 0,
   PAPER_INFERENCE_SEARCH_CONTROL$logvar_endpoint$stability_share < 1,

@@ -1,14 +1,20 @@
 # Bootstrap sampling, summary statistics, and stationarity tests.
 
-# Moving-block bootstrap index: resample a length-nn series in contiguous blocks
-# of length bl (concatenated, truncated to nn rows), preserving short-run
-# dependence. The caller owns the RNG seed.
+# Circular moving-block bootstrap index: resample a length-nn series in
+# blocks of length bl that wrap around modulo nn (concatenated, truncated to
+# nn rows), preserving short-run dependence without under-sampling the tail.
+# Mirrors macro_dynamics's pca_tools/moving_block_pa helper cmb_index.
+# The caller owns the RNG seed.
 mbb_index <- function(nn, bl) {
   bl <- min(bl, nn) # a block longer than the series collapses to one full block
   nblocks <- ceiling(nn / bl)
-  starts <- sample.int(nn - bl + 1L, nblocks, replace = TRUE)
-  unlist(lapply(starts, function(s) s:(s + bl - 1L)))[seq_len(nn)]
+  starts <- sample.int(nn, nblocks, replace = TRUE)
+  unlist(lapply(starts, function(s) (s + 0:(bl - 1) - 1) %% nn + 1))[seq_len(nn)]
 }
+
+# Automatic circular-block length, 1.5 * T^(1/3) rounded up; one convention
+# with macro_dynamics's moving_block_pa helper mb_block_len.
+paper_mbb_block_len <- function(t_obs) as.integer(ceiling(1.5 * t_obs^(1 / 3)))
 
 #' Compute comprehensive summary statistics
 #' @param x numeric vector

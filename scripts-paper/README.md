@@ -65,7 +65,7 @@ FRED patch and data construction
   -> EGARCH cleanup, residual-dynamics gate, decision validation, and routing
   -> optional LAD estimator and table
   -> combined panels
-  -> L'Ecuyer-CMRG log-variance bootstrap bracket and RNG restoration
+  -> log-variance set bootstrap via the shared circular-MBB runner (Mersenne-Twister, HETID_BOOT_CORES)
   -> inference panels, analytical figures, diagnostics, and descriptive report
 ```
 
@@ -149,16 +149,23 @@ HETID_BOOT_REPS=8 HETID_BOOT_CORES=1 Rscript scripts-paper/run_pipeline.R
 Run the full pipeline serially:
 
 ```sh
-HETID_BOOT_REPS=200 HETID_BOOT_CORES=1 Rscript scripts-paper/run_pipeline.R
+HETID_BOOT_REPS=10000 HETID_BOOT_CORES=1 Rscript scripts-paper/run_pipeline.R
 ```
 
-`HETID_BOOT_REPS` (default 200) sets the replication count for both the mean-equation and
-the log-variance set bootstraps. `HETID_BOOT_CORES` (default `detectCores() - 1`)
-parallelizes only the log-variance set bootstrap, which forks its draws through
-`parallel::mclapply`; the mean-equation endpoint bootstrap always runs serially. Because the
-moving-block resampling indices are drawn deterministically up front, the log-variance set
-bootstrap yields identical results at any core count — `HETID_BOOT_CORES` changes runtime,
-not the published numbers.
+`HETID_BOOT_REPS` (default 10000; overriding it prints a message naming the value used) sets
+the replication count for both the mean-equation endpoint bootstrap and the log-variance set
+bootstrap. Both are seeded at 20260708 and resample a circular moving block whose length
+follows the rule `ceiling(1.5 * T^(1/3))` (10 quarters at T = 256), and both parallelize
+through `HETID_BOOT_CORES` (default `detectCores() - 1`) via the shared MBB runner, which
+pins Mersenne-Twister for the draw and restores whatever generator kind was active
+beforehand. The log-variance set bootstrap additionally reruns at the full replication count
+with a doubled block length as a sensitivity check.
+
+The resampling indices are drawn once, up front, under the pinned seed, so they are
+identical at any core count — `HETID_BOOT_CORES` changes runtime, not which observations are
+resampled. Whether the reported numbers also match at every core count further depends on
+the draw callback itself consuming no additional randomness; `mbb_checks.R` tests that
+directly rather than relying on index determinism alone.
 
 Run topology checks and all isolated paper suites:
 
@@ -174,6 +181,9 @@ Rscript scripts-paper/tests/run_tests.R
   by its owning test.
 - `log_variance/figures/bounds_by_tau_test_support.R` is test support for bounds plot data
   and is not production-reachable.
+- `variance_bounds/quoted_numbers.R` is a standalone script, run directly rather than sourced
+  by `run_pipeline.R`; see its header for how it regenerates the paper's quoted SDF
+  approximation-error numbers.
 
 These exclusions are documented in the topology audit; do not wire them into production
 without an explicit scientific change.

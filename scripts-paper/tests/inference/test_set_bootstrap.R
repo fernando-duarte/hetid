@@ -23,12 +23,19 @@ paper_source_once(paper_path("log_variance", "estimators", "log_ols", "estimator
 paper_source_once(paper_path("log_variance", "estimators", "ppml", "estimator.R"))
 paper_source_once(paper_path("log_variance", "estimators", "harvey", "estimator.R"))
 paper_source_once(paper_path("log_variance", "inference", "set_bootstrap_core.R"))
+paper_source_once(paper_path("log_variance", "inference", "set_bootstrap_gate.R"))
+# the mbb runner itself: not otherwise pulled in by the estimator chain above,
+# needed for the real-callback cores=1 vs cores=2 check
+paper_source_once(paper_path("support", "statistics", "api.R"))
 
 paper_source_once(paper_path("tests", "support", "harness.R"))
 .test <- paper_test_harness()
 check <- .test$check
+skip <- .test$skip
 
 paper_source_once(paper_path("tests", "inference", "set_envelope_checks.R"))
 paper_source_once(paper_path("tests", "inference", "set_bootstrap_core_checks.R"))
+paper_source_once(paper_path("tests", "inference", "set_bootstrap_cores_checks.R"))
+paper_source_once(paper_path("tests", "inference", "set_bootstrap_gate_checks.R"))
 
 .test$finish()

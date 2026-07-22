@@ -5,6 +5,7 @@ source(file.path("scripts-paper", "config", "paths.R"))
 paper_source_once(paper_path("tests", "support", "harness.R"))
 .test <- paper_test_harness()
 check <- .test$check
+skip <- .test$skip
 paper_source_once(paper_path("support", "statistics", "api.R"))
 paper_source_once(paper_path("config", "artifacts.R"))
 paper_source_once(paper_path("support", "latex", "table_environment.R"))
@@ -13,68 +14,7 @@ paper_source_once(paper_path("log_variance", "tables", "panel_block.R"))
 paper_source_once(paper_path("log_variance", "tables", "console_formatting.R"))
 paper_source_once(paper_path("tests", "support", "reporting_checks.R"))
 paper_source_once(paper_path("tests", "support", "cell_formatting_checks.R"))
-
-# Moving blocks retain their requested length, range, and within-block order.
-set.seed(91)
-idx <- mbb_index(11L, 4L)
-check("moving-block draw has the requested length", length(idx) == 11L)
-check("moving-block draw stays inside the sample", all(idx %in% seq_len(11L)))
-check(
-  "moving-block draw preserves order inside each block",
-  all(diff(idx[1:4]) == 1L) && all(diff(idx[5:8]) == 1L) &&
-    all(diff(idx[9:11]) == 1L)
-)
-set.seed(91)
-check("moving-block draw is controlled by caller RNG", identical(idx, mbb_index(11L, 4L)))
-check("oversized block returns the full sample", identical(mbb_index(5L, 9L), 1:5))
-
-mbb_run_a <- paper_run_mbb_draws(
-  n_draws = 4L,
-  sample_size = 11L,
-  block_length = 4L,
-  truncation = 8L,
-  seed = 333L,
-  draw = function(index, draw_id) {
-    c(draw_id = draw_id, total = sum(index))
-  }
-)
-mbb_run_b <- paper_run_mbb_draws(
-  n_draws = 4L,
-  sample_size = 11L,
-  block_length = 4L,
-  truncation = 8L,
-  seed = 333L,
-  draw = function(index, draw_id) {
-    c(draw_id = draw_id, total = sum(index))
-  }
-)
-check(
-  "moving-block runner pre-draws a reproducible index stream",
-  identical(mbb_run_a$indices, mbb_run_b$indices) &&
-    identical(mbb_run_a$draws, mbb_run_b$draws) &&
-    all(lengths(mbb_run_a$indices) == 8L)
-)
-mbb_progress <- integer()
-mbb_failed <- paper_run_mbb_draws(
-  n_draws = 3L,
-  sample_size = 9L,
-  block_length = 3L,
-  seed = 444L,
-  draw = function(index, draw_id) {
-    if (draw_id == 2L) stop("fixture draw failed")
-    sum(index)
-  },
-  progress = function(draw_id, n_draws, started_at) {
-    mbb_progress <<- c(mbb_progress, draw_id)
-  }
-)
-check(
-  "moving-block runner captures failures and sequential progress",
-  mbb_failed$n_failed == 1L &&
-    identical(mbb_failed$draws[[2L]], "fixture draw failed") &&
-    identical(mbb_progress, 1:3)
-)
-rm(mbb_run_a, mbb_run_b, mbb_progress, mbb_failed)
+paper_source_once(paper_path("tests", "support", "mbb_checks.R"))
 
 summary_row <- compute_summary_stats(c(1, 2, NA, 4), "x", compute_ac = FALSE)
 check("summary statistics count finite observations", summary_row$N == 3L)

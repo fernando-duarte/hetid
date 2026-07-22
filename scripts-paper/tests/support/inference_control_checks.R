@@ -17,10 +17,8 @@ check(
   )
 )
 check(
-  "bootstrap failure and sensitivity shares execute through shared helpers",
-  paper_bootstrap_failure_limit(200L) == 50L &&
-    paper_bootstrap_sensitivity_reps(100L) == 50L &&
-    paper_bootstrap_sensitivity_reps(800L) == 200L
+  "bootstrap failure share executes through the shared helper",
+  paper_bootstrap_failure_limit(200L) == 50L
 )
 check("IM root brackets execute from the canonical control", {
   narrow <- inference_control
@@ -72,8 +70,10 @@ threaded_fields <- list(
     "paper_bootstrap_failure_limit", "progress_report_every"
   ),
   "log_variance/inference/run_set_bootstrap.R" = c(
-    "paper_bootstrap_failure_limit", "paper_bootstrap_sensitivity_reps",
-    "stability_share"
+    "paper_bootstrap_failure_limit", "stability_share", "progress_report_every"
+  ),
+  "log_variance/inference/set_bootstrap_gate.R" = c(
+    "fatal_failure_share", "progress_report_every"
   ),
   "log_variance/inference/set_envelope.R" = "stability_share"
 )

@@ -16,7 +16,7 @@ build_logvar_set_inference_notes <- function(boot) {
           "Parenthetical rows beneath the $\\tau{>}0$ set cells are a ",
           "%s\\%%"
         ),
-        "moving-block bootstrap ($B=%d$ replications, %d-quarter blocks)",
+        "circular moving-block bootstrap ($B=%s$ replications, %d-quarter blocks)",
         "OUTER confidence envelope covering the entire population identified",
         "interval, conditional on the delivered principal-component series;",
         "coordinatewise intervals do not describe the joint geometry of the",
@@ -26,7 +26,7 @@ build_logvar_set_inference_notes <- function(boot) {
         inference_labels$coverage_percent,
         PAPER_REPORTING_CONTROL$precision$caption_percent
       ),
-      boot$b_reps,
+      paper_format_thousands(boot$b_reps),
       boot$block
     ),
     paste(

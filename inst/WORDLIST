@@ -134,12 +134,15 @@ lm
 logvar
 Manski
 mathrm
+MBB
 mcp
 mcpServers
 md
 meaned
 MERCHANTABILITY
+Mersenne
 minimizer
+Minkowski
 misalign
 mismeasured
 mit
@@ -168,6 +171,7 @@ pcs
 pdfLaTeX
 pkgcheck
 png
+pointwise
 positivity
 prcomp
 pre
@@ -240,6 +244,7 @@ ttf
 uncentered
 unlink
 Unparsed
+unprojected
 unsetting
 unshifted
 untracked
@@ -266,6 +271,3 @@ yaml
 yml
 YYYY
 Zakrajsek
-Minkowski
-pointwise
-unprojected
