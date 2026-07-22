@@ -35,11 +35,23 @@ paper_run_mbb_draws <- function(
   block_length <- as.integer(block_length)
   cores <- as.integer(cores)
 
-  # the runner owns the generator so every bootstrap draws indices under one
-  # documented RNG regardless of ambient state
+  # own the whole RNG protocol so indices depend only on the seed, and leave
+  # the caller's RNG untouched so the bootstrap cannot perturb later stages
   old_kind <- RNGkind()
-  on.exit(do.call(RNGkind, as.list(old_kind)), add = TRUE)
-  RNGkind("Mersenne-Twister")
+  old_seed_exists <- exists(".Random.seed", envir = .GlobalEnv, inherits = FALSE)
+  old_seed <- if (old_seed_exists) get(".Random.seed", envir = .GlobalEnv) else NULL
+  on.exit(
+    {
+      do.call(RNGkind, as.list(old_kind))
+      if (old_seed_exists) {
+        assign(".Random.seed", old_seed, envir = .GlobalEnv)
+      } else if (exists(".Random.seed", envir = .GlobalEnv, inherits = FALSE)) {
+        rm(".Random.seed", envir = .GlobalEnv)
+      }
+    },
+    add = TRUE
+  )
+  RNGkind("Mersenne-Twister", "Inversion", "Rejection")
   # the kind the indices were drawn under, recorded before the exit restore
   rng_kind <- RNGkind()
   set.seed(seed)
