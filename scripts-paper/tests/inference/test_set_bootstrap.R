@@ -5,8 +5,9 @@
 # coef_interval_tables /
 # tau_quadratic_system) and the log-var engine/estimator chain (map/engine/
 # log-OLS/PPML/Harvey) the per-draw re-estimator drives, then the per-draw
-# core module itself. Define the shared check() counter, and source the
-# focused check files. Run from the worktree root:
+# core module itself and its reuse machinery (freshness/provenance/code
+# manifest). Define the shared check() counter, and source the focused check
+# files. Run from the worktree root:
 #   Rscript scripts-paper/tests/inference/test_set_bootstrap.R
 
 source(file.path("scripts-paper", "config", "paths.R"))
@@ -27,6 +28,7 @@ paper_source_once(paper_path("log_variance", "inference", "set_bootstrap_gate.R"
 # the mbb runner itself: not otherwise pulled in by the estimator chain above,
 # needed for the real-callback cores=1 vs cores=2 check
 paper_source_once(paper_path("support", "statistics", "api.R"))
+paper_source_once(paper_path("log_variance", "inference", "set_bootstrap_reuse.R"))
 
 paper_source_once(paper_path("tests", "support", "harness.R"))
 .test <- paper_test_harness()
@@ -37,5 +39,6 @@ paper_source_once(paper_path("tests", "inference", "set_envelope_checks.R"))
 paper_source_once(paper_path("tests", "inference", "set_bootstrap_core_checks.R"))
 paper_source_once(paper_path("tests", "inference", "set_bootstrap_cores_checks.R"))
 paper_source_once(paper_path("tests", "inference", "set_bootstrap_gate_checks.R"))
+paper_source_once(paper_path("tests", "inference", "set_bootstrap_reuse_checks.R"))
 
 .test$finish()

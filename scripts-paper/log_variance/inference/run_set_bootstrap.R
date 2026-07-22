@@ -4,6 +4,7 @@ paper_source_once(paper_path("log_variance", "inference", "set_envelope.R"))
 paper_source_once(paper_path("log_variance", "inference", "set_bootstrap_core.R"))
 paper_source_once(paper_path("log_variance", "inference", "set_bootstrap_builders.R"))
 paper_source_once(paper_path("log_variance", "inference", "set_bootstrap_gate.R"))
+paper_source_once(paper_path("log_variance", "inference", "set_bootstrap_reuse.R"))
 paper_source_once(paper_path(
   "log_variance", "inference", "set_bootstrap_artifacts.R"
 ))
@@ -65,33 +66,41 @@ log_var_eq_set_boot <- local({
   names(full) <- ests
   n <- nrow(prep$data)
   block <- paper_mbb_block_len(n)
+  sens_block <- 2L * block # doubled-block robustness diagnostic; a knob nobody turns
+  sens_reps <- boot_reps # full B -- no reduced-rep exception
   draw_logvar <- function(index, draw_id) {
     logvar_set_boot_draw(
       prep$data[index, , drop = FALSE],
       spec
     )
   }
-  boot_run <- paper_run_mbb_draws(
-    n_draws = boot_reps,
-    sample_size = n,
-    block_length = block,
-    cores = boot_cores,
-    seed = boot_seed,
-    draw = draw_logvar,
-    progress = paper_mbb_console_progress(
-      PAPER_INFERENCE_SEARCH_CONTROL$bootstrap$progress_report_every,
-      "vol set-endpoint bootstrap"
-    )
+  freshness <- logvar_boot_freshness(
+    prep, spec, scale_val, logols_val,
+    n, block, sens_block, boot_reps, sens_reps, boot_seed
   )
-  boot_idx <- boot_run$indices
-  boot_t0 <- boot_run$started_at
-  raw <- boot_run$draws
-  n_failed <- sum(vapply(raw, is.character, logical(1)))
-  if (n_failed > paper_bootstrap_failure_limit(boot_reps)) {
-    stop("vol set-endpoint bootstrap: ", n_failed, " of ", boot_reps, " draws failed")
-  }
-  collected <- logvar_set_boot_collect(raw, spec)
+  t0 <- Sys.time()
+  disp <- paper_boot_cached_or_run(
+    mode = PAPER_BOOT_MODE,
+    artifact_key = "log_variance_bootstrap_draws",
+    freshness = freshness,
+    fields = c(
+      "index_sha", "sens_index_sha", "input_sha", "draw_spec_sha",
+      "code_sha", "runtime_sha", "cache_schema_version"
+    ),
+    run_fn = function() {
+      logvar_boot_run_bundle(
+        draw_logvar, spec, ests, n, block, sens_block,
+        boot_reps, sens_reps, boot_seed, boot_cores
+      )
+    },
+    validate_fn = logvar_boot_cache_validate,
+    warn_label = "vol set-endpoint bootstrap"
+  )
+  collected <- disp$draws$collected
+  sens_collected <- disp$draws$sens_collected
+  n_failed <- disp$draws$n_failed
   prim_cells <- logvar_boot_failure_gate(collected, ests, "primary")
+  sens_cells <- logvar_boot_failure_gate(sens_collected, ests, "sensitivity")
   endpoint_stability <-
     PAPER_INFERENCE_SEARCH_CONTROL$logvar_endpoint$stability_share
   envelope <- function(coll) {
@@ -131,22 +140,9 @@ log_var_eq_set_boot <- local({
   )
   se_obj <- estimator_results
   tau0 <- logvar_boot_tau0_diagnostics(ests, collected, se_obj, se_type, spec)
-  sens_block <- 2L * block # doubled-block robustness diagnostic; a knob nobody turns
-  sens_reps <- boot_reps # full B -- no reduced-rep exception
-  sens_run <- logvar_boot_sensitivity_run(
-    draw_logvar, n, sens_block, sens_reps, boot_seed, boot_cores
-  )
-  sens_collected <- logvar_set_boot_collect(sens_run$draws, spec)
-  sens_cells <- logvar_boot_failure_gate(sens_collected, ests, "sensitivity")
   sens_env <- envelope(sens_collected)
-  provenance <- list(
-    resampler = "circular_mbb",
-    sample_size = n,
-    b_reps = boot_reps, block = block, seed = boot_seed,
-    rng_kind = boot_run$rng_kind,
-    block_rule = "ceiling(1.5*T^(1/3))",
-    index_sha256 = paper_sha256_object(boot_idx),
-    sens_block = sens_block, sens_reps = sens_reps
+  provenance <- logvar_boot_provenance(
+    n, boot_reps, block, sens_block, sens_reps, boot_seed
   )
   log_var_eq_set_boot <- c(
     prim_env,
@@ -172,21 +168,16 @@ log_var_eq_set_boot <- local({
     sens_env = sens_env,
     tau0 = tau0,
     spec = spec,
-    collected = collected,
-    sens_collected = sens_collected,
     prim_cells = prim_cells,
-    sens_cells = sens_cells,
-    boot_reps = boot_reps,
-    block = block,
-    boot_seed = boot_seed,
-    sens_block = sens_block,
-    sens_reps = sens_reps,
-    provenance = provenance
+    sens_cells = sens_cells
   )
   cat(sprintf(
-    "vol set-endpoint bootstrap: B = %d, block = %d, %d failed, %d reported cells, %.1f min\n",
-    boot_reps, block, n_failed, n_reported,
-    as.numeric(difftime(Sys.time(), boot_t0, units = "mins"))
+    "vol set-endpoint bootstrap [%s]: B = %d, block = %d, %d failed, %d reported",
+    disp$source, boot_reps, block, n_failed, n_reported
+  ))
+  cat(sprintf(
+    " cells, %.1f min\n",
+    as.numeric(difftime(Sys.time(), t0, units = "mins"))
   ))
   log_var_eq_set_boot
 })

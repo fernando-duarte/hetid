@@ -71,6 +71,9 @@ logvar_boot_cache_validate <- function(cached) {
     return("primary and sensitivity collections disagree on estimators")
   }
   reps_ok <- function(coll, reps) {
+    if (!is.numeric(reps) || length(reps) != 1L || is.na(reps)) {
+      return(FALSE)
+    }
     all(vapply(ests, function(est) {
       cells <- coll[[est]]
       length(cells) > 0L && all(vapply(cells, function(cell) {

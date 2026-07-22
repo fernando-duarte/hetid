@@ -88,8 +88,9 @@ threaded_fields <- list(
   "mean_equation/inference/run_bootstrap.R" = c(
     "paper_bootstrap_failure_limit", "progress_report_every"
   ),
-  "log_variance/inference/run_set_bootstrap.R" = c(
-    "paper_bootstrap_failure_limit", "stability_share", "progress_report_every"
+  "log_variance/inference/run_set_bootstrap.R" = "stability_share",
+  "log_variance/inference/set_bootstrap_reuse.R" = c(
+    "paper_bootstrap_failure_limit", "progress_report_every"
   ),
   "log_variance/inference/set_bootstrap_gate.R" = c(
     "fatal_failure_share", "progress_report_every"

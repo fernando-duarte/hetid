@@ -1,4 +1,6 @@
-# Persist set-bootstrap diagnostics and exact draw objects.
+# Persist set-bootstrap diagnostics. The exact draw objects are cached by the
+# reuse dispatcher (set_bootstrap_reuse.R via paper_boot_cached_or_run), so
+# this writer produces only the per-cell diagnostics table.
 
 write_logvar_set_boot_artifacts <- function(
   ests,
@@ -12,16 +14,8 @@ write_logvar_set_boot_artifacts <- function(
   sens_env,
   tau0,
   spec,
-  collected,
-  sens_collected,
   prim_cells,
-  sens_cells,
-  boot_reps,
-  block,
-  boot_seed,
-  sens_block,
-  sens_reps,
-  provenance
+  sens_cells
 ) {
   diag_rows <- list()
   for (est in ests) {
@@ -64,24 +58,5 @@ write_logvar_set_boot_artifacts <- function(
     ),
     artifact_path("log_variance_inference_diagnostics"),
     "log_variance_inference_diagnostics"
-  )
-  paper_write_exact_rds(
-    list(
-      b_reps = boot_reps,
-      block = block,
-      seed = boot_seed,
-      sens_block = sens_block,
-      sens_reps = sens_reps,
-      inference_contract = PAPER_ANALYSIS_CONTRACT$inference,
-      taus = spec$taus,
-      coefs = spec$coefs,
-      collected = collected,
-      sens_collected = sens_collected,
-      full = full,
-      provenance = provenance,
-      cache_schema_version = 1L
-    ),
-    artifact_path("log_variance_bootstrap_draws"),
-    "log_variance_bootstrap_draws"
   )
 }
