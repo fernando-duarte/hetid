@@ -66,17 +66,17 @@ mean_boot_results <- function(collected, set_id_mean_eq, inference_alpha,
 }
 
 # Expensive per-draw estimation code for the mean bootstrap: set_id_boot_draw ->
-# estimate_set_id_system and the identified-set solver/tau-star machinery. The cheap
-# inference layer (identified_set_inference.R, inference_calibration.R) is EXCLUDED so
-# edits there still allow reuse; edits to any file below force a fresh resample.
+# estimate_set_id_system and the identified-set solver/tau-star machinery, taken as
+# the whole support/identification tree so a solver file added later is caught
+# without editing this list. Excluded are api.R (a source() facade) and the cheap
+# post-collection inference layer (identified_set_inference.R, inference_calibration.R)
+# that a draw never executes, so edits there still allow reuse; edits to any drawn
+# file force a fresh resample.
 mean_boot_code_manifest <- function() {
   base <- "support/identification"
-  file.path(base, c(
-    "identified_set_bootstrap.R", "tau_star.R", "quadratic_system.R",
-    "quadratic_evaluation.R", "profile_solver_core.R", "profile_bounds_api.R",
-    "scaled_quadratic_program.R", "linear_objective_bounds.R", "coordinate_bounds.R",
-    "bound_search_classifier.R", "functional_bounds.R", "status_contract.R"
-  ))
+  dir_abs <- do.call(paper_path, as.list(strsplit(base, "/", fixed = TRUE)[[1]]))
+  excluded <- c("api.R", "identified_set_inference.R", "inference_calibration.R")
+  file.path(base, setdiff(list.files(dir_abs, pattern = "\\.R$"), excluded))
 }
 
 # Referee-facing reproducibility metadata, built without a resample so reuse and
