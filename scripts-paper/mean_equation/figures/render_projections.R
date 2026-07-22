@@ -63,7 +63,7 @@ local({
     mm
   })
 
-  grDevices::svg(artifact_path("mean_projections_figure"),
+  svglite::svglite(artifact_path("mean_projections_figure"),
     width = render$device[["width"]],
     height = render$device[["height"]]
   )
@@ -72,7 +72,7 @@ local({
     render$layout,
     heights = render$layout_heights
   )
-  graphics::par(oma = c(0, 0, 2, 0)) # device-scoped; dies at dev.off
+  graphics::par(oma = c(0, 0, 0, 0)) # no baked title; device-scoped, dies at dev.off
 
   for (pi in seq_along(panels)) {
     p <- panels[[pi]]
@@ -82,7 +82,6 @@ local({
       main = bquote("project out " * tilde(b)[.(p$perp) * "," * N]),
       cex.main = 1
     )
-    graphics::grid(col = "grey92", lty = 1)
     for (ti in seq_along(taus)) {
       graphics::contour(xg, yg, envs[[pi]][[ti]]$M,
         levels = 0, add = TRUE,
@@ -111,10 +110,6 @@ local({
     col = c(tcols, "grey40", tau0_col),
     lty = c(1, 1, 1, 2, NA), lwd = c(2, 2, 2, 1, NA),
     pch = c(NA, NA, NA, NA, 21), pt.bg = "white", pt.lwd = 1.6
-  )
-  graphics::mtext(
-    "Projected identified sets in SD units: set boundaries and marginal intervals by tau",
-    outer = TRUE, cex = 1.05, line = 0.2
   )
 })
 
