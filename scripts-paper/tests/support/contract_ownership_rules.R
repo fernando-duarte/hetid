@@ -138,11 +138,42 @@ forbid(
   setdiff(
     vapply(names(code), relative, character(1)),
     c(
-      "mean_equation/inference/run_bootstrap.R",
-      "log_variance/inference/run_set_bootstrap.R",
       "log_variance/diagnostics/dynamics/run_gate.R",
       "log_variance/extensions/egarch/run_route.R"
     )
+  )
+)
+forbid(
+  "removed index-regeneration helper",
+  "paper_boot_index_sha"
+)
+forbid(
+  "branch-level MBB coordination",
+  "paper_run_mbb_draws\\(",
+  "support/statistics/mbb_runner.R"
+)
+forbid(
+  "secondary index-family construction",
+  "paper_mbb_index_family\\(",
+  c(
+    "support/statistics/mbb_index_family.R",
+    "inference/run_bootstrap_stage.R"
+  )
+)
+forbid(
+  "secondary indexed-draw execution",
+  "paper_run_indexed_draws\\(",
+  c(
+    "support/statistics/mbb_runner.R",
+    "support/inference/bootstrap_stage_execution.R"
+  )
+)
+forbid(
+  "retired bootstrap orchestration",
+  paste0(
+    "mean_equation/inference/run_bootstrap[.]R|",
+    "log_variance/inference/run_set_bootstrap[.]R|",
+    "log_variance/inference/set_bootstrap_reuse[.]R"
   )
 )
 forbid(

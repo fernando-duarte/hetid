@@ -1,5 +1,5 @@
 # Persist set-bootstrap diagnostics. The exact draw objects are cached by the
-# reuse dispatcher (set_bootstrap_reuse.R via paper_boot_cached_or_run), so
+# unified-stage cache dispatcher, so
 # this writer produces only the per-cell diagnostics table.
 
 write_logvar_set_boot_artifacts <- function(

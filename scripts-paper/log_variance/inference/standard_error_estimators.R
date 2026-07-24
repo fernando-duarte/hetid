@@ -8,6 +8,8 @@
 # modules. The estimator token is omitted consistently with table_formatting.R
 # and the engine modules. Definitions only.
 
+paper_source_once(paper_path("support", "reporting", "cells.R"))
+
 # Invert a symmetric bread with the estimator's conditioning gate: normalize by
 # the diagonal, gate rcond, chol-invert, transform back. Returns NULL on a
 # non-finite matrix, a nonpositive/NA diagonal scale, an rcond below the supplied

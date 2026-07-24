@@ -37,8 +37,8 @@ limit while preserving the original definition order and global symbols.
 | `mbb_runner.R` | Deterministic moving-block draw orchestration: indices are drawn up front under a pinned Mersenne-Twister (the caller's RNG kind is restored afterward), then run through a serial loop or chunked `parallel::mclapply`, reporting progress under either |
 | `reporting_and_validation.R` | Statistical reporting and data-validation functions |
 | `normalizations.R` | Named distributional normalization constants shared by execution and prose |
-| `boot_freshness.R` | Freshness fingerprints for the bootstrap draw caches (resample-index, code, runtime, and draw-spec hashes, plus the field-by-field freshness comparison) that gate cache reuse |
-| `boot_cache.R` | Crash-safe reuse-or-run dispatcher for the expensive bootstrap draw caches: atomic promote of the cache write, structural validation, freshness match, and a warn-and-rerun fallback on any cache problem, while errors inside the run propagate |
+| `boot_freshness.R` | Runtime and executed-source hashes used by unified-stage provenance and cache freshness |
+| `boot_cache.R` | Validated atomic replacement for the unified bootstrap cache, including restoration of a prior valid cache after a post-promotion failure |
 
 ## `latex/`
 

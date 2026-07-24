@@ -107,6 +107,14 @@ run_bootstrap_stage <- function(
       )
     }
   )
+  bootstrap_stage_remove_legacy_caches(
+    cache_path,
+    function(value) {
+      bootstrap_stage_cache_validate(
+        value, stage_spec, provenance()
+      )
+    }
+  )
   bootstrap_stage_results(
     dispatched$stage, stage_spec, mean_eq,
     estimator_results, dispatched$source,
@@ -129,7 +137,7 @@ run_bootstrap_stage <- function(
   .bootstrap_stage_estimator_results, boot_reps, boot_seed,
   boot_cores, PAPER_BOOT_MODE, z_col, impose_beta2r_null,
   logvar_boot_grid_cap, logvar_boot_fit_budget,
-  file.path(out_dir, "state", "bootstrap_stage_draws.rds")
+  artifact_path("bootstrap_stage_draws")
 )
 set_id_boot <- .bootstrap_stage_output$set_id_boot
 log_var_eq_set_boot <- .bootstrap_stage_output$log_var_eq_set_boot

@@ -6,7 +6,7 @@
 # invariant) and boot_min_reps from identified_set_inference.R. Half-infinite sets use
 # the single live side; a divergent-draw fraction or a degenerate scale fails the
 # regularity gate (divergent draws are counted, never dropped). Consumed by
-# scripts-paper/log_variance/inference/run_set_bootstrap.R.
+# scripts-paper/inference/run_bootstrap_stage.R.
 
 paper_source_once(paper_path("support", "identification", "identified_set_inference.R"))
 

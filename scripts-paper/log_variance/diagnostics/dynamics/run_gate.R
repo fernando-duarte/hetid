@@ -11,6 +11,8 @@
 # objects exist) and after diagnostics/joint_gmm/run.R. No decision-file reference
 # here -- the router and approvals belong to the routing layer.
 
+paper_source_once(paper_path("support", "reporting", "cells.R"))
+
 if (exists("log_var_eq") && exists("set_id_mean_eq")) {
   dyn_inputs <- log_var_eq$inputs
   dyn_b_point <- set_id_mean_eq$theta_table$point

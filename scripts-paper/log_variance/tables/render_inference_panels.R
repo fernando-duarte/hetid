@@ -1,11 +1,11 @@
 # Inference variant of the combined log-variance panels: build_logvar_panels
 # (panels_builder.R) with the moving-block bootstrap outer confidence
-# envelope (log_var_eq_set_boot, from run_set_bootstrap.R) threaded
+# envelope (log_var_eq_set_boot, from the unified bootstrap stage) threaded
 # beneath each PPML and Harvey set cell and the set-boot notes appended to both.
 # The log-OLS panel is point identified, so it carries no envelope. Shares the
 # conservative panels' per-panel labels so every \ref stays valid whichever of
 # the two files the manuscript \input's. Writes log_var_eq_panels_inference.tex
-# + compiled standalone. Run via run_pipeline.R after run_set_bootstrap.R.
+# + compiled standalone. Run after the unified bootstrap stage.
 
 paper_source_once(paper_path("log_variance", "tables", "panels_builder.R"))
 paper_source_once(paper_path("log_variance", "tables", "set_inference_caption.R"))

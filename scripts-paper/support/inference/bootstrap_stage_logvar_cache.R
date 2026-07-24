@@ -1,3 +1,7 @@
+paper_source_once(paper_path(
+  "support", "inference", "bootstrap_stage_logvar_contract.R"
+))
+
 bootstrap_stage_anchor_gate <- function(anchor, stage_spec) {
   if (is.character(anchor)) stop(anchor, call. = FALSE)
   valid <- logvar_boot_anchor_validate(
@@ -150,6 +154,12 @@ logvar_boot_anchor_validate <- function(anchor, logvar_spec, taus) {
       )
       if (!values_ok) {
         return("endpoint value/status mismatch")
+      }
+      if (!bootstrap_stage_cache_interval_order_ok(
+        cell$lower, cell$upper,
+        cell$lower_status, cell$upper_status
+      )) {
+        return("endpoint interval order changed")
       }
       live <- live || any(c(
         cell$lower_status, cell$upper_status

@@ -3,7 +3,8 @@
 harvey_control_estimator <- function(
   control = LOGVAR_HARVEY_CONTROL,
   digits = getOption("digits"),
-  upstream = list()
+  upstream = list(),
+  normal_log_square_gap = LOGVAR_NORMAL_LOG_SQUARE_GAP
 ) {
   old_digits <- getOption("digits")
   on.exit(options(digits = old_digits), add = TRUE)
@@ -17,7 +18,10 @@ harvey_control_estimator <- function(
       b_point = harvey_fx$b_ref
     ),
     upstream,
-    list(control = control)
+    list(
+      control = control,
+      normal_log_square_gap = normal_log_square_gap
+    )
   ))
 }
 
@@ -47,6 +51,15 @@ check("changing one Harvey execution control changes spec_id", hs_try({
   !identical(
     harvey_control_estimator()$metadata$spec_id,
     harvey_control_estimator(changed)$metadata$spec_id
+  )
+}))
+
+check("changing the Harvey normal log-square gap changes spec_id", hs_try({
+  !identical(
+    harvey_control_estimator()$metadata$spec_id,
+    harvey_control_estimator(
+      normal_log_square_gap = LOGVAR_NORMAL_LOG_SQUARE_GAP + 0.01
+    )$metadata$spec_id
   )
 }))
 

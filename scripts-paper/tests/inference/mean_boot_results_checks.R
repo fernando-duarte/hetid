@@ -1,7 +1,6 @@
-# Fixture checks for the mean-equation bootstrap's cheap results layer:
-# mean_boot_results assembles set_id_boot from a collected draw set without
-# touching the resample, and mean_boot_cache_validate gates a cached payload
-# before it can stand in for one. Run from root:
+# Fixture checks for the mean-equation bootstrap's cheap results layer.
+# mean_boot_results assembles set_id_boot without touching the resample.
+# Run from root:
 #   Rscript scripts-paper/tests/inference/mean_boot_results_checks.R
 
 source(file.path("scripts-paper", "config", "paths.R"))
@@ -99,23 +98,4 @@ check(
     mbr_out$block == mbr_provenance$block &&
     mbr_out$seed == mbr_provenance$seed
 )
-
-mbr_complete <- mbr_out[c(
-  "point_draws", "endpoint_draws", "tau_star_draws", "n_failed",
-  "n_capped", "n_point_deficient", "provenance"
-)]
-check(
-  "a complete cache payload validates TRUE",
-  isTRUE(mean_boot_cache_validate(mbr_complete))
-)
-mbr_missing <- mbr_complete
-mbr_missing$endpoint_draws <- NULL
-check(
-  "a payload missing endpoint_draws returns a reason string naming it",
-  is.character(mean_boot_cache_validate(mbr_missing)) &&
-    grepl("endpoint_draws", mean_boot_cache_validate(mbr_missing))
-)
-paper_source_once(paper_path(
-  "tests", "inference", "mean_boot_results_freshness_checks.R"
-))
 .test$finish()

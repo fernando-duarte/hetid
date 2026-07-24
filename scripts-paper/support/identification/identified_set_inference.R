@@ -4,7 +4,7 @@
 # (MAD-based) endpoint scales. The interval uses a Stoye (2009)-style joint
 # calibration when the endpoint correlation is estimable, falling back to the
 # Imbens-Manski (2004) interpolation otherwise. Consumed by
-# scripts-paper/mean_equation/inference/run_bootstrap.R and tested by the paper
+# scripts-paper/inference/run_bootstrap_stage.R and tested by the paper
 # inference suite.
 paper_source_once(paper_path(
   "support", "identification", "inference_calibration.R"

@@ -1,3 +1,7 @@
+paper_source_once(paper_path(
+  "support", "inference", "bootstrap_stage_logvar_contract.R"
+))
+
 logvar_set_boot_draw_from_est <- function(dat, est, shared_geometry, logvar_spec) {
   bootstrap_stage_search_control_guard(logvar_spec)
   stopifnot(

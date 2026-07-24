@@ -13,6 +13,8 @@ paper_source_once(paper_path(
   "variance_shares",
   "share_optimization.R"
 ))
+paper_source_once(paper_path("support", "reporting", "cells.R"))
+paper_source_once(paper_path("support", "reporting", "inference.R"))
 paper_source_once(paper_path(
   "support",
   "identification",

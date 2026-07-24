@@ -27,8 +27,9 @@ entrypoint.
 scripts-paper/
 ├── config/                 paths, contracts, artifact registry/lifecycle, decisions
 ├── data_preparation/       FRED patch and construction of all analysis series
+├── inference/              unified mean and volatility bootstrap stage
 ├── mean_equation/
-│   ├── inference/          bootstrap and bounds-by-tau inference
+│   ├── inference/          mean bootstrap results and bounds-by-tau inference
 │   ├── variance_shares/    share definitions, computation, and tables
 │   ├── figures/            projections and three-dimensional region rendering
 │   ├── tables/             structural-equation inference table renderer
@@ -39,7 +40,7 @@ scripts-paper/
 │   ├── estimators/         log-OLS, PPML, Harvey, and gated LAD implementations
 │   ├── diagnostics/        joint-null, joint-GMM, and dynamics diagnostics
 │   ├── extensions/egarch/  gated EGARCH decision, cleanup, and routing
-│   ├── inference/          set bootstrap, envelopes, and standard-error utilities
+│   ├── inference/          branch draws, envelopes, gates, and SE utilities
 │   ├── figures/            bounds and fitted-volatility figures
 │   └── tables/             estimator panels, notes, and renderers
 ├── variance_bounds/        per-maturity SDF-news and expected-SDF variance bounds figure, table, and quoted-numbers note
@@ -58,15 +59,16 @@ The runner preserves the established source order:
 
 ```text
 FRED patch and data construction
-  -> mean-equation OLS, identified set, bootstrap, tables, and variance shares
+  -> mean-equation OLS, identified set, variance shares, and bounds
   -> log-OLS foundation and mean-equation bounds
   -> PPML and Harvey sets, standard errors, and tables
   -> joint-null and joint-GMM diagnostics
   -> EGARCH cleanup, residual-dynamics gate, decision validation, and routing
   -> optional LAD estimator and table
-  -> combined panels
-  -> log-variance set bootstrap via the shared circular-MBB runner (Mersenne-Twister, HETID_BOOT_CORES)
-  -> inference panels, analytical figures, diagnostics, and descriptive report
+  -> conservative panels
+  -> one unified mean/volatility bootstrap stage
+  -> structural and log-variance inference tables
+  -> analytical figures, diagnostics, and descriptive report
 ```
 
 Modules still evaluate in the shared global environment. Important products include
@@ -152,15 +154,14 @@ Run the full pipeline serially:
 HETID_BOOT_REPS=10000 HETID_BOOT_CORES=1 Rscript scripts-paper/run_pipeline.R
 ```
 
-`HETID_BOOT_REPS` (default 10000; overriding it prints a message naming the value used) sets
-the replication count for both the mean-equation endpoint bootstrap and the log-variance set
-bootstrap. Both are seeded at 20260708 and resample a circular moving block whose length
-follows the rule `ceiling(1.5 * T^(1/3))` (10 quarters at T = 256), and both parallelize
-through `HETID_BOOT_CORES` via the shared MBB runner. The default reserves two logical cores
-on macOS and one logical core on other platforms, with a minimum of one worker. The runner
-pins Mersenne-Twister for the draw and restores whatever generator kind was active
-beforehand. The log-variance set bootstrap additionally reruns at the full replication count
-with a doubled block length as a sensitivity check.
+`HETID_BOOT_REPS` (default 10000; overriding it prints the value used) sets the
+replication count for the unified stage. The stage creates one primary circular-MBB
+index family, shared by mean and volatility inference, and one doubled-block family
+for the volatility sensitivity check. Both use seed 20260708. The primary block
+length follows `ceiling(1.5 * T^(1/3))` (10 quarters at T = 256). Execution uses
+`HETID_BOOT_CORES`; the default reserves two logical cores on macOS and one on other
+platforms, with a one-worker minimum. The runner pins Mersenne-Twister while creating
+the stored index families and restores the caller's generator kind.
 
 The resampling indices are drawn once, up front, under the pinned seed, so they are
 identical at any core count — `HETID_BOOT_CORES` changes runtime, not which observations are
@@ -168,20 +169,14 @@ resampled. Whether the reported numbers also match at every core count further d
 the draw callback itself consuming no additional randomness; `mbb_checks.R` tests that
 directly rather than relying on index determinism alone.
 
-`HETID_BOOT_MODE` (default `reuse`; overriding it prints a message naming the mode) governs
-both bootstraps. `reuse` loads a bootstrap's cached per-draw estimates when every freshness
-fingerprint matches the current run: the regenerated resample-index hashes (the log-variance
-bootstrap carries both its primary and its doubled-block sensitivity index), the estimation
-frame, the serializable draw spec, the expensive per-draw estimation source code, the runtime
-(R and package versions, including `hetid`), and the cache schema version. Any mismatch — or
-a missing, unreadable, or structurally invalid cache — warns and resamples instead; `rerun`
-always resamples. Only the expensive per-draw estimates are ever reused; anchors, set tables,
-envelopes, and provenance are recomputed from current state on every run. Failures inside the
-resample itself propagate rather than falling back to a stale cache.
-
-`rerun` reproduces today's published numbers exactly, and `reuse` reproduces a `rerun`
-byte-for-byte: the RNG protocol is fully pinned, so the resample indices depend only on the
-seed regardless of whether the run resampled or loaded a cache.
+`HETID_BOOT_MODE` (default `reuse`) governs the single all-or-nothing cache,
+`state/bootstrap_stage_draws.rds`. A reuse requires the two stored-family hashes,
+canonical input and draw-spec hashes, executed-code and runtime hashes, and the
+cache schema version to match. A missing, unreadable, malformed, or stale component
+reruns the complete stage. Cache installation validates a temporary round trip
+before atomic promotion; a valid prior cache is restored if post-promotion
+validation fails. A cache hit reconstructs both public result objects without
+executing a draw callback.
 
 ```sh
 HETID_BOOT_MODE=rerun Rscript scripts-paper/run_pipeline.R

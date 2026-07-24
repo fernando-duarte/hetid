@@ -1,184 +1,108 @@
-# Contract checks for the reuse-or-run bootstrap cache dispatcher. Run from root:
-# Rscript scripts-paper/tests/support/boot_cache_checks.R
+#!/usr/bin/env Rscript
 
 source(file.path("scripts-paper", "config", "paths.R"))
 paper_source_once(paper_path("tests", "support", "harness.R"))
+paper_source_once(paper_path("support", "statistics", "api.R"))
 .test <- paper_test_harness()
 check <- .test$check
-paper_source_once(paper_path("support", "statistics", "api.R"))
 
-make_case <- function() {
-  dir <- tempfile("bootcache")
-  dir.create(dir)
+cache_case <- function() {
+  directory <- tempfile("bootstrap-cache-")
+  dir.create(directory)
   list(
-    dir = dir,
-    fresh = list(
-      index_sha = "h", input_sha = "d", code_sha = "c",
-      runtime_sha = "r", schema = 1L
-    ),
-    fields = c("index_sha", "input_sha", "code_sha", "runtime_sha", "schema")
+    path = file.path(directory, "stage.rds"),
+    validator = function(value) {
+      if (is.list(value) && identical(names(value), "version")) {
+        TRUE
+      } else {
+        "bad payload"
+      }
+    },
+    reader = readRDS,
+    writer = function(value, path) saveRDS(value, path, version = 3L)
   )
 }
 
-# rerun always runs and writes
 local({
-  cc <- make_case()
-  calls <- 0L
-  path <- file.path(cc$dir, "m.rds")
-  writer <- function(obj, prov) saveRDS(c(obj, list(provenance = prov)), path)
-  out <- paper_boot_cached_or_run_at(path, "rerun", cc$fresh, cc$fields,
-    run_fn = function() {
-      calls <<- calls + 1L
-      list(x = 1L)
-    },
-    validate_fn = function(c) TRUE, warn_label = "t", writer = writer,
-    reader = function() readRDS(path)
+  case <- cache_case()
+  payload <- list(version = "new")
+  installed <- paper_boot_transactional_replace(
+    payload, case$path, case$validator,
+    case$reader, case$writer
   )
   check(
-    "rerun runs run_fn and writes",
-    calls == 1L && file.exists(path) &&
-      identical(out$source, "rerun")
+    "transaction installs the validated round-tripped payload",
+    identical(installed$value, payload) &&
+      identical(readRDS(case$path), payload)
   )
 })
 
-# reuse hit: matching freshness + valid → no run
 local({
-  cc <- make_case()
-  path <- file.path(cc$dir, "m.rds")
-  saveRDS(list(x = 1L, provenance = cc$fresh), path)
-  calls <- 0L
-  out <- paper_boot_cached_or_run_at(path, "reuse", cc$fresh, cc$fields,
-    run_fn = function() {
-      calls <<- calls + 1L
-      list(x = 2L)
-    },
-    validate_fn = function(c) TRUE, warn_label = "t",
-    writer = function(o, p) saveRDS(c(o, list(provenance = p)), path),
-    reader = function() readRDS(path)
-  )
-  check(
-    "reuse hit returns cached draws without running",
-    calls == 0L && identical(out$source, "reuse") && out$draws$x == 1L
-  )
-})
-
-# reuse hit: draws shape matches run_fn's return, no provenance leak
-local({
-  cc <- make_case()
-  path <- file.path(cc$dir, "m.rds")
-  saveRDS(c(list(x = 1L, y = 2L), list(provenance = cc$fresh)), path)
-  out <- paper_boot_cached_or_run_at(path, "reuse", cc$fresh, cc$fields,
-    run_fn = function() list(x = 1L, y = 2L),
-    validate_fn = function(c) TRUE, warn_label = "t",
-    writer = function(o, p) saveRDS(c(o, list(provenance = p)), path),
-    reader = function() readRDS(path)
-  )
-  check(
-    "reuse hit draws carry no provenance leak and match run_fn's shape",
-    identical(sort(names(out$draws)), c("x", "y")) && is.null(out$draws$provenance)
-  )
-})
-
-# reuse miss: stale field → warn + rerun
-local({
-  cc <- make_case()
-  path <- file.path(cc$dir, "m.rds")
-  stale <- cc$fresh
-  stale$input_sha <- "OLD"
-  saveRDS(list(x = 1L, provenance = stale), path)
-  calls <- 0L
-  warned <- FALSE
-  out <- withCallingHandlers(
-    paper_boot_cached_or_run_at(path, "reuse", cc$fresh, cc$fields,
-      run_fn = function() {
-        calls <<- calls + 1L
-        list(x = 2L)
-      },
-      validate_fn = function(c) TRUE, warn_label = "t",
-      writer = function(o, p) saveRDS(c(o, list(provenance = p)), path),
-      reader = function() readRDS(path)
+  case <- cache_case()
+  old <- list(version = "old")
+  saveRDS(old, case$path, version = 3L)
+  failure <- tryCatch(
+    paper_boot_transactional_replace(
+      list(version = "new"), case$path, case$validator,
+      case$reader,
+      function(value, path) stop("disk full")
     ),
-    warning = function(w) {
-      warned <<- TRUE
-      invokeRestart("muffleWarning")
+    error = conditionMessage
+  )
+  check(
+    "failed temporary write preserves the prior cache",
+    identical(failure, "disk full") &&
+      identical(readRDS(case$path), old)
+  )
+})
+
+local({
+  case <- cache_case()
+  old <- list(version = "old")
+  saveRDS(old, case$path, version = 3L)
+  failure <- tryCatch(
+    paper_boot_transactional_replace(
+      list(version = "new"), case$path, case$validator,
+      case$reader, case$writer,
+      promoter = function(from, to) FALSE
+    ),
+    error = conditionMessage
+  )
+  check(
+    "failed promotion preserves the prior cache",
+    identical(failure, "atomic cache promotion failed") &&
+      identical(readRDS(case$path), old)
+  )
+})
+
+local({
+  case <- cache_case()
+  old <- list(version = "old")
+  saveRDS(old, case$path, version = 3L)
+  installed_read <- FALSE
+  reader <- function(path) {
+    if (identical(path, case$path) && installed_read) {
+      installed_read <<- FALSE
+      stop("post-promotion read failed")
     }
-  )
-  check(
-    "reuse with a stale field warns and reruns",
-    calls == 1L && warned && identical(out$source, "fallback-rerun")
-  )
-})
-
-# validate_fn rejection → warn + rerun
-local({
-  cc <- make_case()
-  path <- file.path(cc$dir, "m.rds")
-  saveRDS(list(x = 1L, provenance = cc$fresh), path)
-  calls <- 0L
-  out <- suppressWarnings(paper_boot_cached_or_run_at(path, "reuse", cc$fresh, cc$fields,
-    run_fn = function() {
-      calls <<- calls + 1L
-      list(x = 2L)
-    },
-    validate_fn = function(c) "bad shape", warn_label = "t",
-    writer = function(o, p) saveRDS(c(o, list(provenance = p)), path),
-    reader = function() readRDS(path)
-  ))
-  check("reuse with an invalid cache reruns", calls == 1L && out$source == "fallback-rerun")
-})
-
-# run_fn errors propagate (not swallowed as a fallback)
-local({
-  cc <- make_case()
-  path <- file.path(cc$dir, "m.rds")
-  res <- tryCatch(
-    paper_boot_cached_or_run_at(path, "rerun", cc$fresh, cc$fields,
-      run_fn = function() stop("gate failed"),
-      validate_fn = function(c) TRUE, warn_label = "t",
-      writer = function(o, p) saveRDS(o, path), reader = function() readRDS(path)
-    ),
-    error = conditionMessage
-  )
-  check("run_fn failures propagate", identical(res, "gate failed"))
-})
-
-# atomic write: a failed write leaves the prior good cache intact
-local({
-  cc <- make_case()
-  path <- file.path(cc$dir, "m.rds")
-  saveRDS(list(x = 99L, provenance = cc$fresh), path)
-  tryCatch(
-    paper_boot_cached_or_run_at(path, "rerun", cc$fresh, cc$fields,
-      run_fn = function() list(x = 2L), validate_fn = function(c) TRUE, warn_label = "t",
-      writer = function(o, p) stop("disk full"), reader = function() readRDS(path)
-    ),
-    error = function(e) NULL
-  )
-  check("a failed write preserves the prior cache", readRDS(path)$x == 99L)
-})
-
-# incomplete freshness fingerprint hard-stops before any run_fn/writer call
-local({
-  cc <- make_case()
-  path <- file.path(cc$dir, "m.rds")
-  incomplete <- cc$fresh
-  incomplete$schema <- NA
-  calls <- 0L
-  res <- tryCatch(
-    paper_boot_cached_or_run_at(path, "rerun", incomplete, cc$fields,
-      run_fn = function() {
-        calls <<- calls + 1L
-        list(x = 1L)
-      },
-      validate_fn = function(c) TRUE, warn_label = "t",
-      writer = function(o, p) saveRDS(o, path), reader = function() readRDS(path)
+    readRDS(path)
+  }
+  promoter <- function(from, to) {
+    promoted <- file.rename(from, to)
+    installed_read <<- isTRUE(promoted)
+    promoted
+  }
+  failure <- tryCatch(
+    paper_boot_transactional_replace(
+      list(version = "new"), case$path, case$validator,
+      reader, case$writer, promoter
     ),
     error = conditionMessage
   )
   check(
-    "an incomplete freshness fingerprint hard-stops without running",
-    calls == 0L && !file.exists(path) &&
-      is.character(res) && grepl("freshness fingerprint", res)
+    "post-promotion failure restores the prior valid cache",
+    identical(failure, "post-promotion read failed") &&
+      identical(readRDS(case$path), old)
   )
 })
 

@@ -17,6 +17,8 @@ BOOTSTRAP_STAGE_CODE_FILES <- c(
   )),
   "support/runtime/core.R",
   "support/artifacts/typed_artifacts.R",
+  "log_variance/estimators/shared.R",
+  "log_variance/estimators/log_ols/estimator.R",
   paste0("support/statistics/", c(
     "bootstrap_and_stationarity.R",
     "normalizations.R",

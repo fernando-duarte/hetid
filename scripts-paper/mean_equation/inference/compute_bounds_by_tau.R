@@ -14,6 +14,7 @@ paper_source_once(paper_path("support", "identification", "api.R"))
 paper_source_once(paper_path("support", "identification", "profile_solver_core.R"))
 paper_source_once(paper_path("support", "identification", "profile_bounds_api.R"))
 paper_source_once(paper_path("support", "identification", "tau_star.R"))
+paper_source_once(paper_path("support", "reporting", "inference.R"))
 paper_source_once(paper_path("mean_equation", "inference", "refine_bounds_by_tau.R"))
 paper_source_once(paper_path("support", "graphics", "device.R"))
 

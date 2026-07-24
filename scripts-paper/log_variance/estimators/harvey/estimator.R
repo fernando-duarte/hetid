@@ -83,6 +83,7 @@ logvar_harvey_estimator <- function(w1, w2, pcr, qtr, b_point = NULL,
       logvar_flatten_spec(control, "control"),
       logvar_flatten_spec(start_identity, "start"),
       list(
+        normal_log_square_gap = normal_log_square_gap,
         b_point = if (!is.null(b_point) && !anyNA(b_point)) {
           b_point
         } else {

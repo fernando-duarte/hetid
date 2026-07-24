@@ -1,5 +1,7 @@
 paper_source_once(paper_path("support", "latex", "table_pipeline.R"))
 paper_source_once(paper_path("support", "latex", "simple_table.R"))
+paper_source_once(paper_path("support", "reporting", "inference.R"))
+paper_source_once(paper_path("support", "reporting", "cells.R"))
 paper_source_once(paper_path("log_variance", "tables", "table_formatting.R"))
 paper_source_once(paper_path("log_variance", "tables", "ppml_captions.R"))
 paper_source_once(paper_path("log_variance", "tables", "harvey_panel.R"))

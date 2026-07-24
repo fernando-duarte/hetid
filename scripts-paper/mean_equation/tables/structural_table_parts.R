@@ -1,7 +1,7 @@
 # Definition-only assembly of the structural-equation inference table parts:
 # row labels, the OLS / tau = 0 / display-tau columns, the tau column headers,
 # and the interior \midrule positions, from the frozen mean-set estimate
-# (estimate_identified_set.R) and its endpoint bootstrap (run_bootstrap.R).
+# (estimate_identified_set.R) and the unified bootstrap stage.
 # Shared by render_structural_equation_table.R (the standalone structural table)
 # and render_combined_inference_table.R (Panel A of the merged table) so the two
 # cannot drift on formatting. No side effects.
@@ -58,7 +58,7 @@ structural_equation_table_parts <- function(mean, boot, n_pc) {
       "na"
     )
   )
-  # sampling uncertainty from the endpoint bootstrap (run_bootstrap.R):
+  # sampling uncertainty from the unified endpoint bootstrap:
   # robust nominal 90% intervals under the tau = 0 points, and Stoye-calibrated
   # nominal intervals under the set cells; blank cells stay blank
   stopifnot(identical(boot$point_ci$coef, coef_tab$coef))

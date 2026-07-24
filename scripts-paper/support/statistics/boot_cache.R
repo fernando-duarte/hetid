@@ -1,93 +1,39 @@
-# Reuse-or-run dispatcher for the expensive bootstrap draw caches. Reuse loads a
-# cache only when it deserializes, validates structurally, and matches every
-# freshness fingerprint; otherwise it warns and reruns. Only cache problems fall
-# back; failures inside run_fn (gates, computation, write) propagate.
-
-paper_boot_cache_freshness_ok <- function(freshness, fields) {
-  is.list(freshness) && length(freshness) &&
-    all(fields %in% names(freshness)) &&
-    all(vapply(freshness[fields], function(v) length(v) == 1L && !is.na(v), logical(1)))
-}
-
-paper_boot_cached_or_run_at <- function(path, mode, freshness, fields,
-                                        run_fn, validate_fn, warn_label,
-                                        writer, reader) {
-  if (!paper_boot_cache_freshness_ok(freshness, fields)) {
-    stop(sprintf("%s: cannot compute a complete freshness fingerprint", warn_label),
-      call. = FALSE
-    )
-  }
-  do_run <- function(tag) {
-    obj <- run_fn()
-    writer(obj, freshness)
-    list(draws = obj, source = tag)
-  }
-  if (identical(mode, "reuse")) {
-    reason <- NULL
-    if (!file.exists(path)) {
-      reason <- "no cache file"
-    } else {
-      cached <- tryCatch(reader(), error = function(e) NULL)
-      if (is.null(cached)) {
-        reason <- "cache unreadable"
-      } else {
-        v <- validate_fn(cached)
-        if (!isTRUE(v)) {
-          reason <- if (is.character(v)) v else "cache failed validation"
-        } else {
-          m <- paper_boot_freshness_matches(cached$provenance, freshness, fields)
-          if (!isTRUE(m)) reason <- sprintf("%s changed", m)
-        }
-      }
-    }
-    if (is.null(reason)) {
-      # cached is already read+validated above; reuse it instead of a second reader()
-      # call, and strip the dispatcher-owned provenance key so draws has the same
-      # shape as run_fn()'s return (run_fn must never itself return that top-level key).
-      draws <- cached
-      draws$provenance <- NULL
-      return(list(draws = draws, source = "reuse"))
-    }
-    warning(sprintf("%s: reusing cache not possible (%s); rerunning", warn_label, reason),
-      call. = FALSE
-    )
-    return(do_run("fallback-rerun"))
-  }
-  do_run("rerun")
-}
-
-paper_boot_cached_or_run <- function(mode, artifact_key, freshness, fields,
-                                     run_fn, validate_fn, warn_label) {
-  path <- artifact_path(artifact_key)
-  writer <- function(obj, prov) {
-    payload <- c(obj, list(provenance = prov))
-    tmp <- paste0(path, ".tmp")
-    paper_write_exact_rds(payload, tmp, sprintf("%s cache", warn_label))
-    if (!file.rename(tmp, path)) {
-      unlink(tmp)
-      stop(sprintf("%s: cache write could not be promoted", warn_label), call. = FALSE)
-    }
-  }
-  reader <- function() readRDS(path)
-  paper_boot_cached_or_run_at(
-    path, mode, freshness, fields, run_fn, validate_fn,
-    warn_label, writer, reader
-  )
-}
+# Atomic validated replacement for the unified bootstrap cache.
 
 paper_boot_transactional_replace <- function(
   payload, path, validator, reader, writer, promoter = file.rename,
-  remover = unlink
+  remover = unlink, copier = file.copy
 ) {
   valid <- validator(payload)
   if (!isTRUE(valid)) {
     stop("invalid in-memory cache: ", valid, call. = FALSE)
+  }
+  backup <- NULL
+  if (file.exists(path)) {
+    previous <- tryCatch(reader(path), error = identity)
+    previous_valid <- if (inherits(previous, "error")) {
+      FALSE
+    } else {
+      tryCatch(isTRUE(validator(previous)), error = function(error) FALSE)
+    }
+    if (previous_valid) {
+      backup <- tempfile(
+        paste0(".", basename(path), ".backup-"),
+        tmpdir = dirname(path)
+      )
+      if (!isTRUE(copier(path, backup, overwrite = TRUE))) {
+        stop("prior valid cache could not be backed up", call. = FALSE)
+      }
+    }
   }
   temporary <- tempfile(
     paste0(".", basename(path), ".tmp-"),
     tmpdir = dirname(path)
   )
   on.exit(if (file.exists(temporary)) remover(temporary), add = TRUE)
+  on.exit(if (!is.null(backup) && file.exists(backup)) {
+    remover(backup)
+  }, add = TRUE)
   writer(payload, temporary)
   roundtrip <- reader(temporary)
   if (!identical(roundtrip, payload)) {
@@ -100,13 +46,34 @@ paper_boot_transactional_replace <- function(
   if (!isTRUE(promoter(temporary, path))) {
     stop("atomic cache promotion failed", call. = FALSE)
   }
-  installed <- reader(path)
-  if (!identical(installed, roundtrip)) {
-    stop("installed cache object changed", call. = FALSE)
-  }
-  valid <- validator(installed)
-  if (!isTRUE(valid)) {
-    stop("invalid installed cache: ", valid, call. = FALSE)
+  installed <- tryCatch(
+    {
+      value <- reader(path)
+      if (!identical(value, roundtrip)) {
+        stop("installed cache object changed", call. = FALSE)
+      }
+      valid <- validator(value)
+      if (!isTRUE(valid)) {
+        stop("invalid installed cache: ", valid, call. = FALSE)
+      }
+      value
+    },
+    error = identity
+  )
+  if (inherits(installed, "error")) {
+    recovered <- if (is.null(backup)) {
+      !file.exists(path) || remover(path) == 0L
+    } else {
+      isTRUE(copier(backup, path, overwrite = TRUE))
+    }
+    if (!recovered) {
+      stop(
+        conditionMessage(installed),
+        "; prior cache recovery failed",
+        call. = FALSE
+      )
+    }
+    stop(conditionMessage(installed), call. = FALSE)
   }
   list(value = installed, recovery_backup = NULL)
 }

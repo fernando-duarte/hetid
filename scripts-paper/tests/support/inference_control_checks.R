@@ -98,16 +98,13 @@ threaded_fields <- list(
   ),
   "support/identification/identified_set_bootstrap.R" =
     "bootstrap_bisection_iterations",
-  "mean_equation/inference/run_bootstrap.R" = c(
+  "inference/bootstrap_stage_specs.R" = c(
     "paper_bootstrap_failure_limit", "progress_report_every"
   ),
-  "log_variance/inference/run_set_bootstrap.R" = "stability_share",
-  "log_variance/inference/set_bootstrap_reuse.R" = c(
-    "paper_bootstrap_failure_limit", "progress_report_every"
-  ),
-  "log_variance/inference/set_bootstrap_gate.R" = c(
-    "fatal_failure_share", "progress_report_every"
-  ),
+  "support/inference/bootstrap_stage_execution.R" =
+    "progress_report_every",
+  "inference/bootstrap_stage_results.R" = "stability_share",
+  "log_variance/inference/set_bootstrap_gate.R" = "fatal_failure_share",
   "log_variance/inference/set_envelope.R" = "stability_share"
 )
 threaded_code <- vapply(

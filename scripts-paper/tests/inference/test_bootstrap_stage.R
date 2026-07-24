@@ -42,4 +42,44 @@ stopifnot(
   is.function(bootstrap_stage_results)
 )
 
+manifest <- bootstrap_stage_code_manifest()
+stopifnot(all(c(
+  "log_variance/estimators/shared.R",
+  "log_variance/estimators/log_ols/estimator.R"
+) %in% manifest))
+
+execution_text <- paste(
+  readLines(paper_path(
+    "support", "inference", "bootstrap_stage_execution.R"
+  ), warn = FALSE),
+  collapse = "\n"
+)
+gate_offset <- function(name) {
+  offset <- regexpr(name, execution_text, fixed = TRUE)[[1L]]
+  stopifnot(offset > 0L)
+  offset
+}
+stopifnot(
+  gate_offset("bootstrap_stage_mean_transport_gate") <
+    gate_offset("bootstrap_stage_anchor_gate"),
+  gate_offset("bootstrap_stage_anchor_gate") <
+    gate_offset("bootstrap_stage_volatility_transport_gate"),
+  gate_offset("bootstrap_stage_volatility_transport_gate") <
+    gate_offset("\"primary\", control"),
+  gate_offset("\"primary\", control") <
+    gate_offset("sensitivity <- paper_run_indexed_draws"),
+  gate_offset("sensitivity <- paper_run_indexed_draws") <
+    gate_offset("\"sensitivity\", control")
+)
+
+bounded <- PAPER_ENDPOINT_STATUS[["bounded"]]
+anchor <- list(ppml = list(list(
+  lower = c(2), upper = c(1),
+  lower_status = bounded, upper_status = bounded
+)))
+anchor_spec <- list(estimator_ids = "ppml", coefs = "(Intercept)")
+stopifnot(
+  !isTRUE(logvar_boot_anchor_validate(anchor, anchor_spec, 0))
+)
+
 cat("test_bootstrap_stage: PASS\n")

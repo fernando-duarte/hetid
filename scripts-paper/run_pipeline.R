@@ -38,8 +38,6 @@ paper_source_once(paper_path("data_preparation", "build_asset_return_pcs.R"))
 paper_source_once(paper_path("data_preparation", "build_sdf_pcs.R"))
 paper_source_once(paper_path("mean_equation", "fit_ols.R"))
 paper_source_once(paper_path("mean_equation", "estimate_identified_set.R"))
-paper_source_once(paper_path("mean_equation", "inference", "run_bootstrap.R"))
-paper_source_once(paper_path("mean_equation", "tables", "render_structural_equation_table.R"))
 paper_source_once(paper_path("mean_equation", "variance_shares", "compute_variance_shares.R"))
 paper_source_once(paper_path("mean_equation", "variance_shares", "render_variance_share_table.R"))
 paper_source_once(paper_path("log_variance", "estimators", "log_ols", "run.R"))
@@ -107,11 +105,12 @@ if (isTRUE(lad_gate$source_lad)) {
 # table below stays untouched
 paper_source_once(paper_path("log_variance", "tables", "render_lad_table.R"))
 paper_source_once(paper_path("log_variance", "tables", "render_panels.R"))
-# vol set-endpoint bootstrap: reads the frozen PPML/Harvey caches and the lagged
-# asset-return PCs, re-runs the whole set map per resample, and writes the outer
-# confidence-envelope state and diagnostics to their typed output groups
-# the MBB runner owns and restores the RNG kind (support/statistics/mbb_runner.R)
-paper_source_once(paper_path("log_variance", "inference", "run_set_bootstrap.R"))
+# One late bootstrap stage shares each primary resample and system estimate
+# between mean and volatility inference. It owns both index families and the
+# unified all-or-nothing draw cache.
+paper_source_once(paper_path("inference", "run_bootstrap_stage.R"))
+# Structural inference follows the unified stage that creates set_id_boot.
+paper_source_once(paper_path("mean_equation", "tables", "render_structural_equation_table.R"))
 # The inference variant retains the combined panels and labels while threading
 # the bootstrap envelope beneath the PPML and Harvey set cells.
 paper_source_once(paper_path("log_variance", "tables", "render_inference_panels.R"))

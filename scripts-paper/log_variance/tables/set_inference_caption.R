@@ -2,7 +2,7 @@
 # (render_inference_panels.R): the moving-block bootstrap outer
 # confidence-envelope disclosure appended after each estimator's own panel
 # notes (ppml_captions.R and harvey_caption.R, both unchanged).
-# Definitions only; reads log_var_eq_set_boot (run_set_bootstrap.R) and
+# Definitions only; reads log_var_eq_set_boot (unified bootstrap stage) and
 # the canonical endpoint-stability control at call time.
 
 paper_source_once(paper_path("support", "reporting", "cells.R"))

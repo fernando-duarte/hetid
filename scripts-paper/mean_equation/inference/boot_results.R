@@ -1,19 +1,15 @@
 # Cheap results layer for the mean-equation endpoint bootstrap: turns a
 # collected draw set (set_id_boot_collect's output) into the set_id_boot
-# object the pipeline reports and writes to the typed state directory --
+# object the pipeline reports --
 # per-tau endpoint inference, the tau = 0 point interval, and the percentile
-# bands. Resampling itself stays in run_bootstrap.R; everything here is a
-# deterministic function of `collected`, so a later cache reuse can rebuild
-# set_id_boot from a validated cached payload without resampling.
+# bands. Resampling belongs to the unified bootstrap stage; everything here is
+# a deterministic function of `collected`.
 # endpoint_inference, point_inference, boot_band, PAPER_ANALYSIS_CONTRACT, and
 # PAPER_INFERENCE_SEARCH_CONTROL are sourced by the runner's local() prologue
 # before this file's functions are called.
 
-# Assemble set_id_boot from one bootstrap's collected draws. `provenance` is
-# built by the caller via mean_boot_provenance, recomputed independently of any
-# resample, and passed through unchanged; b_reps, block, and seed are read off
-# provenance rather than off the runner's own locals, so the assembly has no
-# dependency on anything but its arguments.
+# Assemble set_id_boot from one bootstrap's collected draws. Provenance is
+# projected from the canonical stage record and passed through unchanged.
 mean_boot_results <- function(collected, set_id_mean_eq, inference_alpha,
                               control, provenance) {
   names(collected$endpoint_draws) <- names(set_id_mean_eq$set_tables)
@@ -63,77 +59,4 @@ mean_boot_results <- function(collected, set_id_mean_eq, inference_alpha,
     ),
     collected
   )
-}
-
-# Expensive per-draw estimation code for the mean bootstrap: set_id_boot_draw ->
-# estimate_set_id_system and the identified-set solver/tau-star machinery, taken as
-# the whole support/identification tree so a solver file added later is caught
-# without editing this list. Excluded are api.R (a source() facade) and the cheap
-# post-collection inference layer (identified_set_inference.R, inference_calibration.R)
-# that a draw never executes, so edits there still allow reuse; edits to any drawn
-# file force a fresh resample.
-mean_boot_code_manifest <- function() {
-  base <- "support/identification"
-  dir_abs <- do.call(paper_path, as.list(strsplit(base, "/", fixed = TRUE)[[1]]))
-  excluded <- c("api.R", "identified_set_inference.R", "inference_calibration.R")
-  file.path(base, setdiff(list.files(dir_abs, pattern = "\\.R$"), excluded))
-}
-
-# Referee-facing reproducibility metadata, built without a resample so reuse and
-# rerun agree byte for byte: same pinned RNG triple and seed/protocol give the
-# same draw indices and so the same index_sha256 whether this run resampled or
-# loaded a cache.
-mean_boot_provenance <- function(set_id_mean_eq, boot_reps, block, boot_seed) {
-  n <- set_id_mean_eq$sample$n
-  list(
-    resampler = "circular_mbb", sample_size = n, b_reps = boot_reps, block = block,
-    seed = boot_seed, rng_kind = c("Mersenne-Twister", "Inversion", "Rejection"),
-    block_rule = "ceiling(1.5*T^(1/3))",
-    index_sha256 = paper_boot_index_sha(n, block, boot_reps, boot_seed)
-  )
-}
-
-# Freshness fingerprint gating reuse of the cached mean-bootstrap draws: the six
-# matched fields the dispatcher compares against the cache (index/input/draw-spec/
-# code/runtime shas plus the schema version) alongside b_reps/block/seed/sample_size,
-# carried only for the cache's own provenance reporting and the row-count check in
-# mean_boot_cache_validate, not compared for freshness.
-mean_boot_freshness <- function(set_id_mean_eq, boot_spec, boot_reps, block, boot_seed) {
-  n <- set_id_mean_eq$sample$n
-  list(
-    index_sha = paper_boot_index_sha(n, block, boot_reps, boot_seed),
-    input_sha = paper_sha256_object(set_id_mean_eq$data),
-    draw_spec_sha = paper_sha256_object(boot_spec[c(
-      "coefs", "gamma", "taus", "tau_grid", "y1_col", "x_cols", "y2_cols",
-      "z_col", "impose_null"
-    )]),
-    code_sha = paper_boot_code_sha(mean_boot_code_manifest()),
-    runtime_sha = paper_boot_runtime_sha(),
-    cache_schema_version = 1L,
-    b_reps = boot_reps, block = block, seed = boot_seed, sample_size = n
-  )
-}
-
-# TRUE, or a reason string, for whether a cached mean-bootstrap payload has
-# everything a reuse needs to stand in for a fresh resample: the draw
-# matrices and failure/cap counts mean_boot_results would otherwise recompute
-# from `collected`, and the provenance (the dispatcher's freshness object) the
-# console/diagnostics reporting and the row-count check below both read. A
-# stale schema version is caught upstream as a freshness-fingerprint mismatch,
-# not here.
-mean_boot_cache_validate <- function(cached) {
-  need <- c(
-    "point_draws", "endpoint_draws", "tau_star_draws", "n_failed",
-    "n_capped", "n_point_deficient", "provenance"
-  )
-  miss <- setdiff(need, names(cached))
-  if (length(miss)) {
-    return(sprintf("missing cache fields: %s", paste(miss, collapse = ", ")))
-  }
-  b <- cached$provenance$b_reps
-  ok_rows <- is.matrix(cached$point_draws) && nrow(cached$point_draws) == b
-  if (!ok_rows) {
-    return("point_draws row count does not match b_reps")
-  }
-  TRUE
 }
