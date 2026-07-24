@@ -18,6 +18,7 @@ paper_boot_runtime_sha <- function() {
         list.files(repo_path("R"), pattern = "[.]R$")
       )
     ),
+    hetid_namespace_sha = paper_namespace_code_sha("hetid"),
     blas = unname(external["BLAS"]),
     lapack = unname(external["LAPACK"]),
     controls = list(
@@ -30,8 +31,29 @@ paper_boot_runtime_sha <- function() {
   ))
 }
 
+paper_namespace_code_sha <- function(package) {
+  namespace <- if (is.environment(package)) {
+    package
+  } else {
+    asNamespace(package)
+  }
+  symbols <- sort(ls(namespace, all.names = TRUE), method = "radix")
+  functions <- lapply(symbols, function(symbol) {
+    value <- get(symbol, envir = namespace, inherits = FALSE)
+    if (!is.function(value)) {
+      return(NULL)
+    }
+    list(
+      name = symbol,
+      formals = formals(value),
+      body = body(value)
+    )
+  })
+  paper_sha256_object(Filter(Negate(is.null), functions))
+}
+
 paper_source_code_sha <- function(paths, path_fn) {
-  paths <- sort(unique(paths))
+  paths <- sort(unique(paths), method = "radix")
   stopifnot(
     is.character(paths), length(paths) > 0L, !anyNA(paths),
     all(nzchar(paths)), !any(grepl("^/|(^|/)\\.\\.(/|$)", paths))

@@ -65,7 +65,11 @@ paper_boot_transactional_replace <- function(
     recovered <- if (is.null(backup)) {
       !file.exists(path) || remover(path) == 0L
     } else {
-      copied <- isTRUE(copier(backup, path, overwrite = TRUE))
+      cleanup_backup <- FALSE
+      copied <- tryCatch(
+        isTRUE(copier(backup, path, overwrite = TRUE)),
+        error = function(error) FALSE
+      )
       if (!copied) {
         FALSE
       } else {
@@ -78,8 +82,8 @@ paper_boot_transactional_replace <- function(
           ))
       }
     }
+    if (recovered) cleanup_backup <- TRUE
     if (!recovered) {
-      cleanup_backup <- FALSE
       stop(
         conditionMessage(installed),
         "; prior cache recovery failed; valid backup retained at ",

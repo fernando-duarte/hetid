@@ -21,6 +21,16 @@ check(
   "stage runtime hash binds the package source",
   grepl("paper_repo_code_sha", runtime_text, fixed = TRUE)
 )
+check("namespace hash changes when executed code changes", {
+  namespace <- new.env(parent = emptyenv())
+  namespace$target <- function() 1
+  before <- paper_namespace_code_sha(namespace)
+  namespace$target <- function() 2
+  after <- paper_namespace_code_sha(namespace)
+  is.character(before) && nchar(before) == 64L &&
+    is.character(after) && nchar(after) == 64L &&
+    !identical(before, after)
+})
 check("code sha changes when a hashed file's content differs", {
   a <- paper_boot_code_sha(c("support/statistics/mbb_runner.R"))
   b <- paper_boot_code_sha(c(

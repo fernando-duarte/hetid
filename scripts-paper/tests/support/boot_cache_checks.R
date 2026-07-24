@@ -22,7 +22,13 @@ cache_case <- function() {
     writer = function(value, path) saveRDS(value, path, version = 3L)
   )
 }
-
+cache_backups <- function(path) {
+  list.files(
+    dirname(path),
+    pattern = "[.]backup-", all.files = TRUE,
+    full.names = TRUE
+  )
+}
 local({
   case <- cache_case()
   payload <- list(version = "new")
@@ -36,7 +42,6 @@ local({
       identical(readRDS(case$path), payload)
   )
 })
-
 local({
   case <- cache_case()
   old <- list(version = "old")
@@ -139,14 +144,52 @@ local({
     ),
     error = conditionMessage
   )
-  backups <- list.files(
-    dirname(case$path),
-    pattern = "[.]backup-",
-    all.files = TRUE,
-    full.names = TRUE
-  )
+  backups <- cache_backups(case$path)
   check(
     "failed recovery retains the prior valid backup",
+    grepl("prior cache recovery failed", failure, fixed = TRUE) &&
+      length(backups) == 1L &&
+      identical(readRDS(backups[[1L]]), old)
+  )
+})
+
+local({
+  case <- cache_case()
+  old <- list(version = "old")
+  saveRDS(old, case$path, version = 3L)
+  installed_read <- FALSE
+  copy_calls <- 0L
+  reader <- function(path) {
+    if (identical(path, case$path) && installed_read) {
+      installed_read <<- FALSE
+      stop("post-promotion read failed")
+    }
+    readRDS(path)
+  }
+  promoter <- function(from, to) {
+    promoted <- file.rename(from, to)
+    installed_read <<- isTRUE(promoted)
+    promoted
+  }
+  copier <- function(from, to, overwrite) {
+    copy_calls <<- copy_calls + 1L
+    if (copy_calls == 1L) {
+      return(file.copy(from, to, overwrite = overwrite))
+    }
+    writeBin(as.raw(1:4), to)
+    stop("recovery copy crashed")
+  }
+  failure <- tryCatch(
+    paper_boot_transactional_replace(
+      list(version = "new"), case$path, case$validator,
+      reader, case$writer, promoter,
+      copier = copier
+    ),
+    error = conditionMessage
+  )
+  backups <- cache_backups(case$path)
+  check(
+    "recovery exceptions retain the prior valid backup",
     grepl("prior cache recovery failed", failure, fixed = TRUE) &&
       length(backups) == 1L &&
       identical(readRDS(backups[[1L]]), old)
