@@ -37,6 +37,15 @@ skip <- .test$skip
 
 paper_source_once(paper_path("tests", "inference", "set_envelope_checks.R"))
 paper_source_once(paper_path("tests", "inference", "set_bootstrap_core_checks.R"))
+paper_source_once(paper_path(
+  "tests", "inference", "bootstrap_legacy_characterization_helpers.R"
+))
+paper_source_once(paper_path(
+  "tests", "inference", "bootstrap_legacy_characterization_checks.R"
+))
+paper_source_once(paper_path(
+  "tests", "inference", "bootstrap_legacy_failure_characterization_checks.R"
+))
 paper_source_once(paper_path("tests", "inference", "set_bootstrap_cores_checks.R"))
 paper_source_once(paper_path("tests", "inference", "set_bootstrap_gate_checks.R"))
 paper_source_once(paper_path("tests", "inference", "set_bootstrap_reuse_checks.R"))

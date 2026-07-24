@@ -15,6 +15,9 @@ paper_source_once(paper_path("log_variance", "tables", "console_formatting.R"))
 paper_source_once(paper_path("tests", "support", "reporting_checks.R"))
 paper_source_once(paper_path("tests", "support", "cell_formatting_checks.R"))
 paper_source_once(paper_path("tests", "support", "mbb_checks.R"))
+paper_source_once(paper_path(
+  "tests", "support", "mbb_characterization_checks.R"
+))
 
 summary_row <- compute_summary_stats(c(1, 2, NA, 4), "x", compute_ac = FALSE)
 check("summary statistics count finite observations", summary_row$N == 3L)

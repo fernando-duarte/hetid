@@ -16,6 +16,13 @@ check(
   )
 )
 check(
+  "index sha reproduces the committed doubled-block B=10,000 hash",
+  identical(
+    paper_boot_index_sha(256L, 20L, 10000L, 20260708L),
+    "d2550c39daa842fb3b14b19909bbfab1e26e4f3446c44bd80ce7874baab180ce"
+  )
+)
+check(
   "index sha changes with the seed",
   !identical(
     paper_boot_index_sha(256L, 10L, 200L, 20260708L),
