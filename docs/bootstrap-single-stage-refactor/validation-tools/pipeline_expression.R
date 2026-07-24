@@ -65,3 +65,36 @@ bootstrap_validation_expression_is_assignment_call <- function(
     is.call(expression[[3L]]) &&
     identical(expression[[3L]][[1L]], as.name(function_name))
 }
+
+bootstrap_validation_rebind_gate_decision <- function(
+  decision,
+  fresh_gate,
+  gate_hash
+) {
+  stopifnot(
+    is.list(decision),
+    is.list(fresh_gate),
+    is.character(gate_hash),
+    length(gate_hash) == 1L,
+    !is.na(gate_hash),
+    nzchar(gate_hash)
+  )
+  lag_name <- sprintf("lag%d", as.integer(fresh_gate$gate_lag))
+  stopifnot(
+    length(fresh_gate$sample_id) == 1L,
+    length(fresh_gate$gate_lag) == 1L,
+    length(fresh_gate$gate_alpha) == 1L,
+    lag_name %in% names(fresh_gate$q_stats),
+    lag_name %in% names(fresh_gate$p_values),
+    length(fresh_gate$verdict) == 1L
+  )
+
+  decision$gate_science_sha256 <- gate_hash
+  decision$sample_id <- fresh_gate$sample_id
+  decision$gate_lag <- as.integer(fresh_gate$gate_lag)
+  decision$gate_alpha <- fresh_gate$gate_alpha
+  decision$gate_q <- unname(fresh_gate$q_stats[[lag_name]])
+  decision$gate_p <- unname(fresh_gate$p_values[[lag_name]])
+  decision$gate_verdict <- fresh_gate$verdict
+  decision
+}

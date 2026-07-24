@@ -118,9 +118,11 @@ for (expression in pipeline) {
       identical(fresh_gate$verdict, "non_reject"),
       identical(logvar_egarch_decision$gate_verdict, "non_reject")
     )
-    logvar_egarch_decision$sample_id <- fresh_gate$sample_id
-    logvar_egarch_decision$gate_science_sha256 <-
+    logvar_egarch_decision <- bootstrap_validation_rebind_gate_decision(
+      logvar_egarch_decision,
+      fresh_gate,
       logvar_egarch_gate_science_sha256(fresh_gate)
+    )
   }
   is_bootstrap_stage <- bootstrap_validation_expression_has_paper_path(
     expression,
