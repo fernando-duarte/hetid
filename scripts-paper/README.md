@@ -156,7 +156,8 @@ HETID_BOOT_REPS=10000 HETID_BOOT_CORES=1 Rscript scripts-paper/run_pipeline.R
 the replication count for both the mean-equation endpoint bootstrap and the log-variance set
 bootstrap. Both are seeded at 20260708 and resample a circular moving block whose length
 follows the rule `ceiling(1.5 * T^(1/3))` (10 quarters at T = 256), and both parallelize
-through `HETID_BOOT_CORES` (default `detectCores() - 1`) via the shared MBB runner, which
+through `HETID_BOOT_CORES` via the shared MBB runner. The default reserves two logical cores
+on macOS and one logical core on other platforms, with a minimum of one worker. The runner
 pins Mersenne-Twister for the draw and restores whatever generator kind was active
 beforehand. The log-variance set bootstrap additionally reruns at the full replication count
 with a doubled block length as a sensitivity check.

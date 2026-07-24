@@ -59,8 +59,19 @@ if (boot_reps != 10000L) {
 # One seed across every bootstrap in the paper, matching macro_dynamics.
 boot_seed <- 20260708L
 
-detected_cores <- parallel::detectCores()
-default_cores <- max(1L, if (is.na(detected_cores)) 1L else detected_cores - 1L)
+paper_default_boot_cores <- function(
+  detected_cores = parallel::detectCores(logical = TRUE),
+  sysname = Sys.info()[["sysname"]]
+) {
+  if (is.na(detected_cores)) {
+    return(1L)
+  }
+  reserved_cores <- if (identical(sysname, "Darwin")) 2L else 1L
+  max(1L, as.integer(detected_cores) - reserved_cores)
+}
+
+detected_cores <- parallel::detectCores(logical = TRUE)
+default_cores <- paper_default_boot_cores(detected_cores)
 boot_cores <- resolve_whole_number_env("HETID_BOOT_CORES", default_cores)
 stopifnot(boot_cores >= 1L)
 

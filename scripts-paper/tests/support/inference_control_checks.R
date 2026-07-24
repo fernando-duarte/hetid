@@ -75,6 +75,19 @@ check("boot mode rejects garbage with a clear error", {
   res <- tryCatch(resolve_boot_mode_env("HETID_BOOT_MODE", "reuse"), error = conditionMessage)
   is.character(res) && grepl("HETID_BOOT_MODE", res) && grepl("sometimes", res)
 })
+check(
+  "macOS bootstrap defaults reserve two logical cores",
+  identical(paper_default_boot_cores(12L, "Darwin"), 10L)
+)
+check(
+  "other bootstrap defaults preserve the one-core reserve",
+  identical(paper_default_boot_cores(12L, "Linux"), 11L)
+)
+check(
+  "bootstrap core defaults retain a one-worker floor",
+  identical(paper_default_boot_cores(2L, "Darwin"), 1L) &&
+    identical(paper_default_boot_cores(NA_integer_, "Darwin"), 1L)
+)
 
 threaded_fields <- list(
   "support/identification/inference_calibration.R" = c(
