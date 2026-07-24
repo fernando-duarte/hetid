@@ -30,8 +30,9 @@ paper_boot_transactional_replace <- function(
     paste0(".", basename(path), ".tmp-"),
     tmpdir = dirname(path)
   )
+  cleanup_backup <- TRUE
   on.exit(if (file.exists(temporary)) remover(temporary), add = TRUE)
-  on.exit(if (!is.null(backup) && file.exists(backup)) {
+  on.exit(if (cleanup_backup && !is.null(backup) && file.exists(backup)) {
     remover(backup)
   }, add = TRUE)
   writer(payload, temporary)
@@ -64,12 +65,25 @@ paper_boot_transactional_replace <- function(
     recovered <- if (is.null(backup)) {
       !file.exists(path) || remover(path) == 0L
     } else {
-      isTRUE(copier(backup, path, overwrite = TRUE))
+      copied <- isTRUE(copier(backup, path, overwrite = TRUE))
+      if (!copied) {
+        FALSE
+      } else {
+        restored <- tryCatch(reader(path), error = identity)
+        !inherits(restored, "error") &&
+          identical(restored, previous) &&
+          isTRUE(tryCatch(
+            validator(restored),
+            error = function(error) FALSE
+          ))
+      }
     }
     if (!recovered) {
+      cleanup_backup <- FALSE
       stop(
         conditionMessage(installed),
-        "; prior cache recovery failed",
+        "; prior cache recovery failed; valid backup retained at ",
+        backup,
         call. = FALSE
       )
     }

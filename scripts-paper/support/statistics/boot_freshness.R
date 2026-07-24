@@ -1,7 +1,7 @@
 # Shared runtime and source hashes used by the unified bootstrap provenance.
 
 paper_boot_runtime_sha <- function() {
-  pkgs <- c("hetid", "nloptr", "quantreg", "rugarch", "sandwich")
+  pkgs <- c("hetid", "nloptr", "sandwich")
   versions <- vapply(
     pkgs,
     function(package) as.character(utils::packageVersion(package)),
@@ -12,6 +12,12 @@ paper_boot_runtime_sha <- function() {
     r_version = as.character(getRversion()),
     platform = R.version$platform,
     packages = stats::setNames(versions, pkgs),
+    hetid_source_sha = paper_repo_code_sha(
+      file.path(
+        "R",
+        list.files(repo_path("R"), pattern = "[.]R$")
+      )
+    ),
     blas = unname(external["BLAS"]),
     lapack = unname(external["LAPACK"]),
     controls = list(
@@ -24,7 +30,7 @@ paper_boot_runtime_sha <- function() {
   ))
 }
 
-paper_boot_code_sha <- function(paths) {
+paper_source_code_sha <- function(paths, path_fn) {
   paths <- sort(unique(paths))
   stopifnot(
     is.character(paths), length(paths) > 0L, !anyNA(paths),
@@ -32,7 +38,7 @@ paper_boot_code_sha <- function(paths) {
   )
   contents <- lapply(paths, function(relative_path) {
     parts <- strsplit(relative_path, "/", fixed = TRUE)[[1L]]
-    path <- do.call(paper_path, as.list(parts))
+    path <- do.call(path_fn, as.list(parts))
     size <- file.info(path)$size
     list(
       path = relative_path,
@@ -40,4 +46,12 @@ paper_boot_code_sha <- function(paths) {
     )
   })
   paper_sha256_object(contents)
+}
+
+paper_boot_code_sha <- function(paths) {
+  paper_source_code_sha(paths, paper_path)
+}
+
+paper_repo_code_sha <- function(paths) {
+  paper_source_code_sha(paths, repo_path)
 }

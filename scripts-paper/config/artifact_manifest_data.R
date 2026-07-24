@@ -73,7 +73,12 @@ PAPER_CONDITIONAL_ARTIFACT_STATUSES <- setdiff(
   ),
   I = "log_variance/extensions/egarch/run_route.R",
   J = "log_variance/extensions/egarch",
-  K = "tests/support/check_contract_ownership.R"
+  K = "tests/support/check_contract_ownership.R",
+  L = paste(
+    "mean_equation/tables/render_structural_equation_table.R",
+    "log_variance/tables/render_inference_panels.R",
+    sep = ";"
+  )
 )
 .artifact_specs <- c(
   "summary_statistics_table|summary_stats.tex|1|a|A|r",
@@ -126,7 +131,7 @@ PAPER_CONDITIONAL_ARTIFACT_STATUSES <- setdiff(
   "joint_gmm_csv|log_var_eq_joint_gmm.csv|6|s|F|r",
   "joint_gmm_rds|log_var_eq_joint_gmm.rds|6|s|F|r",
   "lad_closure_diagnostics|log_var_eq_lad_closure.csv|6|t|G|l",
-  "bootstrap_stage_draws|bootstrap_stage_draws.rds|7|p|C|r",
+  "bootstrap_stage_draws|bootstrap_stage_draws.rds|7|p|L|r",
   "dynamics_gate|log_var_eq_dynamics_gate.rds|7|u|H|r",
   "egarch_status|log_var_eq_egarch_status.rds|7|v|I|r",
   "conditional_route_status|conditional_route_status.rds|7|z|K|r",

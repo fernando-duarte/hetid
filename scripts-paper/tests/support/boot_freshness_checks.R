@@ -11,6 +11,16 @@ check(
   "runtime sha is stable within a session",
   identical(paper_boot_runtime_sha(), paper_boot_runtime_sha())
 )
+runtime_text <- paste(deparse(body(paper_boot_runtime_sha)), collapse = "\n")
+check(
+  "stage runtime hash excludes optional estimator packages",
+  !grepl("quantreg", runtime_text, fixed = TRUE) &&
+    !grepl("rugarch", runtime_text, fixed = TRUE)
+)
+check(
+  "stage runtime hash binds the package source",
+  grepl("paper_repo_code_sha", runtime_text, fixed = TRUE)
+)
 check("code sha changes when a hashed file's content differs", {
   a <- paper_boot_code_sha(c("support/statistics/mbb_runner.R"))
   b <- paper_boot_code_sha(c(

@@ -19,6 +19,23 @@ stopifnot(
   )
 )
 
+cache_validator_text <- paste(
+  deparse(body(bootstrap_stage_cache_validators)),
+  collapse = "\n"
+)
+stopifnot(
+  grepl(
+    "logvar_boot_collection_validate",
+    cache_validator_text,
+    fixed = TRUE
+  ),
+  !grepl(
+    "bootstrap_stage_logvar_cache_validate",
+    cache_validator_text,
+    fixed = TRUE
+  )
+)
+
 path <- tempfile("bootstrap-stage-cache-", fileext = ".rds")
 on.exit(unlink(path), add = TRUE)
 calls <- 0L

@@ -106,4 +106,51 @@ local({
   )
 })
 
+local({
+  case <- cache_case()
+  old <- list(version = "old")
+  saveRDS(old, case$path, version = 3L)
+  installed_read <- FALSE
+  copy_calls <- 0L
+  reader <- function(path) {
+    if (identical(path, case$path) && installed_read) {
+      installed_read <<- FALSE
+      stop("post-promotion read failed")
+    }
+    readRDS(path)
+  }
+  promoter <- function(from, to) {
+    promoted <- file.rename(from, to)
+    installed_read <<- isTRUE(promoted)
+    promoted
+  }
+  copier <- function(from, to, overwrite) {
+    copy_calls <<- copy_calls + 1L
+    if (copy_calls == 1L) {
+      return(file.copy(from, to, overwrite = overwrite))
+    }
+    FALSE
+  }
+  failure <- tryCatch(
+    paper_boot_transactional_replace(
+      list(version = "new"), case$path, case$validator,
+      reader, case$writer, promoter,
+      copier = copier
+    ),
+    error = conditionMessage
+  )
+  backups <- list.files(
+    dirname(case$path),
+    pattern = "[.]backup-",
+    all.files = TRUE,
+    full.names = TRUE
+  )
+  check(
+    "failed recovery retains the prior valid backup",
+    grepl("prior cache recovery failed", failure, fixed = TRUE) &&
+      length(backups) == 1L &&
+      identical(readRDS(backups[[1L]]), old)
+  )
+})
+
 .test$finish()

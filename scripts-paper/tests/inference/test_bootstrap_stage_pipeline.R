@@ -50,6 +50,13 @@ stopifnot(
   identical(
     bootstrap_rows$producer,
     "inference/run_bootstrap_stage.R"
+  ),
+  identical(
+    strsplit(bootstrap_rows$consumer, ";", fixed = TRUE)[[1L]],
+    c(
+      "mean_equation/tables/render_structural_equation_table.R",
+      "log_variance/tables/render_inference_panels.R"
+    )
   )
 )
 

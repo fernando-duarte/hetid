@@ -34,7 +34,7 @@ bootstrap_stage_cache_validators <- function(stage_spec, current) {
   spec <- stage_spec
   control <- spec$design$failure_control
   logvar_validate <- function(value, family, primary) {
-    bootstrap_stage_logvar_cache_validate(
+    logvar_boot_collection_validate(
       value[[paste0("volatility_", family)]],
       value[[paste0("volatility_", family, "_n_failed")]],
       spec$log_variance, spec$tau$union,
