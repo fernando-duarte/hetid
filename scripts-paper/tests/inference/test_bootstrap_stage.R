@@ -44,6 +44,10 @@ stopifnot(
 
 manifest <- bootstrap_stage_code_manifest()
 stopifnot(all(c(
+  "support/statistics/mbb_protocol_authority.R",
+  "support/inference/bootstrap_stage_logvar_controls.R",
+  "log_variance/estimators/controls.R",
+  "log_variance/estimators/set_orchestration.R",
   "log_variance/estimators/shared.R",
   "log_variance/estimators/log_ols/estimator.R"
 ) %in% manifest))

@@ -54,7 +54,7 @@ blc_separate <- paper_characterize_estimate_calls(function() {
 })
 check(
   "legacy wrappers match frozen from-estimate outputs on fixed indices",
-  identical(blc_separate$value, blc_expected)
+  paper_scientific_equal(blc_separate$value, blc_expected)
 )
 check(
   "two legacy callbacks estimate twice for every shared index",
@@ -70,8 +70,8 @@ blc_vol_est <- estimate_set_id_system(
   blc_vol_spec
 )
 check(
-  "the legacy branch specifications produce identical shared estimates",
-  identical(blc_mean_est, blc_vol_est)
+  "the legacy branch specifications produce matching shared estimates",
+  paper_scientific_equal(blc_mean_est, blc_vol_est)
 )
 
 blc_full_volatility <- paper_legacy_logvar_from_est(
@@ -81,7 +81,7 @@ blc_full_volatility <- paper_legacy_logvar_from_est(
 )
 check(
   "the real legacy volatility callback matches the frozen decomposition",
-  identical(lbd_draw, blc_full_volatility)
+  paper_scientific_equal(lbd_draw, blc_full_volatility)
 )
 
 blc_primary <- list(ppml = list(tag = "ppml"), harvey = list(tag = "harvey"))

@@ -22,6 +22,7 @@ BOOTSTRAP_STAGE_CODE_FILES <- c(
   paste0("support/statistics/", c(
     "bootstrap_and_stationarity.R",
     "normalizations.R",
+    "mbb_protocol_authority.R",
     "mbb_rng_state.R",
     "mbb_index_family.R",
     "mbb_execution_core.R",
@@ -31,6 +32,7 @@ BOOTSTRAP_STAGE_CODE_FILES <- c(
   )),
   paste0("support/inference/", c(
     "bootstrap_stage_spec_assertions.R",
+    "bootstrap_stage_logvar_controls.R",
     "bootstrap_stage_logvar_contract.R",
     "bootstrap_stage_provenance_validation.R",
     "bootstrap_stage_cache_validation.R",
@@ -43,6 +45,8 @@ BOOTSTRAP_STAGE_CODE_FILES <- c(
     "bootstrap_stage_result_helpers.R"
   )),
   "support/reporting/inference.R",
+  "log_variance/estimators/controls.R",
+  "log_variance/estimators/set_orchestration.R",
   paste0("log_variance/inference/", c(
     "set_bootstrap_core.R",
     "set_bootstrap_draw.R",

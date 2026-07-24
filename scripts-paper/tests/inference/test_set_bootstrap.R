@@ -34,10 +34,35 @@ paper_source_once(paper_path("log_variance", "inference", "set_bootstrap_draw.R"
 paper_source_once(paper_path("log_variance", "inference", "set_bootstrap_builders.R"))
 paper_source_once(paper_path("log_variance", "inference", "set_bootstrap_gate.R"))
 paper_source_once(paper_path("inference", "bootstrap_stage_draw.R"))
+paper_source_once(paper_path(
+  "support", "inference", "bootstrap_stage_cache_validation.R"
+))
+paper_source_once(paper_path(
+  "support", "inference", "bootstrap_stage_provenance_validation.R"
+))
+paper_source_once(paper_path(
+  "support", "inference", "bootstrap_stage_mean_cache.R"
+))
+paper_source_once(paper_path(
+  "support", "inference", "bootstrap_stage_logvar_cache.R"
+))
+paper_source_once(paper_path(
+  "support", "inference", "bootstrap_stage_code_manifest.R"
+))
+paper_source_once(paper_path(
+  "support", "inference", "bootstrap_stage_execution.R"
+))
+paper_source_once(paper_path(
+  "support", "inference", "bootstrap_stage_provenance.R"
+))
+paper_source_once(paper_path("inference", "bootstrap_stage_cache.R"))
 # The MBB compatibility runner supports the frozen one-core/two-core branch check.
 paper_source_once(paper_path("support", "statistics", "api.R"))
 
 paper_source_once(paper_path("tests", "support", "harness.R"))
+paper_source_once(paper_path(
+  "tests", "support", "scientific_comparison.R"
+))
 .test <- paper_test_harness()
 check <- .test$check
 skip <- .test$skip
@@ -62,6 +87,9 @@ paper_source_once(paper_path(
 ))
 paper_source_once(paper_path(
   "tests", "inference", "bootstrap_stage_real_failure_boundary_checks.R"
+))
+paper_source_once(paper_path(
+  "tests", "inference", "bootstrap_stage_cache_roundtrip_checks.R"
 ))
 paper_source_once(paper_path("tests", "inference", "set_bootstrap_cores_checks.R"))
 paper_source_once(paper_path("tests", "inference", "set_bootstrap_gate_checks.R"))

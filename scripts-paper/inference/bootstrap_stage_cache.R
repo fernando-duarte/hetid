@@ -121,8 +121,7 @@ bootstrap_stage_cached_or_run <- function(
     if (is.null(cached$reason)) {
       return(list(
         stage = cached$value,
-        source = "reuse",
-        recovery_backup = NULL
+        source = "reuse"
       ))
     }
     warning(
@@ -146,8 +145,7 @@ bootstrap_stage_cached_or_run <- function(
   )
   list(
     stage = installed$value,
-    source = source,
-    recovery_backup = installed$recovery_backup
+    source = source
   )
 }
 

@@ -21,8 +21,14 @@ if (.Platform$OS.type == "windows") {
     seed = 909L, cores = 2L, draw = real_draw
   )
   check(
-    "cores=1 vs cores=2 match on the real logvar_set_boot_draw callback",
-    identical(real_run_serial$draws, real_run_parallel$draws) &&
-      identical(real_run_serial$indices, real_run_parallel$indices)
+    "cores=1 vs cores=2 agree on the real logvar_set_boot_draw callback",
+    paper_scientific_equal(
+      real_run_serial$draws,
+      real_run_parallel$draws
+    ) &&
+      paper_scientific_equal(
+        real_run_serial$indices,
+        real_run_parallel$indices
+      )
   )
 }

@@ -101,6 +101,23 @@ mean_boot_collection_validate <- function(
     !identical(is.na(tau_star), failed_mask)) {
     return("mean failure count changed")
   }
+  if (any(failed_mask & !all_na_point)) {
+    return("failed mean draw retains a point estimate")
+  }
+  causes <- collected$failure_causes
+  causes_ok <- if (collected$n_failed == 0L) {
+    is.null(causes)
+  } else {
+    bootstrap_stage_cache_table_ok(causes) &&
+      length(dim(causes)) == 1L &&
+      !is.null(names(causes)) &&
+      all(nzchar(names(causes))) &&
+      all(causes > 0L) &&
+      identical(as.integer(sum(causes)), collected$n_failed)
+  }
+  if (!causes_ok) {
+    return("mean failure causes changed")
+  }
   if (!identical(
     as.integer(sum(all_na_point & !failed_mask)),
     collected$n_point_deficient
@@ -112,6 +129,12 @@ mean_boot_collection_validate <- function(
   if (any(tau_star[present] < tau_range[[1L]]) ||
     any(tau_star[present] > tau_range[[2L]])) {
     return("tau-star range changed")
+  }
+  if (!identical(
+    as.integer(sum(tau_star == tau_range[[2L]], na.rm = TRUE)),
+    collected$n_capped
+  )) {
+    return("mean capped count changed")
   }
   if (collected$n_failed >
     bootstrap_stage_failure_limit(n_draws, failure_control)) {

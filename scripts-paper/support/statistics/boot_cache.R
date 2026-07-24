@@ -93,5 +93,5 @@ paper_boot_transactional_replace <- function(
     }
     stop(conditionMessage(installed), call. = FALSE)
   }
-  list(value = installed, recovery_backup = NULL)
+  list(value = installed)
 }

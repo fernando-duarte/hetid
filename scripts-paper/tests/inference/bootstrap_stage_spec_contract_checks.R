@@ -21,7 +21,6 @@ PAPER_ANALYSIS_CONTRACT <- list(
 LOGVAR_SEARCH_CONTROL <- list(iterations = 4L)
 LOGVAR_PPML_CONTROL <- list(glm_maxit = 5L)
 LOGVAR_HARVEY_CONTROL <- list(optim_maxit = 6L)
-LOGVAR_NORMAL_LOG_SQUARE_GAP <- 1.27
 LOGVAR_NORMAL_LOG_SQUARE_GAP <- 1.25
 PAPER_REPORTING_CONTROL <- list(
   ppml = list(se_type = "hac"),
@@ -58,18 +57,48 @@ mean_eq <- list(
   tau_cap = 0.25,
   beta1r = c("(Intercept)" = 1, x = 2),
   beta2r = matrix(1, 1L, 1L, dimnames = list("w2", "x")),
-  beta1_table = data.frame(coef = c("(Intercept)", "x")),
-  theta_table = data.frame(coef = "w2")
+  beta1_table = data.frame(
+    coef = c("(Intercept)", "x"),
+    point = c(1, 2)
+  ),
+  theta_table = data.frame(coef = "w2", point = 3),
+  set_tables = list(tau_0.1 = list(
+    beta1 = data.frame(
+      coef = c("(Intercept)", "x"),
+      set_lower = c(0, 1),
+      set_upper = c(2, 3),
+      status = c("bounded", "bounded")
+    ),
+    theta = data.frame(
+      coef = "w2",
+      set_lower = 2,
+      set_upper = 4,
+      status = "bounded"
+    )
+  ))
 )
 log_var_eq <- list(table = data.frame(
   coef = c("(Intercept)", "l.pc1"),
   ols = c(1, 2),
   stringsAsFactors = FALSE
 ))
-sets <- list(tau_0.1 = list(coef = c("(Intercept)", "l.pc1")))
+sets <- list(tau_0.1 = data.frame(
+  coef = c("(Intercept)", "l.pc1"),
+  set_lower = c(0, 1),
+  set_upper = c(2, 3),
+  status = c("bounded", "bounded")
+))
+point_se <- data.frame(
+  coef = c("(Intercept)", "l.pc1"),
+  hac = c(0.1, 0.2)
+)
 estimator_results <- list(
-  ppml = list(estimator = list(metadata = list(response_scale_value = 1)), sets = sets),
-  harvey = list(sets = sets)
+  ppml = list(
+    estimator = list(metadata = list(response_scale_value = 1)),
+    sets = sets,
+    se = list(point = point_se)
+  ),
+  harvey = list(sets = sets, se = list(point = point_se))
 )
 spec <- bootstrap_stage_spec(
   mean_eq, log_var_eq, lag_pc, estimator_results, 2L, 77L, "z", TRUE, 5L, 6L

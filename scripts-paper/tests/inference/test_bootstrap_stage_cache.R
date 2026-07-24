@@ -5,7 +5,19 @@ paper_source_once(paper_path("support", "statistics", "api.R"))
 paper_source_once(paper_path(
   "support", "inference", "bootstrap_stage_cache_validation.R"
 ))
+paper_source_once(paper_path(
+  "log_variance", "inference", "set_bootstrap_gate.R"
+))
+paper_source_once(paper_path(
+  "support", "inference", "bootstrap_stage_logvar_cache.R"
+))
+paper_source_once(paper_path(
+  "support", "inference", "bootstrap_stage_mean_cache.R"
+))
 paper_source_once(paper_path("inference", "bootstrap_stage_cache.R"))
+bootstrap_stage_failure_limit <- function(n_draws, failure_control) {
+  as.integer(floor(n_draws * failure_control$fatal_failure_share))
+}
 
 stopifnot(
   length(BOOTSTRAP_STAGE_CACHE_FIELDS) == 7L,
@@ -35,6 +47,10 @@ stopifnot(
     fixed = TRUE
   )
 )
+
+paper_source_once(paper_path(
+  "tests", "inference", "bootstrap_stage_cache_payload_checks.R"
+))
 
 path <- tempfile("bootstrap-stage-cache-", fileext = ".rds")
 on.exit(unlink(path), add = TRUE)
@@ -68,6 +84,7 @@ out <- bootstrap_stage_cached_or_run(
   }
 )
 stopifnot(
+  identical(names(out), c("stage", "source")),
   identical(out$source, "reuse"),
   run_calls == 0L,
   calls >= 2L

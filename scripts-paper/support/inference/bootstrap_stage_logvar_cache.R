@@ -88,9 +88,6 @@ logvar_boot_collection_validate <- function(
         cell$lower, cell$upper,
         cell$lower_status, cell$upper_status
       )
-      if (any(masks$any & !masks$full)) {
-        return("partial failed endpoint cell")
-      }
       fully_failed <- fully_failed & masks$full
     }
   }

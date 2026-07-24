@@ -23,7 +23,11 @@ logvar_harvey_estimator <- function(w1, w2, pcr, qtr, b_point = NULL,
   logvar_harvey_validate_policy(control)
   stopifnot(
     is.numeric(normal_log_square_gap), length(normal_log_square_gap) == 1L,
-    !is.na(normal_log_square_gap), is.finite(normal_log_square_gap)
+    !is.na(normal_log_square_gap), is.finite(normal_log_square_gap),
+    identical(
+      normal_log_square_gap,
+      LOGVAR_NORMAL_LOG_SQUARE_GAP
+    )
   )
   x_mat <- logvar_design_matrix(pcr)
   chol_xx <- chol(crossprod(x_mat))
