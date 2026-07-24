@@ -7,9 +7,12 @@ LOGVAR_NORMAL_LOG_SQUARE_GAP <- -LOGVAR_NORMAL_LOG_SQUARE_MEAN
 LOGVAR_NORMAL_MEDIAN_MEANLOG_GAP <-
   LOGVAR_NORMAL_LOG_SQUARE_MEDIAN - LOGVAR_NORMAL_LOG_SQUARE_MEAN
 
-logvar_normal_gap_text <- function(digits) {
+logvar_normal_gap_text <- function(
+  digits,
+  gap = LOGVAR_NORMAL_LOG_SQUARE_GAP
+) {
   formatC(
-    LOGVAR_NORMAL_LOG_SQUARE_GAP,
+    gap,
     format = "f",
     digits = as.integer(digits)
   )

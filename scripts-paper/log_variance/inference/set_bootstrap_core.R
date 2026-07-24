@@ -1,146 +1,71 @@
-# Core machinery for the vol-equation set-endpoint bootstrap: build the augmented
-# resampling frame, then on one resampled frame re-estimate the mean equation,
-# rebuild the log-var inputs, and re-run BOTH estimators' set endpoints at every
-# tau. The reports require the whole pipeline (mean eq -> Lewbel set -> map ->
-# endpoints) to run every draw; the set is never held fixed. Reuses the
-# paper-owned estimate_set_id_system / coef_interval_tables /
-# tau_quadratic_system definitions so the mean-eq recipe cannot drift.
-# Consumed by run_set_bootstrap.R.
-
-# Augment the mean-eq frame with the lagged asset-return PC columns (join by qtr),
-# so one moving-block resample carries everything the mean-eq re-estimation and the
-# log-var inputs need. The PCs are conditioned on (resampled, not re-estimated).
-logvar_set_boot_prepare <- function(mean_eq, lag_pc) {
-  key_col <- PAPER_ANALYSIS_CONTRACT$model$key_col
-  pc_cols <- setdiff(names(lag_pc), key_col)
-  aug <- dplyr::left_join(mean_eq$data, lag_pc, by = key_col)
-  stopifnot(
-    nrow(aug) == nrow(mean_eq$data),
-    all(diff(as.numeric(aug$qtr)) == 1L) # gapless: blocks assume adjacency
-  )
-  list(data = aug, pc_cols = pc_cols)
-}
-
-# Finite per-tau search seed from the coefficient box midpoint, else 0.
 logvar_box_seed <- function(box) {
-  mid <- (box$set_lower + box$set_upper) / 2
-  ifelse(is.finite(mid), mid, 0)
+  midpoint <- (box$set_lower + box$set_upper) / 2
+  ifelse(is.finite(midpoint), midpoint, 0)
 }
 
-# Run one estimator's endpoints at every tau on already-prepared draw inputs. The
-# builder returns an estimator object (or NULL on failure); a per-tau tryCatch
-# demotes a failed solve to an all-"failed" record rather than dropping the draw.
-logvar_run_estimator <- function(est_obj, spec, boxes, qss, b_point) {
-  lapply(seq_along(spec$taus), function(j) {
-    seed <- if (!is.null(b_point)) b_point else logvar_box_seed(boxes[[j]])
-    sch <- if (is.null(est_obj)) {
+logvar_run_estimator <- function(
+  est_obj, spec, boxes, qss, b_point, taus = spec$taus
+) {
+  lapply(seq_along(taus), function(index) {
+    seed <- if (is.null(b_point)) logvar_box_seed(boxes[[index]]) else b_point
+    schema <- if (is.null(est_obj)) {
       NULL
     } else {
       tryCatch(
         logvar_engine_set_at_tau(
-          est_obj, qss[[j]], boxes[[j]],
+          est_obj, qss[[index]], boxes[[index]],
           b_seed = seed,
           max_grid_points = spec$grid_cap, max_fit_evals = spec$fit_budget,
-          cold_start_check = FALSE, tau = spec$taus[j]
+          cold_start_check = FALSE, tau = taus[[index]]
         )$schema,
-        error = function(e) NULL
+        error = function(error) NULL
       )
     }
-    logvar_side_record(sch, spec$coefs)
+    logvar_side_record(schema, spec$coefs)
   })
 }
 
-# One resampled draw: re-estimate the mean eq, restrict to the draw's complete
-# lagged-PC rows, de-mean pcr, then run PPML and (warm-started from THIS draw's
-# PPML fit, per the Harvey report) Harvey at every tau. Estimator constructors are
-# called directly (the frozen sample_contract validators do not apply to a
-# resample).
-logvar_set_boot_draw <- function(dat, spec) {
-  est <- estimate_set_id_system(dat, spec)
-  lv <- stats::complete.cases(dat[, spec$pc_cols, drop = FALSE])
-  w1 <- est$w1[lv]
-  w2 <- est$w2[lv, , drop = FALSE]
-  qtr <- dat$qtr[lv]
-  pcr <- paper_normalize_model_matrix(
-    dat[lv, spec$pc_cols],
-    PAPER_ANALYSIS_CONTRACT$model$preprocessing$return_pc
-  )
-  colnames(pcr) <- spec$pc_cols
-  b_point <- if (is.null(est$point0)) NULL else est$point0$theta
-  boxes <- lapply(spec$taus, function(tau) {
-    coef_interval_tables(spec$gamma, tau, est$moments, est$beta1r, est$beta2r)$theta
-  })
-  qss <- lapply(spec$taus, function(tau) tau_quadratic_system(spec$gamma, tau, est$moments))
-  built <- list()
-  for (id in spec$estimator_ids) {
-    dependencies <-
-      paper_logvar_estimator_spec(id)$dependencies
-    stopifnot(all(dependencies %in% names(built)))
-    built[[id]] <- tryCatch(
-      spec$builders[[id]](
-        w1, w2, pcr, qtr, b_point, built
-      ),
-      error = function(e) NULL
-    )
-  }
-  stats::setNames(
-    lapply(spec$estimator_ids, function(id) {
-      logvar_run_estimator(
-        built[[id]], spec, boxes, qss, b_point
-      )
-    }),
-    spec$estimator_ids
-  )
-}
-
-# Pull the four per-side vectors from a schema (or an all-"failed" stand-in).
-logvar_side_record <- function(sch, coefs) {
-  if (is.null(sch) || !identical(sch$coef, coefs)) {
-    n <- length(coefs)
+logvar_side_record <- function(schema, coefs) {
+  if (is.null(schema) || !identical(schema$coef, coefs)) {
+    n_coef <- length(coefs)
     return(list(
-      lower = rep(NA_real_, n), upper = rep(NA_real_, n),
-      lower_status = rep(PAPER_ENDPOINT_STATUS[["failed"]], n),
-      upper_status = rep(PAPER_ENDPOINT_STATUS[["failed"]], n)
+      lower = rep(NA_real_, n_coef),
+      upper = rep(NA_real_, n_coef),
+      lower_status = rep(PAPER_ENDPOINT_STATUS[["failed"]], n_coef),
+      upper_status = rep(PAPER_ENDPOINT_STATUS[["failed"]], n_coef)
     ))
   }
   list(
-    lower = sch$lower, upper = sch$upper,
-    lower_status = sch$lower_status, upper_status = sch$upper_status
+    lower = schema$lower,
+    upper = schema$upper,
+    lower_status = schema$lower_status,
+    upper_status = schema$upper_status
   )
 }
 
-# Stack raw draws (errored draws arrive as condition strings) into per-estimator
-# per-tau B x p matrices for logvar_endpoint_envelope. Failed draws become
-# all-"failed" rows -- never dropped.
 logvar_set_boot_collect <- function(raw, spec) {
-  na_est <- lapply(spec$taus, function(...) logvar_side_record(NULL, spec$coefs))
-  fix <- function(d) {
-    if (!is.character(d)) {
-      return(d)
+  failed_estimator <- lapply(spec$taus, function(...) logvar_side_record(NULL, spec$coefs))
+  raw <- lapply(raw, function(draw) {
+    if (!is.character(draw)) {
+      return(draw)
     }
-    stats::setNames(
-      rep(list(na_est), length(spec$estimator_ids)),
-      spec$estimator_ids
-    )
-  }
-  raw <- lapply(raw, fix)
-  stack <- function(which_est, j, field) {
-    out <- do.call(rbind, lapply(raw, function(d) d[[which_est]][[j]][[field]]))
+    stats::setNames(rep(list(failed_estimator), length(spec$estimator_ids)), spec$estimator_ids)
+  })
+  stack <- function(estimator, tau_index, field) {
+    out <- do.call(rbind, lapply(raw, function(draw) {
+      draw[[estimator]][[tau_index]][[field]]
+    }))
     colnames(out) <- spec$coefs
     out
   }
-  per_est <- function(which_est) {
-    lapply(seq_along(spec$taus), function(j) {
+  stats::setNames(lapply(spec$estimator_ids, function(estimator) {
+    lapply(seq_along(spec$taus), function(tau_index) {
       list(
-        lower = stack(which_est, j, "lower"),
-        upper = stack(which_est, j, "upper"),
-        lower_status = stack(which_est, j, "lower_status"),
-        upper_status = stack(which_est, j, "upper_status")
+        lower = stack(estimator, tau_index, "lower"),
+        upper = stack(estimator, tau_index, "upper"),
+        lower_status = stack(estimator, tau_index, "lower_status"),
+        upper_status = stack(estimator, tau_index, "upper_status")
       )
     })
-  }
-  stats::setNames(
-    lapply(spec$estimator_ids, per_est),
-    spec$estimator_ids
-  )
+  }), spec$estimator_ids)
 }

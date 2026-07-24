@@ -17,8 +17,14 @@ logvar_harvey_estimator <- function(w1, w2, pcr, qtr, b_point = NULL,
                                     ppml_start_at_b = NULL,
                                     ppml_start_at_b_source_id = NULL,
                                     logols_coef = NULL,
-                                    control = LOGVAR_HARVEY_CONTROL) {
+                                    control = LOGVAR_HARVEY_CONTROL,
+                                    normal_log_square_gap =
+                                      LOGVAR_NORMAL_LOG_SQUARE_GAP) {
   logvar_harvey_validate_policy(control)
+  stopifnot(
+    is.numeric(normal_log_square_gap), length(normal_log_square_gap) == 1L,
+    !is.na(normal_log_square_gap), is.finite(normal_log_square_gap)
+  )
   x_mat <- logvar_design_matrix(pcr)
   chol_xx <- chol(crossprod(x_mat))
   ladder <- list()
@@ -28,7 +34,7 @@ logvar_harvey_estimator <- function(w1, w2, pcr, qtr, b_point = NULL,
   if (!is.null(logols_coef)) {
     ladder$logols_shifted <-
       logols_coef +
-      c(LOGVAR_NORMAL_LOG_SQUARE_GAP, rep(0, length(logols_coef) - 1L))
+      c(normal_log_square_gap, rep(0, length(logols_coef) - 1L))
   }
   start_plan <- logvar_harvey_start_plan(ladder, control)
   start_identity <- logvar_harvey_start_identity(
@@ -68,7 +74,7 @@ logvar_harvey_estimator <- function(w1, w2, pcr, qtr, b_point = NULL,
         "log conditional variance (mean-log + %s under normality;",
         "absorbs 2 log|m_0|)"
       ),
-      logvar_normal_gap_text(9L)
+      logvar_normal_gap_text(9L, normal_log_square_gap)
     ),
     sample_id = logvar_sample_id(qtr, w1, w2, pcr), smoothness = "smooth",
     inner_solver = "observed-Newton (Fisher fallback) + backtracking", response_scale = "variance",

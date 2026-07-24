@@ -45,17 +45,8 @@ eval_width_at_tau <- function(gamma, tau, moments) {
   list(total = total, bounded = bounded, valid = valid, status = status)
 }
 
-# Per-coefficient intervals of the joint identified set at one common slack:
-# theta profile bounds plus exact linear-functional bounds for the affine
-# recovery beta1_p(theta) = beta1r_p - beta2r[, p]' theta, returned as
-# list(beta1, theta) of data.frames (coef, set_lower, set_upper, status).
-# A zero beta2r column is a constant functional (beta1_p = beta1r_p exactly,
-# no solve), certified only when no theta side failed closed (an NA side can
-# flag an empty or solver-failed set).
-coef_interval_tables <- function(gamma, tau, moments, beta1r, beta2r) {
-  stopifnot(nrow(beta2r) == ncol(gamma), ncol(beta2r) == length(beta1r))
-  stopifnot(identical(colnames(beta2r), names(beta1r)))
-  qs <- tau_quadratic_system(gamma, tau, moments)
+# Per-coefficient intervals from one already-built quadratic system.
+coef_interval_tables_from_quadratic <- function(qs, beta1r, beta2r) {
   tb <- solve_all_profile_bounds(qs)
   theta_fail_closed <- anyNA(c(tb$lower, tb$upper))
   theta <- data.frame(
@@ -86,6 +77,17 @@ coef_interval_tables <- function(gamma, tau, moments, beta1r, beta2r) {
     )
   }))
   list(beta1 = beta1, theta = theta)
+}
+
+# Compatible wrapper for callers that still provide gamma, tau, and moments.
+coef_interval_tables <- function(gamma, tau, moments, beta1r, beta2r) {
+  stopifnot(nrow(beta2r) == ncol(gamma), ncol(beta2r) == length(beta1r))
+  stopifnot(identical(colnames(beta2r), names(beta1r)))
+  coef_interval_tables_from_quadratic(
+    tau_quadratic_system(gamma, tau, moments),
+    beta1r,
+    beta2r
+  )
 }
 
 .sweep_row <- function(tau, w, grid_label) {
