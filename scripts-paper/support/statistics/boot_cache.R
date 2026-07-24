@@ -74,3 +74,39 @@ paper_boot_cached_or_run <- function(mode, artifact_key, freshness, fields,
     warn_label, writer, reader
   )
 }
+
+paper_boot_transactional_replace <- function(
+  payload, path, validator, reader, writer, promoter = file.rename,
+  remover = unlink
+) {
+  valid <- validator(payload)
+  if (!isTRUE(valid)) {
+    stop("invalid in-memory cache: ", valid, call. = FALSE)
+  }
+  temporary <- tempfile(
+    paste0(".", basename(path), ".tmp-"),
+    tmpdir = dirname(path)
+  )
+  on.exit(if (file.exists(temporary)) remover(temporary), add = TRUE)
+  writer(payload, temporary)
+  roundtrip <- reader(temporary)
+  if (!identical(roundtrip, payload)) {
+    stop("temporary cache round trip changed", call. = FALSE)
+  }
+  valid <- validator(roundtrip)
+  if (!isTRUE(valid)) {
+    stop("invalid temporary cache: ", valid, call. = FALSE)
+  }
+  if (!isTRUE(promoter(temporary, path))) {
+    stop("atomic cache promotion failed", call. = FALSE)
+  }
+  installed <- reader(path)
+  if (!identical(installed, roundtrip)) {
+    stop("installed cache object changed", call. = FALSE)
+  }
+  valid <- validator(installed)
+  if (!isTRUE(valid)) {
+    stop("invalid installed cache: ", valid, call. = FALSE)
+  }
+  list(value = installed, recovery_backup = NULL)
+}

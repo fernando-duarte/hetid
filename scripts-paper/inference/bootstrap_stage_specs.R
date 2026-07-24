@@ -1,18 +1,24 @@
 paper_source_once(paper_path(
   "support", "inference", "bootstrap_stage_spec_assertions.R"
 ))
+paper_source_once(paper_path(
+  "support", "inference", "bootstrap_stage_result_inputs.R"
+))
+paper_source_once(paper_path(
+  "support", "inference", "bootstrap_stage_mean_result_inputs.R"
+))
 
 BOOTSTRAP_STAGE_FIELDS <- list(
   frame = c("data", "key_col", "sample_size"),
   system = c("gamma", "y1_col", "x_cols", "y2_cols", "z_col", "impose_null"),
   tau = c("baseline", "display", "union"),
   design = c("seed", "failure_control", "primary", "sensitivity"),
-  mean = c("coefs", "tau_star_grid", "tau_star_iterations"),
+  mean = c("coefs", "tau_star_grid", "tau_star_iterations", "result_inputs"),
   log_variance = c(
     "coefs", "pc_cols", "complete_case_policy", "grid_cap", "fit_budget",
     "estimator_ids", "estimator_dependencies", "response_scale", "logols_coef",
     "pc_preprocessing", "search_control", "ppml_control", "harvey_control",
-    "normal_log_square_gap", "se_types"
+    "normal_log_square_gap", "se_types", "result_inputs"
   )
 )
 BOOTSTRAP_STAGE_ROOTS <- names(BOOTSTRAP_STAGE_FIELDS)
@@ -138,7 +144,9 @@ bootstrap_stage_spec <- function(
         seq(0, mean_eq$tau_cap, by = PAPER_ANALYSIS_CONTRACT$tau$bootstrap_step),
         mean_eq$tau_cap
       )),
-      tau_star_iterations = PAPER_INFERENCE_SEARCH_CONTROL$tau_star$bootstrap_bisection_iterations
+      tau_star_iterations = PAPER_INFERENCE_SEARCH_CONTROL$
+        tau_star$bootstrap_bisection_iterations,
+      result_inputs = bootstrap_stage_mean_result_inputs(mean_eq)
     ),
     log_variance = list(
       coefs = log_var_eq$table$coef, pc_cols = pc_cols,
@@ -154,8 +162,13 @@ bootstrap_stage_spec <- function(
         ids,
         function(id) PAPER_REPORTING_CONTROL[[id]]$se_type,
         character(1)
-      ), ids)
+      ), ids),
+      result_inputs = NULL
     )
+  )
+  spec$log_variance$result_inputs <- bootstrap_stage_result_inputs(
+    estimator_results, ids, display, spec$log_variance$coefs,
+    spec$log_variance$se_types
   )
   bootstrap_stage_estimator_result_axes_assert(
     estimator_results, ids, spec$tau$baseline, spec$log_variance$coefs
