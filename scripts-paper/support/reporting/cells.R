@@ -110,7 +110,7 @@ paper_format_endpoint_envelope <- function(lower, upper, side, digits) {
       ifelse(
         side == "lower",
         .interval_latex(lower, upper, digits, side = "lower"),
-        .interval_latex(lower, upper, digits)
+        .interval_latex(lower, upper, digits, marks = c("(", ")"))
       )
     )
   )

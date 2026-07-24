@@ -48,11 +48,13 @@ set_cell <- function(
 
 # Side-aware confidence-envelope cell: the moving-block bootstrap outer
 # containment interval for one set endpoint (log_var_eq_set_boot), rendered on
-# the row beneath its set_cell. A genuinely one-sided set (side "upper"/
-# "lower") keeps its live endpoint bracket-closed and the unattained infinite
-# endpoint parenthesized, exactly like set_cell's own infinite-bound cells; a
-# suppressed cell (side "none", or a non-finite endpoint) renders blank.
-# Vectorized like set_cell.
+# the row beneath its set_cell. A two-sided finite envelope renders in round
+# parentheses, following the confidence-interval convention shared with the
+# mean panel's CI rows and distinguishing it from the square-bracket identified
+# set above. A genuinely one-sided set (side "upper"/"lower") keeps its live
+# endpoint bracket-closed and the unattained infinite endpoint parenthesized,
+# exactly like set_cell's own infinite-bound cells; a suppressed cell (side
+# "none", or a non-finite endpoint) renders blank. Vectorized like set_cell.
 envelope_cell <- function(
   ci_lo,
   ci_hi,

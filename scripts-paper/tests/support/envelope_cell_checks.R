@@ -5,7 +5,7 @@
 # estimator's test entry point independent of the other check files' cleanup.
 
 check("envelope_cell renders all four forms exactly", {
-  identical(envelope_cell(-1.25, -1.05, "two-sided"), "$[-1.250,\\,-1.050]$") &&
+  identical(envelope_cell(-1.25, -1.05, "two-sided"), "$(-1.250,\\,-1.050)$") &&
     identical(envelope_cell(-Inf, -1.05, "upper"), "$(-\\infty,\\,-1.050]$") &&
     identical(envelope_cell(-1.25, Inf, "lower"), "$[-1.250,\\,\\infty)$") &&
     identical(envelope_cell(NA_real_, NA_real_, "none"), "")
@@ -13,7 +13,7 @@ check("envelope_cell renders all four forms exactly", {
 check("envelope_cell is vectorized and blanks a non-finite ci on a live side", {
   identical(
     envelope_cell(c(-1.25, NA_real_), c(-1.05, -1.05), c("two-sided", "two-sided")),
-    c("$[-1.250,\\,-1.050]$", "")
+    c("$(-1.250,\\,-1.050)$", "")
   )
 })
 
@@ -58,7 +58,7 @@ ecc_ppml_parts <- logvar_ppml_table_parts(
 )
 check("PPML table parts render the envelope on a separate row beneath the set cell", {
   identical(ecc_ppml_parts$columns[[3]], c(
-    "$[-1.250,\\,-1.150]$", "$[-1.280,\\,-1.120]$",
+    "$[-1.250,\\,-1.150]$", "$(-1.280,\\,-1.120)$",
     "$[0.170,\\,0.190]$", "$(-\\infty,\\,0.210]$", "--", "12"
   )) &&
     identical(ecc_ppml_parts$columns[[4]], c(
@@ -91,7 +91,7 @@ if (exists("logvar_harvey_build_fragment")) {
       "$[-1.250,\\,-1.150]$ & $[-1.300,\\,-1.100]$ \\\\"
     )) &&
       any(ecc_harvey_fragment ==
-        " &  &  & $[-1.280,\\,-1.120]$ & $[-1.350,\\,\\infty)$ \\\\") &&
+        " &  &  & $(-1.280,\\,-1.120)$ & $[-1.350,\\,\\infty)$ \\\\") &&
       any(ecc_harvey_fragment == paste0(
         "$\\theta^{H}_{1,R}$ & 0.200 & 0.180 & ",
         "$[0.170,\\,0.190]$ & $[0.160,\\,0.200]$ \\\\"

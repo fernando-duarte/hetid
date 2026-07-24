@@ -76,7 +76,7 @@ combined_table <- c(
   "\\midrule",
   panel_body(panel_a$row_labels, panel_a$columns, panel_a$rule_after),
   "\\midrule",
-  panel_head("Panel B. Log-variance equation (PPML)"),
+  panel_head("Panel B. Log-variance equation (quasi-maximum likelihood)"),
   "\\midrule",
   panel_body(rows_b, columns_b, c(2L, 10L)),
   "\\bottomrule",
