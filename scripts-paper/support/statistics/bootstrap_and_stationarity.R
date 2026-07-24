@@ -12,10 +12,6 @@ mbb_index <- function(nn, bl) {
   unlist(lapply(starts, function(s) (s + 0:(bl - 1) - 1) %% nn + 1))[seq_len(nn)]
 }
 
-# Automatic circular-block length, 1.5 * T^(1/3) rounded up; one convention
-# with macro_dynamics's moving_block_pa helper mb_block_len.
-paper_mbb_block_len <- function(t_obs) as.integer(ceiling(1.5 * t_obs^(1 / 3)))
-
 #' Compute comprehensive summary statistics
 #' @param x numeric vector
 #' @param var_name variable name

@@ -2,6 +2,12 @@
 
 paper_source_once(paper_path("support", "statistics", "bootstrap_and_stationarity.R"))
 paper_source_once(paper_path(
+  "support", "statistics", "mbb_protocol_authority.R"
+))
+paper_source_once(paper_path("support", "statistics", "mbb_rng_state.R"))
+paper_source_once(paper_path("support", "statistics", "mbb_index_family.R"))
+paper_source_once(paper_path("support", "statistics", "mbb_execution_core.R"))
+paper_source_once(paper_path(
   "support", "statistics", "mbb_runner.R"
 ))
 paper_source_once(paper_path("support", "statistics", "boot_freshness.R"))
