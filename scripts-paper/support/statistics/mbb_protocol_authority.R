@@ -19,8 +19,8 @@ paper_mbb_protocol <- local({
     family_class = "paper_mbb_index_family",
     family_fields = c(
       "family", "n_draws", "sample_size", "block_length", "seed",
-      "rng_kind", "index_sha256", "post_index_rng_sha256", "indices",
-      "draw_rng_state"
+      "rng_kind", "index_sha256", "post_index_rng_sha256",
+      "family_sha256", "indices", "draw_rng_state"
     ),
     block_rule = block_rule,
     block_length = block_length

@@ -2,6 +2,26 @@
 
 .paper_mbb_stop <- function(message) stop(simpleError(message, call = NULL))
 
+.paper_mbb_immutable_stop <- function() {
+  .paper_mbb_stop("paper MBB index families are immutable")
+}
+
+`$<-.paper_mbb_index_family` <- function(x, name, value) {
+  .paper_mbb_immutable_stop()
+}
+
+`[[<-.paper_mbb_index_family` <- function(x, ..., value) {
+  .paper_mbb_immutable_stop()
+}
+
+`[<-.paper_mbb_index_family` <- function(x, ..., value) {
+  .paper_mbb_immutable_stop()
+}
+
+`names<-.paper_mbb_index_family` <- function(x, value) {
+  .paper_mbb_immutable_stop()
+}
+
 .paper_mbb_design <- function(n_draws, sample_size, block_length) {
   stopifnot(
     length(n_draws) == 1L, is.finite(n_draws), n_draws >= 1L,
@@ -25,17 +45,23 @@
 
 .paper_mbb_family_value <- function(design, seed, family, indices, rng_state) {
   protocol <- paper_mbb_protocol()
-  draft <- stats::setNames(
+  value <- stats::setNames(
     list(
       family, design$n_draws, design$sample_size, design$block_length, seed,
-      protocol$rng_kind, NA_character_, NA_character_, indices, rng_state
+      protocol$rng_kind, NA_character_, NA_character_, NA_character_,
+      indices, rng_state
     ),
     protocol$family_fields
   )
-  class(draft) <- protocol$family_class
-  draft$index_sha256 <- paper_mbb_index_sha(draft)
-  draft$post_index_rng_sha256 <- paper_sha256_object(rng_state)
-  draft
+  value$index_sha256 <- paper_sha256_object(indices)
+  value$post_index_rng_sha256 <- paper_sha256_object(rng_state)
+  value$family_sha256 <- .paper_mbb_family_sha(value)
+  structure(value, class = protocol$family_class)
+}
+
+.paper_mbb_family_sha <- function(index_family) {
+  value <- unclass(index_family)
+  paper_sha256_object(value[names(value) != "family_sha256"])
 }
 
 .paper_mbb_index_family_validate <- function(index_family, authenticate = TRUE) {
@@ -60,13 +86,20 @@
         grepl("^[0-9a-f]{64}$", value)
     )
   }
+  attributes_ok <- identical(
+    names(attributes(index_family)),
+    c("names", "class")
+  )
   valid <- identical(class(index_family), protocol$family_class) &&
+    attributes_ok &&
     identical(names(index_family), protocol$family_fields) &&
     index_family$family %in% unname(protocol$family_names) &&
     scalar_integer(index_family$n_draws) && scalar_integer(index_family$sample_size) &&
     scalar_integer(index_family$block_length) && seed_ok &&
     identical(index_family$rng_kind, protocol$rng_kind) &&
-    sha_ok(index_family$index_sha256) && sha_ok(index_family$post_index_rng_sha256) &&
+    sha_ok(index_family$index_sha256) &&
+    sha_ok(index_family$post_index_rng_sha256) &&
+    sha_ok(index_family$family_sha256) &&
     indices_ok && is.integer(index_family$draw_rng_state) &&
     length(index_family$draw_rng_state) > 1L
   if (!isTRUE(valid)) .paper_mbb_stop("invalid paper MBB index family")
@@ -81,12 +114,29 @@
   )) {
     .paper_mbb_stop("paper MBB post-index RNG state is not authenticated")
   }
+  if (authenticate && !identical(
+    index_family$family_sha256,
+    .paper_mbb_family_sha(index_family)
+  )) {
+    .paper_mbb_stop("paper MBB family metadata is not authenticated")
+  }
   invisible(TRUE)
 }
 
 paper_mbb_index_sha <- function(index_family) {
   .paper_mbb_index_family_validate(index_family, authenticate = FALSE)
   paper_sha256_object(index_family$indices)
+}
+
+.paper_mbb_index_family_build <- function(design, seed, family) {
+  indices <- lapply(seq_len(design$n_draws), function(draw_id) {
+    mbb_index(design$sample_size, design$block_length)
+  })
+  value <- .paper_mbb_family_value(
+    design, .paper_mbb_seed_record(seed), family, indices, .Random.seed
+  )
+  .paper_mbb_index_family_validate(value)
+  value
 }
 
 paper_mbb_index_family <- function(
@@ -102,12 +152,5 @@ paper_mbb_index_family <- function(
   on.exit(.paper_mbb_rng_restore(ambient), add = TRUE)
   do.call(RNGkind, as.list(protocol$rng_kind))
   set.seed(seed)
-  indices <- lapply(seq_len(design$n_draws), function(draw_id) {
-    mbb_index(design$sample_size, design$block_length)
-  })
-  family <- .paper_mbb_family_value(
-    design, .paper_mbb_seed_record(seed), family, indices, .Random.seed
-  )
-  .paper_mbb_index_family_validate(family)
-  family
+  .paper_mbb_index_family_build(design, seed, family)
 }

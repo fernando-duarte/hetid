@@ -30,14 +30,31 @@ paper_run_mbb_draws <- function(
     is.null(progress) || is.function(progress),
     is.function(is_failure)
   )
-  index_family <- paper_mbb_index_family(
-    n_draws = as.integer(n_draws),
-    sample_size = as.integer(sample_size),
-    block_length = as.integer(block_length),
-    seed = seed,
-    family = paper_mbb_protocol()$family_names[["compatibility"]]
+  design <- .paper_mbb_design(
+    as.integer(n_draws),
+    as.integer(sample_size),
+    as.integer(block_length)
   )
-  paper_run_indexed_draws(index_family, draw, cores, progress, is_failure)
+  cores <- as.integer(cores)
+  protocol <- paper_mbb_protocol()
+  ambient <- .paper_mbb_rng_capture()
+  on.exit(.paper_mbb_rng_restore(ambient), add = TRUE)
+  do.call(RNGkind, as.list(protocol$rng_kind))
+  set.seed(seed)
+  index_family <- .paper_mbb_index_family_build(
+    design,
+    seed,
+    protocol$family_names[["compatibility"]]
+  )
+  .paper_run_indexed_draws_core(
+    index_family,
+    list(
+      draw = draw,
+      cores = cores,
+      progress = progress,
+      is_failure = is_failure
+    )
+  )
 }
 
 paper_run_indexed_draws <- function(

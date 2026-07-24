@@ -21,6 +21,12 @@ paper_source_once(paper_path(
 paper_source_once(paper_path(
   "tests", "support", "mbb_index_family_checks.R"
 ))
+paper_source_once(paper_path(
+  "tests", "support", "mbb_compatibility_regression_checks.R"
+))
+paper_source_once(paper_path(
+  "tests", "support", "mbb_index_immutability_checks.R"
+))
 
 summary_row <- compute_summary_stats(c(1, 2, NA, 4), "x", compute_ac = FALSE)
 check("summary statistics count finite observations", summary_row$N == 3L)
