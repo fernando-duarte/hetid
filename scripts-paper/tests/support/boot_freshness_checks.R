@@ -18,8 +18,9 @@ check(
     !grepl("rugarch", runtime_text, fixed = TRUE)
 )
 check(
-  "stage runtime hash binds the package source",
-  grepl("paper_repo_code_sha", runtime_text, fixed = TRUE)
+  "stage runtime hash binds package source and loaded namespace",
+  grepl("paper_repo_code_sha", runtime_text, fixed = TRUE) &&
+    grepl("paper_namespace_code_sha", runtime_text, fixed = TRUE)
 )
 check("namespace hash changes when executed code changes", {
   namespace <- new.env(parent = emptyenv())
