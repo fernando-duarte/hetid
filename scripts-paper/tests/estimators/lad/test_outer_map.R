@@ -20,6 +20,10 @@ paper_source_once(paper_path("log_variance", "estimators", "lad", "crossing_doma
 # The offline refinement is intentionally loaded only by this dedicated outer-map suite.
 paper_source_once(paper_path("log_variance", "estimators", "lad", "offline_refinement.R"))
 paper_source_once(paper_path("log_variance", "estimators", "lad", "run_sets.R"))
+paper_source_once(paper_path("support", "latex", "table_pipeline.R"))
+paper_source_once(paper_path("support", "latex", "simple_table.R"))
+paper_source_once(paper_path("log_variance", "tables", "table_formatting.R"))
+paper_source_once(paper_path("log_variance", "tables", "lad_panel_builder.R"))
 
 paper_source_once(paper_path("tests", "support", "harness.R"))
 .test <- paper_test_harness()
@@ -179,5 +183,7 @@ qr_check("lad normalization simulation tracks variance slopes and intercept gaps
     abs((unname(lad$coef[1]) - mint) - LOGVAR_NORMAL_MEDIAN_MEANLOG_GAP) <= 0.05 &&
     abs((unname(lad$coef[1]) - vint) - LOGVAR_NORMAL_LOG_SQUARE_MEDIAN) <= 0.05
 })
+
+paper_source_once(paper_path("tests", "estimators", "lad", "table_checks.R"))
 
 .test$finish()

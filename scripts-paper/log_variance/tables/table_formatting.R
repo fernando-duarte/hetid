@@ -13,26 +13,36 @@ paper_source_once(paper_path("support", "reporting", "cells.R"))
 
 # NA and non-finite values render "--"; upstream diagnostics retain the reason
 # a value is unavailable rather than hiding it behind a numeric token.
-fmt <- function(x) {
-  policy <- PAPER_REPORTING_CONTROL$cells$log_variance
-  paper_format_number(x, policy$digits, policy$numeric_missing)
+fmt <- function(
+  x,
+  cell_policy = PAPER_REPORTING_CONTROL$cells$log_variance
+) {
+  paper_format_number(
+    x,
+    cell_policy$digits,
+    cell_policy$numeric_missing
+  )
 }
 
 # an unreliable or upstream-propagated (NA-endpoint) cell renders its status
 # word; certified one-sided divergence renders a half-infinite range; a
 # degenerate interval (point-identified) is left blank as in the structural
 # table
-set_cell <- function(lo, hi, status) {
-  policy <- PAPER_REPORTING_CONTROL$cells$log_variance
+set_cell <- function(
+  lo,
+  hi,
+  status,
+  cell_policy = PAPER_REPORTING_CONTROL$cells$log_variance
+) {
   paper_format_set_interval(
     lo,
     hi,
     status,
-    digits = policy$digits,
-    status_mode = policy$status_mode,
-    na_as_status = policy$na_as_status,
-    infinite_bounds = policy$infinite_bounds,
-    degenerate_rtol = policy$degenerate_rtol
+    digits = cell_policy$digits,
+    status_mode = cell_policy$status_mode,
+    na_as_status = cell_policy$na_as_status,
+    infinite_bounds = cell_policy$infinite_bounds,
+    degenerate_rtol = cell_policy$degenerate_rtol
   )
 }
 
@@ -43,12 +53,17 @@ set_cell <- function(lo, hi, status) {
 # endpoint parenthesized, exactly like set_cell's own infinite-bound cells; a
 # suppressed cell (side "none", or a non-finite endpoint) renders blank.
 # Vectorized like set_cell.
-envelope_cell <- function(ci_lo, ci_hi, side) {
+envelope_cell <- function(
+  ci_lo,
+  ci_hi,
+  side,
+  cell_policy = PAPER_REPORTING_CONTROL$cells$log_variance
+) {
   paper_format_endpoint_envelope(
     ci_lo,
     ci_hi,
     side,
-    PAPER_REPORTING_CONTROL$cells$log_variance$digits
+    cell_policy$digits
   )
 }
 
@@ -80,7 +95,14 @@ logvar_estimator_headers <- function(reference_header, tau_display) {
 # point column). envelope NULL keeps every column byte-identical to the
 # pre-envelope renderer; a supplied envelope keys on the same taus and aligns to
 # tab_coef.
-logvar_set_envelope_cols <- function(sets, envelope, keys, tab_coef, n_obs) {
+logvar_set_envelope_cols <- function(
+  sets,
+  envelope,
+  keys,
+  tab_coef,
+  n_obs,
+  cell_policy = PAPER_REPORTING_CONTROL$cells$log_variance
+) {
   env <- if (is.null(envelope)) vector("list", length(sets)) else envelope[keys]
   stopifnot(
     length(env) == length(sets),
@@ -90,9 +112,26 @@ logvar_set_envelope_cols <- function(sets, envelope, keys, tab_coef, n_obs) {
   )
   set_col <- function(st, e) {
     logvar_assert_coef_aligned(st$coef, tab_coef)
-    stat_row <- if (is.null(e)) "" else envelope_cell(e$ci_lower, e$ci_upper, e$side)
+    stat_row <- if (is.null(e)) {
+      ""
+    } else {
+      envelope_cell(
+        e$ci_lower,
+        e$ci_upper,
+        e$side,
+        cell_policy
+      )
+    }
     c(
-      interleave(set_cell(st$set_lower, st$set_upper, st$status), stat_row),
+      interleave(
+        set_cell(
+          st$set_lower,
+          st$set_upper,
+          st$status,
+          cell_policy
+        ),
+        stat_row
+      ),
       PAPER_NA_TOKEN, sprintf("%d", n_obs)
     )
   }
@@ -107,10 +146,21 @@ logvar_set_envelope_cols <- function(sets, envelope, keys, tab_coef, n_obs) {
 # from the standard-normal (QMLE) approximation. An all-NA frame (a point not
 # certified feasible) keeps the key column and renders a blank stat row per cell.
 # se_types is the estimator's validated variant vector.
-logvar_se_point_col <- function(vals, se_frame, se_type, se_types, tab_coef,
-                                n_obs) {
+logvar_se_point_col <- function(
+  vals,
+  se_frame,
+  se_type,
+  se_types,
+  tab_coef,
+  n_obs,
+  cell_policy = PAPER_REPORTING_CONTROL$cells$log_variance
+) {
   if (is.null(se_type)) {
-    return(c(interleave(fmt(vals), ""), PAPER_NA_TOKEN, sprintf("%d", n_obs)))
+    return(c(
+      interleave(fmt(vals, cell_policy), ""),
+      PAPER_NA_TOKEN,
+      sprintf("%d", n_obs)
+    ))
   }
   key <- match.arg(se_type, se_types) # loud on an unknown type
   stopifnot(
@@ -121,8 +171,9 @@ logvar_se_point_col <- function(vals, se_frame, se_type, se_types, tab_coef,
   t_stat <- vals / se
   stars <- sig_stars(2 * stats::pnorm(-abs(t_stat)))
   cells <- ifelse(
-    stars == "" | !is.finite(t_stat), fmt(vals),
-    sprintf("%s$%s$", fmt(vals), stars)
+    stars == "" | !is.finite(t_stat),
+    fmt(vals, cell_policy),
+    sprintf("%s$%s$", fmt(vals, cell_policy), stars)
   )
   # a finite coefficient whose SE failed the conditioning gate has no t-stat:
   # mark it "--" (SE unavailable), never a blank stat row, which beside the
@@ -134,61 +185,6 @@ logvar_se_point_col <- function(vals, se_frame, se_type, se_types, tab_coef,
   c(interleave(cells, stat_row), PAPER_NA_TOKEN, sprintf("%d", n_obs))
 }
 
-# The point-column conditioning caveat shared verbatim by both estimators' SE
-# notes: tau = 0 conditions on the plug-in news vector, while the set columns
-# carry either a separate endpoint envelope or an explicit deferral.
-logvar_se_note_caveat <- function(set_endpoint_inference = FALSE) {
-  prefix <- paste(
-    "The $\\tau{=}0$ statistics condition on the plug-in Lewbel news vector",
-    "$b_N$ and do not propagate its first-stage sampling error; $\\tau{>}0$",
-    "set columns are identified-set ranges, not point estimates."
-  )
-  if (isTRUE(set_endpoint_inference)) {
-    return(paste(
-      prefix,
-      "Their moving-block-bootstrap outer confidence envelopes are reported",
-      "separately beneath the set cells."
-    ))
-  }
-  paste(
-    prefix,
-    "No standard error is attached; moving-block-bootstrap set-endpoint",
-    "uncertainty is deferred."
-  )
-}
-
-# Canonical PPML table parts: the quasi-Poisson reference and Lewbel-point
-# columns followed by exact-keyed display-tau hulls. Both the primary table and
-# the combined panels consume this one assembly path so their PPML cells cannot
-# drift. The statistic slots and R-squared row are blank by construction, unless
-# envelope supplies a per-tau (paper_tau_key-keyed) confidence-envelope
-# frame (log_var_eq_set_boot$ppml), in which case the blank row beneath each set
-# cell instead renders that tau's per-coef envelope_cell. NULL (the default)
-# keeps every column byte-identical to the pre-envelope renderer.
 paper_source_once(paper_path(
-  "log_variance", "tables", "estimator_panel.R"
+  "log_variance", "tables", "ppml_table_parts.R"
 ))
-
-logvar_ppml_table_parts <- function(ppml, tau_display, n_pc_r, se_type = NULL,
-                                    envelope = NULL) {
-  model <- PAPER_ANALYSIS_CONTRACT$model
-  expected_coef <- c(
-    model$intercept_col,
-    model$return_pc_cols[seq_len(n_pc_r)]
-  )
-  stopifnot(length(expected_coef) == n_pc_r + 1L)
-  logvar_estimator_panel_parts(
-    ppml,
-    ppml$sample$n,
-    tau_display,
-    list(
-      intercept_label = "$\\theta_0$",
-      slope_template = "$\\theta_{%d,R}$",
-      reference_header = "OLS",
-      expected_coef = expected_coef
-    ),
-    se_type = se_type,
-    se_types = LOGVAR_PPML_SE_TYPES,
-    envelope = envelope
-  )
-}

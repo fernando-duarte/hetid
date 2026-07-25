@@ -8,7 +8,8 @@ logvar_estimator_panel_parts <- function(
   spec,
   se_type = NULL,
   se_types = NULL,
-  envelope = NULL
+  envelope = NULL,
+  cell_policy = PAPER_REPORTING_CONTROL$cells$log_variance
 ) {
   required <- c(
     "intercept_label",
@@ -54,7 +55,8 @@ logvar_estimator_panel_parts <- function(
       se_type,
       se_types,
       tab$coef,
-      n_obs
+      n_obs,
+      cell_policy
     )
   }
   columns <- c(
@@ -67,7 +69,8 @@ logvar_estimator_panel_parts <- function(
       envelope,
       keys,
       tab$coef,
-      n_obs
+      n_obs,
+      cell_policy
     )
   )
   list(
@@ -89,7 +92,8 @@ logvar_estimator_panel_fragment <- function(
   label,
   se_type = NULL,
   se_types = NULL,
-  envelope = NULL
+  envelope = NULL,
+  cell_policy = PAPER_REPORTING_CONTROL$cells$log_variance
 ) {
   parts <- logvar_estimator_panel_parts(
     result,
@@ -98,7 +102,8 @@ logvar_estimator_panel_fragment <- function(
     spec,
     se_type,
     se_types,
-    envelope
+    envelope,
+    cell_policy
   )
   style <- PAPER_TABLE_STYLE$coefficient
   build_simple_latex_table(

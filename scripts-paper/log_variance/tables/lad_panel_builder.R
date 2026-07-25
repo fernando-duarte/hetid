@@ -32,7 +32,8 @@ logvar_lad_build_fragment <- function(
       "LAD panel: $\\theta^{0.5}$, the conditional-median map over the identified",
       "news sets (attained punctured-domain hulls; closure diagnostics separate)."
     ),
-    label
+    label,
+    cell_policy = PAPER_REPORTING_CONTROL$cells$lad
   )
 }
 

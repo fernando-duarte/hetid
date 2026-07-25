@@ -64,6 +64,10 @@ PAPER_REPORTING_CONTROL <- list(
   )
 )
 
+PAPER_REPORTING_CONTROL$cells$lad <- utils::modifyList(
+  PAPER_REPORTING_CONTROL$cells$log_variance,
+  list(digits = 2L)
+)
 # Shared presentation tokens: the missing/not-applicable cell placeholder and
 # the table-notes label, so a single edit retargets every consumer.
 PAPER_NA_TOKEN <- "--"
@@ -105,7 +109,7 @@ stopifnot(
   PAPER_LATEX_CONTROL$cleanup_wait_seconds >= 0,
   all(vapply(
     PAPER_REPORTING_CONTROL$cells[c(
-      "log_variance", "structural", "variance_share"
+      "log_variance", "lad", "structural", "variance_share"
     )],
     function(policy) policy$digits >= 0L,
     logical(1)
