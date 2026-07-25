@@ -4,6 +4,9 @@ source(file.path("scripts-paper", "config", "paths.R"))
 paper_source_once(paper_path(
   "tests", "support", "scientific_comparison.R"
 ))
+paper_source_once(paper_path(
+  "tests", "support", "published_table_comparison.R"
+))
 
 reference <- list(
   estimate = matrix(
@@ -34,5 +37,9 @@ stopifnot(!paper_scientific_equal(reference, candidate))
 candidate <- reference
 candidate$provenance$model_version <- "v2"
 stopifnot(!paper_scientific_equal(reference, candidate))
+
+paper_source_once(paper_path(
+  "tests", "support", "published_table_comparison_checks.R"
+))
 
 cat("scientific_comparison_checks: PASS\n")

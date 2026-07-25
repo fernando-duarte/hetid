@@ -1,18 +1,26 @@
-# Compare public/bootstrap scientific records under the universal rule.
+# Compare final published table numbers at their displayed precision.
 
 source(file.path(
-  "scripts-paper", "tests", "support", "scientific_comparison.R"
+  "scripts-paper",
+  "tests",
+  "support",
+  "published_table_comparison.R"
 ))
 
 compare_scientific_objects <- function(reference, candidate) {
-  reference_projection <- paper_scientific_projection(reference)
-  candidate_projection <- paper_scientific_projection(candidate)
-  comparison <- paper_scientific_compare(reference, candidate)
+  stopifnot(
+    identical(reference$schema_version, 2L),
+    identical(candidate$schema_version, 2L)
+  )
+  comparison <- paper_published_tables_compare(
+    reference$published_tables,
+    candidate$published_tables
+  )
   list(
     equal = isTRUE(comparison),
     comparison = comparison,
-    reference = reference_projection,
-    candidate = candidate_projection
+    reference = reference$published_tables,
+    candidate = candidate$published_tables
   )
 }
 
@@ -42,5 +50,5 @@ if (sys.nframe() == 0L) {
     print(result$comparison)
     quit(status = 1L)
   }
-  cat("scientific comparison passed\n")
+  cat("published table-number comparison passed\n")
 }

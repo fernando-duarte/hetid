@@ -6,8 +6,16 @@ run_root=${HETID_VALIDATION_RUN_ROOT:-$(mktemp -d "${TMPDIR:-/tmp}/hetid-mac-val
 source_root=$run_root/source
 legacy_root=${HETID_LEGACY_ROOT:-/private/tmp/hetid-fresh-pipeline-run-20260722}
 gate_reference=$run_root/legacy-gate.rds
+default_legacy=$repo_root/docs/bootstrap-single-stage-refactor
+default_legacy=$default_legacy/baseline-artifacts/fresh-legacy-scientific-record.rds
+legacy_record=${HETID_LEGACY_REFERENCE_RDS:-$default_legacy}
 
 mkdir -p "$source_root"
+Rscript -e '
+  args <- commandArgs(trailingOnly = TRUE)
+  record <- readRDS(args[[1L]])
+  stopifnot(identical(record$schema_version, 2L))
+' "$legacy_record"
 rsync -a --delete --exclude .git --exclude scripts-paper/output/ \
   "$repo_root/" "$source_root/"
 cp \
@@ -38,9 +46,6 @@ Rscript \
   "$run_root/candidate-rerun.rds" \
   "$run_root/candidate-reuse.rds"
 
-default_legacy=$repo_root/docs/bootstrap-single-stage-refactor
-default_legacy=$default_legacy/baseline-artifacts/fresh-legacy-scientific-record.rds
-legacy_record=${HETID_LEGACY_REFERENCE_RDS:-$default_legacy}
 Rscript \
   docs/bootstrap-single-stage-refactor/validation-tools/compare_scientific_objects.R \
   "$legacy_record" \

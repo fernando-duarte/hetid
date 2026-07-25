@@ -18,6 +18,9 @@ rsync -a \
 rsync -a \
   "$repo_root/scripts-paper/tests/support/scientific_comparison.R" \
   "$source_root/scripts-paper/tests/support/scientific_comparison.R"
+rsync -a \
+  "$repo_root/scripts-paper/tests/support/published_table_comparison.R" \
+  "$source_root/scripts-paper/tests/support/published_table_comparison.R"
 cp \
   "$legacy_root/scripts-paper/output/state/log_var_eq_dynamics_gate.rds" \
   "$gate_reference"
