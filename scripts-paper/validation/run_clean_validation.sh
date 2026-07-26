@@ -125,6 +125,14 @@ export HETID_BOOT_MODE=rerun
 unset HETID_VALIDATION_STRICT_REUSE
 
 pipeline_log="$run_root/pipeline.log"
+if [[ -L "$pipeline_log" ]]; then
+  printf 'pipeline log must not be a symbolic link: %s\n' "$pipeline_log" >&2
+  exit 2
+fi
+if [[ -e "$pipeline_log" && ! -f "$pipeline_log" ]]; then
+  printf 'pipeline log must be a regular file: %s\n' "$pipeline_log" >&2
+  exit 2
+fi
 printf 'producer: %s\n' "$pipeline_script" | tee "$pipeline_log"
 (
   cd -- "$source_root"

@@ -16,4 +16,7 @@ paper_source_once(paper_path(
 paper_source_once(paper_path(
   "tests", "validation", "clean_runner_checks.R"
 ))
+paper_source_once(paper_path(
+  "tests", "validation", "clean_runner_safety_checks.R"
+))
 cat("test_table_acceptance: PASS\n")
