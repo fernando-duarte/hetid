@@ -28,20 +28,6 @@ repo_root="$(
   cd -- "$script_dir/../.."
   pwd -P
 )"
-reference_input=$1
-if [[ ! -f "$reference_input" ]]; then
-  printf 'reference record does not exist: %s\n' "$reference_input" >&2
-  exit 2
-fi
-reference_dir="$(
-  cd -- "$(dirname -- "$reference_input")"
-  pwd -P
-)"
-reference_path="$reference_dir/$(basename -- "$reference_input")"
-compare_cli="$repo_root/scripts-paper/validation/compare_table_records.R"
-
-Rscript --vanilla "$compare_cli" "$reference_path" "$reference_path"
-
 if [[ -n "$run_root" ]]; then
   if [[ "$run_root" != /* ]]; then
     printf 'HETID_VALIDATION_RUN_ROOT must be an absolute path\n' >&2
@@ -56,19 +42,54 @@ else
   validation_tmp_base="${TMPDIR:-/tmp}"
   run_root="$(mktemp -d "$validation_tmp_base/hetid-clean-validation.XXXXXX")"
 fi
+if [[ "$run_root" == / ]]; then
+  printf 'HETID_VALIDATION_RUN_ROOT must not resolve to the filesystem root\n' >&2
+  exit 2
+fi
 rm -f -- "$run_root/comparison-passed"
 
-source_root="$run_root/source"
-mkdir -p -- "$source_root"
-rsync -a --delete \
-  --exclude .git \
-  --exclude scripts-paper/output/ \
-  "$repo_root/" "$source_root/"
+reference_input=$1
+if [[ ! -f "$reference_input" ]]; then
+  printf 'reference record does not exist: %s\n' "$reference_input" >&2
+  exit 2
+fi
+reference_dir="$(
+  cd -- "$(dirname -- "$reference_input")"
+  pwd -P
+)"
+reference_path="$reference_dir/$(basename -- "$reference_input")"
+compare_cli="$repo_root/scripts-paper/validation/compare_table_records.R"
 
+Rscript --vanilla "$compare_cli" "$reference_path" "$reference_path"
+
+source_root="$run_root/source"
+if [[ -L "$source_root" ]]; then
+  printf 'staged source must not be a symbolic link: %s\n' "$source_root" >&2
+  exit 2
+fi
+mkdir -p -- "$source_root"
 source_root="$(
   cd -- "$source_root"
   pwd -P
 )"
+case "$source_root" in
+  "$run_root"/*)
+    ;;
+  *)
+    printf 'staged source is outside the resolved run root: %s\n' "$source_root" >&2
+    exit 2
+    ;;
+esac
+preexisting_git="$(find "$source_root" -name .git -print -quit)"
+if [[ -n "$preexisting_git" ]]; then
+  printf 'preexisting staged Git metadata is not allowed: %s\n' \
+    "$preexisting_git" >&2
+  exit 2
+fi
+rsync -a --delete \
+  --exclude .git \
+  --exclude scripts-paper/output/ \
+  "$repo_root/" "$source_root/"
 staged_output="$source_root/scripts-paper/output"
 preexisting_output="$run_root/preexisting-output"
 if [[ -e "$staged_output" || -L "$staged_output" ]]; then

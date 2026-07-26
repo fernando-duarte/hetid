@@ -140,6 +140,54 @@ local({
     fixed = TRUE
   )))
 
+  symlink_root <- file.path(test_root, "symlinked-source-run")
+  external_source <- tempfile("clean-validation-external-")
+  dir.create(symlink_root, recursive = TRUE)
+  dir.create(external_source, recursive = TRUE)
+  on.exit(unlink(external_source, recursive = TRUE), add = TRUE)
+  external_sentinel <- file.path(external_source, "external-sentinel")
+  writeLines("must survive rejected staging", external_sentinel)
+  stopifnot(file.symlink(
+    external_source,
+    file.path(symlink_root, "source")
+  ))
+  symlink_result <- clean_runner_call(symlink_root, reference)
+  symlink_safe <- clean_runner_status(symlink_result) != 0L &&
+    file.exists(external_sentinel) &&
+    !file.exists(file.path(symlink_root, "pipeline.log"))
+
+  invalid_root <- file.path(test_root, "invalid-reference-run")
+  invalid_reference <- file.path(test_root, "invalid-reference.rds")
+  dir.create(invalid_root, recursive = TRUE)
+  file.create(file.path(invalid_root, "comparison-passed"))
+  saveRDS(list(schema_version = 2L), invalid_reference)
+  invalid_result <- clean_runner_call(invalid_root, invalid_reference)
+  invalid_marker_safe <- clean_runner_status(invalid_result) != 0L &&
+    !file.exists(file.path(invalid_root, "comparison-passed"))
+
+  git_root <- file.path(test_root, "preexisting-git-run")
+  git_metadata <- file.path(git_root, "source", ".git")
+  git_sentinel <- file.path(git_metadata, "preexisting-sentinel")
+  dir.create(git_metadata, recursive = TRUE)
+  writeLines("must survive rejected staging", git_sentinel)
+  git_result <- clean_runner_call(git_root, reference)
+  git_safe <- clean_runner_status(git_result) != 0L &&
+    file.exists(git_sentinel) &&
+    !file.exists(file.path(git_root, "pipeline.log"))
+
+  safety_results <- c(
+    symlinked_source_rejected = symlink_safe,
+    invalid_reference_clears_marker = invalid_marker_safe,
+    preexisting_git_rejected = git_safe
+  )
+  if (!all(safety_results)) {
+    stop(
+      "clean runner safety regressions failed: ",
+      paste(names(safety_results)[!safety_results], collapse = ", "),
+      call. = FALSE
+    )
+  }
+
   dir.create(failure_root, recursive = TRUE)
   file.create(file.path(failure_root, "comparison-passed"))
   failure <- clean_runner_call(failure_root, reference, fail = TRUE)
