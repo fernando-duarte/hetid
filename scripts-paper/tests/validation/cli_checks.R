@@ -1,7 +1,9 @@
-# Subprocess checks for table-record capture and comparison commands.
+# Subprocess checks for direct output-table comparison.
 
-cli_write_table <- function(root, body) {
-  table_path <- file.path(root, "tables", "table.tex")
+source(file.path("scripts-paper", "config", "paths.R"))
+
+cli_write_table <- function(root, body, relative = "table.tex") {
+  table_path <- file.path(root, "tables", relative)
   dir.create(dirname(table_path), recursive = TRUE, showWarnings = FALSE)
   writeLines(c(
     "\\begin{tabular}{lr}",
@@ -15,121 +17,107 @@ cli_write_table <- function(root, body) {
 }
 
 cli_table_body <- function(value, stars) {
-  paste0(
-    "Estimate & ", value, "$^{", stars, "}$ ", strrep("\\\\", 2L)
-  )
+  paste0("Estimate & ", value, "$^{", stars, "}$ \\\\")
 }
 
 cli_write_non_table_artifacts <- function(root, suffix) {
-  write.csv(data.frame(value = suffix), file.path(root, "other.csv"), row.names = FALSE)
-  saveRDS(list(value = suffix), file.path(root, "other.rds"))
-  writeLines(paste("report", suffix), file.path(root, "other.md"))
-  writeLines(paste("svg", suffix), file.path(root, "other.svg"))
-  writeLines(paste("pdf", suffix), file.path(root, "other.pdf"))
+  writeLines(suffix, file.path(root, "other.csv"))
+  writeLines(suffix, file.path(root, "other.rds"))
+  writeLines(suffix, file.path(root, "other.md"))
+  writeLines(suffix, file.path(root, "other.svg"))
+  writeLines(suffix, file.path(root, "other.pdf"))
   dir.create(file.path(root, "diagnostics"), showWarnings = FALSE)
   writeLines(suffix, file.path(root, "diagnostics", "details.txt"))
 }
 
-cli_status <- function(script, arguments) {
-  system2(file.path(R.home("bin"), "Rscript"), args = c(script, arguments))
-}
-
-cli_output <- function(script, arguments) {
+cli_output <- function(arguments) {
   system2(
     file.path(R.home("bin"), "Rscript"),
-    args = c(script, arguments),
+    args = c(
+      "--vanilla",
+      paper_path("validation", "compare_output_tables.R"),
+      arguments
+    ),
     stdout = TRUE,
     stderr = TRUE
   )
 }
 
-cli_capture_code <- paste(
-  deparse(parse(paper_path("validation", "capture_table_record.R"))),
-  collapse = "\n"
-)
-stopifnot(
-  grepl("paper_write_exact_rds", cli_capture_code, fixed = TRUE),
-  !grepl("saveRDS", cli_capture_code, fixed = TRUE)
-)
+cli_status <- function(output) {
+  status <- attr(output, "status")
+  if (is.null(status)) 0L else as.integer(status)
+}
 
 cli_reference_root <- tempfile("table-cli-reference-")
 cli_candidate_root <- tempfile("table-cli-candidate-")
 dir.create(cli_reference_root)
 dir.create(cli_candidate_root)
-cli_write_table(cli_reference_root, cli_table_body("1.23", "***"))
-cli_write_table(cli_candidate_root, cli_table_body("1.23", "***"))
+cli_write_table(
+  cli_reference_root,
+  cli_table_body("1.23", "***")
+)
+cli_write_table(
+  cli_candidate_root,
+  cli_table_body("1.23", "***")
+)
+cli_write_table(
+  cli_candidate_root,
+  "Status & not estimated \\\\",
+  "nonnumeric-only.tex"
+)
 cli_write_non_table_artifacts(cli_reference_root, "reference")
 cli_write_non_table_artifacts(cli_candidate_root, "candidate")
 
-cli_artifact_comparator <- paper_path(
-  "tests", "support", "compare_pipeline_artifacts.R"
+output <- cli_output(c(cli_reference_root, cli_candidate_root))
+stopifnot(
+  identical(cli_status(output), 0L),
+  any(grepl(
+    "Published table-result comparison passed.",
+    output,
+    fixed = TRUE
+  ))
 )
-status <- cli_status(
-  cli_artifact_comparator,
-  c(cli_reference_root, cli_candidate_root)
-)
-stopifnot(identical(status, 0L))
 
 cli_write_table(cli_candidate_root, cli_table_body("1.24", "***"))
-status <- cli_status(
-  cli_artifact_comparator,
-  c(cli_reference_root, cli_candidate_root)
+output <- cli_output(c(cli_reference_root, cli_candidate_root))
+stopifnot(
+  identical(cli_status(output), 1L),
+  any(grepl("displayed values differ", output, fixed = TRUE))
 )
-stopifnot(identical(status, 1L))
 
 cli_write_table(cli_candidate_root, cli_table_body("1.23", "**"))
-status <- cli_status(
-  cli_artifact_comparator,
-  c(cli_reference_root, cli_candidate_root)
-)
-stopifnot(identical(status, 1L))
-
-cli_write_table(cli_candidate_root, cli_table_body("1.23", "***"))
-cli_record_path <- tempfile("table-record-", fileext = ".rds")
-capture_output <- cli_output(
-  paper_path("validation", "capture_table_record.R"),
-  c(cli_reference_root, cli_record_path)
-)
-capture_status <- attr(capture_output, "status")
-if (is.null(capture_status)) {
-  capture_status <- 0L
-}
+output <- cli_output(c(cli_reference_root, cli_candidate_root))
 stopifnot(
-  identical(capture_status, 0L),
-  !any(grepl("[1] TRUE", capture_output, fixed = TRUE)),
-  file.exists(cli_record_path)
-)
-cli_record <- readRDS(cli_record_path)
-stopifnot(
-  identical(cli_record$schema_version, 3L),
-  identical(
-    cli_record$published_tables$table.tex[["tabular_1/row_1/column_1"]]$stars,
-    "***"
-  )
+  identical(cli_status(output), 1L),
+  any(grepl("stars differ", output, fixed = TRUE))
 )
 
-status <- cli_status(
-  paper_path("validation", "compare_table_records.R"),
-  c(cli_record_path, cli_record_path)
+empty_reference <- tempfile("table-cli-empty-reference-")
+empty_candidate <- tempfile("table-cli-empty-candidate-")
+dir.create(file.path(empty_reference, "tables"), recursive = TRUE)
+dir.create(file.path(empty_candidate, "tables"), recursive = TRUE)
+output <- cli_output(c(empty_reference, empty_candidate))
+stopifnot(identical(cli_status(output), 0L))
+
+output <- cli_output(cli_reference_root)
+stopifnot(
+  identical(cli_status(output), 1L),
+  any(grepl("Usage: compare_output_tables.R", output, fixed = TRUE))
 )
-stopifnot(identical(status, 0L))
 
 unlink(cli_reference_root, recursive = TRUE)
 unlink(cli_candidate_root, recursive = TRUE)
-unlink(cli_record_path)
+unlink(empty_reference, recursive = TRUE)
+unlink(empty_candidate, recursive = TRUE)
 rm(
   cli_write_table,
   cli_table_body,
   cli_write_non_table_artifacts,
-  cli_status,
   cli_output,
-  cli_capture_code,
+  cli_status,
   cli_reference_root,
   cli_candidate_root,
-  cli_artifact_comparator,
-  cli_record_path,
-  cli_record,
-  capture_output,
-  capture_status,
-  status
+  empty_reference,
+  empty_candidate,
+  output
 )
