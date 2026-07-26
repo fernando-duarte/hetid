@@ -46,6 +46,27 @@ clean_runner_call <- function(run_root, reference, fail = FALSE) {
   ))
 }
 
+clean_runner_implicit_call <- function(tmpdir, reference) {
+  environment <- c(
+    "HETID_VALIDATION_RUN_ROOT=",
+    paste0("TMPDIR=", tmpdir),
+    paste0(
+      "HETID_VALIDATION_PIPELINE_SCRIPT=",
+      "scripts-paper/tests/validation/fixture_pipeline.R"
+    )
+  )
+  suppressWarnings(system2(
+    "bash",
+    c(
+      paper_path("validation", "run_clean_validation.sh"),
+      reference
+    ),
+    stdout = TRUE,
+    stderr = TRUE,
+    env = environment
+  ))
+}
+
 clean_runner_mark_owned <- function(run_root) {
   dir.create(run_root, recursive = TRUE, showWarnings = FALSE)
   writeLines(

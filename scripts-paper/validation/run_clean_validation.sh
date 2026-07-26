@@ -30,6 +30,44 @@ repo_root="$(
   pwd -P
 )"
 
+resolve_future_path() {
+  requested_path=$1
+  path_probe="$requested_path"
+  path_suffix=""
+  while [[ ! -e "$path_probe" && ! -L "$path_probe" ]]; do
+    path_suffix="/$(basename -- "$path_probe")$path_suffix"
+    path_probe="$(dirname -- "$path_probe")"
+  done
+  if [[ ! -d "$path_probe" ]]; then
+    printf 'path ancestor must be a directory: %s\n' "$path_probe" >&2
+    return 2
+  fi
+  resolved_path_probe="$(
+    cd -- "$path_probe"
+    pwd -P
+  )"
+  printf '%s\n' "$resolved_path_probe$path_suffix"
+}
+
+reject_repository_overlap() {
+  overlap_path=$1
+  overlap_label=$2
+  case "$overlap_path" in
+    "$repo_root" | "$repo_root"/*)
+      printf '%s must not overlap the repository: %s\n' \
+        "$overlap_label" "$overlap_path" >&2
+      return 2
+      ;;
+  esac
+  case "$repo_root" in
+    "$overlap_path" | "$overlap_path"/*)
+      printf '%s must not overlap the repository: %s\n' \
+        "$overlap_label" "$overlap_path" >&2
+      return 2
+      ;;
+  esac
+}
+
 if [[ -n "$run_root" ]]; then
   if [[ "$run_root" != /* ]]; then
     printf 'HETID_VALIDATION_RUN_ROOT must be an absolute path\n' >&2
@@ -45,35 +83,8 @@ if [[ -n "$run_root" ]]; then
     printf 'HETID_VALIDATION_RUN_ROOT must not be a symbolic link\n' >&2
     exit 2
   fi
-  run_probe="$run_root"
-  run_suffix=""
-  while [[ ! -e "$run_probe" && ! -L "$run_probe" ]]; do
-    run_suffix="/$(basename -- "$run_probe")$run_suffix"
-    run_probe="$(dirname -- "$run_probe")"
-  done
-  if [[ ! -d "$run_probe" ]]; then
-    printf 'run-root ancestor must be a directory: %s\n' "$run_probe" >&2
-    exit 2
-  fi
-  resolved_probe="$(
-    cd -- "$run_probe"
-    pwd -P
-  )"
-  resolved_request="$resolved_probe$run_suffix"
-  case "$resolved_request" in
-    "$repo_root" | "$repo_root"/*)
-      printf 'validation run root must not overlap the repository: %s\n' \
-        "$resolved_request" >&2
-      exit 2
-      ;;
-  esac
-  case "$repo_root" in
-    "$resolved_request" | "$resolved_request"/*)
-      printf 'validation run root must not overlap the repository: %s\n' \
-        "$resolved_request" >&2
-      exit 2
-      ;;
-  esac
+  resolved_request="$(resolve_future_path "$run_root")"
+  reject_repository_overlap "$resolved_request" "validation run root"
   mkdir -p -- "$run_root"
   run_root="$(
     cd -- "$run_root"
@@ -81,7 +92,20 @@ if [[ -n "$run_root" ]]; then
   )"
 else
   validation_tmp_base="${TMPDIR:-/tmp}"
+  if [[ "$validation_tmp_base" != /* || ! -d "$validation_tmp_base" ]]; then
+    printf 'TMPDIR must be an existing absolute directory\n' >&2
+    exit 2
+  fi
+  resolved_tmp_base="$(
+    cd -- "$validation_tmp_base"
+    pwd -P
+  )"
+  reject_repository_overlap "$resolved_tmp_base" "TMPDIR"
   run_root="$(mktemp -d "$validation_tmp_base/hetid-clean-validation.XXXXXX")"
+  run_root="$(
+    cd -- "$run_root"
+    pwd -P
+  )"
 fi
 if [[ "$run_root" == / ]]; then
   printf 'HETID_VALIDATION_RUN_ROOT must not resolve to the filesystem root\n' >&2
@@ -104,10 +128,9 @@ else
   )
 fi
 
-rm -f -- "$run_root/comparison-passed"
-
 reference_input=$1
 if [[ ! -f "$reference_input" ]]; then
+  rm -f -- "$run_root/comparison-passed"
   printf 'reference record does not exist: %s\n' "$reference_input" >&2
   exit 2
 fi
@@ -117,6 +140,14 @@ reference_dir="$(
 )"
 reference_path="$reference_dir/$(basename -- "$reference_input")"
 compare_cli="$repo_root/scripts-paper/validation/compare_table_records.R"
+comparison_marker="$run_root/comparison-passed"
+if [[ "$reference_path" == "$comparison_marker" ||
+  "$reference_path" == "$owner_marker" ]]; then
+  printf 'reference record collides with managed path: %s\n' \
+    "$reference_path" >&2
+  exit 2
+fi
+rm -f -- "$comparison_marker"
 
 Rscript --vanilla "$compare_cli" "$reference_path" "$reference_path"
 
@@ -136,6 +167,30 @@ if ! cmp -s -- "$reference_path" "$reference_snapshot"; then
   exit 2
 fi
 Rscript --vanilla "$compare_cli" "$reference_snapshot" "$reference_snapshot"
+
+pipeline_log="$run_root/pipeline.log"
+preexisting_output="$run_root/preexisting-output"
+staged_output_path="$run_root/source/scripts-paper/output"
+managed_collision=""
+case "$reference_path" in
+  "$pipeline_log")
+    managed_collision="$pipeline_log"
+    ;;
+  "$private_root" | "$private_root"/*)
+    managed_collision="$private_root"
+    ;;
+  "$preexisting_output" | "$preexisting_output"/*)
+    managed_collision="$preexisting_output"
+    ;;
+  "$staged_output_path" | "$staged_output_path"/*)
+    managed_collision="$staged_output_path"
+    ;;
+esac
+if [[ -n "$managed_collision" ]]; then
+  printf 'reference record collides with managed path: %s\n' \
+    "$managed_collision" >&2
+  exit 2
+fi
 
 source_root="$run_root/source"
 if [[ -L "$source_root" ]]; then
@@ -175,7 +230,6 @@ case "$reference_path" in
 esac
 rsync "${rsync_options[@]}" "$repo_root/" "$source_root/"
 staged_output="$source_root/scripts-paper/output"
-preexisting_output="$run_root/preexisting-output"
 if [[ -e "$staged_output" || -L "$staged_output" ]]; then
   if [[ -e "$preexisting_output" || -L "$preexisting_output" ]]; then
     printf 'recovery path already exists: %s\n' "$preexisting_output" >&2
@@ -208,7 +262,6 @@ export HETID_BOOT_REPS=10000
 export HETID_BOOT_MODE=rerun
 unset HETID_VALIDATION_STRICT_REUSE
 
-pipeline_log="$run_root/pipeline.log"
 if [[ -L "$pipeline_log" ]]; then
   printf 'pipeline log must not be a symbolic link: %s\n' "$pipeline_log" >&2
   exit 2

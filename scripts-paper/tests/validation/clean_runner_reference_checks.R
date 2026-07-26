@@ -66,9 +66,41 @@ local({
     identical(unname(tools::md5sum(source_reference)), source_hash) &&
     any(grepl("displayed values differ", source_result, fixed = TRUE))
 
+  log_root <- file.path(test_root, "log-reference-run")
+  seed_log <- clean_runner_call(log_root, matching_reference)
+  stopifnot(identical(clean_runner_status(seed_log), 0L))
+  log_reference <- file.path(log_root, "pipeline.log")
+  file.copy(mismatching_reference, log_reference, overwrite = TRUE)
+  log_hash <- unname(tools::md5sum(log_reference))
+  log_result <- clean_runner_call(log_root, log_reference)
+  log_safe <- clean_runner_status(log_result) != 0L &&
+    file.exists(log_reference) &&
+    identical(unname(tools::md5sum(log_reference)), log_hash) &&
+    !file.exists(file.path(log_root, "comparison-passed"))
+
+  output_root <- file.path(test_root, "output-reference-run")
+  seed_output <- clean_runner_call(output_root, matching_reference)
+  stopifnot(identical(clean_runner_status(seed_output), 0L))
+  output_reference <- file.path(
+    output_root,
+    "source",
+    "scripts-paper",
+    "output",
+    "reference.rds"
+  )
+  file.copy(mismatching_reference, output_reference, overwrite = TRUE)
+  output_hash <- unname(tools::md5sum(output_reference))
+  output_result <- clean_runner_call(output_root, output_reference)
+  output_safe <- clean_runner_status(output_result) != 0L &&
+    file.exists(output_reference) &&
+    identical(unname(tools::md5sum(output_reference)), output_hash) &&
+    !file.exists(file.path(output_root, "comparison-passed"))
+
   reference_results <- c(
     candidate_reference_is_immutable = candidate_safe,
-    source_reference_is_immutable = source_safe
+    source_reference_is_immutable = source_safe,
+    pipeline_log_reference_is_immutable = log_safe,
+    staged_output_reference_is_immutable = output_safe
   )
   if (!all(reference_results)) {
     stop(

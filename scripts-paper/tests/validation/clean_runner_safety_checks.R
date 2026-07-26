@@ -43,7 +43,7 @@ local({
     file.exists(file.path(unowned_root, "comparison-passed")) &&
     !file.exists(file.path(unowned_root, "pipeline.log"))
 
-  containment_root <- file.path(repo_root, ".clean-validation-overlap-test")
+  containment_root <- tempfile(".clean-validation-overlap-", tmpdir = repo_root)
   containment_source <- tempfile("clean-validation-overlap-source-")
   dir.create(containment_root)
   dir.create(containment_source)
@@ -56,6 +56,22 @@ local({
   containment_result <- clean_runner_call(containment_root, reference)
   containment_safe <- clean_runner_status(containment_result) != 0L &&
     any(grepl("must not overlap the repository", containment_result, fixed = TRUE))
+  unlink(containment_root, recursive = TRUE)
+
+  implicit_tmpdir <- tempfile(".clean-validation-tmpdir-", tmpdir = repo_root)
+  dir.create(implicit_tmpdir)
+  on.exit(unlink(implicit_tmpdir, recursive = TRUE), add = TRUE)
+  writeLines("must survive", file.path(implicit_tmpdir, "sentinel"))
+  implicit_before <- clean_runner_inventory(implicit_tmpdir)
+  implicit_result <- clean_runner_implicit_call(
+    implicit_tmpdir,
+    file.path(test_root, "missing-implicit-reference.rds")
+  )
+  implicit_after <- clean_runner_inventory(implicit_tmpdir)
+  implicit_safe <- clean_runner_status(implicit_result) != 0L &&
+    identical(implicit_before, implicit_after) &&
+    any(grepl("must not overlap the repository", implicit_result, fixed = TRUE))
+  unlink(implicit_tmpdir, recursive = TRUE)
 
   symlink_root <- file.path(test_root, "symlinked-source-run")
   external_source <- tempfile("clean-validation-external-")
@@ -126,6 +142,7 @@ local({
   safety_results <- c(
     unowned_root_rejected = unowned_safe,
     repository_containment_rejected = containment_safe,
+    implicit_repository_tmpdir_rejected = implicit_safe,
     symlinked_source_rejected = symlink_safe,
     invalid_reference_clears_owned_marker = invalid_marker_safe,
     missing_reference_clears_owned_marker = missing_marker_safe,
@@ -145,5 +162,6 @@ rm(
   clean_runner_status,
   clean_runner_inventory,
   clean_runner_call,
+  clean_runner_implicit_call,
   clean_runner_mark_owned
 )

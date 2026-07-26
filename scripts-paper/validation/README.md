@@ -1,6 +1,6 @@
 # Cross-run table acceptance
 
-Updated: 2026-07-26 10:51 EDT
+Updated: 2026-07-26 11:04 EDT
 
 Cross-run acceptance is decided only by numeric results printed in final TeX
 tables and the significance stars attached to those results. Table paths,
@@ -58,14 +58,25 @@ candidate record, and `comparison-passed` marker at a chosen absolute path.
 The chosen path must be new, empty, or carry the runner's private ownership
 marker from an earlier validation. The runner rejects unowned nonempty paths
 without changing their contents. It also rejects paths equal to, above, or
-inside the repository.
+inside the repository. When no explicit run root is supplied, `TMPDIR` must be
+an existing absolute directory with the same repository-separation property;
+the runner checks it before creating a temporary directory.
 
 The runner validates and snapshots the explicit reference into a protected,
 unique path before staging. The snapshot is used for the final comparison, so a
-reference stored under the reusable run root cannot alias the generated
-candidate or be changed by source staging. If the reference itself is
-`candidate.rds`, the new candidate record is retained beside the protected
-snapshot instead.
+supported reference stored under the reusable run root cannot alias the
+generated candidate or be changed by source staging. Supported locations
+include `candidate.rds` and ordinary paths under `source` but outside
+`source/scripts-paper/output`. For `candidate.rds`, the new candidate is
+retained beside the protected snapshot.
+
+References that collide with runner-managed state are rejected without changing
+the original reference. Reserved locations are `pipeline.log`,
+`comparison-passed`, the ownership marker, the private snapshot tree,
+`preexisting-output`, and `source/scripts-paper/output`. The stale success
+marker is cleared for an authorized run before validating or rejecting a
+snapshot-safe reference. A reference equal to `comparison-passed` or the
+ownership marker is rejected before either reserved file is changed.
 The compatibility Mac entrypoint delegates to the same clean runner:
 
 ```sh
