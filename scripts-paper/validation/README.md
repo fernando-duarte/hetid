@@ -28,39 +28,23 @@ bash docs/bootstrap-single-stage-refactor/validation-tools/capture_legacy_refere
 
 The helper rejects the historical schema-2 path before reading table output.
 
-Run these commands from the repository root.
-
-Capture a schema-3 reference from retained output:
+Run the direct comparison from the repository root:
 
 ```sh
-Rscript --vanilla scripts-paper/validation/capture_table_record.R \
+Rscript --vanilla scripts-paper/validation/compare_output_tables.R \
   path/to/retained/scripts-paper/output \
-  path/to/reference-schema3.rds
-```
-
-Compare two existing schema-3 records:
-
-```sh
-Rscript --vanilla scripts-paper/validation/compare_table_records.R \
-  path/to/reference-schema3.rds \
-  path/to/candidate-schema3.rds
-```
-
-Run one clean candidate pipeline and compare it with the explicit reference:
-
-```sh
-bash scripts-paper/validation/run_clean_validation.sh \
-  path/to/reference-schema3.rds
+  path/to/candidate/scripts-paper/output
 ```
 
 Set `HETID_VALIDATION_RUN_ROOT` to retain the staged source, pipeline log,
 candidate record, and `comparison-passed` marker at a chosen absolute path.
 The chosen path must be new, empty, or carry the runner's private ownership
-marker from an earlier validation. The runner rejects unowned nonempty paths
-without changing their contents. It also rejects paths equal to, above, or
-inside the repository. When no explicit run root is supplied, `TMPDIR` must be
-an existing absolute directory with the same repository-separation property;
-the runner checks it before creating a temporary directory.
+marker from an earlier validation. The runner rejects nonempty paths without
+its ownership marker without changing their contents. It also rejects paths
+equal to, above, or inside the repository. When no explicit run root is
+supplied, `TMPDIR` must be an existing absolute directory with the same
+repository-separation property; the runner checks it before creating a
+temporary directory.
 
 The runner validates and snapshots the explicit reference into a protected,
 unique path before staging. The snapshot is used for the final comparison, so a

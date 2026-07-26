@@ -1,5 +1,7 @@
 # Semantic SSOT scan for active table-acceptance definitions.
 
+source(file.path("scripts-paper", "config", "paths.R"))
+
 definition_files <- list.files(
   repo_root,
   pattern = "[.]R$",
@@ -47,17 +49,6 @@ definition_patterns <- list(
     "nchar\\s*\\(",
     "10\\s*\\^"
   ),
-  schema_validation = c(
-    "\\$schema_version",
-    "\\$published_tables",
-    "identical\\s*\\(",
-    "stop\\s*\\("
-  ),
-  schema_record = c(
-    "list\\s*\\(",
-    "schema_version\\s*=",
-    "published_tables\\s*="
-  ),
   rounding_overlap = c(
     "\\$quantum",
     "abs\\s*\\(",
@@ -98,8 +89,6 @@ fixture_hits <- definition_scan(definition_fixture)
 stopifnot(
   any(grepl("numeric_token", fixture_hits, fixed = TRUE)),
   any(grepl("quantum", fixture_hits, fixed = TRUE)),
-  any(grepl("schema_validation", fixture_hits, fixed = TRUE)),
-  any(grepl("schema_record", fixture_hits, fixed = TRUE)),
   any(grepl("rounding_overlap", fixture_hits, fixed = TRUE))
 )
 definition_hits <- definition_scan(definition_files)
@@ -111,6 +100,34 @@ if (length(definition_hits)) {
   )
 }
 
+acceptance_files <- list.files(
+  paper_path("validation"),
+  recursive = TRUE,
+  full.names = TRUE
+)
+acceptance_files <- acceptance_files[grepl("[.](R|sh)$", acceptance_files)]
+acceptance_code <- paste(
+  unlist(lapply(acceptance_files, readLines, warn = FALSE)),
+  collapse = "\n"
+)
+forbidden_acceptance_terms <- c(
+  "saveRDS",
+  "readRDS",
+  "schema_version",
+  "table_record",
+  "capture_table",
+  "run_clean_validation",
+  "HETID_VALIDATION",
+  "comparison-passed"
+)
+stopifnot(!any(vapply(
+  forbidden_acceptance_terms,
+  grepl,
+  logical(1),
+  x = acceptance_code,
+  fixed = TRUE
+)))
+
 rm(
   definition_files,
   definition_exclusions,
@@ -120,5 +137,8 @@ rm(
   definition_function_bodies,
   definition_scan,
   fixture_hits,
-  definition_hits
+  definition_hits,
+  acceptance_files,
+  acceptance_code,
+  forbidden_acceptance_terms
 )

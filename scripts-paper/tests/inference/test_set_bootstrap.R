@@ -60,9 +60,14 @@ paper_source_once(paper_path("inference", "bootstrap_stage_cache.R"))
 paper_source_once(paper_path("support", "statistics", "api.R"))
 
 paper_source_once(paper_path("tests", "support", "harness.R"))
-paper_source_once(paper_path(
-  "tests", "support", "scientific_comparison.R"
-))
+bootstrap_test_equal <- function(reference, candidate) {
+  isTRUE(all.equal(
+    reference,
+    candidate,
+    tolerance = 1e-4,
+    check.attributes = TRUE
+  ))
+}
 .test <- paper_test_harness()
 check <- .test$check
 skip <- .test$skip

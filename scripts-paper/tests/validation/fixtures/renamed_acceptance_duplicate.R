@@ -18,21 +18,6 @@ renamed_display_quantum <- function(token) {
   10^(exponent - places)
 }
 
-renamed_record_constructor <- function(tables) {
-  list(
-    schema_version = 3L,
-    published_tables = tables
-  )
-}
-
-renamed_record_validator <- function(record) {
-  if (!identical(record$schema_version, 3L) ||
-    !is.list(record$published_tables)) {
-    stop("invalid record")
-  }
-  TRUE
-}
-
 renamed_rounding_comparator <- function(reference, candidate) {
   difference <- abs(reference$value - candidate$value)
   overlap <- (reference$quantum + candidate$quantum) / 2

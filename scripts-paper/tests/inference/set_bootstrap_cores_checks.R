@@ -22,11 +22,11 @@ if (.Platform$OS.type == "windows") {
   )
   check(
     "cores=1 vs cores=2 agree on the real logvar_set_boot_draw callback",
-    paper_scientific_equal(
+    bootstrap_test_equal(
       real_run_serial$draws,
       real_run_parallel$draws
     ) &&
-      paper_scientific_equal(
+      bootstrap_test_equal(
         real_run_serial$indices,
         real_run_parallel$indices
       )

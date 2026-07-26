@@ -193,14 +193,12 @@ Rscript scripts-paper/tests/run_tests.R
 Cross-run acceptance uses only final TeX table numbers and their attached
 significance stars. See the
 [canonical validation workflow](validation/README.md) for the complete rule.
-Capture an explicit schema-3 reference from retained tables, or run one clean
-candidate pipeline against that reference:
+Compare an explicit retained output root directly with a candidate output root:
 
 ```sh
-Rscript --vanilla scripts-paper/validation/capture_table_record.R \
-  path/to/retained/scripts-paper/output path/to/reference-schema3.rds
-bash scripts-paper/validation/run_clean_validation.sh \
-  path/to/reference-schema3.rds
+Rscript --vanilla scripts-paper/validation/compare_output_tables.R \
+  path/to/retained/scripts-paper/output \
+  path/to/candidate/scripts-paper/output
 ```
 
 ## Inactive and test-support modules
