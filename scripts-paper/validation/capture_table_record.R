@@ -10,6 +10,7 @@ script_path <- normalizePath(sub("^--file=", "", script_argument), mustWork = TR
 setwd(normalizePath(file.path(dirname(script_path), "..", ".."), mustWork = TRUE))
 
 source(file.path("scripts-paper", "config", "paths.R"))
+paper_source_once(paper_path("support", "artifacts", "typed_artifacts.R"))
 paper_source_once(paper_path("validation", "table_comparison.R"))
 
 args <- commandArgs(trailingOnly = TRUE)
@@ -26,7 +27,7 @@ temporary <- tempfile(
   pattern = paste0(basename(record_path), "."),
   tmpdir = dirname(record_path)
 )
-saveRDS(record, temporary, version = 3L)
+paper_write_exact_rds(record, temporary, "table record capture")
 roundtrip <- readRDS(temporary)
 invisible(paper_validate_table_record(roundtrip))
 stopifnot(identical(record, roundtrip))

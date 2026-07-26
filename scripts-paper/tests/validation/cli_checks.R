@@ -43,6 +43,15 @@ cli_output <- function(script, arguments) {
   )
 }
 
+cli_capture_code <- paste(
+  deparse(parse(paper_path("validation", "capture_table_record.R"))),
+  collapse = "\n"
+)
+stopifnot(
+  grepl("paper_write_exact_rds", cli_capture_code, fixed = TRUE),
+  !grepl("saveRDS", cli_capture_code, fixed = TRUE)
+)
+
 cli_reference_root <- tempfile("table-cli-reference-")
 cli_candidate_root <- tempfile("table-cli-candidate-")
 dir.create(cli_reference_root)
@@ -114,6 +123,7 @@ rm(
   cli_write_non_table_artifacts,
   cli_status,
   cli_output,
+  cli_capture_code,
   cli_reference_root,
   cli_candidate_root,
   cli_artifact_comparator,
