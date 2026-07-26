@@ -61,6 +61,26 @@ ptc_write(ptc_reference, "table.tex", "estimate & 1.23 & 4.56 \\\\")
 ptc_write(ptc_candidate, "table.tex", "estimate & 1.24 & 4.56 \\\\")
 stopifnot(!isTRUE(ptc_compare(ptc_reference, ptc_candidate)))
 
+ptc_write(ptc_reference, "table.tex", "estimate & 2.31 & -2.31 \\\\")
+ptc_write(ptc_candidate, "table.tex", "estimate & 2.32 & -2.32 \\\\")
+stopifnot(!isTRUE(ptc_compare(ptc_reference, ptc_candidate)))
+
+ptc_write(
+  ptc_reference,
+  "table.tex",
+  "estimate & 2.31e-9 & $2.31 \\times 10^{-9}$ \\\\"
+)
+ptc_write(
+  ptc_candidate,
+  "table.tex",
+  "estimate & 2.32e-9 & $2.32 \\times 10^{-9}$ \\\\"
+)
+stopifnot(!isTRUE(ptc_compare(ptc_reference, ptc_candidate)))
+
+ptc_write(ptc_reference, "table.tex", "estimate & 2.314 & 4.56 \\\\")
+ptc_write(ptc_candidate, "table.tex", "estimate & 2.31 & 4.56 \\\\")
+stopifnot(isTRUE(ptc_compare(ptc_reference, ptc_candidate)))
+
 ptc_write(
   ptc_reference,
   "table.tex",

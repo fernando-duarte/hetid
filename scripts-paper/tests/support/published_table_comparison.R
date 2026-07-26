@@ -5,7 +5,6 @@ PAPER_TABLE_NUMBER_PATTERN <- paste0(
   "(?:[0-9]+(?:[.][0-9]*)?)|(?:[.][0-9]+)",
   ")(?:[eE][-+]?[0-9]+)?"
 )
-
 paper_table_number_quantum <- function(token) {
   mantissa <- sub("[eE].*$", "", token)
   exponent_text <- sub("^.*[eE]", "", token)
@@ -136,7 +135,9 @@ paper_table_tokens_equal <- function(reference, candidate) {
   rounding_overlap <- (
     reference$quantum + candidate$quantum
   ) / 2
-  difference == 0 | difference < rounding_overlap
+  scale <- pmax(abs(reference$value), abs(candidate$value), rounding_overlap)
+  boundary_slack <- 8 * .Machine$double.eps * scale
+  difference == 0 | difference < rounding_overlap - boundary_slack
 }
 
 paper_published_tables_compare <- function(reference, candidate) {
