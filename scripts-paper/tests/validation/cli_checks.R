@@ -34,6 +34,15 @@ cli_status <- function(script, arguments) {
   system2(file.path(R.home("bin"), "Rscript"), args = c(script, arguments))
 }
 
+cli_output <- function(script, arguments) {
+  system2(
+    file.path(R.home("bin"), "Rscript"),
+    args = c(script, arguments),
+    stdout = TRUE,
+    stderr = TRUE
+  )
+}
+
 cli_reference_root <- tempfile("table-cli-reference-")
 cli_candidate_root <- tempfile("table-cli-candidate-")
 dir.create(cli_reference_root)
@@ -68,11 +77,19 @@ stopifnot(identical(status, 1L))
 
 cli_write_table(cli_candidate_root, cli_table_body("1.23", "***"))
 cli_record_path <- tempfile("table-record-", fileext = ".rds")
-status <- cli_status(
+capture_output <- cli_output(
   paper_path("validation", "capture_table_record.R"),
   c(cli_reference_root, cli_record_path)
 )
-stopifnot(identical(status, 0L), file.exists(cli_record_path))
+capture_status <- attr(capture_output, "status")
+if (is.null(capture_status)) {
+  capture_status <- 0L
+}
+stopifnot(
+  identical(capture_status, 0L),
+  !any(grepl("[1] TRUE", capture_output, fixed = TRUE)),
+  file.exists(cli_record_path)
+)
 cli_record <- readRDS(cli_record_path)
 stopifnot(
   identical(cli_record$schema_version, 3L),
@@ -96,10 +113,13 @@ rm(
   cli_table_body,
   cli_write_non_table_artifacts,
   cli_status,
+  cli_output,
   cli_reference_root,
   cli_candidate_root,
   cli_artifact_comparator,
   cli_record_path,
   cli_record,
+  capture_output,
+  capture_status,
   status
 )

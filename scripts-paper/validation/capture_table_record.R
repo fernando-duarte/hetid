@@ -28,7 +28,7 @@ temporary <- tempfile(
 )
 saveRDS(record, temporary, version = 3L)
 roundtrip <- readRDS(temporary)
-paper_validate_table_record(roundtrip)
+invisible(paper_validate_table_record(roundtrip))
 stopifnot(identical(record, roundtrip))
 if (!file.rename(temporary, record_path)) {
   stop("could not promote validated table record", call. = FALSE)
