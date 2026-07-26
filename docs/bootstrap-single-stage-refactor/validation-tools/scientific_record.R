@@ -64,6 +64,9 @@ paper_validate_table_record <- function(record) {
       if (!is.data.frame(cell) ||
         !identical(names(cell), c("value", "quantum")) ||
         !is.numeric(cell$value) || !is.numeric(cell$quantum) ||
+        !is.null(dim(cell$value)) || !is.null(dim(cell$quantum)) ||
+        length(cell$value) != nrow(cell) ||
+        length(cell$quantum) != nrow(cell) ||
         any(!is.finite(cell$value)) ||
         any(!is.finite(cell$quantum) | cell$quantum <= 0)) {
         fail(paste("malformed numeric cell:", path))

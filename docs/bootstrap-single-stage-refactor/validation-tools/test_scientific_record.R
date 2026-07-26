@@ -38,6 +38,11 @@ infinite_record <- valid_record
 infinite_record$published_tables[[1L]][[1L]]$value <- Inf
 zero_quantum_record <- valid_record
 zero_quantum_record$published_tables[[1L]][[1L]]$quantum <- 0
+matrix_record <- valid_record
+matrix_record$published_tables[[1L]][[1L]] <- data.frame(
+  value = I(matrix(c(1.23, 2.34), nrow = 1L)),
+  quantum = I(matrix(c(0.01, 0.01), nrow = 1L))
+)
 
 invalid_records <- list(
   list(schema_version = 2L),
@@ -48,7 +53,8 @@ invalid_records <- list(
   coordinate_record,
   malformed_record,
   infinite_record,
-  zero_quantum_record
+  zero_quantum_record,
+  matrix_record
 )
 
 for (record in invalid_records) {
