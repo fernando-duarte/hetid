@@ -3,6 +3,10 @@
 Recorded: 2026-07-25 23:05 EDT
 Updated: 2026-07-26 08:42 EDT
 
+> Superseded on 2026-07-26 by
+> `2026-07-26-direct-table-only-acceptance-design.md`. The replacement removes
+> serialized records, clean-run staging, and intermediate acceptance gates.
+
 ## Purpose
 
 Replace every cross-run acceptance rule for `scripts-paper` with one rule:
