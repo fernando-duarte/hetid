@@ -1,6 +1,6 @@
 # Single-stage bootstrap refactor final report
 
-Updated: 2026-07-26 10:06 EDT
+Updated: 2026-07-26 19:37 EDT
 
 ## Status
 
@@ -11,11 +11,11 @@ single-stage branch was already incorporated into local `main` and
 `origin/main`. The acceptance redesign and Task 5 follow-up did not run another
 10,000-draw bootstrap.
 
-Current cross-run acceptance requires recapturing an explicit schema-3
-reference from the retained TeX tables. It stages an empty candidate output
-tree and runs the pipeline once. The retained schema-2 record and the earlier
-rerun/reuse comparisons are immutable historical evidence, not current
-acceptance inputs.
+Current acceptance directly compares numeric tokens and attached stars in the
+final TeX tables under two existing output roots. It does not serialize a
+reference, stage a clean run, execute the pipeline, or inspect intermediate
+artifacts. The retained schema records and earlier rerun/reuse comparisons are
+immutable historical evidence, not current acceptance inputs.
 
 ## Historical isolation record
 
@@ -51,8 +51,6 @@ acceptance inputs.
   their attached stars in every final TeX table. Tokens pass when their
   displayed rounding intervals overlap; paths, numeric coordinates, and token
   counts must also match.
-- The canonical schema-3 validator rejects malformed reference records before
-  source staging or pipeline execution.
 
 ## Commits
 
@@ -83,18 +81,16 @@ acceptance inputs.
 Commit range:
 `18fc270c3e2035b9d3699739db6e436bbf646236..9f1280c44ce8886a2af69710c1f9c3b3b37b91a2`
 
-## Current Task 5 validation
+## Current direct-comparison validation
 
-- Schema-3 table acceptance suite passed.
-- Semantic SSOT scan covers active R functions outside the canonical
-  validation directory and detects a renamed duplicate fixture.
-- Historical compatibility comparator passed from a temporary non-repository
-  working directory.
-- Legacy-output capture requires an explicit schema-3 destination and rejects
-  the immutable historical schema-2 path before capture.
-- Mac wrapper success used only `fixture_pipeline.R`; no production pipeline or
-  bootstrap ran.
-- Current topology: 381 R files and 64 artifacts passed.
+- Direct table acceptance suite: passed.
+- Mutation matrix: accepted prose, nonnumeric-only table, and non-table changes;
+  rejected displayed-value, star, numeric-coordinate, and token-count changes.
+- Semantic SSOT scan: passed across active R functions outside
+  `scripts-paper/validation/`; renamed parser, quantum, and rounding duplicate
+  fixtures were detected.
+- Topology and contract ownership: passed.
+- Paper test runner: all 34 suites and structural checks passed.
 
 ## Historical validation completed
 
@@ -170,8 +166,8 @@ The historical schema-2 reference remains:
   `ce51b33e95cbfd1e013279bf83b5b37f7929411f8538e9a619edd851fb8b5f26`
 
 This byte checksum is scoped to the local R serializer. It is historical
-evidence only. Current cross-platform acceptance requires a newly captured
-schema-3 projection so significance stars are retained.
+evidence only. Current cross-platform acceptance reads displayed numeric tokens
+and attached stars directly from the two existing TeX output trees.
 
 It was projected directly from the retained legacy TeX outputs. All 23 match
 the pinned fresh-run inventory byte-for-byte. The previous 19 MiB schema-1

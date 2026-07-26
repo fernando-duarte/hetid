@@ -1,6 +1,6 @@
 # Baseline artifacts
 
-Updated: 2026-07-26 10:06 EDT
+Updated: 2026-07-26 19:37 EDT
 
 - Legacy source: `/private/tmp/hetid-fresh-pipeline-run-20260722`
 - Retained replay:
@@ -24,19 +24,15 @@ only the normalized numeric result-cell projections of all 23 final TeX tables:
   `ce51b33e95cbfd1e013279bf83b5b37f7929411f8538e9a619edd851fb8b5f26`
 
 The RDS checksum is immutable historical evidence for the local R build that
-wrote it. Schema 2 lacks significance stars and is not accepted by the current
-cross-run gate. Do not overwrite this RDS.
+wrote it. It is not a current acceptance input. Do not overwrite this RDS.
 
-For new acceptance, recapture a schema-3 reference from these retained TeX
-tables with `scripts-paper/validation/capture_table_record.R`, then run the
-single-pass clean validator with that explicit reference.
-
-The compatibility helper also requires an explicit, distinct destination and
-rejects the historical path before capture:
+For current acceptance, compare the retained replay's existing output root
+directly with a candidate output root:
 
 ```sh
-bash docs/bootstrap-single-stage-refactor/validation-tools/capture_legacy_reference.sh \
-  path/to/reference-schema3.rds
+Rscript --vanilla scripts-paper/validation/compare_output_tables.R \
+  path/to/retained/scripts-paper/output \
+  path/to/candidate/scripts-paper/output
 ```
 
 The projection came directly from the retained replay at commit `18fc270`.

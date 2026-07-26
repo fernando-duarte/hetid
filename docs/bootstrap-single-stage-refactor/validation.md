@@ -1,28 +1,25 @@
 # Single-stage bootstrap refactor validation
 
-Updated: 2026-07-26 10:06 EDT
+Updated: 2026-07-26 19:37 EDT
 
 ## Current cross-run acceptance
 
-Current acceptance requires an explicit schema-3 reference recaptured from the
-retained TeX tables. The candidate starts from an empty staged output tree,
-runs the pipeline once, and is accepted only when table paths, numeric
-coordinates, token counts, displayed values, and attached stars agree. The
-retained schema-2 record and the earlier rerun/reuse comparisons are immutable
-historical evidence, not current acceptance inputs.
+Current acceptance directly compares numeric tokens and attached stars in the
+final TeX tables under two existing output roots. It does not serialize a
+reference, stage a clean run, execute the pipeline, or inspect intermediate
+artifacts. The retained schema records and earlier rerun/reuse comparisons are
+immutable historical evidence, not current acceptance inputs.
 
-## Current Task 5 validation
+## Current direct-comparison validation
 
-- Schema-3 table acceptance suite: passed.
+- Direct table acceptance suite: passed.
+- Mutation matrix: accepted prose, nonnumeric-only table, and non-table changes;
+  rejected displayed-value, star, numeric-coordinate, and token-count changes.
 - Semantic SSOT scan: passed across active R functions outside
-  `scripts-paper/validation/`; renamed duplicate fixture detected.
-- Compatibility comparator: passed from a temporary non-repository working
-  directory.
-- Legacy-output capture helper: requires an explicit schema-3 destination,
-  rejects the protected historical schema-2 path, and preserves that path
-  when either safety check fails.
-- Mac compatibility wrapper: passed with the fixture pipeline only.
-- Topology: 381 R files and 64 artifacts passed.
+  `scripts-paper/validation/`; renamed parser, quantum, and rounding duplicate
+  fixtures were detected.
+- Topology and contract ownership: passed.
+- Paper test runner: all 34 suites and structural checks passed.
 
 ## Historical implementation evidence
 

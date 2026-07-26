@@ -191,15 +191,18 @@ Rscript scripts-paper/tests/run_tests.R
 ## Cross-run acceptance
 
 Cross-run acceptance uses only final TeX table numbers and their attached
-significance stars. See the
-[canonical validation workflow](validation/README.md) for the complete rule.
-Compare an explicit retained output root directly with a candidate output root:
+significance stars. Compare two existing output roots directly:
 
 ```sh
 Rscript --vanilla scripts-paper/validation/compare_output_tables.R \
-  path/to/retained/scripts-paper/output \
+  path/to/reference/scripts-paper/output \
   path/to/candidate/scripts-paper/output
 ```
+
+The command reads `.tex` files below each root's `tables/` directory. It does
+not run the pipeline or inspect intermediate artifacts. See the
+[canonical validation workflow](validation/README.md) for the precise
+displayed-precision rule.
 
 ## Inactive and test-support modules
 
