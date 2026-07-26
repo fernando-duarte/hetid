@@ -1,6 +1,6 @@
-# Strict comparisons of schema-3 published-table records.
+# Direct comparisons of published-table numeric projections.
 
-paper_source_once(paper_path("validation", "table_record.R"))
+paper_source_once(paper_path("validation", "table_projection.R"))
 
 paper_table_tokens_equal <- function(reference, candidate) {
   stopifnot(nrow(reference) == nrow(candidate))
@@ -16,8 +16,9 @@ paper_table_tokens_equal <- function(reference, candidate) {
     difference < rounding_overlap - slack
 }
 
-paper_numeric_coordinates <- function(table) {
-  sort(names(table)[vapply(table, nrow, integer(1)) > 0L])
+paper_projection_names <- function(projection) {
+  projection_names <- names(projection)
+  if (is.null(projection_names)) character() else sort(projection_names)
 }
 
 paper_coordinate_difference <- function(path, reference, candidate) {
@@ -43,38 +44,46 @@ paper_coordinate_difference <- function(path, reference, candidate) {
   )
 }
 
-paper_compare_table_records <- function(reference, candidate) {
-  paper_validate_table_record(reference)
-  paper_validate_table_record(candidate)
-  reference_paths <- sort(names(reference$published_tables))
-  candidate_paths <- sort(names(candidate$published_tables))
-  if (!identical(reference_paths, candidate_paths)) {
-    return(c(
-      if (length(setdiff(reference_paths, candidate_paths))) {
-        paste(
-          "missing candidate tables:",
-          paste(setdiff(reference_paths, candidate_paths), collapse = ", ")
-        )
-      },
-      if (length(setdiff(candidate_paths, reference_paths))) {
-        paste(
-          "extra candidate tables:",
-          paste(setdiff(candidate_paths, reference_paths), collapse = ", ")
-        )
-      }
-    ))
-  }
-  problems <- character()
-  for (path in reference_paths) {
-    reference_table <- reference$published_tables[[path]]
-    candidate_table <- candidate$published_tables[[path]]
-    reference_coordinates <- paper_numeric_coordinates(reference_table)
-    candidate_coordinates <- paper_numeric_coordinates(candidate_table)
+paper_table_path_difference <- function(reference, candidate) {
+  missing <- setdiff(reference, candidate)
+  extra <- setdiff(candidate, reference)
+  c(
+    if (length(missing)) {
+      paste(
+        "missing candidate numeric tables:",
+        paste(missing, collapse = ", ")
+      )
+    },
+    if (length(extra)) {
+      paste(
+        "extra candidate numeric tables:",
+        paste(extra, collapse = ", ")
+      )
+    }
+  )
+}
+
+paper_compare_table_projections <- function(reference, candidate) {
+  reference_paths <- paper_projection_names(reference)
+  candidate_paths <- paper_projection_names(candidate)
+  problems <- paper_table_path_difference(reference_paths, candidate_paths)
+  for (path in intersect(reference_paths, candidate_paths)) {
+    reference_table <- reference[[path]]
+    candidate_table <- candidate[[path]]
+    reference_coordinates <- paper_projection_names(reference_table)
+    candidate_coordinates <- paper_projection_names(candidate_table)
     problems <- c(
       problems,
-      paper_coordinate_difference(path, reference_coordinates, candidate_coordinates)
+      paper_coordinate_difference(
+        path,
+        reference_coordinates,
+        candidate_coordinates
+      )
     )
-    for (coordinate in intersect(reference_coordinates, candidate_coordinates)) {
+    for (coordinate in intersect(
+      reference_coordinates,
+      candidate_coordinates
+    )) {
       reference_cell <- reference_table[[coordinate]]
       candidate_cell <- candidate_table[[coordinate]]
       if (nrow(reference_cell) != nrow(candidate_cell)) {
@@ -122,9 +131,12 @@ paper_compare_table_records <- function(reference, candidate) {
   if (length(problems)) problems else TRUE
 }
 
-paper_compare_table_projections <- function(reference, candidate) {
-  paper_compare_table_records(
-    list(schema_version = 3L, published_tables = reference),
-    list(schema_version = 3L, published_tables = candidate)
+paper_compare_output_tables <- function(
+  reference_output_root,
+  candidate_output_root
+) {
+  paper_compare_table_projections(
+    paper_published_tables_projection(reference_output_root),
+    paper_published_tables_projection(candidate_output_root)
   )
 }
