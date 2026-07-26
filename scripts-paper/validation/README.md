@@ -1,6 +1,6 @@
 # Cross-run table acceptance
 
-Updated: 2026-07-26 09:47 EDT
+Updated: 2026-07-26 10:06 EDT
 
 Cross-run acceptance is decided only by numeric results printed in final TeX
 tables and the significance stars attached to those results. Table paths,
@@ -17,6 +17,16 @@ empty `scripts-paper/output` tree and executes the pipeline once. Historical
 schema-2 records are obsolete for current acceptance because they do not store
 significance stars. Recapture a schema-3 reference from the retained TeX tables
 before a new acceptance run; do not modify the historical schema-2 RDS.
+
+When capturing from the retained legacy output through the compatibility
+helper, provide a distinct schema-3 destination explicitly:
+
+```sh
+bash docs/bootstrap-single-stage-refactor/validation-tools/capture_legacy_reference.sh \
+  path/to/reference-schema3.rds
+```
+
+The helper rejects the historical schema-2 path before reading table output.
 
 Run these commands from the repository root.
 

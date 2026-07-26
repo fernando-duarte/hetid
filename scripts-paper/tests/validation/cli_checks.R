@@ -105,56 +105,9 @@ status <- cli_status(
 )
 stopifnot(identical(status, 0L))
 
-mac_wrapper <- file.path(
-  "docs",
-  "bootstrap-single-stage-refactor",
-  "validation-tools",
-  "run_mac_candidate.sh"
-)
-missing_reference <- system2("bash", mac_wrapper)
-stopifnot(missing_reference != 0L)
-
-wrapper_reference_root <- tempfile("mac-wrapper-reference-")
-dir.create(file.path(wrapper_reference_root, "tables"), recursive = TRUE)
-writeLines(
-  c(
-    "\\begin{tabular}{lc}",
-    "\\midrule",
-    "Estimate & 1.23$^{**}$ \\\\",
-    "\\end{tabular}"
-  ),
-  file.path(wrapper_reference_root, "tables", "fixture.tex")
-)
-reference_record_path <- tempfile("mac-wrapper-reference-", fileext = ".rds")
-reference_status <- cli_status(
-  paper_path("validation", "capture_table_record.R"),
-  c(wrapper_reference_root, reference_record_path)
-)
-stopifnot(identical(reference_status, 0L))
-
-wrapper_run_root <- tempfile("mac-wrapper-run-")
-wrapper_status <- system2(
-  "bash",
-  c(mac_wrapper, reference_record_path),
-  env = c(
-    paste0("HETID_VALIDATION_RUN_ROOT=", wrapper_run_root),
-    paste0(
-      "HETID_VALIDATION_PIPELINE_SCRIPT=",
-      "scripts-paper/tests/validation/fixture_pipeline.R"
-    )
-  )
-)
-stopifnot(
-  identical(wrapper_status, 0L),
-  file.exists(file.path(wrapper_run_root, "comparison-passed"))
-)
-
 unlink(cli_reference_root, recursive = TRUE)
 unlink(cli_candidate_root, recursive = TRUE)
 unlink(cli_record_path)
-unlink(wrapper_reference_root, recursive = TRUE)
-unlink(reference_record_path)
-unlink(wrapper_run_root, recursive = TRUE)
 rm(
   cli_write_table,
   cli_table_body,
@@ -168,12 +121,5 @@ rm(
   cli_record,
   capture_output,
   capture_status,
-  status,
-  mac_wrapper,
-  missing_reference,
-  wrapper_reference_root,
-  reference_record_path,
-  reference_status,
-  wrapper_run_root,
-  wrapper_status
+  status
 )

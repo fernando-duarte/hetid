@@ -1,6 +1,6 @@
 # Bootstrap validation compatibility tools
 
-Updated: 2026-07-26 09:47 EDT
+Updated: 2026-07-26 10:06 EDT
 
 These tools are compatibility wrappers around the canonical schema-3 owners in
 `scripts-paper/validation/`. They do not define numeric-token parsing,
@@ -17,6 +17,16 @@ historical evidence. Schema 2 is not accepted because it does not preserve
 stars. Do not overwrite the historical RDS. Recapture a schema-3 reference
 from the retained TeX tables with the canonical command documented in
 `scripts-paper/validation/README.md`.
+
+Capture retained legacy output only to an explicit, distinct schema-3 path:
+
+```sh
+bash capture_legacy_reference.sh path/to/reference-schema3.rds
+```
+
+Calling the helper without a destination fails. Passing
+`baseline-artifacts/fresh-legacy-scientific-record.rds` also fails before
+capture so the historical schema-2 evidence cannot be overwritten.
 
 Run a Mac candidate only with an explicit schema-3 reference:
 

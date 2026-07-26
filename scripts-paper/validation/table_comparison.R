@@ -121,3 +121,10 @@ paper_compare_table_records <- function(reference, candidate) {
   }
   if (length(problems)) problems else TRUE
 }
+
+paper_compare_table_projections <- function(reference, candidate) {
+  paper_compare_table_records(
+    list(schema_version = 3L, published_tables = reference),
+    list(schema_version = 3L, published_tables = candidate)
+  )
+}

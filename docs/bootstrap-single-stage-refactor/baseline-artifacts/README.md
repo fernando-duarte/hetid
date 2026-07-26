@@ -1,6 +1,6 @@
 # Baseline artifacts
 
-Updated: 2026-07-26 09:47 EDT
+Updated: 2026-07-26 10:06 EDT
 
 - Legacy source: `/private/tmp/hetid-fresh-pipeline-run-20260722`
 - Retained replay:
@@ -30,6 +30,14 @@ cross-run gate. Do not overwrite this RDS.
 For new acceptance, recapture a schema-3 reference from these retained TeX
 tables with `scripts-paper/validation/capture_table_record.R`, then run the
 single-pass clean validator with that explicit reference.
+
+The compatibility helper also requires an explicit, distinct destination and
+rejects the historical path before capture:
+
+```sh
+bash docs/bootstrap-single-stage-refactor/validation-tools/capture_legacy_reference.sh \
+  path/to/reference-schema3.rds
+```
 
 The projection came directly from the retained replay at commit `18fc270`.
 Every one of its 23 TeX files matches `fresh-output-inventory.csv`

@@ -1,6 +1,6 @@
 # Single-stage bootstrap refactor validation
 
-Updated: 2026-07-26 09:47 EDT
+Updated: 2026-07-26 10:06 EDT
 
 ## Current cross-run acceptance
 
@@ -11,7 +11,20 @@ coordinates, token counts, displayed values, and attached stars agree. The
 retained schema-2 record and the earlier rerun/reuse comparisons are immutable
 historical evidence, not current acceptance inputs.
 
-## Passed
+## Current Task 5 validation
+
+- Schema-3 table acceptance suite: passed.
+- Semantic SSOT scan: passed across active R functions outside
+  `scripts-paper/validation/`; renamed duplicate fixture detected.
+- Compatibility comparator: passed from a temporary non-repository working
+  directory.
+- Legacy-output capture helper: requires an explicit schema-3 destination,
+  rejects the protected historical schema-2 path, and preserves that path
+  when either safety check fails.
+- Mac compatibility wrapper: passed with the fixture pipeline only.
+- Topology: 381 R files and 64 artifacts passed.
+
+## Historical implementation evidence
 
 - Focused unified stage, cache, pipeline, set-bootstrap, mean-result, Harvey,
   statistics, topology, and ownership tests.
@@ -59,9 +72,9 @@ historical evidence, not current acceptance inputs.
 - Table-only comparator checks pass for ordinary decimals, negative values,
   `e` notation, LaTeX `\times 10^{...}` notation, cross-precision overlap,
   numeric-versus-status cells, structure changes, and missing-table failures.
-- Current table projection covers all 22 versioned TeX tables and 2,120
+- Historical table projection covered all 22 then-versioned TeX tables and 2,120
   normalized numeric tokens.
-- Full paper harness after final hardening: all 34 suites and structural checks;
+- Historical full paper harness after final hardening: all 34 suites and structural checks;
   topology covered 364 R files and 64 artifacts.
 - Historical schema-2 validator tests reject unsupported and empty records, traversal,
   drive and backslash paths, malformed coordinates and cells, nonfinite values,
@@ -102,9 +115,12 @@ historical evidence, not current acceptance inputs.
 - Historical candidate records: `candidate-rerun.rds` and
   `candidate-reuse.rds`; their two-pass comparison is not current acceptance.
 
-## Remaining handoff work
+## Historical merge status
 
-- User-initiated review and merge only.
+- Commit `9f1280c44ce8886a2af69710c1f9c3b3b37b91a2` and the
+  `refactor/single-stage-bootstrap-4` work were already incorporated into both
+  local `main` and `origin/main`. Local `git merge-base --is-ancestor` checks
+  returned exit status 0 for both targets on 2026-07-26.
 - Keep Oscar execution out of scope for this workstream.
 
 ## Failed before bootstrap
@@ -119,5 +135,3 @@ historical evidence, not current acceptance inputs.
   `gate_p` values in the runtime decision after rebinding its hash. The strict
   route validator stopped on that inconsistency before any bootstrap draw; see
   BSF-177.
-
-## Historical failed runs

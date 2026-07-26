@@ -1,13 +1,14 @@
 # Single-stage bootstrap refactor final report
 
-Updated: 2026-07-26 09:47 EDT
+Updated: 2026-07-26 10:06 EDT
 
 ## Status
 
 Implementation, focused validation, small-run validation, baseline capture,
 preflight work, the historical local Mac full bootstrap run, the table-only
-acceptance redesign, and final paired review are complete. Only user-initiated
-review and merge remain. The acceptance redesign did not run another
+acceptance redesign, and review follow-up are complete. The historical
+single-stage branch was already incorporated into local `main` and
+`origin/main`. The acceptance redesign and Task 5 follow-up did not run another
 10,000-draw bootstrap.
 
 Current cross-run acceptance requires recapturing an explicit schema-3
@@ -16,24 +17,20 @@ tree and runs the pipeline once. The retained schema-2 record and the earlier
 rerun/reuse comparisons are immutable historical evidence, not current
 acceptance inputs.
 
-## Isolation
+## Historical isolation record
 
 - Base commit: `18fc270c3e2035b9d3699739db6e436bbf646236`
 - Branch: `refactor/single-stage-bootstrap-4`
 - Worktree:
   `/Users/fduarte/Library/CloudStorage/Dropbox-Personal/MyPackages/hetid/.worktrees/single-stage-bootstrap-4`
 - Current commit: `9f1280c44ce8886a2af69710c1f9c3b3b37b91a2`
-- Tracked worktree status: clean
+- Tracked worktree status at the historical handoff: clean
 - Versioned `scripts-paper/output` diff from the base: the LAD fragment and
   standalone TeX table only, both changed solely to two-decimal numeric cells
-- The branch and `origin/refactor/single-stage-bootstrap-4` are synchronized at
-  `9f1280c44ce8886a2af69710c1f9c3b3b37b91a2`. Merge, rebase, and main-checkout
-  mutations: none.
-
-The primary checkout is currently clean at branch `ppml-wording-caf505d3`,
-commit `961cc3e984c25cf3e8762749a90d353883d9c95d`. This differs from the
-initially observed state because of external user activity. It was not changed
-or repaired by this workstream.
+- The branch and `origin/refactor/single-stage-bootstrap-4` were synchronized
+  at `9f1280c44ce8886a2af69710c1f9c3b3b37b91a2` at handoff.
+- Local ancestry checks on 2026-07-26 show that `9f1280c` is an ancestor of
+  both `main` and `origin/main`; the historical work is already merged.
 
 ## Resulting architecture
 
@@ -86,10 +83,23 @@ or repaired by this workstream.
 Commit range:
 `18fc270c3e2035b9d3699739db6e436bbf646236..9f1280c44ce8886a2af69710c1f9c3b3b37b91a2`
 
-## Validation completed
+## Current Task 5 validation
+
+- Schema-3 table acceptance suite passed.
+- Semantic SSOT scan covers active R functions outside the canonical
+  validation directory and detects a renamed duplicate fixture.
+- Historical compatibility comparator passed from a temporary non-repository
+  working directory.
+- Legacy-output capture requires an explicit schema-3 destination and rejects
+  the immutable historical schema-2 path before capture.
+- Mac wrapper success used only `fixture_pipeline.R`; no production pipeline or
+  bootstrap ran.
+- Current topology: 381 R files and 64 artifacts passed.
+
+## Historical validation completed
 
 - Full paper harness: all 34 suites and structural checks passed.
-- Topology: 364 R files and 64 artifacts passed.
+- Historical topology: 364 R files and 64 artifacts passed.
 - Focused Harvey suite: 81 of 81 checks passed.
 - Focused set-bootstrap suite: 48 of 48 checks passed.
 - Focused cache suite: 7 of 7 checks passed.
@@ -108,7 +118,7 @@ Commit range:
 - Source parsing, 100-column limit, and 200-line R-file limit: passed.
 - Versioned published outputs: only the two LAD TeX artifacts changed, with
   finite LAD cells rendered at two decimals.
-- Current table projection: all 22 available versioned TeX tables and 2,120
+- Historical table projection: all 22 then-versioned TeX tables and 2,120
   normalized numeric tokens.
 - LAD suite: 11 passed; Harvey: 81 passed; PPML: 103 passed.
 - Table-only comparator tests cover ordinary and scientific notation,
@@ -169,13 +179,15 @@ record remains at
 `baseline-artifacts/fresh-legacy-scientific-record-schema1.rds` with its
 original SHA-256. No bootstrap draw was used for schema-2 capture.
 
-## Paired review
+## Historical paired review
 
 Claude and Codex independently reviewed the final table-acceptance changes from
 read-only scratch copies. Their findings drove fixes for floating-point
 boundaries, scientific notation, line limits, and malformed-record preflight
-handling. Both final reviews report no remaining critical, high, or medium
-finding. Continuation IDs and summaries are retained under `consultations/`.
+handling. Their final pass found no remaining critical, high, or medium
+finding at that time. The later Task 5 review identified compatibility and
+documentation follow-up; the current validation section records those fixes.
+Continuation IDs and summaries are retained under `consultations/`.
 
 ## Findings
 
@@ -197,10 +209,12 @@ Twenty-eight findings are recorded as BSF-157 through BSF-184.
 - BSF-183 records and resolves the legacy capture helper's unsafe rerun fallback.
 - BSF-184 records and resolves R startup-profile execution during capture.
 
-## Remaining handoff boundary
+## Merge status
 
-- The user alone initiates any merge to `main`; this workstream will not merge
-  or modify the main checkout.
+- The historical single-stage branch is already contained in local `main` and
+  `origin/main`, verified with local ancestry checks.
+- Current table-only acceptance work remains isolated on its feature branch;
+  this report does not authorize an additional merge.
 
 Oscar execution is out of scope for the current workflow and is not a merge
 criterion.

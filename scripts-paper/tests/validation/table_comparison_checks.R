@@ -113,51 +113,6 @@ empty_problem <- tryCatch(
 )
 stopifnot(grepl("invalid published-table record:", empty_problem))
 
-definition_roots <- c(
-  paper_path("tests", "support"),
-  repo_path(
-    "docs",
-    "bootstrap-single-stage-refactor",
-    "validation-tools"
-  )
-)
-definition_files <- unlist(lapply(
-  definition_roots,
-  list.files,
-  pattern = "[.]R$",
-  recursive = TRUE,
-  full.names = TRUE
-))
-definition_files <- definition_files[
-  !grepl("/archives/", definition_files, fixed = TRUE)
-]
-definition_patterns <- c(
-  numeric_token = "paper_table_(normalize_token|cell_results)\\s*<-\\s*function",
-  quantum = "paper_table_number_quantum\\s*<-\\s*function",
-  schema_validation = "paper_validate_table_record\\s*<-\\s*function",
-  schema_record = "paper_table_record\\s*<-\\s*function",
-  rounding_overlap = "paper_table_tokens_equal\\s*<-\\s*function"
-)
-definition_hits <- unlist(lapply(definition_files, function(path) {
-  lines <- readLines(path, warn = FALSE)
-  matched <- vapply(
-    definition_patterns,
-    function(pattern) any(grepl(pattern, lines)),
-    logical(1)
-  )
-  if (!any(matched)) {
-    return(character())
-  }
-  paste0(path, ": ", names(definition_patterns)[matched])
-}))
-if (length(definition_hits)) {
-  stop(
-    "duplicate table-acceptance definitions outside scripts-paper/validation: ",
-    paste(definition_hits, collapse = "; "),
-    call. = FALSE
-  )
-}
-
 rm(
   comparison_cell,
   comparison_record,
@@ -171,9 +126,5 @@ rm(
   missing_table_reference,
   extra_table,
   empty_record_table,
-  empty_problem,
-  definition_roots,
-  definition_files,
-  definition_patterns,
-  definition_hits
+  empty_problem
 )
