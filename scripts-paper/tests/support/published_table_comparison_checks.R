@@ -42,10 +42,24 @@ ptc_write(
   "table.tex",
   c(
     "renamed & 1.23 & 4.560 \\\\",
-    "changed & unavailable & -- \\\\"
+    "changed & 8.88 & unreliable \\\\"
   )
 )
 stopifnot(isTRUE(ptc_compare(ptc_reference, ptc_candidate)))
+
+starred_cell <- paper_table_cell_numbers("1.23$^{***}$")
+stopifnot(identical(names(starred_cell), c("value", "quantum", "stars")))
+ptc_write(
+  ptc_reference,
+  "table.tex",
+  paste0("estimate & 1.23$^{***}$ & 4.56 ", strrep("\\\\", 2L))
+)
+ptc_write(
+  ptc_candidate,
+  "table.tex",
+  paste0("estimate & 1.23$^{**}$ & 4.56 ", strrep("\\\\", 2L))
+)
+stopifnot(!isTRUE(ptc_compare(ptc_reference, ptc_candidate)))
 
 ptc_write(
   ptc_candidate,
@@ -110,7 +124,7 @@ ptc_write(
   "table.tex",
   "estimate & 1.23 & 4.56 \\\\"
 )
-stopifnot(isTRUE(ptc_compare(ptc_reference, ptc_candidate)))
+stopifnot(!isTRUE(ptc_compare(ptc_reference, ptc_candidate)))
 
 ptc_write(ptc_reference, "extra.tex", "estimate & 1.23 & 4.56 \\\\")
 stopifnot(!isTRUE(ptc_compare(ptc_reference, ptc_candidate)))
@@ -134,6 +148,7 @@ unlink(ptc_candidate, recursive = TRUE)
 rm(
   ptc_write,
   ptc_compare,
+  starred_cell,
   ptc_reference,
   ptc_candidate,
   ptc_output_root,
