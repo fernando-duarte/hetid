@@ -162,6 +162,8 @@ PAPER_CONDITIONAL_ARTIFACT_STATUSES <- setdiff(
   "structural_equation_inference_table|structural_equation|inference"
 )
 
+# fitted-volatility slack sweep records, derived from the tau contract
+paper_source_once(paper_path("config", "artifact_manifest_sweep.R"))
 .artifact_specs <- do.call(rbind, strsplit(.artifact_specs, "|", fixed = TRUE))
 stopifnot(ncol(.artifact_specs) == 6L)
 artifact_manifest <- data.frame(

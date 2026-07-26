@@ -7,7 +7,10 @@ PAPER_FIGURE_STYLE <- list(
     reference = "grey35",
     ribbon_alpha = 0.35,
     boundary_linewidth = 0.4,
-    reference_linewidth = 0.35
+    reference_linewidth = 0.35,
+    # anchors of the sequential ramp for nested slack bands, darkest first, so
+    # a tighter tau reads as a deeper blue; interpolated to the sweep length
+    sweep_ramp = c("#0b3d91", "#2a78d6", "#bcd9f5")
   ),
   log_variance = list(
     one_sided = "#b3541e",

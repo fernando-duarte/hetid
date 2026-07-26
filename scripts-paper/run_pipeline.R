@@ -123,6 +123,11 @@ paper_source_once(paper_path("log_variance", "tables", "render_combined_inferenc
 paper_source_once(paper_path("log_variance", "figures", "render_bounds_by_tau.R"))
 # consume the completed estimator caches only after their existing figures
 paper_source_once(paper_path("log_variance", "figures", "fitted_volatility", "run.R"))
+# the same envelope across the contract's slack sweep, plus the combined
+# nesting panels; reuses the estimator caches run.R has already warmed
+paper_source_once(paper_path(
+  "log_variance", "figures", "fitted_volatility", "run_tau_sweep.R"
+))
 # the median (LAD) fitted-|residual| envelope: grid-sampled inner hull, rendered
 # only when the quantreg-gated LAD map ran (guarded on log_var_eq_lad)
 paper_source_once(paper_path("log_variance", "figures", "fitted_volatility", "run_lad.R"))

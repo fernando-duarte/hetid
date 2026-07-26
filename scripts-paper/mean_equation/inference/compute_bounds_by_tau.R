@@ -172,8 +172,11 @@ mean_eq_bounds_tau[
 ] <-
   lapply(set_id_mean_eq$set_tables, `[[`, "theta")
 
+# solve_theta_bound_from stays: it belongs to refine_bounds_by_tau.R, which
+# paper_source_once will not re-source, and the fitted-volatility tau sweep
+# needs it to solve boxes at slacks off the display grid
 rm(
-  theta_coefs, beta_coefs, solve_theta_bound_from, seed_theta, warm,
+  theta_coefs, beta_coefs, seed_theta, warm,
   refined_n, refine_theta_intervals, bounds_at_tau, tables, stored_rows,
   tau_grid, bounds_df, plot_df, ref_lines, figure_style, bounds_plot, device
 )

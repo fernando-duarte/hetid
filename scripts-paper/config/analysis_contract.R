@@ -61,6 +61,9 @@ PAPER_ANALYSIS_CONTRACT <- local({
       cap = 0.99,
       display = c(0.05, 0.10, 0.20),
       projection = c(0.05, 0.10, 0.20),
+      # slacks carried by the fitted-volatility tau sweep; each needs a manifest
+      # variant, so adding one here without a figure record fails fast
+      fitted_volatility_sweep = c(0.05, 0.10, 0.20, 0.30, 0.40),
       sweep_step = 0.005,
       bootstrap_step = 0.05,
       figure_grid_n = 25L
@@ -119,6 +122,12 @@ stopifnot(
       PAPER_ANALYSIS_CONTRACT$tau$display
   ),
   PAPER_ANALYSIS_CONTRACT$tau$cap < 1,
+  PAPER_ANALYSIS_CONTRACT$tau$baseline %in%
+    PAPER_ANALYSIS_CONTRACT$tau$fitted_volatility_sweep,
+  !anyDuplicated(PAPER_ANALYSIS_CONTRACT$tau$fitted_volatility_sweep),
+  PAPER_ANALYSIS_CONTRACT$tau$fitted_volatility_sweep > 0,
+  PAPER_ANALYSIS_CONTRACT$tau$fitted_volatility_sweep <
+    PAPER_ANALYSIS_CONTRACT$tau$cap,
   PAPER_ANALYSIS_CONTRACT$variance_share$grid_points_per_axis >= 2L,
   PAPER_ANALYSIS_CONTRACT$variance_share$coherence_ratio > 0,
   PAPER_ANALYSIS_CONTRACT$variance_share$coherence_ratio <= 1,
