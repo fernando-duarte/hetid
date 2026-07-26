@@ -2,9 +2,22 @@
 
 paper_source_once(paper_path("validation", "table_tokens.R"))
 
+paper_require_readable_directory <- function(path, label) {
+  if (!dir.exists(path)) {
+    stop(label, " does not exist: ", path, call. = FALSE)
+  }
+  if (file.access(path, mode = 5L) != 0L) {
+    stop(label, " is not readable: ", path, call. = FALSE)
+  }
+  invisible(path)
+}
+
 paper_table_numeric_projection <- function(path) {
-  if (!file.exists(path)) {
+  if (!file.exists(path) || dir.exists(path)) {
     stop("published table does not exist: ", path, call. = FALSE)
+  }
+  if (file.access(path, mode = 4L) != 0L) {
+    stop("published table is not readable: ", path, call. = FALSE)
   }
   lines <- readLines(path, warn = FALSE)
   projection <- list()
@@ -49,26 +62,26 @@ paper_table_numeric_projection <- function(path) {
       projection[[key]] <- paper_table_cell_results(cells[[column_id + 1L]])
     }
   }
-  n_values <- sum(vapply(projection, nrow, integer(1)))
-  if (n_values == 0L) {
-    stop("published table has no numeric result cells: ", path, call. = FALSE)
-  }
-  projection
+  has_values <- vapply(projection, nrow, integer(1)) > 0L
+  if (any(has_values)) projection[has_values] else list()
 }
 
 paper_published_tables_projection <- function(output_root) {
+  paper_require_readable_directory(output_root, "output root")
   table_root <- file.path(output_root, "tables")
+  paper_require_readable_directory(table_root, "tables directory")
   paths <- list.files(
     table_root,
     pattern = "[.]tex$",
     recursive = TRUE,
     full.names = TRUE
   )
-  if (!length(paths)) {
-    stop("no published TeX tables found under: ", table_root, call. = FALSE)
-  }
   relative <- substring(paths, nchar(table_root) + 2L)
-  paths <- paths[order(relative)]
-  relative <- sort(relative)
-  stats::setNames(lapply(paths, paper_table_numeric_projection), relative)
+  ordering <- order(relative)
+  projections <- stats::setNames(
+    lapply(paths[ordering], paper_table_numeric_projection),
+    relative[ordering]
+  )
+  has_values <- vapply(projections, length, integer(1)) > 0L
+  projections[has_values]
 }

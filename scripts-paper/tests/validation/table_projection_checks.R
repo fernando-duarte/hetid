@@ -1,5 +1,7 @@
 # Focused checks for canonical published-table numeric projections.
 
+source(file.path("scripts-paper", "config", "paths.R"))
+
 paper_source_once(paper_path(
   "validation", "table_projection.R"
 ))
@@ -92,4 +94,58 @@ tables <- paper_published_tables_projection(output_root)
 stopifnot(
   identical(names(tables), "nested/results.tex"),
   identical(tables[["nested/results.tex"]], projection)
+)
+
+nonnumeric_path <- write_table(output_root, "nonnumeric.tex", c(
+  "\\begin{tabular}{lr}",
+  "Measure & Estimate \\\\",
+  "\\midrule",
+  "Status & not estimated \\\\",
+  "\\end{tabular}"
+))
+nonnumeric_projection <- paper_table_numeric_projection(nonnumeric_path)
+stopifnot(identical(nonnumeric_projection, list()))
+
+tables <- paper_published_tables_projection(output_root)
+stopifnot(
+  identical(names(tables), "nested/results.tex"),
+  identical(tables[["nested/results.tex"]], projection)
+)
+
+empty_root <- tempfile("paper-empty-table-root-")
+dir.create(file.path(empty_root, "tables"), recursive = TRUE)
+empty_tables <- paper_published_tables_projection(empty_root)
+stopifnot(length(empty_tables) == 0L)
+
+missing_root_error <- tryCatch(
+  paper_published_tables_projection(file.path(empty_root, "missing")),
+  error = function(error) conditionMessage(error)
+)
+missing_tables_root <- tempfile("paper-no-tables-")
+dir.create(missing_tables_root)
+missing_tables_error <- tryCatch(
+  paper_published_tables_projection(missing_tables_root),
+  error = function(error) conditionMessage(error)
+)
+stopifnot(
+  grepl("output root does not exist", missing_root_error, fixed = TRUE),
+  grepl("tables directory does not exist", missing_tables_error, fixed = TRUE)
+)
+
+unlink(output_root, recursive = TRUE)
+unlink(empty_root, recursive = TRUE)
+unlink(missing_tables_root, recursive = TRUE)
+rm(
+  write_table,
+  output_root,
+  table_path,
+  projection,
+  nonnumeric_path,
+  nonnumeric_projection,
+  tables,
+  empty_root,
+  empty_tables,
+  missing_root_error,
+  missing_tables_root,
+  missing_tables_error
 )
