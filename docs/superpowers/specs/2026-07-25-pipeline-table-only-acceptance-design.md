@@ -1,16 +1,18 @@
 # Pipeline Table-Only Acceptance Design
 
 Recorded: 2026-07-25 23:05 EDT
+Updated: 2026-07-26 08:42 EDT
 
 ## Purpose
 
 Replace every cross-run acceptance rule for `scripts-paper` with one rule:
-accept a completed candidate when the displayed numeric results and significance
-stars in its final TeX tables agree with the reference.
+accept a completed candidate when every displayed numeric result and its
+significance stars in the final TeX tables agree with the reference.
 
 The acceptance decision ignores all other output. Figures, reports,
 diagnostics, caches, R objects, provenance, hashes, runtime metadata, console
-text, table prose, statuses, and missing-value markers do not affect it.
+text, table prose, statuses, and missing-value markers do not affect it unless
+they replace a displayed numeric result.
 
 ## Scope
 
@@ -35,7 +37,9 @@ A candidate run must satisfy these prerequisites:
 After these prerequisites, acceptance depends only on table results:
 
 - Reference and candidate contain the same relative `.tex` table paths.
-- Every table has at least one comparable numeric result token.
+- Reference and candidate contain the same numeric cell coordinates and token
+  counts.
+- Every table has at least one numeric result token.
 - Corresponding numeric tokens agree at their displayed precision.
 - Significance stars attached to corresponding numeric tokens match exactly.
 
@@ -44,9 +48,13 @@ The comparison ignores:
 - table labels, headers, ordering prose, notes, and captions;
 - table structure outside corresponding numeric cells;
 - nonnumeric statuses such as `unreliable`, `unbounded`, and `--`;
-- missing markers and cells that are nonnumeric on either side;
-- cells that expose different counts of numeric tokens;
+- missing markers and cells that are nonnumeric on both sides;
 - every file outside `output/tables`, including table PDFs.
+
+A numeric cell may not disappear into a missing marker or status. A numeric
+cell that appears, disappears, moves, or changes its token count fails the
+comparison. These coverage checks ensure that the gate compares every final
+table number rather than a surviving subset.
 
 ## Displayed-precision rule
 
@@ -140,7 +148,9 @@ The commands fail with a nonzero status for:
 - an unreadable or malformed reference or candidate record;
 - an absent or empty final table directory;
 - a missing or extra table path;
-- a table with no comparable numeric result;
+- a table with no numeric result;
+- an added, removed, moved, or replaced numeric cell;
+- a numeric token-count mismatch;
 - a displayed numeric difference;
 - a significance-star difference;
 - a staging failure or nonzero pipeline exit.
@@ -159,11 +169,14 @@ Synthetic fixtures cover:
 - displayed-precision overlap and adjacent-token rejection;
 - no-star, one-star, two-star, and three-star equality;
 - star differences with equal numbers;
-- ignored labels, prose, statuses, and missing markers;
+- ignored labels, prose, statuses, and markers that remain nonnumeric in both
+  records;
 - ignored non-table artifacts and arbitrary non-table differences;
 - missing and extra table paths;
+- added, removed, moved, and number-to-status cells;
+- numeric token-count mismatches;
 - malformed record fields and token columns;
-- tables with no comparable numeric results.
+- tables with no numeric results.
 
 A compatibility test first proves that the current general artifact comparator
 rejects non-table differences. The implementation then changes that test to

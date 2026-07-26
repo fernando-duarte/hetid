@@ -1,10 +1,12 @@
 # Pipeline Table-Only Acceptance Implementation Plan
 
+Updated: 2026-07-26 08:42 EDT
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use
 > subagent-driven-development (recommended) or executing-plans to implement
 > this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Make displayed table numbers and significance stars the only
+**Goal:** Make every displayed table number and its significance stars the only
 cross-run acceptance inputs for the complete `scripts-paper` pipeline.
 
 **Architecture:** Canonical modules under `scripts-paper/validation/` parse,
@@ -23,15 +25,21 @@ existing `scripts-paper` source and test harnesses.
   implementation.
 - Compare only displayed numeric table results and their attached significance
   stars.
-- Ignore all non-table outputs and all nonnumeric table content.
-- Require matching relative TeX table paths and at least one comparable numeric
-  result per table.
+- Ignore all non-table outputs and table content that is nonnumeric in both
+  records.
+- Require matching relative TeX table paths, numeric cell coordinates, and
+  token counts, with at least one numeric result per table.
+- Fail if a displayed number disappears, appears, moves to another cell, or is
+  replaced by a nonnumeric marker.
 - Start every candidate with no prior `scripts-paper/output` content.
 - Require successful pipeline process completion before comparison.
 - Run exactly one fresh bootstrap in the production clean runner.
 - Never select a reference implicitly; require an explicit reference record.
 - Use schema version `3L`; reject schema-2 records because they omit stars.
 - Preserve current numeric parsing and displayed-precision boundary behavior.
+- Preserve producer-side estimator checks, routing decisions, dependency gates,
+  cache validation, and successful-process requirements as operational
+  safeguards; do not compare their records across runs.
 - Add no estimator, dependency, reported result, or output-format change.
 - Add no package or paper-pipeline dependency.
 - Keep every R file below 200 lines and every line below 100 columns.
@@ -75,15 +83,29 @@ Modify:
   delegate to the canonical comparator.
 - `docs/bootstrap-single-stage-refactor/validation-tools/capture_table_record.R`:
   delegate to the canonical capture command.
+- `docs/bootstrap-single-stage-refactor/validation-tools/run_mac_candidate.sh`:
+  delegate to the one-run clean validator and require an explicit schema-3
+  reference.
 - `docs/bootstrap-single-stage-refactor/validation-tools/README.md`: mark schema 2
   historical and document schema-3 recapture.
 - `docs/bootstrap-single-stage-refactor/validation-tools/test_scientific_record.R`:
   use schema-3 fixtures.
 - `docs/bootstrap-single-stage-refactor/validation-tools/test_capture_legacy_reference.sh`:
   expect schema 3 and stars.
+- `docs/bootstrap-single-stage-refactor/validation.md`: distinguish historical
+  execution evidence from the new active acceptance rule.
+- `docs/bootstrap-single-stage-refactor/final-report.md`: mark schema 2 and its
+  star-ignoring comparator as historical.
+- `docs/bootstrap-single-stage-refactor/baseline-artifacts/README.md`: require
+  schema-3 recapture for active comparisons.
 
 Do not modify archived records under
 `docs/bootstrap-single-stage-refactor/archives/` or the historical schema-2 RDS.
+Do not modify `scripts-paper/run_pipeline.R`, table renderers, artifact
+manifest/lifecycle owners, bootstrap cache/provenance code, or estimator and
+routing gates. `scripts-paper/tests/support/scientific_comparison.R` remains
+available for focused internal tests and the EGARCH runtime rebind, but it is
+not a final pipeline-acceptance owner.
 
 ---
 
@@ -303,9 +325,12 @@ Also require:
 - `1.23` versus `1.24` fails;
 - `2.31e-9` versus `2.32e-9` fails;
 - changed labels and statuses pass;
-- different numeric token counts in one cell are ignored;
+- different numeric token counts in one cell fail;
+- a numeric cell replaced by `--` fails;
+- an added, removed, or moved numeric cell fails;
+- cells that are nonnumeric in both records are ignored;
 - missing or extra table paths fail;
-- a table with zero comparable tokens fails.
+- a table with zero numeric tokens fails.
 
 - [ ] **Step 3: Run the suite and verify red**
 
@@ -355,9 +380,11 @@ value_equal <- difference == 0 |
   difference < rounding_overlap - slack
 ```
 
-Compare stars only for token frames with equal nonzero row counts. Report value
-and star differences separately. Intersect coordinates and require at least one
-compared token per table.
+Require identical coordinate sets for cells with at least one numeric token.
+Require equal, nonzero token counts at every retained coordinate. Report
+coordinate, token-count, value, and star differences separately, then compare
+every token at every retained coordinate. This prevents a number from
+disappearing into `--` or evading comparison through a row or column change.
 
 - [ ] **Step 6: Run focused and topology checks**
 
@@ -667,9 +694,14 @@ git commit -m "Add clean whole-pipeline acceptance runner"
 - Modify: `docs/bootstrap-single-stage-refactor/validation-tools/scientific_record.R`
 - Modify: `docs/bootstrap-single-stage-refactor/validation-tools/compare_scientific_objects.R`
 - Modify: `docs/bootstrap-single-stage-refactor/validation-tools/capture_table_record.R`
+- Modify: `docs/bootstrap-single-stage-refactor/validation-tools/run_mac_candidate.sh`
 - Modify: `docs/bootstrap-single-stage-refactor/validation-tools/README.md`
 - Modify: `docs/bootstrap-single-stage-refactor/validation-tools/test_scientific_record.R`
 - Modify: `docs/bootstrap-single-stage-refactor/validation-tools/test_capture_legacy_reference.sh`
+- Modify: `docs/bootstrap-single-stage-refactor/validation.md`
+- Modify: `docs/bootstrap-single-stage-refactor/final-report.md`
+- Modify: `docs/bootstrap-single-stage-refactor/baseline-artifacts/README.md`
+- Modify: `scripts-paper/tests/validation/cli_checks.R`
 
 **Interfaces:**
 
@@ -677,13 +709,42 @@ git commit -m "Add clean whole-pipeline acceptance runner"
   `scripts-paper/validation/table_comparison.R`.
 - Historical schema-2 RDS files remain immutable evidence and are not accepted.
 
-- [ ] **Step 1: Write a failing SSOT check**
+- [ ] **Step 1: Write failing SSOT and compatibility-wrapper checks**
 
 Add to `table_comparison_checks.R` a source scan that permits numeric token,
 quantum, schema, and rounding-overlap definitions only under
 `scripts-paper/validation/`. Reject active duplicates under test support or the
 bootstrap validation tools. The check must inspect only active files, excluding
 `docs/bootstrap-single-stage-refactor/archives/`.
+
+Add to `cli_checks.R` a subprocess check that the old Mac entrypoint requires
+an explicit reference and delegates through the fake clean-run seam:
+
+```r
+mac_wrapper <- file.path(
+  "docs", "bootstrap-single-stage-refactor",
+  "validation-tools", "run_mac_candidate.sh"
+)
+missing_reference <- system2("bash", mac_wrapper)
+stopifnot(missing_reference != 0L)
+
+wrapper_run_root <- tempfile("mac-wrapper-run-")
+wrapper_status <- system2(
+  "bash",
+  c(mac_wrapper, reference_record_path),
+  env = c(
+    paste0("HETID_VALIDATION_RUN_ROOT=", wrapper_run_root),
+    paste0(
+      "HETID_VALIDATION_PIPELINE_SCRIPT=",
+      "scripts-paper/tests/validation/fixture_pipeline.R"
+    )
+  )
+)
+stopifnot(
+  identical(wrapper_status, 0L),
+  file.exists(file.path(wrapper_run_root, "comparison-passed"))
+)
+```
 
 - [ ] **Step 2: Run the suite and verify red**
 
@@ -694,7 +755,8 @@ Rscript scripts-paper/tests/validation/test_table_acceptance.R
 ```
 
 Expected: failure because the active bootstrap tools still own schema-2
-validation and table-record construction.
+validation and table-record construction, and `run_mac_candidate.sh` still
+selects an implicit reference and executes two pipeline passes.
 
 - [ ] **Step 3: Convert bootstrap tools into wrappers**
 
@@ -715,16 +777,39 @@ bootstrap_validation_record <- paper_table_record
 
 Make comparison and capture call the canonical functions or CLIs. Change tests
 to schema `3L` and `data.frame(value, quantum, stars)`. Update messages from
-“schema-2” to “schema-3.” Do not replace or rewrite the historical schema-2
-baseline RDS.
+“schema-2” to “schema-3.” Replace `run_mac_candidate.sh` with a compatibility
+wrapper that requires one reference-record argument and delegates directly:
+
+```sh
+#!/usr/bin/env bash
+set -euo pipefail
+
+repo_root=$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)
+if [ "$#" -ne 1 ]; then
+  printf '%s\n' \
+    "usage: run_mac_candidate.sh reference-schema3.rds" >&2
+  exit 64
+fi
+exec bash \
+  "$repo_root/scripts-paper/validation/run_clean_validation.sh" \
+  "$1"
+```
+
+Update the three active bootstrap handoff documents to say that their schema-2
+record and earlier rerun/reuse comparisons are historical evidence. State that
+new acceptance requires recapturing a schema-3 reference from retained TeX
+tables. Do not replace or rewrite the historical schema-2 baseline RDS.
 
 - [ ] **Step 4: Document the canonical workflow**
 
 The validation README must state:
 
 - only table numbers and attached stars decide acceptance;
-- table path equality and one comparable result per table remain required;
-- all non-table output and nonnumeric content are ignored;
+- table paths, numeric coordinates, and token counts must match;
+- every table must contain at least one numeric result;
+- all non-table output and content that is nonnumeric on both sides are ignored;
+- a numeric result becoming nonnumeric, appearing, disappearing, or moving
+  fails;
 - the candidate uses an empty staged output tree;
 - the pipeline runs once;
 - the reference is explicit;
@@ -741,6 +826,7 @@ Run:
 ```sh
 Rscript docs/bootstrap-single-stage-refactor/validation-tools/test_scientific_record.R
 bash docs/bootstrap-single-stage-refactor/validation-tools/test_capture_legacy_reference.sh
+bash -n docs/bootstrap-single-stage-refactor/validation-tools/run_mac_candidate.sh
 Rscript scripts-paper/tests/validation/test_table_acceptance.R
 Rscript scripts-paper/tests/support/check_topology.R
 ```
@@ -755,9 +841,14 @@ git add scripts-paper/validation/README.md \
   docs/bootstrap-single-stage-refactor/validation-tools/scientific_record.R \
   docs/bootstrap-single-stage-refactor/validation-tools/compare_scientific_objects.R \
   docs/bootstrap-single-stage-refactor/validation-tools/capture_table_record.R \
+  docs/bootstrap-single-stage-refactor/validation-tools/run_mac_candidate.sh \
   docs/bootstrap-single-stage-refactor/validation-tools/README.md \
   docs/bootstrap-single-stage-refactor/validation-tools/test_scientific_record.R \
   docs/bootstrap-single-stage-refactor/validation-tools/test_capture_legacy_reference.sh \
+  docs/bootstrap-single-stage-refactor/validation.md \
+  docs/bootstrap-single-stage-refactor/final-report.md \
+  docs/bootstrap-single-stage-refactor/baseline-artifacts/README.md \
+  scripts-paper/tests/validation/cli_checks.R \
   scripts-paper/tests/validation/table_comparison_checks.R
 git commit -m "Centralize whole-pipeline acceptance documentation"
 ```
@@ -803,13 +894,15 @@ and numeric tokens in the validation log.
 Copy `scripts-paper/output` into two temporary roots. In the candidate:
 
 - alter or add CSV, RDS, Markdown, SVG, PDF, diagnostic, state, and report files;
-- alter a table label, note, status, and missing marker without changing a
-  comparable number or star.
+- alter a table label, note, and a status in a cell that is nonnumeric in both
+  roots without changing any numeric result or star.
 
 Run the compatibility comparator and require exit zero.
 
 Then change one displayed number and require exit nonzero. Restore it, change
-one attached star, and require exit nonzero.
+one attached star, and require exit nonzero. Restore it, replace one numeric
+cell with `--`, and require exit nonzero. Add and remove one numeric row in
+separate candidates and require both to exit nonzero.
 
 - [ ] **Step 4: Run package and repository gates**
 
@@ -867,7 +960,8 @@ Skip this commit when no tracked change remains.
 - Exact non-table artifact comparison is retired.
 - Schema 3 records and validates stars.
 - The clean runner starts without prior output and runs the pipeline once.
-- Missing or extra tables, numeric differences, and star differences fail.
+- Missing or extra tables, numeric-shape differences, numeric differences, and
+  star differences fail.
 - Nonnumeric table content and every non-table output are ignored.
 - No production 10,000-draw bootstrap ran during implementation.
 - All focused, paper, package, lint, check, and pre-commit gates pass.
