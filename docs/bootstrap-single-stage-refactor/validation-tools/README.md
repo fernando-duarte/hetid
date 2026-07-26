@@ -39,8 +39,9 @@ second pipeline pass is strict cache reuse: an invalid cache stops immediately
 instead of falling back to another bootstrap. It leaves two table records
 and logs in an isolated temporary directory. The Mac core count is not
 overridden, so production reserves two logical CPUs. Before launching, it
-requires a schema-2 legacy table record so an obsolete baseline cannot waste a
-long run.
+requires a complete schema-2 legacy table record with valid table paths and
+numeric-token projections, so an obsolete or malformed baseline cannot waste
+a long run.
 
 The capture driver optionally receives a legacy gate record through
 `HETID_GATE_REFERENCE_RDS`. It permits a runtime-only rebind of the existing
@@ -54,4 +55,5 @@ Run the cross-version pipeline-expression regression directly:
 
 ```sh
 Rscript test_pipeline_expression.R
+Rscript test_scientific_record.R
 ```

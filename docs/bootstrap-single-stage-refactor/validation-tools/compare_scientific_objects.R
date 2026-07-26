@@ -1,17 +1,13 @@
-# Compare final published table numbers at their displayed precision.
-
 source(file.path(
-  "scripts-paper",
-  "tests",
-  "support",
-  "published_table_comparison.R"
+  "docs",
+  "bootstrap-single-stage-refactor",
+  "validation-tools",
+  "scientific_record.R"
 ))
 
 compare_scientific_objects <- function(reference, candidate) {
-  stopifnot(
-    identical(reference$schema_version, 2L),
-    identical(candidate$schema_version, 2L)
-  )
+  paper_validate_table_record(reference)
+  paper_validate_table_record(candidate)
   comparison <- paper_published_tables_compare(
     reference$published_tables,
     candidate$published_tables

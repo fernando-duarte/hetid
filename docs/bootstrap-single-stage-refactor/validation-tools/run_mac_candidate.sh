@@ -13,9 +13,12 @@ legacy_record=${HETID_LEGACY_REFERENCE_RDS:-$default_legacy}
 mkdir -p "$source_root"
 Rscript -e '
   args <- commandArgs(trailingOnly = TRUE)
+  source(args[[2L]])
   record <- readRDS(args[[1L]])
-  stopifnot(identical(record$schema_version, 2L))
-' "$legacy_record"
+  paper_validate_table_record(record)
+' \
+  "$legacy_record" \
+  "$repo_root/docs/bootstrap-single-stage-refactor/validation-tools/scientific_record.R"
 rsync -a --delete --exclude .git --exclude scripts-paper/output/ \
   "$repo_root/" "$source_root/"
 cp \
