@@ -19,14 +19,15 @@ and `published_table_comparison.R` beside it. Raw bootstrap draws, diagnostics,
 caches, public R objects, statuses, and provenance are not cross-platform
 acceptance inputs.
 
-Capture the completed legacy reference without drawing again:
+Capture the completed legacy reference directly from its final tables:
 
 ```sh
 bash capture_legacy_reference.sh
 ```
 
-This regenerates the schema-2 table record. The older schema-1 record is not
-accepted by the current runner.
+This regenerates the schema-2 table record without sourcing the legacy
+pipeline, loading either bootstrap cache, or executing any estimator or draw.
+The older schema-1 record is not accepted by the current runner.
 
 Run a Mac candidate after user authorization:
 
@@ -56,4 +57,5 @@ Run the cross-version pipeline-expression regression directly:
 ```sh
 Rscript test_pipeline_expression.R
 Rscript test_scientific_record.R
+bash test_capture_legacy_reference.sh
 ```
