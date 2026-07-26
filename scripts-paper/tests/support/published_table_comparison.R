@@ -1,11 +1,34 @@
 # Numeric projection and comparison for final published TeX tables.
 
+paper_table_comparison_sources <- vapply(
+  sys.frames(),
+  function(frame) if (is.null(frame$ofile)) "" else frame$ofile,
+  character(1)
+)
+paper_table_comparison_source <- tail(
+  paper_table_comparison_sources[
+    basename(paper_table_comparison_sources) ==
+      "published_table_comparison.R"
+  ],
+  1L
+)
+if (!length(paper_table_comparison_source)) {
+  paper_table_comparison_source <- file.path(
+    "scripts-paper",
+    "tests",
+    "support",
+    "published_table_comparison.R"
+  )
+}
+paper_table_comparison_source <- normalizePath(
+  paper_table_comparison_source,
+  mustWork = TRUE
+)
 source(file.path(
-  "scripts-paper",
-  "tests",
-  "support",
+  dirname(paper_table_comparison_source),
   "published_table_tokens.R"
 ))
+rm(paper_table_comparison_sources, paper_table_comparison_source)
 
 paper_table_numeric_projection <- function(path) {
   if (!file.exists(path)) {

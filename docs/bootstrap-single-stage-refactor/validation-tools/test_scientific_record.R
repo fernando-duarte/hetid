@@ -26,6 +26,12 @@ empty_record <- valid_record
 empty_record$published_tables <- list()
 traversal_record <- valid_record
 names(traversal_record$published_tables) <- "../table.tex"
+drive_record <- valid_record
+names(drive_record$published_tables) <- "C:/table.tex"
+backslash_record <- valid_record
+names(backslash_record$published_tables) <- "dir\\..\\table.tex"
+coordinate_record <- valid_record
+names(coordinate_record$published_tables[[1L]]) <- "bogus"
 malformed_record <- valid_record
 malformed_record$published_tables[[1L]][[1L]] <- "malformed"
 infinite_record <- valid_record
@@ -37,6 +43,9 @@ invalid_records <- list(
   list(schema_version = 2L),
   empty_record,
   traversal_record,
+  drive_record,
+  backslash_record,
+  coordinate_record,
   malformed_record,
   infinite_record,
   zero_quantum_record
