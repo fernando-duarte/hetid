@@ -15,7 +15,8 @@ suite_manifest <- data.frame(
     "bootstrap_stage_pipeline", "bootstrap_stage_anchor_condition",
     "bootstrap_stage_eval_spec_ssot", "bootstrap_stage_indexed_draw_contract",
     "bootstrap_stage_spec_contract",
-    "mean_boot_results", "scientific_comparison", "support_statistics",
+    "mean_boot_results", "scientific_comparison", "table_acceptance",
+    "support_statistics",
     "support_heteroskedasticity",
     "support_identification_diagnostics", "boot_freshness", "boot_cache", "variance_bounds",
     "variance_bounds_quoted"
@@ -48,6 +49,7 @@ suite_manifest <- data.frame(
     "inference/bootstrap_stage_spec_contract_checks.R",
     "inference/mean_boot_results_checks.R",
     "support/scientific_comparison_checks.R",
+    "validation/test_table_acceptance.R",
     "support/test_statistics.R",
     "support/test_heteroskedasticity.R",
     "support/test_identification_diagnostics.R",
