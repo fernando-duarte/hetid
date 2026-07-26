@@ -3,6 +3,7 @@
 set -euo pipefail
 
 run_root="${HETID_VALIDATION_RUN_ROOT:-}"
+owner_signature="hetid-clean-validation:v1"
 
 report_run_root() {
   status=$?
@@ -28,11 +29,51 @@ repo_root="$(
   cd -- "$script_dir/../.."
   pwd -P
 )"
+
 if [[ -n "$run_root" ]]; then
   if [[ "$run_root" != /* ]]; then
     printf 'HETID_VALIDATION_RUN_ROOT must be an absolute path\n' >&2
     exit 2
   fi
+  case "/${run_root#/}/" in
+    */../* | */./*)
+      printf 'HETID_VALIDATION_RUN_ROOT must not contain dot components\n' >&2
+      exit 2
+      ;;
+  esac
+  if [[ -L "$run_root" ]]; then
+    printf 'HETID_VALIDATION_RUN_ROOT must not be a symbolic link\n' >&2
+    exit 2
+  fi
+  run_probe="$run_root"
+  run_suffix=""
+  while [[ ! -e "$run_probe" && ! -L "$run_probe" ]]; do
+    run_suffix="/$(basename -- "$run_probe")$run_suffix"
+    run_probe="$(dirname -- "$run_probe")"
+  done
+  if [[ ! -d "$run_probe" ]]; then
+    printf 'run-root ancestor must be a directory: %s\n' "$run_probe" >&2
+    exit 2
+  fi
+  resolved_probe="$(
+    cd -- "$run_probe"
+    pwd -P
+  )"
+  resolved_request="$resolved_probe$run_suffix"
+  case "$resolved_request" in
+    "$repo_root" | "$repo_root"/*)
+      printf 'validation run root must not overlap the repository: %s\n' \
+        "$resolved_request" >&2
+      exit 2
+      ;;
+  esac
+  case "$repo_root" in
+    "$resolved_request" | "$resolved_request"/*)
+      printf 'validation run root must not overlap the repository: %s\n' \
+        "$resolved_request" >&2
+      exit 2
+      ;;
+  esac
   mkdir -p -- "$run_root"
   run_root="$(
     cd -- "$run_root"
@@ -46,6 +87,23 @@ if [[ "$run_root" == / ]]; then
   printf 'HETID_VALIDATION_RUN_ROOT must not resolve to the filesystem root\n' >&2
   exit 2
 fi
+
+owner_marker="$run_root/.hetid-clean-validation-owner"
+root_entry="$(find "$run_root" -mindepth 1 -maxdepth 1 -print -quit)"
+if [[ -n "$root_entry" ]]; then
+  if [[ -L "$owner_marker" || ! -f "$owner_marker" ||
+    "$(<"$owner_marker")" != "$owner_signature" ]]; then
+    printf 'nonempty validation run root is not validator-owned: %s\n' \
+      "$run_root" >&2
+    exit 2
+  fi
+else
+  (
+    umask 077
+    printf '%s\n' "$owner_signature" > "$owner_marker"
+  )
+fi
+
 rm -f -- "$run_root/comparison-passed"
 
 reference_input=$1
@@ -61,6 +119,23 @@ reference_path="$reference_dir/$(basename -- "$reference_input")"
 compare_cli="$repo_root/scripts-paper/validation/compare_table_records.R"
 
 Rscript --vanilla "$compare_cli" "$reference_path" "$reference_path"
+
+private_root="$run_root/.hetid-clean-validation-private"
+if [[ -L "$private_root" ||
+  ( -e "$private_root" && ! -d "$private_root" ) ]]; then
+  printf 'validation private path must be a directory: %s\n' \
+    "$private_root" >&2
+  exit 2
+fi
+mkdir -p -- "$private_root"
+private_run="$(mktemp -d "$private_root/run.XXXXXX")"
+reference_snapshot="$private_run/reference.rds"
+cp -p -- "$reference_path" "$reference_snapshot"
+if ! cmp -s -- "$reference_path" "$reference_snapshot"; then
+  printf 'could not preserve the reference record snapshot\n' >&2
+  exit 2
+fi
+Rscript --vanilla "$compare_cli" "$reference_snapshot" "$reference_snapshot"
 
 source_root="$run_root/source"
 if [[ -L "$source_root" ]]; then
@@ -86,10 +161,19 @@ if [[ -n "$preexisting_git" ]]; then
     "$preexisting_git" >&2
   exit 2
 fi
-rsync -a --delete \
-  --exclude .git \
-  --exclude scripts-paper/output/ \
-  "$repo_root/" "$source_root/"
+rsync_options=(
+  -a
+  --delete
+  --exclude .git
+  --exclude scripts-paper/output/
+)
+case "$reference_path" in
+  "$source_root"/*)
+    reference_relative="${reference_path#"$source_root"/}"
+    rsync_options+=(--exclude "/$reference_relative")
+    ;;
+esac
+rsync "${rsync_options[@]}" "$repo_root/" "$source_root/"
 staged_output="$source_root/scripts-paper/output"
 preexisting_output="$run_root/preexisting-output"
 if [[ -e "$staged_output" || -L "$staged_output" ]]; then
@@ -140,8 +224,11 @@ printf 'producer: %s\n' "$pipeline_script" | tee "$pipeline_log"
 ) 2>&1 | tee -a "$pipeline_log"
 
 candidate_record="$run_root/candidate.rds"
+if [[ "$candidate_record" == "$reference_path" ]]; then
+  candidate_record="$private_run/candidate.rds"
+fi
 capture_cli="$source_root/scripts-paper/validation/capture_table_record.R"
 staged_compare_cli="$source_root/scripts-paper/validation/compare_table_records.R"
 Rscript --vanilla "$capture_cli" "$staged_output" "$candidate_record"
-Rscript --vanilla "$staged_compare_cli" "$reference_path" "$candidate_record"
+Rscript --vanilla "$staged_compare_cli" "$reference_snapshot" "$candidate_record"
 touch "$run_root/comparison-passed"

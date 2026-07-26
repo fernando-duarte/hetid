@@ -74,6 +74,21 @@ matrix_cell <- valid_record
 matrix_cell$published_tables$table.tex[[1L]] <- matrix(1.23, nrow = 1L)
 stopifnot(grepl("invalid published-table record:", record_check_error(matrix_cell)))
 
+matrix_column_cell <- valid_record
+matrix_column_cell$published_tables$table.tex[[1L]] <- structure(
+  list(
+    value = matrix(c(1.23, 1.24), nrow = 1L),
+    quantum = matrix(c(0.01, 0.01), nrow = 1L),
+    stars = matrix(c("", "*"), nrow = 1L)
+  ),
+  class = "data.frame",
+  row.names = 1L
+)
+stopifnot(grepl(
+  "invalid published-table record:",
+  record_check_error(matrix_column_cell)
+))
+
 non_atomic_column <- valid_record
 non_atomic_column$published_tables$table.tex[[1L]] <- data.frame(
   value = I(list(1.23)),
@@ -121,6 +136,7 @@ rm(
   non_data_frame_cell,
   wrong_columns,
   matrix_cell,
+  matrix_column_cell,
   non_atomic_column,
   nonfinite_value,
   nonfinite_quantum,

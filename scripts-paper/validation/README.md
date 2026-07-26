@@ -1,6 +1,6 @@
 # Cross-run table acceptance
 
-Updated: 2026-07-26 10:06 EDT
+Updated: 2026-07-26 10:51 EDT
 
 Cross-run acceptance is decided only by numeric results printed in final TeX
 tables and the significance stars attached to those results. Table paths,
@@ -55,6 +55,17 @@ bash scripts-paper/validation/run_clean_validation.sh \
 
 Set `HETID_VALIDATION_RUN_ROOT` to retain the staged source, pipeline log,
 candidate record, and `comparison-passed` marker at a chosen absolute path.
+The chosen path must be new, empty, or carry the runner's private ownership
+marker from an earlier validation. The runner rejects unowned nonempty paths
+without changing their contents. It also rejects paths equal to, above, or
+inside the repository.
+
+The runner validates and snapshots the explicit reference into a protected,
+unique path before staging. The snapshot is used for the final comparison, so a
+reference stored under the reusable run root cannot alias the generated
+candidate or be changed by source staging. If the reference itself is
+`candidate.rds`, the new candidate record is retained beside the protected
+snapshot instead.
 The compatibility Mac entrypoint delegates to the same clean runner:
 
 ```sh

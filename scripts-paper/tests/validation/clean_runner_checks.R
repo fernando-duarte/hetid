@@ -46,16 +46,20 @@ clean_runner_call <- function(run_root, reference, fail = FALSE) {
   ))
 }
 
+clean_runner_mark_owned <- function(run_root) {
+  dir.create(run_root, recursive = TRUE, showWarnings = FALSE)
+  writeLines(
+    "hetid-clean-validation:v1",
+    file.path(run_root, ".hetid-clean-validation-owner")
+  )
+}
+
 local({
   test_root <- tempfile("clean-validation-")
   reference_root <- file.path(test_root, "reference-output")
   success_root <- file.path(test_root, "successful-run")
   failure_root <- file.path(test_root, "failed-run")
   dir.create(file.path(reference_root, "tables"), recursive = TRUE)
-  dir.create(
-    file.path(success_root, "source", "scripts-paper", "output"),
-    recursive = TRUE
-  )
   on.exit(unlink(test_root, recursive = TRUE), add = TRUE)
 
   fixture_lines <- c(
@@ -68,17 +72,6 @@ local({
     fixture_lines,
     file.path(reference_root, "tables", "fixture.tex")
   )
-  writeLines(
-    "must be preserved outside staged output",
-    file.path(
-      success_root,
-      "source",
-      "scripts-paper",
-      "output",
-      "stale-sentinel"
-    )
-  )
-
   reference <- file.path(test_root, "reference.rds")
   capture <- system2(
     file.path(R.home("bin"), "Rscript"),
@@ -95,6 +88,18 @@ local({
 
   original_output <- file.path(repo_root, "scripts-paper", "output")
   original_before <- clean_runner_inventory(original_output)
+  initial_success <- clean_runner_call(success_root, reference)
+  stopifnot(identical(clean_runner_status(initial_success), 0L))
+  stale_output <- file.path(
+    success_root,
+    "source",
+    "scripts-paper",
+    "output"
+  )
+  writeLines(
+    "must be preserved outside staged output",
+    file.path(stale_output, "stale-sentinel")
+  )
   success <- clean_runner_call(success_root, reference)
   original_after <- clean_runner_inventory(original_output)
 
@@ -140,8 +145,8 @@ local({
     fixed = TRUE
   )))
 
-  dir.create(failure_root, recursive = TRUE)
-  file.create(file.path(failure_root, "comparison-passed"))
+  initial_failure_root <- clean_runner_call(failure_root, reference)
+  stopifnot(identical(clean_runner_status(initial_failure_root), 0L))
   failure <- clean_runner_call(failure_root, reference, fail = TRUE)
   stopifnot(
     clean_runner_status(failure) != 0L,

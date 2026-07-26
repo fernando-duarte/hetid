@@ -29,9 +29,37 @@ local({
   )
   stopifnot(identical(clean_runner_status(capture), 0L))
 
+  unowned_root <- file.path(test_root, "unowned-run")
+  unowned_sentinel <- file.path(unowned_root, "source", "arbitrary-file")
+  dir.create(dirname(unowned_sentinel), recursive = TRUE)
+  writeLines("must survive rejected staging", unowned_sentinel)
+  file.create(file.path(unowned_root, "comparison-passed"))
+  unowned_result <- clean_runner_call(unowned_root, reference)
+  unowned_safe <- clean_runner_status(unowned_result) != 0L &&
+    identical(
+      readLines(unowned_sentinel, warn = FALSE),
+      "must survive rejected staging"
+    ) &&
+    file.exists(file.path(unowned_root, "comparison-passed")) &&
+    !file.exists(file.path(unowned_root, "pipeline.log"))
+
+  containment_root <- file.path(repo_root, ".clean-validation-overlap-test")
+  containment_source <- tempfile("clean-validation-overlap-source-")
+  dir.create(containment_root)
+  dir.create(containment_source)
+  on.exit(unlink(containment_root, recursive = TRUE), add = TRUE)
+  on.exit(unlink(containment_source, recursive = TRUE), add = TRUE)
+  stopifnot(file.symlink(
+    containment_source,
+    file.path(containment_root, "source")
+  ))
+  containment_result <- clean_runner_call(containment_root, reference)
+  containment_safe <- clean_runner_status(containment_result) != 0L &&
+    any(grepl("must not overlap the repository", containment_result, fixed = TRUE))
+
   symlink_root <- file.path(test_root, "symlinked-source-run")
   external_source <- tempfile("clean-validation-external-")
-  dir.create(symlink_root, recursive = TRUE)
+  clean_runner_mark_owned(symlink_root)
   dir.create(external_source, recursive = TRUE)
   on.exit(unlink(external_source, recursive = TRUE), add = TRUE)
   external_sentinel <- file.path(external_source, "external-sentinel")
@@ -47,17 +75,28 @@ local({
 
   invalid_root <- file.path(test_root, "invalid-reference-run")
   invalid_reference <- file.path(test_root, "invalid-reference.rds")
-  dir.create(invalid_root, recursive = TRUE)
+  clean_runner_mark_owned(invalid_root)
   file.create(file.path(invalid_root, "comparison-passed"))
   saveRDS(list(schema_version = 2L), invalid_reference)
   invalid_result <- clean_runner_call(invalid_root, invalid_reference)
   invalid_marker_safe <- clean_runner_status(invalid_result) != 0L &&
     !file.exists(file.path(invalid_root, "comparison-passed"))
 
+  missing_root <- file.path(test_root, "missing-reference-run")
+  clean_runner_mark_owned(missing_root)
+  file.create(file.path(missing_root, "comparison-passed"))
+  missing_result <- clean_runner_call(
+    missing_root,
+    file.path(test_root, "missing-reference.rds")
+  )
+  missing_marker_safe <- clean_runner_status(missing_result) != 0L &&
+    !file.exists(file.path(missing_root, "comparison-passed"))
+
   git_root <- file.path(test_root, "preexisting-git-run")
   git_metadata <- file.path(git_root, "source", ".git")
   git_sentinel <- file.path(git_metadata, "preexisting-sentinel")
   dir.create(git_metadata, recursive = TRUE)
+  clean_runner_mark_owned(git_root)
   writeLines("must survive rejected staging", git_sentinel)
   git_result <- clean_runner_call(git_root, reference)
   git_safe <- clean_runner_status(git_result) != 0L &&
@@ -66,7 +105,7 @@ local({
 
   log_root <- file.path(test_root, "symlinked-log-run")
   external_log <- tempfile("clean-validation-external-log-")
-  dir.create(log_root, recursive = TRUE)
+  clean_runner_mark_owned(log_root)
   writeLines("external log sentinel", external_log)
   stopifnot(file.symlink(
     external_log,
@@ -85,8 +124,11 @@ local({
     ))
 
   safety_results <- c(
+    unowned_root_rejected = unowned_safe,
+    repository_containment_rejected = containment_safe,
     symlinked_source_rejected = symlink_safe,
-    invalid_reference_clears_marker = invalid_marker_safe,
+    invalid_reference_clears_owned_marker = invalid_marker_safe,
+    missing_reference_clears_owned_marker = missing_marker_safe,
     preexisting_git_rejected = git_safe,
     symlinked_log_rejected = log_safe
   )
@@ -102,5 +144,6 @@ local({
 rm(
   clean_runner_status,
   clean_runner_inventory,
-  clean_runner_call
+  clean_runner_call,
+  clean_runner_mark_owned
 )

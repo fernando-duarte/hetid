@@ -37,6 +37,11 @@ paper_validate_table_cell <- function(cell, path, coordinate) {
   if (!all(vapply(cell, is.atomic, logical(1)))) {
     paper_invalid_table_record(paste("cell columns must be atomic:", location))
   }
+  cell_rows <- nrow(cell)
+  if (any(vapply(cell, function(column) !is.null(dim(column)), logical(1))) ||
+    any(vapply(cell, length, integer(1)) != cell_rows)) {
+    paper_invalid_table_record(paste("cell columns must be vectors:", location))
+  }
   if (!is.numeric(cell$value) || !is.numeric(cell$quantum) ||
     !is.character(cell$stars)) {
     paper_invalid_table_record(paste("cell column types are invalid:", location))
