@@ -8,7 +8,7 @@ default_record=$default_record/baseline-artifacts/fresh-legacy-scientific-record
 record_path=${HETID_LEGACY_REFERENCE_RDS:-$default_record}
 output_root=$legacy_root/scripts-paper/output
 
-Rscript \
+Rscript --vanilla \
   "$repo_root/docs/bootstrap-single-stage-refactor/validation-tools/capture_table_record.R" \
   "$output_root" \
   "$record_path"
