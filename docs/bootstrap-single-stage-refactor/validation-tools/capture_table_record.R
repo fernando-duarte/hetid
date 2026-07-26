@@ -43,7 +43,7 @@ if (!file.rename(temporary, record_path)) {
 }
 
 cat(
-  "schema-2 table reference retained at ",
+  "schema-3 table reference retained at ",
   record_path,
   "\n",
   sep = ""

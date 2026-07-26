@@ -1,61 +1,37 @@
-# Published-table validation tools
+# Bootstrap validation compatibility tools
 
-These tools implement the single cross-platform acceptance rule. They
-do not launch a bootstrap until explicitly invoked.
+Updated: 2026-07-26 09:47 EDT
 
-The comparator reads every TeX file below `scripts-paper/output/tables` and
-checks only numeric result cells present in both runs. Each printed token
-defines a rounding interval from its displayed precision. Two tokens agree
-when those intervals overlap; adjacent tokens printed at the same precision
-do not agree.
+These tools are compatibility wrappers around the canonical schema-3 owners in
+`scripts-paper/validation/`. They do not define numeric-token parsing,
+precision quanta, record validation, or rounding-overlap comparison.
 
-Table paths must match. Table structure, prose, significance stars, missing
-markers, and statuses such as `unreliable`, `unbounded`, and `--` are ignored.
-A cell is also ignored when it is nonnumeric on either side or exposes a
-different count of numeric tokens.
+Current acceptance uses only numeric results in final TeX tables and their
+attached significance stars. It requires identical table paths, numeric
+coordinates, and token counts. A numeric result that appears, disappears,
+becomes non-numeric, or moves fails. Non-numeric content on both sides and all
+non-table output are ignored.
 
-The tracked owners are `scripts-paper/tests/support/published_table_tokens.R`
-and `published_table_comparison.R` beside it. Raw bootstrap draws, diagnostics,
-caches, public R objects, statuses, and provenance are not cross-platform
-acceptance inputs.
+The retained schema-2 RDS and the earlier rerun/reuse comparisons are
+historical evidence. Schema 2 is not accepted because it does not preserve
+stars. Do not overwrite the historical RDS. Recapture a schema-3 reference
+from the retained TeX tables with the canonical command documented in
+`scripts-paper/validation/README.md`.
 
-Capture the completed legacy reference directly from its final tables:
+Run a Mac candidate only with an explicit schema-3 reference:
 
 ```sh
-bash capture_legacy_reference.sh
+bash run_mac_candidate.sh path/to/reference-schema3.rds
 ```
 
-This regenerates the schema-2 table record without sourcing the legacy
-pipeline, loading either bootstrap cache, or executing any estimator or draw.
-The older schema-1 record is not accepted by the current runner.
+The wrapper delegates to the clean runner. It stages an empty output tree,
+runs the pipeline once, and compares the candidate with the explicit
+reference.
 
-Run a Mac candidate after user authorization:
-
-```sh
-bash run_mac_candidate.sh
-```
-
-The candidate script launches exactly one 10,000-draw unified bootstrap. Its
-second pipeline pass is strict cache reuse: an invalid cache stops immediately
-instead of falling back to another bootstrap. It leaves two table records
-and logs in an isolated temporary directory. The Mac core count is not
-overridden, so production reserves two logical CPUs. Before launching, it
-requires a complete schema-2 legacy table record with valid table paths and
-numeric-token projections, so an obsolete or malformed baseline cannot waste
-a long run.
-
-The capture driver optionally receives a legacy gate record through
-`HETID_GATE_REFERENCE_RDS`. It permits a runtime-only rebind of the existing
-non-rejection decision after the old and fresh gate records match under the
-internal scientific rule with only their serialized sample ID and commit
-removed. This accommodates the documented R-version-dependent sample hash
-without changing tracked scientific configuration. That runtime guard is
-separate from the final cross-platform table acceptance gate.
-
-Run the cross-version pipeline-expression regression directly:
+Run compatibility regressions from the repository root:
 
 ```sh
-Rscript test_pipeline_expression.R
-Rscript test_scientific_record.R
-bash test_capture_legacy_reference.sh
+Rscript docs/bootstrap-single-stage-refactor/validation-tools/test_pipeline_expression.R
+Rscript docs/bootstrap-single-stage-refactor/validation-tools/test_scientific_record.R
+bash docs/bootstrap-single-stage-refactor/validation-tools/test_capture_legacy_reference.sh
 ```

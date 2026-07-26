@@ -43,8 +43,14 @@ test ! -e "$sentinel_path"
 Rscript -e '
   record <- readRDS(commandArgs(TRUE)[[1L]])
   stopifnot(
-    identical(record$schema_version, 2L),
-    identical(names(record$published_tables), "table.tex")
+    identical(record$schema_version, 3L),
+    identical(names(record$published_tables), "table.tex"),
+    identical(
+      record$published_tables$table.tex[[
+        "tabular_1/row_1/column_1"
+      ]]$stars,
+      ""
+    )
   )
 ' "$record_path"
 

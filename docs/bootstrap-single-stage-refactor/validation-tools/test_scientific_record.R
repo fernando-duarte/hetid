@@ -10,9 +10,9 @@ tool_dir <- dirname(normalizePath(
 ))
 source(file.path(tool_dir, "scientific_record.R"))
 
-valid_cell <- data.frame(value = 1.23, quantum = 0.01)
+valid_cell <- data.frame(value = 1.23, quantum = 0.01, stars = "**")
 valid_record <- list(
-  schema_version = 2L,
+  schema_version = 3L,
   published_tables = list(
     "table.tex" = list(
       "tabular_1/row_1/column_1" = valid_cell
@@ -45,7 +45,7 @@ matrix_record$published_tables[[1L]][[1L]] <- data.frame(
 )
 
 invalid_records <- list(
-  list(schema_version = 2L),
+  list(schema_version = 3L),
   empty_record,
   traversal_record,
   drive_record,

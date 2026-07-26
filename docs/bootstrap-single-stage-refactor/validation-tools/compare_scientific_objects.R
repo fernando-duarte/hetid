@@ -8,10 +8,7 @@ source(file.path(
 compare_scientific_objects <- function(reference, candidate) {
   paper_validate_table_record(reference)
   paper_validate_table_record(candidate)
-  comparison <- paper_published_tables_compare(
-    reference$published_tables,
-    candidate$published_tables
-  )
+  comparison <- paper_compare_table_records(reference, candidate)
   list(
     equal = isTRUE(comparison),
     comparison = comparison,
@@ -46,5 +43,5 @@ if (sys.nframe() == 0L) {
     print(result$comparison)
     quit(status = 1L)
   }
-  cat("published table-number comparison passed\n")
+  cat("schema-3 published table-result comparison passed\n")
 }

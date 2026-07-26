@@ -188,6 +188,21 @@ Run topology checks and all isolated paper suites:
 Rscript scripts-paper/tests/run_tests.R
 ```
 
+## Cross-run acceptance
+
+Cross-run acceptance uses only final TeX table numbers and their attached
+significance stars. See the
+[canonical validation workflow](validation/README.md) for the complete rule.
+Capture an explicit schema-3 reference from retained tables, or run one clean
+candidate pipeline against that reference:
+
+```sh
+Rscript --vanilla scripts-paper/validation/capture_table_record.R \
+  path/to/retained/scripts-paper/output path/to/reference-schema3.rds
+bash scripts-paper/validation/run_clean_validation.sh \
+  path/to/reference-schema3.rds
+```
+
 ## Inactive and test-support modules
 
 - `log_variance/tables/legacy_log_ols_caption.R` retains the inactive legacy log-OLS
