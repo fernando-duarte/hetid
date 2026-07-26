@@ -1,49 +1,11 @@
 # Numeric projection and comparison for final published TeX tables.
 
-PAPER_TABLE_NUMBER_PATTERN <- paste0(
-  "[-+]?(?:",
-  "(?:[0-9]+(?:[.][0-9]*)?)|(?:[.][0-9]+)",
-  ")(?:[eE][-+]?[0-9]+)?"
-)
-paper_table_number_quantum <- function(token) {
-  mantissa <- sub("[eE].*$", "", token)
-  exponent_text <- sub("^.*[eE]", "", token)
-  exponent <- if (identical(exponent_text, token)) {
-    0L
-  } else {
-    as.integer(exponent_text)
-  }
-  decimal <- regexpr(".", mantissa, fixed = TRUE)[[1L]]
-  places <- if (decimal < 0L) {
-    0L
-  } else {
-    nchar(mantissa) - decimal
-  }
-  10^(exponent - places)
-}
-
-paper_table_cell_numbers <- function(cell) {
-  matches <- gregexpr(
-    PAPER_TABLE_NUMBER_PATTERN,
-    cell,
-    perl = TRUE
-  )
-  tokens <- regmatches(cell, matches)[[1L]]
-  if (identical(tokens, character())) {
-    return(data.frame(
-      value = double(),
-      quantum = double()
-    ))
-  }
-  data.frame(
-    value = as.numeric(tokens),
-    quantum = vapply(
-      tokens,
-      paper_table_number_quantum,
-      numeric(1)
-    )
-  )
-}
+source(file.path(
+  "scripts-paper",
+  "tests",
+  "support",
+  "published_table_tokens.R"
+))
 
 paper_table_numeric_projection <- function(path) {
   if (!file.exists(path)) {

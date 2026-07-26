@@ -14,10 +14,10 @@ markers, and statuses such as `unreliable`, `unbounded`, and `--` are ignored.
 A cell is also ignored when it is nonnumeric on either side or exposes a
 different count of numeric tokens.
 
-The tracked owner is
-`scripts-paper/tests/support/published_table_comparison.R`. Raw bootstrap
-draws, diagnostics, caches, public R objects, statuses, and provenance are not
-cross-platform acceptance inputs.
+The tracked owners are `scripts-paper/tests/support/published_table_tokens.R`
+and `published_table_comparison.R` beside it. Raw bootstrap draws, diagnostics,
+caches, public R objects, statuses, and provenance are not cross-platform
+acceptance inputs.
 
 Capture the completed legacy reference without drawing again:
 

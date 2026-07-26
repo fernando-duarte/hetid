@@ -19,6 +19,9 @@ rsync -a \
   "$repo_root/scripts-paper/tests/support/scientific_comparison.R" \
   "$source_root/scripts-paper/tests/support/scientific_comparison.R"
 rsync -a \
+  "$repo_root/scripts-paper/tests/support/published_table_tokens.R" \
+  "$source_root/scripts-paper/tests/support/published_table_tokens.R"
+rsync -a \
   "$repo_root/scripts-paper/tests/support/published_table_comparison.R" \
   "$source_root/scripts-paper/tests/support/published_table_comparison.R"
 cp \

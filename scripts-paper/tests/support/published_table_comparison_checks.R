@@ -84,6 +84,25 @@ stopifnot(isTRUE(ptc_compare(ptc_reference, ptc_candidate)))
 ptc_write(
   ptc_reference,
   "table.tex",
+  "estimate & $1.00 \\times 10^{-10}$ & 4.56 \\\\"
+)
+ptc_write(
+  ptc_candidate,
+  "table.tex",
+  "estimate & $9.99 \\times 10^{-11}$ & 4.56 \\\\"
+)
+stopifnot(isTRUE(ptc_compare(ptc_reference, ptc_candidate)))
+
+ptc_write(
+  ptc_candidate,
+  "table.tex",
+  "estimate & $9.89 \\times 10^{-11}$ & 4.56 \\\\"
+)
+stopifnot(!isTRUE(ptc_compare(ptc_reference, ptc_candidate)))
+
+ptc_write(
+  ptc_reference,
+  "table.tex",
   "estimate & $[1.23,\\,2.34]$ & 4.56 \\\\"
 )
 ptc_write(
