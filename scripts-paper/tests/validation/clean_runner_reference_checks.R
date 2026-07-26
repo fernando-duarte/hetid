@@ -78,6 +78,77 @@ local({
     identical(unname(tools::md5sum(log_reference)), log_hash) &&
     !file.exists(file.path(log_root, "comparison-passed"))
 
+  symlink_root <- file.path(test_root, "symlink-log-reference-run")
+  seed_symlink <- clean_runner_call(symlink_root, matching_reference)
+  stopifnot(identical(clean_runner_status(seed_symlink), 0L))
+  symlink_target <- file.path(symlink_root, "pipeline.log")
+  symlink_reference <- file.path(symlink_root, "log-reference.rds")
+  file.copy(mismatching_reference, symlink_target, overwrite = TRUE)
+  stopifnot(file.symlink(symlink_target, symlink_reference))
+  symlink_hash <- unname(tools::md5sum(symlink_reference))
+  symlink_result <- clean_runner_call(symlink_root, symlink_reference)
+  symlink_safe <- clean_runner_status(symlink_result) != 0L &&
+    identical(unname(tools::md5sum(symlink_reference)), symlink_hash) &&
+    !file.exists(file.path(symlink_root, "comparison-passed"))
+
+  hardlink_root <- file.path(test_root, "hardlink-log-reference-run")
+  seed_hardlink <- clean_runner_call(hardlink_root, matching_reference)
+  stopifnot(identical(clean_runner_status(seed_hardlink), 0L))
+  hardlink_target <- file.path(hardlink_root, "pipeline.log")
+  hardlink_reference <- file.path(hardlink_root, "log-reference.rds")
+  file.copy(mismatching_reference, hardlink_target, overwrite = TRUE)
+  stopifnot(file.link(hardlink_target, hardlink_reference))
+  hardlink_hash <- unname(tools::md5sum(hardlink_reference))
+  hardlink_result <- clean_runner_call(hardlink_root, hardlink_reference)
+  hardlink_safe <- clean_runner_status(hardlink_result) != 0L &&
+    identical(unname(tools::md5sum(hardlink_reference)), hardlink_hash) &&
+    !file.exists(file.path(hardlink_root, "comparison-passed"))
+
+  marker_root <- file.path(test_root, "marker-reference-run")
+  seed_marker <- clean_runner_call(marker_root, matching_reference)
+  stopifnot(identical(clean_runner_status(seed_marker), 0L))
+  marker_target <- file.path(marker_root, "comparison-passed")
+  marker_reference <- file.path(marker_root, "marker-reference.rds")
+  file.copy(mismatching_reference, marker_target, overwrite = TRUE)
+  stopifnot(file.link(marker_target, marker_reference))
+  marker_hash <- unname(tools::md5sum(marker_reference))
+  marker_result <- clean_runner_call(marker_root, marker_reference)
+  marker_safe <- clean_runner_status(marker_result) != 0L &&
+    identical(unname(tools::md5sum(marker_target)), marker_hash) &&
+    identical(unname(tools::md5sum(marker_reference)), marker_hash)
+
+  candidate_alias_root <- file.path(test_root, "candidate-alias-run")
+  seed_candidate_alias <- clean_runner_call(
+    candidate_alias_root,
+    matching_reference
+  )
+  stopifnot(identical(clean_runner_status(seed_candidate_alias), 0L))
+  candidate_alias_target <- file.path(candidate_alias_root, "candidate.rds")
+  candidate_alias_reference <- file.path(
+    candidate_alias_root,
+    "candidate-reference.rds"
+  )
+  file.copy(
+    mismatching_reference,
+    candidate_alias_target,
+    overwrite = TRUE
+  )
+  stopifnot(file.link(candidate_alias_target, candidate_alias_reference))
+  candidate_alias_hash <- unname(tools::md5sum(candidate_alias_reference))
+  candidate_alias_result <- clean_runner_call(
+    candidate_alias_root,
+    candidate_alias_reference
+  )
+  candidate_alias_safe <- clean_runner_status(candidate_alias_result) != 0L &&
+    identical(
+      unname(tools::md5sum(candidate_alias_reference)),
+      candidate_alias_hash
+    ) &&
+    identical(
+      unname(tools::md5sum(candidate_alias_target)),
+      candidate_alias_hash
+    )
+
   output_root <- file.path(test_root, "output-reference-run")
   seed_output <- clean_runner_call(output_root, matching_reference)
   stopifnot(identical(clean_runner_status(seed_output), 0L))
@@ -95,12 +166,24 @@ local({
     file.exists(output_reference) &&
     identical(unname(tools::md5sum(output_reference)), output_hash) &&
     !file.exists(file.path(output_root, "comparison-passed"))
+  case_alias <- sub("/source/", "/SOURCE/", output_reference, fixed = TRUE)
+  case_alias_safe <- TRUE
+  if (file.exists(case_alias)) {
+    case_result <- clean_runner_call(output_root, case_alias)
+    case_alias_safe <- clean_runner_status(case_result) != 0L &&
+      identical(unname(tools::md5sum(output_reference)), output_hash)
+  }
 
   reference_results <- c(
     candidate_reference_is_immutable = candidate_safe,
     source_reference_is_immutable = source_safe,
     pipeline_log_reference_is_immutable = log_safe,
-    staged_output_reference_is_immutable = output_safe
+    symlink_log_reference_is_immutable = symlink_safe,
+    hardlink_log_reference_is_immutable = hardlink_safe,
+    comparison_marker_alias_is_immutable = marker_safe,
+    candidate_alias_redirected = candidate_alias_safe,
+    staged_output_reference_is_immutable = output_safe,
+    staged_output_case_alias_rejected = case_alias_safe
   )
   if (!all(reference_results)) {
     stop(

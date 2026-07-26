@@ -1,6 +1,6 @@
 # Cross-run table acceptance
 
-Updated: 2026-07-26 11:04 EDT
+Updated: 2026-07-26 11:20 EDT
 
 Cross-run acceptance is decided only by numeric results printed in final TeX
 tables and the significance stars attached to those results. Table paths,
@@ -67,16 +67,20 @@ unique path before staging. The snapshot is used for the final comparison, so a
 supported reference stored under the reusable run root cannot alias the
 generated candidate or be changed by source staging. Supported locations
 include `candidate.rds` and ordinary paths under `source` but outside
-`source/scripts-paper/output`. For `candidate.rds`, the new candidate is
-retained beside the protected snapshot.
+`source/scripts-paper/output`. For `candidate.rds`, or a hard-link alias with
+the same file identity, the new candidate is retained beside the protected
+snapshot.
 
 References that collide with runner-managed state are rejected without changing
 the original reference. Reserved locations are `pipeline.log`,
 `comparison-passed`, the ownership marker, the private snapshot tree,
-`preexisting-output`, and `source/scripts-paper/output`. The stale success
-marker is cleared for an authorized run before validating or rejecting a
-snapshot-safe reference. A reference equal to `comparison-passed` or the
-ownership marker is rejected before either reserved file is changed.
+`preexisting-output`, and `source/scripts-paper/output`. Checks use file and
+ancestor identity as well as path spelling, so hard links and case aliases do
+not bypass them. Final-component symbolic-link references are always rejected.
+
+The stale success marker is cleared for an authorized failed run unless the
+supplied reference has the same file identity as `comparison-passed`. That sole
+exception preserves the reference bytes; the collision is then rejected.
 The compatibility Mac entrypoint delegates to the same clean runner:
 
 ```sh

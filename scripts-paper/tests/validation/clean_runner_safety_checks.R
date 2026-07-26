@@ -73,6 +73,25 @@ local({
     any(grepl("must not overlap the repository", implicit_result, fixed = TRUE))
   unlink(implicit_tmpdir, recursive = TRUE)
 
+  root_tmp_result <- clean_runner_implicit_call(
+    "/",
+    file.path(test_root, "missing-root-reference.rds")
+  )
+  root_lines <- grep(
+    "^validation run root: /hetid-clean-validation[.]",
+    root_tmp_result,
+    value = TRUE
+  )
+  if (length(root_lines) == 1L) {
+    root_created <- sub("^validation run root: ", "", root_lines)
+    if (grepl("^/hetid-clean-validation[.][A-Za-z0-9]+$", root_created)) {
+      unlink(root_created, recursive = TRUE)
+    }
+  }
+  root_tmp_safe <- clean_runner_status(root_tmp_result) != 0L &&
+    any(grepl("must not overlap the repository", root_tmp_result, fixed = TRUE)) &&
+    any(grepl("validation run root: not created", root_tmp_result, fixed = TRUE))
+
   symlink_root <- file.path(test_root, "symlinked-source-run")
   external_source <- tempfile("clean-validation-external-")
   clean_runner_mark_owned(symlink_root)
@@ -143,6 +162,7 @@ local({
     unowned_root_rejected = unowned_safe,
     repository_containment_rejected = containment_safe,
     implicit_repository_tmpdir_rejected = implicit_safe,
+    filesystem_root_tmpdir_rejected = root_tmp_safe,
     symlinked_source_rejected = symlink_safe,
     invalid_reference_clears_owned_marker = invalid_marker_safe,
     missing_reference_clears_owned_marker = missing_marker_safe,

@@ -52,6 +52,11 @@ resolve_future_path() {
 reject_repository_overlap() {
   overlap_path=$1
   overlap_label=$2
+  if [[ "$overlap_path" == / ]]; then
+    printf '%s must not overlap the repository: %s\n' \
+      "$overlap_label" "$overlap_path" >&2
+    return 2
+  fi
   case "$overlap_path" in
     "$repo_root" | "$repo_root"/*)
       printf '%s must not overlap the repository: %s\n' \
@@ -66,6 +71,41 @@ reject_repository_overlap() {
       return 2
       ;;
   esac
+}
+
+paths_identical() {
+  first_path=$1
+  second_path=$2
+  if [[ "$first_path" == "$second_path" ]]; then
+    return 0
+  fi
+  [[ -e "$first_path" && -e "$second_path" &&
+    "$first_path" -ef "$second_path" ]]
+}
+
+path_is_within() {
+  child_path=$1
+  managed_root=$2
+  case "$child_path" in
+    "$managed_root" | "$managed_root"/*)
+      return 0
+      ;;
+  esac
+  if [[ ! -d "$managed_root" ]]; then
+    return 1
+  fi
+  child_ancestor="$(dirname -- "$child_path")"
+  while :; do
+    if [[ -d "$child_ancestor" &&
+      "$child_ancestor" -ef "$managed_root" ]]; then
+      return 0
+    fi
+    next_ancestor="$(dirname -- "$child_ancestor")"
+    if [[ "$next_ancestor" == "$child_ancestor" ]]; then
+      return 1
+    fi
+    child_ancestor="$next_ancestor"
+  done
 }
 
 if [[ -n "$run_root" ]]; then
@@ -128,9 +168,27 @@ else
   )
 fi
 
+comparison_marker="$run_root/comparison-passed"
+pipeline_log="$run_root/pipeline.log"
+candidate_record_path="$run_root/candidate.rds"
+private_root="$run_root/.hetid-clean-validation-private"
+preexisting_output="$run_root/preexisting-output"
+staged_output_path="$run_root/source/scripts-paper/output"
 reference_input=$1
+reference_is_comparison_marker=false
+if [[ -e "$reference_input" ]] &&
+  paths_identical "$reference_input" "$comparison_marker"; then
+  reference_is_comparison_marker=true
+fi
+if [[ "$reference_is_comparison_marker" == false ]]; then
+  rm -f -- "$comparison_marker"
+fi
+if [[ -L "$reference_input" ]]; then
+  printf 'reference record must not be a symbolic link: %s\n' \
+    "$reference_input" >&2
+  exit 2
+fi
 if [[ ! -f "$reference_input" ]]; then
-  rm -f -- "$run_root/comparison-passed"
   printf 'reference record does not exist: %s\n' "$reference_input" >&2
   exit 2
 fi
@@ -140,18 +198,20 @@ reference_dir="$(
 )"
 reference_path="$reference_dir/$(basename -- "$reference_input")"
 compare_cli="$repo_root/scripts-paper/validation/compare_table_records.R"
-comparison_marker="$run_root/comparison-passed"
-if [[ "$reference_path" == "$comparison_marker" ||
-  "$reference_path" == "$owner_marker" ]]; then
+if paths_identical "$reference_path" "$comparison_marker" ||
+  paths_identical "$reference_path" "$owner_marker" ||
+  paths_identical "$reference_path" "$pipeline_log"; then
   printf 'reference record collides with managed path: %s\n' \
     "$reference_path" >&2
   exit 2
 fi
-rm -f -- "$comparison_marker"
+candidate_alias=false
+if paths_identical "$reference_path" "$candidate_record_path"; then
+  candidate_alias=true
+fi
 
 Rscript --vanilla "$compare_cli" "$reference_path" "$reference_path"
 
-private_root="$run_root/.hetid-clean-validation-private"
 if [[ -L "$private_root" ||
   ( -e "$private_root" && ! -d "$private_root" ) ]]; then
   printf 'validation private path must be a directory: %s\n' \
@@ -168,24 +228,14 @@ if ! cmp -s -- "$reference_path" "$reference_snapshot"; then
 fi
 Rscript --vanilla "$compare_cli" "$reference_snapshot" "$reference_snapshot"
 
-pipeline_log="$run_root/pipeline.log"
-preexisting_output="$run_root/preexisting-output"
-staged_output_path="$run_root/source/scripts-paper/output"
 managed_collision=""
-case "$reference_path" in
-  "$pipeline_log")
-    managed_collision="$pipeline_log"
-    ;;
-  "$private_root" | "$private_root"/*)
-    managed_collision="$private_root"
-    ;;
-  "$preexisting_output" | "$preexisting_output"/*)
-    managed_collision="$preexisting_output"
-    ;;
-  "$staged_output_path" | "$staged_output_path"/*)
-    managed_collision="$staged_output_path"
-    ;;
-esac
+if path_is_within "$reference_path" "$private_root"; then
+  managed_collision="$private_root"
+elif path_is_within "$reference_path" "$preexisting_output"; then
+  managed_collision="$preexisting_output"
+elif path_is_within "$reference_path" "$staged_output_path"; then
+  managed_collision="$staged_output_path"
+fi
 if [[ -n "$managed_collision" ]]; then
   printf 'reference record collides with managed path: %s\n' \
     "$managed_collision" >&2
@@ -276,8 +326,8 @@ printf 'producer: %s\n' "$pipeline_script" | tee "$pipeline_log"
   Rscript --vanilla "$pipeline_script"
 ) 2>&1 | tee -a "$pipeline_log"
 
-candidate_record="$run_root/candidate.rds"
-if [[ "$candidate_record" == "$reference_path" ]]; then
+candidate_record="$candidate_record_path"
+if [[ "$candidate_alias" == true ]]; then
   candidate_record="$private_run/candidate.rds"
 fi
 capture_cli="$source_root/scripts-paper/validation/capture_table_record.R"
