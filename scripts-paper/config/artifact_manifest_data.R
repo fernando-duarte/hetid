@@ -116,6 +116,7 @@ PAPER_CONDITIONAL_ARTIFACT_STATUSES <- setdiff(
   "mean_projections_figure|set_id_projections_sd.svg|3|k|B|r",
   "mean_projections_ols_figure|set_id_projections_sd_ols.svg|3|k|B|r",
   "mean_region_figure|set_id_region_3d.svg|3|l|B|r",
+  "mean_region_tau0p2_figure|set_id_region_3d_tau0p2.svg|3|l|B|r",
   "mean_region_ols_figure|set_id_region_3d_ols.svg|3|l|B|r",
   "mean_region_ols_projected_figure|set_id_region_3d_ols_projected.svg|3|l|B|r",
   "mean_region_ols_projected_tau0p2_figure|set_id_region_3d_ols_projected_tau0p2.svg|3|l|B|r",

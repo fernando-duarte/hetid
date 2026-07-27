@@ -73,15 +73,27 @@ PAPER_FIGURE_RENDER_CONTROL <- list(
       expand = 0.75
     ),
     limit_padding = 0.25,
-    # manual_limits and ticks frame the baseline slack; a wider slack outgrows
-    # them and derives its own ladder at derived_tick_n
+    # Hand-set cube frames and their ladders. The baseline overrides two
+    # endpoints of its padded box and uses ticks; the widest slack outgrows both,
+    # so it takes widest_limits and widest_ticks outright. Every frame must
+    # contain its own set box and the OLS point, which render_region_3d.R
+    # asserts, and every tick must fall inside its own frame.
     manual_limits = list(x_upper = 0.28, y_lower = -0.08),
+    widest_limits = list(
+      c(-0.16, 0.73),
+      c(-0.35, 0.35),
+      c(-0.38466, 0.02)
+    ),
+    widest_ticks = list(
+      c(0, 0.25, 0.50),
+      c(-0.20, 0, 0.20),
+      c(-0.30, -0.15, 0)
+    ),
     ticks = list(
       c(0.15, 0.20, 0.25),
       c(-0.05, 0, 0.05),
       c(-0.20, -0.16, -0.12)
     ),
-    derived_tick_n = 4L,
     tick_digits = 2L,
     device = list(
       width = 9.6,

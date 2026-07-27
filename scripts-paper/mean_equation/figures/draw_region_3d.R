@@ -29,6 +29,32 @@ draw_region_projections <- function(pmat, xyz, offsets, col, pch) {
   }
 }
 
+# Cube frame for one slack, given the padded set box. The baseline overrides two
+# endpoints, keeps its hand-set ladder, and grows the third axis to hold the OLS
+# point (ols_z, NULL when unmarked), continuing the ladder over the headroom. A
+# wider slack outgrows all of that and takes its own frame and ladder outright.
+# The caller asserts the result still contains everything it draws.
+region_3d_frame <- function(lims, render, baseline, ols_z) {
+  ticks <- render$ticks
+  if (baseline) {
+    lims[[1]][2] <- render$manual_limits$x_upper
+    lims[[2]][1] <- render$manual_limits$y_lower
+    if (!is.null(ols_z)) {
+      lims[[3]][2] <- max(
+        lims[[3]][2], ols_z + render$limit_padding * diff(lims[[3]])
+      )
+      step <- diff(ticks[[3]])[1L]
+      top <- max(ticks[[3]])
+      n_extra <- max(floor((lims[[3]][2] - top) / step), 0)
+      ticks[[3]] <- c(ticks[[3]], top + step * seq_len(n_extra))
+    }
+  } else {
+    lims <- render$widest_limits
+    ticks <- render$widest_ticks
+  }
+  list(lims = lims, ticks = ticks)
+}
+
 draw_region_panes <- function(pmat, lims, ticks) {
   lo <- vapply(lims, `[`, numeric(1), 1)
   hi <- vapply(lims, `[`, numeric(1), 2)

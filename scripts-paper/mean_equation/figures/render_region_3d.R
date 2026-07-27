@@ -48,30 +48,21 @@ local({
     })
     # the shell is meshed over the padded box, before any display override
     mesh <- build_region_mesh(sys, lims, seed = render$seed)
-    ticks <- render$ticks
-    if (baseline) {
-      lims[[1]][2] <- render$manual_limits$x_upper
-      lims[[2]][1] <- render$manual_limits$y_lower
-    } else {
-      ticks <- lapply(lims, function(l) {
-        at <- pretty(l, render$derived_tick_n)
-        at[at > l[1] & at < l[2]]
-      })
+    frame <- region_3d_frame(
+      lims, render, baseline,
+      if (identical(ols, "none")) NULL else ols_point[[3]]
+    )
+    lims <- frame$lims
+    ticks <- frame$ticks
+    holds <- function(v) {
+      all(vapply(axes, function(k) {
+        v[[k]] >= lims[[k]][1L] && v[[k]] <= lims[[k]][2L]
+      }, logical(1)))
     }
-    if (!identical(ols, "none")) {
-      lims[[3]][2] <- max(
-        lims[[3]][2],
-        ols_point[[3]] + render$limit_padding * diff(lims[[3]])
-      )
-      step <- diff(ticks[[3]])[1L]
-      top <- max(ticks[[3]])
-      n_extra <- max(floor((lims[[3]][2] - top) / step), 0)
-      ticks[[3]] <- c(ticks[[3]], top + step * seq_len(n_extra))
-    }
-    stopifnot(all(vapply(axes, function(axis) {
-      box0$lo[[axis]] >= lims[[axis]][1L] &&
-        box0$hi[[axis]] <= lims[[axis]][2L]
-    }, logical(1))))
+    stopifnot(
+      holds(box0$lo), holds(box0$hi),
+      identical(ols, "none") || holds(ols_point)
+    )
     tick_labels <- lapply(ticks, function(t) {
       paste0("$", formatC(t, format = "f", digits = render$tick_digits), "$")
     })
@@ -186,6 +177,7 @@ local({
   draw("mean_region_figure", "none")
   draw("mean_region_ols_figure", "point")
   draw("mean_region_ols_projected_figure", "projected")
+  draw("mean_region_tau0p2_figure", "none", widest_tau)
   draw("mean_region_ols_projected_tau0p2_figure", "projected", widest_tau)
 })
 

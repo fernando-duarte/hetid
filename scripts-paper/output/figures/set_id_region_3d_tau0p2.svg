@@ -60,12 +60,6 @@
 <circle cx='385.14' cy='184.58' r='2.97' style='stroke-width: 1.35; stroke: #DC143C; fill: #FFFFFF;' />
 <polyline points='266.40,208.76 266.18,304.91 ' style='stroke-width: 0.98; stroke: #DC143C; stroke-opacity: 0.65; stroke-dasharray: 1.30,3.90;' />
 <circle cx='266.18' cy='304.91' r='2.97' style='stroke-width: 1.35; stroke: #DC143C; fill: #FFFFFF;' />
-<polyline points='258.20,163.93 185.04,110.52 ' style='stroke-width: 0.98; stroke: #FF8C00; stroke-opacity: 0.65; stroke-dasharray: 1.30,3.90;' />
-<polygon points='185.04,114.24 188.76,110.52 185.04,106.80 181.32,110.52 ' style='stroke-width: 1.35; stroke: #FF8C00; fill: #FFFFFF;' />
-<polyline points='258.20,163.93 385.96,139.19 ' style='stroke-width: 0.98; stroke: #FF8C00; stroke-opacity: 0.65; stroke-dasharray: 1.30,3.90;' />
-<polygon points='385.96,142.91 389.69,139.19 385.96,135.47 382.24,139.19 ' style='stroke-width: 1.35; stroke: #FF8C00; fill: #FFFFFF;' />
-<polyline points='258.20,163.93 258.09,306.41 ' style='stroke-width: 0.98; stroke: #FF8C00; stroke-opacity: 0.65; stroke-dasharray: 1.30,3.90;' />
-<polygon points='258.09,310.13 261.81,306.41 258.09,302.68 254.36,306.41 ' style='stroke-width: 1.35; stroke: #FF8C00; fill: #FFFFFF;' />
 <polygon points='337.83,191.33 304.24,191.29 339.39,192.43 ' style='stroke-width: 0.75; stroke: none; fill: #4A90D9; fill-opacity: 0.10;' />
 <polygon points='286.72,221.45 304.24,191.29 265.16,185.51 ' style='stroke-width: 0.75; stroke: none; fill: #4A90D9; fill-opacity: 0.10;' />
 <polygon points='322.15,218.45 339.39,192.43 304.24,191.29 ' style='stroke-width: 0.75; stroke: none; fill: #4A90D9; fill-opacity: 0.10;' />
@@ -217,7 +211,6 @@
 <polyline points='205.36,232.50 190.66,205.15 ' style='stroke-width: 0.67; stroke: #112233;' />
 <polyline points='247.83,229.97 205.36,232.50 ' style='stroke-width: 0.67; stroke: #112233;' />
 <circle cx='266.40' cy='208.76' r='3.64' style='stroke-width: 0.38; fill: #DC143C;' />
-<polygon points='258.20,168.50 262.76,163.93 258.20,159.36 253.63,163.93 ' style='stroke-width: 0.38; fill: #FF8C00;' />
 <line x1='194.26' y1='370.77' x2='85.03' y2='267.32' style='stroke-width: 0.79;' />
 <line x1='172.99' y1='350.63' x2='168.46' y2='355.41' style='stroke-width: 0.79;' />
 <line x1='141.27' y1='320.58' x2='136.74' y2='325.37' style='stroke-width: 0.79;' />
