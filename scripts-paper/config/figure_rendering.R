@@ -23,7 +23,7 @@ PAPER_FIGURE_STYLE <- list(
   variance_bound = list(
     series_colors = c(
       "SDF news" = "#B01513",
-      "expected SDF" = "#7F7F7F"
+      "Expected SDF" = "#7F7F7F"
     ),
     line_width = 0.8,
     point_size = 1.6

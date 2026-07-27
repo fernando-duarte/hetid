@@ -1,10 +1,11 @@
-# Log-scale variance-bounds figure builder: log(U_i) against maturity in
-# months, one series per reported bound (SDF news min, expected-SDF min).
+# Variance-bounds figure builder: U_i in levels against maturity in months,
+# one series per reported bound (SDF news min, expected-SDF min).
 # Pure (defining functions with no side effect on source) so the contract test
 # can drive the reshape and the renderer with fixtures without touching the
 # manifested output.
 
 paper_source_once(paper_path("support", "graphics", "device.R"))
+paper_source_once(paper_path("config", "reporting.R"))
 
 variance_bounds_plot_data <- function(df) {
   stopifnot(
@@ -14,11 +15,32 @@ variance_bounds_plot_data <- function(df) {
   data.frame(
     Maturity = rep(df$Maturity, 2L),
     Series = factor(
-      rep(c("SDF news", "expected SDF"), each = nrow(df)),
-      levels = c("SDF news", "expected SDF")
+      rep(c("SDF news", "Expected SDF"), each = nrow(df)),
+      levels = c("SDF news", "Expected SDF")
     ),
     Value = c(df$Variance_Bound, df$Expected_SDF_Bound)
   )
+}
+
+# Vertical ticks in the summary table's plain-math scientific notation, so
+# \includesvg re-typesets them and the figure and table read alike. Shares that
+# table's precision, read as significant digits under "g" so a half-step break
+# keeps its mantissa instead of rounding to a neighbouring tick's label. Zero
+# prints bare rather than as a mantissa times a power.
+variance_bounds_axis_labels <- function(breaks) {
+  labels <- paper_format_sci(
+    breaks,
+    digits = PAPER_REPORTING_CONTROL$precision$variance_bound_sci,
+    format = "g",
+    na_token = ""
+  )
+  ifelse(!is.na(breaks) & breaks == 0, "$0$", labels)
+}
+
+# Horizontal ticks wrapped in math too, so both axes typeset through the same
+# path and the figure carries no mixed SVG-font and LaTeX text.
+variance_bounds_maturity_labels <- function(breaks) {
+  ifelse(is.na(breaks), "", paste0("$", format(breaks, trim = TRUE), "$"))
 }
 
 variance_bounds_render_figure <- function(df, path) {
@@ -26,14 +48,16 @@ variance_bounds_render_figure <- function(df, path) {
   figure_style <- PAPER_FIGURE_STYLE$variance_bound
   fig <- ggplot2::ggplot(
     long_df,
-    ggplot2::aes(x = Maturity, y = log(Value), color = Series)
+    ggplot2::aes(x = Maturity, y = Value, color = Series)
   ) +
     ggplot2::geom_line(linewidth = figure_style$line_width) +
     ggplot2::geom_point(size = figure_style$point_size) +
     ggplot2::scale_color_manual(values = figure_style$series_colors) +
+    ggplot2::scale_y_continuous(labels = variance_bounds_axis_labels) +
+    ggplot2::scale_x_continuous(labels = variance_bounds_maturity_labels) +
     ggplot2::labs(
       x = "Maturity (months)",
-      y = "Log(Variance Bound)",
+      y = "Variance Bound",
       color = NULL
     ) +
     # Match the paper's svglite / theme_classic figure standard: no in-figure

@@ -145,7 +145,7 @@ PAPER_CONDITIONAL_ARTIFACT_STATUSES <- setdiff(
   "egarch_results_csv|log_var_eq_egarch_x.csv|6|w|J|e",
   "egarch_results_rds|log_var_eq_egarch_x.rds|6|w|J|e",
   "egarch_bounds_figure|log_var_eq_bounds_tau_egarch_x.pdf|3|w|J|e",
-  "variance_bound_figure|variance_bounds_log.svg|3|x|B|r",
+  "variance_bound_figure|variance_bounds.svg|3|x|B|r",
   "variance_bound_summary_table|variance_bounds_summary.tex|2|y|B|r",
   "variance_bound_summary_standalone_tex|variance_bounds_summary_standalone.tex|2|y|B|r",
   "variance_bound_summary_standalone_pdf|variance_bounds_summary_standalone.pdf|2|y|B|r",

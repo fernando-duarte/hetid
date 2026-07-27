@@ -24,7 +24,7 @@ long_df <- variance_bounds_plot_data(fixture_df)
 check(
   "plot data doubles the rows with one series level per bound",
   nrow(long_df) == 2L * nrow(fixture_df) &&
-    identical(levels(long_df$Series), c("SDF news", "expected SDF"))
+    identical(levels(long_df$Series), c("SDF news", "Expected SDF"))
 )
 check(
   "plot data carries each source column into its own series",
@@ -33,7 +33,7 @@ check(
     fixture_df$Variance_Bound
   ) &&
     identical(
-      long_df$Value[long_df$Series == "expected SDF"],
+      long_df$Value[long_df$Series == "Expected SDF"],
       fixture_df$Expected_SDF_Bound
     )
 )

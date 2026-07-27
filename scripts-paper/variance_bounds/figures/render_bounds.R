@@ -1,4 +1,4 @@
-# Driver: render the log variance-bounds figure to its manifested SVG artifact.
+# Driver: render the variance-bounds figure to its manifested SVG artifact.
 
 paper_source_once(paper_path("variance_bounds", "figures", "plot.R"))
 
