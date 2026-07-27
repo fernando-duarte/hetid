@@ -77,7 +77,13 @@ variance_bounds_render_figure <- function(df, path) {
       axis.line = ggplot2::element_blank(),
       axis.text.x = ggplot2::element_text(margin = ggplot2::margin(5, 0, 0, 0, unit = "pt")),
       axis.text.y = ggplot2::element_text(margin = ggplot2::margin(0, 5, 0, 0, unit = "pt")),
-      axis.title.y = ggplot2::element_text(margin = ggplot2::margin(r = 8, unit = "pt"))
+      # svglite reserves the tick column at the width of the raw LaTeX source
+      # ("$4 \\times 10^{-9}$"), but \includesvg typesets that about half as
+      # wide and the labels sit flush to the axis, so the surplus opens between
+      # them and the title. Pull the title back over it, to the gap the x title
+      # keeps from its own labels. Measured through the paper's svg/inkscape
+      # path; revisit if the exponent or that font changes.
+      axis.title.y = ggplot2::element_text(margin = ggplot2::margin(r = -33, unit = "pt"))
     )
   device <- PAPER_FIGURE_RENDER_CONTROL$devices$variance_bounds
   ggplot2::ggsave(
