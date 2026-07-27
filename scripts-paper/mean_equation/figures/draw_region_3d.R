@@ -5,6 +5,30 @@ draw_projected_line <- function(xyz, pmat, ...) {
   graphics::lines(p[, "x"], p[, "y"], ...)
 }
 
+draw_region_point <- function(pmat, xyz, ...) {
+  p <- project_region_3d(matrix(unname(xyz), nrow = 1), pmat)
+  graphics::points(p[, "x"], p[, "y"], ...)
+}
+
+# Dotted rays dropping an interior point onto each coordinate wall, each ending
+# in a hollow marker of that point's own shape, so a reader can pick its three
+# coordinates off the walls.
+draw_region_projections <- function(pmat, xyz, offsets, col, pch) {
+  xyz <- unname(xyz)
+  ray <- grDevices::adjustcolor(col, alpha.f = 0.65)
+  for (perp in seq_along(offsets)) {
+    wall_point <- xyz
+    wall_point[perp] <- offsets[perp]
+    draw_projected_line(
+      rbind(xyz, wall_point), pmat,
+      col = ray, lty = 3, lwd = 1.3
+    )
+    draw_region_point(pmat, wall_point,
+      pch = pch, bg = "white", col = col, cex = 1.1, lwd = 1.8
+    )
+  }
+}
+
 draw_region_panes <- function(pmat, lims, ticks) {
   lo <- vapply(lims, `[`, numeric(1), 1)
   hi <- vapply(lims, `[`, numeric(1), 2)

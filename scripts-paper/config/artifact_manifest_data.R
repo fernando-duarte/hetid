@@ -114,7 +114,11 @@ PAPER_CONDITIONAL_ARTIFACT_STATUSES <- setdiff(
   "variance_share_standalone_pdf|var_share_standalone.pdf|2|i|B|r",
   "mean_bounds_figure|set_id_bounds_tau.svg|3|j|B|r",
   "mean_projections_figure|set_id_projections_sd.svg|3|k|B|r",
+  "mean_projections_ols_figure|set_id_projections_sd_ols.svg|3|k|B|r",
   "mean_region_figure|set_id_region_3d.svg|3|l|B|r",
+  "mean_region_ols_figure|set_id_region_3d_ols.svg|3|l|B|r",
+  "mean_region_ols_projected_figure|set_id_region_3d_ols_projected.svg|3|l|B|r",
+  "mean_region_ols_projected_tau0p2_figure|set_id_region_3d_ols_projected_tau0p2.svg|3|l|B|r",
   "log_ols_bounds_figure|log_var_eq_bounds_tau_logols.svg|3|m|B|r",
   "ppml_bounds_figure|log_var_eq_bounds_tau_ppml.svg|3|m|B|r",
   "harvey_bounds_figure|log_var_eq_bounds_tau_harvey.svg|3|m|B|r",
@@ -148,20 +152,8 @@ PAPER_CONDITIONAL_ARTIFACT_STATUSES <- setdiff(
   "quoted_numbers_md|approximation_error_quoted_numbers.md|5|aa|B|r"
 )
 
-.artifact_variant_specs <- c(
-  "log_ols_bounds_figure|logvar_bounds_tau|logols",
-  "ppml_bounds_figure|logvar_bounds_tau|ppml",
-  "harvey_bounds_figure|logvar_bounds_tau|harvey",
-  "lad_bounds_figure|logvar_bounds_tau|lad",
-  "egarch_bounds_figure|logvar_bounds_tau|egarch_x",
-  "ppml_fitted_volatility_figure|fitted_volatility|ppml",
-  "harvey_fitted_volatility_figure|fitted_volatility|harvey",
-  "lad_fitted_volatility_figure|fitted_volatility|lad",
-  "log_variance_panels_table|logvar_panels|conservative",
-  "log_variance_inference_table|logvar_panels|inference",
-  "structural_equation_inference_table|structural_equation|inference"
-)
-
+# family/variant labels for the interchangeable-flavour records
+paper_source_once(paper_path("config", "artifact_manifest_variants.R"))
 # fitted-volatility slack sweep records, derived from the tau contract
 paper_source_once(paper_path("config", "artifact_manifest_sweep.R"))
 .artifact_specs <- do.call(rbind, strsplit(.artifact_specs, "|", fixed = TRUE))

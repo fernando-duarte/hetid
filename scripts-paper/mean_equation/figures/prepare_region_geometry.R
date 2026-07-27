@@ -43,6 +43,9 @@ region_sd_box <- function(tau) {
 # tau = 0 point in SD units
 region_sd_point <- function() set_id_mean_eq$theta_table$point * region_sd
 
+# OLS benchmark point in SD units (Y2 treated as exogenous, same sample)
+region_sd_ols_point <- function() set_id_mean_eq$theta_table$ols * region_sd
+
 # Closed-form free-coordinate envelope over an (k1, k2) grid (matrices X, Y for
 # the two kept axes, k1 < k2); perp is the projected-out axis. Returns the
 # bottom skin L, top skin H, and margin M = L - H (<= 0 inside the projection).

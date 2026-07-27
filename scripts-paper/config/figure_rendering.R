@@ -40,9 +40,12 @@ PAPER_FIGURE_STYLE <- list(
     )
   ),
   # Identified-region figures (render_region_3d.R, render_projections.R). The
-  # tau = 0 point marker is one crimson shared by both figures.
+  # tau = 0 point marker is one crimson shared by both figures, and the OLS
+  # benchmark marker of their _ols variants is one orange diamond shared too.
   region = list(
     tau0_point = "#dc143c",
+    ols_point = "#ff8c00",
+    ols_pch = 23L,
     wall_fill = "#9dc3e6",
     face_fill = "#4a90d9",
     mesh_segment = "#112233"
@@ -70,12 +73,15 @@ PAPER_FIGURE_RENDER_CONTROL <- list(
       expand = 0.75
     ),
     limit_padding = 0.25,
+    # manual_limits and ticks frame the baseline slack; a wider slack outgrows
+    # them and derives its own ladder at derived_tick_n
     manual_limits = list(x_upper = 0.28, y_lower = -0.08),
     ticks = list(
       c(0.15, 0.20, 0.25),
       c(-0.05, 0, 0.05),
       c(-0.20, -0.16, -0.12)
     ),
+    derived_tick_n = 4L,
     tick_digits = 2L,
     device = list(
       width = 9.6,
@@ -88,12 +94,9 @@ PAPER_FIGURE_RENDER_CONTROL <- list(
     tau_colors = c("#472B7A", "#26818E", "#5DC863"),
     range_padding = 0.06,
     device = c(width = 11, height = 4.7),
-    layout = matrix(
-      c(1L, 2L, 3L, 4L, 4L, 4L),
-      nrow = 2L,
-      byrow = TRUE
-    ),
-    layout_heights = c(6, 1)
+    # one row of panels; the legend overlays the strip they leave above their
+    # square boxes rather than taking a layout row of its own
+    layout = matrix(c(1L, 2L, 3L), nrow = 1L)
   )
 )
 
