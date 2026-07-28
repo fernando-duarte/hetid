@@ -6,68 +6,22 @@
 # rows fails the run). Definitions only; sourced by render_bounds_by_tau.R.
 
 paper_source_once(paper_path("support", "graphics", "device.R"))
+paper_source_once(paper_path("log_variance", "figures", "bounds_by_tau_frame.R"))
 
 logvar_bounds_tau_render <- function(rows, metadata, tau_baseline, tau_star,
                                      path) {
   figure_style <- PAPER_FIGURE_STYLE$identified_set
   logvar_style <- PAPER_FIGURE_STYLE$log_variance
-  rows$category <- ifelse(
-    rows$lower_status == "bounded" & rows$upper_status == "bounded",
-    "two-sided",
-    ifelse(
-      (rows$lower_status == "bounded" & rows$upper_status == "unbounded") |
-        (rows$upper_status == "bounded" & rows$lower_status == "unbounded"),
-      "one-sided",
-      ifelse(
-        rows$lower_status == "unbounded" & rows$upper_status == "unbounded",
-        "unbounded", "unreliable"
-      )
-    )
-  )
-  rows$finite_side <- ifelse(
-    rows$category == "one-sided",
-    ifelse(rows$lower_status == "bounded", rows$lower, rows$upper),
-    NA_real_
-  )
-  rows$direction <- ifelse(
-    rows$category == "one-sided",
-    ifelse(rows$upper_status == "unbounded", "up", "down"),
-    NA_character_
-  )
-  rows$coef <- factor(rows$coef, levels = unique(rows$coef))
-  two <- rows[rows$category == "two-sided", ]
-  one <- rows[rows$category == "one-sided", ]
-  n_tally <- table(factor(
-    rows$category,
-    levels = c("two-sided", "one-sided", "unbounded", "unreliable")
-  ))
-  cat(
-    "  bounds-by-tau rows: two-sided", n_tally[["two-sided"]],
-    "one-sided", n_tally[["one-sided"]],
-    "unbounded", n_tally[["unbounded"]],
-    "unreliable", n_tally[["unreliable"]], "\n"
-  )
-  stopifnot(
-    nrow(rows) > 0L,
-    all(is.finite(two$lower)), all(is.finite(two$upper)),
-    all(is.finite(one$finite_side)), !anyNA(one$direction)
-  )
   # per-facet strip placement below the facet's own data, with a floor so a
   # point-collapsed facet still separates strip from data
-  strip <- do.call(rbind, lapply(levels(rows$coef), function(cf) {
-    sub <- rows[rows$coef == cf, ]
-    vals <- c(
-      sub$lower[is.finite(sub$lower)], sub$upper[is.finite(sub$upper)],
-      sub$finite_side[is.finite(sub$finite_side)]
-    )
-    ymin <- if (length(vals)) min(vals) else 0
-    rng <- max(1e-4, if (length(vals)) diff(range(vals)) else 0)
-    data.frame(
-      coef = cf, tau = sub$tau, category = sub$category,
-      y = ymin - 0.06 * rng, h = 0.04 * rng
-    )
-  }))
-  strip$coef <- factor(strip$coef, levels = levels(rows$coef))
+  frame <- logvar_bounds_tau_frame(rows, tau_star)
+  rows <- frame$rows
+  two <- frame$two
+  one <- frame$one
+  strip <- frame$strip
+  # the slack range past the largest sampled tau: never solved, so it is drawn
+  # as an explicitly uncharacterised band rather than left as blank axis
+  unsampled <- data.frame(lo = max(rows$tau), hi = tau_star)
   ref_line <- data.frame(
     tau = tau_baseline,
     line = sprintf(
@@ -79,6 +33,11 @@ logvar_bounds_tau_render <- function(rows, metadata, tau_baseline, tau_star,
     )
   )
   fig <- ggplot2::ggplot(rows, ggplot2::aes(tau)) +
+    ggplot2::geom_rect(
+      data = unsampled, inherit.aes = FALSE,
+      ggplot2::aes(xmin = lo, xmax = hi, ymin = -Inf, ymax = Inf),
+      fill = logvar_style$unbounded, alpha = logvar_style$unsampled_shade
+    ) +
     ggplot2::geom_ribbon(
       data = two, ggplot2::aes(ymin = lower, ymax = upper),
       fill = figure_style$primary,
@@ -105,10 +64,19 @@ logvar_bounds_tau_render <- function(rows, metadata, tau_baseline, tau_star,
       fill = NA,
       size = logvar_style$one_sided_point_size
     ) +
+    # sampled slacks on the certified boundaries: the segments between them are
+    # interpolation, not a claim about the shape in between
+    ggplot2::geom_point(
+      data = two, ggplot2::aes(y = lower),
+      color = figure_style$primary, size = logvar_style$sampled_point_size
+    ) +
+    ggplot2::geom_point(
+      data = two, ggplot2::aes(y = upper),
+      color = figure_style$primary, size = logvar_style$sampled_point_size
+    ) +
     ggplot2::geom_tile(
       data = strip,
-      ggplot2::aes(y = y, height = h, fill = category),
-      width = tau_star / 30
+      ggplot2::aes(y = y, height = h, width = w, fill = category)
     ) +
     ggplot2::geom_vline(
       data = ref_line, ggplot2::aes(xintercept = tau, linetype = line),
@@ -135,7 +103,9 @@ logvar_bounds_tau_render <- function(rows, metadata, tau_baseline, tau_star,
           PAPER_REPORTING_CONTROL$precision$figure_annotation
         ),
         " is the mean-equation set's ",
-        "bounded-unbounded transition and is excluded from the grid."
+        "bounded-unbounded transition. Points mark the sampled slacks and the ",
+        "segments between them are interpolation. The shaded band above the ",
+        "largest sampled slack is not characterised."
       )
     ) +
     ggplot2::theme(legend.position = "bottom")
@@ -151,10 +121,12 @@ logvar_bounds_tau_render <- function(rows, metadata, tau_baseline, tau_star,
   }
   built <- ggplot2::ggplot_build(fig)
   layer_rows <- vapply(built$data, nrow, integer(1))
-  # the reference line's one data row is replicated into every facet panel
+  # the unsampled band's and the reference line's one data row are each
+  # replicated into every facet panel
+  n_facet <- nlevels(rows$coef)
   expected <- c(
-    nrow(two), nrow(two), nrow(two), nrow(one), nrow(one), nrow(strip),
-    nlevels(rows$coef)
+    n_facet, nrow(two), nrow(two), nrow(two), nrow(one), nrow(one),
+    nrow(two), nrow(two), nrow(strip), n_facet
   )
   stopifnot(identical(layer_rows, expected))
   device <- PAPER_FIGURE_RENDER_CONTROL$devices$logvar_bounds

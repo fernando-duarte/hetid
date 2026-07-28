@@ -156,5 +156,8 @@ paper_source_once(paper_path("tests", "support", "quadratic_helper_checks.R"))
 paper_source_once(paper_path("tests", "support", "profile_classifier_checks.R"))
 paper_source_once(paper_path("tests", "support", "box_multistart_checks.R"))
 paper_source_once(paper_path("tests", "support", "tau_grid_checks.R"))
+paper_source_once(paper_path(
+  "tests", "support", "bounds_by_tau_strip_checks.R"
+))
 
 .test$finish()
