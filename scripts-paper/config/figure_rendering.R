@@ -18,6 +18,8 @@ PAPER_FIGURE_STYLE <- list(
     unreliable = "#c23b22",
     unbounded = "grey55",
     one_sided_point_size = 1.6,
+    sampled_point_size = 0.55,
+    unsampled_shade = 0.2,
     point_linewidth = 0.55
   ),
   variance_bound = list(
@@ -60,6 +62,13 @@ PAPER_FIGURE_RENDER_CONTROL <- list(
     fitted_volatility = c(width = 10, height = 6.25),
     variance_bounds = c(width = 5.5, height = 5.5 / 1.618),
     descriptive = c(width = 11, height = 8.5)
+  ),
+  # shape of the shared bounds-by-tau grid (tau_grid.R): the historical uniform
+  # backbone with its tail intervals subdivided, so the branch switch near tau*
+  # renders as a knee rather than one chord
+  bounds_tau_grid = list(
+    tail_fraction = 0.9,
+    tail_subdivisions = 4L
   ),
   region_3d = list(
     seed = 15599L,

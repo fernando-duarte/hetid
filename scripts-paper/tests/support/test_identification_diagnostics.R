@@ -155,5 +155,6 @@ check("rank-deficient null is not rejected", rk_deficient$p > 0.05)
 paper_source_once(paper_path("tests", "support", "quadratic_helper_checks.R"))
 paper_source_once(paper_path("tests", "support", "profile_classifier_checks.R"))
 paper_source_once(paper_path("tests", "support", "box_multistart_checks.R"))
+paper_source_once(paper_path("tests", "support", "tau_grid_checks.R"))
 
 .test$finish()

@@ -17,6 +17,7 @@ paper_source_once(paper_path("support", "identification", "tau_star.R"))
 paper_source_once(paper_path("support", "reporting", "inference.R"))
 paper_source_once(paper_path("mean_equation", "inference", "refine_bounds_by_tau.R"))
 paper_source_once(paper_path("support", "graphics", "device.R"))
+paper_source_once(paper_path("config", "tau_grid.R"))
 
 theta_coefs <- set_id_mean_eq$theta_table$coef
 beta_coefs <- set_id_mean_eq$beta1_table$coef
@@ -82,12 +83,7 @@ stored_rows <- rbind(
 # solved tau grid, strictly inside (0, tau*): tau = 0 and the baseline come
 # from the stored rows, and the tau* endpoint is excluded (the width diverges
 # right at the transition, crushing every facet's scale)
-tau_grid <- seq(
-  0,
-  set_id_mean_eq$tau_star,
-  length.out = PAPER_ANALYSIS_CONTRACT$tau$figure_grid_n
-)
-tau_grid <- tau_grid[tau_grid > 0 & tau_grid < set_id_mean_eq$tau_star]
+tau_grid <- paper_bounds_tau_grid(set_id_mean_eq$tau_star)
 bounds_df <- rbind(stored_rows, do.call(rbind, lapply(tau_grid, bounds_at_tau)))
 
 # uncertified rows (unbounded or unreliable sides, expected near tau*) are

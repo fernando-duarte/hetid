@@ -9,6 +9,7 @@
 # attainment is not established. Run via run_pipeline.R after compute_bounds_by_tau.R.
 
 paper_source_once(paper_path("log_variance", "figures", "bounds_by_tau_plot.R"))
+paper_source_once(paper_path("config", "tau_grid.R"))
 
 # fresh sample-id recomputation from the same qtr-joined sample; every
 # registry estimator must carry this id
@@ -31,12 +32,7 @@ stopifnot(
   identical(log_var_eq$sample_id, fig_fresh_id)
 )
 
-fig_tau_grid <- seq(
-  0,
-  set_id_mean_eq$tau_star,
-  length.out = PAPER_ANALYSIS_CONTRACT$tau$figure_grid_n
-)
-fig_tau_grid <- fig_tau_grid[fig_tau_grid > 0 & fig_tau_grid < set_id_mean_eq$tau_star]
+fig_tau_grid <- paper_bounds_tau_grid(set_id_mean_eq$tau_star)
 
 # one figure per registry entry: engine grid walk, nesting guard with a warm
 # retry and disclosed downgrades, plot assembly, and the render
