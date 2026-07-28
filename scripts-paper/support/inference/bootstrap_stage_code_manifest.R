@@ -57,6 +57,10 @@ BOOTSTRAP_STAGE_CODE_FILES <- c(
     "standard_error_estimators.R"
   )),
   "mean_equation/inference/boot_results.R",
+  # the draw geometry builds each draw's news box through the widening builder,
+  # so the multistart and the from-a-start profile solve it calls are draw code:
+  # editing them must invalidate the cache
+  "mean_equation/inference/theta_box_multistart.R",
   "inference/bootstrap_stage_specs.R",
   "inference/bootstrap_stage_draw.R",
   "inference/bootstrap_stage_cache.R",

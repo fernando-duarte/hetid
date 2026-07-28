@@ -23,9 +23,7 @@ tau_sweep_taus <- logvar_tau_sweep_feasible(
   set_id_mean_eq$tau_star
 )
 stopifnot(length(tau_sweep_taus) > 0L)
-tau_sweep_boxes <- logvar_tau_sweep_boxes(
-  set_id_mean_eq, solve_theta_bound_from, tau_sweep_taus
-)
+tau_sweep_boxes <- logvar_tau_sweep_boxes(set_id_mean_eq, tau_sweep_taus)
 tau_sweep_x <- logvar_design_matrix(
   log_var_eq$inputs$pcr,
   PAPER_ANALYSIS_CONTRACT$model$return_pc_cols

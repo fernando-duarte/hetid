@@ -22,37 +22,24 @@ theta_coefs <- set_id_mean_eq$theta_table$coef
 beta_coefs <- set_id_mean_eq$beta1_table$coef
 
 # warm-start state, seeded with the tau = 0 closed-form point (the whole set
-# at tau = 0): each successful solve hands its argmax to the next grid tau,
-# where it is still feasible because the set grows with tau
+# at tau = 0): each grid tau hands its accepted argmaxes to the next, where
+# they are still feasible because the set grows with tau
 seed_theta <- set_id_mean_eq$theta_table$point
 if (anyNA(seed_theta)) seed_theta <- NULL
-warm <- list(
-  min = rep(list(seed_theta), length(theta_coefs)),
-  max = rep(list(seed_theta), length(theta_coefs))
-)
+warm <- if (is.null(seed_theta)) list() else list(seed_theta)
 refined_n <- 0L
 
-# warm-started refinement of the news intervals at one grid tau: re-solve
-# each side from the previous grid point's argmax and keep a certified value
-# only when it extends the origin-start solve
+# multistart refinement of the news intervals at one grid tau: the warm pool
+# plus the axis starts and a cross-seeding round (theta_box_multistart.R),
+# keeping a certified value only when it extends the origin-start solve
 refine_theta_intervals <- function(tau, theta_tab) {
   qs <- tau_quadratic_system(set_id_mean_eq$gamma, tau, set_id_mean_eq$moments)
-  for (k in seq_along(theta_coefs)) {
-    for (side in c("min", "max")) {
-      cand <- solve_theta_bound_from(qs, k, side, warm[[side]][[k]])
-      if (is.null(cand)) next
-      warm[[side]][[k]] <<- cand$theta
-      if (theta_tab$status[k] != PAPER_ENDPOINT_STATUS[["bounded"]]) next
-      if (side == "max" && cand$bound > theta_tab$set_upper[k]) {
-        theta_tab$set_upper[k] <- cand$bound
-        refined_n <<- refined_n + 1L
-      } else if (side == "min" && cand$bound < theta_tab$set_lower[k]) {
-        theta_tab$set_lower[k] <- cand$bound
-        refined_n <<- refined_n + 1L
-      }
-    }
-  }
-  theta_tab
+  widened <- widen_theta_box(qs, theta_tab, warm)
+  warm <<- widened$args
+  refined_n <<- refined_n +
+    sum(widened$tab$set_lower < theta_tab$set_lower, na.rm = TRUE) +
+    sum(widened$tab$set_upper > theta_tab$set_upper, na.rm = TRUE)
+  widened$tab
 }
 
 # per-coefficient interval of the joint identified set at one tau (the shared
@@ -172,9 +159,9 @@ mean_eq_bounds_tau[
 ] <-
   lapply(set_id_mean_eq$set_tables, `[[`, "theta")
 
-# solve_theta_bound_from stays: it belongs to refine_bounds_by_tau.R, which
-# paper_source_once will not re-source, and the fitted-volatility tau sweep
-# needs it to solve boxes at slacks off the display grid
+# widen_theta_box and solve_theta_bound_from stay: they belong to
+# theta_box_multistart.R, which paper_source_once will not re-source, and the
+# fitted-volatility tau sweep needs them for slacks off the display grid
 rm(
   theta_coefs, beta_coefs, seed_theta, warm,
   refined_n, refine_theta_intervals, bounds_at_tau, tables, stored_rows,

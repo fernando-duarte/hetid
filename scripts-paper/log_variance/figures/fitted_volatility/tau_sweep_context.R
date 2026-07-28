@@ -7,11 +7,10 @@
 # is seeded at the tau = 0 Lewbel point and walked up through the union of the
 # display and sweep taus, so a swept tau inherits a still-feasible warm start
 # from the next smaller one exactly as set_tables does.
-logvar_tau_sweep_boxes <- function(mean_eq, solve_fn, taus) {
+logvar_tau_sweep_boxes <- function(mean_eq, taus) {
   set_id_display_tau_refinement(
     sort(unique(c(mean_eq$tau_display, taus))),
     mean_eq$theta_table$point,
-    solve_fn,
     mean_eq$gamma, mean_eq$moments, mean_eq$beta1r, mean_eq$beta2r
   )
 }

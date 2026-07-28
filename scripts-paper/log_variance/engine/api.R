@@ -50,6 +50,7 @@ paper_source_once(paper_path(
   "log_variance", "engine", "contracts.R"
 ))
 paper_source_once(paper_path("log_variance", "engine", "context.R"))
+paper_source_once(paper_path("log_variance", "engine", "polish_support.R"))
 paper_source_once(paper_path("log_variance", "engine", "grid_scan.R"))
 paper_source_once(paper_path("log_variance", "engine", "results.R"))
 paper_source_once(paper_path("log_variance", "engine", "endpoints.R"))

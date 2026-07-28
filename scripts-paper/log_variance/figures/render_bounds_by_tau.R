@@ -129,7 +129,12 @@ logvar_bounds_tau_entry <- function(entry) {
     length(fig_tau_grid), " grid taus; crossings ",
     paste(vapply(res, function(r) r$n_cross, integer(1)), collapse = " "),
     "; cache hits ", opts$budget_state$counters[[LOGVAR_ENGINE_PHASES[["cache_hit"]]]],
-    "; nesting downgrades ", nrow(viol), "\n",
+    "; nesting downgrades ", nrow(viol),
+    # a nonzero count means the news box no longer covers the set the polish can
+    # reach, i.e. the box multistart has stopped keeping up with the grid walk
+    "; box escapes ",
+    sum(vapply(res, function(r) length(r$diagnostics$box_escape), integer(1))),
+    "\n",
     sep = ""
   )
 }
