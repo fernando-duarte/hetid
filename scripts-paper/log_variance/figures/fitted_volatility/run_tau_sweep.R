@@ -86,7 +86,6 @@ if (length(tau_sweep_taus) > 1L) {
     for (tau_sweep_log in c(FALSE, TRUE)) {
       tau_sweep_widths <- logvar_tau_sweep_render(
         log_var_eq_fitted_volatility_sweep[[tau_sweep_estimator]],
-        tau_sweep_estimator,
         logvar_tau_sweep_path(
           tau_sweep_estimator,
           suffix = if (tau_sweep_log) "combined_log" else "combined"

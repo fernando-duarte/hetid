@@ -60,6 +60,12 @@ PAPER_FIGURE_RENDER_CONTROL <- list(
     mean_bounds = c(width = 10, height = 5.5),
     logvar_bounds = c(width = 10, height = 6.5),
     fitted_volatility = c(width = 10, height = 6.25),
+    # Published combined slack panel. Wider than the paper's shared 5.5in canvas
+    # because this figure centres its PANEL rather than its canvas, which costs
+    # the panel the width of the axis block twice over; 6.5in is just inside the
+    # 469.755pt \textwidth, so the figure still includes at natural size and the
+    # panel still comes out wider than an uncentred 5.5in one. Height unchanged.
+    fitted_volatility_sweep = c(width = 6.5, height = 5.5 / 1.618),
     variance_bounds = c(width = 5.5, height = 5.5 / 1.618),
     descriptive = c(width = 11, height = 8.5)
   ),

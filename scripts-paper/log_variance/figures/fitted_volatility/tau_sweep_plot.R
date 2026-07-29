@@ -4,8 +4,14 @@
 # one". Fills are opaque because overlaid transparency turns nested ribbons into
 # a single smear, and they run dark to light with tau, so tightness of
 # identification reads as depth of colour.
+#
+# The combined panel is a published figure, so it follows the paper's figure
+# standard rather than the diagnostic style of the per-tau panels: svglite (real
+# <text> that \includesvg re-typesets, not baked path glyphs), the 5.5 by
+# 5.5/1.618 canvas, theme_classic at base size 11 with a thin panel border and an
+# in-panel legend, and no in-figure title, subtitle, or caption because the LaTeX
+# caption and notes carry them.
 
-paper_source_once(paper_path("support", "graphics", "device.R"))
 paper_source_once(paper_path(
   "log_variance", "figures", "fitted_volatility", "plot.R"
 ))
@@ -20,24 +26,65 @@ logvar_tau_sweep_bands <- function(envs, labels) {
   })
 }
 
-logvar_tau_sweep_caption <- function(labels, widths) {
+# Decade ticks, labelled by year. The paper's other quarterly time-series figures
+# write these as "1960 Q1", but centring the panel (see the pad below) costs it
+# about 60pt of width and seven labels that long then run into one another. On a
+# decade grid every tick is Q1 by construction, so the quarter carries nothing
+# and dropping it keeps all seven ticks legible. Switch back to the "1960 Q1"
+# form only alongside coarser breaks -- 20 years fits, 10 does not.
+logvar_tau_sweep_date_labels <- function(breaks) {
+  ifelse(is.na(breaks), "", format(breaks, "%Y"))
+}
+
+# Each key names its own slack, so the legend needs no title. svglite reserves
+# every key at the width of the raw LaTeX source, which \includesvg then typesets
+# far narrower, so five of these in one row lay out wider than the panel and the
+# last falls off the canvas: hence two rows, and no space around the "=" (the
+# math mode adds its own, so "$\\tau=0.05$" typesets exactly like "$\\tau = 0.05$"
+# while reserving two characters less).
+logvar_tau_sweep_key_labels <- function(labels) sprintf("$\\tau=%s$", labels)
+
+# Two lines, so the rotated title reads as two stacked columns. The plotted
+# series is the conditional standard deviation in levels (exp(eta/2)), NOT its
+# logarithm -- only the axis is transformed -- so the log belongs to the scale
+# note and never to the quantity. The linear-y sibling drops that note.
+logvar_tau_sweep_y_label <- function(log_scale) {
   paste0(
-    "Shading is the pointwise projection hull of the estimated plug-in ",
-    "variance-equation image at each slack tau.\nThe bands nest because the ",
-    "identified set grows with tau; the darkest band is the tightest slack. ",
-    "The red line is the\ntau = 0 Lewbel-point fit. Finite plotted endpoints ",
-    "are attained inner approximations from grid scan and local\npolish. ",
-    "These are not confidence or simultaneous path bands; interior attainment ",
-    "is not asserted.\nMedian band width by tau: ",
-    paste(sprintf("%s = %.4f pp", labels, widths), collapse = ", "), "."
+    "Conditional volatility\n(percentage points",
+    if (log_scale) ", log scale" else "", ")"
   )
+}
+
+# Right padding that puts the PANEL, not the whole canvas, at the centre of the
+# figure. \centering centres the file, and the axis title and tick labels hang
+# off the left of the panel, so an unpadded figure sits visibly right of the text
+# block -- the wider the y title, the worse. Measured off a throwaway device at
+# the real canvas size, because the column widths come from font metrics that
+# only resolve on an open device; recomputing beats a constant, which would go
+# stale the next time the axis text changes.
+logvar_tau_sweep_center_pad <- function(fig, width, height) {
+  scratch <- tempfile(fileext = ".svg")
+  svglite::svglite(scratch, width = width, height = height)
+  on.exit(
+    {
+      grDevices::dev.off()
+      unlink(scratch)
+    },
+    add = TRUE
+  )
+  gt <- ggplot2::ggplotGrob(fig)
+  panel <- min(gt$layout$l[gt$layout$name == "panel"])
+  to_pt <- function(w) sum(grid::convertWidth(w, "pt", valueOnly = TRUE))
+  left <- to_pt(gt$widths[seq_len(panel - 1L)])
+  right <- to_pt(gt$widths[seq.int(panel + 1L, length(gt$widths))])
+  max(0, left - right)
 }
 
 # envs: envelopes keyed in any order; log_scale puts the panel on a log y axis,
 # where each band becomes half its log-variance width. That width is roughly
 # flat over the sample, so the tight slacks stay legible instead of collapsing
 # onto the point curve wherever the level is small.
-logvar_tau_sweep_render <- function(envs, estimator, path, log_scale = FALSE) {
+logvar_tau_sweep_render <- function(envs, path, log_scale = FALSE) {
   taus <- vapply(envs, function(e) e$metadata$tau, numeric(1))
   envs <- envs[order(taus)]
   # unname: envs carries full-precision paper_tau_key names, and ggplot2 reads a
@@ -52,7 +99,6 @@ logvar_tau_sweep_render <- function(envs, estimator, path, log_scale = FALSE) {
     stats::median(b$volatility_upper - b$volatility_lower)
   }, numeric(1))
   point <- logvar_fitted_vol_plot_data(envs[[1L]]$data)$point
-  estimator_spec <- PAPER_LOGVAR_ESTIMATORS[[estimator]]
   logvar_style <- PAPER_FIGURE_STYLE$log_variance
   fig <- ggplot2::ggplot(mapping = ggplot2::aes(date))
   # widest tau first so the narrower, darker sets end up on top
@@ -73,29 +119,53 @@ logvar_tau_sweep_render <- function(envs, estimator, path, log_scale = FALSE) {
     ggplot2::scale_fill_manual(
       values = stats::setNames(palette, labels),
       # layers are added widest-first, so pin the key order to increasing tau
-      limits = labels, breaks = labels, name = expression(tau)
+      limits = labels, breaks = labels,
+      labels = logvar_tau_sweep_key_labels(labels), name = NULL,
+      guide = ggplot2::guide_legend(nrow = 1)
     ) +
-    ggplot2::labs(
-      title = paste(
-        estimator_spec$display_name, estimator_spec$display$title_quantity
-      ),
-      subtitle = paste(
-        "Pointwise envelopes over the joint identified set at",
-        paste(labels, collapse = ", ")
-      ),
-      x = NULL, y = estimator_spec$display$y_label,
-      caption = logvar_tau_sweep_caption(labels, widths)
+    ggplot2::scale_x_date(
+      name = NULL,
+      breaks = seq(as.Date("1960-01-01"), as.Date("2020-01-01"), by = "10 years"),
+      labels = logvar_tau_sweep_date_labels
     ) +
-    ggplot2::theme_minimal() +
+    ggplot2::labs(y = logvar_tau_sweep_y_label(log_scale)) +
+    ggplot2::theme_classic(base_size = 11) +
     ggplot2::theme(
-      legend.position = "bottom",
-      plot.caption = ggplot2::element_text(hjust = 0, size = 7.5),
-      plot.margin = ggplot2::margin(8, 10, 8, 10)
+      legend.background = ggplot2::element_blank(),
+      legend.key = ggplot2::element_blank(),
+      # the bands leave the top of the panel empty, so one horizontal row of
+      # keys sits above them rather than over the widest slack
+      legend.position = c(0.025, 0.975),
+      legend.justification = c(0, 1),
+      legend.direction = "horizontal",
+      legend.text = ggplot2::element_text(margin = ggplot2::margin(0, 6, 0, 3)),
+      panel.border = ggplot2::element_rect(colour = "black", fill = NA, linewidth = 1),
+      axis.line = ggplot2::element_blank(),
+      axis.text.x = ggplot2::element_text(margin = ggplot2::margin(5, 0, 0, 0, unit = "pt")),
+      axis.text.y = ggplot2::element_text(margin = ggplot2::margin(0, 5, 0, 0, unit = "pt")),
+      # the default gap leaves the title almost touching the widest tick label;
+      # the ticks are bare digits, so svglite reserves what \includesvg typesets
+      # and this offset carries through to the compiled figure unchanged
+      axis.title.y = ggplot2::element_text(margin = ggplot2::margin(r = 10, unit = "pt"))
     )
   if (log_scale) {
     fig <- fig + ggplot2::scale_y_log10()
   }
-  device <- PAPER_FIGURE_RENDER_CONTROL$devices$fitted_volatility
-  write_svg(path, device[["width"]], device[["height"]], function() print(fig))
+  device <- PAPER_FIGURE_RENDER_CONTROL$devices$fitted_volatility_sweep
+  half_line <- 11 / 2
+  fig <- fig + ggplot2::theme(
+    plot.margin = ggplot2::margin(
+      half_line,
+      half_line + logvar_tau_sweep_center_pad(
+        fig, device[["width"]], device[["height"]]
+      ),
+      half_line, half_line,
+      unit = "pt"
+    )
+  )
+  ggplot2::ggsave(
+    path, fig,
+    width = device[["width"]], height = device[["height"]]
+  )
   widths
 }
