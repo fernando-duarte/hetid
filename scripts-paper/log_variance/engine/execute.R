@@ -26,6 +26,9 @@ logvar_engine_run <- function(est, qs, b_tab, b_seed, grid_n, grid_floor,
       qs, b_tab$set_lower, b_tab$set_upper, 2L * grid_n - 1L
     )
   }
+  # the feasible count as searched, before the selector, the coarsening stride,
+  # and the appended seed rewrite it: a thin lattice is invisible in n_feasible
+  st$n_raw_feasible <- nrow(b_feas)
   if (nrow(b_feas) == 0L) {
     return(fail_closed(PAPER_ENDPOINT_STATUS[["unreliable"]], pre_cross, 0L))
   }
