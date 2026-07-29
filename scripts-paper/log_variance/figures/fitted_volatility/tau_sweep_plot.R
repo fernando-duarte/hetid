@@ -7,38 +7,16 @@
 #
 # The combined panel is a published figure, so it follows the paper's figure
 # standard rather than the diagnostic style of the per-tau panels: svglite (real
-# <text> that \includesvg re-typesets, not baked path glyphs), the 5.5 by
-# 5.5/1.618 canvas, theme_classic at base size 11 with a thin panel border and an
-# in-panel legend, and no in-figure title, subtitle, or caption because the LaTeX
-# caption and notes carry them.
+# <text> that \includesvg re-typesets, not baked path glyphs), theme_classic at
+# base size 11 with a thin panel border, a legend above the frame, and no
+# in-figure title, subtitle, or caption because the LaTeX caption and notes
+# carry them. The canvas is the devices$fitted_volatility_sweep entry in
+# config/figure_rendering.R, which is also where its width is argued; naming the
+# size here as well only gives it somewhere to go stale, which it has done twice.
 
 paper_source_once(paper_path(
-  "log_variance", "figures", "fitted_volatility", "plot.R"
+  "log_variance", "figures", "fitted_volatility", "tau_sweep_layout.R"
 ))
-paper_source_once(paper_path(
-  "log_variance", "figures", "fitted_volatility", "tau_sweep_theme.R"
-))
-
-logvar_tau_sweep_bands <- function(envs, labels) {
-  lapply(seq_along(envs), function(i) {
-    band <- logvar_fitted_vol_plot_data(envs[[i]]$data)$band
-    stopifnot(nrow(band) > 0L)
-    band$tau_label <- factor(labels[i], levels = labels)
-    band$band_group <- paste(labels[i], band$run, sep = ":")
-    band
-  })
-}
-
-# Two lines, so the rotated title reads as two stacked columns. The plotted
-# series is the conditional standard deviation in levels (exp(eta/2)), NOT its
-# logarithm -- only the axis is transformed -- so the log belongs to the scale
-# note and never to the quantity. The linear-y sibling drops that note.
-logvar_tau_sweep_y_label <- function(log_scale) {
-  paste0(
-    "Conditional volatility\n(percentage points",
-    if (log_scale) ", log scale" else "", ")"
-  )
-}
 
 # envs: envelopes keyed in any order; log_scale puts the panel on a log y axis,
 # where each band becomes half its log-variance width. That width is roughly

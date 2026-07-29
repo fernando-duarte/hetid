@@ -159,5 +159,8 @@ paper_source_once(paper_path("tests", "support", "tau_grid_checks.R"))
 paper_source_once(paper_path(
   "tests", "support", "bounds_by_tau_strip_checks.R"
 ))
+paper_source_once(paper_path(
+  "tests", "support", "bounds_by_tau_steps_checks.R"
+))
 
 .test$finish()

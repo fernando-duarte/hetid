@@ -1,8 +1,23 @@
-# Presentation shared by the combined slack panels: the nesting-band panel
-# (tau_sweep_plot.R) and the normalized-envelope panels
-# (tau_sweep_normalized_plot.R). Both are published figures on the paper's
-# figure standard, so they carry one theme, one date axis, and one key vocabulary
-# rather than two that drift apart.
+# Band assembly, layout text, and shared theme for the combined slack panels:
+# the per-slack ribbons, the axis and legend labels, the padding that centres
+# the panel rather than the canvas, and the theme itself. Split from
+# tau_sweep_plot.R for the repository line cap, and shared from there with the
+# normalized-endpoint panels (tau_sweep_normalized_plot.R) so the two exhibits
+# cannot drift apart. Definitions only; sourced by both.
+
+paper_source_once(paper_path(
+  "log_variance", "figures", "fitted_volatility", "plot.R"
+))
+
+logvar_tau_sweep_bands <- function(envs, labels) {
+  lapply(seq_along(envs), function(i) {
+    band <- logvar_fitted_vol_plot_data(envs[[i]]$data)$band
+    stopifnot(nrow(band) > 0L)
+    band$tau_label <- factor(labels[i], levels = labels)
+    band$band_group <- paste(labels[i], band$run, sep = ":")
+    band
+  })
+}
 
 # Decade ticks in the "1960 Q1" form the paper's other quarterly time-series
 # figures carry. Seven labels this long need roughly 275pt of panel, so they fit
@@ -16,15 +31,26 @@ logvar_tau_sweep_date_labels <- function(breaks) {
 # Each key names its own slack, so the legend needs no title. svglite reserves
 # every key at the width of the raw LaTeX source, which \includesvg then typesets
 # far narrower, so five of these in one row lay out wider than the panel and the
-# last falls off the canvas: hence the legend above the frame, and no space
-# around the "=" (the math mode adds its own, so "$\\tau=0.05$" typesets exactly
-# like "$\\tau = 0.05$" while reserving two characters less).
+# last falls off the canvas: hence two rows, and no space around the "=" (the
+# math mode adds its own, so "$\\tau=0.05$" typesets exactly like "$\\tau = 0.05$"
+# while reserving two characters less).
 logvar_tau_sweep_key_labels <- function(labels) sprintf("$\\tau=%s$", labels)
 
-# The point fit is one fixed-colour line, so on the band panel it earns a key
-# only by being mapped to a scale of its own. Its guide sits first, left of the
-# band swatches, so the row reads up in tau from the point-identified case.
+# The point fit is one fixed-colour line, so it earns a key only by being mapped
+# to a scale of its own. Its guide sits first, left of the band swatches, so the
+# row reads up in tau from the point-identified case.
 LOGVAR_TAU_SWEEP_POINT_KEY <- "$\\tau=0$"
+
+# Two lines, so the rotated title reads as two stacked columns. The plotted
+# series is the conditional standard deviation in levels (exp(eta/2)), NOT its
+# logarithm -- only the axis is transformed -- so the log belongs to the scale
+# note and never to the quantity. The linear-y sibling drops that note.
+logvar_tau_sweep_y_label <- function(log_scale) {
+  paste0(
+    "Conditional volatility\n(percentage points",
+    if (log_scale) ", log scale" else "", ")"
+  )
+}
 
 # Right padding that puts the PANEL, not the whole canvas, at the centre of the
 # figure. \centering centres the file, and the axis title and tick labels hang

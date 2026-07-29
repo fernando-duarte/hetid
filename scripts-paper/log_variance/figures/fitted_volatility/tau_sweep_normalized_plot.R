@@ -16,7 +16,7 @@ paper_source_once(paper_path(
   "log_variance", "figures", "fitted_volatility", "plot.R"
 ))
 paper_source_once(paper_path(
-  "log_variance", "figures", "fitted_volatility", "tau_sweep_theme.R"
+  "log_variance", "figures", "fitted_volatility", "tau_sweep_layout.R"
 ))
 
 LOGVAR_TAU_SWEEP_SIDES <- c("lower", "upper")

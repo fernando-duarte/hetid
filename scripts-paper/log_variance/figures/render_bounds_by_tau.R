@@ -10,6 +10,9 @@
 
 paper_source_once(paper_path("log_variance", "figures", "bounds_by_tau_plot.R"))
 paper_source_once(paper_path("config", "tau_grid.R"))
+paper_source_once(paper_path(
+  "log_variance", "figures", "bounds_by_tau_steps.R"
+))
 
 # fresh sample-id recomputation from the same qtr-joined sample; every
 # registry estimator must carry this id
@@ -159,6 +162,12 @@ logvar_bounds_tau_entry <- function(entry) {
     "; box escapes ",
     sum(vapply(res, function(r) length(r$diagnostics$box_escape), integer(1))),
     "\n",
+    sep = ""
+  )
+  steps <- logvar_bounds_tau_steps(grid_rows())
+  cat(
+    "  max lower-step dominance: ",
+    logvar_bounds_tau_steps_report(steps), "\n",
     sep = ""
   )
 }
