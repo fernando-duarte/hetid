@@ -28,10 +28,10 @@ bsr_unified_volatility <- logvar_set_boot_collect(
 )
 check(
   "real unified fixed-index collections equal both legacy compatibility wrappers",
-  paper_scientific_equal(
+  bootstrap_test_equal(
     bsr_unified_mean,
     set_id_boot_collect(bsr_legacy_mean, bsr_collect_specs$mean)
-  ) && paper_scientific_equal(
+  ) && bootstrap_test_equal(
     bsr_unified_volatility,
     logvar_set_boot_collect(bsr_legacy_volatility, bsr_collect_specs$log_variance)
   )
@@ -47,11 +47,11 @@ if (.Platform$OS.type == "windows") {
   )
   check(
     "real unified primary callback agrees under serial and two-core execution",
-    paper_scientific_equal(
+    bootstrap_test_equal(
       bsr_serial$draws,
       bsr_parallel$draws
     ) &&
-      paper_scientific_equal(
+      bootstrap_test_equal(
         bsr_serial$indices,
         bsr_parallel$indices
       )
@@ -68,11 +68,11 @@ if (.Platform$OS.type == "windows") {
   )
   check(
     "real sensitivity callback agrees under serial and two-core execution",
-    paper_scientific_equal(
+    bootstrap_test_equal(
       bsr_sensitivity_serial$draws,
       bsr_sensitivity_parallel$draws
     ) &&
-      paper_scientific_equal(
+      bootstrap_test_equal(
         bsr_sensitivity_serial$indices,
         bsr_sensitivity_parallel$indices
       )

@@ -92,9 +92,15 @@ inactive <- c(
     "bounds_by_tau_test_support.R"
   )
 )
+standalone_validation <- list.files(
+  paper_path("validation"),
+  pattern = "[.]R$",
+  full.names = TRUE
+)
 production <- r_files[
   !grepl("/tests/", r_files) &
-    !r_files %in% inactive
+    !r_files %in% inactive &
+    !r_files %in% standalone_validation
 ]
 unreachable <- setdiff(production, reachable)
 if (length(unreachable)) {

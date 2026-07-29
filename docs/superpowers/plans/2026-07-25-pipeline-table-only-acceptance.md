@@ -2,6 +2,10 @@
 
 Updated: 2026-07-26 08:42 EDT
 
+> Superseded on 2026-07-26 by the approved design in
+> `../specs/2026-07-26-direct-table-only-acceptance-design.md`. Do not execute
+> this serialized-record and clean-run plan.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use
 > subagent-driven-development (recommended) or executing-plans to implement
 > this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.

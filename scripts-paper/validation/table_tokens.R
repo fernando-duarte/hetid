@@ -15,6 +15,12 @@ PAPER_TABLE_TOKEN_PATTERN <- paste0(
   ")"
 )
 
+PAPER_TABLE_STAR_PATTERN <- paste0(
+  "^[[:space:]]*[$]?[[:space:]]*",
+  "\\^\\{([*]{1,3})\\}",
+  "[[:space:]]*[$]?"
+)
+
 paper_table_normalize_token <- function(token) {
   if (!grepl("\\times", token, fixed = TRUE)) {
     return(token)
@@ -36,26 +42,34 @@ paper_table_number_quantum <- function(token) {
     as.integer(exponent_text)
   }
   decimal <- regexpr(".", mantissa, fixed = TRUE)[[1L]]
-  places <- if (decimal < 0L) {
-    0L
-  } else {
-    nchar(mantissa) - decimal
-  }
+  places <- if (decimal < 0L) 0L else nchar(mantissa) - decimal
   10^(exponent - places)
 }
 
-paper_table_cell_numbers <- function(cell) {
-  matches <- gregexpr(PAPER_TABLE_TOKEN_PATTERN, cell, perl = TRUE)
-  tokens <- regmatches(cell, matches)[[1L]]
-  if (identical(tokens, character())) {
+paper_table_token_stars <- function(cell, starts, lengths) {
+  vapply(seq_along(starts), function(index) {
+    tail <- substring(cell, starts[[index]] + lengths[[index]])
+    match <- regexec(PAPER_TABLE_STAR_PATTERN, tail, perl = TRUE)
+    pieces <- regmatches(tail, match)[[1L]]
+    if (length(pieces) == 2L) pieces[[2L]] else ""
+  }, character(1))
+}
+
+paper_table_cell_results <- function(cell) {
+  matches <- gregexpr(PAPER_TABLE_TOKEN_PATTERN, cell, perl = TRUE)[[1L]]
+  if (matches[[1L]] == -1L) {
     return(data.frame(
       value = double(),
-      quantum = double()
+      quantum = double(),
+      stars = character()
     ))
   }
-  tokens <- vapply(tokens, paper_table_normalize_token, character(1))
+  tokens <- regmatches(cell, list(matches))[[1L]]
+  normalized <- vapply(tokens, paper_table_normalize_token, character(1))
   data.frame(
-    value = as.numeric(tokens),
-    quantum = vapply(tokens, paper_table_number_quantum, numeric(1))
+    value = as.numeric(normalized),
+    quantum = vapply(normalized, paper_table_number_quantum, numeric(1)),
+    stars = paper_table_token_stars(cell, matches, attr(matches, "match.length")),
+    row.names = NULL
   )
 }

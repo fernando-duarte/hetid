@@ -54,7 +54,7 @@ check(
   identical(bsr_roundtrip_calls, 1L) &&
     identical(bsr_roundtrip_rerun$source, "rerun") &&
     identical(bsr_roundtrip_reuse$source, "reuse") &&
-    paper_scientific_equal(
+    bootstrap_test_equal(
       bsr_roundtrip_rerun$stage,
       bsr_roundtrip_reuse$stage
     )
