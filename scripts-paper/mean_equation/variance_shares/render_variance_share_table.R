@@ -66,6 +66,9 @@ n_obs <- set_id_mean_eq$sample$n
 row_labels <- c(
   "$PC_{E,t}^{T}b_{E}$", sprintf("\\quad $b_{%d,E}$", seq_len(n_pc)),
   "$PC_{N,t+1}^{T}b_{N}$", sprintf("\\quad $b_{%d,N}$", seq_len(n_pc)),
+  # the two blocks together, carrying their cross term: this row is not the
+  # sum of the two block rows above, so align_blocks leaves it alone
+  "$PC_{E,t}^{T}b_{E}+PC_{N,t+1}^{T}b_{N}$",
   "$N$"
 )
 columns <- c(
@@ -87,7 +90,7 @@ var_share_table <- c(
   simple_tabular_lines(
     row_labels, unname(columns),
     col_headers = paper_tau_col_headers(set_id_mean_eq$tau_display),
-    rule_after = c(1L + n_pc, 2L * (1L + n_pc)),
+    rule_after = c(1L + n_pc, 2L * (1L + n_pc), var_share$combined_row),
     spanners = list(list(
       label = "Share of $\\widehat{\\mathrm{Var}}(\\Delta c_{t+1})$ (\\%)",
       n = length(columns)

@@ -5,6 +5,15 @@ centered_cov_t <- function(mat) {
   crossprod(sweep(mat, 2, colMeans(mat))) / nrow(mat)
 }
 
+# Cross second moment of two blocks, same 1/T centering as centered_cov_t. The
+# combined share is the variance of the summed fitted terms, so it needs the
+# PC_E-PC_N cross-covariance and is not the sum of the two block shares.
+centered_cross_t <- function(a, b) {
+  a <- as.matrix(a)
+  b <- as.matrix(b)
+  crossprod(sweep(a, 2, colMeans(a)), sweep(b, 2, colMeans(b))) / nrow(a)
+}
+
 block_share <- function(coefs, s_block) {
   100 * rowSums((coefs %*% s_block) * coefs) / var_c
 }
@@ -119,6 +128,9 @@ fixed_shares <- function(field) {
     block_share(matrix(b_e, 1), s_e),
     100 * b_e^2 * diag(s_e) / var_c,
     block_share(matrix(b_n, 1), s_n),
-    100 * b_n^2 * diag(s_n) / var_c
+    100 * b_n^2 * diag(s_n) / var_c,
+    # combined: Var(PC_E' b_E + PC_N' b_N), which carries the cross term and so
+    # does not equal the sum of the two block shares above
+    block_share(matrix(c(b_e, b_n), 1), s_joint)
   )
 }
