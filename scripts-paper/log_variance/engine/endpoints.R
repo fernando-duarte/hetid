@@ -59,50 +59,9 @@ logvar_engine_endpoints <- function(est, qs, b_tab, b_seed, extra_starts,
   for (j in seq_len(n_coef)) {
     scan_j <- c(scan$min[j], scan$max[j])
     scale_j <- max(1, abs(scan_j[is.finite(scan_j)]))
-    co <- if (is.null(est$coef_objective)) NULL else est$coef_objective(j)
-    if (is.null(co)) {
-      fn <- local({
-        jj <- j
-        function(b) {
-          tryCatch(
-            {
-              fit <- evaluate_fit(b, phase = LOGVAR_ENGINE_PHASES[["polish"]])
-              if (!logvar_fit_ok(fit)) NaN else unname(fit$coef[[jj]])
-            },
-            logvar_budget_exhausted = function(e) {
-              budget_hit$cond <- e
-              NaN
-            }
-          )
-        }
-      })
-      gr <- if (is.null(est$jacobian_at_b)) {
-        NULL
-      } else {
-        local({
-          jj <- j
-          function(b) {
-            tryCatch(
-              {
-                fit <- evaluate_fit(b, phase = LOGVAR_ENGINE_PHASES[["polish"]])
-                if (!logvar_fit_ok(fit)) {
-                  rep(NaN, length(b))
-                } else {
-                  est$jacobian_at_b(b, fit)[jj, ]
-                }
-              },
-              logvar_budget_exhausted = function(e) {
-                budget_hit$cond <- e
-                rep(NaN, length(b))
-              }
-            )
-          }
-        })
-      }
-    } else {
-      fn <- co$fn
-      gr <- co$gr
-    }
+    objective <- logvar_coef_objective_fns(est, j, evaluate_fit, budget_hit)
+    fn <- objective$fn
+    gr <- objective$gr
     method <- if (identical(meta$smoothness, "smooth") && !is.null(gr)) {
       "slsqp"
     } else {
@@ -150,6 +109,27 @@ logvar_engine_endpoints <- function(est, qs, b_tab, b_seed, extra_starts,
       )
     }
   }
+  # an accepted endpoint outside the box the scan was handed proves the box is
+  # not the outer screen it is contracted to be: the grid could never have
+  # reached that point, so the two halves of the search disagreed about the
+  # region. Report the side instead of drawing a boundary only the polish saw.
+  box_escapes <- list()
+  for (j in seq_len(n_coef)) {
+    for (side in c("min", "max")) {
+      if (if (side == "min") lower_unb[j] else upper_unb[j]) next
+      excess <- logvar_box_escape(
+        if (side == "min") arg_lo[j, ] else arg_up[j, ], b_tab
+      )
+      if (is.na(excess) ||
+        excess <= PAPER_QUADRATIC_CONTROL$box_escape_rtol) {
+        next
+      }
+      if (side == "min") lo_unrel[j] <- TRUE else up_unrel[j] <- TRUE
+      box_escapes[[length(box_escapes) + 1L]] <- list(
+        coef = labels[j], side = side, excess = excess
+      )
+    }
+  }
   estimator_cold_switch <- meta$fit_control$cold_switch
   cold_enabled <- isTRUE(cold_start_check) &&
     !identical(estimator_cold_switch, FALSE)
@@ -193,7 +173,7 @@ logvar_engine_endpoints <- function(est, qs, b_tab, b_seed, extra_starts,
     meta, tau, qs, omega, st$n_fail, n_cross, st$n_feasible, domain_info,
     diag_of(list(
       extra_start_skipped = extra_skipped, cold_start = cold_recs$records,
-      polish = polish_recs
+      polish = polish_recs, box_escape = box_escapes
     ))
   )
 }

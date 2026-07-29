@@ -50,6 +50,7 @@ paper_source_once(paper_path(
   "log_variance", "engine", "contracts.R"
 ))
 paper_source_once(paper_path("log_variance", "engine", "context.R"))
+paper_source_once(paper_path("log_variance", "engine", "polish_support.R"))
 paper_source_once(paper_path("log_variance", "engine", "grid_scan.R"))
 paper_source_once(paper_path("log_variance", "engine", "results.R"))
 paper_source_once(paper_path("log_variance", "engine", "endpoints.R"))
@@ -88,6 +89,7 @@ logvar_engine_set_at_tau <- function(est, qs, b_tab, b_seed = NULL,
   st <- new.env(parent = emptyenv())
   st$labels <- est$coef_labels
   st$n_feasible <- NA_integer_
+  st$n_raw_feasible <- NA_integer_
   st$n_fail <- 0L
   labels_now <- function() {
     if (!is.null(st$labels)) st$labels else paste0("coef", seq_len(ncol(qs$A_i[[1]])))
@@ -96,6 +98,7 @@ logvar_engine_set_at_tau <- function(est, qs, b_tab, b_seed = NULL,
     utils::modifyList(list(
       n_attempted = bs$n_attempted, n_evaluated = bs$n_evaluated,
       n_cached = bs$n_cached, n_failed = bs$n_failed,
+      n_raw_feasible = st$n_raw_feasible,
       counters = bs$counters, budget_exhausted = FALSE
     ), extra)
   }

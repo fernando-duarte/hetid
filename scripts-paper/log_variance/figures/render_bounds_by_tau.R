@@ -9,6 +9,10 @@
 # attainment is not established. Run via run_pipeline.R after compute_bounds_by_tau.R.
 
 paper_source_once(paper_path("log_variance", "figures", "bounds_by_tau_plot.R"))
+paper_source_once(paper_path("config", "tau_grid.R"))
+paper_source_once(paper_path(
+  "log_variance", "figures", "bounds_by_tau_steps.R"
+))
 
 # fresh sample-id recomputation from the same qtr-joined sample; every
 # registry estimator must carry this id
@@ -31,12 +35,27 @@ stopifnot(
   identical(log_var_eq$sample_id, fig_fresh_id)
 )
 
-fig_tau_grid <- seq(
-  0,
-  set_id_mean_eq$tau_star,
-  length.out = PAPER_ANALYSIS_CONTRACT$tau$figure_grid_n
-)
-fig_tau_grid <- fig_tau_grid[fig_tau_grid > 0 & fig_tau_grid < set_id_mean_eq$tau_star]
+fig_tau_grid <- paper_bounds_tau_grid(set_id_mean_eq$tau_star)
+
+# a raw feasible count below the search floor means the lattice, not the set,
+# is what bounded the search at that tau: report the sides as unreliable rather
+# than drawing endpoints too few points can support
+logvar_bounds_tau_gate <- function(r, tau) {
+  n_raw <- r$diagnostics$n_raw_feasible
+  if (is.null(n_raw) || is.na(n_raw) ||
+    n_raw >= LOGVAR_SEARCH_CONTROL$grid_floor) {
+    return(r)
+  }
+  for (col in c("lower_status", "upper_status")) {
+    bounded <- r$schema[[col]] == PAPER_ENDPOINT_STATUS[["bounded"]]
+    r$schema[[col]][bounded] <- PAPER_ENDPOINT_STATUS[["unreliable"]]
+  }
+  cat(sprintf(
+    "  thin lattice at tau = %.4g: %d raw feasible points; sides downgraded\n",
+    tau, n_raw
+  ))
+  r
+}
 
 # one figure per registry entry: engine grid walk, nesting guard with a warm
 # retry and disclosed downgrades, plot assembly, and the render
@@ -50,10 +69,10 @@ logvar_bounds_tau_entry <- function(entry) {
     b_tab <- mean_eq_bounds_tau[[paper_tau_key(tau)]]
     stopifnot(!is.null(b_tab))
     qs <- tau_quadratic_system(set_id_mean_eq$gamma, tau, set_id_mean_eq$moments)
-    do.call(logvar_engine_set_at_tau, c(
+    logvar_bounds_tau_gate(do.call(logvar_engine_set_at_tau, c(
       list(est, qs, b_tab, b_seed = entry$b_seed, extra_starts = extra, tau = tau),
       opts
-    ))
+    )), tau)
   }
   # an entry may opt out of the warm chain (warm_chain = FALSE): for a nonsmooth
   # map every warm arg is another derivative-free polish start on every endpoint,
@@ -124,12 +143,31 @@ logvar_bounds_tau_entry <- function(entry) {
     plot_rows, est$metadata, set_id_mean_eq$tau_baseline,
     set_id_mean_eq$tau_star, entry$output_path
   )
+  raw_counts <- vapply(res, function(r) {
+    n <- r$diagnostics$n_raw_feasible
+    if (is.null(n)) NA_integer_ else as.integer(n)
+  }, integer(1))
+  # all-missing means the engine stopped carrying the count, not that every tau
+  # failed closed, and would silence the gate above without any symptom
+  stopifnot(any(!is.na(raw_counts)))
   cat(
     "log-variance bounds-by-tau figure (", est$metadata$estimator, "): ",
-    length(fig_tau_grid), " grid taus; crossings ",
+    length(fig_tau_grid), " grid taus; min raw feasible ",
+    min(raw_counts, na.rm = TRUE), "; crossings ",
     paste(vapply(res, function(r) r$n_cross, integer(1)), collapse = " "),
     "; cache hits ", opts$budget_state$counters[[LOGVAR_ENGINE_PHASES[["cache_hit"]]]],
-    "; nesting downgrades ", nrow(viol), "\n",
+    "; nesting downgrades ", nrow(viol),
+    # a nonzero count means the news box no longer covers the set the polish can
+    # reach, i.e. the box multistart has stopped keeping up with the grid walk
+    "; box escapes ",
+    sum(vapply(res, function(r) length(r$diagnostics$box_escape), integer(1))),
+    "\n",
+    sep = ""
+  )
+  steps <- logvar_bounds_tau_steps(grid_rows())
+  cat(
+    "  max lower-step dominance: ",
+    logvar_bounds_tau_steps_report(steps), "\n",
     sep = ""
   )
 }
@@ -138,5 +176,5 @@ for (fig_entry in logvar_bounds_tau_registry) logvar_bounds_tau_entry(fig_entry)
 
 rm(
   fig_rows, fig_pcr, fig_fresh_id, fig_tau_grid,
-  logvar_bounds_tau_entry, fig_entry
+  logvar_bounds_tau_entry, logvar_bounds_tau_gate, fig_entry
 )

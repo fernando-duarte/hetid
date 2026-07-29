@@ -13,7 +13,24 @@ PAPER_QUADRATIC_CONTROL <- list(
   bound_edge_rtol = 0.99,
   bound_stability_rtol = 1e-3,
   unbounded_growth_factor = 5,
-  polish_blow_factor = 5
+  polish_blow_factor = 5,
+  # rounds of the news-box multistart (theta_box_multistart.R): round one solves
+  # the axis pool, round two re-seeds from its argmaxes and is the one that
+  # recovers the missed branch, and later rounds have never moved an endpoint
+  box_multistart_rounds = 4L,
+  # significant digits at which two multistart argmaxes count as the same start.
+  # Two solves that reach one vertex from different starts agree to about the
+  # solver's own xtol_rel (1e-8) and so differ in the ninth digit; deduplicating
+  # at full precision would leave the round-two queue full of copies and make
+  # the widening cost hundreds of redundant solves
+  box_multistart_dedup_digits = 6L,
+  # a polished log-variance endpoint attained this far outside the news box it
+  # was searched against, relative to the box's own span, proves the box is not
+  # the outer screen it is contracted to be (engine/polish_support.R). Held at
+  # the feasibility tolerance the endpoint itself was accepted under: judging a
+  # boundary point against a tighter box criterion than its own admission test
+  # would report solver noise as a contract breach
+  box_escape_rtol = 1e-4
 )
 
 quadratic_constraint_values <- function(

@@ -25,6 +25,14 @@ paper_source_once(paper_path(
 s_e <- centered_cov_t(set_id_mean_eq$data[set_id_mean_eq$x_cols])
 s_n <- centered_cov_t(set_id_mean_eq$y2)
 var_c <- drop(centered_cov_t(set_id_mean_eq$y1))
+# PC_{E,t}-PC_{N,t+1} cross moment and the stacked second moment behind the
+# combined row. The two blocks are not orthogonal in sample, so the combined
+# share differs from the sum of the block shares by twice the cross term.
+s_en <- centered_cross_t(
+  set_id_mean_eq$data[set_id_mean_eq$x_cols],
+  set_id_mean_eq$y2
+)
+s_joint <- rbind(cbind(s_e, s_en), cbind(t(s_en), s_n))
 
 # each block's share is a quadratic theta' P theta + q' theta + r in theta,
 # in percent of Var(dc); the news block directly, the E block through
@@ -36,6 +44,19 @@ news_quad_share <- share_quad(100 * s_n / var_c, numeric(n_pc), 0)
 e_quad_share <- share_quad(
   100 * crossprod(b_map, s_e %*% b_map) / var_c,
   drop(-200 * beta2r_e %*% (s_e %*% beta1r_e)) / var_c,
+  100 * drop(beta1r_e %*% s_e %*% beta1r_e) / var_c
+)
+# Combined block: substituting b_E(theta) = beta1r_e - b_map %*% theta into
+# Var(PC_E' b_E + PC_N' theta) gives a quadratic in theta whose cross term
+# -theta' (M' S_en + S_en' M) theta and linear term 2 S_en' beta1r_e are what
+# separate it from e_quad_share + news_quad_share. It varies with theta even
+# under the beta2R null, through S_en, so it gets no constant shortcut.
+m_s_en <- crossprod(b_map, s_en)
+combined_quad_share <- share_quad(
+  100 * (crossprod(b_map, s_e %*% b_map) - (m_s_en + t(m_s_en)) + s_n) / var_c,
+  drop(
+    -200 * beta2r_e %*% (s_e %*% beta1r_e) + 200 * crossprod(s_en, beta1r_e)
+  ) / var_c,
   100 * drop(beta1r_e %*% s_e %*% beta1r_e) / var_c
 )
 
@@ -79,16 +100,18 @@ set_share_cols <- Map(function(nm, quad) {
     set_share_range(st$theta, quad, e_quad_share)
   }
   news_rng <- set_share_range(st$theta, quad, news_quad_share)
+  combined_rng <- set_share_range(st$theta, quad, combined_quad_share)
   e_comp <- component_share_range(st$beta1[e_rows, ], s_e)
   n_comp <- component_share_range(st$theta, s_n)
   list(
-    lo = c(e_rng[1], e_comp$lo, news_rng[1], n_comp$lo),
-    hi = c(e_rng[2], e_comp$hi, news_rng[2], n_comp$hi),
+    lo = c(e_rng[1], e_comp$lo, news_rng[1], n_comp$lo, combined_rng[1]),
+    hi = c(e_rng[2], e_comp$hi, news_rng[2], n_comp$hi, combined_rng[2]),
     # under the null b_E is a constant, so its block share is the value at
-    # beta1R and stays certified whatever the theta set does
+    # beta1R and stays certified whatever the theta set does; the combined
+    # share ranges over the whole theta set either way
     status = c(
       if (impose_beta2r_null) PAPER_ENDPOINT_STATUS[["bounded"]] else joint_status,
-      e_comp$status, joint_status, n_comp$status
+      e_comp$status, joint_status, n_comp$status, joint_status
     )
   )
 }, names(set_id_mean_eq$set_tables), quads)
@@ -122,7 +145,16 @@ var_share <- list(
   point = fixed_shares("point"),
   set_cols = set_share_cols,
   news_row = news_row,
+  combined_row = 2L * n_pc + 3L,
   sd_c = sqrt(var_c)
+)
+stopifnot(
+  "combined row is not last" =
+    length(var_share$ols) == var_share$combined_row,
+  "combined share must be nonnegative" =
+    all(c(var_share$ols, var_share$point)[
+      c(var_share$combined_row, var_share$combined_row)
+    ] >= 0)
 )
 
 cat(sprintf(
@@ -141,8 +173,10 @@ cat(sprintf(
 ))
 
 rm(
-  centered_cov_t, s_e, s_n, var_c, block_share, share_quad, beta1r_e,
-  beta2r_e, b_map, news_quad_share, e_quad_share, e_const,
+  centered_cov_t, centered_cross_t, s_e, s_n, s_en, s_joint, var_c,
+  block_share, share_quad, beta1r_e,
+  beta2r_e, b_map, m_s_en, news_quad_share, e_quad_share, combined_quad_share,
+  e_const,
   polish_extreme, set_share_range, component_share_range,
   e_rows, fixed_shares, quads, set_share_cols, news_row, cc, block_row, comps
 )

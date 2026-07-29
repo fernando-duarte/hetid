@@ -22,6 +22,14 @@ paper_legacy_mean_from_est <- function(est, spec) {
       est$beta1r,
       est$beta2r
     )
+    # the geometry both branches read widens the theta rows (never the beta1
+    # functional rows), so the oracle composes the same widening here
+    if (tau != 0) {
+      interval$theta <- widen_theta_box(
+        tau_quadratic_system(spec$gamma, tau, est$moments),
+        interval$theta
+      )$tab
+    }
     table <- rbind(interval$beta1, interval$theta)
     bounded <- table$status == PAPER_ENDPOINT_STATUS[["bounded"]]
     list(
@@ -63,14 +71,25 @@ paper_legacy_logvar_from_est <- function(dat, est, spec) {
   )
   colnames(pcr) <- spec$pc_cols
   point <- if (is.null(est$point0)) NULL else est$point0$theta
+  # the oracle composes the two documented steps itself -- raw interval table,
+  # then the multistart widening -- rather than calling production's combined
+  # coef_interval_tables_widened, so it still independently pins that builder.
+  # tau = 0 stays raw, matching the geometry: the set is a point there.
   boxes <- lapply(spec$taus, function(tau) {
-    coef_interval_tables(
+    raw <- coef_interval_tables(
       spec$gamma,
       tau,
       est$moments,
       est$beta1r,
       est$beta2r
     )$theta
+    if (tau == 0) {
+      return(raw)
+    }
+    widen_theta_box(
+      tau_quadratic_system(spec$gamma, tau, est$moments),
+      raw
+    )$tab
   })
   quadratics <- lapply(spec$taus, function(tau) {
     tau_quadratic_system(spec$gamma, tau, est$moments)

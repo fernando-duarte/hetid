@@ -78,15 +78,15 @@ names(set_tables) <- vapply(
 )
 # coef_interval_tables starts every profile solve at the origin and can settle
 # on a local vertex short of the true extreme, so the news intervals are
-# re-solved from a warm chain seeded at the tau = 0 point and walked up the
-# display taus. An endpoint moves only when the warm solve certifies a feasible
-# theta outside the origin-start interval, so this only ever adds points the set
-# provably contains. These are the sound boxes: every set_tables consumer, and
-# the log-variance census reading them through mean_eq_bounds_tau, needs a box
-# that contains the set rather than one that clips it.
+# re-solved by the box multistart, walked up the display taus from a chain
+# seeded at the tau = 0 point. An endpoint moves only when a solve certifies a
+# feasible theta outside the origin-start interval, so this only ever adds
+# points the set provably contains. These are the sound boxes: every set_tables
+# consumer, and the log-variance census reading them through mean_eq_bounds_tau,
+# needs a box that contains the set rather than one that clips it.
 refined_theta <- set_id_display_tau_refinement(
   tau_display, if (is.null(point0)) NULL else point0$theta,
-  solve_theta_bound_from, gamma, moments, beta1r, beta2r
+  gamma, moments, beta1r, beta2r
 )
 for (j in seq_along(set_tables)) set_tables[[j]]$theta <- refined_theta[[j]]
 theta_table <- cbind(

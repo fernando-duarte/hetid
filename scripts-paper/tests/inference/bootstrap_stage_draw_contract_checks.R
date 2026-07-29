@@ -36,6 +36,7 @@ coef_interval_tables_from_quadratic <- function(qs, beta1r, beta2r) {
     theta = data.frame(coef = rownames(beta2r), set_lower = 0, set_upper = 1, status = "bounded")
   )
 }
+coef_interval_tables_widened <- coef_interval_tables_from_quadratic
 tau_quadratic_system <- function(gamma, tau, moments) list(tau = tau)
 sweep_fixed_gamma <- function(...) data.frame(tau = c(0, 0.1))
 tau_star_fixed <- function(...) list(tau_star = 0.1, capped = FALSE)

@@ -1,3 +1,4 @@
+paper_source_once(paper_path("mean_equation", "inference", "theta_box_multistart.R"))
 bootstrap_stage_builders <- function(stage_spec) {
   logvar <- stage_spec$log_variance
   logvar_set_boot_builders(
@@ -37,7 +38,7 @@ set_id_boot_geometry <- function(
   union_taus,
   display_taus,
   quadratic_builder = tau_quadratic_system,
-  table_builder = coef_interval_tables_from_quadratic
+  table_builder = coef_interval_tables_widened
 ) {
   display_slots <- seq_along(display_taus) + 1L
   stopifnot(

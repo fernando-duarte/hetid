@@ -1,52 +1,8 @@
-# SLSQP extremization of theta_k from an arbitrary feasible start, in the shared
-# solver's scaling (mirrors .solve_scaled, which pins the start at the origin);
-# returns the theta-units bound and argmax, or NULL when the solve fails or the
-# endpoint misses the feasible+active certificate. Sourced by
-# compute_bounds_by_tau.R after profile_solver_core.R, so the .derive_* and
-# .feasibility_residual helpers resolve at call time.
-solve_theta_bound_from <- function(qs, k, direction, theta_start,
-                                   box =
-                                     PAPER_QUADRATIC_CONTROL$solver_boxes[[1L]],
-                                   feas_tol =
-                                     PAPER_QUADRATIC_CONTROL$feasibility_tolerance) {
-  if (is.null(theta_start)) {
-    return(NULL)
-  }
-  sgn <- if (direction == "min") 1 else -1
-  dim_theta <- ncol(qs$A_i[[1]])
-  e_k <- numeric(dim_theta)
-  e_k[k] <- 1
-  # Unwrapped: slsqp reports an ordinary failure -- an infeasible start, an
-  # unbounded objective -- through $convergence, never by raising, so the only
-  # conditions it can raise are contract breaches (a nonfinite x0, a nonfinite
-  # objective at x0, a jacobian of the wrong shape). None is reachable here:
-  # .derive_theta_scale returns a finite positive delta and .derive_constraint_
-  # scales a finite positive omega, theta_start is finite by the caller's guard,
-  # and the objective is linear in phi. A catch would only mask a defect.
-  delta <- .derive_theta_scale(qs)
-  res <- solve_scaled_quadratic_program(
-    quadratic = qs,
-    x0 = theta_start,
-    objective = function(theta) {
-      sgn * sum(e_k * theta)
-    },
-    gradient = function(theta) sgn * e_k,
-    lower = rep(-delta * box, dim_theta),
-    upper = rep(delta * box, dim_theta),
-    method = "slsqp",
-    objective_scale = "variable",
-    catch_errors = FALSE
-  )
-  if (any(!is.finite(res$theta))) {
-    return(NULL)
-  }
-  theta <- res$theta
-  resid <- res$feasibility_residual
-  if (!is.finite(resid) || abs(resid) > feas_tol) {
-    return(NULL)
-  }
-  list(bound = theta[k], theta = theta)
-}
+# Display-tau refinement of the mean-equation news intervals.
+
+paper_source_once(paper_path(
+  "mean_equation", "inference", "theta_box_multistart.R"
+))
 
 # Pure display-tau refinement of the mean-equation theta intervals, called by
 # estimate_identified_set.R to widen set_tables onto the boxes the paper
@@ -62,48 +18,28 @@ solve_theta_bound_from <- function(qs, k, direction, theta_start,
 # accepted argmax hands a still-feasible start to the next larger tau. It reads
 # and writes no global, prints nothing, and leaves its inputs untouched.
 #
-# solve_fn is solve_theta_bound_from (defined above), passed in rather than
-# reimplemented: solve_fn(qs, k, direction, theta_start) returns
-# list(bound, theta) or NULL, and NULL on a NULL start -- the same cold-start
-# rule the main walk relies on when the tau = 0 point is unavailable.
-set_id_display_tau_refinement <- function(tau_display, seed_theta, solve_fn,
+# Each tau's widening is widen_theta_box (theta_box_multistart.R), which adds
+# the axis pool and a cross-seeding round to the chain: one chain alone stays on
+# the branch it starts on and clips the set near tau*.
+set_id_display_tau_refinement <- function(tau_display, seed_theta,
                                           gamma, moments, beta1r, beta2r) {
-  # a NULL or NA seed leaves every warm entry empty, so the first solve at each
-  # coefficient/side gets a NULL start and solve_fn returns NULL -- mirroring
-  # the main walk's rule that an unavailable tau = 0 point yields cold starts
-  seed <- if (is.null(seed_theta) || anyNA(seed_theta)) NULL else seed_theta
-  warm <- NULL
+  # a NULL or NA seed just leaves the pool without its tau = 0 member; the axis
+  # starts still run, so an unavailable Lewbel point no longer means no warm
+  # solve at all
+  warm <- if (is.null(seed_theta) || anyNA(seed_theta)) {
+    list()
+  } else {
+    list(seed_theta)
+  }
   refined <- list()
   for (tau in sort(tau_display)) {
     qs <- tau_quadratic_system(gamma, tau, moments)
     it <- coef_interval_tables(gamma, tau, moments, beta1r, beta2r)
-    theta_tab <- it$theta
-    if (is.null(warm)) {
-      # K = the theta coefficient axis, taken from the first table's rows
-      k_theta <- nrow(theta_tab)
-      warm <- list(
-        min = rep(list(seed), k_theta),
-        max = rep(list(seed), k_theta)
-      )
-    }
-    for (k in seq_len(nrow(theta_tab))) {
-      for (side in c("min", "max")) {
-        cand <- solve_fn(qs, k, side, warm[[side]][[k]])
-        if (is.null(cand)) next
-        # carry the argmax forward even when the row is not certified bounded,
-        # so the next larger tau still gets a feasible warm start
-        warm[[side]][[k]] <- cand$theta
-        if (theta_tab$status[k] != PAPER_ENDPOINT_STATUS[["bounded"]]) next
-        # keep-if-extends: replace an endpoint only when the warm solve widens
-        # the interval, exactly the main grid walk's acceptance rule
-        if (side == "max" && cand$bound > theta_tab$set_upper[k]) {
-          theta_tab$set_upper[k] <- cand$bound
-        } else if (side == "min" && cand$bound < theta_tab$set_lower[k]) {
-          theta_tab$set_lower[k] <- cand$bound
-        }
-      }
-    }
-    refined[[paper_tau_key(tau)]] <- theta_tab
+    widened <- widen_theta_box(qs, it$theta, warm)
+    # carry every accepted argmax forward, including ones from rows that are not
+    # certified bounded, so the next larger tau still gets feasible warm starts
+    warm <- widened$args
+    refined[[paper_tau_key(tau)]] <- widened$tab
   }
   # Return keyed by each tau's canonical key in the caller's input order;
   # consumers index by name, so the ordering itself is immaterial
