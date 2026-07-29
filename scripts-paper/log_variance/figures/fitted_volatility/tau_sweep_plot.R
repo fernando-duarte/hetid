@@ -7,10 +7,12 @@
 #
 # The combined panel is a published figure, so it follows the paper's figure
 # standard rather than the diagnostic style of the per-tau panels: svglite (real
-# <text> that \includesvg re-typesets, not baked path glyphs), the 5.5 by
-# 5.5/1.618 canvas, theme_classic at base size 11 with a thin panel border and an
-# in-panel legend, and no in-figure title, subtitle, or caption because the LaTeX
-# caption and notes carry them.
+# <text> that \includesvg re-typesets, not baked path glyphs), theme_classic at
+# base size 11 with a thin panel border, a legend above the frame, and no
+# in-figure title, subtitle, or caption because the LaTeX caption and notes
+# carry them. The canvas is the devices$fitted_volatility_sweep entry in
+# config/figure_rendering.R, which is also where its width is argued; naming the
+# size here as well only gives it somewhere to go stale, which it has done twice.
 
 paper_source_once(paper_path(
   "log_variance", "figures", "fitted_volatility", "tau_sweep_layout.R"
