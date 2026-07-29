@@ -43,6 +43,11 @@ logvar_tau_sweep_date_labels <- function(breaks) {
 # while reserving two characters less).
 logvar_tau_sweep_key_labels <- function(labels) sprintf("$\\tau=%s$", labels)
 
+# The point fit is one fixed-colour line, so it earns a key only by being mapped
+# to a scale of its own. Its guide sits first, left of the band swatches, so the
+# row reads up in tau from the point-identified case.
+LOGVAR_TAU_SWEEP_POINT_KEY <- "$\\tau=0$"
+
 # Two lines, so the rotated title reads as two stacked columns. The plotted
 # series is the conditional standard deviation in levels (exp(eta/2)), NOT its
 # logarithm -- only the axis is transformed -- so the log belongs to the scale
@@ -112,15 +117,31 @@ logvar_tau_sweep_render <- function(envs, path, log_scale = FALSE) {
   }
   fig <- fig +
     ggplot2::geom_line(
-      data = point, ggplot2::aes(y = volatility_point, group = run),
-      color = logvar_style$point, linewidth = logvar_style$point_linewidth
+      data = point,
+      ggplot2::aes(
+        y = volatility_point, group = run,
+        color = LOGVAR_TAU_SWEEP_POINT_KEY
+      ),
+      linewidth = logvar_style$point_linewidth
+    ) +
+    ggplot2::scale_color_manual(
+      values = stats::setNames(
+        logvar_style$point, LOGVAR_TAU_SWEEP_POINT_KEY
+      ),
+      name = NULL,
+      # a wider key box for this guide alone, so the red segment reads as a line
+      # rather than a dash; the band swatches keep the theme's 9pt key
+      guide = ggplot2::guide_legend(
+        nrow = 1, order = 1,
+        theme = ggplot2::theme(legend.key.width = grid::unit(20, "pt"))
+      )
     ) +
     ggplot2::scale_fill_manual(
       values = stats::setNames(palette, labels),
       # layers are added widest-first, so pin the key order to increasing tau
       limits = labels, breaks = labels,
       labels = logvar_tau_sweep_key_labels(labels), name = NULL,
-      guide = ggplot2::guide_legend(nrow = 1)
+      guide = ggplot2::guide_legend(nrow = 1, order = 2)
     ) +
     ggplot2::scale_x_date(
       name = NULL,
@@ -132,12 +153,27 @@ logvar_tau_sweep_render <- function(envs, path, log_scale = FALSE) {
     ggplot2::theme(
       legend.background = ggplot2::element_blank(),
       legend.key = ggplot2::element_blank(),
-      # the bands leave the top of the panel empty, so one horizontal row of
-      # keys sits above them rather than over the widest slack
-      legend.position = c(0.025, 0.975),
-      legend.justification = c(0, 1),
+      # One row of five keys is wider than the panel even on the widened canvas,
+      # so the legend sits above the frame instead of inside it. location =
+      # "panel" centres it on the panel rather than on the plot, which the right
+      # centring pad would otherwise pull it off by the width of the axis block.
+      # The key spacing and text margins are trimmed to keep that row inside the
+      # panel's width -- and the row only reads wider than it is, because svglite
+      # reserves the raw "$\\tau=0.05$" source that \includesvg then typesets far
+      # narrower.
+      legend.position = "top",
+      legend.location = "panel",
+      legend.justification = "center",
       legend.direction = "horizontal",
-      legend.text = ggplot2::element_text(margin = ggplot2::margin(0, 6, 0, 3)),
+      # the point-fit and band guides are separate scales; keep them on one line
+      legend.box = "horizontal",
+      legend.box.spacing = grid::unit(2, "pt"),
+      legend.spacing.x = grid::unit(4, "pt"),
+      legend.margin = ggplot2::margin(0, 0, 2, 0, unit = "pt"),
+      # swatches sized to the key text rather than the theme's 1.2 lines
+      legend.key.size = grid::unit(9, "pt"),
+      legend.key.spacing.x = grid::unit(1, "pt"),
+      legend.text = ggplot2::element_text(margin = ggplot2::margin(0, 1, 0, 1)),
       panel.border = ggplot2::element_rect(colour = "black", fill = NA, linewidth = 1),
       axis.line = ggplot2::element_blank(),
       axis.text.x = ggplot2::element_text(margin = ggplot2::margin(5, 0, 0, 0, unit = "pt")),
