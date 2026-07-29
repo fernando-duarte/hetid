@@ -20,7 +20,9 @@
     function(tau) sprintf("tau%s", sub(".", "p", format(tau), fixed = TRUE)),
     character(1)
   ),
-  "combined", "combined_log"
+  "combined", "combined_log",
+  # normalized endpoint panels derived from the combined one, one per side
+  "combined_lower_normalized", "combined_upper_normalized"
 )
 .sweep_grid <- expand.grid(
   tail = .sweep_tails,

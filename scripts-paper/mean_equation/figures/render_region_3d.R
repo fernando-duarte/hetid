@@ -3,16 +3,16 @@
 # reference rendering. The set envelope itself is evaluated analytically by
 # prepare_region_geometry.R.
 #
-# One figure per slack in the contract's region vector, per unit system
+# One figure per slack in the render control's tau vector, per unit system
 # (standardized sigma(PC_{k,N}) b_{k,N}, and raw b_{k,N}), drawn plain and with
 # the OLS benchmark projected onto the walls beside the tau = 0 point.
 
 local({
+  render <- PAPER_FIGURE_RENDER_CONTROL$region_3d
   baseline_tau <- PAPER_ANALYSIS_CONTRACT$tau$baseline
   widest_tau <- max(PAPER_ANALYSIS_CONTRACT$tau$display)
-  region_taus <- PAPER_ANALYSIS_CONTRACT$tau$region
+  region_taus <- render$taus
   dimension <- PAPER_ANALYSIS_CONTRACT$figure$region_dimension
-  render <- PAPER_FIGURE_RENDER_CONTROL$region_3d
   stopifnot(
     identical(dimension, 3L),
     identical(PAPER_ANALYSIS_CONTRACT$model$n_mean_pc, dimension),

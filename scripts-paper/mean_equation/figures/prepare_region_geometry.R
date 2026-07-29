@@ -71,7 +71,7 @@ region_theta_box <- local({
     if (is.null(chain)) {
       chain <<- set_id_display_tau_refinement(
         sort(unique(c(
-          set_id_mean_eq$tau_display, PAPER_ANALYSIS_CONTRACT$tau$region
+          set_id_mean_eq$tau_display, PAPER_FIGURE_RENDER_CONTROL$region_3d$taus
         ))),
         set_id_mean_eq$theta_table$point,
         set_id_mean_eq$gamma, set_id_mean_eq$moments,

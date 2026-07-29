@@ -78,6 +78,14 @@ PAPER_FIGURE_RENDER_CONTROL <- list(
     tail_subdivisions = 4L
   ),
   region_3d = list(
+    # Slacks drawn by the region figures, in both unit systems and with and
+    # without the OLS benchmark; artifact_manifest_region.R turns this vector
+    # into the figure records, so a slack with no record cannot render. It lives
+    # here rather than beside the other tau vectors in the analysis contract
+    # because that file is one of BOOTSTRAP_STAGE_CODE_FILES: editing it digests
+    # differently and discards the cached bootstrap draws, and which slacks get
+    # drawn has no bearing on those draws.
+    taus = c(0.05, 0.10, 0.20, 0.30),
     seed = 15599L,
     wall_grid_points = 440L,
     camera = list(

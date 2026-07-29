@@ -38,7 +38,7 @@ region_figure_basename <- function(ols, units, tau) {
 }
 
 .region_grid <- expand.grid(
-  tau = PAPER_ANALYSIS_CONTRACT$tau$region,
+  tau = PAPER_FIGURE_RENDER_CONTROL$region_3d$taus,
   units = REGION_FIGURE_UNITS,
   ols = REGION_FIGURE_OLS,
   stringsAsFactors = FALSE

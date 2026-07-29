@@ -15,6 +15,9 @@
 paper_source_once(paper_path(
   "log_variance", "figures", "fitted_volatility", "plot.R"
 ))
+paper_source_once(paper_path(
+  "log_variance", "figures", "fitted_volatility", "tau_sweep_theme.R"
+))
 
 logvar_tau_sweep_bands <- function(envs, labels) {
   lapply(seq_along(envs), function(i) {
@@ -26,28 +29,6 @@ logvar_tau_sweep_bands <- function(envs, labels) {
   })
 }
 
-# Decade ticks in the "1960 Q1" form the paper's other quarterly time-series
-# figures carry. Seven labels this long need roughly 275pt of panel, so they fit
-# only because the canvas is wide enough to leave the centred panel above that;
-# on a narrower panel they collide and the year alone has to do.
-logvar_tau_sweep_date_labels <- function(breaks) {
-  quarter <- (as.integer(format(breaks, "%m")) - 1L) %/% 3L + 1L
-  ifelse(is.na(breaks), "", paste0(format(breaks, "%Y"), " Q", quarter))
-}
-
-# Each key names its own slack, so the legend needs no title. svglite reserves
-# every key at the width of the raw LaTeX source, which \includesvg then typesets
-# far narrower, so five of these in one row lay out wider than the panel and the
-# last falls off the canvas: hence two rows, and no space around the "=" (the
-# math mode adds its own, so "$\\tau=0.05$" typesets exactly like "$\\tau = 0.05$"
-# while reserving two characters less).
-logvar_tau_sweep_key_labels <- function(labels) sprintf("$\\tau=%s$", labels)
-
-# The point fit is one fixed-colour line, so it earns a key only by being mapped
-# to a scale of its own. Its guide sits first, left of the band swatches, so the
-# row reads up in tau from the point-identified case.
-LOGVAR_TAU_SWEEP_POINT_KEY <- "$\\tau=0$"
-
 # Two lines, so the rotated title reads as two stacked columns. The plotted
 # series is the conditional standard deviation in levels (exp(eta/2)), NOT its
 # logarithm -- only the axis is transformed -- so the log belongs to the scale
@@ -57,31 +38,6 @@ logvar_tau_sweep_y_label <- function(log_scale) {
     "Conditional volatility\n(percentage points",
     if (log_scale) ", log scale" else "", ")"
   )
-}
-
-# Right padding that puts the PANEL, not the whole canvas, at the centre of the
-# figure. \centering centres the file, and the axis title and tick labels hang
-# off the left of the panel, so an unpadded figure sits visibly right of the text
-# block -- the wider the y title, the worse. Measured off a throwaway device at
-# the real canvas size, because the column widths come from font metrics that
-# only resolve on an open device; recomputing beats a constant, which would go
-# stale the next time the axis text changes.
-logvar_tau_sweep_center_pad <- function(fig, width, height) {
-  scratch <- tempfile(fileext = ".svg")
-  svglite::svglite(scratch, width = width, height = height)
-  on.exit(
-    {
-      grDevices::dev.off()
-      unlink(scratch)
-    },
-    add = TRUE
-  )
-  gt <- ggplot2::ggplotGrob(fig)
-  panel <- min(gt$layout$l[gt$layout$name == "panel"])
-  to_pt <- function(w) sum(grid::convertWidth(w, "pt", valueOnly = TRUE))
-  left <- to_pt(gt$widths[seq_len(panel - 1L)])
-  right <- to_pt(gt$widths[seq.int(panel + 1L, length(gt$widths))])
-  max(0, left - right)
 }
 
 # envs: envelopes keyed in any order; log_scale puts the panel on a log y axis,
@@ -150,54 +106,12 @@ logvar_tau_sweep_render <- function(envs, path, log_scale = FALSE) {
     ) +
     ggplot2::labs(y = logvar_tau_sweep_y_label(log_scale)) +
     ggplot2::theme_classic(base_size = 11) +
-    ggplot2::theme(
-      legend.background = ggplot2::element_blank(),
-      legend.key = ggplot2::element_blank(),
-      # One row of five keys is wider than the panel even on the widened canvas,
-      # so the legend sits above the frame instead of inside it. location =
-      # "panel" centres it on the panel rather than on the plot, which the right
-      # centring pad would otherwise pull it off by the width of the axis block.
-      # The key spacing and text margins are trimmed to keep that row inside the
-      # panel's width -- and the row only reads wider than it is, because svglite
-      # reserves the raw "$\\tau=0.05$" source that \includesvg then typesets far
-      # narrower.
-      legend.position = "top",
-      legend.location = "panel",
-      legend.justification = "center",
-      legend.direction = "horizontal",
-      # the point-fit and band guides are separate scales; keep them on one line
-      legend.box = "horizontal",
-      legend.box.spacing = grid::unit(2, "pt"),
-      legend.spacing.x = grid::unit(4, "pt"),
-      legend.margin = ggplot2::margin(0, 0, 2, 0, unit = "pt"),
-      # swatches sized to the key text rather than the theme's 1.2 lines
-      legend.key.size = grid::unit(9, "pt"),
-      legend.key.spacing.x = grid::unit(1, "pt"),
-      legend.text = ggplot2::element_text(margin = ggplot2::margin(0, 1, 0, 1)),
-      panel.border = ggplot2::element_rect(colour = "black", fill = NA, linewidth = 1),
-      axis.line = ggplot2::element_blank(),
-      axis.text.x = ggplot2::element_text(margin = ggplot2::margin(5, 0, 0, 0, unit = "pt")),
-      axis.text.y = ggplot2::element_text(margin = ggplot2::margin(0, 5, 0, 0, unit = "pt")),
-      # the default gap leaves the title almost touching the widest tick label;
-      # the ticks are bare digits, so svglite reserves what \includesvg typesets
-      # and this offset carries through to the compiled figure unchanged
-      axis.title.y = ggplot2::element_text(margin = ggplot2::margin(r = 10, unit = "pt"))
-    )
+    logvar_tau_sweep_theme()
   if (log_scale) {
     fig <- fig + ggplot2::scale_y_log10()
   }
   device <- PAPER_FIGURE_RENDER_CONTROL$devices$fitted_volatility_sweep
-  half_line <- 11 / 2
-  fig <- fig + ggplot2::theme(
-    plot.margin = ggplot2::margin(
-      half_line,
-      half_line + logvar_tau_sweep_center_pad(
-        fig, device[["width"]], device[["height"]]
-      ),
-      half_line, half_line,
-      unit = "pt"
-    )
-  )
+  fig <- logvar_tau_sweep_center(fig, device)
   ggplot2::ggsave(
     path, fig,
     width = device[["width"]], height = device[["height"]]

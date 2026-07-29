@@ -17,6 +17,9 @@ paper_source_once(paper_path(
 paper_source_once(paper_path(
   "log_variance", "figures", "fitted_volatility", "tau_sweep_plot.R"
 ))
+paper_source_once(paper_path(
+  "log_variance", "figures", "fitted_volatility", "tau_sweep_normalized_plot.R"
+))
 
 tau_sweep_taus <- logvar_tau_sweep_feasible(
   PAPER_ANALYSIS_CONTRACT$tau$fitted_volatility_sweep,
@@ -99,11 +102,30 @@ if (length(tau_sweep_taus) > 1L) {
         paste(sprintf("%.4f", tau_sweep_widths), collapse = "/")
       ))
     }
+    # the same envelopes with each endpoint standardized, so the panels compare
+    # the shape of the swept endpoints against the point fit rather than their
+    # level and width
+    for (tau_sweep_side in LOGVAR_TAU_SWEEP_SIDES) {
+      tau_sweep_cors <- logvar_tau_sweep_normalized_render(
+        log_var_eq_fitted_volatility_sweep[[tau_sweep_estimator]],
+        logvar_tau_sweep_path(
+          tau_sweep_estimator,
+          suffix = paste0("combined_", tau_sweep_side, "_normalized")
+        ),
+        side = tau_sweep_side
+      )
+      cat(sprintf(
+        "normalized %s envelopes (%s): correlation with the tau = 0 fit %s\n",
+        tau_sweep_side, tau_sweep_estimator,
+        paste(sprintf("%.3f", tau_sweep_cors), collapse = "/")
+      ))
+    }
   }
 }
 
 rm(
   tau_sweep_taus, tau_sweep_boxes, tau_sweep_x, tau_sweep_sample_id,
   tau_sweep_estimators, tau_sweep_tau, tau_sweep_ctx, tau_sweep_estimator,
-  tau_sweep_entry, tau_sweep_envelope, tau_sweep_path
+  tau_sweep_entry, tau_sweep_envelope, tau_sweep_path, tau_sweep_side,
+  tau_sweep_cors
 )
