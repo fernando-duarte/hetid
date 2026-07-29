@@ -29,32 +29,6 @@ draw_region_projections <- function(pmat, xyz, offsets, col, pch) {
   }
 }
 
-# Cube frame for one slack, given the padded set box. The baseline overrides two
-# endpoints, keeps its hand-set ladder, and grows the third axis to hold the OLS
-# point (ols_z, NULL when unmarked), continuing the ladder over the headroom. A
-# wider slack outgrows all of that and takes its own frame and ladder outright.
-# The caller asserts the result still contains everything it draws.
-region_3d_frame <- function(lims, render, baseline, ols_z) {
-  ticks <- render$ticks
-  if (baseline) {
-    lims[[1]][2] <- render$manual_limits$x_upper
-    lims[[2]][1] <- render$manual_limits$y_lower
-    if (!is.null(ols_z)) {
-      lims[[3]][2] <- max(
-        lims[[3]][2], ols_z + render$limit_padding * diff(lims[[3]])
-      )
-      step <- diff(ticks[[3]])[1L]
-      top <- max(ticks[[3]])
-      n_extra <- max(floor((lims[[3]][2] - top) / step), 0)
-      ticks[[3]] <- c(ticks[[3]], top + step * seq_len(n_extra))
-    }
-  } else {
-    lims <- render$widest_limits
-    ticks <- render$widest_ticks
-  }
-  list(lims = lims, ticks = ticks)
-}
-
 draw_region_panes <- function(pmat, lims, ticks) {
   lo <- vapply(lims, `[`, numeric(1), 1)
   hi <- vapply(lims, `[`, numeric(1), 2)
@@ -113,6 +87,27 @@ draw_region_panes <- function(pmat, lims, ticks) {
     p <- project_region_3d(rbind(pane, pane[1, ]), pmat)
     graphics::lines(p[, "x"], p[, "y"], col = grid_col, lwd = 1)
   }
+}
+
+# The three cube edges that carry the axes, each with the gaps its orientation
+# needs. One call per figure keeps the edge geometry beside the pane geometry it
+# has to agree with.
+draw_region_axes <- function(pmat, lo, hi, ticks, labels, titles, center) {
+  draw_region_axis(
+    pmat, c(lo[1], hi[2], lo[3]), c(hi[1], hi[2], lo[3]),
+    ticks[[1]], labels[[1]], titles[[1]], center,
+    tick_gap = 0.009, title_gap = 0.024
+  )
+  draw_region_axis(
+    pmat, c(lo[1], lo[2], lo[3]), c(lo[1], hi[2], lo[3]),
+    ticks[[2]], labels[[2]], titles[[2]], center,
+    tick_side = 1, tick_gap = 0.009, title_gap = 0.024
+  )
+  draw_region_axis(
+    pmat, c(lo[1], lo[2], lo[3]), c(lo[1], lo[2], hi[3]),
+    ticks[[3]], labels[[3]], titles[[3]], center,
+    tick_gap = 0.011, title_gap = 0.028
+  )
 }
 
 draw_region_axis <- function(pmat, start, end, at, labels, title, center,

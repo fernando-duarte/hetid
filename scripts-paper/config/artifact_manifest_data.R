@@ -115,11 +115,6 @@ PAPER_CONDITIONAL_ARTIFACT_STATUSES <- setdiff(
   "mean_bounds_figure|set_id_bounds_tau.svg|3|j|B|r",
   "mean_projections_figure|set_id_projections_sd.svg|3|k|B|r",
   "mean_projections_ols_figure|set_id_projections_sd_ols.svg|3|k|B|r",
-  "mean_region_figure|set_id_region_3d.svg|3|l|B|r",
-  "mean_region_tau0p2_figure|set_id_region_3d_tau0p2.svg|3|l|B|r",
-  "mean_region_ols_figure|set_id_region_3d_ols.svg|3|l|B|r",
-  "mean_region_ols_projected_figure|set_id_region_3d_ols_projected.svg|3|l|B|r",
-  "mean_region_ols_projected_tau0p2_figure|set_id_region_3d_ols_projected_tau0p2.svg|3|l|B|r",
   "log_ols_bounds_figure|log_var_eq_bounds_tau_logols.svg|3|m|B|r",
   "ppml_bounds_figure|log_var_eq_bounds_tau_ppml.svg|3|m|B|r",
   "harvey_bounds_figure|log_var_eq_bounds_tau_harvey.svg|3|m|B|r",
@@ -157,6 +152,8 @@ PAPER_CONDITIONAL_ARTIFACT_STATUSES <- setdiff(
 paper_source_once(paper_path("config", "artifact_manifest_variants.R"))
 # fitted-volatility slack sweep records, derived from the tau contract
 paper_source_once(paper_path("config", "artifact_manifest_sweep.R"))
+# 3D identified-region figure records, derived from the same contract
+paper_source_once(paper_path("config", "artifact_manifest_region.R"))
 .artifact_specs <- do.call(rbind, strsplit(.artifact_specs, "|", fixed = TRUE))
 stopifnot(ncol(.artifact_specs) == 6L)
 artifact_manifest <- data.frame(

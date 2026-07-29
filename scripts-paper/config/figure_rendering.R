@@ -111,6 +111,20 @@ PAPER_FIGURE_RENDER_CONTROL <- list(
       c(-0.20, -0.16, -0.12)
     ),
     tick_digits = 2L,
+    # Ladder density for the slacks and unit systems without a hand-set frame.
+    # Those frames also set their own decimal count from the ladder they get:
+    # raw b_{1,N} ticks land on thousandths, which tick_digits would collapse.
+    auto_tick_n = 3L,
+    # Axis titles per unit system. "sd" scales each coefficient by its news-PC
+    # standard deviation; "b" plots the coefficient itself.
+    axis_labels = list(
+      sd = c(
+        "$\\sigma(PC_{1,N})\\, b_{1,N}$",
+        "$\\sigma(PC_{2,N})\\, b_{2,N}$",
+        "$\\sigma(PC_{3,N})\\, b_{3,N}$"
+      ),
+      b = c("$b_{1,N}$", "$b_{2,N}$", "$b_{3,N}$")
+    ),
     device = list(
       width = 9.6,
       height = 8.4,

@@ -61,6 +61,10 @@ PAPER_ANALYSIS_CONTRACT <- local({
       cap = 0.99,
       display = c(0.05, 0.10, 0.20),
       projection = c(0.05, 0.10, 0.20),
+      # slacks drawn by the 3D region figures, in both unit systems and with
+      # and without the OLS benchmark; artifact_manifest_region.R turns this
+      # vector into the figure records, so a slack with no record cannot render
+      region = c(0.05, 0.10, 0.20, 0.30),
       # slacks carried by the fitted-volatility tau sweep; each needs a manifest
       # variant, so adding one here without a figure record fails fast
       fitted_volatility_sweep = c(0.05, 0.10, 0.20, 0.30, 0.40),

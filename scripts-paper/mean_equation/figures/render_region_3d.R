@@ -1,18 +1,27 @@
-# The joint baseline identified set for b_N in standard-deviation units.
-# The closed triangular shell and its coordinate-wall shadows follow the visual
-# construction of the paper's reference rendering. The set envelope itself is
-# evaluated analytically by prepare_region_geometry.R.
-# Writes the region SVG to the typed figure directory, plus an _ols variant
-# marking the OLS benchmark point.
+# The joint identified set for b_N, drawn as a closed triangular shell with its
+# coordinate-wall shadows, following the visual construction of the paper's
+# reference rendering. The set envelope itself is evaluated analytically by
+# prepare_region_geometry.R.
+#
+# One figure per slack in the contract's region vector, per unit system
+# (standardized sigma(PC_{k,N}) b_{k,N}, and raw b_{k,N}), drawn plain and with
+# the OLS benchmark projected onto the walls beside the tau = 0 point.
 
 local({
   baseline_tau <- PAPER_ANALYSIS_CONTRACT$tau$baseline
   widest_tau <- max(PAPER_ANALYSIS_CONTRACT$tau$display)
+  region_taus <- PAPER_ANALYSIS_CONTRACT$tau$region
   dimension <- PAPER_ANALYSIS_CONTRACT$figure$region_dimension
   render <- PAPER_FIGURE_RENDER_CONTROL$region_3d
   stopifnot(
     identical(dimension, 3L),
-    identical(PAPER_ANALYSIS_CONTRACT$model$n_mean_pc, dimension)
+    identical(PAPER_ANALYSIS_CONTRACT$model$n_mean_pc, dimension),
+    # a slack at or above the bounded -> unbounded transition has no finite box
+    # to frame, so it is a contract error rather than a rendering fallback
+    all(region_taus < set_id_mean_eq$tau_star),
+    # the hand-set frames below key off these two slacks; drop either from the
+    # region vector and its tuned frame silently stops being drawn
+    all(c(baseline_tau, widest_tau) %in% region_taus)
   )
   paper_source_once(
     paper_path("mean_equation", "figures", "build_region_3d_geometry.R"),
@@ -22,6 +31,10 @@ local({
     paper_path("mean_equation", "figures", "draw_region_3d.R"),
     envir = environment()
   )
+  paper_source_once(
+    paper_path("mean_equation", "figures", "region_3d_frames.R"),
+    envir = environment()
+  )
 
   elevation <- render$camera$elevation
   azimuth <- render$camera$azimuth
@@ -29,29 +42,35 @@ local({
   n_wall <- render$wall_grid_points
   axes <- seq_len(dimension)
   palette <- PAPER_FIGURE_STYLE$region
-  ols_point <- region_sd_ols_point()
 
-  # ols = "point" adds the OLS benchmark marker and "projected" also drops it
-  # onto the walls. It clears the baseline slack's third axis, so that axis grows
-  # to hold it and the tick ladder continues at its own spacing. The hand-set
-  # frame and ticks belong to the baseline; a wider slack outgrows both and
-  # derives them from its own box, so every variant needs its own pass.
-  draw <- function(artifact, ols = c("none", "point", "projected"),
-                   tau = baseline_tau) {
-    ols <- match.arg(ols)
-    baseline <- identical(tau, baseline_tau)
-    sys <- region_sd_system(tau)
-    box0 <- region_sd_box(tau)
+  # The hand-tuned frames belong to the SD axes at the baseline and the widest
+  # display slack. Every other slack, and every raw-unit figure, is framed from
+  # its own padded box.
+  frame_mode <- function(units, tau) {
+    if (!identical(units, "sd")) {
+      "auto"
+    } else if (identical(tau, baseline_tau)) {
+      "baseline"
+    } else if (identical(tau, widest_tau)) {
+      "widest"
+    } else {
+      "auto"
+    }
+  }
+
+  draw <- function(ols, units, tau) {
+    scale <- region_axis_scale(units)
+    sys <- region_sd_system(tau, scale)
+    box0 <- region_sd_box(tau, scale)
+    point0 <- unname(region_sd_point(scale))
+    marked <- if (identical(ols, "none")) NULL else region_sd_ols_point(scale)
     lims <- lapply(axes, function(k) {
       values <- c(box0$lo[k], box0$hi[k])
       values + c(-1, 1) * render$limit_padding * diff(values)
     })
     # the shell is meshed over the padded box, before any display override
     mesh <- build_region_mesh(sys, lims, seed = render$seed)
-    frame <- region_3d_frame(
-      lims, render, baseline,
-      if (identical(ols, "none")) NULL else ols_point[[3]]
-    )
+    frame <- region_3d_frame(lims, render, frame_mode(units, tau), marked)
     lims <- frame$lims
     ticks <- frame$ticks
     holds <- function(v) {
@@ -61,14 +80,14 @@ local({
     }
     stopifnot(
       holds(box0$lo), holds(box0$hi),
-      identical(ols, "none") || holds(ols_point)
+      is.null(marked) || holds(marked)
     )
-    tick_labels <- lapply(ticks, function(t) {
-      paste0("$", formatC(t, format = "f", digits = render$tick_digits), "$")
-    })
+    tick_labels <- Map(function(at, places) {
+      paste0("$", formatC(at, format = "f", digits = places), "$")
+    }, ticks, frame$digits)
 
     svglite::svglite(
-      filename = artifact_path(artifact),
+      filename = artifact_path(region_figure_id(ols, units, tau)),
       width = 7,
       height = 6.1
     )
@@ -116,11 +135,10 @@ local({
       }
     }
 
-    point0 <- unname(region_sd_point())
     draw_region_projections(pmat, point0, offsets, palette$tau0_point, 21)
-    if (identical(ols, "projected")) {
+    if (!is.null(marked)) {
       draw_region_projections(
-        pmat, ols_point, offsets, palette$ols_point, palette$ols_pch
+        pmat, marked, offsets, palette$ols_point, palette$ols_pch
       )
     }
 
@@ -145,40 +163,25 @@ local({
       pch = 21, bg = palette$tau0_point,
       col = "black", cex = 1.35, lwd = 0.5
     )
-    if (!identical(ols, "none")) {
-      draw_region_point(pmat, ols_point,
+    if (!is.null(marked)) {
+      draw_region_point(pmat, marked,
         pch = palette$ols_pch, bg = palette$ols_point,
         col = "black", cex = 1.35, lwd = 0.5
       )
     }
 
-    center <- (lo + hi) / 2
-    axis_labels <- list(
-      "$\\sigma(PC_{1,N})\\, b_{1,N}$",
-      "$\\sigma(PC_{2,N})\\, b_{2,N}$",
-      "$\\sigma(PC_{3,N})\\, b_{3,N}$"
-    )
-    draw_region_axis(
-      pmat, c(lo[1], hi[2], lo[3]), c(hi[1], hi[2], lo[3]),
-      ticks[[1]], tick_labels[[1]], axis_labels[[1]], center,
-      tick_gap = 0.009, title_gap = 0.024
-    )
-    draw_region_axis(
-      pmat, c(lo[1], lo[2], lo[3]), c(lo[1], hi[2], lo[3]),
-      ticks[[2]], tick_labels[[2]], axis_labels[[2]], center,
-      tick_side = 1, tick_gap = 0.009, title_gap = 0.024
-    )
-    draw_region_axis(
-      pmat, c(lo[1], lo[2], lo[3]), c(lo[1], lo[2], hi[3]),
-      ticks[[3]], tick_labels[[3]], axis_labels[[3]], center,
-      tick_gap = 0.011, title_gap = 0.028
+    draw_region_axes(
+      pmat, lo, hi, ticks, tick_labels,
+      render$axis_labels[[units]], (lo + hi) / 2
     )
   }
-  draw("mean_region_figure", "none")
-  draw("mean_region_ols_figure", "point")
-  draw("mean_region_ols_projected_figure", "projected")
-  draw("mean_region_tau0p2_figure", "none", widest_tau)
-  draw("mean_region_ols_projected_tau0p2_figure", "projected", widest_tau)
+  for (units in REGION_FIGURE_UNITS) {
+    for (tau in region_taus) {
+      for (ols in REGION_FIGURE_OLS) {
+        draw(ols, units, tau)
+      }
+    }
+  }
 })
 
 for (id in artifact_manifest$id[artifact_manifest$producer ==
