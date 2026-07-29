@@ -54,6 +54,24 @@ logvar_bounds_tau_gate <- function(r, tau) {
   r
 }
 
+# Deterministic stand-in for "the knee reads as a knee". A cliff is one adjacent
+# step that dwarfs the steps either side of it, which is what a branch switch
+# looks like when the grid is too coarse to place a vertex inside it; a resolved
+# knee spreads the same descent over several comparable steps. Reported per
+# coefficient as the largest step measured against its larger neighbour, so the
+# claim about shape is a number rather than a reading of the panel.
+logvar_bounds_tau_steps <- function(rows) {
+  bounded <- rows[rows$lower_status == PAPER_ENDPOINT_STATUS[["bounded"]], ]
+  vapply(split(bounded, bounded$coef), function(s) {
+    d <- abs(diff(s$lower[order(s$tau)]))
+    if (length(d) < 3L) {
+      return(NA_real_)
+    }
+    neighbour <- pmax(c(d[-1L], 0), c(0, d[-length(d)]))
+    max(d / pmax(neighbour, .Machine$double.eps))
+  }, numeric(1))
+}
+
 # one figure per registry entry: engine grid walk, nesting guard with a warm
 # retry and disclosed downgrades, plot assembly, and the render
 logvar_bounds_tau_entry <- function(entry) {
@@ -161,11 +179,18 @@ logvar_bounds_tau_entry <- function(entry) {
     "\n",
     sep = ""
   )
+  steps <- logvar_bounds_tau_steps(grid_rows())
+  cat(
+    "  max lower-step dominance: ",
+    paste(sprintf("%s %.1f", names(steps), steps), collapse = "; "), "\n",
+    sep = ""
+  )
 }
 
 for (fig_entry in logvar_bounds_tau_registry) logvar_bounds_tau_entry(fig_entry)
 
 rm(
   fig_rows, fig_pcr, fig_fresh_id, fig_tau_grid,
-  logvar_bounds_tau_entry, logvar_bounds_tau_gate, fig_entry
+  logvar_bounds_tau_entry, logvar_bounds_tau_gate, logvar_bounds_tau_steps,
+  fig_entry
 )
