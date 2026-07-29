@@ -26,14 +26,13 @@ logvar_tau_sweep_bands <- function(envs, labels) {
   })
 }
 
-# Decade ticks, labelled by year. The paper's other quarterly time-series figures
-# write these as "1960 Q1", but centring the panel (see the pad below) costs it
-# about 60pt of width and seven labels that long then run into one another. On a
-# decade grid every tick is Q1 by construction, so the quarter carries nothing
-# and dropping it keeps all seven ticks legible. Switch back to the "1960 Q1"
-# form only alongside coarser breaks -- 20 years fits, 10 does not.
+# Decade ticks in the "1960 Q1" form the paper's other quarterly time-series
+# figures carry. Seven labels this long need roughly 275pt of panel, so they fit
+# only because the canvas is wide enough to leave the centred panel above that;
+# on a narrower panel they collide and the year alone has to do.
 logvar_tau_sweep_date_labels <- function(breaks) {
-  ifelse(is.na(breaks), "", format(breaks, "%Y"))
+  quarter <- (as.integer(format(breaks, "%m")) - 1L) %/% 3L + 1L
+  ifelse(is.na(breaks), "", paste0(format(breaks, "%Y"), " Q", quarter))
 }
 
 # Each key names its own slack, so the legend needs no title. svglite reserves
