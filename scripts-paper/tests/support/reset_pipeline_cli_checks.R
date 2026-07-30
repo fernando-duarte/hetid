@@ -2,7 +2,7 @@
 # Backup/restore guards against destructive test deleting real tracked files.
 
 local({
-  output_dir <- paper_path("output")
+  output_dir <- file.path(repo_root, "scripts-paper", "output")
   backup_dir <- tempfile("reset_cli_backup_")
   backup_exists <- dir.exists(output_dir)
 
