@@ -227,6 +227,30 @@ Consequences, which the task order below respects:
 - **`stopifnot("msg" = logical(0))` passes silently.** Check lengths before asserting.
 - **`inference_version`** is stamped into the diagnostics from the contract via
   `support/reporting/inference.R:24-38`. A change of construction must bump it.
+- **The analytic `tau=0` standard error is part of the draw-cache key.**
+  `support/inference/bootstrap_stage_result_inputs.R:12` reads
+  `result$se$point[c("coef", se_type)]`, which is frozen into
+  `spec$log_variance$result_inputs` (`bootstrap_stage_specs.R:169-172`) and hashed into
+  `draw_spec_sha` (`:186-191`), a validated cache-provenance field
+  (`inference/bootstrap_stage_cache.R:12,17`). So the analytic SE numbers and the printed `se_type`
+  are cache inputs. Consequence: **keep the analytic sandwich computed.** It still feeds the
+  `tau0_se_analytic` and `tau0_ratio` diagnostics we deliberately retain as the before-and-after
+  record, and it keeps the 11 live checks in `standard_error_estimators_checks.R` valid. Only its
+  **rendering** in the `tau=0` cell is replaced.
+- **The real file limits are 199 lines and 99 columns**, not 200 and 100:
+  `tests/support/check_topology.R:33,40` compares with `>=`. `config/analysis_contract.R` now sits at
+  exactly 199, so it has no headroom left — put any further contract commentary in the module
+  headers instead.
+- **Three contract-ownership forbid rules the new code could trip**, all currently clean and worth
+  keeping that way: a literal `alpha = 0.10` outside `config/analysis_contract.R`; any field named
+  `p05` / `p95` / `width_p05` / `width_p95` (**no allowlist** — a percentile-named diagnostics column
+  is a hard failure, so name new columns descriptively); and `digits = 2L`/`3L` outside
+  `config/reporting.R`.
+- **`envelope_cell` blanks on `is.na`, not `is.finite`** (`support/reporting/cells.R:102-117`). Since
+  `is.na(Inf)` is `FALSE`, an infinite endpoint on a `side == "two-sided"` row would fall through and
+  emit the literal string `-Inf` into the LaTeX. Unreachable in this construction — a two-sided
+  Target-P cell pads a finite anchor by a finite `c` times a finite scale — but do not introduce a
+  path where a two-sided row can carry an infinity.
 
 ## File-level shape
 
@@ -518,6 +542,24 @@ record of the conditioning change.
 
 ### Stream G — tables, notes, captions, figures
 
+**G0. Which cells actually change, as opposed to which files regenerate.** All 14 `.tex` files
+regenerate, but the change surface is far smaller, and knowing this prevents wasted work:
+
+- **Only three artifacts carry `tau>0` interval rows today**: `log_var_eq_panels_inference.tex`, its
+  standalone, and `structural_var_inference.tex`. The other eleven pass `envelope = NULL` and print
+  an empty stat row under each set cell.
+- Two structural reasons they cannot receive one, both worth leaving alone rather than "fixing":
+  `log_var_eq_harvey.tex` calls `logvar_harvey_build_fragment(harvey, n_obs, tau_display, caption,
+  label, se_type)` **positionally** at `harvey_panel.R:64`, and `envelope` is the 7th formal, so the
+  appender has no way to pass one; and `build_ppml_table_notes` (`ppml_captions.R:132-138`) does not
+  accept or forward `set_endpoint_inference`, so `log_var_eq.tex` unconditionally prints the
+  "uncertainty is deferred" branch of the caveat. Both are consistent today. If either grows
+  `tau>0` intervals later, its notes signature has to change with it.
+- **`tau=0` t-statistics appear in six artifacts** (`log_var_eq`, `log_var_eq_harvey`,
+  `log_var_eq_panels`, `log_var_eq_panels_inference`, `structural_var_inference`,
+  `structural_eq_inference`) and their standalones. LAD has neither a `tau=0` statistic nor an
+  envelope (`lad_panel_builder.R` passes no `se_type`), so it is untouched beyond regeneration.
+
 **G1.** Panel A rendering: `mean_equation/tables/structural_table_parts.R` renders the `tau=0`
 sub-row as a parenthesized t-statistic with stars on the point (mirroring the `OLS` column's
 `ols_cells`/`ols_tstats` treatment at lines 49-60) instead of `point_ci` at lines 75-78 and
@@ -527,13 +569,44 @@ blank-when-the-set-cell-is-blank rule stays.
 **G2.** Panel B rendering through `log_variance/tables/table_formatting.R` and
 `estimator_panel.R`, published by `render_combined_inference_table.R`.
 
-**G3.** Notes and captions regenerated so every statement about how the parentheses are built is
-true: `log_variance/tables/ppml_captions.R`, `harvey_caption.R`, `ppml_table_parts.R`,
-`legacy_log_ols_caption.R`, `set_inference_caption.R`, and the structural table's own notes.
-"Calibrated at the set endpoints" and any citation of Stoye or Imbens–Manski **as the published
-method** become false and must go. Panel B's containment language is replaced by the pointwise
-statement. `log_var_eq.tex`'s plug-in-conditioning caveat must be rewritten, not deleted — the
-new `tau=0` statistics *do* propagate first-stage error.
+**G3. Panel A has no notes or captions in this repo. Do not go looking for them.**
+`mean_equation/tables/structural_equation_caption.R` (185 lines) and `structural_inference_note.R`
+(40 lines) were **deleted** in commit `bdfd87e` (2026-07-20, "Emit bare tabular fragments for three
+paper tables"). All four Panel A `.tex` files, **and `structural_var_inference.tex` itself**, are now
+bare tabulars — `\begingroup` … `\begin{tabular}` … `\endgroup`, no `\caption`, no
+`threeparttable`, no notes. `render_structural_equation_table.R:16-17` and
+`render_combined_inference_table.R:8-9` say so explicitly: "the paper supplies the float, caption,
+notes, and the dual `\label`". The word "Wald" appears nowhere in `scripts-paper/`.
+
+So the Stoye/Imbens–Manski prose for the paper's **main** table lives in the manuscript, which is
+outside this repo. The deliverable for it is the **exact replacement wording in the handoff memo**,
+which the brief already asks for. The deleted note text is the authoritative statement of what the
+paper currently says and is the right basis for that wording — recover it with
+`git show bdfd87e^:scripts-paper/mean_equation/tables/structural_inference_note.R` and
+`…/structural_equation_caption.R`. Two staleness bugs already in that deleted text, worth fixing in
+the new wording rather than reproducing: it says the `tau=0` interval uses "the one-sided" normal
+quantile when the code computes a two-sided one (`qnorm(1 - alpha/2)`), and it reuses the same
+coverage number for both.
+
+**G3a. Panel B's notes do exist and are the ones to edit.** Four live builders:
+- `log_variance/tables/ppml_table_parts.R:6-24` — `logvar_se_note_caveat`, the plug-in-conditioning
+  caveat, shared verbatim by both estimators. Its `prefix` ("The `tau=0` statistics condition on the
+  plug-in Lewbel news vector `b_N` and do not propagate its first-stage sampling error") becomes
+  **false** and must be rewritten, not deleted — the new statistics do propagate it.
+- `ppml_captions.R:109-127` and `harvey_caption.R:106-125` — both assert "parenthetical values are
+  `$\hat\theta/\mathrm{SE}$` with stars from the standard-normal (QMLE) approximation". True of the
+  *OLS* column, false of the new `tau=0` column, which divides by a bootstrap MAD.
+- `set_inference_caption.R:10-63` — **all** the containment prose, five items: "OUTER confidence
+  envelope covering the entire population identified interval" (`:14-31`), the max-root construction
+  (`:32-38`), the regularity gate (`:39-48`), one-sided sets (`:49-54`), anchor equivalence
+  (`:55-61`). Item 1 and item 2 must become the pointwise statement. Item 3 must point at the
+  contract's `stability_share` rather than `PAPER_INFERENCE_SEARCH_CONTROL$logvar_endpoint`.
+- `render_inference_panels.R:16-17` — the caption suffix ", with a bootstrap outer confidence
+  envelope beneath each set cell."
+
+`legacy_log_ols_caption.R` is **dead** (no caller anywhere; its header says the primary table now
+uses PPML notes). Leave it, or note it as dead — do not spend effort rewording an unreachable
+builder.
 
 **G4.** Affected LaTeX artifacts, enumerated from `config/artifact_manifest_data.R` and
 `config/artifact_latex.R` rather than assumed from this list:
@@ -559,10 +632,40 @@ are heteroskedasticity tests, not set inference; `var_share{,_standalone}.tex` a
 `approximation_error_quoted_numbers.csv` was also checked and holds variance-bound approximation
 errors (`max_bound_sdf_news`, `max_bound_expected_sdf`), not inference numbers.
 
-**G5.** Figures. Classify each: an identified-set image stays an identified-set object and its
-note must not call it a confidence band; a confidence band moves to the Target-P construction and
-says so. No figure may silently mix targets with the tables. Sweep every figure note, caption,
-axis label and legend for paper-facing "slack" and replace with "tolerance".
+**G5. Figures: audited, and the answer is that almost nothing is needed.** All 47 registered figure
+artifacts were classified against their producing code. **Not one plots a confidence object.** Every
+shaded, ribboned or errorbar element is an identified-set image — set endpoints, projection hulls,
+contours, marginal boxes. A grep for `ci_lower`, `ci_upper`, `c_value`, `c_stoye`, `c_im`,
+`endpoint_inference`, `point_inference`, `point_ci`, `point_se`, `robust_scale`,
+`logvar_root_critical`, `boot`, `quantile`, `percentile` across `log_variance/figures/`,
+`mean_equation/figures/` and `variance_bounds/figures/` returns **zero hits**, and no figure script
+is a declared consumer of the draw cache. `alpha` in figure code is only
+`PAPER_FIGURE_STYLE$identified_set$ribbon_alpha`, a transparency. So the Target-P change **cannot**
+desynchronize a figure from the tables: there is no figure to desynchronize. Record this as a
+verified finding rather than doing speculative work.
+
+Labeling is already correct where it exists. `fitted_volatility/plot.R:82-86` states "This is not a
+confidence or simultaneous path band; interior attainment is not asserted", and
+`bounds_by_tau_plot.R:96-109` uses identified-set language throughout. Three genuinely actionable
+items, and only three:
+
+1. **The one paper-facing "slack" in a figure**: `bounds_by_tau_plot.R:106,108` emits "Points mark
+   the sampled slacks…" and "The shaded band above the largest sampled slack is not characterised"
+   into the figure caption. Replace with "tolerance". Every other "slack" under the figure trees is a
+   code comment or a console `cat`, not paper-facing.
+2. **"Band" is overloaded** and now collides with the confidence vocabulary: it names the
+   identified-set ribbon, the uncharacterized `geom_rect`, and a paper-facing string "Band width:
+   median … pp" (`fitted_volatility/plot.R:49`). Prefer "identified-set band" or "hull" where the
+   string is paper-facing, so "band" does not read as a confidence object beside the new tables.
+3. **The eight combined and normalized sweep panels ship with no in-figure caption at all** (by
+   design — `tau_sweep_plot.R:11-13` defers to the paper's LaTeX notes), yet they redraw the same
+   identified-set band columns as the captioned per-tau panels. They therefore have no in-repo guard
+   on their target label. Flag this in the memo so the manuscript's notes for those panels are
+   checked, rather than trying to fix it in code.
+
+Constraint: `tests/figures/fitted_volatility/test_contracts.R:134` pins the substring `"no red
+line"`, so any caption rewording must preserve it. And `config/figure_rendering.R` is deliberately
+**off** the code manifest, so figure-only knobs there do not invalidate the draw cache.
 
 ### Stream H — tests
 
@@ -580,6 +683,24 @@ touches are reached indirectly, which was verified file by file:
 | `support/envelope_cell_checks.R` | `estimators/{ppml,harvey}/test_{ppml,harvey}.R` |
 | `support/inference_control_checks.R` | `support/test_statistics.R` |
 | `inference/standard_error_estimators_checks.R` | `estimators/ppml/test_ppml.R` |
+
+**H0b. `tests/inference/set_bootstrap_core_checks.R` is dead code, and it is hiding real coverage.**
+Nothing sources it; the single reference in the tree is a *comment* at
+`set_bootstrap_cores_checks.R:3` naming it (note the plural "cores" in the live file). An earlier
+grep of mine matched that comment and wrongly concluded the file ran — the topology gate cannot
+catch this either, because its reachability scan excludes `/tests/`
+(`topology_reference_checks.R:101-105`). Of its 190 lines, `:1-74` duplicates
+`set_bootstrap_collection_checks.R` verbatim and `:96-190` duplicates
+`set_bootstrap_draw_checks.R` verbatim. Lines `:75-95` are the **only** copy of three real
+`logvar_set_boot_prepare` checks — joined `pc_cols` and row count, join-carries-lagged-values-by-`qtr`,
+and the gapless `stopifnot` firing on a `qtr` gap — and they run nowhere.
+
+Fix: move those three checks into the live `set_bootstrap_collection_checks.R`, delete
+`set_bootstrap_core_checks.R`, and update the stale comment at `set_bootstrap_cores_checks.R:3` to
+name `set_bootstrap_draw_checks.R`, which is what actually builds the `lbd_dat`/`lbd_spec` fixture
+that file reuses by lexical scoping. The comment update is not cosmetic: the topology gate's
+stale-basename scan (`topology_reference_checks.R:37-60`) fails if a comment names a `.R` basename
+that no longer exists.
 
 So the new `tests/inference/endpoint_targets_checks.R` must be **either** registered in
 `suite_manifest` with a fresh `id` and `path` **or** sourced from an already-registered file.
