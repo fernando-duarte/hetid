@@ -11,6 +11,9 @@
 
 source(file.path("scripts-paper", "config", "paths.R"))
 paper_source_once(paper_path("config", "artifacts.R"))
+paper_source_once(paper_path(
+  "support", "identification", "endpoint_target_cells.R"
+))
 paper_source_once(paper_path("log_variance", "inference", "set_envelope.R"))
 paper_source_once(paper_path("support", "identification", "api.R"))
 paper_source_once(paper_path("support", "identification", "profile_solver_core.R"))

@@ -1,3 +1,7 @@
+paper_source_once(paper_path(
+  "support", "identification", "endpoint_target_cells.R"
+))
+
 bootstrap_stage_mean_provenance <- function(stage) {
   stage$provenance[c(
     "resampler", "sample_size", "b_reps", "block", "seed",
@@ -44,13 +48,17 @@ bootstrap_stage_anchor_frames <- function(anchor, logvar_spec) {
   frames
 }
 
+# The volatility panel's display-tau cells, through the same shared builder the
+# mean panel uses, so both panels quantile one reference distribution. Iterates
+# layout$slots, which skips the tau = 0 slot: that slot is a point evaluation and
+# its statistic is built by logvar_boot_point_t, never here.
 bootstrap_stage_envelopes <- function(
   collected, full, estimator_ids, layout, alpha, stability
 ) {
   envelopes <- lapply(estimator_ids, function(estimator_id) {
     result <- lapply(seq_along(layout$taus), function(index) {
       slot <- layout$slots[[index]]
-      logvar_endpoint_envelope(
+      endpoint_target_table(
         collected[[estimator_id]][[slot]],
         full[[estimator_id]][[slot]],
         alpha = alpha,
