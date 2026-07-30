@@ -13,6 +13,7 @@ write_logvar_set_boot_artifacts <- function(
   se_obj,
   sens_env,
   tau0,
+  point_t,
   spec,
   prim_cells,
   sens_cells
@@ -41,6 +42,23 @@ write_logvar_set_boot_artifacts <- function(
         published_status = pub$status,
         sens_ci_lower = sci$ci_lower,
         sens_ci_upper = sci$ci_upper,
+        # the tau = 0 cell, recycled across the display rows as the tau0 ratio
+        # columns already are. All four status counts and both gate denominators
+        # are recorded so the point cell's arithmetic reconciles from the artifact
+        # alone; point_n_unbounded must always be zero, since a point evaluation
+        # cannot diverge, and is written rather than assumed so that a nonzero
+        # value is visible instead of silent.
+        point_estimate = point_t[[est]]$point,
+        point_se = point_t[[est]]$se,
+        point_statistic = point_t[[est]]$statistic,
+        point_p_value = point_t[[est]]$p_value,
+        point_n_bounded = point_t[[est]]$n_bounded,
+        point_n_unbounded = point_t[[est]]$n_unbounded,
+        point_n_unreliable = point_t[[est]]$n_unreliable,
+        point_n_failed = point_t[[est]]$n_failed,
+        point_n_valid = point_t[[est]]$n_valid_point,
+        point_n_non_failed = point_t[[est]]$n_non_failed,
+        point_reason = point_t[[est]]$reason,
         tau0_sd_boot = tau0[[est]]$sd_boot,
         tau0_se_analytic = tau0[[est]]$se_analytic,
         tau0_ratio = tau0[[est]]$ratio,

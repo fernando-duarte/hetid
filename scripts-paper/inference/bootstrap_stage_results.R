@@ -120,7 +120,7 @@ bootstrap_stage_logvar_result <- function(
   write_logvar_set_boot_artifacts(
     ids, layout$taus, layout$keys, layout$slots,
     primary, simultaneous, full, estimator_results,
-    sensitivity, tau0, spec, primary_cells,
+    sensitivity, tau0, point_t, spec, primary_cells,
     sensitivity_cells
   )
   n_reported <- sum(vapply(ids, function(id) {
