@@ -115,4 +115,7 @@ check(
     mbr_out$block == mbr_provenance$block &&
     mbr_out$seed == mbr_provenance$seed
 )
+paper_source_once(paper_path(
+  "tests", "inference", "mean_boot_results_table_checks.R"
+))
 .test$finish()
