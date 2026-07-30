@@ -1,5 +1,7 @@
 # Group/id-based selection helpers for the six named full-reset compartments.
 
+paper_source_once(paper_path("support", "latex", "table_pipeline.R"))
+
 artifact_records_by_group <- function(group) {
   group <- .artifact_scalar(group, "Artifact group")
   if (!group %in% unname(PAPER_ARTIFACT_GROUPS)) {

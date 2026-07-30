@@ -8,7 +8,6 @@ source(normalizePath(
   mustWork = TRUE
 ))
 paper_source_once(paper_path("config", "artifacts.R"))
-paper_source_once(paper_path("support", "latex", "table_pipeline.R"))
 
 keep_tracked <- "--keep-tracked" %in% commandArgs(trailingOnly = TRUE)
 audits <- reset_pipeline_state(include_tracked = !keep_tracked)
