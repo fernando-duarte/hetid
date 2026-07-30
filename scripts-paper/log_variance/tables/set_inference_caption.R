@@ -1,9 +1,8 @@
 # Notes clause for the _inference variant of the combined log-variance panels
-# (render_inference_panels.R): the moving-block bootstrap outer
-# confidence-envelope disclosure appended after each estimator's own panel
-# notes (ppml_captions.R and harvey_caption.R, both unchanged).
-# Definitions only; reads log_var_eq_set_boot (unified bootstrap stage) and
-# the canonical endpoint-stability control at call time.
+# (render_inference_panels.R): the moving-block bootstrap set-inference
+# disclosure appended after each estimator's own panel notes (ppml_captions.R
+# and harvey_caption.R). Definitions only; reads log_var_eq_set_boot (unified
+# bootstrap stage) and the contract's stability share at call time.
 
 paper_source_once(paper_path("support", "reporting", "cells.R"))
 
@@ -17,10 +16,10 @@ build_logvar_set_inference_notes <- function(boot) {
           "%s\\%%"
         ),
         "circular moving-block bootstrap ($B=%s$ replications, %d-quarter blocks)",
-        "OUTER confidence envelope covering the entire population identified",
-        "interval, conditional on the delivered principal-component series;",
-        "coordinatewise intervals do not describe the joint geometry of the",
-        "identified set."
+        "confidence interval for the coefficient, calibrated to cover it wherever",
+        "the truth sits inside the identified interval, conditional on the",
+        "delivered principal-component series; coordinatewise intervals do not",
+        "describe the joint geometry of the identified set."
       ),
       paper_format_general(
         inference_labels$coverage_percent,
@@ -30,34 +29,51 @@ build_logvar_set_inference_notes <- function(boot) {
       boot$block
     ),
     paste(
-      "The envelope is a centered one-sided max-root construction: each live",
-      "endpoint is studentized by a robust (median-absolute-deviation) scale",
-      "of its bootstrap draws, and the critical value is the conservative",
-      "Politis--Romano--Wolf order statistic of the studentized root over the",
-      "resampled draws, not a normal-quantile approximation."
+      "Each live endpoint is studentized by a robust",
+      "(median-absolute-deviation) scale of its bootstrap draws, and the",
+      "critical value is the conservative Politis--Romano--Wolf order statistic",
+      "of the inward studentized root over the resampled draws, not a",
+      "normal-quantile approximation. The root is credited by the estimated set",
+      "width at the position of the truth and then maximized over that",
+      "position, because a truth away from an endpoint leaves that endpoint",
+      "room to spare before it can fail."
     ),
     sprintf(
       paste(
-        "A regularity gate blanks an endpoint when fewer than a data-driven",
-        "minimum of draws certify a bounded set, when the bounded fraction",
-        "across draws falls below %.0f\\%%, or when the endpoint scale is",
-        "degenerate; divergent draws are always counted toward these",
-        "fractions, never dropped from the draw pool."
+        "One regularity gate, declared once in the analysis contract, governs",
+        "every reported endpoint. An endpoint is blanked when fewer than",
+        "%s\\%% of the replications certify a bounded set, when the certified",
+        "share among the draws that did not fail falls below %.0f\\%%, or when",
+        "the endpoint scale is degenerate. Unbounded and unreliable draws stay",
+        "in that denominator; failed draws leave it but still count against the",
+        "absolute minimum."
       ),
-      100 * PAPER_INFERENCE_SEARCH_CONTROL$logvar_endpoint$stability_share
+      paper_format_general(
+        inference_labels$minimum_valid_draw_percent,
+        PAPER_REPORTING_CONTROL$precision$caption_percent
+      ),
+      100 * PAPER_ANALYSIS_CONTRACT$inference$stability_share
     ),
     paste(
       "A genuinely one-sided identified set (one side certified unbounded at",
-      "the full sample) keeps that side at infinity in the envelope; only the",
-      "finite side is padded by the bootstrap critical value. Both sides",
-      "expand outward from the identified set, never inward."
+      "the full sample) keeps that side at infinity; only the finite side is",
+      "padded by the bootstrap critical value. On a half-infinite set the worst",
+      "position for the truth is the finite endpoint, so the width credit",
+      "vanishes and the pointwise and whole-set critical values coincide there.",
+      "Both sides expand outward from the identified set, never inward."
     ),
     paste(
-      "The set cell above each envelope row is the plug-in identified set",
+      "The set cell above each parenthetical row is the plug-in identified set",
       "(the conservative table's cell, unchanged); the bootstrap centers on a",
       "resample-consistent anchor that equals the plug-in set where the set",
-      "is bounded, so the envelope reads as padding around that same",
+      "is bounded, so the reported row reads as padding around that same",
       "interval, not a second, independent estimate."
+    ),
+    paste(
+      "The critical value for containment of the entire identified interval is",
+      "never smaller and is still computed: it is reported per cell as",
+      "\\texttt{c\\_s} in",
+      "\\texttt{log\\_var\\_eq\\_set\\_inference\\_diagnostics.csv}."
     )
   )
 }

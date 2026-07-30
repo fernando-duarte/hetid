@@ -112,7 +112,7 @@ build_lad_panel_notes <- function(lad, tau_baseline, grid_cap, fit_budget) {
     sprintf(
       paste(
         "Search resolution: the grid is capped at %d points within a %d-fit",
-        "per-slack budget with phase caps; a %d-start re-polish verifies each",
+        "per-tolerance budget with phase caps; a %d-start re-polish verifies each",
         "bounded side, feeding a more extreme candidate back through the engine",
         "and demoting an unreproducible side to unreliable, and the deterministic",
         "\\texttt{%s} schedule fails a nonunique endpoint-relevant tau closed."

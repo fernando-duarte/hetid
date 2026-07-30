@@ -1,25 +1,35 @@
 # PPML table-part assembly and shared standard-error note.
 
-# The point-column conditioning caveat shared verbatim by both estimators' SE
-# notes: tau = 0 conditions on the plug-in news vector, while the set columns
-# carry either a separate endpoint envelope or an explicit deferral.
+# The point-column caveat shared by both estimators' SE notes. The set-column
+# sentence is common to both branches; the tau = 0 sentence is not, because the
+# branch tracks whether the bootstrap objects were threaded into this table.
+# With them, tau = 0 is a bootstrap t statistic that propagates the first-stage
+# news-vector error; without them (the three tables that render before the
+# bootstrap stage) it is the analytic statistic at the plug-in news vector.
 logvar_se_note_caveat <- function(set_endpoint_inference = FALSE) {
-  prefix <- paste(
-    "The $\\tau{=}0$ statistics condition on the plug-in Lewbel news vector",
-    "$b_N$ and do not propagate its first-stage sampling error; $\\tau{>}0$",
-    "set columns are identified-set ranges, not point estimates."
+  set_cols <- paste(
+    "The $\\tau{>}0$ set columns are identified-set ranges, not point",
+    "estimates."
   )
   if (isTRUE(set_endpoint_inference)) {
     return(paste(
-      prefix,
-      "Their moving-block-bootstrap outer confidence envelopes are reported",
-      "separately beneath the set cells."
+      "The $\\tau{=}0$ statistics divide the point estimate by the robust scale",
+      "of its bootstrap draws, which re-estimate the mean equation, so they",
+      "propagate the first-stage sampling error in the Lewbel news vector",
+      "$b_N$. The analytic statistic conditions on a fixed plug-in $b_N$",
+      "instead, so the two are not comparable; it remains computed and is",
+      "reported in the diagnostics.",
+      set_cols,
+      "Their moving-block bootstrap confidence intervals are reported beneath",
+      "the set cells."
     ))
   }
   paste(
-    prefix,
-    "No standard error is attached; moving-block-bootstrap set-endpoint",
-    "uncertainty is deferred."
+    "The $\\tau{=}0$ statistics condition on the plug-in Lewbel news vector",
+    "$b_N$ and do not propagate its first-stage sampling error.",
+    set_cols,
+    "No standard error is attached to them; moving-block-bootstrap",
+    "set-endpoint uncertainty is deferred."
   )
 }
 

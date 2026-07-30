@@ -57,8 +57,8 @@ build_ppml_notes <- function(ppml, tau_baseline, grid_cap, fit_budget,
     sprintf(
       paste(
         "Search resolution: primary grid capped at %d points with a %d-fit",
-        "budget per slack; an independent Morton-ordered coverage audit",
-        "(cap %d, budget %d) reruns every display slack before any cell",
+        "budget per tolerance; an independent Morton-ordered coverage audit",
+        "(cap %d, budget %d) reruns every display tolerance before any cell",
         "ships, and disagreements demote cells to unreliable. The scaling",
         "pilot froze the response scale at %g."
       ),
@@ -90,8 +90,8 @@ build_ppml_notes <- function(ppml, tau_baseline, grid_cap, fit_budget,
 }
 
 # the SE computation clause: describes each stored variant by the assumption it
-# makes, names which variant is printed, and states the point-column
-# conditioning caveat. The framing is neutral -- assumptions, not advice -- so it
+# makes, names which variant is printed and in which columns, and states the
+# point-column caveat. The framing is neutral -- assumptions, not advice -- so it
 # reads correctly whatever logvar_ppml_se_type selects.
 logvar_ppml_se_note <- function(
   se_type,
@@ -99,6 +99,13 @@ logvar_ppml_se_note <- function(
   set_endpoint_inference = FALSE
 ) {
   key <- match.arg(se_type, LOGVAR_PPML_SE_TYPES)
+  # which columns print the analytic ratio: the tau = 0 column prints a bootstrap
+  # t statistic instead wherever the bootstrap objects reach the table
+  analytic_cols <- if (isTRUE(set_endpoint_inference)) {
+    "the OLS column"
+  } else {
+    "the OLS and $\\tau{=}0$ columns"
+  }
   default_name <- switch(key,
     naive = "the model-based $\\hat\\varphi A^{-1}$",
     hc0 = "the Eicker--White HC0 sandwich",
@@ -117,11 +124,12 @@ logvar_ppml_se_note <- function(
         "heteroskedasticity-robust Eicker--White sandwich $A^{-1}(\\sum_t \\hat",
         "r_t^2 x_t x_t')A^{-1}$ (HC0, and HC1 with the $n/(n{-}p)$ factor); and",
         "its Newey--West Bartlett HAC extension over %d lags, consistent also",
-        "under serially correlated scores. The reported statistics use %s;",
-        "parenthetical values are $\\hat\\theta/\\mathrm{SE}$ with stars from the",
+        "under serially correlated scores. Parenthetical values in %s are",
+        "$\\hat\\theta/\\mathrm{SE}$ from %s, with stars from the",
         "standard-normal (QMLE) approximation (%s)."
       ),
       se_hac_lags,
+      analytic_cols,
       default_name,
       paper_significance_legend("ascending_percent")
     ),

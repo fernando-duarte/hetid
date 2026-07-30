@@ -103,9 +103,9 @@ logvar_bounds_tau_render <- function(rows, metadata, tau_baseline, tau_star,
           PAPER_REPORTING_CONTROL$precision$figure_annotation
         ),
         " is the mean-equation set's ",
-        "bounded-unbounded transition. Points mark the sampled slacks and the ",
-        "segments between them are interpolation. The shaded band above the ",
-        "largest sampled slack is not characterised."
+        "bounded-unbounded transition. Points mark the sampled tolerances and ",
+        "the segments between them are interpolation. The shaded band above the ",
+        "largest sampled tolerance is not characterized."
       )
     ) +
     ggplot2::theme(legend.position = "bottom")
