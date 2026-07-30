@@ -24,6 +24,7 @@ limit while preserving the original definition order and global symbols.
 | `linear_objective_bounds.R` | Facade adapter for linear objectives over a quadratic set |
 | `tau_star.R` | Fixed-gamma bounded/unbounded sweep, bisection, re-optimizing oracle, and recession degeneracy diagnostic for the tau* threshold |
 | `identified_set_bootstrap.R` | One-draw re-estimation, draw collection, and diagnostics table for the set-endpoint bootstrap |
+| `identified_set_bootstrap_collect.R` | Collects the per-draw bootstrap results into the unified bootstrap stage's endpoint tables (sourced by `scripts-paper/inference/run_bootstrap_stage.R`) |
 | `identified_set_inference.R` | Percentile bands and Stoye (2009) / Imbens-Manski (2004) endpoint confidence intervals (sources `inference_calibration.R`) |
 | `inference_calibration.R` | Calibrations and robust (MAD-based) endpoint summaries used by identified-set inference |
 | `status_contract.R` | Closed endpoint-state vocabulary and precedence |
@@ -32,8 +33,12 @@ limit while preserving the original definition order and global symbols.
 
 | Module | Responsibility |
 |---|---|
-| `api.R` | Facade for statistics helpers (sources `bootstrap_and_stationarity.R`, `mbb_runner.R`, `boot_freshness.R`, `boot_cache.R`, and `reporting_and_validation.R`; `normalizations.R` is sourced directly by its consumers, not here) |
+| `api.R` | Facade for statistics helpers (sources `bootstrap_and_stationarity.R`, `mbb_protocol_authority.R`, `mbb_rng_state.R`, `mbb_index_family.R`, `mbb_execution_core.R`, `mbb_runner.R`, `boot_freshness.R`, `boot_cache.R`, and `reporting_and_validation.R`; `normalizations.R` is sourced directly by its consumers, not here) |
 | `bootstrap_and_stationarity.R` | Bootstrap sampling, summary statistics, stationarity tests, and the circular moving-block index with its automatic block-length rule (`paper_mbb_block_len`) |
+| `mbb_protocol_authority.R` | Single source of truth for the moving-block bootstrap protocol (draw count, block rule, RNG kind/seed) shared across index generation and execution |
+| `mbb_rng_state.R` | Save/restore of the caller's RNG state around the pinned Mersenne-Twister draw |
+| `mbb_index_family.R` | Generation of the circular moving-block index family from the pinned draw |
+| `mbb_execution_core.R` | Shared serial/`parallel::mclapply` execution core used by the moving-block runner |
 | `mbb_runner.R` | Deterministic moving-block draw orchestration: indices are drawn up front under a pinned Mersenne-Twister (the caller's RNG kind is restored afterward), then run through a serial loop or chunked `parallel::mclapply`, reporting progress under either |
 | `reporting_and_validation.R` | Statistical reporting and data-validation functions |
 | `normalizations.R` | Named distributional normalization constants shared by execution and prose |
@@ -75,6 +80,24 @@ limit while preserving the original definition order and global symbols.
 | Module | Responsibility |
 |---|---|
 | `acm_inputs.R` | Canonical validated quarterly ACM inputs used by paper computations |
+
+## `inference/`
+
+| Module | Responsibility |
+|---|---|
+| `bootstrap_stage_execution.R` | Assembles the mean/log-variance collection specs and runs the unified bootstrap stage candidate |
+| `bootstrap_stage_result_inputs.R` | Extracts per-estimator set/SE fields from an estimator's results for the stage output tables |
+| `bootstrap_stage_mean_result_inputs.R` | Extracts the mean-equation point/set fields feeding the stage's mean tables |
+| `bootstrap_stage_result_helpers.R` | Selects the mean/log-variance provenance fields carried into the stage result |
+| `bootstrap_stage_provenance.R` | Builds the stage's provenance axes and validates a provenance record against them |
+| `bootstrap_stage_provenance_validation.R` | Per-family (design, sample size, seed, RNG kind) index-provenance validation used by cache freshness checks |
+| `bootstrap_stage_cache_validation.R` | Generic payload field/class/validator check used by the stage's cache freshness gate |
+| `bootstrap_stage_logvar_cache.R` | Volatility set-endpoint bootstrap anchor gate and cache handling |
+| `bootstrap_stage_logvar_contract.R` | Enforces the log-variance estimator dependency/complete-case contract and builds per-row inputs |
+| `bootstrap_stage_logvar_controls.R` | Validates the volatility PC-preprocessing policy and search-control records stored by the stage owner |
+| `bootstrap_stage_mean_cache.R` | Reports failed-draw causes and enforces the mean-equation failure-rate gate |
+| `bootstrap_stage_code_manifest.R` | Lists the directories/files whose edits invalidate the primary bootstrap draw cache |
+| `bootstrap_stage_spec_assertions.R` | Named-check assertion helper and structured `bootstrap_stage_error` condition constructor |
 
 ## `runtime/`
 

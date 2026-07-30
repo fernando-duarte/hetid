@@ -56,11 +56,11 @@ testthat::test_file(
 )
 ```
 
-### Run tests for a specific function
+### Run a single test by its exact description
 ```r
 testthat::test_file(
   "tests/testthat/test-compute_identified_set_quadratic.R",
-  filter = "mathematical validation"
+  desc = "assembled A_i matrices are exactly symmetric"
 )
 ```
 

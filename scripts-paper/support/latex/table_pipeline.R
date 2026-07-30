@@ -78,6 +78,7 @@ panel_tabular_lines <- function(panels, col_headers,
 #' Wrap a table fragment in a compilable standalone LaTeX document
 #'
 #' @param table_lines character vector of LaTeX table lines
+#' @param landscape TRUE for landscape geometry (default portrait)
 #' @return character vector of LaTeX lines for a complete document
 make_standalone_latex <- function(table_lines, landscape = FALSE) {
   geometry <- if (isTRUE(landscape)) {
@@ -117,6 +118,7 @@ make_standalone_latex <- function(table_lines, landscape = FALSE) {
 #' Stops on failure, so a LaTeX regression fails the calling pipeline.
 #'
 #' @param tex_path path to the .tex document to compile
+#' @return invisibly, the latexmk cleanup exit status
 compile_latex_pdf <- function(tex_path) {
   status <- system2(
     "latexmk", c("-cd", "-pdf", "-silent", tex_path),

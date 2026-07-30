@@ -3,6 +3,9 @@
 # run_pipeline.R also defines the date_begin ~ date_end PCA sample window.
 
 #' Helper function: PC score series of a panel, complete rows over the sample window
+#' @param df data frame with the key column and PC input columns
+#' @param output_names PC score column names to assign, one per component kept
+#' @return tibble with the key column and one column per name in output_names
 pc_scores <- function(df, output_names) {
   df <- df |>
     filter_window() |>

@@ -6,6 +6,9 @@ yields <- quarterly_acm_inputs$yields
 term_premia <- quarterly_acm_inputs$term_premia
 
 #' Helper function: panel of an SDF series, one column per maturity in mats_qtr
+#' @param fn SDF series function (e.g. hetid::compute_sdf_innovations), called per maturity
+#' @param prefix column-name prefix for each output column (maturity appended)
+#' @return tibble panel with one column per maturity in mats_qtr, plus qtr
 sdf_panel <- function(fn, prefix) {
   mats_qtr |>
     purrr::set_names(paste0(prefix, mats_qtr)) |>

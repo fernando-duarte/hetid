@@ -88,6 +88,7 @@ kpss_pvalue <- function(stat, cval) {
 #' p-values come from kpss_pvalue() above; Ljung-Box p-values are exact.
 #' @param x numeric vector
 #' @param var_name variable name
+#' @param control ADF/KPSS/Ljung-Box test settings
 #' @return data frame with test results
 perform_stationarity_tests <- function(
   x,
