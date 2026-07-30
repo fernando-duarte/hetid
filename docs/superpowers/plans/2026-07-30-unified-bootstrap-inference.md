@@ -560,6 +560,44 @@ regenerate, but the change surface is far smaller, and knowing this prevents was
   `structural_eq_inference`) and their standalones. LAD has neither a `tau=0` statistic nor an
   envelope (`lad_panel_builder.R` passes no `se_type`), so it is untouched beyond regeneration.
 
+**G0a. Three of those six render BEFORE the bootstrap stage exists, so they need deferred
+publication.** `run_pipeline.R` sources `render_ppml_table.R` at line 55, `harvey/run.R` at 57 and
+`render_panels.R` at 107, while `run_bootstrap_stage.R` — which creates the only bootstrap objects —
+is at line 111. Those three tables therefore cannot print a bootstrap `tau=0` statistic as the
+pipeline stands. The plan originally asserted all six would get one; that was wrong.
+
+Resolved in favor of the brief's explicit sentence — "every table that reports identified-set
+inference must end up on the same footing", with `tau=0` parentheses bootstrap t-statistics — since
+leaving three tables on the analytic convention preserves exactly the mixed-convention problem this
+task exists to remove. A table whose only inference statistics are an `OLS` t and an analytic
+plug-in `tau=0` t does report identified-set inference. The `conservative` / `inference` variant
+registration governs only whether `tau>0` confidence rows appear, and in any case labels only
+`log_var_eq_panels.tex`, not the dedicated PPML and Harvey tables.
+
+Implement as **deferred publication**, not as moving estimation:
+
+- **Do not move `harvey/run.R`.** It is not merely a renderer: it builds the Harvey set and attaches
+  its analytic standard errors, and the bootstrap stage consumes both for its specification and
+  diagnostics. Moving it wholesale breaks the stage. Extract only its embedded
+  `render_harvey_table.R` call.
+- Keep all PPML and Harvey estimation and analytic-SE attachment before line 111. Move only the
+  three publication calls to just after it.
+- **Thread a separate bootstrap `tau=0` statistic frame through the shared renderer, independent of
+  `envelope`.** `estimator_panel.R:46` currently always reads the analytic `result$se$point`, so
+  moving execution alone is insufficient. And `set_endpoint_inference` must **not** double as the
+  switch for the point statistic: the conservative tables keep bare `tau>0` set ranges while still
+  printing a bootstrap `tau=0` statistic, so the two decisions are independent.
+- Consequence to accept: if the bootstrap stage fails, those three table triples are no longer
+  freshly regenerated. That is a failure-timing change, not a numerical one — the stage reads the
+  estimator objects without mutating them, assigns two new globals, and restores ambient RNG state.
+- Update the manifest's declared consumers, the artifact topology check and the README dependency
+  flow to match the new ordering.
+
+**G0b. Simplify the notes branch once this lands.** With every table on the bootstrap `tau=0`
+statistic, the `logvar_se_note_caveat` branch collapses: its `tau=0` sentence becomes unconditional
+and `set_endpoint_inference` reverts to meaning only "are there `tau>0` rows". Likewise the
+`analytic_cols` split in both estimator captions no longer needs the `tau=0` case.
+
 **G1.** Panel A rendering: `mean_equation/tables/structural_table_parts.R` renders the `tau=0`
 sub-row as a parenthesized t-statistic with stars on the point (mirroring the `OLS` column's
 `ols_cells`/`ols_tstats` treatment at lines 49-60) instead of `point_ci` at lines 75-78 and

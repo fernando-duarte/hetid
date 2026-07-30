@@ -1,27 +1,7 @@
 source(file.path("scripts-paper", "config", "paths.R"))
-PAPER_ENDPOINT_STATUS <- c(bounded = "bounded", unreliable = "unreliable", failed = "failed")
-PAPER_INFERENCE_SEARCH_CONTROL <- list(tau_star = list(bootstrap_bisection_iterations = 4L))
-PAPER_ANALYSIS_CONTRACT <- list(
-  model = list(
-    key_col = "when",
-    preprocessing = list(return_pc = list(center = TRUE, scale = FALSE))
-  )
-)
-LOGVAR_SEARCH_CONTROL <- list(iterations = 4L)
-LOGVAR_PPML_CONTROL <- list(glm_maxit = 5L)
-LOGVAR_HARVEY_CONTROL <- list(optim_maxit = 6L)
-LOGVAR_NORMAL_LOG_SQUARE_GAP <- 1.25
-BOOTSTRAP_STAGE_COMPLETE_CASE_POLICY <- list(
-  shared_rows = "all",
-  timing = "after_shared_estimation",
-  columns_role = "pc_cols",
-  predicate_id = "stats::complete.cases",
-  subset_roles = c("w1", "w2", "key", "pc_data")
-)
-paper_logvar_estimator_spec <- function(id) {
-  list(dependencies = if (identical(id, "harvey")) "ppml" else character())
-}
-paper_normalize_model_matrix <- function(data, policy) as.matrix(data)
+paper_source_once(paper_path(
+  "tests", "inference", "bootstrap_stage_draw_contract_stubs.R"
+))
 paper_source_once(paper_path("inference", "bootstrap_stage_specs.R"))
 paper_source_once(paper_path("support", "inference", "bootstrap_stage_logvar_contract.R"))
 paper_source_once(paper_path("support", "identification", "tau_star.R"))
