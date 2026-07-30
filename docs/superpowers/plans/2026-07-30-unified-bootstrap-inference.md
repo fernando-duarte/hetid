@@ -117,13 +117,27 @@ Each draw root is a max of three affine functions with slopes `0`, `-d_l`, `+d_u
 2. certified upper bound on any interval: `U[a,b] = (g(a) + g(b) + L (b-a)) / 2`;
 3. split the interval with the largest `U` at its midpoint, evaluate, update `M`; break ties by
    the smallest left endpoint so reruns are bit-identical;
-4. stop when `max U - M <= eps_lambda`.
+4. stop when **`min{c_S, max U} - M <= eps_lambda`** — the gap on the *reported* quantity.
 
 Then `c_p_lower = M`, `c_p_upper = min{c_S, max U}`, with
 `c_p_lower <= c_P* <= c_p_upper` and `c_p_upper - c_p_lower <= eps_lambda`. **Report
 `c_p_upper`** — the upper bracket makes the numerical approximation conservative, and the cap at
 `c_S` is valid by the ordering and preserves it. If `L = 0`, return `c_p_lower = c_p_upper = c_S`
 without subdividing.
+
+The certificate is airtight on all three legs: `M` is an evaluated `g` value so `M <= c_P*`;
+`c_P* <= max U` by the branch bound and `c_P* <= c_S` by the ordering, so
+`c_P* <= min{c_S, max U}`; and the gap is at most `eps_lambda` by the stopping test.
+
+**Terminating on the reported quantity rather than on `max U` is load-bearing, not cosmetic.**
+`U[a,b] - M` shrinks only as `L(b-a)/2`, so a flat `g` forces uniform refinement to width
+`2 eps_lambda / L` — measured at **8,193 / 16,385 / 60,000+** evaluations for `L = 1 / 3 / 10`.
+Folding in the `c_S` cap ends those cases in **2** evaluations, because a flat credited quantile
+is exactly the case where `M` already equals `c_S`. Verified to change nothing real: across all
+30 Panel B cells the two criteria give bit-identical `c_p_upper` (max difference `0.000e+00`) and
+identical evaluation counts (median 8, max 30), since no real cell hits the pathology. This
+removes the blowup at its cause; an iteration cap would only have truncated the symptom and left
+an arbitrary constant behind.
 
 `eps_lambda` is declared once as
 `PAPER_ANALYSIS_CONTRACT$inference$target_p_lambda_tolerance = 1e-4`.
@@ -193,6 +207,10 @@ Consequences, which the task order below respects:
 
 - Development validates read-only against the existing `output/state/bootstrap_stage_draws.rds`
   in throwaway scripts under the scratchpad. Never in-tree.
+- **When validating stream A against Panel A data in the existing cache, duplicate the collapsed
+  `status` into both `lower_status` and `upper_status` in the throwaway script's memory.** The
+  per-side fields do not exist in Panel A's cached draws until stream B lands, so a shared
+  builder that expects them hits a `NULL` otherwise. Panel B's cached draws already carry both.
 - The single full run at the end (roughly eight hours) regenerates everything.
 - Do not fight the invalidation by pinning or faking a hash.
 
@@ -248,14 +266,28 @@ Add `stopifnot` coverage matching the file's existing style. Update
     root_critical(root, alpha)                      # relocated logvar_root_critical, verbatim
     endpoint_side_stat(vals, status, anchor, inward_sign, min_reps, stability)
     target_s_critical(z_lower, z_upper, pool, alpha)
-    target_p_critical(z_lower, z_upper, pool, d_lower, d_upper, alpha, tolerance)
+    target_p_critical(z_lower, z_upper, pool, d_lower, d_upper, alpha, tolerance, c_s)
+    point_t_statistic(point_hat, point_draws, point_status, min_reps, stability)
 
-`target_p_critical` returns `list(c_p_lower, c_p_upper, evals, best_lambda, interior)`.
-`endpoint_side_stat` generalizes `logvar_side_stat` unchanged in behavior: `ok` is finite and
-`bounded`, the non-failed denominator drives `frac`, the scale is `robust_scale` over `ok`, and
-`z` is defined only on `ok`. The scale **must** be `robust_scale` (`stats::mad` at its defaults,
-including the fewer-than-two-finite-inputs `NA` rule) — a hard-coded 1.4826 that misses the
-small-`n` rule drifts §8.1.
+`target_p_critical` returns `list(c_p_lower, c_p_upper, evals, best_lambda, interior)` and takes
+`c_s` because the stopping test folds in the cap. `endpoint_side_stat` generalizes
+`logvar_side_stat` unchanged in behavior: `ok` is finite and `bounded`, the non-failed denominator
+drives `frac`, the scale is `robust_scale` over `ok`, and `z` is defined only on `ok`. The scale
+**must** be `robust_scale` (`stats::mad` at its defaults, including the fewer-than-two-finite-inputs
+`NA` rule) — a hard-coded 1.4826 that misses the small-`n` rule drifts §8.1.
+
+`point_t_statistic` is the **one** `tau=0` builder both panels call, so the shared-implementation
+mandate covers the `tau=0` cell too and not only the `tau>0` cells. Panel A feeds it
+`point_draws` / `point_status`; Panel B feeds it the `point` / `point_status` fields stream D
+introduces. Per coefficient it returns `se` (the robust scale of the accepted point values),
+`t = point_hat / se`, the two-sided normal `p`, `stars` from the existing `sig_stars`, the four
+status counts, both gate denominators, and the blank `reason`.
+
+**The pool must be fixed across `lambda`.** `target_p_critical` computes the pool once and
+quantiles over it at every `lambda`; the roots are finite there by construction, so the order
+statistic never silently drops a draw and `n` never changes. A `lambda`-dependent pool would
+break the monotonicity the Lipschitz argument needs. Assert the pool size once rather than
+re-filtering inside the objective.
 
 **A3. `endpoint_target_cells.R`.** One cell builder both panels call, handling the four shapes
 (two-sided, upper-only, lower-only, both unbounded) plus the suppression path, applying the
@@ -281,6 +313,17 @@ no numbering:
   `{0, 1/4, 1/2, 3/4, 1}` grid returns 0 at all five nodes while the true supremum is `1/8` at
   `lambda = 1/8`; branch and bound finds it in 6 evaluations with a zero gap. The test must fail
   for an endpoint-only search or that grid;
+- **an asymmetric-credit interior optimum**, with `d_l` and `d_u` deliberately unequal (e.g.
+  `d_l = 1`, `d_u = 5`). The symmetric case above cannot distinguish `L = max(d_l, d_u)` from
+  `L = d_l` or `L = (d_l + d_u)/2`, so a mis-derived Lipschitz constant passes it silently while
+  producing a non-conservative bound on real asymmetric data — Panel A's scales differ across
+  sides by up to a factor of two (`se_lower = 0.5095` against `se_upper = 0.2707` at
+  `tau = 0.20`, `b_{3,N}`), so this is a live risk, not a hypothetical one. Assert both that the
+  reported `c_p_upper` brackets the supremum found by a dense reference grid and that the
+  certified gap holds;
+- **stopping-test economy**: on a flat credited quantile with a large `L`, the optimizer must
+  terminate in a handful of evaluations rather than thousands, which pins the stopping test to the
+  reported quantity and prevents a regression back to the `max U` form;
 - **conservative rank**: `root_critical` returns the `ceiling((n+1)(1-alpha))`-th smallest,
   capped;
 - **half-infinite shapes**: a one-live-side cell reports the live side and does not blank;
@@ -320,11 +363,8 @@ an implementation error.
 **C2.** In `set_id_boot_collect`, stack an authoritative `B x 7` `point_status` alongside
 `point_draws`, with `failed` for wholesale failures.
 
-**C3.** Replace `point_inference` in `identified_set_inference.R` with a bootstrap
-t-statistic builder taking `point_hat`, `point_draws`, `point_status`, and the gate parameters,
-returning per coefficient: `se` (the robust scale of the accepted point values), `t = point/se`,
-the two-sided normal `p`, `stars` from `sig_stars`, the four status counts, both gate
-denominators, and the blank `reason`. Stars from the standard normal, per §A.10.
+**C3.** Delete `point_inference` from `identified_set_inference.R`; Panel A calls the shared
+`point_t_statistic` from stream A2 instead. Stars from the standard normal, per §A.10.
 
 **C4.** Wire it in `mean_equation/inference/boot_results.R`, replacing `point_ci` with the
 t-statistic frame while keeping `point_se` (which the diagnostics now render).
@@ -361,10 +401,24 @@ calls the shared `endpoint_target_table` instead of `logvar_endpoint_envelope`.
 shared primitives, since the diagnostics report simultaneous coverage.
 
 **E2.** Panel A: `boot_results.R` calls the shared `endpoint_target_table` instead of
-`endpoint_inference`. `endpoint_inference` is deleted. The normal-theory `c_stoye`/`c_im`/`rho`
-cross-check columns are computed **for the diagnostics only**, from the retained pure functions.
+`endpoint_inference`. `endpoint_inference` is deleted.
+
+**E2a. Where the normal-theory cross-check is computed.** `endpoint_target_table` does **not**
+return `c_stoye`/`c_im`/`rho` — keeping them out of the shared builder is what guarantees a single
+live path into a published cell. They are computed in the Panel A **diagnostics assembler** only
+(`set_id_boot_diagnostics` in `identified_set_bootstrap.R`), which already receives the endpoint
+draws and the full-sample table: call the retained `robust_endpoint_cor`, then `stoye_critical`
+and `im_critical`, and bind the three columns onto the diagnostics frame. Nothing else may call
+them. This is the one place the plan previously left an implementer without an address.
 
 **E3.** The sensitivity draws (`volatility_sensitivity`) go through the same shared functions.
+
+**E4. Panel B's `tau=0` cell** is computed by the shared `point_t_statistic` from the `point` /
+`point_status` fields, per estimator, and rendered by stream G2. Note that
+`bootstrap_stage_envelopes` iterates `layout$slots = seq_along(display_taus) + 1L`
+(`bootstrap_stage_result_helpers.R:16-28,47-65`), so the `tau=0` slot never enters the interval
+builder and cannot be mistaken for a degenerate-width Target-P cell. The compatibility mirrors
+exist for `logvar_boot_failure_gate` only, never as an inference input.
 
 ### Stream F — diagnostics schema
 
@@ -506,6 +560,16 @@ Few and exact; resist adding more.
 6. **Panel B's `tau=0` t-statistics now propagate first-stage error**, where the previous
    analytic statistics conditioned on the plug-in news vector. They are not comparable to the
    old ones and will generally be smaller in magnitude. That is the intended improvement.
+7. **The `tau=0` stars read a MAD-denominated statistic against standard-normal quantiles.** The
+   MAD is a consistent estimator of the *normal-equivalent* scale, and the bootstrap distribution
+   of the `b_N` point draws is manifestly non-normal — sd/MAD runs 11.3, 19.5 and 10.3 against
+   1.02-1.14 for the point-identified block. So the reference distribution of `point / MAD` is not
+   exactly standard normal and the stars are approximate. The construction is nonetheless the
+   specified one, and the alternative is worse: the sample standard deviation does not settle as
+   `B` grows on this estimator, because resamples in which `Q b = L` is nearly singular produce
+   arbitrarily large values. The diagnostics already carry the percentile band of the point draws,
+   so a reader can see the tail behavior directly. Document this rather than substituting a
+   different denominator.
 
 ## Economics worth stating in the memo
 
