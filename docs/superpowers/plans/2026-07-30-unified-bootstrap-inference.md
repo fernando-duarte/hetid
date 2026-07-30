@@ -353,6 +353,14 @@ Note for the memo: this **changes Panel A's stored draws**, hence its published 
 a draw bounded on one side only now contributes to that side's scale. Acceptance check 8.1's
 exactness therefore applies to Panel B, which already carries per-side statuses.
 
+**Predicted magnitude, and a check worth running.** The collapsed status is the *worst* of the two
+sides, so "collapsed bounded" is exactly "bounded on both sides". The two-sided **common pool is
+therefore unchanged** by threading — `n_common` should stay 9909 / 9812 / 9341-9360 at
+`tau = 0.05 / 0.10 / 0.20`. Only the per-side scales move, each gaining the draws bounded on that
+side alone (at most 272 / 557 / 1923 draws across all seven coefficients). So Panel A's Target-P
+numbers should land close to the prototype table above, and a large move in `n_common` after
+stream B is evidence of a threading bug, not of the intended change.
+
 ### Stream C — `tau=0`, Panel A
 
 **C1.** In `set_id_boot_draw_from_est`, add a length-7 `point_status`: `bounded` where the
@@ -468,8 +476,17 @@ new `tau=0` statistics *do* propagate first-stage error.
     log_var_eq_lad_panel.tex            log_var_eq_lad_panel_standalone.tex
 
 Every standalone has a registered `.pdf` sibling that regenerates too.
-`structural_var_inference.tex` is the main exhibit. Three neighbors need nothing:
-`hetero_tests.tex`, `var_share.tex`, `variance_bounds_summary.tex`.
+`structural_var_inference.tex` is the main exhibit. `log_var_eq_lad_panel*` is a **conditional**
+artifact (manifest flag `l`), so the startup-cleanup trap applies to it.
+
+**Enumeration verified against the manifest.** `config/artifact_manifest_data.R` registers exactly
+24 `.tex` artifacts. The 14 above are the complete set carrying set-identification inference. The
+other ten need nothing, for a stated reason each: `summary_stats.tex`, `correlations.tex` and
+`descriptive_stats.tex` are descriptive; `ols_mean_eq.tex` is OLS only; `hetero_tests{,_standalone}.tex`
+are heteroskedasticity tests, not set inference; `var_share{,_standalone}.tex` and
+`variance_bounds_summary{,_standalone}.tex` carry no inference statistics.
+`approximation_error_quoted_numbers.csv` was also checked and holds variance-bound approximation
+errors (`max_bound_sdf_news`, `max_bound_expected_sdf`), not inference numbers.
 
 **G5.** Figures. Classify each: an identified-set image stays an identified-set object and its
 note must not call it a confidence band; a confidence band moves to the Target-P construction and
