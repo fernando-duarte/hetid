@@ -140,52 +140,10 @@ logvar_set_envelope_cols <- function(
   unname(Map(set_col, sets, env))
 }
 
-# A point-estimate table column shared by the PPML parts and the Harvey panel:
-# with se_type NULL (default) the interleaved statistic rows stay blank, exactly
-# as before SEs. With se_type set, the stored SE frame must be present and
-# aligned to tab_coef (fail loud rather than silently blank while the notes claim
-# SEs are reported); values then carry t = coef/se in the stat row with stars
-# from the standard-normal (QMLE) approximation. An all-NA frame (a point not
-# certified feasible) keeps the key column and renders a blank stat row per cell.
-# se_types is the estimator's validated variant vector.
-logvar_se_point_col <- function(
-  vals,
-  se_frame,
-  se_type,
-  se_types,
-  tab_coef,
-  n_obs,
-  cell_policy = PAPER_REPORTING_CONTROL$cells$log_variance
-) {
-  if (is.null(se_type)) {
-    return(c(
-      interleave(fmt(vals, cell_policy), ""),
-      PAPER_NA_TOKEN,
-      sprintf("%d", n_obs)
-    ))
-  }
-  key <- match.arg(se_type, se_types) # loud on an unknown type
-  stopifnot(
-    !is.null(se_frame), key %in% names(se_frame),
-    identical(se_frame$coef, tab_coef) # row order aligned to coefs
-  )
-  se <- se_frame[[key]]
-  t_stat <- vals / se
-  stars <- sig_stars(2 * stats::pnorm(-abs(t_stat)))
-  cells <- ifelse(
-    stars == "" | !is.finite(t_stat),
-    fmt(vals, cell_policy),
-    sprintf("%s$%s$", fmt(vals, cell_policy), stars)
-  )
-  # a finite coefficient whose SE failed the conditioning gate has no t-stat:
-  # mark it "--" (SE unavailable), never a blank stat row, which beside the
-  # star-less coefficient would read as "tested, not significant"
-  stat_row <- ifelse(
-    is.finite(t_stat), sprintf("(%.2f)", t_stat),
-    ifelse(is.finite(vals) & !is.finite(se), PAPER_NA_TOKEN, "")
-  )
-  c(interleave(cells, stat_row), PAPER_NA_TOKEN, sprintf("%d", n_obs))
-}
+# the point column itself, with its analytic and bootstrap statistic branches
+paper_source_once(paper_path(
+  "log_variance", "tables", "point_column.R"
+))
 
 paper_source_once(paper_path(
   "log_variance", "tables", "ppml_table_parts.R"

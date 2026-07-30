@@ -15,6 +15,13 @@ stage <- "inference\", \"run_bootstrap_stage.R"
 structural <- "mean_equation\", \"tables\", \"render_structural_equation_table.R"
 logvar <- "log_variance\", \"tables\", \"render_inference_panels.R"
 combined <- "log_variance\", \"tables\", \"render_combined_inference_table.R"
+# the three deferred publications: each reports a bootstrap tau = 0 statistic,
+# so none of them may be sourced before the stage that creates it
+deferred <- c(
+  "log_variance\", \"tables\", \"render_ppml_table.R",
+  "log_variance\", \"tables\", \"render_harvey_table.R",
+  "log_variance\", \"tables\", \"render_panels.R"
+)
 
 stopifnot(
   !grepl("mean_equation\", \"inference\", \"run_bootstrap.R",
@@ -27,7 +34,24 @@ stopifnot(
   ),
   source_offset(stage) < source_offset(structural),
   source_offset(structural) < source_offset(logvar),
-  source_offset(logvar) < source_offset(combined)
+  source_offset(logvar) < source_offset(combined),
+  all(vapply(deferred, function(path) {
+    source_offset(stage) < source_offset(path)
+  }, logical(1)))
+)
+
+# the Harvey wrapper keeps the estimation and the analytic standard errors ahead
+# of the stage, so only the table publication moved
+harvey_runner_text <- paste(
+  readLines(
+    paper_path("log_variance", "estimators", "harvey", "run.R"),
+    warn = FALSE
+  ),
+  collapse = "\n"
+)
+stopifnot(
+  grepl("harvey\", \"standard_errors.R", harvey_runner_text, fixed = TRUE),
+  !grepl("render_harvey_table.R\"", harvey_runner_text, fixed = TRUE)
 )
 
 runner_text <- paste(
@@ -54,6 +78,9 @@ stopifnot(
   identical(
     strsplit(bootstrap_rows$consumer, ";", fixed = TRUE)[[1L]],
     c(
+      "log_variance/tables/render_ppml_table.R",
+      "log_variance/tables/render_harvey_table.R",
+      "log_variance/tables/render_panels.R",
       "mean_equation/tables/render_structural_equation_table.R",
       "log_variance/tables/render_inference_panels.R",
       "log_variance/tables/render_combined_inference_table.R"

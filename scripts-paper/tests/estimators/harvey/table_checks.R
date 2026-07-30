@@ -103,9 +103,13 @@ check("Harvey panel stays blank and notes stay deferred when se_type is NULL", {
 })
 
 check("Harvey notes describe the hac SE variation and keep the caveat", {
+  # these lines carry no tau > 0 interval rows, so they also pin the caveat's
+  # tau = 0 sentence as unconditional and the analytic ratio as describing the
+  # reference column alone
   notes <- paste(hvt_lines_se, collapse = " ")
   grepl("Newey", notes) && grepl("QMLE", notes) &&
-    grepl("condition on the plug-in", notes) &&
+    grepl("propagate the first-stage sampling error", notes, fixed = TRUE) &&
+    grepl("in the reference column are", notes, fixed = TRUE) &&
     !grepl("No Harvey standard errors", notes, fixed = TRUE)
 })
 

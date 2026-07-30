@@ -2,7 +2,9 @@
 # run_sets.R: the quasi-Poisson log-link reference, the PPML map at
 # the closed-form Lewbel point (tau = 0), and its identified hull at every
 # tau_display slack. Writes the table fragment, standalone source, and compiled
-# PDF to the typed table directory after the PPML set map is complete.
+# PDF to the typed table directory. Run via run_pipeline.R after the bootstrap
+# stage, whose tau = 0 statistic this table reports; the PPML set map and its
+# analytic standard errors are complete well before that.
 
 paper_source_once(paper_path("support", "latex", "table_pipeline.R"))
 paper_source_once(paper_path("support", "latex", "simple_table.R"))
@@ -12,7 +14,8 @@ paper_source_once(paper_path("log_variance", "tables", "ppml_captions.R"))
 ppml_result <- paper_logvar_result("ppml")
 parts <- logvar_ppml_table_parts(
   ppml_result, set_id_mean_eq$tau_display, n_pc_r,
-  se_type = logvar_ppml_se_type
+  se_type = logvar_ppml_se_type,
+  point_stat = logvar_boot_point_stat(log_var_eq_set_boot, "ppml")
 )
 coef_tab <- parts$table
 set_tables <- parts$sets

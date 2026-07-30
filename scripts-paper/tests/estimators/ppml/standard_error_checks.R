@@ -172,11 +172,15 @@ check("ppml parts reject an unknown se_type", {
   )
 })
 check("ppml notes explain the SE computation, name the default, keep the caveat", {
+  # the primary table carries no tau > 0 interval rows, so these notes also pin
+  # the caveat's tau = 0 sentence as unconditional and the analytic ratio as
+  # describing the OLS column alone
   nt <- paste(build_ppml_table_notes(ptbl_note_fixture, 0.05, 1L, 2L,
     se_type = "hac", se_hac_lags = test_hac_lags
   ), collapse = " ")
   grepl("Newey", nt) && grepl("Eicker", nt) && grepl("QMLE", nt) &&
-    grepl("condition on the plug-in", nt) &&
+    grepl("propagate the first-stage sampling error", nt, fixed = TRUE) &&
+    grepl("in the OLS column are", nt, fixed = TRUE) &&
     !grepl("No PPML standard errors are reported", nt, fixed = TRUE)
 })
 check("ppml inference notes do not claim endpoint inference is deferred", {

@@ -3,7 +3,8 @@
 # shared build_logvar_panels (panels_builder.R) with no bootstrap
 # envelope. Writes log_var_eq_panels.tex + compiled standalone; the primary
 # log_var_eq.tex is the PPML-only publication table. Run via run_pipeline.R after
-# render_ppml_table.R.
+# render_ppml_table.R, and so after the bootstrap stage: the panels carry bare
+# tau > 0 set ranges but still report a bootstrap tau = 0 statistic.
 
 paper_source_once(paper_path("log_variance", "tables", "panels_builder.R"))
 

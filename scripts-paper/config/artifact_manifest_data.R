@@ -74,7 +74,12 @@ PAPER_CONDITIONAL_ARTIFACT_STATUSES <- setdiff(
   I = "log_variance/extensions/egarch/run_route.R",
   J = "log_variance/extensions/egarch",
   K = "tests/support/check_contract_ownership.R",
+  # every table that reports a tau = 0 or tau > 0 inference statistic, in the
+  # order run_pipeline.R publishes them after the bootstrap stage
   L = paste(
+    "log_variance/tables/render_ppml_table.R",
+    "log_variance/tables/render_harvey_table.R",
+    "log_variance/tables/render_panels.R",
     "mean_equation/tables/render_structural_equation_table.R",
     "log_variance/tables/render_inference_panels.R",
     "log_variance/tables/render_combined_inference_table.R",

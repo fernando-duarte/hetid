@@ -99,13 +99,6 @@ logvar_ppml_se_note <- function(
   set_endpoint_inference = FALSE
 ) {
   key <- match.arg(se_type, LOGVAR_PPML_SE_TYPES)
-  # which columns print the analytic ratio: the tau = 0 column prints a bootstrap
-  # t statistic instead wherever the bootstrap objects reach the table
-  analytic_cols <- if (isTRUE(set_endpoint_inference)) {
-    "the OLS column"
-  } else {
-    "the OLS and $\\tau{=}0$ columns"
-  }
   default_name <- switch(key,
     naive = "the model-based $\\hat\\varphi A^{-1}$",
     hc0 = "the Eicker--White HC0 sandwich",
@@ -124,12 +117,11 @@ logvar_ppml_se_note <- function(
         "heteroskedasticity-robust Eicker--White sandwich $A^{-1}(\\sum_t \\hat",
         "r_t^2 x_t x_t')A^{-1}$ (HC0, and HC1 with the $n/(n{-}p)$ factor); and",
         "its Newey--West Bartlett HAC extension over %d lags, consistent also",
-        "under serially correlated scores. Parenthetical values in %s are",
-        "$\\hat\\theta/\\mathrm{SE}$ from %s, with stars from the",
+        "under serially correlated scores. Parenthetical values in the OLS",
+        "column are $\\hat\\theta/\\mathrm{SE}$ from %s, with stars from the",
         "standard-normal (QMLE) approximation (%s)."
       ),
       se_hac_lags,
-      analytic_cols,
       default_name,
       paper_significance_legend("ascending_percent")
     ),

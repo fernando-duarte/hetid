@@ -50,10 +50,8 @@ paper_source_once(paper_path("log_variance", "inference", "standard_error_estima
 # analytic PPML QMLE standard errors for the point columns; must run after the
 # frozen PPML object exists and before either table renders it
 paper_source_once(paper_path("log_variance", "estimators", "ppml", "standard_errors.R"))
-# the primary table consumes the completed PPML hulls; the combined table then
-# adds the mean-log robustness panel without recomputing either estimator
-paper_source_once(paper_path("log_variance", "tables", "render_ppml_table.R"))
-# Harvey sets and dedicated table (the wrapper keeps this to one source line)
+# Harvey sets and analytic standard errors (the wrapper keeps this to one source
+# line). Its dedicated table publishes below, after the bootstrap stage.
 paper_source_once(paper_path("log_variance", "estimators", "harvey", "run.R"))
 # joint-null theta_R = 0 distance diagnostic: math, search, stability, then the
 # guarded driver (the log-OLS orchestrator supplies inputs and named parents
@@ -104,11 +102,19 @@ if (isTRUE(lad_gate$source_lad)) {
 # log_var_eq_lad so it renders only when the LAD map ran; main's combined panels
 # table below stays untouched
 paper_source_once(paper_path("log_variance", "tables", "render_lad_table.R"))
-paper_source_once(paper_path("log_variance", "tables", "render_panels.R"))
 # One late bootstrap stage shares each primary resample and system estimate
 # between mean and volatility inference. It owns both index families and the
 # unified all-or-nothing draw cache.
 paper_source_once(paper_path("inference", "run_bootstrap_stage.R"))
+# Publication of every log-variance table follows the stage, because each one
+# reports a bootstrap tau = 0 statistic. Only publication is deferred: the PPML
+# and Harvey estimates and their analytic standard errors are already frozen
+# above, and the stage reads them without mutating them. The primary table
+# consumes the completed PPML hulls, then the conservative panels add the
+# mean-log robustness panel without recomputing any estimator.
+paper_source_once(paper_path("log_variance", "tables", "render_ppml_table.R"))
+paper_source_once(paper_path("log_variance", "tables", "render_harvey_table.R"))
+paper_source_once(paper_path("log_variance", "tables", "render_panels.R"))
 # Structural inference follows the unified stage that creates set_id_boot.
 paper_source_once(paper_path("mean_equation", "tables", "render_structural_equation_table.R"))
 # The inference variant retains the combined panels and labels while threading
