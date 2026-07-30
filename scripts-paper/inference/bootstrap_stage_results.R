@@ -13,7 +13,7 @@ bootstrap_stage_mean_result <- function(
   )
   diagnostics <- set_id_boot_diagnostics(
     result, result$inference, set_id_mean_eq$set_tables,
-    stage_spec$tau$display
+    stage_spec$tau$display, result$point_t
   )
   diagnostics <- cbind(
     paper_inference_metadata_frame(nrow(diagnostics)),
@@ -89,6 +89,9 @@ bootstrap_stage_logvar_result <- function(
   })
   names(simultaneous) <- ids
   se_type <- spec$se_types
+  point_t <- logvar_boot_point_t(
+    ids, stage$volatility_primary, stage$anchor, spec
+  )
   tau0 <- logvar_boot_tau0_diagnostics(
     ids, stage$volatility_primary,
     estimator_results, se_type, spec
@@ -105,9 +108,13 @@ bootstrap_stage_logvar_result <- function(
     sens_block = provenance$sens_block,
     sens_reps = provenance$sens_reps,
     inference_contract = PAPER_ANALYSIS_CONTRACT$inference,
-    coverage_target = "whole-set outer envelope",
+    # what the PUBLISHED cells report. Containment rides along per cell as c_s in
+    # the diagnostics, and the simultaneous critical value as c_sim, but neither
+    # is what a table cell now shows.
+    coverage_target = "pointwise, uniform over the identified set",
     c_sim = simultaneous,
     tau0 = tau0,
+    point_t = point_t,
     provenance = provenance
   ))
   write_logvar_set_boot_artifacts(

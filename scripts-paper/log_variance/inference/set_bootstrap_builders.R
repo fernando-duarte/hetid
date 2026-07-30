@@ -1,5 +1,10 @@
-# Estimator builders used by each moving-block bootstrap draw, plus the
-# tau = 0 bootstrap-vs-analytic-SE diagnostic run once per estimator.
+# Estimator builders used by each moving-block bootstrap draw, plus the two
+# tau = 0 summaries run once per estimator: the published t statistic and the
+# bootstrap-versus-analytic-SE diagnostic ratio.
+
+paper_source_once(paper_path(
+  "support", "identification", "endpoint_point_statistic.R"
+))
 
 logvar_set_boot_builders <- function(
   scale_value,
@@ -51,6 +56,29 @@ logvar_set_boot_builders <- function(
   builders <- list(ppml = build_ppml, harvey = build_harvey)
   stopifnot(all(estimator_ids %in% names(builders)))
   builders[estimator_ids]
+}
+
+# The published tau = 0 cell for each estimator, through the same builder the mean
+# panel uses. The numerator is the ANCHOR's point, not a projection of the
+# estimator result: the anchor is the full-sample run of the very draw function
+# that produced the denominator's draws, so both sides of the ratio come from one
+# code path by construction. That holds only because the point record reads each
+# estimator's own published recipe (set_bootstrap_core.R), which is what makes the
+# anchor equal the estimator's published point column. The renderer re-checks that
+# equality against the estimate it prints, since a divergence there would put a
+# ratio under a number it does not belong to.
+logvar_boot_point_t <- function(ests, collected, anchor, spec, tau0_slot = 1L) {
+  out <- lapply(ests, function(est) {
+    cell <- collected[[est]][[tau0_slot]]
+    full <- anchor[[est]][[tau0_slot]]
+    stopifnot(
+      identical(colnames(cell$point), spec$coefs),
+      length(full$point) == length(spec$coefs)
+    )
+    point_t_statistic(full$point, cell$point, cell$point_status)
+  })
+  names(out) <- ests
+  out
 }
 
 # tau = 0 point diagnostic: bootstrap SD of the point draws against each

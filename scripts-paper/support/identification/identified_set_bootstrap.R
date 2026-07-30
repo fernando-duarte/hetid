@@ -8,6 +8,10 @@
 # status. Consumed and tested by the paper pipeline's mean-equation inference
 # modules.
 
+paper_source_once(paper_path(
+  "support", "identification", "set_id_diagnostics_rows.R"
+))
+
 # Re-estimate the mean-equation system on one data frame: the W1/W2
 # residualizations, the de-meaned instrument, the identification moments, and
 # the closed-form tau = 0 point. Shared by the full-sample estimation
@@ -145,10 +149,12 @@ set_id_boot_status_counts <- function(status, side) {
 # builder reports -- scales, pool sizes, gates, both critical values, the
 # calibrated interval and the reason a table cell renders blank.
 set_id_boot_diagnostics <- function(collected, inference, set_tables, taus,
+                                    point_t,
+                                    control = PAPER_INFERENCE_SEARCH_CONTROL,
                                     min_reps = boot_min_reps(
                                       nrow(collected$endpoint_draws[[1]]$lower)
                                     )) {
-  do.call(rbind, lapply(seq_along(taus), function(j) {
+  display <- do.call(rbind, lapply(seq_along(taus), function(j) {
     st <- set_tables[[j]]
     tab <- rbind(st$beta1, st$theta)
     inf <- inference[[j]]
@@ -171,7 +177,20 @@ set_id_boot_diagnostics <- function(collected, inference, set_tables, taus,
         tab$set_upper / inf$se_upper, NA_real_
       ),
       inf[setdiff(names(inf), "coef")],
+      set_id_boot_normal_cross_check(
+        data.frame(
+          width = tab$set_upper - tab$set_lower,
+          se_lower = inf$se_lower, se_upper = inf$se_upper
+        ),
+        cell, control
+      ),
       row.names = NULL, stringsAsFactors = FALSE
     )
   }))
+  # the tau = 0 block first, so a reader meets the point before the sets it
+  # collapses to at every displayed tolerance
+  rbind(
+    set_id_boot_tau0_rows(point_t, display[1L, , drop = FALSE]),
+    set_id_boot_pad_display(display)
+  )
 }
