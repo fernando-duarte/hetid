@@ -86,17 +86,14 @@ logvar_boot_point_t <- function(ests, collected, anchor, spec, tau0_slot = 1L) {
 # diagnostics CSV. The scale is taken from the authoritative point field over
 # the draws its own status calls bounded, never from a compatibility mirror.
 logvar_boot_tau0_diagnostics <- function(
-  ests, collected, se_obj, se_type, spec,
-  digits = PAPER_REPORTING_CONTROL$precision$console_significant,
-  tau0_slot = 1L
+  ests, collected, se_obj, se_type, spec, point_t,
+  digits = PAPER_REPORTING_CONTROL$precision$console_significant
 ) {
   tau0 <- lapply(ests, function(est) {
-    cell <- collected[[est]][[tau0_slot]]
-    bounded <- cell$point_status == PAPER_ENDPOINT_STATUS[["bounded"]]
-    sd_boot <- stats::setNames(vapply(seq_along(spec$coefs), function(j) {
-      values <- cell$point[bounded[, j], j]
-      if (length(values) >= 2L) robust_scale(values) else NA_real_
-    }, numeric(1)), spec$coefs)
+    # the published cell's own denominator, not a second derivation of it: an
+    # independent recomputation here masked the bounded status differently and
+    # could print a ratio whose numerator was not the scale the cell divides by
+    sd_boot <- stats::setNames(point_t[[est]]$se, spec$coefs)
     se_df <- se_obj[[est]]$se$point
     se_an <- stats::setNames(se_df[[se_type[[est]]]], se_df$coef)[spec$coefs]
     message(sprintf(

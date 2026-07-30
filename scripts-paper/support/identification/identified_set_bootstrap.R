@@ -134,9 +134,7 @@ set_id_boot_draw <- function(dat, spec) {
 # Per-status draw counts for one side of one tau's endpoint matrix, suffixed so
 # the two sides sit beside each other in the diagnostics frame.
 set_id_boot_status_counts <- function(status, side) {
-  counts <- t(apply(status, 2, function(s) {
-    vapply(PAPER_ENDPOINT_STATUS, function(value) sum(s == value), integer(1))
-  }))
+  counts <- t(apply(status, 2, paper_endpoint_status_counts))
   colnames(counts) <- paste0("n_", colnames(counts), "_", side)
   counts
 }
@@ -159,10 +157,11 @@ set_id_boot_diagnostics <- function(collected, inference, set_tables, taus,
     tab <- rbind(st$beta1, st$theta)
     inf <- inference[[j]]
     cell <- collected$endpoint_draws[[j]]
+    width <- tab$set_upper - tab$set_lower
     data.frame(
       coef = tab$coef, tau = taus[j],
       set_lower = tab$set_lower, set_upper = tab$set_upper,
-      width = tab$set_upper - tab$set_lower,
+      width = width,
       set_status = tab$status, set_lower_status = tab$lower_status,
       set_upper_status = tab$upper_status,
       set_id_boot_status_counts(cell$lower_status, "lower"),
@@ -179,8 +178,7 @@ set_id_boot_diagnostics <- function(collected, inference, set_tables, taus,
       inf[setdiff(names(inf), "coef")],
       set_id_boot_normal_cross_check(
         data.frame(
-          width = tab$set_upper - tab$set_lower,
-          se_lower = inf$se_lower, se_upper = inf$se_upper
+          width = width, se_lower = inf$se_lower, se_upper = inf$se_upper
         ),
         cell, control
       ),
@@ -189,8 +187,6 @@ set_id_boot_diagnostics <- function(collected, inference, set_tables, taus,
   }))
   # the tau = 0 block first, so a reader meets the point before the sets it
   # collapses to at every displayed tolerance
-  rbind(
-    set_id_boot_tau0_rows(point_t, display[1L, , drop = FALSE]),
-    set_id_boot_pad_display(display)
-  )
+  tau0 <- set_id_boot_tau0_rows(point_t, display[1L, , drop = FALSE])
+  rbind(tau0, set_id_boot_pad_display(display, tau0))
 }

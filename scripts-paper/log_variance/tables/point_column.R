@@ -115,7 +115,15 @@ logvar_se_point_col <- function(
   # "--" (statistic unavailable), never a blank stat row, which beside the
   # star-less coefficient would read as "tested, not significant"
   stat_row <- ifelse(
-    is.finite(stat$statistic), sprintf("(%.2f)", stat$statistic),
+    is.finite(stat$statistic),
+    sprintf(
+      "(%s)",
+      paper_format_number(
+        stat$statistic,
+        PAPER_REPORTING_CONTROL$cells$statistic_digits,
+        "na"
+      )
+    ),
     ifelse(is.finite(vals) & stat$missing, PAPER_NA_TOKEN, "")
   )
   c(interleave(cells, stat_row), PAPER_NA_TOKEN, sprintf("%d", n_obs))

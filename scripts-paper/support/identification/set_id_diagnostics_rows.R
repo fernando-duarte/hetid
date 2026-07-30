@@ -49,18 +49,15 @@ set_id_boot_tau0_rows <- function(point_t, prototype) {
   )
 }
 
-# Pad the display rows with the tau = 0 columns so both blocks share one schema.
-set_id_boot_pad_display <- function(rows) {
-  na <- rep(NA_real_, nrow(rows))
+# Pad the display rows with the tau = 0 block's own extra columns, taking their
+# names and types from a tau = 0 row rather than restating them. Restating was the
+# thing .set_id_blank_rows exists to avoid, and the two lists had already drifted
+# apart once in review.
+set_id_boot_pad_display <- function(rows, tau0_rows) {
+  extra <- setdiff(names(tau0_rows), names(rows))
   cbind(
     rows,
-    point_n_bounded = rep(NA_integer_, nrow(rows)),
-    point_n_unbounded = rep(NA_integer_, nrow(rows)),
-    point_n_unreliable = rep(NA_integer_, nrow(rows)),
-    point_n_failed = rep(NA_integer_, nrow(rows)),
-    point_n_valid = rep(NA_integer_, nrow(rows)),
-    point_n_non_failed = rep(NA_integer_, nrow(rows)),
-    point_frac_bounded = na, p_value = na,
+    .set_id_blank_rows(tau0_rows[extra], nrow(rows)),
     row.names = NULL, stringsAsFactors = FALSE
   )
 }

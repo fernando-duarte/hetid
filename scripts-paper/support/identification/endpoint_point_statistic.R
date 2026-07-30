@@ -60,10 +60,11 @@ point_t_statistic <- function(point_hat, point_draws, point_status,
     data.frame(
       coef = colnames(point_draws)[[k]], point = point_hat[[k]], se = se,
       statistic = statistic, p_value = 2 * stats::pnorm(-abs(statistic)),
-      n_bounded = sum(status == PAPER_ENDPOINT_STATUS[["bounded"]]),
-      n_unbounded = sum(status == PAPER_ENDPOINT_STATUS[["unbounded"]]),
-      n_unreliable = sum(status == PAPER_ENDPOINT_STATUS[["unreliable"]]),
-      n_failed = sum(status == PAPER_ENDPOINT_STATUS[["failed"]]),
+      # the vocabulary is enumerated once, where it is defined
+      as.list(stats::setNames(
+        paper_endpoint_status_counts(status),
+        paste0("n_", names(PAPER_ENDPOINT_STATUS))
+      )),
       n_valid_point = sum(ok), n_non_failed = n_valid, frac_bounded = frac,
       min_reps = min_reps, reason = reason,
       row.names = NULL, stringsAsFactors = FALSE

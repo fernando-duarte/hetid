@@ -94,7 +94,7 @@ bootstrap_stage_logvar_result <- function(
   )
   tau0 <- logvar_boot_tau0_diagnostics(
     ids, stage$volatility_primary,
-    estimator_results, se_type, spec
+    estimator_results, se_type, spec, point_t
   )
   sensitivity <- bootstrap_stage_envelopes(
     stage$volatility_sensitivity, full, ids,
