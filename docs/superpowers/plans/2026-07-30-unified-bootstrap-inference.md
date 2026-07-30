@@ -495,9 +495,39 @@ axis label and legend for paper-facing "slack" and replace with "tolerance".
 
 ### Stream H — tests
 
-**H1.** Retarget rather than delete: `tests/inference/set_envelope_checks.R`,
-`tests/support/envelope_cell_checks.R`, `tests/support/inference_control_checks.R`,
-`tests/inference/mean_boot_results_checks.R`,
+**H0. How the suite is actually wired — read this before adding a test file.**
+`tests/run_tests.R:7-61` is an **explicit manifest**, not a discovery walk: a new file that is not
+registered, or not sourced by a registered file, silently never runs. Most of the files this task
+touches are reached indirectly, which was verified file by file:
+
+| check file | reached from |
+|---|---|
+| `inference/set_envelope_checks.R` | `inference/test_set_bootstrap.R` |
+| `inference/set_bootstrap_{gate,draw,collection}_checks.R` | `inference/test_set_bootstrap.R` |
+| `inference/set_bootstrap_core_checks.R` | `inference/set_bootstrap_cores_checks.R`, itself sourced at `test_set_bootstrap.R:99` |
+| `inference/mean_boot_results_schema_checks.R` | `inference/mean_boot_results_checks.R` |
+| `support/envelope_cell_checks.R` | `estimators/{ppml,harvey}/test_{ppml,harvey}.R` |
+| `support/inference_control_checks.R` | `support/test_statistics.R` |
+| `inference/standard_error_estimators_checks.R` | `estimators/ppml/test_ppml.R` |
+
+So the new `tests/inference/endpoint_targets_checks.R` must be **either** registered in
+`suite_manifest` with a fresh `id` and `path` **or** sourced from an already-registered file.
+Register it — a shared construction deserves its own named suite. Note `run_tests.R` also runs two
+structural checks first (`support/check_topology.R`, `support/check_contract_ownership.R`); the
+topology gate is what enforces the 200-line cap and the source graph, so it will fail on an
+oversized new file or an unregistered contract field.
+
+**H0a.** `inference/set_bootstrap_cores_checks.R` asserts that `logvar_set_boot_draw` gives
+**identical** results under `cores = 1` and `cores = 2`, on the real callback rather than a toy.
+Stream D must preserve that determinism: the `tau=0` direct evaluation must not introduce any
+order- or process-dependent behavior. `set_bootstrap_core_checks.R` builds the shared fixture
+(`lbd_dat`, `lbd_spec`) that this check reuses, and it exercises the real draw path including the
+`tau=0` slot, so it needs retargeting for the new `point` / `point_status` fields.
+
+**H1.** Retarget rather than delete, using the table above to find each file's entry point:
+`tests/inference/set_envelope_checks.R`, `tests/support/envelope_cell_checks.R`,
+`tests/support/inference_control_checks.R` (it asserts the `logvar_endpoint$stability_share` field
+that stream A1 moves to the contract), `tests/inference/mean_boot_results_checks.R`,
 `tests/inference/mean_boot_results_schema_checks.R`, the
 `tests/inference/set_bootstrap_{gate,draw,collection,core}_checks.R` family, and
 `tests/inference/standard_error_estimators_checks.R`.
