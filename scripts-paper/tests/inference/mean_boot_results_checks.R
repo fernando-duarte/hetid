@@ -115,6 +115,39 @@ check(
     mbr_out$block == mbr_provenance$block &&
     mbr_out$seed == mbr_provenance$seed
 )
+# The diagnostics read a set status per side, so the projection that reaches them
+# has to carry those columns. Build the input through the real projection instead
+# of by hand: a fixture written richer than production is exactly what let a NULL
+# column through as zero rows, and only a full run caught it.
+paper_source_once(paper_path(
+  "support", "inference", "bootstrap_stage_mean_result_inputs.R"
+))
+paper_source_once(paper_path(
+  "support", "identification", "identified_set_bootstrap.R"
+))
+mbr_projected <- bootstrap_stage_mean_result_inputs(mbr_set_id_mean_eq)
+check(
+  "the projection carries every set field the diagnostics read",
+  all(
+    c(
+      "coef", "set_lower", "set_upper", "status",
+      "lower_status", "upper_status"
+    ) %in% names(mbr_projected$set_tables[[1L]]$beta1)
+  )
+)
+check(
+  "diagnostics assemble from the projection rather than a richer fixture",
+  {
+    mbr_diag <- set_id_boot_diagnostics(
+      mbr_out, mbr_out$inference, mbr_projected$set_tables,
+      mbr_set_id_mean_eq$tau_display, mbr_out$point_t
+    )
+    identical(nrow(mbr_diag), 2L * length(mbr_coefs)) &&
+      setequal(mbr_diag$tau, c(0, mbr_set_id_mean_eq$tau_display)) &&
+      all(c("set_lower_status", "set_upper_status") %in% names(mbr_diag))
+  }
+)
+
 paper_source_once(paper_path(
   "tests", "inference", "mean_boot_results_table_checks.R"
 ))

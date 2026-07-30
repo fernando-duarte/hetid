@@ -1,6 +1,12 @@
 bootstrap_stage_mean_result_inputs <- function(mean_eq) {
   point_fields <- c("coef", "point")
-  set_fields <- c("coef", "set_lower", "set_upper", "status")
+  # the per-side statuses travel with the collapsed one: the diagnostics report a
+  # set status per side, and a projection that carried only the collapse handed
+  # them a NULL column, which data.frame() reads as zero rows rather than as an
+  # error
+  set_fields <- c(
+    "coef", "set_lower", "set_upper", "status", "lower_status", "upper_status"
+  )
   list(
     beta1_table = mean_eq$beta1_table[point_fields],
     theta_table = mean_eq$theta_table[point_fields],

@@ -67,13 +67,17 @@ mean_eq <- list(
       coef = c("(Intercept)", "x"),
       set_lower = c(0, 1),
       set_upper = c(2, 3),
-      status = c("bounded", "bounded")
+      status = c("bounded", "bounded"),
+      lower_status = c("bounded", "bounded"),
+      upper_status = c("bounded", "bounded")
     ),
     theta = data.frame(
       coef = "w2",
       set_lower = 2,
       set_upper = 4,
-      status = "bounded"
+      status = "bounded",
+      lower_status = "bounded",
+      upper_status = "bounded"
     )
   ))
 )
