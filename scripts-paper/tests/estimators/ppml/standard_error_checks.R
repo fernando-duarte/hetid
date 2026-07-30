@@ -184,6 +184,9 @@ check("ppml inference notes do not claim endpoint inference is deferred", {
     se_type = "hac", se_hac_lags = test_hac_lags,
     set_endpoint_inference = TRUE
   ), collapse = " ")
-  grepl("outer confidence envelopes", nt, fixed = TRUE) &&
-    !grepl("uncertainty is deferred", nt, fixed = TRUE)
+  grepl("bootstrap confidence intervals are reported beneath", nt,
+    fixed = TRUE
+  ) &&
+    !grepl("uncertainty is deferred", nt, fixed = TRUE) &&
+    !grepl("outer", nt, fixed = TRUE)
 })
