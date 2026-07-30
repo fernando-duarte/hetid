@@ -91,3 +91,5 @@ stopifnot(
 rm(.variant_present)
 
 paper_source_once(paper_path("config", "artifact_lifecycle.R"))
+
+paper_source_once(paper_path("config", "artifact_reset.R"))

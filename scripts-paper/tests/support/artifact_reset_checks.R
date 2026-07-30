@@ -51,3 +51,34 @@ local({
     )
   )
 })
+
+local({
+  check(
+    "artifact_records_by_group returns only that group's rows",
+    all(artifact_records_by_group("diagnostics")$group == "diagnostics") &&
+      nrow(artifact_records_by_group("diagnostics")) > 0L
+  )
+  check(
+    "artifact_records_by_group rejects an unknown group",
+    inherits(try(artifact_records_by_group("not_a_group"), silent = TRUE), "try-error")
+  )
+
+  tracked_path <- repo_path("README.Rmd")
+  gitignored_path <- file.path(
+    repo_root, "scripts-paper", "output", "state",
+    "bootstrap_stage_draws.rds"
+  )
+  gitignored_flags <- .artifact_gitignored(
+    c(tracked_path, gitignored_path)
+  )
+  check(
+    "a tracked file is not reported gitignored and an .rds output path is",
+    identical(gitignored_flags, c(FALSE, TRUE))
+  )
+
+  state_group_ids <- artifact_manifest$id[artifact_manifest$group == "state"]
+  check(
+    "reset_group_ids on the state group with include_tracked=FALSE keeps every row",
+    setequal(.reset_group_ids("state", include_tracked = FALSE), state_group_ids)
+  )
+})
