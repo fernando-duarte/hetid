@@ -74,10 +74,16 @@ PAPER_ANALYSIS_CONTRACT <- local({
       coherence_slack = 1e-9,
       render_degenerate_rtol = 1e-9
     ),
+    # 2.0.0: both panels' tau > 0 cells report the pointwise-coverage target from
+    # one shared bootstrap reference distribution and both tau = 0 cells report
+    # bootstrap t statistics. stability_share gates both panels, declared once so
+    # they cannot drift apart again. See support/identification/endpoint_targets.R.
     inference = list(
-      version = "1.2.0",
+      version = "2.0.0",
       nominal_alpha = 0.10,
-      minimum_valid_draw_share = 0.50
+      minimum_valid_draw_share = 0.50,
+      stability_share = 0.85,
+      target_p_lambda_tolerance = 1e-4
     ),
     figure = list(region_dimension = 3L),
     input = list(
@@ -137,6 +143,9 @@ stopifnot(
   PAPER_ANALYSIS_CONTRACT$inference$nominal_alpha < 1,
   PAPER_ANALYSIS_CONTRACT$inference$minimum_valid_draw_share > 0,
   PAPER_ANALYSIS_CONTRACT$inference$minimum_valid_draw_share <= 1,
+  PAPER_ANALYSIS_CONTRACT$inference$stability_share > 0,
+  PAPER_ANALYSIS_CONTRACT$inference$stability_share < 1,
+  PAPER_ANALYSIS_CONTRACT$inference$target_p_lambda_tolerance > 0,
   !anyDuplicated(unlist(
     PAPER_ANALYSIS_CONTRACT$model$artifact_fields
   ))

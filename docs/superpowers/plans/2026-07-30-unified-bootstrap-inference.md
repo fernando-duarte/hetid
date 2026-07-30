@@ -247,10 +247,44 @@ feeds the diagnostics cross-check): `stoye_critical`, `im_critical`, `pbvn_le_ge
 critical value is emitted **alongside** the bootstrap one in the Panel A diagnostics CSV as a
 cross-check on the normal approximation. Exactly one live path reaches a published cell.
 
+## External review: what was rejected, and why
+
+Recorded so these are not re-litigated. Both reviewers lacked the paper brief, which is where three
+of these are settled.
+
+- **"Delete the permanent normal-theory cross-check; do it once in scratch."** Rejected. The brief
+  requires the normal-theory critical value emitted *alongside* the bootstrap one in the Panel A
+  diagnostics as a standing cross-check on the normal approximation, explicitly as "a one-column
+  addition, not an extra". A one-off scratch check would not survive the next run.
+- **"Delete `logvar_simultaneous_critical`."** Rejected. Target S stays a first-class computed
+  object available to any exhibit that wants containment, and the diagnostics report simultaneous
+  coverage. Removing a working diagnostic is outside this task.
+- **"Remove the `/simplify` phase."** Rejected. It is a required step of the final sequence.
+- **"Replace the both-bounded pool with a `B`-aligned worst-case rank."** Rejected as a
+  *construction* change: it would break acceptance check 8.1, which requires reproducing the
+  published envelope exactly. Accepted as a *limitation* — see limitation 8.
+- **"Calibrate the `tau=0` stars off the empirical root distribution instead of the normal."**
+  Rejected as a construction change: §A.10 mandates the normal reference and acceptance check 8.3
+  pins the 1.645 correspondence to it. Accepted as a limitation, with the measured discrepancy and
+  new diagnostics columns — see limitation 7.
+- **"Add an iteration cap to the optimizer."** Rejected in favor of folding the `c_s` cap into the
+  stopping test, which removes the cause rather than truncating the symptom.
+
 ## Tasks
 
-Ordering is by genuine dependency only. Streams B–H can proceed in parallel against the agreed
-signatures in stream A once those are committed.
+Ordering is by genuine dependency, and it is **not** a free-for-all fan-out. The real graph:
+
+    A  (shared module, contract)          -- blocking, no dependencies
+    B+C  (per-side statuses, Panel A tau=0, cache validator)   -- ONE stream: B and C edit the
+         same two files, and B5's validator change gates both
+    D  (Panel B tau=0 at the logvar_run_estimator seam)        -- parallel with B+C
+    E  (call sites)      -- needs A, B+C, D schemas
+    F  (diagnostics)     -- needs E
+    G  (tables, notes, figures)  -- needs F
+    H  (tests)           -- tracks each stream; H2 waits for the from-scratch run
+
+Streams G's note and caption text and H's retargeting can be drafted against the agreed signatures
+before the internals land, but they cannot be verified until F does.
 
 ### Stream A — the shared construction (blocking; everything else keys off its signatures)
 
@@ -338,9 +372,26 @@ already-available per-side flags, **keeping** the collapsed `status` column that
 and the set-cell renderer consume. Leave the coarser `all()` collapse inside `eval_width_at_tau`
 (`tau_star.R:36-37`) alone — it serves the `tau*` sweep, which must not move.
 
-**B2.** Confirm `widen_theta_box` (`theta_box_multistart.R:115-146`) carries the new columns
-through. It mutates only `set_lower`/`set_upper` and reads `status`, so it should; verify rather
-than assume.
+**B1a. THE BETA ROWS REVERSE THEIR SIDES. Read this before writing the mapping.** For the `theta`
+rows the mapping is direct: `set_lower = tb$lower` comes from the `"min"` solve and
+`set_upper = tb$upper` from `"max"`, so `lower_status` takes `bounded_lower`/`valid_lower` and
+`upper_status` takes `bounded_upper`/`valid_upper`. For the `beta1` rows it is **inverted**, because
+the bound enters with a minus sign (`tau_star.R:68-77`):
+
+    set_lower = beta1r[p] - fmax$bound        # the LOWER side is governed by fmax
+    set_upper = beta1r[p] - fmin$bound        # the UPPER side is governed by fmin
+
+So `lower_status` must be built from **`fmax`**'s flags and `upper_status` from **`fmin`**'s. The
+natural-looking mapping is wrong here and would silently swap the two sides' statuses, scales and
+credits on the `b_0`/`b_E` block. Add a fixture with deliberately asymmetric `fmin`/`fmax` flags
+that fails under the swapped mapping.
+
+**B2.** `widen_theta_box` (`theta_box_multistart.R:115-146`) mutates only `set_lower`/`set_upper`
+and reads `status`, so the new columns pass through. But note the widening is **skipped entirely
+unless the collapsed row status is bounded** (`theta_box_multistart.R:133`,
+`if (theta_tab$status[k] != bounded) next`). A half-infinite row's finite side therefore bypasses
+multistart widening. Do not "fix" that here — it is the `tau*`-safe behavior — but record it, since
+it means a half-infinite Panel A cell's live endpoint is the un-widened one.
 
 **B3.** In `identified_set_bootstrap.R::set_id_boot_draw_from_est`, record `lower_status` and
 `upper_status` per draw instead of one `status`, and NA-mask each side by **its own** status
@@ -348,6 +399,19 @@ rather than the shared mask at lines 70-75.
 
 **B4.** In `identified_set_bootstrap_collect.R`, stack four matrices per `tau` instead of three,
 and inject `failed` into both status matrices for wholesale draw failures.
+
+**B5. The cache validator will reject the new payload — update it in the same commit.**
+`support/inference/bootstrap_stage_mean_cache.R` validates with **exact** field lists:
+`bootstrap_stage_cache_exact_list(collected, fields)` over
+`point_draws / n_point_deficient / endpoint_draws / tau_star_draws / n_capped / n_failed /
+failure_causes` (lines 21-26), and `exact_list(cell, c("lower", "upper", "status"))` per endpoint
+cell (lines 48-51). Adding `point_status` and replacing `status` with the two per-side matrices
+fails both, and cache promotion then fails in `inference/bootstrap_stage_cache.R:80-88`. So:
+extend the top-level field list, validate each side's status matrix separately, carry the
+per-side value/status consistency check (`non-bounded implies NA`) side by side rather than
+jointly, and **bump `BOOTSTRAP_STAGE_CACHE_SCHEMA`** (`inference/bootstrap_stage_cache.R:1`).
+Update the cache fixtures with it. This is a blocking dependency for streams C and D, not an
+afterthought.
 
 Note for the memo: this **changes Panel A's stored draws**, hence its published numbers, because
 a draw bounded on one side only now contributes to that side's scale. Acceptance check 8.1's
@@ -379,10 +443,17 @@ t-statistic frame while keeping `point_se` (which the diagnostics now render).
 
 ### Stream D — `tau=0`, Panel B
 
-**D1.** In `log_variance/inference/set_bootstrap_draw.R`, for the `tau=0` slot only, replace the
-endpoint search with a **direct single evaluation**: call the estimator context's existing
-`fit_at_b(point)`, take `fit$coef` as the authoritative `B x 5` `point`, and set `point_status`
-from `logvar_fit_ok`. Status mapping exactly per §5.2: `bounded` when accepted and finite;
+**D0. The seam is `logvar_run_estimator`, not the draw file.** The `tau` loop that calls
+`logvar_engine_set_at_tau` for **every** slot including `tau=0` is
+`log_variance/inference/set_bootstrap_core.R:6-25`; `set_bootstrap_draw.R:36-41` only invokes that
+loop. Editing the draw file alone would leave the forbidden `tau=0` endpoint search running. Note
+that `b_point` is already threaded into the loop as the search seed
+(`seed <- if (is.null(b_point)) logvar_box_seed(boxes[[index]]) else b_point`), so the branch has
+everything it needs in scope.
+
+**D1.** In `logvar_run_estimator`, branch on the `tau=0` slot: instead of
+`logvar_engine_set_at_tau`, call the estimator context's existing `fit_at_b(b_point)`, take
+`fit$coef` as the authoritative `B x 5` `point`, and set `point_status` from `logvar_fit_ok`. Status mapping exactly per §5.2: `bounded` when accepted and finite;
 `unreliable` when the draw completed but `Q` is rank deficient (`point` is `NULL`), the point is
 unavailable or nonfinite, or the direct fit is rejected; `failed` only for a wholesale draw
 failure; `unbounded` forbidden.
@@ -532,8 +603,16 @@ that stream A1 moves to the contract), `tests/inference/mean_boot_results_checks
 `tests/inference/set_bootstrap_{gate,draw,collection,core}_checks.R` family, and
 `tests/inference/standard_error_estimators_checks.R`.
 
-**H2.** `tests/validation/test_table_acceptance.R` pins published table numbers across runs and
-must be re-pinned to the new numbers — after the from-scratch run, from the run's own output.
+**H2. There are no fixture numbers to re-pin.** `tests/validation/test_table_acceptance.R` is a
+19-line dispatcher over `table_projection_checks.R`, `table_comparison_checks.R`,
+`mutation_matrix_checks.R`, `ssot_checks.R` and `cli_checks.R`, and those exercise the **comparator
+machinery** on synthetic inline fixtures (values like `1.234`, `4.56`), not the real published
+numbers. So "re-pinning" is not a fixture edit and looking for one wastes time. The reference for a
+cross-run comparison is the **tracked `output/tables/*.tex` artifacts themselves**, which the
+from-scratch run regenerates. The acceptance work is therefore: commit the regenerated `.tex`, then
+confirm the comparator reports no differences on a rerun against them — which is exactly acceptance
+check 4. If a comparator fixture happens to encode a superseded *construction* rather than a
+number, retarget that; otherwise leave these five files alone.
 
 ### Stream I — final sequence
 
@@ -557,6 +636,14 @@ Few and exact; resist adding more.
 1. **Target S reproduces today's Panel B envelope** to full displayed precision on the same
    draws, gates and scales. Already verified at `2.22e-16` against a fresh implementation on
    unmodified `main`.
+2a. **The ordering test must not be tautological.** Because `c_p_upper` is *computed* as
+`min(c_s, max U)`, asserting `c_p_upper <= c_s` proves only that `min` works. Keep it (it is
+mandated and free) but add the two checks that actually have content: `c_p_lower <= c_s`, and the
+**uncapped** bound `max U <= c_s + tolerance`. Record the uncapped bound in the diagnostics as
+`c_p_raw_upper` so the ordering identity is auditable rather than assumed. Also assert the
+draw-by-draw domination `R_P(lambda) <= R_S` directly in the unit tests, which is the identity's
+actual source.
+
 2. **Ordering, cell by cell.** `c_p_upper <= c_s` for every coefficient and `tau` in both panels
    — a deterministic identity, not a statistical expectation. Equality expected at zero width;
    equality at positive width is a finding to explain, not an automatic failure. Every reported
@@ -595,10 +682,14 @@ Few and exact; resist adding more.
    constraint changes discontinuously across resamples. The multistart and certification
    machinery detects some of this and not all of it.
 3. **The width is plugged in.** `w_hat` replaces `w`, exactly as the normal-theory path did.
-   `c_P*` is non-increasing in the width, so an over-estimated width makes the interval
-   anti-conservative, and coverage is not uniform near `w = 0`. The width's own bootstrap
-   dispersion is already in the diagnostics and belongs *next to* the cells, not folded into
-   them.
+   `c_P*` is non-increasing in the width **holding the anchors and scales fixed**, so an
+   over-estimated width reduces the calibrated padding. It does **not** follow that an
+   over-estimated width makes the interval anti-conservative on net: since
+   `w_hat - w = (u_hat - u) - (l_hat - l)`, the same endpoint movement that inflates the width also
+   moves the anchors the padding is applied to, and those two effects work in opposite directions.
+   The net finite-sample coverage distortion is sign-indeterminate. Coverage is in any case not
+   uniform in a neighborhood of `w = 0`. The width's own bootstrap dispersion is already in the
+   diagnostics and belongs *next to* the cells, not folded into them.
 4. **Endpoints come from a finite search**, so a reported range can understate the exact
    projection, and that carries into both intervals.
 5. **Proxy-construction uncertainty is not propagated.** The principal components are held at
@@ -607,16 +698,40 @@ Few and exact; resist adding more.
 6. **Panel B's `tau=0` t-statistics now propagate first-stage error**, where the previous
    analytic statistics conditioned on the plug-in news vector. They are not comparable to the
    old ones and will generally be smaller in magnitude. That is the intended improvement.
-7. **The `tau=0` stars read a MAD-denominated statistic against standard-normal quantiles.** The
-   MAD is a consistent estimator of the *normal-equivalent* scale, and the bootstrap distribution
-   of the `b_N` point draws is manifestly non-normal — sd/MAD runs 11.3, 19.5 and 10.3 against
-   1.02-1.14 for the point-identified block. So the reference distribution of `point / MAD` is not
-   exactly standard normal and the stars are approximate. The construction is nonetheless the
-   specified one, and the alternative is worse: the sample standard deviation does not settle as
-   `B` grows on this estimator, because resamples in which `Q b = L` is nearly singular produce
-   arbitrarily large values. The diagnostics already carry the percentile band of the point draws,
-   so a reader can see the tail behavior directly. Document this rather than substituting a
-   different denominator.
+7. **The `tau=0` stars read a MAD-denominated statistic against standard-normal quantiles, and for
+   the `b_N` block that is materially anti-conservative.** This is the most consequential caveat in
+   the change and it must be stated plainly in the memo, because it bears on a significance claim
+   in the main table. Measured from the stored draws, with the centered studentized bootstrap roots
+   `t* = (b_hat* - b_hat) / MAD(b_hat*)`:
+
+   | coef | `t = b_hat/MAD` | `p` normal | empirical 90% of `abs(t*)` | `p` bootstrap |
+   |---|---|---|---|---|
+   | `b_0` | 14.324 | 0.0000 | 1.687 | 0.0001 |
+   | `b_{1,E}` | 0.190 | 0.8493 | 1.844 | 0.8458 |
+   | `b_{2,E}` | -3.595 | 0.0003 | 1.702 | 0.0015 |
+   | `b_{3,E}` | 2.452 | 0.0142 | 1.698 | 0.0212 |
+   | `b_{1,N}` | 1.807 | **0.0707** | 2.598 | **0.1682** |
+   | `b_{2,N}` | 0.113 | 0.9097 | 3.295 | 0.9052 |
+   | `b_{3,N}` | -1.470 | 0.1417 | 3.674 | 0.2548 |
+
+   The normal reference is accurate exactly where the draws are near-normal — the point-identified
+   block, whose empirical critical values sit at 1.69-1.84 against the normal 1.6449 — and badly
+   off exactly where sd/MAD runs 10 to 20. Under the mandated normal reference `b_{1,N}` carries a
+   single star at `p = 0.071`; its bootstrap p-value is 0.168. **Implement the specified normal
+   reference** (§A.10 mandates it and acceptance check 8.3 pins the 1.645 correspondence to it),
+   and record the empirical `abs(t*)` critical value and bootstrap p-value as diagnostics
+   cross-check columns — recording further functions of the same draws is explicitly in scope. Do
+   not silently substitute a different denominator or reference, and do not bury the discrepancy.
+
+8. **Both targets' quantiles are conditional on endpoint certification, not unconditional.** The
+   two-sided root pool is the both-sides-bounded draws (9909 of 10000 at `tau = 0.05`, 9341 at
+   `tau = 0.20`), so `1 - alpha` is a quantile of the root distribution *given* that both endpoints
+   certified, and worst-case unconditional coverage is lower by at most the non-certified share.
+   The `minimum_valid_draw_share` and `stability_share` gates bound that share but do not remove
+   the conditioning. This pool is mandated (§A.6) and required for acceptance check 8.1 to
+   reproduce the published envelope, so the construction stands; the honest treatment is to report
+   the per-cell pool size and the four status counts, which the diagnostics now do, and to state
+   the conditioning in the memo rather than claiming unconditional coverage.
 
 ## Economics worth stating in the memo
 
