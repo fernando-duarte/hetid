@@ -6,6 +6,12 @@ paper_source_once(paper_path(
 ))
 paper_source_once(paper_path("support", "identification", "tau_star.R"))
 paper_source_once(paper_path(
+  "support", "identification", "endpoint_target_cells.R"
+))
+paper_source_once(paper_path(
+  "support", "identification", "endpoint_point_statistic.R"
+))
+paper_source_once(paper_path(
   "log_variance", "inference", "set_envelope.R"
 ))
 
@@ -48,14 +54,19 @@ check("robust endpoint minimum pairs execute from the canonical control", {
   is.na(robust_endpoint_cor(lower, upper)) &&
     is.finite(robust_endpoint_cor(lower, upper, permissive))
 })
+# The endpoint stability share is one policy for both panels and is owned by the
+# analysis contract, not by the search control, so both shared builders read it
+# from there.
 check(
-  "tau-star and log-variance defaults derive from the canonical control",
+  "tau-star and endpoint-target defaults derive from their canonical owners",
   eval(formals(fine_tau_grid)$n_fine) ==
     inference_control$tau_star$fine_grid_points &&
     eval(formals(tau_star_fixed)$iters) ==
       inference_control$tau_star$bisection_iterations &&
-    eval(formals(logvar_endpoint_envelope)$stability) ==
-      inference_control$logvar_endpoint$stability_share
+    eval(formals(endpoint_target_table)$stability) ==
+      PAPER_ANALYSIS_CONTRACT$inference$stability_share &&
+    eval(formals(point_t_statistic)$stability) ==
+      PAPER_ANALYSIS_CONTRACT$inference$stability_share
 )
 
 check("boot mode resolves the reuse default when unset", {
@@ -103,9 +114,11 @@ threaded_fields <- list(
   ),
   "support/inference/bootstrap_stage_execution.R" =
     "progress_report_every",
-  "inference/bootstrap_stage_results.R" = "stability_share",
   "log_variance/inference/set_bootstrap_gate.R" = "fatal_failure_share",
-  "log_variance/inference/set_envelope.R" = "stability_share"
+  # the endpoint stability share is one policy for both panels, owned by the
+  # analysis contract, so the two shared builders are its only consumers
+  "support/identification/endpoint_target_cells.R" = "stability_share",
+  "support/identification/endpoint_point_statistic.R" = "stability_share"
 )
 threaded_code <- vapply(
   names(threaded_fields),
@@ -129,7 +142,10 @@ retired_literals <- c(
   "interval = c(0, 10)", "interval = c(1e-6, 8)",
   "rho > 0.999", "rho < -0.999", "rel.tol = 1e-9",
   "n_fine = 20L", "iters = 40L", "iters = 15L",
-  "boot_reps %/% 4L", "max(50L", "stability = 0.85", "b %% 25L"
+  "boot_reps %/% 4L", "max(50L", "stability = 0.85", "b %% 25L",
+  # the search control no longer owns the stability share; reading it back from
+  # there would let the two panels' gates drift apart again
+  "logvar_endpoint$stability_share"
 )
 check(
   "inference consumers do not restate their retired policy literals",

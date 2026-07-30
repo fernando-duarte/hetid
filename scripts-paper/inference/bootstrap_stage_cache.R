@@ -1,4 +1,6 @@
-BOOTSTRAP_STAGE_CACHE_SCHEMA <- 1L
+# 2: the mean branch records per-side endpoint statuses and an authoritative
+# tau = 0 point_status matrix, so a schema-1 payload can no longer be read.
+BOOTSTRAP_STAGE_CACHE_SCHEMA <- 2L
 BOOTSTRAP_STAGE_CACHE_FIELDS <- c(
   "anchor", "mean", "volatility_primary",
   "volatility_primary_n_failed", "volatility_sensitivity",

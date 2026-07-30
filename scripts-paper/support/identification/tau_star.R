@@ -45,7 +45,9 @@ eval_width_at_tau <- function(gamma, tau, moments) {
   list(total = total, bounded = bounded, valid = valid, status = status)
 }
 
-# Per-coefficient intervals from one already-built quadratic system.
+# Per-coefficient intervals from one already-built quadratic system. Each row
+# carries the collapsed status the tau* sweep and the set-cell renderer read AND
+# the two per-side statuses the endpoint bootstrap studentizes each side by.
 coef_interval_tables_from_quadratic <- function(qs, beta1r, beta2r) {
   tb <- solve_all_profile_bounds(qs)
   theta_fail_closed <- anyNA(c(tb$lower, tb$upper))
@@ -55,6 +57,14 @@ coef_interval_tables_from_quadratic <- function(qs, beta1r, beta2r) {
     status = paper_endpoint_status_from_flags(
       tb$bounded_lower & tb$bounded_upper,
       tb$valid_lower & tb$valid_upper
+    ),
+    # set_lower is the "min" solve and set_upper the "max", so the theta sides
+    # map straight through
+    lower_status = paper_endpoint_status_from_flags(
+      tb$bounded_lower, tb$valid_lower
+    ),
+    upper_status = paper_endpoint_status_from_flags(
+      tb$bounded_upper, tb$valid_upper
     ),
     row.names = NULL, stringsAsFactors = FALSE
   )
@@ -72,6 +82,14 @@ coef_interval_tables_from_quadratic <- function(qs, beta1r, beta2r) {
       status = paper_endpoint_status_from_flags(
         fmin$bounded && fmax$bounded,
         fmin$valid && fmax$valid
+      ),
+      # the functional bound enters with a MINUS sign, so the sides reverse:
+      # set_lower is governed by fmax and set_upper by fmin
+      lower_status = paper_endpoint_status_from_flags(
+        fmax$bounded, fmax$valid
+      ),
+      upper_status = paper_endpoint_status_from_flags(
+        fmin$bounded, fmin$valid
       ),
       row.names = NULL, stringsAsFactors = FALSE
     )

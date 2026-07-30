@@ -28,13 +28,18 @@ mbr_upper <- matrix(
   abs(stats::rnorm(mbr_b * 2L)), mbr_b, 2L,
   dimnames = list(NULL, mbr_coefs)
 )
+mbr_status <- matrix(
+  "bounded", mbr_b, 2L,
+  dimnames = list(NULL, mbr_coefs)
+)
 mbr_collected <- list(
   point_draws = mbr_point_draws,
+  point_status = mbr_status,
   n_point_deficient = 0L,
   endpoint_draws = list(
     list(
       lower = mbr_lower, upper = mbr_upper,
-      status = matrix("bounded", mbr_b, 2L, dimnames = list(NULL, mbr_coefs))
+      lower_status = mbr_status, upper_status = mbr_status
     )
   ),
   tau_star_draws = stats::runif(mbr_b, 0, 0.1),
@@ -46,10 +51,12 @@ mbr_collected <- list(
 mbr_set_tables <- list(tau_005 = list(
   beta1 = data.frame(
     coef = "b1", set_lower = -1, set_upper = 1, status = "bounded",
+    lower_status = "bounded", upper_status = "bounded",
     stringsAsFactors = FALSE
   ),
   theta = data.frame(
     coef = "th1", set_lower = -0.5, set_upper = 0.5, status = "bounded",
+    lower_status = "bounded", upper_status = "bounded",
     stringsAsFactors = FALSE
   )
 ))
@@ -70,15 +77,25 @@ mbr_provenance <- list(
 mbr_out <- mean_boot_results(
   mbr_collected, mbr_set_id_mean_eq,
   PAPER_ANALYSIS_CONTRACT$inference$nominal_alpha,
-  PAPER_INFERENCE_SEARCH_CONTROL, mbr_provenance
+  mbr_provenance
 )
 paper_source_once(paper_path(
   "tests", "inference", "mean_boot_results_schema_checks.R"
 ))
 
 check(
-  "mean_boot_results returns a point_ci frame with both coefficients",
-  identical(mbr_out$point_ci$coef, mbr_coefs)
+  "mean_boot_results returns a tau = 0 t-statistic frame for both coefficients",
+  identical(mbr_out$point_t$coef, mbr_coefs) &&
+    identical(mbr_out$point_t$reason, rep("reported", 2L)) &&
+    isTRUE(all.equal(
+      mbr_out$point_t$statistic,
+      mbr_out$point_t$point / unname(mbr_out$point_se)
+    ))
+)
+check(
+  "the tau > 0 cells come from the shared endpoint target builder",
+  identical(mbr_out$inference[[1L]]$side, rep("two-sided", 2L)) &&
+    all(mbr_out$inference[[1L]]$c_p_upper <= mbr_out$inference[[1L]]$c_s)
 )
 check(
   "mean_boot_results returns one inference table per tau, named by set_tables",
