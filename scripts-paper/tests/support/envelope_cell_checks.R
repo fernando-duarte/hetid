@@ -54,7 +54,8 @@ ecc_ppml <- list(
 )
 ecc_ppml_parts <- logvar_ppml_table_parts(
   ecc_ppml, c(0.05, 0.1), 1L,
-  envelope = ecc_envelope
+  envelope = ecc_envelope,
+  point_stat = NULL
 )
 check("PPML table parts render the envelope on a separate row beneath the set cell", {
   identical(ecc_ppml_parts$columns[[3]], c(
@@ -67,7 +68,7 @@ check("PPML table parts render the envelope on a separate row beneath the set ce
     ))
 })
 check("PPML table parts stay byte-identical to the no-envelope path when envelope is NULL", {
-  no_env <- logvar_ppml_table_parts(ecc_ppml, c(0.05, 0.1), 1L)
+  no_env <- logvar_ppml_table_parts(ecc_ppml, c(0.05, 0.1), 1L, point_stat = NULL)
   identical(no_env$columns[[3]][2], "") && identical(no_env$columns[[4]][4], "")
 })
 
@@ -83,7 +84,8 @@ if (exists("logvar_harvey_build_fragment")) {
   )
   ecc_harvey_fragment <- logvar_harvey_build_fragment(
     ecc_harvey, 12L, c(0.05, 0.1),
-    envelope = ecc_envelope
+    envelope = ecc_envelope,
+    point_stat = NULL
   )
   check("Harvey fragment renders the envelope on a separate row beneath the set cell", {
     any(ecc_harvey_fragment == paste0(
@@ -99,7 +101,7 @@ if (exists("logvar_harvey_build_fragment")) {
       any(ecc_harvey_fragment == " &  &  & $(-\\infty,\\,0.210]$ &  \\\\")
   })
   check("Harvey fragment stays byte-identical to the no-envelope path when envelope is NULL", {
-    no_env <- logvar_harvey_build_fragment(ecc_harvey, 12L, c(0.05, 0.1))
+    no_env <- logvar_harvey_build_fragment(ecc_harvey, 12L, c(0.05, 0.1), point_stat = NULL)
     any(no_env == "$N$ & 12 & 12 & 12 & 12 \\\\") &&
       !any(grepl("-1.280", no_env, fixed = TRUE))
   })

@@ -62,11 +62,14 @@ structural_equation_table_parts <- function(mean, boot, n_pc) {
   # reports a bootstrap t statistic on the same footing as the OLS column, the
   # set columns pointwise-coverage intervals; blank cells stay blank. The guard
   # pins both the row order and the values the stars decorate.
+  # Only the row order is worth asserting here. The volatility panel additionally
+  # checks its frame's point against the estimate it prints, because there the two
+  # come from different objects; here they are the same two vectors -- point_hat is
+  # built from beta1_table and theta_table, which coef_tab rbinds -- so the same
+  # assertion would compare a value against itself and could never fire. A guard
+  # that cannot fail is worse than none: it reads as assurance and gives none.
   point_t <- boot$point_t
-  stopifnot(
-    identical(point_t$coef, coef_tab$coef),
-    identical(unname(point_t$point), unname(coef_tab$point))
-  )
+  stopifnot(identical(point_t$coef, coef_tab$coef))
   point_stars <- sig_stars(point_t$p_value)
   point_cells <- ifelse(
     point_stars == "", fmt(coef_tab$point),

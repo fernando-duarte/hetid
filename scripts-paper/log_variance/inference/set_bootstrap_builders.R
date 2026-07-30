@@ -67,7 +67,7 @@ logvar_set_boot_builders <- function(
 # anchor equal the estimator's published point column. The renderer re-checks that
 # equality against the estimate it prints, since a divergence there would put a
 # ratio under a number it does not belong to.
-logvar_boot_point_t <- function(ests, collected, anchor, spec, tau0_slot = 1L) {
+logvar_boot_point_t <- function(ests, collected, anchor, spec, tau0_slot) {
   out <- lapply(ests, function(est) {
     cell <- collected[[est]][[tau0_slot]]
     full <- anchor[[est]][[tau0_slot]]

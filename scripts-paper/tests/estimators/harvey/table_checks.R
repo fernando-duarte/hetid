@@ -25,7 +25,8 @@ hvt_harvey <- list(
 hvt_lines <- logvar_harvey_append_panel(
   character(0), hvt_harvey, 12L, c(0.05, 0.1), 0.05, 4000L, 20000L,
   caption = "Dedicated Harvey MLE/QMLE table.",
-  label = "tab:log_var_eq_harvey", include_ordering = FALSE
+  label = "tab:log_var_eq_harvey", include_ordering = FALSE,
+  point_stat = NULL
 )
 
 check("Harvey table renderer emits one marker-wrapped table", {
@@ -74,7 +75,8 @@ hvt_harvey_se <- c(hvt_harvey, list(se = list(
 hvt_lines_se <- logvar_harvey_append_panel(
   character(0), hvt_harvey_se, 12L, c(0.05, 0.1), 0.05, 4000L, 20000L,
   caption = "Dedicated Harvey MLE/QMLE table.", label = "tab:log_var_eq_harvey",
-  include_ordering = FALSE, se_type = "hac", se_hac_lags = 4L
+  include_ordering = FALSE, se_type = "hac", se_hac_lags = 4L,
+  point_stat = NULL
 )
 
 check("Harvey panel renders hac t-stats/stars and selects the hac column", {
@@ -118,7 +120,8 @@ check("Harvey panel fails loud when se_type is set but the se frame is absent", 
     {
       logvar_harvey_append_panel(
         character(0), hvt_harvey, 12L, c(0.05, 0.1), 0.05, 4000L, 20000L,
-        include_ordering = FALSE, se_type = "hac", se_hac_lags = 4L
+        include_ordering = FALSE, se_type = "hac", se_hac_lags = 4L,
+        point_stat = NULL
       )
       FALSE
     },
@@ -131,7 +134,8 @@ check("Harvey panel rejects an unknown se_type", {
     {
       logvar_harvey_append_panel(
         character(0), hvt_harvey_se, 12L, c(0.05, 0.1), 0.05, 4000L, 20000L,
-        include_ordering = FALSE, se_type = "bogus", se_hac_lags = 4L
+        include_ordering = FALSE, se_type = "bogus", se_hac_lags = 4L,
+        point_stat = NULL
       )
       FALSE
     },

@@ -144,8 +144,11 @@ target_p_critical <- function(z_lower, z_upper, pool, d_lower, d_upper,
     g_left <- c(g_left[-at], g_left[[at]], g_mid)
     g_right <- c(g_right[-at], g_mid, g_right[[at]])
   }
+  # `top` is the bound the stopping test just accepted, and nothing mutates the
+  # interval arrays between that test and this return, so reusing it is the same
+  # number as recomputing the bound and does not ask a reader to prove they agree
   list(
-    c_p_lower = best, c_p_upper = min(c_s, max(bound())), evals = evals,
+    c_p_lower = best, c_p_upper = min(c_s, top), evals = evals,
     best_lambda = best_lambda, interior = best > endpoint_best + tolerance
   )
 }

@@ -71,10 +71,9 @@ bootstrap_stage_logvar_result <- function(
     )
   }, logical(1))))
   alpha <- PAPER_ANALYSIS_CONTRACT$inference$nominal_alpha
-  stability <- PAPER_ANALYSIS_CONTRACT$inference$stability_share
   primary <- bootstrap_stage_envelopes(
     stage$volatility_primary, full, ids,
-    layout, alpha, stability
+    layout, alpha
   )
   simultaneous <- lapply(ids, function(id) {
     stats::setNames(vapply(seq_along(layout$taus), function(index) {
@@ -82,15 +81,14 @@ bootstrap_stage_logvar_result <- function(
       logvar_simultaneous_critical(
         stage$volatility_primary[[id]][[slot]],
         full[[id]][[slot]],
-        alpha = alpha,
-        stability = stability
+        alpha = alpha
       )
     }, numeric(1)), layout$keys)
   })
   names(simultaneous) <- ids
   se_type <- spec$se_types
   point_t <- logvar_boot_point_t(
-    ids, stage$volatility_primary, stage$anchor, spec
+    ids, stage$volatility_primary, stage$anchor, spec, layout$tau0_slot
   )
   tau0 <- logvar_boot_tau0_diagnostics(
     ids, stage$volatility_primary,
@@ -98,7 +96,7 @@ bootstrap_stage_logvar_result <- function(
   )
   sensitivity <- bootstrap_stage_envelopes(
     stage$volatility_sensitivity, full, ids,
-    layout, alpha, stability
+    layout, alpha
   )
   provenance <- bootstrap_stage_logvar_provenance(stage)
   result <- c(primary, list(

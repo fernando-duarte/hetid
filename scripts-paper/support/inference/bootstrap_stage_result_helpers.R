@@ -27,7 +27,10 @@ bootstrap_stage_display_layout <- function(stage_spec) {
   list(
     taus = taus,
     keys = vapply(taus, paper_tau_key, character(1)),
-    slots = slots
+    slots = slots,
+    # derived from the same axis the collector reads, so a consumer of the point
+    # fields never has to name the slot itself
+    tau0_slot = bootstrap_stage_logvar_tau0_slot(stage_spec$tau$union)
   )
 }
 
@@ -53,7 +56,7 @@ bootstrap_stage_anchor_frames <- function(anchor, logvar_spec) {
 # layout$slots, which skips the tau = 0 slot: that slot is a point evaluation and
 # its statistic is built by logvar_boot_point_t, never here.
 bootstrap_stage_envelopes <- function(
-  collected, full, estimator_ids, layout, alpha, stability
+  collected, full, estimator_ids, layout, alpha
 ) {
   envelopes <- lapply(estimator_ids, function(estimator_id) {
     result <- lapply(seq_along(layout$taus), function(index) {
@@ -61,8 +64,7 @@ bootstrap_stage_envelopes <- function(
       endpoint_target_table(
         collected[[estimator_id]][[slot]],
         full[[estimator_id]][[slot]],
-        alpha = alpha,
-        stability = stability
+        alpha = alpha
       )
     })
     names(result) <- layout$keys

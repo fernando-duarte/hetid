@@ -64,16 +64,6 @@ bootstrap_stage_logvar_cell_fields <- function(tau_index, taus) {
   fields
 }
 
-# A point cannot diverge, so "unbounded" is an implementation error here; the
-# value is present exactly when the status is bounded.
-bootstrap_stage_cache_point_values_ok <- function(value, status) {
-  bounded <- status == PAPER_ENDPOINT_STATUS[["bounded"]]
-  !any(status == PAPER_ENDPOINT_STATUS[["unbounded"]]) &&
-    !any(is.nan(value)) &&
-    all(is.finite(value[bounded])) &&
-    all(is.na(value[!bounded]))
-}
-
 # The two searched sides of the tau = 0 slot are exact copies of the point, and
 # nothing may weaken that to an equality tolerance: the mirrors exist only so
 # the pooled failure gate reads the slot unchanged. `shape_ok(value, type)`

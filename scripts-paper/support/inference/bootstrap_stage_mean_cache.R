@@ -121,13 +121,10 @@ mean_boot_collection_validate <- function(
   ) || !bootstrap_stage_cache_status_ok(point_status, status_values)) {
     return("point status matrix changed")
   }
-  # a point evaluation cannot diverge, so "unbounded" is an implementation
-  # error; the point is recorded exactly where its own status certifies it, and
-  # a wholesale draw failure marks the point as well as both endpoint sides
-  point_failed <- matrix(failed_mask, nrow = n_draws, ncol = length(coefs))
-  if (any(point_status == PAPER_ENDPOINT_STATUS[["unbounded"]]) ||
-    !all((point_status == bounded) == is.finite(point)) ||
-    !all((point_status == failed) == point_failed)) {
+  # the shared point invariant, plus the mean-specific rule that a wholesale draw
+  # failure marks the point as well as both endpoint sides
+  if (!bootstrap_stage_cache_point_values_ok(point, point_status) ||
+    !all((point_status == failed) == failed_mask)) {
     return("point value/status mismatch")
   }
   causes <- collected$failure_causes

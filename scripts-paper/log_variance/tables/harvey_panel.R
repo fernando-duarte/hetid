@@ -23,7 +23,7 @@ paper_source_once(paper_path("log_variance", "tables", "harvey_caption.R"))
 logvar_harvey_build_fragment <- function(harvey, n_obs, tau_display,
                                          caption = NULL, label = NULL,
                                          se_type = NULL, envelope = NULL,
-                                         point_stat = NULL) {
+                                         point_stat) {
   if (is.null(caption)) {
     caption <- paste(
       "Harvey panel: $\\theta^{H}$, the Gaussian multiplicative-variance map",
@@ -64,7 +64,7 @@ logvar_harvey_append_panel <- function(panels_lines, harvey, n_obs,
                                        label = NULL, include_ordering = TRUE,
                                        se_type = NULL, se_hac_lags = NULL,
                                        set_endpoint_inference = FALSE,
-                                       point_stat = NULL) {
+                                       point_stat) {
   harvey_fragment <- logvar_harvey_build_fragment(
     harvey, n_obs, tau_display, caption, label, se_type,
     point_stat = point_stat

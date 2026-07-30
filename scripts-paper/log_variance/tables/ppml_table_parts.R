@@ -40,6 +40,11 @@ logvar_se_note_caveat <- function(set_endpoint_inference = FALSE) {
 # statistic slots unless envelope supplies a per-tau (paper_tau_key-keyed)
 # confidence-envelope frame (log_var_eq_set_boot$ppml), in which case the blank
 # row beneath each set cell instead renders that tau's per-coef envelope_cell.
+# point_stat has no default on purpose. The notes these tables emit now assert
+# unconditionally that the tau = 0 statistics propagate the first-stage error, so a
+# table that omitted the frame would print an analytic ratio under a note claiming
+# otherwise. Requiring it makes that omission impossible rather than merely
+# unlikely; a caller genuinely wanting the analytic branch passes NULL and says so.
 # point_stat supplies the tau = 0 column's bootstrap statistic frame and is
 # independent of envelope. NULL (the default) keeps every column byte-identical
 # to the pre-envelope renderer.
@@ -48,7 +53,7 @@ paper_source_once(paper_path(
 ))
 
 logvar_ppml_table_parts <- function(ppml, tau_display, n_pc_r, se_type = NULL,
-                                    envelope = NULL, point_stat = NULL) {
+                                    envelope = NULL, point_stat) {
   model <- PAPER_ANALYSIS_CONTRACT$model
   expected_coef <- c(
     model$intercept_col,

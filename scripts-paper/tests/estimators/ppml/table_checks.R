@@ -119,7 +119,7 @@ ptbl_ppml <- list(
     vapply(c(0.05, 0.1), paper_tau_key, character(1))
   )
 )
-ptbl_parts <- logvar_ppml_table_parts(ptbl_ppml, c(0.05, 0.1), 1L)
+ptbl_parts <- logvar_ppml_table_parts(ptbl_ppml, c(0.05, 0.1), 1L, point_stat = NULL)
 check("primary table parts use PPML reference, point, and display-tau hulls", {
   identical(
     ptbl_parts$headers,
