@@ -135,8 +135,9 @@ Descriptive component tables and figures have their own subdirectories. LaTeX si
 define six named full-reset compartments (bootstrap cache, gate/decision state, diagnostics,
 tables, figures, reports) and the `reset_pipeline_state()` orchestrator. Before a from-scratch
 run, `Rscript scripts-paper/reset_pipeline_state.R` clears all six by default, including the
-git-tracked tables, figures, and reports; pass `--keep-tracked` to clear only the gitignored
-cache and state compartments and leave the tracked `.tex`/`.svg`/`.md` outputs in place.
+git-tracked tables, figures, and reports; pass `--keep-tracked` to delete only gitignored
+artifacts — the draw cache, gate state, diagnostics, and generated PDFs — leaving the
+tracked `.tex`/`.svg`/`.md` outputs in place.
 `run_pipeline.R` itself is unchanged and still overwrites artifacts in place; running the
 reset script first is a deliberate, separate step.
 

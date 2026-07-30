@@ -112,6 +112,7 @@ paper_source_once(paper_path("tests", "support", "analysis_contract_checks.R"))
 paper_source_once(paper_path("tests", "support", "inference_control_checks.R"))
 paper_source_once(paper_path("tests", "support", "artifact_lifecycle_checks.R"))
 paper_source_once(paper_path("tests", "support", "artifact_reset_checks.R"))
+paper_source_once(paper_path("tests", "support", "artifact_reset_compartment_checks.R"))
 paper_source_once(paper_path("tests", "support", "reset_pipeline_cli_checks.R"))
 paper_source_once(paper_path("tests", "support", "shared_artifact_checks.R"))
 

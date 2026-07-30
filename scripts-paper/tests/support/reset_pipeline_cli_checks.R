@@ -8,15 +8,15 @@ local({
 
   if (backup_exists) {
     dir.create(backup_dir, recursive = TRUE, showWarnings = FALSE)
-    file.copy(output_dir, backup_dir, recursive = TRUE)
+    stopifnot(file.copy(output_dir, backup_dir, recursive = TRUE))
   }
 
   restore_output <- function() {
     unlink(output_dir, recursive = TRUE)
     if (backup_exists) {
-      file.copy(file.path(backup_dir, "output"), file.path(repo_root, "scripts-paper"),
+      stopifnot(file.copy(file.path(backup_dir, "output"), file.path(repo_root, "scripts-paper"),
         recursive = TRUE
-      )
+      ))
     }
     unlink(backup_dir, recursive = TRUE)
   }
@@ -54,9 +54,9 @@ local({
 
   if (backup_exists) {
     unlink(output_dir, recursive = TRUE)
-    file.copy(file.path(backup_dir, "output"), file.path(repo_root, "scripts-paper"),
+    stopifnot(file.copy(file.path(backup_dir, "output"), file.path(repo_root, "scripts-paper"),
       recursive = TRUE
-    )
+    ))
   }
 
   keep_tracked_output <- reset_cli_output("--keep-tracked")

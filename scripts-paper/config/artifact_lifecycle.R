@@ -157,3 +157,5 @@ build_conditional_route_status <- function(
     artifacts = artifacts
   )
 }
+
+paper_source_once(paper_path("config", "artifact_reset.R"))

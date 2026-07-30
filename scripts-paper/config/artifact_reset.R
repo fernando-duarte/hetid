@@ -28,13 +28,8 @@ artifact_records_by_group <- function(group) {
 }
 
 .reset_group_ids <- function(groups, include_tracked) {
-  rows <- artifact_manifest[
-    artifact_manifest$group %in% groups, ,
-    drop = FALSE
-  ]
-  if (!include_tracked) {
-    rows <- rows[.artifact_gitignored(rows$new_path), , drop = FALSE]
-  }
+  rows <- do.call(rbind, lapply(groups, artifact_records_by_group))
+  if (!include_tracked) rows <- rows[.artifact_gitignored(rows$new_path), , drop = FALSE]
   rows$id
 }
 
@@ -43,9 +38,8 @@ cleanup_bootstrap_cache <- function() {
 }
 
 cleanup_gate_state <- function() {
-  cleanup_artifacts_by_ids(c(
-    "dynamics_gate", "egarch_status",
-    "conditional_route_status", "egarch_pilot_state"
+  cleanup_artifacts_by_ids(setdiff(
+    artifact_records_by_group("state")$id, "bootstrap_stage_draws"
   ))
 }
 
