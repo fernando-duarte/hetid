@@ -77,13 +77,34 @@ stopifnot(
 )
 
 bounded <- PAPER_ENDPOINT_STATUS[["bounded"]]
-anchor <- list(ppml = list(list(
-  lower = c(2), upper = c(1),
-  lower_status = bounded, upper_status = bounded
-)))
+# slot one is the tau = 0 point evaluation, whose sides are copies of the point;
+# the inverted interval belongs to a searched slot, where order is a real claim
+anchor_point <- list(
+  lower = c(1), upper = c(1),
+  lower_status = bounded, upper_status = bounded,
+  point = c(1), point_status = bounded
+)
+anchor_searched <- function(lower, upper) {
+  list(
+    lower = lower, upper = upper,
+    lower_status = bounded, upper_status = bounded
+  )
+}
 anchor_spec <- list(estimator_ids = "ppml", coefs = "(Intercept)")
+anchor_taus <- c(0, 0.05)
 stopifnot(
-  !isTRUE(logvar_boot_anchor_validate(anchor, anchor_spec, 0))
+  isTRUE(logvar_boot_anchor_validate(
+    list(ppml = list(anchor_point, anchor_searched(c(-1), c(1)))),
+    anchor_spec, anchor_taus
+  )),
+  !isTRUE(logvar_boot_anchor_validate(
+    list(ppml = list(anchor_point, anchor_searched(c(2), c(1)))),
+    anchor_spec, anchor_taus
+  )),
+  !isTRUE(logvar_boot_anchor_validate(
+    list(ppml = list(anchor_searched(c(1), c(1)), anchor_searched(c(-1), c(1)))),
+    anchor_spec, anchor_taus
+  ))
 )
 
 cat("test_bootstrap_stage: PASS\n")

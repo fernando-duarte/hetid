@@ -1,6 +1,6 @@
 # Cores=1 vs cores=2 equality for the REAL vol set-endpoint draw callback
 # (logvar_set_boot_draw), not the toy summation callback mbb_checks.R uses.
-# Reuses the fixture frame/spec set_bootstrap_core_checks.R already built
+# Reuses the fixture frame/spec set_bootstrap_draw_checks.R already built
 # (lbd_dat, lbd_spec) so the full re-estimation chain (PPML + Harvey warm
 # start) that paper_run_mbb_draws dispatches per draw in production runs
 # identically under serial dispatch and the mclapply chunking cores=2 uses.

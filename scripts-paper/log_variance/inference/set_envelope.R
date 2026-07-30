@@ -135,8 +135,7 @@ logvar_endpoint_envelope <- function(draws, full,
                                        PAPER_ANALYSIS_CONTRACT$inference$nominal_alpha,
                                      min_reps = boot_min_reps(nrow(draws$lower)),
                                      stability =
-                                       PAPER_INFERENCE_SEARCH_CONTROL$
-                                         logvar_endpoint$stability_share) {
+                                       PAPER_ANALYSIS_CONTRACT$inference$stability_share) {
   stopifnot(
     identical(dim(draws$lower), dim(draws$upper)),
     identical(dim(draws$lower_status), dim(draws$lower)),
@@ -162,8 +161,7 @@ logvar_simultaneous_critical <- function(draws, full,
                                            PAPER_ANALYSIS_CONTRACT$inference$nominal_alpha,
                                          min_reps = boot_min_reps(nrow(draws$lower)),
                                          stability =
-                                           PAPER_INFERENCE_SEARCH_CONTROL$
-                                             logvar_endpoint$stability_share) {
+                                           PAPER_ANALYSIS_CONTRACT$inference$stability_share) {
   b <- nrow(draws$lower)
   root <- rep(0, b)
   # same both/all-bounded pool logic as the two-sided branch above.

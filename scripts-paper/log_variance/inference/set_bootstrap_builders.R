@@ -55,16 +55,20 @@ logvar_set_boot_builders <- function(
 
 # tau = 0 point diagnostic: bootstrap SD of the point draws against each
 # estimator's analytic SE, printed as a sanity ratio and returned for the
-# diagnostics CSV.
+# diagnostics CSV. The scale is taken from the authoritative point field over
+# the draws its own status calls bounded, never from a compatibility mirror.
 logvar_boot_tau0_diagnostics <- function(
   ests, collected, se_obj, se_type, spec,
-  digits = PAPER_REPORTING_CONTROL$precision$console_significant
+  digits = PAPER_REPORTING_CONTROL$precision$console_significant,
+  tau0_slot = 1L
 ) {
   tau0 <- lapply(ests, function(est) {
-    sd_boot <- apply(collected[[est]][[1]]$upper, 2, function(v) {
-      ok <- is.finite(v)
-      if (sum(ok) >= 2L) robust_scale(v[ok]) else NA_real_
-    })
+    cell <- collected[[est]][[tau0_slot]]
+    bounded <- cell$point_status == PAPER_ENDPOINT_STATUS[["bounded"]]
+    sd_boot <- stats::setNames(vapply(seq_along(spec$coefs), function(j) {
+      values <- cell$point[bounded[, j], j]
+      if (length(values) >= 2L) robust_scale(values) else NA_real_
+    }, numeric(1)), spec$coefs)
     se_df <- se_obj[[est]]$se$point
     se_an <- stats::setNames(se_df[[se_type[[est]]]], se_df$coef)[spec$coefs]
     message(sprintf(

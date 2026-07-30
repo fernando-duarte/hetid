@@ -75,6 +75,7 @@ skip <- .test$skip
 paper_source_once(paper_path("tests", "inference", "set_envelope_checks.R"))
 paper_source_once(paper_path("tests", "inference", "set_bootstrap_collection_checks.R"))
 paper_source_once(paper_path("tests", "inference", "set_bootstrap_draw_checks.R"))
+paper_source_once(paper_path("tests", "inference", "mean_set_bootstrap_checks.R"))
 paper_source_once(paper_path(
   "tests", "inference", "bootstrap_legacy_characterization_helpers.R"
 ))

@@ -39,7 +39,27 @@ check(
   !identical(gate_error, "no error") && grepl("fixture-over", gate_error, fixed = TRUE)
 )
 
+# The tau = 0 slot adds the authoritative point fields to the same cell. The
+# gate must keep pooling only the two mirrored sides, so its share is unmoved by
+# their presence: that invariance is the whole reason the mirrors are retained.
+gate_point_cell <- function(n_failed, n_b) {
+  cell <- gate_cell(n_failed, n_b)
+  c(cell, list(point = cell$lower, point_status = cell$lower_status))
+}
+gate_point_cells <- logvar_boot_failure_gate(
+  list(est = list(gate_point_cell(gate_under_n, gate_n_b))),
+  "est", "fixture-point"
+)
+check(
+  "the failure gate reads the tau=0 slot from its mirrors alone",
+  identical(
+    unname(gate_point_cells[["est"]][1L, ]),
+    unname(gate_under_cells[["est"]][1L, ])
+  )
+)
+
 rm(
   gate_limit, gate_cell, gate_n_b, gate_under_n, gate_over_n,
-  gate_under, gate_under_cells, gate_under_share, gate_over, gate_error
+  gate_under, gate_under_cells, gate_under_share, gate_over, gate_error,
+  gate_point_cell, gate_point_cells
 )

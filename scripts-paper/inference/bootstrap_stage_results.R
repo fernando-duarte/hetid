@@ -9,7 +9,6 @@ bootstrap_stage_mean_result <- function(
   alpha <- PAPER_ANALYSIS_CONTRACT$inference$nominal_alpha
   result <- mean_boot_results(
     stage$mean, set_id_mean_eq, alpha,
-    PAPER_INFERENCE_SEARCH_CONTROL,
     bootstrap_stage_mean_provenance(stage)
   )
   diagnostics <- set_id_boot_diagnostics(
@@ -72,8 +71,7 @@ bootstrap_stage_logvar_result <- function(
     )
   }, logical(1))))
   alpha <- PAPER_ANALYSIS_CONTRACT$inference$nominal_alpha
-  stability <- PAPER_INFERENCE_SEARCH_CONTROL$
-    logvar_endpoint$stability_share
+  stability <- PAPER_ANALYSIS_CONTRACT$inference$stability_share
   primary <- bootstrap_stage_envelopes(
     stage$volatility_primary, full, ids,
     layout, alpha, stability

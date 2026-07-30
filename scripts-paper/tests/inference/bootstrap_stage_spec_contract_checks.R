@@ -136,6 +136,19 @@ lag_pc_duplicate <- cbind(lag_pc, l.pc1_duplicate = lag_pc$l.pc1)
 names(lag_pc_duplicate)[[3L]] <- "l.pc1"
 duplicate_error <- try(bootstrap_stage_frame(mean_eq, lag_pc_duplicate), silent = TRUE)
 stopifnot(inherits(duplicate_error, "try-error"))
+# Moving blocks assume adjacent keys, so a gap in the mean frame must stop the
+# stage rather than resample across it.
+mean_eq_gapped <- mean_eq
+mean_eq_gapped$data$when <- c(1L, 2L, 4L)
+gap_error <- try(bootstrap_stage_frame(mean_eq_gapped, lag_pc), silent = TRUE)
+stopifnot(
+  inherits(gap_error, "try-error"),
+  isTRUE(grepl(
+    "gapless",
+    conditionMessage(attr(gap_error, "condition")),
+    fixed = TRUE
+  ))
+)
 PAPER_INFERENCE_SEARCH_CONTROL$bootstrap$fatal_failure_share <- 0.3
 bootstrap_stage_spec_validate(spec, bootstrap_stage_expected())
 stopifnot(identical(spec$design$failure_control$fatal_failure_share, 0.2))

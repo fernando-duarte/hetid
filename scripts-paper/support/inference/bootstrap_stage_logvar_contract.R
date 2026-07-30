@@ -42,6 +42,55 @@ logvar_set_boot_compat_spec <- function(spec) {
   fill(spec, "harvey_control", LOGVAR_HARVEY_CONTROL)
 }
 
+# The tau = 0 slot of the per-estimator tau axis. At tau = 0 the news set is a
+# single point, so that slot carries a direct evaluation at the point rather
+# than an endpoint search, and is the one slot whose record adds the point
+# fields. Producer and cache validator read the slot off the same tau axis.
+bootstrap_stage_logvar_tau0_slot <- function(taus) {
+  # NA on a tau axis that carries no zero, so a display-only axis collects the
+  # four searched fields and nothing more. The production invariant that the
+  # union axis starts at zero is asserted where it is established, in
+  # logvar_set_boot_draw and bootstrap_stage_display_layout, not re-litigated
+  # here: this collector is also used on partial axes.
+  match(0, taus)
+}
+
+bootstrap_stage_logvar_cell_fields <- function(tau_index, taus) {
+  fields <- c("lower", "upper", "lower_status", "upper_status")
+  slot <- bootstrap_stage_logvar_tau0_slot(taus)
+  if (identical(as.integer(tau_index), slot)) {
+    fields <- c(fields, "point", "point_status")
+  }
+  fields
+}
+
+# A point cannot diverge, so "unbounded" is an implementation error here; the
+# value is present exactly when the status is bounded.
+bootstrap_stage_cache_point_values_ok <- function(value, status) {
+  bounded <- status == PAPER_ENDPOINT_STATUS[["bounded"]]
+  !any(status == PAPER_ENDPOINT_STATUS[["unbounded"]]) &&
+    !any(is.nan(value)) &&
+    all(is.finite(value[bounded])) &&
+    all(is.na(value[!bounded]))
+}
+
+# The two searched sides of the tau = 0 slot are exact copies of the point, and
+# nothing may weaken that to an equality tolerance: the mirrors exist only so
+# the pooled failure gate reads the slot unchanged. `shape_ok(value, type)`
+# applies whichever per-field shape rule the calling layer already uses.
+bootstrap_stage_logvar_point_ok <- function(cell, shape_ok) {
+  shape_ok(cell$point, "double") &&
+    shape_ok(cell$point_status, "character") &&
+    bootstrap_stage_cache_status_ok(
+      cell$point_status, unname(PAPER_ENDPOINT_STATUS)
+    ) &&
+    bootstrap_stage_cache_point_values_ok(cell$point, cell$point_status) &&
+    identical(cell$lower, cell$point) &&
+    identical(cell$upper, cell$point) &&
+    identical(cell$lower_status, cell$point_status) &&
+    identical(cell$upper_status, cell$point_status)
+}
+
 bootstrap_stage_cache_side_values_ok <- function(value, status, side) {
   stopifnot(side %in% c("lower", "upper"))
   bounded <- status == PAPER_ENDPOINT_STATUS[["bounded"]]

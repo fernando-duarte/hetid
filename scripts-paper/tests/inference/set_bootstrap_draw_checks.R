@@ -63,6 +63,57 @@ check(
     }, logical(1)))
   }, logical(1)))
 )
+# At tau = 0 the news set is the single point b_point, so that slot is one direct
+# evaluation there: point is authoritative, the two sides are exact copies kept
+# only for the pooled failure gate, and a point cannot diverge.
+lbd_t0 <- lapply(lbd_draw, `[[`, 1L)
+check(
+  "the tau=0 slot carries a point whose two mirrors are bitwise identical",
+  all(vapply(lbd_t0, function(r) {
+    length(r$point) == 3L && length(r$point_status) == 3L &&
+      identical(r$lower, r$point) && identical(r$upper, r$point) &&
+      identical(r$lower_status, r$point_status) &&
+      identical(r$upper_status, r$point_status)
+  }, logical(1)))
+)
+check(
+  "every tau=0 point is directly evaluated and no tau=0 status is unbounded",
+  all(vapply(lbd_t0, function(r) {
+    all(r$point_status %in% lbd_allowed) &&
+      !any(r$point_status == "unbounded") &&
+      all(r$point_status == "bounded") && all(is.finite(r$point))
+  }, logical(1)))
+)
+# Pin the seam the direct evaluation rests on: fit_at_b returns its estimates in
+# $coef on the spec's coefficient axis, and the stored point is that evaluation
+# rather than a re-derived or stored-at-construction quantity.
+lbd_compat <- logvar_set_boot_compat_spec(lbd_spec)
+lbd_est <- estimate_set_id_system(lbd_dat, lbd_compat)
+lbd_rows <- bootstrap_stage_logvar_rows(
+  lbd_dat, lbd_est, lbd_compat, lbd_compat$key_col
+)
+lbd_pcr <- paper_normalize_model_matrix(
+  lbd_rows$pc_data, lbd_compat$pc_preprocessing
+)
+colnames(lbd_pcr) <- lbd_compat$pc_cols
+lbd_ppml_obj <- lbd_compat$builders$ppml(
+  lbd_rows$w1, lbd_rows$w2, lbd_pcr, lbd_rows$key, lbd_est$point0$theta, list()
+)
+lbd_ppml_fit <- lbd_ppml_obj$fit_at_b(lbd_est$point0$theta)
+check(
+  "fit_at_b returns $coef on the spec's coefficient axis, in spec order",
+  identical(lbd_ppml_obj$coef_labels, lbd_spec$coefs) &&
+    identical(names(lbd_ppml_fit$coef), lbd_spec$coefs) &&
+    logvar_fit_ok(lbd_ppml_fit)
+)
+# fit_at_b and the constructor's stored point fit are not interchangeable: the
+# constructor evaluates without the fallback-start ladder, so on this fixture the
+# two disagree in the last bit (5.6e-16). fit_at_b is what the published
+# full-sample point column uses, so it is what the draws must record.
+check(
+  "the stored tau=0 point is that direct evaluation, coefficient for coefficient",
+  identical(lbd_draw$ppml[[1]]$point, unname(lbd_ppml_fit$coef))
+)
 check(
   "harvey warm-starts from the draw PPML fit (not cold-start mass-failure)",
   !any(unlist(lapply(lbd_draw$ppml, `[`, c("lower_status", "upper_status"))) != "failed") ||
@@ -86,10 +137,33 @@ check(
     }, logical(1)))
   }, logical(1)))
 )
+# a rank-deficient tau = 0 system leaves no news point to evaluate at all
+check(
+  "a point-deficient draw's tau=0 slot is unreliable, never unbounded",
+  all(vapply(lapply(lbd_draw_deficient, `[[`, 1L), function(r) {
+    identical(r$point_status, rep("unreliable", 3L)) &&
+      all(is.na(r$point)) && identical(r$lower, r$point) &&
+      identical(r$lower_status, r$point_status)
+  }, logical(1)))
+)
 lbd_collected <- logvar_set_boot_collect(list(lbd_draw, "boom"), lbd_spec)
 check(
   "collect stacks real logvar_set_boot_draw output into B x p matrices",
   identical(dim(lbd_collected$ppml[[1]]$lower), c(2L, 3L)) &&
     identical(colnames(lbd_collected$harvey[[1]]$upper), lbd_spec$coefs) &&
     all(lbd_collected$ppml[[1]]$lower_status[2, ] == "failed")
+)
+check(
+  "the tau=0 mirrors survive collection bitwise, point fields and all",
+  identical(lbd_collected$ppml[[1]]$lower, lbd_collected$ppml[[1]]$point) &&
+    identical(lbd_collected$ppml[[1]]$upper, lbd_collected$ppml[[1]]$point) &&
+    identical(
+      lbd_collected$harvey[[1]]$lower_status,
+      lbd_collected$harvey[[1]]$point_status
+    ) &&
+    identical(
+      lbd_collected$harvey[[1]]$upper_status,
+      lbd_collected$harvey[[1]]$point_status
+    ) &&
+    !any(lbd_collected$ppml[[1]]$point_status == "unbounded")
 )

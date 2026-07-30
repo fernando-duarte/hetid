@@ -1,5 +1,5 @@
 source(file.path("scripts-paper", "config", "paths.R"))
-PAPER_ENDPOINT_STATUS <- c(bounded = "bounded", failed = "failed")
+PAPER_ENDPOINT_STATUS <- c(bounded = "bounded", unreliable = "unreliable", failed = "failed")
 PAPER_INFERENCE_SEARCH_CONTROL <- list(tau_star = list(bootstrap_bisection_iterations = 4L))
 PAPER_ANALYSIS_CONTRACT <- list(
   model = list(
@@ -30,11 +30,15 @@ paper_source_once(paper_path("log_variance", "inference", "set_bootstrap_core.R"
 paper_source_once(paper_path("log_variance", "inference", "set_bootstrap_draw.R"))
 paper_source_once(paper_path("log_variance", "inference", "set_bootstrap_builders.R"))
 paper_source_once(paper_path("inference", "bootstrap_stage_draw.R"))
-coef_interval_tables_from_quadratic <- function(qs, beta1r, beta2r) {
-  list(
-    beta1 = data.frame(coef = names(beta1r), set_lower = 0, set_upper = 1, status = "bounded"),
-    theta = data.frame(coef = rownames(beta2r), set_lower = 0, set_upper = 1, status = "bounded")
+stub_set_cells <- function(coef) {
+  data.frame(
+    coef = coef, set_lower = 0,
+    set_upper = 1, status = "bounded", lower_status = "bounded",
+    upper_status = "bounded"
   )
+}
+coef_interval_tables_from_quadratic <- function(qs, beta1r, beta2r) {
+  list(beta1 = stub_set_cells(names(beta1r)), theta = stub_set_cells(rownames(beta2r)))
 }
 coef_interval_tables_widened <- coef_interval_tables_from_quadratic
 tau_quadratic_system <- function(gamma, tau, moments) list(tau = tau)

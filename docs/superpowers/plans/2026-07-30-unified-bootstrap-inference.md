@@ -695,12 +695,22 @@ catch this either, because its reachability scan excludes `/tests/`
 `logvar_set_boot_prepare` checks — joined `pc_cols` and row count, join-carries-lagged-values-by-`qtr`,
 and the gapless `stopifnot` firing on a `qtr` gap — and they run nowhere.
 
-Fix: move those three checks into the live `set_bootstrap_collection_checks.R`, delete
-`set_bootstrap_core_checks.R`, and update the stale comment at `set_bootstrap_cores_checks.R:3` to
-name `set_bootstrap_draw_checks.R`, which is what actually builds the `lbd_dat`/`lbd_spec` fixture
-that file reuses by lexical scoping. The comment update is not cosmetic: the topology gate's
-stale-basename scan (`topology_reference_checks.R:37-60`) fails if a comment names a `.R` basename
-that no longer exists.
+**Correction, established after the fact:** those three checks are **not** lost coverage, and must
+not be rescued. `logvar_set_boot_prepare` does not exist in production — not on this branch and not
+on `main`. `git grep` finds the name in exactly one place in the whole repository: the dead test
+file itself. The function was removed from production and the test file was orphaned along with it,
+so the checks were dead tests of dead code. Both the mapping pass and my own first instruction here
+were wrong to call this lost coverage; the subject is gone, so there is nothing to cover.
+
+Fix: **delete** `set_bootstrap_core_checks.R` outright, and update the stale comment at
+`set_bootstrap_cores_checks.R:3` to name `set_bootstrap_draw_checks.R`, which is what actually builds
+the `lbd_dat`/`lbd_spec` fixture that file reuses by lexical scoping. The comment update is not
+cosmetic: the topology gate's stale-basename scan (`topology_reference_checks.R:37-60`) fails if a
+comment names a `.R` basename that no longer exists.
+
+The general lesson, worth keeping: an unreferenced test file is evidence about the *subject*, not
+only about the test. Check whether the thing under test still exists before treating orphaned
+assertions as coverage to preserve.
 
 So the new `tests/inference/endpoint_targets_checks.R` must be **either** registered in
 `suite_manifest` with a fresh `id` and `path` **or** sourced from an already-registered file.
