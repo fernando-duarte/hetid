@@ -9,7 +9,7 @@ text_files <- list.files(
 removed_patterns <- c(
   "run_all[.]R",
   "scripts/utils/tests/(test_logvar|logvar)",
-  "scripts-paper/(?!run_pipeline[.]R)[a-z0-9_]+[.]R"
+  "scripts-paper/(?!(run_pipeline|reset_pipeline_state)[.]R)[a-z0-9_]+[.]R"
 )
 for (file in text_files) {
   text <- readLines(file, warn = FALSE)
@@ -72,9 +72,10 @@ while (length(frontier)) {
   frontier <- setdiff(children, reachable)
   reachable <- unique(c(reachable, frontier))
 }
-# test-only definitions plus the standalone quoted-numbers regenerator, none
-# of which run_pipeline.R ever reaches
+# test-only definitions, the standalone reset entrypoint, and the standalone
+# quoted-numbers regenerator, none of which run_pipeline.R ever reaches
 inactive <- c(
+  paper_path("reset_pipeline_state.R"),
   paper_path(
     "log_variance",
     "tables",

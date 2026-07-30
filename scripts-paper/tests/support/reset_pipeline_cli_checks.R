@@ -1,6 +1,28 @@
 # Subprocess test for the reset_pipeline_state.R CLI entrypoint.
+# Backup/restore guards against destructive test deleting real tracked files.
 
 local({
+  output_dir <- paper_path("output")
+  backup_dir <- tempfile("reset_cli_backup_")
+  backup_exists <- dir.exists(output_dir)
+
+  if (backup_exists) {
+    dir.create(backup_dir, recursive = TRUE, showWarnings = FALSE)
+    file.copy(output_dir, backup_dir, recursive = TRUE)
+  }
+
+  restore_output <- function() {
+    unlink(output_dir, recursive = TRUE)
+    if (backup_exists) {
+      file.copy(file.path(backup_dir, "output"), file.path(repo_root, "scripts-paper"),
+        recursive = TRUE
+      )
+    }
+    unlink(backup_dir, recursive = TRUE)
+  }
+
+  on.exit(restore_output(), add = TRUE)
+
   reset_cli_output <- function(arguments = character(0)) {
     system2(
       file.path(R.home("bin"), "Rscript"),
@@ -29,6 +51,13 @@ local({
       logical(1)
     ))
   )
+
+  if (backup_exists) {
+    unlink(output_dir, recursive = TRUE)
+    file.copy(file.path(backup_dir, "output"), file.path(repo_root, "scripts-paper"),
+      recursive = TRUE
+    )
+  }
 
   keep_tracked_output <- reset_cli_output("--keep-tracked")
   check(
