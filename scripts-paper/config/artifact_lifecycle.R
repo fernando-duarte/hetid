@@ -7,26 +7,21 @@ paper_source_once(paper_path("config", "logvar_estimators.R"))
 
 PAPER_CONDITIONAL_ROUTE_SCHEMA_VERSION <- "1.1.0"
 
-cleanup_conditional_artifacts <- function(status) {
-  if (!status %in% PAPER_CONDITIONAL_ARTIFACT_STATUSES) {
-    stop(
-      sprintf("Refusing to clean nonconditional status: %s", status),
-      call. = FALSE
-    )
-  }
-  records <- artifact_records_by_status(status)
+.cleanup_artifact_rows <- function(records) {
   paths <- records$new_path
   existed <- file.exists(paths)
   unlink(paths)
   gone <- !file.exists(paths)
   if (!all(gone)) {
     stop(
-      sprintf("Could not remove %s artifacts", status),
+      sprintf(
+        "Could not remove artifact(s): %s",
+        paste(records$id[!gone], collapse = ", ")
+      ),
       call. = FALSE
     )
   }
   list(
-    status = status,
     artifacts = data.frame(
       id = records$id,
       path = paths,
@@ -38,6 +33,35 @@ cleanup_conditional_artifacts <- function(status) {
     n_deleted = sum(existed & gone),
     all_absent = all(gone)
   )
+}
+
+cleanup_conditional_artifacts <- function(status) {
+  if (!status %in% PAPER_CONDITIONAL_ARTIFACT_STATUSES) {
+    stop(
+      sprintf("Refusing to clean nonconditional status: %s", status),
+      call. = FALSE
+    )
+  }
+  records <- artifact_records_by_status(status)
+  c(list(status = status), .cleanup_artifact_rows(records))
+}
+
+cleanup_artifacts_by_ids <- function(ids) {
+  unknown <- setdiff(ids, artifact_manifest$id)
+  if (length(unknown)) {
+    stop(
+      sprintf(
+        "Unknown artifact ID(s): %s",
+        paste(unknown, collapse = ", ")
+      ),
+      call. = FALSE
+    )
+  }
+  records <- artifact_manifest[
+    match(ids, artifact_manifest$id), ,
+    drop = FALSE
+  ]
+  c(list(ids = ids), .cleanup_artifact_rows(records))
 }
 
 assert_artifacts_absent <- function(status) {
