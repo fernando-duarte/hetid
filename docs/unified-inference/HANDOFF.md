@@ -94,6 +94,24 @@ nearly singular produce arbitrarily large values, so the standard deviation does
 grows while the MAD does. Measured here, the ratio is **11.3, 19.5 and 10.3** for the three news
 coefficients against **1.02 to 1.14** for the point-identified block. See section 8.
 
+### What the retired `tau=0` search was actually doing
+
+Worth recording, because it makes concrete why searching that slot was wrong rather than merely
+redundant. At `tau=0` the news set is one point, so the endpoint search built its grid as
+`seq(lo, hi, length.out = 41)` with `lo == hi` — **41 identical values per axis**, hence 1,681
+identical grid rows, coarsened to 841, every one of them the same point. The scan therefore
+resolved to one real model fit and 840 cache hits. The fits came from the polish stage instead: five
+coefficients times two sides times up to four starts, each an SLSQP run whose line search perturbs
+the news vector and so misses the cache on every step. That is on the order of **80 to 400 real
+model fits per draw per estimator**, against a ceiling of 8,000.
+
+The direct evaluation replaces all of it with **one** fit for the quasi-maximum-likelihood
+estimator and **zero** for Harvey, which reads the fit its constructor already performed. Across
+10,000 draws and two estimators that removes roughly **1.6 to 8 million model fits** from the stage,
+along with the grid construction and an O(m²) nearest-neighbor tour over 841 copies of a single
+point. The reported gain in the `tau=0` column is statistical, but the cost of the thing it replaced
+was not small.
+
 ### The `OLS` column — unchanged
 
 Newey–West t-statistics with four lags, both panels. Untouched.

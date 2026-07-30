@@ -271,6 +271,37 @@ feeds the diagnostics cross-check): `stoye_critical`, `im_critical`, `pbvn_le_ge
 critical value is emitted **alongside** the bootstrap one in the Panel A diagnostics CSV as a
 cross-check on the normal approximation. Exactly one live path reaches a published cell.
 
+## Recommended follow-up, deliberately not done here
+
+**Extract the draw gate ladder into a third helper.** `point_t_statistic` and `endpoint_side_stat`
+share their gate arithmetic exactly — the `ok` mask, the non-failed denominator, the bounded
+fraction, the `robust_scale` call under the same two-finite-values guard, and the three-rung ladder
+— while differing only in the reason wording and in the `inward_sign`/`z` pair that makes a column a
+*side*. So the shared concept is "one column of bootstrap draws with statuses, gated", and the honest
+factoring is a third function both call, with the reason nouns parameterized so the published
+`reason` strings stay as they are:
+
+    endpoint_draw_gate(vals, status, anchor, min_reps, stability,
+                       anchor_noun = "endpoint", scale_noun = "endpoint")
+
+That would also make `gate == is.na(reason)` an invariant, closing a combination that currently
+returns `reason = NA` on both a pass and a non-finite anchor — reachable only if a full-sample
+endpoint were non-finite while its status said bounded, which both producers appear to preclude.
+
+**Why it is not done on this branch.** `support/identification` is a hashed directory, so editing
+either file discards the 10,000-draw cache. The bundling window was the wipe, and by the time this
+was recommended the from-scratch run had already started. Applying it afterwards would leave the
+committed artifacts produced by different code than the committed source, which is exactly what
+acceptance check 4 exists to catch; applying it now would mean paying eight hours twice for a change
+with no behavioral effect on a path already verified to 2.2e-16. Take it on the next branch that has
+to rebuild the cache for its own reasons.
+
+Two smaller items in the same category, both recorded rather than attempted because they change files
+whose hash governs the cache: a per-estimator `published_point_fit()` accessor, so each estimator's
+published recipe lives with the estimator instead of in a consumer that branches on field presence;
+and a mean-side anchor symmetric with the volatility one, which would let the mean panel assert its
+statistic frame against something other than itself.
+
 ## External review: what was rejected, and why
 
 Recorded so these are not re-litigated. Both reviewers lacked the paper brief, which is where three
