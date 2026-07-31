@@ -22,8 +22,6 @@ coef_interval_tables_from_quadratic <- function(qs, beta1r, beta2r) {
 }
 coef_interval_tables_widened <- coef_interval_tables_from_quadratic
 tau_quadratic_system <- function(gamma, tau, moments) list(tau = tau)
-sweep_fixed_gamma <- function(...) data.frame(tau = c(0, 0.1))
-tau_star_fixed <- function(...) list(tau_star = 0.1, capped = FALSE)
 logvar_engine_set_at_tau <- function(...) {
   list(schema = data.frame(
     coef = "c1", lower = 0, upper = 1,

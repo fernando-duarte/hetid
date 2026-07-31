@@ -1,6 +1,10 @@
 # 2: the mean branch records per-side endpoint statuses and an authoritative
 # tau = 0 point_status matrix, so a schema-1 payload can no longer be read.
-BOOTSTRAP_STAGE_CACHE_SCHEMA <- 2L
+# 3: the per-draw tau-star search is gone, so tau_star_draws and n_capped leave
+# the mean collection. Bump this whenever the field list in
+# mean_boot_collection_validate changes: no test pins the two together, and a
+# stale number only warns and silently reruns the whole bootstrap.
+BOOTSTRAP_STAGE_CACHE_SCHEMA <- 3L
 BOOTSTRAP_STAGE_CACHE_FIELDS <- c(
   "anchor", "mean", "volatility_primary",
   "volatility_primary_n_failed", "volatility_sensitivity",
