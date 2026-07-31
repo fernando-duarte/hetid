@@ -133,7 +133,6 @@ paper_source_once(paper_path("log_variance", "tables", "render_ppml_table.R"))
 paper_source_once(paper_path("log_variance", "tables", "render_harvey_table.R"))
 paper_source_once(paper_path("log_variance", "tables", "render_panels.R"))
 # Structural inference follows the unified stage that creates set_id_boot.
-paper_source_once(paper_path("mean_equation", "tables", "render_structural_equation_table.R"))
 # The inference variant retains the combined panels and labels while threading
 # the bootstrap envelope beneath the PPML and Harvey set cells.
 paper_source_once(paper_path("log_variance", "tables", "render_inference_panels.R"))

@@ -13,6 +13,5 @@
   "harvey_fitted_volatility_figure|fitted_volatility|harvey",
   "lad_fitted_volatility_figure|fitted_volatility|lad",
   "log_variance_panels_table|logvar_panels|conservative",
-  "log_variance_inference_table|logvar_panels|inference",
-  "structural_equation_inference_table|structural_equation|inference"
+  "log_variance_inference_table|logvar_panels|inference"
 )

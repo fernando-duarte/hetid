@@ -2,7 +2,7 @@
 # row labels, the OLS / tau = 0 / display-tau columns, the tau column headers,
 # and the interior \midrule positions, from the frozen mean-set estimate
 # (estimate_identified_set.R) and the unified bootstrap stage.
-# Shared by render_structural_equation_table.R (the standalone structural table)
+# Builds Panel A of the combined inference table (render_combined_inference_table.R).
 # and render_combined_inference_table.R (Panel A of the merged table) so the two
 # cannot drift on formatting. No side effects.
 

@@ -12,7 +12,6 @@ source_offset <- function(path) {
 }
 
 stage <- "inference\", \"run_bootstrap_stage.R"
-structural <- "mean_equation\", \"tables\", \"render_structural_equation_table.R"
 logvar <- "log_variance\", \"tables\", \"render_inference_panels.R"
 combined <- "log_variance\", \"tables\", \"render_combined_inference_table.R"
 # the three deferred publications: each reports a bootstrap tau = 0 statistic,
@@ -32,8 +31,7 @@ stopifnot(
     pipeline_text,
     fixed = TRUE
   ),
-  source_offset(stage) < source_offset(structural),
-  source_offset(structural) < source_offset(logvar),
+  source_offset(stage) < source_offset(logvar),
   source_offset(logvar) < source_offset(combined),
   all(vapply(deferred, function(path) {
     source_offset(stage) < source_offset(path)
@@ -81,7 +79,6 @@ stopifnot(
       "log_variance/tables/render_ppml_table.R",
       "log_variance/tables/render_harvey_table.R",
       "log_variance/tables/render_panels.R",
-      "mean_equation/tables/render_structural_equation_table.R",
       "log_variance/tables/render_inference_panels.R",
       "log_variance/tables/render_combined_inference_table.R"
     )
