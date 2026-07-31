@@ -8,7 +8,7 @@
 # inference panels. Emits only the tabular in a \begingroup that scopes the font;
 # the paper supplies the float, caption, notes, and the dual \label. Writes
 # structural_var_inference.tex + standalone. Run via run_pipeline.R after
-# render_inference_panels.R (needs set_id_mean_eq, set_id_boot, log_var_eq_set_boot).
+# the estimator pages (needs set_id_mean_eq, set_id_boot, log_var_eq_set_boot).
 
 paper_source_once(paper_path("support", "latex", "table_pipeline.R"))
 paper_source_once(paper_path("mean_equation", "tables", "structural_table_parts.R"))
@@ -18,8 +18,12 @@ paper_source_once(paper_path("log_variance", "tables", "table_formatting.R"))
 panel_a <- structural_equation_table_parts(set_id_mean_eq, set_id_boot, n_pc)
 
 # Panel B: PPML log-variance with the set-endpoint bootstrap envelope beneath
-# each tau > 0 set cell, then drop the blank R^2 row (PPML has no R^2) without
-# disturbing the N row that follows it.
+# each tau > 0 set cell. The R^2 row stays and renders as "--": PPML has no
+# R-squared, and saying so costs one row of dashes. Excising the row instead
+# meant locating it by label, asserting it appeared exactly once, and rebuilding
+# every column around the surviving indices -- machinery that would have to be
+# repeated for each estimator whose R-squared is absent, and that silently
+# reshapes the row set the rule positions below are written against.
 panel_b <- logvar_ppml_table_parts(
   paper_logvar_result("ppml"),
   set_id_mean_eq$tau_display,
@@ -28,11 +32,8 @@ panel_b <- logvar_ppml_table_parts(
   envelope = log_var_eq_set_boot$ppml,
   point_stat = logvar_boot_point_stat(log_var_eq_set_boot, "ppml")
 )
-r2_row <- which(panel_b$rows == "$R^2$")
-stopifnot(length(r2_row) == 1L)
-keep_b <- setdiff(seq_along(panel_b$rows), r2_row)
-rows_b <- panel_b$rows[keep_b]
-columns_b <- lapply(panel_b$columns, function(col) col[keep_b])
+rows_b <- panel_b$rows
+columns_b <- panel_b$columns
 
 # Both panels share the identical OLS / tau column grid; a mismatch is a wiring
 # bug, so fail loud rather than emit a misaligned header.
@@ -92,6 +93,6 @@ cat(sprintf(
 ))
 
 rm(
-  panel_a, panel_b, r2_row, keep_b, rows_b, columns_b, headers, n_col,
+  panel_a, panel_b, rows_b, columns_b, headers, n_col,
   panel_body, panel_head, combined_table
 )

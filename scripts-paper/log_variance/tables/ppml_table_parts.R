@@ -25,11 +25,15 @@ logvar_se_note_caveat <- function(set_endpoint_inference = FALSE) {
       "the set cells."
     ))
   }
+  # This variant deliberately shows sets without intervals. It must not say the
+  # endpoint inference is deferred: it exists, and the inference variant of this
+  # table reports it. Saying otherwise tells a reader the work was never done.
   paste(
     tau_zero,
     set_cols,
-    "No interval is reported beneath them; moving-block-bootstrap set-endpoint",
-    "uncertainty is deferred."
+    "No interval is reported beneath them in this variant; the moving-block",
+    "bootstrap confidence intervals for the set endpoints are reported in the",
+    "inference variant of this table."
   )
 }
 

@@ -60,7 +60,7 @@ combined_quad_share <- share_quad(
   100 * drop(beta1r_e %*% s_e %*% beta1r_e) / var_c
 )
 
-# row-order guards, as in render_structural_equation_table.R
+# row-order guards, as in structural_table_parts.R
 stopifnot(
   identical(
     set_id_mean_eq$theta_table$coef,

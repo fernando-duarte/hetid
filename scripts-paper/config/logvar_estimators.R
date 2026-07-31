@@ -54,7 +54,7 @@ PAPER_LOGVAR_PRIMARY_ESTIMATORS <- list(
       )
     ),
     artifacts = c(
-      table = "log_variance_ppml_table",
+      table = "structural_var_estimators_table",
       bounds = "ppml_bounds_figure",
       fitted_volatility =
         "ppml_fitted_volatility_figure"
@@ -80,7 +80,7 @@ PAPER_LOGVAR_PRIMARY_ESTIMATORS <- list(
       )
     ),
     artifacts = c(
-      table = "log_variance_harvey_table",
+      table = "structural_var_estimators_table",
       bounds = "harvey_bounds_figure",
       fitted_volatility =
         "harvey_fitted_volatility_figure"
@@ -110,7 +110,7 @@ PAPER_LOGVAR_ESTIMATOR_EXTENSIONS <- list(
       )
     ),
     artifacts = c(
-      table = "log_variance_lad_table",
+      table = "structural_var_estimators_table",
       bounds = "lad_bounds_figure",
       fitted_volatility =
         "lad_fitted_volatility_figure"

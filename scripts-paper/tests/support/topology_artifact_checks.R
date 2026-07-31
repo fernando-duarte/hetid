@@ -48,6 +48,26 @@ if (!identical(artifact_manifest$new_path, expected_new)) {
     "Artifact paths disagree with manifest-owned groups"
   )
 }
+# A producer names the file or directory that writes the artifact, so it has to
+# resolve. Deleting a renderer without retiring its code leaves the manifest
+# asserting that a file which no longer exists still produces something, and the
+# code-table guards in artifact_manifest_data.R cannot see that -- the code is
+# still defined and still cited, it just points at nothing. Consumers are exempt
+# because several are deliberately prose ("paper", "diagnostics only; no pipeline
+# stage reads it"), with no path to resolve.
+producer_paths <- unique(unlist(
+  strsplit(artifact_manifest$producer, ";", fixed = TRUE)
+))
+absent_producers <- producer_paths[
+  !file.exists(file.path(paper_root, producer_paths))
+]
+if (length(absent_producers)) {
+  record_problem(
+    "Producers name paths that do not exist: %s",
+    paste(absent_producers, collapse = ", ")
+  )
+}
+
 variant_rows <- nzchar(artifact_manifest$family)
 pairs <- paste(
   artifact_manifest$family[variant_rows],

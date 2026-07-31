@@ -138,11 +138,12 @@ ptbl_note_fixture <- list(
   coverage_audit = list(meta = list(grid_cap = 2L, fit_budget = 3L))
 )
 ptbl_notes <- paste(
-  build_ppml_table_notes(
+  build_ppml_notes(
     ptbl_note_fixture,
     0.05,
     1L,
     2L,
+    include_ordering = FALSE,
     se_type = PAPER_REPORTING_CONTROL$ppml$se_type,
     se_hac_lags = PAPER_REPORTING_CONTROL$ppml$hac_lags
   ),

@@ -86,6 +86,6 @@ local({
   check(
     "keep-tracked drops tracked .tex table rows and keeps gitignored .pdf rows",
     !("summary_statistics_table" %in% kept) &&
-      "log_variance_ppml_standalone_pdf" %in% kept
+      "structural_var_estimators_standalone_pdf" %in% kept
   )
 })

@@ -1,8 +1,11 @@
-# Notes clause for the _inference variant of the combined log-variance panels
-# (render_inference_panels.R): the moving-block bootstrap set-inference
-# disclosure appended after each estimator's own panel notes (ppml_captions.R
-# and harvey_caption.R). Definitions only; reads log_var_eq_set_boot (unified
-# bootstrap stage) and the contract's stability share at call time.
+# Notes clause for the per-estimator document pages whose tau > 0 cells carry a
+# bootstrap confidence row: the moving-block set-inference disclosure, appended
+# after that estimator's own panel notes (ppml_captions.R and harvey_caption.R).
+# It belongs to every page that threads an envelope and to no other -- the
+# log-OLS and median pages are point identified or take no envelope, so a page
+# without an interval row must not carry an explanation of one.
+# Definitions only; reads log_var_eq_set_boot (unified bootstrap stage) and the
+# contract's stability share at call time.
 
 paper_source_once(paper_path("support", "reporting", "cells.R"))
 

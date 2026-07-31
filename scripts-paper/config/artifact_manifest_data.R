@@ -27,12 +27,6 @@ PAPER_CONDITIONAL_ARTIFACT_STATUSES <- setdiff(
 .artifact_producers <- c(
   a = "reports/build_descriptive_statistics.R",
   b = "mean_equation/diagnostics/heteroskedasticity/render_table.R",
-  c = "log_variance/tables/render_ppml_table.R",
-  d = "log_variance/tables/render_harvey_table.R",
-  e = "log_variance/tables/render_lad_table.R",
-  f = "log_variance/tables/render_panels.R",
-  g = "log_variance/tables/render_inference_panels.R",
-  h = "mean_equation/tables/render_structural_equation_table.R",
   i = "mean_equation/variance_shares/render_variance_share_table.R",
   j = "mean_equation/inference/compute_bounds_by_tau.R",
   k = "mean_equation/figures/render_projections.R",
@@ -45,7 +39,6 @@ PAPER_CONDITIONAL_ARTIFACT_STATUSES <- setdiff(
   s = "log_variance/diagnostics/joint_gmm/pipeline_driver.R",
   t = "log_variance/estimators/lad/run_sets.R",
   u = "log_variance/diagnostics/dynamics/run_gate.R",
-  v = "mean_equation/inference/spec_comparison.R",
   v = paste(
     "log_variance/diagnostics/dynamics/run_gate.R",
     "log_variance/extensions/egarch/run_route.R",
@@ -57,13 +50,13 @@ PAPER_CONDITIONAL_ARTIFACT_STATUSES <- setdiff(
   z = "run_pipeline.R",
   # single letters are exhausted; multi-character keys are exact-lookup-safe
   aa = "variance_bounds/quoted/run.R",
-  ab = "log_variance/tables/render_combined_inference_table.R"
+  ab = "log_variance/tables/render_combined_inference_table.R",
+  ae = "mean_equation/inference/spec_comparison.R",
+  ad = "log_variance/tables/render_estimator_pages.R"
 )
 .artifact_consumers <- c(
   A = "reports/descriptive_stats.tex",
   B = "paper",
-  C = "mean_equation/tables/render_structural_equation_table.R",
-  D = "log_variance/tables/render_inference_panels.R",
   E = "tests/diagnostics/joint_null",
   F = "tests/diagnostics/joint_gmm",
   G = "tables;tests",
@@ -79,12 +72,8 @@ PAPER_CONDITIONAL_ARTIFACT_STATUSES <- setdiff(
   # every table that reports a tau = 0 or tau > 0 inference statistic, in the
   # order run_pipeline.R publishes them after the bootstrap stage
   L = paste(
-    "log_variance/tables/render_ppml_table.R",
-    "log_variance/tables/render_harvey_table.R",
-    "log_variance/tables/render_panels.R",
-    "mean_equation/tables/render_structural_equation_table.R",
-    "log_variance/tables/render_inference_panels.R",
     "log_variance/tables/render_combined_inference_table.R",
+    "log_variance/tables/render_estimator_pages.R",
     sep = ";"
   )
 )
@@ -95,27 +84,12 @@ PAPER_CONDITIONAL_ARTIFACT_STATUSES <- setdiff(
   "heteroskedasticity_table|hetero_tests.tex|2|b|B|r",
   "heteroskedasticity_standalone_tex|hetero_tests_standalone.tex|2|b|B|r",
   "heteroskedasticity_standalone_pdf|hetero_tests_standalone.pdf|2|b|B|r",
-  "log_variance_ppml_table|log_var_eq.tex|2|c|B|r",
-  "log_variance_ppml_standalone_tex|log_var_eq_standalone.tex|2|c|B|r",
-  "log_variance_ppml_standalone_pdf|log_var_eq_standalone.pdf|2|c|B|r",
-  "log_variance_harvey_table|log_var_eq_harvey.tex|2|d|B|r",
-  "log_variance_harvey_standalone_tex|log_var_eq_harvey_standalone.tex|2|d|B|r",
-  "log_variance_harvey_standalone_pdf|log_var_eq_harvey_standalone.pdf|2|d|B|r",
-  "log_variance_lad_table|log_var_eq_lad_panel.tex|2|e|B|l",
-  "log_variance_lad_standalone_tex|log_var_eq_lad_panel_standalone.tex|2|e|B|l",
-  "log_variance_lad_standalone_pdf|log_var_eq_lad_panel_standalone.pdf|2|e|B|l",
-  "log_variance_panels_table|log_var_eq_panels.tex|2|f|B|r",
-  "log_variance_panels_standalone_tex|log_var_eq_panels_standalone.tex|2|f|B|r",
-  "log_variance_panels_standalone_pdf|log_var_eq_panels_standalone.pdf|2|f|B|r",
-  "log_variance_inference_table|log_var_eq_panels_inference.tex|2|g|B|r",
-  "log_variance_inference_standalone_tex|log_var_eq_panels_inference_standalone.tex|2|g|B|r",
-  "log_variance_inference_standalone_pdf|log_var_eq_panels_inference_standalone.pdf|2|g|B|r",
-  "structural_equation_inference_table|structural_eq_inference.tex|2|h|B|r",
-  "structural_equation_inference_standalone_tex|structural_eq_inference_standalone.tex|2|h|B|r",
-  "structural_equation_inference_standalone_pdf|structural_eq_inference_standalone.pdf|2|h|B|r",
   "structural_var_inference_table|structural_var_inference.tex|2|ab|B|r",
   "structural_var_inference_standalone_tex|structural_var_inference_standalone.tex|2|ab|B|r",
   "structural_var_inference_standalone_pdf|structural_var_inference_standalone.pdf|2|ab|B|r",
+  "structural_var_estimators_table|structural_var_estimators.tex|2|ad|B|r",
+  "structural_var_estimators_standalone_tex|structural_var_estimators_standalone.tex|2|ad|B|r",
+  "structural_var_estimators_standalone_pdf|structural_var_estimators_standalone.pdf|2|ad|B|r",
   "variance_share_table|var_share.tex|2|i|B|r",
   "variance_share_standalone_tex|var_share_standalone.tex|2|i|B|r",
   "variance_share_standalone_pdf|var_share_standalone.pdf|2|i|B|r",
@@ -132,9 +106,9 @@ PAPER_CONDITIONAL_ARTIFACT_STATUSES <- setdiff(
   "descriptive_figures|figures.pdf|4|a|A|r",
   "descriptive_report_tex|descriptive_stats.tex|5|a|B|r",
   "descriptive_report_pdf|descriptive_stats.pdf|5|a|B|r",
-  "mean_inference_diagnostics|set_id_inference_diagnostics.csv|6|p|C|r",
-  "mean_spec_comparison|set_id_spec_comparison.csv|6|v|M|r",
-  "log_variance_inference_diagnostics|log_var_eq_set_inference_diagnostics.csv|6|p|D|r",
+  "mean_inference_diagnostics|set_id_inference_diagnostics.csv|6|p|M|r",
+  "mean_spec_comparison|set_id_spec_comparison.csv|6|ae|M|r",
+  "log_variance_inference_diagnostics|log_var_eq_set_inference_diagnostics.csv|6|p|M|r",
   "joint_null_csv|log_var_eq_joint_null.csv|6|r|E|r",
   "joint_null_rds|log_var_eq_joint_null.rds|6|r|E|r",
   "joint_gmm_csv|log_var_eq_joint_gmm.csv|6|s|F|r",
@@ -160,10 +134,25 @@ PAPER_CONDITIONAL_ARTIFACT_STATUSES <- setdiff(
 paper_source_once(paper_path("config", "artifact_manifest_variants.R"))
 # fitted-volatility slack sweep records, derived from the tau contract
 paper_source_once(paper_path("config", "artifact_manifest_sweep.R"))
+# a colliding code is legal R; lookups take the first and misattribute silently
+stopifnot(!anyDuplicated(names(.artifact_producers)))
+stopifnot(!anyDuplicated(names(.artifact_consumers)))
 # 3D identified-region figure records, derived from the same contract
 paper_source_once(paper_path("config", "artifact_manifest_region.R"))
 .artifact_specs <- do.call(rbind, strsplit(.artifact_specs, "|", fixed = TRUE))
 stopifnot(ncol(.artifact_specs) == 6L)
+# A code no table defines makes the lookup below return NA, and every reader then
+# treats that NA as a real producer, consumer, group or status. A code no row
+# cites is the reverse: a registry entry kept alive after its last artifact left,
+# which is how a producer survives the deletion of the file it names. setequal
+# catches both directions for the two code tables; groups and statuses are
+# enumerations that need not be exhausted, so those are one-directional.
+stopifnot(
+  setequal(names(.artifact_producers), .artifact_specs[, 4L]),
+  setequal(names(.artifact_consumers), .artifact_specs[, 5L]),
+  all(.artifact_specs[, 3L] %in% names(PAPER_ARTIFACT_GROUPS)),
+  all(.artifact_specs[, 6L] %in% names(PAPER_ARTIFACT_STATUS_CODES))
+)
 artifact_manifest <- data.frame(
   id = .artifact_specs[, 1L],
   basename = .artifact_specs[, 2L],

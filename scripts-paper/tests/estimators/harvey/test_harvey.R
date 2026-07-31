@@ -22,9 +22,9 @@ paper_source_once(paper_path("log_variance", "estimators", "harvey", "estimator.
 paper_source_once(paper_path("log_variance", "inference", "standard_error_estimators.R"))
 paper_source_once(paper_path("log_variance", "estimators", "harvey", "standard_errors.R"))
 paper_source_once(paper_path("support", "latex", "table_pipeline.R"))
-paper_source_once(paper_path("support", "latex", "simple_table.R"))
 paper_source_once(paper_path("log_variance", "tables", "table_formatting.R"))
-paper_source_once(paper_path("log_variance", "tables", "harvey_panel.R"))
+paper_source_once(paper_path("log_variance", "tables", "estimator_panel.R"))
+paper_source_once(paper_path("log_variance", "tables", "harvey_caption.R"))
 
 paper_source_once(paper_path("tests", "support", "harness.R"))
 .test <- paper_test_harness()
