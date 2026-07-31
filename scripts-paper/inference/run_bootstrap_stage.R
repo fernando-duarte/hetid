@@ -115,13 +115,20 @@ run_bootstrap_stage <- function(
       )
     }
   )
-  bootstrap_stage_results(
-    dispatched$stage, stage_spec, mean_eq,
-    estimator_results, dispatched$source,
-    as.numeric(difftime(
-      Sys.time(), started_at,
-      units = "mins"
-    ))
+  # the primary family escapes so the spec comparison can reuse the EXACT
+  # resamples. Rebuilding it there would be a second construction of the index
+  # protocol -- which the ownership audit forbids for good reason: a paired
+  # comparison must not depend on two builders happening to agree.
+  c(
+    bootstrap_stage_results(
+      dispatched$stage, stage_spec, mean_eq,
+      estimator_results, dispatched$source,
+      as.numeric(difftime(
+        Sys.time(), started_at,
+        units = "mins"
+      ))
+    ),
+    list(primary_family = primary_family)
   )
 }
 
@@ -141,6 +148,7 @@ run_bootstrap_stage <- function(
 )
 set_id_boot <- .bootstrap_stage_output$set_id_boot
 log_var_eq_set_boot <- .bootstrap_stage_output$log_var_eq_set_boot
+bootstrap_primary_family <- .bootstrap_stage_output$primary_family
 rm(
   .bootstrap_stage_estimators,
   .bootstrap_stage_estimator_results,

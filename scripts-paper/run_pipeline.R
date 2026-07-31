@@ -120,6 +120,9 @@ paper_source_once(paper_path("log_variance", "tables", "render_lad_table.R"))
 # between mean and volatility inference. It owns both index families and the
 # unified all-or-nothing draw cache.
 paper_source_once(paper_path("inference", "run_bootstrap_stage.R"))
+# the alternative specification's mean draws, on the same index family, so the
+# comparison carries intervals rather than full-sample sets alone
+paper_source_once(paper_path("mean_equation", "inference", "spec_comparison.R"))
 # Publication of every log-variance table follows the stage, because each one
 # reports a bootstrap tau = 0 statistic. Only publication is deferred: the PPML
 # and Harvey estimates and their analytic standard errors are already frozen
