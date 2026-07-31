@@ -51,7 +51,7 @@ cat(sprintf("naive chisq(9) p = %.4e   <- ignores cross-equation dependence\n",
 # block-resampled residual-from-the-mean, so beta2R = 0 holds by construction in
 # every replicate, then recompute the same statistics.
 cat("\n=== null-imposed circular MBB (block 10, same protocol as the paper) ===\n")
-B <- 2000L
+B <- 20000L
 idx <- paper_mbb_index_family(B, n, 10L, boot_seed, "primary")$indices
 Y_c <- scale(Y, center = TRUE, scale = FALSE)
 mu <- attr(Y_c, "scaled:center")
@@ -81,3 +81,32 @@ cat(sprintf("news PC3 rejects at 5%%: %s\n", p3 < 0.05))
 cat(sprintf("joint restriction rejects at 5%%: %s\n", pj < 0.05))
 cat(sprintf("Bonferroni-adjusted PC3 p (x3): %.4f -> rejects at 5%%: %s\n",
             min(1, 3 * p3), min(1, 3 * p3) < 0.05))
+
+# Wild BLOCK bootstrap: imposes only E[u|X] = 0 (the actual null) rather than
+# full X-Y independence, and keeps every residual paired with its own X_t so the
+# design alignment and conditional heteroskedasticity survive. Rademacher
+# multiplier held constant within blocks of 10 to retain serial dependence.
+cat("\n=== wild block bootstrap (imposes the zero-projection null only) ===\n")
+set.seed(boot_seed)
+blk <- 10L
+nb <- ceiling(n / blk)
+block_of <- rep(seq_len(nb), each = blk)[seq_len(n)]
+wild <- vapply(seq_len(B), function(b) {
+  v <- sample(c(-1, 1), nb, replace = TRUE)[block_of]
+  Yb <- sweep(Y_c * v, 2, mu, "+")
+  ws <- vapply(seq_along(yc), function(j) {
+    fit <- stats::lm.fit(X, Yb[, j])
+    bb <- fit$coefficients
+    vv <- nw_vcov(X, fit$residuals, lag_nw)
+    sel <- 2:k
+    drop(t(bb[sel]) %*% solve(vv[sel, sel]) %*% bb[sel])
+  }, numeric(1))
+  c(ws, sum(ws))
+}, numeric(length(yc) + 1L))
+for (j in seq_along(yc)) {
+  cat(sprintf("%-14s  wild-block p = %.4f\n", yc[j], pb(w_obs[j], wild[j, ])))
+}
+cat(sprintf("%-14s  wild-block p = %.4f\n", "JOINT", pb(joint_obs, wild[4, ])))
+pw <- pb(w_obs[3], wild[3, ])
+cat(sprintf("\nPC3 Bonferroni (x3) = %.4f -> rejects at 5%%: %s\n",
+            min(1, 3 * pw), min(1, 3 * pw) < 0.05))
