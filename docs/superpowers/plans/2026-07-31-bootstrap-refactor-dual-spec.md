@@ -72,8 +72,30 @@ and conditional-variance dependence that spec A permits. That reference was too 
 joint at 0.092 instead of 0.043. Do not reintroduce it.
 
 Remaining caveat: at T = 256 and block 10 the wild scheme draws only 26 independent signs per
-replicate, which can narrow its reference. The PCs are treated as observed data throughout, by
-decision.
+replicate, which can narrow its reference.
+
+**DECISION — the rejected row-detach block is load-bearing as a comment.**
+`docs/superpowers/plans/2026-07-31-beta2r-robust-test.R` carries a commented record of the
+superseded scheme: what it imposed, why that is wrong for this null, and the number it produced.
+Two instructions, both binding:
+
+- **Do not uncomment or reimplement it.** It imposes full independence rather than zero linear
+  projection, which destroys the nonlinear and conditional-variance dependence the null permits.
+  Its reference is too wide and it *hid a rejection* — the joint restriction read 0.0917 under it
+  against 0.0425 under the correct null.
+- **Do not delete the comment either.** It is the only record of why the obvious implementation
+  is wrong. A future reader reaching for the textbook null-imposed residual bootstrap will write
+  exactly that scheme again unless the comment stops them. It is documentation of a wrong turn,
+  not dead code awaiting cleanup, and it is explicitly exempt from any pass that removes
+  commented-out code.
+
+**DECISION — the PCs are treated as observed data, by design.**
+Neither `PC_E` nor the news PCs are re-estimated inside any bootstrap in this project, so
+generated-regressor uncertainty is absent from every p-value and every interval here. This is an
+**approved design decision, not an omission or a shortcut.** Doing otherwise would mean
+bootstrapping the entire factor-construction chain back to the asset-return panel, which the
+mean-equation frame does not carry and which is out of scope. Record it as a stated assumption
+wherever these numbers are reported; do not open it as a defect, and do not "fix" it.
 
 Spec B therefore does **not** rest on the pretest. Its primary justification is
 `docs/lewbel_multivariate_set_identification.tex`, §"News-equation reduced-form coefficients":
@@ -224,6 +246,10 @@ nothing else. Verified: no file under `scripts-paper/output/` contains `tau_star
   aggregates are integrity cross-checks, not waste. Keep them and keep their invariants.
 - **Simplicity is a deliverable.** No speculative extensibility, no elaborate gates beyond what
   is specified here.
+- **The row-detach bootstrap stays rejected and stays documented.** Never reimplement it; never
+  delete the comment recording it. See the decision block in section 2.1.
+- **PCs are observed data for bootstrap purposes.** Approved by decision, not a gap. Do not add
+  factor re-estimation to any resampling loop. See the decision block in section 2.1.
 - **Never bypass pre-commit hooks.** No `--no-verify`, no loosening linter config.
 - **Files under 200 lines, lines under 100 characters.**
 - Paper-facing text says "tolerance"/"validity tolerance", never "slack". Existing identifiers

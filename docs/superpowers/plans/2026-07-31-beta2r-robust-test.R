@@ -1,7 +1,14 @@
 # Re-test beta2R = 0 with references that survive serial dependence and
-# heteroskedasticity, instead of the iid F I ran first. Newey-West Wald per
-# equation, plus a null-imposed circular moving-block bootstrap for the joint
-# matrix restriction. No new package dependencies: HAC is written out.
+# heteroskedasticity, instead of the iid F used first. Newey-West Wald per
+# equation, plus a null-imposed wild block bootstrap for the joint matrix
+# restriction. No new package dependencies: HAC is written out.
+#
+# BY DESIGN: the principal components are treated as observed data. Neither PC_E
+# nor the news PCs are re-estimated inside the resampling, so generated-regressor
+# uncertainty is absent from every p-value below. This is an approved decision,
+# not an omission -- doing otherwise means bootstrapping the whole factor
+# construction back to the asset-return panel, which is out of scope. State it
+# as an assumption when quoting these numbers; do not file it as a defect.
 source("/private/tmp/claude-502/-Users-fduarte-Library-CloudStorage-Dropbox-Personal-MyPackages-hetid/511ff928-e438-4f98-a805-111cac88d6d2/scratchpad/pilot_setup.R")
 
 X <- cbind(1, as.matrix(dat[xc]))
@@ -54,12 +61,16 @@ cat(sprintf("naive chisq(9) p = %.4e   <- ignores cross-equation dependence\n",
 # alignment survives and |u_hat_t| does too -- Var(u*|X) keeps whatever
 # relationship the data has, which a slope test should not discard.
 #
-# REJECTED ALTERNATIVE, do not reintroduce: resampling the restricted residuals
-# under circular-MBB row indices independently of X. That imposes full
-# independence, not zero projection, so it also destroys the nonlinear and
-# conditional-variance dependence the null permits. Its reference is too wide:
-# it put the joint restriction at p = 0.0917 where this one puts it at 0.0425,
-# i.e. it hid a rejection.
+# REJECTED ALTERNATIVE -- DO NOT REINTRODUCE, AND DO NOT DELETE THIS COMMENT.
+# Resampling the restricted residuals under circular-MBB row indices
+# independently of X imposes full independence rather than zero linear
+# projection, so it destroys the nonlinear and conditional-variance dependence
+# the null permits. Its reference is too wide and it HID A REJECTION: the joint
+# restriction read p = 0.0917 under it against 0.0425 under the correct null.
+# This comment is the only record of why the obvious implementation is wrong.
+# Anyone reaching for the textbook null-imposed residual bootstrap will write
+# that scheme again without it, so it is exempt from any pass that strips
+# commented-out code. It is documentation, not dead code.
 cat("\n=== null-imposed wild block bootstrap (B = 20,000, block 10) ===\n")
 B <- 20000L
 Y_c <- scale(Y, center = TRUE, scale = FALSE)
