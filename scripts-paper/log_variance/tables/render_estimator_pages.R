@@ -138,12 +138,15 @@ local({
         logvar_boot_point_stat(log_var_eq_set_boot, "harvey")
       ),
       "Panel B. Log-variance equation (Gaussian multiplicative variance)",
-      build_harvey_panel_notes(
-        harvey, tau_baseline, LOGVAR_HARVEY_CONTROL$grid_cap,
-        LOGVAR_HARVEY_CONTROL$fit_budget,
-        se_type = logvar_harvey_se_type,
-        se_hac_lags = logvar_harvey_se_hac_lags,
-        set_endpoint_inference = TRUE
+      c(
+        build_harvey_panel_notes(
+          harvey, tau_baseline, LOGVAR_HARVEY_CONTROL$grid_cap,
+          LOGVAR_HARVEY_CONTROL$fit_budget,
+          se_type = logvar_harvey_se_type,
+          se_hac_lags = logvar_harvey_se_hac_lags,
+          set_endpoint_inference = TRUE
+        ),
+        build_logvar_set_inference_notes(log_var_eq_set_boot)
       ),
       "harvey"
     ))
