@@ -52,13 +52,13 @@ logvar_egarch_dependency_prompt <- paste(
 logvar_egarch_decision <- list(
   schema_version = LOGVAR_EGARCH_SCHEMA_VERSION,
   gate_science_sha256 =
-    "2707d7744b93e50a86186860c0b9804d321084cd6370854aa8a9a56d32ea382e",
+    "d57e8c7259be22933b0740e09efd6e4245bd9c6f873a6b9d9e483f4913c3b61f",
   gate_record_path = LOGVAR_EGARCH_GATE_RECORD_PATH,
-  sample_id = "n255_1962 Q2_2025 Q4_e27b1cdc75fd4100d7117be5a2d70e6b",
+  sample_id = "n255_1962 Q2_2025 Q4_2ed6eb0870e8f83caa42549f38f6b19a",
   gate_lag = 4L,
   gate_alpha = 0.05,
-  gate_q = 0x1.26fc2825e06fcp+2,
-  gate_p = 0x1.51b787b8f067p-2,
+  gate_q = 0x1.26fc28258c61p+2,
+  gate_p = 0x1.51b787b98b118p-2,
   gate_verdict = "non_reject",
   plan_sha256 = LOGVAR_EGARCH_PLAN_SHA256,
   upstream_plans_hash = LOGVAR_EGARCH_UPSTREAM_PLANS_HASH,
