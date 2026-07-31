@@ -9,6 +9,14 @@
 # named here instead, and a mismatch fails fast when the driver looks up a
 # variant path that no record defines.
 
+# [<- overwrites rather than duplicating, so a code already spoken for in
+# artifact_manifest_data.R would be silently reassigned here and every artifact
+# using it would start reporting this producer. A duplicate-name check cannot
+# see that; only refusing to claim a taken code can.
+stopifnot(
+  "sweep producer code is already claimed" =
+    !("ac" %in% names(.artifact_producers))
+)
 .artifact_producers["ac"] <-
   "log_variance/figures/fitted_volatility/run_tau_sweep.R"
 .sweep_estimators <- c("ppml", "harvey")

@@ -44,7 +44,6 @@ PAPER_CONDITIONAL_ARTIFACT_STATUSES <- setdiff(
   s = "log_variance/diagnostics/joint_gmm/pipeline_driver.R",
   t = "log_variance/estimators/lad/run_sets.R",
   u = "log_variance/diagnostics/dynamics/run_gate.R",
-  v = "mean_equation/inference/spec_comparison.R",
   v = paste(
     "log_variance/diagnostics/dynamics/run_gate.R",
     "log_variance/extensions/egarch/run_route.R",
@@ -56,7 +55,9 @@ PAPER_CONDITIONAL_ARTIFACT_STATUSES <- setdiff(
   z = "run_pipeline.R",
   # single letters are exhausted; multi-character keys are exact-lookup-safe
   aa = "variance_bounds/quoted/run.R",
-  ab = "log_variance/tables/render_combined_inference_table.R"
+  ab = "log_variance/tables/render_combined_inference_table.R",
+  ae = "mean_equation/inference/spec_comparison.R",
+  ad = "log_variance/tables/render_estimator_pages.R"
 )
 .artifact_consumers <- c(
   A = "reports/descriptive_stats.tex",
@@ -110,6 +111,9 @@ PAPER_CONDITIONAL_ARTIFACT_STATUSES <- setdiff(
   "structural_var_inference_table|structural_var_inference.tex|2|ab|B|r",
   "structural_var_inference_standalone_tex|structural_var_inference_standalone.tex|2|ab|B|r",
   "structural_var_inference_standalone_pdf|structural_var_inference_standalone.pdf|2|ab|B|r",
+  "structural_var_estimators_table|structural_var_estimators.tex|2|ad|B|r",
+  "structural_var_estimators_standalone_tex|structural_var_estimators_standalone.tex|2|ad|B|r",
+  "structural_var_estimators_standalone_pdf|structural_var_estimators_standalone.pdf|2|ad|B|r",
   "variance_share_table|var_share.tex|2|i|B|r",
   "variance_share_standalone_tex|var_share_standalone.tex|2|i|B|r",
   "variance_share_standalone_pdf|var_share_standalone.pdf|2|i|B|r",
@@ -127,7 +131,7 @@ PAPER_CONDITIONAL_ARTIFACT_STATUSES <- setdiff(
   "descriptive_report_tex|descriptive_stats.tex|5|a|B|r",
   "descriptive_report_pdf|descriptive_stats.pdf|5|a|B|r",
   "mean_inference_diagnostics|set_id_inference_diagnostics.csv|6|p|M|r",
-  "mean_spec_comparison|set_id_spec_comparison.csv|6|v|M|r",
+  "mean_spec_comparison|set_id_spec_comparison.csv|6|ae|M|r",
   "log_variance_inference_diagnostics|log_var_eq_set_inference_diagnostics.csv|6|p|D|r",
   "joint_null_csv|log_var_eq_joint_null.csv|6|r|E|r",
   "joint_null_rds|log_var_eq_joint_null.rds|6|r|E|r",
@@ -154,6 +158,9 @@ PAPER_CONDITIONAL_ARTIFACT_STATUSES <- setdiff(
 paper_source_once(paper_path("config", "artifact_manifest_variants.R"))
 # fitted-volatility slack sweep records, derived from the tau contract
 paper_source_once(paper_path("config", "artifact_manifest_sweep.R"))
+# a colliding code is legal R; lookups take the first and misattribute silently
+stopifnot(!anyDuplicated(names(.artifact_producers)))
+stopifnot(!anyDuplicated(names(.artifact_consumers)))
 # 3D identified-region figure records, derived from the same contract
 paper_source_once(paper_path("config", "artifact_manifest_region.R"))
 .artifact_specs <- do.call(rbind, strsplit(.artifact_specs, "|", fixed = TRUE))

@@ -140,6 +140,8 @@ paper_source_once(paper_path("log_variance", "tables", "render_inference_panels.
 # endpoint bootstrap, and the PPML set-endpoint envelope, so it runs after both
 # the structural table and the inference panels are frozen
 paper_source_once(paper_path("log_variance", "tables", "render_combined_inference_table.R"))
+# one page per estimator: mean equation above each, that estimator's notes below
+paper_source_once(paper_path("log_variance", "tables", "render_estimator_pages.R"))
 # the log-variance figures consume mean_eq_bounds_tau and the registry, so
 # this runs after both producers
 paper_source_once(paper_path("log_variance", "figures", "render_bounds_by_tau.R"))

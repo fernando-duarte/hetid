@@ -49,6 +49,11 @@ PAPER_LATEX_LABELS <- c(
     "log_variance_inference_standalone_pdf"
   ),
   .latex_spec(
+    "structural_var_estimators_table",
+    "structural_var_estimators_standalone_tex",
+    "structural_var_estimators_standalone_pdf"
+  ),
+  .latex_spec(
     "structural_var_inference_table",
     "structural_var_inference_standalone_tex",
     "structural_var_inference_standalone_pdf"
@@ -86,6 +91,10 @@ artifact_latex_publications <- data.frame(
   "log_variance_inference_table|logols|panel_logols",
   "log_variance_inference_table|ppml|panel_ppml",
   "log_variance_inference_table|harvey|panel_harvey",
+  "structural_var_estimators_table|ppml|panel_ppml",
+  "structural_var_estimators_table|logols|panel_logols",
+  "structural_var_estimators_table|harvey|panel_harvey",
+  "structural_var_estimators_table|lad|panel_lad",
   "structural_var_inference_table|structural|structural",
   "structural_var_inference_table|ppml|panel_ppml",
   "variance_share_table|table|variance_share",
