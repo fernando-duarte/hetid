@@ -27,11 +27,6 @@ PAPER_CONDITIONAL_ARTIFACT_STATUSES <- setdiff(
 .artifact_producers <- c(
   a = "reports/build_descriptive_statistics.R",
   b = "mean_equation/diagnostics/heteroskedasticity/render_table.R",
-  c = "log_variance/tables/render_ppml_table.R",
-  d = "log_variance/tables/render_harvey_table.R",
-  e = "log_variance/tables/render_lad_table.R",
-  f = "log_variance/tables/render_panels.R",
-  g = "log_variance/tables/render_inference_panels.R",
   i = "mean_equation/variance_shares/render_variance_share_table.R",
   j = "mean_equation/inference/compute_bounds_by_tau.R",
   k = "mean_equation/figures/render_projections.R",
@@ -62,7 +57,6 @@ PAPER_CONDITIONAL_ARTIFACT_STATUSES <- setdiff(
 .artifact_consumers <- c(
   A = "reports/descriptive_stats.tex",
   B = "paper",
-  D = "log_variance/tables/render_inference_panels.R",
   E = "tests/diagnostics/joint_null",
   F = "tests/diagnostics/joint_gmm",
   G = "tables;tests",
@@ -78,11 +72,8 @@ PAPER_CONDITIONAL_ARTIFACT_STATUSES <- setdiff(
   # every table that reports a tau = 0 or tau > 0 inference statistic, in the
   # order run_pipeline.R publishes them after the bootstrap stage
   L = paste(
-    "log_variance/tables/render_ppml_table.R",
-    "log_variance/tables/render_harvey_table.R",
-    "log_variance/tables/render_panels.R",
-    "log_variance/tables/render_inference_panels.R",
     "log_variance/tables/render_combined_inference_table.R",
+    "log_variance/tables/render_estimator_pages.R",
     sep = ";"
   )
 )
@@ -93,21 +84,6 @@ PAPER_CONDITIONAL_ARTIFACT_STATUSES <- setdiff(
   "heteroskedasticity_table|hetero_tests.tex|2|b|B|r",
   "heteroskedasticity_standalone_tex|hetero_tests_standalone.tex|2|b|B|r",
   "heteroskedasticity_standalone_pdf|hetero_tests_standalone.pdf|2|b|B|r",
-  "log_variance_ppml_table|log_var_eq.tex|2|c|B|r",
-  "log_variance_ppml_standalone_tex|log_var_eq_standalone.tex|2|c|B|r",
-  "log_variance_ppml_standalone_pdf|log_var_eq_standalone.pdf|2|c|B|r",
-  "log_variance_harvey_table|log_var_eq_harvey.tex|2|d|B|r",
-  "log_variance_harvey_standalone_tex|log_var_eq_harvey_standalone.tex|2|d|B|r",
-  "log_variance_harvey_standalone_pdf|log_var_eq_harvey_standalone.pdf|2|d|B|r",
-  "log_variance_lad_table|log_var_eq_lad_panel.tex|2|e|B|l",
-  "log_variance_lad_standalone_tex|log_var_eq_lad_panel_standalone.tex|2|e|B|l",
-  "log_variance_lad_standalone_pdf|log_var_eq_lad_panel_standalone.pdf|2|e|B|l",
-  "log_variance_panels_table|log_var_eq_panels.tex|2|f|B|r",
-  "log_variance_panels_standalone_tex|log_var_eq_panels_standalone.tex|2|f|B|r",
-  "log_variance_panels_standalone_pdf|log_var_eq_panels_standalone.pdf|2|f|B|r",
-  "log_variance_inference_table|log_var_eq_panels_inference.tex|2|g|B|r",
-  "log_variance_inference_standalone_tex|log_var_eq_panels_inference_standalone.tex|2|g|B|r",
-  "log_variance_inference_standalone_pdf|log_var_eq_panels_inference_standalone.pdf|2|g|B|r",
   "structural_var_inference_table|structural_var_inference.tex|2|ab|B|r",
   "structural_var_inference_standalone_tex|structural_var_inference_standalone.tex|2|ab|B|r",
   "structural_var_inference_standalone_pdf|structural_var_inference_standalone.pdf|2|ab|B|r",
@@ -132,7 +108,7 @@ PAPER_CONDITIONAL_ARTIFACT_STATUSES <- setdiff(
   "descriptive_report_pdf|descriptive_stats.pdf|5|a|B|r",
   "mean_inference_diagnostics|set_id_inference_diagnostics.csv|6|p|M|r",
   "mean_spec_comparison|set_id_spec_comparison.csv|6|ae|M|r",
-  "log_variance_inference_diagnostics|log_var_eq_set_inference_diagnostics.csv|6|p|D|r",
+  "log_variance_inference_diagnostics|log_var_eq_set_inference_diagnostics.csv|6|p|M|r",
   "joint_null_csv|log_var_eq_joint_null.csv|6|r|E|r",
   "joint_null_rds|log_var_eq_joint_null.rds|6|r|E|r",
   "joint_gmm_csv|log_var_eq_joint_gmm.csv|6|s|F|r",

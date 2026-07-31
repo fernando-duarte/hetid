@@ -12,14 +12,12 @@ source_offset <- function(path) {
 }
 
 stage <- "inference\", \"run_bootstrap_stage.R"
-logvar <- "log_variance\", \"tables\", \"render_inference_panels.R"
 combined <- "log_variance\", \"tables\", \"render_combined_inference_table.R"
-# the three deferred publications: each reports a bootstrap tau = 0 statistic,
-# so none of them may be sourced before the stage that creates it
+# the two deferred publications: each reports a bootstrap tau = 0 statistic, so
+# neither may be sourced before the stage that creates it
 deferred <- c(
-  "log_variance\", \"tables\", \"render_ppml_table.R",
-  "log_variance\", \"tables\", \"render_harvey_table.R",
-  "log_variance\", \"tables\", \"render_panels.R"
+  combined,
+  "log_variance\", \"tables\", \"render_estimator_pages.R"
 )
 
 stopifnot(
@@ -31,15 +29,13 @@ stopifnot(
     pipeline_text,
     fixed = TRUE
   ),
-  source_offset(stage) < source_offset(logvar),
-  source_offset(logvar) < source_offset(combined),
   all(vapply(deferred, function(path) {
     source_offset(stage) < source_offset(path)
   }, logical(1)))
 )
 
 # the Harvey wrapper keeps the estimation and the analytic standard errors ahead
-# of the stage, so only the table publication moved
+# of the stage; publication is the document's job, never the estimator runner's
 harvey_runner_text <- paste(
   readLines(
     paper_path("log_variance", "estimators", "harvey", "run.R"),
@@ -49,7 +45,7 @@ harvey_runner_text <- paste(
 )
 stopifnot(
   grepl("harvey\", \"standard_errors.R", harvey_runner_text, fixed = TRUE),
-  !grepl("render_harvey_table.R\"", harvey_runner_text, fixed = TRUE)
+  !grepl("publish_latex_artifact", harvey_runner_text, fixed = TRUE)
 )
 
 runner_text <- paste(
@@ -76,11 +72,8 @@ stopifnot(
   identical(
     strsplit(bootstrap_rows$consumer, ";", fixed = TRUE)[[1L]],
     c(
-      "log_variance/tables/render_ppml_table.R",
-      "log_variance/tables/render_harvey_table.R",
-      "log_variance/tables/render_panels.R",
-      "log_variance/tables/render_inference_panels.R",
-      "log_variance/tables/render_combined_inference_table.R"
+      "log_variance/tables/render_combined_inference_table.R",
+      "log_variance/tables/render_estimator_pages.R"
     )
   )
 )

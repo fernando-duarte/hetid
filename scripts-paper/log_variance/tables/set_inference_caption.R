@@ -1,5 +1,5 @@
 # Notes clause for the _inference variant of the combined log-variance panels
-# (render_inference_panels.R): the moving-block bootstrap set-inference
+# document: the moving-block bootstrap set-inference
 # disclosure appended after each estimator's own panel notes (ppml_captions.R
 # and harvey_caption.R). Definitions only; reads log_var_eq_set_boot (unified
 # bootstrap stage) and the contract's stability share at call time.

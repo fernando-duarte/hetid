@@ -1,12 +1,12 @@
 # Notes builder for the Harvey robustness panel appended to the combined
-# log-variance estimator panels (render_panels.R). One marker-wrapped
+# log-variance estimator panels. One marker-wrapped
 # \item per note line so later diffs stay block-scoped, matching the PPML and
 # log-OLS notes-builder voice. The block states the estimand, the intercept
 # scale, the normality normalization identity, the zero-safe existence
 # handling, the hull honesty and failed-fit clauses, the search-resolution
 # disclosure and the standard-error computation. Combined panels optionally
 # add the ordering-independence rule (Harvey never drives the log-OLS/PPML
-# headline swap). Definitions only; sourced by harvey_panel.R.
+# headline swap). Definitions only; sourced by the per-estimator document.
 
 # `harvey` mirrors build_ppml_panel_notes()'s object-first signature for a
 # predictable call site; guarded here so notes are never emitted for a missing

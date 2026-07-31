@@ -5,7 +5,23 @@
 # envelope decides whether a confidence row appears beneath each tau > 0 set
 # cell; point_stat decides whether the tau = 0 column reports the bootstrap
 # statistic instead of the analytic ratio. A table can take the second without
-# the first, which is what the conservative variants do.
+# the first, which is what the published document does per estimator.
+
+# Estimator notation for the panels the per-estimator document stacks. They live
+# beside the assembler, not inside the document, so the checks that pin a panel's
+# row labels read the same literal the published page does. The intercepts are
+# distinct normalizations: theta^H_0 is the Gaussian multiplicative-variance one
+# and theta^0.5_0 the median one, never shared with each other or theta^log_0.
+LOGVAR_HARVEY_PANEL_SPEC <- list(
+  intercept_label = "$\\theta^{H}_0$",
+  slope_template = "$\\theta^{H}_{%d,R}$",
+  reference_header = "Reference"
+)
+LOGVAR_LAD_PANEL_SPEC <- list(
+  intercept_label = "$\\theta^{0.5}_0$",
+  slope_template = "$\\theta^{0.5}_{%d,R}$",
+  reference_header = "Reference"
+)
 
 logvar_estimator_panel_parts <- function(
   result,
@@ -88,41 +104,5 @@ logvar_estimator_panel_parts <- function(
     columns = columns,
     headers = logvar_estimator_headers(spec$reference_header, tau_display),
     n_obs = n_obs
-  )
-}
-
-logvar_estimator_panel_fragment <- function(
-  result,
-  n_obs,
-  tau_display,
-  spec,
-  caption,
-  label,
-  se_type = NULL,
-  se_types = NULL,
-  envelope = NULL,
-  cell_policy = PAPER_REPORTING_CONTROL$cells$log_variance,
-  point_stat = NULL
-) {
-  parts <- logvar_estimator_panel_parts(
-    result,
-    n_obs,
-    tau_display,
-    spec,
-    se_type,
-    se_types,
-    envelope,
-    cell_policy,
-    point_stat
-  )
-  style <- PAPER_TABLE_STYLE$coefficient
-  build_simple_latex_table(
-    parts$rows,
-    parts$columns,
-    col_headers = parts$headers,
-    caption = caption,
-    label = label,
-    fontsize = style$fontsize,
-    rule_after = style$row_stride
   )
 }

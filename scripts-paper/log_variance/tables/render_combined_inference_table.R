@@ -8,7 +8,7 @@
 # inference panels. Emits only the tabular in a \begingroup that scopes the font;
 # the paper supplies the float, caption, notes, and the dual \label. Writes
 # structural_var_inference.tex + standalone. Run via run_pipeline.R after
-# render_inference_panels.R (needs set_id_mean_eq, set_id_boot, log_var_eq_set_boot).
+# the estimator pages (needs set_id_mean_eq, set_id_boot, log_var_eq_set_boot).
 
 paper_source_once(paper_path("support", "latex", "table_pipeline.R"))
 paper_source_once(paper_path("mean_equation", "tables", "structural_table_parts.R"))

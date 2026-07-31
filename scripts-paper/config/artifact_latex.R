@@ -2,8 +2,6 @@
 
 PAPER_LATEX_LABELS <- c(
   heteroskedasticity = "tab:sdf_news_hetero_tests",
-  logvar_ppml = "tab:log_var_eq_set_id",
-  logvar_harvey = "tab:log_var_eq_harvey",
   panel_lad = "tab:log_var_eq_panel_lad",
   panel_logols = "tab:log_var_eq_panel_logols",
   panel_ppml = "tab:log_var_eq_panel_ppml",
@@ -22,31 +20,6 @@ PAPER_LATEX_LABELS <- c(
     "heteroskedasticity_table",
     "heteroskedasticity_standalone_tex",
     "heteroskedasticity_standalone_pdf"
-  ),
-  .latex_spec(
-    "log_variance_ppml_table",
-    "log_variance_ppml_standalone_tex",
-    "log_variance_ppml_standalone_pdf"
-  ),
-  .latex_spec(
-    "log_variance_harvey_table",
-    "log_variance_harvey_standalone_tex",
-    "log_variance_harvey_standalone_pdf"
-  ),
-  .latex_spec(
-    "log_variance_lad_table",
-    "log_variance_lad_standalone_tex",
-    "log_variance_lad_standalone_pdf"
-  ),
-  .latex_spec(
-    "log_variance_panels_table",
-    "log_variance_panels_standalone_tex",
-    "log_variance_panels_standalone_pdf"
-  ),
-  .latex_spec(
-    "log_variance_inference_table",
-    "log_variance_inference_standalone_tex",
-    "log_variance_inference_standalone_pdf"
   ),
   .latex_spec(
     "structural_var_estimators_table",
@@ -82,15 +55,6 @@ artifact_latex_publications <- data.frame(
 
 .latex_label_specs <- c(
   "heteroskedasticity_table|table|heteroskedasticity",
-  "log_variance_ppml_table|table|logvar_ppml",
-  "log_variance_harvey_table|table|logvar_harvey",
-  "log_variance_lad_table|table|panel_lad",
-  "log_variance_panels_table|logols|panel_logols",
-  "log_variance_panels_table|ppml|panel_ppml",
-  "log_variance_panels_table|harvey|panel_harvey",
-  "log_variance_inference_table|logols|panel_logols",
-  "log_variance_inference_table|ppml|panel_ppml",
-  "log_variance_inference_table|harvey|panel_harvey",
   "structural_var_estimators_table|ppml|panel_ppml",
   "structural_var_estimators_table|logols|panel_logols",
   "structural_var_estimators_table|harvey|panel_harvey",

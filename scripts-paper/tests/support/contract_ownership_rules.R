@@ -117,11 +117,6 @@ forbid(
   "support/identification/quadratic_system.R"
 )
 forbid(
-  "secondary panel splicer",
-  "logvar_panel_block <- function",
-  "log_variance/tables/panel_block.R"
-)
-forbid(
   "secondary exact-RDS writer",
   "paper_write_exact_rds <- function",
   "support/artifacts/typed_artifacts.R"

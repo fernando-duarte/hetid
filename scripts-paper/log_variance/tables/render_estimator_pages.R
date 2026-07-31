@@ -17,17 +17,15 @@
 # Run via run_pipeline.R after the bootstrap stage and the estimator runs.
 
 paper_source_once(paper_path("support", "latex", "table_pipeline.R"))
-paper_source_once(paper_path("support", "latex", "simple_table.R"))
 paper_source_once(paper_path("support", "latex", "table_environment.R"))
 paper_source_once(paper_path("mean_equation", "tables", "structural_table_parts.R"))
 paper_source_once(paper_path("log_variance", "tables", "table_formatting.R"))
 paper_source_once(paper_path("log_variance", "tables", "estimator_panel.R"))
 paper_source_once(paper_path("log_variance", "tables", "ppml_table_parts.R"))
 paper_source_once(paper_path("log_variance", "tables", "ppml_captions.R"))
-paper_source_once(paper_path("log_variance", "tables", "panels_builder.R"))
-paper_source_once(paper_path("log_variance", "tables", "harvey_panel.R"))
+paper_source_once(paper_path("log_variance", "tables", "logols_table_parts.R"))
 paper_source_once(paper_path("log_variance", "tables", "harvey_caption.R"))
-paper_source_once(paper_path("log_variance", "tables", "lad_panel_builder.R"))
+paper_source_once(paper_path("log_variance", "tables", "lad_panel_notes.R"))
 paper_source_once(paper_path("log_variance", "tables", "set_inference_caption.R"))
 
 PAGES_ID <- "structural_var_estimators_table"
@@ -133,12 +131,7 @@ local({
   if (!is.null(harvey)) {
     pages <- c(pages, page(
       logvar_estimator_panel_parts(
-        harvey, n_obs, tau_display,
-        list(
-          intercept_label = "$\\theta^{H}_0$",
-          slope_template = "$\\theta^{H}_{%d,R}$",
-          reference_header = "Reference"
-        ),
+        harvey, n_obs, tau_display, LOGVAR_HARVEY_PANEL_SPEC,
         logvar_harvey_se_type, LOGVAR_HARVEY_SE_TYPES,
         log_var_eq_set_boot$harvey,
         PAPER_REPORTING_CONTROL$cells$log_variance,
@@ -162,14 +155,9 @@ local({
   if (!is.null(lad)) {
     pages <- c(pages, page(
       logvar_estimator_panel_parts(
-        lad, lad$sample$n, tau_display,
-        list(
-          intercept_label = "$\\theta^{0.5}_0$",
-          slope_template = "$\\theta^{0.5}_{%d,R}$",
-          reference_header = "Reference"
-        ),
+        lad, lad$sample$n, tau_display, LOGVAR_LAD_PANEL_SPEC,
         NULL, NULL, NULL,
-        PAPER_REPORTING_CONTROL$cells$log_variance,
+        PAPER_REPORTING_CONTROL$cells$lad,
         NULL
       ),
       "Panel B. Log-variance equation (conditional median)",

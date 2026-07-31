@@ -1,11 +1,8 @@
-# Cell formatters and PPML table-part assembly shared by the primary
-# render_ppml_table.R and the combined estimator panels: the "--" non-finite
-# formatter, the status-aware identified-set cell, the coefficient/statistic
-# row interleaver, and the canonical PPML rows and columns. Definitions only.
+# Cell formatters and PPML table-part assembly shared by every log-variance
+# estimator panel: the "--" non-finite formatter, the status-aware
+# identified-set cell, the coefficient/statistic row interleaver, and the
+# canonical PPML rows and columns. Definitions only.
 
-paper_source_once(paper_path(
-  "log_variance", "tables", "panel_block.R"
-))
 paper_source_once(paper_path(
   "support", "reporting", "inference.R"
 ))

@@ -21,9 +21,9 @@ paper_source_once(paper_path("log_variance", "estimators", "lad", "crossing_doma
 paper_source_once(paper_path("log_variance", "estimators", "lad", "offline_refinement.R"))
 paper_source_once(paper_path("log_variance", "estimators", "lad", "run_sets.R"))
 paper_source_once(paper_path("support", "latex", "table_pipeline.R"))
-paper_source_once(paper_path("support", "latex", "simple_table.R"))
 paper_source_once(paper_path("log_variance", "tables", "table_formatting.R"))
-paper_source_once(paper_path("log_variance", "tables", "lad_panel_builder.R"))
+paper_source_once(paper_path("log_variance", "tables", "estimator_panel.R"))
+paper_source_once(paper_path("log_variance", "tables", "lad_panel_notes.R"))
 
 paper_source_once(paper_path("tests", "support", "harness.R"))
 .test <- paper_test_harness()

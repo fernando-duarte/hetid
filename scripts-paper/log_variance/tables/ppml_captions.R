@@ -129,14 +129,6 @@ logvar_ppml_se_note <- function(
   )
 }
 
-build_ppml_table_notes <- function(ppml, tau_baseline, grid_cap, fit_budget,
-                                   se_type, se_hac_lags) {
-  build_ppml_notes(
-    ppml, tau_baseline, grid_cap, fit_budget,
-    include_ordering = FALSE, se_type = se_type, se_hac_lags = se_hac_lags
-  )
-}
-
 build_ppml_panel_notes <- function(ppml, tau_baseline, grid_cap, fit_budget,
                                    se_type, se_hac_lags,
                                    set_endpoint_inference = FALSE) {

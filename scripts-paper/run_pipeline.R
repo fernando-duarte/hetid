@@ -112,10 +112,6 @@ lad_gate <- logvar_lad_gate_read(
 if (isTRUE(lad_gate$source_lad)) {
   paper_source_once(paper_path("log_variance", "estimators", "lad", "run_sets.R"))
 }
-# standalone median (LAD) panel table (theta^0.5): its own .tex + PDF, guarded on
-# log_var_eq_lad so it renders only when the LAD map ran; main's combined panels
-# table below stays untouched
-paper_source_once(paper_path("log_variance", "tables", "render_lad_table.R"))
 # One late bootstrap stage shares each primary resample and system estimate
 # between mean and volatility inference. It owns both index families and the
 # unified all-or-nothing draw cache.
@@ -126,19 +122,10 @@ paper_source_once(paper_path("mean_equation", "inference", "spec_comparison.R"))
 # Publication of every log-variance table follows the stage, because each one
 # reports a bootstrap tau = 0 statistic. Only publication is deferred: the PPML
 # and Harvey estimates and their analytic standard errors are already frozen
-# above, and the stage reads them without mutating them. The primary table
-# consumes the completed PPML hulls, then the conservative panels add the
-# mean-log robustness panel without recomputing any estimator.
-paper_source_once(paper_path("log_variance", "tables", "render_ppml_table.R"))
-paper_source_once(paper_path("log_variance", "tables", "render_harvey_table.R"))
-paper_source_once(paper_path("log_variance", "tables", "render_panels.R"))
-# Structural inference follows the unified stage that creates set_id_boot.
-# The inference variant retains the combined panels and labels while threading
-# the bootstrap envelope beneath the PPML and Harvey set cells.
-paper_source_once(paper_path("log_variance", "tables", "render_inference_panels.R"))
+# above, and the stage reads them without mutating them.
 # the merged mean-over-PPML two-panel table; consumes the mean-set estimate, its
-# endpoint bootstrap, and the PPML set-endpoint envelope, so it runs after both
-# the structural table and the inference panels are frozen
+# endpoint bootstrap, and the PPML set-endpoint envelope, so it runs after the
+# structural table is frozen
 paper_source_once(paper_path("log_variance", "tables", "render_combined_inference_table.R"))
 # one page per estimator: mean equation above each, that estimator's notes below
 paper_source_once(paper_path("log_variance", "tables", "render_estimator_pages.R"))

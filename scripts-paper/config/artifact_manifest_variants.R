@@ -11,7 +11,5 @@
   "egarch_bounds_figure|logvar_bounds_tau|egarch_x",
   "ppml_fitted_volatility_figure|fitted_volatility|ppml",
   "harvey_fitted_volatility_figure|fitted_volatility|harvey",
-  "lad_fitted_volatility_figure|fitted_volatility|lad",
-  "log_variance_panels_table|logvar_panels|conservative",
-  "log_variance_inference_table|logvar_panels|inference"
+  "lad_fitted_volatility_figure|fitted_volatility|lad"
 )

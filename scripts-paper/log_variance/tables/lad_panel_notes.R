@@ -1,58 +1,8 @@
-# Panel fragment, marker-wrapped appender, and notes builder for the median (LAD)
-# log-variance panel appended to the combined estimator panels
-# (render_panels.R). Mirrors the Harvey panel/notes pair exactly -- same
-# fmt/set_cell/interleave formatters, same build_simple_latex_table invocation,
-# same rule_after and fontsize, same creation-time comment markers -- and only
-# appends: the log-OLS/PPML/Harvey order is never touched. The reported cells are
-# the attained punctured-domain hulls; the closure diagnostics live in the CSV and
-# the notes, never in the panel. Definitions only; sourced by the panels table when
-# log_var_eq_lad exists.
-
-# The median panel fragment: reference and Lewbel-point columns plus the
-# per-display-tau attained hulls, t slots blank by construction, R^2 undefined for
-# a quantile fit. Row labels are the conditional-median coefficient vector, never a
-# runner global; the intercept theta^0.5_0 is the median normalization, never
-# shared with theta^log_0 / theta^var_0 / theta^H_0.
-logvar_lad_build_fragment <- function(
-  lad,
-  n_obs,
-  tau_display,
-  label = artifact_latex_label("log_variance_lad_table")
-) {
-  logvar_estimator_panel_fragment(
-    lad,
-    n_obs,
-    tau_display,
-    list(
-      intercept_label = "$\\theta^{0.5}_0$",
-      slope_template = "$\\theta^{0.5}_{%d,R}$",
-      reference_header = "Reference"
-    ),
-    paste(
-      "LAD panel: $\\theta^{0.5}$, the conditional-median map over the identified",
-      "news sets (attained punctured-domain hulls; closure diagnostics separate)."
-    ),
-    label,
-    cell_policy = PAPER_REPORTING_CONTROL$cells$lad
-  )
-}
-
-# Append the marker-wrapped median panel after the incoming (already ordered) panel
-# lines. The splice mirrors the host's panel_block shape; kept local so it never
-# shadows that global helper. Returns the incoming lines with the median block added.
-logvar_lad_append_panel <- function(panels_lines, lad, n_obs,
-                                    tau_display, tau_baseline,
-                                    grid_cap, fit_budget) {
-  fragment <- logvar_lad_build_fragment(lad, n_obs, tau_display)
-  notes <- build_lad_panel_notes(lad, tau_baseline, grid_cap, fit_budget)
-  logvar_append_panel(
-    panels_lines,
-    fragment,
-    notes,
-    "lad",
-    panel_marker = "LOGVAR LAD PANEL"
-  )
-}
+# Notes builder for the median (LAD) log-variance panel. The reported cells are
+# the attained punctured-domain hulls; the closure diagnostics live in the CSV
+# and the notes, never in the panel. Definitions only; sourced by the
+# per-estimator document when log_var_eq_lad exists. The panel's own notation
+# is LOGVAR_LAD_PANEL_SPEC, beside the assembler in estimator_panel.R.
 
 # The median panel notes (dossier section nine): the estimand, the br convention
 # and its reason, the exact-versus-guarded domain split, the attained-hull-primary

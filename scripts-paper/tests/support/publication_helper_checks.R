@@ -2,16 +2,16 @@
 
 check(
   "LaTeX publication and label relationships are manifest-owned",
-  nrow(artifact_latex_publications) == 10L &&
+  nrow(artifact_latex_publications) == 5L &&
     identical(
       artifact_latex_label("structural_var_inference_table", "structural"),
       "tab:structural_eq_set_id"
     ) &&
     identical(
       artifact_latex_publication(
-        "log_variance_ppml_table"
+        "structural_var_estimators_table"
       )$pdf_id,
-      "log_variance_ppml_standalone_pdf"
+      "structural_var_estimators_standalone_pdf"
     )
 )
 local({
@@ -70,25 +70,6 @@ check(
   sum(table_lines == "\\begin{table}[!htbp]") == 1L &&
     sum(table_lines == "\\begin{tablenotes}[flushleft]") == 1L &&
     any(grepl("first second", table_lines, fixed = TRUE))
-)
-panel_lines <- logvar_panel_block(
-  c(
-    "\\begin{threeparttable}",
-    "body",
-    "\\end{threeparttable}"
-  ),
-  "note",
-  "fixture"
-)
-check(
-  "panel helper owns stable panel and notes markers",
-  identical(panel_lines[[1L]], "% BEGIN LOGVAR PANEL fixture") &&
-    identical(
-      panel_lines[[length(panel_lines)]],
-      "% END LOGVAR PANEL fixture"
-    ) &&
-    sum(grepl("LOGVAR NOTES fixture", panel_lines, fixed = TRUE)) == 2L &&
-    sum(panel_lines == "\\item note") == 1L
 )
 hull <- logvar_hull_text(data.frame(
   set_lower = c(-1, NA_real_),

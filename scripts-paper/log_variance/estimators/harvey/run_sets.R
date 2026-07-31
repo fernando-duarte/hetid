@@ -6,7 +6,7 @@
 # absorbs scale in its intercept); instead a deterministic no-fit stability
 # precheck guards the constructor, and a reduced five-start sensitivity gate
 # re-polishes before any result ships. Console block in the driver helpers. Run
-# via run_pipeline.R after run_sets.R, before render_panels.R.
+# via run_pipeline.R after run_sets.R, before the tables are published.
 
 paper_source_once(paper_path("log_variance", "estimators", "harvey", "estimator.R"))
 paper_source_once(paper_path(
