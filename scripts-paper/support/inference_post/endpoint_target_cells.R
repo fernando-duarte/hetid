@@ -9,6 +9,9 @@
 paper_source_once(paper_path(
   "support", "inference_post", "endpoint_targets.R"
 ))
+paper_source_once(paper_path(
+  "support", "inference_post", "endpoint_alternatives.R"
+))
 
 .endpoint_target_cell <- function(lc, uc, f, alpha, tolerance, min_reps) {
   bounded <- PAPER_ENDPOINT_STATUS[["bounded"]]
@@ -90,6 +93,8 @@ endpoint_target_row <- function(lower, upper, lower_status, upper_status, f,
     upper, upper_status, f$set_upper, -1, min_reps, stability
   )
   cell <- .endpoint_target_cell(lc, uc, f, alpha, tolerance, min_reps)
+  # diagnostics only: Target P above stays what the cell publishes
+  alt <- endpoint_alternative_intervals(lower, upper, lc, uc, f, alpha)
   data.frame(
     se_lower = lc$se, se_upper = uc$se, n_lower = lc$n_ok, n_upper = uc$n_ok,
     n_common = cell$n_common, n_non_failed_lower = lc$n_valid,
@@ -99,7 +104,7 @@ endpoint_target_row <- function(lower, upper, lower_status, upper_status, f,
     c_p_gap = cell$c_p_upper - cell$c_p_lower, c_p_evals = cell$evals,
     c_p_lambda = cell$best_lambda, c_p_interior = cell$interior,
     ci_lower = cell$ci_lower, ci_upper = cell$ci_upper, reason = cell$reason,
-    row.names = NULL, stringsAsFactors = FALSE
+    alt, row.names = NULL, stringsAsFactors = FALSE
   )
 }
 
