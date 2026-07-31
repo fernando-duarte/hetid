@@ -330,7 +330,7 @@ what the presentation hash must still guarantee.
 
 *Verify:* full suite green.
 
-**T4. NEUTRALITY GATE — blocking.**
+**T4. NEUTRALITY GATE — blocking. PASSED 2026-07-31.**
 
 Feed the **existing** cache (`scripts-paper/output/state/bootstrap_stage_draws.rds`, produced by
 pre-refactor code) through the **new** post-draw layer and confirm it reproduces every currently
@@ -341,6 +341,31 @@ Compare against the committed `.tex` artifacts and `set_id_inference_diagnostics
 
 **If this gate fails, stop and diagnose before any Phase II work.** Its whole purpose is to
 separate "the refactor was inert" from "a semantic change moved a number".
+
+**RESULT.** Both halves pass. Scripts kept beside this plan as
+`2026-07-31-t4-neutrality-gate-{mean,volatility}.R`.
+
+| panel | shape | worst numeric drift | non-numeric |
+|---|---|---|---|
+| mean | 28 x 55 | 4.441e-16 | all identical |
+| volatility | 30 x 34 | 2.220e-16 | all identical |
+
+Two scope limits, stated rather than buried. The gate compares the
+full-precision diagnostics CSV, never the rounded `.tex`, because three-decimal
+agreement would hide a change in the fourth. And it bypasses schema validation,
+since the frozen cache is schema 2: it therefore establishes **post-draw
+equivalence conditional on legacy primitives** and says nothing about the new
+draw producer, cache writing, or manifest tiering. Those need the full run.
+
+The volatility half excludes `tau0_se_analytic` and `tau0_ratio`, which depend on
+full-sample analytic standard errors from the untouched
+`standard_error_estimators.R` and are expensive to reproduce.
+
+One false failure on the first attempt is worth recording: the gate compared
+`set_id_boot_diagnostics` output directly and reported three columns lost.
+They are prepended by `paper_inference_metadata_frame` in the presentation layer,
+so the comparison was one level below the artifact. Compare what is written, not
+what is computed.
 
 ### Phase II — semantic changes
 
