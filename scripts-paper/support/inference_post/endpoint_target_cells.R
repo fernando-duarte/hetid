@@ -82,6 +82,40 @@ paper_source_once(paper_path(
   c(blank, list(reason = "full-sample side not certified bounded (unreliable)"))
 }
 
+# A requested tau that no longer supports inference is a decision to revisit,
+# not a blank to skim past. The gate reasons are the three ways a side fails
+# regularity; a cell suppressed because the full-sample set is unbounded is a
+# property of the data at that tolerance and passes through.
+ENDPOINT_GATE_FAILURES <- c(
+  "insufficient bounded draws",
+  "boundedness unstable across draws",
+  "degenerate endpoint scale"
+)
+
+endpoint_require_feasible <- function(tbl, tau, stability) {
+  bad <- tbl[tbl$reason %in% ENDPOINT_GATE_FAILURES, , drop = FALSE]
+  if (!nrow(bad)) {
+    return(invisible(tbl))
+  }
+  stop(sprintf(
+    paste0(
+      "tau = %s is not feasible for the endpoint bootstrap.\n",
+      "  %s\n",
+      "  stability threshold %.2f; the two-sided pool needs both sides ",
+      "bounded in the SAME draw, so a cell can fail while each side passes ",
+      "alone.\n",
+      "  Either drop this tau from the bootstrap grid or lower the threshold ",
+      "deliberately -- do not let it blank silently."
+    ),
+    format(tau),
+    paste(sprintf(
+      "%s: %s (lower %.3f, upper %.3f bounded; pool %d)",
+      bad$coef, bad$reason, bad$frac_lower, bad$frac_upper, bad$n_common
+    ), collapse = "\n  "),
+    stability
+  ), call. = FALSE)
+}
+
 # One cell for one coefficient at one tau, from that coefficient's per-side draw
 # columns and its full-sample row.
 endpoint_target_row <- function(lower, upper, lower_status, upper_status, f,
@@ -119,7 +153,8 @@ endpoint_target_table <- function(draws, full,
                                     PAPER_ANALYSIS_CONTRACT$inference$stability_share,
                                   tolerance =
                                     PAPER_ANALYSIS_CONTRACT$inference$
-                                      target_p_lambda_tolerance) {
+                                      target_p_lambda_tolerance,
+                                  tau = NULL) {
   stopifnot(
     identical(dim(draws$lower), dim(draws$upper)),
     identical(dim(draws$lower_status), dim(draws$lower)),
@@ -137,5 +172,10 @@ endpoint_target_table <- function(draws, full,
       stringsAsFactors = FALSE
     )
   })
-  do.call(rbind, rows)
+  out <- do.call(rbind, rows)
+  # tau is a label for the message; callers that have it get the loud failure
+  if (!is.null(tau)) {
+    endpoint_require_feasible(out, tau, stability)
+  }
+  out
 }

@@ -64,7 +64,8 @@ bootstrap_stage_envelopes <- function(
       endpoint_target_table(
         collected[[estimator_id]][[slot]],
         full[[estimator_id]][[slot]],
-        alpha = alpha
+        alpha = alpha,
+        tau = layout$taus[[index]]
       )
     })
     names(result) <- layout$keys

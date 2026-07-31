@@ -8,6 +8,20 @@ source(normalizePath(
 ))
 paper_source_once(paper_path("config", "artifacts.R"))
 paper_source_once(paper_path("config", "analysis.R"))
+
+# A full run overwrites tracked .tex artifacts. A draft bootstrap size would do
+# that silently and leave the paper carrying numbers no one meant to publish, so
+# a reduced HETID_BOOT_REPS has to be acknowledged rather than merely set.
+# HETID_ALLOW_DRAFT_RUN=1 is the acknowledgement.
+if (boot_reps != 10000L && !nzchar(Sys.getenv("HETID_ALLOW_DRAFT_RUN"))) {
+  stop(sprintf(paste0(
+    "refusing to run the publishing pipeline at B = %d.\n",
+    "  This run rewrites tracked .tex artifacts, and a draft bootstrap size ",
+    "would publish numbers that cannot be reproduced.\n",
+    "  Unset HETID_BOOT_REPS for a real run, or set HETID_ALLOW_DRAFT_RUN=1 ",
+    "to accept draft output."
+  ), boot_reps), call. = FALSE)
+}
 paper_source_once(paper_path("support", "data", "acm_inputs.R"))
 create_artifact_directories()
 conditional_cleanup_audits <- stats::setNames(
