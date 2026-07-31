@@ -172,3 +172,25 @@ stopifnot(
   )), fixed = TRUE)
 )
 et_pass("point statistic, its status arithmetic and every blank reason")
+
+# Test: the absolute count applies to the pair of sides, not each side alone
+# Each side is bounded on 60 of 100 draws against a minimum of 50, but the two
+# bounded runs overlap on only 20, and the quantile runs on that intersection.
+etc_lo <- et_side(60L, "unbounded", 40L)
+etc_up <- list(
+  vals = rev(etc_lo$vals),
+  status = rev(etc_lo$status)
+)
+etc_split <- endpoint_target_row(
+  etc_lo$vals, etc_up$vals, etc_lo$status, etc_up$status,
+  et_full("bounded", "bounded", 0, 1), et_alpha, 50L, 0.5, et_tol
+)
+stopifnot(
+  etc_split$n_lower >= 50L,
+  etc_split$n_upper >= 50L,
+  etc_split$n_common < 50L,
+  identical(etc_split$reason, "insufficient bounded draws"),
+  is.na(etc_split$c_s),
+  is.na(etc_split$ci_lower)
+)
+et_pass("a common pool below the minimum is suppressed though both sides clear")

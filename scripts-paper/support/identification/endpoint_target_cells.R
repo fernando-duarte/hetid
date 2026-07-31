@@ -10,7 +10,7 @@ paper_source_once(paper_path(
   "support", "identification", "endpoint_targets.R"
 ))
 
-.endpoint_target_cell <- function(lc, uc, f, alpha, tolerance) {
+.endpoint_target_cell <- function(lc, uc, f, alpha, tolerance, min_reps) {
   bounded <- PAPER_ENDPOINT_STATUS[["bounded"]]
   unbounded <- PAPER_ENDPOINT_STATUS[["unbounded"]]
   blank <- list(
@@ -25,6 +25,13 @@ paper_source_once(paper_path(
     # both-bounded pool: a two-sided root needs z on BOTH sides in one draw, so a
     # draw bounded on one side only feeds that side's scale but not this pool.
     pool <- lc$ok & uc$ok
+    # the absolute count applies to the PAIR of sides, not to each side alone.
+    # Two side gates can both clear while their intersection does not: a cell with
+    # 5,100 bounded lower draws and 8,500 bounded upper draws can have only 3,600
+    # jointly bounded, and the quantile below runs on the intersection.
+    if (sum(pool) < min_reps) {
+      return(c(blank, list(reason = "insufficient bounded draws")))
+    }
     c_s <- target_s_critical(pool, alpha, lc$z, uc$z)
     width <- f$set_upper - f$set_lower
     p <- target_p_critical(
@@ -82,7 +89,7 @@ endpoint_target_row <- function(lower, upper, lower_status, upper_status, f,
   uc <- endpoint_side_stat(
     upper, upper_status, f$set_upper, -1, min_reps, stability
   )
-  cell <- .endpoint_target_cell(lc, uc, f, alpha, tolerance)
+  cell <- .endpoint_target_cell(lc, uc, f, alpha, tolerance, min_reps)
   data.frame(
     se_lower = lc$se, se_upper = uc$se, n_lower = lc$n_ok, n_upper = uc$n_ok,
     n_common = cell$n_common, n_non_failed_lower = lc$n_valid,

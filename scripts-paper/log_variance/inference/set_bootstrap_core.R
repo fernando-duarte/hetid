@@ -55,7 +55,11 @@ logvar_point_record <- function(est_obj, b_point, coefs) {
   } else {
     tryCatch(est_obj$fit_at_b(b_point), error = function(error) NULL)
   }
-  ok <- logvar_fit_ok(fit) && length(fit$coef) == length(coefs)
+  # identity of the axis, not just its length: the collector stacks by position
+  # and relabels afterwards, so a same-length permutation would attach the right
+  # names to the wrong columns and no downstream check could see it -- the names
+  # are gone by then. The searched slots already enforce this in logvar_side_record.
+  ok <- logvar_fit_ok(fit) && identical(names(fit$coef), coefs)
   point <- if (ok) unname(fit$coef) else rep(NA_real_, length(coefs))
   status <- rep(
     PAPER_ENDPOINT_STATUS[[if (ok) "bounded" else "unreliable"]],
