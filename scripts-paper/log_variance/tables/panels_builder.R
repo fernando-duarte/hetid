@@ -5,7 +5,11 @@ paper_source_once(paper_path("support", "reporting", "cells.R"))
 paper_source_once(paper_path("log_variance", "tables", "table_formatting.R"))
 paper_source_once(paper_path("log_variance", "tables", "ppml_captions.R"))
 paper_source_once(paper_path("log_variance", "tables", "harvey_panel.R"))
-logvar_logols_fragment <- function(headers, n_obs, ordering_note, label) {
+# Row labels and columns for the log-OLS panel. Split out of the fragment so
+# the per-estimator document can stack this panel under the mean equation:
+# every other estimator already exposes parts through
+# logvar_estimator_panel_parts, and log-OLS was the only one that did not.
+logvar_logols_table_parts <- function(n_obs) {
   tab <- log_var_eq$table
   nw <- paper_newey_west_statistics(
     log_var_eq$fit_ols,
@@ -54,8 +58,13 @@ logvar_logols_fragment <- function(headers, n_obs, ordering_note, label) {
       )
     }))
   )
+  list(rows = rows, columns = cols)
+}
+
+logvar_logols_fragment <- function(headers, n_obs, ordering_note, label) {
+  parts <- logvar_logols_table_parts(n_obs)
   build_simple_latex_table(
-    rows, cols,
+    parts$rows, parts$columns,
     col_headers = headers,
     caption = paste0(
       paste(
