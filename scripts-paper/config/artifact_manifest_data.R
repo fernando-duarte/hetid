@@ -141,6 +141,18 @@ stopifnot(!anyDuplicated(names(.artifact_consumers)))
 paper_source_once(paper_path("config", "artifact_manifest_region.R"))
 .artifact_specs <- do.call(rbind, strsplit(.artifact_specs, "|", fixed = TRUE))
 stopifnot(ncol(.artifact_specs) == 6L)
+# A code no table defines makes the lookup below return NA, and every reader then
+# treats that NA as a real producer, consumer, group or status. A code no row
+# cites is the reverse: a registry entry kept alive after its last artifact left,
+# which is how a producer survives the deletion of the file it names. setequal
+# catches both directions for the two code tables; groups and statuses are
+# enumerations that need not be exhausted, so those are one-directional.
+stopifnot(
+  setequal(names(.artifact_producers), .artifact_specs[, 4L]),
+  setequal(names(.artifact_consumers), .artifact_specs[, 5L]),
+  all(.artifact_specs[, 3L] %in% names(PAPER_ARTIFACT_GROUPS)),
+  all(.artifact_specs[, 6L] %in% names(PAPER_ARTIFACT_STATUS_CODES))
+)
 artifact_manifest <- data.frame(
   id = .artifact_specs[, 1L],
   basename = .artifact_specs[, 2L],
