@@ -80,3 +80,17 @@ bootstrap_stage_cache_status_ok <- function(value, status_values) {
 bootstrap_stage_cache_table_ok <- function(value) {
   is.integer(value) && inherits(value, "table")
 }
+
+# A point evaluation cannot diverge, so "unbounded" is an implementation error,
+# and the value is present exactly where its own status certifies it. Lives here
+# rather than beside either panel's validator because both panels record a
+# tau = 0 point: two encodings of one invariant had already drifted to two
+# strictnesses, the mean side reading "bounded if and only if finite" and so
+# admitting a NaN wherever the status was not bounded.
+bootstrap_stage_cache_point_values_ok <- function(value, status) {
+  bounded <- status == PAPER_ENDPOINT_STATUS[["bounded"]]
+  !any(status == PAPER_ENDPOINT_STATUS[["unbounded"]]) &&
+    !any(is.nan(value)) &&
+    all(is.finite(value[bounded])) &&
+    all(is.na(value[!bounded]))
+}

@@ -16,7 +16,7 @@ paper_source_once(paper_path(
 ))
 paper_source_once(paper_path("support", "reporting", "inference.R"))
 paper_source_once(paper_path(
-  "support", "identification", "identified_set_inference.R"
+  "support", "inference_post", "identified_set_inference.R"
 ))
 paper_source_once(paper_path(
   "support", "identification", "identified_set_bootstrap.R"
@@ -115,13 +115,20 @@ run_bootstrap_stage <- function(
       )
     }
   )
-  bootstrap_stage_results(
-    dispatched$stage, stage_spec, mean_eq,
-    estimator_results, dispatched$source,
-    as.numeric(difftime(
-      Sys.time(), started_at,
-      units = "mins"
-    ))
+  # the primary family escapes so the spec comparison can reuse the EXACT
+  # resamples. Rebuilding it there would be a second construction of the index
+  # protocol -- which the ownership audit forbids for good reason: a paired
+  # comparison must not depend on two builders happening to agree.
+  c(
+    bootstrap_stage_results(
+      dispatched$stage, stage_spec, mean_eq,
+      estimator_results, dispatched$source,
+      as.numeric(difftime(
+        Sys.time(), started_at,
+        units = "mins"
+      ))
+    ),
+    list(primary_family = primary_family)
   )
 }
 
@@ -135,12 +142,13 @@ run_bootstrap_stage <- function(
 .bootstrap_stage_output <- run_bootstrap_stage(
   set_id_mean_eq, log_var_eq, lag_asset_return_pc,
   .bootstrap_stage_estimator_results, boot_reps, boot_seed,
-  boot_cores, PAPER_BOOT_MODE, z_col, impose_beta2r_null,
+  boot_cores, PAPER_BOOT_MODE, z_col, set_id_mean_eq$impose_null,
   logvar_boot_grid_cap, logvar_boot_fit_budget,
   artifact_path("bootstrap_stage_draws")
 )
 set_id_boot <- .bootstrap_stage_output$set_id_boot
 log_var_eq_set_boot <- .bootstrap_stage_output$log_var_eq_set_boot
+bootstrap_primary_family <- .bootstrap_stage_output$primary_family
 rm(
   .bootstrap_stage_estimators,
   .bootstrap_stage_estimator_results,

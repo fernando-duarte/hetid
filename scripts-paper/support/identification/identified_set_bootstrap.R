@@ -8,6 +8,10 @@
 # status. Consumed and tested by the paper pipeline's mean-equation inference
 # modules.
 
+paper_source_once(paper_path(
+  "support", "inference_post", "set_id_diagnostics_rows.R"
+))
+
 # Re-estimate the mean-equation system on one data frame: the W1/W2
 # residualizations, the de-meaned instrument, the identification moments, and
 # the closed-form tau = 0 point. Shared by the full-sample estimation
@@ -64,49 +68,37 @@ set_id_boot_draw_from_est <- function(est, shared_geometry, mean_spec) {
       est$point0$theta
     )
   }
+  # a point evaluation cannot diverge, so a draw whose tau = 0 system is rank
+  # deficient (point0 NULL, hence an NA point) is unreliable, never unbounded
+  point_status <- ifelse(
+    is.finite(point),
+    PAPER_ENDPOINT_STATUS[["bounded"]],
+    PAPER_ENDPOINT_STATUS[["unreliable"]]
+  )
   bounds <- lapply(shared_geometry$display_slots, function(slot) {
     interval <- shared_geometry$tables[[slot]]
     table <- rbind(interval$beta1, interval$theta)
-    bounded <- table$status == PAPER_ENDPOINT_STATUS[["bounded"]]
+    bounded <- PAPER_ENDPOINT_STATUS[["bounded"]]
+    # each side is masked by its OWN status: a draw certified on one side only
+    # still contributes that endpoint to the scale that side is studentized by
     list(
-      lower = ifelse(bounded, table$set_lower, NA_real_),
-      upper = ifelse(bounded, table$set_upper, NA_real_),
-      status = table$status
+      lower = ifelse(table$lower_status == bounded, table$set_lower, NA_real_),
+      upper = ifelse(table$upper_status == bounded, table$set_upper, NA_real_),
+      lower_status = table$lower_status,
+      upper_status = table$upper_status
     )
   })
-  coarse <- sweep_fixed_gamma(
-    shared_geometry$gamma,
-    est$moments,
-    mean_spec$tau_star_grid,
-    "boot"
-  )
-  tau_star <- tau_star_fixed(
-    shared_geometry$gamma,
-    est$moments,
-    coarse,
-    iters = mean_spec$tau_star_iterations
-  )
   list(
-    point = point, point_ok = !is.null(est$point0),
-    bounds = bounds,
-    tau_star = tau_star$tau_star,
-    capped = tau_star$capped
+    point = point, point_status = point_status,
+    point_ok = !is.null(est$point0),
+    bounds = bounds
   )
 }
 
 # Compatibility wrapper: estimate once, build shared geometry, then delegate.
 set_id_boot_draw <- function(dat, spec) {
   est <- estimate_set_id_system(dat, spec)
-  iterations <- if ("tau_star_iterations" %in% names(spec)) {
-    spec$tau_star_iterations
-  } else {
-    PAPER_INFERENCE_SEARCH_CONTROL$tau_star$bootstrap_bisection_iterations
-  }
-  mean_spec <- list(
-    coefs = spec$coefs,
-    tau_star_grid = spec$tau_grid,
-    tau_star_iterations = iterations
-  )
+  mean_spec <- list(coefs = spec$coefs)
   geometry <- set_id_boot_geometry(
     est,
     spec$gamma,
@@ -116,48 +108,42 @@ set_id_boot_draw <- function(dat, spec) {
   set_id_boot_draw_from_est(est, geometry, mean_spec)
 }
 
-# One diagnostics row per coefficient-tau pair: the full-sample set, per-
-# status draw counts, robust scales and correlation, per-endpoint t
-# statistics (endpoint over its robust scale; the upper-endpoint t backs a
-# negative set's excludes-zero claim, the lower-endpoint t a positive set's),
-# the calibrated interval, and the reason a table cell renders blank.
+# Per-status draw counts for one side of one tau's endpoint matrix, suffixed so
+# the two sides sit beside each other in the diagnostics frame.
+set_id_boot_status_counts <- function(status, side) {
+  counts <- t(apply(status, 2, paper_endpoint_status_counts))
+  colnames(counts) <- paste0("n_", colnames(counts), "_", side)
+  counts
+}
+
+# One diagnostics row per coefficient-tau pair: the full-sample set with its
+# collapsed and per-side statuses, per-side draw counts in the four-state
+# vocabulary, per-endpoint t statistics (endpoint over its robust scale; the
+# upper-endpoint t backs a negative set's excludes-zero claim, the lower-endpoint
+# t a positive set's), and every column the shared reference distribution's cell
+# builder reports -- scales, pool sizes, gates, both critical values, the
+# calibrated interval and the reason a table cell renders blank.
 set_id_boot_diagnostics <- function(collected, inference, set_tables, taus,
+                                    point_t,
+                                    control = PAPER_INFERENCE_SEARCH_CONTROL,
                                     min_reps = boot_min_reps(
-                                      nrow(collected$endpoint_draws[[1]]$status)
+                                      nrow(collected$endpoint_draws[[1]]$lower)
                                     )) {
-  do.call(rbind, lapply(seq_along(taus), function(j) {
+  display <- do.call(rbind, lapply(seq_along(taus), function(j) {
     st <- set_tables[[j]]
     tab <- rbind(st$beta1, st$theta)
     inf <- inference[[j]]
-    status <- collected$endpoint_draws[[j]]$status
-    counts <- t(apply(status, 2, function(s) {
-      c(
-        n_bounded = sum(s == PAPER_ENDPOINT_STATUS[["bounded"]]),
-        n_unbounded = sum(s == PAPER_ENDPOINT_STATUS[["unbounded"]]),
-        n_unreliable = sum(s == PAPER_ENDPOINT_STATUS[["unreliable"]]),
-        n_failed = sum(s == PAPER_ENDPOINT_STATUS[["failed"]])
-      )
-    }))
+    cell <- collected$endpoint_draws[[j]]
     width <- tab$set_upper - tab$set_lower
-    reason <- ifelse(
-      tab$status != PAPER_ENDPOINT_STATUS[["bounded"]], "full-sample set not certified bounded",
-      ifelse(
-        is.finite(width) & width <= 0, "point-identified (width 0)",
-        ifelse(
-          is.finite(inf$ci_lower), "reported",
-          ifelse(
-            inf$n_finite < min_reps, "insufficient bounded draws",
-            "degenerate endpoint scale"
-          )
-        )
-      )
-    )
     data.frame(
       coef = tab$coef, tau = taus[j],
-      set_lower = tab$set_lower, set_upper = tab$set_upper, width = width,
-      set_status = tab$status, counts,
-      n_finite = inf$n_finite, min_reps = min_reps,
-      se_lower = inf$se_lower, se_upper = inf$se_upper,
+      set_lower = tab$set_lower, set_upper = tab$set_upper,
+      width = width,
+      set_status = tab$status, set_lower_status = tab$lower_status,
+      set_upper_status = tab$upper_status,
+      set_id_boot_status_counts(cell$lower_status, "lower"),
+      set_id_boot_status_counts(cell$upper_status, "upper"),
+      min_reps = min_reps,
       t_lower = ifelse(
         is.finite(inf$se_lower) & inf$se_lower > 0,
         tab$set_lower / inf$se_lower, NA_real_
@@ -166,12 +152,18 @@ set_id_boot_diagnostics <- function(collected, inference, set_tables, taus,
         is.finite(inf$se_upper) & inf$se_upper > 0,
         tab$set_upper / inf$se_upper, NA_real_
       ),
-      se_width = inf$se_width, width_lower = inf$width_lower,
-      width_upper = inf$width_upper,
-      rho = inf$rho,
-      c_stoye = inf$c_stoye, c_im = inf$c_im,
-      ci_lower = inf$ci_lower, ci_upper = inf$ci_upper,
-      reason = reason, row.names = NULL, stringsAsFactors = FALSE
+      inf[setdiff(names(inf), "coef")],
+      set_id_boot_normal_cross_check(
+        data.frame(
+          width = width, se_lower = inf$se_lower, se_upper = inf$se_upper
+        ),
+        cell, control
+      ),
+      row.names = NULL, stringsAsFactors = FALSE
     )
   }))
+  # the tau = 0 block first, so a reader meets the point before the sets it
+  # collapses to at every displayed tolerance
+  tau0 <- set_id_boot_tau0_rows(point_t, display[1L, , drop = FALSE])
+  rbind(tau0, set_id_boot_pad_display(display, tau0))
 }

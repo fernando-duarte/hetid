@@ -56,6 +56,17 @@ paper_endpoint_status_reduce <- function(...) {
   }, character(1))
 }
 
+# Count one status vector against the whole vocabulary, named n_<word>. Lives
+# here because this file owns the closed word set: a caller that enumerates the
+# words itself silently loses a column if the set ever grows.
+paper_endpoint_status_counts <- function(status) {
+  vapply(
+    PAPER_ENDPOINT_STATUS,
+    function(value) sum(status == value),
+    integer(1)
+  )
+}
+
 paper_endpoint_status_from_flags <- function(bounded, valid) {
   stopifnot(
     length(bounded) == length(valid),

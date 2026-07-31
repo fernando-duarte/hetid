@@ -48,6 +48,32 @@ check(
   )
 )
 
+# Widening reads the collapsed status and writes only the two endpoint columns,
+# so the per-side statuses the endpoint bootstrap studentizes by must survive it
+# untouched. A half-infinite row is skipped entirely, which leaves its live side
+# un-widened -- recorded here because it is the tau*-safe behavior, not a defect.
+sided_tab <- annulus_tab
+sided_tab$lower_status <- c(
+  PAPER_ENDPOINT_STATUS[["bounded"]], PAPER_ENDPOINT_STATUS[["bounded"]]
+)
+sided_tab$upper_status <- c(
+  PAPER_ENDPOINT_STATUS[["bounded"]], PAPER_ENDPOINT_STATUS[["unbounded"]]
+)
+sided_tab$status[2L] <- PAPER_ENDPOINT_STATUS[["unbounded"]]
+sided_widened <- widen_theta_box(annulus, sided_tab)$tab
+check(
+  "box multistart passes the per-side statuses through unchanged",
+  identical(
+    sided_widened[c("coef", "status", "lower_status", "upper_status")],
+    sided_tab[c("coef", "status", "lower_status", "upper_status")]
+  )
+)
+check(
+  "a half-infinite row's live side is left un-widened by the collapsed gate",
+  identical(sided_widened$set_lower[[2L]], sided_tab$set_lower[[2L]]) &&
+    sided_widened$set_lower[[1L]] < sided_tab$set_lower[[1L]]
+)
+
 pool <- theta_box_start_pool(annulus, list(c(0.3, 0.4), c(0.3, 0.4)))
 check(
   "start pool carries the origin, both axis directions, and one warm copy",

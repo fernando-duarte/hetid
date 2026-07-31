@@ -25,7 +25,8 @@ hvt_harvey <- list(
 hvt_lines <- logvar_harvey_append_panel(
   character(0), hvt_harvey, 12L, c(0.05, 0.1), 0.05, 4000L, 20000L,
   caption = "Dedicated Harvey MLE/QMLE table.",
-  label = "tab:log_var_eq_harvey", include_ordering = FALSE
+  label = "tab:log_var_eq_harvey", include_ordering = FALSE,
+  point_stat = NULL
 )
 
 check("Harvey table renderer emits one marker-wrapped table", {
@@ -74,7 +75,8 @@ hvt_harvey_se <- c(hvt_harvey, list(se = list(
 hvt_lines_se <- logvar_harvey_append_panel(
   character(0), hvt_harvey_se, 12L, c(0.05, 0.1), 0.05, 4000L, 20000L,
   caption = "Dedicated Harvey MLE/QMLE table.", label = "tab:log_var_eq_harvey",
-  include_ordering = FALSE, se_type = "hac", se_hac_lags = 4L
+  include_ordering = FALSE, se_type = "hac", se_hac_lags = 4L,
+  point_stat = NULL
 )
 
 check("Harvey panel renders hac t-stats/stars and selects the hac column", {
@@ -103,9 +105,13 @@ check("Harvey panel stays blank and notes stay deferred when se_type is NULL", {
 })
 
 check("Harvey notes describe the hac SE variation and keep the caveat", {
+  # these lines carry no tau > 0 interval rows, so they also pin the caveat's
+  # tau = 0 sentence as unconditional and the analytic ratio as describing the
+  # reference column alone
   notes <- paste(hvt_lines_se, collapse = " ")
   grepl("Newey", notes) && grepl("QMLE", notes) &&
-    grepl("condition on the plug-in", notes) &&
+    grepl("propagate the first-stage sampling error", notes, fixed = TRUE) &&
+    grepl("in the reference column are", notes, fixed = TRUE) &&
     !grepl("No Harvey standard errors", notes, fixed = TRUE)
 })
 
@@ -114,7 +120,8 @@ check("Harvey panel fails loud when se_type is set but the se frame is absent", 
     {
       logvar_harvey_append_panel(
         character(0), hvt_harvey, 12L, c(0.05, 0.1), 0.05, 4000L, 20000L,
-        include_ordering = FALSE, se_type = "hac", se_hac_lags = 4L
+        include_ordering = FALSE, se_type = "hac", se_hac_lags = 4L,
+        point_stat = NULL
       )
       FALSE
     },
@@ -127,7 +134,8 @@ check("Harvey panel rejects an unknown se_type", {
     {
       logvar_harvey_append_panel(
         character(0), hvt_harvey_se, 12L, c(0.05, 0.1), 0.05, 4000L, 20000L,
-        include_ordering = FALSE, se_type = "bogus", se_hac_lags = 4L
+        include_ordering = FALSE, se_type = "bogus", se_hac_lags = 4L,
+        point_stat = NULL
       )
       FALSE
     },

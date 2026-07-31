@@ -25,7 +25,8 @@ panel_b <- logvar_ppml_table_parts(
   set_id_mean_eq$tau_display,
   n_pc_r,
   se_type = logvar_ppml_se_type,
-  envelope = log_var_eq_set_boot$ppml
+  envelope = log_var_eq_set_boot$ppml,
+  point_stat = logvar_boot_point_stat(log_var_eq_set_boot, "ppml")
 )
 r2_row <- which(panel_b$rows == "$R^2$")
 stopifnot(length(r2_row) == 1L)

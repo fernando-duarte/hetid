@@ -1,4 +1,15 @@
-BOOTSTRAP_STAGE_CACHE_SCHEMA <- 1L
+# 2: the mean branch records per-side endpoint statuses and an authoritative
+# tau = 0 point_status matrix, so a schema-1 payload can no longer be read.
+# 3: the per-draw tau-star search is gone, so tau_star_draws and n_capped leave
+# the mean collection. Bump this whenever the field list in
+# mean_boot_collection_validate changes: no test pins the two together, and a
+# stale number only warns and silently reruns the whole bootstrap.
+# 4: provenance carries presentation_sha beside code_sha. code_sha covers the
+# draw manifest and gates reuse; presentation_sha covers the post-draw manifest,
+# is recorded for audit, and is deliberately absent from the semantic list in
+# bootstrap_stage_provenance_validate so editing a table or an interval
+# construction cannot discard the draws.
+BOOTSTRAP_STAGE_CACHE_SCHEMA <- 4L
 BOOTSTRAP_STAGE_CACHE_FIELDS <- c(
   "anchor", "mean", "volatility_primary",
   "volatility_primary_n_failed", "volatility_sensitivity",
@@ -10,12 +21,12 @@ BOOTSTRAP_STAGE_PROVENANCE_FIELDS <- c(
   "block_rule", "index_sha256", "post_index_rng_sha256",
   "sens_block", "sens_reps", "sens_index_sha256",
   "sens_post_index_rng_sha256", "axes", "input_sha", "draw_spec_sha",
-  "code_sha", "runtime_sha", "cache_schema_version"
+  "code_sha", "presentation_sha", "runtime_sha", "cache_schema_version"
 )
 BOOTSTRAP_STAGE_SHA_FIELDS <- c(
   "index_sha256", "post_index_rng_sha256", "sens_index_sha256",
   "sens_post_index_rng_sha256", "input_sha", "draw_spec_sha",
-  "code_sha", "runtime_sha"
+  "code_sha", "presentation_sha", "runtime_sha"
 )
 BOOTSTRAP_STAGE_SHA_PATTERN <- "^[0-9a-f]{64}$"
 BOOTSTRAP_STAGE_LEGACY_CACHE_BASENAMES <- c(

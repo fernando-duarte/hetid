@@ -45,6 +45,7 @@ PAPER_CONDITIONAL_ARTIFACT_STATUSES <- setdiff(
   s = "log_variance/diagnostics/joint_gmm/pipeline_driver.R",
   t = "log_variance/estimators/lad/run_sets.R",
   u = "log_variance/diagnostics/dynamics/run_gate.R",
+  v = "mean_equation/inference/spec_comparison.R",
   v = paste(
     "log_variance/diagnostics/dynamics/run_gate.R",
     "log_variance/extensions/egarch/run_route.R",
@@ -74,7 +75,13 @@ PAPER_CONDITIONAL_ARTIFACT_STATUSES <- setdiff(
   I = "log_variance/extensions/egarch/run_route.R",
   J = "log_variance/extensions/egarch",
   K = "tests/support/check_contract_ownership.R",
+  M = "diagnostics only; no pipeline stage reads it",
+  # every table that reports a tau = 0 or tau > 0 inference statistic, in the
+  # order run_pipeline.R publishes them after the bootstrap stage
   L = paste(
+    "log_variance/tables/render_ppml_table.R",
+    "log_variance/tables/render_harvey_table.R",
+    "log_variance/tables/render_panels.R",
     "mean_equation/tables/render_structural_equation_table.R",
     "log_variance/tables/render_inference_panels.R",
     "log_variance/tables/render_combined_inference_table.R",
@@ -126,6 +133,7 @@ PAPER_CONDITIONAL_ARTIFACT_STATUSES <- setdiff(
   "descriptive_report_tex|descriptive_stats.tex|5|a|B|r",
   "descriptive_report_pdf|descriptive_stats.pdf|5|a|B|r",
   "mean_inference_diagnostics|set_id_inference_diagnostics.csv|6|p|C|r",
+  "mean_spec_comparison|set_id_spec_comparison.csv|6|v|M|r",
   "log_variance_inference_diagnostics|log_var_eq_set_inference_diagnostics.csv|6|p|D|r",
   "joint_null_csv|log_var_eq_joint_null.csv|6|r|E|r",
   "joint_null_rds|log_var_eq_joint_null.rds|6|r|E|r",

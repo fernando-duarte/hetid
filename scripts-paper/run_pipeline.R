@@ -8,6 +8,20 @@ source(normalizePath(
 ))
 paper_source_once(paper_path("config", "artifacts.R"))
 paper_source_once(paper_path("config", "analysis.R"))
+
+# A full run overwrites tracked LaTeX artifacts. A draft bootstrap size would do
+# that silently and leave the paper carrying numbers no one meant to publish, so
+# a reduced HETID_BOOT_REPS has to be acknowledged rather than merely set.
+# HETID_ALLOW_DRAFT_RUN=1 is the acknowledgement.
+if (boot_reps != 10000L && !nzchar(Sys.getenv("HETID_ALLOW_DRAFT_RUN"))) {
+  stop(sprintf(paste0(
+    "refusing to run the publishing pipeline at B = %d.\n",
+    "  This run rewrites tracked LaTeX artifacts, and a draft bootstrap ",
+    "size would publish numbers that cannot be reproduced.\n",
+    "  Unset HETID_BOOT_REPS for a real run, or set HETID_ALLOW_DRAFT_RUN=1 ",
+    "to accept draft output."
+  ), boot_reps), call. = FALSE)
+}
 paper_source_once(paper_path("support", "data", "acm_inputs.R"))
 create_artifact_directories()
 conditional_cleanup_audits <- stats::setNames(
@@ -50,10 +64,8 @@ paper_source_once(paper_path("log_variance", "inference", "standard_error_estima
 # analytic PPML QMLE standard errors for the point columns; must run after the
 # frozen PPML object exists and before either table renders it
 paper_source_once(paper_path("log_variance", "estimators", "ppml", "standard_errors.R"))
-# the primary table consumes the completed PPML hulls; the combined table then
-# adds the mean-log robustness panel without recomputing either estimator
-paper_source_once(paper_path("log_variance", "tables", "render_ppml_table.R"))
-# Harvey sets and dedicated table (the wrapper keeps this to one source line)
+# Harvey sets and analytic standard errors (the wrapper keeps this to one source
+# line). Its dedicated table publishes below, after the bootstrap stage.
 paper_source_once(paper_path("log_variance", "estimators", "harvey", "run.R"))
 # joint-null theta_R = 0 distance diagnostic: math, search, stability, then the
 # guarded driver (the log-OLS orchestrator supplies inputs and named parents
@@ -104,11 +116,22 @@ if (isTRUE(lad_gate$source_lad)) {
 # log_var_eq_lad so it renders only when the LAD map ran; main's combined panels
 # table below stays untouched
 paper_source_once(paper_path("log_variance", "tables", "render_lad_table.R"))
-paper_source_once(paper_path("log_variance", "tables", "render_panels.R"))
 # One late bootstrap stage shares each primary resample and system estimate
 # between mean and volatility inference. It owns both index families and the
 # unified all-or-nothing draw cache.
 paper_source_once(paper_path("inference", "run_bootstrap_stage.R"))
+# the alternative specification's mean draws, on the same index family, so the
+# comparison carries intervals rather than full-sample sets alone
+paper_source_once(paper_path("mean_equation", "inference", "spec_comparison.R"))
+# Publication of every log-variance table follows the stage, because each one
+# reports a bootstrap tau = 0 statistic. Only publication is deferred: the PPML
+# and Harvey estimates and their analytic standard errors are already frozen
+# above, and the stage reads them without mutating them. The primary table
+# consumes the completed PPML hulls, then the conservative panels add the
+# mean-log robustness panel without recomputing any estimator.
+paper_source_once(paper_path("log_variance", "tables", "render_ppml_table.R"))
+paper_source_once(paper_path("log_variance", "tables", "render_harvey_table.R"))
+paper_source_once(paper_path("log_variance", "tables", "render_panels.R"))
 # Structural inference follows the unified stage that creates set_id_boot.
 paper_source_once(paper_path("mean_equation", "tables", "render_structural_equation_table.R"))
 # The inference variant retains the combined panels and labels while threading

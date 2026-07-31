@@ -1,24 +1,34 @@
 # PPML table-part assembly and shared standard-error note.
 
-# The point-column conditioning caveat shared verbatim by both estimators' SE
-# notes: tau = 0 conditions on the plug-in news vector, while the set columns
-# carry either a separate endpoint envelope or an explicit deferral.
+# The point-column caveat shared by both estimators' SE notes. Every table now
+# publishes after the bootstrap stage, so the tau = 0 sentence is the same in
+# both branches. set_endpoint_inference records only whether this table carries
+# tau > 0 interval rows, and decides nothing about the tau = 0 column.
 logvar_se_note_caveat <- function(set_endpoint_inference = FALSE) {
-  prefix <- paste(
-    "The $\\tau{=}0$ statistics condition on the plug-in Lewbel news vector",
-    "$b_N$ and do not propagate its first-stage sampling error; $\\tau{>}0$",
-    "set columns are identified-set ranges, not point estimates."
+  tau_zero <- paste(
+    "The $\\tau{=}0$ statistics divide the point estimate by the robust scale",
+    "of its bootstrap draws, which re-estimate the mean equation, so they",
+    "propagate the first-stage sampling error in the Lewbel news vector",
+    "$b_N$. The analytic statistic conditions on a fixed plug-in $b_N$",
+    "instead, so the two are not comparable; it remains computed and is",
+    "reported in the diagnostics."
+  )
+  set_cols <- paste(
+    "The $\\tau{>}0$ set columns are identified-set ranges, not point",
+    "estimates."
   )
   if (isTRUE(set_endpoint_inference)) {
     return(paste(
-      prefix,
-      "Their moving-block-bootstrap outer confidence envelopes are reported",
-      "separately beneath the set cells."
+      tau_zero,
+      set_cols,
+      "Their moving-block bootstrap confidence intervals are reported beneath",
+      "the set cells."
     ))
   }
   paste(
-    prefix,
-    "No standard error is attached; moving-block-bootstrap set-endpoint",
+    tau_zero,
+    set_cols,
+    "No interval is reported beneath them; moving-block-bootstrap set-endpoint",
     "uncertainty is deferred."
   )
 }
@@ -26,17 +36,24 @@ logvar_se_note_caveat <- function(set_endpoint_inference = FALSE) {
 # Canonical PPML table parts: the quasi-Poisson reference and Lewbel-point
 # columns followed by exact-keyed display-tau hulls. Both the primary table and
 # the combined panels consume this one assembly path so their PPML cells cannot
-# drift. The statistic slots and R-squared row are blank by construction, unless
-# envelope supplies a per-tau (paper_tau_key-keyed) confidence-envelope
-# frame (log_var_eq_set_boot$ppml), in which case the blank row beneath each set
-# cell instead renders that tau's per-coef envelope_cell. NULL (the default)
-# keeps every column byte-identical to the pre-envelope renderer.
+# drift. The R-squared row is blank by construction, and so are the set-cell
+# statistic slots unless envelope supplies a per-tau (paper_tau_key-keyed)
+# confidence-envelope frame (log_var_eq_set_boot$ppml), in which case the blank
+# row beneath each set cell instead renders that tau's per-coef envelope_cell.
+# point_stat has no default on purpose. The notes these tables emit now assert
+# unconditionally that the tau = 0 statistics propagate the first-stage error, so a
+# table that omitted the frame would print an analytic ratio under a note claiming
+# otherwise. Requiring it makes that omission impossible rather than merely
+# unlikely; a caller genuinely wanting the analytic branch passes NULL and says so.
+# point_stat supplies the tau = 0 column's bootstrap statistic frame and is
+# independent of envelope. NULL (the default) keeps every column byte-identical
+# to the pre-envelope renderer.
 paper_source_once(paper_path(
   "log_variance", "tables", "estimator_panel.R"
 ))
 
 logvar_ppml_table_parts <- function(ppml, tau_display, n_pc_r, se_type = NULL,
-                                    envelope = NULL) {
+                                    envelope = NULL, point_stat) {
   model <- PAPER_ANALYSIS_CONTRACT$model
   expected_coef <- c(
     model$intercept_col,
@@ -55,6 +72,7 @@ logvar_ppml_table_parts <- function(ppml, tau_display, n_pc_r, se_type = NULL,
     ),
     se_type = se_type,
     se_types = LOGVAR_PPML_SE_TYPES,
-    envelope = envelope
+    envelope = envelope,
+    point_stat = point_stat
   )
 }

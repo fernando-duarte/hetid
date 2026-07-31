@@ -28,6 +28,14 @@ bootstrap_stage_provenance_validate <- function(
     input_sha = hashes$input_sha,
     draw_spec_sha = hashes$draw_spec_sha,
     code_sha = paper_boot_code_sha(bootstrap_stage_code_manifest()),
+    # RECORDED, NOT COMPARED. The reuse path passes a freshly built provenance
+    # as `expected`, so every field in the record is checked cached-against-new
+    # by default -- which would make a presentation edit invalidate the draws,
+    # the exact opposite of the point. Carrying the record's own value through
+    # makes this field self-comparing, so it stays auditable without gating.
+    # Do not move this into a plain recomputation; that silently restores the
+    # coupling.
+    presentation_sha = value[["presentation_sha"]],
     runtime_sha = paper_boot_runtime_sha(),
     cache_schema_version = BOOTSTRAP_STAGE_CACHE_SCHEMA
   )
@@ -77,6 +85,12 @@ bootstrap_stage_provenance <- function(
     input_sha = hashes$input_sha,
     draw_spec_sha = hashes$draw_spec_sha,
     code_sha = paper_boot_code_sha(bootstrap_stage_code_manifest()),
+    # recorded, never compared: presentation_sha is absent from the semantic
+    # list in bootstrap_stage_provenance_validate on purpose, so a change to a
+    # table or an interval construction is auditable without discarding draws
+    presentation_sha = paper_boot_code_sha(
+      bootstrap_stage_presentation_manifest()
+    ),
     runtime_sha = paper_boot_runtime_sha(),
     cache_schema_version = BOOTSTRAP_STAGE_CACHE_SCHEMA
   )

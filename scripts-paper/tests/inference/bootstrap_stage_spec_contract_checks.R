@@ -7,16 +7,14 @@ paper_mbb_protocol <- function() {
   ))
 }
 PAPER_INFERENCE_SEARCH_CONTROL <- list(
-  bootstrap = list(fatal_failure_share = 0.2, progress_report_every = 2L),
-  tau_star = list(bootstrap_bisection_iterations = 4L)
+  bootstrap = list(fatal_failure_share = 0.2, progress_report_every = 2L)
 )
 PAPER_ANALYSIS_CONTRACT <- list(
   model = list(
     key_col = "when",
     return_pc_cols = "l.pc1",
     preprocessing = list(return_pc = list(center = TRUE, scale = FALSE))
-  ),
-  tau = list(bootstrap_step = 0.1)
+  )
 )
 LOGVAR_SEARCH_CONTROL <- list(iterations = 4L)
 LOGVAR_PPML_CONTROL <- list(glm_maxit = 5L)
@@ -67,13 +65,17 @@ mean_eq <- list(
       coef = c("(Intercept)", "x"),
       set_lower = c(0, 1),
       set_upper = c(2, 3),
-      status = c("bounded", "bounded")
+      status = c("bounded", "bounded"),
+      lower_status = c("bounded", "bounded"),
+      upper_status = c("bounded", "bounded")
     ),
     theta = data.frame(
       coef = "w2",
       set_lower = 2,
       set_upper = 4,
-      status = "bounded"
+      status = "bounded",
+      lower_status = "bounded",
+      upper_status = "bounded"
     )
   ))
 )
@@ -109,7 +111,6 @@ stopifnot(
   identical(names(spec$log_variance), BOOTSTRAP_STAGE_FIELDS$log_variance),
   identical(spec$frame$data$l.pc1, c(9, NA, 7)),
   identical(spec$mean$coefs, c("(Intercept)", "x", "w2")),
-  identical(spec$mean$tau_star_grid, c(0, 0.1, 0.2, 0.25)),
   !any(c(
     names(spec$frame),
     names(spec$system),
@@ -136,6 +137,19 @@ lag_pc_duplicate <- cbind(lag_pc, l.pc1_duplicate = lag_pc$l.pc1)
 names(lag_pc_duplicate)[[3L]] <- "l.pc1"
 duplicate_error <- try(bootstrap_stage_frame(mean_eq, lag_pc_duplicate), silent = TRUE)
 stopifnot(inherits(duplicate_error, "try-error"))
+# Moving blocks assume adjacent keys, so a gap in the mean frame must stop the
+# stage rather than resample across it.
+mean_eq_gapped <- mean_eq
+mean_eq_gapped$data$when <- c(1L, 2L, 4L)
+gap_error <- try(bootstrap_stage_frame(mean_eq_gapped, lag_pc), silent = TRUE)
+stopifnot(
+  inherits(gap_error, "try-error"),
+  isTRUE(grepl(
+    "gapless",
+    conditionMessage(attr(gap_error, "condition")),
+    fixed = TRUE
+  ))
+)
 PAPER_INFERENCE_SEARCH_CONTROL$bootstrap$fatal_failure_share <- 0.3
 bootstrap_stage_spec_validate(spec, bootstrap_stage_expected())
 stopifnot(identical(spec$design$failure_control$fatal_failure_share, 0.2))

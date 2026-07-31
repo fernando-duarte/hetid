@@ -4,7 +4,7 @@
 #   Rscript scripts-paper/tests/inference/mean_boot_results_checks.R
 
 source(file.path("scripts-paper", "config", "paths.R"))
-paper_source_once(paper_path("support", "identification", "identified_set_inference.R"))
+paper_source_once(paper_path("support", "inference_post", "identified_set_inference.R"))
 paper_source_once(paper_path("support", "statistics", "api.R"))
 paper_source_once(paper_path("mean_equation", "inference", "boot_results.R"))
 paper_source_once(paper_path("tests", "support", "harness.R"))
@@ -28,17 +28,20 @@ mbr_upper <- matrix(
   abs(stats::rnorm(mbr_b * 2L)), mbr_b, 2L,
   dimnames = list(NULL, mbr_coefs)
 )
+mbr_status <- matrix(
+  "bounded", mbr_b, 2L,
+  dimnames = list(NULL, mbr_coefs)
+)
 mbr_collected <- list(
   point_draws = mbr_point_draws,
+  point_status = mbr_status,
   n_point_deficient = 0L,
   endpoint_draws = list(
     list(
       lower = mbr_lower, upper = mbr_upper,
-      status = matrix("bounded", mbr_b, 2L, dimnames = list(NULL, mbr_coefs))
+      lower_status = mbr_status, upper_status = mbr_status
     )
   ),
-  tau_star_draws = stats::runif(mbr_b, 0, 0.1),
-  n_capped = 1L,
   n_failed = 0L,
   failure_causes = NULL
 )
@@ -46,10 +49,12 @@ mbr_collected <- list(
 mbr_set_tables <- list(tau_005 = list(
   beta1 = data.frame(
     coef = "b1", set_lower = -1, set_upper = 1, status = "bounded",
+    lower_status = "bounded", upper_status = "bounded",
     stringsAsFactors = FALSE
   ),
   theta = data.frame(
     coef = "th1", set_lower = -0.5, set_upper = 0.5, status = "bounded",
+    lower_status = "bounded", upper_status = "bounded",
     stringsAsFactors = FALSE
   )
 ))
@@ -70,23 +75,29 @@ mbr_provenance <- list(
 mbr_out <- mean_boot_results(
   mbr_collected, mbr_set_id_mean_eq,
   PAPER_ANALYSIS_CONTRACT$inference$nominal_alpha,
-  PAPER_INFERENCE_SEARCH_CONTROL, mbr_provenance
+  mbr_provenance
 )
 paper_source_once(paper_path(
   "tests", "inference", "mean_boot_results_schema_checks.R"
 ))
 
 check(
-  "mean_boot_results returns a point_ci frame with both coefficients",
-  identical(mbr_out$point_ci$coef, mbr_coefs)
+  "mean_boot_results returns a tau = 0 t-statistic frame for both coefficients",
+  identical(mbr_out$point_t$coef, mbr_coefs) &&
+    identical(mbr_out$point_t$reason, rep("reported", 2L)) &&
+    isTRUE(all.equal(
+      mbr_out$point_t$statistic,
+      mbr_out$point_t$point / unname(mbr_out$point_se)
+    ))
+)
+check(
+  "the tau > 0 cells come from the shared endpoint target builder",
+  identical(mbr_out$inference[[1L]]$side, rep("two-sided", 2L)) &&
+    all(mbr_out$inference[[1L]]$c_p_upper <= mbr_out$inference[[1L]]$c_s)
 )
 check(
   "mean_boot_results returns one inference table per tau, named by set_tables",
   identical(names(mbr_out$inference), names(mbr_set_tables))
-)
-check(
-  "mean_boot_results returns a tau_star_band with a finite median",
-  is.finite(mbr_out$tau_star_band[["median"]])
 )
 check(
   "mean_boot_results reports the collected n_failed unchanged",
@@ -98,4 +109,40 @@ check(
     mbr_out$block == mbr_provenance$block &&
     mbr_out$seed == mbr_provenance$seed
 )
+# The diagnostics read a set status per side, so the projection that reaches them
+# has to carry those columns. Build the input through the real projection instead
+# of by hand: a fixture written richer than production is exactly what let a NULL
+# column through as zero rows, and only a full run caught it.
+paper_source_once(paper_path(
+  "support", "inference", "bootstrap_stage_mean_result_inputs.R"
+))
+paper_source_once(paper_path(
+  "support", "identification", "identified_set_bootstrap.R"
+))
+mbr_projected <- bootstrap_stage_mean_result_inputs(mbr_set_id_mean_eq)
+check(
+  "the projection carries every set field the diagnostics read",
+  all(
+    c(
+      "coef", "set_lower", "set_upper", "status",
+      "lower_status", "upper_status"
+    ) %in% names(mbr_projected$set_tables[[1L]]$beta1)
+  )
+)
+check(
+  "diagnostics assemble from the projection rather than a richer fixture",
+  {
+    mbr_diag <- set_id_boot_diagnostics(
+      mbr_out, mbr_out$inference, mbr_projected$set_tables,
+      mbr_set_id_mean_eq$tau_display, mbr_out$point_t
+    )
+    identical(nrow(mbr_diag), 2L * length(mbr_coefs)) &&
+      setequal(mbr_diag$tau, c(0, mbr_set_id_mean_eq$tau_display)) &&
+      all(c("set_lower_status", "set_upper_status") %in% names(mbr_diag))
+  }
+)
+
+paper_source_once(paper_path(
+  "tests", "inference", "mean_boot_results_table_checks.R"
+))
 .test$finish()

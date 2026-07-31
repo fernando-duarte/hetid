@@ -45,17 +45,27 @@ eval_width_at_tau <- function(gamma, tau, moments) {
   list(total = total, bounded = bounded, valid = valid, status = status)
 }
 
-# Per-coefficient intervals from one already-built quadratic system.
+# Per-coefficient intervals from one already-built quadratic system. Each row
+# carries the collapsed status the tau* sweep and the set-cell renderer read AND
+# the two per-side statuses the endpoint bootstrap studentizes each side by.
 coef_interval_tables_from_quadratic <- function(qs, beta1r, beta2r) {
   tb <- solve_all_profile_bounds(qs)
   theta_fail_closed <- anyNA(c(tb$lower, tb$upper))
+  # set_lower is the "min" solve and set_upper the "max", so the theta sides map
+  # straight through. The collapsed status is the worst of the two, reduced rather
+  # than re-derived from the conjoined flags, so the three columns cannot drift.
+  theta_lower <- paper_endpoint_status_from_flags(
+    tb$bounded_lower, tb$valid_lower
+  )
+  theta_upper <- paper_endpoint_status_from_flags(
+    tb$bounded_upper, tb$valid_upper
+  )
   theta <- data.frame(
     coef = rownames(beta2r),
     set_lower = tb$lower, set_upper = tb$upper,
-    status = paper_endpoint_status_from_flags(
-      tb$bounded_lower & tb$bounded_upper,
-      tb$valid_lower & tb$valid_upper
-    ),
+    status = paper_endpoint_status_reduce(theta_lower, theta_upper),
+    lower_status = theta_lower,
+    upper_status = theta_upper,
     row.names = NULL, stringsAsFactors = FALSE
   )
   beta1 <- do.call(rbind, lapply(names(beta1r), function(p) {
@@ -65,14 +75,19 @@ coef_interval_tables_from_quadratic <- function(qs, beta1r, beta2r) {
       fmin <- solve_linear_functional_bound(qs, beta2r[, p], "min")
       fmax <- solve_linear_functional_bound(qs, beta2r[, p], "max")
     }
+    # the functional bound enters with a MINUS sign, so the sides reverse:
+    # set_lower is governed by fmax and set_upper by fmin. Reducing the two rather
+    # than conjoining the flags by hand is what keeps that reversal from being
+    # fumbled in a third expression.
+    beta_lower <- paper_endpoint_status_from_flags(fmax$bounded, fmax$valid)
+    beta_upper <- paper_endpoint_status_from_flags(fmin$bounded, fmin$valid)
     data.frame(
       coef = p,
       set_lower = unname(beta1r[p]) - fmax$bound,
       set_upper = unname(beta1r[p]) - fmin$bound,
-      status = paper_endpoint_status_from_flags(
-        fmin$bounded && fmax$bounded,
-        fmin$valid && fmax$valid
-      ),
+      status = paper_endpoint_status_reduce(beta_lower, beta_upper),
+      lower_status = beta_lower,
+      upper_status = beta_upper,
       row.names = NULL, stringsAsFactors = FALSE
     )
   }))

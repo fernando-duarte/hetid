@@ -39,16 +39,24 @@ logvar_boot_collection_validate <- function(
   }
   status_values <- unname(PAPER_ENDPOINT_STATUS)
   fully_failed <- rep(TRUE, n_draws)
+  matrix_shape <- function(value, type) {
+    bootstrap_stage_cache_matrix_ok(value, n_draws, coefs, type)
+  }
   for (estimator_id in estimator_ids) {
     cells <- collected[[estimator_id]]
     if (!is.list(cells) || !is.null(attributes(cells)) ||
       length(cells) != length(taus)) {
       return("tau axis changed")
     }
-    for (cell in cells) {
-      fields <- c("lower", "upper", "lower_status", "upper_status")
+    for (tau_index in seq_along(cells)) {
+      cell <- cells[[tau_index]]
+      fields <- bootstrap_stage_logvar_cell_fields(tau_index, taus)
       if (!bootstrap_stage_cache_exact_list(cell, fields)) {
         return("cell fields changed")
+      }
+      if ("point" %in% fields &&
+        !bootstrap_stage_logvar_point_ok(cell, matrix_shape)) {
+        return("point value/status mismatch")
       }
       valid <- c(
         bootstrap_stage_cache_matrix_ok(
@@ -112,17 +120,25 @@ logvar_boot_anchor_validate <- function(anchor, logvar_spec, taus) {
     return("estimator axis changed")
   }
   status_values <- unname(PAPER_ENDPOINT_STATUS)
+  vector_shape <- function(value, type) {
+    identical(typeof(value), type) && length(value) == length(coefs) &&
+      is.null(attributes(value))
+  }
   for (estimator_id in estimator_ids) {
     cells <- anchor[[estimator_id]]
     if (!is.list(cells) || length(cells) != length(taus)) {
       return("tau axis changed")
     }
     live <- FALSE
-    for (cell in cells) {
-      if (!bootstrap_stage_cache_exact_list(
-        cell, c("lower", "upper", "lower_status", "upper_status")
-      )) {
+    for (tau_index in seq_along(cells)) {
+      cell <- cells[[tau_index]]
+      fields <- bootstrap_stage_logvar_cell_fields(tau_index, taus)
+      if (!bootstrap_stage_cache_exact_list(cell, fields)) {
         return("cell fields changed")
+      }
+      if ("point" %in% fields &&
+        !bootstrap_stage_logvar_point_ok(cell, vector_shape)) {
+        return("point value/status mismatch")
       }
       endpoints_ok <- is.double(cell$lower) && is.double(cell$upper) &&
         length(cell$lower) == length(coefs) &&

@@ -1,5 +1,11 @@
 # Estimator-neutral coefficient-panel assembly. Estimator notation, the
 # reference header, and standard-error capability remain explicit inputs.
+#
+# envelope and point_stat are independent switches and must stay that way.
+# envelope decides whether a confidence row appears beneath each tau > 0 set
+# cell; point_stat decides whether the tau = 0 column reports the bootstrap
+# statistic instead of the analytic ratio. A table can take the second without
+# the first, which is what the conservative variants do.
 
 logvar_estimator_panel_parts <- function(
   result,
@@ -9,7 +15,8 @@ logvar_estimator_panel_parts <- function(
   se_type = NULL,
   se_types = NULL,
   envelope = NULL,
-  cell_policy = PAPER_REPORTING_CONTROL$cells$log_variance
+  cell_policy = PAPER_REPORTING_CONTROL$cells$log_variance,
+  point_stat = NULL
 ) {
   required <- c(
     "intercept_label",
@@ -48,7 +55,7 @@ logvar_estimator_panel_parts <- function(
   } else {
     result$se
   }
-  point_col <- function(values, frame) {
+  point_col <- function(values, frame, stat = NULL) {
     logvar_se_point_col(
       values,
       frame,
@@ -56,13 +63,14 @@ logvar_estimator_panel_parts <- function(
       se_types,
       tab$coef,
       n_obs,
-      cell_policy
+      cell_policy,
+      point_stat = stat
     )
   }
   columns <- c(
     list(
       point_col(tab$reference, se$reference),
-      point_col(tab$point, se$point)
+      point_col(tab$point, se$point, point_stat)
     ),
     logvar_set_envelope_cols(
       sets,
@@ -93,7 +101,8 @@ logvar_estimator_panel_fragment <- function(
   se_type = NULL,
   se_types = NULL,
   envelope = NULL,
-  cell_policy = PAPER_REPORTING_CONTROL$cells$log_variance
+  cell_policy = PAPER_REPORTING_CONTROL$cells$log_variance,
+  point_stat = NULL
 ) {
   parts <- logvar_estimator_panel_parts(
     result,
@@ -103,7 +112,8 @@ logvar_estimator_panel_fragment <- function(
     se_type,
     se_types,
     envelope,
-    cell_policy
+    cell_policy,
+    point_stat
   )
   style <- PAPER_TABLE_STYLE$coefficient
   build_simple_latex_table(

@@ -61,15 +61,22 @@ The runner preserves the established source order:
 FRED patch and data construction
   -> mean-equation OLS, identified set, variance shares, and bounds
   -> log-OLS foundation and mean-equation bounds
-  -> PPML and Harvey sets, standard errors, and tables
+  -> PPML and Harvey sets and standard errors
   -> joint-null and joint-GMM diagnostics
   -> EGARCH cleanup, residual-dynamics gate, decision validation, and routing
   -> optional LAD estimator and table
-  -> conservative panels
   -> one unified mean/volatility bootstrap stage
+  -> PPML, Harvey, and conservative-panel tables
   -> structural and log-variance inference tables
   -> analytical figures, diagnostics, and descriptive report
 ```
+
+Every log-variance table reports a bootstrap `tau = 0` statistic, so publication
+waits for the bootstrap stage even where the table carries no `tau > 0`
+confidence rows. Only publication is deferred: the PPML and Harvey estimates and
+their analytic standard errors are frozen before the stage, which reads them
+without mutating them. The LAD table is the one exception, having neither
+statistic.
 
 Modules still evaluate in the shared global environment. Important products include
 `set_id_mean_eq`, `set_id_boot`, `mean_eq_bounds_tau`, `var_share`, `log_var_eq`,

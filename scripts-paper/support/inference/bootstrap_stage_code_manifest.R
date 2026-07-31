@@ -44,7 +44,6 @@ BOOTSTRAP_STAGE_CODE_FILES <- c(
     "bootstrap_stage_mean_result_inputs.R",
     "bootstrap_stage_result_helpers.R"
   )),
-  "support/reporting/inference.R",
   "log_variance/estimators/controls.R",
   "log_variance/estimators/set_orchestration.R",
   paste0("log_variance/inference/", c(
@@ -52,11 +51,8 @@ BOOTSTRAP_STAGE_CODE_FILES <- c(
     "set_bootstrap_draw.R",
     "set_bootstrap_builders.R",
     "set_bootstrap_gate.R",
-    "set_bootstrap_artifacts.R",
-    "set_envelope.R",
     "standard_error_estimators.R"
   )),
-  "mean_equation/inference/boot_results.R",
   # the draw geometry builds each draw's news box through the widening builder,
   # so the multistart and the from-a-start profile solve it calls are draw code:
   # editing them must invalidate the cache
@@ -64,14 +60,38 @@ BOOTSTRAP_STAGE_CODE_FILES <- c(
   "inference/bootstrap_stage_specs.R",
   "inference/bootstrap_stage_draw.R",
   "inference/bootstrap_stage_cache.R",
-  "inference/bootstrap_stage_results.R",
   "inference/run_bootstrap_stage.R"
+)
+
+# Presentation tier: every function in these files is a deterministic transform of
+# draws that already exist, so editing one cannot change a draw and must not throw
+# away a ten-thousand-draw cache. Their hash is recorded in provenance for audit
+# and is deliberately NOT part of the reuse decision. Classify by call site before
+# adding anything here: set_bootstrap_builders.R looked like draw code by name and
+# had to be split, and set_bootstrap_gate.R reads as post-draw but is called from
+# bootstrap_stage_execution.R inside the stage, so it stays on the draw side.
+BOOTSTRAP_STAGE_PRESENTATION_DIRECTORIES <- "support/inference_post"
+
+BOOTSTRAP_STAGE_PRESENTATION_FILES <- c(
+  "support/reporting/inference.R",
+  "log_variance/inference/set_bootstrap_artifacts.R",
+  "log_variance/inference/set_envelope.R",
+  "mean_equation/inference/boot_results.R",
+  "inference/bootstrap_stage_results.R"
 )
 
 bootstrap_stage_code_manifest <- function() {
   bootstrap_stage_manifest_expand(
     BOOTSTRAP_STAGE_CODE_DIRECTORIES,
     BOOTSTRAP_STAGE_CODE_FILES,
+    paper_path
+  )
+}
+
+bootstrap_stage_presentation_manifest <- function() {
+  bootstrap_stage_manifest_expand(
+    BOOTSTRAP_STAGE_PRESENTATION_DIRECTORIES,
+    BOOTSTRAP_STAGE_PRESENTATION_FILES,
     paper_path
   )
 }

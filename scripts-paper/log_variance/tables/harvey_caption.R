@@ -61,7 +61,7 @@ build_harvey_panel_notes <- function(harvey, tau_baseline, grid_cap, fit_budget,
     sprintf(
       paste(
         "Search resolution: the grid is capped at %d points with a %d-fit",
-        "budget per slack, and a five-start sensitivity re-polish reruns every",
+        "budget per tolerance, and a five-start sensitivity re-polish reruns every",
         "side before any cell ships; disagreements demote the cell to",
         "unreliable."
       ),
@@ -83,8 +83,8 @@ build_harvey_panel_notes <- function(harvey, tau_baseline, grid_cap, fit_budget,
 }
 
 # the SE computation clause: describes each stored variant by its assumption,
-# names which variant is printed, and states the point-column conditioning
-# caveat and the set-column no-SE rule. Neutral framing (assumptions, not
+# names which variant is printed and in which columns, and states the
+# point-column caveat and the set-column rule. Neutral framing (assumptions, not
 # advice) so it reads correctly whatever logvar_harvey_se_type selects.
 logvar_harvey_se_note <- function(
   se_type,
@@ -114,9 +114,9 @@ logvar_harvey_se_note <- function(
         "holds); the outer-product BHHH; the Eicker--White QMLE sandwich $H^{-1}",
         "(\\sum_t \\hat g_t \\hat g_t')H^{-1}$ with $\\hat g_t = \\frac{1}{2}(1 -",
         "\\hat r_t)R_t$; and its Newey--West Bartlett HAC extension over %d lags,",
-        "consistent also under serially correlated scores. The reported",
-        "statistics use %s; parenthetical values are $\\hat\\theta/\\mathrm{SE}$",
-        "with stars from the standard-normal (QMLE) approximation",
+        "consistent also under serially correlated scores. Parenthetical values",
+        "in the reference column are $\\hat\\theta/\\mathrm{SE}$ from %s, with",
+        "stars from the standard-normal (QMLE) approximation",
         "(%s)."
       ),
       se_hac_lags,

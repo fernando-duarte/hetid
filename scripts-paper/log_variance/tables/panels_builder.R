@@ -98,9 +98,12 @@ build_logvar_panels <- function(table_id, ppml_caption_suffix = ".",
       format(baseline_tau)
     )
   }
+  # both variants publish after the bootstrap stage, so both take the bootstrap
+  # tau = 0 statistic; only the tau > 0 envelope tells them apart
   ppml_parts <- logvar_ppml_table_parts(
     ppml_result, set_id_mean_eq$tau_display, n_pc_r,
-    se_type = logvar_ppml_se_type, envelope = envelope_ppml
+    se_type = logvar_ppml_se_type, envelope = envelope_ppml,
+    point_stat = logvar_boot_point_stat(log_var_eq_set_boot, "ppml")
   )
   stopifnot(identical(ppml_parts$n_obs, n_obs))
   ppml_fragment <- build_simple_latex_table(
@@ -148,7 +151,8 @@ build_logvar_panels <- function(table_id, ppml_caption_suffix = ".",
     harvey_fragment <- logvar_harvey_build_fragment(
       harvey_result, n_obs, set_id_mean_eq$tau_display,
       label = artifact_latex_label(table_id, "harvey"),
-      se_type = logvar_harvey_se_type, envelope = envelope_harvey
+      se_type = logvar_harvey_se_type, envelope = envelope_harvey,
+      point_stat = logvar_boot_point_stat(log_var_eq_set_boot, "harvey")
     )
     harvey_notes <- c(
       build_harvey_panel_notes(

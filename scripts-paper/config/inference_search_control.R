@@ -21,15 +21,16 @@ PAPER_INFERENCE_SEARCH_CONTROL <- list(
   ),
   tau_star = list(
     fine_grid_points = 20L,
-    bisection_iterations = 40L,
-    bootstrap_bisection_iterations = 15L
+    bisection_iterations = 40L
   ),
   bootstrap = list(
     fatal_failure_share = 0.25,
     progress_report_every = 25L
-  ),
-  logvar_endpoint = list(stability_share = 0.85)
+  )
 )
+# The endpoint stability share used to live here as logvar_endpoint$stability_share,
+# applied to the volatility panel only. It is now one gate policy for both panels
+# and lives in PAPER_ANALYSIS_CONTRACT$inference$stability_share.
 
 PAPER_LOGVAR_BUDGETS <- local({
   primary <- list(
@@ -82,12 +83,9 @@ stopifnot(
   PAPER_INFERENCE_SEARCH_CONTROL$robust_endpoint_correlation$mad_trim_multiple > 0,
   PAPER_INFERENCE_SEARCH_CONTROL$tau_star$fine_grid_points >= 1L,
   PAPER_INFERENCE_SEARCH_CONTROL$tau_star$bisection_iterations >= 1L,
-  PAPER_INFERENCE_SEARCH_CONTROL$tau_star$bootstrap_bisection_iterations >= 1L,
   PAPER_INFERENCE_SEARCH_CONTROL$bootstrap$fatal_failure_share > 0,
   PAPER_INFERENCE_SEARCH_CONTROL$bootstrap$fatal_failure_share < 1,
   PAPER_INFERENCE_SEARCH_CONTROL$bootstrap$progress_report_every >= 1L,
-  PAPER_INFERENCE_SEARCH_CONTROL$logvar_endpoint$stability_share > 0,
-  PAPER_INFERENCE_SEARCH_CONTROL$logvar_endpoint$stability_share < 1,
   identical(
     PAPER_LOGVAR_BUDGETS$estimator$ppml,
     PAPER_LOGVAR_BUDGETS$estimator$harvey

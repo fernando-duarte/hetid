@@ -1,7 +1,9 @@
 # Publication table for the Harvey Gaussian multiplicative-variance MLE/QMLE.
 # Reuses the same row and cell renderer as the Harvey block in
 # log_var_eq_panels.tex, with a dedicated caption, label, and notes context.
-# Run through run.R after the identified news-set map.
+# Run via run_pipeline.R after the bootstrap stage, whose tau = 0 statistic this
+# table reports; the Harvey estimates and analytic standard errors it reads are
+# frozen earlier, by the estimator wrapper run.R.
 
 paper_source_once(paper_path("support", "latex", "table_pipeline.R"))
 paper_source_once(paper_path("support", "latex", "simple_table.R"))
@@ -24,7 +26,8 @@ harvey_table_lines <- logvar_harvey_append_panel(
   ),
   label = artifact_latex_label("log_variance_harvey_table"),
   include_ordering = FALSE,
-  se_type = logvar_harvey_se_type, se_hac_lags = logvar_harvey_se_hac_lags
+  se_type = logvar_harvey_se_type, se_hac_lags = logvar_harvey_se_hac_lags,
+  point_stat = logvar_boot_point_stat(log_var_eq_set_boot, "harvey")
 )
 stopifnot(
   sum(harvey_table_lines == "% BEGIN LOGVAR PANEL harvey") == 1L,

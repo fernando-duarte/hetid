@@ -11,6 +11,9 @@
 
 source(file.path("scripts-paper", "config", "paths.R"))
 paper_source_once(paper_path("config", "artifacts.R"))
+paper_source_once(paper_path(
+  "support", "inference_post", "endpoint_target_cells.R"
+))
 paper_source_once(paper_path("log_variance", "inference", "set_envelope.R"))
 paper_source_once(paper_path("support", "identification", "api.R"))
 paper_source_once(paper_path("support", "identification", "profile_solver_core.R"))
@@ -75,6 +78,7 @@ skip <- .test$skip
 paper_source_once(paper_path("tests", "inference", "set_envelope_checks.R"))
 paper_source_once(paper_path("tests", "inference", "set_bootstrap_collection_checks.R"))
 paper_source_once(paper_path("tests", "inference", "set_bootstrap_draw_checks.R"))
+paper_source_once(paper_path("tests", "inference", "mean_set_bootstrap_checks.R"))
 paper_source_once(paper_path(
   "tests", "inference", "bootstrap_legacy_characterization_helpers.R"
 ))

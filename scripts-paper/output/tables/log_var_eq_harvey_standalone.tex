@@ -18,17 +18,17 @@
 \toprule
  & Reference & $\tau{=}0$ & $\tau{=}0.05$ & $\tau{=}0.1$ & $\tau{=}0.2$ \\
 \midrule
-$\theta^{H}_0$ & -0.837$^{***}$ & -0.794$^{***}$ & $[-0.810,\,-0.755]$ & $[-0.820,\,-0.691]$ & $[-0.835,\,-0.477]$ \\
- & (-4.71) & (-4.50) &  &  &  \\
+$\theta^{H}_0$ & -0.837$^{***}$ & -0.812$^{**}$ & $[-0.820,\,-0.788]$ & $[-0.827,\,-0.743]$ & $[-0.838,\,-0.568]$ \\
+ & (-4.71) & (-2.55) &  &  &  \\
 \midrule
-$\theta^{H}_{1,R}$ & 0.176$^{*}$ & 0.178$^{*}$ & $[0.175,\,0.183]$ & $[0.173,\,0.192]$ & $[0.169,\,0.221]$ \\
- & (1.70) & (1.74) &  &  &  \\
-$\theta^{H}_{2,R}$ & -0.139$^{*}$ & -0.151$^{**}$ & $[-0.161,\,-0.133]$ & $[-0.167,\,-0.111]$ & $[-0.181,\,-0.063]$ \\
- & (-1.84) & (-1.99) &  &  &  \\
-$\theta^{H}_{3,R}$ & 0.481$^{***}$ & 0.474$^{***}$ & $[0.462,\,0.485]$ & $[0.448,\,0.496]$ & $[0.380,\,0.518]$ \\
- & (3.97) & (3.84) &  &  &  \\
-$\theta^{H}_{4,R}$ & 0.635$^{***}$ & 0.616$^{***}$ & $[0.592,\,0.628]$ & $[0.560,\,0.631]$ & $[0.475,\,0.634]$ \\
- & (3.42) & (3.31) &  &  &  \\
+$\theta^{H}_{1,R}$ & 0.176$^{*}$ & 0.182 & $[0.180,\,0.187]$ & $[0.177,\,0.196]$ & $[0.172,\,0.233]$ \\
+ & (1.70) & (1.22) &  &  &  \\
+$\theta^{H}_{2,R}$ & -0.139$^{*}$ & -0.145 & $[-0.153,\,-0.132]$ & $[-0.160,\,-0.115]$ & $[-0.174,\,-0.073]$ \\
+ & (-1.84) & (-1.54) &  &  &  \\
+$\theta^{H}_{3,R}$ & 0.481$^{***}$ & 0.464$^{*}$ & $[0.452,\,0.475]$ & $[0.439,\,0.486]$ & $[0.375,\,0.508]$ \\
+ & (3.97) & (1.92) &  &  &  \\
+$\theta^{H}_{4,R}$ & 0.635$^{***}$ & 0.629 & $[0.613,\,0.634]$ & $[0.589,\,0.635]$ & $[0.519,\,0.637]$ \\
+ & (3.42) & (2.03) &  &  &  \\
 $R^2$ & -- & -- & -- & -- & -- \\
 $N$ & 255 & 255 & 255 & 255 & 255 \\
 \bottomrule
@@ -41,9 +41,9 @@ $N$ & 255 & 255 & 255 & 255 & 255 \\
 \item Under conditional normality $\theta^{H}_0 = \theta^{log}_0 + 1.270362845$; the general offset is $-E[\log u^2]$ for a standardized innovation with an $R$-invariant shape.
 \item Zero squared residuals are handled by the direct parameter-dependent likelihood, not by adding a constant; existence is guarded by a recession-cone certificate, never by a benchmark residual crossing.
 \item Finite endpoints are certified feasible attained inner values -- projection hulls of an estimated plug-in image, with interior attainment not established -- and failed fits make results unreliable.
-\item Search resolution: the grid is capped at 4000 points with a 20000-fit budget per slack, and a five-start sensitivity re-polish reruns every side before any cell ships; disagreements demote the cell to unreliable.
-\item Standard errors for the reference and $\tau{=}0$ point columns are Gaussian multiplicative-variance QMLE variances with $H = \frac{1}{2}R'\mathrm{diag}(\hat r)R$, $R_t = (1, PC_{R,t}')'$ and $\hat r_t = \hat\varepsilon_t^2 / \exp(R_t'\hat\theta^{H})$. Five variants are computed: the working-model Fisher $(\frac{1}{2}R'R)^{-1}$ and observed $H^{-1}$ information (valid only if the Gaussian model holds); the outer-product BHHH; the Eicker--White QMLE sandwich $H^{-1} (\sum_t \hat g_t \hat g_t')H^{-1}$ with $\hat g_t = \frac{1}{2}(1 - \hat r_t)R_t$; and its Newey--West Bartlett HAC extension over 4 lags, consistent also under serially correlated scores. The reported statistics use the Newey--West HAC sandwich (Bartlett, 4 lags); parenthetical values are $\hat\theta/\mathrm{SE}$ with stars from the standard-normal (QMLE) approximation ($^{*}$/$^{**}$/$^{***}$ at 10/5/1\%).
-\item The $\tau{=}0$ statistics condition on the plug-in Lewbel news vector $b_N$ and do not propagate its first-stage sampling error; $\tau{>}0$ set columns are identified-set ranges, not point estimates. No standard error is attached; moving-block-bootstrap set-endpoint uncertainty is deferred.
+\item Search resolution: the grid is capped at 4000 points with a 20000-fit budget per tolerance, and a five-start sensitivity re-polish reruns every side before any cell ships; disagreements demote the cell to unreliable.
+\item Standard errors for the reference and $\tau{=}0$ point columns are Gaussian multiplicative-variance QMLE variances with $H = \frac{1}{2}R'\mathrm{diag}(\hat r)R$, $R_t = (1, PC_{R,t}')'$ and $\hat r_t = \hat\varepsilon_t^2 / \exp(R_t'\hat\theta^{H})$. Five variants are computed: the working-model Fisher $(\frac{1}{2}R'R)^{-1}$ and observed $H^{-1}$ information (valid only if the Gaussian model holds); the outer-product BHHH; the Eicker--White QMLE sandwich $H^{-1} (\sum_t \hat g_t \hat g_t')H^{-1}$ with $\hat g_t = \frac{1}{2}(1 - \hat r_t)R_t$; and its Newey--West Bartlett HAC extension over 4 lags, consistent also under serially correlated scores. Parenthetical values in the reference column are $\hat\theta/\mathrm{SE}$ from the Newey--West HAC sandwich (Bartlett, 4 lags), with stars from the standard-normal (QMLE) approximation ($^{*}$/$^{**}$/$^{***}$ at 10/5/1\%).
+\item The $\tau{=}0$ statistics divide the point estimate by the robust scale of its bootstrap draws, which re-estimate the mean equation, so they propagate the first-stage sampling error in the Lewbel news vector $b_N$. The analytic statistic conditions on a fixed plug-in $b_N$ instead, so the two are not comparable; it remains computed and is reported in the diagnostics. The $\tau{>}0$ set columns are identified-set ranges, not point estimates. No interval is reported beneath them; moving-block-bootstrap set-endpoint uncertainty is deferred.
 \end{tablenotes}
 % END LOGVAR NOTES harvey
 \end{threeparttable}

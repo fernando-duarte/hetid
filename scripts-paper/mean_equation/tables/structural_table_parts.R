@@ -58,10 +58,38 @@ structural_equation_table_parts <- function(mean, boot, n_pc) {
       "na"
     )
   )
-  # sampling uncertainty from the unified endpoint bootstrap:
-  # robust nominal 90% intervals under the tau = 0 points, and Stoye-calibrated
-  # nominal intervals under the set cells; blank cells stay blank
-  stopifnot(identical(boot$point_ci$coef, coef_tab$coef))
+  # sampling uncertainty from the unified endpoint bootstrap: the tau = 0 column
+  # reports a bootstrap t statistic on the same footing as the OLS column, the
+  # set columns pointwise-coverage intervals; blank cells stay blank. The guard
+  # pins both the row order and the values the stars decorate.
+  # Only the row order is worth asserting here. The volatility panel additionally
+  # checks its frame's point against the estimate it prints, because there the two
+  # come from different objects; here they are the same two vectors -- point_hat is
+  # built from beta1_table and theta_table, which coef_tab rbinds -- so the same
+  # assertion would compare a value against itself and could never fire. A guard
+  # that cannot fail is worse than none: it reads as assurance and gives none.
+  point_t <- boot$point_t
+  stopifnot(identical(point_t$coef, coef_tab$coef))
+  point_stars <- sig_stars(point_t$p_value)
+  point_cells <- ifelse(
+    point_stars == "", fmt(coef_tab$point),
+    sprintf("%s$%s$", fmt(coef_tab$point), point_stars)
+  )
+  # a withheld statistic beside a star-less estimate would read as "tested, not
+  # significant", so a finite point the gate left without a statistic renders the
+  # missing token, as logvar_se_point_col does for the log-variance panel
+  point_tstats <- ifelse(
+    is.finite(point_t$statistic),
+    sprintf(
+      "(%s)",
+      paper_format_number(
+        point_t$statistic,
+        PAPER_REPORTING_CONTROL$cells$statistic_digits,
+        "na"
+      )
+    ),
+    ifelse(is.finite(coef_tab$point), PAPER_NA_TOKEN, "")
+  )
   interval_cell <- function(lo, hi, blank) {
     policy <- PAPER_REPORTING_CONTROL$cells$structural
     paper_format_confidence_interval(
@@ -72,10 +100,6 @@ structural_equation_table_parts <- function(mean, boot, n_pc) {
       brackets = policy$confidence_brackets
     )
   }
-  point_ci_cells <- interval_cell(
-    boot$point_ci$lower, boot$point_ci$upper,
-    !is.finite(coef_tab$point)
-  )
   coef_labels <- c(
     "$b_0$",
     sprintf("$b_{%d,E}$", seq_len(n_pc)),
@@ -110,7 +134,7 @@ structural_equation_table_parts <- function(mean, boot, n_pc) {
         sprintf("%d", n_obs)
       ),
       c(
-        interleave(fmt(coef_tab$point), point_ci_cells),
+        interleave(point_cells, point_tstats),
         PAPER_NA_TOKEN, sprintf("%d", n_obs)
       )
     ),

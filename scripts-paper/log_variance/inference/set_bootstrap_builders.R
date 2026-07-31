@@ -1,5 +1,8 @@
-# Estimator builders used by each moving-block bootstrap draw, plus the
-# tau = 0 bootstrap-vs-analytic-SE diagnostic run once per estimator.
+# Estimator builders used by each moving-block bootstrap draw. Draw-path code:
+# every function here runs inside the resample loop, so this file stays inside
+# the manifest that invalidates the draw cache. The two tau = 0 summaries that
+# used to live here are pure functions of the collected draws and moved to
+# support/inference_post/logvar_point_summaries.R.
 
 logvar_set_boot_builders <- function(
   scale_value,
@@ -51,34 +54,4 @@ logvar_set_boot_builders <- function(
   builders <- list(ppml = build_ppml, harvey = build_harvey)
   stopifnot(all(estimator_ids %in% names(builders)))
   builders[estimator_ids]
-}
-
-# tau = 0 point diagnostic: bootstrap SD of the point draws against each
-# estimator's analytic SE, printed as a sanity ratio and returned for the
-# diagnostics CSV.
-logvar_boot_tau0_diagnostics <- function(
-  ests, collected, se_obj, se_type, spec,
-  digits = PAPER_REPORTING_CONTROL$precision$console_significant
-) {
-  tau0 <- lapply(ests, function(est) {
-    sd_boot <- apply(collected[[est]][[1]]$upper, 2, function(v) {
-      ok <- is.finite(v)
-      if (sum(ok) >= 2L) robust_scale(v[ok]) else NA_real_
-    })
-    se_df <- se_obj[[est]]$se$point
-    se_an <- stats::setNames(se_df[[se_type[[est]]]], se_df$coef)[spec$coefs]
-    message(sprintf(
-      "  %s tau=0 bootstrap SD / analytic %s SE: %s", est, se_type[[est]],
-      paste(
-        paper_format_general(
-          sd_boot / se_an,
-          digits
-        ),
-        collapse = " "
-      )
-    ))
-    data.frame(coef = spec$coefs, sd_boot = sd_boot, se_analytic = se_an, ratio = sd_boot / se_an)
-  })
-  names(tau0) <- ests
-  tau0
 }

@@ -31,32 +31,23 @@ paper_legacy_mean_from_est <- function(est, spec) {
       )$tab
     }
     table <- rbind(interval$beta1, interval$theta)
-    bounded <- table$status == PAPER_ENDPOINT_STATUS[["bounded"]]
+    bounded <- PAPER_ENDPOINT_STATUS[["bounded"]]
     list(
-      lower = ifelse(bounded, table$set_lower, NA_real_),
-      upper = ifelse(bounded, table$set_upper, NA_real_),
-      status = table$status
+      lower = ifelse(table$lower_status == bounded, table$set_lower, NA_real_),
+      upper = ifelse(table$upper_status == bounded, table$set_upper, NA_real_),
+      lower_status = table$lower_status,
+      upper_status = table$upper_status
     )
   })
-  coarse <- sweep_fixed_gamma(
-    spec$gamma,
-    est$moments,
-    spec$tau_grid,
-    "boot"
-  )
-  tau_star <- tau_star_fixed(
-    spec$gamma,
-    est$moments,
-    coarse,
-    iters =
-      PAPER_INFERENCE_SEARCH_CONTROL$tau_star$bootstrap_bisection_iterations
-  )
   list(
     point = point,
+    point_status = ifelse(
+      is.finite(point),
+      PAPER_ENDPOINT_STATUS[["bounded"]],
+      PAPER_ENDPOINT_STATUS[["unreliable"]]
+    ),
     point_ok = !is.null(est$point0),
-    bounds = bounds,
-    tau_star = tau_star$tau_star,
-    capped = tau_star$capped
+    bounds = bounds
   )
 }
 

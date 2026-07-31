@@ -30,7 +30,6 @@ show_mats <- c(
 lag_qtrs <- 1L
 n_pc <- analysis_contract$model$n_mean_pc
 n_pc_r <- analysis_contract$model$n_return_pc
-impose_beta2r_null <- TRUE
 news_prefix <- "sdf_news_m"
 expected_prefix <- "expected_sdf_m"
 
@@ -130,3 +129,43 @@ filter_window <- function(df) {
 
 # Return all series columns in a qtr-keyed frame.
 value_cols <- function(df) setdiff(names(df), "qtr")
+
+# Which beta2R specifications the pipeline computes.
+#   "B" -- beta2R estimated from the sample; W2 is the news residualized on X,
+#          and b_0/b_E become set-valued through beta1(w) = beta1R - beta2R'w.
+#   "A" -- beta2R forced to zero; W2 is the raw news and b_0/b_E are points.
+#
+# The FIRST entry of each panel is PUBLISHED. Any others are computed for
+# comparison and diagnostics and reach no table, figure or paper number.
+# Set mean to a single entry to skip the comparison run entirely.
+#
+# The volatility panel is built from the mean panel's news set and its tau = 0
+# anchor, so it can only be computed under a specification the mean panel
+# publishes. Running the volatility panel under both would mean two full
+# estimator passes for a diagnostic, which is the expensive half of the
+# pipeline; the assertion below keeps that a deliberate choice rather than an
+# accident.
+PAPER_SPEC_PLAN <- list(
+  mean = c("B", "A"),
+  volatility = "B"
+)
+
+paper_spec_impose_null <- function(spec) {
+  stopifnot(is.character(spec), length(spec) == 1L, spec %in% c("A", "B"))
+  identical(spec, "A")
+}
+
+paper_published_spec <- function(panel) PAPER_SPEC_PLAN[[panel]][[1L]]
+
+stopifnot(
+  "spec plan panels are mean and volatility" =
+    identical(names(PAPER_SPEC_PLAN), c("mean", "volatility")),
+  "every spec is A or B" =
+    all(unlist(PAPER_SPEC_PLAN) %in% c("A", "B")),
+  "no panel repeats a spec" =
+    !any(vapply(PAPER_SPEC_PLAN, anyDuplicated, integer(1)) > 0L),
+  "every panel runs at least one spec" =
+    all(lengths(PAPER_SPEC_PLAN) >= 1L),
+  "the volatility panel runs only the mean panel's published spec" =
+    identical(PAPER_SPEC_PLAN$volatility, paper_published_spec("mean"))
+)

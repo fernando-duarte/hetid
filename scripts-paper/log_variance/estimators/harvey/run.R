@@ -7,4 +7,7 @@ logvar_harvey_sensitivity_fit_budget <-
   paper_logvar_budget("harvey", "sensitivity_fit_budget")
 paper_source_once(paper_path("log_variance", "estimators", "harvey", "run_sets.R"))
 paper_source_once(paper_path("log_variance", "estimators", "harvey", "standard_errors.R"))
-paper_source_once(paper_path("log_variance", "tables", "render_harvey_table.R"))
+# The dedicated Harvey table is not sourced here: it publishes a bootstrap
+# tau = 0 statistic, so run_pipeline.R sources render_harvey_table.R after the
+# bootstrap stage. Estimation and the analytic standard errors stay here,
+# because the bootstrap stage reads both.
