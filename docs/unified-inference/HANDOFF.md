@@ -382,9 +382,28 @@ The normal reference is accurate exactly where the draws are near-normal — the
 block, whose empirical critical values sit at 1.69 to 1.84 against the normal 1.645 — and badly off
 exactly where sd/MAD runs 10 to 20.
 
-**The consequence.** Under the specified construction, `b_{1,N}` carries a single star at
-`p = 0.079`. Its bootstrap p-value is **0.172**. If the paper's Panel A message rests on `b_{1,N}`
-being distinguishable from zero at `tau=0`, that claim is materially weaker than the star suggests.
+**The consequence, across the whole `tau=0` column.** The stars are mechanical — `p < 0.01` gives
+three, `< 0.05` two, `< 0.10` one, strict — so there is no discretion in the star itself. The choice
+is which reference distribution produces the p-value, and the star follows. Under the mandated normal
+reference against a bootstrap one, **5 of the 17 `tau=0` cells change star**:
+
+| panel | coefficient | `p` normal | star | `p` bootstrap | star |
+|---|---|---|---|---|---|
+| A | `b_{1,N}` | 0.0791 | `*` | 0.1716 | none |
+| B, quasi-ML | `theta_0` | 0.0000 | `***` | 0.0569 | `*` |
+| B, quasi-ML | `theta_{4,R}` | 0.0298 | `**` | 0.1953 | none |
+| B, Harvey | `theta_0` | 0.0378 | `**` | 0.0844 | `*` |
+| B, Harvey | `theta_{4,R}` | 0.0376 | `**` | 0.1795 | none |
+
+**Every one moves the same way**: the normal reference is uniformly the more generous. That is not
+noise, it is the systematic consequence of dividing by a median absolute deviation when the draw
+distribution is heavy-tailed, and it appears wherever the sd/MAD ratio bites. The other twelve cells
+are robust to the choice, `theta_{3,R}` included, which keeps its single star under both.
+
+The shipped stars are correct under the construction the specification mandates. What the paper has
+to decide is disclosure: whether to note that five of these stars rest on a normal reference the
+bootstrap draws do not support. Both p-values are in the diagnostics for every cell, so the
+comparison is auditable rather than a matter of taking this memo's word.
 
 Both p-values are now written to the Panel A diagnostics so the comparison is auditable rather than
 buried. Nothing was silently substituted: the published statistic and its stars are the specified
