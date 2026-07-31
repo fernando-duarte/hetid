@@ -48,8 +48,8 @@ Y2 = beta2R X + eps2
 
 **The evidence against the restriction is real but narrower than an iid F suggests.** An
 initial `F(3,252)` gave PC3 `p = 5.4e-04`, but that reference assumes iid errors on quarterly
-macro data. Re-tested with a Newey-West Wald (lag 4) and a null-imposed circular MBB (block 10,
-the paper's own protocol, B = 2000):
+macro data. Re-tested with a Newey-West Wald (lag 4) and two null-imposed block bootstraps
+(block 10, B = 20,000):
 
 | news PC | HAC Wald | analytic p | MBB row-detach p | **wild block p** |
 |---|---|---|---|---|
@@ -96,16 +96,26 @@ p_value = 2 * stats::pnorm(-abs(statistic))
 
 After change 4 the tau > 0 columns are bootstrap-calibrated (Target P) while tau = 0 would stay
 normal — the same two-reference defect the previous unification removed, relocated from
-Panel A vs Panel B to tau = 0 vs tau > 0. It lands on the weaker side: the draws are extremely
-heavy-tailed.
+Panel A vs Panel B to tau = 0 vs tau > 0. It lands on the weaker side.
+
+Be careful about *why*. The raw excess kurtosis of the draws (9375 at tau = 0.05 for `b_3N`) is
+**not** a distributional property: it is eight bad solves. One draw's lower endpoint sits at
+-1550 against a full-sample bound of -0.544, and dropping that single draw takes kurtosis to 783.
+Those draws do not reach the published critical value — `c_s` moves 3.364 to 3.343 when all eight
+are removed, and the PRW rank sits at 8919 of 9909, far below them.
+
+The real reason is that the root distribution is heavy through its **body**:
 
 ```
-tau = 0.05 lower endpoint, b_3N : excess kurtosis 9375
-tau = 0    point,          b_3N : excess kurtosis 3749
+root quantiles   0.57   1.35   3.36   5.39   12.44   142.19
+                 50%    75%    90%    95%    99%     max
 ```
 
-This is why the machinery already uses MAD rather than sd and the conservative
-Politis–Romano–Wolf order statistic. A normal reference discards that.
+The 90th percentile is 3.36 against the normal's 1.645, independently of the outliers. That is
+what a normal reference discards, and it is why the machinery uses MAD and the conservative
+Politis-Romano-Wolf order statistic. (4.4% of roots are exactly zero — draws wider than the
+full sample on both sides. That atom grows as sets widen under spec B, which is why `c_S` falls
+there.)
 
 **The fix is the tau -> 0 limit of the existing machinery, not a new construction.** At a
 point-identified cell `L = U = theta_hat`, so `z_U = -z_L` and the Target S/P root collapses:
@@ -117,7 +127,14 @@ R_S = max{0, z_L, z_U} = |z_L|
 which is why `c_p_upper == c_s` to the digit on every degenerate row in the current diagnostics
 (1.689/1.689, 1.844/1.844, 1.704/1.704, 1.698/1.698). So the tau = 0 p-value is the empirical
 tail of `|z*|` with `z*_b = (point*_b - point_hat) / se`, reusing the `se` that
-`point_t_statistic` already computes. Same scale, same studentisation, same draws.
+`point_t_statistic` already computes.
+
+Two precision points. This is an **exact specialization at tau = 0**, not a proved `tau -> 0`
+limit — active sets and status maps can be discontinuous, so do not claim continuity. And the
+scale **cancels**: comparing `T*_b >= T_obs` is equivalent to `|point*_b - point_hat| >= |point_hat|`,
+so the p-value is scale-free and should not be described as studentised. Use the finite-B rule
+`p = (1 + sum(T* >= T_obs)) / (|valid| + 1)`, and report both directional tails alongside it,
+since an absolute-deviation test is tail-unbalanced under skew.
 
 **Measured consequence:** 5 of 17 tau = 0 stars change — `b_{1,N}` (`*` to none), `theta_0` PPML
 (`***` to `*`), `theta_{4,R}` PPML (`**` to none), `theta_0` Harvey (`**` to `*`),
@@ -146,8 +163,12 @@ origin-start path. So the studentised root
 z_L = (L*_unrefined - L_refined) / s_L
 ```
 
-mixes two solve recipes. Today this is inert — cells agree to better than 1e-8, so the
-origin-start solve is already finding the true extreme on this data.
+mixes two solve recipes. Today this is inert — the two agree to better than 1e-8. Note what that
+does and does not establish: the refinement certifies feasible points, so agreement means it
+found no additional certified-feasible point outside the origin-start interval. It does **not**
+certify a global extremum. Two multistart procedures can enter the same basin and agree exactly
+while missing another component; this is a non-convex QCQP and the profile solver is local.
+Report these as algorithmic bounds, never as proved identified-set extrema.
 
 **Two reasons to fix now.** The draw path and full-sample path are both being touched anyway.
 And the refinement replaces only `$theta`, never `$beta1` — harmless while `b_E` is a point under
