@@ -94,7 +94,7 @@ set_share_cols <- Map(function(nm, quad) {
   # makes the block share uncertified too, and validity outranks boundedness
   # exactly as in the solvers' own status3
   joint_status <- paper_endpoint_status_worst(st$theta$status)
-  e_rng <- if (impose_beta2r_null) {
+  e_rng <- if (set_id_mean_eq$impose_null) {
     rep(e_const, 2)
   } else {
     set_share_range(st$theta, quad, e_quad_share)
@@ -110,7 +110,7 @@ set_share_cols <- Map(function(nm, quad) {
     # beta1R and stays certified whatever the theta set does; the combined
     # share ranges over the whole theta set either way
     status = c(
-      if (impose_beta2r_null) PAPER_ENDPOINT_STATUS[["bounded"]] else joint_status,
+      if (set_id_mean_eq$impose_null) PAPER_ENDPOINT_STATUS[["bounded"]] else joint_status,
       e_comp$status, joint_status, n_comp$status, joint_status
     )
   )

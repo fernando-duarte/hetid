@@ -135,7 +135,7 @@ run_bootstrap_stage <- function(
 .bootstrap_stage_output <- run_bootstrap_stage(
   set_id_mean_eq, log_var_eq, lag_asset_return_pc,
   .bootstrap_stage_estimator_results, boot_reps, boot_seed,
-  boot_cores, PAPER_BOOT_MODE, z_col, impose_beta2r_null,
+  boot_cores, PAPER_BOOT_MODE, z_col, set_id_mean_eq$impose_null,
   logvar_boot_grid_cap, logvar_boot_fit_budget,
   artifact_path("bootstrap_stage_draws")
 )
