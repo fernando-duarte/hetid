@@ -11,7 +11,7 @@
 # scripts-paper/inference/run_bootstrap_stage.R.
 
 paper_source_once(paper_path(
-  "support", "identification", "identified_set_inference.R"
+  "support", "inference_post", "identified_set_inference.R"
 ))
 
 # Conservative (1-alpha) order statistic of n finite values: the

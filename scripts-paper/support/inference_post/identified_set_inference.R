@@ -8,7 +8,7 @@
 # by scripts-paper/inference/run_bootstrap_stage.R and tested by the paper
 # inference suite.
 paper_source_once(paper_path(
-  "support", "identification", "inference_calibration.R"
+  "support", "inference_post", "inference_calibration.R"
 ))
 
 # Median and nominal percentile band of the finite draws.

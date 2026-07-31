@@ -19,7 +19,7 @@
 # reporting dependency.
 
 paper_source_once(paper_path(
-  "support", "identification", "endpoint_targets.R"
+  "support", "inference_post", "endpoint_targets.R"
 ))
 
 point_t_statistic <- function(point_hat, point_draws, point_status,

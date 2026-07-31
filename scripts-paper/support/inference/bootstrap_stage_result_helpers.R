@@ -1,5 +1,5 @@
 paper_source_once(paper_path(
-  "support", "identification", "endpoint_target_cells.R"
+  "support", "inference_post", "endpoint_target_cells.R"
 ))
 
 bootstrap_stage_mean_provenance <- function(stage) {

@@ -1,5 +1,5 @@
 # Offline checks for the CONTAINMENT half of the shared cell builder
-# (support/identification/endpoint_target_cells.R), plus the simultaneous
+# (support/inference_post/endpoint_target_cells.R), plus the simultaneous
 # critical value that still lives in log_variance/inference/set_envelope.R.
 # The construction: inward endpoint deviations D_L = L* - Lhat, D_U = Uhat - U*,
 # robust (MAD, location-invariant) per-side scales, per-draw root

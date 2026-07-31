@@ -76,7 +76,7 @@ PAPER_ANALYSIS_CONTRACT <- local({
     # 2.0.0: both panels' tau > 0 cells report the pointwise-coverage target from
     # one shared bootstrap reference distribution and both tau = 0 cells report
     # bootstrap t statistics. stability_share gates both panels, declared once so
-    # they cannot drift apart again. See support/identification/endpoint_targets.R.
+    # they cannot drift apart again. See support/inference_post/endpoint_targets.R.
     inference = list(
       version = "2.0.0",
       nominal_alpha = 0.10,

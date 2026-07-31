@@ -5,13 +5,13 @@
 #
 # The per-cell machinery that used to live here is gone. Both panels' published
 # cells now come from the shared builder in
-# support/identification/endpoint_target_cells.R, which computes containment and
+# support/inference_post/endpoint_target_cells.R, which computes containment and
 # pointwise coverage from one bootstrap reference distribution; keeping a second
 # per-cell path here would have been a second live route into a published number.
 # This function reuses that module's primitives rather than its own copies.
 
 paper_source_once(paper_path(
-  "support", "identification", "endpoint_targets.R"
+  "support", "inference_post", "endpoint_targets.R"
 ))
 
 logvar_simultaneous_critical <- function(draws, full,

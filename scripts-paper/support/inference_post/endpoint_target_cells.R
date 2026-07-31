@@ -7,7 +7,7 @@
 # support/inference/bootstrap_stage_result_helpers.R.
 
 paper_source_once(paper_path(
-  "support", "identification", "endpoint_targets.R"
+  "support", "inference_post", "endpoint_targets.R"
 ))
 
 .endpoint_target_cell <- function(lc, uc, f, alpha, tolerance, min_reps) {

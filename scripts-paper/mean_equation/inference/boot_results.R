@@ -9,10 +9,10 @@
 # modules are sourced here because both panels must reach the same code, not a
 # per-panel copy of it.
 paper_source_once(paper_path(
-  "support", "identification", "endpoint_target_cells.R"
+  "support", "inference_post", "endpoint_target_cells.R"
 ))
 paper_source_once(paper_path(
-  "support", "identification", "endpoint_point_statistic.R"
+  "support", "inference_post", "endpoint_point_statistic.R"
 ))
 
 # Assemble set_id_boot from one bootstrap's collected draws. Provenance is

@@ -4,7 +4,7 @@
 #   Rscript scripts-paper/tests/inference/mean_boot_results_checks.R
 
 source(file.path("scripts-paper", "config", "paths.R"))
-paper_source_once(paper_path("support", "identification", "identified_set_inference.R"))
+paper_source_once(paper_path("support", "inference_post", "identified_set_inference.R"))
 paper_source_once(paper_path("support", "statistics", "api.R"))
 paper_source_once(paper_path("mean_equation", "inference", "boot_results.R"))
 paper_source_once(paper_path("tests", "support", "harness.R"))

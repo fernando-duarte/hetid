@@ -2,14 +2,14 @@
 
 paper_source_once(paper_path("config", "analysis.R"))
 paper_source_once(paper_path(
-  "support", "identification", "identified_set_inference.R"
+  "support", "inference_post", "identified_set_inference.R"
 ))
 paper_source_once(paper_path("support", "identification", "tau_star.R"))
 paper_source_once(paper_path(
-  "support", "identification", "endpoint_target_cells.R"
+  "support", "inference_post", "endpoint_target_cells.R"
 ))
 paper_source_once(paper_path(
-  "support", "identification", "endpoint_point_statistic.R"
+  "support", "inference_post", "endpoint_point_statistic.R"
 ))
 paper_source_once(paper_path(
   "log_variance", "inference", "set_envelope.R"
@@ -101,7 +101,7 @@ check(
 )
 
 threaded_fields <- list(
-  "support/identification/inference_calibration.R" = c(
+  "support/inference_post/inference_calibration.R" = c(
     "im_root", "stoye_root", "bvn", "robust_endpoint_correlation"
   ),
   "support/identification/tau_star.R" = c(
@@ -115,8 +115,8 @@ threaded_fields <- list(
   "log_variance/inference/set_bootstrap_gate.R" = "fatal_failure_share",
   # the endpoint stability share is one policy for both panels, owned by the
   # analysis contract, so the two shared builders are its only consumers
-  "support/identification/endpoint_target_cells.R" = "stability_share",
-  "support/identification/endpoint_point_statistic.R" = "stability_share"
+  "support/inference_post/endpoint_target_cells.R" = "stability_share",
+  "support/inference_post/endpoint_point_statistic.R" = "stability_share"
 )
 threaded_code <- vapply(
   names(threaded_fields),

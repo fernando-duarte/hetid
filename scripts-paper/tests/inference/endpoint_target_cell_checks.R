@@ -1,5 +1,5 @@
 # The published-cell half of the endpoint-target checks: the cell shapes and the
-# one gate policy in support/identification/endpoint_target_cells.R, plus the
+# one gate policy in support/inference_post/endpoint_target_cells.R, plus the
 # tau = 0 point statistic in endpoint_point_statistic.R. Sourced by
 # endpoint_targets_checks.R, which owns the prologue, the seed and the shared
 # et_ helpers, and which holds the target-algebra half.

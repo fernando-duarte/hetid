@@ -2,6 +2,9 @@
 paper_source_once(paper_path(
   "support", "inference", "bootstrap_stage_result_helpers.R"
 ))
+paper_source_once(paper_path(
+  "support", "inference_post", "logvar_point_summaries.R"
+))
 
 bootstrap_stage_mean_result <- function(
   stage, stage_spec, set_id_mean_eq, source, elapsed_minutes

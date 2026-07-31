@@ -16,7 +16,7 @@ paper_source_once(paper_path(
 ))
 paper_source_once(paper_path("support", "reporting", "inference.R"))
 paper_source_once(paper_path(
-  "support", "identification", "identified_set_inference.R"
+  "support", "inference_post", "identified_set_inference.R"
 ))
 paper_source_once(paper_path(
   "support", "identification", "identified_set_bootstrap.R"

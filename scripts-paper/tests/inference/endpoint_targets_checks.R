@@ -1,7 +1,7 @@
 # Offline checks for the two identified-set inference targets, both read off the
 # SAME stored bootstrap endpoint draws: containment (Target S) and pointwise
 # coverage uniform over the set (Target P), in
-# support/identification/endpoint_targets.R. This file holds the target algebra
+# support/inference_post/endpoint_targets.R. This file holds the target algebra
 # -- the conservative order statistic, the drawwise ordering and the certified
 # Lipschitz search -- and then sources endpoint_target_cell_checks.R for the
 # published cells, their gate and the tau = 0 point statistic. Run from the
@@ -10,10 +10,10 @@
 
 source(file.path("scripts-paper", "config", "paths.R"))
 paper_source_once(paper_path(
-  "support", "identification", "endpoint_target_cells.R"
+  "support", "inference_post", "endpoint_target_cells.R"
 ))
 paper_source_once(paper_path(
-  "support", "identification", "endpoint_point_statistic.R"
+  "support", "inference_post", "endpoint_point_statistic.R"
 ))
 set.seed(20260730L)
 

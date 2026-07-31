@@ -6,7 +6,7 @@
 # place that writes the CSV, and nowhere else.
 
 paper_source_once(paper_path(
-  "support", "identification", "inference_calibration.R"
+  "support", "inference_post", "inference_calibration.R"
 ))
 
 # An all-NA frame with the prototype's columns and types, so tau = 0 rows share

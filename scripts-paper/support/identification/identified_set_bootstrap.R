@@ -9,7 +9,7 @@
 # modules.
 
 paper_source_once(paper_path(
-  "support", "identification", "set_id_diagnostics_rows.R"
+  "support", "inference_post", "set_id_diagnostics_rows.R"
 ))
 
 # Re-estimate the mean-equation system on one data frame: the W1/W2
