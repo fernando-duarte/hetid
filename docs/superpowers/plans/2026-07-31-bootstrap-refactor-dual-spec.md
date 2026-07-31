@@ -51,23 +51,29 @@ initial `F(3,252)` gave PC3 `p = 5.4e-04`, but that reference assumes iid errors
 macro data. Re-tested with a Newey-West Wald (lag 4) and two null-imposed block bootstraps
 (block 10, B = 20,000):
 
-| news PC | HAC Wald | analytic p | MBB row-detach p | **wild block p** |
-|---|---|---|---|---|
-| `sdf_news_pc1` | 0.65 | 0.886 | 0.914 | 0.836 |
-| `sdf_news_pc2` | 1.30 | 0.730 | 0.793 | 0.794 |
-| `sdf_news_pc3` | 19.76 | 1.9e-04 | 0.0095 | **0.0014** |
-| **joint (matrix)** | 21.70 | 9.9e-03 | 0.0917 | **0.0425** |
+| news PC | HAC Wald | analytic p | **wild block p** |
+|---|---|---|---|
+| `sdf_news_pc1` | 0.65 | 0.886 | 0.836 |
+| `sdf_news_pc2` | 1.30 | 0.730 | 0.794 |
+| `sdf_news_pc3` | 19.76 | 1.9e-04 | **0.0014** |
+| **joint (matrix)** | 21.70 | 9.9e-03 | **0.0425** |
 
-Two null-imposed schemes, B = 20,000, block 10. The row-detach scheme resamples the restricted
-residuals independently of `X`, which imposes full independence — stronger than the
-zero-projection null — and is therefore conservative. The wild block scheme flips residual signs
-by block with each residual kept paired to its own `X_t`, imposing only `E[u | X] = 0`. Under the
-correct null the joint restriction rejects at 5% and PC3 rejects decisively.
+Null-imposed wild block bootstrap, B = 20,000, block 10: residual signs are flipped by block with
+each residual kept paired to its own `X_t`, which imposes `E[u | X] = 0` while leaving the
+design alignment and conditional heteroskedasticity intact. PC3 rejects decisively and the joint
+matrix restriction rejects at 5%.
 
-Caveats in both directions: the wild scheme has only 26 independent sign draws at T = 256 and
-block 10, which can make its reference too narrow; and neither scheme re-estimates the PCA, so
-generated-regressor uncertainty is ignored throughout. PC3 rejects under every reference tried
-(1.4e-03 to 1.3e-02). The joint is genuinely borderline at 5%.
+Note on what the DGP must impose, since it is easy to garble. The pretest asks whether spec A's
+restriction holds, so the resampling has to satisfy `beta2R = 0` by construction — that is what
+makes the p-value a p-value, and it is unrelated to whether estimation residualizes. But spec A
+asserts only that the *linear projection* vanishes. An earlier attempt resampled the restricted
+residuals independently of `X`, which imposes full independence and therefore destroys nonlinear
+and conditional-variance dependence that spec A permits. That reference was too wide and put the
+joint at 0.092 instead of 0.043. Do not reintroduce it.
+
+Remaining caveat: at T = 256 and block 10 the wild scheme draws only 26 independent signs per
+replicate, which can narrow its reference. The PCs are treated as observed data throughout, by
+decision.
 
 Spec B therefore does **not** rest on the pretest. Its primary justification is
 `docs/lewbel_multivariate_set_identification.tex`, §"News-equation reduced-form coefficients":
