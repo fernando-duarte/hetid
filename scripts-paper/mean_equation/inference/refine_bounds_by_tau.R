@@ -34,11 +34,24 @@ widen_beta1_from_args <- function(beta1_tab, beta1r, beta2r, args) {
     return(beta1_tab)
   }
   bounded <- PAPER_ENDPOINT_STATUS[["bounded"]]
+  # A loading that is zero in exact arithmetic can arrive as 1e-13. The PCs are
+  # prcomp scores, so both blocks are mean-centred and the intercept's loading is
+  # a KNOWN zero corrupted by lm()'s arithmetic. Testing it with == 0 passes under
+  # spec A, where beta2R is a literal zero matrix, and fails under spec B.
+  #
+  # Widening such a row optimizes a constant functional: every certified point
+  # maps to the same value in exact arithmetic, but sum(loading * w) differs in
+  # the last bits across points, so min and max separate by ~1e-15. That is
+  # enough to defeat the renderer's exact degeneracy test and print a spurious
+  # [x, x] cell with a confidence interval beneath a row that is point
+  # identified. Compare against the matrix scale so the test is scale-free.
+  null_scale <- max(abs(beta2r)) * sqrt(.Machine$double.eps)
   for (k in seq_len(nrow(beta1_tab))) {
     p <- beta1_tab$coef[[k]]
     loading <- beta2r[, p]
-    # a zero column is point identification, not a wide interval to tighten
-    if (all(loading == 0) || !identical(beta1_tab$status[[k]], bounded)) {
+    # a null column is point identification, not a wide interval to tighten
+    if (!any(abs(loading) > null_scale) ||
+      !identical(beta1_tab$status[[k]], bounded)) {
       next
     }
     vals <- vapply(
