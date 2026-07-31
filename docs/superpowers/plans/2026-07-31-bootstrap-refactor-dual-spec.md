@@ -227,13 +227,34 @@ Cache keeps only: per-tau `lower`, `upper`, `lower_status`, `upper_status`; `poi
 `point_status`; and the failure-count fields as cross-checks. Everything else moves to a
 post-bootstrap layer.
 
-Move to a new directory outside the draw manifest (proposed
-`scripts-paper/support/inference_post/`): `endpoint_targets.R`, `endpoint_target_cells.R`,
-`endpoint_point_statistic.R`, `identified_set_inference.R`, `inference_calibration.R`,
-`set_id_diagnostics_rows.R`. All are consumed only by post-draw code — verified.
+**Partition, verified against the expanded 101-file manifest.**
 
-Take `AuditDrawPath`'s MUST-STAY / CAN-MOVE classification as the specification for what else
-moves, particularly on the volatility side.
+Move to a new directory outside the draw manifest (proposed
+`scripts-paper/support/inference_post/`) — six of the twenty `support/identification` members,
+all consumed only by post-draw code:
+
+```
+endpoint_targets.R          endpoint_point_statistic.R   inference_calibration.R
+endpoint_target_cells.R     identified_set_inference.R   set_id_diagnostics_rows.R
+```
+
+The other fourteen stay: the profile solvers, quadratic system, status contract, moments,
+`tau_star.R` (still needed full-sample) and the bootstrap draw itself.
+
+**One file must be SPLIT, not moved.** `log_variance/inference/set_bootstrap_builders.R` is
+genuinely mixed:
+
+| function | called from | side |
+|---|---|---|
+| `logvar_set_boot_builders` | `inference/bootstrap_stage_draw.R:4` | DRAW |
+| `logvar_boot_point_t` | `inference/bootstrap_stage_results.R:79` | PRESENTATION |
+
+Moving the file wholesale would pull a draw-time builder out of the invalidation set, which is
+exactly the error the two-tier hash is meant to prevent. Split it and move only
+`logvar_boot_point_t`.
+
+Audit every remaining manifest entry the same way before assuming its side — the file name is
+not evidence, as this one shows.
 
 *Verify:* full suite green.
 
