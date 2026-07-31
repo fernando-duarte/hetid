@@ -21,8 +21,37 @@ paper_source_once(paper_path(
 # Each tau's widening is widen_theta_box (theta_box_multistart.R), which adds
 # the axis pool and a cross-seeding round to the chain: one chain alone stays on
 # the branch it starts on and clips the set near tau*.
-set_id_display_tau_refinement <- function(tau_display, seed_theta,
-                                          gamma, moments, beta1r, beta2r) {
+# Widen the beta1 interval onto the same certified points the theta box was
+# widened onto. beta1(w) = beta1R - beta2R'w is a linear image of the SAME set,
+# so every accepted argmax is a feasible w whose image provably belongs in the
+# beta1 interval. Without this the two blocks in one table are reported over
+# different sets: theta over the refined set, beta1 over the origin-start one.
+#
+# Invisible under spec A, where beta2R is zero and every beta1 row is a point,
+# which is why it survived until spec B made beta1 set-valued.
+widen_beta1_from_args <- function(beta1_tab, beta1r, beta2r, args) {
+  if (!length(args)) {
+    return(beta1_tab)
+  }
+  bounded <- PAPER_ENDPOINT_STATUS[["bounded"]]
+  for (k in seq_len(nrow(beta1_tab))) {
+    p <- beta1_tab$coef[[k]]
+    loading <- beta2r[, p]
+    # a zero column is point identification, not a wide interval to tighten
+    if (all(loading == 0) || !identical(beta1_tab$status[[k]], bounded)) {
+      next
+    }
+    vals <- vapply(
+      args, function(w) unname(beta1r[[p]] - sum(loading * w)), numeric(1)
+    )
+    beta1_tab$set_lower[[k]] <- min(beta1_tab$set_lower[[k]], min(vals))
+    beta1_tab$set_upper[[k]] <- max(beta1_tab$set_upper[[k]], max(vals))
+  }
+  beta1_tab
+}
+
+set_id_display_tau_refinement_full <- function(tau_display, seed_theta,
+                                               gamma, moments, beta1r, beta2r) {
   # a NULL or NA seed just leaves the pool without its tau = 0 member; the axis
   # starts still run, so an unavailable Lewbel point no longer means no warm
   # solve at all
@@ -39,9 +68,23 @@ set_id_display_tau_refinement <- function(tau_display, seed_theta,
     # carry every accepted argmax forward, including ones from rows that are not
     # certified bounded, so the next larger tau still gets feasible warm starts
     warm <- widened$args
-    refined[[paper_tau_key(tau)]] <- widened$tab
+    refined[[paper_tau_key(tau)]] <- list(
+      theta = widened$tab,
+      beta1 = widen_beta1_from_args(it$beta1, beta1r, beta2r, widened$args)
+    )
   }
   # Return keyed by each tau's canonical key in the caller's input order;
   # consumers index by name, so the ordering itself is immaterial
   refined[vapply(tau_display, paper_tau_key, character(1))]
+}
+
+# Theta-only view, for the figure callers that never look at beta1.
+set_id_display_tau_refinement <- function(tau_display, seed_theta,
+                                          gamma, moments, beta1r, beta2r) {
+  lapply(
+    set_id_display_tau_refinement_full(
+      tau_display, seed_theta, gamma, moments, beta1r, beta2r
+    ),
+    `[[`, "theta"
+  )
 }

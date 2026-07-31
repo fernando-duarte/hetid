@@ -63,11 +63,17 @@ estimate_mean_equation <- function(set_id_data, y1_col, x_cols, y2_cols, z_col,
   # optimality. These are the sound boxes: every set_tables consumer, and the
   # log-variance census reading them through mean_eq_bounds_tau, needs a box
   # that contains the set rather than one that clips it.
-  refined <- set_id_display_tau_refinement(
+  refined <- set_id_display_tau_refinement_full(
     tau_display, if (is.null(point0)) NULL else point0$theta,
     gamma, moments, beta1r, beta2r
   )
-  for (j in seq_along(set_tables)) set_tables[[j]]$theta <- refined[[j]]
+  # both blocks take the refined set: theta from the widened box, beta1 from the
+  # same certified points through its linear map. Refining only theta would
+  # report the two over different sets under spec B.
+  for (j in seq_along(set_tables)) {
+    set_tables[[j]]$theta <- refined[[j]]$theta
+    set_tables[[j]]$beta1 <- refined[[j]]$beta1
+  }
   theta_table <- cbind(
     data.frame(
       coef = y2_cols,
