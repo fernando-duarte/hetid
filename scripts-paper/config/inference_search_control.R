@@ -21,8 +21,7 @@ PAPER_INFERENCE_SEARCH_CONTROL <- list(
   ),
   tau_star = list(
     fine_grid_points = 20L,
-    bisection_iterations = 40L,
-    bootstrap_bisection_iterations = 15L
+    bisection_iterations = 40L
   ),
   bootstrap = list(
     fatal_failure_share = 0.25,
@@ -84,7 +83,6 @@ stopifnot(
   PAPER_INFERENCE_SEARCH_CONTROL$robust_endpoint_correlation$mad_trim_multiple > 0,
   PAPER_INFERENCE_SEARCH_CONTROL$tau_star$fine_grid_points >= 1L,
   PAPER_INFERENCE_SEARCH_CONTROL$tau_star$bisection_iterations >= 1L,
-  PAPER_INFERENCE_SEARCH_CONTROL$tau_star$bootstrap_bisection_iterations >= 1L,
   PAPER_INFERENCE_SEARCH_CONTROL$bootstrap$fatal_failure_share > 0,
   PAPER_INFERENCE_SEARCH_CONTROL$bootstrap$fatal_failure_share < 1,
   PAPER_INFERENCE_SEARCH_CONTROL$bootstrap$progress_report_every >= 1L,

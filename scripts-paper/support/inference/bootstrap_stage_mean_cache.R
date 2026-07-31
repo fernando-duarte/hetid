@@ -20,7 +20,7 @@ mean_boot_collection_validate <- function(
 ) {
   fields <- c(
     "point_draws", "point_status", "n_point_deficient", "endpoint_draws",
-    "tau_star_draws", "n_capped", "n_failed", "failure_causes"
+    "n_failed", "failure_causes"
   )
   if (!bootstrap_stage_cache_exact_list(collected, fields)) {
     return("collection fields or class changed")
@@ -95,21 +95,16 @@ mean_boot_collection_validate <- function(
     }
     failed_mask <- row_failed
   }
-  tau_star <- collected$tau_star_draws
-  if (!is.double(tau_star) || length(tau_star) != n_draws ||
-    !is.null(attributes(tau_star)) || any(is.nan(tau_star)) ||
-    any(is.infinite(tau_star))) {
-    return("tau-star draws changed")
-  }
-  counts <- collected[c("n_point_deficient", "n_capped", "n_failed")]
+  counts <- collected[c("n_point_deficient", "n_failed")]
   if (!all(vapply(
     counts, bootstrap_stage_cache_count_ok, logical(1),
     upper = n_draws
   ))) {
     return("mean count changed")
   }
-  if (!identical(as.integer(sum(failed_mask)), collected$n_failed) ||
-    !identical(is.na(tau_star), failed_mask)) {
+  # the endpoint status mask stays the authority on which draws failed; the
+  # tau-star NA pattern used to carry a second, redundant copy of it
+  if (!identical(as.integer(sum(failed_mask)), collected$n_failed)) {
     return("mean failure count changed")
   }
   if (any(failed_mask & !all_na_point)) {
@@ -146,18 +141,6 @@ mean_boot_collection_validate <- function(
     collected$n_point_deficient
   )) {
     return("point-deficiency count changed")
-  }
-  tau_range <- range(mean_spec$tau_star_grid)
-  present <- !is.na(tau_star)
-  if (any(tau_star[present] < tau_range[[1L]]) ||
-    any(tau_star[present] > tau_range[[2L]])) {
-    return("tau-star range changed")
-  }
-  if (!identical(
-    as.integer(sum(tau_star == tau_range[[2L]], na.rm = TRUE)),
-    collected$n_capped
-  )) {
-    return("mean capped count changed")
   }
   if (collected$n_failed >
     bootstrap_stage_failure_limit(n_draws, failure_control)) {

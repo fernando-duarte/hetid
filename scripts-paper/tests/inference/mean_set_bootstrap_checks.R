@@ -62,20 +62,9 @@ mps_geometry <- list(
     )
   ))
 )
-mps_draw <- mps_with_stubs(
-  list(
-    sweep_fixed_gamma = function(...) data.frame(tau = c(0, 0.1)),
-    tau_star_fixed = function(...) list(tau_star = 0.1, capped = FALSE)
-  ),
-  function() {
-    set_id_boot_draw_from_est(
-      list(point0 = NULL, moments = NULL), mps_geometry,
-      list(
-        coefs = c("b0", "th1"), tau_star_grid = c(0, 0.1),
-        tau_star_iterations = 2L
-      )
-    )
-  }
+mps_draw <- set_id_boot_draw_from_est(
+  list(point0 = NULL, moments = NULL), mps_geometry,
+  list(coefs = c("b0", "th1"))
 )
 check(
   "a half-infinite draw row keeps its live side and NA-masks only the dead one",

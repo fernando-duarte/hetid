@@ -26,23 +26,12 @@ bootstrap_stage_mean_result <- function(
   )
   digits <- PAPER_REPORTING_CONTROL$precision$console_significant
   cat(sprintf(
-    paste0(
-      "endpoint bootstrap [%s]: B = %d, block = %d, %.1f min; ",
-      "tau* range [%s, %s] (n = %d)\n"
-    ),
-    source, result$b_reps, result$block, elapsed_minutes,
-    paper_format_general(result$tau_star_band[["lower"]], digits),
-    paper_format_general(result$tau_star_band[["upper"]], digits),
-    result$tau_star_band[["n"]]
+    "endpoint bootstrap [%s]: B = %d, block = %d, %.1f min\n",
+    source, result$b_reps, result$block, elapsed_minutes
   ))
   cat(sprintf(
-    paste0(
-      "  %d failed, %d capped, %d point-deficient; ",
-      "bounded at baseline in %.0f%% of draws\n"
-    ),
-    result$n_failed, result$n_capped,
-    result$n_point_deficient,
-    100 * result$tau_star_share_bounded
+    "  %d failed, %d point-deficient\n",
+    result$n_failed, result$n_point_deficient
   ))
   print(result$inference[[1L]], digits = digits)
   result

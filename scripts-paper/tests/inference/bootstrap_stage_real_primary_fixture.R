@@ -11,9 +11,7 @@ bsr_mean_spec <- c(
       rownames(bsr_reference_est$beta2r)
     ),
     taus = lbd_spec$taus[-1L],
-    tau_grid = seq(0, max(lbd_spec$taus), by = 0.05),
-    tau_star_iterations =
-      PAPER_INFERENCE_SEARCH_CONTROL$tau_star$bootstrap_bisection_iterations
+    tau_grid = seq(0, max(lbd_spec$taus), by = 0.05)
   ),
   lbd_spec[bsr_system_fields]
 )
@@ -32,11 +30,7 @@ bsr_stage_spec <- list(
   frame = list(data = lbd_dat, key_col = "qtr", sample_size = nrow(lbd_dat)),
   system = lbd_spec[bsr_system_fields],
   tau = list(display = lbd_spec$taus[-1L], union = lbd_spec$taus),
-  mean = list(
-    coefs = bsr_mean_spec$coefs,
-    tau_star_grid = bsr_mean_spec$tau_grid,
-    tau_star_iterations = bsr_mean_spec$tau_star_iterations
-  ),
+  mean = list(coefs = bsr_mean_spec$coefs),
   log_variance = bsr_logvar_spec[BOOTSTRAP_STAGE_FIELDS$log_variance]
 )
 bsr_eval_specs <- bootstrap_stage_eval_specs(bsr_stage_spec)

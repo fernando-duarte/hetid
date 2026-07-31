@@ -55,11 +55,6 @@ mean_boot_results <- function(collected, set_id_mean_eq, inference_alpha,
         boot_band,
         alpha = inference_alpha
       ),
-      tau_star_band = boot_band(collected$tau_star_draws, inference_alpha),
-      tau_star_share_bounded = mean(
-        collected$tau_star_draws > set_id_mean_eq$tau_baseline,
-        na.rm = TRUE
-      ),
       inference = inference,
       provenance = provenance
     ),

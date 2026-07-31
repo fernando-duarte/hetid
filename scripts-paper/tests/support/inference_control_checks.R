@@ -107,8 +107,6 @@ threaded_fields <- list(
   "support/identification/tau_star.R" = c(
     "fine_grid_points", "bisection_iterations"
   ),
-  "support/identification/identified_set_bootstrap.R" =
-    "bootstrap_bisection_iterations",
   "inference/bootstrap_stage_specs.R" = c(
     "paper_bootstrap_failure_limit", "progress_report_every"
   ),

@@ -88,40 +88,17 @@ set_id_boot_draw_from_est <- function(est, shared_geometry, mean_spec) {
       upper_status = table$upper_status
     )
   })
-  coarse <- sweep_fixed_gamma(
-    shared_geometry$gamma,
-    est$moments,
-    mean_spec$tau_star_grid,
-    "boot"
-  )
-  tau_star <- tau_star_fixed(
-    shared_geometry$gamma,
-    est$moments,
-    coarse,
-    iters = mean_spec$tau_star_iterations
-  )
   list(
     point = point, point_status = point_status,
     point_ok = !is.null(est$point0),
-    bounds = bounds,
-    tau_star = tau_star$tau_star,
-    capped = tau_star$capped
+    bounds = bounds
   )
 }
 
 # Compatibility wrapper: estimate once, build shared geometry, then delegate.
 set_id_boot_draw <- function(dat, spec) {
   est <- estimate_set_id_system(dat, spec)
-  iterations <- if ("tau_star_iterations" %in% names(spec)) {
-    spec$tau_star_iterations
-  } else {
-    PAPER_INFERENCE_SEARCH_CONTROL$tau_star$bootstrap_bisection_iterations
-  }
-  mean_spec <- list(
-    coefs = spec$coefs,
-    tau_star_grid = spec$tau_grid,
-    tau_star_iterations = iterations
-  )
+  mean_spec <- list(coefs = spec$coefs)
   geometry <- set_id_boot_geometry(
     est,
     spec$gamma,

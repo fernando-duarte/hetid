@@ -64,13 +64,11 @@ mean_collected <- list(
   point_status = mean_cell$lower_status,
   n_point_deficient = 0L,
   endpoint_draws = list(mean_cell),
-  tau_star_draws = c(1, 0.5),
-  n_capped = 1L,
   n_failed = 0L,
   failure_causes = NULL
 )
 mean_args <- list(
-  mean_spec = list(coefs = "coef", tau_star_grid = c(0, 1)),
+  mean_spec = list(coefs = "coef"),
   display_taus = 0,
   n_draws = 2L,
   failure_control = list(fatal_failure_share = 0.75)
@@ -79,11 +77,13 @@ stopifnot(isTRUE(do.call(
   mean_boot_collection_validate,
   c(list(collected = mean_collected), mean_args)
 )))
-bad_capped <- mean_collected
-bad_capped$n_capped <- 0L
+# n_failed is now the only recorded copy of what the status mask already says,
+# so the cross-check that they agree is the one that has to stay live
+bad_failed <- mean_collected
+bad_failed$n_failed <- 1L
 stopifnot(!isTRUE(do.call(
   mean_boot_collection_validate,
-  c(list(collected = bad_capped), mean_args)
+  c(list(collected = bad_failed), mean_args)
 )))
 bad_causes <- mean_collected
 bad_causes$failure_causes <- table("forged")
@@ -98,8 +98,6 @@ failed_mean$endpoint_draws[[1L]]$lower[1L, ] <- NA_real_
 failed_mean$endpoint_draws[[1L]]$upper[1L, ] <- NA_real_
 failed_mean$endpoint_draws[[1L]]$lower_status[1L, ] <- failed
 failed_mean$endpoint_draws[[1L]]$upper_status[1L, ] <- failed
-failed_mean$tau_star_draws <- c(NA_real_, 0.5)
-failed_mean$n_capped <- 0L
 failed_mean$n_failed <- 1L
 failed_mean$failure_causes <- table("fixture failure")
 stopifnot(isTRUE(do.call(

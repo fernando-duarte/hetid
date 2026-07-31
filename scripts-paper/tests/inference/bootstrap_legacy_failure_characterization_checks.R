@@ -78,9 +78,11 @@ check(
     identical(blf_shared$volatility_raw, "shared estimation fixture")
 )
 
+# the injection point has to be mean-only: set_id_boot_geometry is shared with
+# the volatility draw, so failing it would prove nothing about isolation
 blf_mean_only <- paper_with_legacy_binding(
-  "sweep_fixed_gamma",
-  function(...) stop("mean tau-star fixture"),
+  "set_id_boot_draw_from_est",
+  function(...) stop("mean branch fixture"),
   function() {
     list(
       mean = blf_capture(set_id_boot_draw(lbd_dat, blf_mean_spec)),
@@ -89,8 +91,8 @@ blf_mean_only <- paper_with_legacy_binding(
   }
 )
 check(
-  "mean tau-star failure leaves the legacy volatility branch unchanged",
-  identical(blf_mean_only$mean, "mean tau-star fixture") &&
+  "mean branch failure leaves the legacy volatility branch unchanged",
+  identical(blf_mean_only$mean, "mean branch fixture") &&
     identical(blf_mean_only$volatility, lbd_draw)
 )
 

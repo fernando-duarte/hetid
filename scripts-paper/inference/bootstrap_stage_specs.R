@@ -13,7 +13,7 @@ BOOTSTRAP_STAGE_FIELDS <- list(
   system = c("gamma", "y1_col", "x_cols", "y2_cols", "z_col", "impose_null"),
   tau = c("baseline", "display", "union"),
   design = c("seed", "failure_control", "primary", "sensitivity"),
-  mean = c("coefs", "tau_star_grid", "tau_star_iterations", "result_inputs"),
+  mean = c("coefs", "result_inputs"),
   log_variance = c(
     "coefs", "pc_cols", "complete_case_policy", "grid_cap", "fit_budget",
     "estimator_ids", "estimator_dependencies", "response_scale", "logols_coef",
@@ -140,12 +140,6 @@ bootstrap_stage_spec <- function(
     ),
     mean = list(
       coefs = c(mean_eq$beta1_table$coef, mean_eq$theta_table$coef),
-      tau_star_grid = unique(c(
-        seq(0, mean_eq$tau_cap, by = PAPER_ANALYSIS_CONTRACT$tau$bootstrap_step),
-        mean_eq$tau_cap
-      )),
-      tau_star_iterations = PAPER_INFERENCE_SEARCH_CONTROL$
-        tau_star$bootstrap_bisection_iterations,
       result_inputs = bootstrap_stage_mean_result_inputs(mean_eq)
     ),
     log_variance = list(

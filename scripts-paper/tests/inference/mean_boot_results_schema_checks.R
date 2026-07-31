@@ -6,9 +6,8 @@ check(
     names(mbr_out),
     c(
       "b_reps", "block", "seed", "inference_contract", "point_se",
-      "point_t", "point_band", "tau_star_band", "tau_star_share_bounded",
-      "inference", "provenance", "point_draws", "point_status",
-      "n_point_deficient", "endpoint_draws", "tau_star_draws", "n_capped",
+      "point_t", "point_band", "inference", "provenance", "point_draws",
+      "point_status", "n_point_deficient", "endpoint_draws",
       "n_failed", "failure_causes"
     )
   )

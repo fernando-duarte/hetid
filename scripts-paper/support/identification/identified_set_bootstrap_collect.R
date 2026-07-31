@@ -14,9 +14,7 @@ set_id_boot_collect <- function(boot_raw, spec) {
       upper = rep(NA_real_, n_coef),
       lower_status = failed_status,
       upper_status = failed_status
-    )), length(spec$taus)),
-    tau_star = NA_real_,
-    capped = FALSE
+    )), length(spec$taus))
   )
   boot_raw[failed] <- list(failed_draw)
   stack <- function(field) {
@@ -43,8 +41,6 @@ set_id_boot_collect <- function(boot_raw, spec) {
     point_status = stack("point_status"),
     n_point_deficient = sum(!vapply(boot_raw, `[[`, logical(1), "point_ok")) - sum(failed),
     endpoint_draws = endpoints,
-    tau_star_draws = vapply(boot_raw, `[[`, numeric(1), "tau_star"),
-    n_capped = sum(vapply(boot_raw, `[[`, logical(1), "capped")),
     n_failed = sum(failed),
     failure_causes = causes
   )

@@ -48,14 +48,9 @@ estimate_set_id_system <- function(...) est
 dat <- data.frame(when = 1:3, pc = c(4, NA, 6), row.names = c("a", "b", "c"))
 geometry <- set_id_boot_geometry(est, matrix(1, 1L, 1L), c(0, 0.1), 0.1)
 mean_spec <- list(
-  coefs = c("b1", "th1"), gamma = matrix(1, 1L, 1L), taus = 0.1,
-  tau_grid = c(0, 0.1), tau_star_iterations = 4L
+  coefs = c("b1", "th1"), gamma = matrix(1, 1L, 1L), taus = 0.1
 )
-mean_branch_spec <- list(
-  coefs = mean_spec$coefs,
-  tau_star_grid = mean_spec$tau_grid,
-  tau_star_iterations = mean_spec$tau_star_iterations
-)
+mean_branch_spec <- list(coefs = mean_spec$coefs)
 mean_direct <- set_id_boot_draw_from_est(est, geometry, mean_branch_spec)
 mean_wrapper <- set_id_boot_draw(dat, mean_spec)
 stopifnot(identical(mean_direct, mean_wrapper))
@@ -76,11 +71,7 @@ log_spec <- list(
 stage_full <- list(
   system = list(gamma = matrix(1, 1L, 1L)),
   tau = list(display = 0.1, union = c(0, 0.1)),
-  mean = list(
-    coefs = mean_spec$coefs,
-    tau_star_grid = mean_spec$tau_grid,
-    tau_star_iterations = mean_spec$tau_star_iterations
-  ),
+  mean = list(coefs = mean_spec$coefs),
   frame = list(key_col = "when"),
   log_variance = log_spec[setdiff(
     names(log_spec),

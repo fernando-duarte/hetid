@@ -42,8 +42,6 @@ mbr_collected <- list(
       lower_status = mbr_status, upper_status = mbr_status
     )
   ),
-  tau_star_draws = stats::runif(mbr_b, 0, 0.1),
-  n_capped = 1L,
   n_failed = 0L,
   failure_causes = NULL
 )
@@ -100,10 +98,6 @@ check(
 check(
   "mean_boot_results returns one inference table per tau, named by set_tables",
   identical(names(mbr_out$inference), names(mbr_set_tables))
-)
-check(
-  "mean_boot_results returns a tau_star_band with a finite median",
-  is.finite(mbr_out$tau_star_band[["median"]])
 )
 check(
   "mean_boot_results reports the collected n_failed unchanged",

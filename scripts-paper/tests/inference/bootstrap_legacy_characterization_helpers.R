@@ -39,19 +39,6 @@ paper_legacy_mean_from_est <- function(est, spec) {
       upper_status = table$upper_status
     )
   })
-  coarse <- sweep_fixed_gamma(
-    spec$gamma,
-    est$moments,
-    spec$tau_grid,
-    "boot"
-  )
-  tau_star <- tau_star_fixed(
-    spec$gamma,
-    est$moments,
-    coarse,
-    iters =
-      PAPER_INFERENCE_SEARCH_CONTROL$tau_star$bootstrap_bisection_iterations
-  )
   list(
     point = point,
     point_status = ifelse(
@@ -60,9 +47,7 @@ paper_legacy_mean_from_est <- function(est, spec) {
       PAPER_ENDPOINT_STATUS[["unreliable"]]
     ),
     point_ok = !is.null(est$point0),
-    bounds = bounds,
-    tau_star = tau_star$tau_star,
-    capped = tau_star$capped
+    bounds = bounds
   )
 }
 

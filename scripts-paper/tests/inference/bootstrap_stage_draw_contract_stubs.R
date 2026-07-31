@@ -10,9 +10,6 @@ paper_source_once(paper_path(
   "support", "identification", "status_contract.R"
 ))
 
-PAPER_INFERENCE_SEARCH_CONTROL <- list(
-  tau_star = list(bootstrap_bisection_iterations = 4L)
-)
 PAPER_ANALYSIS_CONTRACT <- list(
   model = list(
     key_col = "when",

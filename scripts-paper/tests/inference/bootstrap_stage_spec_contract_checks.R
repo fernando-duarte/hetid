@@ -7,16 +7,14 @@ paper_mbb_protocol <- function() {
   ))
 }
 PAPER_INFERENCE_SEARCH_CONTROL <- list(
-  bootstrap = list(fatal_failure_share = 0.2, progress_report_every = 2L),
-  tau_star = list(bootstrap_bisection_iterations = 4L)
+  bootstrap = list(fatal_failure_share = 0.2, progress_report_every = 2L)
 )
 PAPER_ANALYSIS_CONTRACT <- list(
   model = list(
     key_col = "when",
     return_pc_cols = "l.pc1",
     preprocessing = list(return_pc = list(center = TRUE, scale = FALSE))
-  ),
-  tau = list(bootstrap_step = 0.1)
+  )
 )
 LOGVAR_SEARCH_CONTROL <- list(iterations = 4L)
 LOGVAR_PPML_CONTROL <- list(glm_maxit = 5L)
@@ -113,7 +111,6 @@ stopifnot(
   identical(names(spec$log_variance), BOOTSTRAP_STAGE_FIELDS$log_variance),
   identical(spec$frame$data$l.pc1, c(9, NA, 7)),
   identical(spec$mean$coefs, c("(Intercept)", "x", "w2")),
-  identical(spec$mean$tau_star_grid, c(0, 0.1, 0.2, 0.25)),
   !any(c(
     names(spec$frame),
     names(spec$system),

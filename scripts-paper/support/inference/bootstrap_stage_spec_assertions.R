@@ -96,16 +96,11 @@ bootstrap_stage_system_ok <- function(system, frame) {
     !is.na(system$impose_null) && is.null(attributes(system$impose_null))
 }
 
-bootstrap_stage_tau_ok <- function(tau, mean) {
+bootstrap_stage_tau_ok <- function(tau) {
   is.double(tau$display) && is.null(attributes(tau$display)) &&
     length(tau$display) > 0L && !anyNA(tau$display) &&
     all(is.finite(tau$display)) && all(tau$display > 0) && !anyDuplicated(tau$display) &&
-    identical(tau$baseline, tau$display[[1L]]) && identical(tau$union, c(0, tau$display)) &&
-    is.double(mean$tau_star_grid) && is.null(attributes(mean$tau_star_grid)) &&
-    !anyNA(mean$tau_star_grid) &&
-    all(is.finite(mean$tau_star_grid)) && !is.unsorted(mean$tau_star_grid) &&
-    !anyDuplicated(mean$tau_star_grid) && identical(mean$tau_star_grid[[1L]], 0) &&
-    bootstrap_stage_count_ok(mean$tau_star_iterations)
+    identical(tau$baseline, tau$display[[1L]]) && identical(tau$union, c(0, tau$display))
 }
 
 bootstrap_stage_graph_ok <- function(ids, graph) {
@@ -148,7 +143,7 @@ bootstrap_stage_spec_validate <- function(spec, expected) {
     "nested stage fields drifted" = all(shape),
     "frame contract is invalid" = bootstrap_stage_frame_ok(spec$frame),
     "system contract is invalid" = bootstrap_stage_system_ok(spec$system, spec$frame),
-    "tau contract is invalid" = bootstrap_stage_tau_ok(spec$tau, spec$mean),
+    "tau contract is invalid" = bootstrap_stage_tau_ok(spec$tau),
     "mean coefficient axis is invalid" = bootstrap_stage_axis_ok(spec$mean$coefs),
     "failure-control snapshot is invalid" = bootstrap_stage_failure_control_ok(
       design$failure_control, expected$failure_control_fields

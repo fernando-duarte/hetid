@@ -65,7 +65,6 @@ PAPER_ANALYSIS_CONTRACT <- local({
       # variant, so adding one here without a figure record fails fast
       fitted_volatility_sweep = c(0.05, 0.10, 0.20, 0.30, 0.40),
       sweep_step = 0.005,
-      bootstrap_step = 0.05,
       figure_grid_n = 25L
     ),
     variance_share = list(
