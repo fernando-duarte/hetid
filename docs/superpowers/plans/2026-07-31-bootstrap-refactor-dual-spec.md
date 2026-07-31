@@ -46,18 +46,30 @@ Y2 = beta2R X + eps2
 | `W2` | raw `Y2` | `Y2` residualised on `X` |
 | `b_0`, `b_E` | point-identified at every tau | set-valued via `beta1(w) = beta1R - t(beta2R) w` |
 
-**The restriction is rejected in the data.** Regressing each news PC on `(1, PC_E)`:
+**The evidence against the restriction is real but narrower than an iid F suggests.** An
+initial `F(3,252)` gave PC3 `p = 5.4e-04`, but that reference assumes iid errors on quarterly
+macro data. Re-tested with a Newey-West Wald (lag 4) and a null-imposed circular MBB (block 10,
+the paper's own protocol, B = 2000):
 
-| news PC | R² | F(3,252) | p |
+| news PC | HAC Wald | analytic chisq(3) p | **block-bootstrap p** |
 |---|---|---|---|
-| `sdf_news_pc1` | 0.0019 | 0.16 | 0.92 |
-| `sdf_news_pc2` | 0.0059 | 0.49 | 0.69 |
-| `sdf_news_pc3` | 0.0672 | **6.05** | **5.4e-04** |
+| `sdf_news_pc1` | 0.65 | 0.886 | 0.917 |
+| `sdf_news_pc2` | 1.30 | 0.730 | 0.783 |
+| `sdf_news_pc3` | 19.76 | 1.9e-04 | **0.0130** |
+| **joint (matrix)** | 21.70 | 9.9e-03 | **0.0850** |
 
-News PC3 is forecastable, and `b_{3,N}` carries the paper's headline. The spec document agrees:
-`docs/lewbel_multivariate_set_identification.tex`, §"News-equation reduced-form coefficients"
-says that in finite samples "estimating the projection on the full `X_t` is still the correct
-residualization step."
+So: PC3 rejects at 5% and survives Bonferroni (3 × 0.0130 = 0.039), but **the joint matrix
+restriction does not reject at 5%**. Note also that the bootstrap p for PC3 is 68x the analytic
+one — the analytic reference is badly optimistic here, which is the same lesson that governs the
+tau = 0 star decision in §2.2.
+
+Spec B therefore does **not** rest on the pretest. Its primary justification is
+`docs/lewbel_multivariate_set_identification.tex`, §"News-equation reduced-form coefficients":
+in proxy or finite-sample implementations, "estimating the projection on the full `X_t` is still
+the correct residualization step" *even when* `beta2R = 0` holds in population. The pretest
+points the same way for PC3, which is the component carrying `b_{3,N}`, but is not load-bearing.
+
+This ambiguity is also why the plan computes **both** specifications rather than choosing one.
 
 **Measured consequences of switching** (mean panel, B = 10,000, real index family):
 
