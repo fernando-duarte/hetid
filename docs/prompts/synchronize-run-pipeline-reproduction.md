@@ -88,9 +88,13 @@ the final report, state only that this workflow did not launch the scientific pi
 
 ## File boundary
 
-The only existing file you may modify is:
+The only existing files you may modify are the target document and its companion render:
 
 `docs/run_pipeline_math.tex`
+`docs/run_pipeline_math.pdf`
+
+Both already exist. The TeX is tracked; the PDF is git-ignored. Replace the PDF only with the
+accepted build of the certified TeX version, at the end of the workflow.
 
 You may create new timestamped plans, source maps, terminology ledgers, audit reports, and validation
 logs under:
@@ -112,7 +116,8 @@ Additional rules:
 - Do not edit scientific source, configuration, tests, inputs, artifacts, repository metadata, or
   any other documentation.
 - Do not commit, push, publish, delete, revert, reset, or rewrite history.
-- Keep compiled PDFs and LaTeX sidecar files outside the repository.
+- Keep LaTeX sidecar and intermediate build files outside the repository. Only the final accepted
+  PDF returns, to its canonical ignored path `docs/run_pipeline_math.pdf`.
 - Obtain report timestamps with `date "+%Y-%m-%d %H:%M %Z"`. Never guess the time.
 
 Before editing, write a concrete execution plan under `docs/RUN/run_pipeline_math/`. Do not
@@ -643,9 +648,10 @@ condition, missing-value rule, sample transition, return definition, and frequen
 
 ## Compilation and visual inspection
 
-Compile only the final target TeX in a fresh system temporary directory outside the repository. Use
-the project-appropriate documented LaTeX workflow. Never write the PDF or sidecar files beside the
-source document.
+Compile only the final target TeX in a fresh system temporary directory outside the repository. Build
+with `latexmk`. The document is a plain `article`, and the repository ships no `latexmkrc`, so the
+default pdfLaTeX route applies; confirm that from the current preamble rather than assuming it. Never
+leave sidecar or intermediate build files beside the source document.
 
 Require:
 
@@ -688,7 +694,9 @@ Check for:
 Correct every defect. Recompile, rerun structural checks, and repeat the complete visual inspection.
 If a correction changes prose or mathematics, repeat every affected compliance barrier.
 
-The final PDF must come from the exact TeX version certified by the final reports.
+The final PDF must come from the exact TeX version certified by the final reports. Once the build is
+accepted, copy it over `docs/run_pipeline_math.pdf` and verify that the canonical PDF is
+byte-identical to the accepted build.
 
 ## Final scope and evidence gate
 
@@ -697,8 +705,8 @@ Before declaring success:
 1. Recheck the relevant source snapshot.
 2. Confirm that the source remained stable.
 3. Recheck repository status.
-4. Confirm that only the target TeX and newly created `docs/` working records changed through this
-   workflow.
+4. Confirm that only the target TeX, its companion PDF, and newly created `docs/` working records
+   changed through this workflow.
 5. Verify that no scientific source, configuration, test, input, output, cache, manifest instance,
    protected document, existing report, or repository metadata was modified.
 6. Record every failed command and its corrected rerun.

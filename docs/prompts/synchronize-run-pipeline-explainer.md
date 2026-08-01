@@ -114,7 +114,7 @@ Subagents may write only inside:
 
 Subagents have read-only access to the rest of the repository. They may create proposed patches or revised copies inside their private scratch directories. The orchestrator must inspect those proposals, verify them against source, and apply accepted changes to the canonical TeX.
 
-Use `apply_patch` for text edits. Preserve unrelated content and the user’s existing work. Do not use destructive Git commands or broad deletion commands.
+Make text edits in place with the harness’s own file-editing tools. Preserve unrelated content and the user’s existing work. Do not use destructive Git commands or broad deletion commands, and do not rewrite a file wholesale through shell redirection when an in-place edit will do.
 
 ## Planning and delegation
 
@@ -685,7 +685,7 @@ Run a final independent exact-hash fidelity regression after all prose passes. A
 
 ## Stage N: Compile, inspect, and synchronize
 
-Discover and use the project’s documented LaTeX build command. Respect any applicable `latexmkrc`. Build in a fresh directory under the run’s `docs/RUN/` directory.
+Build with `latexmk`. The document is plain `article` with `inputenc`, and the repository ships no `latexmkrc`, so the default pdfLaTeX route applies; confirm that from the current preamble rather than assuming it. Build in a fresh directory under the run’s `docs/RUN/` directory.
 
 Do not invoke R during compilation.
 
