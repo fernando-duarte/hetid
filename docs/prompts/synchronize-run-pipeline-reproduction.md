@@ -14,7 +14,7 @@ Pipeline entry point:
 
 Target document:
 
-`/Users/fduarte/Library/CloudStorage/Dropbox-Personal/MyPackages/hetid/docs/run_pipeline_reproduction.tex`
+`/Users/fduarte/Library/CloudStorage/Dropbox-Personal/MyPackages/hetid/docs/run_pipeline_math.tex`
 
 The repository, pipeline, and document may all have changed since this prompt was written. Do not
 carry forward any numerical value, active branch, input identity, equation, capability, or conclusion
@@ -40,9 +40,9 @@ The current production source is the sole authority.
 3. Trace the effective configuration, defaults, input-selection rules, recorded decisions, branch
    gates, mathematical procedures, numerical controls, lifecycle rules, publication stages, and
    completion checks.
-4. Treat `docs/run_pipeline_reproduction.tex` as an untrusted draft. Revalidate every substantive
+4. Treat `docs/run_pipeline_math.tex` as an untrusted draft. Revalidate every substantive
    sentence, formula, number, status, and capability.
-5. You may inspect `docs/run_pipeline_explained.tex` only as a nonauthoritative source of questions.
+5. You may inspect `docs/run_pipeline_code.tex` only as a nonauthoritative source of questions.
    Do not borrow its prose, structure, or conclusions. Do not edit it.
 6. Treat comments, tests, old reports, generated artifacts, memories, and subagent conclusions as
    leads rather than authority. Production-reachable behavior wins whenever sources disagree. Tests
@@ -90,12 +90,12 @@ the final report, state only that this workflow did not launch the scientific pi
 
 The only existing file you may modify is:
 
-`docs/run_pipeline_reproduction.tex`
+`docs/run_pipeline_math.tex`
 
 You may create new timestamped plans, source maps, terminology ledgers, audit reports, and validation
 logs under:
 
-`docs/RUN/run_pipeline_reproduction/`
+`docs/RUN/run_pipeline_math/`
 
 Do not modify or overwrite an existing report or log. Create a new uniquely named file.
 
@@ -115,7 +115,7 @@ Additional rules:
 - Keep compiled PDFs and LaTeX sidecar files outside the repository.
 - Obtain report timestamps with `date "+%Y-%m-%d %H:%M %Z"`. Never guess the time.
 
-Before editing, write a concrete execution plan under `docs/RUN/run_pipeline_reproduction/`. Do not
+Before editing, write a concrete execution plan under `docs/RUN/run_pipeline_math/`. Do not
 use `multistep-plan`, `multistep-do`, or another multistep skill. Proceed without requesting
 approval.
 
@@ -449,7 +449,7 @@ no unresolved item.
 
 ### Stage C: orchestrator synthesis and scientific audit
 
-The orchestrator alone revises `docs/run_pipeline_reproduction.tex`.
+The orchestrator alone revises `docs/run_pipeline_math.tex`.
 
 You may preserve existing text only after independently validating it. Rewrite or reorganize as much
 as needed to satisfy the full contract. Do not create a differently named primary TeX file.
@@ -707,7 +707,7 @@ Before declaring success:
    visual-review coverage, static-scan results, and every agent audit outcome.
 8. State explicitly that this workflow did not launch the scientific pipeline.
 
-Create new timestamped canonical reports under `docs/RUN/run_pipeline_reproduction/` for:
+Create new timestamped canonical reports under `docs/RUN/run_pipeline_math/` for:
 
 - the execution plan;
 - the source graph and source snapshot;
@@ -731,7 +731,7 @@ rather than repeating the same attempt.
 
 If a genuine external blocker remains after bounded attempts:
 
-1. create a new timestamped Markdown report under `docs/RUN/run_pipeline_reproduction/`;
+1. create a new timestamped Markdown report under `docs/RUN/run_pipeline_math/`;
 2. record the unresolved issue;
 3. record the exact evidence;
 4. list the sources inspected;

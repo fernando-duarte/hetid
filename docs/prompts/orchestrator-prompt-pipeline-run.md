@@ -319,7 +319,7 @@ improvise around it.
   force-add ignored caches, diagnostics, or PDFs. `docs/` is git-ignored, so reports, plans,
   logs, and the consolidated md files are **not** committed and never appear in `git status`;
   do not try to force-add them. The two final Stage-O deliverables are force-tracked exceptions:
-  `docs/run_pipeline_explained.tex` and `docs/run_pipeline_reproduction.tex`. Stage and commit
+  `docs/run_pipeline_code.tex` and `docs/run_pipeline_math.tex`. Stage and commit
   those two files explicitly after their sub-orchestrators finish and the orchestrator verifies
   them. Their PDFs and all synchronization working files remain ignored and uncommitted.
 - **When to commit.** Commit at each natural checkpoint — once per completed implementation
@@ -390,8 +390,8 @@ their disposition; leave them intact after any crash or halted run.
 
 Note: `quality-check.R` writes its own artifacts to `docs/quality-reports/` — leave those in
 place (that path is fixed by the script) and summarize/link them from `RUN/reports/`. The
-Stage-O TeX files keep their existing canonical paths (`docs/run_pipeline_explained.tex` and
-`docs/run_pipeline_reproduction.tex`) — they are deliverables, not run artifacts. When a stage
+Stage-O TeX files keep their existing canonical paths (`docs/run_pipeline_code.tex` and
+`docs/run_pipeline_math.tex`) — they are deliverables, not run artifacts. When a stage
 says "delete the source md files" or "delete other reporting artifacts," delete only eligible
 orchestrator-owned intermediates under `RUN/`,
 never canonical deliverables or `RUN/scratch/agents/` during the active run.
@@ -403,8 +403,8 @@ never canonical deliverables or `RUN/scratch/agents/` during the active run.
 | Pipeline runner | `scripts-paper/run_pipeline.R` |
 | Pipeline output dir | `scripts-paper/output` |
 | Pipeline module docs | `scripts-paper/README.md`, `scripts-paper/support/README.md` |
-| Explainer document | `docs/run_pipeline_explained.tex` |
-| Reproduction document | `docs/run_pipeline_reproduction.tex` |
+| Explainer document | `docs/run_pipeline_code.tex` |
+| Reproduction document | `docs/run_pipeline_math.tex` |
 | Explainer synchronization prompt | `docs/prompts/synchronize-run-pipeline-explainer.md` |
 | Reproduction synchronization prompt | `docs/prompts/synchronize-run-pipeline-reproduction.md` |
 | Quality suite | `docs/quality-check.R` |
@@ -758,8 +758,8 @@ Stage O runs in the **same existing worktree and working branch** used by Stages
 a documentation branch or worktree, do not switch to `main`, and do not let either
 sub-orchestrator change Git state. The two canonical and task-related repository targets are:
 
-- `docs/run_pipeline_explained.tex`
-- `docs/run_pipeline_reproduction.tex`
+- `docs/run_pipeline_code.tex`
+- `docs/run_pipeline_math.tex`
 
 No README or other source/documentation file belongs to this stage. Prompt-authorized ignored
 plans, reports, LaTeX sidecars, renders, and PDFs may support validation, but do not stage or
@@ -771,10 +771,10 @@ the prompt:
 
 - **Explainer sub-orchestrator:** use
   `docs/prompts/synchronize-run-pipeline-explainer.md` for
-  `docs/run_pipeline_explained.tex`.
+  `docs/run_pipeline_code.tex`.
 - **Reproduction sub-orchestrator:** use
   `docs/prompts/synchronize-run-pipeline-reproduction.md` for
-  `docs/run_pipeline_reproduction.tex`.
+  `docs/run_pipeline_math.tex`.
 
 These two sub-orchestrators are the narrow exception to the durable read-only worker protocol.
 Each may edit only its assigned canonical TeX file and may create only the ignored working and
@@ -891,7 +891,7 @@ You are done only when all of these conditions hold:
   source-fidelity, terminology, `econ-write`, `writing-clearly-and-concisely`, LaTeX, and
   final-integrity gate required by its complete prompt.
 - Stage O changed and incorporated no task-related tracked file other than
-  `docs/run_pipeline_explained.tex` and `docs/run_pipeline_reproduction.tex`. Both TeX files
+  `docs/run_pipeline_code.tex` and `docs/run_pipeline_math.tex`. Both TeX files
   reflect the frozen Stage-N source snapshot, and the documentation commit was created and
   pushed from the same working branch and worktree used for the rest of the run.
 - After Stage O, final integration merged the fully pushed working branch into `main`, the hooks

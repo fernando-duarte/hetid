@@ -9,10 +9,10 @@ Production entrypoint:
   /Users/fduarte/Library/CloudStorage/Dropbox-Personal/MyPackages/hetid/scripts-paper/run_pipeline.R
 
 Canonical TeX document:
-  /Users/fduarte/Library/CloudStorage/Dropbox-Personal/MyPackages/hetid/docs/run_pipeline_explained.tex
+  /Users/fduarte/Library/CloudStorage/Dropbox-Personal/MyPackages/hetid/docs/run_pipeline_code.tex
 
 Canonical compiled PDF:
-  /Users/fduarte/Library/CloudStorage/Dropbox-Personal/MyPackages/hetid/docs/run_pipeline_explained.pdf
+  /Users/fduarte/Library/CloudStorage/Dropbox-Personal/MyPackages/hetid/docs/run_pipeline_code.pdf
 
 Your objective is to make the TeX document fully faithful to the current code. Assume that both the code and document have changed since any prior audit. Assume that the latest document revision may have used weak standards. Trust neither the document nor old reports. Derive every claim from the current source.
 
@@ -97,8 +97,8 @@ Before doing task work:
 
 Only the primary orchestrator may modify:
 
-  docs/run_pipeline_explained.tex
-  docs/run_pipeline_explained.pdf
+  docs/run_pipeline_code.tex
+  docs/run_pipeline_code.pdf
 
 Subagents and external reviewers must never modify those files.
 
@@ -729,7 +729,7 @@ Fix every visual defect and rebuild. A successful compiler exit does not prove v
 
 When the build passes:
 
-1. Copy the accepted PDF to `docs/run_pipeline_explained.pdf`.
+1. Copy the accepted PDF to `docs/run_pipeline_code.pdf`.
 2. Verify that the canonical PDF is byte-identical to the accepted build.
 3. Record final TeX and PDF hashes, sizes, and page count.
 4. Recompute the frozen production-source hashes.
