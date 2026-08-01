@@ -1,0 +1,26 @@
+\documentclass{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{booktabs}
+\usepackage{graphicx}
+\usepackage{pdflscape}
+\begin{document}
+\section*{Summary statistics}
+\begin{center}
+\input{../tables/descriptive_statistics/summary_stats.tex}
+\end{center}
+\section*{Consumption growth regression}
+\begin{center}
+\input{../tables/descriptive_statistics/ols_mean_eq.tex}
+\end{center}
+\noindent Dependent variable: quarterly real consumption growth (percent). $N = 256$, $R^2 = 0.099$, adjusted $R^2 = 0.077$.
+\begin{landscape}
+\section*{Correlation matrix}
+\begin{center}
+\resizebox{\linewidth}{!}{\input{../tables/descriptive_statistics/correlations.tex}}
+\end{center}
+\end{landscape}
+\section*{Time series}
+\noindent\includegraphics[width=\textwidth,page=1]{../figures/descriptive_statistics/figures.pdf}
+\section*{Histograms}
+\noindent\includegraphics[width=\textwidth,page=2]{../figures/descriptive_statistics/figures.pdf}
+\end{document}
