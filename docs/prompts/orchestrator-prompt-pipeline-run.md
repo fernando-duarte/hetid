@@ -11,24 +11,31 @@ Run these in order; the run is hands-off only once they're done.
    Claude Code's **permission system** is separate and will still prompt for Bash/Edit/Write/git
    approvals. Launch in an auto-accept / bypass-permissions mode (or pre-allow the needed tools),
    or it will silently wait on permission dialogs.
-4. **⚠️ Start from a clean Git worktree, or Stage 0 will halt the run.** This protects
+4. **⚠️ Start from a clean checkout, or Stage 0 will halt the run.** This protects
    uncommitted source work; it does not authorize pipeline cleanup. Do not run
    `reset_pipeline_state.R` or delete anything under `scripts-paper/output`, including ignored
-   caches. Get onto the intended clean base without disturbing pipeline state:
+   caches. **Whatever branch you are on when you paste the prompt becomes the base branch** —
+   the run reads it from `HEAD` and never assumes `main`. Put yourself on the branch you want
+   as the base, then make the tree clean without disturbing pipeline state:
    ```
    git status          # commit or stash pending source work; preserve pipeline state
-   git switch main
-   git pull --ff-only
+   git branch --show-current   # this is the base the run will branch from
+   git pull --ff-only          # optional; only if this branch tracks a remote
    ```
+   The run does **not** work in this checkout. Stage 0 creates a separate isolated worktree
+   outside the Dropbox tree and does all of its work there, leaving this checkout untouched.
 5. **Paste from `## ORCHESTRATOR PROMPT` down.** Everything above that heading (this quickstart +
    the "How to use" note) is for you, not the agent. Paste from the "You are the **orchestrator**…"
    line to the end of the file.
 6. **Know what you're launching.** Stage C invokes the full pipeline once at the canonical
    10,000-draw configuration. Its validated cache gate reuses an existing current bootstrap and
-   reruns the multi-hour draw stage only when the cache is missing or stale. The workflow spawns
-   subagents and — per the configured choice — **auto-merges to `main` and pushes with no
-   PR/review gate**. The two final documentation sub-orchestrators are a narrow exception to the
-   usual read-only-worker rule: each may edit only its assigned TeX file in the existing worktree
+   reruns the multi-hour draw stage only when the cache is missing or stale — Stage 0 seeds the
+   run worktree with this checkout's ignored pipeline state so that reuse stays possible. The
+   workflow spawns subagents, commits to a new branch in a new isolated worktree, and pushes
+   that branch to `origin`. **It never merges.** It ends by assessing whether the branch would
+   merge cleanly back into the base and reporting the verdict — the merge itself stays yours.
+   The two final documentation sub-orchestrators are a narrow exception to the
+   usual read-only-worker rule: each may edit only its assigned TeX file in the run worktree
    and working branch. Launch only when you want that end state. Other subagents work read-only
    and checkpoint their findings to private Markdown files under `RUN/scratch/agents/` so partial
    work survives an agent crash.
@@ -40,8 +47,9 @@ Run these in order; the run is hands-off only once they're done.
 > running in this repository, then leave it to run. Opus acts as
 > the orchestrator: it sequences the work, delegates to subagents, enforces the barriers, and
 > verifies each stage before moving on. The run is **fully autonomous** — start to finish
-> (Stage A through Stage O and the final merge into `main`) with **no human involvement**: Opus must
-> never pause to ask a question, request approval, or defer a decision back to the human.
+> (Stage A through Stage O and the final mergeability assessment) with **no human involvement**:
+> Opus must never pause to ask a question, request approval, or defer a decision back to the
+> human. It stops short of merging: the branch is left pushed and assessed, never integrated.
 
 ---
 
@@ -81,9 +89,11 @@ into the skills you invoke.
   loop. Treat the human as unavailable for the entire run.
 - **Every step here is straightforward and pre-authorized.** All actions in Stages A–O and final
   integration —
-  including preserving and inventorying the existing pipeline state, running the pipeline,
-  editing code/docs, committing, pushing, and merging into `main` — are explicitly approved in
-  advance. Do them without asking. This authority belongs to the orchestrator. Subagents never
+  including creating the run worktree and branch, preserving and inventorying the existing
+  pipeline state, running the pipeline, editing code/docs, committing, and pushing the working
+  branch — are explicitly approved in advance. Do them without asking. Merging is the one action
+  that is **not** authorized: the run ends with a mergeability assessment and stops there.
+  This authority belongs to the orchestrator. Subagents never
   change Git state; except for the two narrowly scoped Stage-O TeX writers, they may write only
   inside their assigned run scratchpad.
 - **Skills with embedded clarification or decision points are overridden.** `multistep-do`,
@@ -129,14 +139,16 @@ into the skills you invoke.
 - **Bounded retries — fail closed, never loop, never ask.** "No human" does **not** mean "retry
   forever." If something can't be made to pass after a *bounded* effort — fixing the root cause
   each time, not repeating the same attempt — stop that line of work and **fail closed**: leave
-  the working branch unmerged, record in `RUN/orchestrator-log.md` exactly what failed, the
+  the failing change uncommitted, record in `RUN/orchestrator-log.md` exactly what failed, the
   evidence, and what you tried, and continue with any independent remaining work before ending
   with a clear status. Concrete bounds: a failing pre-commit hook or test → retry root-cause
   fixes up to ~5 rounds, then stop and report; a flaky/nondeterministic check → confirm
   flakiness (re-run), report, do not paper over it; a genuinely irreducible blocker (missing
-  credential with no fallback, an external service down, an unresolvable merge conflict on
-  `main`) → stop and report, do **not** force, disable, or guess your way past it. A halted run
-  that reports honestly is a success; a silently-broken merge is a failure.
+  credential with no fallback, an external service down) → stop and report, do **not** force,
+  disable, or guess your way past it. A halted run that reports honestly is a success; a
+  silently-broken commit is a failure. Note that a conflict against the base branch is **not** a
+  blocker here — the run never merges, so conflicts are an output of the final assessment, not
+  an obstacle to it.
 - **Delegation.** Prefer launching subagents (and teams) for independent or parallelizable
   work. Run independent subagents concurrently in a single batch. Give each subagent the
   same autonomy mandate (read-only repository access, a private scratchpad, may spawn its own
@@ -205,7 +217,7 @@ message.
 - **Recover partial work.** If a worker crashes, times out, disappears, or returns no final
   message, inspect its `response.md` and private directory before retrying or reassigning work.
   Use verified partial findings, record the uncovered remainder, and never treat a missing final
-  message as proof that no work was completed. Keep every worker directory until final integration succeeds;
+  message as proof that no work was completed. Keep every worker directory until the run completes successfully;
   preserve it when the run halts.
 
 - **Every delegation carries the full task quad — objective, output, tools, boundaries.** A
@@ -309,12 +321,19 @@ defects (a re-flag is itself a finding to suppress):
 You own the repository's version control for this run. Apply this consistently; do not
 improvise around it.
 
-- **Branch first, from a clean base.** The intended base is `main`. Do **not** commit work
-  directly to `main`. Per **Stage 0**, confirm the working tree is clean before branching — if
-  it isn't, stop and report rather than branching on top of someone else's uncommitted work.
-  From the clean base, create a single working branch for this run, e.g.
-  `git switch -c chore/pipeline-validation-<short-date>`, and do all work there. Verify with
-  `git status` / `git branch --show-current` before your first commit.
+- **The base branch is whatever is checked out at invocation — never assume `main`.** Read it
+  once in Stage 0 with `git rev-parse --abbrev-ref HEAD`, record it in the log as `BASE`, and
+  refer to `BASE` everywhere after. Do not `git switch` to another branch to "get onto the right
+  base", do not hard-code `main` in any command, and do not commit to `BASE` itself. If `HEAD` is
+  detached, stop and report — a detached `HEAD` is not a usable base.
+- **Work in a new isolated worktree on a new branch.** Per **Stage 0**, confirm the invoking
+  checkout is clean, then create one worktree and one branch for this run in a single command:
+  `git worktree add <worktree-path> -b chore/pipeline-validation-<short-date> <BASE>`. Every
+  stage from A onward runs with that worktree as the working directory. The invoking checkout is
+  left untouched for the whole run — do not edit, commit, stage, or run the pipeline in it. If
+  the tree isn't clean, stop and report rather than branching on top of someone else's
+  uncommitted work. Verify with `git -C <worktree-path> status` and
+  `git -C <worktree-path> branch --show-current` before your first commit.
 - **What gets committed.** Commit the tracked source changes produced in the implementation
   cycles (Stages I and M), any package files touched along the way, and the reviewed,
   non-ignored publication artifacts changed or created by Stage C or a later validation run.
@@ -344,8 +363,11 @@ improvise around it.
 - **When to push.** After each gate-passing commit, including the Stage-O documentation commit,
   push the working branch to `origin`
   (`git push -u origin <branch>` on first push). Pushing is in-scope for this run — you do
-  not need to ask. Do **not** merge into `main` mid-run; the merge happens once, after Stage O
-  is complete and its documentation commit is pushed. No pull request is required.
+  not need to ask. No pull request is required.
+- **Never merge.** Do not merge the working branch into `BASE` or any other branch, at any point,
+  and do not merge `BASE` into the working branch. Do not rebase onto `BASE`. After Stage O the
+  run performs a read-only **mergeability assessment** (see **Final mergeability assessment**)
+  and stops. Integration is the human's decision, made later, from the report.
 - **Recover, don't rewrite.** Do not `git reset --hard`, force-push, rebase, or amend already
   pushed commits to "clean things up." If something went wrong, make a new commit that fixes
   it and explain in the message.
@@ -389,7 +411,7 @@ time. Require every subagent and skill that writes an `.md` to do the same.
 
 For subagent `response.md` files, create the timestamped header before substantive work and
 refresh the timestamp at every checkpoint. Keep all `RUN/scratch/agents/` directories for the
-entire active run. Delete them only after final integration succeeds and the final summary has captured
+entire active run. Delete them only after the run completes successfully and the final summary has captured
 their disposition; leave them intact after any crash or halted run.
 
 Note: `quality-check.R` writes its own artifacts to `docs/quality-reports/` — leave those in
@@ -438,11 +460,14 @@ pipeline on a broken footing):
   available; its absence is not a blocker because the Git commands are specified below.
   **Tools available:** `latexmk`, `pre-commit`, `Rscript`/`R`, `git`, `gh`, `graphify`, and the
   `pal`/`context7` MCP tools. Note any missing requirement in the log.
-- **Clean, known starting point:** run `git status --short --branch`. **Do not assume the repo
-  is on `main` or clean** — it may not be. If the working tree has uncommitted or untracked
-  changes, **stop and report**; do not absorb pre-existing work into this run's branch or merge.
-  Record the base branch you will branch from (normally `main`; if `main` isn't current, pull/
-  checkout `main` first only if the tree is clean).
+- **Clean, known starting point, and the base branch comes from `HEAD`:** run
+  `git status --short --branch` and `git rev-parse --abbrev-ref HEAD`. **Do not assume the repo
+  is on `main` or clean** — it may not be, and `main` has no special status in this run. Record
+  the current branch as `BASE` in `RUN/orchestrator-log.md` and use it for every later reference;
+  never substitute a hard-coded branch name. If `HEAD` is detached (`git rev-parse` returns
+  `HEAD`), **stop and report**. If the working tree has uncommitted or untracked changes, **stop
+  and report**; do not absorb pre-existing work into this run's branch. Do not switch branches in
+  the invoking checkout — the run leaves it exactly as found.
 - **LAD gate decision approved — hard precondition, not an optional check.** The LAD estimator is
   gated by the tracked, committed decision file `scripts-paper/config/decisions/lad.dcf`, which
   `run_pipeline.R` reads via `logvar_lad_gate_read()`. Confirm it records `decision: approved` and
@@ -457,10 +482,61 @@ pipeline on a broken footing):
   LAD-less run — record that explicitly in the log, and treat the two absent conditional SVGs as
   expected when reconciling Stage C rather than as missing required output.
 
-Then: (1) pick the run date and create the run folder `RUN = docs/pipeline-run-<run-date>/`
-with its `logs/`, `reports/`, `plans/`, `scratch/`, and `scratch/agents/` subfolders; (2) create
-the working branch
-(see **Git workflow**) and confirm you are on it; and (3) **provision the R environment** — the
+Then, in order:
+
+**(1) Create the isolated run worktree and branch.** One command creates both, from `BASE`:
+
+```
+git worktree add ~/hetid-worktrees/pipeline-run-<run-date> \
+    -b chore/pipeline-validation-<short-date> <BASE>
+```
+
+- **The worktree path must be outside the Dropbox tree.** This repository lives under
+  `~/Library/CloudStorage/Dropbox-Personal/`, and a checkout created inside it mmap-stalls while
+  Dropbox indexes it (it has also stalled `rsync` on `.Rproj.user`). `~/hetid-worktrees/<name>` is
+  outside and is the verified-good location — a full multi-hour bootstrap and the entire test
+  suite have run there without a stall. Only the small `.git/worktrees/` metadata lands in
+  Dropbox, which is fine. Never place the run worktree under the repository root or anywhere
+  inside Dropbox.
+- **Every stage from A onward runs with that worktree as the working directory.** `cd` into it
+  once and stay there, or pass `-C <worktree-path>` on every `git` call. `RUN` is relative to the
+  worktree, so the run folder is `<worktree-path>/docs/pipeline-run-<run-date>/`. Record the
+  absolute worktree path, the branch name, and `BASE` in the log.
+- **The invoking checkout is read-only for the whole run.** Do not edit, stage, commit, run the
+  pipeline, or install the package from it. Its only role after this step is as the donor of
+  ignored pipeline state in step (2).
+
+**(2) Seed the worktree with the invoking checkout's ignored pipeline state. [required — skipping
+this silently costs a multi-hour rerun]** A new worktree checks out tracked files only.
+`scripts-paper/output/` is gitignored, so the fresh worktree has **no** `output/state/`,
+`output/diagnostics/`, or download cache — the bootstrap cache the Stage-C reuse gate reads would
+be absent, the gate would correctly report a miss, and Stage C would execute the full multi-hour
+draw stage. That is exactly the from-scratch rerun the **Preserve pipeline state** constraint
+forbids manufacturing. Before Stage A, copy the ignored state across:
+
+```
+cp -R <invoking-checkout>/scripts-paper/output/. \
+      <worktree-path>/scripts-paper/output/
+```
+
+- **Copy `output/state/` as a complete set, never file-by-file.** The four `.rds` files there
+  (`bootstrap_stage_draws.rds`, `conditional_route_status.rds`, `log_var_eq_dynamics_gate.rds`,
+  `log_var_eq_egarch_status.rds`) are bound to one another and to the committed decision records.
+  Mixing files from two different runs produces a `gate_record_hash_mismatch` in the egarch check
+  that looks like a code defect and is not.
+- **Copy, do not move, symlink, or hard-link.** The invoking checkout keeps its own working state
+  intact; the run must not be able to corrupt it. Verify the copy by comparing
+  `md5 scripts-paper/output/state/*.rds` in both locations and record both digest sets in the log.
+- This is a copy of existing state, not a repair or a reset. Do not run `reset_pipeline_state.R`,
+  delete anything, or "clean up" either tree while doing it. If the invoking checkout has no
+  `scripts-paper/output/` at all, record that fact and proceed — a gate-driven full rerun is then
+  legitimate, and Stage A's inventory will show an empty baseline.
+
+**(3) Create the run folder.** Pick the run date and create
+`RUN = docs/pipeline-run-<run-date>/` **inside the worktree**, with its `logs/`, `reports/`,
+`plans/`, `scratch/`, and `scratch/agents/` subfolders.
+
+**(4) Provision the R environment.** The
 pipeline does not run against an empty library. Confirm the heavy CRAN deps used by
 `scripts-paper/` (`dplyr`, `tidyquant`, `nloptr`, `skedastic`, `ggplot2`, `sandwich`, and — for
 the LAD estimator — the approved `quantreg` version, plus the dev/quality
@@ -469,6 +545,12 @@ itself** (`R CMD INSTALL .`, or `devtools::install()`) so `scripts-paper/` can l
 functions. If a step fails with a missing-package or "there is no package called …" error,
 install the dep and retry — this is expected after a fresh/wiped R library, not a code bug.
 Record what you installed in the log.
+**Install from the worktree, and treat the R library as shared.** Run the install with the
+worktree as the working directory so the installed `hetid` is the worktree's source, not the
+invoking checkout's. The R library is shared between the two checkouts, so this install replaces
+whatever the invoking checkout had installed — expected and acceptable, but note it in the log
+and re-run it after every later `R/` change (per Stage I) so `scripts-paper/` never loads stale
+code from the other tree.
 
 ---
 
@@ -586,7 +668,7 @@ guides). To keep the standard consistent across agents, give every agent the sam
 checklist of guideline rules to apply (derive it once from the two guides up front). Size the
 fan-out to the number of `R/` files. When all finish, the orchestrator reads and verifies every
 response file and **consolidates** them into `RUN/reports/advanced-r-deviations.md`. Retain the
-worker directories until final integration succeeds. This report is consumed in Stage G.
+worker directories until the run completes successfully. This report is consumed in Stage G.
 
 **Stage F — Comment-style and roxygen-doc validation. [parallel with D/E]**
 Enforce two authoritative specs across the package code — `docs/guides/r-comment-style.md` for
@@ -629,8 +711,8 @@ Each finding records `file:line`, the rule violated, the proposed action (**dele
 fix**), and a confidence (**high/med/low**) — so Stage H can defer low-confidence changes (a
 borderline comment deletion, a debatable example removal) instead of auto-applying them. When all
 finish, the orchestrator reads and verifies every response file and **consolidates** them into
-`RUN/reports/comment-style-deviations.md`. Retain the worker directories until final integration
-succeeds. This report is consumed in Stage G.
+`RUN/reports/comment-style-deviations.md`. Retain the worker directories until the run completes
+successfully. This report is consumed in Stage G.
 
 **Stage G — Consolidate D + E + F. [WAIT for D, E, and F]**
 Do not start until all three source reports exist (`RUN/reports/quality-suite.md`,
@@ -743,7 +825,7 @@ the step there instead.
 
 Wait for both to finish or recover their partial checkpoint files. The orchestrator verifies
 and consolidates their findings into `RUN/reports/consolidated-graphify.md`. Retain both worker
-directories and their intermediate artifacts until final integration succeeds.
+directories and their intermediate artifacts until the run completes successfully.
 
 **Stage M — Plan / implement / hooks on the Stage-L report.**
 Apply the Stage-H → Stage-I → Stage-J cycle to `RUN/reports/consolidated-graphify.md` instead
@@ -773,9 +855,10 @@ If a source change becomes necessary, return to the affected earlier stage, repe
 and commit/push gate, then re-enter Stage N with a new recorded snapshot.
 
 **Stage O — Synchronize the two pipeline TeX documents. [final substantive stage]**
-Stage O runs in the **same existing worktree and working branch** used by Stages A–N. Do not create
-a documentation branch or worktree, do not switch to `main`, and do not let either
-sub-orchestrator change Git state. The two canonical and task-related repository targets are:
+Stage O runs in the **same run worktree and working branch** used by Stages A–N. Do not create
+a documentation branch or a second worktree, do not switch branches, do not touch the invoking
+checkout, and do not let either sub-orchestrator change Git state. The two canonical and
+task-related repository targets are:
 
 - `docs/run_pipeline_code.tex`
 - `docs/run_pipeline_math.tex`
@@ -833,7 +916,7 @@ After both finish, the main orchestrator must:
    push that same branch to `origin` under **Git workflow**. Stage the two paths explicitly and no
    others. The optional `commit-push` skill may perform this exact scoped operation if available;
    otherwise use the specified `git add`, `git commit`, and `git push` flow. Fix hook failures at
-   their root cause and retry within the bounded-retry policy. Never commit directly to `main`.
+   their root cause and retry within the bounded-retry policy. Never commit to `BASE`.
 7. Report both sub-orchestrators' completion, the verification evidence, the documentation commit
    SHA/message, the working branch, and the branch push result.
 
@@ -841,29 +924,77 @@ Stage O is complete only after both sub-orchestrators are terminal and verified,
 TeX files are incorporated, and the documentation commit is present on and pushed from the same
 working branch used by the rest of the run.
 
-### Final integration into `main` (after Stage O)
+### Final mergeability assessment (after Stage O) — assess, report, do not merge
 
-Only after every stage is verified complete and all three commit gates landed green, merge
-the completed working branch into `main`:
-1. Ensure the working tree is clean (`git status`) and the branch is fully pushed.
-2. Update `main`: `git switch main` then `git pull --ff-only origin main` (resolve any
-   divergence honestly — do not force).
-3. Merge the working branch (`git merge --no-ff <branch>`), writing a clear human-style merge
-   message. Resolve any conflicts at their root cause; do not discard others' work.
-4. **Run the hooks on the merged tree before pushing** — no merge-time hook checks the merge's
-   content. A direct `git merge --no-ff` fires only the `pre-merge-commit` hook (not installed
-   here); completing the merge with `--no-commit` then `git commit` does fire `pre-commit`, but
-   it narrows to conflicted files, so a clean merge skips every file-based hook while printing
-   a green transcript. The installed backstop is the **pre-push stage**
-   (`default_install_hook_types: [pre-commit, pre-push]` in `.pre-commit-config.yaml`):
-   `git push origin main` re-runs the full hook suite over the pushed range and blocks the
-   push if any hook fails. Don't rely on discovering a bad merge at push time — run
-   `pre-commit run --all-files` on the merge result first; if it fails, fix the root cause,
-   amend the (not-yet-pushed) merge commit, and re-run until green (within the bounded-retry
-   policy).
-5. Push `main` to `origin` (`git push origin main`).
-6. Report the merge commit SHA and confirm `origin/main` is updated.
-7. **Tear down the fleet — last, and only after the final summary is written.** A subagent does
+**Do not merge anything.** The run ends with the working branch committed, pushed, and
+*assessed*. Integration into `BASE` is the human's decision, taken later from your report. Do not
+run `git merge`, `git rebase`, `git cherry-pick`, or `git pull` on either branch, and do not push
+`BASE`. Only after every stage is verified complete and all three commit gates landed green:
+
+1. **Confirm the branch is committed and actually pushed.** The run worktree must be clean
+   (`git status --short`). Prove the push by comparing refs, never by reading command output:
+   `git rev-list --count @{upstream}..HEAD` must be `0`, or `git rev-parse HEAD` must equal
+   `git rev-parse origin/<branch>`. A pre-push hook writes to the same stream as the push, so a
+   trailing hook line can look exactly like success on a push that was aborted — the ref
+   comparison is the only proof.
+2. **Refresh the base tip without changing any branch.** `git fetch origin` only. Resolve the
+   comparison tip in this order and record which you used: `origin/<BASE>` if it exists,
+   otherwise local `<BASE>`. Report how far the branch and the base have diverged
+   (`git rev-list --left-right --count <base-tip>...<branch>`).
+3. **Simulate the merge without performing it.** Use the read-only merge simulator, which writes
+   nothing to any worktree, index, or ref:
+   ```
+   git merge-tree --write-tree --name-only <base-tip> <branch>
+   ```
+   Exit status `0` means the merge is clean and the only output is the merged tree's OID. Exit
+   status `1` means conflicts: the first output line is still the tree OID, the lines after it are
+   the conflicted paths, and an informational block below them names each conflict type
+   (`CONFLICT (content): Merge conflict in <path>`). Read the exit status, not the presence of
+   output — a clean merge also prints. If a detailed inspection is needed, do it in a **throwaway** worktree
+   (`git worktree add --detach <scratch-path> <base-tip>`, merge there, inspect, then
+   `git worktree remove --force <scratch-path>`) — never in the run worktree, never in the
+   invoking checkout, and never leave the trial merge committed or pushed. `<scratch-path>` must
+   also be outside the Dropbox tree.
+4. **Classify the result into exactly one verdict** and justify it per conflicted path:
+   - **CLEAN** — `merge-tree` exits `0`. No conflicts.
+   - **EASY** — conflicts exist, but every one is mechanically resolvable with no judgement call
+     about intent or about which result is correct. Qualifying cases: both sides made byte-identical
+     changes; the conflict is whitespace or line-endings only; the conflicted file is generated and
+     is reproduced deterministically by re-running its generator (`man/`, `NAMESPACE` via
+     `devtools::document()`; `README.md` via `devtools::build_readme()`); or both sides appended
+     disjoint entries to an append-only list (`inst/WORDLIST`, manifest rows) where keeping both
+     sides is unambiguously right. State the resolving action for each path.
+   - **HARD** — anything else. Specifically: both sides edited the same function body or logic;
+     the conflict is in a published numeric artifact under `scripts-paper/output/` (resolving it
+     means deciding which run's numbers are authoritative — a scientific judgement, not a merge
+     mechanic); both sides edited the same prose in `docs/run_pipeline_code.tex` or
+     `docs/run_pipeline_math.tex`; or the correct resolution depends on intent you cannot verify
+     from the diff. When in doubt between EASY and HARD, report **HARD** — over-calling a conflict
+     costs the human a look, under-calling it invites a bad merge.
+5. **Write the assessment to `RUN/reports/mergeability.md`** (timestamped like every other run
+   Markdown file) and reproduce its verdict in the final summary. Record: `BASE`, the branch name,
+   both tip SHAs, the divergence counts, the exact `merge-tree` command and its exit status, the
+   full list of conflicted paths with a per-path classification and proposed resolution, and the
+   overall verdict. Attach the two caveats below so the human's later merge does not trip on them.
+6. **Two known hazards to flag in the report — findings for the human, not work for you.**
+   - *A clean merge runs no file-based hooks.* `git merge --no-ff` fires only `pre-merge-commit`,
+     which is not installed here; routing through `--no-commit` + `git commit` fires `pre-commit`
+     but narrows to conflicted files, so a clean merge skips all 16 file-based hooks while printing
+     a green transcript. The installed backstop is the **pre-push stage**
+     (`default_install_hook_types: [pre-commit, pre-push]`), so the eventual `git push` re-runs the
+     full suite over the pushed range and can fail even though every commit passed. Recommend
+     `pre-commit run --all-files` on the merge result before pushing.
+   - *`scripts-paper/output/` is gitignored, so run state does not travel with the merge.* The
+     merge moves tracked decision records without the `output/state/*.rds` they are bound to, which
+     surfaces later as a `gate_record_hash_mismatch` on the `committed decision validates against
+     the real gate` check — in the merged-into checkout only, on an identical commit. State in the
+     report which checkout holds the authoritative `output/state/` set produced by this run (the
+     run worktree), and that all four `.rds` must be copied as a set, not individually.
+7. **Leave the branch and the run worktree in place.** They are the deliverable. Do not delete the
+   working branch locally or on `origin`, and do not remove the run worktree — it holds the
+   gitignored `RUN/` evidence and the authoritative `output/state/` set, neither of which exists on
+   the branch. Report its absolute path so the human can pick up from it.
+8. **Tear down the fleet — last, and only after the final summary is written.** A subagent does
    not exit when it reports; it goes idle and stays resident, holding its context and any
    worktree it was given. Do this **after** the summary, never before: stopping an agent
    discards its transcript. First confirm that every ordinary worker's `response.md` and each
@@ -884,9 +1015,12 @@ the completed working branch into `main`:
    count of 1 may be the grep itself. `TaskStop` each agent by name or ID. Then reclaim any
    read-only worker worktrees: list them with `git worktree list`, confirm that none contains an
    agent-authored repository change, remove each worker path with `git worktree remove <path>`,
-   and run `git worktree prune`. Stop any background watchers you started, delete scratch
-   branches you made (local and remote), and confirm the roster and `git worktree list` are
-   clean. Only after the run has succeeded and the final summary is durable may you delete
+   and run `git worktree prune`. Stop any background watchers you started and delete any
+   throwaway branches or trial-merge worktrees you created during the assessment.
+   **Do not remove the run worktree and do not delete the working branch, local or remote** —
+   they are this run's deliverable and are explicitly out of scope for teardown. `git worktree
+   list` is clean when it contains the invoking checkout and the run worktree and nothing else.
+   Only after the run has succeeded and the final summary is durable may you delete
    `RUN/scratch/agents/`. If the run halts, leave every worker directory in place for recovery.
 
 ---
@@ -896,16 +1030,20 @@ the completed working branch into `main`:
 You are done only when all of these conditions hold:
 
 - Stages A–O are verified complete in alphabetical order, including the Stage-N source freeze.
-- The working branch was created up front, and every task commit — Stage J, Stage M.3, and the
-  Stage-O documentation commit — landed and was pushed there. No task work or task commit landed
-  directly on `main`.
+- `BASE` was read from `HEAD` at invocation and recorded; no command hard-coded a branch name.
+- A new isolated worktree outside the Dropbox tree and a new working branch were created up front
+  from `BASE`, the worktree was seeded with the invoking checkout's ignored pipeline state, and
+  every stage ran there. The invoking checkout was never written to and is on the same branch and
+  commit it started on.
+- Every task commit — Stage J, Stage M.3, and the Stage-O documentation commit — landed and was
+  pushed on the working branch. No task work or task commit landed on `BASE`.
 - No reset, output cleanup, draft bootstrap, or forced bootstrap rerun prepared any pipeline
   invocation. The Stage-C log records cache reuse or a gate-justified fallback rerun, its outputs
   were reconciled against the Stage-A inventory, and every later pipeline validation preserved
   that contract.
 - Stage G was built from the Stage-D, Stage-E, and Stage-F reports, and Stage L was built from
   its two worker responses. Their source reports were handled as specified, and durable worker
-  checkpoints remained available through successful final integration.
+  checkpoints remained available through successful run completion.
 - Both implementation cycles, Stages I and M, are complete. The Stage-J and Stage-M.3 commit
   gates landed with all hooks green, and all reviewed non-ignored publication artifacts were
   committed.
@@ -917,14 +1055,21 @@ You are done only when all of these conditions hold:
   `docs/run_pipeline_code.tex` and `docs/run_pipeline_math.tex`. Both TeX files
   reflect the frozen Stage-N source snapshot, and the documentation commit was created and
   pushed from the same working branch and worktree used for the rest of the run.
-- After Stage O, final integration merged the fully pushed working branch into `main`, the hooks
-  remained green, and `origin/main` was pushed successfully.
+- **Nothing was merged.** No `git merge`, `git rebase`, `git cherry-pick`, or `git pull` ran on
+  the working branch or on `BASE`, and `BASE` was never pushed. The push proof for the working
+  branch is a ref comparison, not command output.
+- The mergeability assessment ran against the fetched base tip, returned exactly one verdict
+  (CLEAN / EASY / HARD) with a per-path classification, and is recorded in
+  `RUN/reports/mergeability.md`. The working branch and the run worktree are still in place.
 
 Provide a final summary listing, per stage, what was done and the evidence confirming it. Include
-the working branch, commit SHAs/messages, branch-push results, both Stage-O sub-orchestrator
-statuses, the documentation commit, and the final merge commit SHA on `main`. Confirm that every
+`BASE`, the run worktree's absolute path, the working branch, commit SHAs/messages, branch-push
+results (with the ref-comparison proof), both Stage-O sub-orchestrator
+statuses, the documentation commit, and the mergeability verdict with its conflicted paths and
+proposed resolutions. State plainly that no merge was performed. Confirm that every
 ordinary subagent kept the checkout read-only and left a recoverable durable response, and that
 the two narrow Stage-O writer exceptions touched only their assigned TeX targets plus ignored
-prompt-authorized working artifacts. Then, and only then, tear down the fleet under final
-integration step 7: no agent left running, no agent worktree left behind, no scratch branch left
-on `origin`, and no worker scratchpad deleted before its contents were incorporated.
+prompt-authorized working artifacts. Then, and only then, tear down the fleet under the final
+assessment's step 8: no agent left running, no agent worktree left behind, no throwaway branch
+left on `origin`, and no worker scratchpad deleted before its contents were incorporated — while
+the run worktree and the working branch are deliberately left standing.
