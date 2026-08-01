@@ -25,7 +25,7 @@ Run these in order; the run is hands-off only once they're done.
    line to the end of the file.
 6. **Know what you're launching.** Stage C invokes the full pipeline once at the canonical
    10,000-draw configuration. Its validated cache gate reuses an existing current bootstrap and
-   reruns the five-hour draw stage only when the cache is missing or stale. The workflow spawns
+   reruns the multi-hour draw stage only when the cache is missing or stale. The workflow spawns
    subagents and — per the configured choice — **auto-merges to `main` and pushes with no
    PR/review gate**. The two final documentation sub-orchestrators are a narrow exception to the
    usual read-only-worker rule: each may edit only its assigned TeX file in the existing worktree
@@ -262,7 +262,7 @@ message.
   non-throwing API.
 - `nloptr` inequality constraints use the `hin <= 0` convention (inside the set ⇒ negative).
 - Spell-check is `en-US`; add legitimate terms to `inst/WORDLIST`, never reword to dodge it,
-  and never run `spelling::update_wordlist()` (it prunes ~116 words the hook needs).
+  and never run `spelling::update_wordlist()` (it prunes words the hook still needs).
 - **Comment style — apply the comment rules in this prompt whenever the orchestrator writes
   or edits `#` comments** (they summarize `docs/guides/r-comment-style.md`, which
   Stage F audits): no hard-wired numbering in comments or section headers (no "Test 1:",
@@ -280,7 +280,11 @@ message.
   by running `reset_pipeline_state.R`, clearing output, deleting caches, forcing
   `HETID_BOOT_MODE=rerun`, or using a draft bootstrap. This applies to Stage C and to any
   validation rerun required by Stages I or M. Use the canonical 10,000-draw configuration with
-  `HETID_BOOT_MODE=reuse`; let the manifest and freshness gates decide what must run.
+  `HETID_BOOT_MODE=reuse` and let the bootstrap cache gate decide for itself whether the draw
+  callbacks execute. Do not expect a broader freshness system to spare you the rest: the runner
+  sources its modules in fixed order and recomputes them, and the manifest governs artifact
+  paths, status class, and conditional cleanup rather than scheduling. The draw cache is the one
+  place existing state can skip work.
 - **Protected file — never modify, ever:** `docs/heteroskedasticity_tests_general_instruments.tex`.
   Do not edit, rewrite, reformat, recompile-in-place, move, rename, or delete it, and do not
   let any subagent or skill do so — at any stage, for any reason. You may read it for
@@ -292,7 +296,7 @@ These findings surfaced in prior quality/graphify reports and the user has expli
 leaving them AS-IS. Do not action them in this or any future run, and do not re-flag them as
 defects (a re-flag is itself a finding to suppress):
 
-- **`download_term_premia` sub-80 % coverage (77.8 %) — do NOT add an offline-mockable test.**
+- **`download_term_premia` sub-80 % coverage — do NOT add an offline-mockable test.**
   The only uncovered path is the live network download; the coverage gap is accepted as-is.
 - **`R/constants.R` group-label comments are OK and must NOT be changed or deleted** — the
   labels for principal-component defaults, data constraints, news-period geometry, shared guard
@@ -414,9 +418,10 @@ never canonical deliverables or `RUN/scratch/agents/` during the active run.
 
 ### Execution plan
 
-Maintain a TodoWrite list mirroring the stages below and keep it current. Keep a running log
-of decisions made and evidence captured at `RUN/orchestrator-log.md` (see **File output
-locations**).
+Maintain a task list mirroring the stages below and keep it current, using the harness's task
+tools (`TaskCreate` to add a stage, `TaskUpdate` to move it to in-progress and then completed,
+`TaskList` to review). Keep a running log of decisions made and evidence captured at
+`RUN/orchestrator-log.md` (see **File output locations**).
 
 **Stage 0 — Preflight (before Stage A). [WAIT]**
 Verify the run can proceed; if any check fails, fix it or **stop and report** (do not start the
@@ -469,9 +474,10 @@ Record what you installed in the log.
 
 **Stage A — Preserve and inventory pipeline state.**
 Do **not** run `scripts-paper/reset_pipeline_state.R`, delete any manifest-owned artifact, clear
-the output tree, remove caches, or otherwise emulate a from-scratch run. Existing output is
-input to the pipeline's freshness and reuse gates. Inventory `scripts-paper/output` against the
-current `artifact_manifest`, recording each present or absent manifest path, its status class,
+the output tree, remove caches, or otherwise emulate a from-scratch run. The existing bootstrap
+cache is the input its reuse gate reads, and the rest of the existing output is the baseline you
+reconcile Stage C against. Inventory `scripts-paper/output` against the current
+`artifact_manifest`, recording each present or absent manifest path, its status class,
 and the existing bootstrap cache and gate/status records in `RUN/orchestrator-log.md`. Record
 unexpected files separately. This inventory is evidence, not permission to repair, remove, or
 invalidate anything. The reset CLI remains a manual maintenance tool and is never invoked during
@@ -516,17 +522,17 @@ and success — poll/inspect it rather than guessing.
   decision/gate components are not equivalent** — verify each on its own terms from source
   rather than assuming a uniform toggle:
   - `scripts-paper/config/decisions/joint_gmm.R` configures an **always-run diagnostic**, not a
-    run/skip gate: `log_variance/diagnostics/joint_gmm/run.R` is unconditionally sourced every
-    run; the decision record only pins which optional scientific switches are active (the
-    checked-in default is all FALSE) and rejects any nondefault configuration it wasn't
-    ratified for.
+    run/skip gate: `scripts-paper/log_variance/diagnostics/joint_gmm/run.R` is
+    unconditionally sourced every run; the decision record only pins which optional
+    scientific switches are active (the checked-in default is all FALSE) and rejects any
+    nondefault configuration it wasn't ratified for.
   - The residual-dynamics diagnostic in
     `scripts-paper/log_variance/diagnostics/dynamics/run_gate.R` **always runs**. Its base-R
     Ljung-Box screen writes the fresh gate record and status manifest used by the EGARCH route.
   - `scripts-paper/config/decisions/egarch.R` currently gates **routing/status only**: the
-    router (`log_variance/extensions/egarch/run_route.R`) validates the decision against a
-    fresh gate record and rewrites a status manifest, but sources no dynamic estimator either
-    way — there is no wired EGARCH-X estimator yet for it to turn on.
+    router (`scripts-paper/log_variance/extensions/egarch/run_route.R`) validates the decision
+    against a fresh gate record and rewrites a status manifest, but sources no dynamic estimator
+    either way — there is no wired EGARCH-X estimator yet for it to turn on.
   - LAD is the one **actually gated, executable optional estimator**, controlled by the tri-state
     `lad.dcf` gate already verified in **Stage 0** (see its LAD precondition — a stale or missing
     `quantreg` under an `approved` decision hard-fails the run rather than skipping). Do not wait
@@ -679,14 +685,19 @@ for it, but still run `devtools::test()` and let the Stage-J pre-commit hooks (l
 be the gate. If a fix also edits a roxygen `#'` block, run `devtools::document()` and inspect
 the `man/`/`NAMESPACE` diff; if it changes runnable examples, roxygen tags, or exports/imports,
 treat it as a normal package change with the full gates.
-**Reinstall + revalidate after package changes.** The `scripts-paper/` pipeline loads the
-*installed* `hetid`, so any edit under `R/` is invisible until you reinstall. After this stage's package
-changes, run `R CMD INSTALL .` (or `devtools::install()`), then **re-run the validations that
-the change could have invalidated**: the test suite always; and, if the change can affect
-pipeline behavior or numbers, the pipeline. Preserve the existing output and invoke
-`scripts-paper/run_pipeline.R` with the canonical 10,000-draw configuration and
-`HETID_BOOT_MODE=reuse`; never reset or force a rerun. Let the same freshness gates decide
-whether the bootstrap draw callbacks must execute. Stage O performs the documentation
+**Reinstall before any pipeline invocation that follows a package change — the two halves of an
+`R/` edit land at different times.** The `scripts-paper/` pipeline calls the *installed* `hetid`,
+so edited behavior does not take effect until you reinstall. Cache provenance is the opposite:
+`paper_boot_runtime_sha()` in `scripts-paper/support/statistics/boot_freshness.R` hashes the
+**checkout's** `R/*.R` alongside the **installed** namespace, so an `R/` edit invalidates the
+bootstrap cache the moment it is saved. Running the pipeline after editing `R/` but before
+reinstalling therefore gets the worst of both: a stale-cache fallback rerun of the multi-hour draw
+stage executing the old installed code. Always run `R CMD INSTALL .` (or `devtools::install()`)
+first. Then **re-run the validations that the change could have invalidated**: the test suite
+always; and, if the change can affect pipeline behavior or numbers, the pipeline. Preserve the
+existing output and invoke `scripts-paper/run_pipeline.R` with the canonical 10,000-draw
+configuration and `HETID_BOOT_MODE=reuse`; never reset or force a rerun. Let the bootstrap cache
+gate decide for itself whether the draw callbacks must execute. Stage O performs the documentation
 synchronization only after all source work is final, so do not run either synchronization prompt
 here. Be honest in the log about any Stage-C output that remains stale. **Do not start Stage J
 until implementation is complete and verified.**
@@ -701,9 +712,13 @@ re-commit — iterate until the commit lands with **all** hooks green. Then push
 to `origin`. See **Git workflow**.
 
 **Stage K — Graphify graph.**
-Update the graph at `graphify-out/` by invoking the repository's current `graphify` skill and
-following its `update <path>` flow, which re-extracts changed files, prunes deleted sources, merges
-the result without losing edge direction or prior hyperedges, and refreshes the manifest. **Exclude
+Update the graph at `graphify-out/` by invoking the current `graphify` skill and following its
+`--update` flow, which re-extracts changed files, prunes deleted sources, merges the result
+without losing edge direction or prior hyperedges, and refreshes the manifest. Mind the two
+layers: `--update` is the skill's own flag, and it shells out to the CLI's `graphify update
+<path>` subcommand — do not "correct" one into the other. Note also that `.claude/` is
+git-ignored here, so the skill and `graphify-out/` are local-checkout resources that a fresh
+clone will not have; Stage 0's availability check is what catches their absence. **Exclude
 `.claude/` from extraction.** If validation shows that the graph predates the current canonical
 node-ID format and contains ghost duplicates, use the skill's documented forced clean rebuild
 instead of hand-renaming nodes. A cache hit is not evidence that changed files were covered:
@@ -714,7 +729,7 @@ report node, edge, and community counts and confirm that edge endpoints resolve.
 Spawn two agents concurrently, both using graphify, each dispatched per **Delegating to
 subagents** (objective / output / tools / boundaries + a stopping criterion). The two have
 **disjoint objectives** so they don't overlap. Both keep the live `graphify-out/` read-only.
-If the current graphify skill would run `reflect`, `save-result`, `update`, or any other
+If the current graphify skill would run `reflect`, `save-result`, `--update`, or any other
 write-capable step, copy the required graph inputs into that agent's private scratchpad and run
 the step there instead.
 
@@ -855,12 +870,16 @@ the completed working branch into `main`:
    Stage-O sub-orchestrator's prompt-required durable report exist, inspect every final or partial
    status, and record how each result was incorporated. The durable files are authoritative even
    when a worker never returned a final message.
-   **No single command sees every agent, so take the union of two.** `ps -ax | grep --
-   --agent-name` lists in-process teammates but **not** worktree-isolated ones; a worktree agent
-   appears only as a `locked` entry in `git worktree list`, with live shells under its worktree
-   path. Build the roster from both. An agent missing from your roster reads as "already gone",
-   and stopping a working agent can destroy uncheckpointed in-memory work — so confirm liveness per agent
-   (CPU, deliverable mtime, `locked`) before stopping it, and never infer a roster from your log.
+   **No single command sees every agent, so build the roster from the harness first and shell
+   sources second.** `TaskList` is authoritative for anything the harness tracks — start there,
+   never with a `ps` grep. Then cover what it can miss: this session runs `"teammateMode":
+   "tmux"`, so teammates live in tmux panes and are found with `tmux list-sessions` and
+   `tmux list-panes -a`; `ps -ax | grep -- --agent-name` catches in-process teammates but **not**
+   worktree-isolated ones; a worktree agent appears only as a `locked` entry in
+   `git worktree list`, with live shells under its worktree path. An agent missing from your
+   roster reads as "already gone", and stopping a working agent can destroy uncheckpointed
+   in-memory work — so confirm liveness per agent (CPU, deliverable mtime, `locked`) before
+   stopping it, and never infer a roster from your log.
    Note that a `grep` for an agent name contains that name in its own command line, so a match
    count of 1 may be the grep itself. `TaskStop` each agent by name or ID. Then reclaim any
    read-only worker worktrees: list them with `git worktree list`, confirm that none contains an
