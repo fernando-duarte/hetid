@@ -685,7 +685,7 @@ Run a final independent exact-hash fidelity regression after all prose passes. A
 
 ## Stage N: Compile, inspect, and synchronize
 
-Build with `latexmk`. The document is plain `article` with `inputenc`, and the repository ships no `latexmkrc`, so the default pdfLaTeX route applies; confirm that from the current preamble rather than assuming it. Build in a fresh directory under the run’s `docs/RUN/` directory.
+Build with `latexmk -pdf`. The `-pdf` is mandatory, not decorative: this `latexmk` defaults to LaTeX→DVI, and the repository ships no `latexmkrc` to override that, so a bare `latexmk` exits 0 having written only a `.dvi` — the exit-status gate below passes while no PDF exists, and the failure surfaces later as a confusing `qpdf` error on a missing file. The repository’s own helper, `compile_latex_pdf()` in `scripts-paper/support/latex/table_pipeline.R`, passes `-pdf` for this reason. The preamble does not decide this; do not drop the flag on the strength of reading one. Build in a fresh directory under the run’s `docs/RUN/` directory.
 
 Do not invoke R during compilation.
 

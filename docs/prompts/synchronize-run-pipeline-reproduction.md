@@ -649,9 +649,12 @@ condition, missing-value rule, sample transition, return definition, and frequen
 ## Compilation and visual inspection
 
 Compile only the final target TeX in a fresh system temporary directory outside the repository. Build
-with `latexmk`. The document is a plain `article`, and the repository ships no `latexmkrc`, so the
-default pdfLaTeX route applies; confirm that from the current preamble rather than assuming it. Never
-leave sidecar or intermediate build files beside the source document.
+with `latexmk -pdf`. The `-pdf` is mandatory, not decorative: this `latexmk` defaults to LaTeX→DVI,
+and the repository ships no `latexmkrc` to override that, so a bare `latexmk` exits 0 having written
+only a `.dvi`. The exit-status and nonempty-PDF requirements below would then disagree, and the
+copy-back step at the end would have nothing to copy. The repository’s own LaTeX helper passes `-pdf`
+for this reason. The preamble does not decide this; do not drop the flag on the strength of reading
+one. Never leave sidecar or intermediate build files beside the source document.
 
 Require:
 
