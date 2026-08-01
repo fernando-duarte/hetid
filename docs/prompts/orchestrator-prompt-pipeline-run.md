@@ -839,9 +839,7 @@ graph (1461 of 1586 nodes at the last build), so running the CLI path here would
 manifest over a graph left 92 % stale. Note also that `.claude/` is
 git-ignored here, so the skill and `graphify-out/` are local-checkout resources that a fresh
 clone will not have; Stage 0's availability check is what catches their absence. **Exclude
-`.claude/` from extraction.** If validation shows that the graph predates the current canonical
-node-ID format and contains ghost duplicates, use the skill's documented forced clean rebuild
-instead of hand-renaming nodes. A cache hit is not evidence that changed files were covered:
+`.claude/` from extraction.** A cache hit is not evidence that changed files were covered:
 verify the incremental manifest and extraction output. **Read the final counts out of
 `graphify-out/graph.json`, not out of what the rebuild printed — the two disagree.** In a
 controlled test the rebuild printed `Rebuilt: 4 nodes, 5 edges, 1 communities` while the saved
@@ -851,6 +849,24 @@ separately when they differ, and confirm that edge endpoints resolve. Then break
 down by source extension and confirm the `.r` nodes were actually refreshed — R is ~92 % of this
 graph and the only structure the AST-only path cannot produce, so a graph whose `.r` count is
 zero, or unchanged after R edits, is the signature of the wrong update path having run.
+
+**Incremental by default; escalate to a clean rebuild only on evidence — never on churn volume.**
+Do not decide from how many files changed. A changed file's prior nodes and edges are replaced
+wholesale when it is re-extracted (`build_merge` replace-on-re-extract; `prune_sources` is only for
+genuinely deleted files), so a large diff is not itself a corruption risk, and a precautionary full
+rebuild would re-run LLM extraction over the whole corpus for nothing. Decide from the post-merge
+diagnostic instead: run `graphify diagnose multigraph --json` and treat the update as good only if
+`dangling_endpoint_edges`, `missing_endpoint_edges`, `unverified_node_count`, `self_loop_edges`,
+`exact_duplicate_edges`, and `same_endpoint_group_count` are **all `0`**. Every one of them is `0`
+on a healthy graph here, so any non-zero is a real finding rather than background noise. Also
+compare `post_build_node_count`/`post_build_edge_count` against `node_count`/`raw_edge_count` and
+report any drop. Use the skill's documented forced clean rebuild — never hand-rename nodes — when
+that gate trips on node-ID drift (a node split into label-mismatched halves that
+`deduplicate_by_label` cannot merge), when the manifest is missing or out of sync with `graph.json`,
+or when graphify's own version or schema has changed. One trigger the diagnostic cannot see: if
+`detect_incremental` reports a non-empty `excluded_files`, the ignore/exclude rules changed and
+those files' nodes are stranded — the runbook passes only `deleted_files` to `prune_sources` — so
+rebuild clean in that case too. Record the gate's counters and the resulting decision in the log.
 
 **Stage L — Graphify audits (two agents). [WAIT for both]**
 Spawn two agents concurrently, both using graphify, each dispatched per **Delegating to
