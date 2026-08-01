@@ -4,7 +4,7 @@ Run these in order; the run is hands-off only once they're done.
 
 1. **Open a fresh session in this repo.** Start Claude Code from the `hetid` repo root — the
    prompt calls `scripts-paper/...`, reads `docs/...`, and runs `git` here.
-2. **Set the model.** `/model` → **`claude-opus-4-8[1m]` (Opus 4.8, 1M context) at maximum
+2. **Set the model.** `/model` → **`claude-opus-5[1m]` (Opus 5, 1M context) at maximum
    effort**. (Stage 0 re-checks this, but set it yourself so the run doesn't start on the wrong
    model.)
 3. **Make it autonomous at the harness level.** "Never ask the human" governs the *model*;
@@ -36,7 +36,7 @@ Run these in order; the run is hands-off only once they're done.
 ---
 
 > **How to use:** Paste the section below (everything under "ORCHESTRATOR PROMPT") into a
-> fresh **Claude Opus 4.8 (1M context, `claude-opus-4-8[1m]`) session at maximum effort**,
+> fresh **Claude Opus 5 (1M context, `claude-opus-5[1m]`) session at maximum effort**,
 > running in this repository, then leave it to run. Opus acts as
 > the orchestrator: it sequences the work, delegates to subagents, enforces the barriers, and
 > verifies each stage before moving on. The run is **fully autonomous** — start to finish
@@ -54,17 +54,17 @@ helps, enforce ordering barriers, and verify every stage with evidence before ad
 
 ### Model and effort (run configuration — non-negotiable)
 
-Run this entire workflow on **Claude Opus 4.8 with the 1M-token context window, at maximum
+Run this entire workflow on **Claude Opus 5 with the 1M-token context window, at maximum
 effort** — and hold every subagent to the same.
 
-- **Model:** Opus 4.8, 1M context. The exact model ID in this environment is
-  **`claude-opus-4-8[1m]`** (API string `claude-opus-4-8`; the `[1m]` selects the 1M-token
+- **Model:** Opus 5, 1M context. The exact model ID in this environment is
+  **`claude-opus-5[1m]`** (API string `claude-opus-5`; the `[1m]` selects the 1M-token
   context). Confirm the session is on this model before Stage A (e.g. `/model`); if it is not,
   switch to it first. Do not downgrade to Sonnet/Haiku at any point.
 - **Effort:** **maximum.** Run at the highest effort setting available (`xhigh`/`max` — use
   `max`); correctness matters more than token cost here. Do not lower effort to save time or
   tokens.
-- **Subagents inherit this.** Every subagent or team you spawn must also run on Opus 4.8 (1M
+- **Subagents inherit this.** Every subagent or team you spawn must also run on Opus 5 (1M
   context) at maximum effort — when the spawn API exposes a model parameter, set it to the Opus
   tier explicitly; never let a subagent fall back to a smaller/cheaper model or lower effort.
 - **Context budget is not a reason to stop.** With the 1M window you have ample context — do not
@@ -421,10 +421,14 @@ locations**).
 **Stage 0 — Preflight (before Stage A). [WAIT]**
 Verify the run can proceed; if any check fails, fix it or **stop and report** (do not start the
 pipeline on a broken footing):
-- **Model/effort:** session is on `claude-opus-4-8[1m]` at max effort (per **Model and effort**).
+- **Model/effort:** session is on `claude-opus-5[1m]` at max effort (per **Model and effort**).
 - **Skills and final-stage prompts available:** `karpathy-guidelines`, `multistep-do`,
-  `multistep-plan`, `graphify`, `econ-write`, and `writing-clearly-and-concisely` resolve, and
+  `multistep-plan`, `graphify`, and `econ-write` resolve, and
   both synchronization prompt files listed under **Reference paths** exist and are readable.
+  `writing-clearly-and-concisely` is **not** a skill in this harness — it is a pair of guide
+  files at `~/.codex/skills/writing-clearly-and-concisely/SKILL.md` and `elements-of-style.md`
+  that the two synchronization prompts read directly by absolute path. Confirm both files exist
+  and are readable; do not try to invoke it as a skill.
   The optional `commit-push` skill may implement the existing commit/push contract if it is
   available; its absence is not a blocker because the Git commands are specified below.
   **Tools available:** `latexmk`, `pre-commit`, `Rscript`/`R`, `git`, `gh`, `graphify`, and the
@@ -453,8 +457,8 @@ with its `logs/`, `reports/`, `plans/`, `scratch/`, and `scratch/agents/` subfol
 the working branch
 (see **Git workflow**) and confirm you are on it; and (3) **provision the R environment** — the
 pipeline does not run against an empty library. Confirm the heavy CRAN deps used by
-`scripts-paper/` (the tidyverse/time-series packages, `nloptr`, `skedastic`, `ggplot2`, `gt`,
-`sandwich`, and — for the LAD estimator — the approved `quantreg` version, plus the dev/quality
+`scripts-paper/` (`dplyr`, `tidyquant`, `nloptr`, `skedastic`, `ggplot2`, `sandwich`, and — for
+the LAD estimator — the approved `quantreg` version, plus the dev/quality
 tooling in `docs/quality-check.R`'s `required` vector) are installed, and **install the package
 itself** (`R CMD INSTALL .`, or `devtools::install()`) so `scripts-paper/` can load its exported
 functions. If a step fails with a missing-package or "there is no package called …" error,
@@ -698,8 +702,8 @@ to `origin`. See **Git workflow**.
 
 **Stage K — Graphify graph.**
 Update the graph at `graphify-out/` by invoking the repository's current `graphify` skill and
-following its `--update` flow, which re-extracts changed files, prunes deleted sources, merges the
-result without losing edge direction or prior hyperedges, and refreshes the manifest. **Exclude
+following its `update <path>` flow, which re-extracts changed files, prunes deleted sources, merges
+the result without losing edge direction or prior hyperedges, and refreshes the manifest. **Exclude
 `.claude/` from extraction.** If validation shows that the graph predates the current canonical
 node-ID format and contains ghost duplicates, use the skill's documented forced clean rebuild
 instead of hand-renaming nodes. A cache hit is not evidence that changed files were covered:
@@ -710,7 +714,7 @@ report node, edge, and community counts and confirm that edge endpoints resolve.
 Spawn two agents concurrently, both using graphify, each dispatched per **Delegating to
 subagents** (objective / output / tools / boundaries + a stopping criterion). The two have
 **disjoint objectives** so they don't overlap. Both keep the live `graphify-out/` read-only.
-If the current graphify skill would run `reflect`, `save-result`, `--update`, or any other
+If the current graphify skill would run `reflect`, `save-result`, `update`, or any other
 write-capable step, copy the required graph inputs into that agent's private scratchpad and run
 the step there instead.
 
