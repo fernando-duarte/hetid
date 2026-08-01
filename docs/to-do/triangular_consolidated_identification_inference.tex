@@ -1,0 +1,1654 @@
+\documentclass[11pt]{article}
+
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb,amsthm,mathtools}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage{microtype}
+\usepackage{enumitem}
+\usepackage{booktabs,array,longtable}
+\usepackage{verbatim}
+\usepackage[colorlinks=true,linkcolor=blue,citecolor=blue,urlcolor=blue]{hyperref}
+
+\allowdisplaybreaks[2]
+\setlist[itemize]{leftmargin=1.5em,itemsep=0.25em,topsep=0.35em}
+\setlist[enumerate]{leftmargin=1.5em,itemsep=0.25em,topsep=0.35em}
+\emergencystretch=2em
+
+\newcommand{\E}{\mathbb{E}}
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\cF}{\mathcal{F}}
+\newcommand{\cP}{\mathcal{P}}
+\newcommand{\cZ}{\mathcal{Z}}
+\newcommand{\cE}{\mathcal{E}}
+\newcommand{\T}{\top}
+\newcommand{\PC}{\mathrm{PC}}
+\newcommand{\SDF}{\mathrm{SDF}}
+\newcommand{\Cov}{\operatorname{Cov}}
+\newcommand{\Var}{\operatorname{Var}}
+\newcommand{\Corr}{\operatorname{Corr}}
+\newcommand{\rank}{\operatorname{rank}}
+\newcommand{\diag}{\operatorname{diag}}
+\newcommand{\sgn}{\operatorname{sgn}}
+\newcommand{\plim}{\operatorname*{plim}}
+\newcommand{\kurt}{\operatorname{kurt}}
+\newcommand{\se}{\operatorname{se}}
+
+\theoremstyle{plain}
+\newtheorem{proposition}{Proposition}
+\newtheorem{theorem}{Theorem}
+\theoremstyle{definition}
+\newtheorem{assumption}{Assumption}
+\theoremstyle{remark}
+\newtheorem{remark}{Remark}
+
+\newcommand{\heading}[1]{\vspace{0.5em}\noindent\textbf{#1}}
+
+\title{Identification, Inference, and R Bootstrap Options for a Scalar Triangular System\\
+\large A consolidated self-contained guide for point-identified and set-identified cases}
+\author{}
+\date{June 2026}
+
+\begin{document}
+\maketitle
+
+
+\begin{abstract}
+This consolidated report combines the earlier identification guide for a scalar
+triangular system with a practical inference and implementation guide for
+standard errors, confidence intervals, and bootstrap methods in R.  The maintained
+empirical object is a linear triangular model with one outcome, one endogenous
+regressor, one scalar external or constructed instrument when such a variable is
+used, and a common set of controls.  The first part translates the identification
+ideas in Lewbel (2012), Lee--Lewbel--Schennach--Zhang's \texttt{trigmm} paper,
+and Lewis's survey on higher-moment identification into this scalar setting.  The
+second part focuses on the inferential problem: how to bootstrap the
+point-identified generated-instrument estimator, how to bootstrap scalar
+set-identified endpoints, how to reproduce a \texttt{trigmmset}-style second
+moment confidence construction in R, and which R packages provide reusable
+building blocks.  The document is written to be usable without prior familiarity
+with partial identification, while retaining the formulas needed to implement the
+methods directly.
+\end{abstract}
+
+\tableofcontents
+
+\section{Executive summary}
+\label{sec:exec}
+
+The target coefficient is the scalar structural effect of the endogenous
+regressor, denoted by $\theta$. The most useful summary is the following.
+
+\begin{longtable}{>{\raggedright\arraybackslash}p{0.18\textwidth}>
+                  {\raggedright\arraybackslash}p{0.25\textwidth}>
+                  {\raggedright\arraybackslash}p{0.25\textwidth}>
+                  {\raggedright\arraybackslash}p{0.22\textwidth}}
+\toprule
+Option & Main identifying information & What is identified in the scalar triangular model & Main practical cautions \\
+\midrule
+\endfirsthead
+\toprule
+Option & Main identifying information & What is identified in the scalar triangular model & Main practical cautions \\
+\midrule
+\endhead
+Lewbel exact heteroskedasticity & A scalar $Z$ satisfies
+$\Cov(Z,\varepsilon_1\varepsilon_2)=0$ and
+$\Cov(Z,\varepsilon_2^2)\ne0$. & Point identification:
+$\theta=\Cov(Z,W_1W_2)/\Cov(Z,W_2^2)$. & Needs heteroskedastic relevance of the first-stage residual. With one instrument it is just identified, so overidentification tests are unavailable. \\
+\addlinespace
+Lewbel bounded-invalidity set & Same scalar $Z$, but
+$\Corr(Z,\varepsilon_1\varepsilon_2)$ is allowed to be nonzero, bounded relative to $\Corr(Z,\varepsilon_2^2)$. & A finite interval for $\theta$ when the relevance covariance is nonzero and the slack is below one. & The bound depends on a user-chosen slack $\tau$; sampling uncertainty requires an outer confidence construction or bootstrap. \\
+\addlinespace
+Lee--Lewbel--Schennach--Zhang point identification (\texttt{trigmm}) & Common-factor errors
+$W_2=u+v$, $W_1=\alpha u+\theta v+r$ with independent components and enough non-Gaussianity. & Point identification of $(\alpha,\theta)$ from two higher-cumulant equations $M_p(\alpha,\theta)=0$; then all other coefficients follow from the common residualization map. & Requires the sign of the common-factor loading and nondegenerate higher cumulants. Nonlinear GMM can have local minima and weak higher-moment identification. \\
+\addlinespace
+Lee--Lewbel--Schennach--Zhang sharp set & Common-factor structure without the non-Gaussianity point-identifying condition; uses the implied decomposition of observables into Gaussian and non-Gaussian independent parts. & A sharp population joint set for the latent common-factor parameters. & Conceptually important but hard to estimate and interpret; the Stata paper therefore reports a simpler covariance-based outer bound. \\
+\addlinespace
+Lee--Lewbel--Schennach--Zhang set identification (\texttt{trigmmset}) & Same common-factor structure and sign of common-factor loading, but no non-Gaussianity; only second moments. & A joint set in $(\alpha,\theta)$. For positive common-factor loading, $\theta\le B_0\le\alpha$ and $(B_0-\theta)(\alpha-B_0)\le D_0$. The projection onto $\theta$ alone is generally one-sided, not finite. & The reported confidence set is conservative and is a joint region; a finite interval for $\theta$ alone needs an extra magnitude restriction on the common-factor loading. \\
+\addlinespace
+Lee--Lewbel--Schennach--Zhang plus an external instrument & Add a conventional IV moment such as $\E[Z(W_1-\theta W_2)]=0$ to the internal non-Gaussian GMM moments. & Usually point identification, often overidentification, with a direct comparison between the external-IV and internal-moment estimates. & If the two information sources conflict, the overidentifying restrictions can reject but cannot by themselves say which assumption failed. \\
+\addlinespace
+Variance-regime / Rigobon-style identification & A scalar state or instrument $Z$ partitions the sample into variance regimes; the structural impact matrix is fixed while shock variances change nonproportionally. & In a square two-shock representation, the impact ratio for the labeled $W_2$ shock can be identified from regime covariance matrices; in the one-changing-shock case it is a simple covariance-difference ratio. & This is an alternative square-shock model, not the three-shock common-factor model. Needs a credible regime/state and shock labeling. \\
+\addlinespace
+Parametric volatility and unconditional volatility moments & GARCH, Markov-switching, smooth transition, stochastic-volatility, or autocovariances of squared residuals provide additional covariance equations. & Identifies a square impact matrix and hence an impact ratio after normalization and labeling. & Strong functional-form or time-series assumptions; high-moment estimates can be noisy. \\
+\addlinespace
+Non-Gaussian ICA / likelihood / higher-moment GMM & Independent or partly independent non-Gaussian shocks in a square decomposition of $(W_2,W_1)$. & Identifies the square mixing matrix up to sign, scale, and column order; $\theta$ is an impact ratio for the correctly labeled column. & Needs shock labeling, sign normalization, and enough departure from Gaussianity. Standard Wald intervals are unreliable under weak non-Gaussianity. \\
+\bottomrule
+\end{longtable}
+
+The bottom line is that there are two direct methods for the exact Lewbel
+triangular regression problem. Lewbel's method uses the scalar instrument $Z$ to
+construct a heteroskedasticity-based instrument. Lee--Lewbel--Schennach--Zhang
+instead do not need $Z$ for their internal point or set identification; they use a
+common-factor decomposition of the errors. The methods surveyed by Lewis are
+valuable alternatives and diagnostics, but they become direct estimators of
+$\theta$ only after one changes the latent structure to a square two-shock
+representation and labels one shock as the shock whose effect on $W_1$ per unit
+of $W_2$ is the desired coefficient.
+
+\section{Target scalar triangular system and notation}
+\label{sec:model}
+
+The notation follows the supplied TeX note, specialized to one endogenous
+regressor. Let $Y_{1,t+1}$ be the outcome and let $Y_{2,t+1}$ be a scalar
+endogenous regressor. Let $X_t$ be the common vector of controls used in both the
+outcome equation and the reduced form for the endogenous regressor. The
+triangular model is
+\begin{align}
+Y_{1,t+1} &= X_t^\T\beta_1 + \theta Y_{2,t+1}+\varepsilon_{1,t+1},
+\label{eq:structural}\\
+Y_{2,t+1} &= X_t^\T\beta_2^R+\varepsilon_{2,t+1}.
+\label{eq:firststage}
+\end{align}
+The coefficient of interest is the scalar $\theta$. The errors may be correlated,
+so ordinary least squares in \eqref{eq:structural} is not generally causal.
+
+Project both observed variables on the same $X_t$ and define the residuals
+\begin{align}
+W_{1,t+1} &:= Y_{1,t+1}-X_t^\T\beta_1^R,\qquad
+\beta_1^R:=\bigl(\E[X_tX_t^\T]\bigr)^{-1}\E[X_tY_{1,t+1}],\label{eq:W1}\\
+W_{2,t+1} &:= Y_{2,t+1}-X_t^\T\beta_2^R,
+\qquad
+\beta_2^R:=\bigl(\E[X_tX_t^\T]\bigr)^{-1}\E[X_tY_{2,t+1}].\label{eq:W2}
+\end{align}
+Under $\E[X_t\varepsilon_{1,t+1}]=\E[X_t\varepsilon_{2,t+1}]=0$, the residualized
+system is
+\begin{equation}
+W_{1,t+1}=\theta W_{2,t+1}+\varepsilon_{1,t+1},
+\qquad
+W_{2,t+1}=\varepsilon_{2,t+1}.
+\label{eq:resid-system}
+\end{equation}
+For any candidate value $w$ of $\theta$, the implied structural residual is
+\begin{equation}
+\varepsilon_{1,t+1}(w):=W_{1,t+1}-wW_{2,t+1}.
+\label{eq:cand-resid}
+\end{equation}
+Once $\theta$ is known or restricted to a set $\Theta$, the non-endogenous
+coefficients in the outcome equation are recovered by the same linear map used
+in the supplied note:
+\begin{equation}
+\beta_1(w)=\beta_1^R-\beta_2^R w.
+\label{eq:beta-recovery}
+\end{equation}
+Thus each candidate $w$ for $\theta$ implies one and only one candidate
+coefficient vector $\beta_1(w)$. This is why a finite interval for $\theta$ is the
+central object in the scalar problem.
+
+Throughout, $Z_{t+1}$ denotes a single observed scalar that may be used as an
+external instrument, a heteroskedasticity-generating variable, a variance-regime
+indicator, or a shock-labeling variable depending on the identification strategy.
+The role of $Z_{t+1}$ is strategy-specific; it is not automatically a valid
+instrument simply because it is observed.
+
+\section{Baseline: Lewbel's scalar heteroskedasticity method}
+\label{sec:lewbelbaseline}
+
+Although the two new attached papers are the main focus, the Lewbel baseline is
+useful because it fixes the notation and clarifies what it means to have one
+endogenous regressor and one instrument.
+
+\subsection{Exact validity gives a point estimate}
+
+Lewbel's exact triangular condition is
+\begin{equation}
+\Cov(Z_{t+1},\varepsilon_{1,t+1}\varepsilon_{2,t+1})=0,
+\qquad
+\Cov(Z_{t+1},\varepsilon_{2,t+1}^2)\ne0.
+\label{eq:lewbel-exact-assump}
+\end{equation}
+The first condition says that $Z_{t+1}$ is not correlated with the product of
+the two structural errors. The second condition says that $Z_{t+1}$ predicts the
+variance of the first-stage error. Therefore
+\begin{equation}
+H_{t+1}:=(Z_{t+1}-\E Z_{t+1})W_{2,t+1}
+\label{eq:lewbel-instrument}
+\end{equation}
+is a valid constructed instrument for $W_{2,t+1}$ in the residualized equation.
+Indeed,
+\begin{align}
+\E[H_{t+1}\varepsilon_{1,t+1}]&=
+\Cov(Z_{t+1},\varepsilon_{1,t+1}\varepsilon_{2,t+1})=0,\label{eq:lewbel-valid}\\
+\E[H_{t+1}W_{2,t+1}]&=\Cov(Z_{t+1},\varepsilon_{2,t+1}^2)\ne0.\label{eq:lewbel-relevance}
+\end{align}
+In the scalar residualized system this yields the closed-form population
+coefficient
+\begin{equation}
+\theta=
+\frac{\Cov(Z_{t+1},W_{1,t+1}W_{2,t+1})}
+     {\Cov(Z_{t+1},W_{2,t+1}^{2})}.
+\label{eq:lewbel-point}
+\end{equation}
+With controls, the same calculation is applied after residualizing both
+$Y_{1,t+1}$ and $Y_{2,t+1}$ on $X_t$, and the remaining coefficients follow from
+\eqref{eq:beta-recovery}.
+
+\subsection{Bounded invalidity gives a scalar interval}
+
+The supplied TeX note generalizes the exact condition by allowing a bounded
+amount of contamination. In the scalar case, assume that for a known
+$\tau\in[0,1)$,
+\begin{equation}
+\left|\Corr(Z_{t+1},\varepsilon_{1,t+1}\varepsilon_{2,t+1})\right|
+\le
+\tau\left|\Corr(Z_{t+1},\varepsilon_{2,t+1}^2)\right|.
+\label{eq:relative-corr}
+\end{equation}
+Define the observable population quantities
+\begin{align}
+L&:=\Cov(Z_{t+1},W_{1,t+1}W_{2,t+1}),&
+Q&:=\Cov(Z_{t+1},W_{2,t+1}^2),\label{eq:LQ}\\
+S_0&:=\Var(W_{1,t+1}W_{2,t+1}),&
+S_1&:=\Cov(W_{2,t+1}^2,W_{1,t+1}W_{2,t+1}),&
+S_2&:=\Var(W_{2,t+1}^2).
+\label{eq:S012}
+\end{align}
+For a candidate $w$, the relative-correlation bound becomes the quadratic
+inequality
+\begin{equation}
+(L-Qw)^2-d\{S_0-2S_1w+S_2w^2\}\le0,
+\qquad d:=\tau^2\frac{Q^2}{S_2}.
+\label{eq:scalar-lewbel-set}
+\end{equation}
+If $Q\ne0$ and $\tau<1$, the leading coefficient is
+$Q^2-dS_2=Q^2(1-\tau^2)>0$, so the set is a closed finite interval whenever the
+discriminant is nonnegative. Writing
+\begin{equation}
+a:=Q^2-dS_2,\\qquad
+b:=-2LQ+2dS_1,
+\qquad
+c:=L^2-dS_0,
+\label{eq:abc-lewbel}
+\end{equation}
+the interval is
+\begin{equation}
+\Theta_{\text{Lewbel}}(\tau)=
+\left[
+\frac{-b-\sqrt{b^2-4ac}}{2a},\,
+\frac{-b+\sqrt{b^2-4ac}}{2a}
+\right].
+\label{eq:lewbel-interval}
+\end{equation}
+At $\tau=0$, the interval collapses to the point in \eqref{eq:lewbel-point}. As
+$\tau$ grows, the interval widens. The interpretation is simple: the more
+invalidity one is willing to tolerate in the constructed instrument, the less
+precisely $\theta$ is identified.
+
+\subsection{Sampling uncertainty}
+
+The exact Lewbel point estimator can be computed by two-stage least squares using
+$X_t$ and $(Z_{t+1}-\bar Z)\widehat W_{2,t+1}$ as instruments. Heteroskedasticity-
+robust or cluster-robust covariance matrices are standard. For the interval
+\eqref{eq:lewbel-interval}, a conservative confidence set can be obtained by
+replacing the population moments with sample moments and using a bootstrap or a
+moment-inequality outer construction. The attached Lee et al. paper provides a
+more explicit closed-form confidence construction for its own second-moment set,
+which is described in Section~\ref{sec:lsz-set}.
+
+\section{Direct option 1 from Lee--Lewbel--Schennach--Zhang: point identification by non-Gaussianity}
+\label{sec:lsz-point}
+
+The \texttt{trigmm} paper studies the same triangular shape as
+\eqref{eq:structural}--\eqref{eq:firststage}, but it does not use a
+Lewbel-style scalar $Z$ to construct an instrument. Instead, it imposes a latent
+common-factor structure on the residuals. In the notation of this report,
+\begin{equation}
+W_{2,t+1}=u_{t+1}+v_{t+1},
+\qquad
+W_{1,t+1}=\theta W_{2,t+1}+\beta_u u_{t+1}+r_{t+1}.
+\label{eq:lsz-raw}
+\end{equation}
+Equivalently,
+\begin{equation}
+W_{1,t+1}=\alpha u_{t+1}+\theta v_{t+1}+r_{t+1},
+\qquad
+\alpha:=\theta+\beta_u.
+\label{eq:alpha-def}
+\end{equation}
+Here $u$ is the unobserved common cause that creates endogeneity, $v$ is the
+idiosyncratic first-stage shock, and $r$ is the idiosyncratic outcome shock. The
+key assumptions are:
+\begin{itemize}
+\item $u_{t+1}$, $v_{t+1}$, and $r_{t+1}$ are mutually independent, and in the
+implemented command they are also independent of $X_t$;
+\item the sign of $\beta_u=\alpha-\theta$ is specified by the researcher;
+\item sufficiently high moments exist and the relevant higher cumulants are
+nondegenerate.
+\end{itemize}
+The sign condition matters because replacing $u$ by $-u$ changes the sign of the
+common-factor loading without changing the observed distribution. Economic theory
+must therefore decide whether the common factor moves $Y_2$ and $Y_1$ in the
+same direction or in opposite directions.
+
+\subsection{Cumulant notation}
+
+Let $\Phi_{W_2,W_1}$ be the log characteristic function of
+$(W_{2,t+1},W_{1,t+1})$, and let $\Phi_{W_2}$ be the log characteristic function of
+$W_{2,t+1}$. Define joint cumulants by
+\begin{equation}
+\Phi_{W_2,W_1}^{k,l}:=
+\left.
+\frac{\partial^{k+l}\Phi_{W_2,W_1}(\zeta,\xi)}
+     {i^{k+l}\partial\zeta^k\partial\xi^l}
+\right|_{\zeta=0,\xi=0},
+\qquad
+\Phi_{W_2}^{k}:=
+\left.
+\frac{\partial^{k}\Phi_{W_2}(\zeta)}
+     {i^{k}\partial\zeta^k}
+\right|_{\zeta=0}.
+\label{eq:cumulants}
+\end{equation}
+For ordinary intuition, $\Phi_{W_2}^2$ is the variance of $W_2$, $\Phi_{W_2}^3$
+is its third cumulant, and higher orders measure higher-order departures from
+Gaussianity. Gaussian variables have all cumulants above order two equal to zero.
+
+Because cumulants of independent sums add, the latent model implies, for any
+nonnegative integer $p$,
+\begin{align}
+\Phi_{W_2}^{3+p} &= \kappa_u^{3+p}+\kappa_v^{3+p},\label{eq:kappa1}\\
+\Phi_{W_2,W_1}^{2+p,1} &= \alpha\kappa_u^{3+p}+\theta\kappa_v^{3+p},\label{eq:kappa2}\\
+\Phi_{W_2,W_1}^{1+p,2} &= \alpha^2\kappa_u^{3+p}+\theta^2\kappa_v^{3+p},
+\label{eq:kappa3}
+\end{align}
+where $\kappa_u^{m}$ and $\kappa_v^{m}$ are the order-$m$ cumulants of $u$ and
+$v$. Eliminating these nuisance cumulants gives the observable moment equation
+\begin{equation}
+M_p(\alpha,\theta):=
+\Phi_{W_2,W_1}^{1+p,2}-\alpha^2\Phi_{W_2}^{3+p}
+-(\theta+\alpha)\left(\Phi_{W_2,W_1}^{2+p,1}-\alpha\Phi_{W_2}^{3+p}\right)=0.
+\label{eq:Mp}
+\end{equation}
+This is the scalar version of the moment condition implemented by \texttt{trigmm}.
+
+\subsection{Identification from two cumulant equations}
+
+Two different values of $p$ give two equations in the two unknowns $(\alpha,\theta)$.
+For example,
+\begin{equation}
+M_0(\alpha,\theta)=0,
+\qquad
+M_1(\alpha,\theta)=0
+\label{eq:M01}
+\end{equation}
+can point identify $(\alpha,\theta)$. The default \texttt{trigmm} specification
+uses $p=0,1$. The command can also use $p=0,1,2$, which gives three moment
+equations for two parameters and therefore overidentifying restrictions.
+
+For a pair $q<\widetilde q$, the essential nondegeneracy condition is that the
+higher cumulants are not lined up in a way that makes the two equations carry the
+same information. In the notation here, a convenient statement is
+\begin{equation}
+\Phi_{W_2}^{3+\widetilde q}\,\Phi_{W_2,W_1}^{2+q,1}
+\ne
+\Phi_{W_2}^{3+q}\,\Phi_{W_2,W_1}^{2+\widetilde q,1}.
+\label{eq:nondegenerate}
+\end{equation}
+For the default pair $q=0$, $\widetilde q=1$, this condition can fail if either
+$u$ or $v$ is Gaussian, if both are symmetric, or if they have exactly the same
+distribution. This is why the method is described as identification by
+non-Gaussianity: information must be present beyond means and variances.
+
+Once $(\alpha,\theta)$ is identified, the loading of the common factor is
+\begin{equation}
+\beta_u=\alpha-\theta.
+\label{eq:beta-u}
+\end{equation}
+The latent variances can be recovered from second moments. Let
+$\sigma_u^2:=\Var(u)$, $\sigma_v^2:=\Var(v)$, and $\sigma_r^2:=\Var(r)$. Then
+\begin{align}
+\sigma_u^2 &=
+\frac{\Cov(W_1,W_2)-\theta\Var(W_2)}{\alpha-\theta},
+\label{eq:varu}\\
+\sigma_v^2 &= \Var(W_2)-\sigma_u^2,
+\label{eq:varv}\\
+\sigma_r^2 &= \Var(W_1)-\alpha^2\sigma_u^2-\theta^2\sigma_v^2.
+\label{eq:varr}
+\end{align}
+The nonnegativity and plausible sizes of these implied variances are useful
+model diagnostics.
+
+\subsection{How one scalar external instrument can enter}
+
+The internal \texttt{trigmm} moments do not require an external instrument. If a
+scalar external instrument $Z_{t+1}$ is available and satisfies the conventional
+exclusion condition
+\begin{equation}
+\E\left[Z_{t+1}\{W_{1,t+1}-\theta W_{2,t+1}\}\right]=0,
+\label{eq:external-iv}
+\end{equation}
+then it can be added as an additional GMM moment. With one external instrument
+and the internal moment pair $M_0=M_1=0$, the model is overidentified. This is a
+particularly useful implementation because it lets the researcher compare three
+sources of information:
+\begin{enumerate}
+\item the conventional IV estimate from \eqref{eq:external-iv};
+\item the internal higher-cumulant estimate from \eqref{eq:Mp};
+\item the combined GMM estimate using both.
+\end{enumerate}
+Agreement across these estimates is not proof, but it is a strong robustness
+check because the identifying assumptions are very different.
+
+\subsection{Inference and computation}
+
+The point-identified \texttt{trigmm} estimator is a nonlinear GMM estimator. Under
+strong identification and valid moments, standard GMM covariance formulas give
+standard errors for $\theta$, $\alpha$, $\beta_u$, the variance components, and the
+recovered $X_t$ coefficients. The paper emphasizes three practical points.
+\begin{itemize}
+\item The objective function can have multiple local minima. Starting values
+matter, especially with the overidentified $p=0,1,2$ specification.
+\item The overidentified specification allows a Hansen $J$ test. When the extra
+moments come from higher cumulants, a rejection indicates a failure of the
+latent distributional assumptions or the linear model, not merely a bad external
+instrument.
+\item Weak or nearly degenerate higher-moment identification shows up as large
+standard errors and poorly conditioned moment derivatives. The paper suggests
+checking singular values of the GMM derivative matrix as a diagnostic.
+\end{itemize}
+
+\section{Direct option 2 from Lee--Lewbel--Schennach--Zhang: second-moment set identification}
+\label{sec:lsz-set}
+
+The same common-factor model also gives a set-identified result that uses only
+second moments. This option is useful when the non-Gaussianity needed for
+Section~\ref{sec:lsz-point} is not credible or is too weak to estimate precisely.
+
+The underlying Lee--Lewbel--Schennach--Zhang theory contains a sharp identified
+set based on decomposing the observed distribution into independent Gaussian and
+non-Gaussian components. That sharp set is conceptually the most complete
+second-moment object, but it is difficult to estimate and explain in applied
+work. The Stata paper therefore focuses on a coarser but transparent outer bound
+based only on the covariance matrix of $(W_2,W_1)$. The formulas below describe
+that implemented bound.
+
+Assume first that $\beta_u=\alpha-\theta>0$. Define
+\begin{equation}
+B_0:=\frac{\E[W_{1,t+1}W_{2,t+1}]}{\E[W_{2,t+1}^2]},
+\qquad
+D_0:=
+\frac{\E[W_{1,t+1}^2]\E[W_{2,t+1}^2]-\{\E[W_{1,t+1}W_{2,t+1}]\}^2}
+     {\{\E[W_{2,t+1}^2]\}^2}.
+\label{eq:B0D0}
+\end{equation}
+If the residuals are mean zero, $B_0$ is simply the population OLS slope from
+regressing $W_1$ on $W_2$, and $D_0$ is the residual variance from that regression
+scaled by $\Var(W_2)$.
+
+Because
+\begin{equation}
+B_0=
+\frac{\alpha\E[u^2]+\theta\E[v^2]}{\E[u^2]+\E[v^2]}
+=\alpha\lambda+\theta(1-\lambda),
+\qquad
+\lambda:=\frac{\E[u^2]}{\E[u^2]+\E[v^2]}\in[0,1],
+\label{eq:B0-convex}
+\end{equation}
+we obtain the first bound,
+\begin{equation}
+\theta\le B_0\le\alpha.
+\label{eq:lsz-order}
+\end{equation}
+The sharper second-moment bound reported in the paper is
+\begin{equation}
+(B_0-\theta)(\alpha-B_0)\le D_0.
+\label{eq:lsz-hyperbola}
+\end{equation}
+Thus the population identified set is
+\begin{equation}
+\Theta_{\text{LSZ,set}}^+ :=
+\{(\alpha,\theta):\theta\le B_0\le\alpha,
+\ (B_0-\theta)(\alpha-B_0)\le D_0\}.
+\label{eq:lsz-set-positive}
+\end{equation}
+The plus sign indicates $\beta_u>0$.
+
+If instead $\beta_u<0$, apply the positive-loading result to $-W_2$. The order
+reverses and the set becomes
+\begin{equation}
+\Theta_{\text{LSZ,set}}^- :=
+\{(\alpha,\theta):\alpha\le B_0\le\theta,
+\ (\theta-B_0)(B_0-\alpha)\le D_0\}.
+\label{eq:lsz-set-negative}
+\end{equation}
+
+\subsection{Important consequence: the marginal set for $\theta$ is usually not a finite interval}
+
+The joint set \eqref{eq:lsz-set-positive} is informative, but its projection onto
+$\theta$ alone is
+\begin{equation}
+\{\theta:\exists\alpha\text{ such that }(\alpha,\theta)\in
+\Theta_{\text{LSZ,set}}^+\}=(-\infty,B_0]
+\label{eq:theta-halfline-plus}
+\end{equation}
+in population. For $\beta_u<0$, the projection is $[B_0,\infty)$. Therefore the
+second-moment set is a joint bound on the causal effect $\theta$ and the total
+common-factor effect $\alpha$, not a finite scalar interval for $\theta$ by itself.
+A finite interval for $\theta$ requires one more substantive restriction, such as a
+known range for $\beta_u=\alpha-\theta$ or a known range for $\alpha$.
+
+For example, if $\beta_u>0$ and $0\le \beta_u\le\bar\beta$, then
+$\alpha=\theta+\beta_u$ adds
+\begin{equation}
+0\le \alpha-\theta\le\bar\beta.
+\label{eq:beta-bound}
+\end{equation}
+Projecting the intersection of \eqref{eq:lsz-set-positive} and
+\eqref{eq:beta-bound} gives a finite interval whenever $\bar\beta$ is finite.
+This extra magnitude restriction is not part of the base \texttt{trigmmset}
+second-moment result; it must come from outside the paper.
+
+\subsection{Confidence region used by \texttt{trigmmset}}
+
+In sample, estimate $B_0$ and $D_0$ by plug-in estimators $(\widehat B,\widehat D)$
+and estimate their covariance matrix $\widehat V$ by the delta method. For a
+significance level $\delta$, construct the ellipse
+\begin{equation}
+\cE_\delta:=
+\left\{(B,D):
+\begin{bmatrix}B-\widehat B & D-\widehat D\end{bmatrix}
+\widehat V^{-1}
+\begin{bmatrix}B-\widehat B\\ D-\widehat D\end{bmatrix}
+\le \chi^2_{2,1-\delta}
+\right\}.
+\label{eq:ellipse}
+\end{equation}
+Then $\cE_\delta$ contains the true $(B_0,D_0)$ with approximate probability
+$1-\delta$. The command reports a worst-case region that contains the union of
+all identified sets generated by all $(B,D)\in\cE_\delta$. For $\beta_u>0$, define
+\begin{align}
+B^-&:=\min_{(B,D)\in\cE_\delta}B,
+&
+B^+&:=\max_{(B,D)\in\cE_\delta}B,
+\label{eq:Bminusplus}\\
+D^*&:=\max_{(B,D)\in\cE_\delta}
+\{D+(B-B^+)(B^- -B)\}.
+\label{eq:Dstar}
+\end{align}
+The reported confidence set is the union of four simple regions:
+\begin{align}
+&\alpha\ge\theta,\quad B^-\le\alpha\le B^+,
+\quad B^-\le\theta\le B^+,\label{eq:region1}\\
+&B^-\le\alpha\le B^+,
+\quad \theta\le B^-,\label{eq:region2}\\
+&B^-\le\theta\le B^+,
+\quad B^+\le\alpha,\label{eq:region3}\\
+&D^*\ge(\alpha-B^+)(B^- -\theta),
+\quad B^+\le\alpha,
+\quad \theta\le B^-.
+\label{eq:region4}
+\end{align}
+This construction is conservative but easy to draw and easy to report. It gives a
+confidence region for the joint object $(\alpha,\theta)$. The marginal projection
+onto $\theta$ is again generally one-sided: approximately $(-\infty,B^+]$ for
+$\beta_u>0$ and $[B^-,\infty)$ for $\beta_u<0$.
+
+\subsection{Coefficients on controls}
+
+The endogenous-equation slope $\beta_2^R$ is point identified by the projection of
+$Y_2$ on $X_t$. The coefficient vector on $X_t$ in the outcome equation is
+\begin{equation}
+\beta_1(\theta)=\beta_1^R-\beta_2^R\theta.
+\label{eq:lsz-betarecovery}
+\end{equation}
+Because $\theta$ is set identified, $\beta_1$ is also set identified. The
+\texttt{trigmmset} paper describes a conservative element-by-element way to bound
+these coefficients using confidence intervals for the components of $\beta_2^R$,
+$\beta_1^R$, and $B_0$. In the scalar notation here, if the sign of a particular
+component of $\beta_2^R$ is known, the one-sided bound on $\theta$ translates into a
+one-sided bound on that element of $\beta_1$. If the sign of that component is not
+statistically determined, the corresponding coefficient bound may be
+uninformative.
+
+\section{Options from Lewis's review, translated to the scalar triangular setting}
+\label{sec:lewis-options}
+
+Lewis's Annual Review paper is written for structural vector autoregressions and
+simultaneous systems with a square impact matrix. It is therefore not identical
+to the Lewbel triangular model in \eqref{eq:structural}--\eqref{eq:firststage},
+and it is also not identical to the Lee--Lewbel--Schennach--Zhang three-shock
+common-factor model. To use those options in the present scalar problem, impose
+an alternative square decomposition of the two residuals:
+\begin{equation}
+U_{t+1}:=\begin{bmatrix}W_{2,t+1}\\ W_{1,t+1}\end{bmatrix}
+=B\eta_{t+1},
+\qquad
+B=\begin{bmatrix}b_{11}&b_{12}\\ b_{21}&b_{22}\end{bmatrix}.
+\label{eq:square-B}
+\end{equation}
+The shocks $\eta_{t+1}=(\eta_{1,t+1},\eta_{2,t+1})^\T$ are normalized in some
+way, such as unit variances or a unit diagonal. After estimating $B$, the scalar
+coefficient analogous to $\theta$ is an impact ratio for a labeled shock. If
+column $j$ is interpreted as the shock that moves $W_2$, then
+\begin{equation}
+\theta_j:=\frac{b_{2j}}{b_{1j}},
+\qquad b_{1j}\ne0.
+\label{eq:impact-ratio}
+\end{equation}
+This ratio is not automatically the structural $\theta$ in
+\eqref{eq:resid-system}; it becomes the target only if the researcher is willing
+to interpret the selected shock as the exogenous variation in $W_2$ whose causal
+impact on $W_1$ is sought. Shock labeling is therefore central.
+
+\subsection{Heteroskedasticity option A: two variance regimes}
+\label{subsec:regimes}
+
+Let the scalar variable $Z_{t+1}$ partition the data into two regimes, say
+$Z_{t+1}=0$ and $Z_{t+1}=1$. Suppose
+\begin{equation}
+\Sigma_r:=\Var(U_{t+1}\mid Z_{t+1}=r)=B\Lambda_rB^\T,
+\qquad
+\Lambda_r=\diag(\lambda_{r1},\lambda_{r2}),
+\qquad r=0,1.
+\label{eq:regime-covs}
+\end{equation}
+The impact matrix $B$ is constant across regimes, but the shock variances change.
+The two-regime heteroskedasticity condition is
+\begin{equation}
+\frac{\lambda_{11}}{\lambda_{01}}
+\ne
+\frac{\lambda_{12}}{\lambda_{02}}.
+\label{eq:nonprop}
+\end{equation}
+This says that the two shock variances do not change proportionally across the
+two regimes. Then
+\begin{equation}
+\Sigma_1\Sigma_0^{-1}=B\Lambda_1\Lambda_0^{-1}B^{-1},
+\label{eq:eigen}
+\end{equation}
+so the columns of $B$ are eigenvectors of an observable matrix, up to scale and
+order. Once a column is labeled as the $W_2$ shock, $\theta_j=b_{2j}/b_{1j}$ is
+identified.
+
+A particularly transparent special case is that only the variance of the labeled
+shock $j$ changes. Then
+\begin{equation}
+\Sigma_1-\Sigma_0=(\lambda_{1j}-\lambda_{0j})b_jb_j^\T,
+\label{eq:onediff}
+\end{equation}
+where $b_j$ is the $j$-th column of $B$. With
+$U=(W_2,W_1)^\T$, the impact ratio is
+\begin{equation}
+\theta_j=
+\frac{\Cov(W_2,W_1\mid Z=1)-\Cov(W_2,W_1\mid Z=0)}
+     {\Var(W_2\mid Z=1)-\Var(W_2\mid Z=0)}.
+\label{eq:rigobon-ratio}
+\end{equation}
+This is the closest variance-regime analogue of a single-instrument estimator.
+The scalar $Z$ is not an excluded IV; it supplies a high-variance and a low-variance
+state.
+
+\subsection{Heteroskedasticity option B: more regimes, Markov switching, smooth transition, and GARCH}
+
+The same covariance-equation logic extends in several directions.
+\begin{itemize}
+\item \textbf{More than two regimes.} Additional regimes add more covariance
+matrices. If $B$ is constant and the diagonal variance changes are rich enough,
+$B$ is overidentified. Overidentifying restrictions can test whether the fixed
+impact matrix and diagonal shock-variance assumptions are plausible.
+\item \textbf{Markov-switching variances.} The regimes are latent rather than
+observed. Identification still comes from distinct variance matrices satisfying
+a nonproportionality condition, but estimation must also infer the regimes.
+\item \textbf{Smooth transition variances.} The covariance matrix evolves as
+\begin{equation}
+\Omega_t=(1-F(s_t))\Sigma_0+F(s_t)\Sigma_1,
+\label{eq:smooth}
+\end{equation}
+where $s_t$ is a transition variable. Conditional on the transition parameters,
+the endpoints $\Sigma_0$ and $\Sigma_1$ identify $B$ by the same logic as
+Section~\ref{subsec:regimes}. Identification is weak if the transition is nearly
+flat or if $s_t$ does not track actual volatility changes.
+\item \textbf{GARCH or stochastic volatility.} Parametric volatility models use
+the full time path of conditional variances. The maintained idea remains fixed
+$B$ plus diagonal, time-varying structural variances. Parametric assumptions can
+improve efficiency but introduce functional-form risk.
+\end{itemize}
+In all of these variants, one can recover an impact ratio such as
+\eqref{eq:impact-ratio} only after normalizing and labeling the relevant column
+of $B$.
+
+\subsection{Heteroskedasticity option C: unconditional moments of squared residuals}
+
+Lewis also reviews distribution-free identification based on persistence in
+volatility. In the present two-variable notation, the useful objects are
+autocovariances of squared and cross-product residuals, such as
+\begin{equation}
+\Cov\left(\operatorname{vec}(U_{t+1}U_{t+1}^\T),
+\operatorname{vec}(U_{t+1-s}U_{t+1-s}^\T)^\T\right),
+\qquad s>0.
+\label{eq:squared-autocovs}
+\end{equation}
+If structural shocks themselves are serially uncorrelated but their variances are
+persistent, these autocovariances reveal how the structural variances move over
+time. Identification requires the volatility processes of the shocks not to have
+proportional persistence patterns. This option is attractive because it does not
+require choosing exact regimes, but it is demanding in finite samples because it
+uses fourth-order quantities and their autocovariances.
+
+\subsection{Non-Gaussianity option A: independent component analysis}
+
+Instead of changing variances over time, assume that the components of
+$\eta_{t+1}$ in \eqref{eq:square-B} are mutually independent and that at most one
+of them is Gaussian. Then, by the Darmois--Skitovich/Comon logic reviewed by
+Lewis, the decomposition $U=B\eta$ is unique up to scale, sign, and column order.
+In the two-shock case this means that at least one shock must be non-Gaussian.
+
+Independent component analysis (ICA) estimates the rotation of the whitened
+residual vector that makes the candidate shocks as independent or as
+non-Gaussian as possible. After estimating $B$, the scalar causal parameter is
+again an impact ratio $b_{2j}/b_{1j}$ for the economically labeled column. The
+single scalar $Z$ can help label the column, for example by choosing the shock
+most correlated with $Z$ or the shock whose response signs match prior theory,
+but the statistical identification itself comes from independence and
+non-Gaussianity, not from the exclusion restriction $\E[Z\varepsilon_1]=0$.
+
+\subsection{Non-Gaussianity option B: likelihood and pseudo-likelihood}
+
+A parametric likelihood version specifies densities for the independent shocks,
+for example Student-$t$ densities. If the density is correctly specified,
+maximum likelihood can be efficient. Pseudo-maximum likelihood can remain
+consistent under certain misspecifications, provided the pseudo-model is itself
+identified. The cost is that there are many possible ways to be non-Gaussian, so
+a particular density choice is an additional modeling decision.
+
+In the scalar triangular report, this option again delivers $\theta$ only through
+an estimated square mixing matrix and a labeled impact ratio. It is not the same
+as the Lee--Lewbel--Schennach--Zhang cumulant equations, which are tailored to
+the three-component common-factor model.
+
+\subsection{Non-Gaussianity option C: moment-based GMM with coskewness or cokurtosis}
+
+Moment-based non-Gaussian identification selects particular independence-implied
+moments. Let $\eta=C U$ denote candidate shocks after applying an unmixing matrix
+$C=B^{-1}$ and normalizing variances to one. Typical restrictions include
+\begin{align}
+\E[\eta_1\eta_2]&=0,
+\label{eq:orthog}\\
+\E[\eta_1^2\eta_2]&=0,
+\qquad
+\E[\eta_1\eta_2^2]=0,
+\label{eq:coskew}\\
+\E[\eta_1^2\eta_2^2]-1&=0,
+\qquad
+\E[\eta_1^3\eta_2]=0,
+\qquad
+\E[\eta_1\eta_2^3]=0.
+\label{eq:cokurt}
+\end{align}
+The restrictions in \eqref{eq:coskew} use skewness-type information; those in
+\eqref{eq:cokurt} use kurtosis-type information. Identification requires at
+least one shock to have relevant nonzero skewness or nonzero excess kurtosis. A
+GMM estimator chooses $C$ so these cross-moments are close to zero, then obtains
+$B=C^{-1}$ and the impact ratio \eqref{eq:impact-ratio}.
+
+This option is transparent because the identifying moments are explicit, but it
+can be noisy: estimating fourth moments and the covariance matrix of moment
+conditions may require moments up to order eight.
+
+\subsection{Non-independent components and coheteroskedasticity}
+
+The Annual Review also discusses newer work relaxing full independence. The core
+idea is to replace full independence by restrictions on higher-order cumulant
+tensors, such as diagonal cumulant tensors or reflectional-invariance patterns.
+These methods are promising because they can allow some forms of dependence,
+including coheteroskedasticity. In the scalar triangular problem they are best
+viewed as advanced alternatives to the simple square ICA model, not as direct
+Lewbel or \texttt{trigmm} estimators.
+
+\section{Using one scalar instrument with each option}
+\label{sec:singleZ}
+
+The same observed scalar $Z$ can play different roles. Confusing these roles is
+the easiest way to misuse these methods.
+
+\begin{enumerate}[label=\textbf{Role \arabic*.}]
+\item \textbf{External IV.} If $\E[Z\varepsilon_1]=0$ and $\E[ZW_2]\ne0$, then
+$Z$ directly identifies $\theta$ by conventional IV:
+\begin{equation}
+\theta_{\text{IV}}=\frac{\E[ZW_1]}{\E[ZW_2]}.
+\label{eq:directiv}
+\end{equation}
+This moment can be combined with \texttt{trigmm}'s internal moments.
+
+\item \textbf{Lewbel heteroskedasticity shifter.} If $Z$ satisfies
+\eqref{eq:lewbel-exact-assump}, then $(Z-\E Z)W_2$ is the constructed
+instrument. Here the relevant covariance is $\Cov(Z,W_2^2)$, not $\E[ZW_2]$.
+
+\item \textbf{Variance-regime indicator or volatility state.} If $Z$ defines
+high- and low-volatility regimes, then it supplies two covariance matrices. The
+assumption is not exclusion but fixed $B$ and nonproportional changes in shock
+variances.
+
+\item \textbf{Shock-labeling variable.} In ICA or non-Gaussian square models, $Z$
+may help decide which column of $B$ is economically meaningful. It does not by
+itself identify the rotation unless an additional IV or moment condition is
+imposed.
+
+\item \textbf{No role in internal LSZ identification.} The Lee--Lewbel--Schennach--Zhang
+point and set identification results do not require $Z$. They can be used when no
+external instrument exists. A valid $Z$ can be added, but it is optional.
+\end{enumerate}
+
+\section{Inference and weak-identification issues}
+\label{sec:inference}
+
+All the methods in this report use information beyond the first two unconditional
+moments of a homoskedastic linear regression. That information can be weak.
+
+\heading{Lewbel exact and bounded-invalidity inference.}
+If $\Cov(Z,W_2^2)$ is near zero, the constructed instrument is weak. Standard IV
+weak-instrument diagnostics are informative because the estimator is implemented
+as two-stage least squares with the constructed instrument. In the bounded
+invalidity interval, the same weak relevance makes the interval wide and can make
+sample roots unstable.
+
+\heading{Lee--Lewbel--Schennach--Zhang point inference.}
+If the relevant higher cumulants of $u$ and $v$ are small or nearly degenerate,
+the GMM objective is flat in some direction. Then standard errors can be large,
+local minima become a practical problem, and Wald intervals can be misleading.
+The overidentified $p=0,1,2$ specification, the Hansen $J$ test, and singular
+values of the moment derivative matrix are useful diagnostics, but none proves
+identification strength in finite samples.
+
+\heading{Lee--Lewbel--Schennach--Zhang set inference.}
+The \texttt{trigmmset} confidence region is explicitly set-valued. It first builds
+an ellipse for $(B_0,D_0)$ and then reports a conservative worst-case joint
+region for $(\alpha,\theta)$. This is more honest than reporting a spurious
+finite scalar confidence interval for $\theta$ when the population identified set
+itself projects to a half-line.
+
+\heading{Variance-regime inference.}
+If variances change little, or if both shock variances change almost
+proportionally, the eigenvectors in \eqref{eq:eigen} are weakly identified. Robust
+GMM confidence sets or weak-identification-robust procedures are preferable to
+simple Wald intervals.
+
+\heading{Non-Gaussian inference.}
+If the shocks are close to Gaussian, independence-based rotations are weakly
+identified. Testing for non-Gaussianity and independence is useful but difficult
+because the shocks are estimated objects. Robust score/projection methods have
+been developed in the literature, but they are more complex than ordinary
+standard errors.
+
+\section{Software and implementation notes}
+\label{sec:software}
+
+\begin{itemize}
+\item \textbf{Stata.} Lee et al. provide \texttt{trigmm} for the point-identified
+non-Gaussian common-factor method and \texttt{trigmmset} for the second-moment
+set. The commands are wrappers around Stata's \texttt{gmm} infrastructure and use
+Stata post-estimation tools. Lewbel's heteroskedasticity-generated instruments
+are implemented in \texttt{ivreg2h}.
+
+\item \textbf{R or Python.} The scalar formulas in Sections~\ref{sec:lewbelbaseline}
+through \ref{sec:lsz-set} are simple enough to implement directly. For the LSZ
+point estimator, one needs routines for sample cumulants and nonlinear GMM. For
+set estimation, one needs only plug-in estimates of $B_0$ and $D_0$, their
+delta-method covariance matrix, and a routine to draw or optimize over the
+reported joint region. Generic GMM, nonlinear optimization, and bootstrap tools
+are sufficient, but a direct off-the-shelf implementation of \texttt{trigmm} for R
+is not part of the attached papers.
+
+\item \textbf{ICA and SVAR methods.} Generic ICA, VAR, GARCH, and structural-VAR
+software can estimate some of the broader Lewis-type models. The researcher must
+still map the estimated impact matrix into the scalar ratio \eqref{eq:impact-ratio}
+and justify the shock label. These packages do not automatically estimate the
+Lewbel triangular coefficient $\theta$.
+\end{itemize}
+
+\section{A practical decision tree}
+\label{sec:decision}
+
+\begin{enumerate}
+\item \textbf{Start with the maintained triangular model.} Residualize both
+$Y_{1,t+1}$ and $Y_{2,t+1}$ on the same $X_t$ and work with
+$W_{1,t+1},W_{2,t+1}$.
+
+\item \textbf{If a conventional scalar IV is credible, use it and report it.}
+Estimate \eqref{eq:directiv} or its controlled version. Then consider adding
+Lewbel or \texttt{trigmm} moments as robustness checks or efficiency-improving
+overidentifying restrictions.
+
+\item \textbf{If no conventional IV is credible but a heteroskedasticity shifter is
+credible, use Lewbel.} Check whether $\Cov(Z,W_2^2)$ is meaningfully nonzero. If
+exact validity is doubtful, report the bounded-invalidity interval over a grid of
+$\tau$ values.
+
+\item \textbf{If the common-factor story is credible and the errors are plausibly
+non-Gaussian, use \texttt{trigmm}.} Specify the sign of $\beta_u$, estimate with
+$p=0,1$ and with $p=0,1,2$, vary starting values, and report diagnostics.
+
+\item \textbf{If the common-factor story is credible but non-Gaussianity is not,
+use \texttt{trigmmset}.} Report the joint region for $(\alpha,\theta)$ and state
+clearly whether the implied marginal set for $\theta$ is one-sided. Do not report
+a finite interval for $\theta$ unless an additional magnitude restriction is
+imposed.
+
+\item \textbf{If the data are time series with credible volatility regimes or
+persistent volatility, consider the Lewis heteroskedasticity options.} Make clear
+that this replaces the common-factor model by a square impact-matrix model and
+that $\theta$ is an impact ratio for a labeled shock.
+
+\item \textbf{If non-Gaussian independent shocks are credible, consider ICA,
+likelihood, or higher-moment GMM.} Again, report how the shock was labeled and
+how the impact ratio was normalized.
+\end{enumerate}
+
+\section{Conclusion}
+\label{sec:conclusion}
+
+In the scalar triangular setting, the methods differ mainly in what replaces the
+missing excluded instrument. Lewbel uses a scalar heteroskedasticity shifter to
+construct an instrument. Lee--Lewbel--Schennach--Zhang use a common-factor error
+structure: higher cumulants yield point identification, while second moments
+yield a conservative joint set. Lewis's review offers a menu of broader
+higher-moment strategies--variance regimes, volatility processes, ICA,
+likelihood, and moment-based non-Gaussian GMM--but those strategies require a
+square shock decomposition and a shock-labeling step before they deliver a
+scalar effect comparable to $\theta$.
+
+The most transparent reporting strategy is to state, for each estimate or set,
+which object identifies $\theta$: an exclusion moment, a heteroskedasticity
+covariance, a non-Gaussian cumulant system, a second-moment common-factor
+inequality, a variance-regime covariance change, or an independent-component
+rotation. Once that distinction is clear, all other coefficients follow from the
+simple recovery formula $\beta_1(w)=\beta_1^R-\beta_2^Rw$.
+
+
+
+\clearpage
+\section{Inference and R bootstrap implementation guide}
+\label{sec:r-bootstrap-guide}
+
+The preceding sections describe what identifies the coefficient of the scalar
+endogenous regressor.  This section describes how to attach standard errors,
+confidence intervals, or confidence sets to the resulting estimate or identified
+set.  The emphasis is deliberately practical: what can be done directly in R,
+what requires a short custom wrapper, and what is currently easier to do in Stata
+or by translating published Stata/MATLAB code.
+
+There are three distinct inferential targets.  They should not be mixed.
+\begin{enumerate}
+    \item \emph{Point-identified inference}: report a standard error or
+    confidence interval for a singleton estimate $\hat\theta$.
+    \item \emph{Endpoint inference}: report uncertainty about the lower and
+    upper endpoints $(L_0,U_0)$ of a scalar identified interval
+    $\Theta_0=[L_0,U_0]$.
+    \item \emph{Partial-identification confidence sets}: report a set that
+    covers either the entire identified set $\Theta_0$ or the true unknown
+    scalar value $\theta_0\in\Theta_0$.  These are different coverage goals.
+\end{enumerate}
+
+In the scalar triangular setting, the full model often reduces to a one-dimensional
+coefficient set for $\theta$.  Once a candidate $w$ is retained, the other
+coefficients are recovered from
+\begin{equation}
+\beta_1(w)=\beta_1^R-\beta_2^R w.
+\end{equation}
+Thus the most transparent workflow is: first form an estimate or confidence set
+for $\theta$, and then map each endpoint or retained grid value through the
+coefficient recovery formula.
+
+\subsection{What was found in R}
+\label{subsec:r-packages-found}
+
+Table \ref{tab:r-packages} summarizes the R packages and code bases that are
+most relevant to the current problem.  The important conclusion is that R has
+usable point-estimation and bootstrap building blocks, but I did not find a
+standard R package that directly implements the Lewbel (2012) Theorem 3
+set-identified interval or the Lee--Lewbel--Schennach--Zhang \texttt{trigmmset}
+confidence region.
+
+\begin{longtable}{>{\raggedright\arraybackslash}p{0.20\textwidth}>
+                  {\raggedright\arraybackslash}p{0.23\textwidth}>
+                  {\raggedright\arraybackslash}p{0.29\textwidth}>
+                  {\raggedright\arraybackslash}p{0.18\textwidth}}
+\caption{R packages and code bases relevant to bootstrap inference in the scalar triangular model.}\label{tab:r-packages}\\
+\toprule
+Package or code base & Role in this problem & What it provides & Limitation \\
+\midrule
+\endfirsthead
+\toprule
+Package or code base & Role in this problem & What it provides & Limitation \\
+\midrule
+\endhead
+\texttt{REndo::}\newline\texttt{hetErrorsIV()} & Closest direct R implementation of the Lewbel heteroskedastic-error triangular estimator. & Estimates linear models with endogenous regressors using heteroskedastic covariance restrictions; reports robust and cluster-adjusted standard errors. & Point-identified estimator only; no direct bootstrap argument for the set-identified bounds. \\
+\addlinespace
+\texttt{ivlewbel::}\newline\texttt{lewbel()} & Older direct Lewbel-style R implementation. & Implements heteroskedasticity-based GMM/IV estimation for triangular models. & Older and less maintained; point-estimation focus. \\
+\addlinespace
+\texttt{ivreg} & General IV/2SLS infrastructure. & After manually constructing Lewbel instruments, runs 2SLS and exposes an object compatible with many covariance and bootstrap tools. & Does not construct Lewbel instruments or set bounds automatically. \\
+\addlinespace
+\texttt{gmm} & User-supplied moment conditions. & Natural framework for hand-coded nonlinear \texttt{trigmm}-style moments, Lewbel moments, and custom GMM covariance estimation. & Bootstrap and set-inversion must be wrapped by the user. \\
+\addlinespace
+\texttt{boot} & General full-procedure bootstrap. & Resample rows, clusters, or blocks; return any statistic, including a point estimate, a lower endpoint, an upper endpoint, or a whole vector of moments. & Validity depends on the statistic; ordinary $n$-out-of-$n$ bootstrap can fail near nonsmooth set boundaries. \\
+\addlinespace
+\texttt{sandwich::}\newline\texttt{vcovBS()} & Generic bootstrap covariance for model objects. & Case or cluster bootstrap covariance matrices for supported objects through \texttt{update()} and \texttt{coef()}. & Less convenient for custom endpoint sets that are not model objects. \\
+\addlinespace
+\texttt{fwild}\newline\texttt{clusterboot} & Wild cluster bootstrap for linear and IV models. & Supports \texttt{ivreg} objects, so it can be used after manual construction of Lewbel instruments. & Point-identified IV inference; not a partial-identification set package. \\
+\addlinespace
+\texttt{clusterSEs::}\newline\texttt{cluster.wild}\newline\texttt{.ivreg()} & Alternative wild cluster bootstrap for IV. & Wild-cluster-bootstrap $p$-values and intervals for \texttt{ivreg} models. & Point-identified IV inference only. \\
+\addlinespace
+\texttt{ivmodel} & Weak-IV robust inference with one endogenous regressor. & Anderson--Rubin, conditional likelihood ratio, and related intervals for linear IV. & Designed for conventional linear IV, not for \texttt{trigmmset} or Lewbel Theorem 3 set endpoints. \\
+\addlinespace
+\texttt{moonboot} & $m$-out-of-$n$ bootstrap building block. & Useful when ordinary bootstrap is suspect for nonsmooth or irregular statistics. & General method; no triangular-system estimator. \\
+\addlinespace
+\texttt{ivmte::}\newline\texttt{boundCI()} & Useful R example of bootstrap inference for partial-identification bounds. & Takes original bounds and bootstrapped bounds and constructs confidence intervals for bounds. & For marginal treatment effect bounds, not for the scalar triangular model; useful mainly as a template. \\
+\bottomrule
+\end{longtable}
+
+The practical R stack is therefore:
+\begin{equation*}
+\texttt{REndo}\text{ or }\texttt{ivreg}\text{ for point estimation},\qquad
+\texttt{boot}\text{ for full-procedure resampling},\qquad
+\texttt{gmm}\text{ for custom moments}.
+\end{equation*}
+For clustered data, replace row resampling by cluster resampling or use a wild
+cluster bootstrap after the generated instrument has been constructed.
+
+\subsection{Point-identified Lewbel estimator: full-procedure bootstrap}
+\label{subsec:point-lewbel-bootstrap}
+
+For Lewbel's exact point-identified triangular estimator, the bootstrap must
+repeat the entire generated-instrument construction.  It is not enough to hold
+$\hat\varepsilon_2$ fixed across bootstrap draws.
+
+For each bootstrap draw $b=1,\dots,B$:
+\begin{enumerate}
+    \item resample observations, clusters, or time blocks according to the
+    sampling design;
+    \item regress $Y_2$ on $X$ in the bootstrap sample and compute
+    $\hat\varepsilon_{2,i}^{*(b)}$;
+    \item construct $H_i^{*(b)}=(Z_i^{*(b)}-\bar Z^{*(b)})
+    \hat\varepsilon_{2,i}^{*(b)}$;
+    \item estimate the structural equation by IV using $X^{*(b)}$ and
+    $H^{*(b)}$ as instruments;
+    \item store $\hat\theta^{*(b)}$ and any recovered coefficient
+    $\hat\beta_1^{*(b)}=\hat\beta_1^{R,*(b)}-
+    \hat\beta_2^{R,*(b)}\hat\theta^{*(b)}$.
+\end{enumerate}
+A percentile interval is the interval between the empirical $\alpha/2$ and
+$1-\alpha/2$ quantiles of the bootstrap draws.  A studentized interval stores
+$(\hat\theta^{*(b)}-\hat\theta)/\widehat{\se}^{*(b)}$ and inverts the resulting
+quantiles.  A basic interval reflects bootstrap endpoint deviations around the
+original estimate.
+
+A minimal R skeleton is:
+
+\begin{verbatim}
+# install.packages(c("ivreg", "boot"))
+library(ivreg)
+library(boot)
+
+lewbel_point <- function(dat, y1, y2, X, Z) {
+  f2 <- reformulate(X, response = y2)
+  rf <- lm(f2, data = dat)
+  dat$eps2_hat <- resid(rf)
+  dat$H_lewbel <- (dat[[Z]] - mean(dat[[Z]], na.rm = TRUE)) * dat$eps2_hat
+
+  rhs <- paste(c(X, y2), collapse = " + ")
+  inst <- paste(c(X, "H_lewbel"), collapse = " + ")
+  fiv <- as.formula(paste(y1, "~", rhs, "|", inst))
+  fit <- ivreg(fiv, data = dat)
+  unname(coef(fit)[y2])
+}
+
+boot_lewbel_point <- function(dat, y1, y2, X, Z, R = 1999, seed = 123) {
+  set.seed(seed)
+  stat <- function(d, idx) lewbel_point(d[idx, , drop = FALSE], y1, y2, X, Z)
+  out <- boot(dat, statistic = stat, R = R)
+  list(theta_hat = out$t0,
+       percentile = boot.ci(out, type = "perc"),
+       basic      = boot.ci(out, type = "basic"),
+       boot_obj   = out)
+}
+\end{verbatim}
+
+For clustered data, replace the observation index by a cluster index.  For a
+wild cluster bootstrap, a convenient workflow is to construct the Lewbel
+instrument in the original data, estimate the IV model with \texttt{ivreg}, and
+then apply \texttt{fwildclusterboot::boottest()} to the coefficient of $Y_2$.
+This is a point-identified IV bootstrap; it does not bootstrap the Lewbel
+set-identified interval.
+
+\subsection{Lewbel Theorem 3: bootstrapping a scalar set-identified interval}
+\label{subsec:lewbel-theorem3-bootstrap}
+
+Lewbel's Theorem 3 relaxes exact validity by allowing
+$\Cov(Z,\varepsilon_1\varepsilon_2)$ to be nonzero but bounded.  In the scalar
+case, suppose that for a user-chosen $\tau\in[0,1)$,
+\begin{equation}
+|\Corr(Z,\varepsilon_1\varepsilon_2)|
+\le
+\tau |\Corr(Z,
+\varepsilon_2^2)|.
+\label{eq:tau-assump-consolidated}
+\end{equation}
+Let $W_1$ and $W_2$ be the residuals from regressions of $Y_1$ and $Y_2$ on
+$X$.  Define the sample analogues of
+\begin{align*}
+C_{12,Z}&=\Cov(W_1W_2,Z), & C_{22,Z}&=\Cov(W_2^2,Z),\\
+V_{12}&=\Var(W_1W_2), & V_{22}&=\Var(W_2^2),\\
+C_{12,22}&=\Cov(W_1W_2,W_2^2).
+\end{align*}
+The estimated endpoints of the Lewbel interval are the two real roots of
+\begin{equation}
+A\theta^2+B\theta+C=0,
+\label{eq:lewbel-bound-quadratic-consolidated}
+\end{equation}
+where
+\begin{align}
+A &= 1-\tau^2,\label{eq:quadA}\\
+B &= 2\left(\frac{C_{12,22}}{V_{22}}\tau^2
+       -\frac{C_{12,Z}}{C_{22,Z}}\right),\label{eq:quadB}\\
+C &= \left(\frac{C_{12,Z}}{C_{22,Z}}\right)^2
+       -\frac{V_{12}}{V_{22}}\tau^2.\label{eq:quadC}
+\end{align}
+When $\tau=0$, the two roots collapse to the exact Lewbel point estimate
+$C_{12,Z}/C_{22,Z}$.
+
+The full-procedure bootstrap for this set is:
+\begin{enumerate}
+    \item compute the original interval $[\hat L,\hat U]$ from the original data;
+    \item resample observations, clusters, or blocks;
+    \item in each draw, recompute $W_1^*,W_2^*$, all covariance terms, and the
+    two roots $[\hat L^*,\hat U^*]$;
+    \item build endpoint intervals or a partial-identification confidence set
+    from the empirical distribution of $(\hat L^*,\hat U^*)$.
+\end{enumerate}
+
+A minimal R implementation is:
+
+\begin{verbatim}
+pop_cov <- function(a, b) {
+  mean((a - mean(a, na.rm = TRUE)) *
+       (b - mean(b, na.rm = TRUE)), na.rm = TRUE)
+}
+
+rhs_formula <- function(y, X) {
+  if (length(X) == 0) as.formula(paste(y, "~ 1")) else reformulate(X, response = y)
+}
+
+lewbel_set_bounds <- function(dat, y1, y2, X, Z, tau, eps = 1e-10) {
+  stopifnot(tau >= 0, tau < 1)
+
+  W1 <- resid(lm(rhs_formula(y1, X), data = dat))
+  W2 <- resid(lm(rhs_formula(y2, X), data = dat))
+  z  <- dat[[Z]]
+
+  A12 <- W1 * W2
+  A22 <- W2^2
+
+  c12z  <- pop_cov(A12, z)
+  c22z  <- pop_cov(A22, z)
+  v12   <- pop_cov(A12, A12)
+  v22   <- pop_cov(A22, A22)
+  c1222 <- pop_cov(A12, A22)
+
+  if (!is.finite(c22z) || abs(c22z) < eps ||
+      !is.finite(v22) || v22 < eps) {
+    return(c(L = NA_real_, U = NA_real_))
+  }
+
+  A <- 1 - tau^2
+  B <- 2 * ((c1222 / v22) * tau^2 - (c12z / c22z))
+  C <- (c12z / c22z)^2 - (v12 / v22) * tau^2
+
+  disc <- B^2 - 4 * A * C
+  if (!is.finite(disc) || disc < 0) return(c(L = NA_real_, U = NA_real_))
+
+  roots <- sort((-B + c(-1, 1) * sqrt(disc)) / (2 * A))
+  c(L = roots[1], U = roots[2])
+}
+
+bootstrap_lewbel_set <- function(dat, y1, y2, X, Z, tau,
+                                 R = 1999, alpha = 0.05,
+                                 m = nrow(dat), replace = TRUE,
+                                 seed = 123) {
+  set.seed(seed)
+  n <- nrow(dat)
+
+  theta_hat <- lewbel_set_bounds(dat, y1, y2, X, Z, tau)
+
+  reps <- replicate(R, {
+    ii <- sample.int(n, size = m, replace = replace)
+    lewbel_set_bounds(dat[ii, , drop = FALSE], y1, y2, X, Z, tau)
+  })
+
+  reps <- t(reps)
+  reps <- reps[complete.cases(reps), , drop = FALSE]
+
+  list(
+    point_bounds = theta_hat,
+    percentile_outer = c(
+      L = unname(quantile(reps[, "L"], alpha / 2, na.rm = TRUE)),
+      U = unname(quantile(reps[, "U"], 1 - alpha / 2, na.rm = TRUE))
+    ),
+    basic_outer = c(
+      L = 2 * theta_hat["L"] -
+          unname(quantile(reps[, "L"], 1 - alpha / 2, na.rm = TRUE)),
+      U = 2 * theta_hat["U"] -
+          unname(quantile(reps[, "U"], alpha / 2, na.rm = TRUE))
+    ),
+    boot_reps = reps
+  )
+}
+\end{verbatim}
+
+The interval named \texttt{percentile\_outer} is easy to explain: it expands the
+estimated lower endpoint downward and the estimated upper endpoint upward using
+the empirical endpoint distributions.  This is a confidence interval for the
+estimated set's endpoints, not automatically an optimal Imbens--Manski interval
+for the unknown scalar $\theta_0\in[L_0,U_0]$.  For a paper, report which
+coverage target is being used.
+
+\subsection{Imbens--Manski/Stoye endpoint inference}
+\label{subsec:im-stoye}
+
+When the scalar identified set is $\Theta_0=[L_0,U_0]$ and the endpoints are
+estimated by $(\hat L,\hat U)$, the most common partial-identification interval
+has the form
+\begin{equation}
+\left[
+\hat L-c_n \widehat{\se}(\hat L),\quad
+\hat U+c_n \widehat{\se}(\hat U)
+\right].
+\label{eq:im-form}
+\end{equation}
+For set coverage, a conservative choice is the Bonferroni value $c_n=z_{1-
+\alpha/2}$, or the projection of a joint bootstrap confidence region for
+$(L_0,U_0)$.  For coverage of the true scalar point $\theta_0\in[L_0,U_0]$, the
+Imbens--Manski critical value is generally smaller and depends on the estimated
+width of the identified set relative to endpoint uncertainty.  Stoye's refinement
+is important near point identification because naive endpoint intervals can have
+nonuniform coverage when $U_0-L_0$ is close to zero.
+
+A practical algorithm using the bootstrap draws from Section
+\ref{subsec:lewbel-theorem3-bootstrap} is:
+\begin{enumerate}
+    \item estimate $[\hat L,\hat U]$ and bootstrap draws
+    $[\hat L^{*(b)},\hat U^{*(b)}]$;
+    \item estimate the covariance matrix of $(\hat L,\hat U)$ from the bootstrap
+    draws;
+    \item for a conservative interval, project the bootstrap joint region or use
+    the Bonferroni outer interval;
+    \item for an Imbens--Manski/Stoye interval, solve the published critical
+    value equation using the endpoint standard errors and the estimated width
+    $\hat U-\hat L$.
+\end{enumerate}
+
+This method is most appropriate for Lewbel Theorem 3, because that theorem gives
+a scalar interval directly.  It is less natural for \texttt{trigmmset} unless the
+joint $(\alpha,\gamma)$ set has first been projected to a finite scalar interval
+for $\gamma$.
+
+\subsection{A \texttt{trigmmset}-style second-moment bootstrap in R}
+\label{subsec:trigmmset-bootstrap}
+
+Lee--Lewbel--Schennach--Zhang's \texttt{trigmmset} command uses two observable
+second-moment objects.  In the no-covariate residualized notation of this
+report,
+\begin{equation}
+B_0=\frac{\E(W_1W_2)}{\E(W_2^2)},\qquad
+D_0=\frac{\E(W_1^2)\E(W_2^2)-\E(W_1W_2)^2}{\E(W_2^2)^2}.
+\label{eq:BD-consolidated}
+\end{equation}
+For positive common-factor loading, the structural parameters satisfy
+\begin{equation}
+\gamma\le B_0\le \alpha,
+\qquad
+(B_0-\gamma)(\alpha-B_0)\le D_0.
+\label{eq:trigmmset-region-consolidated}
+\end{equation}
+The Stata command estimates $(B_0,D_0)$, uses a delta-method covariance matrix,
+forms an ellipse in $(B,D)$ space, and reports a conservative worst-case region
+for $(\alpha,\gamma)$ over that ellipse.
+
+In R, a simple bootstrap building block is to resample $(\hat B,
+\hat D)$:
+
+\begin{verbatim}
+trigmmset_BD <- function(dat, w, y) {
+  ww <- dat[[w]]
+  yy <- dat[[y]]
+
+  Ey2 <- mean(yy^2, na.rm = TRUE)
+  Ewy <- mean(ww * yy, na.rm = TRUE)
+  Ew2 <- mean(ww^2, na.rm = TRUE)
+
+  B <- Ewy / Ey2
+  D <- (Ew2 * Ey2 - Ewy^2) / Ey2^2
+
+  c(B = B, D = D)
+}
+
+bootstrap_trigmmset_BD <- function(dat, w, y, R = 1999,
+                                   alpha = 0.05, seed = 123) {
+  set.seed(seed)
+  n <- nrow(dat)
+
+  bd_hat <- trigmmset_BD(dat, w, y)
+
+  reps <- replicate(R, {
+    ii <- sample.int(n, n, replace = TRUE)
+    trigmmset_BD(dat[ii, , drop = FALSE], w, y)
+  })
+
+  reps <- t(reps)
+
+  list(
+    BD_hat = bd_hat,
+    BD_percentile_CI = apply(
+      reps, 2, quantile,
+      probs = c(alpha / 2, 1 - alpha / 2),
+      na.rm = TRUE
+    ),
+    BD_cov = cov(reps, use = "complete.obs"),
+    BD_reps = reps
+  )
+}
+\end{verbatim}
+
+This code only bootstraps $(B_0,D_0)$.  To reproduce the logic of
+\texttt{trigmmset}, one must turn the joint uncertainty in $(B,D)$ into a joint
+confidence region and then map that region through the inequalities in
+\eqref{eq:trigmmset-region-consolidated}.  A bootstrap analogue of the Stata
+ellipse is:
+\begin{enumerate}
+    \item compute $\hat\mu=(\hat B,\hat D)^\T$ and bootstrap draws
+    $\hat\mu^{*(b)}=(\hat B^{*(b)},\hat D^{*(b)})^\T$;
+    \item compute a covariance matrix $\hat V_{BD}$ from the bootstrap draws;
+    \item form the ellipsoid
+    \begin{equation}
+    \mathcal E_{\alpha}^{boot}=
+    \left\{\mu:
+    (\mu-\hat\mu)^\T\hat V_{BD}^{-1}(\mu-\hat\mu)
+    \le c_{1-\alpha}^{boot}
+    \right\},
+    \end{equation}
+    where $c_{1-\alpha}^{boot}$ is the empirical $1-\alpha$ quantile of
+    $(\hat\mu^{*(b)}-\hat\mu)^T\hat V_{BD}^{-1}
+    (\hat\mu^{*(b)}-\hat\mu)$;
+    \item report the union of all structural sets implied by
+    $(B,D)\in\mathcal E_{\alpha}^{boot}$.
+\end{enumerate}
+
+If the object of interest is only $\gamma$, report the projection of that union
+onto the $\gamma$ axis.  Under only \eqref{eq:trigmmset-region-consolidated},
+that projection can be one-sided or unbounded.  A finite interval for $\gamma$
+requires an extra restriction, for example a bounded range for the common-factor
+loading $\beta=\alpha-\gamma$.
+
+\subsection{Moment-inequality and test-inversion bootstrap}
+\label{subsec:moment-ineq-bootstrap}
+
+Many set-identified confidence procedures can be expressed as test inversion.
+For each candidate value $w$ of $\theta$, define a null hypothesis
+$H_0:\theta=w$.  Compute a statistic $T_n(w)$ that measures whether the sample
+moments or inequalities are violated at $w$.  Retain $w$ if the test does not
+reject.  The confidence set is
+\begin{equation}
+\mathcal C_{1-\alpha}=\{w:T_n(w)\le c_{1-\alpha}(w)\}.
+\end{equation}
+
+For a scalar moment-inequality representation, a common statistic is
+\begin{equation}
+T_n(w)=\max_{j\le J}
+\frac{\sqrt n\,\bar m_j(w)}{\hat\sigma_j(w)},
+\end{equation}
+where the null requires $\E[m_j(w)]\le0$ for all $j$.  The critical value can be
+computed by generalized moment selection, subsampling, or an $m$-out-of-$n$
+bootstrap.  The R implementation is necessarily custom unless one can adapt a
+specialized package from a different application.
+
+The generic R loop is:
+
+\begin{verbatim}
+theta_grid <- seq(theta_min, theta_max, length.out = 1000)
+keep <- logical(length(theta_grid))
+
+for (k in seq_along(theta_grid)) {
+  w <- theta_grid[k]
+
+  # 1. compute sample moment inequalities mbar(w)
+  # 2. compute a studentized test statistic Tn_w
+  # 3. get a critical value by bootstrap, m-out-of-n bootstrap, or subsampling
+  # 4. retain w if not rejected
+  keep[k] <- (Tn_w <= c_alpha_w)
+}
+
+ci_theta <- range(theta_grid[keep])
+\end{verbatim}
+
+This approach is more work than bootstrapping endpoints, but it is conceptually
+clean when the scalar coefficient is a projection of a higher-dimensional
+identified set, as in \texttt{trigmmset}.
+
+\subsection{Subsampling and $m$-out-of-$n$ bootstrap}
+\label{subsec:subsampling-m-out-n}
+
+Set endpoints are often nonsmooth functions of sample moments: a discriminant
+can cross zero, a constraint can switch from slack to binding, or a projection
+can move from bounded to unbounded.  In such cases, the ordinary $n$-out-of-$n$
+bootstrap may be unreliable.  Two robust alternatives are:
+\begin{enumerate}
+    \item \emph{subsampling}: draw subsets of size $b$ without replacement,
+    with $b\to\infty$ and $b/n\to0$;
+    \item \emph{$m$-out-of-$n$ bootstrap}: draw $m<n$ observations with
+    replacement, again with $m\to\infty$ and $m/n\to0$.
+\end{enumerate}
+For implementation, replace the line
+\begin{verbatim}
+ii <- sample.int(n, n, replace = TRUE)
+\end{verbatim}
+by either
+\begin{verbatim}
+ii <- sample.int(n, b, replace = FALSE)  # subsampling
+\end{verbatim}
+or
+\begin{verbatim}
+ii <- sample.int(n, m, replace = TRUE)   # m-out-of-n bootstrap
+\end{verbatim}
+The statistic must then be scaled appropriately.  For an endpoint statistic,
+compare $\sqrt b(\hat L_b-\hat L)$ or $\sqrt m(\hat L_m^*-\hat L)$ to
+$\sqrt n(\hat L-L_0)$.  In applied work, report sensitivity across a few values
+of $b$ or $m$ rather than relying on one arbitrary tuning value.
+
+\subsection{Recovering confidence intervals for the other coefficients}
+\label{subsec:other-coefficients-inference}
+
+Because $\beta_1(w)=\beta_1^R-\beta_2^Rw$, a set or interval for $\theta$ maps
+into a set for each coefficient.  If $\theta\in[L,U]$, the $k$th coefficient is
+in
+\begin{equation}
+\left\{\beta_{1,k}^R-\beta_{2,k}^R w:w\in[L,U]\right\}.
+\end{equation}
+If $\beta_{2,k}^R>0$, this interval is
+\begin{equation}
+[\beta_{1,k}^R-\beta_{2,k}^R U,
+ \beta_{1,k}^R-\beta_{2,k}^R L].
+\end{equation}
+If $\beta_{2,k}^R<0$, the endpoints are reversed.  In a bootstrap, the safest
+procedure is to recompute the residualization and recovery map in each draw:
+\begin{equation}
+\beta_{1,k}^{*(b)}(w)=
+\beta_{1,k}^{R,*(b)}-\beta_{2,k}^{R,*(b)}w.
+\end{equation}
+This automatically accounts for the sampling uncertainty in the reduced-form
+coefficients and in the identified interval endpoints.
+
+\subsection{Recommended reporting template}
+\label{subsec:reporting-template}
+
+For the scalar triangular model, a clear empirical table should report:
+\begin{enumerate}
+    \item the OLS slope of $W_1$ on $W_2$;
+    \item the exact Lewbel point estimate, if the exact covariance condition is
+    maintained;
+    \item first-stage relevance for the generated instrument, e.g.
+    $\widehat{\Cov}(Z,W_2^2)$ and a heteroskedasticity test;
+    \item the Lewbel bounded-invalidity interval for several values of $\tau$;
+    \item bootstrap endpoint intervals for each reported set;
+    \item if using the common-factor method, the \texttt{trigmm} point estimate
+    or the \texttt{trigmmset}-style joint region and its projection for
+    $\theta$;
+    \item a statement of the coverage target: endpoint coverage, identified-set
+    coverage, or true-parameter coverage.
+\end{enumerate}
+A short but rigorous sentence is: ``The bootstrap resamples observations and
+re-estimates the residualizations, generated instruments, and set endpoints in
+each replication; the reported interval is an outer endpoint interval for the
+identified set.''
+
+\section{Practical conclusions for software choice}
+\label{sec:software-conclusions}
+
+The most direct software choice depends on the identification target.
+For Lewbel point identification in R, use \texttt{REndo::}\newline\texttt{hetErrorsIV()} or
+manually construct the generated instrument and use \texttt{ivreg}.  For
+bootstrap inference, manually wrap the whole construction in \texttt{boot}.  For
+clustered point-identified IV inference, use \texttt{fwild}\newline\texttt{clusterboot} or
+\texttt{clusterSEs} after constructing the generated instrument.
+
+For Lewbel's Theorem 3 set-identified interval, no standard R package was found
+that automates the method.  The necessary computation is short: compute
+residuals, solve the quadratic for the two endpoints, and bootstrap the full
+procedure.  The code in Section \ref{subsec:lewbel-theorem3-bootstrap} is the
+most direct R implementation.
+
+For the Lee--Lewbel--Schennach--Zhang common-factor model, Stata remains the
+direct implementation: \texttt{trigmm} for point identification and
+\texttt{trigmmset} for the second-moment set bound.  In R, \texttt{gmm} can be
+used to code the nonlinear moments for point identification, while a
+\texttt{trigmmset}-style set analysis requires custom code for the $(B,D)$
+confidence region and the projection step.
+
+For publication-quality partial-identification inference, the most credible
+approach is to report both a transparent endpoint-bootstrap interval and a
+sensitivity check using subsampling or $m$-out-of-$n$ bootstrap when endpoints
+are unstable.  If the scalar parameter is a projection of a multidimensional
+moment-inequality set, use test inversion or calibrated projection rather than a
+naive percentile interval.
+
+\begin{thebibliography}{99}
+
+\bibitem[Baum and Lewbel(2019)]{baumlewbel2019}
+Baum, Christopher F., and Arthur Lewbel. 2019. ``Advice on Using
+Heteroskedasticity-Based Identification.'' \emph{Stata Journal} 19(4): 757--767.
+
+\bibitem[Comon(1994)]{comon1994}
+Comon, Pierre. 1994. ``Independent Component Analysis, a New Concept?''
+\emph{Signal Processing} 36(3): 287--314.
+
+\bibitem[Gourieroux, Monfort, and Renne(2017)]{gourieroux2017}
+Gourieroux, Christian, Alain Monfort, and Jean-Paul Renne. 2017. ``Statistical
+Inference for Independent Component Analysis: Application to Structural VAR
+Models.'' \emph{Journal of Econometrics} 196(1): 111--126.
+
+\bibitem[Guay(2021)]{guay2021}
+Guay, Alain. 2021. ``Identification of Structural Vector Autoregressions Through
+Higher Unconditional Moments.'' \emph{Journal of Econometrics} 225(1): 27--46.
+
+\bibitem[Hyvarinen(1999)]{hyvarinen1999}
+Hyvarinen, Aapo. 1999. ``Fast and Robust Fixed-Point Algorithms for Independent
+Component Analysis.'' \emph{IEEE Transactions on Neural Networks} 10(3): 626--634.
+
+\bibitem[Keweloh(2021)]{keweloh2021}
+Keweloh, Sascha A. 2021. ``A Generalized Method of Moments Estimator for
+Structural Vector Autoregressions Based on Higher Moments.'' \emph{Journal of
+Business \& Economic Statistics} 39(3): 772--782.
+
+\bibitem[Lanne, Meitz, and Saikkonen(2017)]{lanne2017}
+Lanne, Markku, Mika Meitz, and Pentti Saikkonen. 2017. ``Identification and
+Estimation of Non-Gaussian Structural Vector Autoregressions.'' \emph{Journal of
+Econometrics} 196(2): 288--304.
+
+\bibitem[Lee et al.(2026)]{leeetal2026}
+Lee, Heejun, Arthur Lewbel, Susanne M. Schennach, and Linqi Zhang. 2026.
+``Instrument-Free Estimation of Triangular Equation Systems with the
+\texttt{trigmm} Command.'' \emph{Stata Journal} 26(1): 68--89.
+
+\bibitem[Lewbel(2012)]{lewbel2012}
+Lewbel, Arthur. 2012. ``Using Heteroscedasticity to Identify and Estimate
+Mismeasured and Endogenous Regressor Models.'' \emph{Journal of Business \&
+Economic Statistics} 30(1): 67--80.
+
+\bibitem[Lewbel, Schennach, and Zhang(2024)]{lsz2024}
+Lewbel, Arthur, Susanne M. Schennach, and Linqi Zhang. 2024. ``Identification of
+a Triangular Two Equation System without Instruments.'' \emph{Journal of Business
+\& Economic Statistics} 42(1): 14--25.
+
+\bibitem[Lewis(2021)]{lewis2021}
+Lewis, Daniel J. 2021. ``Identifying Shocks via Time-Varying Volatility.''
+\emph{Review of Economic Studies} 88(6): 3086--3124.
+
+\bibitem[Lewis(2022)]{lewis2022}
+Lewis, Daniel J. 2022. ``Robust Inference in Models Identified via
+Heteroskedasticity.'' \emph{Review of Economics and Statistics} 104(3): 510--524.
+
+\bibitem[Lewis(2025)]{lewis2025}
+Lewis, Daniel J. 2025. ``Identification Based on Higher Moments in
+Macroeconometrics.'' \emph{Annual Review of Economics} 17: 665--693.
+
+\bibitem[Rigobon(2003)]{rigobon2003}
+Rigobon, Roberto. 2003. ``Identification Through Heteroskedasticity.''
+\emph{Review of Economics and Statistics} 85(4): 777--792.
+
+\bibitem[Sentana and Fiorentini(2001)]{sentana2001}
+Sentana, Enrique, and Gabriele Fiorentini. 2001. ``Identification, Estimation and
+Testing of Conditionally Heteroskedastic Factor Models.'' \emph{Journal of
+Econometrics} 102(2): 143--164.
+
+
+
+\bibitem[Andrews and Soares(2010)]{andrewssoares2010}
+Andrews, Donald W. K., and Gustavo Soares. 2010. ``Inference for Parameters
+Defined by Moment Inequalities Using Generalized Moment Selection.''
+\emph{Econometrica} 78(1): 119--157.
+
+\bibitem[Canty and Ripley(2024)]{bootpackage}
+Canty, Angelo, and Brian Ripley. 2024. \texttt{boot}: Bootstrap Functions.
+R package.  Based on Davison and Hinkley (1997).  URL:
+\url{https://cran.r-project.org/package=boot}.
+
+\bibitem[Chausse(2010)]{gmmpackage}
+Chausse, Pierre. 2010. ``Computing Generalized Method of Moments and Generalized
+Empirical Likelihood with R.'' \emph{Journal of Statistical Software} 34(11):
+1--35.
+
+\bibitem[Fox, Kleiber, and Zeileis(2024)]{ivregpackage}
+Fox, John, Christian Kleiber, and Achim Zeileis. 2024. \texttt{ivreg}:
+Instrumental-Variables Regression by 2SLS, 2SM, or 2SMM, with Diagnostics. R
+package. URL: \url{https://cran.r-project.org/package=ivreg}.
+
+\bibitem[Gui, Meierer, and Algesheimer(2023)]{rendo2023}
+Gui, Raluca, Markus Meierer, and Rene Algesheimer. 2023. ``REndo: Internal
+Instrumental Variables to Address Endogeneity.'' \emph{Journal of Statistical
+Software} 107(3): 1--43.
+
+\bibitem[Imbens and Manski(2004)]{imbensmanski2004}
+Imbens, Guido W., and Charles F. Manski. 2004. ``Confidence Intervals for
+Partially Identified Parameters.'' \emph{Econometrica} 72(6): 1845--1857.
+
+\bibitem[Kaido, Molinari, and Stoye(2019)]{kaidomolinaristoye2019}
+Kaido, Hiroaki, Francesca Molinari, and Jorg Stoye. 2019. ``Confidence Intervals
+for Projections of Partially Identified Parameters.'' \emph{Econometrica} 87(4):
+1397--1432.
+
+\bibitem[MacKinnon, Nielsen, and Webb(2022)]{mackinnon2022}
+MacKinnon, James G., Morten Nielsen, and Matthew D. Webb. 2022. ``Fast and
+Reliable Jackknife and Bootstrap Methods for Cluster-Robust Inference.''
+\emph{Journal of Applied Econometrics} 37(5): 944--967.
+
+\bibitem[Romano and Shaikh(2010)]{romanosh2010}
+Romano, Joseph P., and Azeem M. Shaikh. 2010. ``Inference for the Identified Set
+in Partially Identified Econometric Models.'' \emph{Econometrica} 78(1):
+169--211.
+
+\bibitem[Stoye(2009)]{stoye2009}
+Stoye, Jorg. 2009. ``More on Confidence Intervals for Partially Identified
+Parameters.'' \emph{Econometrica} 77(4): 1299--1315.
+
+\end{thebibliography}
+
+\end{document}
