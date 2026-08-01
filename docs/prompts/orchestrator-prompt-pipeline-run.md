@@ -407,10 +407,10 @@ never canonical deliverables or `RUN/scratch/agents/` during the active run.
 | Pipeline runner | `scripts-paper/run_pipeline.R` |
 | Pipeline output dir | `scripts-paper/output` |
 | Pipeline module docs | `scripts-paper/README.md`, `scripts-paper/support/README.md` |
-| Explainer document | `docs/run_pipeline_code.tex` |
-| Reproduction document | `docs/run_pipeline_math.tex` |
-| Explainer synchronization prompt | `docs/prompts/synchronize-run-pipeline-explainer.md` |
-| Reproduction synchronization prompt | `docs/prompts/synchronize-run-pipeline-reproduction.md` |
+| Code document (the pipeline explainer) | `docs/run_pipeline_code.tex` |
+| Math document (the reproduction manual) | `docs/run_pipeline_math.tex` |
+| Code-document synchronization prompt | `docs/prompts/synchronize-run-pipeline-code.md` |
+| Math-document synchronization prompt | `docs/prompts/synchronize-run-pipeline-math.md` |
 | Quality suite | `docs/quality-check.R` |
 | Style guides | `docs/guides/Advanced R Solutions.xml`, `docs/guides/Advanced R.xml` |
 | R comment style | `docs/guides/r-comment-style.md` |
@@ -788,11 +788,11 @@ Launch **exactly two sub-orchestrators concurrently**, one for each target. Give
 complete contents of its prompt file as its governing task; do not summarize, combine, or replace
 the prompt:
 
-- **Explainer sub-orchestrator:** use
-  `docs/prompts/synchronize-run-pipeline-explainer.md` for
+- **Code-document sub-orchestrator:** use
+  `docs/prompts/synchronize-run-pipeline-code.md` for
   `docs/run_pipeline_code.tex`.
-- **Reproduction sub-orchestrator:** use
-  `docs/prompts/synchronize-run-pipeline-reproduction.md` for
+- **Math-document sub-orchestrator:** use
+  `docs/prompts/synchronize-run-pipeline-math.md` for
   `docs/run_pipeline_math.tex`.
 
 These two sub-orchestrators are the narrow exception to the durable read-only worker protocol.
