@@ -23,6 +23,11 @@ if (boot_reps != 10000L && !nzchar(Sys.getenv("HETID_ALLOW_DRAFT_RUN"))) {
   ), boot_reps), call. = FALSE)
 }
 paper_source_once(paper_path("support", "data", "acm_inputs.R"))
+# Frozen external inputs are verified before anything is created or cleaned, so
+# a missing snapshot or a cache that drifted off its pin stops the run with the
+# output tree untouched.
+paper_source_once(paper_path("support", "data", "frozen_inputs.R"))
+paper_verify_frozen_inputs()
 create_artifact_directories()
 conditional_cleanup_audits <- stats::setNames(
   lapply(

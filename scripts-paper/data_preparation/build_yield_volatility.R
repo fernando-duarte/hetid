@@ -5,6 +5,11 @@
 # Run via run_pipeline.R, which defines the shared maturity grids. The daily ACM
 # asset (~40 MB) is cache-only; the first run downloads it from GitHub.
 
+# The asset is pinned by release tag and digest (config/analysis.R) and verified
+# by paper_verify_frozen_inputs() before the run creates or cleans anything, so
+# the extract below finds a known-good cache and the contract's auto_download
+# never reaches the network.
+
 yield_volatility_input <-
   PAPER_ANALYSIS_CONTRACT$input$yield_volatility
 acm_daily <- hetid::extract_acm_data(

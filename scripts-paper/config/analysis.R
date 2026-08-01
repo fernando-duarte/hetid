@@ -13,6 +13,24 @@ reporting_contract <- PAPER_REPORTING_CONTROL
 fred_from <- "1947-01-01"
 fred_to <- "2026-06-19"
 
+# Consumption input source. "frozen" reads the committed snapshot under data/
+# and never touches the network, so the vintage cannot drift under the results.
+# "live" downloads the current vintage and rewrites that snapshot, which is what
+# makes a vintage change land as a reviewable diff.
+fred_source <- "frozen"
+
+# ACM daily input pin. The package resolves its download through the release
+# "latest" tag, so a new monthly release moves the data with no edit here:
+# acm-term-premium-2026-08 published on 2026-08-01 and did exactly that.
+# "frozen" requires this tag and digest and never consults "latest"; "live"
+# restores the package's own auto-download. To adopt a new vintage, run once
+# with "live", then copy the sha256 the download records in the cache's .meta
+# sidecar into acm_daily_sha256 and bump acm_daily_release.
+acm_daily_source <- "frozen"
+acm_daily_release <- "acm-term-premium-2026-07"
+acm_daily_sha256 <-
+  "9a155e65953d4cf9f0db6131f7580459e4ccfe1d2e8e4e83ab8beb8b9dc292aa"
+
 # Analysis sample window for the principal-component constructions.
 date_begin <- "1962 Q1"
 date_end <- "2025 Q4"
