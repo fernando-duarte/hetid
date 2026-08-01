@@ -4,7 +4,7 @@ Run these in order; the run is hands-off only once they're done.
 
 1. **Open a fresh session in this repo.** Start Claude Code from the `hetid` repo root — the
    prompt calls `scripts-paper/...`, reads `docs/...`, and runs `git` here.
-2. **Set the model.** `/model` → **`claude-opus-5[1m]` (Opus 5, 1M context) at maximum
+2. **Set the model.** `/model` → **`claude-opus-5[1m]` (Opus 5, 1M context) at `xhigh`
    effort**. (Stage 0 re-checks this, but set it yourself so the run doesn't start on the wrong
    model.)
 3. **Make it autonomous at the harness level.** "Never ask the human" governs the *model*;
@@ -43,7 +43,7 @@ Run these in order; the run is hands-off only once they're done.
 ---
 
 > **How to use:** Paste the section below (everything under "ORCHESTRATOR PROMPT") into a
-> fresh **Claude Opus 5 (1M context, `claude-opus-5[1m]`) session at maximum effort**,
+> fresh **Claude Opus 5 (1M context, `claude-opus-5[1m]`) session at `xhigh` effort**,
 > running in this repository, then leave it to run. Opus acts as
 > the orchestrator: it sequences the work, delegates to subagents, enforces the barriers, and
 > verifies each stage before moving on. The run is **fully autonomous** — start to finish
@@ -62,19 +62,21 @@ helps, enforce ordering barriers, and verify every stage with evidence before ad
 
 ### Model and effort (run configuration — non-negotiable)
 
-Run this entire workflow on **Claude Opus 5 with the 1M-token context window, at maximum
+Run this entire workflow on **Claude Opus 5 with the 1M-token context window, at `xhigh`
 effort** — and hold every subagent to the same.
 
 - **Model:** Opus 5, 1M context. The exact model ID in this environment is
   **`claude-opus-5[1m]`** (API string `claude-opus-5`; the `[1m]` selects the 1M-token
   context). Confirm the session is on this model before Stage A (e.g. `/model`); if it is not,
   switch to it first. Do not downgrade to Sonnet/Haiku at any point.
-- **Effort:** **maximum.** Run at the highest effort setting available (`xhigh`/`max` — use
-  `max`); correctness matters more than token cost here. Do not lower effort to save time or
-  tokens.
+- **Effort:** **`xhigh`.** This is the recommended setting for coding and agentic work on Opus 5
+  and the default in Claude Code; correctness matters more than token cost here, so do not drop to
+  `high` or below to save time or tokens. Do not raise it to `max` either — `max` buys no reliable
+  gain on work of this shape and is prone to overthinking and diminishing returns.
 - **Subagents inherit this.** Every subagent or team you spawn must also run on Opus 5 (1M
-  context) at maximum effort — when the spawn API exposes a model parameter, set it to the Opus
-  tier explicitly; never let a subagent fall back to a smaller/cheaper model or lower effort.
+  context) at `xhigh` effort — when the spawn API exposes model or effort parameters, set them to
+  the Opus tier and `xhigh` explicitly; never let a subagent fall back to a smaller/cheaper model
+  or a lower effort.
 - **Context budget is not a reason to stop.** With the 1M window you have ample context — do not
   summarize early, suggest a fresh session, or trim work on account of context limits. Keep going.
 
@@ -150,7 +152,15 @@ into the skills you invoke.
   blocker here — the run never merges, so conflicts are an output of the final assessment, not
   an obstacle to it.
 - **Delegation.** Prefer launching subagents (and teams) for independent or parallelizable
-  work. Run independent subagents concurrently in a single batch. Give each subagent the
+  work, within the fan-out each stage specifies. The per-stage fan-outs below (Stage E and F
+  slices, Stage L's two agents, Stage O's two sub-orchestrators) are the intended shape; beyond
+  them, delegate only when the work is genuinely independent or needs isolated context. Opus 5
+  delegates more readily than earlier models and a subagent is not free — each one re-establishes
+  context, re-explores, and reports back, and multi-agent runs cost several times the tokens of
+  direct work. Work you could finish in a handful of tool calls (a few file reads, a targeted
+  `grep`, a single-file check) is faster done directly, and verification belongs in your own loop
+  rather than in a delegated agent.
+  Run independent subagents concurrently in a single batch. Give each subagent the
   same autonomy mandate (read-only repository access, a private scratchpad, may spawn its own
   compliant subagents, no questions to the human), except for the two Stage-O TeX writers
   governed by their complete synchronization prompts.
@@ -339,12 +349,19 @@ improvise around it.
   non-ignored publication artifacts changed or created by Stage C or a later validation run.
   Derive tracked, untracked, and ignored status from the current checkout; do not assume that
   the output tree starts empty. Stage changed or new publication artifacts explicitly. Do not
-  force-add ignored caches, diagnostics, or PDFs. `docs/` is git-ignored, so reports, plans,
-  logs, and the consolidated md files are **not** committed and never appear in `git status`;
-  do not try to force-add them. The two final Stage-O deliverables are force-tracked exceptions:
-  `docs/run_pipeline_code.tex` and `docs/run_pipeline_math.tex`. Stage and commit
-  those two files explicitly after their sub-orchestrators finish and the orchestrator verifies
-  them. Their PDFs and all synchronization working files remain ignored and uncommitted.
+  force-add ignored caches, diagnostics, or PDFs. `docs/` carries a directory-level ignore rule,
+  so everything this run writes under `RUN/` — reports, plans, logs, the consolidated md files —
+  is **not** committed and does not appear in `git status`; do not try to force-add it.
+  **But `docs/` is not uniformly ignored: a fixed set of files under it is force-tracked, and the
+  set is larger than this run's two deliverables and changes over time.** Run `git ls-files docs/`
+  in Stage 0 and record the result — at the time of writing it also covers this prompt, both
+  synchronization prompts, and the four style guides that Stages E and F read. An edit to any of
+  those *will* show up in `git status`, so treat every force-tracked `docs/` file other than the
+  two Stage-O targets as read-only reference material for this run. The two Stage-O deliverables,
+  `docs/run_pipeline_code.tex` and `docs/run_pipeline_math.tex`, are the only ones this run may
+  change: stage and commit those two files explicitly after their sub-orchestrators finish and the
+  orchestrator verifies them. Their PDFs and all synchronization working files remain ignored and
+  uncommitted.
 - **When to commit.** Commit at each natural checkpoint — once per completed implementation
   cycle, after its changes are verified and its pre-commit gate passes. Concretely: one
   commit at the end of Stage J (the Stage-G/H/I cycle), one at the end of Stage M (the Stage-L
@@ -448,7 +465,7 @@ tools (`TaskCreate` to add a stage, `TaskUpdate` to move it to in-progress and t
 **Stage 0 — Preflight (before Stage A). [WAIT]**
 Verify the run can proceed; if any check fails, fix it or **stop and report** (do not start the
 pipeline on a broken footing):
-- **Model/effort:** session is on `claude-opus-5[1m]` at max effort (per **Model and effort**).
+- **Model/effort:** session is on `claude-opus-5[1m]` at `xhigh` effort (per **Model and effort**).
 - **Skills and final-stage prompts available:** `karpathy-guidelines`, `multistep-do`,
   `multistep-plan`, `graphify`, and `econ-write` resolve, and
   both synchronization prompt files listed under **Reference paths** exist and are readable.
@@ -468,6 +485,13 @@ pipeline on a broken footing):
   `HEAD`), **stop and report**. If the working tree has uncommitted or untracked changes, **stop
   and report**; do not absorb pre-existing work into this run's branch. Do not switch branches in
   the invoking checkout — the run leaves it exactly as found.
+- **Record the force-tracked `docs/` set.** Run `git ls-files docs/` and log the result. `docs/`
+  is ignored as a directory but a fixed set of files under it is tracked anyway, and that set is
+  larger than this run's two Stage-O deliverables — it includes the style guides Stages E and F
+  read and the synchronization prompts Stage O reads. Editing any of them would show up in
+  `git status` and violate the Stage-O scope rule, so treat every entry other than
+  `docs/run_pipeline_code.tex` and `docs/run_pipeline_math.tex` as read-only for this run. See
+  **Git workflow**.
 - **LAD gate decision approved — hard precondition, not an optional check.** The LAD estimator is
   gated by the tracked, committed decision file `scripts-paper/config/decisions/lad.dcf`, which
   `run_pipeline.R` reads via `logvar_lad_gate_read()`. Confirm it records `decision: approved` and
@@ -508,11 +532,15 @@ git worktree add ~/hetid-worktrees/pipeline-run-<run-date> \
 
 **(2) Seed the worktree with the invoking checkout's ignored pipeline state. [required — skipping
 this silently costs a multi-hour rerun]** A new worktree checks out tracked files only.
-`scripts-paper/output/` is gitignored, so the fresh worktree has **no** `output/state/`,
-`output/diagnostics/`, or download cache — the bootstrap cache the Stage-C reuse gate reads would
-be absent, the gate would correctly report a miss, and Stage C would execute the full multi-hour
-draw stage. That is exactly the from-scratch rerun the **Preserve pipeline state** constraint
-forbids manufacturing. Before Stage A, copy the ignored state across:
+`scripts-paper/output/` is **not** ignored as a directory — `.gitignore` excludes only
+`scripts-paper/output/**/*.rds`, `**/*.pdf`, and `**/*.csv`, i.e. by extension — so the fresh
+worktree *does* receive the tracked `.svg`/`.tex`/`.md` publication artifacts under it. What it
+does not receive is anything matching those ignore patterns: `output/state/` holds nothing but
+`.rds` and therefore does not exist at all in a fresh worktree, and the `.rds`/`.csv` diagnostics
+and the download cache are absent for the same reason. The bootstrap cache the Stage-C reuse gate
+reads would therefore be missing, the gate would correctly report a miss, and Stage C would execute
+the full multi-hour draw stage. That is exactly the from-scratch rerun the **Preserve pipeline
+state** constraint forbids manufacturing. Before Stage A, copy the ignored state across:
 
 ```
 cp -R <invoking-checkout>/scripts-paper/output/. \
@@ -794,18 +822,35 @@ re-commit — iterate until the commit lands with **all** hooks green. Then push
 to `origin`. See **Git workflow**.
 
 **Stage K — Graphify graph.**
-Update the graph at `graphify-out/` by invoking the current `graphify` skill and following its
+Update the graph at `graphify-out/` by invoking the current `graphify` **skill** and following its
 `--update` flow, which re-extracts changed files, prunes deleted sources, merges the result
-without losing edge direction or prior hyperedges, and refreshes the manifest. Mind the two
-layers: `--update` is the skill's own flag, and it shells out to the CLI's `graphify update
-<path>` subcommand — do not "correct" one into the other. Note also that `.claude/` is
+without losing edge direction or prior hyperedges, and refreshes the manifest.
+**`--update` and `graphify update <path>` are two different update paths, not one wrapping the
+other — use the skill's, and do not "correct" it into the CLI's.** The skill's `--update` runs its
+own Python through `graphify-out/.graphify_python` (`detect_incremental`, then the shared
+extraction steps including the LLM semantic pass); the CLI subcommand `graphify update <path>` is a
+separate no-LLM, AST-only path (`graphify.watch._rebuild_code`). That distinction is decisive
+here: R files are classified as code, but **graphify ships no AST extractor for R** — so the CLI
+path contributes zero R nodes and edges while still exiting `0` and printing "Code graph updated."
+Its only signal is one warning line it does not fail on: *"N file(s) are classified as code but
+graphify has no AST extractor for their language, so they contributed nothing to the graph: .r
+(N)"*. Every bit of R structure in this graph is therefore LLM-semantic, and R is almost all of the
+graph (1461 of 1586 nodes at the last build), so running the CLI path here would refresh the
+manifest over a graph left 92 % stale. Note also that `.claude/` is
 git-ignored here, so the skill and `graphify-out/` are local-checkout resources that a fresh
 clone will not have; Stage 0's availability check is what catches their absence. **Exclude
 `.claude/` from extraction.** If validation shows that the graph predates the current canonical
 node-ID format and contains ghost duplicates, use the skill's documented forced clean rebuild
 instead of hand-renaming nodes. A cache hit is not evidence that changed files were covered:
-verify the incremental manifest and extraction output. Confirm the graph is current and verified;
-report node, edge, and community counts and confirm that edge endpoints resolve.
+verify the incremental manifest and extraction output. **Read the final counts out of
+`graphify-out/graph.json`, not out of what the rebuild printed — the two disagree.** In a
+controlled test the rebuild printed `Rebuilt: 4 nodes, 5 edges, 1 communities` while the saved
+graph held 4 nodes and **0** edges: dangling edges are dropped at save time without failing the
+run. Report node, edge, and community counts read from the saved graph, note the printed counts
+separately when they differ, and confirm that edge endpoints resolve. Then break the node count
+down by source extension and confirm the `.r` nodes were actually refreshed — R is ~92 % of this
+graph and the only structure the AST-only path cannot produce, so a graph whose `.r` count is
+zero, or unchanged after R edits, is the signature of the wrong update path having run.
 
 **Stage L — Graphify audits (two agents). [WAIT for both]**
 Spawn two agents concurrently, both using graphify, each dispatched per **Delegating to
@@ -984,8 +1029,11 @@ run `git merge`, `git rebase`, `git cherry-pick`, or `git pull` on either branch
      (`default_install_hook_types: [pre-commit, pre-push]`), so the eventual `git push` re-runs the
      full suite over the pushed range and can fail even though every commit passed. Recommend
      `pre-commit run --all-files` on the merge result before pushing.
-   - *`scripts-paper/output/` is gitignored, so run state does not travel with the merge.* The
-     merge moves tracked decision records without the `output/state/*.rds` they are bound to, which
+   - *The `output/state/*.rds` set is ignored by extension, so run state does not travel with the
+     merge.* `scripts-paper/output/` itself is tracked — its `.svg`/`.tex`/`.md` artifacts are in
+     the repo — and `.gitignore` excludes only `**/*.rds`, `**/*.pdf`, and `**/*.csv` beneath it.
+     The merge therefore moves tracked decision records without the `output/state/*.rds` they are
+     bound to, which
      surfaces later as a `gate_record_hash_mismatch` on the `committed decision validates against
      the real gate` check — in the merged-into checkout only, on an identical commit. State in the
      report which checkout holds the authoritative `output/state/` set produced by this run (the
