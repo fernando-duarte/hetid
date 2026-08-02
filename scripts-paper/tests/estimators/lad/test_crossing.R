@@ -180,4 +180,20 @@ qr_check("lad witness coverage: verified, tangent, simultaneous, thin", {
     isTRUE(length(ws$sign_cones) >= 2L) && identical(wth$status, "unresolved_witness")
 })
 
+# An empty probe (first step infeasible) must keep the coefficient axis: a 0 x 1
+# matrix classifies one unnamed coefficient for n_coef labels, so the sides hook
+# indexes past the end of that list.
+qr_check("lad empty crossing probe keeps the coefficient axis", {
+  w <- cx_fx$wit(1L, cx_fx$qsk, cx_fx$w1k, cx_fx$w2k)
+  ctx <- lad_ctx(cx_fx$qsk, cx_fx$w1k, cx_fx$w2k, cx_fx$x_mat, cx_fx$esck)
+  ctx$check_feasible <- function(b) list(feasible = FALSE, max_violation = 1)
+  tr <- logvar_lad_crossing_probe(w, 1L, ctx)
+  cls <- logvar_lad_tail_classify(tr)
+  n_coef <- ncol(cx_fx$x_mat)
+  identical(dim(tr$coef), c(0L, n_coef)) &&
+    identical(colnames(tr$coef), colnames(cx_fx$x_mat)) &&
+    length(cls$coef) == n_coef &&
+    all(vapply(cls$coef, function(z) identical(z$status, "uninformative"), logical(1)))
+})
+
 .test$finish()

@@ -45,8 +45,8 @@ logvar_spec_id <- function(fields) {
 # extra-start idiom shared by the set drivers and the bounds-by-tau figure.
 logvar_bounded_args <- function(s) {
   a <- c(
-    s$arg_lower[s$lower_status == "bounded"],
-    s$arg_upper[s$upper_status == "bounded"]
+    s$arg_lower[s$lower_status == PAPER_ENDPOINT_STATUS[["bounded"]]],
+    s$arg_upper[s$upper_status == PAPER_ENDPOINT_STATUS[["bounded"]]]
   )
   a[!vapply(a, anyNA, logical(1))]
 }

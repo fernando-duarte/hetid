@@ -32,10 +32,10 @@
       sc <- schema[[ti]]
       if (is.null(sc) || !nrow(sc)) next
       for (j in seq_len(nrow(sc))) {
-        if (isTRUE(sc$lower_status[j] == "bounded")) {
+        if (isTRUE(sc$lower_status[j] == PAPER_ENDPOINT_STATUS[["bounded"]])) {
           push(sc$arg_lower[[j]], sprintf("%s:%s:lower", snm[ti], sc$coef[j]))
         }
-        if (isTRUE(sc$upper_status[j] == "bounded")) {
+        if (isTRUE(sc$upper_status[j] == PAPER_ENDPOINT_STATUS[["bounded"]])) {
           push(sc$arg_upper[[j]], sprintf("%s:%s:upper", snm[ti], sc$coef[j]))
         }
       }

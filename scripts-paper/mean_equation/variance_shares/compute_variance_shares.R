@@ -153,7 +153,7 @@ stopifnot(
     length(var_share$ols) == var_share$combined_row,
   "combined share must be nonnegative" =
     all(c(var_share$ols, var_share$point)[
-      c(var_share$combined_row, var_share$combined_row)
+      c(var_share$combined_row, length(var_share$ols) + var_share$combined_row)
     ] >= 0)
 )
 

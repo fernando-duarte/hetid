@@ -16,7 +16,7 @@ logvar_hull_text <- function(
     as.integer(digits)
   )
   vapply(seq_len(nrow(table)), function(index) {
-    if (identical(table$status[[index]], "bounded")) {
+    if (identical(table$status[[index]], PAPER_ENDPOINT_STATUS[["bounded"]])) {
       sprintf(
         format_string,
         table$set_lower[[index]],

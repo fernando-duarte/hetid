@@ -28,7 +28,12 @@ round_preserving_sum <- function(
   block <- round(v[1] * scale)
   base <- floor(v[-1] * scale)
   bump <- order(v[-1] * scale - base, decreasing = TRUE)
-  bump <- bump[seq_len(block - sum(base))]
+  deficit <- block - sum(base)
+  stopifnot(
+    "component shares must sum to their block share" =
+      deficit >= 0 && deficit <= length(base)
+  )
+  bump <- bump[seq_len(deficit)]
   base[bump] <- base[bump] + 1
   c(block, base) / scale
 }

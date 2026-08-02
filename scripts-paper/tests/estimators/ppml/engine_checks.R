@@ -106,8 +106,10 @@ peng_pv <- tryCatch(
         isTRUE(all.equal(unname(est$fit_at_b(arg)$coef[j]), val, tolerance = 1e-6))
     }
     for (j in seq_len(nrow(sc))) {
-      if (identical(sc$lower_status[j], "bounded")) chk(j, sc$arg_lower[[j]], sc$lower[j])
-      if (identical(sc$upper_status[j], "bounded")) chk(j, sc$arg_upper[[j]], sc$upper[j])
+      lo_bounded <- identical(sc$lower_status[j], PAPER_ENDPOINT_STATUS[["bounded"]])
+      up_bounded <- identical(sc$upper_status[j], PAPER_ENDPOINT_STATUS[["bounded"]])
+      if (lo_bounded) chk(j, sc$arg_lower[[j]], sc$lower[j])
+      if (up_bounded) chk(j, sc$arg_upper[[j]], sc$upper[j])
     }
     list(singleton = singleton, feas = feas, fresh = fresh)
   },

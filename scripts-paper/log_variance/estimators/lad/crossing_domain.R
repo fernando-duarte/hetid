@@ -143,7 +143,17 @@ logvar_lad_crossing_probe <- function(witness, path_id, ctx) {
     guard <- c(guard, abs(e_is) / esc)
     statuses <- c(statuses, st)
   }
-  coef_mat <- if (length(coefs)) do.call(rbind, coefs) else matrix(numeric(0))
+  # matrix(numeric(0)) is 0 x 1 with no colnames, so tail_classify returns one
+  # unnamed result for n_coef labels and the sides hook indexes past the end
+  coef_mat <- if (length(coefs)) {
+    do.call(rbind, coefs)
+  } else {
+    matrix(
+      numeric(0),
+      nrow = 0L, ncol = ncol(ctx$x_mat),
+      dimnames = list(NULL, colnames(ctx$x_mat))
+    )
+  }
   list(
     path_id = path_id, row = i, m = ms, coef = coef_mat, fit_status = statuses,
     active_signature = sigs, feasibility_slack = slack, guard_distance = guard

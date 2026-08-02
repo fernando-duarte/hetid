@@ -111,7 +111,7 @@ logvar_bounds_tau_entry <- function(entry) {
       k <- match(paper_tau_key(v$tau), names(res))
       col <- paste0(v$side, "_status")
       j <- match(v$coef, res[[k]]$schema$coef)
-      res[[k]]$schema[[col]][j] <- "unreliable"
+      res[[k]]$schema[[col]][j] <- PAPER_ENDPOINT_STATUS[["unreliable"]]
       cat(sprintf(
         "  nesting violation retained: %s %s side at tau = %.4g (gap %s); downgraded\n",
         v$coef,
@@ -131,10 +131,15 @@ logvar_bounds_tau_entry <- function(entry) {
   )
   if (!is.null(entry$b_seed) && !anyNA(entry$b_seed)) {
     pt <- est$fit_at_b(entry$b_seed)$coef
+    pt_status <- ifelse(
+      is.finite(pt),
+      PAPER_ENDPOINT_STATUS[["bounded"]],
+      PAPER_ENDPOINT_STATUS[["unreliable"]]
+    )
     plot_rows <- rbind(plot_rows, data.frame(
       tau = 0, coef = names(pt), lower = unname(pt), upper = unname(pt),
-      lower_status = ifelse(is.finite(pt), "bounded", "unreliable"),
-      upper_status = ifelse(is.finite(pt), "bounded", "unreliable"),
+      lower_status = pt_status,
+      upper_status = pt_status,
       source = "point", row.names = NULL
     ))
   }

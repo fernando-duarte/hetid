@@ -38,26 +38,35 @@ logvar_bounds_tau_strip <- function(rows, tau_star) {
 
 logvar_bounds_tau_frame <- function(rows, tau_star) {
   rows$category <- ifelse(
-    rows$lower_status == "bounded" & rows$upper_status == "bounded",
+    rows$lower_status == PAPER_ENDPOINT_STATUS[["bounded"]] &
+      rows$upper_status == PAPER_ENDPOINT_STATUS[["bounded"]],
     "two-sided",
     ifelse(
-      (rows$lower_status == "bounded" & rows$upper_status == "unbounded") |
-        (rows$upper_status == "bounded" & rows$lower_status == "unbounded"),
+      (rows$lower_status == PAPER_ENDPOINT_STATUS[["bounded"]] &
+        rows$upper_status == PAPER_ENDPOINT_STATUS[["unbounded"]]) |
+        (rows$upper_status == PAPER_ENDPOINT_STATUS[["bounded"]] &
+          rows$lower_status == PAPER_ENDPOINT_STATUS[["unbounded"]]),
       "one-sided",
       ifelse(
-        rows$lower_status == "unbounded" & rows$upper_status == "unbounded",
+        rows$lower_status == PAPER_ENDPOINT_STATUS[["unbounded"]] &
+          rows$upper_status == PAPER_ENDPOINT_STATUS[["unbounded"]],
         "unbounded", "unreliable"
       )
     )
   )
   rows$finite_side <- ifelse(
     rows$category == "one-sided",
-    ifelse(rows$lower_status == "bounded", rows$lower, rows$upper),
+    ifelse(
+      rows$lower_status == PAPER_ENDPOINT_STATUS[["bounded"]],
+      rows$lower, rows$upper
+    ),
     NA_real_
   )
   rows$direction <- ifelse(
     rows$category == "one-sided",
-    ifelse(rows$upper_status == "unbounded", "up", "down"),
+    ifelse(
+      rows$upper_status == PAPER_ENDPOINT_STATUS[["unbounded"]], "up", "down"
+    ),
     NA_character_
   )
   rows$coef <- factor(rows$coef, levels = unique(rows$coef))

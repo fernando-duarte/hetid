@@ -26,7 +26,12 @@ yield_vol <- acm_daily |>
     dplyr::across(dplyr::starts_with("y"), \(y) (y - dplyr::lag(y))^2)
   ) |>
   dplyr::summarise(
-    dplyr::across(dplyr::starts_with("y"), \(d2) sqrt(sum(d2, na.rm = TRUE))),
+    # sum(NA, na.rm = TRUE) is 0, which would enter the instrument as a
+    # legitimate extreme-low volatility instead of a missing quarter
+    dplyr::across(
+      dplyr::starts_with("y"),
+      \(d2) if (all(is.na(d2))) NA_real_ else sqrt(sum(d2, na.rm = TRUE))
+    ),
     .by = qtr
   ) |>
   dplyr::rename_with(\(x) paste0(x, PAPER_YIELD_VOL_SUFFIX), !qtr)
