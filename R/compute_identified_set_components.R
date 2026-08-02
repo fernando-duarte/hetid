@@ -81,6 +81,8 @@ compute_identified_set_components <- function(gamma, moments) {
     )
   )
 
+  assert_gamma_columns_nonzero(gamma, maturities)
+
   n_maturities <- length(maturities)
 
   L_i <- numeric(n_maturities) # nolint: object_name_linter.

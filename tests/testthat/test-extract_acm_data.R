@@ -355,6 +355,57 @@ test_that("filter_acm_date_range drops NA dates instead of fabricating rows", {
   expect_equal(filtered_end$y1, 1)
 })
 
+test_that("a length > 1 date bound is rejected", {
+  # recycling would otherwise filter rows on alternating parity, silently
+  expect_error(
+    extract_acm_data(
+      data_types = "yields", maturities = 12,
+      start_date = c("2000-01-01", "2010-01-01")
+    ),
+    "start_date must be a single date",
+    class = "hetid_error_bad_argument"
+  )
+  expect_error(
+    extract_acm_data(
+      data_types = "yields", maturities = 12,
+      end_date = c("2000-01-01", "2010-01-01")
+    ),
+    "end_date must be a single date",
+    class = "hetid_error_bad_argument"
+  )
+})
+
+test_that("a canonical period-end start_date keeps the period it names", {
+  # the trailing incomplete quarter warns; that path has its own test above
+  quarterly <- suppressWarnings(extract_acm_data(
+    data_types = "yields", maturities = 12,
+    frequency = "quarterly", start_date = "1962-03-31"
+  ))
+  expect_equal(quarterly$date[1], as.Date("1962-03-31"))
+
+  monthly <- extract_acm_data(
+    data_types = "yields", maturities = 12,
+    start_date = "1962-01-31"
+  )
+  expect_equal(monthly$date[1], as.Date("1962-01-31"))
+})
+
+test_that("filter_acm_date_range normalizes only the start bound", {
+  acm_data <- data.frame(
+    date = as.Date(c("2020-01-30", "2020-02-27")),
+    y1 = c(1, 2)
+  )
+
+  # the January label 2020-01-31 is >= the bound, so the row survives
+  from_label <- filter_acm_date_range(acm_data, as.Date("2020-01-31"), NULL)
+  expect_equal(nrow(from_label), 2)
+
+  # the end side compares the raw date, keeping real-time availability
+  to_raw <- filter_acm_date_range(acm_data, NULL, as.Date("2020-01-31"))
+  expect_equal(nrow(to_raw), 1)
+  expect_equal(to_raw$y1, 1)
+})
+
 test_that("sub-annual maturities extract from the bundled monthly grid", {
   data <- extract_acm_data(
     data_types = "yields",

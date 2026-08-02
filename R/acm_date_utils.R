@@ -37,7 +37,15 @@ parse_dates_c_locale <- function(x, format) {
 #' @param arg Argument name for the structured error
 #' @noRd
 coerce_optional_date <- function(x, arg) {
-  if (is.null(x) || inherits(x, "Date")) {
+  if (is.null(x)) {
+    return(x)
+  }
+  assert_bad_argument_ok(
+    length(x) == 1L,
+    paste0(arg, " must be a single date; got length ", length(x)),
+    arg = arg
+  )
+  if (inherits(x, "Date")) {
     return(x)
   }
   if (is.character(x)) {
@@ -141,14 +149,20 @@ normalize_acm_date_column <- function(acm_data) {
 #'
 #' @param acm_data ACM data frame
 #' @param start_date,end_date Optional inclusive Date bounds (\code{NULL} = unbounded)
+#' @param frequency Grain of the raw dates, used to build the period-end labels
 #' @return ACM data frame filtered to the bounds, NA-dated rows dropped
 #' @noRd
-filter_acm_date_range <- function(acm_data, start_date, end_date) {
+filter_acm_date_range <- function(acm_data, start_date, end_date,
+                                  frequency = "monthly") {
   # unparsed dates arrive as NA; drop them here so an unbounded call still
   # honours the warn-and-continue contract instead of aborting in to_period_end
   acm_data <- acm_data[!is.na(acm_data$date), , drop = FALSE]
   if (!is.null(start_date)) {
-    acm_data <- acm_data[which(acm_data$date >= start_date), , drop = FALSE]
+    # compare the period-end label the returned frame will carry, not the raw
+    # business-day date: the label is never earlier than the raw date, so a
+    # canonical period-end start_date would otherwise drop the period it names
+    period_labels <- to_period_end(acm_data$date, frequency)
+    acm_data <- acm_data[which(period_labels >= start_date), , drop = FALSE]
   }
   if (!is.null(end_date)) {
     acm_data <- acm_data[which(acm_data$date <= end_date), , drop = FALSE]

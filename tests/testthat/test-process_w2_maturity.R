@@ -121,6 +121,50 @@ test_that("too few complete observations warn and return NULL", {
   expect_null(result)
 })
 
+test_that("impose_b_zero skips a maturity with no usable observations", {
+  inputs <- make_w2_guard_inputs()
+  pcs_all_na <- inputs$pcs
+  pcs_all_na[, 1] <- NA_real_
+
+  expect_warning(
+    result <- process_w2_maturity(
+      12, inputs$yields, inputs$term_premia, pcs_all_na,
+      n_pcs = 4, impose_b_zero = TRUE
+    ),
+    "Insufficient data for maturity 12"
+  )
+  expect_null(result)
+})
+
+test_that("impose_b_zero skips a single-observation maturity", {
+  # one observation has an identically-zero centered variance, so the failure
+  # would otherwise surface later as a misleading heteroskedasticity message
+  inputs <- make_w2_guard_inputs()
+  pcs_one <- inputs$pcs
+  pcs_one[-5, 1] <- NA_real_
+
+  expect_warning(
+    result <- process_w2_maturity(
+      12, inputs$yields, inputs$term_premia, pcs_one,
+      n_pcs = 4, impose_b_zero = TRUE
+    ),
+    "Insufficient data for maturity 12"
+  )
+  expect_null(result)
+})
+
+test_that("impose_b_zero keeps a two-observation maturity", {
+  inputs <- make_w2_guard_inputs()
+  pcs_two <- inputs$pcs
+  pcs_two[-c(5, 6), 1] <- NA_real_
+
+  result <- process_w2_maturity(
+    12, inputs$yields, inputs$term_premia, pcs_two,
+    n_pcs = 4, impose_b_zero = TRUE
+  )
+  expect_length(result$residuals, 2)
+})
+
 test_that("well-formed inputs process without warnings", {
   inputs <- make_w2_guard_inputs()
 

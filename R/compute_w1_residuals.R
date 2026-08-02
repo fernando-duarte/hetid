@@ -130,6 +130,13 @@ compute_w1_residuals <- function(n_pcs = HETID_CONSTANTS$DEFAULT_N_PCS,
 
   if (is.null(exog)) {
     reg_matrix <- as.matrix(data[, get_pc_column_names(n_pcs), drop = FALSE])
+    # Type guard only, matching load_w2_pcs(): interior NA in the PCs is
+    # legitimate and is dropped later by complete.cases()
+    assert_bad_argument_ok(
+      is.numeric(reg_matrix),
+      "the pc columns of data must contain only numeric values",
+      arg = "data"
+    )
     n_reg <- n_pcs
   } else {
     assert_dimension_ok(

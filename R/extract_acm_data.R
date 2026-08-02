@@ -125,7 +125,8 @@ extract_acm_data <- function(data_types = c("yields", "term_premia"),
   acm_data <- filter_acm_date_range(
     acm_data,
     start_date,
-    end_date
+    end_date,
+    frequency = if (frequency == "daily") "daily" else "monthly"
   )
 
   col_mapping <- build_acm_col_mapping(data_types, maturities) # nolint: object_usage_linter

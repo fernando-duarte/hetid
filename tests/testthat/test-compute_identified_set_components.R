@@ -131,6 +131,25 @@ test_that("compute_identified_set_components returns correct structure", {
   }
 })
 
+test_that("an all-zero gamma column outside maturities is accepted", {
+  J <- 2
+  I <- 2
+
+  gamma <- matrix(c(1, 1, 0, 0), J, I) # column 2 is all zero
+  moments <- make_components_moments(
+    r_i_0 = matrix(c(2, 3), J, 1),
+    r_i_1 = list(matrix(c(1, 2, 3, 4), J, I)),
+    p_i_0 = matrix(c(1, 2), J, 1),
+    maturities = 1L, n_components = I
+  )
+
+  # the guard is scoped to constrained columns, matching as_lambda_list();
+  # column 2 is never read, so a stricter check would over-reject
+  expect_s3_class(
+    compute_identified_set_components(gamma, moments), "hetid_components"
+  )
+})
+
 test_that("compute_identified_set_components computes values correctly", {
   J <- 2
   I <- 2

@@ -76,6 +76,21 @@ test_that("constraint checker preserves the hin <= 0 sign convention", {
   expect_gt(check(theta_on + 1), 0)
 })
 
+test_that("rejects an all-zero constrained gamma column", {
+  inp <- make_system_inputs()
+  moments <- compute_identification_moments(inp$w1, inp$w2, inp$pcs)
+  gamma_zero <- inp$gamma
+  gamma_zero[, 2] <- 0
+
+  # a zero column zeroes L_i, V_i and Q_i, so the constraint becomes 0 <= 0
+  # and maturity 2 drops out silently, widening the identified set
+  expect_error(
+    build_quadratic_system(gamma_zero, inp$tau, moments),
+    "all-zero column\\(s\\) 2",
+    class = "hetid_error_bad_argument"
+  )
+})
+
 test_that("rejects gamma from a different system", {
   inp <- make_system_inputs()
   moments <- compute_identification_moments(inp$w1, inp$w2, inp$pcs)

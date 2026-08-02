@@ -14,6 +14,25 @@ test_that("compute_w1_residuals returns residuals from PC regression", {
   expect_lte(res_y1$r_squared, 1)
 })
 
+test_that("character pc columns are rejected, not fitted as dummies", {
+  # as.matrix() on a character column yields a character matrix, which lm()
+  # silently converts to factor dummies
+  set.seed(7)
+  n <- 40
+  data <- data.frame(
+    date = seq(as.Date("2000-03-31"), by = "quarter", length.out = n),
+    pc1 = rep(c("lo", "hi"), n / 2),
+    stringsAsFactors = FALSE
+  )
+  data[[HETID_CONSTANTS$CONSUMPTION_GROWTH_COL]] <- rnorm(n)
+
+  expect_error(
+    compute_w1_residuals(n_pcs = 1, data = data),
+    "only numeric values",
+    class = "hetid_error_bad_argument"
+  )
+})
+
 test_that("R-squared matches manual regression", {
   data("variables", package = "hetid", envir = environment())
 
