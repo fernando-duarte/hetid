@@ -92,7 +92,7 @@ w1 <- compute_w1_residuals(n_pcs = 4)
 w2 <- compute_w2_residuals(
   yields, tp,
   maturities = c(24, 60, 108),
-  n_pcs = 4, pcs = pcs
+  n_pcs = 4, pcs = pcs, dates = merged$date
 )
 }
 }

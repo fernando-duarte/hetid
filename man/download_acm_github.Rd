@@ -12,7 +12,9 @@ download_acm_github(quiet = FALSE, frequency = c("monthly", "daily"))
 \item{frequency}{"monthly" (default) or "daily" release asset}
 }
 \value{
-Invisibly returns the cached file path
+Invisibly returns the cached file path. A sidecar file at that path
+plus \code{.meta} is written alongside it, recording the sha256, source
+URL, and retrieval timestamp
 }
 \description{
 Download and Verify the ACM Data from the GitHub Release

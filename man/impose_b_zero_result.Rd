@@ -23,7 +23,8 @@ zero fitted values, and \code{r_squared} / \code{df_residual} both
 \description{
 Imposes \eqn{B = 0} literally: no regression is fit, the residual is the SDF
 innovation itself (already nonlinearly centered upstream), and the
-coefficient row is a full-width vector of structural zeros so the API
-contract \code{ncol(coefficients) == 1 + J + y1_lags} holds.
+coefficient row is a full-width vector of structural zeros, so that the
+matrix assembled from these rows in \code{compute_w2_residuals} keeps its
+\code{1 + J + y1_lags} column contract.
 }
 \keyword{internal}

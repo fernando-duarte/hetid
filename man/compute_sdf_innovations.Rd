@@ -55,13 +55,7 @@ exp(n_hat(i,t)) * (Delta_(t+1)p_(t+i)^(1) + 0.5*(Delta_(t+1)p_(t+i)^(1))^2)
 }
 }
 \details{
-The SDF innovation is the centered second-order approximation
-exp(n_hat(i,t)) * (Delta_(t+1)p_(t+i)^(1) + 0.5*(Delta_(t+1)p_(t+i)^(1))^2)
-\itemize{
-\item B_i
-}
-
-Where:
+In the formula above:
 \itemize{
 \item Delta_(t+1)p_(t+i)^(1) = n_hat(i-step,t+1) - n_hat(i,t)
 \item B_i = 0.5 * mean(exp(n_hat(i,t)) * (Delta_(t+1)p_(t+i)^(1))^2) is the
@@ -74,6 +68,9 @@ has exactly zero unconditional mean; the mean runs over the valid
 \note{
 The effective maximum for \code{i} is \code{MAX_MATURITY - step},
 because this function requires data at maturity \code{i + step}.
+
+The returned series is a news series, so its first row value is
+always \code{NA_real_}: there are T rows but only T-1 news observations.
 }
 \examples{
 # Extract ACM data - need maturities i-step, i, i+step (months)

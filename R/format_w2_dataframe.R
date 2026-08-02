@@ -5,12 +5,12 @@
 #' with one row per maturity-date observation.
 #'
 #' @param residuals_list Named list of residual vectors,
-#'   keyed by \code{"maturity_i"}.
+#'   keyed by \code{maturity_N}.
 #' @param fitted_list Named list of fitted-value vectors,
-#'   keyed by \code{"maturity_i"}.
+#'   keyed by \code{maturity_N}.
 #' @param dates_list Named list of per-maturity t+1 realization \code{Date}
 #'   vectors (the resolved index subset by each maturity's \code{kept_idx}),
-#'   keyed by \code{"maturity_i"} and parallel to \code{residuals_list}.
+#'   keyed by \code{maturity_N} and parallel to \code{residuals_list}.
 #' @param maturities Integer vector of maturities processed.
 #'
 #' @return A data frame with columns \code{date},

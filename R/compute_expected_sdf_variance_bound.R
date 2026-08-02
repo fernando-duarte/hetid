@@ -121,9 +121,8 @@ compute_expected_sdf_variance_bound <- function(yields, term_premia, i,
   # q arm: Inf when q overflows on the shared mask (guarded, never dropped)
   var_q <- guarded_centered_var(components$q)
 
-  # Component arm (1/4)*C*K. Either factor can overflow -- or 0 * Inf can
-  # produce NaN -- only at astronomically large |n_hat|; a non-finite
-  # component loses the min, so failure is conservative, never sharp
+  # component arm (1/4)*C*K: either factor can overflow, or 0 * Inf can give
+  # NaN, only at astronomically large |n_hat|
   component <- 0.25 * max(exp(2 * components$n_hat)) * mean(components$u^4)
   if (!is.finite(component)) {
     component <- Inf

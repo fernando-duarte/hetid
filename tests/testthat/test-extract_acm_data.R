@@ -268,7 +268,6 @@ test_that("extract_acm_data error handling", {
     acm_data_available = function(...) FALSE
   )
 
-  # Should error when data not available and auto_download = FALSE
   expect_error(
     extract_acm_data(auto_download = FALSE),
     "Term premia data not found",

@@ -148,11 +148,9 @@ test_that("compute_matrix_statistics handles zero residuals correctly", {
 
   result <- compute_matrix_statistics(w1, w2)
 
-  # S_i^(1) should be all zeros when w1 is zero
   expect_equal(unname(result$s_i_1[[1]]), rep(0, 2))
   expect_equal(unname(result$s_i_1[[2]]), rep(0, 2))
 
-  # S_i^(2) should still be non-zero
   expect_false(all(result$s_i_2[[1]] == 0))
 
   w1 <- rnorm(10)

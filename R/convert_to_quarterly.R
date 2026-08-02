@@ -21,7 +21,9 @@
 #'   end of the terminal quarter month. If FALSE, incomplete quarters
 #'   are dropped.
 #'
-#' @return Data frame with quarterly observations
+#' @return Data frame with quarterly observations, or a zero-row data frame
+#'   when the input is empty, when every date is \code{NA}, or when every
+#'   quarter is dropped as incomplete
 #' @keywords internal
 convert_to_quarterly <- function(
   data,

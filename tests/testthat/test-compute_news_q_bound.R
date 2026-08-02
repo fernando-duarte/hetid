@@ -4,7 +4,7 @@
 #
 # Fixture convention: with y24 = y36 = tp* = 0 and step = 12, n_hat(24) = 0,
 # n_hat(12) = y12/100, and the realized log price is x_t = -y12[t+s]/100, so
-# every leg is hand-computable from the y12 vector alone.
+# every leg is hand-computable from the y12 vector alone
 
 test_that("compute_news_q_bound matches the manual Minkowski formula at s = 2", {
   # i = 2 * step exercises a multi-period lead with nonlinear row values, so a
@@ -27,7 +27,7 @@ test_that("compute_news_q_bound matches the manual Minkowski formula at s = 2", 
 })
 
 test_that("the i = step boundary uses the realized step-bond leg (q1 leg exact)", {
-  # At s = 1 the led forecast IS the realized log step-bond price
+  # At s = 1 the led forecast is exactly the realized log step-bond price
   # (compute_n_hat_previous with TP^(step) := 0), so u1 = 0 identically and
   # the q1 sigma contributes exactly nothing
   y12_pct <- c(2, 5, 1, 7, 4, 6)

@@ -144,7 +144,6 @@ get_acm_data_path <- function(source = c("auto", "github", "nyfed"),
   source <- match.arg(source)
   frequency <- match.arg(frequency)
   filename <- acm_asset_filename(source, frequency)
-  # Only the monthly GitHub asset ships a bundled read-only fallback
   if (source == "nyfed" || frequency == "daily") {
     return(file.path(get_user_data_dir(), filename))
   }

@@ -25,7 +25,7 @@
 #' @export
 #'
 #' @examples
-#' # Load the bundled data
+#' # Load the term premia (downloaded copy if present, else bundled)
 #' term_premia <- load_term_premia()
 #' head(term_premia)
 #'

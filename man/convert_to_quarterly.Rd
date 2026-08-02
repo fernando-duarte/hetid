@@ -19,7 +19,9 @@ end of the terminal quarter month. If FALSE, incomplete quarters
 are dropped.}
 }
 \value{
-Data frame with quarterly observations
+Data frame with quarterly observations, or a zero-row data frame
+when the input is empty, when every date is \code{NA}, or when every
+quarter is dropped as incomplete
 }
 \description{
 Internal function to convert monthly data to quarterly by keeping

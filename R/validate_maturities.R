@@ -95,6 +95,10 @@ assert_news_contract_ok <- function(maturities, step, arg,
 #' Single source of the guard shared by compute_k_hat / compute_k2_hat,
 #' whose news-period arithmetic shifts whole steps; \code{reason} adapts the
 #' trailing clause to each call site. Stops with hetid_error_bad_argument.
+#'
+#' @param i Maturity index to check.
+#' @param step Step size the index must be a positive multiple of.
+#' @param reason Trailing clause naming why the caller needs the multiple.
 #' @noRd
 validate_step_multiple <- function(i, step, reason) {
   assert_bad_argument_ok(

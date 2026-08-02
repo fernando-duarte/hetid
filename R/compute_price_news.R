@@ -20,6 +20,9 @@
 #' @note The effective maximum for \code{i} is \code{MAX_MATURITY - step},
 #'   because this function requires data at maturity \code{i + step}.
 #'
+#' @note The returned series is a news series, so its first row value is
+#'   always \code{NA_real_}: there are T rows but only T-1 news observations.
+#'
 #' @export
 #'
 #' @examples

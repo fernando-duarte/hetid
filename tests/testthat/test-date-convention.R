@@ -115,7 +115,6 @@ test_that("presence + filtration: W1/W2 residuals carry their t+1 realization da
     expect_true(all(w2$dates[[k]] %in% merged$date[-1])) # lead (t+1) dates only
   }
 
-  # missing dates is an error
   expect_error(
     compute_w2_residuals(
       merged[, paste0("y", mats)], merged[, paste0("tp", mats)],

@@ -87,7 +87,7 @@ n_hat_series <- function(yields, term_premia, i,
   m_i <- i / HETID_CONSTANTS$MATURITY_UNITS_PER_YEAR
   m_next <- (i + step) / HETID_CONSTANTS$MATURITY_UNITS_PER_YEAR
 
-  # ACM data is in percentage points; divide by PERCENT_TO_DECIMAL after
+  # ACM data is in percentage points
   n_hat <- m_i * y_i - m_next * y_next + m_next * tp_next - m_i * tp_i
   n_hat / HETID_CONSTANTS$PERCENT_TO_DECIMAL
 }

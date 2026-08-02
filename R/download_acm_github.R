@@ -62,7 +62,9 @@ acm_release_expected_sha256 <- function(quiet = FALSE, filename) {
 #'
 #' @param quiet Logical, suppress progress output
 #' @param frequency "monthly" (default) or "daily" release asset
-#' @return Invisibly returns the cached file path
+#' @return Invisibly returns the cached file path. A sidecar file at that path
+#'   plus \code{.meta} is written alongside it, recording the sha256, source
+#'   URL, and retrieval timestamp
 #' @keywords internal
 download_acm_github <- function(quiet = FALSE,
                                 frequency = c("monthly", "daily")) {

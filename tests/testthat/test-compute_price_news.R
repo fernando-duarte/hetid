@@ -145,14 +145,12 @@ test_that("compute_price_news requires a valid Date vector", {
     compute_price_news(test_env$yields, test_env$term_premia, i = 60),
     class = "hetid_error_bad_argument"
   )
-  # Non-Date dates are rejected
   expect_error(
     compute_price_news(test_env$yields, test_env$term_premia,
       i = 60, dates = seq_len(nrow(test_env$yields))
     ),
     class = "hetid_error_bad_argument"
   )
-  # Wrong-length dates are rejected
   expect_error(
     compute_price_news(test_env$yields, test_env$term_premia,
       i = 60, dates = test_env$data$date[-1]

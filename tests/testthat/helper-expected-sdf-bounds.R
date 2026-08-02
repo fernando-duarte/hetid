@@ -1,7 +1,7 @@
 # Manual reconstructions of the expected-SDF bound ingredients, shared by the
 # contract and edge test files for compute_expected_sdf_variance_bound (and by
 # the news q-bound tests). All mirror the implementation's construction: the
-# paired set T_i, the is.finite(gap) mask, and divisor-N moments.
+# paired set T_i, the is.finite(gap) mask, and divisor-N moments
 
 # Gap series e^{-y^(1)_{t+s}} - e^{n_hat(i,t)} over T_i, finite-masked
 gap_series <- function(yields, term_premia, i,

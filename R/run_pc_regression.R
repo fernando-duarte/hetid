@@ -38,6 +38,14 @@ run_pc_regression <- function(y, pcs, n_pcs) {
     make.names(nms, unique = TRUE)
   }
   colnames(pcs_clean) <- pc_names
+  # a regressor named y collides with the response: data.frame() renames the
+  # regressor and model.matrix drops it, silently fitting a smaller model
+  if ("y" %in% pc_names) {
+    stop_bad_argument(
+      "pcs must not contain a column named \"y\": it collides with the response",
+      arg = "pcs"
+    )
+  }
   formula_str <- paste(
     "y ~", paste(pc_names, collapse = " + ")
   )

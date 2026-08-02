@@ -93,8 +93,7 @@ compute_news_q_bound <- function(yields, term_premia, i,
   realized_log <- -m_step * y_step[paired + horizon_periods] /
     HETID_CONSTANTS$PERCENT_TO_DECIMAL
 
-  # mask on the primitives, never on the transformed legs: an overflowing
-  # leg keeps its row and turns its variance arm Inf instead
+  # an overflowing leg keeps its row and turns its variance arm Inf instead
   mask <- is.finite(n_hat_0) & is.finite(n_hat_1) & is.finite(realized_log)
   if (!any(mask)) {
     return(NA_real_)
@@ -105,8 +104,7 @@ compute_news_q_bound <- function(yields, term_premia, i,
 
   q_0 <- q_kernel(n_hat_0, realized_log - n_hat_0)
   q_1 <- q_kernel(n_hat_1, realized_log - n_hat_1)
-  # third-order news gap on the news step d (= delta_p over the paired rows).
-  # For tiny |d| the subtraction reaches the floating-point floor, harmless
+  # for tiny |d| the subtraction reaches the floating-point floor, harmless
   # because sigma(g) is added to two much larger terms
   d <- n_hat_1 - n_hat_0
   g <- exp(n_hat_0) * (expm1(d) - d - d^2 / 2)

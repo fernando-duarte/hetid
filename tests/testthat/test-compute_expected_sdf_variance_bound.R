@@ -2,7 +2,7 @@
 # reported bound is min{(1/4)*C*K, var_N(q)} on the estimator's paired mask.
 # Edge and boundary cases live in the _edges sibling; the manual
 # reconstructions (gap_series, q_series, component_arm, var_n,
-# esdf_bound_manual) are in helper-expected-sdf-bounds.R.
+# esdf_bound_manual) are in helper-expected-sdf-bounds.R
 
 test_that("compute_expected_sdf_variance_bound returns a single non-negative value", {
   test_env <- setup_standard_test_env()

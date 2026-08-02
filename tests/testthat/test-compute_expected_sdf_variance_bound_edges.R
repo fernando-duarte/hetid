@@ -1,7 +1,7 @@
 # Edge and boundary tests for compute_expected_sdf_variance_bound: horizon
 # zero, masking, overflow, degenerate data, and validation errors. The
 # contract/formula tests live in the non-_edges sibling; shared manual
-# reconstructions come from helper-expected-sdf-bounds.R.
+# reconstructions come from helper-expected-sdf-bounds.R
 
 test_that("compute_expected_sdf_variance_bound is identically 0 at i = 0", {
   # Horizon 0 is exact (no approximation), so the error-variance bound is 0,
@@ -125,7 +125,7 @@ test_that("the bound drops an Inf realized leg (is.finite, not just NA)", {
 
 test_that("both arms overflowing on a kept row gives Inf, not NA", {
   # y12 = +Inf at one interior date leaves gap = -e^{n_hat} finite, so the row
-  # is KEPT, but u = -Inf makes q = +Inf (q arm -> Inf) and mean(u^4) = Inf
+  # is kept, but u = -Inf makes q = +Inf (q arm -> Inf) and mean(u^4) = Inf
   # makes the component arm Inf too: the documented contract is Inf on a
   # nonempty sample, never NA and never a silent row drop
   y12_pct <- c(1, 2, 3, 4, 5, 6)

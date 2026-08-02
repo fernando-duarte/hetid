@@ -56,6 +56,20 @@ test_that("run_pc_regression errors on a rank-deficient (collinear) design", {
   )
 })
 
+test_that("run_pc_regression rejects a regressor column named y", {
+  # data.frame() renames the colliding regressor and model.matrix drops it, so
+  # the fit silently omits a caller-supplied column and the rank guard is blind
+  set.seed(1)
+  n <- 50
+  pcs <- cbind(y = rnorm(n), pc2 = rnorm(n))
+  y <- rnorm(n)
+  expect_error(
+    run_pc_regression(y, pcs, n_pcs = 2),
+    "collides with the response",
+    class = "hetid_error_bad_argument"
+  )
+})
+
 test_that("compute_time_series_news errors on length mismatch", {
   expect_error(
     compute_time_series_news(c(1, 2, 3), c(4, 5)),

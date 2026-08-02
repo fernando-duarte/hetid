@@ -84,7 +84,6 @@ test_that("compute_scalar_statistics handles zero residuals", {
 
   result <- compute_scalar_statistics(w1, w2)
 
-  # S_i^(0) should be 0 when w1 is all zeros
   expect_equal(unname(result$s_i_0[1]), 0)
   expect_equal(unname(result$s_i_0[2]), 0)
 })

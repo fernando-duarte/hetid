@@ -28,7 +28,6 @@ test_that("A_i matrices are symmetric", {
       isSymmetric(A_i_mat, tol = 1e-10),
       info = paste("A_i for maturity", i, "not symmetric")
     )
-    # Element-wise transpose equality
     expect_equal(
       A_i_mat, t(A_i_mat),
       tolerance = 1e-10,

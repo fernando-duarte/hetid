@@ -1,10 +1,10 @@
 # Freeze the pre-refactor quadratic outputs on synthetic seeded data.
-# Run ONCE from the package root BEFORE the kernel extraction lands:
+# Run once from the package root before the kernel extraction lands:
 #   Rscript tests/testthat/fixtures/make-quadratic-kernel-fixture.R
 # The committed RDS is the bitwise oracle for test-constraint_kernel.R.
 # Generated at pre-refactor commit f0381fc on aarch64-apple-darwin
 # (long.double FALSE); regenerating from any later commit makes the
-# oracle tautological -- do not rerun this script.
+# oracle tautological -- do not rerun this script
 set.seed(42)
 n_obs <- 100
 i_dim <- 3

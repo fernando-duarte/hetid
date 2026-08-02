@@ -13,11 +13,7 @@
 #' @template return-dated-dataframe
 #'
 #' @details
-#' The SDF innovation is the centered second-order approximation
-#' exp(n_hat(i,t)) * (Delta_(t+1)p_(t+i)^(1) + 0.5*(Delta_(t+1)p_(t+i)^(1))^2)
-#' - B_i
-#'
-#' Where:
+#' In the formula above:
 #' - Delta_(t+1)p_(t+i)^(1) = n_hat(i-step,t+1) - n_hat(i,t)
 #' - B_i = 0.5 * mean(exp(n_hat(i,t)) * (Delta_(t+1)p_(t+i)^(1))^2) is the
 #'   constant centering term, an exponential-weighted sample mean
@@ -27,6 +23,9 @@
 #'
 #' @note The effective maximum for \code{i} is \code{MAX_MATURITY - step},
 #'   because this function requires data at maturity \code{i + step}.
+#'
+#' @note The returned series is a news series, so its first row value is
+#'   always \code{NA_real_}: there are T rows but only T-1 news observations.
 #'
 #' @export
 #'

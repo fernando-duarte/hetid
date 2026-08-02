@@ -85,7 +85,7 @@ assert_numeric_finite_values <- function(x, arg) {
 #'
 #' @param pcs Matrix or data frame of principal components (T x J)
 #' @param t_obs Number of observations in w1/w2
-#' @return pcs coerced to a numeric matrix
+#' @return The \code{pcs} input coerced to a numeric matrix
 #' @noRd
 validate_pcs_input <- function(pcs, t_obs) {
   assert_tabular(pcs, "pcs")

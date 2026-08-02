@@ -87,10 +87,8 @@ compute_expected_sdf_gap <- function(yields, term_premia, i,
   u <- realized_log - n_hat_paired
   q_gap <- q_kernel(n_hat_paired, u)
 
-  # is.finite(gap) is the ONE mask for every returned series: each gap leg is
-  # exp(), so the difference is non-finite iff a leg is, and the bound arms
-  # must share the estimator's sample (overflow safety lives in the guarded
-  # variance arms, never in extra row-dropping)
+  # each gap leg is exp(), so the difference is non-finite iff a leg is;
+  # overflow safety lives in the guarded variance arms, not in row-dropping
   mask <- is.finite(gap)
   list(
     exp_n_hat = exp_n_hat,

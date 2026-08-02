@@ -91,8 +91,9 @@ process_w2_maturity <- function(i, yields_df, term_premia_df, pcs, n_pcs,
 #'
 #' Imposes \eqn{B = 0} literally: no regression is fit, the residual is the SDF
 #' innovation itself (already nonlinearly centered upstream), and the
-#' coefficient row is a full-width vector of structural zeros so the API
-#' contract \code{ncol(coefficients) == 1 + J + y1_lags} holds.
+#' coefficient row is a full-width vector of structural zeros, so that the
+#' matrix assembled from these rows in \code{compute_w2_residuals} keeps its
+#' \code{1 + J + y1_lags} column contract.
 #'
 #' @param sdf_innov News-row SDF innovations (length \code{n_align}).
 #' @param reg_lagged News-row regressor matrix (for names / fitted length).

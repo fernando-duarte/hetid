@@ -261,7 +261,6 @@ test_that("print method summarizes both axes", {
   expect_true(any(grepl("hetid_components", printed)))
   expect_true(any(grepl("components \\(theta axis\\): 4", printed)))
   expect_true(any(grepl("maturities \\(constraint axis\\): 2, 4", printed)))
-  # print returns its argument invisibly
   expect_identical(returned, components)
 })
 
