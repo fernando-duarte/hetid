@@ -3049,9 +3049,9 @@ not newly observed results in this manual.
 
 A reproduction is complete only after it constructs every required reported output.
 
-The reproduction emits exhibit bodies, not finished exhibits. Of the five published tables, only the
+The reproduction emits exhibit bodies, not finished exhibits. Of the six published tables, only the
 conditional-scale estimator table pages carry their own title, cross-reference label, and note; the
-other four table bodies and the three descriptive tables are emitted without any of the three, and no
+other five table bodies and the three descriptive tables are emitted without any of the three, and no
 figure carries a title. The document that displays an exhibit supplies whatever the reproduction
 does not.
 
@@ -3098,8 +3098,12 @@ is one minus the ratio of the residual sum of squares divided by \(N_{\mathrm{pm
 sum of squares divided by \(N_{\mathrm{pm}}-1\), where seven is the number of estimated
 coefficients. The preliminary mean regression is not a substitute for the mean least-squares
 benchmark's four-lag covariance calculation.
-\item Produce five published tables. The table identified by \nolinkurl{hetero_tests} reports the
-mean-equation identification tests and checks. The table identified by
+\item Produce six published tables. The table identified by \nolinkurl{hetero_tests} reports the
+mean-equation identification tests and checks, conditioning on the SDF-news principal components.
+The table identified by \nolinkurl{hetero_tests_w2} reports the same tests and checks conditioning
+instead on the mean-equation residuals, which are the objects whose conditional second moments carry
+the identifying variation; the two coincide only when the orthogonality null is imposed. The table
+identified by
 \nolinkurl{structural_var_inference} reports combined mean-equation and conditional-scale inference.
 The table identified by \nolinkurl{structural_var_estimators} combines mean-equation and
 conditional-scale results for the conditional-scale estimators. The table identified by
@@ -3280,9 +3284,10 @@ current configuration. Construct this exact inventory:
 \item In \nolinkurl{tables}, create each named typesetting source, a second source obtained by adding
 \nolinkurl{_standalone} before the extension, and a rendered document with the same
 \nolinkurl{_standalone} basename and extension \nolinkurl{.pdf}. Apply this rule to
-\nolinkurl{hetero_tests.tex}, \nolinkurl{structural_var_inference.tex},
+\nolinkurl{hetero_tests.tex}, \nolinkurl{hetero_tests_w2.tex},
+\nolinkurl{structural_var_inference.tex},
 \nolinkurl{structural_var_estimators.tex}, \nolinkurl{var_share.tex}, and
-\nolinkurl{variance_bounds_summary.tex}. These five triples and the preceding three files give 18
+\nolinkurl{variance_bounds_summary.tex}. These six triples and the preceding three files give 21
 table files.
 
 \item In \nolinkurl{reports}, create \nolinkurl{descriptive_stats.tex},
@@ -5124,11 +5129,11 @@ enabled projected moment-compatibility calculation.
 
 \section{Output consequences of modifications}
 
-The \emph{complete output inventory} contains 84 locations: 77 locations required regardless of
+The \emph{complete output inventory} contains 87 locations: 80 locations required regardless of
 the LAD and residual-dynamics decisions, three LAD
-locations, and four dynamic-volatility locations. The current output inventory contains 80 files
+locations, and four dynamic-volatility locations. The current output inventory contains 83 files
 because LAD runs and the dynamic-volatility calculation is unavailable. A declined or unanswered LAD
-decision reduces the required output inventory to the 77 unconditional files.
+decision reduces the required output inventory to the 80 unconditional files.
 
 The four dynamic-volatility locations are reserved but unavailable. They are
 \nolinkurl{diagnostics/log_var_eq_egarch_x.csv},

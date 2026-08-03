@@ -147,9 +147,9 @@ The current source has the following main contracts:
   \item The bounds-by-relaxation-value grid is tail-refined and nonuniform. The
     joint-null witness and joint-generalized-method-of-moments (GMM) replication
     products are diagnostics; they add no test or identifying restriction.
-  \item The artifact manifest has 84 artifact records. Final
+  \item The artifact manifest has 87 artifact records. Final
     conditional-route reconciliation covers the seven conditional records and
-    does not certify the 77 required files.
+    does not certify the 80 required files.
 \end{itemize}
 
 \section{How to read this document}
@@ -2643,7 +2643,7 @@ reconciler writes the record
 through exact object RDS readback.
 
 Reconciliation covers the seven conditional artifact records; a separate
-acceptance check must establish existence and freshness for the 77 required
+acceptance check must establish existence and freshness for the 80 required
 records. Final LaTeX-sidecar cleanup is the runner's last statement, so a cleanup
 failure may occur after every scientific artifact producer and the
 conditional-route state record write.
@@ -2657,9 +2657,9 @@ acceptance.
 
 \subsection{Manifest shape and path rule}
 
-The expanded artifact manifest contains 84 unique artifact records: 50 literal
+The expanded artifact manifest contains 87 unique artifact records: 53 literal
 records, 18 fitted-volatility-sweep records, and 16 generated mean-region
-records. Of these, 77 are \code{required}, three \code{conditional_lad}, and four
+records. Of these, 80 are \code{required}, three \code{conditional_lad}, and four
 \code{conditional_egarch}; together they occupy seven output groups. Every
 current artifact path, stored in \code{new_path}, follows
 \begin{center}
@@ -2671,10 +2671,10 @@ The retained \code{old_path} stores the legacy flat
 \begin{table}[htbp]
 \centering
 \small
-\caption{Counts for all 84 expanded artifact-manifest records by output group.
+\caption{Counts for all 87 expanded artifact-manifest records by output group.
 LAD means least absolute deviations. EGARCH-X means exponential generalized
 autoregressive conditional heteroskedasticity with exogenous regressors. The
-manifest contains 77 required records, three records conditional on LAD, and
+manifest contains 80 required records, three records conditional on LAD, and
 four records conditional on EGARCH-X. Counts describe expected records, not
 current file presence.
 \label{tab:artifact-groups}}
@@ -2683,20 +2683,20 @@ current file presence.
 Group & Records\\
 \midrule
 \file{tables/descriptive_statistics} & 3\\
-\file{tables} & 15\\
+\file{tables} & 18\\
 \file{figures} & 46\\
 \file{figures/descriptive_statistics} & 1\\
 \file{reports} & 3\\
 \file{diagnostics} & 11\\
 \file{state} & 5\\
 \midrule
-Total & 84\\
+Total & 87\\
 \bottomrule
 \end{tabular}
 \end{table}
 
 Table~\ref{tab:artifact-groups} shows that \file{figures} is the largest output group,
-with 46 of the 84 artifact records.
+with 46 of the 87 artifact records.
 
 Artifact lifecycle status is not execution reachability. The exact crosswalk is:
 \begin{itemize}
@@ -2704,7 +2704,7 @@ Artifact lifecycle status is not execution reachability. The exact crosswalk is:
     conditional route. Its producer stage is always attempted if earlier stages
     succeed. The fitted-volatility sweep stops if no configured value survives;
     with one or more surviving values, runtime filtering can still omit required
-    sweep paths. No final gate checks all 77 required paths.
+    sweep paths. No final gate checks all 80 required paths.
   \item \code{conditional_lad} means the file must exist exactly when the LAD
     producer ran. LAD is source-selected subject to exact
     \code{quantreg} 6.1; a declined or unanswered record selects absence.
@@ -2750,6 +2750,9 @@ ID & Group/basename & Producer under \file{scripts-paper/} & Status\\
 \code{heteroskedasticity_table} & \file{tables/hetero_tests.tex} & \file{mean_equation/diagnostics/heteroskedasticity/render_table.R} & R\\
 \code{heteroskedasticity_standalone_tex} & \file{tables/hetero_tests_standalone.tex} & same heteroskedasticity producer & R\\
 \code{heteroskedasticity_standalone_pdf} & \file{tables/hetero_tests_standalone.pdf} & same heteroskedasticity producer & R\\
+\code{heteroskedasticity_w2_table} & \file{tables/hetero_tests_w2.tex} & same heteroskedasticity producer & R\\
+\code{heteroskedasticity_w2_standalone_tex} & \file{tables/hetero_tests_w2_standalone.tex} & same heteroskedasticity producer & R\\
+\code{heteroskedasticity_w2_standalone_pdf} & \file{tables/hetero_tests_w2_standalone.pdf} & same heteroskedasticity producer & R\\
 \code{structural_var_inference_table} & \file{tables/structural_var_inference.tex} & \file{log_variance/tables/render_combined_inference_table.R} & R\\
 \code{structural_var_inference_standalone_tex} & \file{tables/structural_var_inference_standalone.tex} & same combined-table producer & R\\
 \code{structural_var_inference_standalone_pdf} & \file{tables/structural_var_inference_standalone.pdf} & same combined-table producer & R\\
@@ -2801,11 +2804,11 @@ ID & Group/basename & Producer under \file{scripts-paper/} & Status\\
 
 Table~\ref{tab:literal-artifacts} shows that lifecycle attaches to records,
 allowing required and conditional files to share an output group. The status
-tally over these 50 records is 43 \code{required}, three \code{conditional_lad},
+tally over these 53 records is 46 \code{required}, three \code{conditional_lad},
 and four \code{conditional_egarch}; the 34 generated records are all
-\code{required}, which is how the manifest reaches 77 required of 84.
+\code{required}, which is how the manifest reaches 80 required of 87.
 
-Five of the 84 records have no producer that resolves them. Four are the EGARCH
+Five of the 87 records have no producer that resolves them. Four are the EGARCH
 records. Their producer field names a directory rather than a file, and
 Section~\ref{sec:outside-runner} marks them \emph{not implemented}. Three of those four
 carry no lookup coordinate at all. The fourth, \code{egarch_bounds_figure}, does
@@ -2928,10 +2931,10 @@ These are artifact lookup families, not estimand classes. The LAD variant under
 envelope, whereas the variants for PPML and the Harvey estimator are fitted
 conditional-residual-volatility envelopes.
 An artifact lookup family/variant query must resolve exactly one artifact record.
-The other 58 artifact records have blank family and variant fields and are
+The other 61 artifact records have blank family and variant fields and are
 addressed by artifact ID.
 
-The LaTeX publication registry contains five triples. Each triple binds a
+The LaTeX publication registry contains six triples. Each triple binds a
 fragment, standalone TeX source, and standalone PDF.
 \begin{table}[htbp]
 \centering
@@ -2986,7 +2989,7 @@ readback, and projection checks establish only their named properties.
 
 The current topology checks use expected paths to reject extras and skip the
 output-tree block when the output root is absent. A separate check must establish
-existence for all 77 required paths. Final conditional-route reconciliation may
+existence for all 80 required paths. Final conditional-route reconciliation may
 record \code{requested} without \code{ran}. Published-table projection comparison
 drops TeX files without projected numeric tokens and ignores PDFs, SVGs, CSVs,
 RDS files, Markdown files, the descriptive wrapper, and all other non-table
