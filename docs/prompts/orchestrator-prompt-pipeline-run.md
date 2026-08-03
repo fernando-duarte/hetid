@@ -976,7 +976,10 @@ dispatch it:
   change Git state in any way: no add, commit, push, checkout, switch, branch, stash, reset,
   restore, rebase, or merge. It works on whatever branch the run worktree already has checked out
   and must not switch away from it.
-- Its own nested agents, if it spawns any, remain read-only under the ordinary protocol.
+- **Its own nested agents write to their private scratch directories and nowhere else** — never the
+  graph, never a tracked file, never Git state. Do not dispatch them as strictly read-only: its
+  prompt has them return fragments *through disk*, and an agent that cannot write returns nothing
+  while reporting success. Scratch-only is the boundary, not no-writes-at-all.
 - It still owes a durable `RUN/scratch/agents/<agent-id>/response.md`, checkpointed as it goes, in
   addition to whatever report its own prompt requires.
 

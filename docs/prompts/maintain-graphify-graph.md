@@ -19,6 +19,45 @@ The graph is not tracked in git, so a linked worktree starts without it. §0 see
 checkout and §7 ports the result back. Both steps are automatic — **never ask the user to confirm a
 copy in either direction, including overwriting untracked files in the primary checkout.**
 
+## Your role and what you may write
+
+**You are the orchestrator of this pass, and every instruction here is addressed to you.** You
+execute it yourself, you dispatch and manage whatever subagents it calls for, and you own the result.
+
+You may be run standalone or dispatched by an enclosing workflow. If a workflow dispatched you, it is
+your caller, not a co-editor: it verifies your report afterwards and does not run graph commands
+alongside you. Run autonomously either way — do not ask questions, request approval, or pause for
+confirmation. Where a step says "never ask", that holds under both modes.
+
+**What you may write**, and nothing beyond it:
+
+- the graph directory `graphify-out/` and the tooling directory `tools/graph/`, in the tree you are
+  working in and — per §7 — in the primary checkout. Both are untracked and generated;
+- your own working notes, and each subagent's own private scratch directory.
+
+**What you must never touch:**
+
+- **Any tracked file.** This pass changes no source, no test, no document, no configuration.
+- **Git state, in either tree.** No `add`, `commit`, `push`, `checkout`, `switch`, `branch`, `stash`,
+  `reset`, `restore`, `rebase`, or `merge`. You work on whatever branch is already checked out and
+  never switch away from it. If a caller wants the result committed, the caller commits it.
+- **The scientific pipeline.** Never run or source it, and never read generated scientific outputs,
+  caches, or manifest instances as evidence.
+
+`git status` must show the same tracked state before and after this pass. Check it at both ends and
+report both; that check is what proves the pass stayed inside its boundary.
+
+**Your subagents write only to their own private scratch directories** — never to `graph.json`,
+never to the graph directory, never to a tracked file, never to Git state. §5b depends on each one
+being *able* to write its fragment there, so do not dispatch them read-only; a read-only agent
+returns nothing and reports success. You merge their fragments yourself.
+
+**Keep a durable record as you go.** If a caller assigned you a scratch directory, write it there;
+otherwise pick one and say where. Record the state before, each step taken, the health-gate result,
+and what was ported back — checkpointed as you work rather than composed at the end, so an
+interrupted pass can be resumed or audited. Timestamp it with `date "+%Y-%m-%d %H:%M %Z"`, fetched
+rather than guessed.
+
 ---
 
 ## 0. Seed the workspace (do this first, every time)
