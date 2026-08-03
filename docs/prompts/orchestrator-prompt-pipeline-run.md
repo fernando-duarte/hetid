@@ -189,15 +189,18 @@ and [How we built our multi-agent research system](https://www.anthropic.com/eng
 
 #### Durable read-only worker protocol
 
-Apply this protocol to every subagent, including nested subagents, except the two Stage-O
+Apply this protocol to every subagent, including nested subagents, except the Stage-K graph
+maintenance agent and the two Stage-O
 documentation sub-orchestrators identified below. It overrides any skill or stage instruction
 that would otherwise let a worker edit the checkout or return its findings only in its final
 message.
 
-- **The orchestrator is the sole repository writer outside the Stage-O exception.** The assigned
-  `RUN/scratch/agents/<agent-id>/` directory is a worker's only write exception. A subagent must
-  not create, edit, move, delete, stage, commit, or generate anything else in the checkout,
-  whether the path is tracked, untracked, ignored, or under `graphify-out/`. It must not change
+- **The orchestrator is the sole repository writer outside the two named exceptions** (Stage K's
+  graph maintenance agent, and Stage O's two documentation sub-orchestrators). The assigned
+  `RUN/scratch/agents/<agent-id>/` directory is every other worker's only write exception. A
+  subagent must not create, edit, move, delete, stage, commit, or generate anything else in the
+  checkout, whether the path is tracked, untracked, or ignored — a git-ignored path is not an
+  invitation, and only the Stage-K agent may write the graph and its tooling. It must not change
   Git state, install hooks, run a formatter in place, regenerate documentation, or run a
   pipeline against the live output tree. It must not execute any command that may write outside
   its private scratchpad. It may inspect the repository and run commands proved read-only. If
@@ -398,10 +401,11 @@ defects (a re-flag is itself a finding to suppress):
   messages, maturity grids, numerical parameters, calendar values, date formats, column names,
   data identity, and column-format patterns inside `HETID_CONSTANTS` are intentional navigation
   aids, not banner dividers.
-- **The graphify graph is not to be updated, rebuilt, diagnosed, or otherwise written to**, and no
-  graphify file is to be modified — see Stage K. The user maintains it outside this workflow. Its
-  being behind the working tree is expected and is not a defect to remediate, and "refresh the
-  stale graph" is not an improvement to propose in any plan or report.
+- **The graph is maintained only by Stage K's delegated pass, never ad hoc.** Outside that stage,
+  treat the graph and its tooling as read-only: do not update, rebuild, re-extract, or diagnose them
+  because a hook suggested a graphify command, because the graph looks out of date, or because a
+  plan or report proposes it. The graph's coverage is not a defect to remediate opportunistically,
+  and no stage other than K may write to it.
 
 ### Git workflow
 
@@ -527,6 +531,7 @@ never canonical deliverables or `RUN/scratch/agents/` during the active run.
 | Math document (the reproduction manual) | `docs/run_pipeline_math.tex` |
 | Code-document synchronization prompt | `docs/prompts/synchronize-run-pipeline-code.md` |
 | Math-document synchronization prompt | `docs/prompts/synchronize-run-pipeline-math.md` |
+| Graph maintenance prompt | `docs/prompts/maintain-graphify-graph.md` |
 | Quality suite | `docs/quality-check.R` |
 | Style guides | `docs/guides/Advanced R Solutions.xml`, `docs/guides/Advanced R.xml` |
 | R comment style | `docs/guides/r-comment-style.md` |
@@ -561,7 +566,9 @@ pipeline on a broken footing):
   never substitute a hard-coded branch name. If `HEAD` is detached (`git rev-parse` returns
   `HEAD`), **stop and report**. If the working tree has uncommitted or untracked changes, **stop
   and report**; do not absorb pre-existing work into this run's branch. Do not switch branches in
-  the invoking checkout — the run leaves it exactly as found.
+  the invoking checkout — the run leaves its tracked state and branch exactly as found. Stage K's
+  pass may refresh untracked generated graph state there; that is not a change to the checkout's
+  tracked state and does not violate this rule.
 - **Record the force-tracked `docs/` set.** Run `git ls-files docs/` and log the result. `docs/`
   is ignored as a directory but a fixed set of files under it is tracked anyway, and that set is
   larger than this run's two Stage-O deliverables — it includes the style guides Stages E and F
@@ -603,9 +610,12 @@ git worktree add ~/hetid-worktrees/pipeline-run-<run-date> \
   once and stay there, or pass `-C <worktree-path>` on every `git` call. `RUN` is relative to the
   worktree, so the run folder is `<worktree-path>/docs/pipeline-run-<run-date>/`. Record the
   absolute worktree path, the branch name, and `BASE` in the log.
-- **The invoking checkout is read-only for the whole run.** Do not edit, stage, commit, run the
-  pipeline, or install the package from it. Its only role after this step is as the donor of
-  ignored pipeline state in step (2).
+- **The invoking checkout is read-only for the whole run, with one named exception.** Do not edit,
+  stage, commit, run the pipeline, or install the package from it. Its roles after this step are as
+  the donor of ignored pipeline state in step (2), and as the destination of the port-back that
+  Stage K's graph maintenance pass performs. That exception covers **untracked generated state
+  only** — never a tracked file, never Git state, and never the working tree's branch. Nothing else
+  in the run may write to the invoking checkout for any reason.
 
 **(2) Seed the worktree with the invoking checkout's ignored pipeline state. [required — skipping
 this silently costs a multi-hour rerun]** A new worktree checks out tracked files only.
@@ -639,16 +649,15 @@ cp -R <invoking-checkout>/scripts-paper/output/. \
 
 **(2b) Seed the other untracked resources the run depends on. [required — three stages fail or go
 silently wrong without them]** The same tracked-files-only rule that leaves `output/state/` empty
-also means every **untracked** file under `docs/`, `graphify-out/`, and `.claude/` is missing from
-the worktree. Five of them are load-bearing. None are in git, so `git ls-files docs/` will not list
-them and a fresh clone will not have them either — their absence is invisible until the stage that
-needs one fails. Copy each from the invoking checkout before Stage A:
+also means every **untracked** file under `docs/` and `.claude/` is missing from the worktree. Four
+of them are load-bearing. None are in git, so `git ls-files docs/` will not list them and a fresh
+clone will not have them either — their absence is invisible until the stage that needs one fails.
+Copy each from the invoking checkout before Stage A:
 
 ```
 cp <invoking-checkout>/docs/quality-check.R                                   <worktree-path>/docs/
 cp <invoking-checkout>/docs/lewbel_multivariate_set_identification.tex        <worktree-path>/docs/
 cp <invoking-checkout>/docs/heteroskedasticity_tests_general_instruments.tex  <worktree-path>/docs/
-cp -R <invoking-checkout>/graphify-out                                        <worktree-path>/graphify-out
 mkdir -p <worktree-path>/.claude/skills && \
   cp -R <invoking-checkout>/.claude/skills/graphify <worktree-path>/.claude/skills/graphify
 ```
@@ -656,18 +665,18 @@ mkdir -p <worktree-path>/.claude/skills && \
 | Resource | Needed by | What breaks if it is missing |
 |---|---|---|
 | `docs/quality-check.R` | Stage D | Stage D cannot run at all — the script does not exist |
-| `graphify-out/` | Stages K, L | no graph to audit against — Stage L degrades to source-only |
-| `.claude/skills/graphify` | Stages K, L | the project-local skill does not resolve for read-only queries |
+| `.claude/skills/graphify` | Stage L | the project-local skill does not resolve for read-only queries |
 | `docs/lewbel_multivariate_set_identification.tex` | Stage F | **silent**: the roxygen spec requires `\eqn{}`/`\deqn{}` notation to match this file, and auditors simply cannot perform that check |
 | `docs/heteroskedasticity_tests_general_instruments.tex` | reference reads | the protected file this prompt says you may read for reference |
 
 Copy, never move or symlink — the invoking checkout keeps its originals, and the run must not be
 able to damage them. Confirm each landed.
 
-**The copied graph is a read-only input.** Stage K does not update it and nothing in this run
-writes to `graphify-out/` or to the skill; copying rather than sharing the donor's directory is
-what makes an accidental write survivable. Record the graph's contents and how far behind the
-working tree it is at Stage K.
+**Do not seed the graph directory here — Stage K's pass owns that.** Its prompt seeds whatever it
+needs from the canonical checkout, reconciles a copy that is already present, and points the graph's
+root marker at the tree it is working in. Copying it at this step would hand that pass a directory
+whose files carry fresh copy timestamps, which can defeat its own newer-wins reconciliation. Seed
+the skill so read-only queries resolve, and leave the graph itself to Stage K.
 
 **Baseline the protected file by checksum — `git` cannot police it and mtime is worthless here.**
 `docs/heteroskedasticity_tests_general_instruments.tex` is **untracked**, so it never appears in
@@ -937,37 +946,52 @@ hooks; if any fail, run `pre-commit run --all-files` to reproduce, fix the **roo
 re-commit — iterate until the commit lands with **all** hooks green. Then push the working branch
 to `origin`. See **Git workflow**.
 
-**Stage K — Graphify graph: verify and record, do not modify. [no writes of any kind]**
-The graph at `graphify-out/` is a **fixed input to this run, never a deliverable of it.** Do not
-update, rebuild, re-extract, prune, diagnose, or otherwise write to it, and do not modify the
-`graphify` skill or its configuration. This holds even when the graph is visibly behind the working
-tree — being behind is expected and acceptable here.
+**Stage K — Graphify graph maintenance (one agent, delegated to its own prompt).**
+Dispatch a single agent whose governing task is the **complete contents of
+`docs/prompts/maintain-graphify-graph.md`**. Give it that prompt in full — do not summarize,
+paraphrase, reorder, or replace any part of it, and do not restate its procedure here. That file
+owns the entire method: seeding, updating, repair, the health gate, and porting the result back. It
+is maintained independently of this prompt, so anything said here about *how* to maintain the graph
+would drift out of date; this stage owns only the dispatch and the verification.
 
-**Why this is a hard rule and not a preference.** The graph carries enrichment layers beyond plain
-extraction, and the tooling that produced them is not part of the repository. No current command
-regenerates them, and re-extracting a file discards its share of them. A refresh would therefore
-trade a richer graph for a poorer one **irreversibly**, and the loss would not be visible in any
-count the rebuild prints. The correct response to "the graph looks stale" is to use it as a stale
-map and verify against source — never to refresh it.
+**Make no assumption about the graph's state.** Do not tell the agent the graph is current, stale,
+behind, or freshly built, and do not decide from repository history whether a pass is warranted.
+Run the stage unconditionally and let the pass discover what needs doing — a pass that finds
+nothing to change is a valid and cheap outcome, not a wasted one.
 
-Ignore any editor or hook suggestion to run a graphify command in place of reading files; those are
-generic hints, not instructions for this run.
+**This agent is the second and only other exception to the durable read-only worker protocol.**
+Unlike every other worker in this run it is expected to write outside a private scratchpad, because
+maintaining the graph is inherently a write operation. State its boundaries explicitly when you
+dispatch it:
 
-**What this stage actually does**, all read-only:
+- It **may** write the graph directory and its tooling directory — the locations its own prompt
+  names — in the run worktree, and it may perform the port-back that prompt specifies. Those paths
+  are git-ignored, so none of it touches tracked state.
+- It **may not** create, edit, move, or delete any tracked file, run the scientific pipeline, or
+  change Git state in any way: no add, commit, push, checkout, switch, branch, stash, reset,
+  restore, rebase, or merge. It works on whatever branch the run worktree already has checked out
+  and must not switch away from it.
+- Its own nested agents, if it spawns any, remain read-only under the ordinary protocol.
+- It still owes a durable `RUN/scratch/agents/<agent-id>/response.md`, checkpointed as it goes, in
+  addition to whatever report its own prompt requires.
 
-- Confirm `graphify-out/` and the `graphify` skill are present. Step (2b) seeds both, since neither
-  is tracked; if either is missing, that step was skipped.
-- Record what the graph contains — read counts from the saved graph file itself, not from anything
-  a tool prints, and note the commit or date it was built from if that is recorded. Those two
-  sources disagree in general: save-time processing can drop edges without failing, so printed
-  totals are not evidence of what is on disk.
-- Establish how far behind the graph is: list the files added or changed since it was built. Files
-  **added** since have no node at all rather than a stale one, which is the failure mode most likely
-  to be misread as "not present in the codebase."
-- Record all of the above in the log for Stage L to consume.
+**Its prompt directs it to copy results back to the checkout that owns the canonical graph, which is
+normally the invoking checkout.** That is a deliberate and sanctioned exception to this run's
+isolation rule, and the only one: it concerns untracked, generated, machine-local state that lives
+outside version control precisely so it can be regenerated. Do not extend the exception to anything
+else, and do not let it become licence to touch tracked files or Git state in either tree.
 
-**If the graph is absent, do not build one.** Record its absence and proceed; Stage L then runs
-source-only, which is a documented degradation rather than a failure.
+**Verify after it returns** — read its report and check the claims rather than accepting them:
+
+- the health gate its prompt defines passed, at the counts it reports;
+- `git status` in the run worktree shows **no tracked change** attributable to this stage;
+- the pipeline was not run, and no scientific output, cache, or manifest instance was touched;
+- the branch checked out in the run worktree is unchanged.
+
+Record the outcome, the before-and-after graph size it reports, and what it states the graph now
+describes. **If the pass fails or cannot finish, record that and continue.** Stage L then works from
+whatever graph is present, or from source alone if there is none. A failed maintenance pass degrades
+the next stage; it does not fail the run.
 
 **Stage L — Graphify audits (two agents). [WAIT for both]**
 Spawn two agents concurrently, both using graphify, each dispatched per **Delegating to
@@ -977,13 +1001,14 @@ If the current graphify skill would run `reflect`, `save-result`, `--update`, or
 write-capable step, copy the required graph inputs into that agent's private scratchpad and run
 the step there instead.
 
-**Brief both on what the graph is good for and where it lies.** Per Stage K it is behind the
-working tree by a known amount. Use it to *locate* candidates; never let it settle a question about
-what the code currently does. Give each agent Stage K's list of files added or changed since the
-build, and require every graph-sourced lead to be confirmed against current source before it is
-reported. Two failure modes to name explicitly, because both have produced confident wrong findings
-here: a node that survives for code already refactored away, and a file added after the build having
-no node at all — which reads as "this does not exist" rather than "the graph cannot see it."
+**Brief both on what the graph is good for and how it can mislead**, whatever Stage K reported. Use
+it to *locate* candidates; never let it settle a question about what the code currently does, and
+require every graph-sourced lead to be confirmed against current source before it is reported. Pass
+along whatever Stage K established about the graph's coverage, without inferring more than it says.
+Two failure modes to name explicitly, because both have produced confident wrong findings here: a
+node that outlives the code it described, and a file the graph does not cover having no node at all
+— which reads as "this does not exist" rather than "the graph cannot see it." Both are possible
+however recently the graph was maintained, since coverage is never guaranteed to be complete.
 
 **Absence of a finding is not evidence of absence**, and both agents must say so in their reports.
 A textual-duplication sweep finds textual duplication; semantic duplication is found by pulling a
