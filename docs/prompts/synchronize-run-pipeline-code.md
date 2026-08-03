@@ -1,28 +1,19 @@
 # Orchestrator prompt: synchronize the pipeline explainer
 
-**You are the orchestrator of this workflow, and every reference to "the orchestrator" below means
-you.** You execute this prompt yourself: you own the method, you dispatch and manage whatever
-subagents it calls for, and **you edit the target TeX file directly.** You never hand proposed edits
-to someone else to apply.
+## Required shared contract
 
-You may be run standalone or dispatched by an enclosing workflow. **If an enclosing workflow
-dispatched you, it is not "the orchestrator" in this prompt.** It is your caller. It holds final
-editing authority over the file once you are terminal, and it verifies your work — but it does not
-apply your edits for you and it does not touch the file while you are running. Where this prompt
-says an agent may not modify the canonical TeX, that restricts *your* subagents, never you.
+Read `docs/prompts/shared-workflow-contracts.md` completely before acting. This prompt extends that
+contract. It does not restate the shared role, autonomy, history-independence, ownership, worker,
+concurrency, evidence, snapshot, retry, or completion rules.
+
+You are the orchestrator of this workflow and the sole writer of its canonical TeX and PDF targets.
+An enclosing workflow is the caller defined by the shared contract.
 
 This is a complete source-to-document synchronization.
 
-Select the repository root before any inspection or edit:
-
-1. If an enclosing workflow supplies an isolated run-worktree root, use that exact root.
-2. Otherwise, if the current working directory belongs to a Git worktree containing
-   `scripts-paper/run_pipeline.R`, use that worktree's top level.
-3. Only as a standalone fallback, use
-   `/Users/fduarte/Library/CloudStorage/Dropbox-Personal/MyPackages/hetid`.
-
-Record the selected root and why it was selected. Resolve every repository path in this prompt
-relative to it. The principal paths are:
+Select the repository root under the shared contract. The standalone fallback is
+`/Users/fduarte/Library/CloudStorage/Dropbox-Personal/MyPackages/hetid`. The required repository
+marker and principal paths are:
 
 - production entrypoint: `scripts-paper/run_pipeline.R`;
 - canonical TeX document: `docs/run_pipeline_code.tex`; and
@@ -32,7 +23,9 @@ Verify that the selected root contains the entrypoint and target TeX before proc
 inspect or modify another checkout, including the standalone fallback when an enclosing workflow has
 selected a different worktree.
 
-Your objective is to make the TeX document fully faithful to the current checkout source. Assume that both the source and document have changed since any prior audit. Trust neither the document nor old reports. Derive every claim from a freshly traced source snapshot.
+Your objective is to make the TeX document fully faithful to the selected checkout-source snapshot.
+Treat the existing document and every other report as untrusted leads. Derive every claim from a
+fresh source trace.
 
 The checkout source specifies intended package behavior, but a plain pipeline invocation calls the
 installed `hetid` namespace. Treat equality between the checkout package source and the installed
@@ -51,51 +44,31 @@ The finished document must tell a reader:
 5. Every separate repository entrypoint that directly produces, resets, validates, tests, reproduces,
    or quality-checks this paper pipeline, or implements one of its scientific alternatives, but that
    the runner does not call.
-6. The exact downstream effects of each choice on stages, estimators, diagnostics, caches, artifacts, publication, and failure behavior.
+6. The exact downstream effects of each choice on stages, estimators, diagnostics, caches,
+   artifacts, publication, and failure behavior.
 7. Which statements follow from static source and which outcomes require runtime evidence.
 
-A reader must never have to infer whether the runner executes something. Mark current execution, alternative execution, unavailable functionality, uncalled functionality, and separate entrypoints explicitly.
+A reader must never have to infer whether the runner executes something. Mark current execution,
+alternative execution, unavailable functionality, uncalled functionality, and separate entrypoints
+explicitly.
 
 ## Governing rules
 
-Run this workflow from beginning to end without human involvement.
+The shared autonomy, evidence, and bounded-failure rules apply. This workflow adds two restrictions:
 
-- Never ask the user a question.
-- Never request approval, confirmation, or a plan decision.
-- Do not use a human-prompt or plan-approval mechanism.
-- Treat this prompt as written authorization to pass a discretionary skill approval gate. Pause only
-  when a higher-priority instruction requires it.
-- Use your best judgment when several defensible choices exist.
-- When uncertain, ask another agent or use the available PAL clink interface with Claude or Fable.
-  In Codex, the expected interface is `mcp__pal__clink`. Treat external reviews as advice and verify
-  every suggestion against source.
-- Stop only for a hard external blocker after exhausting safe alternatives. Record the blocker and
-  completed work in the current run directory; do not wait for a human.
 - Do not commit, push, open a pull request, or modify remote state.
+- When a genuine ambiguity remains after source inspection, use an independent worker or an available
+  PAL clink review. Treat every external review as advice and verify it against source.
 
-Evidence controls every conclusion:
-
-- Do not claim that a stage is covered until you have inspected its source.
-- Do not claim that a check passed until you have run it and read its output.
-- Record decisive command output in the final audit and quote only the short portion needed to prove
-  the result.
-- Do not hide, suppress, disable, or weaken a failed check.
-- Fix the cause of a failure when the cause lies in the target TeX or its build. Record an external or
-  out-of-scope cause as a limitation; do not modify another file to force a pass.
-- Use bounded retries. Change the approach or fix the cause before retrying.
-- Set a finite retry cap for each fallible external step in the execution plan.
-- If a check remains impossible, record the command, error, attempts, and remaining consequence in a
-  Markdown report in the current run directory. Continue independent work and report the incomplete
-  gate at the end.
-
-The current checkout code is authoritative for intended behavior:
+The selected checkout-source snapshot is authoritative for intended behavior:
 
 - Read the executable statements, predicates, call graph, configuration, decision records, and manifest-building source.
-- Treat comments, tests, README files, the installed-package description, and the old TeX as
+- Treat comments, tests, README files, the installed-package description, and the existing TeX as
   supporting evidence. When they disagree with checkout executable source, describe the checkout
   behavior and record any unresolved runtime-parity limitation.
-- Do not preserve a TeX statement merely because it compiled or appeared in an earlier audit.
-- Do not import old counts, hashes, defaults, budgets, object names, or route descriptions. Recompute them from the current source.
+- Do not preserve a TeX statement merely because it compiles or appears in another report.
+- Recompute counts, hashes, defaults, budgets, object names, and route descriptions from the frozen
+  source snapshot.
 - Treat every hash and count as evidence for one frozen snapshot, never as a permanent contract.
 
 ## Strict no-execution boundary
@@ -150,35 +123,40 @@ Outside the current run directory, the only canonical paths this workflow may cr
   docs/run_pipeline_code.tex
   docs/run_pipeline_code.pdf
 
-**You** modify those files; your subagents and external reviewers never do. An enclosing workflow
+**You** modify those files; your workers and external reviewers never do. An enclosing workflow
 that dispatched you does not modify them while you are running either — it takes over only once you
 are terminal.
 
 **Never create, modify, or delete `docs/run_pipeline_math.tex` or its PDF.** That document is the
-sibling target of a separate prompt and may be running concurrently under another agent. You may
+sibling target of a separate prompt and may be running concurrently under another sub-orchestrator. You may
 read it as a nonauthoritative source of questions when it is stable, but **skip that read entirely
 while a concurrent synchronization of it may be in progress** rather than inspect a file being
 edited underneath you. Do not borrow its prose, structure, or conclusions: the two documents have
 different purposes and different content contracts, and a symbol or term may legitimately mean
 different things in each.
 
-Create plans, audits, matrices, reports, proposed patches, retained logs, and renders as new uniquely
-named files in the run directory. Never overwrite an existing working record. LaTeX sidecars and
-intermediate build files remain in the external temporary build directory.
+Create plans, audits, matrices, reports, proposed patches, retained logs, and renders in the run
+directory. Do not overwrite a record from another workflow. Within the current workflow record,
+update only the records this workflow owns; give replacement or retry reports unique names. LaTeX
+sidecars and intermediate build files remain in the external temporary build directory.
 
-If the enclosing workflow supplies a records directory, create this prompt's unique run directory at:
+If the caller supplies an enclosing records root, create this prompt's unique workflow record under:
 
-  <enclosing-records-directory>/stage-o/code/YYYYMMDD-HHMMSS/
+  <enclosing-records-root>/stage-o-code/YYYYMMDD-HHMMSS-<unique-suffix>/
 
 Otherwise, use the standalone location:
 
-  docs/RUN/run_pipeline_code/YYYYMMDD-HHMMSS/
+  docs/RUN/run_pipeline_code/YYYYMMDD-HHMMSS-<unique-suffix>/
 
-Subagents may write only inside the selected current run directory:
+In this prompt, "current run directory" means this unique workflow record.
+
+Workers may write only inside the selected workflow record:
 
   <current-run-directory>/scratch/agents/<agent-id>/
 
-Subagents have read-only access to the rest of the repository. They may create proposed patches or revised copies inside their private scratch directories. The orchestrator must inspect those proposals, verify them against source, and apply accepted changes to the canonical TeX.
+Workers follow the shared dispatch and durable-record contract. They may create proposed patches or
+revised copies inside their private scratch directories. The orchestrator verifies accepted changes
+against source and applies them to the canonical TeX.
 
 Make text edits in place with the harness's file-editing tools. The final accepted binary PDF may be
 copied to its canonical path and must then be verified byte-for-byte. Preserve unrelated content and
@@ -195,20 +173,14 @@ Write the plan in the current run directory. Include:
 
 - the source boundary;
 - the no-execution boundary;
-- agent assignments;
+- worker assignments;
 - ordering barriers;
 - evidence required at each barrier;
-- files each agent may inspect;
-- files each agent may write;
+- files each worker may inspect;
+- files each worker may write;
 - acceptance tests;
-- retry and blocker rules.
-
-Use separate agents when they add independent evidence. Respect the environment's global capacity,
-including agents owned by a parent workflow. Run assignments sequentially when capacity prevents
-parallel work; capacity limits must not reduce coverage. Keep tightly coupled synthesis in the
-orchestrator. If a transient capacity rejection occurs, continue independent local work and retry
-after a slot is released; do not treat one rejection as a blocker. Follow any slot arbitration
-provided by the enclosing workflow.
+- retry and blocker rules; and
+- the resource ledger and global slot allocation required by the shared contract.
 
 Cover these roles with separate read-only reviews when capacity permits, or with fresh sequential
 assignments when it does not:
@@ -217,64 +189,21 @@ assignments when it does not:
 2. Inventory inputs, options, prerequisites, decisions, and source-fixed controls.
 3. Trace alternative, dormant, unimplemented, maintenance, validation, test, cache, and artifact functionality.
 
-Agents may subdivide their assignments only within the available global capacity. Require exact
-source locators and evidence in every report.
+Workers may subdivide an assignment only when the shared dispatch contract permits nested
+delegation. Require exact source locators and evidence in every report.
 
 After the main TeX synchronization, run three distinct review assignments, in order:
 
-1. A same-concept/same-word compliance agent.
-2. An `econ-write` compliance agent.
-3. A `writing-clearly-and-concisely` compliance agent.
+1. A same-concept/same-word compliance worker.
+2. An `econ-write` compliance worker.
+3. A `writing-clearly-and-concisely` compliance worker.
 
-Use different agents for these passes when thread capacity permits. If a global thread limit requires
-reuse, give the idle agent a new bounded assignment, the exact current snapshot, and instructions to
-audit it independently without relying on its earlier conclusions. Never combine two passes. Each
-pass begins only after the preceding pass has been incorporated and verified.
+Use distinct workers when global capacity permits. Capacity may require a fresh sequential assignment
+to an idle worker; record the resulting loss of identity-level independence. Never combine two
+passes. Apply the shared review-snapshot and certification protocol.
 
-**"After the preceding pass is incorporated" is a precondition, not a preference.** Overlapping the
-passes to save wall-clock defeats them: a pass that reviewed pre-edit text has not certified the text
-you ship, and no amount of careful application recovers that. If you do overlap them, the only honest
-remedy is to re-run the affected passes on the final text, which costs more than sequencing would
-have.
-
-### Review discipline that decides whether a pass verdict means anything
-
-Each of these needs a mechanism; intending to be careful has already failed at several of them.
-
-- **A certification covers bytes, not a document.** An edit applied after an agent certifies voids
-  that verdict. Name the version each agent reviews and re-state which version each verdict covers.
-- **Freeze the target for the whole of a round.** Editing while an agent reads forces it to re-anchor
-  its findings and silently invalidates its verdict. The rule that holds is **apply nothing until
-  every agent dispatched in that round is terminal** — not until the first one reports.
-- **When only part of the document changed, prove the rest did not** by recording a digest per stable
-  region and having the next agent recompute it rather than accept your claim. Ask for the
-  measurement; never supply the expected value. Choose the regions after establishing they contain no
-  edit — choosing first and checking later produces a bound that does not hold.
-- **A brief that paraphrases the source of truth manufactures defects.** An agent barred from the TeX
-  or from source can only judge what you put in front of it. Quote verbatim; a "contradiction"
-  arising from your summary is yours, not the document's.
-- **Write corrections from source, not from an agent's summary of it**, and re-read each passage
-  immediately after editing. That habit catches more damage than any downstream audit.
-- **Tell agents an overshoot is as serious as an omission**, and aim verification at the
-  neighbourhood of each edit — collateral damage near a fix is about half the findings in a mature
-  round.
-- **Fix defect classes, not the instances named**, or the same finding returns all run.
-- **Generated outputs are inadmissible as evidence** in a no-execution audit: an artifact shows what
-  one run did, not what the code does.
-- **An empty result is not a negative finding.** Escaping, phrases wrapped across lines, and case
-  mismatch all return zero silently. Confirm the search fires against a control that must match
-  before concluding a term is absent.
-
-### Running agents under real interruptions
-
-- **A killed agent stopped mid-task, not at a natural end.** Budget limits end agents without
-  warning; partial output is untrusted and an unfinished audit is not a clean one. Re-dispatch rather
-  than salvage a verdict.
-- **Dispatch long rounds in waves**, and tell each agent to run its cheapest decisive checks first
-  and state exactly where it stopped. A partial that declares its boundary is usable evidence.
-- **Record each dispatch's expected duration**, since agents that cannot write to disk leave a long
-  scope indistinguishable from a dead one. **Silence is not death** — probe before concluding.
-- **Dispatch first, then write the log entry**, or the record reads as in-flight while nothing runs.
+The shared contract owns review freezing, edit invalidation, search controls, worker interruption,
+and durable recovery. Do not restate or weaken those rules in the execution plan.
 
 ## Required reachability vocabulary
 
@@ -285,12 +214,15 @@ Derive a single explicit vocabulary for execution and selection. Use these terms
 - `Alternative path`: the code implements this branch, but a plain invocation does not select it.
 - `Source-selected`: a checked-in plan, configuration value, or decision record selects the branch.
 - `Launch-selected`: an environment input or command-line input selects the branch.
-- `Runtime-selected outcome`: cache validity, data availability, numerical status, or another runtime fact determines the outcome.
+- `Runtime-selected outcome`: cache validity, data availability, numerical status, or another
+  runtime fact determines the outcome.
 - `Available but not called`: the implementation exists, but the current runner has no production path that calls it.
-- `Not implemented`: a schema value, route result, placeholder, or artifact record exists without the substantive solver or producer.
+- `Not implemented`: a schema value, route result, placeholder, or artifact record exists without
+  the substantive solver or producer.
 - `Separate entrypoint`: another command or package API owns the functionality.
 
-Change or extend this vocabulary only if the current code requires another distinct status. Use one term for each status throughout the document.
+Change or extend this vocabulary only if the current code requires another distinct status. Use one
+term for each status throughout the document.
 
 Keep these axes separate:
 
@@ -305,7 +237,9 @@ Keep these axes separate:
 - validation status;
 - cache eligibility.
 
-Never use one axis as evidence for another. A required artifact is not necessarily produced. A route may be requested although no producer runs. A function may be sourced although its body is never called.
+Never use one axis as evidence for another. A required artifact is not necessarily produced. A route
+may be requested although no producer runs. A function may be sourced although its body is never
+called.
 
 ## Stage A: Freeze the source snapshot
 
@@ -367,7 +301,9 @@ Build an ordered ledger containing:
 - failure conditions;
 - later consumers.
 
-Count and reconcile all direct source calls, source-once calls, conditional source calls, guarded driver bodies, direct function calls, final writes, and cleanup calls. Do not rely on counts from the old TeX.
+Count and reconcile all direct source calls, source-once calls, conditional source calls, guarded
+driver bodies, direct function calls, final writes, and cleanup calls. Do not rely on counts in the
+existing target.
 
 Trace fail-fast order. Distinguish:
 
@@ -377,7 +313,8 @@ Trace fail-fast order. Distinguish:
 - a later stage that consumes the result;
 - a final acceptance or completeness check.
 
-Document hidden top-level work such as directory creation, cleanup, state-record writes, exact readback, sidecar removal, or manifest reconciliation.
+Document hidden top-level work such as directory creation, cleanup, state-record writes, exact
+readback, sidecar removal, or manifest reconciliation.
 
 ## Stage C: Establish the exact plain-invocation route
 
@@ -385,7 +322,8 @@ Define a plain invocation explicitly:
 
   Rscript scripts-paper/run_pipeline.R
 
-run from the directory required by the current code, with no command-line arguments and every pipeline-specific environment input unset.
+run from the directory required by the current code, with no command-line arguments and every
+pipeline-specific environment input unset.
 
 From source alone, determine:
 
@@ -404,7 +342,8 @@ From source alone, determine:
 - publication stages;
 - final state writes and cleanup.
 
-Do not say that the pipeline “runs” or “produces” a result when static source establishes only that it attempts the stage. State runtime uncertainty directly.
+Do not say that the pipeline “runs” or “produces” a result when static source establishes only that
+it attempts the stage. State runtime uncertainty directly.
 
 ## Stage D: Inventory every input and option
 
@@ -460,7 +399,8 @@ Distinguish these categories:
 8. Test-fixture parameter.
 9. Dormant or future-only field.
 
-Do not present a source edit as a supported runtime option. Document source-fixed controls because they affect behavior, but call them source-fixed controls.
+Do not present a source edit as a supported runtime option. Document source-fixed controls because
+they affect behavior, but call them source-fixed controls.
 
 Account individually for every behavior-changing formal parameter in production-relevant functions.
 Include it in the TeX if it changes a reachable production path, an implemented alternative, or a
@@ -549,7 +489,8 @@ Reconstruct:
 
 Keep artifact lifecycle separate from runner reachability.
 
-Inspect validation and test source statically. State what each check proves and what it does not prove. Do not promote a separate validation command into the production runner.
+Inspect validation and test source statically. State what each check proves and what it does not
+prove. Do not promote a separate validation command into the production runner.
 
 ## Stage G: Trace scientific and numerical logic
 
@@ -565,13 +506,15 @@ For every estimator, diagnostic, bound, bootstrap statistic, and published equat
 - distinguish diagnostic evidence from estimator selection;
 - distinguish numerical status from execution reachability.
 
-When two estimators or mechanisms receive identical treatment, describe that treatment with the same term and parallel wording. When their treatment differs, identify the precise code difference and explain its consequence.
+When two estimators or mechanisms receive identical treatment, describe that treatment with the
+same term and parallel wording. When their treatment differs, identify the precise code difference
+and explain its consequence.
 
 Do not assume any historical estimator, grid size, budget, or asymmetry remains current.
 
 ## Stage H: Build the coverage matrix and revise the TeX
 
-Wait for all tracing agents. Reconcile their reports against source.
+Wait for all tracing workers. Reconcile their reports against source.
 
 Create a canonical coverage matrix with one row for every behaviorally distinct stage, input, option,
 alternative, control family, artifact family, and separate entrypoint. Group repeated family members
@@ -612,9 +555,11 @@ Revise the TeX so that the document itself contains, at minimum:
 - false-friend distinctions;
 - code-to-document index.
 
-Optimize the organization for comparison with code. Preserve precise file and function locators. Use tables when readers must compare repeated fields.
+Optimize the organization for comparison with code. Preserve precise file and function locators.
+Use tables when readers must compare repeated fields.
 
-Do not merely append missing facts. Rewrite stale organization when necessary to make current and alternative paths unmistakable.
+Do not merely append missing facts. Rewrite stale organization when necessary to make current and
+alternative paths unmistakable.
 
 The orchestrator is the sole canonical TeX editor.
 
@@ -635,15 +580,12 @@ fourth separately when capacity permits, otherwise add it to a fresh sequential 
 
 Require each reviewer to inspect current source independently. They may not rely only on the coverage matrix.
 
-Preflight the PAL interface and available CLI names. If available, request two narrow,
-context-bounded external reviews through `mcp__pal__clink` using the expected current names:
-
-- `cli_name="claude"`, `role="codereviewer"`: active route, inputs, prerequisites, and installed-package boundary.
-- `cli_name="claude-fable"`, `role="codereviewer"`: alternatives, cache and artifact claims,
-  implementation gaps, and estimator symmetry.
-
-If the interface or one CLI is unavailable, record that fact and assign the same scope to another
-independent read-only reviewer. PAL availability alone is not a completion blocker.
+Preflight the PAL interface and discover its available CLI names. If it can supply two independent,
+context-bounded code reviews, assign one the active route, inputs, prerequisites, and installed-package
+boundary, and assign the other alternatives, cache and artifact claims, implementation gaps, and
+estimator symmetry. Record the selected interfaces. If the interface or an independent reviewer is
+unavailable, assign the same scope to another independent worker. PAL availability alone is not a
+completion blocker.
 
 Tell both reviewers:
 
@@ -657,7 +599,8 @@ Tell both reviewers:
 
 Save their reviews in the current run directory.
 
-Verify every finding yourself. Accept or reject it with source evidence. If you edit the TeX, freeze a new hash and repeat the necessary exact-snapshot reviews.
+Verify every finding yourself. Accept or reject it with source evidence. If you edit the TeX,
+freeze a new hash and repeat the necessary exact-snapshot reviews.
 
 Do not call the fidelity stage complete until the accepted hash has independent PASS coverage for
 every scope. If a reviewer times out, record the attempt and obtain equivalent exact-snapshot coverage
@@ -668,7 +611,7 @@ from another independent reviewer.
 After the fidelity snapshot passes, start the terminology assignment. Give its reviewer the accepted
 TeX and the current source.
 
-The terminology agent must perform a complete terminology audit, not a quick copyedit.
+The terminology worker must perform a complete terminology audit, not a quick copyedit.
 
 It must inventory every document concept and every source alias needed to interpret the document,
 including each:
@@ -716,15 +659,20 @@ Apply these rules:
 1. The same concept always uses the same document term.
 2. Different concepts never share one ambiguous document term.
 3. Code aliases do not force prose aliases.
-4. When code uses several names for one concept, choose one canonical document term and map every code name to it explicitly.
-5. When code uses one word for several concepts, give the concepts distinct document terms and explain the false-friend distinction.
+4. When code uses several names for one concept, choose one canonical document term and map every
+   code name to it explicitly.
+5. When code uses one word for several concepts, give the concepts distinct document terms and
+   explain the false-friend distinction.
 6. Symmetric treatment uses symmetric wording, table labels, and sentence structure.
 7. Describe an asymmetry only when source establishes a substantive difference.
 8. Name the same property the same way across estimators, stages, tables, captions, equations, and the index.
 9. Do not replace precise terms with stylistic synonyms.
-10. Verify equivalence from definitions, callers, returned objects, data flow, predicates, and downstream use. Similar spelling is not evidence.
+10. Verify equivalence from definitions, callers, returned objects, data flow, predicates, and
+    downstream use. Similar spelling is not evidence.
 
-The terminology agent may write only a report and proposed patch or revised copy in its private scratch directory. The orchestrator must verify every proposed equivalence against source and apply accepted changes.
+The terminology worker may write only a report and proposed patch or revised copy in its private
+scratch directory. The orchestrator must verify every proposed equivalence against source and apply
+accepted changes.
 
 After applying the pass:
 
@@ -740,16 +688,15 @@ If the terminology pass changes substantive wording, rerun the relevant source-f
 
 After the terminology pass is complete, start the economics-writing assignment.
 
-Resolve the current `econ-write` skill from the available skill catalog. Require this agent to read
-the resolved `SKILL.md` completely. The expected current location is:
+Require the worker to read the exact `econ-write` skill file fixed by the shared contract:
 
   /Users/fduarte/.codex/skills/econ-write/SKILL.md
 
 It must also read every reference that the skill requires for this task, including the McCloskey
-word-choice guidance and revision checklist. If the skill is absent or unreadable, record a blocker;
-do not silently substitute an invented checklist.
+word-choice guidance and revision checklist. If the skill or a required reference is absent or
+unreadable, record a blocker.
 
-The agent must apply every relevant `econ-write` principle to this technical economics explainer while preserving:
+The worker must apply every relevant `econ-write` principle to this technical economics explainer while preserving:
 
 - source fidelity;
 - the canonical terminology ledger;
@@ -759,7 +706,7 @@ The agent must apply every relevant `econ-write` principle to this technical eco
 - current-versus-alternative distinctions;
 - documented limitations.
 
-The agent must check:
+The worker must check:
 
 - reader-first organization;
 - important information first;
@@ -780,42 +727,28 @@ The agent must check:
 - no unsupported empirical or runtime claim;
 - no change to scientific meaning.
 
-Paper-section rules that do not fit a pipeline explainer should not force an artificial research-paper structure. Apply their underlying reader-first principle only where relevant.
+Paper-section rules that do not fit a pipeline explainer should not force an artificial
+research-paper structure. Apply their underlying reader-first principle only where relevant.
 
-The agent must not modify the canonical TeX. It writes a compliance report and proposed edits in its private scratch directory. The orchestrator must verify and apply each accepted edit.
+The worker must not modify the canonical TeX. It writes a compliance report and proposed edits in its
+private scratch directory. The orchestrator must verify and apply each accepted edit.
 
 After applying the pass, freeze a new hash and rerun any fidelity or terminology check affected by the edits.
 
-**Close this pass on rule violations, not on the agent running out of suggestions.** A pass enforcing
-a stated standard converges; a pass improving taste does not, because a fresh reader can always
-tighten another sentence and every fix creates new prose to assess. Requiring "the agent returns
-nothing" is unbounded by construction. Classify every finding as exactly one of:
-
-- a **rule violation** — it breaches a stated rule of the named skill, or damages accuracy: a factual
-  error, a lost branch predicate or caveat, a lost source locator, an undefined or duplicated term, a
-  fragment, or a claim about the code unsupported by source. These block; fix them all.
-- a **discretionary improvement** — compliant and accurate, merely tighter or smoother. These do not
-  block; record each as declined with a one-line reason.
-
-Report both counts so the classification is auditable, and resolve anything ambiguous as a rule
-violation. Ask each agent to return, separately, the passages it deliberately left alone because
-tightening them would cost a distinction — that list is how you check the agent understood the brief,
-and it prevents a later pass from "fixing" a deliberate choice.
+Use the shared rule-violation versus discretionary-improvement classification. Also require a list of
+passages deliberately left unchanged because tightening them would erase a factual distinction.
 
 ## Stage L: `writing-clearly-and-concisely` compliance pass
 
 After the `econ-write` pass is complete, start the clear-writing assignment.
 
-Resolve the current `writing-clearly-and-concisely` skill from the available skill catalog. Require
-this agent to read its `SKILL.md` and every task-required reference completely. The expected current
-locations are:
+Require the worker to read the exact clear-writing files fixed by the shared contract:
 
   /Users/fduarte/.codex/skills/writing-clearly-and-concisely/SKILL.md
   /Users/fduarte/.codex/skills/writing-clearly-and-concisely/elements-of-style.md
 
-If either expected file moved, use the catalog-resolved location. If the skill or a required reference
-is absent or unreadable, record a blocker. The agent must inspect every sentence, caption, note,
-heading, and table entry.
+If either file is absent or unreadable, record a blocker. The worker must inspect every sentence,
+caption, note, heading, and table entry.
 
 It must check:
 
@@ -839,23 +772,17 @@ It must check:
 - repeated loose-sentence patterns;
 - overloaded noun strings.
 
-It must preserve the terminology ledger and every factual distinction. Concision may not erase branch predicates, caveats, source locators, failure behavior, or the difference between static and runtime evidence.
+It must preserve the terminology ledger and every factual distinction. Concision may not erase
+branch predicates, caveats, source locators, failure behavior, or the difference between static and
+runtime evidence.
 
-The agent must not modify the canonical TeX. It writes a compliance report and proposed edits in its private scratch directory. The orchestrator verifies and applies accepted edits.
+The worker must not modify the canonical TeX. It writes a compliance report and proposed edits in its
+private scratch directory. The orchestrator verifies and applies accepted edits.
 
-After applying the pass, freeze a new hash. Apply the same rule-violation versus discretionary split
-defined for the previous pass, and report both counts.
-
-**Both prose passes must be clean on one and the same version.** Passing one on an earlier version
-and the other on a later one certifies nothing: each round's fixes invalidate the other's verdict,
-and two passes that have each been clean once but never together will alternate indefinitely. Keep
-the file frozen until both have reported on it.
-
-**Let each pass own only its own defect class.** Naming, one term serving two concepts, and synonym
-drift belong to the terminology pass; missing, invented, or source-contradicted content belongs to
-the fidelity review. Clearing another pass's findings inside yours makes every round look as
-productive as the last while nothing converges. Carry deferred items in a visible ledger and hand it
-to the pass that owns them.
+After applying the pass, freeze a new hash and use the shared finding classification. The shared
+certification protocol requires fidelity, terminology, `econ-write`, and clear-writing passes to
+certify one final immutable snapshot without an intervening edit. Reopen the earliest affected gate
+after any edit.
 
 ## Stage M: Orchestrator integrity review
 
@@ -865,7 +792,7 @@ Check the final document against the current code and all review reports.
 
 Confirm:
 
-- every subagent finding was resolved or rejected with evidence;
+- every worker finding was resolved or rejected with evidence;
 - later prose edits did not undo earlier source fidelity;
 - later concision edits did not remove required qualifications;
 - terminology remains canonical;
@@ -1024,11 +951,13 @@ declare completion because the remaining findings feel small, and do not begin a
 cannot finish.
 
 **State coverage precisely rather than letting "all passes clean" imply more than it does.** Separate
-what was read line by line on the delivered version, what was verified mechanically across the whole
-file, and what is inherited from a read of an earlier version. Re-test every mechanical zero against
-a control pattern that must match and report the control's count beside the zero, since an unfired
-search and a clean document look identical. If no single agent verified every source claim in one
-pass, say so — that is a normal outcome at this size and a limitation to record, not conceal.
+what was read line by line on the delivered version from what was verified mechanically across the
+whole file. A read of a superseded version does not certify the delivered version; any final scope
+that no assigned reviewer or the orchestrator rechecked blocks `Complete` status. Re-test every
+mechanical zero against a control pattern that must match and report the control's count beside the
+zero, since an unfired search and a clean document look identical. If no single reviewer verified
+every source claim in one pass, state how the orchestrator's final full-file review and the disjoint
+review scopes provide complete coverage.
 
 ## Final response
 

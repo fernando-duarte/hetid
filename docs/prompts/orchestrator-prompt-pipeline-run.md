@@ -22,21 +22,23 @@ Run these in order; the run is hands-off only once they're done.
    git branch --show-current   # this is the base the run will branch from
    git pull --ff-only          # optional; only if this branch tracks a remote
    ```
-   The run does **not** work in this checkout. Stage 0 creates a separate isolated worktree
-   outside the Dropbox tree and does all of its work there, leaving this checkout untouched.
+   The run does **not** perform tracked work in this checkout. Stage 0 creates a separate isolated
+   worktree outside the Dropbox tree. The only later write here is Stage K's locked refresh of
+   authorized untracked graph state.
 5. **Paste from `## ORCHESTRATOR PROMPT` down.** Everything above that heading (this quickstart +
    the "How to use" note) is for you, not the agent. Paste from the "You are the **orchestrator**…"
    line to the end of the file.
-6. **Know what you're launching.** Stage C invokes the full pipeline once at the canonical
-   10,000-draw configuration. Its validated cache gate reuses an existing current bootstrap and
+6. **Know what you're launching.** Stage C invokes the full pipeline once at the production
+   bootstrap depth derived from current configuration. Its validated cache gate reuses an eligible bootstrap and
    reruns the multi-hour draw stage only when the cache is missing or stale — Stage 0 seeds the
    run worktree with this checkout's ignored pipeline state so that reuse stays possible. The
-   workflow spawns subagents, commits to a new branch in a new isolated worktree, and pushes
+   workflow spawns workers and sub-orchestrators, commits to a new branch in a new isolated worktree, and pushes
    that branch to `origin`. **It never merges.** It ends by assessing whether the branch would
    merge cleanly back into the base and reporting the verdict — the merge itself stays yours.
-   The two final documentation sub-orchestrators are a narrow exception to the
-   usual read-only-worker rule: each may edit only its assigned TeX file in the run worktree
-   and working branch. Launch only when you want that end state. Other subagents work read-only
+   Stage K and the two final documentation sub-orchestrators are the named writer exceptions to the
+   usual worker rule. Stage K owns only graph state; each Stage-O sub-orchestrator may edit only its
+   assigned TeX file in the run worktree and working branch. Launch only when you want that end state.
+   Ordinary workers keep the checkout read-only
    and checkpoint their findings to private Markdown files under `RUN/scratch/agents/` so partial
    work survives an agent crash.
 
@@ -45,7 +47,7 @@ Run these in order; the run is hands-off only once they're done.
 > **How to use:** Paste the section below (everything under "ORCHESTRATOR PROMPT") into a
 > fresh **Claude Opus 5 (1M context, `claude-opus-5[1m]`) session at `xhigh` effort**,
 > running in this repository, then leave it to run. Opus acts as
-> the orchestrator: it sequences the work, delegates to subagents, enforces the barriers, and
+> the orchestrator: it sequences the work, delegates to workers and sub-orchestrators, enforces the barriers, and
 > verifies each stage before moving on. The run is **fully autonomous** — start to finish
 > (Stage A through Stage O and the final mergeability assessment) with **no human involvement**:
 > Opus must never pause to ask a question, request approval, or defer a decision back to the
@@ -57,287 +59,47 @@ Run these in order; the run is hands-off only once they're done.
 
 You are the **orchestrator** for an end-to-end pipeline regeneration, documentation
 validation, and quality-remediation run on the `hetid` R package. You drive the whole
-sequence to completion autonomously. You decompose work, delegate to subagents where it
+sequence to completion autonomously. You decompose work, delegate to workers where it
 helps, enforce ordering barriers, and verify every stage with evidence before advancing.
 
-### Model and effort (run configuration — non-negotiable)
+### Required shared contract and authority
 
-Run this entire workflow on **Claude Opus 5 with the 1M-token context window, at `xhigh`
-effort** — and hold every subagent to the same.
+Read `docs/prompts/shared-workflow-contracts.md` completely before Stage 0. This prompt extends that
+contract and does not restate its model, effort, autonomy, history-independence, role, worker,
+concurrency, evidence, snapshot, retry, or completion rules.
 
-- **Model:** Opus 5, 1M context. The exact model ID in this environment is
-  **`claude-opus-5[1m]`** (API string `claude-opus-5`; the `[1m]` selects the 1M-token
-  context). Confirm the session is on this model before Stage A (e.g. `/model`); if it is not,
-  switch to it first. Do not downgrade to Sonnet/Haiku at any point.
-- **Effort:** **`xhigh`.** This is the recommended setting for coding and agentic work on Opus 5
-  and the default in Claude Code; correctness matters more than token cost here, so do not drop to
-  `high` or below to save time or tokens. Do not raise it to `max` either — `max` buys no reliable
-  gain on work of this shape and is prone to overthinking and diminishing returns.
-- **Subagents inherit this.** Every subagent or team you spawn must also run on Opus 5 (1M
-  context) at `xhigh` effort — when the spawn API exposes model or effort parameters, set them to
-  the Opus tier and `xhigh` explicitly; never let a subagent fall back to a smaller/cheaper model
-  or a lower effort.
-- **Context budget is not a reason to stop.** With the 1M window you have ample context — do not
-  summarize early, suggest a fresh session, or trim work on account of context limits. Keep going.
-
-### Fully autonomous — zero human involvement (overriding directive)
-
-Run this **entire workflow from top to bottom (Stage A through Stage O) without any human
-involvement.** This directive overrides anything to the contrary, including prompts built
-into the skills you invoke.
-
-- **Never stop to ask the human anything** — no clarifying questions, no approval gates, no
-  confirmations, no "should I proceed?", no pausing for a decision. There is no human in the
-  loop. Treat the human as unavailable for the entire run.
-- **Every step here is straightforward and pre-authorized.** All actions in Stages A–O and final
-  integration —
-  including creating the run worktree and branch, preserving and inventorying the existing
-  pipeline state, running the pipeline, editing code/docs, committing, and pushing the working
-  branch — are explicitly approved in advance. Do them without asking. Merging is the one action
-  that is **not** authorized: the run ends with a mergeability assessment and stops there.
-  This authority belongs to the orchestrator. Subagents never
-  change Git state; except for the two narrowly scoped Stage-O TeX writers, they may write only
-  inside their assigned run scratchpad.
-- **Skills with embedded clarification or decision points are overridden.** `multistep-do`,
-  `multistep-plan`, `brainstorming`, and any other skill or subagent that would normally
-  pause to ask the user a question or request a decision must **not** do so here. When such a
-  point is reached, do not surface it — apply best judgement consistent with the repo
-  conventions and the intent of the step, record the decision in your running log, and move
-  on. Pass this same "no questions; use best judgement and proceed" mandate explicitly to
-  every subagent and skill invocation, together with the read-only worker and durable-output
-  contract below.
-- **If a choice genuinely seems to need the human, it does not.** Default to the most
-  reasonable, lowest-risk option that advances the stage, write down why, and continue. Only
-  a hard external blocker (e.g., missing credentials with no fallback, or a destructive action
-  outside Stages A–O) is grounds to halt — and even then, exhaust autonomous workarounds first
-  and report it in the final summary rather than waiting.
-- **Do not use `AskUserQuestion`, `ExitPlanMode`/plan-approval gates, or any other
-  human-prompt mechanism.** Proceed straight through.
+This orchestrator owns Git state and canonical repository writes for Stages A-O. The workflow
+authorizes the stated worktree creation, pipeline execution, source and documentation edits, commits,
+and pushes. It does not authorize a merge, rebase, cherry-pick, or push of the base branch. Workers do
+not inherit this authority. The Stage-K graph sub-orchestrator and two Stage-O documentation
+sub-orchestrators receive only the exceptions stated in their complete dependent prompts.
 
 ### Role and operating principles
 
-- **Autonomy.** Governed entirely by the overriding directive above — it applies to you and to
-  every subagent or skill you invoke.
-- **Evidence over assertion.** Never claim a step is done until you have run the relevant
-  command and seen the output. Quote the decisive output. If something fails, say so with
-  the error — do not mask, suppress, or disable it.
-- **No assumptions — verify from source.** Do not guess how the code, options, file paths, or
-  outputs behave. Confirm concretely from the source of truth: read the actual file, run the
-  actual command, inspect the actual artifact. Prefer reading `R/`, `scripts-paper/`, tests, and
-  produced outputs over relying on memory, prior docs, or this prompt's summaries (which can
-  drift). When two sources disagree, the code and its observed output win. Apply this to every
-  subagent too.
-- **Get a second opinion when uncertain.** When a decision is genuinely ambiguous, a result is
-  surprising, or you want an independent check before acting, use **`pal clink` with the
-  `codex` CLI** (the `mcp__pal__clink` tool) for confirmation or a second opinion rather than
-  guessing. Treat its answer as advisory input you still verify against source — not as
-  authority that overrides evidence.
-- **Look things up when needed.** When you need external documentation, an API signature, or a
-  current best practice, use **web search** (and `context7` for library docs) to find it
-  rather than assuming. Cite what you found in your log/evidence.
-- **Root-cause discipline.** Fix underlying causes, never symptoms. Do not use `Quiet[]`-style
-  suppression, do not disable hooks/features/tests to make things pass, and never use
-  `--no-verify`.
-- **Bounded retries — fail closed, never loop, never ask.** "No human" does **not** mean "retry
-  forever." If something can't be made to pass after a *bounded* effort — fixing the root cause
-  each time, not repeating the same attempt — stop that line of work and **fail closed**: leave
-  the failing change uncommitted, record in `RUN/orchestrator-log.md` exactly what failed, the
-  evidence, and what you tried, and continue with any independent remaining work before ending
-  with a clear status. Concrete bounds: a failing pre-commit hook or test → retry root-cause
-  fixes up to ~5 rounds, then stop and report; a flaky/nondeterministic check → confirm
-  flakiness (re-run), report, do not paper over it; a genuinely irreducible blocker (missing
-  credential with no fallback, an external service down) → stop and report, do **not** force,
-  disable, or guess your way past it. A halted run that reports honestly is a success; a
-  silently-broken commit is a failure. Note that a conflict against the base branch is **not** a
-  blocker here — the run never merges, so conflicts are an output of the final assessment, not
-  an obstacle to it.
-- **Delegation.** Prefer launching subagents (and teams) for independent or parallelizable
-  work, within the fan-out each stage specifies. The per-stage fan-outs below (Stage E and F
-  slices, Stage L's two agents, Stage O's two sub-orchestrators) are the intended shape; beyond
-  them, delegate only when the work is genuinely independent or needs isolated context. Opus 5
-  delegates more readily than earlier models and a subagent is not free — each one re-establishes
-  context, re-explores, and reports back, and multi-agent runs cost several times the tokens of
-  direct work. Work you could finish in a handful of tool calls (a few file reads, a targeted
-  `grep`, a single-file check) is faster done directly, and verification belongs in your own loop
-  rather than in a delegated agent.
-  Run independent subagents concurrently in a single batch. Give each subagent the
-  same autonomy mandate (read-only repository access, a private scratchpad, may spawn its own
-  compliant subagents, no questions to the human), except for the two Stage-O TeX writers
-  governed by their complete synchronization prompts.
-  **Dispatch every subagent per the rules in "Delegating to subagents" below** — a bare task
-  string ("review the explainer doc") is not acceptable.
-- **Sequencing.** Honor every barrier marked **WAIT**. Do not start a barriered step until
-  its predecessor has fully completed and been verified.
-- **Working documents.** Every file you or any subagent produces during this run — reports,
-  plans, audits, notes, logs, and all plan-execution intermediates — goes **under `docs/`**,
-  in the right subfolder (see **File output locations** below). Never write working documents
-  to the package root or source tree. `docs/` is git-ignored, so these stay local and out of
-  the package. Subagents may write only in their private `RUN/scratch/agents/<agent-id>/`
-  directory. The orchestrator writes every canonical report, plan, document, source edit, and
-  generated artifact outside those private directories. The two Stage-O documentation
-  sub-orchestrators are the sole exception: each may edit its one assigned canonical TeX target
-  under the Stage-O protocol and may create only the working and validation artifacts authorized
-  by its governing synchronization prompt.
+- Verify mutable behavior from current source and observed output within the stage's authority.
+- Use the shared bounded-failure rule. Set exact retry caps in the run plan; do not embed an
+  approximate universal retry count in this prompt.
+- Honor every **WAIT** barrier. The resource ledger must prove each permitted overlap safe before
+  launch.
+- Keep all plans, reports, logs, and worker records under the run root defined below. Canonical source,
+  documentation, and publication targets remain in their repository paths.
+- Use independent reviews when they add evidence. The orchestrator verifies and synthesizes every
+  result.
 
-### Delegating to subagents (follow Anthropic's agent-prompting guidance)
+### Delegating to workers and sub-orchestrators
 
-This run is an orchestrator-workers pattern: you (the lead) decompose the work, delegate to
-workers, and synthesize. Anthropic's published guidance for exactly this shape applies — apply
-it to every subagent you spawn. Sources:
-[Building effective agents](https://www.anthropic.com/engineering/building-effective-agents)
-and [How we built our multi-agent research system](https://www.anthropic.com/engineering/multi-agent-research-system).
+Apply the shared worker dispatch contract to every worker and nested worker. The exceptions are the
+Stage-K graph sub-orchestrator and the two Stage-O documentation sub-orchestrators; each receives the
+complete shared contract plus its complete dependent prompt.
 
-#### Durable read-only worker protocol
+#### Workflow-specific worker exceptions
 
-Apply this protocol to every subagent, including nested subagents, except the Stage-K graph
-maintenance agent and the two Stage-O
-documentation sub-orchestrators identified below. It overrides any skill or stage instruction
-that would otherwise let a worker edit the checkout or return its findings only in its final
-message.
-
-- **The orchestrator is the sole repository writer outside the two named exceptions** (Stage K's
-  graph maintenance agent, and Stage O's two documentation sub-orchestrators). The assigned
-  `RUN/scratch/agents/<agent-id>/` directory is every other worker's only write exception. A
-  subagent must not create, edit, move, delete, stage, commit, or generate anything else in the
-  checkout, whether the path is tracked, untracked, or ignored — a git-ignored path is not an
-  invitation, and only the Stage-K agent may write the graph and its tooling. It must not change
-  Git state, install hooks, run a formatter in place, regenerate documentation, or run a
-  pipeline against the live output tree. It must not execute any command that may write outside
-  its private scratchpad. It may inspect the repository and run commands proved read-only. If
-  analysis requires a write-capable tool, copy the needed inputs to the private scratchpad and
-  run it there, or tell the orchestrator which command to run.
-- **Give every worker a unique durable output path.** Before substantive work, the worker must
-  create `RUN/scratch/agents/<agent-id>/response.md`. Only that worker may write inside its
-  private directory. The file is the worker's response and recovery record; canonical reports,
-  plans, source files, and deliverables remain the orchestrator's responsibility. A parent that
-  spawns nested workers must give each one a separate directory and record their response paths
-  in the parent's file.
-- **Checkpoint from the start.** The worker must create `response.md` before beginning the
-  audit, with its objective, assigned scope, timestamp, and `Status: in progress`. It must update
-  the file after each completed source, file slice, testable claim, or material finding. Each
-  checkpoint records evidence, completed scope, work still pending, and any error or uncertainty.
-  The worker must not keep all findings only in context and write them at the end.
-- **Polish without erasing recovery value.** The worker may reorganize, deduplicate, and edit
-  `response.md` before handoff, but durable findings must reach disk as they occur. At handoff it
-  marks the file `Status: complete` or `Status: partial` and records the last completed checkpoint
-  and any remaining scope.
-- **Return the path, not the substance.** The worker's final message contains only the exact
-  `response.md` path and its `complete` or `partial` status. It does not repeat findings in the
-  message. The orchestrator reads the file, verifies its evidence, and performs all synthesis and
-  repository changes itself. In Stage O only, the two named documentation sub-orchestrators may
-  edit their disjoint assigned TeX files in the same checkout and branch as the orchestrator.
-  They must not stage, commit, push, switch branches, create worktrees, or modify Git state.
-- **Recover partial work.** If a worker crashes, times out, disappears, or returns no final
-  message, inspect its `response.md` and private directory before retrying or reassigning work.
-  Use verified partial findings, record the uncovered remainder, and never treat a missing final
-  message as proof that no work was completed. Keep every worker directory until the run completes successfully;
-  preserve it when the run halts.
-
-- **Every delegation carries the full task quad — objective, output, tools, boundaries.** A
-  vague task string causes duplicated work and gaps. For each subagent, state:
-  1. **Objective** — the specific goal, in one or two sentences.
-  2. **Output** — the exact private `RUN/scratch/agents/<agent-id>/response.md` path, its required
-     shape, and the canonical artifact that the orchestrator will synthesize from it.
-  3. **Tools & sources** — which tools/skills to use and where to look (e.g. read `R/` and
-     `scripts-paper/`, inspect test definitions, query a scratch copy of `graphify`); examine
-     available tools first, prefer specialized over generic, and identify which commands are
-     safe under the read-only worker protocol.
-  4. **Boundaries** — what is in scope and explicitly out of scope, and (when subagents run in
-     parallel) which slice belongs to this agent so siblings don't overlap. State explicitly
-     that the live checkout is read-only and the private scratchpad is the worker's only writable
-     location. When you fan out, give each agent a distinct, non-overlapping slice and say so.
-- **Scale effort to task complexity.** Tell each subagent how much to invest, and size the fan-out
-  to the work: a single well-scoped file audit or draft → one agent; a broad audit (e.g. Advanced-R
-  deviations, graphify duplications) → several parallel agents partitioned by area, each with a
-  clear quota and stopping criterion. Don't over-invest a fleet on a trivial step, or under-invest
-  one agent on a sweep. State the stopping criterion ("stop when every `R/` file has been checked
-  against the guide", not "look around").
-- **Frameworks over rigid micro-scripts where judgment is needed.** For the `multistep-do` /
-  `multistep-plan` / audit agents, define the division of labor, the approach, and the effort
-  budget, then let the agent exercise judgment — don't dictate every keystroke. (The pipeline
-  *commands* themselves — exact scripts, flags, paths — are not judgment calls: specify those
-  precisely.)
-- **Have agents self-diagnose.** If a subagent's tool call or approach fails, have it diagnose
-  why and adjust rather than silently retrying the same thing. It must checkpoint the failure,
-  diagnosis, and next attempt before proceeding, and you must feed reusable lessons into the
-  next dispatch.
-- **Synthesize from disk, don't relay.** A subagent's final message gives you only its response
-  path and status. Read that file, verify its claims against source per the evidence rules, and
-  integrate the result yourself. Never depend on the chat transcript as the sole copy of worker
-  output.
-
-#### Review discipline that repeatedly decides whether a run is trustworthy
-
-These are failure modes this workflow has actually produced, not hypotheticals. Each has a
-mechanism, because intent alone has already failed at several of them.
-
-- **A certification covers bytes, not a document.** Any fix applied after a reviewer certifies
-  voids that certification: the delivered version must be the version that was certified. State the
-  version identifier a reviewer is reviewing, and re-state which version each verdict covers.
-- **Freeze the file for the whole of a review round.** Editing while a reviewer works forces it to
-  re-anchor its findings and silently invalidates its verdict. The mechanism that holds is a
-  precondition, not a resolution: **apply nothing until every reviewer dispatched in that round is
-  terminal** — not "until the one that just reported is handled". A reviewer returning early is
-  one input of N, and N is fixed at dispatch.
-- **When only part of a document changed, prove the rest is unchanged** by recording a digest per
-  stable region and having the next reviewer recompute it rather than accepting your claim. That is
-  what lets an earlier clean verdict survive a small edit without either lying or forcing a full
-  re-review. Ask for the measurement; never supply the expected value, which invites confirmation.
-- **A brief that paraphrases the source of truth manufactures defects.** A reviewer isolated from a
-  file can only judge what you put in front of it. Quote verbatim; if you summarize, any resulting
-  "contradiction" is yours. Read the full passage before acting on any finding — a claim that
-  looks wrong in isolation is often correct in context.
-- **Write corrections from source, not from a reviewer's summary of source.** A summary is lossy,
-  and prose written from one reproduces the loss as a fresh defect. Re-read the passage after
-  editing it; that single habit catches more damage than any downstream audit.
-- **Tell reviewers an overshoot is as serious as an omission.** A verifier asked only "was it
-  fixed?" passes a fix that went too far. Roughly half the defects in a mature round are collateral
-  damage from earlier fixes, so aim verification at the neighbourhood of each edit, not its target.
-- **Fix defect classes, not the instances named.** When a reviewer names two sites, sweep the whole
-  document for that class and close it; otherwise the same finding returns for the rest of the run.
-- **Generated outputs are inadmissible as evidence** in a static audit. An artifact shows what one
-  run did, not what the code does. Rely on source citations even when the conclusion is right.
-- **An empty result is not a negative finding.** Escaping, wrapped phrases, case mismatch, and shell
-  quoting all return zero silently. Before concluding absence, confirm the same search fires against
-  a control that must match. This has produced both false clean passes and fabricated defects here.
-
-#### Running a fleet under real interruptions
-
-- **Assume a killed agent's children died mid-work, not on completion.** Budget and session limits
-  end an agent and everything it dispatched. Partial output from a killed reviewer is untrusted: an
-  unfinished audit must never be read as a clean one. On resume, re-dispatch rather than salvage
-  verdicts.
-- **Dispatch long rounds in waves** so one interruption cannot erase the whole round, and tell each
-  reviewer to run its cheapest decisive checks first and to state exactly where it stopped. A
-  partial that declares its own boundary is usable evidence; one that does not is a false clean.
-- **Record each dispatch's expected duration when you dispatch it.** Some workers cannot write to
-  disk at all, so their progress is invisible; without a stated duration a long scope is
-  indistinguishable from a dead agent.
-- **Silence is not death — probe, don't conclude.** The reliable stall signal is *every child has
-  returned **and** the parent has not written*, not elapsed quiet time. A probe costs one message;
-  relaunching on a wrong guess discards hours of work.
-- **Dispatch first, then write the report entry.** Announcing a dispatch and ending the turn leaves
-  the work undone while the log reads as though it is in flight. This has cost this workflow hours.
-- **A stop request may only park an agent, not end it, and a parked agent can still wake and
-  write.** When a file's ownership transfers between agents, tell the outgoing one explicitly not to
-  edit and to take no action on any wake-up, and confirm the file is unchanged before the successor
-  relies on it.
-
-#### Closing criteria: converging barriers versus unbounded ones
-
-- **Separate blocking findings from discretionary ones, and say which is which.** A pass that
-  enforces a stated standard converges; a pass that improves taste does not, because a fresh reader
-  can always tighten another sentence and every fix creates new text to assess. Requiring "returns
-  nothing" from the second kind is unbounded by construction.
-- **Close such a pass on zero rule violations** — breaches of a stated rule, or anything that
-  damages accuracy — while recording discretionary suggestions as declined with a reason. Report
-  both counts so the split is auditable rather than asserted, and resolve ambiguity as blocking.
-- **Let each barrier own only its own defect class.** Clearing another barrier's findings inside
-  yours makes every round look as productive as the last while nothing converges. Carry deferred
-  items forward in a visible ledger instead.
-- **Do not declare convergence by extrapolation.** A falling trend is not a clean round. If a count
-  stops falling, the bottleneck is usually the edit process rather than the document — measure
-  what share of findings are self-inflicted before adding another round.
+- Stage K may write only the graph and graph-tooling paths authorized by its dependent prompt.
+- Each Stage-O sub-orchestrator may write only its assigned TeX and PDF plus its unique workflow
+  record.
+- Every other worker writes only to `RUN/scratch/agents/<agent-id>/` and returns the durable path and
+  status required by the shared contract.
+- The orchestrator remains the sole Git owner and repository writer outside these exceptions.
 
 ### Hard constraints (project conventions — non-negotiable)
 
@@ -375,24 +137,19 @@ mechanism, because intent alone has already failed at several of them.
   and run `devtools::build_readme()`, never hand-edit `README.md`. (`scripts-paper/README.md`
   and `scripts-paper/support/README.md` are plain Markdown and not subject to this.)
 - **Preserve pipeline state for every invocation.** Never prepare a `run_pipeline.R` invocation
-  by running `reset_pipeline_state.R`, clearing output, deleting caches, forcing
-  `HETID_BOOT_MODE=rerun`, or using a draft bootstrap. This applies to Stage C and to any
-  validation rerun required by Stages I or M. Use the canonical 10,000-draw configuration with
-  `HETID_BOOT_MODE=reuse` and let the bootstrap cache gate decide for itself whether the draw
-  callbacks execute. Do not expect a broader freshness system to spare you the rest: the runner
-  sources its modules in fixed order and recomputes them, and the manifest governs artifact
-  paths, status class, and conditional cleanup rather than scheduling. The draw cache is the one
-  place existing state can skip work.
+  by running a reset entrypoint, clearing output, deleting caches, selecting a source-defined
+  force-rerun mode, or using a draft configuration. This applies to Stage C and to any validation
+  rerun required by Stages I or M. Derive the production depth, supported reuse request, cache
+  scope, and downstream scheduling rules from the frozen source. Let each current validator decide
+  whether its callbacks execute; do not encode a remembered cache topology in this prompt.
 - **Protected file — never modify, ever:** `docs/heteroskedasticity_tests_general_instruments.tex`.
   Do not edit, rewrite, reformat, recompile-in-place, move, rename, or delete it, and do not
-  let any subagent or skill do so — at any stage, for any reason. You may read it for
+  let any worker, sub-orchestrator, or skill do so — at any stage, for any reason. You may read it for
   reference only. This overrides anything that would otherwise touch it.
 
-### Standing user decisions — do not re-remediate (user-sanctioned)
+### Workflow exclusions
 
-These findings surfaced in prior quality/graphify reports and the user has explicitly ratified
-leaving them AS-IS. Do not action them in this or any future run, and do not re-flag them as
-defects (a re-flag is itself a finding to suppress):
+Treat these as present scope rules. Do not remediate or report them as defects in this workflow:
 
 - **`download_term_premia` sub-80 % coverage — do NOT add an offline-mockable test.**
   The only uncovered path is the live network download; the coverage gap is accepted as-is.
@@ -419,9 +176,10 @@ improvise around it.
   detached, stop and report — a detached `HEAD` is not a usable base.
 - **Work in a new isolated worktree on a new branch.** Per **Stage 0**, confirm the invoking
   checkout is clean, then create one worktree and one branch for this run in a single command:
-  `git worktree add <worktree-path> -b chore/pipeline-validation-<short-date> <BASE>`. Every
-  stage from A onward runs with that worktree as the working directory. The invoking checkout is
-  left untouched for the whole run — do not edit, commit, stage, or run the pipeline in it. If
+  `git worktree add <worktree-path> -b chore/pipeline-validation-<run-id> <BASE>`. Every
+  stage from A onward runs with that worktree as the working directory. The invoking checkout's
+  tracked state is left untouched for the whole run — do not edit, commit, stage, or run the pipeline
+  in it. Stage K's locked, untracked graph port-back is the sole write exception. If
   the tree isn't clean, stop and report rather than branching on top of someone else's
   uncommitted work. Verify with `git -C <worktree-path> status` and
   `git -C <worktree-path> branch --show-current` before your first commit.
@@ -433,11 +191,8 @@ improvise around it.
   force-add ignored caches, diagnostics, or PDFs. `docs/` carries a directory-level ignore rule,
   so everything this run writes under `RUN/` — reports, plans, logs, the consolidated md files —
   is **not** committed and does not appear in `git status`; do not try to force-add it.
-  **But `docs/` is not uniformly ignored: a fixed set of files under it is force-tracked, and the
-  set is larger than this run's two deliverables and changes over time.** Run `git ls-files docs/`
-  in Stage 0 and record the result — at the time of writing it also covers this prompt, both
-  synchronization prompts, and the four style guides that Stages E and F read. An edit to any of
-  those *will* show up in `git status`, so treat every force-tracked `docs/` file other than the
+  **But `docs/` is not uniformly ignored.** Run `git ls-files docs/` in Stage 0 and record the
+  complete current set. Treat every tracked `docs/` file other than the
   two Stage-O targets as read-only reference material for this run. The two Stage-O deliverables,
   `docs/run_pipeline_code.tex` and `docs/run_pipeline_math.tex`, are the only ones this run may
   change: stage and commit those two files explicitly after their sub-orchestrators finish and the
@@ -474,11 +229,14 @@ improvise around it.
 
 All run artifacts live under `docs/` in a single dated run folder so the run is
 self-contained and easy to clean up. Use this layout (create folders as needed). Give every
-subagent its exact private response path and identify canonical targets as read-only context —
-agents must not write to `/tmp`, the repo root, or the source tree.
+worker its exact private response path and identify canonical targets as read-only context —
+workers must not write to `/tmp`, the repo root, or the source tree.
 
-Let `RUN = docs/pipeline-run-<run-date>/` be the run root (pick the date once at the start
-and reuse it everywhere). Within it:
+Create one collision-resistant `RUN_ID` at Stage 0 in the form
+`YYYYMMDD-HHMMSS-<unique-suffix>`, using the system clock plus a task-unique suffix. Verify that no
+branch, worktree, or run directory already uses it; generate a new suffix rather than reusing or
+overwriting anything. Let `RUN = docs/pipeline-run-<RUN_ID>/` and reuse that exact identifier
+throughout the workflow. Within it:
 
 | What | Where |
 |---|---|
@@ -502,23 +260,21 @@ and reuse it everywhere). Within it:
 (reports, plans, audits, notes, logs, consolidated files, the orchestrator log — anything in
 `RUN/`) must carry a **"Last modified" stamp with both date and time** at the very top, just
 under the title — e.g.
-`_Last modified: 2026-06-13 14:32 (local)_`. Obtain the real timestamp from the system clock
+`_Last modified: YYYY-MM-DD HH:MM ZZZ_`. Obtain the real timestamp from the system clock
 (`date '+%Y-%m-%d %H:%M %Z'`) — never invent or hard-code it. Whenever you rewrite a file
 (e.g. consolidating, or re-running a stage), refresh its stamp to the actual modification
-time. Require every subagent and skill that writes an `.md` to do the same.
+time. Require every worker, sub-orchestrator, and skill that writes an `.md` to do the same.
 
-For subagent `response.md` files, create the timestamped header before substantive work and
-refresh the timestamp at every checkpoint. Keep all `RUN/scratch/agents/` directories for the
-entire active run. Delete them only after the run completes successfully and the final summary has captured
-their disposition; leave them intact after any crash or halted run.
+For worker `response.md` files, create the timestamped header before substantive work and
+refresh the timestamp at every checkpoint. Keep all `RUN/scratch/agents/` directories through the
+final handoff. They are durable evidence; cleanup requires a separate, explicitly authorized
+operation after the run.
 
 Note: `quality-check.R` writes its own artifacts to `docs/quality-reports/` — leave those in
 place (that path is fixed by the script) and summarize/link them from `RUN/reports/`. The
 Stage-O TeX files keep their existing canonical paths (`docs/run_pipeline_code.tex` and
-`docs/run_pipeline_math.tex`) — they are deliverables, not run artifacts. When a stage
-says "delete the source md files" or "delete other reporting artifacts," delete only eligible
-orchestrator-owned intermediates under `RUN/`,
-never canonical deliverables or `RUN/scratch/agents/` during the active run.
+`docs/run_pipeline_math.tex`) — they are deliverables, not run artifacts. Preserve every
+orchestrator-owned report and worker record through the final handoff.
 
 ### Reference paths
 
@@ -529,6 +285,7 @@ never canonical deliverables or `RUN/scratch/agents/` during the active run.
 | Pipeline module docs | `scripts-paper/README.md`, `scripts-paper/support/README.md` |
 | Code document (the pipeline explainer) | `docs/run_pipeline_code.tex` |
 | Math document (the reproduction manual) | `docs/run_pipeline_math.tex` |
+| Shared workflow contract | `docs/prompts/shared-workflow-contracts.md` |
 | Code-document synchronization prompt | `docs/prompts/synchronize-run-pipeline-code.md` |
 | Math-document synchronization prompt | `docs/prompts/synchronize-run-pipeline-math.md` |
 | Graph maintenance prompt | `docs/prompts/maintain-graphify-graph.md` |
@@ -539,26 +296,28 @@ never canonical deliverables or `RUN/scratch/agents/` during the active run.
 
 ### Execution plan
 
-Maintain a task list mirroring the stages below and keep it current, using the harness's task
-tools (`TaskCreate` to add a stage, `TaskUpdate` to move it to in-progress and then completed,
-`TaskList` to review). Keep a running log of decisions made and evidence captured at
+Maintain a task list mirroring the stages below and keep it current with the harness's available
+task registry. Discover the current task-control interface rather than depending on particular tool
+names. Keep a running log of decisions made and evidence captured at
 `RUN/orchestrator-log.md` (see **File output locations**).
 
 **Stage 0 — Preflight (before Stage A). [WAIT]**
 Verify the run can proceed; if any check fails, fix it or **stop and report** (do not start the
 pipeline on a broken footing):
-- **Model/effort:** session is on `claude-opus-5[1m]` at `xhigh` effort (per **Model and effort**).
-- **Skills and final-stage prompts available:** `karpathy-guidelines`, `multistep-do`,
-  `multistep-plan`, `graphify`, and `econ-write` resolve, and
-  both synchronization prompt files listed under **Reference paths** exist and are readable.
-  `writing-clearly-and-concisely` is **not** a skill in this harness — it is a pair of guide
-  files at `~/.codex/skills/writing-clearly-and-concisely/SKILL.md` and `elements-of-style.md`
-  that the two synchronization prompts read directly by absolute path. Confirm both files exist
-  and are readable; do not try to invoke it as a skill.
+- **Shared contract and fixed execution:** the shared prompt exists, is readable, and its required
+  model, effort, and absolute skill files are available.
+- **Skills and final-stage prompts available:** read the exact `karpathy-guidelines`,
+  `multistep-plan`, `econ-write`, and clear-writing paths fixed by the shared contract, and verify
+  that all dependent prompt files listed under **Reference paths** exist and are readable. Check the
+  repository-local graph skill at `.claude/skills/graphify/SKILL.md`; its absence degrades Stages K-L
+  to their stated source-only or partial paths but does not block independent stages.
   The optional `commit-push` skill may implement the existing commit/push contract if it is
   available; its absence is not a blocker because the Git commands are specified below.
-  **Tools available:** `latexmk`, `pre-commit`, `Rscript`/`R`, `git`, `gh`, `graphify`, and the
-  `pal`/`context7` MCP tools. Note any missing requirement in the log.
+  **Tools available:** require `git`, `Rscript`/`R`, `pre-commit`, the current package and pipeline
+  validation commands, and the LaTeX/PDF tools required by the dependent Stage-O prompts. Treat
+  `gh`, graphify interfaces, PAL reviewers, and context-documentation interfaces as optional unless
+  a later current-source gate has no compliant substitute. Record each missing optional tool and
+  use the fallback defined by the owning stage.
 - **Clean, known starting point, and the base branch comes from `HEAD`:** run
   `git status --short --branch` and `git rev-parse --abbrev-ref HEAD`. **Do not assume the repo
   is on `main` or clean** — it may not be, and `main` has no special status in this run. Record
@@ -569,46 +328,32 @@ pipeline on a broken footing):
   the invoking checkout — the run leaves its tracked state and branch exactly as found. Stage K's
   pass may refresh untracked generated graph state there; that is not a change to the checkout's
   tracked state and does not violate this rule.
-- **Record the force-tracked `docs/` set.** Run `git ls-files docs/` and log the result. `docs/`
-  is ignored as a directory but a fixed set of files under it is tracked anyway, and that set is
-  larger than this run's two Stage-O deliverables — it includes the style guides Stages E and F
-  read and the synchronization prompts Stage O reads. Editing any of them would show up in
-  `git status` and violate the Stage-O scope rule, so treat every entry other than
+- **Record the force-tracked `docs/` set.** Run `git ls-files docs/` and log the complete current
+  result. Treat every entry other than
   `docs/run_pipeline_code.tex` and `docs/run_pipeline_math.tex` as read-only for this run. See
   **Git workflow**.
-- **LAD gate decision approved — hard precondition, not an optional check.** The LAD estimator is
-  gated by the tracked, committed decision file `scripts-paper/config/decisions/lad.dcf`, which
-  `run_pipeline.R` reads via `logvar_lad_gate_read()`. Confirm it records `decision: approved` and
-  that the installed `quantreg` matches its recorded `quantreg_version` (currently `6.1`). The
-  reader is tri-state: a missing, `declined`, or `unanswered` decision sources no LAD code and
-  silently skips it (no error), but an **`approved` decision whose `quantreg` is absent or
-  version-mismatched hard-fails the run** — a stale version aborts Stage C, it does not merely
-  skip. The current artifact manifest has three `conditional_lad` records: two non-ignored SVG
-  publication paths and one gitignored diagnostics CSV. Do not infer their expected presence
-  from the initial output inventory alone. If the decision is not `approved` or the version is
-  stale, **fix it before Stage C runs**. Only proceed with LAD off if you deliberately intend a
-  LAD-less run — record that explicitly in the log, and treat the two absent conditional SVGs as
-  expected when reconciling Stage C rather than as missing required output.
+- **Discover optional-estimator gates.** Read each current decision parser, tracked decision record,
+  dependency check, and conditional artifact declaration. Record the selected state and its exact
+  consequences. Do not edit a tracked scientific decision merely to turn an estimator on. If an
+  approved state requires an exact dependency version, satisfy that recorded contract or stop before
+  Stage C. If source selects an off state, record its conditional artifact absences as expected.
 
-Then, in order:
+Then follow the dependency order and only the explicit overlaps below:
 
 **(1) Create the isolated run worktree and branch.** One command creates both, from `BASE`:
 
 ```
-git worktree add ~/hetid-worktrees/pipeline-run-<run-date> \
-    -b chore/pipeline-validation-<short-date> <BASE>
+git worktree add ~/hetid-worktrees/pipeline-run-<RUN_ID> \
+    -b chore/pipeline-validation-<RUN_ID> <BASE>
 ```
 
-- **The worktree path must be outside the Dropbox tree.** This repository lives under
-  `~/Library/CloudStorage/Dropbox-Personal/`, and a checkout created inside it mmap-stalls while
-  Dropbox indexes it (it has also stalled `rsync` on `.Rproj.user`). `~/hetid-worktrees/<name>` is
-  outside and is the verified-good location — a full multi-hour bootstrap and the entire test
-  suite have run there without a stall. Only the small `.git/worktrees/` metadata lands in
-  Dropbox, which is fine. Never place the run worktree under the repository root or anywhere
-  inside Dropbox.
+- **The worktree path must be outside the Dropbox tree.** The repository is under
+  `~/Library/CloudStorage/Dropbox-Personal/`. Use `~/hetid-worktrees/<name>` or another path whose
+  resolved parent is outside that synchronized tree. Verify the resolved path before creating the
+  worktree.
 - **Every stage from A onward runs with that worktree as the working directory.** `cd` into it
   once and stay there, or pass `-C <worktree-path>` on every `git` call. `RUN` is relative to the
-  worktree, so the run folder is `<worktree-path>/docs/pipeline-run-<run-date>/`. Record the
+  worktree, so the run folder is `<worktree-path>/docs/pipeline-run-<RUN_ID>/`. Record the
   absolute worktree path, the branch name, and `BASE` in the log.
 - **The invoking checkout is read-only for the whole run, with one named exception.** Do not edit,
   stage, commit, run the pipeline, or install the package from it. Its roles after this step are as
@@ -617,28 +362,19 @@ git worktree add ~/hetid-worktrees/pipeline-run-<run-date> \
   only** — never a tracked file, never Git state, never the working tree's branch. Nothing else in
   the run may write to the invoking checkout for any reason.
 
-**(2) Seed the worktree with the invoking checkout's ignored pipeline state. [required — skipping
-this silently costs a multi-hour rerun]** A new worktree checks out tracked files only.
-`scripts-paper/output/` is **not** ignored as a directory — `.gitignore` excludes only
-`scripts-paper/output/**/*.rds`, `**/*.pdf`, and `**/*.csv`, i.e. by extension — so the fresh
-worktree *does* receive the tracked `.svg`/`.tex`/`.md` publication artifacts under it. What it
-does not receive is anything matching those ignore patterns: `output/state/` holds nothing but
-`.rds` and therefore does not exist at all in a fresh worktree, and the `.rds`/`.csv` diagnostics
-and the download cache are absent for the same reason. The bootstrap cache the Stage-C reuse gate
-reads would therefore be missing, the gate would correctly report a miss, and Stage C would execute
-the full multi-hour draw stage. That is exactly the from-scratch rerun the **Preserve pipeline
-state** constraint forbids manufacturing. Before Stage A, copy the ignored state across:
+**(2) Seed the worktree with the invoking checkout's ignored pipeline state. [required]** A new
+worktree contains tracked files only. Derive the current tracked and ignored output sets with Git and
+the current cache/state readers. Copy the complete existing output tree so the run does not
+manufacture a cache miss or discard a scientifically relevant state record:
 
 ```
 cp -R <invoking-checkout>/scripts-paper/output/. \
       <worktree-path>/scripts-paper/output/
 ```
 
-- **Copy `output/state/` as a complete set, never file-by-file.** The four `.rds` files there
-  (`bootstrap_stage_draws.rds`, `conditional_route_status.rds`, `log_var_eq_dynamics_gate.rds`,
-  `log_var_eq_egarch_status.rds`) are bound to one another and to the committed decision records.
-  Mixing files from two different runs produces a `gate_record_hash_mismatch` in the egarch check
-  that looks like a code defect and is not.
+- **Copy every state family as a complete set, never file-by-file.** Derive each family and its
+  cross-record bindings from current readers and validators. Never mix records from different source
+  trees or pipeline-state snapshots.
 - **Copy, do not move, symlink, or hard-link.** The invoking checkout keeps its own working state
   intact; the run must not be able to corrupt it. Verify the copy by comparing
   `md5 scripts-paper/output/state/*.rds` in both locations and record both digest sets in the log.
@@ -647,12 +383,11 @@ cp -R <invoking-checkout>/scripts-paper/output/. \
   `scripts-paper/output/` at all, record that fact and proceed — a gate-driven full rerun is then
   legitimate, and Stage A's inventory will show an empty baseline.
 
-**(2b) Seed the other untracked resources the run depends on. [required — three stages fail or go
-silently wrong without them]** The same tracked-files-only rule that leaves `output/state/` empty
-also means every **untracked** file under `docs/` and `.claude/` is missing from the worktree. Four
-of them are load-bearing. None are in git, so `git ls-files docs/` will not list them and a fresh
-clone will not have them either — their absence is invisible until the stage that needs one fails.
-Copy each from the invoking checkout before Stage A:
+**(2b) Seed every other required untracked resource.** Derive the dependency closure of Stages D-F,
+K, and O from their current commands, guides, protected references, skills, and complete dependent
+prompts. For each required path absent from `git ls-files`, copy it from the invoking checkout before
+Stage A and verify it by digest. At minimum, resolve the following explicitly named dependencies; a
+new source dependency must be added by discovery rather than omitted because it is absent here:
 
 ```
 cp <invoking-checkout>/docs/quality-check.R                                   <worktree-path>/docs/
@@ -672,28 +407,23 @@ mkdir -p <worktree-path>/.claude/skills && \
 Copy, never move or symlink — the invoking checkout keeps its originals, and the run must not be
 able to damage them. Confirm each landed.
 
-**Do not seed the graph directory here — Stage K's pass owns that.** Its prompt seeds whatever it
-needs from the canonical checkout, reconciles a copy that is already present, and points the graph's
-root marker at the tree it is working in. Copying it at this step would hand that pass a directory
-whose files carry fresh copy timestamps, which can defeat its own newer-wins reconciliation. Seed
-the skill so read-only queries resolve, and leave the graph itself to Stage K.
+**Do not seed the graph directory here — Stage K's pass owns that.** Its prompt acquires the
+canonical lock, selects a coherent candidate by source provenance, seeds its worktree, and points the
+root marker at that tree. Seed the skill needed for queries and leave graph state to Stage K.
 
 **Baseline the protected file by checksum — `git` cannot police it and mtime is worthless here.**
 `docs/heteroskedasticity_tests_general_instruments.tex` is **untracked**, so it never appears in
 `git status` and `git log` can say nothing about it; and `cp` stamps the worktree copy with the copy
-time, so that copy's mtime proves nothing either. Record `md5 -q` for the file in **both** trees at
-this step, and re-verify the worktree digest before the final summary. The donor's own mtime is
-separate evidence that the canonical copy was never touched — check it there, not in the worktree.
+time, so that copy's mtime proves nothing either. Record a content digest for the file in both trees
+at this step, and re-verify both digests before the final summary.
 
-**(3) Create the run folder.** Pick the run date and create
-`RUN = docs/pipeline-run-<run-date>/` **inside the worktree**, with its `logs/`, `reports/`,
+**(3) Create the run folder.** Create
+`RUN = docs/pipeline-run-<RUN_ID>/` **inside the worktree**, with its `logs/`, `reports/`,
 `plans/`, `scratch/`, and `scratch/agents/` subfolders.
 
-**(4) Provision the R environment.** The
-pipeline does not run against an empty library. Confirm the heavy CRAN deps used by
-`scripts-paper/` (`dplyr`, `tidyquant`, `nloptr`, `skedastic`, `ggplot2`, `sandwich`, and — for
-the LAD estimator — the approved `quantreg` version, plus the dev/quality
-tooling in `docs/quality-check.R`'s `required` vector) are installed, and **install the package
+**(4) Provision the R environment.** Derive runtime and quality-tool dependencies from the current
+pipeline source, package metadata, decision gates, and `docs/quality-check.R`. Confirm the selected
+versions are installed, and **install the package
 itself** (`R CMD INSTALL .`, or `devtools::install()`) so `scripts-paper/` can load its exported
 functions. If a step fails with a missing-package or "there is no package called …" error,
 install the dep and retry — this is expected after a fresh/wiped R library, not a code bug.
@@ -721,75 +451,49 @@ this run.
 **Stage B — Validate the manifest and rerun gates. [WAIT]**
 Do not invoke `scripts-paper/run_pipeline.R` in this stage. Read the current manifest, analysis
 configuration, and bootstrap cache-validation code. Confirm that the production configuration is
-`HETID_BOOT_REPS=10000` and that `HETID_BOOT_MODE` defaults to `reuse`. Ensure the Stage-C
-environment does not inherit `HETID_ALLOW_DRAFT_RUN=1` or `HETID_BOOT_MODE=rerun`. Verify the
-gate inputs and dependencies that can be checked before execution, including the LAD decision
-from Stage 0, but do not manually declare the bootstrap cache valid or stale. Do not warm,
+internally consistent. Derive the production bootstrap depth, cache modes, defaults, and draft-run
+controls from current source. Confirm the selected default requests reuse and ensure the Stage-C
+environment does not inherit a draft or forced-rerun override. Verify the
+gate inputs and dependencies that can be checked before execution, including every optional-estimator
+decision discovered in Stage 0, but do not manually declare the bootstrap cache valid or stale. Do not warm,
 downgrade, rewrite, or delete it. The cache validator called by Stage C is authoritative and must
 decide whether to reuse the existing result or rerun the draw callbacks.
 
-**Stage C — Single full pipeline run, background, gate-directed bootstrap.**
-Make Stages A–C's **only** invocation of `scripts-paper/run_pipeline.R` in the background at the
-canonical bootstrap depth. Use
-`HETID_BOOT_REPS=10000 HETID_BOOT_CORES=<N> HETID_BOOT_MODE=reuse`, where `<N>` reflects available
-cores. The README's full-run example uses one core for a serial, reproducible run, so prefer `1`
-unless you have a specific reason to parallelize. Never set `HETID_BOOT_MODE=rerun` merely to
-prove reproducibility or force work that the freshness gate says is unnecessary.
+**Stage C — Single full pipeline run, gate-directed bootstrap.**
+Make Stages A-C's only invocation of `scripts-paper/run_pipeline.R` with the production depth,
+reuse request, and resource controls derived and recorded in Stage B. Use only launch inputs that
+the frozen source recognizes. Prefer the source-defined serial reproducibility setting unless
+parallel execution is both supported and isolated. Never request a forced rerun merely to prove
+reproducibility.
 **Save the full R output (stdout + stderr) to a log file** at `RUN/logs/pipeline-full.log`
-(redirect both streams, e.g. append ` > RUN/logs/pipeline-full.log 2>&1` to the background
-command). Since this runs in the background, the log is your primary way to confirm completion
-and success — poll/inspect it rather than guessing.
-- **The bootstrap is one unified stage.** `HETID_BOOT_REPS` and `HETID_BOOT_CORES` are read once
-  in `scripts-paper/config/analysis.R` and passed to
-  `scripts-paper/inference/run_bootstrap_stage.R`. The stage creates one primary circular-MBB
-  index family shared by mean and volatility inference and one doubled-block sensitivity family
-  for volatility. `HETID_BOOT_CORES` controls both indexed-draw executions. The later
-  mean-specification comparison reuses the exact primary family for the non-published
-  specification. In `reuse` mode, the gate validates the cached draw families, input and draw
-  specifications, executed draw-code and runtime hashes, and cache schema. A valid cache returns
-  `source = "reuse"` without executing a draw callback. A missing, unreadable, malformed, or
-  stale cache emits its reason and returns `source = "fallback-rerun"` after rebuilding. Accept
-  that rerun when the gate requires it; never manufacture one by deleting state or forcing
-  `rerun`. Presentation-only code is recorded separately and does not invalidate the draws; do
-  not override that distinction. Confirm the decision in the saved log: the endpoint lines print
-  `[reuse]` or `[fallback-rerun]`, and a fallback warning states why reuse failed.
-- **Which optional estimators run is a separate axis from bootstrap depth, and the four
-  decision/gate components are not equivalent** — verify each on its own terms from source
-  rather than assuming a uniform toggle:
-  - `scripts-paper/config/decisions/joint_gmm.R` configures an **always-run diagnostic**, not a
-    run/skip gate: `scripts-paper/log_variance/diagnostics/joint_gmm/run.R` is
-    unconditionally sourced every run; the decision record only pins which optional
-    scientific switches are active (the checked-in default is all FALSE) and rejects any
-    nondefault configuration it wasn't ratified for.
-  - The residual-dynamics diagnostic in
-    `scripts-paper/log_variance/diagnostics/dynamics/run_gate.R` **always runs**. Its base-R
-    Ljung-Box screen writes the fresh gate record and status manifest used by the EGARCH route.
-  - `scripts-paper/config/decisions/egarch.R` currently gates **routing/status only**: the
-    router (`scripts-paper/log_variance/extensions/egarch/run_route.R`) validates the decision
-    against a fresh gate record and rewrites a status manifest, but sources no dynamic estimator
-    either way — there is no wired EGARCH-X estimator yet for it to turn on.
-  - LAD is the one **actually gated, executable optional estimator**, controlled by the tri-state
-    `lad.dcf` gate already verified in **Stage 0** (see its LAD precondition — a stale or missing
-    `quantreg` under an `approved` decision hard-fails the run rather than skipping). Do not wait
-    to discover a LAD problem after Stage C finishes.
-- **Avoid the output-dir race — the output path is hardcoded, confirmed from source.**
-  `scripts-paper/config/paths.R` sets `out_dir <- file.path("scripts-paper", "output")` with no
-  env-var or argument override. Stages D, E, and F may run while Stage C is active, but a
-  consumer could read half-written output. Do **not** let backgrounding
-  create a race: either (a) keep `scripts-paper/output` **exclusively Stage C's** while it runs —
-  no other stage reads or writes it until C completes — or (b) if you can't guarantee that,
-  **run Stage C in the foreground** after D, E, and F instead of in the background. Pick one
-  and log which.
-- Stages D, E, and F do not depend on Stage C's results, so proceed with them while it runs.
-  They must not inspect or modify `scripts-paper/output`. Any later stage that consumes the full
-  results must wait and read only from completed output. Reconcile before consuming.
+(redirect both streams to that file). If the resource ledger permits background execution, record
+the process identity and poll the process plus log until terminal status. A log tail alone does not
+prove that the process exited successfully.
+- **Freeze the current resampling and cache contract before launch.** Record every draw family,
+  sharing or sensitivity relation, resource control, reuse predicate, invalidation input, status,
+  and fallback consequence found in source. After the run, reconcile the saved log and resulting
+  status records with that ledger. Accept a validator-required rebuild; never manufacture one by
+  deleting state or selecting a force mode. Use current source names and statuses rather than any
+  remembered topology or label.
+- **Optional estimators and diagnostics are separate from bootstrap depth.** Build a current gate
+  ledger before launch. For every decision record and route, classify whether it selects execution,
+  configures an always-attempted diagnostic, writes routing or status only, refuses a request, or
+  reserves an unimplemented producer. Record its dependency behavior and conditional artifact
+  consequences. Do not infer a uniform toggle from similar names or a remembered source structure.
+- **Prove any Stage-C overlap from current read and write sets.** Derive every pipeline output,
+  cache, state, package-library, and records path before launch. Stage C owns those mutable paths
+  until it exits and reconciliation finishes. Stages D-F may overlap only if their current commands
+  neither read nor write any Stage-C-owned path, mutate the installed package library, nor write a
+  source file they read. If proof is incomplete, run Stage C in the foreground and serialize the
+  stages. Any later consumer waits for process exit and output reconciliation.
 - **Do not assume the output tree starts empty or complete.** Use the Stage-A inventory as the
   pre-run record, and re-derive manifest counts and ignore status from the current code rather
   than hard-coding them. Existing valid state is intentional input. A successful Stage C may
   reuse the bootstrap cache while regenerating or validating downstream artifacts; an unchanged
   valid cache is evidence that the gate worked, not evidence that the pipeline failed to run.
 - After Stage C completes, verify required-manifest coverage, reconcile conditional absences with
-  the LAD and EGARCH status records, compare the result with the Stage-A inventory, and run
+  every discovered optional-estimator and diagnostic status record, compare the result with the
+  Stage-A inventory, and run
   `git status --short --untracked-files=all scripts-paper/output`. Review every non-ignored
   publication artifact that changed or was created, then stage it explicitly for the Stage-J
   commit or a separate focused regeneration commit. Do not force-add the ignored cache,
@@ -799,7 +503,10 @@ and success — poll/inspect it rather than guessing.
   as a regression.
 
 **Stage D — Quality suite + report.**
-Run `docs/quality-check.R` to completion. Then write `RUN/reports/quality-suite.md`
+Derive the quality suite's complete repository write set before execution. If any current output path
+is a tracked `docs/` path protected by Stage 0, redirect it to `RUN` only when the suite exposes a
+documented equivalent interface; otherwise stop Stage D with a blocker rather than overwrite the
+tracked file. Run the discovered quality suite to completion. Then write `RUN/reports/quality-suite.md`
 capturing **all** findings (pkgcheck, rcmdcheck, dupree, lintr, covr, spelling, etc.),
 including severities and file/line references, and linking the script's own artifacts in
 `docs/quality-reports/`. In particular, surface any **roxygen documentation** problems
@@ -811,17 +518,18 @@ review, and Stage G reconciles the two. This report is consumed in Stage G.
 Audit the codebase for **all** deviations from the standards and guidelines in
 `docs/guides/Advanced R Solutions.xml` and `docs/guides/Advanced R.xml`. Document every
 deviation with file/line citations and the specific guideline violated. Fan out across `R/`
-with parallel subagents — partition by a **non-overlapping slice** of files/directories per
-agent (per **Delegating to subagents**: objective = find guideline deviations in your slice;
+with independently scoped workers — partition by a **non-overlapping slice** of files/directories per
+worker (per **Delegating to workers and sub-orchestrators**: objective = find guideline deviations in your slice;
 **output** = incrementally maintain `RUN/scratch/agents/stage-e-<slice>/response.md` and return
 only that path; tools = read the
 guides + the assigned `R/` files; boundary = read-only checkout, private scratchpad only, and
 only the assigned slice; stopping criterion = every file in the slice checked against both
-guides). To keep the standard consistent across agents, give every agent the same finite
-checklist of guideline rules to apply (derive it once from the two guides up front). Size the
-fan-out to the number of `R/` files. When all finish, the orchestrator reads and verifies every
-response file and **consolidates** them into `RUN/reports/advanced-r-deviations.md`. Retain the
-worker directories until the run completes successfully. This report is consumed in Stage G.
+guides). To keep the standard consistent across workers, give every worker the same finite
+checklist of guideline rules to apply (derive it once from the two guides up front). Partition every
+`R/` file, but limit simultaneous workers to the current global slot allocation and serialize the
+remaining slices. When all finish, the orchestrator reads and verifies every response file and
+**consolidates** them into `RUN/reports/advanced-r-deviations.md`. Preserve the worker directories.
+This report is consumed in Stage G.
 
 **Stage F — Comment-style and roxygen-doc validation. [parallel with D/E]**
 Enforce two authoritative specs across the package code — `docs/guides/r-comment-style.md` for
@@ -844,16 +552,17 @@ two Advanced-R XML guides. Audit only `.R` files under `R/` and `tests/`; never 
 
 **Execution of examples is Stage D's job, not F's.** F is **read-only** and judges roxygen
 *statically* — do `@param` / `@return` / refs / math / examples *look* correct against the code
-the agent reads. Whether `@examples` actually **run**, and whether `checkDocumentation()` flags a
+the worker reads. Whether `@examples` actually **run**, and whether `checkDocumentation()` flags a
 usage/`@param` mismatch, comes from Stage D's `rcmdcheck` / quality-suite run and reaches Stage G
-via the Stage-D report; Stage G reconciles the two. Stage-F subagents must not run examples or edit
-source. Stage F may run concurrently with Stages D and E and does not consume Stage C output.
+via the Stage-D report; Stage G reconciles the two. Stage-F workers must not run examples or edit
+source. Run Stage F concurrently with Stages D or E only when the current resource ledger proves
+their read and write sets disjoint. It must not consume Stage C output.
 
 Mirror Stage E's mechanics: derive one finite checklist up front from `r-comment-style.md`
 (**Gate / MUST / MUST NOT**) and `r-roxygen-style.md` (**House style / Drift checks /
 self-check**), then fan out parallel
-subagents over a **non-overlapping slice** each (slice by file, so a file's `#` comments and `#'`
-blocks go to the same agent). Per **Delegating to subagents**: objective = list every
+workers over a **non-overlapping slice** each (slice by file, so a file's `#` comments and `#'`
+blocks go to the same worker). Per **Delegating to workers and sub-orchestrators**: objective = list every
 comment-style and roxygen-doc deviation in your slice; **output** = incrementally maintain
 `RUN/scratch/agents/stage-f-<slice>/response.md` and return only that path; tools = read both
 guides + your assigned files, including each function body to check its `#'` against the code;
@@ -864,8 +573,8 @@ Each finding records `file:line`, the rule violated, the proposed action (**dele
 fix**), and a confidence (**high/med/low**) — so Stage H can defer low-confidence changes (a
 borderline comment deletion, a debatable example removal) instead of auto-applying them. When all
 finish, the orchestrator reads and verifies every response file and **consolidates** them into
-`RUN/reports/comment-style-deviations.md`. Retain the worker directories until the run completes
-successfully. This report is consumed in Stage G.
+`RUN/reports/comment-style-deviations.md`. Preserve the worker directories through the final
+handoff. This report is consumed in Stage G.
 
 **Stage G — Consolidate D + E + F. [WAIT for D, E, and F]**
 Do not start until all three source reports exist (`RUN/reports/quality-suite.md`,
@@ -877,20 +586,20 @@ Advanced-R/hard-constraint item and a comment-style item; over-long comment line
 lintr). Tag each merged item with its provenance (`D`/`E`/`F`); on overlap keep the most
 specific authoritative wording (Stage D for tool/check failures, Stage E for Advanced-R
 findings, Stage F for comment-style and roxygen-doc findings) and do not leave duplicate fixes for
-Stage H to re-plan. Then delete the three source reports
-(`RUN/reports/quality-suite.md`, `RUN/reports/advanced-r-deviations.md`,
-`RUN/reports/comment-style-deviations.md`). The consolidated file is the input to Stage H.
+Stage H to re-plan. Preserve the three source reports and their worker records as evidence. After
+the consolidated report is verified, release every terminal Stage-E and Stage-F worker while
+preserving its scratch directory. The consolidated file is the input to Stage H.
 
-**Stage H — Plan of action (agent, `multistep-plan`).**
-Spawn an agent that invokes the `multistep-plan` skill to produce a plan of action
+**Stage H — Plan of action (worker, `multistep-plan`).**
+Spawn a worker that invokes the `multistep-plan` skill to produce a plan of action
 responding to the items in `RUN/reports/consolidated-quality.md`. It incrementally writes its
 draft and evidence to `RUN/scratch/agents/stage-h-plan/response.md`, leaves the checkout
-read-only, and returns only that path and status. Instruct the agent to be **strongly biased
-against inaction**: the plan should propose implementing changes **only** for items of **high
-certainty and low execution risk**; lower-certainty or higher-risk items should be explicitly deferred with
-rationale, not actioned. The agent has full analytical autonomy, may spawn compliant read-only
-subagents, and asks no human questions. The orchestrator reads and verifies the response, then
-writes the canonical plan to `RUN/plans/stage-h-plan.md` itself.
+read-only, and returns only that path and status. The worker has full analytical autonomy, may spawn compliant read-only
+nested workers, and asks no human questions. Do not defer an item merely for convenience: implement
+high-certainty, low-execution-risk fixes and record a concrete reason for every lower-certainty or
+higher-risk deferral. The orchestrator reads and verifies the response, then
+writes the canonical plan to `RUN/plans/stage-h-plan.md` itself and releases the terminal planning
+worker while preserving its record.
 
 **Stage I — Implement the plan from Stage H. [WAIT]**
 The orchestrator executes the Stage-H plan (`RUN/plans/stage-h-plan.md`) to completion and
@@ -901,18 +610,14 @@ Use TDD/`karpathy-guidelines` where code changes are involved, and run the packa
 If a change touches `scripts-paper/`, also run its own topology checks and isolated suites
 (`Rscript scripts-paper/tests/run_tests.R`) — the package suite does not cover paper code.
 For any change intended to be **numerically neutral** (a refactor that must not move published
-results), capture the completed pre-change `scripts-paper/output` tree under `RUN/scratch/`,
-regenerate the candidate output, and run the current direct acceptance command:
-`Rscript --vanilla scripts-paper/validation/compare_output_tables.R <reference-output-root> <candidate-output-root>`.
-Pass ordinary typed output roots; no flattening or manifest-shape conversion is needed. The
-comparator recursively projects `.tex` files below each root's `tables/` directory and compares
-numeric coordinates, token counts, displayed-precision rounding overlap, and attached
-significance stars. Missing, added, moved, or count-changed numeric content fails. Labels,
-prose, notes, statuses, figures, diagnostics, RDS caches, and other non-table artifacts are
-outside this acceptance contract. There is no pre-captured reference root in the repository,
-so capture one for this run before changing output. If a planned change is meant to
-alter published numbers or stars, validate the intended differences directly instead of asking
-this numerical-neutrality gate to pass.
+results), capture the completed pre-change output tree under `RUN/scratch/`, regenerate the
+candidate output, and discover the current direct acceptance command and comparison universe from
+the frozen repository source and guidance. Record exactly which artifact classes, numeric tokens,
+labels, stars, paths, and statuses the comparator does and does not test. Supply the reference and
+candidate roots in the form its current interface requires; do not reshape them merely to obtain a
+pass. If no independent current comparator covers the claimed neutrality, record that validation
+gap as a blocker for the claim. If a planned change is meant to alter published numbers or stars,
+validate the intended differences directly instead of asking a numerical-neutrality gate to pass.
 **Comment-only edits are numerically inert.** A change that only deletes or rewrites `#`
 comments (ordinary or inline) and touches no executable code, data, runnable example, or
 roxygen tag is numerically inert — skip the before/after snapshot capture and any pipeline re-run
@@ -920,18 +625,14 @@ for it, but still run `devtools::test()` and let the Stage-J pre-commit hooks (l
 be the gate. If a fix also edits a roxygen `#'` block, run `devtools::document()` and inspect
 the `man/`/`NAMESPACE` diff; if it changes runnable examples, roxygen tags, or exports/imports,
 treat it as a normal package change with the full gates.
-**Reinstall before any pipeline invocation that follows a package change — the two halves of an
-`R/` edit land at different times.** The `scripts-paper/` pipeline calls the *installed* `hetid`,
-so edited behavior does not take effect until you reinstall. Cache provenance is the opposite:
-`paper_boot_runtime_sha()` in `scripts-paper/support/statistics/boot_freshness.R` hashes the
-**checkout's** `R/*.R` alongside the **installed** namespace, so an `R/` edit invalidates the
-bootstrap cache the moment it is saved. Running the pipeline after editing `R/` but before
-reinstalling therefore gets the worst of both: a stale-cache fallback rerun of the multi-hour draw
-stage executing the old installed code. Always run `R CMD INSTALL .` (or `devtools::install()`)
-first. Then **re-run the validations that the change could have invalidated**: the test suite
+**Reinstall before any pipeline invocation that follows a package change.** Verify from the current
+runner how it selects the installed `hetid` namespace and from the current freshness code how it
+combines checkout and installed code identity. Never run a pipeline with a known mismatch between
+the edited checkout and selected installed namespace. Run `R CMD INSTALL .` or the current documented
+equivalent first. Then **re-run the validations that the change could have invalidated**: the test suite
 always; and, if the change can affect pipeline behavior or numbers, the pipeline. Preserve the
-existing output and invoke `scripts-paper/run_pipeline.R` with the canonical 10,000-draw
-configuration and `HETID_BOOT_MODE=reuse`; never reset or force a rerun. Let the bootstrap cache
+existing output and invoke `scripts-paper/run_pipeline.R` with the source-derived production
+configuration and validated reuse mode; never reset or force a rerun. Let the bootstrap cache
 gate decide for itself whether the draw callbacks must execute. Stage O performs the documentation
 synchronization only after all source work is final, so do not run either synchronization prompt
 here. Be honest in the log about any Stage-C output that remains stale. **Do not start Stage J
@@ -946,25 +647,31 @@ hooks; if any fail, run `pre-commit run --all-files` to reproduce, fix the **roo
 re-commit — iterate until the commit lands with **all** hooks green. Then push the working branch
 to `origin`. See **Git workflow**.
 
-**Stage K — Graphify graph maintenance (one agent, delegated to its own prompt).**
-Dispatch a single agent whose governing task is the **complete contents of
-`docs/prompts/maintain-graphify-graph.md`**. Give it that prompt in full — do not summarize,
-paraphrase, reorder, or replace any part of it, and do not restate its procedure here. That file
+**Stage K — Graphify graph maintenance (one sub-orchestrator, delegated to its own prompt).**
+Graph refresh is an ancillary best-effort stage because it writes only generated, machine-local
+state. Its required parent-workflow deliverable is a verified terminal record and safe canonical
+state, not a successful mutation. A safe `Partial` degrades Stage L as specified below but does not
+block independent source validation.
+
+Dispatch one sub-orchestrator with the complete current contents of
+`docs/prompts/shared-workflow-contracts.md`, followed by the complete current contents of
+`docs/prompts/maintain-graphify-graph.md`. Do not summarize, paraphrase, reorder, or replace either
+file. The dependent prompt
 owns the entire method: seeding, updating, repair, the health gate, and porting the result back. It
 is maintained independently of this prompt, so anything said here about *how* to maintain the graph
 would drift out of date; this stage owns only the dispatch and the verification.
 
-**Make no assumption about the graph's state.** Do not tell the agent the graph is current, stale,
+**Make no assumption about the graph's state.** Do not tell the sub-orchestrator the graph is current, stale,
 behind, or freshly built, and do not decide from repository history whether a pass is warranted.
 Run the stage unconditionally and let the pass discover what needs doing — a pass that finds
 nothing to change is a valid and cheap outcome, not a wasted one.
 
-**Supply the context its prompt expects but cannot discover:** the absolute run-worktree root, the
-branch (which it must not switch), `RUN` and a private `RUN/scratch/agents/<agent-id>/` for its
-durable record, and the fact that it is running inside a larger workflow. Its own prompt handles
-locating the canonical checkout and seeding itself; do not pre-empt either.
+**Supply the context required by the shared contract:** the absolute run-worktree root, branch,
+`RUN` as the enclosing records root, the recorded source snapshot for Stage K, owned graph
+paths, invoking-checkout destination, and current global slot allocation. The sub-orchestrator creates
+its own unique workflow record below `RUN`; do not assign it an ordinary worker scratch path.
 
-**This agent is the second and only other exception to the durable read-only worker protocol.**
+**This sub-orchestrator is a writer exception to the ordinary worker protocol.**
 Unlike every other worker in this run it is expected to write outside a private scratchpad, because
 maintaining the graph is inherently a write operation. State its boundaries explicitly when you
 dispatch it:
@@ -976,12 +683,11 @@ dispatch it:
   change Git state in any way: no add, commit, push, checkout, switch, branch, stash, reset,
   restore, rebase, or merge. It works on whatever branch the run worktree already has checked out
   and must not switch away from it.
-- **Its own nested agents write to their private scratch directories and nowhere else** — never the
+- **Its own nested workers write to their private scratch directories and nowhere else** — never the
   graph, never a tracked file, never Git state. Do not dispatch them as strictly read-only: its
-  prompt has them return fragments *through disk*, and an agent that cannot write returns nothing
+  prompt has them return fragments *through disk*, and a worker that cannot write returns nothing
   while reporting success. Scratch-only is the boundary, not no-writes-at-all.
-- It still owes a durable `RUN/scratch/agents/<agent-id>/response.md`, checkpointed as it goes, in
-  addition to whatever report its own prompt requires.
+- It owes the unique durable workflow record required by the shared contract and dependent prompt.
 
 **Its prompt directs it to copy results back to the checkout that owns the canonical graph, which is
 normally the invoking checkout.** That is a deliberate and sanctioned exception to this run's
@@ -989,18 +695,16 @@ isolation rule, and the only one: it concerns untracked, generated, machine-loca
 outside version control precisely so it can be regenerated. Do not extend the exception to anything
 else, and do not let it become licence to touch tracked files or Git state in either tree.
 
-**That port-back is the run's only write outside its worktree, so treat it as a shared resource.**
-The destination is machine-local and unsynchronized: if another run, session, or person is doing the
-same thing at the same time, the last writer wins silently and the loser's work disappears with no
-error. Before dispatching, check whether another run appears to be active against the same
-destination checkout, and say what you found in the log. If you cannot establish that you are the
-only writer, still run the stage — but record the uncertainty and re-verify the destination
-afterwards rather than assuming your result landed. **Run this stage once per run, and never
-concurrently with any other writing stage**; it is sequential by position and must stay that way.
+**That port-back is the run's only write outside its worktree.** The dependent prompt's canonical
+lock is mandatory. If the sub-orchestrator cannot acquire or safely reclaim the lock, it must not
+update or port the graph. Run one logical Stage-K workflow and never overlap it with another writing
+stage. Any bounded recovery continues from its durable record rather than launching a competing
+maintenance pass.
 
 **Verify after it returns** — read its report and check the claims rather than accepting them:
 
-- the health gate its prompt defines passed, at the counts it reports;
+- for `Complete`, the health and port-back gates passed at the reported counts; for `Partial`, the
+  exact open gate is recorded and no unverified graph was ported;
 - `git status` in the run worktree shows **no tracked change** attributable to this stage;
 - the pipeline was not run, and no scientific output, cache, or manifest instance was touched;
 - the branch checked out in the run worktree is unchanged.
@@ -1010,48 +714,54 @@ describes. **If the pass fails or cannot finish, record that and continue.** Sta
 whatever graph is present, or from source alone if there is none. A failed maintenance pass degrades
 the next stage; it does not fail the run.
 
-**Stage L — Graphify audits (two agents). [WAIT for both]**
-Spawn two agents concurrently, both using graphify, each dispatched per **Delegating to
-subagents** (objective / output / tools / boundaries + a stopping criterion). The two have
-**disjoint objectives** so they don't overlap. Both keep the live `graphify-out/` read-only.
-If the current graphify skill would run `reflect`, `save-result`, `--update`, or any other
-write-capable step, copy the required graph inputs into that agent's private scratchpad and run
-the step there instead.
+After verifying and incorporating the Stage-K record, release the terminal sub-orchestrator from the
+task roster. Preserve its workflow record. A terminal sub-orchestrator must not occupy capacity
+needed by later stages.
 
-**Brief both on what the graph is good for and how it can mislead**, whatever Stage K reported. Use
+**Stage L — Graphify audits (two scopes). [WAIT for both]**
+Assign the following two disjoint scopes to two workers. Run them concurrently only when the global
+resource ledger shows two free worker slots; otherwise run them sequentially. Both follow the shared
+task envelope. Before dispatch, copy the required graph inputs into each worker's private scratch
+directory and verify each copy against one recorded digest set. Recheck the live inputs after both
+copies; if they changed during capture, discard only those private copies and retry from one stable
+snapshot within the plan's finite cap. If no stable snapshot can be captured, run both audits from
+source alone and record the graph limitation. Workers query only their immutable private copies.
+They never read a graph another session may be replacing, and any write-capable graphify operation
+remains confined to private scratch.
+
+**Brief both on the graph's evidence boundary**, whatever Stage K reported. Use
 it to *locate* candidates; never let it settle a question about what the code currently does, and
 require every graph-sourced lead to be confirmed against current source before it is reported. Pass
 along whatever Stage K established about the graph's coverage, without inferring more than it says.
-Two failure modes to name explicitly, because both have produced confident wrong findings here: a
-node that outlives the code it described, and a file the graph does not cover having no node at all
-— which reads as "this does not exist" rather than "the graph cannot see it." Both are possible
-however recently the graph was maintained, since coverage is never guaranteed to be complete.
+Name both structural limitations: a node may outlive the code it described, and a file outside graph
+coverage has no node. Graph absence therefore never proves source absence.
 
-**Absence of a finding is not evidence of absence**, and both agents must say so in their reports.
-A textual-duplication sweep finds textual duplication; semantic duplication is found by pulling a
-thread, so more of that class almost certainly remains after a clean pass.
+**Absence of a finding is not evidence of absence**, and both workers must state the exact audited
+universe and method. A textual-duplication sweep certifies only the patterns and source scope it
+actually inspected; it does not certify every possible semantic duplication.
 
-- Agent 1 → `RUN/scratch/agents/stage-l-dup/response.md`: objective = find potential
+- Worker 1 → `RUN/scratch/agents/stage-l-dup/response.md`: objective = find potential
   **duplications**, single-source-of-truth violations, DRY violations, and **magic variables**;
   tools = read-only `graphify` query/explain/path operations over the live graph or a private
   scratch copy; boundary = structural/quality smells only, not runtime bugs (that's Agent 2).
-- Agent 2 → `RUN/scratch/agents/stage-l-bugs/response.md`: objective = find potential **bugs
+- Worker 2 → `RUN/scratch/agents/stage-l-bugs/response.md`: objective = find potential **bugs
   and errors**; tools = read-only `graphify` operations plus inspection of implicated source;
   boundary = correctness defects only, not style/duplication (that's Agent 1).
 
 Wait for both to finish or recover their partial checkpoint files. The orchestrator verifies
 and consolidates their findings into `RUN/reports/consolidated-graphify.md`. Retain both worker
-directories and their intermediate artifacts until the run completes successfully.
+directories and their intermediate artifacts. After incorporation, release the terminal workers from
+the task roster while preserving their records.
 
 **Stage M — Plan / implement / hooks on the Stage-L report.**
 Apply the Stage-H → Stage-I → Stage-J cycle to `RUN/reports/consolidated-graphify.md` instead
 of the Stage-G report:
 
-1. Spawn a `multistep-plan` agent (same bias-against-inaction, high-certainty/low-risk-only
-   mandate) to plan a response to the Stage-L findings. It checkpoints incrementally to
+1. Spawn a `multistep-plan` worker using the same high-certainty, low-execution-risk action rule and
+   explicit-deferral requirement as Stage H. It checkpoints incrementally to
    `RUN/scratch/agents/stage-m-plan/response.md`, keeps the checkout read-only, and returns only
-   that path and status. The orchestrator verifies the response and writes the canonical plan to
-   `RUN/plans/stage-m-plan.md`.
+   that path and status. The orchestrator verifies the response, writes the canonical plan to
+   `RUN/plans/stage-m-plan.md`, and releases the terminal planning worker while preserving its record.
 2. The orchestrator implements that plan to completion, recording notes in
    `RUN/plans/stage-m-execution.md`. Subagents may analyze through private checkpoint files but
    never apply repository changes.
@@ -1083,9 +793,11 @@ No README or other source/documentation file belongs to this stage. Prompt-autho
 plans, reports, LaTeX sidecars, renders, and PDFs may support validation, but do not stage or
 commit them. Preserve unrelated files and changes.
 
-Launch **exactly two sub-orchestrators concurrently**, one for each target. Give each one the
-complete contents of its prompt file as its governing task; do not summarize, combine, or replace
-the prompt:
+Launch exactly two sub-orchestrators, one for each target. Run them concurrently when the global
+resource ledger proves that two slots are available; otherwise run them sequentially. Scheduling may
+change, but the roles, scopes, and review coverage may not be combined or reduced. Give each one the
+complete current contents of `docs/prompts/shared-workflow-contracts.md`, followed by the complete
+current contents of its dependent prompt. Do not summarize, combine, reorder, or replace either file:
 
 - **Code-document sub-orchestrator:** use
   `docs/prompts/synchronize-run-pipeline-code.md` for
@@ -1094,30 +806,37 @@ the prompt:
   `docs/prompts/synchronize-run-pipeline-math.md` for
   `docs/run_pipeline_math.tex`.
 
-**Supply each with the context its prompt expects but cannot discover.** Both prompts refer to "the
-current run directory" and neither can invent one, so state it explicitly or they will improvise a
-location outside your tree:
+**Supply each with the context required by the shared contract:**
 
 - the absolute run-worktree root, and that every path resolves relative to it;
 - the branch, and that it must not be switched;
-- `RUN` as its run directory, and a **distinct** `RUN/scratch/agents/<agent-id>/` for each — they
-  run concurrently, so a shared scratch path would have them overwrite each other's records;
+- `RUN` as the enclosing records root; each sub-orchestrator must create its own unique workflow
+  record under the path defined by its dependent prompt;
 - the Stage-N snapshot SHA as the source it must describe;
-- that its sibling is running concurrently on the other document.
+- its exact owned TeX and PDF targets, the sibling's disjoint targets, and whether the sibling is
+  not yet launched, active, or terminal; and
+- the caller's current global slot allocation.
+
+Arbitrate every remaining worker slot centrally. A sub-orchestrator may dispatch a nested worker only
+from its current allocation. When both siblings run, allocate a lone remaining slot to one at a time
+and require the other to continue direct work or wait at its next worker barrier. During sequential
+scheduling, release the first terminal sub-orchestrator before launching the second, while preserving
+its workflow record. Capacity may serialize nested reviews but may not combine roles, reduce
+coverage, or relax independence.
 
 **Each is a sub-orchestrator, not a worker.** It executes its governing prompt itself, start to
 finish, and is responsible for the whole method that prompt defines. Concretely:
 
 - **It edits its own assigned TeX file directly.** Do not ask it to return patches, proposals, or
   line-specific prescriptions for you to apply. Its prompt already makes it the sole editor of that
-  file within its own workflow, and it is the only agent in this run permitted to write that file
-  while it is running.
-- **It may spawn and manage its own subagents** as its prompt directs, and it owns their dispatch,
-  their scope, and their verification. Those nested agents stay read-only under its governing
+  file within its own workflow, and it is the only sub-orchestrator in this run permitted to write
+  that file while it is running.
+- **It may spawn and manage its own workers** as its prompt directs, and it owns their dispatch,
+  their scope, and their verification. Those nested workers stay read-only under its governing
   prompt: they return findings to it, and it applies them.
 - **It owns its file for the duration.** While a sub-orchestrator is running, neither the main
-  orchestrator nor any other agent edits that file — a concurrent edit invalidates the version its
-  reviewers are certifying, which is the failure its prompt's barrier discipline exists to prevent.
+  orchestrator nor any other worker or sub-orchestrator edits that file. A concurrent edit
+  invalidates the version its reviewers are certifying.
 
 **The main orchestrator retains ultimate and final editing authority over both files**, exercised
 only *after* a sub-orchestrator is terminal. You may correct, adjust, or reverse anything either one
@@ -1132,14 +851,15 @@ every barrier in their prompt, including the distinct `econ-write` and
 `writing-clearly-and-concisely` passes. The main orchestrator must verify those passes rather than
 infer compliance from a successful TeX build.
 
-**The two run concurrently and must not collide.** Their targets are disjoint and each is forbidden
-the other's file, which is what makes concurrency safe; state that boundary explicitly in both
-dispatches. If a prompt would have one read the other's target, it must skip that read while the
-sibling is running rather than inspect a file being edited underneath it.
+**Concurrent execution must not collide.** Their targets are disjoint and each is forbidden the
+other's file, which is what makes overlap safe; state that boundary explicitly in both dispatches. A
+sub-orchestrator skips any optional read of a sibling target while that sibling is active. Under
+sequential scheduling it may read the stable sibling only as the nonauthoritative lead allowed by
+its dependent prompt.
 
-**Report the launch to the user immediately after both tasks start.** Identify both targets and
-state that Stage O is now running. This launch notice is mandatory even though the workflow is
-otherwise hands-off; do not wait until the sub-orchestrators finish to report it.
+**Report the Stage-O schedule immediately after the first task starts.** Identify both targets and
+state whether their sub-orchestrators are concurrent or sequential. This notice is mandatory even
+though the workflow is otherwise hands-off; do not wait until the sub-orchestrators finish.
 
 **Monitor both sub-orchestrators until they reach a terminal status.** Use the environment's task
 status tools and inspect their prompt-required durable reports/checkpoints while they run. Do not
@@ -1158,7 +878,8 @@ After both finish, the main orchestrator must:
    and remove only Stage-O-created out-of-scope changes; never discard pre-existing user work.
 3. Verify that each prompt's source-fidelity, terminology, `econ-write`,
    `writing-clearly-and-concisely`, LaTeX, and final-integrity gates passed. Re-run decisive
-   validations when needed; do not rerun or source the scientific pipeline.
+   validations when needed; do not rerun or source the scientific pipeline. Every certification must
+   cover the exact bytes delivered by that sub-orchestrator.
 4. **The edits are already in the files** — the sub-orchestrators applied them. Do not re-apply or
    re-derive them. Your job here is to accept, correct, or reverse what is there, using the final
    editing authority you hold once they are terminal. Resolve every cross-document inconsistency
@@ -1166,14 +887,19 @@ After both finish, the main orchestrator must:
    spanning them is yours alone and neither sub-orchestrator could have settled it. Preserve the
    different purposes and content contracts of the two documents rather than forcing a match — a
    shared symbol carrying different meanings in a source trace and a mathematical manual may be
-   correct in both, and is only a defect if one of them contradicts source.
+   correct in both, and is only a defect if one contradicts source. Any main-orchestrator edit after
+   sub-orchestrator completion invalidates affected certifications. Reopen the earliest affected gate
+   under that dependent prompt and obtain clean certifications on the new final snapshot.
 5. Run `git diff --check` and review the complete prospective diff for both TeX paths.
-6. Commit the two TeX files on the current working branch with all ordinary hooks enabled, then
+6. After all final certifications and cross-document checks pass, release both terminal
+   sub-orchestrators while preserving their complete workflow records. If a later edit reopens a
+   dependent gate, reallocate a slot and obtain the required fresh certification before proceeding.
+7. Commit the two TeX files on the current working branch with all ordinary hooks enabled, then
    push that same branch to `origin` under **Git workflow**. Stage the two paths explicitly and no
    others. The optional `commit-push` skill may perform this exact scoped operation if available;
    otherwise use the specified `git add`, `git commit`, and `git push` flow. Fix hook failures at
    their root cause and retry within the bounded-retry policy. Never commit to `BASE`.
-7. Report both sub-orchestrators' completion, the verification evidence, the documentation commit
+8. Report both sub-orchestrators' completion, the verification evidence, the documentation commit
    SHA/message, the working branch, and the branch push result.
 
 Stage O is complete only after both sub-orchestrators are terminal and verified, both canonical
@@ -1231,56 +957,30 @@ run `git merge`, `git rebase`, `git cherry-pick`, or `git pull` on either branch
    Markdown file) and reproduce its verdict in the final summary. Record: `BASE`, the branch name,
    both tip SHAs, the divergence counts, the exact `merge-tree` command and its exit status, the
    full list of conflicted paths with a per-path classification and proposed resolution, and the
-   overall verdict. Attach the two caveats below so the human's later merge does not trip on them.
-6. **Two known hazards to flag in the report — findings for the human, not work for you.**
-   - *A clean merge runs no file-based hooks.* `git merge --no-ff` fires only `pre-merge-commit`,
-     which is not installed here; routing through `--no-commit` + `git commit` fires `pre-commit`
-     but narrows to conflicted files, so a clean merge skips all 16 file-based hooks while printing
-     a green transcript. The installed backstop is the **pre-push stage**
-     (`default_install_hook_types: [pre-commit, pre-push]`), so the eventual `git push` re-runs the
-     full suite over the pushed range and can fail even though every commit passed. Recommend
-     `pre-commit run --all-files` on the merge result before pushing.
-   - *The `output/state/*.rds` set is ignored by extension, so run state does not travel with the
-     merge.* `scripts-paper/output/` itself is tracked — its `.svg`/`.tex`/`.md` artifacts are in
-     the repo — and `.gitignore` excludes only `**/*.rds`, `**/*.pdf`, and `**/*.csv` beneath it.
-     The merge therefore moves tracked decision records without the `output/state/*.rds` they are
-     bound to, which
-     surfaces later as a `gate_record_hash_mismatch` on the `committed decision validates against
-     the real gate` check — in the merged-into checkout only, on an identical commit. State in the
-     report which checkout holds the authoritative `output/state/` set produced by this run (the
-     run worktree), and that all four `.rds` must be copied as a set, not individually.
+   overall verdict. Attach the two dynamically derived caveats below.
+6. **Record merge-time hazards from current configuration.**
+   - Inspect installed Git hooks and `.pre-commit-config.yaml`. State exactly which hooks a clean
+     merge and later push would run, which file scopes they cover, and which full validation command
+     the integrator should run before pushing. Do not embed a remembered hook count.
+   - Derive ignored pipeline-state families and their bindings to tracked decisions from current
+     `.gitignore`, readers, and validators. State which authoritative state remains only in the run
+     worktree and which files must travel as one coherent family after integration. Do not embed a
+     remembered extension list or state-file count.
 7. **Leave the branch and the run worktree in place.** They are the deliverable. Do not delete the
    working branch locally or on `origin`, and do not remove the run worktree — it holds the
    gitignored `RUN/` evidence and the authoritative `output/state/` set, neither of which exists on
    the branch. Report its absolute path so the human can pick up from it.
-8. **Tear down the fleet — last, and only after the final summary is written.** A subagent does
-   not exit when it reports; it goes idle and stays resident, holding its context and any
-   worktree it was given. Do this **after** the summary, never before: stopping an agent
-   discards its transcript. First confirm that every ordinary worker's `response.md` and each
-   Stage-O sub-orchestrator's prompt-required durable report exist, inspect every final or partial
-   status, and record how each result was incorporated. The durable files are authoritative even
-   when a worker never returned a final message.
-   **No single command sees every agent, so build the roster from the harness first and shell
-   sources second.** `TaskList` is authoritative for anything the harness tracks — start there,
-   never with a `ps` grep. Then cover what it can miss: this session runs `"teammateMode":
-   "tmux"`, so teammates live in tmux panes and are found with `tmux list-sessions` and
-   `tmux list-panes -a`; `ps -ax | grep -- --agent-name` catches in-process teammates but **not**
-   worktree-isolated ones; a worktree agent appears only as a `locked` entry in
-   `git worktree list`, with live shells under its worktree path. An agent missing from your
-   roster reads as "already gone", and stopping a working agent can destroy uncheckpointed
-   in-memory work — so confirm liveness per agent (CPU, deliverable mtime, `locked`) before
-   stopping it, and never infer a roster from your log.
-   Note that a `grep` for an agent name contains that name in its own command line, so a match
-   count of 1 may be the grep itself. `TaskStop` each agent by name or ID. Then reclaim any
-   read-only worker worktrees: list them with `git worktree list`, confirm that none contains an
-   agent-authored repository change, remove each worker path with `git worktree remove <path>`,
-   and run `git worktree prune`. Stop any background watchers you started and delete any
-   throwaway branches or trial-merge worktrees you created during the assessment.
+8. **Finish resource teardown.** Terminal workers should already have been released after their
+   durable results were verified and incorporated. Build a final roster from the current harness
+   task registry, then reconcile it with live processes and `git worktree list`. Never stop an active
+   agent before its last checkpoint. Release remaining terminal agents, stop obsolete watchers, and
+   remove verified read-only worker worktrees and throwaway merge-assessment worktrees or branches.
+   Preserve every durable workflow and worker record through the final summary.
    **Do not remove the run worktree and do not delete the working branch, local or remote** —
    they are this run's deliverable and are explicitly out of scope for teardown. `git worktree
    list` is clean when it contains the invoking checkout and the run worktree and nothing else.
-   Only after the run has succeeded and the final summary is durable may you delete
-   `RUN/scratch/agents/`. If the run halts, leave every worker directory in place for recovery.
+   Do not delete `RUN/scratch/agents/` or dependent workflow records; they are the durable evidence
+   for this run and remain available for audit or recovery.
 
 ---
 
@@ -1288,26 +988,30 @@ run `git merge`, `git rebase`, `git cherry-pick`, or `git pull` on either branch
 
 You are done only when all of these conditions hold:
 
-- Stages A–O are verified complete in alphabetical order, including the Stage-N source freeze.
+- Stages A–J and L–O are verified complete in the dependency order above, including every permitted
+  D–F overlap and the Stage-N source freeze. Stage K reached a verified terminal state: either
+  `Complete`, or a safe `Partial` in which
+  no unverified graph was ported and Stage L completed from a stable graph snapshot or source alone.
 - `BASE` was read from `HEAD` at invocation and recorded; no command hard-coded a branch name.
 - A new isolated worktree outside the Dropbox tree and a new working branch were created up front
   from `BASE`, the worktree was seeded with the invoking checkout's ignored pipeline state, and
-  every stage ran there. The invoking checkout was never written to and is on the same branch and
-  commit it started on.
+  every stage used it as its repository root. The invoking checkout stayed on its original branch
+  and commit; only a successful Stage K locked port-back could change its authorized untracked graph
+  state.
 - Every task commit — Stage J, Stage M.3, and the Stage-O documentation commit — landed and was
   pushed on the working branch. No task work or task commit landed on `BASE`.
 - No reset, output cleanup, draft bootstrap, or forced bootstrap rerun prepared any pipeline
-  invocation. The Stage-C log records cache reuse or a gate-justified fallback rerun, its outputs
-  were reconciled against the Stage-A inventory, and every later pipeline validation preserved
-  that contract.
+  invocation. The Stage-C log records each current cache gate's actual decision and any
+  gate-justified rebuild, its outputs were reconciled against the Stage-A inventory, and every later
+  pipeline validation preserved that contract.
 - Stage G was built from the Stage-D, Stage-E, and Stage-F reports, and Stage L was built from
   its two worker responses. Their source reports were handled as specified, and durable worker
   checkpoints remained available through successful run completion.
 - Both implementation cycles, Stages I and M, are complete. The Stage-J and Stage-M.3 commit
   gates landed with all hooks green, and all reviewed non-ignored publication artifacts were
   committed.
-- The main orchestrator reported the launch of both Stage-O sub-orchestrators immediately,
-  monitored each to a terminal status, inspected its durable evidence, and verified every
+- The main orchestrator reported the Stage-O schedule when its first sub-orchestrator started,
+  monitored each sub-orchestrator to a terminal status, inspected its durable evidence, and verified every
   source-fidelity, terminology, `econ-write`, `writing-clearly-and-concisely`, LaTeX, and
   final-integrity gate required by its complete prompt.
 - Stage O changed and incorporated no task-related tracked file other than
@@ -1325,10 +1029,9 @@ Provide a final summary listing, per stage, what was done and the evidence confi
 `BASE`, the run worktree's absolute path, the working branch, commit SHAs/messages, branch-push
 results (with the ref-comparison proof), both Stage-O sub-orchestrator
 statuses, the documentation commit, and the mergeability verdict with its conflicted paths and
-proposed resolutions. State plainly that no merge was performed. Confirm that every
-ordinary subagent kept the checkout read-only and left a recoverable durable response, and that
-the two narrow Stage-O writer exceptions touched only their assigned TeX targets plus ignored
-prompt-authorized working artifacts. Then, and only then, tear down the fleet under the final
-assessment's step 8: no agent left running, no agent worktree left behind, no throwaway branch
-left on `origin`, and no worker scratchpad deleted before its contents were incorporated — while
-the run worktree and the working branch are deliberately left standing.
+proposed resolutions. State plainly that no merge was performed. Confirm that every ordinary worker
+kept the checkout read-only and left a durable response, Stage K respected its locked graph-only
+exception, and the Stage-O sub-orchestrators touched only their assigned targets and workflow
+records. Write this summary durably, finish the resource teardown in assessment step 8, then report
+the verified teardown state: no agent left running, no agent worktree left behind, and no throwaway
+branch left on `origin`. Preserve every worker record, the run worktree, and the working branch.

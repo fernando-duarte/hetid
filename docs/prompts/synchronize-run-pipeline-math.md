@@ -1,29 +1,20 @@
 # Orchestrator prompt: synchronize the mathematical pipeline manual
 
-**You are the orchestrator of this workflow, and every reference to "the orchestrator" below means
-you.** You execute this prompt yourself: you own the method, you dispatch and manage whatever
-subagents it calls for, and **you edit the target TeX file directly.** You never hand proposed edits
-to someone else to apply.
+## Required shared contract
 
-You may be run standalone or dispatched by an enclosing workflow. **If an enclosing workflow
-dispatched you, it is not "the orchestrator" in this prompt.** It is your caller. It holds final
-editing authority over the file once you are terminal, and it verifies your work — but it does not
-apply your edits for you and it does not touch the file while you are running. Where this prompt
-says subagents may not edit the TeX, that restricts *your* subagents, never you.
+Read `docs/prompts/shared-workflow-contracts.md` completely before acting. This prompt extends that
+contract. It does not restate the shared role, autonomy, history-independence, ownership, worker,
+concurrency, evidence, snapshot, retry, or completion rules.
+
+You are the orchestrator of this workflow and the sole writer of its canonical TeX and PDF targets.
+An enclosing workflow is the caller defined by the shared contract.
 
 Starting with no prior knowledge of this repository, bring the following TeX document into complete
 scientific and mathematical parity with the current checkout source.
 
-Select the repository root before any inspection or edit:
-
-1. If an enclosing workflow supplies an isolated run-worktree root, use that exact root.
-2. Otherwise, if the current working directory belongs to a Git worktree containing
-   `scripts-paper/run_pipeline.R`, use that worktree's top level.
-3. Only as a standalone fallback, use
-   `/Users/fduarte/Library/CloudStorage/Dropbox-Personal/MyPackages/hetid`.
-
-Record the selected root and why it was selected. Resolve every repository path in this prompt
-relative to it. The principal paths are:
+Select the repository root under the shared contract. The standalone fallback is
+`/Users/fduarte/Library/CloudStorage/Dropbox-Personal/MyPackages/hetid`. The required repository
+marker and principal paths are:
 
 - pipeline entrypoint: `scripts-paper/run_pipeline.R`;
 - target TeX document: `docs/run_pipeline_math.tex`; and
@@ -33,9 +24,8 @@ Verify that the selected root contains the entrypoint and target TeX before proc
 inspect or modify another checkout, including the standalone fallback when an enclosing workflow has
 selected a different worktree.
 
-The repository, pipeline, and document may all have changed since this prompt was written. Do not
-carry forward any numerical value, active branch, input identity, equation, capability, or
-conclusion from prior knowledge. Discover the current state directly.
+Apply the shared history-independence rule. Discover every numerical value, branch, input identity,
+equation, capability, and conclusion from the selected source snapshot.
 
 The final result must be a self-contained mathematical reproduction manual. A first-year economics
 PhD student who has never seen the repository must be able to reproduce the scientific calculations
@@ -44,11 +34,6 @@ artifacts. The document need not reproduce repository-specific byte-integrity, c
 file-replacement, or publication machinery. If a required input lacks either a stable external
 identity or an access route, record that as a blocker to repository-independent numerical
 reproduction; do not disguise a repo-local snapshot as a self-contained input.
-
-Run this workflow autonomously from beginning to end. Do not ask the user questions, request
-approval, invoke a discretionary human-review gate, or pause for confirmation. Treat this prompt as
-written authorization to pass discretionary skill approval gates. Pause only when a higher-priority
-instruction requires it. Use your best judgment and proceed.
 
 ## Authority and evidence
 
@@ -72,16 +57,16 @@ the checkout package source is a separate precondition for exact runtime parity.
    **Recompute every derived count from source rather than adjusting the one already written.** The
    document states totals that depend on the registries — inventory sizes, per-group counts,
    how many items are required versus conditional, how many of a kind are published. These move
-   together, so a hand-adjusted number is wrong in a way that still looks plausible, and one wrong
-   total silently contradicts the decomposition printed beside it. Derive them by loading the
-   authoritative structure and counting, then check the parts sum to the whole. When sweeping for a
-   number to update, read every match in context: some bare integers in these documents are source
-   line numbers or maturities, not counts, and a blanket substitution corrupts them.
+   together, so a hand-adjusted number can contradict the decomposition printed beside it. Derive
+   them by statically parsing and reconstructing the authoritative declarations without sourcing,
+   evaluating, or instantiating project R code. Check that the parts sum to the whole. Read every
+   numeric match in context before editing it; a number may be a source locator, maturity, parameter,
+   or count.
 5. You may inspect a stable `docs/run_pipeline_code.tex` only as a nonauthoritative source of
    questions. During concurrent Stage O work, skip that optional read rather than inspect the
    sibling target while it is being edited. Do not borrow its prose, structure, or conclusions. Do
    not edit it.
-6. Treat comments, tests, old reports, memories, and subagent conclusions as leads rather than
+6. Treat comments, tests, other reports, memories, and worker conclusions as leads rather than
    authority. Generated artifacts remain uninspected and cannot supply leads. Checkout executable
    source wins whenever supporting materials disagree. Tests may clarify edge behavior but cannot
    override current production logic.
@@ -102,11 +87,8 @@ parity unverified, and explain that a runtime invocation may differ. This disclo
 not block checkout-source mathematical certification, but it forbids a claim of exact runtime
 parity for the installed namespace. Do not load project logic merely to remove the limitation.
 
-When a genuine ambiguity remains after direct inspection, obtain an independent second opinion
-through the available PAL clink interface with Claude, if available. In Codex, the expected
-interface is `mcp__pal__clink`. Treat that opinion as advice and verify it against source. If that
-facility is unavailable, use a fresh independent reasoning agent. Use official primary
-documentation when an external interface or mathematical convention requires verification.
+When a genuine ambiguity remains after direct inspection, obtain an independent second opinion from
+an available worker or PAL clink reviewer. Apply the shared external-review and evidence rules.
 
 ## Absolute execution boundary
 
@@ -150,27 +132,30 @@ Before editing, discover whether each target exists, is tracked, or is ignored; 
 prompt for those mutable facts. Replace or create the PDF only with the accepted build of the
 certified TeX version, at the end of the workflow.
 
-If the enclosing workflow supplies a records directory, create this prompt's unique run directory
+If the caller supplies an enclosing records root, create this prompt's unique workflow record
 at:
 
-`<enclosing-records-directory>/stage-o/math/YYYYMMDD-HHMMSS/`
+`<enclosing-records-root>/stage-o-math/YYYYMMDD-HHMMSS-<unique-suffix>/`
 
 Otherwise, use the standalone location:
 
-`docs/RUN/run_pipeline_math/YYYYMMDD-HHMMSS/`
+`docs/RUN/run_pipeline_math/YYYYMMDD-HHMMSS-<unique-suffix>/`
+
+In this prompt, "current run directory" means this unique workflow record.
 
 You may create new plans, source maps, terminology ledgers, audit reports, and validation logs only
-inside the selected current run directory.
+inside the selected workflow record.
 
-Do not modify or overwrite an existing report or log. Create a new uniquely named file.
+Do not overwrite a record from another workflow. Within the current workflow record, update only
+the records this workflow owns; give replacement or retry reports unique names.
 
 Additional rules:
 
-- Only you, the orchestrator of this prompt, may edit the target TeX file — never a subagent, and
+- Only you, the orchestrator of this prompt, may edit the target TeX file — never a worker, and
   never an enclosing workflow while you are still running.
-- Every subagent is read-only with respect to the target TeX and the repository, except for its
-  authorized private scratch directory.
-- A subagent that needs a private working file may write only at
+- Every worker is read-only with respect to the target TeX and repository, except for its authorized
+  private scratch directory.
+- A worker that needs a private working file may write only at
   `<current-run-directory>/scratch/agents/<agent-id>/`.
 - The orchestrator alone writes canonical plans, reports, ledgers, and logs.
 - Use patch-based tools for text edits. The final accepted binary PDF may be copied to its canonical
@@ -188,7 +173,7 @@ Additional rules:
   PDF returns, to its canonical path `docs/run_pipeline_math.pdf`.
 - Obtain report timestamps with `date "+%Y-%m-%d %H:%M %Z"`. Never guess the time.
 
-Before editing, write a concrete execution plan in the current timestamped run directory. This
+Before editing, write a concrete execution plan in the current workflow record. This
 prompt already defines the execution workflow; do not invoke an additional general planning wrapper.
 Proceed without requesting approval.
 
@@ -509,82 +494,13 @@ state, or inferential role.
 Audit terminology in headings, prose, equations, subscripts, tables, captions, lists, and
 cross-references.
 
-## Multi-agent workflow
+## Multi-worker workflow
 
-Use separate agents when they add independent evidence. Respect the environment's global capacity,
-including agents owned by a parent workflow. Run assignments sequentially when capacity prevents
-parallel work; capacity limits must not reduce coverage. Give each agent a bounded, nonoverlapping
-task, read-only repository access, a private scratch directory, and the same constraints against
-human intervention and pipeline execution. Do not allow nested delegation unless capacity and the
-plan provide a distinct, nonoverlapping assignment. If a transient capacity rejection occurs,
-continue independent local work and retry after a slot is released. Do not treat one rejection as a
-blocker. Follow any
-slot arbitration provided by the enclosing workflow.
-
-No subagent may edit the target TeX. Subagents return evidence, mathematical derivations,
-line-specific findings, or proposed revisions. The orchestrator verifies every finding and applies
-accepted changes.
-
-A fresh full pass means a new bounded assignment against the exact current TeX snapshot and a
-complete rereading of the relevant source. Call a pass independent only when a distinct agent
-performs it. Use a new agent when thread capacity permits. If a global thread limit requires reuse,
-give an idle agent the fresh assignment, forbid reliance on its earlier conclusions, and record the
-capacity-driven loss of identity-level independence. Never merge sequential compliance passes. At
-least the final source-fidelity audit must be independent of the orchestrator and TeX editing.
-
-### Review discipline that decides whether a barrier verdict means anything
-
-These are failure modes this workflow has produced, not hypotheticals. Each needs a mechanism;
-resolving to be careful has already failed at several of them.
-
-- **A certification covers bytes, not a document.** Any edit applied after an agent certifies voids
-  that verdict — the delivered version must be the certified version. Name the version each agent
-  is reviewing and re-state which version each verdict covers. Most rounds here have ended
-  with every barrier "passed" and none of them covering the file actually in hand.
-- **Freeze the target for the whole of a round.** Editing while an agent reads forces it to
-  re-anchor its findings and silently invalidates its verdict. The mechanism is a precondition,
-  not an intention: **apply nothing until every agent dispatched in that round is terminal** — not
-  until the first one reports. An agent returning early is one input of N, fixed at dispatch.
-- **When only part of the document changed, prove the rest did not.** Record a digest per stable
-  region — the `\part` boundary is the natural split — and have the next agent **recompute** it
-  rather than accept your claim. That is what lets an earlier clean verdict survive a small edit
-  instead of forcing a whole re-audit. Ask for the measurement and never supply the expected value,
-  which invites confirmation. Choose the regions *after* establishing they contain no edit; choosing
-  first and checking later produces a bound that does not hold.
-- **A brief that paraphrases the source of truth manufactures defects.** An agent barred from the
-  TeX or from source can only judge what you put in front of it. Quote verbatim. If you summarize
-  and a "contradiction" appears, it is yours, not the document's — this has produced a confident
-  report of a missing quantity that was present in the very sentence being paraphrased.
-- **Write corrections from source, not from an agent's summary of source.** A summary is lossy, and
-  prose written from one reproduces the loss as a fresh defect. Re-read each passage immediately
-  after editing it; that single habit catches more damage than any downstream audit.
-- **Tell agents an overshoot is as serious as an omission.** A verifier asked only "was it fixed?"
-  passes a correction that went too far. Roughly half the findings in a mature round are collateral
-  damage from earlier fixes, so aim verification at the neighbourhood of each edit, not its target.
-- **Fix defect classes, not the instances named.** When an agent names two occurrences, sweep the
-  document for that class and close it; otherwise the same finding returns for the rest of the run.
-- **Generated outputs are inadmissible as evidence.** A shipped artifact shows what one run did, not
-  what the code does. Rely on source citations even when the artifact agrees.
-- **An empty result is not a negative finding.** Escaping, phrases wrapped across lines, case
-  mismatch, and shell quoting all return zero silently. Before concluding a term is absent, confirm
-  the same search fires against a control that must match. This has produced both false clean passes
-  and fabricated defects here, repeatedly, including a search whose zero was the sole basis for a
-  finding that turned out to be real only after re-testing.
-
-### Running agents under real interruptions
-
-- **Assume a killed agent's work stopped mid-task, not at a natural end.** Budget and session limits
-  end agents without warning. Partial output from one is untrusted: an unfinished audit must never
-  be read as a clean one. On resume, re-dispatch rather than salvage a verdict.
-- **Dispatch long rounds in waves** so one interruption cannot erase the round, and tell each agent
-  to run its cheapest decisive checks first and to state exactly where it stopped. A partial that
-  declares its own boundary is usable evidence; one that does not is a false clean.
-- **Record each dispatch's expected duration when you dispatch it.** Agents here often cannot write
-  to disk, so their progress is invisible and a long scope is indistinguishable from a dead one.
-- **Silence is not death.** Probe before concluding; a probe costs one message and relaunching on a
-  wrong guess discards hours.
-- **Dispatch first, then write the log entry.** Announcing a dispatch and then ending the turn
-  leaves the work undone while the record reads as though it is in flight.
+Apply the shared worker, concurrency, interruption, and review-certification contracts. Workers may
+return evidence, derivations, line-specific findings, and proposed revisions only through their
+private scratch records. They never edit the target TeX. At least the final scientific-fidelity audit
+must be performed by a worker distinct from the orchestrator. Capacity may serialize assignments but
+must not merge their scopes or reduce coverage.
 
 Complete the following stages in order. Do not cross a barrier with an open finding.
 
@@ -610,7 +526,7 @@ irrelevant.
 
 ### Stage B: independent source tracing
 
-Assign these review scopes, using distinct agents when capacity permits:
+Assign these review scopes, using distinct workers when capacity permits:
 
 - the exact source-selected procedure and effective configuration;
 - input transformations, samples, dimensions, and mathematical models;
@@ -623,7 +539,7 @@ Agents must cite precise source locations in their private reports. Those locati
 the TeX document. Agents submit proposed rows and findings; the orchestrator owns the canonical
 matrices and ledgers and reconciles duplicates and disagreements.
 
-The source-tracing agents must also submit evidence for a return-and-frequency ledger. For every
+The source-tracing workers must also submit evidence for a return-and-frequency ledger. For every
 return, rate, yield, growth measure, volatility measure, variance, and frequency-converted variable,
 the ledger must record its source frequency, reported frequency, gross-or-net status, log-or-simple
 status, nominal-or-real status when relevant, price-or-total-return status when relevant,
@@ -640,7 +556,7 @@ Construct two bidirectional coverage matrices in a canonical report:
      counterpart; and
    - every Part II item has source support and the correct two-axis classification.
 
-Resolve agent disagreements against the source. If static evidence cannot determine the procedure
+Resolve worker disagreements against the source. If static evidence cannot determine the procedure
 selected by source, treat the ambiguity as a parity blocker. A runtime fact that selects among
 conditional outcomes is not a static-parity blocker when the source states the condition and all
 outcome rules; document those rules without inferring the realized outcome from outputs or caches.
@@ -655,7 +571,7 @@ The orchestrator alone revises `docs/run_pipeline_math.tex`.
 You may preserve existing text only after independently validating it. Rewrite or reorganize as much
 as needed to satisfy the full contract. Do not create a differently named primary TeX file.
 
-After the substantive draft is complete, assign fresh read-only agents to audit:
+After the substantive draft is complete, assign fresh read-only workers to audit:
 
 - source-selected-procedure completeness, including every runtime-conditional outcome rule;
 - exclusion of all alternatives from Part I;
@@ -684,9 +600,9 @@ every review. A certification tied to an earlier snapshot does not count.
 
 ### Stage D: fresh same-concept–same-word pass
 
-Only after Barrier C passes, assign a fresh agent whose sole task is a rigorous terminology audit.
+Only after Barrier C passes, assign a fresh worker whose sole task is a rigorous terminology audit.
 
-This agent must:
+This worker must:
 
 1. build a canonical terminology ledger from the mathematical referents in the actual
    post-Barrier-C document;
@@ -703,25 +619,25 @@ This agent must:
 10. return exact line-specific corrections without editing the TeX file.
 
 The orchestrator must verify every finding, apply the valid corrections, and return the exact
-revised file to the same agent for another complete audit.
+revised file to the same worker for another complete audit.
 
-Barrier D passes only when that agent reports no remaining same-concept–same-word violation on the
+Barrier D passes only when that worker reports no remaining same-concept–same-word violation on the
 current TeX version and the scientific coverage matrices remain clean.
 
 ### Stage E: fresh `econ-write` pass
 
 Only after Barrier D passes, assign a fresh economics-writing review.
 
-Both the orchestrator and this agent must resolve the current `econ-write` skill from the available
-skill catalog and read its `SKILL.md` completely. The expected current location is:
+Both the orchestrator and this worker must read the exact `econ-write` skill file fixed by the shared
+contract:
 
 `/Users/fduarte/.codex/skills/econ-write/SKILL.md`
 
 They must also read every referenced resource required for a full revision pass, including the
-McCloskey word-choice reference and the revision checklist. If the skill is absent or unreadable,
-record a blocker; do not silently substitute an invented checklist.
+McCloskey word-choice reference and the revision checklist. If the skill or a required reference is
+absent or unreadable, record a blocker.
 
-The economics-writing agent must inspect the complete post-terminology document, not a prior draft
+The economics-writing worker must inspect the complete post-terminology document, not a prior draft
 or a sample.
 
 Apply every relevant principle, including:
@@ -747,41 +663,24 @@ particular, do not invent a contribution, literature review, policy implication,
 or result. Do not remove mathematics needed for exact independent reproduction merely because a
 general writing rule prefers less mathematics.
 
-The agent must return a complete line-specific edit prescription. The orchestrator must verify that
+The worker must return a complete line-specific edit prescription. The orchestrator must verify that
 each proposed edit preserves mathematical meaning, source parity, the Part I–Part II partition,
 two-axis classifications, symbol definitions, return conventions, and the terminology
 ledger before applying it.
 
-Return the actual revision to the economics-writing agent for another full pass.
+Return the actual revision to the economics-writing worker for another full pass.
 
-Barrier E passes only when the agent reports compliance with every applicable rule on the current
+Barrier E passes only when the worker reports compliance with every applicable rule on the current
 TeX version and all earlier scientific and terminology checks remain clean.
 
-**Close this barrier on rule violations, not on the agent running out of suggestions.** A pass that
-enforces a stated standard converges; a pass that improves taste does not, because a fresh reader
-can always tighten another sentence and every fix creates new prose to assess. Requiring "the agent
-returns nothing" is unbounded by construction and will not terminate. So classify every finding as
-exactly one of:
-
-- a **rule violation** — it breaches a stated rule of the named skill, or it damages accuracy: a
-  factual error, a lost caveat or branch predicate, a lost source locator, an undefined or
-  duplicated term, a fragment, or a claim about the pipeline unsupported by source. These block;
-  fix them all.
-- a **discretionary improvement** — the text is compliant and accurate and the suggestion is
-  merely tighter or smoother. These do not block. Record each as declined with a one-line reason.
-
-Report both counts so the split is auditable rather than asserted, and resolve anything ambiguous as
-a rule violation. This is a sharpening of the standard, not a relaxation: the honest close is
-"complies with the named standard and is accurate", which is what the barrier was always claiming.
+Use the shared rule-violation versus discretionary-improvement classification.
 
 ### Stage F: fresh `writing-clearly-and-concisely` pass
 
 Only after Barrier E passes, assign a fresh clear-writing review.
 
-Both the orchestrator and this agent must resolve the current `writing-clearly-and-concisely` skill
-from the available skill catalog and read its `SKILL.md` and every task-required reference
-completely.
-The expected current locations are:
+Both the orchestrator and this worker must read the exact clear-writing files fixed by the shared
+contract:
 
 `/Users/fduarte/.codex/skills/writing-clearly-and-concisely/SKILL.md`
 
@@ -789,15 +688,14 @@ and:
 
 `/Users/fduarte/.codex/skills/writing-clearly-and-concisely/elements-of-style.md`
 
-If either expected file moved, use the catalog-resolved location. If the skill or a required
-reference is absent or unreadable, record a blocker. The agent must inspect the complete
+If either file is absent or unreadable, record a blocker. The worker must inspect the complete
 post-`econ-write` document.
 
 Audit every applicable rule of grammar, punctuation, composition, usage, paragraph structure,
 sentence structure, active voice, positive formulation, specificity, concision, modifier placement,
 parallel construction, tense, and emphasis.
 
-The agent must not:
+The worker must not:
 
 - remove information needed for reproduction;
 - simplify a mathematically necessary distinction;
@@ -807,37 +705,17 @@ The agent must not:
 - make a return or frequency convention ambiguous; or
 - restore an alternative to Part I.
 
-The agent returns exact line-specific corrections. The orchestrator verifies and applies valid
+The worker returns exact line-specific corrections. The orchestrator verifies and applies valid
 changes, then returns the actual revised file for another complete clear-writing audit.
 
-Barrier F passes only when the agent reports no remaining applicable violation on the current TeX
-version and every earlier contract remains satisfied. Apply the same rule-violation versus
-discretionary split defined at Barrier E, and report both counts.
-
-**Both prose barriers must be clean on one and the same version.** Passing E on one version and F on
-a later one certifies nothing: each round's fixes invalidate the other's verdict, and two barriers
-that have each been clean once but never together will alternate indefinitely.
-
-If a later edit may invalidate an earlier pass, return to the earliest affected barrier and repeat
-the sequence. Do not assume that a later stylistic pass preserves scientific or terminology
-compliance.
-
-**Let each barrier own only its own defect class.** Naming, notation overload, one symbol serving
-two concepts, and synonym drift belong to the terminology barrier; prose precision belongs to E and
-F; missing, invented, misclassified, or mathematically wrong content belongs to the scientific
-barrier. Clearing another's findings inside yours makes every round look as productive as the last
-while nothing converges. Carry deferred items forward in a visible ledger, hand that ledger to the
-barrier that owns them, and resolve anything you cannot confidently assign as belonging to the
-strictest barrier still open.
-
-**Do not declare convergence by extrapolation.** A falling count is not a clean round. If the count
-stops falling, measure what share of the findings are defects your own edits introduced before
-adding another round — when that share is large, the bottleneck is the edit process, not the
-document, and another round of the same kind will not help.
+Barrier F passes only when the worker reports no remaining applicable rule violation on the reviewed
+snapshot. Apply the shared gate-ownership and certification protocol. Completion requires scientific
+fidelity, terminology, `econ-write`, and clear-writing passes to certify one immutable snapshot with
+no intervening edit; any edit reopens the earliest affected barrier and every downstream barrier.
 
 ### Stage G: final orchestrator integrity review
 
-After every agent barrier passes, the orchestrator must reread the entire TeX document critically
+After every worker barrier passes, the orchestrator must reread the entire TeX document critically
 from beginning to end.
 
 Verify independently that:
@@ -857,8 +735,8 @@ Verify independently that:
 - input-selection priorities use explicit, unambiguous names;
 - the abstract, prose, equations, lists, tables, and output contract do not contradict one another;
 - no duplicate or conflicting definition remains;
-- no agent finding was lost, copied blindly, or incorporated incorrectly;
-- no stale statement survived from the prior document; and
+- no worker finding was lost, copied blindly, or incorporated incorrectly;
+- no unsupported statement survived from the existing untrusted draft; and
 - the document remains linear, modular, concise, and sufficient for implementation in another
   language.
 
@@ -983,7 +861,7 @@ Before declaring success:
 6. Record every failed command and its corrected rerun.
 7. Record the final TeX version, byte size, line count, word count, abstract word count, compiled
    page count, compiled PDF size, compiler result, log-scan result, structural-PDF result, font
-   result, visual-review coverage, static-scan results, and every agent audit outcome.
+   result, visual-review coverage, static-scan results, and every worker audit outcome.
 8. Attest from the commands launched by this workflow that it did not run R or the pipeline, read
    generated-state contents, mutate scientific state, or instantiate a manifest.
 9. Record the installed-package parity evidence or explicit unverified-runtime caveat.
@@ -1075,14 +953,13 @@ compilation gate, visual integrity, and preserved scope.
 close, stop and hand over: name what is outstanding, by section and class, in a form the next editor
 can act on without re-deriving it, and say plainly which barriers are certified and against which
 version. Do not declare completion because the remaining findings feel small, and do not begin an
-apply pass you cannot finish — starting one without the capacity to complete it is how this
-document has acquired its worst defects, including a fabricated rule, a deleted defining
-occurrence, and a broken build.
+apply pass without enough capacity to finish it and re-run every affected barrier.
 
 **State coverage precisely rather than letting "all barriers pass" imply more than it does.** In the
-final report, separate what was read line by line on the delivered version, what was verified
-mechanically across the whole file, and what is inherited from a cover-to-cover read of an earlier
-version. Re-test every mechanical zero against a control pattern that must match, and report the
-control's count alongside the zero — an unfired search and a clean document are indistinguishable
-otherwise. If no single agent verified every claim in one pass, say so; that is a normal outcome for
-a document this size and a limitation worth recording, not one worth concealing.
+final report, separate what was read line by line on the delivered version from what was verified
+mechanically across the whole file. A read of a superseded version does not certify the delivered
+version; any final scope that no assigned reviewer or the orchestrator rechecked blocks `Complete`
+status. Re-test every mechanical zero against a control pattern that must match, and report the
+control's count alongside the zero because an unfired search and a clean document are
+indistinguishable. If no single reviewer verified every claim in one pass, state how the
+orchestrator's final full-file review and the disjoint review scopes provide complete coverage.
