@@ -104,14 +104,24 @@ CLI does **not** do this; it passes `changed_paths=None` and re-extracts everyth
 artifact layer, re-applies the repair on the changed files, and runs the health gate. About 10s for
 ~58 changed files.
 
-`update` finishes by renaming every community (see §5) and refreshing `GRAPH_REPORT.md`. That step is
-not optional: graphify renames communities after their hub node whenever the partition drifts, so
-without it the names decay to things like `paths.R` on every pass. **`graphify export html` is not
-run automatically** — the HTML is written mid-update, before labelling, so run it afterwards if you
-care about the rendered names.
+After the layers land, `update` **reclusters and then relabels**, both on by default:
 
-Add `--optimize` to also **recluster**. Off by default: it churns community IDs and the report every
-run. Labelling alone does not churn IDs, which is why it is always on.
+- **Recluster.** `_rebuild_code` clusters *mid-update*, before the artifact layer is injected, so its
+  partition never sees those ~88 nodes and ~168 edges — they came out with no community at all, and
+  reclustering the finished graph reproduced only 42 of its 164 communities. Running it afterwards
+  put every artifact node into a community (0 unclustered, down from 88). Costs ~4 s, flat, and it is
+  deterministic: seeded Leiden on a stably-ordered graph gives the same partition and the same IDs
+  for the same input, so IDs move only when the graph genuinely changed. `--no-recluster` skips it.
+- **Relabel** (§5), then refresh `GRAPH_REPORT.md`. Not optional: graphify renames communities after
+  their hub node whenever the partition drifts, so without this the names decay to things like
+  `paths.R`.
+
+**`graphify export html` is not run automatically** — the HTML is written mid-update, before
+reclustering and labelling, so run it afterwards if you care about the rendered names.
+
+Two consecutive `update --force` runs are a fixed point: same node/edge counts, same 153 communities,
+empty delta. If a second run moves anything, something is not idempotent — investigate before
+trusting the result.
 
 `update` regenerates `tools/graph/artifact_manifest.csv` automatically when
 `scripts-paper/config/artifact_manifest*.R` is among the changed files.
@@ -119,7 +129,12 @@ run. Labelling alone does not churn IDs, which is why it is always on.
 ## 3. The health gate
 
 `maintain.py verify` fails on `dangling`, `missing_endpoint`, `duplicate_pairs`,
-`isolated_artifacts`, or a non-directed graph. Everything else is reported, not enforced.
+`duplicate_node_ids`, `isolated_artifacts`, or a non-directed graph. Everything else is reported, not
+enforced.
+
+`duplicate_node_ids` exists because NetworkX **silently dedupes** duplicate ids on load, so a layer
+that appends a node it already emitted looks fine in every query and only shows up as a node count
+that drops by one on a round-trip. That is exactly how the logo node accumulated a copy per run.
 
 Reference values (2026-08-02, built at `b3c06e0`; they drift with the repo — the shape matters, not
 the digits):
@@ -195,6 +210,11 @@ Two modes: `--emit` (writes `.graphify_semantic.json` for a full rebuild, carryi
 `rationale` nodes forward from the current graph) and `--inject` (replaces the layer inside a built
 `graph.json`). **Must be idempotent** — regenerate everything it owns, carry nothing of its own
 forward, or a rebuild accumulates its prior output (this once turned 232 edges into 303).
+
+In `--inject`, decide what to drop by **the exact set of ids the layer is about to emit**, never by a
+proxy attribute like `artifact_id`. The logo node carries no such attribute, so an attribute-based
+filter kept the old copy *and* appended a new one, one duplicate per run — invisible because
+NetworkX dedupes on load.
 
 ### `repair.py`
 
