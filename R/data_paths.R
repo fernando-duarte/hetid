@@ -78,20 +78,6 @@ get_data_file_path <- function(filename) {
   file.path(get_package_data_dir(), filename)
 }
 
-#' Check Data File Exists
-#'
-#' Checks if a data file exists in the user cache or the bundled
-#' package data directory.
-#'
-#' @param filename Character string with filename (including extension)
-#'
-#' @return Logical indicating whether file exists
-#' @keywords internal
-check_data_file_exists <- function(filename) {
-  file_path <- get_data_file_path(filename)
-  file.exists(file_path)
-}
-
 #' Resolve the ACM Asset Filename
 #'
 #' Single source of the (source, frequency) to filename mapping and of

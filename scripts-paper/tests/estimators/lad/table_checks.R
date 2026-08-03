@@ -46,7 +46,7 @@ check("LAD table cells use the dedicated two-decimal policy", {
 })
 
 check("generic log-variance cells retain three decimals", {
-  identical(fmt(-1.234), "-1.234") &&
+  identical(logvar_fmt(-1.234), "-1.234") &&
     identical(
       set_cell(-1.256, -1.204, "bounded"),
       "$[-1.256,\\,-1.204]$"

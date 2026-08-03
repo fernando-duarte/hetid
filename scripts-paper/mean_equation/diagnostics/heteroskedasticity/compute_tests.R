@@ -21,7 +21,7 @@ w2 <- set_id_mean_eq$w2
 z <- set_id_mean_eq$z
 z_mat <- matrix(z, ncol = 1, dimnames = list(NULL, "z"))
 
-fmt <- function(x, d = PAPER_REPORTING_CONTROL$precision$diagnostic_table) {
+hetero_fmt <- function(x, d = PAPER_REPORTING_CONTROL$precision$diagnostic_table) {
   formatC(x, format = "f", digits = d)
 }
 
@@ -30,14 +30,14 @@ pcell <- function(x) {
     return(PAPER_NA_TOKEN)
   }
   stars <- sig_stars(x)
-  paste0(fmt(x), if (nzchar(stars)) paste0("$", stars, "$"))
+  paste0(hetero_fmt(x), if (nzchar(stars)) paste0("$", stars, "$"))
 }
 
 panel_y2 <- hetero_panel(
-  y2, "Y_2", "SDF-news PCs", w1, y1, z, z_mat, fmt, pcell
+  y2, "Y_2", "SDF-news PCs", w1, y1, z, z_mat, hetero_fmt, pcell
 )
 panel_w2 <- hetero_panel(
-  w2, "W_2", "SDF-news residuals", w1, y1, z, z_mat, fmt, pcell
+  w2, "W_2", "SDF-news residuals", w1, y1, z, z_mat, hetero_fmt, pcell
 )
 
 n_obs <- set_id_mean_eq$sample$n

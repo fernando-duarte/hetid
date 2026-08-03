@@ -137,7 +137,10 @@ fine_tau_grid <- function(
   coarse,
   n_fine = PAPER_INFERENCE_SEARCH_CONTROL$tau_star$fine_grid_points
 ) {
-  unb <- coarse$tau[!coarse$all_bounded]
+  # bracket on the certified status, exactly as tau_star_fixed does below: an
+  # "unreliable" tau also clears all_bounded, so the raw flag would put hi at a
+  # failed solve rather than at the bounded -> unbounded transition
+  unb <- coarse$tau[coarse$status == PAPER_ENDPOINT_STATUS[["unbounded"]]]
   hi <- if (length(unb)) min(unb) else max(coarse$tau)
   taus <- seq(0, hi, length.out = n_fine + 2L)
   taus <- taus[taus > 0 & taus < hi]

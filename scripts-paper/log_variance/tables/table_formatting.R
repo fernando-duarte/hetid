@@ -10,7 +10,7 @@ paper_source_once(paper_path("support", "reporting", "cells.R"))
 
 # NA and non-finite values render "--"; upstream diagnostics retain the reason
 # a value is unavailable rather than hiding it behind a numeric token.
-fmt <- function(
+logvar_fmt <- function(
   x,
   cell_policy = PAPER_REPORTING_CONTROL$cells$log_variance
 ) {

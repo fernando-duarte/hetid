@@ -119,6 +119,13 @@ target_p_critical <- function(z_lower, z_upper, pool, d_lower, d_upper,
   right <- 1
   g_left <- g(0)
   g_right <- g(1)
+  # root_critical returns NA_real_ on an empty finite pool. Without this the
+  # loop's stopping test "min(c_s, top) - best <= tolerance" evaluates NA and
+  # aborts with R's bare "missing value where TRUE/FALSE needed", naming nothing.
+  stopifnot(
+    "endpoint root pool has no finite entries" =
+      is.finite(g_left) && is.finite(g_right)
+  )
   evals <- 2L
   best <- max(g_left, g_right)
   endpoint_best <- best

@@ -59,14 +59,6 @@ test_that("get_data_file_path prefers the user-cache copy when present", {
   expect_identical(path, user_csv)
 })
 
-test_that("check_data_file_exists returns logical", {
-  user_root <- withr::local_tempdir()
-  withr::local_envvar(R_USER_DATA_DIR = user_root)
-
-  expect_false(check_data_file_exists("nonexistent_file.csv"))
-  expect_true(check_data_file_exists(HETID_CONSTANTS$ACM_DATA_FILENAME))
-})
-
 test_that("get_acm_data_path resolves the bundled github-family file", {
   path <- get_acm_data_path()
 

@@ -84,12 +84,22 @@ quadratic_constraint_jacobian <- function(
     omega <- rep(1, n_constraints)
   }
   stopifnot(length(omega) == n_constraints)
-  t(vapply(seq_len(n_constraints), function(index) {
+  # vapply with FUN.VALUE = numeric(1) drops dim, so t() returns a
+  # 1 x n_constraints row for a scalar theta where slsqp's hinjac needs
+  # n_constraints x 1. as.vector of the vapply result is constraint-major in
+  # every shape, so byrow = TRUE rebuilds the contract shape uniformly.
+  jacobian <- vapply(seq_len(n_constraints), function(index) {
     theta_scale * (
       2 * drop(quadratic$A_i[[index]] %*% theta) +
         quadratic$b_i[[index]]
     ) / omega[index]
-  }, numeric(length(theta))))
+  }, numeric(length(theta)))
+  matrix(
+    jacobian,
+    nrow = n_constraints,
+    ncol = length(theta),
+    byrow = TRUE
+  )
 }
 
 quadratic_constraint_residual <- function(

@@ -10,7 +10,7 @@ paper_source_once(paper_path("support", "latex", "table_pipeline.R"))
 paper_source_once(paper_path("support", "latex", "simple_table.R"))
 paper_source_once(paper_path("support", "reporting", "cells.R"))
 
-fmt <- function(x) {
+share_fmt <- function(x) {
   policy <- PAPER_REPORTING_CONTROL$cells$variance_share
   paper_format_number(x, policy$digits, policy$numeric_missing)
 }
@@ -78,8 +78,8 @@ row_labels <- c(
 )
 columns <- c(
   list(
-    c(fmt(align_blocks(var_share$ols)), sprintf("%d", n_obs)),
-    c(fmt(align_blocks(var_share$point)), sprintf("%d", n_obs))
+    c(share_fmt(align_blocks(var_share$ols)), sprintf("%d", n_obs)),
+    c(share_fmt(align_blocks(var_share$point)), sprintf("%d", n_obs))
   ),
   lapply(
     var_share$set_cols,
@@ -112,6 +112,6 @@ cat(
 )
 
 rm(
-  fmt, round_preserving_sum, align_blocks, range_cell, n_obs, row_labels,
+  share_fmt, round_preserving_sum, align_blocks, range_cell, n_obs, row_labels,
   columns, var_share_table
 )

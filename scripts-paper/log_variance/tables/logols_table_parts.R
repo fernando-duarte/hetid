@@ -18,8 +18,8 @@ logvar_logols_table_parts <- function(n_obs) {
   )
   stopifnot(!anyNA(nw$se))
   cells <- ifelse(
-    nw$stars == "", fmt(tab$ols),
-    sprintf("%s$%s$", fmt(tab$ols), nw$stars)
+    nw$stars == "", logvar_fmt(tab$ols),
+    sprintf("%s$%s$", logvar_fmt(tab$ols), nw$stars)
   )
   labels <- c(
     "$\\theta^{log}_0$", sprintf("$\\theta^{log}_{%d,R}$", seq_len(n_pc_r))
@@ -47,7 +47,7 @@ logvar_logols_table_parts <- function(n_obs) {
         ),
         sprintf("%d", n_obs)
       ),
-      c(interleave(fmt(tab$point), ""), PAPER_NA_TOKEN, sprintf("%d", n_obs))
+      c(interleave(logvar_fmt(tab$point), ""), PAPER_NA_TOKEN, sprintf("%d", n_obs))
     ),
     unname(lapply(log_var_eq$sets, function(st) {
       logvar_assert_coef_aligned(st$coef, tab$coef)

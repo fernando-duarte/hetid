@@ -76,6 +76,6 @@ if (!identical(panel_y2$suite_cfg$regime, panel_w2$suite_cfg$regime)) {
 }
 
 rm(
-  w1, y1, y2, w2, z, z_mat, fmt, pcell, panel_y2, panel_w2,
+  w1, y1, y2, w2, z, z_mat, hetero_fmt, pcell, panel_y2, panel_w2,
   n_obs, span, hetero_render, hetero_console
 )

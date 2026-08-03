@@ -46,8 +46,20 @@ aligned <- dplyr::inner_join(
 )
 ref_cols <- value_cols(expected_sdf_pc)
 lag_cols <- value_cols(lag_expected_sdf_pc)
-flip <- sign(diag(stats::cor(aligned[ref_cols], aligned[lag_cols])))
+lag_ref_cor <- diag(stats::cor(aligned[ref_cols], aligned[lag_cols]))
+# sign() is a {-1, 0, NA} map, not the {-1, +1} multiplier the flip needs: an
+# exactly-zero correlation would multiply a whole lagged component by zero and an
+# NA would void it, and either way the column enters the conditioning set as a
+# dead regressor that lm silently aliases away. The sign is only defined when
+# every correlation is finite and non-zero, so require that rather than guess.
+stopifnot(
+  "lagged expected-SDF PC correlation is not finite" =
+    all(is.finite(lag_ref_cor)),
+  "lagged expected-SDF PC correlation is exactly zero, so its sign is undefined" =
+    all(lag_ref_cor != 0)
+)
+flip <- sign(lag_ref_cor)
 lag_expected_sdf_pc[lag_cols] <-
   sweep(as.matrix(lag_expected_sdf_pc[lag_cols]), 2, flip, `*`)
 
-rm(pc_scores, model_axes, aligned, ref_cols, lag_cols, flip)
+rm(pc_scores, model_axes, aligned, ref_cols, lag_cols, lag_ref_cor, flip)

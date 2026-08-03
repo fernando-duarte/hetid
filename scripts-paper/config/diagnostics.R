@@ -11,7 +11,15 @@ PAPER_HETEROSKEDASTICITY_CONTROL <- list(
   gq_deflator_position = 2L,
   gq_alternative = "two.sided",
   rejection_level = "two_stars",
-  caption_tests = c("BP", "GQ", "ARCH")
+  caption_tests = c("BP", "GQ", "ARCH"),
+  # Newey-West automatic bandwidth for the rank test's long-run variance:
+  # floor(scale * (n / base)^exponent). The exponent stays written as a division
+  # so it parses to the same double the inline rule produced.
+  long_run_variance = list(
+    bandwidth_scale = 4,
+    bandwidth_base = 100,
+    bandwidth_exponent = 2 / 9
+  )
 )
 
 paper_hetero_test_catalog <- function(

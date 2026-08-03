@@ -100,7 +100,7 @@ logvar_se_point_col <- function(
   }
   if (is.null(stat)) {
     return(c(
-      interleave(fmt(vals, cell_policy), ""),
+      interleave(logvar_fmt(vals, cell_policy), ""),
       PAPER_NA_TOKEN,
       sprintf("%d", n_obs)
     ))
@@ -108,8 +108,8 @@ logvar_se_point_col <- function(
   stars <- sig_stars(stat$p_value)
   cells <- ifelse(
     stars == "" | !is.finite(stat$statistic),
-    fmt(vals, cell_policy),
-    sprintf("%s$%s$", fmt(vals, cell_policy), stars)
+    logvar_fmt(vals, cell_policy),
+    sprintf("%s$%s$", logvar_fmt(vals, cell_policy), stars)
   )
   # a finite coefficient whose statistic failed its gate has no t-stat: mark it
   # "--" (statistic unavailable), never a blank stat row, which beside the

@@ -97,7 +97,10 @@ rk_rank_test <- function(y2, z) {
   h <- as.vector(y2 %*% u)^2
   s <- zc * (h - mean(h))
   n <- length(s)
-  lag <- floor(4 * (n / 100)^(2 / 9))
+  lrv <- PAPER_HETEROSKEDASTICITY_CONTROL$long_run_variance
+  lag <- floor(
+    lrv$bandwidth_scale * (n / lrv$bandwidth_base)^lrv$bandwidth_exponent
+  )
   sc <- s - mean(s)
   gam <- vapply(0:lag, function(k) {
     sum(sc[seq_len(n - k)] * sc[seq_len(n - k) + k]) / n
