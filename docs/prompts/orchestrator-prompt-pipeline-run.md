@@ -560,6 +560,41 @@ cp -R <invoking-checkout>/scripts-paper/output/. \
   `scripts-paper/output/` at all, record that fact and proceed — a gate-driven full rerun is then
   legitimate, and Stage A's inventory will show an empty baseline.
 
+**(2b) Seed the other untracked resources the run depends on. [required — three stages fail or go
+silently wrong without them]** The same tracked-files-only rule that leaves `output/state/` empty
+also means every **untracked** file under `docs/`, `graphify-out/`, and `.claude/` is missing from
+the worktree. Five of them are load-bearing. None are in git, so `git ls-files docs/` will not list
+them and a fresh clone will not have them either — their absence is invisible until the stage that
+needs one fails. Copy each from the invoking checkout before Stage A:
+
+```
+cp <invoking-checkout>/docs/quality-check.R                                   <worktree-path>/docs/
+cp <invoking-checkout>/docs/lewbel_multivariate_set_identification.tex        <worktree-path>/docs/
+cp <invoking-checkout>/docs/heteroskedasticity_tests_general_instruments.tex  <worktree-path>/docs/
+cp -R <invoking-checkout>/graphify-out                                        <worktree-path>/graphify-out
+mkdir -p <worktree-path>/.claude/skills && \
+  cp -R <invoking-checkout>/.claude/skills/graphify <worktree-path>/.claude/skills/graphify
+```
+
+| Resource | Needed by | What breaks if it is missing |
+|---|---|---|
+| `docs/quality-check.R` | Stage D | Stage D cannot run at all — the script does not exist |
+| `graphify-out/` | Stages K, L | no graph to update or audit |
+| `.claude/skills/graphify` | Stage K | the project-local skill does not resolve |
+| `docs/lewbel_multivariate_set_identification.tex` | Stage F | **silent**: the roxygen spec requires `\eqn{}`/`\deqn{}` notation to match this file, and auditors simply cannot perform that check |
+| `docs/heteroskedasticity_tests_general_instruments.tex` | reference reads | the protected file this prompt says you may read for reference |
+
+Copy, never move or symlink — the invoking checkout keeps its originals, and the run must not be
+able to damage them. Confirm each landed, and record `graphify-out/graph.json`'s node and edge
+counts in the log so Stage K can distinguish a real update from a no-op.
+
+**Baseline the protected file by checksum — `git` cannot police it and mtime is worthless here.**
+`docs/heteroskedasticity_tests_general_instruments.tex` is **untracked**, so it never appears in
+`git status` and `git log` can say nothing about it; and `cp` stamps the worktree copy with the copy
+time, so that copy's mtime proves nothing either. Record `md5 -q` for the file in **both** trees at
+this step, and re-verify the worktree digest before the final summary. The donor's own mtime is
+separate evidence that the canonical copy was never touched — check it there, not in the worktree.
+
 **(3) Create the run folder.** Pick the run date and create
 `RUN = docs/pipeline-run-<run-date>/` **inside the worktree**, with its `logs/`, `reports/`,
 `plans/`, `scratch/`, and `scratch/agents/` subfolders.
@@ -837,8 +872,9 @@ graphify has no AST extractor for their language, so they contributed nothing to
 (N)"*. Every bit of R structure in this graph is therefore LLM-semantic, and R is almost all of the
 graph (1461 of 1586 nodes at the last build), so running the CLI path here would refresh the
 manifest over a graph left 92 % stale. Note also that `.claude/` is
-git-ignored here, so the skill and `graphify-out/` are local-checkout resources that a fresh
-clone will not have; Stage 0's availability check is what catches their absence. **Exclude
+git-ignored here, so the skill and `graphify-out/` are untracked local-checkout resources that a
+fresh worktree does not have; **Stage 0 step (2b) is what puts them there** — if either is missing
+at this point, that step was skipped, so seed it now rather than rebuilding from nothing. **Exclude
 `.claude/` from extraction.** A cache hit is not evidence that changed files were covered:
 verify the incremental manifest and extraction output. **Read the final counts out of
 `graphify-out/graph.json`, not out of what the rebuild printed — the two disagree.** In a
