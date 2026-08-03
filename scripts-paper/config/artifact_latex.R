@@ -2,6 +2,7 @@
 
 PAPER_LATEX_LABELS <- c(
   heteroskedasticity = "tab:sdf_news_hetero_tests",
+  heteroskedasticity_w2 = "tab:sdf_news_resid_hetero_tests",
   panel_lad = "tab:log_var_eq_panel_lad",
   panel_logols = "tab:log_var_eq_panel_logols",
   panel_ppml = "tab:log_var_eq_panel_ppml",
@@ -20,6 +21,11 @@ PAPER_LATEX_LABELS <- c(
     "heteroskedasticity_table",
     "heteroskedasticity_standalone_tex",
     "heteroskedasticity_standalone_pdf"
+  ),
+  .latex_spec(
+    "heteroskedasticity_w2_table",
+    "heteroskedasticity_w2_standalone_tex",
+    "heteroskedasticity_w2_standalone_pdf"
   ),
   .latex_spec(
     "structural_var_estimators_table",
@@ -55,6 +61,7 @@ artifact_latex_publications <- data.frame(
 
 .latex_label_specs <- c(
   "heteroskedasticity_table|table|heteroskedasticity",
+  "heteroskedasticity_w2_table|table|heteroskedasticity_w2",
   "structural_var_estimators_table|ppml|panel_ppml",
   "structural_var_estimators_table|logols|panel_logols",
   "structural_var_estimators_table|harvey|panel_harvey",

@@ -1,6 +1,7 @@
-# Render the heteroskedasticity diagnostics as a bare tabular fragment,
-# standalone source, and compiled standalone PDF; the paper supplies the
-# float, caption, and notes.
+# Render the heteroskedasticity diagnostics as bare tabular fragments,
+# standalone sources, and compiled standalone PDFs; the paper supplies the
+# float, caption, and notes. Two tables of identical shape are produced, one
+# conditioning on Y2 and one on W2.
 
 paper_source_once(paper_path(
   "mean_equation",
@@ -9,54 +10,72 @@ paper_source_once(paper_path(
   "compute_tests.R"
 ))
 
-panel_rows <- function(idx) {
-  data.frame(label = row_labels[idx], cells[idx, , drop = FALSE])
+hetero_render <- function(panel, artifact_id, col_group_label) {
+  panel_rows <- function(idx) {
+    data.frame(label = panel$row_labels[idx], panel$cells[idx, , drop = FALSE])
+  }
+  arch_row <- length(panel$test_names)
+  panels <- list(
+    "Null hypothesis of variance constant over time, against volatility clustering" =
+      panel_rows(arch_row),
+    "Null hypothesis of variance unrelated to $Z$, against $Z$-driven heteroskedasticity" =
+      panel_rows(seq_len(arch_row - 1L)),
+    "Relevance and endogeneity diagnostics" =
+      panel_rows((arch_row + 1L):nrow(panel$cells))
+  )
+  tabular <- panel_tabular_lines(
+    panels,
+    col_headers = as.character(seq_len(panel$n_cols)),
+    col_group_label = col_group_label
+  )
+  publish_latex_artifact(artifact_id, tabular)
+  invisible(tabular)
 }
-arch_row <- length(test_names)
-panels <- list(
-  "Null hypothesis of variance constant over time, against volatility clustering" =
-    panel_rows(arch_row),
-  "Null hypothesis of variance unrelated to $Z$, against $Z$-driven heteroskedasticity" =
-    panel_rows(seq_len(arch_row - 1L)),
-  "Relevance and endogeneity diagnostics" = panel_rows((arch_row + 1L):nrow(cells))
-)
-hetero_table <- panel_tabular_lines(
-  panels,
-  col_headers = as.character(seq_len(n_pc_tested)),
-  col_group_label = "SDF-news PC"
-)
-publish_latex_artifact("heteroskedasticity_table", hetero_table)
 
-cat(
-  sprintf("hetero tests (Z = %s): regime", z_col),
-  suite_cfg$regime, "suite,", n_obs, "obs\n",
-  sprintf(
-    "KP rk underidentification: stat = %s, p = %s (NW lag %d, sv sep %s)\n",
-    paper_format_general(
-      rk$stat,
-      PAPER_REPORTING_CONTROL$precision$console_significant
-    ),
-    paper_format_general(
-      rk$p,
-      PAPER_REPORTING_CONTROL$precision$console_significant
-    ),
-    rk$lag,
-    paper_format_general(
-      rk$sep,
-      PAPER_REPORTING_CONTROL$precision$tau_significant
+hetero_render(panel_y2, "heteroskedasticity_table", "SDF-news PC")
+hetero_render(panel_w2, "heteroskedasticity_w2_table", "SDF-news residual")
+
+hetero_console <- function(panel, label) {
+  cat(
+    sprintf("hetero tests on %s (Z = %s): regime", label, z_col),
+    panel$suite_cfg$regime, "suite,", n_obs, "obs\n",
+    sprintf(
+      "KP rk underidentification: stat = %s, p = %s (NW lag %d, sv sep %s)\n",
+      paper_format_general(
+        panel$rk$stat,
+        PAPER_REPORTING_CONTROL$precision$console_significant
+      ),
+      paper_format_general(
+        panel$rk$p,
+        PAPER_REPORTING_CONTROL$precision$console_significant
+      ),
+      panel$rk$lag,
+      paper_format_general(
+        panel$rk$sep,
+        PAPER_REPORTING_CONTROL$precision$tau_significant
+      )
     )
   )
-)
-print(
-  do.call(cbind, pvals),
-  digits =
-    PAPER_REPORTING_CONTROL$precision$diagnostic_table
-)
+  print(
+    do.call(cbind, panel$pvals),
+    digits =
+      PAPER_REPORTING_CONTROL$precision$diagnostic_table
+  )
+}
+
+hetero_console(panel_y2, "Y2")
+hetero_console(panel_w2, "W2")
+
+# The two panels select their diagnostics suite independently, so a divergence
+# is a real difference in design and must not pass unremarked.
+if (!identical(panel_y2$suite_cfg$regime, panel_w2$suite_cfg$regime)) {
+  cat(sprintf(
+    "note: Y2 and W2 selected different diagnostics regimes (%s vs %s)\n",
+    panel_y2$suite_cfg$regime, panel_w2$suite_cfg$regime
+  ))
+}
 
 rm(
-  w1, y1, y2, z, z_mat, fmt, pcell, suite_cfg, run_battery, pvals, test_labels,
-  test_names, column_cells, cells, rk, joint_cells, row_labels,
-  caption_tests, rejection_alpha, caption_p_values, reject, n_pc_tested,
-  caption, n_obs, span, panel_rows, arch_row,
-  panels, hetero_table
+  w1, y1, y2, w2, z, z_mat, fmt, pcell, panel_y2, panel_w2,
+  n_obs, span, hetero_render, hetero_console
 )

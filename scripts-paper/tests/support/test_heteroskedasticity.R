@@ -121,14 +121,20 @@ render_source <- paste(readLines(paper_path(
   "heteroskedasticity",
   "render_table.R"
 ), warn = FALSE), collapse = "\n")
-# The render script emits a bare tabular (the consuming paper owns the notes
-# and the star legend), so the legend call lives outside the repo now; the
-# contract here is only that neither script hard-codes its own thresholds.
+battery_source <- paste(readLines(
+  paper_path("mean_equation", "diagnostics", "heteroskedasticity", "battery.R"),
+  warn = FALSE
+), collapse = "\n")
+# The render script emits a bare tabular (the consuming paper owns the notes and
+# the star legend), so the legend call lives outside the repo now. The battery is
+# parameterized over the conditioning matrix, so the rejection level resolves
+# there. The contract is that no script in the module hard-codes a threshold.
 check(
   "result scripts contain no private significance thresholds",
   grepl("sig_stars\\(x\\)", compute_source) &&
-    grepl("paper_significance_level", compute_source) &&
+    grepl("paper_significance_level", battery_source) &&
     !grepl("sig <- 0\\.05|x < 0\\.0", compute_source) &&
+    !grepl("sig <- 0\\.05|x < 0\\.0", battery_source) &&
     !grepl("p<0\\.10.*p<0\\.05.*p<0\\.01", render_source)
 )
 

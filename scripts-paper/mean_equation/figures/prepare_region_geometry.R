@@ -30,9 +30,10 @@ paper_source_once(paper_path(
   "mean_equation", "inference", "refine_bounds_by_tau.R"
 ))
 
-# news-PC standard deviations that define the SD-unit axes (Y2 = w2 = PC_N under
-# the beta2R = 0 null, so sd(w2[, i]) = sd(PC_{N,i}))
-region_sd <- apply(set_id_mean_eq$w2, 2, stats::sd)
+# news-PC standard deviations that define the SD-unit axes. Scale on Y2, which
+# is PC_N itself: the published mean spec does not impose the beta2R = 0 null,
+# so w2 = resid(lm(Y2 ~ X)) and sd(w2[, i]) is not sd(PC_{N,i})
+region_sd <- apply(set_id_mean_eq$y2, 2, stats::sd)
 
 # Axis scale of one unit system. Every helper below takes the scale as an
 # argument and defaults to the SD axes, so the projection figures keep reading
