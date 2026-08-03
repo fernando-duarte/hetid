@@ -62,9 +62,8 @@ process_w2_maturity <- function(i, yields_df, term_premia_df, pcs, n_pcs,
   # leading lag-NA rows drop consistently for both the fitted and imposed paths
   complete_idx <- complete.cases(sdf_innov, reg_lagged)
   n_complete <- sum(complete_idx)
-  # b = 0 imposes the coefficients rather than estimating them, so the
-  # regression degrees-of-freedom floor does not apply -- but a maturity with
-  # no usable rows is still a skip, not a zero-length success
+  # b = 0 imposes coefficients, so the regression df floor does not apply
+  # a maturity with no usable rows is still a skip, not a zero-length success
   min_required <- if (impose_b_zero) 2L else min_obs_for_pc_regression(n_reg)
   if (n_complete < min_required) {
     return(skip_maturity(paste0(

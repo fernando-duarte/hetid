@@ -37,12 +37,12 @@ lag columns are appended to the PC (or \code{exog}) regressors.}
 \value{
 If return_df = FALSE, returns a list containing:
 \describe{
-\item{residuals}{Numeric vector of residuals W_\{1,t+1\}}
+\item{residuals}{Numeric vector of residuals \eqn{W_{1,t+1}}}
 \item{fitted}{Numeric vector of fitted values}
 \item{coefficients}{Regression coefficients}
 \item{r_squared}{R-squared of the regression}
 \item{dates}{Date vector of the t+1 realization dates of the residuals
-W_\{1,t+1\} (the lead dates subset by the complete-case filter)}
+\eqn{W_{1,t+1}} (the lead dates subset by the complete-case filter)}
 \item{kept_idx}{Integer indices (into the lagged/leading rows) of the
 observations retained by the regression's complete-case filter; used
 downstream to assert that \eqn{Y_1} and \eqn{Y_2} are fit on the same
@@ -52,19 +52,20 @@ sample}
 If return_df = TRUE, returns a data frame with columns:
 \describe{
 \item{date}{Date column}
-\item{residuals}{Residuals W_\{1,t+1\}}
+\item{residuals}{Residuals \eqn{W_{1,t+1}}}
 \item{fitted}{Fitted values from the regression}
 }
 }
 \description{
-Computes the residual W_\{1,t+1\} from regressing consumption growth (Y_\{1,t+1\})
+Computes the residual \eqn{W_{1,t+1}} from regressing consumption growth
+(\eqn{Y_{1,t+1}})
 on principal components extracted from financial asset returns (PC_t) and a constant.
 }
 \details{
 The function performs the regression:
 \deqn{Y_{1,t+1} = \alpha + \beta^{\top} PC_t + W_{1,t+1}}
 
-where Y_\{1,t+1\} is consumption growth and PC_t are the first n_pcs
+where \eqn{Y_{1,t+1}} is consumption growth and PC_t are the first n_pcs
 principal components extracted from financial asset returns (pc1, ..., pc6).
 
 When \code{exog} is supplied, its columns replace the PCs as

@@ -11,6 +11,9 @@ stop_hetid(message, call = NULL)
 
 \item{call}{The call (default NULL)}
 }
+\value{
+Never returns; signals a \code{hetid_error} condition
+}
 \description{
 Signal a Generic hetid Error
 }

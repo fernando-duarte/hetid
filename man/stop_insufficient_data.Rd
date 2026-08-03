@@ -11,6 +11,10 @@ stop_insufficient_data(message, call = NULL)
 
 \item{call}{The call (default NULL)}
 }
+\value{
+Never returns; signals a \code{hetid_error_insufficient_data}
+condition
+}
 \description{
 Signal an Insufficient Data Error
 }

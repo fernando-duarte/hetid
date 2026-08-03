@@ -11,6 +11,10 @@ stop_dimension_mismatch(message, call = NULL)
 
 \item{call}{The call (default NULL)}
 }
+\value{
+Never returns; signals a \code{hetid_error_dimension_mismatch}
+condition
+}
 \description{
 Signal a Dimension Mismatch Error
 }

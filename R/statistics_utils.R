@@ -89,7 +89,7 @@ centered_var <- function(x) {
 #' is not entirely finite yields \code{Inf} (the arm loses the min it
 #' feeds; observations are never dropped, which would understate a
 #' variance bound), and a finite series yields its
-#' \code{\link{centered_var}} clamped at zero (divisor-N arithmetic can
+#' \code{centered_var()} clamped at zero (divisor-N arithmetic can
 #' produce a tiny negative value on a near-constant series, and callers
 #' take square roots). Non-finite inputs here arise only from
 #' \code{exp()} overflow at astronomically large log prices, so the

@@ -2,8 +2,8 @@
 #'
 #' Computes the time series of SDF innovations, the centered second-order
 #' approximation to the SDF news:
-#' exp(n_hat(i,t)) * (Delta_(t+1)p_(t+i)^(1) + 0.5*(Delta_(t+1)p_(t+i)^(1))^2)
-#' - B_i
+#' \deqn{e^{\hat{n}(i,t)}\left(\Delta_{t+1}p^{(1)}_{t+i} +
+#'   \tfrac{1}{2}\left(\Delta_{t+1}p^{(1)}_{t+i}\right)^{2}\right) - B_i}
 #'
 #' @template param-yields-term-premia
 #' @template param-maturity-index
@@ -14,10 +14,11 @@
 #'
 #' @details
 #' In the formula above:
-#' - Delta_(t+1)p_(t+i)^(1) = n_hat(i-step,t+1) - n_hat(i,t)
-#' - B_i = 0.5 * mean(exp(n_hat(i,t)) * (Delta_(t+1)p_(t+i)^(1))^2) is the
+#' - \eqn{\Delta_{t+1}p^{(1)}_{t+i} = \hat{n}(i-step,t+1) - \hat{n}(i,t)}
+#' - \eqn{B_i = \tfrac{1}{2}\mathrm{mean}(e^{\hat{n}(i,t)}
+#'   (\Delta_{t+1}p^{(1)}_{t+i})^{2})} is the
 #'   constant centering term, an exponential-weighted sample mean
-#'   subtracted outside the exp(n_hat) factor so the population analogue
+#'   subtracted outside the \eqn{e^{\hat{n}}} factor so the population analogue
 #'   has exactly zero unconditional mean; the mean runs over the valid
 #'   (non-missing) news dates (T-1 terms with complete data)
 #'
@@ -69,7 +70,7 @@ sdf_innovations_series <- function(yields, term_premia, i,
   validate_row_alignment(yields, term_premia)
 
   components <- compute_news_components(yields, term_premia, i, step = step)
-  n_hat_i <- components$n_hat_i
+  n_hat_i <- components[["n_hat_i"]]
   delta_p <- components$delta_p
 
   exp_mu <- exp(n_hat_i[seq_along(delta_p)])

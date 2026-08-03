@@ -80,15 +80,15 @@ compute_news_q_bound <- function(yields, term_premia, i,
   y_step <- require_acm_col(yields, "yields", step)
 
   horizon_periods <- i %/% step
-  n_obs <- length(components$n_hat_i)
+  n_obs <- length(components[["n_hat_i"]])
   assert_insufficient_data_ok(
     n_obs > horizon_periods,
     HETID_CONSTANTS$INSUFFICIENT_NEWS_MSG
   )
 
   paired <- seq_len(n_obs - horizon_periods)
-  n_hat_0 <- components$n_hat_i[paired]
-  n_hat_1 <- components$n_hat_i_minus_1[paired + 1L]
+  n_hat_0 <- components[["n_hat_i"]][paired]
+  n_hat_1 <- components[["n_hat_i_minus_1"]][paired + 1L]
   m_step <- step / HETID_CONSTANTS$MATURITY_UNITS_PER_YEAR
   realized_log <- -m_step * y_step[paired + horizon_periods] /
     HETID_CONSTANTS$PERCENT_TO_DECIMAL

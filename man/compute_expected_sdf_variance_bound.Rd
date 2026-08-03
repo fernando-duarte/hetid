@@ -59,7 +59,7 @@ envelope/Taylor bound paired with the first-order-cancelled
 The projection (gap-variance) bound \eqn{\widehat{\mathrm{Var}}(g)}
 is no longer part of the returned min: on financial data it exceeds the
 q arm by orders of magnitude and never binds. The component arm
-replaces it because the two remaining arms are NOT ordered: the
+replaces it because the two remaining arms are \strong{not} ordered: the
 truncated \eqn{(1/4) C K} can fall below \eqn{\mathrm{Var}(q)}, so the
 min is not redundant.
 

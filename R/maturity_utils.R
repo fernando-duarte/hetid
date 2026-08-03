@@ -11,9 +11,14 @@ NULL
 #' Generates standard maturity label vector from indices.
 #'
 #' @param maturities Integer vector of maturity indices
-#' @return Character vector, e.g. c("maturity_1", "maturity_2")
+#' @return Character vector, e.g. c("maturity_1", "maturity_2"); character(0)
+#'   for a zero-length input
 #' @keywords internal
 maturity_names <- function(maturities) {
+  # paste0 against integer(0) returns "maturity_", not character(0)
+  if (length(maturities) == 0L) {
+    return(character(0))
+  }
   paste0(HETID_CONSTANTS$MATURITY_PREFIX, maturities)
 }
 

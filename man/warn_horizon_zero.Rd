@@ -11,6 +11,9 @@ warn_horizon_zero(message, call = NULL)
 
 \item{call}{The call (default NULL)}
 }
+\value{
+Invisibly, the warning message; called for its warning side effect
+}
 \description{
 Classed warning raised when \code{\link{compute_expected_sdf}} is called
 with \code{i = 0}: the horizon-zero expected SDF is the realized

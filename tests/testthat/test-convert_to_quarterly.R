@@ -204,3 +204,18 @@ test_that("an all-NA-date input returns an empty frame with a warning", {
   )
   expect_equal(nrow(result), 0)
 })
+
+test_that("non-tabular input raises a structured error", {
+  expect_error(
+    convert_to_quarterly(1:5),
+    class = "hetid_error_bad_argument"
+  )
+})
+
+test_that("input without a date column raises a structured error", {
+  expect_error(
+    convert_to_quarterly(data.frame(x = 1:6)),
+    "Missing required columns: date",
+    class = "hetid_error_bad_argument"
+  )
+})

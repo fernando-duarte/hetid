@@ -11,6 +11,9 @@ warn_degenerate_variance(message, call = NULL)
 
 \item{call}{The call (default NULL)}
 }
+\value{
+Invisibly, the warning message; called for its warning side effect
+}
 \description{
 Classed warning for the variance positivity diagnostic so callers
 can dispatch on it (e.g. \code{withCallingHandlers} with class

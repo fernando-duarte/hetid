@@ -1,6 +1,7 @@
 #' Compute Price News
 #'
-#' Computes the time series of price news Delta_(t+1)p_(t+i)^(1) or Delta_(t+1)y_(t+i)^(1)
+#' Computes the time series of price news \eqn{\Delta_{t+1}p^{(1)}_{t+i}} or
+#' \eqn{\Delta_{t+1}y^{(1)}_{t+i}}
 #'
 #' @template param-yields-term-premia
 #' @template param-maturity-index

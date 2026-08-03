@@ -36,7 +36,8 @@ steps one period, so maturity arithmetic moves in multiples of
 bond, and horizons must satisfy \code{i <= MAX_MATURITY - step}.}
 }
 \value{
-Previous period n_hat series
+Numeric vector of length \code{nrow(yields)}: the previous-period
+n_hat series, \eqn{n\_hat(i - step, t)}.
 }
 \description{
 Handles the boundary case \code{i == step}, where the

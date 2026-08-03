@@ -47,8 +47,9 @@ in the term structure model, providing information about tail risks.
 Unlike \code{compute_c_hat}, \code{compute_k2_hat}, and
 \code{compute_variance_bound} (capped at \code{MAX_MATURITY - step}),
 \code{i} here may run up to \code{MAX_MATURITY}: this estimator reads
-only maturities \code{step} and \code{i} (via
-\code{compute_n_hat_previous(i - step)}), never \code{i + step}.
+maturities \code{step}, \code{i - step}, and \code{i}
+(\code{compute_n_hat_previous()} evaluates \code{n_hat} at
+\code{i - step}), never \code{i + step}.
 }
 \section{Mathematical Formula}{
 

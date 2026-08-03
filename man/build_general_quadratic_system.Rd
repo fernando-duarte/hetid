@@ -24,8 +24,12 @@ element i is a length-K_i numeric vector of slacks}
 \value{
 A list with elements
 \describe{
-\item{components}{List with per-constraint \code{L_i}, \code{V_i}
-(named vectors) and \code{Q_i} (named list)}
+\item{components}{Plain list with per-constraint \code{L_i}, \code{V_i}
+(named vectors) and \code{Q_i} (named list). Not a
+\code{hetid_components} object, so it cannot be passed to
+\code{\link{compute_identified_set_quadratic}}; the per-constraint
+axis is longer than the maturity axis whenever any component carries
+more than one combination}
 \item{quadratic}{List with per-constraint \code{d_i}, \code{A_i},
 \code{b_i}, \code{c_i}, consumable by the same profile-bound
 solvers as the legacy output}

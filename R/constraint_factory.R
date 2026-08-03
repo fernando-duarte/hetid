@@ -109,12 +109,13 @@ make_system_checker <- function(quadratic) {
     ),
     arg = "quadratic"
   )
-  nms <- names(quadratic$A_i)
-  checkers <- lapply(seq_along(quadratic$A_i), function(k) {
+  nms <- names(quadratic[["A_i"]])
+  checkers <- lapply(seq_along(quadratic[["A_i"]]), function(k) {
     slot_label <- if (is.null(nms) || !nzchar(nms[k])) k else nms[k]
     tryCatch(
       make_constraint_checker(
-        quadratic$A_i[[k]], quadratic$b_i[[k]], quadratic$c_i[k]
+        quadratic[["A_i"]][[k]], quadratic[["b_i"]][[k]],
+        quadratic[["c_i"]][[k]]
       ),
       hetid_error = function(e) {
         stop_hetid(paste0(
@@ -131,7 +132,7 @@ make_system_checker <- function(quadratic) {
 
 #' Quadratic List Carries Parallel A/b/c Elements
 #'
-#' The list guard must run first (the \code{$} accessor errors on
+#' The list guard must run first (the \code{[[} accessor errors on
 #' atomic input); the remaining checks are evaluated as a plain
 #' vector — no short-circuiting needed, and the flat form keeps the
 #' cyclomatic complexity at the project threshold.
@@ -144,10 +145,10 @@ is_parallel_quadratic <- function(quadratic) {
     return(FALSE)
   }
   all(c(
-    is.list(quadratic$A_i),
-    is.list(quadratic$b_i),
-    is.numeric(quadratic$c_i),
-    length(quadratic$A_i) == length(quadratic$b_i),
-    length(quadratic$A_i) == length(quadratic$c_i)
+    is.list(quadratic[["A_i"]]),
+    is.list(quadratic[["b_i"]]),
+    is.numeric(quadratic[["c_i"]]),
+    length(quadratic[["A_i"]]) == length(quadratic[["b_i"]]),
+    length(quadratic[["A_i"]]) == length(quadratic[["c_i"]])
   ))
 }

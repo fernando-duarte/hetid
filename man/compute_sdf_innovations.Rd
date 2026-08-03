@@ -49,18 +49,17 @@ the computed series.
 \description{
 Computes the time series of SDF innovations, the centered second-order
 approximation to the SDF news:
-exp(n_hat(i,t)) * (Delta_(t+1)p_(t+i)^(1) + 0.5*(Delta_(t+1)p_(t+i)^(1))^2)
-\itemize{
-\item B_i
-}
+\deqn{e^{\hat{n}(i,t)}\left(\Delta_{t+1}p^{(1)}_{t+i} +
+  \tfrac{1}{2}\left(\Delta_{t+1}p^{(1)}_{t+i}\right)^{2}\right) - B_i}
 }
 \details{
 In the formula above:
 \itemize{
-\item Delta_(t+1)p_(t+i)^(1) = n_hat(i-step,t+1) - n_hat(i,t)
-\item B_i = 0.5 * mean(exp(n_hat(i,t)) * (Delta_(t+1)p_(t+i)^(1))^2) is the
+\item \eqn{\Delta_{t+1}p^{(1)}_{t+i} = \hat{n}(i-step,t+1) - \hat{n}(i,t)}
+\item \eqn{B_i = \tfrac{1}{2}\mathrm{mean}(e^{\hat{n}(i,t)}
+  (\Delta_{t+1}p^{(1)}_{t+i})^{2})} is the
 constant centering term, an exponential-weighted sample mean
-subtracted outside the exp(n_hat) factor so the population analogue
+subtracted outside the \eqn{e^{\hat{n}}} factor so the population analogue
 has exactly zero unconditional mean; the mean runs over the valid
 (non-missing) news dates (T-1 terms with complete data)
 }

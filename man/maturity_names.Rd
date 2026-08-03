@@ -10,7 +10,8 @@ maturity_names(maturities)
 \item{maturities}{Integer vector of maturity indices}
 }
 \value{
-Character vector, e.g. c("maturity_1", "maturity_2")
+Character vector, e.g. c("maturity_1", "maturity_2"); character(0)
+for a zero-length input
 }
 \description{
 Generates standard maturity label vector from indices.

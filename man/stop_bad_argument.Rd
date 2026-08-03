@@ -13,6 +13,9 @@ stop_bad_argument(message, arg = NULL, call = NULL)
 
 \item{call}{The call (default NULL)}
 }
+\value{
+Never returns; signals a \code{hetid_error_bad_argument} condition
+}
 \description{
 Signal a Bad Argument Error
 }

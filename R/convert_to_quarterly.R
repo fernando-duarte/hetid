@@ -29,6 +29,9 @@ convert_to_quarterly <- function(
   data,
   use_incomplete_quarters = HETID_CONSTANTS$USE_INCOMPLETE_QUARTERS
 ) {
+  assert_tabular(data, "data")
+  assert_columns_exist(data, "date", arg = "data")
+
   if (nrow(data) == 0) {
     return(data)
   }

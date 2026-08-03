@@ -158,9 +158,8 @@ filter_acm_date_range <- function(acm_data, start_date, end_date,
   # honours the warn-and-continue contract instead of aborting in to_period_end
   acm_data <- acm_data[!is.na(acm_data$date), , drop = FALSE]
   if (!is.null(start_date)) {
-    # compare the period-end label the returned frame will carry, not the raw
-    # business-day date: the label is never earlier than the raw date, so a
-    # canonical period-end start_date would otherwise drop the period it names
+    # compare the period-end label the frame will carry, not the raw business-day date
+    # the label is never earlier, so a period-end start_date would drop the period it names
     period_labels <- to_period_end(acm_data$date, frequency)
     acm_data <- acm_data[which(period_labels >= start_date), , drop = FALSE]
   }

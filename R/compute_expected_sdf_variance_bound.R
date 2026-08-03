@@ -46,7 +46,7 @@
 #' @note The projection (gap-variance) bound \eqn{\widehat{\mathrm{Var}}(g)}
 #'   is no longer part of the returned min: on financial data it exceeds the
 #'   q arm by orders of magnitude and never binds. The component arm
-#'   replaces it because the two remaining arms are NOT ordered: the
+#'   replaces it because the two remaining arms are \strong{not} ordered: the
 #'   truncated \eqn{(1/4) C K} can fall below \eqn{\mathrm{Var}(q)}, so the
 #'   min is not redundant.
 #'
@@ -97,8 +97,6 @@ compute_expected_sdf_variance_bound <- function(yields, term_premia, i,
   validate_expected_sdf_inputs(yields, term_premia, i, step)
 
   if (i == 0) {
-    # Horizon 0 is exact (M^(0)_{0,t} = P^(1)_t): no approximation error, so the
-    # bound is identically 0
     warn_horizon_zero(
       paste0(
         "i = 0: the horizon-0 expected SDF is exact (the realized one-period ",
@@ -112,8 +110,7 @@ compute_expected_sdf_variance_bound <- function(yields, term_premia, i,
   # i/step row shift), so it is validated there, not here
   components <- compute_expected_sdf_gap(yields, term_premia, i, step = step)
 
-  # Degenerate data (no finite paired observations): no bound to estimate.
-  # Matches the NA_real_ contract of compute_c_hat / compute_k_hat
+  # matches the NA_real_ contract of compute_c_hat / compute_k_hat
   if (length(components$gap) == 0) {
     return(NA_real_)
   }

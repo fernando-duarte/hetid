@@ -11,6 +11,9 @@ warn_dropped_na_dates(message, call = NULL)
 
 \item{call}{The call (default NULL)}
 }
+\value{
+Invisibly, the warning message; called for its warning side effect
+}
 \description{
 Classed warning raised when quarterly conversion removes rows whose
 date is NA (the monthly path keeps them, but the quarterly aggregate

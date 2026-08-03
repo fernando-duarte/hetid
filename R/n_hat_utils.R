@@ -73,7 +73,8 @@ validate_expected_sdf_inputs <- function(yields, term_premia, i, step) {
 #' @template param-yields-term-premia
 #' @template param-maturity-index
 #' @template param-step
-#' @return Previous period n_hat series
+#' @return Numeric vector of length \code{nrow(yields)}: the previous-period
+#'   n_hat series, \eqn{n\_hat(i - step, t)}.
 #' @keywords internal
 compute_n_hat_previous <- function(yields, term_premia, i,
                                    step = HETID_CONSTANTS$DEFAULT_STEP) {
@@ -92,8 +93,9 @@ compute_n_hat_previous <- function(yields, term_premia, i,
 #'
 #' Generic function to compute news as difference between future and current values
 #'
-#' @param current_series Current period series
-#' @param future_series Future period series
+#' @param current_series Numeric vector of current-period values.
+#' @param future_series Numeric vector of future-period values, the same length
+#'   as \code{current_series}.
 #' @return News series (\code{length(current_series) - 1}), or
 #'   \code{numeric(0)} when the inputs have fewer than two observations.
 #' @keywords internal

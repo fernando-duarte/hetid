@@ -19,6 +19,7 @@ NULL
 #' @param message Warning message string
 #' @param subclass Specific warning subclass string
 #' @param call The call (default NULL)
+#' @return Invisibly, the warning message; called for its warning side effect
 #' @keywords internal
 warn_hetid <- function(message, subclass, call = NULL) {
   cnd <- warningCondition(
@@ -37,6 +38,7 @@ warn_hetid <- function(message, subclass, call = NULL) {
 #'
 #' @param message Warning message string
 #' @param call The call (default NULL)
+#' @return Invisibly, the warning message; called for its warning side effect
 #' @keywords internal
 warn_degenerate_variance <- function(message, call = NULL) {
   warn_hetid(message, "hetid_warning_degenerate_variance", call = call)
@@ -51,6 +53,7 @@ warn_degenerate_variance <- function(message, call = NULL) {
 #'
 #' @param message Warning message string
 #' @param call The call (default NULL)
+#' @return Invisibly, the warning message; called for its warning side effect
 #' @keywords internal
 warn_incomplete_quarter <- function(message, call = NULL) {
   warn_hetid(message, "hetid_warning_incomplete_quarter", call = call)
@@ -65,6 +68,7 @@ warn_incomplete_quarter <- function(message, call = NULL) {
 #'
 #' @param message Warning message string
 #' @param call The call (default NULL)
+#' @return Invisibly, the warning message; called for its warning side effect
 #' @keywords internal
 warn_dropped_na_dates <- function(message, call = NULL) {
   warn_hetid(message, "hetid_warning_dropped_na_dates", call = call)
@@ -78,6 +82,7 @@ warn_dropped_na_dates <- function(message, call = NULL) {
 #'
 #' @param message Warning message string
 #' @param call The call (default NULL)
+#' @return Invisibly, the warning message; called for its warning side effect
 #' @keywords internal
 warn_unparsed_dates <- function(message, call = NULL) {
   warn_hetid(message, "hetid_warning_unparsed_dates", call = call)
@@ -91,6 +96,7 @@ warn_unparsed_dates <- function(message, call = NULL) {
 #'
 #' @param message Warning message string
 #' @param call The call (default NULL)
+#' @return Invisibly, the warning message; called for its warning side effect
 #' @keywords internal
 warn_skipped_maturity <- function(message, call = NULL) {
   warn_hetid(message, "hetid_warning_skipped_maturity", call = call)
@@ -105,6 +111,7 @@ warn_skipped_maturity <- function(message, call = NULL) {
 #'
 #' @param message Warning message string
 #' @param call The call (default NULL)
+#' @return Invisibly, the warning message; called for its warning side effect
 #' @keywords internal
 warn_horizon_zero <- function(message, call = NULL) {
   warn_hetid(message, "hetid_warning_horizon_zero", call = call)

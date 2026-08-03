@@ -33,6 +33,7 @@ new_hetid_error <- function(message, subclass = NULL, call = NULL, ...) {
 #' @param message Error message string
 #' @param arg Argument name (optional)
 #' @param call The call (default NULL)
+#' @return Never returns; signals a \code{hetid_error_bad_argument} condition
 #' @keywords internal
 stop_bad_argument <- function(message, arg = NULL,
                               call = NULL) {
@@ -46,6 +47,8 @@ stop_bad_argument <- function(message, arg = NULL,
 #'
 #' @param message Error message string
 #' @param call The call (default NULL)
+#' @return Never returns; signals a \code{hetid_error_dimension_mismatch}
+#'   condition
 #' @keywords internal
 stop_dimension_mismatch <- function(message,
                                     call = NULL) {
@@ -56,6 +59,8 @@ stop_dimension_mismatch <- function(message,
 #'
 #' @param message Error message string
 #' @param call The call (default NULL)
+#' @return Never returns; signals a \code{hetid_error_insufficient_data}
+#'   condition
 #' @keywords internal
 stop_insufficient_data <- function(message,
                                    call = NULL) {
@@ -66,6 +71,7 @@ stop_insufficient_data <- function(message,
 #'
 #' @param message Error message string
 #' @param call The call (default NULL)
+#' @return Never returns; signals a \code{hetid_error} condition
 #' @keywords internal
 stop_hetid <- function(message, call = NULL) {
   stop(new_hetid_error(message, call = call))

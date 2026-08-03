@@ -7,9 +7,11 @@
 compute_identification_moments(w1, w2, pcs, maturities = NULL)
 }
 \arguments{
-\item{w1}{Numeric vector of W1 residuals from compute_w1_residuals()}
+\item{w1}{Numeric vector of W1 residuals from
+\code{\link{compute_w1_residuals}()}}
 
-\item{w2}{Matrix of W2 residuals (T x I) from compute_w2_residuals()}
+\item{w2}{Matrix of W2 residuals (T x I) from
+\code{\link{compute_w2_residuals}()}}
 
 \item{pcs}{Matrix of instruments (T x J): any numeric matrix of
 exogenous time-series instruments. In the VFCI application these

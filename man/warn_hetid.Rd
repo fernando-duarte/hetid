@@ -13,6 +13,9 @@ warn_hetid(message, subclass, call = NULL)
 
 \item{call}{The call (default NULL)}
 }
+\value{
+Invisibly, the warning message; called for its warning side effect
+}
 \description{
 Generic helper behind the specific \code{warn_*} constructors:
 raises a \code{warningCondition} whose class vector is the given

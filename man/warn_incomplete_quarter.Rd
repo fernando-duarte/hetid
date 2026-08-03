@@ -11,6 +11,9 @@ warn_incomplete_quarter(message, call = NULL)
 
 \item{call}{The call (default NULL)}
 }
+\value{
+Invisibly, the warning message; called for its warning side effect
+}
 \description{
 Classed warning raised when quarterly conversion encounters quarters
 whose last available observation is not in the terminal month, so

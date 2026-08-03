@@ -7,9 +7,10 @@
 compute_time_series_news(current_series, future_series)
 }
 \arguments{
-\item{current_series}{Current period series}
+\item{current_series}{Numeric vector of current-period values.}
 
-\item{future_series}{Future period series}
+\item{future_series}{Numeric vector of future-period values, the same length
+as \code{current_series}.}
 }
 \value{
 News series (\code{length(current_series) - 1}), or

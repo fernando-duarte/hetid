@@ -1,6 +1,6 @@
 #' Compute Reduced Form Residuals for Y2 Variables
 #'
-#' Computes residuals W_\{2,t+1\}^\{(i)\} from regressing Y_\{2,t+1\}^\{(i)\} variables
+#' Computes residuals \eqn{W_{2,t+1}^{(i)}} from regressing \eqn{Y_{2,t+1}^{(i)}} variables
 #' (SDF innovations) on the common conditioning vector \eqn{X_t}: a constant, the
 #' principal components extracted from financial asset returns, and (when
 #' \code{y1}/\code{y1_lags} are supplied) the own-lags of \code{y1}. Setting
@@ -63,12 +63,12 @@
 #' returned skip set rather than the warning stream.
 #'
 #' @details
-#' For each maturity i, computes Y_\{2,t+1\}^\{(i)\} as the SDF
+#' For each maturity i, computes \eqn{Y_{2,t+1}^{(i)}} as the SDF
 #' innovation (via \code{compute_sdf_innovations()}, the centered
 #' second-order approximation to the SDF news
 #' \eqn{E_{t+1}[SDF_{t+1+i}] - E_t[SDF_{t+1+i}]}), then regresses it on
 #' the conditioning vector \eqn{X_t} (PC_t, optionally with
-#' \code{y1_lags} own-lags of \code{y1}) for residuals W_\{2,t+1\}.
+#' \code{y1_lags} own-lags of \code{y1}) for residuals \eqn{W_{2,t+1}}.
 #'
 #' \strong{PC alignment:} \code{pcs} must be supplied as a numeric matrix
 #' with one row per yield row, already aligned to the yields by calendar

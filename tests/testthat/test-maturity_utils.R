@@ -12,3 +12,7 @@ test_that("maturity_names uses the configured prefix constant", {
     paste0(HETID_CONSTANTS$MATURITY_PREFIX, 36)
   )
 })
+
+test_that("maturity_names returns character(0) for a zero-length input", {
+  expect_identical(maturity_names(integer(0)), character(0))
+})

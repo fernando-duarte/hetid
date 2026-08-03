@@ -11,6 +11,9 @@ warn_unparsed_dates(message, call = NULL)
 
 \item{call}{The call (default NULL)}
 }
+\value{
+Invisibly, the warning message; called for its warning side effect
+}
 \description{
 Classed warning raised when date parsing leaves some previously
 non-NA values as NA, so callers can dispatch on class

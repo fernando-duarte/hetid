@@ -11,6 +11,9 @@ warn_skipped_maturity(message, call = NULL)
 
 \item{call}{The call (default NULL)}
 }
+\value{
+Invisibly, the warning message; called for its warning side effect
+}
 \description{
 Classed warning raised when a maturity is skipped during W2
 processing (missing columns or too few observations), so callers can

@@ -36,7 +36,7 @@ steps one period, so maturity arithmetic moves in multiples of
 bond, and horizons must satisfy \code{i <= MAX_MATURITY - step}.}
 }
 \value{
-A list with three elements:
+A list with five elements:
 \describe{
 \item{\code{exp_n_hat}}{The full-length \eqn{T} series
 \eqn{e^{n\_hat(i,t)}}, used only by \code{compute_expected_sdf}
@@ -69,7 +69,8 @@ first-order-cancelled gap \eqn{q_t = e^{n\_hat}(e^u - 1 - u)} where
 \eqn{u = x - n\_hat} is the raw log forecast error (\eqn{x} the realized
 log price), plus the masked \eqn{u} and \eqn{n\_hat} series themselves.
 All series are filtered to the common finite paired set
-\eqn{T_i = \{1, \dots, T - s\}}, \eqn{s = i / step}, under ONE mask, so
+\eqn{T_i = \{1, \dots, T - s\}}, \eqn{s = i / step}, under \strong{one}
+mask, so
 the estimator's centering and every bound arm share a single sample. The
 gap's mean is the centering correction; the q variance and the
 fourth-order component \eqn{(1/4)\max(e^{2 n\_hat})\,\mathrm{mean}(u^4)}
