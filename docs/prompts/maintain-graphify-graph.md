@@ -304,6 +304,32 @@ graphify's own schema for this is `.claude/skills/graphify/references/extraction
 rubric, hyperedges, the six legal `file_type` values). Follow it; this section only records what this
 repo's layer actually looks like.
 
+### Running a semantic pass
+
+This is model work, not tooling. **You are the extractor** — no API key, provider or backend is
+required or assumed. If the host happens to have one configured, graphify's own pipeline can drive
+it, but never depend on that and never stop to ask for one.
+
+Fan out. Split the documents into chunks and dispatch subagents **in parallel — as many as you judge
+optimal for the corpus in front of you**, which is a judgement about how much material there is and
+how it groups, not a fixed number. Keep related documents in one chunk (the four `scripts-paper`
+READMEs describe one system; splitting them loses the cross-references between them).
+
+Three things that decide whether the results survive:
+
+- **Each subagent must be able to write its fragment to disk.** A read-only agent produces nothing
+  and reports success — the failure is silent, and you will only notice as missing nodes.
+- **Give every subagent the repo-specific rules from this section**, not just the graphify schema:
+  `source_location: null`, ids of the form `{stem}_{entity}`, and edge endpoints copied from
+  `graph.json` rather than computed. A subagent that invents ids produces edges that are dropped as
+  dangling at build time, silently.
+- **Merge, then verify before writing.** Dedupe by node id, splice into the semantic layer, and check
+  0 dangling edges *before* the build — `build_from_json` drops them silently afterwards, so a
+  finished graph always looks clean.
+
+Give a subagent the file list and the schema, and have it return the fragment; do not have it edit
+`graph.json` directly.
+
 ### When to revise
 
 `maintain.py update` re-extracts the heading structure of any changed document automatically, then
