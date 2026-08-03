@@ -211,6 +211,51 @@ reuse, give the idle agent a new bounded assignment, the exact current snapshot,
 audit it independently without relying on its earlier conclusions. Never combine two passes. Each
 pass begins only after the preceding pass has been incorporated and verified.
 
+**"After the preceding pass is incorporated" is a precondition, not a preference.** Overlapping the
+passes to save wall-clock defeats them: a pass that reviewed pre-edit text has not certified the text
+you ship, and no amount of careful application recovers that. If you do overlap them, the only honest
+remedy is to re-run the affected passes on the final text, which costs more than sequencing would
+have.
+
+### Review discipline that decides whether a pass verdict means anything
+
+Each of these needs a mechanism; intending to be careful has already failed at several of them.
+
+- **A certification covers bytes, not a document.** An edit applied after an agent certifies voids
+  that verdict. Name the version each agent reviews and re-state which version each verdict covers.
+- **Freeze the target for the whole of a round.** Editing while an agent reads forces it to re-anchor
+  its findings and silently invalidates its verdict. The rule that holds is **apply nothing until
+  every agent dispatched in that round is terminal** — not until the first one reports.
+- **When only part of the document changed, prove the rest did not** by recording a digest per stable
+  region and having the next agent recompute it rather than accept your claim. Ask for the
+  measurement; never supply the expected value. Choose the regions after establishing they contain no
+  edit — choosing first and checking later produces a bound that does not hold.
+- **A brief that paraphrases the source of truth manufactures defects.** An agent barred from the TeX
+  or from source can only judge what you put in front of it. Quote verbatim; a "contradiction"
+  arising from your summary is yours, not the document's.
+- **Write corrections from source, not from an agent's summary of it**, and re-read each passage
+  immediately after editing. That habit catches more damage than any downstream audit.
+- **Tell agents an overshoot is as serious as an omission**, and aim verification at the
+  neighbourhood of each edit — collateral damage near a fix is about half the findings in a mature
+  round.
+- **Fix defect classes, not the instances named**, or the same finding returns all run.
+- **Generated outputs are inadmissible as evidence** in a no-execution audit: an artifact shows what
+  one run did, not what the code does.
+- **An empty result is not a negative finding.** Escaping, phrases wrapped across lines, and case
+  mismatch all return zero silently. Confirm the search fires against a control that must match
+  before concluding a term is absent.
+
+### Running agents under real interruptions
+
+- **A killed agent stopped mid-task, not at a natural end.** Budget limits end agents without
+  warning; partial output is untrusted and an unfinished audit is not a clean one. Re-dispatch rather
+  than salvage a verdict.
+- **Dispatch long rounds in waves**, and tell each agent to run its cheapest decisive checks first
+  and state exactly where it stopped. A partial that declares its boundary is usable evidence.
+- **Record each dispatch's expected duration**, since agents that cannot write to disk leave a long
+  scope indistinguishable from a dead one. **Silence is not death** — probe before concluding.
+- **Dispatch first, then write the log entry**, or the record reads as in-flight while nothing runs.
+
 ## Required reachability vocabulary
 
 Derive a single explicit vocabulary for execution and selection. Use these terms when they fit the current code:
@@ -721,6 +766,22 @@ The agent must not modify the canonical TeX. It writes a compliance report and p
 
 After applying the pass, freeze a new hash and rerun any fidelity or terminology check affected by the edits.
 
+**Close this pass on rule violations, not on the agent running out of suggestions.** A pass enforcing
+a stated standard converges; a pass improving taste does not, because a fresh reader can always
+tighten another sentence and every fix creates new prose to assess. Requiring "the agent returns
+nothing" is unbounded by construction. Classify every finding as exactly one of:
+
+- a **rule violation** — it breaches a stated rule of the named skill, or damages accuracy: a factual
+  error, a lost branch predicate or caveat, a lost source locator, an undefined or duplicated term, a
+  fragment, or a claim about the code unsupported by source. These block; fix them all.
+- a **discretionary improvement** — compliant and accurate, merely tighter or smoother. These do not
+  block; record each as declined with a one-line reason.
+
+Report both counts so the classification is auditable, and resolve anything ambiguous as a rule
+violation. Ask each agent to return, separately, the passages it deliberately left alone because
+tightening them would cost a distinction — that list is how you check the agent understood the brief,
+and it prevents a later pass from "fixing" a deliberate choice.
+
 ## Stage L: `writing-clearly-and-concisely` compliance pass
 
 After the `econ-write` pass is complete, start the clear-writing assignment.
@@ -762,7 +823,19 @@ It must preserve the terminology ledger and every factual distinction. Concision
 
 The agent must not modify the canonical TeX. It writes a compliance report and proposed edits in its private scratch directory. The orchestrator verifies and applies accepted edits.
 
-After applying the pass, freeze a new hash.
+After applying the pass, freeze a new hash. Apply the same rule-violation versus discretionary split
+defined for the previous pass, and report both counts.
+
+**Both prose passes must be clean on one and the same version.** Passing one on an earlier version
+and the other on a later one certifies nothing: each round's fixes invalidate the other's verdict,
+and two passes that have each been clean once but never together will alternate indefinitely. Keep
+the file frozen until both have reported on it.
+
+**Let each pass own only its own defect class.** Naming, one term serving two concepts, and synonym
+drift belong to the terminology pass; missing, invented, or source-contradicted content belongs to
+the fidelity review. Clearing another pass's findings inside yours makes every round look as
+productive as the last while nothing converges. Carry deferred items in a visible ledger and hand it
+to the pass that owns them.
 
 ## Stage M: Orchestrator integrity review
 
@@ -810,6 +883,13 @@ snapshot and owned dependency closure while preserving their relative layout, an
 copied hash. Build there with `latexmk -pdf`; keep `-pdf` explicit even if local configuration also
 selects PDF. Do not build inside the repository. Retain only the audit log and necessary renders in
 the current run directory.
+
+**Build to a fixed point before judging the log.** The directory is fresh by construction, so the
+first pass has no auxiliary file and *will* report unresolved references and "rerun to get
+cross-references right" — that is the absence of a prior pass, not a defect in the document. Run the
+build again until the log stops asking, and adjudicate only the final pass. Judging the first pass
+turns a clean document into dozens of phantom warnings and invites a "fix" for a problem that does
+not exist.
 
 Do not invoke R during compilation.
 
@@ -916,6 +996,19 @@ Do not declare completion unless all conditions hold:
 - The task command audit and baseline-to-final tracked-status comparison attribute no production-code
   or pipeline-state change to this workflow.
 - No commit or push occurred.
+
+**An honest partial outranks a false pass, and will be treated that way.** If a pass will not close,
+stop and hand over: name what is outstanding, by section and class, in a form the next editor can act
+on without re-deriving it, and say which passes are certified and against which version. Do not
+declare completion because the remaining findings feel small, and do not begin an apply pass you
+cannot finish.
+
+**State coverage precisely rather than letting "all passes clean" imply more than it does.** Separate
+what was read line by line on the delivered version, what was verified mechanically across the whole
+file, and what is inherited from a read of an earlier version. Re-test every mechanical zero against
+a control pattern that must match and report the control's count beside the zero, since an unfired
+search and a clean document look identical. If no single agent verified every source claim in one
+pass, say so — that is a normal outcome at this size and a limitation to record, not conceal.
 
 ## Final response
 

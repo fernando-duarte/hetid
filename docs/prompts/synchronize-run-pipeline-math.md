@@ -59,6 +59,14 @@ the checkout package source is a separate precondition for exact runtime parity.
    completion checks.
 4. Treat `docs/run_pipeline_math.tex` as an untrusted draft. Revalidate every substantive
    sentence, formula, number, status, and capability.
+   **Recompute every derived count from source rather than adjusting the one already written.** The
+   document states totals that depend on the registries — inventory sizes, per-group counts,
+   how many items are required versus conditional, how many of a kind are published. These move
+   together, so a hand-adjusted number is wrong in a way that still looks plausible, and one wrong
+   total silently contradicts the decomposition printed beside it. Derive them by loading the
+   authoritative structure and counting, then check the parts sum to the whole. When sweeping for a
+   number to update, read every match in context: some bare integers in these documents are source
+   line numbers or maturities, not counts, and a blanket substitution corrupts them.
 5. You may inspect a stable `docs/run_pipeline_code.tex` only as a nonauthoritative source of
    questions. During concurrent Stage O work, skip that optional read rather than inspect the
    sibling target while it is being edited. Do not borrow its prose, structure, or conclusions. Do
@@ -513,6 +521,60 @@ give an idle agent the fresh assignment, forbid reliance on its earlier conclusi
 capacity-driven loss of identity-level independence. Never merge sequential compliance passes. At
 least the final source-fidelity audit must be independent of the orchestrator and TeX editing.
 
+### Review discipline that decides whether a barrier verdict means anything
+
+These are failure modes this workflow has produced, not hypotheticals. Each needs a mechanism;
+resolving to be careful has already failed at several of them.
+
+- **A certification covers bytes, not a document.** Any edit applied after an agent certifies voids
+  that verdict — the delivered version must be the certified version. Name the version each agent
+  is reviewing and re-state which version each verdict covers. Most rounds here have ended
+  with every barrier "passed" and none of them covering the file actually in hand.
+- **Freeze the target for the whole of a round.** Editing while an agent reads forces it to
+  re-anchor its findings and silently invalidates its verdict. The mechanism is a precondition,
+  not an intention: **apply nothing until every agent dispatched in that round is terminal** — not
+  until the first one reports. An agent returning early is one input of N, fixed at dispatch.
+- **When only part of the document changed, prove the rest did not.** Record a digest per stable
+  region — the `\part` boundary is the natural split — and have the next agent **recompute** it
+  rather than accept your claim. That is what lets an earlier clean verdict survive a small edit
+  instead of forcing a whole re-audit. Ask for the measurement and never supply the expected value,
+  which invites confirmation. Choose the regions *after* establishing they contain no edit; choosing
+  first and checking later produces a bound that does not hold.
+- **A brief that paraphrases the source of truth manufactures defects.** An agent barred from the
+  TeX or from source can only judge what you put in front of it. Quote verbatim. If you summarize
+  and a "contradiction" appears, it is yours, not the document's — this has produced a confident
+  report of a missing quantity that was present in the very sentence being paraphrased.
+- **Write corrections from source, not from an agent's summary of source.** A summary is lossy, and
+  prose written from one reproduces the loss as a fresh defect. Re-read each passage immediately
+  after editing it; that single habit catches more damage than any downstream audit.
+- **Tell agents an overshoot is as serious as an omission.** A verifier asked only "was it fixed?"
+  passes a correction that went too far. Roughly half the findings in a mature round are collateral
+  damage from earlier fixes, so aim verification at the neighbourhood of each edit, not its target.
+- **Fix defect classes, not the instances named.** When an agent names two occurrences, sweep the
+  document for that class and close it; otherwise the same finding returns for the rest of the run.
+- **Generated outputs are inadmissible as evidence.** A shipped artifact shows what one run did, not
+  what the code does. Rely on source citations even when the artifact agrees.
+- **An empty result is not a negative finding.** Escaping, phrases wrapped across lines, case
+  mismatch, and shell quoting all return zero silently. Before concluding a term is absent, confirm
+  the same search fires against a control that must match. This has produced both false clean passes
+  and fabricated defects here, repeatedly, including a search whose zero was the sole basis for a
+  finding that turned out to be real only after re-testing.
+
+### Running agents under real interruptions
+
+- **Assume a killed agent's work stopped mid-task, not at a natural end.** Budget and session limits
+  end agents without warning. Partial output from one is untrusted: an unfinished audit must never
+  be read as a clean one. On resume, re-dispatch rather than salvage a verdict.
+- **Dispatch long rounds in waves** so one interruption cannot erase the round, and tell each agent
+  to run its cheapest decisive checks first and to state exactly where it stopped. A partial that
+  declares its own boundary is usable evidence; one that does not is a false clean.
+- **Record each dispatch's expected duration when you dispatch it.** Agents here often cannot write
+  to disk, so their progress is invisible and a long scope is indistinguishable from a dead one.
+- **Silence is not death.** Probe before concluding; a probe costs one message and relaunching on a
+  wrong guess discards hours.
+- **Dispatch first, then write the log entry.** Announcing a dispatch and then ending the turn
+  leaves the work undone while the record reads as though it is in flight.
+
 Complete the following stages in order. Do not cross a barrier with an open finding.
 
 ### Stage A: establish the source snapshot and plan
@@ -684,6 +746,23 @@ Return the actual revision to the economics-writing agent for another full pass.
 Barrier E passes only when the agent reports compliance with every applicable rule on the current
 TeX version and all earlier scientific and terminology checks remain clean.
 
+**Close this barrier on rule violations, not on the agent running out of suggestions.** A pass that
+enforces a stated standard converges; a pass that improves taste does not, because a fresh reader
+can always tighten another sentence and every fix creates new prose to assess. Requiring "the agent
+returns nothing" is unbounded by construction and will not terminate. So classify every finding as
+exactly one of:
+
+- a **rule violation** — it breaches a stated rule of the named skill, or it damages accuracy: a
+  factual error, a lost caveat or branch predicate, a lost source locator, an undefined or
+  duplicated term, a fragment, or a claim about the pipeline unsupported by source. These block;
+  fix them all.
+- a **discretionary improvement** — the text is compliant and accurate and the suggestion is
+  merely tighter or smoother. These do not block. Record each as declined with a one-line reason.
+
+Report both counts so the split is auditable rather than asserted, and resolve anything ambiguous as
+a rule violation. This is a sharpening of the standard, not a relaxation: the honest close is
+"complies with the named standard and is accurate", which is what the barrier was always claiming.
+
 ### Stage F: fresh `writing-clearly-and-concisely` pass
 
 Only after Barrier E passes, assign a fresh clear-writing review.
@@ -721,11 +800,29 @@ The agent returns exact line-specific corrections. The orchestrator verifies and
 changes, then returns the actual revised file for another complete clear-writing audit.
 
 Barrier F passes only when the agent reports no remaining applicable violation on the current TeX
-version and every earlier contract remains satisfied.
+version and every earlier contract remains satisfied. Apply the same rule-violation versus
+discretionary split defined at Barrier E, and report both counts.
+
+**Both prose barriers must be clean on one and the same version.** Passing E on one version and F on
+a later one certifies nothing: each round's fixes invalidate the other's verdict, and two barriers
+that have each been clean once but never together will alternate indefinitely.
 
 If a later edit may invalidate an earlier pass, return to the earliest affected barrier and repeat
 the sequence. Do not assume that a later stylistic pass preserves scientific or terminology
 compliance.
+
+**Let each barrier own only its own defect class.** Naming, notation overload, one symbol serving
+two concepts, and synonym drift belong to the terminology barrier; prose precision belongs to E and
+F; missing, invented, misclassified, or mathematically wrong content belongs to the scientific
+barrier. Clearing another's findings inside yours makes every round look as productive as the last
+while nothing converges. Carry deferred items forward in a visible ledger, hand that ledger to the
+barrier that owns them, and resolve anything you cannot confidently assign as belonging to the
+strictest barrier still open.
+
+**Do not declare convergence by extrapolation.** A falling count is not a clean round. If the count
+stops falling, measure what share of the findings are defects your own edits introduced before
+adding another round — when that share is large, the bottleneck is the edit process, not the
+document, and another round of the same kind will not help.
 
 ### Stage G: final orchestrator integrity review
 
@@ -796,6 +893,13 @@ preserving their relative layout, and verify every copied hash. Build there with
 keep `-pdf` explicit even if local configuration also selects PDF. Never leave sidecars or
 intermediate build files beside the source document. Of the compilation products, retain only the
 audit log and necessary renders in the current run directory.
+
+**Build to a fixed point before judging the log.** The directory is fresh by construction, so the
+first pass has no auxiliary file and *will* report unresolved references and "rerun to get
+cross-references right" — that is the absence of a prior pass, not a defect in the document. Run
+the build again until the log stops asking, and adjudicate only the final pass. Adjudicating the
+first pass turns a clean document into dozens of phantom warnings and invites a "fix" for a
+problem that does not exist.
 
 Require:
 
@@ -955,3 +1059,19 @@ A successful compile alone does not establish scientific parity. A polished docu
 establish completeness. Completion requires source fidelity, mathematical completeness, explicit
 measurement conventions, terminology consistency, writing compliance, passage of the adjudicated
 compilation gate, visual integrity, and preserved scope.
+
+**An honest partial outranks a false pass, and will be treated that way.** If a barrier will not
+close, stop and hand over: name what is outstanding, by section and class, in a form the next editor
+can act on without re-deriving it, and say plainly which barriers are certified and against which
+version. Do not declare completion because the remaining findings feel small, and do not begin an
+apply pass you cannot finish — starting one without the capacity to complete it is how this
+document has acquired its worst defects, including a fabricated rule, a deleted defining
+occurrence, and a broken build.
+
+**State coverage precisely rather than letting "all barriers pass" imply more than it does.** In the
+final report, separate what was read line by line on the delivered version, what was verified
+mechanically across the whole file, and what is inherited from a cover-to-cover read of an earlier
+version. Re-test every mechanical zero against a control pattern that must match, and report the
+control's count alongside the zero — an unfired search and a clean document are indistinguishable
+otherwise. If no single agent verified every claim in one pass, say so; that is a normal outcome for
+a document this size and a limitation worth recording, not one worth concealing.
