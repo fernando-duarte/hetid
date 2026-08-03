@@ -46,9 +46,14 @@ CLI does **not** do this; it passes `changed_paths=None` and re-extracts everyth
 artifact layer, re-applies the repair on the changed files, and runs the health gate. About 10s for
 ~58 changed files.
 
-Add `--optimize` to also recluster and relabel. Off by default: it churns community IDs and the
-report every run. Use it when `graphify` warns that the community set has drifted from the saved
-labels.
+`update` finishes by renaming every community (see §5) and refreshing `GRAPH_REPORT.md`. That step is
+not optional: graphify renames communities after their hub node whenever the partition drifts, so
+without it the names decay to things like `paths.R` on every pass. **`graphify export html` is not
+run automatically** — the HTML is written mid-update, before labelling, so run it afterwards if you
+care about the rendered names.
+
+Add `--optimize` to also **recluster**. Off by default: it churns community IDs and the report every
+run. Labelling alone does not churn IDs, which is why it is always on.
 
 `update` regenerates `tools/graph/artifact_manifest.csv` automatically when
 `scripts-paper/config/artifact_manifest*.R` is among the changed files.
@@ -153,8 +158,26 @@ and normalise file labels to their basename first, or every disambiguated file s
 
 ### `maintain.py`
 
-`verify` / `update` / `rebuild`, plus `--optimize`. Re-execs under
+`verify` / `update` / `label` / `rebuild`, plus `--optimize`. Re-execs under
 `graphify-out/.graphify_python` so a plain `python3` invocation works.
+
+**The labeller** names each community `"<Area>: <lead module>"`, deterministically and with no LLM:
+
+- **Area** from the community's dominant source directory. Derived, not hardcoded, so it does not rot
+  as the tree changes: drop `scripts-paper/`, humanise the next two segments
+  (`log_variance/estimators` → "Log variance estimators"). A short override map covers only the
+  handful that read badly bare — `R` → "Package", `tests` → "Package tests", `man-roxygen` →
+  "Roxygen templates", and so on.
+- **Lead** is the most-connected *file* node **inside that dominant directory**. Take the lead from
+  anywhere and a test file ends up naming a community of package functions.
+- Ties are broken by appending the next-most-connected non-file member, so no two communities share
+  a name.
+
+It must write **both** `.graphify_labels.json` and `.graphify_labels.json.sig`. The sidecar holds
+`graphify.cluster.community_member_sigs(communities)` — per-community membership hashes. Writing
+labels without refreshing it leaves graphify believing they are stale, and the next rebuild silently
+renames everything by hub again. Verify with: saved sig == `community_member_sigs` of the current
+partition, 0 stale.
 
 ## 6. Landmines
 
