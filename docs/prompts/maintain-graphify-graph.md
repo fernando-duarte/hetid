@@ -7,8 +7,60 @@ this pass counts as being asked; nothing else does.** Do not rebuild, update, or
 because a `PreToolUse` hook suggested `graphify query` — that hint fires on almost every tool call
 and is not a request.
 
-Work from the repo root of the **primary checkout**. Confirm with `git rev-parse --show-toplevel` and
-`git rev-parse --abbrev-ref HEAD` before anything else.
+**Work in whatever worktree and branch is currently checked out.** Do not switch branches, do not move
+to the primary checkout, and do not ask which one to use. Confirm where you are first:
+
+```bash
+cd "$(git rev-parse --show-toplevel)"
+git rev-parse --abbrev-ref HEAD      # whatever branch this is, work on it
+```
+
+The graph is not tracked in git, so a linked worktree starts without it. §0 seeds it from the primary
+checkout and §7 ports the result back. Both steps are automatic — **never ask the user to confirm a
+copy in either direction, including overwriting untracked files in the primary checkout.**
+
+---
+
+## 0. Seed the workspace (do this first, every time)
+
+The primary checkout is the canonical home for `graphify-out/` and `tools/graph/`, and neither is in
+git (`.gitignore`: `graphify-out/`, `tools/`). Locate it from anywhere — this works from the primary
+checkout and from any linked worktree:
+
+```bash
+HERE="$(git rev-parse --show-toplevel)"
+PRIMARY="$(cd "$(git rev-parse --git-common-dir)/.." && pwd)"
+echo "working in $HERE  (primary: $PRIMARY)"
+```
+
+`--git-common-dir` is the primary's `.git` even when called from a worktree, so its parent is the
+primary root. **The primary checkout does not have to be on `main`** — it is just wherever the real
+`.git` lives, and its branch is irrelevant to this step.
+
+If `HERE` = `PRIMARY` there is nothing to seed; skip to §1.
+
+Otherwise copy what is missing. Required:
+
+| Path | Needed for |
+|---|---|
+| `graphify-out/graph.json` | the graph itself — without it, stop and report |
+| `graphify-out/.graphify_labels.json` + `.sig` | community names, and the guard that stops graphify hub-renaming them |
+| `graphify-out/.graphify_python` | interpreter marker `maintain.py` re-execs through |
+| `graphify-out/manifest.json`, `cost.json` | incremental bookkeeping |
+| `graphify-out/GRAPH_REPORT.md`, `graph.html` | regenerable, but seed them so the pass can diff |
+| `graphify-out/cache/` | ~10 MB AST cache; skipping it only makes the pass slower |
+| `tools/graph/` | the tooling — also untracked, so a fresh worktree has none of it |
+
+Copy each missing item with `cp -R`, then point `.graphify_root` at the current tree:
+
+```bash
+echo "$HERE" > "$HERE/graphify-out/.graphify_root"
+```
+
+**A file that is already present may still be stale.** If `graphify-out/graph.json` exists in the
+worktree, compare it with the primary's (`md5 -q`) — if they differ, take the **newer by mtime**, say
+which you took and why. A leftover copy from an earlier session is common and silently updating it
+produces a graph that describes neither tree.
 
 ---
 
@@ -32,13 +84,19 @@ running a real update and observing edges on unchanged files move by exactly 0.
 ## 2. The routine pass
 
 ```bash
-cd "$(git rev-parse --show-toplevel)"
+cd "$(git rev-parse --show-toplevel)"           # the worktree you are in, whatever branch
 python3 tools/graph/maintain.py verify          # baseline — note the numbers
 rm -rf graphify-out/cache                       # ONLY if the graphify extractor itself changed
 python3 tools/graph/maintain.py update
 graphify query "which module writes the variance share table?"   # smoke test
 git status -s                                   # must show no graph-related tracked changes
 ```
+
+`update` diffs the graph's `built_at_commit` against **this worktree's `HEAD`**, so on a feature
+branch it picks up everything that branch changed relative to the build. If the diff looks
+implausibly large, check that `built_at_commit` is still reachable
+(`git cat-file -e <commit>^{commit}`) — a rebased or pruned build commit makes the changed set
+meaningless, and a `rebuild` is the honest recovery.
 
 `update` reads `built_at_commit` from `graph.json`, diffs it against `HEAD` for changed `.R` files,
 re-extracts only those (via `graphify.watch._rebuild_code(changed_paths=...)` — the `graphify update`
@@ -202,8 +260,47 @@ partition, 0 stale.
   PyPI and R support disappears.
 - **A parallel session may share this checkout.** Check `git status` before and after.
 
-## 7. Reporting
+## 7. Port the result back to the primary checkout
 
-State what changed and what it cost: nodes/edges before and after, which files were re-extracted,
-how many repairs were applied, and the health-gate result. If the gate fails, say so with the failing
-counts — do not describe a pass as successful because it completed.
+When the pass is finished and the health gate passes, copy the graph back. **Do this automatically —
+no confirmation, and overwrite the primary's files even though they are untracked.** They are
+untracked precisely because the graph is generated; the primary checkout is where the MCP server and
+everyone else reads it from, so a graph left only in a worktree helps nobody.
+
+Skip this only if `HERE` = `PRIMARY` (you were already there).
+
+```bash
+for f in graph.json graph.html GRAPH_REPORT.md manifest.json cost.json \
+         .graphify_labels.json .graphify_labels.json.sig; do
+  cp -f "$HERE/graphify-out/$f" "$PRIMARY/graphify-out/$f"
+done
+cp -R -f "$HERE/graphify-out/cache/." "$PRIMARY/graphify-out/cache/"
+echo "$PRIMARY" > "$PRIMARY/graphify-out/.graphify_root"
+```
+
+Then verify from the primary side and report both numbers:
+
+```bash
+(cd "$PRIMARY" && python3 tools/graph/maintain.py verify)
+```
+
+Three things this must respect:
+
+- **Copy file-by-file with `cp -f`. Never `rm -rf` the destination directory first.** The primary
+  checkout is inside Dropbox, which reads a delete-then-recreate as a spurious deletion, restores the
+  old files, and renames yours to `<name> (Fernando Duarte's conflicted copy <date>).<ext>`. Recheck
+  the destination once after copying; if conflicted copies appeared, the conflicted file is yours —
+  `mv` it back over the canonical name.
+- **Rewrite `.graphify_root`** to the primary path, or later runs there resolve against the worktree.
+- **Say what the primary's graph now describes.** After the port it reflects *this worktree's
+  branch*, and `built_at_commit` points at a commit that may not be on the primary's branch at all.
+  That is intended, but state it plainly in the report rather than leaving it to be discovered.
+
+---
+
+## 8. Reporting
+
+State what changed and what it cost: which worktree and branch you worked in, what had to be seeded
+in §0, nodes/edges before and after, which files were re-extracted, how many repairs were applied,
+the health-gate result, and that the graph was ported back. If the gate fails, say so with the
+failing counts — do not describe a pass as successful because it completed.
