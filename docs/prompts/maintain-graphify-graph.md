@@ -116,6 +116,11 @@ After the layers land, `update` **reclusters and then relabels**, both on by def
   their hub node whenever the partition drifts, so without this the names decay to things like
   `paths.R`.
 
+`update` also diffs the eleven corpus documents, not just `.R` files, and re-extracts the heading
+structure of any that changed — graphify's own incremental rebuild only ever re-extracts *code*, so
+without this a changed README keeps a stale heading tree indefinitely. It then prints a `REVIEW:`
+block listing the concept nodes that document produced; those need a human or model pass, see §5b.
+
 **`graphify export html` is not run automatically** — the HTML is written mid-update, before
 reclustering and labelling, so run it afterwards if you care about the rendered names.
 
@@ -256,6 +261,60 @@ It must write **both** `.graphify_labels.json` and `.graphify_labels.json.sig`. 
 labels without refreshing it leaves graphify believing they are stale, and the next rebuild silently
 renames everything by hub again. Verify with: saved sig == `community_member_sigs` of the current
 partition, 0 stale.
+
+## 5b. The semantic doc-concept layer — the only LLM-authored part
+
+Everything else in this document is deterministic. This layer is not: **41 nodes written by reading
+the documentation**, and nothing in `tools/graph/` can regenerate them. `layers.py --emit` only
+*carries them forward from the existing graph*, so if `graph.json` is lost they are gone unless
+rebuilt from this section.
+
+They are 22 `concept` and 19 `rationale` nodes, drawn from eleven documents:
+
+| Source | Nodes |
+|---|---|
+| `scripts-paper/README.md` | 13 |
+| `README.md` | 8 |
+| `NEWS.md`, `scripts-paper/support/README.md` | 5 each |
+| `.pre-commit-config.yaml` | 3 |
+| `tests/README.md` | 2 |
+| `scripts-paper/validation/README.md`, `.../approximation_error_quoted_numbers.md`, `cran-comments.md`, `.github/workflows/R-CMD-check.yaml`, `config/artifact_manifest_data.R` | 1 each |
+
+### Writing one
+
+- **`concept`** — a named thing the docs define: "Identified Set for the Structural Parameter",
+  "Unified Mean/Volatility Bootstrap Stage", "Moving-Block Bootstrap Determinism".
+- **`rationale`** — a decision, constraint or trade-off: "Pre-Push Hook Installation",
+  "Executed-Code Manifest Cache Invalidation", "Skipped Maturities Widen the Identified Set".
+- Only create a node for something that is **itself a named entity or concept**. A *reason* is not a
+  node — put it in a `rationale` string attribute on the node it explains. 38 of the 41 carry one.
+- `source_location` **must be `null`**. That is what places the node in the semantic tier, which
+  `graphify update` preserves. Give it a line number and the next update deletes it.
+- Node id: `{stem}_{entity}`, lowercase `[a-z0-9_]`, stem = the full repo-relative path with the
+  extension dropped and separators as `_` (`scripts-paper/README.md` → `scripts_paper_readme_...`).
+- Attach edges to **real AST node ids looked up from `graph.json`**, never ids you compute. graphify's
+  remap drops extensions and disambiguates repeated basenames; a computed id silently matches nothing
+  and the edge is dropped as dangling at build time.
+- Relations in use: `references` (103), `rationale_for` (14), `conceptually_related_to` (11),
+  `implements` (9), `cites` (3), `shares_data_with` (2), `semantically_similar_to` (1). `implements`
+  is the valuable one — it links a documented concept to the function that realises it, which is the
+  edge no AST pass can produce.
+
+graphify's own schema for this is `.claude/skills/graphify/references/extraction-spec.md` (confidence
+rubric, hyperedges, the six legal `file_type` values). Follow it; this section only records what this
+repo's layer actually looks like.
+
+### When to revise
+
+`maintain.py update` re-extracts the heading structure of any changed document automatically, then
+prints a `REVIEW:` block naming the concept nodes that came from it. **Heading structure refreshed;
+meaning not.** Re-read the changed document and check its concepts still hold — a renamed gate, a
+dropped module, a reversed default all leave the old node standing and plausible.
+
+Nothing detects a concept that has become wrong. That is the layer's weakness and the reason it is
+worth writing down rather than trusting to memory.
+
+---
 
 ## 6. Landmines
 
