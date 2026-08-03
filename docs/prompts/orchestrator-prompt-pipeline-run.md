@@ -263,6 +263,79 @@ message.
   integrate the result yourself. Never depend on the chat transcript as the sole copy of worker
   output.
 
+#### Review discipline that repeatedly decides whether a run is trustworthy
+
+These are failure modes this workflow has actually produced, not hypotheticals. Each has a
+mechanism, because intent alone has already failed at several of them.
+
+- **A certification covers bytes, not a document.** Any fix applied after a reviewer certifies
+  voids that certification: the delivered version must be the version that was certified. State the
+  version identifier a reviewer is reviewing, and re-state which version each verdict covers.
+- **Freeze the file for the whole of a review round.** Editing while a reviewer works forces it to
+  re-anchor its findings and silently invalidates its verdict. The mechanism that holds is a
+  precondition, not a resolution: **apply nothing until every reviewer dispatched in that round is
+  terminal** — not "until the one that just reported is handled". A reviewer returning early is
+  one input of N, and N is fixed at dispatch.
+- **When only part of a document changed, prove the rest is unchanged** by recording a digest per
+  stable region and having the next reviewer recompute it rather than accepting your claim. That is
+  what lets an earlier clean verdict survive a small edit without either lying or forcing a full
+  re-review. Ask for the measurement; never supply the expected value, which invites confirmation.
+- **A brief that paraphrases the source of truth manufactures defects.** A reviewer isolated from a
+  file can only judge what you put in front of it. Quote verbatim; if you summarize, any resulting
+  "contradiction" is yours. Read the full passage before acting on any finding — a claim that
+  looks wrong in isolation is often correct in context.
+- **Write corrections from source, not from a reviewer's summary of source.** A summary is lossy,
+  and prose written from one reproduces the loss as a fresh defect. Re-read the passage after
+  editing it; that single habit catches more damage than any downstream audit.
+- **Tell reviewers an overshoot is as serious as an omission.** A verifier asked only "was it
+  fixed?" passes a fix that went too far. Roughly half the defects in a mature round are collateral
+  damage from earlier fixes, so aim verification at the neighbourhood of each edit, not its target.
+- **Fix defect classes, not the instances named.** When a reviewer names two sites, sweep the whole
+  document for that class and close it; otherwise the same finding returns for the rest of the run.
+- **Generated outputs are inadmissible as evidence** in a static audit. An artifact shows what one
+  run did, not what the code does. Rely on source citations even when the conclusion is right.
+- **An empty result is not a negative finding.** Escaping, wrapped phrases, case mismatch, and shell
+  quoting all return zero silently. Before concluding absence, confirm the same search fires against
+  a control that must match. This has produced both false clean passes and fabricated defects here.
+
+#### Running a fleet under real interruptions
+
+- **Assume a killed agent's children died mid-work, not on completion.** Budget and session limits
+  end an agent and everything it dispatched. Partial output from a killed reviewer is untrusted: an
+  unfinished audit must never be read as a clean one. On resume, re-dispatch rather than salvage
+  verdicts.
+- **Dispatch long rounds in waves** so one interruption cannot erase the whole round, and tell each
+  reviewer to run its cheapest decisive checks first and to state exactly where it stopped. A
+  partial that declares its own boundary is usable evidence; one that does not is a false clean.
+- **Record each dispatch's expected duration when you dispatch it.** Some workers cannot write to
+  disk at all, so their progress is invisible; without a stated duration a long scope is
+  indistinguishable from a dead agent.
+- **Silence is not death — probe, don't conclude.** The reliable stall signal is *every child has
+  returned **and** the parent has not written*, not elapsed quiet time. A probe costs one message;
+  relaunching on a wrong guess discards hours of work.
+- **Dispatch first, then write the report entry.** Announcing a dispatch and ending the turn leaves
+  the work undone while the log reads as though it is in flight. This has cost this workflow hours.
+- **A stop request may only park an agent, not end it, and a parked agent can still wake and
+  write.** When a file's ownership transfers between agents, tell the outgoing one explicitly not to
+  edit and to take no action on any wake-up, and confirm the file is unchanged before the successor
+  relies on it.
+
+#### Closing criteria: converging barriers versus unbounded ones
+
+- **Separate blocking findings from discretionary ones, and say which is which.** A pass that
+  enforces a stated standard converges; a pass that improves taste does not, because a fresh reader
+  can always tighten another sentence and every fix creates new text to assess. Requiring "returns
+  nothing" from the second kind is unbounded by construction.
+- **Close such a pass on zero rule violations** — breaches of a stated rule, or anything that
+  damages accuracy — while recording discretionary suggestions as declined with a reason. Report
+  both counts so the split is auditable rather than asserted, and resolve ambiguity as blocking.
+- **Let each barrier own only its own defect class.** Clearing another barrier's findings inside
+  yours makes every round look as productive as the last while nothing converges. Carry deferred
+  items forward in a visible ledger instead.
+- **Do not declare convergence by extrapolation.** A falling trend is not a clean round. If a count
+  stops falling, the bottleneck is usually the edit process rather than the document — measure
+  what share of findings are self-inflicted before adding another round.
+
 ### Hard constraints (project conventions — non-negotiable)
 
 - Use the `karpathy-guidelines` skill when writing, reviewing, or refactoring code.
@@ -325,6 +398,10 @@ defects (a re-flag is itself a finding to suppress):
   messages, maturity grids, numerical parameters, calendar values, date formats, column names,
   data identity, and column-format patterns inside `HETID_CONSTANTS` are intentional navigation
   aids, not banner dividers.
+- **The graphify graph is not to be updated, rebuilt, diagnosed, or otherwise written to**, and no
+  graphify file is to be modified — see Stage K. The user maintains it outside this workflow. Its
+  being behind the working tree is expected and is not a defect to remediate, and "refresh the
+  stale graph" is not an improvement to propose in any plan or report.
 
 ### Git workflow
 
@@ -579,14 +656,18 @@ mkdir -p <worktree-path>/.claude/skills && \
 | Resource | Needed by | What breaks if it is missing |
 |---|---|---|
 | `docs/quality-check.R` | Stage D | Stage D cannot run at all — the script does not exist |
-| `graphify-out/` | Stages K, L | no graph to update or audit |
-| `.claude/skills/graphify` | Stage K | the project-local skill does not resolve |
+| `graphify-out/` | Stages K, L | no graph to audit against — Stage L degrades to source-only |
+| `.claude/skills/graphify` | Stages K, L | the project-local skill does not resolve for read-only queries |
 | `docs/lewbel_multivariate_set_identification.tex` | Stage F | **silent**: the roxygen spec requires `\eqn{}`/`\deqn{}` notation to match this file, and auditors simply cannot perform that check |
 | `docs/heteroskedasticity_tests_general_instruments.tex` | reference reads | the protected file this prompt says you may read for reference |
 
 Copy, never move or symlink — the invoking checkout keeps its originals, and the run must not be
-able to damage them. Confirm each landed, and record `graphify-out/graph.json`'s node and edge
-counts in the log so Stage K can distinguish a real update from a no-op.
+able to damage them. Confirm each landed.
+
+**The copied graph is a read-only input.** Stage K does not update it and nothing in this run
+writes to `graphify-out/` or to the skill; copying rather than sharing the donor's directory is
+what makes an accidental write survivable. Record the graph's contents and how far behind the
+working tree it is at Stage K.
 
 **Baseline the protected file by checksum — `git` cannot police it and mtime is worthless here.**
 `docs/heteroskedasticity_tests_general_instruments.tex` is **untracked**, so it never appears in
@@ -856,53 +937,37 @@ hooks; if any fail, run `pre-commit run --all-files` to reproduce, fix the **roo
 re-commit — iterate until the commit lands with **all** hooks green. Then push the working branch
 to `origin`. See **Git workflow**.
 
-**Stage K — Graphify graph.**
-Update the graph at `graphify-out/` by invoking the current `graphify` **skill** and following its
-`--update` flow, which re-extracts changed files, prunes deleted sources, merges the result
-without losing edge direction or prior hyperedges, and refreshes the manifest.
-**`--update` and `graphify update <path>` are two different update paths, not one wrapping the
-other — use the skill's, and do not "correct" it into the CLI's.** The skill's `--update` runs its
-own Python through `graphify-out/.graphify_python` (`detect_incremental`, then the shared
-extraction steps including the LLM semantic pass); the CLI subcommand `graphify update <path>` is a
-separate no-LLM, AST-only path (`graphify.watch._rebuild_code`). That distinction is decisive
-here: R files are classified as code, but **graphify ships no AST extractor for R** — so the CLI
-path contributes zero R nodes and edges while still exiting `0` and printing "Code graph updated."
-Its only signal is one warning line it does not fail on: *"N file(s) are classified as code but
-graphify has no AST extractor for their language, so they contributed nothing to the graph: .r
-(N)"*. Every bit of R structure in this graph is therefore LLM-semantic, and R is almost all of the
-graph (1461 of 1586 nodes at the last build), so running the CLI path here would refresh the
-manifest over a graph left 92 % stale. Note also that `.claude/` is
-git-ignored here, so the skill and `graphify-out/` are untracked local-checkout resources that a
-fresh worktree does not have; **Stage 0 step (2b) is what puts them there** — if either is missing
-at this point, that step was skipped, so seed it now rather than rebuilding from nothing. **Exclude
-`.claude/` from extraction.** A cache hit is not evidence that changed files were covered:
-verify the incremental manifest and extraction output. **Read the final counts out of
-`graphify-out/graph.json`, not out of what the rebuild printed — the two disagree.** In a
-controlled test the rebuild printed `Rebuilt: 4 nodes, 5 edges, 1 communities` while the saved
-graph held 4 nodes and **0** edges: dangling edges are dropped at save time without failing the
-run. Report node, edge, and community counts read from the saved graph, note the printed counts
-separately when they differ, and confirm that edge endpoints resolve. Then break the node count
-down by source extension and confirm the `.r` nodes were actually refreshed — R is ~92 % of this
-graph and the only structure the AST-only path cannot produce, so a graph whose `.r` count is
-zero, or unchanged after R edits, is the signature of the wrong update path having run.
+**Stage K — Graphify graph: verify and record, do not modify. [no writes of any kind]**
+The graph at `graphify-out/` is a **fixed input to this run, never a deliverable of it.** Do not
+update, rebuild, re-extract, prune, diagnose, or otherwise write to it, and do not modify the
+`graphify` skill or its configuration. This holds even when the graph is visibly behind the working
+tree — being behind is expected and acceptable here.
 
-**Incremental by default; escalate to a clean rebuild only on evidence — never on churn volume.**
-Do not decide from how many files changed. A changed file's prior nodes and edges are replaced
-wholesale when it is re-extracted (`build_merge` replace-on-re-extract; `prune_sources` is only for
-genuinely deleted files), so a large diff is not itself a corruption risk, and a precautionary full
-rebuild would re-run LLM extraction over the whole corpus for nothing. Decide from the post-merge
-diagnostic instead: run `graphify diagnose multigraph --json` and treat the update as good only if
-`dangling_endpoint_edges`, `missing_endpoint_edges`, `unverified_node_count`, `self_loop_edges`,
-`exact_duplicate_edges`, and `same_endpoint_group_count` are **all `0`**. Every one of them is `0`
-on a healthy graph here, so any non-zero is a real finding rather than background noise. Also
-compare `post_build_node_count`/`post_build_edge_count` against `node_count`/`raw_edge_count` and
-report any drop. Use the skill's documented forced clean rebuild — never hand-rename nodes — when
-that gate trips on node-ID drift (a node split into label-mismatched halves that
-`deduplicate_by_label` cannot merge), when the manifest is missing or out of sync with `graph.json`,
-or when graphify's own version or schema has changed. One trigger the diagnostic cannot see: if
-`detect_incremental` reports a non-empty `excluded_files`, the ignore/exclude rules changed and
-those files' nodes are stranded — the runbook passes only `deleted_files` to `prune_sources` — so
-rebuild clean in that case too. Record the gate's counters and the resulting decision in the log.
+**Why this is a hard rule and not a preference.** The graph carries enrichment layers beyond plain
+extraction, and the tooling that produced them is not part of the repository. No current command
+regenerates them, and re-extracting a file discards its share of them. A refresh would therefore
+trade a richer graph for a poorer one **irreversibly**, and the loss would not be visible in any
+count the rebuild prints. The correct response to "the graph looks stale" is to use it as a stale
+map and verify against source — never to refresh it.
+
+Ignore any editor or hook suggestion to run a graphify command in place of reading files; those are
+generic hints, not instructions for this run.
+
+**What this stage actually does**, all read-only:
+
+- Confirm `graphify-out/` and the `graphify` skill are present. Step (2b) seeds both, since neither
+  is tracked; if either is missing, that step was skipped.
+- Record what the graph contains — read counts from the saved graph file itself, not from anything
+  a tool prints, and note the commit or date it was built from if that is recorded. Those two
+  sources disagree in general: save-time processing can drop edges without failing, so printed
+  totals are not evidence of what is on disk.
+- Establish how far behind the graph is: list the files added or changed since it was built. Files
+  **added** since have no node at all rather than a stale one, which is the failure mode most likely
+  to be misread as "not present in the codebase."
+- Record all of the above in the log for Stage L to consume.
+
+**If the graph is absent, do not build one.** Record its absence and proceed; Stage L then runs
+source-only, which is a documented degradation rather than a failure.
 
 **Stage L — Graphify audits (two agents). [WAIT for both]**
 Spawn two agents concurrently, both using graphify, each dispatched per **Delegating to
@@ -911,6 +976,18 @@ subagents** (objective / output / tools / boundaries + a stopping criterion). Th
 If the current graphify skill would run `reflect`, `save-result`, `--update`, or any other
 write-capable step, copy the required graph inputs into that agent's private scratchpad and run
 the step there instead.
+
+**Brief both on what the graph is good for and where it lies.** Per Stage K it is behind the
+working tree by a known amount. Use it to *locate* candidates; never let it settle a question about
+what the code currently does. Give each agent Stage K's list of files added or changed since the
+build, and require every graph-sourced lead to be confirmed against current source before it is
+reported. Two failure modes to name explicitly, because both have produced confident wrong findings
+here: a node that survives for code already refactored away, and a file added after the build having
+no node at all — which reads as "this does not exist" rather than "the graph cannot see it."
+
+**Absence of a finding is not evidence of absence**, and both agents must say so in their reports.
+A textual-duplication sweep finds textual duplication; semantic duplication is found by pulling a
+thread, so more of that class almost certainly remains after a clean pass.
 
 - Agent 1 → `RUN/scratch/agents/stage-l-dup/response.md`: objective = find potential
   **duplications**, single-source-of-truth violations, DRY violations, and **magic variables**;
