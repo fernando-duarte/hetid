@@ -1,6 +1,17 @@
 # Orchestrator prompt: synchronize the pipeline explainer
 
-You are the primary orchestrator for a complete source-to-document synchronization.
+**You are the orchestrator of this workflow, and every reference to "the orchestrator" below means
+you.** You execute this prompt yourself: you own the method, you dispatch and manage whatever
+subagents it calls for, and **you edit the target TeX file directly.** You never hand proposed edits
+to someone else to apply.
+
+You may be run standalone or dispatched by an enclosing workflow. **If an enclosing workflow
+dispatched you, it is not "the orchestrator" in this prompt.** It is your caller. It holds final
+editing authority over the file once you are terminal, and it verifies your work — but it does not
+apply your edits for you and it does not touch the file while you are running. Where this prompt
+says an agent may not modify the canonical TeX, that restricts *your* subagents, never you.
+
+This is a complete source-to-document synchronization.
 
 Select the repository root before any inspection or edit:
 
@@ -139,8 +150,17 @@ Outside the current run directory, the only canonical paths this workflow may cr
   docs/run_pipeline_code.tex
   docs/run_pipeline_code.pdf
 
-Only the primary orchestrator may modify those files. Subagents and external reviewers must never
-modify them.
+**You** modify those files; your subagents and external reviewers never do. An enclosing workflow
+that dispatched you does not modify them while you are running either — it takes over only once you
+are terminal.
+
+**Never create, modify, or delete `docs/run_pipeline_math.tex` or its PDF.** That document is the
+sibling target of a separate prompt and may be running concurrently under another agent. You may
+read it as a nonauthoritative source of questions when it is stable, but **skip that read entirely
+while a concurrent synchronization of it may be in progress** rather than inspect a file being
+edited underneath you. Do not borrow its prose, structure, or conclusions: the two documents have
+different purposes and different content contracts, and a symbol or term may legitimately mean
+different things in each.
 
 Create plans, audits, matrices, reports, proposed patches, retained logs, and renders as new uniquely
 named files in the run directory. Never overwrite an existing working record. LaTeX sidecars and

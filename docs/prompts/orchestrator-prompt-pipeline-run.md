@@ -614,8 +614,8 @@ git worktree add ~/hetid-worktrees/pipeline-run-<run-date> \
   stage, commit, run the pipeline, or install the package from it. Its roles after this step are as
   the donor of ignored pipeline state in step (2), and as the destination of the port-back that
   Stage K's graph maintenance pass performs. That exception covers **untracked generated state
-  only** — never a tracked file, never Git state, and never the working tree's branch. Nothing else
-  in the run may write to the invoking checkout for any reason.
+  only** — never a tracked file, never Git state, never the working tree's branch. Nothing else in
+  the run may write to the invoking checkout for any reason.
 
 **(2) Seed the worktree with the invoking checkout's ignored pipeline state. [required — skipping
 this silently costs a multi-hour rerun]** A new worktree checks out tracked files only.
@@ -959,6 +959,11 @@ behind, or freshly built, and do not decide from repository history whether a pa
 Run the stage unconditionally and let the pass discover what needs doing — a pass that finds
 nothing to change is a valid and cheap outcome, not a wasted one.
 
+**Supply the context its prompt expects but cannot discover:** the absolute run-worktree root, the
+branch (which it must not switch), `RUN` and a private `RUN/scratch/agents/<agent-id>/` for its
+durable record, and the fact that it is running inside a larger workflow. Its own prompt handles
+locating the canonical checkout and seeding itself; do not pre-empt either.
+
 **This agent is the second and only other exception to the durable read-only worker protocol.**
 Unlike every other worker in this run it is expected to write outside a private scratchpad, because
 maintaining the graph is inherently a write operation. State its boundaries explicitly when you
@@ -980,6 +985,15 @@ normally the invoking checkout.** That is a deliberate and sanctioned exception 
 isolation rule, and the only one: it concerns untracked, generated, machine-local state that lives
 outside version control precisely so it can be regenerated. Do not extend the exception to anything
 else, and do not let it become licence to touch tracked files or Git state in either tree.
+
+**That port-back is the run's only write outside its worktree, so treat it as a shared resource.**
+The destination is machine-local and unsynchronized: if another run, session, or person is doing the
+same thing at the same time, the last writer wins silently and the loser's work disappears with no
+error. Before dispatching, check whether another run appears to be active against the same
+destination checkout, and say what you found in the log. If you cannot establish that you are the
+only writer, still run the stage — but record the uncertainty and re-verify the destination
+afterwards rather than assuming your result landed. **Run this stage once per run, and never
+concurrently with any other writing stage**; it is sequential by position and must stay that way.
 
 **Verify after it returns** — read its report and check the claims rather than accepting them:
 
@@ -1077,13 +1091,48 @@ the prompt:
   `docs/prompts/synchronize-run-pipeline-math.md` for
   `docs/run_pipeline_math.tex`.
 
-These two sub-orchestrators are the narrow exception to the durable read-only worker protocol.
+**Supply each with the context its prompt expects but cannot discover.** Both prompts refer to "the
+current run directory" and neither can invent one, so state it explicitly or they will improvise a
+location outside your tree:
+
+- the absolute run-worktree root, and that every path resolves relative to it;
+- the branch, and that it must not be switched;
+- `RUN` as its run directory, and a **distinct** `RUN/scratch/agents/<agent-id>/` for each — they
+  run concurrently, so a shared scratch path would have them overwrite each other's records;
+- the Stage-N snapshot SHA as the source it must describe;
+- that its sibling is running concurrently on the other document.
+
+**Each is a sub-orchestrator, not a worker.** It executes its governing prompt itself, start to
+finish, and is responsible for the whole method that prompt defines. Concretely:
+
+- **It edits its own assigned TeX file directly.** Do not ask it to return patches, proposals, or
+  line-specific prescriptions for you to apply. Its prompt already makes it the sole editor of that
+  file within its own workflow, and it is the only agent in this run permitted to write that file
+  while it is running.
+- **It may spawn and manage its own subagents** as its prompt directs, and it owns their dispatch,
+  their scope, and their verification. Those nested agents stay read-only under its governing
+  prompt: they return findings to it, and it applies them.
+- **It owns its file for the duration.** While a sub-orchestrator is running, neither the main
+  orchestrator nor any other agent edits that file — a concurrent edit invalidates the version its
+  reviewers are certifying, which is the failure its prompt's barrier discipline exists to prevent.
+
+**The main orchestrator retains ultimate and final editing authority over both files**, exercised
+only *after* a sub-orchestrator is terminal. You may correct, adjust, or reverse anything either one
+produced, and you own every cross-document decision. What you must not do is duplicate their work by
+re-deriving edits they already made and verified.
+
 Each may edit only its assigned canonical TeX file and may create only the ignored working and
 validation artifacts allowed by its prompt. Each must preserve the other TeX file, every source
-file, and all Git state. Their nested agents remain read-only under their governing prompt. Both
-sub-orchestrators must run on the Stage-N source snapshot and must complete every barrier in their
-prompt, including the distinct `econ-write` and `writing-clearly-and-concisely` passes. The main
-orchestrator must verify those passes rather than infer compliance from a successful TeX build.
+file, and all Git state — no add, commit, push, checkout, switch, branch, stash, reset, restore,
+rebase, or merge, in either tree. Both must run on the Stage-N source snapshot and must complete
+every barrier in their prompt, including the distinct `econ-write` and
+`writing-clearly-and-concisely` passes. The main orchestrator must verify those passes rather than
+infer compliance from a successful TeX build.
+
+**The two run concurrently and must not collide.** Their targets are disjoint and each is forbidden
+the other's file, which is what makes concurrency safe; state that boundary explicitly in both
+dispatches. If a prompt would have one read the other's target, it must skip that read while the
+sibling is running rather than inspect a file being edited underneath it.
 
 **Report the launch to the user immediately after both tasks start.** Identify both targets and
 state that Stage O is now running. This launch notice is mandatory even though the workflow is
@@ -1107,9 +1156,14 @@ After both finish, the main orchestrator must:
 3. Verify that each prompt's source-fidelity, terminology, `econ-write`,
    `writing-clearly-and-concisely`, LaTeX, and final-integrity gates passed. Re-run decisive
    validations when needed; do not rerun or source the scientific pipeline.
-4. Incorporate only verified edits into the two canonical TeX files in the current working branch.
-   Resolve cross-document inconsistencies against current source while preserving the different
-   purposes and content contracts of the two documents.
+4. **The edits are already in the files** — the sub-orchestrators applied them. Do not re-apply or
+   re-derive them. Your job here is to accept, correct, or reverse what is there, using the final
+   editing authority you hold once they are terminal. Resolve every cross-document inconsistency
+   yourself, against current source: you are the only party that may read both files, so anything
+   spanning them is yours alone and neither sub-orchestrator could have settled it. Preserve the
+   different purposes and content contracts of the two documents rather than forcing a match — a
+   shared symbol carrying different meanings in a source trace and a mathematical manual may be
+   correct in both, and is only a defect if one of them contradicts source.
 5. Run `git diff --check` and review the complete prospective diff for both TeX paths.
 6. Commit the two TeX files on the current working branch with all ordinary hooks enabled, then
    push that same branch to `origin` under **Git workflow**. Stage the two paths explicitly and no

@@ -1,8 +1,18 @@
 # Orchestrator prompt: synchronize the mathematical pipeline manual
 
-You are the primary orchestrator. Starting with no prior knowledge of this repository, bring the
-following TeX document into complete scientific and mathematical parity with the current checkout
-source.
+**You are the orchestrator of this workflow, and every reference to "the orchestrator" below means
+you.** You execute this prompt yourself: you own the method, you dispatch and manage whatever
+subagents it calls for, and **you edit the target TeX file directly.** You never hand proposed edits
+to someone else to apply.
+
+You may be run standalone or dispatched by an enclosing workflow. **If an enclosing workflow
+dispatched you, it is not "the orchestrator" in this prompt.** It is your caller. It holds final
+editing authority over the file once you are terminal, and it verifies your work — but it does not
+apply your edits for you and it does not touch the file while you are running. Where this prompt
+says subagents may not edit the TeX, that restricts *your* subagents, never you.
+
+Starting with no prior knowledge of this repository, bring the following TeX document into complete
+scientific and mathematical parity with the current checkout source.
 
 Select the repository root before any inspection or edit:
 
@@ -156,7 +166,8 @@ Do not modify or overwrite an existing report or log. Create a new uniquely name
 
 Additional rules:
 
-- Only the primary orchestrator may edit the target TeX file.
+- Only you, the orchestrator of this prompt, may edit the target TeX file — never a subagent, and
+  never an enclosing workflow while you are still running.
 - Every subagent is read-only with respect to the target TeX and the repository, except for its
   authorized private scratch directory.
 - A subagent that needs a private working file may write only at
