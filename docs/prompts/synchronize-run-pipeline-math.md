@@ -1,63 +1,94 @@
 # Orchestrator prompt: synchronize the mathematical pipeline manual
 
-You are the primary orchestrator, operating as a frontier reasoning agent. Starting with no prior
-knowledge of this repository, bring the following TeX document into complete parity with the current
-scientific pipeline.
+You are the primary orchestrator. Starting with no prior knowledge of this repository, bring the
+following TeX document into complete scientific and mathematical parity with the current checkout
+source.
 
-Repository root:
+Select the repository root before any inspection or edit:
 
-`/Users/fduarte/Library/CloudStorage/Dropbox-Personal/MyPackages/hetid`
+1. If an enclosing workflow supplies an isolated run-worktree root, use that exact root.
+2. Otherwise, if the current working directory belongs to a Git worktree containing
+   `scripts-paper/run_pipeline.R`, use that worktree's top level.
+3. Only as a standalone fallback, use
+   `/Users/fduarte/Library/CloudStorage/Dropbox-Personal/MyPackages/hetid`.
 
-Pipeline entry point:
+Record the selected root and why it was selected. Resolve every repository path in this prompt
+relative to it. The principal paths are:
 
-`/Users/fduarte/Library/CloudStorage/Dropbox-Personal/MyPackages/hetid/scripts-paper/run_pipeline.R`
+- pipeline entrypoint: `scripts-paper/run_pipeline.R`;
+- target TeX document: `docs/run_pipeline_math.tex`; and
+- target PDF: `docs/run_pipeline_math.pdf`.
 
-Target document:
-
-`/Users/fduarte/Library/CloudStorage/Dropbox-Personal/MyPackages/hetid/docs/run_pipeline_math.tex`
+Verify that the selected root contains the entrypoint and target TeX before proceeding. Do not
+inspect or modify another checkout, including the standalone fallback when an enclosing workflow has
+selected a different worktree.
 
 The repository, pipeline, and document may all have changed since this prompt was written. Do not
-carry forward any numerical value, active branch, input identity, equation, capability, or conclusion
-from prior knowledge. Discover the current state directly.
+carry forward any numerical value, active branch, input identity, equation, capability, or
+conclusion from prior knowledge. Discover the current state directly.
 
 The final result must be a self-contained mathematical reproduction manual. A first-year economics
-PhD student who has never seen the repository and will never see it must be able to reproduce the
-entire pipeline in another programming language by reading the TeX document alone.
+PhD student who has never seen the repository must be able to reproduce the scientific calculations
+in another programming language from the TeX document and the explicitly identified immutable input
+artifacts. The document need not reproduce repository-specific byte-integrity, cache-storage,
+file-replacement, or publication machinery. If a required input lacks either a stable external
+identity or an access route, record that as a blocker to repository-independent numerical
+reproduction; do not disguise a repo-local snapshot as a self-contained input.
 
 Run this workflow autonomously from beginning to end. Do not ask the user questions, request
-approval, invoke a human-review gate, or pause for confirmation. If a skill or local instruction
-normally requires such a gate, this no-human directive overrides that gate. Use your best judgment
-and proceed.
+approval, invoke a discretionary human-review gate, or pause for confirmation. Treat this prompt as
+written authorization to pass discretionary skill approval gates. Pause only when a higher-priority
+instruction requires it. Use your best judgment and proceed.
 
 ## Authority and evidence
 
-The current production source is the sole authority.
+The current checkout production source is the authority for intended scientific behavior. A plain
+pipeline invocation calls the installed `hetid` namespace, so equality between that namespace and
+the checkout package source is a separate precondition for exact runtime parity.
 
 1. Read every applicable repository instruction before acting, including `AGENTS.md`, `CLAUDE.md`,
    and any more specific instruction file.
-2. Begin at `scripts-paper/run_pipeline.R` and discover its complete current source graph
-   recursively.
+2. Begin at `scripts-paper/run_pipeline.R`. Define a finite audited source universe containing its
+   transitive repository-owned graph, package-owned scientific procedures, behavior authorities, and
+   separate scientific entrypoints relevant to Part II. Trace behavior through every file that can
+   affect a documented calculation, alternative, refusal, or limitation. Record external packages,
+   executables, and data at their contract boundaries rather than recursively inventorying
+   third-party implementations.
 3. Trace the effective configuration, defaults, input-selection rules, recorded decisions, branch
    gates, mathematical procedures, numerical controls, lifecycle rules, publication stages, and
    completion checks.
 4. Treat `docs/run_pipeline_math.tex` as an untrusted draft. Revalidate every substantive
    sentence, formula, number, status, and capability.
-5. You may inspect `docs/run_pipeline_code.tex` only as a nonauthoritative source of questions.
-   Do not borrow its prose, structure, or conclusions. Do not edit it.
-6. Treat comments, tests, old reports, generated artifacts, memories, and subagent conclusions as
-   leads rather than authority. Production-reachable behavior wins whenever sources disagree. Tests
-   may clarify edge behavior but cannot override current production logic.
-7. Record exact snapshot evidence for every relevant source file at the beginning. Recheck the
-   snapshot before final acceptance. If relevant source changes during the work, retrace the affected
-   behavior and repeat every downstream audit.
+5. You may inspect a stable `docs/run_pipeline_code.tex` only as a nonauthoritative source of
+   questions. During concurrent Stage O work, skip that optional read rather than inspect the
+   sibling target while it is being edited. Do not borrow its prose, structure, or conclusions. Do
+   not edit it.
+6. Treat comments, tests, old reports, memories, and subagent conclusions as leads rather than
+   authority. Generated artifacts remain uninspected and cannot supply leads. Checkout executable
+   source wins whenever supporting materials disagree. Tests may clarify edge behavior but cannot
+   override current production logic.
+7. Record a sorted hash-and-size manifest for every file in the audited source universe at the
+   beginning. Recheck the snapshot before final acceptance. If relevant source changes during the
+   work, retrace the affected behavior and repeat every downstream audit. After two invalidations
+   caused by external edits, stop with a blocker report rather than retrying indefinitely.
 8. Never assert completion without command output or source evidence. Record failed checks and their
    corrected reruns.
 
+Record the installed `hetid` version, library path, package-description metadata, and any digest or
+build evidence discoverable through metadata-only filesystem inspection or supplied by the enclosing
+workflow. Do not run R to obtain it. Version, path, or package-description metadata alone does not
+prove equality. Treat equality as proved only by comparable content-level build provenance or
+semantic digests covering the executable installed namespace selected by the plain invocation and
+the selected checkout snapshot. Otherwise, certify checkout-source parity, label installed-package
+parity unverified, and explain that a runtime invocation may differ. This disclosed limitation does
+not block checkout-source mathematical certification, but it forbids a claim of exact runtime
+parity for the installed namespace. Do not load project logic merely to remove the limitation.
+
 When a genuine ambiguity remains after direct inspection, obtain an independent second opinion
-through `pal clink` with the Claude CLI, if available. Treat that opinion as advice and verify it
-against source. If that facility is unavailable, use a fresh independent reasoning agent. Use
-official primary documentation when an external interface or mathematical convention requires
-verification.
+through the available PAL clink interface with Claude, if available. In Codex, the expected
+interface is `mcp__pal__clink`. Treat that opinion as advice and verify it against source. If that
+facility is unavailable, use a fresh independent reasoning agent. Use official primary
+documentation when an external interface or mathematical convention requires verification.
 
 ## Absolute execution boundary
 
@@ -71,65 +102,84 @@ You must not:
 - initialize, invalidate, replace, or alter caches;
 - initialize or alter manifest instances;
 - fetch or refresh scientific data;
-- use generated outputs, cache contents, or manifest instances as behavioral evidence;
+- inspect generated-output, cache, route-state, or manifest-instance contents or use them as
+  behavioral evidence;
 - infer behavior from prior numerical results; or
 - stop or interfere with an independently running process.
 
-You may inspect source declarations, schemas, configuration, manifest definitions, tests, and input
-contracts without mutation.
+You may inspect source declarations, schemas, configuration, manifest definitions, tests, input
+contracts, and filesystem metadata without mutation. Do not load an installed or checkout project
+namespace.
 
 Small isolated calculations are allowed only when needed to verify algebra, dimensions, numerical
 syntax, or a source-reading hypothesis. Run them in a fresh system temporary directory outside the
 repository. They must not import, source, or execute project logic, fetch data, or create scientific
-outputs.
+outputs, and they must not invoke R.
 
-If another process happens to be running the pipeline, do not inspect or disturb its products. In
-the final report, state only that this workflow did not launch the scientific pipeline.
+If another process happens to be running the pipeline, do not inspect or disturb its products. The
+final report must make no claim about what that independent process did; attest only to commands
+launched by this workflow.
 
 ## File boundary
 
-The only existing files you may modify are the target document and its companion render:
+Outside the current run directory, the only canonical paths you may create or modify are the target
+document and its companion render:
 
 `docs/run_pipeline_math.tex`
 `docs/run_pipeline_math.pdf`
 
-Both already exist. The TeX is tracked; the PDF is git-ignored. Replace the PDF only with the
-accepted build of the certified TeX version, at the end of the workflow.
+Before editing, discover whether each target exists, is tracked, or is ignored; do not rely on this
+prompt for those mutable facts. Replace or create the PDF only with the accepted build of the
+certified TeX version, at the end of the workflow.
 
-You may create new timestamped plans, source maps, terminology ledgers, audit reports, and validation
-logs under:
+If the enclosing workflow supplies a records directory, create this prompt's unique run directory
+at:
 
-`docs/RUN/run_pipeline_math/`
+`<enclosing-records-directory>/stage-o/math/YYYYMMDD-HHMMSS/`
+
+Otherwise, use the standalone location:
+
+`docs/RUN/run_pipeline_math/YYYYMMDD-HHMMSS/`
+
+You may create new plans, source maps, terminology ledgers, audit reports, and validation logs only
+inside the selected current run directory.
 
 Do not modify or overwrite an existing report or log. Create a new uniquely named file.
 
 Additional rules:
 
 - Only the primary orchestrator may edit the target TeX file.
-- Every subagent is read-only with respect to the target TeX and the repository.
-- A subagent that needs a private working file may write only under
-  `docs/RUN/scratch/agents/<agent-id>/`.
+- Every subagent is read-only with respect to the target TeX and the repository, except for its
+  authorized private scratch directory.
+- A subagent that needs a private working file may write only at
+  `<current-run-directory>/scratch/agents/<agent-id>/`.
 - The orchestrator alone writes canonical plans, reports, ledgers, and logs.
-- Use patch-based repository edits. Do not overwrite files through shell redirection or bulk writing
-  commands.
+- Use patch-based tools for text edits. The final accepted binary PDF may be copied to its canonical
+  path and must then be verified byte-for-byte. Do not overwrite text files through shell
+  redirection or bulk-writing commands.
 - Preserve unrelated worktree changes.
-- Do not edit scientific source, configuration, tests, inputs, artifacts, repository metadata, or
-  any other documentation.
-- Do not commit, push, publish, delete, revert, reset, or rewrite history.
+- Do not edit scientific source, configuration, tests, inputs, repository metadata, or any other
+  documentation. The canonical PDF and files inside the current run directory are the only artifact
+  exceptions.
+- Do not commit, push, publish, revert, reset, or rewrite history. Do not delete repository files or
+  directories. Ordinary text removal within an authorized TeX edit is allowed. Cleanup may remove
+  only the exact external temporary directory created by this workflow after its retained evidence
+  and accepted PDF have been copied out.
 - Keep LaTeX sidecar and intermediate build files outside the repository. Only the final accepted
-  PDF returns, to its canonical ignored path `docs/run_pipeline_math.pdf`.
+  PDF returns, to its canonical path `docs/run_pipeline_math.pdf`.
 - Obtain report timestamps with `date "+%Y-%m-%d %H:%M %Z"`. Never guess the time.
 
-Before editing, write a concrete execution plan under `docs/RUN/run_pipeline_math/`. Do not
-use `multistep-plan`, `multistep-do`, or another multistep skill. Proceed without requesting
-approval.
+Before editing, write a concrete execution plan in the current timestamped run directory. This
+prompt already defines the execution workflow; do not invoke an additional general planning wrapper.
+Proceed without requesting approval.
 
 ## Non-negotiable TeX content contract
 
 The TeX document must contain only clear prose, mathematical notation, equations, compact
 mathematical tables when necessary, and carefully structured lists.
 
-It must contain no computational code or pseudocode.
+It must contain no computational code or code-like pseudocode. Ordinary-language ordered algorithm
+steps are allowed when they are the clearest way to specify a mathematical procedure.
 
 It must not quote, reproduce, cite, link to, name, or allude to:
 
@@ -142,22 +192,32 @@ It must not quote, reproduce, cite, link to, name, or allude to:
 - source comments or source line numbers; or
 - any other representation of the underlying implementation.
 
-Do not write phrases such as “the code does,” “the script calls,” or “the implementation uses.”
+Do not write phrases such as “the code does,” “the script calls,” or “the implementation
+uses.”
 
 Names of external scientific data, established scholarly procedures, and required input or output
 artifacts may appear only when an outside reader needs them to reproduce the scientific input or
 artifact contract. Never use such names as disguised implementation references.
 
-The TeX document must contain no reference to a hash, fingerprint, checksum, cryptographic digest,
-hexadecimal verification value, or literal verification string. Remove such references even when
-the source uses them internally. Do not describe their construction, storage, comparison, or role.
-Source-audit reports outside the TeX document may record snapshot evidence when needed to prove the
-scope of the audit.
+The TeX document must contain no literal hash, fingerprint, checksum, cryptographic-digest
+algorithm, hexadecimal verification value, internal integrity field, or construction of such a
+value. It may state that preserved scientific inputs or reusable numerical results are accepted
+only when their required identities and provenance agree with the current request, when
+that condition changes a scientifically relevant route or result. Keep byte-level comparison,
+storage, transactional replacement, and internal integrity representation outside the TeX. Source
+audit reports may record exact snapshot evidence.
 
-When the pipeline selects among multiple input releases, name each scientifically relevant release
-in plain language and state the selection order directly. For example, say that a preserved user
-copy is selected when it exists and that the bundled copy is selected otherwise. Do not use vague
-contrasts such as “a separately stored release” and “the preserved alternative.”
+Identify every scientific input by a stable external name, release or vintage, units, frequency,
+sample coverage, transformations, an immutable artifact identity, and an access route that resolves
+to those exact observations. Both identity and access are required for exact numerical
+reproducibility. If current source supplies only a mutable or repo-local file, state the required
+supplied-input contract in the TeX and mark exact repository-independent numerical certification
+incomplete.
+
+When the pipeline selects among multiple input releases, derive a scientifically meaningful name
+for each release from current evidence and state the complete precedence and selection conditions.
+Do not use vague labels such as “a separately stored release” or “the preserved
+alternative.”
 
 The document must explain the pipeline through mathematics and ordinary language:
 
@@ -270,13 +330,16 @@ convention.
 
 The document must have two conceptually distinct parts.
 
-### Part I: exact current configured reproduction
+### Part I: exact source-selected reproduction procedure
 
-Part I must describe only the route selected by the current configuration, current default inputs,
-and current recorded choices.
+Part I must describe only the procedure selected by the current checkout configuration, default
+launch inputs, and recorded choices. Define that launch as the pipeline entrypoint invoked from its
+source-required working directory, with no command-line arguments and every pipeline-specific
+environment input unset. Do not claim that a runtime-selected outcome was realized.
 
-It must read as one linear procedure from inputs through transformations, estimation, diagnostics,
-inference, reporting, lifecycle actions, and completion checks.
+It must read as one ordered scientific procedure from inputs through transformations, estimation,
+diagnostics, inference, and the scientific output and acceptance contract. Conditional runtime arms
+may branch within that ordered procedure.
 
 Part I must include every current item needed for independent reproduction:
 
@@ -292,14 +355,17 @@ Part I must include every current item needed for independent reproduction:
 - stopping and acceptance rules;
 - random-number and resampling procedures;
 - inference procedures;
-- branch decisions actually reached;
-- preservation or reuse behavior actually selected;
-- output consequences; and
-- final validation and completion conditions.
+- every conditional arm inherent to the selected procedure, together with the runtime fact and exact
+  rule that choose among its outcomes;
+- any preservation or reuse rule that can change the selected scientific inputs, calculations, or
+  interpretation, together with its eligibility conditions and scientific fallback;
+- scientific output consequences; and
+- final scientific validation and acceptance conditions.
 
-Part I must not mention, offer, compare, hint at, or explain:
+Part I must not offer or compare a noncurrent source-selected alternative, such as:
 
-- alternative inputs;
+- differently configured inputs, but not runtime-conditional input arms inherent to the selected
+  procedure;
 - alternative estimators;
 - optional diagnostics;
 - different numerical settings;
@@ -307,17 +373,21 @@ Part I must not mention, offer, compare, hint at, or explain:
 - rejected routes;
 - hypothetical decisions;
 - unavailable extensions; or
-- any other “could,” “may,” or “instead” behavior.
+- any other route that requires a different launch input, tracked choice, or source-fixed control.
 
-Numerical safeguards that belong to the selected procedure remain in Part I. Dormant alternatives do
-not.
+Conditional solver rungs, input-availability rules, numerical statuses, package-availability gates,
+and failure arms that belong to the selected scientific procedure remain in Part I. Include a reuse
+eligibility outcome only when it can change a scientific input, calculation, or interpretation; keep
+outcome-equivalent cache validation and storage mechanics in the audit. Describe included arms
+conditionally and do not infer which occurred. Dormant or differently configured alternatives do not
+belong in Part I. Adjudicate meaning rather than banning modal words by spelling.
 
 ### Part II: complete modification and capability catalogue
 
 After Part I is complete, add Part II at the end of the document.
 
-Part II must exhaust every way the current source permits the mathematical procedure or process to
-differ from Part I. Search the complete source graph for:
+Part II must exhaust every recognized way the current source permits, requests, refuses, or reserves
+the scientific procedure or results to differ from Part I. Search the audited source universe for:
 
 - alternative inputs and acquisition paths;
 - calendar and sample choices;
@@ -331,30 +401,57 @@ differ from Part I. Search the complete source graph for:
 - search controls;
 - resampling rules;
 - random-number controls;
-- preservation and reuse policies;
-- lifecycle behavior;
-- presentation controls;
-- output consequences;
+- preservation and reuse policies that can change selected scientific inputs or calculations;
+- lifecycle behavior that can change scientific reproducibility;
+- presentation controls that change a reported scientific quantity or its interpretation;
+- scientific output consequences;
 - component calculations not available to the full route; and
 - declared extensions that lack a complete executable route.
 
-For every item, state:
+Do not repeat a runtime-conditional outcome already intrinsic to the Part I procedure. Part II
+covers only deviations that require another launch input, tracked choice, source-fixed control,
+component or separate entrypoint, or declared but unavailable capability.
+
+For every behaviorally distinct item or family, state:
 
 1. the condition or choice that activates it;
 2. its admissible domain;
 3. the mathematical or procedural change;
 4. the downstream quantities it changes;
-5. the identities, acceptance rules, or outputs it invalidates; and
-6. its actual execution status.
+5. the scientific identities, acceptance rules, or outputs it invalidates; and
+6. its reachability and request-handling classifications.
 
-Classify every noncurrent capability as exactly one of:
+When an item cannot be activated, cannot change a downstream quantity, or invalidates nothing,
+write `None` or `Not applicable` for that field and cite the source evidence in the audit. Do not
+invent an effect to fill the catalogue.
 
-- an executable full-route modification;
-- an executable component modification;
-- a routing-only choice;
-- an accepted-but-refused choice;
-- an invalid choice; or
-- a declared unavailable extension.
+Classify every item once on each of two independent axes.
+
+Reachability classification:
+
+- `Executable full-route modification`: a supported selection reaches a complete pipeline producer;
+- `Executable component modification`: a substantive calculation is callable only through a
+  component or separate entrypoint, not the full route;
+- `Routing-only choice`: the request changes a route or status but reaches no scientific producer;
+- `No substantive implementation`: the source declares or reserves the item without implementing
+  its calculation.
+
+Request-handling classification:
+
+- `Supported and unselected`: the choice is valid and would have a downstream effect, but the plain
+  invocation does not select it;
+- `Accepted then refused`: an upstream contract accepts the request, but a downstream gate refuses
+  it explicitly;
+- `Accepted but ignored`: the request or field is parsed or recorded but has no downstream effect;
+- `Rejected during validation`: validation rejects the value before routing; or
+- `Not exposed`: the item is not selectable through a current input or recorded choice.
+
+The categories are mutually exclusive within each axis, not across axes. Define any additional
+source-required category before using it, and apply it consistently.
+
+Within the reachability axis, use `Routing-only choice` whenever executable routing or status
+behavior exists, even if no scientific producer runs. Reserve `No substantive implementation` for
+a declaration or parsed field with no executable routing, status, or scientific-production behavior.
 
 A recognized or parsed setting is not necessarily executable. Trace every downstream gate before
 assigning its classification. Do not describe a component calculation, reserved output, recorded
@@ -362,6 +459,9 @@ request, or accepted field as a working full-route capability unless the complet
 perform it.
 
 Part II must describe capabilities through mathematics and prose, not through source identifiers.
+Keep pure cache storage, byte-integrity, file-replacement, publication, and repository-maintenance
+machinery in the source audit rather than the TeX unless it changes a scientific input, calculation,
+or interpretation.
 
 ## Terminology contract
 
@@ -383,22 +483,35 @@ Do not use:
 - a generic term in one section and a more specific term elsewhere; or
 - singular and plural labels that obscure whether the referent changed.
 
-Apply the reverse rule as well: do not collapse distinct concepts under one term. Keep separate names
-when objects differ by estimator, sample, timing, transformation, dimension, denominator, state, or
-inferential role.
+Apply the reverse rule as well: do not collapse distinct concepts under one term. Keep separate
+names when objects differ by estimator, sample, timing, transformation, dimension, denominator,
+state, or inferential role.
 
 Audit terminology in headings, prose, equations, subscripts, tables, captions, lists, and
 cross-references.
 
 ## Multi-agent workflow
 
-Use the maximum useful number of subagents. Give each one a bounded, nonoverlapping task, read-only
-repository access, a private scratch directory, permission to spawn compliant subagents, and the
-same no-human and no-pipeline constraints.
+Use separate agents when they add independent evidence. Respect the environment's global capacity,
+including agents owned by a parent workflow. Run assignments sequentially when capacity prevents
+parallel work; capacity limits must not reduce coverage. Give each agent a bounded, nonoverlapping
+task, read-only repository access, a private scratch directory, and the same constraints against
+human intervention and pipeline execution. Do not allow nested delegation unless capacity and the
+plan provide a distinct, nonoverlapping assignment. If a transient capacity rejection occurs,
+continue independent local work and retry after a slot is released. Do not treat one rejection as a
+blocker. Follow any
+slot arbitration provided by the enclosing workflow.
 
 No subagent may edit the target TeX. Subagents return evidence, mathematical derivations,
 line-specific findings, or proposed revisions. The orchestrator verifies every finding and applies
 accepted changes.
+
+A fresh full pass means a new bounded assignment against the exact current TeX snapshot and a
+complete rereading of the relevant source. Call a pass independent only when a distinct agent
+performs it. Use a new agent when thread capacity permits. If a global thread limit requires reuse,
+give an idle agent the fresh assignment, forbid reliance on its earlier conclusions, and record the
+capacity-driven loss of identity-level independence. Never merge sequential compliance passes. At
+least the final source-fidelity audit must be independent of the orchestrator and TeX editing.
 
 Complete the following stages in order. Do not cross a barrier with an open finding.
 
@@ -407,47 +520,57 @@ Complete the following stages in order. Do not cross a barrier with an open find
 The orchestrator must:
 
 1. read all governing instructions;
-2. record initial repository status;
-3. record the protected files and relevant source snapshot;
+2. record the complete initial Git status and protected paths;
+3. record initial existence, size, and hash for the target TeX and PDF when present; a sorted
+   manifest of hashes and sizes for the audited source universe; and a metadata-only manifest for
+   every protected output, cache, manifest-instance, and route-state root;
 4. obtain the timestamp;
 5. write the execution plan;
 6. inventory the entry point, configuration sources, input contracts, decision records, manifest
    declarations, lifecycle rules, and publication stages; and
-7. recursively close the production-reachable source graph.
+7. close the audited source universe, label its source-selected production graph as a subset, and
+   record external data, package, and executable contracts separately; and
+8. record the installed-package parity evidence or explicit unverified-runtime limitation.
 
 Barrier A passes only when every relevant dependency has been traced or explicitly proved
 irrelevant.
 
-### Stage B: parallel source tracing
+### Stage B: independent source tracing
 
-Assign independent agents to cover, at minimum:
+Assign these review scopes, using distinct agents when capacity permits:
 
-- the exact current route and effective configuration;
+- the exact source-selected procedure and effective configuration;
 - input transformations, samples, dimensions, and mathematical models;
 - estimators, diagnostics, numerical safeguards, resampling, and inference;
-- lifecycle, preservation, reporting, and output consequences; and
-- the exhaustive noncurrent capability inventory and execution-status classification.
+- scientifically relevant preservation, reuse, reporting, and output consequences, plus an audit of
+  operational machinery excluded from the TeX; and
+- the exhaustive noncurrent capability inventory and two-axis classification.
 
 Agents must cite precise source locations in their private reports. Those locations must never enter
-the TeX document.
+the TeX document. Agents submit proposed rows and findings; the orchestrator owns the canonical
+matrices and ledgers and reconciles duplicates and disagreements.
 
-The source-tracing agents must also create a return-and-frequency ledger. For every return, rate,
-yield, growth measure, volatility measure, variance, and frequency-converted variable, the ledger
-must record its source frequency, reported frequency, gross-or-net status, log-or-simple status,
-nominal-or-real status when relevant, price-or-total-return status when relevant, excess-return
-status when relevant, exact conversion formula, units, and proposed TeX location.
+The source-tracing agents must also submit evidence for a return-and-frequency ledger. For every
+return, rate, yield, growth measure, volatility measure, variance, and frequency-converted variable,
+the ledger must record its source frequency, reported frequency, gross-or-net status, log-or-simple
+status, nominal-or-real status when relevant, price-or-total-return status when relevant,
+excess-return status when relevant, exact conversion formula, units, and proposed TeX location.
 
 Construct two bidirectional coverage matrices in a canonical report:
 
-1. Current-route matrix:
-   - every operation executed on the selected route has a Part I counterpart; and
-   - every Part I claim has current-route support.
+1. Source-selected-procedure matrix:
+   - every operation and runtime-conditional outcome rule in the selected procedure has a Part I
+     counterpart; and
+   - every Part I claim has source-selected-procedure support.
 2. Capability matrix:
-   - every source-supported deviation has one Part II counterpart; and
-   - every Part II item has source support and the correct execution-status classification.
+   - every source-recognized deviation, request, refusal, and declared limit has one Part II
+     counterpart; and
+   - every Part II item has source support and the correct two-axis classification.
 
-Resolve agent disagreements against the source. If static evidence cannot determine the selected
-route, treat the uncertainty as a parity blocker. Do not infer the answer from outputs or caches.
+Resolve agent disagreements against the source. If static evidence cannot determine the procedure
+selected by source, treat the ambiguity as a parity blocker. A runtime fact that selects among
+conditional outcomes is not a static-parity blocker when the source states the condition and all
+outcome rules; document those rules without inferring the realized outcome from outputs or caches.
 
 Barrier B passes only when both matrices and the return-and-frequency ledger are complete and have
 no unresolved item.
@@ -461,26 +584,30 @@ as needed to satisfy the full contract. Do not create a differently named primar
 
 After the substantive draft is complete, assign fresh read-only agents to audit:
 
-- current-route completeness;
+- source-selected-procedure completeness, including every runtime-conditional outcome rule;
 - exclusion of all alternatives from Part I;
-- capability completeness and classification in Part II;
+- capability completeness and two-axis classification in Part II;
 - every equation, sign, inequality, denominator, dimension, boundary condition, indexing rule,
-  missing-value rule, search rule, fallback, stopping condition, status mapping, and output
+  missing-value rule, search rule, runtime fallback, stopping condition, status mapping, and output
   consequence;
 - every return, unit, frequency, compounding, annualization, and deannualization convention;
 - first-use symbol definitions;
 - first-use technical-term definitions;
-- the prohibition on hashes, fingerprints, checksums, digests, and literal verification values; and
+- the prohibition on literal integrity values, algorithms, fields, and byte-level implementation
+  details; and
 - the prohibition on implementation references.
 
 The orchestrator verifies and applies every supported correction. Repeat these audits.
 
-Barrier C passes only when the scientific auditors independently report no substantive omission,
-invention, misclassification, mathematical error, undefined object, ambiguous return convention, or
-Part I alternative.
+Barrier C passes only when the orchestrator and at least one distinct read-only scientific auditor
+report no substantive omission, invention, misclassification, mathematical error, undefined object,
+ambiguous return convention, or noncurrent Part I alternative.
 
-Every audit certification must identify the exact current version of the TeX file it reviewed. A
-certification tied to an earlier version does not count.
+Every audit certification must identify the exact TeX snapshot it reviewed by hash, byte count, and
+line count. Copy that version to a digest-named path such as
+`<current-run-directory>/snapshots/run_pipeline_math-<sha256>.tex`, verify it byte-for-byte, and
+give reviewers the snapshot rather than the mutable canonical path. Verify it before and after
+every review. A certification tied to an earlier snapshot does not count.
 
 ### Stage D: fresh same-concept–same-word pass
 
@@ -502,26 +629,27 @@ This agent must:
 9. verify that distinct conventions are not hidden under the same term; and
 10. return exact line-specific corrections without editing the TeX file.
 
-The orchestrator must verify every finding, apply the valid corrections, and return the exact revised
-file to the same agent for another complete audit.
+The orchestrator must verify every finding, apply the valid corrections, and return the exact
+revised file to the same agent for another complete audit.
 
 Barrier D passes only when that agent reports no remaining same-concept–same-word violation on the
 current TeX version and the scientific coverage matrices remain clean.
 
 ### Stage E: fresh `econ-write` pass
 
-Only after Barrier D passes, assign a different fresh agent to perform the economics-writing
-compliance pass.
+Only after Barrier D passes, assign a fresh economics-writing review.
 
-Both the orchestrator and this agent must read the complete current file:
+Both the orchestrator and this agent must resolve the current `econ-write` skill from the available
+skill catalog and read its `SKILL.md` completely. The expected current location is:
 
 `/Users/fduarte/.codex/skills/econ-write/SKILL.md`
 
 They must also read every referenced resource required for a full revision pass, including the
-McCloskey word-choice reference and the revision checklist.
+McCloskey word-choice reference and the revision checklist. If the skill is absent or unreadable,
+record a blocker; do not silently substitute an invented checklist.
 
-The economics-writing agent must inspect the complete post-terminology document, not a prior draft or
-a sample.
+The economics-writing agent must inspect the complete post-terminology document, not a prior draft
+or a sample.
 
 Apply every relevant principle, including:
 
@@ -548,7 +676,7 @@ general writing rule prefers less mathematics.
 
 The agent must return a complete line-specific edit prescription. The orchestrator must verify that
 each proposed edit preserves mathematical meaning, source parity, the Part I–Part II partition,
-execution-status classifications, symbol definitions, return conventions, and the terminology
+two-axis classifications, symbol definitions, return conventions, and the terminology
 ledger before applying it.
 
 Return the actual revision to the economics-writing agent for another full pass.
@@ -558,17 +686,22 @@ TeX version and all earlier scientific and terminology checks remain clean.
 
 ### Stage F: fresh `writing-clearly-and-concisely` pass
 
-Only after Barrier E passes, assign another fresh agent to perform the final prose pass.
+Only after Barrier E passes, assign a fresh clear-writing review.
 
-Both the orchestrator and this agent must read:
+Both the orchestrator and this agent must resolve the current `writing-clearly-and-concisely` skill
+from the available skill catalog and read its `SKILL.md` and every task-required reference
+completely.
+The expected current locations are:
 
 `/Users/fduarte/.codex/skills/writing-clearly-and-concisely/SKILL.md`
 
-and the complete reference:
+and:
 
 `/Users/fduarte/.codex/skills/writing-clearly-and-concisely/elements-of-style.md`
 
-The agent must inspect the complete post-`econ-write` document.
+If either expected file moved, use the catalog-resolved location. If the skill or a required
+reference is absent or unreadable, record a blocker. The agent must inspect the complete
+post-`econ-write` document.
 
 Audit every applicable rule of grammar, punctuation, composition, usage, paragraph structure,
 sentence structure, active voice, positive formulation, specificity, concision, modifier placement,
@@ -601,12 +734,15 @@ from beginning to end.
 
 Verify independently that:
 
-- Part I contains exactly the current selected route and no alternative;
-- Part II exhausts and correctly classifies every permitted deviation and declared limit;
+- Part I contains exactly the source-selected procedure, including all runtime-conditional outcome
+  rules, and no noncurrent alternative;
+- Part II exhausts and correctly classifies every recognized deviation, request, refusal, and
+  declared limit;
 - every formula, condition, dimension, threshold, ordering rule, and status still matches source;
 - every return and frequency conversion has an explicit, source-supported convention;
 - every necessary concept appears without exposing its implementation representation;
-- no hash, fingerprint, checksum, digest, or literal verification value remains;
+- no prohibited literal integrity value, algorithm, internal field, or byte-level integrity
+  implementation remains;
 - every symbol and technical term is defined at first use;
 - each concept uses one canonical term;
 - distinct concepts remain distinct;
@@ -625,14 +761,14 @@ incorporated change.
 
 Before compilation, run targeted scans of the final TeX for:
 
-- code or pseudocode environments;
+- computational-code or code-like-pseudocode environments;
 - internal source paths and extensions;
 - entry-point names;
 - internal function, object, argument, configuration, or environment-variable names;
 - programming commands or syntax;
 - implementation vocabulary;
-- hashes, fingerprints, checksums, cryptographic digests, hexadecimal verification language, and
-  literal verification values;
+- literal hashes, fingerprints, checksums, cryptographic-digest algorithms, hexadecimal verification
+  values, internal integrity fields, and byte-level integrity implementation;
 - placeholders such as `TODO`, `TBD`, or unresolved questions;
 - obsolete terminology and competing synonyms from the terminology ledger;
 - undefined or duplicate labels;
@@ -640,21 +776,26 @@ Before compilation, run targeted scans of the final TeX for:
 - copied or lightly transformed prose from the protected explanatory document; and
 - alternative or optional language leaking into Part I.
 
-Adjudicate every match. A raw search count is not proof. Correct false-positive scans and rerun them.
-The final prohibited count must be zero.
+Adjudicate every match. A raw search count is not proof. Refine searches that produce false
+positives and rerun them. The final count of confirmed prohibited uses must be zero. List permitted
+mathematical or ordinary-language uses as adjudicated matches rather than suppressing them.
 
 Recheck every equation, index, unit, sign, inequality, denominator, rank condition, boundary
 condition, missing-value rule, sample transition, return definition, and frequency conversion.
 
 ## Compilation and visual inspection
 
-Compile only the final target TeX in a fresh system temporary directory outside the repository. Build
-with `latexmk -pdf`. The `-pdf` is mandatory, not decorative: this `latexmk` defaults to LaTeX→DVI,
-and the repository ships no `latexmkrc` to override that, so a bare `latexmk` exits 0 having written
-only a `.dvi`. The exit-status and nonempty-PDF requirements below would then disagree, and the
-copy-back step at the end would have nothing to copy. The repository’s own LaTeX helper passes `-pdf`
-for this reason. The preamble does not decide this; do not drop the flag on the strength of reading
-one. Never leave sidecar or intermediate build files beside the source document.
+Preflight the available LaTeX engine, `latexmk` version and configuration, Poppler tools, `qpdf`,
+and fonts. Derive and hash the complete repository- or document-owned static dependency closure of
+the certified TeX, including every local TeX fragment, image, bibliography, style, class, and
+explicitly bundled font file. Record explicitly when it is standalone. Record external TeX
+packages, engines, and system fonts by resolved path and version; let the installed TeX runtime
+supply them rather than copying them. Create a fresh system temporary directory outside the
+repository with `mktemp -d`, copy the exact certified snapshot and owned dependency closure while
+preserving their relative layout, and verify every copied hash. Build there with `latexmk -pdf`;
+keep `-pdf` explicit even if local configuration also selects PDF. Never leave sidecars or
+intermediate build files beside the source document. Of the compilation products, retain only the
+audit log and necessary renders in the current run directory.
 
 Require:
 
@@ -665,14 +806,18 @@ Require:
 - no unresolved reference;
 - no duplicate label;
 - no missing glyph;
-- no overfull box;
-- no underfull box;
+- no visible or materially risky overfull box;
+- every remaining underfull-box warning classified by page and location and confirmed harmless by
+  visual inspection;
 - no unadjudicated LaTeX or package warning;
-- a structurally valid PDF; and
-- embedded fonts.
+- `qpdf --check` success;
+- all used fonts embedded, with expected families and encodings present and no unexplained
+  substitution, as confirmed with `pdffonts`; and
+- every link annotation enumerated by page and subtype, every internal destination resolved, and
+  every external URI nonempty and consistent with the TeX source.
 
-Check the PDF’s page count, page size, text extraction, and structural integrity. Use appropriate PDF
-inspection tools.
+Check the PDF’s page count, page size, text extraction, and structural integrity. Use appropriate
+PDF inspection tools.
 
 Render every page. Inspect the entire document visually. Contact sheets may help locate problems,
 but inspect dense equations, tables, contents pages, part boundaries, and the final page at readable
@@ -694,7 +839,9 @@ Check for:
 - unintended blank pages; and
 - an unclear Part I–Part II boundary.
 
-Correct every defect. Recompile, rerun structural checks, and repeat the complete visual inspection.
+Correct every material defect caused by the TeX. Record harmless engine warnings with their page,
+location, and visual evidence. Recompile, rerun structural checks, and repeat the complete visual
+inspection.
 If a correction changes prose or mathematics, repeat every affected compliance barrier.
 
 The final PDF must come from the exact TeX version certified by the final reports. Once the build is
@@ -705,24 +852,39 @@ byte-identical to the accepted build.
 
 Before declaring success:
 
-1. Recheck the relevant source snapshot.
-2. Confirm that the source remained stable.
-3. Recheck repository status.
-4. Confirm that only the target TeX, its companion PDF, and newly created `docs/` working records
-   changed through this workflow.
-5. Verify that no scientific source, configuration, test, input, output, cache, manifest instance,
-   protected document, existing report, or repository metadata was modified.
+1. Recompute the audited-source-universe manifest and confirm that it did not change.
+2. Record final existence, size, and hash for the target TeX and PDF.
+3. Recompute the protected generated-state metadata manifest. Explain every difference and confirm
+   that no task command caused it; do not inspect file contents.
+4. Compare final Git status with the complete initial status. Attribute every new or changed tracked
+   path. If an enclosing Stage O runs the sibling code-document task concurrently, treat only its
+   assigned TeX and prompt-authorized records as permitted concurrent external changes; do not
+   inspect or modify that sibling's target.
+5. From the task command audit, direct target hashes, protected-state
+   metadata comparison, and tracked-status comparison, confirm that this workflow did not
+   modify scientific source, configuration, tests, inputs, outputs, caches, manifest instances,
+   protected documents, existing reports, or repository metadata. Do not claim that unrelated
+   external processes made no change.
 6. Record every failed command and its corrected rerun.
-7. Record the final TeX version, byte size, line count, word count, abstract word count, compiled page
-   count, compiled PDF size, compiler result, log-scan result, structural-PDF result, font result,
-   visual-review coverage, static-scan results, and every agent audit outcome.
-8. State explicitly that this workflow did not launch the scientific pipeline.
+7. Record the final TeX version, byte size, line count, word count, abstract word count, compiled
+   page count, compiled PDF size, compiler result, log-scan result, structural-PDF result, font
+   result, visual-review coverage, static-scan results, and every agent audit outcome.
+8. Attest from the commands launched by this workflow that it did not run R or the pipeline, read
+   generated-state contents, mutate scientific state, or instantiate a manifest.
+9. Record the installed-package parity evidence or explicit unverified-runtime caveat.
+10. After retaining the accepted evidence and synchronizing the PDF, remove only the exact system
+    temporary directory created by this workflow. First verify that it is outside the repository and
+    matches the recorded `mktemp` path.
+11. Finalize all reports listed below, logs, and retained renders in the current run directory.
+12. As the last run-directory write, create a sorted path, size, and hash manifest for every other
+    file there. List the manifest's own path as the sole deliberate self-reference exclusion, then
+    verify that no later run-directory write occurs.
 
-Create new timestamped canonical reports under `docs/RUN/run_pipeline_math/` for:
+The reports finalized before the last-write manifest must include:
 
 - the execution plan;
-- the source graph and source snapshot;
-- the current-route coverage matrix;
+- the audited source universe and source snapshot;
+- the source-selected-procedure coverage matrix;
 - the capability coverage matrix;
 - the return-and-frequency ledger;
 - the terminology ledger and audit;
@@ -737,12 +899,14 @@ Reports may contain source locators and command evidence. The TeX document may n
 Never weaken a check, suppress a warning, omit a difficult capability, or replace uncertain
 mathematics with vague prose to obtain a passing result.
 
-Fix the underlying cause of each failure. Use bounded retries that change the diagnosis or remedy
-rather than repeating the same attempt.
+Fix the underlying cause when it lies in the target TeX or its build. Report a source, toolchain, or
+external-data cause as a blocker or limitation; do not modify an out-of-scope file to force a pass.
+Use bounded retries that change the diagnosis or remedy rather than repeating the same attempt. The
+execution plan must set a finite cap for each fallible external step.
 
 If a genuine external blocker remains after bounded attempts:
 
-1. create a new timestamped Markdown report under `docs/RUN/run_pipeline_math/`;
+1. create a new Markdown report in the current run directory;
 2. record the unresolved issue;
 3. record the exact evidence;
 4. list the sources inspected;
@@ -758,11 +922,16 @@ Do not ask the user what to do.
 Declare success only if all of the following are true:
 
 - the TeX document matches a stable snapshot of the current source;
-- Part I contains the exact selected route and no alternatives;
-- Part II exhausts and correctly classifies every source-supported modification and declared limit;
-- an external reader can reproduce the full analysis without the repository;
-- the TeX contains no code, pseudocode, or implementation reference;
-- the TeX contains no hash, fingerprint, checksum, digest, or literal verification value;
+- Part I contains the exact source-selected procedure, including every runtime-conditional outcome
+  rule, and no noncurrent alternative;
+- Part II exhausts and correctly classifies every source-recognized modification, request, refusal,
+  and declared limit;
+- an external reader can reproduce the scientific analysis without the repository because every
+  input has both an immutable artifact identity and an access route resolving to the exact required
+  observations;
+- the TeX contains no computational code, code-like pseudocode, or implementation reference;
+- the TeX contains no prohibited literal integrity value, algorithm, internal field, or byte-level
+  integrity implementation;
 - every return and frequency-converted variable is unambiguous about its mathematical definition,
   units, observation frequency, reporting frequency, and annualization or deannualization formula;
 - every input-selection priority is stated with explicit names and ordering;
@@ -770,13 +939,19 @@ Declare success only if all of the following are true:
 - every concept uses one canonical term throughout;
 - all sequential reviewer barriers certify the final artifact or remain valid after no later edit;
 - no contradiction, omission, stale claim, unsupported statement, placeholder, or open audit finding
-  remains;
-- compilation is clean;
+  about checkout source remains; an explicitly disclosed unverified installed-package caveat is
+  permitted but bars installed-runtime certification;
+- the TeX passes the adjudicated compilation gate;
 - every rendered page is visually defect-free;
-- every file and execution boundary was preserved; and
+- the complete audited-source-universe manifest is unchanged;
+- the direct target hashes, protected-state metadata comparison, and current-run-directory manifest
+  account for every task-attributable change and contain no unexplained difference;
+- the task command audit and baseline-to-final tracked-status comparison attribute no out-of-scope
+  file or scientific-state change to this workflow;
+- every execution boundary was preserved; and
 - the final reports demonstrate these facts with evidence.
 
 A successful compile alone does not establish scientific parity. A polished document alone does not
 establish completeness. Completion requires source fidelity, mathematical completeness, explicit
-measurement conventions, terminology consistency, writing compliance, clean compilation, visual
-integrity, and preserved scope.
+measurement conventions, terminology consistency, writing compliance, passage of the adjudicated
+compilation gate, visual integrity, and preserved scope.

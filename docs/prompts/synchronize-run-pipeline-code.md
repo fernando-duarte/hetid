@@ -2,27 +2,44 @@
 
 You are the primary orchestrator for a complete source-to-document synchronization.
 
-Repository:
-  /Users/fduarte/Library/CloudStorage/Dropbox-Personal/MyPackages/hetid
+Select the repository root before any inspection or edit:
 
-Production entrypoint:
-  /Users/fduarte/Library/CloudStorage/Dropbox-Personal/MyPackages/hetid/scripts-paper/run_pipeline.R
+1. If an enclosing workflow supplies an isolated run-worktree root, use that exact root.
+2. Otherwise, if the current working directory belongs to a Git worktree containing
+   `scripts-paper/run_pipeline.R`, use that worktree's top level.
+3. Only as a standalone fallback, use
+   `/Users/fduarte/Library/CloudStorage/Dropbox-Personal/MyPackages/hetid`.
 
-Canonical TeX document:
-  /Users/fduarte/Library/CloudStorage/Dropbox-Personal/MyPackages/hetid/docs/run_pipeline_code.tex
+Record the selected root and why it was selected. Resolve every repository path in this prompt
+relative to it. The principal paths are:
 
-Canonical compiled PDF:
-  /Users/fduarte/Library/CloudStorage/Dropbox-Personal/MyPackages/hetid/docs/run_pipeline_code.pdf
+- production entrypoint: `scripts-paper/run_pipeline.R`;
+- canonical TeX document: `docs/run_pipeline_code.tex`; and
+- canonical compiled PDF: `docs/run_pipeline_code.pdf`.
 
-Your objective is to make the TeX document fully faithful to the current code. Assume that both the code and document have changed since any prior audit. Assume that the latest document revision may have used weak standards. Trust neither the document nor old reports. Derive every claim from the current source.
+Verify that the selected root contains the entrypoint and target TeX before proceeding. Do not
+inspect or modify another checkout, including the standalone fallback when an enclosing workflow has
+selected a different worktree.
+
+Your objective is to make the TeX document fully faithful to the current checkout source. Assume that both the source and document have changed since any prior audit. Trust neither the document nor old reports. Derive every claim from a freshly traced source snapshot.
+
+The checkout source specifies intended package behavior, but a plain pipeline invocation calls the
+installed `hetid` namespace. Treat equality between the checkout package source and the installed
+namespace as a separate precondition. If read-only evidence from the enclosing workflow proves that
+they match, record that evidence. Otherwise, certify checkout-source parity, label installed-package
+parity unverified, and explain that the runtime may differ. Do not load or execute project logic merely
+to remove this limitation.
 
 The finished document must tell a reader:
 
-1. The exact path that a plain invocation of `Rscript scripts-paper/run_pipeline.R` takes.
+1. The exact path prescribed by checkout source for a plain invocation of
+   `Rscript scripts-paper/run_pipeline.R`, with any installed-package parity caveat stated beside it.
 2. Every input, option, prerequisite, decision, constant, and runtime condition that can affect that path.
 3. Every alternative path or capability implemented in the code but not selected by a plain invocation.
 4. Every reserved or described path that lacks a substantive implementation.
-5. Every separate maintenance, validation, test, or package entrypoint that the runner does not call.
+5. Every separate repository entrypoint that directly produces, resets, validates, tests, reproduces,
+   or quality-checks this paper pipeline, or implements one of its scientific alternatives, but that
+   the runner does not call.
 6. The exact downstream effects of each choice on stages, estimators, diagnostics, caches, artifacts, publication, and failure behavior.
 7. Which statements follow from static source and which outcomes require runtime evidence.
 
@@ -35,26 +52,37 @@ Run this workflow from beginning to end without human involvement.
 - Never ask the user a question.
 - Never request approval, confirmation, or a plan decision.
 - Do not use a human-prompt or plan-approval mechanism.
-- If a skill contains an approval gate, continue under this task’s authorization.
+- Treat this prompt as written authorization to pass a discretionary skill approval gate. Pause only
+  when a higher-priority instruction requires it.
 - Use your best judgment when several defensible choices exist.
-- When uncertain, ask another agent or use PAL `clink` with Claude or Fable. Treat external reviews as advice and verify every suggestion against source.
-- Stop only for a hard external blocker after exhausting safe alternatives. Record the blocker and completed work under `docs/`; do not wait for a human.
+- When uncertain, ask another agent or use the available PAL clink interface with Claude or Fable.
+  In Codex, the expected interface is `mcp__pal__clink`. Treat external reviews as advice and verify
+  every suggestion against source.
+- Stop only for a hard external blocker after exhausting safe alternatives. Record the blocker and
+  completed work in the current run directory; do not wait for a human.
 - Do not commit, push, open a pull request, or modify remote state.
 
 Evidence controls every conclusion:
 
 - Do not claim that a stage is covered until you have inspected its source.
 - Do not claim that a check passed until you have run it and read its output.
-- Quote decisive command output in the final audit.
+- Record decisive command output in the final audit and quote only the short portion needed to prove
+  the result.
 - Do not hide, suppress, disable, or weaken a failed check.
-- Fix the cause of a failure when the fix lies within scope.
+- Fix the cause of a failure when the cause lies in the target TeX or its build. Record an external or
+  out-of-scope cause as a limitation; do not modify another file to force a pass.
 - Use bounded retries. Change the approach or fix the cause before retrying.
-- If a check remains impossible, record the command, error, attempts, and remaining consequence in a Markdown report under `docs/`. Continue independent work and report the incomplete gate at the end.
+- Set a finite retry cap for each fallible external step in the execution plan.
+- If a check remains impossible, record the command, error, attempts, and remaining consequence in a
+  Markdown report in the current run directory. Continue independent work and report the incomplete
+  gate at the end.
 
-The current code is authoritative:
+The current checkout code is authoritative for intended behavior:
 
 - Read the executable statements, predicates, call graph, configuration, decision records, and manifest-building source.
-- Treat comments, tests, README files, and the old TeX as supporting evidence. When they disagree with executable code, describe the executable behavior.
+- Treat comments, tests, README files, the installed-package description, and the old TeX as
+  supporting evidence. When they disagree with checkout executable source, describe the checkout
+  behavior and record any unresolved runtime-parity limitation.
 - Do not preserve a TeX statement merely because it compiled or appeared in an earlier audit.
 - Do not import old counts, hashes, defaults, budgets, object names, or route descriptions. Recompute them from the current source.
 - Treat every hash and count as evidence for one frozen snapshot, never as a permanent contract.
@@ -69,7 +97,7 @@ Specifically, do not:
 - source or evaluate any repository R file;
 - call an R function from the repository;
 - run a test or validation command that sources production R;
-- initialize, reset, populate, clean, migrate, or inspect pipeline outputs;
+- initialize, reset, populate, clean, migrate, or inspect the contents of pipeline outputs;
 - read cache contents or use cache state as behavioral evidence;
 - instantiate the artifact manifest;
 - inspect generated pipeline artifacts as evidence;
@@ -79,9 +107,15 @@ Specifically, do not:
 
 The output tree, caches, generated manifests, and route-state files may be empty by design. Preserve that state.
 
-Static inspection is allowed. Shell text tools, parsers, hashes, and source searches are allowed. You may run a small standalone snippet in a temporary directory outside the repository to test syntax or a self-contained hypothesis. Such a snippet must not import, source, or evaluate repository code and must not touch repository outputs, caches, manifests, or state.
+Static inspection is allowed. Shell text tools, parsers, hashes, and metadata-only filesystem checks
+are allowed. Restrict content searches to the audited source universe and exclude every generated
+state root. You may run a small standalone snippet in a fresh system temporary directory outside the
+repository to test syntax or a self-contained hypothesis. Such a snippet must not import, source, or
+evaluate project code, invoke R, or touch pipeline outputs, caches, manifests, or state.
 
-Compiling the standalone TeX document is allowed and required. LaTeX build files and page renders must remain under `docs/`.
+Compiling the standalone TeX document is allowed and required. Build in a fresh system temporary
+directory outside the repository. Copy only logs and page renders needed for the audit into the
+current run directory, and copy only the accepted PDF to its canonical path.
 
 ## Repository and editing boundaries
 
@@ -91,38 +125,53 @@ Before doing task work:
 2. Read `CLAUDE.md` and any project guidance it names.
 3. Inspect the current Git status without modifying it.
 4. Preserve all unrelated user changes.
-5. Record the current commit, branch, TeX hash and size, PDF hash and size if present, runner hash, and hashes of the main configuration and decision authorities.
-6. Obtain report timestamps with:
+5. Record the current commit and branch; the complete initial Git status; TeX and PDF hashes and
+   sizes when present; and a sorted hash-and-size manifest for every file in the audited source
+   universe.
+6. Create a metadata-only manifest for every protected output, cache, manifest-instance, and
+   route-state root derived from source. Record paths, types, sizes, modification times, and symlink
+   targets without reading file contents.
+7. Obtain report timestamps with:
    `date "+%Y-%m-%d %H:%M %Z"`
 
-Only the primary orchestrator may modify:
+Outside the current run directory, the only canonical paths this workflow may create or modify are:
 
   docs/run_pipeline_code.tex
   docs/run_pipeline_code.pdf
 
-Subagents and external reviewers must never modify those files.
+Only the primary orchestrator may modify those files. Subagents and external reviewers must never
+modify them.
 
-All plans, audits, matrices, reports, proposed patches, logs, builds, renders, and other working documents must remain under `docs/`.
+Create plans, audits, matrices, reports, proposed patches, retained logs, and renders as new uniquely
+named files in the run directory. Never overwrite an existing working record. LaTeX sidecars and
+intermediate build files remain in the external temporary build directory.
 
-Use a run directory such as:
+If the enclosing workflow supplies a records directory, create this prompt's unique run directory at:
 
-  docs/RUN/run-pipeline-sync-YYYYMMDD-HHMMSS/
+  <enclosing-records-directory>/stage-o/code/YYYYMMDD-HHMMSS/
 
-Subagents may write only inside:
+Otherwise, use the standalone location:
 
-  docs/RUN/scratch/agents/<agent-id>/
+  docs/RUN/run_pipeline_code/YYYYMMDD-HHMMSS/
+
+Subagents may write only inside the selected current run directory:
+
+  <current-run-directory>/scratch/agents/<agent-id>/
 
 Subagents have read-only access to the rest of the repository. They may create proposed patches or revised copies inside their private scratch directories. The orchestrator must inspect those proposals, verify them against source, and apply accepted changes to the canonical TeX.
 
-Make text edits in place with the harness’s own file-editing tools. Preserve unrelated content and the user’s existing work. Do not use destructive Git commands or broad deletion commands, and do not rewrite a file wholesale through shell redirection when an in-place edit will do.
+Make text edits in place with the harness's file-editing tools. The final accepted binary PDF may be
+copied to its canonical path and must then be verified byte-for-byte. Preserve unrelated content and
+the user's existing work. Do not use destructive Git commands, broad deletion commands, or shell
+redirection to rewrite a source file.
 
 ## Planning and delegation
 
-Before editing, assess whether a written plan and multi-agent execution are required. For a full pipeline synchronization, presume that both are required unless the repository has become trivial.
+Before editing, write a concrete execution plan. This prompt already defines the complete workflow;
+do not wrap it in `multistep-plan`, `multistep-do`, or another general multistep workflow. Do not
+pause for plan approval.
 
-If `multistep-plan` and `multistep-do` exist, use them. Otherwise, use the closest available planning and subagent-execution skills. Do not pause for plan approval.
-
-Write the plan under `docs/`. Include:
+Write the plan in the current run directory. Include:
 
 - the source boundary;
 - the no-execution boundary;
@@ -134,23 +183,33 @@ Write the plan under `docs/`. Include:
 - acceptance tests;
 - retry and blocker rules.
 
-Use as many agents as the environment safely supports. Fill available concurrency slots with independent work. Keep tightly coupled synthesis in the orchestrator.
+Use separate agents when they add independent evidence. Respect the environment's global capacity,
+including agents owned by a parent workflow. Run assignments sequentially when capacity prevents
+parallel work; capacity limits must not reduce coverage. Keep tightly coupled synthesis in the
+orchestrator. If a transient capacity rejection occurs, continue independent local work and retry
+after a slot is released; do not treat one rejection as a blocker. Follow any slot arbitration
+provided by the enclosing workflow.
 
-At minimum, assign separate read-only agents to:
+Cover these roles with separate read-only reviews when capacity permits, or with fresh sequential
+assignments when it does not:
 
 1. Trace the exact current runner path and every stop condition.
 2. Inventory inputs, options, prerequisites, decisions, and source-fixed controls.
 3. Trace alternative, dormant, unimplemented, maintenance, validation, test, cache, and artifact functionality.
 
-Agents may subdivide their assignments. Require exact source locators and evidence in every report.
+Agents may subdivide their assignments only within the available global capacity. Require exact
+source locators and evidence in every report.
 
-After the main TeX synchronization, use three distinct new agents, in order:
+After the main TeX synchronization, run three distinct review assignments, in order:
 
 1. A same-concept/same-word compliance agent.
 2. An `econ-write` compliance agent.
 3. A `writing-clearly-and-concisely` compliance agent.
 
-Do not reuse one agent for these three passes. Each pass begins only after the preceding pass has been incorporated and verified.
+Use different agents for these passes when thread capacity permits. If a global thread limit requires
+reuse, give the idle agent a new bounded assignment, the exact current snapshot, and instructions to
+audit it independently without relying on its earlier conclusions. Never combine two passes. Each
+pass begins only after the preceding pass has been incorporated and verified.
 
 ## Required reachability vocabulary
 
@@ -185,7 +244,7 @@ Never use one axis as evidence for another. A required artifact is not necessari
 
 ## Stage A: Freeze the source snapshot
 
-Create a dated source-boundary report.
+Create a dated audited-source-universe report.
 
 Record:
 
@@ -194,16 +253,40 @@ Record:
 - hash and size of the runner;
 - hash and size of the TeX;
 - hash and size of the existing PDF;
-- hashes of every principal configuration, decision, manifest, lifecycle, cache, and reporting authority;
-- the production-source boundary;
+- a sorted hash-and-size manifest for every file in the audited source universe;
+- the rule used to derive that boundary;
 - excluded generated-state directories;
+- the initial metadata-only manifest of protected generated-state roots;
 - the exact no-execution rule.
 
-At the end of the workflow, recompute the source hashes. If production source changed during the audit, invalidate the audit and restart from this stage.
+Define an audited source universe that includes the active production graph; package source;
+configuration, decision, schema, manifest, cache, lifecycle, and publication authorities; and every
+separate repository entrypoint that directly produces, resets, validates, tests, reproduces, or
+quality-checks this paper pipeline or implements one of its scientific alternatives. Treat the active
+production graph as a labeled subset. Explicitly exclude unrelated package APIs, tests, and general
+repository utilities. Hash every file in that finite universe. Trace behavior only through files that
+affect a documented route, alternative, boundary, or in-scope separate entrypoint, and record why any
+inventoried family is excluded. Record external packages, executables, and data contracts separately;
+do not attempt to hash or inventory their implementation graphs.
+
+Record the installed `hetid` version, library path, package-description metadata, and any digest or
+build evidence discoverable through metadata-only filesystem inspection or supplied by the enclosing
+workflow. Do not run R to obtain it. Version, path, or build metadata alone does not prove equality.
+Treat equality as proved only by comparable code-content or semantic digests for the exact installed
+namespace selected by the plain invocation and the selected checkout snapshot. Otherwise, parity is
+unverified; this is a runtime-parity limitation, not evidence of inequality.
+
+At the end of the workflow, recompute the complete audited-source-universe manifest. If any file in
+that universe changed during the audit, invalidate the affected work and restart from this stage.
+After two such invalidations caused by external edits, stop with a blocker report rather than
+retrying indefinitely.
 
 ## Stage B: Discover the production graph
 
-Start with `scripts-paper/run_pipeline.R`. Follow every executable call and every file loaded directly or transitively.
+Start with `scripts-paper/run_pipeline.R`. Follow every executable call and every repository-owned
+file loaded directly or transitively. Close the graph over behaviorally relevant helpers and source
+inputs. Record external package calls at the contract boundary; do not recursively inventory the
+implementation of third-party dependencies.
 
 Build an ordered ledger containing:
 
@@ -279,7 +362,8 @@ Account for:
 - writable-filesystem requirements;
 - preexisting cache artifacts that production code may read;
 - source-fixed constants and control objects;
-- formal parameters that expose alternative package or separate-entrypoint functionality.
+- behavior-changing formal parameters that expose a reachable production path, an implemented
+  alternative, or separate public-entrypoint functionality.
 
 For each input or option, record:
 
@@ -313,11 +397,15 @@ Distinguish these categories:
 
 Do not present a source edit as a supported runtime option. Document source-fixed controls because they affect behavior, but call them source-fixed controls.
 
-Account for every formal parameter in production-relevant functions. Include it in the TeX if it changes a reachable production path, an implemented alternative, or a separate public entrypoint. Otherwise, account for its exclusion in the audit.
+Account individually for every behavior-changing formal parameter in production-relevant functions.
+Include it in the TeX if it changes a reachable production path, an implemented alternative, or a
+separate public entrypoint. The audit may group parameters that are provably presentation-only,
+test-only, or function-local plumbing; name each group, state its exclusion rule, and give source
+locators.
 
 ## Stage E: Inventory every alternative and boundary
 
-Trace functionality that exists outside the selected route:
+Trace behaviorally meaningful functionality that exists outside the selected route:
 
 - nondefault branches;
 - alternate data sources and contracts;
@@ -328,20 +416,22 @@ Trace functionality that exists outside the selected route:
 - cache modes and fallback paths;
 - artifact variants;
 - publication variants;
-- package APIs;
+- in-scope package APIs;
 - maintenance commands;
 - validation commands;
 - test orchestrators;
 - quality commands;
-- inactive files;
-- test-support files;
+- inactive production families;
+- test-support families;
 - source-loaded but uncalled helpers;
 - mixed-use files containing both active and inactive functions;
 - schema values without implementations;
 - planned producers without estimators;
 - artifacts reserved for future producers.
 
-For every item, say how it could be selected or called. If no current runner input can reach it, say so.
+For every behaviorally distinct item or family, say how it could be selected or called. If no current
+runner input can reach it, say so. Group repetitive helpers only when they share the same status,
+selection rule, and downstream consequence; preserve source locators for every grouped member.
 
 Distinguish:
 
@@ -400,10 +490,10 @@ Inspect validation and test source statically. State what each check proves and 
 
 For every estimator, diagnostic, bound, bootstrap statistic, and published equation:
 
-- identify the active production implementation;
+- identify the checkout-source-selected production implementation;
 - identify the runner or driver that calls it;
 - identify source-loaded convenience functions that are not called;
-- map the TeX equation to the active code;
+- map the TeX equation to the checkout-source-selected code;
 - define every symbol and normalization;
 - record the relevant search, grid, fit-evaluation, resampling, and inference controls;
 - distinguish local optimization from certification;
@@ -418,7 +508,10 @@ Do not assume any historical estimator, grid size, budget, or asymmetry remains 
 
 Wait for all tracing agents. Reconcile their reports against source.
 
-Create a canonical coverage matrix with one row for every stage, input, option, alternative, control family, artifact family, and separate entrypoint. Include:
+Create a canonical coverage matrix with one row for every behaviorally distinct stage, input, option,
+alternative, control family, artifact family, and separate entrypoint. Group repeated family members
+only when their status, selection rule, and effects are identical, and list every member and source
+locator in the grouped row. Include:
 
 - canonical concept;
 - code aliases;
@@ -462,21 +555,30 @@ The orchestrator is the sole canonical TeX editor.
 
 ## Stage I: Independent fidelity review
 
-Freeze the revised TeX and record its exact hash, line count, and byte count.
+Freeze the revised TeX and record its exact hash, line count, and byte count. Copy it to a path named
+with that digest, such as `<current-run-directory>/snapshots/run_pipeline_code-<sha256>.tex`, and verify the copy
+byte-for-byte, and give reviewers that snapshot rather than the mutable canonical path. Verify the
+snapshot before and after every review.
 
-Give that exact snapshot to independent read-only reviewers:
+Give that exact snapshot to independent read-only reviewers. Assign the first three scopes; assign the
+fourth separately when capacity permits, otherwise add it to a fresh sequential review:
 
 1. Active-path reviewer.
 2. Input-and-options reviewer.
 3. Alternative-path and unimplemented-functionality reviewer.
-4. Artifact, cache, and validation-boundary reviewer, if agent capacity allows.
+4. Artifact, cache, and validation-boundary reviewer.
 
 Require each reviewer to inspect current source independently. They may not rely only on the coverage matrix.
 
-Also request two narrow external reviews through PAL `mcp__pal__clink`:
+Preflight the PAL interface and available CLI names. If available, request two narrow,
+context-bounded external reviews through `mcp__pal__clink` using the expected current names:
 
-- `cli_name="claude"`, `role="codereviewer"`
-- `cli_name="claude-fable"`, `role="codereviewer"`
+- `cli_name="claude"`, `role="codereviewer"`: active route, inputs, prerequisites, and installed-package boundary.
+- `cli_name="claude-fable"`, `role="codereviewer"`: alternatives, cache and artifact claims,
+  implementation gaps, and estimator symmetry.
+
+If the interface or one CLI is unavailable, record that fact and assign the same scope to another
+independent read-only reviewer. PAL availability alone is not a completion blocker.
 
 Tell both reviewers:
 
@@ -485,27 +587,31 @@ Tell both reviewers:
 - do not run or source R;
 - do not inspect generated outputs, caches, or instantiated manifests;
 - do not write any file;
-- check the exact selected path, all inputs and options, all alternatives, reachability labels, cache claims, artifact claims, and estimator symmetry;
+- check only the assigned scope against the frozen source and TeX snapshot;
 - return PASS or concrete findings with source and TeX locators.
 
-Save their reviews under `docs/`.
+Save their reviews in the current run directory.
 
 Verify every finding yourself. Accept or reject it with source evidence. If you edit the TeX, freeze a new hash and repeat the necessary exact-snapshot reviews.
 
-Do not call the fidelity stage complete until the accepted hash has independent PASS coverage. If a reviewer times out, record the attempt and obtain equivalent exact-hash coverage from another independent reviewer.
+Do not call the fidelity stage complete until the accepted hash has independent PASS coverage for
+every scope. If a reviewer times out, record the attempt and obtain equivalent exact-snapshot coverage
+from another independent reviewer.
 
 ## Stage J: Same-concept/same-word compliance pass
 
-After the fidelity snapshot passes, start a distinct new terminology agent. Give it the accepted TeX and the current source.
+After the fidelity snapshot passes, start the terminology assignment. Give its reviewer the accepted
+TeX and the current source.
 
 The terminology agent must perform a complete terminology audit, not a quick copyedit.
 
-It must inventory every:
+It must inventory every document concept and every source alias needed to interpret the document,
+including each:
 
 - scientific concept;
 - estimator;
 - diagnostic;
-- object;
+- behaviorally meaningful object;
 - route;
 - stage;
 - cache;
@@ -527,13 +633,13 @@ It must inventory every:
 - input;
 - decision;
 - protocol;
-- technical phrase;
+- technical phrase used in the TeX;
 - acronym.
 
 For each concept, it must produce a ledger containing:
 
 - one canonical document term;
-- every code name, alias, comment name, object name, and filename for that concept;
+- every code name, alias, object name, and filename needed to map that documented concept to source;
 - source locators;
 - data-flow or call-graph evidence for equivalence;
 - the reason for equivalence when it is not obvious;
@@ -567,13 +673,16 @@ If the terminology pass changes substantive wording, rerun the relevant source-f
 
 ## Stage K: `econ-write` compliance pass
 
-After the terminology pass is complete, start another distinct new agent.
+After the terminology pass is complete, start the economics-writing assignment.
 
-Require this agent to read completely:
+Resolve the current `econ-write` skill from the available skill catalog. Require this agent to read
+the resolved `SKILL.md` completely. The expected current location is:
 
   /Users/fduarte/.codex/skills/econ-write/SKILL.md
 
-It must also read every reference that the skill requires for this task, including the McCloskey word-choice guidance and revision checklist.
+It must also read every reference that the skill requires for this task, including the McCloskey
+word-choice guidance and revision checklist. If the skill is absent or unreadable, record a blocker;
+do not silently substitute an invented checklist.
 
 The agent must apply every relevant `econ-write` principle to this technical economics explainer while preserving:
 
@@ -614,14 +723,18 @@ After applying the pass, freeze a new hash and rerun any fidelity or terminology
 
 ## Stage L: `writing-clearly-and-concisely` compliance pass
 
-After the `econ-write` pass is complete, start a third distinct new agent.
+After the `econ-write` pass is complete, start the clear-writing assignment.
 
-Require this agent to read completely:
+Resolve the current `writing-clearly-and-concisely` skill from the available skill catalog. Require
+this agent to read its `SKILL.md` and every task-required reference completely. The expected current
+locations are:
 
   /Users/fduarte/.codex/skills/writing-clearly-and-concisely/SKILL.md
   /Users/fduarte/.codex/skills/writing-clearly-and-concisely/elements-of-style.md
 
-The agent must inspect every sentence, caption, note, heading, and table entry.
+If either expected file moved, use the catalog-resolved location. If the skill or a required reference
+is absent or unreadable, record a blocker. The agent must inspect every sentence, caption, note,
+heading, and table entry.
 
 It must check:
 
@@ -668,7 +781,7 @@ Confirm:
 - no section contradicts another section;
 - tables agree with prose;
 - captions agree with tables;
-- equations agree with active code;
+- equations agree with checkout-source-selected code;
 - source locators exist;
 - the runner ledger agrees with the route summary;
 - the option table agrees with the input inventory;
@@ -677,15 +790,26 @@ Confirm:
 - requested cache mode is not confused with a realized cache outcome;
 - “attempted,” “completed,” “passed,” and “produced” remain distinct;
 - separate entrypoints are not described as runner options;
-- uncalled helpers are not described as active code;
+- uncalled helpers are not described as part of the checkout-source-selected active path;
 - unimplemented functionality is not described as optional;
 - no historical value survived without current source evidence.
 
-Run a final independent exact-hash fidelity regression after all prose passes. At minimum, require fresh active-path, input/options, and alternative-path reviews of the final hash. Use PAL Claude and Fable again if the final TeX differs materially from the snapshot they reviewed.
+Run a final independent exact-snapshot fidelity regression after all prose passes. At minimum, require
+fresh active-path, input/options, and alternative-path reviews of the final hash. Repeat an external
+PAL review only for a scope whose previously reviewed text changed materially.
 
 ## Stage N: Compile, inspect, and synchronize
 
-Build with `latexmk -pdf`. The `-pdf` is mandatory, not decorative: this `latexmk` defaults to LaTeX→DVI, and the repository ships no `latexmkrc` to override that, so a bare `latexmk` exits 0 having written only a `.dvi` — the exit-status gate below passes while no PDF exists, and the failure surfaces later as a confusing `qpdf` error on a missing file. The repository’s own helper, `compile_latex_pdf()` in `scripts-paper/support/latex/table_pipeline.R`, passes `-pdf` for this reason. The preamble does not decide this; do not drop the flag on the strength of reading one. Build in a fresh directory under the run’s `docs/RUN/` directory.
+Preflight the available LaTeX engine, `latexmk` version and configuration, Poppler tools, `qpdf`, and
+fonts. Derive and hash the complete repository- or document-owned static dependency closure of the
+accepted TeX, including every local TeX fragment, image, bibliography, style, class, and explicitly
+bundled font file. Record explicitly when it is standalone. Record external TeX packages, engines,
+and system fonts by resolved path and version; let the installed TeX runtime supply them rather than
+copying them. Create a fresh system temporary directory with `mktemp -d`, copy the exact accepted TeX
+snapshot and owned dependency closure while preserving their relative layout, and verify every
+copied hash. Build there with `latexmk -pdf`; keep `-pdf` explicit even if local configuration also
+selects PDF. Do not build inside the repository. Retain only the audit log and necessary renders in
+the current run directory.
 
 Do not invoke R during compilation.
 
@@ -696,12 +820,19 @@ Require:
 - no unresolved reference or citation;
 - no multiply defined label;
 - no fatal package error;
-- no overfull or underfull box left unexplained;
+- no unadjudicated LaTeX or package warning;
+- no visible or materially risky overfull box;
+- every remaining underfull-box warning classified by page and location and confirmed harmless by
+  visual inspection;
 - balanced document environments;
 - every `\ref` target defined;
-- no visible `??` marker;
-- stable page count after the final build;
-- `qpdf --check` success.
+- no unresolved-reference marker in extracted text or rendered pages;
+- stable page count across a final no-edit rebuild;
+- `qpdf --check` success;
+- all used fonts embedded, with expected families and encodings present and no unexplained
+  substitution, as confirmed with `pdffonts`;
+- every link annotation enumerated by page and subtype, every internal destination resolved, and
+  every external URI nonempty and consistent with the TeX source.
 
 Render every page with Poppler or an equivalent PDF renderer.
 
@@ -725,24 +856,39 @@ Inspect:
 - font substitution;
 - illegible text.
 
-Fix every visual defect and rebuild. A successful compiler exit does not prove visual correctness.
+Fix every material visual defect caused by the TeX and rebuild. Record harmless engine warnings with
+their page, location, and visual evidence. A successful compiler exit does not prove visual
+correctness.
 
 When the build passes:
 
 1. Copy the accepted PDF to `docs/run_pipeline_code.pdf`.
 2. Verify that the canonical PDF is byte-identical to the accepted build.
 3. Record final TeX and PDF hashes, sizes, and page count.
-4. Recompute the frozen production-source hashes.
-5. Confirm that production source did not change.
-6. Confirm that no R process, pipeline command, reset, cache mutation, output mutation, or manifest instantiation occurred.
-7. Confirm that only permitted files under `docs/` changed.
-8. Leave all reports and renders under `docs/`.
+4. Recompute the audited-source-universe manifest and confirm that it did not change.
+5. Recompute the protected generated-state metadata manifest. Explain every difference and confirm
+   that no task command caused it; do not inspect file contents.
+6. Attest from the commands launched by this workflow that it did not run R or a pipeline command,
+   reset state, read cache or output contents, mutate pipeline state, or instantiate a manifest.
+7. Compare final Git status with the complete initial status. Attribute every new or changed path and
+   confirm that this workflow changed only the two canonical targets and created only run-directory
+   records. If an enclosing Stage O runs the sibling math-document task concurrently, treat only its
+   assigned TeX and prompt-authorized records as permitted concurrent external changes; do not inspect
+   or modify that sibling's target.
+8. After retaining the accepted evidence and synchronizing the PDF, remove only the exact system
+   temporary directory created by this workflow. First verify that it is outside the repository and
+   matches the recorded `mktemp` path.
+9. Finalize all reports, logs, and retained renders in the current run directory.
+10. As the last run-directory write, create a sorted path, size, and hash manifest for every other
+    file there. List the manifest's own path as the sole deliberate self-reference exclusion, then
+    verify that no later run-directory write occurs.
 
 ## Final acceptance criteria
 
 Do not declare completion unless all conditions hold:
 
-- The exact plain-invocation route is explicit.
+- The checkout-source plain-invocation route is explicit, and installed-package parity is either
+  proved or clearly marked unverified.
 - Every top-level runner action and guarded driver body is accounted for.
 - Every user-controlled input is documented with its default, alternatives, validation, and downstream effects.
 - Every tracked decision and source-fixed control family is documented.
@@ -760,11 +906,15 @@ Do not declare completion unless all conditions hold:
 - The `econ-write` pass is complete.
 - The `writing-clearly-and-concisely` pass is complete.
 - The orchestrator has reconciled every pass critically.
-- The final exact hash passes source-fidelity review.
-- The TeX compiles cleanly.
+- The final exact snapshot passes source-fidelity review.
+- The TeX passes the adjudicated compilation gate.
 - Every PDF page has been inspected.
 - The canonical PDF matches the accepted build.
-- No production code or pipeline state was modified.
+- The complete audited-source-universe manifest is unchanged.
+- The protected generated-state metadata comparison has no unexplained task-attributable difference.
+- The current-run-directory manifest accounts for every working record.
+- The task command audit and baseline-to-final tracked-status comparison attribute no production-code
+  or pipeline-state change to this workflow.
 - No commit or push occurred.
 
 ## Final response
@@ -779,8 +929,12 @@ Report:
 - the exact review passes completed;
 - the decisive compilation and `qpdf` output;
 - the number of rendered pages inspected;
-- confirmation that no R or pipeline code ran;
-- confirmation that outputs, caches, and manifests remained untouched;
+- the installed-package parity evidence or explicit unverified-runtime caveat;
+- a procedural attestation that this workflow launched no R or pipeline command;
+- a procedural attestation that no task command read output or cache contents, wrote pipeline state,
+  or instantiated a manifest;
+- the baseline-to-final Git-status comparison and every task-attributable changed or new path;
+- the protected-state metadata comparison and current-run-directory manifest;
 - confirmation that no commit or push occurred;
 - any unresolved blocker or validation limitation.
 
