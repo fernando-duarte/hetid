@@ -22,16 +22,16 @@ This manual gives equations and numerical rules for reproducing a U.S. consumpti
 analysis. A stochastic discount factor (SDF) weights future payoffs across states. Treasury yields
 and term premia determine expected-SDF and SDF-news series. Principal components summarize series
 that move together. Consumption growth and supplied return principal-component scores enter
-separately. Realized yield volatility serves as the mean-equation instrument. The resulting
-restrictions define the mean identified set of admissible coefficients. Four conditional-scale
-estimator mappings carry that set into conditional-scale estimates, which describe the size of
-unexplained consumption growth. A 10,000-draw circular moving-block bootstrap resamples consecutive
-quarter blocks for inference, and two plug-in calculations bound approximation-error variance. Part
-I defines the current configuration, comparisons, and sensitivity checks. Part II catalogues
+separately. Realized yield volatility is the mean-equation instrument. The resulting
+restrictions define the mean identified set of admissible coefficients. Conditional-scale estimator
+mappings, three unconditional and one requiring an external numerical reference, carry that set into
+estimates of unexplained consumption growth. Two 10,000-draw circular moving-block resampling
+families, at the primary block length and at twice that length, support inference and its
+sensitivity check, and two plug-in calculations bound approximation-error variance. Part
+I defines the current configuration; Part II catalogues
 permitted modifications and unavailable extensions. Exact repository-independent reproduction
-remains uncertified because some inputs lack immutable public identities, some principal-component
-constructions lack absolute-sign rules, and some release-specific or numerical-library choices lack
-complete cross-language algorithms.
+remains uncertified because some inputs lack immutable public identities and some
+principal-component constructions lack absolute-sign rules.
 \end{abstract}
 
 \tableofcontents
@@ -93,8 +93,10 @@ mean equation and its identified sets. Map those sets into variance shares and t
 conditional-scale estimators. Run the selected diagnostics and decision gates. Use the bootstrap for
 inference on the mean equation, PPML, and Harvey QML. Finally, calculate the approximation-error
 bounds and the scientific tables and figures. The conditional-median calculation runs only when its
-selected external numerical reference passes the exact-release gate. The residual-dynamics branch
-continues only when its fresh diagnostic agrees exactly with the selected decision.
+selected external numerical reference passes the exact-release gate. The residual-dynamics check
+must reproduce its recorded evidence exactly; any disagreement stops the whole calculation. Under
+the selected configuration that check does not reject, so the volatility-dynamics workstream closes
+as a complete deliverable with no dynamic estimator.
 
 An exact reproduction specifies the observation window, input vintages, numerical conventions, and
 random-number stream before any calculation. An \emph{input vintage} is the exact version of an
@@ -103,18 +105,20 @@ of pseudo-random values produced by a stated pseudo-random-number generator and 
 \emph{seed} is the initial numerical value that determines the resulting random-number stream.
 
 Set the observation windows as follows. The PC window runs from 1962Q1 through 2025Q4. The
-preserved consumption series runs from 1947Q1 through 2026Q2, which retains the early observations
-needed for lags. Date matching and row deletion determine each final sample: remove any row
+preserved consumption series is a supplied snapshot of 318 quarterly observations spanning 1947Q1
+through 2026Q2; the early observations are retained because the analysis takes lags. Date matching and row deletion determine each final sample: remove any row
 missing a quantity required for that calculation and compute the observation count from the retained rows.
 
 Use the following inputs and precedence rules.
 
 \begin{enumerate}
-\item The monthly Treasury input contains U.S. zero-coupon yields and term premia by maturity. First
-use the recognized user-supplied Adrian--Crump--Moench (ACM) monthly 1--120 month replication asset when it exists. Its
-release or vintage is not recorded or verified, so this higher-precedence arm has no immutable
-external identity. Otherwise use the public \emph{ACM Term Premium 2026-06} monthly 1--120 month
-asset, which contains 780 observations from 30 June 1961 through 29 May 2026, at
+\item The monthly Treasury input contains U.S. zero-coupon yields and term premia by maturity. It
+resolves conditionally between two branches. Call each branch of a precedence rule an \emph{arm}.
+If a user-supplied copy of the recognized Adrian--Crump--Moench (ACM) monthly 1--120 month
+replication asset is present, use it; nothing records or verifies its release, so that arm carries
+no immutable external identity. Otherwise use the supplied copy of the public \emph{ACM Term Premium
+2026-06} monthly 1--120 month asset, whose release identity is recorded, and which contains 780
+observations from 30 June 1961 through 29 May 2026, at
 \url{https://github.com/fernando-duarte/ACM_term_premium/releases/download/acm-term-premium-2026-06/ACMTermPremium_replicated_monthly_1m_120m.csv.gz}.
 If neither monthly asset is available, stop. Do not infer from this static rule which arm a future
 reproduction selects.
@@ -127,8 +131,9 @@ is absent, obtain that exact asset; if its identity cannot be confirmed, stop.
 \item The consumption input is the quarterly U.S. real personal consumption expenditures series
 identified as PCECC96 and published at \url{https://fred.stlouisfed.org/series/PCECC96}. Use the
 required supplied snapshot with one observation per quarter from 1947Q1 through 2026Q2, measured in
-billions of chained 2017 dollars, seasonally adjusted at an annual rate. The public series page is
-mutable, and the supplied snapshot has no recorded immutable Federal Reserve Economic Data (FRED) or Bureau of Economic Analysis
+billions of chained dollars, seasonally adjusted at an annual rate. The preserved snapshot does not
+record the chained-dollar base year. The public series page is
+mutable, and the supplied snapshot has no recorded immutable Federal Reserve Economic Data or Bureau of Economic Analysis
 vintage and no public route guaranteed to return those exact observations. Exact
 repository-independent reproduction is therefore uncertified for this input.
 \item Use the first four scores in the supplied \emph{Nominal Financial-Asset Return
@@ -295,7 +300,7 @@ in percentage points. A zero-coupon yield is the discount rate implied by a bond
 payment at maturity and no interim coupon payments. An annualized rate is expressed at the rate that
 would apply over one year.
 
-The public June 2026 monthly fallback supplies 780 observations. The July 2026 daily panel begins on 14 June 1961 and
+The public \emph{ACM Term Premium 2026-06} monthly arm supplies 780 observations. The \emph{ACM Term Premium 2026-07} daily panel begins on 14 June 1961 and
 follows business days. Both panels span maturities from one month through
 ten years. Neither panel is trimmed by date when it is read; the observation windows of
 Section~\ref{sec:target} are imposed later, on the quarterly date. The daily panel supplies yields
@@ -440,15 +445,16 @@ removes only the sample mean of the squared term.
 
 The expected-SDF series uses an unpaired mean correction that equates two sample means without
 shifting either sequence to match the maturity horizon:
-\begin{equation}
+\begin{equation*}
  E_{i,t}=e^{n_{i,t}}+
  \operatorname{mean}_{t\in\mathcal G_i}
        e^{-\frac{h}{12}y_{h,t}/100}
        -\operatorname{mean}_{t\in\mathcal G_i}e^{n_{i,t}}.
- \label{eq:expected-sdf}
-\end{equation}
+\end{equation*}
 Here \(E_{i,t}\) is the scalar expected-SDF value for maturity \(i\) in quarter \(t\), and
-\(\mathcal G_i\) is the common finite index set for the two sample means.
+\(\mathcal G_i\) is the common finite index set for the two sample means. Both index sets are formed
+on the untrimmed quarterly panel, before the observation window of Section~\ref{sec:target} is
+imposed; that window applies only at the PC step.
 
 The unpaired mean correction has four implications. It applies to every integer maturity in the main
 maturity range, including integer maturities between consecutive multiples of three. It leaves a subsequently
@@ -467,8 +473,10 @@ of the expected-SDF series one quarter forward and rebuilding a complete matrix.
 only complete rows, has row count \(T_{EL}\), and has dimension \(T_{EL}\times115\). The SDF-news panel matrix contains
 \(N_{i,t}\) and has dimension \(T_N\times115\). Here \(T_N\) is its row count, and every row is complete. In
 each matrix, 115 is the number of integer maturities from 3 through 117. The three SDF panel matrices
-have different complete-row sets, because the one-quarter-forward relabelling precedes the fixed
-observation window, and they receive three separate PC constructions. An infinite
+may retain the same quarter labels, but the lagged panel's row for a given quarter carries the
+previous quarter's expected-SDF values, so its decomposition is estimated on a one-quarter-shifted
+set of underlying observations. Its loadings therefore differ from the current panel's, and it
+receives its own PC construction rather than a relabelling of the current one. An infinite
 retained value invalidates the corresponding PC construction.
 
 For any one SDF panel matrix \(\mathsf X^{\mathrm{PC}}\in\mathbb R^{T_s\times115}\), let \(T_s\)
@@ -522,8 +530,10 @@ SDF-news PC scores. Each vector belongs to \(\mathbb R^3\).
 
 Apply the \emph{lagged expected-SDF PC score sign alignment}
 only to the lagged expected-SDF PC scores: for each \(k\in\{1,2,3\}\), multiply \(F^{EL}_{kt}\) by the sign of its sample
-correlation with the one-quarter-lagged \(F^E_{kt}\). If that correlation is zero, retain a zero
-multiplier. A \emph{sign convention} chooses consistently between a PC and its negative. A
+correlation with the one-quarter-lagged \(F^E_{kt}\). Every one of these three correlations must be
+finite and nonzero; if any is not, stop the reproduction, because the sign is undefined at a zero
+correlation and a zero multiplier would void the corresponding component.
+A \emph{sign convention} chooses consistently between a PC and its negative. A
 \emph{PC loading} is a coefficient in the linear combination that defines a PC\@. Apply no further
 sign change to the current expected-SDF or SDF-news PC scores. Use the same binary64
 divide-and-conquer procedure for all three PC constructions and retain its raw signs. The current
@@ -542,7 +552,8 @@ intercept followed by the three lagged expected-SDF PC scores.
 \label{sec:meaneq}
 
 Let \(Y_{1t}=g_t\) denote the scalar consumption growth. The \emph{preliminary mean sample}
-contains the complete rows formed from consumption growth, lagged expected-SDF PC scores, and
+contains the complete rows, within the observation window of Section~\ref{sec:target}, formed from
+consumption growth, lagged expected-SDF PC scores, and
 SDF-news PC scores. Estimate the preliminary mean regression on this sample:
 \begin{equation}
  Y_{1t}=X_t'\gamma_X+Y_{2t}'\gamma_N+u_t^{O}.
@@ -580,7 +591,8 @@ the shape of this reference distribution. The null hypothesis states that the co
 zero. A \emph{p-value} is the probability, under that hypothesis, that the absolute test statistic
 is at least as large as its observed absolute value.
 
-The identification sample additionally requires the scalar instrument \(z_t\). This requirement
+The identification sample is formed within the same observation window and additionally requires the
+scalar instrument \(z_t\). This requirement
 removes every quarter in which the instrument is missing and the other three quantities are present. Sort this sample by quarter and refit
 equation~\eqref{eq:prelim-ols} as the \emph{mean least-squares benchmark}. All identification
 calculations use this sample. If
@@ -699,7 +711,18 @@ The correlation expression below interprets the restriction only at coefficient 
 \(\widehat{\operatorname{Var}}_T(z)>0\) and
 \(\widehat{\operatorname{Var}}_T\{e(\theta)W_{2k}\}>0\). Require
 \(s_k^2=\widehat{\operatorname{Var}}_T(W_{2k}^2)\) to be finite and strictly positive for every
-coordinate \(k\) before assembling the inequalities and stop otherwise. The quadratic inequalities
+coordinate \(k\) before assembling the inequalities and stop otherwise. Require \(S_k^{(0)}\),
+\(S_k^{(1)}\), and \(S_k^{(2)}\) to be finite as well. Stop also if the inequality weight \(w_k\)
+defined below is nonfinite, or if any entry of the assembled \(A_k\), \(b_k\), or \(c_k\) is
+nonfinite. Before assembling the
+inequalities, also check the two scale-free regularity ratios
+\(\widehat{\operatorname{Var}}_T(W_{2k}^2)/\widehat{\operatorname{Var}}_T(W_{2k})^2\) and
+\(\widehat{\operatorname{Var}}_T\{(W_1-\gamma W_{2k})W_{2k}\}/\widehat{\operatorname{Var}}_T(W_1W_{2k})\)
+at the scalar \(\gamma\in\mathbb R\) minimizing the numerator---equivalently, minimized only over
+structural SDF-news coefficient vectors whose sole nonzero coordinate is \(k\), not over all of
+\(\mathbb R^3\)---and report a diagnostic warning, without stopping, when
+either falls at or below \(10^{-8}\). A flagged coordinate indicates that the mean identified set
+may be degenerate or unbounded. The quadratic inequalities
 defined after the correlation expression are authoritative over all \(\theta\in\mathbb R^3\),
 including coefficient vectors at which the residual-product correlation is undefined. The slack
 \(\tau_k\) scales the permitted residual-product correlation wherever that interpretation is defined:
@@ -787,7 +810,7 @@ A \emph{slack profile} records lower and upper values and their endpoint states 
 values. Record zero slack with equal lower and upper entries taken from the zero-slack point, in the
 bounded endpoint state when that point passes the stated rank, finiteness, and equation-residual
 acceptance rules and in the unreliable endpoint state otherwise. In the separate coarse slack sequence that
-locates the critical slack, record zero slack as bounded with zero total width defined below and run no search.
+locates the critical slack, record zero slack as bounded with zero total width, both defined below, and run no search.
 
 \subsection{Endpoint searches and endpoint states}
 
@@ -913,7 +936,8 @@ start from the origin, the same six signed axis points, and the structural SDF-n
 vectors accepted at the immediately preceding display slack; the zero-slack point is not re-added. In
 later rounds, start from the vectors accepted in the preceding round, for at most four rounds in
 total and stop earlier as soon as a round produces no starting value that has not already been
-solved from. Remove duplicate starting values after rounding each coordinate to six significant
+solved from. Discard any starting value that is empty or has a missing coordinate, then remove
+duplicates after rounding each coordinate to six significant
 digits.
 
 The widening search uses the same relative iterate tolerance \(10^{-8}\), the same limit of
@@ -928,6 +952,9 @@ other state keeps both endpoint values and both endpoint states. The feasible co
 attained by its searches still enter the next round's starting values. Widen the identified ranges of the coefficients
 on the lagged expected-SDF PC scores only by applying
 equation~\eqref{eq:structural-recovery} to these accepted structural SDF-news coefficient vectors.
+Widen a design coefficient's identified range only when its own two endpoint states are both
+bounded; leave a design coefficient in any other state at the values and states its initial search
+produced.
 Leave unwidened any design coefficient whose loading vector \(\lambda_p\) has every entry no larger in
 absolute value than the largest absolute entry of \(\beta_{2R}\) times
 \(\sqrt{\epsilon_{\mathrm{mach}}}\), where \(\epsilon_{\mathrm{mach}}=2^{-52}\) is the binary64
@@ -955,7 +982,8 @@ transition from a numerically certified bounded mean identified set to a numeric
 proof of global behavior. The coarse slack sequence \emph{brackets} such a transition when one end is
 certified bounded and the other is certified unbounded. Ignore unreliable coarse-sequence values when
 forming the bracket. Use the largest certified bounded slack below the smallest certified unbounded slack as the initial
-lower endpoint, and that smallest certified unbounded slack as the initial upper endpoint. At a midpoint certified bounded or certified unbounded, replace the lower endpoint after a
+lower endpoint, or zero when no slack below it is certified bounded, and that smallest certified
+unbounded slack as the initial upper endpoint. At a midpoint certified bounded or certified unbounded, replace the lower endpoint after a
 bounded result and the upper endpoint after an unbounded result. Perform at most 40 bisections. The
 procedure imposes no separate bracket-width tolerance. When all 40 bisections run, report the
 midpoint of the final bracket, that is, one half of the sum of its lower and upper endpoints. If a midpoint is unreliable, leave the
@@ -1020,7 +1048,7 @@ Divide all four integers by 100.
 Apply this adjustment to the block of the lagged expected-SDF PC scores and to the block of the
 SDF-news PC scores, and only to the two fixed-coefficient columns, namely the mean least-squares
 benchmark column and the zero-slack point column. Never apply it to the joint variance share, whose
-row is not the sum of the two block rows, or to a positive-slack range column. Skip the adjustment
+row is not the sum of the two block rows, or to a positive-slack attained numerical variance-share range column. Skip the adjustment
 for a block in which any of the four values is nonfinite and print those cells unadjusted.
 The adjustment is defined only when the deficit is at least zero and at most three; stop the
 reproduction if it is not.
@@ -1028,7 +1056,8 @@ reproduction if it is not.
 For each display slack, approximate the ranges of all three variance shares over
 \(\Theta(\tau)\) with a \(101\times101\times101\) \emph{rectangular lattice}, a finite evenly
 spaced grid of structural SDF-news coefficient vectors spanning the finite
-\emph{coefficient box}: the rectangle whose side in coordinate \(\ell\) runs from the accepted lower
+\emph{coefficient box}: the rectangle, after the widening search of Section~\ref{sec:idset}, whose
+side in coordinate \(\ell\) runs from the accepted lower
 to the accepted upper identified endpoint of coordinate functional \(\ell\) over \(\Theta(\tau)\) at
 that slack. It is a different object from the expanding search boxes of
 Section~\ref{sec:idset}. Retain lattice points with \(\rho_Q(\theta)\le10^{-10}\). Use as
@@ -1036,7 +1065,9 @@ starting values the retained points attaining the share minimum and maximum and 
 coordinate minima and maxima. After removing duplicates, this rule supplies at most eight starting
 values. Stop the reproduction if the lattice retains no feasible point. If either side of the finite
 coefficient box is nonfinite, do not compute the range at all: report both endpoints missing and print
-the coefficient row's endpoint state in place of an interval.
+in place of an interval the endpoint state that share carries: for a block or joint share, the most
+severe state among the three structural SDF-news coefficient rows; for an individual contribution,
+its own coefficient row's state.
 
 Run both share minimization and share maximization from every starting value. Use sequential
 least-squares quadratic programming with the analytic share gradient and the finite coefficient box as
@@ -1077,7 +1108,7 @@ this object an \emph{interval-hull contribution range}. If the feasible coeffici
 disconnected and its interval hull crosses zero without containing a feasible zero, its reported
 lower endpoint is still zero and need not be attained over the mean identified set.
 
-Label the variance-share ranges as attained numerical ranges. Reserve
+Label the variance-share ranges \emph{attained numerical variance-share ranges}. Reserve
 \emph{certified global range} for a range supported by a global proof. A \emph{lattice
 projection} is the collection of feasible values found on the stated finite lattice. The same
 qualification applies to lattice-based calculations. The three-dimensional rendering instead
@@ -1099,8 +1130,8 @@ Here \(H_t^{(\mathrm{PC})}\in\mathbb R^3\) is the SDF-news PC-score vector and
 \(H_t^{(\mathrm{RF})}\in\mathbb R^3\) is its reported-specification reduced-form residual vector.
 Let \(s\in\{\mathrm{PC},\mathrm{RF}\}\) identify the system. The reduced-form-residual system is the
 one whose conditional second moments directly provide the curvature used for identification; the
-PC-score system is a separate reported diagnostic. Select the Anscombe regime separately for the
-two systems.
+PC-score system is a separate reported diagnostic. Decide separately for the two systems whether the
+studentized Anscombe test runs, by the rule stated below.
 
 \emph{Heteroskedasticity} means that a regression error's conditional variance changes with observed
 variables. Except for the first-order autoregressive conditional heteroskedasticity, or ARCH(1),
@@ -1317,11 +1348,13 @@ eigenvalue and measures the matrix's weakest linear direction.
 
 Join the identification sample to the four lagged supplied return scores by quarter and retain the
 matched rows in increasing quarter order. These rows form the \emph{conditional-scale sample}. Let the positive integer \(T_v\) be its
-observation count. Its count and span are determined by the selected monthly ACM arm and the
-complete-row joins; do not fix them before the inputs have been selected.
+observation count. Its count and span are determined by every selected input---the monthly and daily
+Treasury arms, the preserved consumption snapshot, and the supplied return scores---together with
+the observation window and the complete-row and matched-row rules; do not fix them before the inputs
+have been selected.
 The join deletes no row on account of a nonfinite value, so the sample definition above is exact. A
 nonfinite value carried into the conditional-scale design makes the linear system that defines the
-conditional-scale estimator mapping unsolvable, and the reproduction stops there. Estimate the two reduced forms on the identification
+conditional-scale estimator mapping, defined below, unsolvable, and the reproduction stops there. Estimate the two reduced forms on the identification
 sample before the join, then restrict the
 resulting \(W_{1t}\) and \(W_{2t}\) to the matched rows.
 
@@ -1389,7 +1422,7 @@ start point remains missing.
 For PPML and Harvey QML, visit the retained lattice points in greedy nearest-neighbor order. Begin
 at the retained point with the smallest squared Euclidean distance to the search start point; from the
 current point move to the nearest unvisited retained point; break either tie toward the point that
-comes first in lattice order. After each accepted fit, pass its conditional-scale coefficient vector
+comes first in lattice order, defined below. After each accepted fit, pass its conditional-scale coefficient vector
 to the next point as that point's supplied warm starting value. Across all display slacks, evaluate
 the PPML or Harvey QML mapping at each distinct structural coefficient vector at most once. At each
 slack, impose the estimator-specific cap on evaluations at coefficient vectors not evaluated at an
@@ -1416,7 +1449,10 @@ coordinate at which they differ. Define the positive scalar lattice-extreme scal
  g_j=\max\{1,|v_{j,\min}^{\mathrm{lat}}|,|v_{j,\max}^{\mathrm{lat}}|\},
 \end{equation*}
 taking the maximum over whichever of the two lattice extremes is finite, so that \(g_j=1\) when
-neither is.
+neither is. This \(g_j\) carries no argument and is indexed by a conditional-scale coefficient
+\(j\in\{1,\ldots,5\}\). It is a different quantity from the inequality left-hand side
+\(g_k(\theta)\) of Section~\ref{sec:idset}, which takes a coefficient-vector argument and is indexed
+by an SDF-news coordinate \(k\in\{1,2,3\}\).
 
 The \emph{conditional-scale endpoint-refinement procedure} refines one coefficient \(j\) and one
 endpoint side at a time. Its starting values are the corresponding attained lattice extreme, then the
@@ -1428,7 +1464,7 @@ coefficient box's Euclidean diagonal from every already-accepted point, stopping
 accepted points the invoking subsection states. The first acceptance is the attained lattice extreme
 itself, which is already a starting value, so a count of three supplies two further starting values and three
 lattice-derived starting values in all. The primary refinements of PPML, Harvey QML, and LAD use three; their
-audits use five, as their subsections state. Log-OLS uses no such pool, so for it the attained lattice extreme is the only
+audits use five, as their own sections state. Log-OLS uses no such pool, so for it the attained lattice extreme is the only
 lattice-derived starting value.
 
 For log-OLS, PPML, and Harvey QML, refine each lower and upper endpoint by sequential least-squares
@@ -1455,7 +1491,7 @@ reported interval produced by this procedure an \emph{attained numerical conditi
 it is an inner approximation to the exact projection and not a globally certified identified range.
 
 Two further acceptance rules apply across slacks once every slack has been solved. The
-\emph{nesting rule} requires each attained numerical range not to shrink as the slack rises, and the
+\emph{nesting rule} requires each attained numerical conditional-scale range not to shrink as the slack rises, and the
 \emph{containment rule} requires the accepted zero-slack point to lie inside every positive-slack
 range. Both compare at relative tolerance \(10^{-6}\), and a coefficient side that fails either takes
 the unreliable endpoint state.
@@ -1603,8 +1639,8 @@ The corresponding information matrix is
 \begin{equation*}
  A_P(\eta)=\sum_{t=1}^{T_v}v_t(\eta)X_t^VX_t^{V\prime}.
 \end{equation*}
-The information matrix \(A_P(\eta)\in\mathbb R^{5\times5}\) is symmetric and measures the local
-sensitivity of the PPML estimating equation to changes in the conditional-scale coefficient vector.
+The information matrix \(A_P(\eta)\in\mathbb R^{5\times5}\) is symmetric and measures how strongly
+the PPML estimating equation responds to changes in the conditional-scale coefficient vector.
 Allow exact zero squared structural mean residuals, but require at least one positive squared
 structural mean residual.
 
@@ -1698,7 +1734,9 @@ Jacobian is returned at that structural SDF-news coefficient vector. The refinem
 unchanged by that outcome, because the choice between the gradient-based and the derivative-free
 procedure is made once per coefficient from whether the conditional-scale estimator mapping supplies
 an analytic Jacobian at all, before any fit runs. An evaluation already performed at the same
-coefficient vector does not count again toward the new-evaluation cap. The primary PPML
+coefficient vector does not count again toward the new-evaluation cap. The primary refinement uses
+three separated lattice-derived starting values per side, by the separation rule of
+Section~\ref{sec:logvar-scale}. The primary PPML
 conditional-scale estimator mapping uses at most 4,000 lattice points and permits 20,000 new
 mapping evaluations at each slack. An independent \emph{PPML coverage audit} uses up to 8,000
 lattice points and permits 40,000 new mapping evaluations at each slack. For each coefficient and endpoint side, rank
@@ -1814,9 +1852,29 @@ residual's absolute coordinates, the corrected value \(5\times10^{-9}-5\times10^
 exceed \(\rho_H\). If any of the three parts fails, perform no lattice construction and no search at
 that slack: report every Harvey QML conditional-scale endpoint value as missing and assign every one
 of them the unreliable endpoint state. The self-test reads no data beyond \(X^V\), so its verdict is
-the same at every display slack. Require the selected conditional-scale design to have numerical
-column rank five; stop before Harvey QML if it does not. Treat the three self-test outcomes as
+the same at every display slack. Require the cross-product \(X^{V\prime}X^V\) of the
+conditional-scale design to admit a Cholesky factorization, so the design has full column rank five;
+stop before Harvey QML if it does not. This is a distinct test from the numerical rank defined
+below, which enters only the recession classification. Treat the three self-test outcomes as
 acceptance conditions to verify, not as predetermined results.
+
+Before constructing the Harvey QML estimator, and once only, verify a stability precheck that
+performs no minimization. Form three pairs of a squared-structural-mean-residual sequence and a
+starting coefficient vector: the mean least-squares benchmark squared residuals from their own
+intercept-only start \((\log\bar q,0,0,0,0)'\), where \(\bar q>0\) denotes here the mean of that
+pair's own squared-residual response, which Harvey QML never normalizes; the normalization-anchor squared residuals from the
+accepted zero-slack PPML coefficients, included only when that PPML fit exists; and the
+normalization-anchor squared residuals from their own intercept-only start. For each pair require
+all of the following. The objective and its gradient are finite at the starting vector, the
+objective being evaluated over the quarters whose squared structural mean residual is strictly
+positive. The fitted conditional variance is finite and strictly positive at \emph{every} quarter of
+the conditional-scale sample, not only at those quarters. The observed information matrix
+\(A_H\) is finite. And one trial step again yields a finite objective, where that step adds to the
+starting vector the solution of the linear system whose matrix is the design cross-product
+\(X^{V\prime}X^V\) and whose right-hand side is the current moment vector. That step is a
+Fisher-scoring step: up to a positive constant, \(X^{V\prime}X^V\) is the \emph{expected}
+information, which is not the observed information \(A_H\) checked in the preceding condition. Stop
+before Harvey QML if any pair fails.
 
 Perform a recession-direction check before minimization exactly when at least one squared structural
 mean residual is exactly zero; when every squared structural mean residual is strictly positive, the
@@ -1828,8 +1886,9 @@ Euclidean norm and counting the singular values of the result that exceed \(10^{
 value. Two branches of the recession classification are immediate. If every squared structural mean
 residual is strictly positive and the design \(X^V\) has numerical rank five, the verdict is
 passing. If no squared structural mean residual is strictly positive, the verdict is a certified
-negative recession direction, witnessed by the direction with coordinates
-\(-\operatorname{sign}(c_j^H)\), whose rate is \(-\sum_{j=1}^5|c_j^H|\).
+negative recession direction, witnessed by the direction whose coordinate \(j\) is
+\(-\operatorname{sign}(c_j^H)/d_j^{H,Z}\)---that is, \(-\operatorname{sign}(c_j^H)\) in the
+normalized coordinates of \(Z^H\)---whose rate is \(-\sum_{j=1}^5|c_j^H|\).
 
 In every remaining case at least one squared structural mean residual is exactly zero and at least
 one is strictly positive, and the verdict comes from a facet certification. Examine all ten facets
@@ -1839,10 +1898,16 @@ be scaled onto one of these facets, so the direction coordinates are bounded by 
 minimize \((c^H)'u\) over \(Z_+^Hu\ge0\), \(u_j=\sigma\), and \(-1\le u_\ell\le1\). Apply the following
 classifications in order. A feasible value below \(-\rho_H\) is a negative recession direction.
 Otherwise, a feasible value at most \(\rho_H\) is a zero-rate direction. A feasible value above
-\(\rho_H\) is a certified positive facet when a dual lower bound confirms it. A dual lower bound is
+\(\rho_H\) is a certified positive facet when a dual lower bound both exceeds \(\rho_H\) and agrees
+with that value to the certification tolerance. A dual lower bound is
 no larger than the minimum on that facet. An infeasible facet is certified infeasible when a phase-I
-bound confirms it. A phase-I bound is the matching bound for the smallest constraint violation.
-Every other result is unresolved. The Harvey recession-classification certificate subsection of Part~II states those bounds, their
+bound confirms it. A phase-I bound is the matching bound for the smallest constraint violation. If
+instead the phase-I minimum is at most the certification tolerance, the facet is feasible after all:
+solve its minimum again and apply the same three classifications, so a value below \(-\rho_H\) is a
+negative recession direction, a value at most \(\rho_H\) is a zero-rate direction, and anything else
+is unresolved.
+Every other result is unresolved. The Harvey recession-classification certificate entry in the
+conditional-scale estimators and inference section of Part~II states those bounds, their
 starting values, and their tolerances. The
 verdict is a certified negative recession direction as soon as one facet is a negative recession
 direction; otherwise it is a zero-rate direction when at least one facet is a zero-rate direction;
@@ -1938,8 +2003,10 @@ The same implicit differentiation applied to the first-order condition gives
 Here the displayed Jacobian is a \(5\times3\) matrix measuring the response of the Harvey QML
 conditional-scale coefficient vector to the structural SDF-news coefficient vector.
 
+The primary refinement uses three separated lattice-derived starting values per side, by the
+separation rule of Section~\ref{sec:logvar-scale}.
 The primary Harvey QML conditional-scale estimator mapping uses a 4,000-lattice-point cap and permits
-20,000 new mapping evaluations at each slack. Then run a separate \emph{Harvey sensitivity audit}
+20,000 new mapping evaluations at each slack. Then run a separate \emph{Harvey QML coverage audit}
 with up to 4,000 lattice points and 40,000 new mapping evaluations at each slack. For each endpoint,
 use five separated lattice-derived starting values plus the declared search start point, following the
 PPML separation rule. The audit begins with no prior mapping evaluations and evaluates each distinct
@@ -1980,6 +2047,10 @@ two-sided standard-normal p-value
 \section{Conditional-scale checks and residual-dynamics closure}
 
 \subsection{Joint-null compatibility check}
+
+This subsection reuses two endpoint-state names for a slack's compatibility outcome: a slack is
+\emph{bounded} when its selected candidate survives every rule stated here, and \emph{unreliable}
+otherwise. No endpoint search is involved, so neither word refers to an endpoint state here.
 
 The hypothesis that the supplied return scores do not shift the conditional scale of the structural
 mean residual requires the last four entries of a conditional-scale coefficient to be zero. For the log-OLS conditional-scale estimator mapping, let
@@ -2119,7 +2190,7 @@ If any of the eight fails, the slack is unreliable with compatibility not demons
 basin count as one plus the number of refined candidates that were feasible with a finite objective
 and did not reproduce \(\widehat\theta\).
 
-Record a maximum-norm sensitivity alongside the selected candidate. Pool the selected candidate, the
+Record a \emph{maximum-norm improvement check} alongside the selected candidate. Pool the selected candidate, the
 best lattice candidate, every separated starting value, the best refined candidate, and every refined candidate, keeping the finite ones; evaluate \(D_0\) and \(\varsigma\) at each. Let
 \(\varsigma^\star\) be the smallest pooled value of \(\varsigma\), attained at the pooled candidate
 \(\theta^\star\). Record \(\varsigma(\widehat\theta)\), \(\varsigma^\star\), the provenance of
@@ -2127,7 +2198,7 @@ best lattice candidate, every separated starting value, the best refined candida
 ordered by \(\varsigma\), the rank of \(\theta^\star\) among them ordered by \(D_0\), the absolute gap
 \(\varsigma(\widehat\theta)-\varsigma^\star\), and the relative gap
 \(\{\varsigma(\widehat\theta)-\varsigma^\star\}/\max(10^{-6},\varsigma^\star)\), ranking ties by the
-smallest rank. The sensitivity triggers when \(\|\theta^\star-\widehat\theta\|_2>10^{-12}\), the
+smallest rank. The improvement check triggers when \(\|\theta^\star-\widehat\theta\|_2>10^{-12}\), the
 absolute gap exceeds \(10^{-5}\), and the relative gap exceeds \(0.10\). On a trigger, refine
 \(\varsigma^\star\) by minimizing an auxiliary scalar \(\varpi\ge0\) subject to
 \(\operatorname{sd}_{T_v-1}(r_j)|\eta_{R,j}(\theta)|\le\varpi\) for \(j=1,\ldots,4\) and
@@ -2138,7 +2209,7 @@ objective evaluations, and confine every normalized coordinate to \([-10^{6},10^
 solution only when its recomputed point satisfies \(\rho_Q\le10^{-4}\), its recomputed \(\varpi\) is
 at least \(-10^{-8}\), and its recomputed \(\varsigma\) is at most
 \(\varpi+10^{-8}\max(1,\varpi)\); keep it only if it strictly lowers \(\varsigma\). Record the
-sensitivity as refined when a solution is kept, as attained from the starting values alone otherwise,
+improvement check as refined when a solution is kept, as attained from the starting values alone otherwise,
 and as not triggered whenever the slack is unreliable. The joint-null compatibility check remains a
 diagnostic rather than a statistical hypothesis test or a certificate of the global minimum.
 
@@ -2224,14 +2295,14 @@ estimation uncertainty. It is therefore an approximate specification diagnostic,
 model-selection test. A rejection can reflect mean misspecification, omitted predictors, timing
 errors, or structural breaks; a non-rejection does not establish the absence of variance dynamics.
 
-For descriptive sensitivity, collect the structural SDF-news coefficient vectors that attain the
+As a \emph{descriptive robustness check}, collect the structural SDF-news coefficient vectors that attain the
 bounded lower and upper sides, in that order, of every reported log-OLS conditional-scale
 coefficient range at each slack; then append the zero-slack coefficient vector. Preserve slack,
 coefficient, and side order and retain only the first occurrence of any exact duplicate. Recheck
-each vector's dimension and finiteness. Exclude a
-vector, while stating the reason, when it produces a zero structural mean residual or a nonfinite
-log-OLS residual. Otherwise calculate its Ljung--Box p-values at lags 1, 4, and 8. These sensitivity
-values provide context only and never change the zero-slack verdict.
+each vector's dimension and finiteness, and exclude it, while stating the reason, when that recheck
+fails, when it produces a zero structural mean residual, or when it produces a nonfinite
+log-OLS residual. Otherwise calculate its Ljung--Box p-values at lags 1, 4, and 8. These p-values
+provide context only and never change the zero-slack verdict.
 
 Compare only the lag-4 p-value with 0.05. A finite p-value below 0.05 gives the \emph{reject
 residual-dynamics outcome}; a finite p-value at least 0.05 gives the \emph{non-reject
@@ -2283,8 +2354,9 @@ the LAD numerical reference fixes. Then scan eligible
 working rows in their current pivot-table order and retain the first row that attains the strictly
 smallest ratio. Every pivot swaps rows and columns, so later ties follow the updated pivot-table
 order. Verify release 6.1, preserve the initial observation and design-column orders, give every
-observation equal weight, and calculate no confidence interval from this fit. Set the Barrodale--Roberts numerical tolerance to
-\(\epsilon_{\mathrm{mach}}^{2/3}=2^{-104/3}\). Stop if the design has fewer than five linearly
+observation equal weight, and calculate no confidence interval from this fit. The
+Barrodale--Roberts numerical tolerance is release 6.1's default,
+\(\epsilon_{\mathrm{mach}}^{2/3}=2^{-104/3}\); it is not overridden. Stop if the design has fewer than five linearly
 independent columns.
 
 Use a Frisch--Newton interior-point fit only as a nonuniqueness check. The method approaches the
@@ -2318,8 +2390,8 @@ different when
 The vectors \(\widehat\eta_A^{BR},\widehat\eta_A^{FN}\in\mathbb R^5\) are the two coefficient
 selections. Always retain the Barrodale--Roberts selection.
 
-The current LAD decision is approved and requires release 6.1 of the selected median-regression
-numerical reference. If that exact release is available, perform every LAD calculation in this
+The current LAD decision is approved and requires release 6.1 of the LAD numerical
+reference. If that exact release is available, perform every LAD calculation in this
 section. If it is absent or has another release, stop before LAD rather than substitute a different
 procedure or omit LAD silently. The selected reference fixes the coefficient selection when several
 vectors minimize the same objective. Because its pivot criterion, initialization, and iteration cap
@@ -2366,7 +2438,7 @@ argument once from a cold starting value that ignores every preceding evaluation
 and assign that side the unreliable endpoint state when the refitted coefficient is nonfinite or when
 \(|v_C-v_P|>10^{-9}\max\{1,|v_P|\}\), with \(v_C\) the cold-start coefficient and \(v_P\) the
 accepted coefficient. Skip this replication on a side already carrying the unbounded or unreliable
-endpoint state. LAD supplies attained numerical ranges, a table, and figures of the conditional median
+endpoint state. LAD supplies attained numerical conditional-scale ranges, a table, and figures of the conditional median
 absolute-residual scale. Exclude LAD from all bootstrap calculations.
 
 Before any search at a display slack, apply the hyperplane-intersection check of
@@ -2506,7 +2578,18 @@ tail coefficient's variation explained by its fitted linear relation with \(M_s\
 \label{sec:bootstrap}
 
 Use \(B=10{,}000\) bootstrap draws. Here \(B\) is the positive integer number of bootstrap draws.
-The current publication calculation accepts no other draw count.
+The current publication calculation refuses any other draw count unless a reduced count is
+explicitly acknowledged, because a reduced count would replace published numbers with numbers that
+cannot be reproduced.
+
+The resampled results may be carried over from an earlier calculation rather than recomputed. Reuse
+is the selected behavior. Accept preserved draws only when their recorded provenance agrees with
+the current request on every scientifically relevant identity: the identification sample, the block
+lengths, the draw count, the seed, and the estimation procedures that produced them. When that
+agreement fails, discard the preserved draws and resample in full. The reported quantities are the
+same either way, with one exception a reproducer must know: the agreement conditions deliberately
+exclude the presentation settings of Section~\ref{sec:outputs}, so reused draws may have been
+produced under earlier presentation settings than the tables that display them.
 
 A \emph{circular moving-block bootstrap} repeatedly samples
 consecutive runs of quarters and wraps the sample end back to its beginning, thereby preserving
@@ -2607,7 +2690,7 @@ reduced-form residual, the three re-estimated SDF-news reduced-form residuals, t
 the four lagged supplied return scores. Residual finiteness is not an additional row-selection condition. Fit PPML
 first and Harvey QML second because the Harvey QML initialization depends on the PPML fit.
 
-At zero slack, solve the linear system and evaluate each requested coefficient functional directly.
+At zero slack, solve the linear system and evaluate each requested coordinate and design functional directly.
 At each positive slack, construct a 41-by-41-by-41 coordinate lattice and retain feasible points in
 lattice order, with the first structural SDF-news coefficient changing fastest. If fewer than 100
 points are feasible, replace this lattice once with an 81-by-81-by-81 lattice. If \(m_G>1500\)
@@ -2835,7 +2918,7 @@ suppress it whenever either original-sample endpoint has a state other than boun
 whatever the other endpoint's state.
 
 Mean-equation coefficient tables do not display half-infinite identified ranges. Conditional-scale
-tables may display half-infinite attained numerical ranges and their associated half-infinite
+tables may display half-infinite attained numerical conditional-scale ranges and their associated half-infinite
 confidence intervals.
 
 Two calculations based on normal reference distributions serve only as comparison checks. Calculate
@@ -2956,8 +3039,10 @@ both \(y_{h,t+k_i}\) and \(n_{i-h,t+1}\) are not missing. Let \(K_{2i}\) be the
 mean of \((\Delta q_{i,t+1})^4\) over its nonmissing values with
 \(t=1,\ldots,T_a-k_i\). The three components \(\mathcal E_i^N\), \(K_{1i}\) and \(K_{2i}\) share the
 index range \(t=1,\ldots,T_a-k_i\) and each applies its own nonmissing mask; the three masks are in
-general different sets. At \(i=h\),
-set \(K_{1i}=0\). The
+general different sets. At \(i=h\) the two legs of \(K_{1i}\) coincide, because \(n_{i-h,t+1}\) is
+then the realized log price at \(t+1\) of the bond whose maturity is \(h\) months, which is the same
+quantity as \(-\tfrac{h}{12}y_{h,t+k_i}/100\) at \(k_i=1\). Hence \(K_{1i}=0\) identically, and the
+leading-term candidate reduces to its strictly positive \(K_{2i}\) contribution. The
 leading-term candidate bound is
 \begin{equation*}
  U_{i,\mathrm{lead}}^N=\frac14\mathcal E_i^N(K_{1i}+K_{2i}).
@@ -3071,7 +3156,7 @@ For the quoted-yield calculation, let \(y_{h,t}/400\) be the annualized three-mo
 from percentage points to a one-quarter decimal rate. Use all \(T_a\) quarters of the approximation
 sample, in which the three-month yield must have no missing value, giving \(T_a-1\) first differences.
 Its typical quarterly move is the ordinary sample standard deviation of those first differences, and
-must be finite and strictly positive. Divide the maximum error standard deviation in decimal units by
+must be finite and strictly positive. Divide the maximum approximation-error standard deviation in decimal units by
 that typical move and multiply by 100. The comparison is meaningful because a move of the one-quarter
 yield by \(\mathrm dy\) moves the one-quarter bond price, and hence the stochastic discount factor
 level, by approximately \(\mathrm dy\) times a price close to one.
@@ -3079,7 +3164,8 @@ level, by approximately \(\mathrm dy\) times a price close to one.
 The \emph{quoted-number acceptance rules} compare three reproduced quantities with fixed acceptance
 values and impose two additional inequalities. The fixed acceptance values are \(4.19\times10^{-9}\) for the maximum SDF-news plug-in approximation-error variance bound,
 \(3.19\times10^{-9}\) for the maximum paired expected-SDF plug-in approximation-error variance bound, and 0.00239 for the typical quarterly
-yield move. Use absolute tolerance \(5\times10^{-12}\) for each variance bound and
+yield move. Each reproduced value must differ from its acceptance value by strictly less than an
+absolute tolerance of \(5\times10^{-12}\) for the two variance bounds and
 \(5\times10^{-6}\) for the typical quarterly yield move. The maximum approximation-error standard
 deviation must also remain below 0.7 basis points and
 below 3 percent of the typical move. Check every one of these five rules before producing any
@@ -3123,7 +3209,7 @@ sum of squares divided by \(N_{\mathrm{pm}}-1\), where seven is the number of es
 coefficients. The preliminary mean regression is not a substitute for the mean least-squares
 benchmark's four-lag covariance calculation.
 \item Produce six published tables: two tables of the mean-equation identification diagnostics,
-one conditioning on the SDF-news principal components and the other on the SDF-news reduced-form residuals;
+one conditioning on the SDF-news PC scores and the other on the SDF-news reduced-form residuals;
 a combined mean-equation and conditional-scale inference table; a conditional-scale estimator table;
 a variance-share table; and a plug-in approximation-error variance-bound summary. The two diagnostic
 conditioning choices coincide only under the orthogonality null. The
@@ -3157,7 +3243,7 @@ the mean identified set at slacks 0.05, 0.10, 0.20, and 0.30. At each slack, ren
 units, each with and without the mean least-squares benchmark. Label every finite three-dimensional
 rendering as a triangulated numerical rendering of retained feasible points rather than as a globally
 certified mean identified set.
-\item Produce figures of attained numerical conditional-scale coefficient ranges for log-OLS, PPML, Harvey
+\item Produce figures of attained numerical conditional-scale ranges for log-OLS, PPML, Harvey
 QML, and LAD. The associated table pages follow these inference rules. In
 mean least-squares benchmark reference columns, log-OLS uses standard errors from its four-lag Bartlett analytic
 covariance and Student \(t\) p-values. PPML and Harvey QML use standard errors from their four-lag
@@ -3177,8 +3263,8 @@ projection of that set.
 
 In addition to the baseline figures, render sweep figures of fitted conditional standard deviations
 for PPML and Harvey QML\@. Solve the mean-equation coefficient boxes for these figures over the
-sorted union of the display slacks and the sweep slacks, running the same warm-start endpoint
-refinement of Section~\ref{sec:idset} at every slack of that union, so a sweep slack off the display
+sorted union of the display slacks and the sweep slacks, running the same widening search
+of Section~\ref{sec:idset} at every slack of that union, so a sweep slack off the display
 grid receives a full endpoint solve rather than an interpolated box. Drop any sweep slack that is not
 below the critical slack \(\tau^\star\) and render no figure for it. The sweep slacks are 0.05, 0.10, 0.20,
 0.30, and 0.40. Also render combined level and logarithmic-value figures and combined normalized
@@ -3188,17 +3274,20 @@ every corresponding two-sided envelope.
 \item Produce scientific diagnostic summaries for mean-equation and conditional-scale inference,
 the comparison between reported and comparison specifications, the joint-null compatibility witness,
 the stacked-moment replication check, the residual-dynamics calculation and its descriptive
-sensitivity, and the LAD one-sided closure limits. Describe the LAD limits
+robustness check, and the LAD one-sided closure limits. Describe the LAD limits
 as approximate limits at verified structural-mean-residual crossings rather than attained endpoints.
 \item Produce a plug-in approximation-error variance-bound figure and summary table across the 39
 maturities spaced three months apart, together with a record of the quoted-number acceptance rules.
 \end{enumerate}
 
 For standard-deviation-scaled mean identified set figures, let
-\(s_k^N=\operatorname{sd}_{T-1}(\{W_{2k,t}\}_{t=1}^{T})>0\) be the ordinary sample standard deviation
-of coordinate \(k\) of the SDF-news reduced-form residual vector over the identification sample, and
+\(s_k^N=\operatorname{sd}_{T-1}(\{Y_{2k,t}\}_{t=1}^{T})>0\) be the ordinary sample standard deviation
+of coordinate \(k\) of the SDF-news PC score vector over the identification sample, and
 let \(D_N=\operatorname{diag}(s_1^N,s_2^N,s_3^N)\). Here \(D_N\in\mathbb R^{3\times3}\) is the
-diagonal matrix of SDF-news reduced-form residual standard deviations on the identification sample.
+diagonal matrix of SDF-news PC score standard deviations on the identification sample. These are the
+standard deviations of the scores themselves, not of the SDF-news reduced-form residuals; the two
+coincide only when the reduced-form orthogonality restriction holds, which the reported mean
+specification does not impose.
 Plot the scaled coordinate \(\vartheta=D_N\theta\), where \(\vartheta\in\mathbb R^3\). In these
 coordinates, replace each quadratic inequality's terms by
 \begin{equation*}
@@ -3246,7 +3335,10 @@ lattice extremes for quarter \(t\). Define the positive fitted-log-scale lattice
 Minimize and maximize \(f_t(\theta)\) over the mean identified set. Use the shared conditional-scale
 endpoint-refinement procedure with the corresponding attained lattice extreme and search start point, and no
 further lattice-derived starting values. Replace \(g_j\) by \(g_t^f\) in the
-unreliable endpoint-state rule. Permit 80,000 new mapping evaluations at each slack. Convert the fitted log scale to a standard deviation with
+unreliable endpoint-state rule. Downgrade a side to the unreliable endpoint state when either
+\(\exp(X_t^{V\prime}\eta)\) or \(\exp(X_t^{V\prime}\eta/2)\) fails to be finite; this same
+finiteness downgrade applies to every conditional-scale envelope.
+Permit 80,000 new mapping evaluations at each slack. Convert the fitted log scale to a standard deviation with
 \(\exp(X_t^{V\prime}\eta/2)\). A finite zero-slack fitted value lies inside its two-sided envelope when its
 distance beyond either endpoint is no more than \(10^{-6}\max(1,|s_t^0|)\), where \(s_t^0>0\) is
 the zero-slack fitted scale.
@@ -3256,9 +3348,10 @@ part of the endpoint-refinement procedure above. Form a fresh lattice of 31 equa
 along each structural SDF-news coefficient, spanning that coefficient's range in the baseline-slack
 coefficient box and retain the points satisfying \(\rho_Q(\theta)\le10^{-10}\). Thin the retained
 points to a cap of 3,000 by the thinning rule of Section~\ref{sec:logvar-scale}, which keeps at most
-that many and in general fewer. Then prepend the zero-slack point when it satisfies every inequality
+that many and in general fewer. Then prepend the zero-slack point when it has no missing coordinate
+and satisfies every inequality
 of the baseline-slack system with every inequality scale \(\omega_k\) set to one; do not append it. Fit the
-conditional median absolute-residual estimator afresh at every retained point, carrying no warm
+LAD conditional-scale estimator mapping afresh at every retained point, carrying no warm
 starting value from one point to the next and keep a point only when its fit is accepted with every
 coefficient finite. At least one point must be kept; stop the reproduction otherwise. For each
 quarter \(t\), the lower and upper envelope values are the smallest and largest of
@@ -3268,7 +3361,7 @@ than reproducing it. Assign both sides the bounded endpoint state, downgrading a
 unreliable endpoint state when either \(\exp(X_t^{V\prime}\eta)\) or \(\exp(X_t^{V\prime}\eta/2)\)
 fails to be finite. At any finite log value, the first condition binds. Use no
 endpoint refinement, lattice-extreme scale, cold-start endpoint replication,
-new-evaluation cap, or containment check. Prepending a feasible zero-slack point already places its
+new-evaluation cap, or containment rule. Prepending a feasible zero-slack point already places its
 fitted path inside the envelope. When that point is infeasible or its fit is not accepted, the
 zero-slack path is missing, so there is nothing to contain. Convert the fitted log scale to the fitted conditional median
 absolute-residual scale with the same \(\exp(X_t^{V\prime}\eta/2)\). That quantity is a conditional
@@ -3289,7 +3382,7 @@ notation writes a number as a leading number times a power of ten. Use one star 
 0.10, two below 0.05, and three below 0.01. The \emph{unavailable-value symbol} is an en
 dash. A mean-equation coefficient cell with an unbounded endpoint state is labeled \emph{unbounded}
 and does not display a half-infinite identified range. A conditional-scale cell may show a
-half-infinite attained numerical range and, when defined, its associated half-infinite confidence interval.
+half-infinite attained numerical conditional-scale range and, when defined, its associated half-infinite confidence interval.
 Leave a finite range blank when the presentation calls for unequal endpoints and its
 endpoints are equal. The mean-equation, conditional-scale, and LAD cells require exact
 equality. In the variance-share table, treat the endpoints as equal when
@@ -3297,13 +3390,13 @@ equality. In the variance-share table, treat the endpoints as equal when
 
 Print the unavailable-value symbol in the statistic row when zero-slack point inference has too few
 retained bootstrap draws. Do the same when fewer than 85 percent of the relevant bootstrap draws
-have the bounded endpoint state or when a finite coefficient has a nonfinite or nonpositive endpoint
-MAD scale. Reserve a blank statistic row for a column for which no statistic is defined.
+have the bounded endpoint state, when a finite coefficient has a nonfinite or nonpositive endpoint
+MAD scale, or when the original-sample zero-slack coefficient itself is not finite. Reserve a blank statistic row for a column for which no statistic is defined.
 
 In the variance-share table, apply the following rule only in the two columns that display a single
 coefficient vector, namely the mean least-squares benchmark column and the zero-slack point column,
 and within those columns only to a block of individual PC-score contributions whose displayed
-entries and block total are all finite. Leave the positive-slack attained-numerical-range columns
+entries and block total are all finite. Leave the positive-slack attained numerical variance-share range columns
 unrounded by this rule. Within such a block apply the largest-remainder display adjustment exactly as
 Section~\ref{sec:shares} defines it. That adjustment makes the displayed individual
 contributions sum to the displayed variance-share total without changing the unrounded values. Do not force the joint
@@ -3312,7 +3405,7 @@ Equation~\eqref{eq:share-combined} includes a cross term.
 
 \section{Scientific acceptance}
 
-A scientific reproduction is accepted only if the selected inputs satisfy the identity and coverage
+A scientific reproduction is accepted only if the selected inputs satisfy the identity and observation-window
 rules stated above, every sample and transformation follows the displayed definitions, every
 numerical search reaches one of its declared states, and all inferential gates and scientific
 diagnostics satisfy their stated acceptance rules. The tables and figures must report the resulting
@@ -3320,10 +3413,20 @@ quantities with the labels, units, rounding, and qualifications specified in thi
 typesetting check establishes only that the manual is readable; it does not certify the empirical
 calculation.
 
+Three further conditions bind. A run at any resample size other than the stated one is refused
+unless the reduced size is explicitly acknowledged, because such a run would replace published
+numbers with numbers that cannot be reproduced. Every conditional calculation must be
+all-or-nothing: a conditional calculation that ran must produce every quantity it owns, and one that
+did not run must leave none behind, so that no result from an earlier calculation can be mistaken
+for a result of this one. The reproduction also stops if a conditional calculation is recorded as
+having run without having been requested. And the retained quarters of the identification sample must form an
+unbroken consecutive sequence; a gap stops the calculation, because the resampling blocks are
+defined as consecutive quarters.
+
 The present source materials do not permit an independent outside researcher to certify a unique
 numerical reproduction. The monthly Treasury input may resolve either to a user-supplied copy or to
-the named public fallback; the frozen consumption series lacks an immutable public vintage identity;
-and the supplied return principal components lack a public, immutable source and complete definitions
+the named public arm; the frozen consumption series lacks an immutable public vintage identity;
+and the supplied return PC scores lack a public, immutable source and complete definitions
 of their return frequency, convention, normalization, units, and absolute orientation. The absolute
 signs of two other principal-component systems are also unpinned. Exact LAD selection remains
 conditional on the selected numerical reference release 6.1. Several accepted calculations also
@@ -3340,36 +3443,42 @@ repository-independent numerical reproduction from public information alone.
 Proceed in the following scientific order.
 
 \begin{enumerate}
-\item Resolve and verify the monthly and daily Treasury inputs, the frozen consumption series, and
-the supplied return principal components under the input rules of Section~\ref{sec:inputs}. Stop if
-any required identity, coverage, or convention cannot be established.
+\item Verify the input selections, the presence of the supplied consumption series, and the identity
+of the daily Treasury input under the input rules of Section~\ref{sec:inputs}; stop if any fails.
+Resolve and validate the monthly Treasury input and the supplied return PC scores when
+each is first read, stopping on a missing series, a missing maturity column, or dates that are not
+unique and increasing.
+\item Discard every result of a conditional calculation carried over from an earlier run, recording
+what was discarded, so that no conditional quantity in the final report can predate this calculation.
 \item Construct quarterly Treasury yields and term premia, one-quarter bond-price news, SDF news,
 and expected SDFs, including the stated unpaired mean correction and the horizon-paired quantities
 used only for the expected-SDF approximation-error bound.
-\item Construct quarterly consumption growth, realized yield volatility, and the centered five-year
-volatility instrument.
-\item Date the supplied return principal components, shift them forward one quarter, align all
-series, and apply only the demeaning transformation stated above.
+\item Construct quarterly consumption growth and realized yield volatility.
+\item Date the supplied return PC scores, shift them forward one quarter, and align all
+series, preserving each score's supplied scale.
 \item Form the SDF-news, current expected-SDF, and lagged expected-SDF panels; calculate their first
 three principal-component scores; and apply the stated lagged expected-SDF sign alignment.
-\item Fit the preliminary and benchmark mean regressions. Form the identification sample, estimate
+\item Fit the preliminary mean regression on the window-restricted frame. Then form the
+identification sample and center the five-year volatility instrument on that sample's mean, fit the
+mean least-squares benchmark on that sample, estimate
 both reduced-form specifications, and construct the mean identified set at zero and positive slack.
 \item Calculate the critical slack, coefficient ranges, variance shares, and their attained numerical
-ranges. Evaluate the mean-equation identification diagnostics and the reported-versus-comparison
+variance-share ranges. Evaluate the mean-equation identification diagnostics and the reported-versus-comparison
 specification check.
-\item Form the conditional-scale sample and calculate the log-OLS, PPML, and Harvey QML estimator
+\item Form the conditional-scale sample, centering the return scores without rescaling them, and
+calculate the log-OLS, PPML, and Harvey QML estimator
 mappings, analytic covariances, endpoint searches, and numerical audits.
 \item Evaluate the joint-null compatibility check and the stacked-moment replication check.
 \item Evaluate the residual-dynamics check. Continue only if the newly calculated sample,
 diagnostic quantities, and verdict exactly match the selected prior decision. The selected branch
 ends without a dynamic-volatility estimator.
-\item Verify the selected median-regression numerical reference release 6.1, then calculate the LAD
+\item Verify the LAD numerical reference at release 6.1, then calculate the LAD
 estimator mapping, nonuniqueness check, endpoint searches, and one-sided closure diagnostics.
-\item Generate the primary and sensitivity circular moving-block bootstrap index families before fitting any
+\item Generate the primary and sensitivity circular moving-block bootstrap-index families before fitting any
 draw. Calculate all \(10{,}000\) draws in each family and apply the declared draw-state, failure,
 minimum-share, and inferential rules.
 \item Calculate the comparison-specification bootstrap endpoints from the primary index family.
-\item Construct the mean-identified-set projections, attained numerical conditional-scale coefficient ranges, fitted
+\item Construct the mean-identified-set projections, attained numerical conditional-scale ranges, fitted
 conditional-scale inner approximations, variance-share displays, and corresponding scientific
 tables and figures.
 \item Calculate the two plug-in approximation-error variance bounds and apply all five
@@ -3548,6 +3657,23 @@ loadings and every affected model result.
 Give the three SDF panels different preprocessing policies or retain another number of components.
 The calculations work separately, but the complete route assumes one common policy and
 three-dimensional mean geometry.
+
+\item[Live consumption retrieval credential.]
+\emph{Reachability: No substantive implementation. Request handling: Accepted but ignored.}
+Supply an access credential for the consumption data service, which would select an authenticated
+retrieval endpoint over the public one. The selected configuration reads the preserved consumption
+snapshot and never reaches any retrieval branch, so the credential has no effect.
+
+\emph{Downstream quantities and invalidated scientific identities: None.}
+
+\item[Live consumption retrieval policy.]
+\emph{Reachability: Executable full-route modification. Request handling: Not exposed.}
+Change the endpoints, attempt count, timeouts, backoff schedule, or transfer settings used when the
+consumption series is retrieved live rather than read from the preserved snapshot. Attempts must be
+at least one, timeouts and maximum durations positive, and retries nonnegative. On the live route
+these determine whether a vintage is retrieved at all, and therefore which consumption vintage the
+growth series carries---so they can change every quantity downstream of consumption growth. Under
+the selected configuration the live route is not taken and nothing changes.
 \end{description}
 
 \section{Mean equation, identified sets, and variance shares}
@@ -3632,17 +3758,44 @@ search because no single scientific control changes them all.
 Choose at least two lattice points per coordinate, a coherence ratio in \((0,1]\), nonnegative
 coherence slack, and positive degeneracy tolerance. The lattice and coherence controls can change
 attained inner ranges or their acceptance. The degeneracy tolerance changes only the display of an
-already calculated degenerate range. None changes the mean or scale estimands.
+already calculated degenerate range. None changes the mean or scale \emph{estimands}, the population
+quantities the estimators target.
+
+\item[Multiple instrument combinations per coordinate.]
+\emph{Reachability: Executable component modification. Request handling: Not exposed.}
+Supply, for each constrained SDF-news coordinate, a family of instrument weight vectors rather than
+the single vector the reproduction uses, with its own slack for each combination. The assembly then
+produces one quadratic inequality per coordinate-and-combination pair instead of one per
+coordinate, so the identified set is the intersection of more inequalities and the constraint axis
+becomes longer than the coordinate axis. With one combination per coordinate the values are
+identical to those of Section~\ref{sec:idset}. The complete reproduction always supplies the single
+vector, and the resulting longer constraint axis is incompatible with the per-coordinate component
+container the rest of the sequence consumes, so this is reachable only through the assembly step
+itself.
+
+\item[Quadratic-assembly equivalence self-certification.]
+\emph{Reachability: Executable full-route modification. Request handling: Supported and unselected.}
+Require that each assembled quadratic system be checked against an independently assembled one and
+that the two agree exactly on every numerical component. Any non-empty request enables it. When the
+two agree the scientific results are unchanged; the check adds an acceptance condition that can
+turn an otherwise passing reproduction into a hard stop. It changes no reported quantity.
 \end{description}
 
 \section{Conditional-scale estimators and inference}
 
 \begin{description}[style=nextline]
-\item[LAD route decision.]
+\item[LAD route withdrawal.]
 \emph{Reachability: Executable full-route modification. Request handling: Supported and unselected.}
-Approve, decline, or leave unanswered the LAD calculation. Approval requires the selected exact
-numerical-reference release; failure of that dependency stops the branch. Decline or no answer
-removes LAD scientific results without changing the other estimators.
+Change the tracked LAD decision from approved to declined or unanswered. Approval is
+the current selection, so only these two states are deviations. Withdrawal removes the LAD conditional-scale estimator mapping,
+its table panel, its attained numerical conditional-scale range curve, and its fitted-scale envelope, and changes no other
+estimator.
+
+\item[Approved LAD estimator without its LAD numerical reference.]
+\emph{Reachability: Routing-only choice. Request handling: Accepted then refused.}
+An approved decision whose LAD numerical reference is absent, or present at a release other
+than the recorded one, is refused before any median calculation runs; the reproduction stops rather
+than silently omitting the estimator.
 
 \item[LAD installation-consent status.]
 \emph{Reachability: No substantive implementation. Request handling: Accepted but ignored.}
@@ -3660,14 +3813,15 @@ the changed quantile.
 
 \item[Shared conditional-scale search controls.]
 \emph{Reachability: Executable full-route modification. Request handling: Not exposed.}
-Change lattice density and thinning, traversal order, start counts and separation, cold-start audits,
-endpoint agreement, nesting, point containment, or return-score centering tolerances. These choices
+Change lattice density and thinning, traversal order, start counts and separation, cold-start endpoint replication,
+endpoint agreement, the nesting rule, the containment rule, or return-score centering tolerances. These choices
 affect PPML, Harvey QML, and LAD endpoint states and downstream inference.
 
 \item[Conditional-scale search budgets.]
 \emph{Reachability: Executable full-route modification. Request handling: Supported and unselected.}
 Choose coherent positive lattice caps, new-evaluation budgets, and fitted-envelope start counts for the
-primary, sensitivity, coverage, bootstrap, and fitted-scale searches. The attained endpoints,
+primary searches, the coverage audits, the independent endpoint audit, the bootstrap searches, and
+the fitted-scale searches. The attained endpoints,
 states, envelopes, and bootstrap intervals may change.
 
 \item[Unequal PPML and Harvey QML budgets.]
@@ -3705,7 +3859,7 @@ Any coefficient scaling other than none is rejected; no scaled alternative calcu
 \item[LAD numerical controls.]
 \emph{Reachability: Executable full-route modification. Request handling: Not exposed.}
 Change LAD budgets, tolerances, anchors, probes, hyperplane-crossing paths, tail classifications,
-cone checks, or cold-start audits. Fit acceptance, nonuniqueness evidence, closure classifications,
+cone checks, or cold-start endpoint replication. Fit acceptance, nonuniqueness evidence, closure classifications,
 endpoints, fitted scales, and figures may change.
 
 \item[Offline LAD closure refinement.]
@@ -3715,7 +3869,8 @@ approximate one-sided closure witnesses, but the complete route does not invoke 
 
 \item[Analytic covariance choice.]
 \emph{Reachability: Executable full-route modification. Request handling: Supported and unselected.}
-For PPML choose naive, heteroskedasticity-consistent, or heteroskedasticity-and-autocorrelation-
+For PPML choose naive, either of two heteroskedasticity-consistent covariances---with and without
+the finite-sample degrees-of-freedom scaling---or heteroskedasticity-and-autocorrelation-
 consistent (HAC) covariance; for Harvey QML choose expected, observed, outer-product, robust, or HAC
 covariance. An outer-product covariance uses sample outer products of the estimating scores. For mean
 OLS and log-OLS choose the HAC lag, prewhitening, and finite-sample adjustment. Point and set estimates remain fixed; standard
@@ -3723,8 +3878,9 @@ errors, statistics, p-values, stars, and notes change.
 
 \item[Optional estimator-side diagnostic.]
 \emph{Reachability: No substantive implementation. Request handling: Not exposed.}
-A generic per-side diagnostic is recognized, but no current estimator defines the diagnostic
-quantity and no scientific result depends on it.
+A generic per-side diagnostic hook is reserved in the estimator interface, but no current estimator
+supplies it, every status-bearing probe executes through the side analysis instead, and no
+scientific result depends on the reserved hook.
 
 \emph{Downstream quantities and invalidated scientific identities: None.}
 
@@ -3732,6 +3888,15 @@ quantity and no scientific result depends on it.
 \emph{Reachability: No substantive implementation. Request handling: Not exposed.}
 Naming another estimator cannot provide its objective, domain map, endpoint search, status rules,
 inference, or scientific outputs. A new estimator requires all of them.
+
+\emph{Downstream quantities and invalidated scientific identities: None.}
+
+\item[Conditional-scale calculation under the comparison specification.]
+\emph{Reachability: No substantive implementation. Request handling: Rejected during validation.}
+Run the conditional-scale calculation under the reduced-form specification used only for comparison. The
+plan requires the conditional-scale calculation to run the mean equation's reported specification, and it is
+refused before any calculation begins, so the comparison specification can never reach the
+conditional-scale calculation.
 
 \emph{Downstream quantities and invalidated scientific identities: None.}
 \end{description}
@@ -3743,7 +3908,9 @@ inference, or scientific outputs. A new estimator requires all of them.
 \emph{Reachability: Executable full-route modification. Request handling: Supported and unselected.}
 Choose either recognized suite and any recognized subset of the White, Breusch--Pagan,
 Goldfeld--Quandt, Harvey, and Anscombe tests. A positive fitted-scale-ratio cutoff selects between
-suites at evaluation time. Only diagnostic rows and interpretations change.
+suites at evaluation time. Only diagnostic rows and interpretations change. Three further tests---a
+Glejser test, a Breusch--Pagan Lagrange-multiplier test, and a first-order autoregressive
+conditional heteroskedasticity test---run under every suite and are outside this choice.
 
 \item[Cook--Weisberg diagnostic.]
 \emph{Reachability: Executable component modification. Request handling: Rejected during validation.}
@@ -3800,10 +3967,11 @@ Changing the gate protocol while retaining the old bound decision produces new e
 decision binding refuses further routing.
 
 \item[Post-rejection dynamic-model decisions.]
-\emph{Reachability: Routing-only choice. Request handling: Supported and unselected.}
-After a rejecting gate, choose ladder-consistent approved, declined, unanswered, or not-asked
-decisions for the estimand and dependency. The decision sequence changes terminal route status, but even full approval
-reaches no estimator.
+\emph{Reachability: Routing-only choice. Request handling: Not exposed.}
+A rejecting residual-dynamics gate would open a ladder of estimand and dependency decisions whose
+sequence changes the terminal route status. The current gate does not reject, and the ladder check
+refuses any decision other than not-asked while that holds, so the sequence is not selectable; even
+full approval reaches no estimator.
 
 \item[Inconsistent dynamic-model decisions.]
 \emph{Reachability: No substantive implementation. Request handling: Rejected during validation.}
@@ -3829,6 +3997,14 @@ estimator, likelihood, inference procedure, or scientific results are defined fo
 decision sequence alone is not an estimator.
 
 \emph{Downstream quantities and invalidated scientific identities: None.}
+
+\item[One-direction relevance long-run-variance bandwidth.]
+\emph{Reachability: Executable full-route modification. Request handling: Not exposed.}
+Change the scale, base, or exponent of the rule that sets the long-run-variance bandwidth of the
+one-direction relevance test, which takes the floor of the scale times the ratio of the observation
+count to the base, raised to the exponent. This changes that test's p-value, which is a published row
+of both diagnostic panels.
+
 \end{description}
 
 \section{Resampling and bootstrap inference}
@@ -3877,7 +4053,7 @@ instead truncated to the sample length.
 
 \item[Bootstrap inference contract.]
 \emph{Reachability: Executable full-route modification. Request handling: Supported and unselected.}
-Choose a nominal level in \((0,1/2)\), a minimum valid-draw share in \((0,1]\), a stability share and
+Choose a nominal level in \((0,1)\), a minimum valid-draw share in \((0,1]\), a stability share and
 fatal-failure share in \((0,1)\), and a positive empirical-root tolerance. These choices change
 quantiles, critical values, p-values, intervals, endpoint reportability, and stopping gates.
 
@@ -3889,7 +4065,7 @@ empirical-root inference procedures and point or set estimates do not.
 
 \item[Withdrawal of an estimator capability.]
 \emph{Reachability: Executable component modification. Request handling: Supported and unselected.}
-Withdraw attained-range, table, set-bootstrap, or fitted-scale capability from an estimator. The
+Withdraw attained-numerical-range, table, set-bootstrap, or fitted-scale capability from an estimator. The
 corresponding scientific calculation is omitted, but publication completeness requires coordinated
 output and acceptance changes.
 
@@ -3899,6 +4075,40 @@ No bootstrap draw law, endpoint-state map, interval procedure, or integrated sci
 defined for log-OLS or LAD.
 
 \emph{Downstream quantities and invalidated scientific identities: None.}
+
+\item[Forced resampling.]
+\emph{Reachability: Executable full-route modification. Request handling: Supported and unselected.}
+Require the resampled results to be recomputed rather than carried over from an earlier
+calculation. The admissible states are forced recomputation and reuse; reuse is the selected state.
+Forcing recomputation resamples unconditionally, bypassing the provenance agreement of
+Section~\ref{sec:bootstrap}. Every resampled statistic, p-value, interval, endpoint reportability
+decision, and failure gate is recomputed. Nothing is invalidated; on the contrary, this removes the
+one disclosed reuse exception, because recomputed draws cannot have been produced under earlier
+presentation settings.
+
+\item[Unrecognized resampling-mode request.]
+\emph{Reachability: No substantive implementation. Request handling: Rejected during validation.}
+Request any resampling mode other than forced recomputation or reuse. The request is rejected before
+any resampling begins.
+
+\emph{Downstream quantities and invalidated scientific identities: None.}
+
+\item[Resampling worker count.]
+\emph{Reachability: Executable full-route modification. Request handling: Supported and unselected.}
+Change how many draws are evaluated concurrently, to any whole number of at least one; the default
+is derived from the detected processor count. This changes only the width of the dispatch. It
+changes no scientific quantity: the index families are generated in advance and fixed, so each
+draw's result is a deterministic function of its stored indices.
+
+\emph{Downstream quantities and invalidated scientific identities: None.}
+
+\item[Draft-resolution acknowledgement.]
+\emph{Reachability: Executable full-route modification. Request handling: Supported and unselected.}
+Acknowledge a reduced draw count, which suppresses the refusal described in
+Section~\ref{sec:bootstrap} and lets the reproduction proceed at draft Monte Carlo resolution.
+Every resampled quantity is then computed at that reduced resolution. This invalidates the
+published numbers: the reproduction overwrites reported quantities with values that cannot be
+reproduced at the stated draw count.
 \end{description}
 
 \section{Approximation-error calculations}
@@ -3965,6 +4175,15 @@ Change parameter, constraint, root, box, start, basis, design, Jacobian, epigrap
 projection tolerances and budgets. Here epigraph again means the auxiliary-objective-bound
 formulation defined above. The component's basis reliability, candidates, searches, and
 states may change, but these controls cannot bypass the complete-route refusal.
+
+\item[Combined moment blocks.]
+\emph{Reachability: No substantive implementation. Request handling: Not exposed.}
+Stack the logarithmic and exponential moment blocks into one system with a shared slope vector. The
+specification pins the block combination off, so even ratifying both blocks cannot produce a
+combined system, and the component refuses the nondefault configuration before reaching that point.
+No combined estimator, covariance, or scientific result exists.
+
+\emph{Downstream quantities and invalidated scientific identities: None.}
 \end{description}
 
 \section{Scientifically meaningful presentation choices}
@@ -3986,12 +4205,58 @@ estimates.
 Display fitted-scale sweeps on linear or logarithmic vertical axes, or normalize lower or upper
 endpoint series by their own sample location and scale. These transformations change the scientific
 comparison shown, not the underlying estimates or attained envelopes.
+
+\item[Identified-range slack lattice.]
+\emph{Reachability: Executable full-route modification. Request handling: Not exposed.}
+Change the backbone count, the tail fraction, or the number of tail subdivisions that together
+choose which slacks the mean-equation identified-range curve is evaluated at. The backbone count must be a whole
+number of at least three, the subdivision count a whole number of at least two, and the tail
+fraction must lie in \((0,1)\). This changes the evaluated set of slack points, and therefore the
+computed curve rather than only its rendering. Nothing is invalidated, but the curve's resolution
+near the critical slack is itself a scientific claim about where the branch switch occurs.
+
+\item[Reported-cell display and rounding policy.]
+\emph{Reachability: Executable full-route modification. Request handling: Not exposed.}
+Change the decimal places of each reported family, the unavailable-value symbol, whether a cell
+reports the not-bounded or only the unreliable endpoint state, whether a missing endpoint is
+reported as a state, whether a half-infinite range is displayed or suppressed, the nonnegative
+tolerance at which a range counts as degenerate and is left blank, and whether a confidence interval
+prints with open or closed brackets. Estimates, endpoint states, and inference are unchanged; what a
+reader is told about an endpoint's state and precision changes.
+
+\item[Region-figure mesh seed and resolution.]
+\emph{Reachability: Executable full-route modification. Request handling: Not exposed.}
+Change the pseudo-random seed that draws the sampled boundary mesh of the three-dimensional region
+figures, or the mesh and projection resolutions. All are positive integers. The sampled boundary
+geometry and the projection resolution change. The mean identified set itself is unchanged, but a
+reader takes the drawn boundary for the set's shape, so the approximation's resolution carries
+scientific weight.
+\end{description}
+
+\section{Reproduction lifecycle and component entrypoints}
+
+\begin{description}[style=nextline]
+\item[Preserved-state discard.]
+\emph{Reachability: Executable component modification. Request handling: Supported and unselected.}
+Run the separate state-discarding procedure, optionally restricting it to results not under version
+control. The preserved resampling draws and every gate and route-status record are discarded
+regardless of that restriction. Discarding the draws forces the next calculation to resample in
+full; discarding the gate and route records forces the residual-dynamics check and both route
+statuses to be regenerated. This invalidates every preserved resampled quantity and the binding
+between the recorded dynamic-model decision and the gate evidence it pins.
+
+\item[Cross-reproduction table comparison.]
+\emph{Reachability: Executable component modification. Request handling: Supported and unselected.}
+Run the separate comparison procedure against exactly two completed sets of reported tables; any
+other count stops it. It recomputes no scientific quantity and changes none. It supplies an
+acceptance verdict on whether two reproductions agree.
 \end{description}
 
 \section{Catalogue completeness}
 
-The catalogue contains 88 entries and is exhaustive for deviations recognized by the reproduction contract.
-A future modification is a valid alternative reproduction
+The catalogue contains 105 entries, covering every deviation, request, refusal, and declared limit
+recognized by the reproduction contract that a systematic search of the current source materials
+identified. A future modification is a valid alternative reproduction
 only when all affected definitions, dimensions, input identities, numerical rules, diagnostics,
 inferential procedures, exhibits, and acceptance conditions are updated together.
 
