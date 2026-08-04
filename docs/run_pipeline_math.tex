@@ -2044,6 +2044,90 @@ of its diagonal covariance entry. Divide the coefficient by its standard error a
 two-sided standard-normal p-value
 \(2\{1-\Phi(|\text{coefficient}/\text{standard error}|)\}\).
 
+\section{Zero-slack residual-distribution diagnostic}
+\label{sec:residual-distribution}
+
+At the accepted zero-slack structural SDF-news coefficient vector
+\(\widehat\theta_0\), use the same structural mean residual
+\(e_t=e_t(\widehat\theta_0)\) for all three comparisons. Let
+\(s\in\{L,P,H\}\) index log-OLS, PPML, and Harvey QML, respectively. Define the
+positive fitted exponential scale and the standardized log residual by
+\begin{align*}
+ \widehat\mu_{s,t}
+ &=\exp\!\left(X_t^{V\prime}\widehat\eta_s(\widehat\theta_0)\right),\\
+ \xi_{s,t}
+ &=\log\!\left(\frac{e_t^2}{\widehat\mu_{s,t}}\right)
+  =2\log|e_t|-X_t^{V\prime}\widehat\eta_s(\widehat\theta_0).
+\end{align*}
+Here \(\widehat\eta_s(\widehat\theta_0)\in\mathbb R^5\) is estimator \(s\)'s
+zero-slack conditional-scale coefficient vector, \(\widehat\mu_{s,t}>0\) is its
+fitted exponential scale in quarter \(t\), and \(\xi_{s,t}\in\mathbb R\) is its
+standardized log residual. For PPML and Harvey QML,
+\(\widehat\mu_{s,t}\) is the fitted conditional variance. For log-OLS, it is
+the exponentiated fitted mean of the log squared structural mean residual and
+has no retransformation correction.
+
+Reuse the accepted PPML and Harvey QML zero-slack point fits. Recalculate the
+closed-form log-OLS projection at \(\widehat\theta_0\). Do not center or rescale
+any of the three resulting series. Stop unless \(\widehat\theta_0\) is
+available, exactly one accepted PPML point fit and one accepted Harvey QML point
+fit exist, each point coefficient vector is a finite five-vector, every
+\(e_t\ne0\), every \(\xi_{s,t}\) is finite, and each estimator contributes
+exactly \(T_v\) observations.
+
+If \(e_t/\sqrt{\widehat\mu_{s,t}}\) were standard normal, then
+\(\xi_{s,t}\) would follow the logarithm of a chi-square random variable with
+one degree of freedom, written \(\log\chi_1^2\). Retaining each series' location
+makes the diagnostic assess both the level and the shape of the fitted scale.
+
+For the quantile--quantile figure, sort each estimator's values as
+\(\xi_{s,(1)}\le\cdots\le\xi_{s,(T_v)}\). Define
+\begin{equation*}
+ p_i=\frac{i-a_T}{T_v+1-2a_T},\qquad
+ a_T=
+ \begin{cases}
+  3/8,&T_v\le10,\\
+  1/2,&T_v>10,
+ \end{cases}
+ \qquad
+ z_i=\log F_{\chi_1^2}^{-1}(p_i),
+\end{equation*}
+where \(F_{\chi_1^2}^{-1}\) is the quantile function of a chi-square random
+variable with one degree of freedom. Plot \((z_i,\xi_{s,(i)})\) for all three
+estimators against the 45-degree line. Let \(r_-\) and \(r_+\) be the minimum
+and maximum over every theoretical and empirical quantile, and let
+\(\Delta_r=r_+-r_-\). Use the same range
+\([r_--0.03\Delta_r,r_++0.03\Delta_r]\) on both axes and equal axis units in a
+square panel.
+
+For the density figure, draw one kernel-density estimate for each estimator,
+using bandwidth 1.8 times the executing numerical environment's default
+bandwidth. Overlay the exact \(\log\chi_1^2\) density
+\begin{equation*}
+ f_0(x)=\sqrt{\frac{e^x}{2\pi}}\exp\!\left(-\frac{e^x}{2}\right).
+\end{equation*}
+Evaluate this reference curve at 512 equally spaced values from one unit below
+the smallest \(\xi_{s,t}\) to one unit above the largest. The selected procedure
+fixes the bandwidth multiplier and reference grid, but not the kernel or the
+base bandwidth rule; exact cross-language replication of the empirical density
+curves therefore depends on those external defaults.
+
+For each estimator, report the mean and the divisor-\(T_v\) central moments
+\begin{equation*}
+ \overline\xi_s=\frac1{T_v}\sum_{t=1}^{T_v}\xi_{s,t},\qquad
+ m_{k,s}=\frac1{T_v}\sum_{t=1}^{T_v}(\xi_{s,t}-\overline\xi_s)^k.
+\end{equation*}
+Report \(\overline\xi_s\), \(m_{2,s}\), \(m_{3,s}/m_{2,s}^{3/2}\), and
+\(m_{4,s}/m_{2,s}^2-3\). The corresponding \(\log\chi_1^2\) reference values
+are
+\begin{equation*}
+ \psi(1/2)+\log2,\qquad
+ \frac{\pi^2}{2},\qquad
+ \frac{-16.8288}{(\pi^2/2)^{3/2}},\qquad
+ 4,
+\end{equation*}
+where \(\psi\) is the first derivative of the logarithm of the gamma function.
+
 \section{Conditional-scale checks and residual-dynamics closure}
 
 \subsection{Joint-null compatibility check}
@@ -3271,6 +3355,11 @@ below the critical slack \(\tau^\star\) and render no figure for it. The sweep s
 lower- and upper-endpoint figures. These fitted envelopes are attained numerical inner approximations,
 not confidence bands or simultaneous path bands. Check that an available fitted path at the zero-slack point lies inside
 every corresponding two-sided envelope.
+\item Produce the zero-slack residual-distribution summary and the two figures
+defined in Section~\ref{sec:residual-distribution}. Report the mean, variance,
+skewness, and excess kurtosis for log-OLS, PPML, Harvey QML, and the
+\(\log\chi_1^2\) reference. Publish one quantile--quantile figure and one density
+figure comparing all three estimators with that reference.
 \item Produce scientific diagnostic summaries for mean-equation and conditional-scale inference,
 the comparison between reported and comparison specifications, the joint-null compatibility witness,
 the stacked-moment replication check, the residual-dynamics calculation and its descriptive
@@ -3468,6 +3557,9 @@ specification check.
 \item Form the conditional-scale sample, centering the return scores without rescaling them, and
 calculate the log-OLS, PPML, and Harvey QML estimator
 mappings, analytic covariances, endpoint searches, and numerical audits.
+\item At the accepted zero-slack point, construct the three standardized log-residual
+series, their moment summary, and the quantile--quantile and density comparisons
+with the \(\log\chi_1^2\) reference.
 \item Evaluate the joint-null compatibility check and the stacked-moment replication check.
 \item Evaluate the residual-dynamics check. Continue only if the newly calculated sample,
 diagnostic quantities, and verdict exactly match the selected prior decision. The selected branch
@@ -4206,6 +4298,14 @@ Display fitted-scale sweeps on linear or logarithmic vertical axes, or normalize
 endpoint series by their own sample location and scale. These transformations change the scientific
 comparison shown, not the underlying estimates or attained envelopes.
 
+\item[Residual-distribution figure controls.]
+\emph{Reachability: Executable full-route modification. Request handling: Not exposed.}
+Change the density bandwidth multiplier, reference-grid resolution,
+quantile--quantile padding, equal-axis aspect, or panel dimensions. These choices
+change the displayed distributional comparison, not the fitted coefficients,
+standardized log-residual series, reported moments, identified sets, or
+inference.
+
 \item[Identified-range slack lattice.]
 \emph{Reachability: Executable full-route modification. Request handling: Not exposed.}
 Change the backbone count, the tail fraction, or the number of tail subdivisions that together
@@ -4254,7 +4354,7 @@ acceptance verdict on whether two reproductions agree.
 
 \section{Catalogue completeness}
 
-The catalogue contains 105 entries, covering every deviation, request, refusal, and declared limit
+The catalogue contains 106 entries, covering every deviation, request, refusal, and declared limit
 recognized by the reproduction contract that a systematic search of the current source materials
 identified. A future modification is a valid alternative reproduction
 only when all affected definitions, dimensions, input identities, numerical rules, diagnostics,

@@ -47,8 +47,8 @@
 
 \title{The Current \texttt{scripts-paper} Pipeline of \texttt{hetid}}
 \author{}
-\date{Source inspection: 3 August 2026, 22:22 EDT\\
-Commit \texttt{487a1b589c46d2135d3a638b1b0d217a074e60d2}}
+\date{Source inspection: 4 August 2026, 17:30 EDT\\
+Commit \texttt{ce9e4adb8ae231e5a0cf25db6b8f43f8be782ff5}}
 
 \begin{document}
 
@@ -141,25 +141,32 @@ The current source has the following main contracts:
     search audit enlarges the selected-grid cap and changes its selection rule.
     Section~\ref{sec:ppml-harvey-search}
     states the full matched comparison.
+  \item After the PPML and Harvey tau-zero point fits exist, the runner always
+    attempts two residual-diagnostic figures. They compare the standardized log
+    residuals for PPML, the Harvey estimator, and log-OLS with the
+    log-chi-square reference. The stage reuses the accepted PPML and Harvey
+    point fits and recomputes only the deterministic log-OLS projection.
   \item Bootstrap cache schema 4 and semantic cache freshness govern reuse of
     the unified bootstrap cache artifact. Separate mean and log-variance cache
     files are legacy names.
   \item The bounds-by-relaxation-value grid is tail-refined and nonuniform. The
     joint-null witness and joint-generalized-method-of-moments (GMM) replication
     products are diagnostics; they add no test or identifying restriction.
-  \item The artifact manifest has 87 artifact records. Final
+  \item The artifact manifest has 89 artifact records. Final
     conditional-route reconciliation covers the seven conditional records and
-    does not certify the 80 required files.
+    does not certify the 82 required files.
   \item A plain invocation calls the \emph{installed} \code{hetid} namespace, not
     the checkout under \file{R/}, so this trace's package-layer statements bind to
-    the runtime only if the two agree. At the commit on the title page, they do.
-    Comparing the installed namespace with the checkout over the sorted symbol
-    set, on names, formal arguments, and deparsed bodies, found 171 functions on
-    both sides and no difference. Deparsing is what makes the comparison
-    meaningful: it strips source references and enclosing environments, which
-    otherwise report a mismatch between identical code. This comparison is
-    function-level parity evidence at one commit, not a byte-level attestation of
-    the installed build, and reinstalling from a different tree would invalidate it.
+    the runtime only if the two agree. The preceding source inspection compared
+    the installed namespace with the checkout over the sorted symbol set, on
+    names, formal arguments, and deparsed bodies, and found 171 functions on
+    both sides with no difference. The last commit changed no file under
+    \file{R/}, but this last-commit-only update did not repeat the installed
+    namespace comparison, so installed-package parity is currently unverified.
+    Deparsing strips source references and enclosing environments, which
+    otherwise report a mismatch between identical code. The recorded comparison
+    is function-level evidence, not a byte-level attestation of the installed
+    build, and reinstalling from a different tree invalidates it.
 \end{itemize}
 
 \section{How to read this document}
@@ -195,9 +202,9 @@ module catalog and production entrypoint appear in
 \subsection{Scope of the trace}
 
 The trace covers every direct top-level effect in
-\file{scripts-paper/run_pipeline.R}, including its 48
+\file{scripts-paper/run_pipeline.R}, including its 49
 \code{paper_source_once()} call sites. After prior statements succeed, the
-runner reaches 47 call sites unconditionally. It conditionally sources only
+runner reaches 48 call sites unconditionally. It conditionally sources only
 \file{log_variance/estimators/lad/run_sets.R}. The runner sources
 \file{log_variance/figures/fitted_volatility/run_lad.R} unconditionally; that
 module guards its own body on the existence of the LAD result.
@@ -329,7 +336,7 @@ specification A, mean identified set, variance shares}}\\[0.4em]
 $\downarrow$\\[-0.2em]
 \fbox{\parbox{0.86\textwidth}{\centering
 two-step log-OLS benchmark, attained mean coefficient ranges, PPML, Harvey
-estimator, diagnostics, routes, and
+estimator, tau-zero residual-diagnostic figures, diagnostics, routes, and
 dependency-gated LAD}}\\[0.4em]
 $\downarrow$\\[-0.2em]
 \fbox{\parbox{0.86\textwidth}{\centering
@@ -461,8 +468,9 @@ A tracked \code{PAPER_SPEC_PLAN} edit may change the A/B order or use one mean
 entry, subject to its assertions. The first mean entry becomes published, and
 the sole volatility entry must equal it.\\
 Core estimators and diagnostics: always attempted &
-Run the two-step log-OLS benchmark, PPML, the Harvey estimator, the joint-null
-witness diagnostic, the joint-GMM diagnostic, and the residual-dynamics gate. &
+Run the two-step log-OLS benchmark, PPML, the Harvey estimator, the tau-zero
+residual-diagnostic figures, the joint-null witness diagnostic, the joint-GMM
+diagnostic, and the residual-dynamics gate. &
 These are not run/skip options. Numerical status and diagnostic verdicts are
 runtime-selected outcomes and may stop a later validation or publication stage.\\
 Joint-GMM branch: source-selected &
@@ -533,7 +541,7 @@ The runner follows a literal top-level order. At top level, a definition module
 supplies only functions or constants. Paths in the source-or-effect column are relative to
 \file{scripts-paper/}.
 Every ledger row has status \emph{always attempted} after earlier rows succeed,
-except lines 117--119, whose status is \emph{selected path} and source-selected, subject to
+except lines 123--125, whose status is \emph{selected path} and source-selected, subject to
 the LAD package gate. A row that always sources a file can still contain a
 guarded body. The eight driver-level body guards appear after the table. This rule assigns an explicit
 status to every row without repeating the same words in each one.
@@ -556,7 +564,7 @@ comma-separated values. RDS means R data serialization. TeX is the LaTeX source
 format. PDF means Portable Document Format. SVG means Scalable Vector Graphics.
 The ledger's main result is the exact evaluation
 order and the principal state or artifacts produced at each stage. Unless the
-lines 117--119 row or a guarded body says otherwise, every row is always
+lines 123--125 row or a guarded body says otherwise, every row is always
 attempted after prior success.
 \label{tab:runner-ledger}}\\
 \toprule
@@ -631,93 +639,96 @@ Attach PPML covariance variants; the paper selects four-lag HAC.\\
 Map the Harvey Gaussian multiplicative-variance QMLE over the mean identified set
 and run its fixed-grid second search audit with a 4,000-row selected-grid cap; attach
 Harvey estimator covariance variants.\\
+78--80 & \file{log_variance/figures/residual_diagnostics/run.R} &
+Reuse the accepted PPML and Harvey tau-zero point fits, recompute the fixed
+log-OLS projection, and write the residual quantile--quantile and density SVGs.\\
 \midrule
-78 & \file{log_variance/diagnostics/joint_null/distance_objective.R} &
+84 & \file{log_variance/diagnostics/joint_null/distance_objective.R} &
 Define the joint-null objective.\\
-79 & \file{log_variance/diagnostics/joint_null/search.R} &
+85 & \file{log_variance/diagnostics/joint_null/search.R} &
 Define its scan, multistart, and polish routines.\\
-80 & \file{log_variance/diagnostics/joint_null/stability.R} &
+86 & \file{log_variance/diagnostics/joint_null/stability.R} &
 Define crossing-geometry and witness-stability checks.\\
-81 & \file{log_variance/diagnostics/joint_null/run.R} &
+87 & \file{log_variance/diagnostics/joint_null/run.R} &
 Run the joint-null witness diagnostic and write its CSV/RDS pair.\\
-84 & \file{log_variance/diagnostics/joint_gmm/run.R} &
+90 & \file{log_variance/diagnostics/joint_gmm/run.R} &
 Validate the decision record and run the currently wired joint-GMM replication diagnostic.\\
-91 & \file{log_variance/diagnostics/dynamics/gate_core.R} &
+97 & \file{log_variance/diagnostics/dynamics/gate_core.R} &
 Define the residual-dynamics gate and gate-record builders.\\
-92 & \file{log_variance/diagnostics/dynamics/run_gate.R} &
+98 & \file{log_variance/diagnostics/dynamics/run_gate.R} &
 Evaluate the residual-dynamics gate using its lag-4 Ljung--Box rule, then write
 both the residual-dynamics gate record and the first version of the EGARCH status
 record.\\
-98 & \file{log_variance/extensions/egarch/decision_core.R} &
+104 & \file{log_variance/extensions/egarch/decision_core.R} &
 Define the pinned EGARCH-X decision and routing validation.\\
-99 & \file{log_variance/extensions/egarch/run_route.R} &
+105 & \file{log_variance/extensions/egarch/run_route.R} &
 Validate the residual-dynamics gate record, route every branch, and rewrite the
 terminal EGARCH status record.\\
-106 & \file{log_variance/estimators/lad/dependency_gate.R} &
+112 & \file{log_variance/estimators/lad/dependency_gate.R} &
 Define the LAD decision and exact dependency-version gate.\\
-107--116 & LAD availability and decision read &
+113--122 & LAD availability and decision read &
 Construct \code{lad_gate}; approved but absent or version-mismatched \code{quantreg} stops the run.\\
-117--119 & \file{log_variance/estimators/lad/run_sets.R} &
+123--125 & \file{log_variance/estimators/lad/run_sets.R} &
 Selected path, source-selected: conditionally build and register LAD and its closure
 diagnostics after exact \code{quantreg} 6.1 passes the package gate.\\
 \midrule
-123 & \file{inference/run_bootstrap_stage.R} &
+129 & \file{inference/run_bootstrap_stage.R} &
 Run or reuse the unified bootstrap stage; expose \code{set_id_boot},
 \code{log_var_eq_set_boot}, and \code{bootstrap_primary_family}.\\
-126 & \file{mean_equation/inference/spec_comparison.R} &
+132 & \file{mean_equation/inference/spec_comparison.R} &
 Bootstrap diagnostic mean specification A on the exact primary resample-index
 family used for published mean specification B.\\
-134 & \file{log_variance/tables/render_combined_inference_table.R} &
+140 & \file{log_variance/tables/render_combined_inference_table.R} &
 Publish the combined mean-equation and PPML inference table triple.\\
-136 & \file{log_variance/tables/render_estimator_pages.R} &
+142 & \file{log_variance/tables/render_estimator_pages.R} &
 Publish PPML and two-step log-OLS benchmark pages, then Harvey estimator and LAD
 pages when their results exist.\\
-139 & \file{log_variance/figures/render_bounds_by_tau.R} &
+145 & \file{log_variance/figures/render_bounds_by_tau.R} &
 Render a bounds-by-relaxation-value figure for each bounds-rendering registry entry.\\
-141 & \file{log_variance/figures/fitted_volatility/run.R} &
+147 & \file{log_variance/figures/fitted_volatility/run.R} &
 Render baseline PPML and Harvey estimator fitted
 conditional-residual-volatility envelopes.\\
-144--146 & \file{log_variance/figures/fitted_volatility/run_tau_sweep.R} &
+150--152 & \file{log_variance/figures/fitted_volatility/run_tau_sweep.R} &
 Filter configured relaxation values by the estimated boundedness frontier; render
 PPML and Harvey scalar panels for surviving values and render combined linear,
 log, and normalized panels only when more than one value survives. Stop before
 rendering if no configured value survives.\\
-149 & \file{log_variance/figures/fitted_volatility/run_lad.R} &
+155 & \file{log_variance/figures/fitted_volatility/run_lad.R} &
 Always source the module; render the LAD fitted conditional-median
 absolute-residual envelope only when \code{log_var_eq_lad} exists.\\
-150 & \file{mean_equation/figures/prepare_region_geometry.R} &
+156 & \file{mean_equation/figures/prepare_region_geometry.R} &
 Prepare rescaling, refined boxes, grids, and envelopes for mean-region figures.\\
-151 & \file{mean_equation/figures/render_projections.R} &
+157 & \file{mean_equation/figures/render_projections.R} &
 Render projections with and without the identification-sample OLS benchmark point.\\
-152 & \file{mean_equation/figures/render_region_3d.R} &
+158 & \file{mean_equation/figures/render_region_3d.R} &
 Require all four configured relaxation values to lie below the estimated
 boundedness frontier; then render 16 region figures across relaxation values,
 units, and OLS modes.\\
-153--158 & \file{mean_equation/diagnostics/heteroskedasticity/render_table.R} &
+159--164 & \file{mean_equation/diagnostics/heteroskedasticity/render_table.R} &
 Run the heteroskedasticity diagnostic battery on the SDF-news PC scores and on
 the SDF-news residuals, and publish both three-panel table triples.\\
-161 & \file{variance_bounds/compute_bounds.R} &
+167 & \file{variance_bounds/compute_bounds.R} &
 Compute SDF-news and expected-SDF approximation-error variance bounds for 39
 quarterly maturities.\\
-164 & \file{variance_bounds/quoted/run.R} &
+170 & \file{variance_bounds/quoted/run.R} &
 Regenerate and assert quoted SDF approximation-error variance-bound numbers
 before the variance-bound artifact producers.\\
-165 & \file{variance_bounds/figures/render_bounds.R} &
+171 & \file{variance_bounds/figures/render_bounds.R} &
 Write the SDF approximation-error variance-bound SVG.\\
-166 & \file{variance_bounds/tables/render_summary_table.R} &
+172 & \file{variance_bounds/tables/render_summary_table.R} &
 Publish the variance-bound summary triple.\\
-167 & \file{reports/build_descriptive_statistics.R} &
+173 & \file{reports/build_descriptive_statistics.R} &
 Publish descriptive tables, a two-page figure PDF, wrapper TeX, and report PDF.\\
 \midrule
-170--175 & \code{build_conditional_route_status()} &
+176--181 & \code{build_conditional_route_status()} &
 Reconcile route decisions, conditional requests, producer execution, and
 conditional-artifact presence; carry audits of the startup cleanup of
 conditional artifacts for provenance;
 the runner passes
 \code{egarch_producer_ran = FALSE}.\\
-176--180 & \code{paper_write_exact_rds()} &
+182--186 & \code{paper_write_exact_rds()} &
 Write the required \code{conditional_route_status} conditional-route state record.\\
-181 & \code{clean_latex_sidecars(out_dir)} &
+187 & \code{clean_latex_sidecars(out_dir)} &
 Remove configured LaTeX sidecars recursively; this final action may still fail.\\
 \bottomrule
 \end{longtable}
@@ -1200,11 +1211,13 @@ suites, Goldfeld--Quandt settings, rejection threshold, and caption tests. &
 Changes diagnostic computation and its two published tables, not estimator
 choice or unified-bootstrap draws.\\
 \src{config/figure_rendering.R}{PAPER_FIGURE_STYLE} & Colors, line widths,
-point sizes, opacity, markers, and region fills. & Changes rendered bytes and
+point sizes, opacity, markers, region fills, residual-density smoothing and
+grid size, and quantile--quantile padding. & Changes rendered bytes and
 appearance, not estimates or cache validity.\\
 \src{config/figure_rendering.R}{PAPER_FIGURE_RENDER_CONTROL} & Projection and
-three-dimensional grids, views, region relaxation values, device sizes, labels,
-fonts, and layouts. & Changes geometry evaluation and figure content. Region
+three-dimensional grids, views, region relaxation values, device sizes,
+residual-diagnostic canvases, labels, fonts, and layouts. & Changes geometry
+evaluation and figure content. Region
 relaxation values also change manifest membership; the fitted-volatility sweep
 axis instead belongs to the analysis contract. This file is outside the
 unified-bootstrap draw-code hash.\\
@@ -2577,6 +2590,50 @@ across R versions or machines lies outside the contract.
 \section{Publication stages}
 \label{sec:publication}
 
+\subsection{Tau-zero residual-distribution figures}
+
+Immediately after the Harvey analysis stage,
+\file{scripts-paper/log_variance/figures/residual_diagnostics/run.R} constructs
+one standardized log-residual series for the two-step log-OLS benchmark, PPML,
+and the Harvey estimator. At the accepted tau-zero mean news coefficient
+$\widehat\theta_0$, define
+\[
+  \xi_{a,t}
+  =\log\!\left(e_t(\widehat\theta_0)^2\right)
+   -R_t\trans\widehat\eta_a(\widehat\theta_0)
+  =\log\!\left(
+    \frac{e_t(\widehat\theta_0)^2}{\widehat\mu_{a,t}}
+  \right),
+  \qquad
+  \widehat\mu_{a,t}=\exp\!\left(R_t\trans\widehat\eta_a\right),
+\]
+for $a\in\{\text{log-OLS},\text{PPML},\text{Harvey}\}$. For PPML and the
+Harvey estimator, $\widehat\mu_{a,t}$ is the fitted conditional variance. For
+log-OLS, it is the exponentiated fitted conditional mean of the log squared
+residual and carries no retransformation correction.
+
+The stage reads the PPML and Harvey coefficients from their unique accepted
+tau-zero point fits and never refits either estimator. It recomputes the
+closed-form log-OLS projection at the same $\widehat\theta_0$. It stops if the
+mean point is missing, either primary estimator lacks one unique accepted point
+fit with five finite coefficients, a structural mean residual is exactly zero,
+or any standardized log residual is nonfinite.
+
+Under conditionally normal structural mean residuals and a correctly fitted
+conditional variance, $\xi_{a,t}$ follows $\log\chi_1^2$. The first required SVG
+plots sorted empirical values against the corresponding theoretical quantiles,
+using common axis limits with three-percent padding and a square fixed-aspect
+canvas. The second plots estimator-specific kernel densities against the exact
+reference density
+\[
+  f_{\log\chi_1^2}(x)
+  =\sqrt{\frac{e^x}{2\pi}}\exp\!\left(-\frac{e^x}{2}\right).
+\]
+The density curves use smoothing adjustment 1.8, and the reference curve uses
+512 grid points. Both figures share one estimator palette and one neutral
+reference style. The stage also prints each series' mean, variance, skewness,
+and excess kurtosis beside the corresponding reference moments.
+
 \subsection{Inference tables and estimator pages}
 
 The combined-table artifact producer publishes the mean-equation and PPML
@@ -2698,7 +2755,7 @@ reconciler writes the record
 through exact object RDS readback.
 
 Reconciliation covers the seven conditional artifact records; a separate
-acceptance check must establish existence and freshness for the 80 required
+acceptance check must establish existence and freshness for the 82 required
 records. Final LaTeX-sidecar cleanup is the runner's last statement, so a cleanup
 failure may occur after every scientific artifact producer and the
 conditional-route state record write.
@@ -2712,9 +2769,9 @@ acceptance.
 
 \subsection{Manifest shape and path rule}
 
-The expanded artifact manifest contains 87 unique artifact records: 53 literal
+The expanded artifact manifest contains 89 unique artifact records: 55 literal
 records, 18 fitted-volatility-sweep records, and 16 generated mean-region
-records. Of these, 80 are \code{required}, three \code{conditional_lad}, and four
+records. Of these, 82 are \code{required}, three \code{conditional_lad}, and four
 \code{conditional_egarch}; together they occupy seven output groups. Every
 current artifact path, stored in \code{new_path}, follows
 \begin{center}
@@ -2726,10 +2783,10 @@ The retained \code{old_path} stores the legacy flat
 \begin{table}[htbp]
 \centering
 \small
-\caption{Counts for all 87 expanded artifact-manifest records by output group.
+\caption{Counts for all 89 expanded artifact-manifest records by output group.
 LAD means least absolute deviations. EGARCH-X means exponential generalized
 autoregressive conditional heteroskedasticity with exogenous regressors. The
-manifest contains 80 required records, three records conditional on LAD, and
+manifest contains 82 required records, three records conditional on LAD, and
 four records conditional on EGARCH-X. Counts describe expected records, not
 current file presence.
 \label{tab:artifact-groups}}
@@ -2739,19 +2796,19 @@ Group & Records\\
 \midrule
 \file{tables/descriptive_statistics} & 3\\
 \file{tables} & 18\\
-\file{figures} & 46\\
+\file{figures} & 48\\
 \file{figures/descriptive_statistics} & 1\\
 \file{reports} & 3\\
 \file{diagnostics} & 11\\
 \file{state} & 5\\
 \midrule
-Total & 87\\
+Total & 89\\
 \bottomrule
 \end{tabular}
 \end{table}
 
 Table~\ref{tab:artifact-groups} shows that \file{figures} is the largest output group,
-with 46 of the 87 artifact records.
+with 48 of the 89 artifact records.
 
 Artifact lifecycle status is not execution reachability. The exact crosswalk is:
 \begin{itemize}
@@ -2759,7 +2816,7 @@ Artifact lifecycle status is not execution reachability. The exact crosswalk is:
     conditional route. Its producer stage is always attempted if earlier stages
     succeed. The fitted-volatility sweep stops if no configured value survives;
     with one or more surviving values, runtime filtering can still omit required
-    sweep paths. No final gate checks all 80 required paths.
+    sweep paths. No final gate checks all 82 required paths.
   \item \code{conditional_lad} means the file must exist exactly when the LAD
     producer ran. LAD is source-selected subject to exact
     \code{quantreg} 6.1; a declined or unanswered record selects absence.
@@ -2772,9 +2829,9 @@ obligations. They do not mean always attempted, selected path, or available but
 not called.
 
 \begin{landscape}
-\subsection{The 53 literal records}
+\subsection{The 55 literal records}
 
-The 53 literal artifact records assign one ID to each manifested file. A
+The 55 literal artifact records assign one ID to each manifested file. A
 producer may write a publication triple or paired diagnostic formats; the
 distinct artifact IDs keep each file separately addressable. The typed writer
 determines typed behavior. The artifact ID addresses only the file.
@@ -2785,7 +2842,7 @@ determines typed behavior. The artifact ID addresses only the file.
 \begin{longtable}{@{}>{\raggedright\arraybackslash}p{0.28\textwidth}
   >{\raggedright\arraybackslash}p{0.33\textwidth}
   >{\raggedright\arraybackslash}p{0.32\textwidth}c@{}}
-\caption{The 53 literal artifact records. Group/basename paths are relative to
+\caption{The 55 literal artifact records. Group/basename paths are relative to
 \file{scripts-paper/output/}; producer paths are relative to
 \file{scripts-paper/}. Status R means required, L means conditional least
 absolute deviations (LAD), and E means conditional exponential generalized
@@ -2827,6 +2884,8 @@ ID & Group/basename & Producer under \file{scripts-paper/} & Status\\
 \code{ppml_fitted_volatility_figure} & \file{figures/log_var_eq_fitted_volatility_ppml.svg} & \file{log_variance/figures/fitted_volatility/run.R} & R\\
 \code{harvey_fitted_volatility_figure} & \file{figures/log_var_eq_fitted_volatility_harvey.svg} & same fitted-volatility producer & R\\
 \code{lad_fitted_volatility_figure} & \file{figures/log_var_eq_fitted_volatility_lad.svg} & \file{log_variance/figures/fitted_volatility/run_lad.R} & L\\
+\code{residual_qq_figure} & \file{figures/log_var_eq_residual_qq.svg} & \file{log_variance/figures/residual_diagnostics/run.R} & R\\
+\code{residual_density_figure} & \file{figures/log_var_eq_residual_density.svg} & same residual-distribution producer & R\\
 \code{descriptive_figures} & \file{figures/descriptive_statistics/figures.pdf} & \file{reports/build_descriptive_statistics.R} & R\\
 \code{descriptive_report_tex} & \file{reports/descriptive_stats.tex} & same descriptive producer & R\\
 \code{descriptive_report_pdf} & \file{reports/descriptive_stats.pdf} & same descriptive producer & R\\
@@ -2859,11 +2918,11 @@ ID & Group/basename & Producer under \file{scripts-paper/} & Status\\
 
 Table~\ref{tab:literal-artifacts} shows that lifecycle attaches to records,
 allowing required and conditional files to share an output group. The status
-tally over these 53 records is 46 \code{required}, three \code{conditional_lad},
+tally over these 55 records is 48 \code{required}, three \code{conditional_lad},
 and four \code{conditional_egarch}; the 34 generated records are all
-\code{required}, which is how the manifest reaches 80 required of 87.
+\code{required}, which is how the manifest reaches 82 required of 89.
 
-Five of the 87 records have no producer that resolves them. Four are the EGARCH
+Five of the 89 records have no producer that resolves them. Four are the EGARCH
 records. Their producer field names a directory rather than a file, and
 Section~\ref{sec:outside-runner} marks them \emph{not implemented}. Three of those four
 carry no lookup coordinate at all. The fourth, \code{egarch_bounds_figure}, does
@@ -2986,7 +3045,7 @@ These are artifact lookup families, not estimand classes. The LAD variant under
 envelope, whereas the variants for PPML and the Harvey estimator are fitted
 conditional-residual-volatility envelopes.
 An artifact lookup family/variant query must resolve exactly one artifact record.
-The other 61 artifact records have blank family and variant fields and are
+The other 63 artifact records have blank family and variant fields and are
 addressed by artifact ID.
 
 The LaTeX publication registry contains six triples. Each triple binds a
@@ -3045,7 +3104,7 @@ readback, and projection checks establish only their named properties.
 
 The current topology checks use expected paths to reject extras and skip the
 output-tree block when the output root is absent. A separate check must establish
-existence for all 80 required paths. Final conditional-route reconciliation may
+existence for all 82 required paths. Final conditional-route reconciliation may
 record \code{requested} without \code{ran}. Published-table projection comparison
 drops TeX files without projected numeric tokens and ignores PDFs, SVGs, CSVs,
 RDS files, Markdown files, the descriptive wrapper, and all other non-table
@@ -3293,6 +3352,12 @@ residual-dynamics gate & dynamics gate, Ljung--Box gate, and artifact ID
 \code{dynamics_gate} & One predeclared lag-4 screen produces the
 residual-dynamics gate record read by the EGARCH-X decision router. It does not
 select between PPML and the Harvey estimator.\\
+tau-zero residual-distribution figures &
+\code{log_var_eq_residual_diagnostics},
+\code{LOGVAR_RESID_DIAG_ESTIMATORS}, \code{residual_qq_figure}, and
+\code{residual_density_figure} & These are the quantile--quantile and density
+comparisons of three estimator-specific standardized log-residual series. They
+are published figures, not the Ljung--Box residual-dynamics gate.\\
 heteroskedasticity diagnostic battery & heteroskedasticity evidence, battery,
 tests, and the three-panel heteroskedasticity tables & These phrases refer to the
 collection of named diagnostics recomputed late in the run. The individual tests remain
@@ -3893,6 +3958,9 @@ Mean identified-set numerical geometry & \file{scripts-paper/support/identificat
 Attained variance-share ranges & \file{scripts-paper/mean_equation/variance_shares/} & \ref{sec:mean}\\
 Log-variance estimator registry and set engine & \file{scripts-paper/config/logvar_estimators.R}; \file{scripts-paper/log_variance/engine/} & \ref{sec:logvar}\\
 Two-step log-OLS benchmark, PPML, Harvey estimator, and LAD & \file{scripts-paper/log_variance/estimators/} & \ref{sec:logvar}\\
+Tau-zero residual-distribution figures &
+\file{scripts-paper/log_variance/figures/residual_diagnostics/};
+\file{scripts-paper/config/figure_rendering.R} & \ref{sec:publication}\\
 Diagnostics, residual-dynamics gate, and EGARCH-X decision router & \file{scripts-paper/log_variance/diagnostics/}; \file{scripts-paper/log_variance/extensions/egarch/} & \ref{sec:diagnostics}\\
 Unified bootstrap stage & \file{scripts-paper/inference/run_bootstrap_stage.R}; \file{scripts-paper/inference/bootstrap_stage_specs.R}; \file{scripts-paper/inference/bootstrap_stage_draw.R}; \file{scripts-paper/inference/bootstrap_stage_results.R} & \ref{sec:bootstrap}\\
 Inference post-processing & \file{scripts-paper/support/inference_post/endpoint_targets.R}; \file{scripts-paper/support/inference_post/endpoint_target_cells.R}; \file{scripts-paper/support/inference_post/endpoint_point_statistic.R} & \ref{sec:bootstrap}\\
