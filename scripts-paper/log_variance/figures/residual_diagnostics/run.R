@@ -46,9 +46,8 @@ cat(sprintf(
   resid_diag_moments$excess_kurtosis
 ))
 cat(sprintf(
-  "  %-8s mean %7.3f  var %6.3f  skew %7.3f  excess kurtosis %7.3f\n",
-  "log chi2", attr(resid_diag_moments, "reference_mean"), pi^2 / 2,
-  -16.8288 / (pi^2 / 2)^1.5, 4
+  "  reference mean under conditionally normal residuals: %7.3f\n",
+  attr(resid_diag_moments, "reference_mean")
 ))
 cat(sprintf("  wrote %s\n", resid_diag_qq_path))
 cat(sprintf("  wrote %s\n", resid_diag_density_path))
