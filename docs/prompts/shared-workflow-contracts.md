@@ -244,7 +244,9 @@ Evidence precedes every completion claim.
 
 An empty search result is not evidence of absence until the same command and quoting pattern matches
 a positive control in the searched universe. Record the control and both counts. Read every match in
-context before classifying it.
+context before classifying it. A firing control does not validate a multi-word pattern against a
+hard-wrapped file, because the phrase can be present and split across a line break; match multi-word
+phrases newline-tolerantly.
 
 ## Review snapshots and certification
 
