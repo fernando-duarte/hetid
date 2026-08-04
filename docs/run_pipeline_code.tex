@@ -47,8 +47,8 @@
 
 \title{The Current \texttt{scripts-paper} Pipeline of \texttt{hetid}}
 \author{}
-\date{Source inspection: 1 August 2026, 23:30 EDT\\
-Commit \texttt{d39c6b9d74f7a74d8f754ffe17447f2d99a6cc39}}
+\date{Source inspection: 3 August 2026, 22:22 EDT\\
+Commit \texttt{487a1b589c46d2135d3a638b1b0d217a074e60d2}}
 
 \begin{document}
 
@@ -58,7 +58,7 @@ Commit \texttt{d39c6b9d74f7a74d8f754ffe17447f2d99a6cc39}}
 The current paper pipeline is one ordered graph evaluated in a shared
 environment. It has one unified bootstrap stage and one manifest-driven
 artifact lifecycle. This static source trace maps runner order, in-memory state,
-scientific estimands, numerical certificates, inference rules, cache identity,
+scientific estimands, numerical certificates, inference rules, semantic cache provenance,
 the complete input and control interface, the exact default route,
 source-fixed global contracts, alternative code paths, and publication
 artifacts to the current R source. Runtime completion and
@@ -89,7 +89,7 @@ The current source has the following main contracts:
     consumption snapshot and a digest-pinned daily ACM cache. The current LAD decision
     selects a dependency-gated stage. The current joint-GMM decision selects only
     replication checks, and every nondefault decision stops before substantive
-    joint-GMM work. The EGARCH-X decision must match a fresh runtime gate, but no
+    joint-GMM work. The EGARCH-X decision must match a fresh residual-dynamics gate, but no
     EGARCH-X producer exists in the runner. The reset entrypoint's
     \code{--keep-tracked} flag belongs to a separate maintenance command. Other
     editable global values are source-fixed code contracts, not launch-time
@@ -150,19 +150,29 @@ The current source has the following main contracts:
   \item The artifact manifest has 87 artifact records. Final
     conditional-route reconciliation covers the seven conditional records and
     does not certify the 80 required files.
+  \item A plain invocation calls the \emph{installed} \code{hetid} namespace, not
+    the checkout under \file{R/}, so this trace's package-layer statements bind to
+    the runtime only if the two agree. At the commit on the title page, they do.
+    Comparing the installed namespace with the checkout over the sorted symbol
+    set, on names, formal arguments, and deparsed bodies, found 171 functions on
+    both sides and no difference. Deparsing is what makes the comparison
+    meaningful: it strips source references and enclosing environments, which
+    otherwise report a mismatch between identical code. This comparison is
+    function-level parity evidence at one commit, not a byte-level attestation of
+    the installed build, and reinstalling from a different tree would invalidate it.
 \end{itemize}
 
 \section{How to read this document}
 \label{sec:reading}
 
-This document defines common abbreviations before the detailed terminology reference.
-They include Adrian--Crump--Moench (ACM), Federal Reserve Economic Data (FRED),
-ordinary least squares (OLS), and principal component analysis (PCA). Estimation
-and inference terms include quasi-maximum-likelihood estimator (QMLE),
-random-number generator (RNG),
+Common abbreviations appear throughout: Adrian--Crump--Moench (ACM), Federal
+Reserve Economic Data (FRED), ordinary least squares (OLS), and principal
+component analysis (PCA). Estimation and inference terms include
+quasi-maximum-likelihood estimator (QMLE), random-number generator (RNG),
 heteroskedasticity-and-autocorrelation-consistent (HAC), and standard error (SE).
 Artifact formats include comma-separated values (CSV), R data serialization
 (RDS), Portable Document Format (PDF), and Scalable Vector Graphics (SVG).
+Section~\ref{sec:terminology} gives the full terminology reference.
 
 \subsection{The two code layers}
 
@@ -327,7 +337,7 @@ unified bootstrap stage, paired B-versus-A mean-specification comparison,
 inference tables}}\\[0.4em]
 $\downarrow$\\[-0.2em]
 \fbox{\parbox{0.86\textwidth}{\centering
-figures, heteroskedasticity-diagnostics table, SDF approximation-error variance
+figures, heteroskedasticity-diagnostics tables, SDF approximation-error variance
 bounds, quoted-number reconstruction and assertion,
 descriptive report}}\\[0.4em]
 $\downarrow$\\[-0.2em]
@@ -391,7 +401,7 @@ Bootstrap workers: launch-selected &
 Use detected logical cores minus two on macOS or minus one elsewhere, with a
 one-worker minimum. &
 \code{HETID_BOOT_CORES} selects a whole number of at least 1. It changes
-scheduling, not the prebuilt resample indices or semantic cache identity.\\
+scheduling, not the prebuilt resample indices or semantic cache provenance.\\
 Bootstrap mode: launch-selected; runtime-selected outcome &
 Request \code{reuse}. A present cache is reused only if every validation check
 passes; otherwise the stage reports \code{fallback-rerun}, recomputes the whole
@@ -415,8 +425,9 @@ Artifact startup: always attempted &
 Create manifest parent directories, then remove and audit every conditional LAD
 and EGARCH artifact before either route is evaluated. Preserve regular artifacts
 until their producers overwrite them. &
-The runner exposes no skip-cleanup or full-reset branch. Full reset is a separate
-command described in Table~\ref{tab:outside-runner}.\\
+The runner exposes no skip-cleanup or full-pipeline-state-reset branch. Full
+pipeline-state reset is a separate command described in
+Table~\ref{tab:outside-runner}.\\
 Quarterly ACM input: source-selected; runtime-selected outcome &
 Request quarterly yields and term premia for months 1--120 with
 \code{source="auto"}, \code{auto_download=FALSE}, and incomplete quarters retained.
@@ -460,7 +471,8 @@ software replication checks. The diagnostic does not gate later stages. &
 The decision schema represents nondefault moment blocks, another intercept target,
 stage C, and a tolerance grid. The current driver deliberately stops with
 \code{unwired_joint_branch} on every nondefault record. Those branches are
-available but not called by this runner.\\
+therefore not implemented: the decision schema reserves them, but no wired
+driver exists behind them.\\
 Residual dynamics and EGARCH-X: source-selected; runtime-selected outcome &
 Run the residual-dynamics gate, then require its fresh record to match the
 checked-in EGARCH-X decision record. That record binds a non-rejecting verdict
@@ -523,7 +535,7 @@ supplies only functions or constants. Paths in the source-or-effect column are r
 Every ledger row has status \emph{always attempted} after earlier rows succeed,
 except lines 117--119, whose status is \emph{selected path} and source-selected, subject to
 the LAD package gate. A row that always sources a file can still contain a
-guarded body. The six driver-level body guards appear after the table. This rule assigns an explicit
+guarded body. The eight driver-level body guards appear after the table. This rule assigns an explicit
 status to every row without repeating the same words in each one.
 
 \small
@@ -682,8 +694,8 @@ Require all four configured relaxation values to lie below the estimated
 boundedness frontier; then render 16 region figures across relaxation values,
 units, and OLS modes.\\
 153--158 & \file{mean_equation/diagnostics/heteroskedasticity/render_table.R} &
-Run the heteroskedasticity diagnostic battery and publish its three-panel table
-triple.\\
+Run the heteroskedasticity diagnostic battery on the SDF-news PC scores and on
+the SDF-news residuals, and publish both three-panel table triples.\\
 161 & \file{variance_bounds/compute_bounds.R} &
 Compute SDF-news and expected-SDF approximation-error variance bounds for 39
 quarterly maturities.\\
@@ -711,22 +723,38 @@ Remove configured LaTeX sidecars recursively; this final action may still fail.\
 \end{longtable}
 \normalsize
 
-Six always or conditionally sourced drivers guard their top-level bodies. Four
+Eight always or conditionally sourced drivers guard their top-level bodies. Four
 guard on upstream objects with \code{exists()}. The joint-null driver requires
 \code{log_var_eq}, \code{set_id_mean_eq}, and \code{mean_eq_bounds_tau}. The
-joint-GMM and residual-dynamics drivers each require \code{log_var_eq} and
-\code{set_id_mean_eq}. The conditionally sourced LAD driver again requires all
-three upstream objects. Every one of these predicates is true in runner order if
-earlier stages succeed. The EGARCH-X driver instead guards on file existence:
-it requires the fresh residual-dynamics RDS, and the immediately preceding gate
-either writes it or stops, so that predicate is also true when reached. The
-always sourced LAD fitted-scale driver is different again. It calls
+residual-dynamics driver requires \code{log_var_eq} and \code{set_id_mean_eq},
+and the joint-GMM stack requires the same pair in the chain-sourced
+\file{scripts-paper/log_variance/diagnostics/joint_gmm/pipeline_driver.R} rather
+than in the ordered wrapper the ledger names. The conditionally sourced LAD
+driver again requires all three upstream objects. Every one of these predicates
+is true in runner order if earlier stages succeed. The EGARCH-X driver instead
+guards on file existence: it requires the fresh residual-dynamics RDS. Because
+the residual-dynamics driver's own guard holds in runner order, that gate reaches
+its write and either produces the record or stops, so the router's predicate is
+also true when reached.
+
+The remaining three drivers share one construct. Each calls
 \src{scripts-paper/config/logvar_estimator_access.R}{paper_logvar_result} with
-\code{required=FALSE}, which returns \code{NULL} unless the registry's LAD result
-object \code{log_var_eq_lad} exists, so its body runs only when the
-dependency-gated LAD map ran. These guards let tests and offline tools source the
-same files without running their pipeline bodies. They do not create
-hidden production choices.
+\code{required=FALSE}, which returns \code{NULL} unless that estimator's registry
+result object exists, and each wraps its whole executable body in the resulting
+\code{!is.null()} test. The PPML and Harvey standard-error drivers attach their
+covariance frames this way, and their predicates are true in runner order because
+each estimator's set map has already bound its result object. The LAD
+fitted-scale driver is the one member whose predicate is not guaranteed:
+\code{log_var_eq_lad} exists only when the dependency-gated LAD map ran, so its
+body renders only then.
+
+All eight gate their substantive pipeline work. Seven of the eight also run to the end
+of their files. The EGARCH-X router is the exception: its guard closes at
+\file{log_variance/extensions/egarch/run_route.R} line 94, and line 95
+unconditionally removes the three local path names the module defined. That
+cleanup runs whether or not the route body did. These guards let tests and
+offline tools source the same files without running their pipeline bodies. They
+do not create hidden production choices.
 
 Table~\ref{tab:runner-ledger} ends with conditional-route reconciliation and
 LaTeX-sidecar cleanup. Startup cleanup of conditional artifacts and full
@@ -834,7 +862,7 @@ EGARCH-X decision records, and \file{config/decisions/lad.dcf}. &
 These files select the source-fixed behavior documented in
 Tables~\ref{tab:source-controls} and~\ref{tab:current-route}. Editing one changes
 the code or tracked decision, not a launch-time option; relevant files and whole
-control objects also enter cache identity.\\
+control objects also enter semantic cache provenance.\\
 R and installed \code{hetid} &
 The package declares R 4.5.0 or later. The runner calls the installed
 \code{hetid} namespace for constants, ACM extraction, date normalization, SDF
@@ -904,7 +932,10 @@ count is already overridden, and \code{FRED_API_KEY} sits inside the patched
 downloader, which the frozen consumption path never calls. &
 Their defaults, allowed values, and downstream effects appear in
 Table~\ref{tab:user-controls}. No other production path rooted at the runner
-reads a user environment variable.\\
+calls \code{Sys.getenv}. One path reads the environment indirectly:
+\src{support/data/frozen_inputs.R}{paper_acm_daily_cache_path} calls
+\code{tools::R_user_dir}, so R's own user-directory variables decide where the
+daily ACM cache lives.\\
 Unified bootstrap cache artifact &
 When mode resolves to \code{reuse}, the stage may read the one schema-4 cache at
 the manifested bootstrap path. A clean state supplies no such input. &
@@ -925,7 +956,7 @@ R version, platform, BLAS, LAPACK, selected package versions, data and design
 hashes, code hashes, control objects, and resample-index and RNG hashes are
 derived during bootstrap provenance construction. Git HEAD is read when
 available for diagnostic provenance, and elapsed time is recorded. &
-These are runtime inputs or metadata, not supported choices. A semantic
+These are runtime inputs or metadata, not supported choices. A semantic cache
 provenance mismatch prevents cache reuse. Missing Git metadata yields an
 unavailable provenance stamp rather than selecting another scientific path;
 clock time changes duration metadata, not estimates.\\
@@ -984,7 +1015,7 @@ two on macOS and minus one on other systems, with a one-worker minimum; failed
 detection also gives one worker. & Controls parallel work in the unified
 bootstrap and the paired mean-specification comparison. The resample indices
 are constructed before the parallel callbacks. Worker count is not part of
-semantic cache identity and does not by itself change an artifact path or the
+semantic cache provenance and does not by itself change an artifact path or the
 intended scientific design.\\
 Bootstrap execution mode: \code{HETID_BOOT_MODE} & Unset or empty selects
 \code{reuse}. The only values are \code{reuse} and \code{rerun}, compared after
@@ -993,12 +1024,12 @@ semantically valid, all-or-nothing unified cache; a missing or invalid cache
 warns and causes a complete rerun. \code{rerun} skips the cache read and
 computes the complete stage. A newly computed candidate is validated and
 transactionally replaces the cache before downstream publication. The mode
-value itself is not semantic provenance.\\
+value itself is not semantic cache provenance.\\
 Draft-run acknowledgement: \code{HETID_ALLOW_DRAFT_RUN} & Unset or empty is
 the default. Any nonempty value acknowledges a replication count other than
 10,000. & Releases only the pre-directory publishing-run guard. It does not select
-the replication count, change an estimator or inference rule, or enter cache
-identity. It permits a reduced-count run to overwrite tracked publication
+the replication count, change an estimator or inference rule, or enter semantic
+cache provenance. It permits a reduced-count run to overwrite tracked publication
 files.\\
 FRED transport selector: \code{FRED_API_KEY} & Unset or empty selects the
 public CSV endpoint through the curl fallback. Any nonempty key selects the
@@ -1007,7 +1038,7 @@ FRED series such as PCECC96, but only when a source edit has set
 \code{fred_source="live"}. Under the checked-in \code{frozen} setting, the runner
 never calls the patched downloader, so this variable has no effect. The API route
 and CSV route have separate checked-in retry and timeout policies. The key is not
-cache provenance. If the acquired data differ, the bootstrap input hash
+semantic cache provenance. If the acquired data differ, the bootstrap input hash
 invalidates reuse; identical acquired data leave the scientific input
 unchanged.\\
 Quadratic equivalence assertion: \code{HETID_ASSERT_EQUIV} & Unset or empty
@@ -1015,7 +1046,7 @@ disables it; any nonempty value enables it. & Each reached generalized
 quadratic-system build also runs the legacy builder and requires exact identity
 of the solver-consumable quadratic list and its $L_i$, $V_i$, and $Q_i$ leaves.
 A mismatch stops execution; a pass leaves scientific objects unchanged. The
-flag is not cache identity. A cache hit skips bootstrap draw callbacks, so
+flag is not semantic cache provenance. A cache hit skips bootstrap draw callbacks, so
 \code{HETID_BOOT_MODE=rerun} is needed when the intended check includes those
 calls.\\
 Tracked-artifact retention during reset: \code{--keep-tracked} & The flag is
@@ -1070,14 +1101,18 @@ choice does not invalidate that cache.\\
 \end{longtable}
 \endgroup
 
-The six environment-variable rows are exhaustive: no other production path
-rooted at \file{scripts-paper/run_pipeline.R} reads a user environment variable.
+The six environment-variable rows are exhaustive as a census of
+\code{Sys.getenv}: no other production path rooted at
+\file{scripts-paper/run_pipeline.R} calls it. R's own user-directory variables
+still resolve the daily ACM cache location through \code{tools::R_user_dir}.
 Only four of the six are read on a plain invocation. \code{HETID_ALLOW_DRAFT_RUN}
 is the second operand of the guard's \code{\&\&}, so the default replication count
 short-circuits it away; \code{FRED_API_KEY} is read only inside the patched
 downloader, which the frozen consumption path never reaches. Both variables still
 belong in the table, because either one takes effect the moment its companion
-setting changes. The four tracked rows exhaust the top-level plan and decision
+setting changes.
+
+The four tracked rows exhaust the top-level plan and decision
 records consumed by the runner. The reset flag is the only command-line option of the reset entrypoint. The
 validation table comparator has its own command-line interface, but it is a
 separate validation utility and cannot change pipeline execution.
@@ -1162,8 +1197,8 @@ all downstream estimation and the input hash. The API-key environment variable
 is the supported transport selector listed separately above.\\
 \src{config/diagnostics.R}{PAPER_HETEROSKEDASTICITY_CONTROL} & Diagnostic test
 suites, Goldfeld--Quandt settings, rejection threshold, and caption tests. &
-Changes diagnostic computation and its published table, not estimator choice
-or unified-bootstrap draws.\\
+Changes diagnostic computation and its two published tables, not estimator
+choice or unified-bootstrap draws.\\
 \src{config/figure_rendering.R}{PAPER_FIGURE_STYLE} & Colors, line widths,
 point sizes, opacity, markers, and region fills. & Changes rendered bytes and
 appearance, not estimates or cache validity.\\
@@ -1189,7 +1224,7 @@ family schema. & Supplies the primary block length from which
 volatility-sensitivity length. The index-family code implements circular
 resampling for both result branches and the paired mean-specification
 comparison. This protocol file is draw-hashed; the design, resampler, block
-rule, RNG, and index and post-index RNG hashes also enter semantic provenance,
+rule, RNG, and index and post-index RNG hashes also enter semantic cache provenance,
 so a change invalidates reuse.\\
 \src{config/inference_search_control.R}{PAPER_LOGVAR_BUDGETS} & The identical
 primary PPML and Harvey estimator selected-grid caps and fit-evaluation budgets;
@@ -1418,13 +1453,20 @@ runner. But within the selected daily \code{source="auto"},
 \code{auto_download=TRUE} path, the active extractor can call the same
 download implementation at runtime when no valid daily asset is available.\\
 Nondefault joint-GMM moment, profile, and search branches &
-Available but not called &
-The schema and source-loaded modules represent the $z$ and log/PPML moment
-blocks, intercept target \code{a_P} or both targets, stage C, and a nonempty
-moment-tolerance grid. The production driver validates the record and then stops
-with \code{unwired_joint_branch} before computing any of these branches. The
-tracked record is a top-level behavior input, but none of these fields can enable
-the source-loaded substantive code in the current runner.\\
+Not implemented &
+The schema represents the $z$ and log/PPML moment blocks, intercept target
+\code{a_P} or both targets, stage C, and a nonempty moment-tolerance grid, and
+the moment and Jacobian layers for those blocks are source-loaded. The endpoint
+search behind them is not.
+\file{log_variance/diagnostics/joint_gmm/projection.R} calls
+\code{spec$solve_endpoint}, and nothing in the repository defines or assigns that
+member:
+\src{log_variance/diagnostics/joint_gmm/specification_and_replication.R}{logvar_joint_gmm_spec}
+builds a specification without it, and without the \code{block} and
+\code{n_slope} fields that the projection module reads. The production driver validates the
+record and stops with \code{unwired_joint_branch} before reaching any of this, so
+the refusal is not what makes the branches unavailable. Even a driver that routed
+through could not return an endpoint.\\
 Joint-GMM Gaussian-gap restriction &
 Not implemented &
 The decision schema reserves the flag but rejects \code{TRUE} with
@@ -1509,7 +1551,7 @@ Available but not called &
 Supplies plot-data support to tests. The production bounds-figure artifact producer never sources
 it. These three inactive files are the production-tree exclusions listed in
 \file{scripts-paper/README.md}.\\
-Full state reset \file{scripts-paper/reset_pipeline_state.R} &
+Full pipeline-state reset \file{scripts-paper/reset_pipeline_state.R} &
 Separate entrypoint &
 \code{Rscript} \code{scripts-paper/reset_pipeline_state.R} clears the cache, gate state,
 diagnostics, publication outputs, and sidecars by compartment. Its
@@ -1587,8 +1629,9 @@ cache to match the SHA-256 digest recorded in \file{config/analysis.R}, and
 refuses a cached file whose digest differs rather than replacing it. The refusal
 matters because the package's own downloader resolves the release \code{latest}
 tag, so another session can move the file on disk to a newer vintage that nothing
-here asked for. The recorded release tag does a different job. Nothing on disk
-carries a tag the check could read, so the tag selects which asset to fetch when
+here asked for. The recorded release tag does a different job. The preflight
+writes a \code{.meta} sidecar whose \code{source_url} embeds the tag, but the
+check never reads that sidecar, so the tag only selects which asset to fetch when
 the cache is absent. The digest alone decides whether an existing cache is
 acceptable.
 
@@ -1620,13 +1663,14 @@ survives.
 The runner preserves required artifacts until their producers overwrite them,
 so an early failure may leave files from unreached stages of an earlier run.
 The separate \file{scripts-paper/reset_pipeline_state.R} entrypoint owns
-full-reset behavior.
+full pipeline-state reset.
 
 Invoking that reset entrypoint without a flag removes the unified-bootstrap
 cache, gate state, diagnostics, tables, figures, reports, and LaTeX sidecars.
 Adding \code{--keep-tracked} still removes the cache, state, diagnostics,
 sidecars, and gitignored publication artifacts, but retains tracked table,
-figure, and report files. The runner itself never calls this full reset.
+figure, and report files. The runner itself never calls this full pipeline-state
+reset.
 
 \section{Data construction}
 \label{sec:data}
@@ -1925,7 +1969,7 @@ follow the \code{hin <= 0} convention: nonpositive means feasible.
 assertion. When the variable is nonempty, every reached generalized build also
 runs the legacy builder and requires exact identity of the quadratic list and
 the $L_i$, $V_i$, and $Q_i$ leaves. A mismatch stops execution; a pass changes
-no result. The flag does not enter cache identity. Therefore, a reused unified
+no result. The flag does not enter semantic cache provenance. Therefore, a reused unified
 cache does not recheck quadratic builds inside skipped bootstrap callbacks;
 \code{HETID_BOOT_MODE=rerun} is required when those calls are part of the
 intended assertion scope.
@@ -2208,8 +2252,9 @@ PPML; Table~\ref{tab:ppml-harvey-search} isolates the grid difference.
 \code{logvar_harvey_objective}, \code{logvar_harvey_score}, and
 \code{logvar_harvey_moment}. The current solver calls \code{hv_eval}, which
 implements those formulas directly; it does not call the three named convenience
-primitives. They remain available to tests and the source-loaded, driver-blocked
-joint-GMM branches.
+primitives. They are available to tests, which check them against numerical
+derivatives, but are not separate production paths. This matches the PPML
+primitives above: no joint-GMM module references any Harvey primitive.
 
 \src{scripts-paper/log_variance/estimators/harvey/sensitivity_and_reporting.R}
 {logvar_harvey_sensitivity_gate} implements the fixed-grid Harvey second search
@@ -2354,7 +2399,8 @@ families, preserves their draw order, records index and post-index RNG hashes,
 and restores ambient RNG state. These steps make serial and parallel resampling
 identities independent of solver-side randomness.
 
-Transport failures, draws that return an error instead of a result, may not exceed $\lfloor0.25B\rfloor$. Separately, each
+A transport failure is a draw that returns an error instead of a result.
+Transport failures may not exceed $\lfloor0.25B\rfloor$. Separately, each
 pairing of a log-variance estimator with a relaxation value defines one cell.
 Within that cell, the pooled \code{failed}-status share across result draws,
 coefficients, and sides must stay at or below 0.25. A
@@ -2413,6 +2459,10 @@ independent.
 
 \subsection{\TauP{} inference at positive relaxation values}
 
+Target P is the published confidence-interval procedure at positive relaxation
+values. Its target is pointwise coverage, uniformly over the relevant scalar
+identified interval.
+
 For each full-sample side certified \code{bounded}, the scale is the MAD of
 finite bounded bootstrap endpoints on that side. A side needs at least
 $\lceil0.50B\rceil$ such draws, a bounded share of at least 0.85 among nonfailed
@@ -2466,11 +2516,11 @@ assembles both specifications, and writes the diagnostic CSV. The paired
 B-versus-A mean-specification comparison does not create a second resampling
 protocol or a separate unified bootstrap cache artifact.
 
-\section{Unified bootstrap cache identity and reproducibility}
+\section{Unified bootstrap semantic cache provenance and reproducibility}
 \label{sec:cache}
 
 The unified bootstrap cache reuses expensive draws only when their scientific
-identity is unchanged. Reuse is all-or-nothing. Semantic provenance invalidates
+identity is unchanged. Reuse is all-or-nothing. Semantic cache provenance invalidates
 stale draws. A change confined to the presentation manifest leaves draws valid.
 A presentation-only field stored in a draw-hashed file or whole control object
 still invalidates reuse under the current implementation.
@@ -2481,7 +2531,7 @@ bootstrap cache schema 4 payload contains exactly \code{anchor}, \code{mean},
 \code{volatility_primary_n_failed}, \code{volatility_sensitivity},
 \code{volatility_sensitivity_n_failed}, and \code{provenance}.
 
-Semantic provenance compares 19 of the record's 20 fields: the resampler, sample
+Semantic cache provenance compares 19 of the record's 20 fields: the resampler, sample
 size, both replication counts, both block lengths, the block rule, seed, RNG
 kinds, axes, cache schema, input hash, draw-spec hash, draw-code hash, runtime
 hash, both resample-index family hashes, and both post-index RNG hashes. The
@@ -2505,7 +2555,9 @@ mean box multistart, and the unified-bootstrap implementation. The presentation
 manifest resolves to 13 files: the eight in \file{support/inference_post} plus
 five named post-draw modules. Classification follows the call site, not the
 filename: \file{set_bootstrap_gate.R} reads as post-draw but runs inside the
-stage, so it counts as draw code. The runtime hash also includes the whole
+stage, so it counts as draw code.
+
+The runtime hash also includes the whole
 analysis-contract, inference-search, reporting, and serialization control
 objects.
 Therefore, an edit in one of those authorities invalidates reuse even when the
@@ -2534,7 +2586,8 @@ table triple assembled from the available result objects. It always emits PPML
 and two-step log-OLS benchmark pages, then adds a Harvey estimator page when its
 result exists and a LAD page when its dependency-gated result exists. Under the
 current runner, the Harvey estimator result exists before this artifact producer
-runs. \file{scripts-paper/config/artifact_latex.R} controls table labels and
+runs. \file{scripts-paper/config/artifact_latex.R} controls LaTeX label registry
+entries and
 LaTeX publication registry membership.
 
 All tau-zero stars in these tables come from the bootstrap point/MAD statistic.
@@ -2571,7 +2624,9 @@ values, two unit systems, and two OLS modes.
 \subsection{Heteroskedasticity diagnostic battery}
 
 The late heteroskedasticity analysis stage recomputes the heteroskedasticity
-diagnostic battery and publishes its three-panel table triple. The battery
+diagnostic battery on two conditioning matrices and publishes two three-panel
+table triples: one conditioned on the SDF-news PC scores and one on the SDF-news
+residuals. The two tables have identical shape. The battery
 includes White, Breusch--Pagan,
 Goldfeld--Quandt, the Harvey heteroskedasticity test, regime-dependent Anscombe,
 Glejser, the Breusch--Pagan Lagrange-multiplier (LM) statistic,
@@ -2717,11 +2772,11 @@ obligations. They do not mean always attempted, selected path, or available but
 not called.
 
 \begin{landscape}
-\subsection{The 50 literal records}
+\subsection{The 53 literal records}
 
-The 50 literal artifact records assign one ID to each manifested file. A
+The 53 literal artifact records assign one ID to each manifested file. A
 producer may write a publication triple or paired diagnostic formats; the
-distinct artifact IDs keep each file separately addressable. The artifact writer
+distinct artifact IDs keep each file separately addressable. The typed writer
 determines typed behavior. The artifact ID addresses only the file.
 
 \begingroup
@@ -2730,7 +2785,7 @@ determines typed behavior. The artifact ID addresses only the file.
 \begin{longtable}{@{}>{\raggedright\arraybackslash}p{0.28\textwidth}
   >{\raggedright\arraybackslash}p{0.33\textwidth}
   >{\raggedright\arraybackslash}p{0.32\textwidth}c@{}}
-\caption{The 50 literal artifact records. Group/basename paths are relative to
+\caption{The 53 literal artifact records. Group/basename paths are relative to
 \file{scripts-paper/output/}; producer paths are relative to
 \file{scripts-paper/}. Status R means required, L means conditional least
 absolute deviations (LAD), and E means conditional exponential generalized
@@ -2948,6 +3003,7 @@ they do not compile or inspect the files. PDF means Portable Document Format.
 Fragment & Standalone TeX & Standalone PDF\\
 \midrule
 \code{heteroskedasticity_table} & \code{heteroskedasticity_standalone_tex} & \code{heteroskedasticity_standalone_pdf}\\
+\code{heteroskedasticity_w2_table} & \code{heteroskedasticity_w2_standalone_tex} & \code{heteroskedasticity_w2_standalone_pdf}\\
 \code{structural_var_estimators_table} & \code{structural_var_estimators_standalone_tex} & \code{structural_var_estimators_standalone_pdf}\\
 \code{structural_var_inference_table} & \code{structural_var_inference_standalone_tex} & \code{structural_var_inference_standalone_pdf}\\
 \code{variance_share_table} & \code{variance_share_standalone_tex} & \code{variance_share_standalone_pdf}\\
@@ -3238,7 +3294,7 @@ residual-dynamics gate & dynamics gate, Ljung--Box gate, and artifact ID
 residual-dynamics gate record read by the EGARCH-X decision router. It does not
 select between PPML and the Harvey estimator.\\
 heteroskedasticity diagnostic battery & heteroskedasticity evidence, battery,
-tests, and the three-panel heteroskedasticity table & These phrases refer to the
+tests, and the three-panel heteroskedasticity tables & These phrases refer to the
 collection of named diagnostics recomputed late in the run. The individual tests remain
 distinct, and the Harvey heteroskedasticity test is not the Harvey estimator.\\
 EGARCH-X decision router & EGARCH routing, route result, dynamic workstream, and
@@ -3264,8 +3320,8 @@ table-facing code uses the t-statistic label.\\
 \code{ci_upper} & When the endpoint regularity gate passes and the full-sample
 status pattern supports a finite side, the Target P confidence interval is the published pointwise-coverage
 interval, uniform over the relevant scalar identified interval. Otherwise the
-interval is suppressed or the requested-relaxation-value gate stops
-publication. Mean-coefficient intervals apply to scalar projections of the mean
+interval is suppressed, or the endpoint regularity gate stops publication for the
+requested relaxation value. Mean-coefficient intervals apply to scalar projections of the mean
 identified set. The confidence limits are not identified-set endpoints.\\
 \TauS{} containment diagnostic & \code{target_s_critical} and \code{c_s} & This
 diagnostic calibrates containment of the full identified set. It is not the
@@ -3367,6 +3423,17 @@ LaTeX publication registry; publication triple &
 row is one publication triple: fragment, standalone TeX, and standalone PDF
 artifact IDs. \code{.latex_publication_specs} is temporary construction input,
 not another name for the runtime registry.\\
+LaTeX label registry; semantic label &
+\code{PAPER_LATEX_LABELS}, \code{artifact_latex_labels}, \code{label_key}, and
+\code{latex_label} & A separate registry from the publication registry above.
+\code{PAPER_LATEX_LABELS} maps nine \code{label_key} names to the literal
+cross-reference label strings the paper uses, such as \code{tab:var_share};
+the runtime frame \code{artifact_latex_labels} joins each artifact ID to its
+\code{latex_label} through that key. One artifact ID may carry several panel
+labels. An unresolved key is a source-time hard stop, not a runtime failure:
+the \code{stopifnot} that rejects a missing label runs while
+\file{scripts-paper/config/artifact_latex.R} is sourced, before the runner
+evaluates any stage.\\
 unified bootstrap stage & single shared stage, unified stage, and
 \code{run_bootstrap_stage} & One stage constructs both resample-index families,
 then computes or reuses the unified result payload. When the stage computes the
@@ -3397,10 +3464,13 @@ bootstrap cache payload; bootstrap cache schema 4 &
 stored in the unified bootstrap cache artifact. Schema 4 is its validation
 contract, not a route or artifact manifest schema.\\
 bootstrap provenance record; semantic cache freshness & provenance, semantic
-freshness, cache identity, and cache reuse validity & The provenance record
+freshness, cache identity, semantic cache identity, cache provenance, and cache
+reuse validity & The provenance record
 stores the reuse-gating design, input, code, runtime, and resample-index hashes.
 Semantic freshness means equality under those validators, not modification-time
-freshness or cryptographic authentication.\\
+freshness or cryptographic authentication. This document calls membership in the
+reuse-gating comparison \emph{semantic cache provenance} throughout, and treats
+the other spellings above as code-side aliases only.\\
 bootstrap draw-code manifest; bootstrap presentation manifest &
 \code{bootstrap_stage_code_manifest()}, \code{code_sha},
 \code{bootstrap_stage_presentation_manifest()}, and \code{presentation_sha} &
@@ -3506,9 +3576,12 @@ quasi-Poisson log-link QMLE fitted with \code{glm.fit()}. It is one estimator,
 not a generic name for every log-variance set map. &
 \file{scripts-paper/log_variance/estimators/ppml/fit.R}\\
 LAD & Least absolute deviations, implemented here as median quantile regression
-for the conditional-median log scale. The \code{tau=0.5} argument is a quantile
-probability, not the identification relaxation value. &
-\file{scripts-paper/log_variance/estimators/lad/estimator.R}\\
+for the conditional-median log scale. The estimator fixes the quantile
+probability at \code{quantile = 0.5} and passes it to \code{quantreg} as that
+package's \code{tau} argument. That \code{tau} is a quantile probability, not
+the identification relaxation value this document calls \(\tau\). &
+\src{scripts-paper/log_variance/estimators/controls.R}{quantile}; call sites
+\file{scripts-paper/log_variance/estimators/lad/fit.R}\\
 GMM & Generalized method of moments. The current joint-GMM replication
 diagnostic checks graph, algebra, and software invariance; it is not an added
 estimator or identifying restriction. &
@@ -3672,8 +3745,8 @@ check & The PPML and Harvey second search audits reconcile endpoints and may
 demote a side. The LAD verify-or-rerun check verifies or reruns a row and does
 not patch endpoints.\\
 PPML and Harvey estimator fitted conditional-residual volatility, and LAD fitted
-conditional-median scale & Fitted conditional-residual volatility is conditional
-residual standard deviation. Fitted conditional-median scale is conditional
+conditional-median absolute residual & Fitted conditional-residual volatility is the conditional
+residual standard deviation. The fitted conditional-median absolute residual is the conditional
 median absolute-residual magnitude. The shared artifact lookup family does not
 make the estimands equal.\\
 Residual-dynamics gate, EGARCH-X decision router, and EGARCH-X artifact producer &
