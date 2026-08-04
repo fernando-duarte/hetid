@@ -72,6 +72,12 @@ paper_source_once(paper_path("log_variance", "estimators", "ppml", "standard_err
 # Harvey sets and analytic standard errors (the wrapper keeps this to one source
 # line). Its dedicated table publishes below, after the bootstrap stage.
 paper_source_once(paper_path("log_variance", "estimators", "harvey", "run.R"))
+# Residual-diagnostic figures. After the Harvey wrapper so both point fits are
+# registered, and they are read rather than refitted; log-OLS recomputes only its
+# deterministic projection.
+paper_source_once(paper_path(
+  "log_variance", "figures", "residual_diagnostics", "run.R"
+))
 # joint-null theta_R = 0 distance diagnostic: math, search, stability, then the
 # guarded driver (the log-OLS orchestrator supplies inputs and named parents
 # source their child modules), before the panels table appends its note

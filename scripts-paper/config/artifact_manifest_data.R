@@ -52,7 +52,8 @@ PAPER_CONDITIONAL_ARTIFACT_STATUSES <- setdiff(
   aa = "variance_bounds/quoted/run.R",
   ab = "log_variance/tables/render_combined_inference_table.R",
   ae = "mean_equation/inference/spec_comparison.R",
-  ad = "log_variance/tables/render_estimator_pages.R"
+  ad = "log_variance/tables/render_estimator_pages.R",
+  af = "log_variance/figures/residual_diagnostics/run.R"
 )
 .artifact_consumers <- c(
   A = "reports/descriptive_stats.tex",
@@ -106,6 +107,8 @@ PAPER_CONDITIONAL_ARTIFACT_STATUSES <- setdiff(
   "ppml_fitted_volatility_figure|log_var_eq_fitted_volatility_ppml.svg|3|n|B|r",
   "harvey_fitted_volatility_figure|log_var_eq_fitted_volatility_harvey.svg|3|n|B|r",
   "lad_fitted_volatility_figure|log_var_eq_fitted_volatility_lad.svg|3|o|B|l",
+  "residual_qq_figure|log_var_eq_residual_qq.svg|3|af|B|r",
+  "residual_density_figure|log_var_eq_residual_density.svg|3|af|B|r",
   "descriptive_figures|figures.pdf|4|a|A|r",
   "descriptive_report_tex|descriptive_stats.tex|5|a|B|r",
   "descriptive_report_pdf|descriptive_stats.pdf|5|a|B|r",

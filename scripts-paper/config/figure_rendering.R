@@ -30,6 +30,32 @@ PAPER_FIGURE_STYLE <- list(
     line_width = 0.8,
     point_size = 1.6
   ),
+  # Residual-diagnostic panels (figures/residual_diagnostics). One colour per
+  # log-variance estimator, shared by the quantile-quantile and density figures
+  # so a reader carries the key between them; the identified-set primary goes to
+  # PPML because PPML is the baseline estimator. The reference curve and the
+  # 45-degree line are the same neutral grey and the same dash, so neither reads
+  # as a fourth estimator.
+  residual_diagnostic = list(
+    estimator_colors = c(
+      "PPML" = "#2a78d6",
+      "Harvey" = "#b3541e",
+      "log-OLS" = "#6a3d9a"
+    ),
+    reference = "grey35",
+    reference_linewidth = 0.35,
+    reference_linetype = "22",
+    point_size = 0.55,
+    density_linewidth = 0.55,
+    # wide enough that the three curves read as single-mode shapes rather than
+    # kernel wobble; it flattens peak heights, so the figures are read for the
+    # horizontal shift between estimators and not for the height of a mode
+    density_adjust = 1.8,
+    density_grid_n = 512L,
+    # equal padding on both axes, which keeps the corner-to-corner reference
+    # line exactly diagonal
+    qq_pad_fraction = 0.03
+  ),
   descriptive = list(
     group_colors = c(
       "consumption growth" = "#2a78d6",
@@ -68,6 +94,10 @@ PAPER_FIGURE_RENDER_CONTROL <- list(
     # the 72pt margins -- deliberate, author asked for the width. Height fixed.
     fitted_volatility_sweep = c(width = 7.0, height = 5.5 / 1.618),
     variance_bounds = c(width = 5.5, height = 5.5 / 1.618),
+    # square, because the quantile-quantile panel puts the same range on both
+    # axes and a non-square frame would tilt its 45-degree reference line
+    residual_qq = c(width = 5.5, height = 5.5),
+    residual_density = c(width = 5.5, height = 5.5 / 1.618),
     descriptive = c(width = 11, height = 8.5)
   ),
   # shape of the shared bounds-by-tau grid (tau_grid.R): the historical uniform
