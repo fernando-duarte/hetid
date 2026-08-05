@@ -22,6 +22,9 @@ forbid(
   c(
     "config/reporting.R",
     "config/figure_rendering.R",
+    # the region_3d tick_digits this grants moved here when figure_rendering.R
+    # was split at the line cap; same value, same owner, new file name
+    "config/figure_render_control.R",
     "mean_equation/figures/render_region_3d.R"
   )
 )

@@ -8,6 +8,27 @@
 paper_source_once(paper_path("support", "graphics", "device.R"))
 paper_source_once(paper_path("log_variance", "figures", "bounds_by_tau_frame.R"))
 
+# Display cap for the x axis: the sampled tau at which the grid starts
+# subdividing. paper_bounds_tau_grid splits its final backbone intervals BECAUSE
+# the branch switch near tau* lives there, so the dense tail and the kink are the
+# same points -- measured on the rendered panels, the boundary slope past this
+# tau jumps from a median of 0.01 to above 5, and nothing below it kinks at all.
+# Found from the spacing rather than from a count, so it tracks the grid instead
+# of going stale: walk back over the trailing run of short gaps and stop at the
+# last full-width one. A grid with no subdivided tail has no short gaps, so the
+# cap is the largest sampled tau and the axis is not truncated at all.
+logvar_bounds_tau_display_cap <- function(sampled_taus) {
+  stopifnot(length(sampled_taus) >= 3L)
+  gaps <- diff(sampled_taus)
+  fine <- gaps < 0.5 * stats::median(gaps)
+  if (!any(fine)) {
+    return(max(sampled_taus))
+  }
+  coarse <- which(!fine)
+  stopifnot(length(coarse) >= 1L)
+  sampled_taus[max(coarse) + 1L]
+}
+
 logvar_bounds_tau_render <- function(rows, metadata, tau_baseline, tau_star,
                                      path) {
   figure_style <- PAPER_FIGURE_STYLE$identified_set
@@ -22,6 +43,30 @@ logvar_bounds_tau_render <- function(rows, metadata, tau_baseline, tau_star,
   # the slack range past the largest sampled tau: never solved, so it is drawn
   # as an explicitly uncharacterised band rather than left as blank axis
   unsampled <- data.frame(lo = max(rows$tau), hi = tau_star)
+  # Display cap: the last sampled tau below the branch-switch kink. Every row
+  # stays in the data and in every assertion below; the coordinate system just
+  # zooms, so nothing here changes a bound, a grid or tau*.
+  sampled_taus <- sort(unique(rows$tau))
+  x_cap <- logvar_bounds_tau_display_cap(sampled_taus)
+  n_hidden <- sum(sampled_taus > x_cap)
+  # the uncharacterised band sits above the largest sampled tau, so once the axis
+  # is capped below it the caption must stop advertising it
+  band_note <- if (n_hidden == 0L) {
+    paste0(
+      " The shaded band above the largest sampled tolerance is not ",
+      "characterized."
+    )
+  } else {
+    sprintf(
+      paste0(
+        " The axis is truncated at tau = %s, the last sampled tolerance below ",
+        "the branch switch near tau*; %d sampled tolerances above it are ",
+        "computed and reported but not drawn."
+      ),
+      signif(x_cap, PAPER_REPORTING_CONTROL$precision$figure_annotation),
+      n_hidden
+    )
+  }
   ref_line <- data.frame(
     tau = tau_baseline,
     line = sprintf(
@@ -104,10 +149,10 @@ logvar_bounds_tau_render <- function(rows, metadata, tau_baseline, tau_star,
         ),
         " is the mean-equation set's ",
         "bounded-unbounded transition. Points mark the sampled tolerances and ",
-        "the segments between them are interpolation. The shaded band above the ",
-        "largest sampled tolerance is not characterized."
+        "the segments between them are interpolation.", band_note
       )
     ) +
+    ggplot2::coord_cartesian(xlim = c(min(sampled_taus), x_cap)) +
     ggplot2::theme(legend.position = "bottom")
   # the divergence-marker scale has nothing to match on a map where no side
   # diverges (the median map, and the variance maps at these taus): a manual
