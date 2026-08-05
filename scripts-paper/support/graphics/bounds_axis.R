@@ -17,11 +17,11 @@
 # sampled tau and the axis is not truncated at all. Definitions only.
 
 paper_bounds_tau_display_cap <- function(sampled_taus) {
+  # validated before sorting: sort() drops NA by default, so checking after it
+  # would let a missing tau vanish silently instead of stopping the figure
+  stopifnot(is.numeric(sampled_taus), all(is.finite(sampled_taus)))
   sampled_taus <- sort(unique(sampled_taus))
-  stopifnot(
-    is.numeric(sampled_taus), length(sampled_taus) >= 3L,
-    all(is.finite(sampled_taus))
-  )
+  stopifnot(length(sampled_taus) >= 3L)
   gaps <- diff(sampled_taus)
   # half the median gap separates a subdivided interval from a backbone one for
   # any subdivision count of two or more, which paper_bounds_tau_grid enforces

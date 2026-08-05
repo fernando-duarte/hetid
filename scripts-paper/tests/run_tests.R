@@ -19,7 +19,7 @@ suite_manifest <- data.frame(
     "endpoint_targets",
     "manifest_tier",
     "mean_boot_results", "table_acceptance",
-    "support_statistics",
+    "support_statistics", "bounds_axis",
     "support_heteroskedasticity",
     "support_identification_diagnostics", "boot_freshness", "boot_cache", "variance_bounds",
     "variance_bounds_quoted"
@@ -57,6 +57,7 @@ suite_manifest <- data.frame(
     "inference/mean_boot_results_checks.R",
     "validation/test_table_acceptance.R",
     "support/test_statistics.R",
+    "support/bounds_axis_checks.R",
     "support/test_heteroskedasticity.R",
     "support/test_identification_diagnostics.R",
     "support/boot_freshness_checks.R",
