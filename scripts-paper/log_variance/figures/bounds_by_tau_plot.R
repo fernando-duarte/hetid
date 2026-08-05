@@ -6,28 +6,8 @@
 # rows fails the run). Definitions only; sourced by render_bounds_by_tau.R.
 
 paper_source_once(paper_path("support", "graphics", "device.R"))
+paper_source_once(paper_path("support", "graphics", "bounds_axis.R"))
 paper_source_once(paper_path("log_variance", "figures", "bounds_by_tau_frame.R"))
-
-# Display cap for the x axis: the sampled tau at which the grid starts
-# subdividing. paper_bounds_tau_grid splits its final backbone intervals BECAUSE
-# the branch switch near tau* lives there, so the dense tail and the kink are the
-# same points -- measured on the rendered panels, the boundary slope past this
-# tau jumps from a median of 0.01 to above 5, and nothing below it kinks at all.
-# Found from the spacing rather than from a count, so it tracks the grid instead
-# of going stale: walk back over the trailing run of short gaps and stop at the
-# last full-width one. A grid with no subdivided tail has no short gaps, so the
-# cap is the largest sampled tau and the axis is not truncated at all.
-logvar_bounds_tau_display_cap <- function(sampled_taus) {
-  stopifnot(length(sampled_taus) >= 3L)
-  gaps <- diff(sampled_taus)
-  fine <- gaps < 0.5 * stats::median(gaps)
-  if (!any(fine)) {
-    return(max(sampled_taus))
-  }
-  coarse <- which(!fine)
-  stopifnot(length(coarse) >= 1L)
-  sampled_taus[max(coarse) + 1L]
-}
 
 logvar_bounds_tau_render <- function(rows, metadata, tau_baseline, tau_star,
                                      path) {
@@ -47,7 +27,7 @@ logvar_bounds_tau_render <- function(rows, metadata, tau_baseline, tau_star,
   # stays in the data and in every assertion below; the coordinate system just
   # zooms, so nothing here changes a bound, a grid or tau*.
   sampled_taus <- sort(unique(rows$tau))
-  x_cap <- logvar_bounds_tau_display_cap(sampled_taus)
+  x_cap <- paper_bounds_tau_display_cap(sampled_taus)
   n_hidden <- sum(sampled_taus > x_cap)
   # the uncharacterised band sits above the largest sampled tau, so once the axis
   # is capped below it the caption must stop advertising it

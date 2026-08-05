@@ -15,6 +15,7 @@ paper_source_once(paper_path("support", "identification", "profile_solver_core.R
 paper_source_once(paper_path("support", "identification", "profile_bounds_api.R"))
 paper_source_once(paper_path("support", "identification", "tau_star.R"))
 paper_source_once(paper_path("support", "reporting", "inference.R"))
+paper_source_once(paper_path("support", "graphics", "bounds_axis.R"))
 paper_source_once(paper_path("mean_equation", "inference", "refine_bounds_by_tau.R"))
 paper_source_once(paper_path("support", "graphics", "device.R"))
 paper_source_once(paper_path("config", "tau_grid.R"))
@@ -122,6 +123,18 @@ bounds_plot <- ggplot2::ggplot(plot_df, ggplot2::aes(tau)) +
   ) +
   ggplot2::facet_wrap(~coef, scales = "free_y", ncol = length(beta_coefs)) +
   ggplot2::labs(x = expression(tau), y = NULL, linetype = NULL) +
+  # same display cap as the log-variance bounds panels, so the two exhibits are
+  # cut at the same place in their own grids: a coord_cartesian zoom below the
+  # branch switch near tau*, changing no tau, no bound and no tau*. The cap is
+  # taken from the full sampled grid rather than the certified subset, because
+  # certification can drop interior taus and leave gaps that are not the grid's
+  # own subdivision.
+  ggplot2::coord_cartesian(
+    xlim = c(
+      min(bounds_df$tau),
+      paper_bounds_tau_display_cap(bounds_df$tau)
+    )
+  ) +
   ggplot2::theme(legend.position = "bottom")
 
 device <- PAPER_FIGURE_RENDER_CONTROL$devices$mean_bounds
