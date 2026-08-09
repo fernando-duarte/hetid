@@ -1,0 +1,35 @@
+\documentclass[11pt]{article}
+\usepackage{booktabs}
+\usepackage{threeparttable}
+\usepackage{array}
+\usepackage{amssymb}
+\usepackage[margin=1in]{geometry}
+
+\begin{document}
+
+\begingroup
+\footnotesize\setlength{\tabcolsep}{4pt}
+\begin{tabular}{lccccc}
+\toprule
+ & \multicolumn{5}{c}{Share of $\widehat{\mathrm{Var}}(\Delta c_{t+1})$ (\%)} \\
+\cmidrule(lr){2-6}
+ & OLS & $\tau{=}0$ & $\tau{=}0.05$ & $\tau{=}0.1$ & $\tau{=}0.2$ \\
+\midrule
+$PC_{E,t}^{T}b_{E}$ & 7.08 & 7.37 & $[7.27,\,7.49]$ & $[7.16,\,7.61]$ & $[6.96,\,7.90]$ \\
+\quad $b_{1,E}$ & 0.00 & 0.01 & $[0.00,\,0.01]$ & $[0.00,\,0.02]$ & $[0.00,\,0.05]$ \\
+\quad $b_{2,E}$ & 3.90 & 3.31 & $[3.18,\,3.44]$ & $[3.05,\,3.58]$ & $[2.76,\,3.86]$ \\
+\quad $b_{3,E}$ & 3.18 & 4.05 & $[3.90,\,4.22]$ & $[3.75,\,4.40]$ & $[3.46,\,4.80]$ \\
+\midrule
+$PC_{N,t+1}^{T}b_{N}$ & 3.17 & 5.07 & $[4.06,\,6.42]$ & $[3.34,\,8.16]$ & $[2.31,\,13.23]$ \\
+\quad $b_{1,N}$ & 2.63 & 2.00 & $[1.29,\,2.87]$ & $[0.71,\,3.89]$ & $[0.04,\,6.57]$ \\
+\quad $b_{2,N}$ & 0.12 & 0.01 & $[0.00,\,0.12]$ & $[0.00,\,0.36]$ & $[0.00,\,1.26]$ \\
+\quad $b_{3,N}$ & 0.42 & 3.06 & $[2.27,\,4.01]$ & $[1.60,\,5.14]$ & $[0.62,\,8.19]$ \\
+\midrule
+$PC_{E,t}^{T}b_{E}+PC_{N,t+1}^{T}b_{N}$ & 9.85 & 11.55 & $[10.57,\,12.87]$ & $[9.89,\,14.56]$ & $[8.90,\,19.53]$ \\
+\midrule
+$N$ & 256 & 256 & 256 & 256 & 256 \\
+\bottomrule
+\end{tabular}
+\endgroup
+
+\end{document}
