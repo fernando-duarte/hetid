@@ -52,11 +52,39 @@ region_3d_auto_frame <- function(lims, render, extra) {
   )
 }
 
-# Cube frame for one slack. "baseline" overrides two endpoints, keeps its
-# hand-set ladder, and grows the third axis to hold the OLS point, continuing
-# that ladder at its own spacing over the headroom. "widest" takes its hand-set
-# frame and ladder outright. "auto" derives both from the padded box. The caller
-# asserts the result still contains everything it draws.
+# Grows one axis's limits/ticks just enough to contain `value` with padding,
+# only on the ends listed in `sides` — the caller keeps any hand-tuned end
+# fixed by leaving it out.
+region_3d_grow_axis <- function(lims, ticks, k, value, padding, sides = c("lo", "hi")) {
+  span <- diff(lims[[k]])
+  needed_hi <- value + padding * span
+  needed_lo <- value - padding * span
+  grow_hi <- "hi" %in% sides && needed_hi > lims[[k]][2]
+  grow_lo <- "lo" %in% sides && needed_lo < lims[[k]][1]
+  if (!grow_hi && !grow_lo) {
+    return(list(lims = lims[[k]], ticks = ticks[[k]]))
+  }
+  step <- diff(ticks[[k]])[1L]
+  if (grow_hi) {
+    lims[[k]][2] <- max(lims[[k]][2], needed_hi)
+    top <- max(ticks[[k]])
+    n_extra <- max(floor((lims[[k]][2] - top) / step), 0)
+    ticks[[k]] <- c(ticks[[k]], top + step * seq_len(n_extra))
+  }
+  if (grow_lo) {
+    lims[[k]][1] <- min(lims[[k]][1], needed_lo)
+    bottom <- min(ticks[[k]])
+    n_extra <- max(floor((bottom - lims[[k]][1]) / step), 0)
+    ticks[[k]] <- c(bottom - step * rev(seq_len(n_extra)), ticks[[k]])
+  }
+  list(lims = lims[[k]], ticks = ticks[[k]])
+}
+
+# Cube frame for one slack. "baseline" pins two hand-set endpoints (axis 1
+# upper, axis 2 lower) and grows every axis's free end to hold the OLS point,
+# continuing each ladder at its own spacing over the headroom. "widest" takes
+# its hand-set frame and ladder outright. "auto" derives both from the padded
+# box. The caller asserts the result still contains everything it draws.
 region_3d_frame <- function(lims, render, mode, ols_point) {
   if (identical(mode, "auto")) {
     return(region_3d_auto_frame(lims, render, ols_point))
@@ -66,14 +94,18 @@ region_3d_frame <- function(lims, render, mode, ols_point) {
     lims[[1]][2] <- render$manual_limits$x_upper
     lims[[2]][1] <- render$manual_limits$y_lower
     if (!is.null(ols_point)) {
-      lims[[3]][2] <- max(
-        lims[[3]][2],
-        ols_point[[3]] + render$limit_padding * diff(lims[[3]])
-      )
-      step <- diff(ticks[[3]])[1L]
-      top <- max(ticks[[3]])
-      n_extra <- max(floor((lims[[3]][2] - top) / step), 0)
-      ticks[[3]] <- c(ticks[[3]], top + step * seq_len(n_extra))
+      # axis 1's upper and axis 2's lower are hand-tuned just above and must
+      # never move; their free ends (axis 1 lower, axis 2 upper) and axis 3's
+      # fully free pair all grow to hold the OLS point.
+      baseline_sides <- list("lo", "hi", c("lo", "hi"))
+      for (k in seq_along(lims)) {
+        grown <- region_3d_grow_axis(
+          lims, ticks, k, ols_point[[k]], render$limit_padding,
+          sides = baseline_sides[[k]]
+        )
+        lims[[k]] <- grown$lims
+        ticks[[k]] <- grown$ticks
+      }
     }
   } else {
     lims <- render$widest_limits
