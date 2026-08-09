@@ -47,8 +47,8 @@
 
 \title{The Current \texttt{scripts-paper} Pipeline of \texttt{hetid}}
 \author{}
-\date{Source inspection: 4 August 2026, 17:30 EDT\\
-Commit \texttt{ce9e4adb8ae231e5a0cf25db6b8f43f8be782ff5}}
+\date{Source inspection: 9 August 2026, 09:42 EDT\\
+Commit \texttt{6bef02d28281555740cfc030f563df155330866e}}
 
 \begin{document}
 
@@ -59,7 +59,7 @@ The current paper pipeline is one ordered graph evaluated in a shared
 environment. It has one unified bootstrap stage and one manifest-driven
 artifact lifecycle. This static source trace maps runner order, in-memory state,
 scientific estimands, numerical certificates, inference rules, semantic cache provenance,
-the complete input and control interface, the exact default route,
+complete input and control interface, exact default route,
 source-fixed global contracts, alternative code paths, and publication
 artifacts to the current R source. Runtime completion and
 artifact freshness remain outside the trace. A plain invocation reads four of
@@ -83,10 +83,13 @@ The current source has the following main contracts:
     flags, and a plain invocation reads only four of those inputs. The publishing-run guard
     short-circuits before \code{HETID_ALLOW_DRAFT_RUN}, and the frozen consumption
     path never reaches the one downloader that reads \code{FRED_API_KEY}. The runner
-    also consumes four tracked plan or decision inputs: the mean-specification
-    plan and the LAD, joint-GMM, and EGARCH-X decisions. Both external data inputs
+    also consumes five tracked plan or decision inputs: the mean-specification
+    plan, the heteroskedasticity-instrument choice, and the LAD, joint-GMM, and
+    EGARCH-X decisions. Both external data inputs
     are frozen by checked-in switches, so a plain invocation reads a tracked
-    consumption snapshot and a digest-pinned daily ACM cache. The current LAD decision
+    consumption snapshot and a digest-pinned daily ACM cache. The instrument
+    choice names one column of a two-entry registry; the checked-in choice is the
+    level of realized five-year-yield volatility. The current LAD decision
     selects a dependency-gated stage. The current joint-GMM decision selects only
     replication checks, and every nondefault decision stops before substantive
     joint-GMM work. The EGARCH-X decision must match a fresh residual-dynamics gate, but no
@@ -98,7 +101,7 @@ The current source has the following main contracts:
     stochastic-discount-factor (SDF) news principal-component (PC) score on
     the mean-control block $X$ and estimates the news-on-controls coefficient
     matrix $\beta_2^R$. Diagnostic mean specification A imposes
-    $\beta_2^R=0$. The published expected-SDF and combined variance shares are
+    $\beta_2^R=0$. The published lagged-expected-SDF and combined variance shares are
     set-valued.
   \item One unified bootstrap stage computes the published mean and
     log-variance results. Its primary resample-index family uses 10,000 circular
@@ -142,7 +145,7 @@ The current source has the following main contracts:
     Section~\ref{sec:ppml-harvey-search}
     states the full matched comparison.
   \item After the PPML and Harvey tau-zero point fits exist, the runner always
-    attempts two residual-diagnostic figures. They compare the standardized log
+    attempts two residual-distribution figures. They compare the standardized log
     residuals for PPML, the Harvey estimator, and log-OLS with the
     log-chi-square reference. The stage reuses the accepted PPML and Harvey
     point fits and recomputes only the deterministic log-OLS projection.
@@ -157,16 +160,13 @@ The current source has the following main contracts:
     does not certify the 82 required files.
   \item A plain invocation calls the \emph{installed} \code{hetid} namespace, not
     the checkout under \file{R/}, so this trace's package-layer statements bind to
-    the runtime only if the two agree. The preceding source inspection compared
-    the installed namespace with the checkout over the sorted symbol set, on
-    names, formal arguments, and deparsed bodies, and found 171 functions on
-    both sides with no difference. The last commit changed no file under
-    \file{R/}, but this last-commit-only update did not repeat the installed
-    namespace comparison, so installed-package parity is currently unverified.
-    Deparsing strips source references and enclosing environments, which
-    otherwise report a mismatch between identical code. The recorded comparison
-    is function-level evidence, not a byte-level attestation of the installed
-    build, and reinstalling from a different tree invalidates it.
+    the runtime only if the two agree. Installed-package parity is
+    \emph{unverified}. This trace runs no R, and the installed namespace keeps its
+    code in a lazy-load database that only R can read, so the two sides can be
+    compared here on metadata alone: both report version 0.4.0, and the installed
+    \file{NAMESPACE} is byte-identical to the checkout's. Matching version strings
+    and export lists do not establish matching function bodies. The limitation is
+    a boundary of this trace, not evidence of a mismatch.
 \end{itemize}
 
 \section{How to read this document}
@@ -195,9 +195,10 @@ installed package for package-owned arithmetic and keeps paper-owned code under
 This distinction matters for code matching. A statement about the seven
 identification moments should point to the package. A statement about
 published mean specification B, the unified bootstrap, Target P inference, or a table belongs to
-the paper layer. The authoritative project summary is \file{CLAUDE.md}; the
-module catalog and production entrypoint appear in
-\file{scripts-paper/README.md}.
+the paper layer. The module catalog and production entrypoint appear in
+\file{scripts-paper/README.md}. Repository guidance also names a root
+\file{CLAUDE.md} carrying project rules and standing instructions; that file is
+untracked and absent from this checkout, so this trace could not read it.
 
 \subsection{Scope of the trace}
 
@@ -336,7 +337,7 @@ specification A, mean identified set, variance shares}}\\[0.4em]
 $\downarrow$\\[-0.2em]
 \fbox{\parbox{0.86\textwidth}{\centering
 two-step log-OLS benchmark, attained mean coefficient ranges, PPML, Harvey
-estimator, tau-zero residual-diagnostic figures, diagnostics, routes, and
+estimator, tau-zero residual-distribution figures, diagnostics, routes, and
 dependency-gated LAD}}\\[0.4em]
 $\downarrow$\\[-0.2em]
 \fbox{\parbox{0.86\textwidth}{\centering
@@ -344,7 +345,7 @@ unified bootstrap stage, paired B-versus-A mean-specification comparison,
 inference tables}}\\[0.4em]
 $\downarrow$\\[-0.2em]
 \fbox{\parbox{0.86\textwidth}{\centering
-figures, heteroskedasticity-diagnostics tables, SDF approximation-error variance
+figures, heteroskedasticity diagnostic battery tables, SDF approximation-error variance
 bounds, quoted-number reconstruction and assertion,
 descriptive report}}\\[0.4em]
 $\downarrow$\\[-0.2em]
@@ -445,8 +446,8 @@ exposes them nor downloads this quarterly input.\\
 Daily ACM input: source-selected; runtime-selected outcome &
 Request daily yields for months 1--120 with \code{source="auto"} and
 \code{auto_download=TRUE}. The pin check has already left a digest-verified asset
-in the package cache, so the extractor reuses it, and the contract's
-\code{auto_download} does not reach the network. &
+in the package cache or stopped the run, so the extractor's own download branch is
+unreachable unless that asset disappears between the two steps. &
 A source edit can change the data contract or set \code{acm_daily_source="live"},
 which restores the package's own \code{latest}-tag auto-download. The New York Fed
 source cannot supply the daily frequency, so it is not an alternative for this
@@ -460,6 +461,16 @@ vintage through the patched \code{quantmod} method and rewrites the snapshot. On
 on that path does \code{FRED_API_KEY} choose a transport: unset selects the public
 CSV endpoint through the checked-in curl retry and timeout policy, and any
 nonempty key selects the official JSON API.\\
+Heteroskedasticity instrument: source-selected &
+The contract's \code{instrument$active} names \code{y60_vol}, so the single
+heteroskedasticity instrument $Z$ is the realized quarterly volatility of the
+five-year yield, which the estimator demeans. &
+A source edit to \code{instrument$active} selects any other entry of
+\code{PAPER_INSTRUMENT_CHOICES}; the one alternative today is
+\code{y60_vol_log}, the natural log of the same column, which the yield-volatility
+producer computes whichever entry is active. An unregistered id stops. Switching the active entry
+also obliges a regenerated EGARCH-X decision record, because that record binds the
+residual-dynamics gate the active instrument produces.\\
 Data and mean specifications: source-selected &
 Build all data series. Compute mean specification B first and publish it; compute
 mean specification A second for diagnostics. Use B as the only volatility-panel
@@ -469,7 +480,7 @@ entry, subject to its assertions. The first mean entry becomes published, and
 the sole volatility entry must equal it.\\
 Core estimators and diagnostics: always attempted &
 Run the two-step log-OLS benchmark, PPML, the Harvey estimator, the tau-zero
-residual-diagnostic figures, the joint-null witness diagnostic, the joint-GMM
+residual-distribution figures, the joint-null witness diagnostic, the joint-GMM
 diagnostic, and the residual-dynamics gate. &
 These are not run/skip options. Numerical status and diagnostic verdicts are
 runtime-selected outcomes and may stop a later validation or publication stage.\\
@@ -576,7 +587,10 @@ Lines & Source or effect & Role and principal product\\
 \midrule
 \endhead
 5--8 & \file{config/paths.R} via base \code{source()} &
-Validate the package root and define paths, runtime controls, and the source-once registry.\\
+Validate the package root, define paths and the source-once registry, and
+chain-source five preflight modules: runtime primitives, the analysis contract,
+the instrument registry, the acquisition controls, and the endpoint-status
+contract.\\
 9 & \file{config/artifacts.R} &
 Load the artifact manifest, artifact query API, lifecycle, typed writers, LaTeX publication registry,
 and reset definitions.\\
@@ -607,8 +621,10 @@ Produce \code{sdf_news}, \code{expected_sdf}, and \code{lag_expected_sdf}.\\
 Produce quarterly real consumption growth \code{gr1_pcecc96} from the checked-in
 consumption snapshot.\\
 55 & \file{data_preparation/build_yield_volatility.R} &
-Produce the daily-change-based quarterly yield-volatility panel, including the
-five-year-yield volatility instrument \code{y60_vol}.\\
+Produce the daily-change-based quarterly yield-volatility panel, one column per
+ACM maturity, and both registered instrument columns: \code{y60_vol}, which the
+contract currently selects, and its natural log \code{y60_vol_log}. Stop unless
+\code{y60_vol} is positive wherever it is observed.\\
 56 & \file{data_preparation/build_asset_return_pcs.R} &
 Load and quarter-align bundled nominal asset-return PCs as
 \code{l.pc1}--\code{l.pc4}.\\
@@ -620,7 +636,7 @@ Fit the descriptive OLS benchmark \code{ols_mean_eq}.\\
 Estimate published mean specification B and diagnostic mean specification A;
 bind published mean specification B to \code{set_id_mean_eq}.\\
 60 & \file{mean_equation/variance_shares/compute_variance_shares.R} &
-Compute \code{var_share} for expected-SDF, SDF-news, and combined blocks.\\
+Compute \code{var_share} for lagged expected-SDF, SDF-news, and combined blocks.\\
 61 & \file{mean_equation/variance_shares/render_variance_share_table.R} &
 Publish the variance-share fragment, standalone TeX, and PDF.\\
 62 & \file{log_variance/estimators/log_ols/run.R} &
@@ -816,7 +832,8 @@ is first, and diagnostic mean specification A is second.\\
 Mean specification used by log-variance estimators & Published mean
 specification B only.\\
 Relaxation-value policy & Baseline 0.05; display/projection 0.05, 0.10, 0.20; cap 0.99; sweep
-step 0.005; fitted-volatility sweep over relaxation values through 0.40.\\
+step 0.005; fitted-volatility sweep over relaxation values 0.05, 0.10, 0.20,
+0.30, 0.40.\\
 Inference policy & Version 2.0.0; $\alpha_{\mathrm{inf}}=0.10$; minimum usable share 0.50;
 stability share 0.85; \TauP{} location tolerance $10^{-4}$.\\
 Bootstrap & Default $B=10{,}000$; seed 20260708; mode \code{reuse} or \code{rerun}.\\
@@ -831,9 +848,22 @@ Reporting SEs & PPML and the Harvey estimator both select Bartlett HAC with four
 
 The maturity axes come from package constants. The quarterly SDF grid uses
 months 3--117. The runner loads quarterly ACM yields and term premia for the
-full 1--120 month grid before any data-construction source module. The
-five-year-yield volatility instrument is \code{y60_vol}, the realized
-quarterly volatility of the five-year yield, which the estimator demeans.
+full 1--120 month grid before any data-construction source module.
+
+The heteroskedasticity instrument is a registry choice rather than a name fixed in
+place. \src{scripts-paper/config/instrument_choices.R}{PAPER_INSTRUMENT_CHOICES}
+holds one entry per admissible column, each carrying a column name and a
+description: \code{y60_vol} and \code{y60_vol_log}.
+\code{PAPER_ANALYSIS_CONTRACT$input$instrument} carries only \code{active} and
+\code{producer}; \code{active} is \code{y60_vol}, so the selected path is the
+realized quarterly volatility of the five-year yield, and \code{y60_vol_log} is an
+alternative path present in source but not selected.
+\src{scripts-paper/config/instrument_choices.R}{paper_instrument_choice} resolves
+\code{active} against the registry and stops on an unregistered id, and
+\code{paper_instrument_description()} renders the active entry's description.
+\file{scripts-paper/config/paths.R} sources the registry immediately after the
+contract, and \file{scripts-paper/config/analysis.R} then defines \code{z_col} as
+the active entry's column. The estimator demeans that column.
 
 \subsection{Complete input and prerequisite inventory}
 \label{sec:input-inventory}
@@ -868,7 +898,8 @@ the repository-relative output root, and stops on any other directory or package
 name.\\
 Checked-in source and records &
 The runner consumes the \file{scripts-paper/} source tree, its artifact manifest,
-the analysis and reporting contracts, \code{PAPER_SPEC_PLAN}, the joint-GMM and
+the analysis and reporting contracts, \code{PAPER_SPEC_PLAN}, the instrument
+registry and its active choice, the joint-GMM and
 EGARCH-X decision records, and \file{config/decisions/lad.dcf}. &
 These files select the source-fixed behavior documented in
 Tables~\ref{tab:source-controls} and~\ref{tab:current-route}. Editing one changes
@@ -880,13 +911,16 @@ The package declares R 4.5.0 or later. The runner calls the installed
 construction, and package-owned identification arithmetic. &
 The source checkout supplies the paper scripts, but it does not replace the
 installed package namespace. Missing or incompatible functions stop at their
-first call. The installed \code{hetid} version enters bootstrap runtime
-provenance.\\
+first call. The installed \code{hetid} version and the installed namespace's
+function bodies both enter bootstrap runtime provenance, and so do the bytes of
+the checkout's \file{R/} directory. Editing a package source file therefore
+invalidates cache reuse without changing what executes.\\
 Direct namespaces on the regular path &
 The regular production stages directly call \code{dplyr}, \code{ggplot2},
 \code{knitr}, \code{nloptr}, \code{purrr}, \code{sandwich}, \code{skedastic},
 \code{svglite}, \code{tibble}, \code{tidyr}, and \code{tsibble}. They also call
-base or recommended R namespaces such as \code{parallel}, \code{stats},
+these base or recommended R namespaces: \code{graphics}, \code{grDevices},
+\code{grid}, \code{parallel}, \code{stats},
 \code{tools}, and \code{utils}. The FRED download patch asks for \code{quantmod}
 and returns without patching when it is absent, so \code{quantmod} is not a hard
 prerequisite. &
@@ -917,7 +951,11 @@ Daily yields for months 1--120 with \code{source="auto"} and
 \code{acm-term-premium-2026-07} and its recorded SHA-256 digest. &
 The preflight verifies or fetches exactly that release, so the extractor finds a
 known-good cache. A cached file that fails the digest stops the run. These data
-produce quarterly realized yield volatility and \code{y60_vol}. The New
+produce one realized-volatility column per ACM maturity, among them
+\code{y60_vol}, and the same producer builds \code{y60_vol_log} unconditionally
+for the alternative registry choice. That derivation asserts \code{y60_vol} is
+positive wherever observed, so a nonpositive realized volatility stops the run
+rather than yielding $-\infty$. The New
 York Fed source cannot satisfy a daily request.\\
 Consumption data &
 The checked-in snapshot \file{scripts-paper/data/pcecc96.csv}, holding
@@ -983,11 +1021,12 @@ runner. These facilities enable selected writers; they do not choose a model.\\
 \subsection{User controls and source-fixed contracts}
 \label{sec:user-controls}
 
-The runner and its production configuration consume ten top-level behavior
-inputs: six environment inputs and four tracked plan or decision inputs. The
-tracked inputs are the mean-specification plan and the LAD, joint-GMM, and
-EGARCH-X decisions. The separate reset command exposes one maintenance flag.
-Table~\ref{tab:user-controls} lists all eleven without implying that the reset
+The runner and its production configuration consume eleven top-level behavior
+inputs: six environment inputs and five tracked plan or decision inputs. The
+tracked inputs are the mean-specification plan, the instrument choice, and the
+LAD, joint-GMM, and EGARCH-X decisions. The separate reset command exposes one
+maintenance flag.
+Table~\ref{tab:user-controls} lists all twelve without implying that the reset
 flag belongs to the runner. It separates the value
 the user supplies from the consequence, so changing execution cost cannot be
 mistaken for changing the scientific design.
@@ -997,7 +1036,7 @@ mistaken for changing the scientific design.
 \begin{longtable}{@{}>{\raggedright\arraybackslash}p{0.24\textwidth}
   >{\raggedright\arraybackslash}p{0.23\textwidth}
   >{\raggedright\arraybackslash}p{0.45\textwidth}@{}}
-\caption{Complete top-level behavior-input interface: ten pipeline inputs plus
+\caption{Complete top-level behavior-input interface: eleven pipeline inputs plus
 the separate reset command's one maintenance flag. Default means the behavior when
 the user supplies no override. A source edit is a tracked code change, not a
 launch-time option.
@@ -1079,6 +1118,23 @@ log-variance stage. A one-entry mean plan skips alternative-specification draws
 but still writes the required published-only comparison CSV. Changing the first
 entry changes the published system, all downstream estimators and inference,
 and unified-bootstrap identity.\\
+Instrument choice: \code{PAPER_ANALYSIS_CONTRACT$input$instrument$active} &
+The tracked value in \file{scripts-paper/config/analysis_contract.R} is
+\code{y60_vol}. The allowed ids are the keys of
+\code{PAPER_INSTRUMENT_CHOICES} in
+\file{scripts-paper/config/instrument_choices.R}, currently \code{y60_vol} and
+\code{y60_vol_log}; an unregistered id stops. &
+Selects the column \code{z_source()} supplies as the single heteroskedasticity
+instrument $Z$. It also selects the rendered instrument description bound to
+\code{z_desc}, which no current table or figure reads. It therefore
+changes the mean identified set, both log-variance estimators, the
+heteroskedasticity diagnostic battery, and unified-bootstrap identity four times over:
+through the stage input hash, through the draw-specification hash, which stores
+\code{z_col} verbatim, through the analysis contract in the runtime hash,
+and through that contract's membership in the bootstrap draw-code manifest.
+Switching it also obliges a run of the separate
+\file{scripts-paper/validation/regen_egarch_decision.R} entrypoint, because the
+checked-in EGARCH-X decision record binds the previous choice's gate.\\
 Joint-GMM decision: \file{config/decisions/joint_gmm.R} & The checked-in record
 uses the no-answer default: both nondefault moment blocks and stage C are off,
 the intercept target is \code{a_L}, and the moment-tolerance grid is empty. &
@@ -1123,7 +1179,7 @@ downloader, which the frozen consumption path never reaches. Both variables stil
 belong in the table, because either one takes effect the moment its companion
 setting changes.
 
-The four tracked rows exhaust the top-level plan and decision
+The five tracked rows exhaust the top-level plan and decision
 records consumed by the runner. The reset flag is the only command-line option of the reset entrypoint. The
 validation table comparator has its own command-line interface, but it is a
 separate validation utility and cannot change pipeline execution.
@@ -1133,7 +1189,13 @@ can edit those files, but the runner does not expose their leaves as supported
 runtime options. This document calls them \emph{source-fixed contracts}. The
 distinction matters because such an edit changes the code being run and may
 invalidate the cache at file or whole-object granularity. Table~\ref{tab:source-controls}
-accounts for every source-fixed control family in the production graph.
+accounts for every source-fixed control family in \file{config/} and every
+protocol authority the production graph reaches. Producer-module label and series
+vocabularies, such as the residual-diagnostic estimator list and the
+heteroskedasticity test labels, are covered with their stages instead. They lie
+outside the draw-code manifest and outside the runtime hash's control objects, so
+editing one changes published content without invalidating unified-bootstrap
+reuse.
 
 \begin{landscape}
 \begingroup
@@ -1179,13 +1241,30 @@ input hash, which invalidates reuse.\\
 \src{config/analysis_contract.R}{PAPER_ANALYSIS_CONTRACT} and
 \code{PAPER_YIELD_VOL_SUFFIX} & PC dimensions and
 preprocessing; relaxation-value axes; variance-share, inference, and figure
-policies; ACM, yield-volatility, consumption, and instrument inputs; and the
+policies; ACM, yield-volatility, and consumption inputs; the active instrument
+choice id and its producer path; and the
 generated yield-volatility suffix. & Propagates
 through data construction, identified sets, both log-variance estimators,
 bootstrap inference, diagnostics, and publication. The whole contract enters
-the runtime hash, and its file is in the draw-code manifest.\\
+the runtime hash, and its file is in the draw-code manifest.
+\code{input$instrument} now carries only \code{active} and \code{producer}; the
+column and description it selects live in the registry row below, and the choice
+itself is the supported control listed separately in
+Table~\ref{tab:user-controls}.\\
+\src{config/instrument_choices.R}{PAPER_INSTRUMENT_CHOICES},
+\code{paper_instrument_choice()}, and \code{paper_instrument_description()} &
+The registry of admissible heteroskedasticity instruments: one column name and
+one description per choice id, plus the resolver that maps the contract's
+\code{instrument$active} to that pair and stops on an unregistered id. & This
+file is in neither the bootstrap draw-code manifest nor the presentation
+manifest, and \code{PAPER_INSTRUMENT_CHOICES} is not one of the control objects
+in the runtime hash. Adding a choice therefore invalidates nothing: the new
+column is not selected, and only the quarter key and the active column reach the
+stage input hash. Switching which choice is active is a different edit, and it
+invalidates reuse through the analysis contract, as that row states.\\
 Path, artifact, lifecycle, and publication contracts in \file{config/paths.R},
 \file{config/artifacts.R}, the \file{config/artifact_manifest_*.R} builders,
+\file{config/artifact_registry_queries.R},
 \file{config/artifact_lifecycle.R}, \file{config/artifact_latex.R}, and
 \file{config/artifact_reset.R} & The output root;
 artifact groups, IDs, paths, lifecycle statuses, owners, lookup families and
@@ -1198,6 +1277,7 @@ execution reachability. Membership in the bootstrap draw-code manifest splits
 this family: \file{config/artifacts.R} is a member, so editing the artifact
 registry does invalidate existing result draws, whereas \file{config/paths.R},
 the \file{config/artifact_manifest_*.R} builders,
+\file{config/artifact_registry_queries.R},
 \file{config/artifact_lifecycle.R}, \file{config/artifact_latex.R}, and
 \file{config/artifact_reset.R} are not. A changed cache path can also move where
 the one cache artifact is read or written.\\
@@ -1207,7 +1287,9 @@ data transport and failure behavior directly. Any resulting data change reaches
 all downstream estimation and the input hash. The API-key environment variable
 is the supported transport selector listed separately above.\\
 \src{config/diagnostics.R}{PAPER_HETEROSKEDASTICITY_CONTROL} & Diagnostic test
-suites, Goldfeld--Quandt settings, rejection threshold, and caption tests. &
+suites, Goldfeld--Quandt settings, the fitted-standard-deviation ratio cutoff,
+the rank test's Newey--West bandwidth rule, rejection threshold, and caption
+tests. &
 Changes diagnostic computation and its two published tables, not estimator
 choice or unified-bootstrap draws.\\
 \src{config/figure_rendering.R}{PAPER_FIGURE_STYLE} & Colors, line widths,
@@ -1219,7 +1301,9 @@ three-dimensional grids, views, region relaxation values, device sizes,
 residual-diagnostic canvases, labels, fonts, and layouts. & Changes geometry
 evaluation and figure content. Region
 relaxation values also change manifest membership; the fitted-volatility sweep
-axis instead belongs to the analysis contract. This file is outside the
+axis instead belongs to the analysis contract. \file{config/tau_grid.R} consumes
+the \code{bounds_tau_grid} settings and the contract's figure grid size to build
+the shared bounds-by-relaxation-value grid. This file is outside the
 unified-bootstrap draw-code hash.\\
 \src{config/inference_search_control.R}{PAPER_INFERENCE_SEARCH_CONTROL} &
 Imbens--Manski and Stoye calibration roots, bivariate-normal integration,
@@ -1441,11 +1525,14 @@ Separate entrypoint &
 \code{compute_expected_sdf_variance_bound}. Of those 14,
 \code{build_quadratic_system} runs only under \code{HETID_ASSERT_EQUIV}. No paper
 call site names the remaining 20, but ``no call site'' is not the same as
-``unreached'': five of them run inside the 14. \code{extract_acm_data()} calls
+``unreached'': seven of them run inside the 14. \code{extract_acm_data()} calls
 \code{load_term_premia()}, which in turn calls \code{download_term_premia()} when
 the asset is missing and \code{auto_download} is set, as the daily contract sets
-it; and \code{compute_variance_bound()} calls \code{compute_c_hat()},
-\code{compute_k_hat()}, and \code{compute_k2_hat()}. The other 15, among them
+it; \code{compute_variance_bound()} calls \code{compute_c_hat()},
+\code{compute_k_hat()}, and \code{compute_k2_hat()}; and
+\code{build_quadratic_system()}, on the \code{HETID_ASSERT_EQUIV} path alone,
+calls \code{compute_identified_set_components()} and
+\code{compute_identified_set_quadratic()}. The other 13, among them
 \code{compute_w1_residuals}, \code{compute_w2_residuals}, and
 \code{make_constraint_checker}, are a public API that this pipeline never
 reaches by any route.\\
@@ -1482,8 +1569,9 @@ the refusal is not what makes the branches unavailable. Even a driver that route
 through could not return an endpoint.\\
 Joint-GMM Gaussian-gap restriction &
 Not implemented &
-The decision schema reserves the flag but rejects \code{TRUE} with
-\code{unsupported_gaussian_gap_restriction}. No Gaussian-gap solver exists.\\
+The decision schema reserves the flag but rejects any value other than
+\code{FALSE} with \code{unsupported_gaussian_gap_restriction}. No Gaussian-gap
+solver exists.\\
 EGARCH-X terminal stop routes &
 Alternative path, source-selected and runtime-selected outcome &
 For a fresh unreliable gate, a matching record produces \code{gate_unreliable}.
@@ -1519,7 +1607,7 @@ functions, including \code{moments} and \code{urca}, are not prerequisites for
 the current runner merely because their qualified names appear in a loaded file;
 the same is true of \code{cli} in \code{check_data_completeness()}. Only these
 named helpers are uncalled: the same \file{bootstrap_and_stationarity.R} file also
-defines \code{mbb_index()}, which is production-active as the circular-MBB
+defines \code{mbb_index()}, the production-active circular-MBB
 resampler.\\
 Legacy resample-index runner
 \src{support/statistics/mbb_runner.R}{paper_run_mbb_draws} and the
@@ -1576,9 +1664,38 @@ Separate entrypoint &
 It requires exactly two positional output-root arguments, projects published
 numeric TeX table content, and reports equality or differences. It does not run
 the pipeline, select a branch, or validate non-table artifacts.\\
+EGARCH-X decision-record regenerator
+\file{scripts-paper/validation/regen_egarch_decision.R} &
+Separate entrypoint &
+\code{Rscript} \code{scripts-paper/validation/regen_egarch_decision.R} reads the
+residual-dynamics gate record left by an immediately preceding run and prints the
+\file{config/decisions/egarch.R} fields that record would need. It writes nothing
+and edits nothing; a human pastes the printed \code{gate_science_sha256},
+\code{sample_id}, \code{gate_lag}, \code{gate_alpha}, \code{gate_q},
+\code{gate_p}, and \code{gate_verdict}, and separately updates
+\code{decided_at_utc} to the printed timestamp. It exists because the checked-in decision
+record binds a scientific hash of the active instrument's own gate and the router
+refuses a gate that does not match, so switching \code{instrument$active} makes
+the checked-in record inapplicable. It stops when the gate artifact is absent and
+warns when that artifact is more than thirty minutes old, because the record
+carries no instrument identifier of its own. It lives under \file{validation/}
+because the source-topology gate admits exactly two entrypoints directly under
+\file{scripts-paper/} and exempts \file{validation/}. The runner never calls it.\\
+Committed instrument-comparison artifacts
+\file{scripts-paper/validation/instrument_comparisons/} &
+Separate entrypoint &
+Ten generated files under \file{y60_vol_log/}, plus a \file{PROVENANCE.md}, all
+tracked. Their basenames repeat manifest basenames, but they are not manifest
+records: every artifact path resolves under \file{scripts-paper/output/}, no
+production file names this directory, and the runner neither writes nor deletes
+it. \file{PROVENANCE.md} records that they came from a disposable clone of an
+earlier commit under three uncommitted edits, chief among them
+\code{instrument$active} set to \code{y60_vol_log}. They document a robustness
+comparison against a nonactive instrument. A plain invocation produces none of
+them.\\
 Paper test orchestrator \file{scripts-paper/tests/run_tests.R} &
 Separate entrypoint &
-It launches two structural checks and 36 listed test suites in fresh R
+It launches two structural checks and 39 listed test suites in fresh R
 processes. The runner does not call the orchestrator or any test entrypoint.
 Individual test fixtures may select helper arguments that production callers
 fix; those fixture choices are not pipeline options.\\
@@ -1586,20 +1703,27 @@ Package quality suite \file{docs/quality-check.R} &
 Separate entrypoint &
 \code{Rscript} \code{docs/quality-check.R} runs package-quality tools and writes quality
 reports under \file{docs/}. It belongs to neither the paper production graph nor
-the paper test orchestrator.\\
+the paper test orchestrator. The \file{docs/} tree is gitignored and this file is
+tracked on no branch, so no checkout carries it and this trace could not read it.
+\file{scripts-paper/README.md} documents the command,
+\file{scripts-paper/tests/support/topology_reference_checks.R} exempts its
+basename from the stale-reference scan for that reason, and
+\file{docs/prompts/orchestrator-prompt-pipeline-run.md} records that it writes its
+artifacts under \file{docs/quality-reports/}.\\
 \bottomrule
 \end{longtable}
 \endgroup
 
 \subsection{Publishing-run guard}
 
+Before the runner creates directories or deletes conditional artifacts, the
+publishing-run guard rejects any replication count other than 10,000 unless
+\code{HETID_ALLOW_DRAFT_RUN} is nonempty.
 \src{scripts-paper/config/analysis.R}{resolve_whole_number_env} parses
 \code{HETID_BOOT_REPS} and \code{HETID_BOOT_CORES} as whole numbers. Subsequent
 configuration assertions reject a replication count below 2 and a worker count
 below 1. The default replication count is 10,000.
 Table~\ref{tab:user-controls} states the platform-dependent worker default.
-Before the runner creates directories or deletes conditional artifacts, it
-rejects a different count unless \code{HETID_ALLOW_DRAFT_RUN} is nonempty.
 \code{HETID_ALLOW_DRAFT_RUN} acknowledges that a reduced run rewrites
 publication files. It neither selects the count nor changes the scientific
 publication standard of 10,000.
@@ -1650,8 +1774,9 @@ acceptable.
 
 The preflight has side effects of its own. On the frozen ACM path with no
 cached asset, it creates the cache directory, downloads roughly 40 megabytes,
-and removes the file again if the digest fails. On a passing digest, it writes a
-\code{.meta} sidecar recording the digest, source URL, and retrieval date. It
+and removes the file again if the digest fails. On that path's passing digest it
+writes a \code{.meta} sidecar recording the digest, source URL, and retrieval
+date; an already-cached asset that matches its pin returns before any write. It
 leaves the pipeline's
 own output tree untouched until it returns.
 
@@ -1696,7 +1821,8 @@ and the SDF-news, expected-SDF, and lagged expected-SDF panels. The quarterly AC
 and \code{use_incomplete_quarters=TRUE}. The daily ACM yield input uses
 \code{frequency="daily"}, \code{auto_download=TRUE}, and \code{source="auto"};
 the preflight has already pinned its cache-only asset to one release and digest,
-so the extractor reuses that file. Daily ACM yields and their realized
+so the extractor's own download branch is unreachable unless that asset
+disappears between the two steps. Daily ACM yields and their realized
 quarterly volatility use percentage points. FRED PCECC96 growth is a
 nonannualized quarterly percent rate. Final sample size is a runtime fact outside
 this static source trace.
@@ -1713,8 +1839,9 @@ object relabels expectations so the previous-quarter expectation aligns with
 the next realized outcome.
 
 Quarterly yield and term-premium levels enter through this SDF construction.
-Daily yields separately construct the five-year-yield volatility instrument in
-the daily-yield analysis stage. The bundled \code{hetid::variables} data supply the nominal
+The daily-yield analysis stage separately builds the yield-volatility panel, and
+the analysis contract selects the heteroskedasticity instrument from that panel's
+columns. The bundled \code{hetid::variables} data supply the nominal
 asset-return PCs.
 
 \subsection{Quarterly real consumption growth}
@@ -1743,16 +1870,42 @@ policy. The key is never logged. The transport is not bootstrap provenance, but
 any difference in the acquired PCECC96 observations changes the stage input hash
 and invalidates unified-bootstrap reuse.
 
-\subsection{Yield-volatility panel and instrument}
+\subsection{Yield-volatility panel and heteroskedasticity instrument}
 
 \src{scripts-paper/data_preparation/build_yield_volatility.R}{yield_vol}
 loads daily ACM yields, sums squared daily yield changes within each quarter,
-and defines the square root as the yield-volatility panel. A quarter with no
+and defines the square root as the yield-volatility panel. It builds one column
+per ACM maturity, \code{y1_vol} through \code{y120_vol}, by appending the
+contract's realized-volatility suffix to each package yield-column name. A
+quarter with no
 observed daily change stays missing instead of collapsing to zero, because a zero
-would enter the instrument as a legitimate extreme-low volatility. Its five-year
-column \code{y60_vol} supplies the five-year-yield volatility instrument for all
-three SDF-news PC scores. The identification estimator demeans the instrument on
-its aligned sample.
+would enter the instrument as a legitimate extreme-low volatility. The stage then
+asserts that \code{y60_vol} is positive wherever it is observed and adds
+\code{y60_vol_log}, the natural log of that column. The assertion is the log's
+precondition: $\log 0$ is $-\infty$ rather than missing, so a zero would survive
+the downstream complete-case filter and corrupt the demeaning instead of dropping
+the row.
+
+\src{scripts-paper/config/instrument_choices.R}{PAPER_INSTRUMENT_CHOICES}
+registers the admissible heteroskedasticity instruments, one entry per admissible
+column, both of which this stage computes: \code{y60_vol} and \code{y60_vol_log}.
+Each entry carries a column name and a description, stored in the fields
+\code{column} and \code{label}. \code{PAPER_ANALYSIS_CONTRACT$input$instrument$active} names
+the active entry. The checked-in value is \code{y60_vol}, so a plain invocation
+uses the five-year realized-volatility column, and \code{y60_vol_log} is an
+alternative path that only a source edit selects.
+\src{scripts-paper/config/instrument_choices.R}{paper_instrument_choice} resolves
+the active entry and stops on an unregistered id.
+\src{scripts-paper/config/analysis.R}{z_col} is that entry's column,
+\code{z_source()} returns that column with the quarter key, and \code{z_desc} is
+\code{paper_instrument_description()}, the LaTeX rendering of the entry's
+description. No production consumer reads \code{z_desc}: the binding exists, but
+no current caption or table prints it. The active column supplies the one
+heteroskedasticity instrument for all three SDF-news PC scores, and the identification
+estimator demeans it on its aligned sample. Switching the active entry also
+requires regenerating the checked-in EGARCH-X decision record through the separate
+entrypoint \file{scripts-paper/validation/regen_egarch_decision.R}, because that
+record binds the residual-dynamics gate the active instrument produces.
 
 \subsection{Nominal asset-return PCs}
 
@@ -1774,7 +1927,7 @@ each lagged expected-SDF PC score with the corresponding shifted expected-SDF
 PC score. The products are
 \code{expected_sdf_pc}, \code{lag_expected_sdf_pc}, and \code{sdf_news_pc}.
 These stages leave the aligned quarterly real consumption growth,
-five-year-yield volatility instrument, and three SDF-PC score blocks that the
+heteroskedasticity instrument, and three SDF-PC score blocks that the
 mean-equation stages consume.
 
 \section{Structural mean equation for quarterly real consumption growth and set identification}
@@ -1800,7 +1953,9 @@ SDF-news PC score block. The vectors $\beta_1^{\mathrm{OLS}}$ and
 $\theta^{\mathrm{OLS}}$ are the corresponding OLS coefficients; $u_t$ is the
 descriptive OLS benchmark residual.
 
-The identified-set driver builds its own frame. It adds \code{y60_vol}, applies
+The identified-set driver builds its own frame. It adds the active instrument
+column, \code{z_col}, which the checked-in contract resolves to \code{y60_vol};
+applies
 the analysis window, drops incomplete rows, sorts by quarter, and retains these
 aligned data inside each fit. The OLS and identification objects own their row
 policies and do not rely on ambient row positions.
@@ -1826,9 +1981,12 @@ must name which fit it means.
 
 \src{scripts-paper/config/analysis.R}{PAPER_SPEC_PLAN} sets the mean plan to
 \code{c("B", "A")}, with published mean specification B first and diagnostic
-mean specification A second. The driver verifies that the log-variance plan
-contains only B, retains both fits in \code{set_id_mean_eq_by_spec}, and binds B
-to the downstream name \code{set_id_mean_eq}.
+mean specification A second. The same file rejects a plan whose volatility panel
+is not the mean panel's published entry; that check is a source-time hard stop,
+evaluated while \file{scripts-paper/config/analysis.R} is sourced, before the
+runner reaches any stage. The driver retains both fits in
+\code{set_id_mean_eq_by_spec} and binds B to the downstream name
+\code{set_id_mean_eq}.
 
 This tracked plan is the supported source-level specification control. Each
 panel must contain at least one entry, and its entries must be distinct values
@@ -1878,7 +2036,7 @@ specification B feeds all published mean and log-variance stages. Diagnostic
 mean specification A enters only the paired comparison.
 The shared implementation is
 \src{scripts-paper/support/identification/identified_set_bootstrap.R}
-{estimate_set_id_system}. It demeans $Z=\code{y60_vol}$, computes the package
+{estimate_set_id_system}. It demeans $Z$, the active instrument column, computes the package
 moments, builds the tau-zero system, and solves the tau-zero point when the
 system has the required rank and consistency.
 
@@ -1987,7 +2145,7 @@ cache does not recheck quadratic builds inside skipped bootstrap callbacks;
 \code{HETID_BOOT_MODE=rerun} is required when those calls are part of the
 intended assertion scope.
 
-\subsection{Tau-zero point, profile endpoints, and the estimated boundedness frontier}
+\subsection{Tau-zero point, profile endpoints, and estimated boundedness frontier}
 
 At $\tau=0$, \src{scripts-paper/support/identification/functional_bounds.R}
 {solve_point_identification} solves the linear $Q\theta=L$ system. It requires
@@ -2033,14 +2191,15 @@ $4\times2\times2=16$ manifested SVGs.
 \subsection{Attained variance-share ranges}
 
 Variance-share uncertainty inherits identified-set uncertainty in the mean news
-coefficient. Published mean specification B makes the expected and combined
-shares set-valued. Diagnostic mean specification A leaves the expected block
-constant.
+coefficient. Published mean specification B makes the lagged-expected-SDF and
+combined shares set-valued. Diagnostic mean specification A leaves the lagged
+expected-SDF block constant.
 
 \file{scripts-paper/mean_equation/variance_shares/} forms centered divisor-$T$
-second-moment blocks for the expected-SDF and SDF-news PC score blocks and their
-covariance.
-With $B_E(\theta)$ denoting the expected-SDF coefficient block and $V_c$ the
+second-moment blocks for the lagged expected-SDF and SDF-news PC score blocks and
+their covariance. The lagged block is the one that enters, because the mean
+equation's control block $X$ is the lagged expected-SDF PC score block.
+With $B_E(\theta)$ denoting the lagged expected-SDF coefficient block and $V_c$ the
 variance of quarterly real consumption growth, the reported maps are
 \begin{align*}
   s_N(\theta) &=
@@ -2052,7 +2211,7 @@ variance of quarterly real consumption growth, the reported maps are
     +200\,\frac{B_E(\theta)\trans S_{EN}\theta}{V_c}.
 \end{align*}
 Here $S_N$ and $S_E$ are the divisor-$T$ second-moment matrices for the
-SDF-news and expected-SDF PC score blocks. $S_{EN}$ is their cross-moment
+SDF-news and lagged expected-SDF PC score blocks. $S_{EN}$ is their cross-moment
 matrix.
 
 Each reported attained numerical range starts from a feasible lattice with 101
@@ -2119,9 +2278,10 @@ imply a genuine infinite endpoint. A suspected but uncertified
 crossing receives \code{unreliable}, not an artificial finite bound.
 
 The log-OLS analysis stage also creates the shared design, the tau-zero map, and
-the first entry in the bounds-rendering registry. It computes refined mean
-coefficient boxes immediately afterward because the nonlinear estimators consume
-those exact relaxation-value-keyed boxes.
+the first entry in the bounds-rendering registry. The runner computes refined mean
+coefficient boxes in the next stage,
+\file{scripts-paper/mean_equation/inference/compute_bounds_by_tau.R}, because the
+nonlinear estimators consume those exact relaxation-value-keyed boxes.
 
 \subsection{Common set map and second search audit design for PPML and the Harvey estimator}
 \label{sec:ppml-harvey-search}
@@ -2136,7 +2296,9 @@ the squared-residual response and exponential conditional-variance map
   \mu_t(\eta)=\exp(R_t\trans\eta).
 \]
 For each displayed relaxation value $\tau$, PPML and the Harvey estimator share
-the log-variance set engine, warm-refined mean coefficient box, search seed, and
+the log-variance set engine, warm-refined mean coefficient box, search seed (the
+tau-zero point whenever it is feasible, and otherwise one identical anchor, the
+first row of the shared coarsened baseline grid), and
 four-lag Bartlett HAC standard errors for point columns. These analytic standard
 errors supplement the unified bootstrap. Their primary full-sample set maps,
 second search audits, and bootstrap set maps use the matched controls in
@@ -2545,14 +2707,15 @@ bootstrap cache schema 4 payload contains exactly \code{anchor}, \code{mean},
 \code{volatility_sensitivity_n_failed}, and \code{provenance}.
 
 Semantic cache provenance compares 19 of the record's 20 fields: the resampler, sample
-size, both replication counts, both block lengths, the block rule, seed, RNG
+size, both replication counts, both block lengths, block rule, seed, RNG
 kinds, axes, cache schema, input hash, draw-spec hash, draw-code hash, runtime
 hash, both resample-index family hashes, and both post-index RNG hashes. The
+runtime hash adds R and platform details; versions of
+\code{hetid}, \code{nloptr}, and \code{sandwich}; repository R sources; loaded
+namespace functions; BLAS; LAPACK; and scientific controls. The
 twentieth field, \code{presentation_sha}, is recorded and format-checked but
-compared against itself, so it can never refuse reuse. The runtime hash adds R and platform details, versions of
-\code{hetid}, \code{nloptr}, and \code{sandwich}, repository R sources, loaded
-namespace functions, BLAS, LAPACK, and scientific controls. The provenance record stores
-\code{presentation_sha} for audit only. A presentation helper that changes a
+compared against itself, so it can never refuse reuse and the provenance record
+stores it for audit only. A presentation helper that changes a
 draw estimate must enter the bootstrap draw-code manifest.
 
 Cache invalidation follows source identity at file and whole-object granularity.
@@ -2631,8 +2794,9 @@ reference density
 \]
 The density curves use smoothing adjustment 1.8, and the reference curve uses
 512 grid points. Both figures share one estimator palette and one neutral
-reference style. The stage also prints each series' mean, variance, skewness,
-and excess kurtosis beside the corresponding reference moments.
+reference style. The stage also prints each series's mean, variance, skewness,
+and excess kurtosis, followed by one shared reference value, the
+$\log\chi_1^2$ mean.
 
 \subsection{Inference tables and estimator pages}
 
@@ -2649,8 +2813,11 @@ LaTeX publication registry membership.
 
 All tau-zero stars in these tables come from the bootstrap point/MAD statistic.
 Intervals at positive relaxation values use \TauP{}. The artifact producers
-treat stored endpoint status as data. Only \code{bounded} status permits a
-finite displayed endpoint, regardless of populated numeric slots.
+treat stored endpoint status as data. Only \code{bounded} status yields a finite
+displayed endpoint. The mean and variance-share cells suppress every
+non-\code{bounded} status outright; the log-variance cells suppress
+\code{unreliable}, and an \code{unbounded} side always carries an infinite value
+rather than a number.
 
 \subsection{Coefficient bounds and fitted-scale figures}
 
@@ -2724,7 +2891,7 @@ drift outside source-coded tolerances. The
 current assertions include a maximum news bound near $4.19\times10^{-9}$ and a
 maximum expected-SDF bound near $3.19\times10^{-9}$. They also require the
 implied standard deviations to remain below 0.7 basis points and below 3 percent
-of the typical quarterly move in the one-quarter yield. That move is asserted to
+of the typical quarterly move in the one-quarter yield. A further assertion requires that move to
 be near 0.00239 in per-quarter decimal units. The module then writes a typed CSV and a Markdown report. After
 all assertions pass, the runner writes the SVG and the summary-table triple.
 
@@ -2930,9 +3097,9 @@ carry the artifact lookup family \code{logvar_bounds_tau} with variant
 \code{egarch_x}, so a lookup route exists on paper. But the bounds-rendering
 registry receives entries only for the two-step log-OLS benchmark, PPML, the
 Harvey estimator, and conditional LAD, so nothing ever issues that query. The
-fifth record, \code{descriptive_report_pdf}, is a different case
+fifth record, \code{descriptive_report_pdf}, differs
 entirely: the descriptive producer compiles the wrapper TeX, and \code{latexmk}
-writes the PDF beside it, so the file is produced but never addressed through its
+writes the PDF beside it, so nothing ever addresses the file through its
 manifest path. A change in the compiler's output naming would orphan the record
 without failing anything the runner checks.
 
@@ -3078,7 +3245,8 @@ publication occupies three independently addressable artifact IDs.
 
 The production runner invokes none of the validation or test entrypoints in this
 section. \file{scripts-paper/tests/run_tests.R}, the two-root published-table
-comparator, and \file{docs/quality-check.R} are separate entrypoints. Typed writer
+comparator, the EGARCH-X decision-record regenerator, and the untracked
+\file{docs/quality-check.R} are separate entrypoints. Typed writer
 readback checks are different: a production writer performs its own readback
 when that writer is reached.
 
@@ -3092,13 +3260,23 @@ checks parse and style-check the R tree, inspect source references and
 source-once behavior, and validate path topology. Artifact completeness lies
 outside their scope.
 
+Contract-ownership checks are separate from the topology checks and run as the
+second structural check. They deparse every non-test R file under
+\file{scripts-paper/} and reject a forbidden construct outside the one file that
+owns it, reject retired module paths, reject banned prose and statistic literals,
+require every fit-status predicate to route through \code{LOGVAR_FIT_STATUS},
+assert positively that exactly one file defines
+\code{quadratic_point_feasible}, and hold the engine oracle to its frozen
+verbatim form. They establish ownership and absence, not the correctness of what
+the owner computes.
+
 Typed CSV writers check a round trip at the configured numerical tolerance.
 Exact-RDS writers require \code{identical()} after readback. The published-table
 projection comparison checks relative table paths, numerical coordinates, token
 counts, values under a precision-aware rounding rule, and immediately attached
 stars. Its scope excludes captions, labels, notes, other nonnumeric cells, LaTeX
-structure, rendered layout, and non-table artifacts. The topology, round-trip,
-readback, and projection checks establish only their named properties.
+structure, rendered layout, and non-table artifacts. The topology, ownership,
+round-trip, readback, and projection checks establish only their named properties.
 
 \subsection{Limits of source-level checks}
 
@@ -3150,7 +3328,11 @@ different concepts.
 \begin{longtable}{@{}>{\raggedright\arraybackslash}p{0.20\textwidth}
   >{\raggedright\arraybackslash}p{0.32\textwidth}
   >{\raggedright\arraybackslash}p{0.41\textwidth}@{}}
-\caption{Canonical scientific terms and their current code names.
+\caption{Canonical scientific terms and their current code names. The first column
+gives the one prose name this document uses for the concept. The second lists the
+source identifiers, comment phrases, and mathematical symbols that denote it. The
+third says why those names denote one concept. The prose uses only the canonical
+term; the code names appear here so a reader can match prose to source.
 \label{tab:scientific-terms}}\\
 \toprule
 Canonical term & Code names & Why the names denote one concept\\
@@ -3173,10 +3355,13 @@ the expected-SDF panel one quarter forward for predictive alignment. This
 operation preserves the expectation concept.\\
 expected-SDF PC score block & \code{expected_sdf_pc} & A fresh PCA of the
 expected-SDF panel produces this three-score block.\\
-lagged expected-SDF PC score block & \code{lag_expected_sdf_pc} & A fresh PCA
+lagged expected-SDF PC score block & \code{lag_expected_sdf_pc}; the
+mean equation's control block \code{x_cols}; variance-share code and comments
+that say expected-SDF block or \code{s_e} & A fresh PCA
 of the lagged expected-SDF panel produces this three-score block, whose signs
 are aligned with the expected-SDF PC score block. It is not a date relabeling of
-that score block.\\
+that score block. It is the block the variance shares use, even though the
+variance-share code calls it the expected-SDF block.\\
 SDF-news PC score block & \code{sdf_news_pc} & A fresh PCA of the SDF-news
 panel produces this three-score block.\\
 three SDF-PC score blocks & \code{expected_sdf_pc},
@@ -3197,14 +3382,19 @@ nominal asset-return PCs & \code{lag_asset_return_pc}, \code{l.pc1}--\code{l.pc4
 and configuration fields containing \code{return_pc} & The data stage reads one
 bundled four-PC panel of nominal financial-asset returns and relabels its dates.
 These PCs are never yield PCs.\\
-five-year-yield volatility instrument & \code{yield_vol[["y60_vol"]]},
-\code{y60_vol}, \code{z_col}, mathematical $Z$, and the package parameter
+heteroskedasticity instrument &
+\code{PAPER_INSTRUMENT_CHOICES}, \code{paper_instrument_choice()}, \code{z_col},
+\code{z_source()}, \code{y60_vol}, mathematical $Z$, code comments saying
+heteroskedasticity driver or identification instrument, and the package parameter
 \code{pcs} of \code{compute_identification_moments()} & The yield-volatility panel
-contains many maturities; configuration selects its five-year column as the one
-identification instrument, which the estimator demeans. The package parameter is
+contains one column per ACM maturity plus \code{y60_vol_log}. The instrument
+registry lists the admissible columns; the analysis contract's
+\code{instrument$active} names one of them, and \code{z_col} is that entry's
+column. The checked-in active entry is \code{y60_vol}, the five-year column,
+which the estimator demeans. The package parameter is
 named \code{pcs} because the package's general interface accepts a matrix of
-instruments; the paper passes a single demeaned column of the five-year-yield
-volatility, not principal components of anything.\\
+instruments; the paper passes a single demeaned column,
+not principal components of anything.\\
 published mean specification B & \code{"B"},
 \code{set_id_mean_eq_by_spec[["B"]]}, and \code{set_id_mean_eq} &
 \src{scripts-paper/mean_equation/estimate_identified_set.R}{set_id_mean_eq}
@@ -3406,7 +3596,11 @@ source aliases to proliferate in the prose.
 \begin{longtable}{@{}>{\raggedright\arraybackslash}p{0.22\textwidth}
   >{\raggedright\arraybackslash}p{0.31\textwidth}
   >{\raggedright\arraybackslash}p{0.40\textwidth}@{}}
-\caption{Canonical operational terms and their current code names.
+\caption{Canonical operational terms and their current code names. Operational terms
+name execution, artifact, and validation objects rather than scientific estimands. The
+first column gives the canonical prose name, the second the source identifiers and
+comment phrases that denote it, and the third the meaning and the rule for mapping the
+two.
 \label{tab:operational-terms}}\\
 \toprule
 Canonical term & Code names & Meaning and mapping rule\\
@@ -3457,6 +3651,12 @@ artifact producer.\\
 source-once registry & \code{.paper_source_registry}; source-state registry &
 The source-once protocol distinguishes an absent binding, \code{FALSE} while
 loading, and \code{TRUE} after loading for each normalized source path.\\
+instrument registry & \code{PAPER_INSTRUMENT_CHOICES} and its resolver
+\code{paper_instrument_choice()} & A two-entry list of admissible instrument
+columns, one \code{column} and one \code{label} per choice id. It is not the
+selected heteroskedasticity instrument: the registry enumerates what may be
+chosen, and the analysis contract's \code{instrument$active} names the one in
+force.\\
 log-variance estimator registry & \code{PAPER_LOGVAR_PRIMARY_ESTIMATORS},
 \code{PAPER_LOGVAR_ESTIMATOR_EXTENSIONS}, and \code{PAPER_LOGVAR_ESTIMATORS} &
 The combined registry stores estimator identities, dependencies, capabilities,
@@ -3755,7 +3955,9 @@ numerical certificate.
 \small
 \begin{longtable}{@{}>{\raggedright\arraybackslash}p{0.31\textwidth}
   >{\raggedright\arraybackslash}p{0.62\textwidth}@{}}
-\caption{Similar names that denote different concepts.\label{tab:false-friends}}\\
+\caption{Similar names that denote different concepts. Each row lists names a reader
+could take for one object and states why they are separate. Collapsing any pair in a
+row would misstate what the source computes.\label{tab:false-friends}}\\
 \toprule
 Keep separate & Reason\\
 \midrule
@@ -3765,14 +3967,25 @@ Keep separate & Reason\\
 \midrule
 \endhead
 Source-once registry, log-variance estimator registry, bounds-rendering
-registry, artifact manifest, and LaTeX publication registry & The source-once
+registry, instrument registry, artifact manifest, LaTeX publication registry, and
+LaTeX label registry & The source-once
 registry stores loading state. The log-variance estimator registry stores
 estimator specifications. The bounds-rendering registry stores runtime rendering
-inputs. The artifact manifest stores artifact metadata records. The LaTeX
-publication registry stores publication triples.\\
+inputs. The instrument registry stores admissible instrument columns. The
+artifact manifest stores artifact metadata records. The LaTeX
+publication registry stores publication triples. The LaTeX label registry maps
+artifact IDs to cross-reference label strings.\\
 Relaxation value and numerical tolerance & A relaxation value changes the
 scientific identified set. A numerical tolerance controls a comparison within a
 fixed scientific problem.\\
+Instrument choice id, instrument column, and instrument description & The choice
+id is the registry key that \code{PAPER_ANALYSIS_CONTRACT$input$instrument$active}
+names. The column is the \code{yield_vol} column that key resolves to, which
+\code{z_col} holds. The description is the entry's \code{label} field.
+\code{paper_instrument_choice()} returns the whole entry, and
+\code{paper_instrument_description()} returns only its LaTeX rendering. Every
+registered id currently equals its own column name, a naming
+coincidence rather than an identity.\\
 Identification relaxation value $\tau$ and LAD quantile probability
 \code{tau=0.5} & The identification relaxation value indexes the mean identified
 set. The LAD quantile probability is the
@@ -3934,6 +4147,8 @@ Production inputs and prerequisites & \file{scripts-paper/config/paths.R};
 \file{scripts-paper/data_preparation/}; package ACM data APIs under \file{R/};
 bootstrap provenance sources & \ref{sec:input-inventory}, \ref{sec:frozen-inputs}\\
 Supported user controls & \file{scripts-paper/config/analysis.R};
+\file{scripts-paper/config/analysis_contract.R};
+\file{scripts-paper/config/instrument_choices.R};
 \file{scripts-paper/run_pipeline.R};
 \file{scripts-paper/reset_pipeline_state.R};
 \file{scripts-paper/config/acquisition.R};
@@ -3946,9 +4161,12 @@ Source-fixed global control families & \file{scripts-paper/config/};
 Available-but-not-called and separate functionality &
 \file{scripts-paper/README.md}; \file{scripts-paper/tests/run_tests.R};
 \file{scripts-paper/validation/compare_output_tables.R};
-\file{scripts-paper/reset_pipeline_state.R}; \file{docs/quality-check.R} &
+\file{scripts-paper/validation/regen_egarch_decision.R};
+\file{scripts-paper/validation/instrument_comparisons/};
+\file{scripts-paper/reset_pipeline_state.R};
+\file{docs/quality-check.R} (untracked) &
 \ref{sec:outside-runner}\\
-Analysis contract and policies & \file{scripts-paper/config/analysis_contract.R}; \file{scripts-paper/config/analysis.R} & \ref{sec:preflight}\\
+Analysis contract and policies & \file{scripts-paper/config/analysis_contract.R}; \file{scripts-paper/config/analysis.R}; \file{scripts-paper/config/instrument_choices.R} & \ref{sec:preflight}\\
 Artifact manifest, variants, generated records, and publication mapping & \file{scripts-paper/config/artifacts.R}; \file{scripts-paper/config/artifact_manifest_data.R}; \file{scripts-paper/config/artifact_manifest_variants.R}; \file{scripts-paper/config/artifact_manifest_sweep.R}; \file{scripts-paper/config/artifact_manifest_region.R}; \file{scripts-paper/config/artifact_registry_queries.R}; \file{scripts-paper/config/artifact_latex.R} & \ref{sec:artifacts}\\
 Artifact lifecycle and conditional-route state & \file{scripts-paper/config/artifact_lifecycle.R}; \file{scripts-paper/config/artifact_reset.R} & \ref{sec:preflight}, \ref{sec:publication}\\
 Data construction & \file{scripts-paper/data_preparation/} & \ref{sec:data}\\
