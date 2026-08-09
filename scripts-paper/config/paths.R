@@ -82,6 +82,7 @@ paper_source_once <- function(path, envir = .GlobalEnv) {
 
 paper_source_once(paper_path("support", "runtime", "core.R"))
 paper_source_once(paper_path("config", "analysis_contract.R"))
+paper_source_once(paper_path("config", "instrument_choices.R"))
 paper_source_once(paper_path("config", "acquisition.R"))
 paper_source_once(paper_path(
   "support", "identification", "status_contract.R"

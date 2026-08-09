@@ -51,8 +51,13 @@ n_pc_r <- analysis_contract$model$n_return_pc
 news_prefix <- "sdf_news_m"
 expected_prefix <- "expected_sdf_m"
 
-# Heteroskedasticity instrument used for identification and diagnostics.
-z_col <- analysis_contract$input$instrument$column
+# Heteroskedasticity instrument used for identification and diagnostics,
+# selected from PAPER_INSTRUMENT_CHOICES (config/instrument_choices.R) by
+# PAPER_ANALYSIS_CONTRACT$input$instrument$active. z_source() is unchanged
+# from the single-instrument version: every choice is already a plain
+# column build_yield_volatility.R computed on yield_vol, so selecting one
+# is purely "which column does z_col name."
+z_col <- paper_instrument_choice()$column
 z_source <- function() yield_vol[c("qtr", z_col)]
 z_desc <- paper_instrument_description()
 
