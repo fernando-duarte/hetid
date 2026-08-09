@@ -104,10 +104,7 @@ PAPER_ANALYSIS_CONTRACT <- local({
         fetch_kind = "economic.data"
       ),
       instrument = list(
-        column = "y60_vol",
-        label = paste(
-          "the de-meaned realized quarterly volatility of the five-year yield"
-        ),
+        active = "y60_vol",
         producer = file.path(
           "data_preparation",
           "build_yield_volatility.R"
@@ -149,13 +146,6 @@ stopifnot(
     PAPER_ANALYSIS_CONTRACT$model$artifact_fields
   ))
 )
-
-paper_instrument_description <- function(
-  spec = PAPER_ANALYSIS_CONTRACT$input$instrument
-) {
-  latex_column <- gsub("_", "\\_", spec$column, fixed = TRUE)
-  sprintf("%s (\\texttt{%s})", spec$label, latex_column)
-}
 
 # Realized-volatility column suffix and the generated yield-vol column name.
 # One derivation of "y<maturity>_vol" for the producer (which appends the
