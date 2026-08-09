@@ -4,9 +4,10 @@
 # add its column/label here and the column itself in
 # build_yield_volatility.R, then point PAPER_ANALYSIS_CONTRACT$input$
 # instrument$active at its id -- no other file needs to change. Switching
-# which choice is active also needs scripts-paper/validation/regen_egarch_
-# decision.R (the committed EGARCH gate record is bound to the active
-# choice's exact diagnostics; see that file's header for why).
+# which choice is active also needs
+# scripts-paper/validation/regen_egarch_decision.R (the committed EGARCH
+# gate record is bound to the active choice's exact diagnostics; see that
+# file's header for why).
 
 PAPER_INSTRUMENT_CHOICES <- list(
   y60_vol = list(
