@@ -118,11 +118,39 @@ check(
 )
 rm(share_files, share_code, share_fields)
 check(
-  "instrument prose derives its canonical column",
+  "instrument prose derives the active choice's canonical column",
   grepl(
-    gsub("_", "\\_", contract$input$instrument$column, fixed = TRUE),
+    gsub(
+      "_", "\\_",
+      PAPER_INSTRUMENT_CHOICES[[contract$input$instrument$active]]$column,
+      fixed = TRUE
+    ),
     paper_instrument_description(),
     fixed = TRUE
+  )
+)
+check(
+  "the active instrument choice is registered",
+  contract$input$instrument$active %in% names(PAPER_INSTRUMENT_CHOICES)
+)
+check(
+  "every registered choice has a nonempty column and label",
+  all(vapply(PAPER_INSTRUMENT_CHOICES, function(choice) {
+    is.character(choice$column) && length(choice$column) == 1L &&
+      nzchar(choice$column) &&
+      is.character(choice$label) && length(choice$label) == 1L &&
+      nzchar(choice$label)
+  }, logical(1)))
+)
+check(
+  "instrument-choice column names are unique",
+  !anyDuplicated(vapply(PAPER_INSTRUMENT_CHOICES, `[[`, character(1), "column"))
+)
+check(
+  "paper_instrument_choice rejects an unknown id",
+  inherits(
+    tryCatch(paper_instrument_choice("not_a_real_choice"), error = function(e) e),
+    "error"
   )
 )
 check(
