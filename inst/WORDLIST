@@ -12,11 +12,14 @@ Anscombe
 args
 aut
 backtest
+Barrodale
 bd
 behaviour
 Bera
+BHHH
 booktabs
 Booktabs
+br
 Breusch
 BugReports
 bz
@@ -35,6 +38,7 @@ coercions
 collinear
 compilable
 compositionally
+coordinatewise
 cov
 Cov
 covr
@@ -44,6 +48,7 @@ cre
 crlf
 Crump
 css
+csv
 cxx
 cyclocomp
 data's
@@ -64,17 +69,20 @@ duarte
 dupree
 edu
 EGARCH
+Eicker
 endogeneity
 entrypoint
 env
 eol
 eot
+eq
 erroring
 extdata
 f12m
 fernando
 filesystem
 finiteness
+flushleft
 fn
 formatters
 ggplot
@@ -89,14 +97,18 @@ GQ
 graphify
 gz
 gzipped
+HAC
 Hadamard
 hardcoded
+HC
 heteroskedasticity
 Heteroskedasticity
 hetid
 hpp
+htbp
 https
 hxx
+hyperplanes
 i's
 ico
 idx
@@ -112,6 +124,7 @@ jpeg
 jpg
 js
 json
+Kleibergen
 knitr
 KPSS
 labelled
@@ -132,6 +145,7 @@ lintr
 Ljung
 lm
 logvar
+lr
 Manski
 mathrm
 MBB
@@ -156,6 +170,8 @@ nloptr
 NONINFRINGEMENT
 nonlinearly
 nonnumeric
+nonunique
+nonuniqueness
 normalizer
 nyfed
 optimisation
@@ -164,6 +180,7 @@ orchestrator
 orcid
 ORCID
 orthant
+Paap
 param
 pc
 PCE
@@ -175,6 +192,7 @@ pdfLaTeX
 pkgcheck
 png
 pointwise
+Politis
 positivity
 PPML
 prcomp
@@ -184,6 +202,7 @@ precomputing
 premia
 prepending
 QE
+QMLE
 quadratically
 Quandt
 quantreg
@@ -250,6 +269,7 @@ uncentered
 unlink
 Unparsed
 unprojected
+unreproducible
 unsetting
 unshifted
 untracked

@@ -107,5 +107,6 @@ exclude: |
     man/.*|
     NAMESPACE|
     README\.md|
-    scripts-paper/output/.*
+    scripts-paper/output/.*|
+    scripts-paper/validation/instrument_comparisons/.*/figures/.*
   )$
