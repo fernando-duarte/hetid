@@ -1,7 +1,9 @@
 # Realized quarterly volatility of bond yields: within each quarter, the
 # square root of the sum of squared business-day yield changes (realized
 # volatility), one column per ACM maturity (y1_vol .. y120_vol), in the
-# yields' percentage-point units, not annualized.
+# yields' percentage-point units, not annualized. Also adds y60_vol_log,
+# the natural log of the five-year column, for the alternate instrument
+# choice in config/instrument_choices.R.
 # Run via run_pipeline.R, which defines the shared maturity grids. The daily ACM
 # asset (~40 MB) is cache-only; the first run downloads it from GitHub.
 
@@ -35,5 +37,15 @@ yield_vol <- acm_daily |>
     .by = qtr
   ) |>
   dplyr::rename_with(\(x) paste0(x, PAPER_YIELD_VOL_SUFFIX), !qtr)
+
+# the log-transformed five-year column, for the y60_vol_log instrument
+# choice (config/instrument_choices.R). log(0) is -Inf, not NA, so it would
+# survive drop_na() downstream and silently corrupt the demeaning; assert
+# the precondition instead of guessing a floor.
+stopifnot(
+  "y60_vol must be positive wherever observed for its log to be defined" =
+    all(yield_vol$y60_vol[!is.na(yield_vol$y60_vol)] > 0)
+)
+yield_vol$y60_vol_log <- log(yield_vol$y60_vol)
 
 rm(acm_daily, yield_volatility_input)
