@@ -29,6 +29,9 @@ paper_source_once(paper_path(
 paper_source_once(paper_path(
   "mean_equation", "inference", "refine_bounds_by_tau.R"
 ))
+paper_source_once(paper_path(
+  "mean_equation", "figures", "region_envelope_non_convex.R"
+))
 
 # news-PC standard deviations that define the SD-unit axes. Scale on Y2, which
 # is PC_N itself: the published mean spec does not impose the beta2R = 0 null,
@@ -102,6 +105,17 @@ region_sd_ols_point <- function(s = region_sd) {
 # Closed-form free-coordinate envelope over an (k1, k2) grid (matrices X, Y for
 # the two kept axes, k1 < k2); perp is the projected-out axis. Returns the
 # bottom skin L, top skin H, and margin M = L - H (<= 0 inside the projection).
+#
+# Each constraint is a quadratic in the free coordinate t with leading term
+# a = A_i[perp, perp]. Convex constraints (a > 0) keep the interval between
+# their roots; the joint feasible set is L = max_i lo_i, H = min_i hi_i --
+# exact and vectorized, no optimizer. A single A_i has at most one positive
+# eigenvalue for any gamma (rank-one PSD minus PSD; docs/lewbel_multivariate_
+# set_identification.tex), so a <= 0 is the generic case along axes its one
+# positive direction misses, more likely as tau grows -- not a fluke. Non-
+# convex constraints instead EXCLUDE an interval (or nothing, if their
+# parabola never crosses zero); a second pass intersects the running [L, H]
+# with each exclusion's complement, still raising on a genuine two-piece split.
 region_envelope <- function(sys, perp, X, Y) {
   dimension <- PAPER_ANALYSIS_CONTRACT$figure$region_dimension
   keep <- setdiff(seq_len(dimension), perp)
@@ -110,23 +124,34 @@ region_envelope <- function(sys, perp, X, Y) {
   big <- 1e6 # out-of-domain sentinel
   L <- matrix(-Inf, nrow(X), ncol(X))
   H <- matrix(Inf, nrow(X), ncol(X))
+  non_convex <- integer(0)
   for (i in seq_along(sys$A)) {
-    A <- sys$A[[i]]
-    b <- sys$b[[i]]
-    a <- A[perp, perp]
-    # each constraint is convex in the free coord (a > 0); assert rather than
-    # silently invert a non-PSD direction
-    stopifnot(a > 0)
-    beta <- b[perp] + 2 * (A[perp, k1] * X + A[perp, k2] * Y)
-    gam <- sys$c[i] + b[k1] * X + b[k2] * Y +
-      A[k1, k1] * X^2 + A[k2, k2] * Y^2 + 2 * A[k1, k2] * X * Y
-    disc <- beta^2 - 4 * a * gam
-    ok <- disc >= 0
-    sq <- sqrt(pmax(disc, 0))
-    lo_i <- ifelse(ok, (-beta - sq) / (2 * a), big) # empty constraint pushes
-    hi_i <- ifelse(ok, (-beta + sq) / (2 * a), -big) # the interval apart
+    root <- region_quadratic_roots(sys, i, perp, k1, k2, X, Y)
+    if (!isTRUE(root$a > 0)) {
+      non_convex <- c(non_convex, i)
+      next
+    }
+    ok <- root$disc >= 0
+    lo_i <- ifelse(ok, root$lo, big) # empty constraint pushes
+    hi_i <- ifelse(ok, root$hi, -big) # the interval apart
     L <- pmax(L, lo_i)
     H <- pmin(H, hi_i)
+  }
+  for (i in non_convex) {
+    root <- region_quadratic_roots(sys, i, perp, k1, k2, X, Y)
+    # a real exclusion interval that actually overlaps the running [L, H];
+    # one that sits entirely outside it (no real roots, or roots off to one
+    # side) changes nothing, so it must not fall through to any branch below
+    excludes <- root$disc > 0 & root$lo < H & root$hi > L
+    covers_all <- excludes & root$lo <= L & root$hi >= H
+    trims_low <- excludes & !covers_all & root$lo <= L
+    trims_high <- excludes & !covers_all & !trims_low & root$hi >= H
+    splits <- excludes & !covers_all & !trims_low & !trims_high
+    if (any(splits, na.rm = TRUE)) {
+      stop(region_non_convex_error(i, perp, root$a))
+    }
+    L <- ifelse(covers_all, big, ifelse(trims_low, root$hi, L))
+    H <- ifelse(covers_all, -big, ifelse(trims_high, root$lo, H))
   }
   list(L = L, H = H, M = L - H)
 }

@@ -175,17 +175,25 @@ local({
       render$axis_labels[[units]], (lo + hi) / 2
     )
   }
+  # See region_3d_draw_or_skip (prepare_region_geometry.R): region_envelope
+  # handles the observed non-convex cases directly, so this only fires on a
+  # genuine two-piece split -- not yet seen for any (tau, axis, instrument)
+  # tested, but a data fact this renderer still cannot draw if it occurs.
+  skipped_ids <- character(0)
   for (units in REGION_FIGURE_UNITS) {
     for (tau in region_taus) {
       for (ols in REGION_FIGURE_OLS) {
-        draw(ols, units, tau)
+        skip_id <- region_3d_draw_or_skip(draw, ols, units, tau)
+        if (!is.null(skip_id)) skipped_ids <- c(skipped_ids, skip_id)
       }
     }
   }
-})
+  skipped_ids
+}) -> region_3d_skipped_ids
 
 for (id in artifact_manifest$id[artifact_manifest$producer ==
   "mean_equation/figures/render_region_3d.R"]) {
-  cat("set_id_region_3d: wrote", artifact_path(id), "\n")
+  status <- if (id %in% region_3d_skipped_ids) "skipped (non-convex)" else "wrote"
+  cat("set_id_region_3d:", status, artifact_path(id), "\n")
 }
-rm(id)
+rm(id, region_3d_skipped_ids)
