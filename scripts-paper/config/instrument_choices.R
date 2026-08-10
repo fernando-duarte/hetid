@@ -20,6 +20,13 @@ PAPER_INSTRUMENT_CHOICES <- list(
       "the de-meaned natural log of the realized quarterly volatility of",
       "the five-year yield"
     )
+  ),
+  y60_ret_vol = list(
+    column = "y60_ret_vol",
+    label = paste(
+      "the de-meaned realized quarterly volatility of the duration-approximated",
+      "one-day return on the five-year bond"
+    )
   )
 )
 

@@ -1,9 +1,10 @@
 # Realized quarterly volatility of bond yields: within each quarter, the
 # square root of the sum of squared business-day yield changes (realized
 # volatility), one column per ACM maturity (y1_vol .. y120_vol), in the
-# yields' percentage-point units, not annualized. Also adds y60_vol_log,
-# the natural log of the five-year column, for the alternate instrument
-# choice in config/instrument_choices.R.
+# yields' percentage-point units, not annualized. Also adds y60_vol_log
+# (the natural log of the five-year column) and y60_ret_vol (the realized
+# volatility of the duration-approximated one-day return on the five-year
+# bond), both alternate instrument choices in config/instrument_choices.R.
 # Run via run_pipeline.R, which defines the shared maturity grids. The daily ACM
 # asset (~40 MB) is cache-only; the first run downloads it from GitHub.
 
@@ -48,4 +49,33 @@ stopifnot(
 )
 yield_vol$y60_vol_log <- log(yield_vol$y60_vol)
 
-rm(acm_daily, yield_volatility_input)
+# realized volatility of the duration-approximated one-day return on the
+# five-year bond, for the y60_ret_vol instrument choice
+# (config/instrument_choices.R). The exact one-day holding-period return
+# r_t = p_t^(n-1) - p_{t-1}^(n) needs a yield at "n minus one day," which
+# is not on this maturity-monthly grid; a first-order Taylor expansion
+# around the fixed five-year point gives the standard duration
+# approximation instead: r_t ~= y_{t-1}/tdays - duration*(y_t - y_{t-1}),
+# a one-day carry term minus duration (= maturity, for a zero-coupon bond)
+# times the yield change already used for y60_vol. Computed from the raw
+# acm_daily level (not yield_vol, which has already squared and summed
+# the changes) and joined back on qtr, never row position.
+trading_days_per_year <- 252
+y60_duration_years <- 60L / hetid::HETID_CONSTANTS$MATURITY_UNITS_PER_YEAR
+y60_ret_vol <- acm_daily |>
+  dplyr::transmute(
+    qtr = tsibble::yearquarter(date),
+    ret = dplyr::lag(y60) / trading_days_per_year -
+      y60_duration_years * (y60 - dplyr::lag(y60))
+  ) |>
+  dplyr::summarise(
+    y60_ret_vol = if (all(is.na(ret))) NA_real_ else sqrt(sum(ret^2, na.rm = TRUE)),
+    .by = qtr
+  )
+stopifnot(
+  "y60_ret_vol must cover exactly yield_vol's quarters, no more, no fewer" =
+    setequal(y60_ret_vol$qtr, yield_vol$qtr)
+)
+yield_vol <- dplyr::left_join(yield_vol, y60_ret_vol, by = "qtr")
+
+rm(acm_daily, yield_volatility_input, trading_days_per_year, y60_duration_years, y60_ret_vol)
