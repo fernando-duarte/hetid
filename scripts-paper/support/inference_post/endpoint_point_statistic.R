@@ -1,12 +1,16 @@
 # The tau = 0 cell for BOTH panels: the full-sample point estimate over the
-# robust bootstrap scale of that same point's draws, calibrated against the
-# bootstrap's own distribution rather than a normal one.
+# robust bootstrap scale of that same point's draws, with two calibrations
+# computed beside it. PAPER_POINT_STAR_BASIS picks the one the tables star on;
+# point_star_p reads it.
 #
-# WHY NOT NORMAL. The tau > 0 cells take their critical value from the empirical
-# root distribution, so a normal p-value here would put two reference
-# distributions in one table -- the defect the unified construction removed,
-# relocated from panel-versus-panel to tau = 0 versus tau > 0. It would also land
-# on the weaker side: the root distribution is heavy through its body, with a
+# WHAT EACH BUYS. p_value_normal is the two-sided normal tail of the reported
+# ratio and is the published default, so the stars follow from the number
+# printed beneath the estimate and the column reads like the OLS column beside
+# it. p_value is the draws' own absolute-deviation tail, which shares its
+# reference distribution with the tau > 0 cells: those take their critical value
+# from the empirical root distribution, so starring on the normal leaves two
+# reference distributions in one table. The normal is also the more generous
+# side, because the root distribution is heavy through its body, with a
 # ninetieth percentile near 3.4 against the normal's 1.645.
 #
 # THIS IS AN EXACT SPECIALIZATION AT ZERO WIDTH, NOT A LIMIT. At a
@@ -22,8 +26,10 @@
 # and the interval, but not the calibration.
 #
 # The absolute-deviation test is tail-unbalanced under skew, so the two
-# directional tails ride along beside it. The normal p-value is retained as
-# p_value_normal for comparison and is never what a cell reports.
+# directional tails ride along beside it. Because that tail is a rank and the
+# reported ratio is not, the bootstrap basis can order the two differently: a
+# smaller ratio stars where a larger one does not when its draws are thinner
+# relative to their own MAD. That ordering is what the normal basis avoids.
 #
 # The denominator is the MAD rather than the sample standard deviation because
 # the tau = 0 estimator solves a linear system in estimated moments: resamples in

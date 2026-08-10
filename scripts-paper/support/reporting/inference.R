@@ -140,6 +140,26 @@ sig_stars <- function(
   )
 }
 
+# The p-value the tau = 0 stars read from a point_t_statistic frame, which
+# carries both. "normal" is the two-sided normal tail of the printed point/MAD
+# statistic, so the stars follow from the number beneath the estimate.
+# "bootstrap" is the draws' absolute-deviation p-value, which shares its
+# reference distribution with the tau > 0 intervals but not the printed scale,
+# and so can star a smaller ratio while passing over a larger one. The basis
+# lives here and not in PAPER_REPORTING_CONTROL because that object is in
+# BOOTSTRAP_STAGE_CODE_FILES: a knob that cannot change a draw must not discard
+# a ten-thousand-draw cache. A frame missing the selected column is a wiring
+# error, since star silence would otherwise pass for insignificance.
+PAPER_POINT_STAR_BASIS <- "normal"
+point_star_p <- function(frame, basis = PAPER_POINT_STAR_BASIS) {
+  column <- switch(match.arg(basis, c("normal", "bootstrap")),
+    normal = "p_value_normal",
+    bootstrap = "p_value"
+  )
+  stopifnot(column %in% names(frame))
+  frame[[column]]
+}
+
 paper_newey_west_statistics <- function(
   fit,
   estimates,

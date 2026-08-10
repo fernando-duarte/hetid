@@ -6,7 +6,7 @@
 # the estimate by a stored quasi-maximum-likelihood standard error; the
 # estimator's reference column always uses it. The bootstrap branch reads a
 # point_t_statistic frame -- the estimate over the robust scale of its own
-# bootstrap draws, with the frame's own two-sided normal p-value -- and the
+# bootstrap draws, starred on whichever p-value point_star_p selects -- and the
 # tau = 0 column uses it in every table, because the pipeline now publishes
 # every log-variance table after the bootstrap stage.
 #
@@ -57,7 +57,7 @@ logvar_boot_point_stat <- function(boot, estimator_id) {
 logvar_bootstrap_point_stat <- function(point_stat, tab_coef, vals) {
   stopifnot(
     is.data.frame(point_stat),
-    all(c("coef", "point", "statistic", "p_value") %in% names(point_stat)),
+    all(c("coef", "point", "statistic") %in% names(point_stat)),
     identical(point_stat$coef, tab_coef), # row order aligned to coefs
     length(point_stat$point) == length(vals)
   )
@@ -71,17 +71,19 @@ logvar_bootstrap_point_stat <- function(point_stat, tab_coef, vals) {
   )
   list(
     statistic = point_stat$statistic,
-    p_value = point_stat$p_value,
+    p_value = point_star_p(point_stat),
     missing = !is.finite(point_stat$statistic)
   )
 }
 
 # With se_type NULL and no point_stat the interleaved statistic rows stay blank,
 # exactly as before SEs. Otherwise values carry their statistic in the stat row
-# with stars from the standard-normal approximation. point_stat wins where both
-# are supplied, so the tau = 0 column reports the bootstrap statistic while the
-# reference column beside it keeps the analytic ratio. An all-NA statistic (a
-# point not certified feasible) keeps the key column and blanks its stat rows.
+# with stars from the branch that supplied it: the standard-normal approximation
+# for the analytic ratio, point_star_p's selection for point_stat. point_stat wins
+# where both are supplied, so the tau = 0 column reports the bootstrap statistic
+# while the reference column beside it keeps the analytic ratio. An all-NA
+# statistic (a point not certified feasible) keeps the key column and blanks its
+# stat rows.
 # se_types is the estimator's validated variant vector.
 logvar_se_point_col <- function(
   vals,

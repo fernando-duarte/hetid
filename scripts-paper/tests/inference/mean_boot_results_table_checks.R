@@ -91,7 +91,8 @@ stp_rows <- seq_along(stp_coefs)
 stp_estimates <- stp_parts$columns[[2L]][2L * stp_rows - 1L]
 stp_statistics <- stp_parts$columns[[2L]][2L * stp_rows]
 stp_reported <- stp_point_t$reason == "reported"
-stp_stars <- sig_stars(stp_point_t$p_value)
+stp_star_p <- point_star_p(stp_point_t)
+stp_stars <- sig_stars(stp_star_p)
 
 check(
   "the tau = 0 sub-row prints a parenthesized statistic, not an interval",
@@ -114,13 +115,23 @@ check(
   )
 )
 check(
-  "a star appears exactly when the two-sided normal p-value crosses a level",
+  "a star appears exactly when the basis p-value crosses a level",
   identical(
     grepl("$^{", stp_estimates, fixed = TRUE),
-    !is.na(stp_point_t$p_value) &
-      stp_point_t$p_value < paper_significance_level("one_star")
+    !is.na(stp_star_p) & stp_star_p < paper_significance_level("one_star")
   ) &&
     length(unique(stp_stars)) >= 3L
+)
+# the default basis is the reported ratio's own tail, so the stars cannot order
+# against the statistic beneath them; the bootstrap basis can, which is why it
+# is not the default. Fails if the default flips or the column mapping is wrong.
+check(
+  "the default stars are the reported statistic's own two-sided normal tail",
+  identical(PAPER_POINT_STAR_BASIS, "normal") &&
+    identical(
+      stp_stars,
+      sig_stars(2 * stats::pnorm(-abs(stp_point_t$statistic)))
+    )
 )
 stp_gated <- is.finite(stp_point_t$point) & !is.finite(stp_point_t$statistic)
 stp_absent <- !is.finite(stp_point_t$point)

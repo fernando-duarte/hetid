@@ -6,19 +6,31 @@ paper_source_once(paper_path("config", "reporting.R"))
   paste0("%.", as.integer(digits), "f")
 }
 
+# Fixed-digit rendering, with the sign dropped when the rounded cell is zero.
+# A cell reading "-0.000" asserts a sign the displayed number does not carry,
+# and readers take it for a real negative estimate rather than for rounding.
+# The underlying value keeps its sign; only the printed text loses it.
+.paper_fixed <- function(value, digits) {
+  sub(
+    "^-(0(\\.0*)?)$", "\\1",
+    sprintf(.paper_fixed_format(digits), value)
+  )
+}
+
 # One rendering of an identified-set / confidence interval in LaTeX, shared by
 # the set, confidence, and endpoint-envelope cell formatters below. `marks`
 # selects the finite-interval brackets; `side` renders a half-infinite interval
 # ("upper" reports the finite upper bound, "lower" the finite lower bound).
 .interval_latex <- function(lower, upper, digits, marks = c("[", "]"),
                             side = "none") {
-  fmt <- .paper_fixed_format(digits)
+  lo <- .paper_fixed(lower, digits)
+  hi <- .paper_fixed(upper, digits)
   switch(side,
-    upper = sprintf(paste0("$(-\\infty,\\,", fmt, "]$"), upper),
-    lower = sprintf(paste0("$[", fmt, ",\\,\\infty)$"), lower),
+    upper = sprintf("$(-\\infty,\\,%s]$", hi),
+    lower = sprintf("$[%s,\\,\\infty)$", lo),
     none = sprintf(
-      paste0("$", marks[[1L]], fmt, ",\\,", fmt, marks[[2L]], "$"),
-      lower, upper
+      paste0("$", marks[[1L]], "%s,\\,%s", marks[[2L]], "$"),
+      lo, hi
     )
   )
 }
@@ -38,7 +50,7 @@ paper_format_number <- function(
   ifelse(
     unavailable,
     missing_token,
-    sprintf(.paper_fixed_format(digits), value)
+    .paper_fixed(value, digits)
   )
 }
 

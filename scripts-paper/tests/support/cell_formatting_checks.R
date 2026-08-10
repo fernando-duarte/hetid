@@ -14,6 +14,21 @@ check(
     )
 )
 check(
+  "a value rounding to zero prints unsigned, in cells and in interval bounds",
+  identical(
+    paper_format_number(c(-1e-9, 1e-9, -0.4e-3, -0.6e-3, -1.5), 3L, "na"),
+    c("0.000", "0.000", "0.000", "-0.001", "-1.500")
+  ) &&
+    identical(
+      paper_format_confidence_interval(-1e-9, -2e-9, 3L, brackets = "open"),
+      "$(0.000,\\,0.000)$"
+    ) &&
+    identical(
+      paper_format_number(-1e-9, 0L, "na"),
+      "0"
+    )
+)
+check(
   "set formatter preserves status, degeneracy, and infinite bounds",
   identical(
     paper_format_set_interval(

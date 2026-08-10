@@ -70,7 +70,7 @@ structural_equation_table_parts <- function(mean, boot, n_pc) {
   # that cannot fail is worse than none: it reads as assurance and gives none.
   point_t <- boot$point_t
   stopifnot(identical(point_t$coef, coef_tab$coef))
-  point_stars <- sig_stars(point_t$p_value)
+  point_stars <- sig_stars(point_star_p(point_t))
   point_cells <- ifelse(
     point_stars == "", fmt(coef_tab$point),
     sprintf("%s$%s$", fmt(coef_tab$point), point_stars)

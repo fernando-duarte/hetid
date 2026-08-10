@@ -20,7 +20,9 @@ paper_source_once(paper_path(
 # point-identified display rows already read, where se_lower equals se_upper and
 # the two endpoint t statistics coincide. That reuse is why the tau = 0 scale
 # becomes checkable from the CSV alone, which it was not before: the set-identified
-# block's scales lived only in the draw cache.
+# block's scales lived only in the draw cache. Both star calibrations ride along
+# for the same reason -- the published stars come from one of them, and a CSV
+# carrying only the other cannot audit the table.
 set_id_boot_tau0_rows <- function(point_t, prototype) {
   rows <- .set_id_blank_rows(prototype, nrow(point_t))
   rows$coef <- point_t$coef
@@ -45,6 +47,7 @@ set_id_boot_tau0_rows <- function(point_t, prototype) {
     point_n_non_failed = point_t$n_non_failed,
     point_frac_bounded = point_t$frac_bounded,
     p_value = point_t$p_value,
+    p_value_normal = point_t$p_value_normal,
     row.names = NULL, stringsAsFactors = FALSE
   )
 }
