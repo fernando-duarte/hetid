@@ -1133,7 +1133,7 @@ through the stage input hash, through the draw-specification hash, which stores
 \code{z_col} verbatim, through the analysis contract in the runtime hash,
 and through that contract's membership in the bootstrap draw-code manifest.
 Switching it also obliges a run of the separate
-\file{scripts-paper/validation/regen_egarch_decision.R} entrypoint, because the
+\file{scripts-paper/tools/regen_egarch_decision.R} entrypoint, because the
 checked-in EGARCH-X decision record binds the previous choice's gate.\\
 Joint-GMM decision: \file{config/decisions/joint_gmm.R} & The checked-in record
 uses the no-answer default: both nondefault moment blocks and stage C are off,
@@ -1665,9 +1665,9 @@ It requires exactly two positional output-root arguments, projects published
 numeric TeX table content, and reports equality or differences. It does not run
 the pipeline, select a branch, or validate non-table artifacts.\\
 EGARCH-X decision-record regenerator
-\file{scripts-paper/validation/regen_egarch_decision.R} &
+\file{scripts-paper/tools/regen_egarch_decision.R} &
 Separate entrypoint &
-\code{Rscript} \code{scripts-paper/validation/regen_egarch_decision.R} reads the
+\code{Rscript} \code{scripts-paper/tools/regen_egarch_decision.R} reads the
 residual-dynamics gate record left by an immediately preceding run and prints the
 \file{config/decisions/egarch.R} fields that record would need. It writes nothing
 and edits nothing; a human pastes the printed \code{gate_science_sha256},
@@ -1678,9 +1678,11 @@ record binds a scientific hash of the active instrument's own gate and the route
 refuses a gate that does not match, so switching \code{instrument$active} makes
 the checked-in record inapplicable. It stops when the gate artifact is absent and
 warns when that artifact is more than thirty minutes old, because the record
-carries no instrument identifier of its own. It lives under \file{validation/}
-because the source-topology gate admits exactly two entrypoints directly under
-\file{scripts-paper/} and exempts \file{validation/}. The runner never calls it.\\
+carries no instrument identifier of its own. It lives under \file{tools/}, not
+bare under \file{scripts-paper/} (the source-topology gate admits exactly two
+entrypoints there) and not under \file{validation/} (that directory's own
+charter is cross-run TeX-table acceptance only, and this tool reads an RDS
+gate cache instead). The runner never calls it.\\
 Committed instrument-comparison artifacts
 \file{scripts-paper/validation/instrument_comparisons/} &
 Separate entrypoint &
@@ -1904,7 +1906,7 @@ no current caption or table prints it. The active column supplies the one
 heteroskedasticity instrument for all three SDF-news PC scores, and the identification
 estimator demeans it on its aligned sample. Switching the active entry also
 requires regenerating the checked-in EGARCH-X decision record through the separate
-entrypoint \file{scripts-paper/validation/regen_egarch_decision.R}, because that
+entrypoint \file{scripts-paper/tools/regen_egarch_decision.R}, because that
 record binds the residual-dynamics gate the active instrument produces.
 
 \subsection{Nominal asset-return PCs}
@@ -4161,7 +4163,7 @@ Source-fixed global control families & \file{scripts-paper/config/};
 Available-but-not-called and separate functionality &
 \file{scripts-paper/README.md}; \file{scripts-paper/tests/run_tests.R};
 \file{scripts-paper/validation/compare_output_tables.R};
-\file{scripts-paper/validation/regen_egarch_decision.R};
+\file{scripts-paper/tools/regen_egarch_decision.R};
 \file{scripts-paper/validation/instrument_comparisons/};
 \file{scripts-paper/reset_pipeline_state.R};
 \file{docs/quality-check.R} (untracked) &

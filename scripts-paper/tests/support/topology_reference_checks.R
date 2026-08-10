@@ -98,10 +98,18 @@ standalone_validation <- list.files(
   pattern = "[.]R$",
   full.names = TRUE
 )
+# standalone dev tools (e.g. the EGARCH decision-record regenerator), which
+# run_pipeline.R never reaches either
+standalone_tools <- list.files(
+  paper_path("tools"),
+  pattern = "[.]R$",
+  full.names = TRUE
+)
 production <- r_files[
   !grepl("/tests/", r_files) &
     !r_files %in% inactive &
-    !r_files %in% standalone_validation
+    !r_files %in% standalone_validation &
+    !r_files %in% standalone_tools
 ]
 unreachable <- setdiff(production, reachable)
 if (length(unreachable)) {

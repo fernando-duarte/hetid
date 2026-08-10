@@ -6,12 +6,20 @@
 # and scripts-paper/log_variance/extensions/egarch/route_core.R refuses to
 # route past a gate whose recomputed scientific hash does not match the
 # committed decision record -- by design, so a stale approval can never be
-# silently reused under different data. Lives under validation/, not bare
-# under scripts-paper/, because the source-topology gate
-# (tests/support/topology_reference_checks.R) allows exactly two top-level
-# entrypoints directly under scripts-paper/ (run_pipeline.R,
-# reset_pipeline_state.R) and exempts validation/ entirely, matching
-# validation/compare_output_tables.R's existing placement.
+# silently reused under different data. Lives under tools/, not bare under
+# scripts-paper/ and not under validation/. Bare scripts-paper/ is out
+# because the source-topology gate (tests/support/topology_reference_checks.R)
+# allows exactly two top-level entrypoints there (run_pipeline.R,
+# reset_pipeline_state.R). validation/ is out because that directory's own
+# charter (validation/README.md) is cross-run TeX-table acceptance only --
+# "does not run the pipeline, capture a reference, or write validation
+# artifacts" -- and this tool reads a pipeline-owned RDS cache and prints
+# decision-record fields, which is a different job entirely; it also trips
+# tests/validation/ssot_checks.R's forbidden-term scan for readRDS, a guard
+# against reintroducing the RDS-based table-acceptance layer removed in
+# 31c4a1b. tools/ is a topology-check-exempt standalone-dev-tool location
+# (tests/support/topology_reference_checks.R's standalone_tools), not scanned
+# by ssot_checks.R at all.
 #
 # Usage: run the pipeline once first with the instrument you want to
 # switch to (any HETID_BOOT_REPS; this only needs the dynamics-gate RDS,
@@ -23,7 +31,7 @@
 #
 #   HETID_BOOT_REPS=8 HETID_BOOT_CORES=1 HETID_ALLOW_DRAFT_RUN=1 \
 #     Rscript scripts-paper/run_pipeline.R  # fails at the EGARCH gate; fine
-#   Rscript scripts-paper/validation/regen_egarch_decision.R
+#   Rscript scripts-paper/tools/regen_egarch_decision.R
 
 source(normalizePath(
   file.path("scripts-paper", "config", "paths.R"),

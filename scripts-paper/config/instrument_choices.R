@@ -5,7 +5,7 @@
 # build_yield_volatility.R, then point PAPER_ANALYSIS_CONTRACT$input$
 # instrument$active at its id -- no other file needs to change. Switching
 # which choice is active also needs
-# scripts-paper/validation/regen_egarch_decision.R (the committed EGARCH
+# scripts-paper/tools/regen_egarch_decision.R (the committed EGARCH
 # gate record is bound to the active choice's exact diagnostics; see that
 # file's header for why).
 
