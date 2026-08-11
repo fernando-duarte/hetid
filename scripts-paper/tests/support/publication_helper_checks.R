@@ -123,3 +123,39 @@ check(
     ))
 )
 rm(console_fixture, console_lines)
+
+# The flag is what stops Dropbox putting a deleted sidecar back, so a silent
+# no-op here would restore the reappearance this exists to prevent. Read the
+# attribute back rather than trusting the write. Off macOS there is nothing to
+# assert but the empty return.
+local({
+  flag_dir <- tempfile("paper-fileprovider-")
+  dir.create(flag_dir)
+  on.exit(unlink(flag_dir, recursive = TRUE), add = TRUE)
+  present <- file.path(flag_dir, "fixture.aux")
+  file.create(present)
+  absent <- file.path(flag_dir, "never-written.aux")
+  flagged <- paper_flag_fileprovider_ignored(c(present, absent))
+  darwin <- identical(unname(Sys.info()[["sysname"]]), "Darwin")
+  check(
+    "a missing path is skipped rather than flagged",
+    !(absent %in% flagged)
+  )
+  if (darwin && nzchar(Sys.which("xattr"))) {
+    read_back <- system2(
+      "xattr",
+      c("-p", shQuote(PAPER_FILEPROVIDER_IGNORE_ATTR), shQuote(present)),
+      stdout = TRUE,
+      stderr = FALSE
+    )
+    check(
+      "an existing sidecar reads back as file-provider ignored",
+      identical(flagged, present) && identical(trimws(read_back), "1")
+    )
+  } else {
+    check(
+      "off macOS the flag is a no-op",
+      identical(flagged, character(0))
+    )
+  }
+})

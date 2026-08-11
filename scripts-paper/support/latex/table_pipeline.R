@@ -4,6 +4,7 @@
 # provides a standalone compilable document variant for quick PDF checks.
 
 paper_source_once(paper_path("support", "latex", "table_environment.R"))
+paper_source_once(paper_path("support", "latex", "dropbox_ignore.R"))
 paper_source_once(paper_path("config", "reporting.R"))
 
 #' Build the bare booktabs tabular for a multi-panel table
@@ -144,6 +145,9 @@ compile_latex_pdf <- function(tex_path) {
     ".",
     PAPER_LATEX_CONTROL$sidecar_extensions
   )
+  # flag before deleting: an unflagged sidecar is one Dropbox may already be
+  # syncing, and may put back after the unlink
+  paper_flag_fileprovider_ignored(sidecars)
   unlink(sidecars)
   .stop_if_sidecars_remain(sidecars[file.exists(sidecars)])
   invisible(cleanup_status)
@@ -160,6 +164,7 @@ clean_latex_sidecars <- function(
   for (attempt in seq_len(attempts)) {
     sidecars <- list.files(root, pattern = pattern, recursive = TRUE, full.names = TRUE)
     if (length(sidecars)) {
+      paper_flag_fileprovider_ignored(sidecars)
       unlink(sidecars)
       removed <- union(removed, sidecars)
     }
