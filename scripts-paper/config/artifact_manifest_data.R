@@ -104,8 +104,6 @@ PAPER_CONDITIONAL_ARTIFACT_STATUSES <- setdiff(
   "variance_share_standalone_tex|var_share_standalone.tex|2|i|B|r",
   "variance_share_standalone_pdf|var_share_standalone.pdf|2|i|B|r",
   "mean_bounds_figure|set_id_bounds_tau.svg|3|j|B|r",
-  "mean_projections_figure|set_id_projections_sd.svg|3|k|B|r",
-  "mean_projections_ols_figure|set_id_projections_sd_ols.svg|3|k|B|r",
   "log_ols_bounds_figure|log_var_eq_bounds_tau_logols.svg|3|m|B|r",
   "ppml_bounds_figure|log_var_eq_bounds_tau_ppml.svg|3|m|B|r",
   "harvey_bounds_figure|log_var_eq_bounds_tau_harvey.svg|3|m|B|r",

@@ -1,8 +1,9 @@
-# Artifact records for the 3D identified-region figures, generated from the tau
-# contract. Sourced from artifact_manifest_data.R between the literal spec
-# vector and the manifest assembly, so the drawn slacks stay a single source of
-# truth: adding one to the contract creates its records, and no manifest row can
-# survive a slack being dropped.
+# Artifact records for the identified-region figures -- the 3D shells generated
+# from the tau contract, and the coordinate-plane projections, which share the
+# same unit and OLS axes. Sourced from artifact_manifest_data.R between the
+# literal spec vector and the manifest assembly, so the drawn slacks stay a
+# single source of truth: adding one to the contract creates its records, and no
+# manifest row can survive a slack being dropped.
 #
 # Each slack is drawn once per unit system ("sd" scales every coefficient by its
 # news-PC standard deviation, "b" plots the coefficient itself) and once with
@@ -60,3 +61,44 @@ region_figure_basename <- function(ols, units, tau) {
   )
 )
 rm(.region_grid)
+
+# Coordinate-plane projections of the same set, drawn once per unit system and
+# once with the OLS benchmark. The SD pair predates the unit systems and keeps
+# its untokenised id, which is why only the id builder carries a special case;
+# the filenames have always named their units.
+projection_figure_id <- function(ols, units) {
+  paste0(
+    "mean_projections",
+    if (identical(units, "sd")) "" else paste0("_", units),
+    if (identical(ols, "projected")) "_ols" else "",
+    "_figure"
+  )
+}
+
+projection_figure_basename <- function(ols, units) {
+  paste0(
+    "set_id_projections_", units,
+    if (identical(ols, "projected")) "_ols" else "", ".svg"
+  )
+}
+
+.projection_grid <- expand.grid(
+  units = REGION_FIGURE_UNITS,
+  ols = REGION_FIGURE_OLS,
+  stringsAsFactors = FALSE
+)
+.artifact_specs <- c(
+  .artifact_specs,
+  sprintf(
+    "%s|%s|3|k|B|r",
+    mapply(
+      projection_figure_id, .projection_grid$ols, .projection_grid$units,
+      USE.NAMES = FALSE
+    ),
+    mapply(
+      projection_figure_basename, .projection_grid$ols, .projection_grid$units,
+      USE.NAMES = FALSE
+    )
+  )
+)
+rm(.projection_grid)

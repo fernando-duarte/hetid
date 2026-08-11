@@ -93,10 +93,11 @@ region_3d_grow_axis <- function(lims, ticks, k, value, padding, sides = c("lo", 
 # upper, axis 2 lower) and grows every axis's free end to hold the OLS point,
 # continuing each ladder at its own spacing over the headroom. "widest" takes
 # its hand-set frame and ladder outright. "auto" derives both from the padded
-# box, plus any per-figure adjustment. The caller asserts the result still
-# contains everything it draws.
-region_3d_frame <- function(lims, render, mode, ols_point, adjust = NULL) {
+# box, plus this figure's entry in auto_frame_adjust. The caller asserts the
+# result still contains everything it draws.
+region_3d_frame <- function(lims, render, mode, ols_point, units, tau) {
   if (identical(mode, "auto")) {
+    adjust <- render$auto_frame_adjust[[units]][[region_figure_tau_token(tau)]]
     return(region_3d_auto_frame(lims, render, ols_point, adjust))
   }
   ticks <- render$ticks
