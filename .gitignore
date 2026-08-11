@@ -119,6 +119,20 @@ results/
 scripts-paper/output/**/*.rds
 scripts-paper/output/**/*.pdf
 scripts-paper/output/**/*.csv
+# LaTeX sidecars from compiling the standalone tables. The pipeline deletes
+# these itself (PAPER_LATEX_CONTROL$sidecar_extensions in config/reporting.R,
+# via compile_latex_pdf and clean_latex_sidecars), but they can reappear after
+# it exits, so keep them out of the index. Extensions mirror that list.
+scripts-paper/output/**/*.aux
+scripts-paper/output/**/*.log
+scripts-paper/output/**/*.fls
+scripts-paper/output/**/*.fdb_latexmk
+scripts-paper/output/**/*.out
+scripts-paper/output/**/*.toc
+scripts-paper/output/**/*.nav
+scripts-paper/output/**/*.snm
+scripts-paper/output/**/*.vrb
+scripts-paper/output/**/*.synctex.gz
 
 # graphify knowledge graph (generated output) + local rebuild tooling
 graphify-out/
