@@ -70,7 +70,10 @@ local({
     })
     # the shell is meshed over the padded box, before any display override
     mesh <- build_region_mesh(sys, lims, seed = render$seed)
-    frame <- region_3d_frame(lims, render, frame_mode(units, tau), marked)
+    frame <- region_3d_frame(
+      lims, render, frame_mode(units, tau), marked,
+      render$auto_frame_adjust[[units]][[region_figure_tau_token(tau)]]
+    )
     lims <- frame$lims
     ticks <- frame$ticks
     holds <- function(v) {

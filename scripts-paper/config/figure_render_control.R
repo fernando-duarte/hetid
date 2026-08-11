@@ -82,6 +82,15 @@ PAPER_FIGURE_RENDER_CONTROL <- list(
     # Those frames also set their own decimal count from the ladder they get:
     # raw b_{1,N} ticks land on thousandths, which tick_digits would collapse.
     auto_tick_n = 3L,
+    # Per-figure nudges to an auto frame, keyed by unit system and slack token.
+    # x_lower and x_upper pin axis 1's ends; y_lower_drop lowers axis 2's bottom
+    # by that much. Applied before the OLS growth and the tick ladder, so the
+    # _ols variant can still widen past a pin it would otherwise fall outside.
+    auto_frame_adjust = list(
+      b = list(tau0p2 = list(
+        x_lower = -0.01, x_upper = 0.06, y_lower_drop = 0.025
+      ))
+    ),
     # Axis titles per unit system. "sd" scales each coefficient by its news-PC
     # standard deviation; "b" plots the coefficient itself.
     axis_labels = list(

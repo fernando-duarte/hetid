@@ -32,9 +32,18 @@ region_auto_ticks <- function(lim, n_min) {
   at
 }
 
-# Frame from the padded set box, grown to hold a marked point, on a pretty
-# ladder clipped back inside the frame.
-region_3d_auto_frame <- function(lims, render, extra) {
+# Frame from the padded set box, nudged by any per-figure adjustment, grown to
+# hold a marked point, on a pretty ladder clipped back inside the frame.
+region_3d_auto_frame <- function(lims, render, extra, adjust = NULL) {
+  if (!is.null(adjust$x_lower)) {
+    lims[[1]][1] <- adjust$x_lower
+  }
+  if (!is.null(adjust$x_upper)) {
+    lims[[1]][2] <- adjust$x_upper
+  }
+  if (!is.null(adjust$y_lower_drop)) {
+    lims[[2]][1] <- lims[[2]][1] - adjust$y_lower_drop
+  }
   if (!is.null(extra)) {
     lims <- lapply(seq_along(lims), function(k) {
       pad <- render$limit_padding * diff(lims[[k]])
@@ -84,10 +93,11 @@ region_3d_grow_axis <- function(lims, ticks, k, value, padding, sides = c("lo", 
 # upper, axis 2 lower) and grows every axis's free end to hold the OLS point,
 # continuing each ladder at its own spacing over the headroom. "widest" takes
 # its hand-set frame and ladder outright. "auto" derives both from the padded
-# box. The caller asserts the result still contains everything it draws.
-region_3d_frame <- function(lims, render, mode, ols_point) {
+# box, plus any per-figure adjustment. The caller asserts the result still
+# contains everything it draws.
+region_3d_frame <- function(lims, render, mode, ols_point, adjust = NULL) {
   if (identical(mode, "auto")) {
-    return(region_3d_auto_frame(lims, render, ols_point))
+    return(region_3d_auto_frame(lims, render, ols_point, adjust))
   }
   ticks <- render$ticks
   if (identical(mode, "baseline")) {
