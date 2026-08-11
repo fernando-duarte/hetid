@@ -39,7 +39,7 @@ hvt_plain <- hvt_parts(hvt_harvey)
 check("Harvey panel uses reference, point, and exact tau hulls", {
   identical(hvt_plain$rows[[1L]], "$\\theta^{H}_0$") &&
     identical(hvt_row(hvt_plain, 1L), paste0(
-      "-1.300 & -1.200 & $[-1.250,\\,-1.150]$ & $[-1.300,\\,-1.100]$"
+      "$-1.300$ & $-1.200$ & $[-1.250,\\,-1.150]$ & $[-1.300,\\,-1.100]$"
     )) &&
     identical(hvt_plain$rows[[3L]], "$\\theta^{H}_{1,R}$") &&
     identical(hvt_row(hvt_plain, 3L), paste0(
@@ -81,14 +81,14 @@ hvt_hac <- hvt_parts(hvt_harvey_se, se_type = "hac")
 
 check("Harvey panel renders hac t-stats/stars and selects the hac column", {
   # reference theta_0 = -1.3 / hac se 0.65 = -2.00 -> ** (observed 0.5 -> ***)
-  identical(hvt_hac$columns[[1L]][[1L]], "-1.300$^{**}$") &&
-    identical(hvt_hac$columns[[1L]][[2L]], "(-2.00)")
+  identical(hvt_hac$columns[[1L]][[1L]], "$-1.300$**") &&
+    identical(hvt_hac$columns[[1L]][[2L]], "($-2.00$)")
 })
 
 check("Harvey panel keeps set columns free of statistic cells", {
   # the theta_0 statistic row carries the two point-column t's and blank set
   # cells; pin it to confirm no endpoint statistics were emitted
-  identical(hvt_row(hvt_hac, 2L), "(-2.00) & (-1.85) &  & ")
+  identical(hvt_row(hvt_hac, 2L), "($-2.00$) & ($-1.85$) &  & ")
 })
 
 check("Harvey panel stays blank and notes stay deferred when se_type is NULL", {

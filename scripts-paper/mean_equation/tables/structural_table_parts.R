@@ -20,7 +20,23 @@ structural_equation_table_parts <- function(mean, boot, n_pc) {
   )))
   fmt <- function(x) {
     policy <- PAPER_REPORTING_CONTROL$cells$structural
-    paper_format_number(x, policy$digits, policy$numeric_missing)
+    paper_math_negative(
+      paper_format_number(x, policy$digits, policy$numeric_missing)
+    )
+  }
+  # the parenthesized statistic beneath an estimate, sharing the estimate's
+  # negative-in-math convention
+  stat_cell <- function(x) {
+    sprintf(
+      "(%s)",
+      paper_math_negative(
+        paper_format_number(
+          x,
+          PAPER_REPORTING_CONTROL$cells$statistic_digits,
+          "na"
+        )
+      )
+    )
   }
   # a degenerate interval (exactly equal endpoints, the point-identified case)
   # is left blank: the set equals the tau = 0 point at every displayed tau
@@ -46,18 +62,8 @@ structural_equation_table_parts <- function(mean, boot, n_pc) {
     coef_tab$coef,
     PAPER_REPORTING_CONTROL$mean_ols
   )
-  ols_cells <- ifelse(
-    nw$stars == "", fmt(coef_tab$ols),
-    sprintf("%s$%s$", fmt(coef_tab$ols), nw$stars)
-  )
-  ols_tstats <- sprintf(
-    "(%s)",
-    paper_format_number(
-      nw$statistic,
-      PAPER_REPORTING_CONTROL$cells$statistic_digits,
-      "na"
-    )
-  )
+  ols_cells <- paste0(fmt(coef_tab$ols), nw$stars)
+  ols_tstats <- stat_cell(nw$statistic)
   # sampling uncertainty from the unified endpoint bootstrap: the tau = 0 column
   # reports a bootstrap t statistic on the same footing as the OLS column, the
   # set columns pointwise-coverage intervals; blank cells stay blank. The guard
@@ -71,23 +77,13 @@ structural_equation_table_parts <- function(mean, boot, n_pc) {
   point_t <- boot$point_t
   stopifnot(identical(point_t$coef, coef_tab$coef))
   point_stars <- sig_stars(point_star_p(point_t))
-  point_cells <- ifelse(
-    point_stars == "", fmt(coef_tab$point),
-    sprintf("%s$%s$", fmt(coef_tab$point), point_stars)
-  )
+  point_cells <- paste0(fmt(coef_tab$point), point_stars)
   # a withheld statistic beside a star-less estimate would read as "tested, not
   # significant", so a finite point the gate left without a statistic renders the
   # missing token, as logvar_se_point_col does for the log-variance panel
   point_tstats <- ifelse(
     is.finite(point_t$statistic),
-    sprintf(
-      "(%s)",
-      paper_format_number(
-        point_t$statistic,
-        PAPER_REPORTING_CONTROL$cells$statistic_digits,
-        "na"
-      )
-    ),
+    stat_cell(point_t$statistic),
     ifelse(is.finite(coef_tab$point), PAPER_NA_TOKEN, "")
   )
   interval_cell <- function(lo, hi, blank) {

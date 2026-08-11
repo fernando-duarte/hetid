@@ -22,12 +22,14 @@ paper_table_numeric_projection <- function(path) {
   lines <- readLines(path, warn = FALSE)
   projection <- list()
   in_tabular <- FALSE
+  seen_rule <- FALSE
   data_started <- FALSE
   tabular_id <- 0L
   row_id <- 0L
   for (line in lines) {
     if (grepl("\\begin{tabular}", line, fixed = TRUE)) {
       in_tabular <- TRUE
+      seen_rule <- FALSE
       data_started <- FALSE
       tabular_id <- tabular_id + 1L
       row_id <- 0L
@@ -40,18 +42,35 @@ paper_table_numeric_projection <- function(path) {
     if (!in_tabular) {
       next
     }
-    if (grepl("\\midrule", line, fixed = TRUE)) {
-      data_started <- TRUE
+    # The header block runs from the first interior rule to the first labelled
+    # row. Booktabs tables close their header with \midrule; the paper's
+    # kern-scaffolded tables have no \midrule at all, only \cmidrule, so
+    # matching \midrule alone would leave those tables with an empty projection
+    # -- indistinguishable from a table with no numbers, and so a silent loss of
+    # comparison coverage. Matching "midrule" catches both and skips \toprule
+    # and \bottomrule. That alone starts too early in a kern table, whose outer
+    # rule precedes the spanner and header rows, so the header block is then
+    # closed on content: spanner and header rows carry an empty row label, and
+    # every table's first data row carries a real one. Statistic rows beneath a
+    # coefficient also have an empty label, but by then the region is open.
+    if (grepl("midrule", line, fixed = TRUE)) {
+      seen_rule <- TRUE
       next
     }
-    if (!data_started || !grepl("&", line, fixed = TRUE)) {
+    if (!seen_rule || !grepl("&", line, fixed = TRUE)) {
       next
     }
-    row_id <- row_id + 1L
     cells <- strsplit(line, "&", fixed = TRUE)[[1L]]
     if (length(cells) < 2L) {
       next
     }
+    if (!data_started) {
+      if (!nzchar(trimws(cells[[1L]]))) {
+        next
+      }
+      data_started <- TRUE
+    }
+    row_id <- row_id + 1L
     for (column_id in seq_along(cells[-1L])) {
       key <- sprintf(
         "tabular_%d/row_%d/column_%d",

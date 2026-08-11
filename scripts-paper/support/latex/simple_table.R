@@ -3,7 +3,10 @@
 # a flat rows-by-columns layout; cells that are not pure numbers -- e.g.
 # identified-set interval strings "[lo, hi]" -- render cleanly. Reuses
 # make_standalone_latex / publish_latex_artifact from table_pipeline.R for
-# the standalone variant and manifest-directed writing.
+# the standalone variant and manifest-directed writing, and the rule sets and
+# spanner builder from overleaf_scaffold.R.
+
+paper_source_once(paper_path("support", "latex", "overleaf_scaffold.R"))
 
 #' Build the bare booktabs tabular for a plain-column table
 #'
@@ -17,16 +20,24 @@
 #'   have length(row_labels) entries, pre-formatted
 #' @param col_headers character vector of column headers (length == length(columns))
 #' @param stub header text over the row-label column (default empty)
-#' @param rule_after integer row indices after which to insert a \\midrule
+#' @param rule_after integer row indices after which to insert a separator
 #'   (for visually grouping blocks of rows)
 #' @param spanners optional list of list(label, n) merged headers over column
 #'   groups; the n's must cover all data columns
+#' @param rules rule set for the opening, header, and closing rules and the
+#'   spanner segment style (see PAPER_BOOKTABS_RULES)
+#' @param separator separator emitted at each rule_after index, recycled to its
+#'   length; the kern scaffold uses \\addlinespace between blocks and a light
+#'   rule above the tail, so the two cannot share one literal
 #' @return character vector of LaTeX lines from \\begin{tabular} to \\end{tabular}
 simple_tabular_lines <- function(row_labels, columns, col_headers,
                                  stub = "", rule_after = integer(0),
-                                 spanners = NULL) {
+                                 spanners = NULL,
+                                 rules = PAPER_BOOKTABS_RULES,
+                                 separator = "\\midrule") {
   n_col <- length(columns)
   n_row <- length(row_labels)
+  separator <- rep_len(separator, max(length(rule_after), 1L))
   stopifnot(
     length(col_headers) == n_col,
     all(vapply(columns, length, integer(1)) == n_row)
@@ -36,26 +47,16 @@ simple_tabular_lines <- function(row_labels, columns, col_headers,
     stub, " & ",
     paste(col_headers, collapse = " & "), " \\\\"
   )
-  # Optional merged spanner header row over groups of data columns. Each spanner
-  # is list(label = <LaTeX>, n = <#columns>); the n's must cover all data columns.
-  spanner_lines <- NULL
-  if (!is.null(spanners)) {
-    ns <- vapply(spanners, function(s) s$n, integer(1))
-    stopifnot(sum(ns) == n_col)
-    mc <- vapply(
-      spanners,
-      function(s) sprintf("\\multicolumn{%d}{c}{%s}", s$n, s$label),
-      character(1)
-    )
-    start <- 2L
-    cmids <- character(0)
-    for (n in ns) {
-      cmids <- c(cmids, sprintf("\\cmidrule(lr){%d-%d}", start, start + n - 1L))
-      start <- start + n
-    }
-    spanner_lines <- c(
-      paste0(" & ", paste(mc, collapse = " & "), " \\\\"),
-      paste(cmids, collapse = " ")
+  # Optional merged spanner header row over groups of data columns, built by the
+  # shared header builder so the segment ranges match the kern tables' exactly.
+  header_lines <- if (is.null(spanners)) {
+    header
+  } else {
+    c(
+      paper_overleaf_column_headers(
+        spanners, col_headers, rules$span_prefix, rules$span_join
+      )[1:2],
+      header
     )
   }
   body <- character(0)
@@ -66,17 +67,16 @@ simple_tabular_lines <- function(row_labels, columns, col_headers,
       paste0(row_labels[[i]], " & ", paste(cells, collapse = " & "), " \\\\")
     )
     if (i %in% rule_after) {
-      body <- c(body, "\\midrule")
+      body <- c(body, separator[[match(i, rule_after)]])
     }
   }
   c(
     paste0("\\begin{tabular}{", col_spec, "}"),
-    "\\toprule",
-    spanner_lines,
-    header,
-    "\\midrule",
+    rules$top,
+    header_lines,
+    rules$header,
     body,
-    "\\bottomrule",
+    rules$bottom,
     "\\end{tabular}"
   )
 }

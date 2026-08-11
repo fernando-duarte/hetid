@@ -134,9 +134,9 @@ se_ppml_fix$se <- list(
 )
 check("ppml parts render hac t-stats/stars and select the hac column", {
   pr <- logvar_ppml_table_parts(se_ppml_fix, c(0.05, 0.1), 1L, se_type = "hac", point_stat = NULL)
-  grepl("^{**}", pr$columns[[1]][1], fixed = TRUE) && # -1.3/0.65 = -2.00 -> **
+  endsWith(pr$columns[[1]][1], "**") && # -1.3/0.65 = -2.00 -> **
     !grepl("***", pr$columns[[1]][1], fixed = TRUE) && # not the naive -2.60 ***
-    identical(pr$columns[[1]][2], "(-2.00)") &&
+    identical(pr$columns[[1]][2], "($-2.00$)") &&
     identical(pr$columns[[3]][2], "") # set columns keep blank stat rows
 })
 check("ppml parts stay blank when se_type is NULL (back-compat)", {
@@ -150,7 +150,7 @@ check("ppml parts mark an unavailable SE with -- , not a blank stat row", {
   se_ppml_na <- se_ppml_fix
   se_ppml_na$se$reference$hac[1] <- NA_real_
   pr <- logvar_ppml_table_parts(se_ppml_na, c(0.05, 0.1), 1L, se_type = "hac", point_stat = NULL)
-  identical(pr$columns[[1]][1], "-1.300") && # coefficient value still printed
+  identical(pr$columns[[1]][1], "$-1.300$") && # coefficient value still printed
     identical(pr$columns[[1]][2], "--") # stat row marks the SE unavailable
 })
 check("ppml parts fail loud when se_type is set but se is absent", {

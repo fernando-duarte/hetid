@@ -10,6 +10,7 @@ paper_source_once(paper_path("support", "diagnostics", "identification_diagnosti
 paper_source_once(paper_path("support", "latex", "table_pipeline.R"))
 paper_source_once(paper_path("support", "latex", "simple_table.R"))
 paper_source_once(paper_path("support", "reporting", "inference.R"))
+paper_source_once(paper_path("support", "reporting", "cells.R"))
 paper_source_once(paper_path(
   "mean_equation", "diagnostics", "heteroskedasticity", "battery.R"
 ))
@@ -22,15 +23,14 @@ z <- set_id_mean_eq$z
 z_mat <- matrix(z, ncol = 1, dimnames = list(NULL, "z"))
 
 hetero_fmt <- function(x, d = PAPER_REPORTING_CONTROL$precision$diagnostic_table) {
-  formatC(x, format = "f", digits = d)
+  paper_math_negative(formatC(x, format = "f", digits = d))
 }
 
 pcell <- function(x) {
   if (!is.finite(x)) {
     return(PAPER_NA_TOKEN)
   }
-  stars <- sig_stars(x)
-  paste0(hetero_fmt(x), if (nzchar(stars)) paste0("$", stars, "$"))
+  paste0(hetero_fmt(x), sig_stars(x))
 }
 
 panel_y2 <- hetero_panel(

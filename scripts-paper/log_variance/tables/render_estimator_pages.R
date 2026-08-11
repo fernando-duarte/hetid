@@ -18,6 +18,10 @@
 
 paper_source_once(paper_path("support", "latex", "table_pipeline.R"))
 paper_source_once(paper_path("support", "latex", "table_environment.R"))
+paper_source_once(paper_path("support", "latex", "overleaf_panel_table.R"))
+paper_source_once(paper_path(
+  "log_variance", "tables", "render_variance_panel_fragments.R"
+))
 paper_source_once(paper_path("mean_equation", "tables", "structural_table_parts.R"))
 paper_source_once(paper_path("log_variance", "tables", "table_formatting.R"))
 paper_source_once(paper_path("log_variance", "tables", "estimator_panel.R"))
@@ -41,56 +45,49 @@ local({
   # leaving the R-squared and N tail below the final rule
   coef_rules <- c(2L, 2L * (1L + n_pc_r))
 
-  panel_body <- function(row_labels, columns, rule_after) {
-    out <- character(0)
-    for (i in seq_along(row_labels)) {
-      cells <- vapply(columns, function(col) col[[i]], character(1))
-      out <- c(
-        out,
-        paste0(row_labels[[i]], " & ", paste(cells, collapse = " & "), " \\\\")
-      )
-      if (i %in% rule_after) out <- c(out, "\\midrule")
-    }
-    out
-  }
-  panel_head <- function(title) {
-    sprintf("\\multicolumn{%d}{l}{\\textit{%s}} \\\\", n_col + 1L, title)
-  }
+  mean_panel <- paper_overleaf_panel_lines(
+    "Panel A: Mean equation",
+    panel_a$row_labels, panel_a$columns, headers,
+    PAPER_OVERLEAF_SET_LABEL,
+    blocks = c(2L, panel_a$rule_after[[1L]]),
+    tail_after = panel_a$rule_after[[2L]]
+  )
 
   # An estimator's own headers are discarded, so only the shape has to agree:
   # the column count, and the tau columns after the reference one. Comparing the
   # reference header too would halt on estimators that call it "Reference"
   # rather than "OLS" -- a difference in a value this layout never emits.
-  page <- function(parts, title, notes, component) {
+  variance_panel <- function(parts, title, set_label = PAPER_OVERLEAF_SET_LABEL) {
     stopifnot(
       length(parts$columns) == n_col,
       identical(parts$headers[-1L], headers[-1L]),
       all(vapply(parts$columns, length, integer(1)) == length(parts$rows))
     )
+    paper_overleaf_panel_lines(
+      title, parts$rows, parts$columns, headers, set_label,
+      blocks = coef_rules[[1L]],
+      tail_after = coef_rules[[2L]]
+    )
+  }
+
+  # title heads the panel, subject names the estimator inside the caption
+  # sentence; they are separate because the panel head carries the "Panel B:"
+  # prefix and the caption reads as prose without it.
+  page <- function(parts, title, subject, notes, component,
+                   set_label = PAPER_OVERLEAF_SET_LABEL) {
     c(
       latex_table_environment(
-        tabular_lines = c(
-          paste0("\\begin{tabular}{l", strrep("c", n_col), "}"),
-          "\\toprule",
-          paste0(" & ", paste(headers, collapse = " & "), " \\\\"),
-          "\\midrule",
-          panel_head("Panel A. Mean equation"),
-          "\\midrule",
-          panel_body(panel_a$row_labels, panel_a$columns, panel_a$rule_after),
-          "\\midrule",
-          panel_head(title),
-          "\\midrule",
-          panel_body(parts$rows, parts$columns, coef_rules),
-          "\\bottomrule",
-          "\\end{tabular}"
+        tabular_lines = paper_overleaf_panel_table(
+          list(mean_panel, variance_panel(parts, title, set_label)),
+          n_col
         ),
         caption = paste0(
-          "Mean equation over the ", title, ". Identified sets in brackets, ",
+          "Mean equation over the ", subject, ". Identified sets in brackets, ",
           "moving-block bootstrap confidence intervals in parentheses beneath."
         ),
         label = artifact_latex_label(PAGES_ID, component),
         notes = notes,
-        fontsize = PAPER_TABLE_STYLE$combined_inference$fontsize
+        fontsize = ""
       ),
       "\\clearpage"
     )
@@ -104,7 +101,8 @@ local({
       envelope = log_var_eq_set_boot$ppml,
       point_stat = logvar_boot_point_stat(log_var_eq_set_boot, "ppml")
     ),
-    "Panel B. Log-variance equation (quasi-maximum likelihood)",
+    "Panel B: Log-variance equation (quasi-maximum likelihood)",
+    "log-variance equation (quasi-maximum likelihood)",
     c(
       build_ppml_panel_notes(
         ppml, tau_baseline, logvar_ppml_grid_cap, logvar_ppml_fit_budget,
@@ -116,28 +114,35 @@ local({
     "ppml"
   )
 
+  # the mean-log benchmark prints bare identified-set ranges, with no bootstrap
+  # envelope beneath them, so its spanner does not promise one
   logols_parts <- logvar_logols_table_parts(n_obs)
   logols_parts$headers <- headers
   pages <- c(pages, page(
     logols_parts,
-    "Panel B. Log-variance equation (mean-log benchmark)",
+    "Panel B: Log-variance equation (mean-log benchmark)",
+    "log-variance equation (mean-log benchmark)",
     build_logols_panel_notes(
       tau_baseline, log_var_eq$n_cross[[paper_tau_key(tau_baseline)]]
     ),
-    "logols"
+    "logols",
+    PAPER_OVERLEAF_SET_LABEL_BARE
   ))
 
   harvey <- paper_logvar_result("harvey", required = FALSE)
+  harvey_parts <- NULL
   if (!is.null(harvey)) {
+    harvey_parts <- logvar_estimator_panel_parts(
+      harvey, n_obs, tau_display, LOGVAR_HARVEY_PANEL_SPEC,
+      logvar_harvey_se_type, LOGVAR_HARVEY_SE_TYPES,
+      log_var_eq_set_boot$harvey,
+      PAPER_REPORTING_CONTROL$cells$log_variance,
+      logvar_boot_point_stat(log_var_eq_set_boot, "harvey")
+    )
     pages <- c(pages, page(
-      logvar_estimator_panel_parts(
-        harvey, n_obs, tau_display, LOGVAR_HARVEY_PANEL_SPEC,
-        logvar_harvey_se_type, LOGVAR_HARVEY_SE_TYPES,
-        log_var_eq_set_boot$harvey,
-        PAPER_REPORTING_CONTROL$cells$log_variance,
-        logvar_boot_point_stat(log_var_eq_set_boot, "harvey")
-      ),
-      "Panel B. Log-variance equation (Gaussian multiplicative variance)",
+      harvey_parts,
+      "Panel B: Log-variance equation (Gaussian multiplicative variance)",
+      "log-variance equation (Gaussian multiplicative variance)",
       c(
         build_harvey_panel_notes(
           harvey, tau_baseline, LOGVAR_HARVEY_CONTROL$grid_cap,
@@ -163,14 +168,20 @@ local({
         PAPER_REPORTING_CONTROL$cells$lad,
         NULL
       ),
-      "Panel B. Log-variance equation (conditional median)",
+      "Panel B: Log-variance equation (conditional median)",
+      "log-variance equation (conditional median)",
       build_lad_panel_notes(
         lad, tau_baseline, LOGVAR_LAD_CONTROL$grid_cap,
         LOGVAR_LAD_CONTROL$fit_budget
       ),
-      "lad"
+      "lad",
+      PAPER_OVERLEAF_SET_LABEL_BARE
     ))
   }
+
+  logvar_publish_variance_panel_fragments(
+    harvey_parts, logols_parts, headers, coef_rules
+  )
 
   publish_latex_artifact(PAGES_ID, pages)
   cat(sprintf(

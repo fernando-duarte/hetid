@@ -14,10 +14,12 @@ logvar_fmt <- function(
   x,
   cell_policy = PAPER_REPORTING_CONTROL$cells$log_variance
 ) {
-  paper_format_number(
-    x,
-    cell_policy$digits,
-    cell_policy$numeric_missing
+  paper_math_negative(
+    paper_format_number(
+      x,
+      cell_policy$digits,
+      cell_policy$numeric_missing
+    )
   )
 }
 

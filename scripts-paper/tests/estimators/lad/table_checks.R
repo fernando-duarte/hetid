@@ -40,13 +40,13 @@ ladt_row <- function(i) {
 
 check("LAD table cells use the dedicated two-decimal policy", {
   identical(ladt_parts$rows[[1L]], "$\\theta^{0.5}_0$") &&
-    identical(ladt_row(1L), "-1.23 & -1.24 & $[-1.26,\\,-1.20]$") &&
+    identical(ladt_row(1L), "$-1.23$ & $-1.24$ & $[-1.26,\\,-1.20]$") &&
     identical(ladt_parts$rows[[3L]], "$\\theta^{0.5}_{1,R}$") &&
     identical(ladt_row(3L), "0.13 & 0.14 & $[0.12,\\,0.18]$")
 })
 
 check("generic log-variance cells retain three decimals", {
-  identical(logvar_fmt(-1.234), "-1.234") &&
+  identical(logvar_fmt(-1.234), "$-1.234$") &&
     identical(
       set_cell(-1.256, -1.204, "bounded"),
       "$[-1.256,\\,-1.204]$"

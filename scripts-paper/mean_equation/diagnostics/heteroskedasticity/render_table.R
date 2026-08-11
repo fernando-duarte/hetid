@@ -9,6 +9,7 @@ paper_source_once(paper_path(
   "heteroskedasticity",
   "compute_tests.R"
 ))
+paper_source_once(paper_path("support", "latex", "overleaf_scaffold.R"))
 
 hetero_render <- function(panel, artifact_id, col_group_label) {
   panel_rows <- function(idx) {
@@ -23,11 +24,11 @@ hetero_render <- function(panel, artifact_id, col_group_label) {
     "Relevance and endogeneity diagnostics" =
       panel_rows((arch_row + 1L):nrow(panel$cells))
   )
-  tabular <- panel_tabular_lines(
+  tabular <- paper_overleaf_plain_group(panel_tabular_lines(
     panels,
     col_headers = as.character(seq_len(panel$n_cols)),
     col_group_label = col_group_label
-  )
+  ))
   publish_latex_artifact(artifact_id, tabular)
   invisible(tabular)
 }

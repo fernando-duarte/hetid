@@ -1,3 +1,5 @@
+\begingroup
+\fontsize{12.0pt}{14.4pt}\selectfont
 \begin{tabular}{l@{\hskip 0.5in}ccc}
 \toprule
 & \multicolumn{3}{c}{SDF-news residual} \\
@@ -5,31 +7,32 @@
 & 1 & 2 & 3 \\
 \midrule
 \addlinespace[0.5em]
-\multicolumn{4}{l}{\textbf{Panel A: Null hypothesis of variance constant over time, against volatility clustering}} \\
+\multicolumn{4}{c}{Panel A: Null hypothesis of variance constant over time, against volatility clustering} \\
 \addlinespace[0.3em]
-\quad ARCH(1) ($p$) & 0.000$^{***}$ & 0.000$^{***}$ & 0.897 \\
+\quad ARCH(1) ($p$) & 0.000*** & 0.000*** & 0.897 \\
 \addlinespace[1em]
-\multicolumn{4}{l}{\textbf{Panel B: Null hypothesis of variance unrelated to $Z$, against $Z$-driven heteroskedasticity}} \\
+\multicolumn{4}{c}{Panel B: Null hypothesis of variance unrelated to $Z$, against $Z$-driven heteroskedasticity} \\
 \addlinespace[0.3em]
-\quad White ($p$) & 0.000$^{***}$ & 0.000$^{***}$ & 0.000$^{***}$ \\
-\quad Breusch--Pagan ($p$) & 0.000$^{***}$ & 0.000$^{***}$ & 0.000$^{***}$ \\
-\quad Goldfeld--Quandt ($p$) & 0.000$^{***}$ & 0.000$^{***}$ & 0.000$^{***}$ \\
-\quad Harvey ($p$) & 0.000$^{***}$ & 0.000$^{***}$ & 0.001$^{***}$ \\
-\quad Anscombe ($p$) & 0.000$^{***}$ & 0.000$^{***}$ & 0.001$^{***}$ \\
-\quad Glejser ($p$) & 0.000$^{***}$ & 0.000$^{***}$ & 0.000$^{***}$ \\
-\quad Breusch--Pagan LM ($p$) & 0.000$^{***}$ & 0.000$^{***}$ & 0.000$^{***}$ \\
+\quad White ($p$) & 0.000*** & 0.000*** & 0.000*** \\
+\quad Breusch--Pagan ($p$) & 0.000*** & 0.000*** & 0.000*** \\
+\quad Goldfeld--Quandt ($p$) & 0.000*** & 0.000*** & 0.000*** \\
+\quad Harvey ($p$) & 0.000*** & 0.000*** & 0.001*** \\
+\quad Anscombe ($p$) & 0.000*** & 0.000*** & 0.001*** \\
+\quad Glejser ($p$) & 0.000*** & 0.000*** & 0.000*** \\
+\quad Breusch--Pagan LM ($p$) & 0.000*** & 0.000*** & 0.000*** \\
 \addlinespace[1em]
-\multicolumn{4}{l}{\textbf{Panel C: Relevance and endogeneity diagnostics}} \\
+\multicolumn{4}{c}{Panel C: Relevance and endogeneity diagnostics} \\
 \addlinespace[0.3em]
 \quad $\mathrm{Cov}(Z,W_2^2)$ & 58.737 & 0.761 & 0.036 \\
 \quad $\mathrm{corr}(Z,W_2^2)$ & 0.409 & 0.339 & 0.220 \\
-\quad $t$-stat of $W_2$-on-$Z$ & -1.203 & -0.656 & -0.653 \\
-\quad $\mathrm{corr}(W_1,W_2)$ & 0.167 & 0.037 & -0.064 \\
-\quad $[\mathrm{Cov}(W_1,W_2)/\mathrm{Var}(W_2)]\cdot\mathrm{sd}(W_2)/\mathrm{sd}(\Delta c)$ & 0.162 & 0.036 & -0.062 \\
-\quad $[\mathrm{Cov}(W_1,W_2)/\mathrm{Var}(W_2)]\cdot\mathrm{sd}(W_2)$ & 0.167 & 0.037 & -0.064 \\
-\quad $\det\widehat{M}_Z$ & 1.18 &  &  \\
-\quad $\kappa(\widehat{M}_Z)$ & $1.78 \times 10^{3}$ &  &  \\
-\quad $\sigma_{\min}(\widehat{M}_Z)$ & 0.0331 &  &  \\
-\quad Kleibergen--Paap $\mathrm{rk}$ ($p$) & 0.007$^{***}$ &  &  \\
+\quad $t$-stat of $W_2$-on-$Z$ & $-1.203$ & $-0.656$ & $-0.653$ \\
+\quad $\mathrm{corr}(W_1,W_2)$ & 0.167 & 0.037 & $-0.064$ \\
+\quad $[\mathrm{Cov}(W_1,W_2)/\mathrm{Var}(W_2)]\cdot\mathrm{sd}(W_2)/\mathrm{sd}(\Delta c)$ & 0.162 & 0.036 & $-0.062$ \\
+\quad $[\mathrm{Cov}(W_1,W_2)/\mathrm{Var}(W_2)]\cdot\mathrm{sd}(W_2)$ & 0.167 & 0.037 & $-0.064$ \\
+\quad $\det\widehat{M}_Z$ & \multicolumn{3}{c}{1.18} \\
+\quad $\kappa(\widehat{M}_Z)$ & \multicolumn{3}{c}{$1.78 \times 10^{3}$} \\
+\quad $\sigma_{\min}(\widehat{M}_Z)$ & \multicolumn{3}{c}{0.0331} \\
+\quad Kleibergen--Paap $\mathrm{rk}$ ($p$) & \multicolumn{3}{c}{0.007***} \\
 \bottomrule
 \end{tabular}
+\endgroup

@@ -5,12 +5,13 @@
 # Panel A reuses structural_equation_table_parts (mean-set estimate + endpoint
 # bootstrap); Panel B reuses logvar_ppml_table_parts with the moving-block
 # bootstrap outer envelope (log_var_eq_set_boot$ppml), exactly as the combined
-# inference panels. Emits only the tabular in a \begingroup that scopes the font;
-# the paper supplies the float, caption, notes, and the dual \label. Writes
+# inference panels. Emits only the tabular in the paper's kern group; the paper
+# supplies the float, caption, notes, and the dual \label. Writes
 # structural_var_inference.tex + standalone. Run via run_pipeline.R after
 # the estimator pages (needs set_id_mean_eq, set_id_boot, log_var_eq_set_boot).
 
 paper_source_once(paper_path("support", "latex", "table_pipeline.R"))
+paper_source_once(paper_path("support", "latex", "overleaf_panel_table.R"))
 paper_source_once(paper_path("mean_equation", "tables", "structural_table_parts.R"))
 paper_source_once(paper_path("log_variance", "tables", "table_formatting.R"))
 
@@ -47,43 +48,28 @@ stopifnot(
   all(vapply(columns_b, length, integer(1)) == length(rows_b))
 )
 
-# Serialize one panel's rows to LaTeX body lines, inserting a \midrule after each
-# rule_after index; mirrors the body loop in simple_tabular_lines so the merged
-# table renders identically to the standalone panels.
-panel_body <- function(row_labels, columns, rule_after) {
-  out <- character(0)
-  for (i in seq_along(row_labels)) {
-    cells <- vapply(columns, function(col) col[[i]], character(1))
-    out <- c(
-      out,
-      paste0(row_labels[[i]], " & ", paste(cells, collapse = " & "), " \\\\")
+# Each panel repeats the column header under its own title, so a reader never
+# has to carry the column meanings down from Panel A. Coefficient blocks are
+# separated by open space and the R^2/N tail by a light rule: the intercept row
+# stands alone, then the design block, then the news block.
+combined_table <- paper_overleaf_panel_table(
+  list(
+    paper_overleaf_panel_lines(
+      "Panel A: Mean equation",
+      panel_a$row_labels, panel_a$columns, headers,
+      PAPER_OVERLEAF_SET_LABEL,
+      blocks = c(2L, panel_a$rule_after[[1L]]),
+      tail_after = panel_a$rule_after[[2L]]
+    ),
+    paper_overleaf_panel_lines(
+      "Panel B: Variance equation",
+      rows_b, columns_b, headers,
+      PAPER_OVERLEAF_SET_LABEL,
+      blocks = 2L,
+      tail_after = 2L * (1L + n_pc_r)
     )
-    if (i %in% rule_after) out <- c(out, "\\midrule")
-  }
-  out
-}
-
-panel_head <- function(title) {
-  sprintf("\\multicolumn{%d}{l}{\\textit{%s}} \\\\", n_col + 1L, title)
-}
-
-combined_table <- c(
-  "\\begingroup",
-  PAPER_TABLE_STYLE$combined_inference$fontsize,
-  paste0("\\begin{tabular}{l", strrep("c", n_col), "}"),
-  "\\toprule",
-  paste0(" & ", paste(headers, collapse = " & "), " \\\\"),
-  "\\midrule",
-  panel_head("Panel A. Mean equation"),
-  "\\midrule",
-  panel_body(panel_a$row_labels, panel_a$columns, panel_a$rule_after),
-  "\\midrule",
-  panel_head("Panel B. Log-variance equation (quasi-maximum likelihood)"),
-  "\\midrule",
-  panel_body(rows_b, columns_b, c(2L, 10L)),
-  "\\bottomrule",
-  "\\end{tabular}",
-  "\\endgroup"
+  ),
+  n_col
 )
 publish_latex_artifact("structural_var_inference_table", combined_table)
 
@@ -93,6 +79,5 @@ cat(sprintf(
 ))
 
 rm(
-  panel_a, panel_b, rows_b, columns_b, headers, n_col,
-  panel_body, panel_head, combined_table
+  panel_a, panel_b, rows_b, columns_b, headers, n_col, combined_table
 )

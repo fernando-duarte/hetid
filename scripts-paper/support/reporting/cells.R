@@ -35,6 +35,16 @@ paper_source_once(paper_path("config", "reporting.R"))
   )
 }
 
+# A standalone numeric cell that carries a leading minus renders inside math, so
+# the sign sets as a minus rather than a hyphen. Positive cells stay plain text.
+# The guard is a leading minus followed by a digit, which leaves the "--"
+# missing token alone; interval cells are whole-math already and never arrive
+# here. Applied by the table-cell formatters, not by paper_format_number itself,
+# which also feeds console and diagnostic output where math would be noise.
+paper_math_negative <- function(text) {
+  ifelse(grepl("^-[0-9]", text), paste0("$", text, "$"), text)
+}
+
 paper_format_number <- function(
   value,
   digits,

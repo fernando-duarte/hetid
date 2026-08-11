@@ -103,7 +103,7 @@ table_lines <- variance_bounds_table_lines(fixture_summary)
 check(
   "table carries all five statistic row labels",
   all(vapply(
-    rownames(fixture_summary),
+    unname(VARIANCE_BOUND_ROW_LABELS[rownames(fixture_summary)]),
     function(lbl) any(grepl(lbl, table_lines, fixed = TRUE)),
     logical(1)
   ))
@@ -126,9 +126,12 @@ check(
   ))
 )
 check(
-  "table is a bare tabular fragment without a float or caption",
-  identical(table_lines[[1L]], "\\begin{tabular}{lcc}") &&
-    identical(table_lines[[length(table_lines)]], "\\end{tabular}") &&
+  "table is a font-scoped tabular fragment without a float or caption",
+  identical(table_lines[[1L]], "\\begingroup") &&
+    identical(table_lines[[2L]], PAPER_OVERLEAF_FONTSIZE) &&
+    identical(table_lines[[3L]], "\\begin{tabular}{lcc}") &&
+    identical(table_lines[[length(table_lines) - 1L]], "\\end{tabular}") &&
+    identical(table_lines[[length(table_lines)]], "\\endgroup") &&
     !any(grepl("\\begin{table}", table_lines, fixed = TRUE)) &&
     !any(grepl("\\caption", table_lines, fixed = TRUE))
 )

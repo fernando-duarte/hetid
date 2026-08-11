@@ -1,52 +1,67 @@
 \begin{table}[!htbp]
 \centering
 \begin{threeparttable}
-\caption{Mean equation over the Panel B. Log-variance equation (quasi-maximum likelihood). Identified sets in brackets, moving-block bootstrap confidence intervals in parentheses beneath.}
+\caption{Mean equation over the log-variance equation (quasi-maximum likelihood). Identified sets in brackets, moving-block bootstrap confidence intervals in parentheses beneath.}
 \label{tab:log_var_eq_panel_ppml}
-\scriptsize\setlength{\tabcolsep}{3pt}
-\begin{tabular}{lccccc}
-\toprule
+\begingroup
+\newcommand{\kernouter}{\noalign{\global\cmidrulekern=-6pt}}
+\newcommand{\kernspan}{\noalign{\global\cmidrulekern=3pt}}
+\newcommand{\kernmid}{\noalign{\global\cmidrulekern=-2.5pt}}
+\newcommand{\kerninner}{\noalign{\global\cmidrulekern=1pt}}
+\footnotesize\setlength{\tabcolsep}{3pt}
+\begin{tabular}{lcc@{\hskip 12pt}ccc}
+\kernouter\cmidrule[\heavyrulewidth](lr){1-6}
+\multicolumn{6}{c}{Panel A: Mean equation} \\
+\kerninner\cmidrule(lr){1-6}
+ & \multicolumn{2}{c}{Estimate (test statistic)} & \multicolumn{3}{c}{Identified set (confidence envelope)} \\
+\kernspan\cmidrule(lr){2-3}\cmidrule(lr){4-6}
  & OLS & $\tau{=}0$ & $\tau{=}0.05$ & $\tau{=}0.1$ & $\tau{=}0.2$ \\
-\midrule
-\multicolumn{6}{l}{\textit{Panel A. Mean equation}} \\
-\midrule
-$b_0$ & 0.796$^{***}$ & 0.796$^{***}$ &  &  &  \\
+\kerninner\cmidrule(lr){1-6}
+$b_0$ & 0.796*** & 0.796*** &  &  &  \\
  & (14.52) & (13.57) &  &  &  \\
-$b_{1,E}$ & 0.000 & -0.001 & $[-0.001,\,0.000]$ & $[-0.001,\,0.000]$ & $[-0.002,\,0.001]$ \\
- & (0.07) & (-0.13) & $(-0.012,\,0.010)$ & $(-0.012,\,0.010)$ & $(-0.012,\,0.009)$ \\
-$b_{2,E}$ & -0.458$^{***}$ & -0.422$^{***}$ & $[-0.430,\,-0.413]$ & $[-0.438,\,-0.405]$ & $[-0.456,\,-0.385]$ \\
- & (-4.49) & (-2.99) & $(-0.676,\,-0.160)$ & $(-0.670,\,-0.156)$ & $(-0.664,\,-0.141)$ \\
-$b_{3,E}$ & 0.927$^{***}$ & 1.046$^{***}$ & $[1.026,\,1.067]$ & $[1.006,\,1.089]$ & $[0.966,\,1.137]$ \\
+\addlinespace[2.5pt]
+$b_{1,E}$ & 0.000 & $-0.001$ & $[-0.001,\,0.000]$ & $[-0.001,\,0.000]$ & $[-0.002,\,0.001]$ \\
+ & (0.07) & ($-0.13$) & $(-0.012,\,0.010)$ & $(-0.012,\,0.010)$ & $(-0.012,\,0.009)$ \\
+$b_{2,E}$ & $-0.458$*** & $-0.422$*** & $[-0.430,\,-0.413]$ & $[-0.438,\,-0.405]$ & $[-0.456,\,-0.385]$ \\
+ & ($-4.49$) & ($-2.99$) & $(-0.676,\,-0.160)$ & $(-0.670,\,-0.156)$ & $(-0.664,\,-0.141)$ \\
+$b_{3,E}$ & 0.927*** & 1.046*** & $[1.026,\,1.067]$ & $[1.006,\,1.089]$ & $[0.966,\,1.137]$ \\
  & (3.16) & (3.25) & $(0.518,\,1.581)$ & $(0.542,\,1.559)$ & $(0.575,\,1.538)$ \\
-\midrule
-$b_{1,N}$ & 0.016$^{***}$ & 0.014$^{**}$ & $[0.011,\,0.016]$ & $[0.008,\,0.019]$ & $[0.002,\,0.025]$ \\
+\addlinespace[2.5pt]
+$b_{1,N}$ & 0.016*** & 0.014** & $[0.011,\,0.016]$ & $[0.008,\,0.019]$ & $[0.002,\,0.025]$ \\
  & (4.11) & (2.08) & $(-0.003,\,0.029)$ & $(-0.003,\,0.029)$ & $(-0.006,\,0.032)$ \\
-$b_{2,N}$ & 0.028 & -0.007 & $[-0.028,\,0.014]$ & $[-0.049,\,0.037]$ & $[-0.091,\,0.086]$ \\
- & (1.02) & (-0.11) & $(-0.166,\,0.156)$ & $(-0.157,\,0.151)$ & $(-0.166,\,0.171)$ \\
-$b_{3,N}$ & -0.180$^{*}$ & -0.488$^{*}$ & $[-0.558,\,-0.420]$ & $[-0.632,\,-0.353]$ & $[-0.798,\,-0.219]$ \\
- & (-1.69) & (-1.81) & $(-1.201,\,0.147)$ & $(-1.287,\,0.153)$ & $(-1.477,\,0.205)$ \\
-\midrule
+$b_{2,N}$ & 0.028 & $-0.007$ & $[-0.028,\,0.014]$ & $[-0.049,\,0.037]$ & $[-0.091,\,0.086]$ \\
+ & (1.02) & ($-0.11$) & $(-0.166,\,0.156)$ & $(-0.157,\,0.151)$ & $(-0.166,\,0.171)$ \\
+$b_{3,N}$ & $-0.180$* & $-0.488$* & $[-0.558,\,-0.420]$ & $[-0.632,\,-0.353]$ & $[-0.798,\,-0.219]$ \\
+ & ($-1.69$) & ($-1.81$) & $(-1.201,\,0.147)$ & $(-1.287,\,0.153)$ & $(-1.477,\,0.205)$ \\
+\kerninner\cmidrule(lr){1-6}
 $R^2$ & 0.10 & -- & -- & -- & -- \\
 $N$ & 256 & 256 & 256 & 256 & 256 \\
-\midrule
-\multicolumn{6}{l}{\textit{Panel B. Log-variance equation (quasi-maximum likelihood)}} \\
-\midrule
-$\theta_0$ & -1.302$^{***}$ & -1.250$^{***}$ & $[-1.269,\,-1.219]$ & $[-1.279,\,-1.176]$ & $[-1.293,\,-1.045]$ \\
- & (-5.65) & (-5.60) & $(-1.678,\,-0.771)$ & $(-1.640,\,-0.732)$ & $(-1.600,\,-0.563)$ \\
-\midrule
-$\theta_{1,R}$ & 0.182$^{*}$ & 0.186 & $[0.185,\,0.187]$ & $[0.184,\,0.188]$ & $[0.182,\,0.191]$ \\
+\kernmid\cmidrule[\lightrulewidth](lr){1-6}\addlinespace[2.5pt]
+\multicolumn{6}{c}{Panel B: Log-variance equation (quasi-maximum likelihood)} \\
+\kerninner\cmidrule(lr){1-6}
+ & \multicolumn{2}{c}{Estimate (test statistic)} & \multicolumn{3}{c}{Identified set (confidence envelope)} \\
+\kernspan\cmidrule(lr){2-3}\cmidrule(lr){4-6}
+ & OLS & $\tau{=}0$ & $\tau{=}0.05$ & $\tau{=}0.1$ & $\tau{=}0.2$ \\
+\kerninner\cmidrule(lr){1-6}
+$\theta_0$ & $-1.302$*** & $-1.250$*** & $[-1.269,\,-1.219]$ & $[-1.279,\,-1.176]$ & $[-1.293,\,-1.045]$ \\
+ & ($-5.65$) & ($-5.60$) & $(-1.678,\,-0.771)$ & $(-1.640,\,-0.732)$ & $(-1.600,\,-0.563)$ \\
+\addlinespace[2.5pt]
+$\theta_{1,R}$ & 0.182* & 0.186 & $[0.185,\,0.187]$ & $[0.184,\,0.188]$ & $[0.182,\,0.191]$ \\
  & (1.78) & (1.14) & $(-0.198,\,0.553)$ & $(-0.190,\,0.532)$ & $(-0.161,\,0.485)$ \\
-$\theta_{2,R}$ & -0.007 & -0.008 & $[-0.012,\,-0.005]$ & $[-0.017,\,-0.004]$ & $[-0.032,\,-0.004]$ \\
- & (-0.03) & (-0.03) & $(-0.334,\,0.317)$ & $(-0.317,\,0.297)$ & $(-0.281,\,0.248)$ \\
-$\theta_{3,R}$ & 0.792$^{***}$ & 0.773$^{*}$ & $[0.767,\,0.778]$ & $[0.760,\,0.783]$ & $[0.743,\,0.790]$ \\
+$\theta_{2,R}$ & $-0.007$ & $-0.008$ & $[-0.012,\,-0.005]$ & $[-0.017,\,-0.004]$ & $[-0.032,\,-0.004]$ \\
+ & ($-0.03$) & ($-0.03$) & $(-0.334,\,0.317)$ & $(-0.317,\,0.297)$ & $(-0.281,\,0.248)$ \\
+$\theta_{3,R}$ & 0.792*** & 0.773* & $[0.767,\,0.778]$ & $[0.760,\,0.783]$ & $[0.743,\,0.790]$ \\
  & (4.17) & (1.83) & $(0.057,\,1.478)$ & $(0.053,\,1.472)$ & $(0.042,\,1.463)$ \\
-$\theta_{4,R}$ & 1.346$^{***}$ & 1.330$^{**}$ & $[1.316,\,1.340]$ & $[1.296,\,1.348]$ & $[1.236,\,1.355]$ \\
+$\theta_{4,R}$ & 1.346*** & 1.330** & $[1.316,\,1.340]$ & $[1.296,\,1.348]$ & $[1.236,\,1.355]$ \\
  & (3.73) & (2.32) & $(-0.195,\,2.790)$ & $(-0.250,\,2.790)$ & $(-0.394,\,2.776)$ \\
-\midrule
+\kerninner\cmidrule(lr){1-6}
 $R^2$ & -- & -- & -- & -- & -- \\
 $N$ & 255 & 255 & 255 & 255 & 255 \\
-\bottomrule
+\kernouter\cmidrule[\heavyrulewidth](lr){1-6}
 \end{tabular}
+\global\cmidrulekern=6pt % restore booktabs default (.5em at 12pt): the \global
+% assignments above escape \endgroup and would otherwise leak into the rest of the document
+\endgroup
 \begin{tablenotes}[flushleft]
 \scriptsize
 \item Notes: The estimated mean equation is $\Delta c_{t+1}=b_{0}+PC_{E,t}^{T}b_{E}+ PC_{N,t+1}^{T}b_{N}+\varepsilon_{t+1}$, and the estimated variance equation is $\varepsilon_{t+1}^{2}= \exp(\theta_{0}+PC_{R,t}^{T}\theta_{R}+\xi_{t+1})$. PPML models $E[\varepsilon^2 \mid PC_R]$, not $E[\log \varepsilon^2 \mid PC_R]$; the reported coefficients are quasi-Poisson (log link) QMLE under the exponential conditional-mean restriction. The OLS column applies PPML to squared residuals from the exogenous-news OLS mean equation; $\tau{=}0$ evaluates the PPML map at the Lewbel point, and each $\tau{>}0$ cell ranges that map over the joint identified news set. The intercept $\theta_0$ is on the log conditional-variance scale and absorbs $2\log|m_0|$; it is not comparable to the mean-log intercept. PPML and mean-log slopes are comparable only under an $R$-invariant innovation shape; the intercepts then differ by the Jensen gap $\log E[e^{\xi}]$ ($\approx 1.270$ under normality). Zero squared residuals are admissible responses; separation/existence is checked through the positive-response rank and conditioning gates, and unresolved fits fail closed. Search resolution: primary grid capped at 4000 points with a 20000-fit budget per tolerance; an independent Morton-ordered coverage audit (cap 8000, budget 40000) reruns every display tolerance before any cell ships, and disagreements demote cells to unreliable. The scaling pilot froze the response scale at 1. Panel order is an editorial rule keyed to the benchmark crossing count at $\tau{=}0.05$, not a selection between estimators of one parameter. Set cells are projection hulls of an estimated plug-in image: certified feasible attained values, inner approximations; interior attainment is not established. Standard errors for the OLS and $\tau{=}0$ point columns are quasi-Poisson QMLE variances with $A = X'\mathrm{diag}(\hat\mu)X$ and score residual $\hat r = \varepsilon^2 - \hat\mu$. Four variants are computed: the model-based $\hat\varphi A^{-1}$ ($\hat\varphi = (n{-}p)^{-1}\sum_t \hat r_t^2/\hat\mu_t$), valid only if $\mathrm{Var}(\varepsilon^2 \mid PC_R) \propto \hat\mu$; the heteroskedasticity-robust Eicker--White sandwich $A^{-1}(\sum_t \hat r_t^2 x_t x_t')A^{-1}$ (HC0, and HC1 with the $n/(n{-}p)$ factor); and its Newey--West Bartlett HAC extension over 4 lags, consistent also under serially correlated scores. Parenthetical values in the OLS column are $\hat\theta/\mathrm{SE}$ from the Newey--West HAC sandwich (Bartlett, 4 lags), with stars from the standard-normal (QMLE) approximation ($^{*}$/$^{**}$/$^{***}$ at 10/5/1\%). The $\tau{=}0$ statistics divide the point estimate by the robust scale of its bootstrap draws, which re-estimate the mean equation, so they propagate the first-stage sampling error in the Lewbel news vector $b_N$. The analytic statistic conditions on a fixed plug-in $b_N$ instead, so the two are not comparable; it remains computed and is reported in the diagnostics. The $\tau{>}0$ set columns are identified-set ranges, not point estimates. Their moving-block bootstrap confidence intervals are reported beneath the set cells. Parenthetical rows beneath the $\tau{>}0$ set cells are a 90\% circular moving-block bootstrap ($B=10{,}000$ replications, 10-quarter blocks) confidence interval for the coefficient, calibrated to cover it wherever the truth sits inside the identified interval, conditional on the delivered principal-component series; coordinatewise intervals do not describe the joint geometry of the identified set. Each live endpoint is studentized by a robust (median-absolute-deviation) scale of its bootstrap draws, and the critical value is the conservative Politis--Romano--Wolf order statistic of the inward studentized root over the resampled draws, not a normal-quantile approximation. The root is credited by the estimated set width at the position of the truth and then maximized over that position, because a truth away from an endpoint leaves that endpoint room to spare before it can fail. One regularity gate, declared once in the analysis contract, governs every reported endpoint. An endpoint is blanked when fewer than 50\% of the replications certify a bounded set, when the certified share among the draws that did not fail falls below 85\%, or when the endpoint scale is degenerate. Unbounded and unreliable draws stay in that denominator; failed draws leave it but still count against the absolute minimum. A genuinely one-sided identified set (one side certified unbounded at the full sample) keeps that side at infinity; only the finite side is padded by the bootstrap critical value. On a half-infinite set the worst position for the truth is the finite endpoint, so the width credit vanishes and the pointwise and whole-set critical values coincide there. Both sides expand outward from the identified set, never inward. The set cell above each parenthetical row is the plug-in identified set (the conservative table's cell, unchanged); the bootstrap centers on a resample-consistent anchor that equals the plug-in set where the set is bounded, so the reported row reads as padding around that same interval, not a second, independent estimate. The critical value for containment of the entire identified interval is never smaller and is still computed: it is reported per cell as \texttt{c\_s} in \texttt{log\_var\_eq\_set\_inference\_diagnostics.csv}.
@@ -57,52 +72,67 @@ $N$ & 255 & 255 & 255 & 255 & 255 \\
 \begin{table}[!htbp]
 \centering
 \begin{threeparttable}
-\caption{Mean equation over the Panel B. Log-variance equation (mean-log benchmark). Identified sets in brackets, moving-block bootstrap confidence intervals in parentheses beneath.}
+\caption{Mean equation over the log-variance equation (mean-log benchmark). Identified sets in brackets, moving-block bootstrap confidence intervals in parentheses beneath.}
 \label{tab:log_var_eq_panel_logols}
-\scriptsize\setlength{\tabcolsep}{3pt}
-\begin{tabular}{lccccc}
-\toprule
+\begingroup
+\newcommand{\kernouter}{\noalign{\global\cmidrulekern=-6pt}}
+\newcommand{\kernspan}{\noalign{\global\cmidrulekern=3pt}}
+\newcommand{\kernmid}{\noalign{\global\cmidrulekern=-2.5pt}}
+\newcommand{\kerninner}{\noalign{\global\cmidrulekern=1pt}}
+\footnotesize\setlength{\tabcolsep}{3pt}
+\begin{tabular}{lcc@{\hskip 12pt}ccc}
+\kernouter\cmidrule[\heavyrulewidth](lr){1-6}
+\multicolumn{6}{c}{Panel A: Mean equation} \\
+\kerninner\cmidrule(lr){1-6}
+ & \multicolumn{2}{c}{Estimate (test statistic)} & \multicolumn{3}{c}{Identified set (confidence envelope)} \\
+\kernspan\cmidrule(lr){2-3}\cmidrule(lr){4-6}
  & OLS & $\tau{=}0$ & $\tau{=}0.05$ & $\tau{=}0.1$ & $\tau{=}0.2$ \\
-\midrule
-\multicolumn{6}{l}{\textit{Panel A. Mean equation}} \\
-\midrule
-$b_0$ & 0.796$^{***}$ & 0.796$^{***}$ &  &  &  \\
+\kerninner\cmidrule(lr){1-6}
+$b_0$ & 0.796*** & 0.796*** &  &  &  \\
  & (14.52) & (13.57) &  &  &  \\
-$b_{1,E}$ & 0.000 & -0.001 & $[-0.001,\,0.000]$ & $[-0.001,\,0.000]$ & $[-0.002,\,0.001]$ \\
- & (0.07) & (-0.13) & $(-0.012,\,0.010)$ & $(-0.012,\,0.010)$ & $(-0.012,\,0.009)$ \\
-$b_{2,E}$ & -0.458$^{***}$ & -0.422$^{***}$ & $[-0.430,\,-0.413]$ & $[-0.438,\,-0.405]$ & $[-0.456,\,-0.385]$ \\
- & (-4.49) & (-2.99) & $(-0.676,\,-0.160)$ & $(-0.670,\,-0.156)$ & $(-0.664,\,-0.141)$ \\
-$b_{3,E}$ & 0.927$^{***}$ & 1.046$^{***}$ & $[1.026,\,1.067]$ & $[1.006,\,1.089]$ & $[0.966,\,1.137]$ \\
+\addlinespace[2.5pt]
+$b_{1,E}$ & 0.000 & $-0.001$ & $[-0.001,\,0.000]$ & $[-0.001,\,0.000]$ & $[-0.002,\,0.001]$ \\
+ & (0.07) & ($-0.13$) & $(-0.012,\,0.010)$ & $(-0.012,\,0.010)$ & $(-0.012,\,0.009)$ \\
+$b_{2,E}$ & $-0.458$*** & $-0.422$*** & $[-0.430,\,-0.413]$ & $[-0.438,\,-0.405]$ & $[-0.456,\,-0.385]$ \\
+ & ($-4.49$) & ($-2.99$) & $(-0.676,\,-0.160)$ & $(-0.670,\,-0.156)$ & $(-0.664,\,-0.141)$ \\
+$b_{3,E}$ & 0.927*** & 1.046*** & $[1.026,\,1.067]$ & $[1.006,\,1.089]$ & $[0.966,\,1.137]$ \\
  & (3.16) & (3.25) & $(0.518,\,1.581)$ & $(0.542,\,1.559)$ & $(0.575,\,1.538)$ \\
-\midrule
-$b_{1,N}$ & 0.016$^{***}$ & 0.014$^{**}$ & $[0.011,\,0.016]$ & $[0.008,\,0.019]$ & $[0.002,\,0.025]$ \\
+\addlinespace[2.5pt]
+$b_{1,N}$ & 0.016*** & 0.014** & $[0.011,\,0.016]$ & $[0.008,\,0.019]$ & $[0.002,\,0.025]$ \\
  & (4.11) & (2.08) & $(-0.003,\,0.029)$ & $(-0.003,\,0.029)$ & $(-0.006,\,0.032)$ \\
-$b_{2,N}$ & 0.028 & -0.007 & $[-0.028,\,0.014]$ & $[-0.049,\,0.037]$ & $[-0.091,\,0.086]$ \\
- & (1.02) & (-0.11) & $(-0.166,\,0.156)$ & $(-0.157,\,0.151)$ & $(-0.166,\,0.171)$ \\
-$b_{3,N}$ & -0.180$^{*}$ & -0.488$^{*}$ & $[-0.558,\,-0.420]$ & $[-0.632,\,-0.353]$ & $[-0.798,\,-0.219]$ \\
- & (-1.69) & (-1.81) & $(-1.201,\,0.147)$ & $(-1.287,\,0.153)$ & $(-1.477,\,0.205)$ \\
-\midrule
+$b_{2,N}$ & 0.028 & $-0.007$ & $[-0.028,\,0.014]$ & $[-0.049,\,0.037]$ & $[-0.091,\,0.086]$ \\
+ & (1.02) & ($-0.11$) & $(-0.166,\,0.156)$ & $(-0.157,\,0.151)$ & $(-0.166,\,0.171)$ \\
+$b_{3,N}$ & $-0.180$* & $-0.488$* & $[-0.558,\,-0.420]$ & $[-0.632,\,-0.353]$ & $[-0.798,\,-0.219]$ \\
+ & ($-1.69$) & ($-1.81$) & $(-1.201,\,0.147)$ & $(-1.287,\,0.153)$ & $(-1.477,\,0.205)$ \\
+\kerninner\cmidrule(lr){1-6}
 $R^2$ & 0.10 & -- & -- & -- & -- \\
 $N$ & 256 & 256 & 256 & 256 & 256 \\
-\midrule
-\multicolumn{6}{l}{\textit{Panel B. Log-variance equation (mean-log benchmark)}} \\
-\midrule
-$\theta^{log}_0$ & -2.460$^{***}$ & -2.423 & $(-\infty,\,-2.335]$ & $(-\infty,\,-2.239]$ & $(-\infty,\,-2.118]$ \\
- & (-15.90) &  &  &  &  \\
-\midrule
+\kernmid\cmidrule[\lightrulewidth](lr){1-6}\addlinespace[2.5pt]
+\multicolumn{6}{c}{Panel B: Log-variance equation (mean-log benchmark)} \\
+\kerninner\cmidrule(lr){1-6}
+ & \multicolumn{2}{c}{Estimate (test statistic)} & \multicolumn{3}{c}{Identified set} \\
+\kernspan\cmidrule(lr){2-3}\cmidrule(lr){4-6}
+ & OLS & $\tau{=}0$ & $\tau{=}0.05$ & $\tau{=}0.1$ & $\tau{=}0.2$ \\
+\kerninner\cmidrule(lr){1-6}
+$\theta^{log}_0$ & $-2.460$*** & $-2.423$ & $(-\infty,\,-2.335]$ & $(-\infty,\,-2.239]$ & $(-\infty,\,-2.118]$ \\
+ & ($-15.90$) &  &  &  &  \\
+\addlinespace[2.5pt]
 $\theta^{log}_{1,R}$ & 0.063 & 0.040 & unbounded & unbounded & unbounded \\
  & (0.58) &  &  &  &  \\
-$\theta^{log}_{2,R}$ & -0.156$^{*}$ & -0.102 & unbounded & unbounded & unbounded \\
- & (-1.87) &  &  &  &  \\
+$\theta^{log}_{2,R}$ & $-0.156$* & $-0.102$ & unbounded & unbounded & unbounded \\
+ & ($-1.87$) &  &  &  &  \\
 $\theta^{log}_{3,R}$ & 0.168 & 0.060 & unbounded & unbounded & unbounded \\
  & (1.07) &  &  &  &  \\
 $\theta^{log}_{4,R}$ & 0.163 & 0.210 & unbounded & unbounded & unbounded \\
  & (0.73) &  &  &  &  \\
-\midrule
+\kerninner\cmidrule(lr){1-6}
 $R^2$ & 0.02 & -- & -- & -- & -- \\
 $N$ & 255 & 255 & 255 & 255 & 255 \\
-\bottomrule
+\kernouter\cmidrule[\heavyrulewidth](lr){1-6}
 \end{tabular}
+\global\cmidrulekern=6pt % restore booktabs default (.5em at 12pt): the \global
+% assignments above escape \endgroup and would otherwise leak into the rest of the document
+\endgroup
 \begin{tablenotes}[flushleft]
 \scriptsize
 \item Notes: The log-OLS panel reports the mean-log robustness benchmark; its OLS column has Newey-West $t$ statistics in parentheses, and its set cells map the mean-log estimator over the joint identified news sets. Residual-zero crossings inside the identified news sets make log-scale sides diverge (18 crossings at $\tau{=}0.05$), so this panel is the fragile robustness benchmark.
@@ -113,52 +143,67 @@ $N$ & 255 & 255 & 255 & 255 & 255 \\
 \begin{table}[!htbp]
 \centering
 \begin{threeparttable}
-\caption{Mean equation over the Panel B. Log-variance equation (Gaussian multiplicative variance). Identified sets in brackets, moving-block bootstrap confidence intervals in parentheses beneath.}
+\caption{Mean equation over the log-variance equation (Gaussian multiplicative variance). Identified sets in brackets, moving-block bootstrap confidence intervals in parentheses beneath.}
 \label{tab:log_var_eq_panel_harvey}
-\scriptsize\setlength{\tabcolsep}{3pt}
-\begin{tabular}{lccccc}
-\toprule
+\begingroup
+\newcommand{\kernouter}{\noalign{\global\cmidrulekern=-6pt}}
+\newcommand{\kernspan}{\noalign{\global\cmidrulekern=3pt}}
+\newcommand{\kernmid}{\noalign{\global\cmidrulekern=-2.5pt}}
+\newcommand{\kerninner}{\noalign{\global\cmidrulekern=1pt}}
+\footnotesize\setlength{\tabcolsep}{3pt}
+\begin{tabular}{lcc@{\hskip 12pt}ccc}
+\kernouter\cmidrule[\heavyrulewidth](lr){1-6}
+\multicolumn{6}{c}{Panel A: Mean equation} \\
+\kerninner\cmidrule(lr){1-6}
+ & \multicolumn{2}{c}{Estimate (test statistic)} & \multicolumn{3}{c}{Identified set (confidence envelope)} \\
+\kernspan\cmidrule(lr){2-3}\cmidrule(lr){4-6}
  & OLS & $\tau{=}0$ & $\tau{=}0.05$ & $\tau{=}0.1$ & $\tau{=}0.2$ \\
-\midrule
-\multicolumn{6}{l}{\textit{Panel A. Mean equation}} \\
-\midrule
-$b_0$ & 0.796$^{***}$ & 0.796$^{***}$ &  &  &  \\
+\kerninner\cmidrule(lr){1-6}
+$b_0$ & 0.796*** & 0.796*** &  &  &  \\
  & (14.52) & (13.57) &  &  &  \\
-$b_{1,E}$ & 0.000 & -0.001 & $[-0.001,\,0.000]$ & $[-0.001,\,0.000]$ & $[-0.002,\,0.001]$ \\
- & (0.07) & (-0.13) & $(-0.012,\,0.010)$ & $(-0.012,\,0.010)$ & $(-0.012,\,0.009)$ \\
-$b_{2,E}$ & -0.458$^{***}$ & -0.422$^{***}$ & $[-0.430,\,-0.413]$ & $[-0.438,\,-0.405]$ & $[-0.456,\,-0.385]$ \\
- & (-4.49) & (-2.99) & $(-0.676,\,-0.160)$ & $(-0.670,\,-0.156)$ & $(-0.664,\,-0.141)$ \\
-$b_{3,E}$ & 0.927$^{***}$ & 1.046$^{***}$ & $[1.026,\,1.067]$ & $[1.006,\,1.089]$ & $[0.966,\,1.137]$ \\
+\addlinespace[2.5pt]
+$b_{1,E}$ & 0.000 & $-0.001$ & $[-0.001,\,0.000]$ & $[-0.001,\,0.000]$ & $[-0.002,\,0.001]$ \\
+ & (0.07) & ($-0.13$) & $(-0.012,\,0.010)$ & $(-0.012,\,0.010)$ & $(-0.012,\,0.009)$ \\
+$b_{2,E}$ & $-0.458$*** & $-0.422$*** & $[-0.430,\,-0.413]$ & $[-0.438,\,-0.405]$ & $[-0.456,\,-0.385]$ \\
+ & ($-4.49$) & ($-2.99$) & $(-0.676,\,-0.160)$ & $(-0.670,\,-0.156)$ & $(-0.664,\,-0.141)$ \\
+$b_{3,E}$ & 0.927*** & 1.046*** & $[1.026,\,1.067]$ & $[1.006,\,1.089]$ & $[0.966,\,1.137]$ \\
  & (3.16) & (3.25) & $(0.518,\,1.581)$ & $(0.542,\,1.559)$ & $(0.575,\,1.538)$ \\
-\midrule
-$b_{1,N}$ & 0.016$^{***}$ & 0.014$^{**}$ & $[0.011,\,0.016]$ & $[0.008,\,0.019]$ & $[0.002,\,0.025]$ \\
+\addlinespace[2.5pt]
+$b_{1,N}$ & 0.016*** & 0.014** & $[0.011,\,0.016]$ & $[0.008,\,0.019]$ & $[0.002,\,0.025]$ \\
  & (4.11) & (2.08) & $(-0.003,\,0.029)$ & $(-0.003,\,0.029)$ & $(-0.006,\,0.032)$ \\
-$b_{2,N}$ & 0.028 & -0.007 & $[-0.028,\,0.014]$ & $[-0.049,\,0.037]$ & $[-0.091,\,0.086]$ \\
- & (1.02) & (-0.11) & $(-0.166,\,0.156)$ & $(-0.157,\,0.151)$ & $(-0.166,\,0.171)$ \\
-$b_{3,N}$ & -0.180$^{*}$ & -0.488$^{*}$ & $[-0.558,\,-0.420]$ & $[-0.632,\,-0.353]$ & $[-0.798,\,-0.219]$ \\
- & (-1.69) & (-1.81) & $(-1.201,\,0.147)$ & $(-1.287,\,0.153)$ & $(-1.477,\,0.205)$ \\
-\midrule
+$b_{2,N}$ & 0.028 & $-0.007$ & $[-0.028,\,0.014]$ & $[-0.049,\,0.037]$ & $[-0.091,\,0.086]$ \\
+ & (1.02) & ($-0.11$) & $(-0.166,\,0.156)$ & $(-0.157,\,0.151)$ & $(-0.166,\,0.171)$ \\
+$b_{3,N}$ & $-0.180$* & $-0.488$* & $[-0.558,\,-0.420]$ & $[-0.632,\,-0.353]$ & $[-0.798,\,-0.219]$ \\
+ & ($-1.69$) & ($-1.81$) & $(-1.201,\,0.147)$ & $(-1.287,\,0.153)$ & $(-1.477,\,0.205)$ \\
+\kerninner\cmidrule(lr){1-6}
 $R^2$ & 0.10 & -- & -- & -- & -- \\
 $N$ & 256 & 256 & 256 & 256 & 256 \\
-\midrule
-\multicolumn{6}{l}{\textit{Panel B. Log-variance equation (Gaussian multiplicative variance)}} \\
-\midrule
-$\theta^{H}_0$ & -0.837$^{***}$ & -0.788$^{**}$ & $[-0.806,\,-0.761]$ & $[-0.816,\,-0.723]$ & $[-0.831,\,-0.614]$ \\
- & (-4.71) & (-2.30) & $(-1.313,\,-0.224)$ & $(-1.266,\,-0.216)$ & $(-1.175,\,-0.168)$ \\
-\midrule
-$\theta^{H}_{1,R}$ & 0.176$^{*}$ & 0.186 & $[0.183,\,0.191]$ & $[0.181,\,0.197]$ & $[0.175,\,0.212]$ \\
+\kernmid\cmidrule[\lightrulewidth](lr){1-6}\addlinespace[2.5pt]
+\multicolumn{6}{c}{Panel B: Log-variance equation (Gaussian multiplicative variance)} \\
+\kerninner\cmidrule(lr){1-6}
+ & \multicolumn{2}{c}{Estimate (test statistic)} & \multicolumn{3}{c}{Identified set (confidence envelope)} \\
+\kernspan\cmidrule(lr){2-3}\cmidrule(lr){4-6}
+ & OLS & $\tau{=}0$ & $\tau{=}0.05$ & $\tau{=}0.1$ & $\tau{=}0.2$ \\
+\kerninner\cmidrule(lr){1-6}
+$\theta^{H}_0$ & $-0.837$*** & $-0.788$** & $[-0.806,\,-0.761]$ & $[-0.816,\,-0.723]$ & $[-0.831,\,-0.614]$ \\
+ & ($-4.71$) & ($-2.30$) & $(-1.313,\,-0.224)$ & $(-1.266,\,-0.216)$ & $(-1.175,\,-0.168)$ \\
+\addlinespace[2.5pt]
+$\theta^{H}_{1,R}$ & 0.176* & 0.186 & $[0.183,\,0.191]$ & $[0.181,\,0.197]$ & $[0.175,\,0.212]$ \\
  & (1.70) & (1.19) & $(-0.066,\,0.442)$ & $(-0.057,\,0.440)$ & $(-0.039,\,0.438)$ \\
-$\theta^{H}_{2,R}$ & -0.139$^{*}$ & -0.138 & $[-0.147,\,-0.127]$ & $[-0.155,\,-0.115]$ & $[-0.173,\,-0.087]$ \\
- & (-1.84) & (-1.43) & $(-0.312,\,0.027)$ & $(-0.306,\,0.015)$ & $(-0.303,\,0.010)$ \\
-$\theta^{H}_{3,R}$ & 0.481$^{***}$ & 0.455$^{*}$ & $[0.441,\,0.468]$ & $[0.427,\,0.481]$ & $[0.394,\,0.505]$ \\
+$\theta^{H}_{2,R}$ & $-0.139$* & $-0.138$ & $[-0.147,\,-0.127]$ & $[-0.155,\,-0.115]$ & $[-0.173,\,-0.087]$ \\
+ & ($-1.84$) & ($-1.43$) & $(-0.312,\,0.027)$ & $(-0.306,\,0.015)$ & $(-0.303,\,0.010)$ \\
+$\theta^{H}_{3,R}$ & 0.481*** & 0.455* & $[0.441,\,0.468]$ & $[0.427,\,0.481]$ & $[0.394,\,0.505]$ \\
  & (3.97) & (1.90) & $(0.032,\,0.869)$ & $(0.016,\,0.874)$ & $(-0.019,\,0.890)$ \\
-$\theta^{H}_{4,R}$ & 0.635$^{***}$ & 0.617$^{**}$ & $[0.602,\,0.627]$ & $[0.584,\,0.633]$ & $[0.538,\,0.636]$ \\
+$\theta^{H}_{4,R}$ & 0.635*** & 0.617** & $[0.602,\,0.627]$ & $[0.584,\,0.633]$ & $[0.538,\,0.636]$ \\
  & (3.42) & (2.05) & $(-0.107,\,1.338)$ & $(-0.124,\,1.336)$ & $(-0.159,\,1.314)$ \\
-\midrule
+\kerninner\cmidrule(lr){1-6}
 $R^2$ & -- & -- & -- & -- & -- \\
 $N$ & 255 & 255 & 255 & 255 & 255 \\
-\bottomrule
+\kernouter\cmidrule[\heavyrulewidth](lr){1-6}
 \end{tabular}
+\global\cmidrulekern=6pt % restore booktabs default (.5em at 12pt): the \global
+% assignments above escape \endgroup and would otherwise leak into the rest of the document
+\endgroup
 \begin{tablenotes}[flushleft]
 \scriptsize
 \item Notes: The Harvey panel is the Gaussian multiplicative-variance MLE/QMLE of $E[\varepsilon^2 \mid PC_R] = \exp(R'\theta^{H})$, fit on the fixed squared residuals $\varepsilon^2(b_N)$ at each news vector $b_N$. The intercept $\theta^{H}_0$ is on the log conditional-variance scale and absorbs $2\log|m_0|$ under a rescaling of the residuals. Under conditional normality $\theta^{H}_0 = \theta^{log}_0 + 1.270362845$; the general offset is $-E[\log u^2]$ for a standardized innovation with an $R$-invariant shape. Zero squared residuals are handled by the direct parameter-dependent likelihood, not by adding a constant; existence is guarded by a recession-cone certificate, never by a benchmark residual crossing. Finite endpoints are certified feasible attained inner values -- projection hulls of an estimated plug-in image, with interior attainment not established -- and failed fits make results unreliable. Standard errors for the reference and $\tau{=}0$ point columns are Gaussian multiplicative-variance QMLE variances with $H = \frac{1}{2}R'\mathrm{diag}(\hat r)R$, $R_t = (1, PC_{R,t}')'$ and $\hat r_t = \hat\varepsilon_t^2 / \exp(R_t'\hat\theta^{H})$. Five variants are computed: the working-model Fisher $(\frac{1}{2}R'R)^{-1}$ and observed $H^{-1}$ information (valid only if the Gaussian model holds); the outer-product BHHH; the Eicker--White QMLE sandwich $H^{-1} (\sum_t \hat g_t \hat g_t')H^{-1}$ with $\hat g_t = \frac{1}{2}(1 - \hat r_t)R_t$; and its Newey--West Bartlett HAC extension over 4 lags, consistent also under serially correlated scores. Parenthetical values in the reference column are $\hat\theta/\mathrm{SE}$ from the Newey--West HAC sandwich (Bartlett, 4 lags), with stars from the standard-normal (QMLE) approximation ($^{*}$/$^{**}$/$^{***}$ at 10/5/1\%). The $\tau{=}0$ statistics divide the point estimate by the robust scale of its bootstrap draws, which re-estimate the mean equation, so they propagate the first-stage sampling error in the Lewbel news vector $b_N$. The analytic statistic conditions on a fixed plug-in $b_N$ instead, so the two are not comparable; it remains computed and is reported in the diagnostics. The $\tau{>}0$ set columns are identified-set ranges, not point estimates. Their moving-block bootstrap confidence intervals are reported beneath the set cells. The log-OLS/PPML panel order is governed by the benchmark crossing rule at $\tau{=}0.05$; the Harvey panel is a fixed robustness panel appended after that ordered pair and never influences it. Parenthetical rows beneath the $\tau{>}0$ set cells are a 90\% circular moving-block bootstrap ($B=10{,}000$ replications, 10-quarter blocks) confidence interval for the coefficient, calibrated to cover it wherever the truth sits inside the identified interval, conditional on the delivered principal-component series; coordinatewise intervals do not describe the joint geometry of the identified set. Each live endpoint is studentized by a robust (median-absolute-deviation) scale of its bootstrap draws, and the critical value is the conservative Politis--Romano--Wolf order statistic of the inward studentized root over the resampled draws, not a normal-quantile approximation. The root is credited by the estimated set width at the position of the truth and then maximized over that position, because a truth away from an endpoint leaves that endpoint room to spare before it can fail. One regularity gate, declared once in the analysis contract, governs every reported endpoint. An endpoint is blanked when fewer than 50\% of the replications certify a bounded set, when the certified share among the draws that did not fail falls below 85\%, or when the endpoint scale is degenerate. Unbounded and unreliable draws stay in that denominator; failed draws leave it but still count against the absolute minimum. A genuinely one-sided identified set (one side certified unbounded at the full sample) keeps that side at infinity; only the finite side is padded by the bootstrap critical value. On a half-infinite set the worst position for the truth is the finite endpoint, so the width credit vanishes and the pointwise and whole-set critical values coincide there. Both sides expand outward from the identified set, never inward. The set cell above each parenthetical row is the plug-in identified set (the conservative table's cell, unchanged); the bootstrap centers on a resample-consistent anchor that equals the plug-in set where the set is bounded, so the reported row reads as padding around that same interval, not a second, independent estimate. The critical value for containment of the entire identified interval is never smaller and is still computed: it is reported per cell as \texttt{c\_s} in \texttt{log\_var\_eq\_set\_inference\_diagnostics.csv}.
@@ -169,52 +214,67 @@ $N$ & 255 & 255 & 255 & 255 & 255 \\
 \begin{table}[!htbp]
 \centering
 \begin{threeparttable}
-\caption{Mean equation over the Panel B. Log-variance equation (conditional median). Identified sets in brackets, moving-block bootstrap confidence intervals in parentheses beneath.}
+\caption{Mean equation over the log-variance equation (conditional median). Identified sets in brackets, moving-block bootstrap confidence intervals in parentheses beneath.}
 \label{tab:log_var_eq_panel_lad}
-\scriptsize\setlength{\tabcolsep}{3pt}
-\begin{tabular}{lccccc}
-\toprule
+\begingroup
+\newcommand{\kernouter}{\noalign{\global\cmidrulekern=-6pt}}
+\newcommand{\kernspan}{\noalign{\global\cmidrulekern=3pt}}
+\newcommand{\kernmid}{\noalign{\global\cmidrulekern=-2.5pt}}
+\newcommand{\kerninner}{\noalign{\global\cmidrulekern=1pt}}
+\footnotesize\setlength{\tabcolsep}{3pt}
+\begin{tabular}{lcc@{\hskip 12pt}ccc}
+\kernouter\cmidrule[\heavyrulewidth](lr){1-6}
+\multicolumn{6}{c}{Panel A: Mean equation} \\
+\kerninner\cmidrule(lr){1-6}
+ & \multicolumn{2}{c}{Estimate (test statistic)} & \multicolumn{3}{c}{Identified set (confidence envelope)} \\
+\kernspan\cmidrule(lr){2-3}\cmidrule(lr){4-6}
  & OLS & $\tau{=}0$ & $\tau{=}0.05$ & $\tau{=}0.1$ & $\tau{=}0.2$ \\
-\midrule
-\multicolumn{6}{l}{\textit{Panel A. Mean equation}} \\
-\midrule
-$b_0$ & 0.796$^{***}$ & 0.796$^{***}$ &  &  &  \\
+\kerninner\cmidrule(lr){1-6}
+$b_0$ & 0.796*** & 0.796*** &  &  &  \\
  & (14.52) & (13.57) &  &  &  \\
-$b_{1,E}$ & 0.000 & -0.001 & $[-0.001,\,0.000]$ & $[-0.001,\,0.000]$ & $[-0.002,\,0.001]$ \\
- & (0.07) & (-0.13) & $(-0.012,\,0.010)$ & $(-0.012,\,0.010)$ & $(-0.012,\,0.009)$ \\
-$b_{2,E}$ & -0.458$^{***}$ & -0.422$^{***}$ & $[-0.430,\,-0.413]$ & $[-0.438,\,-0.405]$ & $[-0.456,\,-0.385]$ \\
- & (-4.49) & (-2.99) & $(-0.676,\,-0.160)$ & $(-0.670,\,-0.156)$ & $(-0.664,\,-0.141)$ \\
-$b_{3,E}$ & 0.927$^{***}$ & 1.046$^{***}$ & $[1.026,\,1.067]$ & $[1.006,\,1.089]$ & $[0.966,\,1.137]$ \\
+\addlinespace[2.5pt]
+$b_{1,E}$ & 0.000 & $-0.001$ & $[-0.001,\,0.000]$ & $[-0.001,\,0.000]$ & $[-0.002,\,0.001]$ \\
+ & (0.07) & ($-0.13$) & $(-0.012,\,0.010)$ & $(-0.012,\,0.010)$ & $(-0.012,\,0.009)$ \\
+$b_{2,E}$ & $-0.458$*** & $-0.422$*** & $[-0.430,\,-0.413]$ & $[-0.438,\,-0.405]$ & $[-0.456,\,-0.385]$ \\
+ & ($-4.49$) & ($-2.99$) & $(-0.676,\,-0.160)$ & $(-0.670,\,-0.156)$ & $(-0.664,\,-0.141)$ \\
+$b_{3,E}$ & 0.927*** & 1.046*** & $[1.026,\,1.067]$ & $[1.006,\,1.089]$ & $[0.966,\,1.137]$ \\
  & (3.16) & (3.25) & $(0.518,\,1.581)$ & $(0.542,\,1.559)$ & $(0.575,\,1.538)$ \\
-\midrule
-$b_{1,N}$ & 0.016$^{***}$ & 0.014$^{**}$ & $[0.011,\,0.016]$ & $[0.008,\,0.019]$ & $[0.002,\,0.025]$ \\
+\addlinespace[2.5pt]
+$b_{1,N}$ & 0.016*** & 0.014** & $[0.011,\,0.016]$ & $[0.008,\,0.019]$ & $[0.002,\,0.025]$ \\
  & (4.11) & (2.08) & $(-0.003,\,0.029)$ & $(-0.003,\,0.029)$ & $(-0.006,\,0.032)$ \\
-$b_{2,N}$ & 0.028 & -0.007 & $[-0.028,\,0.014]$ & $[-0.049,\,0.037]$ & $[-0.091,\,0.086]$ \\
- & (1.02) & (-0.11) & $(-0.166,\,0.156)$ & $(-0.157,\,0.151)$ & $(-0.166,\,0.171)$ \\
-$b_{3,N}$ & -0.180$^{*}$ & -0.488$^{*}$ & $[-0.558,\,-0.420]$ & $[-0.632,\,-0.353]$ & $[-0.798,\,-0.219]$ \\
- & (-1.69) & (-1.81) & $(-1.201,\,0.147)$ & $(-1.287,\,0.153)$ & $(-1.477,\,0.205)$ \\
-\midrule
+$b_{2,N}$ & 0.028 & $-0.007$ & $[-0.028,\,0.014]$ & $[-0.049,\,0.037]$ & $[-0.091,\,0.086]$ \\
+ & (1.02) & ($-0.11$) & $(-0.166,\,0.156)$ & $(-0.157,\,0.151)$ & $(-0.166,\,0.171)$ \\
+$b_{3,N}$ & $-0.180$* & $-0.488$* & $[-0.558,\,-0.420]$ & $[-0.632,\,-0.353]$ & $[-0.798,\,-0.219]$ \\
+ & ($-1.69$) & ($-1.81$) & $(-1.201,\,0.147)$ & $(-1.287,\,0.153)$ & $(-1.477,\,0.205)$ \\
+\kerninner\cmidrule(lr){1-6}
 $R^2$ & 0.10 & -- & -- & -- & -- \\
 $N$ & 256 & 256 & 256 & 256 & 256 \\
-\midrule
-\multicolumn{6}{l}{\textit{Panel B. Log-variance equation (conditional median)}} \\
-\midrule
-$\theta^{0.5}_0$ & -2.00 & -1.93 & $[-2.00,\,-1.86]$ & $[-2.05,\,-1.82]$ & $[-2.09,\,-1.69]$ \\
+\kernmid\cmidrule[\lightrulewidth](lr){1-6}\addlinespace[2.5pt]
+\multicolumn{6}{c}{Panel B: Log-variance equation (conditional median)} \\
+\kerninner\cmidrule(lr){1-6}
+ & \multicolumn{2}{c}{Estimate (test statistic)} & \multicolumn{3}{c}{Identified set} \\
+\kernspan\cmidrule(lr){2-3}\cmidrule(lr){4-6}
+ & OLS & $\tau{=}0$ & $\tau{=}0.05$ & $\tau{=}0.1$ & $\tau{=}0.2$ \\
+\kerninner\cmidrule(lr){1-6}
+$\theta^{0.5}_0$ & $-2.00$ & $-1.93$ & $[-2.00,\,-1.86]$ & $[-2.05,\,-1.82]$ & $[-2.09,\,-1.69]$ \\
  &  &  &  &  &  \\
-\midrule
+\addlinespace[2.5pt]
 $\theta^{0.5}_{1,R}$ & 0.03 & 0.10 & $[0.05,\,0.14]$ & $[-0.04,\,0.15]$ & $[-0.07,\,0.17]$ \\
  &  &  &  &  &  \\
-$\theta^{0.5}_{2,R}$ & -0.12 & -0.06 & $[-0.17,\,0.02]$ & $[-0.23,\,0.04]$ & $[-0.31,\,0.09]$ \\
+$\theta^{0.5}_{2,R}$ & $-0.12$ & $-0.06$ & $[-0.17,\,0.02]$ & $[-0.23,\,0.04]$ & $[-0.31,\,0.09]$ \\
  &  &  &  &  &  \\
 $\theta^{0.5}_{3,R}$ & 0.12 & 0.12 & $[0.05,\,0.23]$ & $[0.00,\,0.28]$ & $[-0.10,\,0.39]$ \\
  &  &  &  &  &  \\
-$\theta^{0.5}_{4,R}$ & -0.08 & 0.08 & $[-0.05,\,0.17]$ & $[-0.12,\,0.18]$ & $[-0.19,\,0.36]$ \\
+$\theta^{0.5}_{4,R}$ & $-0.08$ & 0.08 & $[-0.05,\,0.17]$ & $[-0.12,\,0.18]$ & $[-0.19,\,0.36]$ \\
  &  &  &  &  &  \\
-\midrule
+\kerninner\cmidrule(lr){1-6}
 $R^2$ & -- & -- & -- & -- & -- \\
 $N$ & 255 & 255 & 255 & 255 & 255 \\
-\bottomrule
+\kernouter\cmidrule[\heavyrulewidth](lr){1-6}
 \end{tabular}
+\global\cmidrulekern=6pt % restore booktabs default (.5em at 12pt): the \global
+% assignments above escape \endgroup and would otherwise leak into the rest of the document
+\endgroup
 \begin{tablenotes}[flushleft]
 \scriptsize
 \item Notes: The median panel fits the conditional quantile of $\log \varepsilon^2$, $Q_{0.5}(\log \varepsilon^2 \mid PC_R) = R'\theta^{0.5}$, at each news vector $b_N$; the intercept $\theta^{0.5}_0$ is the quantile normalization, not the mean-log or log-mean intercept. The inner map uses the Barrodale--Roberts (\texttt{br}) vertex as the pre-specified selection rule, so the map stays single-valued and reproducible where the quantile is non-unique; \texttt{fn} is the nonuniqueness probe, never the map, and coefficients are never averaged. The domain is punctured at the residual-crossing hyperplanes: an exact residual zero is outside the $\log$ domain, while a guarded nonzero residual is in-domain but numerically unresolved. No residual floor is applied and no row is dropped. The reported cells are single-pass attained inner approximations of the punctured-domain hulls: every endpoint is a fitted coefficient at a feasible $b_N$, and the engine's multi-start search only ever extends an endpoint outward, so the cell is a subset of the true image. The one-sided closure limits are an explicitly approximate diagnostic, kept separate in \texttt{log\_var\_eq\_lad\_closure.csv} and never folded into a cell; side-dependent finite limits are retained as separate closure rows. Search resolution: the grid is capped at 20000 points within a 45000-fit per-tolerance budget with phase caps; a 5-start re-polish verifies each bounded side, feeding a more extreme candidate back through the engine and demoting an unreproducible side to unreliable, and the deterministic \texttt{fn} schedule fails a nonunique endpoint-relevant tau closed. Statuses are operational: bounded, unbounded, unreliable, or unresolved; no finite probe trace is a certified exclusion, and the crossing witnesses, path coverage, guard ratio, and $M$-slope metrics are disclosed in the console block. \texttt{quantreg} 6.1 is a scripts-paper analysis dependency (not in \texttt{DESCRIPTION}); no standard errors or quantile-regression confidence intervals are reported (deferred). Under conditional normality the median slopes equal the variance slopes and $\theta^{0.5}_0 = \theta^{log}_0 + 0.482765246 = \theta^{var}_0 - 0.787597599$; these constants are interpretive checks only, never imposed. The panel order is governed by the benchmark crossing rule at $\tau{=}0.05$; the median panel is appended after that ordered set and never influences it. Cells are inner projection hulls, not point estimates.

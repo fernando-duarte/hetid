@@ -13,7 +13,7 @@ check(
   "significance stars derive from the reporting contract",
   identical(
     sig_stars(reporting_p),
-    c("", "^{*}", "^{**}", "^{***}", "")
+    c("", "*", "**", "***", "")
   )
 )
 check(

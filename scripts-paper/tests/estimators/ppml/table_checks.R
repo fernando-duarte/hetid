@@ -127,8 +127,8 @@ check("primary table parts use PPML reference, point, and display-tau hulls", {
   ) &&
     ptbl_parts$rows[[1]] == "$\\theta_0$" &&
     ptbl_parts$rows[[3]] == "$\\theta_{1,R}$" &&
-    ptbl_parts$columns[[1]][1] == "-1.300" &&
-    ptbl_parts$columns[[2]][1] == "-1.200" &&
+    ptbl_parts$columns[[1]][1] == "$-1.300$" &&
+    ptbl_parts$columns[[2]][1] == "$-1.200$" &&
     ptbl_parts$columns[[3]][1] == "$[-1.250,\\,-1.150]$" &&
     ptbl_parts$columns[[4]][3] == "$[0.160,\\,0.200]$" &&
     all(vapply(ptbl_parts$columns, `[[`, character(1), length(ptbl_parts$rows) - 1L) == "--")

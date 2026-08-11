@@ -111,7 +111,7 @@ logvar_se_point_col <- function(
   cells <- ifelse(
     stars == "" | !is.finite(stat$statistic),
     logvar_fmt(vals, cell_policy),
-    sprintf("%s$%s$", logvar_fmt(vals, cell_policy), stars)
+    paste0(logvar_fmt(vals, cell_policy), stars)
   )
   # a finite coefficient whose statistic failed its gate has no t-stat: mark it
   # "--" (statistic unavailable), never a blank stat row, which beside the
@@ -120,10 +120,12 @@ logvar_se_point_col <- function(
     is.finite(stat$statistic),
     sprintf(
       "(%s)",
-      paper_format_number(
-        stat$statistic,
-        PAPER_REPORTING_CONTROL$cells$statistic_digits,
-        "na"
+      paper_math_negative(
+        paper_format_number(
+          stat$statistic,
+          PAPER_REPORTING_CONTROL$cells$statistic_digits,
+          "na"
+        )
       )
     ),
     ifelse(is.finite(vals) & stat$missing, PAPER_NA_TOKEN, "")

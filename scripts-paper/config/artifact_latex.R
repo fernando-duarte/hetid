@@ -2,7 +2,7 @@
 
 PAPER_LATEX_LABELS <- c(
   heteroskedasticity = "tab:sdf_news_hetero_tests",
-  heteroskedasticity_w2 = "tab:sdf_news_resid_hetero_tests",
+  heteroskedasticity_w2 = "tab:sdf_news_hetero_tests_w2",
   panel_lad = "tab:log_var_eq_panel_lad",
   panel_logols = "tab:log_var_eq_panel_logols",
   panel_ppml = "tab:log_var_eq_panel_ppml",
@@ -46,6 +46,19 @@ PAPER_LATEX_LABELS <- c(
     "variance_bound_summary_table",
     "variance_bound_summary_standalone_tex",
     "variance_bound_summary_standalone_pdf"
+  ),
+  # The Harvey and mean-log variance equations also ship on their own, without
+  # the mean panel above them. Bare tabulars with no \label: the paper supplies
+  # the caption and the cross-reference target, as it does for every fragment.
+  .latex_spec(
+    "log_var_eq_harvey_inference_table",
+    "log_var_eq_harvey_inference_standalone_tex",
+    "log_var_eq_harvey_inference_standalone_pdf"
+  ),
+  .latex_spec(
+    "log_var_eq_logols_inference_table",
+    "log_var_eq_logols_inference_standalone_tex",
+    "log_var_eq_logols_inference_standalone_pdf"
   )
 )
 .latex_publication_specs <- do.call(

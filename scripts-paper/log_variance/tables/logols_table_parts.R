@@ -17,10 +17,7 @@ logvar_logols_table_parts <- function(n_obs) {
     PAPER_REPORTING_CONTROL$logvar_logols
   )
   stopifnot(!anyNA(nw$se))
-  cells <- ifelse(
-    nw$stars == "", logvar_fmt(tab$ols),
-    sprintf("%s$%s$", logvar_fmt(tab$ols), nw$stars)
-  )
+  cells <- paste0(logvar_fmt(tab$ols), nw$stars)
   labels <- c(
     "$\\theta^{log}_0$", sprintf("$\\theta^{log}_{%d,R}$", seq_len(n_pc_r))
   )
@@ -33,10 +30,12 @@ logvar_logols_table_parts <- function(n_obs) {
           cells,
           sprintf(
             "(%s)",
-            paper_format_number(
-              nw$statistic,
-              PAPER_REPORTING_CONTROL$cells$statistic_digits,
-              "na"
+            paper_math_negative(
+              paper_format_number(
+                nw$statistic,
+                PAPER_REPORTING_CONTROL$cells$statistic_digits,
+                "na"
+              )
             )
           )
         ),

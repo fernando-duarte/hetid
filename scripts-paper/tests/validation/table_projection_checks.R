@@ -96,6 +96,47 @@ stopifnot(
   identical(tables[["nested/results.tex"]], projection)
 )
 
+bare_star <- paper_table_cell_results("$-0.458$***")
+stopifnot(
+  identical(bare_star$value, -0.458),
+  identical(bare_star$stars, "***")
+)
+
+# The kern-scaffolded tables carry no \midrule and open with a full-width
+# \cmidrule above their spanner and header rows. Both have to be read: the
+# projection must be non-empty, and it must not take the tau column headers for
+# data. Without this the tables would project to nothing and the comparison gate
+# would pass on no coverage at all.
+kern_root <- tempfile("paper-table-kern-")
+dir.create(kern_root)
+kern_path <- write_table(kern_root, "kern.tex", c(
+  "\\begin{tabular}{lcc@{\\hskip 12pt}cc}",
+  "\\kernouter\\cmidrule[\\heavyrulewidth](lr){1-5}",
+  "\\multicolumn{5}{c}{Panel A: Mean equation} \\\\",
+  "\\kerninner\\cmidrule(lr){1-5}",
+  " & \\multicolumn{2}{c}{Estimate} & \\multicolumn{2}{c}{Set} \\\\",
+  "\\kernspan\\cmidrule(lr){2-3}\\cmidrule(lr){4-5}",
+  " & OLS & $\\tau{=}0$ & $\\tau{=}0.05$ & $\\tau{=}0.1$ \\\\",
+  "\\kerninner\\cmidrule(lr){1-5}",
+  "$b_0$ & 0.796*** & 0.796*** &  &  \\\\",
+  " & (14.52) & ($-13.68$) &  &  \\\\",
+  "\\kernouter\\cmidrule[\\heavyrulewidth](lr){1-5}",
+  "\\end{tabular}"
+))
+kern_projection <- paper_table_numeric_projection(kern_path)
+stopifnot(
+  length(kern_projection) > 0L,
+  identical(kern_projection[["tabular_1/row_1/column_1"]]$value, 0.796),
+  identical(kern_projection[["tabular_1/row_1/column_1"]]$stars, "***"),
+  identical(kern_projection[["tabular_1/row_2/column_2"]]$value, -13.68),
+  # the tau headers sit above the first labelled row and are not data
+  !any(vapply(
+    kern_projection,
+    function(cell) any(cell$value == 0.05),
+    logical(1)
+  ))
+)
+
 nonnumeric_path <- write_table(output_root, "nonnumeric.tex", c(
   "\\begin{tabular}{lr}",
   "Measure & Estimate \\\\",
@@ -133,6 +174,7 @@ stopifnot(
 )
 
 unlink(output_root, recursive = TRUE)
+unlink(kern_root, recursive = TRUE)
 unlink(empty_root, recursive = TRUE)
 unlink(missing_tables_root, recursive = TRUE)
 rm(
@@ -140,6 +182,10 @@ rm(
   output_root,
   table_path,
   projection,
+  bare_star,
+  kern_root,
+  kern_path,
+  kern_projection,
   nonnumeric_path,
   nonnumeric_projection,
   tables,

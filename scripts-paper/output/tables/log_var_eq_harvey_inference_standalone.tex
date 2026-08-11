@@ -1,0 +1,40 @@
+\documentclass[11pt]{article}
+\usepackage{booktabs}
+\usepackage{threeparttable}
+\usepackage{array}
+\usepackage{amssymb}
+\usepackage[margin=1in]{geometry}
+
+\begin{document}
+
+\begingroup
+\newcommand{\kernouter}{\noalign{\global\cmidrulekern=-6pt}}
+\newcommand{\kernspan}{\noalign{\global\cmidrulekern=3pt}}
+\newcommand{\kerninner}{\noalign{\global\cmidrulekern=1pt}}
+\footnotesize\setlength{\tabcolsep}{3pt}
+\begin{tabular}{lcc@{\hskip 12pt}ccc}
+\kernouter\cmidrule[\heavyrulewidth](lr){1-6}
+ & \multicolumn{2}{c}{Estimate (test statistic)} & \multicolumn{3}{c}{Identified set (confidence envelope)} \\
+\kernspan\cmidrule(lr){2-3}\cmidrule(lr){4-6}
+ & OLS & $\tau{=}0$ & $\tau{=}0.05$ & $\tau{=}0.1$ & $\tau{=}0.2$ \\
+\kerninner\cmidrule(lr){1-6}
+$\theta^{H}_0$ & $-0.837$*** & $-0.788$** & $[-0.806,\,-0.761]$ & $[-0.816,\,-0.723]$ & $[-0.831,\,-0.614]$ \\
+ & ($-4.71$) & ($-2.30$) & $(-1.313,\,-0.224)$ & $(-1.266,\,-0.216)$ & $(-1.175,\,-0.168)$ \\
+\addlinespace[2.5pt]
+$\theta^{H}_{1,R}$ & 0.176* & 0.186 & $[0.183,\,0.191]$ & $[0.181,\,0.197]$ & $[0.175,\,0.212]$ \\
+ & (1.70) & (1.19) & $(-0.066,\,0.442)$ & $(-0.057,\,0.440)$ & $(-0.039,\,0.438)$ \\
+$\theta^{H}_{2,R}$ & $-0.139$* & $-0.138$ & $[-0.147,\,-0.127]$ & $[-0.155,\,-0.115]$ & $[-0.173,\,-0.087]$ \\
+ & ($-1.84$) & ($-1.43$) & $(-0.312,\,0.027)$ & $(-0.306,\,0.015)$ & $(-0.303,\,0.010)$ \\
+$\theta^{H}_{3,R}$ & 0.481*** & 0.455* & $[0.441,\,0.468]$ & $[0.427,\,0.481]$ & $[0.394,\,0.505]$ \\
+ & (3.97) & (1.90) & $(0.032,\,0.869)$ & $(0.016,\,0.874)$ & $(-0.019,\,0.890)$ \\
+$\theta^{H}_{4,R}$ & 0.635*** & 0.617** & $[0.602,\,0.627]$ & $[0.584,\,0.633]$ & $[0.538,\,0.636]$ \\
+ & (3.42) & (2.05) & $(-0.107,\,1.338)$ & $(-0.124,\,1.336)$ & $(-0.159,\,1.314)$ \\
+\kerninner\cmidrule(lr){1-6}
+$N$ & 255 & 255 & 255 & 255 & 255 \\
+\kernouter\cmidrule[\heavyrulewidth](lr){1-6}
+\end{tabular}
+\global\cmidrulekern=6pt % restore booktabs default (.5em at 12pt): the \global
+% assignments above escape \endgroup and would otherwise leak into the rest of the document
+\endgroup
+
+\end{document}

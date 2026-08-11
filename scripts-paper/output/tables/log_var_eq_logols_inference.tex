@@ -1,0 +1,30 @@
+\begingroup
+\newcommand{\kernouter}{\noalign{\global\cmidrulekern=-6pt}}
+\newcommand{\kernspan}{\noalign{\global\cmidrulekern=3pt}}
+\newcommand{\kerninner}{\noalign{\global\cmidrulekern=1pt}}
+\footnotesize\setlength{\tabcolsep}{3pt}
+\begin{tabular}{lcc@{\hskip 12pt}ccc}
+\kernouter\cmidrule[\heavyrulewidth](lr){1-6}
+ & \multicolumn{2}{c}{Estimate (test statistic)} & \multicolumn{3}{c}{Identified set} \\
+\kernspan\cmidrule(lr){2-3}\cmidrule(lr){4-6}
+ & OLS & $\tau{=}0$ & $\tau{=}0.05$ & $\tau{=}0.1$ & $\tau{=}0.2$ \\
+\kerninner\cmidrule(lr){1-6}
+$\theta^{log}_0$ & $-2.460$*** & $-2.423$ & $(-\infty,\,-2.335]$ & $(-\infty,\,-2.239]$ & $(-\infty,\,-2.118]$ \\
+ & ($-15.90$) &  &  &  &  \\
+\addlinespace[2.5pt]
+$\theta^{log}_{1,R}$ & 0.063 & 0.040 & unbounded & unbounded & unbounded \\
+ & (0.58) &  &  &  &  \\
+$\theta^{log}_{2,R}$ & $-0.156$* & $-0.102$ & unbounded & unbounded & unbounded \\
+ & ($-1.87$) &  &  &  &  \\
+$\theta^{log}_{3,R}$ & 0.168 & 0.060 & unbounded & unbounded & unbounded \\
+ & (1.07) &  &  &  &  \\
+$\theta^{log}_{4,R}$ & 0.163 & 0.210 & unbounded & unbounded & unbounded \\
+ & (0.73) &  &  &  &  \\
+\kerninner\cmidrule(lr){1-6}
+$R^2$ & 0.02 & -- & -- & -- & -- \\
+$N$ & 255 & 255 & 255 & 255 & 255 \\
+\kernouter\cmidrule[\heavyrulewidth](lr){1-6}
+\end{tabular}
+\global\cmidrulekern=6pt % restore booktabs default (.5em at 12pt): the \global
+% assignments above escape \endgroup and would otherwise leak into the rest of the document
+\endgroup

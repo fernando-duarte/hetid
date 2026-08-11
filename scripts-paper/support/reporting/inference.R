@@ -116,6 +116,9 @@ paper_newey_west_description <- function(policy) {
   )
 }
 
+# Bare asterisks, appended directly after the estimate ("0.796***"), which is the
+# paper's convention. The star legend in the notes still names them as
+# superscripts; that is the paper's wording and not a description of the markup.
 sig_stars <- function(
   p,
   thresholds = PAPER_REPORTING_CONTROL$significance
@@ -130,11 +133,11 @@ sig_stars <- function(
     "",
     ifelse(
       p < thresholds[["three_stars"]],
-      "^{***}",
+      "***",
       ifelse(
         p < thresholds[["two_stars"]],
-        "^{**}",
-        ifelse(p < thresholds[["one_star"]], "^{*}", "")
+        "**",
+        ifelse(p < thresholds[["one_star"]], "*", "")
       )
     )
   )

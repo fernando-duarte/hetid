@@ -15,9 +15,13 @@ PAPER_TABLE_TOKEN_PATTERN <- paste0(
   ")"
 )
 
+# Stars follow their number either bare ("0.796***", the paper's convention) or
+# as a superscript group ("0.796$^{***}$", the earlier one). Both are read, so
+# a table that still carries the old markup keeps its stars compared rather than
+# silently reporting none.
 PAPER_TABLE_STAR_PATTERN <- paste0(
   "^[[:space:]]*[$]?[[:space:]]*",
-  "\\^\\{([*]{1,3})\\}",
+  "(?:\\^\\{([*]{1,3})\\}|([*]{1,3}))",
   "[[:space:]]*[$]?"
 )
 
@@ -51,7 +55,12 @@ paper_table_token_stars <- function(cell, starts, lengths) {
     tail <- substring(cell, starts[[index]] + lengths[[index]])
     match <- regexec(PAPER_TABLE_STAR_PATTERN, tail, perl = TRUE)
     pieces <- regmatches(tail, match)[[1L]]
-    if (length(pieces) == 2L) pieces[[2L]] else ""
+    if (length(pieces) < 2L) {
+      return("")
+    }
+    # one alternative captures, the other is empty
+    groups <- pieces[-1L][nzchar(pieces[-1L])]
+    if (length(groups)) groups[[1L]] else ""
   }, character(1))
 }
 

@@ -8,11 +8,14 @@
 
 paper_source_once(paper_path("support", "latex", "table_pipeline.R"))
 paper_source_once(paper_path("support", "latex", "simple_table.R"))
+paper_source_once(paper_path("support", "latex", "overleaf_scaffold.R"))
 paper_source_once(paper_path("support", "reporting", "cells.R"))
 
 share_fmt <- function(x) {
   policy <- PAPER_REPORTING_CONTROL$cells$variance_share
-  paper_format_number(x, policy$digits, policy$numeric_missing)
+  paper_math_negative(
+    paper_format_number(x, policy$digits, policy$numeric_missing)
+  )
 }
 # largest-remainder (Hamilton) rounding for the fixed-coefficient columns:
 # the component shares add up to their block share exactly in the data, so
@@ -87,11 +90,11 @@ columns <- c(
   )
 )
 
-# Emit only the tabular, wrapped in a \begingroup that scopes the font size and
-# column separation; the paper supplies the float, caption, and notes.
-var_share_table <- c(
-  "\\begingroup",
-  PAPER_TABLE_STYLE$variance_share$fontsize,
+# Emit only the tabular, wrapped in the paper's kern group, which scopes the
+# font size, the column separation, and the \cmidrulekern settings; the paper
+# supplies the float, caption, and notes. The two block boundaries are open
+# space and the tail above N is a light rule, so the separators differ.
+var_share_table <- paper_overleaf_kern_group(
   simple_tabular_lines(
     row_labels, unname(columns),
     col_headers = paper_tau_col_headers(set_id_mean_eq$tau_display),
@@ -99,9 +102,15 @@ var_share_table <- c(
     spanners = list(list(
       label = "Share of $\\widehat{\\mathrm{Var}}(\\Delta c_{t+1})$ (\\%)",
       n = length(columns)
-    ))
+    )),
+    rules = paper_overleaf_rules(length(columns)),
+    separator = c(
+      "\\addlinespace[2.5pt]",
+      "\\addlinespace[2.5pt]",
+      paper_overleaf_inner_rule(length(columns))
+    )
   ),
-  "\\endgroup"
+  PAPER_TABLE_STYLE$variance_share$fontsize
 )
 publish_latex_artifact("variance_share_table", var_share_table)
 

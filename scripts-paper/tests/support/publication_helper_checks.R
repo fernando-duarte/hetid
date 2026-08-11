@@ -2,14 +2,14 @@
 
 check(
   "LaTeX publication and label relationships are manifest-owned",
-  nrow(artifact_latex_publications) == 6L &&
+  nrow(artifact_latex_publications) == 8L &&
     identical(
       artifact_latex_label("structural_var_inference_table", "structural"),
       "tab:structural_eq_set_id"
     ) &&
     identical(
       artifact_latex_label("heteroskedasticity_w2_table", "table"),
-      "tab:sdf_news_resid_hetero_tests"
+      "tab:sdf_news_hetero_tests_w2"
     ) &&
     identical(
       artifact_latex_publication(

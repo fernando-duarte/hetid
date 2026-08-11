@@ -96,7 +96,11 @@ stp_stars <- sig_stars(stp_star_p)
 
 check(
   "the tau = 0 sub-row prints a parenthesized statistic, not an interval",
-  all(grepl("^[(]-?[0-9]+[.][0-9]+[)]$", stp_statistics[stp_reported])) &&
+  # a negative statistic sets its sign in math, so the minus arrives wrapped
+  all(grepl(
+    "^[(](?:[$]-[0-9]+[.][0-9]+[$]|[0-9]+[.][0-9]+)[)]$",
+    stp_statistics[stp_reported]
+  )) &&
     !any(grepl(",", stp_statistics, fixed = TRUE)) &&
     !any(grepl("infty", stp_statistics, fixed = TRUE))
 )
@@ -106,10 +110,12 @@ check(
     stp_statistics[stp_reported],
     sprintf(
       "(%s)",
-      paper_format_number(
-        stp_point_t$statistic[stp_reported],
-        PAPER_REPORTING_CONTROL$cells$statistic_digits,
-        "na"
+      paper_math_negative(
+        paper_format_number(
+          stp_point_t$statistic[stp_reported],
+          PAPER_REPORTING_CONTROL$cells$statistic_digits,
+          "na"
+        )
       )
     )
   )
@@ -117,7 +123,7 @@ check(
 check(
   "a star appears exactly when the basis p-value crosses a level",
   identical(
-    grepl("$^{", stp_estimates, fixed = TRUE),
+    endsWith(stp_estimates, "*"),
     !is.na(stp_star_p) & stp_star_p < paper_significance_level("one_star")
   ) &&
     length(unique(stp_stars)) >= 3L
