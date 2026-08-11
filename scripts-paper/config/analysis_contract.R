@@ -104,7 +104,7 @@ PAPER_ANALYSIS_CONTRACT <- local({
         fetch_kind = "economic.data"
       ),
       instrument = list(
-        active = "y60_vol",
+        active = "y60_vol_log",
         producer = file.path(
           "data_preparation",
           "build_yield_volatility.R"

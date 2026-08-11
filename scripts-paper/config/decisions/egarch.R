@@ -1,6 +1,6 @@
 # The committed EGARCH-X scope decision for this run (EGARCH routing protocol), mirroring
 # the joint-GMM joint_gmm.R committed-record pattern. The base-R
-# residual-dynamics gate returned `non_reject` (lag-4 Ljung-Box p = 0.330), which
+# residual-dynamics gate returned `non_reject` (lag-4 Ljung-Box p = 0.177), which
 # per the ladder stops the dynamic workstream as a complete success: neither the
 # changed-estimand nor the dependency approval is asked, both ordered decisions
 # are `not_asked`, and no heavy package is touched. The record still binds the
@@ -52,13 +52,13 @@ logvar_egarch_dependency_prompt <- paste(
 logvar_egarch_decision <- list(
   schema_version = LOGVAR_EGARCH_SCHEMA_VERSION,
   gate_science_sha256 =
-    "d57e8c7259be22933b0740e09efd6e4245bd9c6f873a6b9d9e483f4913c3b61f",
+    "30d3dca5eab2dbd45717b6b9a4a3ea64d215eb8c7300102d92cb4b0631535021",
   gate_record_path = LOGVAR_EGARCH_GATE_RECORD_PATH,
   sample_id = "n255_1962 Q2_2025 Q4_2ed6eb0870e8f83caa42549f38f6b19a",
   gate_lag = 4L,
   gate_alpha = 0.05,
-  gate_q = 0x1.26fc28258c61p+2,
-  gate_p = 0x1.51b787b98b118p-2,
+  gate_q = 0x1.945aaf5a43576p+2,
+  gate_p = 0x1.69b93d67b7e24p-3,
   gate_verdict = "non_reject",
   plan_sha256 = LOGVAR_EGARCH_PLAN_SHA256,
   upstream_plans_hash = LOGVAR_EGARCH_UPSTREAM_PLANS_HASH,
@@ -71,7 +71,7 @@ logvar_egarch_decision <- list(
     dependency = "not_asked"
   ),
   decision_provenance = "not_asked_default",
-  decided_at_utc = "2026-07-15T04:35:40Z"
+  decided_at_utc = "2026-08-10T23:48:10Z"
 )
 stopifnot(identical(
   names(logvar_egarch_decision),
