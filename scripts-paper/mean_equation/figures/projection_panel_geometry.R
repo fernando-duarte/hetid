@@ -9,12 +9,17 @@
 # collapses neighbouring tick labels into the same text.
 paper_source_once(paper_path("mean_equation", "figures", "region_3d_frames.R"))
 
+# Text size is carried in the label string, not by cex: the paper includes these
+# SVGs with inkscapelatex=true, which discards the SVG font-size and re-typesets
+# every label in LaTeX at the document \f@size. A size macro inside the string
+# survives that pass; cex.lab only moves the anchor the label is centred on.
+# Ticks sit a step below the axis titles so they read as supporting detail.
 projection_axis_labels <- function(units, axes) {
   lapply(axes, function(k) {
     if (identical(units, "sd")) {
-      sprintf("$\\sigma(PC_{%d,N})\\, b_{%d,N}$", k, k)
+      sprintf("{\\small $\\sigma(PC_{%d,N})\\, b_{%d,N}$}", k, k)
     } else {
-      sprintf("$b_{%d,N}$", k)
+      sprintf("{\\small $b_{%d,N}$}", k)
     }
   })
 }
@@ -74,7 +79,11 @@ projection_widened_axis <- function(r, step = NULL) {
 }
 
 projection_tick_labels <- function(v) {
-  paste0("$", formatC(v, format = "f", digits = region_tick_digits(v)), "$")
+  paste0(
+    "$\\scriptstyle ",
+    formatC(v, format = "f", digits = region_tick_digits(v)),
+    "$"
+  )
 }
 
 # Ranges come off the widest displayed projection slack. The SD axes are

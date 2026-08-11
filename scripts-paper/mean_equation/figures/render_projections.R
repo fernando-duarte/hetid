@@ -72,8 +72,19 @@ local({
           main = "", axes = FALSE
         )
         graphics::box()
-        graphics::axis(1, at = xt, labels = projection_tick_labels(xt), cex.axis = 0.8)
-        graphics::axis(2, at = yt, labels = projection_tick_labels(yt), cex.axis = 0.8)
+        # Ticks and their labels are drawn separately because the labels carry a
+        # size macro: axis() measures the raw source, decides the ladder steps
+        # collide, and silently drops every other one -- gap.axis only softens
+        # that, it does not switch it off. mtext draws what it is given, and the
+        # ladder is already spaced for the panel width.
+        graphics::axis(1, at = xt, labels = FALSE)
+        graphics::axis(2, at = yt, labels = FALSE)
+        graphics::mtext(projection_tick_labels(xt),
+          side = 1, at = xt, line = 1, cex = 0.8
+        )
+        graphics::mtext(projection_tick_labels(yt),
+          side = 2, at = yt, line = 1, cex = 0.8
+        )
         for (ti in seq_along(taus)) {
           graphics::contour(g$xg, g$yg, envs[[pi]][[ti]]$M,
             levels = 0, add = TRUE,
@@ -105,18 +116,35 @@ local({
       graphics::par(mar = c(0, 0, 0, 0), pty = "m")
       graphics::par(fig = c(0, 1, strip, 1), new = TRUE)
       plot.new()
+      # The two point markers lead, OLS first, so the row reads markers then
+      # sets then boxes. These six vectors are positional: reordering one
+      # without the others silently relabels a key.
       legend_items <- c(
-        "$\\tau = 0$", if (show_ols) "OLS",
+        if (show_ols) "OLS", "$\\tau = 0$",
         sprintf("$\\tau = %s$", paper_format_tau(taus)), "marginal interval"
       )
-      legend("center",
+      # Raised a tenth of the strip off its centre line, which opens a gap above
+      # the panel boxes and groups the legend with the caption above it.
+      #
+      # text.width measures the labels WITHOUT their size macro. svglite reserves
+      # text at the width of the raw source characters, so letting legend() see
+      # the wrapped strings widens the row past the device and pushes the first
+      # key off the canvas at negative x. The floor stops a short label -- "OLS",
+      # three characters of source that typeset wider than that -- from taking a
+      # slot too narrow to clear the next key.
+      legend(
+        x = 0.5, y = 0.6, xjust = 0.5, yjust = 0.5,
         ncol = length(legend_items), bty = "n", cex = 1.0,
-        legend = legend_items,
-        col = c(tau0_col, if (show_ols) "black", tcols, "grey40"),
-        lty = c(NA, if (show_ols) NA, 1, 1, 1, 2),
-        lwd = c(NA, if (show_ols) NA, 2, 2, 2, 1),
-        pch = c(21, if (show_ols) ols_pch, NA, NA, NA, NA),
-        pt.bg = c("white", if (show_ols) ols_col, NA, NA, NA, NA),
+        legend = paste0("{\\footnotesize ", legend_items, "}"),
+        text.width = pmax(
+          graphics::strwidth(legend_items),
+          graphics::strwidth("$\\tau = 0$")
+        ),
+        col = c(if (show_ols) "black", tau0_col, tcols, "grey40"),
+        lty = c(if (show_ols) NA, NA, 1, 1, 1, 2),
+        lwd = c(if (show_ols) NA, NA, 2, 2, 2, 1),
+        pch = c(if (show_ols) ols_pch, 21, NA, NA, NA, NA),
+        pt.bg = c(if (show_ols) ols_col, "white", NA, NA, NA, NA),
         pt.lwd = 1.6
       )
     }
