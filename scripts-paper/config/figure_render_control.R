@@ -108,6 +108,12 @@ PAPER_FIGURE_RENDER_CONTROL <- list(
     )
   ),
   projections = list(
+    # Ladder step pinned per unit system and coefficient, overriding the step
+    # pretty() would pick; NA leaves that coefficient automatic. b_{2,N} reads
+    # better on its three round tenths than on the five rungs pretty() returns
+    # for its range. Only the per-coefficient frames consult this, so the SD
+    # pair has no entry.
+    tick_steps = list(b = c(NA, 0.1, NA)),
     grid_points = 300L,
     tau_colors = c("#472B7A", "#26818E", "#5DC863"),
     range_padding = 0.06,

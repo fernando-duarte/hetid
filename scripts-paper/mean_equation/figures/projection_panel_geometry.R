@@ -19,11 +19,19 @@ projection_axis_labels <- function(units, axes) {
   })
 }
 
-# Ladder for a frame. A ladder needing three decimals -- raw b_{1,N}, whose
-# whole range is 0.026 wide -- prints labels too wide for a square panel at four
-# steps, so it drops to the next coarser pretty() step. One- and two-decimal
-# ladders keep their four.
-projection_ladder <- function(r) {
+# Ladder for a frame, on a pinned step when the render control gives one and on
+# pretty()'s otherwise. A pretty ladder needing three decimals -- raw b_{1,N},
+# whose whole range is 0.026 wide -- prints labels too wide for a square panel
+# at four steps, so it drops to the next coarser step. One- and two-decimal
+# ladders keep their four. The pinned branch rounds because seq() over a
+# fractional step lands 0 on a value like -2.8e-17, which prints as "-0.00".
+projection_ladder <- function(r, step = NULL) {
+  if (length(step) && !is.na(step)) {
+    return(round(seq(
+      floor(r[1] / step) * step, ceiling(r[2] / step) * step,
+      by = step
+    ), 10L))
+  }
   at <- pretty(r, 4)
   if (region_tick_digits(at) >= 3L) {
     at <- pretty(r, 3)
@@ -49,8 +57,8 @@ projection_ticks <- function(r) {
 # pretty() again for the widened frame is not a fixpoint: it answers with a
 # wider ladder whose new end rung again falls outside, so a recomputing version
 # clips exactly the tick this is here to keep.
-projection_widened_axis <- function(r) {
-  at <- projection_ladder(r)
+projection_widened_axis <- function(r, step = NULL) {
+  at <- projection_ladder(r, step)
   reach <- 0.25 * diff(at)[1L]
   lo <- min(at[at >= r[1] - reach])
   hi <- max(at[at <= r[2] + reach])
@@ -82,7 +90,7 @@ projection_tick_labels <- function(v) {
 # pass, so the plain figure carries the same headroom for a point it does not
 # draw; recomputing the envelopes per variant would cost far more than the
 # whitespace.
-projection_panel_axes <- function(units, box, ols, axes, padding) {
+projection_panel_axes <- function(units, box, ols, axes, padding, steps = NULL) {
   span <- function(k) {
     r <- range(box$lo[k], box$hi[k], ols[k])
     r + c(-1, 1) * padding * diff(r)
@@ -95,7 +103,7 @@ projection_panel_axes <- function(units, box, ols, axes, padding) {
     })
     return(function(k, side) shared[[side]])
   }
-  per_coef <- lapply(axes, function(k) projection_widened_axis(span(k)))
+  per_coef <- lapply(axes, function(k) projection_widened_axis(span(k), steps[k]))
   stopifnot(vapply(per_coef, function(a) {
     length(a$ticks) >= 2L &&
       all(a$ticks > a$range[1] & a$ticks < a$range[2])
@@ -110,7 +118,7 @@ projection_panel_geometry <- function(units, taus, panels, axes, render) {
   ols_point <- region_sd_ols_point(scale)
   panel_axis <- projection_panel_axes(
     units, region_sd_box(max(taus), scale), ols_point, axes,
-    render$range_padding
+    render$range_padding, render$tick_steps[[units]]
   )
   # every marker the renderer draws has to land inside the panel drawing it,
   # or it is clipped to the frame and reads as a point on the boundary
