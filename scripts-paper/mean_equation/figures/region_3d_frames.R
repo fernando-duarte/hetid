@@ -122,6 +122,15 @@ region_3d_frame <- function(lims, render, mode, ols_point, units, tau) {
     lims <- render$widest_limits
     ticks <- render$widest_ticks
   }
+  # A hand-set ladder is shared across the figures of its mode, but the frame
+  # around it is each figure's own padded box, so a rung can land outside the
+  # cube -- and neither draw_region_panes nor draw_region_axis clips, so it is
+  # drawn out there, its gridline crossing open space and its label landing on
+  # the neighbouring axis title. Clip, as region_auto_ticks already does for the
+  # derived ladders. A ladder left with fewer than two rungs is a frame that has
+  # drifted off its figure rather than a sparse axis.
+  ticks <- Map(function(at, lim) at[at >= lim[1] & at <= lim[2]], ticks, lims)
+  stopifnot(all(lengths(ticks) >= 2L))
   list(
     lims = lims,
     ticks = ticks,

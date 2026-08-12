@@ -58,6 +58,8 @@ suite_manifest <- data.frame(
     "validation/test_table_acceptance.R",
     "support/test_statistics.R",
     "support/bounds_axis_checks.R",
+    "support/svg_crop_checks.R",
+    "support/region_frame_checks.R",
     "support/test_heteroskedasticity.R",
     "support/test_identification_diagnostics.R",
     "support/boot_freshness_checks.R",

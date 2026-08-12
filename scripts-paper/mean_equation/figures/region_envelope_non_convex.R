@@ -7,6 +7,8 @@
 # is a distinct piece of algebra from the convex-constraint intersection that
 # function otherwise does.
 
+paper_source_once(paper_path("support", "graphics", "device.R"))
+
 # Raised when a constraint's exclusion splits the free coordinate's feasible
 # set into two disjoint pieces. A classed condition, not a bare stopifnot, so
 # a caller sweeping over many (tau, axis) combinations can catch this one
@@ -54,12 +56,12 @@ region_quadratic_roots <- function(sys, i, perp, k1, k2, X, Y) {
 # have already written a partial figure file before the error, so this
 # removes it. Returns the skipped artifact id, or NULL on success.
 region_3d_draw_or_skip <- function(draw_fn, ols, units, tau) {
+  id <- region_figure_id(ols, units, tau)
+  path <- artifact_path(id)
   skipped <- NULL
   tryCatch(
     draw_fn(ols, units, tau),
     region_non_convex_direction = function(e) {
-      id <- region_figure_id(ols, units, tau)
-      path <- artifact_path(id)
       if (file.exists(path)) file.remove(path)
       message(sprintf(
         "set_id_region_3d: SKIPPED tau=%s units=%s ols=%s -- %s",
@@ -68,5 +70,9 @@ region_3d_draw_or_skip <- function(draw_fn, ols, units, tau) {
       skipped <<- id
     }
   )
+  # persp cannot be made to fill the device, so a completed figure is trimmed
+  # to its own ink here rather than inside draw_fn, where it would run on the
+  # partial file above during the unwind.
+  if (is.null(skipped)) crop_svg_to_ink(path)
   skipped
 }

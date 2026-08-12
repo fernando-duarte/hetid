@@ -60,7 +60,9 @@ PAPER_FIGURE_RENDER_CONTROL <- list(
     # endpoints of its padded box and uses ticks; the widest slack outgrows both,
     # so it takes widest_limits and widest_ticks outright. Every frame must
     # contain its own set box and the OLS point, which render_region_3d.R
-    # asserts, and every tick must fall inside its own frame.
+    # asserts. Ticks outside the frame a figure ends up with are dropped
+    # (region_3d_frames.R), so a ladder here is the widest one any figure of
+    # its mode shows, not the one every figure shows.
     manual_limits = list(x_upper = 0.28, y_lower = -0.08),
     widest_limits = list(
       c(-0.16, 0.73),
