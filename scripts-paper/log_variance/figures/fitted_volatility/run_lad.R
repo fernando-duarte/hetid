@@ -5,9 +5,10 @@
 # instead the identified news set is grid-sampled, the LAD is fit at each feasible
 # b_N, and the per-date envelope is the min/max of the fitted median-log-variance
 # path R'theta^0.5 over those fits -- an attained inner hull, the same claim the
-# shared caption already makes. exp(0.5 R'theta^0.5) is the fitted conditional
-# median |residual| (not the SD: the LAD imposes no conditional-normality scale
-# correction). Guarded on log_var_eq_lad so it renders only when the LAD map ran.
+# shared caption already makes. The panel plots that path itself, net of its
+# intercept; exponentiating half of it would give a conditional median |residual|
+# and not an SD, since the LAD imposes no conditional-normality scale correction.
+# Guarded on log_var_eq_lad so it renders only when the LAD map ran.
 # Reuses logvar_fitted_vol_data / _render / _path. Run via run_pipeline.R after
 # run.R.
 
@@ -18,7 +19,7 @@ lad_result <- paper_logvar_result("lad", required = FALSE)
 if (!is.null(lad_result)) {
   lad_vol_est <- lad_result$estimator
   # baseline mean-equation-slack context (shared with run.R): tau, warm-refined
-  # news box, quadratic system, (1, PC_R) design matrix, Lewbel point + feasibility
+  # news box, quadratic system, intercept-free PC_R design, Lewbel point + feasibility
   lad_vol_ctx <- logvar_fitted_vol_baseline_context(
     set_id_mean_eq, mean_eq_bounds_tau, log_var_eq$inputs
   )

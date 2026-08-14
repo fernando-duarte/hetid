@@ -57,6 +57,34 @@ stopifnot(
     paste(.sweep_grid$estimator, .sweep_grid$tail, sep = "_")
   )
 )
+
+# The high-slack panel is one record rather than a tail on the grid above: its
+# slacks come from the figure render control, not the contract sweep, and it is
+# drawn for one estimator because a second copy of the same story near tau*
+# earns nothing. Log-variance family only, matching the panel it is modelled on.
+.sweep_high_id <- "ppml_fitted_vol_combined_high_log"
+.artifact_specs <- c(.artifact_specs, sprintf(
+  "%s|log_var_eq_fitted_volatility_ppml_tau_combined_high_log.svg|3|ac|B|r",
+  .sweep_high_id
+))
+.artifact_variant_specs <- c(.artifact_variant_specs, sprintf(
+  "%s|fitted_volatility_sweep|ppml_combined_high_log", .sweep_high_id
+))
+
+# The OLS-benchmark panel: the swept combined panel with one more line, the
+# log-variance path the two-step log-OLS map returns at the mean equation's OLS
+# news coefficients. One estimator and the log-variance family, like the record
+# above, because the benchmark line does not depend on which set estimator the
+# bands come from.
+.sweep_ols_id <- "ppml_fitted_vol_combined_log_ols"
+.artifact_specs <- c(.artifact_specs, sprintf(
+  "%s|log_var_eq_fitted_volatility_ppml_tau_combined_log_ols.svg|3|ac|B|r",
+  .sweep_ols_id
+))
+.artifact_variant_specs <- c(.artifact_variant_specs, sprintf(
+  "%s|fitted_volatility_sweep|ppml_combined_log_ols", .sweep_ols_id
+))
 rm(
-  .sweep_estimators, .sweep_tails, .sweep_grid, .sweep_ids, .sweep_basenames
+  .sweep_estimators, .sweep_tails, .sweep_grid, .sweep_ids, .sweep_basenames,
+  .sweep_high_id, .sweep_ols_id
 )

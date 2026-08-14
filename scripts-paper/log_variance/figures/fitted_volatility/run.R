@@ -7,7 +7,7 @@ paper_source_once(paper_path("log_variance", "figures", "fitted_volatility", "en
 paper_source_once(paper_path("log_variance", "figures", "fitted_volatility", "plot.R"))
 
 # baseline mean-equation-slack context (shared with run_lad.R): tau, warm-refined
-# news box, quadratic system, (1, PC_R) design matrix, Lewbel point + feasibility
+# news box, quadratic system, intercept-free PC_R design, Lewbel point + feasibility
 fitted_vol_ctx <- logvar_fitted_vol_baseline_context(
   set_id_mean_eq, mean_eq_bounds_tau, log_var_eq$inputs
 )

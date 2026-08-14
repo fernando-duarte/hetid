@@ -18,11 +18,21 @@ paper_source_once(paper_path(
   "log_variance", "figures", "fitted_volatility", "tau_sweep_layout.R"
 ))
 
-# envs: envelopes keyed in any order; log_scale puts the panel on a log y axis,
-# where each band becomes half its log-variance width. That width is roughly
-# flat over the sample, so the tight slacks stay legible instead of collapsing
-# onto the point curve wherever the level is small.
-logvar_tau_sweep_render <- function(envs, path, log_scale = FALSE) {
+# envs: envelopes keyed in any order; log_variance picks which of the two
+# families the panel carries -- the exponent PC_R,t' theta_R itself, or its
+# exponential. Both on a linear axis: the exponent panel is what a log axis on
+# the exponential one used to be, so transforming the scale as well would only
+# reproduce the sibling.
+#
+# extra_line: optional data.frame(date, value) drawn as one more line and given
+# its own key in the point-fit scale. Used for the OLS benchmark path, which is
+# a single fit rather than an envelope and so has no band of its own.
+logvar_tau_sweep_render <- function(envs, path, log_variance = FALSE,
+                                    extra_line = NULL) {
+  prefix <- if (log_variance) "log_variance_" else "variance_"
+  lo <- paste0(prefix, "lower")
+  hi <- paste0(prefix, "upper")
+  pt <- paste0(prefix, "point")
   taus <- vapply(envs, function(e) e$metadata$tau, numeric(1))
   envs <- envs[order(taus)]
   # unname: envs carries full-precision paper_tau_key names, and ggplot2 reads a
@@ -34,7 +44,7 @@ logvar_tau_sweep_render <- function(envs, path, log_scale = FALSE) {
   )(length(taus))
   bands <- logvar_tau_sweep_bands(envs, labels)
   widths <- vapply(bands, function(b) {
-    stats::median(b$volatility_upper - b$volatility_lower)
+    stats::median(b[[hi]] - b[[lo]])
   }, numeric(1))
   point <- logvar_fitted_vol_plot_data(envs[[1L]]$data)$point
   logvar_style <- PAPER_FIGURE_STYLE$log_variance
@@ -44,7 +54,7 @@ logvar_tau_sweep_render <- function(envs, path, log_scale = FALSE) {
     fig <- fig + ggplot2::geom_ribbon(
       data = bands[[i]],
       ggplot2::aes(
-        ymin = volatility_lower, ymax = volatility_upper,
+        ymin = .data[[lo]], ymax = .data[[hi]],
         group = band_group, fill = tau_label
       )
     )
@@ -53,15 +63,27 @@ logvar_tau_sweep_render <- function(envs, path, log_scale = FALSE) {
     ggplot2::geom_line(
       data = point,
       ggplot2::aes(
-        y = volatility_point, group = run,
+        y = .data[[pt]], group = run,
         color = LOGVAR_TAU_SWEEP_POINT_KEY
       ),
       linewidth = logvar_style$point_linewidth
-    ) +
+    )
+  line_keys <- LOGVAR_TAU_SWEEP_POINT_KEY
+  line_colours <- logvar_style$point
+  if (!is.null(extra_line)) {
+    stopifnot(all(c("date", "value") %in% names(extra_line)))
+    fig <- fig + ggplot2::geom_line(
+      data = extra_line,
+      ggplot2::aes(y = value, color = LOGVAR_TAU_SWEEP_OLS_KEY),
+      linewidth = logvar_style$point_linewidth
+    )
+    line_keys <- c(line_keys, LOGVAR_TAU_SWEEP_OLS_KEY)
+    line_colours <- c(line_colours, PAPER_FIGURE_STYLE$region$ols_point)
+  }
+  fig <- fig +
     ggplot2::scale_color_manual(
-      values = stats::setNames(
-        logvar_style$point, LOGVAR_TAU_SWEEP_POINT_KEY
-      ),
+      values = stats::setNames(line_colours, line_keys),
+      limits = line_keys, breaks = line_keys,
       name = NULL,
       # a wider key box for this guide alone, so the red segment reads as a line
       # rather than a dash; the band swatches keep the theme's 9pt key
@@ -82,12 +104,9 @@ logvar_tau_sweep_render <- function(envs, path, log_scale = FALSE) {
       breaks = seq(as.Date("1960-01-01"), as.Date("2020-01-01"), by = "10 years"),
       labels = logvar_tau_sweep_date_labels
     ) +
-    ggplot2::labs(y = logvar_tau_sweep_y_label(log_scale)) +
+    ggplot2::labs(y = logvar_tau_sweep_y_label(log_variance)) +
     ggplot2::theme_classic(base_size = 11) +
     logvar_tau_sweep_theme()
-  if (log_scale) {
-    fig <- fig + ggplot2::scale_y_log10()
-  }
   device <- PAPER_FIGURE_RENDER_CONTROL$devices$fitted_volatility_sweep
   fig <- logvar_tau_sweep_center(fig, device)
   ggplot2::ggsave(

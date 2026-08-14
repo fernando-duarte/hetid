@@ -4,6 +4,9 @@
 
 paper_source_once(paper_path("support", "graphics", "device.R"))
 paper_source_once(paper_path("support", "reporting", "cells.R"))
+paper_source_once(paper_path(
+  "log_variance", "figures", "fitted_volatility", "labels.R"
+))
 
 logvar_fitted_vol_run_id <- function(valid) {
   runs <- rle(valid)
@@ -13,10 +16,10 @@ logvar_fitted_vol_run_id <- function(valid) {
 logvar_fitted_vol_plot_data <- function(rows) {
   valid <- rows$lower_status == PAPER_ENDPOINT_STATUS[["bounded"]] &
     rows$upper_status == PAPER_ENDPOINT_STATUS[["bounded"]] &
-    is.finite(rows$volatility_lower) & is.finite(rows$volatility_upper)
+    is.finite(rows$log_variance_lower) & is.finite(rows$log_variance_upper)
   band <- rows[valid, , drop = FALSE]
   band$run <- logvar_fitted_vol_run_id(valid)[valid]
-  point_valid <- is.finite(rows$volatility_point)
+  point_valid <- is.finite(rows$log_variance_point)
   point <- rows[point_valid, , drop = FALSE]
   point$run <- logvar_fitted_vol_run_id(point_valid)[point_valid]
   list(band = band, point = point, n_omitted = sum(!valid))
@@ -27,35 +30,24 @@ logvar_fitted_vol_path <- function(estimator) {
 }
 
 logvar_fitted_vol_band_stats <- function(band) {
-  width <- band$volatility_upper - band$volatility_lower
+  width <- band$log_variance_upper - band$log_variance_lower
   stopifnot(length(width) > 0L, all(is.finite(width)))
-  point <- band$volatility_point
-  relative <- width[is.finite(point) & point != 0] / abs(point[is.finite(point) &
-    point != 0])
   imax <- which.max(width)
   list(
     median_width = stats::median(width),
     mean_width = mean(width),
     max_width = width[imax],
-    max_qtr = as.character(band$qtr[imax]),
-    median_relative = if (length(relative) > 0L) stats::median(relative) else NA_real_,
-    max_relative = if (length(relative) > 0L) max(relative) else NA_real_
+    max_qtr = as.character(band$qtr[imax])
   )
 }
 
+# No width-relative-to-the-fit figure: the plotted series is a log variance net
+# of its intercept, so it crosses zero and the ratio to the fit is unbounded
+# there. The width itself is the log of a variance ratio, so it carries no unit.
 logvar_fitted_vol_stats_note <- function(stats) {
-  base <- sprintf(
-    paste0(
-      "Band width: median %.4f pp, mean %.4f pp, max %.4f pp at %s"
-    ),
-    stats$median_width, stats$mean_width, stats$max_width, stats$max_qtr
-  )
-  if (!is.finite(stats$median_relative) || !is.finite(stats$max_relative)) {
-    return(paste0(base, "."))
-  }
   sprintf(
-    paste0("%s; relative to the red fit, median %.1f%% and max %.1f%%."),
-    base, 100 * stats$median_relative, 100 * stats$max_relative
+    "Band width: median %.4f, mean %.4f, max %.4f at %s.",
+    stats$median_width, stats$mean_width, stats$max_width, stats$max_qtr
   )
 }
 
@@ -112,11 +104,7 @@ logvar_fitted_vol_render <- function(envelope, path) {
   if (is.null(estimator_spec)) {
     estimator_spec <- list(
       response_scale = meta$response_scale,
-      display_name = meta$estimator,
-      display = list(
-        title_quantity = "fitted conditional residual volatility",
-        y_label = "Conditional residual volatility"
-      )
+      display_name = meta$estimator
     )
   }
   stopifnot(identical(
@@ -124,8 +112,6 @@ logvar_fitted_vol_render <- function(envelope, path) {
     estimator_spec$response_scale
   ))
   estimator_label <- estimator_spec$display_name
-  title_quantity <- estimator_spec$display$title_quantity
-  y_label <- estimator_spec$display$y_label
   subtitle <- sprintf(
     "Pointwise envelope over the joint identified set at tau = %s",
     paper_format_general(
@@ -144,32 +130,32 @@ logvar_fitted_vol_render <- function(envelope, path) {
     ggplot2::geom_ribbon(
       data = band,
       ggplot2::aes(
-        ymin = volatility_lower, ymax = volatility_upper, group = run
+        ymin = log_variance_lower, ymax = log_variance_upper, group = run
       ),
       fill = figure_style$primary,
       alpha = figure_style$ribbon_alpha
     ) +
     ggplot2::geom_line(
       data = band,
-      ggplot2::aes(y = volatility_lower, group = run),
+      ggplot2::aes(y = log_variance_lower, group = run),
       color = figure_style$primary,
       linewidth = figure_style$boundary_linewidth
     ) +
     ggplot2::geom_line(
       data = band,
-      ggplot2::aes(y = volatility_upper, group = run),
+      ggplot2::aes(y = log_variance_upper, group = run),
       color = figure_style$primary,
       linewidth = figure_style$boundary_linewidth
     ) +
     ggplot2::geom_line(
-      data = point, ggplot2::aes(y = volatility_point, group = run),
+      data = point, ggplot2::aes(y = log_variance_point, group = run),
       color = logvar_style$point,
       linewidth = logvar_style$point_linewidth
     ) +
     ggplot2::labs(
-      title = paste(estimator_label, title_quantity),
+      title = paste(estimator_label, LOGVAR_FITTED_VOL_TITLE_QUANTITY),
       subtitle = subtitle, x = NULL,
-      y = y_label,
+      y = LOGVAR_FITTED_VOL_Y_LABEL,
       caption = logvar_fitted_vol_caption(
         nrow(point) > 0L, band_stats,
         polished = !isTRUE(meta$grid_only)

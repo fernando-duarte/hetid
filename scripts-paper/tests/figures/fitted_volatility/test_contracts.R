@@ -124,9 +124,9 @@ check(
 no_point_rows <- edge_data
 no_point_rows$lower_status <- "bounded"
 no_point_rows$upper_status <- "bounded"
-no_point_rows$volatility_lower <- c(0.5, 0.6)
-no_point_rows$volatility_upper <- c(1.5, 1.6)
-no_point_rows$volatility_point <- NA_real_
+no_point_rows$log_variance_lower <- c(0.5, 0.6)
+no_point_rows$log_variance_upper <- c(1.5, 1.6)
+no_point_rows$log_variance_point <- NA_real_
 no_point <- logvar_fitted_vol_plot_data(no_point_rows)
 check(
   "the no-point path draws no curve and discloses the missing red line",

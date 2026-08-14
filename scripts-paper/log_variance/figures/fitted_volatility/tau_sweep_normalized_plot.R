@@ -42,7 +42,7 @@ logvar_tau_sweep_standardize <- function(x) {
 # single colour scale carries the whole panel. Runs come through unchanged, so a
 # fail-closed gap splits the line instead of being bridged across.
 logvar_tau_sweep_normalized_data <- function(envs, labels, side) {
-  column <- paste0("volatility_", side)
+  column <- paste0("log_variance_", side)
   series <- lapply(seq_along(envs), function(i) {
     band <- logvar_fitted_vol_plot_data(envs[[i]]$data)$band
     stopifnot(nrow(band) > 0L)
@@ -62,7 +62,7 @@ logvar_tau_sweep_normalized_data <- function(envs, labels, side) {
     do.call(rbind, series),
     data.frame(
       date = point$date,
-      value = logvar_tau_sweep_standardize(point$volatility_point),
+      value = logvar_tau_sweep_standardize(point$log_variance_point),
       series = LOGVAR_TAU_SWEEP_POINT_LEVEL,
       run = paste(LOGVAR_TAU_SWEEP_POINT_LEVEL, point$run, sep = ":"),
       row.names = NULL
@@ -70,10 +70,13 @@ logvar_tau_sweep_normalized_data <- function(envs, labels, side) {
   )
 }
 
-# The series is the standardized conditional standard deviation, so the axis
-# carries no unit; the caption supplies the standardization.
+# Standardizing is monotone only within a family, so these take the exponent
+# rather than its exponential and say so; the caption supplies the
+# standardization, which is also why the axis carries no unit.
 logvar_tau_sweep_normalized_y_label <- function(side) {
-  paste0("Normalized conditional volatility\n(", side, " envelope)")
+  paste0(
+    "Normalized $PC_{R,t}^{T}\\theta_{R}$\n(", side, " envelope)"
+  )
 }
 
 logvar_tau_sweep_normalized_render <- function(envs, path, side) {

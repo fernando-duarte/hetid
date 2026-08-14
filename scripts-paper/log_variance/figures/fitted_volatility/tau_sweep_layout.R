@@ -41,15 +41,21 @@ logvar_tau_sweep_key_labels <- function(labels) sprintf("$\\tau=%s$", labels)
 # row reads up in tau from the point-identified case.
 LOGVAR_TAU_SWEEP_POINT_KEY <- "$\\tau=0$"
 
-# Two lines, so the rotated title reads as two stacked columns. The plotted
-# series is the conditional standard deviation in levels (exp(eta/2)), NOT its
-# logarithm -- only the axis is transformed -- so the log belongs to the scale
-# note and never to the quantity. The linear-y sibling drops that note.
-logvar_tau_sweep_y_label <- function(log_scale) {
-  paste0(
-    "Conditional volatility\n(percentage points",
-    if (log_scale) ", log scale" else "", ")"
-  )
+# Key for the OLS benchmark line: the same log-variance path read off the
+# two-step log-OLS map at the mean equation's OLS news coefficients rather than
+# anywhere in the identified set. Plain text, since it names an estimator and
+# not a slack.
+LOGVAR_TAU_SWEEP_OLS_KEY <- "OLS"
+
+# Which of the two families the panel carries. Both sit on a linear axis, so the
+# title names the plotted series outright and no scale note is needed; the
+# log-variance panel is the one the single-slack exhibits also carry.
+logvar_tau_sweep_y_label <- function(log_variance) {
+  if (log_variance) {
+    LOGVAR_FITTED_VOL_Y_LABEL_TEX
+  } else {
+    LOGVAR_FITTED_VOL_Y_LABEL_EXP_TEX
+  }
 }
 
 # Right padding that puts the PANEL, not the whole canvas, at the centre of the

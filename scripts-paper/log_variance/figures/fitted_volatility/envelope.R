@@ -2,9 +2,24 @@
 # identified set. The engine profiles fitted log variance directly at every
 # date; monotonic transformations then give conditional variance and volatility.
 
+# Design matrix for the fitted-volatility figures: the shared (1, PC_R) design
+# with the intercept column zeroed, so the profiled functional is
+# eta_t = PC_R,t' theta_R rather than theta_0 + PC_R,t' theta_R. Zeroing rather
+# than dropping the column keeps the design aligned with the estimator's
+# coefficient labels, which the adapter's contract check and the Jacobian
+# projection both rely on.
+logvar_fitted_vol_design <- function(pcr) {
+  x_mat <- logvar_design_matrix(
+    pcr,
+    PAPER_ANALYSIS_CONTRACT$model$return_pc_cols
+  )
+  x_mat[, PAPER_ANALYSIS_CONTRACT$model$intercept_col] <- 0
+  x_mat
+}
+
 # Baseline mean-equation-slack context shared by the two fitted-volatility
 # drivers (run.R, run_lad.R): the baseline tau, its warm-refined news box, the
-# baseline quadratic system, the (1, PC_R) design matrix, and the Lewbel point
+# baseline quadratic system, the intercept-free PC_R design, and the Lewbel point
 # with its unit-omega baseline feasibility flag. A pure read of the shared
 # products, so both figure drivers assemble one identical baseline context.
 # (logvar_prepare_map_context is the set-map analog, but it also builds a
@@ -15,10 +30,7 @@ logvar_fitted_vol_baseline_context <- function(mean_eq, bounds_tau, inputs) {
   b_tab <- bounds_tau[[paper_tau_key(tau)]]
   stopifnot(!is.null(b_tab))
   qs <- tau_quadratic_system(mean_eq$gamma, tau, mean_eq$moments)
-  x_mat <- logvar_design_matrix(
-    inputs$pcr,
-    PAPER_ANALYSIS_CONTRACT$model$return_pc_cols
-  )
+  x_mat <- logvar_fitted_vol_design(inputs$pcr)
   b_point <- mean_eq$theta_table$point
   point_feasible <- quadratic_point_feasible(qs, b_point)
   list(
@@ -139,8 +151,8 @@ logvar_fitted_vol_envelope <- function(
       response_scale = est$metadata$response_scale,
       sample_id = est$metadata$sample_id, tau = tau,
       estimand = paste(
-        "fitted conditional standard deviation of the consumption-growth",
-        "structural residual"
+        "fitted log conditional variance of the consumption-growth",
+        "structural residual, net of its intercept"
       ),
       envelope = "pointwise fitted-log-variance projection"
     ),

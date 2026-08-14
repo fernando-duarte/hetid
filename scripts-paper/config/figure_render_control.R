@@ -36,6 +36,13 @@ PAPER_FIGURE_RENDER_CONTROL <- list(
   # bounds_by_tau_plot.R, so it needs no knob here and cannot drift from the
   # values above. It is a coord_cartesian zoom and changes no tau, no bound and
   # no tau*.
+  # Slacks for the high-tau fitted-volatility panel, drawn as their own exhibit
+  # rather than folded into the contract's sweep: both sit well above the swept
+  # range, so one panel carrying all of them would flatten the tight slacks into
+  # the point fit. Here rather than beside the contract's tau vectors for the
+  # same reason region_3d$taus is -- analysis_contract.R is one of
+  # BOOTSTRAP_STAGE_CODE_FILES, and which slacks get drawn changes no draw.
+  fitted_volatility_high = list(taus = c(0.5, 0.6)),
   region_3d = list(
     # Slacks drawn by the region figures, in both unit systems and with and
     # without the OLS benchmark; artifact_manifest_region.R turns this vector

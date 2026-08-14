@@ -16,6 +16,23 @@ paper_source_once(paper_path("tests", "support", "harness.R"))
 .test <- paper_test_harness()
 check <- .test$check
 
+# The figure design zeroes the intercept column, so the profiled functional is
+# PC_R' theta_R and the intercept coefficient never reaches the fitted value.
+design_pcr <- matrix(
+  as.numeric(seq_len(2L * length(PAPER_ANALYSIS_CONTRACT$model$return_pc_cols))),
+  nrow = 2L,
+  dimnames = list(NULL, PAPER_ANALYSIS_CONTRACT$model$return_pc_cols)
+)
+design_x <- logvar_fitted_vol_design(design_pcr)
+design_coef <- as.numeric(seq_len(ncol(design_x)))
+check(
+  "figure design drops the intercept from the fitted log variance",
+  all(design_x[, PAPER_ANALYSIS_CONTRACT$model$intercept_col] == 0) &&
+    all(design_x[, colnames(design_pcr)] == design_pcr) &&
+    max(abs(drop(design_x %*% design_coef) -
+      drop(design_pcr %*% design_coef[-1L]))) < 1e-12
+)
+
 # Smooth diagonal coefficient map theta(b) = (b, b). The first design row
 # cancels the two coefficients, exposing why a Cartesian coefficient hull is
 # not a valid fitted-value envelope.
@@ -120,7 +137,7 @@ check(
 # Plot preparation assigns separate groups on either side of an unreliable gap.
 gap_rows <- envelope$data
 gap_rows$lower_status[2] <- "unreliable"
-gap_rows$volatility_point[2] <- NA_real_
+gap_rows$log_variance_point[2] <- NA_real_
 plot_data <- logvar_fitted_vol_plot_data(gap_rows)
 check(
   "unreliable dates split rather than bridge the ribbon",
