@@ -2,6 +2,7 @@
 
 S3method(print,hetid_components)
 S3method(print,hetid_moments)
+S3method(print,hetid_tau0_fit)
 export(HETID_CONSTANTS)
 export(LOG_VARIANCE_CONTROL)
 export(acm_column_name)
