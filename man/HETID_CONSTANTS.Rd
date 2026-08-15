@@ -25,6 +25,8 @@ annualized yields by maturity in years, so the n_hat weights are
 (1:120 months) available from the GitHub source}
 \item{DEGENERACY_TOLERANCE}{Scale-free threshold below which the
 variance positivity diagnostic flags a maturity as degenerate}
+\item{TAU0_POINT_TOLERANCE}{Threshold for treating a tau = 0
+identified set as a point rather than an interval}
 \item{PERCENT_TO_DECIMAL}{Percentage to decimal divisor}
 \item{MONTHS_PER_QUARTER}{Calendar months per quarter (3)}
 \item{MONTHS_PER_YEAR}{Calendar months per year (12), used for

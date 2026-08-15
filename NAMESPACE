@@ -3,6 +3,7 @@
 S3method(print,hetid_components)
 S3method(print,hetid_moments)
 export(HETID_CONSTANTS)
+export(LOG_VARIANCE_CONTROL)
 export(acm_column_name)
 export(align_instrument_sets)
 export(build_general_quadratic_system)
