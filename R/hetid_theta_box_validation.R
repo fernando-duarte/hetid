@@ -53,7 +53,7 @@ validate_hetid_theta_box <- function(x) {
 #'
 #' Bounds are extremes over feasible points, so a lower bound is finite or
 #' \code{-Inf}, an upper bound finite or \code{Inf}, and neither is ever
-#' missing: the search is seeded from a feasible centre.
+#' missing: the search is seeded from a feasible center.
 #'
 #' @param bounds Data frame of bounds
 #' @param arg Element name used in the error message

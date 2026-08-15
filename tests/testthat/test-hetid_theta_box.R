@@ -122,5 +122,5 @@ test_that("print reports the slack and the unbounded side count", {
   box$arg_upper[1, ] <- NA_real_
   expect_output(print(box), "hetid_theta_box")
   expect_output(print(box), "unbounded sides: 1")
-  expect_invisible(print(box))
+  expect_output(expect_invisible(print(box)))
 })

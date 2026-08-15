@@ -19,7 +19,7 @@ compute_identified_set_box(
 component internally}
 
 \item{n_grid}{Odd number of points per gridded coordinate, so the grid
-contains the centre; defaults to \code{IDENTIFIED_SET_CONTROL$N_GRID}}
+contains the center; defaults to \code{IDENTIFIED_SET_CONTROL$N_GRID}}
 
 \item{center}{Optional numeric length-I center for the search,
 required when the fit carries no \eqn{\tau = 0} point}
@@ -39,7 +39,8 @@ bound for coordinate k, \code{NA} where that bound is infinite}
 \code{upper}, one row per element of \code{fit$beta1r} (the intercept
 and each column of \code{x})}
 \item{beta1_arg_lower, beta1_arg_upper}{Row k holds the theta whose
-image attains that bound, \code{NA} where it is infinite}
+image attains that bound exactly, or to rounding for rows flagged
+in \code{null_loading}; \code{NA} where it is infinite}
 \item{w1, w2, quadratic}{The pieces the box was built from, so a
 downstream profile cannot be run against another system}
 }

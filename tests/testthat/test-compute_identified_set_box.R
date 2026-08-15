@@ -18,7 +18,7 @@ test_that("tau outside the unit interval is rejected", {
   )
 })
 
-test_that("an even grid is refused because it would miss the centre", {
+test_that("an even grid is refused because it would miss the center", {
   expect_error(
     compute_identified_set_box(box_fit(), tau = 0.05, n_grid = 10L),
     "odd",
@@ -26,7 +26,7 @@ test_that("an even grid is refused because it would miss the centre", {
   )
 })
 
-test_that("a fit without a tau = 0 point demands an explicit centre", {
+test_that("a fit without a tau = 0 point demands an explicit center", {
   fit <- box_fit()
   fit$point <- NULL
   fit["beta1"] <- list(NULL) # $<-NULL deletes the key and then partial-matches beta1r
@@ -37,7 +37,7 @@ test_that("a fit without a tau = 0 point demands an explicit centre", {
   )
 })
 
-test_that("an infeasible centre is refused", {
+test_that("an infeasible center is refused", {
   expect_error(
     compute_identified_set_box(
       box_fit(),
@@ -155,6 +155,16 @@ test_that("a fit whose beta2r rows are permuted is refused", {
   expect_error(
     compute_identified_set_box(fit, tau = 0.05, n_grid = 11L),
     "positional",
+    class = "hetid_error_bad_argument"
+  )
+})
+
+test_that("a fit with a non-finite structural coefficient is refused", {
+  fit <- box_fit()
+  fit$beta1r[[2L]] <- NA_real_
+  expect_error(
+    compute_identified_set_box(fit, tau = 0.05, n_grid = 11L),
+    "beta1r",
     class = "hetid_error_bad_argument"
   )
 })

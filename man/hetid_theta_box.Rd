@@ -4,7 +4,7 @@
 \alias{hetid_theta_box}
 \title{The hetid_theta_box Container}
 \description{
-Constructor and validator for the identified-set box at a slack
+Constructor for the identified-set box at a slack
 \eqn{\tau}. The box carries the reduced-form pieces it was built from,
 so a downstream profile cannot be run against a different system by
 accident.

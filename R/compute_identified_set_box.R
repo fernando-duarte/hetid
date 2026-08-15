@@ -69,7 +69,7 @@
 #' @param tau Scalar slack in \code{(0, 1)}. Expanded to one value per
 #'   component internally
 #' @param n_grid Odd number of points per gridded coordinate, so the grid
-#'   contains the centre; defaults to \code{IDENTIFIED_SET_CONTROL$N_GRID}
+#'   contains the center; defaults to \code{IDENTIFIED_SET_CONTROL$N_GRID}
 #' @param center Optional numeric length-I center for the search,
 #'   required when the fit carries no \eqn{\tau = 0} point
 #' @param null_loading_rtol Scalar in \code{[0, 1)}; defaults to
@@ -85,7 +85,8 @@
 #'     \code{upper}, one row per element of \code{fit$beta1r} (the intercept
 #'     and each column of \code{x})}
 #'   \item{beta1_arg_lower, beta1_arg_upper}{Row k holds the theta whose
-#'     image attains that bound, \code{NA} where it is infinite}
+#'     image attains that bound exactly, or to rounding for rows flagged
+#'     in \code{null_loading}; \code{NA} where it is infinite}
 #'   \item{w1, w2, quadratic}{The pieces the box was built from, so a
 #'     downstream profile cannot be run against another system}
 #' }
@@ -128,7 +129,7 @@ compute_identified_set_box <- function(fit, tau,
   assert_scalar_integer_in_range(n_grid, "n_grid", 3, .Machine$integer.max)
   assert_bad_argument_ok(
     n_grid %% 2L == 1L,
-    "n_grid must be odd so the grid contains the centre",
+    "n_grid must be odd so the grid contains the center",
     arg = "n_grid"
   )
   assert_scalar_finite(null_loading_rtol, "null_loading_rtol")
@@ -139,7 +140,7 @@ compute_identified_set_box <- function(fit, tau,
   )
 
   n_components <- ncol(fit$w2)
-  validate_box_fit(fit, n_components)
+  validate_box_fit(fit)
   built <- build_quadratic_system(
     fit$gamma, rep(tau, n_components), fit$moments
   )

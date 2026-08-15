@@ -50,9 +50,9 @@ identified_set_basis <- function(components, center, quadratic) {
 #' attained on the window boundary means the set continues past it, so
 #' those coordinates double and the sweep repeats. Bounds accumulate
 #' across passes, so the result only ever grows. The state starts at the
-#' centre, a feasible point whose objective values a hull endpoint can
+#' center, a feasible point whose objective values a hull endpoint can
 #' only improve on, so a constant objective reports its value with the
-#' centre as witness rather than an empty search.
+#' center as witness rather than an empty search.
 #'
 #' Growth runs in two phases. The first \code{n_primary} objectives drive
 #' the window first, along exactly the path they would take alone, while
@@ -60,7 +60,10 @@ identified_set_basis <- function(components, center, quadratic) {
 #' the remaining objectives extend the window. Grids re-laid at a wider
 #' window are not nested in the narrower ones, so letting later objectives
 #' steer the first phase could change, and even narrow, what the leading
-#' ones find. Each phase has \code{MAX_GROWTH} passes.
+#' ones find. Each phase has \code{MAX_GROWTH} passes. The second phase is
+#' a guard the package's fixtures do not trigger, and when the first phase
+#' ends on its pass budget with primary flags still raised, the second may
+#' also carry that primary growth on.
 #'
 #' @param center Numeric feasible center
 #' @param basis Numeric I x I frame
@@ -136,7 +139,7 @@ merge_box_state <- function(best, swept) {
 #' identically zero is unbounded on both sides. The witness therefore
 #' certifies existence and its direction is not used; a zero objective is
 #' constant and keeps its finite value. Search failure never reaches here
-#' as \code{NA}: the state is seeded from the feasible centre.
+#' as \code{NA}: the state is seeded from the feasible center.
 #'
 #' @param found Running state from \code{identified_set_search()}
 #' @param quadratic Quadratic form list

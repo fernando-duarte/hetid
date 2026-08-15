@@ -95,7 +95,7 @@ test_that("imposing the null makes every beta1 row a point", {
 })
 
 test_that("a numerically zero loading leaves its coefficient a point", {
-  # centring both blocks makes the intercept loading a zero carrying rounding
+  # centering both blocks makes the intercept loading a zero carrying rounding
   # noise; snapping it keeps the intercept a point even when the set is not
   d <- simulate_box_dgp(collinear = TRUE)
   x <- sweep(d$x, 2, colMeans(d$x))
@@ -107,6 +107,15 @@ test_that("a numerically zero loading leaves its coefficient a point", {
   expect_identical(
     attr(bounded, "null_loading"),
     c("(Intercept)" = TRUE, x1 = FALSE, x2 = FALSE)
+  )
+  # the snapped row's witness maps through the unsnapped map to the same
+  # value up to the loading it discarded, which is rounding noise
+  expect_equal(
+    unname(recover_structural_coefficients(
+      fit$beta1r, fit$beta2r, bounded$beta1_arg_lower[1L, ]
+    )[1L]),
+    bounded$beta1_bounds$lower[1L],
+    tolerance = 1e-10
   )
   unbounded <- compute_identified_set_box(fit, tau = 0.3, n_grid = 11L)
   expect_identical(unbounded$beta1_bounds$lower[1L], unname(fit$beta1r[1L]))

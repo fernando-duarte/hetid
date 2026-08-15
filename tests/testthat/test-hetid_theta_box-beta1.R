@@ -22,7 +22,7 @@ test_that("validation rejects non-numeric beta1 bounds", {
 })
 
 test_that("validation rejects a missing beta1 bound", {
-  # the search is seeded from a feasible centre, so a bound is finite or
+  # the search is seeded from a feasible center, so a bound is finite or
   # infinite and never missing; a missing one would also dodge the witness rule
   box <- build_box()
   box$beta1_bounds$upper[2L] <- NA_real_

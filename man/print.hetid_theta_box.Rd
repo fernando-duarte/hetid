@@ -28,6 +28,7 @@ colnames(y2) <- c("news1", "news2")
 y1 <- drop(0.3 + x \%*\% c(0.2, -0.1) + y2 \%*\% c(0.8, -0.5) + rnorm(n_obs))
 
 fit <- compute_tau0_system(y1, y2, x, z)
-print(compute_identified_set_box(fit, tau = 0.05))
-compute_identified_set_box(fit, tau = 0.05)$beta1_bounds
+box <- compute_identified_set_box(fit, tau = 0.05)
+print(box)
+box$beta1_bounds
 }

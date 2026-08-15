@@ -1,7 +1,7 @@
 #' Inputs of the Identified-Set Box Search
 #'
 #' Internals of \code{compute_identified_set_box()}: the check on the fit
-#' the structural block relies on, the search centre, the linear
+#' the structural block relies on, the search center, the linear
 #' functionals the sweep bounds, the component labels, and how one block
 #' of the sweep's result is read back into a bounds frame.
 #'
@@ -22,10 +22,9 @@ NULL
 #' wrong map.
 #'
 #' @param fit A \code{hetid_tau0_fit}
-#' @param n_components Theta-axis dimension
 #' @return Invisibly TRUE
 #' @noRd
-validate_box_fit <- function(fit, n_components) {
+validate_box_fit <- function(fit) {
   validate_hetid_tau0_fit(fit)
   assert_numeric_finite_values(fit$beta1r, "beta1r")
   assert_numeric_finite_values(fit$beta2r, "beta2r")
@@ -84,7 +83,7 @@ resolve_box_center <- function(fit, center, quadratic, n_components) {
 #' columns are the objectives and the offset \eqn{\beta_1^R} is added back
 #' when the bounds are read. A loading column that is zero up to rounding
 #' is snapped to exact zero, so the coefficient it belongs to is reported
-#' as the point it is (an intercept when both blocks are centred) rather
+#' as the point it is (an intercept when both blocks are centered) rather
 #' than as an interval of rounding width, or as unbounded when the set is.
 #' The tolerance is relative to each row's own largest loading, since a
 #' row of \eqn{\beta_2^R} is one regression's coefficient vector and that

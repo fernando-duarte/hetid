@@ -10,7 +10,7 @@
 #' @format List containing identified-set search controls:
 #' \describe{
 #'   \item{N_GRID}{Points per gridded coordinate (41L); must be odd so the
-#'     grid contains the centre. The box is an
+#'     grid contains the center. The box is an
 #'     inner approximation whose gridded coordinates carry the resolution
 #'     error, so raising this tightens the box and costs
 #'     \code{N_GRID^(I-1)} hull solves per coordinate}

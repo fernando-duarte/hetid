@@ -35,7 +35,7 @@ test_that("the sweep recovers closed-form extremes on an ellipsoid", {
   expect_true(all(found$upper <= exact$upper + 1e-9))
   expect_true(all(found$lower <= exact$lower + 2e-2))
   expect_true(all(found$upper >= exact$upper - 2e-2))
-  # the zero objective is the point 0, attained at the centre
+  # the zero objective is the point 0, attained at the center
   expect_identical(found$lower[5L], 0)
   expect_identical(found$upper[5L], 0)
   expect_equal(found$arg_lower[5L, ], shape$center)

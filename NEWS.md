@@ -69,7 +69,7 @@
   coefficient stays a point even when the set is unbounded; once a recession
   direction is found, every coordinate and every structural coefficient with a
   non-zero loading is unbounded. `n_grid` must now be odd, so the grid always
-  contains the search centre, and the print method counts unbounded sides
+  contains the search center, and the print method counts unbounded sides
   rather than rows.
   `profile_log_variance_set()` then fits the log-variance equation across that set
   through the same estimator registry, reporting the range each coefficient spans.
