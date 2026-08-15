@@ -17,3 +17,13 @@ simulate_tau0_dgp <- function(t_obs = 400, seed = 42) {
   x_var <- cbind(v1 = rnorm(t_obs), v2 = rnorm(t_obs))
   list(y1 = y1, y2 = y2, x = x, x_var = x_var, z = z, theta_true = theta_true)
 }
+
+# multiplicative chi-square response on exp(eta), the shape the log-variance
+# equation feeds fit_log_variance; shared by Tasks 7 and 9-11
+simulate_logvar_data <- function(t_obs = 300, seed = 7) {
+  set.seed(seed)
+  x <- cbind(v1 = rnorm(t_obs), v2 = rnorm(t_obs))
+  eta <- drop(cbind(1, x) %*% c(-0.5, 0.6, -0.4))
+  y <- exp(eta) * rchisq(t_obs, df = 1)
+  list(y = y, x = x)
+}

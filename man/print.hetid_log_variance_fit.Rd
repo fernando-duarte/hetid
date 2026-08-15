@@ -17,3 +17,12 @@
 \description{
 Print a hetid_log_variance_fit Object
 }
+\examples{
+set.seed(1)
+t_obs <- 80
+x <- cbind(v1 = rnorm(t_obs), v2 = rnorm(t_obs))
+eta <- drop(cbind(1, x) \%*\% c(-0.5, 0.6, -0.4))
+y <- exp(eta) * rchisq(t_obs, df = 1)
+fit <- fit_log_variance(y, x)
+print(fit)
+}
