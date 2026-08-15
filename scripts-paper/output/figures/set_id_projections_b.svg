@@ -165,7 +165,7 @@
 <line x1='246.51' y1='13.31' x2='260.77' y2='13.31' style='stroke-width: 1.50; stroke: #26818E;' />
 <line x1='312.00' y1='13.31' x2='326.26' y2='13.31' style='stroke-width: 1.50; stroke: #5DC863;' />
 <line x1='377.49' y1='13.31' x2='391.75' y2='13.31' style='stroke-width: 0.75; stroke: #666666; stroke-dasharray: 4.00,4.00;' />
-<circle cx='124.86' cy='13.31' r='1.78' style='stroke-width: 1.20; stroke: #DC143C; fill: #FFFFFF;' />
+<circle cx='124.86' cy='13.31' r='2.32' style='stroke-width: 1.20; stroke: #DC143C; fill: #FFFFFF;' />
 <text x='139.11' y='16.14' style='font-size: 7.92px; font-family: "Arial";' textLength='87.67px' lengthAdjust='spacingAndGlyphs'>{\footnotesize $\tau = 0$}</text>
 <text x='198.01' y='16.14' style='font-size: 7.92px; font-family: "Arial";' textLength='98.66px' lengthAdjust='spacingAndGlyphs'>{\footnotesize $\tau = 0.05$}</text>
 <text x='267.89' y='16.14' style='font-size: 7.92px; font-family: "Arial";' textLength='94.27px' lengthAdjust='spacingAndGlyphs'>{\footnotesize $\tau = 0.1$}</text>

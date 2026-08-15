@@ -32,6 +32,14 @@ local({
   })
   ols_col <- PAPER_FIGURE_STYLE$region$ols_point
   ols_pch <- PAPER_FIGURE_STYLE$region$ols_pch
+  # One definition per marker, read by both the panel and its legend key, so a
+  # key cannot drift from the marker it names. legend() takes point size and
+  # border width through pt.cex/pt.lwd rather than cex/lwd, and pt.cex defaults
+  # to the text cex: leaving it unset drew both keys at 1.0 against markers at
+  # 1.3, and a single pt.lwd drew the OLS key's border at twice its panel width.
+  marker_cex <- 1.3
+  tau0_lwd <- 1.6
+  ols_lwd <- 0.8
 
   render_units <- function(units) {
     geom <- projection_panel_geometry(units, taus, panels, axes, render)
@@ -97,12 +105,12 @@ local({
         }
         graphics::points(point0[p$x], point0[p$y],
           pch = 21, bg = "white",
-          col = tau0_col, cex = 1.3, lwd = 1.6
+          col = tau0_col, cex = marker_cex, lwd = tau0_lwd
         )
         if (show_ols) {
           graphics::points(ols_point[p$x], ols_point[p$y],
             pch = ols_pch, bg = ols_col,
-            col = "black", cex = 1.3, lwd = 0.8
+            col = "black", cex = marker_cex, lwd = ols_lwd
           )
         }
       }
@@ -145,7 +153,12 @@ local({
         lwd = c(if (show_ols) NA, NA, 2, 2, 2, 1),
         pch = c(if (show_ols) ols_pch, 21, NA, NA, NA, NA),
         pt.bg = c(if (show_ols) ols_col, "white", NA, NA, NA, NA),
-        pt.lwd = 1.6
+        # positional like the five vectors above; the trailing entries are line
+        # keys, where pch is NA and these are ignored
+        pt.cex = marker_cex,
+        pt.lwd = c(
+          if (show_ols) ols_lwd, tau0_lwd, rep(tau0_lwd, length(tcols) + 1L)
+        )
       )
     }
     for (ols in REGION_FIGURE_OLS) {

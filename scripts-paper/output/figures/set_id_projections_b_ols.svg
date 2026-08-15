@@ -168,8 +168,8 @@
 <line x1='275.96' y1='13.31' x2='290.21' y2='13.31' style='stroke-width: 1.50; stroke: #26818E;' />
 <line x1='341.45' y1='13.31' x2='355.71' y2='13.31' style='stroke-width: 1.50; stroke: #5DC863;' />
 <line x1='406.94' y1='13.31' x2='421.20' y2='13.31' style='stroke-width: 0.75; stroke: #666666; stroke-dasharray: 4.00,4.00;' />
-<polygon points='95.41,15.54 97.64,13.31 95.41,11.07 93.18,13.31 ' style='stroke-width: 1.20; fill: #FF8C00;' />
-<circle cx='154.31' cy='13.31' r='1.78' style='stroke-width: 1.20; stroke: #DC143C; fill: #FFFFFF;' />
+<polygon points='95.41,16.21 98.31,13.31 95.41,10.40 92.51,13.31 ' style='stroke-width: 0.60; fill: #FF8C00;' />
+<circle cx='154.31' cy='13.31' r='2.32' style='stroke-width: 1.20; stroke: #DC143C; fill: #FFFFFF;' />
 <text x='109.67' y='16.14' style='font-size: 7.92px; font-family: "Arial";' textLength='68.11px' lengthAdjust='spacingAndGlyphs'>{\footnotesize OLS}</text>
 <text x='168.56' y='16.14' style='font-size: 7.92px; font-family: "Arial";' textLength='87.67px' lengthAdjust='spacingAndGlyphs'>{\footnotesize $\tau = 0$}</text>
 <text x='227.46' y='16.14' style='font-size: 7.92px; font-family: "Arial";' textLength='98.66px' lengthAdjust='spacingAndGlyphs'>{\footnotesize $\tau = 0.05$}</text>
