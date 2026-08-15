@@ -8,6 +8,10 @@ new_hetid_theta_box(
   bounds,
   arg_lower,
   arg_upper,
+  beta1_bounds,
+  beta1_arg_lower,
+  beta1_arg_upper,
+  null_loading,
   w1,
   w2,
   quadratic,
@@ -21,7 +25,17 @@ new_hetid_theta_box(
 
 \item{arg_lower, arg_upper}{Numeric I x I matrices whose row k holds the
 theta that attains the bound for coordinate k, or \code{NA} when that
-bound is infinite or was never reached}
+bound is infinite}
+
+\item{beta1_bounds}{Data frame with \code{coef}, \code{lower},
+\code{upper}, one row per structural coefficient}
+
+\item{beta1_arg_lower, beta1_arg_upper}{Numeric p x I matrices whose row
+k holds the theta whose image attains the structural bound k, or
+\code{NA} when it is infinite}
+
+\item{null_loading}{Named logical of length p, TRUE where the structural
+coefficient's loading was treated as zero}
 
 \item{w1, w2}{Reduced-form pieces the box was built from}
 

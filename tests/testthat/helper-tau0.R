@@ -45,6 +45,12 @@ simulate_box_dgp <- function(collinear = FALSE, t_obs = 200, seed = 42) {
   list(y1 = y1, y2 = y2, x = x, x_var = x_var, z = z, theta_true = theta_true)
 }
 
+# tau = 0 fit of the three-news DGP, the input every box test starts from
+box_fit <- function(collinear = FALSE) {
+  d <- simulate_box_dgp(collinear = collinear)
+  compute_tau0_system(d$y1, d$y2, d$x, d$z)
+}
+
 # multiplicative chi-square response on exp(eta), the shape the log-variance
 # equation feeds fit_log_variance; shared by Tasks 7 and 9-11
 simulate_logvar_data <- function(t_obs = 300, seed = 7) {

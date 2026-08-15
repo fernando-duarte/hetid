@@ -9,12 +9,15 @@
 #'
 #' @format List containing identified-set search controls:
 #' \describe{
-#'   \item{N_GRID}{Points per gridded coordinate (41L). The box is an
+#'   \item{N_GRID}{Points per gridded coordinate (41L); must be odd so the
+#'     grid contains the centre. The box is an
 #'     inner approximation whose gridded coordinates carry the resolution
 #'     error, so raising this tightens the box and costs
 #'     \code{N_GRID^(I-1)} hull solves per coordinate}
-#'   \item{MAX_GROWTH}{Maximum extent-doubling passes before the search
-#'     gives up and reports the coordinate as unbounded (12L)}
+#'   \item{MAX_GROWTH}{Maximum extent-doubling passes per growth phase
+#'     before the search stops growing and keeps the finite bounds it has
+#'     found (12L); unboundedness is reported only on a recession
+#'     direction, never on an exhausted budget}
 #'   \item{N_DIR}{Unit directions sampled when searching for a recession
 #'     direction (20000L)}
 #'   \item{DIR_SEED}{Seed for that direction sample (20260815L). Fixed so
@@ -27,6 +30,16 @@
 #'     rounding alone}
 #'   \item{SEARCH_LIMIT}{Largest half-width, in slab-frame units, the
 #'     growth loop will expand to (4096)}
+#'   \item{NULL_LOADING_RTOL}{Default for \code{null_loading_rtol} in
+#'     \code{compute_identified_set_box()} (\code{sqrt(.Machine$double.eps)}).
+#'     A structural loading column with no entry above this fraction of the
+#'     largest loading in its own row of \code{beta2r} is treated as
+#'     exactly zero. Such a column is rounding noise on a known zero, and
+#'     left in it would turn a point-identified coefficient into an
+#'     interval, or into an unbounded one when the set is unbounded. The
+#'     rule assumes the columns of \code{x} are comparably scaled, as
+#'     principal components and own lags are; the box records the columns
+#'     it snapped as \code{null_loading}}
 #' }
 #'
 #' @return A named list of identified-set search controls (the elements
@@ -35,6 +48,7 @@
 #' @examples
 #' IDENTIFIED_SET_CONTROL$N_GRID
 #' IDENTIFIED_SET_CONTROL$FEAS_TOL
+#' IDENTIFIED_SET_CONTROL$NULL_LOADING_RTOL
 #' @export
 IDENTIFIED_SET_CONTROL <- list(
   N_GRID = 41L,
@@ -43,5 +57,6 @@ IDENTIFIED_SET_CONTROL <- list(
   DIR_SEED = 20260815L,
   N_POINTS = 5L,
   FEAS_TOL = 1e-10,
-  SEARCH_LIMIT = 4096
+  SEARCH_LIMIT = 4096,
+  NULL_LOADING_RTOL = sqrt(.Machine$double.eps)
 )

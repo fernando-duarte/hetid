@@ -9,6 +9,7 @@ test_that("identified-set controls hold their documented values", {
   expect_identical(IDENTIFIED_SET_CONTROL$N_POINTS, 5L)
   expect_identical(IDENTIFIED_SET_CONTROL$FEAS_TOL, 1e-10)
   expect_identical(IDENTIFIED_SET_CONTROL$SEARCH_LIMIT, 4096)
+  expect_identical(IDENTIFIED_SET_CONTROL$NULL_LOADING_RTOL, sqrt(.Machine$double.eps))
 })
 
 test_that("identified-set controls carry no undocumented entries", {
@@ -16,7 +17,7 @@ test_that("identified-set controls carry no undocumented entries", {
     IDENTIFIED_SET_CONTROL,
     c(
       "N_GRID", "MAX_GROWTH", "N_DIR", "DIR_SEED", "N_POINTS", "FEAS_TOL",
-      "SEARCH_LIMIT"
+      "SEARCH_LIMIT", "NULL_LOADING_RTOL"
     )
   )
 })

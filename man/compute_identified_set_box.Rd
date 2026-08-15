@@ -8,7 +8,8 @@ compute_identified_set_box(
   fit,
   tau,
   n_grid = IDENTIFIED_SET_CONTROL$N_GRID,
-  center = NULL
+  center = NULL,
+  null_loading_rtol = IDENTIFIED_SET_CONTROL$NULL_LOADING_RTOL
 )
 }
 \arguments{
@@ -17,11 +18,16 @@ compute_identified_set_box(
 \item{tau}{Scalar slack in \code{(0, 1)}. Expanded to one value per
 component internally}
 
-\item{n_grid}{Points per gridded coordinate; defaults to
-\code{IDENTIFIED_SET_CONTROL$N_GRID}}
+\item{n_grid}{Odd number of points per gridded coordinate, so the grid
+contains the centre; defaults to \code{IDENTIFIED_SET_CONTROL$N_GRID}}
 
 \item{center}{Optional numeric length-I center for the search,
 required when the fit carries no \eqn{\tau = 0} point}
+
+\item{null_loading_rtol}{Scalar in \code{[0, 1)}; defaults to
+\code{IDENTIFIED_SET_CONTROL$NULL_LOADING_RTOL}. A structural loading
+column with no entry above this fraction of its row's largest loading
+is treated as exactly zero; \code{0} snaps only exact zeros}
 }
 \value{
 A \code{hetid_theta_box} object:
@@ -29,17 +35,26 @@ A \code{hetid_theta_box} object:
 \item{bounds}{Data frame with \code{coef}, \code{lower}, \code{upper}}
 \item{arg_lower, arg_upper}{Row k holds the theta that attains the
 bound for coordinate k, \code{NA} where that bound is infinite}
+\item{beta1_bounds}{Data frame with \code{coef}, \code{lower},
+\code{upper}, one row per element of \code{fit$beta1r} (the intercept
+and each column of \code{x})}
+\item{beta1_arg_lower, beta1_arg_upper}{Row k holds the theta whose
+image attains that bound, \code{NA} where it is infinite}
 \item{w1, w2, quadratic}{The pieces the box was built from, so a
 downstream profile cannot be run against another system}
 }
+The attribute \code{null_loading} is a named logical, one entry per
+structural coefficient, TRUE where its loading was treated as zero.
 }
 \description{
 Computes the coordinate bounds of the identified set for the
-mean-equation news coefficients at a slack \eqn{\tau > 0}, from a
-\code{hetid_tau0_fit}. The set is
-\eqn{\{b : b' A_i b + b_i'b + c_i \le 0\}}, and the returned bounds are
-the extremes of each coordinate over the part of that set the search
-reaches.
+mean-equation news coefficients at a slack \eqn{\tau > 0}, and the
+bounds of the structural coefficients
+\eqn{\beta_1(\theta) = \beta_1^R - (\beta_2^R)'\theta} over the same
+set, from a \code{hetid_tau0_fit}. The set is
+\eqn{\{\theta : \theta' A_i \theta + b_i'\theta + c_i \le 0\}}, and the
+returned bounds are the extremes of each coordinate, and of each
+structural coefficient, over the part of that set the search reaches.
 }
 \details{
 The search grids all but one coordinate and solves the remaining one
@@ -59,6 +74,30 @@ The center is the \eqn{\tau = 0} point, which lies in every
 \eqn{\Theta(\tau)} because each constraint relaxes as \eqn{\tau} grows.
 That is a statement about exact arithmetic, so the point is checked
 against the assembled system before it is used rather than assumed.
+
+The structural block is the affine image of the same set under
+\code{\link{recover_structural_coefficients}}, so its bounds are the
+extremes of \eqn{p} linear functionals of \eqn{\theta}. A linear
+functional is affine along any line and therefore attains its extreme
+on a line at a hull endpoint, exactly as a coordinate does, so the
+block is read off the same line hulls. The window grows for the
+coordinates first, along exactly the path they take on their own, and
+only then for the structural coefficients, so the theta block equals a
+coordinates-only search after that first phase and can only widen
+afterwards. A loading column that is zero up to rounding, with no entry
+above \code{null_loading_rtol} times its row's largest loading, is
+treated as exactly zero and flagged in the \code{null_loading}
+attribute: the structural bounds are then those of the map with that
+column zeroed, and the coefficient is reported as the point
+\code{fit$beta1r[k]}, which the unsnapped map reproduces to rounding.
+The rule assumes the columns of \code{x} are comparably scaled; with a
+column scaled up by a factor of order \code{1 / null_loading_rtol} its
+genuine loading would be snapped too, so pass \code{null_loading_rtol =
+0} to snap exact zeros only. When \code{fit} was built with
+\code{impose_null = TRUE} every loading is exactly zero and every
+structural row is such a point at any tolerance. When a recession
+direction is found, every coordinate and every structural coefficient
+with a non-zero loading is unbounded on both sides.
 }
 \section{Interpretation}{
 
@@ -69,6 +108,10 @@ membership test. Bounds tighten as \code{n_grid} rises, and a spike
 narrower than roughly one grid step is missed, which matters only when
 \eqn{\tau} sits very close to the slack at which the set stops being
 bounded.
+The structural block is likewise the bounding box of the image of a
+non-convex set: a vector of structural coefficients inside it need not
+be attainable jointly, and the only membership check is to map a
+feasible \eqn{\theta} through \code{\link{recover_structural_coefficients}}.
 }
 
 \section{Maturity Indexing Convention}{
@@ -113,8 +156,11 @@ y1 <- drop(0.3 + x \%*\% c(0.2, -0.1) + y2 \%*\% c(0.8, -0.5) + rnorm(n_obs))
 fit <- compute_tau0_system(y1, y2, x, z)
 box <- compute_identified_set_box(fit, tau = 0.05)
 box$bounds
+box$beta1_bounds
 }
 \seealso{
 \code{\link{compute_tau0_system}} for the fit this consumes,
-\code{\link{make_system_checker}} for membership of the set itself
+\code{\link{make_system_checker}} for membership of the set itself,
+\code{\link{recover_structural_coefficients}} for the map behind the
+structural block
 }

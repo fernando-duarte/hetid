@@ -3,11 +3,6 @@
 # the tau = 0 point, nests in tau, never shrinks under refinement) and the
 # rejections that keep it honest.
 
-box_fit <- function(collinear = FALSE) {
-  d <- simulate_box_dgp(collinear = collinear)
-  compute_tau0_system(d$y1, d$y2, d$x, d$z)
-}
-
 test_that("tau = 0 is rejected rather than searched", {
   expect_error(
     compute_identified_set_box(box_fit(), tau = 0),
@@ -23,10 +18,18 @@ test_that("tau outside the unit interval is rejected", {
   )
 })
 
+test_that("an even grid is refused because it would miss the centre", {
+  expect_error(
+    compute_identified_set_box(box_fit(), tau = 0.05, n_grid = 10L),
+    "odd",
+    class = "hetid_error_bad_argument"
+  )
+})
+
 test_that("a fit without a tau = 0 point demands an explicit centre", {
   fit <- box_fit()
   fit$point <- NULL
-  fit$beta1 <- NULL
+  fit["beta1"] <- list(NULL) # $<-NULL deletes the key and then partial-matches beta1r
   expect_error(
     compute_identified_set_box(fit, tau = 0.05, n_grid = 11L),
     "supply center",
@@ -103,8 +106,8 @@ test_that("an unbounded set reports infinite sides, not a large box", {
   # a recession direction exists and the honest answer is infinite
   fit <- box_fit(collinear = TRUE)
   box <- compute_identified_set_box(fit, tau = 0.3, n_grid = 11L)
-  expect_true(any(!is.finite(box$bounds$lower)))
-  expect_true(any(!is.finite(box$bounds$upper)))
+  expect_true(all(!is.finite(box$bounds$lower)))
+  expect_true(all(!is.finite(box$bounds$upper)))
   expect_true(all(is.na(box$arg_lower[!is.finite(box$bounds$lower), ])))
 })
 
@@ -123,4 +126,35 @@ test_that("the boundary returns the box visibly", {
   expect_true(withVisible(
     compute_identified_set_box(fit, tau = 0.05, n_grid = 11L)
   )$visible)
+})
+
+test_that("the structural block works when p differs from I", {
+  # two news columns and an intercept plus two regressors: p = 3, I = 2, so
+  # a block that confused the two axes could not pass
+  d <- simulate_tau0_dgp()
+  fit <- compute_tau0_system(d$y1, d$y2, d$x, d$z)
+  box <- compute_identified_set_box(fit, tau = 0.05, n_grid = 11L)
+  checker <- make_system_checker(box$quadratic)
+  expect_identical(dim(box$beta1_arg_lower), c(3L, 2L))
+  expect_identical(dim(box$arg_lower), c(2L, 2L))
+  for (k in 1:3) {
+    expect_lte(max(checker(box$beta1_arg_lower[k, ])), IDENTIFIED_SET_CONTROL$FEAS_TOL)
+    expect_equal(
+      unname(recover_structural_coefficients(
+        fit$beta1r, fit$beta2r, box$beta1_arg_upper[k, ]
+      )[k]),
+      box$beta1_bounds$upper[k],
+      tolerance = 1e-10
+    )
+  }
+})
+
+test_that("a fit whose beta2r rows are permuted is refused", {
+  fit <- box_fit()
+  fit$beta2r <- fit$beta2r[c(2, 1, 3), ]
+  expect_error(
+    compute_identified_set_box(fit, tau = 0.05, n_grid = 11L),
+    "positional",
+    class = "hetid_error_bad_argument"
+  )
 })

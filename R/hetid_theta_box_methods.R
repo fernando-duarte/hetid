@@ -39,13 +39,28 @@ assert_hetid_theta_box <- function(x, arg = "box") {
 #'
 #' fit <- compute_tau0_system(y1, y2, x, z)
 #' print(compute_identified_set_box(fit, tau = 0.05))
+#' compute_identified_set_box(fit, tau = 0.05)$beta1_bounds
 print.hetid_theta_box <- function(x, ...) {
-  unbounded <- sum(!is.finite(x$bounds$lower) | !is.finite(x$bounds$upper))
+  sides <- function(bounds) {
+    sum(!is.finite(bounds$lower)) + sum(!is.finite(bounds$upper))
+  }
+  null_loading <- attr(x, "null_loading")
+  zeroed <- if (any(null_loading)) {
+    paste(names(null_loading)[null_loading], collapse = ", ")
+  } else {
+    "none"
+  }
   cat("<hetid_theta_box>\n")
   cat("  slack (tau): ", attr(x, "tau"), "\n", sep = "")
   cat("  observations: ", attr(x, "n_obs"), "\n", sep = "")
   cat("  components (theta axis): ", attr(x, "n_components"), "\n", sep = "")
+  cat(
+    "  structural coefficients (beta1 axis): ", nrow(x$beta1_bounds), "\n",
+    sep = ""
+  )
   cat("  grid points per coordinate: ", attr(x, "n_grid"), "\n", sep = "")
-  cat("  unbounded sides: ", unbounded, "\n", sep = "")
+  cat("  unbounded sides: ", sides(x$bounds), "\n", sep = "")
+  cat("  unbounded beta1 sides: ", sides(x$beta1_bounds), "\n", sep = "")
+  cat("  structural loadings treated as zero: ", zeroed, "\n", sep = "")
   invisible(x)
 }

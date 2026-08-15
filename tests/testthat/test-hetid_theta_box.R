@@ -1,37 +1,6 @@
 # Container validation for hetid_theta_box: one rejection per branch, so a
 # malformed box cannot reach a downstream profile.
 
-make_box_parts <- function(n_components = 2L, n_obs = 40L) {
-  set.seed(42)
-  w2 <- matrix(rnorm(n_obs * n_components), n_obs, n_components)
-  colnames(w2) <- paste0("news", seq_len(n_components))
-  list(
-    bounds = data.frame(
-      coef = colnames(w2),
-      lower = rep(-1, n_components),
-      upper = rep(1, n_components),
-      row.names = NULL
-    ),
-    arg_lower = matrix(0, n_components, n_components),
-    arg_upper = matrix(0, n_components, n_components),
-    w1 = rnorm(n_obs),
-    w2 = w2,
-    quadratic = list(
-      A_i = list(diag(n_components)),
-      b_i = list(rep(0, n_components)),
-      c_i = -1
-    ),
-    tau = 0.05,
-    n_grid = 21L,
-    n_obs = n_obs
-  )
-}
-
-build_box <- function(...) {
-  parts <- utils::modifyList(make_box_parts(), list(...))
-  do.call(new_hetid_theta_box, parts)
-}
-
 test_that("constructor returns a validated container", {
   box <- build_box()
   expect_s3_class(box, "hetid_theta_box")

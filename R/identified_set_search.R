@@ -49,32 +49,61 @@ identified_set_basis <- function(components, center, quadratic) {
 #' Each pass sweeps every free coordinate at the current window. A bound
 #' attained on the window boundary means the set continues past it, so
 #' those coordinates double and the sweep repeats. Bounds accumulate
-#' across passes, so the result only ever grows.
+#' across passes, so the result only ever grows. The state starts at the
+#' centre, a feasible point whose objective values a hull endpoint can
+#' only improve on, so a constant objective reports its value with the
+#' centre as witness rather than an empty search.
+#'
+#' Growth runs in two phases. The first \code{n_primary} objectives drive
+#' the window first, along exactly the path they would take alone, while
+#' every objective's bounds accumulate; only once that path has ended may
+#' the remaining objectives extend the window. Grids re-laid at a wider
+#' window are not nested in the narrower ones, so letting later objectives
+#' steer the first phase could change, and even narrow, what the leading
+#' ones find. Each phase has \code{MAX_GROWTH} passes.
 #'
 #' @param center Numeric feasible center
 #' @param basis Numeric I x I frame
 #' @param quadratic Quadratic form list
 #' @param n_grid Points per gridded coordinate
-#' @return List with \code{lower}, \code{upper}, \code{arg_lower},
-#'   \code{arg_upper}
+#' @param objectives Numeric I x m matrix of tracked linear functionals
+#' @param n_primary Number of leading objectives that drive the first
+#'   growth phase; the default lets every objective drive it
+#' @return List with \code{lower}, \code{upper} (length-m), \code{arg_lower},
+#'   \code{arg_upper} (m x I)
 #' @noRd
-identified_set_search <- function(center, basis, quadratic, n_grid) {
+identified_set_search <- function(center, basis, quadratic, n_grid,
+                                  objectives, n_primary = ncol(objectives)) {
   n_components <- length(center)
+  n_objectives <- ncol(objectives)
   half <- rep(2, n_components)
+  at_center <- drop(crossprod(objectives, center))
   best <- list(
-    lower = rep(Inf, n_components),
-    upper = rep(-Inf, n_components),
-    arg_lower = matrix(NA_real_, n_components, n_components),
-    arg_upper = matrix(NA_real_, n_components, n_components)
+    lower = at_center,
+    upper = at_center,
+    arg_lower = matrix(center, n_objectives, n_components, byrow = TRUE),
+    arg_upper = matrix(center, n_objectives, n_components, byrow = TRUE)
   )
-  for (pass in seq_len(IDENTIFIED_SET_CONTROL$MAX_GROWTH)) {
+  edge_key <- "edge_primary"
+  passes <- 0L
+  repeat {
     swept <- identified_set_box_pass(
-      center, basis, half, quadratic, n_grid, IDENTIFIED_SET_CONTROL$FEAS_TOL
+      center, basis, half, quadratic, n_grid, IDENTIFIED_SET_CONTROL$FEAS_TOL,
+      objectives, n_primary
     )
     best <- merge_box_state(best, swept)
-    grow <- swept$edge &
-      half * 2 <= IDENTIFIED_SET_CONTROL$SEARCH_LIMIT
-    if (!any(grow)) {
+    passes <- passes + 1L
+    room <- half * 2 <= IDENTIFIED_SET_CONTROL$SEARCH_LIMIT
+    grow <- swept[[edge_key]] & room
+    if (edge_key == "edge_primary" && n_primary < n_objectives &&
+      (!any(grow) || passes >= IDENTIFIED_SET_CONTROL$MAX_GROWTH)) {
+      # the leading objectives' path has ended: the rest may now grow the
+      # window, judged from this same sweep, with a fresh pass budget
+      edge_key <- "edge"
+      passes <- 0L
+      grow <- swept$edge & room
+    }
+    if (!any(grow) || passes >= IDENTIFIED_SET_CONTROL$MAX_GROWTH) {
       break
     }
     half[grow] <- half[grow] * 2
@@ -98,29 +127,29 @@ merge_box_state <- function(best, swept) {
   best
 }
 
-#' Apply Witnessed Unboundedness and Empty-Search Sentinels
+#' Apply Witnessed Unboundedness
 #'
 #' A recession direction is a proof that the set runs to infinity, and it
 #' does so in both orientations because \eqn{v'A_iv} is unchanged by
-#' negating \eqn{v}. Every coordinate the direction actually moves is
-#' therefore unbounded on both sides. Coordinates the search never
-#' reached at all report \code{NA}, which says the search found nothing,
-#' not that the set is empty.
+#' negating \eqn{v}. The set of such directions is open, so once one
+#' exists no hyperplane contains it and every objective that is not
+#' identically zero is unbounded on both sides. The witness therefore
+#' certifies existence and its direction is not used; a zero objective is
+#' constant and keeps its finite value. Search failure never reaches here
+#' as \code{NA}: the state is seeded from the feasible centre.
 #'
 #' @param found Running state from \code{identified_set_search()}
 #' @param quadratic Quadratic form list
-#' @return The state with infinite and missing bounds applied
+#' @param objectives Numeric I x m matrix of tracked linear functionals
+#' @return The state with infinite bounds applied and their witnesses
+#'   cleared
 #' @noRd
-apply_recession_bounds <- function(found, quadratic) {
-  witness <- recession_direction(quadratic)
-  if (!is.null(witness)) {
-    moved <- abs(witness) > IDENTIFIED_SET_CONTROL$FEAS_TOL
+apply_recession_bounds <- function(found, quadratic, objectives) {
+  if (!is.null(recession_direction(quadratic))) {
+    moved <- colSums(objectives != 0) > 0L
     found$lower[moved] <- -Inf
     found$upper[moved] <- Inf
   }
-  empty <- found$lower > found$upper
-  found$lower[empty] <- NA_real_
-  found$upper[empty] <- NA_real_
   found$arg_lower[!is.finite(found$lower), ] <- NA_real_
   found$arg_upper[!is.finite(found$upper), ] <- NA_real_
   found
