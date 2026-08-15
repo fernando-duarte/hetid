@@ -90,5 +90,9 @@ if (!is.null(fit$point)) {
 }
 }
 \seealso{
-\code{\link{compute_tau0_system}}, \code{\link{fit_log_variance}}
+\code{\link{compute_tau0_system}}, \code{\link{fit_log_variance}},
+and \code{\link{compute_log_variance_vcov}} for the fit's covariance
+matrices -- read its \strong{Inference caveats}: those standard errors are
+conditional on the \code{b} passed here and do not propagate its own
+sampling uncertainty.
 }

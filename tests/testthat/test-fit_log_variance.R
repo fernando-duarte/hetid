@@ -45,11 +45,12 @@ test_that("log_variance_estimator owns the valid-estimator set", {
   expect_identical(spec$id, "ppml")
   expect_identical(spec$se_types, LOG_VARIANCE_CONTROL$SE_TYPES)
   expect_true(is.function(spec$fit_response))
+  expect_true(is.function(spec$vcov))
 
   for (id in names(hetid:::log_variance_estimator_specs())) {
     entry <- hetid:::log_variance_estimator(id)
     expect_true(
-      all(c("id", "label", "fit_response", "se_types") %in% names(entry))
+      all(c("id", "label", "fit_response", "vcov", "se_types") %in% names(entry))
     )
     expect_identical(entry$id, id)
     expect_true(is.character(entry$label) && length(entry$label) == 1L)

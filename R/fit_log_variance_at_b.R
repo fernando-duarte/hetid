@@ -44,7 +44,11 @@
 #' return principal components. \code{x} here is the volatility design, not
 #' the \code{x} passed to \code{\link{compute_tau0_system}}.
 #'
-#' @seealso \code{\link{compute_tau0_system}}, \code{\link{fit_log_variance}}
+#' @seealso \code{\link{compute_tau0_system}}, \code{\link{fit_log_variance}},
+#'   and \code{\link{compute_log_variance_vcov}} for the fit's covariance
+#'   matrices -- read its \strong{Inference caveats}: those standard errors are
+#'   conditional on the \code{b} passed here and do not propagate its own
+#'   sampling uncertainty.
 #'
 #' @export
 #'

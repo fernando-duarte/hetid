@@ -27,6 +27,7 @@ log_variance_estimator_specs <- function() {
       id = "ppml",
       label = "PPML (quasi-Poisson, log link)",
       fit_response = ppml_fit_response,
+      vcov = ppml_vcov_variants,
       se_types = LOG_VARIANCE_CONTROL$SE_TYPES
     )
   )
@@ -37,7 +38,7 @@ log_variance_estimator_specs <- function() {
 #' @param estimator Single string naming the estimator (\code{"ppml"})
 #'
 #' @return A list with elements \code{id}, \code{label},
-#'   \code{fit_response}, and \code{se_types}
+#'   \code{fit_response}, \code{vcov}, and \code{se_types}
 #' @keywords internal
 log_variance_estimator <- function(estimator) {
   specs <- log_variance_estimator_specs()

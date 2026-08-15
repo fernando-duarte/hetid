@@ -11,7 +11,7 @@ log_variance_estimator(estimator)
 }
 \value{
 A list with elements \code{id}, \code{label},
-\code{fit_response}, and \code{se_types}
+\code{fit_response}, \code{vcov}, and \code{se_types}
 }
 \description{
 Look Up a Log-Variance Estimator Spec
