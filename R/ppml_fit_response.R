@@ -114,7 +114,7 @@ ppml_fit_response <- function(y, x_mat, start = NULL, fallback_starts = list(),
   attempts <- list()
   last <- list(
     warnings = character(0), messages = character(0),
-    error_class = LOG_VARIANCE_FIT_STATUS[["nonconvergence"]]
+    error_class = "no_accepted_start"
   )
   for (i in seq_along(ladder$candidates)) {
     cand <- ladder$candidates[[i]]

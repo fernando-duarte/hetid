@@ -9,7 +9,7 @@
 #'
 #' @param y1 Numeric vector of length \eqn{T}: the mean-equation outcome
 #'   \eqn{Y_1} (e.g. consumption growth).
-#' @param y2 Numeric matrix (or vector) of \eqn{T} rows: the \eqn{I}
+#' @param y2 Numeric matrix of \eqn{T} rows: the \eqn{I}
 #'   news/innovation variables \eqn{Y_2}, with unique, non-blank column names.
 #' @param x Numeric matrix (or vector) of \eqn{T} rows: the common
 #'   conditioning regressors \eqn{X} (principal components, own-lags, ...).
@@ -112,10 +112,11 @@ compute_tau0_system <- function(y1, y2, x, z, impose_null = FALSE,
     recover_structural_coefficients(reduced$beta1r, reduced$beta2r, point$theta)
   }
 
-  validate_hetid_tau0_fit(new_hetid_tau0_fit(
+  out <- validate_hetid_tau0_fit(new_hetid_tau0_fit(
     beta1r = reduced$beta1r, beta2r = reduced$beta2r, w1 = reduced$w1, w2 = reduced$w2,
     z = validated$z, gamma = validated$gamma, moments = moments,
     point = point, beta1 = beta1, n_obs = validated$n_obs,
     impose_null = impose_null, tol = tol
   ))
+  out
 }

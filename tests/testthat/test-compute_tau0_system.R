@@ -14,6 +14,11 @@ test_that("reduced forms match lm oracles and the point composes", {
   expect_equal(fit$point$theta, d$theta_true, tolerance = 0.2)
 })
 
+test_that("compute_tau0_system returns visibly", {
+  d <- simulate_tau0_dgp()
+  expect_true(withVisible(compute_tau0_system(d$y1, d$y2, d$x, d$z))$visible)
+})
+
 test_that("beta1 equals the direct OLS of y1 - y2 theta on x", {
   d <- simulate_tau0_dgp()
   fit <- compute_tau0_system(d$y1, d$y2, d$x, d$z)

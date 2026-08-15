@@ -33,7 +33,7 @@
   container (with a `print` method) that reports the point when one exists and stays
   generic about which condition (rank-deficient, under-determined, inconsistent) ruled
   it out otherwise.
-* New `fit_log_variance()` and `fit_log_variance_at_b()`: a PPML (pseudo-Poisson maximum
+* New `fit_log_variance()` and `fit_log_variance_at_b()`: a PPML (Poisson pseudo-maximum
   likelihood) estimator for the log-variance equation, dispatched through an estimator
   registry seam so other estimators can be added later without touching the boundary
   wrappers. `fit_log_variance_at_b()` completes the tau = 0 chain by forming the residual

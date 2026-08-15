@@ -2,15 +2,6 @@
 # registry, the acceptance gates, the start ladder, and the scaled-response
 # guards. Everything here is unexported, so it is reached via hetid:::.
 
-# multiplicative chi-square response on exp(eta), the shape the log-variance
-# equation actually feeds the estimator
-ppml_test_response <- function(t_obs = 300, seed = 7) {
-  set.seed(seed)
-  x <- cbind(v1 = rnorm(t_obs), v2 = rnorm(t_obs))
-  eta <- drop(cbind(1, x) %*% c(-0.5, 0.6, -0.4))
-  list(y = exp(eta) * rchisq(t_obs, df = 1), x = x)
-}
-
 test_that("log_variance_design labels the design and rejects ambiguous names", {
   x <- matrix(stats::rnorm(20), 10, 2)
   design <- hetid:::log_variance_design(x)
@@ -134,7 +125,7 @@ test_that("capture_glm_conditions records conditions and muffles them", {
 })
 
 test_that("the ladder records an overflowing start and keeps going", {
-  d <- ppml_test_response()
+  d <- simulate_logvar_data()
   x_mat <- hetid:::log_variance_design(d$x)
   fit <- hetid:::ppml_fit_response(
     d$y, x_mat,
@@ -150,7 +141,7 @@ test_that("the ladder records an overflowing start and keeps going", {
 })
 
 test_that("the scaled-response guards fail closed with distinct classes", {
-  d <- ppml_test_response()
+  d <- simulate_logvar_data()
   x_mat <- hetid:::log_variance_design(d$x)
 
   y_partial <- d$y
@@ -175,7 +166,7 @@ test_that("the scaled-response guards fail closed with distinct classes", {
 })
 
 test_that("a clean simulated response fits end to end", {
-  d <- ppml_test_response()
+  d <- simulate_logvar_data()
   x_mat <- hetid:::log_variance_design(d$x)
   fit <- hetid:::ppml_fit_response(d$y, x_mat)
 
@@ -185,6 +176,17 @@ test_that("a clean simulated response fits end to end", {
   expect_named(fit$warm_start, colnames(x_mat))
   expect_lt(fit$score_norm, LOG_VARIANCE_CONTROL$SCORE_TOLERANCE)
   expect_identical(attr(fit, "n_obs"), nrow(x_mat))
+})
+
+test_that("fit_log_variance returns visibly on both the ok and nonconvergence paths", {
+  d <- simulate_logvar_data()
+  ok_visible <- withVisible(fit_log_variance(d$y, d$x))
+  expect_true(ok_visible$visible)
+  expect_identical(ok_visible$value$fit_status, "ok")
+
+  failed_visible <- withVisible(fit_log_variance(rep(0, nrow(d$x)), d$x))
+  expect_true(failed_visible$visible)
+  expect_identical(failed_visible$value$fit_status, "nonconvergence")
 })
 
 # Oracle tests for the exported fit_log_variance() wrapper: boundary

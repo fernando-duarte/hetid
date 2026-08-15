@@ -95,3 +95,15 @@ test_that("the tau = 0 composition end to end returns an ok fit", {
   logvar_fit <- fit_log_variance_at_b(fit$point$theta, fit$w1, fit$w2, d$x_var)
   expect_true(log_variance_fit_ok(logvar_fit))
 })
+
+test_that("fit_log_variance_at_b returns visibly", {
+  set.seed(11)
+  t_obs <- 250
+  w2 <- cbind(a = rnorm(t_obs), b = rnorm(t_obs))
+  b <- c(0.6, -0.3)
+  eta <- drop(cbind(1, w2) %*% c(-0.5, 0.4, -0.2))
+  w1 <- drop(w2 %*% b) + sqrt(exp(eta)) * rnorm(t_obs)
+  x <- cbind(v1 = rnorm(t_obs), v2 = rnorm(t_obs))
+
+  expect_true(withVisible(fit_log_variance_at_b(b, w1, w2, x))$visible)
+})

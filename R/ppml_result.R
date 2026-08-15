@@ -103,7 +103,7 @@ ppml_success <- function(acc, run, y, y_scaled, x_mat, response_scale,
   coef_original <- acc$coef_scaled
   coef_original[1] <- coef_original[1] + log(response_scale)
   objective <- sum(acc$mu) - sum(y_scaled[acc$pos] * log(acc$mu[acc$pos]))
-  validate_hetid_log_variance_fit(new_hetid_log_variance_fit(
+  out <- validate_hetid_log_variance_fit(new_hetid_log_variance_fit(
     coef = coef_original, fit_status = LOG_VARIANCE_FIT_STATUS[["ok"]],
     converged = TRUE, objective = objective, score_norm = acc$score_norm,
     convergence_code = as.integer(run$fit$iter),
@@ -121,6 +121,7 @@ ppml_success <- function(acc, run, y, y_scaled, x_mat, response_scale,
     response_scale = response_scale, n_obs = length(y),
     coef_labels = colnames(x_mat)
   ))
+  out
 }
 
 #' Assemble a Fail-Closed PPML Result
@@ -140,7 +141,7 @@ ppml_success <- function(acc, run, y, y_scaled, x_mat, response_scale,
 #' @keywords internal
 ppml_failure <- function(error_class, y, x_mat, response_scale,
                          attempts = list(), ...) {
-  validate_hetid_log_variance_fit(new_hetid_log_variance_fit(
+  out <- validate_hetid_log_variance_fit(new_hetid_log_variance_fit(
     coef = NULL, fit_status = LOG_VARIANCE_FIT_STATUS[["nonconvergence"]],
     converged = FALSE, objective = NA_real_, score_norm = NA_real_,
     convergence_code = -1L, warm_start = NULL,
@@ -149,4 +150,5 @@ ppml_failure <- function(error_class, y, x_mat, response_scale,
     response_scale = response_scale, n_obs = length(y),
     coef_labels = colnames(x_mat)
   ))
+  out
 }

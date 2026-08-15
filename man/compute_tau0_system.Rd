@@ -18,7 +18,7 @@ compute_tau0_system(
 \item{y1}{Numeric vector of length \eqn{T}: the mean-equation outcome
 \eqn{Y_1} (e.g. consumption growth).}
 
-\item{y2}{Numeric matrix (or vector) of \eqn{T} rows: the \eqn{I}
+\item{y2}{Numeric matrix of \eqn{T} rows: the \eqn{I}
 news/innovation variables \eqn{Y_2}, with unique, non-blank column names.}
 
 \item{x}{Numeric matrix (or vector) of \eqn{T} rows: the common

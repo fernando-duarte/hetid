@@ -121,5 +121,6 @@ fit_log_variance_at_b <- function(b, w1, w2, x, estimator = "ppml", start = NULL
     fallback_starts = fallback_starts, response_scale = response_scale
   )
   fit$diagnostics$min_abs_eps <- min_abs_eps
-  validate_hetid_log_variance_fit(fit)
+  out <- validate_hetid_log_variance_fit(fit)
+  out
 }
