@@ -2,8 +2,8 @@
 #'
 #' Internals of \code{compute_identified_set_box()}: the check on the fit
 #' the structural block relies on, the search center, the linear
-#' functionals the sweep bounds, the component labels, and how one block
-#' of the sweep's result is read back into a bounds frame.
+#' functionals the sweep bounds, and how one block of the sweep's result
+#' is read back into a bounds frame.
 #'
 #' @name identified_set_box_inputs
 #' @keywords internal
@@ -122,18 +122,4 @@ identified_set_bounds_frame <- function(coef, offset, found, rows) {
     upper = offset + found$upper[rows],
     row.names = NULL
   )
-}
-
-#' Component Labels for the Bounds Frame
-#'
-#' @param w2 Reduced-form news matrix
-#' @param n_components Theta-axis dimension
-#' @return Character vector of component labels
-#' @noRd
-theta_box_labels <- function(w2, n_components) {
-  coef_labels <- colnames(w2)
-  if (is.null(coef_labels)) {
-    coef_labels <- maturity_names(seq_len(n_components))
-  }
-  coef_labels
 }

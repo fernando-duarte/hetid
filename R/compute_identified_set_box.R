@@ -159,7 +159,7 @@ compute_identified_set_box <- function(fit, tau,
 
   out <- validate_hetid_theta_box(new_hetid_theta_box(
     bounds = identified_set_bounds_frame(
-      theta_box_labels(fit$w2, n_components), 0, found, theta_rows
+      colnames(fit$w2), 0, found, theta_rows
     ),
     arg_lower = found$arg_lower[theta_rows, , drop = FALSE],
     arg_upper = found$arg_upper[theta_rows, , drop = FALSE],

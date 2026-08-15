@@ -6,7 +6,7 @@
 \description{
 Internals of \code{compute_identified_set_box()}: the check on the fit
 the structural block relies on, the search center, the linear
-functionals the sweep bounds, the component labels, and how one block
-of the sweep's result is read back into a bounds frame.
+functionals the sweep bounds, and how one block of the sweep's result
+is read back into a bounds frame.
 }
 \keyword{internal}

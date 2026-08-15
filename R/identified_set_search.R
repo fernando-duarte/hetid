@@ -104,7 +104,7 @@ identified_set_search <- function(center, basis, quadratic, n_grid,
       # window, judged from this same sweep, with a fresh pass budget
       edge_key <- "edge"
       passes <- 0L
-      grow <- swept$edge & room
+      grow <- swept[[edge_key]] & room
     }
     if (!any(grow) || passes >= IDENTIFIED_SET_CONTROL$MAX_GROWTH) {
       break
