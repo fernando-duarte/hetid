@@ -171,7 +171,7 @@ news-error variance bound
 
 \subsection{Identified-Set Search Functions:}{
 \itemize{
-\item \code{\link{compute_identified_set_box}()}: Coordinate bounds at a positive slack
+\item \code{\link{compute_identified_set_box}()}: Theta and structural bounds at a slack
 \item \code{\link{profile_log_variance_set}()}: Volatility coefficients over that set
 \item \code{\link{IDENTIFIED_SET_CONTROL}}: Identified-set search numerical controls
 }}

@@ -37,10 +37,12 @@ group into the following areas:
   the two result containers (`hetid_tau0_fit`, `hetid_log_variance_fit`).
 - **Identified-set search at tau > 0**: the exact one-dimensional feasible
   hull (`line_feasible_hull`), the recession-direction test
-  (`recession_direction`), the box search and its container
-  (`compute_identified_set_box`, `hetid_theta_box`), the log-variance
-  profile over that set (`profile_log_variance_set`), and its numerical
-  controls (`identified_set_control`).
+  (`recession_direction`), the search kernel on closed-form systems
+  (`identified_set_search`), the box search and its container
+  (`compute_identified_set_box`, `hetid_theta_box`, which also carries the
+  structural-coefficient block), the log-variance profile over that set
+  (`profile_log_variance_set`), and its numerical controls
+  (`identified_set_control`).
 - **Statistics**: scalar, vector, and matrix statistics plus statistics
   utilities.
 - **Data and download**: ACM extraction, column mapping, schema and unit

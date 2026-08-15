@@ -57,14 +57,28 @@
   systems from falling between nodes. Results come back in a new `hetid_theta_box`
   container (with a `print` method) that carries the reduced forms it was built from, so
   a profile cannot be run against a different system by accident.
+  The box also reports the structural coefficients (the intercept and the
+  `x` coefficients, `b_0` and `b_E` in the paper) as `beta1_bounds`: the
+  extremes of `beta1r - beta2r' theta` over the same set, read off the same
+  line hulls, so every finite bound is again attained by a returned witness
+  (`beta1_arg_lower`, `beta1_arg_upper`). The window grows for the
+  coordinates first and only then for the structural coefficients, so the
+  theta block is never narrowed by the addition. A loading that is zero up to
+  rounding is treated as exactly zero (tolerance `null_loading_rtol`, the
+  decision recorded in the `null_loading` attribute), so a point-identified
+  coefficient stays a point even when the set is unbounded; once a recession
+  direction is found, every coordinate and every structural coefficient with a
+  non-zero loading is unbounded. `n_grid` must now be odd, so the grid always
+  contains the search centre, and the print method counts unbounded sides
+  rather than rows.
   `profile_log_variance_set()` then fits the log-variance equation across that set
   through the same estimator registry, reporting the range each coefficient spans.
   Both are inner approximations and are documented as such: the box is a bounding box of
   a non-convex set, so `make_system_checker()` remains the membership test, and an
   unbounded side is reported as infinite only on the strength of a witnessing recession
   direction rather than a search window.
-* New `IDENTIFIED_SET_CONTROL`: grid density, growth schedule, feasibility tolerance and
-  direction-sample size for the identified-set search.
+* New `IDENTIFIED_SET_CONTROL`: grid density, growth schedule, feasibility tolerance,
+  null-loading tolerance and direction-sample size for the identified-set search.
 
 ## Improvements
 

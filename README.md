@@ -294,8 +294,8 @@ achieved through heteroskedasticity-based moment conditions.
 
 ### Identified-Set Search Functions
 
-- `compute_identified_set_box()` - Coordinate bounds of the identified
-  set at a slack tau \> 0
+- `compute_identified_set_box()` - Theta (b_N) and structural (b_0, b_E)
+  bounds at a slack tau \> 0
 - `profile_log_variance_set()` - Log-variance coefficient ranges over
   that set
 - `IDENTIFIED_SET_CONTROL` - Numerical controls for the identified-set
