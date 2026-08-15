@@ -87,6 +87,7 @@ x_var <- cbind(v1 = rnorm(t_obs), v2 = rnorm(t_obs))
 if (!is.null(fit$point)) {
   logvar_fit <- fit_log_variance_at_b(fit$point$theta, fit$w1, fit$w2, x_var)
   logvar_fit$coef
+  compute_log_variance_se(logvar_fit)
 }
 }
 \seealso{
