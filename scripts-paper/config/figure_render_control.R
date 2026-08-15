@@ -95,9 +95,13 @@ PAPER_FIGURE_RENDER_CONTROL <- list(
     # x_lower and x_upper pin axis 1's ends; y_lower_drop lowers axis 2's bottom
     # by that much. Applied before the OLS growth and the tick ladder, so the
     # _ols variant can still widen past a pin it would otherwise fall outside.
+    # share_plain_frame drops that growth, giving the _ols variant the same
+    # cube, ladder and labels as its plain twin -- for the raw-unit baseline
+    # pair, whose OLS point sits inside the plain frame anyway.
     auto_frame_adjust = list(
       b = list(tau0p2 = list(
-        x_lower = -0.01, x_upper = 0.06, y_lower_drop = 0.025
+        x_lower = -0.01, x_upper = 0.06, y_lower_drop = 0.025,
+        share_plain_frame = TRUE
       ))
     ),
     # Axis titles per unit system. "sd" scales each coefficient by its news-PC
