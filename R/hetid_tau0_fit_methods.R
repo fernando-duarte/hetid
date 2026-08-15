@@ -37,6 +37,18 @@ assert_hetid_tau0_fit <- function(x, arg = "fit") {
 #'
 #' @return \code{x}, invisibly
 #' @export
+#'
+#' @examples
+#' set.seed(1)
+#' t_obs <- 60
+#' x <- cbind(x1 = rnorm(t_obs), x2 = rnorm(t_obs))
+#' z <- rnorm(t_obs)
+#' e2 <- sqrt(exp(0.5 + 0.9 * z)) * matrix(rnorm(t_obs * 2), t_obs, 2)
+#' y2 <- x %*% matrix(c(1, 0.5, -0.3, 0.7), 2, 2) + e2
+#' colnames(y2) <- c("news1", "news2")
+#' y1 <- drop(0.3 + x %*% c(0.2, -0.1) + y2 %*% c(0.8, -0.5) + rnorm(t_obs))
+#' fit <- compute_tau0_system(y1, y2, x, z)
+#' print(fit)
 print.hetid_tau0_fit <- function(x, ...) {
   cat("<hetid_tau0_fit>\n")
   cat("  n_obs: ", attr(x, "n_obs"), "\n", sep = "")
