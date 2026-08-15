@@ -169,6 +169,13 @@ news-error variance bound
 \item \code{\link{LOG_VARIANCE_CONTROL}}: Log-variance estimation numerical controls
 }}
 
+\subsection{Identified-Set Search Functions:}{
+\itemize{
+\item \code{\link{compute_identified_set_box}()}: Coordinate bounds at a positive slack
+\item \code{\link{profile_log_variance_set}()}: Volatility coefficients over that set
+\item \code{\link{IDENTIFIED_SET_CONTROL}}: Identified-set search numerical controls
+}}
+
 \subsection{Constants and Utilities:}{
 \itemize{
 \item \code{\link{effective_max_maturity}()}: Largest usable maturity index

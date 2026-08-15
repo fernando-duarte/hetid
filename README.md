@@ -292,6 +292,15 @@ achieved through heteroskedasticity-based moment conditions.
 - `LOG_VARIANCE_CONTROL` - Numerical controls for log-variance (PPML)
   estimation
 
+### Identified-Set Search Functions
+
+- `compute_identified_set_box()` - Coordinate bounds of the identified
+  set at a slack tau \> 0
+- `profile_log_variance_set()` - Log-variance coefficient ranges over
+  that set
+- `IDENTIFIED_SET_CONTROL` - Numerical controls for the identified-set
+  search
+
 ### Utilities
 
 - `to_period_end()` - Normalize dates to the calendar period-end

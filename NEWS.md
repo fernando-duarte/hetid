@@ -48,6 +48,23 @@
   paper pipeline's `LOGVAR_PPML_CONTROL`. The paper pipeline keeps its own copy of this
   estimator for now (it is on the bootstrap-cache content manifest); consolidating the
   paper and package copies is left for future work.
+* New `compute_identified_set_box()` and `profile_log_variance_set()`: the tau > 0 case,
+  where each maturity constraint is a genuine quadratic inequality and the system defines
+  a set rather than a point. The box search grids all but one coordinate and solves the
+  remaining one in closed form, so every reported bound is attained at a point that
+  satisfies every constraint and is returned alongside it; the grid lives in a frame in
+  which the set is locally a cube, which is what keeps ill-conditioned (near-collinear)
+  systems from falling between nodes. Results come back in a new `hetid_theta_box`
+  container (with a `print` method) that carries the reduced forms it was built from, so
+  a profile cannot be run against a different system by accident.
+  `profile_log_variance_set()` then fits the log-variance equation across that set
+  through the same estimator registry, reporting the range each coefficient spans.
+  Both are inner approximations and are documented as such: the box is a bounding box of
+  a non-convex set, so `make_system_checker()` remains the membership test, and an
+  unbounded side is reported as infinite only on the strength of a witnessing recession
+  direction rather than a search window.
+* New `IDENTIFIED_SET_CONTROL`: grid density, growth schedule, feasibility tolerance and
+  direction-sample size for the identified-set search.
 
 ## Improvements
 
