@@ -321,6 +321,23 @@ test_that("captured glm conditions land in diagnostics and do not escape", {
   )
 })
 
+# this fixture rides IRLS hitting GLM_MAXIT at epsilon 1e-10 on a
+# near-collinear design, so it carries some numerical-library sensitivity --
+# if it ever flakes on another platform, the collinearity gap (1e-9) is the
+# knob to widen or shrink
+test_that("a near-collinear design fails closed with the warning on record", {
+  set.seed(9)
+  t_obs <- 300
+  x0 <- cbind(rnorm(t_obs), rnorm(t_obs))
+  x_col <- cbind(v1 = x0[, 1], v2 = x0[, 1] + 1e-9 * x0[, 2])
+  eta <- drop(cbind(1, x0) %*% c(-0.5, 0.6, -0.4))
+  fit <- NULL
+  expect_no_warning(fit <- fit_log_variance(exp(eta) * rchisq(t_obs, df = 1), x_col))
+  expect_false(log_variance_fit_ok(fit))
+  expect_identical(fit$diagnostics$error_class, "irls_not_converged")
+  expect_true(any(grepl("did not converge", fit$diagnostics$warnings)))
+})
+
 test_that("a wrong-length start or fallback element is rejected", {
   d <- simulate_logvar_data()
   expect_error(fit_log_variance(d$y, d$x, start = c(1, 2)),
