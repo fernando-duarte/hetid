@@ -144,6 +144,17 @@
 #'   \item \code{\link{recover_structural_coefficients}()}: Recover beta1(theta)
 #' }}
 #'
+#' \subsection{Tau-Zero Estimation Functions:}{
+#' \itemize{
+#'   \item \code{\link{compute_tau0_system}()}: Reduced forms plus tau=0 point solve
+#'   \item \code{\link{compute_tau0_point}()}: Closed-form point solve of the stacked system
+#'   \item \code{\link{fit_log_variance}()}: PPML fit of the log-variance equation
+#'   \item \code{\link{fit_log_variance_at_b}()}: Log-variance fit at a fixed structural parameter
+#'   \item \code{\link{compute_log_variance_vcov}()}: Naive/HC0/HC1/HAC covariance matrices
+#'   \item \code{\link{compute_log_variance_se}()}: Standard-error frame for a log-variance fit
+#'   \item \code{\link{LOG_VARIANCE_CONTROL}}: Log-variance estimation numerical controls
+#' }}
+#'
 #' \subsection{Constants and Utilities:}{
 #' \itemize{
 #'   \item \code{\link{effective_max_maturity}()}: Largest usable maturity index

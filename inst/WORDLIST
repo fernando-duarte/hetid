@@ -93,6 +93,7 @@ github
 gitignore
 gitignored
 Glejser
+glm
 GMM
 Goldfeld
 GQ
@@ -118,6 +119,7 @@ ik
 Imbens
 interpretability
 invariants
+IRLS
 iTP
 ixj
 Iyer
@@ -172,6 +174,7 @@ nloptr
 NONINFRINGEMENT
 nonlinearly
 nonnumeric
+nonpositive
 nonunique
 nonuniqueness
 normalizer
@@ -195,12 +198,14 @@ pkgcheck
 png
 pointwise
 Politis
+positionally
 positivity
 PPML
 prcomp
 pre
 precomputes
 precomputing
+preflight
 premia
 prepending
 QE
@@ -241,6 +246,7 @@ sd
 sdf
 SDF
 serializable
+SEs
 setdiff
 sha
 siunitx
