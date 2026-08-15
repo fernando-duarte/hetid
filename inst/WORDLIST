@@ -56,6 +56,7 @@ de
 deflator
 DeHaven
 desync
+desynchronize
 det
 deterministically
 dev
@@ -77,6 +78,7 @@ eol
 eot
 eq
 erroring
+estimand
 extdata
 f12m
 fernando
@@ -91,10 +93,13 @@ github
 gitignore
 gitignored
 Glejser
+glm
 GMM
 Goldfeld
 GQ
 graphify
+gridded
+Gridding
 gz
 gzipped
 HAC
@@ -116,6 +121,7 @@ ik
 Imbens
 interpretability
 invariants
+IRLS
 iTP
 ixj
 Iyer
@@ -170,6 +176,7 @@ nloptr
 NONINFRINGEMENT
 nonlinearly
 nonnumeric
+nonpositive
 nonunique
 nonuniqueness
 normalizer
@@ -193,12 +200,14 @@ pkgcheck
 png
 pointwise
 Politis
+positionally
 positivity
 PPML
 prcomp
 pre
 precomputes
 precomputing
+preflight
 premia
 prepending
 QE
@@ -220,6 +229,7 @@ renderer
 renv
 Renviron
 reparameterization
+residualization
 residualizations
 resolvers
 Resumable
@@ -238,6 +248,7 @@ sd
 sdf
 SDF
 serializable
+SEs
 setdiff
 sha
 siunitx

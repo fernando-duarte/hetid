@@ -28,6 +28,19 @@ group into the following areas:
   builders (`build_quadratic_system`, `build_general_quadratic_system`),
   identified-set components and quadratic values, constraint checkers/factories,
   generalized instruments, and structural-coefficient recovery.
+- **Tau-zero estimation and log-variance PPML**: the closed-form point solve
+  at tau=0 (`compute_tau0_point`, `compute_tau0_system`), the PPML
+  log-variance fit and its fixed-`b` variant (`fit_log_variance`,
+  `fit_log_variance_at_b`), the standard-error machinery
+  (`compute_log_variance_vcov`, `compute_log_variance_se`,
+  `log_variance_se_utils`), numerical controls (`log_variance_control`), and
+  the two result containers (`hetid_tau0_fit`, `hetid_log_variance_fit`).
+- **Identified-set search at tau > 0**: the exact one-dimensional feasible
+  hull (`line_feasible_hull`), the recession-direction test
+  (`recession_direction`), the box search and its container
+  (`compute_identified_set_box`, `hetid_theta_box`), the log-variance
+  profile over that set (`profile_log_variance_set`), and its numerical
+  controls (`identified_set_control`).
 - **Statistics**: scalar, vector, and matrix statistics plus statistics
   utilities.
 - **Data and download**: ACM extraction, column mapping, schema and unit

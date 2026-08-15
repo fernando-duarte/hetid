@@ -35,6 +35,12 @@ region_auto_ticks <- function(lim, n_min) {
 # Frame from the padded set box, nudged by any per-figure adjustment, grown to
 # hold a marked point, on a pretty ladder clipped back inside the frame.
 region_3d_auto_frame <- function(lims, render, extra, adjust = NULL) {
+  if (isTRUE(adjust$share_plain_frame)) {
+    # This figure is read beside its plain twin, so it takes the twin's frame
+    # instead of growing to give the marked point its usual headroom. The point
+    # still has to land inside, which the caller's holds() asserts.
+    extra <- NULL
+  }
   if (!is.null(adjust$x_lower)) {
     lims[[1]][1] <- adjust$x_lower
   }

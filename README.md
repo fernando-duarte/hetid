@@ -106,7 +106,7 @@ component — or from every instrument separately.
 ``` r
 library(hetid)
 #> Data availability:
-#>   * ACM term premia: Available (updated 2026-07-16)
+#>   * ACM term premia: Available (updated 2026-08-15)
 #> 
 #> Use load_term_premia() to access the data.
 set.seed(42)
@@ -275,6 +275,31 @@ achieved through heteroskedasticity-based moment conditions.
   over the set
 - `recover_structural_coefficients()` - Recover the Y1-equation
   first-stage coefficients
+
+### Tau-Zero Estimation Functions
+
+- `compute_tau0_system()` - Estimate the tau=0 mean-equation system
+  (reduced forms + point solve)
+- `compute_tau0_point()` - Closed-form point solve of the stacked tau=0
+  system
+- `fit_log_variance()` - PPML fit of the log-variance equation
+- `fit_log_variance_at_b()` - Log-variance fit at a fixed structural
+  parameter
+- `compute_log_variance_vcov()` - Naive/HC0/HC1/HAC covariance matrices
+  for a log-variance fit
+- `compute_log_variance_se()` - Standard-error frame for a log-variance
+  fit
+- `LOG_VARIANCE_CONTROL` - Numerical controls for log-variance (PPML)
+  estimation
+
+### Identified-Set Search Functions
+
+- `compute_identified_set_box()` - Coordinate bounds of the identified
+  set at a slack tau \> 0
+- `profile_log_variance_set()` - Log-variance coefficient ranges over
+  that set
+- `IDENTIFIED_SET_CONTROL` - Numerical controls for the identified-set
+  search
 
 ### Utilities
 

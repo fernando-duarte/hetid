@@ -26,6 +26,45 @@
   sample. Neither it nor the envelope bound of `compute_variance_bound()`
   dominates the other, so the reported news bound is their pointwise
   minimum, taken by the caller.
+* New `compute_tau0_system()` and `compute_tau0_point()`: the tau = 0 special case of
+  the Lewbel (2012) triangular system, where every maturity constraint degenerates from
+  a quadratic inequality to a linear equality and the stacked system solves in closed
+  form for a point rather than a set. Results are wrapped in a new `hetid_tau0_fit`
+  container (with a `print` method) that reports the point when one exists and stays
+  generic about which condition (rank-deficient, under-determined, inconsistent) ruled
+  it out otherwise.
+* New `fit_log_variance()` and `fit_log_variance_at_b()`: a PPML (Poisson pseudo-maximum
+  likelihood) estimator for the log-variance equation, dispatched through an estimator
+  registry seam so other estimators can be added later without touching the boundary
+  wrappers. `fit_log_variance_at_b()` completes the tau = 0 chain by forming the residual
+  at a fixed structural parameter and feeding its square to `fit_log_variance()`. Fits
+  are returned as a new `hetid_log_variance_fit` container (with a `print` method).
+* New `compute_log_variance_vcov()` and `compute_log_variance_se()`: naive, HC0, HC1,
+  and HAC (Newey-West) covariance matrices and standard errors for a log-variance fit,
+  with the Newey-West lag truncation controlled by the new
+  `LOG_VARIANCE_CONTROL$HAC_LAGS`.
+* New `LOG_VARIANCE_CONTROL`: numerical controls (GLM tolerance/iterations, score and
+  rank tolerances, HAC lag truncation) for the log-variance estimator, ported from the
+  paper pipeline's `LOGVAR_PPML_CONTROL`. The paper pipeline keeps its own copy of this
+  estimator for now (it is on the bootstrap-cache content manifest); consolidating the
+  paper and package copies is left for future work.
+* New `compute_identified_set_box()` and `profile_log_variance_set()`: the tau > 0 case,
+  where each maturity constraint is a genuine quadratic inequality and the system defines
+  a set rather than a point. The box search grids all but one coordinate and solves the
+  remaining one in closed form, so every reported bound is attained at a point that
+  satisfies every constraint and is returned alongside it; the grid lives in a frame in
+  which the set is locally a cube, which is what keeps ill-conditioned (near-collinear)
+  systems from falling between nodes. Results come back in a new `hetid_theta_box`
+  container (with a `print` method) that carries the reduced forms it was built from, so
+  a profile cannot be run against a different system by accident.
+  `profile_log_variance_set()` then fits the log-variance equation across that set
+  through the same estimator registry, reporting the range each coefficient spans.
+  Both are inner approximations and are documented as such: the box is a bounding box of
+  a non-convex set, so `make_system_checker()` remains the membership test, and an
+  unbounded side is reported as infinite only on the strength of a witnessing recession
+  direction rather than a search window.
+* New `IDENTIFIED_SET_CONTROL`: grid density, growth schedule, feasibility tolerance and
+  direction-sample size for the identified-set search.
 
 ## Improvements
 

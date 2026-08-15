@@ -6,6 +6,9 @@
 # left outside the cube is drawn outside the cube.
 
 source(file.path("scripts-paper", "config", "paths.R"))
+# the auto frames key their per-figure adjustment off region_figure_tau_token,
+# which the artifact manifest owns
+paper_source_once(paper_path("config", "artifacts.R"))
 paper_source_once(paper_path("mean_equation", "figures", "region_3d_frames.R"))
 paper_source_once(paper_path("tests", "support", "harness.R"))
 .test <- paper_test_harness()
@@ -72,6 +75,18 @@ check(
       error = function(e) e
     ),
     "error"
+  )
+)
+
+# The raw-unit baseline pair is read side by side, so its auto frame ignores the
+# marked point rather than growing to pad it: both figures get one cube, one
+# ladder and one set of labels.
+shared_box <- list(c(0, 0.05), c(-0.12, 0.12), c(-0.94, -0.07))
+check(
+  "the raw-unit baseline pair draws the same frame with and without the OLS point",
+  identical(
+    region_3d_frame(shared_box, render, "auto", NULL, "b", 0.20),
+    region_3d_frame(shared_box, render, "auto", c(0.02, 0, -0.18), "b", 0.20)
   )
 )
 
