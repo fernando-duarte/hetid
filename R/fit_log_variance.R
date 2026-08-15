@@ -1,12 +1,13 @@
-#' Fit the Log-Variance Equation via PPML
+#' Fit the Log-Variance Equation
 #'
 #' Boundary wrapper around the log-variance estimator registry
 #' (\code{\link{log_variance_estimator}}): validates \code{y}, \code{x},
 #' \code{start}, \code{fallback_starts}, and \code{response_scale}, builds
 #' the design matrix (\code{\link{log_variance_design}}), and dispatches to
-#' the resolved estimator's \code{fit_response} worker. The only estimator
-#' currently registered is \code{"ppml"} (\code{\link{ppml_fit_response}});
-#' the registry, not this wrapper, owns which estimator strings are valid.
+#' the resolved estimator's \code{fit_response} worker. Two estimators are
+#' registered, \code{"ppml"} (\code{\link{ppml_fit_response}}) and
+#' \code{"harvey"} (\code{\link{harvey_fit_response}}); the registry, not
+#' this wrapper, owns which estimator strings are valid.
 #'
 #' @param y Numeric vector of length \eqn{T}: the nonnegative response
 #'   (e.g. a squared or absolute residual). Must be finite and nonnegative.
@@ -15,16 +16,16 @@
 #'   prepended by \code{\link{log_variance_design}}). Requires at least
 #'   \code{ncol(x) + 2} observations (see
 #'   \code{\link{min_obs_for_pc_regression}}).
-#' @param estimator Single string naming the estimator; passed unchecked to
+#' @param estimator Single string naming the estimator, \code{"ppml"} or
+#'   \code{"harvey"}; passed unchecked to
 #'   \code{\link{log_variance_estimator}}, which is the sole owner of the
 #'   valid-estimator set. Default \code{"ppml"}.
 #' @param start \code{NULL}, or a finite numeric vector of length
-#'   \code{ncol(x) + 1} giving a starting value for
-#'   \code{\link[stats]{glm.fit}} \strong{on the scaled response}
-#'   (\code{y / response_scale}); see the \strong{Start-scale contract}
-#'   section. When named, the names must equal the design column labels
-#'   exactly -- a permuted named start against a different design is a
-#'   silent trap, not accepted positionally.
+#'   \code{ncol(x) + 1} giving a starting value for the solver \strong{on
+#'   the scaled response} (\code{y / response_scale}); see the
+#'   \strong{Start-scale contract} section. When named, the names must
+#'   equal the design column labels exactly -- a permuted named start
+#'   against a different design is a silent trap, not accepted positionally.
 #' @param fallback_starts List of finite numeric vectors, each following the
 #'   same length and naming rule as \code{start}, tried in order after
 #'   \code{start} fails or is not supplied.
@@ -38,14 +39,22 @@
 #'   inference.
 #'
 #' @details
-#' The PPML estimator solves the log-link Poisson moment (score) equation
+#' Both estimators model \eqn{E[y \mid X] = \exp(X\theta)} and differ in the
+#' first-order condition they solve. PPML solves the log-link Poisson
+#' moment (score) equation
 #' \deqn{X^\top (y - \exp(X \theta)) = 0}
 #' by quasi-Poisson IRLS (\code{\link[stats]{glm.fit}} with
 #' \code{family = quasipoisson(link = "log")}). Using quasi-Poisson rather
 #' than Poisson changes only the reported dispersion (and so only the
 #' standard errors downstream): the log link and mean structure are
 #' identical, so the point estimate solves the same score equation either
-#' way.
+#' way. Harvey (1976) minimizes the Gaussian negative log-likelihood
+#' \deqn{0.5 \sum_t (x_t^\top\theta + y_t \exp(-x_t^\top\theta))}
+#' whose first-order condition is \eqn{X^\top (y / \exp(X\theta) - 1) = 0},
+#' by observed-Newton steps with a Fisher-scoring fallback and a
+#' backtracking line search. Both criteria are convex in \eqn{\theta}, so
+#' when a minimizer exists it is unique and the start affects only whether
+#' the solver reaches it.
 #'
 #' A fitted rung is accepted only when every gate below holds; failing any
 #' gate is fail-closed, not an error -- the returned object reports
@@ -55,17 +64,19 @@
 #'   \item{Scaled-response guards}{\code{y / response_scale} must not
 #'     underflow a positive entry to zero, overflow to non-finite, or
 #'     collapse to all-zero.}
-#'   \item{Design rank}{the positive-response rows of the design must have
-#'     full column rank.}
+#'   \item{Design rank}{(PPML) the positive-response rows of the design
+#'     must have full column rank.}
 #'   \item{Finite, positive fit}{the fitted coefficients and
 #'     \eqn{\exp(X\theta)} must be finite, with \eqn{\exp(X\theta) > 0}.}
-#'   \item{IRLS convergence}{\code{glm.fit} must report convergence and no
-#'     boundary solution.}
-#'   \item{Score tolerance}{the scaled score norm must not exceed
+#'   \item{Solver convergence}{PPML: \code{glm.fit} must report convergence
+#'     and no boundary solution. Harvey: the scaled score must pass
+#'     \code{LOG_VARIANCE_HARVEY_CONTROL$SCORE_TOLERANCE} within
+#'     \code{LOG_VARIANCE_HARVEY_CONTROL$MAXIT} iterations without a
+#'     line-search stall.}
+#'   \item{Score tolerance}{(PPML) the scaled score norm must not exceed
 #'     \code{LOG_VARIANCE_CONTROL$SCORE_TOLERANCE}.}
 #'   \item{Conditioning}{the information matrix's reciprocal condition
-#'     number must not fall below
-#'     \code{LOG_VARIANCE_CONTROL$RCOND_TOLERANCE}.}
+#'     number must not fall below the estimator's \code{RCOND_TOLERANCE}.}
 #' }
 #'
 #' Centering the columns of \code{x} before calling this function (as the
@@ -76,7 +87,7 @@
 #' @section Start-scale contract:
 #' \code{start}, \code{fallback_starts}, and the returned \code{warm_start}
 #' all live on the scaled-response fit (\code{y / response_scale}) -- the
-#' scale \code{glm.fit} actually sees. This is what lets a returned
+#' scale the solver actually sees. This is what lets a returned
 #' \code{warm_start} be fed back as \code{start} at the same
 #' \code{response_scale}. At the default \code{response_scale = 1} this
 #' scaled fit is simply the natural scale. Only the returned \code{coef} is
@@ -86,7 +97,8 @@
 #' changing the estimand.
 #'
 #' @seealso \code{\link{log_variance_estimator}},
-#'   \code{\link{log_variance_design}}, \code{\link{ppml_fit_response}}
+#'   \code{\link{log_variance_design}}, \code{\link{ppml_fit_response}},
+#'   \code{\link{harvey_fit_response}}
 #'
 #' @export
 #'
@@ -98,6 +110,7 @@
 #' y <- exp(eta) * rchisq(t_obs, df = 1)
 #' fit <- fit_log_variance(y, x)
 #' fit$coef
+#' fit_log_variance(y, x, estimator = "harvey")$coef
 fit_log_variance <- function(y, x, estimator = "ppml", start = NULL,
                              fallback_starts = list(), response_scale = 1) {
   validate_numeric_inputs(y = y)

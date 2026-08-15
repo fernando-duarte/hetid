@@ -104,6 +104,7 @@ gz
 gzipped
 HAC
 Hadamard
+halvings
 hardcoded
 HC
 heteroskedasticity
@@ -119,6 +120,7 @@ ico
 idx
 ik
 Imbens
+infimum
 interpretability
 invariants
 IRLS
@@ -181,6 +183,7 @@ nonunique
 nonuniqueness
 normalizer
 nyfed
+OPG
 optimisation
 optimizer's
 orchestrator

@@ -29,13 +29,21 @@ log_variance_estimator_specs <- function() {
       fit_response = ppml_fit_response,
       vcov = ppml_vcov_variants,
       se_types = LOG_VARIANCE_CONTROL$SE_TYPES
+    ),
+    harvey = list(
+      id = "harvey",
+      label = "Harvey (Gaussian multiplicative heteroskedasticity)",
+      fit_response = harvey_fit_response,
+      vcov = harvey_vcov_variants,
+      se_types = LOG_VARIANCE_HARVEY_CONTROL$SE_TYPES
     )
   )
 }
 
 #' Look Up a Log-Variance Estimator Spec
 #'
-#' @param estimator Single string naming the estimator (\code{"ppml"})
+#' @param estimator Single string naming the estimator (\code{"ppml"} or
+#'   \code{"harvey"})
 #'
 #' @return A list with elements \code{id}, \code{label},
 #'   \code{fit_response}, \code{vcov}, and \code{se_types}
@@ -84,4 +92,32 @@ log_variance_design <- function(x) {
     arg = "x"
   )
   design
+}
+
+#' Classify the Scaled Response
+#'
+#' Guards the one place where \code{response_scale} can quietly change the
+#' data an estimator sees. Partial underflow is the sneaky case: zeros are
+#' otherwise valid responses, so a positive entry collapsing to exactly zero
+#' looks like data rather than a numerical accident. Shared by every
+#' estimator's \code{fit_response} worker.
+#'
+#' @param y Numeric response on the original scale
+#' @param y_scaled \code{y / response_scale}
+#'
+#' @return A failure class string, or \code{NA_character_} when the scaled
+#'   response is usable
+#' @keywords internal
+log_variance_scaled_response_class <- function(y, y_scaled) {
+  if (any(y > 0 & y_scaled == 0)) {
+    return("scaled_response_underflow")
+  }
+  if (!all(is.finite(y_scaled))) {
+    return("scaled_response_overflow")
+  }
+  # svd on all-zero positive rows escapes as a base error without this
+  if (!any(y_scaled > 0)) {
+    return("all_zero_response")
+  }
+  NA_character_
 }

@@ -30,15 +30,16 @@ new_hetid_log_variance_fit(
 
 \item{converged}{Logical, whether the underlying solver converged}
 
-\item{objective}{The stored Poisson criterion
-\code{sum(mu) - sum(y * log(mu))} over positive-y terms, on the scaled
-response (a quasi-likelihood criterion up to response-only constants,
-not a full deviance), or \code{NA} on failure}
+\item{objective}{The stored criterion on the scaled response, or
+\code{NA} on failure. PPML: \code{sum(mu) - sum(y * log(mu))} over
+positive-y terms (a quasi-likelihood criterion up to response-only
+constants, not a full deviance). Harvey: the Gaussian negative
+log-likelihood \code{0.5 * sum(eta + y * exp(-eta))}}
 
 \item{score_norm}{Numeric score-norm diagnostic, or \code{NA} on failure}
 
-\item{convergence_code}{Integer, IRLS iterations on success or \code{-1L}
-on failure}
+\item{convergence_code}{Integer, solver iterations on success or
+\code{-1L} on failure}
 
 \item{warm_start}{Named numeric vector of scaled-scale coefficients, or
 \code{NULL} on failure}
@@ -51,7 +52,8 @@ on failure}
 \item{x_design}{Numeric matrix, the full design matrix the fit ran on
 (intercept column included), with \code{colnames == coef_labels}}
 
-\item{estimator}{Single string identifying the estimator (\code{"ppml"})}
+\item{estimator}{Single string identifying the estimator (\code{"ppml"}
+or \code{"harvey"})}
 
 \item{response_scale}{Positive finite numeric scalar, the response
 scaling factor applied before fitting}

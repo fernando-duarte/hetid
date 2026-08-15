@@ -1,7 +1,8 @@
 #' Covariance Matrices for a Log-Variance Fit
 #'
 #' Boundary wrapper around the log-variance estimator registry's \code{vcov}
-#' worker (for \code{"ppml"}, \code{\link{ppml_vcov_variants}}). The fit object
+#' worker (\code{\link{ppml_vcov_variants}} for \code{"ppml"},
+#' \code{\link{harvey_vcov_variants}} for \code{"harvey"}). The fit object
 #' is the only data source: the estimator comes from the fit's
 #' \code{estimator} attribute, and the coefficients, response, and design come
 #' from \code{fit$coef}, \code{fit$y}, and \code{fit$x_design}. Nothing is
@@ -17,9 +18,10 @@
 #'
 #' @return A named list of \code{(k + 1) x (k + 1)} covariance matrices keyed
 #'   by the estimator's \code{se_types} (for \code{"ppml"}: \code{"naive"},
-#'   \code{"hc0"}, \code{"hc1"}, \code{"hac"}), each labelled with the fit's
-#'   \code{coef_labels} on both axes. Standard errors are
-#'   \code{sqrt(diag(.))}.
+#'   \code{"hc0"}, \code{"hc1"}, \code{"hac"}; for \code{"harvey"}:
+#'   \code{"expected"}, \code{"observed"}, \code{"opg"}, \code{"robust"},
+#'   \code{"hac"}), each labelled with the fit's \code{coef_labels} on both
+#'   axes. Standard errors are \code{sqrt(diag(.))}.
 #'
 #' @details
 #' Malformed \emph{arguments} are errors: a first argument that is not a

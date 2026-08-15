@@ -48,6 +48,16 @@
   paper pipeline's `LOGVAR_PPML_CONTROL`. The paper pipeline keeps its own copy of this
   estimator for now (it is on the bootstrap-cache content manifest); consolidating the
   paper and package copies is left for future work.
+* New `estimator = "harvey"` for `fit_log_variance()`, `fit_log_variance_at_b()`, and
+  `profile_log_variance_set()`: the Harvey (1976) Gaussian multiplicative-heteroskedasticity
+  QMLE of the log-variance equation, ported from the paper pipeline's Harvey solver
+  (observed-Newton with a Fisher-scoring fallback and a backtracking line search) and
+  registered beside PPML. `compute_log_variance_vcov()` and `compute_log_variance_se()`
+  report its five analytic variants (expected, observed, OPG, robust, HAC). Its controls
+  live in the new `LOG_VARIANCE_HARVEY_CONTROL`. Two pieces of the paper's estimator are
+  deliberately not carried: the zero-response recession certificate (it needs an LP solver
+  the package cannot depend on; a recessing likelihood fails closed as `nonconvergence`
+  instead) and the multi-stage start policy (callers pass a PPML coefficient as `start`).
 * New `compute_identified_set_box()` and `profile_log_variance_set()`: the tau > 0 case,
   where each maturity constraint is a genuine quadratic inequality and the system defines
   a set rather than a point. The box search grids all but one coordinate and solves the

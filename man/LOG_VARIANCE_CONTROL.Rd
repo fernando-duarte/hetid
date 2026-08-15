@@ -18,7 +18,7 @@ number below which a matrix is treated as ill-conditioned (1e-10)}
 (4L). This is the paper's quarterly-data heuristic, not a
 statistical rule; users with other frequencies should pass their
 own \code{hac_lags}}
-\item{SE_TYPES}{Supported standard-error types
+\item{SE_TYPES}{The PPML estimator's standard-error types
 (\code{"naive"}, \code{"hc0"}, \code{"hc1"}, \code{"hac"})}
 }
 }
@@ -31,10 +31,12 @@ described in \strong{Format}). Access individual controls with
 \code{$}.
 }
 \description{
-Numerical controls for log-variance (PPML) estimation and its
-standard errors. Ported from the paper pipeline's
-\code{LOGVAR_PPML_CONTROL} (\code{scripts-paper/log_variance/estimators/controls.R})
-and \code{hac_lags} (\code{scripts-paper/config/reporting.R}).
+Numerical controls for the PPML log-variance estimator and its
+standard errors, plus the HAC lag default shared by every estimator.
+Ported from the paper pipeline's \code{LOGVAR_PPML_CONTROL}
+(\code{scripts-paper/log_variance/estimators/controls.R}) and
+\code{hac_lags} (\code{scripts-paper/config/reporting.R}). The Harvey
+estimator's controls live in \code{\link{LOG_VARIANCE_HARVEY_CONTROL}}.
 }
 \examples{
 LOG_VARIANCE_CONTROL$GLM_EPSILON

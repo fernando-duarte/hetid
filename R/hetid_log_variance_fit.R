@@ -29,13 +29,14 @@ LOG_VARIANCE_FIT_STATUS <- c(ok = "ok", nonconvergence = "nonconvergence")
 #' @param fit_status One of \code{LOG_VARIANCE_FIT_STATUS}: \code{"ok"} or
 #'   \code{"nonconvergence"}
 #' @param converged Logical, whether the underlying solver converged
-#' @param objective The stored Poisson criterion
-#'   \code{sum(mu) - sum(y * log(mu))} over positive-y terms, on the scaled
-#'   response (a quasi-likelihood criterion up to response-only constants,
-#'   not a full deviance), or \code{NA} on failure
+#' @param objective The stored criterion on the scaled response, or
+#'   \code{NA} on failure. PPML: \code{sum(mu) - sum(y * log(mu))} over
+#'   positive-y terms (a quasi-likelihood criterion up to response-only
+#'   constants, not a full deviance). Harvey: the Gaussian negative
+#'   log-likelihood \code{0.5 * sum(eta + y * exp(-eta))}
 #' @param score_norm Numeric score-norm diagnostic, or \code{NA} on failure
-#' @param convergence_code Integer, IRLS iterations on success or \code{-1L}
-#'   on failure
+#' @param convergence_code Integer, solver iterations on success or
+#'   \code{-1L} on failure
 #' @param warm_start Named numeric vector of scaled-scale coefficients, or
 #'   \code{NULL} on failure
 #' @param diagnostics List with at least \code{error_class} and
@@ -43,7 +44,8 @@ LOG_VARIANCE_FIT_STATUS <- c(ok = "ok", nonconvergence = "nonconvergence")
 #' @param y Numeric vector, the original-scale response the fit ran on
 #' @param x_design Numeric matrix, the full design matrix the fit ran on
 #'   (intercept column included), with \code{colnames == coef_labels}
-#' @param estimator Single string identifying the estimator (\code{"ppml"})
+#' @param estimator Single string identifying the estimator (\code{"ppml"}
+#'   or \code{"harvey"})
 #' @param response_scale Positive finite numeric scalar, the response
 #'   scaling factor applied before fitting
 #' @param n_obs Number of observations the fit was computed from

@@ -15,9 +15,9 @@
 #' reported. Skipping can only narrow the reported range, never widen it:
 #' the range is over points that were fitted successfully, and every one
 #' of those lies in the set. Warm starts are carried from the last
-#' \emph{successful} fit; because the quasi-Poisson log link is canonical
-#' the fit is unique, so a start affects whether a fit converges but never
-#' which answer it converges to.
+#' \emph{successful} fit; both registered estimators minimize a convex
+#' criterion, so a start affects whether a fit converges but never which
+#' answer it converges to.
 #'
 #' @section Interpretation:
 #' The range is \strong{attained over the sampled points}, not the profile

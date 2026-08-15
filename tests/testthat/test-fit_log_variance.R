@@ -48,10 +48,10 @@ test_that("log_variance_estimator owns the valid-estimator set", {
   }
 
   err <- expect_error(
-    hetid:::log_variance_estimator("harvey"),
+    hetid:::log_variance_estimator("egarch"),
     class = "hetid_error_bad_argument"
   )
-  expect_match(conditionMessage(err), "ppml")
+  expect_match(conditionMessage(err), "ppml, harvey")
 })
 
 test_that("ppml_pos_rank ranks the positive-response rows only", {

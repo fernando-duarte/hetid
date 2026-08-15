@@ -3,35 +3,10 @@
 # deterministic start ladder, with the fail-closed acceptance check applied to
 # each rung. Ported from the paper pipeline
 # (scripts-paper/log_variance/estimators/ppml/fit.R). No clamping, no epsilon
-# added to y, no suppressed conditions. A file-level roxygen block would
-# collide with ppml_fit_response's own Rd page, so this header stays a comment.
-
-#' Classify the Scaled Response
-#'
-#' Guards the one place where \code{response_scale} can quietly change the
-#' data the estimator sees. Partial underflow is the sneaky case: zeros are
-#' otherwise valid responses, so a positive entry collapsing to exactly zero
-#' looks like data rather than a numerical accident.
-#'
-#' @param y Numeric response on the original scale
-#' @param y_scaled \code{y / response_scale}
-#'
-#' @return A failure class string, or \code{NA_character_} when the scaled
-#'   response is usable
-#' @noRd
-ppml_scaled_response_class <- function(y, y_scaled) {
-  if (any(y > 0 & y_scaled == 0)) {
-    return("scaled_response_underflow")
-  }
-  if (!all(is.finite(y_scaled))) {
-    return("scaled_response_overflow")
-  }
-  # svd on all-zero positive rows escapes as a base error without this
-  if (!any(y_scaled > 0)) {
-    return("all_zero_response")
-  }
-  NA_character_
-}
+# added to y, no suppressed conditions. The scaled-response guard is the
+# estimator-neutral log_variance_scaled_response_class(). A file-level roxygen
+# block would collide with ppml_fit_response's own Rd page, so this header
+# stays a comment.
 
 #' Build the Start Ladder
 #'
@@ -98,7 +73,7 @@ ppml_start_invalid <- function(cand, x_mat) {
 ppml_fit_response <- function(y, x_mat, start = NULL, fallback_starts = list(),
                               response_scale = 1) {
   y_scaled <- y / response_scale
-  scale_failure <- ppml_scaled_response_class(y, y_scaled)
+  scale_failure <- log_variance_scaled_response_class(y, y_scaled)
   if (!is.na(scale_failure)) {
     return(ppml_failure(scale_failure, y, x_mat, response_scale))
   }

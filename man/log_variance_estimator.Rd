@@ -7,7 +7,8 @@
 log_variance_estimator(estimator)
 }
 \arguments{
-\item{estimator}{Single string naming the estimator (\code{"ppml"})}
+\item{estimator}{Single string naming the estimator (\code{"ppml"} or
+\code{"harvey"})}
 }
 \value{
 A list with elements \code{id}, \code{label},
