@@ -92,16 +92,17 @@ PAPER_FIGURE_RENDER_CONTROL <- list(
     # raw b_{1,N} ticks land on thousandths, which tick_digits would collapse.
     auto_tick_n = 3L,
     # Per-figure nudges to an auto frame, keyed by unit system and slack token.
-    # x_lower and x_upper pin axis 1's ends; y_lower_drop lowers axis 2's bottom
-    # by that much. Applied before the OLS growth and the tick ladder, so the
-    # _ols variant can still widen past a pin it would otherwise fall outside.
+    # x_lower and x_upper pin axis 1's ends and x_step its ladder step;
+    # y_lower_drop lowers axis 2's bottom by that much. Applied before the OLS
+    # growth and the tick ladder, so the _ols variant can still widen past a
+    # pin it would otherwise fall outside.
     # share_plain_frame drops that growth, giving the _ols variant the same
     # cube, ladder and labels as its plain twin -- for the raw-unit baseline
     # pair, whose OLS point sits inside the plain frame anyway.
     auto_frame_adjust = list(
       b = list(tau0p2 = list(
-        x_lower = -0.01, x_upper = 0.06, y_lower_drop = 0.025,
-        share_plain_frame = TRUE
+        x_lower = -0.01, x_upper = 0.09, x_step = 0.03,
+        y_lower_drop = 0.025, share_plain_frame = TRUE
       ))
     ),
     # Axis titles per unit system. "sd" scales each coefficient by its news-PC
@@ -114,11 +115,11 @@ PAPER_FIGURE_RENDER_CONTROL <- list(
       ),
       b = c("$b_{1,N}$", "$b_{2,N}$", "$b_{3,N}$")
     ),
-    device = list(
-      width = 9.6,
-      height = 8.4,
-      family = "DejaVu Sans"
-    )
+    # The paper includes the trimmed figure at 0.7 of its 6.5in text width and
+    # Inkscape re-typesets every label at the document's 12pt, so the device is
+    # sized for the trimmed figure to land near 4.6in wide with 12pt text: the
+    # spacing drawn here is then the spacing LaTeX keeps.
+    device = list(width = 5.5, height = 4.6)
   ),
   projections = list(
     # Ladder step pinned per unit system and coefficient, overriding the step

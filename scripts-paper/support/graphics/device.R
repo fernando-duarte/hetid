@@ -140,6 +140,20 @@ crop_svg_to_ink <- function(path, pad = 2) {
     sprintf(" viewBox='%.2f %.2f %.2f %.2f'", lo[1], lo[2], span[1], span[2]),
     cropped
   )
-  writeLines(sub(header, cropped, svg, fixed = TRUE), path)
+  svg <- sub(header, cropped, svg, fixed = TRUE)
+  # The page background is a full-canvas rect at the origin. Inkscape's
+  # drawing-area export, which the paper's \includesvg uses, takes the union of
+  # everything drawn, so left there the rect would pull the exported area back
+  # to the uncropped top-left corner; it moves with the viewBox instead.
+  svg <- sub(
+    "<rect width='100%' height='100%'",
+    sprintf(
+      "<rect x='%.2f' y='%.2f' width='%.2f' height='%.2f'",
+      lo[1], lo[2], span[1], span[2]
+    ),
+    svg,
+    fixed = TRUE
+  )
+  writeLines(svg, path)
   invisible(path)
 }

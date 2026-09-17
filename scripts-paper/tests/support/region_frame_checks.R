@@ -89,5 +89,14 @@ check(
     region_3d_frame(shared_box, render, "auto", c(0.02, 0, -0.18), "b", 0.20)
   )
 )
+# Its pinned step replaces the five-rung pretty() ladder the widened axis 1
+# would otherwise get with four rungs that put both frame ends on a rung.
+check(
+  "the raw-unit baseline pair's axis 1 ladder runs on its pinned step",
+  isTRUE(all.equal(
+    region_3d_frame(shared_box, render, "auto", NULL, "b", 0.20)$ticks[[1]],
+    c(0, 0.03, 0.06, 0.09)
+  ))
+)
 
 .test$finish()

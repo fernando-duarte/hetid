@@ -60,6 +60,13 @@ region_3d_auto_frame <- function(lims, render, extra, adjust = NULL) {
     })
   }
   ticks <- lapply(lims, region_auto_ticks, n_min = render$auto_tick_n)
+  if (!is.null(adjust$x_step)) {
+    # axis 1's ladder on a pinned step, for a frame where the coarsest pretty()
+    # ladder with auto_tick_n rungs still carries one or two too many
+    step <- adjust$x_step
+    rungs <- seq(ceiling(lims[[1]][1] / step - 1e-9), floor(lims[[1]][2] / step + 1e-9))
+    ticks[[1]] <- rungs * step
+  }
   list(
     lims = lims,
     ticks = ticks,

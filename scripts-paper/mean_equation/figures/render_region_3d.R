@@ -88,11 +88,11 @@ local({
 
     svglite::svglite(
       filename = artifact_path(region_figure_id(ols, units, tau)),
-      width = 7,
-      height = 6.1
+      width = render$device$width,
+      height = render$device$height
     )
     on.exit(grDevices::dev.off(), add = TRUE)
-    graphics::par(mar = c(3.2, 4.5, 2.0, 3.6), xpd = NA, family = "sans")
+    graphics::par(mar = c(3.2, 4.5, 2.0, 5.1), xpd = NA, family = "sans")
     pmat <- graphics::persp(
       x = lims[[1]],
       y = lims[[2]],

@@ -48,6 +48,30 @@ check(
   close_to(strokes, c(50, 30, 100, 40))
 )
 
+# The page background follows the crop: Inkscape's drawing-area export takes
+# the union of everything drawn, so a background left at the origin would pull
+# the paper's figure back to the uncropped corner.
+background <- {
+  path <- crop_svg_to_ink(
+    svg_fixture("<polyline points='50.00,30.00 150.00,70.00 ' />"),
+    pad = 0
+  )
+  svg <- paste(readLines(path), collapse = "\n")
+  regmatches(svg, regexpr("<rect [^>]*#FFFFFF[^>]*>", svg))
+}
+check(
+  "the page background moves with the crop",
+  close_to(
+    vapply(
+      c("x", "y", "width", "height"),
+      function(side) svg_attr_num(background, side),
+      numeric(1),
+      USE.NAMES = FALSE
+    ),
+    c(50, 30, 100, 40)
+  )
+)
+
 # Lines and circles carry their coordinates in separate attributes, and the
 # circle's radius has to widen the box on both sides.
 marks <- cropped_box(
