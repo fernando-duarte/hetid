@@ -101,7 +101,7 @@ PAPER_FIGURE_RENDER_CONTROL <- list(
     # pair, whose OLS point sits inside the plain frame anyway.
     auto_frame_adjust = list(
       b = list(tau0p2 = list(
-        x_lower = -0.01, x_upper = 0.09, x_step = 0.03,
+        x_lower = -0.01, x_upper = 0.095, x_step = 0.03,
         y_lower_drop = 0.025, share_plain_frame = TRUE
       ))
     ),

@@ -90,7 +90,7 @@ check(
   )
 )
 # Its pinned step replaces the five-rung pretty() ladder the widened axis 1
-# would otherwise get with four rungs that put both frame ends on a rung.
+# would otherwise get with four rungs, the last one short of the frame's end.
 check(
   "the raw-unit baseline pair's axis 1 ladder runs on its pinned step",
   isTRUE(all.equal(
