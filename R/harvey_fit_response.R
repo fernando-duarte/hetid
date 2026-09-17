@@ -80,10 +80,12 @@ harvey_fit_response <- function(y, x_mat, start = NULL,
     x_mat[pos, , drop = FALSE],
     tol = LOG_VARIANCE_HARVEY_CONTROL$RANK_TOLERANCE
   )$rank
-  # the Fisher direction needs this factor, so a design the Cholesky rejects
-  # leaves the solver with no globally safe step at all
+  # the Fisher direction needs this factor, so a rank-deficient design leaves
+  # the solver with no globally safe step at all; the rank test decides that
+  # on every platform, where the Cholesky alone rounds either way
+  rank_x <- qr(x_mat, tol = LOG_VARIANCE_HARVEY_CONTROL$RANK_TOLERANCE)$rank
   chol_xx <- tryCatch(chol(crossprod(x_mat)), error = function(cond) NULL)
-  if (is.null(chol_xx)) {
+  if (rank_x < ncol(x_mat) || is.null(chol_xx)) {
     return(harvey_failure(
       "singular_design", y, x_mat, response_scale,
       n_zero_response = n_zero, rank_x_pos = rank_x_pos
