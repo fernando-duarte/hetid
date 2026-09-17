@@ -115,11 +115,18 @@ PAPER_FIGURE_RENDER_CONTROL <- list(
       ),
       b = c("$b_{1,N}$", "$b_{2,N}$", "$b_{3,N}$")
     ),
-    # The paper includes the trimmed figure at 0.7 of its 6.5in text width and
-    # Inkscape re-typesets every label at the document's 12pt, so the device is
-    # sized for the trimmed figure to land near 4.6in wide with 12pt text: the
-    # spacing drawn here is then the spacing LaTeX keeps.
-    device = list(width = 5.5, height = 4.6)
+    # The paper includes the trimmed figure at 0.7 of its 6.5in text width, so
+    # the device is sized for the trimmed figure to land near 4.6in wide: its
+    # labels then print at the size they are typeset here.
+    device = list(width = 5.5, height = 4.6),
+    # Labels are typeset by LaTeX (support/graphics/latex_labels.R) at the
+    # manuscript's body size and embedded as glyph outlines. A title sits
+    # title_gap_pt past its axis's tick labels, centred on the ladder except
+    # for title_shift_pt, which slides it along the axis toward larger values
+    # (negative: toward smaller). Points, as the file writes them.
+    label_pointsize = 12L,
+    title_gap_pt = 8,
+    title_shift_pt = c(12, -12, 0)
   ),
   projections = list(
     # Ladder step pinned per unit system and coefficient, overriding the step

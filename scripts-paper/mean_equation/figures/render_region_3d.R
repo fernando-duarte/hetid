@@ -32,6 +32,11 @@ local({
     envir = environment()
   )
   paper_source_once(
+    paper_path("mean_equation", "figures", "region_3d_axes.R"),
+    envir = environment()
+  )
+  paper_source_once(paper_path("support", "graphics", "latex_labels.R"), envir = environment())
+  paper_source_once(
     paper_path("mean_equation", "figures", "region_3d_frames.R"),
     envir = environment()
   )
@@ -86,12 +91,10 @@ local({
       paste0("$", formatC(at, format = "f", digits = places), "$")
     }, ticks, frame$digits)
 
-    svglite::svglite(
-      filename = artifact_path(region_figure_id(ols, units, tau)),
-      width = render$device$width,
-      height = render$device$height
-    )
-    on.exit(grDevices::dev.off(), add = TRUE)
+    path <- artifact_path(region_figure_id(ols, units, tau))
+    svglite::svglite(path, width = render$device$width, height = render$device$height)
+    device <- grDevices::dev.cur()
+    on.exit(if (device %in% grDevices::dev.list()) grDevices::dev.off(device), add = TRUE)
     graphics::par(mar = c(3.2, 4.5, 2.0, 5.1), xpd = NA, family = "sans")
     pmat <- graphics::persp(
       x = lims[[1]],
@@ -115,25 +118,7 @@ local({
     hi <- vapply(lims, `[`, numeric(1), 2)
     offsets <- c(hi[1], lo[2], lo[3])
     wall_fill <- grDevices::adjustcolor(palette$wall_fill, alpha.f = 0.4)
-    for (perp in axes) {
-      keep <- setdiff(axes, perp)
-      first <- seq(lims[[keep[1]]][1], lims[[keep[1]]][2], length.out = n_wall)
-      second <- seq(lims[[keep[2]]][1], lims[[keep[2]]][2], length.out = n_wall)
-      grid <- region_grid(first, second)
-      margin <- region_envelope(sys, perp, grid$X, grid$Y)$M
-      contours <- grDevices::contourLines(first, second, margin, levels = 0)
-      for (contour in contours) {
-        xyz <- matrix(0, length(contour$x), dimension)
-        xyz[, perp] <- offsets[perp]
-        xyz[, keep[1]] <- contour$x
-        xyz[, keep[2]] <- contour$y
-        p <- project_region_3d(xyz, pmat)
-        graphics::polygon(
-          p[, "x"], p[, "y"],
-          col = wall_fill, border = "black", lwd = 1.8
-        )
-      }
-    }
+    draw_region_walls(pmat, sys, lims, offsets, n_wall, wall_fill)
 
     draw_region_projections(pmat, point0, offsets, palette$tau0_point, 21)
     if (!is.null(marked)) {
@@ -170,10 +155,18 @@ local({
       )
     }
 
-    draw_region_axes(
+    axes <- draw_region_axes(
       pmat, lo, hi, ticks, tick_labels,
       render$axis_labels[[units]], (lo + hi) / 2
     )
+    # the device closes here so the labels go onto the finished file; the
+    # corners they cover go back to the caller's crop
+    grDevices::dev.off(device)
+    placed <- place_region_labels(
+      axes, render$label_pointsize, render$title_gap_pt, render$title_shift_pt
+    )
+    write_latex_labels(path, placed$groups)
+    placed$corners
   }
   # See region_3d_draw_or_skip (prepare_region_geometry.R): region_envelope
   # handles the observed non-convex cases directly, so this only fires on a

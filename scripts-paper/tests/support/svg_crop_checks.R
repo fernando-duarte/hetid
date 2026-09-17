@@ -31,8 +31,8 @@ svg_fixture <- function(...) {
   path
 }
 
-cropped_box <- function(..., pad = 0) {
-  path <- crop_svg_to_ink(svg_fixture(...), pad = pad)
+cropped_box <- function(..., pad = 0, extra = NULL) {
+  path <- crop_svg_to_ink(svg_fixture(...), pad = pad, extra = extra)
   svg <- paste(readLines(path), collapse = "\n")
   header <- regmatches(svg, regexpr("<svg [^>]*>", svg))
   svg_free_numbers(svg_attr(header, "viewBox"))
@@ -105,6 +105,16 @@ padded <- cropped_box("<polyline points='2.00,1.00 150.00,70.00 ' />", pad = 3)
 check(
   "padding is clamped at the canvas edge",
   close_to(padded, c(0, 0, 153, 73))
+)
+
+# Corners handed in for content the scan cannot read widen the box like ink.
+extra <- cropped_box(
+  "<polyline points='50.00,30.00 150.00,70.00 ' />",
+  extra = rbind(c(20, 40), c(60, 90))
+)
+check(
+  "extra corners widen the crop like ink",
+  close_to(extra, c(20, 30, 130, 60))
 )
 
 # A file with nothing drawn in it is a rendering failure, not an empty crop.

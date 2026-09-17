@@ -59,7 +59,8 @@ region_3d_draw_or_skip <- function(draw_fn, ols, units, tau) {
   id <- region_figure_id(ols, units, tau)
   path <- artifact_path(id)
   skipped <- NULL
-  tryCatch(
+  # draw_fn returns the corners of the labels it placed once the device closed
+  label_corners <- tryCatch(
     draw_fn(ols, units, tau),
     region_non_convex_direction = function(e) {
       if (file.exists(path)) file.remove(path)
@@ -68,11 +69,12 @@ region_3d_draw_or_skip <- function(draw_fn, ols, units, tau) {
         tau, units, ols, conditionMessage(e)
       ))
       skipped <<- id
+      NULL
     }
   )
   # persp cannot be made to fill the device, so a completed figure is trimmed
   # to its own ink here rather than inside draw_fn, where it would run on the
   # partial file above during the unwind.
-  if (is.null(skipped)) crop_svg_to_ink(path)
+  if (is.null(skipped)) crop_svg_to_ink(path, extra = label_corners)
   skipped
 }

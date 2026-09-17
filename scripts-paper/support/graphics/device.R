@@ -119,7 +119,7 @@ svg_ink_box <- function(svg) {
 # svglite fixes the canvas before the first stroke, and persp keeps the aspect
 # of its projected box, so the slack around a 3D figure cannot be recovered by
 # margin settings -- the finished file is retrofitted to the ink it carries.
-crop_svg_to_ink <- function(path, pad = 2) {
+crop_svg_to_ink <- function(path, pad = 2, extra = NULL) {
   stopifnot(is.character(path), length(path) == 1L, file.exists(path))
   svg <- paste(readLines(path, warn = FALSE), collapse = "\n")
   header <- regmatches(svg, regexpr("<svg [^>]*>", svg))
@@ -127,6 +127,11 @@ crop_svg_to_ink <- function(path, pad = 2) {
     svg_free_numbers(svg_attr(header, side))
   }, numeric(1))
   ink <- svg_ink_box(svg)
+  # labels placed after the device closed (latex_labels.R) are path data the
+  # scan above does not read, so their corners arrive as extra ink
+  if (!is.null(extra)) {
+    ink <- c(pmin(ink[1:2], apply(extra, 2, min)), pmax(ink[3:4], apply(extra, 2, max)))
+  }
   lo <- pmax(0, ink[1:2] - pad)
   hi <- pmin(canvas, ink[3:4] + pad)
   span <- hi - lo
