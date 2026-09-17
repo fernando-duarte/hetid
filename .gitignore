@@ -134,11 +134,6 @@ scripts-paper/output/**/*.snm
 scripts-paper/output/**/*.vrb
 scripts-paper/output/**/*.synctex.gz
 
-# graphify knowledge graph (generated output) + local rebuild tooling
-graphify-out/
-tools/
-.mcp.json
-
 # Duplication tracking
 duplication-tracking/
 baseline-duplication-report.xml

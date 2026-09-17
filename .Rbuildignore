@@ -36,9 +36,6 @@
 ^scripts-paper$
 ^scripts_old$
 ^revdep$
-^tools$
-^graphify-out$
-^\.mcp\.json$
 
 # Testing
 ^tests/testthat/_snaps$

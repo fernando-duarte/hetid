@@ -23,8 +23,7 @@ Run these in order; the run is hands-off only once they're done.
    git pull --ff-only          # optional; only if this branch tracks a remote
    ```
    The run does **not** perform tracked work in this checkout. Stage 0 creates a separate isolated
-   worktree outside the Dropbox tree. The only later write here is Stage K's locked refresh of
-   authorized untracked graph state.
+   worktree outside the Dropbox tree. The invoking checkout remains read-only for the whole run.
 5. **Paste from `## ORCHESTRATOR PROMPT` down.** Everything above that heading (this quickstart +
    the "How to use" note) is for you, not the agent. Paste from the "You are the **orchestrator**…"
    line to the end of the file.
@@ -35,9 +34,9 @@ Run these in order; the run is hands-off only once they're done.
    workflow spawns workers and sub-orchestrators, commits to a new branch in a new isolated worktree, and pushes
    that branch to `origin`. **It never merges.** It ends by assessing whether the branch would
    merge cleanly back into the base and reporting the verdict — the merge itself stays yours.
-   Stage K and the two final documentation sub-orchestrators are the named writer exceptions to the
-   usual worker rule. Stage K owns only graph state; each Stage-O sub-orchestrator may edit only its
-   assigned TeX file in the run worktree and working branch. Launch only when you want that end state.
+   The two final documentation sub-orchestrators are the named writer exceptions to the usual worker
+   rule. Each Stage-L sub-orchestrator may edit only its assigned TeX file in the run worktree and
+   working branch. Launch only when you want that end state.
    Ordinary workers keep the checkout read-only
    and checkpoint their findings to private Markdown files under `RUN/scratch/agents/` so partial
    work survives an agent crash.
@@ -49,7 +48,7 @@ Run these in order; the run is hands-off only once they're done.
 > running in this repository, then leave it to run. Opus acts as
 > the orchestrator: it sequences the work, delegates to workers and sub-orchestrators, enforces the barriers, and
 > verifies each stage before moving on. The run is **fully autonomous** — start to finish
-> (Stage A through Stage O and the final mergeability assessment) with **no human involvement**:
+> (Stage A through Stage L and the final mergeability assessment) with **no human involvement**:
 > Opus must never pause to ask a question, request approval, or defer a decision back to the
 > human. It stops short of merging: the branch is left pushed and assessed, never integrated.
 
@@ -68,11 +67,11 @@ Read `docs/prompts/shared-workflow-contracts.md` completely before Stage 0. This
 contract and does not restate its model, effort, autonomy, history-independence, role, worker,
 concurrency, evidence, snapshot, retry, or completion rules.
 
-This orchestrator owns Git state and canonical repository writes for Stages A-O. The workflow
+This orchestrator owns Git state and canonical repository writes for Stages A-L. The workflow
 authorizes the stated worktree creation, pipeline execution, source and documentation edits, commits,
 and pushes. It does not authorize a merge, rebase, cherry-pick, or push of the base branch. Workers do
-not inherit this authority. The Stage-K graph sub-orchestrator and two Stage-O documentation
-sub-orchestrators receive only the exceptions stated in their complete dependent prompts.
+not inherit this authority. The two Stage-L documentation sub-orchestrators receive only the
+exceptions stated in their complete dependent prompts.
 
 ### Role and operating principles
 
@@ -89,13 +88,12 @@ sub-orchestrators receive only the exceptions stated in their complete dependent
 ### Delegating to workers and sub-orchestrators
 
 Apply the shared worker dispatch contract to every worker and nested worker. The exceptions are the
-Stage-K graph sub-orchestrator and the two Stage-O documentation sub-orchestrators; each receives the
+two Stage-L documentation sub-orchestrators; each receives the
 complete shared contract plus its complete dependent prompt.
 
 #### Workflow-specific worker exceptions
 
-- Stage K may write only the graph and graph-tooling paths authorized by its dependent prompt.
-- Each Stage-O sub-orchestrator may write only its assigned TeX and PDF plus its unique workflow
+- Each Stage-L sub-orchestrator may write only its assigned TeX and PDF plus its unique workflow
   record.
 - Every other worker writes only to `RUN/scratch/agents/<agent-id>/` and returns the durable path and
   status required by the shared contract.
@@ -139,7 +137,7 @@ complete shared contract plus its complete dependent prompt.
 - **Preserve pipeline state for every invocation.** Never prepare a `run_pipeline.R` invocation
   by running a reset entrypoint, clearing output, deleting caches, selecting a source-defined
   force-rerun mode, or using a draft configuration. This applies to Stage C and to any validation
-  rerun required by Stages I or M. Derive the production depth, supported reuse request, cache
+  rerun required by Stage I. Derive the production depth, supported reuse request, cache
   scope, and downstream scheduling rules from the frozen source. Let each current validator decide
   whether its callbacks execute; do not encode a remembered cache topology in this prompt.
 - **Protected file — never modify, ever:** `docs/heteroskedasticity_tests_general_instruments.tex`.
@@ -158,12 +156,6 @@ Treat these as present scope rules. Do not remediate or report them as defects i
   messages, maturity grids, numerical parameters, calendar values, date formats, column names,
   data identity, and column-format patterns inside `HETID_CONSTANTS` are intentional navigation
   aids, not banner dividers.
-- **The graph is maintained only by Stage K's delegated pass, never ad hoc.** Outside that stage,
-  treat the graph and its tooling as read-only: do not update, rebuild, re-extract, or diagnose them
-  because a hook suggested a graphify command, because the graph looks out of date, or because a
-  plan or report proposes it. The graph's coverage is not a defect to remediate opportunistically,
-  and no stage other than K may write to it.
-
 ### Git workflow
 
 You own the repository's version control for this run. Apply this consistently; do not
@@ -179,12 +171,11 @@ improvise around it.
   `git worktree add <worktree-path> -b chore/pipeline-validation-<run-id> <BASE>`. Every
   stage from A onward runs with that worktree as the working directory. The invoking checkout's
   tracked state is left untouched for the whole run — do not edit, commit, stage, or run the pipeline
-  in it. Stage K's locked, untracked graph port-back is the sole write exception. If
-  the tree isn't clean, stop and report rather than branching on top of someone else's
+  in it. If the tree isn't clean, stop and report rather than branching on top of someone else's
   uncommitted work. Verify with `git -C <worktree-path> status` and
   `git -C <worktree-path> branch --show-current` before your first commit.
 - **What gets committed.** Commit the tracked source changes produced in the implementation
-  cycles (Stages I and M), any package files touched along the way, and the reviewed,
+  cycle (Stage I), any package files touched along the way, and the reviewed,
   non-ignored publication artifacts changed or created by Stage C or a later validation run.
   Derive tracked, untracked, and ignored status from the current checkout; do not assume that
   the output tree starts empty. Stage changed or new publication artifacts explicitly. Do not
@@ -193,15 +184,14 @@ improvise around it.
   is **not** committed and does not appear in `git status`; do not try to force-add it.
   **But `docs/` is not uniformly ignored.** Run `git ls-files docs/` in Stage 0 and record the
   complete current set. Treat every tracked `docs/` file other than the
-  two Stage-O targets as read-only reference material for this run. The two Stage-O deliverables,
+  two Stage-L targets as read-only reference material for this run. The two Stage-L deliverables,
   `docs/run_pipeline_code.tex` and `docs/run_pipeline_math.tex`, are the only ones this run may
   change: stage and commit those two files explicitly after their sub-orchestrators finish and the
   orchestrator verifies them. Their PDFs and all synchronization working files remain ignored and
   uncommitted.
-- **When to commit.** Commit at each natural checkpoint — once per completed implementation
-  cycle, after its changes are verified and its pre-commit gate passes. Concretely: one
-  commit at the end of Stage J (the Stage-G/H/I cycle), one at the end of Stage M (the Stage-L
-  cycle), and one documentation commit in Stage O after both TeX files pass their independent
+- **When to commit.** Commit at each natural checkpoint after its changes are verified and its
+  pre-commit gate passes. Concretely: one commit at the end of Stage J (the Stage-G/H/I cycle) and
+  one documentation commit in Stage L after both TeX files pass their independent
   synchronization and the orchestrator's verification. If a cycle produces logically distinct
   change sets, split them into focused commits. Do not commit broken or unverified states.
 - **How to commit.** Stage the specific files you changed (prefer explicit `git add <paths>`
@@ -213,12 +203,12 @@ improvise around it.
   hooks green. (Note hook quirks: roxygen version drift can rewrite `man/`; let
   `devtools::document()` reconcile it. Never run `spelling::update_wordlist()` — add terms to
   `inst/WORDLIST` by hand.)
-- **When to push.** After each gate-passing commit, including the Stage-O documentation commit,
+- **When to push.** After each gate-passing commit, including the Stage-L documentation commit,
   push the working branch to `origin`
   (`git push -u origin <branch>` on first push). Pushing is in-scope for this run — you do
   not need to ask. No pull request is required.
 - **Never merge.** Do not merge the working branch into `BASE` or any other branch, at any point,
-  and do not merge `BASE` into the working branch. Do not rebase onto `BASE`. After Stage O the
+  and do not merge `BASE` into the working branch. Do not rebase onto `BASE`. After Stage L the
   run performs a read-only **mergeability assessment** (see **Final mergeability assessment**)
   and stops. Integration is the human's decision, made later, from the report.
 - **Recover, don't rewrite.** Do not `git reset --hard`, force-push, rebase, or amend already
@@ -249,11 +239,7 @@ throughout the workflow. Within it:
 | Stage-G consolidated report (D+E+F) | `RUN/reports/consolidated-quality.md` |
 | Stage-H plan + Stage-I execution notes | `RUN/plans/stage-h-plan.md`, `RUN/plans/stage-i-execution.md` |
 | Worker response and private work area | `RUN/scratch/agents/<agent-id>/response.md` and sibling files |
-| Stage-L duplication worker response | `RUN/scratch/agents/stage-l-dup/response.md` |
-| Stage-L bug worker response | `RUN/scratch/agents/stage-l-bugs/response.md` |
-| Stage-L consolidated report | `RUN/reports/consolidated-graphify.md` |
-| Stage-M plan + execution notes | `RUN/plans/stage-m-plan.md`, `RUN/plans/stage-m-execution.md` |
-| Stage-O documentation monitoring record | `RUN/reports/stage-o-documentation.md` |
+| Stage-L documentation monitoring record | `RUN/reports/stage-l-documentation.md` |
 | Any other intermediate/scratch file | `RUN/scratch/` |
 
 **Timestamp every Markdown file.** Every `.md` file created or updated during this run
@@ -272,7 +258,7 @@ operation after the run.
 
 Note: `quality-check.R` writes its own artifacts to `docs/quality-reports/` — leave those in
 place (that path is fixed by the script) and summarize/link them from `RUN/reports/`. The
-Stage-O TeX files keep their existing canonical paths (`docs/run_pipeline_code.tex` and
+Stage-L TeX files keep their existing canonical paths (`docs/run_pipeline_code.tex` and
 `docs/run_pipeline_math.tex`) — they are deliverables, not run artifacts. Preserve every
 orchestrator-owned report and worker record through the final handoff.
 
@@ -288,7 +274,6 @@ orchestrator-owned report and worker record through the final handoff.
 | Shared workflow contract | `docs/prompts/shared-workflow-contracts.md` |
 | Code-document synchronization prompt | `docs/prompts/synchronize-run-pipeline-code.md` |
 | Math-document synchronization prompt | `docs/prompts/synchronize-run-pipeline-math.md` |
-| Graph maintenance prompt | `docs/prompts/maintain-graphify-graph.md` |
 | Quality suite | `docs/quality-check.R` |
 | Style guides | `docs/guides/Advanced R Solutions.xml`, `docs/guides/Advanced R.xml` |
 | R comment style | `docs/guides/r-comment-style.md` |
@@ -308,14 +293,12 @@ pipeline on a broken footing):
   model, effort, and absolute skill files are available.
 - **Skills and final-stage prompts available:** read the exact `karpathy-guidelines`,
   `multistep-plan`, `econ-write`, and clear-writing paths fixed by the shared contract, and verify
-  that all dependent prompt files listed under **Reference paths** exist and are readable. Check the
-  repository-local graph skill at `.claude/skills/graphify/SKILL.md`; its absence degrades Stages K-L
-  to their stated source-only or partial paths but does not block independent stages.
+  that all dependent prompt files listed under **Reference paths** exist and are readable.
   The optional `commit-push` skill may implement the existing commit/push contract if it is
   available; its absence is not a blocker because the Git commands are specified below.
   **Tools available:** require `git`, `Rscript`/`R`, `pre-commit`, the current package and pipeline
-  validation commands, and the LaTeX/PDF tools required by the dependent Stage-O prompts. Treat
-  `gh`, graphify interfaces, PAL reviewers, and context-documentation interfaces as optional unless
+  validation commands, and the LaTeX/PDF tools required by the dependent Stage-L prompts. Treat
+  `gh`, PAL reviewers, and context-documentation interfaces as optional unless
   a later current-source gate has no compliant substitute. Record each missing optional tool and
   use the fallback defined by the owning stage.
 - **Clean, known starting point, and the base branch comes from `HEAD`:** run
@@ -325,9 +308,7 @@ pipeline on a broken footing):
   never substitute a hard-coded branch name. If `HEAD` is detached (`git rev-parse` returns
   `HEAD`), **stop and report**. If the working tree has uncommitted or untracked changes, **stop
   and report**; do not absorb pre-existing work into this run's branch. Do not switch branches in
-  the invoking checkout — the run leaves its tracked state and branch exactly as found. Stage K's
-  pass may refresh untracked generated graph state there; that is not a change to the checkout's
-  tracked state and does not violate this rule.
+  the invoking checkout — the run leaves its tracked state and branch exactly as found.
 - **Record the force-tracked `docs/` set.** Run `git ls-files docs/` and log the complete current
   result. Treat every entry other than
   `docs/run_pipeline_code.tex` and `docs/run_pipeline_math.tex` as read-only for this run. See
@@ -355,12 +336,10 @@ git worktree add ~/hetid-worktrees/pipeline-run-<RUN_ID> \
   once and stay there, or pass `-C <worktree-path>` on every `git` call. `RUN` is relative to the
   worktree, so the run folder is `<worktree-path>/docs/pipeline-run-<RUN_ID>/`. Record the
   absolute worktree path, the branch name, and `BASE` in the log.
-- **The invoking checkout is read-only for the whole run, with one named exception.** Do not edit,
+- **The invoking checkout is read-only for the whole run.** Do not edit,
   stage, commit, run the pipeline, or install the package from it. Its roles after this step are as
-  the donor of ignored pipeline state in step (2), and as the destination of the port-back that
-  Stage K's graph maintenance pass performs. That exception covers **untracked generated state
-  only** — never a tracked file, never Git state, never the working tree's branch. Nothing else in
-  the run may write to the invoking checkout for any reason.
+  the donor of ignored pipeline state in step (2). Nothing in the run may write to the invoking
+  checkout for any reason.
 
 **(2) Seed the worktree with the invoking checkout's ignored pipeline state. [required]** A new
 worktree contains tracked files only. Derive the current tracked and ignored output sets with Git and
@@ -383,8 +362,8 @@ cp -R <invoking-checkout>/scripts-paper/output/. \
   `scripts-paper/output/` at all, record that fact and proceed — a gate-driven full rerun is then
   legitimate, and Stage A's inventory will show an empty baseline.
 
-**(2b) Seed every other required untracked resource.** Derive the dependency closure of Stages D-F,
-K, and O from their current commands, guides, protected references, skills, and complete dependent
+**(2b) Seed every other required untracked resource.** Derive the dependency closure of Stages D-F
+and L from their current commands, guides, protected references, skills, and complete dependent
 prompts. For each required path absent from `git ls-files`, copy it from the invoking checkout before
 Stage A and verify it by digest. At minimum, resolve the following explicitly named dependencies; a
 new source dependency must be added by discovery rather than omitted because it is absent here:
@@ -393,23 +372,16 @@ new source dependency must be added by discovery rather than omitted because it 
 cp <invoking-checkout>/docs/quality-check.R                                   <worktree-path>/docs/
 cp <invoking-checkout>/docs/lewbel_multivariate_set_identification.tex        <worktree-path>/docs/
 cp <invoking-checkout>/docs/heteroskedasticity_tests_general_instruments.tex  <worktree-path>/docs/
-mkdir -p <worktree-path>/.claude/skills && \
-  cp -R <invoking-checkout>/.claude/skills/graphify <worktree-path>/.claude/skills/graphify
 ```
 
 | Resource | Needed by | What breaks if it is missing |
 |---|---|---|
 | `docs/quality-check.R` | Stage D | Stage D cannot run at all — the script does not exist |
-| `.claude/skills/graphify` | Stage L | the project-local skill does not resolve for read-only queries |
 | `docs/lewbel_multivariate_set_identification.tex` | Stage F | **silent**: the roxygen spec requires `\eqn{}`/`\deqn{}` notation to match this file, and auditors simply cannot perform that check |
 | `docs/heteroskedasticity_tests_general_instruments.tex` | reference reads | the protected file this prompt says you may read for reference |
 
 Copy, never move or symlink — the invoking checkout keeps its originals, and the run must not be
 able to damage them. Confirm each landed.
-
-**Do not seed the graph directory here — Stage K's pass owns that.** Its prompt acquires the
-canonical lock, selects a coherent candidate by source provenance, seeds its worktree, and points the
-root marker at that tree. Seed the skill needed for queries and leave graph state to Stage K.
 
 **Baseline the protected file by checksum — `git` cannot police it and mtime is worthless here.**
 `docs/heteroskedasticity_tests_general_instruments.tex` is **untracked**, so it never appears in
@@ -633,7 +605,7 @@ equivalent first. Then **re-run the validations that the change could have inval
 always; and, if the change can affect pipeline behavior or numbers, the pipeline. Preserve the
 existing output and invoke `scripts-paper/run_pipeline.R` with the source-derived production
 configuration and validated reuse mode; never reset or force a rerun. Let the bootstrap cache
-gate decide for itself whether the draw callbacks must execute. Stage O performs the documentation
+  gate decide for itself whether the draw callbacks must execute. Stage L performs the documentation
 synchronization only after all source work is final, so do not run either synchronization prompt
 here. Be honest in the log about any Stage-C output that remains stale. **Do not start Stage J
 until implementation is complete and verified.**
@@ -647,141 +619,18 @@ hooks; if any fail, run `pre-commit run --all-files` to reproduce, fix the **roo
 re-commit — iterate until the commit lands with **all** hooks green. Then push the working branch
 to `origin`. See **Git workflow**.
 
-**Stage K — Graphify graph maintenance (one sub-orchestrator, delegated to its own prompt).**
-Graph refresh is an ancillary best-effort stage because it writes only generated, machine-local
-state. Its required parent-workflow deliverable is a verified terminal record and safe canonical
-state, not a successful mutation. A safe `Partial` degrades Stage L as specified below but does not
-block independent source validation.
-
-Dispatch one sub-orchestrator with the complete current contents of
-`docs/prompts/shared-workflow-contracts.md`, followed by the complete current contents of
-`docs/prompts/maintain-graphify-graph.md`. Do not summarize, paraphrase, reorder, or replace either
-file. The dependent prompt
-owns the entire method: seeding, updating, repair, the health gate, and porting the result back. It
-is maintained independently of this prompt, so anything said here about *how* to maintain the graph
-would drift out of date; this stage owns only the dispatch and the verification.
-
-**Make no assumption about the graph's state.** Do not tell the sub-orchestrator the graph is current, stale,
-behind, or freshly built, and do not decide from repository history whether a pass is warranted.
-Run the stage unconditionally and let the pass discover what needs doing — a pass that finds
-nothing to change is a valid and cheap outcome, not a wasted one.
-
-**Supply the context required by the shared contract:** the absolute run-worktree root, branch,
-`RUN` as the enclosing records root, the recorded source snapshot for Stage K, owned graph
-paths, invoking-checkout destination, and current global slot allocation. The sub-orchestrator creates
-its own unique workflow record below `RUN`; do not assign it an ordinary worker scratch path.
-
-**This sub-orchestrator is a writer exception to the ordinary worker protocol.**
-Unlike every other worker in this run it is expected to write outside a private scratchpad, because
-maintaining the graph is inherently a write operation. State its boundaries explicitly when you
-dispatch it:
-
-- It **may** write the graph directory and its tooling directory — the locations its own prompt
-  names — in the run worktree, and it may perform the port-back that prompt specifies. Those paths
-  are git-ignored, so none of it touches tracked state.
-- It **may not** create, edit, move, or delete any tracked file, run the scientific pipeline, or
-  change Git state in any way: no add, commit, push, checkout, switch, branch, stash, reset,
-  restore, rebase, or merge. It works on whatever branch the run worktree already has checked out
-  and must not switch away from it.
-- **Its own nested workers write to their private scratch directories and nowhere else** — never the
-  graph, never a tracked file, never Git state. Do not dispatch them as strictly read-only: its
-  prompt has them return fragments *through disk*, and a worker that cannot write returns nothing
-  while reporting success. Scratch-only is the boundary, not no-writes-at-all.
-- It owes the unique durable workflow record required by the shared contract and dependent prompt.
-
-**Its prompt directs it to copy results back to the checkout that owns the canonical graph, which is
-normally the invoking checkout.** That is a deliberate and sanctioned exception to this run's
-isolation rule, and the only one: it concerns untracked, generated, machine-local state that lives
-outside version control precisely so it can be regenerated. Do not extend the exception to anything
-else, and do not let it become licence to touch tracked files or Git state in either tree.
-
-**That port-back is the run's only write outside its worktree.** The dependent prompt's canonical
-lock is mandatory. If the sub-orchestrator cannot acquire or safely reclaim the lock, it must not
-update or port the graph. Run one logical Stage-K workflow and never overlap it with another writing
-stage. Any bounded recovery continues from its durable record rather than launching a competing
-maintenance pass.
-
-**Verify after it returns** — read its report and check the claims rather than accepting them:
-
-- for `Complete`, the health and port-back gates passed at the reported counts; for `Partial`, the
-  exact open gate is recorded and no unverified graph was ported;
-- `git status` in the run worktree shows **no tracked change** attributable to this stage;
-- the pipeline was not run, and no scientific output, cache, or manifest instance was touched;
-- the branch checked out in the run worktree is unchanged.
-
-Record the outcome, the before-and-after graph size it reports, and what it states the graph now
-describes. **If the pass fails or cannot finish, record that and continue.** Stage L then works from
-whatever graph is present, or from source alone if there is none. A failed maintenance pass degrades
-the next stage; it does not fail the run.
-
-After verifying and incorporating the Stage-K record, release the terminal sub-orchestrator from the
-task roster. Preserve its workflow record. A terminal sub-orchestrator must not occupy capacity
-needed by later stages.
-
-**Stage L — Graphify audits (two scopes). [WAIT for both]**
-Assign the following two disjoint scopes to two workers. Run them concurrently only when the global
-resource ledger shows two free worker slots; otherwise run them sequentially. Both follow the shared
-task envelope. Before dispatch, copy the required graph inputs into each worker's private scratch
-directory and verify each copy against one recorded digest set. Recheck the live inputs after both
-copies; if they changed during capture, discard only those private copies and retry from one stable
-snapshot within the plan's finite cap. If no stable snapshot can be captured, run both audits from
-source alone and record the graph limitation. Workers query only their immutable private copies.
-They never read a graph another session may be replacing, and any write-capable graphify operation
-remains confined to private scratch.
-
-**Brief both on the graph's evidence boundary**, whatever Stage K reported. Use
-it to *locate* candidates; never let it settle a question about what the code currently does, and
-require every graph-sourced lead to be confirmed against current source before it is reported. Pass
-along whatever Stage K established about the graph's coverage, without inferring more than it says.
-Name both structural limitations: a node may outlive the code it described, and a file outside graph
-coverage has no node. Graph absence therefore never proves source absence.
-
-**Absence of a finding is not evidence of absence**, and both workers must state the exact audited
-universe and method. A textual-duplication sweep certifies only the patterns and source scope it
-actually inspected; it does not certify every possible semantic duplication.
-
-- Worker 1 → `RUN/scratch/agents/stage-l-dup/response.md`: objective = find potential
-  **duplications**, single-source-of-truth violations, DRY violations, and **magic variables**;
-  tools = read-only `graphify` query/explain/path operations over the live graph or a private
-  scratch copy; boundary = structural/quality smells only, not runtime bugs (that's Agent 2).
-- Worker 2 → `RUN/scratch/agents/stage-l-bugs/response.md`: objective = find potential **bugs
-  and errors**; tools = read-only `graphify` operations plus inspection of implicated source;
-  boundary = correctness defects only, not style/duplication (that's Agent 1).
-
-Wait for both to finish or recover their partial checkpoint files. The orchestrator verifies
-and consolidates their findings into `RUN/reports/consolidated-graphify.md`. Retain both worker
-directories and their intermediate artifacts. After incorporation, release the terminal workers from
-the task roster while preserving their records.
-
-**Stage M — Plan / implement / hooks on the Stage-L report.**
-Apply the Stage-H → Stage-I → Stage-J cycle to `RUN/reports/consolidated-graphify.md` instead
-of the Stage-G report:
-
-1. Spawn a `multistep-plan` worker using the same high-certainty, low-execution-risk action rule and
-   explicit-deferral requirement as Stage H. It checkpoints incrementally to
-   `RUN/scratch/agents/stage-m-plan/response.md`, keeps the checkout read-only, and returns only
-   that path and status. The orchestrator verifies the response, writes the canonical plan to
-   `RUN/plans/stage-m-plan.md`, and releases the terminal planning worker while preserving its record.
-2. The orchestrator implements that plan to completion, recording notes in
-   `RUN/plans/stage-m-execution.md`. Subagents may analyze through private checkpoint files but
-   never apply repository changes.
-   **[WAIT]**
-3. Commit the Stage-M.2 work on the working branch (clear human-style message); the commit
-   runs the pre-commit hooks — fix root causes and re-commit until all hooks pass, then push
-   to `origin`. See **Git workflow**.
-
-**Stage N — Freeze the completed working branch for final documentation. [WAIT]**
-Do not begin Stage N until Stages A–M are verified complete, the Stage-J and Stage-M commit gates
-landed with all hooks green, every task-related source and publication change is committed, and
+**Stage K — Freeze the completed working branch for final documentation. [WAIT]**
+Do not begin Stage K until Stages A–J are verified complete, the Stage-J commit gate landed with all
+hooks green, every task-related source and publication change is committed, and
 the working branch is fully pushed. Confirm that the tracked worktree is clean, record the branch
-name and HEAD SHA, and freeze that source snapshot as the authority for both Stage-O
-sub-orchestrators. From this point through the Stage-O documentation commit, do not change source,
-configuration, tests, pipeline outputs, or any tracked file except the two Stage-O TeX targets.
+name and HEAD SHA, and freeze that source snapshot as the authority for both Stage-L
+sub-orchestrators. From this point through the Stage-L documentation commit, do not change source,
+configuration, tests, pipeline outputs, or any tracked file except the two Stage-L TeX targets.
 If a source change becomes necessary, return to the affected earlier stage, repeat its validation
-and commit/push gate, then re-enter Stage N with a new recorded snapshot.
+and commit/push gate, then re-enter Stage K with a new recorded snapshot.
 
-**Stage O — Synchronize the two pipeline TeX documents. [final substantive stage]**
-Stage O runs in the **same run worktree and working branch** used by Stages A–N. Do not create
+**Stage L — Synchronize the two pipeline TeX documents. [final substantive stage]**
+Stage L runs in the **same run worktree and working branch** used by Stages A–K. Do not create
 a documentation branch or a second worktree, do not switch branches, do not touch the invoking
 checkout, and do not let either sub-orchestrator change Git state. The two canonical and
 task-related repository targets are:
@@ -812,7 +661,7 @@ current contents of its dependent prompt. Do not summarize, combine, reorder, or
 - the branch, and that it must not be switched;
 - `RUN` as the enclosing records root; each sub-orchestrator must create its own unique workflow
   record under the path defined by its dependent prompt;
-- the Stage-N snapshot SHA as the source it must describe;
+- the Stage-K snapshot SHA as the source it must describe;
 - its exact owned TeX and PDF targets, the sibling's disjoint targets, and whether the sibling is
   not yet launched, active, or terminal; and
 - the caller's current global slot allocation.
@@ -846,7 +695,7 @@ re-deriving edits they already made and verified.
 Each may edit only its assigned canonical TeX file and may create only the ignored working and
 validation artifacts allowed by its prompt. Each must preserve the other TeX file, every source
 file, and all Git state — no add, commit, push, checkout, switch, branch, stash, reset, restore,
-rebase, or merge, in either tree. Both must run on the Stage-N source snapshot and must complete
+rebase, or merge, in either tree. Both must run on the Stage-K source snapshot and must complete
 every barrier in their prompt, including the distinct `econ-write` and
 `writing-clearly-and-concisely` passes. The main orchestrator must verify those passes rather than
 infer compliance from a successful TeX build.
@@ -857,7 +706,7 @@ sub-orchestrator skips any optional read of a sibling target while that sibling 
 sequential scheduling it may read the stable sibling only as the nonauthoritative lead allowed by
 its dependent prompt.
 
-**Report the Stage-O schedule immediately after the first task starts.** Identify both targets and
+**Report the Stage-L schedule immediately after the first task starts.** Identify both targets and
 state whether their sub-orchestrators are concurrent or sequential. This notice is mandatory even
 though the workflow is otherwise hands-off; do not wait until the sub-orchestrators finish.
 
@@ -865,17 +714,17 @@ though the workflow is otherwise hands-off; do not wait until the sub-orchestrat
 status tools and inspect their prompt-required durable reports/checkpoints while they run. Do not
 fire and forget, treat task creation as completion, or rely only on a final chat message. Record
 launch time, task identity, current status, last durable checkpoint, failures/retries, and terminal
-status in `RUN/reports/stage-o-documentation.md`. If either task crashes, stalls, or returns a
+status in `RUN/reports/stage-l-documentation.md`. If either task crashes, stalls, or returns a
 partial result, inspect and preserve its durable work, recover or relaunch only the uncovered
-scope under the same target boundary, and continue monitoring. Stage O cannot pass while either
+scope under the same target boundary, and continue monitoring. Stage L cannot pass while either
 sub-orchestrator is running, missing, partial, or unverified.
 
 After both finish, the main orchestrator must:
 
 1. Read both complete audit trails and final reports, verify their source snapshot against the
-   Stage-N SHA, and inspect every change to the two TeX files.
-2. Confirm that no tracked file other than the two TeX targets changed during Stage O. Investigate
-   and remove only Stage-O-created out-of-scope changes; never discard pre-existing user work.
+   Stage-K SHA, and inspect every change to the two TeX files.
+2. Confirm that no tracked file other than the two TeX targets changed during Stage L. Investigate
+   and remove only Stage-L-created out-of-scope changes; never discard pre-existing user work.
 3. Verify that each prompt's source-fidelity, terminology, `econ-write`,
    `writing-clearly-and-concisely`, LaTeX, and final-integrity gates passed. Re-run decisive
    validations when needed; do not rerun or source the scientific pipeline. Every certification must
@@ -902,16 +751,16 @@ After both finish, the main orchestrator must:
 8. Report both sub-orchestrators' completion, the verification evidence, the documentation commit
    SHA/message, the working branch, and the branch push result.
 
-Stage O is complete only after both sub-orchestrators are terminal and verified, both canonical
+Stage L is complete only after both sub-orchestrators are terminal and verified, both canonical
 TeX files are incorporated, and the documentation commit is present on and pushed from the same
 working branch used by the rest of the run.
 
-### Final mergeability assessment (after Stage O) — assess, report, do not merge
+### Final mergeability assessment (after Stage L) — assess, report, do not merge
 
 **Do not merge anything.** The run ends with the working branch committed, pushed, and
 *assessed*. Integration into `BASE` is the human's decision, taken later from your report. Do not
 run `git merge`, `git rebase`, `git cherry-pick`, or `git pull` on either branch, and do not push
-`BASE`. Only after every stage is verified complete and all three commit gates landed green:
+`BASE`. Only after every stage is verified complete and both commit gates landed green:
 
 1. **Confirm the branch is committed and actually pushed.** The run worktree must be clean
    (`git status --short`). Prove the push by comparing refs, never by reading command output:
@@ -988,35 +837,30 @@ run `git merge`, `git rebase`, `git cherry-pick`, or `git pull` on either branch
 
 You are done only when all of these conditions hold:
 
-- Stages A–J and L–O are verified complete in the dependency order above, including every permitted
-  D–F overlap and the Stage-N source freeze. Stage K reached a verified terminal state: either
-  `Complete`, or a safe `Partial` in which
-  no unverified graph was ported and Stage L completed from a stable graph snapshot or source alone.
+- Stages A–L are verified complete in the dependency order above, including every permitted D–F
+  overlap and the Stage-K source freeze.
 - `BASE` was read from `HEAD` at invocation and recorded; no command hard-coded a branch name.
 - A new isolated worktree outside the Dropbox tree and a new working branch were created up front
   from `BASE`, the worktree was seeded with the invoking checkout's ignored pipeline state, and
-  every stage used it as its repository root. The invoking checkout stayed on its original branch
-  and commit; only a successful Stage K locked port-back could change its authorized untracked graph
-  state.
-- Every task commit — Stage J, Stage M.3, and the Stage-O documentation commit — landed and was
+  every stage used it as its repository root. The invoking checkout stayed unchanged on its original
+  branch and commit.
+- Every task commit — Stage J and the Stage-L documentation commit — landed and was
   pushed on the working branch. No task work or task commit landed on `BASE`.
 - No reset, output cleanup, draft bootstrap, or forced bootstrap rerun prepared any pipeline
   invocation. The Stage-C log records each current cache gate's actual decision and any
   gate-justified rebuild, its outputs were reconciled against the Stage-A inventory, and every later
   pipeline validation preserved that contract.
-- Stage G was built from the Stage-D, Stage-E, and Stage-F reports, and Stage L was built from
-  its two worker responses. Their source reports were handled as specified, and durable worker
-  checkpoints remained available through successful run completion.
-- Both implementation cycles, Stages I and M, are complete. The Stage-J and Stage-M.3 commit
-  gates landed with all hooks green, and all reviewed non-ignored publication artifacts were
-  committed.
-- The main orchestrator reported the Stage-O schedule when its first sub-orchestrator started,
+- Stage G was built from the Stage-D, Stage-E, and Stage-F reports. Its source reports were handled
+  as specified, and durable worker checkpoints remained available through successful run completion.
+- The Stage-I implementation cycle is complete. The Stage-J commit gate landed with all hooks green,
+  and all reviewed non-ignored publication artifacts were committed.
+- The main orchestrator reported the Stage-L schedule when its first sub-orchestrator started,
   monitored each sub-orchestrator to a terminal status, inspected its durable evidence, and verified every
   source-fidelity, terminology, `econ-write`, `writing-clearly-and-concisely`, LaTeX, and
   final-integrity gate required by its complete prompt.
-- Stage O changed and incorporated no task-related tracked file other than
+- Stage L changed and incorporated no task-related tracked file other than
   `docs/run_pipeline_code.tex` and `docs/run_pipeline_math.tex`. Both TeX files
-  reflect the frozen Stage-N source snapshot, and the documentation commit was created and
+  reflect the frozen Stage-K source snapshot, and the documentation commit was created and
   pushed from the same working branch and worktree used for the rest of the run.
 - **Nothing was merged.** No `git merge`, `git rebase`, `git cherry-pick`, or `git pull` ran on
   the working branch or on `BASE`, and `BASE` was never pushed. The push proof for the working
@@ -1027,11 +871,11 @@ You are done only when all of these conditions hold:
 
 Provide a final summary listing, per stage, what was done and the evidence confirming it. Include
 `BASE`, the run worktree's absolute path, the working branch, commit SHAs/messages, branch-push
-results (with the ref-comparison proof), both Stage-O sub-orchestrator
+results (with the ref-comparison proof), both Stage-L sub-orchestrator
 statuses, the documentation commit, and the mergeability verdict with its conflicted paths and
 proposed resolutions. State plainly that no merge was performed. Confirm that every ordinary worker
-kept the checkout read-only and left a durable response, Stage K respected its locked graph-only
-exception, and the Stage-O sub-orchestrators touched only their assigned targets and workflow
+kept the checkout read-only and left a durable response, and the Stage-L sub-orchestrators touched
+only their assigned targets and workflow
 records. Write this summary durably, finish the resource teardown in assessment step 8, then report
 the verified teardown state: no agent left running, no agent worktree left behind, and no throwaway
 branch left on `origin`. Preserve every worker record, the run worktree, and the working branch.

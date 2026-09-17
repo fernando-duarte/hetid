@@ -142,7 +142,7 @@ sidecars and intermediate build files remain in the external temporary build dir
 
 If the caller supplies an enclosing records root, create this prompt's unique workflow record under:
 
-  <enclosing-records-root>/stage-o-code/YYYYMMDD-HHMMSS-<unique-suffix>/
+  <enclosing-records-root>/stage-l-code/YYYYMMDD-HHMMSS-<unique-suffix>/
 
 Otherwise, use the standalone location:
 
@@ -899,7 +899,7 @@ When the build passes:
    reset state, read cache or output contents, mutate pipeline state, or instantiate a manifest.
 7. Compare final Git status with the complete initial status. Attribute every new or changed path and
    confirm that this workflow changed only the two canonical targets and created only run-directory
-   records. If an enclosing Stage O runs the sibling math-document task concurrently, treat only its
+   records. If an enclosing Stage L runs the sibling math-document task concurrently, treat only its
    assigned TeX and prompt-authorized records as permitted concurrent external changes; do not inspect
    or modify that sibling's target.
 8. After retaining the accepted evidence and synchronizing the PDF, remove only the exact system

@@ -63,7 +63,7 @@ the checkout package source is a separate precondition for exact runtime parity.
    numeric match in context before editing it; a number may be a source locator, maturity, parameter,
    or count.
 5. You may inspect a stable `docs/run_pipeline_code.tex` only as a nonauthoritative source of
-   questions. During concurrent Stage O work, skip that optional read rather than inspect the
+   questions. During concurrent Stage L work, skip that optional read rather than inspect the
    sibling target while it is being edited. Do not borrow its prose, structure, or conclusions. Do
    not edit it.
 6. Treat comments, tests, other reports, memories, and worker conclusions as leads rather than
@@ -135,7 +135,7 @@ certified TeX version, at the end of the workflow.
 If the caller supplies an enclosing records root, create this prompt's unique workflow record
 at:
 
-`<enclosing-records-root>/stage-o-math/YYYYMMDD-HHMMSS-<unique-suffix>/`
+`<enclosing-records-root>/stage-l-math/YYYYMMDD-HHMMSS-<unique-suffix>/`
 
 Otherwise, use the standalone location:
 
@@ -850,7 +850,7 @@ Before declaring success:
 3. Recompute the protected generated-state metadata manifest. Explain every difference and confirm
    that no task command caused it; do not inspect file contents.
 4. Compare final Git status with the complete initial status. Attribute every new or changed tracked
-   path. If an enclosing Stage O runs the sibling code-document task concurrently, treat only its
+   path. If an enclosing Stage L runs the sibling code-document task concurrently, treat only its
    assigned TeX and prompt-authorized records as permitted concurrent external changes; do not
    inspect or modify that sibling's target.
 5. From the task command audit, direct target hashes, protected-state
