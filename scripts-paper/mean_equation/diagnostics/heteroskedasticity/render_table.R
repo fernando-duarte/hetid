@@ -65,13 +65,13 @@ hetero_console <- function(panel, label) {
 }
 
 hetero_console(panel_y2, "Y2")
-hetero_console(panel_w2, "W2")
+hetero_console(panel_w2, "omega2")
 
 # The two panels select their diagnostics suite independently, so a divergence
 # is a real difference in design and must not pass unremarked.
 if (!identical(panel_y2$suite_cfg$regime, panel_w2$suite_cfg$regime)) {
   cat(sprintf(
-    "note: Y2 and W2 selected different diagnostics regimes (%s vs %s)\n",
+    "note: Y2 and omega2 selected different diagnostics regimes (%s vs %s)\n",
     panel_y2$suite_cfg$regime, panel_w2$suite_cfg$regime
   ))
 }

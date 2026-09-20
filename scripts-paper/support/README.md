@@ -73,7 +73,7 @@ limit while preserving the original definition order and global symbols.
 | Module | Responsibility |
 |---|---|
 | `heteroskedasticity_tests.R` | Heteroskedasticity testing utilities |
-| `identification_diagnostics.R` | LM-style heteroskedasticity tests, the W2 diagnostics NA fallback row, and the joint-relevance rank test |
+| `identification_diagnostics.R` | LM-style heteroskedasticity tests, the $\omega_2$ diagnostics NA fallback row, and the joint-relevance rank test |
 
 ## `data/`
 

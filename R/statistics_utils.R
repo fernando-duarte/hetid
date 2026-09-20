@@ -14,8 +14,8 @@ NULL
 #' statistics wrappers and \code{compute_identification_moments()} do
 #' this once before delegating to the internal workers).
 #'
-#' @param w1 Numeric vector of W1 residuals
-#' @param w2 Numeric matrix of W2 residuals (T x I)
+#' @param w1 Numeric vector of \eqn{\omega_1} residuals
+#' @param w2 Numeric matrix of \eqn{\omega_2} residuals (T x I)
 #' @param maturities Vector of validated maturity indices
 #' @param compute_fn Function called for each maturity with args
 #'   (w1, w2, w2_i, idx, i, ...)
@@ -109,15 +109,15 @@ guarded_centered_var <- function(x) {
 #' Warn When Identification Variances Are Degenerate
 #'
 #' Diagnostic for the regularity assumption of the identification
-#' strategy: \eqn{var(W_{2,i}^2) > 0} and
-#' \eqn{var(W_1 W_{2,i} - \gamma W_{2,i}^2) > 0} at the true
+#' strategy: \eqn{var(\omega_{2,i}^2) > 0} and
+#' \eqn{var(\omega_1 \omega_{2,i} - \gamma \omega_{2,i}^2) > 0} at the true
 #' \eqn{\gamma}. The first is checked directly; the second is checked
 #' at the \eqn{\gamma} that minimizes it (the residual variance of
-#' regressing \eqn{W_1 W_{2,i}} on \eqn{W_{2,i}^2}), so a warning means
+#' regressing \eqn{\omega_1 \omega_{2,i}} on \eqn{\omega_{2,i}^2}), so a warning means
 #' the condition fails for some \eqn{\gamma}. Both checks are
 #' scale-free ratios compared against
 #' \code{HETID_CONSTANTS$DEGENERACY_TOLERANCE}. The relevant variances
-#' \eqn{var(W_{2,i}^2)} and \eqn{var(W_1 W_{2,i})} are exactly the
+#' \eqn{var(\omega_{2,i}^2)} and \eqn{var(\omega_1 \omega_{2,i})} are exactly the
 #' scalar statistics \code{sigma_i_sq} and \code{s_i_0}, so the caller
 #' passes them in and the diagnostic judges the same numbers the
 #' \code{hetid_moments} container carries. Degenerate variances make
@@ -125,8 +125,8 @@ guarded_centered_var <- function(x) {
 #' degenerate or unbounded, so surfacing them here catches the problem
 #' at the moments stage instead of downstream.
 #'
-#' @param w1 Numeric vector of W1 residuals
-#' @param w2 Numeric matrix of W2 residuals (T x I)
+#' @param w1 Numeric vector of \eqn{\omega_1} residuals
+#' @param w2 Numeric matrix of \eqn{\omega_2} residuals (T x I)
 #' @param maturities Integer vector of w2 column indices to check
 #' @param sigma_i_sq Numeric vector of sigma_i^2 statistics, element k
 #'   corresponding to \code{maturities[k]}
@@ -165,8 +165,8 @@ warn_if_variance_degenerate <- function(w1, w2, maturities,
     )
   }
   msgs <- c(
-    flag_msg(first, "var(W2^2) is numerically degenerate"),
-    flag_msg(second, "var(W1*W2 - gamma*W2^2) is numerically degenerate")
+    flag_msg(first, "var(omega2^2) is numerically degenerate"),
+    flag_msg(second, "var(omega1*omega2 - gamma*omega2^2) is numerically degenerate")
   )
   if (length(msgs) > 0) {
     warn_degenerate_variance(paste0(

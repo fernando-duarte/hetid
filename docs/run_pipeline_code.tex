@@ -2000,7 +2000,7 @@ first entry changes the published mean system, every downstream log-variance
 fit and inference object, and unified-bootstrap identity.
 
 Both specifications first regress quarterly real consumption growth on $X$ and
-call the residual $W_1$. Their only structural difference is the reduced form
+call the residual $\omega_1$. Their only structural difference is the reduced form
 for $Y_2$.
 \begin{table}[htbp]
 \centering
@@ -2008,7 +2008,7 @@ for $Y_2$.
 \caption{Published and diagnostic mean specifications. SDF means stochastic
 discount factor, and PC means principal component. The mean-control block $X$
 contains an intercept and the lagged expected-SDF PC scores. $Y_2$ is the
-SDF-news PC score block. $W_2$ is the specification-specific news block after
+SDF-news PC score block. $\omega_2$ is the specification-specific news block after
 the stated reduced-form operation. $\beta_2^R$ is the news-on-controls
 coefficient matrix. $\beta_1^R$ is the outcome-on-controls coefficient vector.
 $\beta_1(\theta)$ is the structural design coefficient at mean news
@@ -2021,7 +2021,7 @@ machinery. They differ only in the reduced form for $Y_2$.
  & Published mean specification B & Diagnostic mean specification A\\
 \midrule
 \code{impose_null} & \code{FALSE} & \code{TRUE}\\
-$W_2$ & residuals from regressing each SDF-news PC score on $X$ & raw SDF-news
+$\omega_2$ & residuals from regressing each SDF-news PC score on $X$ & raw SDF-news
 PC score block $Y_2$\\
 $\beta_2^R$ & estimated news-on-controls coefficient matrix & exact zero matrix\\
 $\beta_1(\theta)$ &
@@ -2044,29 +2044,29 @@ system has the required rank and consistency.
 
 \subsection{Triangular system}
 
-After the estimator constructs $W_1$ and the specification-specific $W_2$, the
+After the estimator constructs $\omega_1$ and the specification-specific $\omega_2$, the
 identification problem is
 \begin{align*}
-  W_{1t} &= W_{2t}\theta + \varepsilon_{1t},\\
-  W_{2t} &=
+  \omega_{1t} &= \omega_{2t}\theta + \varepsilon_{1t},\\
+  \omega_{2t} &=
   \begin{cases}
     \text{SDF-news reduced-form residuals}, & \text{published mean specification B},\\
     Y_{2t}, & \text{diagnostic mean specification A}.
   \end{cases}
 \end{align*}
-Here $W_1$ is quarterly real consumption growth residualized on $X$. $W_2$ is
+Here $\omega_1$ is quarterly real consumption growth residualized on $X$. $\omega_2$ is
 the specification-specific three-score block in the display. $\theta$ is the
 mean news coefficient. $\varepsilon_1$ is the structural residual.
 The code applies the relaxed heteroskedasticity restriction to each SDF-news PC
 score $i$:
 \[
   \left|\operatorname{Corr}
-    \left(Z_t,\varepsilon_{1t}W_{2it}\right)\right|
+    \left(Z_t,\varepsilon_{1t}\omega_{2it}\right)\right|
   \leq \tau_i
-  \left|\operatorname{Corr}\left(Z_t,W_{2it}^{2}\right)\right| .
+  \left|\operatorname{Corr}\left(Z_t,\omega_{2it}^{2}\right)\right| .
 \]
 The restriction compares the instrument's correlation with
-$\varepsilon_{1t}W_{2it}$ against its correlation with $W_{2it}^2$. At
+$\varepsilon_{1t}\omega_{2it}$ against its correlation with $\omega_{2it}^2$. At
 $\tau_i=0$, it imposes the Lewbel orthogonality condition exactly. Positive
 values allow a scaled departure, with the score's heteroskedasticity correlation
 setting the scale. This restriction is the source's identifying assumption.
@@ -2089,17 +2089,17 @@ into inputs to the quadratic identified-set system.
   \Covhat(A,B)=\frac{1}{T}(A-\bar A)\trans(B-\bar B).
 \]
 $A$ and $B$ are aligned sample vectors or matrices. $T$ is their common row
-count. Bars denote column means. The divisor is $T$ rather than $T-1$. For $W_{2i}$, let
-$W_2\odot W_{2i}$ denote the matrix whose columns multiply each $W_2$ column by
-$W_{2i}$. The package computes
+count. Bars denote column means. The divisor is $T$ rather than $T-1$. For $\omega_{2i}$, let
+$\omega_2\odot \omega_{2i}$ denote the matrix whose columns multiply each $\omega_2$ column by
+$\omega_{2i}$. The package computes
 \begin{align*}
-  S_i^{(0)} &= \Varhat(W_1W_{2i}),&
-  \sigma_i^2 &= \Varhat(W_{2i}^2),\\
-  R_i^{(0)} &= \Covhat(Z,W_1W_{2i}),&
-  R_i^{(1)} &= \Covhat(Z,W_2\odot W_{2i}),\\
-  P_i^{(0)} &= \Covhat(Z,W_{2i}^2),&
-  S_i^{(1)} &= \Covhat(W_1W_{2i},W_2\odot W_{2i}),\\
-  &&S_i^{(2)} &= \Varhat(W_2\odot W_{2i}).
+  S_i^{(0)} &= \Varhat(\omega_1\omega_{2i}),&
+  \sigma_i^2 &= \Varhat(\omega_{2i}^2),\\
+  R_i^{(0)} &= \Covhat(Z,\omega_1\omega_{2i}),&
+  R_i^{(1)} &= \Covhat(Z,\omega_2\odot \omega_{2i}),\\
+  P_i^{(0)} &= \Covhat(Z,\omega_{2i}^2),&
+  S_i^{(1)} &= \Covhat(\omega_1\omega_{2i},\omega_2\odot \omega_{2i}),\\
+  &&S_i^{(2)} &= \Varhat(\omega_2\odot \omega_{2i}).
 \end{align*}
 The container records the three-coordinate $\theta$ axis and the active
 constraint indices. Downstream package functions validate these attributes;
@@ -2240,7 +2240,7 @@ published mean-equation rows with \code{l.pc1}--\code{l.pc4} by quarter and
 centers the four nominal asset-return PCs without scaling. Define the residual
 and log-variance design row by
 \[
-  e_t(\theta)=W_{1t}-W_{2t}\trans \theta,
+  e_t(\theta)=\omega_{1t}-\omega_{2t}\trans \theta,
   \qquad
   R_t=(1,\mathrm{PC}_{1t},\ldots,\mathrm{PC}_{4t}).
 \]
@@ -3376,9 +3376,9 @@ lagged expected-SDF PC score & columns \code{lag_expected_sdf_pc1}--
 \code{lag_expected_sdf_pc3} & Each is one column of the lagged expected-SDF PC
 score block.\\
 SDF-news PC score & columns \code{sdf_news_pc1}--\code{sdf_news_pc3}; generic
-code comments saying $W_2$ component or news component & The current paper
+code comments saying $\omega_2$ component or news component & The current paper
 application supplies the three columns of the SDF-news PC score block as
-$Y_2$. Generic identification code calls a $W_2$ column a component; this
+$Y_2$. Generic identification code calls a $\omega_2$ column a component; this
 document calls each such column in the current application an SDF-news PC score.\\
 nominal asset-return PCs & \code{lag_asset_return_pc}, \code{l.pc1}--\code{l.pc4},
 and configuration fields containing \code{return_pc} & The data stage reads one
@@ -3408,8 +3408,8 @@ comparison.\\
 mean news coefficient $\theta$ & code variables \code{theta}, \code{b},
 \code{b_N}, \code{b_point}, and \code{theta_table} in mean-identification and
 log-variance set map input contexts & In those contexts, the mean news coefficient
-is the three-vector multiplying $W_2$ in
-$e_t(\theta)=W_{1t}-W_{2t}^{\top}\theta$. The log-variance code commonly calls
+is the three-vector multiplying $\omega_2$ in
+$e_t(\theta)=\omega_{1t}-\omega_{2t}^{\top}\theta$. The log-variance code commonly calls
 the same input \code{b} to distinguish it from its own coefficient vector.\\
 residual-scale coefficient $\eta$ & code variables \code{theta},
 \code{theta_hat}, \code{coef}, and occasional \code{eta} & These are the five
@@ -3993,8 +3993,8 @@ Identification relaxation value $\tau$ and LAD quantile probability
 set. The LAD quantile probability is the
 median-regression probability passed to \code{quantreg} and never changes the
 mean identified set.\\
-$W_1$, $e_t(\theta)$, and $u_t$ & $W_1$ is quarterly real consumption growth
-residualized on $X$. The residual $e_t(\theta)=W_{1t}-W_{2t}^{\top}\theta$
+$\omega_1$, $e_t(\theta)$, and $u_t$ & $\omega_1$ is quarterly real consumption growth
+residualized on $X$. The residual $e_t(\theta)=\omega_{1t}-\omega_{2t}^{\top}\theta$
 varies over the mean identified set. The residual $u_t$ comes from the
 descriptive OLS benchmark; the identification-sample OLS benchmark's residuals
 are a fourth, distinct series.\\

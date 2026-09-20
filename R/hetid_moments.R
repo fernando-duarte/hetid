@@ -7,9 +7,9 @@
 #' \code{\link{build_quadratic_system}} or
 #' \code{\link{compute_identified_set_components}}.
 #'
-#' @param w1 Numeric vector of W1 residuals from
+#' @param w1 Numeric vector of \eqn{\omega_1} residuals from
 #'   \code{\link{compute_w1_residuals}()}
-#' @param w2 Matrix of W2 residuals (T x I) from
+#' @param w2 Matrix of \eqn{\omega_2} residuals (T x I) from
 #'   \code{\link{compute_w2_residuals}()}
 #' @param pcs Matrix of instruments (T x J): any numeric matrix of
 #'   exogenous time-series instruments. In the VFCI application these

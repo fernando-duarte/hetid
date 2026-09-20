@@ -2,8 +2,8 @@
 #'
 #' Computes scalar statistics S_i^(0) and sigma_i^2 for each maturity i.
 #'
-#' @param w1 Numeric vector of W1 residuals from compute_w1_residuals()
-#' @param w2 Matrix of W2 residuals (T x I) from compute_w2_residuals()
+#' @param w1 Numeric vector of \eqn{\omega_1} residuals from compute_w1_residuals()
+#' @param w2 Matrix of \eqn{\omega_2} residuals (T x I) from compute_w2_residuals()
 #' @param maturities Vector of maturity indices to compute statistics for.
 #'   Default is all columns of w2.
 #'
@@ -20,11 +20,11 @@
 #' For each maturity i, computes the centered sample variances (1/T
 #' normalization; see [centered_cov()] and the spec sections on moment
 #' notation and centering):
-#' \deqn{\hat{S}_i^{(0)} = \widehat{\mathrm{Var}}(W_1 \odot W_2^{(i)})}
-#' \deqn{\hat{\sigma}_i^2 = \widehat{\mathrm{Var}}\big((W_2^{(i)})^{\odot 2}\big)}
+#' \deqn{\hat{S}_i^{(0)} = \widehat{\mathrm{Var}}(\omega_1 \odot \omega_2^{(i)})}
+#' \deqn{\hat{\sigma}_i^2 = \widehat{\mathrm{Var}}\big((\omega_2^{(i)})^{\odot 2}\big)}
 #'
 #' where \eqn{\odot} denotes the Hadamard (elementwise) product and
-#' \eqn{W_2^{(i)}} is the i-th column of W2.
+#' \eqn{\omega_2^{(i)}} is the i-th column of \eqn{\omega_2}.
 #'
 #' @export
 #'
@@ -53,8 +53,8 @@ compute_scalar_statistics <- function(w1, w2,
 #' \code{compute_identification_moments()} validate once and delegate
 #' here.
 #'
-#' @param w1 Numeric vector of W1 residuals
-#' @param w2 Numeric matrix of W2 residuals (T x I)
+#' @param w1 Numeric vector of \eqn{\omega_1} residuals
+#' @param w2 Numeric matrix of \eqn{\omega_2} residuals (T x I)
 #' @param maturities Vector of validated maturity indices
 #' @return List with named vectors s_i_0 and sigma_i_sq
 #' @noRd

@@ -1,4 +1,4 @@
-#' Process Single Maturity for W2
+#' Process Single Maturity for \eqn{\omega_2}
 #'
 #' Internal function to process regression for a single maturity
 #'
@@ -89,7 +89,7 @@ process_w2_maturity <- function(i, yields_df, term_premia_df, pcs, n_pcs,
   )
 }
 
-#' Assemble the Imposed B = 0 Result for One W2 Maturity
+#' Assemble the Imposed B = 0 Result for One \eqn{\omega_2} Maturity
 #'
 #' Imposes \eqn{B = 0} literally: no regression is fit, the residual is the SDF
 #' innovation itself (already nonlinearly centered upstream), and the

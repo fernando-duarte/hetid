@@ -3,7 +3,7 @@
 #' Vectorized test of the news contract: a horizon's previous-period
 #' index is either the boundary case (\code{maturity == step}) or stays
 #' at or above \code{MIN_MATURITY}. Single source of truth shared by
-#' the scalar validator, the W2 vector validator, and the default-grid
+#' the scalar validator, the \eqn{\omega_2} vector validator, and the default-grid
 #' builder.
 #'
 #' @param maturities Numeric vector of maturity indices

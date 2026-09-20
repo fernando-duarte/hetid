@@ -1,6 +1,6 @@
 #' Build Lagged-Outcome Regressor Columns
 #'
-#' Constructs the predetermined lag block for the W1 reduced form. Column
+#' Constructs the predetermined lag block for the \eqn{\omega_1} reduced form. Column
 #' \code{h} holds \eqn{Y_{1,t+1-h}} at predictor row \code{t}: the outcome
 #' shifted down by \code{h - 1} rows with \code{h - 1} leading \code{NA}s, so
 #' that under the one-period lag/lead convention of

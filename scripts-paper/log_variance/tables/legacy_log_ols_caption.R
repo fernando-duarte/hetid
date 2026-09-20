@@ -31,7 +31,7 @@ build_logvar_notes <- function() {
     "intercept is identified.",
     "The identification columns are a two-step construction: given the news",
     "coefficients $b_{N}$, the fitted residual is",
-    "$\\hat{\\varepsilon}_{t+1}(b_{N})=W_{1,t+1}-W_{2,t+1}^{T}b_{N}$ (the",
+    "$\\hat{\\varepsilon}_{t+1}(b_{N})=\\omega_{1,t+1}-\\omega_{2,t+1}^{T}b_{N}$ (the",
     "design coefficients are",
     "$\\beta_{1}(b_{N})=\\beta_{1}^{R}-(\\beta_{2}^{R})^{T}b_{N}$, so this is",
     "exact), and $(\\hat{\\theta}_{0},\\hat{\\theta}_{R})(b_{N})$ is the OLS",

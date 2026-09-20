@@ -35,7 +35,7 @@ This is the same substantive report as before, but rewritten in the notation of 
 
 1. The structural coefficient on the endogenous news vector is now \(\theta\in\R^I\). A generic candidate value is \(w\in\R^I\). In the one-endogenous-regressor case, set \(I=1\), so \(\theta\) and \(w\) are scalars.
 2. The common conditioning vector is \(X_t\), the outcome is \(Y_{1,t+1}\), and the endogenous news regressors are \(Y_{2,t+1}\).
-3. The residuals are \(W_{1,t+1}\) and \(W_{2,t+1}\), formed after projecting both equations on the same \(X_t\).
+3. The residuals are \(\omega_{1,t+1}\) and \(\omega_{2,t+1}\), formed after projecting both equations on the same \(X_t\).
 4. The instrument list is \(\cZ=\{Z_{1,t+1},\dots,Z_{J_Z,t+1}\}\), with imposed component-instrument pairs \((i,k)\in\cP\).
 5. The set-identified object is \(\Theta(\cZ,\tau)\). In the scalar case \(I=1\), this becomes the interval \([\underline\theta,\overline\theta]\). I avoid using \(L\) and \(U\) for the endpoints because the TeX notation already uses \(L_{ik}\) for a covariance moment.
 6. For every candidate \(w\), the other coefficients are recovered by the affine map
@@ -81,17 +81,17 @@ The residualized variables are
 \]
 
 \[
-W_{1,t+1}:=Y_{1,t+1}-X_t^\T\beta_1^R,
+\omega_{1,t+1}:=Y_{1,t+1}-X_t^\T\beta_1^R,
 \qquad
-W_{2,t+1}:=Y_{2,t+1}-\beta_2^R X_t.
+\omega_{2,t+1}:=Y_{2,t+1}-\beta_2^R X_t.
 \]
 
 Under \(\E[X_t\varepsilon_{1,t+1}]=0\) and \(\E[X_t\varepsilon_{2,t+1}^\T]=0\), the residualized model is
 
 \[
-W_{1,t+1}=\theta^\T W_{2,t+1}+\varepsilon_{1,t+1},
+\omega_{1,t+1}=\theta^\T \omega_{2,t+1}+\varepsilon_{1,t+1},
 \qquad
-W_{2,t+1}=\varepsilon_{2,t+1}.
+\omega_{2,t+1}=\varepsilon_{2,t+1}.
 \]
 
 This residualized system is the object used for both point identification and set identification.
@@ -101,15 +101,15 @@ This residualized system is the object used for both point identification and se
 Let \(Z_{k,t+1}\) be one scalar instrument from \(\cZ\). For each imposed pair \((i,k)\in\cP\), define
 
 \[
-L_{ik}:=\Cov\bigl(Z_{k,t+1},\ W_{1,t+1}W_{2,i,t+1}\bigr),
+L_{ik}:=\Cov\bigl(Z_{k,t+1},\ \omega_{1,t+1}\omega_{2,i,t+1}\bigr),
 \]
 
 \[
-Q_{ik}:=\Cov\bigl(Z_{k,t+1},\ W_{2,t+1}W_{2,i,t+1}\bigr)\in\R^I,
+Q_{ik}:=\Cov\bigl(Z_{k,t+1},\ \omega_{2,t+1}\omega_{2,i,t+1}\bigr)\in\R^I,
 \]
 
 \[
-P_{ik}:=\Cov\bigl(Z_{k,t+1},\ W_{2,i,t+1}^2\bigr).
+P_{ik}:=\Cov\bigl(Z_{k,t+1},\ \omega_{2,i,t+1}^2\bigr).
 \]
 
 The exact Lewbel condition is the zero-contamination case
@@ -121,7 +121,7 @@ The exact Lewbel condition is the zero-contamination case
 Since the candidate first-equation error is
 
 \[
-\varepsilon_{1,t+1}(w):=W_{1,t+1}-w^\T W_{2,t+1},
+\varepsilon_{1,t+1}(w):=\omega_{1,t+1}-w^\T \omega_{2,t+1},
 \]
 
 the exact condition implies
@@ -146,7 +146,7 @@ In the single-news-component case \(I=1\), a single relevant exact instrument gi
 
 \[
 \theta=\frac{L_{1k}}{Q_{1k}},
-\qquad Q_{1k}=P_{1k}=\Cov(Z_{k,t+1},W_{2,t+1}^2)\ne0.
+\qquad Q_{1k}=P_{1k}=\Cov(Z_{k,t+1},\omega_{2,t+1}^2)\ne0.
 \]
 
 The standard Lewbel software implements this point-identified logic by estimating generated instruments and then running IV/GMM. It does not implement the set-identified bounds below.
@@ -168,28 +168,28 @@ The scalar \(\tau_{ik}\) is a sensitivity parameter. It is not identified from t
 For each news component \(i\), define the product-variance moments
 
 \[
-S_i^{(0)}:=\Var\bigl(W_{1,t+1}W_{2,i,t+1}\bigr),
+S_i^{(0)}:=\Var\bigl(\omega_{1,t+1}\omega_{2,i,t+1}\bigr),
 \]
 
 \[
-S_i^{(1)}:=\Cov\bigl(W_{2,t+1}W_{2,i,t+1},\ W_{1,t+1}W_{2,i,t+1}\bigr)\in\R^I,
+S_i^{(1)}:=\Cov\bigl(\omega_{2,t+1}\omega_{2,i,t+1},\ \omega_{1,t+1}\omega_{2,i,t+1}\bigr)\in\R^I,
 \]
 
 \[
-S_i^{(2)}:=\Var\bigl(W_{2,t+1}W_{2,i,t+1}\bigr)\in\R^{I\times I},
+S_i^{(2)}:=\Var\bigl(\omega_{2,t+1}\omega_{2,i,t+1}\bigr)\in\R^{I\times I},
 \qquad
-\sigma_i^2:=\Var\bigl(W_{2,i,t+1}^2\bigr)>0.
+\sigma_i^2:=\Var\bigl(\omega_{2,i,t+1}^2\bigr)>0.
 \]
 
 For any candidate \(w\),
 
 \[
-\Cov\bigl(Z_{k,t+1},\varepsilon_{1,t+1}(w)W_{2,i,t+1}\bigr)
+\Cov\bigl(Z_{k,t+1},\varepsilon_{1,t+1}(w)\omega_{2,i,t+1}\bigr)
 =L_{ik}-Q_{ik}^\T w,
 \]
 
 \[
-\Var\bigl(\varepsilon_{1,t+1}(w)W_{2,i,t+1}\bigr)
+\Var\bigl(\varepsilon_{1,t+1}(w)\omega_{2,i,t+1}\bigr)
 =S_i^{(0)}-2S_i^{(1)\T}w+w^\T S_i^{(2)}w.
 \]
 
@@ -251,9 +251,9 @@ d_k=\tau_k^2\frac{P_k^2}{\sigma^2}.
 In the scalar case,
 
 \[
-Q_k=P_k=\Cov(Z_{k,t+1},W_{2,t+1}^2),
+Q_k=P_k=\Cov(Z_{k,t+1},\omega_{2,t+1}^2),
 \qquad
-S^{(2)}=\sigma^2=\Var(W_{2,t+1}^2),
+S^{(2)}=\sigma^2=\Var(\omega_{2,t+1}^2),
 \]
 
 so, with \(0\le\tau_k<1\) and \(P_k\ne0\), \(A_k=(1-\tau_k^2)P_k^2>0\). Therefore the single-pair set is a closed interval bounded by the roots of \(g_k(w)=0\):
@@ -309,8 +309,8 @@ Use the common trimmed sample implied by the lag order \(H\). With the \(1/T\) n
 
 the plug-in algorithm is:
 
-1. Regress \(Y_{1,t+1}\) on the full common vector \(X_t\). Save \(\widehat\beta_1^R\) and residuals \(\widehat W_{1,t+1}\).
-2. Regress every component of \(Y_{2,t+1}\) on the same \(X_t\). Save \(\widehat\beta_2^R\) and residuals \(\widehat W_{2,t+1}\).
+1. Regress \(Y_{1,t+1}\) on the full common vector \(X_t\). Save \(\widehat\beta_1^R\) and residuals \(\widehat \omega_{1,t+1}\).
+2. Regress every component of \(Y_{2,t+1}\) on the same \(X_t\). Save \(\widehat\beta_2^R\) and residuals \(\widehat \omega_{2,t+1}\).
 3. Construct the pre-specified instruments \(Z_{k,t+1}\) or the date-\(t\) specialization \(Z_{k,t}\), and specify \(\cP\).
 4. Compute sample analogues of \(L_{ik}\), \(Q_{ik}\), \(P_{ik}\), \(S_i^{(0)}\), \(S_i^{(1)}\), \(S_i^{(2)}\), and \(\sigma_i^2\).
 5. Build \(\widehat g_{ik}(w)\) and solve the quadratically constrained problems defining \(\widehat\Theta(\cZ,\tau)\).
@@ -328,7 +328,7 @@ In the scalar case, the plug-in endpoints \(\hat{\underline\theta}\) and \(\hat{
 A practical full bootstrap is:
 
 1. Resample observations. For time-series data, use a block bootstrap; for clustered data, resample clusters.
-2. In each resample, recompute \(\widehat\beta_1^R\), \(\widehat\beta_2^R\), \(\widehat W_{1,t+1}\), and \(\widehat W_{2,t+1}\).
+2. In each resample, recompute \(\widehat\beta_1^R\), \(\widehat\beta_2^R\), \(\widehat \omega_{1,t+1}\), and \(\widehat \omega_{2,t+1}\).
 3. Recompute all sample analogues \(\widehat L_{ik}\), \(\widehat Q_{ik}\), \(\widehat P_{ik}\), \(\widehat S_i^{(j)}\), and \(\widehat\sigma_i^2\).
 4. Recompute \(\widehat\Theta^*(\cZ,\tau)\). In the scalar case, store \(\hat{\underline\theta}^*\) and \(\hat{\overline\theta}^*\).
 5. Use the empirical standard deviations of the bootstrap endpoint draws as \(\widehat{\se}(\hat{\underline\theta})\) and \(\widehat{\se}(\hat{\overline\theta})\).
@@ -409,13 +409,13 @@ with \(c_{1-\alpha}(w)\) obtained by bootstrap, multiplier bootstrap, or general
 One can also test the two primitive one-sided restrictions
 
 \[
-\Corr\bigl(Z_{k,t+1},\varepsilon_{1,t+1}(w)W_{2,i,t+1}\bigr)
--\tau_{ik}\left|\Corr\bigl(Z_{k,t+1},W_{2,i,t+1}^2\bigr)\right|\le0,
+\Corr\bigl(Z_{k,t+1},\varepsilon_{1,t+1}(w)\omega_{2,i,t+1}\bigr)
+-\tau_{ik}\left|\Corr\bigl(Z_{k,t+1},\omega_{2,i,t+1}^2\bigr)\right|\le0,
 \]
 
 \[
--\Corr\bigl(Z_{k,t+1},\varepsilon_{1,t+1}(w)W_{2,i,t+1}\bigr)
--\tau_{ik}\left|\Corr\bigl(Z_{k,t+1},W_{2,i,t+1}^2\bigr)\right|\le0.
+-\Corr\bigl(Z_{k,t+1},\varepsilon_{1,t+1}(w)\omega_{2,i,t+1}\bigr)
+-\tau_{ik}\left|\Corr\bigl(Z_{k,t+1},\omega_{2,i,t+1}^2\bigr)\right|\le0.
 \]
 
 This avoids relying only on endpoint delta-method logic and keeps the inference aligned with the maintained inequality model.
@@ -465,7 +465,7 @@ A credible empirical report should include:
 1. The common conditioning vector \(X_t\), including the principal components and lag choices.
 2. The instrument list \(\cZ\), the pair set \(\cP\), and whether each \(Z_k\) is date-\(t\) or date-\((t+1)\) adapted.
 3. A grid of slack values \(\tau\), for example \(0\), \(0.10\), \(0.25\), \(0.50\), and \(0.90\), unless a specific slack is justified externally.
-4. Relevance diagnostics: \(\widehat P_{ik}=\Covhat(Z_{k,t+1},\widehat W_{2,i,t+1}^2)\) and, for exact point-identified Lewbel estimates, generated-instrument first-stage diagnostics.
+4. Relevance diagnostics: \(\widehat P_{ik}=\Covhat(Z_{k,t+1},\widehat \omega_{2,i,t+1}^2)\) and, for exact point-identified Lewbel estimates, generated-instrument first-stage diagnostics.
 5. The plug-in scalar interval \([\hat{\underline\theta},\hat{\overline\theta}]\) when \(I=1\), or coordinate projections \([\hat{\underline\theta}_m,\hat{\overline\theta}_m]\) when \(I>1\).
 6. Endpoint standard errors from the full bootstrap.
 7. A confidence interval for the true scalar \(\theta\), preferably Imbens-Manski/Stoye-style or moment-inequality inversion.
@@ -545,8 +545,8 @@ lewbel_theta_set <- function(y1, y2, X, Z, tau = 0.5, tol = 1e-10) {
     S2 <- vv(W2^2)
     sigma2 <- S2
 
-    if (abs(P) < tol) stop("Weak/no relevance: Cov(Z_k, W2^2) is near zero.")
-    if (sigma2 < tol) stop("Var(W2^2) is near zero.")
+    if (abs(P) < tol) stop("Weak/no relevance: Cov(Z_k, omega2^2) is near zero.")
+    if (sigma2 < tol) stop("Var(omega2^2) is near zero.")
 
     d <- tau[k]^2 * P^2 / sigma2
     A <- Q^2 - d * S2
@@ -655,7 +655,7 @@ For time-series applications, replace the row bootstrap in `lewbel_theta_set_boo
 
 Using the attached notation, the final practical recommendation is:
 
-1. Estimate \(\widehat W_{1,t+1}\) and \(\widehat W_{2,t+1}\) from projections on the common \(X_t\).
+1. Estimate \(\widehat \omega_{1,t+1}\) and \(\widehat \omega_{2,t+1}\) from projections on the common \(X_t\).
 2. For pre-specified \(\cZ\), \(\cP\), and \(\tau\), compute \(\widehat\Theta(\cZ,
 \tau)\) from the inequalities \(\widehat g_{ik}(w)\le0\).
 3. In the scalar case \(I=1\), report \([\hat{\underline\theta},\hat{\overline\theta}]\), obtained as the intersection of quadratic-root intervals.

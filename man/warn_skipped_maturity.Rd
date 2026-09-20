@@ -15,7 +15,7 @@ warn_skipped_maturity(message, call = NULL)
 Invisibly, the warning message; called for its warning side effect
 }
 \description{
-Classed warning raised when a maturity is skipped during W2
+Classed warning raised when a maturity is skipped during \eqn{\omega_2}
 processing (missing columns or too few observations), so callers can
 dispatch on class \code{hetid_warning_skipped_maturity}.
 }

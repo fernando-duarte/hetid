@@ -2,7 +2,7 @@
 % Please edit documentation in R/validate_w2_inputs.R
 \name{default_w2_maturities}
 \alias{default_w2_maturities}
-\title{Default W2 Maturity Horizons}
+\title{Default \eqn{\omega_2} Maturity Horizons}
 \usage{
 default_w2_maturities(step = HETID_CONSTANTS$DEFAULT_STEP)
 }

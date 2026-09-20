@@ -22,14 +22,14 @@ test_that("well-conditioned residuals produce no warning", {
   )
 })
 
-test_that("two-point W2 residual triggers the var(W2^2) diagnostic", {
+test_that("two-point omega2 residual triggers the var(omega2^2) diagnostic", {
   inputs <- make_diagnostic_inputs()
   n <- length(inputs$w1)
   inputs$w2[, 1] <- sample(c(-1, 1), n, replace = TRUE)
 
   expect_warning(
     compute_identification_moments(inputs$w1, inputs$w2, inputs$pcs),
-    "var\\(W2\\^2\\) is numerically degenerate for maturity 1"
+    "var\\(omega2\\^2\\) is numerically degenerate for maturity 1"
   )
 })
 
@@ -41,7 +41,7 @@ test_that("exact outcome equation triggers the product-variance diagnostic", {
 
   expect_warning(
     compute_identification_moments(inputs$w1, inputs$w2, inputs$pcs),
-    "var\\(W1\\*W2 - gamma\\*W2\\^2\\) is numerically degenerate for maturity 1"
+    "var\\(omega1\\*omega2 - gamma\\*omega2\\^2\\) is numerically degenerate for maturity 1"
   )
 })
 

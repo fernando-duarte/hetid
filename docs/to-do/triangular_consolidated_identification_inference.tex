@@ -95,25 +95,25 @@ Option & Main identifying information & What is identified in the scalar triangu
 Lewbel exact heteroskedasticity & A scalar $Z$ satisfies
 $\Cov(Z,\varepsilon_1\varepsilon_2)=0$ and
 $\Cov(Z,\varepsilon_2^2)\ne0$. & Point identification:
-$\theta=\Cov(Z,W_1W_2)/\Cov(Z,W_2^2)$. & Needs heteroskedastic relevance of the first-stage residual. With one instrument it is just identified, so overidentification tests are unavailable. \\
+$\theta=\Cov(Z,\omega_1\omega_2)/\Cov(Z,\omega_2^2)$. & Needs heteroskedastic relevance of the first-stage residual. With one instrument it is just identified, so overidentification tests are unavailable. \\
 \addlinespace
 Lewbel bounded-invalidity set & Same scalar $Z$, but
 $\Corr(Z,\varepsilon_1\varepsilon_2)$ is allowed to be nonzero, bounded relative to $\Corr(Z,\varepsilon_2^2)$. & A finite interval for $\theta$ when the relevance covariance is nonzero and the slack is below one. & The bound depends on a user-chosen slack $\tau$; sampling uncertainty requires an outer confidence construction or bootstrap. \\
 \addlinespace
 Lee--Lewbel--Schennach--Zhang point identification (\texttt{trigmm}) & Common-factor errors
-$W_2=u+v$, $W_1=\alpha u+\theta v+r$ with independent components and enough non-Gaussianity. & Point identification of $(\alpha,\theta)$ from two higher-cumulant equations $M_p(\alpha,\theta)=0$; then all other coefficients follow from the common residualization map. & Requires the sign of the common-factor loading and nondegenerate higher cumulants. Nonlinear GMM can have local minima and weak higher-moment identification. \\
+$\omega_2=u+v$, $\omega_1=\alpha u+\theta v+r$ with independent components and enough non-Gaussianity. & Point identification of $(\alpha,\theta)$ from two higher-cumulant equations $M_p(\alpha,\theta)=0$; then all other coefficients follow from the common residualization map. & Requires the sign of the common-factor loading and nondegenerate higher cumulants. Nonlinear GMM can have local minima and weak higher-moment identification. \\
 \addlinespace
 Lee--Lewbel--Schennach--Zhang sharp set & Common-factor structure without the non-Gaussianity point-identifying condition; uses the implied decomposition of observables into Gaussian and non-Gaussian independent parts. & A sharp population joint set for the latent common-factor parameters. & Conceptually important but hard to estimate and interpret; the Stata paper therefore reports a simpler covariance-based outer bound. \\
 \addlinespace
 Lee--Lewbel--Schennach--Zhang set identification (\texttt{trigmmset}) & Same common-factor structure and sign of common-factor loading, but no non-Gaussianity; only second moments. & A joint set in $(\alpha,\theta)$. For positive common-factor loading, $\theta\le B_0\le\alpha$ and $(B_0-\theta)(\alpha-B_0)\le D_0$. The projection onto $\theta$ alone is generally one-sided, not finite. & The reported confidence set is conservative and is a joint region; a finite interval for $\theta$ alone needs an extra magnitude restriction on the common-factor loading. \\
 \addlinespace
-Lee--Lewbel--Schennach--Zhang plus an external instrument & Add a conventional IV moment such as $\E[Z(W_1-\theta W_2)]=0$ to the internal non-Gaussian GMM moments. & Usually point identification, often overidentification, with a direct comparison between the external-IV and internal-moment estimates. & If the two information sources conflict, the overidentifying restrictions can reject but cannot by themselves say which assumption failed. \\
+Lee--Lewbel--Schennach--Zhang plus an external instrument & Add a conventional IV moment such as $\E[Z(\omega_1-\theta \omega_2)]=0$ to the internal non-Gaussian GMM moments. & Usually point identification, often overidentification, with a direct comparison between the external-IV and internal-moment estimates. & If the two information sources conflict, the overidentifying restrictions can reject but cannot by themselves say which assumption failed. \\
 \addlinespace
-Variance-regime / Rigobon-style identification & A scalar state or instrument $Z$ partitions the sample into variance regimes; the structural impact matrix is fixed while shock variances change nonproportionally. & In a square two-shock representation, the impact ratio for the labeled $W_2$ shock can be identified from regime covariance matrices; in the one-changing-shock case it is a simple covariance-difference ratio. & This is an alternative square-shock model, not the three-shock common-factor model. Needs a credible regime/state and shock labeling. \\
+Variance-regime / Rigobon-style identification & A scalar state or instrument $Z$ partitions the sample into variance regimes; the structural impact matrix is fixed while shock variances change nonproportionally. & In a square two-shock representation, the impact ratio for the labeled $\omega_2$ shock can be identified from regime covariance matrices; in the one-changing-shock case it is a simple covariance-difference ratio. & This is an alternative square-shock model, not the three-shock common-factor model. Needs a credible regime/state and shock labeling. \\
 \addlinespace
 Parametric volatility and unconditional volatility moments & GARCH, Markov-switching, smooth transition, stochastic-volatility, or autocovariances of squared residuals provide additional covariance equations. & Identifies a square impact matrix and hence an impact ratio after normalization and labeling. & Strong functional-form or time-series assumptions; high-moment estimates can be noisy. \\
 \addlinespace
-Non-Gaussian ICA / likelihood / higher-moment GMM & Independent or partly independent non-Gaussian shocks in a square decomposition of $(W_2,W_1)$. & Identifies the square mixing matrix up to sign, scale, and column order; $\theta$ is an impact ratio for the correctly labeled column. & Needs shock labeling, sign normalization, and enough departure from Gaussianity. Standard Wald intervals are unreliable under weak non-Gaussianity. \\
+Non-Gaussian ICA / likelihood / higher-moment GMM & Independent or partly independent non-Gaussian shocks in a square decomposition of $(\omega_2,\omega_1)$. & Identifies the square mixing matrix up to sign, scale, and column order; $\theta$ is an impact ratio for the correctly labeled column. & Needs shock labeling, sign normalization, and enough departure from Gaussianity. Standard Wald intervals are unreliable under weak non-Gaussianity. \\
 \bottomrule
 \end{longtable}
 
@@ -124,8 +124,8 @@ instead do not need $Z$ for their internal point or set identification; they use
 common-factor decomposition of the errors. The methods surveyed by Lewis are
 valuable alternatives and diagnostics, but they become direct estimators of
 $\theta$ only after one changes the latent structure to a square two-shock
-representation and labels one shock as the shock whose effect on $W_1$ per unit
-of $W_2$ is the desired coefficient.
+representation and labels one shock as the shock whose effect on $\omega_1$ per unit
+of $\omega_2$ is the desired coefficient.
 
 \section{Target scalar triangular system and notation}
 \label{sec:model}
@@ -146,23 +146,23 @@ so ordinary least squares in \eqref{eq:structural} is not generally causal.
 
 Project both observed variables on the same $X_t$ and define the residuals
 \begin{align}
-W_{1,t+1} &:= Y_{1,t+1}-X_t^\T\beta_1^R,\qquad
+\omega_{1,t+1} &:= Y_{1,t+1}-X_t^\T\beta_1^R,\qquad
 \beta_1^R:=\bigl(\E[X_tX_t^\T]\bigr)^{-1}\E[X_tY_{1,t+1}],\label{eq:W1}\\
-W_{2,t+1} &:= Y_{2,t+1}-X_t^\T\beta_2^R,
+\omega_{2,t+1} &:= Y_{2,t+1}-X_t^\T\beta_2^R,
 \qquad
 \beta_2^R:=\bigl(\E[X_tX_t^\T]\bigr)^{-1}\E[X_tY_{2,t+1}].\label{eq:W2}
 \end{align}
 Under $\E[X_t\varepsilon_{1,t+1}]=\E[X_t\varepsilon_{2,t+1}]=0$, the residualized
 system is
 \begin{equation}
-W_{1,t+1}=\theta W_{2,t+1}+\varepsilon_{1,t+1},
+\omega_{1,t+1}=\theta \omega_{2,t+1}+\varepsilon_{1,t+1},
 \qquad
-W_{2,t+1}=\varepsilon_{2,t+1}.
+\omega_{2,t+1}=\varepsilon_{2,t+1}.
 \label{eq:resid-system}
 \end{equation}
 For any candidate value $w$ of $\theta$, the implied structural residual is
 \begin{equation}
-\varepsilon_{1,t+1}(w):=W_{1,t+1}-wW_{2,t+1}.
+\varepsilon_{1,t+1}(w):=\omega_{1,t+1}-w\omega_{2,t+1}.
 \label{eq:cand-resid}
 \end{equation}
 Once $\theta$ is known or restricted to a set $\Theta$, the non-endogenous
@@ -202,22 +202,22 @@ The first condition says that $Z_{t+1}$ is not correlated with the product of
 the two structural errors. The second condition says that $Z_{t+1}$ predicts the
 variance of the first-stage error. Therefore
 \begin{equation}
-H_{t+1}:=(Z_{t+1}-\E Z_{t+1})W_{2,t+1}
+H_{t+1}:=(Z_{t+1}-\E Z_{t+1})\omega_{2,t+1}
 \label{eq:lewbel-instrument}
 \end{equation}
-is a valid constructed instrument for $W_{2,t+1}$ in the residualized equation.
+is a valid constructed instrument for $\omega_{2,t+1}$ in the residualized equation.
 Indeed,
 \begin{align}
 \E[H_{t+1}\varepsilon_{1,t+1}]&=
 \Cov(Z_{t+1},\varepsilon_{1,t+1}\varepsilon_{2,t+1})=0,\label{eq:lewbel-valid}\\
-\E[H_{t+1}W_{2,t+1}]&=\Cov(Z_{t+1},\varepsilon_{2,t+1}^2)\ne0.\label{eq:lewbel-relevance}
+\E[H_{t+1}\omega_{2,t+1}]&=\Cov(Z_{t+1},\varepsilon_{2,t+1}^2)\ne0.\label{eq:lewbel-relevance}
 \end{align}
 In the scalar residualized system this yields the closed-form population
 coefficient
 \begin{equation}
 \theta=
-\frac{\Cov(Z_{t+1},W_{1,t+1}W_{2,t+1})}
-     {\Cov(Z_{t+1},W_{2,t+1}^{2})}.
+\frac{\Cov(Z_{t+1},\omega_{1,t+1}\omega_{2,t+1})}
+     {\Cov(Z_{t+1},\omega_{2,t+1}^{2})}.
 \label{eq:lewbel-point}
 \end{equation}
 With controls, the same calculation is applied after residualizing both
@@ -237,11 +237,11 @@ $\tau\in[0,1)$,
 \end{equation}
 Define the observable population quantities
 \begin{align}
-L&:=\Cov(Z_{t+1},W_{1,t+1}W_{2,t+1}),&
-Q&:=\Cov(Z_{t+1},W_{2,t+1}^2),\label{eq:LQ}\\
-S_0&:=\Var(W_{1,t+1}W_{2,t+1}),&
-S_1&:=\Cov(W_{2,t+1}^2,W_{1,t+1}W_{2,t+1}),&
-S_2&:=\Var(W_{2,t+1}^2).
+L&:=\Cov(Z_{t+1},\omega_{1,t+1}\omega_{2,t+1}),&
+Q&:=\Cov(Z_{t+1},\omega_{2,t+1}^2),\label{eq:LQ}\\
+S_0&:=\Var(\omega_{1,t+1}\omega_{2,t+1}),&
+S_1&:=\Cov(\omega_{2,t+1}^2,\omega_{1,t+1}\omega_{2,t+1}),&
+S_2&:=\Var(\omega_{2,t+1}^2).
 \label{eq:S012}
 \end{align}
 For a candidate $w$, the relative-correlation bound becomes the quadratic
@@ -278,7 +278,7 @@ precisely $\theta$ is identified.
 \subsection{Sampling uncertainty}
 
 The exact Lewbel point estimator can be computed by two-stage least squares using
-$X_t$ and $(Z_{t+1}-\bar Z)\widehat W_{2,t+1}$ as instruments. Heteroskedasticity-
+$X_t$ and $(Z_{t+1}-\bar Z)\widehat \omega_{2,t+1}$ as instruments. Heteroskedasticity-
 robust or cluster-robust covariance matrices are standard. For the interval
 \eqref{eq:lewbel-interval}, a conservative confidence set can be obtained by
 replacing the population moments with sample moments and using a bootstrap or a
@@ -294,14 +294,14 @@ The \texttt{trigmm} paper studies the same triangular shape as
 Lewbel-style scalar $Z$ to construct an instrument. Instead, it imposes a latent
 common-factor structure on the residuals. In the notation of this report,
 \begin{equation}
-W_{2,t+1}=u_{t+1}+v_{t+1},
+\omega_{2,t+1}=u_{t+1}+v_{t+1},
 \qquad
-W_{1,t+1}=\theta W_{2,t+1}+\beta_u u_{t+1}+r_{t+1}.
+\omega_{1,t+1}=\theta \omega_{2,t+1}+\beta_u u_{t+1}+r_{t+1}.
 \label{eq:lsz-raw}
 \end{equation}
 Equivalently,
 \begin{equation}
-W_{1,t+1}=\alpha u_{t+1}+\theta v_{t+1}+r_{t+1},
+\omega_{1,t+1}=\alpha u_{t+1}+\theta v_{t+1}+r_{t+1},
 \qquad
 \alpha:=\theta+\beta_u.
 \label{eq:alpha-def}
@@ -323,41 +323,41 @@ same direction or in opposite directions.
 
 \subsection{Cumulant notation}
 
-Let $\Phi_{W_2,W_1}$ be the log characteristic function of
-$(W_{2,t+1},W_{1,t+1})$, and let $\Phi_{W_2}$ be the log characteristic function of
-$W_{2,t+1}$. Define joint cumulants by
+Let $\Phi_{\omega_2,\omega_1}$ be the log characteristic function of
+$(\omega_{2,t+1},\omega_{1,t+1})$, and let $\Phi_{\omega_2}$ be the log characteristic function of
+$\omega_{2,t+1}$. Define joint cumulants by
 \begin{equation}
-\Phi_{W_2,W_1}^{k,l}:=
+\Phi_{\omega_2,\omega_1}^{k,l}:=
 \left.
-\frac{\partial^{k+l}\Phi_{W_2,W_1}(\zeta,\xi)}
+\frac{\partial^{k+l}\Phi_{\omega_2,\omega_1}(\zeta,\xi)}
      {i^{k+l}\partial\zeta^k\partial\xi^l}
 \right|_{\zeta=0,\xi=0},
 \qquad
-\Phi_{W_2}^{k}:=
+\Phi_{\omega_2}^{k}:=
 \left.
-\frac{\partial^{k}\Phi_{W_2}(\zeta)}
+\frac{\partial^{k}\Phi_{\omega_2}(\zeta)}
      {i^{k}\partial\zeta^k}
 \right|_{\zeta=0}.
 \label{eq:cumulants}
 \end{equation}
-For ordinary intuition, $\Phi_{W_2}^2$ is the variance of $W_2$, $\Phi_{W_2}^3$
+For ordinary intuition, $\Phi_{\omega_2}^2$ is the variance of $\omega_2$, $\Phi_{\omega_2}^3$
 is its third cumulant, and higher orders measure higher-order departures from
 Gaussianity. Gaussian variables have all cumulants above order two equal to zero.
 
 Because cumulants of independent sums add, the latent model implies, for any
 nonnegative integer $p$,
 \begin{align}
-\Phi_{W_2}^{3+p} &= \kappa_u^{3+p}+\kappa_v^{3+p},\label{eq:kappa1}\\
-\Phi_{W_2,W_1}^{2+p,1} &= \alpha\kappa_u^{3+p}+\theta\kappa_v^{3+p},\label{eq:kappa2}\\
-\Phi_{W_2,W_1}^{1+p,2} &= \alpha^2\kappa_u^{3+p}+\theta^2\kappa_v^{3+p},
+\Phi_{\omega_2}^{3+p} &= \kappa_u^{3+p}+\kappa_v^{3+p},\label{eq:kappa1}\\
+\Phi_{\omega_2,\omega_1}^{2+p,1} &= \alpha\kappa_u^{3+p}+\theta\kappa_v^{3+p},\label{eq:kappa2}\\
+\Phi_{\omega_2,\omega_1}^{1+p,2} &= \alpha^2\kappa_u^{3+p}+\theta^2\kappa_v^{3+p},
 \label{eq:kappa3}
 \end{align}
 where $\kappa_u^{m}$ and $\kappa_v^{m}$ are the order-$m$ cumulants of $u$ and
 $v$. Eliminating these nuisance cumulants gives the observable moment equation
 \begin{equation}
 M_p(\alpha,\theta):=
-\Phi_{W_2,W_1}^{1+p,2}-\alpha^2\Phi_{W_2}^{3+p}
--(\theta+\alpha)\left(\Phi_{W_2,W_1}^{2+p,1}-\alpha\Phi_{W_2}^{3+p}\right)=0.
+\Phi_{\omega_2,\omega_1}^{1+p,2}-\alpha^2\Phi_{\omega_2}^{3+p}
+-(\theta+\alpha)\left(\Phi_{\omega_2,\omega_1}^{2+p,1}-\alpha\Phi_{\omega_2}^{3+p}\right)=0.
 \label{eq:Mp}
 \end{equation}
 This is the scalar version of the moment condition implemented by \texttt{trigmm}.
@@ -380,9 +380,9 @@ For a pair $q<\widetilde q$, the essential nondegeneracy condition is that the
 higher cumulants are not lined up in a way that makes the two equations carry the
 same information. In the notation here, a convenient statement is
 \begin{equation}
-\Phi_{W_2}^{3+\widetilde q}\,\Phi_{W_2,W_1}^{2+q,1}
+\Phi_{\omega_2}^{3+\widetilde q}\,\Phi_{\omega_2,\omega_1}^{2+q,1}
 \ne
-\Phi_{W_2}^{3+q}\,\Phi_{W_2,W_1}^{2+\widetilde q,1}.
+\Phi_{\omega_2}^{3+q}\,\Phi_{\omega_2,\omega_1}^{2+\widetilde q,1}.
 \label{eq:nondegenerate}
 \end{equation}
 For the default pair $q=0$, $\widetilde q=1$, this condition can fail if either
@@ -399,11 +399,11 @@ The latent variances can be recovered from second moments. Let
 $\sigma_u^2:=\Var(u)$, $\sigma_v^2:=\Var(v)$, and $\sigma_r^2:=\Var(r)$. Then
 \begin{align}
 \sigma_u^2 &=
-\frac{\Cov(W_1,W_2)-\theta\Var(W_2)}{\alpha-\theta},
+\frac{\Cov(\omega_1,\omega_2)-\theta\Var(\omega_2)}{\alpha-\theta},
 \label{eq:varu}\\
-\sigma_v^2 &= \Var(W_2)-\sigma_u^2,
+\sigma_v^2 &= \Var(\omega_2)-\sigma_u^2,
 \label{eq:varv}\\
-\sigma_r^2 &= \Var(W_1)-\alpha^2\sigma_u^2-\theta^2\sigma_v^2.
+\sigma_r^2 &= \Var(\omega_1)-\alpha^2\sigma_u^2-\theta^2\sigma_v^2.
 \label{eq:varr}
 \end{align}
 The nonnegativity and plausible sizes of these implied variances are useful
@@ -415,7 +415,7 @@ The internal \texttt{trigmm} moments do not require an external instrument. If a
 scalar external instrument $Z_{t+1}$ is available and satisfies the conventional
 exclusion condition
 \begin{equation}
-\E\left[Z_{t+1}\{W_{1,t+1}-\theta W_{2,t+1}\}\right]=0,
+\E\left[Z_{t+1}\{\omega_{1,t+1}-\theta \omega_{2,t+1}\}\right]=0,
 \label{eq:external-iv}
 \end{equation}
 then it can be added as an additional GMM moment. With one external instrument
@@ -460,21 +460,21 @@ set based on decomposing the observed distribution into independent Gaussian and
 non-Gaussian components. That sharp set is conceptually the most complete
 second-moment object, but it is difficult to estimate and explain in applied
 work. The Stata paper therefore focuses on a coarser but transparent outer bound
-based only on the covariance matrix of $(W_2,W_1)$. The formulas below describe
+based only on the covariance matrix of $(\omega_2,\omega_1)$. The formulas below describe
 that implemented bound.
 
 Assume first that $\beta_u=\alpha-\theta>0$. Define
 \begin{equation}
-B_0:=\frac{\E[W_{1,t+1}W_{2,t+1}]}{\E[W_{2,t+1}^2]},
+B_0:=\frac{\E[\omega_{1,t+1}\omega_{2,t+1}]}{\E[\omega_{2,t+1}^2]},
 \qquad
 D_0:=
-\frac{\E[W_{1,t+1}^2]\E[W_{2,t+1}^2]-\{\E[W_{1,t+1}W_{2,t+1}]\}^2}
-     {\{\E[W_{2,t+1}^2]\}^2}.
+\frac{\E[\omega_{1,t+1}^2]\E[\omega_{2,t+1}^2]-\{\E[\omega_{1,t+1}\omega_{2,t+1}]\}^2}
+     {\{\E[\omega_{2,t+1}^2]\}^2}.
 \label{eq:B0D0}
 \end{equation}
 If the residuals are mean zero, $B_0$ is simply the population OLS slope from
-regressing $W_1$ on $W_2$, and $D_0$ is the residual variance from that regression
-scaled by $\Var(W_2)$.
+regressing $\omega_1$ on $\omega_2$, and $D_0$ is the residual variance from that regression
+scaled by $\Var(\omega_2)$.
 
 Because
 \begin{equation}
@@ -504,7 +504,7 @@ Thus the population identified set is
 \end{equation}
 The plus sign indicates $\beta_u>0$.
 
-If instead $\beta_u<0$, apply the positive-loading result to $-W_2$. The order
+If instead $\beta_u<0$, apply the positive-loading result to $-\omega_2$. The order
 reverses and the set becomes
 \begin{equation}
 \Theta_{\text{LSZ,set}}^- :=
@@ -611,7 +611,7 @@ and it is also not identical to the Lee--Lewbel--Schennach--Zhang three-shock
 common-factor model. To use those options in the present scalar problem, impose
 an alternative square decomposition of the two residuals:
 \begin{equation}
-U_{t+1}:=\begin{bmatrix}W_{2,t+1}\\ W_{1,t+1}\end{bmatrix}
+U_{t+1}:=\begin{bmatrix}\omega_{2,t+1}\\ \omega_{1,t+1}\end{bmatrix}
 =B\eta_{t+1},
 \qquad
 B=\begin{bmatrix}b_{11}&b_{12}\\ b_{21}&b_{22}\end{bmatrix}.
@@ -620,7 +620,7 @@ B=\begin{bmatrix}b_{11}&b_{12}\\ b_{21}&b_{22}\end{bmatrix}.
 The shocks $\eta_{t+1}=(\eta_{1,t+1},\eta_{2,t+1})^\T$ are normalized in some
 way, such as unit variances or a unit diagonal. After estimating $B$, the scalar
 coefficient analogous to $\theta$ is an impact ratio for a labeled shock. If
-column $j$ is interpreted as the shock that moves $W_2$, then
+column $j$ is interpreted as the shock that moves $\omega_2$, then
 \begin{equation}
 \theta_j:=\frac{b_{2j}}{b_{1j}},
 \qquad b_{1j}\ne0.
@@ -628,8 +628,8 @@ column $j$ is interpreted as the shock that moves $W_2$, then
 \end{equation}
 This ratio is not automatically the structural $\theta$ in
 \eqref{eq:resid-system}; it becomes the target only if the researcher is willing
-to interpret the selected shock as the exogenous variation in $W_2$ whose causal
-impact on $W_1$ is sought. Shock labeling is therefore central.
+to interpret the selected shock as the exogenous variation in $\omega_2$ whose causal
+impact on $\omega_1$ is sought. Shock labeling is therefore central.
 
 \subsection{Heteroskedasticity option A: two variance regimes}
 \label{subsec:regimes}
@@ -658,7 +658,7 @@ two regimes. Then
 \label{eq:eigen}
 \end{equation}
 so the columns of $B$ are eigenvectors of an observable matrix, up to scale and
-order. Once a column is labeled as the $W_2$ shock, $\theta_j=b_{2j}/b_{1j}$ is
+order. Once a column is labeled as the $\omega_2$ shock, $\theta_j=b_{2j}/b_{1j}$ is
 identified.
 
 A particularly transparent special case is that only the variance of the labeled
@@ -668,11 +668,11 @@ shock $j$ changes. Then
 \label{eq:onediff}
 \end{equation}
 where $b_j$ is the $j$-th column of $B$. With
-$U=(W_2,W_1)^\T$, the impact ratio is
+$U=(\omega_2,\omega_1)^\T$, the impact ratio is
 \begin{equation}
 \theta_j=
-\frac{\Cov(W_2,W_1\mid Z=1)-\Cov(W_2,W_1\mid Z=0)}
-     {\Var(W_2\mid Z=1)-\Var(W_2\mid Z=0)}.
+\frac{\Cov(\omega_2,\omega_1\mid Z=1)-\Cov(\omega_2,\omega_1\mid Z=0)}
+     {\Var(\omega_2\mid Z=1)-\Var(\omega_2\mid Z=0)}.
 \label{eq:rigobon-ratio}
 \end{equation}
 This is the closest variance-regime analogue of a single-instrument estimator.
@@ -803,17 +803,17 @@ The same observed scalar $Z$ can play different roles. Confusing these roles is
 the easiest way to misuse these methods.
 
 \begin{enumerate}[label=\textbf{Role \arabic*.}]
-\item \textbf{External IV.} If $\E[Z\varepsilon_1]=0$ and $\E[ZW_2]\ne0$, then
+\item \textbf{External IV.} If $\E[Z\varepsilon_1]=0$ and $\E[Z\omega_2]\ne0$, then
 $Z$ directly identifies $\theta$ by conventional IV:
 \begin{equation}
-\theta_{\text{IV}}=\frac{\E[ZW_1]}{\E[ZW_2]}.
+\theta_{\text{IV}}=\frac{\E[Z\omega_1]}{\E[Z\omega_2]}.
 \label{eq:directiv}
 \end{equation}
 This moment can be combined with \texttt{trigmm}'s internal moments.
 
 \item \textbf{Lewbel heteroskedasticity shifter.} If $Z$ satisfies
-\eqref{eq:lewbel-exact-assump}, then $(Z-\E Z)W_2$ is the constructed
-instrument. Here the relevant covariance is $\Cov(Z,W_2^2)$, not $\E[ZW_2]$.
+\eqref{eq:lewbel-exact-assump}, then $(Z-\E Z)\omega_2$ is the constructed
+instrument. Here the relevant covariance is $\Cov(Z,\omega_2^2)$, not $\E[Z\omega_2]$.
 
 \item \textbf{Variance-regime indicator or volatility state.} If $Z$ defines
 high- and low-volatility regimes, then it supplies two covariance matrices. The
@@ -837,7 +837,7 @@ All the methods in this report use information beyond the first two unconditiona
 moments of a homoskedastic linear regression. That information can be weak.
 
 \heading{Lewbel exact and bounded-invalidity inference.}
-If $\Cov(Z,W_2^2)$ is near zero, the constructed instrument is weak. Standard IV
+If $\Cov(Z,\omega_2^2)$ is near zero, the constructed instrument is weak. Standard IV
 weak-instrument diagnostics are informative because the estimator is implemented
 as two-stage least squares with the constructed instrument. In the bounded
 invalidity interval, the same weak relevance makes the interval wide and can make
@@ -903,7 +903,7 @@ Lewbel triangular coefficient $\theta$.
 \begin{enumerate}
 \item \textbf{Start with the maintained triangular model.} Residualize both
 $Y_{1,t+1}$ and $Y_{2,t+1}$ on the same $X_t$ and work with
-$W_{1,t+1},W_{2,t+1}$.
+$\omega_{1,t+1},\omega_{2,t+1}$.
 
 \item \textbf{If a conventional scalar IV is credible, use it and report it.}
 Estimate \eqref{eq:directiv} or its controlled version. Then consider adding
@@ -911,7 +911,7 @@ Lewbel or \texttt{trigmm} moments as robustness checks or efficiency-improving
 overidentifying restrictions.
 
 \item \textbf{If no conventional IV is credible but a heteroskedasticity shifter is
-credible, use Lewbel.} Check whether $\Cov(Z,W_2^2)$ is meaningfully nonzero. If
+credible, use Lewbel.} Check whether $\Cov(Z,\omega_2^2)$ is meaningfully nonzero. If
 exact validity is doubtful, report the bounded-invalidity interval over a grid of
 $\tau$ values.
 
@@ -1124,12 +1124,12 @@ case, suppose that for a user-chosen $\tau\in[0,1)$,
 \varepsilon_2^2)|.
 \label{eq:tau-assump-consolidated}
 \end{equation}
-Let $W_1$ and $W_2$ be the residuals from regressions of $Y_1$ and $Y_2$ on
+Let $\omega_1$ and $\omega_2$ be the residuals from regressions of $Y_1$ and $Y_2$ on
 $X$.  Define the sample analogues of
 \begin{align*}
-C_{12,Z}&=\Cov(W_1W_2,Z), & C_{22,Z}&=\Cov(W_2^2,Z),\\
-V_{12}&=\Var(W_1W_2), & V_{22}&=\Var(W_2^2),\\
-C_{12,22}&=\Cov(W_1W_2,W_2^2).
+C_{12,Z}&=\Cov(\omega_1\omega_2,Z), & C_{22,Z}&=\Cov(\omega_2^2,Z),\\
+V_{12}&=\Var(\omega_1\omega_2), & V_{22}&=\Var(\omega_2^2),\\
+C_{12,22}&=\Cov(\omega_1\omega_2,\omega_2^2).
 \end{align*}
 The estimated endpoints of the Lewbel interval are the two real roots of
 \begin{equation}
@@ -1151,7 +1151,7 @@ The full-procedure bootstrap for this set is:
 \begin{enumerate}
     \item compute the original interval $[\hat L,\hat U]$ from the original data;
     \item resample observations, clusters, or blocks;
-    \item in each draw, recompute $W_1^*,W_2^*$, all covariance terms, and the
+    \item in each draw, recompute $\omega_1^*,\omega_2^*$, all covariance terms, and the
     two roots $[\hat L^*,\hat U^*]$;
     \item build endpoint intervals or a partial-identification confidence set
     from the empirical distribution of $(\hat L^*,\hat U^*)$.
@@ -1289,8 +1289,8 @@ Lee--Lewbel--Schennach--Zhang's \texttt{trigmmset} command uses two observable
 second-moment objects.  In the no-covariate residualized notation of this
 report,
 \begin{equation}
-B_0=\frac{\E(W_1W_2)}{\E(W_2^2)},\qquad
-D_0=\frac{\E(W_1^2)\E(W_2^2)-\E(W_1W_2)^2}{\E(W_2^2)^2}.
+B_0=\frac{\E(\omega_1\omega_2)}{\E(\omega_2^2)},\qquad
+D_0=\frac{\E(\omega_1^2)\E(\omega_2^2)-\E(\omega_1\omega_2)^2}{\E(\omega_2^2)^2}.
 \label{eq:BD-consolidated}
 \end{equation}
 For positive common-factor loading, the structural parameters satisfy
@@ -1482,11 +1482,11 @@ coefficients and in the identified interval endpoints.
 
 For the scalar triangular model, a clear empirical table should report:
 \begin{enumerate}
-    \item the OLS slope of $W_1$ on $W_2$;
+    \item the OLS slope of $\omega_1$ on $\omega_2$;
     \item the exact Lewbel point estimate, if the exact covariance condition is
     maintained;
     \item first-stage relevance for the generated instrument, e.g.
-    $\widehat{\Cov}(Z,W_2^2)$ and a heteroskedasticity test;
+    $\widehat{\Cov}(Z,\omega_2^2)$ and a heteroskedasticity test;
     \item the Lewbel bounded-invalidity interval for several values of $\tau$;
     \item bootstrap endpoint intervals for each reported set;
     \item if using the common-factor method, the \texttt{trigmm} point estimate

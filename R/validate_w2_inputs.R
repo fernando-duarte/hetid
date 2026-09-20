@@ -1,4 +1,4 @@
-#' Default W2 Maturity Horizons
+#' Default \eqn{\omega_2} Maturity Horizons
 #'
 #' Step-spaced news horizons from \code{step} to
 #' \code{MAX_MATURITY - step} that satisfy the news contract: each
@@ -17,7 +17,7 @@ default_w2_maturities <- function(step = HETID_CONSTANTS$DEFAULT_STEP) {
   candidates[keep]
 }
 
-#' Validate and Convert W2 Input Data
+#' Validate and Convert \eqn{\omega_2} Input Data
 #'
 #' Internal function to validate and convert yields and term_premia inputs
 #'
@@ -77,7 +77,7 @@ get_bundled_variables <- function() {
   variables
 }
 
-#' Validate Principal Components for W2
+#' Validate Principal Components for \eqn{\omega_2}
 #'
 #' Internal function to validate the supplied principal components.
 #'

@@ -7,9 +7,9 @@
 warn_if_variance_degenerate(w1, w2, maturities, sigma_i_sq, s_i_0)
 }
 \arguments{
-\item{w1}{Numeric vector of W1 residuals}
+\item{w1}{Numeric vector of \eqn{\omega_1} residuals}
 
-\item{w2}{Numeric matrix of W2 residuals (T x I)}
+\item{w2}{Numeric matrix of \eqn{\omega_2} residuals (T x I)}
 
 \item{maturities}{Integer vector of w2 column indices to check}
 
@@ -24,15 +24,15 @@ Invisible NULL, called for its warning side effect
 }
 \description{
 Diagnostic for the regularity assumption of the identification
-strategy: \eqn{var(W_{2,i}^2) > 0} and
-\eqn{var(W_1 W_{2,i} - \gamma W_{2,i}^2) > 0} at the true
+strategy: \eqn{var(\omega_{2,i}^2) > 0} and
+\eqn{var(\omega_1 \omega_{2,i} - \gamma \omega_{2,i}^2) > 0} at the true
 \eqn{\gamma}. The first is checked directly; the second is checked
 at the \eqn{\gamma} that minimizes it (the residual variance of
-regressing \eqn{W_1 W_{2,i}} on \eqn{W_{2,i}^2}), so a warning means
+regressing \eqn{\omega_1 \omega_{2,i}} on \eqn{\omega_{2,i}^2}), so a warning means
 the condition fails for some \eqn{\gamma}. Both checks are
 scale-free ratios compared against
 \code{HETID_CONSTANTS$DEGENERACY_TOLERANCE}. The relevant variances
-\eqn{var(W_{2,i}^2)} and \eqn{var(W_1 W_{2,i})} are exactly the
+\eqn{var(\omega_{2,i}^2)} and \eqn{var(\omega_1 \omega_{2,i})} are exactly the
 scalar statistics \code{sigma_i_sq} and \code{s_i_0}, so the caller
 passes them in and the diagnostic judges the same numbers the
 \code{hetid_moments} container carries. Degenerate variances make

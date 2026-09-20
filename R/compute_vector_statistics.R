@@ -2,8 +2,8 @@
 #'
 #' Computes vector statistics R_i^(0), R_i^(1), and P_i^(0) for each maturity i.
 #'
-#' @param w1 Numeric vector of W1 residuals from compute_w1_residuals()
-#' @param w2 Matrix of W2 residuals (T x I) from compute_w2_residuals()
+#' @param w1 Numeric vector of \eqn{\omega_1} residuals from compute_w1_residuals()
+#' @param w2 Matrix of \eqn{\omega_2} residuals (T x I) from compute_w2_residuals()
 #' @param pcs Matrix of instruments (T x J): any numeric matrix of
 #'   exogenous time-series instruments. In the VFCI application these
 #'   are principal components of asset returns. Column names label
@@ -26,9 +26,9 @@
 #' For each maturity i, computes the centered sample covariances of the
 #' principal components with the residual products (1/T normalization; see
 #' [centered_cov()] and the spec sections on moment notation and centering):
-#' \deqn{\hat{R}_i^{(0)} = \widehat{\mathrm{Cov}}(PC, W_1 \odot W_2^{(i)})}
-#' \deqn{\hat{R}_i^{(1)} = \widehat{\mathrm{Cov}}(PC, W_2 \odot W_2^{(i)})}
-#' \deqn{\hat{P}_i^{(0)} = \widehat{\mathrm{Cov}}(PC, (W_2^{(i)})^{\odot 2})}
+#' \deqn{\hat{R}_i^{(0)} = \widehat{\mathrm{Cov}}(PC, \omega_1 \odot \omega_2^{(i)})}
+#' \deqn{\hat{R}_i^{(1)} = \widehat{\mathrm{Cov}}(PC, \omega_2 \odot \omega_2^{(i)})}
+#' \deqn{\hat{P}_i^{(0)} = \widehat{\mathrm{Cov}}(PC, (\omega_2^{(i)})^{\odot 2})}
 #'
 #' where \eqn{\odot} denotes the Hadamard (elementwise) product.
 #'
@@ -68,8 +68,8 @@ compute_vector_statistics <- function(w1, w2, pcs,
 #' \code{colnames(pcs)} when present, with the standard pc names as
 #' fallback.
 #'
-#' @param w1 Numeric vector of W1 residuals
-#' @param w2 Numeric matrix of W2 residuals (T x I)
+#' @param w1 Numeric vector of \eqn{\omega_1} residuals
+#' @param w2 Numeric matrix of \eqn{\omega_2} residuals (T x I)
 #' @param pcs Numeric matrix of principal components (T x J)
 #' @param maturities Vector of validated maturity indices
 #' @return List with r_i_0, r_i_1, and p_i_0

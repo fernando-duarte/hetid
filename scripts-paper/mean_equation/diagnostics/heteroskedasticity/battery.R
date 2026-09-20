@@ -60,13 +60,16 @@ hetero_row_labels <- function(test_names, sym) {
     sprintf("$\\mathrm{Cov}(Z,%s^2)$", sym),
     sprintf("$\\mathrm{corr}(Z,%s^2)$", sym),
     sprintf("$t$-stat of $%s$-on-$Z$", sym),
-    sprintf("$\\mathrm{corr}(W_1,%s)$", sym),
+    sprintf("$\\mathrm{corr}(\\omega_1,%s)$", sym),
     sprintf(
-      "$[\\mathrm{Cov}(W_1,%s)/\\mathrm{Var}(%s)]\\cdot\\mathrm{sd}(%s)/\\mathrm{sd}(\\Delta c)$",
+      paste0(
+        "$[\\mathrm{Cov}(\\omega_1,%s)/\\mathrm{Var}(%s)]",
+        "\\cdot\\mathrm{sd}(%s)/\\mathrm{sd}(\\Delta c)$"
+      ),
       sym, sym, sym
     ),
     sprintf(
-      "$[\\mathrm{Cov}(W_1,%s)/\\mathrm{Var}(%s)]\\cdot\\mathrm{sd}(%s)$",
+      "$[\\mathrm{Cov}(\\omega_1,%s)/\\mathrm{Var}(%s)]\\cdot\\mathrm{sd}(%s)$",
       sym, sym, sym
     ),
     "$\\det\\widehat{M}_Z$",

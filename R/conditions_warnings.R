@@ -90,7 +90,7 @@ warn_unparsed_dates <- function(message, call = NULL) {
 
 #' Signal a Skipped-Maturity Warning
 #'
-#' Classed warning raised when a maturity is skipped during W2
+#' Classed warning raised when a maturity is skipped during \eqn{\omega_2}
 #' processing (missing columns or too few observations), so callers can
 #' dispatch on class \code{hetid_warning_skipped_maturity}.
 #'

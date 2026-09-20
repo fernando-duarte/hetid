@@ -7,9 +7,9 @@
 compute_per_maturity(w1, w2, maturities, compute_fn, ...)
 }
 \arguments{
-\item{w1}{Numeric vector of W1 residuals}
+\item{w1}{Numeric vector of \eqn{\omega_1} residuals}
 
-\item{w2}{Numeric matrix of W2 residuals (T x I)}
+\item{w2}{Numeric matrix of \eqn{\omega_2} residuals (T x I)}
 
 \item{maturities}{Vector of validated maturity indices}
 

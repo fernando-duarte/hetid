@@ -19,7 +19,7 @@ get_pc_column_names <- function(n_pcs) {
   paste0(HETID_CONSTANTS$PC_PREFIX, seq_len(n_pcs))
 }
 
-#' Assemble the W2 Coefficient Matrix
+#' Assemble the \eqn{\omega_2} Coefficient Matrix
 #'
 #' Builds the per-maturity coefficient matrix from the list of
 #' regression coefficient vectors, taking column names from the

@@ -88,8 +88,8 @@ pak::pak("fernando-duarte/hetid")
 
 ### 🔍 Identification Methods
 
-- **Reduced Form Residuals**: Compute W₁ and W₂ residuals for
-  identification
+- **Reduced Form Residuals**: Compute $\omega_1$ and $\omega_2$
+  residuals for identification
 - **Multi-maturity Analysis**: Simultaneous estimation across the yield
   curve
 - **Identified Set**: Assemble and check the quadratic constraint system
@@ -106,7 +106,7 @@ component — or from every instrument separately.
 ``` r
 library(hetid)
 #> Data availability:
-#>   * ACM term premia: Available (updated 2026-08-15)
+#>   * ACM term premia: Available (updated 2026-09-20)
 #> 
 #> Use load_term_premia() to access the data.
 set.seed(42)

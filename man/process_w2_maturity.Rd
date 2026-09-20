@@ -2,7 +2,7 @@
 % Please edit documentation in R/process_w2_maturity.R
 \name{process_w2_maturity}
 \alias{process_w2_maturity}
-\title{Process Single Maturity for W2}
+\title{Process Single Maturity for \eqn{\omega_2}}
 \usage{
 process_w2_maturity(
   i,

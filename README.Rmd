@@ -77,7 +77,7 @@ pak::pak("fernando-duarte/hetid")
 - **Variance Bounds** (`compute_variance_bound`): Empirical bounds for forecast errors
 
 ### 🔍 Identification Methods
-- **Reduced Form Residuals**: Compute W₁ and W₂ residuals for identification
+- **Reduced Form Residuals**: Compute $\omega_1$ and $\omega_2$ residuals for identification
 - **Multi-maturity Analysis**: Simultaneous estimation across the yield curve
 - **Identified Set**: Assemble and check the quadratic constraint system defining the identified set for the structural parameter across maturities
 

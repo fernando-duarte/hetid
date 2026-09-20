@@ -4,7 +4,7 @@
 
 I use the scalar triangular notation from your note: after residualizing both equations on the common controls \(X_t\), the target parameter is the scalar coefficient \(\theta\) in
 \[
-W_{1,t+1}=\theta W_{2,t+1}+\varepsilon_{1,t+1},\qquad W_{2,t+1}=\varepsilon_{2,t+1}.
+\omega_{1,t+1}=\theta \omega_{2,t+1}+\varepsilon_{1,t+1},\qquad \omega_{2,t+1}=\varepsilon_{2,t+1}.
 \]
 In this scalar setting, point identification means \(\theta\) is a singleton; set identification means \(\theta\) belongs to one interval, and each candidate \(w\in\Theta\) maps to a unique nuisance-coefficient vector through the same recovery map used in your TeX note. Lewbel’s heteroskedasticity construction gives point identification under exact orthogonality and heteroskedastic relevance, while the more recent instrument-free triangular literature gives either point identification through nonlinear higher-moment GMM or set identification through low-order moment bounds. fileciteturn0file2 fileciteturn0file3 citeturn5search0turn20search0turn5search3
 
@@ -20,11 +20,11 @@ The software landscape is uneven. I found **direct, standard packaged support in
 
 Following your note, let the common-controls residualized system be
 \[
-W_{1,t+1}=\theta W_{2,t+1}+\varepsilon_{1,t+1},\qquad W_{2,t+1}=\varepsilon_{2,t+1},
+\omega_{1,t+1}=\theta \omega_{2,t+1}+\varepsilon_{1,t+1},\qquad \omega_{2,t+1}=\varepsilon_{2,t+1},
 \]
 with candidate residual
 \[
-\varepsilon_{1,t+1}(w)=W_{1,t+1}-wW_{2,t+1}.
+\varepsilon_{1,t+1}(w)=\omega_{1,t+1}-w\omega_{2,t+1}.
 \]
 Once \(w\) is fixed, the remaining structural coefficients are uniquely recovered by the same linear map as in your note, so scalar inference on \(\theta\) is the core object. That reduction is exactly why both point-identified and set-identified procedures can be organized as inference on a scalar or on the endpoints of a scalar interval. fileciteturn0file2 citeturn5search0
 
@@ -33,7 +33,7 @@ In Lewbel’s scalar triangular model, exact point identification comes from a v
 \operatorname{Cov}(Z,\varepsilon_1\varepsilon_2)=0,\qquad 
 \operatorname{Cov}(Z,\varepsilon_2^2)\neq 0,
 \]
-which implies that the generated instrument \((Z-\bar Z)\hat\varepsilon_2\) is valid and relevant for \(W_2\). In the single-endogenous-regressor case this gives a just-identified IV estimand; with additional external or generated moments one can also run overidentified GMM and Hansen-type tests. Baum and Lewbel explicitly recommend robust/GMM estimation in applications and emphasize the testing role of heteroskedasticity diagnostics and overidentification diagnostics when available. fileciteturn0file2 fileciteturn0file3 citeturn6search0
+which implies that the generated instrument \((Z-\bar Z)\hat\varepsilon_2\) is valid and relevant for \(\omega_2\). In the single-endogenous-regressor case this gives a just-identified IV estimand; with additional external or generated moments one can also run overidentified GMM and Hansen-type tests. Baum and Lewbel explicitly recommend robust/GMM estimation in applications and emphasize the testing role of heteroskedasticity diagnostics and overidentification diagnostics when available. fileciteturn0file2 fileciteturn0file3 citeturn6search0
 
 In the more recent instrument-free triangular paper, point identification is obtained from a nonlinear common-factor structure plus higher-moment/non-Gaussianity conditions, while set identification is obtained from lower-order moment bounds. The associated Stata commands are `trigmm` for point identification and `trigmmset` for set identification. The Stata Journal article makes clear that `trigmm` is estimated through Stata’s `gmm` framework and that `trigmmset` constructs a confidence region for low-order-moment objects and then maps that into a worst-case confidence region for the structural parameters. citeturn5search3turn20search0
 
@@ -85,8 +85,8 @@ For plain Lewbel-style linear IV, an empirical bootstrap recipe is standard: res
 
 For the instrument-free triangular scalar case, the cleanest direct set-inference method now in software is `trigmmset`. The underlying paper defines two low-order-moment objects,
 \[
-B_0=\frac{E(W_1W_2)}{E(W_2^2)},\qquad
-D_0=\frac{E(W_1^2)E(W_2^2)-E(W_1W_2)^2}{E(W_2^2)^2},
+B_0=\frac{E(\omega_1\omega_2)}{E(\omega_2^2)},\qquad
+D_0=\frac{E(\omega_1^2)E(\omega_2^2)-E(\omega_1\omega_2)^2}{E(\omega_2^2)^2},
 \]
 and shows that for one sign normalization the structural pair \((\alpha,\gamma)\) must satisfy
 \[
@@ -186,9 +186,9 @@ In **Python**, `linearmodels` provides IV2SLS, LIML, k-class, and IVGMM with rob
 
 ### Point-identified Lewbel recipe
 
-Use this when you believe the exact Lewbel conditions hold. First regress \(Y_2\) on \(X\) and obtain \(\hat W_2\). Next construct the generated instrument
+Use this when you believe the exact Lewbel conditions hold. First regress \(Y_2\) on \(X\) and obtain \(\hat \omega_2\). Next construct the generated instrument
 \[
-\hat H_i=(Z_i-\bar Z)\hat W_{2i}.
+\hat H_i=(Z_i-\bar Z)\hat \omega_{2i}.
 \]
 Then estimate the residualized structural equation by 2SLS or GMM using \(X\) and \(\hat H\) as instruments. Report heteroskedasticity-robust or cluster-robust standard errors. If you have extra instruments or extra generated moments, report Hansen’s \(J\)-test, but do not treat nonrejection as proof of validity. fileciteturn0file2 fileciteturn0file3 citeturn6search0
 

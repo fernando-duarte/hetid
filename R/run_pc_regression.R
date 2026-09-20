@@ -1,6 +1,6 @@
 #' Run PC Regression
 #'
-#' Shared regression core for W1 and W2 residual computation.
+#' Shared regression core for \eqn{\omega_1} and \eqn{\omega_2} residual computation.
 #' Expects pre-aligned, pre-lagged inputs. Regressor labels come from
 #' the matrix's own column names (sanitized for formula use); unnamed
 #' or partially named input falls back to the bundled pc1..pcN names.

@@ -2,7 +2,7 @@
 % Please edit documentation in R/computation_utils.R
 \name{assemble_w2_coef_matrix}
 \alias{assemble_w2_coef_matrix}
-\title{Assemble the W2 Coefficient Matrix}
+\title{Assemble the \eqn{\omega_2} Coefficient Matrix}
 \usage{
 assemble_w2_coef_matrix(coef_list, row_names, fallback_names)
 }

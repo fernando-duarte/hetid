@@ -2,7 +2,7 @@
 % Please edit documentation in R/validate_w2_inputs.R
 \name{validate_w2_inputs}
 \alias{validate_w2_inputs}
-\title{Validate and Convert W2 Input Data}
+\title{Validate and Convert \eqn{\omega_2} Input Data}
 \usage{
 validate_w2_inputs(
   yields,

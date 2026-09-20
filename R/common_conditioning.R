@@ -1,7 +1,7 @@
 #' Build the Common Conditioning Regressor Matrix X_t
 #'
 #' Constructs the shared conditioning block \eqn{X_t = (\mathrm{PC}_t, Y_{1,t},
-#' \ldots, Y_{1,t+1-H})} used by both the consumption (W1) and news (W2)
+#' \ldots, Y_{1,t+1-H})} used by both the consumption (\eqn{\omega_1}) and news (\eqn{\omega_2})
 #' reduced forms. The PC block is named first (so the lag append cannot trip
 #' \code{\link{run_pc_regression}}'s blank-name fallback), then the \eqn{H}
 #' predetermined own-lag columns of \code{y1} are appended via

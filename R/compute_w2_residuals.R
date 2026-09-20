@@ -1,6 +1,6 @@
 #' Compute Reduced Form Residuals for Y2 Variables
 #'
-#' Computes residuals \eqn{W_{2,t+1}^{(i)}} from regressing \eqn{Y_{2,t+1}^{(i)}} variables
+#' Computes residuals \eqn{\omega_{2,t+1}^{(i)}} from regressing \eqn{Y_{2,t+1}^{(i)}} variables
 #' (SDF innovations) on the common conditioning vector \eqn{X_t}: a constant, the
 #' principal components extracted from financial asset returns, and (when
 #' \code{y1}/\code{y1_lags} are supplied) the own-lags of \code{y1}. Setting
@@ -18,7 +18,7 @@
 #'   returns the richer list). Both shapes carry dates.
 #' @param dates Required vector of period-end \code{Date}s, one per yield row
 #'   (length \code{nrow(yields)}); internally shifted to the t+1 realization
-#'   dates \eqn{d_2, \ldots, d_T} of the W2 news (matching
+#'   dates \eqn{d_2, \ldots, d_T} of the \eqn{\omega_2} news (matching
 #'   \code{compute_w1_residuals}).
 #' @template param-step
 #' @param y1 Optional outcome vector (length \code{nrow(pcs)}) supplying the
@@ -28,7 +28,7 @@
 #'   append to the PC regressors (default 0 = PC-only, backward compatible).
 #'   Lagging drops the first \eqn{H - 1} leading rows.
 #' @param impose_b_zero Logical; if TRUE, impose \eqn{B = 0} structurally (no
-#'   regression): \eqn{W_2} equals the SDF innovation \eqn{Y_2}, the
+#'   regression): \eqn{\omega_2} equals the SDF innovation \eqn{Y_2}, the
 #'   \code{coefficients} row is the full-width
 #'   \code{(Intercept, pc1..pcJ, l.y1..l<H>.y1)} vector of zeros, and
 #'   \code{r_squared} is \code{NA} (default FALSE).
@@ -50,7 +50,7 @@
 #'     nothing was skipped}
 #' }
 #' If return_df = TRUE, returns a data frame with columns \code{date},
-#' \code{maturity}, \code{residuals} (\eqn{W_{2,t+1}}), and \code{fitted},
+#' \code{maturity}, \code{residuals} (\eqn{\omega_{2,t+1}}), and \code{fitted},
 #' carrying the same skip reasons as a \code{skipped_maturities} attribute.
 #'
 #' Maturities whose required columns or observations are missing are
@@ -68,7 +68,7 @@
 #' second-order approximation to the SDF news
 #' \eqn{E_{t+1}[SDF_{t+1+i}] - E_t[SDF_{t+1+i}]}), then regresses it on
 #' the conditioning vector \eqn{X_t} (PC_t, optionally with
-#' \code{y1_lags} own-lags of \code{y1}) for residuals \eqn{W_{2,t+1}}.
+#' \code{y1_lags} own-lags of \code{y1}) for residuals \eqn{\omega_{2,t+1}}.
 #'
 #' \strong{PC alignment:} \code{pcs} must be supplied as a numeric matrix
 #' with one row per yield row, already aligned to the yields by calendar

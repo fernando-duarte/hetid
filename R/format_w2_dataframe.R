@@ -1,4 +1,4 @@
-#' Format W2 Residuals as a Tidy Data Frame
+#' Format \eqn{\omega_2} Residuals as a Tidy Data Frame
 #'
 #' Internal helper that converts the list-based output of
 #' \code{compute_w2_residuals} into a long-format data frame

@@ -48,7 +48,8 @@
 #'
 #' \subsection{Identification Methods:}{
 #' \itemize{
-#'   \item \strong{Reduced Form Residuals}: Compute W1 and W2 residuals for identification
+#'   \item \strong{Reduced Form Residuals}: Compute \eqn{\omega_1} and
+#'     \eqn{\omega_2} residuals for identification
 #'   \item \strong{Multi-maturity Analysis}: Simultaneous estimation across yield curve
 #' }}
 #'

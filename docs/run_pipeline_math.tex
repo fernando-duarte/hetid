@@ -643,26 +643,26 @@ Compute two reduced-form specifications. A \emph{specification} is a stated coll
 equations and restrictions. A \emph{reduced form} expresses an observed outcome
 as a linear function of the predictors plus a residual. In both specifications, estimate
 \begin{equation*}
- Y_{1t}=X_t'\beta_{1R}+W_{1t},
+ Y_{1t}=X_t'\beta_{1R}+\omega_{1t},
  \qquad \beta_{1R}\in\mathbb R^4.
 \end{equation*}
-Here \(\beta_{1R}\) is the four-dimensional outcome reduced-form coefficient vector, and \(W_{1t}\)
+Here \(\beta_{1R}\) is the four-dimensional outcome reduced-form coefficient vector, and \(\omega_{1t}\)
 is the scalar \emph{outcome reduced-form residual}.
 
 The reported specification removes the linear relation between the
 SDF-news PC scores and \(X_t\). Estimate its three equations:
 \begin{equation*}
- Y_{2t}=\beta_{2R}X_t+W_{2t},
+ Y_{2t}=\beta_{2R}X_t+\omega_{2t},
  \qquad
- \beta_{2R}\in\mathbb R^{3\times4},\quad W_{2t}\in\mathbb R^3.
+ \beta_{2R}\in\mathbb R^{3\times4},\quad \omega_{2t}\in\mathbb R^3.
 \end{equation*}
-Here \(\beta_{2R}\) is the three-by-four SDF-news reduced-form coefficient matrix, and \(W_{2t}\) is
+Here \(\beta_{2R}\) is the three-by-four SDF-news reduced-form coefficient matrix, and \(\omega_{2t}\) is
 the three-dimensional SDF-news reduced-form residual vector.
 
 The \emph{comparison specification} serves only as a \emph{comparison
 check}, meaning a calculation whose result is recorded for comparison and enters no reported quantity. It leaves the
 SDF-news PC scores unresidualized and shows how
-that choice changes the mean identified set. It uses the same \(W_{1t}\), sets \(W_{2t}=Y_{2t}\), and imposes
+that choice changes the mean identified set. It uses the same \(\omega_{1t}\), sets \(\omega_{2t}=Y_{2t}\), and imposes
 \(\beta_{2R}=0_{3\times4}\), the three-by-four zero matrix. Under either specification, for a candidate structural SDF-news
 coefficient vector \(\theta\in\mathbb R^3\), recover the coefficients on the lagged expected-SDF PC scores as
 \begin{equation}
@@ -692,16 +692,16 @@ that mean from observed quantities. The identification calculation uses the foll
 variances and covariances, all computed on the identification sample.
 The structural mean residual at a candidate \(\theta\) is
 \begin{equation}
- e_t(\theta)=W_{1t}-W_{2t}'\theta.
+ e_t(\theta)=\omega_{1t}-\omega_{2t}'\theta.
  \label{eq:mean-residual}
 \end{equation}
 Here \(e_t(\theta)\) is the scalar structural mean residual at structural SDF-news coefficient
-vector \(\theta\in\mathbb R^3\). The scalar \(W_{1t}\) is the outcome reduced-form residual, and
-\(W_{2t}\in\mathbb R^3\) is the SDF-news reduced-form residual vector.
+vector \(\theta\in\mathbb R^3\). The scalar \(\omega_{1t}\) is the outcome reduced-form residual, and
+\(\omega_{2t}\in\mathbb R^3\) is the SDF-news reduced-form residual vector.
 
 For coordinate \(k\in\{1,2,3\}\) of the SDF-news reduced-form residual, define the scalar
-\(h_{kt}=W_{1t}W_{2k,t}\). Also define the vector
-\(G_{kt}=W_{2t}W_{2k,t}\in\mathbb R^3\) and the scalar \(q_{kt}=W_{2k,t}^2\). Using the centered
+\(h_{kt}=\omega_{1t}\omega_{2k,t}\). Also define the vector
+\(G_{kt}=\omega_{2t}\omega_{2k,t}\in\mathbb R^3\) and the scalar \(q_{kt}=\omega_{2k,t}^2\). Using the centered
 divisor-\(T\) operator in equation~\eqref{eq:covT}, calculate seven sample moments:
 \begin{align*}
  S_k^{(0)}&=\widehat{\operatorname{Var}}_T(h_k)\in\mathbb R,
@@ -735,18 +735,18 @@ with the inequality removed.
 The correlation expression below interprets the restriction only at structural SDF-news coefficient
 vectors satisfying
 \(\widehat{\operatorname{Var}}_T(z)>0\) and
-\(\widehat{\operatorname{Var}}_T\{e(\theta)W_{2k}\}>0\).
+\(\widehat{\operatorname{Var}}_T\{e(\theta)\omega_{2k}\}>0\).
 
 As soon as \(S_k^{(0)}\) and \(s_k^2\) are formed, and before any of the stops below, check the two
 scale-free regularity ratios
-\(\widehat{\operatorname{Var}}_T(W_{2k}^2)/\widehat{\operatorname{Var}}_T(W_{2k})^2\) and
-\(\widehat{\operatorname{Var}}_T\{(W_1-\gamma W_{2k})W_{2k}\}/\widehat{\operatorname{Var}}_T(W_1W_{2k})\)
+\(\widehat{\operatorname{Var}}_T(\omega_{2k}^2)/\widehat{\operatorname{Var}}_T(\omega_{2k})^2\) and
+\(\widehat{\operatorname{Var}}_T\{(\omega_1-\gamma \omega_{2k})\omega_{2k}\}/\widehat{\operatorname{Var}}_T(\omega_1\omega_{2k})\)
 at the scalar \(\gamma\in\mathbb R\) minimizing the numerator. That minimization runs only over
 structural SDF-news coefficient vectors whose sole nonzero coordinate is \(k\), not over all of
 \(\mathbb R^3\). Report a diagnostic warning, without stopping, when either ratio falls at or
 below \(10^{-8}\). A flagged coordinate indicates that the mean identified set
 may be degenerate or unbounded. Then require
-\(s_k^2=\widehat{\operatorname{Var}}_T(W_{2k}^2)\) to be finite and strictly positive for every
+\(s_k^2=\widehat{\operatorname{Var}}_T(\omega_{2k}^2)\) to be finite and strictly positive for every
 coordinate \(k\) before assembling the inequalities and stop otherwise. Require \(S_k^{(0)}\),
 \(S_k^{(1)}\), and \(S_k^{(2)}\) to be finite as well. Stop also if the inequality weight \(w_k\)
 defined below is nonfinite, or if any entry of the assembled \(A_k\), \(b_k\), or \(c_k\) is
@@ -755,12 +755,12 @@ defined after the correlation expression are authoritative over all \(\theta\in\
 including coefficient vectors at which the residual-product correlation is undefined. The slack
 \(\tau_k\) scales the permitted residual-product correlation wherever that interpretation is defined:
 \begin{equation}
- \left|\operatorname{corr}_T\{z,e(\theta)W_{2k}\}\right|
- \le \tau_k\left|\operatorname{corr}_T(z,W_{2k}^2)\right|.
+ \left|\operatorname{corr}_T\{z,e(\theta)\omega_{2k}\}\right|
+ \le \tau_k\left|\operatorname{corr}_T(z,\omega_{2k}^2)\right|.
  \label{eq:relaxed-correlation}
 \end{equation}
 Here \(z\) is the scalar instrument sequence, \(e(\theta)\) is the structural mean residual sequence,
-\(W_{2k}\) is coordinate \(k\) of the SDF-news reduced-form residual sequence, and
+\(\omega_{2k}\) is coordinate \(k\) of the SDF-news reduced-form residual sequence, and
 \(\tau_k\in[0,1)\) is its slack parameter. Slack values are admissible only on that half-open unit
 interval. The right-hand correlation scales the allowed departure by
 the instrument's relation with the squared SDF-news reduced-form residual.
@@ -782,7 +782,7 @@ of \(A_k\) are symmetric in exact arithmetic; replace the computed \(A_k\) by
 \((A_k+A_k')/2\) before any later use, because the searches below use an analytic constraint
 derivative that assumes exact symmetry. As a reproduction check on the seven sample moments,
 coordinate \(k\) of \(Q_k\) equals \(P_k^{(0)}\), since both are the divisor-\(T\) covariance of the
-instrument with \(W_{2k}^2\).
+instrument with \(\omega_{2k}^2\).
 
 The analysis uses a common slack, \(\tau_k=\tau\), for all three coordinates of the SDF-news
 reduced-form residual. The mean identified set is
@@ -1158,7 +1158,7 @@ These tests and checks describe identifying variation and leave the mean identif
 under the reported specification unchanged. Apply the complete battery independently to two
 three-coordinate diagnostic systems:
 \[
- H_t^{(\mathrm{PC})}=Y_{2t},\qquad H_t^{(\mathrm{RF})}=W_{2t}.
+ H_t^{(\mathrm{PC})}=Y_{2t},\qquad H_t^{(\mathrm{RF})}=\omega_{2t}.
 \]
 Here \(H_t^{(\mathrm{PC})}\in\mathbb R^3\) is the SDF-news PC-score vector and
 \(H_t^{(\mathrm{RF})}\in\mathbb R^3\) is its reported-specification reduced-form residual vector.
@@ -1308,13 +1308,13 @@ For each coordinate of each diagnostic system, square the coordinate and report
 \(\widehat{\operatorname{Cov}}_T(z,(H_k^{(s)})^2)\), the centered divisor-\(T\) covariance of
 equation~\eqref{eq:covT}, together with the sample correlation of \((H_k^{(s)})^2\) with the instrument,
 which does not depend on the choice of divisor. Also report the least-squares \(t\)-statistic for the instrument coefficient in the base
-regression and \(\operatorname{corr}_T(W_1,H_k^{(s)})\). Last, report the two normalized quantities
+regression and \(\operatorname{corr}_T(\omega_1,H_k^{(s)})\). Last, report the two normalized quantities
 \[
- \frac{\widehat{\operatorname{Cov}}_T(W_1,H_k^{(s)})}
+ \frac{\widehat{\operatorname{Cov}}_T(\omega_1,H_k^{(s)})}
  {\widehat{\operatorname{Var}}_T(H_k^{(s)})}
  \frac{\operatorname{sd}_{T-1}(H_k^{(s)})}{\operatorname{sd}_{T-1}(Y_1)},
  \qquad
- \frac{\widehat{\operatorname{Cov}}_T(W_1,H_k^{(s)})}
+ \frac{\widehat{\operatorname{Cov}}_T(\omega_1,H_k^{(s)})}
  {\widehat{\operatorname{Var}}_T(H_k^{(s)})}\operatorname{sd}_{T-1}(H_k^{(s)}).
 \]
 Here both displayed quantities are scalar normalized covariances for coordinate \(k\) of system \(s\), reported
@@ -1401,7 +1401,7 @@ system. A nonfinite value
 carried into the conditional-scale design makes that system unsolvable, and the reproduction stops
 there. Estimate the two reduced forms on the identification
 sample before the join, then restrict the
-resulting \(W_{1t}\) and \(W_{2t}\) to the matched rows.
+resulting \(\omega_{1t}\) and \(\omega_{2t}\) to the matched rows.
 
 On these \(T_v\) quarters,
 center each lagged supplied return score and retain its original scale. Verify that every centered score's absolute sample mean is strictly below \(10^{-8}\), and stop the
@@ -1583,9 +1583,9 @@ coefficients:
 \begin{equation*}
  \frac{\partial\widehat\eta_L(\theta)}{\partial\theta'}
  =-(X^{V\prime}X^V)^{-1}X^{V\prime}\operatorname{diag}
-   \left(\frac{2}{e_t(\theta)}\right)W_2.
+   \left(\frac{2}{e_t(\theta)}\right)\omega_2.
 \end{equation*}
-Here \(W_2\in\mathbb R^{T_v\times3}\) stacks the SDF-news reduced-form residual vectors. The
+Here \(\omega_2\in\mathbb R^{T_v\times3}\) stacks the SDF-news reduced-form residual vectors. The
 derivative matrix has dimension \(5\times3\).
 
 A \emph{structural-mean-residual hyperplane} is the set of \(\theta\) for which \(e_t(\theta)=0\) in
@@ -1618,18 +1618,18 @@ start point is simply missing.
 
 Combine the lattice's structural-mean-residual sign changes with a
 \emph{hyperplane-intersection check}. For quarter \(t\), let \(\underline h_t\) and \(\overline h_t\)
-be the accepted lower and upper endpoints of \(W_{2t}'\theta\) over the mean identified set. Define
+be the accepted lower and upper endpoints of \(\omega_{2t}'\theta\) over the mean identified set. Define
 the positive scalar tolerance
 \begin{equation*}
- \delta_t=10^{-8}\max\{1,|W_{1t}|\}.
+ \delta_t=10^{-8}\max\{1,|\omega_{1t}|\}.
 \end{equation*}
-After first screening the range of \(W_{2t}'\theta\) over the enclosing coefficient box, declare an
-intersection with \(W_{2t}'\theta=W_{1t}\) when
+After first screening the range of \(\omega_{2t}'\theta\) over the enclosing coefficient box, declare an
+intersection with \(\omega_{2t}'\theta=\omega_{1t}\) when
 \begin{equation*}
- \underline h_t-\delta_t\le W_{1t}\le\overline h_t+\delta_t.
+ \underline h_t-\delta_t\le \omega_{1t}\le\overline h_t+\delta_t.
 \end{equation*}
-If \(W_{2t}=0\), declare a crossing for quarter \(t\) directly and solve nothing. Such a quarter
-passes the box screen only when \(W_{1t}=0\), in which case its structural mean residual is zero at
+If \(\omega_{2t}=0\), declare a crossing for quarter \(t\) directly and solve nothing. Such a quarter
+passes the box screen only when \(\omega_{1t}=0\), in which case its structural mean residual is zero at
 every \(\theta\).
 Apply the box screen exactly, without the tolerance \(\delta_t\), which widens only the comparison
 against the accepted functional endpoints. A sign change of the structural mean residual across the
@@ -1637,7 +1637,7 @@ retained lattice, or an exact zero at a retained lattice point, also establishes
 endpoint comparison is exact when the mean
 identified set is connected, meaning that any two points can be joined by a continuous path inside
 the set. For a disconnected set, it favors declaring a crossing. If either endpoint solve for
-\(W_{2t}'\theta\) fails to return a certified bound for some quarter \(t\), the check is unresolved:
+\(\omega_{2t}'\theta\) fails to return a certified bound for some quarter \(t\), the check is unresolved:
 perform no search at that slack, report every conditional-scale endpoint value as missing, and
 assign every conditional-scale endpoint at that slack the unreliable endpoint state.
 
@@ -1796,7 +1796,7 @@ regarding the fitted conditional-scale coefficient vector as a function of that 
 \begin{equation*}
  \frac{\partial\widehat\eta_P(\theta)}{\partial\theta'}
  =A_P(\widehat\eta_P)^{-1}
-   \sum_{t=1}^{T_v}X_t^V\{-2e_t(\theta)W_{2t}'\}.
+   \sum_{t=1}^{T_v}X_t^V\{-2e_t(\theta)\omega_{2t}'\}.
 \end{equation*}
 Here the displayed Jacobian is a \(5\times3\) matrix measuring the response of the PPML
 conditional-scale coefficient vector to the structural SDF-news coefficient vector.
@@ -2090,7 +2090,7 @@ The same implicit differentiation applied to the first-order condition gives
  \frac{\partial\widehat\eta_H(\theta)}{\partial\theta'}
  =-A_H(\widehat\eta_H)^{-1}
    \sum_{t=1}^{T_v}X_t^V
-   \left\{e_t(\theta)e^{-X_t^{V\prime}\widehat\eta_H}W_{2t}'\right\}.
+   \left\{e_t(\theta)e^{-X_t^{V\prime}\widehat\eta_H}\omega_{2t}'\right\}.
 \end{equation*}
 Here the displayed Jacobian is a \(5\times3\) matrix measuring the response of the Harvey QML
 conditional-scale coefficient vector to the structural SDF-news coefficient vector. Return it only
@@ -2327,7 +2327,7 @@ Let \(e_{t}^{\mathrm{ref}}\) be the scalar quarter-\(t\) residual from the mean 
 benchmark, aligned to the conditional-scale sample. Call quarter \(t\) active when
 \(|e_t(\widehat\theta)|\le10^{-6}\operatorname{med}_{t'}|e_{t'}^{\mathrm{ref}}|\). Construct perturbation
 directions from both signs of the three coordinate axes and, for every active quarter, both signs of
-\(W_{2t}/\|W_{2t}\|_2\). To canonicalize an unsigned direction, find its first coordinate whose
+\(\omega_{2t}/\|\omega_{2t}\|_2\). To canonicalize an unsigned direction, find its first coordinate whose
 absolute value exceeds \(10^{-14}\) and multiply the vector by minus one when that coordinate is
 negative. Treat two canonical directions less than \(10^{-12}\) apart as duplicates. Call a
 direction \emph{matched} when all three perturbations at radii
@@ -2349,7 +2349,7 @@ step off every hyperplane. Either of two further conditions rejects the candidat
 direction is constructed:
 \(\min_t|e_t(\widehat\theta)|\le10^{-8}\operatorname{med}_{t'}|e_{t'}^{\mathrm{ref}}|\), which places
 it closer to a hyperplane than the arithmetic can resolve, or an active quarter with
-\(\|W_{2t}\|_2=0\), which leaves that quarter without a perturbation normal.
+\(\|\omega_{2t}\|_2=0\), which leaves that quarter without a perturbation normal.
 
 Carry out the reproduction and perturbation rules exactly when \(\varsigma(\widehat\theta)\le10^{-6}\)
 or \(\min_t|e_t(\widehat\theta)|\le10^{-8}\operatorname{med}_{t'}|e_{t'}^{\mathrm{ref}}|\). When
@@ -2535,7 +2535,7 @@ use their finite maximum. Stop the reproduction if no strictly positive finite v
 two fallbacks.
 
 The LAD domain excludes every structural-mean-residual hyperplane
-\(e_t(\theta)=W_{1t}-W_{2t}'\theta=0\). A candidate satisfying
+\(e_t(\theta)=\omega_{1t}-\omega_{2t}'\theta=0\). A candidate satisfying
 \(0<|e_t(\theta)|\le10^{-12}m_e\) for any \(t\) belongs to the mathematical domain, but is
 numerically unresolved. Reject that candidate without replacing or truncating its structural mean
 residual. At an accepted candidate, minimize \(\sum_t|\ell_t(\theta)-X_t^{V\prime}\eta|\) at the
@@ -2669,7 +2669,7 @@ crossing quarter; any other rejected candidate assigns every endpoint at that sl
 endpoint state.
 
 For a structural-mean-residual hyperplane in quarter \(t\), use the existing expression
-\(e_t(\theta)=W_{1t}-W_{2t}'\theta\). Let \([\underline\theta_k,\overline\theta_k]\) be coordinate
+\(e_t(\theta)=\omega_{1t}-\omega_{2t}'\theta\). Let \([\underline\theta_k,\overline\theta_k]\) be coordinate
 \(k\)'s side of the coefficient box and \(\mu_k^B=(\underline\theta_k+\overline\theta_k)/2\). Here
 \(\mu^B=(\mu_1^B,\mu_2^B,\mu_3^B)'\) is the box midpoint. Define the all-lower corner
 \(\underline\theta^B=(\underline\theta_1,\underline\theta_2,\underline\theta_3)'\in\mathbb R^3\) and
@@ -2677,18 +2677,18 @@ the all-upper corner
 \(\overline\theta^B=(\overline\theta_1,\overline\theta_2,\overline\theta_3)'\in\mathbb R^3\). Every distance in the crossing machinery below is measured in the search-coordinate scale \(d_\theta\). No per-coordinate scale enters.
 If
 \begin{equation*}
- \|W_{2t}\|_2\le10^{-12}\max\{1,\max_{t',k}|W_{2k,t'}|\},
+ \|\omega_{2t}\|_2\le10^{-12}\max\{1,\max_{t',k}|\omega_{2k,t'}|\},
 \end{equation*}
 where the inner maximum spans all conditional-scale quarters \(t'\) and coordinates
 \(k\in\{1,2,3\}\),
-then classify the hyperplane as unavailable when \(|W_{1t}|\le10^{-12}m_e\) and as having no crossing
+then classify the hyperplane as unavailable when \(|\omega_{1t}|\le10^{-12}m_e\) and as having no crossing
 otherwise. For every other quarter, construct nine base starting values: \(\mu^B\),
 \(\underline\theta^B\), \(\overline\theta^B\),
 and the six points formed from \(\mu^B\) by adding or subtracting \((\overline\theta_k-\underline\theta_k)/4\) in coordinate
 \(k\in\{1,2,3\}\) while leaving the other coordinates unchanged. For each base starting value
 \(a\in\mathbb R^3\), also construct its Euclidean projection
 \begin{equation*}
- p_t(a)=a+W_{2t}\frac{W_{1t}-W_{2t}'a}{W_{2t}'W_{2t}}.
+ p_t(a)=a+\omega_{2t}\frac{\omega_{1t}-\omega_{2t}'a}{\omega_{2t}'\omega_{2t}}.
 \end{equation*}
 Here \(p_t(a)\in\mathbb R^3\) is the Euclidean projection of \(a\) onto the quarter-\(t\)
 hyperplane.
