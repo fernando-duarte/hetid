@@ -4,6 +4,22 @@
 # Every offset past a tick is in points, which svglite writes one-to-one, so
 # the labels sit at the same distances whatever the figure is scaled to.
 
+# Uniform axis scaling cancels in the normalized 3D projection, so only the
+# displayed tick values and titles change. Precision follows the scaled ticks.
+region_3d_axis_labels <- function(render, units, ticks) {
+  multiplier <- render$axis_multiplier
+  stopifnot(length(multiplier) == 1L, is.finite(multiplier), multiplier > 0)
+  ticks <- lapply(ticks, `*`, multiplier)
+  digits <- vapply(ticks, region_tick_digits, integer(1))
+  titles <- paste0("$", multiplier, " \\times ", substring(render$axis_labels[[units]], 2L))
+  list(
+    ticks = Map(function(at, places) {
+      paste0("$", formatC(at, format = "f", digits = places), "$")
+    }, ticks, digits),
+    titles = titles
+  )
+}
+
 # One call per figure keeps the edge geometry beside the pane geometry it has
 # to agree with. Returns the three label specs for place_region_labels.
 draw_region_axes <- function(pmat, lo, hi, ticks, labels, titles, center) {

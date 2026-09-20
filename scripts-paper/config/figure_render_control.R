@@ -115,6 +115,8 @@ PAPER_FIGURE_RENDER_CONTROL <- list(
       ),
       b = c("$b_{1,N}$", "$b_{2,N}$", "$b_{3,N}$")
     ),
+    # Display multiplier for every region figure; geometry stays in model units.
+    axis_multiplier = 10,
     # The paper includes the trimmed figure at 0.7 of its 6.5in text width, so
     # the device is sized for the trimmed figure to land near 4.6in wide: its
     # labels then print at the size they are typeset here.

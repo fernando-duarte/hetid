@@ -87,11 +87,9 @@ local({
       holds(box0$lo), holds(box0$hi),
       is.null(marked) || holds(marked)
     )
-    tick_labels <- Map(function(at, places) {
-      paste0("$", formatC(at, format = "f", digits = places), "$")
-    }, ticks, frame$digits)
-
-    path <- artifact_path(region_figure_id(ols, units, tau))
+    id <- region_figure_id(ols, units, tau)
+    labels <- region_3d_axis_labels(render, units, ticks)
+    path <- artifact_path(id)
     svglite::svglite(path, width = render$device$width, height = render$device$height)
     device <- grDevices::dev.cur()
     on.exit(if (device %in% grDevices::dev.list()) grDevices::dev.off(device), add = TRUE)
@@ -156,8 +154,7 @@ local({
     }
 
     axes <- draw_region_axes(
-      pmat, lo, hi, ticks, tick_labels,
-      render$axis_labels[[units]], (lo + hi) / 2
+      pmat, lo, hi, ticks, labels$ticks, labels$titles, (lo + hi) / 2
     )
     # the device closes here so the labels go onto the finished file; the
     # corners they cover go back to the caller's crop
