@@ -1,0 +1,47 @@
+\begingroup
+\newcommand{\kernouter}{\noalign{\global\cmidrulekern=-6pt}}
+\newcommand{\kernspan}{\noalign{\global\cmidrulekern=3pt}}
+\newcommand{\kernmid}{\noalign{\global\cmidrulekern=-2.5pt}}
+\newcommand{\kerninner}{\noalign{\global\cmidrulekern=1pt}}
+\setstretch{1}\renewcommand{\arraystretch}{1.15}\fontsize{11}{13.2}\selectfont\setlength{\tabcolsep}{3pt}
+\newcommand{\intervalcomma}{\rlap{\hspace{1.5pt}\makebox[0pt]{$,$}}}
+\newlength{\estimateheaderwidth}
+\settowidth{\estimateheaderwidth}{$000.00$}
+\newcommand{\centerheader}[1]{\begingroup
+  \setbox0=\hbox{#1}%
+  \raisebox{\dimexpr (10pt-5pt-\ht0+\dp0)/2\relax}[10pt][5pt]{\usebox0}%
+\endgroup}
+\newcommand{\estimateheader}[1]{\multicolumn{1}{l}{\makebox[0pt][l]{\hspace{16.5pt}\makebox[\estimateheaderwidth]{\centerheader{#1}}}}}
+\newcommand{\intervalheader}[1]{\multicolumn{2}{l}{\makebox[0pt][l]{\makebox[\dimexpr 2\estimateheaderwidth+2\tabcolsep\relax]{\centerheader{#1}}}}}
+\newcommand{\shiftedestimate}[2]{\multicolumn{1}{l}{\makebox[47.06pt][l]{\hspace{33pt}\llap{$#1$}\rlap{$.#2$}}}}
+\newcommand{\shiftedlastestimate}[2]{\multicolumn{1}{l@{\hskip 38pt}}{\makebox[47.06pt][l]{\hspace{33pt}\llap{$#1$}\rlap{$.#2$}}}}
+\newcommand{\estimatesummary}[1]{\multicolumn{1}{l}{\makebox[0pt][l]{\hspace{16.5pt}\makebox[\estimateheaderwidth]{#1}}}}
+\newcommand{\intervalsummary}[1]{\multicolumn{2}{l}{\makebox[0pt][l]{\makebox[\dimexpr 2\estimateheaderwidth+2\tabcolsep\relax]{#1}}}}
+\begin{tabular}{l@{\hskip -3pt}D{.}{.}{3.5}D{.}{.}{3.5}@{\hskip 38pt}D{.}{.}{3.2}D{.}{.}{3.2}@{\hskip 24pt}D{.}{.}{3.2}D{.}{.}{3.2}@{\hskip 24pt}D{.}{.}{3.2}D{.}{.}{3.2}}
+\kernouter\cmidrule[\heavyrulewidth](lr){1-9}
+\multicolumn{9}{c}{Panel A: Mean equation} \\
+\cmidrule(l{-3pt}r{-3pt}){1-9}
+ & \multicolumn{2}{l}{\makebox[0pt][l]{\makebox[117.43pt]{Estimate\(\;\mathord{\times}\;10\)}}} & \multicolumn{6}{c}{Identified set\(\;\mathord{\times}\;10\)} \\[-2pt]
+ & \multicolumn{2}{l}{\makebox[0pt][l]{\makebox[117.43pt]{(test statistic)}}} & \multicolumn{6}{c}{(confidence envelope\(\;\mathord{\times}\;10\))} \\
+\kernspan\cmidrule(l{9pt}r{21pt}){2-3}\cmidrule(l{-6pt}r{-3pt}){4-9}
+\noalign{\vskip -\belowrulesep}
+ & \estimateheader{OLS} & \estimateheader{$\tau{=}0$} & \intervalheader{$\tau{=}0.05$} & \intervalheader{$\tau{=}0.1$} & \intervalheader{$\tau{=}0.2$} \\
+\noalign{\vskip -\aboverulesep}
+\cmidrule(l{9pt}r{21pt}){2-3}\cmidrule(l{-6pt}r{-3pt}){4-9}
+{{PANEL_A_ROWS}}
+\cmidrule[\lightrulewidth](l{-3pt}r{-3pt}){1-9}\addlinespace[1pt]
+\multicolumn{9}{c}{Panel B: Variance equation} \\
+\cmidrule(l{-3pt}r{-3pt}){1-9}
+ & \multicolumn{2}{l}{\makebox[0pt][l]{\makebox[117.43pt]{Estimate\(\;\mathord{\times}\;10\)}}} & \multicolumn{6}{c}{Identified set\(\;\mathord{\times}\;10\)} \\[-2pt]
+ & \multicolumn{2}{l}{\makebox[0pt][l]{\makebox[117.43pt]{(test statistic)}}} & \multicolumn{6}{c}{(confidence envelope\(\;\mathord{\times}\;10\))} \\
+\kernspan\cmidrule(l{9pt}r{21pt}){2-3}\cmidrule(l{-6pt}r{-3pt}){4-9}
+\noalign{\vskip -\belowrulesep}
+ & \estimateheader{OLS} & \estimateheader{$\tau{=}0$} & \intervalheader{$\tau{=}0.05$} & \intervalheader{$\tau{=}0.1$} & \intervalheader{$\tau{=}0.2$} \\
+\noalign{\vskip -\aboverulesep}
+\cmidrule(l{9pt}r{21pt}){2-3}\cmidrule(l{-6pt}r{-3pt}){4-9}
+{{PANEL_B_ROWS}}
+\kernouter\cmidrule[\heavyrulewidth](lr){1-9}
+\end{tabular}
+\global\cmidrulekern=6pt % restore booktabs default (.5em at 12pt): the \global
+% assignments above escape \endgroup and would otherwise leak into the rest of the document
+\endgroup

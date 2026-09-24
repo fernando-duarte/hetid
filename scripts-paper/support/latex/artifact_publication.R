@@ -4,7 +4,8 @@ publish_latex_artifact <- function(
   fragment_id,
   table_lines,
   landscape = FALSE,
-  compiler = compile_latex_pdf
+  compiler = compile_latex_pdf,
+  packages = character()
 ) {
   publication <- artifact_latex_publication(fragment_id)
   ids <- unname(unlist(publication[1L, ], use.names = FALSE))
@@ -23,7 +24,7 @@ publish_latex_artifact <- function(
   )
   writeLines(table_lines, paths[["fragment_id"]])
   writeLines(
-    make_standalone_latex(table_lines, landscape = landscape),
+    make_standalone_latex(table_lines, landscape = landscape, packages = packages),
     paths[["standalone_id"]]
   )
   compiler(paths[["standalone_id"]])

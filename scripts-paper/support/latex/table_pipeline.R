@@ -89,8 +89,10 @@ panel_tabular_lines <- function(panels, col_headers,
 #'
 #' @param table_lines character vector of LaTeX table lines
 #' @param landscape TRUE for landscape geometry (default portrait)
+#' @param packages additional LaTeX package declarations needed by this table
 #' @return character vector of LaTeX lines for a complete document
-make_standalone_latex <- function(table_lines, landscape = FALSE) {
+make_standalone_latex <- function(table_lines, landscape = FALSE,
+                                  packages = character()) {
   geometry <- if (isTRUE(landscape)) {
     "\\usepackage[landscape,margin=1in]{geometry}"
   } else {
@@ -102,6 +104,7 @@ make_standalone_latex <- function(table_lines, landscape = FALSE) {
     "\\usepackage{threeparttable}",
     "\\usepackage{array}",
     "\\usepackage{amssymb}",
+    packages,
     geometry,
     "",
     "\\begin{document}",
