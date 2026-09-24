@@ -11,11 +11,11 @@
 #'
 #' @details
 #' The search grids all but one coordinate and solves the remaining one
-#' exactly: on any line the constraints reduce to univariate quadratics,
-#' so the feasible segment is available in closed form rather than by
-#' sampling. Every reported bound is therefore attained at a point that
-#' satisfies every constraint, and \code{arg_lower} / \code{arg_upper}
-#' name those points.
+#' using polynomial roots and signs: on any line the constraints reduce
+#' to univariate quadratics, giving intervals without point sampling.
+#' Isolated feasible points on a line are omitted. Every finite reported
+#' bound has an attaining point, subject to floating-point root rounding;
+#' \code{arg_lower} / \code{arg_upper} name those points.
 #'
 #' The grid lives in a frame in which the set is locally a cube, built
 #' from the \eqn{Q_i} stack and the slack at the center. Gridding the raw
@@ -53,6 +53,9 @@
 #' with a non-zero loading is unbounded on both sides.
 #'
 #' @section Interpretation:
+#' Infinite sides require a feasible infinite line tail or a direction
+#' with strictly negative curvature for every constraint. Exhausting the
+#' search budget alone cannot establish unboundedness.
 #' The result is an \strong{inner approximation} of the axis-aligned
 #' bounding box of a \strong{non-convex} set. A point inside the box need
 #' not be in the set: \code{\link{make_system_checker}} remains the

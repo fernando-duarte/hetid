@@ -16,8 +16,8 @@
 #'     \code{N_GRID^(I-1)} hull solves per coordinate}
 #'   \item{MAX_GROWTH}{Maximum extent-doubling passes per growth phase
 #'     before the search stops growing and keeps the finite bounds it has
-#'     found (12L); unboundedness is reported only on a recession
-#'     direction, never on an exhausted budget}
+#'     found (12L); unboundedness requires a strict-curvature witness or
+#'     a feasible infinite line tail, never an exhausted budget}
 #'   \item{N_DIR}{Unit directions sampled when searching for a recession
 #'     direction (20000L)}
 #'   \item{DIR_SEED}{Seed for that direction sample (20260815L). Fixed so
@@ -25,9 +25,10 @@
 #'     restored around it}
 #'   \item{N_POINTS}{Interpolation steps taken from the center toward each
 #'     box witness when sampling the set for a profile (5L)}
-#'   \item{FEAS_TOL}{Largest constraint value still treated as feasible
-#'     (1e-10). Without a tolerance a point on the boundary fails on
-#'     rounding alone}
+#'   \item{FEAS_TOL}{Largest constraint value accepted when filtering
+#'     finite profile candidates (1e-10). Boundary rounding can otherwise
+#'     reject a point. This absolute tolerance depends on constraint units;
+#'     line-cell and infinite-tail classification do not use it}
 #'   \item{SEARCH_LIMIT}{Largest half-width, in slab-frame units, the
 #'     growth loop will expand to (4096)}
 #'   \item{NULL_LOADING_RTOL}{Default for \code{null_loading_rtol} in

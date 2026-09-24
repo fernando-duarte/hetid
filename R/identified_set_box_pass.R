@@ -21,7 +21,6 @@
 #' @param half Numeric length-I window half-widths in frame coordinates
 #' @param quadratic Quadratic form list
 #' @param n_grid Points per gridded coordinate
-#' @param tol Feasibility tolerance
 #' @param objectives Numeric I x m matrix; column k is the linear
 #'   functional of theta whose extremes are tracked. The identity tracks
 #'   the coordinates themselves
@@ -33,7 +32,7 @@
 #'   bound was attained on the window boundary) and \code{n_feasible}
 #' @noRd
 identified_set_box_pass <- function(center, basis, half, quadratic,
-                                    n_grid, tol, objectives, n_primary) {
+                                    n_grid, objectives, n_primary) {
   n_components <- length(center)
   n_objectives <- ncol(objectives)
   state <- list(
@@ -54,7 +53,7 @@ identified_set_box_pass <- function(center, basis, half, quadratic,
       u_base <- numeric(n_components)
       u_base[others] <- nodes[r, ]
       hull <- line_feasible_hull(
-        center + drop(basis %*% u_base), basis[, j], quadratic, tol
+        center + drop(basis %*% u_base), basis[, j], quadratic
       )
       if (is.null(hull)) {
         next
@@ -102,7 +101,8 @@ node_on_boundary <- function(node, half) {
 #' Fold One Line Hull into the Running Bounds
 #'
 #' An infinite endpoint is not evaluated as a point. The line runs to
-#' infinity, so every objective the direction actually moves becomes
+#' infinity by the signs of its constraint polynomials, so every objective
+#' the direction actually moves becomes
 #' unbounded on the corresponding side, with the side flipping where the
 #' objective falls along the direction.
 #'

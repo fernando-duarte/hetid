@@ -1,6 +1,9 @@
 #!/usr/bin/env Rscript
 
 source(file.path("scripts-paper", "config", "paths.R"))
+paper_source_once(paper_path(
+  "tests", "inference", "bootstrap_structural_refinement_checks.R"
+))
 runner_path <- paper_path("inference", "run_bootstrap_stage.R")
 stopifnot(file.exists(runner_path))
 
@@ -45,6 +48,7 @@ stopifnot(
 manifest <- bootstrap_stage_code_manifest()
 stopifnot(all(c(
   "support/statistics/mbb_protocol_authority.R",
+  "support/identification/widen_beta1_from_args.R",
   "support/inference/bootstrap_stage_logvar_controls.R",
   "log_variance/estimators/controls.R",
   "log_variance/estimators/set_orchestration.R",

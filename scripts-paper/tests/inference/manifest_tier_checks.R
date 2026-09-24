@@ -57,10 +57,10 @@ check(
 )
 
 mt_after_draw <- mt_probe(
-  paper_path("support", "identification", "identified_set_bootstrap.R")
+  paper_path("support", "identification", "widen_beta1_from_args.R")
 )
 check(
-  "editing draw code moves the draw hash and not the presentation hash",
+  "editing structural refinement moves the draw hash and not the presentation hash",
   !identical(unname(mt_after_draw[["draw"]]), mt_draw0) &&
     identical(unname(mt_after_draw[["presentation"]]), mt_pres0)
 )

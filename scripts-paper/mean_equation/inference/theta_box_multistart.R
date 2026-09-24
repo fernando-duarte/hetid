@@ -22,6 +22,9 @@
 paper_source_once(paper_path(
   "support", "identification", "profile_solver_core.R"
 ))
+paper_source_once(paper_path(
+  "support", "identification", "widen_beta1_from_args.R"
+))
 
 # SLSQP extremization of theta_k from an arbitrary feasible start, in the shared
 # solver's scaling (mirrors .solve_scaled, which pins the start at the origin);
@@ -156,6 +159,8 @@ widen_theta_box <- function(qs, theta_tab, warm = NULL,
 # also drives the tau* sweep, where widening would move the estimated transition.
 coef_interval_tables_widened <- function(qs, beta1r, beta2r) {
   tables <- coef_interval_tables_from_quadratic(qs, beta1r, beta2r)
-  tables$theta <- widen_theta_box(qs, tables$theta)$tab
+  widened <- widen_theta_box(qs, tables$theta)
+  tables$theta <- widened$tab
+  tables$beta1 <- widen_beta1_from_args(tables$beta1, beta1r, beta2r, widened$args)
   tables
 }

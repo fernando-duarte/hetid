@@ -22,13 +22,17 @@ paper_legacy_mean_from_est <- function(est, spec) {
       est$beta1r,
       est$beta2r
     )
-    # the geometry both branches read widens the theta rows (never the beta1
-    # functional rows), so the oracle composes the same widening here
+    # Compose the two refinement operations independently of the production
+    # builder: both blocks include images of the accepted feasible points.
     if (tau != 0) {
-      interval$theta <- widen_theta_box(
+      widened <- widen_theta_box(
         tau_quadratic_system(spec$gamma, tau, est$moments),
         interval$theta
-      )$tab
+      )
+      interval$theta <- widened$tab
+      interval$beta1 <- widen_beta1_from_args(
+        interval$beta1, est$beta1r, est$beta2r, widened$args
+      )
     }
     table <- rbind(interval$beta1, interval$theta)
     bounded <- PAPER_ENDPOINT_STATUS[["bounded"]]

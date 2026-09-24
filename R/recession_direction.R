@@ -5,16 +5,16 @@
 #' \eqn{g_i(\theta) = \theta' A_i \theta + b_i'\theta + c_i}, moving from
 #' any feasible point along \eqn{v} sends \eqn{g_i} to \eqn{-\infty}
 #' whenever \eqn{v' A_i v < 0}. A direction that does this for every
-#' constraint at once is a recession direction, and the set is unbounded
-#' exactly when one exists. Conversely, if every direction leaves some
-#' constraint growing, the set is contained in a ball.
+#' constraint at once certifies unboundedness. This strict-curvature
+#' condition is sufficient, not necessary: a cylinder can be unbounded
+#' along a direction with zero curvature.
 #'
 #' The search is a finite sample of the unit sphere, so it decides
 #' unboundedness one way only: a returned direction is a witness and can
 #' be checked, while \code{NULL} means no witness was found rather than a
 #' proof that none exists. That asymmetry is why the caller reports
-#' \code{Inf} on the strength of a witness and never on the strength of a
-#' search window.
+#' \code{Inf} on the strength of a witness or a feasible infinite line
+#' tail, never on the strength of a search window.
 #'
 #' The directions are drawn from a fixed seed and the caller's random
 #' stream is restored afterwards, so the search is reproducible and does

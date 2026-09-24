@@ -15,8 +15,8 @@ make_line_system <- function(rows) {
   )
 }
 
-hull_of <- function(rows, tol = 1e-10) {
-  line_feasible_hull(0, 1, make_line_system(rows), tol)
+hull_of <- function(rows) {
+  line_feasible_hull(0, 1, make_line_system(rows))
 }
 
 test_that("a positive leading coefficient keeps the interval between roots", {
@@ -85,7 +85,7 @@ test_that("the hull matches a dense scan of the same constraints", {
     max(rows[, 1] * t^2 + rows[, 2] * t + rows[, 3])
   }, numeric(1))
   feasible <- grid[values <= 1e-10]
-  hull <- line_feasible_hull(0, 1, qs, 1e-10)
+  hull <- line_feasible_hull(0, 1, qs)
   expect_lte(hull[1], min(feasible))
   expect_gte(hull[2], max(feasible))
   expect_equal(hull[1], min(feasible), tolerance = 1e-3)
@@ -100,13 +100,13 @@ test_that("a line through a two-dimensional system is solved exactly", {
     c_i = -1
   )
   expect_equal(
-    line_feasible_hull(c(0, 0), c(1, 0), qs, 1e-10),
+    line_feasible_hull(c(0, 0), c(1, 0), qs),
     c(-1, 1),
     tolerance = 1e-12
   )
   # offset line: at theta_2 = 0.6 the disc gives |theta_1| <= 0.8
   expect_equal(
-    line_feasible_hull(c(0, 0.6), c(1, 0), qs, 1e-10),
+    line_feasible_hull(c(0, 0.6), c(1, 0), qs),
     c(-0.8, 0.8),
     tolerance = 1e-12
   )

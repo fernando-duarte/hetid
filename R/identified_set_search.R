@@ -91,8 +91,7 @@ identified_set_search <- function(center, basis, quadratic, n_grid,
   passes <- 0L
   repeat {
     swept <- identified_set_box_pass(
-      center, basis, half, quadratic, n_grid, IDENTIFIED_SET_CONTROL$FEAS_TOL,
-      objectives, n_primary
+      center, basis, half, quadratic, n_grid, objectives, n_primary
     )
     best <- merge_box_state(best, swept)
     passes <- passes + 1L
