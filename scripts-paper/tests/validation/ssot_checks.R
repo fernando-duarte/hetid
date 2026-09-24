@@ -37,11 +37,21 @@ definition_fixture <- paper_path(
   "fixtures",
   "renamed_acceptance_duplicate.R"
 )
+svg_fixture <- paper_path(
+  "tests",
+  "validation",
+  "fixtures",
+  "unrelated_svg_number_extraction.R"
+)
 definition_patterns <- list(
+  # Table tokenizers use the signed numeric grammar in Perl mode; generic SVG
+  # coordinate extraction also calls these three base functions.
   numeric_token = c(
     "gregexpr\\s*\\(",
     "regmatches\\s*\\(",
-    "as.numeric\\s*\\("
+    "as.numeric\\s*\\(",
+    "perl\\s*=\\s*TRUE",
+    "PAPER_TABLE_TOKEN_PATTERN|\\Q[-+]?\\E"
   ),
   quantum = c(
     "sub\\s*\\(",
@@ -89,7 +99,8 @@ fixture_hits <- definition_scan(definition_fixture)
 stopifnot(
   any(grepl("numeric_token", fixture_hits, fixed = TRUE)),
   any(grepl("quantum", fixture_hits, fixed = TRUE)),
-  any(grepl("rounding_overlap", fixture_hits, fixed = TRUE))
+  any(grepl("rounding_overlap", fixture_hits, fixed = TRUE)),
+  length(definition_scan(svg_fixture)) == 0L
 )
 definition_hits <- definition_scan(definition_files)
 if (length(definition_hits)) {
@@ -133,6 +144,7 @@ rm(
   definition_exclusions,
   definition_active,
   definition_fixture,
+  svg_fixture,
   definition_patterns,
   definition_function_bodies,
   definition_scan,
