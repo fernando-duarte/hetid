@@ -301,6 +301,8 @@ achieved through heteroskedasticity-based moment conditions.
 
 - `compute_identified_set_box()` - Theta (b_N) and structural (b_0, b_E)
   bounds at a slack tau \> 0
+- `compute_linear_functional_bounds()` - Named affine bounds with
+  witnesses and search evidence
 - `profile_log_variance_set()` - Log-variance coefficient ranges over
   that set
 - `IDENTIFIED_SET_CONTROL` - Numerical controls for the identified-set

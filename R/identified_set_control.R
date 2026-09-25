@@ -2,10 +2,8 @@
 #'
 #' @description
 #' Numerical controls for the slack-\eqn{\tau} identified-set box search.
-#' The search replaces the paper pipeline's \code{nloptr} profile solver
-#' (\code{scripts-paper/support/identification/}) with an exact
-#' free-coordinate hull on a grid, so these controls describe a grid and a
-#' growth schedule rather than an optimizer.
+#' The search uses an analytic free-coordinate hull on a grid, so these
+#' controls describe a grid and a growth schedule rather than an optimizer.
 #'
 #' @format List containing identified-set search controls:
 #' \describe{
@@ -20,15 +18,17 @@
 #'     a feasible infinite line tail, never an exhausted budget}
 #'   \item{N_DIR}{Unit directions sampled when searching for a recession
 #'     direction (20000L)}
-#'   \item{DIR_SEED}{Seed for that direction sample (20260815L). Fixed so
-#'     the search is reproducible; the caller's random stream is saved and
-#'     restored around it}
+#'   \item{DIR_SEED}{Seed for that direction sample (20260815L). Samples
+#'     depend on \code{RNGkind()}; \code{.Random.seed} is restored, but
+#'     the cached Box-Muller normal deviate is not}
 #'   \item{N_POINTS}{Interpolation steps taken from the center toward each
 #'     box witness when sampling the set for a profile (5L)}
 #'   \item{FEAS_TOL}{Largest constraint value accepted when filtering
 #'     finite profile candidates (1e-10). Boundary rounding can otherwise
-#'     reject a point. This absolute tolerance depends on constraint units;
-#'     line-cell and infinite-tail classification do not use it}
+#'     reject a point. This absolute tolerance depends on constraint units.
+#'     Functional-bound witnesses use it times the sum of absolute quadratic,
+#'     linear and constant terms. Line-cell and infinite-tail classification
+#'     do not use it}
 #'   \item{SEARCH_LIMIT}{Largest half-width, in slab-frame units, the
 #'     growth loop will expand to (4096)}
 #'   \item{NULL_LOADING_RTOL}{Default for \code{null_loading_rtol} in

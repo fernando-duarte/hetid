@@ -26,13 +26,14 @@
 #'   the coordinates themselves
 #' @param n_primary Number of leading objectives whose improvements raise
 #'   \code{edge_primary}
+#' @param evidence Whether to retain tail witnesses
 #' @return List with \code{lower}, \code{upper} (length-m), \code{arg_lower},
 #'   \code{arg_upper} (m x I, row k the attaining theta for objective k),
 #'   \code{edge} and \code{edge_primary} (logical length-I, TRUE where a
 #'   bound was attained on the window boundary) and \code{n_feasible}
 #' @noRd
 identified_set_box_pass <- function(center, basis, half, quadratic,
-                                    n_grid, objectives, n_primary) {
+                                    n_grid, objectives, n_primary, evidence = FALSE) {
   n_components <- length(center)
   n_objectives <- ncol(objectives)
   state <- list(
@@ -44,7 +45,11 @@ identified_set_box_pass <- function(center, basis, half, quadratic,
     edge_primary = rep(FALSE, n_components),
     n_feasible = 0L
   )
+  if (evidence) {
+    state$tail_lower <- state$tail_upper <- vector("list", n_objectives)
+  }
   slope <- crossprod(objectives, basis)
+  if (evidence && any(!is.finite(slope))) stop_hetid("Objective slope exceeds numeric range")
   primary <- seq_len(n_objectives) <= n_primary
   for (j in seq_len(n_components)) {
     others <- setdiff(seq_len(n_components), j)
@@ -124,12 +129,23 @@ absorb_line_hull <- function(state, hull, center, basis, u_base, j, at_edge,
     if (is.infinite(t_val)) {
       rising <- if (t_val > 0) slope > 0 else slope < 0
       falling <- if (t_val > 0) slope < 0 else slope > 0
+      if (!is.null(state$tail_lower)) {
+        proof <- list(
+          kind = "line_tail", origin = center + drop(basis %*% u_base),
+          direction = sign(t_val) * basis[, j]
+        )
+        state$tail_upper[rising] <- rep(list(proof), sum(rising))
+        state$tail_lower[falling] <- rep(list(proof), sum(falling))
+      }
       state$upper[rising] <- Inf
       state$lower[falling] <- -Inf
       next
     }
     theta <- center + drop(basis %*% replace(u_base, j, t_val))
     value <- drop(crossprod(objectives, theta))
+    if (!is.null(state$tail_lower) && any(!is.finite(c(theta, value)))) {
+      stop_hetid("Finite line objective exceeds the numeric range")
+    }
     below <- value < state$lower
     above <- value > state$upper
     state$lower[below] <- value[below]

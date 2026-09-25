@@ -60,8 +60,8 @@ identified_set_basis <- function(components, center, quadratic) {
 #' the remaining objectives extend the window. Grids re-laid at a wider
 #' window are not nested in the narrower ones, so letting later objectives
 #' steer the first phase could change, and even narrow, what the leading
-#' ones find. Each phase has \code{MAX_GROWTH} passes. The second phase is
-#' a guard the package's fixtures do not trigger, and when the first phase
+#' ones find. Each phase allows \code{max_growth} new passes. The second
+#' may reuse the preceding sweep and need zero new passes. When the first
 #' ends on its pass budget with primary flags still raised, the second may
 #' also carry that primary growth on.
 #'
@@ -72,11 +72,16 @@ identified_set_basis <- function(components, center, quadratic) {
 #' @param objectives Numeric I x m matrix of tracked linear functionals
 #' @param n_primary Number of leading objectives that drive the first
 #'   growth phase; the default lets every objective drive it
+#' @param evidence Whether to retain tail witnesses and phase termination evidence
+#' @param max_growth,search_limit Pass and window limits
 #' @return List with \code{lower}, \code{upper} (length-m), \code{arg_lower},
 #'   \code{arg_upper} (m x I)
 #' @noRd
 identified_set_search <- function(center, basis, quadratic, n_grid,
-                                  objectives, n_primary = ncol(objectives)) {
+                                  objectives, n_primary = ncol(objectives),
+                                  evidence = FALSE,
+                                  max_growth = IDENTIFIED_SET_CONTROL$MAX_GROWTH,
+                                  search_limit = IDENTIFIED_SET_CONTROL$SEARCH_LIMIT) {
   n_components <- length(center)
   n_objectives <- ncol(objectives)
   half <- rep(2, n_components)
@@ -87,28 +92,50 @@ identified_set_search <- function(center, basis, quadratic, n_grid,
     arg_lower = matrix(center, n_objectives, n_components, byrow = TRUE),
     arg_upper = matrix(center, n_objectives, n_components, byrow = TRUE)
   )
+  if (evidence) {
+    if (any(!is.finite(at_center))) stop_hetid("Objective at center exceeds numeric range")
+    best$tail_lower <- best$tail_upper <- vector("list", n_objectives)
+  }
+  phase_history <- list()
   edge_key <- "edge_primary"
   passes <- 0L
   repeat {
     swept <- identified_set_box_pass(
-      center, basis, half, quadratic, n_grid, objectives, n_primary
+      center, basis, half, quadratic, n_grid, objectives, n_primary, evidence
     )
     best <- merge_box_state(best, swept)
     passes <- passes + 1L
-    room <- half * 2 <= IDENTIFIED_SET_CONTROL$SEARCH_LIMIT
+    room <- half * 2 <= search_limit
     grow <- swept[[edge_key]] & room
     if (edge_key == "edge_primary" && n_primary < n_objectives &&
-      (!any(grow) || passes >= IDENTIFIED_SET_CONTROL$MAX_GROWTH)) {
+      (!any(grow) || passes >= max_growth)) {
       # the leading objectives' path has ended: the rest may now grow the
       # window, judged from this same sweep, with a fresh pass budget
+      if (evidence) {
+        phase_history <- append_growth_trace(
+          phase_history, edge_key, passes, half,
+          swept[[edge_key]], room, max_growth
+        )
+      }
       edge_key <- "edge"
       passes <- 0L
       grow <- swept[[edge_key]] & room
     }
-    if (!any(grow) || passes >= IDENTIFIED_SET_CONTROL$MAX_GROWTH) {
+    if (!any(grow) || passes >= max_growth) {
+      if (evidence) {
+        phase_history <- append_growth_trace(
+          phase_history, edge_key, passes, half,
+          swept[[edge_key]], room, max_growth
+        )
+      }
       break
     }
     half[grow] <- half[grow] * 2
+  }
+  if (evidence) {
+    best$search <- list(
+      phases = phase_history, max_growth = max_growth, search_limit = search_limit
+    )
   }
   best
 }
@@ -126,33 +153,9 @@ merge_box_state <- function(best, swept) {
   best$upper[above] <- swept$upper[above]
   best$arg_lower[below, ] <- swept$arg_lower[below, ]
   best$arg_upper[above, ] <- swept$arg_upper[above, ]
-  best
-}
-
-#' Apply Witnessed Unboundedness
-#'
-#' A recession direction is a proof that the set runs to infinity, and it
-#' does so in both orientations because \eqn{v'A_iv} is unchanged by
-#' negating \eqn{v}. The set of such directions is open, so once one
-#' exists no hyperplane contains it and every objective that is not
-#' identically zero is unbounded on both sides. The witness therefore
-#' certifies existence and its direction is not used; a zero objective is
-#' constant and keeps its finite value. Search failure never reaches here
-#' as \code{NA}: the state is seeded from the feasible center.
-#'
-#' @param found Running state from \code{identified_set_search()}
-#' @param quadratic Quadratic form list
-#' @param objectives Numeric I x m matrix of tracked linear functionals
-#' @return The state with infinite bounds applied and their witnesses
-#'   cleared
-#' @noRd
-apply_recession_bounds <- function(found, quadratic, objectives) {
-  if (!is.null(recession_direction(quadratic))) {
-    moved <- colSums(objectives != 0) > 0L
-    found$lower[moved] <- -Inf
-    found$upper[moved] <- Inf
+  if (!is.null(best$tail_lower)) {
+    best$tail_lower[below] <- swept$tail_lower[below]
+    best$tail_upper[above] <- swept$tail_upper[above]
   }
-  found$arg_lower[!is.finite(found$lower), ] <- NA_real_
-  found$arg_upper[!is.finite(found$upper), ] <- NA_real_
-  found
+  best
 }

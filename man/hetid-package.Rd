@@ -14,8 +14,7 @@ The hetid package implements identification through heteroskedasticity methods
 from Lewbel (2012) for triangular systems, with applications to the Volatility
 Financial Conditions Index (VFCI) developed by Adrian, DeHaven, Duarte, and Iyer.
 
-The package supports empirical macroeconomic analysis through data access,
-bond pricing calculations, and heteroskedasticity-based structural estimation.
+The package supports data access, bond pricing and heteroskedasticity-based estimation.
 }
 \section{Core Methodology}{
 
@@ -175,6 +174,7 @@ news-error variance bound
 \subsection{Identified-Set Search Functions:}{
 \itemize{
 \item \code{\link{compute_identified_set_box}()}: Theta and structural bounds at a slack
+\item \code{\link{compute_linear_functional_bounds}()}: Named affine bounds and evidence
 \item \code{\link{profile_log_variance_set}()}: Volatility coefficients over that set
 \item \code{\link{IDENTIFIED_SET_CONTROL}}: Identified-set search numerical controls
 }}

@@ -20,6 +20,11 @@
 
 ## New features
 
+* Added `compute_linear_functional_bounds()` for named affine objectives over a
+  fitted identified set. It retains finite attaining points, explicit evidence for
+  infinite sides and search-limit diagnostics. Finite results remain inner
+  approximations; exhausted searches do not establish infinity.
+
 * Added `make_log_variance_fitter()` for repeated PPML or Harvey fits on a fixed
   design. It captures regressors and controls once and checks each response and
   start. Both existing fit functions now accept fitting-control overrides, and
@@ -99,6 +104,10 @@
   null-loading tolerance and direction-sample size for the identified-set search.
 
 ## Improvements
+
+* The recession sampler used by `compute_identified_set_box()` now preserves the
+  absence of `.Random.seed` when the caller had no seed. Direction samples still
+  depend on `RNGkind()`; the hidden Box-Muller normal cache is not restored.
 
 * The paper's PPML and Harvey fitting now delegates to the package. Paper
   recession certificates, start policies and result labels are preserved.

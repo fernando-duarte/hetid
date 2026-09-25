@@ -16,9 +16,11 @@
 #' \code{Inf} on the strength of a witness or a feasible infinite line
 #' tail, never on the strength of a search window.
 #'
-#' The directions are drawn from a fixed seed and the caller's random
-#' stream is restored afterwards, so the search is reproducible and does
-#' not consume the user's randomness.
+#' Directions use a fixed seed with the caller's RNG kind. The caller's
+#' \code{.Random.seed}, including its absence, is restored afterwards.
+#' Reproducibility assumes the same \code{RNGkind()}. The default Inversion
+#' normal generator has no cached deviate; Box-Muller's cached second deviate
+#' is outside \code{.Random.seed} and is cleared by \code{set.seed()}.
 #'
 #' @param quadratic Quadratic form list with \code{A_i}, as returned by
 #'   \code{build_quadratic_system()}
@@ -28,13 +30,18 @@
 #' @noRd
 recession_direction <- function(quadratic,
                                 n_dir = IDENTIFIED_SET_CONTROL$N_DIR) {
-  if (exists(".Random.seed", envir = globalenv())) {
-    saved <- get(".Random.seed", envir = globalenv())
-    on.exit(
-      assign(".Random.seed", saved, envir = globalenv()), # nolint: object_name_linter.
-      add = TRUE
-    )
-  }
+  had_seed <- exists(".Random.seed", envir = globalenv(), inherits = FALSE)
+  if (had_seed) saved <- get(".Random.seed", envir = globalenv())
+  on.exit(
+    {
+      if (had_seed) {
+        assign(".Random.seed", saved, envir = globalenv()) # nolint: object_name_linter.
+      } else {
+        rm(".Random.seed", envir = globalenv())
+      }
+    },
+    add = TRUE
+  )
   set.seed(IDENTIFIED_SET_CONTROL$DIR_SEED)
   n_components <- nrow(quadratic$A_i[[1]])
   dirs <- matrix(stats::rnorm(n_dir * n_components), nrow = n_dir)
