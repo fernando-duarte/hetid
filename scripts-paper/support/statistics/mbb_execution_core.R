@@ -46,7 +46,7 @@
   } else {
     draws <- vector("list", n_draws)
     for (draw_id in seq_len(n_draws)) {
-      draws[[draw_id]] <- run_one(draw_id)
+      draws[draw_id] <- list(run_one(draw_id))
       if (!is.null(progress)) {
         progress(draw_id, n_draws, started_at)
       }

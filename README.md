@@ -310,6 +310,21 @@ achieved through heteroskedasticity-based moment conditions.
 - `IDENTIFIED_SET_CONTROL` - Numerical controls for the identified-set
   search
 
+### Bootstrap Inference
+
+- `circular_mbb_indices()` - Circular block indices for an already
+  aligned sample
+- `bootstrap_endpoint_draws()` - Serial endpoint draws with retained
+  failure records
+- `bootstrap_set_interval()` - Paired endpoint calibration with explicit
+  eligibility gates
+- `bootstrap_point_statistics()` - Robust point statistics and empirical
+  finite-draw tails
+
+Bootstrap validity depends on the model and resampling assumptions.
+Status gates do not certify global optimization bounds or coverage under
+nonregular endpoints.
+
 ### Utilities
 
 - `to_period_end()` - Normalize dates to the calendar period-end

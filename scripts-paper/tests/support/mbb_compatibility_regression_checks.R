@@ -138,3 +138,17 @@ local({
 })
 
 rm(call_shape, progress_calls)
+
+# A final NULL result keeps its draw slot and reaches the supplied failure policy.
+null_run <- paper_run_mbb_draws(
+  3L, 8L, 3L,
+  function(index, draw_id) if (draw_id == 3L) NULL else sum(index),
+  1L,
+  is_failure = is.null
+)
+check(
+  "NULL callback results retain indices and failure-mask identity",
+  length(null_run$draws) == 3L && length(null_run$indices) == 3L &&
+    identical(null_run$failed, c(FALSE, FALSE, TRUE)) && null_run$n_failed == 1L
+)
+rm(null_run)

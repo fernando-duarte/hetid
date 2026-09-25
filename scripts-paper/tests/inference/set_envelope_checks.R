@@ -82,7 +82,8 @@ check("envelope does NOT fabricate a band when the opposite side is unreliable",
   f$lower_status <- "unreliable"
   f$set_lower <- NA_real_
   e <- endpoint_target_table(lse_one, f, alpha = 0.10)
-  e$side == "none" && is.na(e$ci_upper) && grepl("not certified", e$reason)
+  e$side == "none" && is.na(e$ci_upper) &&
+    identical(e$reason, "full-sample side unavailable or unreliable")
 })
 check("envelope fails the gate on a bounded side with a degenerate scale", {
   d <- list(
@@ -131,7 +132,7 @@ lse_two_partial <- list(
   lower_status = matrix("bounded", 100, 1),
   upper_status = matrix("bounded", 100, 1)
 )
-lse_two_partial$lower[1:10, 1] <- Inf
+lse_two_partial$lower[1:10, 1] <- -Inf
 lse_two_partial$lower_status[1:10, 1] <- "unbounded"
 lse_two_partial$upper[11:20, 1] <- Inf
 lse_two_partial$upper_status[11:20, 1] <- "unbounded"

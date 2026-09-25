@@ -6,10 +6,7 @@
 # Mirrors macro_dynamics's pca_tools/moving_block_pa helper cmb_index.
 # The caller owns the RNG seed.
 mbb_index <- function(nn, bl) {
-  bl <- min(bl, nn) # a block longer than the series collapses to one full block
-  nblocks <- ceiling(nn / bl)
-  starts <- sample.int(nn, nblocks, replace = TRUE)
-  unlist(lapply(starts, function(s) (s + 0:(bl - 1) - 1) %% nn + 1))[seq_len(nn)]
+  hetid::circular_mbb_indices(nn, bl)[[1L]]
 }
 
 #' Compute comprehensive summary statistics

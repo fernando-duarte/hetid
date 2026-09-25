@@ -110,8 +110,8 @@ stopifnot(
   isTRUE(all.equal(et_own$se_lower, robust_scale(et_own_lower))),
   !isTRUE(all.equal(et_own$se_lower, robust_scale(et_own_lower[-(1:10)]))),
   et_own$n_lower == 100, et_own$n_upper == 90, et_own$n_common == 90,
-  isTRUE(all.equal(et_own$c_s, root_critical(
-    et_root_s(et_own_z_l, et_own_z_u)[et_own_pool], et_alpha
+  isTRUE(all.equal(et_own$c_s, et_reference_critical(
+    pmax(0, et_own_z_l, et_own_z_u)[et_own_pool], et_alpha
   )))
 )
 et_pass("each side's scale keeps draws the two-sided root pool has to drop")
@@ -178,7 +178,7 @@ et_pass("point statistic, its status arithmetic and every blank reason")
 # bounded runs overlap on only 20, and the quantile runs on that intersection.
 etc_lo <- et_side(60L, "unbounded", 40L)
 etc_up <- list(
-  vals = rev(etc_lo$vals),
+  vals = rev(etc_lo$vals) + 3,
   status = rev(etc_lo$status)
 )
 etc_split <- endpoint_target_row(

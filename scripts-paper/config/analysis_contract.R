@@ -82,7 +82,8 @@ PAPER_ANALYSIS_CONTRACT <- local({
       nominal_alpha = 0.10,
       minimum_valid_draw_share = 0.50,
       stability_share = 0.85,
-      target_p_lambda_tolerance = 1e-4
+      target_p_lambda_tolerance = 1e-4,
+      target_p_max_evals = .Machine$integer.max
     ),
     figure = list(region_dimension = 3L),
     input = list(

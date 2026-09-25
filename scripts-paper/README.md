@@ -186,6 +186,12 @@ resampled. Whether the reported numbers also match at every core count further d
 the draw callback itself consuming no additional randomness; `mbb_checks.R` tests that
 directly rather than relying on index determinism alone.
 
+The package owns circular index generation, status-aware endpoint calibration, and
+point-statistic summaries. Paper adapters retain the paired-draw status vocabulary,
+own-side MAD scales, stability thresholds, fixed index families, parallel execution,
+and published Target P choice. The package's serial endpoint runner is available
+for other analyses; this pipeline retains its checkpoint and parallel runner.
+
 `HETID_BOOT_MODE` (default `reuse`) governs the single all-or-nothing cache,
 `state/bootstrap_stage_draws.rds`. A reuse requires the two stored-family hashes,
 canonical input and draw-spec hashes, executed-code and runtime hashes, and the

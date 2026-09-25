@@ -20,6 +20,13 @@
 
 ## New features
 
+* Added `bootstrap_set_interval()` for paired endpoint calibration,
+  `bootstrap_point_statistics()` for robust statistics and empirical tails,
+  `circular_mbb_indices()` for circular resamples, and `bootstrap_endpoint_draws()`
+  for serial callback execution with retained
+  failure records. Paper inference delegates to these package kernels while
+  retaining its resampling, stability, and publication policies.
+
 * Added `sample_log_variance_set()` to retain joint PPML/Harvey fits and candidate
   failures. Its `predict()` method reports sampled log-variance, variance or
   volatility envelopes with the mean-parameter witnesses. It preserves design and
