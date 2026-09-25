@@ -115,4 +115,6 @@ paper_source_once(paper_path("tests", "support", "artifact_reset_compartment_che
 paper_source_once(paper_path("tests", "support", "reset_pipeline_cli_checks.R"))
 paper_source_once(paper_path("tests", "support", "shared_artifact_checks.R"))
 
+paper_source_once(paper_path("tests", "support", "pinned_acm_checks.R"))
+
 .test$finish()

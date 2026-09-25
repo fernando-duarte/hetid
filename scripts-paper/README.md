@@ -154,8 +154,11 @@ Use an installed `hetid` package and the analysis dependencies already required 
 paper scripts, including the tidyverse/time-series packages, `nloptr`, `skedastic`,
 `ggplot2`, and `sandwich`. LAD additionally requires the approved `quantreg`
 version. A working LaTeX installation with `latexmk` is required for standalone tables and
-the descriptive report. The daily ACM asset must be available in the package cache or be
-downloadable; FRED access is needed for fresh data pulls.
+the descriptive report. The frozen daily ACM release and digest in `config/analysis.R`
+select a verified package snapshot; a matching existing cache is copied without a download.
+Other vintages and the unpinned cache remain separate. The preflight checks this input
+before cleanup, and the daily extraction verifies the same pin. FRED access is needed
+for fresh data pulls.
 
 ## Commands
 

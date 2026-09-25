@@ -353,6 +353,13 @@ The package provides access to:
   including GDP, inflation, financial conditions indices, and principal
   components
 
+For a reproducible GitHub input, pass the same `release` tag and
+`expected_sha256` digest to `download_term_premia()`,
+`load_term_premia()`, or `extract_acm_data()`. Pinned snapshots keep
+vintages separate and verify bytes and provenance on each read. The
+caller chooses the release and independently obtains the digest of its
+monthly or daily asset; quarterly extraction uses the monthly asset.
+
 ## References
 
 - Adrian, T., Crump, R. K., and Moench, E. (2013). “Pricing the term

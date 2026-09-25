@@ -36,6 +36,7 @@
 #'     (re-dated to quarter end), FALSE drops them}
 #'   \item{ACM_DATE_FORMAT}{Date format in ACM files}
 #'   \item{ISO_DATE_FORMAT}{Standard ISO date format}
+#'   \item{ISO_TIMESTAMP_FORMAT}{UTC timestamp format for provenance}
 #'   \item{YEAR_FORMAT}{Year extraction format}
 #'   \item{MONTH_FORMAT}{Month extraction format}
 #'   \item{CONSUMPTION_GROWTH_COL}{Consumption growth column name}
@@ -108,6 +109,7 @@ HETID_CONSTANTS <- list(
   # Date formats
   ACM_DATE_FORMAT = "%d-%b-%Y",
   ISO_DATE_FORMAT = "%Y-%m-%d",
+  ISO_TIMESTAMP_FORMAT = "%Y-%m-%dT%H:%M:%SZ",
   YEAR_FORMAT = "%Y",
   MONTH_FORMAT = "%m",
 
@@ -129,10 +131,8 @@ HETID_CONSTANTS <- list(
 )
 
 # Release-asset download URLs are composed as prefix + asset filename
-ACM_RELEASE_DOWNLOAD_PREFIX <- paste0(
-  "https://github.com/fernando-duarte/ACM_term_premium/releases/",
-  "latest/download/"
-)
+ACM_RELEASE_URL <- "https://github.com/fernando-duarte/ACM_term_premium/releases/"
+ACM_RELEASE_DOWNLOAD_PREFIX <- paste0(ACM_RELEASE_URL, "latest/download/")
 
 #' Data Source URLs
 #'

@@ -36,6 +36,7 @@ their terminal month in quarterly conversion: TRUE keeps them
 (re-dated to quarter end), FALSE drops them}
 \item{ACM_DATE_FORMAT}{Date format in ACM files}
 \item{ISO_DATE_FORMAT}{Standard ISO date format}
+\item{ISO_TIMESTAMP_FORMAT}{UTC timestamp format for provenance}
 \item{YEAR_FORMAT}{Year extraction format}
 \item{MONTH_FORMAT}{Month extraction format}
 \item{CONSUMPTION_GROWTH_COL}{Consumption growth column name}

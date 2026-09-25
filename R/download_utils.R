@@ -42,10 +42,9 @@ fetch_url_to_file <- function(url, destfile, quiet, what) {
 
 #' Atomically Move a Temp File into the Cache
 #'
-#' Replaces \code{dest} with \code{temp} via an unlink-then-rename so a
-#' partial write never half-overwrites the cache. The target is cleared
-#' first because rename-onto-existing fails on Windows; a failed rename
-#' raises a structured error naming \code{what}.
+#' Renames \code{temp} onto \code{dest} without first deleting the target.
+#' A failed rename preserves the existing cache and raises a structured error.
+#' Both paths must be on the same filesystem.
 #'
 #' @param temp Source temp-file path (in the same directory as
 #'   \code{dest} so the rename stays one filesystem operation)
@@ -54,7 +53,6 @@ fetch_url_to_file <- function(url, destfile, quiet, what) {
 #' @return Invisibly returns \code{dest}
 #' @keywords internal
 atomic_replace <- function(temp, dest, what) {
-  unlink(dest)
   if (!file.rename(temp, dest)) {
     stop_hetid(paste0("Could not move ", what, " into ", dest))
   }

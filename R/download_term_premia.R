@@ -27,6 +27,8 @@
 #' @param frequency Data frequency: \code{"monthly"} (default) or
 #'   \code{"daily"} (the ~40 MB business-day asset; GitHub source only).
 #'
+#' @template acm-pin
+#'
 #' @return Invisibly returns the path to the saved data file.
 #' @export
 #'
@@ -50,11 +52,16 @@
 #'
 download_term_premia <- function(source = c("github", "nyfed"),
                                  force = FALSE, quiet = FALSE,
-                                 frequency = c("monthly", "daily")) {
+                                 frequency = c("monthly", "daily"),
+                                 release = NULL, expected_sha256 = NULL) {
   source <- match.arg(source)
   frequency <- match.arg(frequency)
   assert_flag(force, "force")
   assert_flag(quiet, "quiet")
+  pin <- acm_pin(release, expected_sha256, source, frequency)
+  if (!is.null(pin)) {
+    return(download_acm_pin(pin, force, quiet))
+  }
 
   # Path resolution also rejects nyfed + daily, even when force = TRUE
   existing <- get_acm_data_path(source, frequency)

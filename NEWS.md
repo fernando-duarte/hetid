@@ -20,6 +20,11 @@
 
 ## New features
 
+* `download_term_premia()`, `load_term_premia()`, and `extract_acm_data()` now accept
+  paired `release` and `expected_sha256` arguments for verified GitHub snapshots.
+  Pinned vintages coexist with each other and the default cache; reads check the
+  digest, provenance, schema, and dates. The paper retains its release selection.
+
 * Added `bootstrap_set_interval()` for paired endpoint calibration,
   `bootstrap_point_statistics()` for robust statistics and empirical tails,
   `circular_mbb_indices()` for circular resamples, and `bootstrap_endpoint_draws()`
@@ -116,6 +121,9 @@
   null-loading tolerance and direction-sample size for the identified-set search.
 
 ## Improvements
+
+* A failed ACM cache rename now preserves the existing file. Pinned downloads publish
+  data and provenance together and leave existing snapshots unchanged on failure.
 
 * `profile_log_variance_set()` and `sample_log_variance_set()` now share a
   constraint-relative candidate membership check with linear-functional witnesses.

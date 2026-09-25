@@ -18,9 +18,8 @@ atomic_replace(temp, dest, what)
 Invisibly returns \code{dest}
 }
 \description{
-Replaces \code{dest} with \code{temp} via an unlink-then-rename so a
-partial write never half-overwrites the cache. The target is cleared
-first because rename-onto-existing fails on Windows; a failed rename
-raises a structured error naming \code{what}.
+Renames \code{temp} onto \code{dest} without first deleting the target.
+A failed rename preserves the existing cache and raises a structured error.
+Both paths must be on the same filesystem.
 }
 \keyword{internal}

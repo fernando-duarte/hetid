@@ -19,13 +19,10 @@ fred_to <- "2026-06-19"
 # makes a vintage change land as a reviewable diff.
 fred_source <- "frozen"
 
-# ACM daily input pin. The package resolves its download through the release
-# "latest" tag, so a new monthly release moves the data with no edit here:
-# acm-term-premium-2026-08 published on 2026-08-01 and did exactly that.
-# "frozen" requires this tag and digest and never consults "latest"; "live"
-# restores the package's own auto-download. To adopt a new vintage, run once
-# with "live", then copy the sha256 the download records in the cache's .meta
-# sidecar into acm_daily_sha256 and bump acm_daily_release.
+# ACM daily input pin. "frozen" requires this release and digest in an isolated,
+# verified package snapshot; it never consults "latest". "live" uses the package's
+# unpinned cache and auto-download behavior. To adopt a new frozen vintage, set
+# its exact release tag and the independently verified digest of its daily asset.
 acm_daily_source <- "frozen"
 acm_daily_release <- "acm-term-premium-2026-07"
 acm_daily_sha256 <-

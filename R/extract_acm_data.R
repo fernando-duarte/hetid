@@ -42,6 +42,8 @@
 #'   \code{"github"}, or \code{"nyfed"} (explicitly downloaded NY Fed
 #'   cache only, annual maturities).
 #'
+#' @template acm-pin
+#'
 #' @return A data frame with date column and selected variables.
 #'   Column naming convention (maturity suffix in months):
 #'   - Yields: y12, y24, ..., y120 (plus e.g. y6, y18 when requested)
@@ -103,7 +105,8 @@ extract_acm_data <- function(data_types = c("yields", "term_premia"),
                              auto_download = FALSE,
                              use_incomplete_quarters =
                                HETID_CONSTANTS$USE_INCOMPLETE_QUARTERS,
-                             source = c("auto", "github", "nyfed")) {
+                             source = c("auto", "github", "nyfed"),
+                             release = NULL, expected_sha256 = NULL) {
   frequency <- match.arg(frequency)
   source <- match.arg(source)
   validate_acm_extract_inputs(data_types, maturities, use_incomplete_quarters)
@@ -111,7 +114,8 @@ extract_acm_data <- function(data_types = c("yields", "term_premia"),
   # load_term_premia raises hetid_error_insufficient_data when unavailable
   acm_data <- load_term_premia(
     auto_download = auto_download, source = source,
-    frequency = if (frequency == "daily") "daily" else "monthly"
+    frequency = if (frequency == "daily") "daily" else "monthly",
+    release = release, expected_sha256 = expected_sha256
   )
 
   # Annual-only sources cannot serve month-level requests

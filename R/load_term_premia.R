@@ -19,6 +19,8 @@
 #' @param frequency Data frequency: \code{"monthly"} (default) or
 #'   \code{"daily"} (GitHub source only; user cache only).
 #'
+#' @template acm-pin
+#'
 #' @return A data frame containing the term premia data. Raises a
 #'   \code{hetid_error_insufficient_data} condition when the data is not
 #'   available (every source fails the same way).
@@ -33,10 +35,15 @@
 #'
 load_term_premia <- function(auto_download = FALSE,
                              source = c("auto", "github", "nyfed"),
-                             frequency = c("monthly", "daily")) {
+                             frequency = c("monthly", "daily"),
+                             release = NULL, expected_sha256 = NULL) {
   source <- match.arg(source)
   frequency <- match.arg(frequency)
   assert_flag(auto_download, "auto_download")
+  pin <- acm_pin(release, expected_sha256, source, frequency)
+  if (!is.null(pin)) {
+    return(load_acm_pin(pin, auto_download))
+  }
   if (!acm_data_available(source, frequency)) {
     if (auto_download) {
       message("Term premia data not found. Downloading...")

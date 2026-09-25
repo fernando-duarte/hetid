@@ -8,7 +8,9 @@ download_term_premia(
   source = c("github", "nyfed"),
   force = FALSE,
   quiet = FALSE,
-  frequency = c("monthly", "daily")
+  frequency = c("monthly", "daily"),
+  release = NULL,
+  expected_sha256 = NULL
 )
 }
 \arguments{
@@ -22,6 +24,14 @@ annual maturities only).}
 
 \item{frequency}{Data frequency: \code{"monthly"} (default) or
 \code{"daily"} (the ~40 MB business-day asset; GitHub source only).}
+
+\item{release}{Optional GitHub release tag without whitespace or control
+characters. Supply together with
+\code{expected_sha256}; both default to NULL for the existing unpinned behavior.
+Pins are unavailable for \code{source = "nyfed"}.}
+
+\item{expected_sha256}{Expected 64-character hexadecimal sha256 digest of the
+compressed release asset, obtained independently by the caller.}
 }
 \value{
 Invisibly returns the path to the saved data file.
@@ -46,6 +56,28 @@ Unlike \code{\link{load_term_premia}}, there is no \code{"auto"}
 source here: a download is always source-specific. The bundled copy
 counts as available for the github source, but never suppresses an
 explicit nyfed download.
+
+An explicit release and digest select an isolated snapshot in the per-user
+data directory, keyed by release, digest, and frequency. Pinned reads verify
+the digest, provenance, schema, and dates and never fall back to the latest
+release, an unpinned cache, or the bundled asset. Pinned downloads may copy an
+existing unpinned cache or bundled asset whose digest matches, verifying the bytes before
+publication. This leaves the original asset unchanged.
+
+Data and provenance are published together. The sidecar at the path returned by
+\code{download_term_premia()} plus \code{.meta} records the release, digest,
+frequency, URL, UTC timestamp, and whether bytes were downloaded or copied
+from an existing verified asset.
+The URL is informational provenance; release, digest, and frequency define identity.
+A failed download leaves existing snapshots unchanged. With a pin, calling
+\code{download_term_premia(force = TRUE, ...)} downloads and validates fresh bytes
+but retains an existing valid snapshot of the identical bytes. A corrupt snapshot
+fails closed even with force; remove the named snapshot directory explicitly before retrying.
+A terminated download process may leave an unused staging directory in the cache;
+staging directories are never read as snapshots.
+Pinned assets require at least one row and fully parseable, nonmissing dates.
+Monthly and quarterly extraction use the monthly asset and its digest; daily
+extraction uses the daily asset and its digest.
 }
 \examples{
 \dontshow{if (interactive()) withAutoprint(\{ # examplesIf}

@@ -20,7 +20,9 @@ acm_daily <- hetid::extract_acm_data(
   maturities = all_mats,
   frequency = yield_volatility_input$frequency,
   auto_download = yield_volatility_input$auto_download,
-  source = yield_volatility_input$source
+  source = yield_volatility_input$source,
+  release = if (identical(acm_daily_source, "frozen")) acm_daily_release else NULL,
+  expected_sha256 = if (identical(acm_daily_source, "frozen")) acm_daily_sha256 else NULL
 )
 
 yield_vol <- acm_daily |>

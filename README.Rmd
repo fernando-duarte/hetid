@@ -277,6 +277,12 @@ The package provides access to:
 - **ACM Term Structure Data**: Monthly and daily (business-day) data based on Adrian, Crump, and Moench (2013) including yields, term premia, and risk-neutral yields at one-month maturity steps from 1 to 120 months. The bundled file is the validated replication published at [fernando-duarte/ACM_term_premium](https://github.com/fernando-duarte/ACM_term_premium) (it matches the official NY Fed workbook to within 0.0026 basis points at the annual nodes and extends the maturity grid to monthly steps); downloads are verified against the release's sha256 digest. The daily series is download-only via `download_term_premia(frequency = "daily")`. The official NY Fed workbook is the opt-in `source = "nyfed"` fallback and carries annual maturities only.
 - **Economic Variables**: Quarterly economic and financial variables including GDP, inflation, financial conditions indices, and principal components
 
+For a reproducible GitHub input, pass the same `release` tag and `expected_sha256`
+digest to `download_term_premia()`, `load_term_premia()`, or `extract_acm_data()`.
+Pinned snapshots keep vintages separate and verify bytes and provenance on each read.
+The caller chooses the release and independently obtains the digest of its monthly
+or daily asset; quarterly extraction uses the monthly asset.
+
 
 ## References
 
