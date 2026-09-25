@@ -631,7 +631,7 @@ Only after Barrier D passes, assign a fresh economics-writing review.
 Both the orchestrator and this worker must read the exact `econ-write` skill file fixed by the shared
 contract:
 
-`/Users/fduarte/.codex/skills/econ-write/SKILL.md`
+`/Users/fduarte/.agents/skills/econ-write/SKILL.md`
 
 They must also read every referenced resource required for a full revision pass, including the
 McCloskey word-choice reference and the revision checklist. If the skill or a required reference is
@@ -682,11 +682,11 @@ Only after Barrier E passes, assign a fresh clear-writing review.
 Both the orchestrator and this worker must read the exact clear-writing files fixed by the shared
 contract:
 
-`/Users/fduarte/.codex/skills/writing-clearly-and-concisely/SKILL.md`
+`/Users/fduarte/.agents/skills/writing-clearly-and-concisely/SKILL.md`
 
 and:
 
-`/Users/fduarte/.codex/skills/writing-clearly-and-concisely/elements-of-style.md`
+`/Users/fduarte/.agents/skills/writing-clearly-and-concisely/references/elements-of-style.md`
 
 If either file is absent or unreadable, record a blocker. The worker must inspect the complete
 post-`econ-write` document.

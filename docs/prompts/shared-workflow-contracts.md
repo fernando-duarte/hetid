@@ -33,11 +33,11 @@ configuration.
 
 Use these exact skill files when the dependent prompt requires the named skill:
 
-- `/Users/fduarte/.claude/skills/karpathy-guidelines/SKILL.md`
-- `/Users/fduarte/.codex/skills/multistep-plan/SKILL.md`
-- `/Users/fduarte/.codex/skills/econ-write/SKILL.md`
-- `/Users/fduarte/.codex/skills/writing-clearly-and-concisely/SKILL.md`
-- `/Users/fduarte/.codex/skills/writing-clearly-and-concisely/elements-of-style.md`
+- `/Users/fduarte/.agents/skills/karpathy-guidelines/SKILL.md`
+- `/Users/fduarte/.agents/skills/multistep-plan/SKILL.md`
+- `/Users/fduarte/.agents/skills/econ-write/SKILL.md`
+- `/Users/fduarte/.agents/skills/writing-clearly-and-concisely/SKILL.md`
+- `/Users/fduarte/.agents/skills/writing-clearly-and-concisely/references/elements-of-style.md`
 
 Read each required file completely. Follow every task-relevant reference it identifies. If a
 required file is absent or unreadable, record a blocker. Do not invent a replacement checklist or

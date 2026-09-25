@@ -690,7 +690,7 @@ After the terminology pass is complete, start the economics-writing assignment.
 
 Require the worker to read the exact `econ-write` skill file fixed by the shared contract:
 
-  /Users/fduarte/.codex/skills/econ-write/SKILL.md
+  /Users/fduarte/.agents/skills/econ-write/SKILL.md
 
 It must also read every reference that the skill requires for this task, including the McCloskey
 word-choice guidance and revision checklist. If the skill or a required reference is absent or
@@ -744,8 +744,8 @@ After the `econ-write` pass is complete, start the clear-writing assignment.
 
 Require the worker to read the exact clear-writing files fixed by the shared contract:
 
-  /Users/fduarte/.codex/skills/writing-clearly-and-concisely/SKILL.md
-  /Users/fduarte/.codex/skills/writing-clearly-and-concisely/elements-of-style.md
+  /Users/fduarte/.agents/skills/writing-clearly-and-concisely/SKILL.md
+  /Users/fduarte/.agents/skills/writing-clearly-and-concisely/references/elements-of-style.md
 
 If either file is absent or unreadable, record a blocker. The worker must inspect every sentence,
 caption, note, heading, and table entry.
