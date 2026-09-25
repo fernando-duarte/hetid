@@ -4,12 +4,14 @@
 \alias{ppml_pos_rank}
 \title{Rank of the Positive-Response Design Rows}
 \usage{
-ppml_pos_rank(y_scaled, x_mat)
+ppml_pos_rank(y_scaled, x_mat, control = log_variance_fit_control("ppml"))
 }
 \arguments{
 \item{y_scaled}{Numeric response on the scaled (fitted) scale}
 
 \item{x_mat}{Numeric design matrix, intercept column included}
+
+\item{control}{Validated fitting controls}
 }
 \value{
 Integer rank of the column-normalized positive-response rows

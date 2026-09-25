@@ -7,10 +7,9 @@
 The iteration half of the Harvey log-variance solve, split from
 \code{\link{harvey_solver}} for the file-length cap: the monotone
 backtracking line search, the observed-Newton direction with its Fisher
-fallback, the scoring loop, and the fresh post-stop acceptance gate. Ported
-from the paper pipeline
-(\code{scripts-paper/log_variance/estimators/harvey/solver_acceptance.R}).
-Controls come from \code{\link{LOG_VARIANCE_HARVEY_CONTROL}} directly, the
-way the PPML worker reads \code{\link{LOG_VARIANCE_CONTROL}}.
+fallback, the scoring loop, and the fresh post-stop acceptance gate. Originally ported
+from the paper pipeline, whose fitting adapters now delegate here.
+Validated fitting controls are passed through the solve; defaults come
+from \code{\link{LOG_VARIANCE_HARVEY_CONTROL}}.
 }
 \keyword{internal}

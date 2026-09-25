@@ -53,6 +53,7 @@ stopifnot(all(c(
   "log_variance/estimators/controls.R",
   "log_variance/estimators/set_orchestration.R",
   "log_variance/estimators/shared.R",
+  "log_variance/estimators/package_fit.R",
   "log_variance/estimators/log_ols/estimator.R"
 ) %in% manifest))
 

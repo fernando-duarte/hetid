@@ -19,7 +19,7 @@
 #'   \code{nrow(w2)} rows: the volatility-equation regressors, passed
 #'   through to \code{\link{fit_log_variance}}. \strong{Distinct from the
 #'   mean equation's regressors} -- see the \strong{Two designs} section.
-#' @param estimator,start,fallback_starts,response_scale Passed through to
+#' @param estimator,start,fallback_starts,response_scale,control Passed through to
 #'   \code{\link{fit_log_variance}} unchanged; see that function -- in
 #'   particular its \strong{Start-scale contract} section -- for the exact
 #'   contract.
@@ -72,7 +72,8 @@
 #'   compute_log_variance_se(logvar_fit)
 #' }
 fit_log_variance_at_b <- function(b, w1, w2, x, estimator = "ppml", start = NULL,
-                                  fallback_starts = list(), response_scale = 1) {
+                                  fallback_starts = list(), response_scale = 1,
+                                  control = list()) {
   assert_bad_argument_ok(
     is.matrix(w2) && is.numeric(w2), "w2 must be a numeric matrix",
     arg = "w2"
@@ -118,7 +119,7 @@ fit_log_variance_at_b <- function(b, w1, w2, x, estimator = "ppml", start = NULL
   fit <- fit_log_variance(
     eps^2, x,
     estimator = estimator, start = start,
-    fallback_starts = fallback_starts, response_scale = response_scale
+    fallback_starts = fallback_starts, response_scale = response_scale, control = control
   )
   fit$diagnostics$min_abs_eps <- min_abs_eps
   out <- validate_hetid_log_variance_fit(fit)

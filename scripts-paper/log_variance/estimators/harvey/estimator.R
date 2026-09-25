@@ -8,8 +8,8 @@ paper_source_once(paper_path("log_variance", "estimators", "harvey", "solver.R")
 paper_source_once(paper_path("log_variance", "estimators", "harvey", "fit_contract.R"))
 
 # The estimator-engine estimator object. Callable only after the driver stability
-# precheck. Freezes X = cbind(1, pcr), factors X'X once and forwards it to
-# every solve, builds the Lewbel-point ladder (PPML rung one, mean inside the
+# precheck. Freezes X = cbind(1, pcr), delegates numerical fitting to hetid,
+# builds the Lewbel-point ladder (PPML rung one, mean inside the
 # solver, shifted log-OLS diagnostic), fits the point once, and exposes it.
 logvar_harvey_estimator <- function(w1, w2, pcr, qtr, b_point = NULL,
                                     ppml_bundle = NULL,
@@ -30,7 +30,13 @@ logvar_harvey_estimator <- function(w1, w2, pcr, qtr, b_point = NULL,
     )
   )
   x_mat <- logvar_design_matrix(pcr)
-  chol_xx <- chol(crossprod(x_mat))
+  fit_response <- logvar_harvey_fitter(x_mat, control)
+  fit_b <- function(b, start, fallbacks, auto) {
+    eps <- drop(w1 - w2 %*% b)
+    fit <- fit_response(eps^2, start, fallbacks, auto)
+    fit$diagnostics$min_abs_eps <- min(abs(eps))
+    fit
+  }
   ladder <- list()
   if (!is.null(ppml_bundle) && "variance_start" %in% ppml_bundle$valid_for) {
     ladder$ppml_point <- ppml_bundle$coef_original
@@ -50,13 +56,9 @@ logvar_harvey_estimator <- function(w1, w2, pcr, qtr, b_point = NULL,
   )
   raw_point_fit <- NULL
   if (!is.null(b_point) && !anyNA(b_point)) {
-    raw_point_fit <- logvar_harvey_fit(
-      b_point, w1, w2, x_mat,
-      start = start_plan$start,
-      fallback_starts = start_plan$fallback_starts,
-      chol_xx = chol_xx,
-      auto_intercept = start_plan$auto_intercept,
-      control = control
+    raw_point_fit <- fit_b(
+      b_point, start_plan$start,
+      start_plan$fallback_starts, start_plan$auto_intercept
     )
   }
   accepted <- logvar_harvey_accepted(raw_point_fit)
@@ -113,10 +115,7 @@ logvar_harvey_estimator <- function(w1, w2, pcr, qtr, b_point = NULL,
     point_start_rung = point_start_rung, start_bundle = start_bundle,
     fit_at_b = function(b, start = NULL) {
       hv <- function(s, fallbacks, auto) {
-        logvar_harvey_fit(b, w1, w2, x_mat,
-          start = s, fallback_starts = fallbacks, chol_xx = chol_xx,
-          auto_intercept = auto, control = control
-        )
+        fit_b(b, s, fallbacks, auto)
       }
       tagged <- function(f, lbl) {
         lapply(f$diagnostics$start_attempts, function(a) {

@@ -79,25 +79,24 @@ logvar_ppml_estimator <- function(w1, w2, pcr, qtr, b_point = NULL,
                                   response_scale = 1,
                                   control = LOGVAR_PPML_CONTROL) {
   x_mat <- logvar_design_matrix(pcr)
+  fit_response <- logvar_package_fitter(x_mat, "ppml", logvar_package_control(control, "ppml"))
+  fit_b <- function(b, start = NULL, fallback_starts = list()) {
+    e <- drop(w1 - w2 %*% b)
+    fit <- fit_response(e^2, start, fallback_starts, response_scale)
+    fit$diagnostics$min_abs_eps <- min(abs(e))
+    fit
+  }
   anchor_y <- drop(w1 - w2 %*% scale_anchor_b)^2
   if (!any(anchor_y > 0)) {
     stop("logvar_ppml_estimator: scale anchor response has no positive value")
   }
-  anchor_fit <- logvar_ppml_fit(
-    scale_anchor_b, w1, w2, x_mat,
-    response_scale = response_scale,
-    control = control
-  )
+  anchor_fit <- fit_b(scale_anchor_b)
   scale_anchor_bundle <- logvar_ppml_start_bundle(
     anchor_fit, response_scale, scale_anchor_source, scale_anchor_b
   )
   start_bundle <- NULL
   if (!is.null(b_point) && !anyNA(b_point)) {
-    point_fit <- logvar_ppml_fit(
-      b_point, w1, w2, x_mat,
-      response_scale = response_scale,
-      control = control
-    )
+    point_fit <- fit_b(b_point)
     start_bundle <- logvar_ppml_start_bundle(point_fit, response_scale, "lewbel_point", b_point)
   }
   fallback <- if (!is.null(start_bundle)) {
@@ -144,13 +143,7 @@ logvar_ppml_estimator <- function(w1, w2, pcr, qtr, b_point = NULL,
     start_bundle = start_bundle,
     scale_anchor_bundle = scale_anchor_bundle,
     fit_at_b = function(b, start = NULL) {
-      logvar_ppml_fit(
-        b, w1, w2, x_mat,
-        start = start,
-        fallback_starts = fallback,
-        response_scale = response_scale,
-        control = control
-      )
+      fit_b(b, start, fallback)
     },
     jacobian_at_b = function(b, fit = NULL) {
       if (is.null(fit)) {

@@ -13,8 +13,8 @@ NULL
 #'
 #' NA and empty defaults for every diagnostic field; callers override only what
 #' they can populate, so an early fail-closed return stays field-compatible
-#' with an accepted fit. The paper's per-start criteria, recession certificate,
-#' and stored information matrix are not carried here.
+#' with an accepted fit. Per-start criteria and the accepted information
+#' matrix refer to the scaled response. Recession certificates remain caller owned.
 #'
 #' @param error_class Single string naming the failure, or \code{NA}
 #' @param start_attempts List of per-rung attempt records
@@ -28,9 +28,10 @@ harvey_diagnostics <- function(error_class, start_attempts, ...) {
     warnings = character(0), messages = character(0),
     error_class = error_class, start_attempts = start_attempts,
     n_zero_response = NA_integer_, rank_x_pos = NA_integer_,
-    rcond_info = NA_real_, n_halvings = NA_integer_
+    rcond_info = NA_real_, n_halvings = NA_integer_,
+    per_start_criteria = NULL, info_matrix = NULL
   )
-  modifyList(base, list(...))
+  modifyList(base, list(...), keep.null = TRUE)
 }
 
 #' Assemble an Accepted Harvey Fit
@@ -48,11 +49,12 @@ harvey_diagnostics <- function(error_class, start_attempts, ...) {
 #' @param attempts List of per-rung attempt records
 #' @param n_zero_response Count of zero response rows
 #' @param rank_x_pos Integer rank of the positive-response design rows
+#' @param criteria Per-start numerical evidence, or NULL
 #'
 #' @return A validated \code{hetid_log_variance_fit} object
 #' @keywords internal
 harvey_success <- function(accepted, scored, y, x_mat, response_scale,
-                           attempts, n_zero_response, rank_x_pos) {
+                           attempts, n_zero_response, rank_x_pos, criteria = NULL) {
   coef_scaled <- accepted$eval$theta
   names(coef_scaled) <- colnames(x_mat)
   coef_original <- coef_scaled
@@ -65,7 +67,8 @@ harvey_success <- function(accepted, scored, y, x_mat, response_scale,
     diagnostics = harvey_diagnostics(
       NA_character_, attempts,
       n_zero_response = n_zero_response, rank_x_pos = rank_x_pos,
-      rcond_info = accepted$rcond, n_halvings = scored$halves
+      rcond_info = accepted$rcond, n_halvings = scored$halves,
+      per_start_criteria = criteria, info_matrix = accepted$info
     ),
     y = y, x_design = x_mat, estimator = "harvey",
     response_scale = response_scale, n_obs = length(y),

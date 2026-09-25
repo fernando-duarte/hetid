@@ -20,6 +20,12 @@
 
 ## New features
 
+* Added `make_log_variance_fitter()` for repeated PPML or Harvey fits on a fixed
+  design. It captures regressors and controls once and checks each response and
+  start. Both existing fit functions now accept fitting-control overrides, and
+  results record the resolved controls in `diagnostics$fit_control`. Acceptance
+  means satisfying those configured tolerances. Harvey diagnostics retain
+  `per_start_criteria` and `info_matrix` keys even when their values are `NULL`.
 * Added `compute_log_variance_vcov_at_coef()` for PPML or Harvey coefficients
   fitted elsewhere, with an explicit covariance conditioning tolerance.
 
@@ -48,9 +54,8 @@
   `LOG_VARIANCE_CONTROL$HAC_LAGS`.
 * New `LOG_VARIANCE_CONTROL`: numerical controls (GLM tolerance/iterations, score and
   rank tolerances, HAC lag truncation) for the log-variance estimator, ported from the
-  paper pipeline's `LOGVAR_PPML_CONTROL`. The paper pipeline keeps its own copy of this
-  estimator for now (it is on the bootstrap-cache content manifest); consolidating the
-  paper and package copies is left for future work.
+  paper pipeline's `LOGVAR_PPML_CONTROL`. The paper delegates numerical fitting
+  through the package while retaining its scientific controls and diagnostics.
 * New `estimator = "harvey"` for `fit_log_variance()`, `fit_log_variance_at_b()`, and
   `profile_log_variance_set()`: the Harvey (1976) Gaussian multiplicative-heteroskedasticity
   QMLE of the log-variance equation, ported from the paper pipeline's Harvey solver
@@ -94,6 +99,12 @@
   null-loading tolerance and direction-sample size for the identified-set search.
 
 ## Improvements
+
+* The paper's PPML and Harvey fitting now delegates to the package. Paper
+  recession certificates, start policies and result labels are preserved.
+  Malformed starts and samples below the package minimum now raise errors;
+  singular Harvey designs return a typed `singular_design` fit failure instead
+  of a Cholesky error.
 
 * The paper PPML and Harvey covariance adapters reuse the package routines.
 * Bartlett covariance weights support the largest accepted integer lag without

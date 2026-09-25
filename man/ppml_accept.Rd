@@ -4,7 +4,7 @@
 \alias{ppml_accept}
 \title{Accept or Reject One Fitted Rung}
 \usage{
-ppml_accept(fit, y_scaled, x_mat)
+ppml_accept(fit, y_scaled, x_mat, control = log_variance_fit_control("ppml"))
 }
 \arguments{
 \item{fit}{A \code{glm.fit} result (or any list with
@@ -13,6 +13,8 @@ ppml_accept(fit, y_scaled, x_mat)
 \item{y_scaled}{Numeric response on the scaled (fitted) scale}
 
 \item{x_mat}{Numeric design matrix, intercept column included}
+
+\item{control}{Validated fitting controls}
 }
 \value{
 List with \code{accepted}, \code{reason}, and \code{coef_scaled};

@@ -1,8 +1,8 @@
 # The core IRLS solve behind the log-variance equation: glm.fit with
 # quasipoisson(link = "log") on y / response_scale, walked over a
 # deterministic start ladder, with the fail-closed acceptance check applied to
-# each rung. Ported from the paper pipeline
-# (scripts-paper/log_variance/estimators/ppml/fit.R). No clamping, no epsilon
+# each rung. Originally ported from the paper pipeline, whose fitting
+# adapters now delegate here. No clamping, no epsilon
 # added to y, no suppressed conditions. The scaled-response guard is the
 # estimator-neutral log_variance_scaled_response_class(). A file-level roxygen
 # block would collide with ppml_fit_response's own Rd page, so this header
@@ -10,18 +10,20 @@
 
 #' Build the Start Ladder
 #'
-#' Hard-coded rung order: the supplied start, each fallback start, the
+#' The default order is the supplied start, each fallback start, the
 #' intercept-only start, then the \code{glm.fit} default (\code{NULL}).
+#' The validated \code{START_ORDER} control reorders these groups.
 #'
 #' @param start Numeric start vector, or \code{NULL}
 #' @param fallback_starts List of numeric start vectors
 #' @param y_scaled Numeric response on the scaled (fitted) scale
 #' @param p Number of design columns
 #'
-#' @return List with \code{candidates} (a list whose last element is
-#'   \code{NULL}) and the matching \code{labels}
+#' @return List with \code{candidates} and the matching \code{labels}
 #' @noRd
-ppml_start_ladder <- function(start, fallback_starts, y_scaled, p) {
+ppml_start_ladder <- function(
+  start, fallback_starts, y_scaled, p, control = log_variance_fit_control("ppml")
+) {
   intercept_start <- if (mean(y_scaled) > 0) {
     list(c(log(mean(y_scaled)), rep(0, p - 1L)))
   } else {
@@ -33,6 +35,7 @@ ppml_start_ladder <- function(start, fallback_starts, y_scaled, p) {
     intercept_only = intercept_start,
     glm_default = list(NULL)
   )
+  groups <- groups[control$START_ORDER]
   list(
     candidates = unlist(groups, recursive = FALSE),
     labels = rep(names(groups), lengths(groups))
@@ -67,17 +70,24 @@ ppml_start_invalid <- function(cand, x_mat) {
 #' @param start Numeric start vector on the scaled response, or \code{NULL}
 #' @param fallback_starts List of numeric start vectors on the scaled response
 #' @param response_scale Positive finite scalar to divide \code{y} by
+#' @param control Validated fitting controls
+#' @param design Quantities derived from the validated fixed design
 #'
 #' @return A validated \code{hetid_log_variance_fit} object
 #' @keywords internal
 ppml_fit_response <- function(y, x_mat, start = NULL, fallback_starts = list(),
-                              response_scale = 1) {
+                              response_scale = 1, control = log_variance_fit_control("ppml"),
+                              design = log_variance_fixed_design(x_mat, "ppml", control)) {
   y_scaled <- y / response_scale
   scale_failure <- log_variance_scaled_response_class(y, y_scaled)
   if (!is.na(scale_failure)) {
     return(ppml_failure(scale_failure, y, x_mat, response_scale))
   }
-  rank_x_pos <- ppml_pos_rank(y_scaled, x_mat)
+  rank_x_pos <- if (all(y_scaled > 0)) {
+    design$rank
+  } else {
+    ppml_pos_rank(y_scaled, x_mat, control)
+  }
   if (rank_x_pos != ncol(x_mat)) {
     return(ppml_failure(
       "rank_unresolved", y, x_mat, response_scale,
@@ -85,7 +95,7 @@ ppml_fit_response <- function(y, x_mat, start = NULL, fallback_starts = list(),
       min_pos_response = min(y_scaled[y_scaled > 0])
     ))
   }
-  ladder <- ppml_start_ladder(start, fallback_starts, y_scaled, ncol(x_mat))
+  ladder <- ppml_start_ladder(start, fallback_starts, y_scaled, ncol(x_mat), control)
   attempts <- list()
   last <- list(
     warnings = character(0), messages = character(0),
@@ -100,7 +110,7 @@ ppml_fit_response <- function(y, x_mat, start = NULL, fallback_starts = list(),
       last$error_class <- "invalid_start"
       next
     }
-    run <- ppml_run_glm(cand, y_scaled, x_mat)
+    run <- ppml_run_glm(cand, y_scaled, x_mat, control)
     last$warnings <- run$warnings
     last$messages <- run$messages
     if (is.null(run$fit)) {
@@ -110,7 +120,7 @@ ppml_fit_response <- function(y, x_mat, start = NULL, fallback_starts = list(),
       last$error_class <- "fit_error"
       next
     }
-    acc <- ppml_accept(run$fit, y_scaled, x_mat)
+    acc <- ppml_accept(run$fit, y_scaled, x_mat, control)
     attempts <- c(attempts, list(list(
       source = ladder$labels[i],
       error_class = if (acc$accepted) NA_character_ else acc$reason

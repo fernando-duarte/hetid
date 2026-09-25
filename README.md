@@ -282,7 +282,10 @@ achieved through heteroskedasticity-based moment conditions.
   (reduced forms + point solve)
 - `compute_tau0_point()` - Closed-form point solve of the stacked tau=0
   system
-- `fit_log_variance()` - PPML fit of the log-variance equation
+- `fit_log_variance()` - PPML or Harvey fit with configurable fitting
+  controls
+- `make_log_variance_fitter()` - Repeated fits with fixed regressors and
+  controls
 - `fit_log_variance_at_b()` - Log-variance fit at a fixed structural
   parameter
 - `compute_log_variance_vcov()` - Analytic covariance matrices for a

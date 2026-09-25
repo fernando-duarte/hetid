@@ -33,6 +33,20 @@
 #'   \code{y} before fitting. Default \code{1}. See the
 #'   \strong{Start-scale contract} section.
 #'
+#' @param control Named list of fitting-control overrides. Names match the
+#'   estimator's exported control constants, excluding covariance fields.
+#'   PPML additionally accepts \code{START_ORDER}, a permutation of
+#'   \code{supplied}, \code{fallback}, \code{intercept_only}, and
+#'   \code{glm_default}. Harvey accepts logical \code{AUTO_INTERCEPT}.
+#'   Both accept logical \code{SKIP_NONFINITE_STARTS} (default FALSE): when
+#'   TRUE, correctly shaped nonfinite starts are recorded as failed attempts
+#'   rather than rejected at the argument boundary. Shape and names are always
+#'   validated. Numerical tolerances must be finite and positive; iteration
+#'   limits positive integers; \code{LINE_SEARCH_HALVINGS} may be zero.
+#'   Resolved values are recorded in \code{diagnostics$fit_control}. An
+#'   accepted fit meets the configured tolerances; loose tolerances may accept
+#'   an inaccurate solution and affect subsequent inference.
+#'
 #' @return A validated \code{hetid_log_variance_fit} object; see
 #'   \code{\link{hetid_log_variance_fit}} for the container contract and
 #'   \code{\link{log_variance_fit_ok}} to check whether it is usable for
@@ -70,11 +84,10 @@
 #'     \eqn{\exp(X\theta)} must be finite, with \eqn{\exp(X\theta) > 0}.}
 #'   \item{Solver convergence}{PPML: \code{glm.fit} must report convergence
 #'     and no boundary solution. Harvey: the scaled score must pass
-#'     \code{LOG_VARIANCE_HARVEY_CONTROL$SCORE_TOLERANCE} within
-#'     \code{LOG_VARIANCE_HARVEY_CONTROL$MAXIT} iterations without a
+#'     resolved \code{SCORE_TOLERANCE} within \code{MAXIT} iterations without a
 #'     line-search stall.}
 #'   \item{Score tolerance}{(PPML) the scaled score norm must not exceed
-#'     \code{LOG_VARIANCE_CONTROL$SCORE_TOLERANCE}.}
+#'     the resolved \code{SCORE_TOLERANCE}.}
 #'   \item{Conditioning}{the information matrix's reciprocal condition
 #'     number must not fall below the estimator's \code{RCOND_TOLERANCE}.}
 #' }
@@ -96,6 +109,14 @@
 #' \code{response_scale} values degrade numerical precision without
 #' changing the estimand.
 #'
+#' Harvey diagnostics include \code{per_start_criteria} for evaluated starts
+#' when more than one rung is available (or evaluated before failure), and
+#' \code{info_matrix} for an accepted fit. Both use the scaled response;
+#' unavailable values remain \code{NULL}.
+#'
+#' For repeated responses with fixed regressors and controls, use
+#' \code{\link{make_log_variance_fitter}} to reuse design validation and factors.
+#'
 #' @seealso \code{\link{log_variance_estimator}},
 #'   \code{\link{log_variance_design}}, \code{\link{ppml_fit_response}},
 #'   \code{\link{harvey_fit_response}}
@@ -112,80 +133,8 @@
 #' fit$coef
 #' fit_log_variance(y, x, estimator = "harvey")$coef
 fit_log_variance <- function(y, x, estimator = "ppml", start = NULL,
-                             fallback_starts = list(), response_scale = 1) {
-  validate_numeric_inputs(y = y)
-  assert_numeric_finite_values(y, "y")
-  assert_bad_argument_ok(all(y >= 0), "y must be nonnegative", arg = "y")
-
-  assert_tabular(x, "x")
-  x <- as.matrix(x)
-  assert_numeric_finite_values(x, "x")
-  assert_dimension_ok(nrow(x) == length(y), "x must have length(y) rows")
-
-  min_obs <- min_obs_for_pc_regression(ncol(x))
-  assert_insufficient_data_ok(
-    length(y) >= min_obs,
-    paste0(
-      "Insufficient observations for the log-variance fit: got ", length(y),
-      ", need at least ", min_obs, " (ncol(x) + 2)"
-    )
-  )
-
-  assert_scalar_finite(response_scale, "response_scale")
-  assert_bad_argument_ok(
-    response_scale > 0, "response_scale must be positive",
-    arg = "response_scale"
-  )
-
-  spec <- log_variance_estimator(estimator)
-  x_mat <- log_variance_design(x)
-  p <- ncol(x_mat)
-  design_labels <- colnames(x_mat)
-
-  if (!is.null(start)) {
-    assert_log_variance_start(start, p, design_labels, "start")
-  }
-  assert_bad_argument_ok(
-    is.list(fallback_starts), "fallback_starts must be a list",
-    arg = "fallback_starts"
-  )
-  for (i in seq_along(fallback_starts)) {
-    assert_log_variance_start(
-      fallback_starts[[i]], p, design_labels, paste0("fallback_starts[[", i, "]]")
-    )
-  }
-
-  spec$fit_response(y, x_mat, start, fallback_starts, response_scale)
-}
-
-#' Validate One Log-Variance Start Vector
-#'
-#' Shared gate for \code{start} and each \code{fallback_starts} element: a
-#' bare finite numeric vector of the right length, positional when unnamed,
-#' exact-order names when named -- a permuted named start would otherwise be
-#' silently reinterpreted against a different design.
-#'
-#' @param val Candidate start vector
-#' @param p Required length (\code{ncol(x_mat)})
-#' @param labels Design column labels (\code{colnames(x_mat)})
-#' @param arg Argument name for the structured error
-#'
-#' @return Invisible TRUE when valid
-#' @noRd
-assert_log_variance_start <- function(val, p, labels, arg) {
-  assert_bad_argument_ok(
-    is.numeric(val) && is.null(dim(val)) && length(val) == p &&
-      all(is.finite(val)),
-    paste0(arg, " must be a finite numeric vector of length ", p),
-    arg = arg
-  )
-  nm <- names(val)
-  if (!is.null(nm)) {
-    assert_bad_argument_ok(
-      identical(nm, labels),
-      paste0(arg, " names, when supplied, must equal the design labels exactly"),
-      arg = arg
-    )
-  }
-  invisible(TRUE)
+                             fallback_starts = list(), response_scale = 1,
+                             control = list()) {
+  fitter <- make_log_variance_fitter(x, estimator, control)
+  fitter(y, start, fallback_starts, response_scale)
 }

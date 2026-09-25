@@ -14,9 +14,8 @@ The hetid package implements identification through heteroskedasticity methods
 from Lewbel (2012) for triangular systems, with applications to the Volatility
 Financial Conditions Index (VFCI) developed by Adrian, DeHaven, Duarte, and Iyer.
 
-The package provides a complete toolkit for empirical macroeconomic analysis
-using heteroskedasticity-based identification, including data access, bond
-pricing calculations, and structural parameter estimation.
+The package supports empirical macroeconomic analysis through data access,
+bond pricing calculations, and heteroskedasticity-based structural estimation.
 }
 \section{Core Methodology}{
 
@@ -164,6 +163,7 @@ news-error variance bound
 \item \code{\link{compute_tau0_system}()}: Reduced forms plus tau=0 point solve
 \item \code{\link{compute_tau0_point}()}: Closed-form point solve of the stacked system
 \item \code{\link{fit_log_variance}()}: PPML or Harvey fit of the log-variance equation
+\item \code{\link{make_log_variance_fitter}()}: Repeated fits on a fixed design
 \item \code{\link{fit_log_variance_at_b}()}: Log-variance fit at a fixed structural parameter
 \item \code{\link{compute_log_variance_vcov}()}: Analytic covariance matrices of a fit
 \item \code{\link{compute_log_variance_vcov_at_coef}()}: Covariances at supplied coefficients

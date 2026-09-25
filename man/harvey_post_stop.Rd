@@ -4,7 +4,14 @@
 \alias{harvey_post_stop}
 \title{Fresh Post-Stop Acceptance Gate}
 \usage{
-harvey_post_stop(theta, y, x_mat, pos, col_abs)
+harvey_post_stop(
+  theta,
+  y,
+  x_mat,
+  pos,
+  col_abs,
+  control = log_variance_fit_control("harvey")
+)
 }
 \arguments{
 \item{theta}{Numeric coefficient vector of length \code{ncol(x_mat)}}
@@ -17,6 +24,8 @@ harvey_post_stop(theta, y, x_mat, pos, col_abs)
 
 \item{col_abs}{Numeric vector \code{colSums(abs(x_mat))}, the per-coordinate
 scale the moment is judged on}
+
+\item{control}{Validated fitting controls}
 }
 \value{
 \code{NULL} on rejection, otherwise a list with the recomputed

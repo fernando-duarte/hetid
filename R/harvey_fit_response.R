@@ -2,8 +2,8 @@
 # (Gaussian multiplicative-heteroskedasticity) estimator: the criterion
 # 0.5 * (sum(eta) + sum(y / exp(eta))) with eta = X theta, minimized on
 # y / response_scale over a deterministic start ladder, with the fresh
-# post-stop acceptance gate applied to each rung. Ported from the paper
-# pipeline (scripts-paper/log_variance/estimators/harvey/solver.R). No
+# post-stop acceptance gate applied to each rung. Originally ported from the
+# paper pipeline, whose fitting adapters now delegate here. No
 # clamping, no epsilon added to y, no eta capping. The scaled-response guard is
 # the estimator-neutral log_variance_scaled_response_class(); the result
 # assembly lives in R/harvey_result.R. A file-level roxygen block would collide
@@ -14,8 +14,8 @@
 #' Hard-coded rung order: the supplied start, each fallback start, then the
 #' intercept-only start. There is no \code{glm.fit}-default rung to close the
 #' ladder with, since this solver has no data-driven start of its own; the
-#' intercept-only rung is that role here, and it always exists because the
-#' all-zero response was ruled out before the ladder is built.
+#' intercept-only rung fills that role when \code{AUTO_INTERCEPT} is TRUE.
+#' Disabling it permits warm-only fitting or an empty ladder.
 #'
 #' @param start Numeric start vector, or \code{NULL}
 #' @param fallback_starts List of numeric start vectors
@@ -24,11 +24,17 @@
 #'
 #' @return List with \code{candidates} and the matching \code{labels}
 #' @noRd
-harvey_start_ladder <- function(start, fallback_starts, y_scaled, p) {
+harvey_start_ladder <- function(
+  start, fallback_starts, y_scaled, p, control = log_variance_fit_control("harvey")
+) {
   groups <- list(
     supplied = if (is.null(start)) list() else list(start),
     fallback = fallback_starts,
-    intercept_only = list(c(log(mean(y_scaled)), rep(0, p - 1L)))
+    intercept_only = if (control$AUTO_INTERCEPT) {
+      list(c(log(mean(y_scaled)), rep(0, p - 1L)))
+    } else {
+      list()
+    }
   )
   list(
     candidates = unlist(groups, recursive = FALSE),
@@ -64,11 +70,15 @@ harvey_start_ladder <- function(start, fallback_starts, y_scaled, p) {
 #' @param start Numeric start vector on the scaled response, or \code{NULL}
 #' @param fallback_starts List of numeric start vectors on the scaled response
 #' @param response_scale Positive finite scalar to divide \code{y} by
+#' @param control Validated fitting controls
+#' @param design Quantities derived from the validated fixed design
 #'
 #' @return A validated \code{hetid_log_variance_fit} object
 #' @keywords internal
 harvey_fit_response <- function(y, x_mat, start = NULL,
-                                fallback_starts = list(), response_scale = 1) {
+                                fallback_starts = list(), response_scale = 1,
+                                control = log_variance_fit_control("harvey"),
+                                design = log_variance_fixed_design(x_mat, "harvey", control)) {
   y_scaled <- y / response_scale
   scale_failure <- log_variance_scaled_response_class(y, y_scaled)
   if (!is.na(scale_failure)) {
@@ -76,24 +86,22 @@ harvey_fit_response <- function(y, x_mat, start = NULL,
   }
   pos <- y_scaled > 0
   n_zero <- sum(!pos)
-  rank_x_pos <- qr(
-    x_mat[pos, , drop = FALSE],
-    tol = LOG_VARIANCE_HARVEY_CONTROL$RANK_TOLERANCE
-  )$rank
+  rank_x_pos <- harvey_positive_rank(pos, x_mat, control, design)
   # the Fisher direction needs this factor, so a rank-deficient design leaves
   # the solver with no globally safe step at all; the rank test decides that
   # on every platform, where the Cholesky alone rounds either way
-  rank_x <- qr(x_mat, tol = LOG_VARIANCE_HARVEY_CONTROL$RANK_TOLERANCE)$rank
-  chol_xx <- tryCatch(chol(crossprod(x_mat)), error = function(cond) NULL)
+  rank_x <- design$rank
+  chol_xx <- design$chol_xx
   if (rank_x < ncol(x_mat) || is.null(chol_xx)) {
     return(harvey_failure(
       "singular_design", y, x_mat, response_scale,
       n_zero_response = n_zero, rank_x_pos = rank_x_pos
     ))
   }
-  col_abs <- colSums(abs(x_mat))
-  ladder <- harvey_start_ladder(start, fallback_starts, y_scaled, ncol(x_mat))
+  col_abs <- design$col_abs
+  ladder <- harvey_start_ladder(start, fallback_starts, y_scaled, ncol(x_mat), control)
   attempts <- list()
+  criteria <- list()
   last_error <- "no_accepted_start"
   for (i in seq_along(ladder$candidates)) {
     src <- ladder$labels[i]
@@ -105,7 +113,11 @@ harvey_fit_response <- function(y, x_mat, start = NULL,
       last_error <- "invalid_start"
       next
     }
-    scored <- harvey_scoring(cur, y_scaled, x_mat, pos, col_abs, chol_xx)
+    scored <- harvey_scoring(cur, y_scaled, x_mat, pos, col_abs, chol_xx, control)
+    criteria <- c(criteria, list(list(
+      source = src, status = scored$status,
+      score_norm = scored$eval$score_norm, objective = scored$eval$q
+    )))
     if (scored$status != "converged") {
       attempts <- c(attempts, list(list(
         source = src, error_class = scored$status
@@ -114,7 +126,7 @@ harvey_fit_response <- function(y, x_mat, start = NULL,
       next
     }
     accepted <- harvey_post_stop(
-      scored$eval$theta, y_scaled, x_mat, pos, col_abs
+      scored$eval$theta, y_scaled, x_mat, pos, col_abs, control
     )
     if (is.null(accepted)) {
       attempts <- c(attempts, list(list(
@@ -127,11 +139,21 @@ harvey_fit_response <- function(y, x_mat, start = NULL,
       source = src, error_class = NA_character_
     )))
     return(harvey_success(
-      accepted, scored, y, x_mat, response_scale, attempts, n_zero, rank_x_pos
+      accepted, scored, y, x_mat, response_scale, attempts, n_zero, rank_x_pos,
+      criteria = if (length(ladder$candidates) > 1L) criteria else NULL
     ))
   }
   harvey_failure(
     last_error, y, x_mat, response_scale, attempts,
-    n_zero_response = n_zero, rank_x_pos = rank_x_pos
+    n_zero_response = n_zero, rank_x_pos = rank_x_pos,
+    per_start_criteria = if (length(criteria)) criteria else NULL
   )
+}
+
+harvey_positive_rank <- function(pos, x_mat, control, design) {
+  if (all(pos)) {
+    design$rank
+  } else {
+    qr(x_mat[pos, , drop = FALSE], tol = control$RANK_TOLERANCE)$rank
+  }
 }

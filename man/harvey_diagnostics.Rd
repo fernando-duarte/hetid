@@ -19,7 +19,7 @@ A diagnostics list
 \description{
 NA and empty defaults for every diagnostic field; callers override only what
 they can populate, so an early fail-closed return stays field-compatible
-with an accepted fit. The paper's per-start criteria, recession certificate,
-and stored information matrix are not carried here.
+with an accepted fit. Per-start criteria and the accepted information
+matrix refer to the scaled response. Recession certificates remain caller owned.
 }
 \keyword{internal}

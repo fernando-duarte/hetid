@@ -1,17 +1,25 @@
-# PPML execution identity is threaded from LOGVAR_PPML_CONTROL.
-
-ppml_acceptance_code <- paste(readLines(paper_path(
-  "log_variance",
-  "estimators",
-  "ppml",
-  "acceptance.R"
-), warn = FALSE), collapse = "\n")
-
-check(
-  "PPML family and link execute through the estimator control",
-  grepl("control$link", ppml_acceptance_code, fixed = TRUE) &&
-    grepl("control$family", ppml_acceptance_code, fixed = TRUE) &&
-    grepl("control$fit_function", ppml_acceptance_code, fixed = TRUE)
-)
-
-rm(ppml_acceptance_code)
+# The adapter verifies scientific identity before delegating the numerical solve.
+check("PPML rejects a different family instead of silently substituting it", {
+  control <- LOGVAR_PPML_CONTROL
+  control$family <- "gaussian"
+  error <- tryCatch(logvar_ppml_fit_response(ppml_fx$y, ppml_fx$x_mat,
+    control = control
+  ), error = identity)
+  inherits(error, "error") && grepl("PPML control family must equal quasipoisson",
+    conditionMessage(error),
+    fixed = TRUE
+  )
+})
+check("PPML rejects disabled acceptance gates", {
+  all(vapply(c("rank_switch", "finite_mean_switch", "boundary_switch"), function(key) {
+    control <- LOGVAR_PPML_CONTROL
+    control[[key]] <- FALSE
+    error <- tryCatch(logvar_ppml_fit_response(ppml_fx$y, ppml_fx$x_mat,
+      control = control
+    ), error = identity)
+    inherits(error, "error") && grepl(paste0("PPML control ", key, " must equal TRUE"),
+      conditionMessage(error),
+      fixed = TRUE
+    )
+  }, logical(1)))
+})

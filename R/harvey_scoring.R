@@ -3,11 +3,10 @@
 #' The iteration half of the Harvey log-variance solve, split from
 #' \code{\link{harvey_solver}} for the file-length cap: the monotone
 #' backtracking line search, the observed-Newton direction with its Fisher
-#' fallback, the scoring loop, and the fresh post-stop acceptance gate. Ported
-#' from the paper pipeline
-#' (\code{scripts-paper/log_variance/estimators/harvey/solver_acceptance.R}).
-#' Controls come from \code{\link{LOG_VARIANCE_HARVEY_CONTROL}} directly, the
-#' way the PPML worker reads \code{\link{LOG_VARIANCE_CONTROL}}.
+#' fallback, the scoring loop, and the fresh post-stop acceptance gate. Originally ported
+#' from the paper pipeline, whose fitting adapters now delegate here.
+#' Validated fitting controls are passed through the solve; defaults come
+#' from \code{\link{LOG_VARIANCE_HARVEY_CONTROL}}.
 #'
 #' @name harvey_scoring_module
 #' @keywords internal
@@ -24,14 +23,16 @@ NULL
 #' every tie acceptance monotone in the score, so the search cannot cycle.
 #'
 #' @param cur Current \code{\link{harvey_eval}} result
+#' @param control Validated fitting controls
 #' @param dir Numeric direction to step along
 #' @inheritParams harvey_eval
 #'
 #' @return \code{NULL} when no halving is accepted (a stall), otherwise a list
 #'   with the accepted \code{eval} and the number of \code{halves} taken
 #' @keywords internal
-harvey_line_search <- function(cur, dir, y, x_mat, pos, col_abs) {
-  ctrl <- LOG_VARIANCE_HARVEY_CONTROL
+harvey_line_search <- function(cur, dir, y, x_mat, pos, col_abs,
+                               control = log_variance_fit_control("harvey")) {
+  ctrl <- control
   step_size <- 1
   q_noise <- ctrl$Q_NOISE_MULTIPLIER * .Machine$double.eps *
     (1 + sum(abs(cur$eta)) + sum(cur$r[pos]))
@@ -62,11 +63,13 @@ harvey_line_search <- function(cur, dir, y, x_mat, pos, col_abs) {
 #' the hybrid exists.
 #'
 #' @param cur Current \code{\link{harvey_eval}} result
+#' @param control Validated fitting controls
 #' @param x_mat Numeric design matrix, intercept column included
 #'
 #' @return Numeric direction vector, or \code{NULL}
 #' @keywords internal
-harvey_newton_dir <- function(cur, x_mat) {
+harvey_newton_dir <- function(cur, x_mat,
+                              control = log_variance_fit_control("harvey")) {
   obs <- crossprod(x_mat, cur$r * x_mat)
   d <- diag(obs)
   # gate the diagonal before sqrt: a nonpositive entry reaches the same NULL
@@ -75,7 +78,7 @@ harvey_newton_dir <- function(cur, x_mat) {
     return(NULL)
   }
   normalized <- obs / tcrossprod(sqrt(d))
-  if (rcond(normalized) < LOG_VARIANCE_HARVEY_CONTROL$NEWTON_RCOND_TOLERANCE) {
+  if (rcond(normalized) < control$NEWTON_RCOND_TOLERANCE) {
     return(NULL)
   }
   obs_chol <- tryCatch(chol(obs), error = function(cond) NULL)
@@ -98,6 +101,7 @@ harvey_newton_dir <- function(cur, x_mat) {
 #'
 #' @param cur Evaluated start from \code{\link{harvey_eval}}
 #' @inheritParams harvey_eval
+#' @inheritParams harvey_line_search
 #' @param chol_xx Upper triangular Cholesky factor of \code{crossprod(x_mat)}
 #'
 #' @return List with the last \code{eval}, the \code{iters} taken (negative on
@@ -105,22 +109,23 @@ harvey_newton_dir <- function(cur, x_mat) {
 #'   \code{halves}, and a \code{status} of \code{"converged"},
 #'   \code{"line_search_stall"}, or \code{"iteration_cap"}
 #' @keywords internal
-harvey_scoring <- function(cur, y, x_mat, pos, col_abs, chol_xx) {
-  ctrl <- LOG_VARIANCE_HARVEY_CONTROL
+harvey_scoring <- function(cur, y, x_mat, pos, col_abs, chol_xx,
+                           control = log_variance_fit_control("harvey")) {
+  ctrl <- control
   if (cur$score_norm <= ctrl$SCORE_TOLERANCE) {
     return(list(eval = cur, iters = 0L, halves = 0L, status = "converged"))
   }
   total_halves <- 0L
   for (it in seq_len(ctrl$MAXIT)) {
-    dir_newton <- harvey_newton_dir(cur, x_mat)
+    dir_newton <- harvey_newton_dir(cur, x_mat, control)
     taken <- if (is.null(dir_newton)) {
       NULL
     } else {
-      harvey_line_search(cur, dir_newton, y, x_mat, pos, col_abs)
+      harvey_line_search(cur, dir_newton, y, x_mat, pos, col_abs, control)
     }
     if (is.null(taken)) {
       dir_fisher <- harvey_chol_solve(chol_xx, cur$moment)
-      taken <- harvey_line_search(cur, dir_fisher, y, x_mat, pos, col_abs)
+      taken <- harvey_line_search(cur, dir_fisher, y, x_mat, pos, col_abs, control)
     }
     if (is.null(taken)) {
       return(list(
@@ -156,11 +161,13 @@ harvey_scoring <- function(cur, y, x_mat, pos, col_abs, chol_xx) {
 #' rank deficiency. \code{NULL} rejects the point.
 #'
 #' @inheritParams harvey_eval
+#' @inheritParams harvey_line_search
 #'
 #' @return \code{NULL} on rejection, otherwise a list with the recomputed
 #'   \code{eval}, the observed \code{info}, and its normalized \code{rcond}
 #' @keywords internal
-harvey_post_stop <- function(theta, y, x_mat, pos, col_abs) {
+harvey_post_stop <- function(theta, y, x_mat, pos, col_abs,
+                             control = log_variance_fit_control("harvey")) {
   ev <- harvey_eval(theta, y, x_mat, pos, col_abs)
   if (is.null(ev)) {
     return(NULL)
@@ -175,7 +182,7 @@ harvey_post_stop <- function(theta, y, x_mat, pos, col_abs) {
     return(NULL)
   }
   rc <- rcond(info / tcrossprod(sqrt(d)))
-  if (!is.finite(rc) || rc < LOG_VARIANCE_HARVEY_CONTROL$RCOND_TOLERANCE) {
+  if (!is.finite(rc) || rc < control$RCOND_TOLERANCE) {
     return(NULL)
   }
   list(eval = ev, info = info, rcond = rc)

@@ -4,7 +4,15 @@
 \alias{harvey_scoring}
 \title{Run the Scoring Loop From One Evaluated Start}
 \usage{
-harvey_scoring(cur, y, x_mat, pos, col_abs, chol_xx)
+harvey_scoring(
+  cur,
+  y,
+  x_mat,
+  pos,
+  col_abs,
+  chol_xx,
+  control = log_variance_fit_control("harvey")
+)
 }
 \arguments{
 \item{cur}{Evaluated start from \code{\link{harvey_eval}}}
@@ -19,6 +27,8 @@ harvey_scoring(cur, y, x_mat, pos, col_abs, chol_xx)
 scale the moment is judged on}
 
 \item{chol_xx}{Upper triangular Cholesky factor of \code{crossprod(x_mat)}}
+
+\item{control}{Validated fitting controls}
 }
 \value{
 List with the last \code{eval}, the \code{iters} taken (negative on

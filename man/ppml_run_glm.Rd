@@ -4,7 +4,12 @@
 \alias{ppml_run_glm}
 \title{Run One glm.fit Rung}
 \usage{
-ppml_run_glm(start, y_scaled, x_mat)
+ppml_run_glm(
+  start,
+  y_scaled,
+  x_mat,
+  control = log_variance_fit_control("ppml")
+)
 }
 \arguments{
 \item{start}{Numeric start vector, or \code{NULL} for the
@@ -13,6 +18,8 @@ ppml_run_glm(start, y_scaled, x_mat)
 \item{y_scaled}{Numeric response on the scaled (fitted) scale}
 
 \item{x_mat}{Numeric design matrix, intercept column included}
+
+\item{control}{Validated fitting controls}
 }
 \value{
 List with \code{fit} (\code{NULL} on error), \code{warnings},

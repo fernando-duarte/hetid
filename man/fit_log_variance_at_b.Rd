@@ -12,7 +12,8 @@ fit_log_variance_at_b(
   estimator = "ppml",
   start = NULL,
   fallback_starts = list(),
-  response_scale = 1
+  response_scale = 1,
+  control = list()
 )
 }
 \arguments{
@@ -32,7 +33,7 @@ reduced-form residuals (\code{compute_tau0_system()}'s \code{w2}).}
 through to \code{\link{fit_log_variance}}. \strong{Distinct from the
 mean equation's regressors} -- see the \strong{Two designs} section.}
 
-\item{estimator, start, fallback_starts, response_scale}{Passed through to
+\item{estimator, start, fallback_starts, response_scale, control}{Passed through to
 \code{\link{fit_log_variance}} unchanged; see that function -- in
 particular its \strong{Start-scale contract} section -- for the exact
 contract.}

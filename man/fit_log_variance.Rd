@@ -10,7 +10,8 @@ fit_log_variance(
   estimator = "ppml",
   start = NULL,
   fallback_starts = list(),
-  response_scale = 1
+  response_scale = 1,
+  control = list()
 )
 }
 \arguments{
@@ -42,6 +43,20 @@ same length and naming rule as \code{start}, tried in order after
 \item{response_scale}{Single finite positive numeric scalar dividing
 \code{y} before fitting. Default \code{1}. See the
 \strong{Start-scale contract} section.}
+
+\item{control}{Named list of fitting-control overrides. Names match the
+estimator's exported control constants, excluding covariance fields.
+PPML additionally accepts \code{START_ORDER}, a permutation of
+\code{supplied}, \code{fallback}, \code{intercept_only}, and
+\code{glm_default}. Harvey accepts logical \code{AUTO_INTERCEPT}.
+Both accept logical \code{SKIP_NONFINITE_STARTS} (default FALSE): when
+TRUE, correctly shaped nonfinite starts are recorded as failed attempts
+rather than rejected at the argument boundary. Shape and names are always
+validated. Numerical tolerances must be finite and positive; iteration
+limits positive integers; \code{LINE_SEARCH_HALVINGS} may be zero.
+Resolved values are recorded in \code{diagnostics$fit_control}. An
+accepted fit meets the configured tolerances; loose tolerances may accept
+an inaccurate solution and affect subsequent inference.}
 }
 \value{
 A validated \code{hetid_log_variance_fit} object; see
@@ -91,11 +106,10 @@ must have full column rank.}
 \eqn{\exp(X\theta)} must be finite, with \eqn{\exp(X\theta) > 0}.}
 \item{Solver convergence}{PPML: \code{glm.fit} must report convergence
 and no boundary solution. Harvey: the scaled score must pass
-\code{LOG_VARIANCE_HARVEY_CONTROL$SCORE_TOLERANCE} within
-\code{LOG_VARIANCE_HARVEY_CONTROL$MAXIT} iterations without a
+resolved \code{SCORE_TOLERANCE} within \code{MAXIT} iterations without a
 line-search stall.}
 \item{Score tolerance}{(PPML) the scaled score norm must not exceed
-\code{LOG_VARIANCE_CONTROL$SCORE_TOLERANCE}.}
+the resolved \code{SCORE_TOLERANCE}.}
 \item{Conditioning}{the information matrix's reciprocal condition
 number must not fall below the estimator's \code{RCOND_TOLERANCE}.}
 }
@@ -117,6 +131,14 @@ on the original \code{y} scale (\code{coef[1] == warm_start[1] +
 log(response_scale)}, other coefficients unchanged). Extreme
 \code{response_scale} values degrade numerical precision without
 changing the estimand.
+
+Harvey diagnostics include \code{per_start_criteria} for evaluated starts
+when more than one rung is available (or evaluated before failure), and
+\code{info_matrix} for an accepted fit. Both use the scaled response;
+unavailable values remain \code{NULL}.
+
+For repeated responses with fixed regressors and controls, use
+\code{\link{make_log_variance_fitter}} to reuse design validation and factors.
 }
 
 \examples{

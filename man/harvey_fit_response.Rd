@@ -9,7 +9,9 @@ harvey_fit_response(
   x_mat,
   start = NULL,
   fallback_starts = list(),
-  response_scale = 1
+  response_scale = 1,
+  control = log_variance_fit_control("harvey"),
+  design = log_variance_fixed_design(x_mat, "harvey", control)
 )
 }
 \arguments{
@@ -23,6 +25,10 @@ intercept column included and column labels validated}
 \item{fallback_starts}{List of numeric start vectors on the scaled response}
 
 \item{response_scale}{Positive finite scalar to divide \code{y} by}
+
+\item{control}{Validated fitting controls}
+
+\item{design}{Quantities derived from the validated fixed design}
 }
 \value{
 A validated \code{hetid_log_variance_fit} object

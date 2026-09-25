@@ -12,7 +12,8 @@ harvey_success(
   response_scale,
   attempts,
   n_zero_response,
-  rank_x_pos
+  rank_x_pos,
+  criteria = NULL
 )
 }
 \arguments{
@@ -31,6 +32,8 @@ harvey_success(
 \item{n_zero_response}{Count of zero response rows}
 
 \item{rank_x_pos}{Integer rank of the positive-response design rows}
+
+\item{criteria}{Per-start numerical evidence, or NULL}
 }
 \value{
 A validated \code{hetid_log_variance_fit} object

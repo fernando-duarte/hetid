@@ -2,9 +2,8 @@
 #'
 #' The post-fit half of the PPML log-variance response solve: the
 #' positive-response rank diagnostic, the single \code{glm.fit} call site, and
-#' the fail-closed acceptance check applied to each start-ladder rung. Ported
-#' from the paper pipeline
-#' (\code{scripts-paper/log_variance/estimators/ppml/acceptance.R}).
+#' the fail-closed acceptance check applied to each start-ladder rung. Originally ported
+#' from the paper pipeline, whose fitting adapters now delegate here.
 #'
 #' @name ppml_acceptance
 #' @keywords internal
@@ -19,15 +18,16 @@ NULL
 #'
 #' @param y_scaled Numeric response on the scaled (fitted) scale
 #' @param x_mat Numeric design matrix, intercept column included
+#' @param control Validated fitting controls
 #'
 #' @return Integer rank of the column-normalized positive-response rows
 #' @keywords internal
-ppml_pos_rank <- function(y_scaled, x_mat) {
+ppml_pos_rank <- function(y_scaled, x_mat, control = log_variance_fit_control("ppml")) {
   x_pos <- x_mat[y_scaled > 0, , drop = FALSE]
   col_norms <- sqrt(colSums(x_pos^2))
   divisor <- ifelse(col_norms > 0, col_norms, 1)
   d <- svd(sweep(x_pos, 2, divisor, "/"))$d
-  sum(d > LOG_VARIANCE_CONTROL$RANK_TOLERANCE * d[1])
+  sum(d > control$RANK_TOLERANCE * d[1])
 }
 
 #' Run One glm.fit Rung
@@ -41,18 +41,19 @@ ppml_pos_rank <- function(y_scaled, x_mat) {
 #'   \code{glm.fit} default
 #' @param y_scaled Numeric response on the scaled (fitted) scale
 #' @param x_mat Numeric design matrix, intercept column included
+#' @param control Validated fitting controls
 #'
 #' @return List with \code{fit} (\code{NULL} on error), \code{warnings},
 #'   \code{messages}, \code{error_class}, and \code{error_message}
 #' @keywords internal
 #' @importFrom stats glm.fit quasipoisson glm.control
-ppml_run_glm <- function(start, y_scaled, x_mat) {
+ppml_run_glm <- function(start, y_scaled, x_mat, control = log_variance_fit_control("ppml")) {
   captured <- capture_glm_conditions(stats::glm.fit(
     x = x_mat, y = y_scaled,
     family = stats::quasipoisson(link = "log"), start = start,
     control = stats::glm.control(
-      epsilon = LOG_VARIANCE_CONTROL$GLM_EPSILON,
-      maxit = LOG_VARIANCE_CONTROL$GLM_MAXIT
+      epsilon = control$GLM_EPSILON,
+      maxit = control$GLM_MAXIT
     )
   ))
   error_warning <- if (is.na(captured$error_message)) {
@@ -81,6 +82,7 @@ ppml_run_glm <- function(start, y_scaled, x_mat) {
 #'   \code{coefficients}, \code{converged}, and \code{boundary})
 #' @param y_scaled Numeric response on the scaled (fitted) scale
 #' @param x_mat Numeric design matrix, intercept column included
+#' @param control Validated fitting controls
 #'
 #' @return List with \code{accepted}, \code{reason}, and \code{coef_scaled};
 #'   accepted (and score-or-conditioning rejected) verdicts also carry
@@ -89,7 +91,7 @@ ppml_run_glm <- function(start, y_scaled, x_mat) {
 #'   \code{rcond_info_raw}
 #' @keywords internal
 #' @importFrom stats median
-ppml_accept <- function(fit, y_scaled, x_mat) {
+ppml_accept <- function(fit, y_scaled, x_mat, control = log_variance_fit_control("ppml")) {
   coef_hat <- fit$coefficients
   bad <- function(reason) {
     list(accepted = FALSE, reason = reason, coef_scaled = coef_hat)
@@ -121,9 +123,9 @@ ppml_accept <- function(fit, y_scaled, x_mat) {
     sweep(sqrt(mu) * x_mat, 2, info_col_scale, "/")
   ))
   reason <- NA_character_
-  if (!(score_norm <= LOG_VARIANCE_CONTROL$SCORE_TOLERANCE)) {
+  if (!(score_norm <= control$SCORE_TOLERANCE)) {
     reason <- "score_tolerance"
-  } else if (!(rcond_scaled >= LOG_VARIANCE_CONTROL$RCOND_TOLERANCE)) {
+  } else if (!(rcond_scaled >= control$RCOND_TOLERANCE)) {
     reason <- "ill_conditioned"
   }
   list(

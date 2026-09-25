@@ -4,7 +4,15 @@
 \alias{harvey_line_search}
 \title{Backtrack Along a Proposed Direction}
 \usage{
-harvey_line_search(cur, dir, y, x_mat, pos, col_abs)
+harvey_line_search(
+  cur,
+  dir,
+  y,
+  x_mat,
+  pos,
+  col_abs,
+  control = log_variance_fit_control("harvey")
+)
 }
 \arguments{
 \item{cur}{Current \code{\link{harvey_eval}} result}
@@ -19,6 +27,8 @@ harvey_line_search(cur, dir, y, x_mat, pos, col_abs)
 
 \item{col_abs}{Numeric vector \code{colSums(abs(x_mat))}, the per-coordinate
 scale the moment is judged on}
+
+\item{control}{Validated fitting controls}
 }
 \value{
 \code{NULL} when no halving is accepted (a stall), otherwise a list

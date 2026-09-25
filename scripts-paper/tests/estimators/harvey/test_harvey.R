@@ -45,4 +45,6 @@ paper_source_once(paper_path("tests", "estimators", "harvey", "table_checks.R"))
 paper_source_once(paper_path("tests", "support", "envelope_cell_checks.R"))
 paper_source_once(paper_path("tests", "estimators", "harvey", "standard_error_checks.R"))
 
+paper_source_once(paper_path("tests", "estimators", "harvey", "package_fit_checks.R"))
+
 .test$finish()

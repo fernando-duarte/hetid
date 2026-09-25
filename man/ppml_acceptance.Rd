@@ -6,8 +6,7 @@
 \description{
 The post-fit half of the PPML log-variance response solve: the
 positive-response rank diagnostic, the single \code{glm.fit} call site, and
-the fail-closed acceptance check applied to each start-ladder rung. Ported
-from the paper pipeline
-(\code{scripts-paper/log_variance/estimators/ppml/acceptance.R}).
+the fail-closed acceptance check applied to each start-ladder rung. Originally ported
+from the paper pipeline, whose fitting adapters now delegate here.
 }
 \keyword{internal}
