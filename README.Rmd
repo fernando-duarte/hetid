@@ -251,6 +251,7 @@ The key insight from Lewbel (2012) is that identification can be achieved throug
 - `compute_identified_set_box()` - Theta (b_N) and structural (b_0, b_E) bounds at a slack tau > 0
 - `compute_linear_functional_bounds()` - Named affine bounds with witnesses and search evidence
 - `profile_log_variance_set()` - Log-variance coefficient ranges over that set
+- `sample_log_variance_set()` - Retained joint fits for sampled prediction envelopes via `predict()`
 - `IDENTIFIED_SET_CONTROL` - Numerical controls for the identified-set search
 
 ### Utilities

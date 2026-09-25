@@ -106,7 +106,7 @@ component — or from every instrument separately.
 ``` r
 library(hetid)
 #> Data availability:
-#>   * ACM term premia: Available (updated 2026-09-24)
+#>   * ACM term premia: Available (updated 2026-09-25)
 #> 
 #> Use load_term_premia() to access the data.
 set.seed(42)
@@ -305,6 +305,8 @@ achieved through heteroskedasticity-based moment conditions.
   witnesses and search evidence
 - `profile_log_variance_set()` - Log-variance coefficient ranges over
   that set
+- `sample_log_variance_set()` - Retained joint fits for sampled
+  prediction envelopes via `predict()`
 - `IDENTIFIED_SET_CONTROL` - Numerical controls for the identified-set
   search
 

@@ -68,18 +68,9 @@ validate_linear_objectives <- function(objectives, offsets, theta_names) {
 
 # Check finite witnesses with the existing checker and constraint-relative rounding scale.
 validate_linear_witnesses <- function(points, quadratic) {
-  checker <- make_system_checker(quadratic)
+  checker <- make_relative_feasibility_checker(quadratic)
   for (row in seq_len(nrow(points))) {
-    theta <- points[row, ]
-    residual <- checker(theta)
-    magnitude <- vapply(seq_along(quadratic$c_i), function(i) {
-      sum(abs(theta) * drop(abs(quadratic$A_i[[i]]) %*% abs(theta))) +
-        sum(abs(quadratic$b_i[[i]] * theta)) + abs(quadratic$c_i[i])
-    }, numeric(1))
-    if (any(!is.finite(c(residual, magnitude)))) {
-      stop_hetid("Finite witness arithmetic exceeds the numeric range")
-    }
-    if (any(residual > IDENTIFIED_SET_CONTROL$FEAS_TOL * magnitude)) {
+    if (!checker(points[row, ])) {
       stop_hetid("A finite bound witness fails the constraint-relative feasibility check")
     }
   }

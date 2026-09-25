@@ -29,7 +29,8 @@ A data frame with \code{term}, \code{lower} and \code{upper},
 one row per volatility coefficient, all \code{NA} when no candidate
 could be fitted or the box has an infinite side. Attributes
 \code{n_attempted}, \code{n_failed} and \code{estimator} record the
-sampling.
+sampling. Use \code{\link{sample_log_variance_set}} to retain joint fits
+and predict sampled envelopes.
 }
 \description{
 Fits the log-variance equation at points of the mean-equation
@@ -41,12 +42,14 @@ the fits span. This is the slack-\eqn{\tau} counterpart of
 Candidate points are the box's attaining witnesses together with steps
 from the center toward each of them, and every candidate is re-checked
 against the constraints before it is fitted, so no fit is ever run
-outside the set.
+outside the set up to a constraint-relative feasibility tolerance.
+Nonfinite candidate-membership arithmetic raises a structured error rather
+than admitting or silently dropping a point.
 
 Fits that fail are skipped rather than fatal, and the counts are
 reported. Skipping can only narrow the reported range, never widen it:
 the range is over points that were fitted successfully, and every one
-of those lies in the set. Warm starts are carried from the last
+of those satisfies the same relative feasibility check. Warm starts use the last
 \emph{successful} fit; both registered estimators minimize a convex
 criterion, so a start affects whether a fit converges but never which
 answer it converges to.
@@ -55,8 +58,9 @@ answer it converges to.
 
 The range is \strong{attained over the sampled points}, not the profile
 over the whole set. It is an inner approximation on both counts: the
-box itself is one, and the sample is finite. Widen it by raising
-\code{n_points}, or the box's \code{n_grid}.
+box itself is one, and the sample is finite. Raising \code{n_points}
+or the box's \code{n_grid} samples different points and can reveal wider
+ranges; the reported range need not grow.
 }
 
 \examples{

@@ -22,12 +22,12 @@ depend on \code{RNGkind()}; \code{.Random.seed} is restored, but
 the cached Box-Muller normal deviate is not}
 \item{N_POINTS}{Interpolation steps taken from the center toward each
 box witness when sampling the set for a profile (5L)}
-\item{FEAS_TOL}{Largest constraint value accepted when filtering
-finite profile candidates (1e-10). Boundary rounding can otherwise
-reject a point. This absolute tolerance depends on constraint units.
-Functional-bound witnesses use it times the sum of absolute quadratic,
-linear and constant terms. Line-cell and infinite-tail classification
-do not use it}
+\item{FEAS_TOL}{Relative feasibility tolerance (1e-10), shared by
+profile/sample candidates and functional-bound witnesses. Each constraint
+value must be at most this tolerance times the sum of the absolute
+quadratic, linear and constant terms at the point. This comparison is
+invariant to positive constraint scaling up to floating-point rounding.
+Line-cell and infinite-tail classification do not use it}
 \item{SEARCH_LIMIT}{Largest half-width, in slab-frame units, the
 growth loop will expand to (4096)}
 \item{NULL_LOADING_RTOL}{Default for \code{null_loading_rtol} in

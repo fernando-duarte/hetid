@@ -9,12 +9,14 @@
 #' Candidate points are the box's attaining witnesses together with steps
 #' from the center toward each of them, and every candidate is re-checked
 #' against the constraints before it is fitted, so no fit is ever run
-#' outside the set.
+#' outside the set up to a constraint-relative feasibility tolerance.
+#' Nonfinite candidate-membership arithmetic raises a structured error rather
+#' than admitting or silently dropping a point.
 #'
 #' Fits that fail are skipped rather than fatal, and the counts are
 #' reported. Skipping can only narrow the reported range, never widen it:
 #' the range is over points that were fitted successfully, and every one
-#' of those lies in the set. Warm starts are carried from the last
+#' of those satisfies the same relative feasibility check. Warm starts use the last
 #' \emph{successful} fit; both registered estimators minimize a convex
 #' criterion, so a start affects whether a fit converges but never which
 #' answer it converges to.
@@ -22,8 +24,9 @@
 #' @section Interpretation:
 #' The range is \strong{attained over the sampled points}, not the profile
 #' over the whole set. It is an inner approximation on both counts: the
-#' box itself is one, and the sample is finite. Widen it by raising
-#' \code{n_points}, or the box's \code{n_grid}.
+#' box itself is one, and the sample is finite. Raising \code{n_points}
+#' or the box's \code{n_grid} samples different points and can reveal wider
+#' ranges; the reported range need not grow.
 #'
 #' @param box A \code{hetid_theta_box} from
 #'   \code{\link{compute_identified_set_box}}
@@ -37,7 +40,8 @@
 #'   one row per volatility coefficient, all \code{NA} when no candidate
 #'   could be fitted or the box has an infinite side. Attributes
 #'   \code{n_attempted}, \code{n_failed} and \code{estimator} record the
-#'   sampling.
+#'   sampling. Use \code{\link{sample_log_variance_set}} to retain joint fits
+#'   and predict sampled envelopes.
 #' @seealso \code{\link{compute_identified_set_box}} for the box,
 #'   \code{\link{fit_log_variance_at_b}} for the single-\eqn{b} fit
 #' @export
@@ -68,107 +72,5 @@ profile_log_variance_set <- function(box, x_var, estimator = "ppml",
     return(empty_log_variance_profile(coef_labels, 0L, 0L, estimator))
   }
   fits <- fit_over_candidates(candidates, box, x_var, estimator)
-  if (is.null(fits$coefs)) {
-    return(empty_log_variance_profile(
-      coef_labels, nrow(candidates), fits$n_failed, estimator
-    ))
-  }
-  out <- data.frame(
-    term = colnames(fits$coefs),
-    lower = apply(fits$coefs, 2, min),
-    upper = apply(fits$coefs, 2, max),
-    row.names = NULL
-  )
-  attr(out, "n_attempted") <- nrow(candidates)
-  attr(out, "n_failed") <- fits$n_failed
-  attr(out, "estimator") <- estimator
-  out
-}
-
-#' Candidate Points Inside the Identified Set
-#'
-#' The witnesses are feasible by construction and the interpolations are
-#' re-checked, because the set is non-convex and a point between two of
-#' its members need not belong to it.
-#'
-#' @param box A \code{hetid_theta_box}
-#' @param n_points Steps from the center toward each witness
-#' @return Numeric matrix of distinct feasible candidates, or \code{NULL}
-#'   when the box has an infinite side or nothing survives the check
-#' @noRd
-profile_set_candidates <- function(box, n_points) {
-  if (any(!is.finite(box$bounds$lower)) || any(!is.finite(box$bounds$upper))) {
-    return(NULL)
-  }
-  witnesses <- rbind(box$arg_lower, box$arg_upper)
-  witnesses <- witnesses[stats::complete.cases(witnesses), , drop = FALSE]
-  if (nrow(witnesses) == 0L) {
-    return(NULL)
-  }
-  center <- colMeans(witnesses)
-  steps <- seq_len(n_points) / n_points
-  sampled <- rbind(
-    center,
-    do.call(rbind, lapply(steps, function(s) {
-      sweep(witnesses * s, 2, center * (1 - s), "+")
-    }))
-  )
-  checker <- make_system_checker(box$quadratic)
-  keep <- apply(sampled, 1, function(b) max(checker(b))) <=
-    IDENTIFIED_SET_CONTROL$FEAS_TOL
-  sampled <- unique(sampled[keep, , drop = FALSE])
-  if (nrow(sampled) == 0L) NULL else sampled
-}
-
-#' Fit the Log-Variance Equation at Every Candidate
-#'
-#' @param candidates Numeric matrix of feasible points
-#' @param box A \code{hetid_theta_box}
-#' @param x_var Volatility-equation design
-#' @param estimator Estimator id
-#' @return List with \code{coefs} (matrix, or \code{NULL}) and
-#'   \code{n_failed}
-#' @noRd
-fit_over_candidates <- function(candidates, box, x_var, estimator) {
-  rows <- vector("list", nrow(candidates))
-  warm <- NULL
-  n_failed <- 0L
-  for (i in seq_len(nrow(candidates))) {
-    fit <- fit_log_variance_at_b(
-      candidates[i, ], box$w1, box$w2, x_var,
-      estimator = estimator, start = warm
-    )
-    if (log_variance_fit_ok(fit)) {
-      rows[[i]] <- fit$coef
-      warm <- fit$warm_start
-    } else {
-      n_failed <- n_failed + 1L
-    }
-  }
-  rows <- rows[!vapply(rows, is.null, logical(1))]
-  list(
-    coefs = if (length(rows) == 0L) NULL else do.call(rbind, rows),
-    n_failed = n_failed
-  )
-}
-
-#' All-Missing Profile Frame
-#'
-#' @param coef_labels Coefficient labels
-#' @param n_attempted,n_failed Sampling counts
-#' @param estimator Estimator id
-#' @return A data frame of NA bounds carrying the sampling attributes
-#' @noRd
-empty_log_variance_profile <- function(coef_labels, n_attempted, n_failed,
-                                       estimator) {
-  out <- data.frame(
-    term = coef_labels,
-    lower = NA_real_,
-    upper = NA_real_,
-    row.names = NULL
-  )
-  attr(out, "n_attempted") <- n_attempted
-  attr(out, "n_failed") <- n_failed
-  attr(out, "estimator") <- estimator
-  out
+  log_variance_profile_bounds(fits, nrow(candidates), coef_labels, estimator)
 }

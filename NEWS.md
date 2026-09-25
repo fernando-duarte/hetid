@@ -20,6 +20,11 @@
 
 ## New features
 
+* Added `sample_log_variance_set()` to retain joint PPML/Harvey fits and candidate
+  failures. Its `predict()` method reports sampled log-variance, variance or
+  volatility envelopes with the mean-parameter witnesses. It preserves design and
+  date identity and reports numeric range failures separately from sampling gaps.
+
 * Added `compute_linear_functional_bounds()` for named affine objectives over a
   fitted identified set. It retains finite attaining points, explicit evidence for
   infinite sides and search-limit diagnostics. Finite results remain inner
@@ -104,6 +109,15 @@
   null-loading tolerance and direction-sample size for the identified-set search.
 
 ## Improvements
+
+* `profile_log_variance_set()` and `sample_log_variance_set()` now share a
+  constraint-relative candidate membership check with linear-functional witnesses.
+  This corrects the absolute tolerance's loss of boundary points at large response
+  units and admission of infeasible interpolations at small units; affected
+  sampled ranges can change. Nonfinite candidate-membership arithmetic now
+  raises a structured error instead of silently discarding points.
+  Scalar profiles also preserve the coefficient axis when extracting candidate
+  rows, so row labels no longer cause a spurious coefficient-name error.
 
 * The recession sampler used by `compute_identified_set_box()` now preserves the
   absence of `.Random.seed` when the caller had no seed. Direction samples still
