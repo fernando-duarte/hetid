@@ -41,26 +41,3 @@ solve_all_profile_bounds <- function(quadratic, ...) {
   })
   do.call(rbind, rows)
 }
-
-# Closed-form point identification at tau = 0. The constraints are perfect
-# squares, so a full-rank and consistent Q theta = L system identifies a point.
-solve_point_identification <- function(
-  components,
-  tol = PAPER_QUADRATIC_CONTROL$point_identification_tolerance
-) {
-  qmat <- do.call(rbind, components$Q_i)
-  lvec <- components$L_i
-  if (nrow(qmat) < ncol(qmat) ||
-    qr(qmat, tol = tol)$rank < ncol(qmat)) {
-    return(NULL)
-  }
-  point <- qr.solve(qmat, lvec, tol = tol)
-  if (any(!is.finite(point))) {
-    return(NULL)
-  }
-  if (max(abs(qmat %*% point - lvec)) >
-    tol * max(1, max(abs(lvec)))) {
-    return(NULL)
-  }
-  list(theta = as.numeric(point), cond = kappa(qmat))
-}

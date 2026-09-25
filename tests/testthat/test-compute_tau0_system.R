@@ -19,6 +19,24 @@ test_that("compute_tau0_system returns visibly", {
   expect_true(withVisible(compute_tau0_system(d$y1, d$y2, d$x, d$z))$visible)
 })
 
+test_that("centering preserves exactly balanced instrument deviations", {
+  d <- simulate_tau0_dgp(t_obs = 160)
+  # These dyadic deviations and their sums with the offsets are representable
+  # exactly. The mean is the offset, so no numerical mean oracle is needed.
+  deviations <- cbind(
+    z1 = rep(c(-1, 1) / 128, 80),
+    z2 = rep(c(-1, -1, 1, 1) / 64, 40)
+  )
+  z <- sweep(deviations, 2, c(0.1, 0.3), "+")
+  fit <- compute_tau0_system(d$y1, d$y2, d$x, z, gamma = matrix(1, 2, 2))
+  expect_identical(fit$z, deviations)
+  one <- compute_tau0_system(d$y1, d$y2, d$x, z[, 1])
+  expect_identical(one$z[, 1], deviations[, 1])
+  constant <- compute_tau0_system(d$y1, d$y2, d$x, rep(0.1, 160))
+  expect_identical(unname(constant$z), matrix(0, 160, 1))
+  expect_null(constant$point)
+})
+
 test_that("beta1 equals the direct OLS of y1 - y2 theta on x", {
   d <- simulate_tau0_dgp()
   fit <- compute_tau0_system(d$y1, d$y2, d$x, d$z)

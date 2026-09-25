@@ -20,7 +20,8 @@ suite_manifest <- data.frame(
     "endpoint_targets",
     "manifest_tier",
     "mean_boot_results", "table_acceptance",
-    "support_statistics", "bounds_axis", "svg_crop", "latex_labels", "region_frame",
+    "support_statistics", "mean_system_adapter", "bounds_axis", "svg_crop",
+    "latex_labels", "region_frame",
     "support_heteroskedasticity",
     "support_identification_diagnostics", "boot_freshness", "boot_cache", "variance_bounds",
     "variance_bounds_quoted"
@@ -59,6 +60,7 @@ suite_manifest <- data.frame(
     "inference/mean_boot_results_checks.R",
     "validation/test_table_acceptance.R",
     "support/test_statistics.R",
+    "support/test_mean_system_adapter.R",
     "support/bounds_axis_checks.R",
     "support/svg_crop_checks.R",
     "support/latex_label_checks.R",

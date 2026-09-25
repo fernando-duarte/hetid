@@ -12,46 +12,29 @@ paper_source_once(paper_path(
   "support", "inference_post", "set_id_diagnostics_rows.R"
 ))
 
-# Re-estimate the mean-equation system on one data frame: the W1/W2
-# residualizations, the de-meaned instrument, the identification moments, and
-# the closed-form tau = 0 point. Shared by the full-sample estimation
-# (scripts-paper/mean_equation/estimate_identified_set.R) and the per-draw
-# bootstrap so the two recipes cannot drift apart.
+# Adapt the package mean-system fit to the paper's eight-field result. Shared
+# by full-sample estimation and the bootstrap, with paper-owned tolerances and
+# quadratic assembly preserved at this boundary.
 estimate_set_id_system <- function(dat, spec) {
-  fit1 <- stats::lm(
-    stats::reformulate(spec$x_cols, response = spec$y1_col),
-    data = dat
+  fit <- hetid::compute_tau0_system(
+    y1 = dat[[spec$y1_col]],
+    y2 = as.matrix(dat[spec$y2_cols]),
+    x = as.matrix(dat[spec$x_cols]),
+    z = as.matrix(dat[spec$z_col]),
+    impose_null = spec$impose_null,
+    gamma = spec$gamma,
+    tol = PAPER_QUADRATIC_CONTROL$point_identification_tolerance
   )
-  beta1r <- stats::coef(fit1)
-  w1 <- stats::residuals(fit1)
-  # under the orthogonality null the news PCs are population-orthogonal to
-  # X_t, so beta2R = 0 exactly and W2 is the raw news; otherwise W2 is the
-  # sample residualization on X_t
-  if (spec$impose_null) {
-    w2 <- as.matrix(dat[spec$y2_cols])
-    beta2r <- matrix(
-      0, length(spec$y2_cols), length(beta1r),
-      dimnames = list(spec$y2_cols, names(beta1r))
-    )
-  } else {
-    fit2 <- stats::lm(
-      as.matrix(dat[spec$y2_cols]) ~ .,
-      data = dat[spec$x_cols]
-    )
-    w2 <- stats::residuals(fit2)
-    beta2r <- t(stats::coef(fit2))
-  }
-  z <- dat[[spec$z_col]] - mean(dat[[spec$z_col]])
-  moments <- hetid::compute_identification_moments(
-    w1, w2, matrix(z, ncol = 1, dimnames = list(NULL, spec$z_col))
-  )
+  w2 <- fit$w2
+  if (!spec$impose_null) rownames(w2) <- rownames(dat)
   built <- build_pipeline_quadratic_system(
-    spec$gamma, rep(0, ncol(spec$gamma)), moments
+    spec$gamma, rep(0, ncol(spec$gamma)), fit$moments
   )
   list(
-    beta1r = beta1r, w1 = w1, beta2r = beta2r, w2 = w2, z = z,
-    moments = moments,
-    point0 = solve_point_identification(built$components),
+    beta1r = fit$beta1r, w1 = fit$w1,
+    beta2r = fit$beta2r, w2 = w2,
+    z = as.numeric(fit$z[, 1L]),
+    moments = fit$moments, point0 = fit$point,
     tau0_quadratic = built$quadratic
   )
 }

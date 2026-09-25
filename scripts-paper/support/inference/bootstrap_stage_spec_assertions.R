@@ -79,7 +79,7 @@ bootstrap_stage_frame_ok <- function(frame) {
 
 bootstrap_stage_system_ok <- function(system, frame) {
   roles <- c(system$y1_col, system$x_cols, system$y2_cols, system$z_col)
-  gamma_names <- colnames(system$gamma)
+  gamma_names <- dimnames(system$gamma)
   fields <- c("gamma", "y1_col", "x_cols", "y2_cols", "z_col", "impose_null")
   bootstrap_stage_record_ok(system, fields) &&
     all(vapply(system[c("y1_col", "x_cols", "y2_cols", "z_col")], function(value) {
@@ -91,7 +91,9 @@ bootstrap_stage_system_ok <- function(system, frame) {
     is.numeric(system$gamma) && bootstrap_stage_matrix_attrs_ok(system$gamma) &&
     !anyNA(system$gamma) && all(is.finite(system$gamma)) &&
     nrow(system$gamma) == 1L && ncol(system$gamma) == length(system$y2_cols) &&
-    (is.null(gamma_names) || identical(gamma_names, system$y2_cols)) &&
+    (is.null(gamma_names) ||
+      (identical(gamma_names[[1L]], system$z_col) &&
+        identical(gamma_names[[2L]], system$y2_cols))) &&
     is.logical(system$impose_null) && length(system$impose_null) == 1L &&
     !is.na(system$impose_null) && is.null(attributes(system$impose_null))
 }

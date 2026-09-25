@@ -92,6 +92,9 @@
 
 ## Improvements
 
+* `compute_tau0_system()` now centers each instrument with `mean()`, preserving
+  balanced deviations that could be perturbed by column-summation roundoff.
+
 * `compute_w2_residuals()` now surfaces skipped maturities in its return
   value: list mode gains a `skipped` element (named character vector of
   skip reasons) and data-frame mode carries the same information as a

@@ -62,3 +62,25 @@ check(
   identical(bsf_volatility$mean, bsf_control$mean) &&
     identical(bsf_volatility$volatility, "volatility tau-zero fixture")
 )
+
+# Preserve indexed row/key identity while exercising genuine shared-fit failures.
+for (case in c("collinear", "missing outcome")) {
+  invalid <- bsf_input$data
+  if (case == "collinear") invalid$x <- 1 else invalid$y1[1L] <- NA_real_
+  error <- tryCatch(
+    estimate_set_id_system(invalid, bsr_stage_spec$system),
+    error = identity
+  )
+  expected_class <- if (case == "collinear") "hetid_error" else "hetid_error_bad_argument"
+  result <- bootstrap_stage_primary_draw(invalid, bsr_stage_spec, bsf_input$context)
+  check(
+    paste(case, "raises a structured error at the shared estimator"),
+    inherits(error, expected_class)
+  )
+  check(
+    paste(case, "reaches both real primary branches identically"),
+    inherits(error, "error") && identical(
+      result, list(mean = conditionMessage(error), volatility = conditionMessage(error))
+    )
+  )
+}

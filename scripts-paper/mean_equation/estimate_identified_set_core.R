@@ -21,9 +21,8 @@ estimate_mean_equation <- function(set_id_data, y1_col, x_cols, y2_cols, z_col,
   tau_cap <- tau_contract$cap
   tau_display <- tau_contract$display
   # reduced-form fits, de-meaned single instrument with unit weight, moments,
-  # and the closed-form tau = 0 point, via the paper-owned shared estimator --
-  # the endpoint bootstrap re-runs the identical recipe per draw, so the two
-  # cannot drift apart
+  # and the tau = 0 point, via the shared adapter to the package estimator.
+  # The endpoint bootstrap uses the same adapter per draw.
   sys_spec <- list(
     y1_col = y1_col, x_cols = x_cols, y2_cols = y2_cols, z_col = z_col,
     gamma = matrix(1, 1, length(y2_cols)), impose_null = impose_null

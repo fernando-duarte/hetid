@@ -1,7 +1,7 @@
 # Offline checks for the vol-equation set-endpoint bootstrap inference layer.
 # A thin entrypoint mirroring the PPML suite: source the envelope module
 # (which sources the paper-owned robust-scale and minimum-repetition functions),
-# the paper-owned mean-equation support recipe (estimate_set_id_system /
+# the package-backed mean-system adapter and paper geometry (estimate_set_id_system /
 # coef_interval_tables /
 # tau_quadratic_system) and the log-var engine/estimator chain (map/engine/
 # log-OLS/PPML/Harvey) the per-draw re-estimator drives, then the per-draw

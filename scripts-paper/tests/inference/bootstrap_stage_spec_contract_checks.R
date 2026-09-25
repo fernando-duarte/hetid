@@ -46,7 +46,7 @@ lag_pc <- tibble::tibble(when = c(1L, 3L, 4L), l.pc1 = c(9, 7, 6))
 mean_eq <- list(
   data = mean_data,
   sample = list(n = 3L),
-  gamma = matrix(1, 1L, 1L, dimnames = list(NULL, "w2")),
+  gamma = matrix(1, 1L, 1L, dimnames = list("z", "w2")),
   y1_col = "y1",
   x_cols = "x",
   y2_cols = "w2",
@@ -153,4 +153,21 @@ stopifnot(
 PAPER_INFERENCE_SEARCH_CONTROL$bootstrap$fatal_failure_share <- 0.3
 bootstrap_stage_spec_validate(spec, bootstrap_stage_expected())
 stopifnot(identical(spec$design$failure_control$fatal_failure_share, 0.2))
+unnamed_system <- spec$system
+dimnames(unnamed_system$gamma) <- NULL
+stopifnot(bootstrap_stage_system_ok(unnamed_system, spec$frame))
+bad_axes <- list(
+  column_only = list(NULL, "w2"), row_only = list("z", NULL),
+  wrong_row = list("wrong", "w2"), wrong_column = list("z", "wrong")
+)
+rejected_axes <- vapply(bad_axes, function(axes) {
+  invalid <- spec
+  dimnames(invalid$system$gamma) <- axes
+  error <- tryCatch(
+    bootstrap_stage_spec_validate(invalid, bootstrap_stage_expected()),
+    error = identity
+  )
+  inherits(error, "error") && grepl("system contract", conditionMessage(error), fixed = TRUE)
+}, logical(1))
+stopifnot(all(rejected_axes))
 cat("bootstrap_stage_spec_contract_checks: PASS\n")
