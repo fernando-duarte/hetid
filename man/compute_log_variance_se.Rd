@@ -13,7 +13,8 @@ compute_log_variance_se(fit, hac_lags = LOG_VARIANCE_CONTROL$HAC_LAGS)
 \item{hac_lags}{Single nonnegative integer: the Newey-West lag truncation
 for the \code{hac} variant. Default
 \code{LOG_VARIANCE_CONTROL$HAC_LAGS} (the paper's quarterly heuristic).
-\code{0} collapses \code{hac} to \code{hc0}.}
+\code{0} collapses \code{hac} to \code{hc0} for PPML and
+\code{robust} for Harvey.}
 }
 \value{
 A \code{data.frame} with \code{length(coef_labels)} rows and

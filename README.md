@@ -106,7 +106,7 @@ component — or from every instrument separately.
 ``` r
 library(hetid)
 #> Data availability:
-#>   * ACM term premia: Available (updated 2026-09-20)
+#>   * ACM term premia: Available (updated 2026-09-24)
 #> 
 #> Use load_term_premia() to access the data.
 set.seed(42)
@@ -285,8 +285,10 @@ achieved through heteroskedasticity-based moment conditions.
 - `fit_log_variance()` - PPML fit of the log-variance equation
 - `fit_log_variance_at_b()` - Log-variance fit at a fixed structural
   parameter
-- `compute_log_variance_vcov()` - Naive/HC0/HC1/HAC covariance matrices
-  for a log-variance fit
+- `compute_log_variance_vcov()` - Analytic covariance matrices for a
+  log-variance fit
+- `compute_log_variance_vcov_at_coef()` - Covariance matrices at
+  supplied PPML or Harvey coefficients
 - `compute_log_variance_se()` - Standard-error frame for a log-variance
   fit
 - `LOG_VARIANCE_CONTROL` - Numerical controls for log-variance (PPML)

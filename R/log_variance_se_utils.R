@@ -7,9 +7,10 @@
 #' (\code{scripts-paper/log_variance/inference/standard_error_estimators.R}).
 #' Estimator modules keep only their own bread, score, and variant assembly.
 #'
-#' These internals never raise: malformed arguments are the exported
-#' boundary's business (\code{\link{compute_log_variance_vcov}}), and every
-#' data-quality failure here comes back as \code{NULL} or the skeleton.
+#' These internals never raise: the public entrypoints
+#' \code{\link{compute_log_variance_vcov}} and
+#' \code{\link{compute_log_variance_vcov_at_coef}} validate malformed arguments.
+#' Data-quality failures here come back as \code{NULL} or the skeleton.
 #'
 #' @name log_variance_se_utils
 #' @keywords internal
@@ -73,7 +74,7 @@ se_bartlett_meat <- function(scores, hac_lags) {
     gamma_l <- crossprod(
       scores[(l + 1L):n, , drop = FALSE], scores[1:(n - l), , drop = FALSE]
     )
-    meat <- meat + (1 - l / (hac_lags + 1L)) * (gamma_l + t(gamma_l))
+    meat <- meat + (1 - l / (hac_lags + 1)) * (gamma_l + t(gamma_l))
   }
   meat
 }

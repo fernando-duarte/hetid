@@ -166,6 +166,7 @@ news-error variance bound
 \item \code{\link{fit_log_variance}()}: PPML or Harvey fit of the log-variance equation
 \item \code{\link{fit_log_variance_at_b}()}: Log-variance fit at a fixed structural parameter
 \item \code{\link{compute_log_variance_vcov}()}: Analytic covariance matrices of a fit
+\item \code{\link{compute_log_variance_vcov_at_coef}()}: Covariances at supplied coefficients
 \item \code{\link{compute_log_variance_se}()}: Standard-error frame for a log-variance fit
 \item \code{\link{LOG_VARIANCE_CONTROL}}: PPML estimation numerical controls
 \item \code{\link{LOG_VARIANCE_HARVEY_CONTROL}}: Harvey estimation numerical controls

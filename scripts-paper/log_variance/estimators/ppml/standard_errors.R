@@ -1,37 +1,11 @@
-# Analytic (non-bootstrap) standard errors for the PPML (quasi-Poisson
-# log-link) log-variance QMLE, reported under the two point columns of the
-# log-variance panels: the OLS reference fit and the tau = 0 Lewbel-point fit.
-# theta_hat solves X'(eps^2 - exp(X theta)) = 0, so every variance is a pure
-# function of the accepted coefficient, the squared-residual response y, and the
-# design X -- no fit object or response_scale is needed (the map is
-# scale-invariant and the original-scale coef reproduces mu). Four variants are
-# computed and stored; run_pipeline.R's logvar_ppml_se_type picks which prints
-# (the configured HAC choice matches the log-OLS panel inference):
-#   naive  Pearson-dispersion-scaled model information  phi_hat * A^-1
-#   hc0    Eicker-White sandwich                         A^-1 (X'diag(r^2)X) A^-1
-#   hc1    hc0 with the n/(n-p) factor
-#   hac    Newey-West Bartlett HAC of the score          A^-1 M_hac A^-1
-# with A = X'diag(mu)X, r = eps^2 - mu. The moving-block bootstrap is deferred.
-# The estimator-agnostic scaffolding (normalized inverse, HAC meat, SE frames,
-# response reconstruction, attach diagnostic) lives in standard_error_estimators.R;
-# this module keeps only the PPML bread and variant assembly. Consumers validate
-# a requested type with base match.arg(se_type, LOGVAR_PPML_SE_TYPES); the SEs
-# are hand-rolled in base R rather than delegated to a reconstructed
-# glm()/sandwich object -- a glm refit is a second optimization that can diverge
-# from the exact coefficient the table prints and bypasses the estimator's
-# fail-closed acceptance gate, and the four formulas are pinned to sandwich in
-# the tests.
+# Analytic PPML covariance calculation delegates to hetid at the stored
+# original-scale coefficient, response and complete design. The paper owns
+# its conditioning control, SE frames, dated response reconstruction and
+# reporting. No refit or synthetic successful-fit object is introduced.
 
-# canonical variant keys (the values run_pipeline.R's logvar_ppml_se_type may take)
+# Canonical paper variant keys, checked against the package result in tests.
 LOGVAR_PPML_SE_TYPES <- c("naive", "hc0", "hc1", "hac")
 
-# QMLE covariance variants at an accepted fit. hac_lags is a programmer contract
-# (loud on a malformed value). The bread A = X'diag(mu)X is inverted through the
-# shared normalized conditioning gate (logvar_se_norm_inv); a NULL inverse (a
-# non-finite, singular, or ill-conditioned bread) fails every variant closed to
-# an all-NA matrix, exactly as the prologue does for a bad coefficient, response,
-# or nonpositive mu. Returns a named list of p x p matrices keyed by
-# LOGVAR_PPML_SE_TYPES.
 logvar_ppml_vcov <- function(
   coef,
   y,
@@ -39,39 +13,13 @@ logvar_ppml_vcov <- function(
   hac_lags,
   rcond_tol = LOGVAR_PPML_CONTROL$rcond_tol
 ) {
-  pre <- logvar_se_preflight(
-    coef,
-    y,
-    x_mat,
-    hac_lags,
-    LOGVAR_PPML_SE_TYPES
-  )
-  if (!pre$ok) {
-    return(pre$na_out)
+  if (is.null(rcond_tol)) {
+    stop("rcond_tol is missing from the paper fit control", call. = FALSE)
   }
-  n <- pre$n
-  p <- pre$p
-  mu <- pre$mu
-  na_mat <- pre$na_mat
-  a_inv <- logvar_se_norm_inv(
-    crossprod(x_mat, mu * x_mat),
-    rcond_tol
-  )
-  r <- y - mu
-  u <- x_mat * r # per-observation score rows
-  meat_hc0 <- crossprod(u)
-  phi <- sum(r^2 / mu) / (n - p) # Pearson dispersion
-  sandwich_v <- function(meat) {
-    if (is.null(a_inv)) na_mat else a_inv %*% meat %*% a_inv
-  }
-  v_hc0 <- sandwich_v(meat_hc0)
-  list(
-    naive = if (is.null(a_inv)) na_mat else phi * a_inv,
-    hc0 = v_hc0,
-    hc1 = (n / (n - p)) * v_hc0,
-    hac = sandwich_v(
-      logvar_se_bartlett_meat(u, pre$hac_lags)
-    )
+  hetid::compute_log_variance_vcov_at_coef(
+    coef, y,
+    x_design = x_mat, estimator = "ppml",
+    hac_lags = hac_lags, rcond_tol = rcond_tol
   )
 }
 

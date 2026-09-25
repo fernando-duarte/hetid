@@ -20,6 +20,9 @@
 
 ## New features
 
+* Added `compute_log_variance_vcov_at_coef()` for PPML or Harvey coefficients
+  fitted elsewhere, with an explicit covariance conditioning tolerance.
+
 * New `compute_news_q_bound()`: the two-leg first-order-cancelled
   (Minkowski) bound on the variance of the centered quadratic SDF-news
   approximation error, `[sd(q1) + sd(q0) + sd(g)]^2` over the paired news
@@ -91,6 +94,10 @@
   null-loading tolerance and direction-sample size for the identified-set search.
 
 ## Improvements
+
+* The paper PPML and Harvey covariance adapters reuse the package routines.
+* Bartlett covariance weights support the largest accepted integer lag without
+  integer overflow.
 
 * `compute_tau0_system()` now centers each instrument with `mean()`, preserving
   balanced deviations that could be perturbed by column-summation roundoff.

@@ -93,6 +93,8 @@ test_that("the variant list is keyed and labelled off the fit", {
 #   standard_errors.R: cd9860e0e6b5da2a10cfc8061a9823c694927968d92c8b39d15758d986d4f9f4
 #   fit.R: 732653a3f8bda50d0acde5def18b1243733e083b1269e9b2ae82b091c8b75a0f
 #   acceptance.R: 45cc27baf799c2d84a5f4d936e2290743f36bfa1867adb1150519ca46eca63b9
+# After consolidation, the paper covariance bodies delegate to hetid. These
+# hashes remain historical; current adapter tests provide migration coverage.
 # The test itself never sources the paper pipeline.
 test_that("pinned paper-equivalence fixture: ppml coef and vcov at the default seed", {
   d <- simulate_logvar_data()

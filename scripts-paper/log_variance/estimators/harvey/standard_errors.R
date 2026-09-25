@@ -1,34 +1,11 @@
-# Analytic (non-bootstrap) standard errors for the Harvey Gaussian
-# multiplicative-variance log-variance QMLE, reported under the two point columns
-# of the Harvey table: the OLS-residual reference fit and the tau = 0 Lewbel
-# point fit. theta_hat maximizes -0.5 sum(eta + y exp(-eta)), so every variance
-# is a pure function of the accepted coefficient, the squared-residual response
-# y, and the design X (no fit object needed; the map reproduces mu = exp(X
-# theta)). Five variants are computed and stored; run_pipeline.R's
-# logvar_harvey_se_type picks which prints (the configured HAC choice matches
-# the PPML and log-OLS panel inference):
-#   expected  0.5 X'X inverse           Gaussian working-model Fisher information
-#   observed  0.5 X'diag(r)X inverse    Gaussian working-model observed info
-#   opg       (G'G) inverse             outer-product-of-gradients (BHHH)
-#   robust    H^-1 (G'G) H^-1           Eicker-White QMLE sandwich
-#   hac       H^-1 M_hac H^-1           Newey-West Bartlett HAC of the score
-# with r = y/mu, G_i = 0.5(1 - r_i) x_i, H = 0.5 X'diag(r)X. The moving-block
-# bootstrap is deferred. The estimator-agnostic scaffolding (normalized inverse,
-# HAC meat, SE frames, response reconstruction, attach diagnostic) lives in
-# standard_error_estimators.R; this module keeps only the Harvey breads and variant
-# assembly. Consumers validate a requested type with base match.arg(se_type,
-# LOGVAR_HARVEY_SE_TYPES); hand-rolled in base R because the Harvey QMLE is not a
-# glm() object sandwich can dispatch on.
+# Analytic HARVEY covariance calculation delegates to hetid at the stored
+# original-scale coefficient, response and complete design. The paper owns
+# its conditioning control, SE frames, dated response reconstruction and
+# reporting. No refit or synthetic successful-fit object is introduced.
 
-# canonical variant keys (the values run_pipeline.R's logvar_harvey_se_type may take)
+# Canonical paper variant keys, checked against the package result in tests.
 LOGVAR_HARVEY_SE_TYPES <- c("expected", "observed", "opg", "robust", "hac")
 
-# QMLE covariance variants at an accepted fit. hac_lags is a programmer contract
-# (loud on a malformed value). Each variant fails closed to an all-NA matrix on a
-# conditioning problem in its bread: a non-finite coefficient, invalid response,
-# nonpositive mu, n <= p, or a bread the shared normalized gate
-# (logvar_se_norm_inv) rejects. Returns a named list of p x p matrices keyed by
-# LOGVAR_HARVEY_SE_TYPES.
 logvar_harvey_vcov <- function(
   coef,
   y,
@@ -36,39 +13,13 @@ logvar_harvey_vcov <- function(
   hac_lags,
   rcond_tol = LOGVAR_HARVEY_CONTROL$rcond_tol
 ) {
-  pre <- logvar_se_preflight(
-    coef,
-    y,
-    x_mat,
-    hac_lags,
-    LOGVAR_HARVEY_SE_TYPES
-  )
-  if (!pre$ok) {
-    return(pre$na_out)
+  if (is.null(rcond_tol)) {
+    stop("rcond_tol is missing from the paper fit control", call. = FALSE)
   }
-  mu <- pre$mu
-  na_mat <- pre$na_mat
-  r <- y / mu # zero-safe: y >= 0, mu > 0 (a zero response gives r = 0)
-  g <- 0.5 * (1 - r) * x_mat # per-observation score rows
-  h_inv <- logvar_se_norm_inv(
-    0.5 * crossprod(x_mat, r * x_mat),
-    rcond_tol
-  )
-  ex_inv <- logvar_se_norm_inv(0.5 * crossprod(x_mat), rcond_tol)
-  meat_opg <- crossprod(g)
-  opg_inv <- logvar_se_norm_inv(meat_opg, rcond_tol)
-  sandwich_v <- function(bread, meat) {
-    if (is.null(bread)) na_mat else bread %*% meat %*% bread
-  }
-  list(
-    expected = if (is.null(ex_inv)) na_mat else ex_inv,
-    observed = if (is.null(h_inv)) na_mat else h_inv,
-    opg = if (is.null(opg_inv)) na_mat else opg_inv,
-    robust = sandwich_v(h_inv, meat_opg),
-    hac = sandwich_v(
-      h_inv,
-      logvar_se_bartlett_meat(g, pre$hac_lags)
-    )
+  hetid::compute_log_variance_vcov_at_coef(
+    coef, y,
+    x_design = x_mat, estimator = "harvey",
+    hac_lags = hac_lags, rcond_tol = rcond_tol
   )
 }
 

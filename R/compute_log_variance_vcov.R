@@ -14,7 +14,8 @@
 #' @param hac_lags Single nonnegative integer: the Newey-West lag truncation
 #'   for the \code{hac} variant. Default
 #'   \code{LOG_VARIANCE_CONTROL$HAC_LAGS} (the paper's quarterly heuristic).
-#'   \code{0} collapses \code{hac} to \code{hc0}.
+#'   \code{0} collapses \code{hac} to \code{hc0} for PPML and
+#'   \code{robust} for Harvey.
 #'
 #' @return A named list of \code{(k + 1) x (k + 1)} covariance matrices keyed
 #'   by the estimator's \code{se_types} (for \code{"ppml"}: \code{"naive"},
@@ -44,9 +45,10 @@
 #' \code{fit$x_design} are in \strong{chronological order}: the container
 #' carries no date index, so this is a caller precondition, not something the
 #' function can check. Rows in an arbitrary order make the lag autocovariances
-#' meaningless (the other three variants are order-invariant).
+#' meaningless (the other variants are order-invariant).
 #'
-#' @seealso \code{\link{fit_log_variance}},
+#' @seealso \code{\link{compute_log_variance_vcov_at_coef}} for coefficients
+#'   fitted outside the package, \code{\link{fit_log_variance}},
 #'   \code{\link{fit_log_variance_at_b}}, \code{\link{LOG_VARIANCE_CONTROL}}
 #'
 #' @export

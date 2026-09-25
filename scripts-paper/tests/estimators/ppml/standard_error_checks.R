@@ -75,7 +75,7 @@ check("ppml se fails closed on non-finite coef", {
   all(vapply(bad, function(v) all(is.na(v)), logical(1)))
 })
 check("ppml se fails closed on a rank-deficient design", {
-  xd <- cbind(ppml_fx$x_mat, ppml_fx$x_mat[, 2]) # duplicate column -> singular A
+  xd <- cbind(ppml_fx$x_mat, copy = ppml_fx$x_mat[, 2]) # duplicate column -> singular A
   all(is.na(logvar_ppml_vcov(rep(0, ncol(xd)), ppml_fx$y, xd, test_hac_lags)$hc0))
 })
 check("ppml se fails closed when n <= p", {

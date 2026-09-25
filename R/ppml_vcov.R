@@ -27,8 +27,8 @@
 #' all-NA matrix, exactly as \code{\link{se_preflight}} does for a bad
 #' coefficient, response, or nonpositive \eqn{\mu}. The raw
 #' \code{(coef, y, x_mat, hac_lags)} signature is the registry's \code{vcov}
-#' contract; the exported boundary is
-#' \code{\link{compute_log_variance_vcov}}.
+#' contract. The public entrypoints are \code{\link{compute_log_variance_vcov}}
+#' and \code{\link{compute_log_variance_vcov_at_coef}}.
 #'
 #' @param coef Numeric coefficient vector of length \code{ncol(x_mat)}, on the
 #'   same scale as \code{y}
@@ -38,10 +38,15 @@
 #' @param hac_lags Nonnegative integer Newey-West lag truncation; rows of
 #'   \code{x_mat} and \code{y} are assumed chronological
 #'
+#' @param rcond_tol Positive normalized-information conditioning tolerance
+#'
 #' @return Named list of \code{ncol(x_mat)} square matrices keyed by
 #'   \code{LOG_VARIANCE_CONTROL$SE_TYPES}
 #' @keywords internal
-ppml_vcov_variants <- function(coef, y, x_mat, hac_lags) {
+ppml_vcov_variants <- function(
+  coef, y, x_mat, hac_lags,
+  rcond_tol = LOG_VARIANCE_CONTROL$RCOND_TOLERANCE
+) {
   se_types <- LOG_VARIANCE_CONTROL$SE_TYPES
   pre <- se_preflight(coef, y, x_mat, hac_lags, se_types)
   if (!pre$ok) {
@@ -52,7 +57,7 @@ ppml_vcov_variants <- function(coef, y, x_mat, hac_lags) {
   mu <- pre$mu
   na_mat <- pre$na_mat
   a_inv <- se_norm_inv(
-    crossprod(x_mat, mu * x_mat), LOG_VARIANCE_CONTROL$RCOND_TOLERANCE
+    crossprod(x_mat, mu * x_mat), rcond_tol
   )
   r <- y - mu
   u <- x_mat * r # per-observation score rows

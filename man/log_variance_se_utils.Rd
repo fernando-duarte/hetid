@@ -12,8 +12,9 @@ all-NA skeleton. Ported from the paper pipeline
 Estimator modules keep only their own bread, score, and variant assembly.
 }
 \details{
-These internals never raise: malformed arguments are the exported
-boundary's business (\code{\link{compute_log_variance_vcov}}), and every
-data-quality failure here comes back as \code{NULL} or the skeleton.
+These internals never raise: the public entrypoints
+\code{\link{compute_log_variance_vcov}} and
+\code{\link{compute_log_variance_vcov_at_coef}} validate malformed arguments.
+Data-quality failures here come back as \code{NULL} or the skeleton.
 }
 \keyword{internal}

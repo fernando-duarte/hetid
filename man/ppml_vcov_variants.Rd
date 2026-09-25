@@ -4,7 +4,13 @@
 \alias{ppml_vcov_variants}
 \title{PPML Covariance Variants}
 \usage{
-ppml_vcov_variants(coef, y, x_mat, hac_lags)
+ppml_vcov_variants(
+  coef,
+  y,
+  x_mat,
+  hac_lags,
+  rcond_tol = LOG_VARIANCE_CONTROL$RCOND_TOLERANCE
+)
 }
 \arguments{
 \item{coef}{Numeric coefficient vector of length \code{ncol(x_mat)}, on the
@@ -17,6 +23,8 @@ labels naming the coefficient axis}
 
 \item{hac_lags}{Nonnegative integer Newey-West lag truncation; rows of
 \code{x_mat} and \code{y} are assumed chronological}
+
+\item{rcond_tol}{Positive normalized-information conditioning tolerance}
 }
 \value{
 Named list of \code{ncol(x_mat)} square matrices keyed by
@@ -51,7 +59,7 @@ singular, or ill-conditioned bread -- fails every variant closed to an
 all-NA matrix, exactly as \code{\link{se_preflight}} does for a bad
 coefficient, response, or nonpositive \eqn{\mu}. The raw
 \code{(coef, y, x_mat, hac_lags)} signature is the registry's \code{vcov}
-contract; the exported boundary is
-\code{\link{compute_log_variance_vcov}}.
+contract. The public entrypoints are \code{\link{compute_log_variance_vcov}}
+and \code{\link{compute_log_variance_vcov_at_coef}}.
 }
 \keyword{internal}
