@@ -35,11 +35,13 @@ if (!is.null(lad_result)) {
   # feasible b_N grid over the joint identified set (the LAD map's grid builder);
   # the tau = 0 Lewbel point, when feasible, is prepended so the red point curve
   # sits inside the hull by construction
+  paper_source_once(paper_path("support", "identification", "containing_box.R"))
+  lad_vol_box <- paper_containing_box(lad_vol_b_tab)
   lad_vol_grid <- logvar_coarsen_grid(
     logvar_feasible_grid(
       lad_vol_qs,
-      lad_vol_b_tab$set_lower,
-      lad_vol_b_tab$set_upper,
+      lad_vol_box$lower,
+      lad_vol_box$upper,
       LOGVAR_SEARCH_CONTROL$fitted_lad_grid_n
     ),
     LOGVAR_SEARCH_CONTROL$fitted_lad_grid_cap

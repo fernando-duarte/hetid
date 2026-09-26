@@ -28,7 +28,11 @@ jn_at_tau <- function(b_tab, w1, w2, proj, d_inv2, eps_ref, qs, prior = list(),
   )
 }
 jn_box <- function(center, rad) {
-  list(set_lower = center - rad, set_upper = center + rad)
+  list(
+    set_lower = center - rad, set_upper = center + rad,
+    outer_lower = center - rad, outer_upper = center + rad,
+    status = rep("bounded", length(center))
+  )
 }
 # Projection ownership: the driver's single owned 5 x n projection matches the map.
 check("jn projection ownership returns the owned 5 x n matrix", jn_try({

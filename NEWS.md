@@ -20,6 +20,11 @@
 
 ## New features
 
+* Added `compute_quadratic_set_evidence()` for raw quadratic systems. It returns
+  checked boundedness and tail evidence, explicit unresolved sides, strict point
+  membership checks, and numerical containing bounds for linear objectives.
+  Finite optimization and inference policies remain with callers.
+
 * `download_term_premia()`, `load_term_premia()`, and `extract_acm_data()` now accept
   paired `release` and `expected_sha256` arguments for verified GitHub snapshots.
   Pinned vintages coexist with each other and the default cache; reads check the

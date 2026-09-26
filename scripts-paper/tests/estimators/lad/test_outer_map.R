@@ -66,11 +66,13 @@ ox_fx <- local({
   w1 <- drop(w2 %*% b0) + 1.2 * sample(c(-1, 1), n, TRUE) + rnorm(n, sd = 0.3)
   qsb <- list(A_i = list(diag(2)), b_i = list(c(0, 0)), c_i = -1)
   btab <- data.frame(
-    coef = c("b1", "b2"), set_lower = c(-1, -1), set_upper = c(1, 1), status = "bounded"
+    coef = c("b1", "b2"), set_lower = c(-1, -1), set_upper = c(1, 1),
+    outer_lower = c(-1, -1), outer_upper = c(1, 1), status = "bounded"
   )
   qs_s <- list(A_i = list(diag(2)), b_i = list(-2 * b0), c_i = sum(b0^2))
   btab_s <- data.frame(
-    coef = c("b1", "b2"), set_lower = b0, set_upper = b0, status = "bounded"
+    coef = c("b1", "b2"), set_lower = b0, set_upper = b0,
+    outer_lower = b0, outer_upper = b0, status = "bounded"
   )
   environment()
 })
@@ -94,7 +96,12 @@ check("lad engine seam exposes the literal signature and phase counters", {
 })
 # Pure anchor: a 5001-point grid uses the lattice loop (no NN cap); default stops.
 check("lad lattice traversal bypasses nearest-neighbor over 5001 points", {
-  qs_big <- list(A_i = list(diag(2)), b_i = list(c(0, 0)), c_i = -100)
+  # The four halfspaces make the advertised containing box exact.
+  qs_big <- list(
+    A_i = rep(list(matrix(0, 2L, 2L)), 4L),
+    b_i = list(c(1, 0), c(-1, 0), c(0, 1), c(0, -1)),
+    c_i = rep(-1, 4L)
+  )
   run71 <- function(tr) {
     logvar_engine_set_at_tau(lad_dummy(tr), qs_big, ox_fx$btab,
       grid_n = 71L, grid_floor = 1L, cold_start_check = FALSE

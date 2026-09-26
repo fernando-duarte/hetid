@@ -57,8 +57,7 @@ set_id_report_spec <- function(fit, spec, published) {
     ),
     fit$sample$n, "over", format(fit$sample$span[1]), "to",
     format(fit$sample$span[2]),
-    "\n  tau* =", signif(fit$tau_star, digits),
-    if (fit$tau_star_capped) "(capped at sweep max)" else "",
+    "\n ", format_tau_star_bracket(fit$tau_star_bracket, digits),
     " kappa(Q) =", signif(fit$theta_point_cond, digits),
     " beta2R:", if (fit$impose_null) "null (= 0)" else "sample", "\n"
   )

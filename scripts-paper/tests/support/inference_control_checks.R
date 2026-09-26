@@ -104,9 +104,8 @@ threaded_fields <- list(
   "support/inference_post/inference_calibration.R" = c(
     "im_root", "stoye_root", "bvn", "robust_endpoint_correlation"
   ),
-  "support/identification/tau_star.R" = c(
-    "fine_grid_points", "bisection_iterations"
-  ),
+  "support/identification/tau_star.R" = "fine_grid_points",
+  "support/identification/tau_star_bracket.R" = "bisection_iterations",
   "inference/bootstrap_stage_specs.R" = c(
     "paper_bootstrap_failure_limit", "progress_report_every"
   ),

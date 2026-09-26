@@ -27,6 +27,12 @@ annualized yields by maturity in years, so the n_hat weights are
 variance positivity diagnostic flags a maturity as degenerate}
 \item{TAU0_POINT_TOLERANCE}{Rank and residual tolerance for the
 tau = 0 stacked linear solve; the alternative outcome is no point (NULL)}
+\item{QUADRATIC_EVIDENCE_MAXIT}{Default multivariate evidence-search budget (500)}
+\item{QUADRATIC_SEARCH_RTOL}{Candidate geometry-search tolerance (1e-10)}
+\item{QUADRATIC_OUTER_RTOL}{Candidate outer-bound search tolerance (1e-12)}
+\item{QUADRATIC_SIGN_FACTOR}{Rounding-margin multiplier for sign checks (64)}
+\item{QUADRATIC_OUTER_FACTOR}{Rounding-margin multiplier for outer bounds (16)}
+\item{QUADRATIC_WEIGHT_FLOOR}{Interior weight-search initialization floor (1e-9)}
 \item{PERCENT_TO_DECIMAL}{Percentage to decimal divisor}
 \item{MONTHS_PER_QUARTER}{Calendar months per quarter (3)}
 \item{MONTHS_PER_YEAR}{Calendar months per year (12), used for

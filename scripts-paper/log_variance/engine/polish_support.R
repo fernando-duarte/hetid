@@ -54,13 +54,14 @@ logvar_coef_objective_fns <- function(est, j, evaluate_fit, budget_hit) {
 }
 
 # How far outside the news box an attaining point sits, relative to the box's
-# own span (<= 0 when inside). The scan only ever sees b_tab's box while the
-# polish is bounded by the quadratic constraints alone, so a positive value
-# means the two halves of the search covered different regions and the box is
-# not the outer screen it is contracted to be.
+# own span (<= 0 when inside). The scan only ever sees the containing box while
+# the polish is bounded by the quadratic constraints alone. The box is verified
+# to contain the set, so a positive value means the polish accepted a point
+# outside the set or the containing bound is wrong; either way the side fails.
 logvar_box_escape <- function(arg, b_tab) {
-  lo <- b_tab$set_lower
-  hi <- b_tab$set_upper
+  box <- paper_containing_box(b_tab)
+  lo <- box$lower
+  hi <- box$upper
   if (is.null(arg) || anyNA(arg) || anyNA(lo) || anyNA(hi) ||
     !all(is.finite(c(lo, hi)))) {
     return(NA_real_)

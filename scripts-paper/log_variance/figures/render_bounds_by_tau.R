@@ -146,7 +146,7 @@ logvar_bounds_tau_entry <- function(entry) {
   row.names(plot_rows) <- NULL
   logvar_bounds_tau_render(
     plot_rows, est$metadata, set_id_mean_eq$tau_baseline,
-    set_id_mean_eq$tau_star, entry$output_path
+    set_id_mean_eq$tau_star, entry$output_path, set_id_mean_eq$tau_star_bracket
   )
   raw_counts <- vapply(res, function(r) {
     n <- r$diagnostics$n_raw_feasible

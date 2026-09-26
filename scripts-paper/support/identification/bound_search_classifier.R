@@ -1,89 +1,53 @@
-# Shared box-growth classifier for coordinate and linear-functional bounds.
-
+# Boundedness and tails come from geometry; boxes only guide finite approximation.
 .profile_invalid_bound <- function() {
-  list(
-    bound = NA_real_,
-    bounded = FALSE,
-    valid = FALSE
-  )
+  list(bound = NA_real_, bounded = FALSE, valid = FALSE)
 }
 
 .profile_unbounded_bound <- function(value) {
-  list(
-    bound = value,
-    bounded = FALSE,
-    valid = TRUE
-  )
+  list(bound = value, bounded = FALSE, valid = TRUE)
 }
 
 .classify_profile_search <- function(
-  quadratic,
-  delta,
-  omega,
-  boxes,
-  solve_box,
-  value_at,
-  finalize,
-  trusted_at,
-  unbounded_value,
-  target_edge_is_unbounded,
-  feasibility_tolerance,
+  objective, direction, boxes, solve_box, delta, evidence, evidence_index,
+  candidate_is_endpoint,
   edge_rtol = PAPER_QUADRATIC_CONTROL$bound_edge_rtol,
-  stability_rtol =
-    PAPER_QUADRATIC_CONTROL$bound_stability_rtol,
-  growth_factor =
-    PAPER_QUADRATIC_CONTROL$unbounded_growth_factor
+  stability_rtol = PAPER_QUADRATIC_CONTROL$bound_stability_rtol
 ) {
-  first <- solve_box(boxes[[1L]])
-  if (.solve_finite(first) &&
-    all(abs(first$phi) < edge_rtol * boxes[[1L]])) {
-    return(finalize(first))
+  state <- profile_evidence_state(evidence, evidence_index, direction)
+  if (identical(state, "unbounded")) {
+    return(.profile_unbounded_bound(if (direction == "min") -Inf else Inf))
   }
-
+  if (!identical(state, "bounded")) {
+    return(.profile_invalid_bound())
+  }
+  if (all(objective == 0)) {
+    return(list(bound = 0, bounded = TRUE, valid = TRUE))
+  }
+  normalized <- profile_objective_direction(objective)
+  if (is.null(normalized)) {
+    return(.profile_invalid_bound())
+  }
   previous <- NULL
-  trusted_at_last <- FALSE
-  for (box in boxes[-1L]) {
+  for (box in boxes) {
     result <- solve_box(box)
-    if (!.solve_finite(result)) {
-      return(.profile_invalid_bound())
+    if (!.solve_finite(result)) next
+    candidate <- profile_checked_candidate(evidence, delta * result$phi)
+    if (is.null(candidate)) next
+    if (!candidate_is_endpoint(candidate$theta)) next
+    value <- sum(objective * candidate$theta)
+    normalized_value <- sum(normalized * candidate$theta)
+    if (!is.finite(value) || !is.finite(normalized_value)) next
+    interior <- all(abs(result$phi) < edge_rtol * box)
+    stable <- !is.null(previous) &&
+      abs(normalized_value - previous) <= stability_rtol * max(1, abs(normalized_value))
+    if (interior || stable) {
+      return(list(
+        bound = value, bounded = TRUE, valid = TRUE,
+        theta = candidate$theta, contraction = candidate$contraction,
+        movement = candidate$movement
+      ))
     }
-    residual <- .feasibility_residual(
-      quadratic,
-      delta * result$phi,
-      omega
-    )
-    if (!is.finite(residual) ||
-      residual > feasibility_tolerance) {
-      return(.profile_invalid_bound())
-    }
-    if (all(abs(result$phi) < edge_rtol * box)) {
-      return(finalize(result))
-    }
-
-    trusted_at_last <- isTRUE(trusted_at(result, box))
-    if (!trusted_at_last) {
-      previous <- NULL
-      next
-    }
-    current <- value_at(result)
-    if (!is.null(previous)) {
-      stable <- abs(current - previous) <=
-        stability_rtol * max(1, abs(current))
-      if (stable) {
-        return(finalize(result))
-      }
-      growing <- abs(current) >=
-        growth_factor * max(abs(previous), delta)
-      if (growing) {
-        return(.profile_unbounded_bound(unbounded_value))
-      }
-    }
-    previous <- current
-  }
-
-  if (isTRUE(target_edge_is_unbounded) &&
-    !trusted_at_last) {
-    return(.profile_unbounded_bound(unbounded_value))
+    previous <- normalized_value
   }
   .profile_invalid_bound()
 }

@@ -106,7 +106,7 @@ structural_equation_table_parts <- function(mean, boot, n_pc) {
   # for the inference table and its standalone
   set_data <- lapply(names(mean$set_tables), function(nm) {
     st <- mean$set_tables[[nm]]
-    tab <- rbind(st$beta1, st$theta)
+    tab <- rbind(st$beta1, st$theta[names(st$beta1)])
     stopifnot(identical(tab$coef, coef_tab$coef))
     inf <- boot$inference[[nm]]
     stopifnot(identical(inf$coef, coef_tab$coef))

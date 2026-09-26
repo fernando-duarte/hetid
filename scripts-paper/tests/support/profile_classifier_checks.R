@@ -1,135 +1,139 @@
-# Deterministic box-search fixtures for the shared bound classifier.
-
-zero_quadratic <- list(
-  A_i = list(matrix(0, nrow = 2L, ncol = 2L)),
-  b_i = list(c(0, 0)),
-  c_i = 0
-)
+# Evidence decides tail status before any finite-box optimizer result.
 profile_boxes <- c(10, 100, 1000)
-profile_finalize <- function(result) {
-  list(
-    bound = result$phi[[1L]],
-    bounded = TRUE,
-    valid = TRUE
-  )
-}
-run_profile_fixture <- function(
-  quadratic,
-  solve_box,
-  value_at = function(result) result$phi[[1L]],
-  finalize = profile_finalize,
-  trusted_at = function(result, box) TRUE,
-  target_edge_is_unbounded = FALSE
-) {
-  .classify_profile_search(
-    quadratic = quadratic,
-    delta = 1,
-    omega = 1,
-    boxes = profile_boxes,
-    solve_box = solve_box,
-    value_at = value_at,
-    finalize = finalize,
-    trusted_at = trusted_at,
-    unbounded_value = Inf,
-    target_edge_is_unbounded = target_edge_is_unbounded,
-    feasibility_tolerance = 1e-8
-  )
-}
-
+flat_qs <- list(A_i = list(matrix(0, 2, 2)), b_i = list(c(0, 0)), c_i = -1)
+flat_evidence <- paper_profile_evidence(flat_qs, diag(2))
 interior_calls <- 0L
-interior <- run_profile_fixture(
-  zero_quadratic,
+flat_upper <- .classify_profile_search(
+  c(1, 0), "max", profile_boxes,
   function(box) {
     interior_calls <<- interior_calls + 1L
     list(phi = c(2, 3), convergence = 0L)
-  }
+  }, 1, flat_evidence, 1L,
+  candidate_is_endpoint = function(theta) TRUE
 )
 check(
-  "profile classifier accepts a first-box interior solution",
-  interior_calls == 1L &&
-    identical(interior, list(bound = 2, bounded = TRUE, valid = TRUE))
+  "verified infinite tail overrides a local interior stall",
+  interior_calls == 0L && identical(flat_upper$bound, Inf) &&
+    flat_upper$valid && !flat_upper$bounded
 )
 
-coordinate_edge <- run_profile_fixture(
-  zero_quadratic,
-  function(box) list(phi = c(box, 0), convergence = 0L),
-  trusted_at = function(result, box) FALSE,
-  target_edge_is_unbounded = TRUE
-)
+ball_qs <- list(A_i = list(diag(2)), b_i = list(c(0, 0)), c_i = -1)
+ball_evidence <- paper_profile_evidence(ball_qs, diag(2))
+ball_lower <- solve_profile_bound(ball_qs, 1L, "min", evidence = ball_evidence)
+ball_upper <- solve_profile_bound(ball_qs, 1L, "max", evidence = ball_evidence)
 check(
-  "profile classifier marks a coordinate riding the final edge as infinite",
-  is.infinite(coordinate_edge$bound) &&
-    !coordinate_edge$bounded &&
-    coordinate_edge$valid
+  "unit ball keeps two independently bounded coordinate endpoints",
+  ball_lower$valid && ball_upper$valid &&
+    ball_lower$bounded && ball_upper$bounded &&
+    abs(ball_lower$bound + 1) < 1e-6 && abs(ball_upper$bound - 1) < 1e-6
+)
+ball_all <- solve_all_profile_bounds(ball_qs, evidence = ball_evidence)
+corrections <- attr(ball_all, "profile_corrections")
+check(
+  "finite profile bounds expose bounded numerical correction diagnostics",
+  nrow(corrections) == 4L &&
+    identical(sort(unique(corrections$side)), c("max", "min")) &&
+    all(is.finite(corrections$movement)) &&
+    all(corrections$movement <= PAPER_QUADRATIC_CONTROL$candidate_correction_rtol)
+)
+zero_bound <- solve_linear_functional_bound(ball_qs, c(0, 0), "max")
+check(
+  "zero structural loading has a finite zero bound",
+  identical(zero_bound$bound, 0) && zero_bound$bounded && zero_bound$valid
 )
 
-stable_functional <- run_profile_fixture(
-  zero_quadratic,
-  function(box) {
-    first <- if (box == profile_boxes[[1L]]) 1 else 2
-    if (box == profile_boxes[[3L]]) first <- 2.0001
-    list(phi = c(first, box), convergence = 0L)
-  }
+halfspace <- list(
+  A_i = list(matrix(0, 2, 2)), b_i = list(c(1, 0)), c_i = 0
 )
+half_evidence <- hetid::compute_quadratic_set_evidence(
+  halfspace, matrix(c(1, 0), 2L, 1L),
+  points = matrix(c(-1, 0), 1L)
+)
+half_lower <- solve_profile_bound(halfspace, 1L, "min", evidence = half_evidence)
+half_upper <- solve_profile_bound(halfspace, 1L, "max", evidence = half_evidence)
 check(
-  "profile classifier accepts a stable functional while another coordinate edges",
-  stable_functional$bounded &&
-    stable_functional$valid &&
-    isTRUE(all.equal(stable_functional$bound, 2.0001))
+  "halfspace preserves an infinite lower side and finite upper side",
+  identical(half_lower$bound, -Inf) && half_lower$valid && !half_lower$bounded &&
+    half_upper$valid && half_upper$bounded && abs(half_upper$bound) < 1e-6
 )
 
-growing_functional <- run_profile_fixture(
-  zero_quadratic,
-  function(box) {
-    value <- if (box == profile_boxes[[1L]]) 1 else box * 0.6
-    list(phi = c(value, box), convergence = 0L)
-  }
+near_boundary <- profile_checked_candidate(ball_evidence, c(1 + 1e-9, 0))
+check(
+  "finite candidate contracts into strict membership by a recorded small amount",
+  !is.null(near_boundary) && ball_evidence$check_point(near_boundary$theta) &&
+    near_boundary$contraction > 0 && near_boundary$contraction < 1e-6
 )
 check(
-  "profile classifier marks a growing trusted functional as infinite",
-  is.infinite(growing_functional$bound) &&
-    !growing_functional$bounded &&
-    growing_functional$valid
+  "distant infeasible solver output cannot become a finite endpoint",
+  is.null(profile_checked_candidate(ball_evidence, c(100, 0)))
 )
 
-infeasible_quadratic <- zero_quadratic
-infeasible_quadratic$b_i[[1L]] <- c(1, 0)
-infeasible <- run_profile_fixture(
-  infeasible_quadratic,
-  function(box) {
-    phi <- if (box == profile_boxes[[1L]]) c(box, 0) else c(1, 0)
-    list(phi = phi, convergence = 0L)
-  }
+unknown_evidence <- hetid::compute_quadratic_set_evidence(
+  ball_qs, diag(2),
+  n_dir = 0L, maxit = 0L
 )
+for (value in c(2, 1e6)) {
+  unknown <- .classify_profile_search(
+    c(1, 0), "max", profile_boxes,
+    function(box) list(phi = c(value, box), convergence = 0L),
+    1, unknown_evidence, 1L,
+    candidate_is_endpoint = function(theta) TRUE
+  )
+  check(
+    sprintf("finite box pattern %g does not certify unresolved geometry", value),
+    is.na(unknown$bound) && !unknown$valid && !unknown$bounded
+  )
+}
+
+thin_qs <- list(
+  A_i = list(diag(c(1, 1e-200))), b_i = list(c(0, 0)), c_i = -1
+)
+thin_anchor <- c(1 - 1e-9, 0)
+thin_evidence <- paper_profile_evidence(thin_qs, diag(2),
+  points = matrix(thin_anchor, 1L)
+)
+thin_evidence$feasible_points <- matrix(thin_anchor, 1L)
+thin_candidate <- c(1 + 1e-9, 0)
+thin_fixed <- profile_checked_candidate(thin_evidence, thin_candidate)
 check(
-  "profile classifier rejects enlarged-box infeasibility",
-  is.na(infeasible$bound) &&
-    !infeasible$bounded &&
-    !infeasible$valid
+  "thin-ball candidate uses displacement cap even when contraction is large",
+  !thin_evidence$check_point(thin_candidate) &&
+    thin_evidence$check_point(thin_anchor) && !is.null(thin_fixed) &&
+    thin_evidence$check_point(thin_fixed$theta) &&
+    thin_fixed$contraction > PAPER_QUADRATIC_CONTROL$candidate_correction_rtol &&
+    thin_fixed$movement <= PAPER_QUADRATIC_CONTROL$candidate_correction_rtol &&
+    max(abs(thin_fixed$theta - thin_candidate)) < 1e-6
 )
 
-slack_quadratic <- zero_quadratic
-slack_quadratic$c_i <- -1
-uncertified <- run_profile_fixture(
-  slack_quadratic,
-  function(box) {
-    phi <- if (box == profile_boxes[[1L]]) c(box, 0) else c(1, 0)
-    list(phi = phi, convergence = 0L)
-  },
-  finalize = function(result) {
-    .finalize_bound(
-      slack_quadratic,
-      1,
-      1,
-      result,
-      1L,
-      1e-8
-    )
-  }
+coarse <- data.frame(
+  tau = c(0, .1, .2), status = c("bounded", "bounded", "unbounded")
 )
+local({
+  local_env <- new.env(parent = environment(tau_star_fixed))
+  local_env$eval_width_at_tau <- function(...) {
+    list(total = NA_real_, bounded = FALSE, valid = FALSE, status = "unreliable")
+  }
+  evaluate <- tau_star_fixed
+  environment(evaluate) <- local_env
+  out <- evaluate(NULL, NULL, coarse, iters = 4L)
+  check(
+    "unresolved midpoint remains an explicit tau bracket",
+    identical(out$tau_star, .1) && identical(out$bracket$lower, .1) &&
+      identical(out$bracket$upper, .2) &&
+      isTRUE(all.equal(out$bracket$inconclusive, .15)) &&
+      identical(out$bracket$status, "unresolved_band") && !out$capped
+  )
+})
+coarse$status[3L] <- "unreliable"
+above <- tau_star_fixed(NULL, NULL, coarse, iters = 0L)
 check(
-  "profile classifier rejects interior but uncertified stability",
-  uncertified$bounded &&
-    !uncertified$valid &&
-    identical(uncertified$bound, 1)
+  "no found tail gives an unresolved upper bracket, not a cap",
+  identical(above$tau_star, .1) && is.na(above$bracket$upper) &&
+    identical(above$bracket$status, "unresolved_above") && !above$capped
+)
+coarse$status[3L] <- "bounded"
+cap <- tau_star_fixed(NULL, NULL, coarse, iters = 0L)
+check(
+  "all certified bounded sweep points permit a stated sweep cap",
+  cap$capped && identical(cap$tau_star, .2)
 )

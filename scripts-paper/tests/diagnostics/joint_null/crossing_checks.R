@@ -52,7 +52,11 @@ check("jn zero-leverage crossing diverges only in the intercept", jn_try({
 # Cancellation: the anti-parallel near-puncture is unreliable, never a witness.
 check("jn cancellation near a puncture classifies unreliable, not a witness", jn_try({
   qs_can <- jn_ball(fx$b_cross_can, 0.2)
-  b_tab <- list(set_lower = fx$b_cross_can - 0.2, set_upper = fx$b_cross_can + 0.2)
+  b_tab <- list(
+    set_lower = fx$b_cross_can - 0.2, set_upper = fx$b_cross_can + 0.2,
+    outer_lower = fx$b_cross_can - 0.2, outer_upper = fx$b_cross_can + 0.2,
+    status = rep("bounded", length(fx$b_cross_can))
+  )
   row <- logvar_joint_null_at_tau(
     0.05, 0.05, b_tab, fx$w1_can, fx$w2_can,
     fx$proj_can, (1 / apply(fx$pcr_can, 2, stats::sd))^2, rep(1.5, nrow(fx$pcr_can)),
@@ -115,7 +119,11 @@ check("jn a rank-deficient direction set fails the SVD coverage threshold", jn_t
 }))
 # Known witness: b_star attains zero slopes and classifies compatible_witness.
 check("jn known witness at b_star classifies compatible_witness", jn_try({
-  b_tab <- list(set_lower = fx$b_star - 0.5, set_upper = fx$b_star + 0.5)
+  b_tab <- list(
+    set_lower = fx$b_star - 0.5, set_upper = fx$b_star + 0.5,
+    outer_lower = fx$b_star - 0.5, outer_upper = fx$b_star + 0.5,
+    status = rep("bounded", length(fx$b_star))
+  )
   row <- logvar_joint_null_at_tau(
     0.05, 0.05, b_tab, fx$w1, fx$w2, fx$proj,
     di2, fx$eps_ref, fx$qs_ball

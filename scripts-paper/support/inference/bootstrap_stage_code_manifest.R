@@ -60,6 +60,7 @@ BOOTSTRAP_STAGE_CODE_FILES <- c(
   "mean_equation/inference/theta_box_multistart.R",
   "inference/bootstrap_stage_specs.R",
   "inference/bootstrap_stage_draw.R",
+  "inference/bootstrap_stage_geometry.R",
   "inference/bootstrap_stage_cache.R",
   "inference/run_bootstrap_stage.R"
 )

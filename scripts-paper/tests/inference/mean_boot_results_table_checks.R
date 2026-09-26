@@ -54,6 +54,7 @@ stp_set <- list(
   ),
   theta = data.frame(
     coef = stp_coefs[stp_news], set_lower = -2, set_upper = 2,
+    outer_lower = -2, outer_upper = 2,
     status = "bounded", lower_status = "bounded", upper_status = "bounded",
     stringsAsFactors = FALSE
   )
@@ -82,7 +83,7 @@ stp_boot <- list(
   point_t = stp_point_t,
   inference = list(tau_005 = endpoint_target_table(
     stp_endpoints,
-    rbind(stp_set$beta1, stp_set$theta)
+    rbind(stp_set$beta1, stp_set$theta[names(stp_set$beta1)])
   ))
 )
 

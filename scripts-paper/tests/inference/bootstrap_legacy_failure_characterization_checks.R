@@ -43,6 +43,7 @@ blf_mean_control <- paper_legacy_mean_from_est(
   blf_reference_est,
   blf_mean_spec
 )
+blf_production_mean_control <- set_id_boot_draw(lbd_dat, blf_mean_spec)
 blf_shared <- paper_with_legacy_binding(
   "estimate_set_id_system",
   function(dat, spec) {
@@ -132,17 +133,35 @@ blf_harvey_status <- unlist(lapply(blf_harvey_actual$harvey, function(cell) {
 }))
 check(
   "failed terminal builder remains structured failed volatility cells",
-  identical(blf_harvey_actual, blf_harvey_expected) &&
+  isTRUE(all.equal(
+    blf_harvey_actual, blf_harvey_expected,
+    tolerance = 1e-12
+  )) &&
     identical(blf_harvey_actual$ppml, lbd_draw$ppml) &&
     length(blf_harvey_status) > 0L &&
     all(blf_harvey_status == PAPER_ENDPOINT_STATUS[["failed"]])
 )
+blf_mean_after <- set_id_boot_draw(lbd_dat, blf_mean_spec)
 check(
-  "volatility builder failures leave the legacy mean branch unchanged",
-  identical(
-    set_id_boot_draw(lbd_dat, blf_mean_spec),
-    blf_mean_control
-  )
+  "volatility builder failures leave the production mean branch identical",
+  identical(blf_mean_after, blf_production_mean_control)
+)
+check(
+  "production mean stays numerically compatible with independent legacy bounds",
+  identical(blf_mean_after$point, blf_mean_control$point) &&
+    identical(blf_mean_after$point_status, blf_mean_control$point_status) &&
+    identical(
+      lapply(blf_mean_after$bounds, `[[`, "lower_status"),
+      lapply(blf_mean_control$bounds, `[[`, "lower_status")
+    ) &&
+    identical(
+      lapply(blf_mean_after$bounds, `[[`, "upper_status"),
+      lapply(blf_mean_control$bounds, `[[`, "upper_status")
+    ) &&
+    isTRUE(all.equal(
+      blf_mean_after$bounds, blf_mean_control$bounds,
+      tolerance = 1e-11
+    ))
 )
 rm(
   blf_reference_est,
@@ -152,6 +171,8 @@ rm(
   blf_capture_full,
   blf_raw_failure,
   blf_mean_control,
+  blf_production_mean_control,
+  blf_mean_after,
   blf_shared,
   blf_shared_projection,
   blf_mean_only,

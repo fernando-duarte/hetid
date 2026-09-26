@@ -80,7 +80,11 @@ jn_fx <- local({
   rad_mnj <- 0.6
   w1_mnj <- drop(w2_mnj %*% b_c_mnj) + sample(c(-1, 1), n_mnj, TRUE) * runif(n_mnj, 1, 3)
   qs_mnj <- jn_ball(b_c_mnj, rad_mnj)
-  b_tab_mnj <- list(set_lower = b_c_mnj - rad_mnj, set_upper = b_c_mnj + rad_mnj)
+  b_tab_mnj <- list(
+    set_lower = b_c_mnj - rad_mnj, set_upper = b_c_mnj + rad_mnj,
+    outer_lower = b_c_mnj - rad_mnj, outer_upper = b_c_mnj + rad_mnj,
+    status = rep("bounded", length(b_c_mnj))
+  )
   grid_mnj <- logvar_feasible_grid(qs_mnj, b_tab_mnj$set_lower, b_tab_mnj$set_upper, 13L)
   eps_mnj <- w1_mnj - w2_mnj %*% t(grid_mnj)
   sl_mnj <- (proj_mnj %*% log(eps_mnj^2))[-1, , drop = FALSE]

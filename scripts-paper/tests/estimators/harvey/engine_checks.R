@@ -15,7 +15,8 @@ he_try <- .test$safe
 # the four lagged return PCs the constructor expects)
 he_qs <- list(A_i = list(diag(2)), b_i = list(c(0, 0)), c_i = -1)
 he_btab <- data.frame(
-  coef = c("x1", "x2"), set_lower = c(-1, -1), set_upper = c(1, 1), status = "bounded"
+  coef = c("x1", "x2"), set_lower = c(-1, -1), set_upper = c(1, 1),
+  outer_lower = c(-1, -1), outer_upper = c(1, 1), status = "bounded"
 )
 he_labels <- c("t0", "t1")
 he_omega <- .derive_constraint_scales(he_qs, .derive_theta_scale(he_qs))
@@ -65,7 +66,8 @@ he_pv <- tryCatch(
     b0 <- c(0.15, -0.1)
     qs_s <- list(A_i = list(diag(2)), b_i = list(-2 * b0), c_i = sum(b0^2))
     btab_s <- data.frame(
-      coef = c("x1", "x2"), set_lower = b0, set_upper = b0, status = "bounded"
+      coef = c("x1", "x2"), set_lower = b0, set_upper = b0,
+      outer_lower = b0, outer_upper = b0, status = "bounded"
     )
     fit0 <- logvar_harvey_fit(b0, he_w1, he_w2, he_x)
     res_s <- logvar_engine_set_at_tau(he_mk(NULL), qs_s, btab_s,

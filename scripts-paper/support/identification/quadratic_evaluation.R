@@ -8,11 +8,11 @@ PAPER_QUADRATIC_CONTROL <- list(
   solver_maxeval = 1000L,
   feasibility_tolerance = 1e-4,
   admission_tolerance = 1e-10,
+  candidate_correction_rtol = 1e-6,
   crossing_range_rtol = 1e-8,
   point_identification_tolerance = 1e-8,
   bound_edge_rtol = 0.99,
   bound_stability_rtol = 1e-3,
-  unbounded_growth_factor = 5,
   polish_blow_factor = 5,
   # rounds of the news-box multistart (theta_box_multistart.R): round one solves
   # the axis pool, round two re-seeds from its argmaxes and is the one that

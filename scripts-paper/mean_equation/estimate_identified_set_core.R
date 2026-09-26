@@ -46,33 +46,13 @@ estimate_mean_equation <- function(set_id_data, y1_col, x_cols, y2_cols, z_col,
     stats::reformulate(c(x_cols, y2_cols), response = y1_col),
     data = set_id_data
   )
-  # per-coefficient intervals of the joint identified set at each display
-  # slack (theta profile bounds + beta1 functional bounds, the shared
-  # coef_interval_tables recipe from support/identification/tau_star.R)
-  set_tables <- lapply(
-    tau_display, \(tau) coef_interval_tables(gamma, tau, moments, beta1r, beta2r)
-  )
-  names(set_tables) <- vapply(tau_display, paper_tau_key, character(1))
-  # coef_interval_tables starts every profile solve at the origin and can settle
-  # on a local vertex short of the true extreme, so the news intervals are
-  # re-solved by the box multistart, walked up the display taus from a chain
-  # seeded at the tau = 0 point. An endpoint moves only when a solve certifies a
-  # feasible theta outside the origin-start interval, so this only ever adds
-  # points the set provably contains -- it certifies feasibility, not global
-  # optimality. These are the sound boxes: every set_tables consumer, and the
-  # log-variance census reading them through mean_eq_bounds_tau, needs a box
-  # that contains the set rather than one that clips it.
-  refined <- set_id_display_tau_refinement_full(
+  # Coordinate and structural endpoints share checked points and refinement.
+  # Finite values are numerical approximations; containing outer bounds travel
+  # separately for the volatility searches and residual-zero screens.
+  set_tables <- set_id_display_tau_refinement_full(
     tau_display, if (is.null(point0)) NULL else point0$theta,
     gamma, moments, beta1r, beta2r
   )
-  # both blocks take the refined set: theta from the widened box, beta1 from the
-  # same certified points through its linear map. Refining only theta would
-  # report the two over different sets under spec B.
-  for (j in seq_along(set_tables)) {
-    set_tables[[j]]$theta <- refined[[j]]$theta
-    set_tables[[j]]$beta1 <- refined[[j]]$beta1
-  }
   theta_table <- cbind(
     data.frame(
       coef = y2_cols,
@@ -129,6 +109,7 @@ estimate_mean_equation <- function(set_id_data, y1_col, x_cols, y2_cols, z_col,
     theta_point_cond = if (is.null(point0)) NA_real_ else point0$cond,
     tau_star = tau_star$tau_star,
     tau_star_capped = tau_star$capped,
+    tau_star_bracket = tau_star$bracket,
     tau_sweep = tau_sweep,
     relevance = relevance,
     w2_cor = stats::cor(w2),

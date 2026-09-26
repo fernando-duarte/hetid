@@ -8,14 +8,17 @@
 # polish, guarded by a residual-zero census -- log(eps^2) is singular where
 # a residual crosses zero, and the hyperplane w2_t' b = w1_t meets the set
 # iff w1_t lies inside the range of the linear functional w2_t' b over it,
-# which solve_linear_functional_bound answers up to its local-solver caveat
-# (a closed-form box range soundly screens the unambiguous rows first, and
-# the scan's sign tracker is a second sound detector). Definitions only;
+# which crossing_census.R decides with verified outer bounds for no-crossing
+# verdicts and checked member points for crossings (the scan's sign tracker
+# is a second sound detector). Definitions only;
 # sourced by the log-OLS orchestrator after the profile-bound internals and by
 # tests/engine/test_residual_map.R.
 
 paper_source_once(paper_path(
   "log_variance", "estimators", "controls.R"
+))
+paper_source_once(paper_path(
+  "log_variance", "core", "crossing_census.R"
 ))
 
 logvar_design_matrix <- function(pcr, expected_pc_cols = NULL) {
@@ -69,52 +72,6 @@ logvar_theta_grad <- function(b, w1, w2, proj_row) {
 # row j equals logvar_theta_grad(b, w1, w2, proj[j, ])
 logvar_theta_jacobian <- function(b, w1, w2, proj) {
   -2 * (proj %*% (w2 / drop(w1 - w2 %*% b)))
-}
-
-# residual-zero census over the joint set: observation t's hyperplane
-# w2_t' b = w1_t intersects the set iff w1_t lies inside the image of the
-# linear functional w2_t' b over it -- an interval when the set is
-# connected, so the [min, max] range test below is exact there and errs
-# only toward flagging a crossing on a disconnected set. The closed-form
-# range over the bounding box is a sound outer screen (outside it, no
-# crossing is possible); each remaining ambiguous row gets functional
-# bounds over the set itself, exact up to connectedness for found
-# crossings and solver-certified for no-crossing verdicts. cross collects
-# the certified crossings, unresolved the rows whose solves failed
-# (callers must fail closed on those).
-logvar_crossing_census <- function(qs, lower, upper, w1, w2) {
-  w2_pos <- pmax(w2, 0)
-  w2_neg <- pmin(w2, 0)
-  box_min <- drop(w2_pos %*% lower + w2_neg %*% upper)
-  box_max <- drop(w2_pos %*% upper + w2_neg %*% lower)
-  cross <- integer(0)
-  unresolved <- integer(0)
-  for (t_row in which(w1 >= box_min & w1 <= box_max)) {
-    # a zero w2 row reaches here only when w1_t = 0 (its box range is {0}),
-    # i.e. eps_t is identically zero over the whole set: a crossing, and one
-    # a zero-objective functional solve could not certify
-    if (all(w2[t_row, ] == 0)) {
-      cross <- c(cross, t_row)
-      next
-    }
-    # relative slack biased toward flagging a crossing, so roundoff at the
-    # functional endpoints never certifies a false negative
-    slack <- PAPER_QUADRATIC_CONTROL$crossing_range_rtol *
-      max(1, abs(w1[t_row]))
-    fmin <- solve_linear_functional_bound(qs, w2[t_row, ], "min")
-    if (!(fmin$bounded && fmin$valid)) {
-      unresolved <- c(unresolved, t_row)
-      next
-    }
-    if (w1[t_row] < fmin$bound - slack) next
-    fmax <- solve_linear_functional_bound(qs, w2[t_row, ], "max")
-    if (!(fmax$bounded && fmax$valid)) {
-      unresolved <- c(unresolved, t_row)
-    } else if (w1[t_row] <= fmax$bound + slack) {
-      cross <- c(cross, t_row)
-    }
-  }
-  list(cross = cross, unresolved = unresolved)
 }
 
 # axis-product grid over the per-coefficient bounding box, filtered to the

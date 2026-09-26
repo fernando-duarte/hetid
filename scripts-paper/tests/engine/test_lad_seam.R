@@ -23,7 +23,8 @@ check <- .test$check
 # length-2 fit otherwise; analyze_domain is injected per check.
 qsb <- list(A_i = list(diag(2)), b_i = list(c(0, 0)), c_i = -1)
 btab <- data.frame(
-  coef = c("b1", "b2"), set_lower = c(-1, -1), set_upper = c(1, 1), status = "bounded"
+  coef = c("b1", "b2"), set_lower = c(-1, -1), set_upper = c(1, 1),
+  outer_lower = c(-1, -1), outer_upper = c(1, 1), status = "bounded"
 )
 seam_dummy <- function(analyze_domain = NULL, fail_at = NULL, traversal = "lattice") {
   fit_at_b <- function(b, start = NULL) {

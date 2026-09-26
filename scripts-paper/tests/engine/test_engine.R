@@ -11,6 +11,9 @@ source(file.path("scripts-paper", "config", "paths.R"))
 paper_source_once(paper_path("config", "artifacts.R"))
 paper_source_once(paper_path("support", "identification", "profile_solver_core.R"))
 paper_source_once(paper_path("support", "identification", "profile_bounds_api.R"))
+paper_source_once(paper_path(
+  "support", "identification", "coefficient_interval_tables.R"
+))
 paper_source_once(paper_path("log_variance", "core", "residual_map.R"))
 paper_source_once(paper_path("log_variance", "engine", "api.R"))
 paper_source_once(paper_path("log_variance", "estimators", "log_ols", "estimator.R"))
@@ -23,6 +26,8 @@ paper_source_once(paper_path("tests", "support", "harness.R"))
 check <- .test$check
 
 paper_source_once(paper_path("tests", "engine", "map_checks.R"))
+paper_source_once(paper_path("tests", "engine", "containing_box_checks.R"))
+paper_source_once(paper_path("tests", "engine", "crossing_census_checks.R"))
 paper_source_once(paper_path("tests", "engine", "oracle_checks.R"))
 paper_source_once(paper_path("tests", "engine", "schema_checks.R"))
 paper_source_once(paper_path("tests", "engine", "service_checks.R"))

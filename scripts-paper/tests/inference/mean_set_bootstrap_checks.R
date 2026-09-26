@@ -31,7 +31,8 @@ mps_tables <- mps_with_stubs(
   ),
   function() {
     coef_interval_tables_from_quadratic(
-      NULL, c(b0 = 5), matrix(1, 1L, 1L, dimnames = list("th1", "b0"))
+      NULL, c(b0 = 5), matrix(1, 1L, 1L, dimnames = list("th1", "b0")),
+      evidence = list()
     )
   }
 )

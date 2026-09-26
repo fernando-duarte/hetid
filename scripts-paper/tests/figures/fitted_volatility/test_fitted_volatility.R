@@ -96,7 +96,8 @@ check(
 # The exact one-dimensional set b^2 <= 1 has analytic fitted-volatility bounds.
 qs <- list(A_i = list(matrix(1, 1, 1)), b_i = list(0), c_i = -1)
 b_tab <- data.frame(
-  coef = "b", set_lower = -1, set_upper = 1, status = "bounded"
+  coef = "b", set_lower = -1, set_upper = 1,
+  outer_lower = -1, outer_upper = 1, status = "bounded"
 )
 envelope <- logvar_fitted_vol_envelope(
   base_est, qtr, x_mat, qs, b_tab,

@@ -17,19 +17,25 @@ local({
   beta$set_upper[beta$coef == "half"] <- Inf
   beta[beta$coef == "unreliable", c("status", "lower_status")] <- "unreliable"
   theta <- data.frame(
-    coef = rownames(beta2r), set_lower = -0.1, set_upper = 0.1, status = "bounded"
+    coef = rownames(beta2r), set_lower = -0.1, set_upper = 0.1,
+    outer_lower = -1, outer_upper = 1,
+    lower_status = "bounded", upper_status = "bounded", status = "bounded"
   )
   points <- rbind(diag(2L), -diag(2L))
   args <- lapply(seq_len(nrow(points)), function(i) points[i, ])
   env <- new.env(parent = .GlobalEnv)
-  env$coef_interval_tables_from_quadratic <- function(...) list(beta1 = beta, theta = theta)
+  env$coef_interval_tables_from_quadratic <- function(
+    qs, beta1r, beta2r, points = NULL, evidence = NULL
+  ) {
+    list(beta1 = beta, theta = theta)
+  }
   calls <- 0L
-  env$widen_theta_box <- function(...) {
+  env$widen_theta_box <- function(qs, theta_tab, warm = NULL, evidence = NULL) {
     calls <<- calls + 1L
     wide <- theta
     wide$set_lower <- -1
     wide$set_upper <- 1
-    list(tab = wide, args = args)
+    list(tab = wide, args = args, evidence = evidence, corrections = NULL)
   }
   build <- coef_interval_tables_widened
   environment(build) <- env
@@ -42,10 +48,19 @@ local({
     row <- out$beta1[out$beta1$coef == name, ]
     stopifnot(row$set_lower <= min(images[, name]), row$set_upper >= max(images[, name]))
   }
-  unchanged <- !beta$coef %in% c("first", "second")
+  zero_row <- beta$coef == "zero"
+  half_row <- beta$coef == "half"
+  unreliable_row <- beta$coef == "unreliable"
   stopifnot(
     calls == 1L,
-    identical(out$beta1[unchanged, ], beta[unchanged, ]),
+    identical(out$beta1[zero_row, ], beta[zero_row, ]),
+    out$beta1$set_lower[half_row] <= min(images[, "half"]),
+    identical(out$beta1$set_upper[half_row], Inf),
+    identical(
+      out$beta1$set_lower[unreliable_row],
+      beta$set_lower[unreliable_row]
+    ),
+    out$beta1$set_upper[unreliable_row] >= max(images[, "unreliable"]),
     identical(
       out$beta1[c("coef", "status", "lower_status", "upper_status")],
       beta[c("coef", "status", "lower_status", "upper_status")]
@@ -60,6 +75,8 @@ local({
   beta1r <- c(theta1 = 0, theta2 = 0)
   beta2r <- diag(2L)
   dimnames(beta2r) <- list(names(beta1r), names(beta1r))
+  theta$outer_lower <- -2
+  theta$outer_upper <- 2
   beta <- theta
   qs$A_i <- list(diag(2L), -diag(2L))
   qs$b_i <- list(c(0, 0), c(0, 0))

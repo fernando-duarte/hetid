@@ -156,6 +156,7 @@ pcov_unb <- logvar_engine_set_at_tau(
   pcov_est, peng_qs,
   data.frame(
     coef = c("x1", "x2"), set_lower = c(-1, -1), set_upper = c(1, 1),
+    outer_lower = c(-Inf, -1), outer_upper = c(Inf, 1),
     status = c("unbounded", "bounded")
   ),
   grid_n = 5L, grid_floor = 1L, cold_start_check = FALSE

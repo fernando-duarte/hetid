@@ -10,7 +10,7 @@ paper_source_once(paper_path("support", "graphics", "bounds_axis.R"))
 paper_source_once(paper_path("log_variance", "figures", "bounds_by_tau_frame.R"))
 
 logvar_bounds_tau_render <- function(rows, metadata, tau_baseline, tau_star,
-                                     path) {
+                                     path, tau_bracket) {
   figure_style <- PAPER_FIGURE_STYLE$identified_set
   logvar_style <- PAPER_FIGURE_STYLE$log_variance
   # per-facet strip placement below the facet's own data, with a floor so a
@@ -122,13 +122,12 @@ logvar_bounds_tau_render <- function(rows, metadata, tau_baseline, tau_star,
         "Estimator ", metadata$estimator, "; target functional ",
         metadata$target_functional, ". Bands are projection hulls of an ",
         "estimated plug-in image; interior attainment is not established; ",
-        "finite endpoints are inner approximations. tau* = ",
-        signif(
-          tau_star,
-          PAPER_REPORTING_CONTROL$precision$figure_annotation
+        "finite endpoints are inner approximations. ",
+        format_tau_star_bracket(
+          tau_bracket, PAPER_REPORTING_CONTROL$precision$figure_annotation
         ),
-        " is the mean-equation set's ",
-        "bounded-unbounded transition. Points mark the sampled tolerances and ",
+        ". The grid stays below its certified bounded lower endpoint. ",
+        "Points mark the sampled tolerances and ",
         "the segments between them are interpolation.", band_note
       )
     ) +

@@ -28,7 +28,9 @@ blc_mean_spec <- c(
     "gamma", "y1_col", "x_cols", "y2_cols", "z_col", "impose_null"
   )]
 )
-blc_dummy_builder <- function(...) list(characterization = TRUE)
+blc_dummy_builder <- function(...) {
+  list(characterization = TRUE, fit_at_b = function(...) stop("dummy fit"))
+}
 blc_vol_spec <- lbd_spec
 blc_vol_spec$builders <- stats::setNames(
   rep(list(blc_dummy_builder), length(blc_vol_spec$estimator_ids)),

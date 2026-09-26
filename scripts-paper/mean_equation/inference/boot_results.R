@@ -27,7 +27,7 @@ mean_boot_results <- function(collected, set_id_mean_eq, inference_alpha,
     st <- set_id_mean_eq$set_tables[[j]]
     endpoint_target_table(
       collected$endpoint_draws[[j]],
-      rbind(st$beta1, st$theta),
+      rbind(st$beta1, st$theta[names(st$beta1)]),
       alpha = inference_alpha,
       tau = set_id_mean_eq$tau_display[[j]]
     )

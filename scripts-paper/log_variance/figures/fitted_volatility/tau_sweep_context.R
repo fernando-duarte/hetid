@@ -15,15 +15,13 @@ logvar_tau_sweep_boxes <- function(mean_eq, taus) {
   )
 }
 
-# Slacks the sweep can actually render. The identified set exists only below
-# tau*, so a contract tau at or above the estimated transition has no bounded
-# set to project and is dropped with a console note rather than hard-failing the
-# stage on a data-dependent boundary.
+# Render only slacks below the certified bounded cap. Larger slacks can be
+# unbounded or unresolved; the cap alone does not distinguish those outcomes.
 logvar_tau_sweep_feasible <- function(taus, tau_star) {
   keep <- taus < tau_star
   if (any(!keep)) {
     cat(sprintf(
-      "  fitted-volatility sweep: dropping tau %s (>= tau* = %s)\n",
+      "  fitted-volatility sweep: omitting tau %s (>= certified bounded cap %s)\n",
       paste(format(taus[!keep]), collapse = ", "),
       signif(tau_star, PAPER_REPORTING_CONTROL$precision$console_significant)
     ))

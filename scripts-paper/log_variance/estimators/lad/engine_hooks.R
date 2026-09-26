@@ -34,7 +34,8 @@ logvar_lad_precheck_hook <- function(
     geom$evaluate_fit <- ctx$evaluate_fit
     geom$degenerate <- isTRUE(all(b_tab$set_lower == b_tab$set_upper))
     geom$center <- (b_tab$set_lower + b_tab$set_upper) / 2
-    census <- logvar_crossing_census(qs, b_tab$set_lower, b_tab$set_upper, w1, w2)
+    box <- paper_containing_box(b_tab)
+    census <- logvar_crossing_census(qs, box$lower, box$upper, w1, w2)
     ctx_g <- logvar_lad_augment_ctx(
       ctx,
       w1,

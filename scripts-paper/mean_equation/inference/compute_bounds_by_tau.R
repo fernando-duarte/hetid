@@ -1,14 +1,7 @@
-# Identified intervals for every coefficient of the structural consumption-
-# growth equation as a function of the slack tau: on a grid over [0, tau*],
-# the exact per-coefficient range of the joint identified set from
-# estimate_identified_set.R (profile bounds for the news coefficients, linear-
-# functional bounds beta1(theta) = beta1R - beta2R' theta for the design
-# coefficients), with the closed-form tau = 0 point as the left endpoint.
-# A warm-started refinement re-solves each news bound from the previous grid
-# point's argmax: the shared solver starts every solve at the origin and can
-# drop into a lower local vertex mid-grid (a dip in the pc2 upper bound near
-# tau = 0.3), while continuation along the grid tracks the true branch.
-# Writes the bounds SVG to the typed figure directory after mean-set estimation.
+# Numerical coefficient ranges over the joint identified set on the slack grid.
+# Coordinate and structural endpoints use the same shared refinement as the
+# full sample and bootstrap. The theta tables also carry separate containing
+# outer bounds for the volatility consumers; the plotted bands use endpoints.
 
 paper_source_once(paper_path("support", "identification", "api.R"))
 paper_source_once(paper_path("support", "identification", "profile_solver_core.R"))
@@ -29,36 +22,19 @@ beta_coefs <- set_id_mean_eq$beta1_table$coef
 seed_theta <- set_id_mean_eq$theta_table$point
 if (anyNA(seed_theta)) seed_theta <- NULL
 warm <- if (is.null(seed_theta)) list() else list(seed_theta)
-refined_n <- 0L
 
-# multistart refinement of the news intervals at one grid tau: the warm pool
-# plus the axis starts and a cross-seeding round (theta_box_multistart.R),
-# keeping a certified value only when it extends the origin-start solve
-refine_theta_intervals <- function(tau, theta_tab) {
-  qs <- tau_quadratic_system(set_id_mean_eq$gamma, tau, set_id_mean_eq$moments)
-  widened <- widen_theta_box(qs, theta_tab, warm)
-  warm <<- widened$args
-  refined_n <<- refined_n +
-    sum(widened$tab$set_lower < theta_tab$set_lower, na.rm = TRUE) +
-    sum(widened$tab$set_upper > theta_tab$set_upper, na.rm = TRUE)
-  widened$tab
-}
-
-# per-coefficient interval of the joint identified set at one tau (the shared
-# coef_interval_tables recipe); a row is certified only when both sides are
-# finite and feasibility-valid, i.e. status "bounded". The refined theta
-# tables are kept per tau (full three-state status) as mean_eq_bounds_tau
-# for the log-variance bounds-by-tau figure, whose census needs these exact
-# warm-refined boxes as its sound outer screen
+# Retain the complete refined theta tables, including containing outer bounds,
+# for downstream volatility searches and residual-zero screens.
 mean_eq_bounds_tau <- list()
 bounds_at_tau <- function(tau) {
-  it <- coef_interval_tables(
-    set_id_mean_eq$gamma, tau, set_id_mean_eq$moments,
-    set_id_mean_eq$beta1r, set_id_mean_eq$beta2r
+  system <- mean_profile_system(set_id_mean_eq$gamma, tau, set_id_mean_eq$moments)
+  it <- coef_interval_tables_widened(
+    system$quadratic, set_id_mean_eq$beta1r, set_id_mean_eq$beta2r,
+    points = system$points, warm = warm
   )
-  it$theta <- refine_theta_intervals(tau, it$theta)
+  warm <<- attr(it, "profile_points")
+  tab <- rbind(it$beta1, it$theta[names(it$beta1)])
   mean_eq_bounds_tau[[paper_tau_key(tau)]] <<- it$theta
-  tab <- rbind(it$beta1, it$theta)
   data.frame(
     tau = tau, coef = tab$coef, lower = tab$set_lower, upper = tab$set_upper,
     certified = tab$status == PAPER_ENDPOINT_STATUS[["bounded"]]
@@ -155,8 +131,7 @@ cat(
     ),
     "];"
   ),
-  sum(!bounds_df$certified), "uncertified coefficient-tau rows dropped;",
-  refined_n, "sides extended by warm-start refinement\n"
+  sum(!bounds_df$certified), "uncertified coefficient-tau rows dropped\n"
 )
 
 # warm-refined boxes at the display taus for the PPML set map: the estimator
@@ -173,6 +148,6 @@ mean_eq_bounds_tau[
 # fitted-volatility tau sweep needs them for slacks off the display grid
 rm(
   theta_coefs, beta_coefs, seed_theta, warm,
-  refined_n, refine_theta_intervals, bounds_at_tau, tables, stored_rows,
+  bounds_at_tau, tables, stored_rows,
   tau_grid, bounds_df, plot_df, ref_lines, figure_style, bounds_plot, device
 )

@@ -66,14 +66,14 @@ cx_fx <- local({
   b_ref <- c(0.3, -0.2, 0.15)
   e_ref <- 1.4 * sample(c(-1, 1), n, TRUE) + rnorm(n, sd = 0.3)
   w1 <- drop(w2 %*% b_ref) + e_ref
-  # K = 2 witness design (b_cross interior to ||b - c|| <= 0.5, row 1 crossing)
+  # K = 2 ball witness design; row 1 crosses.
   # plus tangent, simultaneous-second-crossing, and thin near-point variants
   w2k <- matrix(rnorm(30 * 2L), 30L, 2L)
   b_cross <- c(0.2, -0.15)
   qsk <- list(A_i = list(diag(2)), b_i = list(-2 * b_cross), c_i = sum(b_cross^2) - 0.25)
   btabk <- data.frame(
     coef = c("b1", "b2"), set_lower = b_cross - 0.5, set_upper = b_cross + 0.5,
-    status = "bounded"
+    outer_lower = b_cross - 0.5, outer_upper = b_cross + 0.5, status = "bounded"
   )
   w1k <- drop(w2k %*% b_cross) + 1.3 * sample(c(-1, 1), 30L, TRUE)
   w1k[1] <- drop(w2k[1, ] %*% b_cross)

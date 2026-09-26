@@ -60,7 +60,7 @@ set_id_boot_draw_from_est <- function(est, shared_geometry, mean_spec) {
   )
   bounds <- lapply(shared_geometry$display_slots, function(slot) {
     interval <- shared_geometry$tables[[slot]]
-    table <- rbind(interval$beta1, interval$theta)
+    table <- rbind(interval$beta1, interval$theta[names(interval$beta1)])
     bounded <- PAPER_ENDPOINT_STATUS[["bounded"]]
     # each side is masked by its OWN status: a draw certified on one side only
     # still contributes that endpoint to the scale that side is studentized by
@@ -114,7 +114,7 @@ set_id_boot_diagnostics <- function(collected, inference, set_tables, taus,
                                     )) {
   display <- do.call(rbind, lapply(seq_along(taus), function(j) {
     st <- set_tables[[j]]
-    tab <- rbind(st$beta1, st$theta)
+    tab <- rbind(st$beta1, st$theta[names(st$beta1)])
     inf <- inference[[j]]
     cell <- collected$endpoint_draws[[j]]
     width <- tab$set_upper - tab$set_lower

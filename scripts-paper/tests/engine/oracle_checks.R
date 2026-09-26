@@ -93,7 +93,8 @@ orc_make_fixture <- function(w2, w1) {
   qtr <- seq_len(nrow(w2))
   b_tab <- data.frame(
     coef = colnames(w2), set_lower = c(-1, -1),
-    set_upper = c(1, 1), status = "bounded"
+    set_upper = c(1, 1), outer_lower = c(-1, -1),
+    outer_upper = c(1, 1), status = "bounded"
   )
   list(
     w1 = w1, w2 = w2, proj = proj, qtr = qtr, b_tab = b_tab,
@@ -154,16 +155,17 @@ check(
     !is.na(orc_cross$engine$schema$upper[orc_i0])
 )
 # unresolved census: force every functional solve to fail so the one
-# box-ambiguous row (w1 = 1.5 needs the solver over the ball) fails closed
+# genuinely crossing row (w1 = 1.3 < sqrt(2)) needs the solver and fails closed
 orc_w2_amb <- matrix(runif(orc_n * 2L, -0.25, 0.25), orc_n, 2L)
 orc_w2_amb[1, ] <- c(1, 1)
 orc_w1_amb <- 5 + runif(orc_n)
-orc_w1_amb[1] <- 1.5
+orc_w1_amb[1] <- 1.3
+check("ambiguous row crosses the unit ball by direct geometry", 1.3 < sqrt(2))
 orc_fx_amb <- orc_make_fixture(orc_w2_amb, orc_w1_amb)
 orc_amb <- local({
   old <- solve_linear_functional_bound
   on.exit(assign("solve_linear_functional_bound", old, envir = globalenv()), add = TRUE)
-  patched <- function(quadratic, objective_vec, direction) {
+  patched <- function(quadratic, objective_vec, direction, ...) {
     list(bound = NA_real_, bounded = FALSE, valid = FALSE)
   }
   assign("solve_linear_functional_bound", patched, envir = globalenv())

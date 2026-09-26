@@ -14,7 +14,8 @@ peng_try <- .test$safe
 # small positive synthetic PPML sample (w2 has K = 2 columns to match the ball)
 peng_qs <- list(A_i = list(diag(2)), b_i = list(c(0, 0)), c_i = -1)
 peng_btab <- data.frame(
-  coef = c("x1", "x2"), set_lower = c(-1, -1), set_upper = c(1, 1), status = "bounded"
+  coef = c("x1", "x2"), set_lower = c(-1, -1), set_upper = c(1, 1),
+  outer_lower = c(-1, -1), outer_upper = c(1, 1), status = "bounded"
 )
 peng_labels <- c("t0", "t1")
 peng_omega <- .derive_constraint_scales(peng_qs, .derive_theta_scale(peng_qs))
@@ -77,7 +78,8 @@ peng_pv <- tryCatch(
     b0 <- c(0.15, -0.1)
     qs_s <- list(A_i = list(diag(2)), b_i = list(-2 * b0), c_i = sum(b0^2))
     btab_s <- data.frame(
-      coef = c("x1", "x2"), set_lower = b0, set_upper = b0, status = "bounded"
+      coef = c("x1", "x2"), set_lower = b0, set_upper = b0,
+      outer_lower = b0, outer_upper = b0, status = "bounded"
     )
     fit0 <- logvar_ppml_fit(b0, peng_w1, peng_w2, cbind(1, peng_pcr))
     mk <- function(anchor) {

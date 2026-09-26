@@ -5,6 +5,7 @@ source(file.path("scripts-paper", "config", "paths.R"))
 paper_source_once(paper_path("support", "diagnostics", "identification_diagnostics.R"))
 paper_source_once(paper_path("support", "identification", "profile_solver_core.R"))
 paper_source_once(paper_path("support", "identification", "profile_bounds_api.R"))
+paper_source_once(paper_path("support", "identification", "tau_star.R"))
 
 paper_source_once(paper_path("tests", "support", "harness.R"))
 .test <- paper_test_harness()
@@ -154,7 +155,11 @@ check("rank-deficient null is not rejected", rk_deficient$p > 0.05)
 
 paper_source_once(paper_path("tests", "support", "quadratic_helper_checks.R"))
 paper_source_once(paper_path("tests", "support", "profile_classifier_checks.R"))
+paper_source_once(paper_path("tests", "support", "objective_scale_checks.R"))
 paper_source_once(paper_path("tests", "support", "box_multistart_checks.R"))
+paper_source_once(paper_path("tests", "support", "fixture_helpers.R"))
+paper_source_once(paper_path("tests", "support", "checked_pool_retry_checks.R"))
+paper_source_once(paper_path("tests", "support", "raw_quadratic_checks.R"))
 paper_source_once(paper_path("tests", "support", "tau_grid_checks.R"))
 paper_source_once(paper_path(
   "tests", "support", "bounds_by_tau_strip_checks.R"

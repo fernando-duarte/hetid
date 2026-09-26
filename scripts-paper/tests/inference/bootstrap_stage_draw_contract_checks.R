@@ -10,15 +10,24 @@ paper_source_once(paper_path("log_variance", "inference", "set_bootstrap_core.R"
 paper_source_once(paper_path("log_variance", "inference", "set_bootstrap_draw.R"))
 paper_source_once(paper_path("log_variance", "inference", "set_bootstrap_builders.R"))
 paper_source_once(paper_path("inference", "bootstrap_stage_draw.R"))
-stub_set_cells <- function(coef) {
-  data.frame(
-    coef = coef, set_lower = 0,
-    set_upper = 1, status = "bounded", lower_status = "bounded",
-    upper_status = "bounded"
+stub_set_cells <- function(coef, containing = FALSE) {
+  out <- data.frame(
+    coef = coef, set_lower = 0, set_upper = 1,
+    status = "bounded", lower_status = "bounded", upper_status = "bounded"
   )
+  if (containing) {
+    out$outer_lower <- 0
+    out$outer_upper <- 1
+  }
+  out
 }
-coef_interval_tables_from_quadratic <- function(qs, beta1r, beta2r) {
-  list(beta1 = stub_set_cells(names(beta1r)), theta = stub_set_cells(rownames(beta2r)))
+coef_interval_tables_from_quadratic <- function(
+  qs, beta1r, beta2r, points = NULL, evidence = NULL
+) {
+  list(
+    beta1 = stub_set_cells(names(beta1r)),
+    theta = stub_set_cells(rownames(beta2r), containing = TRUE)
+  )
 }
 coef_interval_tables_widened <- coef_interval_tables_from_quadratic
 tau_quadratic_system <- function(gamma, tau, moments) list(tau = tau)
@@ -45,6 +54,21 @@ stopifnot(identical(
 estimate_set_id_system <- function(...) est
 dat <- data.frame(when = 1:3, pc = c(4, NA, 6), row.names = c("a", "b", "c"))
 geometry <- set_id_boot_geometry(est, matrix(1, 1L, 1L), c(0, 0.1), 0.1)
+observed_points <- NULL
+point_est <- est
+point_est$point0 <- list(theta = 0.25)
+recording_builder <- function(qs, beta1r, beta2r, points = NULL) {
+  observed_points <<- points
+  coef_interval_tables_from_quadratic(qs, beta1r, beta2r, points = points)
+}
+point_geometry <- set_id_boot_geometry(
+  point_est, matrix(1, 1L, 1L), c(0, 0.1), 0.1,
+  table_builder = recording_builder
+)
+stopifnot(
+  identical(observed_points, matrix(0.25, 1L)),
+  identical(point_geometry$tables[[2L]]$theta$coef, "th1")
+)
 mean_spec <- list(
   coefs = c("b1", "th1"), gamma = matrix(1, 1L, 1L), taus = 0.1
 )

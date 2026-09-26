@@ -1,5 +1,9 @@
 # Definitions for computing fixed and identified-set variance shares.
 
+paper_source_once(paper_path(
+  "support", "identification", "containing_box.R"
+))
+
 centered_cov_t <- function(mat) {
   mat <- as.matrix(mat)
   crossprod(sweep(mat, 2, colMeans(mat))) / nrow(mat)
@@ -38,8 +42,8 @@ polish_extreme <- function(x0, quad, sq, box, sign_mult, delta, omega) {
     gradient = function(theta) {
       sign_mult * sq$grad(theta)
     },
-    lower = box$set_lower,
-    upper = box$set_upper,
+    lower = box$lower,
+    upper = box$upper,
     method = "slsqp",
     objective_scale = "none"
   )
@@ -47,8 +51,8 @@ polish_extreme <- function(x0, quad, sq, box, sign_mult, delta, omega) {
     return(NA_real_)
   }
   th <- pmin(
-    pmax(res$theta, box$set_lower),
-    box$set_upper
+    pmax(res$theta, box$lower),
+    box$upper
   )
   resid <- res$feasibility_residual
   if (is.finite(resid) &&
@@ -61,10 +65,11 @@ polish_extreme <- function(x0, quad, sq, box, sign_mult, delta, omega) {
 
 # Bound a convex block share over the joint identified set. A non-finite side
 # cannot be gridded, so the range is not computed; the caller decides what that
-# means from box$status, because the endpoints cannot say -- an uncertified
-# solve can return finite ones and a certified-unbounded set infinite ones.
-set_share_range <- function(box, quad, sq) {
-  if (any(!is.finite(c(box$set_lower, box$set_upper)))) {
+# means from tab$status, because the containing bounds cannot say -- they are
+# NA without a certificate and infinite on a certified-unbounded side.
+set_share_range <- function(tab, quad, sq) {
+  box <- paper_containing_box(tab, require_bounded = FALSE)
+  if (any(!is.finite(c(box$lower, box$upper)))) {
     return(c(NA_real_, NA_real_))
   }
   delta <- .derive_theta_scale(quad)
@@ -76,8 +81,8 @@ set_share_range <- function(box, quad, sq) {
       length.out =
         PAPER_ANALYSIS_CONTRACT$variance_share$grid_points_per_axis
     ),
-    box$set_lower,
-    box$set_upper
+    box$lower,
+    box$upper
   )
   pts <- as.matrix(expand.grid(axes))
   constraint_values <- quadratic_constraint_values(pts, quad, omega)

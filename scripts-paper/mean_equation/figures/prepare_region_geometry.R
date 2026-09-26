@@ -90,8 +90,9 @@ region_theta_box <- local({
 
 # per-coefficient bounding box of the set at slack tau, on the requested axes
 region_sd_box <- function(tau, s = region_sd) {
-  theta <- region_theta_box(tau)
-  list(lo = theta$set_lower * s, hi = theta$set_upper * s)
+  paper_source_once(paper_path("support", "identification", "containing_box.R"))
+  box <- paper_containing_box(region_theta_box(tau))
+  list(lo = box$lower * s, hi = box$upper * s)
 }
 
 # tau = 0 point

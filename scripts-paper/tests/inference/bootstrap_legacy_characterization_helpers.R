@@ -34,7 +34,7 @@ paper_legacy_mean_from_est <- function(est, spec) {
         interval$beta1, est$beta1r, est$beta2r, widened$args
       )
     }
-    table <- rbind(interval$beta1, interval$theta)
+    table <- rbind(interval$beta1, interval$theta[names(interval$beta1)])
     bounded <- PAPER_ENDPOINT_STATUS[["bounded"]]
     list(
       lower = ifelse(table$lower_status == bounded, table$set_lower, NA_real_),

@@ -1,3 +1,4 @@
+paper_source_once(paper_path("support", "identification", "profile_evidence.R"))
 # Paper-owned public profile-bound functions. Source profile_solver_core.R first.
 
 paper_source_once(paper_path(

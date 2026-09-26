@@ -91,9 +91,8 @@ logvar_logols_estimator <- function(
     },
     analyze_domain = list(
       precheck = function(qs, b_tab, ctx) {
-        census <- logvar_crossing_census(
-          qs, b_tab$set_lower, b_tab$set_upper, w1, w2
-        )
+        box <- paper_containing_box(b_tab)
+        census <- logvar_crossing_census(qs, box$lower, box$upper, w1, w2)
         list(
           unresolved = census$unresolved,
           n_flagged = length(census$cross),

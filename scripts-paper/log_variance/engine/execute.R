@@ -20,10 +20,11 @@ logvar_engine_run <- function(est, qs, b_tab, b_seed, grid_n, grid_floor,
     }
   }
   pre_cross <- if (is.null(pre)) NA_integer_ else pre$n_flagged
-  b_feas <- logvar_feasible_grid(qs, b_tab$set_lower, b_tab$set_upper, grid_n)
+  box <- paper_containing_box(b_tab)
+  b_feas <- logvar_feasible_grid(qs, box$lower, box$upper, grid_n)
   if (nrow(b_feas) < grid_floor) {
     b_feas <- logvar_feasible_grid(
-      qs, b_tab$set_lower, b_tab$set_upper, 2L * grid_n - 1L
+      qs, box$lower, box$upper, 2L * grid_n - 1L
     )
   }
   # the feasible count as searched, before the selector, the coarsening stride,
@@ -104,7 +105,7 @@ logvar_engine_run <- function(est, qs, b_tab, b_seed, grid_n, grid_floor,
       },
       pool_k = starts_per_side,
       pool_sep = LOGVAR_SEARCH_CONTROL$start_separation_fraction *
-        sqrt(sum((b_tab$set_upper - b_tab$set_lower)^2))
+        sqrt(sum((box$upper - box$lower)^2))
     )
   }
   st$n_fail <- if (is.null(scan$n_fit_failures)) 0L else scan$n_fit_failures

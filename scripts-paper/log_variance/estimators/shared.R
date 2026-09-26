@@ -86,11 +86,12 @@ logvar_prepare_map_context <- function(inputs, contract, mean_eq, bounds_tau,
   b_tab_base <- bounds_tau[[paper_tau_key(tau_base)]]
   stopifnot(!is.null(b_tab_base))
   point_feasible <- quadratic_point_feasible(qs_base, b_point)
+  box_base <- paper_containing_box(b_tab_base)
   grid_base <- logvar_coarsen_grid(
     logvar_feasible_grid(
       qs_base,
-      b_tab_base$set_lower,
-      b_tab_base$set_upper,
+      box_base$lower,
+      box_base$upper,
       LOGVAR_SEARCH_CONTROL$grid_n
     ),
     grid_cap

@@ -1,5 +1,5 @@
-# Non-dimensionalized profile-bounds solver with scale-aware unbounded detection
-# and a solver-independent feasibility+active-constraint validity check.
+# Non-dimensionalized optimizer for finite profile candidates.
+# Geometry classification and strict candidate membership are separate checks.
 # Invariance: theta = delta * phi preserves the feasible set for ANY delta > 0,
 # and dividing each constraint g_i <= 0 by omega_i > 0 leaves it unchanged.
 
@@ -61,7 +61,7 @@ paper_source_once(paper_path(
 # solver convergence code. With objective = NULL the objective is the coordinate
 # functional e_k' phi (component bounds, byte-identical to the original path);
 # with objective = c it is the linear functional c' phi (the theta-units value is
-# delta * c' phi, recovered by .finalize_linear_bound). delta is a positive
+# delta * c' phi, recovered by the profile classifier). delta is a positive
 # constant, so scaling the objective by it would not move the argmin; it is left
 # out of the objective and applied only when recovering the bound, mirroring the
 # coordinate convention (obj in phi units, bound in theta units).
@@ -97,10 +97,9 @@ paper_source_once(paper_path(
   )
 }
 
-# Most-binding normalized constraint value at theta (~0 at a feasible+active
-# boundary point). Certifies FEASIBLE + at least one ACTIVE constraint -- it does
-# NOT certify global optimality (no stationarity / multiplier check); on
-# non-convex (indefinite A_i) sets a premature boundary stall can still pass.
+# Most-binding normalized constraint value, used to check activity near a
+# finite endpoint candidate. Strict membership is checked independently by the
+# geometry evidence. Neither check certifies global optimality.
 .feasibility_residual <- function(quadratic, theta, omega) {
   quadratic_constraint_residual(theta, quadratic, omega)
 }
@@ -108,30 +107,3 @@ paper_source_once(paper_path(
 # A scaled solve is usable for a bound/track decision only if every coordinate is
 # finite (a crashed solve returns NA for all of phi).
 .solve_finite <- function(r) all(is.finite(r$phi))
-
-# Turn a finite scaled solution into a finite bound. VALID is the
-# solver-INDEPENDENT feasible+active certificate (residual ~ 0): a feasible point
-# that sits on at least one constraint boundary. We deliberately do NOT gate this
-# on the solver's convergence code -- SLSQP returns roundoff-limited codes on
-# legitimately ill-conditioned bounds, so trusting the residual certificate
-# (with hard crashes already screened by .solve_finite) avoids false "unreliable"
-# verdicts on otherwise valid bounds.
-.finalize_bound <- function(quadratic, delta, omega, r, component_index, feas_tol) {
-  resid <- .feasibility_residual(quadratic, delta * r$phi, omega)
-  list(
-    bound = delta * r$phi[component_index], bounded = TRUE,
-    valid = is.finite(resid) && abs(resid) <= feas_tol
-  )
-}
-
-# Linear-functional analog of .finalize_bound: the bound is the theta-units
-# functional value delta * (objective_vec' phi) = c' theta; the valid certificate
-# is the same solver-independent feasible+active residual check.
-.finalize_linear_bound <- function(quadratic, delta, omega, r, objective_vec,
-                                   feas_tol) {
-  resid <- .feasibility_residual(quadratic, delta * r$phi, omega)
-  list(
-    bound = delta * sum(objective_vec * r$phi), bounded = TRUE,
-    valid = is.finite(resid) && abs(resid) <= feas_tol
-  )
-}

@@ -16,13 +16,18 @@ limit while preserving the original definition order and global symbols.
 | `quadratic_system.R` | Single entry point assembling the identified-set quadratic system via `hetid::build_general_quadratic_system()` (the `K_i = 1` date-t specialization); re-attaches the `hetid_components` class and attributes |
 | `quadratic_evaluation.R` | Canonical evaluation of the quadratic inequality systems |
 | `scaled_quadratic_program.R` | Generic scaled quadratic-program adapter |
-| `profile_solver_core.R` | Non-dimensionalized profile-bounds solver with scale-aware unbounded detection (sources `quadratic_evaluation.R`, `scaled_quadratic_program.R`) |
+| `profile_solver_core.R` | Non-dimensionalized profile-bound candidate solver (sources `quadratic_evaluation.R`, `scaled_quadratic_program.R`) |
 | `profile_bounds_api.R` | Public profile-bound facade (sources the classifier, coordinate, functional, and linear-objective bound modules) |
-| `bound_search_classifier.R` | Shared box-growth classifier for coordinate and linear-functional bounds |
+| `bound_search_classifier.R` | Accepts coordinate and linear-functional endpoints only with the corresponding geometry evidence and checked member points |
+| `profile_evidence.R` | Adapter to `hetid::compute_quadratic_set_evidence()`, including bounded candidate correction toward checked points |
+| `profile_point_pool.R` | Shares checked points across eligible objective sides |
+| `containing_box.R` | Produces and validates the containing bounds used by search domains and residual-crossing screens |
+| `coefficient_interval_tables.R` | Builds coordinate and structural endpoint tables from shared geometry evidence |
 | `coordinate_bounds.R` | Coordinate profile bounds over the quadratic identified set |
 | `functional_bounds.R` | Linear-functional and aggregate profile bounds |
 | `linear_objective_bounds.R` | Facade adapter for linear objectives over a quadratic set |
-| `tau_star.R` | Fixed-gamma bounded/unbounded sweep, bisection, re-optimizing oracle, and recession degeneracy diagnostic for the tau* threshold |
+| `tau_star.R` | Fixed-gamma geometry sweep, re-optimizing oracle, and recession degeneracy diagnostic |
+| `tau_star_bracket.R` | Bisection with explicit bounded, unbounded, unresolved and capped brackets for the tau* threshold |
 | `identified_set_bootstrap.R` | One-draw re-estimation, draw collection, and diagnostics table for the set-endpoint bootstrap |
 | `identified_set_bootstrap_collect.R` | Collects the per-draw bootstrap results into the unified bootstrap stage's endpoint tables (sourced by `scripts-paper/inference/run_bootstrap_stage.R`) |
 | `identified_set_inference.R` | Percentile bands and Stoye (2009) / Imbens-Manski (2004) endpoint confidence intervals (sources `inference_calibration.R`) |

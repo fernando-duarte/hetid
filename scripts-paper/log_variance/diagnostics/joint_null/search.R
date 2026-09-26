@@ -5,6 +5,9 @@
 paper_source_once(paper_path(
   "log_variance", "diagnostics", "joint_null", "search_candidates.R"
 ))
+paper_source_once(paper_path(
+  "support", "identification", "containing_box.R"
+))
 
 # Vectorized feasible-grid scan of q over the joint Lewbel set, returning the
 # attained arg-min (carry floor included), separated polish starts, and the grid
@@ -13,8 +16,9 @@ paper_source_once(paper_path(
 logvar_joint_null_scan <- function(qs, b_tab, w1, w2, proj, d_inv2, grid_n,
                                    prior_minima = list(), seed_points = list(),
                                    control = LOGVAR_JOINT_NULL_CONTROL) {
-  lower <- as.numeric(b_tab$set_lower)
-  upper <- as.numeric(b_tab$set_upper)
+  box <- paper_containing_box(b_tab)
+  lower <- as.numeric(box$lower)
+  upper <- as.numeric(box$upper)
   grid <- logvar_feasible_grid(qs, lower, upper, grid_n)
   if (nrow(grid) < control$grid_floor) {
     grid <- logvar_feasible_grid(qs, lower, upper, 2L * grid_n - 1L)

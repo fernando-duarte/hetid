@@ -46,6 +46,7 @@ seam_est <- function() {
 seam_qs <- list(A_i = list(diag(2)), b_i = list(c(0, 0)), c_i = -1)
 seam_btab <- data.frame(
   coef = c("x1", "x2"), set_lower = c(-1, -1), set_upper = c(1, 1),
+  outer_lower = c(-1, -1), outer_upper = c(1, 1),
   status = "bounded", row.names = NULL
 )
 seam_run <- function(...) {

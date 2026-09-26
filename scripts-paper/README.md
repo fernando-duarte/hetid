@@ -88,6 +88,29 @@ Their names and serialized schemas are part of the pipeline contract.
 Production dependencies are loaded through `paper_source_once()`; direct
 `source(paper_path(...))` calls are rejected by the topology check.
 
+## Endpoint geometry
+
+Coordinate and structural bounds share `hetid::compute_quadratic_set_evidence()`.
+Checked tail directions establish infinite sides; positive definite combinations of the
+quadratic constraints establish boundedness. An unsuccessful search leaves a side unresolved.
+Finite endpoint values are numerical approximations at checked feasible points. Full-sample
+and bootstrap estimation use the same builder and share those points across objectives.
+
+Theta tables retain `set_lower` and `set_upper` for reporting and inference. Their separate
+`outer_lower` and `outer_upper` columns contain the set and supply the volatility search
+domains, variance-share searches, and region frames. The residual-zero census uses containing
+bounds to exclude crossings; unresolved cases remain explicit. These numerical bounds use
+rounding margins and independently checked candidate weights, rather than interval arithmetic.
+
+The tau-star result includes a bracket and its search status. Scalar sweep limits use the
+certified bounded lower endpoint. An unresolved midpoint is not reported as a threshold,
+and an exhausted search does not establish that the sweep maximum is bounded.
+Bounded geometry can coexist with an unresolved finite endpoint or width. The volatility
+engine still requires valid attained coordinate sides as well as finite containing bounds,
+because some estimator hooks use the attained sides. The preserved-input repair audit gives
+specification B a bracket of [0.615, 0.625] and a plotting cap of 0.615; its earlier cap near
+0.6209 lacked the required boundedness evidence.
+
 ## Gates and decisions
 
 Three distinct decision points guard the conditional log-variance workstreams. They are
