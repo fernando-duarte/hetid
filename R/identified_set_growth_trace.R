@@ -1,4 +1,4 @@
-# A phase stop describes the numerical search, never the geometry of the entire set.
+# A phase stop describes the numerical search, never the geometry of the entire set
 append_growth_trace <- function(phase_history, phase, passes, half, edge, room, max_growth) {
   reason <- if (any(edge & room) && passes >= max_growth) {
     "pass_limit"

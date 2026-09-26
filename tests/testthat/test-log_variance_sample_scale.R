@@ -27,7 +27,7 @@ test_that("response rescaling retains boundary candidates and log-variance width
   get_sample <- function(scale) {
     fit <- compute_tau0_system(scale * d$y1, scale * d$y2, d$x, d$z)
     region <- compute_identified_set_box(fit, 0.05, n_grid = 7)
-    # Tighten IRLS accuracy to isolate membership from scale-dependent stopping.
+    # Tighten IRLS accuracy to isolate membership from scale-dependent stopping
     sample_log_variance_set(region, d$x_var,
       n_points = 3,
       control = list(GLM_EPSILON = 1e-14)

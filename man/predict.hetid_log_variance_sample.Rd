@@ -61,3 +61,15 @@ or underflow at finite eta makes only that transformed side missing, with status
 \code{transform_overflow} or \code{transform_underflow}; it never proves infinity
 or an attained zero. No prediction step refits a candidate or draws randomness.
 }
+\examples{
+set.seed(42)
+n <- 100
+z <- rnorm(n)
+x <- cbind(x = rnorm(n))
+y2 <- cbind(news = exp(z / 2) * rnorm(n))
+y1 <- 0.3 + x[, 1] + 0.5 * y2[, 1] + rnorm(n)
+fit <- compute_tau0_system(y1, y2, x, z)
+box <- compute_identified_set_box(fit, 0.01, n_grid = 3)
+sampled <- sample_log_variance_set(box, x)
+predict(sampled, x[1:3, , drop = FALSE])$bounds
+}

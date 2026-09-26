@@ -1,4 +1,4 @@
-#' Run a serial endpoint bootstrap over precomputed indices
+#' Run a Serial Endpoint Bootstrap Over Precomputed Indices
 #'
 #' @param full Full-sample endpoint frame accepted by [bootstrap_set_interval()].
 #' @param indices Nonempty list of equally long numeric index vectors, using

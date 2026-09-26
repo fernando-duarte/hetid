@@ -5,7 +5,7 @@ bootstrap_root_rank <- function(n, alpha) {
   min(n, ceiling((n + 1) * (1 - alpha)))
 }
 
-# A diagnostic for the explicitly listed live sides, not an all-coefficient CI.
+# A diagnostic for the explicitly listed live sides, not an all-coefficient CI
 bootstrap_simultaneous_diagnostic <- function(sides, full, alpha, min_reps) {
   n <- length(sides[[1]]$lower$ok)
   root <- rep(0, n)

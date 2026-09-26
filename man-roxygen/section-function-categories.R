@@ -65,7 +65,16 @@
 #'   \item \code{\link{profile_log_variance_set}()}: Volatility coefficients over that set
 #'   \item \code{\link{sample_log_variance_set}()}: Retained joint fits for prediction
 #'   \item \code{\link{predict.hetid_log_variance_sample}()}: Sampled prediction envelopes
+#'   \item \code{\link{compute_quadratic_set_evidence}()}: Nonemptiness, boundedness, outer bounds
 #'   \item \code{\link{IDENTIFIED_SET_CONTROL}}: Identified-set search numerical controls
+#' }}
+#'
+#' \subsection{Bootstrap Inference Functions:}{
+#' \itemize{
+#'   \item \code{\link{circular_mbb_indices}()}: Circular moving-block resample indices
+#'   \item \code{\link{bootstrap_endpoint_draws}()}: Serial endpoint bootstrap over those indices
+#'   \item \code{\link{bootstrap_set_interval}()}: Intervals from paired endpoint draws
+#'   \item \code{\link{bootstrap_point_statistics}()}: Robust scales and empirical tails
 #' }}
 #'
 #' \subsection{Constants and Utilities:}{

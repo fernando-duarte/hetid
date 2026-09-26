@@ -1,4 +1,4 @@
-#' Calibrate intervals from paired bootstrap endpoints
+#' Calibrate Intervals From Paired Bootstrap Endpoints
 #'
 #' Uses the joint distribution of supplied endpoints, with separate robust scales
 #' for each side. All tuning choices governing draw eligibility are explicit.

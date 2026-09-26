@@ -37,6 +37,17 @@
 #'   original sample rows, including failed rows in that numbering. Eta witnesses
 #'   remain available when only the requested-scale transformation fails. The
 #'   design, dates, type, intercept choice and original sample are retained.
+#' @examples
+#' set.seed(42)
+#' n <- 100
+#' z <- rnorm(n)
+#' x <- cbind(x = rnorm(n))
+#' y2 <- cbind(news = exp(z / 2) * rnorm(n))
+#' y1 <- 0.3 + x[, 1] + 0.5 * y2[, 1] + rnorm(n)
+#' fit <- compute_tau0_system(y1, y2, x, z)
+#' box <- compute_identified_set_box(fit, 0.01, n_grid = 3)
+#' sampled <- sample_log_variance_set(box, x)
+#' predict(sampled, x[1:3, , drop = FALSE])$bounds
 #' @importFrom stats predict
 #' @export
 predict.hetid_log_variance_sample <- function(object, newdata = NULL,

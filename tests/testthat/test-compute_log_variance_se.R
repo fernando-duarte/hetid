@@ -1,6 +1,5 @@
-# Tests for compute_log_variance_se(): the term/coef/SE frame assembled over
-# compute_log_variance_vcov(), plus the NA-not-zero diagonal rule on the
-# internal frame-assembly helper.
+# compute_log_variance_se(): the term/coef/SE frame assembled over compute_log_variance_vcov(),
+# plus the NA-not-zero diagonal rule on the internal frame-assembly helper
 
 test_that("the frame has the right shape and default row names", {
   d <- simulate_logvar_data()

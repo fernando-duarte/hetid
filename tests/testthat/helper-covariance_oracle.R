@@ -1,4 +1,4 @@
-# Independent solve() and observation-pair oracle for covariance tests.
+# Independent solve() and observation-pair oracle for covariance tests
 covariance_fixture <- function() {
   x <- cbind("(Intercept)" = 1, v = c(-2, -1, 0, 1, 2, 3))
   list(x = x, coef = c(0.2, -0.1), y = c(0, 2, 1, 3, 1, 4))

@@ -1,6 +1,5 @@
-# Tests for the PPML log-variance internals: the design builder, the estimator
-# registry, the acceptance gates, the start ladder, and the scaled-response
-# guards. Everything here is unexported, so it is reached via hetid:::.
+# PPML log-variance internals: the design builder, the estimator registry, the acceptance
+# gates, the start ladder, and the scaled-response guards. Unexported, so via hetid:::
 
 test_that("log_variance_design labels the design and rejects ambiguous names", {
   x <- matrix(stats::rnorm(20), 10, 2)
@@ -190,12 +189,11 @@ test_that("fit_log_variance returns visibly on both the ok and nonconvergence pa
 })
 
 # Oracle tests for the exported fit_log_variance() wrapper: boundary
-# validation plus end-to-end parity against a direct glm.fit call.
+# validation plus end-to-end parity against a direct glm.fit call
 
 test_that("coefficients match a direct glm.fit parity run", {
-  # quasipoisson, matching production: poisson would warn on every
-  # non-integer response; the mathematical (oracle) check is the
-  # score-equation test below, this one pins glm.fit parity
+  # quasipoisson, matching production: poisson would warn on every non-integer response; the
+  # mathematical (oracle) check is the score-equation test below, this one pins glm.fit parity
   d <- simulate_logvar_data()
   fit <- fit_log_variance(d$y, d$x)
   parity <- stats::glm.fit(
@@ -217,9 +215,8 @@ test_that("score equation holds at the reported coefficients", {
 })
 
 test_that("response_scale shifts only the intercept by log(s)", {
-  # within one fit the identity coef[1] - warm_start[1] == log(s) is exact by
-  # construction; across the two runs glm.fit's mustart is not scale-equivariant,
-  # so coefficients agree only to convergence tolerance
+  # Within a fit, coef[1] - warm_start[1] == log(s) by construction; glm.fit's mustart is not
+  # scale-equivariant across runs, so their coefficients agree only to convergence tolerance
   d <- simulate_logvar_data()
   base <- fit_log_variance(d$y, d$x)
   scaled <- fit_log_variance(d$y, d$x, response_scale = 7)
@@ -267,9 +264,8 @@ test_that("extreme regressor rescale keeps acceptance and coefficients", {
 })
 
 test_that("scaled-response underflow and overflow fail closed, not as base errors", {
-  # y/response_scale can underflow to zero (svd on zero rows is a base error
-  # without the guard) or overflow to Inf; partial underflow is the sneaky
-  # case because zeros are otherwise valid responses
+  # y/response_scale can overflow to Inf or underflow to zero; unguarded svd fails on zero rows
+  # Partial underflow is harder to detect because zero responses are otherwise valid
   d <- simulate_logvar_data()
   total <- fit_log_variance(d$y * 1e-300, d$x, response_scale = 1e300)
   expect_false(log_variance_fit_ok(total))
@@ -294,9 +290,9 @@ test_that("captured glm conditions land in diagnostics and do not escape", {
   # fixture where the full ladder fails closed while still carrying a
   # warning could not be constructed deterministically. Substituting a
   # capture_glm_conditions()-level check around a real glm.fit call that
-  # DOES warn (a supplied start far from the data-driven optimum, which
+  # does warn (a supplied start far from the data-driven optimum, which
   # hits maxit): the warning must land in the recorded list and nothing
-  # may escape, including through the full ladder that then recovers.
+  # may escape, including through the full ladder that then recovers
   d <- simulate_logvar_data()
   expect_no_warning(fit_log_variance(d$y, d$x))
 
@@ -324,9 +320,8 @@ test_that("captured glm conditions land in diagnostics and do not escape", {
   )
 })
 
-# GLM_MAXIT is pinned to a single IRLS pass so every rung exhausts it by
-# construction; the near-collinear design this replaced hit the cap only on
-# platforms whose rounding kept glm.fit from calling the deviance settled
+# GLM_MAXIT = 1 exhausts every rung by construction; the old near-collinear fixture hit the cap
+# only where platform rounding kept glm.fit's deviance unsettled
 test_that("exhausting IRLS on every rung fails closed with the warning on record", {
   d <- simulate_logvar_data()
   local_mocked_bindings(

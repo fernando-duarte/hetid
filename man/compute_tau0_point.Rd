@@ -11,7 +11,7 @@ compute_tau0_point(components, tol = HETID_CONSTANTS$TAU0_POINT_TOLERANCE)
 \code{\link{compute_identified_set_components}}.}
 
 \item{tol}{Positive numeric scalar, the rank and residual tolerance
-(default \code{HETID_CONSTANTS$TAU0_POINT_TOLERANCE}, \code{1e-8}).
+(default \code{HETID_CONSTANTS$TAU0_POINT_TOLERANCE}).
 Passed to \code{\link[base]{qr}} and \code{\link[base]{qr.solve}} for
 the rank check and solve, and scales the residual-consistency gate.}
 }

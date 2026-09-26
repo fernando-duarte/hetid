@@ -1,4 +1,4 @@
-# Offline fixtures keep all pinned-cache tests outside the real user data directory.
+# Offline fixtures keep all pinned-cache tests outside the real user data directory
 local_acm_pin_fixture <- function(.local_envir = parent.frame()) {
   root <- withr::local_tempdir(.local_envir = .local_envir)
   withr::local_envvar(c(R_USER_DATA_DIR = root), .local_envir = .local_envir)

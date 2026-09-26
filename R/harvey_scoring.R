@@ -62,9 +62,9 @@ harvey_line_search <- function(cur, dir, y, x_mat, pos, col_abs,
 #' only linearly convergent and crawls on heavy-tailed responses, which is why
 #' the hybrid exists.
 #'
-#' @param cur Current \code{\link{harvey_eval}} result
-#' @param control Validated fitting controls
-#' @param x_mat Numeric design matrix, intercept column included
+#' @param cur Current \code{\link{harvey_eval}} result.
+#' @param x_mat Numeric design matrix, intercept column included.
+#' @param control Validated fitting controls.
 #'
 #' @return Numeric direction vector, or \code{NULL}
 #' @keywords internal

@@ -1,6 +1,5 @@
-# Tests for compute_log_variance_vcov(): the four QMLE covariance variants
-# read off a hetid_log_variance_fit, each pinned to a manual oracle computed
-# at the fit's own coefficient.
+# Tests for compute_log_variance_vcov(): the four QMLE covariance variants read off a
+# hetid_log_variance_fit, each pinned to a manual oracle computed at the fit's own coefficient
 
 test_that("naive vcov matches the manual dispersion oracle at fit$coef", {
   d <- simulate_logvar_data()
@@ -95,7 +94,7 @@ test_that("the variant list is keyed and labelled off the fit", {
 #   acceptance.R: 45cc27baf799c2d84a5f4d936e2290743f36bfa1867adb1150519ca46eca63b9
 # After consolidation, the paper covariance bodies delegate to hetid. These
 # hashes remain historical; current adapter tests provide migration coverage.
-# The test itself never sources the paper pipeline.
+# The test itself never sources the paper pipeline
 test_that("pinned paper-equivalence fixture: ppml coef and vcov at the default seed", {
   d <- simulate_logvar_data()
   fit <- fit_log_variance(d$y, d$x)

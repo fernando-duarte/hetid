@@ -3,8 +3,8 @@
 #' Search for sufficient evidence about linear objectives over the intersection
 #' of quadratic inequalities. This function does not optimize finite endpoints.
 #'
-#' @param quadratic List containing nonempty parallel lists `A_i`, `b_i` and a
-#'   numeric vector `c_i`, representing `x' A_i x + b_i' x + c_i <= 0`.
+#' @param quadratic List containing nonempty parallel lists \code{A_i}, \code{b_i} and a
+#'   numeric vector \code{c_i}, representing \verb{x' A_i x + b_i' x + c_i <= 0}.
 #'   Matrices must be finite and symmetric and share one positive dimension.
 #' @param objectives Finite numeric matrix, with one objective loading per column
 #'   and one row per coordinate. Only exactly zero loadings denote constants.
@@ -33,23 +33,26 @@
 #' supplies no boundedness evidence.
 #'
 #' Direction sampling uses the existing fixed-seed search and restores
-#' `.Random.seed`, including its absence. Reproducibility assumes the same
-#' `RNGkind()`. The Box-Muller cached deviate, which is outside `.Random.seed`,
-#' cannot be restored by that search. Use `n_dir = 0` to avoid RNG use entirely.
+#' \code{.Random.seed}, including its absence. Reproducibility assumes the same
+#' \code{RNGkind()}. The Box-Muller cached deviate, which is outside
+#' \code{.Random.seed}, cannot be restored by that search. Use \code{n_dir = 0}
+#' to avoid RNG use entirely.
 #'
-#' @return A list with `summary` (one row per objective, with lower and upper
-#'   states `bounded`, `unbounded` or `unresolved`, and an exact-constant flag),
-#'   `nonempty`, `boundedness`, `directional`, `strict_direction`, `tails`, and
-#'   `feasible_points`. The `check_point` closure uses the same strict membership
+#' @return A list with \code{summary} (one row per objective, with lower and upper
+#'   states \code{bounded}, \code{unbounded} or \code{unresolved}, and an
+#'   exact-constant flag), \code{nonempty}, \code{boundedness}, \code{directional},
+#'   \code{strict_direction}, \code{tails}, and \code{feasible_points}. The
+#'   \code{check_point} closure uses the same strict membership
 #'   check as finite nonemptiness witnesses. It returns false for unresolved
-#'   membership and uses no optimizer feasibility tolerance. The `outer_bounds`
-#'   closure, `outer_bounds(objectives, refine = TRUE, pool = NULL)`, returns
+#'   membership and uses no optimizer feasibility tolerance. The
+#'   \code{outer_bounds} closure,
+#'   \code{outer_bounds(objectives, refine = TRUE, pool = NULL)}, returns
 #'   numerical lower and upper bounds that contain the set for every objective
 #'   column, from a checked positive definite combination of the constraints.
-#'   Bounds are `NA` when no combination is verified, and exact zero loadings
+#'   Bounds are \code{NA} when no combination is verified, and exact zero loadings
 #'   give exact zeros. These bounds need not be attained. Pass the returned
-#'   `pool` attribute back to reuse candidate weights across calls. Every weight
-#'   vector is verified again. Multivariate searches use `maxit`; scalar weight
+#'   \code{pool} attribute back to reuse candidate weights across calls. Every weight
+#'   vector is verified again. Multivariate searches use \code{maxit}; scalar weight
 #'   searches use a fixed tolerance. The search consumes no random numbers.
 #' @export
 #' @examples

@@ -13,7 +13,7 @@ bootstrap_endpoint_cell <- function(lc, uc, f, alpha, control, min_reps, target)
   # One live side: the truth can sit anywhere on the infinite ray, so the worst
   # position is at the finite endpoint, the credit vanishes and both targets
   # coincide at the live side's own quantile. No lambda optimization is needed,
-  # and the dead side's draw status must not exclude a bounded live-side draw.
+  # and the dead side's draw status must not exclude a bounded live-side draw
   if (identical(f$lower_status, unbounded) && identical(f$upper_status, bounded)) {
     if (!uc$gate) {
       return(c(blank, list(reason = uc$reason)))
@@ -51,12 +51,10 @@ bootstrap_two_sided_cell <- function(lc, uc, f, alpha, control, min_reps, target
     return(c(blank, list(reason = if (!lc$gate) lc$reason else uc$reason)))
   }
   # both-bounded pool: a two-sided root needs z on both sides in one draw, so a
-  # draw bounded on one side only feeds that side's scale but not this pool.
+  # draw bounded on one side only feeds that side's scale but not this pool
   pool <- lc$ok & uc$ok
-  # the absolute count applies to the pair of sides, not to each side alone.
-  # Two side gates can both clear while their intersection does not: a cell with
-  # 5,100 bounded lower draws and 8,500 bounded upper draws can have only 3,600
-  # jointly bounded, and the quantile below runs on the intersection.
+  # 5,100 bounded lower and 8,500 bounded upper draws can pass side gates but overlap in only 3,600
+  # The absolute-count gate and quantile both use that jointly bounded pool
   if (sum(pool) < min_reps) {
     return(c(blank, list(reason = "insufficient bounded draws")))
   }

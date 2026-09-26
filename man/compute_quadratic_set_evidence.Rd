@@ -35,12 +35,14 @@ tolerance. Search exhaustion never proves boundedness.}
 }
 \value{
 A list with \code{summary} (one row per objective, with lower and upper
-states \code{bounded}, \code{unbounded} or \code{unresolved}, and an exact-constant flag),
-\code{nonempty}, \code{boundedness}, \code{directional}, \code{strict_direction}, \code{tails}, and
-\code{feasible_points}. The \code{check_point} closure uses the same strict membership
+states \code{bounded}, \code{unbounded} or \code{unresolved}, and an
+exact-constant flag), \code{nonempty}, \code{boundedness}, \code{directional},
+\code{strict_direction}, \code{tails}, and \code{feasible_points}. The
+\code{check_point} closure uses the same strict membership
 check as finite nonemptiness witnesses. It returns false for unresolved
-membership and uses no optimizer feasibility tolerance. The \code{outer_bounds}
-closure, \code{outer_bounds(objectives, refine = TRUE, pool = NULL)}, returns
+membership and uses no optimizer feasibility tolerance. The
+\code{outer_bounds} closure,
+\code{outer_bounds(objectives, refine = TRUE, pool = NULL)}, returns
 numerical lower and upper bounds that contain the set for every objective
 column, from a checked positive definite combination of the constraints.
 Bounds are \code{NA} when no combination is verified, and exact zero loadings
@@ -70,8 +72,9 @@ supplies no boundedness evidence.
 
 Direction sampling uses the existing fixed-seed search and restores
 \code{.Random.seed}, including its absence. Reproducibility assumes the same
-\code{RNGkind()}. The Box-Muller cached deviate, which is outside \code{.Random.seed},
-cannot be restored by that search. Use \code{n_dir = 0} to avoid RNG use entirely.
+\code{RNGkind()}. The Box-Muller cached deviate, which is outside
+\code{.Random.seed}, cannot be restored by that search. Use \code{n_dir = 0}
+to avoid RNG use entirely.
 }
 \examples{
 ball <- list(A_i = list(diag(2)), b_i = list(c(0, 0)), c_i = -1)

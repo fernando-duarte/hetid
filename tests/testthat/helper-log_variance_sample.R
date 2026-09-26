@@ -1,4 +1,4 @@
-# A scalar feasible interval with a response that reveals its sampled theta.
+# A scalar feasible interval with a response that reveals its sampled theta
 sample_box_fixture <- function() {
   parts <- make_box_parts(n_components = 1L, n_obs = 20L)
   parts$w1 <- rep(2, 20)

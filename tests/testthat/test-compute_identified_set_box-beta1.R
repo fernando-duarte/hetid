@@ -1,6 +1,5 @@
-# The structural (beta1) block of the identified-set box: the affine image
-# beta1r - beta2r' theta of the same set, read off the same hull endpoints,
-# so it inherits every property the theta block is tested for.
+# Structural (beta1) block of the identified-set box: the affine image beta1r - beta2r' theta of
+# the same set on the same hull endpoints, inheriting every property the theta block is tested for
 
 test_that("every finite beta1 bound is the image of a feasible witness", {
   fit <- box_fit()
@@ -67,9 +66,8 @@ test_that("refining a nested grid never shrinks the beta1 intervals", {
 })
 
 test_that("the theta block is never narrower than a coordinates-only sweep", {
-  # the coordinates grow the window first, along their own path, and the
-  # structural objectives may only extend it afterwards, so the public
-  # theta block contains what the coordinates alone would find
+  # Coordinates grow the window first along their own path; structural objectives only extend it
+  # Thus the public theta block contains everything the coordinate-only search finds
   fit <- box_fit()
   box <- compute_identified_set_box(fit, tau = 0.05, n_grid = 15L)
   built <- build_quadratic_system(fit$gamma, rep(0.05, 3), fit$moments)
@@ -124,9 +122,8 @@ test_that("a numerically zero loading leaves its coefficient a point", {
 })
 
 test_that("rescaling a regressor or a news column leaves the snap alone", {
-  # a column of x a thousand times larger carries a loading a thousand times
-  # smaller, a genuine loading whose interval rescales; a column of y2 a
-  # thousand times larger scales one row of beta2r, which the row-relative
+  # An x column a thousand times larger carries a loading a thousand times smaller, a genuine
+  # loading whose interval rescales; a y2 column does so to one beta2r row, which row-relative
   # tolerance ignores
   d <- simulate_box_dgp()
   base <- compute_identified_set_box(box_fit(), tau = 0.05, n_grid = 11L)

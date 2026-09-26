@@ -1,4 +1,4 @@
-# The fitted-system domain and argument axes used by the functional API.
+# The fitted-system domain and argument axes used by the functional API
 linear_bounds_frame <- function(fit, tau, n_grid, center, max_growth, search_limit) {
   validate_box_fit(fit)
   assert_scalar_finite(tau, "tau")
@@ -66,7 +66,7 @@ validate_linear_objectives <- function(objectives, offsets, theta_names) {
   stats::setNames(offsets, objective_names)
 }
 
-# Check finite witnesses with the existing checker and constraint-relative rounding scale.
+# Check finite witnesses with the existing checker and constraint-relative rounding scale
 validate_linear_witnesses <- function(points, quadratic) {
   checker <- make_relative_feasibility_checker(quadratic)
   for (row in seq_len(nrow(points))) {
@@ -77,7 +77,7 @@ validate_linear_witnesses <- function(points, quadratic) {
   invisible(TRUE)
 }
 
-# Both proof kinds use the public theta axis, independent of moment-container labels.
+# Both proof kinds use the public theta axis, independent of moment-container labels
 linear_bounds_evidence <- function(tails, objectives, theta_names) {
   tails <- lapply(tails, function(proof) {
     if (is.null(proof)) {

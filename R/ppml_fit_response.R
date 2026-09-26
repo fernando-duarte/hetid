@@ -6,7 +6,7 @@
 # added to y, no suppressed conditions. The scaled-response guard is the
 # estimator-neutral log_variance_scaled_response_class(). A file-level roxygen
 # block would collide with ppml_fit_response's own Rd page, so this header
-# stays a comment.
+# stays a comment
 
 #' Build the Start Ladder
 #'
@@ -14,12 +14,13 @@
 #' intercept-only start, then the \code{glm.fit} default (\code{NULL}).
 #' The validated \code{START_ORDER} control reorders these groups.
 #'
-#' @param start Numeric start vector, or \code{NULL}
-#' @param fallback_starts List of numeric start vectors
-#' @param y_scaled Numeric response on the scaled (fitted) scale
-#' @param p Number of design columns
+#' @param start Numeric start vector, or \code{NULL}.
+#' @param fallback_starts List of numeric start vectors.
+#' @param y_scaled Numeric response on the scaled (fitted) scale.
+#' @param p Number of design columns.
+#' @param control Validated fitting controls.
 #'
-#' @return List with \code{candidates} and the matching \code{labels}
+#' @return List with \code{candidates} and the matching \code{labels}.
 #' @noRd
 ppml_start_ladder <- function(
   start, fallback_starts, y_scaled, p, control = log_variance_fit_control("ppml")

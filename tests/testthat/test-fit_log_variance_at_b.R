@@ -1,6 +1,5 @@
-# Tests for fit_log_variance_at_b(): the wrapper composing reduced-form
-# residuals with a fixed structural b into the log-variance equation's
-# response, completing the tau = 0 chain.
+# Tests for fit_log_variance_at_b(): the wrapper composing reduced-form residuals with a fixed
+# structural b into the log-variance equation's response, completing the tau = 0 chain
 
 test_that("matches a direct call on (w1 - w2 %*% b)^2", {
   set.seed(11)

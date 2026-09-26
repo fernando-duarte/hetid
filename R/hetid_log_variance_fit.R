@@ -10,9 +10,8 @@
 #' @keywords internal
 NULL
 
-# fit_status vocabulary for hetid_log_variance_fit. The paper's engine-only
-# statuses (nonexistence, domain_failure, nonfinite_fitted_log_variance) are
-# deliberately dropped here; adding one later is non-breaking.
+# hetid_log_variance_fit's fit_status drops the paper engine's nonexistence, domain_failure and
+# nonfinite_fitted_log_variance statuses; adding any later is non-breaking
 LOG_VARIANCE_FIT_STATUS <- c(ok = "ok", nonconvergence = "nonconvergence")
 
 #' Construct a hetid_log_variance_fit Object

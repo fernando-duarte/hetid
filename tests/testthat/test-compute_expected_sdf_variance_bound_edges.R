@@ -1,7 +1,5 @@
-# Edge and boundary tests for compute_expected_sdf_variance_bound: horizon
-# zero, masking, overflow, degenerate data, and validation errors. The
-# contract/formula tests live in the non-_edges sibling; shared manual
-# reconstructions come from helper-expected-sdf-bounds.R
+# compute_expected_sdf_variance_bound edges: horizon 0, masks, overflow, degeneracy, invalid inputs
+# Contract/formula: non-_edges sibling; shared manual reconstructions: helper-expected-sdf-bounds.R
 
 test_that("compute_expected_sdf_variance_bound is identically 0 at i = 0", {
   # Horizon 0 is exact (no approximation), so the error-variance bound is 0,
@@ -62,9 +60,8 @@ test_that("the bound drops a non-finite exp(n_hat) leg too (interior NA in y60)"
 })
 
 test_that("a constant gap series gives a bound of exactly 0", {
-  # y24 = y36 = tp24 = tp36 = 0 => n_hat(24) = 0 => e^{n_hat} = 1; a constant
-  # one-period yield makes q constant, so the q arm's 1/N variance is exactly
-  # 0 and wins the min (the component arm is strictly positive here)
+  # y24 = y36 = tp24 = tp36 = 0 => n_hat(24) = 0 => e^{n_hat} = 1; a constant one-period yield
+  # makes q constant, so the q arm's 1/N variance is exactly 0 and wins (component arm positive)
   k <- 8
   y12_pct <- rep(2, k)
   zeros <- numeric(k)

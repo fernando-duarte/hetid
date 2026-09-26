@@ -48,7 +48,7 @@ make_log_variance_fitter <- function(x, estimator = "ppml", control = list()) {
   }
 }
 
-# Quantities determined only by the validated, fixed design and controls.
+# Quantities determined only by the validated, fixed design and controls
 log_variance_fixed_design <- function(x_mat, estimator, control) {
   harvey <- identical(estimator, "harvey")
   list(

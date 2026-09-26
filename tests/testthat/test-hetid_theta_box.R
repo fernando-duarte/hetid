@@ -1,5 +1,5 @@
 # Container validation for hetid_theta_box: one rejection per branch, so a
-# malformed box cannot reach a downstream profile.
+# malformed box cannot reach a downstream profile
 
 test_that("constructor returns a validated container", {
   box <- build_box()

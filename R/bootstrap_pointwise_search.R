@@ -21,7 +21,7 @@
 # otherwise force uniform refinement to width 2*tolerance/L -- measured at tens
 # of thousands of evaluations by L = 3 -- while the c_s cap that the ordering
 # identity already licenses ends exactly those cases at once. Cells whose
-# supremum is interior are unaffected: both tests agree there.
+# supremum is interior are unaffected: both tests agree there
 bootstrap_pointwise_critical <- function(z_lower, z_upper, pool, d_lower, d_upper,
                                          alpha, tolerance, c_s, max_evals =
                                            BOOTSTRAP_INFERENCE_DEFAULTS$max_evals) {
@@ -84,9 +84,8 @@ bootstrap_pointwise_critical <- function(z_lower, z_upper, pool, d_lower, d_uppe
     g_left <- c(g_left[-at], g_left[[at]], g_mid)
     g_right <- c(g_right[-at], g_mid, g_right[[at]])
   }
-  # `top` is the bound the stopping test just accepted, and nothing mutates the
-  # interval arrays between that test and this return, so reusing it is the same
-  # number as recomputing the bound and does not ask a reader to prove they agree
+  # top is the accepted stopping bound; interval arrays are unchanged before return, so reusing it
+  # equals recomputation and makes that equality explicit
   list(
     c_p_lower = best, c_p_upper = max(best, min(c_s, top)), evals = evals,
     best_lambda = best_lambda, interior = best > endpoint_best + tolerance,

@@ -179,3 +179,9 @@ test_that("real bounded systems keep checked points inside tight containing boun
     expect_true(all((bounds$upper - bounds$lower) / width <= 1.02))
   }
 })
+
+test_that("outer_norm2 returns exact 0 and Inf on its guard inputs", {
+  expect_identical(hetid:::outer_norm2(c(0, 0)), 0)
+  expect_identical(hetid:::outer_norm2(c(Inf, 1)), Inf)
+  expect_identical(hetid:::outer_norm2(c(NaN, 1)), Inf)
+})

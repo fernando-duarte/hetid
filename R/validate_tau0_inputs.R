@@ -51,7 +51,7 @@ validate_tau0_inputs <- function(y1, y2, x, z, gamma, impose_null, tol) {
   )
 
   # Use the corrected scalar mean for each instrument. Summation roundoff in
-  # colMeans can perturb balanced deviations and downstream optimizer paths.
+  # colMeans can perturb balanced deviations and downstream optimizer paths
   z_means <- vapply(seq_len(ncol(z)), function(j) mean(z[, j]), numeric(1))
   z <- sweep(z, 2, z_means)
   if (is.null(colnames(z))) {

@@ -118,3 +118,37 @@ test_that("matrix-valued full-frame columns fail at the public boundary", {
     expect_error(bootstrap_fixture_fit(bad), class = "hetid_error")
   }
 })
+
+test_that("the lower-live half-line reports a finite lower endpoint and Inf above", {
+  x <- bootstrap_fixture()
+  x$full$upper <- Inf
+  x$full$upper_status <- "unbounded"
+  x$draws$upper[, ] <- NA_real_
+  x$draws$upper_status[, ] <- "failed"
+  out <- bootstrap_fixture_fit(x)$summary
+
+  # The fixture's raw deviations v give padding v[k]: studentization cancels in ci_lower
+  # k is the conservative order-statistic rank, independent of internal result fields
+  v <- seq(-0.2, 0.2, length.out = 100)
+  k <- min(100L, ceiling((100L + 1L) * (1 - 0.1)))
+  expect_identical(out$reason, "reported")
+  expect_equal(out$ci_upper, Inf)
+  expect_equal(out$n_common, 100)
+  expect_equal(out$c_p_lower, out$c_s)
+  expect_equal(out$ci_lower, -2 - v[k])
+})
+
+test_that("a lower pool below min_reps refuses instead of reporting", {
+  x <- bootstrap_fixture()
+  x$full$upper <- Inf
+  x$full$upper_status <- "unbounded"
+  x$draws$upper[, ] <- NA_real_
+  x$draws$upper_status[, ] <- "failed"
+  x$draws$lower[50:100, ] <- NA_real_
+  x$draws$lower_status[50:100, ] <- "failed"
+  out <- bootstrap_fixture_fit(x)$summary
+  expect_identical(out$reason, "insufficient bounded draws")
+  expect_true(is.na(out$ci_lower))
+  expect_equal(out$n_lower, 49)
+  expect_equal(out$n_common, 0)
+})

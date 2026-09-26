@@ -2,7 +2,7 @@
 # of the Harvey Gaussian multiplicative-heteroskedasticity log-variance fit,
 # each pinned to a manual solve()-path oracle at a fixed coefficient. Every
 # variant is a pure function of the coefficient, the response, and the design,
-# so these tests never construct a Harvey fit.
+# so these tests never construct a Harvey fit
 
 # fixture inputs: the shared log-variance DGP, its design, and the coefficient
 # the DGP was drawn from

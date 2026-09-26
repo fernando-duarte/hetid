@@ -58,7 +58,9 @@ validate_hetid_log_variance_fit <- function(x) {
 }
 
 #' Validate y and x_design Against n_obs and coef_labels
-#'
+#' @param x A classed \code{hetid_log_variance_fit} object.
+#' @param n_obs Number of observations the fit was computed from.
+#' @param coef_labels Character vector of coefficient labels.
 #' @noRd
 validate_log_variance_fit_data <- function(x, n_obs, coef_labels) {
   assert_bad_argument_ok(
@@ -94,7 +96,8 @@ validate_log_variance_fit_data <- function(x, n_obs, coef_labels) {
 #'
 #' Checked only when present, matching the fail-closed contract where a
 #' failed fit carries \code{NULL} for either.
-#'
+#' @param x A classed \code{hetid_log_variance_fit} object.
+#' @param coef_labels Character vector of coefficient labels.
 #' @noRd
 validate_log_variance_fit_names <- function(x, coef_labels) {
   for (field in c("coef", "warm_start")) {
@@ -115,7 +118,7 @@ validate_log_variance_fit_names <- function(x, coef_labels) {
 }
 
 #' Validate the diagnostics List Shape
-#'
+#' @param x A classed \code{hetid_log_variance_fit} object.
 #' @noRd
 validate_log_variance_fit_diag <- function(x) {
   diagnostics <- x$diagnostics
@@ -132,7 +135,7 @@ validate_log_variance_fit_diag <- function(x) {
 }
 
 #' Validate the Fields Required When fit_status Is ok
-#'
+#' @param x A classed \code{hetid_log_variance_fit} object.
 #' @noRd
 validate_log_variance_fit_ok <- function(x) {
   assert_bad_argument_ok(
@@ -159,7 +162,7 @@ validate_log_variance_fit_ok <- function(x) {
 }
 
 #' Validate the Fields Required When fit_status Is nonconvergence
-#'
+#' @param x A classed \code{hetid_log_variance_fit} object.
 #' @noRd
 validate_log_variance_fit_nonconv <- function(x) {
   for (field in c("coef", "warm_start")) {

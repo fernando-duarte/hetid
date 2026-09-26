@@ -1,6 +1,5 @@
-# Tests for the Harvey estimator as the registry sees it: the spec entry, the
-# covariance and standard-error boundaries keyed by its own SE types, and the
-# two wrappers that pass an estimator id through to the worker.
+# Harvey estimator as the registry sees it: the spec entry, the covariance and standard-error
+# boundaries keyed by its own SE types, and the two wrappers passing an estimator id to the worker
 
 test_that("the registry carries the harvey spec", {
   spec <- hetid:::log_variance_estimator("harvey")

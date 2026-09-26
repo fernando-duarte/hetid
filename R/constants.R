@@ -27,6 +27,8 @@
 #'     variance positivity diagnostic flags a maturity as degenerate}
 #'   \item{TAU0_POINT_TOLERANCE}{Rank and residual tolerance for the
 #'     tau = 0 stacked linear solve; the alternative outcome is no point (NULL)}
+#'   \item{BOX_BOUNDARY_TOLERANCE}{Relative tolerance for deciding that a search
+#'     node lies on the box boundary}
 #'   \item{QUADRATIC_EVIDENCE_MAXIT}{Default multivariate evidence-search budget (500)}
 #'   \item{QUADRATIC_SEARCH_RTOL}{Candidate geometry-search tolerance (1e-10)}
 #'   \item{QUADRATIC_OUTER_RTOL}{Candidate outer-bound search tolerance (1e-12)}
@@ -106,6 +108,7 @@ HETID_CONSTANTS <- list(
   PERCENT_TO_DECIMAL = 100,
   DEGENERACY_TOLERANCE = 1e-8,
   TAU0_POINT_TOLERANCE = 1e-8,
+  BOX_BOUNDARY_TOLERANCE = 1e-9,
   QUADRATIC_EVIDENCE_MAXIT = 500L,
   QUADRATIC_SEARCH_RTOL = 1e-10,
   QUADRATIC_OUTER_RTOL = 1e-12,

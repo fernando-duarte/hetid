@@ -1,5 +1,5 @@
 # Candidate weights for verified outer bounds. Every output here is a proposal
-# that outer_verify() must accept before it can bound anything.
+# that outer_verify() must accept before it can bound anything
 
 outer_certificate_ok <- function(certificate, m) {
   s <- certificate$scales
@@ -7,9 +7,8 @@ outer_certificate_ok <- function(certificate, m) {
     all(is.finite(s)) && all(s > 0)
 }
 
-# The certificate weights apply to A_i / scales_i; on the power-of-two rows the
-# same combination has weights w_i * 2^k_i / scales_i, formed in log space so
-# extreme ratios cannot overflow. Returns simplex weights or NULL.
+# Same combination: weights on A_i/scales_i become w_i*2^k_i/scales_i on power-of-two rows
+# Use log space to avoid extreme-ratio overflow; return simplex weights or NULL
 outer_certificate_weights <- function(certificate, sys) {
   if (!outer_certificate_ok(certificate, sys$m)) {
     return(NULL)
@@ -23,7 +22,7 @@ outer_certificate_weights <- function(certificate, sys) {
 }
 
 # Unverified closed-form bound used only to steer the search. Rejected weights
-# score double.xmax rather than Inf, which Nelder-Mead would warn about.
+# score double.xmax rather than Inf, which Nelder-Mead would warn about
 outer_search_value <- function(sys, v, loading) {
   mat <- Reduce(`+`, Map(`*`, sys$A, v))
   eig <- eigen(mat, symmetric = TRUE)
@@ -39,7 +38,7 @@ outer_search_value <- function(sys, v, loading) {
   if (is.finite(value)) value else .Machine$double.xmax
 }
 
-# Interior simplex search for m >= 2 rows; returns simplex weights.
+# Interior simplex search for m >= 2 rows; returns simplex weights
 outer_simplex_search <- function(sys, loading, v0, maxit) {
   m <- sys$m
   full <- function(p) c(p, 1 - sum(p))
@@ -64,9 +63,8 @@ outer_simplex_search <- function(sys, loading, v0, maxit) {
   full(fit$par)
 }
 
-# Deterministic budgeted search for the upper bound of one normalized loading,
-# started from v0. The interior search cannot land exactly on a vertex, so the
-# start and the single-row vertices also compete. Uses no random numbers.
+# Budgeted upper-bound search for one normalized loading starts at v0 and uses no random numbers
+# The interior misses exact vertices, so v0 and single-row vertices also compete
 outer_side_search <- function(sys, loading, v0, maxit) {
   m <- sys$m
   if (m == 1L || maxit == 0L) {

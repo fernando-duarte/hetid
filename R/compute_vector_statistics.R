@@ -25,7 +25,7 @@
 #' @details
 #' For each maturity i, computes the centered sample covariances of the
 #' principal components with the residual products (1/T normalization; see
-#' [centered_cov()] and the spec sections on moment notation and centering):
+#' \code{\link{centered_cov}} and the spec sections on moment notation and centering):
 #' \deqn{\hat{R}_i^{(0)} = \widehat{\mathrm{Cov}}(PC, \omega_1 \odot \omega_2^{(i)})}
 #' \deqn{\hat{R}_i^{(1)} = \widehat{\mathrm{Cov}}(PC, \omega_2 \odot \omega_2^{(i)})}
 #' \deqn{\hat{P}_i^{(0)} = \widehat{\mathrm{Cov}}(PC, (\omega_2^{(i)})^{\odot 2})}

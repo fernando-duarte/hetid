@@ -27,6 +27,8 @@ annualized yields by maturity in years, so the n_hat weights are
 variance positivity diagnostic flags a maturity as degenerate}
 \item{TAU0_POINT_TOLERANCE}{Rank and residual tolerance for the
 tau = 0 stacked linear solve; the alternative outcome is no point (NULL)}
+\item{BOX_BOUNDARY_TOLERANCE}{Relative tolerance for deciding that a search
+node lies on the box boundary}
 \item{QUADRATIC_EVIDENCE_MAXIT}{Default multivariate evidence-search budget (500)}
 \item{QUADRATIC_SEARCH_RTOL}{Candidate geometry-search tolerance (1e-10)}
 \item{QUADRATIC_OUTER_RTOL}{Candidate outer-bound search tolerance (1e-12)}

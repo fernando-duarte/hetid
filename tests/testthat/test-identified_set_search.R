@@ -1,6 +1,5 @@
-# The box-search kernel on hand-built quadratic systems: an ellipsoid whose
-# extremes are known in closed form, a zero objective, a system with a
-# recession direction, and the one-component case.
+# The box-search kernel on hand-built quadratic systems: an ellipsoid whose extremes are known in
+# closed form, a zero objective, a system with a recession direction, and the one-component case
 
 # one ellipsoid theta' A theta + b' theta + c <= 0 with A positive definite;
 # the exact extremes of l' theta are l' mu +/- sqrt(r2 * l' A^{-1} l)
@@ -82,4 +81,23 @@ test_that("a single component needs no gridded plane", {
   expect_equal(found$lower, c(-1, -2, 0), tolerance = 1e-12)
   expect_equal(found$upper, c(1, 2, 0), tolerance = 1e-12)
   expect_identical(dim(found$arg_lower), c(3L, 1L))
+})
+
+test_that("a singular Q stack raises a hetid_error naming the missing search frame", {
+  # self-contained: two identical unit-ball constraints, so the checker is feasible
+  # at the origin and the Q stack is square, aligned and singular
+  quadratic <- list(
+    A_i = list(diag(2), diag(2)),
+    b_i = list(c(0, 0), c(0, 0)),
+    c_i = c(-1, -1)
+  )
+  components <- list(Q_i = list(c(1, 1), c(2, 2)))
+  expect_error(
+    hetid:::identified_set_basis(components, c(0, 0), quadratic),
+    class = "hetid_error"
+  )
+  expect_error(
+    hetid:::identified_set_basis(components, c(0, 0), quadratic),
+    "Q stack is singular"
+  )
 })

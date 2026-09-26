@@ -1,6 +1,5 @@
-# Profiling the log-variance coefficients over an identified set: parity
-# with the single-b fit, warm starts advancing only on success, and the
-# fail-closed paths that must report NA rather than a narrowed range.
+# Profiling the log-variance coefficients over an identified set: parity with the single-b fit,
+# warm starts advancing only on success, fail-closed paths reporting NA not a narrowed range
 
 profile_box <- function(tau = 0.05, n_grid = 11L) {
   d <- simulate_box_dgp()

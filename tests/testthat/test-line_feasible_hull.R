@@ -1,9 +1,8 @@
-# Exact feasible hull along one line: the analytic case table, the
-# multi-exclusion intersection a running-interval scheme gets wrong, and
-# root stability under cancellation.
+# Exact feasible hull along one line: the analytic case table, the multi-exclusion intersection a
+# running-interval scheme gets wrong, and root stability under cancellation
 
 # One-dimensional systems, so center = 0 and dir = 1 make the univariate
-# coefficients (a, beta, gamma) exactly the rows supplied here.
+# coefficients (a, beta, gamma) exactly the rows supplied here
 make_line_system <- function(rows) {
   rows <- rbind(rows)
   list(
@@ -57,7 +56,7 @@ test_that("a constant constraint is decided by its sign alone", {
 
 test_that("two exclusions intersect correctly rather than by running trims", {
   # [0, 10] minus (3, 7) minus (-1, 4) is [7, 10]. A scheme that trims a
-  # running [lower, upper] instead reports 4, which is infeasible.
+  # running [lower, upper] instead reports 4, which is infeasible
   rows <- rbind(
     c(1, -10, 0), # t(t - 10) <= 0    keeps [0, 10]
     c(-1, 10, -21), # -(t-3)(t-7) <= 0 excludes (3, 7)

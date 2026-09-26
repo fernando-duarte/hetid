@@ -1,4 +1,4 @@
-# "Bounded" is supplied inference eligibility, not a geometric certificate.
+# "Bounded" is supplied inference eligibility, not a geometric certificate
 validate_bootstrap_side <- function(value, status, side) {
   assert_bad_argument_ok(
     bootstrap_is_numeric(value) && is.character(status) &&

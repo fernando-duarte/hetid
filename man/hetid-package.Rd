@@ -36,7 +36,8 @@ The method is particularly useful for:
 \itemize{
 \item \strong{ACM Term Structure Data}: Access to monthly and daily
 (business-day) yields, term premia, and risk-neutral yields at monthly
-maturity steps (1-120 months) based on Adrian, Crump, and Moench (2013)
+maturity steps (\code{MIN_MATURITY}-\code{MAX_MATURITY} months, 1-120)
+based on Adrian, Crump, and Moench (2013)
 \item \strong{Economic Variables}: Quarterly macroeconomic and financial data
 \item \strong{Verified Downloads}: Functions to download the latest GitHub
 release with sha256 verification (NY Fed workbook as opt-in fallback)
@@ -101,7 +102,8 @@ w2 <- compute_w2_residuals(
 \describe{
 \item{\strong{ACM Term Structure Data}}{Monthly and daily (business-day)
 data from Adrian, Crump, and Moench (2013) including yields, term premia,
-and risk-neutral yields at monthly maturity steps from 1 to 120 months.
+and risk-neutral yields at monthly maturity steps from
+\code{MIN_MATURITY} to \code{MAX_MATURITY} months (1 to 120).
 Updated from the GitHub replication release (the daily series is
 download-only); the NY Fed workbook is the opt-in fallback.}
 \item{\strong{Economic Variables}}{Quarterly macroeconomic and financial
@@ -178,7 +180,16 @@ news-error variance bound
 \item \code{\link{profile_log_variance_set}()}: Volatility coefficients over that set
 \item \code{\link{sample_log_variance_set}()}: Retained joint fits for prediction
 \item \code{\link{predict.hetid_log_variance_sample}()}: Sampled prediction envelopes
+\item \code{\link{compute_quadratic_set_evidence}()}: Nonemptiness, boundedness, outer bounds
 \item \code{\link{IDENTIFIED_SET_CONTROL}}: Identified-set search numerical controls
+}}
+
+\subsection{Bootstrap Inference Functions:}{
+\itemize{
+\item \code{\link{circular_mbb_indices}()}: Circular moving-block resample indices
+\item \code{\link{bootstrap_endpoint_draws}()}: Serial endpoint bootstrap over those indices
+\item \code{\link{bootstrap_set_interval}()}: Intervals from paired endpoint draws
+\item \code{\link{bootstrap_point_statistics}()}: Robust scales and empirical tails
 }}
 
 \subsection{Constants and Utilities:}{

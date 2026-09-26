@@ -22,7 +22,7 @@ NULL
 #' transforms back. Returns \code{NULL} on a non-finite matrix, a nonpositive
 #' or non-finite diagonal scale, a normalized \code{rcond} below
 #' \code{rcond_tol}, or a failed Cholesky, so SE availability tracks acceptance
-#' of a column-rescaled fit -- do NOT simplify the gate to a raw
+#' of a column-rescaled fit -- do not simplify the gate to a raw
 #' \code{rcond(m)}, which spuriously rejects a rescaled-but-fine bread.
 #'
 #' @param m Symmetric numeric matrix to invert

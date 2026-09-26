@@ -2,7 +2,7 @@
 % Please edit documentation in R/bootstrap_set_interval.R
 \name{bootstrap_set_interval}
 \alias{bootstrap_set_interval}
-\title{Calibrate intervals from paired bootstrap endpoints}
+\title{Calibrate Intervals From Paired Bootstrap Endpoints}
 \usage{
 bootstrap_set_interval(
   full,
