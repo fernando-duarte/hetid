@@ -45,6 +45,22 @@ paper_math_negative <- function(text) {
   ifelse(grepl("^-[0-9]", text), paste0("$", text, "$"), text)
 }
 
+# Pad each cell of a column to the widest sign and integer part in that column,
+# so centered cells of equal width line up on the decimal point. Digits share
+# one width, so a phantom digit or minus pads exactly. Negative cells arrive
+# already wrapped in math by paper_math_negative; every cell leaves wrapped.
+decimal_align <- function(cells) {
+  for (k in seq_len(ncol(cells))) {
+    num <- gsub("$", "", cells[, k], fixed = TRUE)
+    neg <- startsWith(num, "-")
+    int_digits <- nchar(sub("\\..*$", "", sub("^-", "", num)))
+    sign_pad <- ifelse(any(neg) & !neg, "\\phantom{-}", "")
+    digit_pad <- strrep("\\phantom{0}", max(int_digits) - int_digits)
+    cells[, k] <- paste0("$", sign_pad, digit_pad, num, "$")
+  }
+  cells
+}
+
 paper_format_number <- function(
   value,
   digits,

@@ -16,7 +16,6 @@ paper_source_once(paper_path(
 ))
 
 w1 <- set_id_mean_eq$w1
-y1 <- set_id_mean_eq$y1
 y2 <- set_id_mean_eq$y2
 w2 <- set_id_mean_eq$w2
 z <- set_id_mean_eq$z
@@ -34,10 +33,10 @@ pcell <- function(x) {
 }
 
 panel_y2 <- hetero_panel(
-  y2, "Y_2", "SDF-news PCs", w1, y1, z, z_mat, hetero_fmt, pcell
+  y2, "Y_2", "SDF-news PCs", w1, z, z_mat, hetero_fmt, pcell
 )
 panel_w2 <- hetero_panel(
-  w2, "\\omega_2", "SDF-news residuals", w1, y1, z, z_mat, hetero_fmt, pcell
+  w2, "\\omega_2", "SDF-news residuals", w1, z, z_mat, hetero_fmt, pcell
 )
 
 n_obs <- set_id_mean_eq$sample$n

@@ -11,21 +11,6 @@ paper_source_once(paper_path(
 ))
 paper_source_once(paper_path("support", "latex", "overleaf_scaffold.R"))
 
-# Pad each cell of a column to the widest sign and integer part in that column,
-# so centered cells of equal width line up on the decimal point. Digits share
-# one width, so a phantom digit or minus pads exactly.
-decimal_align <- function(cells) {
-  for (k in seq_len(ncol(cells))) {
-    num <- gsub("$", "", cells[, k], fixed = TRUE)
-    neg <- startsWith(num, "-")
-    int_digits <- nchar(sub("\\..*$", "", sub("^-", "", num)))
-    sign_pad <- ifelse(any(neg) & !neg, "\\phantom{-}", "")
-    digit_pad <- strrep("\\phantom{0}", max(int_digits) - int_digits)
-    cells[, k] <- paste0("$", sign_pad, digit_pad, num, "$")
-  }
-  cells
-}
-
 hetero_render <- function(panel, artifact_id, col_group_label) {
   panel_rows <- function(idx, align = identity) {
     data.frame(
@@ -101,6 +86,6 @@ if (!identical(panel_y2$suite_cfg$regime, panel_w2$suite_cfg$regime)) {
 }
 
 rm(
-  w1, y1, y2, w2, z, z_mat, hetero_fmt, pcell, panel_y2, panel_w2,
-  n_obs, span, hetero_render, hetero_console, decimal_align
+  w1, y2, w2, z, z_mat, hetero_fmt, pcell, panel_y2, panel_w2,
+  n_obs, span, hetero_render, hetero_console
 )

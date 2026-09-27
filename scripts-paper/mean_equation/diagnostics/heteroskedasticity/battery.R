@@ -123,7 +123,7 @@ hetero_caption <- function(pvals, n_cols, subject) {
 # inherited: select_diagnostics_suite gates on a fitted-sd ratio, so a suite
 # pinned for a different matrix is not guaranteed to apply. The chosen regime is
 # reported, so a divergence between the two panels is visible rather than silent.
-hetero_panel <- function(mat, sym, subject, w1, y1, z, z_mat, fmt, pcell) {
+hetero_panel <- function(mat, sym, subject, w1, z, z_mat, fmt, pcell) {
   suite_cfg <- select_diagnostics_suite(mat, z_mat)
   pvals <- apply(mat, 2, hetero_run_battery,
     z = z, z_mat = z_mat, suite_cfg = suite_cfg, simplify = FALSE
