@@ -11,23 +11,47 @@ paper_source_once(paper_path(
 ))
 paper_source_once(paper_path("support", "latex", "overleaf_scaffold.R"))
 
+# Pad each cell of a column to the widest sign and integer part in that column,
+# so centered cells of equal width line up on the decimal point. Digits share
+# one width, so a phantom digit or minus pads exactly.
+decimal_align <- function(cells) {
+  for (k in seq_len(ncol(cells))) {
+    num <- gsub("$", "", cells[, k], fixed = TRUE)
+    neg <- startsWith(num, "-")
+    int_digits <- nchar(sub("\\..*$", "", sub("^-", "", num)))
+    sign_pad <- ifelse(any(neg) & !neg, "\\phantom{-}", "")
+    digit_pad <- strrep("\\phantom{0}", max(int_digits) - int_digits)
+    cells[, k] <- paste0("$", sign_pad, digit_pad, num, "$")
+  }
+  cells
+}
+
 hetero_render <- function(panel, artifact_id, col_group_label) {
-  panel_rows <- function(idx) {
-    data.frame(label = panel$row_labels[idx], panel$cells[idx, , drop = FALSE])
+  panel_rows <- function(idx, align = identity) {
+    data.frame(
+      label = panel$row_labels[idx],
+      align(panel$cells[idx, , drop = FALSE])
+    )
   }
   arch_row <- length(panel$test_names)
+  rk_row <- nrow(panel$cells)
   panels <- list(
     "Null hypothesis of variance constant over time, against volatility clustering" =
       panel_rows(arch_row),
     "Null hypothesis of variance unrelated to $Z$, against $Z$-driven heteroskedasticity" =
       panel_rows(seq_len(arch_row - 1L)),
     "Relevance and endogeneity diagnostics" =
-      panel_rows((arch_row + 1L):nrow(panel$cells))
+      panel_rows((arch_row + 1L):(rk_row - 1L), align = decimal_align),
+    "Null hypothesis of a singular relevance matrix, against a nonsingular one" =
+      panel_rows(rk_row)
   )
+  # 2.9cm makes the three data columns together wide enough for the longest
+  # panel title, so no title stretches the last column
   tabular <- paper_overleaf_plain_group(panel_tabular_lines(
     panels,
     col_headers = as.character(seq_len(panel$n_cols)),
-    col_group_label = col_group_label
+    col_group_label = col_group_label,
+    col_width = "2.9cm"
   ))
   publish_latex_artifact(artifact_id, tabular)
   invisible(tabular)
@@ -78,5 +102,5 @@ if (!identical(panel_y2$suite_cfg$regime, panel_w2$suite_cfg$regime)) {
 
 rm(
   w1, y1, y2, w2, z, z_mat, hetero_fmt, pcell, panel_y2, panel_w2,
-  n_obs, span, hetero_render, hetero_console
+  n_obs, span, hetero_render, hetero_console, decimal_align
 )

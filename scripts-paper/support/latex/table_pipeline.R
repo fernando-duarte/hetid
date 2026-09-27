@@ -13,18 +13,20 @@ paper_source_once(paper_path("config", "reporting.R"))
 #' without any float/threeparttable/caption/notes wrapper, so the published
 #' fragment is only \\begin{tabular} ... \\end{tabular}.
 #'
-#' @param panels named list; names are panel titles rendered as centered
-#'   "Panel <letter>: <title>" rows (letter assigned by position). Each
-#'   element is a data frame whose first column holds row labels (character,
-#'   may contain math) and whose remaining length(col_headers) columns hold
-#'   pre-formatted character cell values. A row whose cells after the first are
-#'   all empty is a whole-table scalar and spans the data columns.
+#' @param panels named list; names are panel titles rendered as left-aligned
+#'   "Panel <letter>: <title>" rows (letter assigned by position), each opened
+#'   by a rule. Each element is a data frame whose first column holds row
+#'   labels (character, may contain math) and whose remaining
+#'   length(col_headers) columns hold pre-formatted character cell values.
 #' @param col_headers character vector of column headers (e.g. maturities)
 #' @param col_group_label spanner text over the numeric columns
+#' @param col_width optional LaTeX width giving every data column that width
+#'   with centered contents; NULL keeps natural-width centered columns
 #' @return character vector of LaTeX lines from \\begin{tabular} to
 #'   \\end{tabular}
 panel_tabular_lines <- function(panels, col_headers,
-                                col_group_label = "Maturity (months)") {
+                                col_group_label = "Maturity (months)",
+                                col_width = NULL) {
   n_cols <- length(col_headers)
   header_lines <- c(
     paste0(
@@ -38,16 +40,17 @@ panel_tabular_lines <- function(panels, col_headers,
   for (panel_idx in seq_along(panels)) {
     panel_df <- panels[[panel_idx]]
     stopifnot(ncol(panel_df) == n_cols + 1)
+    # the header's \\midrule opens the first panel; the others get their own
     spacing <- if (panel_idx == 1) {
       "\\addlinespace[0.5em]"
     } else {
-      "\\addlinespace[1em]"
+      c("\\midrule", "\\addlinespace[0.5em]")
     }
     body <- c(
       body,
       spacing,
       paste0(
-        "\\multicolumn{", n_cols + 1, "}{c}{Panel ",
+        "\\multicolumn{", n_cols + 1, "}{l}{Panel ",
         LETTERS[panel_idx], ": ", names(panels)[panel_idx], "} \\\\"
       ),
       "\\addlinespace[0.3em]"
@@ -55,25 +58,22 @@ panel_tabular_lines <- function(panels, col_headers,
     for (row_idx in seq_len(nrow(panel_df))) {
       cells <- as.character(unlist(panel_df[row_idx, -1]))
       cells[is.na(cells)] <- "--"
-      # A diagnostic computed on the whole column block, not per column, arrives
-      # with its value in the first cell and the rest padded empty. Spanning the
-      # data columns says "one number for the table"; leaving the padding in
-      # place would put it under column 1 and read as a per-column value.
-      value <- if (n_cols > 1L && all(cells[-1L] == "")) {
-        paste0("\\multicolumn{", n_cols, "}{c}{", cells[[1L]], "}")
-      } else {
-        paste(cells, collapse = " & ")
-      }
       body <- c(
         body,
         paste0(
-          "\\quad ", as.character(panel_df[row_idx, 1]), " & ", value, " \\\\"
+          "\\quad ", as.character(panel_df[row_idx, 1]), " & ",
+          paste(cells, collapse = " & "), " \\\\"
         )
       )
     }
   }
 
-  col_spec <- paste0("l@{\\hskip 0.5in}", strrep("c", n_cols))
+  data_col <- if (is.null(col_width)) {
+    "c"
+  } else {
+    paste0(">{\\centering\\arraybackslash}p{", col_width, "}")
+  }
+  col_spec <- paste0("l@{\\hskip 0.5in}", strrep(data_col, n_cols))
   c(
     paste0("\\begin{tabular}{", col_spec, "}"),
     "\\toprule",

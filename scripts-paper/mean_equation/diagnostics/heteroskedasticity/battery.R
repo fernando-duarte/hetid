@@ -53,29 +53,16 @@ HETERO_TEST_LABELS <- c(
 )
 
 # Row labels carry the conditioning symbol so the two tables cannot be confused
-# for one another once separated from their captions.
+# for one another once separated from their captions. The rank test closes the
+# table as a panel of its own: it tests the relevance condition jointly, so the
+# per-column headers over the other rows do not apply to it.
 hetero_row_labels <- function(test_names, sym) {
   c(
     unname(HETERO_TEST_LABELS[test_names]),
-    sprintf("$\\mathrm{Cov}(Z,%s^2)$", sym),
     sprintf("$\\mathrm{corr}(Z,%s^2)$", sym),
     sprintf("$t$-stat of $%s$-on-$Z$", sym),
     sprintf("$\\mathrm{corr}(\\omega_1,%s)$", sym),
-    sprintf(
-      paste0(
-        "$[\\mathrm{Cov}(\\omega_1,%s)/\\mathrm{Var}(%s)]",
-        "\\cdot\\mathrm{sd}(%s)/\\mathrm{sd}(\\Delta c)$"
-      ),
-      sym, sym, sym
-    ),
-    sprintf(
-      "$[\\mathrm{Cov}(\\omega_1,%s)/\\mathrm{Var}(%s)]\\cdot\\mathrm{sd}(%s)$",
-      sym, sym, sym
-    ),
-    "$\\det\\widehat{M}_Z$",
-    "$\\kappa(\\widehat{M}_Z)$",
-    "$\\sigma_{\\min}(\\widehat{M}_Z)$",
-    "Kleibergen--Paap $\\mathrm{rk}$ ($p$)"
+    "Kleibergen--Paap rank ($p$)"
   )
 }
 
@@ -148,31 +135,16 @@ hetero_panel <- function(mat, sym, subject, w1, y1, z, z_mat, fmt, pcell) {
     mean_t <- summary(stats::lm(col ~ z))$coefficients[2, 3]
     c(
       vapply(test_names, function(nm) pcell(pv[[nm]]), character(1)),
-      fmt(mean(z * col^2) - mean(z) * mean(col^2)),
       fmt(stats::cor(z, col^2)),
       fmt(mean_t),
-      fmt(stats::cor(w1, col)),
-      fmt(
-        stats::cov(w1, col) / stats::var(col) *
-          stats::sd(col) / stats::sd(y1)
-      ),
-      fmt(stats::cov(w1, col) / stats::var(col) * stats::sd(col))
+      fmt(stats::cor(w1, col))
     )
   }
   cells <- do.call(cbind, lapply(seq_len(ncol(mat)), column_cells))
   rk <- rk_rank_test(mat, z)
-  joint_cells <- c(
-    paper_format_sci(
-      c(rk$det, rk$kappa, rk$sv_min),
-      digits = PAPER_REPORTING_CONTROL$precision$diagnostic_table,
-      format = "g"
-    ),
-    pcell(rk$p)
-  )
-  cells <- rbind(
-    cells,
-    cbind(joint_cells, matrix("", length(joint_cells), ncol(mat) - 1L))
-  )
+  # the rank test is one joint p-value, reported under the first column with the
+  # rest empty; it closes the table, in the order of hetero_row_labels
+  cells <- rbind(cells, c(pcell(rk$p), rep("", ncol(mat) - 1L)))
   list(
     cells = cells,
     row_labels = hetero_row_labels(test_names, sym),
