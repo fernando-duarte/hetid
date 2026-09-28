@@ -27,9 +27,8 @@ test_that("compute_news_q_bound matches the manual Minkowski formula at s = 2", 
 })
 
 test_that("the i = step boundary uses the realized step-bond leg (q1 leg exact)", {
-  # At s = 1 the led forecast is exactly the realized log step-bond price
-  # (compute_n_hat_previous with TP^(step) := 0), so u1 = 0 identically and
-  # the q1 sigma contributes exactly nothing
+  # At s = 1 the led forecast is exactly the realized log step-bond price (compute_n_hat_previous
+  # with TP^(step) := 0), so u1 = 0 identically and the q1 sigma contributes exactly nothing
   y12_pct <- c(2, 5, 1, 7, 4, 6)
   n <- length(y12_pct)
   zeros <- numeric(n)
@@ -73,9 +72,8 @@ test_that("interior primitive NAs drop rows; the survivors match the manual form
 })
 
 test_that("an overflowing leg on finite primitives gives Inf, not NA or a drop", {
-  # y12 = -1e5 at a realized position keeps every primitive finite
-  # (x = +1000), but q0 = expm1(1000) overflows: the arm turns Inf and the
-  # bound is Inf -- conservative, so the envelope arm wins the caller's min
+  # y12 = -1e5 at a realized position keeps every primitive finite (x = +1000), but q0 =
+  # expm1(1000) overflows: arm and bound turn Inf -- conservative, so the envelope arm wins the min
   y12_pct <- c(1, 4, 9, -1e5, 7, 5, 3, 8)
   n <- length(y12_pct)
   zeros <- numeric(n)
@@ -88,10 +86,8 @@ test_that("an overflowing leg on finite primitives gives Inf, not NA or a drop",
 })
 
 test_that("compute_news_q_bound returns NA_real_ when no primitive rows survive", {
-  # An all-NA y24 kills both forecast legs (n_hat(24) and n_hat(12) each read
-  # y24) at every date while the realized y12 leg stays finite, so the
-  # primitive mask is empty; y12 keeps percent-scale values so the units
-  # heuristic stays quiet
+  # All-NA y24 kills n_hat(24) and n_hat(12), both reading y24, while realized y12 stays finite
+  # The primitive mask is empty; percent-scale y12 values keep the units heuristic quiet
   y12_pct <- c(1, 4, 9, 2, 7, 5, 3, 8)
   zeros <- numeric(8)
   yields <- data.frame(y12 = y12_pct, y24 = rep(NA_real_, 8), y36 = zeros)

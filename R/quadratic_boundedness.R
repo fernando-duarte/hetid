@@ -1,4 +1,4 @@
-# Numerical certificate search. Optimizer output is only a candidate.
+# Numerical certificate search. Optimizer output is only a candidate
 quadratic_curvature_margin <- function(a, direction) {
   products <- outer(direction, direction) * a
   value <- sum(products)
@@ -74,7 +74,7 @@ quadratic_boundedness_search <- function(quadratic,
   list(certificate = certificate, directions = directions, matrices = matrices)
 }
 
-# Candidate center of the containing ellipsoid; feasibility is checked separately.
+# Candidate center of the containing ellipsoid; feasibility is checked separately
 quadratic_certificate_center <- function(quadratic, certificate) {
   if (is.null(certificate)) {
     return(NULL)

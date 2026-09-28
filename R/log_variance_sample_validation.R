@@ -1,4 +1,4 @@
-# Validate retained axes and failure masks without refitting the sample.
+# Validate retained axes and failure masks without refitting the sample
 validate_hetid_log_variance_sample <- function(x) {
   assert_bad_argument_ok(inherits(x, "hetid_log_variance_sample") && is.list(x),
     "object must be a hetid_log_variance_sample",

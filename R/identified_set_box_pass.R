@@ -100,7 +100,7 @@ node_on_boundary <- function(node, half) {
   if (length(node) == 0L) {
     return(logical(0))
   }
-  abs(abs(node) - half) <= 1e-9 * half
+  abs(abs(node) - half) <= HETID_CONSTANTS$BOX_BOUNDARY_TOLERANCE * half
 }
 
 #' Fold One Line Hull into the Running Bounds

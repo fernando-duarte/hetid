@@ -1,5 +1,5 @@
 # Pins every identified-set search control, so a value cannot drift
-# without a deliberate edit here.
+# without a deliberate edit here
 
 test_that("identified-set controls hold their documented values", {
   expect_identical(IDENTIFIED_SET_CONTROL$N_GRID, 41L)

@@ -1,9 +1,8 @@
 # Tests for compute_tau0_point, the closed-form point solver at tau = 0
 
 make_point_components <- function(qmat, lvec) {
-  # build through the real internal constructor so the fixture cannot drift
-  # from the container's invariants: V_i is a named numeric vector (not a
-  # list), and L_i/V_i/Q_i all carry maturity_N names
+  # Use the internal constructor to prevent fixture drift: V_i is a named numeric vector, not a
+  # list, and L_i/V_i/Q_i all have maturity_N names
   nms <- paste0("maturity_", seq_len(nrow(qmat)))
   hetid:::new_hetid_components(
     L_i = stats::setNames(lvec, nms),
@@ -54,7 +53,7 @@ test_that("non-finite systems are misuse, not a no-point outcome", {
 # (maturities index w2 columns), so a full-rank stacked system is square and
 # necessarily consistent: the paper's residual-consistency gate is retained
 # as ported defensive depth but is unreachable through validated containers
-# and carries no dedicated test here.
+# and carries no dedicated test here
 
 test_that("non-components input raises hetid_error_bad_argument", {
   expect_error(compute_tau0_point(list(Q_i = list(), L_i = numeric())),

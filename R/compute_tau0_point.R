@@ -10,7 +10,7 @@
 #' @param components A \code{hetid_components} object from
 #'   \code{\link{compute_identified_set_components}}.
 #' @param tol Positive numeric scalar, the rank and residual tolerance
-#'   (default \code{HETID_CONSTANTS$TAU0_POINT_TOLERANCE}, \code{1e-8}).
+#'   (default \code{HETID_CONSTANTS$TAU0_POINT_TOLERANCE}).
 #'   Passed to \code{\link[base]{qr}} and \code{\link[base]{qr.solve}} for
 #'   the rank check and solve, and scales the residual-consistency gate.
 #'
@@ -69,9 +69,8 @@ compute_tau0_point <- function(components,
     "components contain non-finite values in Q_i or L_i",
     arg = "components"
   )
-  # at tau = 0 the constraints are perfect squares, so a full-rank and
-  # consistent Q theta = L system identifies a point; anything else is a
-  # valid statistical outcome (no point), returned as NULL rather than an error
+  # At tau = 0 constraints are perfect squares: full-rank, consistent Q theta = L gives a point
+  # Otherwise no point is a valid statistical outcome, returned as NULL rather than an error
   if (nrow(qmat) < ncol(qmat) || qr(qmat, tol = tol)$rank < ncol(qmat)) {
     return(NULL)
   }

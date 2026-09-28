@@ -7,11 +7,11 @@
 harvey_newton_dir(cur, x_mat, control = log_variance_fit_control("harvey"))
 }
 \arguments{
-\item{cur}{Current \code{\link{harvey_eval}} result}
+\item{cur}{Current \code{\link{harvey_eval}} result.}
 
-\item{x_mat}{Numeric design matrix, intercept column included}
+\item{x_mat}{Numeric design matrix, intercept column included.}
 
-\item{control}{Validated fitting controls}
+\item{control}{Validated fitting controls.}
 }
 \value{
 Numeric direction vector, or \code{NULL}

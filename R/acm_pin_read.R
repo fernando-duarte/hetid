@@ -1,4 +1,4 @@
-# Validate bytes before parsing; pinned inputs require complete, usable dates.
+# Validate bytes before parsing; pinned inputs require complete, usable dates
 read_acm_pin_data <- function(path, pin) {
   if (!acm_pin_digest_matches(path, pin)) {
     acm_pin_error(pin, "sha256 mismatch or missing asset")

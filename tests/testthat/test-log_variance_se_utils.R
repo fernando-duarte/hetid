@@ -1,6 +1,5 @@
-# Tests for the estimator-agnostic SE scaffolding: the normalized fail-closed
-# inverse, the Bartlett/Newey-West meat, and the preflight that either hands
-# back mu or the all-NA skeleton.
+# Tests for the estimator-agnostic SE scaffolding: the normalized fail-closed inverse, the
+# Bartlett/Newey-West meat, and the preflight that either hands back mu or the all-NA skeleton
 
 test_that("se_norm_inv equals solve() on a well-conditioned matrix", {
   set.seed(3)

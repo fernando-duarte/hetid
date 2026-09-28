@@ -28,7 +28,8 @@
 #' \itemize{
 #'   \item \strong{ACM Term Structure Data}: Access to monthly and daily
 #'     (business-day) yields, term premia, and risk-neutral yields at monthly
-#'     maturity steps (1-120 months) based on Adrian, Crump, and Moench (2013)
+#'     maturity steps (\code{MIN_MATURITY}-\code{MAX_MATURITY} months, 1-120)
+#'     based on Adrian, Crump, and Moench (2013)
 #'   \item \strong{Economic Variables}: Quarterly macroeconomic and financial data
 #'   \item \strong{Verified Downloads}: Functions to download the latest GitHub
 #'     release with sha256 verification (NY Fed workbook as opt-in fallback)
@@ -89,7 +90,8 @@
 #' \describe{
 #'   \item{\strong{ACM Term Structure Data}}{Monthly and daily (business-day)
 #'     data from Adrian, Crump, and Moench (2013) including yields, term premia,
-#'     and risk-neutral yields at monthly maturity steps from 1 to 120 months.
+#'     and risk-neutral yields at monthly maturity steps from
+#'     \code{MIN_MATURITY} to \code{MAX_MATURITY} months (1 to 120).
 #'     Updated from the GitHub replication release (the daily series is
 #'     download-only); the NY Fed workbook is the opt-in fallback.}
 #'   \item{\strong{Economic Variables}}{Quarterly macroeconomic and financial

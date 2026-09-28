@@ -1,4 +1,4 @@
-# Analytic sets whose classification must not depend on constraint units.
+# Analytic sets whose classification must not depend on constraint units
 scale_hull <- function(rows) {
   rows <- rbind(rows)
   qs <- list(

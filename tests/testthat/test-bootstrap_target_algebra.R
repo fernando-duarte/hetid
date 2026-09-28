@@ -8,9 +8,8 @@ test_that("paired endpoint root algebra retains independent oracles", {
   et_min_reps <- 50L
   et_pool <- rep(TRUE, et_b)
   et_check <- function(...) expect_true(all(vapply(list(...), isTRUE, logical(1))))
-  # the conservative rank, and both per-draw roots, written out from their
-  # definitions rather than borrowed from the module, so the ordering identity
-  # below is tested against the spec and not against itself
+  # Write the conservative rank and both per-draw roots from definitions, not module code
+  # This tests the ordering identity against the spec rather than against itself
   et_rank <- function(n, alpha) min(n, ceiling((n + 1) * (1 - alpha)))
   et_root_s <- function(z_l, z_u) pmax(0, z_l, z_u)
   et_root_p <- function(z_l, z_u, d_l, d_u, lambda) {
@@ -88,7 +87,7 @@ test_that("paired endpoint root algebra retains independent oracles", {
   # 84 draws with no inward deviation, 8 that only threaten the lower endpoint and
   # 8 that only threaten the upper one, with unit credits on both sides. The
   # conservative order statistic is exactly zero on the coarse grid and 1/8 at
-  # lambda equal to 1/8, so only a certified search over the continuum finds it.
+  # lambda equal to 1/8, so only a certified search over the continuum finds it
   et_adv_l <- c(rep(0, 84L), rep(0.25, 8L), rep(0, 8L))
   et_adv_u <- c(rep(0, 84L), rep(0, 8L), rep(1, 8L))
   et_adv_cs <- bootstrap_containment_critical(et_pool, et_alpha, et_adv_l, et_adv_u)
@@ -111,9 +110,8 @@ test_that("paired endpoint root algebra retains independent oracles", {
     isTRUE(all.equal(et_adv_cs, 0.25))
   )
 
-  # interior optimum with asymmetric credits
-  # the same shape with credits of 1 and 5, so the Lipschitz constant has to be
-  # the larger of the two: the peak rides the steep upper-side face
+  # interior optimum with asymmetric credits: the same shape with credits of 1 and 5, so the
+  # Lipschitz constant has to be the larger of the two: the peak rides the steep upper-side face
   et_asym_u <- c(rep(0, 84L), rep(0, 8L), rep(5.1, 8L))
   et_asym_cs <- bootstrap_containment_critical(et_pool, et_alpha, et_adv_l, et_asym_u)
   et_asym <- bootstrap_pointwise_critical(
@@ -135,10 +133,8 @@ test_that("paired endpoint root algebra retains independent oracles", {
     isTRUE(et_asym$interior)
   )
 
-  # stopping-test economy
-  # a flat credited quantile with a steep slope: the reported bound is capped by
-  # Target S, which is itself zero here, so the search must stop at once instead
-  # of refining to a width of twice the tolerance over the Lipschitz constant
+  # A flat credited quantile with steep slope has Target S = 0, which caps the reported bound
+  # Stop at once instead of refining to width 2*tolerance/Lipschitz
   et_cheap <- bootstrap_pointwise_critical(
     rep(-3, et_b), rep(-3, et_b), et_pool, 10, 10, et_alpha, et_tol,
     bootstrap_containment_critical(et_pool, et_alpha, rep(-3, et_b), rep(-3, et_b))

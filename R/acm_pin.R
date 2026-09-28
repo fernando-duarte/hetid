@@ -1,4 +1,4 @@
-# Validate an explicit release and caller-supplied digest before touching the cache.
+# Validate an explicit release and caller-supplied digest before touching the cache
 acm_pin <- function(release, expected_sha256, source, frequency) {
   if (is.null(release) && is.null(expected_sha256)) {
     return(NULL)
@@ -21,7 +21,7 @@ acm_pin <- function(release, expected_sha256, source, frequency) {
   )
   release <- unname(enc2utf8(release))
   sha <- unname(tolower(expected_sha256))
-  # One full digest keeps paths short without truncating the identity hash.
+  # One full digest keeps paths short without truncating the identity hash
   key <- acm_pin_key(release, sha, frequency)
   filename <- acm_asset_filename("github", frequency)
   list(
@@ -34,7 +34,7 @@ acm_pin <- function(release, expected_sha256, source, frequency) {
   )
 }
 
-# Pin failures name the immutable snapshot, which is never silently overwritten.
+# Pin failures name the immutable snapshot, which is never silently overwritten
 acm_pin_error <- function(pin, detail) {
   recovery <- if (dir.exists(dirname(pin$path))) {
     " Remove that snapshot directory before retrying if it is corrupt."

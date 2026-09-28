@@ -1,5 +1,5 @@
 # Fit candidates in their original order, carrying only successful warm starts.
-# The legacy path keeps its one-shot seam; retained samples can supply a prepared fitter.
+# The legacy path keeps its one-shot seam; retained samples can supply a prepared fitter
 fit_over_candidates <- function(candidates, box, x_var, estimator,
                                 fitter = NULL, retain = FALSE) {
   rows <- vector("list", nrow(candidates))
@@ -33,7 +33,7 @@ fit_over_candidates <- function(candidates, box, x_var, estimator,
   out
 }
 
-# Preserve candidate identity when a fit fails, without repeating responses and designs.
+# Preserve candidate identity when a fit fails, without repeating responses and designs
 log_variance_sample_records <- function(fits, candidates, labels) {
   coef_matrix <- matrix(NA_real_, nrow(candidates), length(labels),
     dimnames = list(rownames(candidates), labels)

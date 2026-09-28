@@ -1,7 +1,5 @@
-# Tests for the Harvey log-variance worker: the start ladder, the first-order
-# condition it solves, the scaled-response guards, and the zero-response rows
-# it treats as first-class. The internals are unexported, so they are reached
-# via hetid:::.
+# Harvey log-variance worker: the start ladder, the first-order condition it solves, the
+# scaled-response guards, and zero-response rows as first-class. Unexported, so via hetid:::
 
 test_that("a clean simulated response fits end to end", {
   d <- simulate_logvar_data()

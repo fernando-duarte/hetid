@@ -2,7 +2,7 @@
 % Please edit documentation in R/circular_mbb_indices.R
 \name{circular_mbb_indices}
 \alias{circular_mbb_indices}
-\title{Generate circular moving-block bootstrap indices}
+\title{Generate Circular Moving-Block Bootstrap Indices}
 \usage{
 circular_mbb_indices(sample_size, block_length, n_draws = 1L)
 }
@@ -17,7 +17,7 @@ circular_mbb_indices(sample_size, block_length, n_draws = 1L)
 A list of \code{n_draws} numeric index vectors, each of length \code{sample_size}.
 }
 \description{
-Generate circular moving-block bootstrap indices
+Generate Circular Moving-Block Bootstrap Indices
 }
 \details{
 Starts are sampled uniformly with replacement. Each block wraps at

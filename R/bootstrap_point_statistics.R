@@ -1,4 +1,4 @@
-#' Summarize bootstrap point estimates with robust scales and empirical tails
+#' Summarize Bootstrap Point Estimates With Robust Scales and Empirical Tails
 #'
 #' @param point Named numeric vector of full-sample estimates; `NA` is allowed.
 #' @param draws Numeric matrix with draws in rows and columns named exactly as

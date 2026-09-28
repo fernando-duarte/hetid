@@ -83,8 +83,9 @@ validate_hetid_tau0_fit <- function(x) {
 }
 
 #' Validate w1, w2, z, and gamma Against n_obs
-#'
-#' @return \code{list(i_dim, j_dim)} read off \code{w2} and \code{z}
+#' @param x A classed \code{hetid_tau0_fit} object.
+#' @param n_obs Number of observations the fit was computed from.
+#' @return \code{list(i_dim, j_dim)} read off \code{w2} and \code{z}.
 #' @noRd
 validate_tau0_fit_data_shapes <- function(x, n_obs) {
   assert_bad_argument_ok(
@@ -117,9 +118,9 @@ validate_tau0_fit_data_shapes <- function(x, n_obs) {
 }
 
 #' Validate beta1r and beta2r Against Each Other and the Component Axis
-#'
-#' @param dims \code{list(i_dim, j_dim)} from \code{validate_tau0_fit_data_shapes()}
-#' @return Invisible TRUE
+#' @param x A classed \code{hetid_tau0_fit} object.
+#' @param dims \code{list(i_dim, j_dim)} from \code{validate_tau0_fit_data_shapes()}.
+#' @return Invisible TRUE.
 #' @noRd
 validate_tau0_fit_betas <- function(x, dims) {
   assert_bad_argument_ok(
@@ -154,9 +155,9 @@ validate_tau0_fit_betas <- function(x, dims) {
 }
 
 #' Validate point and the point/beta1 Pairing
-#'
-#' @param dims \code{list(i_dim, j_dim)} from \code{validate_tau0_fit_data_shapes()}
-#' @return Invisible TRUE
+#' @param x A classed \code{hetid_tau0_fit} object.
+#' @param dims \code{list(i_dim, j_dim)} from \code{validate_tau0_fit_data_shapes()}.
+#' @return Invisible TRUE.
 #' @noRd
 validate_tau0_fit_point <- function(x, dims) {
   point <- x$point

@@ -22,7 +22,7 @@ test_that("compute_tau0_system returns visibly", {
 test_that("centering preserves exactly balanced instrument deviations", {
   d <- simulate_tau0_dgp(t_obs = 160)
   # These dyadic deviations and their sums with the offsets are representable
-  # exactly. The mean is the offset, so no numerical mean oracle is needed.
+  # exactly. The mean is the offset, so no numerical mean oracle is needed
   deviations <- cbind(
     z1 = rep(c(-1, 1) / 128, 80),
     z2 = rep(c(-1, -1, 1, 1) / 64, 40)
@@ -120,7 +120,7 @@ test_that("x contract violations error loudly", {
 # the point solve:
 #   functional_bounds.R: 4271c77274e03f4fbfba2d9cf60f5e20d74602e0b771757bf43abefb4644a2be
 #   quadratic_evaluation.R: 0b090ad3d42d2efe249ab1b3225b495560eebc3edbfc02de0e2e10428d4ca477
-# The test itself never sources the paper pipeline.
+# The test itself never sources the paper pipeline
 test_that("pinned paper-equivalence fixture: the tau=0 point at the default seed", {
   d <- simulate_tau0_dgp()
 

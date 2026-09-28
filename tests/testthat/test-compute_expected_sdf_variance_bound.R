@@ -138,9 +138,8 @@ test_that("compute_expected_sdf_variance_bound honors a non-default step", {
 
 test_that("q removes the first-order term: var(q) is far below var(g)", {
   test_env <- setup_standard_test_env()
-  # the projection arm is gone from the min, but the property that motivated
-  # the q arm still holds and guards the construction: the linear term is
-  # cancelled, so var(q) is orders of magnitude below var(g)
+  # The projection arm is gone from the min, but the property motivating the q arm still guards
+  # the construction: the linear term cancels, so var(q) is orders of magnitude below var(g)
   for (i in c(12, 60, 108)) {
     vg <- var_n(gap_series(test_env$yields, test_env$term_premia, i = i))
     vq <- var_n(q_series(test_env$yields, test_env$term_premia, i = i))

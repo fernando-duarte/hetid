@@ -10,7 +10,7 @@ test_that("common response units preserve theta bounds and rescale beta1", {
       tau = 0.05, n_grid = 11L
     )
     # Every feasible point satisfies the sum of the inequalities. Positive
-    # definite curvature of that sum independently proves the set is bounded.
+    # definite curvature of that sum independently proves the set is bounded
     eig <- eigen(Reduce(`+`, box$quadratic$A_i), symmetric = TRUE)$values
     expect_gt(min(eig), 0)
     expect_true(all(is.finite(unlist(box$bounds[c("lower", "upper")]))))
@@ -22,7 +22,7 @@ test_that("common response units preserve theta bounds and rescale beta1", {
       tolerance = 1e-10
     )
     # Boundary arithmetic has the units of the quadratic; check the witnesses
-    # against the original-unit system rather than an absolute scaled cutoff.
+    # against the original-unit system rather than an absolute scaled cutoff
     checker <- make_system_checker(reference$quadratic)
     witnesses <- rbind(
       box$arg_lower, box$arg_upper,

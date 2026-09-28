@@ -1,4 +1,4 @@
-# Prediction rows are explicitly aligned to the retained coefficient axis.
+# Prediction rows are explicitly aligned to the retained coefficient axis
 log_variance_prediction_design <- function(object, newdata, include_intercept, dates) {
   if (is.null(newdata)) {
     design <- object$x_design
@@ -24,7 +24,7 @@ log_variance_prediction_design <- function(object, newdata, include_intercept, d
   list(design = design, dates = dates)
 }
 
-# Keep missing geometry/fitting outcomes distinct from numeric projection failures.
+# Keep missing geometry/fitting outcomes distinct from numeric projection failures
 empty_log_variance_envelope <- function(object, input, type, include_intercept) {
   n <- nrow(input$design)
   missing_values <- rep(NA_real_, n)
@@ -61,6 +61,17 @@ transform_sampled_log_variance <- function(eta, type) {
 #' @param x A \code{hetid_log_variance_sample}.
 #' @param ... Unused, for method consistency.
 #' @return The object, invisibly.
+#' @examples
+#' set.seed(42)
+#' n <- 100
+#' z <- rnorm(n)
+#' x <- cbind(x = rnorm(n))
+#' y2 <- cbind(news = exp(z / 2) * rnorm(n))
+#' y1 <- 0.3 + x[, 1] + 0.5 * y2[, 1] + rnorm(n)
+#' fit <- compute_tau0_system(y1, y2, x, z)
+#' box <- compute_identified_set_box(fit, 0.01, n_grid = 3)
+#' sampled <- sample_log_variance_set(box, x)
+#' print(sampled)
 #' @export
 print.hetid_log_variance_sample <- function(x, ...) {
   validate_hetid_log_variance_sample(x)

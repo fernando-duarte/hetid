@@ -2,7 +2,7 @@
 % Please edit documentation in R/bootstrap_endpoint_draws.R
 \name{bootstrap_endpoint_draws}
 \alias{bootstrap_endpoint_draws}
-\title{Run a serial endpoint bootstrap over precomputed indices}
+\title{Run a Serial Endpoint Bootstrap Over Precomputed Indices}
 \usage{
 bootstrap_endpoint_draws(full, indices, statistic, seed = NULL)
 }
@@ -28,7 +28,7 @@ A list containing the four paired matrices consumed directly by
 include valid returned frames whose endpoint statuses are \code{failed}.
 }
 \description{
-Run a serial endpoint bootstrap over precomputed indices
+Run a Serial Endpoint Bootstrap Over Precomputed Indices
 }
 \details{
 Callback errors become failed draws with missing endpoints and a

@@ -1,4 +1,4 @@
-# Reuse constraint-relative rounding checks for bounds and candidate membership.
+# Reuse constraint-relative rounding checks for bounds and candidate membership
 make_relative_feasibility_checker <- function(quadratic) {
   checker <- make_system_checker(quadratic)
   function(theta) {

@@ -1,5 +1,5 @@
 # Recession-direction search: a witness proves the set unbounded, and a
-# bounded set must yield none.
+# bounded set must yield none
 
 test_that("a bounded set has no recession direction", {
   # unit ball: A = I, so v'Av = 1 > 0 in every direction

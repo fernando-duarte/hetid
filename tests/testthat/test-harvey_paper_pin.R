@@ -27,7 +27,7 @@
 #     d1c71657f788ed9fc6cb1f7fe50e308fb1d427450c3cbe90de857f77917d2ffb
 #   harvey/standard_errors.R:
 #     c4e9ecafa50c7f98378e8e414a064c11f1ccf822cb17091e7587064c68e25a25
-# The test itself never sources the paper pipeline.
+# The test itself never sources the paper pipeline
 test_that("pinned paper-equivalence fixture: harvey coef and vcov at the default seed", {
   d <- simulate_logvar_data()
   fit <- fit_log_variance(d$y, d$x, estimator = "harvey")

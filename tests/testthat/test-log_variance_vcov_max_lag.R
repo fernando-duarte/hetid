@@ -17,7 +17,7 @@ test_that("the existing fit API supports its largest accepted HAC lag", {
     expect_identical(attributes(actual$hac), attributes(expected$hac))
     expect_true(all(is.finite(actual$hac)))
     # At a fitted coefficient this HAC matrix is a first-order-condition
-    # residual; compare the different accumulation orders on an absolute scale.
+    # residual; compare the different accumulation orders on an absolute scale
     expect_lt(max(abs(actual$hac - expected$hac)), 1e-14)
   }
 })

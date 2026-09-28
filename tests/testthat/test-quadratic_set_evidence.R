@@ -109,10 +109,34 @@ test_that("a verified combination can bound individually indefinite constraints"
   weights <- out$boundedness$weights / out$boundedness$scales
   combined <- Reduce(`+`, Map(`*`, qs$A_i, weights))
   expect_true(all(diag(combined) > 0))
-  # Independent containment: the weighted inequality bounds every feasible x.
+  # Independent containment: the weighted inequality bounds every feasible x
   corners <- rbind(c(0, 0), c(.3, .3), c(-.3, .3))
   for (i in seq_len(nrow(corners))) {
     expect_true(out$check_point(corners[i, ]))
     expect_lte(sum(corners[i, ]^2 * diag(combined)), sum(weights))
   }
+})
+
+test_that("the sampled rescue supplies strict-curvature tail evidence", {
+  sys <- evidence_system(-diag(2), constant = 1)
+  unresolved <- list(
+    lower = rep(FALSE, 3), upper = rep(FALSE, 3),
+    nonempty = FALSE, strict = NULL, tails = vector("list", 3)
+  )
+  constant <- c(FALSE, FALSE, TRUE)
+  out <- hetid:::quadratic_sample_tails(sys, unresolved, constant, 64L)
+
+  expect_true(out$nonempty)
+  expect_identical(out$lower, c(TRUE, TRUE, FALSE))
+  expect_identical(out$upper, c(TRUE, TRUE, FALSE))
+
+  v <- out$strict
+  expect_false(is.null(v))
+  expect_equal(sum(v^2), 1)
+  # independent curvature check, not the implementation's own margin predicate
+  for (a in sys$A_i) expect_lt(drop(crossprod(v, a %*% v)), 0)
+
+  expect_identical(out$tails[[1]][[1]]$type, "strict_curvature")
+  expect_identical(out$tails[[2]][[1]]$type, "strict_curvature")
+  expect_null(out$tails[[3]])
 })

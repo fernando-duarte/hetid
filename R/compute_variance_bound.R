@@ -36,11 +36,11 @@
 #' population target is conservative relative to the minimal-envelope
 #' target when \code{c_bar} is at least the minimal envelope.
 #'
-#' @note The effective maximum for \code{i} is \code{MAX_MATURITY - step},
-#'   because the envelope c_hat needs data at maturity \code{i + step}.
-#'   \code{i} must
-#'   be a positive multiple of \code{step} (enforced by
-#'   \code{\link{compute_k_hat}} and \code{\link{compute_k2_hat}}).
+#' @note The effective maximum for \code{i} is \code{MAX_MATURITY - step}, because
+#'   \code{\link{compute_k_hat}} and \code{\link{compute_k2_hat}} run on every call
+#'   and both read data at maturity \code{i + step}, whether or not \code{c_bar}
+#'   replaces the estimated envelope. Separately, \code{i} must
+#'   be a positive multiple of \code{step} (enforced by the same two functions).
 #'
 #' @export
 #'

@@ -1,4 +1,4 @@
-# Validate a direction independently of how it was proposed.
+# Validate a direction independently of how it was proposed
 quadratic_strict_direction <- function(quadratic, direction) {
   all(vapply(quadratic$A_i, function(a) {
     magnitude <- max(abs(a))
@@ -48,7 +48,7 @@ quadratic_polish_direction <- function(quadratic, direction, maxit) {
   }
 }
 
-# A line tail is accepted only when its leading nonzero sign is resolved.
+# A line tail is accepted only when its leading nonzero sign is resolved
 quadratic_verify_line_tail <- function(quadratic, origin, direction, side) {
   all(vapply(seq_along(quadratic$c_i), function(i) {
     quadratic_constraint_tail(

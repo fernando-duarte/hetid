@@ -1,4 +1,4 @@
-#' Generate circular moving-block bootstrap indices
+#' Generate Circular Moving-Block Bootstrap Indices
 #'
 #' @param sample_size Positive integer length of the aligned estimation sample.
 #' @param block_length Positive integer block length, capped at `sample_size`.

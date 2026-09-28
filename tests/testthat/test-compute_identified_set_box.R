@@ -1,7 +1,5 @@
-# The identified-set box at a positive slack: the properties that make an
-# inner approximation trustworthy (attained by feasible points, contains
-# the tau = 0 point, nests in tau, never shrinks under refinement) and the
-# rejections that keep it honest.
+# The identified-set box at positive slack is an inner approximation attained by feasible points,
+# contains the tau = 0 point, nests in tau, never shrinks under refinement; tests cover rejections
 
 test_that("tau = 0 is rejected rather than searched", {
   expect_error(
@@ -61,9 +59,8 @@ test_that("every finite bound is attained by a feasible theta", {
 })
 
 test_that("a box corner is not itself a member of the set", {
-  # the guard behind the previous test: bounds alone cannot stand in for a
-  # witness, because the corner of a box around a non-convex set is
-  # generally outside it
+  # the guard behind the previous test: bounds alone cannot stand in for a witness, because the
+  # corner of a box around a non-convex set is generally outside it
   box <- compute_identified_set_box(box_fit(), tau = 0.05, n_grid = 15L)
   checker <- make_system_checker(box$quadratic)
   expect_gt(max(checker(box$bounds$lower)), IDENTIFIED_SET_CONTROL$FEAS_TOL)
@@ -88,9 +85,8 @@ test_that("boxes nest as the slack grows", {
 })
 
 test_that("refining a nested grid never shrinks the box", {
-  # 21 -> 41 -> 81 keeps every coarse node, so the finer search sees at
-  # least what the coarser one did. Arbitrary sizes would not nest and the
-  # comparison would be meaningless.
+  # 21 -> 41 -> 81 keeps every coarse node, so the finer search sees at least what the coarser one
+  # did. Arbitrary sizes would not nest and the comparison would be meaningless
   fit <- box_fit()
   coarse <- compute_identified_set_box(fit, tau = 0.05, n_grid = 21L)
   medium <- compute_identified_set_box(fit, tau = 0.05, n_grid = 41L)

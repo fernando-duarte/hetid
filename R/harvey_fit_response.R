@@ -7,7 +7,7 @@
 # clamping, no epsilon added to y, no eta capping. The scaled-response guard is
 # the estimator-neutral log_variance_scaled_response_class(); the result
 # assembly lives in R/harvey_result.R. A file-level roxygen block would collide
-# with harvey_fit_response's own Rd page, so this header stays a comment.
+# with harvey_fit_response's own Rd page, so this header stays a comment
 
 #' Build the Harvey Start Ladder
 #'
@@ -17,12 +17,13 @@
 #' intercept-only rung fills that role when \code{AUTO_INTERCEPT} is TRUE.
 #' Disabling it permits warm-only fitting or an empty ladder.
 #'
-#' @param start Numeric start vector, or \code{NULL}
-#' @param fallback_starts List of numeric start vectors
-#' @param y_scaled Numeric response on the scaled (fitted) scale
-#' @param p Number of design columns
+#' @param start Numeric start vector, or \code{NULL}.
+#' @param fallback_starts List of numeric start vectors.
+#' @param y_scaled Numeric response on the scaled (fitted) scale.
+#' @param p Number of design columns.
+#' @param control Validated fitting controls.
 #'
-#' @return List with \code{candidates} and the matching \code{labels}
+#' @return List with \code{candidates} and the matching \code{labels}.
 #' @noRd
 harvey_start_ladder <- function(
   start, fallback_starts, y_scaled, p, control = log_variance_fit_control("harvey")
@@ -87,9 +88,8 @@ harvey_fit_response <- function(y, x_mat, start = NULL,
   pos <- y_scaled > 0
   n_zero <- sum(!pos)
   rank_x_pos <- harvey_positive_rank(pos, x_mat, control, design)
-  # the Fisher direction needs this factor, so a rank-deficient design leaves
-  # the solver with no globally safe step at all; the rank test decides that
-  # on every platform, where the Cholesky alone rounds either way
+  # Fisher steps need this factor: rank deficiency leaves no globally safe step
+  # The rank test decides on every platform; Cholesky alone may round either way
   rank_x <- design$rank
   chol_xx <- design$chol_xx
   if (rank_x < ncol(x_mat) || is.null(chol_xx)) {

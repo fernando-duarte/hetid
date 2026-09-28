@@ -1,7 +1,5 @@
-# Tests for the Harvey solver primitives: the zero-safe ratio, the guarded
-# point evaluation and its gradient identity, the Cholesky solve, and the two
-# gates that reject a point the scoring loop reached. Everything here is
-# unexported, so it is reached via hetid:::.
+# Unexported Harvey solver primitives (hetid:::): zero-safe ratio, guarded point evaluation and
+# gradient identity, Cholesky solve, and two gates rejecting points reached by the scoring loop
 
 harvey_parts <- function(theta = c(-0.3, 0.2, -0.1)) {
   d <- simulate_logvar_data()
@@ -103,9 +101,8 @@ test_that("the line search stalls when no halving can improve the point", {
 })
 
 test_that("a column with no positive-response support fails both gates", {
-  # the volatility regressor is nonzero only where the response is zero, so
-  # its information column is exactly zero: this is the rank deficiency the
-  # post-stop gate is there to catch, since rank_x_pos itself gates nothing
+  # Volatility regressor nonzero only on zero-response rows: the information column is exactly zero
+  # The post-stop gate must catch this rank deficiency: rank_x_pos itself gates nothing
   set.seed(5)
   y <- c(abs(stats::rnorm(28)) + 0.1, rep(0, 12))
   x_mat <- hetid:::log_variance_design(cbind(v = c(rep(0, 28), rep(1, 12))))

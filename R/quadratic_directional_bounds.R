@@ -1,5 +1,5 @@
 # Conservative side-specific certificates for explicitly supported degeneracies.
-# A singular block is accepted only when excluded rows are structurally zero.
+# A singular block is accepted only when excluded rows are structurally zero
 quadratic_directional_bounds <- function(quadratic, objectives) {
   count <- ncol(objectives)
   dimension <- nrow(objectives)

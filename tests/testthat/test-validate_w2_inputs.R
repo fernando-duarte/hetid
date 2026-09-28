@@ -23,7 +23,7 @@ test_that("maturities beyond the effective maximum are rejected", {
 })
 
 test_that("maturities violating the news contract are rejected", {
-  # In range but neither the boundary (step) nor step-above MIN:
+  # In range but neither the boundary (step) nor step-above MIN_MATURITY:
   # 6 != step (12) and 6 - 12 falls below MIN_MATURITY (1)
   yields <- data.frame(y12 = 1:5, y24 = 1:5)
   term_premia <- data.frame(tp12 = 1:5, tp24 = 1:5)

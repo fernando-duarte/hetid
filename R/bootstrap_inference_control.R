@@ -1,4 +1,4 @@
-# Numerical search defaults; eligibility thresholds remain explicit caller choices.
+# Numerical search defaults; eligibility thresholds remain explicit caller choices
 BOOTSTRAP_INFERENCE_DEFAULTS <- list(tolerance = 1e-4, max_evals = 10000L)
 BOOTSTRAP_ENDPOINT_STATUS <- c("bounded", "unbounded", "unreliable", "failed")
 

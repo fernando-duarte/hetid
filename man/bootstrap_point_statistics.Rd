@@ -2,7 +2,7 @@
 % Please edit documentation in R/bootstrap_point_statistics.R
 \name{bootstrap_point_statistics}
 \alias{bootstrap_point_statistics}
-\title{Summarize bootstrap point estimates with robust scales and empirical tails}
+\title{Summarize Bootstrap Point Estimates With Robust Scales and Empirical Tails}
 \usage{
 bootstrap_point_statistics(point, draws, status, min_reps, stability)
 }
@@ -24,7 +24,7 @@ A data frame of estimates, scales, statistics, empirical and normal
 p-values, status counts, eligibility counts and reasons for unavailable rows.
 }
 \description{
-Summarize bootstrap point estimates with robust scales and empirical tails
+Summarize Bootstrap Point Estimates With Robust Scales and Empirical Tails
 }
 \details{
 Bounded draws must be finite, failed draws must be \code{NA}, and

@@ -1,7 +1,7 @@
 # Evaluation helpers for the outer_bounds closure: objective scaling, the
-# tightest verified bound per side, per-side refinement and the result.
+# tightest verified bound per side, per-side refinement and the result
 
-# Power-of-two scaled columns for every nonzero objective that scales exactly.
+# Power-of-two scaled columns for every nonzero objective that scales exactly
 outer_scale_objectives <- function(objectives, zero) {
   exps <- vapply(seq_len(ncol(objectives)), function(j) {
     outer_pow2_exponent(objectives[, j])
@@ -40,7 +40,7 @@ outer_merge_bounds <- function(best, found, index, cols) {
 }
 
 # Per-side searches from each side's current best candidate; a result is
-# verified before it can tighten the side.
+# verified before it can tighten the side
 outer_refine_sides <- function(sys, best, scaled, maxit) {
   for (col_index in seq_len(ncol(scaled))) {
     for (side in c(1, -1)) {
@@ -58,7 +58,7 @@ outer_refine_sides <- function(sys, best, scaled, maxit) {
 }
 
 # Undo the objective scaling exactly and pad by the smallest normal number,
-# which covers rounding of any result that lands in the subnormal range.
+# which covers rounding of any result that lands in the subnormal range
 outer_rescale_bounds <- function(bounds, best, scaled) {
   tiny <- .Machine$double.xmin
   active <- scaled$active

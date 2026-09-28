@@ -57,6 +57,29 @@ logvar_bounds_tau_render <- function(rows, metadata, tau_baseline, tau_star,
       )
     )
   )
+  # starting wrap width for the caption, in characters; confirmed by reading the
+  # rendered figure, since the fitted line length depends on the actual font
+  caption_wrap_chars <- 130
+  # one long disclosure line clips off the left edge under the caption's default
+  # right alignment, so wrap to the device before drawing (see caption_wrap_chars)
+  caption_text <- paste(
+    strwrap(
+      paste0(
+        "Estimator ", metadata$estimator, "; target functional ",
+        metadata$target_functional, ". Bands are projection hulls of an ",
+        "estimated plug-in image; interior attainment is not established; ",
+        "finite endpoints are inner approximations. ",
+        format_tau_star_bracket(
+          tau_bracket, PAPER_REPORTING_CONTROL$precision$figure_annotation
+        ),
+        ". The grid stays below its certified bounded lower endpoint. ",
+        "Points mark the sampled tolerances and ",
+        "the segments between them are interpolation.", band_note
+      ),
+      width = caption_wrap_chars
+    ),
+    collapse = "\n"
+  )
   fig <- ggplot2::ggplot(rows, ggplot2::aes(tau)) +
     ggplot2::geom_rect(
       data = unsampled, inherit.aes = FALSE,
@@ -118,21 +141,13 @@ logvar_bounds_tau_render <- function(rows, metadata, tau_baseline, tau_star,
     ggplot2::labs(
       x = expression(tau), y = NULL, linetype = NULL, shape = NULL,
       fill = "status",
-      caption = paste0(
-        "Estimator ", metadata$estimator, "; target functional ",
-        metadata$target_functional, ". Bands are projection hulls of an ",
-        "estimated plug-in image; interior attainment is not established; ",
-        "finite endpoints are inner approximations. ",
-        format_tau_star_bracket(
-          tau_bracket, PAPER_REPORTING_CONTROL$precision$figure_annotation
-        ),
-        ". The grid stays below its certified bounded lower endpoint. ",
-        "Points mark the sampled tolerances and ",
-        "the segments between them are interpolation.", band_note
-      )
+      caption = caption_text
     ) +
     ggplot2::coord_cartesian(xlim = c(min(sampled_taus), x_cap)) +
-    ggplot2::theme(legend.position = "bottom")
+    ggplot2::theme(
+      legend.position = "bottom",
+      plot.caption = ggplot2::element_text(hjust = 0)
+    )
   # the divergence-marker scale has nothing to match on a map where no side
   # diverges (the median map, and the variance maps at these taus): a manual
   # scale over an empty aesthetic warns on every build and is then dropped, so

@@ -1,5 +1,5 @@
 # Container validation for the structural (beta1) block of hetid_theta_box:
-# the same one-rejection-per-branch coverage the theta block has.
+# the same one-rejection-per-branch coverage the theta block has
 
 test_that("validation rejects a beta1 frame with the wrong columns", {
   box <- build_box()

@@ -34,6 +34,9 @@ validate_hetid_moments <- function(x) {
 
 #' Validate the Seven Moment Shapes
 #'
+#' @param stats The seven-element moment list under validation.
+#' @param maturities Integer maturity vector defining the constraint axis.
+#' @param n_components Integer width of the theta axis.
 #' @noRd
 validate_moments_shapes <- function(stats, maturities, n_components) {
   expected <- maturity_names(maturities)
@@ -84,6 +87,10 @@ validate_moments_shapes <- function(stats, maturities, n_components) {
 
 #' Validate the Theta-Axis Dimensions of Each Moment Element
 #'
+#' @param stats The seven-element moment list under validation.
+#' @param maturities Integer maturity vector defining the constraint axis.
+#' @param n_components Integer width of the theta axis.
+#' @param j_rows Integer row count read off \code{stats$r_i_0}.
 #' @noRd
 validate_moments_inner_dims <- function(stats, maturities,
                                         n_components, j_rows) {
