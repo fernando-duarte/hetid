@@ -85,9 +85,9 @@ bootstrap_stage_provenance <- function(
     input_sha = hashes$input_sha,
     draw_spec_sha = hashes$draw_spec_sha,
     code_sha = paper_boot_code_sha(bootstrap_stage_code_manifest()),
-    # recorded, never compared: presentation_sha is absent from the semantic
-    # list in bootstrap_stage_provenance_validate on purpose, so a change to a
-    # table or an interval construction is auditable without discarding draws
+    # Record the current presentation hash for audit. Reuse validation checks
+    # its format but compares the stored value with itself, so presentation
+    # changes alone do not discard draws.
     presentation_sha = paper_boot_code_sha(
       bootstrap_stage_presentation_manifest()
     ),

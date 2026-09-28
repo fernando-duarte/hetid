@@ -1,7 +1,7 @@
 # Enforcement half of the EGARCH-X decision core (EGARCH routing protocol): the strict
-# decision/gate-binding validator, the ordered-decision ladder check, the pure
-# branch router, and the routing status-manifest builder. Chain-sourced by
-# decision_core.R after the record builder. Base R only and
+# decision/gate-binding validator, the ordered-decision ladder check, and the
+# pure branch router. Chain-sourced by decision_core.R, which owns the record
+# and routing status-manifest builders. Base R only and
 # dependency-agnostic: the router receives dependency availability and version as
 # plain arguments and never calls requireNamespace() or `::`, so this file is the
 # security gate that runs and fails before any package access. Definitions only.

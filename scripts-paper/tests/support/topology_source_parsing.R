@@ -92,7 +92,7 @@ for (file in r_files) {
   walk_direct(expressions)
   if (direct) {
     record_problem(
-      "Direct paper_source_once(paper_path()) remains in %s",
+      "Direct source(paper_path()) remains in %s",
       relative_paper(file)
     )
   }

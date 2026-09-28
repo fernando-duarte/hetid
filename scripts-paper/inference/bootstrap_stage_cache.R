@@ -6,9 +6,9 @@
 # stale number only warns and silently reruns the whole bootstrap.
 # 4: provenance carries presentation_sha beside code_sha. code_sha covers the
 # draw manifest and gates reuse; presentation_sha covers the post-draw manifest,
-# is recorded for audit, and is deliberately absent from the semantic list in
-# bootstrap_stage_provenance_validate so editing a table or an interval
-# construction cannot discard the draws.
+# is recorded for audit, and keeps its stored value in the semantic comparison
+# in bootstrap_stage_provenance_validate. A changed presentation hash alone
+# therefore cannot discard the draws.
 BOOTSTRAP_STAGE_CACHE_SCHEMA <- 4L
 BOOTSTRAP_STAGE_CACHE_FIELDS <- c(
   "anchor", "mean", "volatility_primary",

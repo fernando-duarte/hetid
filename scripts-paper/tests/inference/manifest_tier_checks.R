@@ -70,9 +70,9 @@ check(
   identical(mt_draw(), mt_draw0) && identical(mt_pres(), mt_pres0)
 )
 
-# presentation_sha must be recorded and format-checked, but never compared:
-# it is absent from the semantic list precisely so a table edit cannot discard
-# draws. If it ever migrates into a recomputation there, this fails.
+# This check pins presentation_sha's presence and hash-format validation.
+# Reuse validation compares the stored value with itself; these field-list
+# assertions do not test that comparison behavior.
 check(
   "presentation_sha is a recorded provenance field and a checked hash",
   "presentation_sha" %in% BOOTSTRAP_STAGE_PROVENANCE_FIELDS &&
