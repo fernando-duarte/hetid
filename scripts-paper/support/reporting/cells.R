@@ -98,11 +98,13 @@ paper_format_set_interval <- function(
   }
   status_cell <- status_cell |
     (isTRUE(na_as_status) & (is.na(lower) | is.na(upper)))
-  degenerate <- if (degenerate_rtol == 0) {
-    lower == upper
-  } else {
-    abs(upper - lower) <= degenerate_rtol * (1 + abs(upper))
-  }
+  # Affine bounds can accumulate roundoff even for a constant coefficient.
+  # Allow 128 machine epsilons relative to the endpoints, without an absolute
+  # floor that would hide small sets near zero. This affects display only;
+  # degenerate_rtol can request a larger tolerance for a particular table.
+  roundoff <- 128 * .Machine$double.eps * pmax(abs(lower), abs(upper))
+  tolerance <- pmax(roundoff, degenerate_rtol * (1 + abs(upper)))
+  degenerate <- is.finite(lower) & is.finite(upper) & abs(upper - lower) <= tolerance
   fixed <- .interval_latex(lower, upper, digits)
   interval <- if (isTRUE(infinite_bounds)) {
     ifelse(

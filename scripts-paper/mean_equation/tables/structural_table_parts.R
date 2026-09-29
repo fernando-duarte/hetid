@@ -38,8 +38,8 @@ structural_equation_table_parts <- function(mean, boot, n_pc) {
       )
     )
   }
-  # a degenerate interval (exactly equal endpoints, the point-identified case)
-  # is left blank: the set equals the tau = 0 point at every displayed tau
+  # a point interval, allowing for endpoint roundoff, is left blank:
+  # the set equals the tau = 0 point at every displayed tau
   set_cell <- function(lo, hi, status) {
     policy <- PAPER_REPORTING_CONTROL$cells$structural
     paper_format_set_interval(

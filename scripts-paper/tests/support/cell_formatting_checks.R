@@ -44,6 +44,39 @@ check(
   )
 )
 check(
+  "set formatter treats accumulated endpoint roundoff as a point at any scale",
+  {
+    scale <- c(1e-100, 1, 1e100)
+    lower <- 0.79574249641165817 * scale
+    upper <- 0.79574249641167061 * scale
+    all(paper_format_set_interval(lower, upper, "bounded", 3L) == "") &&
+      all(paper_format_set_interval(-upper, -lower, "bounded", 3L) == "")
+  }
+)
+check(
+  "distinct bounds stay visible even when both round to the same printed number",
+  {
+    lower <- c(0, 1e-100, 0.795742, 0.79574249641166)
+    upper <- c(1e-100, 2e-100, 0.795743, 0.79574249641266)
+    all(nzchar(paper_format_set_interval(lower, upper, "bounded", 3L)))
+  }
+)
+check(
+  "roundoff handling preserves missing, unreliable and infinite interval cells",
+  identical(
+    paper_format_set_interval(
+      c(NA, 1, -Inf, 1, -Inf), c(NA, 1, 2, Inf, Inf),
+      c("unreliable", "unreliable", "bounded", "bounded", "bounded"),
+      digits = 3L, status_mode = "unreliable", na_as_status = TRUE,
+      infinite_bounds = TRUE
+    ),
+    c(
+      "unreliable", "unreliable", "$(-\\infty,\\,2.000]$", "$[1.000,\\,\\infty)$",
+      "unbounded"
+    )
+  )
+)
+check(
   "confidence formatter preserves open and closed intervals",
   identical(
     paper_format_confidence_interval(1, 2, 3L, brackets = "open"),

@@ -171,4 +171,18 @@ check("an unbounded side stops the table", {
   raises(structural_inference_panels(structural_inference_rows(unbounded), settings), "tau0.05")
 })
 
+check("roundoff-only mean sets leave both the set and confidence cells blank", {
+  roundoff <- rows
+  selected <- roundoff$panel == "mean" & roundoff$term == "(Intercept)" &
+    roundoff$column %in% sprintf("tau%.2f", settings$taus)
+  roundoff$lower[selected] <- 0.79574249641165817
+  roundoff$upper[selected] <- 0.79574249641167061
+  rendered <- structural_inference_panels(roundoff, settings)
+  expected <- panels
+  for (column in 3:5) expected$mean$columns[[column]][1:2] <- ""
+  identical(rendered, expected) &&
+    all(is.finite(roundoff$ci_lower[selected])) &&
+    all(roundoff$upper[selected] > roundoff$lower[selected])
+})
+
 .test$finish()

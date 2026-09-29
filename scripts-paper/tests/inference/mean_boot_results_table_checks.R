@@ -157,6 +157,15 @@ check(
     stp_parts$columns[[3L]][2L * stp_rows]
   ))
 )
+check("legacy mean tables also omit roundoff-only sets and their confidence cells", {
+  roundoff_mean <- stp_mean
+  roundoff_mean$set_tables[[1L]]$beta1$set_lower[1L] <- 0.79574249641165817
+  roundoff_mean$set_tables[[1L]]$beta1$set_upper[1L] <- 0.79574249641167061
+  rendered <- structural_equation_table_parts(roundoff_mean, stp_boot, stp_n_pc)
+  expected <- stp_parts
+  expected$columns[[3L]][1:2] <- ""
+  identical(rendered, expected)
+})
 stp_reversed <- stp_boot
 stp_reversed$point_t <- stp_point_t[rev(seq_len(nrow(stp_point_t))), ]
 check(
