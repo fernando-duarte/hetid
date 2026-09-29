@@ -114,11 +114,10 @@ bounds_plot <- ggplot2::ggplot(plot_df, ggplot2::aes(tau)) +
   ggplot2::theme(legend.position = "bottom")
 
 device <- PAPER_FIGURE_RENDER_CONTROL$devices$mean_bounds
-write_svg(
-  artifact_path("mean_bounds_figure"),
-  device[["width"]],
-  device[["height"]],
-  function() print(bounds_plot)
+ggplot2::ggsave(
+  artifact_path("mean_bounds_figure"), bounds_plot,
+  width = device[["width"]], height = device[["height"]],
+  device = svglite::svglite
 )
 
 cat(

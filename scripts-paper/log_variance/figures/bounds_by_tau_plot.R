@@ -169,10 +169,9 @@ logvar_bounds_tau_render <- function(rows, metadata, tau_baseline, tau_star,
   )
   stopifnot(identical(layer_rows, expected))
   device <- PAPER_FIGURE_RENDER_CONTROL$devices$logvar_bounds
-  write_svg(
-    path,
-    device[["width"]],
-    device[["height"]],
-    function() print(fig)
+  ggplot2::ggsave(
+    path, fig,
+    width = device[["width"]], height = device[["height"]],
+    device = svglite::svglite
   )
 }
