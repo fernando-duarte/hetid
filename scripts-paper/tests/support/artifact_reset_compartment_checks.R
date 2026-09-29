@@ -24,19 +24,20 @@ local({
     }, logical(1)))
   }
 
-  write_all_fixtures()
-  bootstrap_audit <- cleanup_bootstrap_cache()
-  check(
-    "cleanup_bootstrap_cache removes only bootstrap_stage_draws",
-    identical(bootstrap_audit$ids, "bootstrap_stage_draws") &&
-      bootstrap_audit$all_absent &&
-      all(file.exists(artifact_manifest$new_path[artifact_manifest$id != "bootstrap_stage_draws"]))
-  )
-
   others_survive <- function(removed_ids) {
     sibling_paths <- artifact_manifest$new_path[!artifact_manifest$id %in% removed_ids]
     all(file.exists(sibling_paths))
   }
+
+  write_all_fixtures()
+  bootstrap_audit <- cleanup_bootstrap_cache()
+  cache_ids <- c("bootstrap_stage_draws", "structural_inference_draws")
+  check(
+    "cleanup_bootstrap_cache removes only the two draw caches",
+    identical(bootstrap_audit$ids, cache_ids) &&
+      bootstrap_audit$all_absent &&
+      others_survive(cache_ids)
+  )
 
   write_all_fixtures()
   gate_audit <- cleanup_gate_state()

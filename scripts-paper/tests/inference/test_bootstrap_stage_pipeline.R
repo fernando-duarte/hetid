@@ -13,12 +13,13 @@ source_offset <- function(path) {
 
 stage <- "inference\", \"run_bootstrap_stage.R"
 combined <- "log_variance\", \"tables\", \"render_combined_inference_table.R"
-# the two deferred publications: each reports a bootstrap tau = 0 statistic, so
-# neither may be sourced before the stage that creates it
-deferred <- c(
-  combined,
-  "log_variance\", \"tables\", \"render_estimator_pages.R"
-)
+# the deferred publication reports a bootstrap tau = 0 statistic, so it may not
+# be sourced before the stage that creates it
+deferred <- "log_variance\", \"tables\", \"render_estimator_pages.R"
+# the structural inference table bootstraps on its own, straight after the
+# prepared frames and ahead of every estimator and the unified stage
+sdf_pcs <- "data_preparation\", \"build_sdf_pcs.R"
+fit_ols <- "mean_equation\", \"fit_ols.R"
 
 stopifnot(
   !grepl("mean_equation\", \"inference\", \"run_bootstrap.R",
@@ -29,9 +30,11 @@ stopifnot(
     pipeline_text,
     fixed = TRUE
   ),
-  all(vapply(deferred, function(path) {
-    source_offset(stage) < source_offset(path)
-  }, logical(1)))
+  source_offset(stage) < source_offset(deferred),
+  source_offset(sdf_pcs) < source_offset(combined),
+  source_offset(combined) < source_offset(fit_ols),
+  source_offset(combined) < source_offset(stage),
+  lengths(regmatches(pipeline_text, gregexpr(combined, pipeline_text, fixed = TRUE))) == 1L
 )
 
 # the Harvey wrapper keeps the estimation and the analytic standard errors ahead
@@ -69,13 +72,21 @@ stopifnot(
     bootstrap_rows$producer,
     "inference/run_bootstrap_stage.R"
   ),
-  identical(
-    strsplit(bootstrap_rows$consumer, ";", fixed = TRUE)[[1L]],
-    c(
-      "log_variance/tables/render_combined_inference_table.R",
-      "log_variance/tables/render_estimator_pages.R"
-    )
-  )
+  identical(bootstrap_rows$consumer, "log_variance/tables/render_estimator_pages.R")
+)
+
+structural_rows <- artifact_manifest[
+  artifact_manifest$id == "structural_inference_draws", ,
+  drop = FALSE
+]
+combined_script <- "log_variance/tables/render_combined_inference_table.R"
+stopifnot(
+  nrow(structural_rows) == 1L,
+  identical(structural_rows$group, "state"),
+  identical(structural_rows$basename, "structural_inference_draws.rds"),
+  identical(structural_rows$producer, combined_script),
+  identical(structural_rows$consumer, combined_script),
+  identical(structural_rows$status, "required")
 )
 
 reporting_consumers <- c(

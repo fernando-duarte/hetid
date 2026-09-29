@@ -48,7 +48,10 @@
 \title{The Current \texttt{scripts-paper} Pipeline of \texttt{hetid}}
 \author{}
 \date{Source inspection: 9 August 2026, 09:42 EDT\\
-Commit \texttt{6bef02d28281555740cfc030f563df155330866e}}
+Commit \texttt{6bef02d28281555740cfc030f563df155330866e}\\
+Structural-inference and manifest update: 28 September 2026, 22:11 EDT,\\
+working tree on base \texttt{f022c4b703101bc02fffc0679ade45c484d8d634}; the rest of
+the original trace was not rerun}
 
 \begin{document}
 
@@ -103,8 +106,11 @@ The current source has the following main contracts:
     matrix $\beta_2^R$. Diagnostic mean specification A imposes
     $\beta_2^R=0$. The published lagged-expected-SDF and combined variance shares are
     set-valued.
-  \item One unified bootstrap stage computes the published mean and
-    log-variance results. Its primary resample-index family uses 10,000 circular
+  \item One unified bootstrap stage computes the mean and log-variance
+    results behind the estimator pages, figures, and diagnostics. The combined
+    mean-equation and PPML inference table does not use it: it runs first, on
+    public \code{hetid} calls, with its own bootstrap and cache
+    (Section~\ref{sec:structural-inference}). The unified stage's primary resample-index family uses 10,000 circular
     moving-block-bootstrap (MBB) replications. The shared bootstrap frame has
     $T$ rows, and the primary family uses block length
     $\ell=\lceil1.5T^{1/3}\rceil$, seed 20260708, and
@@ -151,13 +157,14 @@ The current source has the following main contracts:
     point fits and recomputes only the deterministic log-OLS projection.
   \item Bootstrap cache schema 4 and semantic cache freshness govern reuse of
     the unified bootstrap cache artifact. Separate mean and log-variance cache
-    files are legacy names.
+    files are legacy names. The combined table's draws live in a second, separate
+    cache artifact, \file{structural_inference_draws.rds}.
   \item The bounds-by-relaxation-value grid is tail-refined and nonuniform. The
     joint-null witness and joint-generalized-method-of-moments (GMM) replication
     products are diagnostics; they add no test or identifying restriction.
-  \item The artifact manifest has 89 artifact records. Final
+  \item The artifact manifest has 100 artifact records. Final
     conditional-route reconciliation covers the seven conditional records and
-    does not certify the 82 required files.
+    does not certify the 93 required files.
   \item A plain invocation calls the \emph{installed} \code{hetid} namespace, not
     the checkout under \file{R/}, so this trace's package-layer statements bind to
     the runtime only if the two agree. Installed-package parity is
@@ -416,7 +423,9 @@ passes; otherwise the stage reports \code{fallback-rerun}, recomputes the whole
 payload, and replaces the cache transactionally. On a clean state with no cache
 file, this rule selects \code{fallback-rerun}. &
 \code{HETID_BOOT_MODE=rerun} skips the cache read, recomputes the whole payload,
-and reports \code{rerun}. No mode can reuse only one result branch.\\
+and reports \code{rerun}. No mode can reuse only one result branch. The
+combined-table calculation applies the same mode to its own cache
+(Section~\ref{sec:structural-inference}).\\
 Quadratic equivalence assertion: launch-selected &
 Do not run the extra legacy-versus-generalized quadratic-builder assertion. &
 Any nonempty \code{HETID_ASSERT_EQUIV} runs it at every reached quadratic-system
@@ -552,7 +561,7 @@ The runner follows a literal top-level order. At top level, a definition module
 supplies only functions or constants. Paths in the source-or-effect column are relative to
 \file{scripts-paper/}.
 Every ledger row has status \emph{always attempted} after earlier rows succeed,
-except lines 123--125, whose status is \emph{selected path} and source-selected, subject to
+except lines 127--129, whose status is \emph{selected path} and source-selected, subject to
 the LAD package gate. A row that always sources a file can still contain a
 guarded body. The eight driver-level body guards appear after the table. This rule assigns an explicit
 status to every row without repeating the same words in each one.
@@ -575,7 +584,7 @@ comma-separated values. RDS means R data serialization. TeX is the LaTeX source
 format. PDF means Portable Document Format. SVG means Scalable Vector Graphics.
 The ledger's main result is the exact evaluation
 order and the principal state or artifacts produced at each stage. Unless the
-lines 123--125 row or a guarded body says otherwise, every row is always
+lines 127--129 row or a guarded body says otherwise, every row is always
 attempted after prior success.
 \label{tab:runner-ledger}}\\
 \toprule
@@ -630,72 +639,75 @@ Load and quarter-align bundled nominal asset-return PCs as
 \code{l.pc1}--\code{l.pc4}.\\
 57 & \file{data_preparation/build_sdf_pcs.R} &
 Produce the three SDF-PC score blocks.\\
-58 & \file{mean_equation/fit_ols.R} &
+61 & \file{log_variance/tables/render_combined_inference_table.R} &
+Compute the combined table's reference column, public-\code{hetid} sets, and own
+bootstrap, reusing or replacing \file{state/structural_inference_draws.rds}; publish
+the combined mean-equation and PPML inference table triple only if its
+publication gates pass (Section~\ref{sec:structural-inference}).\\
+62 & \file{mean_equation/fit_ols.R} &
 Fit the descriptive OLS benchmark \code{ols_mean_eq}.\\
-59 & \file{mean_equation/estimate_identified_set.R} &
+63 & \file{mean_equation/estimate_identified_set.R} &
 Estimate published mean specification B and diagnostic mean specification A;
 bind published mean specification B to \code{set_id_mean_eq}.\\
-60 & \file{mean_equation/variance_shares/compute_variance_shares.R} &
+64 & \file{mean_equation/variance_shares/compute_variance_shares.R} &
 Compute \code{var_share} for lagged expected-SDF, SDF-news, and combined blocks.\\
-61 & \file{mean_equation/variance_shares/render_variance_share_table.R} &
+65 & \file{mean_equation/variance_shares/render_variance_share_table.R} &
 Publish the variance-share fragment, standalone TeX, and PDF.\\
-62 & \file{log_variance/estimators/log_ols/run.R} &
+66 & \file{log_variance/estimators/log_ols/run.R} &
 Freeze the shared log-variance sample, build \code{log_var_eq}, and initialize the
 bounds-rendering registry.\\
-63 & \file{mean_equation/inference/compute_bounds_by_tau.R} &
+67 & \file{mean_equation/inference/compute_bounds_by_tau.R} &
 Build \code{mean_eq_bounds_tau} and write the attained mean coefficient-range figure.\\
-66 & \file{log_variance/estimators/ppml/run_sets.R} &
+70 & \file{log_variance/estimators/ppml/run_sets.R} &
 Map the PPML quasi-Poisson log-link QMLE over the mean identified set and run its
 grid-expanded second search audit with an 8,000-row selected-grid cap.\\
-68 & \file{log_variance/inference/standard_error_estimators.R} &
+72 & \file{log_variance/inference/standard_error_estimators.R} &
 Define shared analytic covariance helpers.\\
-71 & \file{log_variance/estimators/ppml/standard_errors.R} &
+75 & \file{log_variance/estimators/ppml/standard_errors.R} &
 Attach PPML covariance variants; the paper selects four-lag HAC.\\
-74 & \file{log_variance/estimators/harvey/run.R} &
+78 & \file{log_variance/estimators/harvey/run.R} &
 Map the Harvey Gaussian multiplicative-variance QMLE over the mean identified set
 and run its fixed-grid second search audit with a 4,000-row selected-grid cap; attach
 Harvey estimator covariance variants.\\
-78--80 & \file{log_variance/figures/residual_diagnostics/run.R} &
+82--84 & \file{log_variance/figures/residual_diagnostics/run.R} &
 Reuse the accepted PPML and Harvey tau-zero point fits, recompute the fixed
 log-OLS projection, and write the residual quantile--quantile and density SVGs.\\
 \midrule
-84 & \file{log_variance/diagnostics/joint_null/distance_objective.R} &
+88 & \file{log_variance/diagnostics/joint_null/distance_objective.R} &
 Define the joint-null objective.\\
-85 & \file{log_variance/diagnostics/joint_null/search.R} &
+89 & \file{log_variance/diagnostics/joint_null/search.R} &
 Define its scan, multistart, and polish routines.\\
-86 & \file{log_variance/diagnostics/joint_null/stability.R} &
+90 & \file{log_variance/diagnostics/joint_null/stability.R} &
 Define crossing-geometry and witness-stability checks.\\
-87 & \file{log_variance/diagnostics/joint_null/run.R} &
+91 & \file{log_variance/diagnostics/joint_null/run.R} &
 Run the joint-null witness diagnostic and write its CSV/RDS pair.\\
-90 & \file{log_variance/diagnostics/joint_gmm/run.R} &
+94 & \file{log_variance/diagnostics/joint_gmm/run.R} &
 Validate the decision record and run the currently wired joint-GMM replication diagnostic.\\
-97 & \file{log_variance/diagnostics/dynamics/gate_core.R} &
+101 & \file{log_variance/diagnostics/dynamics/gate_core.R} &
 Define the residual-dynamics gate and gate-record builders.\\
-98 & \file{log_variance/diagnostics/dynamics/run_gate.R} &
+102 & \file{log_variance/diagnostics/dynamics/run_gate.R} &
 Evaluate the residual-dynamics gate using its lag-4 Ljung--Box rule, then write
 both the residual-dynamics gate record and the first version of the EGARCH status
 record.\\
-104 & \file{log_variance/extensions/egarch/decision_core.R} &
+108 & \file{log_variance/extensions/egarch/decision_core.R} &
 Define the pinned EGARCH-X decision and routing validation.\\
-105 & \file{log_variance/extensions/egarch/run_route.R} &
+109 & \file{log_variance/extensions/egarch/run_route.R} &
 Validate the residual-dynamics gate record, route every branch, and rewrite the
 terminal EGARCH status record.\\
-112 & \file{log_variance/estimators/lad/dependency_gate.R} &
+116 & \file{log_variance/estimators/lad/dependency_gate.R} &
 Define the LAD decision and exact dependency-version gate.\\
-113--122 & LAD availability and decision read &
+117--126 & LAD availability and decision read &
 Construct \code{lad_gate}; approved but absent or version-mismatched \code{quantreg} stops the run.\\
-123--125 & \file{log_variance/estimators/lad/run_sets.R} &
+127--129 & \file{log_variance/estimators/lad/run_sets.R} &
 Selected path, source-selected: conditionally build and register LAD and its closure
 diagnostics after exact \code{quantreg} 6.1 passes the package gate.\\
 \midrule
-129 & \file{inference/run_bootstrap_stage.R} &
+133 & \file{inference/run_bootstrap_stage.R} &
 Run or reuse the unified bootstrap stage; expose \code{set_id_boot},
 \code{log_var_eq_set_boot}, and \code{bootstrap_primary_family}.\\
-132 & \file{mean_equation/inference/spec_comparison.R} &
+136 & \file{mean_equation/inference/spec_comparison.R} &
 Bootstrap diagnostic mean specification A on the exact primary resample-index
 family used for published mean specification B.\\
-140 & \file{log_variance/tables/render_combined_inference_table.R} &
-Publish the combined mean-equation and PPML inference table triple.\\
 142 & \file{log_variance/tables/render_estimator_pages.R} &
 Publish PPML and two-step log-OLS benchmark pages, then Harvey estimator and LAD
 pages when their results exist.\\
@@ -1058,12 +1070,14 @@ PPML, and Harvey estimator bootstrap draws, endpoint gates, Target P intervals, 
 p-values and stars, volatility sensitivity, and the resample-index family available to
 the paired mean-specification comparison. The count and family hashes enter
 semantic cache provenance, so changing the count invalidates unified-bootstrap
-reuse.\\
+reuse. The same count sets the combined table's separate draws and, through its
+settings, invalidates that cache too.\\
 Bootstrap worker count: \code{HETID_BOOT_CORES} & An override must be a whole
 number of at least 1. By default, the runner uses detected logical cores minus
 two on macOS and minus one on other systems, with a one-worker minimum; failed
 detection also gives one worker. & Controls parallel work in the unified
-bootstrap and the paired mean-specification comparison. The resample indices
+bootstrap, the paired mean-specification comparison, and the combined table's
+bootstrap. The resample indices
 are constructed before the parallel callbacks. Worker count is not part of
 semantic cache provenance and does not by itself change an artifact path or the
 intended scientific design.\\
@@ -1074,7 +1088,8 @@ semantically valid, all-or-nothing unified cache; a missing or invalid cache
 warns and causes a complete rerun. \code{rerun} skips the cache read and
 computes the complete stage. A newly computed candidate is validated and
 transactionally replaces the cache before downstream publication. The mode
-value itself is not semantic cache provenance.\\
+value itself is not semantic cache provenance. The combined table applies the
+same rule to its own cache.\\
 Draft-run acknowledgement: \code{HETID_ALLOW_DRAFT_RUN} & Unset or empty is
 the default. Any nonempty value acknowledges a replication count other than
 10,000. & Releases only the pre-directory publishing-run guard. It does not select
@@ -1280,7 +1295,7 @@ the \file{config/artifact_manifest_*.R} builders,
 \file{config/artifact_registry_queries.R},
 \file{config/artifact_lifecycle.R}, \file{config/artifact_latex.R}, and
 \file{config/artifact_reset.R} are not. A changed cache path can also move where
-the one cache artifact is read or written.\\
+either cache artifact is read or written.\\
 \src{config/acquisition.R}{PAPER_FRED_DOWNLOAD_CONTROL} & FRED endpoints,
 attempts, backoff, curl flags, retries, and timeout/stall rules. & Changes only
 data transport and failure behavior directly. Any resulting data change reaches
@@ -1515,7 +1530,9 @@ premia, with incomplete quarters kept, and daily yields, both through
 the alternative path.\\
 The rest of the package API &
 Separate entrypoint &
-\file{NAMESPACE} exports 34 objects. The paper layer calls 14 of them:
+This census covers the legacy pipeline portion as audited at the original
+source inspection, before the combined-table calculation existed; it has not been
+re-audited. At that inspection \file{NAMESPACE} exported 34 objects, and the paper layer called 14 of them:
 \code{HETID_CONSTANTS}, \code{acm_column_name}, \code{effective_max_maturity},
 \code{to_period_end}, \code{extract_acm_data}, \code{compute_sdf_innovations},
 \code{compute_expected_sdf}, \code{compute_identification_moments},
@@ -1534,8 +1551,17 @@ it; \code{compute_variance_bound()} calls \code{compute_c_hat()},
 calls \code{compute_identified_set_components()} and
 \code{compute_identified_set_quadratic()}. The other 13, among them
 \code{compute_w1_residuals}, \code{compute_w2_residuals}, and
-\code{make_constraint_checker}, are a public API that this pipeline never
-reaches by any route.\\
+\code{make_constraint_checker}, were a public API that the legacy portion never
+reached by any route. The combined-table calculation of
+Section~\ref{sec:structural-inference} adds direct calls to
+\code{IDENTIFIED_SET_CONTROL}, \code{compute_tau0_system},
+\code{fit_log_variance}, \code{fit_log_variance_at_b},
+\code{compute_log_variance_se}, \code{make_system_checker},
+\code{compute_identified_set_box}, \code{compute_quadratic_set_evidence},
+\code{sample_log_variance_set}, \code{circular_mbb_indices},
+\code{bootstrap_endpoint_draws}, \code{bootstrap_point_statistics}, and
+\code{bootstrap_set_interval}. The legacy counts above exclude these calls and
+are not re-derived against them.\\
 Cook--Weisberg heteroskedasticity test &
 Available but not called &
 \file{support/diagnostics/heteroskedasticity_tests.R} implements the test behind a
@@ -1697,7 +1723,7 @@ comparison against a nonactive instrument. A plain invocation produces none of
 them.\\
 Paper test orchestrator \file{scripts-paper/tests/run_tests.R} &
 Separate entrypoint &
-It launches two structural checks and 39 listed test suites in fresh R
+It launches two structural checks and 50 listed test suites in fresh R
 processes. The runner does not call the orchestrator or any test entrypoint.
 Individual test fixtures may select helper arguments that production callers
 fix; those fixture choices are not pipeline options.\\
@@ -1733,7 +1759,7 @@ publication standard of 10,000.
 \src{scripts-paper/config/analysis.R}{resolve_boot_mode_env} maps
 \code{HETID_BOOT_MODE} to \code{PAPER_BOOT_MODE}. The default is \code{reuse};
 the only alternative is \code{rerun}. This choice is consulted later by the
-unified-bootstrap stage. It does not weaken the publishing-run guard.
+combined-table calculation and by the unified-bootstrap stage. It does not weaken the publishing-run guard.
 
 A reduced serial run needs a reduced replication count, the draft
 acknowledgement, and an explicit one-core request:
@@ -1971,12 +1997,13 @@ the descriptive-statistics artifact producer, which publishes it as
 \code{ols_mean_equation_table}. The \emph{identification-sample OLS benchmark}
 \src{scripts-paper/mean_equation/estimate_identified_set_core.R}{ols_fit} runs
 on the instrument-complete identification sample. It supplies the OLS column of
-the combined mean-equation and PPML inference table and of the log-variance
-estimator pages, the residuals the two-step log-OLS benchmark maps, the
+the log-variance estimator pages, the residuals the two-step log-OLS benchmark maps, the
 reference residuals used by the shared analytic covariance helpers, and the
 mean-region figures' OLS point. The two
 coefficient vectors need not agree, so any claim about ``the OLS benchmark''
-must name which fit it means.
+must name which fit it means. The combined mean-equation and PPML inference
+table fits its own OLS reference on the same 256 rows
+(Section~\ref{sec:structural-inference}).
 
 \subsection{Published mean specification B and diagnostic mean specification A}
 \label{sec:specs}
@@ -2524,6 +2551,99 @@ Even then, the current runner sources no dynamic estimator module and reports
 approval into EGARCH-X estimates or artifacts; the fields describe a future
 route, not a current user control.
 
+\section{Combined-table structural inference}
+\label{sec:structural-inference}
+
+The combined mean-equation and PPML inference table,
+\file{tables/structural_var_inference.tex}, has its own calculation. Runner
+line 61 sources
+\file{scripts-paper/log_variance/tables/render_combined_inference_table.R}
+immediately after \file{data_preparation/build_sdf_pcs.R} and before any
+estimator. The producer sources
+\file{scripts-paper/support/structural_inference/api.R}, calls
+\src{scripts-paper/support/structural_inference/run.R}{paper_structural_inference_run}
+inside one \code{local()} scope, and releases the result before the runner moves
+on. The calculation reads only the date-keyed frames that data preparation
+built: \code{gr1_pcecc96}, the lagged expected-SDF and SDF-news PC scores, the
+selected instrument, and the lagged nominal asset-return PCs. It reads none of
+\code{set_id_mean_eq}, \code{set_id_boot}, the PPML or Harvey set maps, their
+envelopes, or the unified bootstrap cache artifact. The identification, PPML, and
+bootstrap arithmetic runs through exported \code{hetid} functions. The OLS
+reference column is the exception: it uses base \code{stats::lm} with the paper's
+\code{sandwich}-based Newey--West helper. The paper code otherwise prepares
+inputs, gates, and caches, and builds each positive-$\tau$ quadratic system
+through the thin wrapper
+\src{scripts-paper/support/identification/quadratic_system.R}{build_pipeline_quadratic_system},
+which delegates to \code{hetid::build_general_quadratic_system}. The private optimizers, second search audits,
+endpoint engine, and unified-stage calibration described in
+Sections~\ref{sec:bootstrap} and~\ref{sec:cache} and in the log-variance
+estimator sections govern the other artifacts, not this table.
+
+\src{scripts-paper/support/structural_inference/settings.R}{structural_inference_settings}
+stops unless both published specifications are B, the specification that
+estimates $\beta_2^R$. Its rows are forecast origins $t$, one quarter before the
+response quarter $t+1$ the rest of the pipeline uses. Growth and the instrument
+are therefore read one quarter ahead under lead names
+(\code{fgr1.pcecc96}, \code{fy60_vol_log}), and the lagged PC scores are origin
+values. The window is the paper window shifted back one quarter, 1961~Q4 to
+2025~Q3 in origin labels. The mean sample is the same 256 rows as the response
+quarters 1962~Q1 to 2025~Q4. The variance equation reads the 255 of them that
+carry $PC_R$, because the first mean row has none. The shift relabels rows; it
+changes no value.
+
+The reference column fits OLS on the 256 mean rows with the paper's four-lag
+Newey--West statistics and $t$ tails, then fits PPML on the squared OLS residuals
+of the 255 variance rows, with $PC_R$ centered on that sample and not scaled, and
+reports four-lag HAC standard errors with normal tails. At $\tau=0$, each draw calls
+\code{hetid::compute_tau0_system} and evaluates PPML at the resulting news
+coefficients with \code{hetid::fit_log_variance_at_b}. At each displayed
+$\tau\in\{0.05,0.10,0.20\}$,
+\src{scripts-paper/support/structural_inference/positive.R}{structural_inference_positive}
+first checks that the $\tau=0$ point lies strictly inside the positive-$\tau$
+quadratic system, then runs the public box search
+\code{hetid::compute_identified_set_box} with $\code{n_grid}=41$ and
+$\code{null_loading_rtol}=0$. Mean cells report the attained box range, with
+boundedness settled by \code{hetid::compute_quadratic_set_evidence} on the box
+witnesses. The PPML cells report sampled coefficient ranges:
+\code{hetid::sample_log_variance_set} refits PPML at the box's attaining
+witnesses and at $\code{n_points}=20$ steps from the center toward each witness,
+keeps the feasible candidates, and takes the minimum and maximum of each
+coefficient over the successful fits. A sampled range
+is eligible only when every candidate fit succeeds and both ends are finite. It
+is an inner approximation, and the full-set extrema are not established.
+
+The bootstrap fixes the Mersenne-Twister/Inversion/Rejection kinds, sets seed
+20260708, and draws $B=10{,}000$ circular-block index vectors of length 256 with
+\code{hetid::circular_mbb_indices}, using block length 10, which is
+$\lceil1.5\cdot256^{1/3}\rceil$. Each draw resamples all mean-row tuples, keeps
+the variance-complete rows inside the draw, recenters $PC_R$, and holds the PC
+rotations fixed. Draws run in batches of $10\times$\code{boot_cores} on forked
+workers, spool to temporary files, and replay in order through
+\code{hetid::bootstrap_endpoint_draws}. Calibration uses
+\code{hetid::bootstrap_point_statistics} at $\tau=0$ and
+\code{hetid::bootstrap_set_interval} with the pointwise target at positive
+$\tau$, under the contract's nominal level, minimum valid-draw share, and
+stability share. A coefficient is publishable only when its failed-draw share,
+counting sampled-range fit failures, is at most 0.25 on both sides. A calibration
+search that stops on its evaluation or precision limit blocks publication.
+
+The table keeps its own all-or-nothing cache artifact,
+\file{state/structural_inference_draws.rds}, separate from
+\file{state/bootstrap_stage_draws.rds}. \code{HETID_BOOT_MODE} selects reuse or
+rerun for it as well. Reuse requires cache schema 1 and an identical identity:
+the hash of the prepared input tuple, the full settings list, hashes of the
+calculation's source files and of \code{paper_newey_west_statistics}, hashes of
+the installed \code{hetid} namespace's functions and constants, the versions of
+\code{hetid}, \code{sandwich}, and \code{tsibble}, the R, platform, BLAS, and
+LAPACK identity, and hashes of the analysis, inference-search, and reporting
+controls. The control hashes cover whole control objects, so an edit to a
+presentation-only field inside them can also force a rerun. The renderer, the
+table template, and the cache input/output code are outside the identity. A new result is checked, written beside the target, and
+promoted by one rename, with both names flagged for Dropbox to ignore. The cache
+is written before the publication gates are read, so a run that fails them keeps
+its draws and diagnostics while the producer refuses to publish. The reset
+bootstrap-cache compartment removes both cache artifacts.
+
 \section{Unified bootstrap and inference}
 \label{sec:bootstrap}
 
@@ -2535,7 +2655,8 @@ resample-index families. It computes or reuses one payload containing the
 published mean, log-variance, and volatility-sensitivity results and manages the
 unified bootstrap cache artifact. The paired B-versus-A mean-specification
 comparison reuses the primary resample-index family without creating another
-resampling protocol or unified bootstrap cache artifact.
+resampling protocol or unified bootstrap cache artifact. The combined
+mean-equation and PPML inference table reads nothing from this stage.
 
 The shared bootstrap frame retains every row of the gapless mean sample and
 joins nominal asset-return PCs by quarter. A primary bootstrap replication has
@@ -2696,7 +2817,9 @@ protocol or a separate unified bootstrap cache artifact.
 \section{Unified bootstrap semantic cache provenance and reproducibility}
 \label{sec:cache}
 
-The unified bootstrap cache reuses expensive draws only when their scientific
+This section covers only the unified bootstrap cache; the combined table's
+cache is described in Section~\ref{sec:structural-inference}. The unified
+bootstrap cache reuses expensive draws only when their scientific
 identity is unchanged. Reuse is all-or-nothing. Semantic cache provenance invalidates
 stale draws. A change confined to the presentation manifest leaves draws valid.
 A presentation-only field stored in a draw-hashed file or whole control object
@@ -2802,9 +2925,10 @@ $\log\chi_1^2$ mean.
 
 \subsection{Inference tables and estimator pages}
 
-The combined-table artifact producer publishes the mean-equation and PPML
-inference panels as one combined mean-equation and PPML inference table triple.
-The estimator-pages artifact producer publishes a log-variance estimator-pages
+The combined-table artifact producer runs before every estimator and publishes
+the mean-equation and PPML inference panels as one combined mean-equation and
+PPML inference table triple from the calculation of
+Section~\ref{sec:structural-inference}. The estimator-pages artifact producer publishes a log-variance estimator-pages
 table triple assembled from the available result objects. It always emits PPML
 and two-step log-OLS benchmark pages, then adds a Harvey estimator page when its
 result exists and a LAD page when its dependency-gated result exists. Under the
@@ -2813,8 +2937,11 @@ runs. \file{scripts-paper/config/artifact_latex.R} controls LaTeX label registry
 entries and
 LaTeX publication registry membership.
 
-All tau-zero stars in these tables come from the bootstrap point/MAD statistic.
-Intervals at positive relaxation values use \TauP{}. The artifact producers
+All tau-zero stars on the estimator pages come from the bootstrap point/MAD
+statistic, and their intervals at positive relaxation values use \TauP{}. The
+combined table's stars and intervals come from
+\code{hetid::bootstrap_point_statistics} and \code{hetid::bootstrap_set_interval}
+instead, under the same pointwise target and nominal controls. The artifact producers
 treat stored endpoint status as data. Only \code{bounded} status yields a finite
 displayed endpoint. The mean and variance-share cells suppress every
 non-\code{bounded} status outright; the log-variance cells suppress
@@ -2838,12 +2965,12 @@ surviving relaxation value and estimator.
 If more than one relaxation value survives, it also writes linear, log-scale,
 lower-normalized, and upper-normalized combined panels.
 
-The manifest marks as \code{required} all 18 PPML and Harvey estimator artifact
+The manifest marks as \code{required} all 20 PPML and Harvey estimator artifact
 records for the fitted-volatility sweep over relaxation values; filtering against
 the estimated boundedness frontier at runtime may omit paths. Artifact completeness and render acceptance therefore
 require an independent missing-file check after any run that reaches the end.
 
-The mean-region analysis stages prepare shared refined geometry and render two
+The mean-region analysis stages prepare shared refined geometry and render four
 projection figures plus 16 three-dimensional regions spanning four relaxation
 values, two unit systems, and two OLS modes.
 
@@ -2924,7 +3051,7 @@ reconciler writes the record
 through exact object RDS readback.
 
 Reconciliation covers the seven conditional artifact records; a separate
-acceptance check must establish existence and freshness for the 82 required
+acceptance check must establish existence and freshness for the 93 required
 records. Final LaTeX-sidecar cleanup is the runner's last statement, so a cleanup
 failure may occur after every scientific artifact producer and the
 conditional-route state record write.
@@ -2938,9 +3065,9 @@ acceptance.
 
 \subsection{Manifest shape and path rule}
 
-The expanded artifact manifest contains 89 unique artifact records: 55 literal
-records, 18 fitted-volatility-sweep records, and 16 generated mean-region
-records. Of these, 82 are \code{required}, three \code{conditional_lad}, and four
+The expanded artifact manifest contains 100 unique artifact records: 60 literal
+records, 20 fitted-volatility-sweep records, and 20 generated mean-region
+records. Of these, 93 are \code{required}, three \code{conditional_lad}, and four
 \code{conditional_egarch}; together they occupy seven output groups. Every
 current artifact path, stored in \code{new_path}, follows
 \begin{center}
@@ -2952,10 +3079,10 @@ The retained \code{old_path} stores the legacy flat
 \begin{table}[htbp]
 \centering
 \small
-\caption{Counts for all 89 expanded artifact-manifest records by output group.
+\caption{Counts for all 100 expanded artifact-manifest records by output group.
 LAD means least absolute deviations. EGARCH-X means exponential generalized
 autoregressive conditional heteroskedasticity with exogenous regressors. The
-manifest contains 82 required records, three records conditional on LAD, and
+manifest contains 93 required records, three records conditional on LAD, and
 four records conditional on EGARCH-X. Counts describe expected records, not
 current file presence.
 \label{tab:artifact-groups}}
@@ -2964,20 +3091,20 @@ current file presence.
 Group & Records\\
 \midrule
 \file{tables/descriptive_statistics} & 3\\
-\file{tables} & 18\\
-\file{figures} & 48\\
+\file{tables} & 24\\
+\file{figures} & 52\\
 \file{figures/descriptive_statistics} & 1\\
 \file{reports} & 3\\
 \file{diagnostics} & 11\\
-\file{state} & 5\\
+\file{state} & 6\\
 \midrule
-Total & 89\\
+Total & 100\\
 \bottomrule
 \end{tabular}
 \end{table}
 
 Table~\ref{tab:artifact-groups} shows that \file{figures} is the largest output group,
-with 48 of the 89 artifact records.
+with 52 of the 100 artifact records.
 
 Artifact lifecycle status is not execution reachability. The exact crosswalk is:
 \begin{itemize}
@@ -2985,7 +3112,7 @@ Artifact lifecycle status is not execution reachability. The exact crosswalk is:
     conditional route. Its producer stage is always attempted if earlier stages
     succeed. The fitted-volatility sweep stops if no configured value survives;
     with one or more surviving values, runtime filtering can still omit required
-    sweep paths. No final gate checks all 82 required paths.
+    sweep paths. No final gate checks all 93 required paths.
   \item \code{conditional_lad} means the file must exist exactly when the LAD
     producer ran. LAD is source-selected subject to exact
     \code{quantreg} 6.1; a declined or unanswered record selects absence.
@@ -2998,9 +3125,9 @@ obligations. They do not mean always attempted, selected path, or available but
 not called.
 
 \begin{landscape}
-\subsection{The 55 literal records}
+\subsection{The 60 literal records}
 
-The 55 literal artifact records assign one ID to each manifested file. A
+The 60 literal artifact records assign one ID to each manifested file. A
 producer may write a publication triple or paired diagnostic formats; the
 distinct artifact IDs keep each file separately addressable. The typed writer
 determines typed behavior. The artifact ID addresses only the file.
@@ -3011,7 +3138,7 @@ determines typed behavior. The artifact ID addresses only the file.
 \begin{longtable}{@{}>{\raggedright\arraybackslash}p{0.28\textwidth}
   >{\raggedright\arraybackslash}p{0.33\textwidth}
   >{\raggedright\arraybackslash}p{0.32\textwidth}c@{}}
-\caption{The 55 literal artifact records. Group/basename paths are relative to
+\caption{The 60 literal artifact records. Group/basename paths are relative to
 \file{scripts-paper/output/}; producer paths are relative to
 \file{scripts-paper/}. Status R means required, L means conditional least
 absolute deviations (LAD), and E means conditional exponential generalized
@@ -3040,12 +3167,16 @@ ID & Group/basename & Producer under \file{scripts-paper/} & Status\\
 \code{structural_var_estimators_table} & \file{tables/structural_var_estimators.tex} & \file{log_variance/tables/render_estimator_pages.R} & R\\
 \code{structural_var_estimators_standalone_tex} & \file{tables/structural_var_estimators_standalone.tex} & same estimator-page producer & R\\
 \code{structural_var_estimators_standalone_pdf} & \file{tables/structural_var_estimators_standalone.pdf} & same estimator-page producer & R\\
+\code{log_var_eq_harvey_inference_table} & \file{tables/log_var_eq_harvey_inference.tex} & same estimator-page producer & R\\
+\code{log_var_eq_harvey_inference_standalone_tex} & \file{tables/log_var_eq_harvey_inference_standalone.tex} & same estimator-page producer & R\\
+\code{log_var_eq_harvey_inference_standalone_pdf} & \file{tables/log_var_eq_harvey_inference_standalone.pdf} & same estimator-page producer & R\\
+\code{log_var_eq_logols_inference_table} & \file{tables/log_var_eq_logols_inference.tex} & same estimator-page producer & R\\
+\code{log_var_eq_logols_inference_standalone_tex} & \file{tables/log_var_eq_logols_inference_standalone.tex} & same estimator-page producer & R\\
+\code{log_var_eq_logols_inference_standalone_pdf} & \file{tables/log_var_eq_logols_inference_standalone.pdf} & same estimator-page producer & R\\
 \code{variance_share_table} & \file{tables/var_share.tex} & \file{mean_equation/variance_shares/render_variance_share_table.R} & R\\
 \code{variance_share_standalone_tex} & \file{tables/var_share_standalone.tex} & same variance-share producer & R\\
 \code{variance_share_standalone_pdf} & \file{tables/var_share_standalone.pdf} & same variance-share producer & R\\
 \code{mean_bounds_figure} & \file{figures/set_id_bounds_tau.svg} & \file{mean_equation/inference/compute_bounds_by_tau.R} & R\\
-\code{mean_projections_figure} & \file{figures/set_id_projections_sd.svg} & \file{mean_equation/figures/render_projections.R} & R\\
-\code{mean_projections_ols_figure} & \file{figures/set_id_projections_sd_ols.svg} & same projection producer & R\\
 \code{log_ols_bounds_figure} & \file{figures/log_var_eq_bounds_tau_logols.svg} & \file{log_variance/figures/render_bounds_by_tau.R} & R\\
 \code{ppml_bounds_figure} & \file{figures/log_var_eq_bounds_tau_ppml.svg} & same bounds-figure producer & R\\
 \code{harvey_bounds_figure} & \file{figures/log_var_eq_bounds_tau_harvey.svg} & same bounds-figure producer & R\\
@@ -3067,6 +3198,7 @@ ID & Group/basename & Producer under \file{scripts-paper/} & Status\\
 \code{joint_gmm_rds} & \file{diagnostics/log_var_eq_joint_gmm.rds} & same joint-GMM producer & R\\
 \code{lad_closure_diagnostics} & \file{diagnostics/log_var_eq_lad_closure.csv} & \file{log_variance/estimators/lad/run_sets.R} & L\\
 \code{bootstrap_stage_draws} & \file{state/bootstrap_stage_draws.rds} & \file{inference/run_bootstrap_stage.R} & R\\
+\code{structural_inference_draws} & \file{state/structural_inference_draws.rds} & same combined-table producer & R\\
 \code{dynamics_gate} & \file{state/log_var_eq_dynamics_gate.rds} & \file{log_variance/diagnostics/dynamics/run_gate.R} & R\\
 \code{egarch_status} & \file{state/log_var_eq_egarch_status.rds} & \file{log_variance/diagnostics/dynamics/run_gate.R} and \file{log_variance/extensions/egarch/run_route.R} & R\\
 \code{conditional_route_status} & \file{state/conditional_route_status.rds} & \file{run_pipeline.R} & R\\
@@ -3087,11 +3219,11 @@ ID & Group/basename & Producer under \file{scripts-paper/} & Status\\
 
 Table~\ref{tab:literal-artifacts} shows that lifecycle attaches to records,
 allowing required and conditional files to share an output group. The status
-tally over these 55 records is 48 \code{required}, three \code{conditional_lad},
-and four \code{conditional_egarch}; the 34 generated records are all
-\code{required}, which is how the manifest reaches 82 required of 89.
+tally over these 60 records is 53 \code{required}, three \code{conditional_lad},
+and four \code{conditional_egarch}; the 40 generated records are all
+\code{required}, which is how the manifest reaches 93 required of 100.
 
-Five of the 89 records have no producer that resolves them. Four are the EGARCH
+Five of the 100 records have no producer that resolves them. Four are the EGARCH
 records. Their producer field names a directory rather than a file, and
 Section~\ref{sec:outside-runner} marks them \emph{not implemented}. Three of those four
 carry no lookup coordinate at all. The fourth, \code{egarch_bounds_figure}, does
@@ -3108,12 +3240,14 @@ without failing anything the runner checks.
 \subsection{Artifact records for the fitted-volatility sweep over relaxation values}
 
 From two estimators and nine exact tails, the manifest builder generates 18
-records for the fitted-volatility sweep over relaxation values. For estimator $e$
+records for the fitted-volatility sweep over relaxation values, and it appends two
+PPML-only records: \code{ppml_fitted_vol_combined_high_log} and
+\code{ppml_fitted_vol_combined_log_ols}, giving 20. For estimator $e$
 and tail $t$, the ID is \code{<e>_fitted_vol_<t>}. The variant is
-\code{<e>_<t>}. The family is \code{fitted_volatility_sweep}. All 18 artifact
+\code{<e>_<t>}. The family is \code{fitted_volatility_sweep}. All 20 artifact
 records are required.
 \file{log_variance/figures/fitted_volatility/run_tau_sweep.R} is the registered
-producer for all 18 records, but its current body does not guarantee all 18. It
+producer for all 20 records, but its current body does not guarantee all 20. It
 writes scalar records only for configured relaxation values below the estimated
 boundedness frontier and aggregate records only when more than one value
 survives. It stops if no configured value survives. Scalar tails use
@@ -3133,9 +3267,10 @@ common to every record.
 \begin{table}[htbp]
 \centering
 \small
-\caption{The 18 required artifact records for the fitted-volatility sweep over
+\caption{The 20 required artifact records for the fitted-volatility sweep over
 relaxation values. PPML means Poisson pseudo-maximum likelihood.
-Each estimator has the five scalar and four aggregate tails shown. IDs use
+Each estimator has the five scalar and four aggregate tails shown, and PPML has
+two further aggregate tails. IDs use
 \code{<estimator>_fitted_vol_<ID tail>}; paths use
 \file{figures/log_var_eq_fitted_volatility_<estimator>_<basename tail>.svg}.
 \label{tab:sweep-artifacts}}
@@ -3150,6 +3285,8 @@ PPML & \code{combined} & \code{tau_combined}\\
 PPML & \code{combined_log} & \code{tau_combined_log}\\
 PPML & \code{combined_lower_normalized} & \code{tau_combined_lower_normalized}\\
 PPML & \code{combined_upper_normalized} & \code{tau_combined_upper_normalized}\\
+PPML & \code{combined_high_log} & \code{tau_combined_high_log}\\
+PPML & \code{combined_log_ols} & \code{tau_combined_log_ols}\\
 Harvey estimator & \code{tau0p05}, \code{tau0p1}, \code{tau0p2}, \code{tau0p3}, \code{tau0p4} & same five tails\\
 Harvey estimator & \code{combined} & \code{tau_combined}\\
 Harvey estimator & \code{combined_log} & \code{tau_combined_log}\\
@@ -3163,34 +3300,41 @@ For example, the first PPML ID is \code{ppml_fitted_vol_tau0p05}. Its path is
 \file{figures/log_var_eq_fitted_volatility_ppml_tau0p05.svg}. The first
 aggregate Harvey ID is \code{harvey_fitted_vol_combined}. Its path is
 \file{figures/log_var_eq_fitted_volatility_harvey_tau_combined.svg}. These
-formulas exhaust the Cartesian product used by the artifact manifest builder.
+formulas exhaust the Cartesian product used by the artifact manifest builder; the
+two PPML-only records follow the same formulas outside that product.
 
 \subsection{Generated mean-region artifact records}
 
-The manifest builder generates 16 required region records from four relaxation
-values, two unit systems, and two OLS modes. They have no artifact lookup
+The manifest builder generates 20 required mean-region records: 16
+three-dimensional region records from four relaxation values, two unit systems,
+and two OLS modes, and four projection records from the same two unit systems
+and two OLS modes. They have no artifact lookup
 family/variant; artifact producers resolve them by artifact ID.
-\file{mean_equation/figures/render_region_3d.R} produces all 16. The paper
+\file{mean_equation/figures/render_region_3d.R} produces the 16 region records and
+\file{mean_equation/figures/render_projections.R} the four projections. The paper
 consumes them, and each has required artifact lifecycle status.
 The exact artifact ID and basename formulas cover all combinations.
 
 \begin{table}[htbp]
 \centering
 \small
-\caption{The 16 required three-dimensional mean-region records. In each row,
-\code{<t>} takes \code{tau0p05}, \code{tau0p1}, \code{tau0p2}, and
-\code{tau0p3}; every basename lies under \file{figures/}. ``SD'' means
-standard-deviation units, and OLS means ordinary least squares. Each row
-represents four records.
+\caption{The 20 required generated mean-region records. In each of the first
+four rows, \code{<t>} takes \code{tau0p05}, \code{tau0p1}, \code{tau0p2}, and
+\code{tau0p3}, so the row represents four three-dimensional records; each of the
+last two rows represents two projection records. Every basename lies under
+\file{figures/}. ``SD'' means standard-deviation units, and OLS means ordinary
+least squares.
 \label{tab:region-artifacts}}
 \begin{tabular}{@{}p{0.13\textwidth}p{0.14\textwidth}p{0.66\textwidth}@{}}
 \toprule
-OLS mode & Units & Four IDs and basenames\\
+OLS mode & Units & IDs and basenames\\
 \midrule
 None & SD & \code{mean_region_sd_<t>} / \code{set_id_region_3d_sd_<t>.svg}\\
 None & coefficient & \code{mean_region_b_<t>} / \code{set_id_region_3d_b_<t>.svg}\\
 Projected & SD & \code{mean_region_ols_projected_sd_<t>} / \code{set_id_region_3d_ols_projected_sd_<t>.svg}\\
 Projected & coefficient & \code{mean_region_ols_projected_b_<t>} / \code{set_id_region_3d_ols_projected_b_<t>.svg}\\
+None & SD, coefficient & \code{mean_projections_figure} / \code{set_id_projections_sd.svg}; \code{mean_projections_b_figure} / \code{set_id_projections_b.svg}\\
+Projected & SD, coefficient & \code{mean_projections_ols_figure} / \code{set_id_projections_sd_ols.svg}; \code{mean_projections_b_ols_figure} / \code{set_id_projections_b_ols.svg}\\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -3206,7 +3350,7 @@ Only three artifact lookup families exist:
     \code{harvey}, conditional \code{lad}, and conditional \code{egarch_x};
   \item \code{fitted_volatility}: \code{ppml}, \code{harvey}, and conditional
     \code{lad};
-  \item \code{fitted_volatility_sweep}: the 18 estimator/tail variants in
+  \item \code{fitted_volatility_sweep}: the 20 estimator/tail variants in
     Table~\ref{tab:sweep-artifacts}.
 \end{itemize}
 These are artifact lookup families, not estimand classes. The LAD variant under
@@ -3214,10 +3358,10 @@ These are artifact lookup families, not estimand classes. The LAD variant under
 envelope, whereas the variants for PPML and the Harvey estimator are fitted
 conditional-residual-volatility envelopes.
 An artifact lookup family/variant query must resolve exactly one artifact record.
-The other 63 artifact records have blank family and variant fields and are
+The other 72 artifact records have blank family and variant fields and are
 addressed by artifact ID.
 
-The LaTeX publication registry contains six triples. Each triple binds a
+The LaTeX publication registry contains eight triples. Each triple binds a
 fragment, standalone TeX source, and standalone PDF.
 \begin{table}[htbp]
 \centering
@@ -3236,6 +3380,8 @@ Fragment & Standalone TeX & Standalone PDF\\
 \code{structural_var_inference_table} & \code{structural_var_inference_standalone_tex} & \code{structural_var_inference_standalone_pdf}\\
 \code{variance_share_table} & \code{variance_share_standalone_tex} & \code{variance_share_standalone_pdf}\\
 \code{variance_bound_summary_table} & \code{variance_bound_summary_standalone_tex} & \code{variance_bound_summary_standalone_pdf}\\
+\code{log_var_eq_harvey_inference_table} & \code{log_var_eq_harvey_inference_standalone_tex} & \code{log_var_eq_harvey_inference_standalone_pdf}\\
+\code{log_var_eq_logols_inference_table} & \code{log_var_eq_logols_inference_standalone_tex} & \code{log_var_eq_logols_inference_standalone_pdf}\\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -3284,7 +3430,7 @@ round-trip, readback, and projection checks establish only their named propertie
 
 The current topology checks use expected paths to reject extras and skip the
 output-tree block when the output root is absent. A separate check must establish
-existence for all 82 required paths. Final conditional-route reconciliation may
+existence for all 93 required paths. Final conditional-route reconciliation may
 record \code{requested} without \code{ran}. Published-table projection comparison
 drops TeX files without projected numeric tokens and ignores PDFs, SVGs, CSVs,
 RDS files, Markdown files, the descriptive wrapper, and all other non-table

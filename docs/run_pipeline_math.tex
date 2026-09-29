@@ -2848,7 +2848,8 @@ first \(N_O\) indices.
 Here \(K_B\) is the positive integer number of sampled blocks.
 The sensitivity bootstrap-index family changes the block length to measure how strongly the
 bootstrap conclusions depend on that choice. Each family contains \(B\) bootstrap draws, so the two
-families contain \(2B=20{,}000\) sampled index sequences in all. They do not carry the same
+families contain \(2B=20{,}000\) sampled index sequences in all. The combined inference table
+resamples separately, under Section~\ref{sec:combined-table}. The two families do not carry the same
 content. Every bootstrap draw of the primary family produces the mean-equation quantities and the
 conditional-scale quantities together, from a single system estimate. Every bootstrap draw of the
 sensitivity family produces conditional-scale quantities only.
@@ -2956,7 +2957,9 @@ endpoints with the failed endpoint state from this denominator.
 \label{sec:ci}
 
 This section converts sampling variation in lower and upper reported endpoints into a
-confidence interval for one coefficient at one positive display slack. Standardizing the two endpoint
+confidence interval for one coefficient at one positive display slack. For the combined inference
+table, the reported endpoints and the draws come from Section~\ref{sec:combined-table}, and the
+interval is computed there by the package's routine under the same target and controls. Standardizing the two endpoint
 deviations permits a common critical value and accommodates different lower- and upper-endpoint
 scales.
 
@@ -3242,6 +3245,69 @@ Run the mean-equation endpoint bootstrap for the reported and comparison specifi
 same primary bootstrap-index family. Compare their paired endpoints as a comparison check. Only the
 reported specification reaches the reported outputs.
 
+\section{Combined inference table}
+\label{sec:combined-table}
+
+The combined mean-equation and conditional-scale inference table has its own calculation, carried
+out right after the SDF, consumption, volatility, return-score, and PC constructions and before any
+other estimator. Its reported endpoints do not come from the endpoint searches and lattice budgets
+of Sections~\ref{sec:idset}, \ref{sec:expcondvar}, and \ref{sec:bootstrap}, which the other tables
+and figures keep; they come from the public box search and the sampled PPML fits below. Its conditional-scale estimator is PPML
+alone, and it is defined only under the reported specification, which estimates \(\beta_{2R}\);
+under any other published specification the calculation stops.
+
+\emph{Samples.} Index each row by its forecast origin \(t\), one quarter before the response
+quarter \(t+1\) used elsewhere in this manual, so consumption growth and the instrument enter one
+quarter ahead of the origin and the lagged PC scores enter at the origin. The origin window is
+1961~Q4 through 2025~Q3. The mean sample is the identification sample itself, \(N_O=256\) rows,
+the response quarters 1962~Q1 through 2025~Q4. The conditional-scale rows are the \(T_v=255\) of
+them that carry the supplied return scores; the first mean row has none. The relabeling changes no
+value.
+
+\emph{Reference column.} Fit the mean least-squares benchmark by ordinary least squares on the \(N_O\) rows, with four-lag
+Newey--West standard errors and Student-\(t\) tails on the residual degrees of freedom. Fit PPML to
+its squared residuals on the \(T_v\) rows, with the return scores centered on those rows and not
+rescaled, and report four-lag HAC standard errors with normal tails.
+
+\emph{Zero slack.} Compute the zero-slack mean point with the package's zero-slack system solver,
+then fit PPML at that point's SDF-news coefficients on the \(T_v\) rows.
+
+\emph{Positive slack, mean rows.} At each display slack \(\tau\in\{0.05,0.10,0.20\}\), build the
+quadratic system and require the zero-slack point to satisfy every constraint strictly. Run the
+package's public coordinate-box search on a grid of 41 points per coordinate with a zero
+null-loading tolerance. Each reported mean range is the attained box range: the smallest and largest
+coefficient values at feasible witness points the search found. An endpoint is \emph{bounded} only
+when the package's quadratic-set evidence, evaluated at the zero-slack point and the box witnesses,
+establishes boundedness on that side. These ranges are attained values, not certified extrema.
+
+\emph{Positive slack, conditional-scale rows.} Refit PPML at the box's witness points and at 20
+steps from the zero-slack point toward each witness, keep only candidates that satisfy the
+constraints up to the package's relative feasibility tolerance, and report the smallest and largest
+fitted value of each coefficient across successful fits. These \emph{sampled PPML coefficient
+ranges} are inner approximations twice over, because the box and the sample are both finite; the
+full-set extrema are not established. A sampled range is usable only when every candidate fit
+succeeds and both ends are finite.
+
+\emph{Bootstrap.} Use \(B=10{,}000\) draws, seed 20260708, the generator settings of
+Section~\ref{sec:bootstrap}, and circular blocks of length
+\(m=\lceil1.5N_O^{1/3}\rceil=10\) over the \(N_O\) mean rows, generating every index sequence
+before any fit. Each draw resamples whole mean-row tuples, keeps its conditional-scale rows inside
+the draw, recenters the return scores on them, holds the PC rotations fixed, and repeats the three
+calculations above. At zero slack, report the package's bootstrap point statistic. At positive
+slack, report the package's endpoint-status-aware set interval with the same pointwise coverage
+target as Section~\ref{sec:ci} and the same controls: nominal level 0.10, minimum usable-draw share
+0.5, stability share 0.85, and search tolerance \(10^{-4}\). What differs from the other tables is
+the endpoints fed to it, not the inferential target. A coefficient is published only when, on each side, at most one quarter of the draws
+fail, counting any failed sampled PPML fit as a failure, and only when no interval search stopped on
+its evaluation or precision limit.
+
+\emph{Preserved draws.} These draws are preserved separately from those of
+Section~\ref{sec:bootstrap}. Reuse them only when the prepared inputs, every setting above, the
+calculation's code, the installed package's functions and constants, the package versions, the
+numerical libraries, and the whole analysis, inference, and reporting control objects all agree;
+otherwise recompute every draw. Because whole control objects are compared, a presentation-only
+control change can also force recomputation.
+
 \section{Plug-in approximation-error variance bounds}
 \label{sec:approximation}
 
@@ -3445,17 +3511,18 @@ is one minus the ratio of the residual sum of squares divided by \(N_{\mathrm{pm
 sum of squares divided by \(N_{\mathrm{pm}}-1\), where seven is the number of estimated
 coefficients. The preliminary mean regression is not a substitute for the mean least-squares
 benchmark's four-lag covariance calculation.
-\item Produce six published tables: two tables of the mean-equation identification diagnostics,
+\item Produce eight published tables: two tables of the mean-equation identification diagnostics,
 one conditioning on the SDF-news PC scores and the other on the SDF-news reduced-form residuals;
-a combined mean-equation and conditional-scale inference table; a conditional-scale estimator table;
-a variance-share table; and a plug-in approximation-error variance-bound summary. The two diagnostic
+a combined mean-equation and conditional-scale inference table, calculated as in
+Section~\ref{sec:combined-table}; a conditional-scale estimator table; separate Harvey QML and
+log-OLS conditional-scale tables without the mean panel; a variance-share table; and a plug-in approximation-error variance-bound summary. The two diagnostic
 conditioning choices coincide only under the orthogonality null. The
 comparison between the reported and comparison specifications is a comparison check. Critical slack appears
 in the slack-dependent calculations and figures, not in an additional published table.
 \item Produce one figure of identified ranges of mean-equation coefficients as a function of slack,
-and two two-coordinate projection figures of the mean identified set, drawn in the
-standard-deviation-scaled coordinates defined below and differing only in whether the projected
-mean least-squares benchmark is shown. Draw the first on the \emph{bounds-by-slack
+and four two-coordinate projection figures of the mean identified set, two drawn in the
+standard-deviation-scaled coordinates defined below and two in coefficient units, each pair
+differing only in whether the projected mean least-squares benchmark is shown. Draw the first on the \emph{bounds-by-slack
 grid}, built once from the critical slack \(\tau^\star\) and shared by the mean-equation calculation and
 the figure. Form 25 equally spaced values from zero through \(\tau^\star\) and discard both
 endpoints, leaving the strictly interior backbone of 23 values. Split the backbone at
@@ -3852,6 +3919,8 @@ used only for the expected-SDF approximation-error bound.
 series, preserving each score's supplied scale.
 \item Form the SDF-news, current expected-SDF, and lagged expected-SDF panels; calculate their first
 three PC scores; and apply the stated lagged expected-SDF sign alignment.
+\item Calculate the combined inference table of Section~\ref{sec:combined-table}, including its
+own bootstrap. Nothing later in this sequence feeds it.
 \item Fit the preliminary mean regression on the preliminary mean sample. Then form the
 identification sample and center the five-year realized yield volatility on that sample's mean, fit the
 mean least-squares benchmark on that sample, estimate
@@ -4709,9 +4778,9 @@ Change the unit set or the overlay set that the three-dimensional renderings are
 selected configuration draws every drawable slack in both unit systems, raw coefficients and
 coefficients multiplied by SDF-news PC score standard deviations, and each of those both with and
 without the projected mean least-squares benchmark, so restricting either set removes renderings
-rather than substituting one for another. The two two-coordinate projection figures are outside this
-choice: they are always drawn in the scaled coordinates and always in both benchmark variants. Axes
-and interpretation change; estimates do not.
+rather than substituting one for another. The four two-coordinate projection figures are drawn over
+the same unit and benchmark sets, so the same restriction removes projections too. Axes and
+interpretation change; estimates do not.
 
 \item[Fitted-scale panel families.]
 \emph{Reachability: Executable full-route modification. Request handling: Not exposed.}

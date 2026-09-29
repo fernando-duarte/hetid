@@ -70,13 +70,10 @@ PAPER_CONDITIONAL_ARTIFACT_STATUSES <- setdiff(
   J = "log_variance/extensions/egarch",
   K = "tests/support/check_contract_ownership.R",
   M = "diagnostics only; no pipeline stage reads it",
-  # every table that reports a tau = 0 or tau > 0 inference statistic, in the
-  # order run_pipeline.R publishes them after the bootstrap stage
-  L = paste(
-    "log_variance/tables/render_combined_inference_table.R",
-    "log_variance/tables/render_estimator_pages.R",
-    sep = ";"
-  )
+  # the estimator pages, which run_pipeline.R publishes after the bootstrap stage
+  L = "log_variance/tables/render_estimator_pages.R",
+  # the structural inference table reads back the draw cache it writes itself
+  N = "log_variance/tables/render_combined_inference_table.R"
 )
 .artifact_specs <- c(
   "summary_statistics_table|summary_stats.tex|1|a|A|r",
@@ -125,6 +122,7 @@ PAPER_CONDITIONAL_ARTIFACT_STATUSES <- setdiff(
   "joint_gmm_rds|log_var_eq_joint_gmm.rds|6|s|F|r",
   "lad_closure_diagnostics|log_var_eq_lad_closure.csv|6|t|G|l",
   "bootstrap_stage_draws|bootstrap_stage_draws.rds|7|p|L|r",
+  "structural_inference_draws|structural_inference_draws.rds|7|ab|N|r",
   "dynamics_gate|log_var_eq_dynamics_gate.rds|7|u|H|r",
   "egarch_status|log_var_eq_egarch_status.rds|7|v|I|r",
   "conditional_route_status|conditional_route_status.rds|7|z|K|r",

@@ -55,6 +55,10 @@ paper_source_once(paper_path("data_preparation", "build_consumption_growth.R"))
 paper_source_once(paper_path("data_preparation", "build_yield_volatility.R"))
 paper_source_once(paper_path("data_preparation", "build_asset_return_pcs.R"))
 paper_source_once(paper_path("data_preparation", "build_sdf_pcs.R"))
+# The mean-over-PPML structural inference table runs its own bootstrap from the
+# prepared frames alone and keeps its own draw cache, so it needs none of the
+# estimators or the unified bootstrap stage below.
+paper_source_once(paper_path("log_variance", "tables", "render_combined_inference_table.R"))
 paper_source_once(paper_path("mean_equation", "fit_ols.R"))
 paper_source_once(paper_path("mean_equation", "estimate_identified_set.R"))
 paper_source_once(paper_path("mean_equation", "variance_shares", "compute_variance_shares.R"))
@@ -130,14 +134,10 @@ paper_source_once(paper_path("inference", "run_bootstrap_stage.R"))
 # the alternative specification's mean draws, on the same index family, so the
 # comparison carries intervals rather than full-sample sets alone
 paper_source_once(paper_path("mean_equation", "inference", "spec_comparison.R"))
-# Publication of every log-variance table follows the stage, because each one
+# Publication of every estimator page follows the stage, because each one
 # reports a bootstrap tau = 0 statistic. Only publication is deferred: the PPML
 # and Harvey estimates and their analytic standard errors are already frozen
 # above, and the stage reads them without mutating them.
-# the merged mean-over-PPML two-panel table; consumes the mean-set estimate, its
-# endpoint bootstrap, and the PPML set-endpoint envelope, so it runs after the
-# structural table is frozen
-paper_source_once(paper_path("log_variance", "tables", "render_combined_inference_table.R"))
 # one page per estimator: mean equation above each, that estimator's notes below
 paper_source_once(paper_path("log_variance", "tables", "render_estimator_pages.R"))
 # the log-variance figures consume mean_eq_bounds_tau and the registry, so

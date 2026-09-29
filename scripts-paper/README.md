@@ -45,7 +45,7 @@ scripts-paper/
 │   └── tables/             estimator panels, notes, and renderers
 ├── variance_bounds/        per-maturity SDF-news and expected-SDF variance bounds figure, table, and quoted-numbers note
 ├── reports/                descriptive-statistics report builder
-├── support/                paper-owned identification, statistics, LaTeX, reporting, runtime, and diagnostics helpers
+├── support/                paper-owned identification, statistics, structural-inference, LaTeX, reporting, runtime, and diagnostics helpers
 ├── tests/                  isolated suites, topology checks, and comparison support
 └── run_pipeline.R          ordered source orchestrator
 ```
@@ -59,6 +59,7 @@ The runner preserves the established source order:
 
 ```text
 FRED patch and data construction
+  -> structural inference table (its own bootstrap and draw cache)
   -> mean-equation OLS, identified set, variance shares, and bounds
   -> log-OLS foundation and mean-equation bounds
   -> PPML and Harvey sets and standard errors
@@ -67,16 +68,40 @@ FRED patch and data construction
   -> optional LAD estimator and table
   -> one unified mean/volatility bootstrap stage
   -> PPML, Harvey, and conservative-panel tables
-  -> structural and log-variance inference tables
+  -> log-variance estimator pages
   -> analytical figures, diagnostics, and descriptive report
 ```
 
-Every log-variance table reports a bootstrap `tau = 0` statistic, so publication
-waits for the bootstrap stage even where the table carries no `tau > 0`
+Every estimator page reports a bootstrap `tau = 0` statistic, so its publication
+waits for the bootstrap stage even where the page carries no `tau > 0`
 confidence rows. Only publication is deferred: the PPML and Harvey estimates and
 their analytic standard errors are frozen before the stage, which reads them
-without mutating them. The LAD table is the one exception, having neither
+without mutating them. The LAD page is the one exception, having neither
 statistic.
+
+The combined mean-over-PPML table, `tables/structural_var_inference.tex`, is the
+exception to that ordering. `log_variance/tables/render_combined_inference_table.R`
+runs immediately after `build_sdf_pcs.R` and computes every number itself through
+`support/structural_inference/api.R`. Its identification, PPML, and bootstrap
+arithmetic uses exported `hetid` functions (`compute_tau0_system`,
+`fit_log_variance_at_b`, `compute_identified_set_box`, `compute_quadratic_set_evidence`,
+`sample_log_variance_set`, `circular_mbb_indices`, `bootstrap_endpoint_draws`,
+`bootstrap_point_statistics`, `bootstrap_set_interval`); the OLS reference column uses
+base `lm` with `sandwich` Newey-West standard errors. It reads none of the estimators, `set_id_boot`, or the PPML envelope, and it refuses to
+run unless both published specifications are B (estimated `beta2R`). Rows are indexed
+by forecast origin, one quarter before the response quarter, so the window is
+1961 Q4–2025 Q3 in origin labels for the same 256 mean rows (response quarters
+1962 Q1–2025 Q4); the variance equation uses the 255 of them that have `PC_R`. The
+`tau > 0` mean cells are attained ranges from the public box search
+(`n_grid = 41`). The `tau > 0` PPML cells are sampled coefficient ranges: PPML is refit
+at the box witnesses and at `n_points = 20` steps along each center-to-witness segment,
+so the ranges are inner approximations, not established full-set extrema. The inference
+target and nominal controls are the paper's usual pointwise ones. Its bootstrap uses
+B = 10000 resamples, each built from circular blocks of length 10, with seed 20260708,
+and it keeps its own all-or-nothing cache, `state/structural_inference_draws.rds`. The cache is written
+before the publication gates are read, so a run that fails them keeps its draws.
+Every other table, figure, and diagnostic, including the estimator pages, keeps its
+existing calculation path.
 
 Modules still evaluate in the shared global environment. Important products include
 `set_id_mean_eq`, `set_id_boot`, `mean_eq_bounds_tau`, `var_share`, `log_var_eq`,
@@ -166,7 +191,7 @@ define six named full-reset compartments (bootstrap cache, gate/decision state, 
 tables, figures, reports) and the `reset_pipeline_state()` orchestrator. Before a from-scratch
 run, `Rscript scripts-paper/reset_pipeline_state.R` clears all six by default, including the
 git-tracked tables, figures, and reports; pass `--keep-tracked` to delete only gitignored
-artifacts — the draw cache, gate state, diagnostics, and generated PDFs — leaving the
+artifacts — the two draw caches, gate state, diagnostics, and generated PDFs — leaving the
 tracked `.tex`/`.svg`/`.md` outputs in place.
 `run_pipeline.R` itself is unchanged and still overwrites artifacts in place; running the
 reset script first is a deliberate, separate step.
@@ -188,7 +213,8 @@ for fresh data pulls.
 Run a deterministic quick pipeline:
 
 ```sh
-HETID_BOOT_REPS=8 HETID_BOOT_CORES=1 Rscript scripts-paper/run_pipeline.R
+HETID_BOOT_REPS=8 HETID_BOOT_CORES=1 HETID_ALLOW_DRAFT_RUN=1 \
+  Rscript scripts-paper/run_pipeline.R
 ```
 
 Run the full pipeline serially:
@@ -197,8 +223,13 @@ Run the full pipeline serially:
 HETID_BOOT_REPS=10000 HETID_BOOT_CORES=1 Rscript scripts-paper/run_pipeline.R
 ```
 
+A replication count other than 10000 stops before any output is touched unless
+`HETID_ALLOW_DRAFT_RUN=1` is also set, because a draft run still overwrites the
+tracked tables, the structural inference table included.
+
 `HETID_BOOT_REPS` (default 10000; overriding it prints the value used) sets the
-replication count for the unified stage. The stage creates one primary circular-MBB
+replication count for the unified stage and for the structural inference table's
+separate bootstrap. The unified stage creates one primary circular-MBB
 index family, shared by mean and volatility inference, and one doubled-block family
 for the volatility sensitivity check. Both use seed 20260708. The primary block
 length follows `ceiling(1.5 * T^(1/3))` (10 quarters at T = 256). Execution uses
@@ -218,7 +249,12 @@ own-side MAD scales, stability thresholds, fixed index families, parallel execut
 and published Target P choice. The package's serial endpoint runner is available
 for other analyses; this pipeline retains its checkpoint and parallel runner.
 
-`HETID_BOOT_MODE` (default `reuse`) governs the single all-or-nothing cache,
+`HETID_BOOT_MODE` (default `reuse`) governs both all-or-nothing draw caches. The
+structural inference table's cache, `state/structural_inference_draws.rds`, is reused
+only when its input hash, settings, code and function hashes, installed `hetid`
+namespace hashes, package versions, R/BLAS/LAPACK identity, and control hashes all
+match; otherwise the table recomputes every draw. The control hashes cover whole
+control objects, so even a presentation-only control edit can force a rerun. The unified stage's cache is
 `state/bootstrap_stage_draws.rds`. A reuse requires the two stored-family hashes,
 canonical input and draw-spec hashes, executed-code and runtime hashes, and the
 cache schema version to match. A missing, unreadable, malformed, or stale component
