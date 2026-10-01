@@ -23,10 +23,14 @@ Read this file completely before acting on a dependent prompt.
 Confirm the shared file's path and content digest in the workflow record. If it is missing or
 unreadable, do not run the dependent workflow.
 
-## Fixed execution configuration
+## Execution configuration
 
-Run the orchestrator, every sub-orchestrator, and every worker on **Claude Opus 5 with the 1M-token
-context window at `xhigh` effort**. The model selector is `claude-opus-5[1m]`; the API model string is
+A workflow-specific prompt may define its own model, context window, and effort settings, including
+explicit user overrides. When it does, use that configuration for its agents. Otherwise apply the
+defaults below.
+
+By default, run the orchestrator, every sub-orchestrator, and every worker on **Claude Opus 5 with
+the 1M-token context window at `xhigh` effort**. The model selector is `claude-opus-5[1m]`; the API model string is
 `claude-opus-5`. When the harness exposes model or effort arguments, set both explicitly. If the
 required model or effort is unavailable, record a blocker rather than silently substituting another
 configuration.
