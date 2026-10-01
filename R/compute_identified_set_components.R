@@ -65,7 +65,7 @@
 #'   print(components)
 #' })
 compute_identified_set_components <- function(gamma, moments) {
-  assert_hetid_moments(moments)
+  validate_hetid_moments(moments)
   assert_bad_argument_ok(
     is.matrix(gamma),
     "gamma must be a matrix",

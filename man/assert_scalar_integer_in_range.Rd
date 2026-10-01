@@ -10,14 +10,13 @@ assert_scalar_integer_in_range(x, name, min_value, max_value, arg = name)
 \item{x}{Object to check. Valid input is a single finite, integer-valued
 numeric value; missing values, \code{NaN}, and infinite values are rejected.}
 
-\item{name}{Single character string used in the error message and the
-condition's \code{arg} field when the finite numeric check fails.}
+\item{name}{Single character string used in the error message.}
 
 \item{min_value, max_value}{Single numeric lower and upper bounds of the
 inclusive range. Bounds are supplied by the caller and are not validated.}
 
 \item{arg}{Single character string used in the condition's \code{arg} field
-when the integer or range check fails. Defaults to \code{name}.}
+when any check fails. Defaults to \code{name}.}
 }
 \value{
 Invisible \code{TRUE} if valid. Otherwise, signals a

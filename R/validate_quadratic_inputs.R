@@ -114,9 +114,8 @@ validate_hetid_components <- function(x) {
 #' object (via \code{validate_hetid_components()}), and the
 #' type/finiteness/positivity constraints for
 #' \code{\link{compute_identified_set_quadratic}}. Moment shapes are
-#' class invariants guaranteed by the
-#' \code{compute_identification_moments()} boundary and are trusted
-#' rather than re-checked. No input is modified. Nonnumeric or non-finite
+#' checked by \code{validate_hetid_moments()} at this boundary. No input is
+#' modified. Nonnumeric or non-finite
 #' quadratic inputs, including NA/NaN/Inf, are rejected, not omitted.
 #'
 #' @inheritParams compute_identified_set_quadratic
@@ -131,7 +130,7 @@ validate_hetid_components <- function(x) {
 #'
 #' @keywords internal
 validate_quadratic_inputs <- function(tau, components, moments) {
-  assert_hetid_moments(moments)
+  validate_hetid_moments(moments)
   assert_bad_argument_ok(
     inherits(components, "hetid_components"),
     paste0(

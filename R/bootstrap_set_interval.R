@@ -82,6 +82,7 @@ bootstrap_set_interval <- function(full, draws, target, alpha, min_reps, stabili
     "target must be pointwise or containment",
     arg = "target"
   )
+  assert_scalar_finite(alpha, "alpha")
   validate_bootstrap_gate(min_reps, stability, alpha)
   control <- bootstrap_inference_control(control)
   sides <- lapply(seq_len(nrow(full)), function(k) {

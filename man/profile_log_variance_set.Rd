@@ -17,7 +17,7 @@ profile_log_variance_set(
 
 \item{x_var}{Numeric matrix or data frame of finite volatility regressors,
 with \code{nrow(box$w2)} rows in the same observation order and no intercept
-column. Missing values are not removed. Fitting requires at least
+column. Missing values are not removed. Requires at least
 \code{ncol(x_var) + 2} observations. Column labels must be unique,
 non-missing and non-blank, and must not equal \code{"(Intercept)"}.
 Unnamed matrix columns receive labels \code{pc1}, \code{pc2}, and so on.
@@ -68,10 +68,12 @@ convex criteria. When a unique finite minimizer exists, different starts
 share that target; numerical acceptance follows the checks and tolerances
 in \code{\link{fit_log_variance}}.
 
-Invalid fitting inputs and nonfinite response arithmetic raise structured
-errors when a fit is attempted. They are not counted as failed fits.
-When no feasible candidates remain, or any box side is infinite, no fit
-is attempted and fitting-stage input checks are not run.
+The estimator, regressor values and labels, row alignment, and minimum
+sample size are validated before candidate selection, even when no fit
+is attempted. Nonfinite response arithmetic raises a structured error
+when a candidate response is constructed. Invalid inputs are not counted
+as failed fits. When no feasible candidates remain, or any box side is
+infinite, no fit is attempted.
 Align time-series inputs by date before constructing the box and
 \code{x_var}; this function neither joins nor reorders observations.
 }

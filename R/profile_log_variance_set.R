@@ -21,10 +21,12 @@
 #' share that target; numerical acceptance follows the checks and tolerances
 #' in \code{\link{fit_log_variance}}.
 #'
-#' Invalid fitting inputs and nonfinite response arithmetic raise structured
-#' errors when a fit is attempted. They are not counted as failed fits.
-#' When no feasible candidates remain, or any box side is infinite, no fit
-#' is attempted and fitting-stage input checks are not run.
+#' The estimator, regressor values and labels, row alignment, and minimum
+#' sample size are validated before candidate selection, even when no fit
+#' is attempted. Nonfinite response arithmetic raises a structured error
+#' when a candidate response is constructed. Invalid inputs are not counted
+#' as failed fits. When no feasible candidates remain, or any box side is
+#' infinite, no fit is attempted.
 #' Align time-series inputs by date before constructing the box and
 #' \code{x_var}; this function neither joins nor reorders observations.
 #'
@@ -40,7 +42,7 @@
 #'   \code{\link{compute_identified_set_box}}.
 #' @param x_var Numeric matrix or data frame of finite volatility regressors,
 #'   with \code{nrow(box$w2)} rows in the same observation order and no intercept
-#'   column. Missing values are not removed. Fitting requires at least
+#'   column. Missing values are not removed. Requires at least
 #'   \code{ncol(x_var) + 2} observations. Column labels must be unique,
 #'   non-missing and non-blank, and must not equal \code{"(Intercept)"}.
 #'   Unnamed matrix columns receive labels \code{pc1}, \code{pc2}, and so on.
@@ -98,7 +100,22 @@ profile_log_variance_set <- function(box, x_var, estimator = "ppml",
                                        IDENTIFIED_SET_CONTROL$N_POINTS) {
   assert_hetid_theta_box(box)
   assert_scalar_integer_in_range(n_points, "n_points", 1, .Machine$integer.max)
+  log_variance_estimator(estimator)
+  assert_tabular(x_var, "x_var")
+  x_var <- as.matrix(x_var)
+  assert_numeric_finite_values(x_var, "x_var")
   coef_labels <- colnames(log_variance_design(x_var))
+  assert_dimension_ok(
+    nrow(x_var) == nrow(box$w2), "x_var must have nrow(box$w2) rows"
+  )
+  min_obs <- min_obs_for_pc_regression(ncol(x_var))
+  assert_insufficient_data_ok(
+    nrow(x_var) >= min_obs,
+    paste0(
+      "Insufficient observations for the log-variance fit: got ", nrow(x_var),
+      ", need at least ", min_obs, " (ncol(x_var) + 2)"
+    )
+  )
 
   candidates <- profile_set_candidates(box, n_points)
   if (is.null(candidates)) {

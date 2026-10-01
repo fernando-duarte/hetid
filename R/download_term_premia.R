@@ -89,6 +89,9 @@ download_term_premia <- function(source = c("github", "nyfed"),
   # Path resolution also rejects nyfed + daily, even when force = TRUE
   existing <- get_acm_data_path(source, frequency)
   if (!force && file.exists(existing)) {
+    if (dir.exists(existing)) {
+      stop_hetid(paste0("Term premia data path is a directory: ", existing))
+    }
     if (!quiet) {
       message(
         "Term premia data already exists. Use force = TRUE to re-download."

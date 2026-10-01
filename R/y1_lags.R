@@ -83,8 +83,8 @@ append_y1_lags <- function(reg_matrix, y1, n_lags) {
 #' @keywords internal
 validate_y1_lags <- function(y1_lags, n_obs) {
   assert_bad_argument_ok(
-    is.numeric(y1_lags) && length(y1_lags) == 1L && !is.na(y1_lags) &&
-      y1_lags >= 0 && y1_lags == as.integer(y1_lags),
+    is.numeric(y1_lags) && length(y1_lags) == 1L && is.finite(y1_lags) &&
+      y1_lags >= 0 && y1_lags %% 1 == 0 && y1_lags <= .Machine$integer.max,
     "y1_lags must be a single non-negative integer",
     arg = "y1_lags"
   )

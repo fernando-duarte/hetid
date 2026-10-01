@@ -143,14 +143,13 @@ fit_log_variance_at_b <- function(b, w1, w2, x, estimator = "ppml", start = NULL
   }
 
   eps <- drop(w1 - w2 %*% b)
-  min_abs_eps <- min(abs(eps))
 
   fit <- fit_log_variance(
     eps^2, x,
     estimator = estimator, start = start,
     fallback_starts = fallback_starts, response_scale = response_scale, control = control
   )
-  fit$diagnostics$min_abs_eps <- min_abs_eps
+  fit$diagnostics$min_abs_eps <- min(abs(eps))
   out <- validate_hetid_log_variance_fit(fit)
   out
 }

@@ -47,7 +47,10 @@ If \code{return_df = FALSE}, a list containing:
 \item{kept_idx}{Logical vector of length \code{nrow(data) - 1}; \code{TRUE}
 marks retained predictor/next-outcome pairs. Used downstream to check
 that \eqn{Y_1} and \eqn{Y_2} are fit on the same sample.}
-\item{model}{The \code{lm} object from the regression.}
+\item{model}{The \code{lm} object from the regression. Formula-reserved
+regressor labels use internal names; its \code{hetid_regressor_names}
+attribute maps those names to public labels. Prediction data use the
+internal names. Ordinary labels require no mapping.}
 }
 If \code{return_df = TRUE}, a data frame with one row per retained pair and columns:
 \describe{
@@ -74,8 +77,8 @@ regressors under the same one-period lag convention: row t of
 
 Rows are paired by position; supplied dates are neither sorted nor normalized.
 Missing outcomes, PCs, or own-lags remove the affected pairs by complete cases;
-\code{exog} must contain no missing or infinite values. Other numeric inputs
-must be finite apart from missing values. The regression needs at least
+\code{exog} must contain no missing or infinite values. Other inputs must be
+numeric and finite on the complete pairs fitted. The regression needs at least
 \code{n_reg + 2} complete pairs, where \code{n_reg} counts PCs or exogenous
 columns plus own-lags. Too few pairs or collinear regressors raise a
 \code{hetid_error}; invalid arguments and dimensions have specific subclasses.

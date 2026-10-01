@@ -41,14 +41,17 @@ Inputs must already be aligned; the caller applies any required
 leads or lags before fitting.
 Rows with \code{NA} or \code{NaN} in \code{y} or a selected regressor
 are omitted jointly; missing values in unused columns do not affect the fit.
-Infinite values are not removed by complete-case filtering.
+Response and selected regressors must be numeric. Infinite values on
+complete rows signal a \code{hetid_error_bad_argument} condition.
 At least \code{n_pcs + 2} complete observations are required.
 Regressor labels come from the selected columns' names, sanitized with
 \code{make.names(..., unique = TRUE)}. If any selected name is missing or
 empty, or column names are absent, all selected columns use the names from
 \code{\link{get_pc_column_names}} instead.
-Names such as \code{...} and \code{..1} cannot be evaluated in the
-regression formula, even after sanitization.
+Formula-reserved names \code{...} and \code{..N} use collision-free internal
+names in the fitted model. Its \code{hetid_regressor_names} attribute maps
+internal names to sanitized public labels; prediction data use internal names.
+The returned coefficient vector always uses the public labels.
 
 Too few complete observations signal a
 \code{hetid_error_insufficient_data} condition. A selected regressor named

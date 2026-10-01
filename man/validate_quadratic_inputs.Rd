@@ -38,9 +38,8 @@ identical maturity identity, the shapes of the \code{components}
 object (via \code{validate_hetid_components()}), and the
 type/finiteness/positivity constraints for
 \code{\link{compute_identified_set_quadratic}}. Moment shapes are
-class invariants guaranteed by the
-\code{compute_identification_moments()} boundary and are trusted
-rather than re-checked. No input is modified. Nonnumeric or non-finite
+checked by \code{validate_hetid_moments()} at this boundary. No input is
+modified. Nonnumeric or non-finite
 quadratic inputs, including NA/NaN/Inf, are rejected, not omitted.
 }
 \keyword{internal}

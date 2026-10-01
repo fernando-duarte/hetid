@@ -25,11 +25,11 @@ new_hetid_tau0_fit(
 \item{beta2r}{Numeric matrix (I x length(beta1r)), OLS coefficients of the Y2
 reduced form, with named component rows and columns matching \code{names(beta1r)}.}
 
-\item{w1}{Numeric vector of length \code{n_obs}, Y1 reduced-form residuals.}
+\item{w1}{Finite numeric vector of length \code{n_obs}, Y1 reduced-form residuals.}
 
-\item{w2}{Numeric matrix (n_obs x I), Y2 reduced-form residuals.}
+\item{w2}{Finite numeric matrix (n_obs x I), Y2 reduced-form residuals.}
 
-\item{z}{Numeric matrix (n_obs x J), de-meaned instruments.}
+\item{z}{Finite numeric matrix (n_obs x J), de-meaned instruments.}
 
 \item{gamma}{Numeric matrix (J x I), instrument weights.}
 
@@ -39,7 +39,8 @@ reduced form, with named component rows and columns matching \code{names(beta1r)
 \code{NULL} when the tau = 0 system has no unique consistent point solution.}
 
 \item{beta1}{Named numeric vector of length \code{length(beta1r)}, structural
-coefficients, or \code{NULL} exactly when \code{point} is \code{NULL}.}
+coefficients with names matching \code{beta1r}, or \code{NULL} exactly when
+\code{point} is \code{NULL}.}
 
 \item{n_obs}{Finite integer-valued scalar in \code{[1, .Machine$integer.max]}.}
 

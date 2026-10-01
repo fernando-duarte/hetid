@@ -97,6 +97,14 @@ n_hat_series <- function(yields, term_premia, i,
   y_next <- require_acm_col(yields, "yields", i + step)
   tp_i <- require_acm_col(term_premia, "term_premia", i)
   tp_next <- require_acm_col(term_premia, "term_premia", i + step)
+  for (maturity in c(i, i + step)) {
+    column <- acm_column_name("term_premia", maturity)
+    assert_bad_argument_ok(
+      is.numeric(require_acm_col(term_premia, "term_premia", maturity)),
+      paste0("term_premia column '", column, "' must be numeric"),
+      arg = "term_premia"
+    )
+  }
 
   if (i == step) {
     tp_i <- 0

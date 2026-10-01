@@ -20,8 +20,9 @@ exist or no non-annual maturities are requested; otherwise signals a
 \description{
 Checks that raw yield-column names exist for every requested maturity
 that is not a whole number of years. The NY Fed fallback source carries
-only annual nodes; missing non-annual nodes produce a structured error
-directing the caller to the GitHub source.
+only annual nodes. Missing non-annual nodes produce a structured error
+listing the absent columns and maturities. When the source contains only
+annual nodes, the error directs the caller to the GitHub source.
 }
 \details{
 Only column names are checked: values, including missing values, are

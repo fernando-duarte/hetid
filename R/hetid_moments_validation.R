@@ -11,7 +11,7 @@ NULL
 
 #' Validate a hetid_moments Object
 #'
-#' Checks constraint-axis names and shapes and theta-axis dimensions
+#' Checks numeric types, constraint-axis names and shapes, and theta-axis dimensions
 #' against the object's own attributes. Run by the public boundary
 #' \code{\link{compute_identification_moments}} on every object it
 #' returns; call it directly on containers assembled via
@@ -70,6 +70,10 @@ validate_moments_shapes <- function(stats, maturities, n_components) {
 
   for (name in c("r_i_0", "p_i_0")) {
     x <- stats[[name]]
+    assert_bad_argument_ok(
+      is.numeric(x), paste0(name, " must be numeric"),
+      arg = name
+    )
     assert_dimension_ok(
       is.matrix(x) && nrow(x) == j_rows && ncol(x) == n,
       paste0(name, " must be a J x length(maturities) matrix")
@@ -108,6 +112,13 @@ validate_moments_inner_dims <- function(stats, maturities,
                                         n_components, j_rows) {
   for (k in seq_along(maturities)) {
     label <- paste0(" for maturity ", maturities[k])
+    for (name in c("r_i_1", "s_i_2")) {
+      assert_bad_argument_ok(
+        is.numeric(stats[[name]][[k]]),
+        paste0(name, label, " must be numeric"),
+        arg = name
+      )
+    }
     assert_dimension_ok(
       is.matrix(stats$r_i_1[[k]]) &&
         nrow(stats$r_i_1[[k]]) == j_rows &&
@@ -115,7 +126,7 @@ validate_moments_inner_dims <- function(stats, maturities,
       paste0("r_i_1", label, " must be a J x n_components matrix")
     )
     assert_dimension_ok(
-      is.numeric(stats$s_i_1[[k]]) &&
+      is.numeric(stats$s_i_1[[k]]) && is.null(dim(stats$s_i_1[[k]])) &&
         length(stats$s_i_1[[k]]) == n_components,
       paste0("s_i_1", label, " must be a length n_components vector")
     )

@@ -4,14 +4,16 @@
 \alias{assert_scalar_finite}
 \title{Assert Scalar Finite Value}
 \usage{
-assert_scalar_finite(x, name)
+assert_scalar_finite(x, name, arg = name)
 }
 \arguments{
 \item{x}{Object to check. Valid input is a single finite numeric value;
 missing values, \code{NaN}, and infinite values are rejected.}
 
-\item{name}{Single character string used in the error message and the
-condition's \code{arg} field.}
+\item{name}{Single character string used in the error message.}
+
+\item{arg}{Single character string used in the condition's \code{arg} field.
+Defaults to \code{name}.}
 }
 \value{
 Invisible \code{TRUE} if valid. Otherwise, signals a

@@ -43,8 +43,9 @@ validate_acm_extract_inputs <- function(data_types, maturities,
 #'
 #' Checks that raw yield-column names exist for every requested maturity
 #' that is not a whole number of years. The NY Fed fallback source carries
-#' only annual nodes; missing non-annual nodes produce a structured error
-#' directing the caller to the GitHub source.
+#' only annual nodes. Missing non-annual nodes produce a structured error
+#' listing the absent columns and maturities. When the source contains only
+#' annual nodes, the error directs the caller to the GitHub source.
 #'
 #' Only column names are checked: values, including missing values, are
 #' not inspected. Annual nodes and other data types are checked separately
@@ -63,17 +64,36 @@ assert_subannual_available <- function(acm_data, maturities) {
   if (length(sub_annual) == 0) {
     return(invisible(TRUE))
   }
-  absent <- setdiff(
-    acm_raw_column_name("yields", sub_annual), names(acm_data)
-  )
+  requested <- acm_raw_column_name("yields", sub_annual)
+  absent_idx <- !requested %in% names(acm_data)
+  absent <- requested[absent_idx]
   if (length(absent) > 0) {
+    nonannual <- HETID_CONSTANTS$ALL_ACM_MATURITIES
+    nonannual <- nonannual[nonannual %% units_per_year != 0L]
+    nonannual_columns <- unlist(lapply(names(HETID_ACM_SCHEMA), function(type) {
+      acm_raw_column_name(type, nonannual)
+    }), use.names = FALSE)
+    annual_columns <- unlist(lapply(names(HETID_ACM_SCHEMA), function(type) {
+      acm_raw_column_name(type, HETID_CONSTANTS$DEFAULT_ACM_MATURITIES)
+    }), use.names = FALSE)
+    annual_only <- any(annual_columns %in% names(acm_data)) &&
+      !any(nonannual_columns %in% names(acm_data))
+    diagnosis <- if (annual_only) {
+      "The loaded ACM source provides only annual maturities; missing yield column(s): "
+    } else {
+      "The loaded ACM source is missing required yield column(s): "
+    }
     stop_insufficient_data(paste0(
-      "The loaded ACM source provides only annual maturities (",
-      paste(HETID_CONSTANTS$DEFAULT_ACM_MATURITIES, collapse = ", "),
-      " months), but sub-annual months were requested: ",
-      paste(sub_annual, collapse = ", "),
-      ". Month-level maturities require the GitHub source: ",
-      "download_term_premia(source = \"github\")."
+      diagnosis, paste(absent, collapse = ", "),
+      " (months: ", paste(sub_annual[absent_idx], collapse = ", "), ").",
+      if (annual_only) {
+        paste0(
+          " Month-level maturities require the GitHub source: ",
+          "download_term_premia(source = \"github\")."
+        )
+      } else {
+        " The source file may be incomplete or corrupt."
+      }
     ))
   }
   invisible(TRUE)

@@ -7,14 +7,17 @@
 #' leads or lags before fitting.
 #' Rows with \code{NA} or \code{NaN} in \code{y} or a selected regressor
 #' are omitted jointly; missing values in unused columns do not affect the fit.
-#' Infinite values are not removed by complete-case filtering.
+#' Response and selected regressors must be numeric. Infinite values on
+#' complete rows signal a \code{hetid_error_bad_argument} condition.
 #' At least \code{n_pcs + 2} complete observations are required.
 #' Regressor labels come from the selected columns' names, sanitized with
 #' \code{make.names(..., unique = TRUE)}. If any selected name is missing or
 #' empty, or column names are absent, all selected columns use the names from
 #' \code{\link{get_pc_column_names}} instead.
-#' Names such as \code{...} and \code{..1} cannot be evaluated in the
-#' regression formula, even after sanitization.
+#' Formula-reserved names \code{...} and \code{..N} use collision-free internal
+#' names in the fitted model. Its \code{hetid_regressor_names} attribute maps
+#' internal names to sanitized public labels; prediction data use internal names.
+#' The returned coefficient vector always uses the public labels.
 #'
 #' Too few complete observations signal a
 #' \code{hetid_error_insufficient_data} condition. A selected regressor named
@@ -48,6 +51,16 @@
 #' @keywords internal
 run_pc_regression <- function(y, pcs, n_pcs) {
   pcs <- pcs[, seq_len(n_pcs), drop = FALSE]
+  assert_bad_argument_ok(is.numeric(y), "y must contain only numeric values", arg = "y")
+  numeric_pcs <- if (is.data.frame(pcs)) {
+    all(vapply(pcs, is.numeric, logical(1L)))
+  } else {
+    is.numeric(pcs)
+  }
+  assert_bad_argument_ok(
+    numeric_pcs, "pcs must contain only numeric values",
+    arg = "pcs"
+  )
 
   complete_idx <- complete.cases(y, pcs)
   n_complete <- sum(complete_idx)
@@ -61,6 +74,8 @@ run_pc_regression <- function(y, pcs, n_pcs) {
   }
   y_clean <- y[complete_idx]
   pcs_clean <- pcs[complete_idx, , drop = FALSE]
+  assert_numeric_finite_values(y_clean, "y")
+  assert_numeric_finite_values(as.matrix(pcs_clean), "pcs")
 
   nms <- colnames(pcs)
   pc_names <- if (is.null(nms) || anyNA(nms) || !all(nzchar(nms))) {
@@ -69,7 +84,6 @@ run_pc_regression <- function(y, pcs, n_pcs) {
     # sanitize non-syntactic names so formula and data.frame agree
     make.names(nms, unique = TRUE)
   }
-  colnames(pcs_clean) <- pc_names
   # data.frame() renames a regressor named y, and model.matrix() drops the response
   # from the predictors; reject the collision to avoid losing a regressor
   if ("y" %in% pc_names) {
@@ -78,17 +92,26 @@ run_pc_regression <- function(y, pcs, n_pcs) {
       arg = "pcs"
     )
   }
-  formula_str <- paste(
-    "y ~", paste(pc_names, collapse = " + ")
-  )
+  fit_names <- pc_names
+  reserved <- pc_names == "..." | grepl("^\\.\\.[0-9]+$", pc_names)
+  if (any(reserved)) {
+    aliases <- paste0(".hetid_x", which(reserved))
+    fit_names[reserved] <- utils::tail(make.unique(c(pc_names, aliases)), sum(reserved))
+  }
+  colnames(pcs_clean) <- fit_names
+  formula_str <- paste("y ~", paste(fit_names, collapse = " + "))
   reg_data <- data.frame(y = y_clean, pcs_clean)
   model <- lm(
     as.formula(formula_str),
     data = reg_data
   )
+  if (any(reserved)) {
+    attr(model, "hetid_regressor_names") <- stats::setNames(pc_names, fit_names)
+  }
 
   # reject collinear regressors before passing NA coefficients downstream
   coefs <- coef(model)
+  names(coefs) <- c("(Intercept)", pc_names)
   if (anyNA(coefs)) {
     aliased <- names(coefs)[is.na(coefs)]
     stop_hetid(paste0(

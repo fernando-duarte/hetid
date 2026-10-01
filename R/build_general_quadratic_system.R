@@ -76,7 +76,7 @@
 #'   system$labels
 #' })
 build_general_quadratic_system <- function(lambda, tau, moments) {
-  assert_hetid_moments(moments)
+  validate_hetid_moments(moments)
   lambda_list <- as_lambda_list(lambda, moments)
   tau_list <- as_tau_list(tau, lambda_list, moments)
 
@@ -185,7 +185,7 @@ build_general_quadratic_system <- function(lambda, tau, moments) {
 #'   nrow(system$labels)
 #' })
 separate_instruments_lambda <- function(moments) {
-  assert_hetid_moments(moments)
+  validate_hetid_moments(moments)
   j_rows <- nrow(moments$r_i_0)
   n_components <- attr(moments, "n_components")
   maturities <- attr(moments, "maturities")

@@ -24,15 +24,16 @@ NULL
 #' @param beta1r Named numeric vector, OLS coefficients of the Y1 reduced form.
 #' @param beta2r Numeric matrix (I x length(beta1r)), OLS coefficients of the Y2
 #'   reduced form, with named component rows and columns matching \code{names(beta1r)}.
-#' @param w1 Numeric vector of length \code{n_obs}, Y1 reduced-form residuals.
-#' @param w2 Numeric matrix (n_obs x I), Y2 reduced-form residuals.
-#' @param z Numeric matrix (n_obs x J), de-meaned instruments.
+#' @param w1 Finite numeric vector of length \code{n_obs}, Y1 reduced-form residuals.
+#' @param w2 Finite numeric matrix (n_obs x I), Y2 reduced-form residuals.
+#' @param z Finite numeric matrix (n_obs x J), de-meaned instruments.
 #' @param gamma Numeric matrix (J x I), instrument weights.
 #' @param moments A \code{hetid_moments} object with centered \eqn{1/T} moments.
 #' @param point A list from \code{\link{compute_tau0_point}}, or
 #'   \code{NULL} when the tau = 0 system has no unique consistent point solution.
 #' @param beta1 Named numeric vector of length \code{length(beta1r)}, structural
-#'   coefficients, or \code{NULL} exactly when \code{point} is \code{NULL}.
+#'   coefficients with names matching \code{beta1r}, or \code{NULL} exactly when
+#'   \code{point} is \code{NULL}.
 #' @param n_obs Finite integer-valued scalar in \code{[1, .Machine$integer.max]}.
 #' @param impose_null A \code{TRUE} or \code{FALSE} flag, whether \eqn{B = 0} was imposed
 #'   on the second reduced form, setting \code{beta2r} to zero.
@@ -56,65 +57,6 @@ new_hetid_tau0_fit <- function(beta1r, beta2r, w1, w2, z, gamma, moments,
     tol = tol,
     class = "hetid_tau0_fit"
   )
-}
-
-#' Validate a hetid_tau0_fit Object
-#'
-#' Checks attributes, data shapes, coefficient alignment, the moments class,
-#' and point/beta1 pairing. The public boundary \code{\link{compute_tau0_system}}
-#' always runs it; use it on manually assembled containers too.
-#'
-#' @param x A classed \code{hetid_tau0_fit} object.
-#' @return \code{x}, invisibly; failures signal a structured \code{hetid_error}.
-#' @keywords internal
-validate_hetid_tau0_fit <- function(x) {
-  assert_hetid_tau0_fit(x, arg = "x")
-  n_obs <- attr(x, "n_obs")
-  assert_scalar_integer_in_range(n_obs, "n_obs", 1, .Machine$integer.max)
-  assert_flag(attr(x, "impose_null"), "impose_null")
-  tol <- attr(x, "tol")
-  assert_scalar_finite(tol, "tol")
-  assert_bad_argument_ok(tol > 0, "tol must be positive", arg = "tol")
-  dims <- validate_tau0_fit_data_shapes(x, n_obs)
-  validate_tau0_fit_betas(x, dims)
-  assert_hetid_moments(x$moments, arg = "moments")
-  validate_tau0_fit_point(x, dims)
-  invisible(x)
-}
-
-#' Validate w1, w2, z, and gamma Against n_obs
-#' @param x A classed \code{hetid_tau0_fit} object.
-#' @param n_obs Number of observations the fit was computed from.
-#' @return \code{list(i_dim, j_dim)} read off \code{w2} and \code{z}.
-#' @noRd
-validate_tau0_fit_data_shapes <- function(x, n_obs) {
-  assert_bad_argument_ok(
-    is.numeric(x$w1) && is.null(dim(x$w1)), "w1 must be a numeric vector",
-    arg = "w1"
-  )
-  assert_dimension_ok(length(x$w1) == n_obs, "w1 must have length n_obs")
-  assert_bad_argument_ok(
-    is.matrix(x$w2) && is.numeric(x$w2), "w2 must be a numeric matrix",
-    arg = "w2"
-  )
-  assert_dimension_ok(nrow(x$w2) == n_obs, "w2 must have n_obs rows")
-  assert_bad_argument_ok(
-    is.matrix(x$z) && is.numeric(x$z), "z must be a numeric matrix",
-    arg = "z"
-  )
-  assert_dimension_ok(nrow(x$z) == n_obs, "z must have n_obs rows")
-
-  i_dim <- ncol(x$w2)
-  j_dim <- ncol(x$z)
-  assert_bad_argument_ok(
-    is.matrix(x$gamma) && is.numeric(x$gamma), "gamma must be a numeric matrix",
-    arg = "gamma"
-  )
-  assert_dimension_ok(
-    nrow(x$gamma) == j_dim && ncol(x$gamma) == i_dim,
-    "gamma must be a J x I matrix matching ncol(z) and ncol(w2)"
-  )
-  list(i_dim = i_dim, j_dim = j_dim)
 }
 
 #' Validate beta1r and beta2r Against Each Other and the Component Axis
@@ -174,8 +116,9 @@ validate_tau0_fit_point <- function(x, dims) {
     arg = "point"
   )
   assert_bad_argument_ok(
-    is.numeric(point$theta) && is.null(dim(point$theta)),
-    "point$theta must be a numeric vector",
+    is.numeric(point$theta) && is.null(dim(point$theta)) &&
+      all(is.finite(point$theta)),
+    "point$theta must be a finite numeric vector",
     arg = "point"
   )
   assert_dimension_ok(
@@ -194,6 +137,11 @@ validate_tau0_fit_point <- function(x, dims) {
   )
   assert_dimension_ok(
     length(x$beta1) == length(x$beta1r), "beta1 must have length(beta1r)"
+  )
+  assert_bad_argument_ok(
+    identical(names(x$beta1), names(x$beta1r)),
+    "names(beta1) must equal names(beta1r)",
+    arg = "beta1"
   )
   invisible(TRUE)
 }

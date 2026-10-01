@@ -16,7 +16,7 @@ The \code{hetid_moments} object \code{x}, returned invisibly
 and unchanged when validation succeeds.
 }
 \description{
-Checks constraint-axis names and shapes and theta-axis dimensions
+Checks numeric types, constraint-axis names and shapes, and theta-axis dimensions
 against the object's own attributes. Run by the public boundary
 \code{\link{compute_identification_moments}} on every object it
 returns; call it directly on containers assembled via
