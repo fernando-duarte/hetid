@@ -65,8 +65,8 @@ scientific estimands, numerical certificates, inference rules, semantic cache pr
 complete input and control interface, exact default route,
 source-fixed global contracts, alternative code paths, and publication
 artifacts to the current R source. Runtime completion and
-artifact freshness remain outside the trace. A plain invocation reads four of
-the six named environment inputs, a tracked consumption snapshot, and a
+artifact freshness remain outside the trace. A plain invocation reads three of
+the five named environment inputs, a tracked consumption snapshot, and a
 digest-pinned daily ACM cache. The package layer under \file{R/}
 owns the Lewbel moment and quadratic arithmetic. The paper layer under
 \file{scripts-paper/} owns the application, numerical searches, inference,
@@ -82,8 +82,8 @@ using generated output as evidence.
 
 The current source has the following main contracts:
 \begin{itemize}
-  \item The production graph names six environment inputs and no command-line
-    flags, and a plain invocation reads only four of those inputs. The publishing-run guard
+  \item The production graph names five environment inputs and no command-line
+    flags, and a plain invocation reads only three of those inputs. The publishing-run guard
     short-circuits before \code{HETID_ALLOW_DRAFT_RUN}, and the frozen consumption
     path never reaches the one downloader that reads \code{FRED_API_KEY}. The runner
     also consumes five tracked plan or decision inputs: the mean-specification
@@ -156,8 +156,7 @@ The current source has the following main contracts:
     log-chi-square reference. The stage reuses the accepted PPML and Harvey
     point fits and recomputes only the deterministic log-OLS projection.
   \item Bootstrap cache schema 4 and semantic cache freshness govern reuse of
-    the unified bootstrap cache artifact. Separate mean and log-variance cache
-    files are legacy names. The combined table's draws live in a second, separate
+    the unified bootstrap cache artifact. The combined table's draws live in a second, separate
     cache artifact, \file{structural_inference_draws.rds}.
   \item The bounds-by-relaxation-value grid is tail-refined and nonuniform. The
     joint-null witness and joint-generalized-method-of-moments (GMM) replication
@@ -375,7 +374,7 @@ objects exist when a later stage runs.
 \label{sec:current-route}
 
 Table~\ref{tab:current-route} is the short answer to ``what path does the code
-take?'' It starts from a plain invocation, so all six environment inputs are
+take?'' It starts from a plain invocation, so all five environment inputs are
 unset. It separates a path selected by source from a result that only the run can
 determine. Every row is conditional on all earlier rows succeeding.
 
@@ -426,10 +425,6 @@ file, this rule selects \code{fallback-rerun}. &
 and reports \code{rerun}. No mode can reuse only one result branch. The
 combined-table calculation applies the same mode to its own cache
 (Section~\ref{sec:structural-inference}).\\
-Quadratic equivalence assertion: launch-selected &
-Do not run the extra legacy-versus-generalized quadratic-builder assertion. &
-Any nonempty \code{HETID_ASSERT_EQUIV} runs it at every reached quadratic-system
-build. A mismatch stops; a match does not change the scientific object.\\
 Frozen external inputs: source-selected; runtime-selected outcome &
 Before the output tree is created or cleaned, require \code{fred_source} and
 \code{acm_daily_source} to be \code{frozen} or \code{live}, require the checked-in
@@ -984,10 +979,10 @@ The runner offers no alternate nominal asset-return-PC file. A source-contract
 edit can change column names or dimension, and that change then reaches the
 log-variance frame and bootstrap input.\\
 Launch environment &
-The production graph names exactly six variables: \code{HETID_BOOT_REPS},
-\code{HETID_BOOT_CORES}, \code{HETID_BOOT_MODE}, \code{HETID_ASSERT_EQUIV},
+The production graph names exactly five variables: \code{HETID_BOOT_REPS},
+\code{HETID_BOOT_CORES}, \code{HETID_BOOT_MODE},
 \code{HETID_ALLOW_DRAFT_RUN}, and \code{FRED_API_KEY}. A plain invocation reads
-only the first four. The guard's \code{\&\&} short-circuits on the default
+only the first three. The guard's \code{\&\&} short-circuits on the default
 replication count, so \code{HETID_ALLOW_DRAFT_RUN} is never evaluated unless the
 count is already overridden, and \code{FRED_API_KEY} sits inside the patched
 downloader, which the frozen consumption path never calls. &
@@ -1033,12 +1028,12 @@ runner. These facilities enable selected writers; they do not choose a model.\\
 \subsection{User controls and source-fixed contracts}
 \label{sec:user-controls}
 
-The runner and its production configuration consume eleven top-level behavior
-inputs: six environment inputs and five tracked plan or decision inputs. The
+The runner and its production configuration consume ten top-level behavior
+inputs: five environment inputs and five tracked plan or decision inputs. The
 tracked inputs are the mean-specification plan, the instrument choice, and the
 LAD, joint-GMM, and EGARCH-X decisions. The separate reset command exposes one
 maintenance flag.
-Table~\ref{tab:user-controls} lists all twelve without implying that the reset
+Table~\ref{tab:user-controls} lists all eleven without implying that the reset
 flag belongs to the runner. It separates the value
 the user supplies from the consequence, so changing execution cost cannot be
 mistaken for changing the scientific design.
@@ -1106,14 +1101,6 @@ and CSV route have separate checked-in retry and timeout policies. The key is no
 semantic cache provenance. If the acquired data differ, the bootstrap input hash
 invalidates reuse; identical acquired data leave the scientific input
 unchanged.\\
-Quadratic equivalence assertion: \code{HETID_ASSERT_EQUIV} & Unset or empty
-disables it; any nonempty value enables it. & Each reached generalized
-quadratic-system build also runs the legacy builder and requires exact identity
-of the solver-consumable quadratic list and its $L_i$, $V_i$, and $Q_i$ leaves.
-A mismatch stops execution; a pass leaves scientific objects unchanged. The
-flag is not semantic cache provenance. A cache hit skips bootstrap draw callbacks, so
-\code{HETID_BOOT_MODE=rerun} is needed when the intended check includes those
-calls.\\
 Tracked-artifact retention during reset: \code{--keep-tracked} & The flag is
 supplied to \file{scripts-paper/reset_pipeline_state.R} and is absent by default.
 The reset entrypoint is separate from the pipeline runner. & Every reset clears
@@ -1183,11 +1170,11 @@ choice does not invalidate that cache.\\
 \end{longtable}
 \endgroup
 
-The six environment-variable rows are exhaustive as a census of
+The five environment-variable rows are exhaustive as a census of
 \code{Sys.getenv}: no other production path rooted at
 \file{scripts-paper/run_pipeline.R} calls it. R's own user-directory variables
 still resolve the daily ACM cache location through \code{tools::R_user_dir}.
-Only four of the six are read on a plain invocation. \code{HETID_ALLOW_DRAFT_RUN}
+Only three of the five are read on a plain invocation. \code{HETID_ALLOW_DRAFT_RUN}
 is the second operand of the guard's \code{\&\&}, so the default replication count
 short-circuits it away; \code{FRED_API_KEY} is read only inside the patched
 downloader, which the frozen consumption path never reaches. Both variables still
@@ -1458,10 +1445,10 @@ Unified-bootstrap cache and provenance contracts in
 \file{support/inference/bootstrap_stage_code_manifest.R}, and
 \file{support/statistics/boot_freshness.R} & Stage-specification and cache
 schemas and required fields;
-legacy cache names; draw-code and presentation source manifests; SHA-256 field
+draw-code and presentation source manifests; SHA-256 field
 rules; and the R, platform, BLAS, LAPACK, and selected-package runtime
 fingerprint. & Determine whether a payload is structurally and semantically
-eligible for reuse and which older cache paths are removed after validation.
+eligible for reuse.
 Changing the draw-code manifest can change \code{code_sha}; changing only the
 presentation manifest changes its audit hash without invalidating result draws.
 These contracts choose cache acceptance, not an estimator.\\
@@ -1530,38 +1517,16 @@ premia, with incomplete quarters kept, and daily yields, both through
 the alternative path.\\
 The rest of the package API &
 Separate entrypoint &
-This census covers the legacy pipeline portion as audited at the original
-source inspection, before the combined-table calculation existed; it has not been
-re-audited. At that inspection \file{NAMESPACE} exported 34 objects, and the paper layer called 14 of them:
-\code{HETID_CONSTANTS}, \code{acm_column_name}, \code{effective_max_maturity},
-\code{to_period_end}, \code{extract_acm_data}, \code{compute_sdf_innovations},
-\code{compute_expected_sdf}, \code{compute_identification_moments},
-\code{build_general_quadratic_system}, \code{build_quadratic_system},
-\code{recover_structural_coefficients}, \code{compute_variance_bound},
-\code{compute_news_q_bound}, and
-\code{compute_expected_sdf_variance_bound}. Of those 14,
-\code{build_quadratic_system} runs only under \code{HETID_ASSERT_EQUIV}. No paper
-call site names the remaining 20, but ``no call site'' is not the same as
-``unreached'': seven of them run inside the 14. \code{extract_acm_data()} calls
-\code{load_term_premia()}, which in turn calls \code{download_term_premia()} when
-the asset is missing and \code{auto_download} is set, as the daily contract sets
-it; \code{compute_variance_bound()} calls \code{compute_c_hat()},
-\code{compute_k_hat()}, and \code{compute_k2_hat()}; and
-\code{build_quadratic_system()}, on the \code{HETID_ASSERT_EQUIV} path alone,
-calls \code{compute_identified_set_components()} and
-\code{compute_identified_set_quadratic()}. The other 13, among them
-\code{compute_w1_residuals}, \code{compute_w2_residuals}, and
-\code{make_constraint_checker}, were a public API that the legacy portion never
-reached by any route. The combined-table calculation of
-Section~\ref{sec:structural-inference} adds direct calls to
-\code{IDENTIFIED_SET_CONTROL}, \code{compute_tau0_system},
-\code{fit_log_variance}, \code{fit_log_variance_at_b},
-\code{compute_log_variance_se}, \code{make_system_checker},
-\code{compute_identified_set_box}, \code{compute_quadratic_set_evidence},
-\code{sample_log_variance_set}, \code{circular_mbb_indices},
-\code{bootstrap_endpoint_draws}, \code{bootstrap_point_statistics}, and
-\code{bootstrap_set_interval}. The legacy counts above exclude these calls and
-are not re-derived against them.\\
+Paper modules call package data, SDF, moment, and quadratic-system APIs.
+The package's data and variance-bound functions also call internal helpers:
+\code{extract_acm_data()} calls \code{load_term_premia()}, which calls
+\code{download_term_premia()} when the asset is missing and
+\code{auto_download} is set; \code{compute_variance_bound()} calls
+\code{compute_c_hat()}, \code{compute_k_hat()}, and \code{compute_k2_hat()}.
+The combined-table calculation of Section~\ref{sec:structural-inference}
+uses the package's identification, log-variance, circular-resampling, and
+bootstrap-calibration APIs listed there. Public package APIs remain available
+to separate analyses even when the paper graph has no caller.\\
 Cook--Weisberg heteroskedasticity test &
 Available but not called &
 \file{support/diagnostics/heteroskedasticity_tests.R} implements the test behind a
@@ -1635,17 +1600,6 @@ the same is true of \code{cli} in \code{check_data_completeness()}. Only these
 named helpers are uncalled: the same \file{bootstrap_and_stationarity.R} file also
 defines \code{mbb_index()}, the production-active circular-MBB
 resampler.\\
-Legacy resample-index runner
-\src{support/statistics/mbb_runner.R}{paper_run_mbb_draws} and the
-\code{compatibility} resample-index family &
-Available but not called &
-The resampling protocol declares three resample-index family names. The unified
-bootstrap stage builds the primary and volatility-sensitivity families directly;
-only this runner constructs the \code{compatibility} family, and no production
-call site invokes it. Two separate checks pin that absence rather than leaving it
-to chance. The bootstrap-stage suite requires zero such calls inside the unified
-stage's own runner, and a contract-ownership rule forbids the call anywhere
-outside \file{support/statistics/mbb_runner.R}.\\
 Source-loaded convenience APIs &
 Available but not called &
 Examples are artifact basename/directory accessors, \code{fine_tau_grid}, a
@@ -1662,21 +1616,11 @@ tests or source-loaded future moment branches. The active PPML acceptance code
 computes its score and information matrix directly; the active Harvey solver
 uses \code{hv_eval}.
 Section~\ref{sec:logvar} maps the equations to those active callers.\\
-Legacy log-OLS caption
-\file{log_variance/tables/legacy_log_ols_caption.R} &
-Available but not called &
-Retains a caption builder for a separate legacy mean-log OLS robustness table.
-The runner never sources this file.\\
-LAD offline refinement
-\file{log_variance/estimators/lad/offline_refinement.R} &
-Available but not called &
-Only the LAD outer-map test suite sources it. The selected production LAD path
-does not.\\
 Bounds-figure test support
 \file{log_variance/figures/bounds_by_tau_test_support.R} &
 Available but not called &
 Supplies plot-data support to tests. The production bounds-figure artifact producer never sources
-it. These three inactive files are the production-tree exclusions listed in
+it. This test-support file is the production-tree exclusion listed in
 \file{scripts-paper/README.md}.\\
 Full pipeline-state reset \file{scripts-paper/reset_pipeline_state.R} &
 Separate entrypoint &
@@ -1709,18 +1653,6 @@ bare under \file{scripts-paper/} (the source-topology gate admits exactly two
 entrypoints there) and not under \file{validation/} (that directory's own
 charter is cross-run TeX-table acceptance only, and this tool reads an RDS
 gate cache instead). The runner never calls it.\\
-Committed instrument-comparison artifacts
-\file{scripts-paper/validation/instrument_comparisons/} &
-Separate entrypoint &
-Ten generated files under \file{y60_vol_log/}, plus a \file{PROVENANCE.md}, all
-tracked. Their basenames repeat manifest basenames, but they are not manifest
-records: every artifact path resolves under \file{scripts-paper/output/}, no
-production file names this directory, and the runner neither writes nor deletes
-it. \file{PROVENANCE.md} records that they came from a disposable clone of an
-earlier commit under three uncommitted edits, chief among them
-\code{instrument$active} set to \code{y60_vol_log}. They document a robustness
-comparison against a nonactive instrument. A plain invocation produces none of
-them.\\
 Paper test orchestrator \file{scripts-paper/tests/run_tests.R} &
 Separate entrypoint &
 It launches two structural checks and 50 listed test suites in fresh R
@@ -2141,7 +2073,7 @@ into one inequality per SDF-news PC score.
 {build_pipeline_quadratic_system} calls
 \code{hetid::build_general_quadratic_system()}. With the paper's one instrument
 combination per SDF-news PC score in matrix $\gamma$, this path is numerically
-equivalent to the legacy builder on the $L_i$, $V_i$, and $Q_i$ quantities
+equivalent to \code{hetid::build_quadratic_system()} on the $L_i$, $V_i$, and $Q_i$ quantities
 consumed by the solver. For each SDF-news PC score $i$,
 let $\gamma_{\cdot i}$ denote column $i$ of the weight matrix. Then
 \begin{align*}
@@ -2164,15 +2096,6 @@ The identified set is
 \src{scripts-paper/support/identification/tau_star.R}{tau_quadratic_system}
 broadcasts the paper's scalar $\tau$ over all three SDF-news PC scores. Constraint values
 follow the \code{hin <= 0} convention: nonpositive means feasible.
-
-\code{HETID_ASSERT_EQUIV} turns the numerical-equivalence statement into a live
-assertion. When the variable is nonempty, every reached generalized build also
-runs the legacy builder and requires exact identity of the quadratic list and
-the $L_i$, $V_i$, and $Q_i$ leaves. A mismatch stops execution; a pass changes
-no result. The flag does not enter semantic cache provenance. Therefore, a reused unified
-cache does not recheck quadratic builds inside skipped bootstrap callbacks;
-\code{HETID_BOOT_MODE=rerun} is required when those calls are part of the
-intended assertion scope.
 
 \subsection{Tau-zero point, profile endpoints, and estimated boundedness frontier}
 
@@ -2689,10 +2612,7 @@ The volatility-sensitivity resample-index family uses the same replication count
 the same seed, and block length $2\ell$. RNG kinds are Mersenne-Twister,
 Inversion, and Rejection.
 \src{scripts-paper/support/statistics/mbb_protocol_authority.R}{paper_mbb_protocol}
-names three resample-index families, but the runner builds only these two. The
-third family, \code{compatibility}, is constructed only by
-\src{scripts-paper/support/statistics/mbb_runner.R}{paper_run_mbb_draws}, which
-no production call site invokes. Before parallel work, the builder constructs both resample-index
+names these two resample-index families. Before parallel work, the builder constructs both resample-index
 families, preserves their draw order, records index and post-index RNG hashes,
 and restores ambient RNG state. These steps make serial and parallel resampling
 identities independent of solver-side randomness.
@@ -2870,8 +2790,7 @@ In \code{reuse} mode, a missing or semantically stale unified bootstrap cache
 artifact warns and triggers a complete rerun. In \code{rerun} mode, the stage
 always computes. The promotion routine writes to a temporary location,
 performs exact object RDS readback and cache reuse validation, and then replaces
-the current artifact. The stage removes legacy separate mean and log-variance
-cache names only after the unified bootstrap cache artifact passes validation.
+the current artifact.
 Exact object RDS readback requires object identity at write time; byte identity
 across R versions or machines lies outside the contract.
 
@@ -3864,8 +3783,7 @@ sensitivity family & The volatility-sensitivity resample-index family is the imm
 record containing the ordered index draws and the same kinds of protocol
 metadata, with block length twice that of the primary resample-index family. Its
 \code{indices} field drives volatility-only re-estimation; it does not rescale a
-standard error. The protocol's third family name, \code{compatibility}, has no
-production constructor and names no family the runner builds.\\
+standard error.\\
 unified bootstrap cache artifact & unified state artifact, bootstrap cache, and
 artifact ID \code{bootstrap_stage_draws} & The RDS stores the unified stage's
 result collections, failure counts, volatility anchor, and provenance. Both
@@ -4310,7 +4228,6 @@ Available-but-not-called and separate functionality &
 \file{scripts-paper/README.md}; \file{scripts-paper/tests/run_tests.R};
 \file{scripts-paper/validation/compare_output_tables.R};
 \file{scripts-paper/tools/regen_egarch_decision.R};
-\file{scripts-paper/validation/instrument_comparisons/};
 \file{scripts-paper/reset_pipeline_state.R};
 \file{docs/quality-check.R} (untracked) &
 \ref{sec:outside-runner}\\

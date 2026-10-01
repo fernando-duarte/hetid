@@ -15,13 +15,10 @@ paper_source_once(paper_path("tests", "support", "reporting_checks.R"))
 paper_source_once(paper_path("tests", "support", "cell_formatting_checks.R"))
 paper_source_once(paper_path("tests", "support", "mbb_checks.R"))
 paper_source_once(paper_path(
-  "tests", "support", "mbb_characterization_checks.R"
+  "tests", "support", "mbb_indexed_rng_checks.R"
 ))
 paper_source_once(paper_path(
   "tests", "support", "mbb_index_family_checks.R"
-))
-paper_source_once(paper_path(
-  "tests", "support", "mbb_compatibility_regression_checks.R"
 ))
 paper_source_once(paper_path(
   "tests", "support", "mbb_index_immutability_checks.R"

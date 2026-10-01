@@ -129,10 +129,6 @@ LOGVAR_LAD_CONTROL <- list(
   cold_start_rtol = 1e-9
 )
 
-LOGVAR_LAD_OFFLINE_REFINEMENT_CONTROL <- list(
-  refine_radii = c(0.05, 0.0125)
-)
-
 stopifnot(
   LOGVAR_SEARCH_CONTROL$grid_n >= 2L,
   LOGVAR_SEARCH_CONTROL$grid_floor >= 1L,

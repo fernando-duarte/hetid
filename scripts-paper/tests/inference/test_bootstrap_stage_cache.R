@@ -133,27 +133,4 @@ stopifnot(
   stale_calls == 1L
 )
 
-legacy_dir <- tempfile("bootstrap-stage-legacy-")
-dir.create(legacy_dir)
-legacy_cache <- file.path(legacy_dir, "bootstrap_stage_draws.rds")
-legacy_paths <- file.path(
-  legacy_dir,
-  BOOTSTRAP_STAGE_LEGACY_CACHE_BASENAMES
-)
-unrelated <- file.path(legacy_dir, "keep.rds")
-saveRDS(list(provenance = current), legacy_cache, version = 3L)
-invisible(lapply(c(legacy_paths, unrelated), function(target) {
-  saveRDS(TRUE, target, version = 3L)
-}))
-removed <- bootstrap_stage_remove_legacy_caches(
-  legacy_cache,
-  function(value) identical(value$provenance, current)
-)
-stopifnot(
-  identical(sort(removed), sort(legacy_paths)),
-  !any(file.exists(legacy_paths)),
-  file.exists(unrelated),
-  file.exists(legacy_cache)
-)
-
 cat("test_bootstrap_stage_cache: PASS\n")

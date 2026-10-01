@@ -50,150 +50,80 @@ check(
   is.integer(paper_mbb_block_len(256L))
 )
 
-# The runner pins Mersenne-Twister for the duration of the call and restores
-# whatever ambient generator kind was active, even when a callback stops.
-default_kind <- RNGkind()
-RNGkind("Wichmann-Hill")
-ambient_kind <- RNGkind()
-paper_run_mbb_draws(
-  n_draws = 3L, sample_size = 8L, block_length = 3L, seed = 21L,
-  draw = function(index, draw_id) sum(index)
+# Execution consumes one stored schedule and reports callback failures/progress.
+family <- paper_mbb_index_family(12L, 20L, 5L, 77L, "primary")
+parallel_draw <- function(index, draw_id) sum(index) + draw_id
+serial <- paper_run_indexed_draws(family, parallel_draw)
+check(
+  "indexed execution passes the exact stored index objects to callbacks",
+  identical(serial$indices, family$indices) && identical(
+    paper_run_indexed_draws(family, function(index, draw_id) index)$draws,
+    family$indices
+  )
 )
 check(
-  "RNG kind is restored after a successful run",
-  identical(RNGkind(), ambient_kind)
+  "index construction is reproducible independently of execution",
+  identical(family, paper_mbb_index_family(12L, 20L, 5L, 77L, "primary"))
 )
-kind_run <- paper_run_mbb_draws(
-  n_draws = 3L, sample_size = 8L, block_length = 3L, seed = 21L,
-  draw = function(index, draw_id) sum(index)
-)
-check(
-  "returned rng_kind reports Mersenne-Twister regardless of ambient kind",
-  identical(ambient_kind[1], "Wichmann-Hill") &&
-    identical(kind_run$rng_kind[1], "Mersenne-Twister")
-)
-run_error <- tryCatch(
-  {
-    paper_run_mbb_draws(
-      n_draws = 3L, sample_size = 8L, block_length = 3L, seed = 21L,
-      draw = function(index, draw_id) sum(index),
-      progress = function(draw_id, n_draws, started_at) stop("boom mid-draw")
-    )
-    "no error"
+progress_hits <- integer()
+failed <- paper_run_indexed_draws(
+  family,
+  function(index, draw_id) {
+    if (draw_id == 2L) stop("fixture draw failed")
+    sum(index)
   },
-  error = function(error) conditionMessage(error)
+  progress = function(draw_id, n_draws, started_at) {
+    progress_hits <<- c(progress_hits, draw_id)
+  }
 )
 check(
-  "RNG kind is restored after a run that errors mid-draws",
-  identical(run_error, "boom mid-draw") && identical(RNGkind(), ambient_kind)
+  "indexed execution captures failures and sequential progress",
+  failed$n_failed == 1L &&
+    identical(failed$draws[[2L]], "fixture draw failed") &&
+    identical(failed$failed, seq_len(12L) == 2L) &&
+    identical(progress_hits, seq_len(12L))
 )
-do.call(RNGkind, as.list(default_kind))
-
-# Chunked mclapply dispatch must reproduce the serial output exactly: indices
-# are pre-drawn, so chunking or forking cannot perturb the deterministic draw.
+custom <- paper_run_indexed_draws(
+  family, function(index, draw_id) list(ok = draw_id != 2L),
+  is_failure = function(value) !value$ok
+)
+check("custom failure classification counts structured draw results", custom$n_failed == 1L)
+invalid_callbacks <- 0L
+invalid <- tryCatch(
+  paper_run_indexed_draws(family, function(...) {
+    invalid_callbacks <<- invalid_callbacks + 1L
+  }, cores = 1.5),
+  error = conditionMessage
+)
+check(
+  "invalid executor controls fail before invoking callbacks",
+  is.character(invalid) && identical(invalid_callbacks, 0L)
+)
 if (.Platform$OS.type == "windows") {
-  skip("chunked parallel draws match the serial draws", "no fork on windows")
-  skip("progress fires under cores = 2 dispatch", "no fork on windows")
+  skip("chunked parallel draws match serial draws and report progress", "no fork on windows")
 } else {
-  parallel_draw <- function(index, draw_id) sum(index) + draw_id
-  run_serial <- paper_run_mbb_draws(
-    n_draws = 12L, sample_size = 20L, block_length = 5L,
-    seed = 77L, cores = 1L, draw = parallel_draw
-  )
-  run_parallel <- paper_run_mbb_draws(
-    n_draws = 12L, sample_size = 20L, block_length = 5L,
-    seed = 77L, cores = 2L, draw = parallel_draw
-  )
-  check(
-    "chunked parallel draws match the serial draws",
-    identical(run_serial$draws, run_parallel$draws) &&
-      identical(run_serial$indices, run_parallel$indices)
-  )
   progress_hits <- integer()
-  run_progress <- paper_run_mbb_draws(
-    n_draws = 12L, sample_size = 20L, block_length = 5L,
-    seed = 77L, cores = 2L, draw = parallel_draw,
+  forked <- paper_run_indexed_draws(
+    family, parallel_draw,
+    cores = 2L,
     progress = function(n_done, n_draws, started_at) {
       progress_hits <<- c(progress_hits, n_done)
     }
   )
   check(
-    "progress fires under cores = 2 dispatch and the run completes",
-    identical(progress_hits, c(2L, 4L, 6L, 8L, 10L, 12L)) &&
-      identical(run_progress$draws, run_serial$draws)
+    "chunked parallel draws match serial draws and report progress",
+    identical(forked$draws, serial$draws) &&
+      identical(forked$indices, serial$indices) &&
+      identical(progress_hits, c(2L, 4L, 6L, 8L, 10L, 12L))
   )
-}
-
-mbb_run_a <- paper_run_mbb_draws(
-  n_draws = 4L,
-  sample_size = 11L,
-  block_length = 4L,
-  seed = 333L,
-  draw = function(index, draw_id) {
-    c(draw_id = draw_id, total = sum(index))
-  }
-)
-mbb_run_b <- paper_run_mbb_draws(
-  n_draws = 4L,
-  sample_size = 11L,
-  block_length = 4L,
-  seed = 333L,
-  draw = function(index, draw_id) {
-    c(draw_id = draw_id, total = sum(index))
-  }
-)
-check(
-  "moving-block runner pre-draws a reproducible index stream",
-  identical(mbb_run_a$indices, mbb_run_b$indices) &&
-    identical(mbb_run_a$draws, mbb_run_b$draws) &&
-    all(lengths(mbb_run_a$indices) == 11L)
-)
-mbb_progress <- integer()
-mbb_failed <- paper_run_mbb_draws(
-  n_draws = 3L,
-  sample_size = 9L,
-  block_length = 3L,
-  seed = 444L,
-  draw = function(index, draw_id) {
+  forked_fail <- paper_run_indexed_draws(family, function(index, draw_id) {
     if (draw_id == 2L) stop("fixture draw failed")
     sum(index)
-  },
-  progress = function(draw_id, n_draws, started_at) {
-    mbb_progress <<- c(mbb_progress, draw_id)
-  }
-)
-check(
-  "moving-block runner captures failures and sequential progress",
-  mbb_failed$n_failed == 1L &&
-    identical(mbb_failed$draws[[2L]], "fixture draw failed") &&
-    identical(mbb_progress, 1:3)
-)
-rm(mbb_run_a, mbb_run_b, mbb_progress, mbb_failed)
-
-# RNG protocol is fully pinned, not just the base generator
-local({
-  old <- RNGkind()
-  on.exit(do.call(RNGkind, as.list(old)), add = TRUE)
-  RNGkind("Mersenne-Twister", "Inversion", "Rounding") # hostile ambient sample.kind
-  run <- paper_run_mbb_draws(4L, 11L, 3L, function(idx, id) sum(idx), seed = 1L)
+  }, cores = 2L)
   check(
-    "runner pins sample.kind to Rejection regardless of ambient",
-    identical(run$rng_kind, c("Mersenne-Twister", "Inversion", "Rejection"))
+    "forked callback failures retain their draw positions and counts",
+    identical(forked_fail$draws, failed$draws) &&
+      identical(forked_fail$failed, failed$failed) && forked_fail$n_failed == 1L
   )
-})
-# ambient .Random.seed and RNGkind survive a successful run and a mid-run error
-local({
-  old_kind <- RNGkind()
-  on.exit(do.call(RNGkind, as.list(old_kind)), add = TRUE)
-  set.seed(999L)
-  before <- .Random.seed
-  paper_run_mbb_draws(4L, 11L, 3L, function(idx, id) sum(idx), seed = 1L)
-  check("ambient .Random.seed restored after a successful run", identical(.Random.seed, before))
-  check("ambient RNGkind restored after a successful run", identical(RNGkind(), old_kind))
-  boom <- function(...) stop("boom")
-  tryCatch(
-    paper_run_mbb_draws(4L, 11L, 3L, function(idx, id) sum(idx), seed = 1L, progress = boom),
-    error = function(e) NULL
-  )
-  check("ambient .Random.seed restored after a mid-run error", identical(.Random.seed, before))
-})
+}
+rm(family, parallel_draw, serial, progress_hits, failed, custom, invalid, invalid_callbacks)

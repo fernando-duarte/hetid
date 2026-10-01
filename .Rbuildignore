@@ -3,8 +3,6 @@
 ^\.Rproj\.user$
 ^README\.Rmd$
 ^README\.html$
-^NEWS\.md$
-^cran-comments\.md$
 
 # Git and GitHub
 ^\.git$

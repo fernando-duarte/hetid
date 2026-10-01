@@ -13,8 +13,7 @@ paper_mbb_protocol <- local({
     resampler = "circular_mbb",
     family_names = c(
       primary = "primary",
-      sensitivity = "doubled_block_sensitivity",
-      compatibility = "compatibility"
+      sensitivity = "doubled_block_sensitivity"
     ),
     family_class = "paper_mbb_index_family",
     family_fields = c(

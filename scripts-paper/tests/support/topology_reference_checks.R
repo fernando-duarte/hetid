@@ -78,17 +78,6 @@ inactive <- c(
   paper_path("reset_pipeline_state.R"),
   paper_path(
     "log_variance",
-    "tables",
-    "legacy_log_ols_caption.R"
-  ),
-  paper_path(
-    "log_variance",
-    "estimators",
-    "lad",
-    "offline_refinement.R"
-  ),
-  paper_path(
-    "log_variance",
     "figures",
     "bounds_by_tau_test_support.R"
   )

@@ -56,7 +56,6 @@ runner_text <- paste(
   collapse = "\n"
 )
 stopifnot(
-  grepl("bootstrap_stage_remove_legacy_caches", runner_text, fixed = TRUE),
   grepl("artifact_path(\"bootstrap_stage_draws\")", runner_text, fixed = TRUE)
 )
 

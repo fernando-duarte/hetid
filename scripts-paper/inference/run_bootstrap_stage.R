@@ -107,14 +107,6 @@ run_bootstrap_stage <- function(
       )
     }
   )
-  bootstrap_stage_remove_legacy_caches(
-    cache_path,
-    function(value) {
-      bootstrap_stage_cache_validate(
-        value, stage_spec, provenance()
-      )
-    }
-  )
   # the primary family escapes so the spec comparison can reuse the EXACT
   # resamples. Rebuilding it there would be a second construction of the index
   # protocol -- which the ownership audit forbids for good reason: a paired

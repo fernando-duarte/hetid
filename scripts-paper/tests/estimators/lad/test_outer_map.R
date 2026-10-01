@@ -17,8 +17,6 @@ paper_source_once(paper_path("log_variance", "estimators", "ppml", "estimator.R"
 paper_source_once(paper_path("log_variance", "estimators", "lad", "estimator.R"))
 paper_source_once(paper_path("log_variance", "estimators", "lad", "fit.R"))
 paper_source_once(paper_path("log_variance", "estimators", "lad", "crossing_domain.R"))
-# The offline refinement is intentionally loaded only by this dedicated outer-map suite.
-paper_source_once(paper_path("log_variance", "estimators", "lad", "offline_refinement.R"))
 paper_source_once(paper_path("log_variance", "estimators", "lad", "run_sets.R"))
 paper_source_once(paper_path("support", "latex", "table_pipeline.R"))
 paper_source_once(paper_path("log_variance", "tables", "table_formatting.R"))

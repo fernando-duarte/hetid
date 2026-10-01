@@ -8,7 +8,7 @@ family_raw <- serialize(family, NULL, version = 3)
 mutation_errors <- c(
   tryCatch(
     {
-      family$family <- protocol$family_names[["compatibility"]]
+      family$family <- protocol$family_names[["sensitivity"]]
       NA_character_
     },
     error = conditionMessage
@@ -22,7 +22,7 @@ mutation_errors <- c(
   ),
   tryCatch(
     {
-      family[1L] <- list(protocol$family_names[["compatibility"]])
+      family[1L] <- list(protocol$family_names[["sensitivity"]])
       NA_character_
     },
     error = conditionMessage
@@ -82,8 +82,7 @@ check(
       protocol$family_names,
       c(
         primary = "primary",
-        sensitivity = "doubled_block_sensitivity",
-        compatibility = "compatibility"
+        sensitivity = "doubled_block_sensitivity"
       )
     ) &&
     identical(protocol$family_class, "paper_mbb_index_family") &&

@@ -75,15 +75,8 @@ local({
 
 local({
   draw <- function(index, draw_id) c(draw_id, total = sum(index))
-  wrapper <- paper_run_mbb_draws(4L, 11L, 3L, draw, seed = 1L)
-  family <- paper_mbb_index_family(4L, 11L, 3L, 1L, "compatibility")
+  family <- paper_mbb_index_family(4L, 11L, 3L, 1L, "primary")
   indexed <- paper_run_indexed_draws(family, draw)
-  check(
-    "the compatibility wrapper matches the canonical serial executor",
-    identical(wrapper$draws, indexed$draws) &&
-      identical(wrapper$indices, indexed$indices) &&
-      identical(names(wrapper), names(indexed))
-  )
   if (.Platform$OS.type == "windows") {
     skip("indexed executor preserves fork behavior", "no fork on windows")
   } else {
@@ -110,16 +103,16 @@ local({
   zero <- paper_mbb_index_family(2L, 8L, 3L, 0L, "primary")
   null <- paper_mbb_index_family(2L, 8L, 3L, NULL, "primary")
   invalid <- tryCatch(
-    paper_run_mbb_draws(0L, 8L, 3L, function(index, draw_id) index, 1L),
+    paper_mbb_index_family(0L, 8L, 3L, 1L, "primary"),
     error = conditionMessage
   )
   check(
-    "zero and NULL seeds retain their legacy records and restore ambient RNG",
+    "zero and NULL seeds retain their records and restore ambient RNG",
     identical(zero$seed, 0L) && is.null(null$seed) &&
       identical(RNGkind(), old_kind) && identical(.Random.seed, old_seed)
   )
   check(
-    "the compatibility wrapper retains legacy validation order",
+    "index construction rejects a nonpositive draw count",
     identical(invalid, "n_draws >= 1L is not TRUE")
   )
 })

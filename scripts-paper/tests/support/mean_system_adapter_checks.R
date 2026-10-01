@@ -80,3 +80,19 @@ for (null in c(TRUE, FALSE)) {
     )
   }
 }
+
+component_fit <- estimate_set_id_system(adapter_data, adapter_spec)
+component_system <- build_pipeline_quadratic_system(
+  adapter_spec$gamma, c(0.1, 0.1), component_fit$moments
+)
+check(
+  "quadratic components retain their class and maturity axes",
+  inherits(component_system$components, "hetid_components") &&
+    identical(
+      attr(component_system$components, "maturities"),
+      as.integer(attr(component_system, "maturities"))
+    ) && identical(
+    attr(component_system$components, "n_components"),
+    as.integer(attr(component_system, "n_components"))
+  )
+)

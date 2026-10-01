@@ -239,9 +239,10 @@ the stored index families and restores the caller's generator kind.
 
 The resampling indices are drawn once, up front, under the pinned seed, so they are
 identical at any core count — `HETID_BOOT_CORES` changes runtime, not which observations are
-resampled. Whether the reported numbers also match at every core count further depends on
-the draw callback itself consuming no additional randomness; `mbb_checks.R` tests that
-directly rather than relying on index determinism alone.
+resampled. The indexed-draw runner restores the saved post-index RNG state before
+callbacks run and restores the caller's RNG state afterward. `mbb_checks.R` verifies
+serial/fork equality for deterministic callbacks; `mbb_indexed_rng_checks.R` verifies
+RNG restoration and callback failure handling.
 
 The package owns circular index generation, status-aware endpoint calibration, and
 point-statistic summaries. Paper adapters retain the paired-draw status vocabulary,
@@ -291,10 +292,6 @@ displayed-precision rule.
 
 ## Inactive and test-support modules
 
-- `log_variance/tables/legacy_log_ols_caption.R` retains the inactive legacy log-OLS
-  caption beside the table code.
-- `log_variance/estimators/lad/offline_refinement.R` is an offline refinement sourced only
-  by its owning test.
 - `log_variance/figures/bounds_by_tau_test_support.R` is test support for bounds plot data
   and is not production-reachable.
 

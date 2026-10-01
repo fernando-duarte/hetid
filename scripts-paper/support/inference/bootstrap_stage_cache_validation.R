@@ -32,23 +32,6 @@ bootstrap_stage_read_validated <- function(path, validator, reader = readRDS) {
   list(value = value, reason = NULL)
 }
 
-bootstrap_stage_remove_validated <- function(
-  paths, cache_path, validator, reader = readRDS, remover = unlink
-) {
-  authenticated <- bootstrap_stage_read_validated(
-    cache_path, validator, reader
-  )
-  if (!is.null(authenticated$reason)) {
-    stop("validated removal refused: ", authenticated$reason, call. = FALSE)
-  }
-  present <- paths[file.exists(paths)]
-  if (length(present)) remover(present)
-  if (any(file.exists(present))) {
-    stop("validated removal left one or more exact paths", call. = FALSE)
-  }
-  present
-}
-
 bootstrap_stage_manifest_expand <- function(directories, files, path_fn) {
   expanded <- unlist(lapply(directories, function(relative) {
     parts <- strsplit(relative, "/", fixed = TRUE)[[1L]]

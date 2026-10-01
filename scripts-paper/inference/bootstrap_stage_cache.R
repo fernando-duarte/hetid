@@ -29,10 +29,6 @@ BOOTSTRAP_STAGE_SHA_FIELDS <- c(
   "code_sha", "presentation_sha", "runtime_sha"
 )
 BOOTSTRAP_STAGE_SHA_PATTERN <- "^[0-9a-f]{64}$"
-BOOTSTRAP_STAGE_LEGACY_CACHE_BASENAMES <- c(
-  "set_id_boot_draws.rds",
-  "log_var_eq_set_boot_draws.rds"
-)
 
 paper_source_once(paper_path(
   "support", "inference", "bootstrap_stage_provenance.R"
@@ -157,15 +153,5 @@ bootstrap_stage_cached_or_run <- function(
   list(
     stage = installed$value,
     source = source
-  )
-}
-
-bootstrap_stage_remove_legacy_caches <- function(cache_path, validator) {
-  legacy_paths <- file.path(
-    dirname(cache_path),
-    BOOTSTRAP_STAGE_LEGACY_CACHE_BASENAMES
-  )
-  bootstrap_stage_remove_validated(
-    legacy_paths, cache_path, validator
   )
 }

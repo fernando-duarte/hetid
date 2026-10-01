@@ -79,7 +79,7 @@ report a blocker rather than silently substituting another setting.
   active caches, requesting a force-rerun mode, or using a draft configuration. Derive production
   depth, reuse inputs, resources, and scheduling from current source; validators decide which
   callbacks execute. Within the isolated worktree, allow the runner's normal output overwrites,
-  manifest-defined conditional cleanup, LaTeX sidecar cleanup, and validated legacy-cache migration.
+  manifest-defined conditional cleanup and LaTeX sidecar cleanup.
   Record those operations against the preserved baseline; do not invoke cleanup helpers separately.
 - **Scientific decisions:** discover optional-estimator decisions, dependency requirements,
   diagnostics, status routes, and conditional artifacts. Do not change an approved scientific

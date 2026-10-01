@@ -113,8 +113,7 @@ forbid(
 )
 forbid(
   "direct legacy quadratic-system builder",
-  "hetid::build_quadratic_system\\(",
-  "support/identification/quadratic_system.R"
+  "hetid::build_quadratic_system\\("
 )
 forbid(
   "secondary exact-RDS writer",
@@ -144,8 +143,7 @@ forbid(
 )
 forbid(
   "branch-level MBB coordination",
-  "paper_run_mbb_draws\\(",
-  "support/statistics/mbb_runner.R"
+  "paper_run_mbb_draws\\("
 )
 forbid(
   "secondary index-family construction",

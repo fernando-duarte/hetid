@@ -59,7 +59,7 @@ paper_source_once(paper_path(
   "support", "inference", "bootstrap_stage_provenance.R"
 ))
 paper_source_once(paper_path("inference", "bootstrap_stage_cache.R"))
-# The MBB compatibility runner supports the frozen one-core/two-core branch check.
+# Stored MBB families support the indexed one-core/two-core branch check.
 paper_source_once(paper_path("support", "statistics", "api.R"))
 
 paper_source_once(paper_path("tests", "support", "harness.R"))
@@ -79,15 +79,6 @@ paper_source_once(paper_path("tests", "inference", "set_envelope_checks.R"))
 paper_source_once(paper_path("tests", "inference", "set_bootstrap_collection_checks.R"))
 paper_source_once(paper_path("tests", "inference", "set_bootstrap_draw_checks.R"))
 paper_source_once(paper_path("tests", "inference", "mean_set_bootstrap_checks.R"))
-paper_source_once(paper_path(
-  "tests", "inference", "bootstrap_legacy_characterization_helpers.R"
-))
-paper_source_once(paper_path(
-  "tests", "inference", "bootstrap_legacy_characterization_checks.R"
-))
-paper_source_once(paper_path(
-  "tests", "inference", "bootstrap_legacy_failure_characterization_checks.R"
-))
 paper_source_once(paper_path(
   "tests", "inference", "bootstrap_stage_real_primary_fixture.R"
 ))

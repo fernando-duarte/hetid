@@ -1,21 +1,25 @@
-# Real unified primary callback: call count, legacy parity, and fork parity.
+# Real unified primary callback: call count, branch consistency, and fork parity.
 
-bsr_counted <- paper_characterize_estimate_calls(function() {
-  paper_run_indexed_draws(
-    bsr_family,
-    bsr_primary_callback,
-    cores = 1L
-  )
+bsr_counted <- local({
+  original <- estimate_set_id_system
+  n_calls <- 0L
+  assign("estimate_set_id_system", function(dat, spec) {
+    n_calls <<- n_calls + 1L
+    original(dat, spec)
+  }, envir = .GlobalEnv)
+  on.exit(assign("estimate_set_id_system", original, envir = .GlobalEnv), add = TRUE)
+  value <- paper_run_indexed_draws(bsr_family, bsr_primary_callback, cores = 1L)
+  list(value = value, n_calls = n_calls)
 })
 bsr_serial <- bsr_counted$value
 check(
   "the real unified primary callback estimates exactly once per fixed index",
   identical(bsr_counted$n_calls, bsr_family$n_draws)
 )
-bsr_legacy_mean <- lapply(bsr_family$indices, function(index) {
+bsr_direct_mean <- lapply(bsr_family$indices, function(index) {
   set_id_boot_draw(lbd_dat[index, , drop = FALSE], bsr_mean_spec)
 })
-bsr_legacy_volatility <- lapply(bsr_family$indices, function(index) {
+bsr_direct_volatility <- lapply(bsr_family$indices, function(index) {
   logvar_set_boot_draw(lbd_dat[index, , drop = FALSE], bsr_logvar_spec)
 })
 bsr_unified_mean <- set_id_boot_collect(
@@ -27,13 +31,13 @@ bsr_unified_volatility <- logvar_set_boot_collect(
   bsr_collect_specs$log_variance
 )
 check(
-  "real unified fixed-index collections equal both legacy compatibility wrappers",
+  "real unified fixed-index collections agree with the individual branch evaluators",
   bootstrap_test_equal(
     bsr_unified_mean,
-    set_id_boot_collect(bsr_legacy_mean, bsr_collect_specs$mean)
+    set_id_boot_collect(bsr_direct_mean, bsr_collect_specs$mean)
   ) && bootstrap_test_equal(
     bsr_unified_volatility,
-    logvar_set_boot_collect(bsr_legacy_volatility, bsr_collect_specs$log_variance)
+    logvar_set_boot_collect(bsr_direct_volatility, bsr_collect_specs$log_variance)
   )
 )
 if (.Platform$OS.type == "windows") {

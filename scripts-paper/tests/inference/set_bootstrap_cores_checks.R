@@ -2,8 +2,8 @@
 # (logvar_set_boot_draw), not the toy summation callback mbb_checks.R uses.
 # Reuses the fixture frame/spec set_bootstrap_draw_checks.R already built
 # (lbd_dat, lbd_spec) so the full re-estimation chain (PPML + Harvey warm
-# start) that paper_run_mbb_draws dispatches per draw in production runs
-# identically under serial dispatch and the mclapply chunking cores=2 uses.
+# start) runs identically under indexed serial dispatch and the mclapply
+# chunking cores=2 uses.
 
 if (.Platform$OS.type == "windows") {
   skip("cores=1 vs cores=2 real-callback draws match", "no fork on windows")
@@ -12,14 +12,11 @@ if (.Platform$OS.type == "windows") {
     logvar_set_boot_draw(lbd_dat[index, , drop = FALSE], lbd_spec)
   }
   real_block <- paper_mbb_block_len(nrow(lbd_dat))
-  real_run_serial <- paper_run_mbb_draws(
-    n_draws = 4L, sample_size = nrow(lbd_dat), block_length = real_block,
-    seed = 909L, cores = 1L, draw = real_draw
+  real_family <- paper_mbb_index_family(
+    4L, nrow(lbd_dat), real_block, 909L, "primary"
   )
-  real_run_parallel <- paper_run_mbb_draws(
-    n_draws = 4L, sample_size = nrow(lbd_dat), block_length = real_block,
-    seed = 909L, cores = 2L, draw = real_draw
-  )
+  real_run_serial <- paper_run_indexed_draws(real_family, real_draw, cores = 1L)
+  real_run_parallel <- paper_run_indexed_draws(real_family, real_draw, cores = 2L)
   check(
     "cores=1 vs cores=2 agree on the real logvar_set_boot_draw callback",
     bootstrap_test_equal(

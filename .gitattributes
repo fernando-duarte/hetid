@@ -83,7 +83,5 @@
 .gitattributes export-ignore
 .Rbuildignore export-ignore
 README.Rmd export-ignore
-NEWS.md export-ignore
-cran-comments.md export-ignore
 ^dev/ export-ignore
 ^data-raw/ export-ignore
