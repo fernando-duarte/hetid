@@ -7,25 +7,38 @@
 make_system_checker(quadratic)
 }
 \arguments{
-\item{quadratic}{List with parallel \code{A_i}, \code{b_i},
-\code{c_i} elements (the \code{quadratic} element of either
-builder's output)}
+\item{quadratic}{List containing \code{A_i} and \code{b_i} lists and a
+numeric \code{c_i} vector, all of equal length, as in either builder's
+\code{quadratic} element. Each position supplies the coefficients for
+one \code{\link{make_constraint_checker}}; entries are paired by position,
+so their order must agree even when names are supplied.}
 }
 \value{
-Function of theta returning the named numeric vector of
-constraint values
+A function taking a numeric \code{theta} vector conformable with
+every coefficient matrix and returning one numeric value per constraint,
+in input order. Names are copied from \code{quadratic$A_i} when present;
+unnamed inputs return an unnamed vector. Empty parallel inputs return
+\code{numeric(0)}, imposing no constraints.
 }
 \description{
 Companion to \code{\link{make_constraint_checker}} for
 multi-constraint systems: takes the \code{quadratic} element
 produced by \code{\link{build_general_quadratic_system}} (or the
-legacy \code{\link{build_quadratic_system}}) and returns a closure
+\code{\link{build_quadratic_system}}) and returns a closure
 evaluating every constraint at a candidate theta. Following the
 package's \code{hin <= 0} convention, theta lies inside the
 identified set exactly when every returned value is non-positive
-(\code{max(values) <= 0}). A system where no theta satisfies all
+(\code{all(values <= 0)}). A system where no theta satisfies all
 constraints is an empty estimated set; this checker is the
-intended tool for probing that case on a grid.
+intended tool for probing that case on a grid. Failure to find a feasible
+grid point does not establish emptiness.
+}
+\details{
+Invalid parallel structure signals a
+\code{hetid_error_bad_argument}. Invalid individual coefficients signal
+a \code{hetid_error} identifying the constraint by name or position.
+The returned closure does not validate \code{theta}; the missing-value
+and finite-input caveats of \code{\link{make_constraint_checker}} apply.
 }
 \section{General instrument scheme}{
 
@@ -34,29 +47,39 @@ defines K_i constructed instruments, each a linear combination of
 the J columns of the instrument matrix the moments were computed
 from. The identified set intersects one quadratic constraint per
 (component, combination) pair: \code{sum(K_i)} constraints in
-total. The legacy single-combination case is \code{K_i = 1} for
+total. The single-combination case is \code{K_i = 1} for
 every component (a J x I matrix); using every instrument
 separately is \code{lambda[[i]] = diag(J)}. Each constraint
 depends on its weight column only through its direction, so any
 nonzero rescaling of a column leaves the constraint set unchanged.
-A per-component instrument SUBSET is expressed directly as zero
+A per-component instrument subset is expressed directly as zero
 rows in that component's weight matrix;
 \code{align_instrument_sets()} builds the union axis and
 \code{lambda_from_support()} zero-pads compact weights onto it.
-Honesty note: intersecting more sample-moment constraints
-weakly shrinks the ESTIMATED set mechanically, so widths are
+Intersecting more sample-moment constraints
+weakly shrinks the estimated set mechanically, so widths are
 comparable only across schemes with the same constraint count.
 }
 
 \examples{
-set.seed(42)
-w1 <- rnorm(50)
-w2 <- matrix(rnorm(100), nrow = 50)
-z <- matrix(rnorm(150), nrow = 50)
-moments <- compute_identification_moments(w1, w2, z)
-qs <- build_general_quadratic_system(
-  separate_instruments_lambda(moments), 0.2, moments
-)
-check_all <- make_system_checker(qs$quadratic)
-max(check_all(c(0, 0)))
+local({
+  old_seed <- get0(".Random.seed", envir = .GlobalEnv, inherits = FALSE)
+  on.exit(if (is.null(old_seed)) {
+    rm(".Random.seed", envir = .GlobalEnv)
+  } else {
+    assign(".Random.seed", old_seed, envir = .GlobalEnv)
+  })
+  set.seed(42)
+  w1 <- rnorm(50)
+  w2 <- matrix(rnorm(100), nrow = 50)
+  z <- matrix(rnorm(150), nrow = 50)
+  moments <- compute_identification_moments(w1, w2, z)
+  qs <- build_general_quadratic_system(
+    separate_instruments_lambda(moments), 0.2, moments
+  )
+  check_all <- make_system_checker(qs$quadratic)
+  values <- check_all(c(0, 0))
+  print(values)
+  all(values <= 0)
+})
 }

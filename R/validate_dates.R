@@ -1,20 +1,29 @@
 #' Validate a Date Vector for a Time-Series Output
 #'
-#' Single source of truth for the package date convention: a function that
-#' returns a time series cannot do so without a real \code{Date} index. The
-#' dates must be a non-missing \code{Date} vector (never a character string or
-#' a fabricated integer row index) of the expected length. Character/POSIXct
-#' inputs are rejected rather than coerced, because \code{as.Date()} of a bare
-#' numeric silently reads days-since-epoch -- exactly the fake-index failure
-#' this guard exists to prevent. The lenient sibling \code{coerce_optional_date}
-#' (acm_date_utils.R) parses character bounds instead of rejecting them; this
-#' guard is deliberately strict.
+#' Check that a time-series date index inherits from \code{Date}, has no
+#' missing values, and has the expected length.
 #'
-#' @param dates The date vector supplied by the caller.
-#' @param expected_len Integer; the required length (e.g. \code{nrow(yields)}).
-#' @param arg Argument name used in the structured error.
+#' @details
+#' Character, POSIXct, and bare numeric inputs are rejected without coercion.
+#' Converting a bare numeric row index with \code{as.Date()} would interpret
+#' it as days since the epoch. The sibling \code{coerce_optional_date} in
+#' acm_date_utils.R instead parses character date bounds.
 #'
-#' @return Invisible \code{TRUE} when valid; otherwise a \code{hetid_error}.
+#' Callers must supply calendar period-end dates normalized at ingestion.
+#' This helper does not check period ends, ordering, or uniqueness and does
+#' not modify the input. An empty \code{Date} vector passes when
+#' \code{expected_len} is zero.
+#'
+#' @param dates A \code{Date} vector with no missing values.
+#' @param expected_len A nonnegative integer scalar giving the required number
+#'   of dates (e.g. \code{nrow(yields)}).
+#' @param arg A character scalar naming the argument in bad-argument errors.
+#'   Defaults to \code{"dates"}.
+#'
+#' @return Invisible \code{TRUE} when the checks pass. Invalid date types or
+#'   missing dates signal a \code{hetid_error_bad_argument}; a length mismatch
+#'   signals a \code{hetid_error_dimension_mismatch}. Both inherit from
+#'   \code{hetid_error}.
 #' @noRd
 validate_dates_vector <- function(dates, expected_len, arg = "dates") {
   assert_bad_argument_ok(

@@ -14,28 +14,31 @@ harvey_post_stop(
 )
 }
 \arguments{
-\item{theta}{Numeric coefficient vector of length \code{ncol(x_mat)}}
+\item{theta}{Numeric coefficient vector of length \code{ncol(x_mat)}.}
 
-\item{y}{Numeric nonnegative response}
+\item{y}{Finite nonnegative numeric response vector of length \code{nrow(x_mat)}.}
 
-\item{x_mat}{Numeric design matrix, intercept column included}
+\item{x_mat}{Finite numeric design matrix, intercept column included.}
 
-\item{pos}{Logical vector marking the positive-response rows}
+\item{pos}{Logical vector \code{y > 0} of length \code{length(y)}.}
 
 \item{col_abs}{Numeric vector \code{colSums(abs(x_mat))}, the per-coordinate
-scale the moment is judged on}
+scale the moment is judged on. Each entry must be positive.}
 
-\item{control}{Validated fitting controls}
+\item{control}{Validated named list of Harvey fitting controls; defaults
+derive from \code{\link{LOG_VARIANCE_HARVEY_CONTROL}}.}
 }
 \value{
 \code{NULL} on rejection, otherwise a list with the recomputed
-\code{eval}, the observed \code{info}, and its normalized \code{rcond}
+\code{eval}, the numeric \code{ncol(x_mat)} square observed-information matrix
+\code{info}, and its scalar normalized reciprocal condition number \code{rcond}.
 }
 \description{
 Recomputes the safe ratio and criterion from scratch at the stopped point,
 then requires a finite strictly positive fitted variance and a
-diagonally-normalized information \code{rcond} above tolerance. Normalizing
-by the diagonal makes the gate scale-invariant while still catching genuine
+diagonally-normalized information \code{rcond} at or above \code{RCOND_TOLERANCE}.
+It does not recheck score convergence, which the scoring loop establishes.
+Normalizing by the diagonal makes the gate scale-invariant while catching
 rank deficiency. \code{NULL} rejects the point.
 }
 \keyword{internal}

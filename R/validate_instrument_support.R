@@ -3,7 +3,7 @@
 #' Internal validators shared by \code{\link{lambda_from_support}} and
 #' \code{\link{align_instrument_sets}}. A support is a list with one
 #' integer vector of free instrument rows per constrained system
-#' column and NULL at every unconstrained column -- the same
+#' column and \code{NULL} at every unconstrained column -- the same
 #' positional convention as the lambda weight lists themselves.
 #'
 #' @name validate_instrument_support
@@ -12,12 +12,11 @@ NULL
 
 #' A Value Is a Single Positive Integer Count
 #'
-#' Type guard first, then flat checks: the \code{all(c(...))} pattern
-#' keeps cyclomatic complexity low, and NA produced by arithmetic on
-#' unexpected values fails closed through \code{isTRUE()}.
+#' Tests whether a dimensionless numeric input is a single finite positive
+#' whole number. Invalid or missing inputs return \code{FALSE}.
 #'
-#' @param x Candidate count
-#' @return Logical scalar (TRUE only when fully valid)
+#' @param x Candidate numeric scalar count.
+#' @return Logical scalar, \code{TRUE} only for a finite positive whole number.
 #' @noRd
 positive_count_ok <- function(x) {
   if (!is.numeric(x) || !is.null(dim(x))) {
@@ -33,9 +32,10 @@ positive_count_ok <- function(x) {
 
 #' One Support Entry Is a Valid Free-Row Index Vector
 #'
-#' @param s_i Candidate index vector
-#' @param j_total Number of instrument rows on the union axis
-#' @return Logical scalar (TRUE only when fully valid)
+#' @param s_i Candidate numeric vector of instrument row indices.
+#' @param j_total Validated positive integer count of instrument rows on the union axis.
+#' @return Logical scalar, \code{TRUE} only for a nonempty vector of unique,
+#'   finite whole-number indices in \code{1..j_total}.
 #' @noRd
 support_entry_ok <- function(s_i, j_total) {
   if (!is.numeric(s_i) || !is.null(dim(s_i))) {
@@ -60,11 +60,13 @@ support_entry_ok <- function(s_i, j_total) {
 #' could never satisfy the builder's nonzero-direction rule, so it is
 #' rejected here, before any downstream work.
 #'
-#' @param support Candidate support list
-#' @param j_total Number of instrument rows the indices refer to
-#' @param n_components System width (required list length)
-#' @param maturities Constrained system columns
-#' @return The support list with entries coerced to integer
+#' @param support Candidate list with one entry per system column.
+#' @param j_total Validated positive integer count of instrument rows.
+#' @param n_components Validated system width on the theta axis (required list length).
+#' @param maturities Validated integer vector of constrained system column indices.
+#' @return List of length \code{n_components}, with constrained entries coerced
+#'   to integer and \code{NULL} at unconstrained columns. Invalid support signals
+#'   a \code{hetid_error_bad_argument} condition.
 #' @noRd
 assert_support_list <- function(support, j_total, n_components,
                                 maturities) {

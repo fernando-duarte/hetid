@@ -6,6 +6,7 @@
 \description{
 Path resolution functions for package data. Bundled data ships
 read-only in the installed package's extdata directory; downloaded
-copies live in the per-user cache from \code{tools::R_user_dir()}.
+copies live in the per-user data directory from
+\code{\link[tools:R_user_dir]{tools::R_user_dir}} with \code{which = "data"}.
 }
 \keyword{internal}

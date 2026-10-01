@@ -7,19 +7,24 @@
 assert_scalar_integer_in_range(x, name, min_value, max_value, arg = name)
 }
 \arguments{
-\item{x}{Value to check}
+\item{x}{Object to check. Valid input is a single finite, integer-valued
+numeric value; missing values, \code{NaN}, and infinite values are rejected.}
 
-\item{name}{Parameter name used in the error message}
+\item{name}{Single character string used in the error message and the
+condition's \code{arg} field when the finite numeric check fails.}
 
-\item{min_value, max_value}{Inclusive integer bounds}
+\item{min_value, max_value}{Single numeric lower and upper bounds of the
+inclusive range. Bounds are supplied by the caller and are not validated.}
 
-\item{arg}{Condition argument name (defaults to \code{name})}
+\item{arg}{Single character string used in the condition's \code{arg} field
+when the integer or range check fails. Defaults to \code{name}.}
 }
 \value{
-Invisible TRUE if valid, stops with informative error otherwise.
+Invisible \code{TRUE} if valid. Otherwise, signals a
+\code{hetid_error_bad_argument} condition if \code{x} fails validation.
 }
 \description{
-Shared core for scalar integer-index validators. The \code{arg} defaults to
-\code{name} so callers can keep a distinct condition \code{arg} field.
+Shared core for scalar integer-index validators. Checks that a single
+finite numeric value is integer-valued and lies within inclusive bounds.
 }
 \keyword{internal}

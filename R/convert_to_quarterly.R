@@ -1,29 +1,39 @@
 #' Convert Monthly Data to Quarterly
 #'
 #' Internal function to convert monthly data to quarterly by keeping
-#' the last observation of each quarter. Quarters whose last available
-#' observation is not in the terminal month (March, June, September,
+#' the last observation of each quarter and relabeling its date to the
+#' last calendar day of the quarter using \code{\link{to_period_end}}.
+#'
+#' @details
+#' Quarters whose last available observation is not in the terminal month
+#' (March, June, September,
 #' December) are either kept with their date re-coded to the last day
 #' of the terminal month, so the quarterly series is uniformly dated --
 #' raising a classed warning
 #' (\code{hetid_warning_incomplete_quarter}) because incomplete data
 #' enters the output -- or dropped, announced by an informational
 #' message naming the removed quarters.
+#' A quarter is complete when its last observation falls in its terminal
+#' month; observations in every month of the quarter are not required.
 #' Rows with a missing (NA) date are dropped first, with a classed warning
 #' (\code{hetid_warning_dropped_na_dates}); the monthly path keeps them.
 #' Duplicated dates are rejected up front with a structured error, since each
 #' date must appear at most once for the conversion to be well defined.
 #'
-#' @param data Data frame with a date column
-#' @param use_incomplete_quarters Logical. If TRUE (the default, from
+#' @param data Data frame with a \code{Date} column named \code{date}.
+#'   Non-missing dates must be unique. Missing values in other columns
+#'   are retained in the selected observations.
+#' @param use_incomplete_quarters Logical scalar. If \code{TRUE} (the default, from
 #'   \code{HETID_CONSTANTS$USE_INCOMPLETE_QUARTERS}), incomplete
 #'   quarters keep their latest available observation, re-dated to the
-#'   end of the terminal quarter month. If FALSE, incomplete quarters
+#'   end of the terminal quarter month. If \code{FALSE}, incomplete quarters
 #'   are dropped.
 #'
-#' @return Data frame with quarterly observations, or a zero-row data frame
+#' @return Data frame with one observation per retained quarter, ordered by
+#'   date, with dates at calendar quarter-end and other column values taken
+#'   from that quarter's last observation. A zero-row data frame is returned
 #'   when the input is empty, when every date is \code{NA}, or when every
-#'   quarter is dropped as incomplete
+#'   quarter is dropped as incomplete.
 #' @keywords internal
 convert_to_quarterly <- function(
   data,
@@ -65,7 +75,7 @@ convert_to_quarterly <- function(
 
   data <- data[order(data[["date"]]), , drop = FALSE]
 
-  # Scratch frame avoids clobbering any input columns named year/month/quarter
+  # Separate frame preserves input columns named year, month, or quarter
   scratch <- data.frame(
     date = data[["date"]],
     year = as.numeric(format(data[["date"]], HETID_CONSTANTS$YEAR_FORMAT)),
@@ -130,8 +140,6 @@ convert_to_quarterly <- function(
     all.x = TRUE
   )
 
-  # Period-end: shift to the last calendar day of the quarter (Mar 31 / Jun 30 /
-  # Sep 30 / Dec 31) regardless of which business day the last observation fell on
   result$date <- to_period_end(result$date, "quarterly")
 
   result

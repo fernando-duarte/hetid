@@ -1,9 +1,15 @@
 #' Construct and Validate hetid_tau0_fit Objects
 #'
-#' Internal helpers behind the \code{hetid_tau0_fit} container: the cheap
-#' \code{new_hetid_tau0_fit()} constructor and the full shape sweep in
-#' \code{validate_hetid_tau0_fit()}. The public boundary that builds
-#' these objects is \code{compute_tau0_system()}.
+#' Container for the tau = 0 mean-equation fit built by
+#' \code{\link{compute_tau0_system}}.
+#'
+#' @details The list contains \code{beta1r}, \code{beta2r}, \code{w1},
+#' \code{w2}, \code{z}, \code{gamma}, \code{moments}, \code{point}, and
+#' \code{beta1}. Attributes record the integer sample size \code{n_obs},
+#' the logical \code{impose_null} flag, and the positive tolerance \code{tol}.
+#' Here I = \code{ncol(w2)} is the component axis and J = \code{ncol(z)}.
+#' See \code{\link{new_hetid_tau0_fit}} for element shapes and
+#' \code{\link{validate_hetid_tau0_fit}} for structural checks.
 #'
 #' @name hetid_tau0_fit
 #' @keywords internal
@@ -11,31 +17,27 @@ NULL
 
 #' Construct a hetid_tau0_fit Object
 #'
-#' Low-level cheap constructor for the \code{hetid_tau0_fit} class:
-#' coerces \code{n_obs} to integer and checks the three identity
-#' attributes, trusting the shapes of the data elements themselves. The
-#' full structural sweep lives in \code{validate_hetid_tau0_fit()}, which
-#' the public boundary \code{compute_tau0_system()} always runs; hot
-#' paths rebuilding containers from known-good parts may call this
-#' constructor directly and skip it.
+#' Checks the three identity attributes and coerces \code{n_obs} to integer,
+#' trusting the data elements. \code{\link{compute_tau0_system}} always calls
+#' \code{\link{validate_hetid_tau0_fit}}; known-good parts may skip that sweep.
 #'
-#' @param beta1r Named numeric vector, OLS coefficients of the Y1 reduced form
-#' @param beta2r Matrix (I x length(beta1r)), OLS coefficients of the Y2
-#'   reduced form, one row per system component
-#' @param w1 Numeric vector, Y1 reduced-form residuals
-#' @param w2 Matrix (n_obs x I), Y2 reduced-form residuals
-#' @param z Matrix (n_obs x J), de-meaned instruments
-#' @param gamma Matrix (J x I), instrument weights
-#' @param moments A \code{hetid_moments} object
-#' @param point \code{list(theta, cond)} from \code{compute_tau0_point()}, or
-#'   \code{NULL} when the tau=0 system has no point solution
-#' @param beta1 Named numeric vector, the recovered structural coefficients,
-#'   or \code{NULL} exactly when \code{point} is \code{NULL}
-#' @param n_obs Number of observations the fit was computed from
-#' @param impose_null Logical, whether the null \eqn{\theta = 0} was imposed
-#'   on the second reduced form
-#' @param tol Positive numeric scalar, the point tolerance actually used
-#' @return A classed \code{hetid_tau0_fit} list
+#' @param beta1r Named numeric vector, OLS coefficients of the Y1 reduced form.
+#' @param beta2r Numeric matrix (I x length(beta1r)), OLS coefficients of the Y2
+#'   reduced form, with named component rows and columns matching \code{names(beta1r)}.
+#' @param w1 Numeric vector of length \code{n_obs}, Y1 reduced-form residuals.
+#' @param w2 Numeric matrix (n_obs x I), Y2 reduced-form residuals.
+#' @param z Numeric matrix (n_obs x J), de-meaned instruments.
+#' @param gamma Numeric matrix (J x I), instrument weights.
+#' @param moments A \code{hetid_moments} object with centered \eqn{1/T} moments.
+#' @param point A list from \code{\link{compute_tau0_point}}, or
+#'   \code{NULL} when the tau = 0 system has no unique consistent point solution.
+#' @param beta1 Named numeric vector of length \code{length(beta1r)}, structural
+#'   coefficients, or \code{NULL} exactly when \code{point} is \code{NULL}.
+#' @param n_obs Finite integer-valued scalar in \code{[1, .Machine$integer.max]}.
+#' @param impose_null A \code{TRUE} or \code{FALSE} flag, whether \eqn{B = 0} was imposed
+#'   on the second reduced form, setting \code{beta2r} to zero.
+#' @param tol Positive finite numeric scalar, the point tolerance actually used.
+#' @return A \code{hetid_tau0_fit} list with the supplied elements and attributes.
 #' @keywords internal
 new_hetid_tau0_fit <- function(beta1r, beta2r, w1, w2, z, gamma, moments,
                                point, beta1, n_obs, impose_null, tol) {
@@ -58,14 +60,12 @@ new_hetid_tau0_fit <- function(beta1r, beta2r, w1, w2, z, gamma, moments,
 
 #' Validate a hetid_tau0_fit Object
 #'
-#' Full structural-alignment gate for the \code{hetid_tau0_fit} class,
-#' checked against the object's own \code{n_obs} attribute. Run by the
-#' public boundary \code{compute_tau0_system()} on every object it
-#' returns; call it directly on containers assembled via
-#' \code{new_hetid_tau0_fit()} from parts that are not known-good.
+#' Checks attributes, data shapes, coefficient alignment, the moments class,
+#' and point/beta1 pairing. The public boundary \code{\link{compute_tau0_system}}
+#' always runs it; use it on manually assembled containers too.
 #'
-#' @param x A classed \code{hetid_tau0_fit} object
-#' @return \code{x}, invisibly
+#' @param x A classed \code{hetid_tau0_fit} object.
+#' @return \code{x}, invisibly; failures signal a structured \code{hetid_error}.
 #' @keywords internal
 validate_hetid_tau0_fit <- function(x) {
   assert_hetid_tau0_fit(x, arg = "x")

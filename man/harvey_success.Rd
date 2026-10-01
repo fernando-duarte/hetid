@@ -17,31 +17,42 @@ harvey_success(
 )
 }
 \arguments{
-\item{accepted}{Post-stop verdict from \code{\link{harvey_post_stop}}}
+\item{accepted}{A non-\code{NULL} post-stop verdict list from
+\code{\link{harvey_post_stop}}, evaluated on the scaled response.}
 
-\item{scored}{Scoring result from \code{\link{harvey_scoring}}}
+\item{scored}{A scoring result list from \code{\link{harvey_scoring}}.}
 
-\item{y}{Numeric response on the original scale}
+\item{y}{A nonempty, finite, nonnegative numeric response vector on the original scale.}
 
-\item{x_mat}{Numeric design matrix, intercept column included}
+\item{x_mat}{A finite numeric design matrix with \code{length(y)} rows,
+column names, and the intercept in its first column.}
 
-\item{response_scale}{Positive finite scalar the response was divided by}
+\item{response_scale}{A positive finite numeric scalar the response was divided by.}
 
-\item{attempts}{List of per-rung attempt records}
+\item{attempts}{A list of per-rung attempt records.}
 
-\item{n_zero_response}{Count of zero response rows}
+\item{n_zero_response}{The number of zero response rows.}
 
-\item{rank_x_pos}{Integer rank of the positive-response design rows}
+\item{rank_x_pos}{The integer rank of the positive-response design rows.}
 
-\item{criteria}{Per-start numerical evidence, or NULL}
+\item{criteria}{A list of per-start numerical evidence, or \code{NULL}
+(the default) when that evidence is not supplied.}
 }
 \value{
-A validated \code{hetid_log_variance_fit} object
+A validated \code{hetid_log_variance_fit} list, returned visibly,
+with \code{fit_status = "ok"}, \code{converged = TRUE}, and coefficient
+vectors named by \code{colnames(x_mat)}. The original response and design
+are retained as \code{y} and \code{x_design}; \code{convergence_code}
+records the number of scoring iterations and \code{diagnostics} contains
+the acceptance evidence.
 }
 \description{
 Recovers the original-scale coefficients by adding
 \code{log(response_scale)} to the intercept only, keeps the raw scaled-fit
 vector as \code{warm_start}, and reports the criterion and score norm the
 post-stop gate recomputed on the scaled response.
+}
+\seealso{
+\code{\link{hetid_log_variance_fit}}.
 }
 \keyword{internal}

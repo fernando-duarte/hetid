@@ -7,15 +7,17 @@
 warn_incomplete_quarter(message, call = NULL)
 }
 \arguments{
-\item{message}{Warning message string}
+\item{message}{A character string containing the warning message.}
 
-\item{call}{The call (default NULL)}
+\item{call}{A call object to include in the condition, or \code{NULL} (the
+default) to omit the call.}
 }
 \value{
-Invisibly, the warning message; called for its warning side effect
+The warning message is returned invisibly as a character string.
+The function is called for its warning side effect.
 }
 \description{
-Classed warning raised when quarterly conversion encounters quarters
+Classed warning raised when quarterly conversion keeps incomplete quarters
 whose last available observation is not in the terminal month, so
 callers can dispatch on class
 \code{hetid_warning_incomplete_quarter}.

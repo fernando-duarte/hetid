@@ -1,9 +1,9 @@
-#' Frame, Growth Loop and Recession Bounds for the Box Search
+#' Frame and Growth Loop for the Box Search
 #'
-#' Internals of \code{compute_identified_set_box()}: the search frame in
-#' which the set is locally a cube, the extent-doubling loop over that
-#' frame, and the recession bounds that turn a witnessed unbounded
-#' direction into infinite coordinates.
+#' Search-frame construction and the extent-doubling loop used by
+#' \code{\link{compute_identified_set_box}} and
+#' \code{\link{compute_linear_functional_bounds}}. The frame rescales a
+#' local slab approximation; the loop accumulates bounds across windows.
 #'
 #' @name identified_set_search
 #' @keywords internal
@@ -11,16 +11,18 @@ NULL
 
 #' Local Search Frame
 #'
-#' Near the center the set is the slab intersection
-#' \eqn{\{|Q_i'\delta| \lesssim \rho_i\}}, so mapping frame coordinates
-#' through \eqn{Q^{-1}\mathrm{diag}(\rho)} makes it locally the unit cube.
+#' The frame normalizes the local slab approximation
+#' \eqn{\{|Q_i'\delta| \le \rho_i\}}, where \eqn{\rho_i} is the square
+#' root of the negated constraint value at the center. Mapping the unit
+#' cube through \eqn{Q^{-1}\mathrm{diag}(\rho)} gives that approximation.
 #' Gridding that frame keeps the node density independent of how
 #' ill-conditioned \eqn{Q} is, which is what an axis-aligned grid loses.
 #'
-#' @param components Components list carrying \code{Q_i}
-#' @param center Numeric feasible center
-#' @param quadratic Quadratic form list
-#' @return Numeric I x I basis matrix
+#' @param components Components list carrying \code{Q_i}, with one
+#'   constraint per theta component and a nonsingular stacked matrix.
+#' @param center Finite numeric length-I center strictly inside the set.
+#' @param quadratic Quadratic form list at the search slack.
+#' @return Numeric I x I basis matrix mapping frame coordinates to theta.
 #' @noRd
 identified_set_basis <- function(components, center, quadratic) {
   q_mat <- do.call(rbind, components$Q_i)
@@ -46,10 +48,12 @@ identified_set_basis <- function(components, center, quadratic) {
 
 #' Extent-Doubling Search Over the Frame
 #'
-#' Each pass sweeps every free coordinate at the current window. A bound
-#' attained on the window boundary means the set continues past it, so
-#' those coordinates double and the sweep repeats. Bounds accumulate
-#' across passes, so the result only ever grows. The state starts at the
+#' Each pass sweeps every free coordinate at the current window. An
+#' improved bound attained at a gridded window boundary flags those
+#' coordinates for doubling, subject to the pass and window limits.
+#' Boundary improvement is a search heuristic, not proof of unboundedness.
+#' Bounds accumulate across passes, so the result only ever grows.
+#' The state starts at the
 #' center, a feasible point whose objective values a hull endpoint can
 #' only improve on, so a constant objective reports its value with the
 #' center as witness rather than an empty search.
@@ -65,17 +69,27 @@ identified_set_basis <- function(components, center, quadratic) {
 #' ends on its pass budget with primary flags still raised, the second may
 #' also carry that primary growth on.
 #'
-#' @param center Numeric feasible center
-#' @param basis Numeric I x I frame
-#' @param quadratic Quadratic form list
-#' @param n_grid Points per gridded coordinate
-#' @param objectives Numeric I x m matrix of tracked linear functionals
+#' @param center Finite numeric length-I center strictly inside the set.
+#' @param basis Numeric I x I frame mapping frame coordinates to theta.
+#' @param quadratic Quadratic form list at the search slack.
+#' @param n_grid Odd integer of at least three points per gridded coordinate.
+#' @param objectives Finite numeric I x m matrix of tracked linear
+#'   functionals, one per column.
 #' @param n_primary Number of leading objectives that drive the first
-#'   growth phase; the default lets every objective drive it
-#' @param evidence Whether to retain tail witnesses and phase termination evidence
-#' @param max_growth,search_limit Pass and window limits
+#'   growth phase; the default lets every objective drive it.
+#' @param evidence Logical scalar; \code{FALSE} by default. If \code{TRUE},
+#'   retain tail witnesses and phase termination evidence.
+#' @param max_growth Positive integer pass budget per growth phase;
+#'   defaults to \code{IDENTIFIED_SET_CONTROL$MAX_GROWTH}.
+#' @param search_limit Finite scalar at least two, limiting window
+#'   half-widths in frame units; defaults to
+#'   \code{IDENTIFIED_SET_CONTROL$SEARCH_LIMIT}.
 #' @return List with \code{lower}, \code{upper} (length-m), \code{arg_lower},
-#'   \code{arg_upper} (m x I)
+#'   \code{arg_upper} (m x I, row k a theta witness for objective k).
+#'   Infinite bounds can come from feasible line tails; their point rows
+#'   are placeholders until the caller applies recession bounds. With
+#'   \code{evidence = TRUE}, also contains length-m lists \code{tail_lower},
+#'   \code{tail_upper}, and \code{search} with phase records and limits.
 #' @noRd
 identified_set_search <- function(center, basis, quadratic, n_grid,
                                   objectives, n_primary = ncol(objectives),
@@ -109,8 +123,6 @@ identified_set_search <- function(center, basis, quadratic, n_grid,
     grow <- swept[[edge_key]] & room
     if (edge_key == "edge_primary" && n_primary < n_objectives &&
       (!any(grow) || passes >= max_growth)) {
-      # the leading objectives' path has ended: the rest may now grow the
-      # window, judged from this same sweep, with a fresh pass budget
       if (evidence) {
         phase_history <- append_growth_trace(
           phase_history, edge_key, passes, half,
@@ -142,9 +154,10 @@ identified_set_search <- function(center, basis, quadratic, n_grid,
 
 #' Merge One Sweep into the Running Bounds
 #'
-#' @param best Running state
-#' @param swept One sweep's state
-#' @return The merged state
+#' @param best Running state list from the growth loop.
+#' @param swept One sweep's state list, with the same objective ordering.
+#' @return The running state list with strictly improved bounds, point
+#'   rows and, when present, tail witnesses copied from the sweep.
 #' @noRd
 merge_box_state <- function(best, swept) {
   below <- swept$lower < best$lower

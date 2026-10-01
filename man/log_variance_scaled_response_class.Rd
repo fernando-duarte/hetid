@@ -7,13 +7,17 @@
 log_variance_scaled_response_class(y, y_scaled)
 }
 \arguments{
-\item{y}{Numeric response on the original scale}
+\item{y}{Finite nonnegative numeric response vector on the original scale.}
 
-\item{y_scaled}{\code{y / response_scale}}
+\item{y_scaled}{Numeric vector of the same length as \code{y}, obtained
+as \code{y / response_scale}.}
 }
 \value{
-A failure class string, or \code{NA_character_} when the scaled
-response is usable
+A character scalar: \code{"scaled_response_underflow"} if a
+positive original response becomes exactly zero,
+\code{"scaled_response_overflow"} if the scaled response is non-finite,
+or \code{"all_zero_response"} if it has no positive entries. Checks
+occur in that order. Returns \code{NA_character_} when none applies.
 }
 \description{
 Guards the one place where \code{response_scale} can quietly change the
@@ -21,5 +25,10 @@ data an estimator sees. Partial underflow is the sneaky case: zeros are
 otherwise valid responses, so a positive entry collapsing to exactly zero
 looks like data rather than a numerical accident. Shared by every
 estimator's \code{fit_response} worker.
+}
+\details{
+Callers validate the original response and positive finite scale before
+calling this helper. It does not validate vector lengths or remove missing
+values.
 }
 \keyword{internal}

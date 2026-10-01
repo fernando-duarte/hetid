@@ -7,14 +7,18 @@
 validate_maturity_index(i, max_maturity = HETID_CONSTANTS$MAX_MATURITY)
 }
 \arguments{
-\item{i}{Integer maturity index to validate}
+\item{i}{Numeric value of length one giving an integer maturity in months.
+Missing and non-finite values are rejected.}
 
-\item{max_maturity}{Maximum allowed maturity (default from ACM dataset limit)}
+\item{max_maturity}{Numeric value of length one giving the inclusive upper
+bound in months, defaulting to \code{HETID_CONSTANTS$MAX_MATURITY}.}
 }
 \value{
-Invisible TRUE if valid, stops with informative error if invalid
+Invisible \code{TRUE} if valid; otherwise signals a
+\code{hetid_error_bad_argument} condition.
 }
 \description{
-Validates maturity index against dataset constraints.
+Checks that a maturity index is a finite integer between
+\code{HETID_CONSTANTS$MIN_MATURITY} and \code{max_maturity}, inclusive.
 }
 \keyword{internal}

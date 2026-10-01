@@ -7,12 +7,13 @@
 stop_hetid(message, call = NULL)
 }
 \arguments{
-\item{message}{Error message string}
+\item{message}{A character scalar containing the error message.}
 
-\item{call}{The call (default NULL)}
+\item{call}{A call object to store on the condition, or \code{NULL}
+(the default) to omit the call from the displayed error.}
 }
 \value{
-Never returns; signals a \code{hetid_error} condition
+Never returns normally; signals a \code{hetid_error} condition.
 }
 \description{
 Signal a Generic hetid Error

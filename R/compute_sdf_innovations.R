@@ -1,6 +1,6 @@
 #' Compute SDF Innovations Time Series
 #'
-#' Computes the time series of SDF innovations, the centered second-order
+#' Computes stochastic discount factor (SDF) innovations, the centered second-order
 #' approximation to the SDF news:
 #' \deqn{e^{\hat{n}(i,t)}\left(\Delta_{t+1}p^{(1)}_{t+i} +
 #'   \tfrac{1}{2}\left(\Delta_{t+1}p^{(1)}_{t+i}\right)^{2}\right) - B_i}
@@ -10,7 +10,10 @@
 #' @template param-dates-required
 #' @template param-step
 #'
-#' @template return-dated-dataframe
+#' @return A data frame with \code{nrow(yields)} rows and two columns:
+#'   \code{date}, the supplied \code{Date} vector, and \code{sdf_innovations},
+#'   the numeric news series. News from row \code{k} to row \code{k + 1}
+#'   carries \code{dates[k + 1]}; the first value is \code{NA_real_}.
 #'
 #' @details
 #' In the formula above:
@@ -18,9 +21,37 @@
 #' - \eqn{B_i = \tfrac{1}{2}\mathrm{mean}(e^{\hat{n}(i,t)}
 #'   (\Delta_{t+1}p^{(1)}_{t+i})^{2})} is the
 #'   constant centering term, an exponential-weighted sample mean
-#'   subtracted outside the \eqn{e^{\hat{n}}} factor so the population analogue
-#'   has exactly zero unconditional mean; the mean runs over the valid
-#'   (non-missing) news dates (T-1 terms with complete data)
+#'   subtracted outside the \eqn{e^{\hat{n}}} factor. The mean runs over
+#'   non-missing news and exponential weights (T-1 terms with complete data).
+#'   If price news has zero conditional mean, the population analogue has
+#'   zero unconditional mean. The full series need not have zero sample mean.
+#'
+#' Supply yields and term premia in annualized percentage points, with rows
+#' aligned to the same dates and ordered chronologically. Adjacent rows must
+#' be one news period apart, matching \code{step} months; the default step
+#' therefore uses annual observations. The function does not reorder rows,
+#' aggregate data, or normalize dates. See \code{\link{compute_n_hat}} for
+#' the step-period term-premium convention required by the construction.
+#'
+#' The maturity must satisfy \code{i == step} or
+#' \code{i - step >= HETID_CONSTANTS$MIN_MATURITY}, as well as the upper
+#' bound below; it need not be a multiple of \code{step}. Supply columns at
+#' \code{i - step}, \code{i}, and \code{i + step}. At \code{i == step},
+#' only \code{i} and \code{i + step} are needed: the previous leg is the
+#' realized log price of the step-maturity bond, and its term premium is
+#' set to zero. The step must be a positive integer no greater than
+#' \code{HETID_CONSTANTS$MAX_MATURITY %/% 2}.
+#'
+#' Missing inputs propagate to the affected news values and are excluded
+#' from the centering mean. At least two input rows and one non-missing
+#' news-weight pair are needed. A single row or all-missing news raises
+#' \code{hetid_error_insufficient_data}. Invalid maturities, steps, missing
+#' columns, or invalid dates
+#' raise \code{hetid_error_bad_argument}; row or date-length mismatches raise
+#' \code{hetid_error_dimension_mismatch}. Dates cannot be missing or
+#' \code{NULL}, despite the default in the signature. Non-missing yield
+#' magnitudes below one throughout trigger a \code{hetid_warning_unit_scale} warning
+#' about possible decimal units; no automatic unit conversion is performed.
 #'
 #' @note The effective maximum for \code{i} is \code{MAX_MATURITY - step},
 #'   because this function requires data at maturity \code{i + step}.
@@ -31,22 +62,16 @@
 #' @export
 #'
 #' @examples
-#' # Extract ACM data - need maturities i-step, i, i+step (months)
-#' # For i = 60 with the default annual step: 48, 60, 72
+#' # Monthly data and step match the ACM rollover convention
+#' mats <- c(59, 60, 61)
 #' data <- extract_acm_data(
-#'   data_types = c("yields", "term_premia"),
-#'   maturities = c(48, 60, 72)
+#'   data_types = c("yields", "term_premia"), maturities = mats
 #' )
-#' yields <- data[, paste0("y", c(48, 60, 72))]
-#' term_premia <- data[, paste0("tp", c(48, 60, 72))]
-#'
-#' # Compute SDF innovations for i = 60 (dated data frame)
 #' sdf_innovations_60 <- compute_sdf_innovations(
-#'   yields, term_premia,
-#'   i = 60,
-#'   dates = data$date
+#'   data[, paste0("y", mats)], data[, paste0("tp", mats)],
+#'   i = 60, step = 1, dates = data$date
 #' )
-#'
+#' head(sdf_innovations_60)
 compute_sdf_innovations <- function(yields, term_premia, i, dates = NULL,
                                     step = HETID_CONSTANTS$DEFAULT_STEP) {
   prepare_return_data(

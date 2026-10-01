@@ -7,14 +7,15 @@
 harvey_info(theta, y, x_mat)
 }
 \arguments{
-\item{theta}{Numeric coefficient vector of length \code{ncol(x_mat)}}
+\item{theta}{Numeric coefficient vector of length \code{ncol(x_mat)}.}
 
-\item{y}{Numeric nonnegative response}
+\item{y}{Finite nonnegative numeric response vector of length \code{nrow(x_mat)}.}
 
-\item{x_mat}{Numeric design matrix, intercept column included}
+\item{x_mat}{Finite numeric design matrix, intercept column included.}
 }
 \value{
-Numeric \code{ncol(x_mat)} square matrix
+Numeric \code{ncol(x_mat)} square matrix, with row and column names
+inherited from \code{colnames(x_mat)} when present.
 }
 \description{
 \eqn{0.5 X' diag(r) X}, the Hessian of

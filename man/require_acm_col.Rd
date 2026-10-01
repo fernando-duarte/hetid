@@ -7,19 +7,20 @@
 require_acm_col(data, data_type, maturity)
 }
 \arguments{
-\item{data}{ACM data frame or matrix}
+\item{data}{An ACM data frame or matrix.}
 
-\item{data_type}{Schema key: \code{"yields"}, \code{"term_premia"},
-or \code{"risk_neutral_yields"}}
+\item{data_type}{A character string: \code{"yields"}, \code{"term_premia"},
+or \code{"risk_neutral_yields"}.}
 
-\item{maturity}{Maturity index (single value)}
+\item{maturity}{A single integer or integer-valued numeric maturity in months.}
 }
 \value{
-The requested column vector (see \code{\link{require_column}})
+The requested column, with values and extraction attributes as described
+in \code{\link{require_column}}. An invalid schema key or missing column
+signals a \code{hetid_error_bad_argument}.
 }
 \description{
-Thin wrapper for the repeated \code{require_column(data,
-acm_column_name(data_type, maturity), data_type)} fetch idiom in the
-news-kernel and SDF chain.
+Retrieves a reshaped ACM column using its data type and maturity, without
+altering its observations.
 }
 \keyword{internal}

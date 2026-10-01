@@ -2,11 +2,11 @@
 % Please edit documentation in R/identified_set_search.R
 \name{identified_set_search}
 \alias{identified_set_search}
-\title{Frame, Growth Loop and Recession Bounds for the Box Search}
+\title{Frame and Growth Loop for the Box Search}
 \description{
-Internals of \code{compute_identified_set_box()}: the search frame in
-which the set is locally a cube, the extent-doubling loop over that
-frame, and the recession bounds that turn a witnessed unbounded
-direction into infinite coordinates.
+Search-frame construction and the extent-doubling loop used by
+\code{\link{compute_identified_set_box}} and
+\code{\link{compute_linear_functional_bounds}}. The frame rescales a
+local slab approximation; the loop accumulates bounds across windows.
 }
 \keyword{internal}

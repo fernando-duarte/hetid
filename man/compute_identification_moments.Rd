@@ -8,19 +8,22 @@ compute_identification_moments(w1, w2, pcs, maturities = NULL)
 }
 \arguments{
 \item{w1}{Numeric vector of \eqn{\omega_1} residuals from
-\code{\link{compute_w1_residuals}()}}
+\code{\link{compute_w1_residuals}()}, with at least two observations.}
 
-\item{w2}{Matrix of \eqn{\omega_2} residuals (T x I) from
-\code{\link{compute_w2_residuals}()}}
+\item{w2}{Numeric matrix or data frame of \eqn{\omega_2} residuals
+(T x I) from \code{\link{compute_w2_residuals}()}, with at least one
+column and the same number of observations as \code{w1}.}
 
-\item{pcs}{Matrix of instruments (T x J): any numeric matrix of
-exogenous time-series instruments. In the VFCI application these
-are principal components of asset returns. Column names label
-the instrument axis of the moments (falling back to pc1..pcJ).}
+\item{pcs}{Numeric matrix or data frame of exogenous time-series
+instruments (T x J), with at least one column and the same number
+of observations as \code{w1}. In the VFCI application these are
+principal components of nominal financial asset returns. Column names
+label the instrument axis (falling back to \code{pc1}, ..., \code{pcJ}).}
 
-\item{maturities}{Integer vector of w2 column indices whose moment
-conditions are computed (the constraint axis). Default is all
-columns of w2.}
+\item{maturities}{Nonempty numeric vector of distinct integer-valued
+\code{w2} column indices in \code{1:ncol(w2)} whose moment conditions
+are computed (the constraint axis). \code{NULL}, the default, selects
+all columns of \code{w2}. The supplied order is preserved.}
 }
 \value{
 An object of class \code{hetid_moments}: a list with elements
@@ -28,6 +31,20 @@ An object of class \code{hetid_moments}: a list with elements
 \code{p_i_0}, \code{s_i_1}, \code{s_i_2} and attributes
 \code{maturities}, \code{n_components}, \code{n_obs},
 \code{n_instruments}.
+With M the number of selected columns, \code{I = ncol(w2)}, and
+\code{J = ncol(pcs)}, the elements are:
+\describe{
+\item{\code{s_i_0}, \code{sigma_i_sq}}{Numeric vectors of length M.}
+\item{\code{r_i_0}, \code{p_i_0}}{J x M numeric matrices.}
+\item{\code{r_i_1}}{A list of M numeric J x I matrices.}
+\item{\code{s_i_1}}{A list of M numeric vectors of length I.}
+\item{\code{s_i_2}}{A list of M numeric I x I covariance matrices.}
+}
+Constraint-axis names are \code{maturity_N} in the order of
+\code{maturities}; inner theta-axis names cover all \code{w2} columns.
+The attributes record selected indices, full theta dimension, observation
+count, and instrument count, respectively. Degenerate inputs can return
+zero moments with a warning; no positive-variance guarantee is made.
 }
 \description{
 Computes all seven statistical moments needed for the identified set
@@ -38,6 +55,20 @@ entry point of the identification chain; pass the result to
 \code{\link{compute_identified_set_components}}.
 }
 \details{
+\code{w1}, \code{w2}, and \code{pcs} must contain finite numeric values;
+missing values are rejected
+rather than removed. Align observations by date before calling: this function
+does not match dates or reorder rows. Data frames are coerced to matrices.
+
+All seven moments are centered sample covariances or variances with
+\eqn{1/T} normalization. See \code{\link{compute_scalar_statistics}},
+\code{\link{compute_vector_statistics}}, and
+\code{\link{compute_matrix_statistics}} for their formulas.
+The variance-positivity diagnostic emits a
+\code{hetid_warning_degenerate_variance} when identification variances are
+numerically degenerate. Invalid inputs raise structured \code{hetid_error}
+conditions.
+
 Direct callers are responsible for supplying unique instrument column
 names; the validated front door for constructing instrument matrices
 is \code{\link{build_instrument_matrix}()}.
@@ -66,26 +97,39 @@ Per-maturity outputs are named \code{maturity_N} where N is
 the w2 column index, with element k corresponding to
 \code{maturities[k]}. Inner theta-axis dimensions (each \code{r_i_1}
 matrix, \code{s_i_1} vector, and \code{s_i_2} matrix) are always full
-\code{n_components}-sized. Downstream functions accept only validated
-containers and resolve positions internally, so cross-object maturity
-misalignment cannot occur.
+\code{n_components}-sized. \code{compute_identification_moments()} validates
+moment shapes. Downstream functions check relevant dimensions and use the recorded
+indices; they trust that validation and do not verify common data provenance.
+Callers must supply moments, gamma, and tau from the same system.
 }
 
 \examples{
-set.seed(42)
-n_obs <- 100
-w1 <- rnorm(n_obs)
-w2 <- matrix(rnorm(n_obs * 4), nrow = n_obs, ncol = 4)
-pcs <- matrix(rnorm(n_obs * 3), nrow = n_obs, ncol = 3)
+local({
+  old_seed <- if (exists(".Random.seed", envir = .GlobalEnv, inherits = FALSE)) {
+    get(".Random.seed", envir = .GlobalEnv)
+  } else {
+    NULL
+  }
+  on.exit(if (is.null(old_seed)) {
+    rm(".Random.seed", envir = .GlobalEnv)
+  } else {
+    assign(".Random.seed", old_seed, envir = .GlobalEnv)
+  })
+  set.seed(42)
+  n_obs <- 100
+  w1 <- rnorm(n_obs)
+  w2 <- matrix(rnorm(n_obs * 2), nrow = n_obs, ncol = 2)
+  pcs <- matrix(rnorm(n_obs * 2), nrow = n_obs, ncol = 2)
 
-moments <- compute_identification_moments(w1, w2, pcs)
-moments
+  moments <- compute_identification_moments(w1, w2, pcs)
+  print(moments)
 
-subset_moments <- compute_identification_moments(
-  w1, w2, pcs,
-  maturities = c(2, 4)
-)
-names(subset_moments$s_i_0)
+  subset_moments <- compute_identification_moments(
+    w1, w2, pcs,
+    maturities = 2
+  )
+  names(subset_moments$s_i_0)
+})
 }
 \seealso{
 \code{\link{build_instrument_matrix}} for constructing

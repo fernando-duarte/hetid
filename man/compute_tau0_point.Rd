@@ -8,9 +8,11 @@ compute_tau0_point(components, tol = HETID_CONSTANTS$TAU0_POINT_TOLERANCE)
 }
 \arguments{
 \item{components}{A \code{hetid_components} object from
-\code{\link{compute_identified_set_components}}.}
+\code{\link{compute_identified_set_components}}.
+Values in \code{Q_i} and \code{L_i} must be finite; missing values
+are rejected rather than omitted.}
 
-\item{tol}{Positive numeric scalar, the rank and residual tolerance
+\item{tol}{Positive finite numeric scalar, the rank and residual tolerance
 (default \code{HETID_CONSTANTS$TAU0_POINT_TOLERANCE}).
 Passed to \code{\link[base]{qr}} and \code{\link[base]{qr.solve}} for
 the rank check and solve, and scales the residual-consistency gate.}
@@ -18,11 +20,12 @@ the rank check and solve, and scales the residual-consistency gate.}
 \value{
 A list, or \code{NULL} when the stacked system has no unique
 consistent point solution (under-determined, rank-deficient, or the
-solved \eqn{\theta} does not satisfy the system to within \code{tol}):
+solved \eqn{\theta} is non-finite or fails the scaled residual check
+described in Details):
 \describe{
-\item{theta}{Numeric vector of length \code{n_components}: the
+\item{theta}{Unnamed numeric vector of length \code{n_components}: the
 solved point \eqn{\theta}.}
-\item{cond}{Numeric scalar: the condition number of the stacked
+\item{cond}{Numeric scalar: the estimated 2-norm condition number of the stacked
 \eqn{Q} matrix (\code{\link[base]{kappa}}), a diagnostic for how
 sensitive \code{theta} is to perturbations in \code{Q} or \code{L}.}
 }
@@ -41,18 +44,42 @@ into \eqn{L} gives:
 \deqn{Q \theta = L}
 solved by \code{\link[base]{qr.solve}} when \eqn{Q} is square
 (\code{nrow(Q) == n_components}) and full rank.
+Maturities are system-column indices;
+the number of active constraints cannot exceed \code{n_components}.
+A point is returned only if its largest absolute residual is at most
+\code{tol * max(1, max(abs(L)))}.
+
+Invalid component classes, names, or dimensions raise structured
+\code{hetid_error} conditions. Non-finite \code{Q_i} or \code{L_i}
+values and invalid \code{tol} raise \code{hetid_error_bad_argument}
+conditions rather than returning \code{NULL}.
 }
 \examples{
-set.seed(42)
-n_obs <- 100
-J <- 3
-I <- 3
-w1 <- rnorm(n_obs)
-w2 <- matrix(rnorm(n_obs * I), nrow = n_obs, ncol = I)
-pcs <- matrix(rnorm(n_obs * J), nrow = n_obs, ncol = J)
-gamma <- matrix(rnorm(J * I), nrow = J, ncol = I)
+local({
+  old_seed <- if (exists(".Random.seed", envir = .GlobalEnv, inherits = FALSE)) {
+    get(".Random.seed", envir = .GlobalEnv)
+  } else {
+    NULL
+  }
+  on.exit({
+    if (is.null(old_seed)) {
+      rm(".Random.seed", envir = .GlobalEnv)
+    } else {
+      assign(".Random.seed", old_seed, envir = .GlobalEnv)
+    }
+  })
+  set.seed(42)
+  n_obs <- 100
+  J <- 2
+  I <- 2
+  w1 <- rnorm(n_obs)
+  w2 <- matrix(rnorm(n_obs * I), nrow = n_obs, ncol = I)
+  pcs <- matrix(rnorm(n_obs * J), nrow = n_obs, ncol = J)
+  gamma <- matrix(rnorm(J * I), nrow = J, ncol = I)
 
-moments <- compute_identification_moments(w1, w2, pcs)
-components <- compute_identified_set_components(gamma, moments)
-point <- compute_tau0_point(components)
+  moments <- compute_identification_moments(w1, w2, pcs)
+  components <- compute_identified_set_components(gamma, moments)
+  point <- compute_tau0_point(components)
+  print(point)
+})
 }

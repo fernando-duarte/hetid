@@ -7,21 +7,24 @@
 harvey_eval(theta, y, x_mat, pos, col_abs)
 }
 \arguments{
-\item{theta}{Numeric coefficient vector of length \code{ncol(x_mat)}}
+\item{theta}{Numeric coefficient vector of length \code{ncol(x_mat)}.}
 
-\item{y}{Numeric nonnegative response}
+\item{y}{Finite nonnegative numeric response vector of length \code{nrow(x_mat)}.}
 
-\item{x_mat}{Numeric design matrix, intercept column included}
+\item{x_mat}{Finite numeric design matrix, intercept column included.}
 
-\item{pos}{Logical vector marking the positive-response rows}
+\item{pos}{Logical vector \code{y > 0} of length \code{length(y)}.}
 
 \item{col_abs}{Numeric vector \code{colSums(abs(x_mat))}, the per-coordinate
-scale the moment is judged on}
+scale the moment is judged on. Each entry must be positive.}
 }
 \value{
-\code{NULL} when the point is unusable, otherwise a list with
-\code{theta}, \code{eta}, \code{r}, \code{q} (the criterion),
-\code{moment} (\eqn{X'(r - 1)}), and \code{score_norm}
+\code{NULL} for non-finite coefficients or linear predictors,
+overflowing fitted variances, non-finite ratios, criterion, or scaled
+score. Otherwise, a list with coefficient vector \code{theta},
+observation-length vectors \code{eta} and \code{r}, scalar criterion
+\code{q}, coefficient-length vector \code{moment} (\eqn{X'(r - 1)}), and
+scalar \code{score_norm} (\code{max(abs(moment) / col_abs)}).
 }
 \description{
 The single gate every start, line-search trial, and accepted point passes

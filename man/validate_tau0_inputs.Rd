@@ -2,37 +2,61 @@
 % Please edit documentation in R/validate_tau0_inputs.R
 \name{validate_tau0_inputs}
 \alias{validate_tau0_inputs}
-\title{Validate compute_tau0_system Inputs}
+\title{Validate Tau = 0 System Inputs}
 \usage{
 validate_tau0_inputs(y1, y2, x, z, gamma, impose_null, tol)
 }
 \arguments{
-\item{y1}{Numeric vector, the mean-equation outcome}
+\item{y1}{Numeric vector containing the mean-equation outcome.}
 
-\item{y2}{Numeric matrix or vector, the news/innovation variables}
+\item{y2}{Numeric matrix or data frame containing the news/innovation
+variables, with unique, non-empty, non-missing column names.}
 
-\item{x}{Numeric matrix or vector, the common conditioning regressors}
+\item{x}{Numeric matrix, vector, or data frame containing the common
+conditioning regressors.}
 
-\item{z}{Numeric matrix or vector, the instrument(s)}
+\item{z}{Numeric matrix, vector, or data frame containing the instruments.
+Absent column names are assigned as \code{z1}, \code{z2}, and so on;
+supplied names must be unique, non-empty, and non-missing.}
 
-\item{gamma}{NULL or a numeric matrix; see
-\code{\link{compute_tau0_system}} for the defaulting rule}
+\item{gamma}{A numeric \code{ncol(z) x ncol(y2)} matrix of instrument
+weights, or \code{NULL} to use unit weights when \code{z} has one column.
+Weights must be supplied for multiple instruments. If dimnames are
+present, both axes must match \code{colnames(z)} and
+\code{colnames(y2)} exactly, after instrument names are assigned.}
 
-\item{impose_null}{Logical flag}
+\item{impose_null}{Logical scalar, either \code{TRUE} or \code{FALSE}.
+Validated here; the reduced-form restriction is applied by the caller.}
 
-\item{tol}{Positive numeric scalar}
+\item{tol}{Positive, finite numeric scalar for the point-solve tolerance.}
 }
 \value{
-\code{list(y1, y2, x, z, gamma, n_obs)}: \code{y2}/\code{x}/\code{z}
-coerced to matrices, \code{z} de-meaned with normalized column names,
-\code{gamma} resolved to a \code{ncol(z) x ncol(y2)} matrix
+A named list containing the prepared inputs:
+\describe{
+\item{y1}{The unchanged outcome vector.}
+\item{y2, x}{The news/innovation and conditioning-regressor matrices.}
+\item{z}{The de-meaned instrument matrix with validated column names.}
+\item{gamma}{The supplied weight matrix, or an unnamed one-row matrix
+of unit weights with one column per news/innovation variable.}
+\item{n_obs}{The number of observations, \code{length(y1)}.}
+}
+Validation failures signal structured \code{hetid_error} conditions.
 }
 \description{
-Internal validator for the tau = 0 mean-equation orchestrator: checks
-shape and finiteness of every input, applies the axis-name contract to
-\code{z} and \code{y2}, resolves \code{gamma}, and de-means \code{z}.
-Never restates the \code{x} contract (no intercept column, no column
-named "y") documented on \code{\link{compute_tau0_system}}: those are
-caught for free downstream by \code{\link{run_pc_regression}}.
+Checks and prepares inputs for \code{\link{compute_tau0_system}}:
+validates the observation arrays, column names, flag, and tolerance,
+resolves the instrument weights, and de-means the instruments.
+}
+\details{
+The observation arrays must contain only finite numeric values; missing
+rows are rejected rather than omitted. Each of \code{y2}, \code{x}, and
+\code{z} must have at least one column and \code{length(y1)} rows. At least
+\code{min_obs_for_pc_regression(ncol(x))} observations are required.
+
+The \code{x} contract (no intercept column and no column named "y")
+described in \code{\link{compute_tau0_system}} is enforced downstream
+by \code{\link{run_pc_regression}}. Finiteness of supplied \code{gamma}
+values is checked downstream by
+\code{\link{compute_identified_set_components}}.
 }
 \keyword{internal}

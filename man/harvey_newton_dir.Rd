@@ -11,18 +11,19 @@ harvey_newton_dir(cur, x_mat, control = log_variance_fit_control("harvey"))
 
 \item{x_mat}{Numeric design matrix, intercept column included.}
 
-\item{control}{Validated fitting controls.}
+\item{control}{Validated named list of Harvey fitting controls; defaults
+derive from \code{\link{LOG_VARIANCE_HARVEY_CONTROL}}.}
 }
 \value{
-Numeric direction vector, or \code{NULL}
+Numeric vector of length \code{ncol(x_mat)}, or \code{NULL} on rejection.
 }
 \description{
 \eqn{(X' diag(r) X)^{-1} X'(r - 1)} when the observed information is well
 conditioned, else \code{NULL} so the caller falls back to the
-constant-information Fisher direction. Newton converges quadratically near
-the solution; Fisher (the always positive definite \eqn{0.5 X'X}) is the
-globally safe direction far from it. Expected-information scoring alone is
-only linearly convergent and crawls on heavy-tailed responses, which is why
-the hybrid exists.
+constant-information Fisher direction. The expected information
+\eqn{0.5 X'X} is positive definite for the validated full-rank design.
+Non-finite entries, nonpositive diagonal entries, a normalized reciprocal
+condition number below \code{NEWTON_RCOND_TOLERANCE}, or a failed Cholesky
+factorization reject the observed-Newton direction.
 }
 \keyword{internal}

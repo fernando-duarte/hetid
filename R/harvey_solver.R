@@ -4,9 +4,7 @@
 #' multiplicative-heteroskedasticity log-variance solve: the zero-safe ratio
 #' \eqn{r = y / \exp(X\theta)}, the observed information, the guarded
 #' single-point evaluation every step is judged on, and the Cholesky
-#' triangular solve behind the Fisher direction. Ported from the paper
-#' pipeline (\code{scripts-paper/log_variance/estimators/harvey/likelihood.R}
-#' and \code{.../solver_primitives.R}). No clamping, no epsilon added to
+#' triangular solve behind the Fisher direction. No clamping, no epsilon added to
 #' \code{y}, no \eqn{\eta} capping: a non-finite quantity is a hard trial
 #' failure for the caller to reject, never a value this layer silences.
 #'
@@ -19,16 +17,16 @@ NULL
 #' The evaluation order is contractual: form \eqn{\eta}, mark the positive
 #' rows, seed \code{r} with zeros, and only then fill the positive rows on the
 #' log scale. A zero response row stays an exact zero without ever forming
-#' \code{0 * Inf}, and a non-finite positive row is left as it is (\code{Inf},
-#' never \code{NaN}) for the caller to treat as a failed trial. \code{y} is not
+#' \code{0 * Inf}. With finite \eqn{\eta}, overflow on a positive row gives
+#' \code{Inf}, not \code{NaN}, for the caller to treat as a failed trial. \code{y} is not
 #' re-validated here: the exported boundary \code{\link{fit_log_variance}}
 #' already required it finite and nonnegative.
 #'
-#' @param theta Numeric coefficient vector of length \code{ncol(x_mat)}
-#' @param y Numeric nonnegative response
-#' @param x_mat Numeric design matrix, intercept column included
+#' @param theta Numeric coefficient vector of length \code{ncol(x_mat)}.
+#' @param y Finite nonnegative numeric response vector of length \code{nrow(x_mat)}.
+#' @param x_mat Finite numeric design matrix, intercept column included.
 #'
-#' @return Numeric vector of length \code{length(y)}
+#' @return Numeric vector of length \code{length(y)}, with exact zeros where \code{y == 0}.
 #' @keywords internal
 harvey_ratio <- function(theta, y, x_mat) {
   eta <- drop(x_mat %*% theta)
@@ -46,7 +44,8 @@ harvey_ratio <- function(theta, y, x_mat) {
 #'
 #' @inheritParams harvey_ratio
 #'
-#' @return Numeric \code{ncol(x_mat)} square matrix
+#' @return Numeric \code{ncol(x_mat)} square matrix, with row and column names
+#'   inherited from \code{colnames(x_mat)} when present.
 #' @keywords internal
 harvey_info <- function(theta, y, x_mat) {
   0.5 * crossprod(x_mat, harvey_ratio(theta, y, x_mat) * x_mat)
@@ -61,13 +60,16 @@ harvey_info <- function(theta, y, x_mat) {
 #' variance that large is a runaway trial, not a solution.
 #'
 #' @inheritParams harvey_ratio
-#' @param pos Logical vector marking the positive-response rows
+#' @param pos Logical vector \code{y > 0} of length \code{length(y)}.
 #' @param col_abs Numeric vector \code{colSums(abs(x_mat))}, the per-coordinate
-#'   scale the moment is judged on
+#'   scale the moment is judged on. Each entry must be positive.
 #'
-#' @return \code{NULL} when the point is unusable, otherwise a list with
-#'   \code{theta}, \code{eta}, \code{r}, \code{q} (the criterion),
-#'   \code{moment} (\eqn{X'(r - 1)}), and \code{score_norm}
+#' @return \code{NULL} for non-finite coefficients or linear predictors,
+#'   overflowing fitted variances, non-finite ratios, criterion, or scaled
+#'   score. Otherwise, a list with coefficient vector \code{theta},
+#'   observation-length vectors \code{eta} and \code{r}, scalar criterion
+#'   \code{q}, coefficient-length vector \code{moment} (\eqn{X'(r - 1)}), and
+#'   scalar \code{score_norm} (\code{max(abs(moment) / col_abs)}).
 #' @keywords internal
 harvey_eval <- function(theta, y, x_mat, pos, col_abs) {
   if (!all(is.finite(theta))) {
@@ -99,10 +101,13 @@ harvey_eval <- function(theta, y, x_mat, pos, col_abs) {
 #' matrix; the forward and back substitutions return that matrix's solve
 #' applied to \code{m}, without ever forming an explicit inverse.
 #'
-#' @param chol_xx Upper triangular Cholesky factor
-#' @param m Numeric vector or matrix to solve against
+#' @param chol_xx Numeric square upper triangular Cholesky factor of a
+#'   positive definite matrix.
+#' @param m Numeric vector of length \code{nrow(chol_xx)}, or numeric matrix
+#'   with that many rows, giving the right-hand side.
 #'
-#' @return The solve of the factored matrix applied to \code{m}
+#' @return Numeric vector or matrix with the same dimensions as \code{m},
+#'   solving the system whose matrix is \code{crossprod(chol_xx)}.
 #' @keywords internal
 harvey_chol_solve <- function(chol_xx, m) {
   backsolve(

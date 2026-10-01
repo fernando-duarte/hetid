@@ -17,63 +17,72 @@ compute_w1_residuals(
 \code{HETID_CONSTANTS$MAX_N_PCS}). Default is
 \code{HETID_CONSTANTS$DEFAULT_N_PCS}.}
 
-\item{data}{Optional data frame containing the variables. If NULL,
-loads from package data. A \code{date} column (period-end \code{Date}) is
-always required: the residual series carries its realization dates in both
-return shapes.}
+\item{data}{Optional data frame in chronological order, with a non-missing
+period-end \code{Date} column \code{date}, numeric consumption growth in
+\code{HETID_CONSTANTS$CONSUMPTION_GROWTH_COL}, and numeric \code{pc1} through
+\code{pc<n_pcs>} columns unless \code{exog} is supplied. The default
+\code{NULL} loads bundled data and normalizes its dates to quarter ends.}
 
-\item{return_df}{Logical, if TRUE returns a tidy data frame (default FALSE
-returns the richer list). Both shapes carry dates.}
+\item{return_df}{Logical scalar; \code{TRUE} returns a data frame, while
+the default \code{FALSE} returns a list. Both shapes carry dates.}
 
-\item{exog}{Optional T x K numeric matrix of exogenous regressors
-that replaces the bundled PC columns in the first-stage
-regression. Cannot be combined with an explicit \code{n_pcs}.}
+\item{exog}{Optional finite numeric \eqn{T \times K} matrix or data frame with
+\eqn{K \ge 1}, replacing the PCs. Rows must match \code{data} in order.
+The default \code{NULL} uses PCs. Cannot be combined with explicit \code{n_pcs}.}
 
-\item{y1_lags}{Integer number of own-lags \eqn{H} of the outcome to include
+\item{y1_lags}{Non-negative integer number of own-lags \eqn{H} to include
 as predetermined regressors \eqn{Y_{1,t+1-h}}, \eqn{h = 1, \ldots, H}
 (default 0 = none). Lagging drops the first \eqn{H - 1} leading rows; the
 lag columns are appended to the PC (or \code{exog}) regressors.}
 }
 \value{
-If return_df = FALSE, returns a list containing:
+If \code{return_df = FALSE}, a list containing:
 \describe{
-\item{residuals}{Numeric vector of residuals \eqn{\omega_{1,t+1}}}
-\item{fitted}{Numeric vector of fitted values}
-\item{coefficients}{Regression coefficients}
-\item{r_squared}{R-squared of the regression}
+\item{residuals}{Numeric vector of residuals \eqn{\omega_{1,t+1}}.}
+\item{fitted}{Numeric vector of fitted values in the outcome's units.}
+\item{coefficients}{Named regression coefficients, including the intercept.}
+\item{r_squared}{Numeric scalar R-squared of the regression.}
 \item{dates}{Date vector of the t+1 realization dates of the residuals
-\eqn{\omega_{1,t+1}} (the lead dates subset by the complete-case filter)}
-\item{kept_idx}{Integer indices (into the lagged/leading rows) of the
-observations retained by the regression's complete-case filter; used
-downstream to assert that \eqn{Y_1} and \eqn{Y_2} are fit on the same
-sample}
-\item{model}{The lm object from the regression}
+\eqn{\omega_{1,t+1}} (lead dates subset by the complete-case filter).}
+\item{kept_idx}{Logical vector of length \code{nrow(data) - 1}; \code{TRUE}
+marks retained predictor/next-outcome pairs. Used downstream to check
+that \eqn{Y_1} and \eqn{Y_2} are fit on the same sample.}
+\item{model}{The \code{lm} object from the regression.}
 }
-If return_df = TRUE, returns a data frame with columns:
+If \code{return_df = TRUE}, a data frame with one row per retained pair and columns:
 \describe{
-\item{date}{Date column}
-\item{residuals}{Residuals \eqn{\omega_{1,t+1}}}
-\item{fitted}{Fitted values from the regression}
+\item{date}{Date column of outcome realization dates.}
+\item{residuals}{Numeric residuals \eqn{\omega_{1,t+1}} in the outcome's units.}
+\item{fitted}{Numeric fitted values in the outcome's units.}
 }
 }
 \description{
 Computes the residual \eqn{\omega_{1,t+1}} from regressing consumption growth
-(\eqn{Y_{1,t+1}})
-on principal components extracted from financial asset returns (PC_t) and a constant.
+(\eqn{Y_{1,t+1}}) on principal components of nominal financial asset returns
+(\eqn{PC_t}) and a constant, optionally including own-lags of the outcome.
 }
 \details{
-The function performs the regression:
+With no own-lags and the default PC regressors, the regression is:
 \deqn{Y_{1,t+1} = \alpha + \beta^{\top} PC_t + \omega_{1,t+1}}
 
-where \eqn{Y_{1,t+1}} is consumption growth and PC_t are the first n_pcs
-principal components extracted from financial asset returns (pc1, ..., pc6).
+where \eqn{Y_{1,t+1}} is consumption growth and \eqn{PC_t} contains the first
+\code{n_pcs} principal components of nominal financial asset returns.
 
 When \code{exog} is supplied, its columns replace the PCs as
 regressors under the same one-period lag convention: row t of
 \code{exog} is paired with consumption growth at t+1.
+
+Rows are paired by position; supplied dates are neither sorted nor normalized.
+Missing outcomes, PCs, or own-lags remove the affected pairs by complete cases;
+\code{exog} must contain no missing or infinite values. Other numeric inputs
+must be finite apart from missing values. The regression needs at least
+\code{n_reg + 2} complete pairs, where \code{n_reg} counts PCs or exogenous
+columns plus own-lags. Too few pairs or collinear regressors raise a
+\code{hetid_error}; invalid arguments and dimensions have specific subclasses.
+Loading bundled data emits an informational message. No growth rescaling is applied.
 }
 \examples{
-# Compute residuals using 4 PCs (default)
+# Bundled data use quarter-end realization dates
 res_y1 <- compute_w1_residuals()
 
 # Use only first 2 PCs
@@ -82,10 +91,11 @@ res_y1_2pc <- compute_w1_residuals(n_pcs = 2)
 # Include one own-lag of the outcome as a predetermined regressor
 res_y1_lag <- compute_w1_residuals(y1_lags = 1L)
 
-# Replace the PCs with custom exogenous regressors (not combined with n_pcs)
+# Custom data and regressors must share the same dated rows
 data("variables", package = "hetid")
+variables$date <- to_period_end(variables$date, "quarterly")
 exog <- as.matrix(variables[, c("pc1", "pc2", "pc3")])
-res_y1_exog <- compute_w1_residuals(exog = exog)
+res_y1_exog <- compute_w1_residuals(data = variables, exog = exog)
 
 # Get results as data frame
 res_y1_df <- compute_w1_residuals(n_pcs = 4, return_df = TRUE)

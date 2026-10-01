@@ -16,40 +16,64 @@ compute_quadratic_set_evidence(
 \arguments{
 \item{quadratic}{List containing nonempty parallel lists \code{A_i}, \code{b_i} and a
 numeric vector \code{c_i}, representing \verb{x' A_i x + b_i' x + c_i <= 0}.
-Matrices must be finite and symmetric and share one positive dimension.}
+Matrices must be finite, real, exactly symmetric and share one positive
+dimension. Each \code{b_i} vector has that dimension; \code{c_i} has one
+entry per constraint. All coefficients must be finite and real.}
 
 \item{objectives}{Finite numeric matrix, with one objective loading per column
-and one row per coordinate. Only exactly zero loadings denote constants.}
+and one row per coordinate. At least one column is required. Only exactly
+zero loadings denote constants.}
 
 \item{points}{Optional finite numeric matrix of candidate points, one per row.
+It has one column per coordinate; \code{NULL} supplies no user candidates.
 Nonzero points are also tried as direction candidates.}
 
 \item{directions}{Optional finite numeric matrix of candidate directions,
-one per row. These are checked independently before accepting any evidence.}
+one per row and one column per coordinate. \code{NULL} supplies no user
+candidates. These are checked independently before accepting any evidence.}
 
-\item{n_dir}{Number of additional sampled directions; zero disables sampling.}
+\item{n_dir}{Nonnegative integer number of additional sampled directions;
+zero disables sampling. Defaults to \code{IDENTIFIED_SET_CONTROL$N_DIR}.}
 
-\item{maxit}{Iteration budget for multivariate candidate searches; zero
-disables deterministic optimization. Scalar weight searches use a fixed
-tolerance. Search exhaustion never proves boundedness.}
+\item{maxit}{Nonnegative integer iteration budget for multivariate candidate
+searches; zero disables deterministic optimization. Scalar weight searches
+use a fixed tolerance. Defaults to \code{HETID_CONSTANTS$QUADRATIC_EVIDENCE_MAXIT}.
+Search exhaustion never proves boundedness.}
 }
 \value{
-A list with \code{summary} (one row per objective, with lower and upper
-states \code{bounded}, \code{unbounded} or \code{unresolved}, and an
-exact-constant flag), \code{nonempty}, \code{boundedness}, \code{directional},
-\code{strict_direction}, \code{tails}, and \code{feasible_points}. The
-\code{check_point} closure uses the same strict membership
-check as finite nonemptiness witnesses. It returns false for unresolved
-membership and uses no optimizer feasibility tolerance. The
+A list with \code{summary}, a data frame with columns \code{objective},
+\code{lower_state}, \code{upper_state}, and \code{constant}, one row per
+objective. States are \code{bounded}, \code{unbounded}, or \code{unresolved}.
+Objective names use column names, replacing missing or empty names by
+\code{objective_j} for column \code{j} and making duplicates unique.
+\code{nonempty} is a logical flag for verified nonemptiness; \code{FALSE}
+does not prove emptiness. \code{boundedness} is a positive definite
+combination certificate or \code{NULL}; \code{directional} is a list of
+directional bound certificates; \code{strict_direction} is a verified
+strict negative-curvature direction or \code{NULL}. \code{tails} is an
+objective-named list of tail evidence. \code{feasible_points} is a matrix
+of verified points, one per row, possibly with zero rows.
+The \code{check_point(point)} closure accepts a finite real numeric vector
+with one entry per coordinate and returns a logical scalar. It uses the
+same strict membership check as finite nonemptiness witnesses. It returns
+false for unresolved membership or invalid points and uses no optimizer
+feasibility tolerance. The
 \code{outer_bounds} closure,
-\code{outer_bounds(objectives, refine = TRUE, pool = NULL)}, returns
-numerical lower and upper bounds that contain the set for every objective
-column, from a checked positive definite combination of the constraints.
+\code{outer_bounds(objectives, refine = TRUE, pool = NULL)}, accepts an
+objective matrix with the same coordinate dimension and returns a data
+frame with \code{lower} and \code{upper}, one row per objective column.
+These numerical bounds contain the set and use checked positive definite
+combinations of the constraints. Set \code{refine = FALSE} to use only
+the common certificate and supplied candidate pool without further searches.
 Bounds are \code{NA} when no combination is verified, and exact zero loadings
 give exact zeros. These bounds need not be attained. Pass the returned
 \code{pool} attribute back to reuse candidate weights across calls. Every weight
 vector is verified again. Multivariate searches use \code{maxit}; scalar weight
 searches use a fixed tolerance. The search consumes no random numbers.
+Other attributes are \code{sources} (candidate indices for each bound),
+\code{candidates} (numerical certificate diagnostics), \code{empty} (whether
+a verified combination proves emptiness), and \code{reason} (an explanation
+when all nonconstant bounds are unknown, or \code{NULL}).
 }
 \description{
 Search for sufficient evidence about linear objectives over the intersection
@@ -70,6 +94,10 @@ checks use conservative rounding margins; near-zero cancellation and poorly
 conditioned systems can remain unresolved. Finite optimizer output alone
 supplies no boundedness evidence.
 
+Missing or nonfinite numeric entries are rejected rather than omitted.
+Invalid inputs raise structured \code{hetid_error} conditions. Conflicting
+geometry certificates also raise a structured error.
+
 Direction sampling uses the existing fixed-seed search and restores
 \code{.Random.seed}, including its absence. Reproducibility assumes the same
 \code{RNGkind()}. The Box-Muller cached deviate, which is outside
@@ -78,5 +106,15 @@ to avoid RNG use entirely.
 }
 \examples{
 ball <- list(A_i = list(diag(2)), b_i = list(c(0, 0)), c_i = -1)
-compute_quadratic_set_evidence(ball, diag(2), n_dir = 0)$summary
+evidence <- compute_quadratic_set_evidence(ball, diag(2), n_dir = 0)
+evidence$summary
+evidence$check_point(c(0, 0))
+evidence$outer_bounds(diag(2), refine = FALSE)
+
+halfspace <- list(A_i = list(matrix(0, 1, 1)), b_i = list(1), c_i = 0)
+compute_quadratic_set_evidence(
+  halfspace, matrix(1),
+  points = matrix(-1), directions = matrix(-1),
+  n_dir = 0, maxit = 0
+)$summary
 }

@@ -4,9 +4,12 @@
 \alias{hetid_theta_box}
 \title{The hetid_theta_box Container}
 \description{
-Constructor for the identified-set box at a slack
-\eqn{\tau}. The box carries the reduced-form pieces it was built from,
-so a downstream profile cannot be run against a different system by
-accident.
+Container for identified-set coordinate bounds and structural-coefficient
+bounds at a slack \eqn{\tau}. It retains the reduced-form residuals and
+quadratic constraints used to construct the box.
+}
+\seealso{
+\code{\link{compute_identified_set_box}} for the public constructor
+and the approximation and membership caveats.
 }
 \keyword{internal}

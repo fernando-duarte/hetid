@@ -16,18 +16,23 @@
 #' weights are used, so the nonzero-direction rule lives in one
 #' place.
 #'
-#' @param support List with one integer vector of free instrument
-#'   rows (unique, in \code{1..j_total}, at least one) per
-#'   constrained system column and NULL at unconstrained columns
-#' @param weights List of numeric K_i-column matrices, one per
-#'   constrained column with \code{length(support[[i]])} rows; NULL
-#'   exactly where \code{support} is NULL
-#' @param j_total Total number of instrument columns on the union
-#'   axis (e.g. \code{ncol} of the moments' instrument matrix)
+#' @param support Non-empty list with one numeric vector of unique,
+#'   finite integer row indices in \code{1..j_total} per constrained
+#'   system column and \code{NULL} at unconstrained columns. Each vector
+#'   must have at least one entry, and at least one column must be constrained.
+#' @param weights List of the same length as \code{support}, with one
+#'   finite numeric K_i-column matrix per constrained column, where
+#'   K_i is at least one. Each matrix has \code{length(support[[i]])}
+#'   rows corresponding, in order, to \code{support[[i]]}.
+#'   Entries must be \code{NULL} exactly where
+#'   \code{support} is \code{NULL}; missing and infinite values are rejected.
+#' @param j_total Single positive integer giving the total number of
+#'   instrument columns on the union axis (e.g. \code{ncol} of the
+#'   moments' instrument matrix).
 #'
-#' @return List of length \code{length(support)}: a numeric
-#'   \code{j_total} x K_i matrix at constrained columns, NULL at
-#'   unconstrained columns
+#' @return Unnamed list of length \code{length(support)}: a numeric
+#'   \code{j_total} x K_i matrix at constrained columns, \code{NULL} at
+#'   unconstrained columns. Matrices have no row or column names.
 #'
 #' @template section-general-instruments
 #'
@@ -36,6 +41,10 @@
 #' @examples
 #' support <- list(c(1L, 3L), 2L)
 #' weights <- list(matrix(c(0.6, 0.8), 2, 1), matrix(1, 1, 1))
+#' lambda_from_support(support, weights, j_total = 4)
+#'
+#' support <- list(NULL, c(3L, 1L))
+#' weights <- list(NULL, diag(2))
 #' lambda_from_support(support, weights, j_total = 4)
 lambda_from_support <- function(support, weights, j_total) {
   assert_bad_argument_ok(
@@ -93,11 +102,11 @@ lambda_from_support <- function(support, weights, j_total) {
 
 #' Pad One Compact Weight Matrix onto the Union Axis
 #'
-#' @param w_i Compact weight matrix for component i
-#' @param s_i Integer support rows for component i
-#' @param j_total Union axis length
-#' @param i Component index (for error messages)
-#' @return Numeric \code{j_total} x K_i matrix
+#' @param w_i Compact finite numeric weight matrix for component i.
+#' @param s_i Integer support rows for component i.
+#' @param j_total Union axis length.
+#' @param i Component index (for error messages).
+#' @return Numeric \code{j_total} x K_i matrix without dimension names.
 #' @noRd
 pad_weights_entry <- function(w_i, s_i, j_total, i) {
   assert_bad_argument_ok(

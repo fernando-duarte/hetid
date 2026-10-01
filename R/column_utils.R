@@ -8,8 +8,9 @@ NULL
 
 #' Column Labels of a Matrix or Data Frame
 #'
-#' @param x Matrix or data frame
-#' @return \code{colnames(x)} for a matrix, else \code{names(x)}
+#' @param x A matrix, data frame, or named list.
+#' @return A character vector of column or element names, or \code{NULL}
+#'   when no names are present.
 #' @noRd
 column_labels <- function(x) {
   if (is.matrix(x)) colnames(x) else names(x)
@@ -17,9 +18,10 @@ column_labels <- function(x) {
 
 #' Append an Optional Context Clause to a Message
 #'
-#' @param msg Base message
-#' @param context Optional context string, or \code{NULL}
-#' @return \code{msg} with \code{" in <context>"} appended when context is set
+#' @param msg A character string containing the base message.
+#' @param context An optional character string, or \code{NULL} (the default).
+#' @return A character string with \code{" in <context>"} appended when context
+#'   is supplied; otherwise, \code{msg} unchanged.
 #' @noRd
 with_context <- function(msg, context = NULL) {
   if (!is.null(context)) paste0(msg, " in ", context) else msg
@@ -27,10 +29,14 @@ with_context <- function(msg, context = NULL) {
 
 #' Extract and Validate a Required Column
 #'
-#' @param x Data frame, matrix, or list to extract from
-#' @param col_name Column name to extract
-#' @param context Description for error message
-#' @return The extracted column value (unnamed)
+#' @param x A data frame, matrix, or named list to extract from.
+#' @param col_name A character string naming the required column or element.
+#' @param context An optional character string for the error message;
+#'   \code{NULL} (the default) adds no context.
+#' @return The column or element, with missing values unchanged. Matrix results
+#'   have names removed; data-frame and list elements retain their attributes.
+#'   A missing name signals a \code{hetid_error_bad_argument} with
+#'   \code{arg = col_name}.
 #' @keywords internal
 require_column <- function(x, col_name, context = NULL) {
   has_col <- col_name %in% column_labels(x)
@@ -45,9 +51,11 @@ require_column <- function(x, col_name, context = NULL) {
 #' \code{acm_raw_column_name}; \code{arg} preserves each call site's
 #' condition field (\code{"data_type"} vs \code{"data_types"}).
 #'
-#' @param data_type Candidate schema key
-#' @param arg Condition argument name
-#' @return Invisible TRUE when valid
+#' @param data_type A character string naming a key in \code{HETID_ACM_SCHEMA}.
+#' @param arg A character string naming the condition argument;
+#'   defaults to \code{"data_type"}.
+#' @return Invisible \code{TRUE} for a valid key; otherwise signals a
+#'   \code{hetid_error_bad_argument} with the supplied \code{arg}.
 #' @noRd
 assert_acm_data_type <- function(data_type, arg = "data_type") {
   assert_bad_argument_ok(
@@ -60,16 +68,19 @@ assert_acm_data_type <- function(data_type, arg = "data_type") {
   )
 }
 
-#' Assert Data Types Are Known ACM Schema Keys (vector form)
+#' Assert Data Types Are Known ACM Schema Keys (Vector Form)
 #'
 #' Vector sibling of \code{assert_acm_data_type}: the non-empty
 #' character-vector contract for \code{validate_acm_extract_inputs}.
 #' Shares the schema-key source of truth (\code{names(HETID_ACM_SCHEMA)});
 #' keeps the vector message distinct from the scalar one.
 #'
-#' @param data_types Candidate schema keys (character vector)
-#' @param arg Condition argument name
-#' @return Invisible TRUE when valid
+#' @param data_types A non-empty character vector of distinct schema keys from
+#'   \code{names(HETID_ACM_SCHEMA)}; missing values are not allowed.
+#' @param arg A character string naming the condition argument;
+#'   defaults to \code{"data_types"}.
+#' @return Invisible \code{TRUE} for valid keys; otherwise signals a
+#'   \code{hetid_error_bad_argument} with the supplied \code{arg}.
 #' @noRd
 assert_acm_data_types <- function(data_types, arg = "data_types") {
   assert_bad_argument_ok(
@@ -93,17 +104,23 @@ assert_acm_data_types <- function(data_types, arg = "data_types") {
 
 #' Build an ACM Column Name from the Schema
 #'
-#' Single source of truth for reshaped ACM column names: routes the
-#' prefix through \code{HETID_ACM_SCHEMA} and the format through
-#' \code{HETID_CONSTANTS$COL_FORMAT_SIMPLE} instead of hard-coding
-#' literals like \code{paste0("y", i)} at call sites.
+#' Constructs names for reshaped ACM data, such as \code{"y12"} for a 12-month
+#' yield. Prefixes follow \code{HETID_ACM_SCHEMA}, and maturity formatting follows
+#' \code{HETID_CONSTANTS$COL_FORMAT_SIMPLE}.
 #'
-#' @param data_type Schema key: \code{"yields"}, \code{"term_premia"},
-#'   or \code{"risk_neutral_yields"}
-#' @param maturity Maturity index (or vector of indices)
-#' @return Character vector of column names, e.g. \code{"y60"}
+#' @details Only \code{data_type} is validated. Maturities are formatted directly
+#'   without range or missing-value checks.
+#' @param data_type A character string: \code{"yields"}, \code{"term_premia"},
+#'   or \code{"risk_neutral_yields"}.
+#' @param maturity An integer or integer-valued numeric vector of maturities in months.
+#' @return An unnamed character vector with one column name per maturity, in input
+#'   order, such as \code{"y60"}. Empty input returns \code{character(0)};
+#'   missing maturities produce names ending in \code{"NA"}. An invalid schema
+#'   key signals a \code{hetid_error_bad_argument} with \code{arg = "data_type"}.
 #' @examples
 #' acm_column_name("yields", c(12, 60))
+#' acm_column_name("term_premia", 12)
+#' acm_column_name("risk_neutral_yields", 12)
 #' @export
 acm_column_name <- function(data_type, maturity) {
   assert_acm_data_type(data_type, arg = "data_type")
@@ -116,15 +133,16 @@ acm_column_name <- function(data_type, maturity) {
 
 #' Fetch an ACM Column by Schema Type and Maturity
 #'
-#' Thin wrapper for the repeated \code{require_column(data,
-#' acm_column_name(data_type, maturity), data_type)} fetch idiom in the
-#' news-kernel and SDF chain.
+#' Retrieves a reshaped ACM column using its data type and maturity, without
+#' altering its observations.
 #'
-#' @param data ACM data frame or matrix
-#' @param data_type Schema key: \code{"yields"}, \code{"term_premia"},
-#'   or \code{"risk_neutral_yields"}
-#' @param maturity Maturity index (single value)
-#' @return The requested column vector (see \code{\link{require_column}})
+#' @param data An ACM data frame or matrix.
+#' @param data_type A character string: \code{"yields"}, \code{"term_premia"},
+#'   or \code{"risk_neutral_yields"}.
+#' @param maturity A single integer or integer-valued numeric maturity in months.
+#' @return The requested column, with values and extraction attributes as described
+#'   in \code{\link{require_column}}. An invalid schema key or missing column
+#'   signals a \code{hetid_error_bad_argument}.
 #' @keywords internal
 require_acm_col <- function(data, data_type, maturity) {
   require_column(data, acm_column_name(data_type, maturity), data_type)
@@ -132,9 +150,10 @@ require_acm_col <- function(data, data_type, maturity) {
 
 #' Assert Input Is Tabular
 #'
-#' @param x Object to check
-#' @param name Argument name for error message
-#' @return Invisible TRUE; stops with a structured error otherwise
+#' @param x An object to check; column contents are not inspected.
+#' @param name A character string naming the argument in the error and its \code{arg} field.
+#' @return Invisible \code{TRUE} for a matrix or data frame; otherwise signals a
+#'   \code{hetid_error_bad_argument}.
 #' @keywords internal
 assert_tabular <- function(x, name) {
   assert_bad_argument_ok(
@@ -147,11 +166,14 @@ assert_tabular <- function(x, name) {
 
 #' Assert Required Columns Exist
 #'
-#' @param df Data frame or matrix
-#' @param required_cols Character vector of required column names
-#' @param context Description for error message
-#' @param arg Condition argument name
-#' @return Invisible TRUE; stops with a structured error otherwise
+#' @param df A data frame or matrix; column contents are not inspected.
+#' @param required_cols A character vector of required column names. Empty input
+#'   imposes no requirements; repeated names are checked only once.
+#' @param context An optional character string for the error message;
+#'   \code{NULL} (the default) adds no context.
+#' @param arg A character string naming the condition argument; defaults to \code{"df"}.
+#' @return Invisible \code{TRUE} when all required names exist; otherwise signals
+#'   a \code{hetid_error_bad_argument} listing the missing names.
 #' @keywords internal
 assert_columns_exist <- function(df, required_cols,
                                  context = NULL, arg = "df") {

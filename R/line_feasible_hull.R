@@ -13,20 +13,25 @@
 #' infinite tail. Only an exactly zero leading coefficient is linear.
 #' Roots use scaled, cancellation-resistant arithmetic; an unrepresentable
 #' root signals an error rather than supplying an infinite bound.
+#' Non-finite line coefficients also raise a \code{hetid_error}.
 #'
 #' Isolated feasible points, including convex tangencies, are omitted
 #' because they contain no open cell. Thus this is a hull of the retained
 #' intervals, subject to root rounding, rather than a claim that every
 #' lower-dimensional part of the set is found.
 #'
-#' @param center Numeric length-I point on the line
-#' @param dir Numeric length-I direction, need not be normalised
+#' @param center Finite numeric length-I point on the line, where I is
+#'   the theta-axis dimension.
+#' @param dir Finite numeric length-I direction; need not be normalised.
 #' @param quadratic Quadratic form list with \code{A_i}, \code{b_i},
-#'   \code{c_i}, as returned by \code{build_quadratic_system()}
-#' @return Numeric \code{c(lower, upper)} hull of the feasible set on the
-#'   line, with \code{-Inf} or \code{Inf} only when the polynomial signs
-#'   establish feasibility of that tail,
-#'   or \code{NULL} when no cell is feasible
+#'   \code{c_i}, as in the \code{quadratic} element returned by
+#'   \code{build_quadratic_system()}. Matrices in \code{A_i} must be
+#'   symmetric and dimensions must match \code{center} and \code{dir}.
+#' @return Unnamed numeric vector \code{c(lower, upper)} bounding the
+#'   retained feasible intervals in the line parameter \eqn{t}, with
+#'   \code{-Inf} or \code{Inf} only when the polynomial signs establish
+#'   feasibility of that tail, or \code{NULL} when no cell is feasible.
+#'   The hull may span infeasible gaps between retained intervals.
 #' @noRd
 line_feasible_hull <- function(center, dir, quadratic) {
   coefs <- line_quadratic_coefficients(center, dir, quadratic)
@@ -59,10 +64,14 @@ line_feasible_hull <- function(center, dir, quadratic) {
 #' \gamma}. The cross term uses \eqn{2 \cdot dir' A center}, which is
 #' exact because \code{A_i} is symmetrized when the system is assembled.
 #'
-#' @param center,dir Numeric length-I vectors
-#' @param quadratic Quadratic form list
-#' @return Numeric matrix with one row per constraint and columns
-#'   \code{a}, \code{beta}, \code{gamma}
+#' @param center,dir Finite numeric length-I vectors, where I is the
+#'   theta-axis dimension.
+#' @param quadratic Quadratic form list with symmetric \code{A_i}
+#'   matrices and matching \code{b_i} vectors and \code{c_i} constants.
+#' @return Numeric matrix with one row per constraint, in the order of
+#'   \code{quadratic$c_i}, and three unnamed columns containing \code{a},
+#'   \code{beta}, and \code{gamma}, respectively. No values are removed
+#'   or replaced when arithmetic produces non-finite coefficients.
 #' @noRd
 line_quadratic_coefficients <- function(center, dir, quadratic) {
   n_constraints <- length(quadratic$c_i)

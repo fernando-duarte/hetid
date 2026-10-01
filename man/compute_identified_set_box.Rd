@@ -13,46 +13,50 @@ compute_identified_set_box(
 )
 }
 \arguments{
-\item{fit}{A \code{hetid_tau0_fit} from \code{\link{compute_tau0_system}}}
+\item{fit}{A \code{hetid_tau0_fit} from \code{\link{compute_tau0_system}}.}
 
-\item{tau}{Scalar slack in \code{(0, 1)}. Expanded to one value per
-component internally}
+\item{tau}{Finite numeric scalar slack in \code{(0, 1)}, expanded to
+one value per component internally.}
 
-\item{n_grid}{Odd number of points per gridded coordinate, so the grid
-contains the center; defaults to \code{IDENTIFIED_SET_CONTROL$N_GRID}}
+\item{n_grid}{Odd integer from 3 to \code{.Machine$integer.max}, the
+points per gridded coordinate; the grid contains the center.
+Defaults to \code{IDENTIFIED_SET_CONTROL$N_GRID}.}
 
-\item{center}{Optional numeric length-I center for the search,
-required when the fit carries no \eqn{\tau = 0} point}
+\item{center}{Finite numeric vector of length \code{ncol(fit$w2)},
+strictly inside every constraint. Defaults to \code{fit$point$theta};
+required when the fit carries no \eqn{\tau = 0} point.}
 
-\item{null_loading_rtol}{Scalar in \code{[0, 1)}; defaults to
+\item{null_loading_rtol}{Finite numeric scalar in \code{[0, 1)}; defaults to
 \code{IDENTIFIED_SET_CONTROL$NULL_LOADING_RTOL}. A structural loading
 column with no entry above this fraction of its row's largest loading
-is treated as exactly zero; \code{0} snaps only exact zeros}
+is treated as exactly zero; \code{0} snaps only exact zeros.}
 }
 \value{
 A \code{hetid_theta_box} object:
 \describe{
-\item{bounds}{Data frame with \code{coef}, \code{lower}, \code{upper}}
-\item{arg_lower, arg_upper}{Row k holds the theta that attains the
-bound for coordinate k, \code{NA} where that bound is infinite}
+\item{bounds}{Data frame with \code{coef}, \code{lower}, \code{upper},
+one row per column of \code{fit$w2}, in that order.}
+\item{arg_lower, arg_upper}{Numeric I x I matrices, I = \code{ncol(fit$w2)}.
+Row k attains coordinate k's bound; \code{NA} for an infinite bound.}
 \item{beta1_bounds}{Data frame with \code{coef}, \code{lower},
 \code{upper}, one row per element of \code{fit$beta1r} (the intercept
-and each column of \code{x})}
-\item{beta1_arg_lower, beta1_arg_upper}{Row k holds the theta whose
-image attains that bound exactly, or to rounding for rows flagged
-in \code{null_loading}; \code{NA} where it is infinite}
-\item{w1, w2, quadratic}{The pieces the box was built from, so a
-downstream profile cannot be run against another system}
+and each column of \code{x}), in the order of \code{fit$beta1r}.}
+\item{beta1_arg_lower, beta1_arg_upper}{Numeric p x I matrices, where
+p = \code{length(fit$beta1r)}. Row k holds the theta whose
+image under the map with flagged loadings zeroed attains that bound;
+\code{NA} where the bound is infinite.}
+\item{w1, w2, quadratic}{Retained residuals and constraints used
+by downstream profiling.}
 }
 The attribute \code{null_loading} is a named logical, one entry per
 structural coefficient, TRUE where its loading was treated as zero.
+Attributes also record \code{tau}, \code{n_components}, \code{n_grid},
+and \code{n_obs}. Non-finite numeric arguments are rejected, not omitted.
 }
 \description{
-Computes the coordinate bounds of the identified set for the
-mean-equation news coefficients at a slack \eqn{\tau > 0}, and the
-bounds of the structural coefficients
-\eqn{\beta_1(\theta) = \beta_1^R - (\beta_2^R)'\theta} over the same
-set, from a \code{hetid_tau0_fit}. The set is
+From a \code{hetid_tau0_fit}, bounds the mean-equation news coefficients at
+slack \eqn{\tau > 0} and the structural coefficients
+\eqn{\beta_1(\theta) = \beta_1^R - (\beta_2^R)'\theta} over the same set:
 \eqn{\{\theta : \theta' A_i \theta + b_i'\theta + c_i \le 0\}}, and the
 returned bounds are the extremes of each coordinate, and of each
 structural coefficient, over the part of that set the search reaches.
@@ -71,10 +75,12 @@ coordinates instead loses ill-conditioned sets: when the news columns
 are nearly collinear the set is a thin diagonal tube, and an
 axis-aligned grid can miss it between nodes.
 
-The center is the \eqn{\tau = 0} point, which lies in every
+The default center is the \eqn{\tau = 0} point, which lies in every
 \eqn{\Theta(\tau)} because each constraint relaxes as \eqn{\tau} grows.
 That is a statement about exact arithmetic, so the point is checked
 against the assembled system before it is used rather than assumed.
+The fit must enforce one constraint per news component and have a
+nonsingular stacked \eqn{Q_i} matrix to define the search frame.
 
 The structural block is the affine image of the same set under
 \code{\link{recover_structural_coefficients}}, so its bounds are the
@@ -85,12 +91,12 @@ block is read off the same line hulls. The window grows for the
 coordinates first, along exactly the path they take on their own, and
 only then for the structural coefficients, so the theta block equals a
 coordinates-only search after that first phase and can only widen
-afterwards. A loading column that is zero up to rounding, with no entry
+afterwards. A loading column with no entry
 above \code{null_loading_rtol} times its row's largest loading, is
 treated as exactly zero and flagged in the \code{null_loading}
 attribute: the structural bounds are then those of the map with that
 column zeroed, and the coefficient is reported as the point
-\code{fit$beta1r[k]}, which the unsnapped map reproduces to rounding.
+\code{fit$beta1r[k]}. The map without this zeroing can differ.
 The rule assumes the columns of \code{x} are comparably scaled; with a
 column scaled up by a factor of order \code{1 / null_loading_rtol} its
 genuine loading would be snapped too, so pass \code{null_loading_rtol =
@@ -108,10 +114,9 @@ search budget alone cannot establish unboundedness.
 The result is an \strong{inner approximation} of the axis-aligned
 bounding box of a \strong{non-convex} set. A point inside the box need
 not be in the set: \code{\link{make_system_checker}} remains the
-membership test. Bounds tighten as \code{n_grid} rises, and a spike
-narrower than roughly one grid step is missed, which matters only when
-\eqn{\tau} sits very close to the slack at which the set stops being
-bounded.
+membership test. Larger \code{n_grid} improves grid resolution, but
+the grids need not be nested, so reported ranges need not widen
+monotonically. Narrow features can fall between grid nodes.
 The structural block is likewise the bounding box of the image of a
 non-convex set: a vector of structural coefficients inside it need not
 be attainable jointly, and the only membership check is to map a
@@ -142,29 +147,38 @@ Per-maturity outputs are named \code{maturity_N} where N is
 the w2 column index, with element k corresponding to
 \code{maturities[k]}. Inner theta-axis dimensions (each \code{r_i_1}
 matrix, \code{s_i_1} vector, and \code{s_i_2} matrix) are always full
-\code{n_components}-sized. Downstream functions accept only validated
-containers and resolve positions internally, so cross-object maturity
-misalignment cannot occur.
+\code{n_components}-sized. \code{compute_identification_moments()} validates
+moment shapes. Downstream functions check relevant dimensions and use the recorded
+indices; they trust that validation and do not verify common data provenance.
+Callers must supply moments, gamma, and tau from the same system.
 }
 
 \examples{
-set.seed(42)
-n_obs <- 200
-x <- cbind(x1 = rnorm(n_obs), x2 = rnorm(n_obs))
-z <- rnorm(n_obs)
-e2 <- sqrt(exp(0.5 + 0.9 * z)) * matrix(rnorm(n_obs * 2), n_obs, 2)
-y2 <- x \%*\% matrix(c(1, 0.5, -0.3, 0.7), 2, 2) + e2
-colnames(y2) <- c("news1", "news2")
-y1 <- drop(0.3 + x \%*\% c(0.2, -0.1) + y2 \%*\% c(0.8, -0.5) + rnorm(n_obs))
-
-fit <- compute_tau0_system(y1, y2, x, z)
-box <- compute_identified_set_box(fit, tau = 0.05)
-box$bounds
-box$beta1_bounds
+local({
+  seed <- get0(".Random.seed", envir = globalenv(), inherits = FALSE)
+  on.exit(if (is.null(seed)) {
+    rm(".Random.seed", envir = globalenv())
+  } else {
+    assign(".Random.seed", seed, envir = globalenv())
+  })
+  set.seed(42)
+  n_obs <- 200
+  x <- cbind(x1 = rnorm(n_obs), x2 = rnorm(n_obs))
+  z <- rnorm(n_obs)
+  e2 <- sqrt(exp(0.5 + 0.9 * z)) * matrix(rnorm(n_obs * 2), n_obs, 2)
+  y2 <- x \%*\% matrix(c(1, 0.5, -0.3, 0.7), 2, 2) + e2
+  colnames(y2) <- c("news1", "news2")
+  y1 <- drop(0.3 + x \%*\% c(0.2, -0.1) + y2 \%*\% c(0.8, -0.5) + rnorm(n_obs))
+  fit <- compute_tau0_system(y1, y2, x, z)
+  box <- compute_identified_set_box(fit, tau = 0.05, n_grid = 11L)
+  print(box$bounds)
+  print(box$beta1_bounds)
+})
 }
 \seealso{
 \code{\link{compute_tau0_system}} for the fit this consumes,
 \code{\link{make_system_checker}} for membership of the set itself,
 \code{\link{recover_structural_coefficients}} for the map behind the
-structural block
+structural block; \code{\link{IDENTIFIED_SET_CONTROL}} for search budgets
+and the RNG-state caveat of the fixed-seed recession search.
 }

@@ -9,23 +9,40 @@ circular_mbb_indices(sample_size, block_length, n_draws = 1L)
 \arguments{
 \item{sample_size}{Positive integer length of the aligned estimation sample.}
 
-\item{block_length}{Positive integer block length, capped at \code{sample_size}.}
+\item{block_length}{Positive integer number of observations per block, capped
+at \code{sample_size}.}
 
-\item{n_draws}{Positive integer number of index vectors.}
+\item{n_draws}{Positive integer number of index vectors. Defaults to one draw.}
 }
 \value{
-A list of \code{n_draws} numeric index vectors, each of length \code{sample_size}.
+An unnamed list of \code{n_draws} numeric row-index vectors, each of
+length \code{sample_size}, with values from one to \code{sample_size}.
 }
 \description{
-Generate Circular Moving-Block Bootstrap Indices
+Draw row indices for resampling an aligned time series in consecutive blocks,
+treating the final and first observations as adjacent.
 }
 \details{
 Starts are sampled uniformly with replacement. Each block wraps at
 the final row; concatenated blocks are truncated to \code{sample_size}. This
 function consumes the caller's random-number stream. The caller chooses
 the seed, RNG kind, block length, and already date-aligned input sample.
+
+All arguments must be finite numeric scalars with whole-number values from
+one to \code{.Machine$integer.max}. Missing values are rejected. Invalid
+arguments raise a \code{hetid_error_bad_argument} condition.
 }
 \examples{
-set.seed(23)
-circular_mbb_indices(10, 3, 2)
+local({
+  old_seed <- get0(".Random.seed", envir = .GlobalEnv, inherits = FALSE)
+  on.exit({
+    if (is.null(old_seed)) {
+      rm(".Random.seed", envir = .GlobalEnv)
+    } else {
+      assign(".Random.seed", old_seed, envir = .GlobalEnv)
+    }
+  })
+  set.seed(23)
+  circular_mbb_indices(10, 3, 2)
+})
 }

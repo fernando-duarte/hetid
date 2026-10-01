@@ -6,12 +6,25 @@
 #' shared with \code{\link{fit_log_variance}}.
 #'
 #' @inheritParams fit_log_variance
+#' @param x Numeric matrix or data frame of volatility regressors, without an
+#'   intercept column (one is prepended by
+#'   \code{\link{log_variance_design}}). Requires at least
+#'   \code{ncol(x) + 2} rows (see \code{\link{min_obs_for_pc_regression}}).
+#' @details
+#' The design must be a matrix or data frame with finite numeric entries;
+#' missing or nonfinite values are rejected, without dropping rows. Unnamed
+#' columns receive default labels. Supplied column names must be non-missing,
+#' non-blank and unique, and must not include \code{"(Intercept)"}.
+#'
 #' @return A function with arguments \code{y}, \code{start = NULL},
 #'   \code{fallback_starts = list()} and \code{response_scale = 1}, following
 #'   the contracts of \code{\link{fit_log_variance}} and returning the same
 #'   validated \code{hetid_log_variance_fit} container. The design and controls
 #'   are captured when this function is created. Changing the caller's original
 #'   objects afterward does not change the fitter.
+#'   Numerical fitting failures return a container with
+#'   \code{fit_status = "nonconvergence"} and \code{coef = NULL}; malformed
+#'   arguments raise structured \code{hetid_error} conditions.
 #' @export
 #' @examples
 #' x <- matrix(seq(-1, 1, length.out = 20), ncol = 1)
@@ -48,7 +61,6 @@ make_log_variance_fitter <- function(x, estimator = "ppml", control = list()) {
   }
 }
 
-# Quantities determined only by the validated, fixed design and controls
 log_variance_fixed_design <- function(x_mat, estimator, control) {
   harvey <- identical(estimator, "harvey")
   list(

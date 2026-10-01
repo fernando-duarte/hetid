@@ -1,6 +1,3 @@
-# Candidate weights for verified outer bounds. Every output here is a proposal
-# that outer_verify() must accept before it can bound anything
-
 outer_certificate_ok <- function(certificate, m) {
   s <- certificate$scales
   outer_weights_ok(certificate$weights, m) && length(s) == m &&
@@ -8,7 +5,7 @@ outer_certificate_ok <- function(certificate, m) {
 }
 
 # Same combination: weights on A_i/scales_i become w_i*2^k_i/scales_i on power-of-two rows
-# Use log space to avoid extreme-ratio overflow; return simplex weights or NULL
+# Log weights avoid overflow when rescaling the certificate weights
 outer_certificate_weights <- function(certificate, sys) {
   if (!outer_certificate_ok(certificate, sys$m)) {
     return(NULL)
@@ -21,8 +18,7 @@ outer_certificate_weights <- function(certificate, sys) {
   v / sum(v)
 }
 
-# Unverified closed-form bound used only to steer the search. Rejected weights
-# score double.xmax rather than Inf, which Nelder-Mead would warn about
+# Rejected weights score .Machine$double.xmax so Nelder-Mead receives finite values
 outer_search_value <- function(sys, v, loading) {
   mat <- Reduce(`+`, Map(`*`, sys$A, v))
   eig <- eigen(mat, symmetric = TRUE)
@@ -38,7 +34,6 @@ outer_search_value <- function(sys, v, loading) {
   if (is.finite(value)) value else .Machine$double.xmax
 }
 
-# Interior simplex search for m >= 2 rows; returns simplex weights
 outer_simplex_search <- function(sys, loading, v0, maxit) {
   m <- sys$m
   full <- function(p) c(p, 1 - sum(p))
@@ -63,8 +58,7 @@ outer_simplex_search <- function(sys, loading, v0, maxit) {
   full(fit$par)
 }
 
-# Budgeted upper-bound search for one normalized loading starts at v0 and uses no random numbers
-# The interior misses exact vertices, so v0 and single-row vertices also compete
+# Search may miss simplex vertices, so compare each single-row choice and v0 explicitly
 outer_side_search <- function(sys, loading, v0, maxit) {
   m <- sys$m
   if (m == 1L || maxit == 0L) {

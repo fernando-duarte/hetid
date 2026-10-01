@@ -5,6 +5,6 @@
 \title{Custom Condition Classes for hetid}
 \description{
 Structured condition constructors for programmatic error
-handling. Enables tryCatch with class-based dispatch.
+handling. These conditions support \code{tryCatch()} with class-based dispatch.
 }
 \keyword{internal}

@@ -7,25 +7,41 @@
 \method{print}{hetid_log_variance_sample}(x, ...)
 }
 \arguments{
-\item{x}{A \code{hetid_log_variance_sample}.}
+\item{x}{A \code{hetid_log_variance_sample} list returned by
+\code{\link{sample_log_variance_set}}.}
 
 \item{...}{Unused, for method consistency.}
 }
 \value{
-The object, invisibly.
+The \code{hetid_log_variance_sample} object \code{x}, invisibly.
 }
 \description{
-Print Retained Log-Variance Samples
+Displays the estimator, candidate and failed-fit counts, sampling reason,
+and sampled coefficient ranges. This \code{\link[base:print]{print}} method
+uses the retained fits without refitting them.
 }
 \examples{
-set.seed(42)
-n <- 100
-z <- rnorm(n)
-x <- cbind(x = rnorm(n))
-y2 <- cbind(news = exp(z / 2) * rnorm(n))
-y1 <- 0.3 + x[, 1] + 0.5 * y2[, 1] + rnorm(n)
-fit <- compute_tau0_system(y1, y2, x, z)
-box <- compute_identified_set_box(fit, 0.01, n_grid = 3)
-sampled <- sample_log_variance_set(box, x)
-print(sampled)
+(function() {
+  old_seed <- get0(".Random.seed", envir = globalenv(), inherits = FALSE)
+  on.exit({
+    if (is.null(old_seed)) {
+      rm(".Random.seed", envir = globalenv())
+    } else {
+      assign(".Random.seed", old_seed, envir = globalenv())
+    }
+  })
+  set.seed(42)
+  n <- 100
+  z <- rnorm(n)
+  x <- cbind(x = rnorm(n))
+  y2 <- cbind(news = exp(z / 2) * rnorm(n))
+  y1 <- 0.3 + x[, 1] + 0.5 * y2[, 1] + rnorm(n)
+  fit <- compute_tau0_system(y1, y2, x, z)
+  box <- compute_identified_set_box(fit, 0.01, n_grid = 3)
+  sampled <- sample_log_variance_set(box, x)
+  print(sampled)
+})()
+}
+\seealso{
+\code{\link{sample_log_variance_set}}
 }

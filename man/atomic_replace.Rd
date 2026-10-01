@@ -7,19 +7,24 @@
 atomic_replace(temp, dest, what)
 }
 \arguments{
-\item{temp}{Source temp-file path (in the same directory as
-\code{dest} so the rename stays one filesystem operation)}
+\item{temp}{Character scalar giving the source temporary-file path, in the same
+directory as \code{dest} so the rename stays one filesystem operation.}
 
-\item{dest}{Destination cache path}
+\item{dest}{Character scalar giving the destination cache path.}
 
-\item{what}{Human label for the error message}
+\item{what}{Character scalar giving a human-readable label for the error message.}
 }
 \value{
-Invisibly returns \code{dest}
+The character scalar \code{dest}, invisibly, on success.
 }
 \description{
 Renames \code{temp} onto \code{dest} without first deleting the target.
-A failed rename preserves the existing cache and raises a structured error.
+A failed rename preserves the existing cache and raises a \code{hetid_error}
+condition. Any warning from \code{file.rename} is also emitted.
 Both paths must be on the same filesystem.
+}
+\details{
+On success, the file is available at \code{dest} and \code{temp} no longer
+exists, provided the paths differ.
 }
 \keyword{internal}

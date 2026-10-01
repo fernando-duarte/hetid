@@ -15,31 +15,48 @@ bootstrap_set_interval(
 )
 }
 \arguments{
-\item{full}{Data frame with unique character \code{coef}, numeric \code{lower}, \code{upper},
-and character \code{lower_status}, \code{upper_status} columns.}
+\item{full}{Nonempty data frame with character \code{coef}, numeric
+\code{lower}, \code{upper}, and character \code{lower_status},
+\code{upper_status} columns. Coefficient names must be unique, nonempty,
+and nonmissing; column names must be unique. See Details for endpoint and
+status restrictions.}
 
-\item{draws}{List containing the four endpoint/status matrices, with draws in
-rows and coefficient columns named exactly as \code{full$coef}, in that order.
-Optional row names must agree across matrices. Extra evidence is retained.}
+\item{draws}{List containing numeric \code{lower}, \code{upper} and character
+\code{lower_status}, \code{upper_status} matrices of identical dimensions.
+Rows identify paired draws; coefficient columns must be named exactly as
+\code{full$coef}, in that order. Optional row names must be unique, nonempty,
+nonmissing, and identical across matrices. Extra evidence is retained.}
 
-\item{target}{Exactly \code{"pointwise"} or \code{"containment"}; see Details.}
+\item{target}{Single character string, exactly \code{"pointwise"} or
+\code{"containment"}; see Details.}
 
-\item{alpha}{Nominal tail probability strictly between zero and one.}
+\item{alpha}{Finite numeric scalar giving the nominal tail probability,
+strictly between zero and one.}
 
-\item{min_reps}{Minimum eligible draw count, a positive integer.}
+\item{min_reps}{Minimum eligible draw count, an integer-valued numeric scalar
+from one through \code{.Machine$integer.max}.}
 
-\item{stability}{Minimum eligible share among non-failed draws, in \verb{[0, 1]}.}
+\item{stability}{Finite numeric scalar giving the minimum eligible share among
+non-failed draws, in \code{[0, 1]}.}
 
-\item{control}{Named list with \code{tolerance} (default \code{1e-4}) and \code{max_evals}
-(default \code{10000}) for the pointwise search.}
+\item{control}{List of uniquely named pointwise search overrides. Supported
+entries are \code{tolerance}, a positive finite numeric scalar, and
+\code{max_evals}, an integer-valued numeric scalar from two through
+\code{.Machine$integer.max}. Omitted entries use
+\code{BOOTSTRAP_INFERENCE_DEFAULTS}: \code{tolerance = 1e-4} and
+\code{max_evals = 10000}. The default empty list uses both defaults.}
 }
 \value{
-A list with \code{summary} (one row per coefficient), \code{sides} (eligibility
-masks, scales and roots), \code{simultaneous} (diagnostic containment calculation),
-original \code{full} and \code{draws}, and the requested settings. Side roots can be
+A plain list with \code{summary} (a data frame with one row per
+coefficient in \code{full} order), \code{sides} (a coefficient-named list of
+lower and upper eligibility masks, scales and roots), \code{simultaneous}
+(a diagnostic containment calculation), original \code{full} and
+\code{draws}, and \code{target}, \code{alpha}, \code{min_reps},
+\code{stability}, and the resolved \code{control} settings. Side roots can be
 nonfinite when no interval consumes them; the diagnostic reports its own
-availability. The interval uses the
-conservative upper critical value even if the search stops at its budget.
+availability. Pointwise intervals use the conservative upper critical value
+even if the search stops at its budget; containment intervals use the
+containment critical value.
 }
 \description{
 Uses the joint distribution of supplied endpoints, with separate robust scales
@@ -88,6 +105,31 @@ relevant dependence assumptions. Eligibility gates and algebraic search
 bounds do not establish coverage under weak identification, nonregular
 endpoints, or selective draw failure. The caller owns resampling and tuning.
 }
+\section{Returned Diagnostics}{
+
+In \code{summary}, \code{ci_lower} and \code{ci_upper} are the padded interval
+endpoints in the same units as the supplied endpoints. They are missing when
+an interval is unavailable; a half-infinite interval has one infinite endpoint.
+\code{side} identifies the live sides, and \code{reason} explains availability.
+\code{se_lower} and \code{se_upper} are the side scales. Draw counts, shares,
+and gates describe eligibility. \code{c_s} is the containment critical value;
+\code{c_p_lower} and \code{c_p_upper} bound the pointwise critical value, with
+gap \code{c_p_gap}. For two-sided containment, the pointwise values are missing.
+\code{c_p_evals}, \code{c_p_lambda}, \code{c_p_interior}, and
+\code{search_stop} describe the search. \code{root_rank} and
+\code{tail_resolution} describe the interval's root pool.
+
+Each entry of \code{sides} contains \code{lower} and \code{upper} lists, with
+logical draw mask \code{ok}, bounded and non-failed counts \code{n_ok} and
+\code{n_valid}, bounded share \code{frac}, scale \code{se}, logical
+\code{gate}, failure \code{reason}, and numeric standardized deviations
+\code{z}. Deviations are missing outside the eligible mask or if the gate fails.
+\code{simultaneous} contains \code{critical}, \code{reason},
+\code{n_common}, \code{meets_min_reps}, \code{root_rank},
+\code{tail_resolution}, and the coefficient-by-side logical matrix
+\code{active_sides}; see Details for its scope and availability.
+}
+
 \examples{
 full <- data.frame(
   coef = "a", lower = 0, upper = 1,

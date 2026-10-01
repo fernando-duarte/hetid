@@ -7,21 +7,26 @@
 lambda_from_support(support, weights, j_total)
 }
 \arguments{
-\item{support}{List with one integer vector of free instrument
-rows (unique, in \code{1..j_total}, at least one) per
-constrained system column and NULL at unconstrained columns}
+\item{support}{Non-empty list with one numeric vector of unique,
+finite integer row indices in \code{1..j_total} per constrained
+system column and \code{NULL} at unconstrained columns. Each vector
+must have at least one entry, and at least one column must be constrained.}
 
-\item{weights}{List of numeric K_i-column matrices, one per
-constrained column with \code{length(support[[i]])} rows; NULL
-exactly where \code{support} is NULL}
+\item{weights}{List of the same length as \code{support}, with one
+finite numeric K_i-column matrix per constrained column, where
+K_i is at least one. Each matrix has \code{length(support[[i]])}
+rows corresponding, in order, to \code{support[[i]]}.
+Entries must be \code{NULL} exactly where
+\code{support} is \code{NULL}; missing and infinite values are rejected.}
 
-\item{j_total}{Total number of instrument columns on the union
-axis (e.g. \code{ncol} of the moments' instrument matrix)}
+\item{j_total}{Single positive integer giving the total number of
+instrument columns on the union axis (e.g. \code{ncol} of the
+moments' instrument matrix).}
 }
 \value{
-List of length \code{length(support)}: a numeric
-\code{j_total} x K_i matrix at constrained columns, NULL at
-unconstrained columns
+Unnamed list of length \code{length(support)}: a numeric
+\code{j_total} x K_i matrix at constrained columns, \code{NULL} at
+unconstrained columns. Matrices have no row or column names.
 }
 \description{
 Builds the padded per-component weight list consumed by
@@ -48,22 +53,26 @@ defines K_i constructed instruments, each a linear combination of
 the J columns of the instrument matrix the moments were computed
 from. The identified set intersects one quadratic constraint per
 (component, combination) pair: \code{sum(K_i)} constraints in
-total. The legacy single-combination case is \code{K_i = 1} for
+total. The single-combination case is \code{K_i = 1} for
 every component (a J x I matrix); using every instrument
 separately is \code{lambda[[i]] = diag(J)}. Each constraint
 depends on its weight column only through its direction, so any
 nonzero rescaling of a column leaves the constraint set unchanged.
-A per-component instrument SUBSET is expressed directly as zero
+A per-component instrument subset is expressed directly as zero
 rows in that component's weight matrix;
 \code{align_instrument_sets()} builds the union axis and
 \code{lambda_from_support()} zero-pads compact weights onto it.
-Honesty note: intersecting more sample-moment constraints
-weakly shrinks the ESTIMATED set mechanically, so widths are
+Intersecting more sample-moment constraints
+weakly shrinks the estimated set mechanically, so widths are
 comparable only across schemes with the same constraint count.
 }
 
 \examples{
 support <- list(c(1L, 3L), 2L)
 weights <- list(matrix(c(0.6, 0.8), 2, 1), matrix(1, 1, 1))
+lambda_from_support(support, weights, j_total = 4)
+
+support <- list(NULL, c(3L, 1L))
+weights <- list(NULL, diag(2))
 lambda_from_support(support, weights, j_total = 4)
 }

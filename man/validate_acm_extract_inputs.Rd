@@ -11,16 +11,24 @@ validate_acm_extract_inputs(
 )
 }
 \arguments{
-\item{data_types}{Character vector of data type keys}
+\item{data_types}{Non-empty character vector with no missing values or
+duplicates. Allowed keys are \code{"yields"}, \code{"term_premia"},
+and \code{"risk_neutral_yields"}, from \code{HETID_ACM_SCHEMA}.}
 
-\item{maturities}{Numeric vector of maturities in months}
+\item{maturities}{Non-empty numeric vector of distinct, finite integer
+bond maturities in months, between \code{HETID_CONSTANTS$MIN_MATURITY}
+and \code{HETID_CONSTANTS$MAX_MATURITY}, inclusive.}
 
-\item{use_incomplete_quarters}{Logical flag from the caller}
+\item{use_incomplete_quarters}{A single non-missing logical value.
+Defaults to \code{TRUE}; this helper checks the flag without applying
+the quarterly-conversion policy.}
 }
 \value{
-Invisible TRUE if valid, stops with informative error otherwise
+Invisible \code{TRUE} if valid; otherwise signals a
+\code{hetid_error_bad_argument} condition identifying the argument.
 }
 \description{
-Validate ACM Extraction Inputs
+Checks the data-type, bond-maturity, and incomplete-quarter arguments
+before ACM data is loaded. Inputs are validated without modification.
 }
 \keyword{internal}

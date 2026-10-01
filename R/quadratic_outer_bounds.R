@@ -1,35 +1,47 @@
 #' Outer Bounds Closure for Quadratic Set Evidence
 #'
-#' Internal factory for the `outer_bounds` closure that
-#' `compute_quadratic_set_evidence()` returns. The closure bounds linear
+#' Internal factory for the \code{outer_bounds} closure that
+#' \code{compute_quadratic_set_evidence()} returns. The closure bounds linear
 #' objectives over the feasible set from below and above using only
 #' nonnegative constraint combinations whose Hessian is verified positive
 #' definite. Its results contain the set whether or not the set is nonempty.
 #' They are not attained values and say nothing about optimizer accuracy.
 #'
 #' Rows are rescaled by powers of two, which leaves the feasible set unchanged
-#' exactly; a row whose rescaling would lose a nonzero entry makes every bound
-#' unknown. The certificate's weights, `weights / scales` on the original rows,
-#' form the common candidate. Per-side candidates come from a deterministic
-#' Nelder-Mead search limited by `maxit` iterations that uses no random
-#' numbers. Every candidate, including those passed back through `pool`, is
+#' exactly; a row whose rescaling would lose a nonzero entry makes every nonzero
+#' objective's bounds unknown. The certificate's weights, \code{weights / scales}
+#' on the original rows, form the common candidate. Per-side searches use no
+#' random numbers. Two-row systems use scalar optimization with a fixed tolerance;
+#' systems with more rows use Nelder-Mead with at most \code{maxit} iterations.
+#' Every candidate, including those passed back through \code{pool}, is
 #' verified independently before it bounds anything, and a side takes the
 #' tightest verified bound.
 #'
-#' @param quadratic Validated quadratic system with `A_i`, `b_i`, `c_i`
-#' @param certificate Boundedness certificate with `weights` and `scales`, or
-#'   `NULL`
-#' @param maxit Iteration budget for each per-side candidate search
-#' @param nonempty TRUE when a checked point or tail proves the set nonempty.
+#' @param quadratic Validated list with parallel lists \code{A_i}, \code{b_i}
+#'   and a numeric vector \code{c_i}, defining the quadratic inequalities.
+#' @param certificate Boundedness certificate list with \code{weights} and
+#'   \code{scales}, or \code{NULL} when no certificate is available.
+#' @param maxit Nonnegative integer iteration budget for multivariate per-side
+#'   searches, at most \code{.Machine$integer.max}. Defaults to
+#'   \code{HETID_CONSTANTS$QUADRATIC_EVIDENCE_MAXIT}; zero disables all refinement.
+#' @param nonempty Logical flag, default \code{FALSE}. Use \code{TRUE} when
+#'   a checked point or tail proves the set nonempty.
 #'   A verified combination proving the same set empty is then a certificate
 #'   conflict and raises a structured error instead of returning bounds.
-#' @return Function `outer_bounds(objectives, refine = TRUE, pool = NULL)`.
-#'   It returns a data frame with `lower` and `upper`, one row per objective
-#'   column. Exactly zero loadings give exact zeros, and unknown sides are `NA`.
-#'   Attributes: `pool` (verified simplex weights on the rescaled rows, to pass
-#'   back), `sources` (the candidate behind each side), `candidates` (per
-#'   candidate error terms), `empty` (TRUE when a verified combination proves
-#'   the set empty) and `reason` (why every bound is unknown, or `NULL`).
+#' @return Function \code{outer_bounds(objectives, refine = TRUE, pool = NULL)}.
+#'   Supply a finite numeric matrix \code{objectives}, with one row per coordinate
+#'   and at least one objective column. The logical flag \code{refine} enables
+#'   per-side searches. Optional \code{pool} is a list of numeric weight vectors;
+#'   unverifiable vectors are discarded. Invalid request types or missing values
+#'   in objectives or flags raise structured errors.
+#'   The closure returns a data frame with \code{lower} and \code{upper}, one row
+#'   per objective column. Exactly zero loadings give exact zeros. Both bounds are
+#'   \code{NA} when either side is unknown, including numerical overflow.
+#'   Attributes: \code{pool} (verified simplex weights on the rescaled rows, to pass
+#'   back), \code{sources} (candidate indices for each side; zero for zero loadings),
+#'   \code{candidates} (per-candidate verification quantities), \code{empty}
+#'   (\code{TRUE} when a verified combination proves the set empty) and
+#'   \code{reason} (a global failure reason, or \code{NULL}).
 #' @noRd
 quadratic_outer_bounder <- function(quadratic, certificate,
                                     maxit = HETID_CONSTANTS$QUADRATIC_EVIDENCE_MAXIT,

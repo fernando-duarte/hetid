@@ -2,19 +2,18 @@
 % Please edit documentation in R/log_variance_se_utils.R
 \name{log_variance_se_utils}
 \alias{log_variance_se_utils}
-\title{Estimator-Agnostic Standard-Error Scaffolding}
+\title{Shared Log-Variance Covariance Calculations}
 \description{
-The pieces every log-variance covariance estimator shares: the normalized
-fail-closed inverse of a bread matrix, the Bartlett/Newey-West HAC meat of a
-score matrix, and the preflight that either hands back \eqn{\mu} or the
-all-NA skeleton. Ported from the paper pipeline
-(\code{scripts-paper/log_variance/inference/standard_error_estimators.R}).
-Estimator modules keep only their own bread, score, and variant assembly.
+Shared helpers invert diagonally normalized information matrices, sum
+Bartlett-weighted score cross-products, and check inputs for covariance
+evaluation. Estimator modules assemble their own covariance variants.
 }
 \details{
-These internals never raise: the public entrypoints
+These internals assume valid argument types and shapes. Use the public
+entrypoints
 \code{\link{compute_log_variance_vcov}} and
-\code{\link{compute_log_variance_vcov_at_coef}} validate malformed arguments.
-Data-quality failures here come back as \code{NULL} or the skeleton.
+\code{\link{compute_log_variance_vcov_at_coef}} for covariance evaluation.
+Failed matrix-inversion and preflight checks return \code{NULL} and the
+all-NA skeleton, respectively.
 }
 \keyword{internal}

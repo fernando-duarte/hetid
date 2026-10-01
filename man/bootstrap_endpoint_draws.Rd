@@ -7,33 +7,48 @@
 bootstrap_endpoint_draws(full, indices, statistic, seed = NULL)
 }
 \arguments{
-\item{full}{Full-sample endpoint frame accepted by \code{\link[=bootstrap_set_interval]{bootstrap_set_interval()}}.}
+\item{full}{Nonempty full-sample endpoint data frame accepted by
+\code{\link{bootstrap_set_interval}}, with unique character coefficient names.}
 
 \item{indices}{Nonempty list of equally long numeric index vectors, using
-whole numbers from one through their common length. Optional list names
-provide unique draw identifiers.}
+finite whole numbers from one through their common positive length.
+Missing indices are not allowed. Optional list names must be unique, nonempty,
+and nonmissing.}
 
-\item{statistic}{Function of \verb{(index, draw_id)} returning an endpoint frame
+\item{statistic}{Function of \code{(index, draw_id)} returning an endpoint frame
 with the same coefficient names and order as \code{full}. \code{draw_id} is the
 position in \code{indices}. Extra frame columns are retained in \code{results}.
 The callback must raise numerical failures as errors or return them with
 \code{failed} statuses and missing endpoints.}
 
-\item{seed}{Optional integer seed. The caller's RNG kind is used.}
+\item{seed}{Optional scalar integer from zero through \code{.Machine$integer.max},
+or \code{NULL} (the default) to use the caller's current random-number state.
+The caller's RNG kind is used. This seeds callbacks, not index generation.}
 }
 \value{
-A list containing the four paired matrices consumed directly by
-\code{\link[=bootstrap_set_interval]{bootstrap_set_interval()}}, plus \code{full}, \code{indices}, \code{results}, \code{errors},
-\code{callback_failed}, and \code{n_callback_failed}. Callback failure counts do not
-include valid returned frames whose endpoint statuses are \code{failed}.
+A list with numeric \code{lower} and \code{upper} matrices and character
+\code{lower_status} and \code{upper_status} matrices, each with
+\code{length(indices)} rows and \code{nrow(full)} columns. Row names are
+\code{names(indices)}; column names are \code{full$coef}. These matrices are
+consumed directly by \code{\link{bootstrap_set_interval}}.
+The list also contains the unchanged \code{full} and \code{indices};
+\code{results} and \code{errors}, lists named like \code{indices}, with one entry
+per draw; the unnamed logical vector \code{callback_failed}; and its sum,
+\code{n_callback_failed}. Callback errors leave \code{NULL} results and store
+\code{message} and \code{classes} in the corresponding error entry, with
+\code{NA_real_} endpoints and \code{failed} statuses. Valid returned frames are
+retained in \code{results} with \code{NULL} error entries, even when their
+per-side statuses are \code{failed}; these do not count as callback failures.
 }
 \description{
-Run a Serial Endpoint Bootstrap Over Precomputed Indices
+Evaluates an endpoint statistic for each supplied resample and collects paired
+endpoints, per-side statuses, and callback failure evidence for interval calibration.
 }
 \details{
 Callback errors become failed draws with missing endpoints and a
 retained message and condition classes. A returned malformed frame, including
-\code{NULL}, is a contract error and stops the run. Returned per-side failures are
+\code{NULL}, is a contract error and stops the run with a \code{hetid_error}
+condition. Callback warnings are not intercepted. Returned per-side failures are
 preserved independently. The original full-sample evidence, indices and raw
 successful callback results are retained.
 
@@ -55,7 +70,17 @@ statistic <- function(index, draw_id) {
   )
 }
 full <- statistic(seq_along(y), 0)
-set.seed(17)
-draws <- bootstrap_endpoint_draws(full, circular_mbb_indices(20, 3, 20), statistic)
+draws <- (function() {
+  had_seed <- exists(".Random.seed", envir = globalenv(), inherits = FALSE)
+  if (had_seed) old_seed <- get(".Random.seed", envir = globalenv())
+  on.exit(if (had_seed) {
+    assign(".Random.seed", old_seed, envir = globalenv())
+  } else {
+    rm(".Random.seed", envir = globalenv())
+  })
+  set.seed(17)
+  indices <- circular_mbb_indices(length(y), 3, 20)
+  bootstrap_endpoint_draws(full, indices, statistic, seed = 17)
+})()
 bootstrap_set_interval(full, draws, "containment", 0.1, 10, 0.8)$summary
 }

@@ -7,12 +7,14 @@
 compute_identified_set_components(gamma, moments)
 }
 \arguments{
-\item{gamma}{Matrix (J x I) where each column gamma_i contains the
+\item{gamma}{Finite numeric matrix (J x I) where each column gamma_i contains the
 coefficients for system column i. I must equal the moments'
-\code{n_components} attribute and J its instrument count.}
+\code{n_components} attribute and J its instrument count. Every constrained
+column must contain a nonzero value; unconstrained columns may be zero.
+Missing or non-finite values are rejected with a \code{hetid_error}.}
 
 \item{moments}{A \code{hetid_moments} object from
-\code{\link{compute_identification_moments}}}
+\code{\link{compute_identification_moments}}.}
 }
 \value{
 An object of class \code{hetid_components}: a list (with
@@ -20,21 +22,22 @@ M = \code{length(maturities)} the active constraint maturities and
 n_components the theta axis) containing
 \describe{
 \item{L_i}{Named numeric vector of length M (keys maturity_N); element k
-is L_i for maturity \code{maturities[k]}}
+is L_i for maturity \code{maturities[k]}.}
 \item{V_i}{Named numeric vector of length M (keys maturity_N); element k
-is V_i for maturity \code{maturities[k]}}
+is V_i for maturity \code{maturities[k]}.}
 \item{Q_i}{Named list of length M (keys maturity_N); element k is the
-length-n_components vector Q_i for maturity \code{maturities[k]}}
+length-n_components vector Q_i for maturity \code{maturities[k]}, named
+\code{maturity_1}, ..., \code{maturity_I}.}
 }
 carrying the moments' \code{maturities} and \code{n_components}
-attributes forward.
+attributes forward. Arithmetic overflow can produce non-finite entries.
 }
 \description{
 Computes the basic components L_i, V_i, and Q_i for the identified set
 calculation for each maturity i.
 }
 \details{
-For each maturity i, computes:
+Uses the centered \eqn{1/T} moments in \code{moments}. For each maturity i, computes:
 \deqn{L_i(\boldsymbol{\Gamma}) = \boldsymbol{\gamma}_i^{\top} \hat{\mathbf{R}}_i^{(0)}}
 \deqn{V_i(\boldsymbol{\Gamma}) = \boldsymbol{\gamma}_i^{\top}
   \left(\hat{\mathbf{P}}_i^{(0)} (\hat{\mathbf{P}}_i^{(0)})^{\top}\right)
@@ -71,21 +74,30 @@ Per-maturity outputs are named \code{maturity_N} where N is
 the w2 column index, with element k corresponding to
 \code{maturities[k]}. Inner theta-axis dimensions (each \code{r_i_1}
 matrix, \code{s_i_1} vector, and \code{s_i_2} matrix) are always full
-\code{n_components}-sized. Downstream functions accept only validated
-containers and resolve positions internally, so cross-object maturity
-misalignment cannot occur.
+\code{n_components}-sized. \code{compute_identification_moments()} validates
+moment shapes. Downstream functions check relevant dimensions and use the recorded
+indices; they trust that validation and do not verify common data provenance.
+Callers must supply moments, gamma, and tau from the same system.
 }
 
 \examples{
-set.seed(42)
-n_obs <- 100
-J <- 3
-I <- 4
-w1 <- rnorm(n_obs)
-w2 <- matrix(rnorm(n_obs * I), nrow = n_obs, ncol = I)
-pcs <- matrix(rnorm(n_obs * J), nrow = n_obs, ncol = J)
-gamma <- matrix(rnorm(J * I), nrow = J, ncol = I)
-
-moments <- compute_identification_moments(w1, w2, pcs)
-components <- compute_identified_set_components(gamma, moments)
+local({
+  old_seed <- get0(".Random.seed", envir = .GlobalEnv)
+  on.exit({
+    if (is.null(old_seed)) {
+      rm(".Random.seed", envir = .GlobalEnv)
+    } else {
+      assign(".Random.seed", old_seed, envir = .GlobalEnv)
+    }
+  })
+  set.seed(42)
+  w1 <- rnorm(30)
+  w2 <- matrix(rnorm(60), ncol = 2)
+  pcs <- matrix(rnorm(30), ncol = 1)
+  gamma <- matrix(c(0, 1), nrow = 1)
+  moments <- compute_identification_moments(w1, w2, pcs, maturities = 2)
+  components <- compute_identified_set_components(gamma, moments)
+  print(components$Q_i)
+  print(components)
+})
 }

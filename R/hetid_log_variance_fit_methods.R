@@ -1,15 +1,24 @@
 #' Methods and Assertions for hetid_log_variance_fit Objects
 #'
+#' Internal class and inference checks, and the print method for
+#' \code{hetid_log_variance_fit} objects.
+#'
 #' @name hetid_log_variance_fit_methods
 #' @keywords internal
 NULL
 
-#' Assert a Valid hetid_log_variance_fit Object
+#' Assert the hetid_log_variance_fit Class
 #'
-#' @param x Object to check
-#' @param arg Argument name for the structured error
+#' Checks class inheritance only. Use
+#' \code{\link{validate_hetid_log_variance_fit}} for structural validation.
 #'
-#' @return Invisible TRUE when valid
+#' @param x Object to check.
+#' @param arg Character string naming the argument in the structured error.
+#'   Defaults to \code{"fit"}.
+#'
+#' @return \code{TRUE}, invisibly, when \code{x} inherits from
+#'   \code{hetid_log_variance_fit}. Otherwise signals a
+#'   \code{hetid_error_bad_argument} condition carrying \code{arg}.
 #' @keywords internal
 assert_hetid_log_variance_fit <- function(x, arg = "fit") {
   assert_bad_argument_ok(
@@ -25,19 +34,25 @@ assert_hetid_log_variance_fit <- function(x, arg = "fit") {
 
 #' Check Whether a Log-Variance Fit Is Usable for Inference
 #'
-#' Ports \code{logvar_fit_ok()} from the paper's PPML engine
-#' (\code{scripts-paper/log_variance/engine/contracts.R}) exactly: a fit is
-#' usable only when it reports success, the underlying solver converged, and
-#' the recovered coefficients are present and all finite. This is
+#' Checks whether a fit reports success, the underlying solver converged,
+#' and the recovered coefficients are present and all finite. This is
 #' deliberately a raw predicate, not a validator -- it does not require
-#' \code{x} to have passed \code{validate_hetid_log_variance_fit()}, so
+#' \code{fit} to have passed \code{\link{validate_hetid_log_variance_fit}}, so
 #' callers can probe an in-progress or hand-built fit list directly.
 #'
-#' @param fit A \code{hetid_log_variance_fit} object, or any list with
-#'   \code{fit_status}, \code{converged}, and \code{coef} elements
+#' No coefficient length or shape is checked: an empty numeric vector
+#' passes the finite-value check. Malformed coefficient objects for which
+#' \code{is.finite()} is undefined can raise an error.
 #'
-#' @return \code{TRUE} when the fit is ok, converged, and has finite
-#'   coefficients; \code{FALSE} otherwise
+#' @param fit A \code{hetid_log_variance_fit} object, or any list with
+#'   \code{fit_status}, \code{converged}, and \code{coef} elements. For a
+#'   well-formed fit these are a status string, a logical scalar, and a
+#'   numeric coefficient vector or \code{NULL}, respectively.
+#'
+#' @return A logical scalar: \code{TRUE} when \code{fit} is a list with
+#'   \code{fit_status = "ok"}, \code{converged = TRUE}, and non-\code{NULL}
+#'   coefficients that are all finite; \code{FALSE} when any check fails.
+#'   Missing or nonfinite coefficient values fail the finite-value check.
 #' @keywords internal
 log_variance_fit_ok <- function(fit) {
   is.list(fit) &&
@@ -49,20 +64,37 @@ log_variance_fit_ok <- function(fit) {
 
 #' Print a hetid_log_variance_fit Object
 #'
-#' @param x A \code{hetid_log_variance_fit} object
-#' @param ... Unused, for method consistency
+#' Prints the estimator, fit status, and observation count to the console.
 #'
-#' @return \code{x}, invisibly
+#' @param x A \code{hetid_log_variance_fit} object.
+#' @param ... Unused arguments accepted for method consistency.
+#'
+#' @return \code{x}, invisibly.
+#' @seealso \code{\link[base:print]{print}}
 #' @export
 #'
 #' @examples
-#' set.seed(1)
-#' t_obs <- 80
-#' x <- cbind(v1 = rnorm(t_obs), v2 = rnorm(t_obs))
-#' eta <- drop(cbind(1, x) %*% c(-0.5, 0.6, -0.4))
-#' y <- exp(eta) * rchisq(t_obs, df = 1)
-#' fit <- fit_log_variance(y, x)
-#' print(fit)
+#' local({
+#'   old_seed <- if (exists(".Random.seed", envir = .GlobalEnv, inherits = FALSE)) {
+#'     get(".Random.seed", envir = .GlobalEnv)
+#'   } else {
+#'     NULL
+#'   }
+#'   on.exit({
+#'     if (is.null(old_seed)) {
+#'       rm(".Random.seed", envir = .GlobalEnv)
+#'     } else {
+#'       assign(".Random.seed", old_seed, envir = .GlobalEnv)
+#'     }
+#'   })
+#'   set.seed(1)
+#'   t_obs <- 80
+#'   x <- cbind(v1 = rnorm(t_obs), v2 = rnorm(t_obs))
+#'   eta <- drop(cbind(1, x) %*% c(-0.5, 0.6, -0.4))
+#'   y <- exp(eta) * rchisq(t_obs, df = 1)
+#'   fit <- fit_log_variance(y, x)
+#'   print(fit)
+#' })
 print.hetid_log_variance_fit <- function(x, ...) {
   cat("<hetid_log_variance_fit>\n")
   cat("  estimator: ", attr(x, "estimator"), "\n", sep = "")

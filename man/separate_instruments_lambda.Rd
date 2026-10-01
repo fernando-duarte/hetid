@@ -7,11 +7,13 @@
 separate_instruments_lambda(moments)
 }
 \arguments{
-\item{moments}{A \code{hetid_moments} object}
+\item{moments}{A \code{hetid_moments} object from
+\code{\link{compute_identification_moments}}.}
 }
 \value{
 List of length \code{n_components}; identity J x J matrix
-at constrained columns, NULL elsewhere
+at constrained columns, NULL elsewhere. Rows retain the instrument
+names from \code{moments}; list positions follow system column indices.
 }
 \description{
 Returns the lambda list whose every constrained component carries
@@ -27,27 +29,35 @@ defines K_i constructed instruments, each a linear combination of
 the J columns of the instrument matrix the moments were computed
 from. The identified set intersects one quadratic constraint per
 (component, combination) pair: \code{sum(K_i)} constraints in
-total. The legacy single-combination case is \code{K_i = 1} for
+total. The single-combination case is \code{K_i = 1} for
 every component (a J x I matrix); using every instrument
 separately is \code{lambda[[i]] = diag(J)}. Each constraint
 depends on its weight column only through its direction, so any
 nonzero rescaling of a column leaves the constraint set unchanged.
-A per-component instrument SUBSET is expressed directly as zero
+A per-component instrument subset is expressed directly as zero
 rows in that component's weight matrix;
 \code{align_instrument_sets()} builds the union axis and
 \code{lambda_from_support()} zero-pads compact weights onto it.
-Honesty note: intersecting more sample-moment constraints
-weakly shrinks the ESTIMATED set mechanically, so widths are
+Intersecting more sample-moment constraints
+weakly shrinks the estimated set mechanically, so widths are
 comparable only across schemes with the same constraint count.
 }
 
 \examples{
-set.seed(42)
-w1 <- rnorm(50)
-w2 <- matrix(rnorm(100), nrow = 50)
-z <- matrix(rnorm(150), nrow = 50)
-moments <- compute_identification_moments(w1, w2, z)
-lambda <- separate_instruments_lambda(moments)
-system <- build_general_quadratic_system(lambda, 0.2, moments)
-nrow(system$labels)
+local({
+  old_seed <- get0(".Random.seed", envir = .GlobalEnv, inherits = FALSE)
+  on.exit(if (is.null(old_seed)) {
+    rm(".Random.seed", envir = .GlobalEnv)
+  } else {
+    assign(".Random.seed", old_seed, envir = .GlobalEnv)
+  })
+  set.seed(42)
+  w1 <- rnorm(50)
+  w2 <- matrix(rnorm(100), nrow = 50)
+  z <- matrix(rnorm(150), nrow = 50)
+  moments <- compute_identification_moments(w1, w2, z)
+  lambda <- separate_instruments_lambda(moments)
+  system <- build_general_quadratic_system(lambda, 0.2, moments)
+  nrow(system$labels)
+})
 }

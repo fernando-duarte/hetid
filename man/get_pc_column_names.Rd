@@ -7,12 +7,12 @@
 get_pc_column_names(n_pcs)
 }
 \arguments{
-\item{n_pcs}{Number of principal components}
+\item{n_pcs}{Non-negative integer count of principal components.}
 }
 \value{
-Character vector, e.g. c("pc1", "pc2", ...); empty for zero PCs
+Character vector of length \code{n_pcs}; empty for zero PCs.
 }
 \description{
-Build PC Column Names
+Builds sequential names using \code{HETID_CONSTANTS$PC_PREFIX}.
 }
 \keyword{internal}

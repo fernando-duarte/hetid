@@ -10,16 +10,23 @@ get_acm_download_path(
 )
 }
 \arguments{
-\item{source}{Download source: "github" or "nyfed"}
+\item{source}{A character scalar: \code{"github"} (default) or \code{"nyfed"}.}
 
-\item{frequency}{"monthly" (default) or "daily" (github only)}
+\item{frequency}{A character scalar: \code{"monthly"} (default) or
+\code{"daily"} (GitHub-only).}
 }
 \value{
-Character string with the writable ACM data file path
+A character scalar giving the ACM download destination. Its parent
+directory exists, but writability is not checked.
 }
 \description{
 Returns the per-source user-cache path where downloads are written,
 creating the directory on demand. The bundled copy is never
 overwritten.
+}
+\details{
+No data file is created. The \code{"nyfed"}/\code{"daily"}
+combination raises a \code{hetid_error_bad_argument} condition; directory
+creation failures raise a \code{hetid_error} condition.
 }
 \keyword{internal}

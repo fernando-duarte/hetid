@@ -1,19 +1,35 @@
 #' Apply Witnessed Unboundedness
 #'
-#' A recession direction is a proof that the set runs to infinity, and it
-#' does so in both orientations because \eqn{v'A_iv} is unchanged by
+#' Updates search bounds when a sampled strict-curvature direction proves
+#' that every nonzero linear objective is unbounded on both sides.
+#'
+#' @details
+#' A direction with \eqn{v'A_i v < 0} for every constraint is a proof that
+#' the set runs to infinity in both orientations because curvature is unchanged by
 #' negating \eqn{v}. The set of such directions is open, so once one
 #' exists no hyperplane contains it and every objective that is not
 #' identically zero is unbounded on both sides. The witness therefore
 #' establishes existence without requiring that direction to move every
 #' objective; a zero objective keeps its finite value. Search failure never reaches here
 #' as \code{NA}: the state is seeded from the feasible center.
+#' A missing sampled witness does not prove boundedness; it leaves the
+#' accumulated bounds unchanged, including any previously witnessed line tails.
+#' The sampler restores \code{.Random.seed}, including its absence. Samples depend
+#' on \code{RNGkind()}; the cached Box-Muller normal deviate is not restored.
+#' When tail evidence is retained, nonfinite or nonnegative witness curvature
+#' raises a structured \code{hetid_error}.
 #'
-#' @param found Running state from \code{identified_set_search()}
-#' @param quadratic Quadratic form list
-#' @param objectives Numeric I x m matrix of tracked linear functionals
-#' @return The state with infinite bounds, NA attaining points for those
-#'   bounds, and optional retained tail evidence
+#' @param found Running list from \code{identified_set_search()}, with length-m
+#'   bounds and m x I attaining-point matrices, optionally retaining tail evidence.
+#' @param quadratic Quadratic form list with one finite I x I matrix in
+#'   \code{A_i} per enforced maturity constraint.
+#' @param objectives Finite numeric I x m matrix of tracked linear functionals;
+#'   rows index theta components and columns index objectives.
+#' @return The running list, with both bounds infinite for each nonzero objective
+#'   when a strict-curvature witness is found, and otherwise the accumulated bounds.
+#'   Attaining-point rows for all nonfinite bounds are \code{NA_real_}; zero
+#'   objectives retain their finite values and points. If tail evidence is present,
+#'   affected sides receive a \code{strict_curvature} record containing the direction.
 #' @noRd
 apply_recession_bounds <- function(found, quadratic, objectives) {
   direction <- recession_direction(quadratic)

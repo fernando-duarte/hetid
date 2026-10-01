@@ -11,14 +11,26 @@ NULL
 
 #' Validate a hetid_moments Object
 #'
-#' Full structural-alignment gate for the \code{hetid_moments} class,
-#' checked against the object's own attributes. Run by the public
-#' boundary \code{compute_identification_moments()} on every object it
+#' Checks constraint-axis names and shapes and theta-axis dimensions
+#' against the object's own attributes. Run by the public boundary
+#' \code{\link{compute_identification_moments}} on every object it
 #' returns; call it directly on containers assembled via
-#' \code{new_hetid_moments()} from parts that are not known-good.
+#' \code{\link{new_hetid_moments}} from parts that are not known-good.
 #'
-#' @param x A classed \code{hetid_moments} object
-#' @return \code{x}, invisibly
+#' @param x A \code{hetid_moments} list with seven named statistics and
+#'   \code{maturities} and \code{n_components} attributes, as created by
+#'   \code{\link{new_hetid_moments}}.
+#' @return The \code{hetid_moments} object \code{x}, returned invisibly
+#'   and unchanged when validation succeeds.
+#' @details
+#' The \code{maturities} attribute must contain distinct, finite integer
+#' w2 column indices between one and \code{n_components}. Outer names
+#' must be \code{maturity_N}, in the order of these indices. Instrument
+#' dimensions are checked against the row count of \code{x$r_i_0}.
+#' Finiteness of moment values and inner dimension names are not checked.
+#' Invalid classes, maturity indices, or outer names signal
+#' \code{hetid_error_bad_argument}; shape mismatches signal
+#' \code{hetid_error_dimension_mismatch}.
 #' @keywords internal
 validate_hetid_moments <- function(x) {
   assert_hetid_moments(x, arg = "x")

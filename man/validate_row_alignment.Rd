@@ -7,16 +7,21 @@
 validate_row_alignment(yields, term_premia)
 }
 \arguments{
-\item{yields}{Yields data (matrix or data frame)}
+\item{yields}{A matrix or data frame of yields, with observations in rows.}
 
-\item{term_premia}{Term premia data (matrix or data frame)}
+\item{term_premia}{A matrix or data frame of term premia, with observations in rows.}
 }
 \value{
-Invisible TRUE if valid, stops with informative error if invalid
+Invisible \code{TRUE} when row counts agree. Otherwise, signals a
+\code{hetid_error_dimension_mismatch} condition.
 }
 \description{
-Rows-only counterpart to \code{validate_data_dimensions} for the
+Rows-only counterpart to \code{\link{validate_data_dimensions}} for the
 bond-pricing entry points: their frames may carry different column
 sets, but mismatched row counts must error, never recycle.
+}
+\details{
+Checks row counts only; callers must align observations by date.
+Column counts, names, and values are not checked, and empty frames are allowed.
 }
 \keyword{internal}

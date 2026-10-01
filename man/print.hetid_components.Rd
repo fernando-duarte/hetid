@@ -7,22 +7,16 @@
 \method{print}{hetid_components}(x, ...)
 }
 \arguments{
-\item{x}{A \code{hetid_components} object}
+\item{x}{A \code{hetid_components} object.}
 
-\item{...}{Unused, for method consistency}
+\item{...}{Unused arguments, accepted for method consistency.}
 }
 \value{
-\code{x}, invisibly
+\code{x}, invisibly.
 }
 \description{
-Print a hetid_components Object
+Displays the theta-axis dimension and active constraint indices on the console.
 }
-\examples{
-set.seed(42)
-w1 <- rnorm(100)
-w2 <- matrix(rnorm(100 * 4), nrow = 100, ncol = 4)
-pcs <- matrix(rnorm(100 * 3), nrow = 100, ncol = 3)
-gamma <- matrix(rnorm(3 * 4), nrow = 3, ncol = 4)
-moments <- compute_identification_moments(w1, w2, pcs)
-print(compute_identified_set_components(gamma, moments))
+\seealso{
+\code{\link[base]{print}}, \code{\link{compute_identified_set_components}}
 }

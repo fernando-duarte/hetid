@@ -1,14 +1,3 @@
-# The Fisher-scoring solve behind the log-variance equation's Harvey
-# (Gaussian multiplicative-heteroskedasticity) estimator: the criterion
-# 0.5 * (sum(eta) + sum(y / exp(eta))) with eta = X theta, minimized on
-# y / response_scale over a deterministic start ladder, with the fresh
-# post-stop acceptance gate applied to each rung. Originally ported from the
-# paper pipeline, whose fitting adapters now delegate here. No
-# clamping, no epsilon added to y, no eta capping. The scaled-response guard is
-# the estimator-neutral log_variance_scaled_response_class(); the result
-# assembly lives in R/harvey_result.R. A file-level roxygen block would collide
-# with harvey_fit_response's own Rd page, so this header stays a comment
-
 #' Build the Harvey Start Ladder
 #'
 #' Hard-coded rung order: the supplied start, each fallback start, then the
@@ -17,11 +6,13 @@
 #' intercept-only rung fills that role when \code{AUTO_INTERCEPT} is TRUE.
 #' Disabling it permits warm-only fitting or an empty ladder.
 #'
-#' @param start Numeric start vector, or \code{NULL}.
-#' @param fallback_starts List of numeric start vectors.
-#' @param y_scaled Numeric response on the scaled (fitted) scale.
-#' @param p Number of design columns.
-#' @param control Validated fitting controls.
+#' @param start Numeric coefficient vector of length \code{p}, or \code{NULL}.
+#' @param fallback_starts List of numeric coefficient vectors of length \code{p}.
+#' @param y_scaled Finite nonnegative response vector on the scaled (fitted)
+#'   scale, with at least one positive value.
+#' @param p Positive integer giving the number of design columns.
+#' @param control Resolved Harvey fitting-control list; the default enables
+#'   the intercept-only start through \code{AUTO_INTERCEPT = TRUE}.
 #'
 #' @return List with \code{candidates} and the matching \code{labels}.
 #' @noRd
@@ -50,31 +41,48 @@ harvey_start_ladder <- function(
 #' cannot fit -- an all-zero response, a scaled response that under- or
 #' overflowed, a design whose cross-product is singular, or a ladder with no
 #' accepted rung -- comes back as a fail-closed result, never an error;
-#' malformed arguments are the exported boundary's business.
+#' malformed arguments are checked by \code{\link{fit_log_variance}} before
+#' dispatch to this internal worker.
 #'
 #' @details
 #' Zero response rows are first-class and go straight to the solve: the ratio
 #' helper keeps them exact, and \code{rank_x_pos} is recorded as a diagnostic
-#' rather than gating anything, since a positive-response design that cannot
-#' resolve the coefficients is caught by the post-stop conditioning gate. The
-#' paper's recession certificate, which decides in advance whether interior
-#' zeros push the criterion to its infimum along a ray, is deliberately not
-#' ported: it needs a linear program the package has no dependency for. A
-#' recessing likelihood therefore fails closed the slow way, through
-#' \code{"line_search_stall"}, \code{"iteration_cap"}, or a rung whose start
-#' does not evaluate -- the same verdict, reached by iterating rather than by
-#' certificate.
+#' rather than used as an acceptance condition. The post-stop check measures
+#' the information matrix's conditioning. The solver does not establish
+#' whether the criterion has a finite minimizer: numerical acceptance depends
+#' on the configured tolerances. A failed line search or an exhausted
+#' iteration limit returns a failed fit.
 #'
-#' @param y Numeric nonnegative response on the original scale
-#' @param x_mat Numeric design matrix from \code{\link{log_variance_design}},
-#'   intercept column included and column labels validated
-#' @param start Numeric start vector on the scaled response, or \code{NULL}
-#' @param fallback_starts List of numeric start vectors on the scaled response
-#' @param response_scale Positive finite scalar to divide \code{y} by
-#' @param control Validated fitting controls
-#' @param design Quantities derived from the validated fixed design
+#' @param y Finite nonnegative numeric vector of length \code{nrow(x_mat)},
+#'   giving the response on the original scale. Missing values are not allowed.
+#' @param x_mat Finite numeric design matrix from
+#'   \code{\link{log_variance_design}}, with a leading intercept column and
+#'   validated column labels. Rows correspond to \code{y} in the same order.
+#' @param start Numeric coefficient vector of length \code{ncol(x_mat)} on
+#'   the scaled response \code{y / response_scale}, or \code{NULL} (default).
+#'   Named vectors must match the design column labels in order. Values must
+#'   be finite unless \code{control$SKIP_NONFINITE_STARTS} is \code{TRUE}.
+#' @param fallback_starts List of coefficient vectors following the same
+#'   scale, length, naming, and finiteness rules as \code{start}, tried in
+#'   list order after the supplied start. The default is an empty list.
+#' @param response_scale Positive finite numeric scalar dividing \code{y}
+#'   before fitting. The default \code{1} leaves the response unchanged.
+#' @param control Resolved, validated Harvey fitting-control list, not a list
+#'   of overrides. Defaults come from \code{\link{LOG_VARIANCE_HARVEY_CONTROL}},
+#'   with \code{AUTO_INTERCEPT = TRUE} and \code{SKIP_NONFINITE_STARTS = FALSE}.
+#' @param design List of fixed-design quantities for this \code{x_mat} and
+#'   \code{control}, computed by \code{log_variance_fixed_design()} by default.
 #'
-#' @return A validated \code{hetid_log_variance_fit} object
+#' @return A validated \code{\link{hetid_log_variance_fit}} list retaining
+#'   the original response and design. On success, \code{fit_status = "ok"},
+#'   \code{coef} contains named original-scale coefficients, and
+#'   \code{warm_start} contains named scaled-response coefficients, each of
+#'   length \code{ncol(x_mat)}. Only the intercept differs by
+#'   \code{log(response_scale)}. The criterion and score use the scaled
+#'   response. On failure, \code{fit_status = "nonconvergence"}, \code{coef}
+#'   and \code{warm_start} are \code{NULL}, and \code{diagnostics$error_class}
+#'   records the reason. Attempted starts are recorded in
+#'   \code{diagnostics$start_attempts}.
 #' @keywords internal
 harvey_fit_response <- function(y, x_mat, start = NULL,
                                 fallback_starts = list(), response_scale = 1,
@@ -88,8 +96,7 @@ harvey_fit_response <- function(y, x_mat, start = NULL,
   pos <- y_scaled > 0
   n_zero <- sum(!pos)
   rank_x_pos <- harvey_positive_rank(pos, x_mat, control, design)
-  # Fisher steps need this factor: rank deficiency leaves no globally safe step
-  # The rank test decides on every platform; Cholesky alone may round either way
+  # Rounding can let Cholesky succeed with dependent columns, so check rank separately
   rank_x <- design$rank
   chol_xx <- design$chol_xx
   if (rank_x < ncol(x_mat) || is.null(chol_xx)) {

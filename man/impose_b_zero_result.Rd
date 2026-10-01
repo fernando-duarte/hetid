@@ -7,24 +7,32 @@
 impose_b_zero_result(sdf_innov, reg_lagged, complete_idx, n_complete)
 }
 \arguments{
-\item{sdf_innov}{News-row SDF innovations (length \code{n_align}).}
+\item{sdf_innov}{Numeric SDF-innovation vector over the aligned news rows.}
 
-\item{reg_lagged}{News-row regressor matrix (for names / fitted length).}
+\item{reg_lagged}{Numeric regressor matrix with one row per innovation and
+named columns for the conditioning variables.}
 
-\item{complete_idx}{Logical complete-case mask over the news rows.}
+\item{complete_idx}{Logical complete-case mask of length \code{length(sdf_innov)}.}
 
-\item{n_complete}{Number of complete rows.}
+\item{n_complete}{Integer complete-row count, equal to \code{sum(complete_idx)}.}
 }
 \value{
-List mirroring the fitted-path result, with zero coefficients,
-zero fitted values, and \code{r_squared} / \code{df_residual} both
-\code{NA_real_}.
+Named list with the components described in
+\code{\link{process_w2_maturity}}. Residuals are \code{sdf_innov[complete_idx]},
+fitted values are a zero vector of length \code{n_complete}, and coefficients
+are zeros named \code{(Intercept)} followed by \code{colnames(reg_lagged)}.
+The \code{r_squared} and \code{df_residual} components are \code{NA_real_}.
 }
 \description{
 Imposes \eqn{B = 0} literally: no regression is fit, the residual is the SDF
-innovation itself (already nonlinearly centered upstream), and the
-coefficient row is a full-width vector of structural zeros, so that the
-matrix assembled from these rows in \code{compute_w2_residuals} keeps its
-\code{1 + J + y1_lags} column contract.
+innovation itself, and the coefficient row is a full-width vector of
+structural zeros, so that the
+matrix assembled from these rows in \code{\link{compute_w2_residuals}} keeps its
+\code{1 + n_pcs + y1_lags} column contract.
+}
+\details{
+Inputs are prepared by \code{\link{process_w2_maturity}}; this helper
+does not validate them. The returned mask is unchanged and
+\code{n_reg = ncol(reg_lagged)}.
 }
 \keyword{internal}

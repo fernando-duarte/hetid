@@ -7,7 +7,11 @@
 #' \code{MIN_MATURITY}.
 #'
 #' @template param-step
-#' @return Integer vector of valid default maturities
+#' @details
+#' Maturity indices and \code{step} are in months. The step must be a
+#' finite positive integer no greater than half of \code{HETID_CONSTANTS$MAX_MATURITY};
+#' invalid values raise a \code{hetid_error_bad_argument} condition.
+#' @return Numeric vector of valid default maturities in increasing order.
 #' @keywords internal
 default_w2_maturities <- function(step = HETID_CONSTANTS$DEFAULT_STEP) {
   validate_step(step)
@@ -19,14 +23,29 @@ default_w2_maturities <- function(step = HETID_CONSTANTS$DEFAULT_STEP) {
 
 #' Validate and Convert \eqn{\omega_2} Input Data
 #'
-#' Internal function to validate and convert yields and term_premia inputs
+#' Checks input dimensions and news horizons, converting yields and term
+#' premia to data frames without dropping observations.
 #'
-#' @param yields Yields data (data frame or matrix)
-#' @param term_premia Term premia data (data frame or matrix)
-#' @param maturities Vector of maturities
+#' @param yields Data frame or matrix of yields.
+#' @param term_premia Data frame or matrix of term premia with the same
+#'   numbers of rows and columns as \code{yields}.
+#' @param maturities Nonempty numeric vector of distinct, finite integer
+#'   bond maturities in months, between \code{MIN_MATURITY} and
+#'   \code{MAX_MATURITY - step}. Each must equal \code{step} or satisfy
+#'   \code{maturity - step >= MIN_MATURITY}.
 #' @template param-step
 #'
-#' @return List with converted data frames and validated maturities
+#' @details
+#' Inputs must already be aligned by calendar date. This helper checks
+#' dimensions, not dates, column availability, numeric contents, or missing
+#' values. Column availability is checked later for each maturity.
+#' The step must be a finite positive integer no greater than half of
+#' \code{HETID_CONSTANTS$MAX_MATURITY}. Invalid types or horizons raise
+#' \code{hetid_error_bad_argument}; unequal dimensions raise
+#' \code{hetid_error_dimension_mismatch}.
+#'
+#' @return A list with \code{yields} and \code{term_premia} as data frames,
+#'   and \code{maturities} unchanged, including its order and names.
 #' @keywords internal
 validate_w2_inputs <- function(yields, term_premia, maturities,
                                step = HETID_CONSTANTS$DEFAULT_STEP) {
@@ -38,8 +57,7 @@ validate_w2_inputs <- function(yields, term_premia, maturities,
 
   validate_data_dimensions(yields_df, term_premia_df)
 
-  # No ncol-based cap: inputs may hold non-contiguous column subsets,
-  # so column availability is checked per maturity in process_w2_maturity
+  # Inputs can omit maturity columns, so ncol cannot bound maturity values
   validate_step(step)
   validate_maturities(
     maturities,
@@ -68,7 +86,9 @@ validate_w2_inputs <- function(yields, term_premia, maturities,
 #' imported verbatim from its source repository with quarter-start labels,
 #' so normalization happens here, at ingestion.
 #'
-#' @return Data frame containing the variables dataset, period-end dated
+#' @return A data frame containing the bundled \code{\link{variables}}
+#'   dataset with quarterly period-end \code{date} values. Other columns
+#'   and row order are unchanged; the packaged data file is not modified.
 #' @keywords internal
 get_bundled_variables <- function() {
   data("variables", package = "hetid", envir = environment())
@@ -79,21 +99,32 @@ get_bundled_variables <- function() {
 
 #' Validate Principal Components for \eqn{\omega_2}
 #'
-#' Internal function to validate the supplied principal components.
+#' Converts supplied principal components of nominal financial asset
+#' returns to a numeric matrix and checks its row count.
 #'
-#' @param pcs Supplied PC matrix (required; aligned to yields by date)
-#' @param n_pcs Number of PCs to use
-#' @param n_obs Number of observations (for validation)
+#' @param pcs Required numeric matrix or data frame of principal components,
+#'   already aligned to yields by calendar date, with \code{n_obs} rows.
+#' @param n_pcs Positive integer number of leading PC columns to label,
+#'   validated by the caller not to exceed \code{ncol(pcs)}.
+#' @param n_obs Nonnegative integer number of yield observations expected.
 #'
-#' @return List with components:
+#' @details
+#' Missing and nonfinite entries are retained. Subsequent regression drops
+#' incomplete observations; this helper does not check finiteness or dates.
+#' Missing inputs or nonnumeric contents raise
+#' \code{hetid_error_bad_argument}; a row-count mismatch raises
+#' \code{hetid_error_dimension_mismatch}.
+#'
+#' @return A list with components:
 #'   \describe{
-#'     \item{pcs}{Matrix of principal components}
-#'     \item{pc_names}{Character labels for the first n_pcs
-#'       regressor columns}
+#'     \item{pcs}{Numeric matrix retaining all supplied columns and rows.}
+#'     \item{pc_names}{Character labels for the first \code{n_pcs}
+#'       columns. If any selected label is absent, missing, or empty, all
+#'       labels use the \code{HETID_CONSTANTS$PC_PREFIX} prefix followed
+#'       by their column indices. Matrix column names are unchanged.}
 #'   }
 #' @keywords internal
 load_w2_pcs <- function(pcs, n_pcs, n_obs) {
-  # No bundled-by-position fallback
   assert_bad_argument_ok(
     !is.null(pcs),
     paste0(
@@ -105,8 +136,6 @@ load_w2_pcs <- function(pcs, n_pcs, n_obs) {
 
   assert_tabular(pcs, "pcs")
   pcs <- as.matrix(pcs)
-  # Type guard only: W2 regression tolerates interior NA in PCs
-  # (dropped via complete.cases in run_pc_regression), so no finite check
   assert_bad_argument_ok(
     is.numeric(pcs),
     "pcs must contain only numeric values",

@@ -39,7 +39,6 @@ download_acm_pin <- function(pin, force, quiet) {
     }
   )
   validate_acm_pin_metadata(pin, staged_path)
-  # A force request verifies a fresh download but retains the identical immutable snapshot.
   # A concurrent publisher may also have completed while this download was in flight
   if (dir.exists(destination)) {
     read_acm_pin(pin)

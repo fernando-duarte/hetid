@@ -7,19 +7,19 @@
 se_norm_inv(m, rcond_tol)
 }
 \arguments{
-\item{m}{Symmetric numeric matrix to invert}
+\item{m}{Square symmetric numeric matrix to invert.}
 
-\item{rcond_tol}{Positive scalar reciprocal-condition tolerance}
+\item{rcond_tol}{Finite positive scalar reciprocal-condition tolerance.}
 }
 \value{
 The inverse of \code{m} with \code{m}'s dimnames, or \code{NULL}
+when the matrix fails the finiteness, conditioning, or Cholesky checks.
 }
 \description{
 Normalizes by the diagonal, gates \code{rcond}, Cholesky-inverts, and
 transforms back. Returns \code{NULL} on a non-finite matrix, a nonpositive
 or non-finite diagonal scale, a normalized \code{rcond} below
-\code{rcond_tol}, or a failed Cholesky, so SE availability tracks acceptance
-of a column-rescaled fit -- do not simplify the gate to a raw
-\code{rcond(m)}, which spuriously rejects a rescaled-but-fine bread.
+\code{rcond_tol}, or a failed Cholesky factorization. The conditioning
+check uses diagonal scaling rather than the raw \code{rcond(m)}.
 }
 \keyword{internal}

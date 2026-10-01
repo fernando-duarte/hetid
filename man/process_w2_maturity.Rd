@@ -29,40 +29,83 @@ contain the columns for the maturities the function uses
 \code{i = 60}). Whole years are multiples of 12 (i = 12 is the
 1-year bond, i = 60 the 5-year, i = 120 the 10-year).}
 
-\item{yields_df}{Yields data frame}
+\item{yields_df}{Numeric yields data frame in annualized percentage points,
+with maturity columns named \code{y<N>} for maturity \code{N} in months.}
 
-\item{term_premia_df}{Term premia data frame}
+\item{term_premia_df}{Numeric term-premia data frame in annualized percentage
+points, with columns named \code{tp<N>} and the same date-aligned rows as
+\code{yields_df}.}
 
-\item{pcs}{Matrix of principal components (n x J) where n is the
-number of observations (one row per yield row, aligned to the
-yields by calendar date) and J is the number of components,
-extracted from a broader set of returns of financial assets.
-Required: join the components to the yields by \code{date} before
-calling. The matrix may be any instrument set, not only principal
-components; see \code{\link{build_instrument_matrix}()} for a
-validated constructor that supports arbitrary transformations.}
+\item{pcs}{Numeric matrix or data frame of instruments (n x J), with one row
+per yield row, already aligned to yields by calendar date. In the VFCI
+application these are principal components of nominal financial asset
+returns. Other instrument sets are accepted; see
+\code{\link{build_instrument_matrix}} for a validated constructor supporting
+arbitrary transformations. Join instruments to yields by \code{date}
+before calling.}
 
-\item{n_pcs}{Number of PCs}
+\item{n_pcs}{Integer number of leading columns of \code{pcs} to use, from
+one to \code{ncol(pcs)}.}
 
-\item{step}{Integer number of maturity-index units per news period
-(default \code{HETID_CONSTANTS$DEFAULT_STEP}). The news operator
-steps one period, so maturity arithmetic moves in multiples of
-\code{step}: \code{compute_n_hat()} pairs maturities \code{i} and
-\code{i + step}, the one-period bond is the \code{step}-maturity
-bond, and horizons must satisfy \code{i <= MAX_MATURITY - step}.}
+\item{step}{Positive integer number of months per news period, no greater than
+half of \code{HETID_CONSTANTS$MAX_MATURITY}. Functions with a default use
+\code{HETID_CONSTANTS$DEFAULT_STEP}. For time-series inputs, adjacent observations
+must be \code{step} months apart. Functions that read maturity \code{i + step}
+require \code{i <= HETID_CONSTANTS$MAX_MATURITY - step}; additional
+horizon restrictions are described for each function.}
 
-\item{y1}{Optional outcome vector (length \code{nrow(pcs)}) supplying the
-own-lag block of the common conditioning vector \eqn{X_t}.}
+\item{y1}{Numeric outcome vector of length \code{nrow(pcs)}, aligned to the
+same dates, supplying the own-lag block of \eqn{X_t}. Required when
+\code{y1_lags > 0}; otherwise ignored and defaults to \code{NULL}.}
 
-\item{y1_lags}{Integer number of own-lags \eqn{H \ge 0} to append.}
+\item{y1_lags}{Integer number of own-lags \eqn{H \ge 0} to append, at most
+\code{nrow(pcs) - 1}. Defaults to zero.}
 
-\item{impose_b_zero}{Logical; if TRUE, impose \eqn{B = 0} (no regression):
+\item{impose_b_zero}{Logical; defaults to \code{FALSE}. If \code{TRUE},
+impose \eqn{B = 0} (no regression):
 the residual is the SDF innovation itself.}
 }
 \value{
-List with regression results or NULL if skipped
+A named list with the following components, or \code{NULL} when skipped:
+\describe{
+\item{residuals, fitted}{Numeric vectors for the retained news rows.}
+\item{coefficients}{Named numeric vector of length
+\code{1 + n_pcs + y1_lags}, including \code{(Intercept)}. Fitted-path
+regressor names are made syntactically valid and unique.}
+\item{r_squared}{Numeric regression R-squared, or \code{NA_real_} when imposed.}
+\item{n_obs}{Number of retained complete rows.}
+\item{kept_idx}{Logical mask over the aligned news rows, before filtering.}
+\item{n_reg}{Number of conditioning columns, \code{n_pcs + y1_lags}.}
+\item{df_residual}{Residual degrees of freedom, or \code{NA_real_} when imposed.}
+}
+With \code{impose_b_zero = TRUE}, residuals are the retained innovations,
+fitted values and all coefficients are zero, and no model is fit.
 }
 \description{
-Internal function to process regression for a single maturity
+Computes SDF innovations for one bond maturity and either regresses them on
+the common conditioning vector or imposes zero coefficients.
+}
+\details{
+Called with inputs validated by \code{\link{compute_w2_residuals}}. Required
+maturity columns are \code{i - step}, \code{i}, and \code{i + step}; at
+\code{i == step}, only \code{i} and \code{i + step} are required.
+The horizon must equal \code{step} or satisfy \code{i - step >= MIN_MATURITY},
+and cannot exceed \code{MAX_MATURITY - step}. The positive integer \code{step}
+cannot exceed \code{MAX_MATURITY \%/\% 2}.
+Rows must already be aligned by calendar date; this helper does not join dates.
+The SDF innovations use the convention of \code{\link{compute_sdf_innovations}}.
+
+Conditioning row \code{t} predicts news for \code{t + 1}. Only the common
+leading news and conditioning rows are used. Rows with missing innovations
+or conditioning values (including leading own-lag missing values) are dropped
+in both paths. The fitted path needs \code{n_pcs + y1_lags + 2} complete rows;
+the imposed path needs two. Infinities are not removed by complete-case filtering.
+
+Missing maturity columns or too few complete rows yield \code{NULL} and a
+\code{hetid_warning_skipped_maturity} warning. Errors from the news kernel or
+conditioning builder propagate, including \code{hetid_error_insufficient_data}
+when no valid news remain. The fitted path also propagates structured errors
+for a response-name collision or a rank-deficient design, and the news kernel
+may signal \code{hetid_warning_unit_scale} for likely decimal yields.
 }
 \keyword{internal}

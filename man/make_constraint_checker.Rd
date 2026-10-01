@@ -7,29 +7,40 @@
 make_constraint_checker(A_i, b_i, c_i)
 }
 \arguments{
-\item{A_i}{Symmetric numeric matrix from quadratic computation}
+\item{A_i}{Square symmetric numeric matrix from quadratic computation.}
 
 \item{b_i}{Numeric coefficient vector from quadratic computation,
-with length equal to \code{nrow(A_i)}}
+with length equal to \code{nrow(A_i)}.}
 
-\item{c_i}{Scalar numeric constant from quadratic computation}
+\item{c_i}{Numeric scalar constant from quadratic computation.}
 }
 \value{
-A function that takes a theta vector and returns the scalar
-value of \eqn{\theta' A_i \theta + b_i' \theta + c_i}. Negative
-values indicate theta is inside the constraint.
+A function taking a numeric \code{theta} vector of length
+\code{nrow(A_i)} and returning the numeric scalar
+\eqn{\theta' A_i \theta + b_i' \theta + c_i}. Non-positive
+values satisfy the constraint, including equality at its boundary.
 }
 \description{
-Factory function that precomputes constants and returns a
+Factory function that captures quadratic coefficients and returns a
 closure for efficiently evaluating the quadratic constraint
 at many theta values (e.g., grid search or optimisation).
 Inputs are validated once at factory time; the returned closure
 performs no checks.
+}
+\details{
+Invalid coefficient types or a nonsymmetric matrix signal
+a \code{hetid_error_bad_argument}; a coefficient-vector length mismatch
+signals a \code{hetid_error_dimension_mismatch}. Missing and non-finite
+coefficients are not explicitly rejected or removed, and missing values
+propagate to the result. Supply finite coefficients and candidates for
+membership checks. The closure does not validate \code{theta}; invalid
+inputs can produce ordinary R arithmetic errors or non-finite results.
 }
 \examples{
 A <- matrix(c(1, 0, 0, 1), 2, 2)
 b <- c(-2, -2)
 c_val <- 0.5
 check <- make_constraint_checker(A, b, c_val)
-check(c(0.5, 0.5)) # Evaluate constraint at theta
+check(c(0.5, 0.5))
+check(c(0.5, 0.5)) <= 0
 }

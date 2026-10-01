@@ -4,6 +4,7 @@
 \alias{hetid_log_variance_fit_methods}
 \title{Methods and Assertions for hetid_log_variance_fit Objects}
 \description{
-Methods and Assertions for hetid_log_variance_fit Objects
+Internal class and inference checks, and the print method for
+\code{hetid_log_variance_fit} objects.
 }
 \keyword{internal}

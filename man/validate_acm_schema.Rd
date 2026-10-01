@@ -7,20 +7,29 @@
 validate_acm_schema(acm_data, path)
 }
 \arguments{
-\item{acm_data}{Data frame as read from disk}
+\item{acm_data}{A data frame as read from disk, with raw ACM column names.}
 
-\item{path}{Source file path, named in error messages}
+\item{path}{A character string naming the source file in error messages.}
 }
 \value{
-Invisible TRUE
+The logical scalar \code{TRUE}, invisibly, when validation passes.
+Otherwise, signals a \code{hetid_error} condition naming the source file
+and the first failed requirement.
 }
 \description{
-Guards against stale or corrupt cache files that the download-time
-digest check cannot see (the digest only covers fresh downloads):
-requires a date column, at least one ACM yield column, and numeric
-values in every ACM family column. The check is deliberately lenient
+Checks the column schema of data read from disk to catch stale or
+corrupt cache files. Requires a date column, at least one ACM yield
+column, and numeric columns in every ACM family. The check is deliberately lenient
 about which maturities are present so both the GitHub
 (monthly-maturity) and NY Fed (annual-only) sources pass, as do
 reduced test fixtures.
+}
+\details{
+The date column must be named \code{DATE} or \code{date}; its
+values are not parsed or validated here. ACM families are identified
+by the raw prefixes in \code{\link{HETID_ACM_SCHEMA}}. Numeric
+columns may contain missing or nonfinite values, and zero-row data
+frames are allowed. Other columns are ignored. This function does
+not read or modify the source file or change the supplied data frame.
 }
 \keyword{internal}

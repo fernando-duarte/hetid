@@ -23,54 +23,73 @@ new_hetid_log_variance_fit(
 }
 \arguments{
 \item{coef}{Named numeric vector of original-scale coefficients, or
-\code{NULL} on failure}
+\code{NULL} on failure. Names must equal \code{coef_labels}.}
 
 \item{fit_status}{One of \code{LOG_VARIANCE_FIT_STATUS}: \code{"ok"} or
-\code{"nonconvergence"}}
+\code{"nonconvergence"}.}
 
-\item{converged}{Logical, whether the underlying solver converged}
+\item{converged}{Logical scalar indicating whether the solver converged.}
 
 \item{objective}{The stored criterion on the scaled response, or
-\code{NA} on failure. PPML: \code{sum(mu) - sum(y * log(mu))} over
-positive-y terms (a quasi-likelihood criterion up to response-only
-constants, not a full deviance). Harvey: the Gaussian negative
-log-likelihood \code{0.5 * sum(eta + y * exp(-eta))}}
+\code{NA_real_} on failure. With \code{y_scaled = y / response_scale},
+\code{eta = x_design \%*\% warm_start}, and \code{mu = exp(eta)}, PPML
+stores \code{sum(mu) - sum(y_scaled[pos] * log(mu[pos]))}, where
+\code{pos = y_scaled > 0}. This is a quasi-likelihood criterion up to
+response-only constants, not a full deviance. Harvey stores the Gaussian
+negative log-likelihood \code{0.5 * sum(eta + y_scaled * exp(-eta))}.}
 
-\item{score_norm}{Numeric score-norm diagnostic, or \code{NA} on failure}
+\item{score_norm}{Numeric scalar score-norm diagnostic on the scaled
+response, or \code{NA_real_} on failure.}
 
-\item{convergence_code}{Integer, solver iterations on success or
-\code{-1L} on failure}
+\item{convergence_code}{Integer scalar counting solver iterations on
+success, or \code{-1L} on failure.}
 
-\item{warm_start}{Named numeric vector of scaled-scale coefficients, or
-\code{NULL} on failure}
+\item{warm_start}{Named numeric vector of coefficients for the scaled
+response \code{y / response_scale}, or \code{NULL} on failure. Names
+must equal \code{coef_labels}. On success, \code{coef} differs only by
+adding \code{log(response_scale)} to its intercept coefficient.}
 
 \item{diagnostics}{List with at least \code{error_class} and
-\code{start_attempts}}
+\code{start_attempts} entries.}
 
-\item{y}{Numeric vector, the original-scale response the fit ran on}
+\item{y}{Finite nonnegative numeric vector of length \code{n_obs}, the
+original-scale response the fit ran on.}
 
-\item{x_design}{Numeric matrix, the full design matrix the fit ran on
-(intercept column included), with \code{colnames == coef_labels}}
+\item{x_design}{Finite numeric matrix with \code{n_obs} rows and
+\code{length(coef_labels)} columns, the full design matrix including
+the intercept. Column names must equal \code{coef_labels}.}
 
-\item{estimator}{Single string identifying the estimator (\code{"ppml"}
-or \code{"harvey"})}
+\item{estimator}{Single non-missing string identifying the estimator.
+Public fits use \code{"ppml"} or \code{"harvey"}; this constructor
+checks the string's type and length, not membership in the registry.}
 
 \item{response_scale}{Positive finite numeric scalar, the response
-scaling factor applied before fitting}
+divisor applied before fitting: the solver uses \code{y / response_scale}.}
 
-\item{n_obs}{Number of observations the fit was computed from}
+\item{n_obs}{Positive finite integer-valued numeric scalar no greater
+than \code{.Machine$integer.max}, the number of observations fitted.}
 
-\item{coef_labels}{Character vector naming the coefficient axis}
+\item{coef_labels}{Non-empty character vector without missing values,
+naming the coefficient axis.}
 }
 \value{
-A classed \code{hetid_log_variance_fit} list
+A \code{hetid_log_variance_fit} list, visibly, with the ten fit
+fields stored as supplied and the four container-identity attributes.
+The \code{n_obs} attribute is converted to integer. The result has not
+undergone full structural validation; see \code{\link{hetid_log_variance_fit}}.
 }
 \description{
-Low-level cheap constructor for the \code{hetid_log_variance_fit} class:
-checks the four container-identity attributes, trusting the shapes of the
-fit fields themselves. The full structural sweep lives in
-\code{validate_hetid_log_variance_fit()}, which the public boundary
-\code{fit_log_variance()} always runs; hot paths rebuilding containers
-from known-good parts may call this constructor directly and skip it.
+Low-level constructor for the \code{hetid_log_variance_fit} class.
+Checks \code{n_obs}, \code{response_scale}, \code{coef_labels}, and
+\code{estimator}, but stores the fit fields without validating them.
+}
+\details{
+The parameter descriptions state the contract for validated fits.
+Call \code{\link{validate_hetid_log_variance_fit}} when assembling a
+container from parts that are not known to satisfy that contract.
+Results from \code{\link{fit_log_variance}} undergo this validation.
+Invalid container-identity attributes signal a
+\code{hetid_error_bad_argument} condition; missing values are rejected
+in these attributes rather than removed.
 }
 \keyword{internal}

@@ -19,131 +19,131 @@ compute_w2_residuals(
 )
 }
 \arguments{
-\item{yields}{Data frame with columns y1, y2, ..., containing yields}
+\item{yields}{Numeric data frame or matrix with month-suffixed columns such as
+\code{y1} and \code{y12}, containing yields in annualized percentage points.}
 
-\item{term_premia}{Data frame with columns tp1, tp2, ..., containing term premia}
+\item{term_premia}{Numeric data frame or matrix with month-suffixed columns such
+as \code{tp1} and \code{tp12}, containing term premia in annualized percentage
+points. Rows must match \code{yields} by observation date and order.}
 
-\item{maturities}{Vector of maturities to process. NULL (default)
-uses the step-spaced horizons from \code{step} to
-\code{MAX_MATURITY - step} satisfying the news contract (see
-\code{\link{default_w2_maturities}}).}
+\item{maturities}{Nonempty vector of distinct integer bond maturities in months,
+from \code{MIN_MATURITY} to \code{MAX_MATURITY - step}. Each must equal
+\code{step} or satisfy \code{maturity - step >= MIN_MATURITY}.
+\code{NULL} uses \code{\link{default_w2_maturities}}.}
 
-\item{n_pcs}{Integer specifying the number of principal components to use.
-Any value up to \code{ncol(pcs)} is allowed. Default is
-\code{HETID_CONSTANTS$DEFAULT_N_PCS} following Adrian, Crump, and Moench (2013).
-The choice of n_pcs represents a trade-off between capturing variation in
-financial asset returns and maintaining computational stability. More components
-capture more variation but may lead to overfitting in finite samples.}
+\item{n_pcs}{Positive integer number of leading \code{pcs} columns to use,
+no greater than \code{ncol(pcs)}. The default is
+\code{HETID_CONSTANTS$DEFAULT_N_PCS}.}
 
-\item{pcs}{Matrix of principal components (n x J) where n is the
-number of observations (one row per yield row, aligned to the
-yields by calendar date) and J is the number of components,
-extracted from a broader set of returns of financial assets.
-Required: join the components to the yields by \code{date} before
-calling. The matrix may be any instrument set, not only principal
-components; see \code{\link{build_instrument_matrix}()} for a
-validated constructor that supports arbitrary transformations.}
+\item{pcs}{Numeric matrix or data frame of instruments (n x J), with one row
+per yield row, already aligned to yields by calendar date. In the VFCI
+application these are principal components of nominal financial asset
+returns. Other instrument sets are accepted; see
+\code{\link{build_instrument_matrix}} for a validated constructor supporting
+arbitrary transformations. Join instruments to yields by \code{date}
+before calling.}
 
-\item{return_df}{Logical, if TRUE returns a tidy data frame (default FALSE
-returns the richer list). Both shapes carry dates.}
+\item{return_df}{Logical; \code{FALSE} (default) returns a list,
+\code{TRUE} a long-format data frame. Both shapes carry dates.}
 
-\item{dates}{Required vector of period-end \code{Date}s, one per yield row
-(length \code{nrow(yields)}); internally shifted to the t+1 realization
-dates \eqn{d_2, \ldots, d_T} of the \eqn{\omega_2} news (matching
-\code{compute_w1_residuals}).}
+\item{dates}{Required non-missing period-end \code{Date} vector, one per yield
+row. News realization dates are \code{dates[-1]}, subset by \code{kept_idx}.}
 
-\item{step}{Integer number of maturity-index units per news period
-(default \code{HETID_CONSTANTS$DEFAULT_STEP}). The news operator
-steps one period, so maturity arithmetic moves in multiples of
-\code{step}: \code{compute_n_hat()} pairs maturities \code{i} and
-\code{i + step}, the one-period bond is the \code{step}-maturity
-bond, and horizons must satisfy \code{i <= MAX_MATURITY - step}.}
+\item{step}{Positive integer number of months per news period, no greater than
+half of \code{HETID_CONSTANTS$MAX_MATURITY}. Functions with a default use
+\code{HETID_CONSTANTS$DEFAULT_STEP}. For time-series inputs, adjacent observations
+must be \code{step} months apart. Functions that read maturity \code{i + step}
+require \code{i <= HETID_CONSTANTS$MAX_MATURITY - step}; additional
+horizon restrictions are described for each function.}
 
-\item{y1}{Optional outcome vector (length \code{nrow(pcs)}) supplying the
-own-lag block of the common conditioning vector \eqn{X_t}; required when
-\code{y1_lags > 0}.}
+\item{y1}{Optional numeric outcome vector, aligned to the yield rows;
+required with length \code{nrow(pcs)} when \code{y1_lags > 0}.}
 
-\item{y1_lags}{Integer number of own-lags \eqn{H \ge 0} of \code{y1} to
-append to the PC regressors (default 0 = PC-only, backward compatible).
-Lagging drops the first \eqn{H - 1} leading rows.}
+\item{y1_lags}{Integer number of own-lags \eqn{H \ge 0} to append to the
+PC regressors (default 0). Cannot exceed \code{nrow(pcs) - 1}.
+For \eqn{H > 0}, lagging drops the first \eqn{H - 1} news rows.}
 
-\item{impose_b_zero}{Logical; if TRUE, impose \eqn{B = 0} structurally (no
-regression): \eqn{\omega_2} equals the SDF innovation \eqn{Y_2}, the
-\code{coefficients} row is the full-width
-\code{(Intercept, pc1..pcJ, l.y1..l<H>.y1)} vector of zeros, and
-\code{r_squared} is \code{NA} (default FALSE).}
+\item{impose_b_zero}{Logical; \code{TRUE} imposes \eqn{B = 0} without regression:
+coefficients and fitted values are zero and \code{r_squared} is \code{NA}.
+Complete-case filtering still applies. Default is \code{FALSE}.}
 }
 \value{
-If return_df = FALSE, returns a list containing:
+With \code{return_df = FALSE}, a list containing:
 \describe{
-\item{residuals}{List of residual vectors, one for each maturity}
-\item{fitted}{List of fitted value vectors}
-\item{dates}{Per-maturity list of t+1 realization \code{Date} vectors
-parallel to \code{residuals}, the lead date index subset by each
-maturity's \code{kept_idx}.}
-\item{coefficients}{Matrix of regression coefficients (maturities x predictors)}
-\item{r_squared}{Vector of R-squared values for each maturity}
-\item{n_obs}{Number of observations used in each regression}
-\item{kept_idx}{List of logical vectors indicating which
-rows survived complete.cases filtering, one per maturity}
-\item{skipped}{Named character vector of skip reasons, one element
-per skipped maturity (named \code{maturity_N}); zero-length when
-nothing was skipped}
+\item{residuals, fitted}{Numeric-vector lists keyed by \code{maturity_N}
+for successfully processed bond maturities \code{N} in months.}
+\item{dates}{Parallel lists of realization \code{Date} vectors.}
+\item{coefficients}{Numeric matrix with one \code{maturity_N} row per requested
+maturity and \code{1 + n_pcs + y1_lags} columns: intercept, selected PC
+labels, and \code{l.y1}, \code{l2.y1}, etc. Regression labels are sanitized.}
+\item{r_squared, n_obs}{Numeric vectors in requested-maturity order:
+R-squared and complete observation counts, respectively.}
+\item{kept_idx}{List keyed by \code{maturity_N} of logical complete-case masks
+over the \code{nrow(yields) - 1} news rows.}
+\item{skipped}{Skip reasons named \code{maturity_N}; empty when none are skipped.}
 }
-If return_df = TRUE, returns a data frame with columns \code{date},
-\code{maturity}, \code{residuals} (\eqn{\omega_{2,t+1}}), and \code{fitted},
-carrying the same skip reasons as a \code{skipped_maturities} attribute.
-
-Maturities whose required columns or observations are missing are
-skipped with a warning rather than aborting the run: their entries
-are absent from \code{residuals}, \code{fitted}, and \code{kept_idx},
-and their \code{coefficients} rows, \code{r_squared}, and \code{n_obs}
-are \code{NA}. With \code{return_df = TRUE}, skipped maturities
-contribute no rows (zero rows if all are skipped). Each skip removes
-a constraint and can only widen the identified set, so check the
-returned skip set rather than the warning stream.
+With \code{return_df = TRUE}, a data frame with columns \code{date},
+\code{maturity} (months), \code{residuals}, and \code{fitted}, and the
+same skip reasons in its \code{skipped_maturities} attribute.
+Skipped maturities are absent from the lists (including \code{dates});
+their coefficient rows, R-squared values, and observation counts are \code{NA}.
+No data-frame rows are added for skips; if all are skipped, the frame has zero rows.
+Dropping constraints can only widen the set; check skips before comparing estimates.
 }
 \description{
-Computes residuals \eqn{\omega_{2,t+1}^{(i)}} from regressing \eqn{Y_{2,t+1}^{(i)}} variables
-(SDF innovations) on the common conditioning vector \eqn{X_t}: a constant, the
-principal components extracted from financial asset returns, and (when
-\code{y1}/\code{y1_lags} are supplied) the own-lags of \code{y1}. Setting
-\code{impose_b_zero = TRUE} gives the exact-news case \eqn{B = 0}, in which the
-residual is the centered SDF news itself and all coefficients are zero.
+Regresses SDF innovations \eqn{Y_{2,t+1}^{(i)}} on a constant, principal
+components of nominal financial asset returns, and optional own-lags of
+\code{y1}, returning residuals \eqn{\omega_{2,t+1}^{(i)}}. With
+\code{impose_b_zero = TRUE}, the residual is the SDF news itself.
 }
 \details{
-For each maturity i, computes \eqn{Y_{2,t+1}^{(i)}} as the SDF
-innovation (via \code{compute_sdf_innovations()}, the centered
-second-order approximation to the SDF news
-\eqn{E_{t+1}[SDF_{t+1+i}] - E_t[SDF_{t+1+i}]}), then regresses it on
-the conditioning vector \eqn{X_t} (PC_t, optionally with
-\code{y1_lags} own-lags of \code{y1}) for residuals \eqn{\omega_{2,t+1}}.
+SDF news uses the centered second-order approximation in
+\code{\link{compute_sdf_innovations}}. Predictor row \eqn{t} is paired with
+news realized at \eqn{t+1}. Yields and term premia must have the same dimensions,
+with numeric columns named \code{yN} and \code{tpN}, in annualized percentage points.
+Maturity \code{i} needs columns at \code{i - step}, \code{i}, and
+\code{i + step}; at \code{i == step}, only \code{i} and \code{i + step} are needed.
+Supply \code{pcs} already joined to yields by \code{date}, with one row per yield
+row. Matrices and numeric data frames are accepted. Set \code{step} to the number
+of months per observation period; the default is an annual news clock.
+The rollover convention must also match; see \code{\link{compute_n_hat}}.
 
-\strong{PC alignment:} \code{pcs} must be supplied as a numeric matrix
-with one row per yield row, already aligned to the yields by calendar
-date. Join the principal components to the yields by \code{date} before
-calling (both share the package period-end convention). See the example.
+Rows with missing SDF innovations, selected PCs, or own-lags are removed per
+maturity. Missing required columns or fewer than \code{n_pcs + y1_lags + 2}
+complete rows cause a \code{hetid_warning_skipped_maturity} warning and a skip;
+the imposed path needs only two complete rows. Argument-validation failures,
+no valid SDF news, and rank-deficient designs abort with a \code{hetid_error}.
 }
 \examples{
-# The bundled dataset ships as imported (quarter-start dates); normalize to
-# the package period-end convention so it merges with ACM by calendar date,
-# then pass the aligned PCs via `pcs`.
-mats <- c(12, 24, 36, 48)
-acm_data <- extract_acm_data(
-  data_types = c("yields", "term_premia"),
-  maturities = mats, frequency = "quarterly"
-)
-data("variables", package = "hetid")
-variables$date <- to_period_end(variables$date, "quarterly")
-pc_cols <- paste0("pc", 1:4)
-merged <- merge(
-  variables[, c("date", pc_cols)],
-  acm_data[, c("date", paste0("y", mats), paste0("tp", mats))],
-  by = "date"
-)
-res_w2 <- compute_w2_residuals(
-  merged[, paste0("y", mats)], merged[, paste0("tp", mats)],
-  maturities = c(24, 36), n_pcs = 4, pcs = as.matrix(merged[, pc_cols]),
-  dates = merged$date
-)
+local({
+  old_seed <- get0(".Random.seed", envir = globalenv(), inherits = FALSE)
+  on.exit(if (is.null(old_seed)) {
+    rm(".Random.seed", envir = globalenv())
+  } else {
+    assign(".Random.seed", old_seed, envir = globalenv())
+  })
+  set.seed(42)
+  acm <- extract_acm_data(
+    data_types = c("yields", "term_premia"), maturities = 1:3
+  )
+  # Simulated nominal asset returns supply monthly conditioning PCs
+  returns <- matrix(rnorm(nrow(acm) * 2), ncol = 2)
+  inputs <- data.frame(date = acm$date, stats::prcomp(returns)$x, outcome = rnorm(nrow(acm)))
+  merged <- merge(inputs, acm, by = "date")
+  yields <- merged[, paste0("y", 1:3)]
+  term_premia <- merged[, paste0("tp", 1:3)]
+  pcs <- as.matrix(merged[, c("PC1", "PC2")])
+  fit <- compute_w2_residuals(
+    yields, term_premia,
+    maturities = 2, n_pcs = 2, pcs = pcs,
+    dates = merged$date, step = 1, y1 = merged$outcome, y1_lags = 2
+  )
+  imposed <- compute_w2_residuals(
+    yields, term_premia,
+    maturities = 2, n_pcs = 2, pcs = pcs,
+    dates = merged$date, step = 1, y1 = merged$outcome, y1_lags = 2,
+    impose_b_zero = TRUE, return_df = TRUE
+  )
+  print(head(imposed))
+})
 }

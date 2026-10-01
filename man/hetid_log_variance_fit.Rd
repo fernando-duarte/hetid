@@ -4,10 +4,25 @@
 \alias{hetid_log_variance_fit}
 \title{Construct hetid_log_variance_fit Objects}
 \description{
-Internal helpers behind the \code{hetid_log_variance_fit} container: the
-cheap \code{new_hetid_log_variance_fit()} constructor. The full shape
-sweep lives in \code{validate_hetid_log_variance_fit()}
-(\code{R/hetid_log_variance_fit_validation.R}). The public boundary that
-builds these objects is \code{fit_log_variance()}.
+Container for accepted and failed log-variance fits, built by
+\code{\link{fit_log_variance}}. Internal callers can assemble one with
+\code{\link{new_hetid_log_variance_fit}} and check its structure with
+\code{\link{validate_hetid_log_variance_fit}}.
+}
+\details{
+The list contains \code{coef}, \code{fit_status}, \code{converged},
+\code{objective}, \code{score_norm}, \code{convergence_code},
+\code{warm_start}, \code{diagnostics}, \code{y}, and \code{x_design}.
+Attributes record \code{estimator}, \code{response_scale}, \code{n_obs},
+and \code{coef_labels}. See \code{\link{new_hetid_log_variance_fit}} for
+the field definitions.
+
+Accepted fits have \code{fit_status = "ok"}, finite coefficients,
+objectives and score norms, and \code{converged = TRUE}. Failed fits have
+\code{fit_status = "nonconvergence"}, \code{converged = FALSE},
+\code{NULL} coefficients and warm starts, \code{NA_real_} objectives and
+score norms, and \code{convergence_code = -1L}. The failure reason is
+stored in \code{diagnostics$error_class}; the response and design are
+retained in both cases.
 }
 \keyword{internal}

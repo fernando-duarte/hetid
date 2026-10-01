@@ -7,19 +7,26 @@
 effective_max_maturity(step = HETID_CONSTANTS$DEFAULT_STEP)
 }
 \arguments{
-\item{step}{Integer number of maturity-index units per news period
-(default \code{HETID_CONSTANTS$DEFAULT_STEP}). The news operator
-steps one period, so maturity arithmetic moves in multiples of
-\code{step}: \code{compute_n_hat()} pairs maturities \code{i} and
-\code{i + step}, the one-period bond is the \code{step}-maturity
-bond, and horizons must satisfy \code{i <= MAX_MATURITY - step}.}
+\item{step}{Positive integer number of months per news period, no greater than
+half of \code{HETID_CONSTANTS$MAX_MATURITY}. Functions with a default use
+\code{HETID_CONSTANTS$DEFAULT_STEP}. For time-series inputs, adjacent observations
+must be \code{step} months apart. Functions that read maturity \code{i + step}
+require \code{i <= HETID_CONSTANTS$MAX_MATURITY - step}; additional
+horizon restrictions are described for each function.}
 }
 \value{
-Integer scalar, \code{MAX_MATURITY - step}
+An integer scalar giving the maximum usable bond maturity in months,
+equal to \code{HETID_CONSTANTS$MAX_MATURITY - step}.
 }
 \description{
 Largest maturity index usable by functions that need data at
-maturity \code{i + step} (e.g. \code{compute_n_hat}).
+maturity \code{i + step} (e.g. \code{\link{compute_n_hat}}).
+}
+\details{
+Maturity indices and \code{step} are measured in months. The step must be
+a single finite numeric value with no fractional part, between \code{1} and
+\code{HETID_CONSTANTS$MAX_MATURITY \%/\% 2}, inclusive. Missing values and
+invalid steps raise a \code{hetid_error_bad_argument} condition.
 }
 \examples{
 effective_max_maturity()

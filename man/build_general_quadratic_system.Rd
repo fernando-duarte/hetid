@@ -7,19 +7,24 @@
 build_general_quadratic_system(lambda, tau, moments)
 }
 \arguments{
-\item{lambda}{Either a numeric J x I matrix (one combination per
-component; legacy-equivalent) or a list of length
-\code{n_components} indexed by system column with a numeric
-J x K_i weight matrix at every constrained column (NULL required
-at unconstrained columns). All-zero weight columns are rejected.}
+\item{lambda}{Numeric J x I matrix (one combination per component), or a list of
+length \code{n_components}, indexed by system column: constrained entries are
+numeric J x K_i weight matrices; unconstrained entries must be NULL.
+J counts instruments; I is \code{n_components}. Constrained weights must be finite
+and each column nonzero. Unconstrained matrix columns are ignored.}
 
-\item{tau}{Scalar in \code{[0, 1)}, numeric vector of length
+\item{tau}{Numeric scalar, numeric vector of length
 \code{n_components} (replicated across each component's
 combinations), or list of length \code{n_components} whose
-element i is a length-K_i numeric vector of slacks}
+constrained element i contains K_i numeric slacks. List elements may
+have dimensions; their values are used in R's linear indexing order.
+All supplied slacks must be finite and in \code{[0, 1)}. In list form,
+unconstrained entries must be NULL or zero-length. A flat vector of
+slacks is interpreted by system column when its length is I and as
+a common slack when its length is one; other flat lengths are rejected.}
 
 \item{moments}{A \code{hetid_moments} object from
-\code{\link{compute_identification_moments}}}
+\code{\link{compute_identification_moments}}.}
 }
 \value{
 A list with elements
@@ -29,24 +34,30 @@ A list with elements
 \code{hetid_components} object, so it cannot be passed to
 \code{\link{compute_identified_set_quadratic}}; the per-constraint
 axis is longer than the maturity axis whenever any component carries
-more than one combination}
+more than one combination. Each \code{Q_i} vector has length I.}
 \item{quadratic}{List with per-constraint \code{d_i}, \code{A_i},
 \code{b_i}, \code{c_i}, consumable by the same profile-bound
-solvers as the legacy output}
+solvers as \code{build_quadratic_system()}. Each \code{A_i} is I x I and each
+\code{b_i} has length I; \code{d_i} and \code{c_i} are numeric vectors.}
 \item{labels}{Data frame with columns \code{constraint},
 \code{maturity}, \code{combo}, \code{name} mapping constraint
-positions to (component, combination) pairs}
+positions to (component, combination) pairs, in \code{maturities}
+order then combination order. Names are \code{maturity_N} for a
+single combination or \code{maturity_N_combo_K} otherwise.}
 }
 carrying the moments' \code{maturities} and \code{n_components}
 attributes.
 }
 \description{
-Generalizes \code{\link{build_quadratic_system}} from one linear
-combination per component to K_i combinations per component i: one
-quadratic constraint per (component, combination) pair, sharing the
-same per-constraint kernel as the legacy path. With a J x I matrix
-input (all K_i = 1) the output values are bit-identical to
+Extends \code{\link{build_quadratic_system}} to K_i instrument combinations
+per component i, with one quadratic constraint per combination and the same kernel.
+A J x I matrix (all K_i = 1) gives bit-identical values to
 \code{build_quadratic_system}.
+}
+\details{
+Non-positive or non-finite \code{sigma_i_sq}, non-finite moment
+values used in assembly, or non-finite coefficients cause a
+\code{hetid_error}; missing values are not removed. No defaults are supplied.
 }
 \section{General instrument scheme}{
 
@@ -55,17 +66,17 @@ defines K_i constructed instruments, each a linear combination of
 the J columns of the instrument matrix the moments were computed
 from. The identified set intersects one quadratic constraint per
 (component, combination) pair: \code{sum(K_i)} constraints in
-total. The legacy single-combination case is \code{K_i = 1} for
+total. The single-combination case is \code{K_i = 1} for
 every component (a J x I matrix); using every instrument
 separately is \code{lambda[[i]] = diag(J)}. Each constraint
 depends on its weight column only through its direction, so any
 nonzero rescaling of a column leaves the constraint set unchanged.
-A per-component instrument SUBSET is expressed directly as zero
+A per-component instrument subset is expressed directly as zero
 rows in that component's weight matrix;
 \code{align_instrument_sets()} builds the union axis and
 \code{lambda_from_support()} zero-pads compact weights onto it.
-Honesty note: intersecting more sample-moment constraints
-weakly shrinks the ESTIMATED set mechanically, so widths are
+Intersecting more sample-moment constraints
+weakly shrinks the estimated set mechanically, so widths are
 comparable only across schemes with the same constraint count.
 }
 
@@ -93,24 +104,33 @@ Per-maturity outputs are named \code{maturity_N} where N is
 the w2 column index, with element k corresponding to
 \code{maturities[k]}. Inner theta-axis dimensions (each \code{r_i_1}
 matrix, \code{s_i_1} vector, and \code{s_i_2} matrix) are always full
-\code{n_components}-sized. Downstream functions accept only validated
-containers and resolve positions internally, so cross-object maturity
-misalignment cannot occur.
+\code{n_components}-sized. \code{compute_identification_moments()} validates
+moment shapes. Downstream functions check relevant dimensions and use the recorded
+indices; they trust that validation and do not verify common data provenance.
+Callers must supply moments, gamma, and tau from the same system.
 }
 
 \examples{
-set.seed(42)
-n_obs <- 100
-w1 <- rnorm(n_obs)
-w2 <- matrix(rnorm(n_obs * 2), nrow = n_obs)
-z <- matrix(rnorm(n_obs * 3), nrow = n_obs)
-moments <- compute_identification_moments(w1, w2, z)
+local({
+  old_seed <- get0(".Random.seed", envir = .GlobalEnv, inherits = FALSE)
+  on.exit(if (is.null(old_seed)) {
+    rm(".Random.seed", envir = .GlobalEnv)
+  } else {
+    assign(".Random.seed", old_seed, envir = .GlobalEnv)
+  })
+  set.seed(42)
+  n_obs <- 100
+  w1 <- rnorm(n_obs)
+  w2 <- matrix(rnorm(n_obs * 2), nrow = n_obs)
+  z <- matrix(rnorm(n_obs * 3), nrow = n_obs)
+  moments <- compute_identification_moments(w1, w2, z)
 
-# Two combinations for the first component, one for the second
-lambda <- list(
-  matrix(c(1, 0, 0, 0, 1, 1), nrow = 3),
-  matrix(c(1, 1, 1), nrow = 3)
-)
-system <- build_general_quadratic_system(lambda, 0.2, moments)
-system$labels
+  # Two combinations for the first component, one for the second
+  lambda <- list(
+    matrix(c(1, 0, 0, 0, 1, 1), nrow = 3),
+    matrix(c(1, 1, 1), nrow = 3)
+  )
+  system <- build_general_quadratic_system(lambda, 0.2, moments)
+  system$labels
+})
 }

@@ -14,9 +14,12 @@ compute_expected_sdf(
 )
 }
 \arguments{
-\item{yields}{Data frame with columns y1, y2, ..., containing yields}
+\item{yields}{Numeric data frame or matrix with month-suffixed columns such as
+\code{y1} and \code{y12}, containing yields in annualized percentage points.}
 
-\item{term_premia}{Data frame with columns tp1, tp2, ..., containing term premia}
+\item{term_premia}{Numeric data frame or matrix with month-suffixed columns such
+as \code{tp1} and \code{tp12}, containing term premia in annualized percentage
+points. Rows must match \code{yields} by observation date and order.}
 
 \item{i}{Integer specifying the maturity index (column) to analyze,
 in \strong{months}, on the ACM monthly grid (1 to 120). Individual
@@ -30,31 +33,31 @@ contain the columns for the maturities the function uses
 \code{i = 60}). Whole years are multiples of 12 (i = 12 is the
 1-year bond, i = 60 the 5-year, i = 120 the 10-year).}
 
-\item{dates}{Required \code{Date} vector of period-end calendar dates, one
-per row of \code{yields}/\code{term_premia}. A time series is never
-returned without its date index; a non-\code{Date} or wrong-length vector
-is an error.}
+\item{dates}{Required non-missing \code{Date} vector of period-end calendar
+dates, one per row of \code{yields}/\code{term_premia}. Supplied dates are
+used as labels without normalization. \code{NULL}, non-\code{Date}, or
+missing dates raise \code{hetid_error_bad_argument}; a wrong-length vector
+raises \code{hetid_error_dimension_mismatch}.}
 
-\item{step}{Integer number of maturity-index units per news period
-(default \code{HETID_CONSTANTS$DEFAULT_STEP}). The news operator
-steps one period, so maturity arithmetic moves in multiples of
-\code{step}: \code{compute_n_hat()} pairs maturities \code{i} and
-\code{i + step}, the one-period bond is the \code{step}-maturity
-bond, and horizons must satisfy \code{i <= MAX_MATURITY - step}.}
+\item{step}{Positive integer number of months per news period, no greater than
+half of \code{HETID_CONSTANTS$MAX_MATURITY}. Functions with a default use
+\code{HETID_CONSTANTS$DEFAULT_STEP}. For time-series inputs, adjacent observations
+must be \code{step} months apart. Functions that read maturity \code{i + step}
+require \code{i <= HETID_CONSTANTS$MAX_MATURITY - step}; additional
+horizon restrictions are described for each function.}
 
-\item{paired}{Logical; selects the bias-correction estimator. The
+\item{paired}{Single non-missing logical; selects the bias-correction estimator. The
 default \code{FALSE} uses the horizon-agnostic correction (a difference
 of full-sample means over one common finite set), admitting any
-\code{i} on the \code{i + step} grid. \code{TRUE} restores the previous
-matched-forecast-error
-correction (the mean gap pairing the realized price \code{i / step}
+\code{i} on the \code{i + step} grid. \code{TRUE} selects the
+matched-forecast-error correction (the mean gap pairing the realized price \code{i / step}
 rows ahead with \code{exp(n_hat(i, t))}), which requires \code{i} to be
 a positive multiple of \code{step}.}
 }
 \value{
-A data frame whose first column \code{date} (period-end
-\code{Date}) carries the conditioning-information date of each value, plus
-the computed series.
+A data frame with the supplied dates in its first column,
+\code{date}, followed by the computed numeric series. Each value's date
+follows the convention described for the function.
 }
 \description{
 Computes the time series approximating the conditional expectation of
@@ -69,10 +72,19 @@ Two corrections are available. The default (\code{paired = FALSE}) is
 horizon-agnostic: it estimates the bias as a difference of full-sample
 means and admits any \code{i} on the \code{i + step} grid (no
 multiple-of-step requirement). The \code{Mathematical Formula},
-\code{Time units}, and \code{Details} sections below describe the previous
+\code{Time units}, and \code{Details} sections below describe the
 \code{paired = TRUE} matched-forecast-error correction, which leads the
 realized leg \code{i / step} rows and so requires \code{i} to be a
 positive multiple of \code{step}.
+
+Yields and term premia are in annualized percentage points, with rows
+aligned to the same dates. The output has \code{nrow(yields)} rows and
+columns \code{date} and \code{expected_sdf}; the latter is dimensionless.
+For \code{i > 0}, an empty finite correction sample raises
+\code{hetid_error_insufficient_data}. With \code{paired = TRUE}, the
+sample must also contain more than \code{i / step} rows.
+Positive horizons signal \code{hetid_warning_unit_scale} if the maximum
+absolute yield is finite and below one, suggesting decimal inputs.
 
 These details describe \code{paired = TRUE}. The default
 (\code{paired = FALSE}) instead mean-matches over the common finite set
@@ -94,15 +106,15 @@ property of the requested additive form, not a defect.
 
 At the one-period horizon \code{i == step} (\code{s == 1}), the
 \code{n_hat} normalization \code{TP^(1) := 0} drops the one-period
-term premium, so the result does not depend on \code{tp\{step\}} (only
-on the \code{y\{step\}} yield used by the realized leg).
+term premium, so the result does not depend on \code{tp\{step\}}.
+The \code{i + step} yield and term premium still enter \code{n_hat}.
 
 The correction is estimated over the whole sample from realized future
 one-period prices, so the returned \eqn{E_t}-labelled series is an
 in-sample fitted object, not a pseudo-out-of-sample forecast; it must
 not be fed into a real-time backtest. The \code{is.finite()} mask
 guards only the scalar correction: any \code{NA}/\code{Inf} carried by
-\code{n_hat(i, t)} itself (e.g. at the unpaired tail dates) propagates
+\code{exp(n_hat(i, t))} (e.g. at the unpaired tail dates) propagates
 to the corresponding output values.
 
 Besides the \code{i} and \code{i + step} columns \code{compute_n_hat}
@@ -117,7 +129,9 @@ because \code{n_hat(i, t)} requires data at maturity \code{i + step}.
 Passing \code{i = 0} returns the horizon-zero boundary
 \eqn{E_t[\mathrm{SDF}_{t+1}] = P^{(1)}_t = e^{-y^{(1)}_t}}, the realized
 one-period price observed at \eqn{t}. It is exact: no forecast, no
-approximation, and no bias correction (\code{paired} is ignored). A
+approximation, and no bias correction (a valid \code{paired} is ignored).
+Only the \code{y\{step\}} column is needed; \code{term_premia} must
+remain row-aligned. A
 \code{hetid_warning_horizon_zero} warning is signaled to flag this.
 
 To read off the shifted-information expectation
@@ -160,19 +174,25 @@ must be a positive multiple of \code{step}; the default
 }
 
 \examples{
-# Extract ACM data (the i = 60 horizon needs maturities 12, 60, and 72)
+# Monthly observations use a one-month news period
 data <- extract_acm_data(
   data_types = c("yields", "term_premia"),
-  maturities = c(12, 60, 72)
+  maturities = c(1, 60, 61)
 )
-yields <- data[, paste0("y", c(12, 60, 72))]
-term_premia <- data[, paste0("tp", c(12, 60, 72))]
+yields <- data[, paste0("y", c(1, 60, 61))]
+term_premia <- data[, paste0("tp", c(1, 60, 61))]
 
-# Expected SDF for the 5-year (60-month) horizon (s = 5 news periods)
 expected_sdf_60 <- compute_expected_sdf(
   yields, term_premia,
-  i = 60,
+  i = 60, step = 1,
   dates = data$date
+)
+head(expected_sdf_60)
+
+# Paired correction leads the realized price by 60 monthly rows
+paired_sdf_60 <- compute_expected_sdf(
+  yields, term_premia,
+  i = 60, step = 1, paired = TRUE, dates = data$date
 )
 
 }

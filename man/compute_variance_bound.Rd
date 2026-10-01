@@ -13,9 +13,12 @@ compute_variance_bound(
 )
 }
 \arguments{
-\item{yields}{Data frame with columns y1, y2, ..., containing yields}
+\item{yields}{Numeric data frame or matrix with month-suffixed columns such as
+\code{y1} and \code{y12}, containing yields in annualized percentage points.}
 
-\item{term_premia}{Data frame with columns tp1, tp2, ..., containing term premia}
+\item{term_premia}{Numeric data frame or matrix with month-suffixed columns such
+as \code{tp1} and \code{tp12}, containing term premia in annualized percentage
+points. Rows must match \code{yields} by observation date and order.}
 
 \item{i}{Integer specifying the maturity index (column) to analyze,
 in \strong{months}, on the ACM monthly grid (1 to 120). Individual
@@ -29,22 +32,23 @@ contain the columns for the maturities the function uses
 \code{i = 60}). Whole years are multiples of 12 (i = 12 is the
 1-year bond, i = 60 the 5-year, i = 120 the 10-year).}
 
-\item{step}{Integer number of maturity-index units per news period
-(default \code{HETID_CONSTANTS$DEFAULT_STEP}). The news operator
-steps one period, so maturity arithmetic moves in multiples of
-\code{step}: \code{compute_n_hat()} pairs maturities \code{i} and
-\code{i + step}, the one-period bond is the \code{step}-maturity
-bond, and horizons must satisfy \code{i <= MAX_MATURITY - step}.}
+\item{step}{Positive integer number of months per news period, no greater than
+half of \code{HETID_CONSTANTS$MAX_MATURITY}. Functions with a default use
+\code{HETID_CONSTANTS$DEFAULT_STEP}. For time-series inputs, adjacent observations
+must be \code{step} months apart. Functions that read maturity \code{i + step}
+require \code{i <= HETID_CONSTANTS$MAX_MATURITY - step}; additional
+horizon restrictions are described for each function.}
 
-\item{c_bar}{Optional deterministic envelope. When \code{NULL}
+\item{c_bar}{Optional positive finite numeric scalar representing a
+deterministic envelope. When \code{NULL}
 (default) the sample maximum \code{\link{compute_c_hat}} is used;
 when a positive scalar is supplied it replaces the envelope, giving
 the spec's envelope-conservative variant
 \eqn{U_i^{bd} = (1/4)\,\bar C_i\,(k1 + k2)}.}
 }
 \value{
-Numeric value of (1/4)\emph{c_hat_i}(k_hat_i + k2_hat_i), or
-(1/4)\emph{c_bar}(k_hat_i + k2_hat_i) when \code{c_bar} is supplied, or
+A numeric value of \code{0.25 * c_hat_i * (k_hat_i + k2_hat_i)}, or
+\code{0.25 * c_bar * (k_hat_i + k2_hat_i)} when \code{c_bar} is supplied, or
 \code{NA_real_} when a required component estimator
 (\code{\link{compute_c_hat}} when \code{c_bar} is \code{NULL},
 \code{\link{compute_k_hat}}, or \code{\link{compute_k2_hat}}) has no
@@ -53,7 +57,7 @@ valid paired observations.
 \description{
 Computes the plug-in leading fourth-order term of the SDF-news
 approximation-error variance bound,
-U_i = (1/4) * c_hat_i * (k_hat_i + k2_hat_i).
+\eqn{U_i = (1/4) c\_hat_i (k\_hat_i + k2\_hat_i)}.
 }
 \details{
 The leading fourth-order term is
@@ -64,31 +68,53 @@ to the leading part of the theoretical bound, not a literal
 finite-sample upper bound: sample fourth moments can lie below their
 population counterparts and the higher-order remainder is omitted. At
 the one-period maturity \code{i == step} the k_hat (k1) term is zero,
-so the bound is the strictly positive k2_hat contribution.
+so only the k2_hat contribution remains; it can be zero when all
+retained price-news observations are zero.
 
 Supplying \code{c_bar} substitutes a user-specified deterministic
 envelope for the sample maximum (the spec's U^bd variant); its
 population target is conservative relative to the minimal-envelope
 target when \code{c_bar} is at least the minimal envelope.
+
+Inputs must contain numeric yield and term-premium columns in annualized
+percentage points, with rows aligned to the same observation dates. Date
+columns are not read or matched here. There must be more than \code{i / step}
+rows, and the row frequency must equal the news period: the default annual
+step requires annual observations. The term-premium rollover convention must
+also match the news period; see \code{\link{compute_n_hat}}.
+
+Each component uses dates \code{1, ..., T - i / step}, where \code{T} is the
+number of rows, and omits its own missing terms. Components can therefore
+use different observations. No missing values are imputed. With sufficient
+rows but no usable observations for a required component, the result is
+\code{NA_real_}, including when \code{c_bar} is supplied.
+
+Invalid maturity, step, envelope, or missing required columns raise
+\code{hetid_error_bad_argument}; unequal row counts raise
+\code{hetid_error_dimension_mismatch}; too few rows raise
+\code{hetid_error_insufficient_data}. Yields that look like decimal rates
+trigger a unit-scale warning; they are not automatically rescaled.
 }
 \note{
 The effective maximum for \code{i} is \code{MAX_MATURITY - step}, because
-\code{\link{compute_k_hat}} and \code{\link{compute_k2_hat}} run on every call
-and both read data at maturity \code{i + step}, whether or not \code{c_bar}
+\code{\link{compute_k2_hat}} runs on every call
+and reads data at maturity \code{i + step}, whether or not \code{c_bar}
 replaces the estimated envelope. Separately, \code{i} must
-be a positive multiple of \code{step} (enforced by the same two functions).
+be a positive multiple of \code{step}, as required by
+\code{\link{compute_k_hat}} and \code{\link{compute_k2_hat}}.
+The step must be a positive integer no larger than
+\code{HETID_CONSTANTS$MAX_MATURITY \%/\% 2L}.
 }
 \examples{
-# Extract ACM data - need maturities step, i-step, i, i+step (months)
-# For i = 60 with the default annual step: 12, 48, 60, and 72
+# Monthly data and step match the ACM rollover convention
+mats <- c(1, 59, 60, 61)
 data <- extract_acm_data(
-  data_types = c("yields", "term_premia"),
-  maturities = c(12, 48, 60, 72)
+  data_types = c("yields", "term_premia"), maturities = mats
 )
-yields <- data[, paste0("y", c(12, 48, 60, 72))]
-term_premia <- data[, paste0("tp", c(12, 48, 60, 72))]
-
-# Compute variance bound for the 5-year (60-month) maturity
-var_bound_60 <- compute_variance_bound(yields, term_premia, i = 60)
-
+yields <- data[, paste0("y", mats)]
+term_premia <- data[, paste0("tp", mats)]
+var_bound_60 <- compute_variance_bound(yields, term_premia, i = 60, step = 1)
+var_bound_60
+# A supplied envelope replaces only the estimated maximum
+compute_variance_bound(yields, term_premia, i = 60, step = 1, c_bar = 1.05)
 }

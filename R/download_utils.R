@@ -12,13 +12,17 @@ NULL
 #' Wraps \code{download.file} with an explicit libcurl method (so the
 #' release-redirect behavior does not depend on the environment) and
 #' converts every failure mode -- error, warning, non-zero status,
-#' missing or empty result -- into a structured error.
+#' missing or empty result -- into a \code{hetid_error} condition.
 #'
-#' @param url Source URL
-#' @param destfile Destination path
-#' @param quiet Logical, suppress progress output
-#' @param what Human label for error messages
-#' @return Invisibly returns \code{destfile}
+#' The download writes to \code{destfile} in binary mode and may overwrite an
+#' existing file. This helper does not remove a partial or empty file on failure;
+#' the caller is responsible for cleanup.
+#'
+#' @param url Character scalar giving the source URL.
+#' @param destfile Character scalar giving the destination file path.
+#' @param quiet Logical scalar; \code{TRUE} suppresses progress output.
+#' @param what Character scalar giving a human-readable label for error messages.
+#' @return The character scalar \code{destfile}, invisibly, on success.
 #' @keywords internal
 fetch_url_to_file <- function(url, destfile, quiet, what) {
   status <- tryCatch(
@@ -43,14 +47,18 @@ fetch_url_to_file <- function(url, destfile, quiet, what) {
 #' Atomically Move a Temp File into the Cache
 #'
 #' Renames \code{temp} onto \code{dest} without first deleting the target.
-#' A failed rename preserves the existing cache and raises a structured error.
+#' A failed rename preserves the existing cache and raises a \code{hetid_error}
+#' condition. Any warning from \code{file.rename} is also emitted.
 #' Both paths must be on the same filesystem.
 #'
-#' @param temp Source temp-file path (in the same directory as
-#'   \code{dest} so the rename stays one filesystem operation)
-#' @param dest Destination cache path
-#' @param what Human label for the error message
-#' @return Invisibly returns \code{dest}
+#' On success, the file is available at \code{dest} and \code{temp} no longer
+#' exists, provided the paths differ.
+#'
+#' @param temp Character scalar giving the source temporary-file path, in the same
+#'   directory as \code{dest} so the rename stays one filesystem operation.
+#' @param dest Character scalar giving the destination cache path.
+#' @param what Character scalar giving a human-readable label for the error message.
+#' @return The character scalar \code{dest}, invisibly, on success.
 #' @keywords internal
 atomic_replace <- function(temp, dest, what) {
   if (!file.rename(temp, dest)) {

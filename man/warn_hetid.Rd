@@ -7,18 +7,24 @@
 warn_hetid(message, subclass, call = NULL)
 }
 \arguments{
-\item{message}{Warning message string}
+\item{message}{A character string containing the warning message.}
 
-\item{subclass}{Specific warning subclass string}
+\item{subclass}{A character string naming the specific warning subclass.}
 
-\item{call}{The call (default NULL)}
+\item{call}{A call object to include in the condition, or \code{NULL} (the
+default) to omit the call.}
 }
 \value{
-Invisibly, the warning message; called for its warning side effect
+The warning message is returned invisibly as a character string.
+The function is called for its warning side effect.
 }
 \description{
 Generic helper behind the specific \code{warn_*} constructors:
 raises a \code{warningCondition} whose class vector is the given
 subclass followed by the shared \code{hetid_warning} parent.
+}
+\details{
+Warning display and conversion to an error follow
+\code{\link[base:warning]{warning}} and the \code{warn} option.
 }
 \keyword{internal}

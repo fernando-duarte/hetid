@@ -18,16 +18,40 @@
 #' @template param-maturity-index
 #' @template param-step
 #'
+#' @details
+#' Supply numeric yields and term premia in annualized percentage points.
+#' Rows must refer to the same dates in the same chronological order;
+#' only row counts are checked, so align by date before calling. For
+#' \code{i > 0}, yields must contain \code{y\{step\}}, \code{y\{i\}},
+#' and \code{y\{i + step\}}; term premia must contain \code{tp\{i\}}
+#' and \code{tp\{i + step\}}. At \code{i == step}, \code{tp\{i\}}
+#' must be present but its values are ignored under the one-period
+#' zero-term-premium normalization. Term premia must use a rollover
+#' convention consistent with \code{step}; see \code{\link{compute_n_hat}}.
+#' The \code{step} must be a positive integer no larger than
+#' \code{HETID_CONSTANTS$MAX_MATURITY \%/\% 2}.
+#'
+#' Missing or non-finite paired gaps are excluded from both arms under
+#' one common mask. A non-finite q value on a retained pair makes the q
+#' arm \code{Inf}; a non-finite component arm is also replaced by
+#' \code{Inf}. The function requires more than \code{i / step} rows for
+#' \code{i > 0}. Invalid indices, missing columns, unequal row counts,
+#' and insufficient rows raise structured \code{hetid_error} conditions.
+#' Yields with a finite maximum absolute value below one trigger a
+#' \code{hetid_warning_unit_scale} warning about possible decimal units.
+#'
 #' @return Numeric scalar \eqn{\widehat U_{i}^{(0)} \ge 0}; \code{Inf} when
 #'   both arms overflow on a nonempty paired sample (conservative, never
 #'   sharp); \code{NA_real_} only when no finite paired observations remain.
 #'
 #' @section Mathematical Formula:
-#' With \eqn{s = i / step}, \eqn{T_i = \{1, \dots, T - s\}}, and \eqn{N_i =
-#' |T_i|} the number of finite paired observations,
+#' For \code{i > 0}, let \eqn{s = i / step}, and let \eqn{T_i} contain
+#' the indices in \eqn{\{1, \dots, T - s\}} for which the paired gap
+#' \eqn{e^{x_t} - e^{a_t}} is finite. With \eqn{N_i = |T_i|},
 #' \deqn{\widehat U_{i}^{(0)} = \min\!\left\{
-#'   \frac{1}{4}\,\Big(\max_t e^{2 a_t}\Big)\,\frac{1}{N_i}\sum_t u_t^4,\;
-#'   \frac{1}{N_i}\sum_{t}(q_t - \bar q)^2
+#'   \frac{1}{4}\,\Big(\max_{t \in T_i} e^{2 a_t}\Big)\,
+#'   \frac{1}{N_i}\sum_{t \in T_i} u_t^4,\;
+#'   \frac{1}{N_i}\sum_{t \in T_i}(q_t - \bar q)^2
 #' \right\}}
 #' where \eqn{q_t = e^{a_t}(e^{u_t} - 1 - u_t)},
 #' \eqn{x_t = -m(\mathrm{step}) y^{(\mathrm{step})}_{t+s}/100},
@@ -41,12 +65,13 @@
 #' @section Time units:
 #' The realized one-period yield is led \code{i / step} rows; rows count
 #' news periods, not calendar time, so \code{i} must be a positive multiple
-#' of \code{step} and the row frequency must equal the news period.
+#' of \code{step} when \code{i > 0}, and the row frequency must equal the
+#' news period. Here \eqn{m(\mathrm{step}) = step /
+#' \mathrm{MATURITY\_UNITS\_PER\_YEAR}} is the step maturity in years.
 #'
 #' @note The projection (gap-variance) bound \eqn{\widehat{\mathrm{Var}}(g)}
-#'   is no longer part of the returned min: on financial data it exceeds the
-#'   q arm by orders of magnitude and never binds. The component arm
-#'   replaces it because the two remaining arms are \strong{not} ordered: the
+#'   is not part of the returned min. The two returned arms are
+#'   \strong{not} ordered: the
 #'   truncated \eqn{(1/4) C K} can fall below \eqn{\mathrm{Var}(q)}, so the
 #'   min is not redundant.
 #'
@@ -56,9 +81,8 @@
 #'   moments can lie below their population counterparts. When the
 #'   component arm wins the min, the reported value carries the same
 #'   leading-term status as the SDF-news bound of
-#'   \code{\link{compute_variance_bound}}; when the q arm wins (every
-#'   maturity on the shipped ACM data), the reported value is the exact
-#'   first-order-cancelled bound estimate.
+#'   \code{\link{compute_variance_bound}}; when the q arm wins, the reported
+#'   value is the exact first-order-cancelled bound estimate.
 #'
 #' @note The effective maximum for \code{i} is \code{MAX_MATURITY - step},
 #'   because \code{n_hat(i, t)} requires data at maturity \code{i + step}.
@@ -81,16 +105,20 @@
 #' @export
 #'
 #' @examples
-#' # Extract ACM data (the i = 60 horizon needs maturities 12, 60, and 72)
+#' # Monthly rows require a one-month news step
 #' data <- extract_acm_data(
 #'   data_types = c("yields", "term_premia"),
-#'   maturities = c(12, 60, 72)
+#'   maturities = c(1, 60, 61),
+#'   frequency = "monthly"
 #' )
-#' yields <- data[, paste0("y", c(12, 60, 72))]
-#' term_premia <- data[, paste0("tp", c(12, 60, 72))]
+#' yields <- data[, paste0("y", c(1, 60, 61))]
+#' term_premia <- data[, paste0("tp", c(1, 60, 61))]
 #'
-#' # Variance bound for the 5-year (60-month) horizon
-#' bound_60 <- compute_expected_sdf_variance_bound(yields, term_premia, i = 60)
+#' bound_60 <- compute_expected_sdf_variance_bound(
+#'   yields, term_premia,
+#'   i = 60, step = 1
+#' )
+#' bound_60
 #'
 compute_expected_sdf_variance_bound <- function(yields, term_premia, i,
                                                 step = HETID_CONSTANTS$DEFAULT_STEP) {
@@ -106,20 +134,14 @@ compute_expected_sdf_variance_bound <- function(yields, term_premia, i,
     return(0)
   }
 
-  # compute_expected_sdf_gap owns the multiple-of-step contract (it does the
-  # i/step row shift), so it is validated there, not here
   components <- compute_expected_sdf_gap(yields, term_premia, i, step = step)
 
-  # matches the NA_real_ contract of compute_c_hat / compute_k_hat
   if (length(components$gap) == 0) {
     return(NA_real_)
   }
 
-  # q arm: Inf when q overflows on the shared mask (guarded, never dropped)
   var_q <- guarded_centered_var(components$q)
 
-  # component arm (1/4)*C*K: either factor can overflow, or 0 * Inf can give
-  # NaN, only at astronomically large |n_hat|
   component <- 0.25 * max(exp(2 * components$n_hat)) * mean(components$u^4)
   if (!is.finite(component)) {
     component <- Inf

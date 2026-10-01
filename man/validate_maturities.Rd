@@ -13,20 +13,26 @@ validate_maturities(
 )
 }
 \arguments{
-\item{maturities}{Numeric vector of maturity indices.}
+\item{maturities}{Non-empty numeric vector of finite integer maturity
+indices with no dimensions or duplicates. Missing values are rejected.}
 
-\item{max_value}{Inclusive upper bound (e.g. \code{ncol(gamma)}).}
+\item{max_value}{Numeric value of length one giving the inclusive upper
+bound (e.g. \code{ncol(gamma)}), in the same units as \code{maturities}.}
 
-\item{max_label}{Optional human label for the bound, shown label-first in the
+\item{max_label}{Character string or \code{NULL} (the default). An optional
+human label for the upper bound, shown label-first in the
 error message (e.g. \code{"ncol(gamma)"} renders as \code{ncol(gamma) (4)}).}
 
-\item{arg}{Argument name for the structured error.}
+\item{arg}{Character string giving the argument name in error messages and
+the structured condition, defaulting to \code{"maturities"}.}
 
-\item{min_value}{Inclusive lower bound (default 1, the positional
-component-index convention).}
+\item{min_value}{Numeric value of length one giving the inclusive lower
+bound in the same units as \code{maturities}. The default \code{1L} follows
+the positional column-index convention.}
 }
 \value{
-Invisible TRUE if valid, stops with informative error otherwise.
+Invisible \code{TRUE} if valid; otherwise signals a
+\code{hetid_error_bad_argument} condition with the supplied \code{arg}.
 }
 \description{
 Single source of truth for validating a numeric maturity vector:
@@ -39,6 +45,10 @@ The default \code{min_value = 1} serves the identification layer,
 whose "maturities" are positional w2 column indices (1..n); callers
 validating ACM bond maturities pass
 \code{min_value = HETID_CONSTANTS$MIN_MATURITY} (months).
+
+The supplied order and names do not affect validity. This function only
+checks the input; it does not sort, deduplicate, or convert it.
+Callers supply valid scalar bounds and labels; these are not validated here.
 }
 \seealso{
 \code{\link{validate_maturity_index}}

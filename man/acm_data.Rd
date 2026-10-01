@@ -12,17 +12,17 @@ The ACM data is stored as a gzipped CSV with 361 columns:
 the date plus 120 maturities (1 to 120 months at one-month steps)
 for each of three families:
 \describe{
-\item{date}{The business-day observation date for each row in the series
-(originally 'DATE' in source data, ISO formatted, standardized to
-lowercase)}
+\item{DATE}{The business-day observation date in ISO format
+(\code{YYYY-MM-DD}). \code{load_term_premia()} converts it to a
+\code{Date} column named \code{date}.}
 \item{ACMY01-ACMY10, ACMY001M-ACMY119M}{Model-implied zero-coupon
 Treasury yields from the ACM model. Whole-year maturities keep
 the official padded-year names (ACMY01 = 12 months, ...,
-ACMY10 = 120 months); sub-annual months use the three-digit
+ACMY10 = 120 months); maturities that are not whole years use the three-digit
 month form (e.g. ACMY001M = 1 month)}
 \item{ACMTP01-ACMTP10, ACMTP001M-ACMTP119M}{ACM term premium
-estimates—the additional compensation investors require for
-bearing interest-rate risk—under the same dual naming}
+estimates under the same dual naming. These measure the additional
+compensation investors require for bearing interest-rate risk.}
 \item{ACMRNY01-ACMRNY10, ACMRNY001M-ACMRNY119M}{Risk-neutral yields
 (the expected average short-rate path) as implied by the ACM
 model, under the same dual naming}
@@ -59,6 +59,8 @@ identical column schema;
 it is download-only (~40 MB, never bundled, GitHub source only) via
 \code{download_term_premia(frequency = "daily")}. The NY Fed fallback
 source (\code{source = "nyfed"}) provides only the annual-node maturities.
+Monthly and quarterly output from \code{extract_acm_data()} uses calendar
+period-end dates; daily output retains the observation dates.
 }
 
 \subsection{Relationship Between Fields}{
@@ -75,15 +77,18 @@ yield and the risk-neutral yield.
 The bundled file is the validated ACM replication published at
 \url{https://github.com/fernando-duarte/ACM_term_premium} (release
 \code{acm-term-premium-2026-06}, asset
-\code{ACMTermPremium_replicated_monthly_1m_120m.csv.gz}, sha256
-\code{745b97c6804924fc5777aac6ecc8b952a2f11123b291e0057c3e25449e566454}).
-It reproduces the official NY Fed workbook to within 0.0026 basis
+\code{ACMTermPremium_replicated_monthly_1m_120m.csv.gz}). The bundled
+file has sha256
+\code{745b97c6804924fc5777aac6ecc8b952a2f11123b291e0057c3e25449e566454}.
+The release reports a maximum difference of about 0.0026 basis
 points at the annual nodes and extends the maturity grid to monthly
 steps from 1 to 120 months: whole-year maturities keep the official
-column names (\code{ACMY01}..\code{ACMY10}), sub-annual months use
+column names (\code{ACMY01}..\code{ACMY10}), maturities that are not whole years use
 names like \code{ACMY003M}. Dates are ISO (\code{YYYY-MM-DD}).
-\code{download_term_premia()} refreshes the cache from the latest
-release with sha256 verification; the official NY Fed workbook
+\code{download_term_premia(force = TRUE)} refreshes the per-user cache
+from the latest release with sha256 verification, leaving the bundled
+file unchanged. Without \code{force = TRUE}, an available monthly copy
+(cached or bundled) is returned without downloading. The official NY Fed workbook
 remains available as the opt-in \code{source = "nyfed"} fallback
 (annual maturities only). The methodology is Adrian, Crump, and
 Moench (2013).
@@ -91,22 +96,24 @@ Moench (2013).
 
 \section{Usage}{
 
-To access the raw ACM data:
-\preformatted{
-# Download the data (if not already available)
-download_term_premia()
+The ACM file is a package resource, not a \code{data()} object.
+Use \code{load_term_premia()} for raw data and \code{extract_acm_data()}
+for selected variables and calendar period-end dates.
+Both prefer a downloaded GitHub copy when present and otherwise use the
+bundled monthly file; no download is needed to use the bundled data.
+}
 
-# Load the raw data
+\examples{
 acm_raw <- load_term_premia()
+head(acm_raw[, c("date", "ACMY02", "ACMTP02")])
 
-# Or use the convenience function for processed data
 acm_data <- extract_acm_data(
   data_types = c("yields", "term_premia"),
-  maturities = c(24, 60, 120)
+  maturities = 24
 )
-}
-}
+head(acm_data)
 
+}
 \references{
 Adrian, T., Crump, R. K., and Moench, E. (2013). "Pricing the term structure
 with linear regressions." Journal of Financial Economics, 110(1), 110-138.

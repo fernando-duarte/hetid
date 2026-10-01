@@ -1,23 +1,26 @@
 #' Build the Quadratic System for a General Instrument Scheme
 #'
-#' Generalizes \code{\link{build_quadratic_system}} from one linear
-#' combination per component to K_i combinations per component i: one
-#' quadratic constraint per (component, combination) pair, sharing the
-#' same per-constraint kernel as the legacy path. With a J x I matrix
-#' input (all K_i = 1) the output values are bit-identical to
+#' Extends \code{\link{build_quadratic_system}} to K_i instrument combinations
+#' per component i, with one quadratic constraint per combination and the same kernel.
+#' A J x I matrix (all K_i = 1) gives bit-identical values to
 #' \code{build_quadratic_system}.
 #'
-#' @param lambda Either a numeric J x I matrix (one combination per
-#'   component; legacy-equivalent) or a list of length
-#'   \code{n_components} indexed by system column with a numeric
-#'   J x K_i weight matrix at every constrained column (NULL required
-#'   at unconstrained columns). All-zero weight columns are rejected.
-#' @param tau Scalar in \code{[0, 1)}, numeric vector of length
+#' @param lambda Numeric J x I matrix (one combination per component), or a list of
+#'   length \code{n_components}, indexed by system column: constrained entries are
+#'   numeric J x K_i weight matrices; unconstrained entries must be NULL.
+#'   J counts instruments; I is \code{n_components}. Constrained weights must be finite
+#'   and each column nonzero. Unconstrained matrix columns are ignored.
+#' @param tau Numeric scalar, numeric vector of length
 #'   \code{n_components} (replicated across each component's
 #'   combinations), or list of length \code{n_components} whose
-#'   element i is a length-K_i numeric vector of slacks
+#'   constrained element i contains K_i numeric slacks. List elements may
+#'   have dimensions; their values are used in R's linear indexing order.
+#'   All supplied slacks must be finite and in \code{[0, 1)}. In list form,
+#'   unconstrained entries must be NULL or zero-length. A flat vector of
+#'   slacks is interpreted by system column when its length is I and as
+#'   a common slack when its length is one; other flat lengths are rejected.
 #' @param moments A \code{hetid_moments} object from
-#'   \code{\link{compute_identification_moments}}
+#'   \code{\link{compute_identification_moments}}.
 #'
 #' @return A list with elements
 #' \describe{
@@ -26,16 +29,23 @@
 #'     \code{hetid_components} object, so it cannot be passed to
 #'     \code{\link{compute_identified_set_quadratic}}; the per-constraint
 #'     axis is longer than the maturity axis whenever any component carries
-#'     more than one combination}
+#'     more than one combination. Each \code{Q_i} vector has length I.}
 #'   \item{quadratic}{List with per-constraint \code{d_i}, \code{A_i},
 #'     \code{b_i}, \code{c_i}, consumable by the same profile-bound
-#'     solvers as the legacy output}
+#'     solvers as \code{build_quadratic_system()}. Each \code{A_i} is I x I and each
+#'     \code{b_i} has length I; \code{d_i} and \code{c_i} are numeric vectors.}
 #'   \item{labels}{Data frame with columns \code{constraint},
 #'     \code{maturity}, \code{combo}, \code{name} mapping constraint
-#'     positions to (component, combination) pairs}
+#'     positions to (component, combination) pairs, in \code{maturities}
+#'     order then combination order. Names are \code{maturity_N} for a
+#'     single combination or \code{maturity_N_combo_K} otherwise.}
 #' }
 #' carrying the moments' \code{maturities} and \code{n_components}
 #' attributes.
+#'
+#' @details Non-positive or non-finite \code{sigma_i_sq}, non-finite moment
+#' values used in assembly, or non-finite coefficients cause a
+#' \code{hetid_error}; missing values are not removed. No defaults are supplied.
 #'
 #' @template section-general-instruments
 #' @template section-maturity-convention
@@ -43,20 +53,28 @@
 #' @export
 #'
 #' @examples
-#' set.seed(42)
-#' n_obs <- 100
-#' w1 <- rnorm(n_obs)
-#' w2 <- matrix(rnorm(n_obs * 2), nrow = n_obs)
-#' z <- matrix(rnorm(n_obs * 3), nrow = n_obs)
-#' moments <- compute_identification_moments(w1, w2, z)
+#' local({
+#'   old_seed <- get0(".Random.seed", envir = .GlobalEnv, inherits = FALSE)
+#'   on.exit(if (is.null(old_seed)) {
+#'     rm(".Random.seed", envir = .GlobalEnv)
+#'   } else {
+#'     assign(".Random.seed", old_seed, envir = .GlobalEnv)
+#'   })
+#'   set.seed(42)
+#'   n_obs <- 100
+#'   w1 <- rnorm(n_obs)
+#'   w2 <- matrix(rnorm(n_obs * 2), nrow = n_obs)
+#'   z <- matrix(rnorm(n_obs * 3), nrow = n_obs)
+#'   moments <- compute_identification_moments(w1, w2, z)
 #'
-#' # Two combinations for the first component, one for the second
-#' lambda <- list(
-#'   matrix(c(1, 0, 0, 0, 1, 1), nrow = 3),
-#'   matrix(c(1, 1, 1), nrow = 3)
-#' )
-#' system <- build_general_quadratic_system(lambda, 0.2, moments)
-#' system$labels
+#'   # Two combinations for the first component, one for the second
+#'   lambda <- list(
+#'     matrix(c(1, 0, 0, 0, 1, 1), nrow = 3),
+#'     matrix(c(1, 1, 1), nrow = 3)
+#'   )
+#'   system <- build_general_quadratic_system(lambda, 0.2, moments)
+#'   system$labels
+#' })
 build_general_quadratic_system <- function(lambda, tau, moments) {
   assert_hetid_moments(moments)
   lambda_list <- as_lambda_list(lambda, moments)
@@ -139,23 +157,33 @@ build_general_quadratic_system <- function(lambda, tau, moments) {
 #' constraints when all components are constrained). Feed the result
 #' to \code{\link{build_general_quadratic_system}}.
 #'
-#' @param moments A \code{hetid_moments} object
+#' @param moments A \code{hetid_moments} object from
+#'   \code{\link{compute_identification_moments}}.
 #' @return List of length \code{n_components}; identity J x J matrix
-#'   at constrained columns, NULL elsewhere
+#'   at constrained columns, NULL elsewhere. Rows retain the instrument
+#'   names from \code{moments}; list positions follow system column indices.
 #'
 #' @template section-general-instruments
 #'
 #' @export
 #'
 #' @examples
-#' set.seed(42)
-#' w1 <- rnorm(50)
-#' w2 <- matrix(rnorm(100), nrow = 50)
-#' z <- matrix(rnorm(150), nrow = 50)
-#' moments <- compute_identification_moments(w1, w2, z)
-#' lambda <- separate_instruments_lambda(moments)
-#' system <- build_general_quadratic_system(lambda, 0.2, moments)
-#' nrow(system$labels)
+#' local({
+#'   old_seed <- get0(".Random.seed", envir = .GlobalEnv, inherits = FALSE)
+#'   on.exit(if (is.null(old_seed)) {
+#'     rm(".Random.seed", envir = .GlobalEnv)
+#'   } else {
+#'     assign(".Random.seed", old_seed, envir = .GlobalEnv)
+#'   })
+#'   set.seed(42)
+#'   w1 <- rnorm(50)
+#'   w2 <- matrix(rnorm(100), nrow = 50)
+#'   z <- matrix(rnorm(150), nrow = 50)
+#'   moments <- compute_identification_moments(w1, w2, z)
+#'   lambda <- separate_instruments_lambda(moments)
+#'   system <- build_general_quadratic_system(lambda, 0.2, moments)
+#'   nrow(system$labels)
+#' })
 separate_instruments_lambda <- function(moments) {
   assert_hetid_moments(moments)
   j_rows <- nrow(moments$r_i_0)

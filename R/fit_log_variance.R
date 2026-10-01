@@ -11,33 +11,38 @@
 #'
 #' @param y Numeric vector of length \eqn{T}: the nonnegative response
 #'   (e.g. a squared or absolute residual). Must be finite and nonnegative.
-#' @param x Numeric matrix (or data-frame-coercible object) of \eqn{T} rows:
-#'   the volatility regressors, without an intercept column (one is
+#' @param x Numeric matrix or data frame of \eqn{T} rows containing only
+#'   finite values: the volatility regressors, without an intercept column (one is
 #'   prepended by \code{\link{log_variance_design}}). Requires at least
 #'   \code{ncol(x) + 2} observations (see
 #'   \code{\link{min_obs_for_pc_regression}}).
+#'   Missing values are rejected, not omitted.
 #' @param estimator Single string naming the estimator, \code{"ppml"} or
 #'   \code{"harvey"}; passed unchecked to
 #'   \code{\link{log_variance_estimator}}, which is the sole owner of the
 #'   valid-estimator set. Default \code{"ppml"}.
-#' @param start \code{NULL}, or a finite numeric vector of length
+#' @param start \code{NULL} (the default), or a finite numeric vector of length
 #'   \code{ncol(x) + 1} giving a starting value for the solver \strong{on
 #'   the scaled response} (\code{y / response_scale}); see the
 #'   \strong{Start-scale contract} section. When named, the names must
 #'   equal the design column labels exactly -- a permuted named start
 #'   against a different design is a silent trap, not accepted positionally.
 #' @param fallback_starts List of finite numeric vectors, each following the
-#'   same length and naming rule as \code{start}, tried in order after
-#'   \code{start} fails or is not supplied.
+#'   same length and naming rule as \code{start}. Default \code{list()}.
+#'   By default, tried in order after \code{start} fails or is not supplied;
+#'   PPML's \code{START_ORDER} control can reorder the start groups.
 #' @param response_scale Single finite positive numeric scalar dividing
 #'   \code{y} before fitting. Default \code{1}. See the
 #'   \strong{Start-scale contract} section.
 #'
-#' @param control Named list of fitting-control overrides. Names match the
-#'   estimator's exported control constants, excluding covariance fields.
+#' @param control Named list of fitting-control overrides. Default \code{list()}.
+#'   Names match the estimator's exported control constants, excluding
+#'   covariance fields.
 #'   PPML additionally accepts \code{START_ORDER}, a permutation of
 #'   \code{supplied}, \code{fallback}, \code{intercept_only}, and
-#'   \code{glm_default}. Harvey accepts logical \code{AUTO_INTERCEPT}.
+#'   \code{glm_default}. Harvey accepts logical \code{AUTO_INTERCEPT}
+#'   (default \code{TRUE}); when \code{FALSE}, only supplied and fallback
+#'   starts are available.
 #'   Both accept logical \code{SKIP_NONFINITE_STARTS} (default FALSE): when
 #'   TRUE, correctly shaped nonfinite starts are recorded as failed attempts
 #'   rather than rejected at the argument boundary. Shape and names are always
@@ -47,7 +52,12 @@
 #'   accepted fit meets the configured tolerances; loose tolerances may accept
 #'   an inaccurate solution and affect subsequent inference.
 #'
-#' @return A validated \code{hetid_log_variance_fit} object; see
+#' @return A validated \code{hetid_log_variance_fit} list. Accepted fits have
+#'   \code{fit_status = "ok"}, with named \code{coef} and \code{warm_start}
+#'   vectors of length \code{ncol(x) + 1}, intercept first. Failed fits have
+#'   \code{fit_status = "nonconvergence"}, \code{coef = NULL},
+#'   \code{warm_start = NULL}, and a reason in \code{diagnostics$error_class}.
+#'   The original \code{y} and intercept-augmented design are retained. See
 #'   \code{\link{hetid_log_variance_fit}} for the container contract and
 #'   \code{\link{log_variance_fit_ok}} to check whether it is usable for
 #'   inference.
@@ -59,38 +69,50 @@
 #' \deqn{X^\top (y - \exp(X \theta)) = 0}
 #' by quasi-Poisson IRLS (\code{\link[stats]{glm.fit}} with
 #' \code{family = quasipoisson(link = "log")}). Using quasi-Poisson rather
-#' than Poisson changes only the reported dispersion (and so only the
-#' standard errors downstream): the log link and mean structure are
-#' identical, so the point estimate solves the same score equation either
-#' way. Harvey (1976) minimizes the Gaussian negative log-likelihood
+#' than Poisson permits noninteger responses without count warnings; the
+#' log link and mean structure are identical, so the point estimate solves
+#' the same score equation either way. Covariances are computed separately by
+#' \code{\link{compute_log_variance_vcov}} from the accepted coefficients,
+#' response, and design. Harvey (1976) minimizes the Gaussian negative log-likelihood
 #' \deqn{0.5 \sum_t (x_t^\top\theta + y_t \exp(-x_t^\top\theta))}
 #' whose first-order condition is \eqn{X^\top (y / \exp(X\theta) - 1) = 0},
 #' by observed-Newton steps with a Fisher-scoring fallback and a
-#' backtracking line search. Both criteria are convex in \eqn{\theta}, so
-#' when a minimizer exists it is unique and the start affects only whether
-#' the solver reaches it.
+#' backtracking line search. Both criteria are convex in \eqn{\theta}.
+#' PPML is strictly convex when the full design has full column rank; Harvey
+#' is strictly convex when its positive-response design rows have full column
+#' rank. Under the respective strict-convexity condition, a finite minimizer,
+#' if it exists, is unique; starts affect whether the solver reaches it.
 #'
-#' A fitted rung is accepted only when every gate below holds; failing any
-#' gate is fail-closed, not an error -- the returned object reports
-#' \code{fit_status = "nonconvergence"} and the failing gate in
-#' \code{diagnostics$error_class}:
+#' A fitted rung on the scaled response is accepted only when every applicable
+#' gate below holds.
+#' A rejected rung is followed by the next available start. Failure before
+#' fitting, or exhaustion of the start ladder, returns
+#' \code{fit_status = "nonconvergence"} with a reason in
+#' \code{diagnostics$error_class}. Malformed arguments instead raise structured
+#' \code{hetid_error} conditions.
 #' \describe{
 #'   \item{Scaled-response guards}{\code{y / response_scale} must not
 #'     underflow a positive entry to zero, overflow to non-finite, or
 #'     collapse to all-zero.}
 #'   \item{Design rank}{(PPML) the positive-response rows of the design
-#'     must have full column rank.}
+#'     must have full column rank. Harvey requires a full-rank full design
+#'     with a usable Cholesky factor of its cross-product.}
 #'   \item{Finite, positive fit}{the fitted coefficients and
 #'     \eqn{\exp(X\theta)} must be finite, with \eqn{\exp(X\theta) > 0}.}
 #'   \item{Solver convergence}{PPML: \code{glm.fit} must report convergence
 #'     and no boundary solution. Harvey: the scaled score must pass
 #'     resolved \code{SCORE_TOLERANCE} within \code{MAXIT} iterations without a
-#'     line-search stall.}
+#'     line-search stall. After a step, convergence also requires the resolved
+#'     \code{REL_CHANGE_TOLERANCE} for the criterion or coefficients; an initial
+#'     start whose score already passes needs no step.}
 #'   \item{Score tolerance}{(PPML) the scaled score norm must not exceed
 #'     the resolved \code{SCORE_TOLERANCE}.}
-#'   \item{Conditioning}{the information matrix's reciprocal condition
-#'     number must not fall below the estimator's \code{RCOND_TOLERANCE}.}
+#'   \item{Conditioning}{The diagonally normalized information matrix's
+#'     reciprocal condition number must not fall below the estimator's
+#'     \code{RCOND_TOLERANCE}.}
 #' }
+#' PPML warnings and messages from the last attempted solver call are recorded
+#' in \code{diagnostics$warnings} and \code{diagnostics$messages}.
 #'
 #' Centering the columns of \code{x} before calling this function (as the
 #' paper does for its volatility regressors) is a caller choice: it changes
@@ -103,7 +125,7 @@
 #' scale the solver actually sees. This is what lets a returned
 #' \code{warm_start} be fed back as \code{start} at the same
 #' \code{response_scale}. At the default \code{response_scale = 1} this
-#' scaled fit is simply the natural scale. Only the returned \code{coef} is
+#' scaled fit is simply the natural scale. The returned \code{coef} vector is
 #' on the original \code{y} scale (\code{coef[1] == warm_start[1] +
 #' log(response_scale)}, other coefficients unchanged). Extreme
 #' \code{response_scale} values degrade numerical precision without
@@ -124,14 +146,25 @@
 #' @export
 #'
 #' @examples
-#' set.seed(1)
-#' t_obs <- 200
-#' x <- cbind(v1 = rnorm(t_obs), v2 = rnorm(t_obs))
-#' eta <- drop(cbind(1, x) %*% c(-0.5, 0.6, -0.4))
-#' y <- exp(eta) * rchisq(t_obs, df = 1)
-#' fit <- fit_log_variance(y, x)
-#' fit$coef
-#' fit_log_variance(y, x, estimator = "harvey")$coef
+#' local({
+#'   old_seed <- get0(".Random.seed", envir = .GlobalEnv, inherits = FALSE)
+#'   on.exit(if (is.null(old_seed)) {
+#'     rm(".Random.seed", envir = .GlobalEnv)
+#'   } else {
+#'     assign(".Random.seed", old_seed, envir = .GlobalEnv)
+#'   })
+#'   set.seed(1)
+#'   t_obs <- 200
+#'   x <- cbind(v1 = rnorm(t_obs), v2 = rnorm(t_obs))
+#'   eta <- drop(cbind(1, x) %*% c(-0.5, 0.6, -0.4))
+#'   y <- exp(eta) * rchisq(t_obs, df = 1)
+#'   fit <- fit_log_variance(y, x, response_scale = 10)
+#'   print(fit$coef)
+#'   refit <- fit_log_variance(y, x, start = fit$warm_start, response_scale = 10)
+#'   print(all.equal(fit$coef, refit$coef))
+#'   print(fit_log_variance(y, x, estimator = "harvey")$coef)
+#'   print(fit_log_variance(rep(0, t_obs), x)$fit_status)
+#' })
 fit_log_variance <- function(y, x, estimator = "ppml", start = NULL,
                              fallback_starts = list(), response_scale = 1,
                              control = list()) {

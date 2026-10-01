@@ -7,21 +7,21 @@
 harvey_ratio(theta, y, x_mat)
 }
 \arguments{
-\item{theta}{Numeric coefficient vector of length \code{ncol(x_mat)}}
+\item{theta}{Numeric coefficient vector of length \code{ncol(x_mat)}.}
 
-\item{y}{Numeric nonnegative response}
+\item{y}{Finite nonnegative numeric response vector of length \code{nrow(x_mat)}.}
 
-\item{x_mat}{Numeric design matrix, intercept column included}
+\item{x_mat}{Finite numeric design matrix, intercept column included.}
 }
 \value{
-Numeric vector of length \code{length(y)}
+Numeric vector of length \code{length(y)}, with exact zeros where \code{y == 0}.
 }
 \description{
 The evaluation order is contractual: form \eqn{\eta}, mark the positive
 rows, seed \code{r} with zeros, and only then fill the positive rows on the
 log scale. A zero response row stays an exact zero without ever forming
-\code{0 * Inf}, and a non-finite positive row is left as it is (\code{Inf},
-never \code{NaN}) for the caller to treat as a failed trial. \code{y} is not
+\code{0 * Inf}. With finite \eqn{\eta}, overflow on a positive row gives
+\code{Inf}, not \code{NaN}, for the caller to treat as a failed trial. \code{y} is not
 re-validated here: the exported boundary \code{\link{fit_log_variance}}
 already required it finite and nonnegative.
 }

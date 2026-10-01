@@ -13,10 +13,18 @@ compute_time_series_news(current_series, future_series)
 as \code{current_series}.}
 }
 \value{
-News series (\code{length(current_series) - 1}), or
+Numeric vector of length \code{length(current_series) - 1}, or
 \code{numeric(0)} when the inputs have fewer than two observations.
 }
 \description{
-Generic function to compute news as difference between future and current values
+Computes news by subtracting each current-period value from the
+future series in the following row.
+}
+\details{
+Element \code{t} is \code{future_series[t + 1] - current_series[t]}.
+Missing values in either paired observation propagate to that element;
+observations are not removed. Unequal input lengths raise a
+\code{hetid_error_dimension_mismatch}. The output has no dates; input
+positions must already refer to corresponding periods.
 }
 \keyword{internal}

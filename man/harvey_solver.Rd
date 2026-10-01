@@ -8,9 +8,7 @@ The math and linear-algebra core of the Harvey Gaussian
 multiplicative-heteroskedasticity log-variance solve: the zero-safe ratio
 \eqn{r = y / \exp(X\theta)}, the observed information, the guarded
 single-point evaluation every step is judged on, and the Cholesky
-triangular solve behind the Fisher direction. Ported from the paper
-pipeline (\code{scripts-paper/log_variance/estimators/harvey/likelihood.R}
-and \code{.../solver_primitives.R}). No clamping, no epsilon added to
+triangular solve behind the Fisher direction. No clamping, no epsilon added to
 \code{y}, no \eqn{\eta} capping: a non-finite quantity is a hard trial
 failure for the caller to reject, never a value this layer silences.
 }

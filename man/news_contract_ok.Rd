@@ -7,18 +7,24 @@
 news_contract_ok(maturities, step)
 }
 \arguments{
-\item{maturities}{Numeric vector of maturity indices}
+\item{maturities}{Numeric vector of maturity indices in months.}
 
-\item{step}{Integer number of maturity-index units per news period.}
+\item{step}{Positive integer scalar giving the number of months per news period.}
 }
 \value{
-Logical vector, TRUE where the contract holds
+A logical vector of length \code{length(maturities)}, with
+\code{TRUE} where the news contract holds and \code{FALSE} otherwise.
+Missing maturity indices produce \code{NA}; an empty input returns
+\code{logical(0)}.
 }
 \description{
-Vectorized test of the news contract: a horizon's previous-period
-index is either the boundary case (\code{maturity == step}) or stays
-at or above \code{MIN_MATURITY}. Single source of truth shared by
+Vectorized test of the news contract: a horizon equals \code{step}
+(the boundary case) or its previous-period index \code{maturities - step}
+stays at or above \code{HETID_CONSTANTS$MIN_MATURITY}. Shared by
 the scalar validator, the \eqn{\omega_2} vector validator, and the default-grid
 builder.
+}
+\details{
+This predicate does not validate input types or ranges.
 }
 \keyword{internal}

@@ -7,17 +7,24 @@
 acm_asset_filename(source, frequency)
 }
 \arguments{
-\item{source}{Data source: "auto", "github", or "nyfed"}
+\item{source}{A character scalar: \code{"auto"}, \code{"github"}, or
+\code{"nyfed"}, already validated by the caller.}
 
-\item{frequency}{Data frequency: "monthly" or "daily"}
+\item{frequency}{A character scalar: \code{"monthly"} or \code{"daily"},
+already validated by the caller.}
 }
 \value{
-Character string with the asset filename
+A character scalar giving the asset filename from
+\code{HETID_CONSTANTS}.
 }
 \description{
 Single source of the (source, frequency) to filename mapping and of
 the rule that daily data is GitHub-only. Both path resolvers below
 derive from it, so the read and write paths cannot desync. Callers
 pass \code{match.arg()}-validated values.
+}
+\details{
+The \code{"nyfed"}/\code{"daily"} combination raises a
+\code{hetid_error_bad_argument} condition. \code{"auto"} uses the GitHub asset.
 }
 \keyword{internal}

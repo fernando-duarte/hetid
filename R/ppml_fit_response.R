@@ -1,26 +1,19 @@
-# The core IRLS solve behind the log-variance equation: glm.fit with
-# quasipoisson(link = "log") on y / response_scale, walked over a
-# deterministic start ladder, with the fail-closed acceptance check applied to
-# each rung. Originally ported from the paper pipeline, whose fitting
-# adapters now delegate here. No clamping, no epsilon
-# added to y, no suppressed conditions. The scaled-response guard is the
-# estimator-neutral log_variance_scaled_response_class(). A file-level roxygen
-# block would collide with ppml_fit_response's own Rd page, so this header
-# stays a comment
-
 #' Build the Start Ladder
 #'
 #' The default order is the supplied start, each fallback start, the
 #' intercept-only start, then the \code{glm.fit} default (\code{NULL}).
 #' The validated \code{START_ORDER} control reorders these groups.
+#' The intercept-only start is omitted when the scaled response has zero mean.
 #'
-#' @param start Numeric start vector, or \code{NULL}.
-#' @param fallback_starts List of numeric start vectors.
-#' @param y_scaled Numeric response on the scaled (fitted) scale.
-#' @param p Number of design columns.
-#' @param control Validated fitting controls.
+#' @param start Numeric start vector of length \code{p}, or \code{NULL}.
+#' @param fallback_starts List of numeric start vectors of length \code{p}.
+#' @param y_scaled Finite nonnegative response vector on the scaled fit.
+#' @param p Positive integer number of design columns, including the intercept.
+#' @param control Validated PPML fitting controls, including \code{START_ORDER}.
 #'
-#' @return List with \code{candidates} and the matching \code{labels}.
+#' @return A list with \code{candidates}, a list of start vectors or
+#'   \code{NULL}, and \code{labels}, a character vector of matching group
+#'   names in the same order.
 #' @noRd
 ppml_start_ladder <- function(
   start, fallback_starts, y_scaled, p, control = log_variance_fit_control("ppml")
@@ -45,11 +38,13 @@ ppml_start_ladder <- function(
 
 #' Screen a Candidate Start
 #'
-#' @param cand Candidate start vector, or \code{NULL} for the glm.fit default
-#' @param x_mat Numeric design matrix, intercept column included
+#' @param cand Numeric candidate vector of length \code{ncol(x_mat)}, or
+#'   \code{NULL} for the \code{glm.fit} default.
+#' @param x_mat Finite numeric design matrix, intercept column included.
 #'
-#' @return \code{TRUE} when the start overflows the log link and must be
-#'   skipped
+#' @return A logical scalar: \code{TRUE} when the candidate coefficients or
+#'   their exponentiated linear predictor are nonfinite, and \code{FALSE}
+#'   otherwise, including for \code{NULL}. Underflow to zero is not rejected.
 #' @noRd
 ppml_start_invalid <- function(cand, x_mat) {
   !is.null(cand) &&
@@ -58,23 +53,55 @@ ppml_start_invalid <- function(cand, x_mat) {
 
 #' Fit the PPML Log-Variance Response
 #'
-#' Walks the start ladder and returns the first accepted fit, recovering the
-#' original-scale coefficients from the scaled solve. A response the estimator
-#' cannot fit -- an all-zero response, a rank-unresolved positive-response
-#' design, a scaled response that under- or overflowed, or a ladder with no
-#' accepted rung -- comes back as a fail-closed result, never an error;
-#' malformed arguments are the exported boundary's business.
+#' Fits \code{y / response_scale} by quasi-Poisson IRLS with a log link and
+#' returns the first accepted start-ladder fit, with coefficients recovered
+#' on the original response scale.
 #'
-#' @param y Numeric nonnegative response on the original scale
-#' @param x_mat Numeric design matrix from \code{\link{log_variance_design}},
-#'   intercept column included and column labels validated
-#' @param start Numeric start vector on the scaled response, or \code{NULL}
-#' @param fallback_starts List of numeric start vectors on the scaled response
-#' @param response_scale Positive finite scalar to divide \code{y} by
-#' @param control Validated fitting controls
-#' @param design Quantities derived from the validated fixed design
+#' @param y Finite nonnegative numeric vector of length \code{nrow(x_mat)}
+#'   on the original response scale. Missing values are not allowed.
+#' @param x_mat Finite numeric design matrix from
+#'   \code{\link{log_variance_design}}, with the intercept first and unique,
+#'   non-missing, non-blank column labels. Rows must align with \code{y}.
+#' @param start Numeric vector of length \code{ncol(x_mat)} on the scaled
+#'   response, or \code{NULL} (the default). Names, if present, must match
+#'   \code{colnames(x_mat)} in order. Nonfinite starts may reach this helper
+#'   when the boundary permits them and are recorded as invalid attempts.
+#' @param fallback_starts List of start vectors following the same scale,
+#'   length, and naming rules as \code{start}. Defaults to an empty list.
+#' @param response_scale Positive finite numeric scalar dividing \code{y}
+#'   before fitting. Defaults to \code{1}.
+#' @param control Complete validated PPML fitting-control list. Defaults to
+#'   the PPML controls resolved by \code{log_variance_fit_control("ppml")}.
+#' @param design Fixed-design quantities matching \code{x_mat} and
+#'   \code{control}; computed from them by default.
 #'
-#' @return A validated \code{hetid_log_variance_fit} object
+#' @return A validated \code{hetid_log_variance_fit} list, visibly, retaining
+#'   the original response and design. On success, \code{fit_status = "ok"}
+#'   and \code{coef} is named by the design columns; \code{warm_start} stays
+#'   on the scaled response. On failure, \code{fit_status = "nonconvergence"},
+#'   \code{coef} and \code{warm_start} are \code{NULL}, and the reason is in
+#'   \code{diagnostics$error_class}. See \code{\link{hetid_log_variance_fit}}.
+#'
+#' @details
+#' Arguments must already satisfy the validation contract of
+#' \code{\link{fit_log_variance}} or \code{\link{make_log_variance_fitter}};
+#' this internal solver does not replace that boundary validation.
+#' An all-zero response, loss of full column rank among positive-response
+#' rows, response-scaling underflow or overflow, or a ladder with no accepted
+#' rung returns a failure object for validated inputs.
+#'
+#' By default, starts are tried in this order: the supplied start, each
+#' fallback, an intercept-only start, and the \code{\link[stats]{glm.fit}}
+#' default. The validated \code{START_ORDER} control reorders these groups.
+#' Acceptance uses the convergence, score, and conditioning gates of
+#' \code{\link{ppml_accept}}. The intercept in \code{coef} adds
+#' \code{log(response_scale)} to the scaled-fit intercept; slopes are unchanged.
+#' The objective and score diagnostics refer to the scaled response.
+#'
+#' Warnings and messages from the final attempted fit, or the accepted fit,
+#' are captured in \code{diagnostics$warnings} and \code{diagnostics$messages}.
+#' Earlier attempts retain their source and failure class in
+#' \code{diagnostics$start_attempts}, but not their warning or message text.
 #' @keywords internal
 ppml_fit_response <- function(y, x_mat, start = NULL, fallback_starts = list(),
                               response_scale = 1, control = log_variance_fit_control("ppml"),

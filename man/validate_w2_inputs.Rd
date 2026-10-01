@@ -12,23 +12,38 @@ validate_w2_inputs(
 )
 }
 \arguments{
-\item{yields}{Yields data (data frame or matrix)}
+\item{yields}{Data frame or matrix of yields.}
 
-\item{term_premia}{Term premia data (data frame or matrix)}
+\item{term_premia}{Data frame or matrix of term premia with the same
+numbers of rows and columns as \code{yields}.}
 
-\item{maturities}{Vector of maturities}
+\item{maturities}{Nonempty numeric vector of distinct, finite integer
+bond maturities in months, between \code{MIN_MATURITY} and
+\code{MAX_MATURITY - step}. Each must equal \code{step} or satisfy
+\code{maturity - step >= MIN_MATURITY}.}
 
-\item{step}{Integer number of maturity-index units per news period
-(default \code{HETID_CONSTANTS$DEFAULT_STEP}). The news operator
-steps one period, so maturity arithmetic moves in multiples of
-\code{step}: \code{compute_n_hat()} pairs maturities \code{i} and
-\code{i + step}, the one-period bond is the \code{step}-maturity
-bond, and horizons must satisfy \code{i <= MAX_MATURITY - step}.}
+\item{step}{Positive integer number of months per news period, no greater than
+half of \code{HETID_CONSTANTS$MAX_MATURITY}. Functions with a default use
+\code{HETID_CONSTANTS$DEFAULT_STEP}. For time-series inputs, adjacent observations
+must be \code{step} months apart. Functions that read maturity \code{i + step}
+require \code{i <= HETID_CONSTANTS$MAX_MATURITY - step}; additional
+horizon restrictions are described for each function.}
 }
 \value{
-List with converted data frames and validated maturities
+A list with \code{yields} and \code{term_premia} as data frames,
+and \code{maturities} unchanged, including its order and names.
 }
 \description{
-Internal function to validate and convert yields and term_premia inputs
+Checks input dimensions and news horizons, converting yields and term
+premia to data frames without dropping observations.
+}
+\details{
+Inputs must already be aligned by calendar date. This helper checks
+dimensions, not dates, column availability, numeric contents, or missing
+values. Column availability is checked later for each maturity.
+The step must be a finite positive integer no greater than half of
+\code{HETID_CONSTANTS$MAX_MATURITY}. Invalid types or horizons raise
+\code{hetid_error_bad_argument}; unequal dimensions raise
+\code{hetid_error_dimension_mismatch}.
 }
 \keyword{internal}

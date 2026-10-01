@@ -1,4 +1,3 @@
-# Numerical certificate search. Optimizer output is only a candidate
 quadratic_curvature_margin <- function(a, direction) {
   products <- outer(direction, direction) * a
   value <- sum(products)

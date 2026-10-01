@@ -7,21 +7,45 @@
 \method{print}{hetid_moments}(x, ...)
 }
 \arguments{
-\item{x}{A \code{hetid_moments} object}
+\item{x}{A \code{hetid_moments} list created by
+\code{\link{compute_identification_moments}}.}
 
-\item{...}{Unused, for method consistency}
+\item{...}{Additional arguments, ignored by this method.}
 }
 \value{
-\code{x}, invisibly
+The supplied \code{hetid_moments} object \code{x}, invisibly.
 }
 \description{
-Print a hetid_moments Object
+Prints the observation and instrument counts, the theta-axis dimension,
+and the selected constraint-axis indices to the console.
+}
+\details{
+The displayed maturities are column indices of \code{w2}, not
+necessarily bond maturities. The theta axis includes all \code{w2} columns;
+the constraint axis includes only the selected indices.
 }
 \examples{
-set.seed(42)
-w1 <- rnorm(100)
-w2 <- matrix(rnorm(100 * 4), nrow = 100, ncol = 4)
-pcs <- matrix(rnorm(100 * 3), nrow = 100, ncol = 3)
-moments <- compute_identification_moments(w1, w2, pcs)
-print(moments)
+local({
+  old_seed <- if (exists(".Random.seed", envir = .GlobalEnv, inherits = FALSE)) {
+    get(".Random.seed", envir = .GlobalEnv)
+  } else {
+    NULL
+  }
+  on.exit({
+    if (is.null(old_seed)) {
+      rm(".Random.seed", envir = .GlobalEnv)
+    } else {
+      assign(".Random.seed", old_seed, envir = .GlobalEnv)
+    }
+  })
+  set.seed(42)
+  w1 <- rnorm(100)
+  w2 <- matrix(rnorm(100 * 2), nrow = 100, ncol = 2)
+  pcs <- matrix(rnorm(100), nrow = 100, ncol = 1)
+  moments <- compute_identification_moments(w1, w2, pcs, maturities = 2)
+  print(moments)
+})
+}
+\seealso{
+\code{\link[base:print]{print}} for the generic.
 }

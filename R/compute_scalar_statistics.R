@@ -1,43 +1,62 @@
 #' Compute Scalar Statistics for Heteroskedasticity Identification
 #'
-#' Computes scalar statistics S_i^(0) and sigma_i^2 for each maturity i.
+#' Computes the centered sample variances \eqn{S_i^{(0)}} and
+#' \eqn{\sigma_i^2} for each selected \code{w2} column.
 #'
-#' @param w1 Numeric vector of \eqn{\omega_1} residuals from compute_w1_residuals()
-#' @param w2 Matrix of \eqn{\omega_2} residuals (T x I) from compute_w2_residuals()
-#' @param maturities Vector of maturity indices to compute statistics for.
-#'   Default is all columns of w2.
+#' @param w1 Finite numeric vector of \eqn{\omega_1} residuals, with at least
+#'   two observations, such as the \code{residuals} component returned by
+#'   \code{\link{compute_w1_residuals}}.
+#' @param w2 Numeric matrix or data frame of \eqn{\omega_2} residuals with
+#'   \code{length(w1)} rows and at least one column, assembled from the
+#'   residual vectors returned by \code{\link{compute_w2_residuals}}.
+#'   All entries must be finite, and rows must correspond to the same
+#'   observations as \code{w1} in the same order.
+#'   Align dated series by realization date before extracting numeric inputs.
+#' @param maturities Nonempty numeric vector of distinct integer-valued
+#'   \code{w2} column indices between 1 and \code{ncol(w2)}. These indices
+#'   need not denote bond maturities. The default, \code{NULL}, selects all
+#'   columns in order.
 #'
 #' @return A list containing:
 #' \describe{
-#'   \item{s_i_0}{Named vector of S_i^(0) values, keyed \code{maturity_N}
+#'   \item{s_i_0}{Named numeric vector of \eqn{S_i^{(0)}} values, keyed \code{maturity_N}
 #'     (N = the w2 column index, not necessarily a bond maturity) with
 #'     one entry per element of \code{maturities}.}
-#'   \item{sigma_i_sq}{Named vector of sigma_i^2 values, keyed
+#'   \item{sigma_i_sq}{Named numeric vector of \eqn{\sigma_i^2} values, keyed
 #'     \code{maturity_N} with one entry per element of \code{maturities}.}
 #' }
+#' Both vectors follow the order of \code{maturities}; element \code{k}
+#' corresponds to \code{maturities[k]}. A statistic is zero when the
+#' corresponding finite product or squared-residual series is constant.
+#' Intermediate arithmetic can overflow for very large finite residuals,
+#' yielding non-finite statistics.
 #'
 #' @details
-#' For each maturity i, computes the centered sample variances (1/T
-#' normalization; see [centered_cov()] and the spec sections on moment
-#' notation and centering):
+#' For each selected column i, computes the centered sample variances using
+#' \eqn{1/T} normalization, where \eqn{T = \operatorname{length}(w1)}
+#' (see \code{\link{centered_cov}}):
 #' \deqn{\hat{S}_i^{(0)} = \widehat{\mathrm{Var}}(\omega_1 \odot \omega_2^{(i)})}
 #' \deqn{\hat{\sigma}_i^2 = \widehat{\mathrm{Var}}\big((\omega_2^{(i)})^{\odot 2}\big)}
 #'
 #' where \eqn{\odot} denotes the Hadamard (elementwise) product and
 #' \eqn{\omega_2^{(i)}} is the i-th column of \eqn{\omega_2}.
+#' \code{NA}, \code{NaN}, or infinite input values are rejected, including in
+#' unselected \code{w2} columns; observations are not dropped. Invalid types
+#' or maturity indices signal a \code{hetid_error_bad_argument}; mismatched
+#' observation counts signal a \code{hetid_error_dimension_mismatch}; fewer
+#' than two observations signal a \code{hetid_error_insufficient_data}.
 #'
 #' @export
 #'
 #' @examples
-#' set.seed(42)
-#' n_obs <- 100
-#' I <- 4
-#' w1 <- rnorm(n_obs)
-#' w2 <- matrix(rnorm(n_obs * I), nrow = n_obs, ncol = I)
+#' w1 <- c(-2, -1, 0, 1, 2)
+#' w2 <- cbind(c(2, -1, -2, -1, 2), c(-1, 2, 0, -2, 1))
 #'
 #' scalar_stats <- compute_scalar_statistics(w1, w2)
 #' scalar_stats$s_i_0
 #' scalar_stats$sigma_i_sq
+#'
+#' compute_scalar_statistics(w1, w2, maturities = c(2, 1))
 compute_scalar_statistics <- function(w1, w2,
                                       maturities = NULL) {
   validated <- validate_statistics_inputs(w1, w2, maturities)
@@ -53,10 +72,10 @@ compute_scalar_statistics <- function(w1, w2,
 #' \code{compute_identification_moments()} validate once and delegate
 #' here.
 #'
-#' @param w1 Numeric vector of \eqn{\omega_1} residuals
-#' @param w2 Numeric matrix of \eqn{\omega_2} residuals (T x I)
-#' @param maturities Vector of validated maturity indices
-#' @return List with named vectors s_i_0 and sigma_i_sq
+#' @param w1 Numeric vector of \eqn{\omega_1} residuals.
+#' @param w2 Numeric matrix of \eqn{\omega_2} residuals (T x I).
+#' @param maturities Vector of validated maturity indices.
+#' @return A list with named numeric vectors \code{s_i_0} and \code{sigma_i_sq}.
 #' @noRd
 compute_scalar_statistics_impl <- function(w1, w2, maturities) {
   results <- compute_per_maturity(

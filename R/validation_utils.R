@@ -8,14 +8,18 @@ NULL
 
 #' Validate Row Alignment of Yields and Term Premia
 #'
-#' Rows-only counterpart to \code{validate_data_dimensions} for the
+#' Rows-only counterpart to \code{\link{validate_data_dimensions}} for the
 #' bond-pricing entry points: their frames may carry different column
 #' sets, but mismatched row counts must error, never recycle.
 #'
-#' @param yields Yields data (matrix or data frame)
-#' @param term_premia Term premia data (matrix or data frame)
+#' @details Checks row counts only; callers must align observations by date.
+#'   Column counts, names, and values are not checked, and empty frames are allowed.
 #'
-#' @return Invisible TRUE if valid, stops with informative error if invalid
+#' @param yields A matrix or data frame of yields, with observations in rows.
+#' @param term_premia A matrix or data frame of term premia, with observations in rows.
+#'
+#' @return Invisible \code{TRUE} when row counts agree. Otherwise, signals a
+#'   \code{hetid_error_dimension_mismatch} condition.
 #' @keywords internal
 validate_row_alignment <- function(yields, term_premia) {
   assert_dimension_ok(
@@ -31,12 +35,16 @@ validate_row_alignment <- function(yields, term_premia) {
 
 #' Validate Data Dimensions
 #'
-#' Validates that yields and term premia have consistent dimensions.
+#' Validates that yields and term premia have equal row and column counts.
 #'
-#' @param yields Yields data (matrix or data frame)
-#' @param term_premia Term premia data (matrix or data frame)
+#' @details Checks dimensions only; dates, column names, and values are not checked.
+#'   Empty matrices and data frames are allowed when their dimensions agree.
 #'
-#' @return Invisible TRUE if valid, stops with informative error if invalid
+#' @param yields A matrix or data frame of yields, with observations in rows.
+#' @param term_premia A matrix or data frame of term premia, with observations in rows.
+#'
+#' @return Invisible \code{TRUE} when dimensions agree. Otherwise, signals a
+#'   \code{hetid_error_dimension_mismatch} condition.
 #' @keywords internal
 validate_data_dimensions <- function(yields, term_premia) {
   validate_row_alignment(yields, term_premia)
@@ -54,11 +62,13 @@ validate_data_dimensions <- function(yields, term_premia) {
 
 #' Validate Number of Principal Components
 #'
-#' Validates n_pcs parameter for principal components.
+#' Validates the number of principal components of nominal financial asset returns.
 #'
-#' @param n_pcs Number of principal components to validate
+#' @param n_pcs A single finite numeric value representing an integer from one to
+#'   \code{HETID_CONSTANTS$MAX_N_PCS}, inclusive.
 #'
-#' @return Invisible TRUE if valid, stops with informative error if invalid
+#' @return Invisible \code{TRUE} when valid. Otherwise, signals a
+#'   \code{hetid_error_bad_argument} condition with \code{arg = "n_pcs"}.
 #' @keywords internal
 validate_n_pcs <- function(n_pcs) {
   assert_scalar_integer_in_range(
@@ -72,11 +82,17 @@ validate_n_pcs <- function(n_pcs) {
 #' With \code{expected_length}, every input must equal that length; without it,
 #' the inputs must merely share a common length.
 #'
-#' @param ... Vectors or lists whose lengths must agree
-#' @param expected_length Optional single nonnegative integer; if supplied, every
-#'   input must have exactly this length
+#' @details Checks lengths only; values, types, and dates are not checked.
+#'   Empty inputs are allowed when their lengths satisfy the requested comparison.
 #'
-#' @return Invisible TRUE if valid, stops with informative error if invalid
+#' @param ... Vectors or lists whose lengths must agree. Supply at least two inputs
+#'   when \code{expected_length = NULL}, or at least one when a length is supplied.
+#' @param expected_length A single finite nonnegative numeric integer, or
+#'   \code{NULL} (the default) to compare input lengths with each other.
+#'
+#' @return Invisible \code{TRUE} when lengths agree. Signals a
+#'   \code{hetid_error_bad_argument} condition for an invalid expected length or too
+#'   few inputs, or \code{hetid_error_dimension_mismatch} for unequal lengths.
 #' @keywords internal
 validate_time_series_lengths <- function(..., expected_length = NULL) {
   series_list <- list(...)
@@ -122,9 +138,16 @@ validate_time_series_lengths <- function(..., expected_length = NULL) {
 #'
 #' Validates that inputs are numeric vectors for mathematical computation.
 #'
-#' @param ... Named numeric vectors to validate
+#' @details Integer and double vectors are accepted, including empty vectors and
+#'   missing or nonfinite values. Matrices, arrays, and nonnumeric inputs are rejected.
+#'   Supplying no inputs succeeds.
 #'
-#' @return Invisible TRUE if valid, stops with informative error if invalid
+#' @param ... Numeric vectors, optionally named. Names identify invalid inputs in
+#'   errors; unnamed inputs are identified as \code{input_1}, \code{input_2}, and so on.
+#'
+#' @return Invisible \code{TRUE} when all inputs are numeric vectors. Otherwise,
+#'   signals a \code{hetid_error_bad_argument} condition whose \code{arg} field
+#'   identifies the first invalid input.
 #' @keywords internal
 validate_numeric_inputs <- function(...) {
   inputs <- list(...)

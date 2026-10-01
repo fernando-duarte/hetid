@@ -14,30 +14,38 @@ compute_log_variance_vcov_at_coef(
 )
 }
 \arguments{
-\item{coef}{Numeric vector with one entry per design column, on the same
-response scale as \code{y}. Names may be absent; when present they must
+\item{coef}{Numeric vector with one entry per design column, such that
+\code{exp(x_design \%*\% coef)} is on the scale of \code{y}.
+Names may be absent; when present they must
 equal \code{colnames(x_design)} in exactly the same order.}
 
-\item{y}{Numeric response vector with one entry per design row.}
+\item{y}{Numeric nonnegative response vector with one entry per design
+row, such as squared residuals for a conditional variance model.}
 
 \item{x_design}{Numeric matrix with at least one column and unique,
 nonmissing, nonempty column names. Supply the complete fitted design,
 including its intercept column if used; none is added. Rows must be
 aligned with \code{y}. For HAC they must be in chronological order.}
 
-\item{estimator}{Single estimator name, \code{"ppml"} or \code{"harvey"}.}
+\item{estimator}{Single estimator name, \code{"ppml"} (the default) or
+\code{"harvey"}.}
 
 \item{hac_lags}{Nonnegative integer Bartlett lag truncation, at most
 \code{.Machine$integer.max}. Lags beyond the sample length contribute no
-cross-products; the supplied bandwidth still determines their weights.}
+cross-products; the supplied bandwidth still determines their weights.
+Lags count observations. The default \code{LOG_VARIANCE_CONTROL$HAC_LAGS}
+is the paper's quarterly-data heuristic; choose a bandwidth appropriate
+for the frequency of the supplied rows.}
 
 \item{rcond_tol}{Optional finite positive scalar conditioning tolerance
 on diagonally normalized information matrices. \code{NULL} uses the
-estimator's package default. This is a covariance gate, not a fitting
+estimator's \code{RCOND_TOLERANCE} in \code{LOG_VARIANCE_CONTROL} or
+\code{LOG_VARIANCE_HARVEY_CONTROL}. This is a covariance gate, not a fitting
 control or a change to the estimator's convergence criteria.}
 }
 \value{
-A named list of covariance matrices, labelled on both axes by
+A named list of numeric covariance matrices, each with
+\code{ncol(x_design)} rows and columns, labelled on both axes by
 \code{colnames(x_design)}. PPML returns \code{naive}, \code{hc0},
 \code{hc1}, and \code{hac}; Harvey returns \code{expected},
 \code{observed}, \code{opg}, \code{robust}, and \code{hac}.
@@ -68,6 +76,11 @@ robust sandwich for Harvey. Row order affects HAC; it is not checked here.
 \examples{
 x_design <- cbind("(Intercept)" = 1, v = c(-1, 0, 1, 2))
 compute_log_variance_vcov_at_coef(c(0.2, -0.1), c(1, 2, 3, 4), x_design)
+harvey_vcov <- compute_log_variance_vcov_at_coef(
+  c(0.2, -0.1), c(1, 2, 3, 4), x_design,
+  estimator = "harvey", hac_lags = 0
+)
+all.equal(harvey_vcov$hac, harvey_vcov$robust)
 }
 \seealso{
 \code{\link{compute_log_variance_vcov}},

@@ -18,8 +18,8 @@ NULL
 #' directly on containers assembled via \code{new_hetid_log_variance_fit()}
 #' from parts that are not known-good.
 #'
-#' @param x A classed \code{hetid_log_variance_fit} object
-#' @return \code{x}, invisibly
+#' @param x A classed \code{hetid_log_variance_fit} object.
+#' @return The input \code{x}, invisibly, on successful validation.
 #' @keywords internal
 validate_hetid_log_variance_fit <- function(x) {
   assert_hetid_log_variance_fit(x, arg = "x")

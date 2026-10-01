@@ -7,28 +7,33 @@
 compute_vector_statistics(w1, w2, pcs, maturities = NULL)
 }
 \arguments{
-\item{w1}{Numeric vector of \eqn{\omega_1} residuals from compute_w1_residuals()}
+\item{w1}{Finite numeric vector of \eqn{\omega_1} residuals of length T,
+with at least two observations, from \code{\link{compute_w1_residuals}}.}
 
-\item{w2}{Matrix of \eqn{\omega_2} residuals (T x I) from compute_w2_residuals()}
+\item{w2}{Numeric matrix or data frame of \eqn{\omega_2} residuals (T x I)
+from \code{\link{compute_w2_residuals}}, with at least one column.}
 
-\item{pcs}{Matrix of instruments (T x J): any numeric matrix of
-exogenous time-series instruments. In the VFCI application these
-are principal components of asset returns. Column names label
+\item{pcs}{Numeric matrix or data frame of exogenous time-series instruments
+(T x J), with at least one column. In the VFCI application these
+are principal components of nominal financial asset returns. Column names label
 the instrument axis of the moments (falling back to pc1..pcJ).}
 
-\item{maturities}{Vector of maturity indices to compute statistics for.
-Default is all columns of w2.}
+\item{maturities}{Nonempty numeric vector of distinct integer-valued
+\code{w2} column indices between 1 and \code{ncol(w2)}, in the desired
+output order. The default \code{NULL} selects all columns of \code{w2}.}
 }
 \value{
-A list (with J the instrument count, n_components the theta axis
-= \code{ncol(w2)}, and M = \code{length(maturities)} the constraint axis):
+A list with the following components. Here J is the instrument
+count, n_components = \code{ncol(w2)} is the theta axis, and M is the
+number of selected maturities (the constraint axis).
 \describe{
 \item{r_i_0}{Matrix (J x M); column k holds R_i^(0) for maturity
-\code{maturities[k]} (columns named maturity_N)}
+\code{maturities[k]} (columns named \code{maturity_N}).}
 \item{r_i_1}{Named list of length M (keys maturity_N); element k is the
-J x n_components matrix R_i^(1) for maturity \code{maturities[k]}}
+J x n_components matrix R_i^(1) for maturity \code{maturities[k]},
+with columns named \code{maturity_1}, ..., \code{maturity_I}.}
 \item{p_i_0}{Matrix (J x M); column k holds P_i^(0) for maturity
-\code{maturities[k]} (columns named maturity_N)}
+\code{maturities[k]} (columns named \code{maturity_N}).}
 }
 }
 \description{
@@ -36,7 +41,7 @@ Computes vector statistics R_i^(0), R_i^(1), and P_i^(0) for each maturity i.
 }
 \details{
 For each maturity i, computes the centered sample covariances of the
-principal components with the residual products (1/T normalization; see
+instruments with the residual products (1/T normalization; see
 \code{\link{centered_cov}} and the spec sections on moment notation and centering):
 \deqn{\hat{R}_i^{(0)} = \widehat{\mathrm{Cov}}(PC, \omega_1 \odot \omega_2^{(i)})}
 \deqn{\hat{R}_i^{(1)} = \widehat{\mathrm{Cov}}(PC, \omega_2 \odot \omega_2^{(i)})}
@@ -44,20 +49,29 @@ principal components with the residual products (1/T normalization; see
 
 where \eqn{\odot} denotes the Hadamard (elementwise) product.
 
+Inputs must contain only finite numeric values; missing observations
+are rejected rather than omitted. Rows must already refer to the same
+observations in the same order; this function does not align dates.
+Invalid inputs raise structured \code{hetid_error} conditions.
+Maturity indices identify \code{w2} columns, not bond maturities in months.
+Constant instruments or constant finite residual products yield zero
+covariances; no variance-degeneracy diagnostic is run. Finite inputs can
+still overflow when forming residual products, yielding non-finite covariances.
+
 Row labels of \code{r_i_0}, \code{r_i_1}, and \code{p_i_0} use
 \code{colnames(pcs)} when present, falling back to the standard
 \code{pc1..pcJ} names.
 }
 \examples{
-set.seed(42)
-n_obs <- 100
-I <- 4
-J <- 3
-w1 <- rnorm(n_obs)
-w2 <- matrix(rnorm(n_obs * I), nrow = n_obs, ncol = I)
-pcs <- matrix(rnorm(n_obs * J), nrow = n_obs, ncol = J)
+w1 <- c(-2, 1, 0, 2, -1, 0)
+w2 <- cbind(c(-1, 0, 2, -2, 1, 0), c(0, -2, 1, 0, 2, -1))
+pcs <- cbind(pc1 = c(-2, -1, 0, 0, 1, 2), pc2 = c(1, -1, 2, -2, 0, 0))
 
 vec_stats <- compute_vector_statistics(w1, w2, pcs)
 vec_stats$r_i_0
 vec_stats$r_i_1[[1]]
+
+selected <- compute_vector_statistics(w1, w2, pcs, maturities = 2)
+colnames(selected$r_i_0)
+colnames(selected$r_i_1[[1]])
 }

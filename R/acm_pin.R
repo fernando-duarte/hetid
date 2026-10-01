@@ -1,4 +1,3 @@
-# Validate an explicit release and caller-supplied digest before touching the cache
 acm_pin <- function(release, expected_sha256, source, frequency) {
   if (is.null(release) && is.null(expected_sha256)) {
     return(NULL)
@@ -34,7 +33,6 @@ acm_pin <- function(release, expected_sha256, source, frequency) {
   )
 }
 
-# Pin failures name the immutable snapshot, which is never silently overwritten
 acm_pin_error <- function(pin, detail) {
   recovery <- if (dir.exists(dirname(pin$path))) {
     " Remove that snapshot directory before retrying if it is corrupt."

@@ -1,8 +1,9 @@
 #' PPML Covariance Variants
 #'
 #' The four analytic (non-bootstrap) QMLE covariance matrices for the
-#' log-link quasi-Poisson log-variance fit, ported from the paper pipeline
-#' (\code{scripts-paper/log_variance/estimators/ppml/standard_errors.R}).
+#' log-link quasi-Poisson log-variance fit.
+#'
+#' @details
 #' \eqn{\hat\theta} solves \eqn{X'(y - \exp(X\theta)) = 0}, so every variant is
 #' a pure function of the accepted coefficient, the response \code{y}, and the
 #' design \code{X}: no fit object and no \code{response_scale} are needed, the
@@ -17,10 +18,6 @@
 #'   \item{hac}{Newey-West Bartlett HAC of the score,
 #'     \eqn{A^{-1} M_{hac} A^{-1}}}
 #' }
-#' The SEs are hand-rolled in base R rather than delegated to a reconstructed
-#' \code{glm}/\code{sandwich} object: a refit is a second optimization that can
-#' drift from the coefficient the fit actually reports.
-#'
 #' The bread is inverted through the shared conditioning gate
 #' (\code{\link{se_norm_inv}}); a \code{NULL} inverse -- a non-finite,
 #' singular, or ill-conditioned bread -- fails every variant closed to an
@@ -30,18 +27,35 @@
 #' contract. The public entrypoints are \code{\link{compute_log_variance_vcov}}
 #' and \code{\link{compute_log_variance_vcov_at_coef}}.
 #'
+#' No rows are omitted for missing values. This helper evaluates formulas at
+#' the supplied coefficient without checking convergence or optimality.
+#' Malformed arguments are validated by the public entrypoints. Arithmetic
+#' overflow after preflight or inversion can still yield nonfinite entries.
+#'
 #' @param coef Numeric coefficient vector of length \code{ncol(x_mat)}, on the
-#'   same scale as \code{y}
-#' @param y Numeric nonnegative response
-#' @param x_mat Numeric design matrix, intercept column included, with column
-#'   labels naming the coefficient axis
-#' @param hac_lags Nonnegative integer Newey-West lag truncation; rows of
-#'   \code{x_mat} and \code{y} are assumed chronological
+#'   response scale of \code{y}, or \code{NULL} for a failed fit. Entries must
+#'   follow the design-column order.
+#' @param y Numeric nonnegative response vector of length \code{nrow(x_mat)},
+#'   aligned with the design rows. Zero responses are allowed.
+#' @param x_mat Numeric design matrix with column labels naming the coefficient
+#'   axis. Supply the complete fitted design, including its intercept column
+#'   if used; none is added.
+#' @param hac_lags Single nonnegative integer Newey-West lag truncation, in
+#'   observations. Rows of \code{x_mat} and \code{y} are assumed chronological.
+#'   Zero makes \code{hac} equal \code{hc0}. Lags at or beyond the sample length
+#'   contribute no cross-products; the supplied bandwidth still sets weights.
 #'
-#' @param rcond_tol Positive normalized-information conditioning tolerance
+#' @param rcond_tol Finite positive scalar tolerance for the reciprocal
+#'   condition number of the diagonally normalized information matrix.
+#'   Defaults to \code{LOG_VARIANCE_CONTROL$RCOND_TOLERANCE}.
 #'
-#' @return Named list of \code{ncol(x_mat)} square matrices keyed by
-#'   \code{LOG_VARIANCE_CONTROL$SE_TYPES}
+#' @return A named list of numeric covariance matrices keyed by
+#'   \code{LOG_VARIANCE_CONTROL$SE_TYPES}. Each matrix has
+#'   \code{ncol(x_mat)} rows and columns, labelled by \code{colnames(x_mat)}
+#'   on both axes. All matrices contain \code{NA_real_} when inputs are
+#'   nonfinite or incompatible, responses are negative, fitted means are
+#'   nonpositive or nonfinite, \code{nrow(x_mat) <= ncol(x_mat)}, or the
+#'   information matrix fails the inversion gate.
 #' @keywords internal
 ppml_vcov_variants <- function(
   coef, y, x_mat, hac_lags,
@@ -60,8 +74,8 @@ ppml_vcov_variants <- function(
     crossprod(x_mat, mu * x_mat), rcond_tol
   )
   r <- y - mu
-  u <- x_mat * r # per-observation score rows
-  phi <- sum(r^2 / mu) / (n - p) # Pearson dispersion
+  u <- x_mat * r
+  phi <- sum(r^2 / mu) / (n - p)
   sandwich_v <- function(meat) {
     if (is.null(a_inv)) na_mat else a_inv %*% meat %*% a_inv
   }

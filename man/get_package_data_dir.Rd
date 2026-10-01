@@ -7,10 +7,14 @@
 get_package_data_dir()
 }
 \value{
-Character string with path to the bundled data directory
+A character scalar giving the bundled data directory path.
 }
 \description{
-Returns the read-only extdata directory shipped with the package,
-for both development and installed package environments.
+Returns the extdata path in the package located by \code{system.file()}.
+Treat bundled data as read-only.
+}
+\details{
+If the package cannot be located, returns \code{inst/extdata}
+relative to the working directory. The directory need not exist.
 }
 \keyword{internal}

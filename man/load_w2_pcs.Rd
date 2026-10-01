@@ -7,21 +7,33 @@
 load_w2_pcs(pcs, n_pcs, n_obs)
 }
 \arguments{
-\item{pcs}{Supplied PC matrix (required; aligned to yields by date)}
+\item{pcs}{Required numeric matrix or data frame of principal components,
+already aligned to yields by calendar date, with \code{n_obs} rows.}
 
-\item{n_pcs}{Number of PCs to use}
+\item{n_pcs}{Positive integer number of leading PC columns to label,
+validated by the caller not to exceed \code{ncol(pcs)}.}
 
-\item{n_obs}{Number of observations (for validation)}
+\item{n_obs}{Nonnegative integer number of yield observations expected.}
 }
 \value{
-List with components:
+A list with components:
 \describe{
-\item{pcs}{Matrix of principal components}
-\item{pc_names}{Character labels for the first n_pcs
-regressor columns}
+\item{pcs}{Numeric matrix retaining all supplied columns and rows.}
+\item{pc_names}{Character labels for the first \code{n_pcs}
+columns. If any selected label is absent, missing, or empty, all
+labels use the \code{HETID_CONSTANTS$PC_PREFIX} prefix followed
+by their column indices. Matrix column names are unchanged.}
 }
 }
 \description{
-Internal function to validate the supplied principal components.
+Converts supplied principal components of nominal financial asset
+returns to a numeric matrix and checks its row count.
+}
+\details{
+Missing and nonfinite entries are retained. Subsequent regression drops
+incomplete observations; this helper does not check finiteness or dates.
+Missing inputs or nonnumeric contents raise
+\code{hetid_error_bad_argument}; a row-count mismatch raises
+\code{hetid_error_dimension_mismatch}.
 }
 \keyword{internal}

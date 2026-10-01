@@ -7,16 +7,18 @@
 validate_hetid_components(x)
 }
 \arguments{
-\item{x}{A classed \code{hetid_components} object}
+\item{x}{A \code{hetid_components} object with valid constructor attributes.}
 }
 \value{
-\code{x}, invisibly
+\code{x}, invisibly, on success; otherwise a structured
+bad-argument or dimension-mismatch error.
 }
 \description{
-Full shape gate for the \code{hetid_components} class, checked
-against the object's own attributes: element lengths, per-maturity
-names, and the theta-axis dimension of every \code{Q_i} entry. Run by
-the public boundary \code{compute_identified_set_components()} on
+Checks the \code{hetid_components} class, element lengths, per-maturity
+names, and the numeric vector shape of each \code{Q_i} entry against
+the object's own attributes. Attributes and \code{L_i}/\code{V_i}
+types are trusted from the constructor; finiteness is checked separately.
+Called by the public boundary \code{compute_identified_set_components()} on
 every object it returns and by \code{validate_quadratic_inputs()} on
 every object it receives; call it directly on containers assembled
 via \code{new_hetid_components()} from parts that are not known-good.

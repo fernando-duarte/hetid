@@ -7,14 +7,17 @@
 stop_bad_argument(message, arg = NULL, call = NULL)
 }
 \arguments{
-\item{message}{Error message string}
+\item{message}{A character scalar containing the error message.}
 
-\item{arg}{Argument name (optional)}
+\item{arg}{A character scalar naming the invalid argument, or \code{NULL}
+(the default) when no argument name is supplied.}
 
-\item{call}{The call (default NULL)}
+\item{call}{A call object to store on the condition, or \code{NULL}
+(the default) to omit the call from the displayed error.}
 }
 \value{
-Never returns; signals a \code{hetid_error_bad_argument} condition
+Never returns normally; signals a \code{hetid_error_bad_argument}
+condition inheriting from \code{hetid_error}, with an \code{arg} field.
 }
 \description{
 Signal a Bad Argument Error

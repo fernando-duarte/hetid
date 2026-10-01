@@ -7,22 +7,39 @@
 \method{print}{hetid_log_variance_fit}(x, ...)
 }
 \arguments{
-\item{x}{A \code{hetid_log_variance_fit} object}
+\item{x}{A \code{hetid_log_variance_fit} object.}
 
-\item{...}{Unused, for method consistency}
+\item{...}{Unused arguments accepted for method consistency.}
 }
 \value{
-\code{x}, invisibly
+\code{x}, invisibly.
 }
 \description{
-Print a hetid_log_variance_fit Object
+Prints the estimator, fit status, and observation count to the console.
 }
 \examples{
-set.seed(1)
-t_obs <- 80
-x <- cbind(v1 = rnorm(t_obs), v2 = rnorm(t_obs))
-eta <- drop(cbind(1, x) \%*\% c(-0.5, 0.6, -0.4))
-y <- exp(eta) * rchisq(t_obs, df = 1)
-fit <- fit_log_variance(y, x)
-print(fit)
+local({
+  old_seed <- if (exists(".Random.seed", envir = .GlobalEnv, inherits = FALSE)) {
+    get(".Random.seed", envir = .GlobalEnv)
+  } else {
+    NULL
+  }
+  on.exit({
+    if (is.null(old_seed)) {
+      rm(".Random.seed", envir = .GlobalEnv)
+    } else {
+      assign(".Random.seed", old_seed, envir = .GlobalEnv)
+    }
+  })
+  set.seed(1)
+  t_obs <- 80
+  x <- cbind(v1 = rnorm(t_obs), v2 = rnorm(t_obs))
+  eta <- drop(cbind(1, x) \%*\% c(-0.5, 0.6, -0.4))
+  y <- exp(eta) * rchisq(t_obs, df = 1)
+  fit <- fit_log_variance(y, x)
+  print(fit)
+})
+}
+\seealso{
+\code{\link[base:print]{print}}
 }

@@ -15,30 +15,62 @@ ppml_fit_response(
 )
 }
 \arguments{
-\item{y}{Numeric nonnegative response on the original scale}
+\item{y}{Finite nonnegative numeric vector of length \code{nrow(x_mat)}
+on the original response scale. Missing values are not allowed.}
 
-\item{x_mat}{Numeric design matrix from \code{\link{log_variance_design}},
-intercept column included and column labels validated}
+\item{x_mat}{Finite numeric design matrix from
+\code{\link{log_variance_design}}, with the intercept first and unique,
+non-missing, non-blank column labels. Rows must align with \code{y}.}
 
-\item{start}{Numeric start vector on the scaled response, or \code{NULL}}
+\item{start}{Numeric vector of length \code{ncol(x_mat)} on the scaled
+response, or \code{NULL} (the default). Names, if present, must match
+\code{colnames(x_mat)} in order. Nonfinite starts may reach this helper
+when the boundary permits them and are recorded as invalid attempts.}
 
-\item{fallback_starts}{List of numeric start vectors on the scaled response}
+\item{fallback_starts}{List of start vectors following the same scale,
+length, and naming rules as \code{start}. Defaults to an empty list.}
 
-\item{response_scale}{Positive finite scalar to divide \code{y} by}
+\item{response_scale}{Positive finite numeric scalar dividing \code{y}
+before fitting. Defaults to \code{1}.}
 
-\item{control}{Validated fitting controls}
+\item{control}{Complete validated PPML fitting-control list. Defaults to
+the PPML controls resolved by \code{log_variance_fit_control("ppml")}.}
 
-\item{design}{Quantities derived from the validated fixed design}
+\item{design}{Fixed-design quantities matching \code{x_mat} and
+\code{control}; computed from them by default.}
 }
 \value{
-A validated \code{hetid_log_variance_fit} object
+A validated \code{hetid_log_variance_fit} list, visibly, retaining
+the original response and design. On success, \code{fit_status = "ok"}
+and \code{coef} is named by the design columns; \code{warm_start} stays
+on the scaled response. On failure, \code{fit_status = "nonconvergence"},
+\code{coef} and \code{warm_start} are \code{NULL}, and the reason is in
+\code{diagnostics$error_class}. See \code{\link{hetid_log_variance_fit}}.
 }
 \description{
-Walks the start ladder and returns the first accepted fit, recovering the
-original-scale coefficients from the scaled solve. A response the estimator
-cannot fit -- an all-zero response, a rank-unresolved positive-response
-design, a scaled response that under- or overflowed, or a ladder with no
-accepted rung -- comes back as a fail-closed result, never an error;
-malformed arguments are the exported boundary's business.
+Fits \code{y / response_scale} by quasi-Poisson IRLS with a log link and
+returns the first accepted start-ladder fit, with coefficients recovered
+on the original response scale.
+}
+\details{
+Arguments must already satisfy the validation contract of
+\code{\link{fit_log_variance}} or \code{\link{make_log_variance_fitter}};
+this internal solver does not replace that boundary validation.
+An all-zero response, loss of full column rank among positive-response
+rows, response-scaling underflow or overflow, or a ladder with no accepted
+rung returns a failure object for validated inputs.
+
+By default, starts are tried in this order: the supplied start, each
+fallback, an intercept-only start, and the \code{\link[stats]{glm.fit}}
+default. The validated \code{START_ORDER} control reorders these groups.
+Acceptance uses the convergence, score, and conditioning gates of
+\code{\link{ppml_accept}}. The intercept in \code{coef} adds
+\code{log(response_scale)} to the scaled-fit intercept; slopes are unchanged.
+The objective and score diagnostics refer to the scaled response.
+
+Warnings and messages from the final attempted fit, or the accepted fit,
+are captured in \code{diagnostics$warnings} and \code{diagnostics$messages}.
+Earlier attempts retain their source and failure class in
+\code{diagnostics$start_attempts}, but not their warning or message text.
 }
 \keyword{internal}

@@ -7,12 +7,20 @@
 validate_numeric_inputs(...)
 }
 \arguments{
-\item{...}{Named numeric vectors to validate}
+\item{...}{Numeric vectors, optionally named. Names identify invalid inputs in
+errors; unnamed inputs are identified as \code{input_1}, \code{input_2}, and so on.}
 }
 \value{
-Invisible TRUE if valid, stops with informative error if invalid
+Invisible \code{TRUE} when all inputs are numeric vectors. Otherwise,
+signals a \code{hetid_error_bad_argument} condition whose \code{arg} field
+identifies the first invalid input.
 }
 \description{
 Validates that inputs are numeric vectors for mathematical computation.
+}
+\details{
+Integer and double vectors are accepted, including empty vectors and
+missing or nonfinite values. Matrices, arrays, and nonnumeric inputs are rejected.
+Supplying no inputs succeeds.
 }
 \keyword{internal}

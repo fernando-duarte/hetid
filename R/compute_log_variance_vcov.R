@@ -11,27 +11,40 @@
 #'
 #' @param fit A \code{hetid_log_variance_fit} object from
 #'   \code{\link{fit_log_variance}} or \code{\link{fit_log_variance_at_b}}.
-#' @param hac_lags Single nonnegative integer: the Newey-West lag truncation
+#' @param hac_lags Single finite nonnegative integer, no greater than
+#'   \code{.Machine$integer.max}: the Newey-West lag truncation in observations
 #'   for the \code{hac} variant. Default
 #'   \code{LOG_VARIANCE_CONTROL$HAC_LAGS} (the paper's quarterly heuristic).
+#'   Choose a lag truncation appropriate to the frequency of your observations.
 #'   \code{0} collapses \code{hac} to \code{hc0} for PPML and
 #'   \code{robust} for Harvey.
 #'
-#' @return A named list of \code{(k + 1) x (k + 1)} covariance matrices keyed
+#' @return A named list of square numeric covariance matrices with
+#'   \code{ncol(fit$x_design)} rows and columns, including the intercept, keyed
 #'   by the estimator's \code{se_types} (for \code{"ppml"}: \code{"naive"},
 #'   \code{"hc0"}, \code{"hc1"}, \code{"hac"}; for \code{"harvey"}:
 #'   \code{"expected"}, \code{"observed"}, \code{"opg"}, \code{"robust"},
 #'   \code{"hac"}), each labelled with the fit's \code{coef_labels} on both
-#'   axes. Standard errors are \code{sqrt(diag(.))}.
+#'   axes. Unavailable matrices contain \code{NA_real_} in every entry; see
+#'   \strong{Details}. Standard errors are \code{sqrt(diag(.))}.
 #'
 #' @details
 #' Malformed \emph{arguments} are errors: a first argument that is not a
 #' \code{hetid_log_variance_fit}, or an \code{hac_lags} that is not a scalar
 #' nonnegative integer, signals \code{hetid_error_bad_argument}. Data-quality
 #' failures are fail-closed instead, returning all-NA matrices of the right
-#' shape so a vcov failure cannot kill a caller's estimation loop: a failed fit
-#' (\code{!\link{log_variance_fit_ok}(fit)}), non-finite coefficients, a
-#' singular or ill-conditioned bread, or \code{n <= p}.
+#' shape for a failed fit (\code{!\link{log_variance_fit_ok}(fit)}), non-finite
+#' coefficients, response, or design entries, non-finite or nonpositive fitted
+#' means, or \code{n <= p}. Here \code{n = nrow(fit$x_design)} and
+#' \code{p = ncol(fit$x_design)}. Missing observations are not dropped.
+#'
+#' A singular or ill-conditioned information matrix also makes its covariance
+#' variants unavailable. PPML uses one information matrix, so all variants
+#' return all-NA matrices together. Harvey checks expected information,
+#' observed information, and the outer product of gradients separately:
+#' \code{expected} and \code{opg} can fail independently, while a failed
+#' observed-information inverse makes \code{observed}, \code{robust}, and
+#' \code{hac} all-NA.
 #'
 #' @section Inference caveats:
 #' These are \strong{conditional second-stage} standard errors, computed at a
@@ -54,14 +67,32 @@
 #' @export
 #'
 #' @examples
-#' set.seed(1)
-#' t_obs <- 200
-#' x <- cbind(v1 = rnorm(t_obs), v2 = rnorm(t_obs))
-#' eta <- drop(cbind(1, x) %*% c(-0.5, 0.6, -0.4))
-#' y <- exp(eta) * rchisq(t_obs, df = 1)
-#' fit <- fit_log_variance(y, x)
-#' vcov_list <- compute_log_variance_vcov(fit)
-#' sqrt(diag(vcov_list$hac))
+#' local({
+#'   old_seed <- if (exists(".Random.seed", envir = .GlobalEnv, inherits = FALSE)) {
+#'     get(".Random.seed", envir = .GlobalEnv)
+#'   } else {
+#'     NULL
+#'   }
+#'   on.exit({
+#'     if (is.null(old_seed)) {
+#'       rm(".Random.seed", envir = .GlobalEnv)
+#'     } else {
+#'       assign(".Random.seed", old_seed, envir = .GlobalEnv)
+#'     }
+#'   })
+#'   set.seed(1)
+#'   t_obs <- 200
+#'   x <- cbind(v1 = rnorm(t_obs), v2 = rnorm(t_obs))
+#'   eta <- drop(cbind(1, x) %*% c(-0.5, 0.6, -0.4))
+#'   y <- exp(eta) * rchisq(t_obs, df = 1)
+#'   fit <- fit_log_variance(y, x)
+#'   vcov_list <- compute_log_variance_vcov(fit)
+#'   print(sqrt(diag(vcov_list$hac)))
+#'   vcov_zero <- compute_log_variance_vcov(fit, hac_lags = 0)
+#'   print(all.equal(vcov_zero$hac, vcov_zero$hc0))
+#'   harvey_fit <- fit_log_variance(y, x, estimator = "harvey")
+#'   names(compute_log_variance_vcov(harvey_fit))
+#' })
 compute_log_variance_vcov <- function(fit,
                                       hac_lags = LOG_VARIANCE_CONTROL$HAC_LAGS) {
   assert_hetid_log_variance_fit(fit)

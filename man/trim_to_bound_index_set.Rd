@@ -2,30 +2,36 @@
 % Please edit documentation in R/computation_utils.R
 \name{trim_to_bound_index_set}
 \alias{trim_to_bound_index_set}
-\title{Trim a Series to the Bound Index Set T_i = \{1, ..., T - i/step\}}
+\title{Trim a Series to the Bound Index Set}
 \usage{
 trim_to_bound_index_set(series, i, step, len_offset = 0L)
 }
 \arguments{
 \item{series}{Numeric series to trim.}
 
-\item{i}{Maturity index (a positive multiple of \code{step}).}
+\item{i}{Integer maturity index in months, a positive multiple of \code{step}.}
 
-\item{step}{Integer number of maturity-index units per news period.}
+\item{step}{Positive integer number of months per news period.}
 
-\item{len_offset}{Added to the effective length and the kept range
-(0 for a length-T series, 1L for a T-1 news series).}
+\item{len_offset}{Integer length adjustment: \code{0L} (the default) for a length-T
+level series, or \code{1L} for a T-1 news series.}
 }
 \value{
-The trimmed, NA-dropped numeric vector (possibly empty).
+Numeric vector in input order with \code{NA} and \code{NaN} removed from
+the retained range; empty when all retained values are missing.
 }
 \description{
-Shared trim for the variance-bound kernels: drops the trailing
-\code{i/step} news periods (the realized leg's horizon) and the NA
-entries, leaving each caller its own reduction. \code{len_offset}
+Shared trim for the variance-bound kernels: keeps indices
+\eqn{T_i = \{1, \dots, T - i/step\}}, then removes missing values,
+leaving each caller its own reduction. \code{len_offset}
 adapts the length bookkeeping for a length-T level series
 (\code{n_hat}, offset 0) versus a T-1 news series (\code{delta_p},
 offset 1). Callers validate \code{i} as a positive multiple of
 \code{step} so \code{i/step} is a whole number of periods.
+}
+\details{
+Signals \code{hetid_error_insufficient_data} when
+\code{length(series) + len_offset <= i/step}. Other input validation belongs
+to the caller.
 }
 \keyword{internal}

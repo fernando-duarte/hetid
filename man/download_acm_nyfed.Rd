@@ -7,15 +7,25 @@
 download_acm_nyfed(quiet = FALSE)
 }
 \arguments{
-\item{quiet}{Logical, suppress progress output}
+\item{quiet}{A non-missing logical scalar. If \code{TRUE}, suppresses download
+progress and status messages. The default is \code{FALSE}.}
 }
 \value{
-Invisibly returns the cached file path
+A character string giving the cached CSV file path, returned invisibly.
 }
 \description{
 Opt-in fallback source: downloads the official NY Fed xls workbook,
 converts it to CSV via \pkg{readxl}, and caches it under the
 nyfed-specific filename. This source provides annual maturities
 only.
+}
+\details{
+The cache is stored under \code{tools::R_user_dir("hetid", "data")},
+creating the directory if needed. Each call downloads the workbook and replaces
+the NY Fed cache after conversion; the bundled data is unchanged.
+Temporary workbook and CSV files are removed when the function exits.
+The \pkg{readxl} package is required. Missing \pkg{readxl}, download failures,
+workbook conversion errors, and cache replacement failures raise a
+\code{hetid_error}.
 }
 \keyword{internal}

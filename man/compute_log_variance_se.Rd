@@ -10,9 +10,11 @@ compute_log_variance_se(fit, hac_lags = LOG_VARIANCE_CONTROL$HAC_LAGS)
 \item{fit}{A \code{hetid_log_variance_fit} object from
 \code{\link{fit_log_variance}} or \code{\link{fit_log_variance_at_b}}.}
 
-\item{hac_lags}{Single nonnegative integer: the Newey-West lag truncation
+\item{hac_lags}{Single finite nonnegative integer, no greater than
+\code{.Machine$integer.max}: the Newey-West lag truncation in observations
 for the \code{hac} variant. Default
 \code{LOG_VARIANCE_CONTROL$HAC_LAGS} (the paper's quarterly heuristic).
+Choose a lag truncation appropriate to the frequency of your observations.
 \code{0} collapses \code{hac} to \code{hc0} for PPML and
 \code{robust} for Harvey.}
 }
@@ -26,12 +28,10 @@ covariance matrix, with a negative or non-finite diagonal entry
 rendered \code{NA} rather than clamped to zero.
 }
 \description{
-Thin assembly over \code{\link{compute_log_variance_vcov}}: turns its named
-list of covariance matrices into one \code{data.frame} with a row per
-coefficient. The SE column names come from the vcov list itself, which
-\code{compute_log_variance_vcov} always keys by the estimator's registry
-spec (\code{\link{log_variance_estimator}}'s \code{se_types}) -- so a
-future estimator with different variant names needs no change here.
+Collects coefficient estimates and their standard errors in one
+\code{data.frame}, with a row per coefficient. Standard-error columns
+are named for the estimator's covariance variants, computed by
+\code{\link{compute_log_variance_vcov}}.
 }
 \details{
 Malformed \emph{arguments} are errors, exactly as in
@@ -41,6 +41,12 @@ nonnegative integer, signals \code{hetid_error_bad_argument}. A failed fit
 is not an argument error -- it renders the fully-\code{NA} frame instead
 (\code{term} intact, every other column \code{NA_real_}), matching
 \code{compute_log_variance_vcov}'s fail-closed contract.
+
+\code{hac_lags} must be finite and no greater than
+\code{.Machine$integer.max}; missing values are rejected. If the fit is
+usable but a covariance variant fails its data-quality or conditioning
+checks, its standard-error column is \code{NA_real_}; the coefficient
+estimates are retained. Rows with missing values are not dropped here.
 }
 \section{Inference caveats}{
 
@@ -51,13 +57,29 @@ rows are in chronological order.
 }
 
 \examples{
-set.seed(1)
-t_obs <- 200
-x <- cbind(v1 = rnorm(t_obs), v2 = rnorm(t_obs))
-eta <- drop(cbind(1, x) \%*\% c(-0.5, 0.6, -0.4))
-y <- exp(eta) * rchisq(t_obs, df = 1)
-fit <- fit_log_variance(y, x)
-compute_log_variance_se(fit)
+(function() {
+  old_seed <- if (exists(".Random.seed", envir = .GlobalEnv, inherits = FALSE)) {
+    get(".Random.seed", envir = .GlobalEnv)
+  } else {
+    NULL
+  }
+  on.exit({
+    if (is.null(old_seed)) {
+      rm(".Random.seed", envir = .GlobalEnv)
+    } else {
+      assign(".Random.seed", old_seed, envir = .GlobalEnv)
+    }
+  })
+  set.seed(1)
+  t_obs <- 200
+  x <- cbind(v1 = rnorm(t_obs), v2 = rnorm(t_obs))
+  eta <- drop(cbind(1, x) \%*\% c(-0.5, 0.6, -0.4))
+  y <- exp(eta) * rchisq(t_obs, df = 1)
+  fit <- fit_log_variance(y, x)
+  print(compute_log_variance_se(fit))
+  fit_harvey <- fit_log_variance(y, x, estimator = "harvey")
+  print(compute_log_variance_se(fit_harvey, hac_lags = 0))
+})()
 }
 \seealso{
 \code{\link{compute_log_variance_vcov}} for the underlying

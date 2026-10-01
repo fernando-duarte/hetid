@@ -2,21 +2,30 @@
 % Please edit documentation in R/validate_acm_extract.R
 \name{assert_subannual_available}
 \alias{assert_subannual_available}
-\title{Assert the Loaded Source Covers Sub-Annual Maturities}
+\title{Assert the Loaded Source Covers Non-Annual Maturities}
 \usage{
 assert_subannual_available(acm_data, maturities)
 }
 \arguments{
-\item{acm_data}{Raw loaded ACM data frame}
+\item{acm_data}{Raw loaded ACM data frame with source column names.}
 
-\item{maturities}{Requested maturities in months}
+\item{maturities}{Numeric vector of requested bond maturities in months,
+already validated by \code{\link{validate_acm_extract_inputs}}.}
 }
 \value{
-Invisible TRUE
+Invisible \code{TRUE} when all requested non-annual yield columns
+exist or no non-annual maturities are requested; otherwise signals a
+\code{hetid_error_insufficient_data} condition. The data is not modified.
 }
 \description{
-The NY Fed fallback source carries only annual nodes; requesting
-month-level maturities against it gets a structured error naming
-the fix instead of a pile of missing-column warnings.
+Checks that raw yield-column names exist for every requested maturity
+that is not a whole number of years. The NY Fed fallback source carries
+only annual nodes; missing non-annual nodes produce a structured error
+directing the caller to the GitHub source.
+}
+\details{
+Only column names are checked: values, including missing values, are
+not inspected. Annual nodes and other data types are checked separately
+by \code{\link{extract_acm_data}}.
 }
 \keyword{internal}

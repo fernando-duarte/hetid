@@ -14,19 +14,21 @@ assert_news_contract_ok(
 )
 }
 \arguments{
-\item{maturities}{Scalar or vector of maturity indices}
+\item{maturities}{Numeric scalar or vector of maturity indices in months.}
 
-\item{step}{Integer number of maturity-index units per news period.}
+\item{step}{Positive integer scalar giving the number of months per news period.}
 
-\item{arg}{Condition argument name}
+\item{arg}{Character scalar naming the argument stored in the error condition.}
 
-\item{subject, offset_label}{Wording for the subject and the
-\code{<x> - step} offset in the message}
+\item{subject, offset_label}{Character scalars giving the subject and the
+\code{<x> - step} offset label in the error message.}
 
-\item{include_invalid}{Whether to append the invalid values}
+\item{include_invalid}{Logical scalar indicating whether to append invalid values.}
 }
 \value{
-Invisible TRUE if valid, stops otherwise
+Invisible \code{TRUE} when every index satisfies the news contract,
+including when the input is empty. Otherwise, signals a
+\code{hetid_error_bad_argument} condition with the supplied \code{arg}.
 }
 \description{
 Single source of the news-contract failure message for both the
@@ -35,5 +37,9 @@ vector check in \code{validate_w2_inputs}. \code{subject} and
 \code{offset_label} adapt the wording to each call site;
 \code{include_invalid} appends the offending values (used by the
 vector path).
+}
+\details{
+This guard checks only the news contract, not input types,
+ranges, or the validity of \code{step}.
 }
 \keyword{internal}

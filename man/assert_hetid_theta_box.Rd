@@ -7,14 +7,16 @@
 assert_hetid_theta_box(x, arg = "box")
 }
 \arguments{
-\item{x}{Object to check}
+\item{x}{Object to check for inheritance from \code{hetid_theta_box}.}
 
-\item{arg}{Argument name used in the error message}
+\item{arg}{Character string naming the argument in the error message and
+condition; defaults to \code{"box"}.}
 }
 \value{
-Invisibly TRUE
+Invisibly \code{TRUE} when the class check passes. Otherwise,
+signals a \code{hetid_error_bad_argument} condition.
 }
 \description{
-Assert a hetid_theta_box Object
+Checks class inheritance without validating the object's contents.
 }
 \keyword{internal}

@@ -8,9 +8,13 @@ NULL
 
 #' Assert a hetid_theta_box Object
 #'
-#' @param x Object to check
-#' @param arg Argument name used in the error message
-#' @return Invisibly TRUE
+#' Checks class inheritance without validating the object's contents.
+#'
+#' @param x Object to check for inheritance from \code{hetid_theta_box}.
+#' @param arg Character string naming the argument in the error message and
+#'   condition; defaults to \code{"box"}.
+#' @return Invisibly \code{TRUE} when the class check passes. Otherwise,
+#'   signals a \code{hetid_error_bad_argument} condition.
 #' @keywords internal
 assert_hetid_theta_box <- function(x, arg = "box") {
   assert_bad_argument_ok(
@@ -23,24 +27,40 @@ assert_hetid_theta_box <- function(x, arg = "box") {
 
 #' Print a hetid_theta_box Object
 #'
-#' @param x A \code{hetid_theta_box} object
-#' @param ... Unused, for method consistency
-#' @return \code{x}, invisibly
+#' Reports the slack, sample size, theta and structural dimensions,
+#' grid size, unbounded sides, and structural coefficients whose loadings
+#' were treated as zero.
+#'
+#' @param x A \code{hetid_theta_box} object from
+#'   \code{\link{compute_identified_set_box}}.
+#' @param ... Unused additional arguments, for method consistency.
+#' @return The input \code{x}, invisibly. The summary is written to the console.
+#' @seealso \code{\link[base:print]{print}}, \code{\link{compute_identified_set_box}}.
 #' @export
 #' @examples
-#' set.seed(42)
-#' n_obs <- 200
-#' x <- cbind(x1 = rnorm(n_obs), x2 = rnorm(n_obs))
-#' z <- rnorm(n_obs)
-#' e2 <- sqrt(exp(0.5 + 0.9 * z)) * matrix(rnorm(n_obs * 2), n_obs, 2)
-#' y2 <- x %*% matrix(c(1, 0.5, -0.3, 0.7), 2, 2) + e2
-#' colnames(y2) <- c("news1", "news2")
-#' y1 <- drop(0.3 + x %*% c(0.2, -0.1) + y2 %*% c(0.8, -0.5) + rnorm(n_obs))
+#' local({
+#'   old_seed <- get0(".Random.seed", envir = .GlobalEnv, inherits = FALSE)
+#'   on.exit({
+#'     if (is.null(old_seed)) {
+#'       rm(".Random.seed", envir = .GlobalEnv)
+#'     } else {
+#'       assign(".Random.seed", old_seed, envir = .GlobalEnv)
+#'     }
+#'   })
+#'   set.seed(42)
+#'   n_obs <- 200
+#'   x <- cbind(x1 = rnorm(n_obs), x2 = rnorm(n_obs))
+#'   z <- rnorm(n_obs)
+#'   e2 <- sqrt(exp(0.5 + 0.9 * z)) * matrix(rnorm(n_obs * 2), n_obs, 2)
+#'   y2 <- x %*% matrix(c(1, 0.5, -0.3, 0.7), 2, 2) + e2
+#'   colnames(y2) <- c("news1", "news2")
+#'   y1 <- drop(0.3 + x %*% c(0.2, -0.1) + y2 %*% c(0.8, -0.5) + rnorm(n_obs))
 #'
-#' fit <- compute_tau0_system(y1, y2, x, z)
-#' box <- compute_identified_set_box(fit, tau = 0.05)
-#' print(box)
-#' box$beta1_bounds
+#'   fit <- compute_tau0_system(y1, y2, x, z)
+#'   box <- compute_identified_set_box(fit, tau = 0.05)
+#'   print(box)
+#'   box$beta1_bounds
+#' })
 print.hetid_theta_box <- function(x, ...) {
   sides <- function(bounds) {
     sum(!is.finite(bounds$lower)) + sum(!is.finite(bounds$upper))

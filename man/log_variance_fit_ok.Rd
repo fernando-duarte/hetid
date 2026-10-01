@@ -8,19 +8,26 @@ log_variance_fit_ok(fit)
 }
 \arguments{
 \item{fit}{A \code{hetid_log_variance_fit} object, or any list with
-\code{fit_status}, \code{converged}, and \code{coef} elements}
+\code{fit_status}, \code{converged}, and \code{coef} elements. For a
+well-formed fit these are a status string, a logical scalar, and a
+numeric coefficient vector or \code{NULL}, respectively.}
 }
 \value{
-\code{TRUE} when the fit is ok, converged, and has finite
-coefficients; \code{FALSE} otherwise
+A logical scalar: \code{TRUE} when \code{fit} is a list with
+\code{fit_status = "ok"}, \code{converged = TRUE}, and non-\code{NULL}
+coefficients that are all finite; \code{FALSE} when any check fails.
+Missing or nonfinite coefficient values fail the finite-value check.
 }
 \description{
-Ports \code{logvar_fit_ok()} from the paper's PPML engine
-(\code{scripts-paper/log_variance/engine/contracts.R}) exactly: a fit is
-usable only when it reports success, the underlying solver converged, and
-the recovered coefficients are present and all finite. This is
+Checks whether a fit reports success, the underlying solver converged,
+and the recovered coefficients are present and all finite. This is
 deliberately a raw predicate, not a validator -- it does not require
-\code{x} to have passed \code{validate_hetid_log_variance_fit()}, so
+\code{fit} to have passed \code{\link{validate_hetid_log_variance_fit}}, so
 callers can probe an in-progress or hand-built fit list directly.
+}
+\details{
+No coefficient length or shape is checked: an empty numeric vector
+passes the finite-value check. Malformed coefficient objects for which
+\code{is.finite()} is undefined can raise an error.
 }
 \keyword{internal}

@@ -21,41 +21,69 @@ new_hetid_theta_box(
 )
 }
 \arguments{
-\item{bounds}{Data frame with \code{coef}, \code{lower}, \code{upper}}
+\item{bounds}{Data frame with columns \code{coef}, \code{lower}, and
+\code{upper}, one row per theta coordinate. Coefficient labels are unique
+and non-missing; numeric bounds are non-missing, with \code{lower <= upper}.
+Infinite sides are represented by \code{-Inf} and \code{Inf}, respectively.}
 
-\item{arg_lower, arg_upper}{Numeric I x I matrices whose row k holds the
-theta that attains the bound for coordinate k, or \code{NA} when that
-bound is infinite}
+\item{arg_lower, arg_upper}{Numeric \eqn{I \times I} matrices whose row
+\eqn{k} holds the theta attaining the lower or upper bound for coordinate
+\eqn{k}, respectively; the row is \code{NA} when that bound is infinite.}
 
 \item{beta1_bounds}{Data frame with \code{coef}, \code{lower},
-\code{upper}, one row per structural coefficient}
+\code{upper}, one row per structural coefficient, with the same bounds
+conventions as \code{bounds}.}
 
-\item{beta1_arg_lower, beta1_arg_upper}{Numeric p x I matrices whose row
-k holds the theta whose image attains the structural bound k, or
-\code{NA} when it is infinite}
+\item{beta1_arg_lower, beta1_arg_upper}{Numeric \eqn{p \times I} matrices
+whose row \eqn{k} holds the theta whose image attains structural bound
+\eqn{k}, or \code{NA} when it is infinite. For flagged coefficients,
+attainment refers to the map with their loadings treated as zero.}
 
-\item{null_loading}{Named logical of length p, TRUE where the structural
-coefficient's loading was treated as zero}
+\item{null_loading}{Non-missing logical vector of length \eqn{p}, named by
+\code{beta1_bounds$coef}; \code{TRUE} where the structural coefficient's
+loading was treated as zero.}
 
-\item{w1, w2}{Reduced-form pieces the box was built from}
+\item{w1, w2}{Numeric residual vector of length \code{n_obs} and numeric
+residual matrix with \code{n_obs} rows and \eqn{I} columns, respectively,
+from the same reduced-form system and aligned sample.}
 
-\item{quadratic}{Quadratic form list at this slack}
+\item{quadratic}{Quadratic constraint list at this slack, containing
+\code{A_i}, \code{b_i}, and \code{c_i}.}
 
-\item{tau}{Scalar slack}
+\item{tau}{Single finite numeric slack. This constructor does not restrict
+its range; the public constructor requires a value in \code{(0, 1)}.}
 
-\item{n_grid}{Points per gridded coordinate used by the search}
+\item{n_grid}{Integer-valued numeric scalar between \code{2} and
+\code{.Machine$integer.max}, inclusive, giving the search points per
+gridded coordinate. The public constructor additionally requires an odd
+value of at least \code{3}.}
 
-\item{n_obs}{Observation count}
+\item{n_obs}{Integer-valued numeric observation count between \code{1} and
+\code{.Machine$integer.max}, inclusive.}
 }
 \value{
-A \code{hetid_theta_box} object
+A list of class \code{hetid_theta_box} with the supplied bounds,
+witness matrices, and reduced-form sources as elements. Attributes retain
+\code{tau}, \code{n_components = ncol(w2)}, \code{n_grid}, \code{n_obs},
+and \code{null_loading}; the counts \code{n_grid} and \code{n_obs} are stored
+as integers.
 }
 \description{
-Low-level cheap constructor. It checks the identity attributes and
-trusts the shapes of the bounds and witnesses themselves; the full
-sweep lives in \code{validate_hetid_theta_box()}, which the public
-boundary \code{compute_identified_set_box()} always runs. Hot paths
-rebuilding a box from known-good parts may call this directly and skip
-it.
+Constructs a box from previously computed bounds, attaining points, and
+reduced-form sources.
+}
+\details{
+Only \code{tau}, \code{n_grid}, and \code{n_obs} are checked here. Bounds,
+witness shapes, and residual dimensions are checked by
+\code{\link{validate_hetid_theta_box}}, which the public constructor
+\code{\link{compute_identified_set_box}} always runs. Internal callers
+rebuilding a box from known-good parts may skip that validation.
+Invalid scalar metadata raises a structured \code{hetid_error} condition.
+All other inputs are retained without validation or missing-value removal.
+The validator does not test witness feasibility or verify that the residuals
+and quadratic constraints describe the same estimated system.
+
+Here \eqn{I = \mathrm{ncol}(w2)} is the theta-axis dimension, and
+\eqn{p} is the number of structural coefficients, including the intercept.
 }
 \keyword{internal}

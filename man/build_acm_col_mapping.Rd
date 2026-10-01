@@ -7,15 +7,25 @@
 build_acm_col_mapping(data_types, maturities)
 }
 \arguments{
-\item{data_types}{Character vector of data types}
+\item{data_types}{Character vector of schema keys: \code{"yields"},
+\code{"term_premia"}, or \code{"risk_neutral_yields"}.}
 
-\item{maturities}{Numeric vector of maturities in months}
+\item{maturities}{Numeric vector of integer-valued maturities in months.}
 }
 \value{
-List mapping new names to old names
+A named list of scalar raw column names, keyed by package column
+names (for example, \code{y12} maps to \code{"ACMY01"}). Entries follow
+data-type order, then maturity order within each type; names on
+\code{data_types} do not prefix the keys. Empty maturities yield an empty
+list; empty \code{data_types} yields \code{NULL}.
 }
 \description{
 Internal function to build mapping between raw and package column
 names for the requested data types and maturities (months).
+}
+\details{
+Maturity validation is the caller's responsibility. Missing maturities
+produce missing raw names with package keys ending in \code{NA}.
+Unknown data types raise a \code{hetid_error_bad_argument} condition.
 }
 \keyword{internal}

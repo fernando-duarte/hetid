@@ -7,10 +7,10 @@
 validate_hetid_log_variance_fit(x)
 }
 \arguments{
-\item{x}{A classed \code{hetid_log_variance_fit} object}
+\item{x}{A classed \code{hetid_log_variance_fit} object.}
 }
 \value{
-\code{x}, invisibly
+The input \code{x}, invisibly, on successful validation.
 }
 \description{
 Full structural-alignment gate for the \code{hetid_log_variance_fit}

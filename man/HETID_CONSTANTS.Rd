@@ -23,7 +23,7 @@ annualized yields by maturity in years, so the n_hat weights are
 \code{\link{extract_acm_data}}}
 \item{ALL_ACM_MATURITIES}{The full monthly maturity grid
 (1:120 months) available from the GitHub source}
-\item{DEGENERACY_TOLERANCE}{Scale-free threshold below which the
+\item{DEGENERACY_TOLERANCE}{Scale-free threshold at or below which the
 variance positivity diagnostic flags a maturity as degenerate}
 \item{TAU0_POINT_TOLERANCE}{Rank and residual tolerance for the
 tau = 0 stacked linear solve; the alternative outcome is no point (NULL)}
@@ -42,7 +42,7 @@ period-end month arithmetic}
 \item{USE_INCOMPLETE_QUARTERS}{Default policy for quarters missing
 their terminal month in quarterly conversion: TRUE keeps them
 (re-dated to quarter end), FALSE drops them}
-\item{ACM_DATE_FORMAT}{Date format in ACM files}
+\item{ACM_DATE_FORMAT}{ACM date format with abbreviated month names, tried before ISO formats}
 \item{ISO_DATE_FORMAT}{Standard ISO date format}
 \item{ISO_TIMESTAMP_FORMAT}{UTC timestamp format for provenance}
 \item{YEAR_FORMAT}{Year extraction format}
@@ -59,14 +59,14 @@ xls fallback source}
 \item{BUNDLED_VARIABLES_DATASET}{Bundled dataset name}
 \item{COL_FORMAT_PADDED}{Padded raw column name format for
 whole-year maturities (e.g. ACMY01)}
-\item{COL_FORMAT_MONTHLY}{Raw column name format for sub-annual
-month maturities (e.g. ACMY003M)}
+\item{COL_FORMAT_MONTHLY}{Raw column name format for maturities
+that are not whole years (e.g. ACMY003M or ACMY015M)}
 \item{COL_FORMAT_SIMPLE}{Package column name format, maturity in
 months (e.g. y12)}
 \item{INSUFFICIENT_NEWS_MSG}{Shared error message for the
 news-period data-sufficiency guard in the variance-bound kernels}
 \item{BOUND_INDEX_TRIM_MSG}{Shared step-multiple reason string for the
-bound-index-set kernels (c_hat/k2_hat)}
+bound-index-set kernels (c_hat/k2_hat/news_q_bound)}
 }
 }
 \usage{
@@ -78,7 +78,6 @@ A named list of package constants (the elements described in
 }
 \description{
 Constants used for computations and data processing.
-All values are documented with their sources.
 }
 \examples{
 HETID_CONSTANTS$DEFAULT_N_PCS

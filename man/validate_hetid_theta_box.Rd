@@ -7,12 +7,33 @@
 validate_hetid_theta_box(x)
 }
 \arguments{
-\item{x}{A \code{hetid_theta_box} object}
+\item{x}{A \code{hetid_theta_box} object to validate.}
 }
 \value{
-\code{x}, invisibly
+The supplied \code{x}, invisibly and unchanged, when checks pass.
+Invalid arguments signal a \code{hetid_error_bad_argument}; incompatible
+dimensions signal a \code{hetid_error_dimension_mismatch}.
 }
 \description{
-Validate a hetid_theta_box Object
+Check the bounds, witness dimensions, zero-loading flags, and retained
+source dimensions of an identified-set box.
+}
+\details{
+Both bounds frames must have exactly the columns \code{coef}, \code{lower},
+and \code{upper}, with unique, non-missing coefficient labels and numeric,
+non-missing endpoints. Lower endpoints must be finite or \code{-Inf}; upper
+endpoints must be finite or \code{Inf}. Each lower endpoint must not exceed
+its upper endpoint.
+The theta bounds have one row per \code{n_components}; structural bounds
+have one row per structural coefficient. Each numeric witness matrix has
+one row per bound and \code{n_components} columns. Rows beside finite bounds
+must be finite; rows beside infinite bounds are not checked for finiteness.
+
+The \code{null_loading} attribute must be a non-missing logical vector named
+in structural-coefficient order. The retained \code{w2} matrix must have
+\code{n_components} columns and as many rows as \code{w1} has elements.
+The retained quadratic list must contain \code{A_i}, \code{b_i}, and \code{c_i}.
+These checks do not establish that witnesses attain their bounds or satisfy
+the quadratic constraints, and do not revalidate the quadratic coefficients.
 }
 \keyword{internal}

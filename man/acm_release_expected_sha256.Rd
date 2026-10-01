@@ -7,12 +7,15 @@
 acm_release_expected_sha256(quiet = FALSE, filename)
 }
 \arguments{
-\item{quiet}{Logical, suppress progress output}
+\item{quiet}{Logical scalar. If \code{TRUE}, suppresses download progress
+output. Defaults to \code{FALSE}.}
 
-\item{filename}{Release asset filename whose digest to extract}
+\item{filename}{Character string giving the release asset filename whose
+digest to extract.}
 }
 \value{
-Lower-case 64-character sha256 string
+A character string containing the lower-case, 64-character sha256
+digest. Missing or unusable release metadata raises a \code{hetid_error}.
 }
 \description{
 Reads the latest-release metadata from the GitHub API and extracts

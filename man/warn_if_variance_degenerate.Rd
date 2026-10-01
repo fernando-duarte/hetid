@@ -7,37 +7,43 @@
 warn_if_variance_degenerate(w1, w2, maturities, sigma_i_sq, s_i_0)
 }
 \arguments{
-\item{w1}{Numeric vector of \eqn{\omega_1} residuals}
+\item{w1}{Numeric vector of \eqn{\omega_1} residuals of length T.}
 
-\item{w2}{Numeric matrix of \eqn{\omega_2} residuals (T x I)}
+\item{w2}{Numeric matrix of \eqn{\omega_2} residuals (T x I).}
 
-\item{maturities}{Integer vector of w2 column indices to check}
+\item{maturities}{Integer vector of w2 column indices to check.}
 
-\item{sigma_i_sq}{Numeric vector of sigma_i^2 statistics, element k
-corresponding to \code{maturities[k]}}
+\item{sigma_i_sq}{Numeric vector of \code{sigma_i_sq} statistics, element k
+corresponding to \code{maturities[k]}.}
 
-\item{s_i_0}{Numeric vector of S_i^(0) statistics, element k
-corresponding to \code{maturities[k]}}
+\item{s_i_0}{Numeric vector of \code{s_i_0} statistics, element k
+corresponding to \code{maturities[k]}.}
 }
 \value{
-Invisible NULL, called for its warning side effect
+Invisible \code{NULL}, called for its warning side effect.
 }
 \description{
+Checks identification variances for numerical degeneracy and warns when flagged.
+}
+\details{
 Diagnostic for the regularity assumption of the identification
 strategy: \eqn{var(\omega_{2,i}^2) > 0} and
 \eqn{var(\omega_1 \omega_{2,i} - \gamma \omega_{2,i}^2) > 0} at the true
 \eqn{\gamma}. The first is checked directly; the second is checked
 at the \eqn{\gamma} that minimizes it (the residual variance of
 regressing \eqn{\omega_1 \omega_{2,i}} on \eqn{\omega_{2,i}^2}), so a warning means
-the condition fails for some \eqn{\gamma}. Both checks are
+the condition is numerically degenerate for some \eqn{\gamma}. Both checks are
 scale-free ratios compared against
 \code{HETID_CONSTANTS$DEGENERACY_TOLERANCE}. The relevant variances
 \eqn{var(\omega_{2,i}^2)} and \eqn{var(\omega_1 \omega_{2,i})} are exactly the
 scalar statistics \code{sigma_i_sq} and \code{s_i_0}, so the caller
 passes them in and the diagnostic judges the same numbers the
-\code{hetid_moments} container carries. Degenerate variances make
-the quadratic constraint ill-defined and the identified set
-degenerate or unbounded, so surfacing them here catches the problem
+\code{hetid_moments} container carries. Degenerate variances may make
+the identified set degenerate or unbounded, so surfacing them here catches the problem
 at the moments stage instead of downstream.
+Inputs must already be validated and aligned; this helper does not
+remove observations or validate the supplied statistics. It emits at most
+one warning of class \code{hetid_warning_degenerate_variance}, naming
+the affected w2 column indices and checks.
 }
 \keyword{internal}

@@ -4,6 +4,6 @@
 \alias{statistics_utils}
 \title{Statistics Computation Utilities}
 \description{
-Higher-order functions for per-maturity statistics computation
+Helpers for per-maturity statistics, centered moments, and variance diagnostics.
 }
 \keyword{internal}

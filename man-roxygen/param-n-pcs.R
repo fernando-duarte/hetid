@@ -1,6 +1,3 @@
-#' @param n_pcs Integer specifying the number of principal components to use.
-#'   Any value up to \code{ncol(pcs)} is allowed. Default is
-#'   \code{HETID_CONSTANTS$DEFAULT_N_PCS} following Adrian, Crump, and Moench (2013).
-#'   The choice of n_pcs represents a trade-off between capturing variation in
-#'   financial asset returns and maintaining computational stability. More components
-#'   capture more variation but may lead to overfitting in finite samples.
+#' @param n_pcs Positive integer number of leading \code{pcs} columns to use,
+#'   no greater than \code{ncol(pcs)}. The default is
+#'   \code{HETID_CONSTANTS$DEFAULT_N_PCS}.

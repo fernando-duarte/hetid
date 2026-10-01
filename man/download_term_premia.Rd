@@ -14,27 +14,32 @@ download_term_premia(
 )
 }
 \arguments{
-\item{source}{Data source: \code{"github"} (default,
+\item{source}{Character string specifying \code{"github"} (default,
 digest-verified) or \code{"nyfed"} (official workbook fallback,
 annual maturities only).}
 
-\item{force}{Logical. If TRUE, forces re-download even if data exists.}
+\item{force}{Single nonmissing logical. If \code{TRUE}, forces re-download
+even if data exists. Defaults to \code{FALSE}.}
 
-\item{quiet}{Logical. If TRUE, suppresses download progress messages.}
+\item{quiet}{Single nonmissing logical. If \code{TRUE}, suppresses download
+progress messages. Defaults to \code{FALSE}.}
 
-\item{frequency}{Data frequency: \code{"monthly"} (default) or
+\item{frequency}{Character string specifying \code{"monthly"} (default) or
 \code{"daily"} (the ~40 MB business-day asset; GitHub source only).}
 
-\item{release}{Optional GitHub release tag without whitespace or control
-characters. Supply together with
-\code{expected_sha256}; both default to NULL for the existing unpinned behavior.
-Pins are unavailable for \code{source = "nyfed"}.}
+\item{release}{\code{NULL} or a single non-missing, non-empty character string
+giving a GitHub release tag without whitespace or control characters.
+Supply together with \code{expected_sha256}; both default to \code{NULL}
+to select unpinned data. Pins are unavailable for \code{source = "nyfed"}.}
 
-\item{expected_sha256}{Expected 64-character hexadecimal sha256 digest of the
-compressed release asset, obtained independently by the caller.}
+\item{expected_sha256}{\code{NULL} or a single non-missing character string
+containing the 64-character hexadecimal sha256 digest of the compressed
+release asset, obtained independently by the caller.}
 }
 \value{
-Invisibly returns the path to the saved data file.
+Invisibly returns a single character string giving the data file
+path. With \code{force = FALSE}, this may be an existing cached file or
+the bundled monthly GitHub asset, without a new download.
 }
 \description{
 Downloads the Adrian, Crump, and Moench (ACM) term-structure data
@@ -56,6 +61,7 @@ Unlike \code{\link{load_term_premia}}, there is no \code{"auto"}
 source here: a download is always source-specific. The bundled copy
 counts as available for the github source, but never suppresses an
 explicit nyfed download.
+Unpinned existing files are returned without rechecking their contents.
 
 An explicit release and digest select an isolated snapshot in the per-user
 data directory, keyed by release, digest, and frequency. Pinned reads verify
@@ -81,17 +87,35 @@ extraction uses the daily asset and its digest.
 }
 \examples{
 \dontshow{if (interactive()) withAutoprint(\{ # examplesIf}
-# Download the data (only if not already present)
-download_term_premia()
+local({
+  # Keep downloaded files out of the normal user cache
+  data_dir <- tempfile("hetid-data-")
+  old_dir <- Sys.getenv("R_USER_DATA_DIR", unset = NA_character_)
+  on.exit({
+    if (is.na(old_dir)) {
+      Sys.unsetenv("R_USER_DATA_DIR")
+    } else {
+      Sys.setenv(R_USER_DATA_DIR = old_dir)
+    }
+    unlink(data_dir, recursive = TRUE)
+  })
+  Sys.setenv(R_USER_DATA_DIR = data_dir)
 
-# Force re-download from the GitHub release
-download_term_premia(force = TRUE)
+  # The bundled monthly asset can satisfy an unforced request
+  path <- download_term_premia()
+  file.exists(path)
 
-# Opt into the NY Fed workbook fallback
-download_term_premia(source = "nyfed")
+  # Force re-download from the GitHub release
+  download_term_premia(force = TRUE)
 
-# Download the daily (business-day) series
-download_term_premia(frequency = "daily")
+  # The NY Fed workbook requires the optional readxl package
+  if (requireNamespace("readxl", quietly = TRUE)) {
+    download_term_premia(source = "nyfed")
+  }
+
+  # Download the daily (business-day) series
+  download_term_premia(frequency = "daily")
+})
 \dontshow{\}) # examplesIf}
 }
 \references{

@@ -3,37 +3,52 @@
 #' Assembles the instrument matrix Z fed to
 #' \code{\link{compute_identification_moments}} from a primitive
 #' matrix and optional user transformations: each transform is a
-#' function of the full primitive matrix returning a vector or matrix
-#' of derived instruments (for example squares, interactions, or any
-#' nonlinear feature). Outputs are validated (numeric, finite, aligned
-#' rows, unique column names) and bound columnwise.
+#' function of the full primitive matrix returning a vector, matrix,
+#' or data frame of derived instruments (for example squares,
+#' interactions, or any nonlinear feature). Outputs are validated
+#' (numeric, finite, matching row counts, unique column names) and
+#' bound columnwise.
 #'
 #' Transforms must return fully finite values: apply lag- or
 #' difference-type constructions before calling this function and trim
 #' incomplete rows yourself, so that the rows of the result stay
 #' aligned with the residual series.
+#' Invalid inputs signal a \code{hetid_error_bad_argument}; a transform
+#' returning the wrong number of rows signals a
+#' \code{hetid_error_dimension_mismatch}. Errors from user-supplied
+#' transform functions propagate unchanged.
 #'
 #' @param z Numeric matrix or data frame of primitive instruments
-#'   (T x J). Unnamed columns are labeled \code{z1..zJ}.
-#' @param transforms NULL, a function, or a named list of functions;
+#'   (T x J), with at least one column and only finite values.
+#'   If column names are absent, they are labeled \code{z1..zJ};
+#'   supplied names must be unique, non-empty, and non-missing.
+#' @param transforms \code{NULL} (the default), a function, or a
+#'   non-empty list of functions with unique names after labeling;
 #'   each receives \code{z} (as a named numeric matrix) and returns a
-#'   length-T vector or T-row matrix. Unnamed list entries are labeled
-#'   \code{h1, h2, ...} by position. Output columns are always labeled
+#'   length-T numeric vector or T-row numeric matrix or data frame
+#'   with at least one column, preserving the input row order.
+#'   All returned values must be finite:
+#'   \code{NA}, \code{NaN}, and infinite values are rejected.
+#'   A single function is named \code{h1}; unnamed list entries are
+#'   labeled \code{h1, h2, ...} by position. Output columns are labeled
 #'   from the transform name; a multi-column output gets suffixes
-#'   \code{_1, _2, ...}.
-#' @param include_original Logical; keep the primitive columns in the
-#'   result (default TRUE). FALSE requires at least one transform.
+#'   \code{_1, _2, ...}, replacing any returned column names. These
+#'   labels must be unique across the final matrix.
+#' @param include_original A single non-missing logical; keep the
+#'   primitive columns in the result (default \code{TRUE}).
+#'   \code{FALSE} requires at least one transform.
 #'
-#' @return Numeric matrix (T x total instruments) with unique column
-#'   names, ready for \code{compute_identification_moments()}.
+#' @return Numeric matrix with T rows in the input order and unique
+#'   column names. Primitive columns, when included, precede the
+#'   transformed columns in list order. With \code{transforms = NULL},
+#'   returns the named primitive matrix.
 #'
 #' @template section-general-instruments
 #'
 #' @export
 #'
 #' @examples
-#' set.seed(42)
-#' z <- matrix(rnorm(60), nrow = 20, dimnames = list(NULL, c("a", "b", "c")))
+#' z <- cbind(a = c(-2, -1, 1, 2), b = c(1, 3, 2, 4))
 #' build_instrument_matrix(
 #'   z,
 #'   transforms = list(
@@ -41,6 +56,11 @@
 #'     ab = function(z) z[, "a"] * z[, "b"]
 #'   )
 #' )[1:3, ]
+#' build_instrument_matrix(
+#'   z,
+#'   transforms = list(squares = function(z) z^2),
+#'   include_original = FALSE
+#' )
 build_instrument_matrix <- function(z, transforms = NULL,
                                     include_original = TRUE) {
   assert_tabular(z, "z")
@@ -67,8 +87,6 @@ build_instrument_matrix <- function(z, transforms = NULL,
     arg = "transforms"
   )
   if (!is.null(transforms)) {
-    # Backfill missing names by index position: "" names cause silent
-    # lookup of the first element when iterating by name
     if (is.null(names(transforms))) {
       names(transforms) <- paste0("h", seq_along(transforms))
     } else {
@@ -109,10 +127,10 @@ build_instrument_matrix <- function(z, transforms = NULL,
 
 #' Validate and Label One Transform Output
 #'
-#' @param out Raw return value of a transform
-#' @param nm Transform name (used for labels and error messages)
-#' @param t_obs Required number of rows
-#' @return Numeric matrix with column names
+#' @param out Raw return value of a transform.
+#' @param nm Transform name (used for labels and error messages).
+#' @param t_obs Required number of rows.
+#' @return Numeric matrix with column names.
 #' @noRd
 as_transform_block <- function(out, nm, t_obs) {
   if (is.numeric(out) && is.null(dim(out))) {
@@ -133,7 +151,7 @@ as_transform_block <- function(out, nm, t_obs) {
       " rows to align with z"
     )
   )
-  # Label from transform name: arithmetic on z keeps z's dimnames, aliasing originals
+  # Avoid duplicate instrument names when transforms retain z's column names
   colnames(out) <- if (ncol(out) == 1) {
     nm
   } else {
@@ -148,9 +166,9 @@ as_transform_block <- function(out, nm, t_obs) {
 #' zero-row subset recipes built on top of them, so they must be
 #' unique, non-empty, and non-NA.
 #'
-#' @param nms Character vector of column names (or NULL)
-#' @param label Object label for the error message
-#' @return Invisible TRUE
+#' @param nms Character vector of column names (or \code{NULL}).
+#' @param label Object label for the error message.
+#' @return Invisible \code{TRUE}.
 #' @noRd
 assert_instrument_names <- function(nms, label) {
   assert_bad_argument_ok(

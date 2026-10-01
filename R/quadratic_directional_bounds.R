@@ -1,5 +1,3 @@
-# Conservative side-specific certificates for explicitly supported degeneracies.
-# A singular block is accepted only when excluded rows are structurally zero
 quadratic_directional_bounds <- function(quadratic, objectives) {
   count <- ncol(objectives)
   dimension <- nrow(objectives)
@@ -8,6 +6,7 @@ quadratic_directional_bounds <- function(quadratic, objectives) {
   for (i in seq_along(quadratic$c_i)) {
     a <- quadratic$A_i[[i]]
     b <- quadratic$b_i[[i]]
+    # Only exact zeros justify excluding coordinates from the block
     active <- which(rowSums(abs(a)) != 0 | b != 0)
     if (all(a == 0) && length(active) == 1L) {
       k <- active[1L]

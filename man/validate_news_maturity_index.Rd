@@ -7,23 +7,30 @@
 validate_news_maturity_index(i, step = HETID_CONSTANTS$DEFAULT_STEP)
 }
 \arguments{
-\item{i}{Integer maturity index to validate}
+\item{i}{Numeric value of length one giving an integer news horizon in
+months. Missing and non-finite values are rejected.}
 
-\item{step}{Integer number of maturity-index units per news period
-(default \code{HETID_CONSTANTS$DEFAULT_STEP}). The news operator
-steps one period, so maturity arithmetic moves in multiples of
-\code{step}: \code{compute_n_hat()} pairs maturities \code{i} and
-\code{i + step}, the one-period bond is the \code{step}-maturity
-bond, and horizons must satisfy \code{i <= MAX_MATURITY - step}.}
+\item{step}{Positive integer number of months per news period, no greater than
+half of \code{HETID_CONSTANTS$MAX_MATURITY}. Functions with a default use
+\code{HETID_CONSTANTS$DEFAULT_STEP}. For time-series inputs, adjacent observations
+must be \code{step} months apart. Functions that read maturity \code{i + step}
+require \code{i <= HETID_CONSTANTS$MAX_MATURITY - step}; additional
+horizon restrictions are described for each function.}
 }
 \value{
-Invisible TRUE if valid, stops with informative error otherwise
+Invisible \code{TRUE} if valid; otherwise signals a
+\code{hetid_error_bad_argument} condition for an invalid horizon or step.
 }
 \description{
 Validates a maturity index used as a news horizon: the news at
 horizon \code{i} differences \code{n_hat(i, t)} against
 \code{n_hat(i - step, t + 1)}, so \code{i} must not exceed
-\code{effective_max_maturity(step)} and the previous-period index
-must satisfy the news contract (see \code{news_contract_ok}).
+\code{\link{effective_max_maturity}(step)}. The boundary case
+\code{i == step} is allowed; otherwise \code{i - step} must be at least
+\code{HETID_CONSTANTS$MIN_MATURITY}. The horizon need not be a multiple
+of \code{step}.
+}
+\details{
+The step must satisfy \code{\link{validate_step}}.
 }
 \keyword{internal}

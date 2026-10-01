@@ -6,60 +6,93 @@
 #' \code{\link{fit_log_variance_at_b}}, which fits at a single \eqn{b}.
 #'
 #' @details
-#' Candidate points are the box's attaining witnesses together with steps
-#' from the center toward each of them, and every candidate is re-checked
-#' against the constraints before it is fitted, so no fit is ever run
+#' Candidate points include the box's attaining witnesses, their mean, and steps
+#' from that mean toward each witness. Duplicate points are removed, and every
+#' candidate is re-checked against the constraints before it is fitted,
+#' so no fit is ever run
 #' outside the set up to a constraint-relative feasibility tolerance.
 #' Nonfinite candidate-membership arithmetic raises a structured error rather
 #' than admitting or silently dropping a point.
 #'
-#' Fits that fail are skipped rather than fatal, and the counts are
-#' reported. Skipping can only narrow the reported range, never widen it:
-#' the range is over points that were fitted successfully, and every one
-#' of those satisfies the same relative feasibility check. Warm starts use the last
-#' \emph{successful} fit; both registered estimators minimize a convex
-#' criterion, so a start affects whether a fit converges but never which
-#' answer it converges to.
+#' Nonconverged fits are skipped, and their counts are reported. The ranges
+#' use only successful fits and do not account for omitted candidates.
+#' Warm starts use the last \emph{successful} fit. Both estimators minimize
+#' convex criteria. When a unique finite minimizer exists, different starts
+#' share that target; numerical acceptance follows the checks and tolerances
+#' in \code{\link{fit_log_variance}}.
+#'
+#' Invalid fitting inputs and nonfinite response arithmetic raise structured
+#' errors when a fit is attempted. They are not counted as failed fits.
+#' When no feasible candidates remain, or any box side is infinite, no fit
+#' is attempted and fitting-stage input checks are not run.
+#' Align time-series inputs by date before constructing the box and
+#' \code{x_var}; this function neither joins nor reorders observations.
 #'
 #' @section Interpretation:
 #' The range is \strong{attained over the sampled points}, not the profile
-#' over the whole set. It is an inner approximation on both counts: the
-#' box itself is one, and the sample is finite. Raising \code{n_points}
-#' or the box's \code{n_grid} samples different points and can reveal wider
-#' ranges; the reported range need not grow.
+#' over the whole set. The box search can miss relevant points, and the
+#' candidate sample is finite. The Cartesian box can also contain infeasible
+#' points, so candidates are checked against the original constraints.
+#' Raising \code{n_points} or the box's \code{n_grid} changes the sampled
+#' points and can reveal wider ranges; the reported range need not grow.
 #'
 #' @param box A \code{hetid_theta_box} from
-#'   \code{\link{compute_identified_set_box}}
-#' @param x_var Volatility-equation design, without an intercept column.
-#'   This is a different design from the mean equation's \code{x}
-#' @param estimator Estimator id passed through to
-#'   \code{\link{fit_log_variance_at_b}}, which owns the valid set
-#' @param n_points Steps from the center toward each witness; defaults to
-#'   \code{IDENTIFIED_SET_CONTROL$N_POINTS}
-#' @return A data frame with \code{term}, \code{lower} and \code{upper},
-#'   one row per volatility coefficient, all \code{NA} when no candidate
-#'   could be fitted or the box has an infinite side. Attributes
-#'   \code{n_attempted}, \code{n_failed} and \code{estimator} record the
-#'   sampling. Use \code{\link{sample_log_variance_set}} to retain joint fits
+#'   \code{\link{compute_identified_set_box}}.
+#' @param x_var Numeric matrix or data frame of finite volatility regressors,
+#'   with \code{nrow(box$w2)} rows in the same observation order and no intercept
+#'   column. Missing values are not removed. Fitting requires at least
+#'   \code{ncol(x_var) + 2} observations. Column labels must be unique,
+#'   non-missing and non-blank, and must not equal \code{"(Intercept)"}.
+#'   Unnamed matrix columns receive labels \code{pc1}, \code{pc2}, and so on.
+#'   This is a different design from the mean equation's \code{x}.
+#' @param estimator Single string naming the estimator: \code{"ppml"} (the
+#'   default) or \code{"harvey"}. Passed to \code{\link{fit_log_variance_at_b}};
+#'   \code{\link{log_variance_estimator}} owns the valid set.
+#' @param n_points Positive integer number of interpolation steps from the
+#'   mean of the box witnesses toward each witness, including its endpoint.
+#'   Must not exceed \code{.Machine$integer.max}; defaults to
+#'   \code{IDENTIFIED_SET_CONTROL$N_POINTS}.
+#' @return A data frame with character \code{term} and numeric \code{lower}
+#'   and \code{upper}, one row per volatility coefficient, including
+#'   \code{"(Intercept)"} first, then the \code{x_var} columns in order.
+#'   The bounds are the smallest and largest successfully fitted coefficients
+#'   on the log-variance scale. Both bound columns are \code{NA} when no
+#'   candidate could be fitted or the box has an infinite side; term labels
+#'   remain present. Attributes \code{n_attempted} and \code{n_failed} count
+#'   distinct feasible candidates attempted and nonconverged fits, respectively;
+#'   both are zero when no fit is attempted. The \code{estimator} attribute
+#'   records the supplied estimator id.
+#'   Use \code{\link{sample_log_variance_set}} to retain joint fits
 #'   and predict sampled envelopes.
 #' @seealso \code{\link{compute_identified_set_box}} for the box,
 #'   \code{\link{fit_log_variance_at_b}} for the single-\eqn{b} fit
 #' @export
 #'
 #' @examples
-#' set.seed(42)
-#' n_obs <- 200
-#' x <- cbind(x1 = rnorm(n_obs), x2 = rnorm(n_obs))
-#' z <- rnorm(n_obs)
-#' e2 <- sqrt(exp(0.5 + 0.9 * z)) * matrix(rnorm(n_obs * 2), n_obs, 2)
-#' y2 <- x %*% matrix(c(1, 0.5, -0.3, 0.7), 2, 2) + e2
-#' colnames(y2) <- c("news1", "news2")
-#' y1 <- drop(0.3 + x %*% c(0.2, -0.1) + y2 %*% c(0.8, -0.5) + rnorm(n_obs))
-#' x_var <- cbind(v1 = rnorm(n_obs), v2 = rnorm(n_obs))
+#' local({
+#'   had_seed <- exists(".Random.seed", envir = .GlobalEnv, inherits = FALSE)
+#'   if (had_seed) old_seed <- get(".Random.seed", envir = .GlobalEnv)
+#'   on.exit({
+#'     if (had_seed) {
+#'       assign(".Random.seed", old_seed, envir = .GlobalEnv)
+#'     } else {
+#'       rm(".Random.seed", envir = .GlobalEnv)
+#'     }
+#'   })
+#'   set.seed(42)
+#'   n_obs <- 200
+#'   x <- cbind(x1 = rnorm(n_obs), x2 = rnorm(n_obs))
+#'   z <- rnorm(n_obs)
+#'   e2 <- sqrt(exp(0.5 + 0.9 * z)) * matrix(rnorm(n_obs * 2), n_obs, 2)
+#'   y2 <- x %*% matrix(c(1, 0.5, -0.3, 0.7), 2, 2) + e2
+#'   colnames(y2) <- c("news1", "news2")
+#'   y1 <- drop(0.3 + x %*% c(0.2, -0.1) + y2 %*% c(0.8, -0.5) + rnorm(n_obs))
+#'   x_var <- cbind(v1 = rnorm(n_obs), v2 = rnorm(n_obs))
 #'
-#' fit <- compute_tau0_system(y1, y2, x, z)
-#' box <- compute_identified_set_box(fit, tau = 0.05, n_grid = 11L)
-#' profile_log_variance_set(box, x_var)
+#'   fit <- compute_tau0_system(y1, y2, x, z)
+#'   box <- compute_identified_set_box(fit, tau = 0.05, n_grid = 11L)
+#'   profile_log_variance_set(box, x_var)
+#' })
 profile_log_variance_set <- function(box, x_var, estimator = "ppml",
                                      n_points =
                                        IDENTIFIED_SET_CONTROL$N_POINTS) {

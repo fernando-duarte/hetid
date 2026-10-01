@@ -2,7 +2,6 @@
 #'
 #' @description
 #' Constants used for computations and data processing.
-#' All values are documented with their sources.
 #'
 #' @format List containing package constants:
 #' \describe{
@@ -23,7 +22,7 @@
 #'     \code{\link{extract_acm_data}}}
 #'   \item{ALL_ACM_MATURITIES}{The full monthly maturity grid
 #'     (1:120 months) available from the GitHub source}
-#'   \item{DEGENERACY_TOLERANCE}{Scale-free threshold below which the
+#'   \item{DEGENERACY_TOLERANCE}{Scale-free threshold at or below which the
 #'     variance positivity diagnostic flags a maturity as degenerate}
 #'   \item{TAU0_POINT_TOLERANCE}{Rank and residual tolerance for the
 #'     tau = 0 stacked linear solve; the alternative outcome is no point (NULL)}
@@ -42,7 +41,7 @@
 #'   \item{USE_INCOMPLETE_QUARTERS}{Default policy for quarters missing
 #'     their terminal month in quarterly conversion: TRUE keeps them
 #'     (re-dated to quarter end), FALSE drops them}
-#'   \item{ACM_DATE_FORMAT}{Date format in ACM files}
+#'   \item{ACM_DATE_FORMAT}{ACM date format with abbreviated month names, tried before ISO formats}
 #'   \item{ISO_DATE_FORMAT}{Standard ISO date format}
 #'   \item{ISO_TIMESTAMP_FORMAT}{UTC timestamp format for provenance}
 #'   \item{YEAR_FORMAT}{Year extraction format}
@@ -59,14 +58,14 @@
 #'   \item{BUNDLED_VARIABLES_DATASET}{Bundled dataset name}
 #'   \item{COL_FORMAT_PADDED}{Padded raw column name format for
 #'     whole-year maturities (e.g. ACMY01)}
-#'   \item{COL_FORMAT_MONTHLY}{Raw column name format for sub-annual
-#'     month maturities (e.g. ACMY003M)}
+#'   \item{COL_FORMAT_MONTHLY}{Raw column name format for maturities
+#'     that are not whole years (e.g. ACMY003M or ACMY015M)}
 #'   \item{COL_FORMAT_SIMPLE}{Package column name format, maturity in
 #'     months (e.g. y12)}
 #'   \item{INSUFFICIENT_NEWS_MSG}{Shared error message for the
 #'     news-period data-sufficiency guard in the variance-bound kernels}
 #'   \item{BOUND_INDEX_TRIM_MSG}{Shared step-multiple reason string for the
-#'     bound-index-set kernels (c_hat/k2_hat)}
+#'     bound-index-set kernels (c_hat/k2_hat/news_q_bound)}
 #' }
 #'
 #' @references
@@ -84,27 +83,16 @@
 #' HETID_CONSTANTS$DEFAULT_ACM_MATURITIES
 #' @export
 HETID_CONSTANTS <- list(
-  # Principal component defaults
-  DEFAULT_N_PCS = 4L, # Default from Adrian, Crump, Moench (2013)
-  MAX_N_PCS = 6L, # Maximum for stability
-
-  # Data constraints (maturity indices are months)
+  DEFAULT_N_PCS = 4L,
+  MAX_N_PCS = 6L,
   MIN_MATURITY = 1L,
   MAX_MATURITY = 120L,
-
-  # News-period geometry
   DEFAULT_STEP = 12L,
   MATURITY_UNITS_PER_YEAR = 12L,
-
-  # Shared guard message for the news-period kernels (c_hat/k_hat/k2_hat/gap)
   INSUFFICIENT_NEWS_MSG = "Not enough observations. Need T > i/step news periods",
   BOUND_INDEX_TRIM_MSG = "the bound index set trims whole news periods",
-
-  # Maturity grids (months)
   DEFAULT_ACM_MATURITIES = seq(12L, 120L, by = 12L),
   ALL_ACM_MATURITIES = 1L:120L,
-
-  # Numerical parameters
   PERCENT_TO_DECIMAL = 100,
   DEGENERACY_TOLERANCE = 1e-8,
   TAU0_POINT_TOLERANCE = 1e-8,
@@ -115,31 +103,21 @@ HETID_CONSTANTS <- list(
   QUADRATIC_SIGN_FACTOR = 64,
   QUADRATIC_OUTER_FACTOR = 16,
   QUADRATIC_WEIGHT_FLOOR = 1e-9,
-
-  # Calendar
   MONTHS_PER_QUARTER = 3L,
   MONTHS_PER_YEAR = 12L,
   USE_INCOMPLETE_QUARTERS = TRUE,
-
-  # Date formats
   ACM_DATE_FORMAT = "%d-%b-%Y",
   ISO_DATE_FORMAT = "%Y-%m-%d",
   ISO_TIMESTAMP_FORMAT = "%Y-%m-%dT%H:%M:%SZ",
   YEAR_FORMAT = "%Y",
   MONTH_FORMAT = "%m",
-
-  # Column names
   CONSUMPTION_GROWTH_COL = "gr1.pcecc96",
   PC_PREFIX = "pc",
   MATURITY_PREFIX = "maturity_",
-
-  # Data identity
   ACM_DATA_FILENAME = "ACMTermPremium_replicated_monthly_1m_120m.csv.gz",
   ACM_DAILY_DATA_FILENAME = "ACMTermPremium_replicated_daily_1m_120m.csv.gz",
   ACM_NYFED_FILENAME = "ACMTermPremium_nyfed.csv",
   BUNDLED_VARIABLES_DATASET = "variables",
-
-  # Column format patterns
   COL_FORMAT_PADDED = "%s%02d",
   COL_FORMAT_MONTHLY = "%s%03dM",
   COL_FORMAT_SIMPLE = "%s%d"

@@ -33,10 +33,8 @@ described in \strong{Format}). Access individual controls with
 \description{
 Numerical controls for the PPML log-variance estimator and its
 standard errors, plus the HAC lag default shared by every estimator.
-Ported from the paper pipeline's \code{LOGVAR_PPML_CONTROL}
-(\code{scripts-paper/log_variance/estimators/controls.R}) and
-\code{hac_lags} (\code{scripts-paper/config/reporting.R}). The Harvey
-estimator's controls live in \code{\link{LOG_VARIANCE_HARVEY_CONTROL}}.
+The Harvey estimator's controls live in
+\code{\link{LOG_VARIANCE_HARVEY_CONTROL}}.
 }
 \examples{
 LOG_VARIANCE_CONTROL$GLM_EPSILON

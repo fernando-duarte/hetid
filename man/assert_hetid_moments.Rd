@@ -2,19 +2,24 @@
 % Please edit documentation in R/hetid_moments_methods.R
 \name{assert_hetid_moments}
 \alias{assert_hetid_moments}
-\title{Assert a Valid hetid_moments Object}
+\title{Assert hetid_moments Class Membership}
 \usage{
 assert_hetid_moments(x, arg = "moments")
 }
 \arguments{
-\item{x}{Object to check}
+\item{x}{Object to check for class inheritance.}
 
-\item{arg}{Argument name for the structured error}
+\item{arg}{Character string naming the argument in the error message and
+condition. Defaults to \code{"moments"}.}
 }
 \value{
-Invisible TRUE when valid
+The logical scalar \code{TRUE}, invisibly, when the class is present.
+Otherwise, signals a \code{hetid_error_bad_argument} condition with the
+supplied \code{arg} field.
 }
 \description{
-Assert a Valid hetid_moments Object
+Checks whether an object inherits from \code{hetid_moments}. This does not
+validate its statistics or attributes; use \code{\link{validate_hetid_moments}}
+for structural validation.
 }
 \keyword{internal}

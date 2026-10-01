@@ -7,19 +7,23 @@
 validate_expected_sdf_inputs(yields, term_premia, i, step)
 }
 \arguments{
-\item{yields}{Data frame with columns y1, y2, ..., containing yields}
+\item{yields}{Numeric data frame or matrix with month-suffixed columns such as
+\code{y1} and \code{y12}, containing yields in annualized percentage points.}
 
-\item{term_premia}{Data frame with columns tp1, tp2, ..., containing term premia}
+\item{term_premia}{Numeric data frame or matrix with month-suffixed columns such
+as \code{tp1} and \code{tp12}, containing term premia in annualized percentage
+points. Rows must match \code{yields} by observation date and order.}
 
-\item{i}{Maturity index; the horizon-0 boundary (\code{i == 0}) is
-admitted here and handled by the callers.}
+\item{i}{Integer maturity index in months between zero and
+\code{effective_max_maturity(step)}, inclusive. The horizon-0 boundary
+(\code{i == 0}) is admitted here and handled by the callers.}
 
-\item{step}{Integer number of maturity-index units per news period
-(default \code{HETID_CONSTANTS$DEFAULT_STEP}). The news operator
-steps one period, so maturity arithmetic moves in multiples of
-\code{step}: \code{compute_n_hat()} pairs maturities \code{i} and
-\code{i + step}, the one-period bond is the \code{step}-maturity
-bond, and horizons must satisfy \code{i <= MAX_MATURITY - step}.}
+\item{step}{Positive integer number of months per news period, no greater than
+half of \code{HETID_CONSTANTS$MAX_MATURITY}. Functions with a default use
+\code{HETID_CONSTANTS$DEFAULT_STEP}. For time-series inputs, adjacent observations
+must be \code{step} months apart. Functions that read maturity \code{i + step}
+require \code{i <= HETID_CONSTANTS$MAX_MATURITY - step}; additional
+horizon restrictions are described for each function.}
 }
 \value{
 Invisible \code{TRUE}; stops with a structured error otherwise.
@@ -29,5 +33,11 @@ The common preamble for the expected-SDF kernels: a valid \code{step},
 a maturity index in \code{[0, effective_max_maturity(step)]} (the lower
 bound of 0 admits the horizon-0 boundary the callers handle), and
 row-aligned yields and term premia.
+}
+\details{
+Both input frames must have the same number of rows. This helper
+does not check dates, column availability, units, or missing values.
+The news step must be a positive integer no larger than
+\code{HETID_CONSTANTS$MAX_MATURITY \%/\% 2L}.
 }
 \keyword{internal}

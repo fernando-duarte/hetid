@@ -1,3 +1,3 @@
-#' @return A data frame whose first column \code{date} (period-end
-#'   \code{Date}) carries the conditioning-information date of each value, plus
-#'   the computed series.
+#' @return A data frame with the supplied dates in its first column,
+#'   \code{date}, followed by the computed numeric series. Each value's date
+#'   follows the convention described for the function.

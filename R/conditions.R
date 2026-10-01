@@ -1,7 +1,7 @@
 #' Custom Condition Classes for hetid
 #'
 #' Structured condition constructors for programmatic error
-#' handling. Enables tryCatch with class-based dispatch.
+#' handling. These conditions support \code{tryCatch()} with class-based dispatch.
 #'
 #' @name conditions
 #' @keywords internal
@@ -15,11 +15,16 @@ NULL
 #' error class; \code{...} carries any extra condition fields (e.g.
 #' \code{arg}).
 #'
-#' @param message Error message string
-#' @param subclass Optional specific condition class, prepended
-#' @param call The call (default NULL)
-#' @param ... Extra named fields stored on the condition
-#' @return A condition object (not signaled)
+#' @param message A character scalar containing the error message.
+#' @param subclass A character vector of specific condition classes to prepend,
+#'   or \code{NULL} (the default) for no additional classes.
+#' @param call A call object to store on the condition, or \code{NULL}
+#'   (the default) to omit the call from the displayed error.
+#' @param ... Additional named fields stored on the condition without modification.
+#' @return A list with \code{message}, \code{call}, and any additional fields.
+#'   Its classes are \code{subclass}, when supplied, followed by
+#'   \code{hetid_error}, \code{error}, and \code{condition}.
+#'   The condition is returned without being signaled.
 #' @keywords internal
 new_hetid_error <- function(message, subclass = NULL, call = NULL, ...) {
   structure(
@@ -30,10 +35,13 @@ new_hetid_error <- function(message, subclass = NULL, call = NULL, ...) {
 
 #' Signal a Bad Argument Error
 #'
-#' @param message Error message string
-#' @param arg Argument name (optional)
-#' @param call The call (default NULL)
-#' @return Never returns; signals a \code{hetid_error_bad_argument} condition
+#' @param message A character scalar containing the error message.
+#' @param arg A character scalar naming the invalid argument, or \code{NULL}
+#'   (the default) when no argument name is supplied.
+#' @param call A call object to store on the condition, or \code{NULL}
+#'   (the default) to omit the call from the displayed error.
+#' @return Never returns normally; signals a \code{hetid_error_bad_argument}
+#'   condition inheriting from \code{hetid_error}, with an \code{arg} field.
 #' @keywords internal
 stop_bad_argument <- function(message, arg = NULL,
                               call = NULL) {
@@ -45,10 +53,11 @@ stop_bad_argument <- function(message, arg = NULL,
 
 #' Signal a Dimension Mismatch Error
 #'
-#' @param message Error message string
-#' @param call The call (default NULL)
+#' @param message A character scalar containing the error message.
+#' @param call A call object to store on the condition, or \code{NULL}
+#'   (the default) to omit the call from the displayed error.
 #' @return Never returns; signals a \code{hetid_error_dimension_mismatch}
-#'   condition
+#'   condition inheriting from \code{hetid_error}.
 #' @keywords internal
 stop_dimension_mismatch <- function(message,
                                     call = NULL) {
@@ -57,10 +66,11 @@ stop_dimension_mismatch <- function(message,
 
 #' Signal an Insufficient Data Error
 #'
-#' @param message Error message string
-#' @param call The call (default NULL)
+#' @param message A character scalar containing the error message.
+#' @param call A call object to store on the condition, or \code{NULL}
+#'   (the default) to omit the call from the displayed error.
 #' @return Never returns; signals a \code{hetid_error_insufficient_data}
-#'   condition
+#'   condition inheriting from \code{hetid_error}.
 #' @keywords internal
 stop_insufficient_data <- function(message,
                                    call = NULL) {
@@ -69,9 +79,10 @@ stop_insufficient_data <- function(message,
 
 #' Signal a Generic hetid Error
 #'
-#' @param message Error message string
-#' @param call The call (default NULL)
-#' @return Never returns; signals a \code{hetid_error} condition
+#' @param message A character scalar containing the error message.
+#' @param call A call object to store on the condition, or \code{NULL}
+#'   (the default) to omit the call from the displayed error.
+#' @return Never returns normally; signals a \code{hetid_error} condition.
 #' @keywords internal
 stop_hetid <- function(message, call = NULL) {
   stop(new_hetid_error(message, call = call))
@@ -79,11 +90,13 @@ stop_hetid <- function(message, call = NULL) {
 
 #' Assert Bad Argument Invariant
 #'
-#' @param ok Logical scalar; if not TRUE, signals error
-#' @param message Error message string
-#' @param arg Optional argument name
+#' @param ok A logical scalar. Any value other than a single nonmissing
+#'   \code{TRUE} signals an error.
+#' @param message A character scalar containing the error message.
+#' @param arg A character scalar naming the invalid argument, or \code{NULL}
+#'   (the default) when no argument name is supplied.
 #'
-#' @return Invisible TRUE when validation passes
+#' @return Invisible \code{TRUE} when validation passes.
 #' @noRd
 assert_bad_argument_ok <- function(ok, message,
                                    arg = NULL) {
@@ -95,10 +108,12 @@ assert_bad_argument_ok <- function(ok, message,
 
 #' Assert a Value Is a Single TRUE/FALSE Flag
 #'
-#' @param x Value to check
-#' @param arg Argument name, used in both the message and the condition
+#' @param x A logical scalar to check. Missing, empty, nonscalar, and
+#'   nonlogical inputs signal a bad argument error.
+#' @param arg A character scalar naming the argument, used in both the message
+#'   and the condition.
 #'
-#' @return Invisible TRUE when valid
+#' @return Invisible \code{TRUE} when valid.
 #' @noRd
 assert_flag <- function(x, arg) {
   assert_bad_argument_ok(
@@ -110,10 +125,11 @@ assert_flag <- function(x, arg) {
 
 #' Assert Dimension Invariant
 #'
-#' @param ok Logical scalar; if not TRUE, signals error
-#' @param message Error message string
+#' @param ok A logical scalar. Any value other than a single nonmissing
+#'   \code{TRUE} signals an error.
+#' @param message A character scalar containing the error message.
 #'
-#' @return Invisible TRUE when validation passes
+#' @return Invisible \code{TRUE} when validation passes.
 #' @noRd
 assert_dimension_ok <- function(ok, message) {
   if (!isTRUE(ok)) {
@@ -124,10 +140,11 @@ assert_dimension_ok <- function(ok, message) {
 
 #' Assert Data Availability Invariant
 #'
-#' @param ok Logical scalar; if not TRUE, signals error
-#' @param message Error message string
+#' @param ok A logical scalar. Any value other than a single nonmissing
+#'   \code{TRUE} signals an error.
+#' @param message A character scalar containing the error message.
 #'
-#' @return Invisible TRUE when validation passes
+#' @return Invisible \code{TRUE} when validation passes.
 #' @noRd
 assert_insufficient_data_ok <- function(ok, message) {
   if (!isTRUE(ok)) {

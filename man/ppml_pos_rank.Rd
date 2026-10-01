@@ -7,19 +7,27 @@
 ppml_pos_rank(y_scaled, x_mat, control = log_variance_fit_control("ppml"))
 }
 \arguments{
-\item{y_scaled}{Numeric response on the scaled (fitted) scale}
+\item{y_scaled}{Finite nonnegative numeric response vector on the scaled
+(fitted) scale, with at least one positive value.}
 
-\item{x_mat}{Numeric design matrix, intercept column included}
+\item{x_mat}{Finite numeric design matrix with one row per response and
+an intercept column.}
 
-\item{control}{Validated fitting controls}
+\item{control}{Validated fitting controls; defaults to the PPML controls
+from \code{log_variance_fit_control("ppml")}.}
 }
 \value{
-Integer rank of the column-normalized positive-response rows
+A scalar integer rank of the column-normalized rows for which
+\code{y_scaled > 0}.
 }
 \description{
 Scales each nonzero column of the positive-response rows by its Euclidean
 norm and counts singular values above
 \code{RANK_TOLERANCE * d[1]}. A zero column keeps its zero singular value
 and so lowers the count.
+}
+\details{
+Inputs are already validated by the fitting boundary; missing values are
+not removed here. The relative cutoff uses \code{control$RANK_TOLERANCE}.
 }
 \keyword{internal}

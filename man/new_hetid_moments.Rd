@@ -9,16 +9,23 @@ new_hetid_moments(stats, maturities, n_components, n_obs)
 \arguments{
 \item{stats}{List with the seven statistics (\code{s_i_0},
 \code{sigma_i_sq}, \code{r_i_0}, \code{r_i_1}, \code{p_i_0},
-\code{s_i_1}, \code{s_i_2})}
+\code{s_i_1}, \code{s_i_2}). Extra elements are discarded.}
 
-\item{maturities}{Integer vector of w2 column indices}
+\item{maturities}{Nonempty numeric vector of distinct integer-valued
+\code{w2} column indices in \code{1:n_components}, coerced to integer.}
 
-\item{n_components}{Theta-axis dimension (\code{ncol(w2)})}
+\item{n_components}{Positive integer-valued numeric scalar giving the
+theta-axis dimension (\code{ncol(w2)}), no larger than
+\code{.Machine$integer.max}.}
 
-\item{n_obs}{Number of observations the moments were computed from}
+\item{n_obs}{Positive integer-valued numeric observation count, no larger
+than \code{.Machine$integer.max}.}
 }
 \value{
-A classed \code{hetid_moments} list
+A \code{hetid_moments} list containing the seven named statistics
+in the order above, with integer attributes \code{maturities},
+\code{n_components}, and \code{n_obs}, plus \code{n_instruments} from
+\code{nrow(stats$r_i_0)}. Shapes are not validated by this constructor.
 }
 \description{
 Low-level cheap constructor for the \code{hetid_moments} class: type,

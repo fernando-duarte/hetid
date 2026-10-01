@@ -8,36 +8,52 @@ build_instrument_matrix(z, transforms = NULL, include_original = TRUE)
 }
 \arguments{
 \item{z}{Numeric matrix or data frame of primitive instruments
-(T x J). Unnamed columns are labeled \code{z1..zJ}.}
+(T x J), with at least one column and only finite values.
+If column names are absent, they are labeled \code{z1..zJ};
+supplied names must be unique, non-empty, and non-missing.}
 
-\item{transforms}{NULL, a function, or a named list of functions;
+\item{transforms}{\code{NULL} (the default), a function, or a
+non-empty list of functions with unique names after labeling;
 each receives \code{z} (as a named numeric matrix) and returns a
-length-T vector or T-row matrix. Unnamed list entries are labeled
-\code{h1, h2, ...} by position. Output columns are always labeled
+length-T numeric vector or T-row numeric matrix or data frame
+with at least one column, preserving the input row order.
+All returned values must be finite:
+\code{NA}, \code{NaN}, and infinite values are rejected.
+A single function is named \code{h1}; unnamed list entries are
+labeled \code{h1, h2, ...} by position. Output columns are labeled
 from the transform name; a multi-column output gets suffixes
-\code{_1, _2, ...}.}
+\code{_1, _2, ...}, replacing any returned column names. These
+labels must be unique across the final matrix.}
 
-\item{include_original}{Logical; keep the primitive columns in the
-result (default TRUE). FALSE requires at least one transform.}
+\item{include_original}{A single non-missing logical; keep the
+primitive columns in the result (default \code{TRUE}).
+\code{FALSE} requires at least one transform.}
 }
 \value{
-Numeric matrix (T x total instruments) with unique column
-names, ready for \code{compute_identification_moments()}.
+Numeric matrix with T rows in the input order and unique
+column names. Primitive columns, when included, precede the
+transformed columns in list order. With \code{transforms = NULL},
+returns the named primitive matrix.
 }
 \description{
 Assembles the instrument matrix Z fed to
 \code{\link{compute_identification_moments}} from a primitive
 matrix and optional user transformations: each transform is a
-function of the full primitive matrix returning a vector or matrix
-of derived instruments (for example squares, interactions, or any
-nonlinear feature). Outputs are validated (numeric, finite, aligned
-rows, unique column names) and bound columnwise.
+function of the full primitive matrix returning a vector, matrix,
+or data frame of derived instruments (for example squares,
+interactions, or any nonlinear feature). Outputs are validated
+(numeric, finite, matching row counts, unique column names) and
+bound columnwise.
 }
 \details{
 Transforms must return fully finite values: apply lag- or
 difference-type constructions before calling this function and trim
 incomplete rows yourself, so that the rows of the result stay
 aligned with the residual series.
+Invalid inputs signal a \code{hetid_error_bad_argument}; a transform
+returning the wrong number of rows signals a
+\code{hetid_error_dimension_mismatch}. Errors from user-supplied
+transform functions propagate unchanged.
 }
 \section{General instrument scheme}{
 
@@ -46,23 +62,22 @@ defines K_i constructed instruments, each a linear combination of
 the J columns of the instrument matrix the moments were computed
 from. The identified set intersects one quadratic constraint per
 (component, combination) pair: \code{sum(K_i)} constraints in
-total. The legacy single-combination case is \code{K_i = 1} for
+total. The single-combination case is \code{K_i = 1} for
 every component (a J x I matrix); using every instrument
 separately is \code{lambda[[i]] = diag(J)}. Each constraint
 depends on its weight column only through its direction, so any
 nonzero rescaling of a column leaves the constraint set unchanged.
-A per-component instrument SUBSET is expressed directly as zero
+A per-component instrument subset is expressed directly as zero
 rows in that component's weight matrix;
 \code{align_instrument_sets()} builds the union axis and
 \code{lambda_from_support()} zero-pads compact weights onto it.
-Honesty note: intersecting more sample-moment constraints
-weakly shrinks the ESTIMATED set mechanically, so widths are
+Intersecting more sample-moment constraints
+weakly shrinks the estimated set mechanically, so widths are
 comparable only across schemes with the same constraint count.
 }
 
 \examples{
-set.seed(42)
-z <- matrix(rnorm(60), nrow = 20, dimnames = list(NULL, c("a", "b", "c")))
+z <- cbind(a = c(-2, -1, 1, 2), b = c(1, 3, 2, 4))
 build_instrument_matrix(
   z,
   transforms = list(
@@ -70,4 +85,9 @@ build_instrument_matrix(
     ab = function(z) z[, "a"] * z[, "b"]
   )
 )[1:3, ]
+build_instrument_matrix(
+  z,
+  transforms = list(squares = function(z) z^2),
+  include_original = FALSE
+)
 }

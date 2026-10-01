@@ -1,18 +1,21 @@
 #' Validate One Log-Variance Start Vector
 #'
-#' Shared gate for \code{start} and each \code{fallback_starts} element: a
-#' bare finite numeric vector of the right length, positional when unnamed,
-#' exact-order names when named -- a permuted named start would otherwise be
-#' silently reinterpreted against a different design.
+#' Checks the length and optional names of a numeric \code{start} vector or
+#' \code{fallback_starts} element. Values must be finite unless
+#' \code{skip_nonfinite = TRUE}. Unnamed starts are positional; named starts
+#' must match the design labels in order to avoid changing their interpretation.
 #'
-#' @param val Candidate start vector
-#' @param p Required length (\code{ncol(x_mat)})
-#' @param labels Design column labels (\code{colnames(x_mat)})
-#' @param arg Argument name for the structured error
-#' @param skip_nonfinite Whether correctly shaped nonfinite starts may reach
-#'   the solver's failed-attempt recovery path
+#' @param val Numeric vector of length \code{p}, with no dimensions.
+#' @param p Required vector length, given by \code{ncol(x_mat)}.
+#' @param labels Character vector of design column labels, given by
+#'   \code{colnames(x_mat)}.
+#' @param arg Character string identifying the argument in a structured error.
+#' @param skip_nonfinite Logical scalar. If \code{TRUE}, allows correctly
+#'   shaped starts containing \code{NA}, \code{NaN}, or infinite values to reach
+#'   the solver's failed-attempt recovery path. Defaults to \code{FALSE}.
 #'
-#' @return Invisible TRUE when valid
+#' @return Invisible \code{TRUE} when valid. Otherwise signals a
+#'   \code{hetid_error_bad_argument} condition with the \code{arg} field.
 #' @noRd
 assert_log_variance_start <- function(val, p, labels, arg, skip_nonfinite = FALSE) {
   assert_bad_argument_ok(

@@ -7,25 +7,41 @@
 build_common_conditioning(pcs, n_pcs, y1 = NULL, y1_lags = 0L)
 }
 \arguments{
-\item{pcs}{Numeric matrix of principal components (full \eqn{T} rows).}
+\item{pcs}{Numeric matrix of principal components of nominal financial
+asset returns (full \eqn{T} rows), in the same observation order as \code{y1}.}
 
-\item{n_pcs}{Integer number of leading PC columns to keep.}
+\item{n_pcs}{Non-negative integer number of leading PC columns to keep,
+at most \code{ncol(pcs)}.}
 
-\item{y1}{Numeric outcome vector (length \code{nrow(pcs)}), or NULL when
-\code{y1_lags == 0}.}
+\item{y1}{Numeric outcome vector of length \code{nrow(pcs)}, required when
+\code{y1_lags > 0}. The default is \code{NULL}; ignored when \code{y1_lags == 0}.}
 
-\item{y1_lags}{Integer number of own-lags \eqn{H \ge 0} to append.}
+\item{y1_lags}{Integer number of own-lags \eqn{H \ge 0} to append.
+The default \code{0L} keeps only the PC block.}
 }
 \value{
-Numeric matrix with the \code{n_pcs} named PC columns and, when
-\code{y1_lags > 0}, \code{l.y1, ..., l<H>.y1} appended.
+Numeric matrix with \code{nrow(pcs)} rows and
+\code{n_pcs + y1_lags} columns. The first \code{n_pcs} columns retain their
+names unless any name is missing or blank, in which case all are replaced
+by the canonical PC names. When \code{y1_lags > 0}, the named lag columns
+\code{l.y1}, \code{l2.y1}, and so on are appended in increasing lag order.
 }
 \description{
 Constructs the shared conditioning block \eqn{X_t = (\mathrm{PC}_t, Y_{1,t},
-\ldots, Y_{1,t+1-H})} used by both the consumption (\eqn{\omega_1}) and news (\eqn{\omega_2})
-reduced forms. The PC block is named first (so the lag append cannot trip
+\ldots, Y_{1,t+1-H})} used by both the consumption (\eqn{\omega_1}) and
+news (\eqn{\omega_2}) reduced forms.
+}
+\details{
+The PC block is named first (so the lag append cannot trip
 \code{\link{run_pc_regression}}'s blank-name fallback), then the \eqn{H}
 predetermined own-lag columns of \code{y1} are appended via
 \code{\link{append_y1_lags}}.
+Predictor row \eqn{t} is paired with the outcome at \eqn{t+1}; lag column
+\eqn{h} contains \eqn{Y_{1,t+1-h}} with \eqn{h-1} leading \code{NA}s.
+Missing input values and all rows are retained for downstream complete-case
+filtering. Lag counts and PC inputs are validated by the calling workflow.
+With positive \code{y1_lags}, \code{y1 = NULL} signals a
+\code{hetid_error_bad_argument}; a length mismatch signals a
+\code{hetid_error_dimension_mismatch}.
 }
 \keyword{internal}

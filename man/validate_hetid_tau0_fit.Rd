@@ -7,16 +7,14 @@
 validate_hetid_tau0_fit(x)
 }
 \arguments{
-\item{x}{A classed \code{hetid_tau0_fit} object}
+\item{x}{A classed \code{hetid_tau0_fit} object.}
 }
 \value{
-\code{x}, invisibly
+\code{x}, invisibly; failures signal a structured \code{hetid_error}.
 }
 \description{
-Full structural-alignment gate for the \code{hetid_tau0_fit} class,
-checked against the object's own \code{n_obs} attribute. Run by the
-public boundary \code{compute_tau0_system()} on every object it
-returns; call it directly on containers assembled via
-\code{new_hetid_tau0_fit()} from parts that are not known-good.
+Checks attributes, data shapes, coefficient alignment, the moments class,
+and point/beta1 pairing. The public boundary \code{\link{compute_tau0_system}}
+always runs it; use it on manually assembled containers too.
 }
 \keyword{internal}

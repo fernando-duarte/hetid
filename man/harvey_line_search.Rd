@@ -15,32 +15,34 @@ harvey_line_search(
 )
 }
 \arguments{
-\item{cur}{Current \code{\link{harvey_eval}} result}
+\item{cur}{Current list returned by \code{\link{harvey_eval}}.}
 
-\item{dir}{Numeric direction to step along}
+\item{dir}{Numeric direction vector of length \code{ncol(x_mat)}.}
 
-\item{y}{Numeric nonnegative response}
+\item{y}{Finite nonnegative numeric response vector of length \code{nrow(x_mat)}.}
 
-\item{x_mat}{Numeric design matrix, intercept column included}
+\item{x_mat}{Finite numeric design matrix, intercept column included.}
 
-\item{pos}{Logical vector marking the positive-response rows}
+\item{pos}{Logical vector \code{y > 0} of length \code{length(y)}.}
 
 \item{col_abs}{Numeric vector \code{colSums(abs(x_mat))}, the per-coordinate
-scale the moment is judged on}
+scale the moment is judged on. Each entry must be positive.}
 
-\item{control}{Validated fitting controls}
+\item{control}{Validated named list of Harvey fitting controls; defaults
+derive from \code{\link{LOG_VARIANCE_HARVEY_CONTROL}}.}
 }
 \value{
 \code{NULL} when no halving is accepted (a stall), otherwise a list
-with the accepted \code{eval} and the number of \code{halves} taken
+with the accepted \code{eval} and the number of \code{halves} taken.
 }
 \description{
-Accepts a strict criterion decrease or, on a criterion tie, only a scaled
-score improvement past the pinned margin. A tie is any difference within the
-criterion's own summation rounding error, not literal equality of the stored
-doubles: near the optimum the step's true decrease sits below that noise
-floor, so two evaluations cannot be told apart by \code{q} and the score is
-the only meaningful signal. Requiring strict score progress on a tie keeps
-every tie acceptance monotone in the score, so the search cannot cycle.
+Accepts any strict criterion decrease. An equal or higher criterion is
+accepted only within the summation-rounding band and with a scaled-score
+improvement exceeding the control's progress margin.
+}
+\details{
+Starts at the full step and halves it up to \code{LINE_SEARCH_HALVINGS}
+times. Unusable trial evaluations are rejected. The rounding band uses
+\code{Q_NOISE_MULTIPLIER}; the score margin uses \code{SCORE_PROGRESS_MULTIPLIER}.
 }
 \keyword{internal}

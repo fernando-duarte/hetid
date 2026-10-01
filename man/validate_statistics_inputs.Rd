@@ -7,24 +7,36 @@
 validate_statistics_inputs(w1, w2, maturities = NULL)
 }
 \arguments{
-\item{w1}{Numeric vector of residuals}
+\item{w1}{Numeric vector of finite residuals with at least two observations.}
 
-\item{w2}{Matrix or data frame of residuals}
+\item{w2}{Numeric matrix or data frame of finite residuals, with
+\code{length(w1)} rows and at least one column.}
 
-\item{maturities}{Maturity indices or NULL for all columns}
+\item{maturities}{Nonempty numeric vector of distinct integer-valued
+\code{w2} column indices between 1 and \code{ncol(w2)}, inclusive.
+These identify the maturity constraint axis, not bond maturities in months.
+The default \code{NULL} selects all columns in their original order.}
 }
 \value{
-List with validated components:
+A list with the following validated components.
 \describe{
-\item{w2}{w2 coerced to matrix}
-\item{t_obs}{Number of observations}
-\item{maturities}{Validated maturity vector}
+\item{w2}{A numeric matrix with the same dimensions as the input.}
+\item{t_obs}{The number of observations, equal to \code{length(w1)}.}
+\item{maturities}{The selected column indices in the supplied order,
+or \code{seq_len(ncol(w2))} when the input is \code{NULL}.}
 }
 }
 \description{
-Shared validation for compute_scalar_statistics,
-compute_matrix_statistics, compute_vector_statistics, and
-compute_identification_moments. Checks types, finiteness, a minimum
+Shared validation for \code{compute_scalar_statistics()},
+\code{compute_matrix_statistics()}, \code{compute_vector_statistics()}, and
+\code{compute_identification_moments()}. Checks types, finiteness, a minimum
 number of observations, dimension agreement, and the maturity vector.
+}
+\details{
+Missing, \code{NaN}, and infinite residuals are rejected rather
+than removed. Invalid types, values, or maturity indices signal a
+\code{hetid_error_bad_argument}; fewer than two observations signal a
+\code{hetid_error_insufficient_data}; unequal observation counts signal a
+\code{hetid_error_dimension_mismatch}.
 }
 \keyword{internal}

@@ -7,26 +7,30 @@
 compute_per_maturity(w1, w2, maturities, compute_fn, ...)
 }
 \arguments{
-\item{w1}{Numeric vector of \eqn{\omega_1} residuals}
+\item{w1}{Numeric vector of \eqn{\omega_1} residuals of length T.}
 
-\item{w2}{Numeric matrix of \eqn{\omega_2} residuals (T x I)}
+\item{w2}{Numeric matrix of \eqn{\omega_2} residuals (T x I).}
 
-\item{maturities}{Vector of validated maturity indices}
+\item{maturities}{Vector of validated w2 column indices (the constraint axis).}
 
-\item{compute_fn}{Function called for each maturity with args
-(w1, w2, w2_i, idx, i, ...)}
+\item{compute_fn}{Function called with named arguments \code{w1}, \code{w2},
+\code{w2_i} (column \code{i}), \code{idx} (position in \code{maturities}),
+\code{i} (w2 column index), and \code{...}.}
 
-\item{...}{Extra arguments forwarded to compute_fn}
+\item{...}{Extra arguments forwarded to \code{compute_fn}.}
 }
 \value{
-Named list of per-maturity results from compute_fn, one element per
+Named list of per-maturity results from \code{compute_fn}, one element per
 entry of \code{maturities} in order, named \code{maturity_N} where
 \code{N} is the w2 column index (\code{maturity_names()}), so element
 \code{k} corresponds to \code{maturities[k]}.
 }
 \description{
 Applies a computation function to each maturity, returning a named
-list of results. Trusts already-validated inputs: callers must
+list of results.
+}
+\details{
+Trusts already-validated inputs: callers must
 first run \code{validate_statistics_inputs()} (the exported
 statistics wrappers and \code{compute_identification_moments()} do
 this once before delegating to the internal workers).

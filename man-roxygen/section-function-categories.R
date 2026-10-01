@@ -64,7 +64,7 @@
 #'   \item \code{\link{compute_linear_functional_bounds}()}: Named affine bounds and evidence
 #'   \item \code{\link{profile_log_variance_set}()}: Volatility coefficients over that set
 #'   \item \code{\link{sample_log_variance_set}()}: Retained joint fits for prediction
-#'   \item \code{\link{predict.hetid_log_variance_sample}()}: Sampled prediction envelopes
+#'   \item \code{\link[stats:predict]{predict}()}: Sampled prediction envelopes
 #'   \item \code{\link{compute_quadratic_set_evidence}()}: Nonemptiness, boundedness, outer bounds
 #'   \item \code{\link{IDENTIFIED_SET_CONTROL}}: Identified-set search numerical controls
 #' }}

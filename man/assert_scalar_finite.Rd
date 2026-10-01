@@ -7,12 +7,15 @@
 assert_scalar_finite(x, name)
 }
 \arguments{
-\item{x}{Value to check}
+\item{x}{Object to check. Valid input is a single finite numeric value;
+missing values, \code{NaN}, and infinite values are rejected.}
 
-\item{name}{Parameter name for the error message}
+\item{name}{Single character string used in the error message and the
+condition's \code{arg} field.}
 }
 \value{
-Invisible TRUE if valid, stops with informative error otherwise.
+Invisible \code{TRUE} if valid. Otherwise, signals a
+\code{hetid_error_bad_argument} condition.
 }
 \description{
 Internal guard for parameters that must be a single

@@ -8,36 +8,52 @@ align_instrument_sets(z_sets, n_components, maturities = NULL)
 }
 \arguments{
 \item{z_sets}{List of length \code{n_components}: a numeric
-matrix or data frame (T x J_i, named columns) at every
-constrained system column, NULL at unconstrained columns}
+matrix or data frame of finite numeric values (\code{T x J_i}) at
+every constrained system column, and \code{NULL} elsewhere.
+Each set must have at least one column, with unique, non-empty,
+non-missing column names.}
 
-\item{n_components}{Number of system columns (theta axis)}
+\item{n_components}{A single positive integer giving the number of
+system columns (theta axis).}
 
-\item{maturities}{Constrained system columns (default NULL means
-all of \code{1..n_components})}
+\item{maturities}{A non-empty numeric vector of unique integer system
+column indices in \code{1..n_components}, or \code{NULL} for all
+system columns. These are positional indices, not bond maturities
+in months or years. Their supplied order determines the traversal
+of the instrument sets.}
 }
 \value{
-List with elements
+A list with the following elements.
 \describe{
-\item{instruments}{T x J_union numeric matrix, columns in
-first-appearance order across constrained components}
+\item{instruments}{A \code{T x J_union} double matrix with unique
+column names in first-appearance order across sets visited in
+\code{maturities} order. Row names are not retained.}
 \item{support}{List of length \code{n_components}: integer
 positions of component i's columns within
-\code{colnames(instruments)}, NULL at unconstrained columns}
+\code{colnames(instruments)}, in the component's original column
+order, and \code{NULL} at unconstrained columns.}
 }
 }
 \description{
-Unites per-component instrument matrices by column NAME into one
-T x J_union matrix plus the per-component support index lists
-that locate each component's columns on the union axis. Columns
-sharing a name across components must be content-identical
-(bitwise, after coercion to double): the union is keyed on names,
-and silently uniting two different series under one name is the
-exact misalignment this validator exists to catch. Compute the
-moments from \code{instruments} -- the returned \code{support}
-indexes the columns of \code{instruments} -- then feed \code{support} to
-\code{\link{lambda_from_support}} (and to the scripts-layer
-optimizer's support mask).
+Unites per-component instrument matrices by column name into one
+\code{T x J_union} matrix and lists the column positions used by
+each component.
+}
+\details{
+Columns sharing a name across components must be identical
+after coercion to double and removal of names. Comparison uses
+\code{\link[base:identical]{identical}()} with its defaults, so
+positive and negative zero compare equal. Differing columns with
+the same name raise a \code{hetid_error_bad_argument} error.
+All sets must have the same row count and already refer to the
+same observations in the same order; this function does not align
+dates or check observation identities. Missing and non-finite
+values are rejected rather than omitted.
+
+Compute the moments from the returned \code{instruments} matrix.
+The returned \code{support} indexes its columns and can be passed
+to \code{\link{lambda_from_support}} and to the scripts-layer
+optimizer's support mask.
 }
 \section{General instrument scheme}{
 
@@ -46,23 +62,23 @@ defines K_i constructed instruments, each a linear combination of
 the J columns of the instrument matrix the moments were computed
 from. The identified set intersects one quadratic constraint per
 (component, combination) pair: \code{sum(K_i)} constraints in
-total. The legacy single-combination case is \code{K_i = 1} for
+total. The single-combination case is \code{K_i = 1} for
 every component (a J x I matrix); using every instrument
 separately is \code{lambda[[i]] = diag(J)}. Each constraint
 depends on its weight column only through its direction, so any
 nonzero rescaling of a column leaves the constraint set unchanged.
-A per-component instrument SUBSET is expressed directly as zero
+A per-component instrument subset is expressed directly as zero
 rows in that component's weight matrix;
 \code{align_instrument_sets()} builds the union axis and
 \code{lambda_from_support()} zero-pads compact weights onto it.
-Honesty note: intersecting more sample-moment constraints
-weakly shrinks the ESTIMATED set mechanically, so widths are
+Intersecting more sample-moment constraints
+weakly shrinks the estimated set mechanically, so widths are
 comparable only across schemes with the same constraint count.
 }
 
 \examples{
 t_obs <- 20
-z <- matrix(rnorm(t_obs * 3), t_obs,
+z <- matrix(seq_len(t_obs * 3), t_obs,
   dimnames = list(NULL, c("pc1", "pc2", "pc3"))
 )
 aligned <- align_instrument_sets(
@@ -71,4 +87,11 @@ aligned <- align_instrument_sets(
 )
 colnames(aligned$instruments)
 aligned$support
+
+subset <- align_instrument_sets(
+  list(z[, c("pc1", "pc2")], NULL, z[, c("pc2", "pc3")]),
+  n_components = 3, maturities = c(3, 1)
+)
+colnames(subset$instruments)
+subset$support
 }

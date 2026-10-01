@@ -7,14 +7,18 @@
 require_column(x, col_name, context = NULL)
 }
 \arguments{
-\item{x}{Data frame, matrix, or list to extract from}
+\item{x}{A data frame, matrix, or named list to extract from.}
 
-\item{col_name}{Column name to extract}
+\item{col_name}{A character string naming the required column or element.}
 
-\item{context}{Description for error message}
+\item{context}{An optional character string for the error message;
+\code{NULL} (the default) adds no context.}
 }
 \value{
-The extracted column value (unnamed)
+The column or element, with missing values unchanged. Matrix results
+have names removed; data-frame and list elements retain their attributes.
+A missing name signals a \code{hetid_error_bad_argument} with
+\code{arg = col_name}.
 }
 \description{
 Extract and Validate a Required Column

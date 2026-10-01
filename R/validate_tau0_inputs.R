@@ -1,24 +1,48 @@
-#' Validate compute_tau0_system Inputs
+#' Validate Tau = 0 System Inputs
 #'
-#' Internal validator for the tau = 0 mean-equation orchestrator: checks
-#' shape and finiteness of every input, applies the axis-name contract to
-#' \code{z} and \code{y2}, resolves \code{gamma}, and de-means \code{z}.
-#' Never restates the \code{x} contract (no intercept column, no column
-#' named "y") documented on \code{\link{compute_tau0_system}}: those are
-#' caught for free downstream by \code{\link{run_pc_regression}}.
+#' Checks and prepares inputs for \code{\link{compute_tau0_system}}:
+#' validates the observation arrays, column names, flag, and tolerance,
+#' resolves the instrument weights, and de-means the instruments.
 #'
-#' @param y1 Numeric vector, the mean-equation outcome
-#' @param y2 Numeric matrix or vector, the news/innovation variables
-#' @param x Numeric matrix or vector, the common conditioning regressors
-#' @param z Numeric matrix or vector, the instrument(s)
-#' @param gamma NULL or a numeric matrix; see
-#'   \code{\link{compute_tau0_system}} for the defaulting rule
-#' @param impose_null Logical flag
-#' @param tol Positive numeric scalar
+#' @details
+#' The observation arrays must contain only finite numeric values; missing
+#' rows are rejected rather than omitted. Each of \code{y2}, \code{x}, and
+#' \code{z} must have at least one column and \code{length(y1)} rows. At least
+#' \code{min_obs_for_pc_regression(ncol(x))} observations are required.
 #'
-#' @return \code{list(y1, y2, x, z, gamma, n_obs)}: \code{y2}/\code{x}/\code{z}
-#'   coerced to matrices, \code{z} de-meaned with normalized column names,
-#'   \code{gamma} resolved to a \code{ncol(z) x ncol(y2)} matrix
+#' The \code{x} contract (no intercept column and no column named "y")
+#' described in \code{\link{compute_tau0_system}} is enforced downstream
+#' by \code{\link{run_pc_regression}}. Finiteness of supplied \code{gamma}
+#' values is checked downstream by
+#' \code{\link{compute_identified_set_components}}.
+#'
+#' @param y1 Numeric vector containing the mean-equation outcome.
+#' @param y2 Numeric matrix or data frame containing the news/innovation
+#'   variables, with unique, non-empty, non-missing column names.
+#' @param x Numeric matrix, vector, or data frame containing the common
+#'   conditioning regressors.
+#' @param z Numeric matrix, vector, or data frame containing the instruments.
+#'   Absent column names are assigned as \code{z1}, \code{z2}, and so on;
+#'   supplied names must be unique, non-empty, and non-missing.
+#' @param gamma A numeric \code{ncol(z) x ncol(y2)} matrix of instrument
+#'   weights, or \code{NULL} to use unit weights when \code{z} has one column.
+#'   Weights must be supplied for multiple instruments. If dimnames are
+#'   present, both axes must match \code{colnames(z)} and
+#'   \code{colnames(y2)} exactly, after instrument names are assigned.
+#' @param impose_null Logical scalar, either \code{TRUE} or \code{FALSE}.
+#'   Validated here; the reduced-form restriction is applied by the caller.
+#' @param tol Positive, finite numeric scalar for the point-solve tolerance.
+#'
+#' @return A named list containing the prepared inputs:
+#'   \describe{
+#'     \item{y1}{The unchanged outcome vector.}
+#'     \item{y2, x}{The news/innovation and conditioning-regressor matrices.}
+#'     \item{z}{The de-meaned instrument matrix with validated column names.}
+#'     \item{gamma}{The supplied weight matrix, or an unnamed one-row matrix
+#'       of unit weights with one column per news/innovation variable.}
+#'     \item{n_obs}{The number of observations, \code{length(y1)}.}
+#'   }
+#'   Validation failures signal structured \code{hetid_error} conditions.
 #' @keywords internal
 validate_tau0_inputs <- function(y1, y2, x, z, gamma, impose_null, tol) {
   assert_flag(impose_null, "impose_null")
@@ -50,8 +74,7 @@ validate_tau0_inputs <- function(y1, y2, x, z, gamma, impose_null, tol) {
     )
   )
 
-  # Use the corrected scalar mean for each instrument. Summation roundoff in
-  # colMeans can perturb balanced deviations and downstream optimizer paths
+  # Use mean() per instrument because colMeans() roundoff can disturb balanced deviations
   z_means <- vapply(seq_len(ncol(z)), function(j) mean(z[, j]), numeric(1))
   z <- sweep(z, 2, z_means)
   if (is.null(colnames(z))) {
@@ -67,10 +90,14 @@ validate_tau0_inputs <- function(y1, y2, x, z, gamma, impose_null, tol) {
 
 #' Resolve and Validate the gamma Argument
 #'
-#' @param z De-meaned, name-normalized instrument matrix
-#' @param y2 Coerced y2 matrix
-#' @param gamma NULL or a candidate \code{ncol(z) x ncol(y2)} matrix
-#' @return The resolved gamma matrix
+#' @param z De-meaned instrument matrix with validated column names.
+#' @param y2 News/innovation matrix with validated column names.
+#' @param gamma A numeric \code{ncol(z) x ncol(y2)} weight matrix, or
+#'   \code{NULL} when \code{z} has one column. Supplied dimnames must match
+#'   both input axes exactly.
+#' @return The supplied weight matrix, or an unnamed one-row matrix of unit
+#'   weights with \code{ncol(y2)} columns. Invalid type, shape, or dimnames
+#'   signal a structured \code{hetid_error} condition.
 #' @noRd
 resolve_tau0_gamma <- function(z, y2, gamma) {
   if (is.null(gamma)) {

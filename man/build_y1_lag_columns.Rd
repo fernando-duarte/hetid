@@ -7,15 +7,18 @@
 build_y1_lag_columns(y1, n_lags)
 }
 \arguments{
-\item{y1}{Numeric outcome vector (length \eqn{n}).}
+\item{y1}{Numeric outcome vector (length \eqn{n}), in time order.
+Missing values are retained in each shifted column.}
 
-\item{n_lags}{Integer number of own-lags \eqn{H \ge 1}.}
+\item{n_lags}{Integer number of own-lags \eqn{1 \le H \le n}.
+The caller must validate this value before building the lag block.}
 }
 \value{
 An \eqn{n \times H} numeric matrix with columns
-\code{l.y1, ..., l<H>.y1}. Column \code{h} has \code{h - 1} leading
-\code{NA}s, which the regression's complete-case filter drops, removing the
-first \eqn{H - 1} rows.
+\code{l.y1}, \code{l2.y1}, and so on through lag \code{H}.
+Column \code{h} has \code{h - 1} leading \code{NA}s. No rows are removed
+here; the regression's complete-case filter drops the first \eqn{H - 1}
+rows and any other rows with missing responses or regressors.
 }
 \description{
 Constructs the predetermined lag block for the \eqn{\omega_1} reduced form. Column

@@ -3,28 +3,31 @@
 #' Computes the basic components L_i, V_i, and Q_i for the identified set
 #' calculation for each maturity i.
 #'
-#' @param gamma Matrix (J x I) where each column gamma_i contains the
+#' @param gamma Finite numeric matrix (J x I) where each column gamma_i contains the
 #'   coefficients for system column i. I must equal the moments'
-#'   \code{n_components} attribute and J its instrument count.
+#'   \code{n_components} attribute and J its instrument count. Every constrained
+#'   column must contain a nonzero value; unconstrained columns may be zero.
+#'   Missing or non-finite values are rejected with a \code{hetid_error}.
 #' @param moments A \code{hetid_moments} object from
-#'   \code{\link{compute_identification_moments}}
+#'   \code{\link{compute_identification_moments}}.
 #'
 #' @return An object of class \code{hetid_components}: a list (with
 #' M = \code{length(maturities)} the active constraint maturities and
 #' n_components the theta axis) containing
 #' \describe{
 #'   \item{L_i}{Named numeric vector of length M (keys maturity_N); element k
-#'     is L_i for maturity \code{maturities[k]}}
+#'     is L_i for maturity \code{maturities[k]}.}
 #'   \item{V_i}{Named numeric vector of length M (keys maturity_N); element k
-#'     is V_i for maturity \code{maturities[k]}}
+#'     is V_i for maturity \code{maturities[k]}.}
 #'   \item{Q_i}{Named list of length M (keys maturity_N); element k is the
-#'     length-n_components vector Q_i for maturity \code{maturities[k]}}
+#'     length-n_components vector Q_i for maturity \code{maturities[k]}, named
+#'     \code{maturity_1}, ..., \code{maturity_I}.}
 #' }
 #' carrying the moments' \code{maturities} and \code{n_components}
-#' attributes forward.
+#' attributes forward. Arithmetic overflow can produce non-finite entries.
 #'
 #' @details
-#' For each maturity i, computes:
+#' Uses the centered \eqn{1/T} moments in \code{moments}. For each maturity i, computes:
 #' \deqn{L_i(\boldsymbol{\Gamma}) = \boldsymbol{\gamma}_i^{\top} \hat{\mathbf{R}}_i^{(0)}}
 #' \deqn{V_i(\boldsymbol{\Gamma}) = \boldsymbol{\gamma}_i^{\top}
 #'   \left(\hat{\mathbf{P}}_i^{(0)} (\hat{\mathbf{P}}_i^{(0)})^{\top}\right)
@@ -42,17 +45,25 @@
 #' @export
 #'
 #' @examples
-#' set.seed(42)
-#' n_obs <- 100
-#' J <- 3
-#' I <- 4
-#' w1 <- rnorm(n_obs)
-#' w2 <- matrix(rnorm(n_obs * I), nrow = n_obs, ncol = I)
-#' pcs <- matrix(rnorm(n_obs * J), nrow = n_obs, ncol = J)
-#' gamma <- matrix(rnorm(J * I), nrow = J, ncol = I)
-#'
-#' moments <- compute_identification_moments(w1, w2, pcs)
-#' components <- compute_identified_set_components(gamma, moments)
+#' local({
+#'   old_seed <- get0(".Random.seed", envir = .GlobalEnv)
+#'   on.exit({
+#'     if (is.null(old_seed)) {
+#'       rm(".Random.seed", envir = .GlobalEnv)
+#'     } else {
+#'       assign(".Random.seed", old_seed, envir = .GlobalEnv)
+#'     }
+#'   })
+#'   set.seed(42)
+#'   w1 <- rnorm(30)
+#'   w2 <- matrix(rnorm(60), ncol = 2)
+#'   pcs <- matrix(rnorm(30), ncol = 1)
+#'   gamma <- matrix(c(0, 1), nrow = 1)
+#'   moments <- compute_identification_moments(w1, w2, pcs, maturities = 2)
+#'   components <- compute_identified_set_components(gamma, moments)
+#'   print(components$Q_i)
+#'   print(components)
+#' })
 compute_identified_set_components <- function(gamma, moments) {
   assert_hetid_moments(moments)
   assert_bad_argument_ok(
@@ -113,21 +124,24 @@ compute_identified_set_components <- function(gamma, moments) {
 
 #' Construct a hetid_components Object
 #'
-#' Low-level cheap constructor carrying the maturity identity of the
-#' moments the components were derived from: type, scalar, and
-#' maturity-vector checks with lossless coercions. The full shape sweep
-#' lives in \code{validate_hetid_components()}, which the public boundary
-#' \code{compute_identified_set_components()} always runs; hot paths
-#' assembling components from known-good parts may call this
-#' constructor directly and skip it.
+#' Constructs a component list with maturity and theta-axis attributes.
+#' Checks outer types and lengths and coerces valid indices to integers.
+#' Does not check names, finiteness, or individual \code{Q_i} entries; call
+#' \code{\link{validate_hetid_components}} for the full shape check.
+#' The public \code{\link{compute_identified_set_components}} always runs it.
+#' For valid containers, outer names must be \code{maturity_N} in maturity order,
+#' and each \code{Q_i} entry must be a numeric vector of length \code{n_components}.
 #'
-#' @param L_i Named vector of L_i values
-#' @param V_i Named vector of V_i values
-#' @param Q_i List of Q_i vectors
-#' @param maturities Integer vector of w2 column indices
-#' @param n_components Theta-axis dimension
+#' @param L_i Numeric vector of length \code{length(maturities)} with L_i values.
+#' @param V_i Numeric vector of length \code{length(maturities)} with V_i values.
+#' @param Q_i List of length \code{length(maturities)} with Q_i vectors.
+#' @param maturities Nonempty numeric vector of distinct, finite integer w2 column
+#'   indices in \code{1:n_components}; input order is preserved.
+#' @param n_components Finite positive integer theta-axis dimension, no larger than
+#'   \code{.Machine$integer.max}.
 #'
-#' @return A classed \code{hetid_components} list
+#' @return A \code{hetid_components} list with unchanged \code{L_i}, \code{V_i}, and
+#'   \code{Q_i} entries and integer \code{maturities} and \code{n_components} attributes.
 #' @keywords internal
 new_hetid_components <- function(L_i, V_i, Q_i, # nolint: object_name_linter.
                                  maturities, n_components) {
@@ -166,18 +180,12 @@ new_hetid_components <- function(L_i, V_i, Q_i, # nolint: object_name_linter.
 
 #' Print a hetid_components Object
 #'
-#' @param x A \code{hetid_components} object
-#' @param ... Unused, for method consistency
+#' Displays the theta-axis dimension and active constraint indices on the console.
 #'
-#' @return \code{x}, invisibly
-#' @examples
-#' set.seed(42)
-#' w1 <- rnorm(100)
-#' w2 <- matrix(rnorm(100 * 4), nrow = 100, ncol = 4)
-#' pcs <- matrix(rnorm(100 * 3), nrow = 100, ncol = 3)
-#' gamma <- matrix(rnorm(3 * 4), nrow = 3, ncol = 4)
-#' moments <- compute_identification_moments(w1, w2, pcs)
-#' print(compute_identified_set_components(gamma, moments))
+#' @param x A \code{hetid_components} object.
+#' @param ... Unused arguments, accepted for method consistency.
+#' @return \code{x}, invisibly.
+#' @seealso \code{\link[base]{print}}, \code{\link{compute_identified_set_components}}
 #' @export
 print.hetid_components <- function(x, ...) {
   cat("<hetid_components>\n")

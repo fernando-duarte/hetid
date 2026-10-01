@@ -48,7 +48,7 @@ quadratic_polish_direction <- function(quadratic, direction, maxit) {
   }
 }
 
-# A line tail is accepted only when its leading nonzero sign is resolved
+# Accept a verified negative leading coefficient or a constraint that is zero along the line
 quadratic_verify_line_tail <- function(quadratic, origin, direction, side) {
   all(vapply(seq_along(quadratic$c_i), function(i) {
     quadratic_constraint_tail(

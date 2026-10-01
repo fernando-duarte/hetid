@@ -18,20 +18,28 @@ quadratic_from_components(
 )
 }
 \arguments{
-\item{tau}{Vector of length \code{n_components}, indexed by system
-column}
+\item{tau}{Finite numeric vector of length \code{n_components} in
+\code{[0, 1)}, indexed by system column.}
 
-\item{L_i, V_i, s_i_0, sigma_i_sq}{Position-indexed numeric vectors}
+\item{L_i, V_i, s_i_0, sigma_i_sq}{Finite numeric vectors of length
+\code{length(maturities)}, in constraint order; \code{sigma_i_sq}
+must be strictly positive.}
 
-\item{Q_i, s_i_1, s_i_2}{Position-indexed lists of theta-axis objects}
+\item{Q_i, s_i_1}{Lists of \code{length(maturities)} finite numeric
+vectors, each of length \code{n_components}, in constraint order.}
 
-\item{maturities}{Integer vector; element k maps to
-\code{maturities[k]}}
+\item{s_i_2}{List of \code{length(maturities)} finite numeric
+\code{n_components x n_components} matrices, in constraint order.}
 
-\item{n_components}{Theta-axis dimension (I)}
+\item{maturities}{Integer vector of constrained system column indices;
+element k maps to \code{maturities[k]}.}
+
+\item{n_components}{Positive integer theta-axis dimension (I).}
 }
 \value{
-A list with d_i, A_i, b_i, c_i
+A plain list with \code{d_i}, \code{A_i}, \code{b_i}, and
+\code{c_i}, shaped and named as described in
+\code{\link{compute_identified_set_quadratic}}.
 }
 \description{
 Internal workhorse holding the d/A/b/c arithmetic. Inputs are raw

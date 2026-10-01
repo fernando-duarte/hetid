@@ -10,24 +10,32 @@
 #' @param y1 Numeric vector of length \eqn{T}: the mean-equation outcome
 #'   \eqn{Y_1} (e.g. consumption growth).
 #' @param y2 Numeric matrix of \eqn{T} rows: the \eqn{I}
-#'   news/innovation variables \eqn{Y_2}, with unique, non-blank column names.
+#'   news/innovation variables \eqn{Y_2}. At least one column is required,
+#'   with unique, non-empty, non-missing column names.
 #' @param x Numeric matrix (or vector) of \eqn{T} rows: the common
-#'   conditioning regressors \eqn{X} (principal components, own-lags, ...).
+#'   conditioning regressors \eqn{X} (e.g. principal components of nominal
+#'   financial asset returns or own-lags). At least one column is required.
+#'   A vector is treated as a one-column matrix.
 #'   See the \strong{x contract} section below.
 #' @param z Numeric matrix (or vector) of \eqn{T} rows: the \eqn{J}
 #'   instrument(s) that enter the heteroskedasticity condition.
+#'   At least one column is required. Supplied column names must be unique,
+#'   non-empty, and non-missing. When no column names are supplied, they
+#'   are generated as \code{z1}, \code{z2}, etc. A vector is treated as a
+#'   one-column matrix. Instruments are de-meaned before computing moments.
 #' @param impose_null Logical; if \code{TRUE}, impose \eqn{B = 0}
 #'   structurally on the \eqn{Y_2} reduced form instead of estimating it
 #'   (\code{w2 <- y2}, \code{beta2r} all zero). Default \code{FALSE}.
-#' @param gamma \code{NULL} or a numeric \eqn{J \times I} matrix of
-#'   instrument weights. Defaults to \code{matrix(1, 1, ncol(y2))} only when
+#' @param gamma \code{NULL} or a finite numeric \eqn{J \times I} matrix of
+#'   instrument weights, with no all-zero column. Defaults to
+#'   \code{matrix(1, 1, ncol(y2))} only when
 #'   \code{ncol(z) == 1} (the paper's benchmark instrument); with a
 #'   multi-column \code{z}, \code{gamma} is required, since an implicit
 #'   equal-weight direction is units-dependent and would silently change
 #'   the estimand. A supplied \code{gamma} must have \code{dim ==
 #'   c(ncol(z), ncol(y2))}; if it carries dimnames they must equal
 #'   \code{colnames(z)} and \code{colnames(y2)} exactly (a correctly sized
-#'   but permuted named \code{gamma} silently changes the estimand).
+#'   but permuted named \code{gamma} is rejected).
 #' @param tol Positive numeric scalar, the point-solve tolerance passed to
 #'   \code{\link{compute_tau0_point}} (default
 #'   \code{HETID_CONSTANTS$TAU0_POINT_TOLERANCE}).
@@ -35,15 +43,24 @@
 #' @return A validated \code{hetid_tau0_fit} object; see
 #'   \code{\link{hetid_tau0_fit}} for the full container contract.
 #' \describe{
-#'   \item{beta1r, beta2r}{Reduced-form OLS coefficients of \eqn{Y_1} and
-#'     \eqn{Y_2} on \eqn{X}.}
-#'   \item{w1, w2}{Reduced-form residuals.}
+#'   \item{beta1r, beta2r}{Named coefficient vector for \eqn{Y_1} and an
+#'     \eqn{I \times (ncol(x) + 1)} coefficient matrix for \eqn{Y_2},
+#'     including the intercept. Matrix rows follow \code{colnames(y2)};
+#'     columns follow \code{names(beta1r)}. When \code{impose_null = TRUE},
+#'     \code{beta2r} is all zero instead of estimated by OLS.}
+#'   \item{w1, w2}{A length-\eqn{T} residual vector and a
+#'     \eqn{T \times I} residual matrix. When \code{impose_null = TRUE},
+#'     \code{w2} is the supplied \code{y2}.}
 #'   \item{z, gamma}{The de-meaned instrument matrix and the resolved
 #'     instrument weights.}
-#'   \item{moments, point}{The \code{hetid_moments} object and the tau = 0
-#'     point solve (\code{NULL} when the stacked system has no unique
-#'     consistent solution).}
-#'   \item{beta1}{The recovered structural coefficients, or \code{NULL}
+#'   \item{moments, point}{The centered \eqn{1/T} \code{hetid_moments}
+#'     object for all \code{y2} columns and the tau = 0 point solve
+#'     (\code{NULL} when the stacked system has no unique
+#'     consistent solution). A non-\code{NULL} \code{point} contains
+#'     a length-\eqn{I} \code{theta} vector and a scalar \code{cond}
+#'     condition-number diagnostic.}
+#'   \item{beta1}{A named vector of recovered structural coefficients,
+#'     the same length as \code{beta1r}, or \code{NULL}
 #'     exactly when \code{point} is \code{NULL}.}
 #' }
 #'
@@ -54,6 +71,10 @@
 #' anywhere in the inputs is a structured \code{hetid_error_bad_argument}
 #' and is never silently filtered: an independent \code{complete.cases}
 #' filter per input would desynchronize the mean and volatility samples.
+#' After converting \code{x} to a matrix, at least \code{ncol(x) + 2}
+#' observations are required; fewer raise
+#' \code{hetid_error_insufficient_data}. Unequal row counts raise
+#' \code{hetid_error_dimension_mismatch}.
 #' Row order is assumed chronological, for downstream HAC lag structure,
 #' but that ordering is documented, not enforced.
 #'
@@ -78,6 +99,8 @@
 #' function for the exact solve. The structural coefficients then follow
 #' from the exact affine identity in
 #' \code{\link{recover_structural_coefficients}}.
+#' The moments calculation warns when identification variances are
+#' numerically degenerate; this diagnostic does not itself stop the solve.
 #'
 #' @seealso \code{\link{tau0_reduced_forms}}, \code{\link{compute_tau0_point}},
 #'   \code{\link{recover_structural_coefficients}}
@@ -85,17 +108,30 @@
 #' @export
 #'
 #' @examples
-#' set.seed(42)
-#' t_obs <- 150
-#' x <- cbind(x1 = rnorm(t_obs), x2 = rnorm(t_obs))
-#' z <- rnorm(t_obs)
-#' e2 <- sqrt(exp(0.5 + 0.9 * z)) * matrix(rnorm(t_obs * 2), t_obs, 2)
-#' y2 <- x %*% matrix(c(1, 0.5, -0.3, 0.7), 2, 2) + e2
-#' colnames(y2) <- c("news1", "news2")
-#' theta_true <- c(0.8, -0.5)
-#' y1 <- drop(0.3 + x %*% c(0.2, -0.1) + y2 %*% theta_true + rnorm(t_obs))
-#' fit <- compute_tau0_system(y1, y2, x, z)
-#' fit$point$theta
+#' local({
+#'   old_seed <- get0(".Random.seed", envir = globalenv(), inherits = FALSE)
+#'   on.exit({
+#'     if (is.null(old_seed)) {
+#'       rm(".Random.seed", envir = globalenv())
+#'     } else {
+#'       assign(".Random.seed", old_seed, envir = globalenv())
+#'     }
+#'   })
+#'   set.seed(42)
+#'   t_obs <- 150
+#'   x <- cbind(x1 = rnorm(t_obs), x2 = rnorm(t_obs))
+#'   z <- rnorm(t_obs)
+#'   e2 <- sqrt(exp(0.5 + 0.9 * z)) * matrix(rnorm(t_obs * 2), t_obs, 2)
+#'   y2 <- x %*% matrix(c(1, 0.5, -0.3, 0.7), 2, 2) + e2
+#'   colnames(y2) <- c("news1", "news2")
+#'   theta_true <- c(0.8, -0.5)
+#'   y1 <- drop(0.3 + x %*% c(0.2, -0.1) + y2 %*% theta_true + rnorm(t_obs))
+#'   fit <- compute_tau0_system(y1, y2, x, z)
+#'   print(fit$point$theta)
+#'
+#'   null_fit <- compute_tau0_system(y1, y2, x, z, impose_null = TRUE)
+#'   print(null_fit$beta2r)
+#' })
 compute_tau0_system <- function(y1, y2, x, z, impose_null = FALSE,
                                 gamma = NULL,
                                 tol = HETID_CONSTANTS$TAU0_POINT_TOLERANCE) {

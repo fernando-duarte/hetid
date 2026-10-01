@@ -4,9 +4,16 @@
 \alias{hetid_tau0_fit}
 \title{Construct and Validate hetid_tau0_fit Objects}
 \description{
-Internal helpers behind the \code{hetid_tau0_fit} container: the cheap
-\code{new_hetid_tau0_fit()} constructor and the full shape sweep in
-\code{validate_hetid_tau0_fit()}. The public boundary that builds
-these objects is \code{compute_tau0_system()}.
+Container for the tau = 0 mean-equation fit built by
+\code{\link{compute_tau0_system}}.
+}
+\details{
+The list contains \code{beta1r}, \code{beta2r}, \code{w1},
+\code{w2}, \code{z}, \code{gamma}, \code{moments}, \code{point}, and
+\code{beta1}. Attributes record the integer sample size \code{n_obs},
+the logical \code{impose_null} flag, and the positive tolerance \code{tol}.
+Here I = \code{ncol(w2)} is the component axis and J = \code{ncol(z)}.
+See \code{\link{new_hetid_tau0_fit}} for element shapes and
+\code{\link{validate_hetid_tau0_fit}} for structural checks.
 }
 \keyword{internal}

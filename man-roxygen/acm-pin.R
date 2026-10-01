@@ -1,9 +1,10 @@
-#' @param release Optional GitHub release tag without whitespace or control
-#'   characters. Supply together with
-#'   \code{expected_sha256}; both default to NULL for the existing unpinned behavior.
-#'   Pins are unavailable for \code{source = "nyfed"}.
-#' @param expected_sha256 Expected 64-character hexadecimal sha256 digest of the
-#'   compressed release asset, obtained independently by the caller.
+#' @param release \code{NULL} or a single non-missing, non-empty character string
+#'   giving a GitHub release tag without whitespace or control characters.
+#'   Supply together with \code{expected_sha256}; both default to \code{NULL}
+#'   to select unpinned data. Pins are unavailable for \code{source = "nyfed"}.
+#' @param expected_sha256 \code{NULL} or a single non-missing character string
+#'   containing the 64-character hexadecimal sha256 digest of the compressed
+#'   release asset, obtained independently by the caller.
 #' @details
 #' An explicit release and digest select an isolated snapshot in the per-user
 #' data directory, keyed by release, digest, and frequency. Pinned reads verify

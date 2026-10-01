@@ -7,16 +7,26 @@
 download_acm_github(quiet = FALSE, frequency = c("monthly", "daily"))
 }
 \arguments{
-\item{quiet}{Logical, suppress progress output}
+\item{quiet}{Logical scalar. If \code{TRUE}, suppresses download progress
+output and status messages. Defaults to \code{FALSE}.}
 
-\item{frequency}{"monthly" (default) or "daily" release asset}
+\item{frequency}{Character string selecting the observation frequency:
+\code{"monthly"} (default) or \code{"daily"}. Both assets use the monthly
+maturity grid.}
 }
 \value{
-Invisibly returns the cached file path. A sidecar file at that path
-plus \code{.meta} is written alongside it, recording the sha256, source
-URL, and retrieval timestamp
+Invisibly returns a character string giving the cached file path.
+Download, digest-verification, or cache-replacement failures raise a
+\code{hetid_error}.
 }
 \description{
-Download and Verify the ACM Data from the GitHub Release
+Downloads the selected release asset, verifies its sha256 digest, and saves
+it in the per-user data directory, replacing an existing cached copy.
+}
+\details{
+The data directory is created if needed. A sidecar at the cached path plus
+\code{.meta} records the sha256 digest, source URL, and retrieval date in
+\code{YYYY-MM-DD} format. The sidecar is written after the verified file is
+cached; a sidecar write failure does not undo the cache replacement.
 }
 \keyword{internal}

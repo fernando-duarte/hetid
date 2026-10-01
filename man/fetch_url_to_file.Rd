@@ -7,21 +7,26 @@
 fetch_url_to_file(url, destfile, quiet, what)
 }
 \arguments{
-\item{url}{Source URL}
+\item{url}{Character scalar giving the source URL.}
 
-\item{destfile}{Destination path}
+\item{destfile}{Character scalar giving the destination file path.}
 
-\item{quiet}{Logical, suppress progress output}
+\item{quiet}{Logical scalar; \code{TRUE} suppresses progress output.}
 
-\item{what}{Human label for error messages}
+\item{what}{Character scalar giving a human-readable label for error messages.}
 }
 \value{
-Invisibly returns \code{destfile}
+The character scalar \code{destfile}, invisibly, on success.
 }
 \description{
 Wraps \code{download.file} with an explicit libcurl method (so the
 release-redirect behavior does not depend on the environment) and
 converts every failure mode -- error, warning, non-zero status,
-missing or empty result -- into a structured error.
+missing or empty result -- into a \code{hetid_error} condition.
+}
+\details{
+The download writes to \code{destfile} in binary mode and may overwrite an
+existing file. This helper does not remove a partial or empty file on failure;
+the caller is responsible for cleanup.
 }
 \keyword{internal}

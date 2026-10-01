@@ -1,5 +1,8 @@
 #' Real Roots Retaining Constraint Identity and Multiplicity
 #'
+#' Computes real roots of each constraint polynomial
+#' \eqn{a t^2 + \beta t + \gamma}, preserving input row order.
+#'
 #' Explicitly separates constant, linear, and quadratic constraints. A
 #' nonzero leading coefficient remains quadratic, however small it is.
 #' The discriminant is computed in units of a power of two near
@@ -15,9 +18,16 @@
 #' Finite roots outside the numeric range fail rather than masquerading as
 #' unboundedness. Root rounding near a repeated root remains unavoidable.
 #'
-#' @param coefs Numeric matrix with columns a, beta, gamma
-#' @return Numeric two-column matrix, one row per constraint. Missing roots
-#'   are \code{NA}; a double root appears twice so it cannot flip a sign
+#' Nonfinite coefficients or nonzero roots outside the numeric range
+#' signal a \code{hetid_error} condition.
+#'
+#' @param coefs Numeric matrix with one row per constraint and three columns
+#'   in the order \code{a}, \code{beta}, \code{gamma}. All entries must be finite.
+#' @return Numeric two-column matrix without dimnames, one row per constraint
+#'   in input order. Constant polynomials and quadratics with negative
+#'   discriminants have two \code{NA} entries. Linear polynomials have their
+#'   root in the first column and \code{NA} in the second. A double root appears
+#'   twice so it cannot flip a sign. Roots are not sorted within each row.
 #' @noRd
 line_quadratic_roots <- function(coefs) {
   if (any(!is.finite(coefs))) {
@@ -45,9 +55,16 @@ line_quadratic_roots <- function(coefs) {
 
 #' Scaled Roots of Constraints with Nonzero Curvature
 #'
-#' @param a_val,beta_val,gamma_val Coefficient vectors; a is nonzero and
-#'   beta and gamma are not both zero
-#' @return Two-column root matrix with NA for negative discriminants
+#' Computes real roots for the quadratic rows selected by
+#' \code{line_quadratic_roots()}, using scaled arithmetic.
+#'
+#' @param a_val,beta_val,gamma_val Finite numeric coefficient vectors of equal
+#'   length. Each \code{a_val} is nonzero, and \code{beta_val} and
+#'   \code{gamma_val} are not both zero at any position.
+#' @return Numeric two-column matrix without dimnames, one row per input
+#'   position. Negative discriminants give two \code{NA} entries; a double root
+#'   appears twice. Roots are not sorted within each row. Scaling failures or
+#'   nonzero roots outside the numeric range signal a \code{hetid_error} condition.
 #' @noRd
 scaled_quadratic_roots <- function(a_val, beta_val, gamma_val) {
   product <- sqrt(abs(a_val)) * sqrt(abs(gamma_val))

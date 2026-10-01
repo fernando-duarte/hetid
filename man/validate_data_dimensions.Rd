@@ -7,14 +7,19 @@
 validate_data_dimensions(yields, term_premia)
 }
 \arguments{
-\item{yields}{Yields data (matrix or data frame)}
+\item{yields}{A matrix or data frame of yields, with observations in rows.}
 
-\item{term_premia}{Term premia data (matrix or data frame)}
+\item{term_premia}{A matrix or data frame of term premia, with observations in rows.}
 }
 \value{
-Invisible TRUE if valid, stops with informative error if invalid
+Invisible \code{TRUE} when dimensions agree. Otherwise, signals a
+\code{hetid_error_dimension_mismatch} condition.
 }
 \description{
-Validates that yields and term premia have consistent dimensions.
+Validates that yields and term premia have equal row and column counts.
+}
+\details{
+Checks dimensions only; dates, column names, and values are not checked.
+Empty matrices and data frames are allowed when their dimensions agree.
 }
 \keyword{internal}

@@ -15,35 +15,35 @@ harvey_scoring(
 )
 }
 \arguments{
-\item{cur}{Evaluated start from \code{\link{harvey_eval}}}
+\item{cur}{Evaluated-start list from \code{\link{harvey_eval}}.}
 
-\item{y}{Numeric nonnegative response}
+\item{y}{Finite nonnegative numeric response vector of length \code{nrow(x_mat)}.}
 
-\item{x_mat}{Numeric design matrix, intercept column included}
+\item{x_mat}{Finite numeric design matrix, intercept column included.}
 
-\item{pos}{Logical vector marking the positive-response rows}
+\item{pos}{Logical vector \code{y > 0} of length \code{length(y)}.}
 
 \item{col_abs}{Numeric vector \code{colSums(abs(x_mat))}, the per-coordinate
-scale the moment is judged on}
+scale the moment is judged on. Each entry must be positive.}
 
-\item{chol_xx}{Upper triangular Cholesky factor of \code{crossprod(x_mat)}}
+\item{chol_xx}{Numeric upper triangular Cholesky factor of \code{crossprod(x_mat)}.}
 
-\item{control}{Validated fitting controls}
+\item{control}{Validated named list of Harvey fitting controls; defaults
+derive from \code{\link{LOG_VARIANCE_HARVEY_CONTROL}}.}
 }
 \value{
 List with the last \code{eval}, the \code{iters} taken (negative on
 a stall, marking the iteration it stalled at), the cumulative
-\code{halves}, and a \code{status} of \code{"converged"},
-\code{"line_search_stall"}, or \code{"iteration_cap"}
+\code{halves} from accepted steps, and a \code{status} of \code{"converged"},
+\code{"line_search_stall"}, or \code{"iteration_cap"}.
 }
 \description{
-The initial-start shortcut exits converged with code \code{0} when the
+The initial-start shortcut exits converged with \code{iters = 0} when the
 scaled score already passes; otherwise each iteration prefers the
 observed-Newton direction and falls back to the Fisher direction when the
 observed information is ill conditioned or its line search stalls.
-Convergence needs a passed score \emph{and} a relative criterion or
-parameter change, so a step that merely grazes the tolerance is not enough.
-\code{MAXIT} is a safety ceiling: Newton gets there in a handful of
-iterations, the Fisher fallback on a pathological point may need many more.
+After a step, convergence needs a score at or below \code{SCORE_TOLERANCE}
+\emph{and} a criterion or parameter change within \code{REL_CHANGE_TOLERANCE}
+times the corresponding scale (at least one). \code{MAXIT} caps iterations.
 }
 \keyword{internal}

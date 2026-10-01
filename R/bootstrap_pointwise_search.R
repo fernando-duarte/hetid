@@ -1,27 +1,3 @@
-# Target P, over the continuum of truth positions phi_0 = L + lambda * w. Each
-# side earns a width credit -- truth sitting away from an endpoint leaves that
-# endpoint room to spare before it can fail -- so the per-draw root is
-#   max{0, z_l - lambda * d_l, z_u - (1 - lambda) * d_u},   d = w_hat / s,
-# a max of three affine functions of lambda with slopes 0, -d_l and +d_u. Each
-# is L-Lipschitz with L = max(d_l, d_u), and the order statistic inherits L,
-# because order statistics are monotone in each argument and translation
-# equivariant: f_b(lambda') <= f_b(lambda) + L*delta for every draw implies the
-# same for the k-th smallest. That licenses a certified branch and bound, since
-# on any [a,b] the two one-sided Lipschitz bounds average to
-#   U[a,b] = (g(a) + g(b) + L * (b - a)) / 2 >= sup over [a,b] of g.
-# The supremum genuinely needs this: an interior lambda attains it in about a
-# third of the table's cells, so an endpoint search or a fixed grid is wrong.
-#
-# The pool is fixed once, and every root is finite on it, so n never changes and
-# the monotonicity the Lipschitz argument needs holds. Ties break on the
-# smallest left endpoint, so reruns are bit-identical.
-#
-# The stopping test is the gap on the reported value min(c_s, max U), not on
-# max U. U - M shrinks only as L*(b-a)/2, so a flat credited quantile would
-# otherwise force uniform refinement to width 2*tolerance/L -- measured at tens
-# of thousands of evaluations by L = 3 -- while the c_s cap that the ordering
-# identity already licenses ends exactly those cases at once. Cells whose
-# supremum is interior are unaffected: both tests agree there
 bootstrap_pointwise_critical <- function(z_lower, z_upper, pool, d_lower, d_upper,
                                          alpha, tolerance, c_s, max_evals =
                                            BOOTSTRAP_INFERENCE_DEFAULTS$max_evals) {
@@ -50,6 +26,8 @@ bootstrap_pointwise_critical <- function(z_lower, z_upper, pool, d_lower, d_uppe
   best <- max(g_left, g_right)
   endpoint_best <- best
   best_lambda <- if (g_left >= g_right) 0 else 1
+  # With a fixed draw pool, the largest absolute root slope also bounds quantile changes
+  # Combining the endpoint bounds gives an upper bound throughout each interval
   bound <- function() {
     bootstrap_finite_arithmetic(
       (g_left + g_right + lipschitz * (right - left)) / 2, "search upper bound"
@@ -58,6 +36,7 @@ bootstrap_pointwise_critical <- function(z_lower, z_upper, pool, d_lower, d_uppe
   repeat {
     upper <- bound()
     top <- max(upper)
+    # Credits only reduce roots, so c_s also bounds the quantile and can end refinement early
     if (min(c_s, top) - best <= tolerance) {
       search_stop <- "tolerance"
       break
@@ -84,8 +63,7 @@ bootstrap_pointwise_critical <- function(z_lower, z_upper, pool, d_lower, d_uppe
     g_left <- c(g_left[-at], g_left[[at]], g_mid)
     g_right <- c(g_right[-at], g_mid, g_right[[at]])
   }
-  # top is the accepted stopping bound; interval arrays are unchanged before return, so reusing it
-  # equals recomputation and makes that equality explicit
+  # Every stop occurs before interval updates, so top remains the final search bound
   list(
     c_p_lower = best, c_p_upper = max(best, min(c_s, top)), evals = evals,
     best_lambda = best_lambda, interior = best > endpoint_best + tolerance,

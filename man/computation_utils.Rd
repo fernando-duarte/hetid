@@ -4,6 +4,6 @@
 \alias{computation_utils}
 \title{Computation Utilities for Term Structure Analysis}
 \description{
-Common utility functions for price news and SDF innovations computations
+Internal helpers for regression coefficients, dated series, and variance-bound trimming.
 }
 \keyword{internal}

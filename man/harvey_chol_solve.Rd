@@ -7,12 +7,15 @@
 harvey_chol_solve(chol_xx, m)
 }
 \arguments{
-\item{chol_xx}{Upper triangular Cholesky factor}
+\item{chol_xx}{Numeric square upper triangular Cholesky factor of a
+positive definite matrix.}
 
-\item{m}{Numeric vector or matrix to solve against}
+\item{m}{Numeric vector of length \code{nrow(chol_xx)}, or numeric matrix
+with that many rows, giving the right-hand side.}
 }
 \value{
-The solve of the factored matrix applied to \code{m}
+Numeric vector or matrix with the same dimensions as \code{m},
+solving the system whose matrix is \code{crossprod(chol_xx)}.
 }
 \description{
 \code{chol_xx} is the upper triangular factor of a positive definite

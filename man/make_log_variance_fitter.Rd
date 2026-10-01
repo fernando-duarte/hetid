@@ -7,22 +7,24 @@
 make_log_variance_fitter(x, estimator = "ppml", control = list())
 }
 \arguments{
-\item{x}{Numeric matrix (or data-frame-coercible object) of \eqn{T} rows:
-the volatility regressors, without an intercept column (one is
-prepended by \code{\link{log_variance_design}}). Requires at least
-\code{ncol(x) + 2} observations (see
-\code{\link{min_obs_for_pc_regression}}).}
+\item{x}{Numeric matrix or data frame of volatility regressors, without an
+intercept column (one is prepended by
+\code{\link{log_variance_design}}). Requires at least
+\code{ncol(x) + 2} rows (see \code{\link{min_obs_for_pc_regression}}).}
 
 \item{estimator}{Single string naming the estimator, \code{"ppml"} or
 \code{"harvey"}; passed unchecked to
 \code{\link{log_variance_estimator}}, which is the sole owner of the
 valid-estimator set. Default \code{"ppml"}.}
 
-\item{control}{Named list of fitting-control overrides. Names match the
-estimator's exported control constants, excluding covariance fields.
+\item{control}{Named list of fitting-control overrides. Default \code{list()}.
+Names match the estimator's exported control constants, excluding
+covariance fields.
 PPML additionally accepts \code{START_ORDER}, a permutation of
 \code{supplied}, \code{fallback}, \code{intercept_only}, and
-\code{glm_default}. Harvey accepts logical \code{AUTO_INTERCEPT}.
+\code{glm_default}. Harvey accepts logical \code{AUTO_INTERCEPT}
+(default \code{TRUE}); when \code{FALSE}, only supplied and fallback
+starts are available.
 Both accept logical \code{SKIP_NONFINITE_STARTS} (default FALSE): when
 TRUE, correctly shaped nonfinite starts are recorded as failed attempts
 rather than rejected at the argument boundary. Shape and names are always
@@ -39,12 +41,21 @@ the contracts of \code{\link{fit_log_variance}} and returning the same
 validated \code{hetid_log_variance_fit} container. The design and controls
 are captured when this function is created. Changing the caller's original
 objects afterward does not change the fitter.
+Numerical fitting failures return a container with
+\code{fit_status = "nonconvergence"} and \code{coef = NULL}; malformed
+arguments raise structured \code{hetid_error} conditions.
 }
 \description{
 Validates the regressors and fitting controls once and returns a function
 that fits new responses on that design. Response values, response scaling,
 starts and fitted results are checked on every call. Numerical fitting is
 shared with \code{\link{fit_log_variance}}.
+}
+\details{
+The design must be a matrix or data frame with finite numeric entries;
+missing or nonfinite values are rejected, without dropping rows. Unnamed
+columns receive default labels. Supplied column names must be non-missing,
+non-blank and unique, and must not include \code{"(Intercept)"}.
 }
 \examples{
 x <- matrix(seq(-1, 1, length.out = 20), ncol = 1)

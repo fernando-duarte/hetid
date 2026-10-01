@@ -7,27 +7,45 @@
 ppml_accept(fit, y_scaled, x_mat, control = log_variance_fit_control("ppml"))
 }
 \arguments{
-\item{fit}{A \code{glm.fit} result (or any list with
-\code{coefficients}, \code{converged}, and \code{boundary})}
+\item{fit}{A \code{glm.fit} result, or a list with a numeric
+\code{coefficients} vector matching the design columns and logical
+\code{converged} and \code{boundary} flags.}
 
-\item{y_scaled}{Numeric response on the scaled (fitted) scale}
+\item{y_scaled}{Finite nonnegative numeric response vector on the scaled
+(fitted) scale, with at least one positive value.}
 
-\item{x_mat}{Numeric design matrix, intercept column included}
+\item{x_mat}{Finite numeric design matrix with one row per response and
+an intercept column.}
 
-\item{control}{Validated fitting controls}
+\item{control}{Validated fitting controls; defaults to the PPML controls
+from \code{log_variance_fit_control("ppml")}.}
 }
 \value{
-List with \code{accepted}, \code{reason}, and \code{coef_scaled};
-accepted (and score-or-conditioning rejected) verdicts also carry
-\code{mu}, \code{pos}, \code{score_norm}, \code{score_norm_raw},
-\code{info_col_scale}, \code{condition_weighted_scaled}, and
-\code{rcond_info_raw}
+A list with logical scalar \code{accepted}, scalar string
+\code{reason} (\code{NA_character_} on acceptance), and coefficient
+vector \code{coef_scaled}. Early rejection reasons are
+\code{"nonfinite_coef"}, \code{"nonpositive_mu"},
+\code{"irls_not_converged"}, \code{"boundary"}, and \code{"info_scale"}.
+Accepted verdicts and rejections for \code{"score_tolerance"} or
+\code{"ill_conditioned"} also carry fitted scaled means \code{mu},
+a logical positive-response mask \code{pos}, the maximum normalized
+score \code{score_norm}, the maximum absolute unnormalized score
+\code{score_norm_raw}, information column norms \code{info_col_scale},
+the condition estimate \code{condition_weighted_scaled} (\code{1 / rcond}
+for the column-normalized information matrix), and the raw information
+matrix's reciprocal condition estimate \code{rcond_info_raw}.
 }
 \description{
-Fail-closed post-fit check on the scaled response: every gate is
-unconditional and short-circuits with its reason, so an ill-posed fit never
-reaches the score and conditioning computations. Rejection is the default,
-since a silently accepted non-solution would be reported with standard
-errors as if it were one.
+Checks finite coefficients, positive finite fitted means, convergence,
+and the boundary flag before computing score and conditioning diagnostics.
+Rejection is the default, since a silently accepted non-solution would be
+reported with standard errors as if it were one.
+}
+\details{
+Response and design inputs are already validated by the fitting boundary;
+missing values are not removed here. Acceptance requires the normalized
+score to be at most \code{control$SCORE_TOLERANCE} and the reciprocal
+condition estimate of the column-normalized information matrix to be at
+least \code{control$RCOND_TOLERANCE}.
 }
 \keyword{internal}

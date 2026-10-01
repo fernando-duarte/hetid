@@ -4,7 +4,7 @@
 \alias{hetid_theta_box_validation}
 \title{Validation of hetid_theta_box Objects}
 \description{
-Full shape sweep behind \code{validate_hetid_theta_box()}. The theta
+Shape and consistency checks behind \code{\link{validate_hetid_theta_box}}. The theta
 block and the structural (beta1) block share one bounds check and one
 witness check, run once per block, followed by the zero-loading flag
 and the retained-source check.

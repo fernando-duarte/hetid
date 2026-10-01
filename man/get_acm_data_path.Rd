@@ -10,16 +10,16 @@ get_acm_data_path(
 )
 }
 \arguments{
-\item{source}{Data source: "auto" and "github" resolve the GitHub
-user cache then the bundled file; "nyfed" resolves the NY Fed
-cache path only}
+\item{source}{A character scalar. \code{"auto"} (default) and
+\code{"github"} resolve the GitHub user cache then the bundled file;
+\code{"nyfed"} resolves the NY Fed cache path only.}
 
-\item{frequency}{"monthly" (default) or "daily" (GitHub-only, user
-cache only)}
+\item{frequency}{A character scalar: \code{"monthly"} (default) or
+\code{"daily"} (GitHub-only, user cache only).}
 }
 \value{
-Character string with full path to the ACM data file (the
-nyfed and daily paths may not exist; callers check existence)
+A character scalar giving the ACM data file path. The file need
+not exist; callers check existence.
 }
 \description{
 Resolves the ACM data file for a source. The default GitHub-family
@@ -28,5 +28,9 @@ the bundled copy; the NY Fed fallback source resolves only its own
 cache file and is never loaded implicitly. The daily-frequency asset
 is GitHub-only and cache-only: it has no bundled copy, and the
 bundled monthly file never satisfies a daily request.
+}
+\details{
+No file or directory is created. The \code{"nyfed"}/\code{"daily"}
+combination raises a \code{hetid_error_bad_argument} condition.
 }
 \keyword{internal}

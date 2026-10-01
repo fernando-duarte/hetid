@@ -4,6 +4,6 @@
 \alias{validate_units}
 \title{Input-Unit Validation for the Bond-Pricing Entry Points}
 \description{
-Input-Unit Validation for the Bond-Pricing Entry Points
+Internal guardrail for yields supplied to the bond-pricing calculations.
 }
 \keyword{internal}

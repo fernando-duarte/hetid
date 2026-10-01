@@ -1,9 +1,9 @@
 #' Harvey Covariance Variants
 #'
 #' The five analytic (non-bootstrap) QMLE covariance matrices for the Harvey
-#' Gaussian multiplicative-heteroskedasticity log-variance fit, ported from
-#' the paper pipeline
-#' (\code{scripts-paper/log_variance/estimators/harvey/standard_errors.R}).
+#' Gaussian multiplicative-heteroskedasticity log-variance fit.
+#'
+#' @details
 #' \eqn{\hat\theta} minimizes \eqn{0.5 \sum_t (\eta_t + y_t e^{-\eta_t})} with
 #' \eqn{\eta = X\theta}, so every variant is a pure function of the accepted
 #' coefficient, the response \code{y}, and the design \code{X}: no fit object
@@ -34,18 +34,35 @@
 #' contract. The public entrypoints are \code{\link{compute_log_variance_vcov}}
 #' and \code{\link{compute_log_variance_vcov_at_coef}}.
 #'
+#' Missing or non-finite coefficients, responses, or design entries, negative
+#' responses, inconsistent vector lengths, or
+#' \code{nrow(x_mat) <= ncol(x_mat)} return all-NA matrices;
+#' no rows are omitted. Zero responses are allowed. Non-finite fitted means
+#' also return all-NA matrices. Later arithmetic overflow can still produce
+#' non-finite covariance entries. The coefficient's convergence or optimality
+#' is not checked here, and first-stage estimation uncertainty is not propagated.
+#' The public entrypoints validate matrix structure and scalar controls before
+#' calling this internal helper.
+#'
 #' @param coef Numeric coefficient vector of length \code{ncol(x_mat)}, on the
-#'   same scale as \code{y}
-#' @param y Numeric nonnegative response
+#'   same response scale as \code{y} and in design-column order. \code{NULL}
+#'   represents a failed fit and returns all-NA matrices.
+#' @param y Numeric nonnegative response vector of length \code{nrow(x_mat)}.
 #' @param x_mat Numeric design matrix, intercept column included, with column
-#'   labels naming the coefficient axis
-#' @param hac_lags Nonnegative integer Newey-West lag truncation; rows of
-#'   \code{x_mat} and \code{y} are assumed chronological
+#'   labels naming the coefficient axis. No intercept is added. Rows must align
+#'   with \code{y} and be chronological for HAC; order is not checked.
+#' @param hac_lags Nonnegative integer Newey-West lag truncation, in observations.
+#'   Zero makes \code{hac} equal \code{robust}. Lags beyond the sample length add
+#'   no cross-products, but the supplied truncation still determines their weights.
 #'
-#' @param rcond_tol Positive normalized-information conditioning tolerance
+#' @param rcond_tol Finite positive scalar tolerance for the reciprocal condition
+#'   number of diagonally normalized information. Defaults to
+#'   \code{LOG_VARIANCE_HARVEY_CONTROL$RCOND_TOLERANCE}.
 #'
-#' @return Named list of \code{ncol(x_mat)} square matrices keyed by
-#'   \code{LOG_VARIANCE_HARVEY_CONTROL$SE_TYPES}
+#' @return Named list keyed by \code{LOG_VARIANCE_HARVEY_CONTROL$SE_TYPES}.
+#'   Each element is a numeric \code{ncol(x_mat) x ncol(x_mat)} covariance matrix,
+#'   labelled on both axes by \code{colnames(x_mat)}. An unusable input returns
+#'   all-NA matrices; an unavailable inverse makes the variants requiring it all-NA.
 #' @keywords internal
 harvey_vcov_variants <- function(
   coef, y, x_mat, hac_lags,
@@ -57,8 +74,8 @@ harvey_vcov_variants <- function(
     return(pre$na_out)
   }
   na_mat <- pre$na_mat
-  r <- y / pre$mu # zero-safe: y >= 0, mu > 0 (a zero response gives r = 0)
-  g <- 0.5 * (1 - r) * x_mat # per-observation score rows
+  r <- y / pre$mu
+  g <- 0.5 * (1 - r) * x_mat
   h_inv <- se_norm_inv(0.5 * crossprod(x_mat, r * x_mat), rcond_tol)
   ex_inv <- se_norm_inv(0.5 * crossprod(x_mat), rcond_tol)
   meat_opg <- crossprod(g)

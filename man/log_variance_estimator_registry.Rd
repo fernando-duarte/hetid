@@ -4,10 +4,8 @@
 \alias{log_variance_estimator_registry}
 \title{Log-Variance Estimator Registry and Design Builder}
 \description{
-The registry is the sole owner of the valid-estimator set: callers take a
-plain \code{estimator} string and hand it here, so adding an estimator is
-one branch in \code{log_variance_estimator_specs()} plus its worker files,
-with no caller changes. \code{se_types} lives on the spec because a future
-estimator carries its own SE variants.
+The registry maps estimator names to fitting workers, covariance workers,
+and supported standard-error types. Callers resolve an estimator string
+through \code{\link{log_variance_estimator}}.
 }
 \keyword{internal}

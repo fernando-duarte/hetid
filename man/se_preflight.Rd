@@ -7,23 +7,36 @@
 se_preflight(coef, y, x_mat, hac_lags, se_types)
 }
 \arguments{
-\item{coef}{Numeric coefficient vector, or \code{NULL} on a failed fit}
+\item{coef}{Numeric coefficient vector of length \code{ncol(x_mat)}, or
+\code{NULL} on a failed fit.}
 
-\item{y}{Numeric response on the same scale \code{coef} was fitted on}
+\item{y}{Numeric response vector of length \code{nrow(x_mat)}, on the same
+scale \code{coef} was fitted on. Zero responses are allowed.}
 
-\item{x_mat}{Numeric design matrix, intercept column included}
+\item{x_mat}{Numeric design matrix, including any fitted intercept column.
+No intercept is added.}
 
-\item{hac_lags}{Nonnegative integer lag truncation}
+\item{hac_lags}{Single nonnegative integer lag truncation, measured in rows.}
 
-\item{se_types}{Character vector of variant names}
+\item{se_types}{Character vector of covariance variant names.}
 }
 \value{
-List with \code{ok}, \code{n}, \code{p}, \code{hac_lags},
-\code{na_mat}, \code{na_out}, and \code{mu} when \code{ok}
+A list containing logical \code{ok}, dimensions \code{n} and
+\code{p}, integer \code{hac_lags}, an all-NA \code{p x p} matrix
+\code{na_mat}, and \code{na_out}, a list of those matrices named by
+\code{se_types}. Matrix axes use \code{colnames(x_mat)}. When
+\code{ok = TRUE}, the list also contains the length-\code{n} fitted-mean
+vector \code{mu}; otherwise \code{mu} is absent.
 }
 \description{
-Estimator-neutral prologue: reports the dimensions, the canonical all-NA
-result keyed by \code{se_types}, and -- only when the inputs are usable --
-the fitted mean \eqn{\mu = \exp(X \theta)}.
+Returns the dimensions and covariance matrices filled with \code{NA},
+keyed by \code{se_types}. Usable inputs also return the fitted mean
+\eqn{\mu = \exp(X \theta)}.
+}
+\details{
+Usable inputs require more rows than design columns, finite numeric
+coefficients, responses, and design entries, nonnegative responses, and
+finite strictly positive fitted means. Missing values are not removed:
+any failed check returns \code{ok = FALSE} and the all-NA skeleton.
 }
 \keyword{internal}

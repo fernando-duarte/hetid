@@ -7,16 +7,21 @@
 new_hetid_error(message, subclass = NULL, call = NULL, ...)
 }
 \arguments{
-\item{message}{Error message string}
+\item{message}{A character scalar containing the error message.}
 
-\item{subclass}{Optional specific condition class, prepended}
+\item{subclass}{A character vector of specific condition classes to prepend,
+or \code{NULL} (the default) for no additional classes.}
 
-\item{call}{The call (default NULL)}
+\item{call}{A call object to store on the condition, or \code{NULL}
+(the default) to omit the call from the displayed error.}
 
-\item{...}{Extra named fields stored on the condition}
+\item{...}{Additional named fields stored on the condition without modification.}
 }
 \value{
-A condition object (not signaled)
+A list with \code{message}, \code{call}, and any additional fields.
+Its classes are \code{subclass}, when supplied, followed by
+\code{hetid_error}, \code{error}, and \code{condition}.
+The condition is returned without being signaled.
 }
 \description{
 Single source of the \code{hetid_error} class vector and condition

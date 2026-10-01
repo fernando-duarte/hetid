@@ -7,18 +7,26 @@
 acm_raw_column_name(data_type, maturity_months)
 }
 \arguments{
-\item{data_type}{Schema key from \code{HETID_ACM_SCHEMA}}
+\item{data_type}{Character scalar schema key: \code{"yields"},
+\code{"term_premia"}, or \code{"risk_neutral_yields"}.}
 
-\item{maturity_months}{Integer vector of maturities in months}
+\item{maturity_months}{Integer vector of maturities in months.}
 }
 \value{
-Character vector of raw column names
+A character vector of raw column names in maturity order, with
+\code{NA_character_} for missing maturities. An empty maturity vector
+returns \code{logical(0)}.
 }
 \description{
 Single source of truth for the raw file's dual naming convention:
 whole-year maturities keep the official padded-year names
-(\code{ACMY01}..\code{ACMY10}), sub-annual months use the
+(\code{ACMY01}..\code{ACMY10}), maturities that are not whole years use the
 three-digit month form (\code{ACMY001M}..\code{ACMY119M}).
 Vectorized over \code{maturity_months}.
+}
+\details{
+Maturities are coerced to integers but are not checked against the
+available maturity grid. Missing maturities are retained as missing names.
+Unknown data types raise a \code{hetid_error_bad_argument} condition.
 }
 \keyword{internal}

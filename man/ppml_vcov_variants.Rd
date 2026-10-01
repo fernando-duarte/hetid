@@ -14,26 +14,39 @@ ppml_vcov_variants(
 }
 \arguments{
 \item{coef}{Numeric coefficient vector of length \code{ncol(x_mat)}, on the
-same scale as \code{y}}
+response scale of \code{y}, or \code{NULL} for a failed fit. Entries must
+follow the design-column order.}
 
-\item{y}{Numeric nonnegative response}
+\item{y}{Numeric nonnegative response vector of length \code{nrow(x_mat)},
+aligned with the design rows. Zero responses are allowed.}
 
-\item{x_mat}{Numeric design matrix, intercept column included, with column
-labels naming the coefficient axis}
+\item{x_mat}{Numeric design matrix with column labels naming the coefficient
+axis. Supply the complete fitted design, including its intercept column
+if used; none is added.}
 
-\item{hac_lags}{Nonnegative integer Newey-West lag truncation; rows of
-\code{x_mat} and \code{y} are assumed chronological}
+\item{hac_lags}{Single nonnegative integer Newey-West lag truncation, in
+observations. Rows of \code{x_mat} and \code{y} are assumed chronological.
+Zero makes \code{hac} equal \code{hc0}. Lags at or beyond the sample length
+contribute no cross-products; the supplied bandwidth still sets weights.}
 
-\item{rcond_tol}{Positive normalized-information conditioning tolerance}
+\item{rcond_tol}{Finite positive scalar tolerance for the reciprocal
+condition number of the diagonally normalized information matrix.
+Defaults to \code{LOG_VARIANCE_CONTROL$RCOND_TOLERANCE}.}
 }
 \value{
-Named list of \code{ncol(x_mat)} square matrices keyed by
-\code{LOG_VARIANCE_CONTROL$SE_TYPES}
+A named list of numeric covariance matrices keyed by
+\code{LOG_VARIANCE_CONTROL$SE_TYPES}. Each matrix has
+\code{ncol(x_mat)} rows and columns, labelled by \code{colnames(x_mat)}
+on both axes. All matrices contain \code{NA_real_} when inputs are
+nonfinite or incompatible, responses are negative, fitted means are
+nonpositive or nonfinite, \code{nrow(x_mat) <= ncol(x_mat)}, or the
+information matrix fails the inversion gate.
 }
 \description{
 The four analytic (non-bootstrap) QMLE covariance matrices for the
-log-link quasi-Poisson log-variance fit, ported from the paper pipeline
-(\code{scripts-paper/log_variance/estimators/ppml/standard_errors.R}).
+log-link quasi-Poisson log-variance fit.
+}
+\details{
 \eqn{\hat\theta} solves \eqn{X'(y - \exp(X\theta)) = 0}, so every variant is
 a pure function of the accepted coefficient, the response \code{y}, and the
 design \code{X}: no fit object and no \code{response_scale} are needed, the
@@ -48,11 +61,6 @@ map being scale-invariant with the original-scale coefficient reproducing
 \item{hac}{Newey-West Bartlett HAC of the score,
 \eqn{A^{-1} M_{hac} A^{-1}}}
 }
-The SEs are hand-rolled in base R rather than delegated to a reconstructed
-\code{glm}/\code{sandwich} object: a refit is a second optimization that can
-drift from the coefficient the fit actually reports.
-}
-\details{
 The bread is inverted through the shared conditioning gate
 (\code{\link{se_norm_inv}}); a \code{NULL} inverse -- a non-finite,
 singular, or ill-conditioned bread -- fails every variant closed to an
@@ -61,5 +69,10 @@ coefficient, response, or nonpositive \eqn{\mu}. The raw
 \code{(coef, y, x_mat, hac_lags)} signature is the registry's \code{vcov}
 contract. The public entrypoints are \code{\link{compute_log_variance_vcov}}
 and \code{\link{compute_log_variance_vcov_at_coef}}.
+
+No rows are omitted for missing values. This helper evaluates formulas at
+the supplied coefficient without checking convergence or optimality.
+Malformed arguments are validated by the public entrypoints. Arithmetic
+overflow after preflight or inversion can still yield nonfinite entries.
 }
 \keyword{internal}

@@ -7,24 +7,39 @@
 harvey_failure(error_class, y, x_mat, response_scale, attempts = list(), ...)
 }
 \arguments{
-\item{error_class}{Single string naming the failure}
+\item{error_class}{A single non-missing string naming the failure.}
 
-\item{y}{Numeric response on the original scale}
+\item{y}{A nonempty, finite, nonnegative numeric response vector on the original scale.}
 
-\item{x_mat}{Numeric design matrix, intercept column included}
+\item{x_mat}{A finite numeric design matrix with \code{length(y)} rows,
+column names, and the intercept in its first column.}
 
-\item{response_scale}{Positive finite scalar the response was divided by}
+\item{response_scale}{A positive finite numeric scalar the response was divided by.}
 
-\item{attempts}{List of per-rung attempt records (empty before the ladder)}
+\item{attempts}{A list of per-rung attempt records. The default is an empty
+list for a failure before the start ladder.}
 
-\item{...}{Extra diagnostics fields to record}
+\item{...}{Named diagnostic fields passed to \code{\link{harvey_diagnostics}}.}
 }
 \value{
-A validated \code{hetid_log_variance_fit} object
+A validated \code{hetid_log_variance_fit} list, returned visibly,
+with \code{converged = FALSE}, \code{coef = NULL}, \code{warm_start = NULL},
+\code{objective = NA_real_}, \code{score_norm = NA_real_}, and
+\code{convergence_code = -1L}. The original response and design are retained
+as \code{y} and \code{x_design}, together with the failure diagnostics.
 }
 \description{
 A response the solver cannot fit is a result, not an error: the caller gets
 the same container with \code{fit_status = "nonconvergence"} and the reason
 in \code{diagnostics$error_class}.
+}
+\details{
+Solver failure is recorded without an error. Construction and validation can
+still raise structured \code{hetid_error} conditions for malformed container
+inputs. Missing or non-finite response and design values are rejected;
+rows are not removed.
+}
+\seealso{
+\code{\link{hetid_log_variance_fit}}.
 }
 \keyword{internal}

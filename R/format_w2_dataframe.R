@@ -4,17 +4,21 @@
 #' \code{compute_w2_residuals} into a long-format data frame
 #' with one row per maturity-date observation.
 #'
-#' @param residuals_list Named list of residual vectors,
+#' @param residuals_list Named list of numeric residual vectors,
 #'   keyed by \code{maturity_N}.
-#' @param fitted_list Named list of fitted-value vectors,
-#'   keyed by \code{maturity_N}.
+#' @param fitted_list Named list of numeric fitted-value vectors,
+#'   keyed by \code{maturity_N} and parallel to \code{residuals_list}.
 #' @param dates_list Named list of per-maturity t+1 realization \code{Date}
 #'   vectors (the resolved index subset by each maturity's \code{kept_idx}),
 #'   keyed by \code{maturity_N} and parallel to \code{residuals_list}.
-#' @param maturities Integer vector of maturities processed.
+#' @param maturities Integer vector of bond horizons in months to include,
+#'   in output order.
 #'
-#' @return A data frame with columns \code{date},
-#'   \code{maturity}, \code{residuals}, and \code{fitted}.
+#' @return A data frame with columns \code{date} (\code{Date}),
+#'   \code{maturity} (months), \code{residuals}, and \code{fitted} (numeric).
+#'   Rows retain their within-maturity input order and missing values.
+#'   Maturities absent from \code{residuals_list} contribute no rows.
+#'   If none are present, returns a zero-row data frame with the same columns.
 #'
 #' @noRd
 format_w2_dataframe <- function(

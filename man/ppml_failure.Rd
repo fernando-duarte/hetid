@@ -7,23 +7,31 @@
 ppml_failure(error_class, y, x_mat, response_scale, attempts = list(), ...)
 }
 \arguments{
-\item{error_class}{Single string naming the failure}
+\item{error_class}{Nonmissing character scalar naming the failure.}
 
-\item{y}{Numeric response on the original scale}
+\item{y}{Finite nonnegative numeric response vector on the original scale.}
 
-\item{x_mat}{Numeric design matrix, intercept column included}
+\item{x_mat}{Finite numeric design matrix with \code{length(y)} rows,
+column labels, and an intercept in column one.}
 
-\item{response_scale}{Positive finite scalar the response was divided by}
+\item{response_scale}{Positive finite numeric scalar used to divide the response.}
 
-\item{attempts}{List of per-rung attempt records (empty before the ladder)}
+\item{attempts}{List of per-rung attempt records; defaults to an empty list
+before the start ladder is attempted.}
 
-\item{...}{Extra diagnostics fields to record}
+\item{...}{Named diagnostics fields merged by \code{\link{ppml_diagnostics}}.}
 }
 \value{
-A validated \code{hetid_log_variance_fit} object
+A validated \code{\link{hetid_log_variance_fit}} list with
+\code{coef} and \code{warm_start} set to \code{NULL}, \code{objective}
+and \code{score_norm} set to \code{NA_real_}, \code{converged = FALSE},
+and \code{convergence_code = -1L}. The response, design, and diagnostics
+are retained. Container validation rejects missing or nonfinite response
+and design entries with structured \code{hetid_error} conditions;
+observations are not removed.
 }
 \description{
-A statistically impossible fit is a result, not an error: the caller gets
+An unsuccessful response solve is a result: the caller gets
 the same container with \code{fit_status = "nonconvergence"} and the reason
 in \code{diagnostics$error_class}.
 }

@@ -7,12 +7,14 @@
 warn_degenerate_variance(message, call = NULL)
 }
 \arguments{
-\item{message}{Warning message string}
+\item{message}{A character string containing the warning message.}
 
-\item{call}{The call (default NULL)}
+\item{call}{A call object to include in the condition, or \code{NULL} (the
+default) to omit the call.}
 }
 \value{
-Invisibly, the warning message; called for its warning side effect
+The warning message is returned invisibly as a character string.
+The function is called for its warning side effect.
 }
 \description{
 Classed warning for the variance positivity diagnostic so callers

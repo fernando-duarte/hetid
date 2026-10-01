@@ -6,18 +6,25 @@
 #' inner approximations, not certified global extrema or an outer enclosure.
 #'
 #' @param fit A \code{hetid_tau0_fit} from \code{\link{compute_tau0_system}}.
-#' @param tau Scalar slack in \code{(0, 1)}.
+#' @param tau Finite numeric scalar slack in \code{(0, 1)}, applied to every
+#'   component.
 #' @param objectives Finite numeric matrix with one row per column of
-#'   \code{fit$w2} and one uniquely named column per objective. Rows are
+#'   \code{fit$w2} and at least one column, one per objective. Column names
+#'   must be unique, nonempty, and nonmissing. Rows are
 #'   positional when unnamed; supplied row names must match \code{fit$w2}
 #'   column names exactly in order. No loading is snapped to zero.
 #' @param offsets Finite numeric vector with one value per objective, or
 #'   \code{NULL} for zeros. Supplied names must match objective names in order.
-#' @param n_grid Odd number of grid nodes per gridded coordinate, at least three.
-#' @param center Optional finite center, strictly inside the set. The default
-#'   is the fit's tau-zero point. Supplied names must match the theta axis.
-#' @param max_growth Maximum number of passes per growth phase, at least one.
-#' @param search_limit Largest window half-width in frame units, at least two.
+#' @param n_grid Odd integer scalar number of grid nodes per gridded coordinate,
+#'   at least three. Defaults to \code{IDENTIFIED_SET_CONTROL$N_GRID}.
+#' @param center Finite numeric vector with one value per column of
+#'   \code{fit$w2}, strictly inside the set, or \code{NULL} to use the fit's
+#'   tau-zero point. Required when the fit has no such point. Supplied names
+#'   must match \code{colnames(fit$w2)} exactly in order.
+#' @param max_growth Integer scalar maximum number of passes per growth phase,
+#'   at least one. Defaults to \code{IDENTIFIED_SET_CONTROL$MAX_GROWTH}.
+#' @param search_limit Finite numeric scalar largest window half-width in frame
+#'   units, at least two. Defaults to \code{IDENTIFIED_SET_CONTROL$SEARCH_LIMIT}.
 #'
 #' @details
 #' A singular or nonsquare Q frame is unsupported. Coordinates drive the first
@@ -36,6 +43,8 @@
 #' those precision limits and is not guaranteed to find the full set.
 #' The direction sampler restores \code{.Random.seed}; samples depend on the caller's
 #' \code{RNGkind()}. R's cached Box-Muller normal deviate is not restored.
+#' An objective with all loadings exactly zero has both bounds equal to its
+#' offset, with the center as both attaining points and no recession evidence.
 #'
 #' An infinite side has either a \code{line_tail} record, with an origin and
 #' an oriented direction whose sufficiently distant tail is feasible, or a
@@ -47,11 +56,14 @@
 #' A line origin need not be feasible; its sufficiently distant tail is.
 #' These are floating-point witnesses, not exact-arithmetic certificates.
 #'
-#' @return A \code{hetid_functional_bounds} list with \code{bounds} (columns
-#'   \code{coef}, \code{lower}, \code{upper}), \code{arg_lower} and
-#'   \code{arg_upper} (one theta row per objective, NA for infinite sides),
-#'   and \code{evidence_lower} and \code{evidence_upper} (named lists; NULL
-#'   for attained finite sides, otherwise the witness described above).
+#' @return A \code{hetid_functional_bounds} list with \code{bounds}, a data
+#'   frame with one row per objective in input order and columns \code{coef}
+#'   (objective name), \code{lower}, and \code{upper}. The numeric matrices
+#'   \code{arg_lower} and \code{arg_upper} have objective-named rows and
+#'   \code{colnames(fit$w2)} columns, holding attaining theta vectors or
+#'   \code{NA} rows for infinite sides. The \code{evidence_lower} and
+#'   \code{evidence_upper} lists are named by objective; entries are \code{NULL}
+#'   for attained finite sides, otherwise the witness described above.
 #'   It retains \code{objectives}, \code{offsets}, \code{quadratic},
 #'   \code{center}, \code{basis}, \code{tau}, \code{n_grid}, and
 #'   \code{search}. The latter records controls, per-phase pass counts,
@@ -67,15 +79,27 @@
 #'   \code{\link{compute_identified_set_box}}
 #' @export
 #' @examples
-#' set.seed(42)
-#' n <- 100
-#' z <- rnorm(n)
-#' x <- cbind(x = rnorm(n))
-#' y2 <- cbind(news = exp(z / 2) * rnorm(n))
-#' y1 <- 0.3 + x[, 1] + 0.5 * y2[, 1] + rnorm(n)
-#' fit <- compute_tau0_system(y1, y2, x, z)
-#' objectives <- matrix(c(1, -2, 0), 1, dimnames = list("news", c("news", "twice", "flat")))
-#' compute_linear_functional_bounds(fit, 0.05, objectives, c(0, 1, 3))$bounds
+#' local({
+#'   old_seed <- if (exists(".Random.seed", globalenv(), inherits = FALSE)) .Random.seed else NULL
+#'   on.exit({
+#'     if (is.null(old_seed)) {
+#'       rm(".Random.seed", envir = globalenv())
+#'     } else {
+#'       assign(".Random.seed", old_seed, envir = globalenv())
+#'     }
+#'   })
+#'   set.seed(42)
+#'   n <- 100
+#'   z <- rnorm(n)
+#'   x <- cbind(x = rnorm(n))
+#'   y2 <- cbind(news = exp(z / 2) * rnorm(n))
+#'   y1 <- 0.3 + x[, 1] + 0.5 * y2[, 1] + rnorm(n)
+#'   fit <- compute_tau0_system(y1, y2, x, z)
+#'   objectives <- matrix(c(1, -2, 0), 1,
+#'     dimnames = list("news", c("news", "twice", "flat"))
+#'   )
+#'   compute_linear_functional_bounds(fit, 0.05, objectives, c(0, 1, 3))$bounds
+#' })
 compute_linear_functional_bounds <- function(
   fit, tau, objectives, offsets = NULL,
   n_grid = IDENTIFIED_SET_CONTROL$N_GRID, center = NULL,

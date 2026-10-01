@@ -5,8 +5,17 @@
 #' nyfed-specific filename. This source provides annual maturities
 #' only.
 #'
-#' @param quiet Logical, suppress progress output
-#' @return Invisibly returns the cached file path
+#' The cache is stored under \code{tools::R_user_dir("hetid", "data")},
+#' creating the directory if needed. Each call downloads the workbook and replaces
+#' the NY Fed cache after conversion; the bundled data is unchanged.
+#' Temporary workbook and CSV files are removed when the function exits.
+#' The \pkg{readxl} package is required. Missing \pkg{readxl}, download failures,
+#' workbook conversion errors, and cache replacement failures raise a
+#' \code{hetid_error}.
+#'
+#' @param quiet A non-missing logical scalar. If \code{TRUE}, suppresses download
+#'   progress and status messages. The default is \code{FALSE}.
+#' @return A character string giving the cached CSV file path, returned invisibly.
 #' @keywords internal
 download_acm_nyfed <- function(quiet = FALSE) {
   download_url <- DATA_URLS$ACM_NYFED_XLS
@@ -43,7 +52,6 @@ download_acm_nyfed <- function(quiet = FALSE) {
     }
   )
 
-  # Atomic write: a partial write never half-overwrites the cache
   temp_csv <- tempfile(
     pattern = "acm_nyfed_", tmpdir = dirname(csv_path),
     fileext = ".csv"

@@ -2,32 +2,38 @@
 % Please edit documentation in R/computation_utils.R
 \name{prepare_return_data}
 \alias{prepare_return_data}
-\title{Attach Dates to a Time-Series Output (always a dated data frame)}
+\title{Attach Dates to a Time-Series Output}
 \usage{
 prepare_return_data(result_series, dates, yields, series_name, is_news = FALSE)
 }
 \arguments{
-\item{result_series}{The computed series (a level series of \code{length(dates)}
-elements, or a news series of \code{length(dates) - 1} when \code{is_news}).}
+\item{result_series}{Numeric vector with \code{length(dates)} elements for a level
+series, or \code{length(dates) - 1} elements when \code{is_news} is \code{TRUE}.
+Missing values are retained.}
 
-\item{dates}{Required \code{Date} vector, one per row of \code{yields}.}
+\item{dates}{Non-missing period-end \code{Date} vector, one per row of \code{yields}.}
 
-\item{yields}{Original yields data, used only for the row-count check.}
+\item{yields}{Original yields matrix or data frame, used only for the row-count check.}
 
-\item{series_name}{Name for the value column.}
+\item{series_name}{Character scalar naming the value column, distinct from \code{"date"}.}
 
-\item{is_news}{Logical. If TRUE, \code{result_series} is a news series with one
+\item{is_news}{Logical scalar. If \code{TRUE}, \code{result_series} has one
 element per period change (T - 1 elements), aligned to the dates by
-prepending NA so element \code{k} (the change from \code{k} to \code{k + 1})
-carries \code{dates[k + 1]}. If FALSE (the default), it is a level series
+prepending \code{NA_real_} so element \code{k} (the change from \code{k} to \code{k + 1})
+carries \code{dates[k + 1]}. If \code{FALSE} (the default), it is a level series
 carrying its own date.}
 }
 \value{
-A data frame with a \code{date} column (period-end) and the series.
+Data frame with \code{length(dates)} rows, the unchanged \code{date} column,
+and a value column named by \code{series_name}.
 }
 \description{
-The single chokepoint by which every exported time-series function emits its
-result. Dates are mandatory and validated as a real \code{Date} vector (see
-\code{validate_dates_vector}); there is no dateless or fabricated-index path.
+Attaches the supplied dates to a computed level or news series. Dates are mandatory
+and validated as a non-missing \code{Date} vector of the same length as the rows
+of \code{yields}. Dates are preserved; callers supply period-end labels.
+}
+\details{
+Invalid or missing dates signal \code{hetid_error_bad_argument}.
+Date or series length mismatches signal \code{hetid_error_dimension_mismatch}.
 }
 \keyword{internal}

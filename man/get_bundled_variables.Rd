@@ -7,7 +7,9 @@
 get_bundled_variables()
 }
 \value{
-Data frame containing the variables dataset, period-end dated
+A data frame containing the bundled \code{\link{variables}}
+dataset with quarterly period-end \code{date} values. Other columns
+and row order are unchanged; the packaged data file is not modified.
 }
 \description{
 Loads the bundled variables dataset from package data and normalizes its

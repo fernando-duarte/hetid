@@ -12,12 +12,16 @@ NULL
 
 #' Validate Maturity Index
 #'
-#' Validates maturity index against dataset constraints.
+#' Checks that a maturity index is a finite integer between
+#' \code{HETID_CONSTANTS$MIN_MATURITY} and \code{max_maturity}, inclusive.
 #'
-#' @param i Integer maturity index to validate
-#' @param max_maturity Maximum allowed maturity (default from ACM dataset limit)
+#' @param i Numeric value of length one giving an integer maturity in months.
+#'   Missing and non-finite values are rejected.
+#' @param max_maturity Numeric value of length one giving the inclusive upper
+#'   bound in months, defaulting to \code{HETID_CONSTANTS$MAX_MATURITY}.
 #'
-#' @return Invisible TRUE if valid, stops with informative error if invalid
+#' @return Invisible \code{TRUE} if valid; otherwise signals a
+#'   \code{hetid_error_bad_argument} condition.
 #' @keywords internal
 validate_maturity_index <- function(i, max_maturity = HETID_CONSTANTS$MAX_MATURITY) {
   assert_scalar_integer_in_range(
@@ -33,8 +37,11 @@ validate_maturity_index <- function(i, max_maturity = HETID_CONSTANTS$MAX_MATURI
 #' at least one news horizon (\code{i = step}, needing maturity
 #' \code{i + step}) fits inside the data.
 #'
-#' @param step Integer number of maturity-index units per news period.
-#' @return Invisible TRUE if valid, stops with informative error otherwise
+#' @param step Numeric value of length one giving a positive integer number
+#'   of months per news period, at most half of \code{HETID_CONSTANTS$MAX_MATURITY}.
+#'   Missing and non-finite values are rejected.
+#' @return Invisible \code{TRUE} if valid; otherwise signals a
+#'   \code{hetid_error_bad_argument} condition.
 #' @keywords internal
 validate_step <- function(step) {
   assert_scalar_integer_in_range(
@@ -48,12 +55,18 @@ validate_step <- function(step) {
 #' Validates a maturity index used as a news horizon: the news at
 #' horizon \code{i} differences \code{n_hat(i, t)} against
 #' \code{n_hat(i - step, t + 1)}, so \code{i} must not exceed
-#' \code{effective_max_maturity(step)} and the previous-period index
-#' must satisfy the news contract (see \code{news_contract_ok}).
+#' \code{\link{effective_max_maturity}(step)}. The boundary case
+#' \code{i == step} is allowed; otherwise \code{i - step} must be at least
+#' \code{HETID_CONSTANTS$MIN_MATURITY}. The horizon need not be a multiple
+#' of \code{step}.
 #'
-#' @param i Integer maturity index to validate
+#' The step must satisfy \code{\link{validate_step}}.
+#'
+#' @param i Numeric value of length one giving an integer news horizon in
+#'   months. Missing and non-finite values are rejected.
 #' @template param-step
-#' @return Invisible TRUE if valid, stops with informative error otherwise
+#' @return Invisible \code{TRUE} if valid; otherwise signals a
+#'   \code{hetid_error_bad_argument} condition for an invalid horizon or step.
 #' @keywords internal
 validate_news_maturity_index <- function(i, step = HETID_CONSTANTS$DEFAULT_STEP) {
   validate_maturity_index(i, max_maturity = effective_max_maturity(step))
@@ -77,15 +90,25 @@ validate_news_maturity_index <- function(i, step = HETID_CONSTANTS$DEFAULT_STEP)
 #' validating ACM bond maturities pass
 #' \code{min_value = HETID_CONSTANTS$MIN_MATURITY} (months).
 #'
-#' @param maturities Numeric vector of maturity indices.
-#' @param max_value Inclusive upper bound (e.g. \code{ncol(gamma)}).
-#' @param max_label Optional human label for the bound, shown label-first in the
-#'   error message (e.g. \code{"ncol(gamma)"} renders as \code{ncol(gamma) (4)}).
-#' @param arg Argument name for the structured error.
-#' @param min_value Inclusive lower bound (default 1, the positional
-#'   component-index convention).
+#' The supplied order and names do not affect validity. This function only
+#' checks the input; it does not sort, deduplicate, or convert it.
+#' Callers supply valid scalar bounds and labels; these are not validated here.
 #'
-#' @return Invisible TRUE if valid, stops with informative error otherwise.
+#' @param maturities Non-empty numeric vector of finite integer maturity
+#'   indices with no dimensions or duplicates. Missing values are rejected.
+#' @param max_value Numeric value of length one giving the inclusive upper
+#'   bound (e.g. \code{ncol(gamma)}), in the same units as \code{maturities}.
+#' @param max_label Character string or \code{NULL} (the default). An optional
+#'   human label for the upper bound, shown label-first in the
+#'   error message (e.g. \code{"ncol(gamma)"} renders as \code{ncol(gamma) (4)}).
+#' @param arg Character string giving the argument name in error messages and
+#'   the structured condition, defaulting to \code{"maturities"}.
+#' @param min_value Numeric value of length one giving the inclusive lower
+#'   bound in the same units as \code{maturities}. The default \code{1L} follows
+#'   the positional column-index convention.
+#'
+#' @return Invisible \code{TRUE} if valid; otherwise signals a
+#'   \code{hetid_error_bad_argument} condition with the supplied \code{arg}.
 #' @seealso \code{\link{validate_maturity_index}}
 #' @keywords internal
 validate_maturities <- function(maturities, max_value,

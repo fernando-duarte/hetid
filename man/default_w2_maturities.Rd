@@ -7,15 +7,15 @@
 default_w2_maturities(step = HETID_CONSTANTS$DEFAULT_STEP)
 }
 \arguments{
-\item{step}{Integer number of maturity-index units per news period
-(default \code{HETID_CONSTANTS$DEFAULT_STEP}). The news operator
-steps one period, so maturity arithmetic moves in multiples of
-\code{step}: \code{compute_n_hat()} pairs maturities \code{i} and
-\code{i + step}, the one-period bond is the \code{step}-maturity
-bond, and horizons must satisfy \code{i <= MAX_MATURITY - step}.}
+\item{step}{Positive integer number of months per news period, no greater than
+half of \code{HETID_CONSTANTS$MAX_MATURITY}. Functions with a default use
+\code{HETID_CONSTANTS$DEFAULT_STEP}. For time-series inputs, adjacent observations
+must be \code{step} months apart. Functions that read maturity \code{i + step}
+require \code{i <= HETID_CONSTANTS$MAX_MATURITY - step}; additional
+horizon restrictions are described for each function.}
 }
 \value{
-Integer vector of valid default maturities
+Numeric vector of valid default maturities in increasing order.
 }
 \description{
 Step-spaced news horizons from \code{step} to
@@ -23,5 +23,10 @@ Step-spaced news horizons from \code{step} to
 horizon equals \code{step} (the boundary case, needing the
 step-maturity yield) or keeps \code{horizon - step} at or above
 \code{MIN_MATURITY}.
+}
+\details{
+Maturity indices and \code{step} are in months. The step must be a
+finite positive integer no greater than half of \code{HETID_CONSTANTS$MAX_MATURITY};
+invalid values raise a \code{hetid_error_bad_argument} condition.
 }
 \keyword{internal}

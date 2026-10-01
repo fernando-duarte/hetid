@@ -10,8 +10,6 @@ quadratic_point_verifier <- function(quadratic) {
   }
 }
 
-# Propose an interior point when the containing ellipsoid's center is outside S.
-# Failure of this finite search says nothing about whether S is empty
 quadratic_find_point <- function(quadratic, certificate, center, maxit) {
   if (is.null(certificate) || is.null(center) || maxit == 0L) {
     return(NULL)
@@ -36,7 +34,7 @@ quadratic_find_point <- function(quadratic, certificate, center, maxit) {
   if (quadratic_verified_point(quadratic, result$par)) result$par else NULL
 }
 
-# Require a strict numerical margin except for a structurally zero polynomial
+# Accept zero only when coefficients or point coordinates make every term zero
 quadratic_verified_point <- function(quadratic, point) {
   all(vapply(seq_along(quadratic$c_i), function(i) {
     a <- quadratic$A_i[[i]]

@@ -18,32 +18,55 @@
 #' source here: a download is always source-specific. The bundled copy
 #' counts as available for the github source, but never suppresses an
 #' explicit nyfed download.
+#' Unpinned existing files are returned without rechecking their contents.
 #'
-#' @param source Data source: \code{"github"} (default,
+#' @param source Character string specifying \code{"github"} (default,
 #'   digest-verified) or \code{"nyfed"} (official workbook fallback,
 #'   annual maturities only).
-#' @param force Logical. If TRUE, forces re-download even if data exists.
-#' @param quiet Logical. If TRUE, suppresses download progress messages.
-#' @param frequency Data frequency: \code{"monthly"} (default) or
+#' @param force Single nonmissing logical. If \code{TRUE}, forces re-download
+#'   even if data exists. Defaults to \code{FALSE}.
+#' @param quiet Single nonmissing logical. If \code{TRUE}, suppresses download
+#'   progress messages. Defaults to \code{FALSE}.
+#' @param frequency Character string specifying \code{"monthly"} (default) or
 #'   \code{"daily"} (the ~40 MB business-day asset; GitHub source only).
 #'
 #' @template acm-pin
 #'
-#' @return Invisibly returns the path to the saved data file.
+#' @return Invisibly returns a single character string giving the data file
+#'   path. With \code{force = FALSE}, this may be an existing cached file or
+#'   the bundled monthly GitHub asset, without a new download.
 #' @export
 #'
 #' @examplesIf interactive()
-#' # Download the data (only if not already present)
-#' download_term_premia()
+#' local({
+#'   # Keep downloaded files out of the normal user cache
+#'   data_dir <- tempfile("hetid-data-")
+#'   old_dir <- Sys.getenv("R_USER_DATA_DIR", unset = NA_character_)
+#'   on.exit({
+#'     if (is.na(old_dir)) {
+#'       Sys.unsetenv("R_USER_DATA_DIR")
+#'     } else {
+#'       Sys.setenv(R_USER_DATA_DIR = old_dir)
+#'     }
+#'     unlink(data_dir, recursive = TRUE)
+#'   })
+#'   Sys.setenv(R_USER_DATA_DIR = data_dir)
 #'
-#' # Force re-download from the GitHub release
-#' download_term_premia(force = TRUE)
+#'   # The bundled monthly asset can satisfy an unforced request
+#'   path <- download_term_premia()
+#'   file.exists(path)
 #'
-#' # Opt into the NY Fed workbook fallback
-#' download_term_premia(source = "nyfed")
+#'   # Force re-download from the GitHub release
+#'   download_term_premia(force = TRUE)
 #'
-#' # Download the daily (business-day) series
-#' download_term_premia(frequency = "daily")
+#'   # The NY Fed workbook requires the optional readxl package
+#'   if (requireNamespace("readxl", quietly = TRUE)) {
+#'     download_term_premia(source = "nyfed")
+#'   }
+#'
+#'   # Download the daily (business-day) series
+#'   download_term_premia(frequency = "daily")
+#' })
 #'
 #' @references
 #' Adrian, T., Crump, R. K., and Moench, E. (2013).
@@ -74,7 +97,6 @@ download_term_premia <- function(source = c("github", "nyfed"),
     return(invisible(existing))
   }
 
-  # match.arg gates source; the default catches a choice added without a handler
   switch(source,
     github = download_acm_github(quiet = quiet, frequency = frequency),
     nyfed = download_acm_nyfed(quiet = quiet),

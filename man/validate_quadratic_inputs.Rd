@@ -7,13 +7,14 @@
 validate_quadratic_inputs(tau, components, moments)
 }
 \arguments{
-\item{tau}{Vector of real numbers in \code{[0, 1)} (length I, the
+\item{tau}{Numeric vector of finite real numbers in \code{[0, 1)} (length I, the
 moments' \code{n_components}) containing tau_i values, indexed by
 system column. Exact zeros are allowed and correspond to the
-point-identification benchmark.}
+zero-slack benchmark, where each constraint reduces to
+\eqn{L_i - Q_i^\top \theta = 0}.}
 
 \item{components}{A \code{hetid_components} object from
-\code{\link{compute_identified_set_components}}}
+\code{\link{compute_identified_set_components}}.}
 
 \item{moments}{The \code{hetid_moments} object the components were
 computed from (see
@@ -25,10 +26,11 @@ identification).}
 \value{
 A list with components:
 \describe{
-\item{maturities}{Integer vector of maturity indices (constraint axis)}
-\item{n_components}{Theta-axis dimension (I)}
-\item{n_maturities}{Length of \code{maturities}}
+\item{maturities}{Integer vector of constrained w2 column indices.}
+\item{n_components}{Integer theta-axis dimension (I).}
+\item{n_maturities}{Number of constraints, \code{length(maturities)}.}
 }
+Invalid inputs raise structured bad-argument or dimension-mismatch errors.
 }
 \description{
 Checks the container classes, that the components and moments carry
@@ -38,6 +40,7 @@ type/finiteness/positivity constraints for
 \code{\link{compute_identified_set_quadratic}}. Moment shapes are
 class invariants guaranteed by the
 \code{compute_identification_moments()} boundary and are trusted
-rather than re-checked.
+rather than re-checked. No input is modified. Nonnumeric or non-finite
+quadratic inputs, including NA/NaN/Inf, are rejected, not omitted.
 }
 \keyword{internal}

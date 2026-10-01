@@ -4,10 +4,11 @@
 \alias{HETID_ACM_SCHEMA}
 \title{ACM Data Schema}
 \format{
-Named list. Each element contains:
+Named list with elements \code{yields}, \code{term_premia}, and
+\code{risk_neutral_yields}. Each element is a named list containing:
 \describe{
-\item{prefix_old}{Padded prefix in raw ACM data}
-\item{prefix_new}{Short prefix used in package}
+\item{prefix_old}{Character string giving the prefix in raw ACM column names.}
+\item{prefix_new}{Character string giving the prefix in extracted column names.}
 }
 }
 \usage{

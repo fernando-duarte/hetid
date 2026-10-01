@@ -7,20 +7,28 @@
 acm_column_name(data_type, maturity)
 }
 \arguments{
-\item{data_type}{Schema key: \code{"yields"}, \code{"term_premia"},
-or \code{"risk_neutral_yields"}}
+\item{data_type}{A character string: \code{"yields"}, \code{"term_premia"},
+or \code{"risk_neutral_yields"}.}
 
-\item{maturity}{Maturity index (or vector of indices)}
+\item{maturity}{An integer or integer-valued numeric vector of maturities in months.}
 }
 \value{
-Character vector of column names, e.g. \code{"y60"}
+An unnamed character vector with one column name per maturity, in input
+order, such as \code{"y60"}. Empty input returns \code{character(0)};
+missing maturities produce names ending in \code{"NA"}. An invalid schema
+key signals a \code{hetid_error_bad_argument} with \code{arg = "data_type"}.
 }
 \description{
-Single source of truth for reshaped ACM column names: routes the
-prefix through \code{HETID_ACM_SCHEMA} and the format through
-\code{HETID_CONSTANTS$COL_FORMAT_SIMPLE} instead of hard-coding
-literals like \code{paste0("y", i)} at call sites.
+Constructs names for reshaped ACM data, such as \code{"y12"} for a 12-month
+yield. Prefixes follow \code{HETID_ACM_SCHEMA}, and maturity formatting follows
+\code{HETID_CONSTANTS$COL_FORMAT_SIMPLE}.
+}
+\details{
+Only \code{data_type} is validated. Maturities are formatted directly
+without range or missing-value checks.
 }
 \examples{
 acm_column_name("yields", c(12, 60))
+acm_column_name("term_premia", 12)
+acm_column_name("risk_neutral_yields", 12)
 }

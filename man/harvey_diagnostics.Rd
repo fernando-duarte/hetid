@@ -7,14 +7,22 @@
 harvey_diagnostics(error_class, start_attempts, ...)
 }
 \arguments{
-\item{error_class}{Single string naming the failure, or \code{NA}}
+\item{error_class}{A single string naming the failure, or
+\code{NA_character_} for an accepted fit.}
 
-\item{start_attempts}{List of per-rung attempt records}
+\item{start_attempts}{A list of per-rung attempt records.}
 
-\item{...}{Fields to override in the defaults}
+\item{...}{Named diagnostic fields to override or add. A \code{NULL}
+override is retained, rather than removing the field.}
 }
 \value{
-A diagnostics list
+A named list containing \code{warnings}, \code{messages},
+\code{error_class}, \code{start_attempts}, \code{n_zero_response},
+\code{rank_x_pos}, \code{rcond_info}, \code{n_halvings},
+\code{per_start_criteria}, and \code{info_matrix}, plus any added fields.
+Unpopulated fields are empty character vectors, typed missing scalars,
+or \code{NULL}; \code{error_class} and \code{start_attempts} are supplied
+by the caller. This helper does not validate diagnostic values.
 }
 \description{
 NA and empty defaults for every diagnostic field; callers override only what

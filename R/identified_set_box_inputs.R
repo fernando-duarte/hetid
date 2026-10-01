@@ -11,18 +11,14 @@ NULL
 
 #' Check the Fit the Structural Block Relies On
 #'
-#' \code{assert_hetid_tau0_fit()} is a class check only. The structural
-#' block indexes \code{names(beta1r)}, stacks \code{beta2r} beside the
-#' identity and maps witnesses positionally through \code{beta2r}, so the
-#' full container sweep runs here, plus the two facts it does not cover:
-#' finite coefficients, and \code{beta2r} rows in the order of the
-#' \code{w2} columns. A fit from \code{compute_tau0_system()} always
-#' passes; a hand-modified one fails with a structured condition rather
-#' than in a \code{data.frame()} call or, worse, by silently bounding the
-#' wrong map.
+#' Runs \code{validate_hetid_tau0_fit()}, then checks that the reduced-form
+#' coefficients are finite and the \code{beta2r} row names match the \code{w2}
+#' column names. The structural map uses these coefficients in column order.
 #'
-#' @param fit A \code{hetid_tau0_fit}
-#' @return Invisibly TRUE
+#' @param fit A \code{hetid_tau0_fit} object with finite reduced-form
+#'   coefficients and \code{beta2r} rows ordered as the \code{w2} columns.
+#' @return \code{TRUE}, invisibly, when validation passes; otherwise a
+#'   structured \code{hetid_error} is raised.
 #' @noRd
 validate_box_fit <- function(fit) {
   validate_hetid_tau0_fit(fit)
@@ -38,11 +34,16 @@ validate_box_fit <- function(fit) {
 
 #' Resolve and Check the Search Center
 #'
-#' @param fit A \code{hetid_tau0_fit}
-#' @param center Optional caller-supplied center
-#' @param quadratic Quadratic form list at this slack
-#' @param n_components Theta-axis dimension
-#' @return Numeric length-I feasible center
+#' @param fit A \code{hetid_tau0_fit} object.
+#' @param center A finite numeric vector of length \code{n_components},
+#'   strictly inside every constraint, or \code{NULL} to use
+#'   \code{fit$point$theta}. A missing fit point requires an explicit center.
+#' @param quadratic A list with parallel \code{A_i}, \code{b_i}, and
+#'   \code{c_i} elements at the requested slack.
+#' @param n_components Number of theta components, equal to \code{ncol(fit$w2)}.
+#' @return The numeric center of length \code{n_components}, with every
+#'   constraint value strictly negative. Invalid centers raise a structured
+#'   \code{hetid_error}; missing and non-finite values are not filtered.
 #' @noRd
 resolve_box_center <- function(fit, center, quadratic, n_components) {
   if (is.null(center)) {
@@ -81,21 +82,21 @@ resolve_box_center <- function(fit, center, quadratic, n_components) {
 #' The theta coordinates first, then the structural map
 #' \eqn{\beta_1(\theta) = \beta_1^R - (\beta_2^R)'\theta}: its slope
 #' columns are the objectives and the offset \eqn{\beta_1^R} is added back
-#' when the bounds are read. A loading column that is zero up to rounding
-#' is snapped to exact zero, so the coefficient it belongs to is reported
-#' as the point it is (an intercept when both blocks are centered) rather
-#' than as an interval of rounding width, or as unbounded when the set is.
-#' The tolerance is relative to each row's own largest loading, since a
-#' row of \eqn{\beta_2^R} is one regression's coefficient vector and that
-#' is the noise floor of its zeros; rescaling a column of \eqn{Y_2} then
-#' changes nothing. Under \code{impose_null} every loading is already zero.
+#' when the bounds are read. Columns satisfying the relative loading threshold
+#' are set to zero, so their structural coefficients are reported as constants.
+#' The threshold uses each row's largest absolute loading; rescaling a Y2
+#' component leaves the decision unchanged. Genuinely small loadings can also
+#' be set to zero. Under \code{impose_null} every loading is already zero.
 #'
-#' @param fit A \code{hetid_tau0_fit}
-#' @param n_components Theta-axis dimension
-#' @param null_loading_rtol Scalar in \code{[0, 1)}; a loading column with
+#' @param fit A validated \code{hetid_tau0_fit} object.
+#' @param n_components Number of theta components, equal to \code{ncol(fit$w2)}.
+#' @param null_loading_rtol Numeric scalar in \code{[0, 1)}; a loading column with
 #'   no entry above this fraction of its row's largest loading is snapped
-#'   to zero, and \code{0} snaps only exact zeros
-#' @return Numeric I x (I + p) matrix
+#'   to zero, and \code{0} snaps only exact zeros.
+#' @return An unnamed numeric matrix with \code{n_components} rows and
+#'   \code{n_components + length(fit$beta1r)} columns. Theta-coordinate
+#'   objectives precede structural-coefficient objectives in
+#'   \code{names(fit$beta1r)} order; structural offsets are not included.
 #' @noRd
 identified_set_objectives <- function(fit, n_components, null_loading_rtol) {
   beta1_loadings <- -unname(fit$beta2r)
@@ -107,13 +108,17 @@ identified_set_objectives <- function(fit, n_components, null_loading_rtol) {
 
 #' Bounds Frame for One Block of Objectives
 #'
-#' @param coef Character labels, one per row of the block
-#' @param offset Numeric, added to the sweep's bounds (0 for theta,
+#' @param coef Character vector of labels, one per row of the block.
+#' @param offset Finite numeric scalar or vector of length \code{length(rows)},
+#'   added to the sweep's bounds (0 for theta,
 #'   \code{beta1r} for the structural block); infinite bounds pass through
-#'   untouched
-#' @param found Search state after \code{apply_recession_bounds()}
-#' @param rows Integer indices of the block's objectives
-#' @return Data frame with \code{coef}, \code{lower}, \code{upper}
+#'   untouched.
+#' @param found Search-state list after \code{apply_recession_bounds()},
+#'   with numeric \code{lower} and \code{upper} vectors.
+#' @param rows Integer vector of indices of the block's objectives.
+#' @return A data frame with character \code{coef} and numeric \code{lower}
+#'   and \code{upper} columns, one row per selected objective in \code{rows}
+#'   order, with automatic row names.
 #' @noRd
 identified_set_bounds_frame <- function(coef, offset, found, rows) {
   data.frame(

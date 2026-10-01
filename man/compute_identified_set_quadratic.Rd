@@ -7,13 +7,14 @@
 compute_identified_set_quadratic(tau, components, moments)
 }
 \arguments{
-\item{tau}{Vector of real numbers in \code{[0, 1)} (length I, the
+\item{tau}{Numeric vector of finite real numbers in \code{[0, 1)} (length I, the
 moments' \code{n_components}) containing tau_i values, indexed by
 system column. Exact zeros are allowed and correspond to the
-point-identification benchmark.}
+zero-slack benchmark, where each constraint reduces to
+\eqn{L_i - Q_i^\top \theta = 0}.}
 
 \item{components}{A \code{hetid_components} object from
-\code{\link{compute_identified_set_components}}}
+\code{\link{compute_identified_set_components}}.}
 
 \item{moments}{The \code{hetid_moments} object the components were
 computed from (see
@@ -23,17 +24,19 @@ computed from (see
 identification).}
 }
 \value{
-A list (per-maturity elements keyed maturity_N, M =
-\code{length(maturities)}; n_components the theta axis):
+A plain list with the following components, where M is
+\code{length(attr(moments, "maturities"))} and I is the moments'
+\code{n_components}. Per-maturity elements are named \code{maturity_N}:
 \describe{
 \item{d_i}{Named numeric vector of length M; element k is d_i for
-maturity \code{maturities[k]}}
+maturity \code{maturities[k]}.}
 \item{A_i}{Named list of length M; element k is the n_components x
-n_components symmetric matrix A_i for maturity \code{maturities[k]}}
+n_components symmetric matrix A_i for maturity \code{maturities[k]}.}
 \item{b_i}{Named list of length M; element k is the length-n_components
-vector b_i for maturity \code{maturities[k]}}
+vector b_i for maturity \code{maturities[k]}; its entries are named
+\code{maturity_1}, ..., \code{maturity_I} along the theta axis.}
 \item{c_i}{Named numeric vector of length M; element k is c_i for
-maturity \code{maturities[k]}}
+maturity \code{maturities[k]}.}
 }
 }
 \description{
@@ -63,6 +66,14 @@ computed from these moments); a mismatch raises a structured
 dimension error. Prefer \code{\link{build_quadratic_system}}, which
 computes the components internally from \code{(gamma, moments)} and
 makes a stale pairing impossible.
+
+Missing and non-finite values in \code{tau}, the components, or the
+moments used in the arithmetic are rejected, not omitted. Invalid
+inputs raise structured \code{hetid_error} conditions; non-finite
+quadratic coefficients, including arithmetic overflow, also raise an
+error. No inputs are modified. When \code{tau[i] = 0}, \code{d_i = 0}
+and the constraint is \eqn{(L_i - Q_i^\top \theta)^2 \leq 0};
+a unique point requires sufficient independent constraints.
 }
 \section{Maturity Indexing Convention}{
 
@@ -88,23 +99,42 @@ Per-maturity outputs are named \code{maturity_N} where N is
 the w2 column index, with element k corresponding to
 \code{maturities[k]}. Inner theta-axis dimensions (each \code{r_i_1}
 matrix, \code{s_i_1} vector, and \code{s_i_2} matrix) are always full
-\code{n_components}-sized. Downstream functions accept only validated
-containers and resolve positions internally, so cross-object maturity
-misalignment cannot occur.
+\code{n_components}-sized. \code{compute_identification_moments()} validates
+moment shapes. Downstream functions check relevant dimensions and use the recorded
+indices; they trust that validation and do not verify common data provenance.
+Callers must supply moments, gamma, and tau from the same system.
 }
 
 \examples{
-set.seed(42)
-n_obs <- 100
-J <- 3
-I <- 4
-w1 <- rnorm(n_obs)
-w2 <- matrix(rnorm(n_obs * I), nrow = n_obs, ncol = I)
-pcs <- matrix(rnorm(n_obs * J), nrow = n_obs, ncol = J)
-gamma <- matrix(rnorm(J * I), nrow = J, ncol = I)
-tau <- rep(0.2, I)
+local({
+  old_seed <- if (exists(".Random.seed", envir = .GlobalEnv, inherits = FALSE)) {
+    get(".Random.seed", envir = .GlobalEnv)
+  } else {
+    NULL
+  }
+  on.exit({
+    if (is.null(old_seed)) {
+      rm(".Random.seed", envir = .GlobalEnv)
+    } else {
+      assign(".Random.seed", old_seed, envir = .GlobalEnv)
+    }
+  })
+  set.seed(42)
+  n_obs <- 100
+  J <- 3
+  I <- 4
+  w1 <- rnorm(n_obs)
+  w2 <- matrix(rnorm(n_obs * I), nrow = n_obs, ncol = I)
+  pcs <- matrix(rnorm(n_obs * J), nrow = n_obs, ncol = J)
+  gamma <- matrix(rnorm(J * I), nrow = J, ncol = I)
+  tau <- rep(0.2, I)
 
-moments <- compute_identification_moments(w1, w2, pcs)
-components <- compute_identified_set_components(gamma, moments)
-quad <- compute_identified_set_quadratic(tau, components, moments)
+  moments <- compute_identification_moments(w1, w2, pcs, maturities = 2L)
+  components <- compute_identified_set_components(gamma, moments)
+  quad <- compute_identified_set_quadratic(tau, components, moments)
+  print(names(quad$d_i))
+  print(dim(quad$A_i[[1]]))
+  exact <- compute_identified_set_quadratic(rep(0, I), components, moments)
+  print(exact$d_i)
+})
 }

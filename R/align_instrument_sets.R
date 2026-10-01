@@ -1,31 +1,46 @@
 #' Align Per-Component Instrument Sets onto a Union Matrix
 #'
-#' Unites per-component instrument matrices by column NAME into one
-#' T x J_union matrix plus the per-component support index lists
-#' that locate each component's columns on the union axis. Columns
-#' sharing a name across components must be content-identical
-#' (bitwise, after coercion to double): the union is keyed on names,
-#' and silently uniting two different series under one name is the
-#' exact misalignment this validator exists to catch. Compute the
-#' moments from \code{instruments} -- the returned \code{support}
-#' indexes the columns of \code{instruments} -- then feed \code{support} to
-#' \code{\link{lambda_from_support}} (and to the scripts-layer
-#' optimizer's support mask).
+#' Unites per-component instrument matrices by column name into one
+#' \code{T x J_union} matrix and lists the column positions used by
+#' each component.
+#'
+#' @details Columns sharing a name across components must be identical
+#'   after coercion to double and removal of names. Comparison uses
+#'   \code{\link[base:identical]{identical}()} with its defaults, so
+#'   positive and negative zero compare equal. Differing columns with
+#'   the same name raise a \code{hetid_error_bad_argument} error.
+#'   All sets must have the same row count and already refer to the
+#'   same observations in the same order; this function does not align
+#'   dates or check observation identities. Missing and non-finite
+#'   values are rejected rather than omitted.
+#'
+#'   Compute the moments from the returned \code{instruments} matrix.
+#'   The returned \code{support} indexes its columns and can be passed
+#'   to \code{\link{lambda_from_support}} and to the scripts-layer
+#'   optimizer's support mask.
 #'
 #' @param z_sets List of length \code{n_components}: a numeric
-#'   matrix or data frame (T x J_i, named columns) at every
-#'   constrained system column, NULL at unconstrained columns
-#' @param n_components Number of system columns (theta axis)
-#' @param maturities Constrained system columns (default NULL means
-#'   all of \code{1..n_components})
+#'   matrix or data frame of finite numeric values (\code{T x J_i}) at
+#'   every constrained system column, and \code{NULL} elsewhere.
+#'   Each set must have at least one column, with unique, non-empty,
+#'   non-missing column names.
+#' @param n_components A single positive integer giving the number of
+#'   system columns (theta axis).
+#' @param maturities A non-empty numeric vector of unique integer system
+#'   column indices in \code{1..n_components}, or \code{NULL} for all
+#'   system columns. These are positional indices, not bond maturities
+#'   in months or years. Their supplied order determines the traversal
+#'   of the instrument sets.
 #'
-#' @return List with elements
+#' @return A list with the following elements.
 #' \describe{
-#'   \item{instruments}{T x J_union numeric matrix, columns in
-#'     first-appearance order across constrained components}
+#'   \item{instruments}{A \code{T x J_union} double matrix with unique
+#'     column names in first-appearance order across sets visited in
+#'     \code{maturities} order. Row names are not retained.}
 #'   \item{support}{List of length \code{n_components}: integer
 #'     positions of component i's columns within
-#'     \code{colnames(instruments)}, NULL at unconstrained columns}
+#'     \code{colnames(instruments)}, in the component's original column
+#'     order, and \code{NULL} at unconstrained columns.}
 #' }
 #'
 #' @template section-general-instruments
@@ -34,7 +49,7 @@
 #'
 #' @examples
 #' t_obs <- 20
-#' z <- matrix(rnorm(t_obs * 3), t_obs,
+#' z <- matrix(seq_len(t_obs * 3), t_obs,
 #'   dimnames = list(NULL, c("pc1", "pc2", "pc3"))
 #' )
 #' aligned <- align_instrument_sets(
@@ -43,6 +58,13 @@
 #' )
 #' colnames(aligned$instruments)
 #' aligned$support
+#'
+#' subset <- align_instrument_sets(
+#'   list(z[, c("pc1", "pc2")], NULL, z[, c("pc2", "pc3")]),
+#'   n_components = 3, maturities = c(3, 1)
+#' )
+#' colnames(subset$instruments)
+#' subset$support
 align_instrument_sets <- function(z_sets, n_components,
                                   maturities = NULL) {
   assert_bad_argument_ok(
@@ -104,9 +126,9 @@ align_instrument_sets <- function(z_sets, n_components,
 
 #' Validate and Coerce One Component's Instrument Set
 #'
-#' @param z_i Matrix or data frame of instruments for one component
-#' @param label Label for error messages
-#' @return Numeric matrix (storage mode double) with valid names
+#' @param z_i Matrix or data frame of instruments for one component.
+#' @param label Label for error messages.
+#' @return Numeric matrix (storage mode double) with valid names.
 #' @noRd
 as_instrument_set <- function(z_i, label) {
   assert_tabular(z_i, label)
@@ -124,11 +146,11 @@ as_instrument_set <- function(z_i, label) {
 
 #' Unite Named Instrument Columns Across Sets
 #'
-#' First-appearance order; same-name columns must be bitwise
-#' identical across sets.
+#' First-appearance order; same-name columns must compare equal under
+#' \code{identical()} across sets.
 #'
-#' @param mats List of validated double matrices with unique names
-#' @return T x J_union matrix with unique column names
+#' @param mats List of validated double matrices with unique names.
+#' @return \code{T x J_union} matrix with unique column names.
 #' @noRd
 unite_named_columns <- function(mats) {
   vals <- list()

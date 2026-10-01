@@ -1,6 +1,6 @@
 #' Statistics Computation Utilities
 #'
-#' Higher-order functions for per-maturity statistics computation
+#' Helpers for per-maturity statistics, centered moments, and variance diagnostics.
 #'
 #' @name statistics_utils
 #' @keywords internal
@@ -9,18 +9,22 @@ NULL
 #' Compute Per-Maturity Statistics
 #'
 #' Applies a computation function to each maturity, returning a named
-#' list of results. Trusts already-validated inputs: callers must
+#' list of results.
+#'
+#' @details
+#' Trusts already-validated inputs: callers must
 #' first run \code{validate_statistics_inputs()} (the exported
 #' statistics wrappers and \code{compute_identification_moments()} do
 #' this once before delegating to the internal workers).
 #'
-#' @param w1 Numeric vector of \eqn{\omega_1} residuals
-#' @param w2 Numeric matrix of \eqn{\omega_2} residuals (T x I)
-#' @param maturities Vector of validated maturity indices
-#' @param compute_fn Function called for each maturity with args
-#'   (w1, w2, w2_i, idx, i, ...)
-#' @param ... Extra arguments forwarded to compute_fn
-#' @return Named list of per-maturity results from compute_fn, one element per
+#' @param w1 Numeric vector of \eqn{\omega_1} residuals of length T.
+#' @param w2 Numeric matrix of \eqn{\omega_2} residuals (T x I).
+#' @param maturities Vector of validated w2 column indices (the constraint axis).
+#' @param compute_fn Function called with named arguments \code{w1}, \code{w2},
+#'   \code{w2_i} (column \code{i}), \code{idx} (position in \code{maturities}),
+#'   \code{i} (w2 column index), and \code{...}.
+#' @param ... Extra arguments forwarded to \code{compute_fn}.
+#' @return Named list of per-maturity results from \code{compute_fn}, one element per
 #'   entry of \code{maturities} in order, named \code{maturity_N} where
 #'   \code{N} is the w2 column index (\code{maturity_names()}), so element
 #'   \code{k} corresponds to \code{maturities[k]}.
@@ -41,14 +45,17 @@ compute_per_maturity <- function(w1, w2, maturities,
   results
 }
 
-#' Centered Sample Covariance (1/T normalization)
+#' Centered Sample Covariance (1/T Normalization)
 #'
 #' Computes the centered sample covariance between the columns of two
 #' conformable inputs (vectors or matrices), using the \eqn{1/T}
 #' normalization of the sample analog in Lewbel multivariate set
 #' identification (centered cov/var; see the package spec sections on
 #' moment notation and centering), \strong{not} the \eqn{1/(T-1)}
-#' convention of [stats::cov()]. For inputs \eqn{A} (T x a) and
+#' convention of \code{\link[stats:cov]{stats::cov()}}.
+#'
+#' @details
+#' For inputs \eqn{A} (T x a) and
 #' \eqn{B} (T x b),
 #' \deqn{\widehat{\mathrm{Cov}}(A, B) = \frac{1}{T} (A - \bar{A})^\top
 #'   (B - \bar{B}) \in \mathbb{R}^{a \times b},}
@@ -57,10 +64,15 @@ compute_per_maturity <- function(w1, w2, maturities,
 #' same quantity as the one-pass formula
 #' \eqn{A^\top B / T - \bar{A} \bar{B}^\top} but without its
 #' catastrophic cancellation when column means dominate the spread.
+#' Inputs must have the same row count; vectors are treated as
+#' one-column matrices. Inputs are not validated and observations are not
+#' removed: missing values propagate to affected covariance entries.
 #'
 #' @param a Numeric vector or matrix (T x a).
 #' @param b Numeric vector or matrix (T x b).
-#' @return An \eqn{a \times b} matrix of centered covariances.
+#' @return An \eqn{a \times b} numeric matrix of centered covariances, with
+#'   row and column names taken from the columns of \code{a} and \code{b}.
+#'   A single finite observation gives zeros; an empty sample gives \code{NaN} entries.
 #' @keywords internal
 centered_cov <- function(a, b) {
   a <- as.matrix(a)
@@ -70,14 +82,15 @@ centered_cov <- function(a, b) {
   crossprod(a_centered, b_centered) / nrow(a)
 }
 
-#' Centered Sample Variance (1/T normalization)
+#' Centered Sample Variance (1/T Normalization)
 #'
 #' Scalar diagonal of \code{\link{centered_cov}}: the 1/T centered
 #' variance of a single numeric vector, sharing its centering and
 #' divisor.
+#' Missing values propagate; observations are not removed.
 #'
 #' @param x Numeric vector.
-#' @return Numeric scalar centered variance.
+#' @return Numeric scalar centered variance, or \code{NaN} for an empty vector.
 #' @noRd
 centered_var <- function(x) {
   centered_cov(x, x)[1, 1]
@@ -89,15 +102,13 @@ centered_var <- function(x) {
 #' is not entirely finite yields \code{Inf} (the arm loses the min it
 #' feeds; observations are never dropped, which would understate a
 #' variance bound), and a finite series yields its
-#' \code{centered_var()} clamped at zero (divisor-N arithmetic can
-#' produce a tiny negative value on a near-constant series, and callers
-#' take square roots). Non-finite inputs here arise only from
-#' \code{exp()} overflow at astronomically large log prices, so the
-#' \code{Inf} branch errs conservative, never sharp.
+#' \code{centered_var()} clamped at zero before callers take square roots.
+#' Non-finite inputs can arise from overflow in the bound components;
+#' the \code{Inf} branch keeps the arm conservative.
 #'
 #' @param x Numeric vector.
 #' @return Numeric scalar: \code{max(0, centered_var(x))}, or \code{Inf}
-#'   when any element of \code{x} is non-finite.
+#'   when any element of \code{x} is non-finite. Empty inputs give \code{NaN}.
 #' @noRd
 guarded_centered_var <- function(x) {
   if (!all(is.finite(x))) {
@@ -108,31 +119,37 @@ guarded_centered_var <- function(x) {
 
 #' Warn When Identification Variances Are Degenerate
 #'
+#' Checks identification variances for numerical degeneracy and warns when flagged.
+#'
+#' @details
 #' Diagnostic for the regularity assumption of the identification
 #' strategy: \eqn{var(\omega_{2,i}^2) > 0} and
 #' \eqn{var(\omega_1 \omega_{2,i} - \gamma \omega_{2,i}^2) > 0} at the true
 #' \eqn{\gamma}. The first is checked directly; the second is checked
 #' at the \eqn{\gamma} that minimizes it (the residual variance of
 #' regressing \eqn{\omega_1 \omega_{2,i}} on \eqn{\omega_{2,i}^2}), so a warning means
-#' the condition fails for some \eqn{\gamma}. Both checks are
+#' the condition is numerically degenerate for some \eqn{\gamma}. Both checks are
 #' scale-free ratios compared against
 #' \code{HETID_CONSTANTS$DEGENERACY_TOLERANCE}. The relevant variances
 #' \eqn{var(\omega_{2,i}^2)} and \eqn{var(\omega_1 \omega_{2,i})} are exactly the
 #' scalar statistics \code{sigma_i_sq} and \code{s_i_0}, so the caller
 #' passes them in and the diagnostic judges the same numbers the
-#' \code{hetid_moments} container carries. Degenerate variances make
-#' the quadratic constraint ill-defined and the identified set
-#' degenerate or unbounded, so surfacing them here catches the problem
+#' \code{hetid_moments} container carries. Degenerate variances may make
+#' the identified set degenerate or unbounded, so surfacing them here catches the problem
 #' at the moments stage instead of downstream.
+#' Inputs must already be validated and aligned; this helper does not
+#' remove observations or validate the supplied statistics. It emits at most
+#' one warning of class \code{hetid_warning_degenerate_variance}, naming
+#' the affected w2 column indices and checks.
 #'
-#' @param w1 Numeric vector of \eqn{\omega_1} residuals
-#' @param w2 Numeric matrix of \eqn{\omega_2} residuals (T x I)
-#' @param maturities Integer vector of w2 column indices to check
-#' @param sigma_i_sq Numeric vector of sigma_i^2 statistics, element k
-#'   corresponding to \code{maturities[k]}
-#' @param s_i_0 Numeric vector of S_i^(0) statistics, element k
-#'   corresponding to \code{maturities[k]}
-#' @return Invisible NULL, called for its warning side effect
+#' @param w1 Numeric vector of \eqn{\omega_1} residuals of length T.
+#' @param w2 Numeric matrix of \eqn{\omega_2} residuals (T x I).
+#' @param maturities Integer vector of w2 column indices to check.
+#' @param sigma_i_sq Numeric vector of \code{sigma_i_sq} statistics, element k
+#'   corresponding to \code{maturities[k]}.
+#' @param s_i_0 Numeric vector of \code{s_i_0} statistics, element k
+#'   corresponding to \code{maturities[k]}.
+#' @return Invisible \code{NULL}, called for its warning side effect.
 #' @keywords internal
 warn_if_variance_degenerate <- function(w1, w2, maturities,
                                         sigma_i_sq, s_i_0) {

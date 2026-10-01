@@ -5,6 +5,6 @@
 \title{N-Hat Series Utilities}
 \description{
 Helpers shared by the price-news and SDF-innovation chain: the
-previous-period n_hat series and the generic news differencing.
+previous-period n_hat series and news between adjacent observations.
 }
 \keyword{internal}

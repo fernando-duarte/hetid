@@ -2,19 +2,22 @@
 % Please edit documentation in R/hetid_tau0_fit_methods.R
 \name{assert_hetid_tau0_fit}
 \alias{assert_hetid_tau0_fit}
-\title{Assert a Valid hetid_tau0_fit Object}
+\title{Assert hetid_tau0_fit Class Membership}
 \usage{
 assert_hetid_tau0_fit(x, arg = "fit")
 }
 \arguments{
-\item{x}{Object to check}
+\item{x}{An object whose class is to be checked.}
 
-\item{arg}{Argument name for the structured error}
+\item{arg}{A character scalar naming the argument in the error message
+and condition; defaults to \code{"fit"}.}
 }
 \value{
-Invisible TRUE when valid
+\code{TRUE}, invisibly, when the class matches. Otherwise, signals
+a \code{hetid_error_bad_argument} condition.
 }
 \description{
-Assert a Valid hetid_tau0_fit Object
+Checks only that the object inherits from \code{hetid_tau0_fit}.
+Use \code{\link{validate_hetid_tau0_fit}} to check its contents and alignment.
 }
 \keyword{internal}

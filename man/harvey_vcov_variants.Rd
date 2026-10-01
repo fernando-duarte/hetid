@@ -14,27 +14,34 @@ harvey_vcov_variants(
 }
 \arguments{
 \item{coef}{Numeric coefficient vector of length \code{ncol(x_mat)}, on the
-same scale as \code{y}}
+same response scale as \code{y} and in design-column order. \code{NULL}
+represents a failed fit and returns all-NA matrices.}
 
-\item{y}{Numeric nonnegative response}
+\item{y}{Numeric nonnegative response vector of length \code{nrow(x_mat)}.}
 
 \item{x_mat}{Numeric design matrix, intercept column included, with column
-labels naming the coefficient axis}
+labels naming the coefficient axis. No intercept is added. Rows must align
+with \code{y} and be chronological for HAC; order is not checked.}
 
-\item{hac_lags}{Nonnegative integer Newey-West lag truncation; rows of
-\code{x_mat} and \code{y} are assumed chronological}
+\item{hac_lags}{Nonnegative integer Newey-West lag truncation, in observations.
+Zero makes \code{hac} equal \code{robust}. Lags beyond the sample length add
+no cross-products, but the supplied truncation still determines their weights.}
 
-\item{rcond_tol}{Positive normalized-information conditioning tolerance}
+\item{rcond_tol}{Finite positive scalar tolerance for the reciprocal condition
+number of diagonally normalized information. Defaults to
+\code{LOG_VARIANCE_HARVEY_CONTROL$RCOND_TOLERANCE}.}
 }
 \value{
-Named list of \code{ncol(x_mat)} square matrices keyed by
-\code{LOG_VARIANCE_HARVEY_CONTROL$SE_TYPES}
+Named list keyed by \code{LOG_VARIANCE_HARVEY_CONTROL$SE_TYPES}.
+Each element is a numeric \code{ncol(x_mat) x ncol(x_mat)} covariance matrix,
+labelled on both axes by \code{colnames(x_mat)}. An unusable input returns
+all-NA matrices; an unavailable inverse makes the variants requiring it all-NA.
 }
 \description{
 The five analytic (non-bootstrap) QMLE covariance matrices for the Harvey
-Gaussian multiplicative-heteroskedasticity log-variance fit, ported from
-the paper pipeline
-(\code{scripts-paper/log_variance/estimators/harvey/standard_errors.R}).
+Gaussian multiplicative-heteroskedasticity log-variance fit.
+}
+\details{
 \eqn{\hat\theta} minimizes \eqn{0.5 \sum_t (\eta_t + y_t e^{-\eta_t})} with
 \eqn{\eta = X\theta}, so every variant is a pure function of the accepted
 coefficient, the response \code{y}, and the design \code{X}: no fit object
@@ -55,8 +62,7 @@ variants, with \eqn{r = y / \mu}, per-observation score rows
 }
 The SEs are hand-rolled in base R: the Harvey QMLE is not a \code{glm}
 object a sandwich package could dispatch on.
-}
-\details{
+
 Each bread is inverted through the shared conditioning gate
 (\code{\link{se_norm_inv}}); a \code{NULL} inverse -- a non-finite,
 singular, or ill-conditioned bread -- fails that variant closed to an
@@ -65,5 +71,15 @@ coefficient, response, or nonpositive \eqn{\mu}. The raw
 \code{(coef, y, x_mat, hac_lags)} signature is the registry's \code{vcov}
 contract. The public entrypoints are \code{\link{compute_log_variance_vcov}}
 and \code{\link{compute_log_variance_vcov_at_coef}}.
+
+Missing or non-finite coefficients, responses, or design entries, negative
+responses, inconsistent vector lengths, or
+\code{nrow(x_mat) <= ncol(x_mat)} return all-NA matrices;
+no rows are omitted. Zero responses are allowed. Non-finite fitted means
+also return all-NA matrices. Later arithmetic overflow can still produce
+non-finite covariance entries. The coefficient's convergence or optimality
+is not checked here, and first-stage estimation uncertainty is not propagated.
+The public entrypoints validate matrix structure and scalar controls before
+calling this internal helper.
 }
 \keyword{internal}

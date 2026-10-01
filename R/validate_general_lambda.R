@@ -1,17 +1,26 @@
 #' Coerce Weights to the Per-Component List Form
 #'
-#' Accepts the legacy J x I matrix (one combination per component) or a
+#' Accepts a J x I matrix (one combination per component) or a
 #' list of length \code{n_components} indexed by system column, with a
-#' numeric J x K_i matrix at every constrained column (NULL required at
-#' unconstrained columns). Mirrors the legacy convention that
-#' gamma/tau are full-size system objects indexed by maturity value.
+#' numeric J x K_i matrix at every constrained column. List inputs require
+#' \code{NULL} at unconstrained columns; matrix inputs discard those columns.
+#' Here I is \code{n_components}, J is the number of instruments, and K_i
+#' is the number of combinations at constrained system column i.
+#' Every constrained matrix must have at least one column.
+#' System columns are w2 column indices, not bond maturity values.
+#' Constrained weights must be finite, with no \code{NA}, \code{NaN}, or
+#' infinite values.
 #' All-zero weight columns are rejected: the spec's admissibility sets
 #' exclude the zero direction, and a zero column would silently add a
 #' vacuous constraint.
 #'
-#' @param lambda Matrix or list of weight matrices
-#' @param moments A \code{hetid_moments} object
-#' @return List of length \code{n_components}
+#' @param lambda A J x I matrix or a length-I list of weight matrices.
+#' @param moments A validated \code{hetid_moments} object supplying the
+#'   constrained system columns, system width, and instrument count.
+#' @return A list of length \code{n_components}, indexed by system column,
+#'   with numeric J x K_i matrices at constrained columns and \code{NULL}
+#'   elsewhere. Matrix inputs give one-column matrices; list inputs retain
+#'   their names and matrix dimensions.
 #' @noRd
 as_lambda_list <- function(lambda, moments) {
   maturities <- attr(moments, "maturities")
@@ -33,7 +42,6 @@ as_lambda_list <- function(lambda, moments) {
         ") as the moments' instruments"
       )
     )
-    # Canonicalize to list; unused columns become NULL (legacy semantics)
     lambda <- lapply(seq_len(n_components), function(i) {
       if (i %in% maturities) lambda[, i, drop = FALSE] else NULL
     })
@@ -83,13 +91,18 @@ as_lambda_list <- function(lambda, moments) {
 
 #' Constraint Labels for the General System
 #'
-#' One row per (component, combination) pair in component-major order.
-#' Single-combination components keep the legacy \code{maturity_N}
-#' name so the K_i = 1 case is name-identical to the legacy path.
+#' One row per (component, combination) pair, in the supplied
+#' \code{maturities} order and then in weight-column order.
+#' Single-combination components use \code{maturity_N}; multiple
+#' combinations use \code{maturity_N_combo_k}.
+#' Here N is a w2 column index, not a bond maturity value.
 #'
-#' @param lambda_list Output of \code{as_lambda_list()}
-#' @param maturities Constraint-axis maturities
-#' @return Data frame with constraint, maturity, combo, name
+#' @param lambda_list A per-system-column list from \code{as_lambda_list()}.
+#' @param maturities An integer vector of constrained w2 column indices.
+#' @return A data frame with one row per constraint and columns
+#'   \code{constraint} (sequential row index), \code{maturity} (w2 column
+#'   index), \code{combo} (weight-column index), and \code{name} (constraint
+#'   label).
 #' @noRd
 general_constraint_labels <- function(lambda_list, maturities) {
   k_per <- vapply(

@@ -1,9 +1,7 @@
 #' PPML Acceptance Machinery
 #'
-#' The post-fit half of the PPML log-variance response solve: the
-#' positive-response rank diagnostic, the single \code{glm.fit} call site, and
-#' the fail-closed acceptance check applied to each start-ladder rung. Originally ported
-#' from the paper pipeline, whose fitting adapters now delegate here.
+#' The positive-response rank diagnostic, \code{glm.fit} call, and
+#' acceptance checks used for each PPML log-variance fitting attempt.
 #'
 #' @name ppml_acceptance
 #' @keywords internal
@@ -16,11 +14,18 @@ NULL
 #' \code{RANK_TOLERANCE * d[1]}. A zero column keeps its zero singular value
 #' and so lowers the count.
 #'
-#' @param y_scaled Numeric response on the scaled (fitted) scale
-#' @param x_mat Numeric design matrix, intercept column included
-#' @param control Validated fitting controls
+#' Inputs are already validated by the fitting boundary; missing values are
+#' not removed here. The relative cutoff uses \code{control$RANK_TOLERANCE}.
 #'
-#' @return Integer rank of the column-normalized positive-response rows
+#' @param y_scaled Finite nonnegative numeric response vector on the scaled
+#'   (fitted) scale, with at least one positive value.
+#' @param x_mat Finite numeric design matrix with one row per response and
+#'   an intercept column.
+#' @param control Validated fitting controls; defaults to the PPML controls
+#'   from \code{log_variance_fit_control("ppml")}.
+#'
+#' @return A scalar integer rank of the column-normalized rows for which
+#'   \code{y_scaled > 0}.
 #' @keywords internal
 ppml_pos_rank <- function(y_scaled, x_mat, control = log_variance_fit_control("ppml")) {
   x_pos <- x_mat[y_scaled > 0, , drop = FALSE]
@@ -33,18 +38,29 @@ ppml_pos_rank <- function(y_scaled, x_mat, control = log_variance_fit_control("p
 #' Run One glm.fit Rung
 #'
 #' The one \code{glm.fit} call site of the package's log-variance estimator.
-#' Conditions are recorded, never silenced, and an IRLS error comes back as a
-#' \code{NULL} fit rather than propagating: the ladder decides what a failed
-#' rung means.
+#' Warnings and messages are captured in the returned list instead of printed.
+#' An IRLS error comes back as a \code{NULL} fit rather than propagating:
+#' the ladder decides what a failed rung means.
 #'
-#' @param start Numeric start vector, or \code{NULL} for the
-#'   \code{glm.fit} default
-#' @param y_scaled Numeric response on the scaled (fitted) scale
-#' @param x_mat Numeric design matrix, intercept column included
-#' @param control Validated fitting controls
+#' Inputs are already validated by the fitting boundary; missing values are
+#' not removed here. The fit uses a quasi-Poisson family with a log link and
+#' \code{control$GLM_EPSILON} and \code{control$GLM_MAXIT} as IRLS controls.
 #'
-#' @return List with \code{fit} (\code{NULL} on error), \code{warnings},
-#'   \code{messages}, \code{error_class}, and \code{error_message}
+#' @param start Numeric coefficient start vector on the scaled response,
+#'   with one element per design column, or \code{NULL} for the
+#'   \code{glm.fit} default.
+#' @param y_scaled Finite nonnegative numeric response vector on the scaled
+#'   (fitted) scale, with at least one positive value.
+#' @param x_mat Finite numeric design matrix with one row per response and
+#'   an intercept column.
+#' @param control Validated fitting controls; defaults to the PPML controls
+#'   from \code{log_variance_fit_control("ppml")}.
+#'
+#' @return A list with \code{fit} (the \code{glm.fit} result, or \code{NULL}
+#'   on error), character vectors \code{warnings} and \code{messages}, and
+#'   scalar strings \code{error_class} and \code{error_message} (both
+#'   \code{NA_character_} on success). On error, the prefixed error message
+#'   is also appended to \code{warnings}.
 #' @keywords internal
 #' @importFrom stats glm.fit quasipoisson glm.control
 ppml_run_glm <- function(start, y_scaled, x_mat, control = log_variance_fit_control("ppml")) {
@@ -72,23 +88,40 @@ ppml_run_glm <- function(start, y_scaled, x_mat, control = log_variance_fit_cont
 
 #' Accept or Reject One Fitted Rung
 #'
-#' Fail-closed post-fit check on the scaled response: every gate is
-#' unconditional and short-circuits with its reason, so an ill-posed fit never
-#' reaches the score and conditioning computations. Rejection is the default,
-#' since a silently accepted non-solution would be reported with standard
-#' errors as if it were one.
+#' Checks finite coefficients, positive finite fitted means, convergence,
+#' and the boundary flag before computing score and conditioning diagnostics.
+#' Rejection is the default, since a silently accepted non-solution would be
+#' reported with standard errors as if it were one.
 #'
-#' @param fit A \code{glm.fit} result (or any list with
-#'   \code{coefficients}, \code{converged}, and \code{boundary})
-#' @param y_scaled Numeric response on the scaled (fitted) scale
-#' @param x_mat Numeric design matrix, intercept column included
-#' @param control Validated fitting controls
+#' Response and design inputs are already validated by the fitting boundary;
+#' missing values are not removed here. Acceptance requires the normalized
+#' score to be at most \code{control$SCORE_TOLERANCE} and the reciprocal
+#' condition estimate of the column-normalized information matrix to be at
+#' least \code{control$RCOND_TOLERANCE}.
 #'
-#' @return List with \code{accepted}, \code{reason}, and \code{coef_scaled};
-#'   accepted (and score-or-conditioning rejected) verdicts also carry
-#'   \code{mu}, \code{pos}, \code{score_norm}, \code{score_norm_raw},
-#'   \code{info_col_scale}, \code{condition_weighted_scaled}, and
-#'   \code{rcond_info_raw}
+#' @param fit A \code{glm.fit} result, or a list with a numeric
+#'   \code{coefficients} vector matching the design columns and logical
+#'   \code{converged} and \code{boundary} flags.
+#' @param y_scaled Finite nonnegative numeric response vector on the scaled
+#'   (fitted) scale, with at least one positive value.
+#' @param x_mat Finite numeric design matrix with one row per response and
+#'   an intercept column.
+#' @param control Validated fitting controls; defaults to the PPML controls
+#'   from \code{log_variance_fit_control("ppml")}.
+#'
+#' @return A list with logical scalar \code{accepted}, scalar string
+#'   \code{reason} (\code{NA_character_} on acceptance), and coefficient
+#'   vector \code{coef_scaled}. Early rejection reasons are
+#'   \code{"nonfinite_coef"}, \code{"nonpositive_mu"},
+#'   \code{"irls_not_converged"}, \code{"boundary"}, and \code{"info_scale"}.
+#'   Accepted verdicts and rejections for \code{"score_tolerance"} or
+#'   \code{"ill_conditioned"} also carry fitted scaled means \code{mu},
+#'   a logical positive-response mask \code{pos}, the maximum normalized
+#'   score \code{score_norm}, the maximum absolute unnormalized score
+#'   \code{score_norm_raw}, information column norms \code{info_col_scale},
+#'   the condition estimate \code{condition_weighted_scaled} (\code{1 / rcond}
+#'   for the column-normalized information matrix), and the raw information
+#'   matrix's reciprocal condition estimate \code{rcond_info_raw}.
 #' @keywords internal
 #' @importFrom stats median
 ppml_accept <- function(fit, y_scaled, x_mat, control = log_variance_fit_control("ppml")) {
@@ -111,7 +144,7 @@ ppml_accept <- function(fit, y_scaled, x_mat, control = log_variance_fit_control
   }
   pos <- y_scaled > 0
   sc <- drop(crossprod(x_mat, y_scaled - mu))
-  # the score gate is scaled per coordinate: one absolute tolerance on
+  # the score check is scaled per coordinate: one absolute tolerance on
   # X'(y - mu) would pass or fail on each regressor's units alone
   bound_unit <- max(1, stats::median(y_scaled[pos])) * colSums(abs(x_mat))
   score_norm <- max(abs(sc) / bound_unit)

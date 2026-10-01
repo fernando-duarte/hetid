@@ -1,12 +1,16 @@
 #' Harvey Scoring and Acceptance
 #'
-#' The iteration half of the Harvey log-variance solve, split from
-#' \code{\link{harvey_solver}} for the file-length cap: the monotone
-#' backtracking line search, the observed-Newton direction with its Fisher
-#' fallback, the scoring loop, and the fresh post-stop acceptance gate. Originally ported
-#' from the paper pipeline, whose fitting adapters now delegate here.
+#' Iteration helpers for the Harvey log-variance solver: the backtracking
+#' line search, observed-Newton direction with Fisher fallback, scoring loop,
+#' and post-stop acceptance check. Evaluation helpers are documented in
+#' \code{\link{harvey_solver}}.
 #' Validated fitting controls are passed through the solve; defaults come
 #' from \code{\link{LOG_VARIANCE_HARVEY_CONTROL}}.
+#'
+#' These helpers assume finite, nonnegative responses and a finite design from
+#' \code{\link{fit_log_variance}}; scoring also requires full column rank.
+#' Missing values are not removed. The fitted variance \eqn{\exp(X\theta)} is
+#' on the solver's response scale. Malformed direct calls are not validated here.
 #'
 #' @name harvey_scoring_module
 #' @keywords internal
@@ -14,21 +18,22 @@ NULL
 
 #' Backtrack Along a Proposed Direction
 #'
-#' Accepts a strict criterion decrease or, on a criterion tie, only a scaled
-#' score improvement past the pinned margin. A tie is any difference within the
-#' criterion's own summation rounding error, not literal equality of the stored
-#' doubles: near the optimum the step's true decrease sits below that noise
-#' floor, so two evaluations cannot be told apart by \code{q} and the score is
-#' the only meaningful signal. Requiring strict score progress on a tie keeps
-#' every tie acceptance monotone in the score, so the search cannot cycle.
+#' Accepts any strict criterion decrease. An equal or higher criterion is
+#' accepted only within the summation-rounding band and with a scaled-score
+#' improvement exceeding the control's progress margin.
 #'
-#' @param cur Current \code{\link{harvey_eval}} result
-#' @param control Validated fitting controls
-#' @param dir Numeric direction to step along
+#' Starts at the full step and halves it up to \code{LINE_SEARCH_HALVINGS}
+#' times. Unusable trial evaluations are rejected. The rounding band uses
+#' \code{Q_NOISE_MULTIPLIER}; the score margin uses \code{SCORE_PROGRESS_MULTIPLIER}.
+#'
+#' @param cur Current list returned by \code{\link{harvey_eval}}.
+#' @param control Validated named list of Harvey fitting controls; defaults
+#'   derive from \code{\link{LOG_VARIANCE_HARVEY_CONTROL}}.
+#' @param dir Numeric direction vector of length \code{ncol(x_mat)}.
 #' @inheritParams harvey_eval
 #'
 #' @return \code{NULL} when no halving is accepted (a stall), otherwise a list
-#'   with the accepted \code{eval} and the number of \code{halves} taken
+#'   with the accepted \code{eval} and the number of \code{halves} taken.
 #' @keywords internal
 harvey_line_search <- function(cur, dir, y, x_mat, pos, col_abs,
                                control = log_variance_fit_control("harvey")) {
@@ -56,24 +61,24 @@ harvey_line_search <- function(cur, dir, y, x_mat, pos, col_abs,
 #'
 #' \eqn{(X' diag(r) X)^{-1} X'(r - 1)} when the observed information is well
 #' conditioned, else \code{NULL} so the caller falls back to the
-#' constant-information Fisher direction. Newton converges quadratically near
-#' the solution; Fisher (the always positive definite \eqn{0.5 X'X}) is the
-#' globally safe direction far from it. Expected-information scoring alone is
-#' only linearly convergent and crawls on heavy-tailed responses, which is why
-#' the hybrid exists.
+#' constant-information Fisher direction. The expected information
+#' \eqn{0.5 X'X} is positive definite for the validated full-rank design.
+#' Non-finite entries, nonpositive diagonal entries, a normalized reciprocal
+#' condition number below \code{NEWTON_RCOND_TOLERANCE}, or a failed Cholesky
+#' factorization reject the observed-Newton direction.
 #'
 #' @param cur Current \code{\link{harvey_eval}} result.
 #' @param x_mat Numeric design matrix, intercept column included.
-#' @param control Validated fitting controls.
+#' @param control Validated named list of Harvey fitting controls; defaults
+#'   derive from \code{\link{LOG_VARIANCE_HARVEY_CONTROL}}.
 #'
-#' @return Numeric direction vector, or \code{NULL}
+#' @return Numeric vector of length \code{ncol(x_mat)}, or \code{NULL} on rejection.
 #' @keywords internal
 harvey_newton_dir <- function(cur, x_mat,
                               control = log_variance_fit_control("harvey")) {
   obs <- crossprod(x_mat, cur$r * x_mat)
   d <- diag(obs)
-  # gate the diagonal before sqrt: a nonpositive entry reaches the same NULL
-  # either way, but sqrt() would emit a spurious NaN warning first
+  # Check the diagonal before sqrt() to avoid warnings from negative entries
   if (!all(is.finite(obs)) || any(!is.finite(d)) || any(d <= 0)) {
     return(NULL)
   }
@@ -90,24 +95,23 @@ harvey_newton_dir <- function(cur, x_mat,
 
 #' Run the Scoring Loop From One Evaluated Start
 #'
-#' The initial-start shortcut exits converged with code \code{0} when the
+#' The initial-start shortcut exits converged with \code{iters = 0} when the
 #' scaled score already passes; otherwise each iteration prefers the
 #' observed-Newton direction and falls back to the Fisher direction when the
 #' observed information is ill conditioned or its line search stalls.
-#' Convergence needs a passed score \emph{and} a relative criterion or
-#' parameter change, so a step that merely grazes the tolerance is not enough.
-#' \code{MAXIT} is a safety ceiling: Newton gets there in a handful of
-#' iterations, the Fisher fallback on a pathological point may need many more.
+#' After a step, convergence needs a score at or below \code{SCORE_TOLERANCE}
+#' \emph{and} a criterion or parameter change within \code{REL_CHANGE_TOLERANCE}
+#' times the corresponding scale (at least one). \code{MAXIT} caps iterations.
 #'
-#' @param cur Evaluated start from \code{\link{harvey_eval}}
+#' @param cur Evaluated-start list from \code{\link{harvey_eval}}.
 #' @inheritParams harvey_eval
 #' @inheritParams harvey_line_search
-#' @param chol_xx Upper triangular Cholesky factor of \code{crossprod(x_mat)}
+#' @param chol_xx Numeric upper triangular Cholesky factor of \code{crossprod(x_mat)}.
 #'
 #' @return List with the last \code{eval}, the \code{iters} taken (negative on
 #'   a stall, marking the iteration it stalled at), the cumulative
-#'   \code{halves}, and a \code{status} of \code{"converged"},
-#'   \code{"line_search_stall"}, or \code{"iteration_cap"}
+#'   \code{halves} from accepted steps, and a \code{status} of \code{"converged"},
+#'   \code{"line_search_stall"}, or \code{"iteration_cap"}.
 #' @keywords internal
 harvey_scoring <- function(cur, y, x_mat, pos, col_abs, chol_xx,
                            control = log_variance_fit_control("harvey")) {
@@ -156,15 +160,17 @@ harvey_scoring <- function(cur, y, x_mat, pos, col_abs, chol_xx,
 #'
 #' Recomputes the safe ratio and criterion from scratch at the stopped point,
 #' then requires a finite strictly positive fitted variance and a
-#' diagonally-normalized information \code{rcond} above tolerance. Normalizing
-#' by the diagonal makes the gate scale-invariant while still catching genuine
+#' diagonally-normalized information \code{rcond} at or above \code{RCOND_TOLERANCE}.
+#' It does not recheck score convergence, which the scoring loop establishes.
+#' Normalizing by the diagonal makes the gate scale-invariant while catching
 #' rank deficiency. \code{NULL} rejects the point.
 #'
 #' @inheritParams harvey_eval
 #' @inheritParams harvey_line_search
 #'
 #' @return \code{NULL} on rejection, otherwise a list with the recomputed
-#'   \code{eval}, the observed \code{info}, and its normalized \code{rcond}
+#'   \code{eval}, the numeric \code{ncol(x_mat)} square observed-information matrix
+#'   \code{info}, and its scalar normalized reciprocal condition number \code{rcond}.
 #' @keywords internal
 harvey_post_stop <- function(theta, y, x_mat, pos, col_abs,
                              control = log_variance_fit_control("harvey")) {

@@ -7,13 +7,20 @@
 maturity_names(maturities)
 }
 \arguments{
-\item{maturities}{Integer vector of maturity indices}
+\item{maturities}{Integer vector of maturity indices. In the identification
+layer, these are column positions in \code{w2}, not bond maturities in months.}
 }
 \value{
-Character vector, e.g. c("maturity_1", "maturity_2"); character(0)
-for a zero-length input
+A character vector of the same length and order as \code{maturities},
+with each index prefixed by \code{HETID_CONSTANTS$MATURITY_PREFIX}, such as
+\code{c("maturity_1", "maturity_2")}. Returns \code{character(0)} for a
+zero-length input.
 }
 \description{
-Generates standard maturity label vector from indices.
+Generates a standard maturity label vector from indices.
+}
+\details{
+The indices are used as supplied, without validation. Missing values
+become labels ending in \code{"NA"}.
 }
 \keyword{internal}

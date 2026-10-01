@@ -1,11 +1,12 @@
 #' Assert Slack Values Are Finite and in [0, 1)
 #'
 #' Single source of truth for the tau range rule, shared by
-#' \code{validate_quadratic_inputs()} (legacy path) and
+#' \code{validate_quadratic_inputs()} and
 #' \code{as_tau_list()} (general path).
 #'
-#' @param tau Numeric vector of slacks
-#' @return Invisible TRUE
+#' @param tau Numeric vector of dimensionless slacks in \code{[0, 1)}.
+#'   Missing and non-finite values are rejected; an empty vector is valid.
+#' @return Invisible \code{TRUE}; invalid values signal \code{hetid_error_bad_argument}.
 #' @noRd
 assert_tau_values_ok <- function(tau) {
   assert_bad_argument_ok(
@@ -28,16 +29,16 @@ assert_tau_values_ok <- function(tau) {
 #' in \code{maturities} must hold an empty entry. \code{predicate_desc}
 #' and \code{suffix} reproduce each caller's exact message;
 #' \code{is_empty} swaps the emptiness test (tau also accepts
-#' zero-length numerics, the others require NULL).
+#' any zero-length entry, the others require NULL).
 #'
-#' @param x Candidate per-component list
-#' @param n_components System width
-#' @param maturities Constrained system columns
-#' @param arg Condition argument name
-#' @param predicate_desc Wording for the required-empty state
-#' @param suffix Trailing clause appended after the column list
-#' @param is_empty Per-element emptiness predicate
-#' @return Invisible TRUE if valid, stops otherwise
+#' @param x Candidate per-component list of length \code{n_components}.
+#' @param n_components Integer system width (theta-axis dimension).
+#' @param maturities Integer indices of constrained system columns.
+#' @param arg Character argument name stored in the error condition.
+#' @param predicate_desc Character wording for the empty state, default \code{"NULL"}.
+#' @param suffix Character message suffix, empty by default.
+#' @param is_empty Function returning one logical value per entry, default \code{is.null}.
+#' @return Invisible \code{TRUE}; nonempty entries signal \code{hetid_error_bad_argument}.
 #' @noRd
 assert_null_at_unconstrained <- function(x, n_components, maturities, arg,
                                          predicate_desc = "NULL",
@@ -61,17 +62,20 @@ assert_null_at_unconstrained <- function(x, n_components, maturities, arg,
 
 #' Coerce Slacks to the Per-Component List Form
 #'
-#' Promotion rules: a scalar replicates across every constraint; a
-#' length-I numeric replicates \code{tau[i]} across component i's K_i
-#' combinations (legacy semantics); a list must carry a length-K_i
-#' numeric per constrained column and NULL or zero-length entries at
-#' unconstrained columns. A flat numeric of any other length
-#' (including sum(K_i)) or with dimensions is rejected as ambiguous.
+#' A scalar replicates across every constraint; a numeric vector of length
+#' \code{n_components} replicates \code{tau[i]} across system column i's K_i
+#' combinations. A list must carry K_i numeric values per constrained column
+#' and NULL or any zero-length entry at unconstrained columns. Numeric list
+#' entries retain their dimensions and names. Slacks must be finite and in
+#' \code{[0, 1)}. Flat numeric inputs of other lengths or with dimensions are
+#' rejected; total combination count does not determine their interpretation.
 #'
-#' @param tau Scalar, length-I numeric, or list
-#' @param lambda_list Output of \code{as_lambda_list()}
-#' @param moments A \code{hetid_moments} object
-#' @return List of length \code{n_components}
+#' @param tau Numeric scalar, numeric vector of length \code{n_components}, or list.
+#' @param lambda_list Validated list of weight matrices from \code{as_lambda_list()}.
+#' @param moments Validated \code{hetid_moments} object carrying both axes.
+#' @return List indexed by system column, of length \code{n_components}.
+#'   Numeric inputs produce vectors and empty numerics at unconstrained
+#'   columns; a valid list is returned unchanged, including names and empty entries.
 #' @noRd
 as_tau_list <- function(tau, lambda_list, moments) {
   maturities <- attr(moments, "maturities")
@@ -120,14 +124,14 @@ as_tau_list <- function(tau, lambda_list, moments) {
 #'
 #' Worker for the dimensionless-numeric branch of
 #' \code{as_tau_list()}: a scalar replicates across every constraint,
-#' a length-I vector replicates \code{tau[i]} across component i's
+#' a vector of length \code{n_components} replicates \code{tau[i]} across column i's
 #' combinations.
 #'
-#' @param tau Scalar or length-I numeric (the caller's branch
-#'   condition guarantees a dimensionless non-list numeric)
-#' @param k_per Per-column combination counts
-#' @param n_components Theta-axis dimension
-#' @return List of length \code{n_components}
+#' @param tau Numeric scalar or vector of length \code{n_components}, without dimensions.
+#' @param k_per Integer combination counts per system column, zero if unconstrained.
+#' @param n_components Integer theta-axis dimension.
+#' @return Unnamed list of length \code{n_components}, with K_i slacks per column
+#'   and zero-length numeric vectors at unconstrained columns.
 #' @noRd
 promote_numeric_tau <- function(tau, k_per, n_components) {
   assert_tau_values_ok(tau)
@@ -152,9 +156,10 @@ promote_numeric_tau <- function(tau, k_per, n_components) {
 #' Shared by \code{validate_quadratic_inputs()} and
 #' \code{build_general_quadratic_system()}.
 #'
-#' @param sigma_i_sq Numeric vector from the moments container
-#' @param maturities Maturity vector for the error message
-#' @return Invisible TRUE
+#' @param sigma_i_sq Numeric vector from the moments container, in constraint-axis order.
+#' @param maturities Integer system-column indices in the same order, for error messages.
+#' @return Invisible \code{TRUE}; invalid variances signal \code{hetid_error_bad_argument}
+#'   naming their system-column indices.
 #' @noRd
 assert_sigma_positive <- function(sigma_i_sq, maturities) {
   bad_sigma <- which(

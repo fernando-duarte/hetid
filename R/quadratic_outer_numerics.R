@@ -1,21 +1,9 @@
-# Verified outer bounds from one nonnegative constraint combination.
-#
-# For weights v >= 0, every x in the feasible set satisfies
-# x'Mx + B'x + C <= 0 with M = sum v_i A_i. With any centre z, u = x - z,
-# rho = B + 2Mz and Q(z), the Lagrangian bound over a scalar rescaling
-# t > 0 has the closed form l'z + sqrt(a r) + sqrt(a) rho / (2 sqrt(lambda)),
-# where a >= l'M^-1 l, lambda <= lambda_min(M) and r = -Q(z) + rho^2/(4 lambda).
-# Every computed quantity carries a forward-error bound, so optimizer output
-# and the centre are candidates only. A nonfinite intermediate result returns
-# NULL (unknown), never a bound
-
 outer_gamma <- function(k) {
   u <- .Machine$double.eps / 2
   k * u / (1 - k * u)
 }
 
-# Base-2 exponent k of max(abs(x)); x/2^k is exact unless a nonzero entry falls below normal range
-# floor(log2(double.xmax)) = 1024, so clamp k to keep 2^k normal
+# log2(double.xmax) rounds to 1024; clamp k so 2^k stays finite and normal
 outer_pow2_exponent <- function(x) {
   top <- max(abs(x))
   if (top == 0) {
@@ -43,7 +31,6 @@ outer_norm2 <- function(x) {
   top * sqrt(sum((x / top)^2)) * (1 + outer_gamma(n + 4)) + n * .Machine$double.xmin
 }
 
-# Rows rescaled by powers of two leave the feasible set unchanged exactly
 outer_normalize_system <- function(quadratic) {
   m <- length(quadratic$c_i)
   out <- list(
@@ -70,8 +57,7 @@ outer_weights_ok <- function(v, m) {
   length(v) == m && all(is.finite(v)) && all(v >= 0) && sum(v) > 0
 }
 
-# The weighted Hessian and linear term with their rounding bounds, and a
-# lower bound on the exact combination's smallest eigenvalue
+# Rounding in the matrix calculation lowers the eigenvalue bound for positive definiteness
 outer_combination <- function(sys, v) {
   n <- sys$n
   m <- sys$m
@@ -91,7 +77,6 @@ outer_combination <- function(sys, v) {
   )
 }
 
-# Squared radius bound r_bar of the containing ellipsoid about centre z
 outer_radius <- function(sys, v, z, comb) {
   m <- sys$m
   tiny <- .Machine$double.xmin
@@ -108,6 +93,7 @@ outer_radius <- function(sys, v, z, comb) {
   rho <- comb$lin + 2 * drop(comb$mat %*% z)
   e_rho <- 2 * comb$g * (comb$abs_b + 2 * drop(comb$abs_m %*% abs_z)) +
     2 * comb$e_m * abs_z + tiny
+  # rho_bar bounds the norm of rho for the scalar radius correction
   rho_bar <- outer_norm2(abs(rho) + e_rho) * (1 + comb$g)
   rterm <- rho_bar / (2 * sqrt(comb$lam))
   r_bar <- -q_value + e_q + rterm^2
@@ -117,8 +103,6 @@ outer_radius <- function(sys, v, z, comb) {
   list(r_bar = r_bar, rterm = rterm, e_q = e_q, rho_bar = rho_bar, empty = r_bar < 0)
 }
 
-# Verify one simplex weight vector on normalized rows for pieces reused by every objective bound
-# Return NULL if the combination is not verified positive definite or any intermediate is nonfinite
 outer_verify <- function(sys, v) {
   if (!outer_weights_ok(v, sys$m)) {
     return(NULL)
@@ -146,8 +130,7 @@ outer_verify <- function(sys, v) {
   ), radius)
 }
 
-# Bounds of every column of a normalized loading matrix under one verified
-# candidate. Columns with a nonfinite result are NA (unknown)
+# Nonfinite endpoints remain unknown so they cannot tighten another candidate's bounds
 outer_candidate_bounds <- function(cand, scaled) {
   eps <- .Machine$double.eps
   tiny <- .Machine$double.xmin

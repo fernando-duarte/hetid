@@ -1,17 +1,49 @@
 #' Run PC Regression
 #'
-#' Shared regression core for \eqn{\omega_1} and \eqn{\omega_2} residual computation.
-#' Expects pre-aligned, pre-lagged inputs. Regressor labels come from
-#' the matrix's own column names (sanitized for formula use); unnamed
-#' or partially named input falls back to the bundled pc1..pcN names.
+#' Fits an ordinary least-squares regression with an intercept for
+#' \eqn{\omega_1} and \eqn{\omega_2} residual computation.
 #'
-#' @param y Numeric response vector
-#' @param pcs Matrix of regressors (principal components in the
-#'   bundled workflow)
-#' @param n_pcs Number of leading columns to use
+#' @details Inputs must already be aligned; the caller applies any required
+#' leads or lags before fitting.
+#' Rows with \code{NA} or \code{NaN} in \code{y} or a selected regressor
+#' are omitted jointly; missing values in unused columns do not affect the fit.
+#' Infinite values are not removed by complete-case filtering.
+#' At least \code{n_pcs + 2} complete observations are required.
+#' Regressor labels come from the selected columns' names, sanitized with
+#' \code{make.names(..., unique = TRUE)}. If any selected name is missing or
+#' empty, or column names are absent, all selected columns use the names from
+#' \code{\link{get_pc_column_names}} instead.
+#' Names such as \code{...} and \code{..1} cannot be evaluated in the
+#' regression formula, even after sanitization.
 #'
-#' @return List with residuals, fitted, coefficients, r_squared, model,
-#'   complete_idx, and df_residual
+#' Too few complete observations signal a
+#' \code{hetid_error_insufficient_data} condition. A selected regressor named
+#' \code{y} after sanitization signals a \code{hetid_error_bad_argument}
+#' condition. An aliased coefficient signals a \code{hetid_error} condition.
+#' Other invalid inputs can raise errors from subsetting or \code{stats::lm()}.
+#' Computing R-squared can warn when the fit is essentially perfect.
+#'
+#' @param y Numeric response vector with one element per row of \code{pcs}.
+#' @param pcs Numeric regressor matrix with rows aligned to \code{y}.
+#'   In the bundled workflow, regressors include principal components of
+#'   nominal financial asset returns and may include additional controls.
+#' @param n_pcs Positive integer number of leading regressor columns to use,
+#'   no greater than \code{ncol(pcs)}. This counts all selected regressors,
+#'   including controls, rather than only principal components.
+#'
+#' @return A named list containing:
+#'   \describe{
+#'     \item{residuals, fitted}{Named numeric vectors for complete observations,
+#'       in their original order, without padding omitted rows.}
+#'     \item{coefficients}{Named numeric vector containing the intercept and
+#'       selected regressor coefficients.}
+#'     \item{r_squared}{Numeric scalar giving the regression's R-squared,
+#'       which can be \code{NaN} for a constant response.}
+#'     \item{model}{The fitted \code{lm} object.}
+#'     \item{complete_idx}{Logical vector of length \code{length(y)} indicating
+#'       the observations used in the fit.}
+#'     \item{df_residual}{Integer residual degrees of freedom.}
+#'   }
 #' @importFrom stats lm residuals fitted coef as.formula complete.cases
 #' @keywords internal
 run_pc_regression <- function(y, pcs, n_pcs) {
@@ -38,8 +70,8 @@ run_pc_regression <- function(y, pcs, n_pcs) {
     make.names(nms, unique = TRUE)
   }
   colnames(pcs_clean) <- pc_names
-  # a regressor named y collides with the response: data.frame() renames the
-  # regressor and model.matrix drops it, silently fitting a smaller model
+  # data.frame() renames a regressor named y, and model.matrix() drops the response
+  # from the predictors; reject the collision to avoid losing a regressor
   if ("y" %in% pc_names) {
     stop_bad_argument(
       "pcs must not contain a column named \"y\": it collides with the response",
@@ -55,8 +87,7 @@ run_pc_regression <- function(y, pcs, n_pcs) {
     data = reg_data
   )
 
-  # collinear regressors make lm() drop terms to NA; fail here instead of
-  # propagating an under-ranked design downstream
+  # reject collinear regressors before passing NA coefficients downstream
   coefs <- coef(model)
   if (anyNA(coefs)) {
     aliased <- names(coefs)[is.na(coefs)]

@@ -1,15 +1,27 @@
 #' Reject All-Zero Constrained Columns of Gamma
 #'
-#' A zero column makes L_i = V_i = Q_i = 0, hence A_i = b_i = c_i = 0, so the
-#' constraint 0 <= 0 holds at every theta and the maturity drops out silently,
-#' widening the identified set. Only constrained columns are checked, matching
-#' the general path's as_lambda_list() guard in R/validate_general_lambda.R.
+#' Checks that each constrained column has at least one nonzero instrument weight.
 #'
-#' @param gamma Instrument weight matrix
-#' @param maturities Integer vector of constrained column indices
-#' @param arg Argument name for the structured error
+#' @details
+#' A zero column makes \eqn{L_i = V_i = Q_i = 0}, hence
+#' \eqn{A_i = b_i = c_i = 0}. The constraint \eqn{0 \leq 0} then holds at
+#' every \eqn{\theta}, so that maturity supplies no identifying restriction.
+#' Only constrained columns are checked, matching the general path's
+#' \code{as_lambda_list()} guard in \code{R/validate_general_lambda.R}.
+#' Nonzero weights are detected exactly, without a numerical tolerance.
+#' The caller must validate the matrix type, finite values, dimensions, and
+#' column indices before invoking this helper; missing values are not removed.
 #'
-#' @return Invisible TRUE when every constrained column is nonzero
+#' @param gamma Numeric instrument weight matrix with one row per instrument
+#'   and one column per system component, already validated by the caller.
+#' @param maturities Integer vector of constrained system column indices in
+#'   \code{gamma}, not bond maturities in months or years.
+#' @param arg Character string naming the argument in the error message and
+#'   structured condition; defaults to \code{"gamma"}.
+#'
+#' @return \code{TRUE}, invisibly, when every constrained column is nonzero.
+#'   Otherwise, signals a \code{hetid_error_bad_argument} condition naming
+#'   all constrained columns with zero weights.
 #' @noRd
 assert_gamma_columns_nonzero <- function(gamma, maturities, arg = "gamma") {
   zero_cols <- maturities[colSums(gamma[, maturities, drop = FALSE] != 0) == 0]

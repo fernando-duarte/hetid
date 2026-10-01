@@ -4,12 +4,17 @@
 \alias{harvey_scoring_module}
 \title{Harvey Scoring and Acceptance}
 \description{
-The iteration half of the Harvey log-variance solve, split from
-\code{\link{harvey_solver}} for the file-length cap: the monotone
-backtracking line search, the observed-Newton direction with its Fisher
-fallback, the scoring loop, and the fresh post-stop acceptance gate. Originally ported
-from the paper pipeline, whose fitting adapters now delegate here.
+Iteration helpers for the Harvey log-variance solver: the backtracking
+line search, observed-Newton direction with Fisher fallback, scoring loop,
+and post-stop acceptance check. Evaluation helpers are documented in
+\code{\link{harvey_solver}}.
 Validated fitting controls are passed through the solve; defaults come
 from \code{\link{LOG_VARIANCE_HARVEY_CONTROL}}.
+}
+\details{
+These helpers assume finite, nonnegative responses and a finite design from
+\code{\link{fit_log_variance}}; scoring also requires full column rank.
+Missing values are not removed. The fitted variance \eqn{\exp(X\theta)} is
+on the solver's response scale. Malformed direct calls are not validated here.
 }
 \keyword{internal}

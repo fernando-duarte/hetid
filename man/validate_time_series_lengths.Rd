@@ -7,17 +7,24 @@
 validate_time_series_lengths(..., expected_length = NULL)
 }
 \arguments{
-\item{...}{Vectors or lists whose lengths must agree}
+\item{...}{Vectors or lists whose lengths must agree. Supply at least two inputs
+when \code{expected_length = NULL}, or at least one when a length is supplied.}
 
-\item{expected_length}{Optional single nonnegative integer; if supplied, every
-input must have exactly this length}
+\item{expected_length}{A single finite nonnegative numeric integer, or
+\code{NULL} (the default) to compare input lengths with each other.}
 }
 \value{
-Invisible TRUE if valid, stops with informative error if invalid
+Invisible \code{TRUE} when lengths agree. Signals a
+\code{hetid_error_bad_argument} condition for an invalid expected length or too
+few inputs, or \code{hetid_error_dimension_mismatch} for unequal lengths.
 }
 \description{
 Validates that multiple inputs (vectors or lists) have consistent lengths.
 With \code{expected_length}, every input must equal that length; without it,
 the inputs must merely share a common length.
+}
+\details{
+Checks lengths only; values, types, and dates are not checked.
+Empty inputs are allowed when their lengths satisfy the requested comparison.
 }
 \keyword{internal}

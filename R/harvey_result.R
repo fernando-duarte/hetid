@@ -16,11 +16,19 @@ NULL
 #' with an accepted fit. Per-start criteria and the accepted information
 #' matrix refer to the scaled response. Recession certificates remain caller owned.
 #'
-#' @param error_class Single string naming the failure, or \code{NA}
-#' @param start_attempts List of per-rung attempt records
-#' @param ... Fields to override in the defaults
+#' @param error_class A single string naming the failure, or
+#'   \code{NA_character_} for an accepted fit.
+#' @param start_attempts A list of per-rung attempt records.
+#' @param ... Named diagnostic fields to override or add. A \code{NULL}
+#'   override is retained, rather than removing the field.
 #'
-#' @return A diagnostics list
+#' @return A named list containing \code{warnings}, \code{messages},
+#'   \code{error_class}, \code{start_attempts}, \code{n_zero_response},
+#'   \code{rank_x_pos}, \code{rcond_info}, \code{n_halvings},
+#'   \code{per_start_criteria}, and \code{info_matrix}, plus any added fields.
+#'   Unpopulated fields are empty character vectors, typed missing scalars,
+#'   or \code{NULL}; \code{error_class} and \code{start_attempts} are supplied
+#'   by the caller. This helper does not validate diagnostic values.
 #' @keywords internal
 #' @importFrom utils modifyList
 harvey_diagnostics <- function(error_class, start_attempts, ...) {
@@ -41,17 +49,26 @@ harvey_diagnostics <- function(error_class, start_attempts, ...) {
 #' vector as \code{warm_start}, and reports the criterion and score norm the
 #' post-stop gate recomputed on the scaled response.
 #'
-#' @param accepted Post-stop verdict from \code{\link{harvey_post_stop}}
-#' @param scored Scoring result from \code{\link{harvey_scoring}}
-#' @param y Numeric response on the original scale
-#' @param x_mat Numeric design matrix, intercept column included
-#' @param response_scale Positive finite scalar the response was divided by
-#' @param attempts List of per-rung attempt records
-#' @param n_zero_response Count of zero response rows
-#' @param rank_x_pos Integer rank of the positive-response design rows
-#' @param criteria Per-start numerical evidence, or NULL
+#' @param accepted A non-\code{NULL} post-stop verdict list from
+#'   \code{\link{harvey_post_stop}}, evaluated on the scaled response.
+#' @param scored A scoring result list from \code{\link{harvey_scoring}}.
+#' @param y A nonempty, finite, nonnegative numeric response vector on the original scale.
+#' @param x_mat A finite numeric design matrix with \code{length(y)} rows,
+#'   column names, and the intercept in its first column.
+#' @param response_scale A positive finite numeric scalar the response was divided by.
+#' @param attempts A list of per-rung attempt records.
+#' @param n_zero_response The number of zero response rows.
+#' @param rank_x_pos The integer rank of the positive-response design rows.
+#' @param criteria A list of per-start numerical evidence, or \code{NULL}
+#'   (the default) when that evidence is not supplied.
 #'
-#' @return A validated \code{hetid_log_variance_fit} object
+#' @return A validated \code{hetid_log_variance_fit} list, returned visibly,
+#'   with \code{fit_status = "ok"}, \code{converged = TRUE}, and coefficient
+#'   vectors named by \code{colnames(x_mat)}. The original response and design
+#'   are retained as \code{y} and \code{x_design}; \code{convergence_code}
+#'   records the number of scoring iterations and \code{diagnostics} contains
+#'   the acceptance evidence.
+#' @seealso \code{\link{hetid_log_variance_fit}}.
 #' @keywords internal
 harvey_success <- function(accepted, scored, y, x_mat, response_scale,
                            attempts, n_zero_response, rank_x_pos, criteria = NULL) {
@@ -83,14 +100,27 @@ harvey_success <- function(accepted, scored, y, x_mat, response_scale,
 #' the same container with \code{fit_status = "nonconvergence"} and the reason
 #' in \code{diagnostics$error_class}.
 #'
-#' @param error_class Single string naming the failure
-#' @param y Numeric response on the original scale
-#' @param x_mat Numeric design matrix, intercept column included
-#' @param response_scale Positive finite scalar the response was divided by
-#' @param attempts List of per-rung attempt records (empty before the ladder)
-#' @param ... Extra diagnostics fields to record
+#' @details
+#' Solver failure is recorded without an error. Construction and validation can
+#' still raise structured \code{hetid_error} conditions for malformed container
+#' inputs. Missing or non-finite response and design values are rejected;
+#' rows are not removed.
 #'
-#' @return A validated \code{hetid_log_variance_fit} object
+#' @param error_class A single non-missing string naming the failure.
+#' @param y A nonempty, finite, nonnegative numeric response vector on the original scale.
+#' @param x_mat A finite numeric design matrix with \code{length(y)} rows,
+#'   column names, and the intercept in its first column.
+#' @param response_scale A positive finite numeric scalar the response was divided by.
+#' @param attempts A list of per-rung attempt records. The default is an empty
+#'   list for a failure before the start ladder.
+#' @param ... Named diagnostic fields passed to \code{\link{harvey_diagnostics}}.
+#'
+#' @return A validated \code{hetid_log_variance_fit} list, returned visibly,
+#'   with \code{converged = FALSE}, \code{coef = NULL}, \code{warm_start = NULL},
+#'   \code{objective = NA_real_}, \code{score_norm = NA_real_}, and
+#'   \code{convergence_code = -1L}. The original response and design are retained
+#'   as \code{y} and \code{x_design}, together with the failure diagnostics.
+#' @seealso \code{\link{hetid_log_variance_fit}}.
 #' @keywords internal
 harvey_failure <- function(error_class, y, x_mat, response_scale,
                            attempts = list(), ...) {

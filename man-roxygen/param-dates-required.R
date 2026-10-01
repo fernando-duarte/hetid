@@ -1,4 +1,5 @@
-#' @param dates Required \code{Date} vector of period-end calendar dates, one
-#'   per row of \code{yields}/\code{term_premia}. A time series is never
-#'   returned without its date index; a non-\code{Date} or wrong-length vector
-#'   is an error.
+#' @param dates Required non-missing \code{Date} vector of period-end calendar
+#'   dates, one per row of \code{yields}/\code{term_premia}. Supplied dates are
+#'   used as labels without normalization. \code{NULL}, non-\code{Date}, or
+#'   missing dates raise \code{hetid_error_bad_argument}; a wrong-length vector
+#'   raises \code{hetid_error_dimension_mismatch}.

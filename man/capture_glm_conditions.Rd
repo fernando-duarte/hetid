@@ -7,17 +7,18 @@
 capture_glm_conditions(expression)
 }
 \arguments{
-\item{expression}{Expression to evaluate, captured lazily}
+\item{expression}{Expression to evaluate lazily in the caller's environment.}
 }
 \value{
 List with \code{value} (\code{NULL} on error), \code{warnings},
-\code{messages}, \code{error_class}, and \code{error_message} (the last
-two \code{NA} when the expression completed)
+\code{messages} (character vectors), \code{error_class}, and
+\code{error_message} (character scalars). The last two are
+\code{NA_character_} on completion; errors have an \code{"error: "}
+message prefix. A successful expression can also return \code{NULL}.
 }
 \description{
-Collects warnings and messages instead of letting them print (nothing is
-suppressed: every condition ends up in the diagnostics), and turns an error
-into a \code{NULL} value plus its class, which the ladder maps to a
-\code{fit_status} of \code{"nonconvergence"}.
+Records warning and message text and muffles their console output. An error
+returns a \code{NULL} value with its first class and message; the PPML
+ladder can then try another start before returning nonconvergence.
 }
 \keyword{internal}

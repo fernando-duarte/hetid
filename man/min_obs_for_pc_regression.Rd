@@ -7,10 +7,11 @@
 min_obs_for_pc_regression(n_pcs)
 }
 \arguments{
-\item{n_pcs}{Number of principal components}
+\item{n_pcs}{Non-negative integer count of regressors, including any own-lag columns.}
 }
 \value{
-Integer minimum complete-observation count
+Numeric scalar \code{n_pcs + 2L}, the minimum complete-observation count;
+an integer when \code{n_pcs} is an integer.
 }
 \description{
 Single source of truth for the "need at least n_pcs + 2 complete

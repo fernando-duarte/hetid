@@ -21,6 +21,7 @@
 #' the w2 column index, with element k corresponding to
 #' \code{maturities[k]}. Inner theta-axis dimensions (each \code{r_i_1}
 #' matrix, \code{s_i_1} vector, and \code{s_i_2} matrix) are always full
-#' \code{n_components}-sized. Downstream functions accept only validated
-#' containers and resolve positions internally, so cross-object maturity
-#' misalignment cannot occur.
+#' \code{n_components}-sized. \code{compute_identification_moments()} validates
+#' moment shapes. Downstream functions check relevant dimensions and use the recorded
+#' indices; they trust that validation and do not verify common data provenance.
+#' Callers must supply moments, gamma, and tau from the same system.

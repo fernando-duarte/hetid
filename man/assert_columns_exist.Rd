@@ -7,16 +7,19 @@
 assert_columns_exist(df, required_cols, context = NULL, arg = "df")
 }
 \arguments{
-\item{df}{Data frame or matrix}
+\item{df}{A data frame or matrix; column contents are not inspected.}
 
-\item{required_cols}{Character vector of required column names}
+\item{required_cols}{A character vector of required column names. Empty input
+imposes no requirements; repeated names are checked only once.}
 
-\item{context}{Description for error message}
+\item{context}{An optional character string for the error message;
+\code{NULL} (the default) adds no context.}
 
-\item{arg}{Condition argument name}
+\item{arg}{A character string naming the condition argument; defaults to \code{"df"}.}
 }
 \value{
-Invisible TRUE; stops with a structured error otherwise
+Invisible \code{TRUE} when all required names exist; otherwise signals
+a \code{hetid_error_bad_argument} listing the missing names.
 }
 \description{
 Assert Required Columns Exist

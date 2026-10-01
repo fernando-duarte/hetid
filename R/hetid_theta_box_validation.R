@@ -1,6 +1,6 @@
 #' Validation of hetid_theta_box Objects
 #'
-#' Full shape sweep behind \code{validate_hetid_theta_box()}. The theta
+#' Shape and consistency checks behind \code{\link{validate_hetid_theta_box}}. The theta
 #' block and the structural (beta1) block share one bounds check and one
 #' witness check, run once per block, followed by the zero-loading flag
 #' and the retained-source check.
@@ -11,8 +11,31 @@ NULL
 
 #' Validate a hetid_theta_box Object
 #'
-#' @param x A \code{hetid_theta_box} object
-#' @return \code{x}, invisibly
+#' Check the bounds, witness dimensions, zero-loading flags, and retained
+#' source dimensions of an identified-set box.
+#'
+#' @details
+#' Both bounds frames must have exactly the columns \code{coef}, \code{lower},
+#' and \code{upper}, with unique, non-missing coefficient labels and numeric,
+#' non-missing endpoints. Lower endpoints must be finite or \code{-Inf}; upper
+#' endpoints must be finite or \code{Inf}. Each lower endpoint must not exceed
+#' its upper endpoint.
+#' The theta bounds have one row per \code{n_components}; structural bounds
+#' have one row per structural coefficient. Each numeric witness matrix has
+#' one row per bound and \code{n_components} columns. Rows beside finite bounds
+#' must be finite; rows beside infinite bounds are not checked for finiteness.
+#'
+#' The \code{null_loading} attribute must be a non-missing logical vector named
+#' in structural-coefficient order. The retained \code{w2} matrix must have
+#' \code{n_components} columns and as many rows as \code{w1} has elements.
+#' The retained quadratic list must contain \code{A_i}, \code{b_i}, and \code{c_i}.
+#' These checks do not establish that witnesses attain their bounds or satisfy
+#' the quadratic constraints, and do not revalidate the quadratic coefficients.
+#'
+#' @param x A \code{hetid_theta_box} object to validate.
+#' @return The supplied \code{x}, invisibly and unchanged, when checks pass.
+#'   Invalid arguments signal a \code{hetid_error_bad_argument}; incompatible
+#'   dimensions signal a \code{hetid_error_dimension_mismatch}.
 #' @keywords internal
 validate_hetid_theta_box <- function(x) {
   assert_bad_argument_ok(
@@ -55,9 +78,9 @@ validate_hetid_theta_box <- function(x) {
 #' \code{-Inf}, an upper bound finite or \code{Inf}, and neither is ever
 #' missing: the search is seeded from a feasible center.
 #'
-#' @param bounds Data frame of bounds
-#' @param arg Element name used in the error message
-#' @return Invisibly TRUE
+#' @param bounds A data frame with \code{coef}, \code{lower}, and \code{upper} columns.
+#' @param arg A character scalar naming the element in error messages.
+#' @return \code{TRUE}, invisibly, when checks pass.
 #' @noRd
 validate_theta_box_bounds <- function(bounds, arg) {
   assert_bad_argument_ok(
@@ -94,11 +117,12 @@ validate_theta_box_bounds <- function(bounds, arg) {
 #' A finite bound must name the theta that attains it, because a box
 #' corner is generally not a member of the set and cannot stand in.
 #'
-#' @param bounds The block's bounds frame
-#' @param arg_lower,arg_upper The block's witness matrices
-#' @param n_components Theta-axis dimension
-#' @param args Character length two, the element names used in messages
-#' @return Invisibly TRUE
+#' @param bounds The block's bounds data frame.
+#' @param arg_lower,arg_upper Numeric witness matrices with one row per bound
+#'   and \code{n_components} columns.
+#' @param n_components An integer scalar giving the theta-axis dimension.
+#' @param args A character vector of length two naming the elements in messages.
+#' @return \code{TRUE}, invisibly, when checks pass.
 #' @noRd
 validate_theta_box_witnesses <- function(bounds, arg_lower, arg_upper,
                                          n_components, args) {
@@ -128,9 +152,9 @@ validate_theta_box_witnesses <- function(bounds, arg_lower, arg_upper,
 
 #' Validate the Retained Reduced-Form Sources
 #'
-#' @param x A \code{hetid_theta_box} object
-#' @param n_components Theta-axis dimension
-#' @return Invisibly TRUE
+#' @param x A \code{hetid_theta_box} object.
+#' @param n_components An integer scalar giving the theta-axis dimension.
+#' @return \code{TRUE}, invisibly, when checks pass.
 #' @noRd
 validate_theta_box_sources <- function(x, n_components) {
   assert_dimension_ok(

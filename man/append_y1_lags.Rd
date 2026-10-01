@@ -7,18 +7,29 @@
 append_y1_lags(reg_matrix, y1, n_lags)
 }
 \arguments{
-\item{reg_matrix}{Numeric regressor matrix (PCs or \code{exog}).}
+\item{reg_matrix}{Numeric regressor matrix (PCs of nominal financial asset
+returns or \code{exog}), with one row per element of \code{y1} in the same
+time order. Missing values are retained.}
 
-\item{y1}{Numeric outcome vector.}
+\item{y1}{Numeric outcome vector. Missing values are retained in the lag block.}
 
-\item{n_lags}{Integer number of own-lags \eqn{H \ge 1}.}
+\item{n_lags}{Integer number of own-lags, from 1 through \code{length(y1)}.
+The caller must validate this value before appending the lag block.}
 }
 \value{
-\code{reg_matrix} with \code{n_lags} named lag columns appended.
+A numeric matrix with the same rows as \code{reg_matrix} and
+\code{n_lags} named lag columns appended. Existing column names are repaired
+only when at least one is blank or \code{NA}; the input is not modified.
 }
 \description{
-Sanitizes any blank/\code{NA} regressor label first (so
-\code{run_pc_regression}'s name fallback cannot relabel the lag columns) with
-a collision-proof scheme, then column-binds the lag block.
+Appends the predetermined outcome lag block to the supplied regressors.
+}
+\details{
+If any supplied column name is blank or \code{NA}, those labels are replaced
+with \code{.exog} plus their column index and all regressor names are made unique.
+This avoids \code{\link{run_pc_regression}}'s blank-name fallback. An unnamed
+matrix keeps blank labels on its original columns after binding; callers
+must name those columns first to preserve the lag labels in the regression.
+Existing names that match the appended lag names are not changed here.
 }
 \keyword{internal}

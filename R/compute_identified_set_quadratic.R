@@ -3,12 +3,13 @@
 #' Computes the quadratic form components d_i, A_i, b_i, and c_i for the
 #' identified set calculation for each maturity i.
 #'
-#' @param tau Vector of real numbers in \code{[0, 1)} (length I, the
+#' @param tau Numeric vector of finite real numbers in \code{[0, 1)} (length I, the
 #'   moments' \code{n_components}) containing tau_i values, indexed by
 #'   system column. Exact zeros are allowed and correspond to the
-#'   point-identification benchmark.
+#'   zero-slack benchmark, where each constraint reduces to
+#'   \eqn{L_i - Q_i^\top \theta = 0}.
 #' @param components A \code{hetid_components} object from
-#'   \code{\link{compute_identified_set_components}}
+#'   \code{\link{compute_identified_set_components}}.
 #' @param moments The \code{hetid_moments} object the components were
 #'   computed from (see
 #'   \code{\link{compute_identification_moments}}). Its
@@ -16,17 +17,19 @@
 #'   (zero indicates no heteroskedasticity to exploit for
 #'   identification).
 #'
-#' @return A list (per-maturity elements keyed maturity_N, M =
-#' \code{length(maturities)}; n_components the theta axis):
+#' @return A plain list with the following components, where M is
+#' \code{length(attr(moments, "maturities"))} and I is the moments'
+#' \code{n_components}. Per-maturity elements are named \code{maturity_N}:
 #' \describe{
 #'   \item{d_i}{Named numeric vector of length M; element k is d_i for
-#'     maturity \code{maturities[k]}}
+#'     maturity \code{maturities[k]}.}
 #'   \item{A_i}{Named list of length M; element k is the n_components x
-#'     n_components symmetric matrix A_i for maturity \code{maturities[k]}}
+#'     n_components symmetric matrix A_i for maturity \code{maturities[k]}.}
 #'   \item{b_i}{Named list of length M; element k is the length-n_components
-#'     vector b_i for maturity \code{maturities[k]}}
+#'     vector b_i for maturity \code{maturities[k]}; its entries are named
+#'     \code{maturity_1}, ..., \code{maturity_I} along the theta axis.}
 #'   \item{c_i}{Named numeric vector of length M; element k is c_i for
-#'     maturity \code{maturities[k]}}
+#'     maturity \code{maturities[k]}.}
 #' }
 #'
 #' @details
@@ -53,24 +56,50 @@
 #' computes the components internally from \code{(gamma, moments)} and
 #' makes a stale pairing impossible.
 #'
+#' Missing and non-finite values in \code{tau}, the components, or the
+#' moments used in the arithmetic are rejected, not omitted. Invalid
+#' inputs raise structured \code{hetid_error} conditions; non-finite
+#' quadratic coefficients, including arithmetic overflow, also raise an
+#' error. No inputs are modified. When \code{tau[i] = 0}, \code{d_i = 0}
+#' and the constraint is \eqn{(L_i - Q_i^\top \theta)^2 \leq 0};
+#' a unique point requires sufficient independent constraints.
+#'
 #' @template section-maturity-convention
 #'
 #' @export
 #'
 #' @examples
-#' set.seed(42)
-#' n_obs <- 100
-#' J <- 3
-#' I <- 4
-#' w1 <- rnorm(n_obs)
-#' w2 <- matrix(rnorm(n_obs * I), nrow = n_obs, ncol = I)
-#' pcs <- matrix(rnorm(n_obs * J), nrow = n_obs, ncol = J)
-#' gamma <- matrix(rnorm(J * I), nrow = J, ncol = I)
-#' tau <- rep(0.2, I)
+#' local({
+#'   old_seed <- if (exists(".Random.seed", envir = .GlobalEnv, inherits = FALSE)) {
+#'     get(".Random.seed", envir = .GlobalEnv)
+#'   } else {
+#'     NULL
+#'   }
+#'   on.exit({
+#'     if (is.null(old_seed)) {
+#'       rm(".Random.seed", envir = .GlobalEnv)
+#'     } else {
+#'       assign(".Random.seed", old_seed, envir = .GlobalEnv)
+#'     }
+#'   })
+#'   set.seed(42)
+#'   n_obs <- 100
+#'   J <- 3
+#'   I <- 4
+#'   w1 <- rnorm(n_obs)
+#'   w2 <- matrix(rnorm(n_obs * I), nrow = n_obs, ncol = I)
+#'   pcs <- matrix(rnorm(n_obs * J), nrow = n_obs, ncol = J)
+#'   gamma <- matrix(rnorm(J * I), nrow = J, ncol = I)
+#'   tau <- rep(0.2, I)
 #'
-#' moments <- compute_identification_moments(w1, w2, pcs)
-#' components <- compute_identified_set_components(gamma, moments)
-#' quad <- compute_identified_set_quadratic(tau, components, moments)
+#'   moments <- compute_identification_moments(w1, w2, pcs, maturities = 2L)
+#'   components <- compute_identified_set_components(gamma, moments)
+#'   quad <- compute_identified_set_quadratic(tau, components, moments)
+#'   print(names(quad$d_i))
+#'   print(dim(quad$A_i[[1]]))
+#'   exact <- compute_identified_set_quadratic(rep(0, I), components, moments)
+#'   print(exact$d_i)
+#' })
 compute_identified_set_quadratic <- function(tau, components, moments) {
   validation <- validate_quadratic_inputs(tau, components, moments)
 
@@ -90,15 +119,22 @@ compute_identified_set_quadratic <- function(tau, components, moments) {
 #' position-indexed vectors/lists already validated (or hand-built in
 #' tests); \code{maturities} supplies the value mapping for element k.
 #'
-#' @param tau Vector of length \code{n_components}, indexed by system
-#'   column
-#' @param L_i,V_i,s_i_0,sigma_i_sq Position-indexed numeric vectors
-#' @param Q_i,s_i_1,s_i_2 Position-indexed lists of theta-axis objects
-#' @param maturities Integer vector; element k maps to
-#'   \code{maturities[k]}
-#' @param n_components Theta-axis dimension (I)
+#' @param tau Finite numeric vector of length \code{n_components} in
+#'   \code{[0, 1)}, indexed by system column.
+#' @param L_i,V_i,s_i_0,sigma_i_sq Finite numeric vectors of length
+#'   \code{length(maturities)}, in constraint order; \code{sigma_i_sq}
+#'   must be strictly positive.
+#' @param Q_i,s_i_1 Lists of \code{length(maturities)} finite numeric
+#'   vectors, each of length \code{n_components}, in constraint order.
+#' @param s_i_2 List of \code{length(maturities)} finite numeric
+#'   \code{n_components x n_components} matrices, in constraint order.
+#' @param maturities Integer vector of constrained system column indices;
+#'   element k maps to \code{maturities[k]}.
+#' @param n_components Positive integer theta-axis dimension (I).
 #'
-#' @return A list with d_i, A_i, b_i, c_i
+#' @return A plain list with \code{d_i}, \code{A_i}, \code{b_i}, and
+#'   \code{c_i}, shaped and named as described in
+#'   \code{\link{compute_identified_set_quadratic}}.
 #' @keywords internal
 quadratic_from_components <- function(tau,
                                       L_i, V_i, Q_i, # nolint: object_name_linter.

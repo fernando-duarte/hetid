@@ -22,11 +22,15 @@
 #' normal generator has no cached deviate; Box-Muller's cached second deviate
 #' is outside \code{.Random.seed} and is cleared by \code{set.seed()}.
 #'
-#' @param quadratic Quadratic form list with \code{A_i}, as returned by
-#'   \code{build_quadratic_system()}
-#' @param n_dir Number of unit directions to sample
-#' @return Numeric unit vector \eqn{v} with \eqn{v' A_i v < 0} for every
-#'   constraint, or \code{NULL} when the sample contains none
+#' @param quadratic Quadratic form list, such as the \code{quadratic}
+#'   component returned by \code{build_quadratic_system()}. Its \code{A_i}
+#'   must be a nonempty list of finite numeric square matrices of the same
+#'   positive dimension; missing entries are not removed.
+#' @param n_dir Positive integer number of unit directions to sample.
+#'   Defaults to \code{IDENTIFIED_SET_CONTROL$N_DIR}.
+#' @return Numeric unit vector \eqn{v}, with one entry per theta coordinate
+#'   and \eqn{v' A_i v < 0} for every constraint, or \code{NULL} when the
+#'   sample contains none.
 #' @noRd
 recession_direction <- function(quadratic,
                                 n_dir = IDENTIFIED_SET_CONTROL$N_DIR) {

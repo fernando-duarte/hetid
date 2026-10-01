@@ -8,12 +8,14 @@
 #' @template param-maturity-index
 #' @template param-step
 #'
-#' @return Numeric value of k_hat_i, or \code{NA_real_} when no valid
-#'   paired observations remain.
+#' @return A numeric scalar giving the fourth moment of log-price forecast
+#'   errors, or \code{NA_real_} when no non-missing paired observations remain.
 #'
 #' @section Mathematical Formula:
 #' With h = i/step news periods and m(step) the step maturity in years:
-#' \deqn{k\_hat_i = \mathrm{mean}_t (-m(step) y_{t+h}^{(step)} / 100 - n\_hat(i-step,t+1))^4}
+#' \deqn{k\_hat_i = \mathrm{mean}_t
+#'   \left[\left(-m(step) y_{t+h}^{(step)} / 100 -
+#'   n\_hat(i-step,t+1)\right)^4\right]}
 #'
 #' The mean is taken over the valid (non-missing) terms for
 #' \eqn{t = 1, \dots, T-h}; with complete data the divisor is \eqn{T-h}.
@@ -28,28 +30,62 @@
 #' @note Unlike \code{compute_c_hat}, \code{compute_k2_hat}, and
 #'   \code{compute_variance_bound} (capped at \code{MAX_MATURITY - step}),
 #'   \code{i} here may run up to \code{MAX_MATURITY}: this estimator reads
-#'   maturities \code{step}, \code{i - step}, and \code{i}
-#'   (\code{compute_n_hat_previous()} evaluates \code{n_hat} at
-#'   \code{i - step}), never \code{i + step}.
+#'   maturities \code{step}, \code{i - step}, and \code{i} when
+#'   \code{i > step}. At \code{i == step}, only the step-maturity yield
+#'   is needed; the result is zero when paired observations remain and
+#'   all paired values are finite.
+#'   For \code{i > step}, \code{compute_n_hat_previous()} evaluates
+#'   \code{n_hat} at \code{i - step}, never \code{i + step}.
 #'
 #' @details
 #' The fourth moment estimator summarizes the tail thickness of forecast errors
 #' in the term structure model, providing information about tail risks.
 #'
+#' Supply numeric data frames or matrices with the same number of rows,
+#' already aligned by date and ordered in time. Values must be annualized
+#' percentage points. The calculation uses row positions and does not inspect
+#' dates. A \code{hetid_warning_unit_scale} warning flags yields whose maximum
+#' absolute non-missing value is below one; it does not rescale the inputs.
+#'
+#' \code{step} must be an integer from one through
+#' \code{HETID_CONSTANTS$MAX_MATURITY \%/\% 2}; its default is the annual
+#' news period \code{HETID_CONSTANTS$DEFAULT_STEP}. Here, \code{i} is a
+#' positive multiple of \code{step} no larger than
+#' \code{HETID_CONSTANTS$MAX_MATURITY}, including the upper boundary when
+#' it is a multiple of \code{step}.
+#'
+#' For \code{i > step}, yields at \code{step}, \code{i - step}, and
+#' \code{i}, and term premia at \code{i - step} and \code{i}, are required.
+#' The step-maturity term premium is normalized to zero when it enters the
+#' forecast. At \code{i == step}, term premia are unused but must still
+#' have the same row count. The term-premium rollover convention must match
+#' the news period; the calculation does not reconcile different conventions.
+#'
+#' Pairs with a missing yield or forecast (including \code{NaN}) are omitted.
+#' Infinite inputs are not removed and can produce non-finite results.
+#' There must be more than \code{i/step} rows, even when all values are
+#' missing; otherwise a \code{hetid_error_insufficient_data} is raised.
+#' Invalid scalar arguments or missing required columns raise
+#' \code{hetid_error_bad_argument}; unequal row counts raise
+#' \code{hetid_error_dimension_mismatch}.
+#'
+#' @seealso \code{\link{compute_n_hat}}, \code{\link{compute_variance_bound}}
+#'
 #' @export
 #'
 #' @examples
-#' # Extract ACM data - need maturities step, i-step, and i (months)
-#' # For i = 60 with the default annual step: 12, 48, and 60
+#' # Monthly rows and a monthly news step use the same time unit
 #' data <- extract_acm_data(
 #'   data_types = c("yields", "term_premia"),
-#'   maturities = c(12, 48, 60)
+#'   maturities = c(1, 11, 12),
+#'   start_date = "2000-01-01",
+#'   end_date = "2020-12-31"
 #' )
-#' yields <- data[, paste0("y", c(12, 48, 60))]
-#' term_premia <- data[, paste0("tp", c(12, 48, 60))]
+#' yields <- data[, paste0("y", c(1, 11, 12))]
+#' term_premia <- data[, paste0("tp", c(1, 11, 12))]
 #'
-#' # Compute k_hat for the 5-year (60-month) maturity
-#' k_hat_60 <- compute_k_hat(yields, term_premia, i = 60)
+#' compute_k_hat(yields, term_premia, i = 12, step = 1)
+#' compute_k_hat(yields, term_premia, i = 1, step = 1)
 #'
 compute_k_hat <- function(yields, term_premia, i,
                           step = HETID_CONSTANTS$DEFAULT_STEP) {
@@ -60,8 +96,7 @@ compute_k_hat <- function(yields, term_premia, i,
     max_index = FALSE
   )
   if (i == step) {
-    # i > step validates units transitively via n_hat_series; the i == step
-    # boundary (compute_n_hat_previous direct branch) is the one gap
+    # The i == step branch of compute_n_hat_previous skips n_hat_series's unit check
     validate_percent_units(yields)
   }
 
@@ -72,7 +107,7 @@ compute_k_hat <- function(yields, term_premia, i,
     step = step
   )
 
-  horizon_periods <- i %/% step # shift counts news periods (rows), not months
+  horizon_periods <- i %/% step
   n_obs <- length(y_step)
 
   assert_insufficient_data_ok(
@@ -80,7 +115,7 @@ compute_k_hat <- function(yields, term_premia, i,
     HETID_CONSTANTS$INSUFFICIENT_NEWS_MSG
   )
 
-  # guard above keeps seq.int() ranges ascending (no 1:0 inversion)
+  # The row-count guard prevents seq.int() from creating descending index ranges
   y_shifted <- y_step[seq.int(horizon_periods + 1, n_obs)]
   n_hat_shifted <- n_hat_i_minus_1[seq.int(2, n_obs - horizon_periods + 1)]
   valid <- !is.na(y_shifted) & !is.na(n_hat_shifted)

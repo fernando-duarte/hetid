@@ -7,10 +7,13 @@
 validate_step(step)
 }
 \arguments{
-\item{step}{Integer number of maturity-index units per news period.}
+\item{step}{Numeric value of length one giving a positive integer number
+of months per news period, at most half of \code{HETID_CONSTANTS$MAX_MATURITY}.
+Missing and non-finite values are rejected.}
 }
 \value{
-Invisible TRUE if valid, stops with informative error otherwise
+Invisible \code{TRUE} if valid; otherwise signals a
+\code{hetid_error_bad_argument} condition.
 }
 \description{
 Validates the number of maturity-index units per news period: a

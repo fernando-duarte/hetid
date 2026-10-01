@@ -7,13 +7,19 @@
 get_data_file_path(filename)
 }
 \arguments{
-\item{filename}{Character string with filename (including extension)}
+\item{filename}{A non-empty, non-missing character scalar giving the
+filename, including its extension.}
 }
 \value{
-Character string with full path to data file
+A character scalar giving the data file path. The bundled fallback
+is returned even if the file does not exist.
 }
 \description{
 Resolves a data filename to the per-user downloaded copy when one
 exists, falling back to the read-only bundled copy otherwise.
+}
+\details{
+Invalid filenames raise a \code{hetid_error_bad_argument} condition.
+No directory or file is created.
 }
 \keyword{internal}

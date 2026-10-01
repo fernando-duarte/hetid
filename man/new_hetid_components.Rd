@@ -7,26 +7,29 @@
 new_hetid_components(L_i, V_i, Q_i, maturities, n_components)
 }
 \arguments{
-\item{L_i}{Named vector of L_i values}
+\item{L_i}{Numeric vector of length \code{length(maturities)} with L_i values.}
 
-\item{V_i}{Named vector of V_i values}
+\item{V_i}{Numeric vector of length \code{length(maturities)} with V_i values.}
 
-\item{Q_i}{List of Q_i vectors}
+\item{Q_i}{List of length \code{length(maturities)} with Q_i vectors.}
 
-\item{maturities}{Integer vector of w2 column indices}
+\item{maturities}{Nonempty numeric vector of distinct, finite integer w2 column
+indices in \code{1:n_components}; input order is preserved.}
 
-\item{n_components}{Theta-axis dimension}
+\item{n_components}{Finite positive integer theta-axis dimension, no larger than
+\code{.Machine$integer.max}.}
 }
 \value{
-A classed \code{hetid_components} list
+A \code{hetid_components} list with unchanged \code{L_i}, \code{V_i}, and
+\code{Q_i} entries and integer \code{maturities} and \code{n_components} attributes.
 }
 \description{
-Low-level cheap constructor carrying the maturity identity of the
-moments the components were derived from: type, scalar, and
-maturity-vector checks with lossless coercions. The full shape sweep
-lives in \code{validate_hetid_components()}, which the public boundary
-\code{compute_identified_set_components()} always runs; hot paths
-assembling components from known-good parts may call this
-constructor directly and skip it.
+Constructs a component list with maturity and theta-axis attributes.
+Checks outer types and lengths and coerces valid indices to integers.
+Does not check names, finiteness, or individual \code{Q_i} entries; call
+\code{\link{validate_hetid_components}} for the full shape check.
+The public \code{\link{compute_identified_set_components}} always runs it.
+For valid containers, outer names must be \code{maturity_N} in maturity order,
+and each \code{Q_i} entry must be a numeric vector of length \code{n_components}.
 }
 \keyword{internal}

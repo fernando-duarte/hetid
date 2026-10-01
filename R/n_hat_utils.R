@@ -1,7 +1,7 @@
 #' N-Hat Series Utilities
 #'
 #' Helpers shared by the price-news and SDF-innovation chain: the
-#' previous-period n_hat series and the generic news differencing.
+#' previous-period n_hat series and news between adjacent observations.
 #'
 #' @name n_hat_utils
 #' @keywords internal
@@ -12,16 +12,22 @@ NULL
 #' The common preamble for the variance-bound news kernels: a valid
 #' \code{step}, a maturity index within the estimator's ceiling, an
 #' optional whole-news-period (step-multiple) check, and row-aligned
-#' yields and term premia, in the historical call order.
+#' yields and term premia.
 #'
 #' @template param-yields-term-premia
 #' @template param-maturity-index
 #' @template param-step
-#' @param step_multiple_reason Reason string for the step-multiple check,
-#'   or \code{NULL} to skip it.
-#' @param max_index When \code{TRUE}, cap \code{i} at
-#'   \code{effective_max_maturity(step)}; when \code{FALSE} only require a
-#'   positive index (the k_hat estimator reads no \code{i + step} column).
+#' @param step_multiple_reason Character reason string for requiring \code{i}
+#'   to be a positive multiple of \code{step}, or \code{NULL} (the default)
+#'   to skip that check.
+#' @param max_index Logical flag. When \code{TRUE} (the default), cap \code{i}
+#'   at \code{effective_max_maturity(step)}; otherwise cap it at
+#'   \code{HETID_CONSTANTS$MAX_MATURITY} (the k_hat estimator reads no
+#'   \code{i + step} column).
+#' @details Both input frames must have the same number of rows. This helper
+#'   does not check dates, column availability, units, or missing values.
+#'   The news step must be a positive integer no larger than
+#'   \code{HETID_CONSTANTS$MAX_MATURITY \%/\% 2L}.
 #' @return Invisible \code{TRUE}; stops with a structured error otherwise.
 #' @keywords internal
 validate_news_kernel_inputs <- function(yields, term_premia, i, step,
@@ -48,9 +54,14 @@ validate_news_kernel_inputs <- function(yields, term_premia, i, step,
 #' row-aligned yields and term premia.
 #'
 #' @template param-yields-term-premia
-#' @param i Maturity index; the horizon-0 boundary (\code{i == 0}) is
-#'   admitted here and handled by the callers.
+#' @param i Integer maturity index in months between zero and
+#'   \code{effective_max_maturity(step)}, inclusive. The horizon-0 boundary
+#'   (\code{i == 0}) is admitted here and handled by the callers.
 #' @template param-step
+#' @details Both input frames must have the same number of rows. This helper
+#'   does not check dates, column availability, units, or missing values.
+#'   The news step must be a positive integer no larger than
+#'   \code{HETID_CONSTANTS$MAX_MATURITY \%/\% 2L}.
 #' @return Invisible \code{TRUE}; stops with a structured error otherwise.
 #' @keywords internal
 validate_expected_sdf_inputs <- function(yields, term_premia, i, step) {
@@ -73,6 +84,17 @@ validate_expected_sdf_inputs <- function(yields, term_premia, i, step) {
 #' @template param-yields-term-premia
 #' @template param-maturity-index
 #' @template param-step
+#' @details The maturity index must equal \code{step} or satisfy
+#'   \code{i - step >= HETID_CONSTANTS$MIN_MATURITY}.
+#'   For \code{i == step}, only the \code{yields} column at maturity
+#'   \code{step} is read; \code{term_premia} is unused. For \code{i > step},
+#'   both input frames need columns at maturities \code{i - step} and \code{i},
+#'   and \code{i} must not exceed \code{HETID_CONSTANTS$MAX_MATURITY}.
+#'   Yields and term premia are annualized percentage points. Missing values
+#'   propagate through the calculation; rows are not removed. The output has
+#'   no dates, and input rows must already refer to matching dates.
+#'   The nonboundary branch checks row counts and warns with
+#'   \code{hetid_warning_unit_scale} when yields appear to be decimal values.
 #' @return Numeric vector of length \code{nrow(yields)}: the previous-period
 #'   n_hat series, \eqn{n\_hat(i - step, t)}.
 #' @keywords internal
@@ -80,7 +102,6 @@ compute_n_hat_previous <- function(yields, term_premia, i,
                                    step = HETID_CONSTANTS$DEFAULT_STEP) {
   validate_step(step)
   if (i == step) {
-    # Boundary: realized log price of the step-maturity bond, observable at t
     y_step <- require_acm_col(yields, "yields", step)
     m_step <- step / HETID_CONSTANTS$MATURITY_UNITS_PER_YEAR
     -m_step * y_step / HETID_CONSTANTS$PERCENT_TO_DECIMAL
@@ -91,13 +112,19 @@ compute_n_hat_previous <- function(yields, term_premia, i,
 
 #' Compute Time Series News
 #'
-#' Generic function to compute news as difference between future and current values
+#' Computes news by subtracting each current-period value from the
+#' future series in the following row.
 #'
 #' @param current_series Numeric vector of current-period values.
 #' @param future_series Numeric vector of future-period values, the same length
 #'   as \code{current_series}.
-#' @return News series (\code{length(current_series) - 1}), or
+#' @return Numeric vector of length \code{length(current_series) - 1}, or
 #'   \code{numeric(0)} when the inputs have fewer than two observations.
+#' @details Element \code{t} is \code{future_series[t + 1] - current_series[t]}.
+#'   Missing values in either paired observation propagate to that element;
+#'   observations are not removed. Unequal input lengths raise a
+#'   \code{hetid_error_dimension_mismatch}. The output has no dates; input
+#'   positions must already refer to corresponding periods.
 #' @keywords internal
 compute_time_series_news <- function(current_series, future_series) {
   assert_dimension_ok(

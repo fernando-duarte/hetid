@@ -11,7 +11,7 @@
 #' horizon-agnostic: it estimates the bias as a difference of full-sample
 #' means and admits any \code{i} on the \code{i + step} grid (no
 #' multiple-of-step requirement). The \code{Mathematical Formula},
-#' \code{Time units}, and \code{Details} sections below describe the previous
+#' \code{Time units}, and \code{Details} sections below describe the
 #' \code{paired = TRUE} matched-forecast-error correction, which leads the
 #' realized leg \code{i / step} rows and so requires \code{i} to be a
 #' positive multiple of \code{step}.
@@ -20,12 +20,11 @@
 #' @template param-maturity-index
 #' @template param-dates-required
 #' @template param-step
-#' @param paired Logical; selects the bias-correction estimator. The
+#' @param paired Single non-missing logical; selects the bias-correction estimator. The
 #'   default \code{FALSE} uses the horizon-agnostic correction (a difference
 #'   of full-sample means over one common finite set), admitting any
-#'   \code{i} on the \code{i + step} grid. \code{TRUE} restores the previous
-#'   matched-forecast-error
-#'   correction (the mean gap pairing the realized price \code{i / step}
+#'   \code{i} on the \code{i + step} grid. \code{TRUE} selects the
+#'   matched-forecast-error correction (the mean gap pairing the realized price \code{i / step}
 #'   rows ahead with \code{exp(n_hat(i, t))}), which requires \code{i} to be
 #'   a positive multiple of \code{step}.
 #'
@@ -56,6 +55,15 @@
 #' \code{paired = FALSE} uses no lead and accepts any \code{i}.
 #'
 #' @details
+#' Yields and term premia are in annualized percentage points, with rows
+#' aligned to the same dates. The output has \code{nrow(yields)} rows and
+#' columns \code{date} and \code{expected_sdf}; the latter is dimensionless.
+#' For \code{i > 0}, an empty finite correction sample raises
+#' \code{hetid_error_insufficient_data}. With \code{paired = TRUE}, the
+#' sample must also contain more than \code{i / step} rows.
+#' Positive horizons signal \code{hetid_warning_unit_scale} if the maximum
+#' absolute yield is finite and below one, suggesting decimal inputs.
+#'
 #' These details describe \code{paired = TRUE}. The default
 #' (\code{paired = FALSE}) instead mean-matches over the common finite set
 #' to the unshifted one-period price \eqn{e^{-y^{(1)}_t}}, not over
@@ -76,15 +84,15 @@
 #'
 #' At the one-period horizon \code{i == step} (\code{s == 1}), the
 #' \code{n_hat} normalization \code{TP^(1) := 0} drops the one-period
-#' term premium, so the result does not depend on \code{tp\{step\}} (only
-#' on the \code{y\{step\}} yield used by the realized leg).
+#' term premium, so the result does not depend on \code{tp\{step\}}.
+#' The \code{i + step} yield and term premium still enter \code{n_hat}.
 #'
 #' The correction is estimated over the whole sample from realized future
 #' one-period prices, so the returned \eqn{E_t}-labelled series is an
 #' in-sample fitted object, not a pseudo-out-of-sample forecast; it must
 #' not be fed into a real-time backtest. The \code{is.finite()} mask
 #' guards only the scalar correction: any \code{NA}/\code{Inf} carried by
-#' \code{n_hat(i, t)} itself (e.g. at the unpaired tail dates) propagates
+#' \code{exp(n_hat(i, t))} (e.g. at the unpaired tail dates) propagates
 #' to the corresponding output values.
 #'
 #' Besides the \code{i} and \code{i + step} columns \code{compute_n_hat}
@@ -98,7 +106,9 @@
 #' @note Passing \code{i = 0} returns the horizon-zero boundary
 #'   \eqn{E_t[\mathrm{SDF}_{t+1}] = P^{(1)}_t = e^{-y^{(1)}_t}}, the realized
 #'   one-period price observed at \eqn{t}. It is exact: no forecast, no
-#'   approximation, and no bias correction (\code{paired} is ignored). A
+#'   approximation, and no bias correction (a valid \code{paired} is ignored).
+#'   Only the \code{y\{step\}} column is needed; \code{term_premia} must
+#'   remain row-aligned. A
 #'   \code{hetid_warning_horizon_zero} warning is signaled to flag this.
 #'
 #' @note To read off the shifted-information expectation
@@ -118,19 +128,25 @@
 #' @export
 #'
 #' @examples
-#' # Extract ACM data (the i = 60 horizon needs maturities 12, 60, and 72)
+#' # Monthly observations use a one-month news period
 #' data <- extract_acm_data(
 #'   data_types = c("yields", "term_premia"),
-#'   maturities = c(12, 60, 72)
+#'   maturities = c(1, 60, 61)
 #' )
-#' yields <- data[, paste0("y", c(12, 60, 72))]
-#' term_premia <- data[, paste0("tp", c(12, 60, 72))]
+#' yields <- data[, paste0("y", c(1, 60, 61))]
+#' term_premia <- data[, paste0("tp", c(1, 60, 61))]
 #'
-#' # Expected SDF for the 5-year (60-month) horizon (s = 5 news periods)
 #' expected_sdf_60 <- compute_expected_sdf(
 #'   yields, term_premia,
-#'   i = 60,
+#'   i = 60, step = 1,
 #'   dates = data$date
+#' )
+#' head(expected_sdf_60)
+#'
+#' # Paired correction leads the realized price by 60 monthly rows
+#' paired_sdf_60 <- compute_expected_sdf(
+#'   yields, term_premia,
+#'   i = 60, step = 1, paired = TRUE, dates = data$date
 #' )
 #'
 compute_expected_sdf <- function(yields, term_premia, i, dates = NULL,
@@ -140,8 +156,7 @@ compute_expected_sdf <- function(yields, term_premia, i, dates = NULL,
   assert_flag(paired, "paired")
 
   if (i == 0) {
-    # Reuse compute_n_hat_previous: it applies the TP^(1) := 0 normalization
-    # that n_hat_series(0) would skip
+    # n_hat_series rejects i = 0, so use the realized one-period price helper
     warn_horizon_zero(
       paste0(
         "i = 0 returns the realized one-period price (observed at t), exact ",
@@ -153,7 +168,6 @@ compute_expected_sdf <- function(yields, term_premia, i, dates = NULL,
   }
 
   if (paired) {
-    # Gap series also drives compute_expected_sdf_variance_bound()
     components <- compute_expected_sdf_gap(yields, term_premia, i, step = step)
     assert_insufficient_data_ok(
       length(components$gap) > 0,
@@ -162,7 +176,6 @@ compute_expected_sdf <- function(yields, term_premia, i, dates = NULL,
     exp_n_hat <- components$exp_n_hat
     correction <- mean(components$gap)
   } else {
-    # No lead, so any maturity i (not just multiples of step) is admissible
     exp_n_hat <- exp(n_hat_series(yields, term_premia, i, step = step))
     y_step <- require_acm_col(yields, "yields", step)
     m_step <- step / HETID_CONSTANTS$MATURITY_UNITS_PER_YEAR

@@ -10,14 +10,17 @@ acm_data_available(
 )
 }
 \arguments{
-\item{source}{Data source passed to \code{get_acm_data_path}}
+\item{source}{A character scalar: \code{"auto"} (default), \code{"github"},
+or \code{"nyfed"}, passed to \code{\link{get_acm_data_path}}.}
 
-\item{frequency}{Data frequency passed to \code{get_acm_data_path}}
+\item{frequency}{A character scalar: \code{"monthly"} (default) or
+\code{"daily"}, passed to \code{\link{get_acm_data_path}}.}
 }
 \value{
-Logical indicating whether the resolved file exists
+A logical scalar: \code{TRUE} if the resolved path exists,
+\code{FALSE} otherwise. Resolution errors propagate.
 }
 \description{
-Check ACM Data Availability
+Reports whether the resolved ACM path exists without reading its contents.
 }
 \keyword{internal}

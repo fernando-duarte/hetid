@@ -15,29 +15,61 @@ sample_log_variance_set(
 }
 \arguments{
 \item{box}{A \code{hetid_theta_box} from
-\code{\link{compute_identified_set_box}}}
+\code{\link{compute_identified_set_box}}, retaining finite mean-equation
+residuals \code{w1} and \code{w2} with matching theta labels.}
 
-\item{x_var}{Volatility-equation design, without an intercept column.
-This is a different design from the mean equation's \code{x}}
+\item{x_var}{Numeric matrix or data frame of volatility regressors, without an
+intercept column. Rows must match the already aligned observations in
+\code{box$w2}; at least \code{ncol(x_var) + 2} rows are required. Values must
+be finite: missing observations are not dropped. Column names, when supplied,
+must be non-missing, unique and non-blank and cannot include \code{"(Intercept)"}.
+Unnamed columns receive the labels used by \code{\link{log_variance_design}}.
+These regressors may differ from the mean equation's design.}
 
-\item{estimator}{Estimator id passed to \code{\link{make_log_variance_fitter}}.}
+\item{estimator}{Single string, \code{"ppml"} (the default) or
+\code{"harvey"}, passed to \code{\link{make_log_variance_fitter}}.}
 
-\item{n_points}{Steps from the center toward each witness; defaults to
-\code{IDENTIFIED_SET_CONTROL$N_POINTS}}
+\item{n_points}{Positive integer, at most \code{.Machine$integer.max}, giving the
+interpolation steps from the center toward each witness; defaults to
+\code{IDENTIFIED_SET_CONTROL$N_POINTS}.}
 
-\item{control}{Fitting controls passed to \code{\link{make_log_variance_fitter}}.}
+\item{control}{Uniquely named list of fitting-control overrides passed to
+\code{\link{make_log_variance_fitter}}. The default empty list uses the
+estimator's defaults. See \code{\link{fit_log_variance}} for supported controls
+and their allowed values. The resolved controls are retained in the result.}
 
-\item{dates}{Optional unique, non-missing \code{Date} labels for the already
-aligned estimation rows. Supply period-end dates for a time series.}
+\item{dates}{\code{NULL} (the default), or a vector of unique, non-missing
+\code{Date} labels, one for each already aligned estimation row. Supply
+period-end dates for a time series; dates are retained in their supplied order.}
 }
 \value{
-A \code{hetid_log_variance_sample} list. \code{bounds} is the marginal
-coefficient frame, with attempted/failed counts as in the existing profiler.
-\code{candidates} and \code{coefficients} have matching candidate rows; failed
-coefficient rows are all NA. \code{fits} retains status and diagnostics per
-candidate without duplicating responses or designs. \code{reason} is
-\code{sampled}, \code{infinite_box}, \code{no_candidates}, or
-\code{all_fits_failed}. The remaining fields retain the fitting context.
+A list of class \code{hetid_log_variance_sample} with fields:
+\describe{
+\item{bounds}{Data frame with \code{term}, \code{lower}, and \code{upper},
+one row per log-variance coefficient, including the intercept. Ranges use
+successful fits only; both endpoints are \code{NA} if none succeed.
+Attributes \code{n_attempted}, \code{n_failed}, and \code{estimator}
+record the candidate count, failed-fit count, and estimator.}
+\item{candidates}{Numeric matrix of feasible sampled mean parameters. Columns
+match \code{box$w2}; rows are named \code{candidate_1}, \code{candidate_2},
+and so on. The column axis is the theta axis, not the constraint axis.}
+\item{coefficients}{Numeric matrix with the same candidate rows. Columns
+match the retained design, including \code{"(Intercept)"} first.
+Failed fits have all-\code{NA} coefficient rows.}
+\item{fits}{List named by candidate ID, retaining \code{fit_status},
+\code{converged}, \code{objective}, \code{score_norm},
+\code{convergence_code}, and \code{diagnostics} for each fit, without
+duplicating responses or designs.}
+\item{reason}{\code{"sampled"} if any fit succeeds, \code{"infinite_box"}
+if the box has an infinite endpoint, \code{"no_candidates"} if no feasible
+candidate remains, or \code{"all_fits_failed"} if every attempted fit
+fails. Both \code{"infinite_box"} and \code{"no_candidates"} have zero-row
+candidate and coefficient matrices and an empty \code{fits} list.}
+\item{box, x_design, dates}{Original box, numeric volatility design with an
+intercept prepended, and supplied date labels (or \code{NULL}).}
+\item{estimator, n_points, control}{Estimator ID, requested interpolation
+steps, and resolved fitting controls.}
+}
 }
 \description{
 Uses the same feasible candidates as \code{\link{profile_log_variance_set}},
@@ -48,7 +80,7 @@ Repeated responses share a prepared fixed-design fitter.
 Nonconverged fits are retained as failed records and omitted from the attained
 ranges. Warm starts advance only after success. Invalid inputs and response
 arithmetic errors still raise structured conditions. Infinite boxes are not
-truncated: they return no fitted candidates, matching the existing sampler.
+truncated: they return no fitted candidates.
 Candidate filtering uses a constraint-relative feasibility tolerance, shared
 with linear-functional witness checks. Nonfinite check arithmetic raises a
 structured error rather than admitting a point.
@@ -60,15 +92,16 @@ Align separate time series by date before constructing these inputs; this
 function neither joins nor reorders observations.
 }
 \examples{
-set.seed(42)
+# Fixed inputs for the mean and volatility equations
 n <- 100
-z <- rnorm(n)
-x <- cbind(x = rnorm(n))
-y2 <- cbind(news = exp(z / 2) * rnorm(n))
-y1 <- 0.3 + x[, 1] + 0.5 * y2[, 1] + rnorm(n)
+index <- seq_len(n)
+z <- seq(-1, 1, length.out = n)
+x <- cbind(x = sin(index))
+y2 <- cbind(news = exp(z / 2) * cos(sqrt(2) * index))
+y1 <- 0.3 + x[, 1] + 0.5 * y2[, 1] + sin(sqrt(3) * index)
 fit <- compute_tau0_system(y1, y2, x, z)
 box <- compute_identified_set_box(fit, 0.01, n_grid = 3)
-sampled <- sample_log_variance_set(box, x)
+sampled <- sample_log_variance_set(box, x, n_points = 3)
 predict(sampled, x[1:3, , drop = FALSE], type = "volatility")$bounds
 }
 \seealso{

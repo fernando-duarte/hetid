@@ -12,16 +12,17 @@ NULL
 
 #' Record Conditions Around a glm.fit Call
 #'
-#' Collects warnings and messages instead of letting them print (nothing is
-#' suppressed: every condition ends up in the diagnostics), and turns an error
-#' into a \code{NULL} value plus its class, which the ladder maps to a
-#' \code{fit_status} of \code{"nonconvergence"}.
+#' Records warning and message text and muffles their console output. An error
+#' returns a \code{NULL} value with its first class and message; the PPML
+#' ladder can then try another start before returning nonconvergence.
 #'
-#' @param expression Expression to evaluate, captured lazily
+#' @param expression Expression to evaluate lazily in the caller's environment.
 #'
 #' @return List with \code{value} (\code{NULL} on error), \code{warnings},
-#'   \code{messages}, \code{error_class}, and \code{error_message} (the last
-#'   two \code{NA} when the expression completed)
+#'   \code{messages} (character vectors), \code{error_class}, and
+#'   \code{error_message} (character scalars). The last two are
+#'   \code{NA_character_} on completion; errors have an \code{"error: "}
+#'   message prefix. A successful expression can also return \code{NULL}.
 #' @keywords internal
 capture_glm_conditions <- function(expression) {
   warning_msgs <- character(0)
@@ -58,15 +59,22 @@ capture_glm_conditions <- function(expression) {
 
 #' Build the PPML Diagnostics List
 #'
-#' NA and empty defaults for every diagnostic field; callers override only
-#' what they can populate, so an early fail-closed return stays
-#' field-compatible with an accepted fit.
+#' Provides missing-value and empty defaults for diagnostics, with the supplied
+#' failure reason and start attempts. Callers replace fields they can populate.
 #'
-#' @param error_class Single string naming the failure, or \code{NA}
-#' @param start_attempts List of per-rung attempt records
-#' @param ... Fields to override in the defaults
+#' @param error_class Character scalar naming the failure, or
+#'   \code{NA_character_} for an accepted fit.
+#' @param start_attempts List of per-rung attempt records.
+#' @param ... Named fields merged with the defaults by
+#'   \code{\link[utils:modifyList]{modifyList}}. New names are added, and
+#'   \code{NULL} removes a field.
 #'
-#' @return A diagnostics list
+#' @return Named list with \code{warnings} and \code{messages} (empty character
+#'   vectors), \code{error_class}, \code{start_attempts}, and missing defaults
+#'   for \code{min_pos_response}, \code{rank_x_pos},
+#'   \code{condition_weighted_scaled}, \code{rcond_info_raw},
+#'   \code{info_col_scale}, \code{score_norm_raw}, and \code{score_norm_scaled},
+#'   modified by \code{...}.
 #' @keywords internal
 #' @importFrom utils modifyList
 ppml_diagnostics <- function(error_class, start_attempts, ...) {
@@ -87,16 +95,23 @@ ppml_diagnostics <- function(error_class, start_attempts, ...) {
 #' \code{log(response_scale)} to the intercept only, keeps the raw scaled-fit
 #' vector as \code{warm_start}, and reports the scaled objective.
 #'
-#' @param acc Accepted verdict from \code{\link{ppml_accept}}
-#' @param run Runner result from \code{\link{ppml_run_glm}}
-#' @param y Numeric response on the original scale
-#' @param y_scaled Numeric response on the scaled (fitted) scale
-#' @param x_mat Numeric design matrix, intercept column included
-#' @param response_scale Positive finite scalar the response was divided by
-#' @param attempts List of per-rung attempt records
-#' @param rank_x_pos Integer rank of the positive-response design rows
+#' @param acc Accepted verdict list from \code{\link{ppml_accept}}.
+#' @param run Runner result list from \code{\link{ppml_run_glm}}.
+#' @param y Finite nonnegative numeric response vector on the original scale.
+#' @param y_scaled Numeric vector equal to \code{y / response_scale}, with
+#'   at least one positive entry.
+#' @param x_mat Finite numeric design matrix with \code{length(y)} rows,
+#'   column labels matching the coefficients, and an intercept in column one.
+#' @param response_scale Positive finite numeric scalar used to divide the response.
+#' @param attempts List of per-rung attempt records.
+#' @param rank_x_pos Integer rank of the positive-response design rows.
 #'
-#' @return A validated \code{hetid_log_variance_fit} object
+#' @return A validated \code{\link{hetid_log_variance_fit}} list with
+#'   \code{fit_status = "ok"}, original-scale coefficients, scaled
+#'   \code{warm_start}, solver iterations in \code{convergence_code}, and
+#'   the response, design, and diagnostics. Container validation rejects
+#'   missing or nonfinite response and design entries with structured
+#'   \code{hetid_error} conditions; observations are not removed.
 #' @keywords internal
 ppml_success <- function(acc, run, y, y_scaled, x_mat, response_scale,
                          attempts, rank_x_pos) {
@@ -126,18 +141,26 @@ ppml_success <- function(acc, run, y, y_scaled, x_mat, response_scale,
 
 #' Assemble a Fail-Closed PPML Result
 #'
-#' A statistically impossible fit is a result, not an error: the caller gets
+#' An unsuccessful response solve is a result: the caller gets
 #' the same container with \code{fit_status = "nonconvergence"} and the reason
 #' in \code{diagnostics$error_class}.
 #'
-#' @param error_class Single string naming the failure
-#' @param y Numeric response on the original scale
-#' @param x_mat Numeric design matrix, intercept column included
-#' @param response_scale Positive finite scalar the response was divided by
-#' @param attempts List of per-rung attempt records (empty before the ladder)
-#' @param ... Extra diagnostics fields to record
+#' @param error_class Nonmissing character scalar naming the failure.
+#' @param y Finite nonnegative numeric response vector on the original scale.
+#' @param x_mat Finite numeric design matrix with \code{length(y)} rows,
+#'   column labels, and an intercept in column one.
+#' @param response_scale Positive finite numeric scalar used to divide the response.
+#' @param attempts List of per-rung attempt records; defaults to an empty list
+#'   before the start ladder is attempted.
+#' @param ... Named diagnostics fields merged by \code{\link{ppml_diagnostics}}.
 #'
-#' @return A validated \code{hetid_log_variance_fit} object
+#' @return A validated \code{\link{hetid_log_variance_fit}} list with
+#'   \code{coef} and \code{warm_start} set to \code{NULL}, \code{objective}
+#'   and \code{score_norm} set to \code{NA_real_}, \code{converged = FALSE},
+#'   and \code{convergence_code = -1L}. The response, design, and diagnostics
+#'   are retained. Container validation rejects missing or nonfinite response
+#'   and design entries with structured \code{hetid_error} conditions;
+#'   observations are not removed.
 #' @keywords internal
 ppml_failure <- function(error_class, y, x_mat, response_scale,
                          attempts = list(), ...) {

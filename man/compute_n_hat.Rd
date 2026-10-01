@@ -13,9 +13,12 @@ compute_n_hat(
 )
 }
 \arguments{
-\item{yields}{Data frame with columns y1, y2, ..., containing yields}
+\item{yields}{Numeric data frame or matrix with month-suffixed columns such as
+\code{y1} and \code{y12}, containing yields in annualized percentage points.}
 
-\item{term_premia}{Data frame with columns tp1, tp2, ..., containing term premia}
+\item{term_premia}{Numeric data frame or matrix with month-suffixed columns such
+as \code{tp1} and \code{tp12}, containing term premia in annualized percentage
+points. Rows must match \code{yields} by observation date and order.}
 
 \item{i}{Integer specifying the maturity index (column) to analyze,
 in \strong{months}, on the ACM monthly grid (1 to 120). Individual
@@ -29,38 +32,62 @@ contain the columns for the maturities the function uses
 \code{i = 60}). Whole years are multiples of 12 (i = 12 is the
 1-year bond, i = 60 the 5-year, i = 120 the 10-year).}
 
-\item{dates}{Required \code{Date} vector of period-end calendar dates, one
-per row of \code{yields}/\code{term_premia}. A time series is never
-returned without its date index; a non-\code{Date} or wrong-length vector
-is an error.}
+\item{dates}{Required non-missing \code{Date} vector of period-end calendar
+dates, one per row of \code{yields}/\code{term_premia}. Supplied dates are
+used as labels without normalization. \code{NULL}, non-\code{Date}, or
+missing dates raise \code{hetid_error_bad_argument}; a wrong-length vector
+raises \code{hetid_error_dimension_mismatch}.}
 
-\item{step}{Integer number of maturity-index units per news period
-(default \code{HETID_CONSTANTS$DEFAULT_STEP}). The news operator
-steps one period, so maturity arithmetic moves in multiples of
-\code{step}: \code{compute_n_hat()} pairs maturities \code{i} and
-\code{i + step}, the one-period bond is the \code{step}-maturity
-bond, and horizons must satisfy \code{i <= MAX_MATURITY - step}.}
+\item{step}{Positive integer number of months per news period, no greater than
+half of \code{HETID_CONSTANTS$MAX_MATURITY}. Functions with a default use
+\code{HETID_CONSTANTS$DEFAULT_STEP}. For time-series inputs, adjacent observations
+must be \code{step} months apart. Functions that read maturity \code{i + step}
+require \code{i <= HETID_CONSTANTS$MAX_MATURITY - step}; additional
+horizon restrictions are described for each function.}
 }
 \value{
-A data frame whose first column \code{date} (period-end
-\code{Date}) carries the conditioning-information date of each value, plus
-the computed series.
+A data frame with the supplied dates in its first column,
+\code{date}, followed by the computed numeric series. Each value's date
+follows the convention described for the function.
 }
 \description{
-Computes the time series n_hat(i,t) which is an estimator for
-E_t[p_(t+i)^(1)] = -E_t[y_(t+i)^(1)]
+Estimates the conditional expected log price of the step-maturity bond
+at a horizon of \code{i} months from yields and term premia.
 }
 \details{
+Supply numeric yield and term-premium columns in annualized percentage
+points, with rows already aligned by date. Nonempty data frames and numeric
+matrices are accepted. Columns for maturities \code{i} and \code{i + step} are
+required in each input, including when \code{i == step}.
+
 With maturity weights in years, \eqn{m(i) = i /
-\mathrm{MATURITY\_UNITS\_PER\_YEAR}}, the formula is
-\deqn{n\_hat(i,t) = m(i) y_t^{(i)} - m(i+step) y_t^{(i+step)} +
-  m(i+step) TP_t^{(i+step)} - m(i) TP_t^{(i)}}
+\mathrm{MATURITY\_UNITS\_PER\_YEAR}}, and the percentage-to-decimal
+divisor \eqn{c = \mathrm{PERCENT\_TO\_DECIMAL}}, the formula is
+\deqn{n\_hat(i,t) = [m(i) y_t^{(i)} - m(i+step) y_t^{(i+step)} +
+  m(i+step) TP_t^{(i+step)} - m(i) TP_t^{(i)}] / c.}
 
 At the one-period maturity \code{i == step} the term premium of the
 step-maturity bond is zero by definition (the imposed normalization
 TP^(1):=0, since A^(step) = E_t[y^(step)]), so the m(i)*TP_t^(i)
 term is dropped: any supplied value is overwritten by zero. This
 matches the boundary leg of \code{compute_n_hat_previous()}.
+
+The returned columns are \code{date} and \code{n_hat}, with one row per
+input observation in the original order. The numeric \code{n_hat} column
+is in decimal log-price units. Missing values in the used columns propagate
+without dropping rows, except that the overwritten one-period term premium
+does not affect the result.
+Dates must be non-missing; supplied dates are not normalized or sorted.
+Zero-row numeric matrices return an empty result; zero-row data frames
+are rejected by yield validation.
+
+The default \code{step} is annual. Allowed steps are positive integers no
+larger than \code{HETID_CONSTANTS$MAX_MATURITY \%/\% 2L}. The maturity
+\code{i} need not be a multiple of \code{step}. Invalid indices, missing
+columns, invalid dates, and mismatched row counts raise structured
+\code{hetid_error} conditions. Yields whose maximum absolute non-missing
+value is below one trigger a \code{hetid_warning_unit_scale} warning;
+the function does not rescale such inputs automatically.
 }
 \note{
 The effective maximum for \code{i} is
@@ -76,19 +103,14 @@ construction assumes a consistent step-period term-premium input and
 does not reconcile rollover conventions.
 }
 \examples{
-# Extract ACM data - need maturities i and i+step (months)
-# For i = 60 with the default annual step: 60 and 72
+# Monthly data and step match the ACM rollover convention
+mats <- c(60, 61)
 data <- extract_acm_data(
-  data_types = c("yields", "term_premia"),
-  maturities = c(60, 72)
+  data_types = c("yields", "term_premia"), maturities = mats
 )
-
-# Compute n_hat for the 5-year (60-month) maturity (dated data frame)
 n_hat_60 <- compute_n_hat(
-  yields = data[, paste0("y", c(60, 72))],
-  term_premia = data[, paste0("tp", c(60, 72))],
-  i = 60,
-  dates = data$date
+  data[, paste0("y", mats)], data[, paste0("tp", mats)],
+  i = 60, step = 1, dates = data$date
 )
-
+head(n_hat_60)
 }

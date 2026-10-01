@@ -2,7 +2,7 @@
 % Please edit documentation in R/statistics_utils.R
 \name{centered_cov}
 \alias{centered_cov}
-\title{Centered Sample Covariance (1/T normalization)}
+\title{Centered Sample Covariance (1/T Normalization)}
 \usage{
 centered_cov(a, b)
 }
@@ -12,7 +12,9 @@ centered_cov(a, b)
 \item{b}{Numeric vector or matrix (T x b).}
 }
 \value{
-An \eqn{a \times b} matrix of centered covariances.
+An \eqn{a \times b} numeric matrix of centered covariances, with
+row and column names taken from the columns of \code{a} and \code{b}.
+A single finite observation gives zeros; an empty sample gives \code{NaN} entries.
 }
 \description{
 Computes the centered sample covariance between the columns of two
@@ -20,7 +22,10 @@ conformable inputs (vectors or matrices), using the \eqn{1/T}
 normalization of the sample analog in Lewbel multivariate set
 identification (centered cov/var; see the package spec sections on
 moment notation and centering), \strong{not} the \eqn{1/(T-1)}
-convention of \code{\link[stats:cov]{stats::cov()}}. For inputs \eqn{A} (T x a) and
+convention of \code{\link[stats:cov]{stats::cov()}}.
+}
+\details{
+For inputs \eqn{A} (T x a) and
 \eqn{B} (T x b),
 \deqn{\widehat{\mathrm{Cov}}(A, B) = \frac{1}{T} (A - \bar{A})^\top
   (B - \bar{B}) \in \mathbb{R}^{a \times b},}
@@ -29,5 +34,8 @@ inputs are centered before the cross product, which computes the
 same quantity as the one-pass formula
 \eqn{A^\top B / T - \bar{A} \bar{B}^\top} but without its
 catastrophic cancellation when column means dominate the spread.
+Inputs must have the same row count; vectors are treated as
+one-column matrices. Inputs are not validated and observations are not
+removed: missing values propagate to affected covariance entries.
 }
 \keyword{internal}

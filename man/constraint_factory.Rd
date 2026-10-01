@@ -4,6 +4,6 @@
 \alias{constraint_factory}
 \title{Constraint Factory for Quadratic Form Evaluation}
 \description{
-Factory function for precomputing quadratic form constants
+Factories that validate quadratic coefficients and return constraint evaluators.
 }
 \keyword{internal}

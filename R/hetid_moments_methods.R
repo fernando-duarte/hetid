@@ -1,15 +1,25 @@
 #' Methods and Assertions for hetid_moments Objects
 #'
+#' Internal class assertion and print method for moment containers created by
+#' \code{\link{compute_identification_moments}}.
+#'
 #' @name hetid_moments_methods
 #' @keywords internal
 NULL
 
-#' Assert a Valid hetid_moments Object
+#' Assert hetid_moments Class Membership
 #'
-#' @param x Object to check
-#' @param arg Argument name for the structured error
+#' Checks whether an object inherits from \code{hetid_moments}. This does not
+#' validate its statistics or attributes; use \code{\link{validate_hetid_moments}}
+#' for structural validation.
 #'
-#' @return Invisible TRUE when valid
+#' @param x Object to check for class inheritance.
+#' @param arg Character string naming the argument in the error message and
+#'   condition. Defaults to \code{"moments"}.
+#'
+#' @return The logical scalar \code{TRUE}, invisibly, when the class is present.
+#'   Otherwise, signals a \code{hetid_error_bad_argument} condition with the
+#'   supplied \code{arg} field.
 #' @keywords internal
 assert_hetid_moments <- function(x, arg = "moments") {
   assert_bad_argument_ok(
@@ -25,17 +35,39 @@ assert_hetid_moments <- function(x, arg = "moments") {
 
 #' Print a hetid_moments Object
 #'
-#' @param x A \code{hetid_moments} object
-#' @param ... Unused, for method consistency
+#' Prints the observation and instrument counts, the theta-axis dimension,
+#' and the selected constraint-axis indices to the console.
 #'
-#' @return \code{x}, invisibly
+#' @param x A \code{hetid_moments} list created by
+#'   \code{\link{compute_identification_moments}}.
+#' @param ... Additional arguments, ignored by this method.
+#'
+#' @return The supplied \code{hetid_moments} object \code{x}, invisibly.
+#' @details The displayed maturities are column indices of \code{w2}, not
+#'   necessarily bond maturities. The theta axis includes all \code{w2} columns;
+#'   the constraint axis includes only the selected indices.
+#' @seealso \code{\link[base:print]{print}} for the generic.
 #' @examples
-#' set.seed(42)
-#' w1 <- rnorm(100)
-#' w2 <- matrix(rnorm(100 * 4), nrow = 100, ncol = 4)
-#' pcs <- matrix(rnorm(100 * 3), nrow = 100, ncol = 3)
-#' moments <- compute_identification_moments(w1, w2, pcs)
-#' print(moments)
+#' local({
+#'   old_seed <- if (exists(".Random.seed", envir = .GlobalEnv, inherits = FALSE)) {
+#'     get(".Random.seed", envir = .GlobalEnv)
+#'   } else {
+#'     NULL
+#'   }
+#'   on.exit({
+#'     if (is.null(old_seed)) {
+#'       rm(".Random.seed", envir = .GlobalEnv)
+#'     } else {
+#'       assign(".Random.seed", old_seed, envir = .GlobalEnv)
+#'     }
+#'   })
+#'   set.seed(42)
+#'   w1 <- rnorm(100)
+#'   w2 <- matrix(rnorm(100 * 2), nrow = 100, ncol = 2)
+#'   pcs <- matrix(rnorm(100), nrow = 100, ncol = 1)
+#'   moments <- compute_identification_moments(w1, w2, pcs, maturities = 2)
+#'   print(moments)
+#' })
 #' @export
 print.hetid_moments <- function(x, ...) {
   maturities <- attr(x, "maturities")

@@ -12,9 +12,12 @@ compute_news_components(
 )
 }
 \arguments{
-\item{yields}{Data frame with columns y1, y2, ..., containing yields}
+\item{yields}{Numeric data frame or matrix with month-suffixed columns such as
+\code{y1} and \code{y12}, containing yields in annualized percentage points.}
 
-\item{term_premia}{Data frame with columns tp1, tp2, ..., containing term premia}
+\item{term_premia}{Numeric data frame or matrix with month-suffixed columns such
+as \code{tp1} and \code{tp12}, containing term premia in annualized percentage
+points. Rows must match \code{yields} by observation date and order.}
 
 \item{i}{Integer specifying the maturity index (column) to analyze,
 in \strong{months}, on the ACM monthly grid (1 to 120). Individual
@@ -28,26 +31,48 @@ contain the columns for the maturities the function uses
 \code{i = 60}). Whole years are multiples of 12 (i = 12 is the
 1-year bond, i = 60 the 5-year, i = 120 the 10-year).}
 
-\item{step}{Integer number of maturity-index units per news period
-(default \code{HETID_CONSTANTS$DEFAULT_STEP}). The news operator
-steps one period, so maturity arithmetic moves in multiples of
-\code{step}: \code{compute_n_hat()} pairs maturities \code{i} and
-\code{i + step}, the one-period bond is the \code{step}-maturity
-bond, and horizons must satisfy \code{i <= MAX_MATURITY - step}.}
+\item{step}{Positive integer number of months per news period, no greater than
+half of \code{HETID_CONSTANTS$MAX_MATURITY}. Functions with a default use
+\code{HETID_CONSTANTS$DEFAULT_STEP}. For time-series inputs, adjacent observations
+must be \code{step} months apart. Functions that read maturity \code{i + step}
+require \code{i <= HETID_CONSTANTS$MAX_MATURITY - step}; additional
+horizon restrictions are described for each function.}
 }
 \value{
-A list with three elements: \code{n_hat_i}, the n_hat(i, t)
-level series; \code{n_hat_i_minus_1}, the previous-maturity series
+A list of three numeric vectors, with \code{T = nrow(yields)}:
+\code{n_hat_i}, the length-T n_hat(i, t) level series;
+\code{n_hat_i_minus_1}, the length-T previous-maturity series
 n_hat(i - step, t) (the realized log step-bond price at the
 \code{i == step} boundary), consumed by
 \code{\link{compute_news_q_bound}} for its led leg; and
-\code{delta_p}, the price news (T-1 elements)
+\code{delta_p}, the log price news (T-1 elements when T >= 2)
 \code{delta_p[t] = n_hat(i - step, t + 1) - n_hat(i, t)}.
+All three vectors are undated and in log-price units. For inputs with
+T < 2 that pass validation, \code{delta_p} is \code{numeric(0)}.
 }
 \description{
 Validates the maturity index and computes the n_hat level series and
 the price-news difference shared by \code{compute_price_news} and
 \code{compute_sdf_innovations}, so the delta_p definition lives in a
 single place.
+}
+\details{
+The inputs must be numeric matrices or data frames with the same number
+of rows, aligned in time before calling this helper. Yields and term
+premia are in annualized percentage points. Required maturity columns
+are \code{i} and \code{i + step}, plus \code{i - step} when
+\code{i > step}. The integer horizon must satisfy \code{i == step} or
+\code{i - step >= HETID_CONSTANTS$MIN_MATURITY}, and
+\code{i <= HETID_CONSTANTS$MAX_MATURITY - step}. The positive integer
+\code{step} cannot exceed \code{HETID_CONSTANTS$MAX_MATURITY \%/\% 2}.
+
+The step-maturity term premium is normalized to zero; see
+\code{\link{compute_n_hat}} for the normalization and term-premium
+convention. Missing values are retained and propagate through the
+arithmetic, except in that normalized term premium. Yields whose
+largest absolute non-missing value is below one trigger a unit-scale
+warning; the inputs are not rescaled automatically. Invalid maturities,
+steps, missing columns, and unequal row counts raise structured
+\code{hetid_error} conditions.
 }
 \keyword{internal}

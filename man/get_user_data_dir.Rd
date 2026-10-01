@@ -7,14 +7,21 @@
 get_user_data_dir(create = FALSE)
 }
 \arguments{
-\item{create}{Logical, whether to create the directory if missing}
+\item{create}{A non-missing logical scalar. If \code{TRUE}, create the
+directory recursively if missing; \code{FALSE} (default) only resolves it.}
 }
 \value{
-Character string with path to the user data directory
+A character scalar giving the user data directory path. With
+\code{create = FALSE}, the directory need not exist.
 }
 \description{
 Returns the per-user cache directory for downloaded data files.
 Downloads must never write into the installed package library, so
 all writes target this directory instead.
+}
+\details{
+Uses \code{\link[tools:R_user_dir]{tools::R_user_dir}} with
+\code{which = "data"}, including its \code{R_USER_DATA_DIR} override.
+Failure to create the directory raises a \code{hetid_error} condition.
 }
 \keyword{internal}

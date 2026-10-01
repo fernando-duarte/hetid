@@ -7,17 +7,23 @@
 se_bartlett_meat(scores, hac_lags)
 }
 \arguments{
-\item{scores}{Numeric matrix of per-observation score rows}
+\item{scores}{Finite numeric matrix of per-observation score rows.}
 
-\item{hac_lags}{Nonnegative integer lag truncation}
+\item{hac_lags}{Single nonnegative integer lag truncation, measured in rows.}
 }
 \value{
-A \code{ncol(scores)} square numeric matrix
+A \code{ncol(scores)} square numeric matrix, with score column names
+on both axes when present.
 }
 \description{
 The outer-product meat \code{crossprod(scores)} plus the
 triangular-weighted lag autocovariances out to \code{hac_lags}. Rows must be
 in chronological order. \code{hac_lags = 0} returns the plain
 outer-product meat.
+}
+\details{
+Scores are not centered, and cross-products are not divided by the sample
+size. Lags at or beyond \code{nrow(scores)} contribute no cross-products;
+the supplied bandwidth still determines the Bartlett weights.
 }
 \keyword{internal}

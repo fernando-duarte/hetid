@@ -8,13 +8,15 @@ log_variance_estimator(estimator)
 }
 \arguments{
 \item{estimator}{Single string naming the estimator (\code{"ppml"} or
-\code{"harvey"})}
+\code{"harvey"}). Missing values are not allowed.}
 }
 \value{
-A list with elements \code{id}, \code{label},
-\code{fit_response}, \code{vcov}, and \code{se_types}
+A named list with character scalars \code{id} and \code{label},
+functions \code{fit_response} and \code{vcov}, and a character vector
+\code{se_types} of supported standard-error types.
 }
 \description{
-Look Up a Log-Variance Estimator Spec
+Resolves a registered estimator name to its workers and standard-error types.
+Invalid names signal a \code{hetid_error_bad_argument} condition.
 }
 \keyword{internal}

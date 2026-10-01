@@ -7,18 +7,25 @@
 ppml_diagnostics(error_class, start_attempts, ...)
 }
 \arguments{
-\item{error_class}{Single string naming the failure, or \code{NA}}
+\item{error_class}{Character scalar naming the failure, or
+\code{NA_character_} for an accepted fit.}
 
-\item{start_attempts}{List of per-rung attempt records}
+\item{start_attempts}{List of per-rung attempt records.}
 
-\item{...}{Fields to override in the defaults}
+\item{...}{Named fields merged with the defaults by
+\code{\link[utils:modifyList]{modifyList}}. New names are added, and
+\code{NULL} removes a field.}
 }
 \value{
-A diagnostics list
+Named list with \code{warnings} and \code{messages} (empty character
+vectors), \code{error_class}, \code{start_attempts}, and missing defaults
+for \code{min_pos_response}, \code{rank_x_pos},
+\code{condition_weighted_scaled}, \code{rcond_info_raw},
+\code{info_col_scale}, \code{score_norm_raw}, and \code{score_norm_scaled},
+modified by \code{...}.
 }
 \description{
-NA and empty defaults for every diagnostic field; callers override only
-what they can populate, so an early fail-closed return stays
-field-compatible with an accepted fit.
+Provides missing-value and empty defaults for diagnostics, with the supplied
+failure reason and start attempts. Callers replace fields they can populate.
 }
 \keyword{internal}

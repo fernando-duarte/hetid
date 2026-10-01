@@ -2,10 +2,16 @@
 #'
 #' Computes matrix statistics S_i^(1) and S_i^(2) for each maturity i.
 #'
-#' @param w1 Numeric vector of \eqn{\omega_1} residuals from compute_w1_residuals()
-#' @param w2 Matrix of \eqn{\omega_2} residuals (T x I) from compute_w2_residuals()
-#' @param maturities Vector of maturity indices to compute statistics for.
-#'   Default is all columns of w2.
+#' @param w1 Numeric vector of \eqn{\omega_1} residuals from
+#'   \code{\link{compute_w1_residuals}}, with at least two finite observations.
+#' @param w2 Numeric matrix or data frame of \eqn{\omega_2} residuals from
+#'   \code{\link{compute_w2_residuals}}, with \code{T = length(w1)} rows and
+#'   \code{I >= 1} columns. All entries must be finite; rows must represent the
+#'   same observations in the same order as \code{w1}.
+#' @param maturities Nonempty numeric vector of distinct integer-valued
+#'   \code{w2} column indices between 1 and \code{ncol(w2)} (the constraint
+#'   axis). \code{NULL}, the default, selects all columns in order. These
+#'   indices are positions, not bond maturities in months or years.
 #'
 #' @return A list containing:
 #' \describe{
@@ -16,32 +22,50 @@
 #'     keyed \code{maturity_N} with one entry per element of
 #'     \code{maturities}.}
 #' }
+#' Both lists follow the order of \code{maturities}. Vector names and matrix
+#' row and column names are \code{maturity_1}, ..., \code{maturity_I},
+#' corresponding to all \code{w2} columns, even when only a subset of
+#' constraints is selected. Zero or singular statistics are returned as
+#' computed, without a degeneracy warning.
 #'
 #' @details
 #' First computes the matrix:
 #' \deqn{\omega_2^{\circ i} = \text{diag}(\omega_2^{(i)}) \omega_2}
 #'
 #' Then for each maturity i computes the centered sample (co)variances (1/T
-#' normalization; see [centered_cov()] and the spec sections on moment
-#' notation and centering):
+#' normalization; see \code{\link{centered_cov}}):
 #' \deqn{\hat{S}_i^{(1)} = \widehat{\mathrm{Cov}}(\omega_2^{\circ i},
 #'   \omega_1 \odot \omega_2^{(i)})}
 #' \deqn{\hat{S}_i^{(2)} = \widehat{\mathrm{Var}}(\omega_2^{\circ i})}
 #'
 #' where \eqn{\odot} denotes the Hadamard (elementwise) product.
 #'
+#' Missing, \code{NaN}, and infinite values are rejected; no observations
+#' are dropped. Invalid types or maturity indices signal a
+#' \code{hetid_error_bad_argument}; unequal observation counts signal a
+#' \code{hetid_error_dimension_mismatch}; fewer than two observations signal
+#' a \code{hetid_error_insufficient_data}.
+#'
+#' @seealso \code{\link{compute_identification_moments}} for all seven
+#'   moments in a validated container.
+#'
 #' @export
 #'
 #' @examples
-#' set.seed(42)
-#' n_obs <- 100
-#' I <- 4
-#' w1 <- rnorm(n_obs)
-#' w2 <- matrix(rnorm(n_obs * I), nrow = n_obs, ncol = I)
+#' w1 <- c(-0.2, 0.1, -0.1, 0.3, -0.3, 0.2)
+#' w2 <- cbind(
+#'   c(0.1, -0.2, 0.3, -0.1, 0.2, -0.3),
+#'   c(-0.1, 0.3, -0.2, 0.2, -0.3, 0.1)
+#' )
 #'
 #' mat_stats <- compute_matrix_statistics(w1, w2)
 #' mat_stats$s_i_1[[1]]
 #' mat_stats$s_i_2[[1]]
+#'
+#' subset_stats <- compute_matrix_statistics(w1, w2, maturities = 2)
+#' names(subset_stats$s_i_1)
+#' names(subset_stats$s_i_1[[1]])
+#' dim(subset_stats$s_i_2[[1]])
 compute_matrix_statistics <- function(w1, w2,
                                       maturities = NULL) {
   validated <- validate_statistics_inputs(w1, w2, maturities)
@@ -57,10 +81,10 @@ compute_matrix_statistics <- function(w1, w2,
 #' \code{compute_identification_moments()} validate once and delegate
 #' here.
 #'
-#' @param w1 Numeric vector of \eqn{\omega_1} residuals
-#' @param w2 Numeric matrix of \eqn{\omega_2} residuals (T x I)
-#' @param maturities Vector of validated maturity indices
-#' @return List with s_i_1 and s_i_2
+#' @param w1 Numeric vector of \eqn{\omega_1} residuals.
+#' @param w2 Numeric matrix of \eqn{\omega_2} residuals (T x I).
+#' @param maturities Vector of validated maturity indices.
+#' @return List with \code{s_i_1} and \code{s_i_2}.
 #' @noRd
 compute_matrix_statistics_impl <- function(w1, w2, maturities) {
   theta_names <- maturity_names(seq_len(ncol(w2)))

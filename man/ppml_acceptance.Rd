@@ -4,9 +4,7 @@
 \alias{ppml_acceptance}
 \title{PPML Acceptance Machinery}
 \description{
-The post-fit half of the PPML log-variance response solve: the
-positive-response rank diagnostic, the single \code{glm.fit} call site, and
-the fail-closed acceptance check applied to each start-ladder rung. Originally ported
-from the paper pipeline, whose fitting adapters now delegate here.
+The positive-response rank diagnostic, \code{glm.fit} call, and
+acceptance checks used for each PPML log-variance fitting attempt.
 }
 \keyword{internal}

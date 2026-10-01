@@ -5,7 +5,7 @@
 \title{Validation Helpers for ACM Extraction}
 \description{
 Input validation for \code{\link{extract_acm_data}}: argument
-contracts plus the source-capability guard for sub-annual
-maturities.
+contracts plus the source-capability guard for non-annual
+maturity nodes.
 }
 \keyword{internal}

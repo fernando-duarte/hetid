@@ -1,10 +1,10 @@
 #' Quarterly Economic and Financial Variables Dataset
 #'
 #' A time series dataset containing quarterly U.S. economic and financial variables
-#' from 1962 to present, including GDP, inflation, interest rates, financial conditions
+#' from 1962 Q1 through 2025 Q4, including GDP, inflation, interest rates, financial conditions
 #' indices, and various derived measures.
 #'
-#' @format A data frame with 256 observations and 452 variables. Key variable
+#' @format A data frame with 256 quarterly observations and 452 variables. Key variable
 #' groups include:
 #' \itemize{
 #'   \item Date and period identifiers: \code{date} (calendar quarter-start as
@@ -22,14 +22,16 @@
 #'     \code{ciss}
 #'   \item Equity market: \code{gspc}, \code{gspc_ret}, \code{gspc_vol}
 #'   \item Monetary policy shocks: columns prefixed \code{mp_shock_}
-#'   \item Principal components: \code{pc1} through \code{pc6}
+#'   \item Principal components of nominal financial asset returns:
+#'     \code{pc1} through \code{pc6}
 #'   \item VFCI measures: \code{vfci}, \code{vfci_lev}, and \code{vfci_}
 #'     variants; expected excess returns (\code{mu})
 #'   \item SDF panels: per-maturity expected SDF and SDF news
 #'     (\code{expected_sdf_m3} through \code{expected_sdf_m117},
 #'     \code{sdf_news_m3} through \code{sdf_news_m117}, maturity in months)
-#'     and their principal components (\code{expected_sdf_pc1}--\code{pc3},
-#'     \code{sdf_news_pc1}--\code{pc3})
+#'     and their principal components
+#'     (\code{expected_sdf_pc1} through \code{expected_sdf_pc3},
+#'     \code{sdf_news_pc1} through \code{sdf_news_pc3})
 #'   \item Growth-rate and timing transformations: columns following the
 #'     naming grammar described in Details (e.g. \code{gr1.}, \code{gr4.},
 #'     \code{lgr1.}, \code{fgr4.}, \code{f2gr1.}), including quarterly growth
@@ -42,6 +44,11 @@
 #' }
 #'
 #' @details
+#' \strong{Missing values.} The dataset retains \code{NA} values from the
+#' source, including gaps in series coverage and unavailable transformed or
+#' estimated values. Loading it does not remove incomplete observations or
+#' impute missing values.
+#'
 #' \strong{Date convention.} The dataset is imported verbatim from its source
 #' repository and ships unmodified, so \code{date} carries quarter-start
 #' labels (\code{1962-01-01}, \code{1962-04-01}, ...). The package-wide
@@ -57,8 +64,9 @@
 #' unit-less digit counts quarters); an explicit calendar suffix
 #' (\code{m}=month, \code{y}=year, \code{d}=day) is used only for non-quarterly
 #' series. \code{log.<series>} is the natural log; \code{gr<h>.<series>} is the
-#' \code{h}-quarter growth rate (\code{gr1} quarterly, \code{gr4}
-#' year-over-year); prefixes \code{l}, \code{l2}, \code{l3} lag backward and
+#' \code{h}-quarter percentage growth rate,
+#' \code{100 * (level / lagged_level - 1)} (\code{gr1} quarterly,
+#' \code{gr4} year-over-year); prefixes \code{l}, \code{l2}, \code{l3} lag backward and
 #' \code{f}, \code{f2}, \code{f3} lead forward by that many quarters, with the
 #' first lead/lag dropping its digit (bare \code{l}/\code{f}). Tokens stack
 #' lead/lag then growth then \code{.series}, so \code{lgr1.gdpc1} is quarterly
@@ -80,7 +88,6 @@
 #' data(variables)
 #' head(variables)
 #'
-#' # Time series plot
 #' plot(variables$date, variables$vfci,
 #'   type = "l",
 #'   xlab = "Date", ylab = "VFCI",

@@ -4,6 +4,7 @@
 \alias{hetid_moments_methods}
 \title{Methods and Assertions for hetid_moments Objects}
 \description{
-Methods and Assertions for hetid_moments Objects
+Internal class assertion and print method for moment containers created by
+\code{\link{compute_identification_moments}}.
 }
 \keyword{internal}

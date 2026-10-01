@@ -7,18 +7,24 @@
 validate_y1_lags(y1_lags, n_obs)
 }
 \arguments{
-\item{y1_lags}{Candidate number of own-lags.}
+\item{y1_lags}{Numeric scalar giving a non-negative, integer-valued number of
+own-lags representable as an R integer. Missing values are not allowed;
+zero requests no lag block. Must not exceed \code{n_obs - 1}.}
 
-\item{n_obs}{Number of available observations.}
+\item{n_obs}{Number of available observations before lead/lag alignment.
+Supplied by the caller; this helper does not validate its type or count
+complete observations.}
 }
 \value{
-The validated value coerced to integer.
+The validated integer scalar. Invalid lag counts signal a
+\code{hetid_error_bad_argument}; counts beyond the available history signal
+a \code{hetid_error_insufficient_data}.
 }
 \description{
 Type/range check only. The substantive sufficiency requirement (the
 regression needs \code{n_reg + 2} complete observations, where
-\code{n_reg = n_pcs + H}) is enforced by \code{run_pc_regression}, the single
-source of truth for that bound; this guard only protects the lag builder's
-index arithmetic.
+\code{n_reg} counts all PC or \code{exog} columns plus the own-lags) is
+enforced by \code{\link{run_pc_regression}}, the single source of truth for
+that bound; this guard only protects the lag builder's index arithmetic.
 }
 \keyword{internal}

@@ -19,9 +19,12 @@ NULL
 #' parser; any ambiguity (zero or multiple matching assets, missing or
 #' malformed digest) fails closed.
 #'
-#' @param quiet Logical, suppress progress output
-#' @param filename Release asset filename whose digest to extract
-#' @return Lower-case 64-character sha256 string
+#' @param quiet Logical scalar. If \code{TRUE}, suppresses download progress
+#'   output. Defaults to \code{FALSE}.
+#' @param filename Character string giving the release asset filename whose
+#'   digest to extract.
+#' @return A character string containing the lower-case, 64-character sha256
+#'   digest. Missing or unusable release metadata raises a \code{hetid_error}.
 #' @keywords internal
 acm_release_expected_sha256 <- function(quiet = FALSE, filename) {
   json_file <- tempfile(pattern = "acm_release_", fileext = ".json")
@@ -60,11 +63,22 @@ acm_release_expected_sha256 <- function(quiet = FALSE, filename) {
 
 #' Download and Verify the ACM Data from the GitHub Release
 #'
-#' @param quiet Logical, suppress progress output
-#' @param frequency "monthly" (default) or "daily" release asset
-#' @return Invisibly returns the cached file path. A sidecar file at that path
-#'   plus \code{.meta} is written alongside it, recording the sha256, source
-#'   URL, and retrieval timestamp
+#' Downloads the selected release asset, verifies its sha256 digest, and saves
+#' it in the per-user data directory, replacing an existing cached copy.
+#'
+#' The data directory is created if needed. A sidecar at the cached path plus
+#' \code{.meta} records the sha256 digest, source URL, and retrieval date in
+#' \code{YYYY-MM-DD} format. The sidecar is written after the verified file is
+#' cached; a sidecar write failure does not undo the cache replacement.
+#'
+#' @param quiet Logical scalar. If \code{TRUE}, suppresses download progress
+#'   output and status messages. Defaults to \code{FALSE}.
+#' @param frequency Character string selecting the observation frequency:
+#'   \code{"monthly"} (default) or \code{"daily"}. Both assets use the monthly
+#'   maturity grid.
+#' @return Invisibly returns a character string giving the cached file path.
+#'   Download, digest-verification, or cache-replacement failures raise a
+#'   \code{hetid_error}.
 #' @keywords internal
 download_acm_github <- function(quiet = FALSE,
                                 frequency = c("monthly", "daily")) {
@@ -76,7 +90,6 @@ download_acm_github <- function(quiet = FALSE,
   )
   cache_path <- get_acm_download_path("github", frequency)
 
-  # Same directory as the cache so the rename is a single filesystem operation
   temp_gz <- tempfile(
     pattern = "acm_download_", tmpdir = dirname(cache_path),
     fileext = ".csv.gz"
@@ -102,7 +115,7 @@ download_acm_github <- function(quiet = FALSE,
 
   atomic_replace(temp_gz, cache_path, "the verified download")
 
-  # Provenance sidecar for debugging cached-vs-bundled differences
+  # The source and checksum help explain differences between cached and bundled data
   writeLines(
     c(
       paste0("sha256: ", actual_sha),

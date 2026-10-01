@@ -7,12 +7,13 @@
 assert_tabular(x, name)
 }
 \arguments{
-\item{x}{Object to check}
+\item{x}{An object to check; column contents are not inspected.}
 
-\item{name}{Argument name for error message}
+\item{name}{A character string naming the argument in the error and its \code{arg} field.}
 }
 \value{
-Invisible TRUE; stops with a structured error otherwise
+Invisible \code{TRUE} for a matrix or data frame; otherwise signals a
+\code{hetid_error_bad_argument}.
 }
 \description{
 Assert Input Is Tabular

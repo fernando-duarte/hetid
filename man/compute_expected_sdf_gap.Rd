@@ -12,9 +12,12 @@ compute_expected_sdf_gap(
 )
 }
 \arguments{
-\item{yields}{Data frame with columns y1, y2, ..., containing yields}
+\item{yields}{Numeric data frame or matrix with month-suffixed columns such as
+\code{y1} and \code{y12}, containing yields in annualized percentage points.}
 
-\item{term_premia}{Data frame with columns tp1, tp2, ..., containing term premia}
+\item{term_premia}{Numeric data frame or matrix with month-suffixed columns such
+as \code{tp1} and \code{tp12}, containing term premia in annualized percentage
+points. Rows must match \code{yields} by observation date and order.}
 
 \item{i}{Integer specifying the maturity index (column) to analyze,
 in \strong{months}, on the ACM monthly grid (1 to 120). Individual
@@ -28,25 +31,27 @@ contain the columns for the maturities the function uses
 \code{i = 60}). Whole years are multiples of 12 (i = 12 is the
 1-year bond, i = 60 the 5-year, i = 120 the 10-year).}
 
-\item{step}{Integer number of maturity-index units per news period
-(default \code{HETID_CONSTANTS$DEFAULT_STEP}). The news operator
-steps one period, so maturity arithmetic moves in multiples of
-\code{step}: \code{compute_n_hat()} pairs maturities \code{i} and
-\code{i + step}, the one-period bond is the \code{step}-maturity
-bond, and horizons must satisfy \code{i <= MAX_MATURITY - step}.}
+\item{step}{Positive integer number of months per news period, no greater than
+half of \code{HETID_CONSTANTS$MAX_MATURITY}. Functions with a default use
+\code{HETID_CONSTANTS$DEFAULT_STEP}. For time-series inputs, adjacent observations
+must be \code{step} months apart. Functions that read maturity \code{i + step}
+require \code{i <= HETID_CONSTANTS$MAX_MATURITY - step}; additional
+horizon restrictions are described for each function.}
 }
 \value{
-A list with five elements:
+A named list with five numeric vectors. The four paired vectors
+retain their input order and contain no dates; they are all
+\code{numeric(0)} if no finite gaps remain:
 \describe{
 \item{\code{exp_n_hat}}{The full-length \eqn{T} series
 \eqn{e^{n\_hat(i,t)}}, used only by \code{compute_expected_sdf}
-for its output.}
+for its output. Missing or non-finite values are retained.}
 \item{\code{gap}}{The gap series \eqn{g_t} over the finite paired
 dates (length \eqn{\le T - s} after dropping any non-finite pair).}
 \item{\code{q}}{The first-order-cancelled gap \eqn{q_t =
       e^{n\_hat}(e^u - 1 - u)}, \eqn{u = x - n\_hat}, aligned to
 \code{gap}'s finite paired set (one common \code{is.finite(gap)} mask).
-\code{q} shares \code{g}'s conditional mean in population
+\code{q} shares the gap's conditional mean in population
 (\eqn{E[u | \mathrm{info}] = 0}) and its \eqn{1/N} variance is a
 sharper \eqn{O(\sigma^4)} bound. \code{q} is \strong{not} itself guaranteed
 finite: a yield \eqn{\to +\infty} gives \eqn{q = +\infty}, and an
@@ -61,17 +66,18 @@ arm.}
 }
 }
 \description{
-Builds the components shared by \code{\link{compute_expected_sdf}} and
+Builds the components shared by
+\code{\link{compute_expected_sdf}} with \code{paired = TRUE} and
 \code{\link{compute_expected_sdf_variance_bound}}: the full-length
 \eqn{e^{n\_hat(i,t)}} series, the paired gap series
 \eqn{g_t = e^{-y^{(1)}_{t+s}} - e^{n\_hat(i,t)}}, and the
 first-order-cancelled gap \eqn{q_t = e^{n\_hat}(e^u - 1 - u)} where
 \eqn{u = x - n\_hat} is the raw log forecast error (\eqn{x} the realized
 log price), plus the masked \eqn{u} and \eqn{n\_hat} series themselves.
-All series are filtered to the common finite paired set
-\eqn{T_i = \{1, \dots, T - s\}}, \eqn{s = i / step}, under \strong{one}
-mask, so
-the estimator's centering and every bound arm share a single sample. The
+The paired series use one common \code{is.finite(gap)} mask over
+\eqn{T_i = \{1, \dots, T - s\}}, \eqn{s = i / step}, so the
+estimator's centering and every bound arm share a single sample.
+The full-length \code{exp_n_hat} series is not filtered. The
 gap's mean is the centering correction; the q variance and the
 fourth-order component \eqn{(1/4)\max(e^{2 n\_hat})\,\mathrm{mean}(u^4)}
 are the two arms of the min returned by
@@ -80,8 +86,27 @@ are the two arms of the min returned by
 \details{
 Callers validate \code{step}, \code{i} (within
 \code{effective_max_maturity(step)}), and row alignment before calling.
-This helper owns the multiple-of-step contract (it performs the
-\code{i/step} row shift) via \code{validate_step_multiple}, and raises
-the structural \code{T > i/step} guard.
+The allowed \code{step} values are integers from 1 through
+\code{HETID_CONSTANTS$MAX_MATURITY \%/\% 2}.
+This helper requires \code{i} to be a positive multiple of \code{step};
+it does not handle the public callers' \code{i = 0} boundary.
+The realized one-period yield is led \code{i / step} rows. Input rows
+must already be aligned by date, and their frequency must equal the
+intended news period; this helper does not match dates or reorder rows.
+
+Yields and term premia are in annualized percentage points.
+The realized log price is
+\eqn{x_t = -m(\mathrm{step}) y^{(\mathrm{step})}_{t+s} / 100}, where
+\eqn{m(\mathrm{step})} is
+\code{step / HETID_CONSTANTS$MATURITY_UNITS_PER_YEAR}; thus
+\eqn{e^{-y^{(1)}_{t+s}} = e^{x_t}}. The required columns are the
+\code{step}-maturity yield and the \code{i} and \code{i + step}
+yields and term premia, as used by \code{\link{compute_n_hat}}.
+
+Invalid horizons or missing columns raise
+\code{hetid_error_bad_argument}, unequal row counts raise
+\code{hetid_error_dimension_mismatch}, and \code{T <= i / step}
+raises \code{hetid_error_insufficient_data}. Yields that look like
+decimals trigger \code{hetid_warning_unit_scale}; inputs are not rescaled.
 }
 \keyword{internal}

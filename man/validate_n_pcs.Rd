@@ -7,12 +7,14 @@
 validate_n_pcs(n_pcs)
 }
 \arguments{
-\item{n_pcs}{Number of principal components to validate}
+\item{n_pcs}{A single finite numeric value representing an integer from one to
+\code{HETID_CONSTANTS$MAX_N_PCS}, inclusive.}
 }
 \value{
-Invisible TRUE if valid, stops with informative error if invalid
+Invisible \code{TRUE} when valid. Otherwise, signals a
+\code{hetid_error_bad_argument} condition with \code{arg = "n_pcs"}.
 }
 \description{
-Validates n_pcs parameter for principal components.
+Validates the number of principal components of nominal financial asset returns.
 }
 \keyword{internal}

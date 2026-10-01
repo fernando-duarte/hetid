@@ -7,15 +7,18 @@
 assemble_w2_coef_matrix(coef_list, row_names, fallback_names)
 }
 \arguments{
-\item{coef_list}{List of coefficient vectors (NULL for skipped),
-one per maturity}
+\item{coef_list}{List of named numeric coefficient vectors, one per maturity;
+\code{NULL} entries denote skipped maturities.}
 
-\item{row_names}{Maturity row names}
+\item{row_names}{Character vector of row labels, one per entry of \code{coef_list}.}
 
-\item{fallback_names}{Column names used only when all entries are NULL}
+\item{fallback_names}{Character vector of column names used only when all entries
+are \code{NULL}.}
 }
 \value{
-Numeric matrix with one row per maturity
+Numeric matrix with \code{length(coef_list)} rows, named by \code{row_names}.
+Columns use the names of the first non-\code{NULL} vector, or \code{fallback_names}
+when all entries are \code{NULL}. Skipped rows contain \code{NA_real_}.
 }
 \description{
 Builds the per-maturity coefficient matrix from the list of
@@ -23,5 +26,9 @@ regression coefficient vectors, taking column names from the
 regression output itself (the single source). A skipped maturity
 (NULL entry) contributes an all-NA row; when every maturity was
 skipped, \code{fallback_names} supplies the columns.
+}
+\details{
+Non-\code{NULL} vectors must have the same length and coefficient order.
+Values are assigned by position, without matching coefficient names.
 }
 \keyword{internal}

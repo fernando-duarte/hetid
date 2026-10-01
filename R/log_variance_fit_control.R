@@ -1,4 +1,4 @@
-# Fitting-only controls; scientific sampling and recession policy stay with callers
+# Candidate sampling and recession checks are separate from these fitting controls
 log_variance_fit_defaults <- function(estimator) {
   controls <- list(
     ppml = c(LOG_VARIANCE_CONTROL[c(

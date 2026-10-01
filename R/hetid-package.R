@@ -9,7 +9,7 @@
 #' from Lewbel (2012) for triangular systems, with applications to the Volatility
 #' Financial Conditions Index (VFCI) developed by Adrian, DeHaven, Duarte, and Iyer.
 #'
-#' The package supports data access, bond pricing and heteroskedasticity-based estimation.
+#' The package supports data access, bond pricing, and identified-set estimation.
 #'
 #' @section Core Methodology:
 #' The package implements the identification through heteroskedasticity approach
@@ -28,7 +28,7 @@
 #' \itemize{
 #'   \item \strong{ACM Term Structure Data}: Access to monthly and daily
 #'     (business-day) yields, term premia, and risk-neutral yields at monthly
-#'     maturity steps (\code{MIN_MATURITY}-\code{MAX_MATURITY} months, 1-120)
+#'     maturity steps (\code{MIN_MATURITY}-\code{MAX_MATURITY} months)
 #'     based on Adrian, Crump, and Moench (2013)
 #'   \item \strong{Economic Variables}: Quarterly macroeconomic and financial data
 #'   \item \strong{Verified Downloads}: Functions to download the latest GitHub
@@ -52,51 +52,53 @@
 #'   \item \strong{Multi-maturity Analysis}: Simultaneous estimation across yield curve
 #' }}
 #'
-#' @section Typical Workflow:
+#' @section Monthly News Example:
+#' The bundled ACM term premia use a monthly rollover convention. This example
+#' uses monthly rows and \code{step = 1}; its instruments are PCs of simulated
+#' nominal asset returns, rather than the bundled quarterly PCs.
 #' \preformatted{
-#' # Data Setup: merge ACM yields with bundled PCs by calendar date
-#' download_term_premia()
-#' mats <- seq(12, 120, by = 12)
-#' acm_data <- extract_acm_data(
-#'   data_types = c("yields", "term_premia"),
-#'   maturities = mats,
-#'   frequency = "quarterly"
-#' )
-#' data("variables", package = "hetid")
-#'
-#' # The bundled dataset ships as imported (quarter-start dates); normalize to
-#' # the package period-end convention so it merges with ACM by calendar date
-#' variables$date <- to_period_end(variables$date, "quarterly")
-#' pc_cols <- paste0("pc", 1:4)
-#' merged <- merge(
-#'   variables[, c("date", pc_cols)],
-#'   acm_data[, c("date", paste0("y", mats), paste0("tp", mats))],
-#'   by = "date"
-#' )
-#' pcs <- as.matrix(merged[, pc_cols])
-#' yields <- merged[, paste0("y", mats)]
-#' tp <- merged[, paste0("tp", mats)]
-#'
-#' # Compute Reduced Form Residuals
-#' w1 <- compute_w1_residuals(n_pcs = 4)
-#' w2 <- compute_w2_residuals(
-#'   yields, tp,
-#'   maturities = c(24, 60, 108),
-#'   n_pcs = 4, pcs = pcs, dates = merged$date
-#' )
+#' local({
+#'   old_seed <- get0(".Random.seed", envir = .GlobalEnv, inherits = FALSE)
+#'   on.exit(if (is.null(old_seed)) {
+#'     rm(".Random.seed", envir = .GlobalEnv)
+#'   } else {
+#'     assign(".Random.seed", old_seed, envir = .GlobalEnv)
+#'   })
+#'   set.seed(42)
+#'   acm <- extract_acm_data(maturities = c(1, 2, 3))
+#'   n_pcs <- HETID_CONSTANTS$DEFAULT_N_PCS
+#'   returns <- matrix(rnorm(nrow(acm) * n_pcs), ncol = n_pcs)
+#'   pc_data <- data.frame(date = acm$date, stats::prcomp(returns)$x)
+#'   pc_cols <- paste0(HETID_CONSTANTS$PC_PREFIX, seq_len(n_pcs))
+#'   names(pc_data)[-1] <- pc_cols
+#'   merged <- merge(acm, pc_data, by = "date")
+#'   w2 <- compute_w2_residuals(
+#'     merged[, c("y1", "y2", "y3")], merged[, c("tp1", "tp2", "tp3")],
+#'     maturities = 2, step = 1, n_pcs = n_pcs,
+#'     pcs = as.matrix(merged[, pc_cols]), dates = merged$date
+#'   )
+#'   print(head(w2$residuals$maturity_2))
+#' })
 #' }
+#'
+#' Changing \code{step} does not convert term premia to another rollover
+#' convention; see \code{\link{compute_n_hat}}. For quarterly analyses,
+#' use inputs with a matching news convention. Normalize the bundled variables'
+#' quarter-start dates with \code{to_period_end(..., "quarterly")} before a
+#' date-keyed merge. Both residual regressions drop incomplete observations;
+#' align their returned realization dates before computing joint moments.
 #'
 #' @section Data Sources:
 #' \describe{
 #'   \item{\strong{ACM Term Structure Data}}{Monthly and daily (business-day)
 #'     data from Adrian, Crump, and Moench (2013) including yields, term premia,
 #'     and risk-neutral yields at monthly maturity steps from
-#'     \code{MIN_MATURITY} to \code{MAX_MATURITY} months (1 to 120).
+#'     \code{MIN_MATURITY} to \code{MAX_MATURITY} months.
 #'     Updated from the GitHub replication release (the daily series is
 #'     download-only); the NY Fed workbook is the opt-in fallback.}
 #'   \item{\strong{Economic Variables}}{Quarterly macroeconomic and financial
 #'     variables including GDP, inflation, financial conditions indices, and
-#'     principal components of financial asset returns.}
+#'     principal components of nominal financial asset returns.}
 #' }
 #'
 #' @template section-function-categories

@@ -1,4 +1,3 @@
-# Validate the raw system at the public boundary
 quadratic_real_finite <- function(x) {
   is.numeric(x) && !is.complex(x) && all(is.finite(x))
 }

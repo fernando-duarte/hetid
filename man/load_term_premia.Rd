@@ -13,31 +13,39 @@ load_term_premia(
 )
 }
 \arguments{
-\item{auto_download}{Logical. If TRUE and data doesn't exist, automatically
-downloads it (from the GitHub release for \code{"auto"}/
-\code{"github"}, from the NY Fed for \code{"nyfed"}). Default is FALSE.}
+\item{auto_download}{A single nonmissing logical value. If \code{TRUE} and
+data is unavailable, downloads it into the per-user data directory
+(from the GitHub release for \code{"auto"}/\code{"github"}, from the
+NY Fed for \code{"nyfed"}). Defaults to \code{FALSE}.}
 
-\item{source}{Data source: \code{"auto"} (default; GitHub user cache,
+\item{source}{A character string selecting the data source:
+\code{"auto"} (default; GitHub user cache,
 then bundled copy), \code{"github"} (same resolution), or
 \code{"nyfed"} (the NY Fed cache only). Note the asymmetry with
 \code{\link{download_term_premia}}, which has no \code{"auto"}: a
 download is always source-specific.}
 
-\item{frequency}{Data frequency: \code{"monthly"} (default) or
+\item{frequency}{A character string selecting the data frequency:
+\code{"monthly"} (default) or
 \code{"daily"} (GitHub source only; user cache only).}
 
-\item{release}{Optional GitHub release tag without whitespace or control
-characters. Supply together with
-\code{expected_sha256}; both default to NULL for the existing unpinned behavior.
-Pins are unavailable for \code{source = "nyfed"}.}
+\item{release}{\code{NULL} or a single non-missing, non-empty character string
+giving a GitHub release tag without whitespace or control characters.
+Supply together with \code{expected_sha256}; both default to \code{NULL}
+to select unpinned data. Pins are unavailable for \code{source = "nyfed"}.}
 
-\item{expected_sha256}{Expected 64-character hexadecimal sha256 digest of the
-compressed release asset, obtained independently by the caller.}
+\item{expected_sha256}{\code{NULL} or a single non-missing character string
+containing the 64-character hexadecimal sha256 digest of the compressed
+release asset, obtained independently by the caller.}
 }
 \value{
-A data frame containing the term premia data. Raises a
-\code{hetid_error_insufficient_data} condition when the data is not
-available (every source fails the same way).
+A data frame with one row per source observation, a \code{Date}
+column named \code{date}, and the source's raw ACM columns for model-implied yields
+(\code{ACMY}), term premia (\code{ACMTP}), and risk-neutral yields
+(\code{ACMRNY}), in annualized percentage points. Maturity coverage and
+column names depend on the source; see \code{\link{acm_data}}.
+Raises a \code{hetid_error_insufficient_data} condition when the requested
+data is unavailable and \code{auto_download = FALSE}.
 }
 \description{
 Loads the ACM term premia data. The default \code{"auto"} source
@@ -70,9 +78,17 @@ staging directories are never read as snapshots.
 Pinned assets require at least one row and fully parseable, nonmissing dates.
 Monthly and quarterly extraction use the monthly asset and its digest; daily
 extraction uses the daily asset and its digest.
+
+Unpinned reads check the schema of the selected file and preserve its rows
+and missing numeric values. Dates are parsed and the date column is renamed
+to \code{date}; raw observation dates are not relabeled to calendar period-end.
+Use \code{\link{extract_acm_data}} for period-end dates and maturity selection.
+Missing dates remain missing. Partly unparseable dates become \code{NA} with
+a \code{hetid_warning_unparsed_dates} warning. If any date is nonmissing but
+no date can be parsed, a \code{hetid_error} condition is raised. A corrupt
+selected cache raises an error rather than falling back to the bundled file.
 }
 \examples{
-# Load the term premia (downloaded copy if present, else bundled)
 term_premia <- load_term_premia()
 head(term_premia)
 

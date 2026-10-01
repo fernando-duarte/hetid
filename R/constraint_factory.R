@@ -1,6 +1,6 @@
 #' Constraint Factory for Quadratic Form Evaluation
 #'
-#' Factory function for precomputing quadratic form constants
+#' Factories that validate quadratic coefficients and return constraint evaluators.
 #'
 #' @name constraint_factory
 #' @keywords internal
@@ -8,20 +8,29 @@ NULL
 
 #' Create Constraint Checker from Quadratic Components
 #'
-#' Factory function that precomputes constants and returns a
+#' Factory function that captures quadratic coefficients and returns a
 #' closure for efficiently evaluating the quadratic constraint
 #' at many theta values (e.g., grid search or optimisation).
 #' Inputs are validated once at factory time; the returned closure
 #' performs no checks.
 #'
-#' @param A_i Symmetric numeric matrix from quadratic computation
+#' @param A_i Square symmetric numeric matrix from quadratic computation.
 #' @param b_i Numeric coefficient vector from quadratic computation,
-#'   with length equal to \code{nrow(A_i)}
-#' @param c_i Scalar numeric constant from quadratic computation
+#'   with length equal to \code{nrow(A_i)}.
+#' @param c_i Numeric scalar constant from quadratic computation.
 #'
-#' @return A function that takes a theta vector and returns the scalar
-#'   value of \eqn{\theta' A_i \theta + b_i' \theta + c_i}. Negative
-#'   values indicate theta is inside the constraint.
+#' @return A function taking a numeric \code{theta} vector of length
+#'   \code{nrow(A_i)} and returning the numeric scalar
+#'   \eqn{\theta' A_i \theta + b_i' \theta + c_i}. Non-positive
+#'   values satisfy the constraint, including equality at its boundary.
+#'
+#' @details Invalid coefficient types or a nonsymmetric matrix signal
+#'   a \code{hetid_error_bad_argument}; a coefficient-vector length mismatch
+#'   signals a \code{hetid_error_dimension_mismatch}. Missing and non-finite
+#'   coefficients are not explicitly rejected or removed, and missing values
+#'   propagate to the result. Supply finite coefficients and candidates for
+#'   membership checks. The closure does not validate \code{theta}; invalid
+#'   inputs can produce ordinary R arithmetic errors or non-finite results.
 #'
 #' @export
 #'
@@ -30,14 +39,14 @@ NULL
 #' b <- c(-2, -2)
 #' c_val <- 0.5
 #' check <- make_constraint_checker(A, b, c_val)
-#' check(c(0.5, 0.5)) # Evaluate constraint at theta
+#' check(c(0.5, 0.5))
+#' check(c(0.5, 0.5)) <= 0
 make_constraint_checker <- function(A_i, b_i, c_i) { # nolint: object_name_linter.
   assert_bad_argument_ok(
     is.matrix(A_i) && is.numeric(A_i) && nrow(A_i) == ncol(A_i),
     "A_i must be a square numeric matrix",
     arg = "A_i"
   )
-  # Builders symmetrize via (A + t(A)) / 2; reject hand-built asymmetric A
   assert_bad_argument_ok(
     isSymmetric(A_i),
     "A_i must be a symmetric matrix",
@@ -71,35 +80,57 @@ make_constraint_checker <- function(A_i, b_i, c_i) { # nolint: object_name_linte
 #' Companion to \code{\link{make_constraint_checker}} for
 #' multi-constraint systems: takes the \code{quadratic} element
 #' produced by \code{\link{build_general_quadratic_system}} (or the
-#' legacy \code{\link{build_quadratic_system}}) and returns a closure
+#' \code{\link{build_quadratic_system}}) and returns a closure
 #' evaluating every constraint at a candidate theta. Following the
 #' package's \code{hin <= 0} convention, theta lies inside the
 #' identified set exactly when every returned value is non-positive
-#' (\code{max(values) <= 0}). A system where no theta satisfies all
+#' (\code{all(values <= 0)}). A system where no theta satisfies all
 #' constraints is an empty estimated set; this checker is the
-#' intended tool for probing that case on a grid.
+#' intended tool for probing that case on a grid. Failure to find a feasible
+#' grid point does not establish emptiness.
 #'
-#' @param quadratic List with parallel \code{A_i}, \code{b_i},
-#'   \code{c_i} elements (the \code{quadratic} element of either
-#'   builder's output)
-#' @return Function of theta returning the named numeric vector of
-#'   constraint values
+#' @param quadratic List containing \code{A_i} and \code{b_i} lists and a
+#'   numeric \code{c_i} vector, all of equal length, as in either builder's
+#'   \code{quadratic} element. Each position supplies the coefficients for
+#'   one \code{\link{make_constraint_checker}}; entries are paired by position,
+#'   so their order must agree even when names are supplied.
+#' @return A function taking a numeric \code{theta} vector conformable with
+#'   every coefficient matrix and returning one numeric value per constraint,
+#'   in input order. Names are copied from \code{quadratic$A_i} when present;
+#'   unnamed inputs return an unnamed vector. Empty parallel inputs return
+#'   \code{numeric(0)}, imposing no constraints.
+#'
+#' @details Invalid parallel structure signals a
+#'   \code{hetid_error_bad_argument}. Invalid individual coefficients signal
+#'   a \code{hetid_error} identifying the constraint by name or position.
+#'   The returned closure does not validate \code{theta}; the missing-value
+#'   and finite-input caveats of \code{\link{make_constraint_checker}} apply.
 #'
 #' @template section-general-instruments
 #'
 #' @export
 #'
 #' @examples
-#' set.seed(42)
-#' w1 <- rnorm(50)
-#' w2 <- matrix(rnorm(100), nrow = 50)
-#' z <- matrix(rnorm(150), nrow = 50)
-#' moments <- compute_identification_moments(w1, w2, z)
-#' qs <- build_general_quadratic_system(
-#'   separate_instruments_lambda(moments), 0.2, moments
-#' )
-#' check_all <- make_system_checker(qs$quadratic)
-#' max(check_all(c(0, 0)))
+#' local({
+#'   old_seed <- get0(".Random.seed", envir = .GlobalEnv, inherits = FALSE)
+#'   on.exit(if (is.null(old_seed)) {
+#'     rm(".Random.seed", envir = .GlobalEnv)
+#'   } else {
+#'     assign(".Random.seed", old_seed, envir = .GlobalEnv)
+#'   })
+#'   set.seed(42)
+#'   w1 <- rnorm(50)
+#'   w2 <- matrix(rnorm(100), nrow = 50)
+#'   z <- matrix(rnorm(150), nrow = 50)
+#'   moments <- compute_identification_moments(w1, w2, z)
+#'   qs <- build_general_quadratic_system(
+#'     separate_instruments_lambda(moments), 0.2, moments
+#'   )
+#'   check_all <- make_system_checker(qs$quadratic)
+#'   values <- check_all(c(0, 0))
+#'   print(values)
+#'   all(values <= 0)
+#' })
 make_system_checker <- function(quadratic) {
   assert_bad_argument_ok(
     is_parallel_quadratic(quadratic),
@@ -132,13 +163,12 @@ make_system_checker <- function(quadratic) {
 
 #' Quadratic List Carries Parallel A/b/c Elements
 #'
-#' The list guard must run first (the \code{[[} accessor errors on
-#' atomic input); the remaining checks are evaluated as a plain
-#' vector — no short-circuiting needed, and the flat form keeps the
-#' cyclomatic complexity at the project threshold.
+#' Checks that \code{A_i} and \code{b_i} are lists and \code{c_i} is numeric,
+#' with matching lengths. Individual coefficients are validated separately
+#' by \code{make_constraint_checker()}.
 #'
-#' @param quadratic Candidate quadratic list
-#' @return Logical scalar
+#' @param quadratic Candidate quadratic list.
+#' @return Logical scalar indicating whether the elements have parallel lengths.
 #' @noRd
 is_parallel_quadratic <- function(quadratic) {
   if (!is.list(quadratic)) {

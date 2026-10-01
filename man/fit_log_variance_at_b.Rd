@@ -17,10 +17,10 @@ fit_log_variance_at_b(
 )
 }
 \arguments{
-\item{b}{Numeric vector of length \code{ncol(w2)}: the fixed structural
-parameter. When named, the names must equal \code{colnames(w2)} exactly
--- a silently permuted \code{b} would change which residual multiplies
-which column, with no other symptom. Unnamed \code{b} is positional.}
+\item{b}{Finite numeric vector of length \code{ncol(w2)}: the fixed
+structural parameter. If both \code{b} and the columns of \code{w2}
+are named, \code{names(b)} must equal \code{colnames(w2)} exactly,
+including their order. Otherwise, \code{b} is used positionally.}
 
 \item{w1}{Numeric vector of length \code{nrow(w2)}: the mean-equation
 reduced-form residual (\code{compute_tau0_system()}'s \code{w1}).}
@@ -28,22 +28,29 @@ reduced-form residual (\code{compute_tau0_system()}'s \code{w1}).}
 \item{w2}{Numeric matrix, \code{ncol(w2) == length(b)}: the news-equation
 reduced-form residuals (\code{compute_tau0_system()}'s \code{w2}).}
 
-\item{x}{Numeric matrix (or data-frame-coercible object) of
-\code{nrow(w2)} rows: the volatility-equation regressors, passed
-through to \code{\link{fit_log_variance}}. \strong{Distinct from the
-mean equation's regressors} -- see the \strong{Two designs} section.}
+\item{x}{Numeric matrix or numeric data frame with \code{nrow(w2)} rows:
+the volatility-equation regressors, without an intercept column.
+An intercept is added internally. Requires at least \code{ncol(x) + 2}
+observations; see \code{\link{fit_log_variance}} for the full design
+contract and the \strong{Two designs} section below.}
 
 \item{estimator, start, fallback_starts, response_scale, control}{Passed through to
 \code{\link{fit_log_variance}} unchanged; see that function -- in
 particular its \strong{Start-scale contract} section -- for the exact
-contract.}
+contract. The estimator is \code{"ppml"} by default, or
+\code{"harvey"}; the remaining defaults are \code{NULL},
+\code{list()}, \code{1}, and \code{list()}, respectively.}
 }
 \value{
 A validated \code{hetid_log_variance_fit} object (see
 \code{\link{hetid_log_variance_fit}}), with one extra
 \code{diagnostics$min_abs_eps} field: \code{min(abs(eps))} for
 \eqn{\varepsilon = w_1 - w_2 b}, a cheap check for a residual sitting
-at (or near) zero.
+at (or near) zero. A failure reported by \code{\link{fit_log_variance}}
+returns an object with
+\code{fit_status = "nonconvergence"}, \code{coef = NULL}, and
+\code{warm_start = NULL}, retaining the response, design, and diagnostics.
+This includes an all-zero squared-residual response.
 }
 \description{
 Completes the tau = 0 chain: given the mean-equation reduced-form
@@ -53,6 +60,20 @@ structural parameter (e.g. \code{compute_tau0_system()}'s
 \eqn{\varepsilon^2} to \code{\link{fit_log_variance}} as the log-variance
 equation's response.
 }
+\section{Input alignment}{
+
+\code{b}, \code{w1}, \code{w2}, and \code{x} must contain only finite
+numeric values; missing values are rejected rather than filtered.
+The computed squared residuals must also remain finite.
+\code{w1}, \code{w2}, and \code{x} must already be row-aligned by the
+caller, merging time series by calendar date upstream. Dates are not
+stored or checked here. Keep chronological row order for subsequent HAC
+inference. Invalid values or names raise a structured
+\code{hetid_error_bad_argument}; incompatible dimensions raise
+\code{hetid_error_dimension_mismatch}, and too few rows in \code{x} raise
+\code{hetid_error_insufficient_data}.
+}
+
 \section{Guard the composition}{
 
 \code{compute_tau0_system()} returns \code{point = NULL} whenever the
@@ -64,32 +85,42 @@ is no \code{point$theta} to pass. Callers must check
 
 \section{Two designs}{
 
-The mean equation and the log-variance equation use different regressor
-sets in the intended application: the mean equation conditions on SDF
-principal components, while the volatility equation conditions on lagged
-return principal components. \code{x} here is the volatility design, not
-the \code{x} passed to \code{\link{compute_tau0_system}}.
+The mean and log-variance equations need not use the same regressors.
+Principal components in the intended application are of nominal financial
+asset returns. \code{x} here supplies the volatility regressors, chosen
+separately from \code{x} passed to \code{\link{compute_tau0_system}}.
 }
 
 \examples{
-set.seed(42)
-t_obs <- 150
-x <- cbind(x1 = rnorm(t_obs), x2 = rnorm(t_obs))
-z <- rnorm(t_obs)
-e2 <- sqrt(exp(0.5 + 0.9 * z)) * matrix(rnorm(t_obs * 2), t_obs, 2)
-y2 <- x \%*\% matrix(c(1, 0.5, -0.3, 0.7), 2, 2) + e2
-colnames(y2) <- c("news1", "news2")
-theta_true <- c(0.8, -0.5)
-y1 <- drop(0.3 + x \%*\% c(0.2, -0.1) + y2 \%*\% theta_true + rnorm(t_obs))
-fit <- compute_tau0_system(y1, y2, x, z)
+local({
+  old_seed <- if (exists(".Random.seed", envir = .GlobalEnv, inherits = FALSE)) {
+    get(".Random.seed", envir = .GlobalEnv, inherits = FALSE)
+  } else {
+    NULL
+  }
+  on.exit(if (is.null(old_seed)) {
+    rm(".Random.seed", envir = .GlobalEnv)
+  } else {
+    assign(".Random.seed", old_seed, envir = .GlobalEnv)
+  })
+  set.seed(42)
+  t_obs <- 150
+  x <- cbind(x1 = rnorm(t_obs), x2 = rnorm(t_obs))
+  z <- rnorm(t_obs)
+  e2 <- sqrt(exp(0.5 + 0.9 * z)) * matrix(rnorm(t_obs * 2), t_obs, 2)
+  y2 <- x \%*\% matrix(c(1, 0.5, -0.3, 0.7), 2, 2) + e2
+  colnames(y2) <- c("news1", "news2")
+  theta_true <- c(0.8, -0.5)
+  y1 <- drop(0.3 + x \%*\% c(0.2, -0.1) + y2 \%*\% theta_true + rnorm(t_obs))
+  fit <- compute_tau0_system(y1, y2, x, z)
 
-# the volatility design is distinct from the mean-equation design above
-x_var <- cbind(v1 = rnorm(t_obs), v2 = rnorm(t_obs))
-if (!is.null(fit$point)) {
-  logvar_fit <- fit_log_variance_at_b(fit$point$theta, fit$w1, fit$w2, x_var)
-  logvar_fit$coef
-  compute_log_variance_se(logvar_fit)
-}
+  x_var <- cbind(v1 = rnorm(t_obs), v2 = rnorm(t_obs))
+  if (!is.null(fit$point)) {
+    logvar_fit <- fit_log_variance_at_b(fit$point$theta, fit$w1, fit$w2, x_var)
+    print(logvar_fit$coef)
+    print(compute_log_variance_se(logvar_fit))
+  }
+})
 }
 \seealso{
 \code{\link{compute_tau0_system}}, \code{\link{fit_log_variance}},

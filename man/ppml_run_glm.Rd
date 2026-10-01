@@ -12,23 +12,35 @@ ppml_run_glm(
 )
 }
 \arguments{
-\item{start}{Numeric start vector, or \code{NULL} for the
-\code{glm.fit} default}
+\item{start}{Numeric coefficient start vector on the scaled response,
+with one element per design column, or \code{NULL} for the
+\code{glm.fit} default.}
 
-\item{y_scaled}{Numeric response on the scaled (fitted) scale}
+\item{y_scaled}{Finite nonnegative numeric response vector on the scaled
+(fitted) scale, with at least one positive value.}
 
-\item{x_mat}{Numeric design matrix, intercept column included}
+\item{x_mat}{Finite numeric design matrix with one row per response and
+an intercept column.}
 
-\item{control}{Validated fitting controls}
+\item{control}{Validated fitting controls; defaults to the PPML controls
+from \code{log_variance_fit_control("ppml")}.}
 }
 \value{
-List with \code{fit} (\code{NULL} on error), \code{warnings},
-\code{messages}, \code{error_class}, and \code{error_message}
+A list with \code{fit} (the \code{glm.fit} result, or \code{NULL}
+on error), character vectors \code{warnings} and \code{messages}, and
+scalar strings \code{error_class} and \code{error_message} (both
+\code{NA_character_} on success). On error, the prefixed error message
+is also appended to \code{warnings}.
 }
 \description{
 The one \code{glm.fit} call site of the package's log-variance estimator.
-Conditions are recorded, never silenced, and an IRLS error comes back as a
-\code{NULL} fit rather than propagating: the ladder decides what a failed
-rung means.
+Warnings and messages are captured in the returned list instead of printed.
+An IRLS error comes back as a \code{NULL} fit rather than propagating:
+the ladder decides what a failed rung means.
+}
+\details{
+Inputs are already validated by the fitting boundary; missing values are
+not removed here. The fit uses a quasi-Poisson family with a log link and
+\code{control$GLM_EPSILON} and \code{control$GLM_MAXIT} as IRLS controls.
 }
 \keyword{internal}

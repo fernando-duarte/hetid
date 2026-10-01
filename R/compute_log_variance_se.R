@@ -1,11 +1,9 @@
 #' Standard-Error Frame for a Log-Variance Fit
 #'
-#' Thin assembly over \code{\link{compute_log_variance_vcov}}: turns its named
-#' list of covariance matrices into one \code{data.frame} with a row per
-#' coefficient. The SE column names come from the vcov list itself, which
-#' \code{compute_log_variance_vcov} always keys by the estimator's registry
-#' spec (\code{\link{log_variance_estimator}}'s \code{se_types}) -- so a
-#' future estimator with different variant names needs no change here.
+#' Collects coefficient estimates and their standard errors in one
+#' \code{data.frame}, with a row per coefficient. Standard-error columns
+#' are named for the estimator's covariance variants, computed by
+#' \code{\link{compute_log_variance_vcov}}.
 #'
 #' @inheritParams compute_log_variance_vcov
 #'
@@ -26,6 +24,12 @@
 #' (\code{term} intact, every other column \code{NA_real_}), matching
 #' \code{compute_log_variance_vcov}'s fail-closed contract.
 #'
+#' \code{hac_lags} must be finite and no greater than
+#' \code{.Machine$integer.max}; missing values are rejected. If the fit is
+#' usable but a covariance variant fails its data-quality or conditioning
+#' checks, its standard-error column is \code{NA_real_}; the coefficient
+#' estimates are retained. Rows with missing values are not dropped here.
+#'
 #' @section Inference caveats:
 #' Same as \code{\link{compute_log_variance_vcov}}: these are
 #' \strong{conditional second-stage} standard errors at a fixed plug-in
@@ -39,13 +43,29 @@
 #' @export
 #'
 #' @examples
-#' set.seed(1)
-#' t_obs <- 200
-#' x <- cbind(v1 = rnorm(t_obs), v2 = rnorm(t_obs))
-#' eta <- drop(cbind(1, x) %*% c(-0.5, 0.6, -0.4))
-#' y <- exp(eta) * rchisq(t_obs, df = 1)
-#' fit <- fit_log_variance(y, x)
-#' compute_log_variance_se(fit)
+#' (function() {
+#'   old_seed <- if (exists(".Random.seed", envir = .GlobalEnv, inherits = FALSE)) {
+#'     get(".Random.seed", envir = .GlobalEnv)
+#'   } else {
+#'     NULL
+#'   }
+#'   on.exit({
+#'     if (is.null(old_seed)) {
+#'       rm(".Random.seed", envir = .GlobalEnv)
+#'     } else {
+#'       assign(".Random.seed", old_seed, envir = .GlobalEnv)
+#'     }
+#'   })
+#'   set.seed(1)
+#'   t_obs <- 200
+#'   x <- cbind(v1 = rnorm(t_obs), v2 = rnorm(t_obs))
+#'   eta <- drop(cbind(1, x) %*% c(-0.5, 0.6, -0.4))
+#'   y <- exp(eta) * rchisq(t_obs, df = 1)
+#'   fit <- fit_log_variance(y, x)
+#'   print(compute_log_variance_se(fit))
+#'   fit_harvey <- fit_log_variance(y, x, estimator = "harvey")
+#'   print(compute_log_variance_se(fit_harvey, hac_lags = 0))
+#' })()
 compute_log_variance_se <- function(fit,
                                     hac_lags = LOG_VARIANCE_CONTROL$HAC_LAGS) {
   assert_hetid_log_variance_fit(fit)
@@ -68,19 +88,19 @@ compute_log_variance_se <- function(fit,
 #' (\code{scripts-paper/log_variance/inference/standard_error_estimators.R}):
 #' one SE column per \code{vcov_list} entry, \code{sqrt(diag(.))} with a
 #' negative or non-finite diagonal rendered \code{NA}. \code{pmax(d, 0)}
-#' guards \code{sqrt()} from ever seeing a negative value -- \code{ifelse()}
-#' evaluates its \code{yes} branch for every element regardless of the test,
-#' so without it a negative diagonal would still trigger a "NaNs produced"
-#' warning even though the result is discarded in favor of \code{NA}.
+#' guards \code{sqrt()} from ever seeing a negative value. When any test
+#' element is true, \code{ifelse()} evaluates its \code{yes} branch for the
+#' whole vector, so a negative diagonal could otherwise trigger a
+#' "NaNs produced" warning even though that entry is replaced by \code{NA}.
 #'
 #' @param coef_values Numeric vector, one entry per coefficient (may be
-#'   \code{NA_real_} on a failed fit)
+#'   \code{NA_real_} on a failed fit).
 #' @param labels Character vector of coefficient labels, same length as
-#'   \code{coef_values}
-#' @param vcov_list Named list of square covariance matrices, one per SE type
+#'   \code{coef_values}.
+#' @param vcov_list Named list of square covariance matrices, one per SE type.
 #'
 #' @return A \code{data.frame} with \code{term}, \code{coef}, and one column
-#'   per \code{vcov_list} entry, default integer row names
+#'   per \code{vcov_list} entry, default integer row names.
 #' @noRd
 log_variance_se_frame <- function(coef_values, labels, vcov_list) {
   se <- lapply(vcov_list, function(v) {

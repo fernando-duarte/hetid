@@ -2,19 +2,23 @@
 % Please edit documentation in R/hetid_log_variance_fit_methods.R
 \name{assert_hetid_log_variance_fit}
 \alias{assert_hetid_log_variance_fit}
-\title{Assert a Valid hetid_log_variance_fit Object}
+\title{Assert the hetid_log_variance_fit Class}
 \usage{
 assert_hetid_log_variance_fit(x, arg = "fit")
 }
 \arguments{
-\item{x}{Object to check}
+\item{x}{Object to check.}
 
-\item{arg}{Argument name for the structured error}
+\item{arg}{Character string naming the argument in the structured error.
+Defaults to \code{"fit"}.}
 }
 \value{
-Invisible TRUE when valid
+\code{TRUE}, invisibly, when \code{x} inherits from
+\code{hetid_log_variance_fit}. Otherwise signals a
+\code{hetid_error_bad_argument} condition carrying \code{arg}.
 }
 \description{
-Assert a Valid hetid_log_variance_fit Object
+Checks class inheritance only. Use
+\code{\link{validate_hetid_log_variance_fit}} for structural validation.
 }
 \keyword{internal}

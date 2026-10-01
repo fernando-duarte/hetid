@@ -16,24 +16,31 @@ ppml_success(
 )
 }
 \arguments{
-\item{acc}{Accepted verdict from \code{\link{ppml_accept}}}
+\item{acc}{Accepted verdict list from \code{\link{ppml_accept}}.}
 
-\item{run}{Runner result from \code{\link{ppml_run_glm}}}
+\item{run}{Runner result list from \code{\link{ppml_run_glm}}.}
 
-\item{y}{Numeric response on the original scale}
+\item{y}{Finite nonnegative numeric response vector on the original scale.}
 
-\item{y_scaled}{Numeric response on the scaled (fitted) scale}
+\item{y_scaled}{Numeric vector equal to \code{y / response_scale}, with
+at least one positive entry.}
 
-\item{x_mat}{Numeric design matrix, intercept column included}
+\item{x_mat}{Finite numeric design matrix with \code{length(y)} rows,
+column labels matching the coefficients, and an intercept in column one.}
 
-\item{response_scale}{Positive finite scalar the response was divided by}
+\item{response_scale}{Positive finite numeric scalar used to divide the response.}
 
-\item{attempts}{List of per-rung attempt records}
+\item{attempts}{List of per-rung attempt records.}
 
-\item{rank_x_pos}{Integer rank of the positive-response design rows}
+\item{rank_x_pos}{Integer rank of the positive-response design rows.}
 }
 \value{
-A validated \code{hetid_log_variance_fit} object
+A validated \code{\link{hetid_log_variance_fit}} list with
+\code{fit_status = "ok"}, original-scale coefficients, scaled
+\code{warm_start}, solver iterations in \code{convergence_code}, and
+the response, design, and diagnostics. Container validation rejects
+missing or nonfinite response and design entries with structured
+\code{hetid_error} conditions; observations are not removed.
 }
 \description{
 Recovers the original-scale coefficients by adding
