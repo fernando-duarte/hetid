@@ -14,6 +14,37 @@ test_that("centered_var equals the diagonal of centered_cov", {
   expect_identical(centered_var(x), centered_cov(x, x)[1, 1])
 })
 
+test_that("centered_cov preserves vector spread at large offsets", {
+  x <- 2^40 + c(-1, 0, 1)
+  y <- -2^40 + c(1, 0, -1)
+
+  expect_equal(centered_cov(x, x), matrix(2 / 3), tolerance = 1e-15)
+  expect_equal(centered_cov(x, y), matrix(-2 / 3), tolerance = 1e-15)
+})
+
+test_that("centered_cov preserves unequal column covariances at large offsets", {
+  a <- cbind(
+    2^40 + c(-1, 0, 1),
+    -2^41 + c(1, -2, 1)
+  )
+  b <- cbind(
+    2^42 + c(-2, 0, 2),
+    -2^43 + c(3, 0, -3),
+    2^44 + c(1, -2, 1)
+  )
+  expected <- matrix(c(4 / 3, -2, 0, 0, 0, 2), nrow = 2, byrow = TRUE)
+
+  expect_equal(centered_cov(a, b), expected, tolerance = 1e-15)
+  expect_equal(centered_cov(b, a), t(expected), tolerance = 1e-15)
+})
+
+test_that("centered_var preserves divisor-T variance at large offsets", {
+  x <- 2^40 + c(-1, 0, 1)
+
+  expect_equal(centered_var(x), 2 / 3, tolerance = 1e-15)
+  expect_equal(centered_var(rep(2^40, 3)), 0)
+})
+
 test_that("well-conditioned residuals produce no warning", {
   inputs <- make_diagnostic_inputs()
 

@@ -57,6 +57,39 @@ test_that("subset system equals the matching full-system constraints", {
   )
 })
 
+test_that("unsorted maturities preserve identity through moments and quadratics", {
+  inp <- make_system_inputs(n_components = 6)
+  inp$tau <- c(0, 0.05, 0.1, 0.2, 0.3, 0.4)
+  maturities <- c(4L, 2L, 5L)
+  nms <- paste0("maturity_", maturities)
+
+  full_moments <- compute_identification_moments(inp$w1, inp$w2, inp$pcs)
+  full_system <- build_quadratic_system(inp$gamma, inp$tau, full_moments)
+  subset_moments <- compute_identification_moments(
+    inp$w1, inp$w2, inp$pcs,
+    maturities = maturities
+  )
+  subset_system <- build_quadratic_system(inp$gamma, inp$tau, subset_moments)
+
+  expect_identical(attr(subset_moments, "maturities"), maturities)
+  expect_identical(attr(subset_moments, "n_components"), 6L)
+  for (field in c("s_i_0", "sigma_i_sq", "r_i_1", "s_i_1", "s_i_2")) {
+    expect_identical(subset_moments[[field]], full_moments[[field]][nms])
+  }
+  for (field in c("r_i_0", "p_i_0")) {
+    expect_identical(subset_moments[[field]], full_moments[[field]][, nms, drop = FALSE])
+  }
+
+  expect_identical(attr(subset_system$components, "maturities"), maturities)
+  expect_identical(attr(subset_system$components, "n_components"), 6L)
+  for (field in names(full_system$components)) {
+    expect_identical(subset_system$components[[field]], full_system$components[[field]][nms])
+  }
+  for (field in names(full_system$quadratic)) {
+    expect_identical(subset_system$quadratic[[field]], full_system$quadratic[[field]][nms])
+  }
+})
+
 test_that("constraint checker preserves the hin <= 0 sign convention", {
   inp <- make_system_inputs()
   moments <- compute_identification_moments(inp$w1, inp$w2, inp$pcs)

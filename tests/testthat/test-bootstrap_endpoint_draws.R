@@ -61,6 +61,37 @@ test_that("serial bootstrap retains draw identity and feeds inference directly",
   )
 })
 
+test_that("runner forwards each draw's ordered resampling indices", {
+  values <- c(2, 5, 11, 17)
+  indices <- list(ordered = 1:4, reversed = 4:1, repeated = c(2L, 2L, 4L, 1L))
+  full <- bootstrap_fixture()$full
+  full$lower <- 113
+  full$upper <- 148
+  received <- list()
+  statistic <- function(index, draw_id) {
+    received[[length(received) + 1L]] <<- list(index = index, draw_id = draw_id)
+    sampled <- values[index]
+    out <- full
+    out$lower <- sum(seq_along(sampled) * sampled)
+    out$upper <- out$lower + sum(sampled)
+    out
+  }
+  fit <- bootstrap_endpoint_draws(full, indices, statistic)
+  expected_received <- lapply(seq_along(indices), function(id) {
+    list(index = indices[[id]], draw_id = id)
+  })
+  expect_identical(received, expected_received)
+  expect_identical(fit$lower, matrix(c(113, 62, 74),
+    ncol = 1,
+    dimnames = list(names(indices), "a")
+  ))
+  expect_identical(fit$upper, matrix(c(148, 97, 103),
+    ncol = 1,
+    dimnames = list(names(indices), "a")
+  ))
+  expect_equal(fit$n_callback_failed, 0)
+})
+
 test_that("runner restores RNG kind, seed and absent seed even on contract errors", {
   saved <- bootstrap_rng_capture()
   on.exit(bootstrap_rng_restore(saved))
