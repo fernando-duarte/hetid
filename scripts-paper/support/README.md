@@ -1,28 +1,40 @@
 # Paper-owned support modules
 
-This directory holds the support modules owned and sourced by the paper pipeline
-(`scripts-paper/`). The former numbered analysis pipeline was deleted, so there is no live
-sibling implementation to keep in sync. Every file is loaded through `paper_source_once()`.
-Several files chain-source the split implementation files that sit beside them — for example
+This directory contains shared helpers for the paper pipeline. Run the analysis through
+[`../run_pipeline.R`](../run_pipeline.R); see the [pipeline README](../README.md) for
+configuration, execution order, artifacts, and tests. These helpers are paper-owned code,
+separate from the R package API. They call the installed `hetid` package for identification,
+estimation, and bootstrap calibration.
+
+Consumers load R modules through `paper_source_once()`. Facades such as
 `identification/api.R`, `identification/profile_bounds_api.R`, `statistics/api.R`, and
-`latex/table_pipeline.R` act as facades — keeping each file within the paper tree's 200-line
-limit while preserving the original definition order and global symbols.
+`structural_inference/api.R` load their implementation files in dependency order.
+`latex/table_pipeline.R` also loads its publication and environment helpers. Support files
+are not separate pipeline entrypoints.
+
+The unified bootstrap stage distinguishes draw code from deterministic post-draw summaries.
+`inference/bootstrap_stage_code_manifest.R` defines both source inventories: draw-code edits
+invalidate its cache; edits under `inference_post/` update the presentation hash without
+discarding draws. The combined structural-inference table uses a separate calculation and
+cache, whose identity is defined in `structural_inference/identity.R`. That identity hashes
+whole control objects conservatively, so a presentation-only control edit can invalidate it.
 
 ## `identification/`
 
 | Module | Responsibility |
 |---|---|
-| `api.R` | Facade for the active quadratic assembly (sources `quadratic_system.R`) |
+| `api.R` | Loads `quadratic_system.R` and `profile_evidence.R` for active quadratic assembly and geometry evidence |
 | `quadratic_system.R` | Single entry point assembling the identified-set quadratic system via `hetid::build_general_quadratic_system()` (the `K_i = 1` date-t specialization); re-attaches the `hetid_components` class and attributes |
 | `quadratic_evaluation.R` | Canonical evaluation of the quadratic inequality systems |
 | `scaled_quadratic_program.R` | Generic scaled quadratic-program adapter |
 | `profile_solver_core.R` | Non-dimensionalized profile-bound candidate solver (sources `quadratic_evaluation.R`, `scaled_quadratic_program.R`) |
-| `profile_bounds_api.R` | Public profile-bound facade (sources the classifier, coordinate, functional, and linear-objective bound modules) |
+| `profile_bounds_api.R` | Loads the classifier, coordinate, functional, and linear-objective bound modules; requires `profile_solver_core.R` loaded first |
 | `bound_search_classifier.R` | Accepts coordinate and linear-functional endpoints only with the corresponding geometry evidence and checked member points |
 | `profile_evidence.R` | Adapter to `hetid::compute_quadratic_set_evidence()`, including bounded candidate correction toward checked points |
 | `profile_point_pool.R` | Shares checked points across eligible objective sides |
 | `containing_box.R` | Produces and validates the containing bounds used by search domains and residual-crossing screens |
 | `coefficient_interval_tables.R` | Builds coordinate and structural endpoint tables from shared geometry evidence |
+| `widen_beta1_from_args.R` | Widens eligible structural coefficient bounds using the structural images of checked member points |
 | `coordinate_bounds.R` | Coordinate profile bounds over the quadratic identified set |
 | `functional_bounds.R` | Linear-functional and aggregate profile bounds |
 | `linear_objective_bounds.R` | Facade adapter for linear objectives over a quadratic set |
@@ -30,34 +42,91 @@ limit while preserving the original definition order and global symbols.
 | `tau_star_bracket.R` | Bisection with explicit bounded, unbounded, unresolved and capped brackets for the tau* threshold |
 | `identified_set_bootstrap.R` | One-draw re-estimation, draw collection, and diagnostics table for the set-endpoint bootstrap |
 | `identified_set_bootstrap_collect.R` | Collects the per-draw bootstrap results into the unified bootstrap stage's endpoint tables (sourced by `scripts-paper/inference/run_bootstrap_stage.R`) |
-| `identified_set_inference.R` | Percentile bands and Stoye (2009) / Imbens-Manski (2004) endpoint confidence intervals (sources `inference_calibration.R`) |
-| `inference_calibration.R` | Calibrations and robust (MAD-based) endpoint summaries used by identified-set inference |
 | `status_contract.R` | Closed endpoint-state vocabulary and precedence |
 
 ## `statistics/`
 
 | Module | Responsibility |
 |---|---|
-| `api.R` | Facade for statistics helpers (sources `bootstrap_and_stationarity.R`, `mbb_protocol_authority.R`, `mbb_rng_state.R`, `mbb_index_family.R`, `mbb_execution_core.R`, `mbb_runner.R`, `boot_freshness.R`, `boot_cache.R`, and `reporting_and_validation.R`; `normalizations.R` is sourced directly by its consumers, not here) |
+| `api.R` | Loads the bootstrap, stationarity, reporting, and cache helpers listed below; consumers load `normalizations.R` directly |
 | `bootstrap_and_stationarity.R` | Bootstrap sampling, summary statistics, stationarity tests, and the circular moving-block index with its automatic block-length rule (`paper_mbb_block_len`) |
-| `mbb_protocol_authority.R` | Single source of truth for the moving-block bootstrap protocol (draw count, block rule, RNG kind/seed) shared across index generation and execution |
+| `mbb_protocol_authority.R` | Owns the circular moving-block rule, RNG kind, index-family names, and provenance schema shared across generation and execution |
 | `mbb_rng_state.R` | Save/restore of the caller's RNG state around the pinned Mersenne-Twister draw |
 | `mbb_index_family.R` | Generation of the circular moving-block index family from the pinned draw |
 | `mbb_execution_core.R` | Shared serial/`parallel::mclapply` execution core used by the moving-block runner |
-| `mbb_runner.R` | Deterministic moving-block draw orchestration: indices are drawn up front under a pinned Mersenne-Twister (the caller's RNG kind is restored afterward), then run through a serial loop or chunked `parallel::mclapply`, reporting progress under either |
+| `mbb_runner.R` | Executes a pre-generated index family serially or in parallel, installs its recorded RNG state, restores the caller's state afterward, and reports progress |
 | `reporting_and_validation.R` | Statistical reporting and data-validation functions |
 | `normalizations.R` | Named distributional normalization constants shared by execution and prose |
 | `boot_freshness.R` | Runtime and executed-source hashes used by unified-stage provenance and cache freshness |
 | `boot_cache.R` | Validated atomic replacement for the unified bootstrap cache, including restoration of a prior valid cache after a post-promotion failure |
 
+## `inference_post/`
+
+These modules summarize stored draws. Published endpoint calibration delegates to
+`hetid::bootstrap_set_interval()`; the paper retains its inference controls, publication
+gates, and diagnostic schema. Stoye and Imbens-Manski normal-theory calibrations are
+diagnostic cross-checks, not the source of published confidence intervals.
+
+| Module | Responsibility |
+|---|---|
+| `identified_set_inference.R` | Percentile summaries and the contract-owned minimum valid repetition count; loads `inference_calibration.R` |
+| `inference_calibration.R` | Robust MAD scales, trimmed endpoint correlations, and normal-theory critical values for diagnostics |
+| `endpoint_targets.R` | Prepares named coefficient axes for the package endpoint API |
+| `endpoint_target_cells.R` | Builds published pointwise endpoint cells through the package API and enforces the paper's calibration and feasibility gates |
+| `endpoint_alternatives.R` | Normal, percentile, and basic interval alternatives computed from the same draws for diagnostics only |
+| `endpoint_point_statistic.R` | Delegates tau = 0 point statistics and their normal and empirical p-values to `hetid::bootstrap_point_statistics()` |
+| `logvar_point_summaries.R` | Log-variance tau = 0 point summaries and bootstrap-versus-analytic standard-error diagnostics |
+| `set_id_diagnostics_rows.R` | Tau = 0 diagnostics rows, display-schema padding, and normal-theory calibration cross-checks |
+
+## `structural_inference/`
+
+This calculation supplies both panels of the combined structural-inference table through
+`log_variance/tables/render_combined_inference_table.R`. It joins inputs by date on forecast
+origins, keeps the mean sample's rows, and selects variance-complete rows within each draw.
+The circular-block resamples are shared across both panels and all displayed tau values.
+PC rotations remain fixed; variance centering is recomputed within each repetition.
+
+Positive-tau mean ranges use public package box calculations. Variance ranges come from
+PPML fits at sampled points; they remain sampled coefficient ranges, distinct from full-set
+boundedness evidence. The cache retains completed draws even when publication gates fail;
+the renderer refuses unavailable cells and cells that fail publication gates.
+
+| Module | Responsibility |
+|---|---|
+| `api.R` | Loads the calculation, bootstrap, and cache modules; `rows.R` and `panels.R` are loaded separately by the renderer |
+| `settings.R` | Reads paper controls, validates published specification B, and defines forecast-origin inputs and displayed tau values |
+| `inputs.R` | Prepares date-keyed inputs and the mean/variance sample masks |
+| `arrays.R` | Resamples whole mean rows and defines panel, coefficient, and tau axes |
+| `fit.R` | Fits the mean and variance equations for the full sample or one replication |
+| `positive.R` | Computes positive-tau mean bounds, sampled PPML ranges, and witness diagnostics |
+| `failures.R` | Classifies numerical failures and records endpoint statuses and reasons |
+| `reference.R` | Builds OLS and PPML reference estimates with HAC statistics |
+| `bootstrap.R` | Runs shared circular-block draws in bounded batches, collects them through the package endpoint runner, and calibrates the results |
+| `calibration.R` | Delegates point and interval calibration to `hetid` and applies failed-draw and numerical-search publication gates |
+| `identity.R` | Defines cache identity from inputs, settings, executed code, installed package code, and runtime |
+| `cache_validate.R` | Checks cache schema, identity, axes, and draw payloads |
+| `cache.R` | Reads validated caches and verifies a temporary replacement before one rename; failures before promotion preserve the existing cache |
+| `run.R` | Reuses a valid cache or recomputes and saves the result |
+| `rows.R` | Joins package summaries, gates, reference estimates, and diagnostics into typed display rows |
+| `panels.R` | Enforces cell publication checks and formats the two table panels |
+
 ## `latex/`
 
 | Module | Responsibility |
 |---|---|
-| `table_pipeline.R` | Booktabs multi-panel bare-tabular builder (plain-math scientific notation, no siunitx; the paper supplies float, caption, and notes) and standalone-document variant (sources `table_environment.R`, `artifact_publication.R`) |
+| `table_pipeline.R` | Generic booktabs panel fragments and standalone documents; compiles PDFs and enforces sidecar cleanup (loads `table_environment.R`, `dropbox_ignore.R`, and `artifact_publication.R`) |
 | `table_environment.R` | Shared table/threeparttable environment and notes renderer |
 | `artifact_publication.R` | Manifest-directed fragment, standalone-source, and PDF publication |
 | `simple_table.R` | Simple booktabs/threeparttable table with plain `l c c ...` columns for non-numeric cells (e.g. interval strings) |
+| `overleaf_scaffold.R` | Shared manuscript table fonts, column headers, and booktabs rule scaffolds |
+| `overleaf_panel_table.R` | Shared inference-panel layout, coefficient blocks, and summary rows |
+| `structural_var_inference.R` | Fills the decimal-aligned combined structural-inference table using the adjacent `structural_var_inference_template.tex` |
+| `dropbox_ignore.R` | Best-effort macOS File Provider ignore flags for generated files; sidecar removal remains enforced by the compilation helper |
+
+The combined structural-inference fragment contains the table body and layout; its
+manuscript float supplies the caption and notes. Estimator pages include their own table
+environments, captions, and notes. Standalone sources wrap the supplied content for PDF
+inspection.
 
 ## `reporting/`
 
@@ -85,6 +154,7 @@ limit while preserving the original definition order and global symbols.
 | Module | Responsibility |
 |---|---|
 | `acm_inputs.R` | Canonical validated quarterly ACM inputs used by paper computations |
+| `frozen_inputs.R` | Verifies the consumption snapshot and pinned ACM input before conditional artifact cleanup |
 
 ## `inference/`
 
@@ -115,3 +185,5 @@ limit while preserving the original definition order and global symbols.
 | Module | Responsibility |
 |---|---|
 | `device.R` | Fail-safe SVG device lifecycle shared by publication figures |
+| `bounds_axis.R` | Shared bounds-by-tau display cap; changes the plotted viewport while retaining every sampled row in data and artifacts |
+| `latex_labels.R` | Typesets labels with `latex` and `dvisvgm`, then places glyph outlines in finished SVGs |

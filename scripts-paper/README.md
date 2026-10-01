@@ -1,283 +1,277 @@
 # Paper analysis pipeline
 
-`scripts-paper/` is the reproducible analysis used to build the paper's consumption-growth
-mean equation, identified sets, log-variance estimators, diagnostics, tables, figures, and
-descriptive report. It is separate from the R package, and its R source graph is entirely
-contained within `scripts-paper/`. Run it only from the package root.
+`scripts-paper/` builds the paper's consumption-growth mean equation, identified sets,
+log-variance estimates, diagnostics, tables, figures, and descriptive report. Its source
+modules live entirely under this directory and call the installed `hetid` package for
+shared estimation and inference primitives.
 
-The paper pipeline's sole entrypoint is:
+Run every command below from the `hetid` package root. The analysis entrypoint is
+[run_pipeline.R](run_pipeline.R); individual production modules depend on its source order
+and shared objects.
+
+## Run the pipeline
+
+A production run uses 10,000 bootstrap draws and validates existing caches before reuse:
 
 ```sh
 Rscript scripts-paper/run_pipeline.R
 ```
 
-The separate package quality suite lives under `docs/` and is not part of the paper source
-graph. Run it from the package root:
+To use one worker explicitly:
 
 ```sh
-Rscript docs/quality-check.R
+HETID_BOOT_CORES=1 Rscript scripts-paper/run_pipeline.R
 ```
 
-There are intentionally no compatibility wrappers for the former flat source paths or
-entrypoint.
-
-## Module tree
-
-```text
-scripts-paper/
-├── config/                 paths, contracts, artifact registry/lifecycle, decisions
-├── data_preparation/       FRED patch and construction of all analysis series
-├── inference/              unified mean and volatility bootstrap stage
-├── mean_equation/
-│   ├── inference/          mean bootstrap results and bounds-by-tau inference
-│   ├── variance_shares/    share definitions, computation, and tables
-│   ├── figures/            projections and three-dimensional region rendering
-│   ├── tables/             structural-equation inference table renderer
-│   └── diagnostics/heteroskedasticity/
-├── log_variance/
-│   ├── core/               residual map and endpoint polishing
-│   ├── engine/             estimator-neutral scan and endpoint engine
-│   ├── estimators/         log-OLS, PPML, Harvey, and gated LAD implementations
-│   ├── diagnostics/        joint-null, joint-GMM, and dynamics diagnostics
-│   ├── extensions/egarch/  gated EGARCH decision, cleanup, and routing
-│   ├── inference/          branch draws, envelopes, gates, and SE utilities
-│   ├── figures/            bounds and fitted-volatility figures
-│   └── tables/             estimator panels, notes, and renderers
-├── variance_bounds/        per-maturity SDF-news and expected-SDF variance bounds figure, table, and quoted-numbers note
-├── reports/                descriptive-statistics report builder
-├── support/                paper-owned identification, statistics, structural-inference, LaTeX, reporting, runtime, and diagnostics helpers
-├── tests/                  isolated suites, topology checks, and comparison support
-└── run_pipeline.R          ordered source orchestrator
-```
-
-The support layer contains paper-owned implementations. See `support/README.md` for the
-current module catalog.
-
-## Dependency flow
-
-The runner preserves the established source order:
-
-```text
-FRED patch and data construction
-  -> structural inference table (its own bootstrap and draw cache)
-  -> mean-equation OLS, identified set, variance shares, and bounds
-  -> log-OLS foundation and mean-equation bounds
-  -> PPML and Harvey sets and standard errors
-  -> joint-null and joint-GMM diagnostics
-  -> EGARCH cleanup, residual-dynamics gate, decision validation, and routing
-  -> optional LAD estimator and table
-  -> one unified mean/volatility bootstrap stage
-  -> PPML, Harvey, and conservative-panel tables
-  -> log-variance estimator pages
-  -> analytical figures, diagnostics, and descriptive report
-```
-
-Every estimator page reports a bootstrap `tau = 0` statistic, so its publication
-waits for the bootstrap stage even where the page carries no `tau > 0`
-confidence rows. Only publication is deferred: the PPML and Harvey estimates and
-their analytic standard errors are frozen before the stage, which reads them
-without mutating them. The LAD page is the one exception, having neither
-statistic.
-
-The combined mean-over-PPML table, `tables/structural_var_inference.tex`, is the
-exception to that ordering. `log_variance/tables/render_combined_inference_table.R`
-runs immediately after `build_sdf_pcs.R` and computes every number itself through
-`support/structural_inference/api.R`. Its identification, PPML, and bootstrap
-arithmetic uses exported `hetid` functions (`compute_tau0_system`,
-`fit_log_variance_at_b`, `compute_identified_set_box`, `compute_quadratic_set_evidence`,
-`sample_log_variance_set`, `circular_mbb_indices`, `bootstrap_endpoint_draws`,
-`bootstrap_point_statistics`, `bootstrap_set_interval`); the OLS reference column uses
-base `lm` with `sandwich` Newey-West standard errors. It reads none of the estimators, `set_id_boot`, or the PPML envelope, and it refuses to
-run unless both published specifications are B (estimated `beta2R`). Rows are indexed
-by forecast origin, one quarter before the response quarter, so the window is
-1961 Q4–2025 Q3 in origin labels for the same 256 mean rows (response quarters
-1962 Q1–2025 Q4); the variance equation uses the 255 of them that have `PC_R`. The
-`tau > 0` mean cells are attained ranges from the public box search
-(`n_grid = 41`). The `tau > 0` PPML cells are sampled coefficient ranges: PPML is refit
-at the box witnesses and at `n_points = 20` steps along each center-to-witness segment,
-so the ranges are inner approximations, not established full-set extrema. The inference
-target and nominal controls are the paper's usual pointwise ones. Its bootstrap uses
-B = 10000 resamples, each built from circular blocks of length 10, with seed 20260708,
-and it keeps its own all-or-nothing cache, `state/structural_inference_draws.rds`. The cache is written
-before the publication gates are read, so a run that fails them keeps its draws.
-Every other table, figure, and diagnostic, including the estimator pages, keeps its
-existing calculation path.
-
-Modules still evaluate in the shared global environment. Important products include
-`set_id_mean_eq`, `set_id_boot`, `mean_eq_bounds_tau`, `var_share`, `log_var_eq`,
-`log_var_eq_ppml`, `log_var_eq_harvey`, conditional `log_var_eq_lad`, the estimator
-registry `logvar_bounds_tau_registry`, `log_var_eq_set_boot`, joint-diagnostic objects,
-dynamics-gate records, fitted-volatility envelopes, and the final table/report objects.
-Their names and serialized schemas are part of the pipeline contract.
-
-Production dependencies are loaded through `paper_source_once()`; direct
-`source(paper_path(...))` calls are rejected by the topology check.
-
-## Endpoint geometry
-
-Coordinate and structural bounds share `hetid::compute_quadratic_set_evidence()`.
-Checked tail directions establish infinite sides; positive definite combinations of the
-quadratic constraints establish boundedness. An unsuccessful search leaves a side unresolved.
-Finite endpoint values are numerical approximations at checked feasible points. Full-sample
-and bootstrap estimation use the same builder and share those points across objectives.
-
-Theta tables retain `set_lower` and `set_upper` for reporting and inference. Their separate
-`outer_lower` and `outer_upper` columns contain the set and supply the volatility search
-domains, variance-share searches, and region frames. The residual-zero census uses containing
-bounds to exclude crossings; unresolved cases remain explicit. These numerical bounds use
-rounding margins and independently checked candidate weights, rather than interval arithmetic.
-
-The tau-star result includes a bracket and its search status. Scalar sweep limits use the
-certified bounded lower endpoint. An unresolved midpoint is not reported as a threshold,
-and an exhausted search does not establish that the sweep maximum is bounded.
-Bounded geometry can coexist with an unresolved finite endpoint or width. The volatility
-engine still requires valid attained coordinate sides as well as finite containing bounds,
-because some estimator hooks use the attained sides. The preserved-input repair audit gives
-specification B a bracket of [0.615, 0.625] and a plotting cap of 0.615; its earlier cap near
-0.6209 lacked the required boundedness evidence.
-
-## Gates and decisions
-
-Three distinct decision points guard the conditional log-variance workstreams. They are
-not interchangeable:
-
-- **Joint-GMM: always-run diagnostic, not a run/skip gate.** `config/decisions/joint_gmm.R`
-  is the committed no-answer-default record; `log_variance/diagnostics/joint_gmm/run.R`
-  always evaluates the moment-specification and graph-replication checks and writes its
-  artifacts. Nothing downstream is skipped based on it.
-- **Residual-dynamics diagnostic: always runs.** The base-R Ljung-Box screen on the
-  `tau = 0` benchmark residual (`log_variance/diagnostics/dynamics/run_gate.R`) always runs,
-  uses base R only, and writes both the gate record and the always-present status manifest.
-  It sources no dynamic estimator; it only supplies the gate verdict.
-- **EGARCH: routing/status gate.** `config/decisions/egarch.R` binds a scientific SHA-256 of
-  the freshly regenerated dynamics-gate record, plus the sample id, gate fields, plan hashes,
-  and recorded prompt hashes. The router (`log_variance/extensions/egarch/run_route.R`)
-  validates that record against the fresh gate, routes every ladder branch, and rewrites the
-  status manifest. On the committed non-rejecting gate it closes the dynamic workstream
-  without sourcing any extension estimator.
-- **LAD: the one actually-gated executable optional estimator.** The tri-state DCF
-  `config/decisions/lad.dcf` is read by `log_variance/estimators/lad/dependency_gate.R`; the
-  median (LAD) set map is sourced only when the decision is `approved` and the installed
-  `quantreg` version matches the recorded `quantreg_version`. A missing, declined, or
-  unanswered decision sources no LAD code and adds no registry stub; an approved decision
-  with `quantreg` absent or version-mismatched hard-fails in the reader.
-
-Do not weaken or bypass these scientific and dependency gates. The conditional-artifact
-cleanup runs before routing (for both the LAD and EGARCH statuses) so stale conditional
-outputs cannot look like current results.
-
-## Generated artifacts
-
-`config/artifact_manifest_data.R` is the artifact metadata owner;
-`config/artifacts.R` exposes its query API, and
-`config/artifact_lifecycle.R` owns conditional cleanup/status. The runner creates missing
-directories and preserves existing output except for conditional artifacts, which are
-removed before routing to prevent stale results. Writers and readers use these typed roots:
-
-```text
-scripts-paper/output/
-├── tables/       fragments, standalone TeX, and standalone table PDFs
-├── figures/      analytical and descriptive figures
-├── reports/      descriptive report TeX and PDF, quoted-numbers markdown note
-├── diagnostics/  inference, joint-diagnostic, LAD, EGARCH, and quoted-numbers diagnostics
-└── state/        bootstrap draws, gate/status records, and conditional pilot state
-```
-
-Descriptive component tables and figures have their own subdirectories. LaTeX sidecars and
-`.DS_Store` files are not artifacts.
-
-`config/artifact_reset.R` builds on `artifact_lifecycle.R`'s `cleanup_artifacts_by_ids()` to
-define six named full-reset compartments (bootstrap cache, gate/decision state, diagnostics,
-tables, figures, reports) and the `reset_pipeline_state()` orchestrator. Before a from-scratch
-run, `Rscript scripts-paper/reset_pipeline_state.R` clears all six by default, including the
-git-tracked tables, figures, and reports; pass `--keep-tracked` to delete only gitignored
-artifacts — the two draw caches, gate state, diagnostics, and generated PDFs — leaving the
-tracked `.tex`/`.svg`/`.md` outputs in place.
-`run_pipeline.R` itself is unchanged and still overwrites artifacts in place; running the
-reset script first is a deliberate, separate step.
-
-## Prerequisites
-
-Use an installed `hetid` package and the analysis dependencies already required by the
-paper scripts, including the tidyverse/time-series packages, `nloptr`, `skedastic`,
-`ggplot2`, and `sandwich`. LAD additionally requires the approved `quantreg`
-version. A working LaTeX installation with `latexmk` is required for standalone tables and
-the descriptive report. The frozen daily ACM release and digest in `config/analysis.R`
-select a verified package snapshot; a matching existing cache is copied without a download.
-Other vintages and the unpinned cache remain separate. The preflight checks this input
-before cleanup, and the daily extraction verifies the same pin. FRED access is needed
-for fresh data pulls.
-
-## Commands
-
-Run a deterministic quick pipeline:
+The runner overwrites publication artifacts in `scripts-paper/output/`, including tracked
+TeX tables and SVG figures. Use a separate worktree for experimental settings or input
+changes. A reduced-bootstrap run requires explicit acknowledgment:
 
 ```sh
 HETID_BOOT_REPS=8 HETID_BOOT_CORES=1 HETID_ALLOW_DRAFT_RUN=1 \
   Rscript scripts-paper/run_pipeline.R
 ```
 
-Run the full pipeline serially:
+This reduces bootstrap depth, not the full-sample estimation work. Its output is draft
+output. Without the acknowledgment, any draw count other than 10,000 stops before output
+is created or cleaned.
 
-```sh
-HETID_BOOT_REPS=10000 HETID_BOOT_CORES=1 Rscript scripts-paper/run_pipeline.R
+| Environment variable | Default | Effect |
+|---|---|---|
+| `HETID_BOOT_REPS` | `10000` | Draw count for both the structural-inference table and unified bootstrap stage; integer at least 2. |
+| `HETID_BOOT_CORES` | Available logical cores minus 2 on macOS, minus 1 elsewhere; minimum 1 | Worker count; integer at least 1. Set 1 for serial execution. |
+| `HETID_BOOT_MODE` | `reuse` | Reuse valid draw caches; `rerun` forces both cached calculations to recompute. |
+| `HETID_ALLOW_DRAFT_RUN` | Unset | Set to `1` to acknowledge output overwrites at a non-production draw count. |
+
+### Prerequisites and inputs
+
+Use an installed `hetid` built from the intended package revision. The pipeline loads the
+installed namespace; editing `R/` alone does not update it. Analysis dependencies include
+`dplyr`, `tidyr`, `purrr`, `tibble`, `tsibble`, `tidyquant`, `ggplot2`, `svglite`, `nloptr`,
+`sandwich`, `skedastic`, `moments`, `tseries`, `urca`, and `knitr`. The FRED transport uses
+`quantmod`, system `curl`, and `jsonlite` when an API key is supplied. Standalone table PDFs
+and the descriptive report require a working LaTeX installation with `latexmk`. Region
+figure labels also require `latex` and `dvisvgm` on `PATH`.
+
+[config/analysis.R](config/analysis.R) selects the input vintages and sample window:
+
+- Consumption defaults to `fred_source = "frozen"`, which reads the committed
+  [data/pcecc96.csv](data/pcecc96.csv). Selecting `"live"` pulls the current FRED vintage and
+  rewrites that snapshot. A frozen run never silently falls back to live consumption data.
+- Daily ACM data defaults to `acm_daily_source = "frozen"`, using the exact release tag and
+  SHA-256 recorded in the configuration. Preflight verifies the pinned user-cache snapshot;
+  it can copy a matching existing asset or download the pinned release when needed.
+- Quarterly ACM data uses the package's monthly data source, with automatic download
+  disabled. A fresh installation can use the bundled monthly asset; an existing user cache
+  takes precedence. This input is separate from the daily release pin.
+- The configured analysis window is 1962 Q1–2025 Q4. Series are joined by quarter. The SDF
+  panels supply expected-SDF and SDF-news components; the separate lagged return regressors
+  use bundled principal components of **nominal financial asset returns**.
+
+Frozen consumption and daily-ACM verification run before output creation or conditional
+cleanup. With valid cached inputs, neither requires a fresh network pull. LAD also requires
+the exact approved `quantreg` version in [config/decisions/lad.dcf](config/decisions/lad.dcf).
+
+## Configuration and module layout
+
+Scientific settings are declared in source, rather than command-line flags:
+
+| Owner | Settings |
+|---|---|
+| [config/analysis.R](config/analysis.R) | Input vintages, sample window, bootstrap settings, and specification plan. |
+| [config/analysis_contract.R](config/analysis_contract.R) | Model axes, slack grids, preprocessing, inference targets, and active instrument. |
+| [config/instrument_choices.R](config/instrument_choices.R) | Available heteroskedasticity instruments and their descriptions. |
+| [config/inference_search_control.R](config/inference_search_control.R) | Numerical search, fitting, and bootstrap budgets. |
+| [config/reporting.R](config/reporting.R) | Standard-error choices, significance levels, precision, and table style. |
+| [config/logvar_estimators.R](config/logvar_estimators.R) | Estimator identities, capabilities, dependencies, and artifact assignments. |
+| [config/artifact_manifest_data.R](config/artifact_manifest_data.R) | Artifact paths, producers, consumers, and lifecycle statuses. |
+
+The current specification plan publishes B (estimated `beta2R`) for both equations and
+computes A (`beta2R = 0`) for the mean-equation comparison. Only the first mean specification
+is published; the volatility specification must match it. The active heteroskedasticity
+instrument is `y60_vol_log`, the de-meaned log of realized quarterly five-year yield
+volatility. Changing the instrument also changes the dynamics-gate evidence bound by the
+committed EGARCH decision; see the instructions in
+[tools/regen_egarch_decision.R](tools/regen_egarch_decision.R) before changing that record.
+
+```text
+scripts-paper/
+├── config/             scientific, computational, reporting, and artifact contracts
+├── data/               committed consumption snapshot
+├── data_preparation/   consumption, SDF panels, yield volatility, and component series
+├── mean_equation/      OLS, identified sets, variance shares, inference, and figures
+├── log_variance/       estimator engine, estimators, diagnostics, tables, and figures
+├── inference/          unified mean/volatility bootstrap stage
+├── variance_bounds/    SDF variance bounds and quoted approximation-error numbers
+├── reports/            descriptive-statistics report builder
+├── support/            paper-owned shared calculations and publication helpers
+├── tests/              isolated suites and structural checks
+├── validation/         read-only comparison of final TeX table numbers and stars
+├── tools/              standalone scientific-configuration utilities
+├── output/             generated artifacts
+├── reset_pipeline_state.R
+└── run_pipeline.R
 ```
 
-A replication count other than 10000 stops before any output is touched unless
-`HETID_ALLOW_DRAFT_RUN=1` is also set, because a draft run still overwrites the
-tracked tables, the structural inference table included.
+See [support/README.md](support/README.md) for the shared module catalog and
+[validation/README.md](validation/README.md) for the table-comparison contract.
 
-`HETID_BOOT_REPS` (default 10000; overriding it prints the value used) sets the
-replication count for the unified stage and for the structural inference table's
-separate bootstrap. The unified stage creates one primary circular-MBB
-index family, shared by mean and volatility inference, and one doubled-block family
-for the volatility sensitivity check. Both use seed 20260708. The primary block
-length follows `ceiling(1.5 * T^(1/3))` (10 quarters at T = 256). Execution uses
-`HETID_BOOT_CORES`; the default reserves two logical cores on macOS and one on other
-platforms, with a one-worker minimum. The runner pins Mersenne-Twister while creating
-the stored index families and restores the caller's generator kind.
+## Execution order and inference
 
-The resampling indices are drawn once, up front, under the pinned seed, so they are
-identical at any core count — `HETID_BOOT_CORES` changes runtime, not which observations are
-resampled. The indexed-draw runner restores the saved post-index RNG state before
-callbacks run and restores the caller's RNG state afterward. `mbb_checks.R` verifies
-serial/fork equality for deterministic callbacks; `mbb_indexed_rng_checks.R` verifies
-RNG restoration and callback failure handling.
+The entrypoint preserves this dependency order:
 
-The package owns circular index generation, status-aware endpoint calibration, and
-point-statistic summaries. Paper adapters retain the paired-draw status vocabulary,
-own-side MAD scales, stability thresholds, fixed index families, parallel execution,
-and published Target P choice. The package's serial endpoint runner is available
-for other analyses; this pipeline retains its checkpoint and parallel runner.
-
-`HETID_BOOT_MODE` (default `reuse`) governs both all-or-nothing draw caches. The
-structural inference table's cache, `state/structural_inference_draws.rds`, is reused
-only when its input hash, settings, code and function hashes, installed `hetid`
-namespace hashes, package versions, R/BLAS/LAPACK identity, and control hashes all
-match; otherwise the table recomputes every draw. The control hashes cover whole
-control objects, so even a presentation-only control edit can force a rerun. The unified stage's cache is
-`state/bootstrap_stage_draws.rds`. A reuse requires the two stored-family hashes,
-canonical input and draw-spec hashes, executed-code and runtime hashes, and the
-cache schema version to match. A missing, unreadable, malformed, or stale component
-reruns the complete stage. Cache installation validates a temporary round trip
-before atomic promotion; a valid prior cache is restored if post-promotion
-validation fails. A cache hit reconstructs both public result objects without
-executing a draw callback.
-
-```sh
-HETID_BOOT_MODE=rerun Rscript scripts-paper/run_pipeline.R
+```text
+Input verification and conditional-output cleanup
+  -> data preparation
+  -> combined structural-inference table (separate bootstrap and draw cache)
+  -> mean OLS, identified sets, variance shares, and log-OLS foundation
+  -> mean bounds-by-tau, PPML/Harvey sets, analytic SEs, and residual diagnostics
+  -> joint-null, joint-GMM, and residual-dynamics diagnostics
+  -> EGARCH decision validation/routing and approved LAD estimation
+  -> unified mean/volatility bootstrap and mean-specification comparison
+  -> estimator pages and variance-panel fragments
+  -> bounds, fitted-volatility, region, and heteroskedasticity exhibits
+  -> SDF variance bounds, quoted-number checks, and descriptive report
 ```
 
-Run topology checks and all isolated paper suites:
+Modules share the global environment. Core results include `set_id_mean_eq`, `set_id_boot`,
+`mean_eq_bounds_tau`, `var_share`, `log_var_eq`, `log_var_eq_ppml`, `log_var_eq_harvey`,
+conditional `log_var_eq_lad`, and `log_var_eq_set_boot`. Their names and serialized schemas
+are part of the pipeline contract. Production dependencies load through
+`paper_source_once()`; topology checks reject direct `source(paper_path(...))` calls.
+
+### Combined structural-inference table
+
+[log_variance/tables/render_combined_inference_table.R](log_variance/tables/render_combined_inference_table.R)
+produces `output/tables/structural_var_inference.tex` immediately after data preparation.
+It builds its own mean/PPML estimates and bootstrap through
+[support/structural_inference/api.R](support/structural_inference/api.R), without reading
+later estimator results or unified-stage draws. Both published specifications must be B.
+
+Rows use forecast origins, one quarter before their response quarters. The configured
+window therefore covers origins 1961 Q4–2025 Q3; variance estimation retains only mean rows
+with return-PC regressors. Mean `tau > 0` cells are attained ranges from the package box
+search. PPML cells are sampled coefficient ranges from refits at box witnesses and along
+center-to-witness segments, with 20 steps per segment by default. They are inner
+approximations, rather than established extrema over the full set. Intervals use the
+configured pointwise target. Draws are cached before publication gates are checked, so a
+failed publication gate retains them for inspection and validated reuse.
+
+### Unified bootstrap and estimator pages
+
+[inference/run_bootstrap_stage.R](inference/run_bootstrap_stage.R) shares each primary
+circular moving-block resample and its system estimate between mean and volatility
+inference. A second family doubles the block length for volatility sensitivity checks.
+The seed is `20260708`; the primary block rule is `ceiling(1.5 * T^(1/3))`, giving 10
+quarters at `T = 256`. Indices are generated before callbacks under a pinned RNG kind, so
+worker count does not change the resampled observations. The indexed runner restores the
+caller's RNG state afterward.
+
+The package supplies circular indices, endpoint calibration, and point-statistic
+summaries. Paper adapters own parallel execution, status handling, stability gates,
+pointwise Target P intervals, and publication. The alternative mean specification uses
+the same primary index family in a separate comparison calculation after the unified
+stage; those extra draws are not stored in its cache.
+
+[log_variance/tables/render_estimator_pages.R](log_variance/tables/render_estimator_pages.R)
+publishes `structural_var_estimators.tex`, with a repeated mean panel above each variance
+estimator. Publication follows the bootstrap because PPML, Harvey, and log-OLS report a
+bootstrap `tau = 0` statistic. PPML and Harvey estimates and analytic SEs are computed
+before the stage and remain unchanged by it. LAD reports neither that variance statistic
+nor `tau > 0` variance confidence intervals; its page appears only when LAD ran.
+
+### Cache reuse
+
+`HETID_BOOT_MODE=reuse` validates each cache independently. A missing, unreadable,
+malformed, or stale cache triggers the complete corresponding calculation.
+
+| Cache under `output/state/` | Reuse checks |
+|---|---|
+| `structural_inference_draws.rds` | Prepared inputs, settings, calculation code/functions, installed `hetid` namespace, package/runtime identities, schema, and whole control objects. |
+| `bootstrap_stage_draws.rds` | Stored index families, canonical inputs and draw specification, draw-code/runtime identities, payload, and schema. |
+
+The unified cache records presentation-code hashes for audit but does not use them to
+invalidate draws. It rebuilds result objects from accepted cached draws using the current
+presentation code. Its temporary cache is validated before atomic promotion, with recovery
+of a valid prior cache if validation after promotion fails. The structural-inference cache
+excludes renderers, but conservatively hashes whole controls; a reporting-control edit can
+therefore invalidate that cache.
+
+## Endpoint geometry and conditional stages
+
+Coordinate and structural bounds use `hetid::compute_quadratic_set_evidence()`. Checked
+tail directions establish infinite sides; positive definite combinations of quadratic
+constraints establish boundedness. An unsuccessful search leaves the side unresolved.
+Finite reported endpoints are numerical approximations at checked feasible points.
+
+Theta tables distinguish attained `set_lower`/`set_upper` from containing
+`outer_lower`/`outer_upper`. The latter define volatility and variance-share search domains,
+region frames, and residual-crossing exclusions. Their rounding margins and checked
+candidate weights are numerical safeguards, rather than interval-arithmetic proofs.
+Bounded geometry can coexist with an unresolved endpoint. The volatility engine requires
+valid attained coordinate sides as well as finite containing bounds. Tau-star output
+retains a bracket and status; sweep limits use the bounded lower endpoint, never an
+unresolved midpoint. The current run computes these values instead of using a recorded
+historical plotting cap.
+
+Conditional stages have distinct roles:
+
+- **Joint-GMM** always runs its moment-specification and graph-replication diagnostics.
+  [config/decisions/joint_gmm.R](config/decisions/joint_gmm.R) records the no-answer default;
+  the diagnostic does not skip downstream work.
+- **Residual dynamics** always runs a base-R Ljung-Box screen on the `tau = 0` residual and
+  writes gate/status records. It sources no dynamic estimator.
+- **EGARCH** validates the committed decision against freshly regenerated gate evidence
+  and routes the workstream. The current decision records `non_reject`. The production
+  graph contains no EGARCH estimator producer, so routing permission alone never establishes
+  execution; the final conditional-status record retains `egarch_producer_ran = FALSE`.
+- **LAD** runs only when the DCF decision is `approved` and the installed `quantreg` version
+  matches its record (currently `6.1`). Missing, declined, or unanswered decisions skip LAD
+  without adding an estimator stub. An approved decision with a missing or mismatched
+  dependency stops the run.
+
+The runner removes manifest-defined LAD and EGARCH conditional artifacts before routing
+so stale outputs cannot represent the new run. Preserve these scientific and dependency
+gates when changing settings.
+
+## Generated artifacts and reset
+
+The artifact manifest supplies paths and lifecycle status; `config/artifacts.R` exposes
+queries and `config/artifact_lifecycle.R` owns cleanup. Output uses these roots:
+
+```text
+scripts-paper/output/
+├── tables/       TeX fragments, standalone TeX, and table PDFs
+├── figures/      analytical figures and descriptive-statistics components
+├── reports/      descriptive report TeX/PDF and quoted-numbers Markdown note
+├── diagnostics/  inference, specification, gate, and quoted-number diagnostics
+└── state/        draw caches, gate/status records, and conditional pilot state
+```
+
+Descriptive tables and figures use dedicated subdirectories. The runner creates missing
+output directories, overwrites produced artifacts, and cleans LaTeX sidecars at completion.
+It does not clear draw caches before attempting reuse.
+
+Reset is a separate, destructive operation, rather than a prerequisite for a normal run:
+
+```sh
+Rscript scripts-paper/reset_pipeline_state.R --keep-tracked
+```
+
+This clears the two draw caches, other state, diagnostics, ignored table/figure/report
+artifacts, and LaTeX sidecars. Omitting `--keep-tracked` also deletes the manifest's tracked
+publication outputs. The reset covers registered artifacts, not arbitrary files in
+`output/`. It does not change scientific configuration or input snapshots.
+
+## Checks and cross-run comparison
+
+Run the isolated paper suites plus topology and contract-ownership checks:
 
 ```sh
 Rscript scripts-paper/tests/run_tests.R
 ```
 
-## Cross-run acceptance
-
-Cross-run acceptance uses only final TeX table numbers and their attached
-significance stars. Compare two existing output roots directly:
+Compare the displayed numbers and significance stars in two existing output trees:
 
 ```sh
 Rscript --vanilla scripts-paper/validation/compare_output_tables.R \
@@ -285,15 +279,14 @@ Rscript --vanilla scripts-paper/validation/compare_output_tables.R \
   path/to/candidate/scripts-paper/output
 ```
 
-The command reads `.tex` files below each root's `tables/` directory. It does
-not run the pipeline or inspect intermediate artifacts. See the
-[canonical validation workflow](validation/README.md) for the precise
-displayed-precision rule.
+This reads `.tex` files under each `tables/` directory and does not run the pipeline.
+See [validation/README.md](validation/README.md) for precision rules, parser limits, and
+what a passing comparison establishes.
 
-## Inactive and test-support modules
+The package quality suite is separate from the paper pipeline. In checkouts that contain
+its local script, run `Rscript docs/quality-check.R` from the package root. Package tests
+use `Rscript -e 'devtools::test()'`.
 
-- `log_variance/figures/bounds_by_tau_test_support.R` is test support for bounds plot data
-  and is not production-reachable.
-
-These exclusions are documented in the topology audit; do not wire them into production
-without an explicit scientific change.
+`log_variance/figures/bounds_by_tau_test_support.R` is test support and remains outside
+the production source graph. The reset, validation command, and `tools/` utilities are
+standalone commands rather than analysis stages.
