@@ -94,14 +94,8 @@ harvey_success <- function(accepted, scored, y, x_mat, response_scale,
 #' @keywords internal
 harvey_failure <- function(error_class, y, x_mat, response_scale,
                            attempts = list(), ...) {
-  out <- validate_hetid_log_variance_fit(new_hetid_log_variance_fit(
-    coef = NULL, fit_status = LOG_VARIANCE_FIT_STATUS[["nonconvergence"]],
-    converged = FALSE, objective = NA_real_, score_norm = NA_real_,
-    convergence_code = -1L, warm_start = NULL,
-    diagnostics = harvey_diagnostics(error_class, attempts, ...),
-    y = y, x_design = x_mat, estimator = "harvey",
-    response_scale = response_scale, n_obs = length(y),
-    coef_labels = colnames(x_mat)
-  ))
-  out
+  log_variance_failure_fit(
+    y, x_mat, response_scale, "harvey",
+    harvey_diagnostics(error_class, attempts, ...)
+  )
 }

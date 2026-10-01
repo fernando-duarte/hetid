@@ -88,3 +88,27 @@ new_hetid_log_variance_fit <- function(coef, fit_status, converged, objective,
     class = "hetid_log_variance_fit"
   )
 }
+
+#' Assemble a Failed Log-Variance Fit
+#'
+#' Shares the nonconvergence fields across estimators while retaining each
+#' estimator's diagnostics and the original response and design.
+#'
+#' @inheritParams harvey_failure
+#' @param estimator Single string identifying the estimator.
+#' @param diagnostics Estimator-specific list of failure diagnostics.
+#' @return A validated \code{hetid_log_variance_fit} object, visibly.
+#' @noRd
+log_variance_failure_fit <- function(y, x_mat, response_scale, estimator,
+                                     diagnostics) {
+  out <- validate_hetid_log_variance_fit(new_hetid_log_variance_fit(
+    coef = NULL, fit_status = LOG_VARIANCE_FIT_STATUS[["nonconvergence"]],
+    converged = FALSE, objective = NA_real_, score_norm = NA_real_,
+    convergence_code = -1L, warm_start = NULL,
+    diagnostics = diagnostics,
+    y = y, x_design = x_mat, estimator = estimator,
+    response_scale = response_scale, n_obs = length(y),
+    coef_labels = colnames(x_mat)
+  ))
+  out
+}

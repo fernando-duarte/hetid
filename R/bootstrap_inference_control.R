@@ -4,12 +4,9 @@ BOOTSTRAP_ENDPOINT_STATUS <- c("bounded", "unbounded", "unreliable", "failed")
 
 bootstrap_inference_control <- function(control) {
   defaults <- BOOTSTRAP_INFERENCE_DEFAULTS
-  assert_bad_argument_ok(
-    is.list(control) && (length(control) == 0L ||
-      (!is.null(names(control)) && !anyNA(names(control)) &&
-        !anyDuplicated(names(control)) && all(names(control) %in% names(defaults)))),
-    "control must be a uniquely named list of supported search controls",
-    arg = "control"
+  assert_named_control(
+    control, names(defaults),
+    "control must be a uniquely named list of supported search controls"
   )
   for (key in names(control)) defaults[key] <- control[key]
   assert_scalar_finite(defaults$tolerance, "tolerance")

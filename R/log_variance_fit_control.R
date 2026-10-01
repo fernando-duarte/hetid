@@ -53,12 +53,9 @@ log_variance_control_value_ok <- function(value, key) {
 
 log_variance_fit_control <- function(estimator, control = list()) {
   defaults <- log_variance_fit_defaults(estimator)
-  assert_bad_argument_ok(
-    is.list(control) && (length(control) == 0L ||
-      (!is.null(names(control)) && !anyNA(names(control)) &&
-        !anyDuplicated(names(control)) && all(names(control) %in% names(defaults)))),
-    "control must be a uniquely named list of supported fitting controls",
-    arg = "control"
+  assert_named_control(
+    control, names(defaults),
+    "control must be a uniquely named list of supported fitting controls"
   )
   for (key in names(control)) {
     assert_bad_argument_ok(log_variance_control_value_ok(control[[key]], key),
