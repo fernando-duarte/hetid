@@ -10,7 +10,10 @@ test_that("existing cache directories fail before a success message or download"
   cases <- list(c("github", "monthly"), c("github", "daily"), c("nyfed", "monthly"))
   for (case in cases) {
     path <- get_acm_download_path(case[1], case[2])
-    expect_identical(dirname(path), tools::R_user_dir("hetid", "data"))
+    expect_identical(
+      normalizePath(dirname(path), winslash = "/", mustWork = TRUE),
+      normalizePath(tools::R_user_dir("hetid", "data"), winslash = "/", mustWork = TRUE)
+    )
     expect_true(startsWith(path, user_root))
     dir.create(path)
     for (quiet in c(FALSE, TRUE)) {
