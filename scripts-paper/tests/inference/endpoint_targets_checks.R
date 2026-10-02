@@ -11,8 +11,12 @@ et_b <- 100L
 et_min_reps <- boot_min_reps(et_b)
 et_pool <- rep(TRUE, et_b)
 et_pass <- function(label) cat(sprintf("PASS  %s\n", label))
+# exact rank in integer arithmetic for an alpha with at most six decimals, so an
+# exact-integer rank is not pushed up by floating-point rounding
 et_reference_critical <- function(x, alpha) {
-  sort(x)[min(length(x), ceiling((length(x) + 1) * (1 - alpha)))]
+  n <- length(x)
+  a <- round(alpha * 1e6)
+  sort(x)[max(1, min(n, ((n + 1) * (1e6 - a) + 1e6 - 1) %/% 1e6))]
 }
 paper_source_once(paper_path("tests", "inference", "endpoint_target_cell_checks.R"))
 # The package budget remains useful for callers; paper policy still converges

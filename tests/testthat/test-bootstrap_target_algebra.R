@@ -10,7 +10,12 @@ test_that("paired endpoint root algebra retains independent oracles", {
   et_check <- function(...) expect_true(all(vapply(list(...), isTRUE, logical(1))))
   # Write the conservative rank and both per-draw roots from definitions, not module code
   # This tests the ordering identity against the spec rather than against itself
-  et_rank <- function(n, alpha) min(n, ceiling((n + 1) * (1 - alpha)))
+  # exact rank in integer arithmetic for an alpha with at most six decimals, so an
+  # exact-integer rank is not pushed up by floating-point rounding
+  et_rank <- function(n, alpha) {
+    a <- round(alpha * 1e6)
+    max(1, min(n, ((n + 1) * (1e6 - a) + 1e6 - 1) %/% 1e6))
+  }
   et_root_s <- function(z_l, z_u) pmax(0, z_l, z_u)
   et_root_p <- function(z_l, z_u, d_l, d_u, lambda) {
     pmax(0, z_l - lambda * d_l, z_u - (1 - lambda) * d_u)
@@ -25,6 +30,7 @@ test_that("paired endpoint root algebra retains independent oracles", {
     bootstrap_root_critical(as.numeric(1:20), 0.10) == 19,
     bootstrap_root_critical(as.numeric(1:20), 0.01) == 20,
     bootstrap_root_critical(et_vals, 0.5) == sort(et_vals)[et_rank(10L, 0.5)],
+    bootstrap_root_critical(as.numeric(1:149), 0.18) == et_rank(149L, 0.18),
     identical(bootstrap_root_critical(numeric(0), et_alpha), NA_real_)
   )
   for (et_n in c(3L, 7L, 41L)) {
