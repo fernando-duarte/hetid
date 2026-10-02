@@ -62,7 +62,13 @@ logvar_fitted_vol_domain <- function(est, labels) {
           paste(labels, "max", sep = ":")
         ),
         closure_diagnostics = closure,
-        info = list(method = "source-side-hook-axis-mismatch")
+        # keep the source hook's reason (an uncertified Fuller scale) visible
+        info = c(
+          list(method = "source-side-hook-axis-mismatch"),
+          if (is.list(sides) && !is.null(sides$info$reason)) {
+            list(reason = sides$info$reason)
+          }
+        )
       ))
     }
     lower_na <- is.na(sides$lower_unbounded)
@@ -98,7 +104,7 @@ logvar_fitted_vol_adapter <- function(est, x_mat, labels,
     is.matrix(x_mat), is.numeric(x_mat), all(is.finite(x_mat)),
     length(labels) == nrow(x_mat), !anyNA(labels), !anyDuplicated(labels),
     identical(colnames(x_mat), est$coef_labels),
-    identical(est$metadata$response_scale, "variance"),
+    est$metadata$response_scale %in% PAPER_LOGVAR_RESPONSE_SCALES,
     is.null(expected_sample_id) ||
       identical(est$metadata$sample_id, expected_sample_id)
   )

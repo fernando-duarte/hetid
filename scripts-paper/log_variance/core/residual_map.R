@@ -20,6 +20,9 @@ paper_source_once(paper_path(
 paper_source_once(paper_path(
   "log_variance", "core", "crossing_census.R"
 ))
+paper_source_once(paper_path(
+  "log_variance", "core", "projection_scan.R"
+))
 
 logvar_design_matrix <- function(pcr, expected_pc_cols = NULL) {
   pcr <- as.matrix(pcr)
@@ -49,11 +52,12 @@ logvar_design_matrix <- function(pcr, expected_pc_cols = NULL) {
   out
 }
 
-# projection rows P = (R'R)^{-1} R' of the log-variance regression; row j
-# gives theta_hat_j(b) = P[j, ] %*% log((w1 - W2 b)^2)
+# projection rows P = (R'R)^{-1} R' of the log-variance regression, from the
+# package's thin-QR operator; row j gives theta_hat_j(b) = P[j, ] %*%
+# log((w1 - W2 b)^2)
 logvar_projection <- function(pcr) {
   r_mat <- logvar_design_matrix(pcr)
-  solve(crossprod(r_mat), t(r_mat))
+  hetid::log_projection_matrix(r_mat[, -1L, drop = FALSE])
 }
 
 # theta_hat(b): OLS coefficients of log((w1 - W2 b)^2) on (1, PC_R)
@@ -92,52 +96,22 @@ logvar_feasible_grid <- function(qs, lower, upper, n_axis) {
   b_grid[feas, , drop = FALSE]
 }
 
-# scan theta_hat over the feasible grid in chunks: running per-coefficient
-# extremes with their arg-extreme points, plus cross_grid -- the observations
-# whose residual takes both signs (or an exact zero) across the feasible
-# lattice, a sound crossing detector complementing the census. A NaN map
-# value (a zero-weight times log(0) coincidence at a lattice point) is
-# treated as missing; +/-Inf values are kept, since divergent sides are
-# handled by the caller's crossing bookkeeping.
-logvar_grid_scan <- function(
-  b_feas,
-  w1,
-  w2,
-  proj,
-  chunk = LOGVAR_SEARCH_CONTROL$scan_chunk_size
-) {
-  stopifnot(nrow(b_feas) > 0L)
-  n_coef <- nrow(proj)
-  best_min <- rep(Inf, n_coef)
-  best_max <- rep(-Inf, n_coef)
-  arg_min <- arg_max <- matrix(NA_real_, n_coef, ncol(b_feas))
-  any_nonpos <- rep(FALSE, length(w1))
-  any_nonneg <- rep(FALSE, length(w1))
-  for (s in seq(1L, nrow(b_feas), by = chunk)) {
-    rows <- s:min(s + chunk - 1L, nrow(b_feas))
-    eps <- w1 - w2 %*% t(b_feas[rows, , drop = FALSE])
-    # rowSums comparisons are the C-level form of the both-signs tracker
-    # (an exact zero satisfies both, so it still counts as a crossing)
-    any_nonpos <- any_nonpos | (rowSums(eps <= 0) > 0)
-    any_nonneg <- any_nonneg | (rowSums(eps >= 0) > 0)
-    th <- proj %*% log(eps^2)
-    th[is.nan(th)] <- NA
-    for (j in seq_len(n_coef)) {
-      k_min <- which.min(th[j, ])
-      k_max <- which.max(th[j, ])
-      if (length(k_min) && th[j, k_min] < best_min[j]) {
-        best_min[j] <- th[j, k_min]
-        arg_min[j, ] <- b_feas[rows[k_min], ]
-      }
-      if (length(k_max) && th[j, k_max] > best_max[j]) {
-        best_max[j] <- th[j, k_max]
-        arg_max[j, ] <- b_feas[rows[k_max], ]
-      }
-    }
-  }
-  list(
-    min = best_min, max = best_max, arg_min = arg_min, arg_max = arg_max,
-    cross_grid = which(any_nonpos & any_nonneg)
+# scan theta_hat over the feasible grid in chunks (the log-OLS benchmark
+# arithmetic), through the estimator-neutral scanner in projection_scan.R;
+# cross_grid is the both-signs crossing tracker, a sound crossing detector
+# complementing the census
+logvar_grid_scan <- function(b_feas, w1, w2, proj,
+                             chunk = LOGVAR_SEARCH_CONTROL$scan_chunk_size) {
+  logvar_projection_scan(
+    b_feas,
+    function(b) {
+      list(
+        coef = proj %*% log((w1 - w2 %*% t(b))^2),
+        eligible = rep(TRUE, nrow(b))
+      )
+    },
+    nrow(proj), chunk,
+    residuals_at = function(b) w1 - w2 %*% t(b)
   )
 }
 

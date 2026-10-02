@@ -246,6 +246,10 @@ The key insight from Lewbel (2012) is that identification can be achieved throug
 - `compute_log_variance_vcov_at_coef()` - Covariance matrices at supplied PPML or Harvey coefficients
 - `compute_log_variance_se()` - Standard-error frame for a log-variance fit
 - `LOG_VARIANCE_CONTROL` - Numerical controls for log-variance (PPML) estimation
+- `log_projection_matrix()` - QR-based OLS operator of the volatility design
+- `prepare_log_projection()` - Fixed inputs for log projections of squared residuals
+- `evaluate_log_projection()` - Log, additive-log, or Fuller log projection at a candidate b
+- `LOG_PROJECTION_CONTROL` - Tuning and tolerances for the log projections
 
 ### Identified-Set Search Functions
 - `compute_identified_set_box()` - Theta (b_N) and structural (b_0, b_E) bounds at a slack tau > 0

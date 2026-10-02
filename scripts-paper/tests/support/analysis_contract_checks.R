@@ -193,6 +193,6 @@ check(
     }, logical(1))) &&
     identical(
       paper_logvar_estimator_ids(primary = FALSE),
-      "lad"
+      c("lad", "log_plus", "log_fuller")
     )
 )

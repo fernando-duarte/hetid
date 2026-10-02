@@ -72,6 +72,9 @@ paper_source_once(paper_path("log_variance", "estimators", "ppml", "standard_err
 # Harvey sets and analytic standard errors (the wrapper keeps this to one source
 # line). Its dedicated table publishes below, after the bootstrap stage.
 paper_source_once(paper_path("log_variance", "estimators", "harvey", "run.R"))
+# regularized log projections (no inference): before the residual diagnostics,
+# which read their point fits
+paper_source_once(paper_path("log_variance", "estimators", "log_projection", "run_sets.R"))
 # Residual-diagnostic figures. After the Harvey wrapper so both point fits are
 # registered, and they are read rather than refitted; log-OLS recomputes only its
 # deterministic projection.
@@ -140,6 +143,10 @@ paper_source_once(paper_path("log_variance", "tables", "render_combined_inferenc
 # above, and the stage reads them without mutating them.
 # one page per estimator: mean equation above each, that estimator's notes below
 paper_source_once(paper_path("log_variance", "tables", "render_estimator_pages.R"))
+# tuning-sensitivity appendix table of the regularized log projections
+paper_source_once(paper_path(
+  "log_variance", "tables", "render_log_projection_tuning_table.R"
+))
 # the log-variance figures consume mean_eq_bounds_tau and the registry, so
 # this runs after both producers
 paper_source_once(paper_path("log_variance", "figures", "render_bounds_by_tau.R"))

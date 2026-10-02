@@ -28,8 +28,7 @@ paper_source_once(paper_path("log_variance", "tables", "estimator_panel.R"))
 paper_source_once(paper_path("log_variance", "tables", "ppml_table_parts.R"))
 paper_source_once(paper_path("log_variance", "tables", "ppml_captions.R"))
 paper_source_once(paper_path("log_variance", "tables", "logols_table_parts.R"))
-paper_source_once(paper_path("log_variance", "tables", "harvey_caption.R"))
-paper_source_once(paper_path("log_variance", "tables", "lad_panel_notes.R"))
+paper_source_once(paper_path("log_variance", "tables", "estimator_page_specs.R"))
 paper_source_once(paper_path("log_variance", "tables", "set_inference_caption.R"))
 
 PAGES_ID <- "structural_var_estimators_table"
@@ -74,17 +73,18 @@ local({
   # sentence; they are separate because the panel head carries the "Panel B:"
   # prefix and the caption reads as prose without it.
   page <- function(parts, title, subject, notes, component,
-                   set_label = PAPER_OVERLEAF_SET_LABEL) {
+                   set_label = PAPER_OVERLEAF_SET_LABEL,
+                   caption = paste0(
+                     "Mean equation over the ", subject, ". Identified sets in brackets, ",
+                     "moving-block bootstrap confidence intervals in parentheses beneath."
+                   )) {
     c(
       latex_table_environment(
         tabular_lines = paper_overleaf_panel_table(
           list(mean_panel, variance_panel(parts, title, set_label)),
           n_col
         ),
-        caption = paste0(
-          "Mean equation over the ", subject, ". Identified sets in brackets, ",
-          "moving-block bootstrap confidence intervals in parentheses beneath."
-        ),
+        caption = caption,
         label = artifact_latex_label(PAGES_ID, component),
         notes = notes,
         fontsize = ""
@@ -144,37 +144,32 @@ local({
       "Panel B: Log-variance equation (Gaussian multiplicative variance)",
       "log-variance equation (Gaussian multiplicative variance)",
       c(
-        build_harvey_panel_notes(
-          harvey, tau_baseline, LOGVAR_HARVEY_CONTROL$grid_cap,
-          LOGVAR_HARVEY_CONTROL$fit_budget,
-          se_type = logvar_harvey_se_type,
-          se_hac_lags = logvar_harvey_se_hac_lags,
-          set_endpoint_inference = TRUE
-        ),
+        logvar_harvey_page_notes(harvey, tau_baseline),
         build_logvar_set_inference_notes(log_var_eq_set_boot)
       ),
       "harvey"
     ))
   }
 
-  # LAD runs only behind the quantreg dependency gate, so its page is present
-  # exactly when the estimator is. The document itself is always produced.
-  lad <- paper_logvar_result("lad", required = FALSE)
-  if (!is.null(lad)) {
+  # extension estimators (no set bootstrap) get one page each from their page
+  # spec; a conditional one (LAD, behind its dependency gate) is present exactly
+  # when the estimator ran. The document itself is always produced.
+  for (id in paper_logvar_estimator_ids(capability = "table", primary = FALSE)) {
+    result <- paper_logvar_result(
+      id,
+      required = logvar_estimator_page_required(id)
+    )
+    if (is.null(result)) next
+    spec <- logvar_estimator_page_spec(id)
     pages <- c(pages, page(
       logvar_estimator_panel_parts(
-        lad, lad$sample$n, tau_display, LOGVAR_LAD_PANEL_SPEC,
-        NULL, NULL, NULL,
-        PAPER_REPORTING_CONTROL$cells$lad,
-        NULL
+        result, result$sample$n, tau_display, spec$panel_spec,
+        NULL, NULL, NULL, spec$cells, NULL
       ),
-      "Panel B: Log-variance equation (conditional median)",
-      "log-variance equation (conditional median)",
-      build_lad_panel_notes(
-        lad, tau_baseline, LOGVAR_LAD_CONTROL$grid_cap,
-        LOGVAR_LAD_CONTROL$fit_budget
-      ),
-      "lad",
+      spec$title,
+      spec$subject,
+      spec$notes(result, tau_baseline),
+      id,
       PAPER_OVERLEAF_SET_LABEL_BARE
     ))
   }

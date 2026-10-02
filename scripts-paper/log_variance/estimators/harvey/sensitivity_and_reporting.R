@@ -82,22 +82,7 @@ logvar_harvey_report <- function(hv, taus) {
     "  Lewbel-point start rung: %s\n",
     if (is.na(hv$point_start_rung)) "-- (no point fit)" else hv$point_start_rung
   ))
-  audit <- hv$sensitivity_audit$audit
-  if (is.null(audit)) {
-    cat("  sensitivity gate: no sides evaluated\n")
-  } else {
-    demoted <- audit[!is.na(audit$reason), , drop = FALSE]
-    if (nrow(demoted) == 0L) {
-      cat(sprintf("  sensitivity gate: %d sides agree, none downgraded\n", nrow(audit)))
-    } else {
-      by_reason <- table(demoted$reason)
-      cat(sprintf(
-        "  sensitivity gate: %d of %d sides downgraded (%s)\n",
-        nrow(demoted), nrow(audit),
-        paste(sprintf("%s=%d", names(by_reason), as.integer(by_reason)), collapse = " ")
-      ))
-    }
-  }
+  logvar_print_audit_summary(hv$sensitivity_audit$audit)
   # Harvey-vs-PPML Lewbel-point slopes: the shape-dependence diagnostic; a soft
   # flag when a slope sign flips (economics can move magnitudes, but two
   # estimators of one conditional variance flipping a loading sign reads as a bug)

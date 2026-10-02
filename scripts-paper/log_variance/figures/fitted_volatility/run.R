@@ -1,6 +1,7 @@
-# Fitted-volatility envelopes for the PPML and Harvey variance estimators at the
-# baseline mean-equation slack. The computation and rendering stay generic;
-# this driver only registers the two already-computed estimator objects.
+# Fitted-volatility envelopes at the baseline mean-equation slack for every
+# registry estimator with an engine-profiled envelope (capability
+# engine_envelope). The computation and rendering stay generic; this driver only
+# registers the already-computed estimator objects.
 
 paper_source_once(paper_path("log_variance", "figures", "fitted_volatility", "adapter.R"))
 paper_source_once(paper_path("log_variance", "figures", "fitted_volatility", "envelope.R"))
@@ -34,10 +35,7 @@ fitted_vol_entry <- function(estimator) {
   logvar_bounds_tau_registry[[which(hit)]]
 }
 
-fitted_vol_estimators <- paper_logvar_estimator_ids(
-  capability = "fitted_volatility",
-  primary = TRUE
-)
+fitted_vol_estimators <- paper_logvar_estimator_ids(capability = "engine_envelope")
 log_var_eq_fitted_volatility <- stats::setNames(
   lapply(fitted_vol_estimators, function(estimator) {
     entry <- fitted_vol_entry(estimator)

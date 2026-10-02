@@ -6,6 +6,10 @@
 # coverage-run failure. Sourced by pilot_and_grid.R; the
 # selector (logvar_ppml_morton_select) and the engine are resolved at call time.
 # The caller supplies qs_fn(tau); no globals are read.
+paper_source_once(paper_path(
+  "log_variance", "estimators", "ppml", "coverage_protocol.R"
+))
+
 # Run the coverage scan for every display tau over the same fresh cache (nesting
 # reuse across taus) but a fresh budget per tau, driving the engine with the
 # Morton selector, five starts per side, and the recorded search seed. A failed
@@ -26,15 +30,6 @@ logvar_ppml_coverage_run <- function(est_cov, taus, b_tabs, b_seed,
 
 # per-coefficient aggregate status via the legacy ladder unreliable > unbounded
 # > bounded (a side of the worse kind sets the coefficient status)
-# suffix a provenance string with the source it came from; a missing provenance
-# collapses to the bare source label
-.logvar_prov_suffix <- function(prov, source) {
-  if (is.null(prov) || length(prov) != 1L || is.na(prov)) {
-    return(source)
-  }
-  paste0(prov, "+", source)
-}
-
 # the union-extreme over the certified (bounded, finite) candidates: the most
 # extreme attained value with its source, provenance, arg, fit status, and
 # residual; a tie keeps the primary; no certified candidate keeps the primary

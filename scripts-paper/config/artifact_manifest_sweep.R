@@ -4,10 +4,10 @@
 # swept taus stay a single source of truth: adding one to the contract creates
 # its figure record, and no manifest row can survive a tau being dropped.
 #
-# The producer iterates the primary fitted-volatility estimators from the
-# logvar estimator config, which is not loaded this early; the estimator ids are
-# named here instead, and a mismatch fails fast when the driver looks up a
-# variant path that no record defines.
+# The producer iterates the engine_envelope estimators from the logvar
+# estimator config, which is not loaded this early; the estimator ids are named
+# here instead, a contract check pins them to the registry, and a mismatch fails
+# fast when the driver looks up a variant path that no record defines.
 
 # [<- overwrites rather than duplicating, so a code already spoken for in
 # artifact_manifest_data.R would be silently reassigned here and every artifact
@@ -19,7 +19,7 @@ stopifnot(
 )
 .artifact_producers["ac"] <-
   "log_variance/figures/fitted_volatility/run_tau_sweep.R"
-.sweep_estimators <- c("ppml", "harvey")
+.sweep_estimators <- c("ppml", "harvey", "log_plus", "log_fuller")
 # scalar format() per tau: formatting the vector would pad 0.1 to "0.10" and
 # rename the figure that the sweep actually writes
 .sweep_tails <- c(

@@ -7,6 +7,9 @@ PAPER_LATEX_LABELS <- c(
   panel_logols = "tab:log_var_eq_panel_logols",
   panel_ppml = "tab:log_var_eq_panel_ppml",
   panel_harvey = "tab:log_var_eq_panel_harvey",
+  panel_log_plus = "tab:log_var_eq_panel_log_plus",
+  panel_log_fuller = "tab:log_var_eq_panel_log_fuller",
+  log_projection_tuning = "tab:log_var_eq_log_projection_tuning",
   structural = "tab:structural_eq_set_id",
   variance_share = "tab:var_share",
   variance_bound = "tab:variance_bounds_summary"
@@ -59,6 +62,11 @@ PAPER_LATEX_LABELS <- c(
     "log_var_eq_logols_inference_table",
     "log_var_eq_logols_inference_standalone_tex",
     "log_var_eq_logols_inference_standalone_pdf"
+  ),
+  .latex_spec(
+    "log_projection_tuning_table",
+    "log_projection_tuning_standalone_tex",
+    "log_projection_tuning_standalone_pdf"
   )
 )
 .latex_publication_specs <- do.call(
@@ -79,6 +87,9 @@ artifact_latex_publications <- data.frame(
   "structural_var_estimators_table|logols|panel_logols",
   "structural_var_estimators_table|harvey|panel_harvey",
   "structural_var_estimators_table|lad|panel_lad",
+  "structural_var_estimators_table|log_plus|panel_log_plus",
+  "structural_var_estimators_table|log_fuller|panel_log_fuller",
+  "log_projection_tuning_table|table|log_projection_tuning",
   "structural_var_inference_table|structural|structural",
   "structural_var_inference_table|ppml|panel_ppml",
   "variance_share_table|table|variance_share",

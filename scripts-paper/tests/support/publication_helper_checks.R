@@ -2,7 +2,7 @@
 
 check(
   "LaTeX publication and label relationships are manifest-owned",
-  nrow(artifact_latex_publications) == 8L &&
+  nrow(artifact_latex_publications) == 9L &&
     identical(
       artifact_latex_label("structural_var_inference_table", "structural"),
       "tab:structural_eq_set_id"

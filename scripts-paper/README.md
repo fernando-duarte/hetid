@@ -124,12 +124,13 @@ The entrypoint preserves this dependency order:
 Input verification and conditional-output cleanup
   -> data preparation
   -> mean OLS, identified sets, variance shares, and log-OLS foundation
-  -> mean bounds-by-tau, PPML/Harvey sets, analytic SEs, and residual diagnostics
+  -> mean bounds-by-tau, PPML/Harvey sets, analytic SEs, regularized log-OLS sets,
+     and residual diagnostics
   -> joint-null, joint-GMM, and residual-dynamics diagnostics
   -> EGARCH decision validation/routing and approved LAD estimation
   -> unified mean/volatility bootstrap and mean-specification comparison
   -> combined structural-inference table (separate bootstrap and draw cache)
-  -> estimator pages and variance-panel fragments
+  -> estimator pages, variance-panel fragments, and the tuning appendix table
   -> bounds, fitted-volatility, region, and heteroskedasticity exhibits
   -> SDF variance bounds, quoted-number checks, and descriptive report
 ```
@@ -181,7 +182,9 @@ publishes `structural_var_estimators.tex`, with a repeated mean panel above each
 estimator. Publication follows the bootstrap because PPML, Harvey, and log-OLS report a
 bootstrap `tau = 0` statistic. PPML and Harvey estimates and analytic SEs are computed
 before the stage and remain unchanged by it. LAD reports neither that variance statistic
-nor `tau > 0` variance confidence intervals; its page appears only when LAD ran.
+nor `tau > 0` variance confidence intervals; its page appears only when LAD ran. The two
+regularized log-OLS projections (additive threshold and two-pass Fuller) report no
+inference either; their tuning sensitivity is in `log_var_eq_log_projection_tuning.tex`.
 
 ### Cache reuse
 

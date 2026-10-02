@@ -16,7 +16,9 @@ paper_source_once(paper_path("support", "statistics", "normalizations.R"))
 LOGVAR_RESID_DIAG_ESTIMATORS <- c(
   ppml = "PPML",
   harvey = "Harvey",
-  logols = "log-OLS"
+  logols = "log-OLS",
+  log_plus = paper_logvar_estimator_spec("log_plus")$display_name,
+  log_fuller = paper_logvar_estimator_spec("log_fuller")$display_name
 )
 
 # The one registry entry for an estimator id, by the same identity check the
@@ -64,17 +66,20 @@ logvar_resid_diag_point_coef <- function(registry, estimator, p) {
   coef
 }
 
-# theta_hat at b_point for all three estimators, in the display order of
-# LOGVAR_RESID_DIAG_ESTIMATORS.
+# theta_hat at b_point for every estimator, in the display order of
+# LOGVAR_RESID_DIAG_ESTIMATORS: registry estimators read their accepted point
+# fit; the log-OLS benchmark recomputes its deterministic projection.
 logvar_resid_diag_thetas <- function(registry, inputs, b_point) {
   x_mat <- logvar_design_matrix(inputs$pcr)
   p <- ncol(x_mat)
-  proj <- logvar_projection(inputs$pcr)
-  list(
-    ppml = logvar_resid_diag_point_coef(registry, "ppml", p),
-    harvey = logvar_resid_diag_point_coef(registry, "harvey", p),
-    logols = logvar_theta_hat(b_point, inputs$w1, inputs$w2, proj)
-  )
+  keys <- names(LOGVAR_RESID_DIAG_ESTIMATORS)
+  stats::setNames(lapply(keys, function(key) {
+    if (identical(key, "logols")) {
+      proj <- logvar_projection(inputs$pcr)
+      return(logvar_theta_hat(b_point, inputs$w1, inputs$w2, proj))
+    }
+    logvar_resid_diag_point_coef(registry, key, p)
+  }), keys)
 }
 
 # The long frame the figures plot: one row per quarter per estimator, with the

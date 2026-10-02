@@ -38,6 +38,16 @@ PAPER_LOGVAR_RESPONSE_SCALES <- c(
   )
 }
 
+# The display strings the conditional-volatility estimators share
+PAPER_LOGVAR_VOLATILITY_DISPLAY <- list(
+  title_quantity =
+    "fitted conditional residual volatility",
+  y_label = paste(
+    "Conditional SD of consumption-growth residual",
+    "(percentage points)"
+  )
+)
+
 PAPER_LOGVAR_PRIMARY_ESTIMATORS <- list(
   ppml = .paper_logvar_spec(
     key = "ppml",
@@ -45,14 +55,7 @@ PAPER_LOGVAR_PRIMARY_ESTIMATORS <- list(
     result_object = "log_var_eq_ppml",
     builder = "logvar_ppml_estimator",
     response_scale = PAPER_LOGVAR_RESPONSE_SCALES[["variance"]],
-    display = list(
-      title_quantity =
-        "fitted conditional residual volatility",
-      y_label = paste(
-        "Conditional SD of consumption-growth residual",
-        "(percentage points)"
-      )
-    ),
+    display = PAPER_LOGVAR_VOLATILITY_DISPLAY,
     artifacts = c(
       table = "structural_var_estimators_table",
       bounds = "ppml_bounds_figure",
@@ -61,7 +64,7 @@ PAPER_LOGVAR_PRIMARY_ESTIMATORS <- list(
     ),
     capabilities = c(
       "bounds_by_tau", "table", "set_bootstrap",
-      "fitted_volatility"
+      "fitted_volatility", "engine_envelope"
     ),
     budget_policy = "primary"
   ),
@@ -71,14 +74,7 @@ PAPER_LOGVAR_PRIMARY_ESTIMATORS <- list(
     result_object = "log_var_eq_harvey",
     builder = "logvar_harvey_estimator",
     response_scale = PAPER_LOGVAR_RESPONSE_SCALES[["variance"]],
-    display = list(
-      title_quantity =
-        "fitted conditional residual volatility",
-      y_label = paste(
-        "Conditional SD of consumption-growth residual",
-        "(percentage points)"
-      )
-    ),
+    display = PAPER_LOGVAR_VOLATILITY_DISPLAY,
     artifacts = c(
       table = "structural_var_estimators_table",
       bounds = "harvey_bounds_figure",
@@ -87,40 +83,18 @@ PAPER_LOGVAR_PRIMARY_ESTIMATORS <- list(
     ),
     capabilities = c(
       "bounds_by_tau", "table", "set_bootstrap",
-      "fitted_volatility"
+      "fitted_volatility", "engine_envelope"
     ),
     dependencies = "ppml",
     budget_policy = "primary"
   )
 )
 
-PAPER_LOGVAR_ESTIMATOR_EXTENSIONS <- list(
-  lad = .paper_logvar_spec(
-    key = "lad",
-    display_name = "LAD",
-    result_object = "log_var_eq_lad",
-    builder = "logvar_lad_estimator",
-    response_scale = PAPER_LOGVAR_RESPONSE_SCALES[["log"]],
-    display = list(
-      title_quantity =
-        "fitted conditional residual scale (median)",
-      y_label = paste(
-        "Conditional median |consumption-growth residual|",
-        "(percentage points)"
-      )
-    ),
-    artifacts = c(
-      table = "structural_var_estimators_table",
-      bounds = "lad_bounds_figure",
-      fitted_volatility =
-        "lad_fitted_volatility_figure"
-    ),
-    capabilities = c(
-      "bounds_by_tau", "table", "fitted_volatility"
-    ),
-    budget_policy = "lad_control"
-  )
-)
+# extension estimators (no set bootstrap) live in their own file
+paper_source_once(paper_path(
+  "config",
+  "logvar_estimator_extensions.R"
+))
 
 PAPER_LOGVAR_ESTIMATORS <- c(
   PAPER_LOGVAR_PRIMARY_ESTIMATORS,

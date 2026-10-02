@@ -110,7 +110,7 @@ stopifnot(length(owner_defs) == 1L)
 # helper would make its engine-equivalence comparisons tautological. Tests are
 # excluded from the scan above, so guard the oracle explicitly. Deparsed, not
 # read, so the guard tests code and ignores comments about the helper.
-oracle_code <- deparsed(paper_path("tests", "engine", "oracle_checks.R"))
+oracle_code <- deparsed(paper_path("tests", "engine", "oracle_reference.R"))
 stopifnot(
   !grepl("quadratic_point_feasible", oracle_code, fixed = TRUE),
   grepl(

@@ -106,7 +106,7 @@ component — or from every instrument separately.
 ``` r
 library(hetid)
 #> Data availability:
-#>   * ACM term premia: Available (updated 2026-09-25)
+#>   * ACM term premia: Available (updated 2026-10-02)
 #> 
 #> Use load_term_premia() to access the data.
 set.seed(42)
@@ -296,6 +296,14 @@ achieved through heteroskedasticity-based moment conditions.
   fit
 - `LOG_VARIANCE_CONTROL` - Numerical controls for log-variance (PPML)
   estimation
+- `log_projection_matrix()` - QR-based OLS operator of the volatility
+  design
+- `prepare_log_projection()` - Fixed inputs for log projections of
+  squared residuals
+- `evaluate_log_projection()` - Log, additive-log, or Fuller log
+  projection at a candidate b
+- `LOG_PROJECTION_CONTROL` - Tuning and tolerances for the log
+  projections
 
 ### Identified-Set Search Functions
 

@@ -21,6 +21,7 @@ paper_source_once(paper_path("support", "identification", "profile_bounds_api.R"
 paper_source_once(paper_path("support", "identification", "tau_star.R"))
 paper_source_once(paper_path("log_variance", "core", "residual_map.R"))
 paper_source_once(paper_path("log_variance", "engine", "api.R"))
+paper_source_once(paper_path("log_variance", "estimators", "log_projection", "prep.R"))
 paper_source_once(paper_path("log_variance", "estimators", "log_ols", "estimator.R"))
 paper_source_once(paper_path(
   "log_variance", "estimators", "log_ols", "set_mapping.R"
@@ -61,7 +62,13 @@ pcr <- paper_normalize_model_matrix(
   as.matrix(logvar_rows[value_cols(lag_asset_return_pc)]),
   PAPER_ANALYSIS_CONTRACT$model$preprocessing$return_pc
 )
-proj <- logvar_projection(pcr)
+# the one package preparation every log-scale estimator reuses: full mean
+# sample, volatility rows by quarter, raw PCs centered by the package
+log_projection_prep <- logvar_log_projection_prep(
+  set_id_mean_eq, logvar_rows,
+  as.matrix(logvar_rows[value_cols(lag_asset_return_pc)]), pcr, w1_lv
+)
+proj <- log_projection_prep$projection
 logvar_coefs <- rownames(proj)
 # naive-analyst OLS column: the residuals of the exogenous-news OLS fit
 # itself (its own jointly-estimated design coefficients, not the beta1(b_N)
@@ -85,10 +92,10 @@ theta_point <- if (anyNA(b_point)) {
 # the log-OLS map packaged as the shared engine's first estimator object
 # (closures over the frozen aligned sample; estimator.R)
 logvar_est <- logvar_logols_estimator(
+  log_projection_prep,
+  logvar_rows$qtr,
   w1_lv,
   w2_lv,
-  proj,
-  logvar_rows$qtr,
   pcr,
   control = LOGVAR_LOGOLS_CONTROL
 )
@@ -159,6 +166,7 @@ log_var_eq$inputs <- logvar_joint_null_extend_inputs(
   stats::residuals(set_id_mean_eq$ols_fit)[logvar_rows$row],
   logvar_rows$qtr
 )
+log_var_eq$log_projection_prep <- log_projection_prep
 log_var_eq$sample_contract <- list(
   qtr = logvar_rows$qtr, n = nrow(logvar_rows), pc_names = colnames(pcr),
   sample_id = log_var_eq$sample_id
@@ -170,26 +178,9 @@ logvar_bounds_tau_registry <- list(list(
   b_seed = b_point, engine_opts = list(),
   output_path = logvar_bounds_tau_path(logvar_est$metadata)
 ))
-cat(
-  "log-variance equation: N =", log_var_eq$sample$n,
-  "over", format(log_var_eq$sample$span[1]), "to",
-  format(log_var_eq$sample$span[2]),
-  "\n  crossings by tau:",
-  paste(names(log_var_eq$n_cross), log_var_eq$n_cross, sep = "=", collapse = " "),
-  "\n  min |eps_hat| at the tau = 0 point:",
-  signif(
-    log_var_eq$min_abs_eps_point,
-    PAPER_REPORTING_CONTROL$precision$console_significant
-  ),
-  "\n"
-)
-print(
-  log_var_eq$table,
-  digits =
-    PAPER_REPORTING_CONTROL$precision$console_significant
-)
+logvar_logols_report(log_var_eq)
 rm(
   logvar_grid_n, logvar_grid_floor, logvar_rows, w1_lv, w2_lv, pcr, proj,
   logvar_coefs, lv_ols, fit_logvar_ols, b_point, theta_point,
-  logvar_est, logvar_sets, logvar_table
+  logvar_est, logvar_sets, logvar_table, log_projection_prep
 )

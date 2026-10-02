@@ -1,87 +1,11 @@
 # Oracle-equivalence checks for the estimator-generic set engine: a frozen
 # verbatim-logic copy of the driver closure logvar_set_at_tau is the oracle,
 # and the engine in benchmark configuration must reproduce its legacy table
-# bit for bit while exposing the richer per-side schema. Sourced by
-# test_engine.R, which supplies check() and the map/engine/log-OLS layers.
+# (statuses and infinities exactly, finite endpoints to roundoff) while
+# exposing the richer per-side schema. Sourced by test_engine.R, which supplies
+# check() and the map/engine/log-OLS layers.
 set.seed(19)
-# Frozen copy of logvar_set_at_tau from the log-OLS runner:
-# tau_quadratic_
-# system becomes the supplied qs and the driver globals become parameters; every
-# other line keeps the driver's logic unchanged.
-oracle_set_at_tau <- function(qs, b_tab, w1, w2, proj, b_point, grid_n,
-                              grid_floor, qtr) {
-  logvar_coefs <- rownames(proj)
-  stopifnot(identical(b_tab$coef, colnames(w2)))
-  na_table <- function(status) {
-    data.frame(
-      coef = logvar_coefs, set_lower = NA_real_, set_upper = NA_real_,
-      status = status, row.names = NULL
-    )
-  }
-  out <- function(table, n_cross = NA_integer_, n_feasible = NA_integer_,
-                  cross_qtr = NULL) {
-    list(table = table, n_cross = n_cross, n_feasible = n_feasible, cross_qtr = cross_qtr)
-  }
-  if (any(b_tab$status != "bounded")) {
-    status <- if (any(b_tab$status == "unbounded")) "unbounded" else "unreliable"
-    return(out(na_table(status)))
-  }
-  census <- logvar_crossing_census(qs, b_tab$set_lower, b_tab$set_upper, w1, w2)
-  if (length(census$unresolved) > 0L) {
-    return(out(na_table("unreliable"), n_cross = length(census$cross)))
-  }
-  b_feas <- logvar_feasible_grid(qs, b_tab$set_lower, b_tab$set_upper, grid_n)
-  if (nrow(b_feas) < grid_floor) {
-    b_feas <- logvar_feasible_grid(qs, b_tab$set_lower, b_tab$set_upper, 2L * grid_n - 1L)
-  }
-  if (nrow(b_feas) == 0L) {
-    return(out(na_table("unreliable"), n_cross = length(census$cross), n_feasible = 0L))
-  }
-  # kept verbatim on purpose: production shares this via quadratic_point_feasible,
-  # and routing the oracle through it would make the equivalence checks vacuous
-  if (!anyNA(b_point)) {
-    if (.feasibility_residual(qs, b_point, rep(1, length(qs$A_i))) <= 0) {
-      b_feas <- rbind(b_feas, b_point)
-    }
-  }
-  scan <- logvar_grid_scan(b_feas, w1, w2, proj)
-  cross_all <- sort(union(census$cross, scan$cross_grid))
-  lower_unb <- apply(proj[, cross_all, drop = FALSE] > 0, 1, any)
-  upper_unb <- apply(proj[, cross_all, drop = FALSE] < 0, 1, any)
-  lower <- ifelse(lower_unb, -Inf, scan$min)
-  upper <- ifelse(upper_unb, Inf, scan$max)
-  unreliable <- rep(FALSE, length(logvar_coefs))
-  for (j in seq_along(logvar_coefs)) {
-    scan_j <- c(scan$min[j], scan$max[j])
-    scale_j <- max(1, abs(scan_j[is.finite(scan_j)]))
-    for (side in c("min", "max")) {
-      if (if (side == "min") lower_unb[j] else upper_unb[j]) next
-      starts <- list(if (side == "min") scan$arg_min[j, ] else scan$arg_max[j, ])
-      if (!anyNA(b_point)) starts <- c(starts, list(b_point))
-      accepted <- FALSE
-      for (b_start in starts) {
-        pol <- logvar_polish_bound(qs, side, b_start, scale_j, w1, w2, proj[j, ])
-        if (pol$suspect) unreliable[j] <- TRUE
-        if (is.null(pol$bound)) next
-        accepted <- TRUE
-        if (side == "min" && pol$bound < lower[j]) lower[j] <- pol$bound
-        if (side == "max" && pol$bound > upper[j]) upper[j] <- pol$bound
-      }
-      if (!accepted) unreliable[j] <- TRUE
-    }
-  }
-  status <- ifelse(unreliable, "unreliable",
-    ifelse(lower_unb | upper_unb, "unbounded", "bounded")
-  )
-  out(
-    data.frame(
-      coef = logvar_coefs, set_lower = lower, set_upper = upper,
-      status = status, row.names = NULL
-    ),
-    n_cross = length(cross_all), n_feasible = nrow(b_feas), cross_qtr = qtr[cross_all]
-  )
-}
-
+paper_source_once(paper_path("tests", "engine", "oracle_reference.R"))
 # a K = 2 fixture with centered PCs (two columns -> three theta coefficients),
 # the log-OLS estimator, and the all-bounded b_tab the oracle asserts against
 orc_make_fixture <- function(w2, w1) {
@@ -96,9 +20,16 @@ orc_make_fixture <- function(w2, w1) {
     set_upper = c(1, 1), outer_lower = c(-1, -1),
     outer_upper = c(1, 1), status = "bounded"
   )
+  # the package prep needs mean-zero mean-sample residuals: one balancing
+  # row joins the mean sample only, so the volatility rows keep the fixture's
+  # exact residuals and crossings
+  prep <- hetid::prepare_log_projection(
+    c(w1, -sum(w1)), rbind(w2, -colSums(w2)), pcr,
+    seq_len(nrow(w2) + 1L), qtr
+  )
   list(
     w1 = w1, w2 = w2, proj = proj, qtr = qtr, b_tab = b_tab,
-    est = logvar_logols_estimator(w1, w2, proj, qtr, pcr)
+    est = logvar_logols_estimator(prep, qtr, w1, w2, pcr)
   )
 }
 # unit-ball joint set b1^2 + b2^2 <= 1 with the box [-1, 1]^2 as its hull; run
@@ -118,7 +49,20 @@ orc_run_pair <- function(fx, b_point, b_tab = fx$b_tab,
     )
   )
 }
-orc_same_table <- function(p) identical(p$engine$table, p$oracle$table)
+# statuses and infinities exact; finite endpoints to roundoff, since the
+# engine evaluates the package map (2 log|e| on a QR operator) and the oracle
+# the frozen arithmetic
+orc_same_table <- function(p) {
+  e <- p$engine$table
+  o <- p$oracle$table
+  same_side <- function(a, b) {
+    identical(is.finite(a), is.finite(b)) &&
+      identical(a[!is.finite(a)], b[!is.finite(b)]) &&
+      isTRUE(all.equal(a[is.finite(a)], b[is.finite(b)], tolerance = 1e-10))
+  }
+  identical(e$coef, o$coef) && identical(e$status, o$status) &&
+    same_side(e$set_lower, o$set_lower) && same_side(e$set_upper, o$set_upper)
+}
 orc_n <- 12L
 # every residual safely positive: no crossings, both sides bounded
 orc_fx_safe <- orc_make_fixture(
