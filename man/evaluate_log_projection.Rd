@@ -19,7 +19,12 @@ evaluate_log_projection(
 matrix with one candidate per row (batch evaluation, no Jacobians).}
 
 \item{method}{One of \code{LOG_PROJECTION_CONTROL$METHODS}. \code{"log"}
-regresses \eqn{\log e_t^2}.}
+regresses \eqn{\log e_t^2}; \code{"log_plus"} regresses
+\eqn{\log(e_t^2 + h_T^2)} with \eqn{h_T = m \hat s / \sqrt{T}} and
+\eqn{\hat s} the common mean-sample scale; \code{"log_fuller"} applies
+the two-pass Fuller transformation
+\eqn{F(x, \delta) = \log(x + \delta) - \delta / (x + \delta)} with
+\eqn{c_T = m^2 / T} and the candidate's own mean-sample scale.}
 
 \item{multiplier}{Positive tuning multiplier \eqn{m}; ignored by
 \code{"log"}.}
@@ -43,7 +48,11 @@ coefficients' Jacobian with respect to \eqn{b}.
 }
 \details{
 \code{"log"} reports \code{"domain_failure"} when a volatility-sample
-residual is exactly zero and keeps its (non-finite) coefficients. A
+residual is exactly zero and keeps its (non-finite) coefficients.
+\code{"log_plus"} fails when the common scale is zero and
+\code{"log_fuller"} when the candidate's mean-sample scale is zero; their
+coefficients are then \code{NA}. Individual zero residuals are valid for
+both regularized methods. A
 non-finite residual or result is a \code{"numerical_failure"} with
 \code{NA} coefficients; failures in one batch column never affect
 another. A raw-coordinate intercept is
@@ -59,7 +68,11 @@ news residuals are both named, the names must agree exactly, as in
 Evaluation is pointwise. A set search (coefficient bounds, fitted-index
 envelopes) wraps this function in its own optimizer, maps the statuses
 onto its own failure vocabulary, and includes the method, multiplier, and
-the full preparation identity in any cache key.
+the full preparation identity in any cache key. A successful
+\code{"log_fuller"} evaluation does not establish a positive scale over a
+whole set: when \code{prep$scale_lower_certified} is \code{FALSE}, the
+search must treat every endpoint as unresolved unless it certifies
+positivity itself.
 }
 
 \examples{

@@ -5,10 +5,17 @@
 # numerical failures; domain failures are established zero conditions only
 log_projection_screen <- function(prep, b_mat, e, method) {
   bad <- colSums(!is.finite(e)) > 0L
+  e_mean <- NULL
   domain <- switch(method,
-    log = colSums(e == 0) > 0L
+    log = colSums(e == 0) > 0L,
+    log_plus = rep(!is.finite(prep$log_scale_common), ncol(e)),
+    log_fuller = {
+      e_mean <- prep$w1_mean - prep$w2_mean %*% t(b_mat)
+      bad <- bad | colSums(!is.finite(e_mean)) > 0L
+      colSums(e_mean != 0) == 0L
+    }
   )
-  list(bad = bad, domain = domain & !bad, e_mean = NULL)
+  list(bad = bad, domain = domain & !bad, e_mean = e_mean)
 }
 
 # Spread run-column values back to all k candidates, NA elsewhere
@@ -75,6 +82,13 @@ log_projection_result <- function(prep, method, multiplier, is_single,
 log_projection_jacobian <- function(prep, method, pass) {
   e <- drop(pass$e)
   switch(method,
-    log = -2 * (prep$projection %*% (prep$w2 / e))
+    log = -2 * (prep$projection %*% (prep$w2 / e)),
+    log_plus = {
+      d <- log_projection_resid_deriv(e, drop(pass$log_x) / 2, drop(pass$work$a))
+      -(prep$projection %*% (d * prep$w2))
+    },
+    log_fuller = log_projection_fuller_jacobian(
+      prep, e, drop(pass$log_x) / 2, pass$work
+    )
   )
 }

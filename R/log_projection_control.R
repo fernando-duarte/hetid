@@ -27,7 +27,7 @@
 #' LOG_PROJECTION_CONTROL$SENSITIVITY_MULTIPLIERS
 #' @export
 LOG_PROJECTION_CONTROL <- list(
-  METHODS = "log",
+  METHODS = c("log", "log_plus", "log_fuller"),
   MULTIPLIER = 1,
   SENSITIVITY_MULTIPLIERS = c(0.5, 1, 2),
   RANK_TOLERANCE = 1e-10,

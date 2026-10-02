@@ -10,7 +10,12 @@
 #' @param b Numeric vector with one entry per news column, or a numeric
 #'   matrix with one candidate per row (batch evaluation, no Jacobians).
 #' @param method One of \code{LOG_PROJECTION_CONTROL$METHODS}. \code{"log"}
-#'   regresses \eqn{\log e_t^2}.
+#'   regresses \eqn{\log e_t^2}; \code{"log_plus"} regresses
+#'   \eqn{\log(e_t^2 + h_T^2)} with \eqn{h_T = m \hat s / \sqrt{T}} and
+#'   \eqn{\hat s} the common mean-sample scale; \code{"log_fuller"} applies
+#'   the two-pass Fuller transformation
+#'   \eqn{F(x, \delta) = \log(x + \delta) - \delta / (x + \delta)} with
+#'   \eqn{c_T = m^2 / T} and the candidate's own mean-sample scale.
 #' @param multiplier Positive tuning multiplier \eqn{m}; ignored by
 #'   \code{"log"}.
 #' @param jacobian Logical; return the \eqn{p \times d_N} Jacobian (single
@@ -23,7 +28,11 @@
 #'   \code{"numerical_failure"}, one per candidate), and \code{diagnostics}.
 #' @details
 #' \code{"log"} reports \code{"domain_failure"} when a volatility-sample
-#' residual is exactly zero and keeps its (non-finite) coefficients. A
+#' residual is exactly zero and keeps its (non-finite) coefficients.
+#' \code{"log_plus"} fails when the common scale is zero and
+#' \code{"log_fuller"} when the candidate's mean-sample scale is zero; their
+#' coefficients are then \code{NA}. Individual zero residuals are valid for
+#' both regularized methods. A
 #' non-finite residual or result is a \code{"numerical_failure"} with
 #' \code{NA} coefficients; failures in one batch column never affect
 #' another. A raw-coordinate intercept is
@@ -38,7 +47,11 @@
 #' Evaluation is pointwise. A set search (coefficient bounds, fitted-index
 #' envelopes) wraps this function in its own optimizer, maps the statuses
 #' onto its own failure vocabulary, and includes the method, multiplier, and
-#' the full preparation identity in any cache key.
+#' the full preparation identity in any cache key. A successful
+#' \code{"log_fuller"} evaluation does not establish a positive scale over a
+#' whole set: when \code{prep$scale_lower_certified} is \code{FALSE}, the
+#' search must treat every endpoint as unresolved unless it certifies
+#' positivity itself.
 #' @seealso \code{\link{prepare_log_projection}},
 #'   \code{\link{LOG_PROJECTION_CONTROL}},
 #'   \code{\link{fit_log_variance_at_b}} for the exponential-mean estimators
@@ -119,13 +132,30 @@ evaluate_log_projection <- function(prep, b, method,
     e_run <- e[, run, drop = FALSE]
     log_x <- 2 * log(abs(e_run))
     pass <- switch(method,
-      log = log_projection_log(prep, e_run, log_x)
+      log = log_projection_log(prep, e_run, log_x),
+      log_plus = log_projection_plus(prep, e_run, log_x, multiplier),
+      log_fuller = log_projection_fuller(
+        prep, screening$e_mean[, run, drop = FALSE], e_run, log_x, multiplier
+      )
     )
     pass$e <- e_run
     pass$log_x <- log_x
   }
   log_projection_result(
     prep, method, multiplier, is_single, jacobian, screening, run, pass
+  )
+}
+
+log_projection_plus <- function(prep, e, log_x, multiplier) {
+  log_h2 <- 2 * log(multiplier) - log(nrow(e)) + prep$log_scale_common
+  a <- log_add_exp(log_x, log_h2)
+  list(
+    coef = prep$projection %*% a,
+    diagnostics = list(
+      log_threshold = rep(log_h2, ncol(e)),
+      share_small = colMeans(log_x < log_h2)
+    ),
+    work = list(a = a)
   )
 }
 

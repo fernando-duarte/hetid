@@ -1,5 +1,5 @@
 test_that("log-projection controls hold their documented values", {
-  expect_identical(LOG_PROJECTION_CONTROL$METHODS, "log")
+  expect_identical(LOG_PROJECTION_CONTROL$METHODS, c("log", "log_plus", "log_fuller"))
   expect_identical(LOG_PROJECTION_CONTROL$MULTIPLIER, 1)
   expect_identical(LOG_PROJECTION_CONTROL$SENSITIVITY_MULTIPLIERS, c(0.5, 1, 2))
   expect_identical(LOG_PROJECTION_CONTROL$RANK_TOLERANCE, 1e-10)
