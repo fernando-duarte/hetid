@@ -4,14 +4,23 @@
 \alias{prepare_log_projection}
 \title{Prepare a Log Projection of Squared Residuals}
 \usage{
-prepare_log_projection(w1, w2, x_var, mean_ids, volatility_ids)
+prepare_log_projection(
+  w1,
+  w2,
+  x_var,
+  mean_ids,
+  volatility_ids,
+  impose_null = FALSE
+)
 }
 \arguments{
 \item{w1}{Numeric vector of the outcome's auxiliary residuals on the mean
 sample (from a regression with an intercept, so mean zero there).}
 
 \item{w2}{Numeric matrix of the news regressors' auxiliary residuals on
-the mean sample, one column per news coefficient, same rows as \code{w1}.}
+the mean sample, one column per news coefficient, same rows as
+\code{w1}. Intercept-regression residuals (mean zero) unless
+\code{impose_null} is \code{TRUE}.}
 
 \item{x_var}{Numeric matrix or data frame of raw volatility regressors on
 the volatility sample, without an intercept; centered here.}
@@ -24,6 +33,12 @@ of one atomic class (for example \code{Date} or
 Identifiers are a within-call join key: a replay on resampled rows,
 which repeats quarters, passes positional integer identifiers
 (\code{seq_along}) on both sides after aligning the rows itself.}
+
+\item{impose_null}{Logical flag. \code{TRUE} when the news reduced form,
+intercept included, was imposed to be zero, so \code{w2} is the
+supplied news itself and need not have mean zero on the mean sample (a
+resample of centered news does not). \code{w2} is never recentered;
+\code{w1} must have mean zero either way.}
 }
 \value{
 A \code{hetid_log_projection_prep} object for

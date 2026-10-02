@@ -9,7 +9,9 @@
 #' @param w1 Numeric vector of the outcome's auxiliary residuals on the mean
 #'   sample (from a regression with an intercept, so mean zero there).
 #' @param w2 Numeric matrix of the news regressors' auxiliary residuals on
-#'   the mean sample, one column per news coefficient, same rows as \code{w1}.
+#'   the mean sample, one column per news coefficient, same rows as
+#'   \code{w1}. Intercept-regression residuals (mean zero) unless
+#'   \code{impose_null} is \code{TRUE}.
 #' @param x_var Numeric matrix or data frame of raw volatility regressors on
 #'   the volatility sample, without an intercept; centered here.
 #' @param mean_ids,volatility_ids Unique, non-missing observation identifiers
@@ -20,6 +22,11 @@
 #'   Identifiers are a within-call join key: a replay on resampled rows,
 #'   which repeats quarters, passes positional integer identifiers
 #'   (\code{seq_along}) on both sides after aligning the rows itself.
+#' @param impose_null Logical flag. \code{TRUE} when the news reduced form,
+#'   intercept included, was imposed to be zero, so \code{w2} is the
+#'   supplied news itself and need not have mean zero on the mean sample (a
+#'   resample of centered news does not). \code{w2} is never recentered;
+#'   \code{w1} must have mean zero either way.
 #'
 #' @return A \code{hetid_log_projection_prep} object for
 #'   \code{\link{evaluate_log_projection}}.
@@ -36,9 +43,13 @@
 #' @seealso \code{\link{evaluate_log_projection}},
 #'   \code{\link{LOG_PROJECTION_CONTROL}}
 #' @export
-prepare_log_projection <- function(w1, w2, x_var, mean_ids, volatility_ids) {
+prepare_log_projection <- function(w1, w2, x_var, mean_ids, volatility_ids,
+                                   impose_null = FALSE) {
   ctrl <- LOG_PROJECTION_CONTROL
-  x <- validate_log_projection_inputs(w1, w2, x_var, mean_ids, volatility_ids)
+  assert_flag(impose_null, "impose_null")
+  x <- validate_log_projection_inputs(
+    w1, w2, x_var, mean_ids, volatility_ids, impose_null
+  )
   rows <- match(volatility_ids, mean_ids)
   center <- vapply(seq_len(ncol(x)), function(j) mean(x[, j]), numeric(1))
   names(center) <- colnames(x)
@@ -71,7 +82,7 @@ prepare_log_projection <- function(w1, w2, x_var, mean_ids, volatility_ids) {
 
 # Validates the raw inputs and returns x_var as a named numeric matrix
 validate_log_projection_inputs <- function(w1, w2, x_var, mean_ids,
-                                           volatility_ids) {
+                                           volatility_ids, impose_null) {
   assert_bad_argument_ok(
     is.numeric(w1) && is.null(dim(w1)) && length(w1) >= 1L,
     "w1 must be a numeric vector",
@@ -87,9 +98,17 @@ validate_log_projection_inputs <- function(w1, w2, x_var, mean_ids,
   assert_dimension_ok(nrow(w2) == length(w1), "nrow(w2) must equal length(w1)")
   tol <- LOG_PROJECTION_CONTROL$MEAN_ZERO_TOLERANCE
   assert_bad_argument_ok(
-    log_projection_mean_zero(w1, tol) && log_projection_mean_zero(w2, tol),
-    "w1 and w2 must be intercept-regression residuals (mean zero on the mean sample)",
+    log_projection_mean_zero(w1, tol),
+    "w1 must be an intercept-regression residual (mean zero on the mean sample)",
     arg = "w1"
+  )
+  assert_bad_argument_ok(
+    impose_null || log_projection_mean_zero(w2, tol),
+    paste(
+      "w2 must be intercept-regression residuals (mean zero on the mean",
+      "sample) unless impose_null = TRUE"
+    ),
+    arg = "w2"
   )
   x <- as.matrix(x_var)
   assert_numeric_finite_values(x, "x_var")
