@@ -18,8 +18,9 @@ number below which a matrix is treated as ill-conditioned (1e-10)}
 (4L). This is the paper's quarterly-data heuristic, not a
 statistical rule; users with other frequencies should pass their
 own \code{hac_lags}}
-\item{SE_TYPES}{The PPML estimator's standard-error types
-(\code{"naive"}, \code{"hc0"}, \code{"hc1"}, \code{"hac"})}
+\item{SE_TYPES}{The standard-error types of the PPML estimator and of
+\code{\link{compute_log_projection_vcov}} (\code{"naive"},
+\code{"hc0"}, \code{"hc1"}, \code{"hac"})}
 }
 }
 \usage{

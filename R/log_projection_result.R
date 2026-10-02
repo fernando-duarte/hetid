@@ -1,5 +1,66 @@
-# Internal helpers for evaluate_log_projection: candidate screening, result
-# assembly, and Jacobian dispatch.
+# Internal helpers for evaluate_log_projection and compute_log_projection_vcov:
+# argument checks, candidate screening and passes, result assembly, and
+# Jacobian dispatch.
+
+# Validates prep, method, multiplier and the candidate(s); returns the
+# candidate matrix and whether one vector was supplied
+log_projection_args <- function(prep, b, method, multiplier) {
+  assert_hetid_log_projection_prep(prep)
+  method_values <- LOG_PROJECTION_CONTROL$METHODS
+  assert_bad_argument_ok(
+    is.character(method) && length(method) == 1L && !is.na(method) &&
+      method %in% method_values,
+    paste0("method must be one of: ", paste(method_values, collapse = ", ")),
+    arg = "method"
+  )
+  assert_scalar_finite(multiplier, "multiplier")
+  assert_bad_argument_ok(multiplier > 0, "multiplier must be positive",
+    arg = "multiplier"
+  )
+  is_single <- is.null(dim(b))
+  b_mat <- if (is_single) matrix(b, nrow = 1L) else b
+  assert_bad_argument_ok(
+    is.numeric(b_mat) && is.matrix(b_mat) && nrow(b_mat) >= 1L,
+    "b must be a numeric vector or a matrix with one candidate per row",
+    arg = "b"
+  )
+  assert_numeric_finite_values(b_mat, "b")
+  assert_dimension_ok(
+    ncol(b_mat) == ncol(prep$w2),
+    sprintf("each candidate needs %d entries, not %d", ncol(prep$w2), ncol(b_mat))
+  )
+  # a permuted named candidate would silently change the residuals
+  b_names <- if (is_single) names(b) else colnames(b)
+  assert_bad_argument_ok(
+    is.null(b_names) || is.null(colnames(prep$w2)) ||
+      identical(b_names, colnames(prep$w2)),
+    "names of b must equal colnames(w2) in order",
+    arg = "b"
+  )
+  list(b_mat = b_mat, is_single = is_single)
+}
+
+# Screens the candidates and runs the method's passes on the live columns
+log_projection_passes <- function(prep, b_mat, method, multiplier) {
+  e <- prep$w1 - prep$w2 %*% t(b_mat)
+  screening <- log_projection_screen(prep, b_mat, e, method)
+  run <- !screening$bad & (method == "log" | !screening$domain)
+  pass <- NULL
+  if (any(run)) {
+    e_run <- e[, run, drop = FALSE]
+    log_x <- 2 * log(abs(e_run))
+    pass <- switch(method,
+      log = log_projection_log(prep, e_run, log_x),
+      log_plus = log_projection_plus(prep, e_run, log_x, multiplier),
+      log_fuller = log_projection_fuller(
+        prep, screening$e_mean[, run, drop = FALSE], e_run, log_x, multiplier
+      )
+    )
+    pass$e <- e_run
+    pass$log_x <- log_x
+  }
+  list(screening = screening, run = run, pass = pass)
+}
 
 # Classify candidates before any transform: non-finite residuals are
 # numerical failures; domain failures are established zero conditions only

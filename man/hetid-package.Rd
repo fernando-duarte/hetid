@@ -176,6 +176,7 @@ news-error variance bound
 \item \code{\link{log_projection_matrix}()}: QR-based OLS operator of the volatility design
 \item \code{\link{prepare_log_projection}()}: Fixed inputs for log projections
 \item \code{\link{evaluate_log_projection}()}: Log projection coefficients and Jacobian at b
+\item \code{\link{compute_log_projection_vcov}()}: Covariance matrices of a log projection at b
 \item \code{\link{LOG_PROJECTION_CONTROL}}: Log-projection tuning and tolerances
 }}
 

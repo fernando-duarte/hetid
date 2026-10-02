@@ -25,7 +25,8 @@ log_projection_fuller <- function(prep, e_mean, e, log_x, multiplier) {
     ),
     work = list(
       e_mean = e_mean, a0 = first$a, rho0 = first$rho, eta = eta,
-      log_ratio = log_ratio, a = second$a, rho = second$rho
+      log_ratio = log_ratio, a = second$a, rho = second$rho,
+      response = second$value
     )
   )
 }

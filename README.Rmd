@@ -249,6 +249,7 @@ The key insight from Lewbel (2012) is that identification can be achieved throug
 - `log_projection_matrix()` - QR-based OLS operator of the volatility design
 - `prepare_log_projection()` - Fixed inputs for log projections of squared residuals
 - `evaluate_log_projection()` - Log, additive-log, or Fuller log projection at a candidate b
+- `compute_log_projection_vcov()` - Covariance matrices of a log projection at one candidate
 - `LOG_PROJECTION_CONTROL` - Tuning and tolerances for the log projections
 
 ### Identified-Set Search Functions

@@ -87,62 +87,18 @@
 evaluate_log_projection <- function(prep, b, method,
                                     multiplier = LOG_PROJECTION_CONTROL$MULTIPLIER,
                                     jacobian = TRUE) {
-  assert_hetid_log_projection_prep(prep)
-  method_values <- LOG_PROJECTION_CONTROL$METHODS
-  assert_bad_argument_ok(
-    is.character(method) && length(method) == 1L && !is.na(method) &&
-      method %in% method_values,
-    paste0("method must be one of: ", paste(method_values, collapse = ", ")),
-    arg = "method"
-  )
-  assert_scalar_finite(multiplier, "multiplier")
-  assert_bad_argument_ok(multiplier > 0, "multiplier must be positive",
-    arg = "multiplier"
-  )
+  validated_args <- log_projection_args(prep, b, method, multiplier)
   assert_flag(jacobian, "jacobian")
-  is_single <- is.null(dim(b))
-  b_mat <- if (is_single) matrix(b, nrow = 1L) else b
-  assert_bad_argument_ok(
-    is.numeric(b_mat) && is.matrix(b_mat) && nrow(b_mat) >= 1L,
-    "b must be a numeric vector or a matrix with one candidate per row",
-    arg = "b"
-  )
-  assert_numeric_finite_values(b_mat, "b")
-  assert_dimension_ok(
-    ncol(b_mat) == ncol(prep$w2),
-    sprintf("each candidate needs %d entries, not %d", ncol(prep$w2), ncol(b_mat))
-  )
-  # a permuted named candidate would silently change the residuals
-  b_names <- if (is_single) names(b) else colnames(b)
-  assert_bad_argument_ok(
-    is.null(b_names) || is.null(colnames(prep$w2)) ||
-      identical(b_names, colnames(prep$w2)),
-    "names of b must equal colnames(w2) in order",
-    arg = "b"
-  )
-  assert_bad_argument_ok(is_single || !jacobian,
+  assert_bad_argument_ok(validated_args$is_single || !jacobian,
     "jacobian = TRUE needs a single candidate vector b",
     arg = "jacobian"
   )
-  e <- prep$w1 - prep$w2 %*% t(b_mat)
-  screening <- log_projection_screen(prep, b_mat, e, method)
-  run <- !screening$bad & (method == "log" | !screening$domain)
-  pass <- NULL
-  if (any(run)) {
-    e_run <- e[, run, drop = FALSE]
-    log_x <- 2 * log(abs(e_run))
-    pass <- switch(method,
-      log = log_projection_log(prep, e_run, log_x),
-      log_plus = log_projection_plus(prep, e_run, log_x, multiplier),
-      log_fuller = log_projection_fuller(
-        prep, screening$e_mean[, run, drop = FALSE], e_run, log_x, multiplier
-      )
-    )
-    pass$e <- e_run
-    pass$log_x <- log_x
-  }
+  passes <- log_projection_passes(
+    prep, validated_args$b_mat, method, multiplier
+  )
   log_projection_result(
-    prep, method, multiplier, is_single, jacobian, screening, run, pass
+    prep, method, multiplier, validated_args$is_single, jacobian,
+    passes$screening, passes$run, passes$pass
   )
 }
 
@@ -155,7 +111,7 @@ log_projection_plus <- function(prep, e, log_x, multiplier) {
       log_threshold = rep(log_h2, ncol(e)),
       share_small = colMeans(log_x < log_h2)
     ),
-    work = list(a = a)
+    work = list(a = a, response = a)
   )
 }
 
@@ -163,6 +119,6 @@ log_projection_log <- function(prep, e, log_x) {
   list(
     coef = prep$projection %*% log_x,
     diagnostics = list(min_abs_resid = apply(abs(e), 2L, min)),
-    work = list()
+    work = list(response = log_x)
   )
 }

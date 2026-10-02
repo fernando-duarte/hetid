@@ -302,6 +302,8 @@ achieved through heteroskedasticity-based moment conditions.
   squared residuals
 - `evaluate_log_projection()` - Log, additive-log, or Fuller log
   projection at a candidate b
+- `compute_log_projection_vcov()` - Covariance matrices of a log
+  projection at one candidate
 - `LOG_PROJECTION_CONTROL` - Tuning and tolerances for the log
   projections
 

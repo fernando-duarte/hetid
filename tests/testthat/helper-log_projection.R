@@ -59,3 +59,18 @@ lp_fd_error <- function(f, jac, b, steps = c(1e-4, 1e-5, 1e-6)) {
 lp_design <- function(prep) {
   cbind(1, prep$x_centered)
 }
+
+# The two-pass Fuller second-pass response with plain log/exp, as an oracle
+lp_fuller_response <- function(prep, b, m) {
+  e <- prep$w1 - drop(prep$w2 %*% b)
+  e_mean <- prep$w1_mean - drop(prep$w2_mean %*% b)
+  n_vol <- length(e)
+  c_t <- m^2 / n_vol
+  delta0 <- c_t * mean(e_mean^2)
+  f0 <- log(e^2 + delta0) - delta0 / (e^2 + delta0)
+  v <- lp_design(prep)
+  theta0 <- stats::lm.fit(v, f0)$coefficients
+  eta <- drop(prep$x_centered %*% theta0[-1])
+  delta <- delta0 * exp(eta) / mean(exp(eta))
+  log(e^2 + delta) - delta / (e^2 + delta)
+}
