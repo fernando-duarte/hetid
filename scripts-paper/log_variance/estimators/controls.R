@@ -28,13 +28,14 @@ LOGVAR_LOGOLS_CONTROL <- list(
 # bootstrap_grid_cap and bootstrap_fit_budget size each bootstrap draw's
 # search: a positive integer caps it, Inf searches the whole feasible lattice
 # as the published map does (several hours more per 10,000-draw run), and NA
-# uses the stage's shared bootstrap budgets. The grid cap of 3000 is double the
-# shared one; the fit budget stays uncapped so the larger scan cannot exhaust it
+# uses the stage's shared bootstrap budgets. The grid cap matches the shared
+# 1500 (3000 cost an hour more per run and found the same Fuller peak); the fit
+# budget stays uncapped so a larger cap cannot exhaust it
 LOGVAR_LOG_PROJECTION_CONTROL <- list(
   estimator_version = "log-projection-v1",
   cold_start_rtol = 1e-8,
   registry_grid_cap = 3000L,
-  bootstrap_grid_cap = 3000L,
+  bootstrap_grid_cap = 1500L,
   bootstrap_fit_budget = Inf
 )
 

@@ -127,7 +127,7 @@ check(
     !isTRUE(bootstrap_stage_controls_ok(lpb_renamed))
 )
 
-# per-estimator search budgets: the log projections default to a 3000-point grid
+# per-estimator search budgets: the log projections default to a 1500-point grid
 lpb_fc <- function(grid, fit) {
   list(metadata = list(fit_control = list(
     bootstrap_grid_cap = grid, bootstrap_fit_budget = fit
@@ -139,7 +139,7 @@ check(
     identical(logvar_boot_budget(lpb_fc(200L, Inf), "bootstrap_grid_cap", 5L), 200L) &&
     identical(logvar_boot_budget(lpb_fc(NA, NA), "bootstrap_fit_budget", 300), 300) &&
     identical(logvar_boot_budget(NULL, "bootstrap_grid_cap", 5L), 5L) &&
-    identical(logvar_boot_budget(lpb_direct("log_plus"), "bootstrap_grid_cap", 5L), 3000L) &&
+    identical(logvar_boot_budget(lpb_direct("log_plus"), "bootstrap_grid_cap", 5L), 1500L) &&
     identical(
       logvar_boot_budget(list(metadata = list(fit_control = list())), "bootstrap_grid_cap", 5L),
       5L
