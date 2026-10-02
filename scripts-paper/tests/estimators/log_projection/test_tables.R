@@ -182,12 +182,12 @@ tt_anchor <- function(matches) {
   ), collapse = " ")
 }
 tt_ctrl <- LOGVAR_LOG_PROJECTION_CONTROL
-LOGVAR_LOG_PROJECTION_CONTROL$bootstrap_grid_cap <- 1500L
-tt_capped <- logvar_extension_anchor_matches("log_plus")
+LOGVAR_LOG_PROJECTION_CONTROL$bootstrap_grid_cap <- Inf
+tt_uncapped <- logvar_extension_anchor_matches("log_plus")
 LOGVAR_LOG_PROJECTION_CONTROL <- tt_ctrl
 check(
   "the anchor sentence asserts equality unless the projection search is capped",
-  logvar_extension_anchor_matches("log_plus") && !tt_capped &&
+  !logvar_extension_anchor_matches("log_plus") && tt_uncapped &&
     logvar_extension_anchor_matches("ppml") &&
     grepl("equals the plug-in set", tt_anchor(TRUE), fixed = TRUE) &&
     !grepl("equals the plug-in set", tt_anchor(FALSE), fixed = TRUE) &&
