@@ -9,6 +9,7 @@ paper_source_once(paper_path("config", "artifacts.R"))
 paper_source_once(paper_path(
   "log_variance", "tables", "render_log_projection_tuning_table.R"
 ))
+paper_source_once(paper_path("log_variance", "tables", "set_inference_caption.R"))
 
 paper_source_once(paper_path("tests", "support", "harness.R"))
 .test <- paper_test_harness()
@@ -172,6 +173,19 @@ check(
     grepl("log\\_var\\_eq\\_log\\_projection\\_endpoints.csv", tt_tuning_notes,
       fixed = TRUE
     )
+)
+
+tt_anchor <- function(matches) {
+  paste(build_logvar_set_inference_notes(
+    list(inference_contract = PAPER_ANALYSIS_CONTRACT$inference, b_reps = 60L, block = 10L),
+    matches
+  ), collapse = " ")
+}
+check(
+  "bootstrapped extension pages qualify the anchor instead of asserting equality",
+  grepl("equals the plug-in set", tt_anchor(TRUE), fixed = TRUE) &&
+    !grepl("equals the plug-in set", tt_anchor(FALSE), fixed = TRUE) &&
+    grepl("can sit slightly inside", tt_anchor(FALSE), fixed = TRUE)
 )
 
 .test$finish()

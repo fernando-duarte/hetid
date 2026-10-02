@@ -4,12 +4,15 @@
 # It belongs to every page that threads an envelope and to no other -- the
 # log-OLS and median pages are point identified or take no envelope, so a page
 # without an interval row must not carry an explanation of one.
-# Definitions only; reads log_var_eq_set_boot (unified bootstrap stage) and the
-# contract's stability share at call time.
+# anchor_matches_plugin is FALSE for estimators whose published sets come from a
+# different search than the bootstrap's capped one (the regularized log
+# projections' uncapped, audited lattice), where the anchor can sit inside the
+# plug-in set. Definitions only; reads log_var_eq_set_boot (unified bootstrap
+# stage) and the contract's stability share at call time.
 
 paper_source_once(paper_path("support", "reporting", "cells.R"))
 
-build_logvar_set_inference_notes <- function(boot) {
+build_logvar_set_inference_notes <- function(boot, anchor_matches_plugin = TRUE) {
   inference_labels <- paper_inference_labels(boot$inference_contract)
   c(
     sprintf(
@@ -65,13 +68,25 @@ build_logvar_set_inference_notes <- function(boot) {
       "vanishes and the pointwise and whole-set critical values coincide there.",
       "Both sides expand outward from the identified set, never inward."
     ),
-    paste(
-      "The set cell above each parenthetical row is the plug-in identified set",
-      "(the conservative table's cell, unchanged); the bootstrap centers on a",
-      "resample-consistent anchor that equals the plug-in set where the set",
-      "is bounded, so the reported row reads as padding around that same",
-      "interval, not a second, independent estimate."
-    ),
+    if (anchor_matches_plugin) {
+      paste(
+        "The set cell above each parenthetical row is the plug-in identified set",
+        "(the conservative table's cell, unchanged); the bootstrap centers on a",
+        "resample-consistent anchor that equals the plug-in set where the set",
+        "is bounded, so the reported row reads as padding around that same",
+        "interval, not a second, independent estimate."
+      )
+    } else {
+      paste(
+        "The set cell above each parenthetical row is the plug-in identified set",
+        "(the conservative table's cell, unchanged); the bootstrap centers on a",
+        "resample-consistent anchor found by the replications' own capped",
+        "search, which can sit slightly inside the plug-in set (both are",
+        "reported in \\texttt{log\\_var\\_eq\\_set\\_inference\\_diagnostics.csv}),",
+        "so the reported row reads as padding around that anchor, not a second,",
+        "independent estimate."
+      )
+    },
     paste(
       "The critical value for containment of the entire identified interval is",
       "never smaller and is still computed: it is reported per cell as",
