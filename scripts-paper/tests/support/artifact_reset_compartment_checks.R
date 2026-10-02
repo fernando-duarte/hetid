@@ -31,9 +31,9 @@ local({
 
   write_all_fixtures()
   bootstrap_audit <- cleanup_bootstrap_cache()
-  cache_ids <- c("bootstrap_stage_draws", "structural_inference_draws")
+  cache_ids <- "bootstrap_stage_draws"
   check(
-    "cleanup_bootstrap_cache removes only the two draw caches",
+    "cleanup_bootstrap_cache removes only the stage's draw cache",
     identical(bootstrap_audit$ids, cache_ids) &&
       bootstrap_audit$all_absent &&
       others_survive(cache_ids)

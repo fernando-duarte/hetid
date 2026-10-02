@@ -16,10 +16,10 @@ combined <- "log_variance\", \"tables\", \"render_combined_inference_table.R"
 # the deferred publication reports a bootstrap tau = 0 statistic, so it may not
 # be sourced before the stage that creates it
 deferred <- "log_variance\", \"tables\", \"render_estimator_pages.R"
-# the structural table bootstraps on its own and leaves the pipeline process enlarged,
-# so the stage and the spec comparison fork their workers before it is sourced
+# the spec comparison reuses the stage's index family, and the combined table
+# and the estimator pages read the stage's results, so all of them follow it
 spec <- "mean_equation\", \"inference\", \"spec_comparison.R"
-pins <- c(stage, spec, combined, deferred)
+pins <- c(stage, combined, deferred)
 
 stopifnot(
   !grepl("mean_equation\", \"inference\", \"run_bootstrap.R",
@@ -30,7 +30,8 @@ stopifnot(
     pipeline_text,
     fixed = TRUE
   ),
-  !is.unsorted(vapply(pins, source_offset, integer(1)), strictly = TRUE)
+  !is.unsorted(vapply(pins, source_offset, integer(1)), strictly = TRUE),
+  source_offset(stage) < source_offset(spec)
 )
 
 # the Harvey wrapper keeps the estimation and the analytic standard errors ahead
@@ -67,21 +68,13 @@ stopifnot(
     bootstrap_rows$producer,
     "inference/run_bootstrap_stage.R"
   ),
-  identical(bootstrap_rows$consumer, "log_variance/tables/render_estimator_pages.R")
-)
-
-structural_rows <- artifact_manifest[
-  artifact_manifest$id == "structural_inference_draws", ,
-  drop = FALSE
-]
-combined_script <- "log_variance/tables/render_combined_inference_table.R"
-stopifnot(
-  nrow(structural_rows) == 1L,
-  identical(structural_rows$group, "state"),
-  identical(structural_rows$basename, "structural_inference_draws.rds"),
-  identical(structural_rows$producer, combined_script),
-  identical(structural_rows$consumer, combined_script),
-  identical(structural_rows$status, "required")
+  identical(
+    strsplit(bootstrap_rows$consumer, ";", fixed = TRUE)[[1L]],
+    c(
+      "log_variance/tables/render_combined_inference_table.R",
+      "log_variance/tables/render_estimator_pages.R"
+    )
+  )
 )
 
 reporting_consumers <- c(

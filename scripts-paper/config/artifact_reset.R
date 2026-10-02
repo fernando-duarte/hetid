@@ -33,8 +33,7 @@ artifact_records_by_group <- function(group) {
   rows$id
 }
 
-# the unified stage's draws and the structural inference table's own draws
-PAPER_BOOTSTRAP_CACHE_IDS <- c("bootstrap_stage_draws", "structural_inference_draws")
+PAPER_BOOTSTRAP_CACHE_IDS <- "bootstrap_stage_draws"
 
 cleanup_bootstrap_cache <- function() {
   cleanup_artifacts_by_ids(PAPER_BOOTSTRAP_CACHE_IDS)

@@ -133,9 +133,8 @@ paper_source_once(paper_path("inference", "run_bootstrap_stage.R"))
 # the alternative specification's mean draws, on the same index family, so the
 # comparison carries intervals rather than full-sample sets alone
 paper_source_once(paper_path("mean_equation", "inference", "spec_comparison.R"))
-# The mean-over-PPML structural inference table runs its own bootstrap from the
-# prepared frames and keeps its own draw cache. It leaves this process's footprint
-# enlarged, so the two stages above fork their workers before it runs.
+# the mean-over-PPML combined table: the PPML estimator page's two panels in the
+# paper's decimal-aligned layout, so it follows the bootstrap stage
 paper_source_once(paper_path("log_variance", "tables", "render_combined_inference_table.R"))
 # Publication of every estimator page follows the stage, because each one
 # reports a bootstrap tau = 0 statistic. Only publication is deferred: the PPML

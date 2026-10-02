@@ -7,17 +7,15 @@ separate from the R package API. They call the installed `hetid` package for ide
 estimation, and bootstrap calibration.
 
 Consumers load R modules through `paper_source_once()`. Facades such as
-`identification/api.R`, `identification/profile_bounds_api.R`, `statistics/api.R`, and
-`structural_inference/api.R` load their implementation files in dependency order.
+`identification/api.R`, `identification/profile_bounds_api.R`, and `statistics/api.R` load
+their implementation files in dependency order.
 `latex/table_pipeline.R` also loads its publication and environment helpers. Support files
 are not separate pipeline entrypoints.
 
 The unified bootstrap stage distinguishes draw code from deterministic post-draw summaries.
 `inference/bootstrap_stage_code_manifest.R` defines both source inventories: draw-code edits
 invalidate its cache; edits under `inference_post/` update the presentation hash without
-discarding draws. The combined structural-inference table uses a separate calculation and
-cache, whose identity is defined in `structural_inference/identity.R`. That identity hashes
-whole control objects conservatively, so a presentation-only control edit can invalidate it.
+discarding draws.
 
 ## `identification/`
 
@@ -78,38 +76,6 @@ diagnostic cross-checks, not the source of published confidence intervals.
 | `logvar_point_summaries.R` | Log-variance tau = 0 point summaries and bootstrap-versus-analytic standard-error diagnostics |
 | `set_id_diagnostics_rows.R` | Tau = 0 diagnostics rows, display-schema padding, and normal-theory calibration cross-checks |
 
-## `structural_inference/`
-
-This calculation supplies both panels of the combined structural-inference table through
-`log_variance/tables/render_combined_inference_table.R`. It joins inputs by date on forecast
-origins, keeps the mean sample's rows, and selects variance-complete rows within each draw.
-The circular-block resamples are shared across both panels and all displayed tau values.
-PC rotations remain fixed; variance centering is recomputed within each repetition.
-
-Positive-tau mean ranges use public package box calculations. Variance ranges come from
-PPML fits at sampled points; they remain sampled coefficient ranges, distinct from full-set
-boundedness evidence. The cache retains completed draws even when publication gates fail;
-the renderer refuses unavailable cells and cells that fail publication gates.
-
-| Module | Responsibility |
-|---|---|
-| `api.R` | Loads the calculation, bootstrap, and cache modules; `rows.R` and `panels.R` are loaded separately by the renderer |
-| `settings.R` | Reads paper controls, validates published specification B, and defines forecast-origin inputs and displayed tau values |
-| `inputs.R` | Prepares date-keyed inputs and the mean/variance sample masks |
-| `arrays.R` | Resamples whole mean rows and defines panel, coefficient, and tau axes |
-| `fit.R` | Fits the mean and variance equations for the full sample or one replication |
-| `positive.R` | Computes positive-tau mean bounds, sampled PPML ranges, and witness diagnostics |
-| `failures.R` | Classifies numerical failures and records endpoint statuses and reasons |
-| `reference.R` | Builds OLS and PPML reference estimates with HAC statistics |
-| `bootstrap.R` | Runs shared circular-block draws in bounded batches, collects them through the package endpoint runner, and calibrates the results |
-| `calibration.R` | Delegates point and interval calibration to `hetid` and applies failed-draw and numerical-search publication gates |
-| `identity.R` | Defines cache identity from inputs, settings, executed code, installed package code, and runtime |
-| `cache_validate.R` | Checks cache schema, identity, axes, and draw payloads |
-| `cache.R` | Reads validated caches and verifies a temporary replacement before one rename; failures before promotion preserve the existing cache |
-| `run.R` | Reuses a valid cache or recomputes and saves the result |
-| `rows.R` | Joins package summaries, gates, reference estimates, and diagnostics into typed display rows |
-| `panels.R` | Enforces cell publication checks and formats the two table panels |
-
 ## `latex/`
 
 | Module | Responsibility |
@@ -120,7 +86,7 @@ the renderer refuses unavailable cells and cells that fail publication gates.
 | `simple_table.R` | Simple booktabs/threeparttable table with plain `l c c ...` columns for non-numeric cells (e.g. interval strings) |
 | `overleaf_scaffold.R` | Shared manuscript table fonts, column headers, and booktabs rule scaffolds |
 | `overleaf_panel_table.R` | Shared inference-panel layout, coefficient blocks, and summary rows |
-| `structural_var_inference.R` | Fills the decimal-aligned combined structural-inference table using the adjacent `structural_var_inference_template.tex` |
+| `structural_var_inference.R` | Fills the decimal-aligned combined structural-inference table using the adjacent `structural_var_inference_template.tex`, and refuses unprintable cells by name |
 | `dropbox_ignore.R` | Best-effort macOS File Provider ignore flags for generated files; sidecar removal remains enforced by the compilation helper |
 
 The combined structural-inference fragment contains the table body and layout; its

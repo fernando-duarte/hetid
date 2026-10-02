@@ -110,6 +110,35 @@ paper_structural_var_panel_rows <- function(labels, columns) {
   )
 }
 
+# cells the parsers above cannot print (a withheld statistic, a status word, a
+# half-infinite set), each named by panel, row and column
+paper_structural_var_unprintable <- function(panel, labels, title) {
+  bad <- character()
+  for (j in seq_along(panel$columns)) {
+    for (i in seq_len(length(labels) - 2L)) {
+      cell <- panel$columns[[j]][[i]]
+      statistic <- i %% 2L == 0L
+      printable <- tryCatch(
+        {
+          if (j <= 2L) {
+            paper_structural_var_estimate(cell, statistic = statistic)
+          } else {
+            paper_structural_var_interval(cell)
+          }
+          TRUE
+        },
+        error = function(e) FALSE
+      )
+      if (!printable) {
+        bad <- c(bad, sprintf(
+          "%s %s %s: %s", title, labels[[i - statistic]], panel$headers[[j]], cell
+        ))
+      }
+    }
+  }
+  bad
+}
+
 paper_structural_var_inference_table <- function(panel_a, panel_b) {
   headers <- c(
     "OLS", "$\\tau{=}0$", "$\\tau{=}0.05$", "$\\tau{=}0.1$", "$\\tau{=}0.2$"
@@ -118,6 +147,17 @@ paper_structural_var_inference_table <- function(panel_a, panel_b) {
     identical(panel_a$headers, headers),
     identical(panel_b$headers, headers)
   )
+  unprintable <- c(
+    paper_structural_var_unprintable(panel_a, panel_a$row_labels, "Panel A"),
+    paper_structural_var_unprintable(panel_b, panel_b$rows, "Panel B")
+  )
+  if (length(unprintable)) {
+    stop(
+      "The combined table cannot print these cells: ",
+      paste(unprintable, collapse = "; "),
+      call. = FALSE
+    )
+  }
   template <- readLines(paper_path(
     "support", "latex", "structural_var_inference_template.tex"
   ), warn = FALSE)

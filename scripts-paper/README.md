@@ -38,9 +38,9 @@ is created or cleaned.
 
 | Environment variable | Default | Effect |
 |---|---|---|
-| `HETID_BOOT_REPS` | `10000` | Draw count for both the structural-inference table and unified bootstrap stage; integer at least 2. |
+| `HETID_BOOT_REPS` | `10000` | Draw count for the unified bootstrap stage and the mean-specification comparison; integer at least 2. |
 | `HETID_BOOT_CORES` | Available logical cores minus 2 on macOS, minus 1 elsewhere; minimum 1 | Worker count; integer at least 1. Set 1 for serial execution. |
-| `HETID_BOOT_MODE` | `reuse` | Reuse valid draw caches; `rerun` forces both cached calculations to recompute. |
+| `HETID_BOOT_MODE` | `reuse` | Reuse a valid draw cache; `rerun` forces the stage to recompute. |
 | `HETID_ALLOW_DRAFT_RUN` | Unset | Set to `1` to acknowledge output overwrites at a non-production draw count. |
 
 ### Prerequisites and inputs
@@ -129,7 +129,7 @@ Input verification and conditional-output cleanup
   -> joint-null, joint-GMM, and residual-dynamics diagnostics
   -> EGARCH decision validation/routing and approved LAD estimation
   -> unified mean/volatility bootstrap and mean-specification comparison
-  -> combined structural-inference table (separate bootstrap and draw cache)
+  -> combined mean-over-PPML table from the stage's results
   -> estimator pages, variance-panel fragments, and the tuning appendix table
   -> bounds, fitted-volatility, region, and heteroskedasticity exhibits
   -> SDF variance bounds, quoted-number checks, and descriptive report
@@ -141,25 +141,14 @@ conditional `log_var_eq_lad`, and `log_var_eq_set_boot`. Their names and seriali
 are part of the pipeline contract. Production dependencies load through
 `paper_source_once()`; topology checks reject direct `source(paper_path(...))` calls.
 
-### Combined structural-inference table
+### Combined mean-over-PPML table
 
 [log_variance/tables/render_combined_inference_table.R](log_variance/tables/render_combined_inference_table.R)
-produces `output/tables/structural_var_inference.tex` after the unified bootstrap stage and
-the mean-specification comparison, because its run leaves the pipeline's R process enlarged
-and those two stages fork their workers from it. When its draw cache is missing or stale,
-the full calculation's own workers therefore fork from the larger process. It builds its
-own mean/PPML estimates and bootstrap through
-[support/structural_inference/api.R](support/structural_inference/api.R), without reading
-the estimators' results or the unified-stage draws. Both published specifications must be B.
-
-Rows use forecast origins, one quarter before their response quarters. The configured
-window therefore covers origins 1961 Q4–2025 Q3; variance estimation retains only mean rows
-with return-PC regressors. Mean `tau > 0` cells are attained ranges from the package box
-search. PPML cells are sampled coefficient ranges from refits at box witnesses and along
-center-to-witness segments, with 20 steps per segment by default. They are inner
-approximations, rather than established extrema over the full set. Intervals use the
-configured pointwise target. Draws are cached before publication gates are checked, so a
-failed publication gate retains them for inspection and validated reuse.
+produces `output/tables/structural_var_inference.tex` after the unified bootstrap stage. It
+holds the PPML estimator page's two panels, from the same builders and the same stage draws,
+in the paper's decimal-aligned template. That template prints finite numbers only, so a
+withheld statistic, a status word or a half-infinite set stops publication with the cell
+named. The stage has already saved its validated cache by then, so a refusal costs no draws.
 
 ### Unified bootstrap and estimator pages
 
@@ -190,20 +179,17 @@ tuning sensitivity, without intervals, is in `log_var_eq_log_projection_tuning.t
 
 ### Cache reuse
 
-`HETID_BOOT_MODE=reuse` validates each cache independently. A missing, unreadable,
-malformed, or stale cache triggers the complete corresponding calculation.
+`HETID_BOOT_MODE=reuse` validates the stage's cache. A missing, unreadable, malformed, or
+stale cache triggers the complete calculation.
 
 | Cache under `output/state/` | Reuse checks |
 |---|---|
-| `structural_inference_draws.rds` | Prepared inputs, settings, calculation code/functions, installed `hetid` namespace, package/runtime identities, schema, and whole control objects. |
 | `bootstrap_stage_draws.rds` | Stored index families, canonical inputs and draw specification, draw-code/runtime identities, payload, and schema. |
 
 The unified cache records presentation-code hashes for audit but does not use them to
 invalidate draws. It rebuilds result objects from accepted cached draws using the current
 presentation code. Its temporary cache is validated before atomic promotion, with recovery
-of a valid prior cache if validation after promotion fails. The structural-inference cache
-excludes renderers, but conservatively hashes whole controls; a reporting-control edit can
-therefore invalidate that cache.
+of a valid prior cache if validation after promotion fails.
 
 ## Endpoint geometry and conditional stages
 
@@ -266,7 +252,7 @@ Reset is a separate, destructive operation, rather than a prerequisite for a nor
 Rscript scripts-paper/reset_pipeline_state.R --keep-tracked
 ```
 
-This clears the two draw caches, other state, diagnostics, ignored table/figure/report
+This clears the draw cache, other state, diagnostics, ignored table/figure/report
 artifacts, and LaTeX sidecars. Omitting `--keep-tracked` also deletes the manifest's tracked
 publication outputs. The reset covers registered artifacts, not arbitrary files in
 `output/`. It does not change scientific configuration or input snapshots.
