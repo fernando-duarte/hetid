@@ -53,3 +53,27 @@ logvar_logols_sets <- function(
   names(sets) <- names(mean_eq$set_tables)
   sets
 }
+
+# console summary of the benchmark map: sample, crossings by tau, the
+# smallest residual at the tau = 0 point, and the coefficient table
+logvar_logols_report <- function(log_var_eq) {
+  cat(
+    "log-variance equation: N =", log_var_eq$sample$n,
+    "over", format(log_var_eq$sample$span[1]), "to",
+    format(log_var_eq$sample$span[2]),
+    "\n  crossings by tau:",
+    paste(names(log_var_eq$n_cross), log_var_eq$n_cross, sep = "=", collapse = " "),
+    "\n  min |eps_hat| at the tau = 0 point:",
+    signif(
+      log_var_eq$min_abs_eps_point,
+      PAPER_REPORTING_CONTROL$precision$console_significant
+    ),
+    "\n"
+  )
+  print(
+    log_var_eq$table,
+    digits =
+      PAPER_REPORTING_CONTROL$precision$console_significant
+  )
+  invisible(NULL)
+}
