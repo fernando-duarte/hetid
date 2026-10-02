@@ -52,13 +52,13 @@ logvar_egarch_dependency_prompt <- paste(
 logvar_egarch_decision <- list(
   schema_version = LOGVAR_EGARCH_SCHEMA_VERSION,
   gate_science_sha256 =
-    "30d3dca5eab2dbd45717b6b9a4a3ea64d215eb8c7300102d92cb4b0631535021",
+    "2cda5eb9eb8322b04df6c91771451d521be9c7668e50617ed37dfb0dd3f46da3",
   gate_record_path = LOGVAR_EGARCH_GATE_RECORD_PATH,
   sample_id = "n255_1962 Q2_2025 Q4_2ed6eb0870e8f83caa42549f38f6b19a",
   gate_lag = 4L,
   gate_alpha = 0.05,
-  gate_q = 0x1.945aaf5a43576p+2,
-  gate_p = 0x1.69b93d67b7e24p-3,
+  gate_q = 0x1.945aaf5a4356cp+2,
+  gate_p = 0x1.69b93d67b7e3cp-3,
   gate_verdict = "non_reject",
   plan_sha256 = LOGVAR_EGARCH_PLAN_SHA256,
   upstream_plans_hash = LOGVAR_EGARCH_UPSTREAM_PLANS_HASH,
@@ -71,7 +71,7 @@ logvar_egarch_decision <- list(
     dependency = "not_asked"
   ),
   decision_provenance = "not_asked_default",
-  decided_at_utc = "2026-08-10T23:48:10Z"
+  decided_at_utc = "2026-10-02T11:16:29Z"
 )
 stopifnot(identical(
   names(logvar_egarch_decision),
