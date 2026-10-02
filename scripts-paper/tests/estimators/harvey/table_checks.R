@@ -66,6 +66,18 @@ check("Harvey notes carry the MLE and zero-safe disclosures", {
     !grepl("appended after that ordered pair", notes, fixed = TRUE)
 })
 
+# the page-notes helper reads the SE globals config/analysis.R defines
+logvar_harvey_se_type <- NULL
+logvar_harvey_se_hac_lags <- NULL
+check("Harvey page notes state the registered search budgets", {
+  notes <- paste(logvar_harvey_page_notes(hvt_harvey, 0.05), collapse = " ")
+  grepl("five-start sensitivity re-polish", notes, fixed = TRUE) &&
+    grepl(sprintf("capped at %d points", paper_logvar_budget("harvey", "grid_cap")),
+      notes,
+      fixed = TRUE
+    )
+})
+
 hvt_se_frame <- function(se_col) {
   data.frame(
     coef = hvt_coef, expected = se_col, observed = se_col, opg = se_col,

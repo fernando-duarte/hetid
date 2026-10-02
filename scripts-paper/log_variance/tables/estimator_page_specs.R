@@ -40,11 +40,12 @@ logvar_estimator_page_required <- function(id) {
 }
 
 # The Harvey page notes: the panel notes with the search budgets the Harvey map
-# ran at
+# ran at, read from the registered budget policy (the Harvey control list
+# carries no budgets)
 logvar_harvey_page_notes <- function(harvey, tau_baseline) {
   build_harvey_panel_notes(
-    harvey, tau_baseline, LOGVAR_HARVEY_CONTROL$grid_cap,
-    LOGVAR_HARVEY_CONTROL$fit_budget,
+    harvey, tau_baseline, paper_logvar_budget("harvey", "grid_cap"),
+    paper_logvar_budget("harvey", "fit_budget"),
     se_type = logvar_harvey_se_type,
     se_hac_lags = logvar_harvey_se_hac_lags,
     set_endpoint_inference = TRUE
