@@ -16,14 +16,10 @@ PAPER_REPORTING_CONTROL <- list(
     prewhite = FALSE,
     adjust = FALSE
   ),
-  ppml = list(
-    se_type = "hac",
-    hac_lags = 4L
-  ),
-  harvey = list(
-    se_type = "hac",
-    hac_lags = 4L
-  ),
+  ppml = list(se_type = "hac", hac_lags = 4L),
+  harvey = list(se_type = "hac", hac_lags = 4L),
+  log_plus = list(se_type = "hac", hac_lags = 4L),
+  log_fuller = list(se_type = "hac", hac_lags = 4L),
   cells = list(
     log_variance = list(
       digits = 3L,

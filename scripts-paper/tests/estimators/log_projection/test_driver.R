@@ -27,6 +27,7 @@ check <- .test$check
 check(
   "sourcing the driver offline defines helpers and runs nothing",
   is.function(logvar_log_projection_sets) &&
+    is.function(logvar_log_projection_se_columns) &&
     !exists("log_var_eq_log_plus") && !exists("log_var_eq_log_projection_tuning")
 )
 

@@ -6,6 +6,9 @@ paper_source_once(paper_path("log_variance", "engine", "api.R"))
 paper_source_once(paper_path("log_variance", "inference", "standard_error_estimators.R"))
 paper_source_once(paper_path("log_variance", "estimators", "ppml", "standard_errors.R"))
 paper_source_once(paper_path("log_variance", "estimators", "harvey", "standard_errors.R"))
+paper_source_once(paper_path(
+  "log_variance", "estimators", "log_projection", "standard_errors.R"
+))
 paper_source_once(paper_path("tests", "support", "harness.R"))
 .test <- paper_test_harness()
 check <- .test$check
@@ -92,6 +95,53 @@ for (est in c("ppml", "harvey")) {
     identical(unavailable$reference, got$reference) &&
       identical(unavailable$point$coef, tab$coef) &&
       all(is.na(as.matrix(unavailable$point[-1])))
+  })
+}
+# The log projections delegate both columns to hetid at the reference and point
+# news vectors, keyed by the package's variant names
+set.seed(5)
+lp_n <- 40L
+lp_z <- cbind(1, stats::rnorm(lp_n))
+lp_news <- cbind(n1 = stats::rnorm(lp_n), n2 = stats::rnorm(lp_n))
+lp_w1 <- drop(stats::lm.fit(lp_z, drop(lp_news %*% c(0.4, -0.2)) +
+  stats::rnorm(lp_n))$residuals)
+lp_w2 <- stats::lm.fit(lp_z, lp_news)$residuals
+colnames(lp_w2) <- colnames(lp_news)
+lp_prep <- hetid::prepare_log_projection(
+  lp_w1, lp_w2, cbind(l.pc1 = stats::rnorm(lp_n)), seq_len(lp_n), seq_len(lp_n)
+)
+lp_labels <- rownames(lp_prep$projection)
+lp_ctx <- list(b_ref = c(0.3, -0.1), b_point = c(0.4, -0.2), point_feasible = TRUE)
+for (method in c("log_plus", "log_fuller")) {
+  lp_mapped <- list(
+    estimator = list(
+      coef_labels = lp_labels,
+      metadata = list(fit_control = list(method = method))
+    ),
+    multiplier = 1, point = stats::setNames(c(0.1, 0.2), lp_labels)
+  )
+  lp_frame <- function(b) {
+    logvar_se_frame(
+      hetid::compute_log_projection_vcov(lp_prep, b, method, 1, 2L), lp_labels
+    )
+  }
+  lp_got <- logvar_log_projection_se_columns(lp_mapped, lp_prep, lp_ctx, 2L)
+  check(paste(method, "delegates reference and point frames to hetid"), {
+    identical(lp_got$reference, lp_frame(lp_ctx$b_ref)) &&
+      identical(lp_got$point, lp_frame(lp_ctx$b_point)) &&
+      identical(lp_got$reference$coef, lp_labels) &&
+      identical(
+        names(hetid::compute_log_projection_vcov(lp_prep, lp_ctx$b_ref, method)),
+        LOGVAR_LOG_PROJECTION_SE_TYPES
+      )
+  })
+  lp_off <- logvar_log_projection_se_columns(
+    lp_mapped, lp_prep, utils::modifyList(lp_ctx, list(point_feasible = FALSE)), 2L
+  )
+  check(paste(method, "reports an infeasible point as an all-NA frame"), {
+    identical(lp_off$reference, lp_got$reference) &&
+      identical(lp_off$point$coef, lp_labels) &&
+      all(is.na(as.matrix(lp_off$point[-1])))
   })
 }
 .test$finish()

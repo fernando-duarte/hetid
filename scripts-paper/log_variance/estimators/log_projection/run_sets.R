@@ -1,9 +1,10 @@
 # Regularized log projections of squared residuals (registry ids log_plus and
 # log_fuller, the hetid evaluate_log_projection methods) mapped over the mean
 # equation's warm-refined display-tau news sets through the shared set engine:
-# reference and Lewbel-point columns, a full-lattice primary scan, an
-# independent five-start audit, nesting demotion, the tuning sensitivity at the
-# baseline slack, and the endpoint-diagnostics CSV. No inference. The modules are
+# reference and Lewbel-point columns with analytic SEs, a full-lattice primary
+# scan, an independent five-start audit, nesting demotion, the tuning
+# sensitivity at the baseline slack, and the endpoint-diagnostics CSV. The
+# bootstrap inference runs later, in the unified stage. The modules are
 # sourced here so run_pipeline.R gains one line; run after the Harvey stage and
 # before the residual diagnostics, which read each estimator's point fit.
 
@@ -22,6 +23,9 @@ paper_source_once(paper_path(
   "log_variance", "estimators", "log_projection", "diagnostics.R"
 ))
 paper_source_once(paper_path("log_variance", "estimators", "log_projection", "tuning.R"))
+paper_source_once(paper_path(
+  "log_variance", "estimators", "log_projection", "standard_errors.R"
+))
 
 # Guarded orchestration: runs only with the upstream benchmark objects present, so
 # sourcing this offline (the estimator test suites) defines the helpers only.
@@ -67,6 +71,10 @@ if (exists("log_var_eq") && exists("set_id_mean_eq") && exists("mean_eq_bounds_t
         endpoints = logvar_log_projection_endpoint_rows(
           lp_mapped, lp_ctx$prep, lp_ctx
         ),
+        se = logvar_log_projection_se_columns(
+          lp_mapped, lp_ctx$prep, lp_ctx,
+          PAPER_REPORTING_CONTROL[[lp_id]]$hac_lags
+        ),
         scale = list(
           n_mean = attr(lp_ctx$prep, "n_mean"), n_vol = attr(lp_ctx$prep, "n_vol"),
           s_hat = exp(lp_ctx$prep$log_scale_common / 2),
@@ -90,6 +98,11 @@ if (exists("log_var_eq") && exists("set_id_mean_eq") && exists("mean_eq_bounds_t
       census_label = "census comparability (benchmark n_cross by tau)"
     )
     logvar_print_audit_summary(lp_mapped$audit, "audit")
+    logvar_se_report(
+      lp_result$se, paper_logvar_estimator_spec(lp_id)$display_name,
+      LOGVAR_LOG_PROJECTION_SE_TYPES, PAPER_REPORTING_CONTROL[[lp_id]]$se_type,
+      PAPER_REPORTING_CONTROL[[lp_id]]$hac_lags, c("hac", "naive")
+    )
   }
   lp_tuning <- logvar_log_projection_tuning(
     lp_maps, lp_ctx, set_id_mean_eq$tau_baseline
