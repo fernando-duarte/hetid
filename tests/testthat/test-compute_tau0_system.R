@@ -109,18 +109,8 @@ test_that("x contract violations error loudly", {
   )
 })
 
-# Paper-equivalence pin. These values come from the package chain and were
-# verified equal (tolerance 1e-10) to the paper pipeline's own recipe -- the
-# inline replication of estimate_set_id_system (scripts-paper/support/
-# identification/identified_set_bootstrap.R:20-70) feeding
-# solve_point_identification() -- against scripts-paper at HEAD
-# b34044ac67ee38e133e264b51da386a05a951b7e on 2026-08-15, by the procedure in
-# docs/verification/tau0_port_equivalence.R (local, git-ignored; re-run it to
-# re-verify). sha256 of the paper files under support/identification that own
-# the point solve:
-#   functional_bounds.R: 4271c77274e03f4fbfba2d9cf60f5e20d74602e0b771757bf43abefb4644a2be
-#   quadratic_evaluation.R: 0b090ad3d42d2efe249ab1b3225b495560eebc3edbfc02de0e2e10428d4ca477
-# The test itself never sources the paper pipeline
+# Pin: these tau=0 points matched the paper's point solve to 1e-10 at scripts-paper
+# b34044ac (2026-08-15); the test never sources the paper pipeline
 test_that("pinned paper-equivalence fixture: the tau=0 point at the default seed", {
   d <- simulate_tau0_dgp()
 

@@ -24,7 +24,6 @@ test_that("price-news kernel works for maturity 12", {
   expect_length(price_news_12, nrow(test_env$yields) - 1)
   expect_true(all(is.finite(price_news_12) | is.na(price_news_12)))
 
-  # For maturity 12, the price news should have mean near zero
   mean_news <- mean(price_news_12, na.rm = TRUE)
   expect_lt(abs(mean_news), 0.01,
     label = "Price news mean should be small for maturity 12"

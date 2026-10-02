@@ -121,10 +121,8 @@ test_that("the bound drops an Inf realized leg (is.finite, not just NA)", {
 })
 
 test_that("both arms overflowing on a kept row gives Inf, not NA", {
-  # y12 = +Inf at one interior date leaves gap = -e^{n_hat} finite, so the row
-  # is kept, but u = -Inf makes q = +Inf (q arm -> Inf) and mean(u^4) = Inf
-  # makes the component arm Inf too: the documented contract is Inf on a
-  # nonempty sample, never NA and never a silent row drop
+  # y12 = +Inf keeps the row (gap = -e^{n_hat} finite) but makes q and mean(u^4) Inf;
+  # contract: Inf on a nonempty sample, never NA and never a silent row drop
   y12_pct <- c(1, 2, 3, 4, 5, 6)
   y12_pct[3] <- Inf
   n <- length(y12_pct)

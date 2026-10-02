@@ -55,9 +55,9 @@ test_that("outer bounds contain sampled members and refinement only tightens", {
   expect_true(all(refined$lower >= common$lower) && all(refined$upper <= common$upper))
   set.seed(1)
   pts <- matrix(runif(3e5, -6, 6), ncol = 3)
-  values <- sapply(seq_along(sys$A_i), function(i) {
+  values <- vapply(seq_along(sys$A_i), function(i) {
     rowSums((pts %*% sys$A_i[[i]]) * pts) + drop(pts %*% sys$b_i[[i]]) + sys$c_i[i]
-  })
+  }, numeric(nrow(pts)))
   inside <- pts[apply(values <= 0, 1, all), , drop = FALSE]
   expect_gt(nrow(inside), 100)
   expect_true(all(sweep(inside, 2, refined$lower) >= 0))

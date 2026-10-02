@@ -1,33 +1,5 @@
-# Paper-equivalence pin for the Harvey port. The coefficient vector, the
-# iteration count, and all five covariance matrices come from the package chain
-# and were verified equal (tolerance 1e-10, on every field the two sides share:
-# coef, warm_start, objective, score_norm, convergence_code, n_zero_response,
-# rank_x_pos, rcond_info, n_halvings, and the start ladder) to the paper
-# pipeline's logvar_harvey_fit_response / logvar_harvey_fit / logvar_harvey_vcov
-# against scripts-paper at HEAD eaa9ad3bff80978b9b26b6e73079af44fd35e0b3 on
-# 2026-08-15, by the procedure in docs/verification/harvey_port_equivalence.R
-# (local, git-ignored; re-run it to re-verify). Full matrices, dimnames
-# included: a diagonal-only pin would let off-diagonal drift pass. The paper
-# files that own the fit and the SEs, with sha256:
-#   engine/contracts.R:
-#     c3cd07a4b9ca4b33c55da2038ac5bc673a73e101d37158a069c905ba3f57efbd
-#   estimators/controls.R:
-#     cc336681b4f2a62257020ef236d2ccdd750d24ade214a72d5faf52aaab2adc55
-#   harvey/likelihood.R:
-#     63b88226b59c4eca08396bff7150ec8250ed4450b98793d5345205b3f66c3bbf
-#   harvey/solver_primitives.R:
-#     1b1d9f9281268e0a941e54bd112093636208d0796f331ac837793cbc15beeeb9
-#   harvey/solver_result.R:
-#     986dca8b672ae76d503756b1efa054b866b4b878933effaa2fa88d12349da9e5
-#   harvey/solver_acceptance.R:
-#     643ae7db824250020e23643a7b2d8420e329307e60ef798d8df57b3f1fe11af3
-#   harvey/solver.R:
-#     51ce2cfded0af7a779691fbd2228bab762869b8ea879ec217f6af17562ade022
-#   inference/standard_error_estimators.R:
-#     d1c71657f788ed9fc6cb1f7fe50e308fb1d427450c3cbe90de857f77917d2ffb
-#   harvey/standard_errors.R:
-#     c4e9ecafa50c7f98378e8e414a064c11f1ccf822cb17091e7587064c68e25a25
-# The test itself never sources the paper pipeline
+# pinned to the paper pipeline's Harvey fit and vcov (equal to 1e-10, 2026-08-15); full
+# matrices so off-diagonal drift fails; the test never sources the paper pipeline
 test_that("pinned paper-equivalence fixture: harvey coef and vcov at the default seed", {
   d <- simulate_logvar_data()
   fit <- fit_log_variance(d$y, d$x, estimator = "harvey")

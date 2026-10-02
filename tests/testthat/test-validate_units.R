@@ -1,5 +1,3 @@
-# Tests for percentage-point yield-unit validation guardrail
-
 test_that("validate_percent_units rejects non-tabular input", {
   expect_error(
     validate_percent_units(1:10),

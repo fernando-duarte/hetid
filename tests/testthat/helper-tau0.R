@@ -16,17 +16,14 @@ simulate_tau0_dgp <- function(t_obs = 400, seed = 42) {
   list(y1 = y1, y2 = y2, x = x, x_var = x_var, z = z, theta_true = theta_true)
 }
 
-# Three-news variant for the identified-set box. Two news columns leave no
-# gridded plane at all, so the box search needs three to exercise the sweep.
-# collinear = TRUE shares one factor across the news columns, which makes the
-# Q stack ill-conditioned and the set a thin diagonal tube -- the geometry an
-# axis-aligned grid misses and the search frame exists to handle
+# Three-news box DGP: two news columns leave no gridded plane, so the sweep needs three
 simulate_box_dgp <- function(collinear = FALSE, t_obs = 200, seed = 42) {
   set.seed(seed)
   x <- cbind(x1 = rnorm(t_obs), x2 = rnorm(t_obs))
   z <- rnorm(t_obs)
   theta_true <- c(0.8, -0.5, 0.3)
   shared <- rnorm(t_obs)
+  # collinear: shared factor, ill-conditioned Q stack, thin diagonal tube an axis grid misses
   raw <- if (collinear) {
     cbind(
       shared + 0.15 * rnorm(t_obs), shared + 0.15 * rnorm(t_obs),

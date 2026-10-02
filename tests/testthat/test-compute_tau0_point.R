@@ -49,11 +49,8 @@ test_that("non-finite systems are misuse, not a no-point outcome", {
   )
 })
 
-# The maturities axis satisfies M <= n_components in every valid container
-# (maturities index w2 columns), so a full-rank stacked system is square and
-# necessarily consistent: the paper's residual-consistency gate is retained
-# as ported defensive depth but is unreachable through validated containers
-# and carries no dedicated test here
+# M <= n_components makes a full-rank stack square and consistent in exact arithmetic
+# the solver also checks the numerical residual against tol
 
 test_that("non-components input raises hetid_error_bad_argument", {
   expect_error(compute_tau0_point(list(Q_i = list(), L_i = numeric())),

@@ -1,5 +1,3 @@
-# Tests for the skip-and-warn guards in process_w2_maturity
-
 make_w2_guard_inputs <- function(n = 30, seed = 99) {
   set.seed(seed)
   list(

@@ -1,6 +1,3 @@
-# Harvey log-variance worker: the start ladder, the first-order condition it solves, the
-# scaled-response guards, and zero-response rows as first-class. Unexported, so via hetid:::
-
 test_that("a clean simulated response fits end to end", {
   d <- simulate_logvar_data()
   fit <- fit_log_variance(d$y, d$x, estimator = "harvey")

@@ -1,10 +1,5 @@
-# Contract, alignment, and edge tests for compute_news_q_bound, the two-leg
-# first-order-cancelled (Minkowski) SDF-news variance bound. The manual spec
-# reconstruction news_q_manual lives in helper-expected-sdf-bounds.R.
-#
-# Fixture convention: with y24 = y36 = tp* = 0 and step = 12, n_hat(24) = 0,
-# n_hat(12) = y12/100, and the realized log price is x_t = -y12[t+s]/100, so
-# every leg is hand-computable from the y12 vector alone
+# fixture: y24 = y36 = tp* = 0, step = 12 give n_hat(24) = 0, n_hat(12) = y12/100 and
+# realized x_t = -y12[t+s]/100, so every leg is hand-computable from y12 alone
 
 test_that("compute_news_q_bound matches the manual Minkowski formula at s = 2", {
   # i = 2 * step exercises a multi-period lead with nonlinear row values, so a

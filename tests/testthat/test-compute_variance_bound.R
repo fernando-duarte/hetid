@@ -47,7 +47,6 @@ test_that("variance bound formula verification", {
   k_hat_48 <- compute_k_hat(test_env$yields, test_env$term_premia, i = i)
   k2_hat_48 <- compute_k2_hat(test_env$yields, test_env$term_premia, i = i)
 
-  # Verify formula: variance_bound = 0.25 * c_hat * (k_hat + k2_hat)
   expected_bound <- 0.25 * c_hat_48 * (k_hat_48 + k2_hat_48)
 
   expect_equal(var_bound_48, expected_bound,

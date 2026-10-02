@@ -1,5 +1,3 @@
-# Tests for the shared vector maturity validator and the scalar primitive
-
 test_that("validate_maturities accepts a valid vector invisibly", {
   expect_invisible(validate_maturities(c(1, 2, 3), max_value = 5))
   expect_true(validate_maturities(c(1, 2, 3), max_value = 5))

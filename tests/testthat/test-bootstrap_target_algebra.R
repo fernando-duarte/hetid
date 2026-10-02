@@ -83,11 +83,8 @@ test_that("paired endpoint root algebra retains independent oracles", {
     et_flat$c_p_upper == et_cs, identical(et_flat$interior, FALSE)
   )
 
-  # the adversarial interior optimum
-  # 84 draws with no inward deviation, 8 that only threaten the lower endpoint and
-  # 8 that only threaten the upper one, with unit credits on both sides. The
-  # conservative order statistic is exactly zero on the coarse grid and 1/8 at
-  # lambda equal to 1/8, so only a certified search over the continuum finds it
+  # adversarial interior optimum: 84 zero draws, 8 lower-only, 8 upper-only, unit credits
+  # order statistic is 0 on the coarse grid, 1/8 at lambda = 1/8; only certified search finds it
   et_adv_l <- c(rep(0, 84L), rep(0.25, 8L), rep(0, 8L))
   et_adv_u <- c(rep(0, 84L), rep(0, 8L), rep(1, 8L))
   et_adv_cs <- bootstrap_containment_critical(et_pool, et_alpha, et_adv_l, et_adv_u)

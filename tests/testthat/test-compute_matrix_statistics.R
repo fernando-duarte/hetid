@@ -102,7 +102,7 @@ test_that("compute_matrix_statistics produces symmetric S_i^(2)", {
 
   result <- compute_matrix_statistics(w1, w2)
 
-  # S_i^(2) should be symmetric since it's (W_2^{circ i})^T * W_2^{circ i}
+  # S_i^(2) is a centered 1/T covariance matrix of W_2^{circ i}, hence symmetric
   for (i in 1:I) {
     s_i_2_mat <- result$s_i_2[[i]]
     expect_true(isSymmetric(s_i_2_mat))

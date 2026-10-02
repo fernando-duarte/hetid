@@ -1,6 +1,3 @@
-# Tests for the post-read schema guard: stale or corrupt caches fail
-# at load with a structured error naming the offending file
-
 test_that("a frame without a date column fails schema validation", {
   expect_error(
     validate_acm_schema(data.frame(x = 1), "some/path.csv"),

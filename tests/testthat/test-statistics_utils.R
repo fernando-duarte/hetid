@@ -1,5 +1,3 @@
-# Tests for the variance positivity diagnostic
-
 make_diagnostic_inputs <- function(n = 200, seed = 123) {
   set.seed(seed)
   list(

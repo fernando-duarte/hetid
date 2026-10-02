@@ -1,5 +1,5 @@
-# download_term_premia and load_term_premia with mocked network access and a
-# throwaway per-user cache dir (no real downloads, no writes outside tempdir)
+# load_term_premia against a mocked data path in a temp working dir; downloads mocked,
+# no network, no writes outside tempdir
 
 test_that("load_term_premia auto-downloads when file missing", {
   withr::with_tempdir({

@@ -1,6 +1,3 @@
-# Profiling the log-variance coefficients over an identified set: parity with the single-b fit,
-# warm starts advancing only on success, fail-closed paths reporting NA not a narrowed range
-
 profile_box <- function(tau = 0.05, n_grid = 11L) {
   d <- simulate_box_dgp()
   fit <- compute_tau0_system(d$y1, d$y2, d$x, d$z)

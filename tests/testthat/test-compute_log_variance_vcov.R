@@ -5,8 +5,8 @@ test_that("naive vcov matches the manual dispersion oracle at fit$coef", {
   d <- simulate_logvar_data()
   fit <- fit_log_variance(d$y, d$x)
   vc <- compute_log_variance_vcov(fit)
-  # manual naive oracle AT fit$coef via the solve() path — a glm refit would
-  # converge to slightly different coefficients and test the wrong point
+  # manual naive oracle at fit$coef via solve(); a glm refit would converge to
+  # slightly different coefficients and test the wrong point
   x_mat <- cbind(1, d$x)
   mu <- drop(exp(x_mat %*% fit$coef))
   r <- d$y - mu
@@ -78,23 +78,8 @@ test_that("the variant list is keyed and labelled off the fit", {
   }
 })
 
-# Paper-equivalence pin. The coefficient vector and all four covariance
-# matrices come from the package chain and were verified equal (tolerance
-# 1e-10) to the paper pipeline's logvar_ppml_fit_response / logvar_ppml_vcov
-# against scripts-paper at HEAD b34044ac67ee38e133e264b51da386a05a951b7e on
-# 2026-08-15, by the procedure in docs/verification/tau0_port_equivalence.R
-# (local, git-ignored; re-run it to re-verify). Full matrices, dimnames
-# included: a diagonal-only pin would let off-diagonal drift pass. The four
-# paper files that own the fit and the SEs are
-# log_variance/inference/standard_error_estimators.R and
-# log_variance/estimators/ppml/{standard_errors,fit,acceptance}.R, with sha256:
-#   standard_error_estimators.R: d1c71657f788ed9fc6cb1f7fe50e308fb1d427450c3cbe90de857f77917d2ffb
-#   standard_errors.R: cd9860e0e6b5da2a10cfc8061a9823c694927968d92c8b39d15758d986d4f9f4
-#   fit.R: 732653a3f8bda50d0acde5def18b1243733e083b1269e9b2ae82b091c8b75a0f
-#   acceptance.R: 45cc27baf799c2d84a5f4d936e2290743f36bfa1867adb1150519ca46eca63b9
-# After consolidation, the paper covariance bodies delegate to hetid. These
-# hashes remain historical; current adapter tests provide migration coverage.
-# The test itself never sources the paper pipeline
+# Pin: coef and all four vcov matrices matched the paper PPML chain to 1e-10 at
+# scripts-paper b34044ac; full matrices, so off-diagonal drift cannot pass
 test_that("pinned paper-equivalence fixture: ppml coef and vcov at the default seed", {
   d <- simulate_logvar_data()
   fit <- fit_log_variance(d$y, d$x)

@@ -30,8 +30,6 @@ test_that("get_data_file_path rejects empty filename", {
 })
 
 test_that("get_data_file_path still resolves a normal filename", {
-  # Output-identity guard for the valid path: a plain name still resolves to a
-  # single path ending in that filename
   path <- get_data_file_path("foo.csv")
   expect_type(path, "character")
   expect_length(path, 1)

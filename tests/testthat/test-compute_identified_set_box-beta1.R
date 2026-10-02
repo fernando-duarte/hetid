@@ -122,9 +122,8 @@ test_that("a numerically zero loading leaves its coefficient a point", {
 })
 
 test_that("rescaling a regressor or a news column leaves the snap alone", {
-  # An x column a thousand times larger carries a loading a thousand times smaller, a genuine
-  # loading whose interval rescales; a y2 column does so to one beta2r row, which row-relative
-  # tolerance ignores
+  # x1 scaled by 1000 carries a genuine 1000x smaller loading whose interval rescales;
+  # scaling a y2 column moves one beta2r row, which row-relative tolerance ignores
   d <- simulate_box_dgp()
   base <- compute_identified_set_box(box_fit(), tau = 0.05, n_grid = 11L)
   x <- d$x

@@ -24,8 +24,7 @@ test_that("download_term_premia errors on download failure", {
 })
 
 test_that("nyfed cache is written to a temp file, then renamed into place", {
-  # Temp+rename (mirrors the github source): a partial write never half-overwrites
-  # the cache without deleting the existing target first
+  # a partial write never touches the existing cache (same temp + rename as github)
   skip_if_not_installed("readxl")
   user_root <- withr::local_tempdir()
   withr::local_envvar(R_USER_DATA_DIR = user_root)

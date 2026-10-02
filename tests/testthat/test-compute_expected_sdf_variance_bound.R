@@ -1,8 +1,5 @@
-# Contract and formula tests for compute_expected_sdf_variance_bound: the
-# reported bound is min{(1/4)*C*K, var_N(q)} on the estimator's paired mask.
-# Edge and boundary cases live in the _edges sibling; the manual
-# reconstructions (gap_series, q_series, component_arm, var_n,
-# esdf_bound_manual) are in helper-expected-sdf-bounds.R
+# Contract and formula tests: bound = min{(1/4)*C*K, var_N(q)} on the paired mask
+# Edge cases live in the _edges sibling; manual rebuilds in helper-expected-sdf-bounds.R
 
 test_that("compute_expected_sdf_variance_bound returns a single non-negative value", {
   test_env <- setup_standard_test_env()
@@ -46,10 +43,8 @@ test_that("the q arm wins on real data at every tested horizon", {
 })
 
 test_that("the component arm wins on a fat-tailed symmetric fixture", {
-  # y24 = y36 = tp = 0 => n_hat(24) = 0, envelope C = 1, m_step = 1; the
-  # alternating y12 = -/+300 pattern makes u = +/-3 over the paired set, where
-  # var(q) = var(e^u - 1 - u) ~ 49.3 exceeds the component (1/4)*mean(u^4) =
-  # 20.25, so the min must select the component arm
+  # y24 = y36 = tp = 0 => n_hat(24) = 0, C = 1, m_step = 1; y12 = -/+300 gives u = +/-3,
+  # so var(q) ~ 49.3 exceeds the component (1/4)*mean(u^4) = 20.25 and the min picks it
   y12_pct <- c(0, 0, -300, 300, -300, 300)
   n <- length(y12_pct)
   zeros <- numeric(n)
@@ -138,8 +133,7 @@ test_that("compute_expected_sdf_variance_bound honors a non-default step", {
 
 test_that("q removes the first-order term: var(q) is far below var(g)", {
   test_env <- setup_standard_test_env()
-  # The projection arm is gone from the min, but the property motivating the q arm still guards
-  # the construction: the linear term cancels, so var(q) is orders of magnitude below var(g)
+  # the linear term cancels in q, so var(q) sits orders of magnitude below var(g)
   for (i in c(12, 60, 108)) {
     vg <- var_n(gap_series(test_env$yields, test_env$term_premia, i = i))
     vq <- var_n(q_series(test_env$yields, test_env$term_premia, i = i))

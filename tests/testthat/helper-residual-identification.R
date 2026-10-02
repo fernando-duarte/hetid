@@ -36,7 +36,7 @@ residual_chain_fixture <- function() {
 }
 
 residual_chain_news <- function(data, i, news_step) {
-  # This fixture covers horizons greater than one news period.
+  # covers horizons above one news period (i > news_step)
   year_units <- HETID_CONSTANTS$MATURITY_UNITS_PER_YEAR
   percent <- HETID_CONSTANTS$PERCENT_TO_DECIMAL
   level <- function(horizon) {
