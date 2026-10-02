@@ -173,6 +173,10 @@ news-error variance bound
 \item \code{\link{compute_log_variance_se}()}: Standard-error frame for a log-variance fit
 \item \code{\link{LOG_VARIANCE_CONTROL}}: PPML estimation numerical controls
 \item \code{\link{LOG_VARIANCE_HARVEY_CONTROL}}: Harvey estimation numerical controls
+\item \code{\link{log_projection_matrix}()}: QR-based OLS operator of the volatility design
+\item \code{\link{prepare_log_projection}()}: Fixed inputs for log projections
+\item \code{\link{evaluate_log_projection}()}: Log projection coefficients and Jacobian at b
+\item \code{\link{LOG_PROJECTION_CONTROL}}: Log-projection tuning and tolerances
 }}
 
 \subsection{Identified-Set Search Functions:}{
