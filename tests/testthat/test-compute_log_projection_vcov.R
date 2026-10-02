@@ -57,7 +57,7 @@ test_that("zero lags reduce HAC to HC0; failures and overflow are all-NA", {
   expect_identical(v0$hac, v0$hc0)
   all_na <- function(v) all(vapply(v, function(m) all(is.na(m)), logical(1)))
   zf <- lp_zero_fixture()
-  zp <- prepare_log_projection(zf$w1, zf$w2, zf$x_var, zf$mean_ids, zf$vol_ids)
+  zp <- lp_prep(zf)
   zero_fit <- compute_log_projection_vcov(zp, 0, "log")
   expect_true(all_na(zero_fit))
   expect_identical(names(zero_fit), LOG_VARIANCE_CONTROL$SE_TYPES)
@@ -87,7 +87,7 @@ test_that("covariance guards raise their documented conditions", {
   )
 })
 
-test_that("the covariance's response reproduces the published coefficients", {
+test_that("oracle responses reproduce the evaluator's regularized coefficients", {
   fx <- lp_fixture()
   prep <- lp_prep(fx)
   responses <- lp_vcov_responses(prep, fx)

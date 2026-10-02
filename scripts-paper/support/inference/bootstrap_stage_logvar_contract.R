@@ -15,14 +15,13 @@ bootstrap_stage_logvar_complete <- function(dat, spec) {
 
 bootstrap_stage_logvar_rows <- function(dat, est, spec, key_col) {
   bootstrap_stage_logvar_contract(spec)
-  stopifnot(key_col %in% names(dat), all(spec$pc_cols %in% names(dat)))
-  pc_data <- dat[, spec$pc_cols, drop = FALSE]
+  stopifnot(key_col %in% names(dat))
   complete <- bootstrap_stage_logvar_complete(dat, spec)
   rows <- list(
     w1 = est$w1[complete],
     w2 = est$w2[complete, , drop = FALSE],
     key = dat[[key_col]][complete],
-    pc_data = pc_data[complete, , drop = FALSE]
+    pc_data = dat[complete, spec$pc_cols, drop = FALSE]
   )
   stopifnot(identical(names(rows), spec$complete_case_policy$subset_roles))
   rows

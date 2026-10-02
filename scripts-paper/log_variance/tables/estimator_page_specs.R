@@ -1,9 +1,9 @@
 # Page specifications for the extension estimators of the per-estimator
 # document (render_estimator_pages.R): panel notation, cell policy, analytic SE
-# choice, panel title, caption subject, and notes builder per registry id. The page renderer loops
-# over the registry's extension table ids and reads each spec here, so adding an
-# estimator page is one entry, not a new hand-written block. Definitions only;
-# sourced by render_estimator_pages.R.
+# choice, panel title, caption subject, and notes builder per registry id. The
+# page renderer loops over the registry's extension table ids and reads each
+# spec here, so adding an estimator page is one entry, not a new hand-written
+# block. Definitions only; sourced by render_estimator_pages.R.
 
 paper_source_once(paper_path("log_variance", "tables", "estimator_panel.R"))
 paper_source_once(paper_path("log_variance", "tables", "lad_panel_notes.R"))

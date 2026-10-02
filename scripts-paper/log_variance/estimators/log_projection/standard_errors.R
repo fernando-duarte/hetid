@@ -12,25 +12,18 @@ paper_source_once(paper_path(
 
 LOGVAR_LOG_PROJECTION_SE_TYPES <- hetid::LOG_VARIANCE_CONTROL$SE_TYPES
 
-logvar_log_projection_se_frame <- function(prep, method, multiplier, b,
-                                           coef_labels, hac_lags) {
-  if (is.null(b)) {
-    return(logvar_se_na_frame(coef_labels, LOGVAR_LOG_PROJECTION_SE_TYPES))
-  }
-  logvar_se_frame(
-    hetid::compute_log_projection_vcov(
-      prep, unname(b), method, multiplier, hac_lags
-    ),
-    coef_labels
-  )
-}
-
 logvar_log_projection_se_columns <- function(mapped, prep, ctx, hac_lags) {
   est <- mapped$estimator
   frame <- function(b) {
-    logvar_log_projection_se_frame(
-      prep, est$metadata$fit_control$method, mapped$multiplier, b,
-      est$coef_labels, hac_lags
+    if (is.null(b)) {
+      return(logvar_se_na_frame(est$coef_labels, LOGVAR_LOG_PROJECTION_SE_TYPES))
+    }
+    logvar_se_frame(
+      hetid::compute_log_projection_vcov(
+        prep, unname(b), est$metadata$fit_control$method, mapped$multiplier,
+        hac_lags
+      ),
+      est$coef_labels
     )
   }
   point_ok <- isTRUE(ctx$point_feasible) && all(is.finite(mapped$point))

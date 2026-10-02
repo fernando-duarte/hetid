@@ -89,7 +89,6 @@ tt_boot <- function(statistic) {
     point_t = list(log_plus = tt_point_t(statistic))
   )
 }
-tt_cells <- function(parts) unlist(parts$columns)
 tt_parts <- logvar_extension_page_parts("log_plus", tt_result, 0.05, tt_boot(c(-6, 1)))
 check(
   "the regularized Panel B carries analytic, bootstrap, and envelope rows",
@@ -110,11 +109,11 @@ check(
     any(tt_unavailable$columns[[2L]] == PAPER_NA_TOKEN) &&
     !any(grepl("^\\(", tt_unavailable$columns[[2L]]))
 )
-tt_lad <- logvar_extension_page_parts("lad", tt_result, 0.05, NULL)
+tt_lad <- unlist(logvar_extension_page_parts("lad", tt_result, 0.05, NULL)$columns)
 check(
   "LAD keeps its blank statistics without a bootstrap object",
-  !any(grepl("*", tt_cells(tt_lad), fixed = TRUE)) &&
-    !any(grepl("^\\(|\\$\\(", tt_cells(tt_lad)))
+  !any(grepl("*", tt_lad, fixed = TRUE)) &&
+    !any(grepl("^\\(|\\$\\(", tt_lad))
 )
 
 tt_endpoints <- data.frame(
