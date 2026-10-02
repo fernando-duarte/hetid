@@ -84,7 +84,7 @@ log_spec <- list(
   response_scale = 1, logols_coef = c(c1 = 1),
   pc_preprocessing = list(center = TRUE, scale = FALSE),
   search_control = LOGVAR_SEARCH_CONTROL, ppml_control = LOGVAR_PPML_CONTROL,
-  harvey_control = LOGVAR_HARVEY_CONTROL,
+  harvey_control = LOGVAR_HARVEY_CONTROL, log_projection_control = LOGVAR_LOG_PROJECTION_CONTROL,
   normal_log_square_gap = LOGVAR_NORMAL_LOG_SQUARE_GAP,
   se_types = c(ppml = "hac", harvey = "hac"),
   taus = c(0, 0.1), key_col = "when",

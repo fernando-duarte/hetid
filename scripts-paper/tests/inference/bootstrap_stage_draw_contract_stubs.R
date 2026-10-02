@@ -19,6 +19,7 @@ PAPER_ANALYSIS_CONTRACT <- list(
 LOGVAR_SEARCH_CONTROL <- list(iterations = 4L)
 LOGVAR_PPML_CONTROL <- list(glm_maxit = 5L)
 LOGVAR_HARVEY_CONTROL <- list(optim_maxit = 6L)
+LOGVAR_LOG_PROJECTION_CONTROL <- list(registry_grid_cap = 3L)
 LOGVAR_NORMAL_LOG_SQUARE_GAP <- 1.25
 BOOTSTRAP_STAGE_COMPLETE_CASE_POLICY <- list(
   shared_rows = "all",

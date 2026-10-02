@@ -20,6 +20,7 @@ BOOTSTRAP_STAGE_CODE_FILES <- c(
   "log_variance/estimators/shared.R",
   "log_variance/estimators/package_fit.R",
   "log_variance/estimators/log_ols/estimator.R",
+  "log_variance/estimators/log_projection/estimator.R",
   paste0("support/statistics/", c(
     "bootstrap_and_stationarity.R",
     "normalizations.R",

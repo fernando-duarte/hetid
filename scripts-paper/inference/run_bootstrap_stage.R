@@ -125,7 +125,7 @@ run_bootstrap_stage <- function(
 }
 
 .bootstrap_stage_estimators <- paper_logvar_estimator_ids(
-  capability = "set_bootstrap", primary = TRUE
+  capability = "set_bootstrap"
 )
 .bootstrap_stage_estimator_results <- stats::setNames(
   lapply(.bootstrap_stage_estimators, paper_logvar_result),

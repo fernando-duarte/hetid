@@ -19,6 +19,7 @@ PAPER_ANALYSIS_CONTRACT <- list(
 LOGVAR_SEARCH_CONTROL <- list(iterations = 4L)
 LOGVAR_PPML_CONTROL <- list(glm_maxit = 5L)
 LOGVAR_HARVEY_CONTROL <- list(optim_maxit = 6L)
+LOGVAR_LOG_PROJECTION_CONTROL <- list(registry_grid_cap = 3L)
 LOGVAR_NORMAL_LOG_SQUARE_GAP <- 1.25
 PAPER_REPORTING_CONTROL <- list(
   ppml = list(se_type = "hac"),
@@ -28,7 +29,9 @@ paper_mbb_block_len <- function(sample_size) 2L
 paper_tau_key <- function(tau) paste0("tau_", tau)
 paper_sha256_object <- function(value) paste0("hash-", length(serialize(value, NULL)))
 paper_bootstrap_failure_limit <- function(n_draws, control) n_draws
-paper_logvar_estimator_ids <- function(...) c("ppml", "harvey")
+# capability-aware: the stage's scope guard asks for the log projections
+stub_registry <- list(set_bootstrap = c("ppml", "harvey"), log_projection = character())
+paper_logvar_estimator_ids <- function(capability, ...) stub_registry[[capability]]
 paper_logvar_estimator_spec <- function(id) {
   list(dependencies = if (identical(id, "harvey")) "ppml" else character())
 }
@@ -170,4 +173,26 @@ rejected_axes <- vapply(bad_axes, function(axes) {
   inherits(error, "error") && grepl("system contract", conditionMessage(error), fixed = TRUE)
 }, logical(1))
 stopifnot(all(rejected_axes))
+# the log projections need estimated news: allowed under impose_null = FALSE,
+# rejected by name under TRUE (the PPML/Harvey stage above built under TRUE)
+stub_registry <- list(
+  set_bootstrap = c("ppml", "harvey", "log_plus", "log_fuller"),
+  log_projection = c("log_plus", "log_fuller")
+)
+PAPER_REPORTING_CONTROL[c("log_plus", "log_fuller")] <- list(list(se_type = "hac"))
+results4 <- c(estimator_results, list(
+  log_plus = estimator_results$harvey, log_fuller = estimator_results$harvey
+))
+spec4 <- bootstrap_stage_spec(
+  mean_eq, log_var_eq, lag_pc, results4, 2L, 77L, "z", FALSE, 5L, 6L
+)
+scope_error <- tryCatch(
+  bootstrap_stage_spec(mean_eq, log_var_eq, lag_pc, results4, 2L, 77L, "z", TRUE, 5L, 6L),
+  error = identity
+)
+stopifnot(
+  identical(spec4$log_variance$estimator_ids, stub_registry$set_bootstrap),
+  inherits(scope_error, "error"),
+  grepl("estimated news", conditionMessage(scope_error), fixed = TRUE)
+)
 cat("bootstrap_stage_spec_contract_checks: PASS\n")

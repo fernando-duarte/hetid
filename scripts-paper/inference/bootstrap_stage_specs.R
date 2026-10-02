@@ -18,7 +18,7 @@ BOOTSTRAP_STAGE_FIELDS <- list(
     "coefs", "pc_cols", "complete_case_policy", "grid_cap", "fit_budget",
     "estimator_ids", "estimator_dependencies", "response_scale", "logols_coef",
     "pc_preprocessing", "search_control", "ppml_control", "harvey_control",
-    "normal_log_square_gap", "se_types", "result_inputs"
+    "log_projection_control", "normal_log_square_gap", "se_types", "result_inputs"
   )
 )
 BOOTSTRAP_STAGE_ROOTS <- names(BOOTSTRAP_STAGE_FIELDS)
@@ -96,7 +96,7 @@ bootstrap_stage_frame <- function(mean_eq, lag_pc) {
 }
 
 bootstrap_stage_dependency_graph <- function() {
-  ids <- paper_logvar_estimator_ids(capability = "set_bootstrap", primary = TRUE)
+  ids <- paper_logvar_estimator_ids(capability = "set_bootstrap")
   graph <- stats::setNames(lapply(ids, function(id) {
     paper_logvar_estimator_spec(id)$dependencies
   }), ids)
@@ -113,6 +113,11 @@ bootstrap_stage_spec <- function(
   frame <- bootstrap_stage_frame(mean_eq, lag_pc)
   dependencies <- bootstrap_stage_dependency_graph()
   ids <- names(dependencies)
+  # the log projections need estimated, mean-zero news residuals (spec B)
+  bootstrap_stage_assert(list(
+    "log projections need estimated news (impose_null = FALSE)" = !isTRUE(impose_null) ||
+      !length(intersect(ids, paper_logvar_estimator_ids(capability = "log_projection")))
+  ))
   pc_cols <- PAPER_ANALYSIS_CONTRACT$model$return_pc_cols
   family_names <- paper_mbb_protocol()$family_names[
     c("primary", "sensitivity")
@@ -151,6 +156,7 @@ bootstrap_stage_spec <- function(
       pc_preprocessing = PAPER_ANALYSIS_CONTRACT$model$preprocessing$return_pc,
       search_control = LOGVAR_SEARCH_CONTROL, ppml_control = LOGVAR_PPML_CONTROL,
       harvey_control = LOGVAR_HARVEY_CONTROL,
+      log_projection_control = LOGVAR_LOG_PROJECTION_CONTROL,
       normal_log_square_gap = LOGVAR_NORMAL_LOG_SQUARE_GAP,
       se_types = stats::setNames(vapply(
         ids,

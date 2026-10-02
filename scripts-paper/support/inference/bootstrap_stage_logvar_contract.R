@@ -6,11 +6,18 @@ bootstrap_stage_logvar_contract <- function(spec) {
   invisible(TRUE)
 }
 
+# The complete-case mask over the return-PC columns, owned once: the row
+# subset below and the mean-sample row map the log-projection builders read
+bootstrap_stage_logvar_complete <- function(dat, spec) {
+  stopifnot(all(spec$pc_cols %in% names(dat)))
+  stats::complete.cases(dat[, spec$pc_cols, drop = FALSE])
+}
+
 bootstrap_stage_logvar_rows <- function(dat, est, spec, key_col) {
   bootstrap_stage_logvar_contract(spec)
   stopifnot(key_col %in% names(dat), all(spec$pc_cols %in% names(dat)))
   pc_data <- dat[, spec$pc_cols, drop = FALSE]
-  complete <- stats::complete.cases(pc_data)
+  complete <- bootstrap_stage_logvar_complete(dat, spec)
   rows <- list(
     w1 = est$w1[complete],
     w2 = est$w2[complete, , drop = FALSE],
@@ -39,7 +46,8 @@ logvar_set_boot_compat_spec <- function(spec) {
   )
   spec <- fill(spec, "search_control", LOGVAR_SEARCH_CONTROL)
   spec <- fill(spec, "ppml_control", LOGVAR_PPML_CONTROL)
-  fill(spec, "harvey_control", LOGVAR_HARVEY_CONTROL)
+  spec <- fill(spec, "harvey_control", LOGVAR_HARVEY_CONTROL)
+  fill(spec, "log_projection_control", LOGVAR_LOG_PROJECTION_CONTROL)
 }
 
 # The tau = 0 slot of the per-estimator tau axis. At tau = 0 the news set is a

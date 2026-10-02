@@ -19,14 +19,14 @@ lbd_spec <- list(
   fit_budget = 300,
   estimator_ids = c("ppml", "harvey"),
   builders = list(
-    ppml = function(w1, w2, pcr, qtr, b_point, built) {
+    ppml = function(w1, w2, pcr, qtr, b_point, built, mean_sample) {
       logvar_ppml_estimator(
         w1, w2, pcr, qtr, b_point,
         scale_anchor_b = c(0, 0),
         scale_anchor_source = "test"
       )
     },
-    harvey = function(w1, w2, pcr, qtr, b_point, built) {
+    harvey = function(w1, w2, pcr, qtr, b_point, built, mean_sample) {
       ppml_obj <- built[["ppml"]]
       logvar_harvey_estimator(
         w1, w2, pcr, qtr, b_point,

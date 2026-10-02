@@ -2,7 +2,9 @@
 
 bootstrap_stage_controls_ok <- function(logvar) {
   policy <- logvar$pc_preprocessing
-  controls <- logvar[c("search_control", "ppml_control", "harvey_control")]
+  controls <- logvar[c(
+    "search_control", "ppml_control", "harvey_control", "log_projection_control"
+  )]
   se_types <- logvar$se_types
   bootstrap_stage_count_ok(logvar$grid_cap) &&
     bootstrap_stage_count_ok(logvar$fit_budget) &&
@@ -18,6 +20,9 @@ bootstrap_stage_controls_ok <- function(logvar) {
     identical(names(logvar$search_control), names(LOGVAR_SEARCH_CONTROL)) &&
     identical(names(logvar$ppml_control), names(LOGVAR_PPML_CONTROL)) &&
     identical(names(logvar$harvey_control), names(LOGVAR_HARVEY_CONTROL)) &&
+    identical(
+      names(logvar$log_projection_control), names(LOGVAR_LOG_PROJECTION_CONTROL)
+    ) &&
     bootstrap_stage_scalar_ok(logvar$normal_log_square_gap) &&
     is.character(se_types) && !anyNA(se_types) &&
     identical(attributes(se_types), list(names = logvar$estimator_ids))

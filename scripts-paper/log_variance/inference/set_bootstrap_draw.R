@@ -21,6 +21,12 @@ logvar_set_boot_draw_from_est <- function(dat, est, shared_geometry, logvar_spec
     shared_geometry$quadratics[[tau0]], est$beta1r, est$beta2r
   )
   boxes <- lapply(tables, function(interval) interval$theta)
+  # the draw's mean sample, for builders that need more than the volatility
+  # rows (the log projections' scale and Fuller certification)
+  mean_sample <- list(
+    w1 = est$w1, w2 = est$w2, pc_raw = as.matrix(rows$pc_data),
+    volatility_rows = which(bootstrap_stage_logvar_complete(dat, logvar_spec))
+  )
   built <- list()
   for (id in logvar_spec$estimator_ids) {
     dependencies <- logvar_spec$estimator_dependencies[[id]]
@@ -28,7 +34,7 @@ logvar_set_boot_draw_from_est <- function(dat, est, shared_geometry, logvar_spec
     inputs <- built[dependencies]
     built[[id]] <- tryCatch(
       logvar_spec$builders[[id]](
-        rows$w1, rows$w2, pcr, rows$key, point, inputs
+        rows$w1, rows$w2, pcr, rows$key, point, inputs, mean_sample
       ),
       error = function(error) NULL
     )

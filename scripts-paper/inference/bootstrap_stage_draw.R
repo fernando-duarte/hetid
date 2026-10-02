@@ -8,6 +8,7 @@ bootstrap_stage_builders <- function(stage_spec) {
     estimator_ids = logvar$estimator_ids,
     ppml_control = logvar$ppml_control,
     harvey_control = logvar$harvey_control,
+    log_projection_control = logvar$log_projection_control,
     normal_log_square_gap = logvar$normal_log_square_gap
   )
 }
