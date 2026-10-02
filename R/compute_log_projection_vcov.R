@@ -54,7 +54,8 @@
 #'   z <- cbind(1, rnorm(n))
 #'   news <- cbind(n1 = rnorm(n))
 #'   w1 <- drop(lm.fit(z, drop(news %*% 0.5) + rnorm(n))$residuals)
-#'   w2 <- lm.fit(z, news)$residuals
+#'   w2 <- as.matrix(lm.fit(z, news)$residuals)
+#'   colnames(w2) <- "n1"
 #'   ids <- seq_len(n)
 #'   prep <- prepare_log_projection(w1, w2, cbind(pc1 = rnorm(n)), ids, ids)
 #'   v <- compute_log_projection_vcov(prep, c(n1 = 0.4), "log_plus")
