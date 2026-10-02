@@ -86,6 +86,9 @@ paper_source_once(paper_path(
   "tests", "inference", "bootstrap_stage_real_primary_checks.R"
 ))
 paper_source_once(paper_path(
+  "tests", "inference", "log_projection_bootstrap_checks.R"
+))
+paper_source_once(paper_path(
   "tests", "inference", "bootstrap_stage_real_failure_boundary_checks.R"
 ))
 paper_source_once(paper_path(

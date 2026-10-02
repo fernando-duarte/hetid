@@ -72,7 +72,7 @@ paper_source_once(paper_path("log_variance", "estimators", "ppml", "standard_err
 # Harvey sets and analytic standard errors (the wrapper keeps this to one source
 # line). Its dedicated table publishes below, after the bootstrap stage.
 paper_source_once(paper_path("log_variance", "estimators", "harvey", "run.R"))
-# regularized log projections (no inference): before the residual diagnostics,
+# regularized log projections and their analytic SEs: before the residual diagnostics,
 # which read their point fits
 paper_source_once(paper_path("log_variance", "estimators", "log_projection", "run_sets.R"))
 # Residual-diagnostic figures. After the Harvey wrapper so both point fits are

@@ -90,7 +90,7 @@ PAPER_LOGVAR_PRIMARY_ESTIMATORS <- list(
   )
 )
 
-# extension estimators (no set bootstrap) live in their own file
+# extension estimators live in their own file
 paper_source_once(paper_path(
   "config",
   "logvar_estimator_extensions.R"

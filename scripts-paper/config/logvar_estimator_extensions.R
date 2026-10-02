@@ -1,5 +1,5 @@
 # Extension log-variance estimators: registry entries for estimators outside
-# the primary set bootstrap. Sourced by logvar_estimators.R after
+# the PPML/Harvey pair. Sourced by logvar_estimators.R after
 # .paper_logvar_spec and the shared display list are defined.
 
 PAPER_LOGVAR_ESTIMATOR_EXTENSIONS <- list(
@@ -29,8 +29,8 @@ PAPER_LOGVAR_ESTIMATOR_EXTENSIONS <- list(
     budget_policy = "lad_control"
   ),
   # regularized log projections of squared residuals (hetid's
-  # evaluate_log_projection methods; the key is the package method): no
-  # inference, every other output the engine-envelope estimators get
+  # evaluate_log_projection methods; the key is the package method): in the
+  # set bootstrap, with every output the engine-envelope estimators get
   log_plus = .paper_logvar_spec(
     key = "log_plus",
     display_name = "Regularized log-OLS (additive)",
@@ -44,7 +44,7 @@ PAPER_LOGVAR_ESTIMATOR_EXTENSIONS <- list(
       fitted_volatility = "log_plus_fitted_volatility_figure"
     ),
     capabilities = c(
-      "bounds_by_tau", "table", "fitted_volatility",
+      "bounds_by_tau", "table", "set_bootstrap", "fitted_volatility",
       "engine_envelope", "log_projection"
     ),
     budget_policy = "log_projection_control"
@@ -62,7 +62,7 @@ PAPER_LOGVAR_ESTIMATOR_EXTENSIONS <- list(
       fitted_volatility = "log_fuller_fitted_volatility_figure"
     ),
     capabilities = c(
-      "bounds_by_tau", "table", "fitted_volatility",
+      "bounds_by_tau", "table", "set_bootstrap", "fitted_volatility",
       "engine_envelope", "log_projection"
     ),
     budget_policy = "log_projection_control"

@@ -179,12 +179,14 @@ stage; those extra draws are not stored in its cache.
 
 [log_variance/tables/render_estimator_pages.R](log_variance/tables/render_estimator_pages.R)
 publishes `structural_var_estimators.tex`, with a repeated mean panel above each variance
-estimator. Publication follows the bootstrap because PPML, Harvey, and log-OLS report a
-bootstrap `tau = 0` statistic. PPML and Harvey estimates and analytic SEs are computed
-before the stage and remain unchanged by it. LAD reports neither that variance statistic
-nor `tau > 0` variance confidence intervals; its page appears only when LAD ran. The two
-regularized log-OLS projections (additive threshold and two-pass Fuller) report no
-inference either; their tuning sensitivity is in `log_var_eq_log_projection_tuning.tex`.
+estimator. Publication follows the bootstrap because PPML, Harvey, log-OLS, and the two
+regularized log-OLS projections report a bootstrap `tau = 0` statistic. PPML, Harvey, and
+projection estimates and analytic SEs are computed before the stage and remain unchanged
+by it. LAD reports neither that variance statistic nor `tau > 0` variance confidence
+intervals; its page appears only when LAD ran. The regularized projections (additive
+threshold and two-pass Fuller) report the same inference as PPML and Harvey (analytic
+HAC SEs, the bootstrap `tau = 0` statistic, and `tau > 0` intervals at `m = 1`); their
+tuning sensitivity, without intervals, is in `log_var_eq_log_projection_tuning.tex`.
 
 ### Cache reuse
 

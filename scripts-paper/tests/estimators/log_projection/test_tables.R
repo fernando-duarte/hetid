@@ -1,6 +1,7 @@
 # Offline rendering checks for the regularized log-projection exhibits: the
 # tuning appendix table's shape, headers, and coefficient alignment, the
-# no-inference Panel B, and the notes builders. Run from the package root:
+# bootstrapped Panel B through the extension-page wrapper, and the notes
+# builders. Run from the package root:
 #   Rscript scripts-paper/tests/estimators/log_projection/test_tables.R
 
 source(file.path("scripts-paper", "config", "paths.R"))
@@ -59,26 +60,61 @@ tt_set <- data.frame(
   coef = tt_coef, set_lower = c(-1.3, 0.05), set_upper = c(-1.1, 0.15),
   status = "bounded", stringsAsFactors = FALSE
 )
+tt_key <- paper_tau_key(0.05)
+tt_se <- data.frame(
+  coef = tt_coef, naive = c(0.1, 0.05), hc0 = c(0.1, 0.05),
+  hc1 = c(0.1, 0.05), hac = c(0.1, 0.05)
+)
 tt_result <- list(
   table = data.frame(
     coef = tt_coef, reference = c(-1.2, 0.1), point = c(-1.25, 0.12),
     stringsAsFactors = FALSE
   ),
-  sets = stats::setNames(list(tt_set), paper_tau_key(0.05))
+  sets = stats::setNames(list(tt_set), tt_key),
+  se = list(reference = tt_se, point = tt_se),
+  sample = list(n = 12L)
 )
-tt_parts <- logvar_estimator_panel_parts(
-  tt_result, 12L, 0.05, LOGVAR_LOG_PLUS_PANEL_SPEC, NULL, NULL, NULL,
-  PAPER_REPORTING_CONTROL$cells$log_variance, NULL
-)
-tt_cells <- unlist(tt_parts$columns)
+tt_point_t <- function(statistic) {
+  data.frame(
+    coef = tt_coef, point = c(-1.25, 0.12), statistic = statistic,
+    p_value = c(0.001, 0.5), p_value_normal = c(0.001, 0.5)
+  )
+}
+tt_boot <- function(statistic) {
+  list(
+    log_plus = stats::setNames(list(data.frame(
+      coef = tt_coef, ci_lower = c(-1.5, 0.01), ci_upper = c(-0.9, 0.2),
+      side = "both"
+    )), tt_key),
+    point_t = list(log_plus = tt_point_t(statistic))
+  )
+}
+tt_cells <- function(parts) unlist(parts$columns)
+tt_parts <- logvar_extension_page_parts("log_plus", tt_result, 0.05, tt_boot(c(-6, 1)))
 check(
-  "the regularized Panel B carries no statistics, stars, or envelopes",
-  !any(grepl("*", tt_cells, fixed = TRUE)) &&
-    !any(grepl("^\\(", tt_cells)) &&
+  "the regularized Panel B carries analytic, bootstrap, and envelope rows",
+  any(grepl("*", tt_parts$columns[[2L]], fixed = TRUE)) &&
+    any(grepl("^\\(", tt_parts$columns[[1L]])) &&
+    any(grepl("$(", tt_parts$columns[[3L]], fixed = TRUE)) &&
     identical(
       tt_parts$rows[nzchar(tt_parts$rows)][1:2],
       c("$\\theta^{L}_0$", "$\\theta^{L}_{1,R}$")
     )
+)
+tt_unavailable <- logvar_extension_page_parts(
+  "log_plus", tt_result, 0.05, tt_boot(c(NA_real_, NA_real_))
+)
+check(
+  "an unavailable bootstrap statistic shows the NA token, never the analytic ratio",
+  !any(grepl("*", tt_unavailable$columns[[2L]], fixed = TRUE)) &&
+    any(tt_unavailable$columns[[2L]] == PAPER_NA_TOKEN) &&
+    !any(grepl("^\\(", tt_unavailable$columns[[2L]]))
+)
+tt_lad <- logvar_extension_page_parts("lad", tt_result, 0.05, NULL)
+check(
+  "LAD keeps its blank statistics without a bootstrap object",
+  !any(grepl("*", tt_cells(tt_lad), fixed = TRUE)) &&
+    !any(grepl("^\\(|\\$\\(", tt_cells(tt_lad)))
 )
 
 tt_endpoints <- data.frame(
@@ -108,16 +144,22 @@ tt_fuller_notes <- paste(
   collapse = " "
 )
 check(
-  "panel notes explain the OLS column, the tuning, and the missing inference",
+  "panel notes explain the OLS column, the tuning, the SEs, and the bootstrap",
   grepl("OLS column", tt_plus_notes, fixed = TRUE) &&
     grepl("h_T = 0.01", tt_plus_notes, fixed = TRUE) &&
-    grepl("No inference is reported for Panel B", tt_plus_notes, fixed = TRUE) &&
+    grepl("plug-in least-squares variances", tt_plus_notes, fixed = TRUE) &&
+    grepl("Newey--West", tt_plus_notes, fixed = TRUE) &&
+    grepl("refits the mean equation", tt_plus_notes, fixed = TRUE) &&
+    grepl("does not by itself establish", tt_plus_notes, fixed = TRUE) &&
+    !grepl("No inference is reported", tt_plus_notes, fixed = TRUE) &&
     grepl("different candidates", tt_plus_notes, fixed = TRUE)
 )
 check(
   "Fuller notes say uncertified when the scale bound is not certified",
   grepl("uncertified", tt_fuller_notes, fixed = TRUE) &&
-    grepl("c_T = 0.004", tt_fuller_notes, fixed = TRUE)
+    grepl("c_T = 0.004", tt_fuller_notes, fixed = TRUE) &&
+    grepl("first-pass adjustment profile at", tt_fuller_notes, fixed = TRUE) &&
+    grepl("regularity", tt_fuller_notes, fixed = TRUE)
 )
 tt_tuning_notes <- paste(
   build_log_projection_tuning_notes(tt_tuning, 0.05, tt_endpoints),
@@ -127,6 +169,7 @@ check(
   "tuning notes give both formulas and the endpoint CSV",
   grepl("c_T = m^2 / T", tt_tuning_notes, fixed = TRUE) &&
     grepl("quadruples", tt_tuning_notes, fixed = TRUE) &&
+    grepl("Only the $m = 1$ estimates carry", tt_tuning_notes, fixed = TRUE) &&
     grepl("log\\_var\\_eq\\_log\\_projection\\_endpoints.csv", tt_tuning_notes,
       fixed = TRUE
     )

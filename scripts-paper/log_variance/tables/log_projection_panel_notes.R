@@ -1,8 +1,11 @@
 # Notes for the regularized log-projection pages and their tuning appendix
 # table: the transformed response and what its coefficients mean, the tuning
 # values, the small-residual shares, the Fuller scale certification, the search
-# and its caveats, and the absence of inference for these panels. One string
-# per item. Definitions only; sourced by estimator_page_specs.R.
+# and its caveats, the analytic standard errors, and what the bootstrap
+# rebuilds. One string per item. Definitions only; sourced by
+# estimator_page_specs.R.
+
+paper_source_once(paper_path("log_variance", "tables", "log_projection_se_note.R"))
 
 .lp_num <- function(x) {
   paper_format_general(x, PAPER_REPORTING_CONTROL$precision$diagnostic_table)
@@ -79,7 +82,11 @@ build_log_projection_panel_notes <- function(result, tau_baseline) {
         "The candidate scale's positivity over the set is uncertified, so every",
         "endpoint is reported unreliable."
       )
-    })
+    }, paste(
+      "A bootstrap replication whose candidate scale is uncertified reports",
+      "every endpoint unreliable; such replications stay in the regularity",
+      "gate's denominator."
+    ))
   }
   c(
     notes,
@@ -93,8 +100,27 @@ build_log_projection_panel_notes <- function(result, tau_baseline) {
     ),
     paste(
       "Exponentiated sweep panels are not variance ratios for this projection.",
-      "No inference is reported for Panel B; the tuning sensitivity is in the",
-      "appendix table."
+      "The tuning sensitivity is in the appendix table."
+    ),
+    logvar_log_projection_se_note(
+      method, PAPER_REPORTING_CONTROL[[method]]$se_type,
+      PAPER_REPORTING_CONTROL[[method]]$hac_lags
+    ),
+    sprintf(
+      paste(
+        "The bootstrap calibration described below is applied unchanged; each",
+        "replication refits the mean equation and rebuilds %s from its own",
+        "resample at $m = 1$, holding the delivered principal-component series",
+        "fixed. Its intended target is this regularized projection, pointwise",
+        "over the identified set; the calibration does not by itself establish",
+        "coverage for a partially identified set under a sample-size-dependent",
+        "regularization."
+      ),
+      if (identical(method, "log_plus")) {
+        "$\\hat s$ and the threshold $h_T$"
+      } else {
+        "$c_T$, the candidate scale, and the adjustment profile"
+      }
     )
   )
 }
@@ -133,8 +159,9 @@ build_log_projection_tuning_notes <- function(tuning, tau_baseline, endpoints) {
     ),
     paste(
       "A dash marks an unavailable point; unreliable marks a side the audit or",
-      "the nesting check could not certify. No inference is reported for these",
-      "estimates."
+      "the nesting check could not certify. Only the $m = 1$ estimates carry",
+      "bootstrap intervals, on the estimator pages; this sensitivity table",
+      "reports none."
     ),
     paste(
       "Endpoint diagnostics ($\\hat s$, $h_T$, $s_b$, $c_T$, small-residual",

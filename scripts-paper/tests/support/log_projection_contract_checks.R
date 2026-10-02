@@ -11,15 +11,14 @@ check(
     !anyDuplicated(sweep_estimators)
 )
 check(
-  "the regularized log projections are registry extensions without inference",
+  "the regularized log projections are registry extensions in the set bootstrap",
   identical(
     paper_logvar_estimator_ids(capability = "log_projection"),
     c("log_plus", "log_fuller")
   ) &&
-    !any(c("log_plus", "log_fuller") %in%
-      paper_logvar_estimator_ids(capability = "set_bootstrap")) &&
     identical(
       paper_logvar_estimator_ids(capability = "set_bootstrap"),
-      c("ppml", "harvey")
-    )
+      c("ppml", "harvey", "log_plus", "log_fuller")
+    ) &&
+    !any(c("log_plus", "log_fuller") %in% paper_logvar_estimator_ids(primary = TRUE))
 )

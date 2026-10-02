@@ -1,6 +1,6 @@
 # Page specifications for the extension estimators of the per-estimator
-# document (render_estimator_pages.R): panel notation, cell policy, panel title,
-# caption subject, and notes builder per registry id. The page renderer loops
+# document (render_estimator_pages.R): panel notation, cell policy, analytic SE
+# choice, panel title, caption subject, and notes builder per registry id. The page renderer loops
 # over the registry's extension table ids and reads each spec here, so adding an
 # estimator page is one entry, not a new hand-written block. Definitions only;
 # sourced by render_estimator_pages.R.
@@ -9,6 +9,9 @@ paper_source_once(paper_path("log_variance", "tables", "estimator_panel.R"))
 paper_source_once(paper_path("log_variance", "tables", "lad_panel_notes.R"))
 paper_source_once(paper_path("log_variance", "tables", "harvey_caption.R"))
 paper_source_once(paper_path("log_variance", "tables", "log_projection_panel_notes.R"))
+paper_source_once(paper_path(
+  "log_variance", "estimators", "log_projection", "standard_errors.R"
+))
 
 LOGVAR_ESTIMATOR_PAGE_SPECS <- list(
   lad = list(
@@ -26,6 +29,8 @@ LOGVAR_ESTIMATOR_PAGE_SPECS <- list(
   log_plus = list(
     panel_spec = LOGVAR_LOG_PLUS_PANEL_SPEC,
     cells = PAPER_REPORTING_CONTROL$cells$log_variance,
+    se_type = PAPER_REPORTING_CONTROL$log_plus$se_type,
+    se_types = LOGVAR_LOG_PROJECTION_SE_TYPES,
     title = paste(
       "Panel B: Log-variance equation (regularized log projection,",
       "additive threshold)"
@@ -38,6 +43,8 @@ LOGVAR_ESTIMATOR_PAGE_SPECS <- list(
   log_fuller = list(
     panel_spec = LOGVAR_LOG_FULLER_PANEL_SPEC,
     cells = PAPER_REPORTING_CONTROL$cells$log_variance,
+    se_type = PAPER_REPORTING_CONTROL$log_fuller$se_type,
+    se_types = LOGVAR_LOG_PROJECTION_SE_TYPES,
     title = paste(
       "Panel B: Log-variance equation (regularized log projection,",
       "two-pass Fuller)"
@@ -55,6 +62,25 @@ logvar_estimator_page_spec <- function(id) {
     stop(sprintf("No estimator page spec for %s", id), call. = FALSE)
   }
   spec
+}
+
+# Whether the registry puts an extension estimator in the set bootstrap
+logvar_extension_in_boot <- function(id) {
+  "set_bootstrap" %in% paper_logvar_estimator_spec(id)$capabilities
+}
+
+# An extension page's panel: the analytic SE choice from its page spec, and the
+# bootstrap envelope and tau = 0 statistic exactly when the estimator is in the
+# set bootstrap
+logvar_extension_page_parts <- function(id, result, tau_display, boot) {
+  spec <- logvar_estimator_page_spec(id)
+  in_boot <- logvar_extension_in_boot(id)
+  logvar_estimator_panel_parts(
+    result, result$sample$n, tau_display, spec$panel_spec,
+    spec$se_type, spec$se_types,
+    if (in_boot) boot[[id]], spec$cells,
+    if (in_boot) logvar_boot_point_stat(boot, id)
+  )
 }
 
 # An extension estimator's page is required exactly when its bounds artifact is;

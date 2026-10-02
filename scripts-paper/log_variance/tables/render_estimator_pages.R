@@ -151,9 +151,10 @@ local({
     ))
   }
 
-  # extension estimators (no set bootstrap) get one page each from their page
-  # spec; a conditional one (LAD, behind its dependency gate) is present exactly
-  # when the estimator ran. The document itself is always produced.
+  # extension estimators get one page each from their page spec; those in the
+  # set bootstrap also carry its envelope and tau = 0 statistic. A conditional
+  # one (LAD, behind its dependency gate) is present exactly when the estimator
+  # ran. The document itself is always produced.
   for (id in paper_logvar_estimator_ids(capability = "table", primary = FALSE)) {
     result <- paper_logvar_result(
       id,
@@ -161,16 +162,17 @@ local({
     )
     if (is.null(result)) next
     spec <- logvar_estimator_page_spec(id)
+    in_boot <- logvar_extension_in_boot(id)
     pages <- c(pages, page(
-      logvar_estimator_panel_parts(
-        result, result$sample$n, tau_display, spec$panel_spec,
-        NULL, NULL, NULL, spec$cells, NULL
-      ),
+      logvar_extension_page_parts(id, result, tau_display, log_var_eq_set_boot),
       spec$title,
       spec$subject,
-      spec$notes(result, tau_baseline),
+      c(
+        spec$notes(result, tau_baseline),
+        if (in_boot) build_logvar_set_inference_notes(log_var_eq_set_boot)
+      ),
       id,
-      PAPER_OVERLEAF_SET_LABEL_BARE
+      if (in_boot) PAPER_OVERLEAF_SET_LABEL else PAPER_OVERLEAF_SET_LABEL_BARE
     ))
   }
 
