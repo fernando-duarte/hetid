@@ -12,7 +12,8 @@ validate_data_dimensions(yields, term_premia)
 \item{term_premia}{A matrix or data frame of term premia, with observations in rows.}
 }
 \value{
-Invisible \code{TRUE} when dimensions agree. Otherwise, signals a
+Invisible \code{TRUE} when row and column counts agree. A non-tabular input
+signals a \code{hetid_error_bad_argument}; unequal row or column counts signal a
 \code{hetid_error_dimension_mismatch} condition.
 }
 \description{

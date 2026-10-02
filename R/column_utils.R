@@ -58,6 +58,7 @@ require_column <- function(x, col_name, context = NULL) {
 #'   \code{hetid_error_bad_argument} with the supplied \code{arg}.
 #' @noRd
 assert_acm_data_type <- function(data_type, arg = "data_type") {
+  assert_acm_pin_string(data_type, arg)
   assert_bad_argument_ok(
     data_type %in% names(HETID_ACM_SCHEMA),
     paste0(

@@ -179,3 +179,17 @@ test_that("compute_price_news rejects invalid maturity values", {
     "between"
   )
 })
+
+test_that("non-tabular inputs signal a bad-argument error naming the input", {
+  err <- tryCatch(
+    compute_price_news(yields = numeric(50), term_premia = numeric(50), i = 24),
+    error = identity
+  )
+  expect_s3_class(err, "hetid_error_bad_argument")
+  expect_identical(err$arg, "yields")
+  err <- tryCatch(
+    compute_price_news(yields = matrix(0, 50, 3), term_premia = numeric(50), i = 24),
+    error = identity
+  )
+  expect_identical(err$arg, "term_premia")
+})

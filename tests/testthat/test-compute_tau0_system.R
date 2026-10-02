@@ -128,3 +128,19 @@ test_that("pinned paper-equivalence fixture: the tau=0 point at the default seed
   )
   expect_equal(null_fit$point$cond, 1.1479416097673945, tolerance = 1e-8)
 })
+
+test_that("non-array system inputs signal a bad-argument error naming the input", {
+  d <- simulate_tau0_dgp()
+  for (name in c("y2", "x", "z")) {
+    for (bad in list(NULL, list(1))) {
+      args <- list(y1 = d$y1, y2 = d$y2, x = d$x, z = d$z)
+      args[name] <- list(bad)
+      err <- tryCatch(do.call(compute_tau0_system, args), error = identity)
+      expect_s3_class(err, "hetid_error_bad_argument")
+      expect_identical(err$arg, name)
+    }
+  }
+  fit <- compute_tau0_system(d$y1, d$y2, d$x, d$z)
+  expect_equal(compute_tau0_system(d$y1, as.data.frame(d$y2), d$x, d$z)$point, fit$point)
+  expect_equal(compute_tau0_system(d$y1, d$y2, as.data.frame(d$x), d$z)$point, fit$point)
+})

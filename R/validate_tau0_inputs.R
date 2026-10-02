@@ -50,6 +50,14 @@ validate_tau0_inputs <- function(y1, y2, x, z, gamma, impose_null, tol) {
   assert_bad_argument_ok(tol > 0, "tol must be positive", arg = "tol")
 
   validate_numeric_inputs(y1 = y1)
+  matrix_inputs <- list(y2 = y2, x = x, z = z)
+  for (name in names(matrix_inputs)) {
+    assert_bad_argument_ok(
+      is.atomic(matrix_inputs[[name]]) || is.data.frame(matrix_inputs[[name]]),
+      paste0(name, " must be a numeric matrix, vector, or data frame"),
+      arg = name
+    )
+  }
   y2 <- as.matrix(y2)
   x <- as.matrix(x)
   z <- as.matrix(z)

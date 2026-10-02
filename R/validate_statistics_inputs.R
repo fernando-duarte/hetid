@@ -31,6 +31,7 @@ validate_statistics_inputs <- function(w1, w2,
   validate_numeric_inputs(w1 = w1)
   assert_tabular(w2, "w2")
   w2 <- as.matrix(w2)
+  assert_bad_argument_ok(ncol(w2) >= 1, "w2 must have at least one column", arg = "w2")
   assert_numeric_finite_values(w1, "w1")
   assert_numeric_finite_values(w2, "w2")
 

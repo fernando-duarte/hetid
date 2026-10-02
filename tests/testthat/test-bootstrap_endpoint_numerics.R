@@ -76,3 +76,29 @@ test_that("diagnostic-only overflow does not abort other coefficient intervals",
     class = "hetid_error"
   )
 })
+
+test_that("root rank keeps exact-integer ranks and stays at least one", {
+  expect_identical(bootstrap_root_rank(149, 0.18), 123)
+  expect_identical(bootstrap_root_rank(19, 0.95), 1)
+  expect_identical(bootstrap_root_rank(19, 1 - .Machine$double.eps), 1)
+  expect_identical(bootstrap_root_rank(999, 0.500999), 500)
+  expect_identical(bootstrap_root_rank(999, 0.501001), 499)
+  expect_identical(bootstrap_root_critical(as.numeric(19:1), 0.95), 1)
+  expect_identical(bootstrap_root_critical(as.numeric(19:1), 0.95 - 1e-12), 2)
+})
+
+test_that("root rank snaps only within the rounding margin of an integer", {
+  expect_identical(bootstrap_root_rank(19, 0.95 - 2 * .Machine$double.eps), 1)
+  expect_identical(bootstrap_root_rank(19, 0.95 - 1e-12), 2)
+  expect_identical(bootstrap_root_rank(19, 0.95 + 2 * .Machine$double.eps), 1)
+  expect_identical(bootstrap_root_rank(19, 0.95 + 1e-12), 1)
+})
+
+test_that("root rank matches exact integer arithmetic on a three-decimal alpha grid", {
+  a <- 1:999
+  for (n in c(19, 99, 149, 999, 9999)) {
+    exact <- pmin(n, ((n + 1) * (1000 - a) + 999) %/% 1000)
+    got <- vapply(a / 1000, function(alpha) bootstrap_root_rank(n, alpha), numeric(1))
+    expect_identical(got, as.numeric(exact))
+  }
+})

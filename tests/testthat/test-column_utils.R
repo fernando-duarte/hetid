@@ -123,3 +123,14 @@ test_that("require_column extracts from data frames and matrices", {
     class = "hetid_error_bad_argument"
   )
 })
+
+test_that("schema keys must be one non-missing string", {
+  for (bad in list(c("yields", "term_premia"), NA_character_, character(0), 12)) {
+    err <- tryCatch(acm_column_name(bad, 12), error = identity)
+    expect_s3_class(err, "hetid_error_bad_argument")
+    expect_length(conditionMessage(err), 1L)
+    expect_identical(err$arg, "data_type")
+  }
+  err <- tryCatch(acm_raw_column_name(c("yields", "term_premia"), 12), error = identity)
+  expect_identical(err$arg, "data_types")
+})

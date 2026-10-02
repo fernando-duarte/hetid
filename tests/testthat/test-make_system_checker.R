@@ -38,3 +38,21 @@ test_that("malformed quadratic lists are rejected", {
     class = "hetid_error_bad_argument"
   )
 })
+
+test_that("an invalid constraint keeps its condition behind the slot label", {
+  bad_a <- matrix(c(1, 2, 3, 4), 2)
+  direct <- tryCatch(make_constraint_checker(bad_a, c(0, 0), 0), error = identity)
+  wrapped <- tryCatch(
+    make_system_checker(list(A_i = list(c1 = bad_a), b_i = list(c1 = c(0, 0)), c_i = c(c1 = 0))),
+    error = identity
+  )
+  expect_identical(class(wrapped), class(direct))
+  expect_identical(wrapped$arg, direct$arg)
+  expect_identical(conditionMessage(wrapped), paste0("constraint c1: ", conditionMessage(direct)))
+  short_b <- tryCatch(
+    make_system_checker(list(A_i = list(diag(2)), b_i = list(0), c_i = 0)),
+    error = identity
+  )
+  expect_s3_class(short_b, "hetid_error_dimension_mismatch")
+  expect_match(conditionMessage(short_b), "^constraint 1: b_i must have length")
+})

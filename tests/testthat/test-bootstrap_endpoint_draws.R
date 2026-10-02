@@ -149,3 +149,9 @@ test_that("an unchanged Rounding kind does not warn on restore", {
   expect_silent(bootstrap_endpoint_draws(full, list(1:3), callback))
   expect_identical(RNGkind()[3], "Rounding")
 })
+
+test_that("an empty first index vector names the indices argument", {
+  err <- tryCatch(validate_bootstrap_indices(list(integer(0))), error = identity)
+  expect_s3_class(err, "hetid_error_bad_argument")
+  expect_identical(err$arg, "indices")
+})

@@ -12,16 +12,20 @@ NULL
 #' bond-pricing entry points: their frames may carry different column
 #' sets, but mismatched row counts must error, never recycle.
 #'
-#' @details Checks row counts only; callers must align observations by date.
+#' @details Checks only that both inputs are tabular with equal row counts; callers must
+#'   align observations by date.
 #'   Column counts, names, and values are not checked, and empty frames are allowed.
 #'
 #' @param yields A matrix or data frame of yields, with observations in rows.
 #' @param term_premia A matrix or data frame of term premia, with observations in rows.
 #'
-#' @return Invisible \code{TRUE} when row counts agree. Otherwise, signals a
+#' @return Invisible \code{TRUE} when row counts agree. A non-tabular input signals a
+#'   \code{hetid_error_bad_argument}; unequal row counts signal a
 #'   \code{hetid_error_dimension_mismatch} condition.
 #' @keywords internal
 validate_row_alignment <- function(yields, term_premia) {
+  assert_tabular(yields, "yields")
+  assert_tabular(term_premia, "term_premia")
   assert_dimension_ok(
     nrow(yields) == nrow(term_premia),
     paste0(
@@ -43,7 +47,8 @@ validate_row_alignment <- function(yields, term_premia) {
 #' @param yields A matrix or data frame of yields, with observations in rows.
 #' @param term_premia A matrix or data frame of term premia, with observations in rows.
 #'
-#' @return Invisible \code{TRUE} when dimensions agree. Otherwise, signals a
+#' @return Invisible \code{TRUE} when row and column counts agree. A non-tabular input
+#'   signals a \code{hetid_error_bad_argument}; unequal row or column counts signal a
 #'   \code{hetid_error_dimension_mismatch} condition.
 #' @keywords internal
 validate_data_dimensions <- function(yields, term_premia) {

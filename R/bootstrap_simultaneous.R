@@ -1,8 +1,12 @@
+# a rank within ROOT_RANK_FACTOR * eps * (n + 1) of an integer is that integer, since a decimal
+# alpha cannot be represented more exactly; otherwise the exact ceiling, clamped to 1..n
 bootstrap_root_rank <- function(n, alpha) {
   if (n == 0L) {
     return(NA_real_)
   }
-  min(n, ceiling((n + 1) * (1 - alpha)))
+  # an exact-integer rank can round one ulp up; the margin keeps ceiling() on that integer
+  margin <- HETID_CONSTANTS$ROOT_RANK_FACTOR * .Machine$double.eps * (n + 1)
+  min(n, max(1, ceiling((n + 1) * (1 - alpha) - margin)))
 }
 
 bootstrap_simultaneous_diagnostic <- function(sides, full, alpha, min_reps) {

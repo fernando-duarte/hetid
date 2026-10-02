@@ -34,6 +34,8 @@ node lies on the box boundary}
 \item{QUADRATIC_OUTER_RTOL}{Candidate outer-bound search tolerance (1e-12)}
 \item{QUADRATIC_SIGN_FACTOR}{Rounding-margin multiplier for sign checks (64)}
 \item{QUADRATIC_OUTER_FACTOR}{Rounding-margin multiplier for outer bounds (16)}
+\item{ROOT_RANK_FACTOR}{Rounding-margin multiplier for keeping an exact-integer
+bootstrap root rank (4)}
 \item{QUADRATIC_WEIGHT_FLOOR}{Interior weight-search initialization floor (1e-9)}
 \item{PERCENT_TO_DECIMAL}{Percentage to decimal divisor}
 \item{MONTHS_PER_QUARTER}{Calendar months per quarter (3)}

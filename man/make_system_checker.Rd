@@ -35,8 +35,9 @@ grid point does not establish emptiness.
 }
 \details{
 Invalid parallel structure signals a
-\code{hetid_error_bad_argument}. Invalid individual coefficients signal
-a \code{hetid_error} identifying the constraint by name or position.
+\code{hetid_error_bad_argument}. Invalid individual coefficients re-signal the
+\code{\link{make_constraint_checker}} condition unchanged, except that its message is
+prefixed with the constraint's name or position.
 The returned closure does not validate \code{theta}; the missing-value
 and finite-input caveats of \code{\link{make_constraint_checker}} apply.
 }

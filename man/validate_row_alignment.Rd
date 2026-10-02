@@ -12,7 +12,8 @@ validate_row_alignment(yields, term_premia)
 \item{term_premia}{A matrix or data frame of term premia, with observations in rows.}
 }
 \value{
-Invisible \code{TRUE} when row counts agree. Otherwise, signals a
+Invisible \code{TRUE} when row counts agree. A non-tabular input signals a
+\code{hetid_error_bad_argument}; unequal row counts signal a
 \code{hetid_error_dimension_mismatch} condition.
 }
 \description{
@@ -21,7 +22,8 @@ bond-pricing entry points: their frames may carry different column
 sets, but mismatched row counts must error, never recycle.
 }
 \details{
-Checks row counts only; callers must align observations by date.
+Checks only that both inputs are tabular with equal row counts; callers must
+align observations by date.
 Column counts, names, and values are not checked, and empty frames are allowed.
 }
 \keyword{internal}

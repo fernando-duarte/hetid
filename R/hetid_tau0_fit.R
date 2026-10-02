@@ -103,9 +103,11 @@ validate_tau0_fit_betas <- function(x, dims) {
 #' @noRd
 validate_tau0_fit_point <- function(x, dims) {
   point <- x$point
+  # [[ ]] because $ would partial-match beta1r when the beta1 key is absent
+  beta1 <- x[["beta1"]]
   if (is.null(point)) {
     assert_bad_argument_ok(
-      is.null(x$beta1), "beta1 must be NULL when point is NULL",
+      is.null(beta1), "beta1 must be NULL when point is NULL",
       arg = "beta1"
     )
     return(invisible(TRUE))
@@ -127,19 +129,19 @@ validate_tau0_fit_point <- function(x, dims) {
   )
   assert_scalar_finite(point$cond, "point$cond")
   assert_bad_argument_ok(
-    !is.null(x$beta1), "beta1 must be provided when point is non-NULL",
+    !is.null(beta1), "beta1 must be provided when point is non-NULL",
     arg = "beta1"
   )
   assert_bad_argument_ok(
-    is.numeric(x$beta1) && is.null(dim(x$beta1)) && !is.null(names(x$beta1)),
+    is.numeric(beta1) && is.null(dim(beta1)) && !is.null(names(beta1)),
     "beta1 must be a named numeric vector",
     arg = "beta1"
   )
   assert_dimension_ok(
-    length(x$beta1) == length(x$beta1r), "beta1 must have length(beta1r)"
+    length(beta1) == length(x$beta1r), "beta1 must have length(beta1r)"
   )
   assert_bad_argument_ok(
-    identical(names(x$beta1), names(x$beta1r)),
+    identical(names(beta1), names(x$beta1r)),
     "names(beta1) must equal names(beta1r)",
     arg = "beta1"
   )

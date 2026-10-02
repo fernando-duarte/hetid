@@ -5,7 +5,7 @@ validate_bootstrap_indices <- function(indices) {
   )
   if (!is.null(names(indices))) assert_instrument_names(names(indices), "indices")
   n <- length(indices[[1]])
-  assert_scalar_integer_in_range(n, "sample_size", 1, .Machine$integer.max)
+  assert_bad_argument_ok(n >= 1L, "indices[[1]] must be a nonempty index vector", arg = "indices")
   valid <- vapply(indices, function(index) {
     bootstrap_is_numeric(index) && is.null(dim(index)) && length(index) == n &&
       all(is.finite(index)) && all(index == floor(index)) && all(index >= 1 & index <= n)

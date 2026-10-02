@@ -170,3 +170,12 @@ test_that("validate_statistics_inputs rejects duplicate maturities", {
     class = "hetid_error_bad_argument"
   )
 })
+
+test_that("validate_statistics_inputs names w2 when it has no columns", {
+  err <- tryCatch(
+    validate_statistics_inputs(rnorm(20), matrix(numeric(0), nrow = 20, ncol = 0)),
+    error = identity
+  )
+  expect_s3_class(err, "hetid_error_bad_argument")
+  expect_identical(err$arg, "w2")
+})

@@ -101,8 +101,9 @@ make_constraint_checker <- function(A_i, b_i, c_i) { # nolint: object_name_linte
 #'   \code{numeric(0)}, imposing no constraints.
 #'
 #' @details Invalid parallel structure signals a
-#'   \code{hetid_error_bad_argument}. Invalid individual coefficients signal
-#'   a \code{hetid_error} identifying the constraint by name or position.
+#'   \code{hetid_error_bad_argument}. Invalid individual coefficients re-signal the
+#'   \code{\link{make_constraint_checker}} condition unchanged, except that its message is
+#'   prefixed with the constraint's name or position.
 #'   The returned closure does not validate \code{theta}; the missing-value
 #'   and finite-input caveats of \code{\link{make_constraint_checker}} apply.
 #'
@@ -149,9 +150,8 @@ make_system_checker <- function(quadratic) {
         quadratic[["c_i"]][[k]]
       ),
       hetid_error = function(e) {
-        stop_hetid(paste0(
-          "constraint ", slot_label, ": ", conditionMessage(e)
-        ))
+        e$message <- paste0("constraint ", slot_label, ": ", conditionMessage(e))
+        stop(e)
       }
     )
   })
