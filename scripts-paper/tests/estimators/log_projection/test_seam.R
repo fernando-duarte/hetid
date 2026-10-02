@@ -140,4 +140,48 @@ check(
   is.function(est_ols$analyze_domain$precheck) && is.function(est_ols$coef_objective)
 )
 
+# the real engine on a one-dimensional set equals a dense evaluation of the
+# package map, and the pooled audit polishes from more starts
+prep_1d <- hetid::prepare_log_projection(
+  c(-2, 2, -3, 3), cbind(bN1 = c(-1, 1, -1, 1)), matrix(numeric(0), 4L, 0L),
+  1:4, 1:4
+)
+qs_1d <- list(A_i = list(matrix(1)), b_i = list(0), c_i = -0.0625)
+tab_1d <- data.frame(
+  coef = "bN1", set_lower = -0.25, set_upper = 0.25, outer_lower = -0.25,
+  outer_upper = 0.25, status = "bounded"
+)
+dense_1d <- seq(-0.25, 0.25, length.out = 2001L)
+for (method in c("log_plus", "log_fuller")) {
+  est_1d <- logvar_log_projection_estimator(
+    prep_1d, method, method, 1, "s", LOGVAR_LOG_PROJECTION_CONTROL
+  )
+  res_1d <- logvar_engine_set_at_tau(est_1d, qs_1d, tab_1d,
+    b_seed = 0, cold_start_check = FALSE, tau = 0.05
+  )
+  vals <- hetid::evaluate_log_projection(prep_1d, matrix(dense_1d), method,
+    jacobian = FALSE
+  )$coef
+  check(
+    sprintf("%s engine set equals a dense evaluation of the package map", method),
+    identical(res_1d$table$status, "bounded") &&
+      abs(res_1d$table$set_lower - min(vals)) <= 1e-4 * max(1, abs(min(vals))) &&
+      abs(res_1d$table$set_upper - max(vals)) <= 1e-4 * max(1, abs(max(vals)))
+  )
+}
+trials <- function(r) vapply(r$diagnostics$polish, function(x) x$n_trials, integer(1))
+run_1d <- function(pool_k) {
+  est <- logvar_log_projection_estimator(
+    prep_1d, "log_plus", "log_plus", 1, "s", LOGVAR_LOG_PROJECTION_CONTROL,
+    pool_k = pool_k
+  )
+  logvar_engine_set_at_tau(est, qs_1d, tab_1d,
+    b_seed = 0, cold_start_check = FALSE, tau = 0.05
+  )
+}
+check(
+  "the pooled audit polishes each side from more starts than the primary",
+  any(trials(run_1d(5L)) > trials(run_1d(1L)))
+)
+
 .test$finish()

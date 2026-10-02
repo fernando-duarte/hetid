@@ -142,6 +142,8 @@ PAPER_CONDITIONAL_ARTIFACT_STATUSES <- setdiff(
 paper_source_once(paper_path("config", "artifact_manifest_variants.R"))
 # fitted-volatility slack sweep records, derived from the tau contract
 paper_source_once(paper_path("config", "artifact_manifest_sweep.R"))
+# regularized log-projection records
+paper_source_once(paper_path("config", "artifact_manifest_log_projection.R"))
 # a colliding code is legal R; lookups take the first and misattribute silently
 stopifnot(!anyDuplicated(names(.artifact_producers)))
 stopifnot(!anyDuplicated(names(.artifact_consumers)))

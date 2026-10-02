@@ -36,7 +36,10 @@ w1 <- drop(w2 %*% b_point) + eps
 inputs <- list(w1 = w1, w2 = w2, pcr = pcr, qtr = seq_len(n_obs))
 
 zero_theta <- stats::setNames(numeric(p_cols), colnames(x_mat))
-thetas <- list(ppml = zero_theta, harvey = zero_theta, logols = zero_theta)
+thetas <- stats::setNames(
+  rep(list(zero_theta), length(LOGVAR_RESID_DIAG_ESTIMATORS)),
+  names(LOGVAR_RESID_DIAG_ESTIMATORS)
+)
 series <- logvar_resid_diag_series(inputs, b_point, thetas)
 
 # Quantile-quantile geometry: one shared theoretical axis, sorted empirical

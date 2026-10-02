@@ -8,6 +8,7 @@
 paper_source_once(paper_path("log_variance", "tables", "estimator_panel.R"))
 paper_source_once(paper_path("log_variance", "tables", "lad_panel_notes.R"))
 paper_source_once(paper_path("log_variance", "tables", "harvey_caption.R"))
+paper_source_once(paper_path("log_variance", "tables", "log_projection_panel_notes.R"))
 
 LOGVAR_ESTIMATOR_PAGE_SPECS <- list(
   lad = list(
@@ -20,6 +21,30 @@ LOGVAR_ESTIMATOR_PAGE_SPECS <- list(
         result, tau_baseline, LOGVAR_LAD_CONTROL$grid_cap,
         LOGVAR_LAD_CONTROL$fit_budget
       )
+    }
+  ),
+  log_plus = list(
+    panel_spec = LOGVAR_LOG_PLUS_PANEL_SPEC,
+    cells = PAPER_REPORTING_CONTROL$cells$log_variance,
+    title = paste(
+      "Panel B: Log-variance equation (regularized log projection,",
+      "additive threshold)"
+    ),
+    subject = "log-variance equation (regularized log projection, additive threshold)",
+    notes = function(result, tau_baseline) {
+      build_log_projection_panel_notes(result, tau_baseline)
+    }
+  ),
+  log_fuller = list(
+    panel_spec = LOGVAR_LOG_FULLER_PANEL_SPEC,
+    cells = PAPER_REPORTING_CONTROL$cells$log_variance,
+    title = paste(
+      "Panel B: Log-variance equation (regularized log projection,",
+      "two-pass Fuller)"
+    ),
+    subject = "log-variance equation (regularized log projection, two-pass Fuller)",
+    notes = function(result, tau_baseline) {
+      build_log_projection_panel_notes(result, tau_baseline)
     }
   )
 )

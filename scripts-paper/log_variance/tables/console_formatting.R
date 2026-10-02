@@ -87,3 +87,24 @@ logvar_print_map_summary <- function(
   }
   invisible(map)
 }
+
+# One console line for an audit reconciliation frame: how many sides agree, or
+# how many were downgraded and why
+logvar_print_audit_summary <- function(audit, label = "sensitivity gate") {
+  if (is.null(audit)) {
+    cat(sprintf("  %s: no sides evaluated\n", label))
+    return(invisible(NULL))
+  }
+  demoted <- audit[!is.na(audit$reason), , drop = FALSE]
+  if (nrow(demoted) == 0L) {
+    cat(sprintf("  %s: %d sides agree, none downgraded\n", label, nrow(audit)))
+  } else {
+    by_reason <- table(demoted$reason)
+    cat(sprintf(
+      "  %s: %d of %d sides downgraded (%s)\n",
+      label, nrow(demoted), nrow(audit),
+      paste(sprintf("%s=%d", names(by_reason), as.integer(by_reason)), collapse = " ")
+    ))
+  }
+  invisible(NULL)
+}

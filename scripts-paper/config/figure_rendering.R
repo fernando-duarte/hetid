@@ -40,7 +40,9 @@ PAPER_FIGURE_STYLE <- list(
     estimator_colors = c(
       "PPML" = "#2a78d6",
       "Harvey" = "#b3541e",
-      "log-OLS" = "#6a3d9a"
+      "log-OLS" = "#6a3d9a",
+      "Regularized log-OLS (additive)" = "#1b9e77",
+      "Regularized log-OLS (Fuller)" = "#e7298a"
     ),
     reference = "grey35",
     reference_linewidth = 0.35,

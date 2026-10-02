@@ -25,6 +25,12 @@ LOGVAR_LOGOLS_CONTROL <- list(
   cold_start_rtol = 1e-8
 )
 
+LOGVAR_LOG_PROJECTION_CONTROL <- list(
+  estimator_version = "log-projection-v1",
+  cold_start_rtol = 1e-8,
+  registry_grid_cap = 3000L
+)
+
 LOGVAR_PPML_CONTROL <- list(
   estimator_version = "ppml-v1",
   fit_function = "glm.fit",
@@ -137,6 +143,9 @@ stopifnot(
   LOGVAR_SEARCH_CONTROL$fitted_vol_starts_per_side >= 1L,
   LOGVAR_SEARCH_CONTROL$logols_full_grid_safety_cap >= 1,
   LOGVAR_LOGOLS_CONTROL$cold_start_rtol > 0,
+  LOGVAR_LOG_PROJECTION_CONTROL$registry_grid_cap >= 1L,
+  LOGVAR_LOG_PROJECTION_CONTROL$registry_grid_cap <=
+    LOGVAR_SEARCH_CONTROL$nearest_neighbor_limit,
   identical(LOGVAR_PPML_CONTROL$fit_function, "glm.fit"),
   identical(LOGVAR_PPML_CONTROL$family, "quasipoisson"),
   identical(LOGVAR_PPML_CONTROL$link, "log"),

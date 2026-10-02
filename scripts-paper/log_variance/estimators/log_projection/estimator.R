@@ -30,7 +30,7 @@ logvar_log_projection_estimator <- function(prep, id, method, multiplier,
   }
   labels <- rownames(prep$projection)
   nan_jacobian <- matrix(NaN, length(labels), ncol(prep$w2))
-  list(
+  est <- list(
     metadata = list(
       estimator = id, target_functional = "theta_log",
       intercept_normalization = sprintf("%s projection intercept", method),
@@ -71,4 +71,27 @@ logvar_log_projection_estimator <- function(prep, id, method, multiplier,
       )
     }
   )
+  if (identical(method, "log_fuller") && !isTRUE(prep$scale_lower_certified)) {
+    est$analyze_domain <- logvar_log_projection_uncertified_domain(labels)
+  }
+  est
+}
+
+# Every side of an uncertified Fuller map is unresolved: positivity of the
+# candidate scale over the set is not established (spec, Fuller scale), so no
+# consumer of the estimator (display map, audit, bounds-by-tau figure,
+# fitted-volatility envelopes) can certify an endpoint
+logvar_log_projection_uncertified_domain <- function(labels) {
+  force(labels)
+  list(sides = function(qs, b_tab, scan, ctx) {
+    list(
+      lower_unbounded = rep(FALSE, length(labels)),
+      upper_unbounded = rep(FALSE, length(labels)),
+      unresolved_endpoints = c(
+        paste(labels, "min", sep = ":"), paste(labels, "max", sep = ":")
+      ),
+      closure_diagnostics = NULL,
+      info = list(reason = "fuller_scale_uncertified")
+    )
+  })
 }

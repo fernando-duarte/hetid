@@ -22,6 +22,17 @@ LOGVAR_LAD_PANEL_SPEC <- list(
   slope_template = "$\\theta^{0.5}_{%d,R}$",
   reference_header = "Reference"
 )
+# the regularized log projections: L for the additive log, F for Fuller
+LOGVAR_LOG_PLUS_PANEL_SPEC <- list(
+  intercept_label = "$\\theta^{L}_0$",
+  slope_template = "$\\theta^{L}_{%d,R}$",
+  reference_header = "Reference"
+)
+LOGVAR_LOG_FULLER_PANEL_SPEC <- list(
+  intercept_label = "$\\theta^{F}_0$",
+  slope_template = "$\\theta^{F}_{%d,R}$",
+  reference_header = "Reference"
+)
 
 logvar_estimator_panel_parts <- function(
   result,

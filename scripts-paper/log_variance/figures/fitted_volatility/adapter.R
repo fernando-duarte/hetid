@@ -62,7 +62,13 @@ logvar_fitted_vol_domain <- function(est, labels) {
           paste(labels, "max", sep = ":")
         ),
         closure_diagnostics = closure,
-        info = list(method = "source-side-hook-axis-mismatch")
+        # keep the source hook's reason (an uncertified Fuller scale) visible
+        info = c(
+          list(method = "source-side-hook-axis-mismatch"),
+          if (is.list(sides) && !is.null(sides$info$reason)) {
+            list(reason = sides$info$reason)
+          }
+        )
       ))
     }
     lower_na <- is.na(sides$lower_unbounded)

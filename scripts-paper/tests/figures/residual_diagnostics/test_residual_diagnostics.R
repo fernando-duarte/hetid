@@ -36,7 +36,10 @@ w1 <- drop(w2 %*% b_point) + eps
 inputs <- list(w1 = w1, w2 = w2, pcr = pcr, qtr = seq_len(n_obs))
 
 zero_theta <- stats::setNames(numeric(p_cols), colnames(x_mat))
-thetas <- list(ppml = zero_theta, harvey = zero_theta, logols = zero_theta)
+thetas <- stats::setNames(
+  rep(list(zero_theta), length(LOGVAR_RESID_DIAG_ESTIMATORS)),
+  names(LOGVAR_RESID_DIAG_ESTIMATORS)
+)
 series <- logvar_resid_diag_series(inputs, b_point, thetas)
 
 check(
@@ -71,7 +74,10 @@ inputs_exact$w1 <- drop(w2 %*% b_point) +
   exp(drop(x_mat %*% exact_theta) / 2)
 exact <- logvar_resid_diag_series(
   inputs_exact, b_point,
-  list(ppml = exact_theta, harvey = exact_theta, logols = exact_theta)
+  stats::setNames(
+    rep(list(exact_theta), length(LOGVAR_RESID_DIAG_ESTIMATORS)),
+    names(LOGVAR_RESID_DIAG_ESTIMATORS)
+  )
 )
 check(
   "xi vanishes when the fit reproduces the log response",

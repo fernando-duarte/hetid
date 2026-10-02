@@ -19,7 +19,7 @@ stopifnot(
 )
 .artifact_producers["ac"] <-
   "log_variance/figures/fitted_volatility/run_tau_sweep.R"
-.sweep_estimators <- c("ppml", "harvey")
+.sweep_estimators <- c("ppml", "harvey", "log_plus", "log_fuller")
 # scalar format() per tau: formatting the vector would pad 0.1 to "0.10" and
 # rename the figure that the sweep actually writes
 .sweep_tails <- c(
