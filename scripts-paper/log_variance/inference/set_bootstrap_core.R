@@ -3,10 +3,20 @@ logvar_box_seed <- function(box) {
   ifelse(is.finite(midpoint), midpoint, 0)
 }
 
+# An estimator may size its own bootstrap search through its fit control
+# (the log projections search the full lattice by default): NA or an absent
+# field takes the stage's shared budget, and Inf is uncapped
+logvar_boot_budget <- function(est_obj, field, shared) {
+  own <- if (is.list(est_obj)) est_obj$metadata$fit_control[[field]]
+  if (is.null(own) || is.na(own)) shared else own
+}
+
 logvar_run_estimator <- function(
   est_obj, spec, boxes, qss, b_point, taus = spec$taus
 ) {
   tau0 <- bootstrap_stage_logvar_tau0_slot(taus)
+  grid_cap <- logvar_boot_budget(est_obj, "bootstrap_grid_cap", spec$grid_cap)
+  fit_budget <- logvar_boot_budget(est_obj, "bootstrap_fit_budget", spec$fit_budget)
   lapply(seq_along(taus), function(index) {
     if (identical(index, tau0)) {
       return(logvar_point_record(est_obj, b_point, spec$coefs))
@@ -19,7 +29,8 @@ logvar_run_estimator <- function(
         logvar_engine_set_at_tau(
           est_obj, qss[[index]], boxes[[index]],
           b_seed = seed,
-          max_grid_points = spec$grid_cap, max_fit_evals = spec$fit_budget,
+          max_grid_points = if (is.infinite(grid_cap)) NULL else grid_cap,
+          max_fit_evals = fit_budget,
           cold_start_check = FALSE, tau = taus[[index]]
         )$schema,
         error = function(error) NULL

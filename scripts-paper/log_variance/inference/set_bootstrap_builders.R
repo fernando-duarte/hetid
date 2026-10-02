@@ -55,9 +55,11 @@ logvar_set_boot_builders <- function(
     function(w1, w2, pcr, qtr, b_point, built, mean_sample) {
       # raw PCs and positional identifiers: the package centers once, as for
       # the published preparation, and a resample repeats quarters
+      stopifnot(isTRUE(mean_sample$impose_null) || isFALSE(mean_sample$impose_null))
       prep <- hetid::prepare_log_projection(
         mean_sample$w1, mean_sample$w2, mean_sample$pc_raw,
-        seq_along(mean_sample$w1), mean_sample$volatility_rows
+        seq_along(mean_sample$w1), mean_sample$volatility_rows,
+        impose_null = mean_sample$impose_null
       )
       stopifnot(identical(unname(prep$w1), unname(w1)))
       logvar_log_projection_estimator(

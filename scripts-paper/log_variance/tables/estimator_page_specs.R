@@ -12,6 +12,7 @@ paper_source_once(paper_path("log_variance", "tables", "log_projection_panel_not
 paper_source_once(paper_path(
   "log_variance", "estimators", "log_projection", "standard_errors.R"
 ))
+paper_source_once(paper_path("log_variance", "estimators", "controls.R"))
 
 LOGVAR_ESTIMATOR_PAGE_SPECS <- list(
   lad = list(
@@ -67,6 +68,17 @@ logvar_estimator_page_spec <- function(id) {
 # Whether the registry puts an extension estimator in the set bootstrap
 logvar_extension_in_boot <- function(id) {
   "set_bootstrap" %in% paper_logvar_estimator_spec(id)$capabilities
+}
+
+# Whether the bootstrap anchor reproduces the published set: the log
+# projections' draws search the published map's full lattice unless their
+# control caps the search (NA or a finite budget)
+logvar_extension_anchor_matches <- function(id) {
+  if (!"log_projection" %in% paper_logvar_estimator_spec(id)$capabilities) {
+    return(TRUE)
+  }
+  budgets <- LOGVAR_LOG_PROJECTION_CONTROL[c("bootstrap_grid_cap", "bootstrap_fit_budget")]
+  all(vapply(budgets, function(x) isTRUE(is.infinite(x)), logical(1)))
 }
 
 # An extension page's panel: the analytic SE choice from its page spec, and the

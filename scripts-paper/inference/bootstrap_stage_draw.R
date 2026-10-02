@@ -66,6 +66,7 @@ bootstrap_stage_shared_state <- function(dat, stage_spec, context = NULL, depend
     estimate, stage_spec$system$gamma, stage_spec$tau$union, stage_spec$tau$display
   )
   geometry$key_col <- stage_spec$frame$key_col
+  geometry$impose_null <- stage_spec$system$impose_null
   if (!is.null(context)) geometry$draw_context <- context
   stopifnot(
     identical(geometry$gamma, stage_spec$system$gamma),

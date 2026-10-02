@@ -25,7 +25,8 @@ logvar_set_boot_draw_from_est <- function(dat, est, shared_geometry, logvar_spec
   # rows (the log projections' scale and Fuller certification)
   mean_sample <- list(
     w1 = est$w1, w2 = est$w2, pc_raw = as.matrix(rows$pc_data),
-    volatility_rows = which(bootstrap_stage_logvar_complete(dat, logvar_spec))
+    volatility_rows = which(bootstrap_stage_logvar_complete(dat, logvar_spec)),
+    impose_null = shared_geometry$impose_null
   )
   built <- list()
   for (id in logvar_spec$estimator_ids) {
@@ -57,5 +58,6 @@ logvar_set_boot_draw <- function(dat, spec) {
   est <- estimate_set_id_system(dat, spec)
   geometry <- set_id_boot_geometry(est, spec$gamma, spec$taus, spec$taus[-1L])
   geometry$key_col <- spec$key_col
+  geometry$impose_null <- spec$impose_null
   logvar_set_boot_draw_from_est(dat, est, geometry, spec)
 }

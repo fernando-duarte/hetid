@@ -181,9 +181,15 @@ tt_anchor <- function(matches) {
     matches
   ), collapse = " ")
 }
+tt_ctrl <- LOGVAR_LOG_PROJECTION_CONTROL
+LOGVAR_LOG_PROJECTION_CONTROL$bootstrap_grid_cap <- 1500L
+tt_capped <- logvar_extension_anchor_matches("log_plus")
+LOGVAR_LOG_PROJECTION_CONTROL <- tt_ctrl
 check(
-  "bootstrapped extension pages qualify the anchor instead of asserting equality",
-  grepl("equals the plug-in set", tt_anchor(TRUE), fixed = TRUE) &&
+  "the anchor sentence asserts equality unless the projection search is capped",
+  logvar_extension_anchor_matches("log_plus") && !tt_capped &&
+    logvar_extension_anchor_matches("ppml") &&
+    grepl("equals the plug-in set", tt_anchor(TRUE), fixed = TRUE) &&
     !grepl("equals the plug-in set", tt_anchor(FALSE), fixed = TRUE) &&
     grepl("can sit slightly inside", tt_anchor(FALSE), fixed = TRUE)
 )

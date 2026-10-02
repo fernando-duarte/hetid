@@ -4,11 +4,11 @@
 # It belongs to every page that threads an envelope and to no other -- the
 # log-OLS and median pages are point identified or take no envelope, so a page
 # without an interval row must not carry an explanation of one.
-# anchor_matches_plugin is FALSE for estimators whose published sets come from a
-# different search than the bootstrap's capped one (the regularized log
-# projections' uncapped, audited lattice), where the anchor can sit inside the
-# plug-in set. Definitions only; reads log_var_eq_set_boot (unified bootstrap
-# stage) and the contract's stability share at call time.
+# anchor_matches_plugin is FALSE when the bootstrap searches more coarsely than
+# the published map (the regularized log projections with a capped bootstrap
+# search), where the anchor can sit inside the plug-in set. Definitions only;
+# reads log_var_eq_set_boot (unified bootstrap stage) and the contract's
+# stability share at call time.
 
 paper_source_once(paper_path("support", "reporting", "cells.R"))
 

@@ -169,8 +169,11 @@ local({
       spec$subject,
       c(
         spec$notes(result, tau_baseline),
-        # their published sets come from an uncapped, audited search
-        if (in_boot) build_logvar_set_inference_notes(log_var_eq_set_boot, FALSE)
+        if (in_boot) {
+          build_logvar_set_inference_notes(
+            log_var_eq_set_boot, logvar_extension_anchor_matches(id)
+          )
+        }
       ),
       id,
       if (in_boot) PAPER_OVERLEAF_SET_LABEL else PAPER_OVERLEAF_SET_LABEL_BARE
