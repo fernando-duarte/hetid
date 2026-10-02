@@ -35,8 +35,8 @@ NULL
 #'   coefficients with names matching \code{beta1r}, or \code{NULL} exactly when
 #'   \code{point} is \code{NULL}.
 #' @param n_obs Finite integer-valued scalar in \code{[1, .Machine$integer.max]}.
-#' @param impose_null A \code{TRUE} or \code{FALSE} flag, whether \eqn{B = 0} was imposed
-#'   on the second reduced form, setting \code{beta2r} to zero.
+#' @param impose_null A \code{TRUE} or \code{FALSE} flag, whether \eqn{\beta_2^R = 0}
+#'   was imposed on the second reduced form, setting \code{beta2r} to zero.
 #' @param tol Positive finite numeric scalar, the point tolerance actually used.
 #' @return A \code{hetid_tau0_fit} list with the supplied elements and attributes.
 #' @keywords internal

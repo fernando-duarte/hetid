@@ -62,7 +62,7 @@ same dates, supplying the own-lag block of \eqn{X_t}. Required when
 \code{nrow(pcs) - 1}. Defaults to zero.}
 
 \item{impose_b_zero}{Logical; defaults to \code{FALSE}. If \code{TRUE},
-impose \eqn{B = 0} (no regression):
+impose \eqn{\beta_2^R = 0} (no regression):
 the residual is the SDF innovation itself.}
 }
 \value{

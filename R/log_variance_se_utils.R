@@ -134,7 +134,7 @@ se_preflight <- function(coef, y, x_mat, hac_lags, se_types) {
 #' Are the SE Inputs Usable?
 #'
 #' Checks types before finiteness because \code{is.finite()} errors on
-#' character vectors. Later checks run only when earlier ones pass.
+#' lists, including data frames. Later checks run only when earlier ones pass.
 #'
 #' @param coef,y,x_mat Inputs as in \code{\link{se_preflight}}.
 #' @param n,p Numbers of design rows and columns, respectively.

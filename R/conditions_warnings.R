@@ -119,10 +119,11 @@ warn_skipped_maturity <- function(message, call = NULL) {
 
 #' Signal a Horizon-Zero Expected-SDF Warning
 #'
-#' Classed warning raised when \code{\link{compute_expected_sdf}} is called
-#' with \code{i = 0}: the horizon-zero expected SDF is the realized
-#' one-period price, returned exactly (not a forecast, no approximation), so
-#' callers can dispatch on class \code{hetid_warning_horizon_zero}.
+#' Classed warning raised when \code{\link{compute_expected_sdf}} or
+#' \code{\link{compute_expected_sdf_variance_bound}} is called with \code{i = 0}: the
+#' horizon-zero expected SDF is the realized one-period price, returned exactly, and its
+#' approximation-error variance bound is identically zero. Callers can dispatch on class
+#' \code{hetid_warning_horizon_zero}.
 #'
 #' @param message A character string containing the warning message.
 #' @param call A call object to include in the condition, or \code{NULL} (the

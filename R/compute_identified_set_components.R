@@ -25,6 +25,8 @@
 #' }
 #' carrying the moments' \code{maturities} and \code{n_components}
 #' attributes forward. Arithmetic overflow can produce non-finite entries.
+#' \code{print()} shows the theta-axis dimension and active constraint indices,
+#' then returns \code{x} invisibly.
 #'
 #' @details
 #' Uses the centered \eqn{1/T} moments in \code{moments}. For each maturity i, computes:
@@ -178,14 +180,9 @@ new_hetid_components <- function(L_i, V_i, Q_i, # nolint: object_name_linter.
   )
 }
 
-#' Print a hetid_components Object
-#'
-#' Displays the theta-axis dimension and active constraint indices on the console.
-#'
-#' @param x A \code{hetid_components} object.
+#' @rdname compute_identified_set_components
+#' @param x A \code{hetid_components} object, for \code{print()}.
 #' @param ... Unused arguments, accepted for method consistency.
-#' @return \code{x}, invisibly.
-#' @seealso \code{\link[base]{print}}, \code{\link{compute_identified_set_components}}
 #' @export
 print.hetid_components <- function(x, ...) {
   cat("<hetid_components>\n")

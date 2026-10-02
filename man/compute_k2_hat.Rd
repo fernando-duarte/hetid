@@ -41,7 +41,7 @@ observations are missing.
 \description{
 Computes k2_hat_i, the fourth moment of the price-news term that, with
 \code{\link{compute_k_hat}} (k1_hat), forms the variance-bound leading
-term U_i = (1/4) * C_i * (k1_hat_i + k2_hat_i).
+term \eqn{U_i = (1/4) c\_hat_i (k\_hat_i + k2\_hat_i)}.
 }
 \details{
 k2_hat captures the contribution of the nonzero conditional mean of the

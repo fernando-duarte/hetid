@@ -65,7 +65,8 @@ assemble_w2_coef_matrix <- function(coef_list, row_names, fallback_names) {
 #'
 #' Single source of truth for the "need at least n_pcs + 2 complete
 #' observations" rule, shared by \code{\link{run_pc_regression}} (which
-#' errors) and the \code{process_w2_maturity} pre-check (which skips).
+#' errors), the \code{process_w2_maturity} pre-check (which skips), and the
+#' log-variance and tau-zero input checks.
 #'
 #' @param n_pcs Non-negative integer count of regressors, including any own-lag columns.
 #' @return Numeric scalar \code{n_pcs + 2L}, the minimum complete-observation count;

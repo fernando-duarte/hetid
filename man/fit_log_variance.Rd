@@ -184,6 +184,10 @@ local({
   print(fit_log_variance(rep(0, t_obs), x)$fit_status)
 })
 }
+\references{
+Harvey, A. C. (1976). "Estimating Regression Models with Multiplicative
+Heteroscedasticity." Econometrica, 44(3), 461-465.
+}
 \seealso{
 \code{\link{log_variance_estimator}},
 \code{\link{log_variance_design}}, \code{\link{ppml_fit_response}},

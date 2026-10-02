@@ -51,7 +51,7 @@ recession_direction <- function(quadratic,
   dirs <- matrix(stats::rnorm(n_dir * n_components), nrow = n_dir)
   dirs <- dirs / sqrt(rowSums(dirs^2))
   negative <- rep(TRUE, n_dir)
-  for (a_mat in quadratic$A_i) { # nolint: object_name_linter.
+  for (a_mat in quadratic$A_i) {
     negative <- negative & rowSums((dirs %*% a_mat) * dirs) < 0
     if (!any(negative)) {
       return(NULL)

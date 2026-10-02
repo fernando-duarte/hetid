@@ -21,10 +21,11 @@ The validated integer scalar. Invalid lag counts signal a
 a \code{hetid_error_insufficient_data}.
 }
 \description{
-Type/range check only. The substantive sufficiency requirement (the
-regression needs \code{n_reg + 2} complete observations, where
-\code{n_reg} counts all PC or \code{exog} columns plus the own-lags) is
-enforced by \code{\link{run_pc_regression}}, the single source of truth for
-that bound; this guard only protects the lag builder's index arithmetic.
+Checks the lag count's type and range, protecting the lag builder's index arithmetic.
+Regression requires \code{n_reg + 2} complete observations, where \code{n_reg}
+counts PC or \code{exog} columns plus own-lags; see
+\code{\link{min_obs_for_pc_regression}}. \code{\link{run_pc_regression}} errors
+below this bound; \code{process_w2_maturity} skips the maturity, except that
+its \code{impose_b_zero} path needs only two complete rows.
 }
 \keyword{internal}

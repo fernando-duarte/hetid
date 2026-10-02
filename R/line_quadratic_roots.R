@@ -5,7 +5,7 @@
 #'
 #' Explicitly separates constant, linear, and quadratic constraints. A
 #' nonzero leading coefficient remains quadratic, however small it is.
-#' The discriminant is computed in units of a power of two near
+#' The discriminant is computed in units of a power of two \eqn{m} near
 #' \eqn{\max(|\beta|, \sqrt{|a|}\sqrt{|\gamma|})}, avoiding the
 #' overflow or underflow of squaring the original coefficients. Binary
 #' scaling avoids additional rounding from an arbitrary normalization.

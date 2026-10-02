@@ -154,8 +154,9 @@ normalize_acm_date_column <- function(acm_data) {
 
 #' Filter ACM Data by Optional Date Bounds
 #'
-#' Rows with NA dates are dropped explicitly; NA subscripts would
-#' otherwise fabricate all-NA rows.
+#' Rows with missing dates are dropped first because \code{to_period_end()} rejects
+#' missing dates, both for the lower bound here and when \code{extract_acm_data()}
+#' relabels the result.
 #'
 #' @param acm_data An ACM data frame with a \code{Date} column named \code{date}.
 #' @param start_date,end_date Optional inclusive scalar \code{Date} bounds;
@@ -169,7 +170,6 @@ normalize_acm_date_column <- function(acm_data) {
 #' @noRd
 filter_acm_date_range <- function(acm_data, start_date, end_date,
                                   frequency = "monthly") {
-  # Dropping missing dates lets unbounded extracts reach to_period_end without an error
   acm_data <- acm_data[!is.na(acm_data$date), , drop = FALSE]
   if (!is.null(start_date)) {
     # Keep the boundary period when start_date is its calendar end but raw dates are earlier

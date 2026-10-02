@@ -45,7 +45,7 @@ n_hat series, \eqn{n\_hat(i - step, t)}.
 \description{
 Handles the boundary case \code{i == step}, where the
 previous-period index \code{i - step = 0} denotes the realized
-one-period bond: n_hat(0,t) = E_t[p_t^(step)] = p_t^(step), the
+one-period bond: \eqn{n\_hat(0, t) = E_t[p_t^{(step)}] = p_t^{(step)}}, the
 log price of the step-maturity bond.
 }
 \details{

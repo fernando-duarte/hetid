@@ -10,9 +10,9 @@
 #' System columns are w2 column indices, not bond maturity values.
 #' Constrained weights must be finite, with no \code{NA}, \code{NaN}, or
 #' infinite values.
-#' All-zero weight columns are rejected: the spec's admissibility sets
-#' exclude the zero direction, and a zero column would silently add a
-#' vacuous constraint.
+#' All-zero weight columns are rejected: a zero column gives a constant instrument,
+#' which the spec excludes (each instrument must be nonconstant), and it would
+#' silently add a vacuous constraint.
 #'
 #' @param lambda A J x I matrix or a length-I list of weight matrices.
 #' @param moments A validated \code{hetid_moments} object supplying the

@@ -26,13 +26,12 @@ Invisible \code{NULL}, called for its warning side effect.
 Checks identification variances for numerical degeneracy and warns when flagged.
 }
 \details{
-Diagnostic for the regularity assumption of the identification
-strategy: \eqn{var(\omega_{2,i}^2) > 0} and
-\eqn{var(\omega_1 \omega_{2,i} - \gamma \omega_{2,i}^2) > 0} at the true
-\eqn{\gamma}. The first is checked directly; the second is checked
-at the \eqn{\gamma} that minimizes it (the residual variance of
-regressing \eqn{\omega_1 \omega_{2,i}} on \eqn{\omega_{2,i}^2}), so a warning means
-the condition is numerically degenerate for some \eqn{\gamma}. Both checks are
+Screens \eqn{var(\omega_{2,i}^2)} and the minimum of
+\eqn{var(\omega_1 \omega_{2,i} - a \omega_{2,i}^2)} over scalar \eqn{a}.
+The minimum is the residual variance from regressing
+\eqn{\omega_1 \omega_{2,i}} on \eqn{\omega_{2,i}^2}.
+Here \eqn{a} is a projection coefficient, called gamma in the warning text,
+not necessarily the structural coefficient \eqn{\theta_i}. Both checks are
 scale-free ratios compared against
 \code{HETID_CONSTANTS$DEGENERACY_TOLERANCE}. The relevant variances
 \eqn{var(\omega_{2,i}^2)} and \eqn{var(\omega_1 \omega_{2,i})} are exactly the

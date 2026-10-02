@@ -15,7 +15,8 @@ acm_raw_column_name(data_type, maturity_months)
 \value{
 A character vector of raw column names in maturity order, with
 \code{NA_character_} for missing maturities. An empty maturity vector
-returns \code{logical(0)}.
+returns \code{logical(0)}. When every maturity is missing, the result is a
+logical \code{NA} vector.
 }
 \description{
 Single source of truth for the raw file's dual naming convention:

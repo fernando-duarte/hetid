@@ -85,7 +85,7 @@
 #'   \item{bounds}{Data frame with \code{coef}, \code{lower}, \code{upper},
 #'     one row per column of \code{fit$w2}, in that order.}
 #'   \item{arg_lower, arg_upper}{Numeric I x I matrices, I = \code{ncol(fit$w2)}.
-#'     Row k attains coordinate k's bound; \code{NA} for an infinite bound.}
+#'     Row k attains the bound of coordinate k; \code{NA} for an infinite bound.}
 #'   \item{beta1_bounds}{Data frame with \code{coef}, \code{lower},
 #'     \code{upper}, one row per element of \code{fit$beta1r} (the intercept
 #'     and each column of \code{x}), in the order of \code{fit$beta1r}.}

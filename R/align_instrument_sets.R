@@ -16,8 +16,7 @@
 #'
 #'   Compute the moments from the returned \code{instruments} matrix.
 #'   The returned \code{support} indexes its columns and can be passed
-#'   to \code{\link{lambda_from_support}} and to the scripts-layer
-#'   optimizer's support mask.
+#'   to \code{\link{lambda_from_support}}.
 #'
 #' @param z_sets List of length \code{n_components}: a numeric
 #'   matrix or data frame of finite numeric values (\code{T x J_i}) at

@@ -1,4 +1,7 @@
-# Publish the data and provenance together by renaming a sibling staging directory
+#' Download or Reuse a Pinned ACM Snapshot
+#'
+#' Publishes the data and provenance together by renaming a sibling staging directory.
+#' @noRd
 download_acm_pin <- function(pin, force, quiet) {
   destination <- dirname(pin$path)
   if (dir.exists(destination)) {

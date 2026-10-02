@@ -101,9 +101,9 @@
 #' \url{https://www.newyorkfed.org/research/data_indicators/term-premia-tabs}
 #'
 #' @seealso
-#' \code{\link{load_term_premia}} for loading the raw data
-#' \code{\link{extract_acm_data}} for convenient data extraction
-#' \code{\link{download_term_premia}} for downloading the latest data
+#' \code{\link{load_term_premia}} for loading the raw data;
+#' \code{\link{extract_acm_data}} for convenient data extraction;
+#' \code{\link{download_term_premia}} for downloading the latest data.
 #'
 #' @name acm_data
 #' @aliases ACM_data ACM acm term_premia

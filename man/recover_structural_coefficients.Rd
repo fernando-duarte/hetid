@@ -17,8 +17,8 @@ PCs are principal components of nominal financial asset returns.}
 \item{beta2r}{Numeric \eqn{I \times p} matrix: the OLS coefficients of the
 \eqn{I} components of \eqn{Y_2} on the same \eqn{X}, i.e. the
 \code{coefficients} element of \code{\link{compute_w2_residuals}}. Row
-\eqn{i} is \eqn{(\alpha_{i0}, \alpha_{i1}, \ldots)}. This matrix \emph{is}
-the point-identified \eqn{\boldsymbol{\beta}_{20}} (the \eqn{Y_2}-equation
+\eqn{i} is \eqn{(\boldsymbol{\beta}_{2,i}^{R})^{\top}}. This matrix \emph{is}
+the point-identified \eqn{\boldsymbol{\beta}_2^{R}} (the \eqn{Y_2}-equation
 coefficient matrix), which is identified independently of
 \eqn{\boldsymbol{\theta}}. If both predictor axes have names, its column names
 must match \code{names(beta1r)} exactly, including order.}
@@ -62,8 +62,8 @@ The population map
 above, because \eqn{(E[XX'])^{-1}E[XY_1] = \boldsymbol{\beta}_1^{R}} and
 \eqn{(E[XX'])^{-1}E[XY_2'] = (\boldsymbol{\beta}_2^{R})^{\top}}. The
 constant, principal-component, and own-lag coefficients therefore vary affinely with
-\eqn{\boldsymbol{\theta}}, while \eqn{\boldsymbol{\beta}_{20} =
-\boldsymbol{\beta}_2^{R}} does not depend on \eqn{\boldsymbol{\theta}}.
+\eqn{\boldsymbol{\theta}}, while \eqn{\boldsymbol{\beta}_2^{R}} does not depend on
+\eqn{\boldsymbol{\theta}}.
 }
 \section{Sample consistency}{
 

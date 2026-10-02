@@ -52,3 +52,7 @@ The HAC lag default is shared with PPML and lives in
 LOG_VARIANCE_HARVEY_CONTROL$MAXIT
 LOG_VARIANCE_HARVEY_CONTROL$SE_TYPES
 }
+\references{
+Harvey, A. C. (1976). "Estimating Regression Models with Multiplicative
+Heteroscedasticity." Econometrica, 44(3), 461-465.
+}

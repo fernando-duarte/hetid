@@ -23,7 +23,7 @@
 #'   non-empty, and non-missing. When no column names are supplied, they
 #'   are generated as \code{z1}, \code{z2}, etc. A vector is treated as a
 #'   one-column matrix. Instruments are de-meaned before computing moments.
-#' @param impose_null Logical; if \code{TRUE}, impose \eqn{B = 0}
+#' @param impose_null Logical; if \code{TRUE}, impose \eqn{\beta_2^R = 0}
 #'   structurally on the \eqn{Y_2} reduced form instead of estimating it
 #'   (\code{w2 <- y2}, \code{beta2r} all zero). Default \code{FALSE}.
 #' @param gamma \code{NULL} or a finite numeric \eqn{J \times I} matrix of
@@ -89,11 +89,12 @@
 #' into \code{beta1r}, \code{beta2r}, and the returned container.
 #'
 #' @details
-#' At \eqn{\tau = 0} the heteroskedasticity condition
-#' \eqn{E[\varepsilon_1 \varepsilon_2 \mid Z] = \tau \,
-#' \mathrm{Var}(\varepsilon_2 \mid Z)} collapses each maturity's quadratic
-#' identified-set constraint to the linear equality
-#' \deqn{\mathbf{Q}_i^\top \boldsymbol{\theta} = L_i,}
+#' For the configured instrument \eqn{Z_i = \gamma_i^\top Z}, the bound
+#' \eqn{|\mathrm{Corr}(Z_i, \varepsilon_1 \varepsilon_{2,i})| \le
+#' \tau |\mathrm{Corr}(Z_i, \varepsilon_{2,i}^2)|} at \eqn{\tau = 0} becomes
+#' \eqn{\mathrm{Cov}(Z_i, \varepsilon_1 \varepsilon_{2,i}) = 0}.
+#' Each maturity's sample constraint then reduces to
+#' \deqn{Q_i^\top \theta = L_i,}
 #' so stacking across maturities gives a single linear system, solved (when
 #' full rank and consistent) by \code{\link{compute_tau0_point}}; see that
 #' function for the exact solve. The structural coefficients then follow

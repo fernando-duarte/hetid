@@ -66,8 +66,7 @@ periods ahead, \eqn{E_t[\mathrm{SDF}_{t+1+s}]}, using the expected
 log one-period price \code{n_hat(i, t)} plus an empirical bias
 correction. The unconditional expectation is replaced by the sample
 average over the observations.
-}
-\details{
+
 Two corrections are available. The default (\code{paired = FALSE}) is
 horizon-agnostic: it estimates the bias as a difference of full-sample
 means and admits any \code{i} on the \code{i + step} grid (no
@@ -76,7 +75,8 @@ multiple-of-step requirement). The \code{Mathematical Formula},
 \code{paired = TRUE} matched-forecast-error correction, which leads the
 realized leg \code{i / step} rows and so requires \code{i} to be a
 positive multiple of \code{step}.
-
+}
+\details{
 Yields and term premia are in annualized percentage points, with rows
 aligned to the same dates. The output has \code{nrow(yields)} rows and
 columns \code{date} and \code{expected_sdf}; the latter is dimensionless.
@@ -114,8 +114,8 @@ one-period prices, so the returned \eqn{E_t}-labelled series is an
 in-sample fitted object, not a pseudo-out-of-sample forecast; it must
 not be fed into a real-time backtest. The \code{is.finite()} mask
 guards only the scalar correction: any \code{NA}/\code{Inf} carried by
-\code{exp(n_hat(i, t))} (e.g. at the unpaired tail dates) propagates
-to the corresponding output values.
+\code{exp(n_hat(i, t))} (for example from a missing or overflowing yield or
+term premium on that date) propagates to the corresponding output values.
 
 Besides the \code{i} and \code{i + step} columns \code{compute_n_hat}
 uses, the realized leg requires the one-period yield column
@@ -150,10 +150,10 @@ defined against.
 With \code{s = i / step} news periods, \eqn{m(\mathrm{step})} the step
 maturity in years, and \code{n_hat(i, t)} the expected log one-period
 price from \code{\link{compute_n_hat}}, the estimator is
-\deqn{\exp(n\_hat(i,t)) + \frac{1}{|T_i|} \sum_{t \in T_i}
-  \left( e^{-m(\mathrm{step}) y^{(\mathrm{step})}_{t+s} / 100}
-  - \exp(n\_hat(i,t)) \right)}
-over the bound index set \eqn{T_i = \{1, \dots, T - s\}}. The leading
+\deqn{\exp(n\_hat(i,t)) + \frac{1}{|T_i|} \sum_{r \in T_i}
+  \left( e^{-m(\mathrm{step}) y^{(\mathrm{step})}_{r+s} / 100}
+  - \exp(n\_hat(i,r)) \right)}
+over the dates \eqn{T_i \subseteq \{1, \dots, T - s\}} where both legs are finite. The leading
 term \eqn{\exp(n\_hat(i,t))} is the conditional approximation to
 \eqn{E_t[e^{-y^{(1)}_{t+s}}]}; the constant correction is the sample
 analogue of the unconditional

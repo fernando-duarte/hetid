@@ -143,6 +143,10 @@
 #'   \code{\link{log_variance_design}}, \code{\link{ppml_fit_response}},
 #'   \code{\link{harvey_fit_response}}
 #'
+#' @references
+#' Harvey, A. C. (1976). "Estimating Regression Models with Multiplicative
+#' Heteroscedasticity." Econometrica, 44(3), 461-465.
+#'
 #' @export
 #'
 #' @examples

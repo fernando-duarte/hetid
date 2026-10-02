@@ -27,22 +27,23 @@ A list with the following components. Here J is the instrument
 count, n_components = \code{ncol(w2)} is the theta axis, and M is the
 number of selected maturities (the constraint axis).
 \describe{
-\item{r_i_0}{Matrix (J x M); column k holds R_i^(0) for maturity
+\item{r_i_0}{Matrix (J x M); column k holds \eqn{R_i^{(0)}} for maturity
 \code{maturities[k]} (columns named \code{maturity_N}).}
 \item{r_i_1}{Named list of length M (keys maturity_N); element k is the
-J x n_components matrix R_i^(1) for maturity \code{maturities[k]},
+J x n_components matrix \eqn{R_i^{(1)}} for maturity \code{maturities[k]},
 with columns named \code{maturity_1}, ..., \code{maturity_I}.}
-\item{p_i_0}{Matrix (J x M); column k holds P_i^(0) for maturity
+\item{p_i_0}{Matrix (J x M); column k holds \eqn{P_i^{(0)}} for maturity
 \code{maturities[k]} (columns named \code{maturity_N}).}
 }
 }
 \description{
-Computes vector statistics R_i^(0), R_i^(1), and P_i^(0) for each maturity i.
+Computes the centered instrument covariances \eqn{R_i^{(0)}}, \eqn{R_i^{(1)}}, and
+\eqn{P_i^{(0)}} for each selected \code{w2} column.
 }
 \details{
 For each maturity i, computes the centered sample covariances of the
 instruments with the residual products (1/T normalization; see
-\code{\link{centered_cov}} and the spec sections on moment notation and centering):
+\code{\link{centered_cov}}):
 \deqn{\hat{R}_i^{(0)} = \widehat{\mathrm{Cov}}(PC, \omega_1 \odot \omega_2^{(i)})}
 \deqn{\hat{R}_i^{(1)} = \widehat{\mathrm{Cov}}(PC, \omega_2 \odot \omega_2^{(i)})}
 \deqn{\hat{P}_i^{(0)} = \widehat{\mathrm{Cov}}(PC, (\omega_2^{(i)})^{\odot 2})}

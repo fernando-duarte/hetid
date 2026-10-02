@@ -44,8 +44,8 @@ coefficients with names matching \code{beta1r}, or \code{NULL} exactly when
 
 \item{n_obs}{Finite integer-valued scalar in \code{[1, .Machine$integer.max]}.}
 
-\item{impose_null}{A \code{TRUE} or \code{FALSE} flag, whether \eqn{B = 0} was imposed
-on the second reduced form, setting \code{beta2r} to zero.}
+\item{impose_null}{A \code{TRUE} or \code{FALSE} flag, whether \eqn{\beta_2^R = 0}
+was imposed on the second reduced form, setting \code{beta2r} to zero.}
 
 \item{tol}{Positive finite numeric scalar, the point tolerance actually used.}
 }

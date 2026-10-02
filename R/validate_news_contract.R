@@ -55,9 +55,12 @@ assert_news_contract_ok <- function(maturities, step, arg,
 
 #' Validate That a Maturity Index Is a Positive Multiple of the Step
 #'
-#' Single source of the guard shared by compute_k_hat / compute_k2_hat,
-#' whose news-period arithmetic shifts whole steps; \code{reason} adapts the
-#' trailing clause to each call site. Stops with hetid_error_bad_argument.
+#' Single source of the step-multiple guard, reached through
+#' \code{validate_news_kernel_inputs()} (from \code{compute_c_hat}, \code{compute_k_hat},
+#' \code{compute_k2_hat}, and \code{compute_news_q_bound}) and called directly by
+#' \code{compute_expected_sdf_gap()}; their news-period arithmetic shifts whole steps.
+#' \code{reason} adapts the trailing clause to each call site. Stops with
+#' \code{hetid_error_bad_argument}.
 #'
 #' @param i Finite integer scalar maturity index in months, validated by the caller.
 #' @param step Positive integer scalar number of months per news period,

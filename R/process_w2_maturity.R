@@ -19,7 +19,7 @@
 #' @param y1_lags Integer number of own-lags \eqn{H \ge 0} to append, at most
 #'   \code{nrow(pcs) - 1}. Defaults to zero.
 #' @param impose_b_zero Logical; defaults to \code{FALSE}. If \code{TRUE},
-#'   impose \eqn{B = 0} (no regression):
+#'   impose \eqn{\beta_2^R = 0} (no regression):
 #'   the residual is the SDF innovation itself.
 #'
 #' @details
@@ -128,9 +128,9 @@ process_w2_maturity <- function(i, yields_df, term_premia_df, pcs, n_pcs,
   )
 }
 
-#' Assemble the Imposed B = 0 Result for One \eqn{\omega_2} Maturity
+#' Assemble the Imposed \eqn{\beta_2^R = 0} Result for One \eqn{\omega_2} Maturity
 #'
-#' Imposes \eqn{B = 0} literally: no regression is fit, the residual is the SDF
+#' Imposes \eqn{\beta_2^R = 0} literally: no regression is fit, the residual is the SDF
 #' innovation itself, and the coefficient row is a full-width vector of
 #' structural zeros, so that the
 #' matrix assembled from these rows in \code{\link{compute_w2_residuals}} keeps its

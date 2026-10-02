@@ -39,9 +39,10 @@ require \code{i <= HETID_CONSTANTS$MAX_MATURITY - step}; additional
 horizon restrictions are described for each function.}
 }
 \value{
-Numeric scalar \eqn{\widehat U_{i}^{(0)} \ge 0}; \code{Inf} when
-both arms overflow on a nonempty paired sample (conservative, never
-sharp); \code{NA_real_} only when no finite paired observations remain.
+Numeric scalar \eqn{\widehat U_{i}^{(0)} \ge 0}: \code{0} when \code{i = 0}
+(with a \code{hetid_warning_horizon_zero} warning); \code{Inf} when both arms
+overflow on a nonempty paired sample (conservative, never sharp); \code{NA_real_}
+only when no finite paired observations remain.
 }
 \description{
 Computes \eqn{\widehat U_{i}^{(0)}}, the reported bound on the

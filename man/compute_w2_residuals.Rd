@@ -63,7 +63,7 @@ required with length \code{nrow(pcs)} when \code{y1_lags > 0}.}
 PC regressors (default 0). Cannot exceed \code{nrow(pcs) - 1}.
 For \eqn{H > 0}, lagging drops the first \eqn{H - 1} news rows.}
 
-\item{impose_b_zero}{Logical; \code{TRUE} imposes \eqn{B = 0} without regression:
+\item{impose_b_zero}{Logical; \code{TRUE} imposes \eqn{\beta_2^R = 0} without regression:
 coefficients and fitted values are zero and \code{r_squared} is \code{NA}.
 Complete-case filtering still applies. Default is \code{FALSE}.}
 }
@@ -103,9 +103,10 @@ news realized at \eqn{t+1}. Yields and term premia must have the same dimensions
 with numeric columns named \code{yN} and \code{tpN}, in annualized percentage points.
 Maturity \code{i} needs columns at \code{i - step}, \code{i}, and
 \code{i + step}; at \code{i == step}, only \code{i} and \code{i + step} are needed.
-Supply \code{pcs} already joined to yields by \code{date}, with one row per yield
-row. Matrices and numeric data frames are accepted. Set \code{step} to the number
-of months per observation period; the default is an annual news clock.
+Supply \code{pcs} (required; \code{NULL} signals \code{hetid_error_bad_argument})
+already joined to yields by \code{date}, with one row per yield row. Matrices and
+numeric data frames are accepted. Set \code{step} to the number of months per
+observation period; the default is an annual news clock.
 The rollover convention must also match; see \code{\link{compute_n_hat}}.
 
 Rows with missing SDF innovations, selected PCs, or own-lags are removed per

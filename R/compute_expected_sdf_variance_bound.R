@@ -40,9 +40,10 @@
 #' Yields with a finite maximum absolute value below one trigger a
 #' \code{hetid_warning_unit_scale} warning about possible decimal units.
 #'
-#' @return Numeric scalar \eqn{\widehat U_{i}^{(0)} \ge 0}; \code{Inf} when
-#'   both arms overflow on a nonempty paired sample (conservative, never
-#'   sharp); \code{NA_real_} only when no finite paired observations remain.
+#' @return Numeric scalar \eqn{\widehat U_{i}^{(0)} \ge 0}: \code{0} when \code{i = 0}
+#'   (with a \code{hetid_warning_horizon_zero} warning); \code{Inf} when both arms
+#'   overflow on a nonempty paired sample (conservative, never sharp); \code{NA_real_}
+#'   only when no finite paired observations remain.
 #'
 #' @section Mathematical Formula:
 #' For \code{i > 0}, let \eqn{s = i / step}, and let \eqn{T_i} contain

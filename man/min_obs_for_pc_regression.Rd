@@ -16,6 +16,7 @@ an integer when \code{n_pcs} is an integer.
 \description{
 Single source of truth for the "need at least n_pcs + 2 complete
 observations" rule, shared by \code{\link{run_pc_regression}} (which
-errors) and the \code{process_w2_maturity} pre-check (which skips).
+errors), the \code{process_w2_maturity} pre-check (which skips), and the
+log-variance and tau-zero input checks.
 }
 \keyword{internal}

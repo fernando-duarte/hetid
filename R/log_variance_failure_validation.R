@@ -1,5 +1,7 @@
 #' Validate the Fields Required When fit_status Is nonconvergence
 #' @param x A classed \code{hetid_log_variance_fit} object.
+#' @return Invisible \code{TRUE}; otherwise signals a \code{hetid_error_bad_argument}
+#'   condition naming the first inconsistent field.
 #' @noRd
 validate_log_variance_fit_nonconv <- function(x) {
   assert_bad_argument_ok(

@@ -17,8 +17,8 @@ The logical scalar \code{TRUE}, returned invisibly after the check.
 Warns when yield magnitudes suggest decimal input to term-structure
 formulas that assume \strong{annualized percentage points}. Those formulas
 divide by \code{HETID_CONSTANTS$PERCENT_TO_DECIMAL}, so decimal input would
-distort subsequent exponentiated quantities, including \eqn{e^{\hat\mu}}
-and \eqn{\hat C_i}.
+distort subsequent exponentiated quantities, including \eqn{e^{n\_hat}} in
+\code{compute_sdf_innovations()} and \eqn{c\_hat_i} in \code{compute_c_hat()}.
 }
 \details{
 Emits a \code{hetid_warning_unit_scale} warning when the maximum absolute

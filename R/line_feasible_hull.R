@@ -77,7 +77,7 @@ line_quadratic_coefficients <- function(center, dir, quadratic) {
   n_constraints <- length(quadratic$c_i)
   coefs <- matrix(0, nrow = n_constraints, ncol = 3)
   for (i in seq_len(n_constraints)) {
-    a_mat <- quadratic$A_i[[i]] # nolint: object_name_linter.
+    a_mat <- quadratic$A_i[[i]]
     b_vec <- quadratic$b_i[[i]]
     a_dir <- drop(a_mat %*% dir)
     coefs[i, ] <- c(

@@ -1,8 +1,8 @@
 #' Assert Slack Values Are Finite and in [0, 1)
 #'
 #' Single source of truth for the tau range rule, shared by
-#' \code{validate_quadratic_inputs()} and
-#' \code{as_tau_list()} (general path).
+#' \code{validate_quadratic_inputs()}, \code{as_tau_list()} (both its list and numeric
+#' branches), \code{compute_identified_set_box()}, and \code{linear_bounds_frame()}.
 #'
 #' @param tau Numeric vector of dimensionless slacks in \code{[0, 1)}.
 #'   Missing and non-finite values are rejected; an empty vector is valid.

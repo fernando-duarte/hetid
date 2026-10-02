@@ -16,7 +16,8 @@
 #'
 #' @return A character vector of raw column names in maturity order, with
 #'   \code{NA_character_} for missing maturities. An empty maturity vector
-#'   returns \code{logical(0)}.
+#'   returns \code{logical(0)}. When every maturity is missing, the result is a
+#'   logical \code{NA} vector.
 #' @keywords internal
 acm_raw_column_name <- function(data_type, maturity_months) {
   assert_acm_data_type(data_type, arg = "data_types")

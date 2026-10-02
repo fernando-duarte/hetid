@@ -2,7 +2,7 @@
 % Please edit documentation in R/process_w2_maturity.R
 \name{impose_b_zero_result}
 \alias{impose_b_zero_result}
-\title{Assemble the Imposed B = 0 Result for One \eqn{\omega_2} Maturity}
+\title{Assemble the Imposed \eqn{\beta_2^R = 0} Result for One \eqn{\omega_2} Maturity}
 \usage{
 impose_b_zero_result(sdf_innov, reg_lagged, complete_idx, n_complete)
 }
@@ -24,7 +24,7 @@ are zeros named \code{(Intercept)} followed by \code{colnames(reg_lagged)}.
 The \code{r_squared} and \code{df_residual} components are \code{NA_real_}.
 }
 \description{
-Imposes \eqn{B = 0} literally: no regression is fit, the residual is the SDF
+Imposes \eqn{\beta_2^R = 0} literally: no regression is fit, the residual is the SDF
 innovation itself, and the coefficient row is a full-width vector of
 structural zeros, so that the
 matrix assembled from these rows in \code{\link{compute_w2_residuals}} keeps its

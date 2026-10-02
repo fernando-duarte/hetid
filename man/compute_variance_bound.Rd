@@ -44,7 +44,7 @@ deterministic envelope. When \code{NULL}
 (default) the sample maximum \code{\link{compute_c_hat}} is used;
 when a positive scalar is supplied it replaces the envelope, giving
 the spec's envelope-conservative variant
-\eqn{U_i^{bd} = (1/4)\,\bar C_i\,(k1 + k2)}.}
+\eqn{U_i^{bd} = \frac{1}{4} \bar{C}_i (K1_i + K2_i)}.}
 }
 \value{
 A numeric value of \code{0.25 * c_hat_i * (k_hat_i + k2_hat_i)}, or

@@ -31,8 +31,9 @@
 #' Status \code{sampled_partial} records omission of nonconverged fits; \code{sampled}
 #' still carries no full-set coverage guarantee. An infinite box, absent candidates,
 #' or all failed fits keeps the sampling reason and returns missing predictions.
-#' Nonfinite projection arithmetic makes that row unavailable. Exponential overflow
-#' or underflow at finite eta makes only that transformed side missing, with status
+#' Nonfinite projection arithmetic makes that row unavailable, with status
+#' \code{nonfinite_projection} on both sides. Exponential overflow or underflow at
+#' finite eta makes only that transformed side missing, with status
 #' \code{transform_overflow} or \code{transform_underflow}; it never proves infinity
 #' or an attained zero. No prediction step refits a candidate or draws randomness.
 #' Tied endpoints use the first successful candidate in the original sample order.

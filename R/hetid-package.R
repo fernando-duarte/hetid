@@ -105,11 +105,12 @@
 #'
 #' @section Mathematical Background:
 #' The identification strategy exploits the relationship:
-#' \deqn{Y_{1,t+1} = \theta Y_{2,t+1} + \epsilon_{1,t+1}}
-#' \deqn{Y_{2,t+1} = \gamma' Z_t + \epsilon_{2,t+1}}
+#' \deqn{Y_{1,t+1} = X_t^\top \beta_1 + \theta^\top Y_{2,t+1} + \epsilon_{1,t+1}}
+#' \deqn{Y_{2,t+1} = \beta_2^R X_t + \epsilon_{2,t+1}}
 #'
-#' Where identification is achieved through heteroskedasticity-based moment conditions
-#' as described in Lewbel (2012).
+#' Here \eqn{X_t} stacks a constant, the principal components of nominal financial asset
+#' returns, and any retained lags of \eqn{Y_1}. Identification comes from
+#' heteroskedasticity-based moment conditions on the residuals, as described in Lewbel (2012).
 #'
 #' @references
 #' Adrian, T., Crump, R. K., and Moench, E. (2013). "Pricing the term structure

@@ -37,7 +37,7 @@ A \code{hetid_theta_box} object:
 \item{bounds}{Data frame with \code{coef}, \code{lower}, \code{upper},
 one row per column of \code{fit$w2}, in that order.}
 \item{arg_lower, arg_upper}{Numeric I x I matrices, I = \code{ncol(fit$w2)}.
-Row k attains coordinate k's bound; \code{NA} for an infinite bound.}
+Row k attains the bound of coordinate k; \code{NA} for an infinite bound.}
 \item{beta1_bounds}{Data frame with \code{coef}, \code{lower},
 \code{upper}, one row per element of \code{fit$beta1r} (the intercept
 and each column of \code{x}), in the order of \code{fit$beta1r}.}
@@ -130,8 +130,8 @@ it was computed from. Two axes are recorded as attributes of
 \code{hetid_moments} objects:
 \describe{
 \item{\code{n_components}}{the theta axis: \code{ncol(w2)}, the
-dimension of theta, the length of \code{tau}, and the column
-count of \code{gamma}. Immutable for a given system.}
+dimension of theta, the length of a per-component \code{tau} vector,
+and the column count of \code{gamma}. Immutable for a given system.}
 \item{\code{maturities}}{the constraint axis: which w2 columns (by
 column index, values in \code{1..n_components}) have their moment
 conditions computed and enforced. May be any subset, e.g.

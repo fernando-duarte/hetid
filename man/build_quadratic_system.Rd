@@ -60,8 +60,8 @@ it was computed from. Two axes are recorded as attributes of
 \code{hetid_moments} objects:
 \describe{
 \item{\code{n_components}}{the theta axis: \code{ncol(w2)}, the
-dimension of theta, the length of \code{tau}, and the column
-count of \code{gamma}. Immutable for a given system.}
+dimension of theta, the length of a per-component \code{tau} vector,
+and the column count of \code{gamma}. Immutable for a given system.}
 \item{\code{maturities}}{the constraint axis: which w2 columns (by
 column index, values in \code{1..n_components}) have their moment
 conditions computed and enforced. May be any subset, e.g.

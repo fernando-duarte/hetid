@@ -1,8 +1,9 @@
 #' Build the Common Conditioning Regressor Matrix X_t
 #'
-#' Constructs the shared conditioning block \eqn{X_t = (\mathrm{PC}_t, Y_{1,t},
-#' \ldots, Y_{1,t+1-H})} used by both the consumption (\eqn{\omega_1}) and
-#' news (\eqn{\omega_2}) reduced forms.
+#' Constructs the non-constant columns of the conditioning vector
+#' \eqn{X_t = (1, \mathrm{PC}_t^\top, Y_{1,t}, \ldots, Y_{1,t+1-H})^\top} for the news
+#' (\eqn{\omega_2}) reduced form; \code{\link{run_pc_regression}} adds the intercept.
+#' \code{\link{compute_w1_residuals}} assembles the matching \eqn{\omega_1} block itself.
 #'
 #' @details
 #' The PC block is named first (so the lag append cannot trip

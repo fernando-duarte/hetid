@@ -2,9 +2,12 @@
 % Please edit documentation in R/compute_identified_set_components.R
 \name{compute_identified_set_components}
 \alias{compute_identified_set_components}
+\alias{print.hetid_components}
 \title{Compute Basic Components for Identified Set}
 \usage{
 compute_identified_set_components(gamma, moments)
+
+\method{print}{hetid_components}(x, ...)
 }
 \arguments{
 \item{gamma}{Finite numeric matrix (J x I) where each column gamma_i contains the
@@ -15,6 +18,10 @@ Missing or non-finite values are rejected with a \code{hetid_error}.}
 
 \item{moments}{A \code{hetid_moments} object from
 \code{\link{compute_identification_moments}}.}
+
+\item{x}{A \code{hetid_components} object, for \code{print()}.}
+
+\item{...}{Unused arguments, accepted for method consistency.}
 }
 \value{
 An object of class \code{hetid_components}: a list (with
@@ -31,6 +38,8 @@ length-n_components vector Q_i for maturity \code{maturities[k]}, named
 }
 carrying the moments' \code{maturities} and \code{n_components}
 attributes forward. Arithmetic overflow can produce non-finite entries.
+\code{print()} shows the theta-axis dimension and active constraint indices,
+then returns \code{x} invisibly.
 }
 \description{
 Computes the basic components L_i, V_i, and Q_i for the identified set
@@ -57,8 +66,8 @@ it was computed from. Two axes are recorded as attributes of
 \code{hetid_moments} objects:
 \describe{
 \item{\code{n_components}}{the theta axis: \code{ncol(w2)}, the
-dimension of theta, the length of \code{tau}, and the column
-count of \code{gamma}. Immutable for a given system.}
+dimension of theta, the length of a per-component \code{tau} vector,
+and the column count of \code{gamma}. Immutable for a given system.}
 \item{\code{maturities}}{the constraint axis: which w2 columns (by
 column index, values in \code{1..n_components}) have their moment
 conditions computed and enforced. May be any subset, e.g.

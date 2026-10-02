@@ -20,8 +20,8 @@ A single finite observation gives zeros; an empty sample gives \code{NaN} entrie
 Computes the centered sample covariance between the columns of two
 conformable inputs (vectors or matrices), using the \eqn{1/T}
 normalization of the sample analog in Lewbel multivariate set
-identification (centered cov/var; see the package spec sections on
-moment notation and centering), \strong{not} the \eqn{1/(T-1)}
+identification (centered cov/var; see the sample-implementation section of
+the package spec), \strong{not} the \eqn{1/(T-1)}
 convention of \code{\link[stats:cov]{stats::cov()}}.
 }
 \details{

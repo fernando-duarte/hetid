@@ -5,11 +5,9 @@
 #' matrices defined only on each component's instrument subset:
 #' element i of the result is a \code{j_total} x K_i matrix that is
 #' zero everywhere except rows \code{support[[i]]}, which carry
-#' \code{weights[[i]]}. Off-support rows are exact structural zeros,
-#' so the result is also a valid masked start for the scripts-layer
-#' optimizer (pass the same \code{support} as its mask). Constrained
-#' columns are the non-NULL positions of \code{support};
-#' \code{weights} must be NULL exactly where \code{support} is NULL.
+#' \code{weights[[i]]}. Off-support rows are exact structural zeros.
+#' Constrained columns are the non-\code{NULL} positions of \code{support};
+#' \code{weights} must be \code{NULL} exactly where \code{support} is \code{NULL}.
 #'
 #' Weight columns that are entirely zero are not rejected here; they are rejected
 #' by \code{\link{build_general_quadratic_system}} when the padded

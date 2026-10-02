@@ -22,8 +22,9 @@ direction (20000L)}
 \item{DIR_SEED}{Seed for that direction sample (20260815L). Samples
 depend on \code{RNGkind()}; \code{.Random.seed} is restored, but
 the cached Box-Muller normal deviate is not}
-\item{N_POINTS}{Interpolation steps taken from the center toward each
-box witness when sampling the set for a profile (5L)}
+\item{N_POINTS}{Equally spaced steps from the mean of complete box witnesses
+to each witness, including the witness, for \code{profile_log_variance_set()}
+and \code{sample_log_variance_set()} (5L)}
 \item{FEAS_TOL}{Relative feasibility tolerance (1e-10), shared by
 profile/sample candidates and functional-bound witnesses. Each constraint
 value must be at most this tolerance times the sum of the absolute

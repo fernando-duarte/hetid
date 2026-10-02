@@ -17,9 +17,10 @@ The warning message is returned invisibly as a character string.
 The function is called for its warning side effect.
 }
 \description{
-Classed warning raised when \code{\link{compute_expected_sdf}} is called
-with \code{i = 0}: the horizon-zero expected SDF is the realized
-one-period price, returned exactly (not a forecast, no approximation), so
-callers can dispatch on class \code{hetid_warning_horizon_zero}.
+Classed warning raised when \code{\link{compute_expected_sdf}} or
+\code{\link{compute_expected_sdf_variance_bound}} is called with \code{i = 0}: the
+horizon-zero expected SDF is the realized one-period price, returned exactly, and its
+approximation-error variance bound is identically zero. Callers can dispatch on class
+\code{hetid_warning_horizon_zero}.
 }
 \keyword{internal}
