@@ -11,7 +11,7 @@ BOOTSTRAP_STAGE_CODE_FILES <- c(
     "analysis_contract.R",
     "artifacts.R",
     "inference_search_control.R",
-    "logvar_estimators.R",
+    "logvar_estimators.R", "logvar_estimator_extensions.R",
     "logvar_estimator_access.R",
     "reporting.R"
   )),

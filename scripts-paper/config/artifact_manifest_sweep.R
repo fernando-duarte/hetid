@@ -4,10 +4,10 @@
 # swept taus stay a single source of truth: adding one to the contract creates
 # its figure record, and no manifest row can survive a tau being dropped.
 #
-# The producer iterates the primary fitted-volatility estimators from the
-# logvar estimator config, which is not loaded this early; the estimator ids are
-# named here instead, and a mismatch fails fast when the driver looks up a
-# variant path that no record defines.
+# The producer iterates the engine_envelope estimators from the logvar
+# estimator config, which is not loaded this early; the estimator ids are named
+# here instead, a contract check pins them to the registry, and a mismatch fails
+# fast when the driver looks up a variant path that no record defines.
 
 # [<- overwrites rather than duplicating, so a code already spoken for in
 # artifact_manifest_data.R would be silently reassigned here and every artifact

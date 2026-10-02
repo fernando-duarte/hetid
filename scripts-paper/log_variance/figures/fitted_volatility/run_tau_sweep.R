@@ -1,5 +1,5 @@
 # Fitted-volatility envelopes across the contract's slack sweep, for the same
-# primary estimators the baseline figure covers. run.R pins the slack at the
+# engine_envelope estimators the baseline figure covers. run.R pins the slack at the
 # mean-equation baseline; this driver repeats that object at every swept tau and
 # adds one combined panel per estimator (linear and log y) so the nesting of the
 # identified sets in tau is visible in a single exhibit.
@@ -36,10 +36,7 @@ tau_sweep_sample_id <- logvar_sample_id(
   log_var_eq$inputs$w2, log_var_eq$inputs$pcr
 )
 stopifnot(identical(tau_sweep_sample_id, log_var_eq$sample_id))
-tau_sweep_estimators <- paper_logvar_estimator_ids(
-  capability = "fitted_volatility",
-  primary = TRUE
-)
+tau_sweep_estimators <- paper_logvar_estimator_ids(capability = "engine_envelope")
 
 log_var_eq_fitted_volatility_sweep <- list()
 for (tau_sweep_tau in tau_sweep_taus) {
