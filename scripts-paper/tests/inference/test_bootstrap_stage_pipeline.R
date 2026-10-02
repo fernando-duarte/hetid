@@ -6,9 +6,9 @@ paper_source_once(paper_path("config", "artifacts.R"))
 pipeline_path <- paper_path("run_pipeline.R")
 pipeline_text <- paste(readLines(pipeline_path, warn = FALSE), collapse = "\n")
 source_offset <- function(path) {
-  match <- regexpr(path, pipeline_text, fixed = TRUE)[[1L]]
-  stopifnot(match > 0L)
-  match
+  matches <- gregexpr(path, pipeline_text, fixed = TRUE)[[1L]]
+  stopifnot(length(matches) == 1L, matches > 0L)
+  matches[[1L]]
 }
 
 stage <- "inference\", \"run_bootstrap_stage.R"
@@ -16,10 +16,10 @@ combined <- "log_variance\", \"tables\", \"render_combined_inference_table.R"
 # the deferred publication reports a bootstrap tau = 0 statistic, so it may not
 # be sourced before the stage that creates it
 deferred <- "log_variance\", \"tables\", \"render_estimator_pages.R"
-# the structural inference table bootstraps on its own, straight after the
-# prepared frames and ahead of every estimator and the unified stage
-sdf_pcs <- "data_preparation\", \"build_sdf_pcs.R"
-fit_ols <- "mean_equation\", \"fit_ols.R"
+# the structural table bootstraps on its own and leaves the pipeline process enlarged,
+# so the stage and the spec comparison fork their workers before it is sourced
+spec <- "mean_equation\", \"inference\", \"spec_comparison.R"
+pins <- c(stage, spec, combined, deferred)
 
 stopifnot(
   !grepl("mean_equation\", \"inference\", \"run_bootstrap.R",
@@ -30,11 +30,7 @@ stopifnot(
     pipeline_text,
     fixed = TRUE
   ),
-  source_offset(stage) < source_offset(deferred),
-  source_offset(sdf_pcs) < source_offset(combined),
-  source_offset(combined) < source_offset(fit_ols),
-  source_offset(combined) < source_offset(stage),
-  lengths(regmatches(pipeline_text, gregexpr(combined, pipeline_text, fixed = TRUE))) == 1L
+  !is.unsorted(vapply(pins, source_offset, integer(1)), strictly = TRUE)
 )
 
 # the Harvey wrapper keeps the estimation and the analytic standard errors ahead

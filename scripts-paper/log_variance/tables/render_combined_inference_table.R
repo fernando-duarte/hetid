@@ -9,7 +9,7 @@
 # existing template renders into the paper's scaled decimal-aligned tabular; the
 # paper supplies the float, caption, notes, and the dual \label. Writes
 # structural_var_inference.tex + standalone. Run via run_pipeline.R after the
-# data preparation.
+# unified bootstrap stage and the mean-specification comparison.
 
 paper_source_once(paper_path("support", "structural_inference", "api.R"))
 paper_source_once(paper_path("support", "structural_inference", "rows.R"))

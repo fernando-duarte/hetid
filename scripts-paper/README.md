@@ -123,12 +123,12 @@ The entrypoint preserves this dependency order:
 ```text
 Input verification and conditional-output cleanup
   -> data preparation
-  -> combined structural-inference table (separate bootstrap and draw cache)
   -> mean OLS, identified sets, variance shares, and log-OLS foundation
   -> mean bounds-by-tau, PPML/Harvey sets, analytic SEs, and residual diagnostics
   -> joint-null, joint-GMM, and residual-dynamics diagnostics
   -> EGARCH decision validation/routing and approved LAD estimation
   -> unified mean/volatility bootstrap and mean-specification comparison
+  -> combined structural-inference table (separate bootstrap and draw cache)
   -> estimator pages and variance-panel fragments
   -> bounds, fitted-volatility, region, and heteroskedasticity exhibits
   -> SDF variance bounds, quoted-number checks, and descriptive report
@@ -143,10 +143,13 @@ are part of the pipeline contract. Production dependencies load through
 ### Combined structural-inference table
 
 [log_variance/tables/render_combined_inference_table.R](log_variance/tables/render_combined_inference_table.R)
-produces `output/tables/structural_var_inference.tex` immediately after data preparation.
-It builds its own mean/PPML estimates and bootstrap through
+produces `output/tables/structural_var_inference.tex` after the unified bootstrap stage and
+the mean-specification comparison, because its run leaves the pipeline's R process enlarged
+and those two stages fork their workers from it. When its draw cache is missing or stale,
+the full calculation's own workers therefore fork from the larger process. It builds its
+own mean/PPML estimates and bootstrap through
 [support/structural_inference/api.R](support/structural_inference/api.R), without reading
-later estimator results or unified-stage draws. Both published specifications must be B.
+the estimators' results or the unified-stage draws. Both published specifications must be B.
 
 Rows use forecast origins, one quarter before their response quarters. The configured
 window therefore covers origins 1961 Q4–2025 Q3; variance estimation retains only mean rows
