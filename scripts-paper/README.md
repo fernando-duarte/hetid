@@ -39,7 +39,7 @@ is created or cleaned.
 | Environment variable | Default | Effect |
 |---|---|---|
 | `HETID_BOOT_REPS` | `10000` | Draw count for the unified bootstrap stage and the mean-specification comparison; integer at least 2. |
-| `HETID_BOOT_CORES` | Available logical cores minus 2 on macOS, minus 1 elsewhere; minimum 1 | Worker count; integer at least 1. Set 1 for serial execution. |
+| `HETID_BOOT_CORES` | Available logical cores minus 2 on macOS, minus 1 elsewhere, at most 12; minimum 1 | Worker count; integer at least 1. Set 1 for serial execution. |
 | `HETID_BOOT_MODE` | `reuse` | Reuse a valid draw cache; `rerun` forces the stage to recompute. |
 | `HETID_ALLOW_DRAFT_RUN` | Unset | Set to `1` to acknowledge output overwrites at a non-production draw count. |
 

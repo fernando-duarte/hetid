@@ -78,6 +78,11 @@ if (boot_reps != 10000L) {
 # One seed across every bootstrap in the paper, matching macro_dynamics.
 boot_seed <- 20260708L
 
+# Bootstrap throughput stops growing at 12 workers on the 16-core M4 Max
+# (12 performance cores): 12, 14 and 16 workers finish 168 draws in about the
+# same 170 s, and each extra worker only adds a forked copy of the process
+paper_max_default_boot_cores <- 12L
+
 paper_default_boot_cores <- function(
   detected_cores = parallel::detectCores(logical = TRUE),
   sysname = Sys.info()[["sysname"]]
@@ -86,7 +91,7 @@ paper_default_boot_cores <- function(
     return(1L)
   }
   reserved_cores <- if (identical(sysname, "Darwin")) 2L else 1L
-  max(1L, as.integer(detected_cores) - reserved_cores)
+  max(1L, min(paper_max_default_boot_cores, as.integer(detected_cores) - reserved_cores))
 }
 
 detected_cores <- parallel::detectCores(logical = TRUE)

@@ -95,6 +95,12 @@ check(
   identical(paper_default_boot_cores(12L, "Linux"), 11L)
 )
 check(
+  "bootstrap core defaults stop at twelve workers",
+  identical(paper_default_boot_cores(16L, "Darwin"), 12L) &&
+    identical(paper_default_boot_cores(64L, "Linux"), 12L) &&
+    identical(paper_default_boot_cores(14L, "Darwin"), 12L)
+)
+check(
   "bootstrap core defaults retain a one-worker floor",
   identical(paper_default_boot_cores(2L, "Darwin"), 1L) &&
     identical(paper_default_boot_cores(NA_integer_, "Darwin"), 1L)
