@@ -27,11 +27,17 @@ test_that("coefficient paths preserve independent donor pins", {
         values <- unname(table[[col[2]]])
         expected <- suppressWarnings(as.numeric(rows$bits))
         expect_identical(as.integer(rows$row), seq_along(values))
-        expect_identical(is.na(values), is.na(expected))
-        expect_oracle_equal(values, expected, ORACLE_TOLERANCE[["solver"]],
+        repaired <- repaired_pin_rows(scenario, tau, field)
+        keep <- setdiff(seq_along(values), repaired)
+        expect_identical(is.na(values[keep]), is.na(expected[keep]))
+        expect_oracle_equal(values[keep], expected[keep], ORACLE_TOLERANCE[["solver"]],
           info = paste(scenario, key, field)
         )
-        if (length(col) == 3L) expect_identical(table[[col[3]]], rows$status)
+        if (length(col) == 3L) {
+          expect_identical(table[[col[3]]][keep], rows$status[keep])
+          expect_true(all(table[[col[3]]][repaired] == "bounded"))
+        }
+        if (length(repaired)) expect_beta1_upper_within_outer(fit, tau, repaired, values)
       }
     }
     reverse <- profile_mean_tau_path(fit, rev(scenarios[[scenario]]))

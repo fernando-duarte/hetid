@@ -21,8 +21,25 @@ test_that("full synthetic paths retain every independent historical hex pin", {
     expect_identical(got$field, want$field)
     expect_identical(got$row, want$row)
     expect_identical(got$tau, want$tau)
-    expect_identical(got$status, want$status)
-    expect_oracle_equal(got$value, want$exact, ORACLE_TOLERANCE[["solver"]])
+    repaired <- vapply(seq_len(nrow(got)), function(i) {
+      got$row[i] %in% repaired_pin_rows(scenario, got$tau[i], got$field[i])
+    }, logical(1))
+    expect_identical(got$status[!repaired], want$status[!repaired])
+    expect_oracle_equal(
+      got$value[!repaired], want$exact[!repaired], ORACLE_TOLERANCE[["solver"]]
+    )
+    if (any(repaired)) {
+      fixed <- got[repaired, ]
+      expect_true(all(is.finite(fixed$value)))
+      expect_true(all(fixed$status[fixed$field != "share_hi"] == "bounded"))
+      expect_true(all(fixed$value[fixed$field == "share_lo"] <=
+        fixed$value[fixed$field == "share_hi"]))
+      upper <- !is.na(got$tau) & got$tau == 0.05 & got$field == "beta1_upper"
+      expect_beta1_upper_within_outer(
+        mean_profile_fixture(seed), 0.05, fixed$row[fixed$field == "beta1_upper"],
+        got$value[upper]
+      )
+    }
     expect_identical(names(result), c(
       "rows", "ols", "point", "set_cols", "sets",
       "news_row", "combined_row", "sd_c", "n_obs", "taus"

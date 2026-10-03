@@ -60,3 +60,35 @@ test_that("a containing box never substitutes attained endpoints", {
   tab$outer_upper <- NA_real_
   expect_error(profile_containing_box(tab), "lacks finite", class = "hetid_error")
 })
+
+test_that("segment repair reaches a checked point beside a nearly tangent anchor", {
+  ev <- profile_evidence(mean_profile_ball(), diag(2), matrix(c(1 - 1e-10, 1e-5), 1L))
+  ev$feasible_points <- matrix(c(1 - 1e-10, 1e-5), 1L)
+  initial <- c(1 + 1e-8, 0)
+  control <- QUADRATIC_PROFILE_CONTROL
+  expect_false(ev$check_point(initial))
+  for (normalized in list(NULL, c(1, 0))) {
+    repaired <- profile_checked_candidate(ev, initial, control, normalized)
+    expect_true(ev$check_point(repaired$theta))
+    movement <- max(abs(repaired$theta - initial))
+    expect_gt(movement, control$candidate_correction_rtol)
+    expect_lte(movement, HETID_CONSTANTS$PROFILE_SEGMENT_RTOL)
+    expect_lte(
+      abs(repaired$theta[1] - initial[1]), HETID_CONSTANTS$PROFILE_SEGMENT_OBJECTIVE_RTOL
+    )
+  }
+  expect_null(profile_checked_candidate(ev, c(1 + 1e-3, 0), control))
+})
+
+test_that("segment repair checks every active constraint at a corner", {
+  corner <- list(
+    A_i = rep(list(matrix(0, 2, 2)), 3L),
+    b_i = list(c(1, 0), c(-0.8, 0.6), c(-0.8, 0.6)), c_i = rep(0, 3L)
+  )
+  ev <- list(
+    check_point = quadratic_point_verifier(corner), feasible_points = matrix(c(-1, -2), 1L)
+  )
+  repaired <- profile_segment_candidate(ev, c(1e-8, 1e-8))
+  expect_true(ev$check_point(repaired$theta))
+  expect_lte(max(abs(repaired$theta - 1e-8)), HETID_CONSTANTS$PROFILE_SEGMENT_RTOL)
+})

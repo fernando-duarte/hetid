@@ -37,6 +37,11 @@ node lies on the box boundary}
 \item{ROOT_RANK_FACTOR}{Rounding-margin multiplier for keeping an exact-integer
 bootstrap root rank (4)}
 \item{QUADRATIC_WEIGHT_FLOOR}{Interior weight-search initialization floor (1e-9)}
+\item{PROFILE_SEGMENT_RTOL}{Largest relative sup-norm movement of the segment
+repair of a profile endpoint candidate (1e-5)}
+\item{PROFILE_SEGMENT_OBJECTIVE_RTOL}{Largest change in the normalized objective
+from that repair, relative to max(1, |value|) (1e-5)}
+\item{PROFILE_SEGMENT_MAXIT}{Bracketing and bisection steps of that repair (60)}
 \item{PERCENT_TO_DECIMAL}{Percentage to decimal divisor}
 \item{MONTHS_PER_QUARTER}{Calendar months per quarter (3)}
 \item{MONTHS_PER_YEAR}{Calendar months per year (12), used for

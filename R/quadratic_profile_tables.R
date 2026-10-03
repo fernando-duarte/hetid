@@ -85,7 +85,7 @@ profile_tables_widened <- function(quadratic, beta1r, beta2r, points, warm, cont
   retry <- any(statuses == "unreliable") && length(widened$points) > 0L
   if (retry) {
     # newly checked points may repair a boundary candidate within the same
-    # displacement cap, under the same geometry and acceptance rules
+    # movement caps, under the same geometry and acceptance rules
     widened$evidence <- profile_evidence(quadratic, evidence$objectives,
       points = profile_point_matrix(widened$points, dimension)
     )

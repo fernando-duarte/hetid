@@ -69,7 +69,7 @@ profile_bound_candidate <- function(result, quadratic, evidence, objective,
   if (!all(is.finite(result$phi))) {
     return(NULL)
   }
-  candidate <- profile_checked_candidate(evidence, delta * result$phi, control)
+  candidate <- profile_checked_candidate(evidence, delta * result$phi, control, normalized)
   if (is.null(candidate)) {
     return(NULL)
   }

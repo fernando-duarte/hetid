@@ -29,3 +29,11 @@ the absolute gap is at most the tolerance times max(|expected|, 1), with toleran
 for closed-form evaluations and fits at a given point and 1e-5 for nloptr search
 outputs. Statuses, NA/NaN/Inf patterns and all other non-double fields remain exact.
 Expected values are still never regenerated from candidate output.
+
+Repaired endpoints, 2026-10-03, authorized by the package author: the donor runtime left
+synthetic_seed34, tau 0.05, beta1_upper rows 2 and 3 unreliable (NA). The segment repair
+of thin-set endpoint candidates (Fix B) now recovers them, so the pin tests exempt
+exactly these rows, listed in REPAIRED_DONOR_PINS (tests/testthat/helper-
+mean_profile.R), from the historical NA and status pins. They must instead be bounded
+and finite, and each structural upper endpoint must lie at or below its verified outer
+upper bound and within 1e-5 of it. The historical rows in the CSV are unchanged.
