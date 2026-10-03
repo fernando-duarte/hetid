@@ -12,7 +12,7 @@ test_that("explicit scoped RNG setup reproduces draws and restores caller state"
     before <- bootstrap_rng_capture()
     actual <- with_rng_scope(
       {
-        expect_identical(RNGkind(), fixed)
+        expect_identical(RNGkind()[1:3], fixed)
         list(uniform = runif(5), normal = rnorm(5), sample = sample.int(31, 7))
       },
       seed = 17,

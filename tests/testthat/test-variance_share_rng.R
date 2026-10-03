@@ -2,7 +2,7 @@ test_that("share orchestration fixes the search kind and restores present or abs
   prepared <- variance_share_fixture()
   observed <- NULL
   local_mocked_bindings(profile_mean_tau_path = function(...) {
-    observed <<- RNGkind()
+    observed <<- RNGkind()[1:3]
     runif(1)
     stop_hetid("Downstream share probe")
   })
