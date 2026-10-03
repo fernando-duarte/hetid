@@ -12,10 +12,12 @@ logvar_order_grid_nn <- function(b_feas, b_seed = NULL) {
   if (m == 0L) {
     return(integer(0))
   }
+  # transposed once, not on each of the m steps
+  tb <- t(b_feas)
   cur <- if (is.null(b_seed) || anyNA(b_seed)) {
     1L
   } else {
-    which.min(colSums((t(b_feas) - b_seed)^2))
+    which.min(colSums((tb - b_seed)^2))
   }
   ord <- integer(m)
   left <- rep(TRUE, m)
@@ -23,7 +25,7 @@ logvar_order_grid_nn <- function(b_feas, b_seed = NULL) {
     ord[k] <- cur
     left[cur] <- FALSE
     if (k == m) break
-    d <- colSums((t(b_feas) - b_feas[cur, ])^2)
+    d <- colSums((tb - b_feas[cur, ])^2)
     d[!left] <- Inf
     cur <- which.min(d)
   }

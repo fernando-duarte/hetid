@@ -6,7 +6,7 @@ paper_source_once(paper_path("config", "artifacts.R"))
 
 suite_manifest <- data.frame(
   id = c(
-    "engine", "engine_lad_seam", "residual_map", "log_projection_seam",
+    "engine", "engine_lad_seam", "residual_map", "grid_rewrite", "log_projection_seam",
     "ppml_coverage_protocol", "log_projection_driver", "log_projection_tables",
     "harvey", "lad_crossing",
     "lad_dependency_gate", "lad_inner_fit", "lad_outer_map", "ppml",
@@ -32,6 +32,7 @@ suite_manifest <- data.frame(
     "engine/test_engine.R",
     "engine/test_lad_seam.R",
     "engine/test_residual_map.R",
+    "engine/test_grid_rewrite.R",
     "estimators/log_projection/test_seam.R",
     "estimators/ppml/test_coverage_protocol.R",
     "estimators/log_projection/test_driver.R",

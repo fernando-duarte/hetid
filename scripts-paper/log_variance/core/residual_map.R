@@ -88,11 +88,10 @@ logvar_feasible_grid <- function(qs, lower, upper, n_axis) {
   dimnames(b_grid) <- NULL
   omega <- .derive_constraint_scales(qs, .derive_theta_scale(qs))
   values <- quadratic_constraint_values(b_grid, qs, omega)
-  feas <- apply(
-    values <= PAPER_QUADRATIC_CONTROL$admission_tolerance,
-    1L,
-    all
-  )
+  ok <- values <= PAPER_QUADRATIC_CONTROL$admission_tolerance
+  # all() per row without apply's per-row calls: TRUE & NA is NA and FALSE & NA
+  # is FALSE, as in all(), and the all-TRUE start keeps a zero-column matrix whole
+  feas <- Reduce(`&`, lapply(seq_len(ncol(ok)), function(j) ok[, j]), rep(TRUE, nrow(ok)))
   b_grid[feas, , drop = FALSE]
 }
 
