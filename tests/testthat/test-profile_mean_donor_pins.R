@@ -28,7 +28,9 @@ test_that("coefficient paths preserve independent donor pins", {
         expected <- suppressWarnings(as.numeric(rows$bits))
         expect_identical(as.integer(rows$row), seq_along(values))
         expect_identical(is.na(values), is.na(expected))
-        expect_identical(values, expected, info = paste(scenario, key, field))
+        expect_oracle_equal(values, expected, ORACLE_TOLERANCE[["solver"]],
+          info = paste(scenario, key, field)
+        )
         if (length(col) == 3L) expect_identical(table[[col[3]]], rows$status)
       }
     }

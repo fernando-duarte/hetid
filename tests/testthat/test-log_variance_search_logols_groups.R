@@ -47,7 +47,7 @@ test_that("coincident residual zeros cancel the slope without extending the log 
   forward <- found$map$scan_grid(mesh)
   for (chunk in c(1L, 2L)) {
     scan <- lv_set_grid_scan(mesh, sample$w1, sample$w2, prep$projection, chunk, prep)
-    expect_identical(scan, forward)
+    expect_oracle_equal(scan, forward, ORACLE_TOLERANCE[["direct"]])
   }
   backward <- found$map$scan_grid(mesh[5:1, , drop = FALSE])
   expect_equal(

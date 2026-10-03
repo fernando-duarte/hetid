@@ -22,7 +22,7 @@ test_that("full synthetic paths retain every independent historical hex pin", {
     expect_identical(got$row, want$row)
     expect_identical(got$tau, want$tau)
     expect_identical(got$status, want$status)
-    expect_identical(got$value, want$exact)
+    expect_oracle_equal(got$value, want$exact, ORACLE_TOLERANCE[["solver"]])
     expect_identical(names(result), c(
       "rows", "ols", "point", "set_cols", "sets",
       "news_row", "combined_row", "sd_c", "n_obs", "taus"

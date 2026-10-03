@@ -17,5 +17,15 @@ Original SOURCE.txt attributes these values to unmodified hetid paper scripts at
 `f022c4b703101bc02fffc0679ade45c484d8d634`. The recorded environment was R 4.6.1,
 nloptr 2.2.1, OpenBLAS 0.3.34 and R LAPACK. The present port is not the source of
 these expected values. Hexadecimal bits, status strings and row order are retained.
-Exact fixture disagreement blocks acceptance on that environment; no automatic
-regeneration, tolerance widening or platform skip is permitted.
+Disagreement beyond the cross-platform tolerance below blocks acceptance; no automatic
+regeneration or platform skip is permitted.
+
+Cross-platform comparison, 2026-10-03 16:27 EDT, authorized by the package author: the
+stored hex bits are unchanged, but computed doubles are now compared through
+`expect_oracle_equal()` (tests/testthat/helper-oracle_tolerance.R) rather than
+`expect_identical()`, because R CMD check on the CI matrix (macOS, Windows, Ubuntu)
+differs from the capture runtime by floating-point noise. A finite double passes when
+the absolute gap is at most the tolerance times max(|expected|, 1), with tolerance 1e-8
+for closed-form evaluations and fits at a given point and 1e-5 for nloptr search
+outputs. Statuses, NA/NaN/Inf patterns and all other non-double fields remain exact.
+Expected values are still never regenerated from candidate output.

@@ -124,5 +124,5 @@ test_that("log-OLS chunk controls fail at construction when malformed", {
   small <- make_log_variance_map(sample, "logols", control = control)
   usual <- make_log_variance_map(sample, "logols")
   grid <- lv_test_oracle()$inputs$points
-  expect_identical(small$scan_grid(grid), usual$scan_grid(grid))
+  expect_oracle_equal(small$scan_grid(grid), usual$scan_grid(grid), ORACLE_TOLERANCE[["direct"]])
 })

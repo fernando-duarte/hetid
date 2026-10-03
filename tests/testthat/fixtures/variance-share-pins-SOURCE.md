@@ -13,3 +13,13 @@ Live unchanged-M/current-private-H run passed every selected pin before product
 implementation; see shares-donor-baseline.R/log/command and full RDS.
 This original independent expected-value provenance is distinct from current-H
 regression evidence and does not imply the historical renv runtime was launched.
+
+Cross-platform comparison, 2026-10-03 16:27 EDT, authorized by the package author: the
+stored hex bits are unchanged, but computed doubles are now compared through
+`expect_oracle_equal()` (tests/testthat/helper-oracle_tolerance.R) rather than
+`expect_identical()`, because R CMD check on the CI matrix (macOS, Windows, Ubuntu)
+differs from the capture runtime by floating-point noise. A finite double passes when
+the absolute gap is at most the tolerance times max(|expected|, 1), with tolerance 1e-8
+for closed-form evaluations and fits at a given point and 1e-5 for nloptr search
+outputs. Statuses, NA/NaN/Inf patterns and all other non-double fields remain exact.
+Expected values are still never regenerated from candidate output.
