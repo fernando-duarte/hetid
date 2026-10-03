@@ -1,5 +1,6 @@
 profile_interval_tables <- function(quadratic, beta1r, beta2r, evidence, control) {
   dimension <- nrow(beta2r)
+  containing <- profile_containing_bounds(evidence, dimension)
   side_frame <- function(coef, lower, upper, lo, hi) {
     lower_status <- profile_status_from_flags(lo$bounded, lo$valid)
     upper_status <- profile_status_from_flags(hi$bounded, hi$valid)
@@ -28,7 +29,8 @@ profile_interval_tables <- function(quadratic, beta1r, beta2r, evidence, control
     )
   })
   beta_rows <- lapply(seq_along(beta1r), function(j) {
-    side <- solved(beta2r[, j], dimension + j)
+    side <- profile_negligible_loading(beta1r[[j]], beta2r[, j], containing, evidence)
+    if (is.null(side)) side <- solved(beta2r[, j], dimension + j)
     list(
       tab = side_frame(
         names(beta1r)[j], unname(beta1r[j]) - side$max$bound,
@@ -40,12 +42,35 @@ profile_interval_tables <- function(quadratic, beta1r, beta2r, evidence, control
   bind <- function(rows) do.call(rbind, lapply(rows, `[[`, "tab"))
   out <- list(
     beta1 = bind(beta_rows),
-    theta = cbind(bind(theta_rows), profile_containing_bounds(evidence, dimension))
+    theta = cbind(bind(theta_rows), containing)
   )
   attr(out, "profile_points") <- unlist(lapply(c(theta_rows, beta_rows), `[[`, "points"),
     recursive = FALSE
   )
   out
+}
+
+# A loading that can move its coefficient by no more than rounding error over
+# the verified theta enclosure leaves the coefficient numerically constant, so
+# its range comes from that enclosure; searching along a loading that is only
+# rounding noise would follow a platform-dependent direction.
+profile_negligible_loading <- function(offset, loading, containing, evidence) {
+  lower <- containing$outer_lower
+  upper <- containing$outer_upper
+  if (all(loading == 0) || !isTRUE(evidence$nonempty) ||
+    !all(is.finite(c(lower, upper)))) {
+    return(NULL)
+  }
+  low <- sum(pmin(loading * lower, loading * upper))
+  high <- sum(pmax(loading * lower, loading * upper))
+  magnitudes <- abs(c(offset, loading * pmax(abs(lower), abs(upper))))
+  rounding <- HETID_CONSTANTS$QUADRATIC_SIGN_FACTOR * .Machine$double.eps *
+    length(magnitudes) * sum(magnitudes)
+  if (!is.finite(high - low) || high - low > rounding) {
+    return(NULL)
+  }
+  side <- function(bound) list(bound = bound, bounded = TRUE, valid = TRUE)
+  list(min = side(low), max = side(high))
 }
 
 profile_tables_widened <- function(quadratic, beta1r, beta2r, points, warm, control) {

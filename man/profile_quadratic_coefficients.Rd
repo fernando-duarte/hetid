@@ -32,6 +32,8 @@ set_upper, status, lower_status and upper_status. Theta additionally contains
 outer_lower and outer_upper, verified containing bounds. Side statuses are
 bounded, unbounded or unreliable. Bounded denotes geometry plus an accepted
 attained candidate; it does not prove that the candidate is a global extremum.
+A structural coefficient whose beta2r loading moves it by at most rounding
+error over the verified theta enclosure is bounded by that enclosure instead.
 Missing endpoints remain unreliable. The profile_points attribute contains
 checked points from multistart widening. Their order is part of the warm path.
 }

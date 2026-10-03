@@ -58,3 +58,22 @@ test_that("structural affine widening preserves constants and direct sum arithme
   expect_lte(got$beta1$set_lower[2], min(values))
   expect_gte(got$beta1$set_upper[2], max(values))
 })
+
+test_that("a rounding-noise loading takes the constant range from the theta enclosure", {
+  fit <- mean_profile_fixture(34L)
+  # intercept loadings that are rounding noise along directions where the thin
+  # tau = 0.05 set defeats the endpoint search
+  noise <- list(
+    c(0x1.68b25b35d5a9ap-55, 0x1.1318a2b9d225cp-58, -0x1.cab698de27a22p-54),
+    c(-0x1.6bab1545d3441p-56, -0x1.b5a7d6b17abd7p-59, 0x1.fb4c12dc4dd42p-55)
+  )
+  for (loading in noise) {
+    fit$beta2r[, 1] <- loading
+    got <- profile_mean_tau_path(fit, 0.05)[[1L]]$beta1
+    expect_identical(c(got$lower_status[1], got$upper_status[1]), c("bounded", "bounded"))
+    at_point <- fit$beta1r[[1]] - sum(loading * fit$point$theta)
+    expect_lte(got$set_lower[1], at_point)
+    expect_gte(got$set_upper[1], at_point)
+    expect_lte(got$set_upper[1] - got$set_lower[1], 1e-15)
+  }
+})
