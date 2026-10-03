@@ -14,7 +14,7 @@ test_that("every mean wrapper selects fixed RNG kind and restores caller state",
   seen <- list()
   fail <- FALSE
   observe <- function() {
-    seen[[length(seen) + 1L]] <<- RNGkind()
+    seen[[length(seen) + 1L]] <<- RNGkind()[1:3]
     stats::runif(1)
     if (fail) stop(original)
   }

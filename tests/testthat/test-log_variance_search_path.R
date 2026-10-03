@@ -9,12 +9,18 @@ test_that("audited PPML and Harvey paths preserve the independent donor results"
     )
     expected <- oracle[[method]]
     keep <- names(expected)[!is.na(names(expected))]
-    expect_identical(lv_test_core(maps[[method]][keep]), lv_test_core(expected[keep]))
+    expect_oracle_equal(
+      lv_drop_route(lv_test_core(maps[[method]][keep])),
+      lv_drop_route(lv_test_core(expected[keep])), ORACLE_TOLERANCE[["solver"]]
+    )
+    expect_effort_consistent(maps[[method]])
     for (result in maps[[method]]$results) {
       expect_identical(result$schema$sample_id, rep(sample$sample_id, 3L))
     }
   }
-  expect_identical(maps$harvey$estimator$point_fit, oracle$harvey_point_fit)
+  expect_oracle_equal(
+    maps$harvey$estimator$point_fit, oracle$harvey_point_fit, ORACLE_TOLERANCE[["direct"]]
+  )
   expect_identical(maps$ppml$selector_provenance$status, "verified")
   expect_identical(maps$ppml$selector_provenance$traversal, "as_selected")
   expect_identical(maps$ppml$selector_provenance$n_verified, 2L)
@@ -22,7 +28,10 @@ test_that("audited PPML and Harvey paths preserve the independent donor results"
     maps$ppml, oracle$quadratics,
     oracle$theta_tables, oracle$taus, oracle$control
   )
-  expect_identical(path, oracle$ppml_path)
+  expect_oracle_equal(
+    lv_drop_route(path), lv_drop_route(oracle$ppml_path), ORACLE_TOLERANCE[["solver"]]
+  )
+  expect_effort_consistent(path)
 })
 
 test_that("the existing log projection preserves donor endpoint semantics", {

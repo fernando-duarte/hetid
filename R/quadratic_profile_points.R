@@ -29,7 +29,7 @@ profile_point_matrix <- function(points, dimension) {
   do.call(rbind, points)
 }
 
-profile_checked_candidate <- function(evidence, theta, control) {
+profile_checked_candidate <- function(evidence, theta, control, normalized = NULL) {
   if (evidence$check_point(theta)) {
     return(list(theta = theta))
   }
@@ -50,7 +50,7 @@ profile_checked_candidate <- function(evidence, theta, control) {
       }
     }
   }
-  NULL
+  profile_segment_candidate(evidence, theta, normalized)
 }
 
 profile_objective_direction <- function(objective) {

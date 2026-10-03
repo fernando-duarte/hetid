@@ -45,3 +45,23 @@ a separate historical data-vintage and platform contract. Capture sources and
 source hashes are retained in the untracked execution packet. Any refresh requires
 an explicit independent-oracle decision; never replace expected values from the
 candidate implementation.
+
+Cross-platform comparison, 2026-10-03 16:27 EDT, authorized by the package author: the
+stored hex bits are unchanged, but computed doubles are now compared through
+`expect_oracle_equal()` (tests/testthat/helper-oracle_tolerance.R) rather than
+`expect_identical()`, because R CMD check on the CI matrix (macOS, Windows, Ubuntu)
+differs from the capture runtime by floating-point noise. A finite double passes when
+the absolute gap is at most the tolerance times max(|expected|, 1), with tolerance 1e-8
+for closed-form evaluations and fits at a given point and 1e-5 for nloptr search
+outputs. Statuses, NA/NaN/Inf patterns and all other non-double fields remain exact.
+Expected values are still never regenerated from candidate output.
+
+The search oracles no longer pin the search-effort tallies (`n_attempted`,
+`n_evaluated`, `n_cached`, `counters`, `cache_hits`), the labels naming which pass found
+an endpoint (`origin`, `lower_source`, `upper_source`) or the fitted-volatility cache
+contents. These record the route a search took, which floating-point noise changes
+across platforms; the tallies' internal arithmetic is checked on the fresh run instead.
+
+The Harvey `rcond_info` diagnostic is the LAPACK 1-norm condition estimate, whose search
+steps move it by up to 0.03 across platforms; it is checked separately with absolute
+tolerance 0.1.

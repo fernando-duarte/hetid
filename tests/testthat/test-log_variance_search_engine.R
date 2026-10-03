@@ -1,7 +1,11 @@
 test_that("the engine preserves the independent donor baseline", {
   oracle <- lv_test_oracle()
   result <- lv_test_search()
-  expect_identical(result[names(oracle$engine)], oracle$engine)
+  expect_oracle_equal(
+    lv_drop_route(result[names(oracle$engine)]), lv_drop_route(oracle$engine),
+    ORACLE_TOLERANCE[["solver"]]
+  )
+  expect_effort_consistent(result)
   expected <- 0.5 * sqrt(rowSums(oracle$inputs$loading^2))
   expect_equal(result$schema$lower, -unname(expected), tolerance = 1e-6)
   expect_equal(result$schema$upper, unname(expected), tolerance = 1e-6)

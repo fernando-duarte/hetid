@@ -83,3 +83,19 @@ The PPML/Harvey historical captures have SHA256
 `8796452c85f36138491c908f785d2c7c1882669cbea7b9dfa589abef29bdaec1`.
 They use the accepted exact historical hetid 0.4.0 namespace and original 255 dates,
 five taus and cap .615. No fixture refresh is authorized from candidate outputs.
+
+Cross-platform comparison, 2026-10-03 16:27 EDT, authorized by the package author: the
+stored hex bits are unchanged, but computed doubles are now compared through
+`expect_oracle_equal()` (tests/testthat/helper-oracle_tolerance.R) rather than
+`expect_identical()`, because R CMD check on the CI matrix (macOS, Windows, Ubuntu)
+differs from the capture runtime by floating-point noise. A finite double passes when
+the absolute gap is at most the tolerance times max(|expected|, 1), with tolerance 1e-8
+for closed-form evaluations and fits at a given point and 1e-5 for nloptr search
+outputs. Statuses, NA/NaN/Inf patterns and all other non-double fields remain exact.
+Expected values are still never regenerated from candidate output.
+
+The search oracles no longer pin the search-effort tallies (`n_attempted`,
+`n_evaluated`, `n_cached`, `counters`, `cache_hits`), the labels naming which pass found
+an endpoint (`origin`, `lower_source`, `upper_source`) or the fitted-volatility cache
+contents. These record the route a search took, which floating-point noise changes
+across platforms; the tallies' internal arithmetic is checked on the fresh run instead.

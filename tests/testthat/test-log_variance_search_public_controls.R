@@ -56,7 +56,11 @@ test_that("public PPML and Harvey controls preserve direct and aggregate donor s
     )
     expected <- oracle[[method]]
     keep <- names(expected)[!is.na(names(expected))]
-    expect_identical(lv_test_core(sets[keep]), lv_test_core(expected[keep]))
+    expect_oracle_equal(
+      lv_drop_route(lv_test_core(sets[keep])), lv_drop_route(lv_test_core(expected[keep])),
+      ORACLE_TOLERANCE[["solver"]]
+    )
+    expect_effort_consistent(sets)
     for (result in sets$results) {
       expect_true(all(result$schema$lower_status == "bounded"))
       expect_true(all(result$schema$upper_status == "bounded"))

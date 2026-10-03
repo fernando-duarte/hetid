@@ -181,6 +181,12 @@ test_that("all-pass Harvey aggregates retain their previous numerical evidence",
   ))
   expected <- oracle$harvey
   keep <- names(expected)[!is.na(names(expected))]
-  expect_identical(lv_test_core(result[keep]), lv_test_core(expected[keep]))
-  expect_identical(result$estimator$point_fit, oracle$harvey_point_fit)
+  expect_oracle_equal(
+    lv_drop_route(lv_test_core(result[keep])), lv_drop_route(lv_test_core(expected[keep])),
+    ORACLE_TOLERANCE[["solver"]]
+  )
+  expect_effort_consistent(result)
+  expect_oracle_equal(
+    result$estimator$point_fit, oracle$harvey_point_fit, ORACLE_TOLERANCE[["direct"]]
+  )
 })

@@ -60,7 +60,9 @@ profile_multistart_round <- function(quadratic, queue, evidence, delta, search_b
           lower = bounds$lower, upper = bounds$upper,
           objective_scale = "variable", control = control, catch_errors = FALSE
         )
-        candidate <- profile_checked_candidate(evidence, result$theta, control)
+        candidate <- profile_checked_candidate(evidence, result$theta, control,
+          normalized = sign_mult * objective
+        )
         if (!is.null(candidate)) found[[length(found) + 1L]] <- candidate$theta
       }
     }
