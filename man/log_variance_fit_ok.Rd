@@ -26,8 +26,15 @@ deliberately a raw predicate, not a validator -- it does not require
 callers can probe an in-progress or hand-built fit list directly.
 }
 \details{
+This checks \code{fit_status} and \code{converged}, not an evaluator's
+\code{status}. A successful report does not establish existence of a
+minimizer, endpoint reliability, or validity of inference.
+
 No coefficient length or shape is checked: an empty numeric vector
 passes the finite-value check. Malformed coefficient objects for which
 \code{is.finite()} is undefined can raise an error.
 }
-\keyword{internal}
+\examples{
+log_variance_fit_ok(list(fit_status = "ok", converged = TRUE, coef = c(0.2, -0.1)))
+log_variance_fit_ok(list(fit_status = "nonconvergence", converged = FALSE, coef = NULL))
+}

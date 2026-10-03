@@ -74,13 +74,14 @@ yield and the risk-neutral yield.
 }
 \section{Data Source}{
 
-The bundled file is the validated ACM replication published at
-\url{https://github.com/fernando-duarte/ACM_term_premium} (release
-\code{acm-term-premium-2026-06}, asset
-\code{ACMTermPremium_replicated_monthly_1m_120m.csv.gz}). The bundled
-file has sha256
+The bundled file is a packaged snapshot from the ACM replication project at
+\url{https://github.com/fernando-duarte/ACM_term_premium}, with sha256
 \code{745b97c6804924fc5777aac6ecc8b952a2f11123b291e0057c3e25449e566454}.
-The release reports a maximum difference of about 0.0026 basis
+Its byte identity with a published release asset has not been established;
+the package distribution supplies these exact bytes. Importing a matching
+local file into a nominated release pin records \code{verified-existing-asset},
+which verifies local bytes, not their publication at that release URL.
+The replication project reports a maximum difference of about 0.0026 basis
 points at the annual nodes and extends the maturity grid to monthly
 steps from 1 to 120 months: whole-year maturities keep the official
 column names (\code{ACMY01}..\code{ACMY10}), maturities that are not whole years use

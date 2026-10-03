@@ -14,6 +14,7 @@ BugReports: https://github.com/fernando-duarte/hetid/issues
 Depends:
     R (>= 4.5.0)
 Imports:
+    nloptr (>= 2.2.1),
     stats,
     tools,
     utils

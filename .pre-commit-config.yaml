@@ -19,7 +19,9 @@ repos:
       # Update documentation
       - id: roxygenize
         additional_dependencies:
-          - roxygen2
+          - roxygen2@8.1.0
+          - rdtools@0.1.0
+          - nloptr@2.2.1
 
       # Keep DESCRIPTION tidy
       - id: use-tidy-description

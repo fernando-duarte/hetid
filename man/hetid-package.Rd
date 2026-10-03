@@ -121,7 +121,9 @@ principal components of nominal financial asset returns.}
 \item \code{\link{download_term_premia}()}: Download ACM data
 \item \code{\link{extract_acm_data}()}: Extract and process ACM data
 \item \code{\link{load_term_premia}()}: Load cached ACM data
+\item \code{\link{resolve_acm_asset}()}: Resolve an ACM asset or pin descriptor
 \item \code{\link{acm_column_name}()}: Build a reshaped ACM column name
+\item \code{\link{aggregate_quarterly}()}: Aggregate monthly values to quarters
 }}
 
 \subsection{Bond Pricing Functions:}{
@@ -130,6 +132,7 @@ principal components of nominal financial asset returns.}
 \item \code{\link{compute_price_news}()}: Unexpected price changes
 \item \code{\link{compute_sdf_innovations}()}: SDF innovations
 \item \code{\link{compute_expected_sdf}()}: Expected one-period SDF
+\item \code{\link{compute_sdf_panel}()}: Dated expected-SDF or news horizon panels
 \item \code{\link{compute_expected_sdf_variance_bound}()}: Expected-SDF
 level-error variance bound
 \item \code{\link{compute_c_hat}()}: Supremum estimator
@@ -138,6 +141,7 @@ level-error variance bound
 \item \code{\link{compute_variance_bound}()}: Variance bounds
 \item \code{\link{compute_news_q_bound}()}: First-order-cancelled
 news-error variance bound
+\item \code{\link{compute_variance_bounds}()}: Approximation-error bounds by maturity
 }}
 
 \subsection{Identification Functions:}{
@@ -168,6 +172,9 @@ news-error variance bound
 \item \code{\link{fit_log_variance}()}: PPML or Harvey fit of the log-variance equation
 \item \code{\link{make_log_variance_fitter}()}: Repeated fits on a fixed design
 \item \code{\link{fit_log_variance_at_b}()}: Log-variance fit at a fixed structural parameter
+\item \code{\link{compute_harvey_ratio}()}: Zero-safe Harvey response ratios
+\item \code{\link{precheck_harvey_starts}()}: Standalone Harvey start stability check
+\item \code{\link{log_variance_fit_ok}()}: Reported fit success and finite coefficients
 \item \code{\link{compute_log_variance_vcov}()}: Analytic covariance matrices of a fit
 \item \code{\link{compute_log_variance_vcov_at_coef}()}: Covariances at supplied coefficients
 \item \code{\link{compute_log_variance_se}()}: Standard-error frame for a log-variance fit
@@ -178,6 +185,7 @@ news-error variance bound
 \item \code{\link{evaluate_log_projection}()}: Log projection coefficients and Jacobian at b
 \item \code{\link{compute_log_projection_vcov}()}: Log projection covariance matrices at b
 \item \code{\link{LOG_PROJECTION_CONTROL}}: Log-projection tuning and tolerances
+\item \code{\link{compute_vfci_tau0}()}: Dated tau-zero VFCI from a PPML log-variance fit
 }}
 
 \subsection{Identified-Set Search Functions:}{
@@ -189,6 +197,30 @@ news-error variance bound
 \item \code{\link[stats:predict]{predict}()}: Sampled prediction envelopes
 \item \code{\link{compute_quadratic_set_evidence}()}: Nonemptiness, boundedness, outer bounds
 \item \code{\link{IDENTIFIED_SET_CONTROL}}: Identified-set search numerical controls
+\item \code{\link{QUADRATIC_PROFILE_CONTROL}}: Quadratic profile numerical controls
+\item \code{\link{MEAN_TAU_CONTROL}}: Mean-set tau bracket and grid controls
+\item \code{\link{build_identified_set_objectives}()}:
+Theta and structural coefficient objectives
+\item \code{\link{check_identified_set_center}()}: Strict interior check for a proposed center
+\item \code{\link{solve_quadratic_program}()}: Scaled SLSQP optimizer candidates
+\item \code{\link{profile_quadratic_coefficients}()}:
+Coefficient endpoints with boundedness evidence
+\item \code{\link{profile_mean_tau_path}()}: Ordered mean-set profiles across tau values
+\item \code{\link{find_mean_tau_star}()}: Bracket a mean-set boundedness transition
+\item \code{\link{mean_tau_grid}()}: Interior tau grid with a refined tail
+\item \code{\link{VARIANCE_SHARE_CONTROL}}: Variance-share search numerical controls
+\item \code{\link{compute_variance_shares}()}: Outcome variance shares over mean sets
+\item \code{\link{log_variance_map_control}()}: Numerical controls for coefficient maps
+\item \code{\link{log_variance_search_control}()}: Numerical controls for coefficient searches
+\item \code{\link{prepare_log_variance_search}()}: Fixed samples for coefficient maps
+\item \code{\link{make_log_variance_map}()}: PPML, Harvey or log-OLS coefficient maps
+\item \code{\link{search_log_variance_map}()}: Coefficient ranges over a mean set
+\item \code{\link{profile_log_variance_map}()}: Coefficient profiles across tau values
+\item \code{\link{profile_log_variance_path}()}: Ordered coefficient profile paths
+\item \code{\link{profile_fitted_volatility}()}:
+Numerical dated fitted-volatility search
+\item \code{\link{profile_fitted_volatility_path}()}:
+Fitted-volatility envelopes across tau values
 }}
 
 \subsection{Bootstrap Inference Functions:}{
@@ -203,6 +235,7 @@ news-error variance bound
 \itemize{
 \item \code{\link{effective_max_maturity}()}: Largest usable maturity index
 \item \code{\link{to_period_end}()}: Normalize dates to the period-end convention
+\item \code{\link{with_rng_scope}()}: Evaluate code with scoped RNG state
 \item \code{\link{HETID_CONSTANTS}}: Package-wide constant defaults
 }}
 }

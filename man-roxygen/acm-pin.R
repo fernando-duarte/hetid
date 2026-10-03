@@ -4,7 +4,8 @@
 #'   to select unpinned data. Pins are unavailable for \code{source = "nyfed"}.
 #' @param expected_sha256 \code{NULL} or a single non-missing character string
 #'   containing the 64-character hexadecimal sha256 digest of the compressed
-#'   release asset, obtained independently by the caller.
+#'   ACM asset, obtained independently by the caller. The digest can identify
+#'   existing local bytes without establishing their published release origin.
 #' @details
 #' An explicit release and digest select an isolated snapshot in the per-user
 #' data directory, keyed by release, digest, and frequency. Pinned reads verify
@@ -17,7 +18,9 @@
 #' \code{download_term_premia()} plus \code{.meta} records the release, digest,
 #' frequency, URL, UTC timestamp, and whether bytes were downloaded or copied
 #' from an existing verified asset.
-#' The URL is informational provenance; release, digest, and frequency define identity.
+#' The URL describes the requested download; release, digest, and frequency define identity.
+#' A \code{verified-existing-asset} acquisition verifies matching local bytes,
+#' not that those bytes were published at the nominated release URL.
 #' A failed download leaves existing snapshots unchanged. With a pin, calling
 #' \code{download_term_premia(force = TRUE, ...)} downloads and validates fresh bytes
 #' but retains an existing valid snapshot of the identical bytes. A corrupt snapshot

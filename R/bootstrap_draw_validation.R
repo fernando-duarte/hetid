@@ -25,7 +25,10 @@ bootstrap_rng_capture <- function() {
 }
 
 bootstrap_rng_restore <- function(saved) {
-  if (!identical(RNGkind(), saved$kind)) do.call(RNGkind, as.list(saved$kind))
+  if (!identical(RNGkind(), saved$kind)) {
+    # Reinstating the caller's kind must not let legacy-generator warnings abort cleanup.
+    suppressWarnings(do.call(RNGkind, as.list(saved$kind)))
+  }
   if (saved$present) {
     assign(".Random.seed", saved$seed, envir = globalenv()) # nolint: object_name_linter.
   } else if (exists(".Random.seed", envir = globalenv(), inherits = FALSE)) {

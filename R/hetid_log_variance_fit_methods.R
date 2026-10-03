@@ -40,6 +40,10 @@ assert_hetid_log_variance_fit <- function(x, arg = "fit") {
 #' \code{fit} to have passed \code{\link{validate_hetid_log_variance_fit}}, so
 #' callers can probe an in-progress or hand-built fit list directly.
 #'
+#' This checks \code{fit_status} and \code{converged}, not an evaluator's
+#' \code{status}. A successful report does not establish existence of a
+#' minimizer, endpoint reliability, or validity of inference.
+#'
 #' No coefficient length or shape is checked: an empty numeric vector
 #' passes the finite-value check. Malformed coefficient objects for which
 #' \code{is.finite()} is undefined can raise an error.
@@ -53,7 +57,10 @@ assert_hetid_log_variance_fit <- function(x, arg = "fit") {
 #'   \code{fit_status = "ok"}, \code{converged = TRUE}, and non-\code{NULL}
 #'   coefficients that are all finite; \code{FALSE} when any check fails.
 #'   Missing or nonfinite coefficient values fail the finite-value check.
-#' @keywords internal
+#' @export
+#' @examples
+#' log_variance_fit_ok(list(fit_status = "ok", converged = TRUE, coef = c(0.2, -0.1)))
+#' log_variance_fit_ok(list(fit_status = "nonconvergence", converged = FALSE, coef = NULL))
 log_variance_fit_ok <- function(fit) {
   is.list(fit) &&
     identical(fit$fit_status, LOG_VARIANCE_FIT_STATUS[["ok"]]) &&
