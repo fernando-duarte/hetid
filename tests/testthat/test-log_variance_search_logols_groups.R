@@ -45,9 +45,12 @@ test_that("coincident residual zeros cancel the slope without extending the log 
   prep <- sample$prep
   mesh <- matrix(c(-.1, -.05, 0, .05, .1), ncol = 1L)
   forward <- found$map$scan_grid(mesh)
+  # the cancelled slope ties the extremes at both mesh ends, so which tied point
+  # is reported depends on rounding; compare everything but the arguments
+  values <- setdiff(names(forward), c("arg_min", "arg_max"))
   for (chunk in c(1L, 2L)) {
     scan <- lv_set_grid_scan(mesh, sample$w1, sample$w2, prep$projection, chunk, prep)
-    expect_oracle_equal(scan, forward, ORACLE_TOLERANCE[["direct"]])
+    expect_oracle_equal(scan[values], forward[values], ORACLE_TOLERANCE[["direct"]])
   }
   backward <- found$map$scan_grid(mesh[5:1, , drop = FALSE])
   expect_equal(
