@@ -14,7 +14,6 @@ lv_set_ppml_control <- function() {
     JACOBIAN_RCOND_TOL = 1e-10,
     COLD_START_RTOL = 1e-6,
     MORTON_BITS = 17L,
-    EXACT_DOUBLE_BITS = 53L,
     PILOT_OVERFLOW_MARGIN = 5,
     PILOT_CONDITION_LIMIT = 1e10,
     PILOT_GRID_POINTS = 10L
@@ -100,9 +99,7 @@ lv_set_ppml_pilot <- function(sample, anchor, grid_points,
     response <- drop(sample$w1 - sample$w2 %*% anchor)^2
     positive <- response[response > 0]
     if (!length(positive)) {
-      lv_set_stop("The PPML response needs a scale but the anchor response has no positive value.",
-        call. = FALSE
-      )
+      lv_set_stop("The PPML response needs a scale but the anchor response has no positive value.")
     }
     response_scale <- stats::median(positive)
   }
@@ -127,7 +124,7 @@ lv_set_ppml_estimator <- function(sample, point = NULL, anchor, anchor_source,
     fit
   }
   if (!any(drop(w1 - w2 %*% anchor)^2 > 0)) {
-    lv_set_stop("The PPML anchor response has no positive value.", call. = FALSE)
+    lv_set_stop("The PPML anchor response has no positive value.")
   }
   anchor_bundle <- lv_set_ppml_start_bundle(
     fit_b(anchor), response_scale,

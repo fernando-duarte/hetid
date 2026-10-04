@@ -35,9 +35,7 @@ test_that("daily github download verifies the digest and caches the daily asset"
   expect_true(file.exists(result))
   expect_identical(unname(tools::sha256sum(result)), fixture$sha)
 
-  # Provenance sidecar records the digest; the monthly cache is untouched
-  meta <- readLines(paste0(result, ".meta"))
-  expect_true(any(grepl(fixture$sha, meta, fixed = TRUE)))
+  # The monthly cache is untouched
   expect_false(file.exists(get_acm_download_path("github")))
 })
 

@@ -27,9 +27,9 @@ lv_set_audit_selector <- function(audit, selector_id) {
     }
     ran <- entry$result$diagnostics$selector$selector_id
     if (!identical(ran, selector_id)) {
-      lv_set_stop("The audit at tau ", key, " chose its grid with ",
-        if (is.null(ran)) "no selector" else ran, ", not with ", selector_id, ".",
-        call. = FALSE
+      lv_set_stop(
+        "The audit at tau ", key, " chose its grid with ",
+        if (is.null(ran)) "no selector" else ran, ", not with ", selector_id, "."
       )
     }
   }

@@ -51,13 +51,13 @@ convert_to_quarterly <- function(
   na_date <- is.na(data[["date"]])
   if (any(na_date)) {
     n_na <- sum(na_date)
-    warn_dropped_na_dates(sprintf(
+    warn_hetid(sprintf(
       paste0(
         "Dropped %d row%s with a missing (NA) date before quarterly ",
         "conversion; the monthly path keeps such rows."
       ),
       n_na, if (n_na == 1L) "" else "s"
-    ))
+    ), "hetid_warning_dropped_na_dates")
     data <- data[!na_date, , drop = FALSE]
     if (nrow(data) == 0) {
       return(data)
@@ -75,33 +75,21 @@ convert_to_quarterly <- function(
 
   data <- data[order(data[["date"]]), , drop = FALSE]
 
-  # Separate frame preserves input columns named year, month, or quarter
-  scratch <- data.frame(
-    date = data[["date"]],
-    year = as.numeric(format(data[["date"]], HETID_CONSTANTS$YEAR_FORMAT)),
-    month = as.numeric(format(data[["date"]], HETID_CONSTANTS$MONTH_FORMAT))
-  )
-  scratch$quarter <- ceiling(
-    scratch$month / HETID_CONSTANTS$MONTHS_PER_QUARTER
-  )
-
-  last_in_quarter <- aggregate(
-    date ~ year + quarter,
-    data = scratch,
-    FUN = max
-  )
-
-  last_months <- as.numeric(
-    format(last_in_quarter$date, HETID_CONSTANTS$MONTH_FORMAT)
-  )
-  expected_months <- last_in_quarter$quarter *
-    HETID_CONSTANTS$MONTHS_PER_QUARTER
+  # Last observation of each quarter, listed by quarter and then year
+  q_end <- to_period_end(data[["date"]], "quarterly")
+  is_last <- !duplicated(q_end, fromLast = TRUE)
+  expected_months <- as.numeric(format(q_end[is_last], HETID_CONSTANTS$MONTH_FORMAT))
+  ord <- order(expected_months, q_end[is_last])
+  last_dates <- data[["date"]][is_last][ord]
+  quarter_ends <- q_end[is_last][ord]
+  expected_months <- expected_months[ord]
+  last_months <- as.numeric(format(last_dates, HETID_CONSTANTS$MONTH_FORMAT))
   incomplete <- last_months != expected_months
 
   if (any(incomplete)) {
     details <- paste0(
-      last_in_quarter$year[incomplete],
-      " Q", last_in_quarter$quarter[incomplete],
+      format(quarter_ends[incomplete], HETID_CONSTANTS$YEAR_FORMAT),
+      " Q", expected_months[incomplete] / HETID_CONSTANTS$MONTHS_PER_QUARTER,
       " (last observation in ", month.name[last_months[incomplete]],
       ", quarter ends in ", month.name[expected_months[incomplete]], ")"
     )
@@ -110,7 +98,7 @@ convert_to_quarterly <- function(
       paste(details, collapse = "; "), ". "
     )
     if (use_incomplete_quarters) {
-      warn_incomplete_quarter(paste0(
+      warn_hetid(paste0(
         notice,
         "These quarters are kept in the quarterly output using their ",
         "latest available observation, re-dated to the last day of the ",
@@ -118,7 +106,7 @@ convert_to_quarterly <- function(
         "September, or December. To drop incomplete quarters instead, ",
         "set use_incomplete_quarters = FALSE (the TRUE default comes ",
         "from HETID_CONSTANTS$USE_INCOMPLETE_QUARTERS)."
-      ))
+      ), "hetid_warning_incomplete_quarter")
     } else {
       dropped <- if (sum(incomplete) == 1) {
         "This quarter was dropped from the quarterly output. To keep it"
@@ -129,16 +117,11 @@ convert_to_quarterly <- function(
         notice, dropped,
         " instead, set use_incomplete_quarters = TRUE."
       ))
-      last_in_quarter <- last_in_quarter[!incomplete, , drop = FALSE]
+      last_dates <- last_dates[!incomplete]
     }
   }
 
-  result <- merge(
-    last_in_quarter[, "date", drop = FALSE],
-    data,
-    by = "date",
-    all.x = TRUE
-  )
+  result <- merge(data.frame(date = last_dates), data, by = "date", all.x = TRUE)
 
   result$date <- to_period_end(result$date, "quarterly")
 

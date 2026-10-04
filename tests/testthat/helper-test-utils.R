@@ -3,32 +3,12 @@
 #' Common functions and data setup for testing
 #'
 
-#' Load Standard Test Data
-#'
-#' Loads ACM data with standard configuration for testing
-#'
-#' @param data_types Character vector of data types to load
-#' @param frequency Data frequency ("quarterly" or "monthly")
-#' @return Data frame with requested data
-#' @keywords internal
-load_standard_test_data <- function(data_types = c("yields", "term_premia"),
-                                    frequency = "quarterly") {
-  # Drop the trailing incomplete quarter so computation tests stay
-  # warning-free; that warning has its own dedicated tests
-  extract_acm_data(
-    data_types = data_types,
-    frequency = frequency,
-    use_incomplete_quarters = FALSE
-  )
-}
-
 #' Extract Yields and Term Premia from Test Data
 #'
 #' Common pattern for extracting yields and term premia columns
 #'
-#' @param data Data frame from load_standard_test_data
+#' @param data Data frame from extract_acm_data
 #' @return List with yields and term_premia data frames
-#' @keywords internal
 extract_yields_and_tp <- function(data) {
   mats <- HETID_CONSTANTS$DEFAULT_ACM_MATURITIES
   list(
@@ -41,13 +21,15 @@ extract_yields_and_tp <- function(data) {
 #'
 #' Complete setup for most computation tests
 #'
-#' @param data_types Character vector of data types to load
-#' @param frequency Data frequency
 #' @return List with data, yields, and term_premia
-#' @keywords internal
-setup_standard_test_env <- function(data_types = c("yields", "term_premia"),
-                                    frequency = "quarterly") {
-  data <- load_standard_test_data(data_types, frequency)
+setup_standard_test_env <- function() {
+  # Drop the trailing incomplete quarter so computation tests stay
+  # warning-free; that warning has its own dedicated tests
+  data <- extract_acm_data(
+    data_types = c("yields", "term_premia"),
+    frequency = "quarterly",
+    use_incomplete_quarters = FALSE
+  )
   extracted <- extract_yields_and_tp(data)
 
   list(
@@ -64,7 +46,6 @@ setup_standard_test_env <- function(data_types = c("yields", "term_premia"),
 #' @param result The result to test
 #' @param should_be_positive Whether the result should be positive
 #' @param label Label for the expectation
-#' @keywords internal
 expect_single_finite_value <- function(result, should_be_positive = TRUE, label = "result") {
   expect_type(result, "double")
   expect_length(result, 1)
@@ -83,7 +64,6 @@ expect_single_finite_value <- function(result, should_be_positive = TRUE, label 
 #' @param n_maturities Number of maturities
 #' @param seed Random seed for reproducibility
 #' @return List with yields and term_premia matrices
-#' @keywords internal
 create_synthetic_test_data <- function(n = 100, n_maturities = 10, seed = 123) {
   set.seed(seed)
 

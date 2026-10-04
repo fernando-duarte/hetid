@@ -66,10 +66,7 @@ acm_release_expected_sha256 <- function(quiet = FALSE, filename) {
 #' Downloads the selected release asset, verifies its sha256 digest, and saves
 #' it in the per-user data directory, replacing an existing cached copy.
 #'
-#' The data directory is created if needed. A sidecar at the cached path plus
-#' \code{.meta} records the sha256 digest, source URL, and retrieval date in
-#' \code{YYYY-MM-DD} format. The sidecar is written after the verified file is
-#' cached; a sidecar write failure does not undo the cache replacement.
+#' The data directory is created if needed.
 #'
 #' @param quiet Logical scalar. If \code{TRUE}, suppresses download progress
 #'   output and status messages. Defaults to \code{FALSE}.
@@ -114,19 +111,6 @@ download_acm_github <- function(quiet = FALSE,
   }
 
   atomic_replace(temp_gz, cache_path, "the verified download")
-
-  # The source and checksum help explain differences between cached and bundled data
-  writeLines(
-    c(
-      paste0("sha256: ", actual_sha),
-      paste0("source_url: ", asset_url),
-      paste0(
-        "retrieved: ",
-        format(Sys.time(), HETID_CONSTANTS$ISO_DATE_FORMAT)
-      )
-    ),
-    paste0(cache_path, ".meta")
-  )
 
   if (!quiet) {
     message("ACM data saved to: ", cache_path)

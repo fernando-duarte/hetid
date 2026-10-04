@@ -18,9 +18,9 @@ lv_set_harvey_sets <- function(sample, context, path, bounds, tau_control, contr
   )
   fatal <- !is.na(failed) & !recoverable
   if (any(fatal)) {
-    lv_set_stop("The Harvey stability precheck failed: ",
-      paste(names(failed)[fatal], failed[fatal], collapse = ", "), ".",
-      call. = FALSE
+    lv_set_stop(
+      "The Harvey stability precheck failed: ",
+      paste(names(failed)[fatal], failed[fatal], collapse = ", "), "."
     )
   }
   if (any(recoverable)) {
@@ -40,9 +40,9 @@ lv_set_harvey_sets <- function(sample, context, path, bounds, tau_control, contr
   # no set is searched unless the Harvey fit at the OLS residuals exists
   reference_fit <- lv_set_harvey_fitter(x_mat, harvey_control)(reference)
   if (!log_variance_fit_ok(reference_fit)) {
-    lv_set_stop("The Harvey fit at the OLS residuals failed (", reference_fit$fit_status, "/",
-      reference_fit$diagnostics$error_class, ").",
-      call. = FALSE
+    lv_set_stop(
+      "The Harvey fit at the OLS residuals failed (", reference_fit$fit_status, "/",
+      reference_fit$diagnostics$error_class, ")."
     )
   }
   cache <- new.env(parent = emptyenv())

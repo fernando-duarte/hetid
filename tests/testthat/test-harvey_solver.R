@@ -10,18 +10,18 @@ harvey_parts <- function(theta = c(-0.3, 0.2, -0.1)) {
   )
 }
 
-test_that("harvey_ratio keeps zero rows exact and divides elsewhere", {
+test_that("compute_harvey_ratio keeps zero rows exact and divides elsewhere", {
   p <- harvey_parts()
   y <- p$y
   y[c(3, 17)] <- 0
-  r <- hetid:::harvey_ratio(p$theta, y, p$x_mat)
+  r <- compute_harvey_ratio(p$theta, y, p$x_mat)
   expect_identical(r[c(3, 17)], c(0, 0))
   eta <- drop(p$x_mat %*% p$theta)
   expect_equal(r[-c(3, 17)], (y / exp(eta))[-c(3, 17)], tolerance = 1e-12)
 
   # an all-zero response is all-zero ratio, with no 0 * Inf anywhere
   expect_identical(
-    hetid:::harvey_ratio(p$theta, rep(0, length(y)), p$x_mat),
+    compute_harvey_ratio(p$theta, rep(0, length(y)), p$x_mat),
     rep(0, length(y))
   )
 })

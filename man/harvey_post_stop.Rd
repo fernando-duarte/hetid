@@ -9,7 +9,9 @@ harvey_post_stop(ev, x_mat, control = log_variance_fit_control("harvey"))
 \arguments{
 \item{ev}{Converged \code{\link{harvey_eval}} result.}
 
-\item{x_mat}{Finite numeric design matrix, intercept column included.}
+\item{x_mat}{Finite numeric matrix with at least one row and one column.
+Supply the complete design, including any intercept; none is added.
+Rows must be aligned with \code{y}.}
 
 \item{control}{Validated named list of Harvey fitting controls; defaults
 derive from \code{\link{LOG_VARIANCE_HARVEY_CONTROL}}.}

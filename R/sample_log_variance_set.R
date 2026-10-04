@@ -110,9 +110,7 @@ sample_log_variance_set <- function(box, x_var, estimator = "ppml",
     fit$diagnostics$min_abs_eps <- min(abs(eps))
     fit
   }
-  found <- fit_over_candidates(candidates, box, x_var, estimator,
-    fitter = fit_candidate, retain = TRUE
-  )
+  found <- fit_over_candidates(candidates, fit_candidate, retain = TRUE)
   bounds <- log_variance_profile_bounds(found, nrow(candidates), colnames(design), estimator)
   if (is.null(found$coefs) && nrow(candidates)) reason <- "all_fits_failed"
   out <- structure(

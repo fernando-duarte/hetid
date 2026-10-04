@@ -3,9 +3,7 @@
   inputs$moments$s_i_0[3] <- NA_real_
 
   err <- tryCatch(
-    compute_identified_set_quadratic(
-      inputs$tau, inputs$components, inputs$moments
-    ),
+    build_quadratic_system(inputs$gamma, inputs$tau, inputs$moments)$quadratic,
     error = function(e) e
   )
 
@@ -23,8 +21,8 @@
   inputs$moments$s_i_0[3] <- NA_real_
 
   err <- tryCatch(
-    compute_identified_set_quadratic(
-      rep(0, length(inputs$tau)), inputs$components, inputs$moments
+    build_quadratic_system(
+      inputs$gamma, rep(0, length(inputs$tau)), inputs$moments
     ),
     error = function(e) e
   )
@@ -36,32 +34,10 @@
 
 {
   inputs <- setup_quadratic_test_inputs()
-  inputs$components$L_i[1] <- NA_real_
-
-  err <- tryCatch(
-    compute_identified_set_quadratic(
-      inputs$tau, inputs$components, inputs$moments
-    ),
-    error = function(e) e
-  )
-
-  expect_s3_class(err, "hetid_error_bad_argument")
-  expect_match(
-    conditionMessage(err),
-    "L_i contains non-finite (NA/NaN/Inf) values for maturity/maturities 1",
-    fixed = TRUE
-  )
-  expect_identical(err$arg, "L_i")
-}
-
-{
-  inputs <- setup_quadratic_test_inputs()
   inputs$moments$s_i_2[[4]][1, 2] <- Inf
 
   err <- tryCatch(
-    compute_identified_set_quadratic(
-      inputs$tau, inputs$components, inputs$moments
-    ),
+    build_quadratic_system(inputs$gamma, inputs$tau, inputs$moments)$quadratic,
     error = function(e) e
   )
 
@@ -86,8 +62,7 @@
   tau <- runif(I, 0.1, 0.9)
 
   moments <- compute_identification_moments(w1, w2, pcs)
-  components <- compute_identified_set_components(gamma, moments)
-  result <- compute_identified_set_quadratic(tau, components, moments)
+  result <- build_quadratic_system(gamma, tau, moments)$quadratic
 
   for (a in result$A_i) {
     expect_identical(a, t(a))
@@ -126,8 +101,7 @@
   tau <- runif(I, 0.1, 0.9)
 
   moments <- compute_identification_moments(w1, w2, pcs)
-  components <- compute_identified_set_components(gamma, moments)
-  result <- compute_identified_set_quadratic(tau, components, moments)
+  result <- build_quadratic_system(gamma, tau, moments)$quadratic
 
   expect_type(result, "list")
   expect_named(result, c("d_i", "A_i", "b_i", "c_i"))

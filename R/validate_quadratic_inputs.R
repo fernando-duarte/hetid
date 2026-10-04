@@ -70,8 +70,8 @@ validate_finite_by_maturity <- function(quantities, maturities) {
 #' the object's own attributes. Attributes and \code{L_i}/\code{V_i}
 #' types are trusted from the constructor; finiteness is checked separately.
 #' Called by the public boundary \code{compute_identified_set_components()} on
-#' every object it returns, and by \code{validate_quadratic_inputs()} and
-#' \code{compute_tau0_point()} on every object they receive; call it directly on
+#' every object it returns, and by \code{compute_tau0_point()} on every
+#' object it receives; call it directly on
 #' containers assembled via \code{new_hetid_components()} from parts that are not
 #' known-good.
 #'
@@ -106,88 +106,4 @@ validate_hetid_components <- function(x) {
   }
   validate_q_i_dims(x$Q_i, maturities, n_components)
   invisible(x)
-}
-
-#' Validate Inputs for the Quadratic Identified Set Computation
-#'
-#' Checks the container classes, that the components and moments carry
-#' identical maturity identity, the shapes of the \code{components}
-#' object (via \code{validate_hetid_components()}), and the
-#' type/finiteness/positivity constraints for
-#' \code{\link{compute_identified_set_quadratic}}. Moment shapes are
-#' checked by \code{validate_hetid_moments()} at this boundary. No input is
-#' modified. Nonnumeric or non-finite
-#' quadratic inputs, including NA/NaN/Inf, are rejected, not omitted.
-#'
-#' @inheritParams compute_identified_set_quadratic
-#'
-#' @return A list with components:
-#' \describe{
-#'   \item{maturities}{Integer vector of constrained w2 column indices.}
-#'   \item{n_components}{Integer theta-axis dimension (I).}
-#'   \item{n_maturities}{Number of constraints, \code{length(maturities)}.}
-#' }
-#' Invalid inputs raise structured bad-argument or dimension-mismatch errors.
-#'
-#' @keywords internal
-validate_quadratic_inputs <- function(tau, components, moments) {
-  validate_hetid_moments(moments)
-  assert_bad_argument_ok(
-    inherits(components, "hetid_components"),
-    paste0(
-      "components must be a hetid_components object created by ",
-      "compute_identified_set_components()"
-    ),
-    arg = "components"
-  )
-
-  maturities <- attr(moments, "maturities")
-  n_components <- attr(moments, "n_components")
-  assert_dimension_ok(
-    identical(attr(components, "maturities"), maturities),
-    paste0(
-      "components and moments carry different maturities: components = ",
-      paste(attr(components, "maturities"), collapse = ", "),
-      "; moments = ", paste(maturities, collapse = ", "),
-      ". Both must come from the same system and constraint subset."
-    )
-  )
-  assert_dimension_ok(
-    identical(attr(components, "n_components"), n_components),
-    paste0(
-      "components and moments carry different n_components: components = ",
-      attr(components, "n_components"), "; moments = ", n_components
-    )
-  )
-
-  validate_numeric_inputs(
-    tau = tau, L_i = components$L_i, V_i = components$V_i
-  )
-  assert_tau_values_ok(tau)
-  assert_dimension_ok(
-    length(tau) == n_components,
-    paste0(
-      "tau must have length I (the moments' n_components): tau = ",
-      length(tau), "; n_components = ", n_components
-    )
-  )
-  validate_hetid_components(components)
-  n_maturities <- length(maturities)
-
-  sigma_i_sq <- moments$sigma_i_sq
-  assert_sigma_positive(sigma_i_sq, maturities)
-
-  validate_finite_by_maturity(
-    list(
-      L_i = components$L_i, V_i = components$V_i, Q_i = components$Q_i,
-      s_i_0 = moments$s_i_0, s_i_1 = moments$s_i_1, s_i_2 = moments$s_i_2
-    ),
-    maturities
-  )
-
-  list(
-    maturities = maturities,
-    n_components = n_components,
-    n_maturities = n_maturities
-  )
 }

@@ -8,8 +8,6 @@ test_that("search and tau defaults preserve the frozen donor values", {
     MULTISTART_ROUNDS = 4L, MULTISTART_DEDUP_DIGITS = 6L
   ))
   expect_identical(MEAN_TAU_CONTROL, list(
-    CAP = 0.99, SWEEP_STEP = 0.005,
-    BISECTION_ITERATIONS = 40L, GRID_BACKBONE = 25L, GRID_TAIL_FRACTION = 0.9,
-    GRID_TAIL_SUBDIVISIONS = 4L
+    CAP = 0.99, SWEEP_STEP = 0.005, BISECTION_ITERATIONS = 40L
   ))
 })

@@ -2,8 +2,7 @@
 #'
 #' Container for accepted and failed log-variance fits, built by
 #' \code{\link{fit_log_variance}}. Internal callers can assemble one with
-#' \code{\link{new_hetid_log_variance_fit}} and check its structure with
-#' \code{\link{validate_hetid_log_variance_fit}}.
+#' \code{\link{new_hetid_log_variance_fit}}.
 #'
 #' @details
 #' The list contains \code{coef}, \code{fit_status}, \code{converged},
@@ -34,9 +33,8 @@ LOG_VARIANCE_FIT_STATUS <- c(ok = "ok", nonconvergence = "nonconvergence")
 #' \code{estimator}, but stores the fit fields without validating them.
 #'
 #' @details
-#' The parameter descriptions state the contract for validated fits.
-#' Call \code{\link{validate_hetid_log_variance_fit}} when assembling a
-#' container from parts that are not known to satisfy that contract.
+#' The parameter descriptions state the contract for validated fits; the
+#' constructor does not enforce it.
 #' Results from \code{\link{fit_log_variance}} are assembled from validated
 #' inputs and are not re-validated.
 #' Invalid container-identity attributes signal a

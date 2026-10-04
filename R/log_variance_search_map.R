@@ -16,28 +16,21 @@ lv_set_display_map <- function(estimator, path, theta_tables, taus, seed, grid_c
   results
 }
 
-lv_set_ppml_builder <- function(sample, context,
-                                ppml_control = lv_set_ppml_control()) {
+lv_set_ppml_sets <- function(sample, context, path, bounds, tau_control, control) {
+  ctrl <- control$search
+  ppml_control <- lv_set_ppml_control()
   keys <- apply(context$grid, 1L, lv_set_b_key)
   pilot <- lv_set_ppml_pilot(
     sample, context$anchor,
     context$grid[keys != lv_set_b_key(context$anchor), , drop = FALSE], ppml_control
   )
-  list(pilot = pilot, build = function() {
+  build <- function() {
     lv_set_ppml_estimator(sample,
       point = context$point, anchor = context$anchor,
       anchor_source = context$anchor_source, response_scale = pilot$response_scale,
       control = ppml_control
     )
-  })
-}
-
-lv_set_ppml_sets <- function(sample, context, path, bounds, tau_control, control) {
-  ctrl <- control$search
-  ppml_control <- lv_set_ppml_control()
-  builder <- lv_set_ppml_builder(sample, context, ppml_control)
-  pilot <- builder$pilot
-  build <- builder$build
+  }
   map_obj <- build()
   cache <- new.env(parent = emptyenv())
   primary <- lv_set_display_map(

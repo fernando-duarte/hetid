@@ -1,5 +1,6 @@
 # Regression guard for the d/A/b/c arithmetic: hand-computed expectations hit
-# the internal quadratic_from_components() with raw statistics, so not circular
+# the assembly kernel through the quadratic_from_components() test helper with
+# raw statistics, so not circular
 
 test_that("A_i matrices are symmetric", {
   set.seed(456)
@@ -136,7 +137,7 @@ test_that(
       maturities = maturities
     )
     components <- compute_identified_set_components(gamma, moments)
-    quad <- compute_identified_set_quadratic(tau, components, moments)
+    quad <- build_quadratic_system(gamma, tau, moments)$quadratic
 
     expected_d_i <- tau[maturities]^2 *
       unname(components$V_i) /
@@ -165,21 +166,13 @@ test_that(
     pcs <- matrix(rnorm(n_obs * J), nrow = n_obs, ncol = J)
 
     full_moments <- compute_identification_moments(w1, w2, pcs)
-    full_quad <- compute_identified_set_quadratic(
-      tau,
-      compute_identified_set_components(gamma, full_moments),
-      full_moments
-    )
+    full_quad <- build_quadratic_system(gamma, tau, full_moments)$quadratic
 
     subset_moments <- compute_identification_moments(
       w1, w2, pcs,
       maturities = maturities
     )
-    subset_quad <- compute_identified_set_quadratic(
-      tau,
-      compute_identified_set_components(gamma, subset_moments),
-      subset_moments
-    )
+    subset_quad <- build_quadratic_system(gamma, tau, subset_moments)$quadratic
 
     nms <- paste0("maturity_", maturities)
     expect_identical(subset_quad$d_i, full_quad$d_i[nms])

@@ -115,8 +115,9 @@ local({
 })
 }
 \seealso{
-\code{\link{compute_identified_set_components}} and
-\code{\link{compute_identified_set_quadratic}} for the component
-definitions, and \code{\link{make_system_checker}} for evaluating
+\code{\link{compute_identified_set_components}} for the component
+definitions, \code{\link{build_general_quadratic_system}} for several
+instrument combinations per component, and
+\code{\link{make_system_checker}} for evaluating
 every constraint at a candidate theta.
 }

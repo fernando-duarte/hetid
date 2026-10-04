@@ -11,11 +11,7 @@ lv_set_assert <- function(...) {
   invisible(TRUE)
 }
 
-lv_set_stop <- function(...) {
-  arguments <- list(...)
-  arguments[["call."]] <- NULL
-  stop_hetid(do.call(paste0, c(arguments, list(collapse = ""))))
-}
+lv_set_stop <- function(...) stop_hetid(paste0(..., collapse = ""))
 
 lv_set_solver_control <- function() {
   c(QUADRATIC_PROFILE_CONTROL, list(GRID_POINTS_LIMIT = HETID_CONSTANTS$GRID_POINTS_LIMIT))

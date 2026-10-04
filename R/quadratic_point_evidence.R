@@ -82,11 +82,7 @@ quadratic_term_holds <- function(term, point, square) {
   if (any(!is.finite(products))) {
     return(FALSE)
   }
-  error <- max(
-    .Machine$double.xmin,
-    HETID_CONSTANTS$QUADRATIC_SIGN_FACTOR * .Machine$double.eps *
-      length(point) * sum(abs(products))
-  )
+  error <- quadratic_sign_error(products, length(point))
   if (sum(products) < -error) {
     return(TRUE)
   }

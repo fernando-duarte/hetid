@@ -26,8 +26,7 @@
 #' \describe{
 #'   \item{components}{Plain list with per-constraint \code{L_i}, \code{V_i}
 #'     (named vectors) and \code{Q_i} (named list). Not a
-#'     \code{hetid_components} object, so it cannot be passed to
-#'     \code{\link{compute_identified_set_quadratic}}; the per-constraint
+#'     \code{hetid_components} object; the per-constraint
 #'     axis is longer than the maturity axis whenever any component carries
 #'     more than one combination. Each \code{Q_i} vector has length I.}
 #'   \item{quadratic}{List with per-constraint \code{d_i}, \code{A_i},
@@ -92,20 +91,9 @@ build_general_quadratic_system <- function(lambda, tau, moments) {
   )
 
   label_df <- general_constraint_labels(lambda_list, maturities)
-  n_total <- nrow(label_df)
-
-  L_i <- numeric(n_total) # nolint: object_name_linter.
-  V_i <- numeric(n_total) # nolint: object_name_linter.
-  Q_i <- vector("list", n_total) # nolint: object_name_linter.
-  d_i <- numeric(n_total)
-  A_i <- vector("list", n_total) # nolint: object_name_linter.
-  b_i <- vector("list", n_total)
-  c_i <- numeric(n_total)
-
   # Labels frame drives the loop; labels and constraints cannot drift apart
-  nms <- label_df$name
   idx_vec <- match(label_df$maturity, maturities)
-  for (pos in seq_len(n_total)) {
+  rows <- lapply(seq_len(nrow(label_df)), function(pos) {
     i <- label_df$maturity[pos]
     k <- label_df$combo[pos]
     idx <- idx_vec[pos]
@@ -120,28 +108,18 @@ build_general_quadratic_system <- function(lambda, tau, moments) {
       s_i_2_mat = moments$s_i_2[[idx]],
       sigma_i_sq_val = moments$sigma_i_sq[idx],
       n_components = n_components,
-      label = nms[pos]
+      label = label_df$name[pos]
     )
-    L_i[pos] <- parts$L # nolint: object_name_linter.
-    V_i[pos] <- parts$V # nolint: object_name_linter.
-    Q_i[[pos]] <- parts$Q # nolint: object_name_linter.
-    d_i[pos] <- quad$d
-    A_i[[pos]] <- quad$A # nolint: object_name_linter.
-    b_i[[pos]] <- quad$b
-    c_i[pos] <- quad$c
-  }
-  names(L_i) <- nms # nolint: object_name_linter.
-  names(V_i) <- nms # nolint: object_name_linter.
-  names(Q_i) <- nms # nolint: object_name_linter.
-  names(d_i) <- nms
-  names(A_i) <- nms # nolint: object_name_linter.
-  names(b_i) <- nms
-  names(c_i) <- nms
+    c(parts, quad)
+  })
+  names(rows) <- label_df$name
+  num <- function(field) vapply(rows, `[[`, 0, field)
+  lst <- function(field) lapply(rows, `[[`, field)
 
   structure(
     list(
-      components = list(L_i = L_i, V_i = V_i, Q_i = Q_i),
-      quadratic = list(d_i = d_i, A_i = A_i, b_i = b_i, c_i = c_i),
+      components = list(L_i = num("L"), V_i = num("V"), Q_i = lst("Q")),
+      quadratic = list(d_i = num("d"), A_i = lst("A"), b_i = lst("b"), c_i = num("c")),
       labels = label_df
     ),
     maturities = maturities,

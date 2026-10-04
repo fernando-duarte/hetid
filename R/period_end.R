@@ -58,11 +58,7 @@ to_period_end <- function(dates,
     monthly = month,
     quarterly = ceiling(month / HETID_CONSTANTS$MONTHS_PER_QUARTER) *
       HETID_CONSTANTS$MONTHS_PER_QUARTER,
-    annual = HETID_CONSTANTS$MONTHS_PER_YEAR,
-    stop_bad_argument(
-      paste0("frequency has no period-end rule: ", frequency),
-      arg = "frequency"
-    )
+    annual = HETID_CONSTANTS$MONTHS_PER_YEAR
   )
 
   # Last calendar day of terminal_month = first day of the next month minus 1

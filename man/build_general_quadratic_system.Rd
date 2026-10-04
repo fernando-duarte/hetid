@@ -31,8 +31,7 @@ A list with elements
 \describe{
 \item{components}{Plain list with per-constraint \code{L_i}, \code{V_i}
 (named vectors) and \code{Q_i} (named list). Not a
-\code{hetid_components} object, so it cannot be passed to
-\code{\link{compute_identified_set_quadratic}}; the per-constraint
+\code{hetid_components} object; the per-constraint
 axis is longer than the maturity axis whenever any component carries
 more than one combination. Each \code{Q_i} vector has length I.}
 \item{quadratic}{List with per-constraint \code{d_i}, \code{A_i},

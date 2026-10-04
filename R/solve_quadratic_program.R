@@ -59,14 +59,6 @@ profile_solve_checked <- function(quadratic, dimension, x0, objective, gradient,
     assert_dimension_ok(length(value) == dimension, paste0(name, " has wrong dimension"))
   }
   assert_bad_argument_ok(all(lower <= upper), "lower must not exceed upper")
-  warning_option <- getOption("nloptr.show.inequality.warning")
-  on.exit(options(nloptr.show.inequality.warning = warning_option), add = TRUE)
-  if (!requireNamespace("nloptr", quietly = TRUE)) {
-    stop(new_hetid_error("Quadratic profile searches require nloptr >= 2.2.1",
-      "hetid_error_missing_backend",
-      package = "nloptr"
-    ))
-  }
   tryCatch(profile_solve(
     quadratic, x0, objective, gradient, lower, upper,
     objective_scale, control, delta, omega

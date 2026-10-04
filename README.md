@@ -106,7 +106,7 @@ component — or from every instrument separately.
 ``` r
 library(hetid)
 #> Data availability:
-#>   * ACM term premia: Available (updated 2026-10-02)
+#>   * ACM term premia: Available (updated 2026-10-04)
 #> 
 #> Use load_term_premia() to access the data.
 set.seed(42)
@@ -269,8 +269,6 @@ achieved through heteroskedasticity-based moment conditions.
   Q_i) per maturity
 - `build_quadratic_system()` - Assemble the identified-set quadratic
   system (preferred entry point)
-- `compute_identified_set_quadratic()` - Quadratic form coefficients
-  (d_i, A_i, b_i, c_i)
 - `make_constraint_checker()` - Closure for grid search / optimisation
   over the set
 - `recover_structural_coefficients()` - Recover the Y1-equation

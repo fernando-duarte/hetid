@@ -13,8 +13,4 @@ A character scalar giving the bundled data directory path.
 Returns the extdata path in the package located by \code{system.file()}.
 Treat bundled data as read-only.
 }
-\details{
-If the package cannot be located, returns \code{inst/extdata}
-relative to the working directory. The directory need not exist.
-}
 \keyword{internal}

@@ -1,7 +1,7 @@
 #' Assert Slack Values Are Finite and in [0, 1)
 #'
 #' Single source of truth for the tau range rule, shared by
-#' \code{validate_quadratic_inputs()}, \code{as_tau_list()} (both its list and numeric
+#' \code{build_quadratic_system()}, \code{as_tau_list()} (both its list and numeric
 #' branches), \code{compute_identified_set_box()}, and \code{linear_bounds_frame()}.
 #'
 #' @param tau Numeric vector of dimensionless slacks in \code{[0, 1)}.
@@ -153,8 +153,7 @@ promote_numeric_tau <- function(tau, k_per, n_components) {
 
 #' Assert sigma_i_sq Is Finite and Strictly Positive
 #'
-#' Shared by \code{validate_quadratic_inputs()} and
-#' \code{build_general_quadratic_system()}.
+#' Used by \code{build_general_quadratic_system()}.
 #'
 #' @param sigma_i_sq Numeric vector from the moments container, in constraint-axis order.
 #' @param maturities Integer system-column indices in the same order, for error messages.

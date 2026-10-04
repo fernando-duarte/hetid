@@ -1,6 +1,4 @@
 test_that("instrument counts are bounded before integer coercion", {
-  expect_true(positive_count_ok(.Machine$integer.max))
-  expect_false(positive_count_ok(.Machine$integer.max + 1))
   z <- matrix(1:6, 3, dimnames = list(NULL, c("a", "b")))
   old <- options(warn = 2)
   on.exit(options(old))

@@ -56,18 +56,5 @@ assert_acm_pin_string <- function(value, arg) {
 }
 
 acm_pin_key <- function(release, sha, frequency) {
-  key_file <- tempfile("acm_key_")
-  on.exit(unlink(key_file), add = TRUE)
-  tryCatch(
-    {
-      writeBin(charToRaw(paste(release, sha, frequency, sep = "\n")), key_file)
-      key <- unname(tools::sha256sum(key_file))
-      if (is.na(key)) {
-        stop_hetid("Could not hash the ACM snapshot identity")
-      }
-      key
-    },
-    error = function(e) stop_hetid(conditionMessage(e)),
-    warning = function(w) stop_hetid(conditionMessage(w))
-  )
+  unname(tools::sha256sum(bytes = charToRaw(paste(release, sha, frequency, sep = "\n"))))
 }

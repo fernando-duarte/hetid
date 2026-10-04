@@ -89,11 +89,7 @@ quadratic_constraint_tail <- function(a, b, constant, origin, direction, side) {
 
 quadratic_linear_tail <- function(a, b, constant, products, origin, direction, side) {
   linear <- sum(products) * side
-  error <- max(
-    .Machine$double.xmin,
-    HETID_CONSTANTS$QUADRATIC_SIGN_FACTOR * .Machine$double.eps *
-      length(direction) * sum(abs(products))
-  )
+  error <- quadratic_sign_error(products, length(direction))
   if (linear < -error) {
     return(TRUE)
   }
@@ -129,11 +125,7 @@ quadratic_line_evidence <- function(quadratic, origin, direction, objectives) {
     }
     products <- (objective / magnitude) * direction
     value <- sum(products)
-    error <- max(
-      .Machine$double.xmin,
-      HETID_CONSTANTS$QUADRATIC_SIGN_FACTOR * .Machine$double.eps *
-        length(direction) * sum(abs(products))
-    )
+    error <- quadratic_sign_error(products, length(direction))
     if (abs(value) <= error) 0 else sign(value)
   }, 0)
   for (side in c(-1, 1)) {

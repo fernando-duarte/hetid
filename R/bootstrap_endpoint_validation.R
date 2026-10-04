@@ -1,6 +1,6 @@
 validate_bootstrap_side <- function(value, status, side) {
   assert_bad_argument_ok(
-    bootstrap_is_numeric(value) && is.character(status) &&
+    is.numeric(value) && is.character(status) &&
       length(value) == length(status) && !anyNA(status) &&
       all(status %in% BOOTSTRAP_ENDPOINT_STATUS),
     "endpoint values and statuses must use the documented types and vocabulary"
@@ -71,11 +71,11 @@ validate_bootstrap_draws <- function(draws, coefs) {
       all(fields %in% names(draws)), "draws must contain four paired endpoint matrices",
     arg = "draws"
   )
-  validate_bootstrap_matrix(draws$lower, coefs, bootstrap_is_numeric)
+  validate_bootstrap_matrix(draws$lower, coefs, is.numeric)
   dimensions <- dim(draws$lower)
   rows <- rownames(draws$lower)
   for (field in fields[-1]) {
-    type <- if (field == "upper") bootstrap_is_numeric else is.character
+    type <- if (field == "upper") is.numeric else is.character
     validate_bootstrap_matrix(draws[[field]], coefs, type, dimensions, rows)
   }
   for (side in c("lower", "upper")) {
@@ -96,7 +96,7 @@ validate_bootstrap_point_mirrors <- function(draws, coefs) {
     "point and point_status must be supplied together"
   )
   for (field in c("point", "point_status")) {
-    type <- if (field == "point") bootstrap_is_numeric else is.character
+    type <- if (field == "point") is.numeric else is.character
     validate_bootstrap_matrix(
       draws[[field]], coefs, type, dim(draws$lower),
       rownames(draws$lower)
