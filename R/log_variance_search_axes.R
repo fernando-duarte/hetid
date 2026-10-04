@@ -129,7 +129,13 @@ lv_set_check_selector <- function(selected, mesh) {
   id <- selected$selector_id
   lv_set_assert(is.character(id) && is.null(dim(id)) && length(id) == 1L &&
     !is.na(id) && nzchar(id))
-  keys <- apply(selected$grid, 1L, lv_set_b_key)
-  lv_set_assert(!anyDuplicated(keys), all(keys %in% apply(mesh, 1L, lv_set_b_key)))
+  keys <- lv_set_b_keys(selected$grid)
+  lv_set_assert(!anyDuplicated(keys), all(keys %in% lv_set_b_keys(mesh)))
   selected
+}
+
+# lv_set_b_key() for every row of a matrix at once
+lv_set_b_keys <- function(mesh) {
+  formatted <- matrix(sprintf("%.17g", mesh), nrow(mesh))
+  do.call(paste, c(lapply(seq_len(ncol(formatted)), function(j) formatted[, j]), sep = "|"))
 }
