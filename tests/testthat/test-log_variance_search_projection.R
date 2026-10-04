@@ -44,7 +44,7 @@ test_that("crossing census uses containing bounds and checked attained ranges", 
   w1 <- c(0.5, 2.5, -5 + 1e-12, 1, 0, 1 + 1e-5)
   result <- lv_set_fixed_rng(lv_set_crossing_census(
     qs, c(-1, -1), c(1, 1),
-    w1, w2, lv_set_logols_control()
+    w1, w2
   ))
   expect_identical(result$cross, integer())
   expect_identical(result$zero_rows, 5L)
@@ -52,7 +52,7 @@ test_that("crossing census uses containing bounds and checked attained ranges", 
   strip <- list(A_i = list(diag(c(1, 0))), b_i = list(c(0, 0)), c_i = -1)
   pending <- lv_set_fixed_rng(lv_set_crossing_census(
     strip, c(-1, -50), c(1, 50),
-    c(0.5, 30), diag(2), lv_set_logols_control()
+    c(0.5, 30), diag(2)
   ))
   expect_true(all(1:2 %in% c(pending$cross, pending$unresolved)))
 })

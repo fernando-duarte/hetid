@@ -62,10 +62,7 @@ test_that("coordinate forms are lazy and remain local to each census", {
   w1 <- c(-2, 0, 2)
   w2 <- matrix(1, 3L, 2L)
   run <- function(q, w1, w2, groups = NULL) {
-    lv_set_crossing_census(q, c(-3, -3), c(3, 3), w1, w2,
-      lv_set_logols_control(),
-      groups = groups
-    )
+    lv_set_crossing_census(q, c(-3, -3), c(3, 3), w1, w2, groups = groups)
   }
   expected <- list(cross = 1:3, unresolved = integer(0), zero_rows = integer(0))
   expect_identical(run(q, w1, w2), expected)
