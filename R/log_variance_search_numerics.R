@@ -1,23 +1,23 @@
 # Exact dyadic identities are deliberately limited to a safe integer lattice.
+# x = sign * odd mantissa * 2^exponent, by exact power-of-two arithmetic
 lv_log_dyadic <- function(x) {
   if (x == 0) {
     return(c(0, 0))
   }
-  parts <- strsplit(sprintf("%a", abs(x)), "p", fixed = TRUE)[[1L]]
-  digits <- substring(parts[1L], 3L)
-  fractional <- strsplit(digits, ".", fixed = TRUE)[[1L]]
-  exponent <- as.numeric(parts[2L]) - if (length(fractional) == 2L) {
-    4 * nchar(fractional[2L])
-  } else {
-    0
-  }
-  mantissa <- 0
-  for (digit in strsplit(paste(fractional, collapse = ""), "", fixed = TRUE)[[1L]]) {
-    mantissa <- 16 * mantissa + strtoi(digit, base = 16L)
-  }
-  while (mantissa %% 2 == 0) {
-    mantissa <- mantissa / 2
+  magnitude <- abs(x)
+  exponent <- floor(log2(magnitude))
+  if (2^exponent > magnitude) {
+    exponent <- exponent - 1
+  } else if (2^(exponent + 1) <= magnitude) {
     exponent <- exponent + 1
+  }
+  mantissa <- magnitude / 2^exponent * 2^(.Machine$double.digits - 1L)
+  exponent <- exponent - (.Machine$double.digits - 1L)
+  for (shift in c(32, 16, 8, 4, 2, 1)) {
+    if (mantissa %% 2^shift == 0) {
+      mantissa <- mantissa / 2^shift
+      exponent <- exponent + shift
+    }
   }
   c(sign(x) * mantissa, exponent)
 }
@@ -30,10 +30,28 @@ lv_log_exact <- function(terms) {
   if (!nrow(terms)) {
     return(0)
   }
-  keys <- apply(terms, 1L, function(row) paste(sprintf("%a", sort(abs(row))), collapse = ":"))
-  signs <- apply(sign(terms), 1L, prod)
-  encoded <- list()
   limit <- 2^(.Machine$double.digits - 1L)
+  if (nrow(terms) == 1L) {
+    product <- lv_log_encode_product(c(abs(terms), prod(sign(terms))), limit)
+    if (anyNA(product)) {
+      return(NA_real_)
+    }
+    return(lv_log_exact_sum(matrix(product, 1L), limit))
+  }
+  # one key per row: its sorted magnitudes, so equal monomials group together
+  magnitude <- abs(terms)
+  if (ncol(terms) > 1L) {
+    magnitude <- matrix(magnitude[order(row(magnitude), magnitude)],
+      ncol = ncol(terms), byrow = TRUE
+    )
+  }
+  formatted <- matrix(sprintf("%a", magnitude), nrow(terms))
+  keys <- do.call(paste, c(
+    lapply(seq_len(ncol(formatted)), function(j) formatted[, j]),
+    sep = ":"
+  ))
+  signs <- Reduce(`*`, lapply(seq_len(ncol(terms)), function(j) sign(terms[, j])))
+  encoded <- list()
   for (key in unique(keys)) {
     count <- sum(signs[keys == key])
     if (count == 0) next

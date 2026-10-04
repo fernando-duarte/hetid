@@ -28,9 +28,16 @@ variance_share_assert_coherent <- function(cc, blocks, control) {
 
 variance_share_set_column <- function(st, e_rows, objectives, covariance, control) {
   joint_status <- profile_status_worst(st$theta$status)
-  e_rng <- variance_share_range(st$theta, st$quadratic, objectives$expected, control)
-  news_rng <- variance_share_range(st$theta, st$quadratic, objectives$news, control)
-  combined_rng <- variance_share_range(st$theta, st$quadratic, objectives$combined, control)
+  share_grid <- variance_share_grid(st$theta, st$quadratic, control)
+  e_rng <- variance_share_range(
+    st$theta, st$quadratic, objectives$expected, control, share_grid
+  )
+  news_rng <- variance_share_range(
+    st$theta, st$quadratic, objectives$news, control, share_grid
+  )
+  combined_rng <- variance_share_range(
+    st$theta, st$quadratic, objectives$combined, control, share_grid
+  )
   e_comp <- variance_share_component_range(
     st$beta1[e_rows, ],
     covariance$s_e, covariance$var_c

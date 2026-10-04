@@ -2,18 +2,20 @@ lv_set_polish <- function(quadratic, direction, start, guard_scale, fn, gr, cont
   if (!is.finite(guard_scale)) guard_scale <- 1
   sign_mult <- if (direction == "min") 1 else -1
   dimension <- ncol(quadratic$A_i[[1L]])
-  bounds <- tryCatch(profile_scaled_bounds(
-    profile_theta_scale(quadratic),
-    control$sets$solver_boxes[[1L]], dimension
-  ), hetid_error_solver = function(e) NULL)
+  delta <- tryCatch(profile_theta_scale(quadratic), hetid_error_solver = function(e) NULL)
+  bounds <- if (!is.null(delta)) {
+    tryCatch(profile_scaled_bounds(delta, control$sets$solver_boxes[[1L]], dimension),
+      hetid_error_solver = function(e) NULL
+    )
+  }
   if (is.null(bounds)) {
     return(list(bound = NULL, par = NULL, suspect = FALSE))
   }
-  result <- solve_quadratic_program(quadratic, start,
+  result <- profile_solve_checked(quadratic, dimension, start,
     objective = function(b) sign_mult * fn(b),
     gradient = function(b) sign_mult * gr(b),
     lower = bounds$lower, upper = bounds$upper,
-    objective_scale = "none", control = control$sets
+    objective_scale = "none", control = control$sets, delta = delta
   )
   out <- function(bound, par, suspect) list(bound = bound, par = par, suspect = suspect)
   if (any(!is.finite(result$theta))) {

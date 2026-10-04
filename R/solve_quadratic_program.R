@@ -33,6 +33,18 @@ solve_quadratic_program <- function(quadratic, x0, objective, gradient, lower, u
   )
   dimension <- quadratic_validate_system(quadratic)
   validate_profile_control(control)
+  profile_solve_checked(
+    quadratic, dimension, x0, objective, gradient, lower, upper,
+    objective_scale, control, catch_errors
+  )
+}
+
+# Solver entry for package callers whose system and controls are already
+# validated; they may also pass the scales they hold, so neither the system
+# check nor the eigen decompositions repeat on every solve
+profile_solve_checked <- function(quadratic, dimension, x0, objective, gradient, lower,
+                                  upper, objective_scale, control, catch_errors = TRUE,
+                                  delta = NULL, omega = NULL) {
   assert_flag(catch_errors, "catch_errors")
   assert_bad_argument_ok(
     is.function(objective) && is.function(gradient),
@@ -57,7 +69,7 @@ solve_quadratic_program <- function(quadratic, x0, objective, gradient, lower, u
   }
   tryCatch(profile_solve(
     quadratic, x0, objective, gradient, lower, upper,
-    objective_scale, control
+    objective_scale, control, delta, omega
   ), error = function(error) {
     if (catch_errors) {
       return(profile_missing_candidate(dimension))
@@ -74,9 +86,9 @@ profile_missing_candidate <- function(dimension) {
 }
 
 profile_solve <- function(quadratic, x0, objective, gradient, lower, upper,
-                          objective_scale, control) {
-  delta <- profile_theta_scale(quadratic)
-  omega <- profile_constraint_scales(quadratic, delta, control)
+                          objective_scale, control, delta = NULL, omega = NULL) {
+  if (is.null(delta)) delta <- profile_theta_scale(quadratic)
+  if (is.null(omega)) omega <- profile_constraint_scales(quadratic, delta, control)
   if (!is.finite(delta) || delta <= 0 || any(!is.finite(omega)) || any(omega <= 0)) {
     stop(new_hetid_error(
       "Quadratic profile scaling exceeds the numeric range",

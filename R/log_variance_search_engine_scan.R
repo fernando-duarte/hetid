@@ -8,8 +8,14 @@ lv_set_feasible_grid <- function(quadratic, lower, upper, n_axis, control,
     quadratic, profile_theta_scale(quadratic),
     control$sets
   )
-  values <- profile_constraint_values(mesh, quadratic, omega)
-  mesh[apply(values <= control$sets$admission_tolerance, 1L, all), , drop = FALSE]
+  admitted <- profile_constraint_values(mesh, quadratic, omega) <=
+    control$sets$admission_tolerance
+  # all() row by row, as one column-wise Reduce over `&`
+  keep <- Reduce(
+    `&`, lapply(seq_len(ncol(admitted)), function(j) admitted[, j]),
+    rep(TRUE, nrow(admitted))
+  )
+  mesh[keep, , drop = FALSE]
 }
 
 lv_set_coarsen_grid <- function(mesh, max_points) {
@@ -25,14 +31,16 @@ lv_set_order_grid <- function(mesh, seed = NULL) {
   if (m == 0L) {
     return(integer(0))
   }
-  current <- if (is.null(seed) || anyNA(seed)) 1L else which.min(colSums((t(mesh) - seed)^2))
+  # transposed once, not on each of the m steps
+  columns <- t(mesh)
+  current <- if (is.null(seed) || anyNA(seed)) 1L else which.min(colSums((columns - seed)^2))
   visit <- integer(m)
   left <- rep(TRUE, m)
   for (k in seq_len(m)) {
     visit[k] <- current
     left[current] <- FALSE
     if (k == m) break
-    distance <- colSums((t(mesh) - mesh[current, ])^2)
+    distance <- colSums((columns - mesh[current, ])^2)
     distance[!left] <- Inf
     current <- which.min(distance)
   }

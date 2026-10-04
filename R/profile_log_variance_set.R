@@ -121,6 +121,17 @@ profile_log_variance_set <- function(box, x_var, estimator = "ppml",
   if (is.null(candidates)) {
     return(empty_log_variance_profile(coef_labels, 0L, 0L, estimator))
   }
-  fits <- fit_over_candidates(candidates, box, x_var, estimator)
+  theta <- candidates[1L, ]
+  names(theta) <- colnames(candidates)
+  assert_log_variance_at_b_inputs(theta, box$w1, box$w2)
+  assert_numeric_finite_values(candidates, "b")
+  fitter <- make_log_variance_fitter(x_var, estimator)
+  fit_candidate <- function(b, start) {
+    eps <- drop(box$w1 - box$w2 %*% b)
+    fit <- fitter(eps^2, start = start)
+    fit$diagnostics$min_abs_eps <- min(abs(eps))
+    fit
+  }
+  fits <- fit_over_candidates(candidates, box, x_var, estimator, fitter = fit_candidate)
   log_variance_profile_bounds(fits, nrow(candidates), coef_labels, estimator)
 }

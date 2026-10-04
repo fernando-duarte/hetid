@@ -103,6 +103,22 @@
 fit_log_variance_at_b <- function(b, w1, w2, x, estimator = "ppml", start = NULL,
                                   fallback_starts = list(), response_scale = 1,
                                   control = list()) {
+  assert_log_variance_at_b_inputs(b, w1, w2)
+
+  eps <- drop(w1 - w2 %*% b)
+
+  fit <- fit_log_variance(
+    eps^2, x,
+    estimator = estimator, start = start,
+    fallback_starts = fallback_starts, response_scale = response_scale, control = control
+  )
+  fit$diagnostics$min_abs_eps <- min(abs(eps))
+  fit
+}
+
+# Checks b, w1 and w2 for a fit at b; profile_log_variance_set() runs it once
+# for a candidate set that shares w1, w2 and the candidate names
+assert_log_variance_at_b_inputs <- function(b, w1, w2) {
   assert_bad_argument_ok(
     is.matrix(w2) && is.numeric(w2), "w2 must be a numeric matrix",
     arg = "w2"
@@ -141,14 +157,5 @@ fit_log_variance_at_b <- function(b, w1, w2, x, estimator = "ppml", start = NULL
       arg = "b"
     )
   }
-
-  eps <- drop(w1 - w2 %*% b)
-
-  fit <- fit_log_variance(
-    eps^2, x,
-    estimator = estimator, start = start,
-    fallback_starts = fallback_starts, response_scale = response_scale, control = control
-  )
-  fit$diagnostics$min_abs_eps <- min(abs(eps))
-  fit
+  invisible(TRUE)
 }

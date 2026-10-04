@@ -11,7 +11,8 @@ harvey_scoring(
   pos,
   col_abs,
   chol_xx,
-  control = log_variance_fit_control("harvey")
+  control = log_variance_fit_control("harvey"),
+  log_y_pos = log(y[pos])
 )
 }
 \arguments{
@@ -30,6 +31,9 @@ scale the moment is judged on. Each entry must be positive.}
 
 \item{control}{Validated named list of Harvey fitting controls; defaults
 derive from \code{\link{LOG_VARIANCE_HARVEY_CONTROL}}.}
+
+\item{log_y_pos}{Numeric vector \code{log(y[pos])}; a fit passes the copy it
+computed once instead of taking the log on every evaluation.}
 }
 \value{
 List with the last \code{eval}, the \code{iters} taken (negative on
