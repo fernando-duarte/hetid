@@ -102,10 +102,6 @@ download_term_premia <- function(source = c("github", "nyfed"),
 
   switch(source,
     github = download_acm_github(quiet = quiet, frequency = frequency),
-    nyfed = download_acm_nyfed(quiet = quiet),
-    stop_bad_argument(
-      paste0("source has no download handler: ", source),
-      arg = "source"
-    )
+    nyfed = download_acm_nyfed(quiet = quiet)
   )
 }

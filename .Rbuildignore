@@ -10,30 +10,13 @@
 ^\.gitattributes$
 ^\.github$
 
-# CI/CD
-^\.travis\.yml$
-^appveyor\.yml$
-^codecov\.yml$
-^\.circleci$
-^\.gitlab-ci\.yml$
-
 # Documentation
-^_pkgdown\.yml$
-^_pkgdown\.yaml$
 ^docs$
-^pkgdown$
-^doc$
-^Meta$
-^inst/doc/.*\.md$
 
 # Development directories
 ^data-raw$
-^dev$
-^inst/examples$
 ^inst/hooks/claude-check\.sh$
 ^scripts-paper$
-^scripts_old$
-^revdep$
 
 # Testing
 ^tests/testthat/_snaps$
@@ -76,31 +59,9 @@
 # Other common files to exclude
 ^\.lintr$
 ^\.pre-commit-config\.yaml$
-^tic\.R$
-^codemeta\.json$
-^\.ccache$
 ^\.vscode$
 ^\.idea$
 
-# Large data files (if any)
-# Commented out to allow data/ files
-# ^.*\.rda$
-# ^.*\.RData$
-# ^.*\.rds$
-
-# Makefile
-^Makefile$
 ^LICENSE\.md$
 
-# Analysis scripts (not part of package)
-^hetid_analysis_script\.R$
-^hetid_interactive_analysis\.R$
-^example_hetid_analysis\.R$
-^hetid_analysis_enhanced\.R$
-^test_enhanced_analysis\.R$
-^REFACTORING_PLAN\.md$
-^REFACTORING_COMPLETE\.md$
-^baseline-duplication-report\.xml$
-^duplication-tracking$
-^return_value_patterns\.md$
 ^man-roxygen$

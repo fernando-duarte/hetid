@@ -14,20 +14,10 @@ NULL
 #' Returns the extdata path in the package located by \code{system.file()}.
 #' Treat bundled data as read-only.
 #'
-#' @details If the package cannot be located, returns \code{inst/extdata}
-#' relative to the working directory. The directory need not exist.
 #' @return A character scalar giving the bundled data directory path.
 #' @keywords internal
 get_package_data_dir <- function() {
-  pkg_dir <- system.file(package = "hetid")
-
-  if (pkg_dir == "") {
-    # nocov start
-    file.path("inst", "extdata")
-    # nocov end
-  } else {
-    file.path(pkg_dir, "extdata")
-  }
+  system.file("extdata", package = "hetid")
 }
 
 #' Get User Data Directory
