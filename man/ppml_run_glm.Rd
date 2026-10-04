@@ -26,14 +26,18 @@ an intercept column.}
 from \code{log_variance_fit_control("ppml")}.}
 }
 \value{
-A list with \code{fit} (the \code{glm.fit} result, or \code{NULL}
-on error), character vectors \code{warnings} and \code{messages}, and
+A list with \code{fit} (the \code{glm.fit} result, the lean
+solver's list of the fields the ladder reads, or \code{NULL} on error),
+character vectors \code{warnings} and \code{messages}, and
 scalar strings \code{error_class} and \code{error_message} (both
 \code{NA_character_} on success). On error, the prefixed error message
 is also appended to \code{warnings}.
 }
 \description{
 The one \code{glm.fit} call site of the package's log-variance estimator.
+A supplied start is first tried with the lean \code{ppml_irls()}, which
+reproduces an uneventful \code{glm.fit} solve bit for bit; any eventful solve
+falls back to \code{glm.fit}.
 Warnings and messages are captured in the returned list instead of printed.
 An IRLS error comes back as a \code{NULL} fit rather than propagating:
 the ladder decides what a failed rung means.

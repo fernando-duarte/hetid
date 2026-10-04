@@ -38,6 +38,9 @@ ppml_pos_rank <- function(y_scaled, x_mat, control = log_variance_fit_control("p
 #' Run One glm.fit Rung
 #'
 #' The one \code{glm.fit} call site of the package's log-variance estimator.
+#' A supplied start is first tried with the lean \code{ppml_irls()}, which
+#' reproduces an uneventful \code{glm.fit} solve bit for bit; any eventful solve
+#' falls back to \code{glm.fit}.
 #' Warnings and messages are captured in the returned list instead of printed.
 #' An IRLS error comes back as a \code{NULL} fit rather than propagating:
 #' the ladder decides what a failed rung means.
@@ -56,14 +59,24 @@ ppml_pos_rank <- function(y_scaled, x_mat, control = log_variance_fit_control("p
 #' @param control Validated fitting controls; defaults to the PPML controls
 #'   from \code{log_variance_fit_control("ppml")}.
 #'
-#' @return A list with \code{fit} (the \code{glm.fit} result, or \code{NULL}
-#'   on error), character vectors \code{warnings} and \code{messages}, and
+#' @return A list with \code{fit} (the \code{glm.fit} result, the lean
+#'   solver's list of the fields the ladder reads, or \code{NULL} on error),
+#'   character vectors \code{warnings} and \code{messages}, and
 #'   scalar strings \code{error_class} and \code{error_message} (both
 #'   \code{NA_character_} on success). On error, the prefixed error message
 #'   is also appended to \code{warnings}.
 #' @keywords internal
 #' @importFrom stats glm.fit quasipoisson glm.control
 ppml_run_glm <- function(start, y_scaled, x_mat, control = log_variance_fit_control("ppml")) {
+  if (!is.null(start)) {
+    lean <- ppml_irls(x_mat, y_scaled, start, control$GLM_EPSILON, control$GLM_MAXIT)
+    if (!is.null(lean)) {
+      return(list(
+        fit = lean, warnings = character(0), messages = character(0),
+        error_class = NA_character_, error_message = NA_character_
+      ))
+    }
+  }
   captured <- capture_glm_conditions(stats::glm.fit(
     x = x_mat, y = y_scaled,
     family = stats::quasipoisson(link = "log"), start = start,
