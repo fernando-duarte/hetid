@@ -68,8 +68,8 @@ line_quadratic_roots <- function(coefs) {
 #' @noRd
 scaled_quadratic_roots <- function(a_val, beta_val, gamma_val) {
   product <- sqrt(abs(a_val)) * sqrt(abs(gamma_val))
-  exponent <- pmin(
-    floor(log2(pmax(abs(beta_val), product))), .Machine$double.max.exp - 1
+  exponent <- pmin.int(
+    floor(log2(pmax.int(abs(beta_val), product))), .Machine$double.max.exp - 1
   )
   root_scale <- 2^exponent
   if (any(!is.finite(root_scale)) || any(root_scale == 0)) {
@@ -83,7 +83,7 @@ scaled_quadratic_roots <- function(a_val, beta_val, gamma_val) {
   roots <- matrix(NA_real_, length(a_val), 2L)
   keep <- disc >= 0
   q_val <- -(beta_val[keep] / root_scale[keep] +
-    ifelse(beta_val[keep] >= 0, 1, -1) * sqrt(disc[keep])) / 2
+    (2 * (beta_val[keep] >= 0) - 1) * sqrt(disc[keep])) / 2
   first <- q_val * (root_scale[keep] / a_val[keep])
   retry <- !is.finite(first) | first == 0
   first[retry] <- (q_val[retry] * root_scale[keep][retry]) / a_val[keep][retry]

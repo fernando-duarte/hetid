@@ -1,7 +1,9 @@
-variance_share_range <- function(tab, quadratic, share, control) {
+# The containing-box grid and its feasible rows depend on the set, not on the
+# share, so one column builds them once for its three shares
+variance_share_grid <- function(tab, quadratic, control) {
   domain <- profile_containing_box(tab)
   if (any(!is.finite(c(domain$lower, domain$upper)))) {
-    return(c(NA_real_, NA_real_))
+    return(NULL)
   }
   variance_share_grid_capacity(length(domain$lower), control)
   delta <- profile_theta_scale(quadratic)
@@ -15,6 +17,16 @@ variance_share_range <- function(tab, quadratic, share, control) {
     control$admission_tolerance) == 0
   pts <- pts[feasible, , drop = FALSE]
   if (!nrow(pts)) stop_hetid("No feasible grid point in the containing box.")
+  list(domain = domain, pts = pts)
+}
+
+variance_share_range <- function(tab, quadratic, share, control,
+                                 share_grid = variance_share_grid(tab, quadratic, control)) {
+  if (is.null(share_grid)) {
+    return(c(NA_real_, NA_real_))
+  }
+  domain <- share_grid$domain
+  pts <- share_grid$pts
   vals <- share$value(pts)
   if (!all(is.finite(vals))) stop_hetid("Share values overflowed on the feasible grid.")
   starts <- pts[unique(c(

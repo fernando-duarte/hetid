@@ -38,11 +38,11 @@ profile_search_linear <- function(quadratic, objective, normalized, direction,
       hetid_error_solver = function(error) NULL
     )
     if (is.null(bounds)) next
-    result <- solve_quadratic_program(quadratic, rep(0, dimension),
+    result <- profile_solve_checked(quadratic, dimension, rep(0, dimension),
       objective = function(theta) sign_mult * sum(normalized * theta),
       gradient = function(theta) sign_mult * normalized,
       lower = bounds$lower, upper = bounds$upper,
-      objective_scale = "variable", control = control
+      objective_scale = "variable", control = control, delta = delta, omega = omega
     )
     candidate <- profile_bound_candidate(
       result, quadratic, evidence, objective,

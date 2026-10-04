@@ -48,17 +48,19 @@ profile_multistart_round <- function(quadratic, queue, evidence, delta, search_b
                                      control) {
   dimension <- ncol(quadratic$A_i[[1L]])
   bounds <- profile_scaled_bounds(delta, search_box, dimension)
+  omega <- profile_constraint_scales(quadratic, delta, control)
   found <- list()
   for (k in seq_len(dimension)) {
     for (sign_mult in c(1, -1)) {
       objective <- numeric(dimension)
       objective[k] <- 1
       for (start in queue) {
-        result <- solve_quadratic_program(quadratic, start,
+        result <- profile_solve_checked(quadratic, dimension, start,
           objective = function(theta) sign_mult * sum(objective * theta),
           gradient = function(theta) sign_mult * objective,
           lower = bounds$lower, upper = bounds$upper,
-          objective_scale = "variable", control = control, catch_errors = FALSE
+          objective_scale = "variable", control = control, catch_errors = FALSE,
+          delta = delta, omega = omega
         )
         candidate <- profile_checked_candidate(evidence, result$theta, control,
           normalized = sign_mult * objective

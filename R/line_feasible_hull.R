@@ -36,16 +36,24 @@
 line_feasible_hull <- function(center, dir, quadratic) {
   coefs <- line_quadratic_coefficients(center, dir, quadratic)
   roots <- line_quadratic_roots(coefs)
-  cuts <- sort(unique(c(roots)))
+  cuts <- unique(c(roots))
+  cuts <- cuts[!is.na(cuts)]
+  cuts <- cuts[order(cuts)]
   left <- c(-Inf, cuts)
   right <- c(cuts, Inf)
-  leading <- ifelse(
-    coefs[, 1] != 0, sign(coefs[, 1]),
-    ifelse(coefs[, 2] != 0, -sign(coefs[, 2]), sign(coefs[, 3]))
-  )
+  # the leading sign: curvature, else minus the slope, else the constant
+  leading <- sign(coefs[, 3])
+  linear <- coefs[, 2] != 0
+  leading[linear] <- -sign(coefs[linear, 2])
+  curved <- coefs[, 1] != 0
+  leading[curved] <- sign(coefs[curved, 1])
   feasible <- rep(TRUE, length(left))
   for (i in seq_len(nrow(coefs))) {
-    passed <- findInterval(left, sort(roots[i, ]))
+    # roots at or left of each cell's left end, a repeated root counted twice
+    passed <- integer(length(left))
+    for (root in roots[i, ]) {
+      if (!is.na(root)) passed <- passed + (left >= root)
+    }
     feasible <- feasible & leading[i] * (-1)^passed <= 0
   }
   if (!any(feasible)) {
