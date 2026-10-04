@@ -48,17 +48,17 @@ lv_set_harvey_sets <- function(sample, context, path, bounds, tau_control, contr
   cache <- new.env(parent = emptyenv())
   primary <- lv_set_display_map(
     map_obj, path, bounds$theta, tau_control$display,
-    context$seed, ctrl$primary_grid_cap, ctrl$primary_fit_budget, cache, control
+    context$seed, ctrl$PRIMARY_GRID_CAP, ctrl$PRIMARY_FIT_BUDGET, cache, control
   )
   # the same boxes searched again from more starts, over a fresh cache
   audit <- lv_set_audit_run(map_obj, path, bounds$theta, tau_control$display,
-    context$seed, ctrl$primary_grid_cap, ctrl$sensitivity_fit_budget,
+    context$seed, ctrl$PRIMARY_GRID_CAP, ctrl$SENSITIVITY_FIT_BUDGET,
     control = control
   )
   reconciled <- lv_set_audit_apply(primary, audit, control)
   list(
     key = "harvey", estimator = map_obj, sample = sample, seed = context$seed,
-    point = context$point, cache = cache, grid_cap = ctrl$primary_grid_cap,
+    point = context$point, cache = cache, grid_cap = ctrl$PRIMARY_GRID_CAP,
     results = reconciled$results, primary = primary,
     audit = reconciled$audit, ppml = ppml, taus = tau_control$display,
     stability_precheck = list(passed = all(is.na(failed)), reasons = failed)

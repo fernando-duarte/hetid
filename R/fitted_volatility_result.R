@@ -69,7 +69,7 @@ fitted_volatility_result <- function(sets, adapter, result, tau, point_eta,
   )
   inside <- lower_status == "bounded" & upper_status == "bounded" & is.finite(point_eta)
   point_transform_failed <- inside & is.na(rows$volatility_point)
-  slack <- control$search$point_containment_rtol * pmax(1, abs(rows$volatility_point))
+  slack <- control$search$POINT_CONTAINMENT_RTOL * pmax(1, abs(rows$volatility_point))
   contained <- rows$volatility_point >= rows$volatility_lower - slack &
     rows$volatility_point <= rows$volatility_upper + slack
   contained[point_transform_failed] <- FALSE

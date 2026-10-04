@@ -61,15 +61,15 @@ theta_table <- data.frame(
   coef = "news", status = "bounded", outer_lower = -tau, outer_upper = tau
 )
 control <- log_variance_search_control()
-control$search$grid_n <- 7L
-control$search$grid_floor <- 3L
-control$search$primary_grid_cap <- 7L
-control$search$coverage_grid_cap <- 7L
-control$search$primary_fit_budget <- 50L
-control$search$coverage_fit_budget <- 50L
-control$search$envelope_fit_budget <- 100L
-control$search$primary_starts_per_side <- 1L
-control$search$audit_starts_per_side <- 1L
+control$search$GRID_N <- 7L
+control$search$GRID_FLOOR <- 3L
+control$search$PRIMARY_GRID_CAP <- 7L
+control$search$COVERAGE_GRID_CAP <- 7L
+control$search$PRIMARY_FIT_BUDGET <- 50L
+control$search$COVERAGE_FIT_BUDGET <- 50L
+control$search$ENVELOPE_FIT_BUDGET <- 100L
+control$search$PRIMARY_STARTS_PER_SIDE <- 1L
+control$search$AUDIT_STARTS_PER_SIDE <- 1L
 sets <- profile_log_variance_map(
   sample_data, stats::setNames(list(quadratic), key),
   stats::setNames(list(theta_table), key), tau, "ppml",

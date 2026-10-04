@@ -1,7 +1,7 @@
 test_that("every raw lattice is checked before construction", {
   input <- lv_test_oracle()$inputs
   control <- input$control
-  control$sets$grid_points_limit <- 1L
+  control$sets$GRID_POINTS_LIMIT <- 1L
   expect_error(search_log_variance_map(lv_test_linear(), input$quadratic,
     input$table,
     control = control
@@ -14,7 +14,7 @@ test_that("every raw lattice is checked before construction", {
     matrix(numeric(), 4L, 0L), 1:4, 1:4
   )
   map_control <- log_variance_map_control("logols")
-  map_control$full_grid_safety_cap <- 1L
+  map_control$FULL_GRID_SAFETY_CAP <- 1L
   map <- make_log_variance_map(sample, "logols", control = map_control)
   qs <- list(A_i = list(matrix(1)), b_i = list(0), c_i = -0.0625)
   tab <- data.frame(coef = "b1", status = "bounded", outer_lower = -0.25, outer_upper = 0.25)
@@ -23,16 +23,16 @@ test_that("every raw lattice is checked before construction", {
     class = "hetid_error_bad_argument"
   )
   control <- log_variance_search_control()
-  control$search$grid_n <- 3L
-  control$search$grid_floor <- 100L
-  map$full_grid_safety_cap <- 3L
+  control$search$GRID_N <- 3L
+  control$search$GRID_FLOOR <- 100L
+  map$FULL_GRID_SAFETY_CAP <- 3L
   expect_error(search_log_variance_map(map, qs, tab, control = control),
     "before allocation",
     class = "hetid_error_bad_argument"
   )
   oracle <- lv_test_path_oracle()
   control <- oracle$control
-  control$sets$grid_points_limit <- 1L
+  control$sets$GRID_POINTS_LIMIT <- 1L
   for (method in c("ppml", "harvey", "logols")) {
     expect_error(
       profile_log_variance_map(
@@ -105,7 +105,7 @@ test_that("aggregate reuse binds systems, tau requests, point and controls", {
     oracle$taus, oracle$control
   ), class = "hetid_error_bad_argument")
   changed <- oracle$control
-  changed$search$cold_start_check <- FALSE
+  changed$search$COLD_START_CHECK <- FALSE
   expect_error(profile_log_variance_map(sample, oracle$quadratics, oracle$theta_tables,
     oracle$taus, "ppml", c(0, 0), changed,
     ppml = map

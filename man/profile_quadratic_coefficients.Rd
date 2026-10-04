@@ -54,8 +54,8 @@ quadratic <- list(A_i = list(matrix(1)), b_i = list(0), c_i = -1)
 beta1r <- c(intercept = 0.5)
 beta2r <- matrix(0.2, dimnames = list("news", "intercept"))
 control <- QUADRATIC_PROFILE_CONTROL
-control$solver_boxes <- c(10, 100, 1000)
-control$multistart_rounds <- 1L
+control$SOLVER_BOXES <- c(10, 100, 1000)
+control$MULTISTART_ROUNDS <- 1L
 profile <- profile_quadratic_coefficients(
   quadratic, beta1r, beta2r,
   points = matrix(0), control = control

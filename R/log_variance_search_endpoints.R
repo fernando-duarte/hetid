@@ -98,7 +98,7 @@ lv_set_check_endpoint_box <- function(ends, bounds, control) {
         if (side == "min") ends$arg_lower[j, ] else ends$arg_upper[j, ],
         bounds
       )
-      if (is.na(excess) || excess <= control$search$box_escape_rtol) next
+      if (is.na(excess) || excess <= control$search$BOX_ESCAPE_RTOL) next
       if (side == "min") ends$lower_bad[j] <- TRUE else ends$upper_bad[j] <- TRUE
       box_escapes[[length(box_escapes) + 1L]] <- list(
         coef = ends$labels[j], side = side,

@@ -36,13 +36,13 @@ test_that("controls preserve defaults and refuse invalid or excessive grids befo
     VARIANCE_SHARE_CONTROL[names(QUADRATIC_PROFILE_CONTROL)],
     QUADRATIC_PROFILE_CONTROL
   )
-  expect_identical(VARIANCE_SHARE_CONTROL$taus, c(.05, .10, .20))
-  expect_identical(VARIANCE_SHARE_CONTROL$grid_points_per_axis, 101L)
-  expect_identical(VARIANCE_SHARE_CONTROL$grid_points_limit, 2e6)
+  expect_identical(VARIANCE_SHARE_CONTROL$TAUS, c(.05, .10, .20))
+  expect_identical(VARIANCE_SHARE_CONTROL$GRID_POINTS_PER_AXIS, 101L)
+  expect_identical(VARIANCE_SHARE_CONTROL$GRID_POINTS_LIMIT, 2e6)
   bad_values <- list(
-    taus = c(.1, .1), grid_points_per_axis = 1.5,
-    grid_points_limit = 0, coherence_ratio = 1.1, coherence_slack = -1,
-    orthogonality_tolerance = -1, point_tolerance = 0, solver_maxeval = 0
+    TAUS = c(.1, .1), GRID_POINTS_PER_AXIS = 1.5,
+    GRID_POINTS_LIMIT = 0, COHERENCE_RATIO = 1.1, COHERENCE_SLACK = -1,
+    ORTHOGONALITY_TOLERANCE = -1, POINT_TOLERANCE = 0, SOLVER_MAXEVAL = 0
   )
   for (key in names(bad_values)) {
     bad <- VARIANCE_SHARE_CONTROL
@@ -52,7 +52,7 @@ test_that("controls preserve defaults and refuse invalid or excessive grids befo
   expect_error(validate_variance_share_control(VARIANCE_SHARE_CONTROL[-1]),
     class = "hetid_error_bad_argument"
   )
-  expect_error(validate_variance_share_control(c(VARIANCE_SHARE_CONTROL, list(taus = .1))),
+  expect_error(validate_variance_share_control(c(VARIANCE_SHARE_CONTROL, list(TAUS = .1))),
     class = "hetid_error_bad_argument"
   )
   prepared <- variance_share_fixture()
@@ -61,10 +61,10 @@ test_that("controls preserve defaults and refuse invalid or excessive grids befo
     class = "hetid_error_bad_argument"
   )
   control <- VARIANCE_SHARE_CONTROL
-  control$grid_points_per_axis <- 3L
-  control$grid_points_limit <- 81
+  control$GRID_POINTS_PER_AXIS <- 3L
+  control$GRID_POINTS_LIMIT <- 81
   expect_silent(validate_variance_share_inputs(prepared, control))
-  control$grid_points_limit <- 80
+  control$GRID_POINTS_LIMIT <- 80
   expect_error(validate_variance_share_inputs(prepared, control), "too many points")
 })
 

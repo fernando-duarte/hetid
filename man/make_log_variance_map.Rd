@@ -37,7 +37,7 @@ required when point is NULL for PPML.}
 required by Harvey, intercept first.}
 
 \item{control}{Estimator controls from log_variance_map_control(). Log-OLS
-scan_chunk_size must be a positive finite integer.}
+SCAN_CHUNK_SIZE must be a positive finite integer.}
 }
 \value{
 A list with metadata, coef_labels, fit_at_b, jacobian_at_b, and optional

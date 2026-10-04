@@ -12,8 +12,8 @@ lv_set_search <- function(estimator, quadratic, theta_table, seed = NULL,
   ctrl <- control$search
   if (is.null(budget)) budget <- lv_set_budget(max_fit_evals)
   if (is.null(cache)) cache <- new.env(parent = emptyenv())
-  if (is.null(cold_start_check)) cold_start_check <- ctrl$cold_start_check
-  if (is.null(starts_per_side)) starts_per_side <- ctrl$primary_starts_per_side
+  if (is.null(cold_start_check)) cold_start_check <- ctrl$COLD_START_CHECK
+  if (is.null(starts_per_side)) starts_per_side <- ctrl$PRIMARY_STARTS_PER_SIDE
   lv_set_validate_overrides(cold_start_check, tau, cache, budget)
   lv_set_check_extra_starts(extra_starts, theta_table$coef)
   estimator$theta_labels <- theta_table$coef
@@ -31,7 +31,7 @@ lv_set_search <- function(estimator, quadratic, theta_table, seed = NULL,
   check_feasible <- function(b) {
     values <- profile_constraint_values(b, quadratic, omega)
     list(
-      feasible = max(values) <= control$sets$admission_tolerance,
+      feasible = max(values) <= control$sets$ADMISSION_TOLERANCE,
       max_violation = max(values)
     )
   }
@@ -118,12 +118,12 @@ lv_set_search_grid <- function(estimator, quadratic, bounds, seed,
   limit <- lv_set_lattice_limit(estimator, control)
   mesh <- lv_set_feasible_grid(
     quadratic, bounds$lower, bounds$upper,
-    ctrl$grid_n, control, limit
+    ctrl$GRID_N, control, limit
   )
-  if (nrow(mesh) < ctrl$grid_floor) {
+  if (nrow(mesh) < ctrl$GRID_FLOOR) {
     mesh <- lv_set_feasible_grid(
       quadratic, bounds$lower, bounds$upper,
-      2 * ctrl$grid_n - 1, control, limit
+      2 * ctrl$GRID_N - 1, control, limit
     )
   }
   # the count as searched, before thinning and the seed rewrite it, since a
@@ -149,7 +149,7 @@ lv_set_search_grid <- function(estimator, quadratic, bounds, seed,
     # the ordering is quadratic in the grid, so an uncapped scan of a large
     # lattice fit by fit is refused rather than left to run
     if (is.null(estimator$scan_grid) && is.null(max_grid_points) &&
-      nrow(mesh) > ctrl$nearest_neighbor_limit) {
+      nrow(mesh) > ctrl$NEAREST_NEIGHBOR_LIMIT) {
       lv_set_stop(
         "The nearest-neighbour scan has ", nrow(mesh),
         " points, set max_grid_points."
@@ -187,7 +187,7 @@ lv_set_run_scan <- function(estimator, mesh, budget, in_lattice_order,
     }
     lv_set_scan(mesh, visit, evaluate, state,
       pool_k = starts_per_side,
-      separation = ctrl$start_separation_fraction * sqrt(sum((bounds$upper - bounds$lower)^2))
+      separation = ctrl$START_SEPARATION_FRACTION * sqrt(sum((bounds$upper - bounds$lower)^2))
     )
   }
 }

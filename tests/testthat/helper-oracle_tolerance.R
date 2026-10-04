@@ -6,7 +6,7 @@
 # A finite double passes when |actual - expected| <= tolerance * max(|expected|, 1).
 # "direct" covers closed-form evaluations and fits at a given point (observed
 # cross-platform gap <= 1e-10); "solver" covers outputs of the nloptr searches
-# (solver_xtol_rel = 1e-8; observed gap <= 2.3e-7 on the CI matrix).
+# (SOLVER_XTOL_REL = 1e-8; observed gap <= 2.3e-7 on the CI matrix).
 ORACLE_TOLERANCE <- c(direct = 1e-8, solver = 1e-5)
 
 oracle_mismatch <- function(actual, expected, tolerance, path = "value") {

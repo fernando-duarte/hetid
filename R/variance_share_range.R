@@ -9,12 +9,12 @@ variance_share_grid <- function(tab, quadratic, control) {
   delta <- profile_theta_scale(quadratic)
   omega <- profile_constraint_scales(quadratic, delta, control)
   axes <- Map(
-    function(l, h) seq(l, h, length.out = control$grid_points_per_axis),
+    function(l, h) seq(l, h, length.out = control$GRID_POINTS_PER_AXIS),
     domain$lower, domain$upper
   )
   pts <- as.matrix(expand.grid(axes))
   feasible <- rowSums(profile_constraint_values(pts, quadratic, omega) >
-    control$admission_tolerance) == 0
+    control$ADMISSION_TOLERANCE) == 0
   pts <- pts[feasible, , drop = FALSE]
   if (!nrow(pts)) stop_hetid("No feasible grid point in the containing box.")
   list(domain = domain, pts = pts)
@@ -47,7 +47,7 @@ variance_share_range <- function(tab, quadratic, share, control,
       # Keep the solver's pre-clamp residual and its one-sided feasibility gate
       theta <- pmin(pmax(result$theta, domain$lower), domain$upper)
       residual <- result$feasibility_residual
-      if (is.finite(residual) && residual <= control$feasibility_tolerance) {
+      if (is.finite(residual) && residual <= control$FEASIBILITY_TOLERANCE) {
         share$value(matrix(theta, 1))
       } else {
         NA_real_

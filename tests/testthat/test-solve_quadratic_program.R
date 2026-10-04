@@ -79,7 +79,7 @@ test_that("argument failures are outside the numerical catch", {
     objective_scale = "invalid"
   ), class = "hetid_error_bad_argument")
   broken <- QUADRATIC_PROFILE_CONTROL
-  broken$solver_maxeval <- 0L
+  broken$SOLVER_MAXEVAL <- 0L
   expect_error(run(x0 = c(0, 0), lower = c(-1, -1), upper = c(1, 1), control = broken),
     class = "hetid_error_bad_argument"
   )

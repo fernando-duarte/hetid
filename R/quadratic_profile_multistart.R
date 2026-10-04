@@ -20,9 +20,9 @@ profile_multistart <- function(quadratic, warm, evidence, control) {
     c(list(numeric(dimension)), axes, warm, anchors),
     control
   )
-  search_box <- control$solver_boxes[[1L]]
+  search_box <- control$SOLVER_BOXES[[1L]]
   solved <- character()
-  for (round in seq_len(control$multistart_rounds)) {
+  for (round in seq_len(control$MULTISTART_ROUNDS)) {
     queue <- Filter(function(point) {
       !profile_start_key(point, control) %in% solved
     }, queue)

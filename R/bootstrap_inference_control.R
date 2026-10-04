@@ -1,5 +1,7 @@
-BOOTSTRAP_INFERENCE_DEFAULTS <- list(tolerance = 1e-4, max_evals = 10000L)
-BOOTSTRAP_ENDPOINT_STATUS <- c("bounded", "unbounded", "unreliable", "failed")
+BOOTSTRAP_INFERENCE_DEFAULTS <- list(TOLERANCE = 1e-4, MAX_EVALS = 10000L)
+BOOTSTRAP_ENDPOINT_STATUS <- c(
+  bounded = "bounded", unbounded = "unbounded", unreliable = "unreliable", failed = "failed"
+)
 
 bootstrap_inference_control <- function(control) {
   defaults <- BOOTSTRAP_INFERENCE_DEFAULTS
@@ -8,9 +10,9 @@ bootstrap_inference_control <- function(control) {
     "control must be a uniquely named list of supported search controls"
   )
   for (key in names(control)) defaults[key] <- control[key]
-  assert_scalar_finite(defaults$tolerance, "tolerance")
-  assert_bad_argument_ok(defaults$tolerance > 0, "tolerance must be positive", arg = "control")
-  assert_scalar_integer_in_range(defaults$max_evals, "max_evals", 2, .Machine$integer.max)
+  assert_scalar_finite(defaults$TOLERANCE, "TOLERANCE")
+  assert_bad_argument_ok(defaults$TOLERANCE > 0, "TOLERANCE must be positive", arg = "control")
+  assert_scalar_integer_in_range(defaults$MAX_EVALS, "MAX_EVALS", 2, .Machine$integer.max)
   defaults
 }
 

@@ -4,7 +4,7 @@ profile_linear_bound <- function(quadratic, objective, direction, evidence,
   dimension <- ncol(quadratic$A_i[[1L]])
   assert_bad_argument_ok(
     length(objective) == dimension &&
-      direction %in% c("min", "max") && length(control$solver_boxes) == 3L,
+      direction %in% c("min", "max") && length(control$SOLVER_BOXES) == 3L,
     "Invalid linear profile inputs"
   )
   invalid <- list(bound = NA_real_, bounded = FALSE, valid = FALSE)
@@ -33,7 +33,7 @@ profile_search_linear <- function(quadratic, objective, normalized, direction,
   omega <- profile_constraint_scales(quadratic, delta, control)
   sign_mult <- if (direction == "min") 1 else -1
   previous <- NULL
-  for (box in control$solver_boxes) {
+  for (box in control$SOLVER_BOXES) {
     bounds <- tryCatch(profile_scaled_bounds(delta, box, dimension),
       hetid_error_solver = function(error) NULL
     )
@@ -53,9 +53,9 @@ profile_search_linear <- function(quadratic, objective, normalized, direction,
     normalized_value <- candidate$normalized_value
     # accept a checked endpoint away from the box edge or once its value
     # stabilizes across boxes
-    interior <- all(abs(result$phi) < control$bound_edge_rtol * box)
+    interior <- all(abs(result$phi) < control$BOUND_EDGE_RTOL * box)
     stable <- !is.null(previous) && abs(normalized_value - previous) <=
-      control$bound_stability_rtol * max(1, abs(normalized_value))
+      control$BOUND_STABILITY_RTOL * max(1, abs(normalized_value))
     if (interior || stable) {
       return(list(bound = value, bounded = TRUE, valid = TRUE, theta = candidate$theta))
     }
@@ -74,7 +74,7 @@ profile_bound_candidate <- function(result, quadratic, evidence, objective,
     return(NULL)
   }
   residual <- profile_residual(quadratic, candidate$theta, omega)
-  if (!(is.finite(residual) && abs(residual) <= control$feasibility_tolerance)) {
+  if (!(is.finite(residual) && abs(residual) <= control$FEASIBILITY_TOLERANCE)) {
     return(NULL)
   }
   value <- sum(objective * candidate$theta)

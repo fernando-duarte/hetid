@@ -108,7 +108,7 @@ compute_vfci_tau0 <- function(data, y, x, y2, z, het, date_begin, date_end) {
     stop_hetid("The tau-zero VFCI PPML log-variance fit did not converge")
   }
   assert_bad_argument_ok(
-    identical(names(logvar$coef), c(LOG_VARIANCE_INTERCEPT_LABEL, colnames(x_het))),
+    identical(names(logvar$coef), c(HETID_CONSTANTS$INTERCEPT_LABEL, colnames(x_het))),
     "PPML coefficient labels must match the volatility design in order",
     arg = "het"
   )

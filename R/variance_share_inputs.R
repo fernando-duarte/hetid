@@ -29,7 +29,7 @@ validate_variance_share_inputs <- function(prepared, control) {
   }
   assert_bad_argument_ok(
     !anyDuplicated(c(
-      "(Intercept)",
+      HETID_CONSTANTS$INTERCEPT_LABEL,
       colnames(prepared[["x"]]), colnames(prepared[["y2"]])
     )),
     "Expected and news coefficient names must be distinct",
@@ -62,7 +62,7 @@ variance_share_covariances <- function(y, x, y2, control) {
     )
     correlation <- stats::cov2cor(s_block)
     assert_bad_argument_ok(
-      all(abs(correlation[upper.tri(correlation)]) <= control$orthogonality_tolerance),
+      all(abs(correlation[upper.tri(correlation)]) <= control$ORTHOGONALITY_TOLERANCE),
       "The columns within x and within y2 must be uncorrelated in sample.",
       arg = "prepared"
     )
@@ -77,10 +77,10 @@ variance_share_covariances <- function(y, x, y2, control) {
 variance_share_fit <- function(y, x, y2, z, control) {
   fit <- compute_tau0_system(y, y2, x, z,
     impose_null = FALSE,
-    gamma = matrix(1, 1, ncol(y2)), tol = control$point_tolerance
+    gamma = matrix(1, 1, ncol(y2)), tol = control$POINT_TOLERANCE
   )
   assert_bad_argument_ok(
-    identical(names(fit$beta1r), c("(Intercept)", colnames(x))) &&
+    identical(names(fit$beta1r), c(HETID_CONSTANTS$INTERCEPT_LABEL, colnames(x))) &&
       identical(rownames(fit$beta2r), colnames(y2)) &&
       identical(colnames(fit$beta2r), names(fit$beta1r)),
     "Mean coefficient axes must match the supplied block names",
@@ -95,7 +95,7 @@ variance_share_fit <- function(y, x, y2, z, control) {
 variance_share_ols <- function(y, x, y2) {
   ols <- stats::lm.fit(cbind("(Intercept)" = 1, x, y2), y)$coefficients
   assert_bad_argument_ok(
-    identical(names(ols), c("(Intercept)", colnames(x), colnames(y2))) &&
+    identical(names(ols), c(HETID_CONSTANTS$INTERCEPT_LABEL, colnames(x), colnames(y2))) &&
       all(is.finite(ols)), "OLS requires finite coefficients and a full-rank design",
     arg = "prepared"
   )

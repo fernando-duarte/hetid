@@ -5,8 +5,8 @@ fv_test_boundary <- function() {
 read_fitted_volatility_endpoint_oracle <- function() {
   paths <- test_path("fixtures", paste0("fitted-volatility-endpoint-oracle.part-", 1:2, ".rds"))
   expected <- c(
-    "f888b98e67e2e4389a5ed2bf0252b894eeaf0c151b71aec2a840be59aa38461d",
-    "d6da4ab1e5614a04c0282a77d4ad7e433c9c3b5966b83e1697ee3e6fd68622ee"
+    "4ab833af7d00816c4c436c08f9d36421a12daf0c6a29bd9b359352c52036e404",
+    "d1ad534b2dffe0b22d7890cfe576dcad4e5d19b43c5eead3bd16e33fcf94673b"
   )
   stopifnot(identical(unname(tools::sha256sum(paths)), expected))
   bytes <- do.call(c, lapply(paths, function(path) readBin(path, "raw", n = file.info(path)$size)))
@@ -17,20 +17,20 @@ read_fitted_volatility_endpoint_oracle <- function() {
 
 fv_test_control <- function() {
   control <- log_variance_search_control()
-  control$search$grid_n <- 7L
-  control$search$grid_floor <- 3L
-  control$search$primary_starts_per_side <- 1L
-  control$search$audit_starts_per_side <- 1L
-  control$search$primary_grid_cap <- 30L
-  control$search$coverage_grid_cap <- 30L
-  control$search$primary_fit_budget <- 1000L
-  control$search$coverage_fit_budget <- 1000L
-  control$search$sensitivity_fit_budget <- 1000L
+  control$search$GRID_N <- 7L
+  control$search$GRID_FLOOR <- 3L
+  control$search$PRIMARY_STARTS_PER_SIDE <- 1L
+  control$search$AUDIT_STARTS_PER_SIDE <- 1L
+  control$search$PRIMARY_GRID_CAP <- 30L
+  control$search$COVERAGE_GRID_CAP <- 30L
+  control$search$PRIMARY_FIT_BUDGET <- 1000L
+  control$search$COVERAGE_FIT_BUDGET <- 1000L
+  control$search$SENSITIVITY_FIT_BUDGET <- 1000L
   control
 }
 
 fv_test_source <- function(fail = FALSE, cold = FALSE, jacobian = NULL) {
-  labels <- c(LOG_VARIANCE_INTERCEPT_LABEL, "pc1", "pc2")
+  labels <- c(HETID_CONSTANTS$INTERCEPT_LABEL, "pc1", "pc2")
   loading <- matrix(c(0, 1, 2), 3L, 1L, dimnames = list(labels, "news"))
   calls <- new.env(parent = emptyenv())
   calls$fits <- list()

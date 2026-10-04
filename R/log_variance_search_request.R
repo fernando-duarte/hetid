@@ -47,7 +47,7 @@ lv_set_build_map <- function(method, sample, path, bounds, tau_control, control,
   }
   context <- lv_set_map_context(
     sample, path, bounds$theta, tau_control,
-    control$search$primary_grid_cap, control
+    control$search$PRIMARY_GRID_CAP, control
   )
   if (is.null(ppml)) ppml <- lv_set_ppml_sets(sample, context, path, bounds, tau_control, control)
   if (method == "ppml") {

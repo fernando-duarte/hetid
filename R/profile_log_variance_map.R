@@ -40,8 +40,8 @@
 #'   data.frame(coef = "news", status = "bounded", outer_lower = -tau, outer_upper = tau)
 #' }), keys)
 #' control <- log_variance_search_control()
-#' control$search$grid_n <- 7L
-#' control$search$grid_floor <- 3L
+#' control$search$GRID_N <- 7L
+#' control$search$GRID_FLOOR <- 3L
 #' sets <- profile_log_variance_map(
 #'   sample_data, quadratics, theta_tables, taus, "logols",
 #'   point = c(news = 0), control = control
@@ -115,7 +115,7 @@ lv_set_map_context <- function(sample, path, theta_tables, tau_control, grid_cap
   bounds <- profile_containing_box(tab)
   mesh <- lv_set_coarsen_grid(lv_set_feasible_grid(
     quadratic, bounds$lower, bounds$upper,
-    control$search$grid_n, control
+    control$search$GRID_N, control
   ), grid_cap)
   lv_set_assert(nrow(mesh) > 0L)
   anchor <- if (point_feasible) point else mesh[1L, ]

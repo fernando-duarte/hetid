@@ -2,7 +2,7 @@ lv_set_morton_select <- function(mesh, max_points,
                                  control = lv_set_ppml_control()) {
   n <- nrow(mesh)
   k_cols <- ncol(mesh)
-  bits <- control$morton_bits
+  bits <- control$MORTON_BITS
   if (bits * k_cols > .Machine$double.digits) {
     lv_set_stop("The Morton key exceeds the exact range of a double.")
   }

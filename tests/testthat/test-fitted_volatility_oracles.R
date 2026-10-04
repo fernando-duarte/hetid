@@ -7,8 +7,8 @@ test_that("fixture parts reproduce the original compressed and serialized bytes"
   writeBin(bytes, files[1L])
   writeBin(memDecompress(bytes, "gzip"), files[2L])
   expect_identical(unname(tools::sha256sum(files)), c(
-    "c1046c3145e6c3c5d489fcfdcccc7aac756a50b73a69886d17a6905439997ea2",
-    "e30f7331c92ec342ae31324f9e5020d4a43ce1258bfe7ec4742ac25d492faf3e"
+    "87bfe9bc07d7e996f037d6b4207f5aedf7906d2a9e865f57f40f5f5ab80b316a",
+    "022c44cc778a047587af684e81efa5bba6758dc680caf92af63148a64970401b"
   ))
   oracle <- read_fitted_volatility_endpoint_oracle()
   expect_identical(oracle$ppml$complete, TRUE)

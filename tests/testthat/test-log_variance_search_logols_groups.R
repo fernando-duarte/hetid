@@ -6,9 +6,9 @@ test_that("coincident residual zeros cancel the slope without extending the log 
   map <- make_log_variance_map(sample, "logols")
   table <- data.frame(coef = "news", status = "bounded", outer_lower = -.1, outer_upper = .1)
   control <- log_variance_search_control()
-  control$search$grid_n <- 5L
-  control$search$grid_floor <- 3L
-  control$search$primary_starts_per_side <- 1L
+  control$search$GRID_N <- 5L
+  control$search$GRID_FLOOR <- 3L
+  control$search$PRIMARY_STARTS_PER_SIDE <- 1L
   for (constant in c(-.01, -.1^2)) {
     for (cold in c(FALSE, TRUE)) {
       for (seed in list(NULL, 0)) {
@@ -145,9 +145,9 @@ test_that("actual small group weights distinguish certified and unresolved signs
     quadratic <- list(A_i = list(matrix(1)), b_i = list(0), c_i = -.01)
     table <- data.frame(coef = "news", status = "bounded", outer_lower = -.1, outer_upper = .1)
     control <- log_variance_search_control()
-    control$search$grid_n <- 5L
-    control$search$grid_floor <- 3L
-    control$search$primary_starts_per_side <- 1L
+    control$search$GRID_N <- 5L
+    control$search$GRID_FLOOR <- 3L
+    control$search$PRIMARY_STARTS_PER_SIDE <- 1L
     result <- search_log_variance_map(map, quadratic, table,
       max_grid_points = 5L,
       max_fit_evals = 100L, cold_start_check = FALSE, control = control

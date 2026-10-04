@@ -35,12 +35,12 @@ lv_set_ppml_sets <- function(sample, context, path, bounds, tau_control, control
   cache <- new.env(parent = emptyenv())
   primary <- lv_set_display_map(
     map_obj, path, bounds$theta, tau_control$display,
-    context$seed, ctrl$primary_grid_cap, ctrl$primary_fit_budget, cache, control
+    context$seed, ctrl$PRIMARY_GRID_CAP, ctrl$PRIMARY_FIT_BUDGET, cache, control
   )
   # the audit fits through an estimator of its own, over a larger grid chosen
   # to fill the set, so it shares no fit and no start with the first search
   audit <- lv_set_audit_run(build(), path, bounds$theta, tau_control$display,
-    context$seed, ctrl$coverage_grid_cap, ctrl$coverage_fit_budget,
+    context$seed, ctrl$COVERAGE_GRID_CAP, ctrl$COVERAGE_FIT_BUDGET,
     grid_selector = function(mesh, max_points) {
       lv_set_morton_select(mesh, max_points, ppml_control)
     }, control = control
@@ -50,7 +50,7 @@ lv_set_ppml_sets <- function(sample, context, path, bounds, tau_control, control
   )
   list(
     key = "ppml", estimator = map_obj, sample = sample, seed = context$seed,
-    point = context$point, cache = cache, grid_cap = ctrl$primary_grid_cap,
+    point = context$point, cache = cache, grid_cap = ctrl$PRIMARY_GRID_CAP,
     results = reconciled$results, primary = primary,
     audit = reconciled$audit, selector_provenance =
       reconciled$selector_provenance, pilot = pilot, taus = tau_control$display
@@ -116,10 +116,10 @@ lv_set_bounds_by_tau <- function(sets, path, bounds,
         bounds$theta[[profile_tau_key(tau)]],
         seed = sets$seed, extra_starts = extra,
         max_grid_points = sets$grid_cap, cache = sets$cache, budget = budget,
-        starts_per_side = ctrl$primary_starts_per_side, tau = tau, control = control
+        starts_per_side = ctrl$PRIMARY_STARTS_PER_SIDE, tau = tau, control = control
       )
       n_raw <- lv_set_path_raw_count(result)
-      if (!is.na(n_raw) && n_raw < ctrl$grid_floor) {
+      if (!is.na(n_raw) && n_raw < ctrl$GRID_FLOOR) {
         for (column in c("lower_status", "upper_status")) {
           bounded <- result$schema[[column]] == "bounded"
           result$schema[[column]][bounded] <- "unreliable"
@@ -134,7 +134,7 @@ lv_set_bounds_by_tau <- function(sets, path, bounds,
       results[[keys[[i]]]] <- run_tau(mesh[[i]], warm)
       warm <- lv_set_bounded_args(results[[keys[[i]]]]$schema)
     }
-    repaired <- lv_set_nesting_repair(results, run_tau, ctrl$nesting_rtol)
+    repaired <- lv_set_nesting_repair(results, run_tau, ctrl$NESTING_RTOL)
     results <- repaired$results
     violations <- repaired$violations
     columns <- names(repaired$rows)

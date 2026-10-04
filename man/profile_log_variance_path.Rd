@@ -52,8 +52,8 @@ theta_tables <- stats::setNames(lapply(taus, function(tau) {
   data.frame(coef = "news", status = "bounded", outer_lower = -tau, outer_upper = tau)
 }), keys)
 control <- log_variance_search_control()
-control$search$grid_n <- 7L
-control$search$grid_floor <- 3L
+control$search$GRID_N <- 7L
+control$search$GRID_FLOOR <- 3L
 sets <- profile_log_variance_map(
   sample_data, quadratics, theta_tables, taus[1L], "logols",
   point = c(news = 0), control = control

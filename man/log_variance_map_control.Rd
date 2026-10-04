@@ -17,6 +17,6 @@ Controls for a Candidate-Indexed Log-Variance Estimator
 }
 \examples{
 control <- log_variance_map_control("logols")
-control$scan_chunk_size <- 32L
-control$scan_chunk_size
+control$SCAN_CHUNK_SIZE <- 32L
+control$SCAN_CHUNK_SIZE
 }

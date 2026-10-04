@@ -1,6 +1,6 @@
 bootstrap_pointwise_critical <- function(z_lower, z_upper, pool, d_lower, d_upper,
                                          alpha, tolerance, c_s, max_evals =
-                                           BOOTSTRAP_INFERENCE_DEFAULTS$max_evals) {
+                                           BOOTSTRAP_INFERENCE_DEFAULTS$MAX_EVALS) {
   lipschitz <- max(d_lower, d_upper)
   bootstrap_finite_arithmetic(lipschitz, "width credit")
   if (lipschitz == 0) {

@@ -2,30 +2,30 @@ validate_profile_control <- function(control) {
   keys <- names(QUADRATIC_PROFILE_CONTROL)
   assert_bad_argument_ok(is.list(control) && !anyDuplicated(names(control)) &&
     all(keys %in% names(control)), "control lacks quadratic profile settings", arg = "control")
-  scalar <- setdiff(keys, "solver_boxes")
+  scalar <- setdiff(keys, "SOLVER_BOXES")
   for (key in scalar) assert_scalar_finite(control[[key]], paste0("control$", key))
   nonnegative <- c(
-    "symmetry_rtol", "feasibility_tolerance", "admission_tolerance",
-    "candidate_correction_rtol", "bound_stability_rtol"
+    "SYMMETRY_RTOL", "FEASIBILITY_TOLERANCE", "ADMISSION_TOLERANCE",
+    "CANDIDATE_CORRECTION_RTOL", "BOUND_STABILITY_RTOL"
   )
   assert_bad_argument_ok(all(vapply(control[nonnegative], function(x) x >= 0, logical(1))),
     "Profile tolerances must be nonnegative",
     arg = "control"
   )
-  assert_bad_argument_ok(control$constraint_scale_floor_rtol > 0 &&
-    control$solver_xtol_rel > 0 && control$bound_edge_rtol > 0 &&
-    control$bound_edge_rtol < 1, "Invalid positive profile controls", arg = "control")
-  for (key in c("solver_maxeval", "multistart_rounds", "multistart_dedup_digits")) {
+  assert_bad_argument_ok(control$CONSTRAINT_SCALE_FLOOR_RTOL > 0 &&
+    control$SOLVER_XTOL_REL > 0 && control$BOUND_EDGE_RTOL > 0 &&
+    control$BOUND_EDGE_RTOL < 1, "Invalid positive profile controls", arg = "control")
+  for (key in c("SOLVER_MAXEVAL", "MULTISTART_ROUNDS", "MULTISTART_DEDUP_DIGITS")) {
     assert_scalar_integer_in_range(
       control[[key]], paste0("control$", key),
       1, .Machine$integer.max
     )
   }
-  boxes <- control$solver_boxes
+  boxes <- control$SOLVER_BOXES
   assert_bad_argument_ok(
     quadratic_real_finite(boxes) && is.null(dim(boxes)) &&
       length(boxes) == 3L && all(boxes > 0),
-    "solver_boxes must contain three positive finite values",
+    "SOLVER_BOXES must contain three positive finite values",
     arg = "control"
   )
   invisible(control)

@@ -20,8 +20,8 @@
 #' @param grid_selector Optional selector returning a unique feasible subset and
 #'   selector_id. Selected rows are visited in their returned order.
 #' @param control Search and solver controls from log_variance_search_control().
-#'   sets$grid_points_limit bounds each raw lattice before allocation. Log-OLS
-#'   also uses its resolved full_grid_safety_cap; the smaller bound applies.
+#'   sets$GRID_POINTS_LIMIT bounds each raw lattice before allocation. Log-OLS
+#'   also uses its resolved FULL_GRID_SAFETY_CAP; the smaller bound applies.
 #' @return A list with schema, n_feasible and diagnostics. The schema preserves
 #'   coefficient identity, side statuses, attaining points, residuals and sources.
 #'   Unreliable sides may retain diagnostic values; they are not accepted endpoints.
@@ -47,8 +47,8 @@
 #'   coef = "news", status = "bounded", outer_lower = -0.1, outer_upper = 0.1
 #' )
 #' control <- log_variance_search_control()
-#' control$search$grid_n <- 7L
-#' control$search$grid_floor <- 3L
+#' control$search$GRID_N <- 7L
+#' control$search$GRID_FLOOR <- 3L
 #' result <- search_log_variance_map(
 #'   map, quadratic, theta_table,
 #'   seed = c(news = 0), max_grid_points = 7L,

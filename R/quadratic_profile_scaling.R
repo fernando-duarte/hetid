@@ -27,7 +27,7 @@ profile_constraint_scales <- function(quadratic, delta, control) {
       magnitudes[!is.finite(magnitudes)] <- 0
       pos <- magnitudes[magnitudes > 0]
       floor_val <- if (length(pos)) {
-        control$constraint_scale_floor_rtol * stats::median(pos)
+        control$CONSTRAINT_SCALE_FLOOR_RTOL * stats::median(pos)
       } else {
         0
       }
@@ -42,7 +42,7 @@ profile_constraint_scales <- function(quadratic, delta, control) {
 profile_assert_symmetric <- function(quadratic, control) {
   for (matrix_i in quadratic$A_i) {
     matrix_scale <- max(1, max(abs(matrix_i)))
-    if (max(abs(matrix_i - t(matrix_i))) > control$symmetry_rtol * matrix_scale) {
+    if (max(abs(matrix_i - t(matrix_i))) > control$SYMMETRY_RTOL * matrix_scale) {
       stop_bad_argument("A_i must be symmetric for the analytic Jacobian",
         arg = "quadratic"
       )

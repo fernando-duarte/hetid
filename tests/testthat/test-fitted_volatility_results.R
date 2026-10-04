@@ -53,7 +53,7 @@ test_that("exponentials preserve the frozen extended-real and underflow policy",
 test_that("overflow demotion preserves raw evidence and containment errors carry dates", {
   sets <- fv_test_sets()$sets
   design <- sets$sample$x_mat
-  design[, LOG_VARIANCE_INTERCEPT_LABEL] <- 0
+  design[, HETID_CONSTANTS$INTERCEPT_LABEL] <- 0
   adapter <- fitted_volatility_adapter(
     sets$estimator, design,
     sprintf("date_%04d", 1:12), sets$cache
@@ -146,7 +146,7 @@ test_that("public and internal budget routes preserve independent point accounti
   geometry <- fv_test_system()
   control <- fv_test_control()
   for (limit in c(0, Inf)) {
-    control$search$envelope_fit_budget <- limit
+    control$search$ENVELOPE_FIT_BUDGET <- limit
     expect_error(profile_fitted_volatility(setup$sets, geometry$quadratic, geometry$table,
       0.05,
       control = control
@@ -154,7 +154,7 @@ test_that("public and internal budget routes preserve independent point accounti
     expect_length(ls(setup$sets$cache), 0L)
     expect_length(setup$calls$fits, 0L)
   }
-  control$search$envelope_fit_budget <- 1L
+  control$search$ENVELOPE_FIT_BUDGET <- 1L
   result <- profile_fitted_volatility(setup$sets, geometry$quadratic, geometry$table,
     0.05,
     control = control
@@ -164,7 +164,7 @@ test_that("public and internal budget routes preserve independent point accounti
   expect_identical(result$diagnostics$engine$n_evaluated, 1L)
   expect_identical(result$diagnostics$source$n_attempted, 2L)
   design <- setup$sets$sample$x_mat
-  design[, LOG_VARIANCE_INTERCEPT_LABEL] <- 0
+  design[, HETID_CONSTANTS$INTERCEPT_LABEL] <- 0
   adapter <- fitted_volatility_adapter(
     setup$sets$estimator, design,
     sprintf("date_%04d", 1:12), setup$sets$cache

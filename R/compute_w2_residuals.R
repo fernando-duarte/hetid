@@ -170,7 +170,7 @@ compute_w2_residuals <- function(yields, term_premia,
   coef_matrix <- assemble_w2_coef_matrix(
     coef_list,
     row_names = maturity_names(maturities),
-    fallback_names = c("(Intercept)", pc_result$pc_names, pc_lag_names)
+    fallback_names = c(HETID_CONSTANTS$INTERCEPT_LABEL, pc_result$pc_names, pc_lag_names)
   )
 
   dates_list <- lapply(kept_idx_list, function(kept) w2_dates[which(kept)])

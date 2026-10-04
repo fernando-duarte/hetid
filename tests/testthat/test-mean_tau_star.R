@@ -1,9 +1,9 @@
 test_that("tau brackets return the bounded end and retain unresolved states", {
   fit <- mean_profile_fixture()
   control <- MEAN_TAU_CONTROL
-  control$cap <- 0.4
-  control$sweep_step <- 0.1
-  control$bisection_iterations <- 2L
+  control$CAP <- 0.4
+  control$SWEEP_STEP <- 0.1
+  control$BISECTION_ITERATIONS <- 2L
   run <- function(classify) {
     testthat::local_mocked_bindings(profile_mean_tau_status = classify, .package = "hetid")
     find_mean_tau_star(fit, control)

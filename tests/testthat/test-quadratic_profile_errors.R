@@ -88,7 +88,7 @@ test_that("derived profile overflow is numerical failure rather than bad caller 
   finite_scale <- list(A_i = list(matrix(1)), b_i = list(0), c_i = -4)
   expect_identical(profile_theta_scale(finite_scale), 2)
   overflowing_boxes <- QUADRATIC_PROFILE_CONTROL
-  overflowing_boxes$solver_boxes <- rep(.Machine$double.xmax, 3L)
+  overflowing_boxes$SOLVER_BOXES <- rep(.Machine$double.xmax, 3L)
   cases <- list(
     list(quadratic = extreme, control = QUADRATIC_PROFILE_CONTROL),
     list(quadratic = finite_scale, control = overflowing_boxes)

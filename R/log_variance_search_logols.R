@@ -54,10 +54,10 @@ lv_set_logols_estimator <- function(sample, control = lv_set_logols_control()) {
         control = control,
         preparation = lv_set_hash(sample$prep)
       )),
-      cold_start_rtol = control$cold_start_rtol
+      cold_start_rtol = control$COLD_START_RTOL
     ),
     coef_labels = rownames(projection), theta_labels = colnames(w2),
-    full_grid_safety_cap = control$full_grid_safety_cap,
+    FULL_GRID_SAFETY_CAP = control$FULL_GRID_SAFETY_CAP,
     fit_at_b = function(b, start = NULL, phase = NULL) {
       ev <- evaluate_log_projection(sample$prep, b, "log", jacobian = FALSE)
       status <- c(
@@ -78,7 +78,7 @@ lv_set_logols_estimator <- function(sample, control = lv_set_logols_control()) {
       lv_logols_objective(sample$prep, groups, j)
     },
     scan_grid = function(mesh) {
-      lv_set_grid_scan(mesh, w1, w2, projection, control$scan_chunk_size, sample$prep)
+      lv_set_grid_scan(mesh, w1, w2, projection, control$SCAN_CHUNK_SIZE, sample$prep)
     },
     precheck = function(quadratic, theta_table) {
       bounds <- profile_containing_box(theta_table)
@@ -100,8 +100,8 @@ lv_set_logols_estimator <- function(sample, control = lv_set_logols_control()) {
 lv_set_logols_sets <- function(sample, path, bounds, tau_control, control) {
   logols_control <- lv_set_logols_control()
   lv_set_check_lattice(
-    2 * control$search$grid_n - 1, ncol(sample$w2),
-    min(control$sets$grid_points_limit, logols_control$full_grid_safety_cap)
+    2 * control$search$GRID_N - 1, ncol(sample$w2),
+    min(control$sets$GRID_POINTS_LIMIT, logols_control$FULL_GRID_SAFETY_CAP)
   )
   map_obj <- lv_set_logols_estimator(sample, logols_control)
   seed <- unname(path$point)

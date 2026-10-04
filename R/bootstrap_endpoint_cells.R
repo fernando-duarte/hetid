@@ -61,7 +61,7 @@ bootstrap_two_sided_cell <- function(lc, uc, f, alpha, control, min_reps, target
     width <- bootstrap_finite_arithmetic(f$upper - f$lower, "interval width")
     p <- bootstrap_pointwise_critical(
       lc$z, uc$z, pool, width / lc$se, width / uc$se,
-      alpha, control$tolerance, c_s, control$max_evals
+      alpha, control$TOLERANCE, c_s, control$MAX_EVALS
     )
     critical <- p$c_p_upper
   }

@@ -1,20 +1,20 @@
 lv_set_harvey_control <- function() {
   list(
-    estimator_version = "harvey-v1",
+    ESTIMATOR_VERSION = "harvey-v1",
     fit = c(LOG_VARIANCE_HARVEY_CONTROL[setdiff(
       names(LOG_VARIANCE_HARVEY_CONTROL),
       "SE_TYPES"
     )], list(SKIP_NONFINITE_STARTS = TRUE)),
-    recession_rank_tol = 1e-10,
-    recession_rate_multiplier = 1e-9,
-    certificate_tol = 1e-8,
-    lp_xtol_rel = 1e-12,
-    lp_maxeval = 2000L,
-    lp_bound = 1e6,
-    jacobian_rcond_tol = 1e-10,
-    cold_start_rtol = 1e-6,
-    fit_stage_policy = c("warm", "ppml_at_b", "standalone"),
-    standalone_start_policy = c("ppml_point", "logols_shifted", "intercept_only")
+    RECESSION_RANK_TOL = 1e-10,
+    RECESSION_RATE_MULTIPLIER = 1e-9,
+    CERTIFICATE_TOL = 1e-8,
+    LP_XTOL_REL = 1e-12,
+    LP_MAXEVAL = 2000L,
+    LP_BOUND = 1e6,
+    JACOBIAN_RCOND_TOL = 1e-10,
+    COLD_START_RTOL = 1e-6,
+    FIT_STAGE_POLICY = c("warm", "ppml_at_b", "standalone"),
+    STANDALONE_START_POLICY = c("ppml_point", "logols_shifted", "intercept_only")
   )
 }
 
@@ -32,7 +32,7 @@ lv_set_failure <- function(fit_status, error_class, recession = NULL) {
 
 lv_set_harvey_fitter <- function(x_mat, control = lv_set_harvey_control()) {
   lv_set_assert(
-    is.matrix(x_mat), identical(colnames(x_mat)[[1L]], "(Intercept)"),
+    is.matrix(x_mat), identical(colnames(x_mat)[[1L]], HETID_CONSTANTS$INTERCEPT_LABEL),
     all(x_mat[, 1L] == 1)
   )
   build <- function(auto_intercept) {
@@ -80,7 +80,7 @@ lv_set_harvey_jacobian <- function(fit, b, w1, w2, x_mat, control) {
     return(NULL)
   }
   information <- crossprod(x_mat, compute_harvey_ratio(theta, eps^2, x_mat) * x_mat)
-  if (!all(is.finite(information)) || rcond(information) < control$jacobian_rcond_tol) {
+  if (!all(is.finite(information)) || rcond(information) < control$JACOBIAN_RCOND_TOL) {
     return(NULL)
   }
   # eps / mu on the log scale, an exact zero residual stays an exact zero
@@ -102,9 +102,9 @@ lv_set_harvey_jacobian <- function(fit, b, w1, w2, x_mat, control) {
 lv_set_harvey_estimator <- function(sample, point = NULL, ppml, logols_coef,
                                     control = lv_set_harvey_control()) {
   lv_set_assert(
-    identical(control$fit_stage_policy, c("warm", "ppml_at_b", "standalone")),
+    identical(control$FIT_STAGE_POLICY, c("warm", "ppml_at_b", "standalone")),
     identical(
-      control$standalone_start_policy,
+      control$STANDALONE_START_POLICY,
       c("ppml_point", "logols_shifted", "intercept_only")
     ),
     identical(ppml$metadata$sample_id, sample$sample_id)
@@ -139,7 +139,7 @@ lv_set_harvey_estimator <- function(sample, point = NULL, ppml, logols_coef,
       estimator = "harvey", target_functional = "theta_var_gaussian",
       sample_id = sample$sample_id, smoothness = "smooth", response_scale = "variance",
       response_scale_value = 1, spec_id = spec_id,
-      cold_start_rtol = control$cold_start_rtol
+      cold_start_rtol = control$COLD_START_RTOL
     ),
     coef_labels = colnames(x_mat), theta_labels = colnames(w2),
     point_fit = point_fit,

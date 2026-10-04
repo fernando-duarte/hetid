@@ -26,7 +26,7 @@ test_that("boundary repair respects a checked anchor and displacement cap", {
   repaired <- profile_checked_candidate(ev, initial, QUADRATIC_PROFILE_CONTROL)
   expect_true(ev$check_point(repaired$theta))
   expect_lte(max(abs(repaired$theta / max(1, abs(initial)) -
-    initial / max(1, abs(initial)))), QUADRATIC_PROFILE_CONTROL$candidate_correction_rtol)
+    initial / max(1, abs(initial)))), QUADRATIC_PROFILE_CONTROL$CANDIDATE_CORRECTION_RTOL)
   expect_null(profile_checked_candidate(ev, c(2, 0), QUADRATIC_PROFILE_CONTROL))
   expect_null(profile_checked_candidate(ev, c(NA_real_, 0), QUADRATIC_PROFILE_CONTROL))
   ev$feasible_points <- matrix(numeric(), 0, 2)
@@ -38,10 +38,10 @@ test_that("box growth preserves the donor elongated-set regression", {
     qs <- list(A_i = list(diag(c(1, eps))), b_i = list(c(0, 0)), c_i = -1)
     ev <- profile_evidence(qs, diag(2), matrix(0, 1, 2))
     control <- QUADRATIC_PROFILE_CONTROL
-    control$solver_boxes <- boxes
+    control$SOLVER_BOXES <- boxes
     profile_linear_bound(qs, c(0, 1), "max", ev, 2L, control)
   }
-  boxes <- QUADRATIC_PROFILE_CONTROL$solver_boxes
+  boxes <- QUADRATIC_PROFILE_CONTROL$SOLVER_BOXES
   repeated <- rep(boxes[1], 3)
   expect_equal(bounds(1e-13, boxes)$bound, 3162277.6601655032, tolerance = 1e-12)
   expect_false(bounds(1e-13, repeated)$valid)
@@ -71,7 +71,7 @@ test_that("segment repair reaches a checked point beside a nearly tangent anchor
     repaired <- profile_checked_candidate(ev, initial, control, normalized)
     expect_true(ev$check_point(repaired$theta))
     movement <- max(abs(repaired$theta - initial))
-    expect_gt(movement, control$candidate_correction_rtol)
+    expect_gt(movement, control$CANDIDATE_CORRECTION_RTOL)
     expect_lte(movement, HETID_CONSTANTS$PROFILE_SEGMENT_RTOL)
     expect_lte(
       abs(repaired$theta[1] - initial[1]), HETID_CONSTANTS$PROFILE_SEGMENT_OBJECTIVE_RTOL

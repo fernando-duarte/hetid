@@ -111,7 +111,7 @@ run_pc_regression <- function(y, pcs, n_pcs) {
 
   # reject collinear regressors before passing NA coefficients downstream
   coefs <- coef(model)
-  names(coefs) <- c("(Intercept)", pc_names)
+  names(coefs) <- c(HETID_CONSTANTS$INTERCEPT_LABEL, pc_names)
   if (anyNA(coefs)) {
     aliased <- names(coefs)[is.na(coefs)]
     stop_hetid(paste0(

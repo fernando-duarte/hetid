@@ -9,9 +9,9 @@ lv_test_log_domain <- function(w1, w2, x = cbind(pc1 = seq_along(w1)),
     outer_lower = -radius, outer_upper = radius
   )
   control <- log_variance_search_control()
-  control$search$grid_n <- 5L
-  control$search$grid_floor <- 3L
-  control$search$primary_starts_per_side <- 1L
+  control$search$GRID_N <- 5L
+  control$search$GRID_FLOOR <- 3L
+  control$search$PRIMARY_STARTS_PER_SIDE <- 1L
   result <- search_log_variance_map(map, quadratic, bounds_table,
     seed = seed, max_grid_points = 5L, max_fit_evals = 100L,
     cold_start_check = cold, control = control
@@ -161,9 +161,9 @@ test_that("public divergence retains a crossing in a disconnected positive compo
   expect_equal(unname(groups$weights[, group]), target, tolerance = 1e-12)
   expect_identical(unname(groups$signs[, group]), sign(target))
   control <- log_variance_search_control()
-  control$search$grid_n <- 5L
-  control$search$grid_floor <- 3L
-  control$search$primary_starts_per_side <- 1L
+  control$search$GRID_N <- 5L
+  control$search$GRID_FLOOR <- 3L
+  control$search$PRIMARY_STARTS_PER_SIDE <- 1L
   result <- search_log_variance_map(map, quadratic, table,
     max_grid_points = 5L,
     max_fit_evals = 100L, cold_start_check = FALSE, control = control
