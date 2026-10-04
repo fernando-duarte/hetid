@@ -82,7 +82,7 @@ lv_set_logols_estimator <- function(sample, control = lv_set_logols_control()) {
     },
     precheck = function(quadratic, theta_table) {
       bounds <- profile_containing_box(theta_table)
-      census <- lv_set_crossing_census(quadratic, bounds$lower, bounds$upper, w1, w2, control,
+      census <- lv_set_crossing_census(quadratic, bounds$lower, bounds$upper, w1, w2,
         groups = groups
       )
       census$unresolved_coverage <- lv_log_crossing_coverage(groups, census, rownames(projection))

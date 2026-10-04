@@ -7,7 +7,7 @@ lv_set_logols_control <- function() {
   )
 }
 
-lv_set_box_clear <- function(lower, upper, w1, w2, slack = 0) {
+lv_set_box_clear <- function(lower, upper, w1, w2) {
   vapply(seq_along(w1), function(i) {
     bound <- lv_log_sum(lapply(seq_along(lower), function(j) {
       lv_log_op(rep(w2[i, j], 2L), c(lower[j], upper[j]), "*")
@@ -16,7 +16,7 @@ lv_set_box_clear <- function(lower, upper, w1, w2, slack = 0) {
   }, logical(1))
 }
 
-lv_set_crossing_census <- function(quadratic, lower, upper, w1, w2, control,
+lv_set_crossing_census <- function(quadratic, lower, upper, w1, w2,
                                    sets = lv_set_solver_control(), groups = NULL) {
   constant <- rowSums(w2 != 0) == 0L
   zero <- which(constant & w1 == 0)

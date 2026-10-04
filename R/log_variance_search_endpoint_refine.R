@@ -1,6 +1,6 @@
 lv_set_polish_side <- function(ends, j, side, found, seed, extra_pool,
                                quadratic, guard_scale, objective, budget_hit, control) {
-  starts <- lv_set_polish_starts(ends, j, side, found, seed, extra_pool)
+  starts <- lv_set_polish_starts(j, side, found, seed, extra_pool)
   if (!is.null(objective$admit)) starts <- Filter(objective$admit, starts)
   accepted <- FALSE
   for (start in starts) {
@@ -55,7 +55,7 @@ lv_set_refine_endpoints <- function(ends, estimator, quadratic, seed, found,
   records
 }
 
-lv_set_polish_starts <- function(ends, j, side, found, seed, extra_pool) {
+lv_set_polish_starts <- function(j, side, found, seed, extra_pool) {
   seeded <- !is.null(seed) && !anyNA(seed)
   starts <- list(if (side == "min") found$arg_min[j, ] else found$arg_max[j, ])
   pool <- if (side == "min") found$arg_min_pool else found$arg_max_pool
