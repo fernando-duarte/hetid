@@ -137,7 +137,8 @@ lv_log_op <- function(a, b, op) {
   }
   bounds <- range(values)
   for (pass in seq_len(2L)) {
-    pad <- 4 * .Machine$double.eps * abs(bounds) + .Machine$double.xmin
+    pad <- HETID_CONSTANTS$INTERVAL_PAD_FACTOR * .Machine$double.eps * abs(bounds) +
+      .Machine$double.xmin
     bounds <- bounds + c(-pad[1L], pad[2L])
   }
   if (any(!is.finite(bounds))) unknown else bounds

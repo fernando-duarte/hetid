@@ -43,6 +43,10 @@
 #'   \item{PROFILE_SEGMENT_MAXIT}{Bracketing and bisection steps of that repair (60)}
 #'   \item{GRID_POINTS_LIMIT}{Largest raw search lattice built before allocation
 #'     (2e6 points), shared by the variance-share and log-variance set controls}
+#'   \item{PROFILE_ANCHOR_HALVINGS}{Halvings of the step toward a feasible anchor when a
+#'     profile candidate is pulled back into the set (40)}
+#'   \item{INTERVAL_PAD_FACTOR}{Rounding-margin multiplier for the outward padding of
+#'     interval arithmetic bounds (4)}
 #'   \item{PERCENT_TO_DECIMAL}{Percentage to decimal divisor}
 #'   \item{MONTHS_PER_QUARTER}{Calendar months per quarter (3)}
 #'   \item{MONTHS_PER_YEAR}{Calendar months per year (12), used for
@@ -116,6 +120,8 @@ HETID_CONSTANTS <- list(
   PROFILE_SEGMENT_RTOL = 1e-5,
   PROFILE_SEGMENT_OBJECTIVE_RTOL = 1e-5,
   PROFILE_SEGMENT_MAXIT = 60L,
+  PROFILE_ANCHOR_HALVINGS = 40L,
+  INTERVAL_PAD_FACTOR = 4,
   GRID_POINTS_LIMIT = 2e6,
   MONTHS_PER_QUARTER = 3L,
   MONTHS_PER_YEAR = 12L,

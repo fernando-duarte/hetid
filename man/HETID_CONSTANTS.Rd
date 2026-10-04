@@ -44,6 +44,10 @@ from that repair, relative to max(1, |value|) (1e-5)}
 \item{PROFILE_SEGMENT_MAXIT}{Bracketing and bisection steps of that repair (60)}
 \item{GRID_POINTS_LIMIT}{Largest raw search lattice built before allocation
 (2e6 points), shared by the variance-share and log-variance set controls}
+\item{PROFILE_ANCHOR_HALVINGS}{Halvings of the step toward a feasible anchor when a
+profile candidate is pulled back into the set (40)}
+\item{INTERVAL_PAD_FACTOR}{Rounding-margin multiplier for the outward padding of
+interval arithmetic bounds (4)}
 \item{PERCENT_TO_DECIMAL}{Percentage to decimal divisor}
 \item{MONTHS_PER_QUARTER}{Calendar months per quarter (3)}
 \item{MONTHS_PER_YEAR}{Calendar months per year (12), used for

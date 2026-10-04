@@ -9,7 +9,7 @@ outer_pow2_exponent <- function(x) {
   if (top == 0) {
     return(0)
   }
-  min(max(floor(log2(top)), -1022), 1023)
+  min(max(floor(log2(top)), .Machine$double.min.exp), .Machine$double.max.exp - 1L)
 }
 
 outer_pow2_scale <- function(x, k) {

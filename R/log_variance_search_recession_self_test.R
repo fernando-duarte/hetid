@@ -20,7 +20,8 @@ lv_set_recession_self_test <- function(x_mat, control) {
     all_zero = identical(all_zero$classification, "negative_recession"),
     residual_adjust = tol > 0 && raw_bound > tol && corrected_bound < tol &&
       abs(corrected_bound + 10 * tol) <=
-        64 * .Machine$double.eps * max(tol, abs(corrected_bound), 10 * tol)
+        HETID_CONSTANTS$QUADRATIC_SIGN_FACTOR * .Machine$double.eps *
+          max(tol, abs(corrected_bound), 10 * tol)
   )
   names(checks)[!checks]
 }
