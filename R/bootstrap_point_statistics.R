@@ -64,12 +64,12 @@
 #' bootstrap_point_statistics(c(a = 2), draws, status, 3, 0.8)
 bootstrap_point_statistics <- function(point, draws, status, min_reps, stability) {
   assert_bad_argument_ok(
-    bootstrap_is_numeric(point) && is.null(dim(point)) && length(point) > 0L &&
+    is.numeric(point) && is.null(dim(point)) && length(point) > 0L &&
       !any(is.infinite(point) | is.nan(point)), "point must be finite or NA",
     arg = "point"
   )
   assert_instrument_names(names(point), "point")
-  validate_bootstrap_matrix(draws, names(point), bootstrap_is_numeric)
+  validate_bootstrap_matrix(draws, names(point), is.numeric)
   validate_bootstrap_matrix(status, names(point), is.character, dim(draws), rownames(draws))
   validate_bootstrap_side(draws, status, "lower")
   assert_bad_argument_ok(

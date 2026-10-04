@@ -18,9 +18,12 @@ harvey_scoring(
 \arguments{
 \item{cur}{Evaluated-start list from \code{\link{harvey_eval}}.}
 
-\item{y}{Finite nonnegative numeric response vector of length \code{nrow(x_mat)}.}
+\item{y}{Finite nonnegative numeric response vector with one entry per
+row of \code{x_mat}.}
 
-\item{x_mat}{Finite numeric design matrix, intercept column included.}
+\item{x_mat}{Finite numeric matrix with at least one row and one column.
+Supply the complete design, including any intercept; none is added.
+Rows must be aligned with \code{y}.}
 
 \item{pos}{Logical vector \code{y > 0} of length \code{length(y)}.}
 

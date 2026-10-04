@@ -45,14 +45,7 @@
 #' weights <- list(NULL, diag(2))
 #' lambda_from_support(support, weights, j_total = 4)
 lambda_from_support <- function(support, weights, j_total) {
-  assert_bad_argument_ok(
-    positive_count_ok(j_total),
-    paste0(
-      "j_total must be a single positive integer (the union ",
-      "instrument count)"
-    ),
-    arg = "j_total"
-  )
+  assert_scalar_integer_in_range(j_total, "j_total", 1, .Machine$integer.max)
   j_total <- as.integer(j_total)
   assert_bad_argument_ok(
     is.list(support) && length(support) >= 1,

@@ -3,8 +3,8 @@ lv_set_morton_select <- function(mesh, max_points,
   n <- nrow(mesh)
   k_cols <- ncol(mesh)
   bits <- control$morton_bits
-  if (bits * k_cols > control$exact_double_bits) {
-    lv_set_stop("The Morton key exceeds the exact range of a double.", call. = FALSE)
+  if (bits * k_cols > .Machine$double.digits) {
+    lv_set_stop("The Morton key exceeds the exact range of a double.")
   }
   quantized <- matrix(0, n, k_cols)
   for (k in seq_len(k_cols)) {

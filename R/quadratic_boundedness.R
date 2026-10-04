@@ -1,11 +1,15 @@
 quadratic_curvature_margin <- function(a, direction) {
   products <- outer(direction, direction) * a
   value <- sum(products)
-  error <- max(
+  c(value = value, error = quadratic_sign_error(products, nrow(a)))
+}
+
+# Rounding bound for a sum of n products, floored at the smallest normal double
+quadratic_sign_error <- function(products, n) {
+  max(
     .Machine$double.xmin,
-    HETID_CONSTANTS$QUADRATIC_SIGN_FACTOR * .Machine$double.eps * nrow(a) * sum(abs(products))
+    HETID_CONSTANTS$QUADRATIC_SIGN_FACTOR * .Machine$double.eps * n * sum(abs(products))
   )
-  c(value = value, error = error)
 }
 
 quadratic_weighted_matrix <- function(matrices, combination_weights) {

@@ -10,27 +10,6 @@
 #' @keywords internal
 NULL
 
-#' A Value Is a Single Positive Integer Count
-#'
-#' Tests whether a dimensionless numeric input is a single finite positive
-#' whole number representable as an R integer. Invalid inputs return \code{FALSE}.
-#'
-#' @param x Candidate numeric scalar count.
-#' @return Logical scalar, \code{TRUE} only for a finite positive whole number.
-#' @noRd
-positive_count_ok <- function(x) {
-  if (!is.numeric(x) || !is.null(dim(x))) {
-    return(FALSE)
-  }
-  isTRUE(all(c(
-    length(x) == 1,
-    is.finite(x),
-    x %% 1 == 0,
-    x >= 1,
-    x <= .Machine$integer.max
-  )))
-}
-
 #' One Support Entry Is a Valid Free-Row Index Vector
 #'
 #' @param s_i Candidate numeric vector of instrument row indices.

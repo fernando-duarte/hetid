@@ -125,10 +125,10 @@ parse_and_warn_dates <- function(raw_dates, label = "date") {
   }
   newly_na <- is.na(parsed) & !is.na(raw_dates)
   if (any(newly_na)) {
-    warn_unparsed_dates(paste0(
+    warn_hetid(paste0(
       sum(newly_na), " ", label,
       " value(s) could not be parsed and became NA"
-    ))
+    ), "hetid_warning_unparsed_dates")
   }
   parsed
 }

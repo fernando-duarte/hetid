@@ -129,36 +129,30 @@ ppml_fit_response <- function(y, x_mat, start = NULL, fallback_starts = list(),
     warnings = character(0), messages = character(0),
     error_class = "no_accepted_start"
   )
+  note <- function(error_class) {
+    attempts <<- c(attempts, list(list(source = ladder$labels[i], error_class = error_class)))
+    if (!is.na(error_class)) last$error_class <<- error_class
+  }
   for (i in seq_along(ladder$candidates)) {
     cand <- ladder$candidates[[i]]
     if (ppml_start_invalid(cand, x_mat)) {
-      attempts <- c(attempts, list(list(
-        source = ladder$labels[i], error_class = "invalid_start"
-      )))
-      last$error_class <- "invalid_start"
+      note("invalid_start")
       next
     }
     run <- ppml_run_glm(cand, y_scaled, x_mat, control)
     last$warnings <- run$warnings
     last$messages <- run$messages
     if (is.null(run$fit)) {
-      attempts <- c(attempts, list(list(
-        source = ladder$labels[i], error_class = "fit_error"
-      )))
-      last$error_class <- "fit_error"
+      note("fit_error")
       next
     }
     acc <- ppml_accept(run$fit, y_scaled, x_mat, control, design$col_abs)
-    attempts <- c(attempts, list(list(
-      source = ladder$labels[i],
-      error_class = if (acc$accepted) NA_character_ else acc$reason
-    )))
+    note(if (acc$accepted) NA_character_ else acc$reason)
     if (acc$accepted) {
       return(ppml_success(
         acc, run, y, y_scaled, x_mat, response_scale, attempts, rank_x_pos
       ))
     }
-    last$error_class <- acc$reason
   }
   ppml_failure(
     last$error_class, y, x_mat, response_scale, attempts,

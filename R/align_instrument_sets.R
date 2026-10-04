@@ -66,11 +66,7 @@
 #' subset$support
 align_instrument_sets <- function(z_sets, n_components,
                                   maturities = NULL) {
-  assert_bad_argument_ok(
-    positive_count_ok(n_components),
-    "n_components must be a single positive integer",
-    arg = "n_components"
-  )
+  assert_scalar_integer_in_range(n_components, "n_components", 1, .Machine$integer.max)
   n_components <- as.integer(n_components)
   if (is.null(maturities)) {
     maturities <- seq_len(n_components)
@@ -89,18 +85,7 @@ align_instrument_sets <- function(z_sets, n_components,
     ),
     arg = "z_sets"
   )
-  unconstrained <- setdiff(seq_len(n_components), maturities)
-  bad_extra <- unconstrained[
-    !vapply(z_sets[unconstrained], is.null, logical(1))
-  ]
-  assert_bad_argument_ok(
-    length(bad_extra) == 0,
-    paste0(
-      "z_sets must be NULL at unconstrained system column(s) ",
-      paste(bad_extra, collapse = ", ")
-    ),
-    arg = "z_sets"
-  )
+  assert_null_at_unconstrained(z_sets, n_components, maturities, "z_sets")
   mats <- lapply(maturities, function(i) {
     as_instrument_set(z_sets[[i]], paste0("z_sets[[", i, "]]"))
   })
@@ -152,27 +137,20 @@ as_instrument_set <- function(z_i, label) {
 #' @return \code{T x J_union} matrix with unique column names.
 #' @noRd
 unite_named_columns <- function(mats) {
-  vals <- list()
-  for (m in mats) {
-    cn <- colnames(m)
-    for (j in seq_len(ncol(m))) {
-      nm <- cn[j]
-      column <- unname(m[, j])
-      if (is.null(vals[[nm]])) {
-        vals[[nm]] <- column
-      } else {
-        assert_bad_argument_ok(
-          identical(vals[[nm]], column),
-          paste0(
-            "instrument column '", nm, "' differs across z_sets; ",
-            "same-name columns must be content-identical"
-          ),
-          arg = "z_sets"
-        )
-      }
-    }
+  nms <- unlist(lapply(mats, colnames))
+  out <- do.call(cbind, lapply(mats, unname))
+  is_first <- match(nms, nms) == seq_along(nms)
+  for (j in which(!is_first)) {
+    assert_bad_argument_ok(
+      identical(out[, j], out[, match(nms[j], nms)]),
+      paste0(
+        "instrument column '", nms[j], "' differs across z_sets; ",
+        "same-name columns must be content-identical"
+      ),
+      arg = "z_sets"
+    )
   }
-  out <- do.call(cbind, vals)
-  colnames(out) <- names(vals)
+  out <- out[, is_first, drop = FALSE]
+  colnames(out) <- nms[is_first]
   out
 }

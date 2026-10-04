@@ -51,13 +51,13 @@ convert_to_quarterly <- function(
   na_date <- is.na(data[["date"]])
   if (any(na_date)) {
     n_na <- sum(na_date)
-    warn_dropped_na_dates(sprintf(
+    warn_hetid(sprintf(
       paste0(
         "Dropped %d row%s with a missing (NA) date before quarterly ",
         "conversion; the monthly path keeps such rows."
       ),
       n_na, if (n_na == 1L) "" else "s"
-    ))
+    ), "hetid_warning_dropped_na_dates")
     data <- data[!na_date, , drop = FALSE]
     if (nrow(data) == 0) {
       return(data)
@@ -110,7 +110,7 @@ convert_to_quarterly <- function(
       paste(details, collapse = "; "), ". "
     )
     if (use_incomplete_quarters) {
-      warn_incomplete_quarter(paste0(
+      warn_hetid(paste0(
         notice,
         "These quarters are kept in the quarterly output using their ",
         "latest available observation, re-dated to the last day of the ",
@@ -118,7 +118,7 @@ convert_to_quarterly <- function(
         "September, or December. To drop incomplete quarters instead, ",
         "set use_incomplete_quarters = FALSE (the TRUE default comes ",
         "from HETID_CONSTANTS$USE_INCOMPLETE_QUARTERS)."
-      ))
+      ), "hetid_warning_incomplete_quarter")
     } else {
       dropped <- if (sum(incomplete) == 1) {
         "This quarter was dropped from the quarterly output. To keep it"

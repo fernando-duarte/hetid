@@ -110,15 +110,14 @@ harvey_fit_response <- function(y, x_mat, start = NULL,
   ladder <- harvey_start_ladder(start, fallback_starts, y_scaled, ncol(x_mat), control)
   attempts <- list()
   criteria <- list()
-  last_error <- "no_accepted_start"
+  note <- function(error_class) {
+    attempts <<- c(attempts, list(list(source = src, error_class = error_class)))
+  }
   for (i in seq_along(ladder$candidates)) {
     src <- ladder$labels[i]
     cur <- harvey_eval(ladder$candidates[[i]], y_scaled, x_mat, pos, col_abs, log_y_pos)
     if (is.null(cur)) {
-      attempts <- c(attempts, list(list(
-        source = src, error_class = "invalid_start"
-      )))
-      last_error <- "invalid_start"
+      note("invalid_start")
       next
     }
     scored <- harvey_scoring(
@@ -129,30 +128,23 @@ harvey_fit_response <- function(y, x_mat, start = NULL,
       score_norm = scored$eval$score_norm, objective = scored$eval$q
     )))
     if (scored$status != "converged") {
-      attempts <- c(attempts, list(list(
-        source = src, error_class = scored$status
-      )))
-      last_error <- scored$status
+      note(scored$status)
       next
     }
     accepted <- harvey_post_stop(scored$eval, x_mat, control)
     if (is.null(accepted)) {
-      attempts <- c(attempts, list(list(
-        source = src, error_class = "post_stop_reject"
-      )))
-      last_error <- "post_stop_reject"
+      note("post_stop_reject")
       next
     }
-    attempts <- c(attempts, list(list(
-      source = src, error_class = NA_character_
-    )))
+    note(NA_character_)
     return(harvey_success(
       accepted, scored, y, x_mat, response_scale, attempts, n_zero, rank_x_pos,
       criteria = if (length(ladder$candidates) > 1L) criteria else NULL
     ))
   }
+  last_error <- c("no_accepted_start", vapply(attempts, `[[`, "", "error_class"))
   harvey_failure(
-    last_error, y, x_mat, response_scale, attempts,
+    last_error[length(last_error)], y, x_mat, response_scale, attempts,
     n_zero_response = n_zero, rank_x_pos = rank_x_pos,
     per_start_criteria = if (length(criteria)) criteria else NULL
   )

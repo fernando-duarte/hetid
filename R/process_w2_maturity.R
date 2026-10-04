@@ -65,7 +65,7 @@ process_w2_maturity <- function(i, yields_df, term_premia_df, pcs, n_pcs,
                                 y1 = NULL, y1_lags = 0L,
                                 impose_b_zero = FALSE) {
   skip_maturity <- function(msg) {
-    warn_skipped_maturity(msg)
+    warn_hetid(msg, "hetid_warning_skipped_maturity")
     NULL
   }
 

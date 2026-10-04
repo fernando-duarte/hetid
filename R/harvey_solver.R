@@ -12,30 +12,6 @@
 #' @keywords internal
 NULL
 
-#' Zero-Safe Ratio r = y / exp(X theta)
-#'
-#' The evaluation order is contractual: form \eqn{\eta}, mark the positive
-#' rows, seed \code{r} with zeros, and only then fill the positive rows on the
-#' log scale. A zero response row stays an exact zero without ever forming
-#' \code{0 * Inf}. With finite \eqn{\eta}, overflow on a positive row gives
-#' \code{Inf}, not \code{NaN}, for the caller to treat as a failed trial. \code{y} is not
-#' re-validated here: the exported boundary \code{\link{fit_log_variance}}
-#' already required it finite and nonnegative.
-#'
-#' @param theta Numeric coefficient vector of length \code{ncol(x_mat)}.
-#' @param y Finite nonnegative numeric response vector of length \code{nrow(x_mat)}.
-#' @param x_mat Finite numeric design matrix, intercept column included.
-#'
-#' @return Numeric vector of length \code{length(y)}, with exact zeros where \code{y == 0}.
-#' @keywords internal
-harvey_ratio <- function(theta, y, x_mat) {
-  eta <- drop(x_mat %*% theta)
-  pos <- y > 0
-  r <- numeric(length(y))
-  r[pos] <- exp(log(y[pos]) - eta[pos])
-  r
-}
-
 #' Evaluate One Candidate Coefficient Vector
 #'
 #' The single gate every start, line-search trial, and accepted point passes
@@ -44,7 +20,7 @@ harvey_ratio <- function(theta, y, x_mat) {
 #' anything past \code{log(.Machine$double.xmax)} is \code{Inf}, and a fitted
 #' variance that large is a runaway trial, not a solution.
 #'
-#' @inheritParams harvey_ratio
+#' @inheritParams compute_harvey_ratio
 #' @param pos Logical vector \code{y > 0} of length \code{length(y)}.
 #' @param col_abs Numeric vector \code{colSums(abs(x_mat))}, the per-coordinate
 #'   scale the moment is judged on. Each entry must be positive.
@@ -66,7 +42,7 @@ harvey_eval <- function(theta, y, x_mat, pos, col_abs, log_y_pos = log(y[pos])) 
   if (!all(is.finite(eta)) || any(eta > log(.Machine$double.xmax))) {
     return(NULL)
   }
-  # the ratio from the eta already in hand, in harvey_ratio()'s order
+  # the ratio from the eta already in hand, in compute_harvey_ratio()'s order
   r <- numeric(length(y))
   r[pos] <- exp(log_y_pos - eta[pos])
   if (anyNA(r) || !all(is.finite(r[pos]))) {

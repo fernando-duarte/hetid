@@ -150,9 +150,9 @@ lv_set_search_grid <- function(estimator, quadratic, bounds, seed,
     # lattice fit by fit is refused rather than left to run
     if (is.null(estimator$scan_grid) && is.null(max_grid_points) &&
       nrow(mesh) > ctrl$nearest_neighbor_limit) {
-      lv_set_stop("The nearest-neighbour scan has ", nrow(mesh),
-        " points, set max_grid_points.",
-        call. = FALSE
+      lv_set_stop(
+        "The nearest-neighbour scan has ", nrow(mesh),
+        " points, set max_grid_points."
       )
     }
   }

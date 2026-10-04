@@ -185,12 +185,12 @@ warn_if_variance_degenerate <- function(w1, w2, maturities,
     flag_msg(second, "var(omega1*omega2 - gamma*omega2^2) is numerically degenerate")
   )
   if (length(msgs) > 0) {
-    warn_degenerate_variance(paste0(
+    warn_hetid(paste0(
       "Variance positivity diagnostic: ",
       paste(msgs, collapse = "; "),
       ". The identification regularity conditions may fail and the ",
       "identified set may be degenerate or unbounded."
-    ))
+    ), "hetid_warning_degenerate_variance")
   }
   invisible(NULL)
 }

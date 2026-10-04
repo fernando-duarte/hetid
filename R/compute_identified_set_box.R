@@ -135,19 +135,6 @@ compute_identified_set_box <- function(fit, tau,
                                        null_loading_rtol =
                                          IDENTIFIED_SET_CONTROL$NULL_LOADING_RTOL) {
   assert_hetid_tau0_fit(fit)
-  assert_scalar_finite(tau, "tau")
-  assert_tau_values_ok(tau)
-  assert_bad_argument_ok(
-    tau > 0,
-    "tau must be strictly positive; the tau = 0 point is compute_tau0_point()",
-    arg = "tau"
-  )
-  assert_scalar_integer_in_range(n_grid, "n_grid", 3, .Machine$integer.max)
-  assert_bad_argument_ok(
-    n_grid %% 2L == 1L,
-    "n_grid must be odd so the grid contains the center",
-    arg = "n_grid"
-  )
   assert_scalar_finite(null_loading_rtol, "null_loading_rtol")
   assert_bad_argument_ok(
     null_loading_rtol >= 0 && null_loading_rtol < 1,
@@ -156,19 +143,17 @@ compute_identified_set_box <- function(fit, tau,
   )
 
   n_components <- ncol(fit$w2)
-  validate_box_fit(fit)
-  built <- build_quadratic_system(
-    fit$gamma, rep(tau, n_components), fit$moments
+  search_frame <- linear_bounds_frame(
+    fit, tau, n_grid, center,
+    IDENTIFIED_SET_CONTROL$MAX_GROWTH, IDENTIFIED_SET_CONTROL$SEARCH_LIMIT
   )
-  quadratic <- built$quadratic
-  center <- resolve_box_center(fit, center, quadratic, n_components)
-  basis <- identified_set_basis(built$components, center, quadratic)
+  quadratic <- search_frame$quadratic
   objectives <- identified_set_objectives(fit, n_components, null_loading_rtol)
   theta_rows <- seq_len(n_components)
   beta1_rows <- n_components + seq_along(fit$beta1r)
 
   found <- identified_set_search(
-    center, basis, quadratic, n_grid, objectives,
+    search_frame$center, search_frame$basis, quadratic, n_grid, objectives,
     n_primary = n_components
   )
   found <- apply_recession_bounds(found, quadratic, objectives)

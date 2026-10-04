@@ -37,5 +37,3 @@ bootstrap_finite_arithmetic <- function(x, operation) {
   }
   x
 }
-
-bootstrap_is_numeric <- function(x) is.numeric(x) && !is.complex(x)

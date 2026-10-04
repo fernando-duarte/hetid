@@ -34,7 +34,11 @@ compute_harvey_ratio <- function(theta, y, x_mat) {
     length(theta) == ncol(x_mat), "theta must have ncol(x_mat) entries"
   )
   validate_log_variance_response(y, nrow(x_mat), 1)
-  harvey_ratio(theta, y, x_mat)
+  eta <- drop(x_mat %*% theta)
+  pos <- y > 0
+  r <- numeric(length(y))
+  r[pos] <- exp(log(y[pos]) - eta[pos])
+  r
 }
 
 #' @noRd
