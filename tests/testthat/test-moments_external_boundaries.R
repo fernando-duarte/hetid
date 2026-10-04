@@ -1,10 +1,8 @@
 moments_boundary_calls <- function(gamma, moments) {
-  components <- compute_identified_set_components(gamma, moments)
   tau <- rep(0.2, ncol(gamma))
   list(
     validator = function(x) validate_hetid_moments(x),
     components = function(x) compute_identified_set_components(gamma, x),
-    direct = function(x) compute_identified_set_quadratic(tau, components, x),
     standard = function(x) build_quadratic_system(gamma, tau, x),
     general = function(x) build_general_quadratic_system(gamma, tau, x),
     separate = function(x) separate_instruments_lambda(x)
@@ -86,8 +84,7 @@ test_that("valid reordered moment subsets preserve both axes and values", {
   general <- build_general_quadratic_system(gamma, tau, subset)
   expect_identical(general$components, unclass(standard$components)[c("L_i", "V_i", "Q_i")])
   expect_identical(general$quadratic, standard$quadratic)
-  direct <- compute_identified_set_quadratic(tau, standard$components, subset)
-  expect_identical(direct, standard$quadratic)
+  direct <- standard$quadratic
   all_quadratic <- build_quadratic_system(gamma, tau, full)$quadratic
   for (field in names(direct)) {
     expect_identical(direct[[field]], all_quadratic[[field]][expected])

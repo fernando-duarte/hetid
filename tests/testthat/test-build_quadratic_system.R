@@ -23,7 +23,12 @@ test_that("build_quadratic_system chains components and quadratic", {
   expect_named(system$quadratic, c("d_i", "A_i", "b_i", "c_i"))
 
   components <- compute_identified_set_components(inp$gamma, moments)
-  quadratic <- compute_identified_set_quadratic(inp$tau, components, moments)
+  quadratic <- quadratic_from_components(
+    inp$tau, components$L_i, components$V_i, components$Q_i,
+    moments$s_i_0, moments$s_i_1, moments$s_i_2, moments$sigma_i_sq,
+    maturities = attr(moments, "maturities"),
+    n_components = attr(moments, "n_components")
+  )
   expect_identical(system$components$L_i, components$L_i)
   expect_identical(system$quadratic, quadratic)
 })

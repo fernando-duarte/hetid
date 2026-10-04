@@ -232,7 +232,6 @@ The key insight from Lewbel (2012) is that identification can be achieved throug
 ### Identified Set Functions
 - `compute_identified_set_components()` - Basic components (L_i, V_i, Q_i) per maturity
 - `build_quadratic_system()` - Assemble the identified-set quadratic system (preferred entry point)
-- `compute_identified_set_quadratic()` - Quadratic form coefficients (d_i, A_i, b_i, c_i)
 - `make_constraint_checker()` - Closure for grid search / optimisation over the set
 - `recover_structural_coefficients()` - Recover the Y1-equation first-stage coefficients
 

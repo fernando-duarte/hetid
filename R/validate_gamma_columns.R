@@ -34,3 +34,45 @@ assert_gamma_columns_nonzero <- function(gamma, maturities, arg = "gamma") {
     arg = arg
   )
 }
+
+#' Validate Gamma Against a Moments Container
+#'
+#' Shared input boundary of \code{compute_identified_set_components()} and
+#' \code{build_quadratic_system()}: container class, matrix type, finite
+#' values, dimensions, and nonzero constrained columns.
+#'
+#' @param gamma Candidate J x I instrument weight matrix.
+#' @param moments Candidate \code{hetid_moments} object.
+#' @return Invisible \code{TRUE}; invalid inputs raise structured errors.
+#' @noRd
+validate_gamma_inputs <- function(gamma, moments) {
+  validate_hetid_moments(moments)
+  assert_bad_argument_ok(
+    is.matrix(gamma),
+    "gamma must be a matrix",
+    arg = "gamma"
+  )
+  assert_numeric_finite_values(gamma, "gamma")
+
+  maturities <- attr(moments, "maturities")
+  n_components <- attr(moments, "n_components")
+  j_rows <- nrow(moments$r_i_0)
+
+  assert_dimension_ok(
+    ncol(gamma) == n_components,
+    paste0(
+      "gamma must have n_components (", n_components,
+      ") columns to match the moments' system"
+    )
+  )
+  assert_dimension_ok(
+    nrow(gamma) == j_rows,
+    paste0(
+      "gamma must have the same number of rows (J = ", j_rows,
+      ") as the moments' instruments"
+    )
+  )
+
+  assert_gamma_columns_nonzero(gamma, maturities)
+  invisible(TRUE)
+}

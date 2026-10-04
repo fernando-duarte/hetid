@@ -42,9 +42,10 @@
 #' for every constrained maturity. Building the system does not test
 #' whether the identified set is empty.
 #'
-#' @seealso \code{\link{compute_identified_set_components}} and
-#'   \code{\link{compute_identified_set_quadratic}} for the component
-#'   definitions, and \code{\link{make_system_checker}} for evaluating
+#' @seealso \code{\link{compute_identified_set_components}} for the component
+#'   definitions, \code{\link{build_general_quadratic_system}} for several
+#'   instrument combinations per component, and
+#'   \code{\link{make_system_checker}} for evaluating
 #'   every constraint at a candidate theta.
 #'
 #' @template section-maturity-convention
@@ -82,7 +83,24 @@
 #'   print(check(rep(0, I)))
 #' })
 build_quadratic_system <- function(gamma, tau, moments) {
-  components <- compute_identified_set_components(gamma, moments)
-  quadratic <- compute_identified_set_quadratic(tau, components, moments)
-  list(components = components, quadratic = quadratic)
+  validate_gamma_inputs(gamma, moments)
+  maturities <- attr(moments, "maturities")
+  n_components <- attr(moments, "n_components")
+  validate_numeric_inputs(tau = tau)
+  assert_tau_values_ok(tau)
+  assert_dimension_ok(
+    length(tau) == n_components,
+    paste0(
+      "tau must have length I (the moments' n_components): tau = ",
+      length(tau), "; n_components = ", n_components
+    )
+  )
+  # One weight column per component is the general system with K_i = 1
+  built <- build_general_quadratic_system(gamma, tau, moments)
+  components <- new_hetid_components(
+    L_i = built$components$L_i, V_i = built$components$V_i,
+    Q_i = built$components$Q_i,
+    maturities = maturities, n_components = n_components
+  )
+  list(components = components, quadratic = built$quadratic)
 }

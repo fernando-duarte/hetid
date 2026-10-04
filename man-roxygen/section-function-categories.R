@@ -40,7 +40,6 @@
 #'   \item \code{\link{compute_identified_set_components}()}: L_i, V_i, Q_i
 #'   \item \code{\link{build_quadratic_system}()}: Quadratic constraints (preferred)
 #'   \item \code{\link{build_general_quadratic_system}()}: Generalized constraints
-#'   \item \code{\link{compute_identified_set_quadratic}()}: d_i, A_i, b_i, c_i
 #'   \item \code{\link{make_constraint_checker}()}: Per-maturity constraint closure
 #'   \item \code{\link{make_system_checker}()}: Full-system constraint closure
 #'   \item \code{\link{align_instrument_sets}()}: Align instrument sets

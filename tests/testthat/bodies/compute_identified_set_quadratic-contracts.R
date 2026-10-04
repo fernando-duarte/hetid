@@ -2,93 +2,25 @@
   inputs <- setup_quadratic_test_inputs()
 
   expect_error(
-    compute_identified_set_quadratic(
-      "not numeric", inputs$components, inputs$moments
-    ),
+    build_quadratic_system(inputs$gamma, "not numeric", inputs$moments)$quadratic,
     "tau must be a numeric vector"
   )
 
   expect_error(
-    compute_identified_set_quadratic(
-      c(0.5, -1, 0.5, 0.5), inputs$components, inputs$moments
-    ),
+    build_quadratic_system(inputs$gamma, c(0.5, -1, 0.5, 0.5), inputs$moments)$quadratic,
     "All elements of tau must be in [0, 1)",
     fixed = TRUE
   )
 
   expect_error(
-    compute_identified_set_quadratic(
-      c(0.5, 0.5, 0.5), inputs$components, inputs$moments
-    ),
+    build_quadratic_system(inputs$gamma, c(0.5, 0.5, 0.5), inputs$moments)$quadratic,
     "tau must have length I"
   )
 
   expect_error(
-    compute_identified_set_quadratic(
-      inputs$tau, unclass(inputs$components), inputs$moments
-    ),
-    "hetid_components object",
-    class = "hetid_error_bad_argument"
-  )
-
-  expect_error(
-    compute_identified_set_quadratic(
-      inputs$tau, inputs$components, unclass(inputs$moments)
-    ),
+    build_quadratic_system(inputs$gamma, inputs$tau, unclass(inputs$moments)),
     "hetid_moments object",
     class = "hetid_error_bad_argument"
-  )
-
-  broken <- inputs
-  broken$components$L_i <- "not numeric"
-  expect_error(
-    compute_identified_set_quadratic(
-      broken$tau, broken$components, broken$moments
-    ),
-    "L_i must be a numeric vector"
-  )
-
-  broken <- inputs
-  broken$components$Q_i <- "not list"
-  expect_error(
-    compute_identified_set_quadratic(
-      broken$tau, broken$components, broken$moments
-    ),
-    "Q_i must be a list"
-  )
-}
-
-{
-  inputs <- setup_quadratic_test_inputs(
-    n_rows = 3, n_maturities = 3, n_components = 6, maturities = c(2, 4, 5)
-  )
-  other <- setup_quadratic_test_inputs(
-    n_rows = 3, n_maturities = 3, n_components = 6, maturities = c(1, 4, 5)
-  )
-
-  expect_error(
-    compute_identified_set_quadratic(
-      inputs$tau, other$components, inputs$moments
-    ),
-    "different maturities",
-    class = "hetid_error_dimension_mismatch"
-  )
-}
-
-{
-  inputs <- setup_quadratic_test_inputs(
-    n_rows = 3, n_maturities = 3, n_components = 6, maturities = c(2, 4, 5)
-  )
-  other <- setup_quadratic_test_inputs(
-    n_rows = 3, n_maturities = 3, n_components = 7, maturities = c(2, 4, 5)
-  )
-
-  expect_error(
-    compute_identified_set_quadratic(
-      inputs$tau, other$components, inputs$moments
-    ),
-    "different n_components",
-    class = "hetid_error_dimension_mismatch"
   )
 }
 
@@ -98,9 +30,7 @@
     inputs <- setup_quadratic_test_inputs()
     inputs$moments$sigma_i_sq[2] <- bad
     expect_error(
-      compute_identified_set_quadratic(
-        inputs$tau, inputs$components, inputs$moments
-      ),
+      build_quadratic_system(inputs$gamma, inputs$tau, inputs$moments)$quadratic,
       "non-positive, non-finite, or NA"
     )
   }
@@ -110,23 +40,23 @@
   inputs <- setup_quadratic_test_inputs()
   tau <- rep(0, length(inputs$tau))
 
-  result <- compute_identified_set_quadratic(
-    tau, inputs$components, inputs$moments
-  )
+  result <- build_quadratic_system(inputs$gamma, tau, inputs$moments)$quadratic
+
+  components <- compute_identified_set_components(inputs$gamma, inputs$moments)
 
   expect_type(result, "list")
-  expect_equal(unname(result$d_i), rep(0, length(inputs$components$L_i)))
+  expect_equal(unname(result$d_i), rep(0, length(components$L_i)))
 
-  for (i in seq_along(inputs$components$Q_i)) {
+  for (i in seq_along(components$Q_i)) {
     expect_equal(
       unname(result$A_i[[i]]),
-      tcrossprod(inputs$components$Q_i[[i]])
+      unname(tcrossprod(components$Q_i[[i]]))
     )
     expect_equal(
       unname(result$b_i[[i]]),
-      -2 * inputs$components$L_i[[i]] * inputs$components$Q_i[[i]]
+      unname(-2 * components$L_i[[i]] * components$Q_i[[i]])
     )
-    expect_equal(unname(result$c_i[i]), inputs$components$L_i[[i]]^2)
+    expect_equal(unname(result$c_i[i]), components$L_i[[i]]^2)
   }
 }
 
@@ -135,19 +65,17 @@
   inputs$moments$sigma_i_sq[2] <- 1e-309
 
   err <- tryCatch(
-    compute_identified_set_quadratic(
-      inputs$tau, inputs$components, inputs$moments
-    ),
+    build_quadratic_system(inputs$gamma, inputs$tau, inputs$moments)$quadratic,
     error = function(e) e
   )
 
   expect_s3_class(err, "hetid_error")
   expect_match(
-    conditionMessage(err), "non-finite for maturity 2",
+    conditionMessage(err), "non-finite for maturity_2",
     fixed = TRUE
   )
   expect_match(conditionMessage(err), "tau_i = 0.5", fixed = TRUE)
-  expect_match(conditionMessage(err), "V_i = 1", fixed = TRUE)
+  expect_match(conditionMessage(err), "V_i = 9", fixed = TRUE)
   expect_match(
     conditionMessage(err), "sigma_i_sq = 1e-309",
     fixed = TRUE
@@ -161,9 +89,7 @@
     tau[2] <- bad
 
     err <- tryCatch(
-      compute_identified_set_quadratic(
-        tau, inputs$components, inputs$moments
-      ),
+      build_quadratic_system(inputs$gamma, tau, inputs$moments)$quadratic,
       error = function(e) e
     )
 
@@ -183,9 +109,7 @@
     tau[2] <- bad
 
     err <- tryCatch(
-      compute_identified_set_quadratic(
-        tau, inputs$components, inputs$moments
-      ),
+      build_quadratic_system(inputs$gamma, tau, inputs$moments)$quadratic,
       error = function(e) e
     )
 

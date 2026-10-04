@@ -19,8 +19,8 @@ names, and the numeric vector shape of each \code{Q_i} entry against
 the object's own attributes. Attributes and \code{L_i}/\code{V_i}
 types are trusted from the constructor; finiteness is checked separately.
 Called by the public boundary \code{compute_identified_set_components()} on
-every object it returns, and by \code{validate_quadratic_inputs()} and
-\code{compute_tau0_point()} on every object they receive; call it directly on
+every object it returns, and by \code{compute_tau0_point()} on every
+object it receives; call it directly on
 containers assembled via \code{new_hetid_components()} from parts that are not
 known-good.
 }

@@ -67,34 +67,9 @@
 #'   print(components)
 #' })
 compute_identified_set_components <- function(gamma, moments) {
-  validate_hetid_moments(moments)
-  assert_bad_argument_ok(
-    is.matrix(gamma),
-    "gamma must be a matrix",
-    arg = "gamma"
-  )
-  assert_numeric_finite_values(gamma, "gamma")
-
+  validate_gamma_inputs(gamma, moments)
   maturities <- attr(moments, "maturities")
   n_components <- attr(moments, "n_components")
-  j_rows <- nrow(moments$r_i_0)
-
-  assert_dimension_ok(
-    ncol(gamma) == n_components,
-    paste0(
-      "gamma must have n_components (", n_components,
-      ") columns to match the moments' system"
-    )
-  )
-  assert_dimension_ok(
-    nrow(gamma) == j_rows,
-    paste0(
-      "gamma must have the same number of rows (J = ", j_rows,
-      ") as the moments' instruments"
-    )
-  )
-
-  assert_gamma_columns_nonzero(gamma, maturities)
 
   parts <- lapply(seq_along(maturities), function(idx) {
     constraint_components(gamma[, maturities[idx], drop = FALSE], idx, moments)
