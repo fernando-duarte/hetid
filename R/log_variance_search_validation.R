@@ -18,7 +18,7 @@ lv_set_stop <- function(...) {
 }
 
 lv_set_solver_control <- function() {
-  c(QUADRATIC_PROFILE_CONTROL, list(grid_points_limit = 2e6))
+  c(QUADRATIC_PROFILE_CONTROL, list(GRID_POINTS_LIMIT = HETID_CONSTANTS$GRID_POINTS_LIMIT))
 }
 
 lv_set_method <- function(method) {
@@ -114,21 +114,21 @@ lv_set_validate_control <- function(control) {
   assert_bad_argument_ok(is.list(control$sets), "sets control must be a list", "control")
   assert_bad_argument_ok(is.list(control$search), "search control must be a list", "control")
   validate_profile_control(control$sets)
-  limit <- control$sets$grid_points_limit
+  limit <- control$sets$GRID_POINTS_LIMIT
   assert_bad_argument_ok(
     is.numeric(limit) && !is.complex(limit) && is.null(dim(limit)),
-    "grid_points_limit must be a real numeric scalar", "grid_points_limit"
+    "GRID_POINTS_LIMIT must be a real numeric scalar", "GRID_POINTS_LIMIT"
   )
-  lv_set_positive(limit, "grid_points_limit", integer = TRUE)
+  lv_set_positive(limit, "GRID_POINTS_LIMIT", integer = TRUE)
   defaults <- lv_set_search_control()
   assert_bad_argument_ok(
     identical(names(control$search), names(defaults)),
     "search controls must have the default names and order", "control"
   )
-  for (name in setdiff(names(defaults), "cold_start_check")) {
+  for (name in setdiff(names(defaults), "COLD_START_CHECK")) {
     lv_set_positive(control$search[[name]], name, is.integer(defaults[[name]]))
   }
-  assert_flag(control$search$cold_start_check, "cold_start_check")
+  assert_flag(control$search$COLD_START_CHECK, "COLD_START_CHECK")
   invisible(TRUE)
 }
 

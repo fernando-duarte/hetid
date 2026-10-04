@@ -107,7 +107,7 @@ profile_solve <- function(quadratic, x0, objective, gradient, lower, upper,
     hinjac = function(phi) {
       profile_constraint_jacobian(delta * phi, quadratic, omega, theta_scale = delta)
     },
-    control = list(xtol_rel = control$solver_xtol_rel, maxeval = control$solver_maxeval),
+    control = list(xtol_rel = control$SOLVER_XTOL_REL, maxeval = control$SOLVER_MAXEVAL),
     deprecatedBehavior = FALSE
   )
   if (any(!is.finite(result$par))) {

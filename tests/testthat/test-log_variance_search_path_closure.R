@@ -93,7 +93,7 @@ test_that("path count integrity and thin-lattice demotions remain enforced", {
   expect_identical(lv_set_path_raw_count(pending), NA_integer_)
   oracle <- lv_test_path_oracle()
   control <- oracle$control
-  control$search$grid_floor <- 1000L
+  control$search$GRID_FLOOR <- 1000L
   sets <- profile_log_variance_map(
     lv_test_sample(), oracle$quadratics,
     oracle$theta_tables, oracle$taus, "ppml", c(0, 0), control
@@ -105,7 +105,7 @@ test_that("path count integrity and thin-lattice demotions remain enforced", {
   grid <- path$rows[path$rows$source == "grid", ]
   expect_identical(path$diagnostics$thin_lattice, oracle$taus)
   expect_true(all(path$diagnostics$raw_feasible > 0L &
-    path$diagnostics$raw_feasible < control$search$grid_floor))
+    path$diagnostics$raw_feasible < control$search$GRID_FLOOR))
   expect_false(any(grid$lower_status == "bounded" | grid$upper_status == "bounded"))
 })
 
@@ -113,14 +113,14 @@ test_that("log-OLS chunk controls fail at construction when malformed", {
   sample <- lv_test_sample()
   for (chunk in list(NA_integer_, NaN, 0L, -1L, 1.5, Inf, NULL, "1", TRUE, c(1L, 2L))) {
     control <- log_variance_map_control("logols")
-    control["scan_chunk_size"] <- list(chunk)
+    control["SCAN_CHUNK_SIZE"] <- list(chunk)
     expect_error(make_log_variance_map(sample, "logols", control = control),
-      "scan_chunk_size",
+      "SCAN_CHUNK_SIZE",
       class = "hetid_error_bad_argument"
     )
   }
   control <- log_variance_map_control("logols")
-  control$scan_chunk_size <- 1L
+  control$SCAN_CHUNK_SIZE <- 1L
   small <- make_log_variance_map(sample, "logols", control = control)
   usual <- make_log_variance_map(sample, "logols")
   grid <- lv_test_oracle()$inputs$points

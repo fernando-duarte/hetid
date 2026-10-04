@@ -45,7 +45,7 @@ profile_checked_candidate <- function(evidence, theta, control, normalized = NUL
       anchor <- evidence$feasible_points[i, ]
       candidate <- (1 - fraction) * theta + fraction * anchor
       movement <- max(abs(candidate / point_scale - theta / point_scale))
-      if (movement <= control$candidate_correction_rtol && evidence$check_point(candidate)) {
+      if (movement <= control$CANDIDATE_CORRECTION_RTOL && evidence$check_point(candidate)) {
         return(list(theta = candidate))
       }
     }
@@ -67,7 +67,7 @@ profile_objective_direction <- function(objective) {
 }
 
 profile_start_key <- function(point, control) {
-  paste(signif(point, control$multistart_dedup_digits), collapse = "|")
+  paste(signif(point, control$MULTISTART_DEDUP_DIGITS), collapse = "|")
 }
 
 profile_dedup_starts <- function(points, control) {

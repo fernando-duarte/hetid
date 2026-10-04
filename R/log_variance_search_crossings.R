@@ -1,9 +1,9 @@
 lv_set_logols_control <- function() {
   list(
-    estimator_version = "logols-v1", cold_start_rtol = 1e-8, crossing_range_rtol = 1e-8,
-    scan_chunk_size = 5000L,
+    ESTIMATOR_VERSION = "logols-v1", COLD_START_RTOL = 1e-8, CROSSING_RANGE_RTOL = 1e-8,
+    SCAN_CHUNK_SIZE = 5000L,
     # the whole lattice is scanned, so its largest size is bounded before it is built
-    full_grid_safety_cap = 1e6
+    FULL_GRID_SAFETY_CAP = 1e6
   )
 }
 

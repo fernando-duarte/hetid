@@ -35,8 +35,8 @@ test_that("controls are strict and small pools expose their rank resolution", {
   expect_equal(out$summary$root_rank, 4)
   expect_equal(out$summary$tail_resolution, 1 / 5)
   for (control in list(
-    list(unknown = 1), list(tolerance = 0), list(max_evals = 1),
-    list(max_evals = 2.5), list(tolerance = NA_real_)
+    list(unknown = 1), list(TOLERANCE = 0), list(MAX_EVALS = 1),
+    list(MAX_EVALS = 2.5), list(TOLERANCE = NA_real_)
   )) {
     expect_error(bootstrap_fixture_fit(x, control = control), class = "hetid_error")
   }

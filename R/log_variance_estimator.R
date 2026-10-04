@@ -8,8 +8,6 @@
 #' @keywords internal
 NULL
 
-LOG_VARIANCE_INTERCEPT_LABEL <- "(Intercept)"
-
 #' Supported Log-Variance Estimator Specs
 #'
 #' Built inside a function, not stored as a package-level constant: the
@@ -88,14 +86,14 @@ log_variance_design <- function(x) {
     colnames(x) <- get_pc_column_names(ncol(x))
   }
   design <- cbind(rep(1, nrow(x)), x)
-  colnames(design) <- c(LOG_VARIANCE_INTERCEPT_LABEL, colnames(x))
+  colnames(design) <- c(HETID_CONSTANTS$INTERCEPT_LABEL, colnames(x))
   design_labels <- colnames(design)
   assert_bad_argument_ok(
     is.numeric(design) && !anyNA(design_labels) &&
       all(nzchar(design_labels)) && !anyDuplicated(design_labels),
     paste0(
       "design column labels must be non-missing, non-blank, and unique ",
-      "(the intercept column is named ", LOG_VARIANCE_INTERCEPT_LABEL, ")"
+      "(the intercept column is named ", HETID_CONSTANTS$INTERCEPT_LABEL, ")"
     ),
     arg = "x"
   )

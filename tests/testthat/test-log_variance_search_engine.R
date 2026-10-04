@@ -13,7 +13,7 @@ test_that("the engine preserves the independent donor baseline", {
   expect_true(all(result$schema$upper_status == "bounded"))
   expect_lte(
     max(result$schema$lower_constraint_residual),
-    oracle$inputs$control$sets$feasibility_tolerance
+    oracle$inputs$control$sets$FEASIBILITY_TOLERANCE
   )
 })
 
@@ -66,7 +66,7 @@ test_that("unresolved domain endpoints outrank divergence", {
 test_that("derived overflow is numerical and a containing box is not an endpoint", {
   input <- lv_test_oracle()$inputs
   control <- input$control
-  control$sets$solver_boxes <- rep(.Machine$double.xmax, 3L)
+  control$sets$SOLVER_BOXES <- rep(.Machine$double.xmax, 3L)
   qs <- list(A_i = list(matrix(1)), b_i = list(0), c_i = -4)
   polished <- lv_set_polish(qs, "min", 0, 1, identity, function(x) 1, control)
   expect_null(polished$bound)

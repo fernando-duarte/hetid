@@ -1,25 +1,25 @@
 lv_set_search_control <- function() {
   list(
-    grid_n = 41L,
-    grid_floor = 100L,
-    primary_starts_per_side = 3L,
-    audit_starts_per_side = 5L,
-    envelope_starts_per_side = 1L,
-    cold_start_check = TRUE,
-    cold_start_rtol_fallback = 1e-8,
-    endpoint_agreement_rtol = 1e-4,
-    nearest_neighbor_limit = 5000L,
-    start_separation_fraction = 0.05,
-    nesting_rtol = 1e-6,
-    point_containment_rtol = 1e-6,
-    polish_blow_factor = 5,
-    box_escape_rtol = 1e-4,
-    primary_grid_cap = 4000L,
-    primary_fit_budget = 20000L,
-    sensitivity_fit_budget = 40000L,
-    coverage_grid_cap = 8000L,
-    coverage_fit_budget = 40000L,
-    envelope_fit_budget = 80000L
+    GRID_N = 41L,
+    GRID_FLOOR = 100L,
+    PRIMARY_STARTS_PER_SIDE = 3L,
+    AUDIT_STARTS_PER_SIDE = 5L,
+    ENVELOPE_STARTS_PER_SIDE = 1L,
+    COLD_START_CHECK = TRUE,
+    COLD_START_RTOL_FALLBACK = 1e-8,
+    ENDPOINT_AGREEMENT_RTOL = 1e-4,
+    NEAREST_NEIGHBOR_LIMIT = 5000L,
+    START_SEPARATION_FRACTION = 0.05,
+    NESTING_RTOL = 1e-6,
+    POINT_CONTAINMENT_RTOL = 1e-6,
+    POLISH_BLOW_FACTOR = 5,
+    BOX_ESCAPE_RTOL = 1e-4,
+    PRIMARY_GRID_CAP = 4000L,
+    PRIMARY_FIT_BUDGET = 20000L,
+    SENSITIVITY_FIT_BUDGET = 40000L,
+    COVERAGE_GRID_CAP = 8000L,
+    COVERAGE_FIT_BUDGET = 40000L,
+    ENVELOPE_FIT_BUDGET = 80000L
   )
 }
 
@@ -27,13 +27,13 @@ lv_set_search_control <- function() {
 #'
 #' @return Separate sets and search lists. Values preserve the donor grid,
 #'   fit-budget, start-count, cold-fit, agreement and nesting schedules.
-#'   sets$grid_points_limit caps each raw lattice at 2,000,000 rows before
+#'   sets$GRID_POINTS_LIMIT caps each raw lattice at 2,000,000 rows before
 #'   allocation; a smaller method-specific cap still applies.
 #' @examples
 #' control <- log_variance_search_control()
-#' control$search$grid_n <- 7L
-#' control$search$primary_fit_budget <- 100L
-#' control$search[c("grid_n", "primary_fit_budget")]
+#' control$search$GRID_N <- 7L
+#' control$search$PRIMARY_FIT_BUDGET <- 100L
+#' control$search[c("GRID_N", "PRIMARY_FIT_BUDGET")]
 #' @export
 log_variance_search_control <- function() {
   list(sets = lv_set_solver_control(), search = lv_set_search_control())

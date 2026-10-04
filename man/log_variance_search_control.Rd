@@ -9,7 +9,7 @@ log_variance_search_control()
 \value{
 Separate sets and search lists. Values preserve the donor grid,
 fit-budget, start-count, cold-fit, agreement and nesting schedules.
-sets$grid_points_limit caps each raw lattice at 2,000,000 rows before
+sets$GRID_POINTS_LIMIT caps each raw lattice at 2,000,000 rows before
 allocation; a smaller method-specific cap still applies.
 }
 \description{
@@ -17,7 +17,7 @@ Controls for the Log-Variance Set Search
 }
 \examples{
 control <- log_variance_search_control()
-control$search$grid_n <- 7L
-control$search$primary_fit_budget <- 100L
-control$search[c("grid_n", "primary_fit_budget")]
+control$search$GRID_N <- 7L
+control$search$PRIMARY_FIT_BUDGET <- 100L
+control$search[c("GRID_N", "PRIMARY_FIT_BUDGET")]
 }

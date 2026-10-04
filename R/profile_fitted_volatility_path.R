@@ -33,17 +33,17 @@
 #'   response_ids = dates[rows]
 #' )
 #' control <- log_variance_search_control()
-#' control$sets$solver_boxes <- c(10, 100, 1000)
-#' control$sets$multistart_rounds <- 1L
-#' control$search$grid_n <- 7L
-#' control$search$grid_floor <- 3L
-#' control$search$primary_grid_cap <- 7L
-#' control$search$coverage_grid_cap <- 7L
-#' control$search$primary_fit_budget <- 50L
-#' control$search$coverage_fit_budget <- 50L
-#' control$search$envelope_fit_budget <- 100L
-#' control$search$primary_starts_per_side <- 1L
-#' control$search$audit_starts_per_side <- 1L
+#' control$sets$SOLVER_BOXES <- c(10, 100, 1000)
+#' control$sets$MULTISTART_ROUNDS <- 1L
+#' control$search$GRID_N <- 7L
+#' control$search$GRID_FLOOR <- 3L
+#' control$search$PRIMARY_GRID_CAP <- 7L
+#' control$search$COVERAGE_GRID_CAP <- 7L
+#' control$search$PRIMARY_FIT_BUDGET <- 50L
+#' control$search$COVERAGE_FIT_BUDGET <- 50L
+#' control$search$ENVELOPE_FIT_BUDGET <- 100L
+#' control$search$PRIMARY_STARTS_PER_SIDE <- 1L
+#' control$search$AUDIT_STARTS_PER_SIDE <- 1L
 #' taus <- c(0.025, 0.05)
 #' mean_path <- profile_mean_tau_path(fit, taus = taus, control = control$sets)
 #' quadratics <- lapply(mean_path, function(result) result$quadratic)

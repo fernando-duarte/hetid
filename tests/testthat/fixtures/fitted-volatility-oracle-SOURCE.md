@@ -23,13 +23,13 @@ No observations, fit records, diagnostics, environments or source caches are dro
 
 | Part | SHA256 |
 | --- | --- |
-| 1 | `f888b98e67e2e4389a5ed2bf0252b894eeaf0c151b71aec2a840be59aa38461d` |
-| 2 | `d6da4ab1e5614a04c0282a77d4ad7e433c9c3b5966b83e1697ee3e6fd68622ee` |
+| 1 | `4ab833af7d00816c4c436c08f9d36421a12daf0c6a29bd9b359352c52036e404` |
+| 2 | `d1ad534b2dffe0b22d7890cfe576dcad4e5d19b43c5eead3bd16e33fcf94673b` |
 
 Ordered concatenation reproduces the original 1990574 compressed bytes, SHA256
-`c1046c3145e6c3c5d489fcfdcccc7aac756a50b73a69886d17a6905439997ea2`.
+`87bfe9bc07d7e996f037d6b4207f5aedf7906d2a9e865f57f40f5f5ab80b316a`.
 Gzip decoding reproduces the original 15736156 serialized bytes, SHA256
-`e30f7331c92ec342ae31324f9e5020d4a43ce1258bfe7ec4742ac25d492faf3e`.
+`022c44cc778a047587af684e81efa5bba6758dc680caf92af63148a64970401b`.
 Exact compressed and serialized byte identity is decisive. Naive whole-object
 identical() is false for separately restored closure/cache environment identities;
 ignore.environment=TRUE is also false. The independent admitted-namespace decoding
@@ -99,3 +99,11 @@ The search oracles no longer pin the search-effort tallies (`n_attempted`,
 an endpoint (`origin`, `lower_source`, `upper_source`) or the fitted-volatility cache
 contents. These record the route a search took, which floating-point noise changes
 across platforms; the tallies' internal arithmetic is checked on the fresh run instead.
+
+Control relabel, 2026-10-04 02:48 EDT, authorized by the package author: the package's control
+lists now spell every setting in upper case, so the element names of each stored
+`control$sets` and `control$search` were upper-cased and the two segments rewritten
+(new hashes above). No value was recomputed. With the names lower-cased again, the
+object serializes to the same bytes as the previous capture
+(`f888b98e…38461d`, `d6da4ab1…8622ee`). The donor-style names in the prose above
+(grid_n, grid_floor) refer to the same settings.

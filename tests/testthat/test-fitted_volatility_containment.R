@@ -9,7 +9,7 @@ test_that("point overflow respects bounded containment and preserves other diagn
     sets$estimator$fit_at_b <- function(b, start = NULL, phase = NULL) source_fit
     sets$estimator$jacobian_at_b <- function(...) matrix(0, 3, 1)
     design <- sets$sample$x_mat
-    design[, LOG_VARIANCE_INTERCEPT_LABEL] <- 0
+    design[, HETID_CONSTANTS$INTERCEPT_LABEL] <- 0
     point_eta <- unname(drop(design %*% source_coef))
     overflow <- point_eta / 2 > log(.Machine$double.xmax)
     expect_true(all(is.finite(point_eta)))

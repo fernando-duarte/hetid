@@ -1,6 +1,6 @@
 lv_set_ppml_control <- function() {
   list(
-    estimator_version = "ppml-v1",
+    ESTIMATOR_VERSION = "ppml-v1",
     fit = c(
       LOG_VARIANCE_CONTROL[c(
         "GLM_EPSILON", "GLM_MAXIT", "SCORE_TOLERANCE",
@@ -11,13 +11,13 @@ lv_set_ppml_control <- function() {
         SKIP_NONFINITE_STARTS = TRUE
       )
     ),
-    jacobian_rcond_tol = 1e-10,
-    cold_start_rtol = 1e-6,
-    morton_bits = 17L,
-    exact_double_bits = 53L,
-    pilot_overflow_margin = 5,
-    pilot_condition_limit = 1e10,
-    pilot_grid_points = 10L
+    JACOBIAN_RCOND_TOL = 1e-10,
+    COLD_START_RTOL = 1e-6,
+    MORTON_BITS = 17L,
+    EXACT_DOUBLE_BITS = 53L,
+    PILOT_OVERFLOW_MARGIN = 5,
+    PILOT_CONDITION_LIMIT = 1e10,
+    PILOT_GRID_POINTS = 10L
   )
 }
 
@@ -34,7 +34,7 @@ lv_set_slim_fit <- function(fit) {
 
 lv_set_ppml_fitter <- function(x_mat, control = lv_set_ppml_control()) {
   lv_set_assert(
-    is.matrix(x_mat), identical(colnames(x_mat)[[1L]], "(Intercept)"),
+    is.matrix(x_mat), identical(colnames(x_mat)[[1L]], HETID_CONSTANTS$INTERCEPT_LABEL),
     all(x_mat[, 1L] == 1)
   )
   fitter <- make_log_variance_fitter(x_mat[, -1L, drop = FALSE], "ppml", control$fit)
@@ -56,7 +56,7 @@ lv_set_ppml_jacobian <- function(fit, b, w1, w2, x_mat, response_scale, control)
     return(NULL)
   }
   scaled <- information / tcrossprod(norms)
-  if (!all(is.finite(scaled)) || rcond(scaled) < control$jacobian_rcond_tol) {
+  if (!all(is.finite(scaled)) || rcond(scaled) < control$JACOBIAN_RCOND_TOL) {
     return(NULL)
   }
   chol_r <- tryCatch(chol(scaled), error = function(e) NULL)
@@ -81,17 +81,17 @@ lv_set_ppml_start_bundle <- function(fit, response_scale, source, b) {
 lv_set_ppml_pilot <- function(sample, anchor, grid_points,
                               control = lv_set_ppml_control()) {
   fitter <- lv_set_ppml_fitter(sample$x_mat, control)
-  guard <- log(.Machine$double.xmax) - control$pilot_overflow_margin
+  guard <- log(.Machine$double.xmax) - control$PILOT_OVERFLOW_MARGIN
   triggers <- function(b) {
     fit <- fitter(drop(sample$w1 - sample$w2 %*% b)^2)
     condition <- fit$diagnostics$condition_weighted_scaled
     bad_condition <- length(condition) != 1L || !is.finite(condition) ||
-      condition > control$pilot_condition_limit
+      condition > control$PILOT_CONDITION_LIMIT
     bad_eta <- !is.null(fit$warm_start) &&
       max(drop(sample$x_mat %*% fit$warm_start)) > guard
     isTRUE(!isTRUE(fit$converged) || bad_condition || bad_eta)
   }
-  n_grid <- if (is.null(grid_points)) 0L else min(control$pilot_grid_points, nrow(grid_points))
+  n_grid <- if (is.null(grid_points)) 0L else min(control$PILOT_GRID_POINTS, nrow(grid_points))
   triggered <- c(triggers(anchor), vapply(seq_len(n_grid), function(i) {
     triggers(grid_points[i, ])
   }, logical(1)))
@@ -155,7 +155,7 @@ lv_set_ppml_estimator <- function(sample, point = NULL, anchor, anchor_source,
       estimator = "ppml", target_functional = "theta_var",
       sample_id = sample$sample_id, smoothness = "smooth", response_scale = "variance",
       response_scale_value = response_scale, spec_id = spec_id,
-      cold_start_rtol = control$cold_start_rtol
+      cold_start_rtol = control$COLD_START_RTOL
     ),
     coef_labels = colnames(x_mat), theta_labels = colnames(w2),
     start_bundle = start_bundle,

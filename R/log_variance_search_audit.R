@@ -10,7 +10,7 @@ lv_set_audit_run <- function(estimator, path, theta_tables, taus, seed, grid_cap
         lv_set_quadratic(path, taus[[i]]), theta_tables[[keys[[i]]]],
         seed = seed,
         max_grid_points = grid_cap, cache = cache, budget = lv_set_budget(fit_budget),
-        starts_per_side = control$search$audit_starts_per_side,
+        starts_per_side = control$search$AUDIT_STARTS_PER_SIDE,
         grid_selector = grid_selector, tau = taus[[i]], control = control
       )),
       error = function(e) list(ok = FALSE, error = conditionMessage(e))
@@ -74,7 +74,7 @@ lv_set_audit_apply <- function(primary, audit, control = log_variance_search_con
       )
     }
   }
-  tolerance <- control$search$endpoint_agreement_rtol
+  tolerance <- control$search$ENDPOINT_AGREEMENT_RTOL
   results <- list()
   rows <- list()
   for (key in names(primary)) {

@@ -13,9 +13,9 @@ lv_test_covered_crossings <- function(x) {
   quadratic <- list(A_i = list(matrix(1), matrix(-1)), b_i = list(0, 0), c_i = c(-4, 1))
   bounds_table <- data.frame(coef = "news", status = "bounded", outer_lower = -2, outer_upper = 2)
   control <- log_variance_search_control()
-  control$search$grid_n <- 5L
-  control$search$grid_floor <- 3L
-  control$search$primary_starts_per_side <- 1L
+  control$search$GRID_N <- 5L
+  control$search$GRID_FLOOR <- 3L
+  control$search$PRIMARY_STARTS_PER_SIDE <- 1L
   census <- map$precheck(quadratic, bounds_table)
   result <- search_log_variance_map(map, quadratic, bounds_table,
     max_grid_points = 5L, max_fit_evals = 100L, cold_start_check = FALSE, control = control

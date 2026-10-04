@@ -64,7 +64,7 @@ validate_log_variance_sample_design <- function(x) {
   assert_numeric_finite_values(x$x_design, "retained design")
   assert_instrument_names(colnames(x$x_design), "retained design")
   assert_dimension_ok(nrow(x$x_design) == nrow(x$box$w2), "retained design rows disagree")
-  assert_bad_argument_ok(colnames(x$x_design)[1] == LOG_VARIANCE_INTERCEPT_LABEL &&
+  assert_bad_argument_ok(colnames(x$x_design)[1] == HETID_CONSTANTS$INTERCEPT_LABEL &&
     all(x$x_design[, 1] == 1), "retained design must start with an intercept", arg = "object")
   invisible(TRUE)
 }

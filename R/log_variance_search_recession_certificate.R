@@ -4,7 +4,7 @@ lv_set_lp <- function(obj, gmat, hvec, emat, evec, lower, upper, x0, control) {
     gr = function(x) obj, lower = lower, upper = upper,
     hin = function(x) drop(gmat %*% x) - hvec, hinjac = function(x) gmat,
     heq = function(x) drop(emat %*% x) - evec, heqjac = function(x) emat,
-    control = list(xtol_rel = control$lp_xtol_rel, maxeval = control$lp_maxeval),
+    control = list(xtol_rel = control$LP_XTOL_REL, maxeval = control$LP_MAXEVAL),
     deprecatedBehavior = FALSE
   ), error = function(e) NULL)
   if (is.null(result) || any(!is.finite(result$par))) {
@@ -46,7 +46,7 @@ lv_set_facet_dual <- function(c_vec, z_pos, j, sign_j, control) {
   e_j[j] <- 1
   solution <- lv_set_lp(
     c(hvec, sign_j), matrix(0, 1, m + 1), 0, cbind(t(gmat), e_j),
-    -c_vec, c(rep(0, m), -control$lp_bound), rep(control$lp_bound, m + 1), rep(0, m + 1),
+    -c_vec, c(rep(0, m), -control$LP_BOUND), rep(control$LP_BOUND, m + 1), rep(0, m + 1),
     control
   )
   if (is.null(solution)) {
@@ -83,8 +83,8 @@ lv_set_facet_phase1 <- function(z_pos, j, sign_j, t_max, control) {
   m <- nrow(g_full)
   dual <- lv_set_lp(
     c(h_full, sign_j), matrix(0, 1, m + 1), 0,
-    cbind(t(g_full), emat[1, ]), -obj, c(rep(0, m), -control$lp_bound),
-    rep(control$lp_bound, m + 1), rep(0, m + 1), control
+    cbind(t(g_full), emat[1, ]), -obj, c(rep(0, m), -control$LP_BOUND),
+    rep(control$LP_BOUND, m + 1), rep(0, m + 1), control
   )
   if (is.null(dual)) {
     return(list(ok = TRUE, t_min = v[p + 1], dual_ok = FALSE))
@@ -108,7 +108,7 @@ lv_set_facet <- function(c_vec, z_pos, j, sign_j, rate_tol, t_max, control) {
     }
     dual <- lv_set_facet_dual(c_vec, z_pos, j, sign_j, control)
     closed <- dual$ok && abs(primal$value - dual$bound) /
-      max(1, abs(primal$value), abs(dual$bound)) <= control$certificate_tol
+      max(1, abs(primal$value), abs(dual$bound)) <= control$CERTIFICATE_TOL
     certified <- dual$ok && dual$bound > rate_tol && closed
     return(list(
       status = if (certified) "certified_positive" else "unresolved",
@@ -116,14 +116,14 @@ lv_set_facet <- function(c_vec, z_pos, j, sign_j, rate_tol, t_max, control) {
     ))
   }
   phase1 <- lv_set_facet_phase1(z_pos, j, sign_j, t_max, control)
-  if (phase1$ok && phase1$t_min <= control$certificate_tol) {
+  if (phase1$ok && phase1$t_min <= control$CERTIFICATE_TOL) {
     # the facet is feasible after all, so the rate is read again
     primal <- lv_set_facet_primal(c_vec, z_pos, j, sign_j, control)
     found <- lv_set_facet_witness(primal, control, rate_tol)
     status <- if (found %in% c("negative_witness", "zero_witness")) found else "unresolved"
     return(list(status = status, primal = primal))
   }
-  empty <- phase1$ok && isTRUE(phase1$dual_ok) && phase1$bound > control$certificate_tol
+  empty <- phase1$ok && isTRUE(phase1$dual_ok) && phase1$bound > control$CERTIFICATE_TOL
   list(status = if (empty) "certified_infeasible" else "unresolved", primal = primal)
 }
 
@@ -141,10 +141,10 @@ lv_set_recession <- function(y, x_mat, control) {
     scaled <- x_pos
     scaled[, norms > 0] <- sweep(x_pos[, norms > 0, drop = FALSE], 2, norms[norms > 0], "/")
     d <- svd(scaled)$d
-    sum(d > control$recession_rank_tol * d[1])
+    sum(d > control$RECESSION_RANK_TOL * d[1])
   }
   c_vec <- colSums(z_mat)
-  rate_tol <- control$recession_rate_multiplier * max(1, sum(abs(c_vec)))
+  rate_tol <- control$RECESSION_RATE_MULTIPLIER * max(1, sum(abs(c_vec)))
   out <- list(rank_x_pos = rank_x_pos, rate_tol = rate_tol, facets = character(0))
   if (all(positive) && rank_x_pos == p) {
     out$classification <- "pass"
@@ -176,7 +176,7 @@ lv_set_recession <- function(y, x_mat, control) {
 }
 
 lv_set_facet_witness <- function(primal, control, rate_tol) {
-  if (!(primal$ok && primal$feas_viol <= control$certificate_tol)) {
+  if (!(primal$ok && primal$feas_viol <= control$CERTIFICATE_TOL)) {
     return(NA_character_)
   }
   if (primal$value < -rate_tol) {

@@ -55,8 +55,8 @@ with_rng_scope(
     )
     y <- drop(0.2 + 0.3 * x + 0.6 * y2 + rnorm(n))
     control <- VARIANCE_SHARE_CONTROL
-    control$taus <- 0.05
-    control$grid_points_per_axis <- 11L
+    control$TAUS <- 0.05
+    control$GRID_POINTS_PER_AXIS <- 11L
     shares <- compute_variance_shares(list(y = y, x = x, y2 = y2, z = z), control)
     shares$point
   },

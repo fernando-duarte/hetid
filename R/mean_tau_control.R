@@ -5,8 +5,8 @@
 #'   in the last 10 percent into four parts, preserving the backbone maximum.
 #' @export
 MEAN_TAU_CONTROL <- list(
-  cap = 0.99, sweep_step = 0.005, bisection_iterations = 40L,
-  grid_backbone = 25L, grid_tail_fraction = 0.9, grid_tail_subdivisions = 4L
+  CAP = 0.99, SWEEP_STEP = 0.005, BISECTION_ITERATIONS = 40L,
+  GRID_BACKBONE = 25L, GRID_TAIL_FRACTION = 0.9, GRID_TAIL_SUBDIVISIONS = 4L
 )
 
 validate_mean_tau_control <- function(control) {
@@ -16,14 +16,14 @@ validate_mean_tau_control <- function(control) {
     "control lacks mean tau settings",
     arg = "control"
   )
-  for (key in c("cap", "sweep_step", "grid_tail_fraction")) {
+  for (key in c("CAP", "SWEEP_STEP", "GRID_TAIL_FRACTION")) {
     assert_scalar_finite(control[[key]], paste0("control$", key))
   }
   validate_mean_tau_ranges(control)
-  for (key in c("bisection_iterations", "grid_backbone", "grid_tail_subdivisions")) {
+  for (key in c("BISECTION_ITERATIONS", "GRID_BACKBONE", "GRID_TAIL_SUBDIVISIONS")) {
     minimum <- switch(key,
-      bisection_iterations = 1,
-      grid_backbone = 3,
+      BISECTION_ITERATIONS = 1,
+      GRID_BACKBONE = 3,
       2
     )
     assert_scalar_integer_in_range(
@@ -36,9 +36,9 @@ validate_mean_tau_control <- function(control) {
 
 validate_mean_tau_ranges <- function(control) {
   assert_bad_argument_ok(
-    control$cap > 0 && control$cap < 1 &&
-      control$sweep_step > 0 && control$sweep_step <= control$cap &&
-      control$grid_tail_fraction > 0 && control$grid_tail_fraction < 1,
+    control$CAP > 0 && control$CAP < 1 &&
+      control$SWEEP_STEP > 0 && control$SWEEP_STEP <= control$CAP &&
+      control$GRID_TAIL_FRACTION > 0 && control$GRID_TAIL_FRACTION < 1,
     "Invalid mean tau controls",
     arg = "control"
   )

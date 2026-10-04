@@ -57,7 +57,7 @@ test_that("NULL Jacobians retain the outer dated missing-gradient policy", {
 test_that("Jacobian axes are checked once before dated multiplication", {
   oracle <- fv_test_boundary()
   good <- matrix(c(0, 1, 2), 3L, 1L,
-    dimnames = list(c(LOG_VARIANCE_INTERCEPT_LABEL, "pc1", "pc2"), "news")
+    dimnames = list(c(HETID_CONSTANTS$INTERCEPT_LABEL, "pc1", "pc2"), "news")
   )
   bad <- list(
     good[3:1, , drop = FALSE], matrix(1, 2L, 1L),

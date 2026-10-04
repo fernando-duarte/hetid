@@ -1,9 +1,9 @@
 test_that("tau brackets return the bounded end and retain unresolved states", {
   fit <- mean_profile_fixture()
   control <- MEAN_TAU_CONTROL
-  control$cap <- 0.4
-  control$sweep_step <- 0.1
-  control$bisection_iterations <- 2L
+  control$CAP <- 0.4
+  control$SWEEP_STEP <- 0.1
+  control$BISECTION_ITERATIONS <- 2L
   run <- function(classify) {
     testthat::local_mocked_bindings(profile_mean_tau_status = classify, .package = "hetid")
     find_mean_tau_star(fit, control)
@@ -51,7 +51,7 @@ test_that("the tau grid preserves exact donor keys and the backbone maximum", {
   expect_identical(max(got), seq(0, 0.615, length.out = 25L)[24L])
   expect_true(all(diff(got) > 0 & got[-1L] < 0.615))
   invalid <- MEAN_TAU_CONTROL
-  invalid$grid_tail_fraction <- 0.999
+  invalid$GRID_TAIL_FRACTION <- 0.999
   expect_error(mean_tau_grid(0.615, invalid), class = "hetid_error_bad_argument")
   expect_error(mean_tau_grid(NA_real_), class = "hetid_error")
   expect_error(mean_tau_grid(0), class = "hetid_error")

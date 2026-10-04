@@ -1,6 +1,6 @@
 test_that("block ranges use the joint set and retain interior minima", {
   control <- VARIANCE_SHARE_CONTROL
-  control$grid_points_per_axis <- 11L
+  control$GRID_POINTS_PER_AXIS <- 11L
   ball <- mean_profile_ball()
   tab <- variance_share_ball_table()
   share <- variance_share_quadratic(diag(2), c(0, 0), 0)
@@ -24,11 +24,11 @@ test_that("enclosure, grid admission and mandatory polishing failures stay expli
   ball <- mean_profile_ball()
   share <- variance_share_quadratic(diag(2), c(0, 0), 0)
   control <- VARIANCE_SHARE_CONTROL
-  control$grid_points_per_axis <- 2L
+  control$GRID_POINTS_PER_AXIS <- 2L
   expect_error(variance_share_range(tab, ball, share, control), "No feasible grid point",
     class = "hetid_error"
   )
-  control$grid_points_per_axis <- 11L
+  control$GRID_POINTS_PER_AXIS <- 11L
   expect_error(variance_share_range(within(tab, outer_lower[1] <- 2), ball, share, control),
     "exceeds",
     class = "hetid_error"
@@ -41,9 +41,9 @@ test_that("enclosure, grid admission and mandatory polishing failures stay expli
     "outside",
     class = "hetid_error"
   )
-  control$grid_points_limit <- 100
+  control$GRID_POINTS_LIMIT <- 100
   expect_error(variance_share_range(tab, ball, share, control), "too many points")
-  control$grid_points_limit <- 2e6
+  control$GRID_POINTS_LIMIT <- 2e6
   local_mocked_bindings(solve_quadratic_program = function(...) {
     list(theta = c(NA_real_, NA_real_), feasibility_residual = NA_real_)
   })
@@ -54,7 +54,7 @@ test_that("enclosure, grid admission and mandatory polishing failures stay expli
 
 test_that("finite pre-clamp residuals through tolerance pass without a convergence gate", {
   control <- VARIANCE_SHARE_CONTROL
-  control$grid_points_per_axis <- 3L
+  control$GRID_POINTS_PER_AXIS <- 3L
   residual <- -1
   theta <- 1.2
   starts <- list()

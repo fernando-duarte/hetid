@@ -4,7 +4,7 @@ lv_set_polish <- function(quadratic, direction, start, guard_scale, fn, gr, cont
   dimension <- ncol(quadratic$A_i[[1L]])
   delta <- tryCatch(profile_theta_scale(quadratic), hetid_error_solver = function(e) NULL)
   bounds <- if (!is.null(delta)) {
-    tryCatch(profile_scaled_bounds(delta, control$sets$solver_boxes[[1L]], dimension),
+    tryCatch(profile_scaled_bounds(delta, control$sets$SOLVER_BOXES[[1L]], dimension),
       hetid_error_solver = function(e) NULL
     )
   }
@@ -22,12 +22,12 @@ lv_set_polish <- function(quadratic, direction, start, guard_scale, fn, gr, cont
     return(out(NULL, NULL, FALSE))
   }
   residual <- result$feasibility_residual
-  if (!is.finite(residual) || residual > control$sets$feasibility_tolerance) {
+  if (!is.finite(residual) || residual > control$sets$FEASIBILITY_TOLERANCE) {
     return(out(NULL, result$theta, FALSE))
   }
   bound <- fn(result$theta)
   if (!is.finite(bound) ||
-    abs(bound) > control$search$polish_blow_factor * max(1, guard_scale)) {
+    abs(bound) > control$search$POLISH_BLOW_FACTOR * max(1, guard_scale)) {
     return(out(NULL, result$theta, TRUE))
   }
   out(bound, result$theta, FALSE)
@@ -118,7 +118,7 @@ lv_set_result_closed <- function(coefs, status, metadata, tau, quadratic, omega,
 lv_set_cold_check <- function(metadata, coefs, lower, upper, arg_lower, arg_upper,
                               lower_open, upper_open, lower_bad, upper_bad, evaluate, control) {
   rtol <- metadata$cold_start_rtol
-  if (is.null(rtol)) rtol <- control$search$cold_start_rtol_fallback
+  if (is.null(rtol)) rtol <- control$search$COLD_START_RTOL_FALLBACK
   records <- list()
   for (j in seq_along(coefs)) {
     for (side in c("min", "max")) {

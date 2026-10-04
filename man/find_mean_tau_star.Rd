@@ -20,7 +20,7 @@ lower, bounded endpoint. The bracket also carries upper (NA when absent),
 status, inconclusive taus, and sweep_max. Status is capped, unresolved_above,
 unresolved_below, unresolved_band or bracketed. The sweep records each tau,
 bounded/unbounded/unreliable status and coarse/bisection origin. The coarse
-progression is seq(0, cap, by = sweep_step); a nondivisible cap is not added.
+progression is seq(0, CAP, by = SWEEP_STEP); a nondivisible CAP is not added.
 Capped means its last inspected progression value is bounded.
 }
 \description{
@@ -39,9 +39,9 @@ y2 <- matrix(x[, 1] + (1 + z) * cos(2 * t),
 y1 <- 0.5 + 0.2 * x[, 1] + 0.7 * y2[, 1] + sin(3 * t)
 fit <- compute_tau0_system(y1, y2, x, z)
 control <- MEAN_TAU_CONTROL
-control$cap <- 0.1
-control$sweep_step <- 0.05
-control$bisection_iterations <- 2L
+control$CAP <- 0.1
+control$SWEEP_STEP <- 0.05
+control$BISECTION_ITERATIONS <- 2L
 transition <- find_mean_tau_star(fit, control = control)
 transition$bracket
 transition$sweep

@@ -1,5 +1,5 @@
 lv_set_feasible_grid <- function(quadratic, lower, upper, n_axis, control,
-                                 raw_limit = control$sets$grid_points_limit) {
+                                 raw_limit = control$sets$GRID_POINTS_LIMIT) {
   lv_set_check_lattice(n_axis, length(lower), raw_limit)
   axes <- Map(function(lo, hi) seq(lo, hi, length.out = n_axis), lower, upper)
   mesh <- as.matrix(expand.grid(axes, KEEP.OUT.ATTRS = FALSE))
@@ -9,7 +9,7 @@ lv_set_feasible_grid <- function(quadratic, lower, upper, n_axis, control,
     control$sets
   )
   admitted <- profile_constraint_values(mesh, quadratic, omega) <=
-    control$sets$admission_tolerance
+    control$sets$ADMISSION_TOLERANCE
   # all() row by row, as one column-wise Reduce over `&`
   keep <- Reduce(
     `&`, lapply(seq_len(ncol(admitted)), function(j) admitted[, j]),

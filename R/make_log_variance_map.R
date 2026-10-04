@@ -4,8 +4,8 @@
 #' @return The frozen estimator controls, separate from search controls.
 #' @examples
 #' control <- log_variance_map_control("logols")
-#' control$scan_chunk_size <- 32L
-#' control$scan_chunk_size
+#' control$SCAN_CHUNK_SIZE <- 32L
+#' control$SCAN_CHUNK_SIZE
 #' @export
 log_variance_map_control <- function(method = c("ppml", "harvey", "logols")) {
   method <- lv_set_method(method)
@@ -34,7 +34,7 @@ log_variance_map_control <- function(method = c("ppml", "harvey", "logols")) {
 #' @param logols_coef OLS coefficients of log squared benchmark residuals,
 #'   required by Harvey, intercept first.
 #' @param control Estimator controls from log_variance_map_control(). Log-OLS
-#'   scan_chunk_size must be a positive finite integer.
+#'   SCAN_CHUNK_SIZE must be a positive finite integer.
 #' @return A list with metadata, coef_labels, fit_at_b, jacobian_at_b, and optional
 #'   point/start, batch-scan, objective and domain hooks. Raw fit_status is distinct
 #'   from the projection evaluator's status. Log-OLS coefficients are projections,
@@ -76,7 +76,7 @@ make_log_variance_map <- function(sample, method = c("ppml", "harvey", "logols")
     lv_set_validate_harvey_start(ppml, sample, logols_coef)
     return(lv_set_harvey_estimator(sample, point, ppml, logols_coef, control))
   }
-  lv_set_positive(control$scan_chunk_size, "scan_chunk_size", integer = TRUE)
+  lv_set_positive(control$SCAN_CHUNK_SIZE, "SCAN_CHUNK_SIZE", integer = TRUE)
   lv_set_logols_estimator(sample, control)
 }
 

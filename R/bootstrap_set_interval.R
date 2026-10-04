@@ -21,11 +21,11 @@
 #' @param stability Finite numeric scalar giving the minimum eligible share among
 #'   non-failed draws, in \code{[0, 1]}.
 #' @param control List of uniquely named pointwise search overrides. Supported
-#'   entries are \code{tolerance}, a positive finite numeric scalar, and
-#'   \code{max_evals}, an integer-valued numeric scalar from two through
+#'   entries are \code{TOLERANCE}, a positive finite numeric scalar, and
+#'   \code{MAX_EVALS}, an integer-valued numeric scalar from two through
 #'   \code{.Machine$integer.max}. Omitted entries use
-#'   \code{BOOTSTRAP_INFERENCE_DEFAULTS}: \code{tolerance = 1e-4} and
-#'   \code{max_evals = 10000}. The default empty list uses both defaults.
+#'   \code{BOOTSTRAP_INFERENCE_DEFAULTS}: \code{TOLERANCE = 1e-4} and
+#'   \code{MAX_EVALS = 10000}. The default empty list uses both defaults.
 #' @template bootstrap-inference
 #' @return A plain list with \code{summary} (a data frame with one row per
 #'   coefficient in \code{full} order), \code{sides} (a coefficient-named list of

@@ -12,7 +12,7 @@ test_that("full synthetic paths retain every independent historical hex pin", {
   )
   for (scenario in names(scenarios)) {
     control <- VARIANCE_SHARE_CONTROL
-    control$taus <- scenarios[[scenario]]
+    control$TAUS <- scenarios[[scenario]]
     seed <- as.integer(sub("synthetic_seed", "", scenario))
     prepared <- variance_share_fixture(seed)
     result <- compute_variance_shares(prepared, control)
@@ -51,7 +51,7 @@ test_that("full synthetic paths retain every independent historical hex pin", {
     expect_identical(result$news_row, 5L)
     expect_identical(result$combined_row, 9L)
     expect_identical(result$n_obs, 220L)
-    expect_identical(names(result$sets), sprintf("%.17g", control$taus))
+    expect_identical(names(result$sets), sprintf("%.17g", control$TAUS))
     expect_identical(names(result$set_cols), names(result$sets))
     expect_null(attr(result$sets, "profile_points"))
     expect_equal(sum(result$point[2:4]), result$point[1], tolerance = 1e-12)
@@ -61,7 +61,7 @@ test_that("full synthetic paths retain every independent historical hex pin", {
       expect_true(all(result$point <= cc$hi + 1e-9 | is.na(cc$hi)))
     }
     if (seed == 3L) {
-      control$taus <- rev(control$taus)
+      control$TAUS <- rev(control$TAUS)
       prepared$variance <- rep(FALSE, length(prepared$y))
       prepared <- c(prepared, setNames(list(1, 2), c("extra", "extra")))
       reversed <- compute_variance_shares(prepared, control)

@@ -60,8 +60,8 @@ endpoint_target_table <- function(draws, full,
     alpha, min_reps, stability,
     # Preserve the paper's converge-to-tolerance policy for wide-credit cells.
     control = list(
-      tolerance = tolerance,
-      max_evals = PAPER_ANALYSIS_CONTRACT$inference$target_p_max_evals
+      TOLERANCE = tolerance,
+      MAX_EVALS = PAPER_ANALYSIS_CONTRACT$inference$target_p_max_evals
     )
   )
   if (any(fit$summary$search_stop %in% c("max_evals", "precision"))) {

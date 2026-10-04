@@ -1,10 +1,10 @@
 test_that("public controls support custom and built-in searches without donor fields", {
   control <- log_variance_search_control()
-  expect_identical(control$sets$grid_points_limit, 2e6)
+  expect_identical(control$sets$GRID_POINTS_LIMIT, 2e6)
   expect_identical(control$sets[names(QUADRATIC_PROFILE_CONTROL)], QUADRATIC_PROFILE_CONTROL)
-  expect_null(QUADRATIC_PROFILE_CONTROL$grid_points_limit)
-  control$search$grid_n <- 7L
-  control$search$grid_floor <- 3L
+  expect_null(QUADRATIC_PROFILE_CONTROL$GRID_POINTS_LIMIT)
+  control$search$GRID_N <- 7L
+  control$search$GRID_FLOOR <- 3L
   map <- lv_test_linear()
   map$coef_labels <- "f"
   map$fit_at_b <- function(b, start = NULL, phase = NULL) {
@@ -24,13 +24,13 @@ test_that("public PPML and Harvey controls preserve direct and aggregate donor s
   oracle <- lv_test_path_oracle()
   sample <- lv_test_sample()
   control <- log_variance_search_control()
-  control$search$grid_n <- 7L
-  control$search$grid_floor <- 3L
-  control$search$primary_grid_cap <- 30L
-  control$search$coverage_grid_cap <- 30L
-  control$search$primary_fit_budget <- 1000L
-  control$search$sensitivity_fit_budget <- 1000L
-  control$search$coverage_fit_budget <- 1000L
+  control$search$GRID_N <- 7L
+  control$search$GRID_FLOOR <- 3L
+  control$search$PRIMARY_GRID_CAP <- 30L
+  control$search$COVERAGE_GRID_CAP <- 30L
+  control$search$PRIMARY_FIT_BUDGET <- 1000L
+  control$search$SENSITIVITY_FIT_BUDGET <- 1000L
+  control$search$COVERAGE_FIT_BUDGET <- 1000L
   expect_identical(control$search, oracle$control$search)
   expect_identical(control$sets, oracle$control$sets[names(control$sets)])
   point <- c(0, 0)
@@ -77,7 +77,7 @@ test_that("public raw lattice caps reject malformed and oversized work before fi
   invalid <- list(NULL, NA_real_, NaN, Inf, "2e6", c(1, 2), matrix(2e6), 0, -1, 1.5)
   for (limit in invalid) {
     control <- log_variance_search_control()
-    control$sets$grid_points_limit <- limit
+    control$sets$GRID_POINTS_LIMIT <- limit
     cache <- new.env(parent = emptyenv())
     budget <- lv_set_budget()
     before <- as.list(budget)
@@ -88,19 +88,19 @@ test_that("public raw lattice caps reject malformed and oversized work before fi
     expect_identical(as.list(budget), before)
   }
   control <- log_variance_search_control()
-  control$search$grid_n <- 3L
-  control$sets$grid_points_limit <- 8L
+  control$search$GRID_N <- 3L
+  control$sets$GRID_POINTS_LIMIT <- 8L
   expect_error(search_log_variance_map(map, input$quadratic, input$table, control = control),
     "before allocation",
     class = "hetid_error_bad_argument"
   )
-  control$sets$grid_points_limit <- 9L
+  control$sets$GRID_POINTS_LIMIT <- 9L
   expect_error(search_log_variance_map(map, input$quadratic, input$table, control = control),
     "before allocation",
     class = "hetid_error_bad_argument"
   )
   logols_control <- log_variance_map_control("logols")
-  logols_control$full_grid_safety_cap <- 8L
+  logols_control$FULL_GRID_SAFETY_CAP <- 8L
   logols <- make_log_variance_map(lv_test_sample(), "logols", control = logols_control)
   expect_error(search_log_variance_map(logols, input$quadratic, input$table, control = control),
     "before allocation",

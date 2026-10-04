@@ -14,11 +14,11 @@ variance_share_assert_coherent <- function(cc, blocks, control) {
   for (block in blocks) {
     comps <- block[1L] + seq_len(block[2L])
     if (all(is.finite(c(cc$lo[c(block[1L], comps)], cc$hi[c(block[1L], comps)])))) {
-      if (cc$hi[block[1L]] < control$coherence_ratio * max(cc$hi[comps])) {
+      if (cc$hi[block[1L]] < control$COHERENCE_RATIO * max(cc$hi[comps])) {
         stop_hetid("Block share max below a component max.")
       }
-      if (cc$lo[block[1L]] < control$coherence_ratio * max(cc$lo[comps]) -
-        control$coherence_slack) {
+      if (cc$lo[block[1L]] < control$COHERENCE_RATIO * max(cc$lo[comps]) -
+        control$COHERENCE_SLACK) {
         stop_hetid("Block share min below a component min.")
       }
     }

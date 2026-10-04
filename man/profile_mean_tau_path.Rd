@@ -45,8 +45,8 @@ y2 <- matrix(x[, 1] + (1 + z) * cos(2 * t),
 y1 <- 0.5 + 0.2 * x[, 1] + 0.7 * y2[, 1] + sin(3 * t)
 fit <- compute_tau0_system(y1, y2, x, z)
 control <- QUADRATIC_PROFILE_CONTROL
-control$solver_boxes <- c(10, 100, 1000)
-control$multistart_rounds <- 1L
+control$SOLVER_BOXES <- c(10, 100, 1000)
+control$MULTISTART_ROUNDS <- 1L
 path <- profile_mean_tau_path(fit, taus = 0.05, through = 0.025, control = control)
 path[[1]]$theta
 path[[1]]$beta1

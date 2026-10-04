@@ -65,3 +65,10 @@ across platforms; the tallies' internal arithmetic is checked on the fresh run i
 The Harvey `rcond_info` diagnostic is the LAPACK 1-norm condition estimate, whose search
 steps move it by up to 0.03 across platforms; it is checked separately with absolute
 tolerance 0.1.
+
+Control relabel, 2026-10-04 02:48 EDT, authorized by the package author: the package's control
+lists now spell every setting in upper case, so the element names of the stored
+`control$sets` and `control$search` in both fixtures were upper-cased and the files
+rewritten. No value was recomputed; with the names lower-cased again each object is
+identical to the previous capture. The donor-style names in the prose above (grid_n,
+grid_floor) refer to the same settings.

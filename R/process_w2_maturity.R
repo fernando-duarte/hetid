@@ -152,7 +152,7 @@ process_w2_maturity <- function(i, yields_df, term_premia_df, pcs, n_pcs,
 #' @keywords internal
 impose_b_zero_result <- function(sdf_innov, reg_lagged, complete_idx,
                                  n_complete) {
-  coef_names <- c("(Intercept)", colnames(reg_lagged))
+  coef_names <- c(HETID_CONSTANTS$INTERCEPT_LABEL, colnames(reg_lagged))
   zero_coefs <- stats::setNames(rep(0, length(coef_names)), coef_names)
   resid_vec <- sdf_innov[complete_idx]
   list(

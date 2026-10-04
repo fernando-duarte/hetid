@@ -20,8 +20,8 @@ Tau Grid with a Refined Tail
 }
 \examples{
 control <- MEAN_TAU_CONTROL
-control$grid_backbone <- 6L
-control$grid_tail_fraction <- 0.5
-control$grid_tail_subdivisions <- 2L
+control$GRID_BACKBONE <- 6L
+control$GRID_TAIL_FRACTION <- 0.5
+control$GRID_TAIL_SUBDIVISIONS <- 2L
 mean_tau_grid(tau_star = 0.1, control = control)
 }

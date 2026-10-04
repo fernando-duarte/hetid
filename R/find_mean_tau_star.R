@@ -14,7 +14,7 @@
 #'   status, inconclusive taus, and sweep_max. Status is capped, unresolved_above,
 #'   unresolved_below, unresolved_band or bracketed. The sweep records each tau,
 #'   bounded/unbounded/unreliable status and coarse/bisection origin. The coarse
-#'   progression is seq(0, cap, by = sweep_step); a nondivisible cap is not added.
+#'   progression is seq(0, CAP, by = SWEEP_STEP); a nondivisible CAP is not added.
 #'   Capped means its last inspected progression value is bounded.
 #' @export
 
@@ -29,9 +29,9 @@
 #' y1 <- 0.5 + 0.2 * x[, 1] + 0.7 * y2[, 1] + sin(3 * t)
 #' fit <- compute_tau0_system(y1, y2, x, z)
 #' control <- MEAN_TAU_CONTROL
-#' control$cap <- 0.1
-#' control$sweep_step <- 0.05
-#' control$bisection_iterations <- 2L
+#' control$CAP <- 0.1
+#' control$SWEEP_STEP <- 0.05
+#' control$BISECTION_ITERATIONS <- 2L
 #' transition <- find_mean_tau_star(fit, control = control)
 #' transition$bracket
 #' transition$sweep
@@ -40,7 +40,7 @@ find_mean_tau_star <- function(fit, control = MEAN_TAU_CONTROL) {
   validate_mean_tau_control(control)
   with_rng_scope(
     {
-      taus <- seq(0, control$cap, by = control$sweep_step)
+      taus <- seq(0, control$CAP, by = control$SWEEP_STEP)
       # the tau = 0 set is the point itself
       status <- c("bounded", vapply(taus[-1L], profile_mean_tau_status, character(1),
         fit = fit
@@ -53,7 +53,7 @@ find_mean_tau_star <- function(fit, control = MEAN_TAU_CONTROL) {
       hi <- if (length(unbounded)) min(unbounded) else NA_real_
       if (!is.na(hi)) {
         assert_bad_argument_ok(lo < hi, "Inconsistent boundedness transition evidence")
-        for (iteration in seq_len(control$bisection_iterations)) {
+        for (iteration in seq_len(control$BISECTION_ITERATIONS)) {
           mid <- (lo + hi) / 2
           if (mid == lo || mid == hi) break
           state <- profile_mean_tau_status(fit, mid)

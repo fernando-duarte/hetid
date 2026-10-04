@@ -42,6 +42,8 @@ repair of a profile endpoint candidate (1e-5)}
 \item{PROFILE_SEGMENT_OBJECTIVE_RTOL}{Largest change in the normalized objective
 from that repair, relative to max(1, |value|) (1e-5)}
 \item{PROFILE_SEGMENT_MAXIT}{Bracketing and bisection steps of that repair (60)}
+\item{GRID_POINTS_LIMIT}{Largest raw search lattice built before allocation
+(2e6 points), shared by the variance-share and log-variance set controls}
 \item{PERCENT_TO_DECIMAL}{Percentage to decimal divisor}
 \item{MONTHS_PER_QUARTER}{Calendar months per quarter (3)}
 \item{MONTHS_PER_YEAR}{Calendar months per year (12), used for
@@ -55,6 +57,7 @@ their terminal month in quarterly conversion: TRUE keeps them
 \item{YEAR_FORMAT}{Year extraction format}
 \item{MONTH_FORMAT}{Month extraction format}
 \item{CONSUMPTION_GROWTH_COL}{Consumption growth column name}
+\item{INTERCEPT_LABEL}{Name of the intercept column and coefficient}
 \item{PC_PREFIX}{Prefix for principal component columns}
 \item{MATURITY_PREFIX}{Prefix for maturity label columns}
 \item{ACM_DATA_FILENAME}{Bundled/downloaded monthly ACM data filename
@@ -63,7 +66,6 @@ their terminal month in quarterly conversion: TRUE keeps them
 (gzipped CSV, GitHub release only, never bundled)}
 \item{ACM_NYFED_FILENAME}{Cache filename for the opt-in NY Fed
 xls fallback source}
-\item{BUNDLED_VARIABLES_DATASET}{Bundled dataset name}
 \item{COL_FORMAT_PADDED}{Padded raw column name format for
 whole-year maturities (e.g. ACMY01)}
 \item{COL_FORMAT_MONTHLY}{Raw column name format for maturities

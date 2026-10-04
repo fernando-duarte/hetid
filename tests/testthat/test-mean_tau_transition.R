@@ -1,9 +1,9 @@
 test_that("the actual classifier brackets the donor synthetic transition", {
   fit <- mean_profile_fixture(26L)
   control <- MEAN_TAU_CONTROL
-  control$cap <- 0.9
-  control$sweep_step <- 0.1
-  control$bisection_iterations <- 4L
+  control$CAP <- 0.9
+  control$SWEEP_STEP <- 0.1
+  control$BISECTION_ITERATIONS <- 4L
   got <- find_mean_tau_star(fit, control)
   expect_identical(got$bracket$status, "bracketed")
   expect_equal(got$bracket$lower, 0.55625, tolerance = 1e-15)
@@ -34,8 +34,8 @@ test_that("the actual classifier brackets the donor synthetic transition", {
 test_that("a nondivisible cap retains the last inspected donor progression value", {
   fit <- mean_profile_fixture()
   control <- MEAN_TAU_CONTROL
-  control$cap <- 0.41
-  control$sweep_step <- 0.1
+  control$CAP <- 0.41
+  control$SWEEP_STEP <- 0.1
   testthat::local_mocked_bindings(profile_mean_tau_status = function(fit, tau) {
     "bounded"
   }, .package = "hetid")

@@ -1,8 +1,8 @@
 test_that("every mean wrapper selects fixed RNG kind and restores caller state", {
   fit <- mean_profile_fixture()
   control <- MEAN_TAU_CONTROL
-  control$cap <- 0.1
-  control$sweep_step <- 0.1
+  control$CAP <- 0.1
+  control$SWEEP_STEP <- 0.1
   wrappers <- list(
     coefficients = function() {
       profile_quadratic_coefficients(mean_profile_ball(3), fit$beta1r, fit$beta2r)

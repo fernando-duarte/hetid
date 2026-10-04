@@ -31,8 +31,8 @@ test_that("share orchestration fixes the search kind and restores present or abs
 test_that("successful share output preserves caller RNG state", {
   prepared <- variance_share_fixture()
   control <- VARIANCE_SHARE_CONTROL
-  control$taus <- .05
-  control$grid_points_per_axis <- 11L
+  control$TAUS <- .05
+  control$GRID_POINTS_PER_AXIS <- 11L
   with_rng_scope({
     for (present in c(TRUE, FALSE)) {
       RNGkind("L'Ecuyer-CMRG", "Inversion", "Rejection")

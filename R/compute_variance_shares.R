@@ -44,8 +44,8 @@
 #'     )
 #'     y <- drop(0.2 + 0.3 * x + 0.6 * y2 + rnorm(n))
 #'     control <- VARIANCE_SHARE_CONTROL
-#'     control$taus <- 0.05
-#'     control$grid_points_per_axis <- 11L
+#'     control$TAUS <- 0.05
+#'     control$GRID_POINTS_PER_AXIS <- 11L
 #'     shares <- compute_variance_shares(list(y = y, x = x, y2 = y2, z = z), control)
 #'     shares$point
 #'   },
@@ -67,7 +67,7 @@ compute_variance_shares <- function(prepared, control = VARIANCE_SHARE_CONTROL) 
       objectives <- variance_share_objectives(fit, colnames(x), covariance)
       news_row <- n_e + 2L
       combined_row <- n_e + n_n + 3L
-      set_tables <- profile_mean_tau_path(fit, control$taus, control = control)
+      set_tables <- profile_mean_tau_path(fit, control$TAUS, control = control)
       e_rows <- match(colnames(x), set_tables[[1L]]$beta1$coef)
       assert_bad_argument_ok(
         !anyNA(e_rows) &&
@@ -91,7 +91,7 @@ compute_variance_shares <- function(prepared, control = VARIANCE_SHARE_CONTROL) 
         combined_row = combined_row,
         sd_c = sqrt(covariance$var_c),
         n_obs = length(y),
-        taus = control$taus
+        taus = control$TAUS
       )
       assert_dimension_ok(length(out$ols) == combined_row, "Combined row must be last")
       if (!all(c(out$ols[combined_row], out$point[combined_row]) >= 0)) {

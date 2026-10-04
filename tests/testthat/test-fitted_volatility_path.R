@@ -18,7 +18,7 @@ test_that("sweep admission rejects invalid controls, caps and slacks before muta
   }
   for (budget in c(0, Inf)) {
     control <- fv_test_control()
-    control$search$envelope_fit_budget <- budget
+    control$search$ENVELOPE_FIT_BUDGET <- budget
     expect_error(profile_fitted_volatility_path(setup$sets, setup$fit, 0.6, 0.05,
       control = control
     ), class = "hetid_error_bad_argument")

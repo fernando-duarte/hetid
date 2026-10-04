@@ -50,7 +50,7 @@ fitted_volatility_validate_design <- function(sample_data, estimator) {
       identical(estimator$theta_labels, colnames(sample_data$w2)),
     "design and source estimator axes must agree", "sets"
   )
-  intercept <- match(LOG_VARIANCE_INTERCEPT_LABEL, colnames(design))
+  intercept <- match(HETID_CONSTANTS$INTERCEPT_LABEL, colnames(design))
   assert_bad_argument_ok(
     !is.na(intercept) && all(design[, intercept] == 1),
     "prepared design must retain its intercept column of ones", "sets"
@@ -82,7 +82,7 @@ fitted_volatility_validate_set <- function(sets, quadratic, theta_table, tau, po
   lv_set_positive(tau, "tau")
   lv_set_validate_search(
     sets$estimator, quadratic, theta_table, sets$seed, sets$grid_cap,
-    control$search$envelope_fit_budget, control$search$envelope_starts_per_side, control
+    control$search$ENVELOPE_FIT_BUDGET, control$search$ENVELOPE_STARTS_PER_SIDE, control
   )
   if (!is.null(point)) lv_set_axis(point, sets$estimator$theta_labels, "point")
   invisible(TRUE)

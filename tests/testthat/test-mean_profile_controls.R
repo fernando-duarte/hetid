@@ -1,15 +1,15 @@
 test_that("search and tau defaults preserve the frozen donor values", {
   expect_identical(QUADRATIC_PROFILE_CONTROL, list(
-    constraint_scale_floor_rtol = 1e-12, symmetry_rtol = 1e-8,
-    solver_boxes = c(1e6, 1e9, 1e10), solver_xtol_rel = 1e-8,
-    solver_maxeval = 1000L, feasibility_tolerance = 1e-4,
-    admission_tolerance = 1e-10, candidate_correction_rtol = 1e-6,
-    bound_edge_rtol = 0.99, bound_stability_rtol = 1e-3,
-    multistart_rounds = 4L, multistart_dedup_digits = 6L
+    CONSTRAINT_SCALE_FLOOR_RTOL = 1e-12, SYMMETRY_RTOL = 1e-8,
+    SOLVER_BOXES = c(1e6, 1e9, 1e10), SOLVER_XTOL_REL = 1e-8,
+    SOLVER_MAXEVAL = 1000L, FEASIBILITY_TOLERANCE = 1e-4,
+    ADMISSION_TOLERANCE = 1e-10, CANDIDATE_CORRECTION_RTOL = 1e-6,
+    BOUND_EDGE_RTOL = 0.99, BOUND_STABILITY_RTOL = 1e-3,
+    MULTISTART_ROUNDS = 4L, MULTISTART_DEDUP_DIGITS = 6L
   ))
   expect_identical(MEAN_TAU_CONTROL, list(
-    cap = 0.99, sweep_step = 0.005,
-    bisection_iterations = 40L, grid_backbone = 25L, grid_tail_fraction = 0.9,
-    grid_tail_subdivisions = 4L
+    CAP = 0.99, SWEEP_STEP = 0.005,
+    BISECTION_ITERATIONS = 40L, GRID_BACKBONE = 25L, GRID_TAIL_FRACTION = 0.9,
+    GRID_TAIL_SUBDIVISIONS = 4L
   ))
 })
