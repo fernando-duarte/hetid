@@ -75,33 +75,21 @@ convert_to_quarterly <- function(
 
   data <- data[order(data[["date"]]), , drop = FALSE]
 
-  # Separate frame preserves input columns named year, month, or quarter
-  scratch <- data.frame(
-    date = data[["date"]],
-    year = as.numeric(format(data[["date"]], HETID_CONSTANTS$YEAR_FORMAT)),
-    month = as.numeric(format(data[["date"]], HETID_CONSTANTS$MONTH_FORMAT))
-  )
-  scratch$quarter <- ceiling(
-    scratch$month / HETID_CONSTANTS$MONTHS_PER_QUARTER
-  )
-
-  last_in_quarter <- aggregate(
-    date ~ year + quarter,
-    data = scratch,
-    FUN = max
-  )
-
-  last_months <- as.numeric(
-    format(last_in_quarter$date, HETID_CONSTANTS$MONTH_FORMAT)
-  )
-  expected_months <- last_in_quarter$quarter *
-    HETID_CONSTANTS$MONTHS_PER_QUARTER
+  # Last observation of each quarter, listed by quarter and then year
+  q_end <- to_period_end(data[["date"]], "quarterly")
+  is_last <- !duplicated(q_end, fromLast = TRUE)
+  expected_months <- as.numeric(format(q_end[is_last], HETID_CONSTANTS$MONTH_FORMAT))
+  ord <- order(expected_months, q_end[is_last])
+  last_dates <- data[["date"]][is_last][ord]
+  quarter_ends <- q_end[is_last][ord]
+  expected_months <- expected_months[ord]
+  last_months <- as.numeric(format(last_dates, HETID_CONSTANTS$MONTH_FORMAT))
   incomplete <- last_months != expected_months
 
   if (any(incomplete)) {
     details <- paste0(
-      last_in_quarter$year[incomplete],
-      " Q", last_in_quarter$quarter[incomplete],
+      format(quarter_ends[incomplete], HETID_CONSTANTS$YEAR_FORMAT),
+      " Q", expected_months[incomplete] / HETID_CONSTANTS$MONTHS_PER_QUARTER,
       " (last observation in ", month.name[last_months[incomplete]],
       ", quarter ends in ", month.name[expected_months[incomplete]], ")"
     )
@@ -129,16 +117,11 @@ convert_to_quarterly <- function(
         notice, dropped,
         " instead, set use_incomplete_quarters = TRUE."
       ))
-      last_in_quarter <- last_in_quarter[!incomplete, , drop = FALSE]
+      last_dates <- last_dates[!incomplete]
     }
   }
 
-  result <- merge(
-    last_in_quarter[, "date", drop = FALSE],
-    data,
-    by = "date",
-    all.x = TRUE
-  )
+  result <- merge(data.frame(date = last_dates), data, by = "date", all.x = TRUE)
 
   result$date <- to_period_end(result$date, "quarterly")
 

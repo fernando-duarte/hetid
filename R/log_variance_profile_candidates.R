@@ -36,40 +36,13 @@ profile_set_candidates <- function(box, n_points) {
   if (nrow(sampled) == 0L) NULL else sampled
 }
 
-#' All-Missing Profile Frame
-#'
-#' Creates a coefficient-bound frame when no fit is available.
-#'
-#' @param coef_labels A character vector of coefficient labels.
-#' @param n_attempted,n_failed Integer counts of attempted and failed fits,
-#'   respectively.
-#' @param estimator A character string identifying the estimator.
-#' @return A data frame with one row per coefficient label and columns
-#'   \code{term}, \code{lower}, and \code{upper}. Both bounds are \code{NA_real_}.
-#'   Attributes \code{n_attempted}, \code{n_failed}, and \code{estimator} retain
-#'   the supplied counts and estimator identifier.
-#' @noRd
-empty_log_variance_profile <- function(coef_labels, n_attempted, n_failed,
-                                       estimator) {
-  out <- data.frame(
-    term = coef_labels,
-    lower = NA_real_,
-    upper = NA_real_,
-    row.names = NULL
-  )
-  attr(out, "n_attempted") <- n_attempted
-  attr(out, "n_failed") <- n_failed
-  attr(out, "estimator") <- estimator
-  out
-}
-
 log_variance_profile_bounds <- function(fits, n_attempted, labels, estimator) {
-  if (is.null(fits$coefs)) {
-    return(empty_log_variance_profile(labels, n_attempted, fits$n_failed, estimator))
-  }
+  has_fits <- !is.null(fits$coefs)
   out <- data.frame(
-    term = colnames(fits$coefs), lower = apply(fits$coefs, 2, min),
-    upper = apply(fits$coefs, 2, max), row.names = NULL
+    term = if (has_fits) colnames(fits$coefs) else labels,
+    lower = if (has_fits) apply(fits$coefs, 2, min) else NA_real_,
+    upper = if (has_fits) apply(fits$coefs, 2, max) else NA_real_,
+    row.names = NULL
   )
   attr(out, "n_attempted") <- n_attempted
   attr(out, "n_failed") <- fits$n_failed

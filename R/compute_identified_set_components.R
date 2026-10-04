@@ -96,28 +96,14 @@ compute_identified_set_components <- function(gamma, moments) {
 
   assert_gamma_columns_nonzero(gamma, maturities)
 
-  n_maturities <- length(maturities)
-
-  L_i <- numeric(n_maturities) # nolint: object_name_linter.
-  V_i <- numeric(n_maturities) # nolint: object_name_linter.
-  Q_i <- vector("list", n_maturities) # nolint: object_name_linter.
-
-  names(L_i) <- maturity_names(maturities) # nolint: object_name_linter.
-  names(V_i) <- maturity_names(maturities) # nolint: object_name_linter.
-  names(Q_i) <- maturity_names(maturities) # nolint: object_name_linter.
-
-  for (idx in seq_along(maturities)) {
-    i <- maturities[idx]
-    gamma_i <- gamma[, i, drop = FALSE]
-
-    parts <- constraint_components(gamma_i, idx, moments)
-    L_i[idx] <- parts$L # nolint: object_name_linter.
-    V_i[idx] <- parts$V # nolint: object_name_linter.
-    Q_i[[idx]] <- parts$Q # nolint: object_name_linter.
-  }
+  parts <- lapply(seq_along(maturities), function(idx) {
+    constraint_components(gamma[, maturities[idx], drop = FALSE], idx, moments)
+  })
+  names(parts) <- maturity_names(maturities)
 
   components <- new_hetid_components(
-    L_i = L_i, V_i = V_i, Q_i = Q_i,
+    L_i = vapply(parts, `[[`, 0, "L"), V_i = vapply(parts, `[[`, 0, "V"),
+    Q_i = lapply(parts, `[[`, "Q"),
     maturities = maturities, n_components = n_components
   )
   validate_hetid_components(components)

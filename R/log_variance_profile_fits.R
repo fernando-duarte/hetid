@@ -1,5 +1,4 @@
-fit_over_candidates <- function(candidates, box, x_var, estimator,
-                                fitter = NULL, retain = FALSE) {
+fit_over_candidates <- function(candidates, fitter, retain = FALSE) {
   rows <- vector("list", nrow(candidates))
   records <- if (retain) vector("list", nrow(candidates)) else NULL
   warm <- NULL
@@ -7,13 +6,7 @@ fit_over_candidates <- function(candidates, box, x_var, estimator,
   for (i in seq_len(nrow(candidates))) {
     theta <- candidates[i, ]
     names(theta) <- colnames(candidates)
-    fit <- if (is.null(fitter)) {
-      fit_log_variance_at_b(theta, box$w1, box$w2, x_var,
-        estimator = estimator, start = warm
-      )
-    } else {
-      fitter(theta, warm)
-    }
+    fit <- fitter(theta, warm)
     if (retain) records[[i]] <- fit
     if (log_variance_fit_ok(fit)) {
       rows[[i]] <- fit$coef

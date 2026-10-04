@@ -1,52 +1,39 @@
 # Manual rebuilds of the expected-SDF bound pieces, mirroring the implementation:
 # paired set T_i, is.finite(gap) mask, divisor-N moments
 
-# Gap series e^{-y^(1)_{t+s}} - e^{n_hat(i,t)} over T_i, finite-masked
-gap_series <- function(yields, term_premia, i,
-                       step = HETID_CONSTANTS$DEFAULT_STEP) {
+# Paired legs over T_i: a = n_hat(i,t), x = -y^(1)_{t+s}, and the finite-gap mask
+paired_legs <- function(yields, term_premia, i, step) {
   n_hat <- n_hat_series(yields, term_premia, i, step = step)
   y_step <- yields[[acm_column_name("yields", step)]]
   s <- i %/% step
   n_obs <- length(n_hat)
   m_step <- step / HETID_CONSTANTS$MATURITY_UNITS_PER_YEAR
-  exp_n_hat_paired <- exp(n_hat[seq_len(n_obs - s)])
-  realized <- exp(-m_step * y_step[seq.int(s + 1L, n_obs)] /
-    HETID_CONSTANTS$PERCENT_TO_DECIMAL)
-  g <- realized - exp_n_hat_paired
-  g[is.finite(g)]
+  a <- n_hat[seq_len(n_obs - s)]
+  x <- -m_step * y_step[seq.int(s + 1L, n_obs)] /
+    HETID_CONSTANTS$PERCENT_TO_DECIMAL
+  list(a = a, x = x, keep = is.finite(exp(x) - exp(a)))
+}
+
+# Gap series e^{-y^(1)_{t+s}} - e^{n_hat(i,t)} over T_i, finite-masked
+gap_series <- function(yields, term_premia, i,
+                       step = HETID_CONSTANTS$DEFAULT_STEP) {
+  p <- paired_legs(yields, term_premia, i, step)
+  (exp(p$x) - exp(p$a))[p$keep]
 }
 
 # q_t = e^{a}(e^u - 1 - u) (u = x - a), on the gap's finite mask
 q_series <- function(yields, term_premia, i,
                      step = HETID_CONSTANTS$DEFAULT_STEP) {
-  n_hat <- n_hat_series(yields, term_premia, i, step = step)
-  y_step <- yields[[acm_column_name("yields", step)]]
-  s <- i %/% step
-  n_obs <- length(n_hat)
-  m_step <- step / HETID_CONSTANTS$MATURITY_UNITS_PER_YEAR
-  a <- n_hat[seq_len(n_obs - s)]
-  x <- -m_step * y_step[seq.int(s + 1L, n_obs)] /
-    HETID_CONSTANTS$PERCENT_TO_DECIMAL
-  g <- exp(x) - exp(a)
-  q_gap <- exp(a) * (expm1(x - a) - (x - a)) # stable via expm1
-  q_gap[is.finite(g)] # same common mask as the gap, matching the implementation
+  p <- paired_legs(yields, term_premia, i, step)
+  (exp(p$a) * (expm1(p$x - p$a) - (p$x - p$a)))[p$keep] # stable via expm1
 }
 
 # Fourth-order component arm (1/4) * max(e^{2a}) * mean(u^4) on the gap mask
 component_arm <- function(yields, term_premia, i,
                           step = HETID_CONSTANTS$DEFAULT_STEP) {
-  n_hat <- n_hat_series(yields, term_premia, i, step = step)
-  y_step <- yields[[acm_column_name("yields", step)]]
-  s <- i %/% step
-  n_obs <- length(n_hat)
-  m_step <- step / HETID_CONSTANTS$MATURITY_UNITS_PER_YEAR
-  a <- n_hat[seq_len(n_obs - s)]
-  x <- -m_step * y_step[seq.int(s + 1L, n_obs)] /
-    HETID_CONSTANTS$PERCENT_TO_DECIMAL
-  g <- exp(x) - exp(a)
-  keep <- is.finite(g)
-  u <- (x - a)[keep]
-  0.25 * max(exp(2 * a[keep])) * mean(u^4)
+  p <- paired_legs(yields, term_premia, i, step)
+  u <- (p$x - p$a)[p$keep]
+  0.25 * max(exp(2 * p$a[p$keep])) * mean(u^4)
 }
 
 var_n <- function(z) sum((z - mean(z))^2) / length(z) # divisor-N variance

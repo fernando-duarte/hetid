@@ -94,7 +94,6 @@ export(solve_quadratic_program)
 export(to_period_end)
 export(with_rng_scope)
 importFrom(stats,
-  aggregate,
   as.formula,
   coef,
   complete.cases,

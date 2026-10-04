@@ -119,7 +119,7 @@ profile_log_variance_set <- function(box, x_var, estimator = "ppml",
 
   candidates <- profile_set_candidates(box, n_points)
   if (is.null(candidates)) {
-    return(empty_log_variance_profile(coef_labels, 0L, 0L, estimator))
+    return(log_variance_profile_bounds(list(n_failed = 0L), 0L, coef_labels, estimator))
   }
   theta <- candidates[1L, ]
   names(theta) <- colnames(candidates)
@@ -132,6 +132,6 @@ profile_log_variance_set <- function(box, x_var, estimator = "ppml",
     fit$diagnostics$min_abs_eps <- min(abs(eps))
     fit
   }
-  fits <- fit_over_candidates(candidates, box, x_var, estimator, fitter = fit_candidate)
+  fits <- fit_over_candidates(candidates, fit_candidate)
   log_variance_profile_bounds(fits, nrow(candidates), coef_labels, estimator)
 }
