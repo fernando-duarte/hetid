@@ -2,43 +2,30 @@
 % Please edit documentation in R/harvey_scoring.R
 \name{harvey_post_stop}
 \alias{harvey_post_stop}
-\title{Fresh Post-Stop Acceptance Gate}
+\title{Post-Stop Acceptance Gate}
 \usage{
-harvey_post_stop(
-  theta,
-  y,
-  x_mat,
-  pos,
-  col_abs,
-  control = log_variance_fit_control("harvey")
-)
+harvey_post_stop(ev, x_mat, control = log_variance_fit_control("harvey"))
 }
 \arguments{
-\item{theta}{Numeric coefficient vector of length \code{ncol(x_mat)}.}
-
-\item{y}{Finite nonnegative numeric response vector of length \code{nrow(x_mat)}.}
+\item{ev}{Converged \code{\link{harvey_eval}} result.}
 
 \item{x_mat}{Finite numeric design matrix, intercept column included.}
-
-\item{pos}{Logical vector \code{y > 0} of length \code{length(y)}.}
-
-\item{col_abs}{Numeric vector \code{colSums(abs(x_mat))}, the per-coordinate
-scale the moment is judged on. Each entry must be positive.}
 
 \item{control}{Validated named list of Harvey fitting controls; defaults
 derive from \code{\link{LOG_VARIANCE_HARVEY_CONTROL}}.}
 }
 \value{
-\code{NULL} on rejection, otherwise a list with the recomputed
+\code{NULL} on rejection, otherwise a list with the evaluation
 \code{eval}, the numeric \code{ncol(x_mat)} square observed-information matrix
 \code{info}, and its scalar normalized reciprocal condition number \code{rcond}.
 }
 \description{
-Recomputes the safe ratio and criterion from scratch at the stopped point,
-then requires a finite strictly positive fitted variance and a
-diagonally-normalized information \code{rcond} at or above \code{RCOND_TOLERANCE}.
-It does not recheck score convergence, which the scoring loop establishes.
-Normalizing by the diagonal makes the gate scale-invariant while catching
-rank deficiency. \code{NULL} rejects the point.
+Judges the converged evaluation from \code{\link{harvey_scoring}}: requires
+a finite strictly positive fitted variance and a diagonally-normalized
+information \code{rcond} at or above \code{RCOND_TOLERANCE}. The
+information \eqn{0.5 X' diag(r) X} uses that evaluation's ratio. It does not
+recheck score convergence, which the scoring loop establishes. Normalizing by
+the diagonal makes the gate scale-invariant while catching rank deficiency.
+\code{NULL} rejects the point.
 }
 \keyword{internal}

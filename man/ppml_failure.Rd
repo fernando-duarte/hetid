@@ -22,13 +22,11 @@ before the start ladder is attempted.}
 \item{...}{Named diagnostics fields merged by \code{\link{ppml_diagnostics}}.}
 }
 \value{
-A validated \code{\link{hetid_log_variance_fit}} list with
+A \code{\link{hetid_log_variance_fit}} list with
 \code{coef} and \code{warm_start} set to \code{NULL}, \code{objective}
 and \code{score_norm} set to \code{NA_real_}, \code{converged = FALSE},
 and \code{convergence_code = -1L}. The response, design, and diagnostics
-are retained. Container validation rejects missing or nonfinite response
-and design entries with structured \code{hetid_error} conditions;
-observations are not removed.
+are retained.
 }
 \description{
 An unsuccessful response solve is a result: the caller gets

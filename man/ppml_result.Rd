@@ -7,7 +7,6 @@
 The two ways a PPML response solve ends -- an accepted fit and a
 fail-closed result -- plus the diagnostics container they share and the
 condition recorder wrapped around \code{glm.fit}. Success and every failure
-branch go through \code{\link{new_hetid_log_variance_fit}}, so all of them
-come back in one shape.
+branch build the same container, so all of them come back in one shape.
 }
 \keyword{internal}

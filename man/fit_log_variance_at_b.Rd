@@ -42,7 +42,7 @@ contract. The estimator is \code{"ppml"} by default, or
 \code{list()}, \code{1}, and \code{list()}, respectively.}
 }
 \value{
-A validated \code{hetid_log_variance_fit} object (see
+A \code{hetid_log_variance_fit} object (see
 \code{\link{hetid_log_variance_fit}}), with one extra
 \code{diagnostics$min_abs_eps} field: \code{min(abs(eps))} for
 \eqn{\varepsilon = w_1 - w_2 b}, a cheap check for a residual sitting

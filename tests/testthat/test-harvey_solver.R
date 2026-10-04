@@ -111,7 +111,7 @@ test_that("a column with no positive-response support fails both gates", {
 
   ev <- hetid:::harvey_eval(c(0, 0), y, x_mat, pos, col_abs)
   expect_null(hetid:::harvey_newton_dir(ev, x_mat))
-  expect_null(hetid:::harvey_post_stop(c(0, 0), y, x_mat, pos, col_abs))
+  expect_null(hetid:::harvey_post_stop(ev, x_mat))
 
   # and the whole solve fails closed on it, without a recession certificate
   fit <- hetid:::harvey_fit_response(y, x_mat)

@@ -87,7 +87,8 @@ Checks \code{n_obs}, \code{response_scale}, \code{coef_labels}, and
 The parameter descriptions state the contract for validated fits.
 Call \code{\link{validate_hetid_log_variance_fit}} when assembling a
 container from parts that are not known to satisfy that contract.
-Results from \code{\link{fit_log_variance}} undergo this validation.
+Results from \code{\link{fit_log_variance}} are assembled from validated
+inputs and are not re-validated.
 Invalid container-identity attributes signal a
 \code{hetid_error_bad_argument} condition; missing values are rejected
 in these attributes rather than removed.

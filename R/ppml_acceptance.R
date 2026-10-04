@@ -38,6 +38,9 @@ ppml_pos_rank <- function(y_scaled, x_mat, control = log_variance_fit_control("p
 #' Run One glm.fit Rung
 #'
 #' The one \code{glm.fit} call site of the package's log-variance estimator.
+#' A supplied start is first tried with the lean \code{ppml_irls()}, which
+#' reproduces an uneventful \code{glm.fit} solve bit for bit; any eventful solve
+#' falls back to \code{glm.fit}.
 #' Warnings and messages are captured in the returned list instead of printed.
 #' An IRLS error comes back as a \code{NULL} fit rather than propagating:
 #' the ladder decides what a failed rung means.
@@ -56,14 +59,24 @@ ppml_pos_rank <- function(y_scaled, x_mat, control = log_variance_fit_control("p
 #' @param control Validated fitting controls; defaults to the PPML controls
 #'   from \code{log_variance_fit_control("ppml")}.
 #'
-#' @return A list with \code{fit} (the \code{glm.fit} result, or \code{NULL}
-#'   on error), character vectors \code{warnings} and \code{messages}, and
+#' @return A list with \code{fit} (the \code{glm.fit} result, the lean
+#'   solver's list of the fields the ladder reads, or \code{NULL} on error),
+#'   character vectors \code{warnings} and \code{messages}, and
 #'   scalar strings \code{error_class} and \code{error_message} (both
 #'   \code{NA_character_} on success). On error, the prefixed error message
 #'   is also appended to \code{warnings}.
 #' @keywords internal
 #' @importFrom stats glm.fit quasipoisson glm.control
 ppml_run_glm <- function(start, y_scaled, x_mat, control = log_variance_fit_control("ppml")) {
+  if (!is.null(start)) {
+    lean <- ppml_irls(x_mat, y_scaled, start, control$GLM_EPSILON, control$GLM_MAXIT)
+    if (!is.null(lean)) {
+      return(list(
+        fit = lean, warnings = character(0), messages = character(0),
+        error_class = NA_character_, error_message = NA_character_
+      ))
+    }
+  }
   captured <- capture_glm_conditions(stats::glm.fit(
     x = x_mat, y = y_scaled,
     family = stats::quasipoisson(link = "log"), start = start,
@@ -108,6 +121,8 @@ ppml_run_glm <- function(start, y_scaled, x_mat, control = log_variance_fit_cont
 #'   an intercept column.
 #' @param control Validated fitting controls; defaults to the PPML controls
 #'   from \code{log_variance_fit_control("ppml")}.
+#' @param col_abs Numeric vector \code{colSums(abs(x_mat))}; the fitter passes
+#'   the copy its fixed design already holds.
 #'
 #' @return A list with logical scalar \code{accepted}, scalar string
 #'   \code{reason} (\code{NA_character_} on acceptance), and coefficient
@@ -124,7 +139,8 @@ ppml_run_glm <- function(start, y_scaled, x_mat, control = log_variance_fit_cont
 #'   matrix's reciprocal condition estimate \code{rcond_info_raw}.
 #' @keywords internal
 #' @importFrom stats median
-ppml_accept <- function(fit, y_scaled, x_mat, control = log_variance_fit_control("ppml")) {
+ppml_accept <- function(fit, y_scaled, x_mat, control = log_variance_fit_control("ppml"),
+                        col_abs = colSums(abs(x_mat))) {
   coef_hat <- fit$coefficients
   bad <- function(reason) {
     list(accepted = FALSE, reason = reason, coef_scaled = coef_hat)
@@ -146,14 +162,14 @@ ppml_accept <- function(fit, y_scaled, x_mat, control = log_variance_fit_control
   sc <- drop(crossprod(x_mat, y_scaled - mu))
   # the score check is scaled per coordinate: one absolute tolerance on
   # X'(y - mu) would pass or fail on each regressor's units alone
-  bound_unit <- max(1, stats::median(y_scaled[pos])) * colSums(abs(x_mat))
+  bound_unit <- max(1, stats::median(y_scaled[pos])) * col_abs
   score_norm <- max(abs(sc) / bound_unit)
   info_col_scale <- sqrt(colSums(mu * x_mat^2))
   if (any(!is.finite(info_col_scale)) || any(info_col_scale <= 0)) {
     return(bad("info_scale"))
   }
   rcond_scaled <- rcond(crossprod(
-    sweep(sqrt(mu) * x_mat, 2, info_col_scale, "/")
+    (sqrt(mu) * x_mat) / rep(info_col_scale, each = nrow(x_mat))
   ))
   reason <- NA_character_
   if (!(score_norm <= control$SCORE_TOLERANCE)) {

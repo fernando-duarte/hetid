@@ -84,7 +84,7 @@ test_that("Harvey rejects a converged point with ill-conditioned information", {
   expect_lt(rc, control$RCOND_TOLERANCE)
   expect_identical(unname(drop(crossprod(x_mat, y - 1))), c(0, 0, 0))
   expect_null(hetid:::harvey_post_stop(
-    start, y, x_mat, y > 0, colSums(abs(x_mat)), control
+    hetid:::harvey_eval(start, y, x_mat, y > 0, colSums(abs(x_mat))), x_mat, control
   ))
   fit <- fit_log_variance(
     y, x, "harvey",

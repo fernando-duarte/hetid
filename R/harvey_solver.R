@@ -2,7 +2,7 @@
 #'
 #' The math and linear-algebra core of the Harvey Gaussian
 #' multiplicative-heteroskedasticity log-variance solve: the zero-safe ratio
-#' \eqn{r = y / \exp(X\theta)}, the observed information, the guarded
+#' \eqn{r = y / \exp(X\theta)}, the guarded
 #' single-point evaluation every step is judged on, and the Cholesky
 #' triangular solve behind the Fisher direction. No clamping, no epsilon added to
 #' \code{y}, no \eqn{\eta} capping: a non-finite quantity is a hard trial
@@ -36,21 +36,6 @@ harvey_ratio <- function(theta, y, x_mat) {
   r
 }
 
-#' Observed Information of the Harvey Criterion
-#'
-#' \eqn{0.5 X' diag(r) X}, the Hessian of
-#' \eqn{Q = 0.5 (\sum_t \eta_t + \sum_t r_t)}. The expected information
-#' \eqn{0.5 X'X} is a trivial expression and gets no helper.
-#'
-#' @inheritParams harvey_ratio
-#'
-#' @return Numeric \code{ncol(x_mat)} square matrix, with row and column names
-#'   inherited from \code{colnames(x_mat)} when present.
-#' @keywords internal
-harvey_info <- function(theta, y, x_mat) {
-  0.5 * crossprod(x_mat, harvey_ratio(theta, y, x_mat) * x_mat)
-}
-
 #' Evaluate One Candidate Coefficient Vector
 #'
 #' The single gate every start, line-search trial, and accepted point passes
@@ -79,7 +64,9 @@ harvey_eval <- function(theta, y, x_mat, pos, col_abs) {
   if (!all(is.finite(eta)) || any(eta > log(.Machine$double.xmax))) {
     return(NULL)
   }
-  r <- harvey_ratio(theta, y, x_mat)
+  # the ratio from the eta already in hand, in harvey_ratio()'s order
+  r <- numeric(length(y))
+  r[pos] <- exp(log(y[pos]) - eta[pos])
   if (anyNA(r) || !all(is.finite(r[pos]))) {
     return(NULL)
   }

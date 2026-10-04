@@ -11,7 +11,7 @@ log_projection_fuller <- function(prep, e_mean, e, log_x, multiplier) {
   first <- log_projection_fuller_transform(log_x, log_d0)
   coef0 <- prep$projection %*% first$value
   eta <- prep$x_centered %*% coef0[-1L, , drop = FALSE]
-  log_ratio <- sweep(eta, 2L, log_sum_exp_cols(eta)) + log(n_vol)
+  log_ratio <- eta - rep(log_sum_exp_cols(eta), each = n_vol) + log(n_vol)
   second <- log_projection_fuller_transform(log_x, log_d0 + log_ratio)
   list(
     coef = prep$projection %*% second$value,
@@ -19,8 +19,8 @@ log_projection_fuller <- function(prep, e_mean, e, log_x, multiplier) {
       log_scale = log_scale,
       log_c = rep(log_c, k),
       share_small = colMeans(log_x < log_d0 + log_ratio),
-      profile_log_ratio_min = apply(log_ratio, 2L, min),
-      profile_log_ratio_max = apply(log_ratio, 2L, max),
+      profile_log_ratio_min = log_projection_col_stat(log_ratio, min),
+      profile_log_ratio_max = log_projection_col_stat(log_ratio, max),
       first_pass_coef = coef0
     ),
     work = list(

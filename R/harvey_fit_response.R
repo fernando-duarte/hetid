@@ -132,9 +132,7 @@ harvey_fit_response <- function(y, x_mat, start = NULL,
       last_error <- scored$status
       next
     }
-    accepted <- harvey_post_stop(
-      scored$eval$theta, y_scaled, x_mat, pos, col_abs, control
-    )
+    accepted <- harvey_post_stop(scored$eval, x_mat, control)
     if (is.null(accepted)) {
       attempts <- c(attempts, list(list(
         source = src, error_class = "post_stop_reject"

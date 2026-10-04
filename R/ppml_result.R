@@ -3,8 +3,7 @@
 #' The two ways a PPML response solve ends -- an accepted fit and a
 #' fail-closed result -- plus the diagnostics container they share and the
 #' condition recorder wrapped around \code{glm.fit}. Success and every failure
-#' branch go through \code{\link{new_hetid_log_variance_fit}}, so all of them
-#' come back in one shape.
+#' branch build the same container, so all of them come back in one shape.
 #'
 #' @name ppml_result
 #' @keywords internal
@@ -106,37 +105,30 @@ ppml_diagnostics <- function(error_class, start_attempts, ...) {
 #' @param attempts List of per-rung attempt records.
 #' @param rank_x_pos Integer rank of the positive-response design rows.
 #'
-#' @return A validated \code{\link{hetid_log_variance_fit}} list with
+#' @return A \code{\link{hetid_log_variance_fit}} list with
 #'   \code{fit_status = "ok"}, original-scale coefficients, scaled
 #'   \code{warm_start}, solver iterations in \code{convergence_code}, and
-#'   the response, design, and diagnostics. Container validation rejects
-#'   missing or nonfinite response and design entries with structured
-#'   \code{hetid_error} conditions; observations are not removed.
+#'   the response, design, and diagnostics. It is assembled from validated
+#'   inputs without re-validating the container.
 #' @keywords internal
 ppml_success <- function(acc, run, y, y_scaled, x_mat, response_scale,
                          attempts, rank_x_pos) {
   coef_original <- acc$coef_scaled
   coef_original[1] <- coef_original[1] + log(response_scale)
   objective <- sum(acc$mu) - sum(y_scaled[acc$pos] * log(acc$mu[acc$pos]))
-  out <- validate_hetid_log_variance_fit(new_hetid_log_variance_fit(
-    coef = coef_original, fit_status = LOG_VARIANCE_FIT_STATUS[["ok"]],
-    converged = TRUE, objective = objective, score_norm = acc$score_norm,
-    convergence_code = as.integer(run$fit$iter),
-    warm_start = acc$coef_scaled,
-    diagnostics = ppml_diagnostics(
-      NA_character_, attempts,
-      warnings = run$warnings, messages = run$messages,
-      min_pos_response = min(y_scaled[acc$pos]), rank_x_pos = rank_x_pos,
-      condition_weighted_scaled = acc$condition_weighted_scaled,
-      rcond_info_raw = acc$rcond_info_raw,
-      info_col_scale = acc$info_col_scale,
-      score_norm_raw = acc$score_norm_raw, score_norm_scaled = acc$score_norm
-    ),
-    y = y, x_design = x_mat, estimator = "ppml",
-    response_scale = response_scale, n_obs = length(y),
-    coef_labels = colnames(x_mat)
-  ))
-  out
+  diagnostics <- list(
+    warnings = run$warnings, messages = run$messages,
+    error_class = NA_character_, start_attempts = attempts,
+    min_pos_response = min(y_scaled[acc$pos]), rank_x_pos = rank_x_pos,
+    condition_weighted_scaled = acc$condition_weighted_scaled,
+    rcond_info_raw = acc$rcond_info_raw, info_col_scale = acc$info_col_scale,
+    score_norm_raw = acc$score_norm_raw, score_norm_scaled = acc$score_norm
+  )
+  log_variance_fit_object(
+    coef_original, LOG_VARIANCE_FIT_STATUS[["ok"]], TRUE, objective, acc$score_norm,
+    as.integer(run$fit$iter), acc$coef_scaled, diagnostics, y, x_mat, "ppml",
+    response_scale, length(y), colnames(x_mat)
+  )
 }
 
 #' Assemble a Fail-Closed PPML Result
@@ -154,13 +146,11 @@ ppml_success <- function(acc, run, y, y_scaled, x_mat, response_scale,
 #'   before the start ladder is attempted.
 #' @param ... Named diagnostics fields merged by \code{\link{ppml_diagnostics}}.
 #'
-#' @return A validated \code{\link{hetid_log_variance_fit}} list with
+#' @return A \code{\link{hetid_log_variance_fit}} list with
 #'   \code{coef} and \code{warm_start} set to \code{NULL}, \code{objective}
 #'   and \code{score_norm} set to \code{NA_real_}, \code{converged = FALSE},
 #'   and \code{convergence_code = -1L}. The response, design, and diagnostics
-#'   are retained. Container validation rejects missing or nonfinite response
-#'   and design entries with structured \code{hetid_error} conditions;
-#'   observations are not removed.
+#'   are retained.
 #' @keywords internal
 ppml_failure <- function(error_class, y, x_mat, response_scale,
                          attempts = list(), ...) {
