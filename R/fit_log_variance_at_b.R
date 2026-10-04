@@ -27,7 +27,7 @@
 #'   \code{"harvey"}; the remaining defaults are \code{NULL},
 #'   \code{list()}, \code{1}, and \code{list()}, respectively.
 #'
-#' @return A validated \code{hetid_log_variance_fit} object (see
+#' @return A \code{hetid_log_variance_fit} object (see
 #'   \code{\link{hetid_log_variance_fit}}), with one extra
 #'   \code{diagnostics$min_abs_eps} field: \code{min(abs(eps))} for
 #'   \eqn{\varepsilon = w_1 - w_2 b}, a cheap check for a residual sitting
@@ -150,6 +150,5 @@ fit_log_variance_at_b <- function(b, w1, w2, x, estimator = "ppml", start = NULL
     fallback_starts = fallback_starts, response_scale = response_scale, control = control
   )
   fit$diagnostics$min_abs_eps <- min(abs(eps))
-  out <- validate_hetid_log_variance_fit(fit)
-  out
+  fit
 }

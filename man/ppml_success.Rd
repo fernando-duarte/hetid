@@ -35,12 +35,11 @@ column labels matching the coefficients, and an intercept in column one.}
 \item{rank_x_pos}{Integer rank of the positive-response design rows.}
 }
 \value{
-A validated \code{\link{hetid_log_variance_fit}} list with
+A \code{\link{hetid_log_variance_fit}} list with
 \code{fit_status = "ok"}, original-scale coefficients, scaled
 \code{warm_start}, solver iterations in \code{convergence_code}, and
-the response, design, and diagnostics. Container validation rejects
-missing or nonfinite response and design entries with structured
-\code{hetid_error} conditions; observations are not removed.
+the response, design, and diagnostics. It is assembled from validated
+inputs without re-validating the container.
 }
 \description{
 Recovers the original-scale coefficients by adding

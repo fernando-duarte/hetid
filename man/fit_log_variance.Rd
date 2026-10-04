@@ -64,7 +64,7 @@ accepted fit meets the configured tolerances; loose tolerances may accept
 an inaccurate solution and affect subsequent inference.}
 }
 \value{
-A validated \code{hetid_log_variance_fit} list. Accepted fits have
+A \code{hetid_log_variance_fit} list. Accepted fits have
 \code{fit_status = "ok"}, with named \code{coef} and \code{warm_start}
 vectors of length \code{ncol(x) + 1}, intercept first. Failed fits have
 \code{fit_status = "nonconvergence"}, \code{coef = NULL},

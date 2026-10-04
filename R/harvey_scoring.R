@@ -156,33 +156,30 @@ harvey_scoring <- function(cur, y, x_mat, pos, col_abs, chol_xx,
   )
 }
 
-#' Fresh Post-Stop Acceptance Gate
+#' Post-Stop Acceptance Gate
 #'
-#' Recomputes the safe ratio and criterion from scratch at the stopped point,
-#' then requires a finite strictly positive fitted variance and a
-#' diagonally-normalized information \code{rcond} at or above \code{RCOND_TOLERANCE}.
-#' It does not recheck score convergence, which the scoring loop establishes.
-#' Normalizing by the diagonal makes the gate scale-invariant while catching
-#' rank deficiency. \code{NULL} rejects the point.
+#' Judges the converged evaluation from \code{\link{harvey_scoring}}: requires
+#' a finite strictly positive fitted variance and a diagonally-normalized
+#' information \code{rcond} at or above \code{RCOND_TOLERANCE}. The
+#' information \eqn{0.5 X' diag(r) X} uses that evaluation's ratio. It does not
+#' recheck score convergence, which the scoring loop establishes. Normalizing by
+#' the diagonal makes the gate scale-invariant while catching rank deficiency.
+#' \code{NULL} rejects the point.
 #'
+#' @param ev Converged \code{\link{harvey_eval}} result.
 #' @inheritParams harvey_eval
 #' @inheritParams harvey_line_search
 #'
-#' @return \code{NULL} on rejection, otherwise a list with the recomputed
+#' @return \code{NULL} on rejection, otherwise a list with the evaluation
 #'   \code{eval}, the numeric \code{ncol(x_mat)} square observed-information matrix
 #'   \code{info}, and its scalar normalized reciprocal condition number \code{rcond}.
 #' @keywords internal
-harvey_post_stop <- function(theta, y, x_mat, pos, col_abs,
-                             control = log_variance_fit_control("harvey")) {
-  ev <- harvey_eval(theta, y, x_mat, pos, col_abs)
-  if (is.null(ev)) {
-    return(NULL)
-  }
+harvey_post_stop <- function(ev, x_mat, control = log_variance_fit_control("harvey")) {
   mu <- exp(ev$eta)
   if (!all(is.finite(mu)) || any(mu <= 0)) {
     return(NULL)
   }
-  info <- harvey_info(theta, y, x_mat)
+  info <- 0.5 * crossprod(x_mat, ev$r * x_mat)
   d <- diag(info)
   if (any(!is.finite(d)) || any(d <= 0)) {
     return(NULL)

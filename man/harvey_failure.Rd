@@ -22,7 +22,7 @@ list for a failure before the start ladder.}
 \item{...}{Named diagnostic fields passed to \code{\link{harvey_diagnostics}}.}
 }
 \value{
-A validated \code{hetid_log_variance_fit} list, returned visibly,
+A \code{hetid_log_variance_fit} list, returned visibly,
 with \code{converged = FALSE}, \code{coef = NULL}, \code{warm_start = NULL},
 \code{objective = NA_real_}, \code{score_norm = NA_real_}, and
 \code{convergence_code = -1L}. The original response and design are retained

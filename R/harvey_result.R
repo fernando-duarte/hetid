@@ -62,7 +62,7 @@ harvey_diagnostics <- function(error_class, start_attempts, ...) {
 #' @param criteria A list of per-start numerical evidence, or \code{NULL}
 #'   (the default) when that evidence is not supplied.
 #'
-#' @return A validated \code{hetid_log_variance_fit} list, returned visibly,
+#' @return A \code{hetid_log_variance_fit} list, returned visibly,
 #'   with \code{fit_status = "ok"}, \code{converged = TRUE}, and coefficient
 #'   vectors named by \code{colnames(x_mat)}. The original response and design
 #'   are retained as \code{y} and \code{x_design}; \code{convergence_code}
@@ -76,22 +76,18 @@ harvey_success <- function(accepted, scored, y, x_mat, response_scale,
   names(coef_scaled) <- colnames(x_mat)
   coef_original <- coef_scaled
   coef_original[1] <- coef_original[1] + log(response_scale)
-  out <- validate_hetid_log_variance_fit(new_hetid_log_variance_fit(
-    coef = coef_original, fit_status = LOG_VARIANCE_FIT_STATUS[["ok"]],
-    converged = TRUE, objective = accepted$eval$q,
-    score_norm = accepted$eval$score_norm,
-    convergence_code = as.integer(scored$iters), warm_start = coef_scaled,
-    diagnostics = harvey_diagnostics(
-      NA_character_, attempts,
-      n_zero_response = n_zero_response, rank_x_pos = rank_x_pos,
-      rcond_info = accepted$rcond, n_halvings = scored$halves,
-      per_start_criteria = criteria, info_matrix = accepted$info
-    ),
-    y = y, x_design = x_mat, estimator = "harvey",
-    response_scale = response_scale, n_obs = length(y),
-    coef_labels = colnames(x_mat)
-  ))
-  out
+  diagnostics <- list(
+    warnings = character(0), messages = character(0),
+    error_class = NA_character_, start_attempts = attempts,
+    n_zero_response = n_zero_response, rank_x_pos = rank_x_pos,
+    rcond_info = accepted$rcond, n_halvings = scored$halves,
+    per_start_criteria = criteria, info_matrix = accepted$info
+  )
+  log_variance_fit_object(
+    coef_original, LOG_VARIANCE_FIT_STATUS[["ok"]], TRUE, accepted$eval$q,
+    accepted$eval$score_norm, as.integer(scored$iters), coef_scaled, diagnostics,
+    y, x_mat, "harvey", response_scale, length(y), colnames(x_mat)
+  )
 }
 
 #' Assemble a Fail-Closed Harvey Result
@@ -115,7 +111,7 @@ harvey_success <- function(accepted, scored, y, x_mat, response_scale,
 #'   list for a failure before the start ladder.
 #' @param ... Named diagnostic fields passed to \code{\link{harvey_diagnostics}}.
 #'
-#' @return A validated \code{hetid_log_variance_fit} list, returned visibly,
+#' @return A \code{hetid_log_variance_fit} list, returned visibly,
 #'   with \code{converged = FALSE}, \code{coef = NULL}, \code{warm_start = NULL},
 #'   \code{objective = NA_real_}, \code{score_norm = NA_real_}, and
 #'   \code{convergence_code = -1L}. The original response and design are retained

@@ -4,7 +4,13 @@
 \alias{ppml_accept}
 \title{Accept or Reject One Fitted Rung}
 \usage{
-ppml_accept(fit, y_scaled, x_mat, control = log_variance_fit_control("ppml"))
+ppml_accept(
+  fit,
+  y_scaled,
+  x_mat,
+  control = log_variance_fit_control("ppml"),
+  col_abs = colSums(abs(x_mat))
+)
 }
 \arguments{
 \item{fit}{A \code{glm.fit} result, or a list with a numeric
@@ -19,6 +25,9 @@ an intercept column.}
 
 \item{control}{Validated fitting controls; defaults to the PPML controls
 from \code{log_variance_fit_control("ppml")}.}
+
+\item{col_abs}{Numeric vector \code{colSums(abs(x_mat))}; the fitter passes
+the copy its fixed design already holds.}
 }
 \value{
 A list with logical scalar \code{accepted}, scalar string

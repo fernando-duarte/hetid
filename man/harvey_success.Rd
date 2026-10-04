@@ -39,7 +39,7 @@ column names, and the intercept in its first column.}
 (the default) when that evidence is not supplied.}
 }
 \value{
-A validated \code{hetid_log_variance_fit} list, returned visibly,
+A \code{hetid_log_variance_fit} list, returned visibly,
 with \code{fit_status = "ok"}, \code{converged = TRUE}, and coefficient
 vectors named by \code{colnames(x_mat)}. The original response and design
 are retained as \code{y} and \code{x_design}; \code{convergence_code}

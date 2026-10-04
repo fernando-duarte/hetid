@@ -19,7 +19,7 @@
 #' @return A function with arguments \code{y}, \code{start = NULL},
 #'   \code{fallback_starts = list()} and \code{response_scale = 1}, following
 #'   the contracts of \code{\link{fit_log_variance}} and returning the same
-#'   validated \code{hetid_log_variance_fit} container. The design and controls
+#'   \code{hetid_log_variance_fit} container. The design and controls
 #'   are captured when this function is created. Changing the caller's original
 #'   objects afterward does not change the fitter.
 #'   Numerical fitting failures return a container with

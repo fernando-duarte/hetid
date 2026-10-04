@@ -118,7 +118,7 @@ log_projection_plus <- function(prep, e, log_x, multiplier) {
 log_projection_log <- function(prep, e, log_x) {
   list(
     coef = prep$projection %*% log_x,
-    diagnostics = list(min_abs_resid = apply(abs(e), 2L, min)),
+    diagnostics = list(min_abs_resid = log_projection_col_stat(abs(e), min)),
     work = list(response = log_x)
   )
 }

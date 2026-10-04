@@ -3,14 +3,20 @@
 # without squaring first; scales are taken from max-abs rescaled columns so
 # neither squares nor sums overflow or underflow.
 
+# column-wise stat(); a single column skips apply(), which bootstrap fits
+# call thousands of times on one-column candidates, with apply()'s names
+log_projection_col_stat <- function(x, stat) {
+  if (ncol(x) == 1L) stats::setNames(stat(x), colnames(x)) else apply(x, 2L, stat)
+}
+
 # column-wise log(mean(x^2)); -Inf for a zero column, NaN never
 log_mean_square_cols <- function(x) {
   x <- as.matrix(x)
-  u <- apply(abs(x), 2L, max)
+  u <- log_projection_col_stat(abs(x), max)
   out <- rep(-Inf, ncol(x))
   live <- u > 0
   out[live] <- 2 * log(u[live]) +
-    log(colMeans(sweep(x[, live, drop = FALSE], 2L, u[live], "/")^2))
+    log(colMeans((x[, live, drop = FALSE] / rep(u[live], each = nrow(x)))^2))
   out
 }
 
@@ -33,8 +39,8 @@ log_add_exp <- function(u, v) {
 
 # column-wise log(sum(exp(z))) after subtracting each column's maximum
 log_sum_exp_cols <- function(z) {
-  m <- apply(z, 2L, max)
-  m + log(colSums(exp(sweep(z, 2L, m))))
+  m <- log_projection_col_stat(z, max)
+  m + log(colSums(exp(z - rep(m, each = nrow(z)))))
 }
 
 # Fuller transform F(x, delta) = log(x + delta) - delta / (x + delta) from

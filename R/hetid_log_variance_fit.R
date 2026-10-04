@@ -37,7 +37,8 @@ LOG_VARIANCE_FIT_STATUS <- c(ok = "ok", nonconvergence = "nonconvergence")
 #' The parameter descriptions state the contract for validated fits.
 #' Call \code{\link{validate_hetid_log_variance_fit}} when assembling a
 #' container from parts that are not known to satisfy that contract.
-#' Results from \code{\link{fit_log_variance}} undergo this validation.
+#' Results from \code{\link{fit_log_variance}} are assembled from validated
+#' inputs and are not re-validated.
 #' Invalid container-identity attributes signal a
 #' \code{hetid_error_bad_argument} condition; missing values are rejected
 #' in these attributes rather than removed.
@@ -106,6 +107,20 @@ new_hetid_log_variance_fit <- function(coef, fit_status, converged, objective,
     arg = "estimator"
   )
 
+  log_variance_fit_object(
+    coef, fit_status, converged, objective, score_norm, convergence_code,
+    warm_start, diagnostics, y, x_design, estimator, response_scale,
+    as.integer(n_obs), coef_labels
+  )
+}
+
+# Assembles the container without checks. The package's own fit builders use it
+# directly: their inputs were validated at the fitter boundary, so re-checking
+# every one of thousands of repeated fits only costs time.
+log_variance_fit_object <- function(coef, fit_status, converged, objective,
+                                    score_norm, convergence_code, warm_start,
+                                    diagnostics, y, x_design, estimator,
+                                    response_scale, n_obs, coef_labels) {
   structure(
     list(
       coef = coef, fit_status = fit_status, converged = converged,
@@ -115,7 +130,7 @@ new_hetid_log_variance_fit <- function(coef, fit_status, converged, objective,
     ),
     estimator = estimator,
     response_scale = response_scale,
-    n_obs = as.integer(n_obs),
+    n_obs = n_obs,
     coef_labels = coef_labels,
     class = "hetid_log_variance_fit"
   )
@@ -129,18 +144,13 @@ new_hetid_log_variance_fit <- function(coef, fit_status, converged, objective,
 #' @inheritParams harvey_failure
 #' @param estimator Single string identifying the estimator.
 #' @param diagnostics Estimator-specific list of failure diagnostics.
-#' @return A validated \code{hetid_log_variance_fit} object, visibly.
+#' @return A \code{hetid_log_variance_fit} object, visibly.
 #' @noRd
 log_variance_failure_fit <- function(y, x_mat, response_scale, estimator,
                                      diagnostics) {
-  out <- validate_hetid_log_variance_fit(new_hetid_log_variance_fit(
-    coef = NULL, fit_status = LOG_VARIANCE_FIT_STATUS[["nonconvergence"]],
-    converged = FALSE, objective = NA_real_, score_norm = NA_real_,
-    convergence_code = -1L, warm_start = NULL,
-    diagnostics = diagnostics,
-    y = y, x_design = x_mat, estimator = estimator,
-    response_scale = response_scale, n_obs = length(y),
-    coef_labels = colnames(x_mat)
-  ))
-  out
+  log_variance_fit_object(
+    NULL, LOG_VARIANCE_FIT_STATUS[["nonconvergence"]], FALSE, NA_real_, NA_real_,
+    -1L, NULL, diagnostics, y, x_mat, estimator, response_scale, length(y),
+    colnames(x_mat)
+  )
 }

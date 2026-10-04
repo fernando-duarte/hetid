@@ -148,7 +148,7 @@ ppml_fit_response <- function(y, x_mat, start = NULL, fallback_starts = list(),
       last$error_class <- "fit_error"
       next
     }
-    acc <- ppml_accept(run$fit, y_scaled, x_mat, control)
+    acc <- ppml_accept(run$fit, y_scaled, x_mat, control, design$col_abs)
     attempts <- c(attempts, list(list(
       source = ladder$labels[i],
       error_class = if (acc$accepted) NA_character_ else acc$reason

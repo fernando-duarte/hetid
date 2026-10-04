@@ -103,7 +103,7 @@ log_projection_result <- function(prep, method, multiplier, is_single,
     diagnostics <- lapply(pass$diagnostics, log_projection_fill, run = run)
   }
   rownames(coef_mat) <- rownames(prep$projection)
-  finite <- apply(is.finite(coef_mat), 2L, all)
+  finite <- colSums(!is.finite(coef_mat)) == 0L
   status <- ifelse(screening$bad, st[["numerical_failure"]],
     ifelse(screening$domain, st[["domain_failure"]],
       ifelse(finite, st[["ok"]], st[["numerical_failure"]])
