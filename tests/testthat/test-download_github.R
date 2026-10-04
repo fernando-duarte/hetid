@@ -16,10 +16,6 @@ test_that("github download verifies the digest and caches the file", {
   expect_identical(result, get_acm_download_path("github"))
   expect_true(file.exists(result))
   expect_identical(unname(tools::sha256sum(result)), fixture$sha)
-
-  # Provenance sidecar records the digest
-  meta <- readLines(paste0(result, ".meta"))
-  expect_true(any(grepl(fixture$sha, meta, fixed = TRUE)))
 })
 
 test_that("a digest mismatch fails closed without caching", {

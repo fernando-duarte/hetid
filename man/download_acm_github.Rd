@@ -24,9 +24,6 @@ Downloads the selected release asset, verifies its sha256 digest, and saves
 it in the per-user data directory, replacing an existing cached copy.
 }
 \details{
-The data directory is created if needed. A sidecar at the cached path plus
-\code{.meta} records the sha256 digest, source URL, and retrieval date in
-\code{YYYY-MM-DD} format. The sidecar is written after the verified file is
-cached; a sidecar write failure does not undo the cache replacement.
+The data directory is created if needed.
 }
 \keyword{internal}

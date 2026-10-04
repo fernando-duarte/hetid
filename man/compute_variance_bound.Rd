@@ -8,8 +8,7 @@ compute_variance_bound(
   yields,
   term_premia,
   i,
-  step = HETID_CONSTANTS$DEFAULT_STEP,
-  c_bar = NULL
+  step = HETID_CONSTANTS$DEFAULT_STEP
 )
 }
 \arguments{
@@ -38,21 +37,12 @@ half of \code{HETID_CONSTANTS$MAX_MATURITY}. Functions with a default use
 must be \code{step} months apart. Functions that read maturity \code{i + step}
 require \code{i <= HETID_CONSTANTS$MAX_MATURITY - step}; additional
 horizon restrictions are described for each function.}
-
-\item{c_bar}{Optional positive finite numeric scalar representing a
-deterministic envelope. When \code{NULL}
-(default) the sample maximum \code{\link{compute_c_hat}} is used;
-when a positive scalar is supplied it replaces the envelope, giving
-the spec's envelope-conservative variant
-\eqn{U_i^{bd} = \frac{1}{4} \bar{C}_i (K1_i + K2_i)}.}
 }
 \value{
 A numeric value of \code{0.25 * c_hat_i * (k_hat_i + k2_hat_i)}, or
-\code{0.25 * c_bar * (k_hat_i + k2_hat_i)} when \code{c_bar} is supplied, or
 \code{NA_real_} when a required component estimator
-(\code{\link{compute_c_hat}} when \code{c_bar} is \code{NULL},
-\code{\link{compute_k_hat}}, or \code{\link{compute_k2_hat}}) has no
-valid paired observations.
+(\code{\link{compute_c_hat}}, \code{\link{compute_k_hat}}, or
+\code{\link{compute_k2_hat}}) has no valid paired observations.
 }
 \description{
 Computes the plug-in leading fourth-order term of the SDF-news
@@ -71,11 +61,6 @@ the one-period maturity \code{i == step} the k_hat (k1) term is zero,
 so only the k2_hat contribution remains; it can be zero when all
 retained price-news observations are zero.
 
-Supplying \code{c_bar} substitutes a user-specified deterministic
-envelope for the sample maximum (the spec's U^bd variant); its
-population target is conservative relative to the minimal-envelope
-target when \code{c_bar} is at least the minimal envelope.
-
 Inputs must contain numeric yield and term-premium columns in annualized
 percentage points, with rows aligned to the same observation dates. Date
 columns are not read or matched here. There must be more than \code{i / step}
@@ -87,9 +72,9 @@ Each component uses dates \code{1, ..., T - i / step}, where \code{T} is the
 number of rows, and omits its own missing terms. Components can therefore
 use different observations. No missing values are imputed. With sufficient
 rows but no usable observations for a required component, the result is
-\code{NA_real_}, including when \code{c_bar} is supplied.
+\code{NA_real_}.
 
-Invalid maturity, step, envelope, or missing required columns raise
+Invalid maturity, step, or missing required columns raise
 \code{hetid_error_bad_argument}; unequal row counts raise
 \code{hetid_error_dimension_mismatch}; too few rows raise
 \code{hetid_error_insufficient_data}. Yields that look like decimal rates
@@ -98,8 +83,7 @@ trigger a unit-scale warning; they are not automatically rescaled.
 \note{
 The effective maximum for \code{i} is \code{MAX_MATURITY - step}, because
 \code{\link{compute_k2_hat}} runs on every call
-and reads data at maturity \code{i + step}, whether or not \code{c_bar}
-replaces the estimated envelope. Separately, \code{i} must
+and reads data at maturity \code{i + step}. Separately, \code{i} must
 be a positive multiple of \code{step}, as required by
 \code{\link{compute_k_hat}} and \code{\link{compute_k2_hat}}.
 The step must be a positive integer no larger than
@@ -115,6 +99,4 @@ yields <- data[, paste0("y", mats)]
 term_premia <- data[, paste0("tp", mats)]
 var_bound_60 <- compute_variance_bound(yields, term_premia, i = 60, step = 1)
 var_bound_60
-# A supplied envelope replaces only the estimated maximum
-compute_variance_bound(yields, term_premia, i = 60, step = 1, c_bar = 1.05)
 }

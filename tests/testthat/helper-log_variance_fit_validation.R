@@ -1,26 +1,5 @@
-#' Shape Validation for hetid_log_variance_fit Objects
-#'
-#' Internal helpers behind \code{validate_hetid_log_variance_fit()}: the
-#' data-shape sweep (\code{y}, \code{x_design} against \code{n_obs} and
-#' \code{coef_labels}), the \code{coef}/\code{warm_start} name checks, the
-#' \code{diagnostics} shape check, and the success/failure cross-field
-#' consistency sweep.
-#'
-#' @name hetid_log_variance_fit_validation
-#' @keywords internal
-NULL
-
-#' Validate a hetid_log_variance_fit Object
-#'
-#' Full structural-alignment gate for the \code{hetid_log_variance_fit}
-#' class, checked against the object's own attributes. Run by the public
-#' boundary \code{fit_log_variance()} on every object it returns; call it
-#' directly on containers assembled via \code{new_hetid_log_variance_fit()}
-#' from parts that are not known-good.
-#'
-#' @param x A classed \code{hetid_log_variance_fit} object.
-#' @return The input \code{x}, invisibly, on successful validation.
-#' @keywords internal
+# Structural validator for hetid_log_variance_fit objects, kept as a test
+# oracle. Package fits are assembled from validated parts and skip it.
 validate_hetid_log_variance_fit <- function(x) {
   assert_hetid_log_variance_fit(x, arg = "x")
   n_obs <- attr(x, "n_obs")
@@ -57,11 +36,10 @@ validate_hetid_log_variance_fit <- function(x) {
   invisible(x)
 }
 
-#' Validate y and x_design Against n_obs and coef_labels
-#' @param x A classed \code{hetid_log_variance_fit} object.
-#' @param n_obs Number of observations the fit was computed from.
-#' @param coef_labels Character vector of coefficient labels.
-#' @noRd
+# Validate y and x_design Against n_obs and coef_labels
+# @param x A classed \code{hetid_log_variance_fit} object.
+# @param n_obs Number of observations the fit was computed from.
+# @param coef_labels Character vector of coefficient labels.
 validate_log_variance_fit_data <- function(x, n_obs, coef_labels) {
   assert_bad_argument_ok(
     is.numeric(x$y) && is.null(dim(x$y)), "y must be a numeric vector",
@@ -92,13 +70,12 @@ validate_log_variance_fit_data <- function(x, n_obs, coef_labels) {
   invisible(TRUE)
 }
 
-#' Validate coef and warm_start Names Against coef_labels
-#'
-#' Checked only when present, matching the fail-closed contract where a
-#' failed fit carries \code{NULL} for either.
-#' @param x A classed \code{hetid_log_variance_fit} object.
-#' @param coef_labels Character vector of coefficient labels.
-#' @noRd
+# Validate coef and warm_start Names Against coef_labels
+#
+# Checked only when present, matching the fail-closed contract where a
+# failed fit carries \code{NULL} for either.
+# @param x A classed \code{hetid_log_variance_fit} object.
+# @param coef_labels Character vector of coefficient labels.
 validate_log_variance_fit_names <- function(x, coef_labels) {
   for (field in c("coef", "warm_start")) {
     val <- x[[field]]
@@ -117,9 +94,8 @@ validate_log_variance_fit_names <- function(x, coef_labels) {
   invisible(TRUE)
 }
 
-#' Validate the diagnostics List Shape
-#' @param x A classed \code{hetid_log_variance_fit} object.
-#' @noRd
+# Validate the diagnostics List Shape
+# @param x A classed \code{hetid_log_variance_fit} object.
 validate_log_variance_fit_diag <- function(x) {
   diagnostics <- x$diagnostics
   assert_bad_argument_ok(
@@ -134,9 +110,8 @@ validate_log_variance_fit_diag <- function(x) {
   invisible(TRUE)
 }
 
-#' Validate the Fields Required When fit_status Is ok
-#' @param x A classed \code{hetid_log_variance_fit} object.
-#' @noRd
+# Validate the Fields Required When fit_status Is ok
+# @param x A classed \code{hetid_log_variance_fit} object.
 validate_log_variance_fit_ok <- function(x) {
   assert_bad_argument_ok(
     isTRUE(x$converged), "converged must be TRUE when fit_status is ok",

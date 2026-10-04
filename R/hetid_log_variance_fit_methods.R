@@ -9,8 +9,7 @@ NULL
 
 #' Assert the hetid_log_variance_fit Class
 #'
-#' Checks class inheritance only. Use
-#' \code{\link{validate_hetid_log_variance_fit}} for structural validation.
+#' Checks class inheritance only.
 #'
 #' @param x Object to check.
 #' @param arg Character string naming the argument in the structured error.
@@ -37,7 +36,7 @@ assert_hetid_log_variance_fit <- function(x, arg = "fit") {
 #' Checks whether a fit reports success, the underlying solver converged,
 #' and the recovered coefficients are present and all finite. This is
 #' deliberately a raw predicate, not a validator -- it does not require
-#' \code{fit} to have passed \code{\link{validate_hetid_log_variance_fit}}, so
+#' \code{fit} to be structurally valid, so
 #' callers can probe an in-progress or hand-built fit list directly.
 #'
 #' This checks \code{fit_status} and \code{converged}, not an evaluator's

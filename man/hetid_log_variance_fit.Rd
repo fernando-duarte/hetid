@@ -6,8 +6,7 @@
 \description{
 Container for accepted and failed log-variance fits, built by
 \code{\link{fit_log_variance}}. Internal callers can assemble one with
-\code{\link{new_hetid_log_variance_fit}} and check its structure with
-\code{\link{validate_hetid_log_variance_fit}}.
+\code{\link{new_hetid_log_variance_fit}}.
 }
 \details{
 The list contains \code{coef}, \code{fit_status}, \code{converged},

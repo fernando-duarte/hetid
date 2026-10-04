@@ -84,9 +84,8 @@ Checks \code{n_obs}, \code{response_scale}, \code{coef_labels}, and
 \code{estimator}, but stores the fit fields without validating them.
 }
 \details{
-The parameter descriptions state the contract for validated fits.
-Call \code{\link{validate_hetid_log_variance_fit}} when assembling a
-container from parts that are not known to satisfy that contract.
+The parameter descriptions state the contract for validated fits; the
+constructor does not enforce it.
 Results from \code{\link{fit_log_variance}} are assembled from validated
 inputs and are not re-validated.
 Invalid container-identity attributes signal a

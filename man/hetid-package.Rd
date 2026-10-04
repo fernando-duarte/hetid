@@ -198,16 +198,12 @@ news-error variance bound
 \item \code{\link{compute_quadratic_set_evidence}()}: Nonemptiness, boundedness, outer bounds
 \item \code{\link{IDENTIFIED_SET_CONTROL}}: Identified-set search numerical controls
 \item \code{\link{QUADRATIC_PROFILE_CONTROL}}: Quadratic profile numerical controls
-\item \code{\link{MEAN_TAU_CONTROL}}: Mean-set tau bracket and grid controls
-\item \code{\link{build_identified_set_objectives}()}:
-Theta and structural coefficient objectives
-\item \code{\link{check_identified_set_center}()}: Strict interior check for a proposed center
+\item \code{\link{MEAN_TAU_CONTROL}}: Mean-set tau bracket controls
 \item \code{\link{solve_quadratic_program}()}: Scaled SLSQP optimizer candidates
 \item \code{\link{profile_quadratic_coefficients}()}:
 Coefficient endpoints with boundedness evidence
 \item \code{\link{profile_mean_tau_path}()}: Ordered mean-set profiles across tau values
 \item \code{\link{find_mean_tau_star}()}: Bracket a mean-set boundedness transition
-\item \code{\link{mean_tau_grid}()}: Interior tau grid with a refined tail
 \item \code{\link{VARIANCE_SHARE_CONTROL}}: Variance-share search numerical controls
 \item \code{\link{compute_variance_shares}()}: Outcome variance shares over mean sets
 \item \code{\link{log_variance_map_control}()}: Numerical controls for coefficient maps

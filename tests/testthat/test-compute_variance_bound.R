@@ -96,27 +96,6 @@ test_that("compute_variance_bound rejects invalid maturity values", {
   )
 })
 
-test_that("compute_variance_bound accepts a user envelope c_bar (U^bd)", {
-  test_env <- setup_standard_test_env()
-  i <- 48
-
-  k_hat <- compute_k_hat(test_env$yields, test_env$term_premia, i = i)
-  k2_hat <- compute_k2_hat(test_env$yields, test_env$term_premia, i = i)
-
-  c_bar <- 1.05
-  vb_bd <- compute_variance_bound(test_env$yields, test_env$term_premia,
-    i = i, c_bar = c_bar
-  )
-  expect_equal(vb_bd, 0.25 * c_bar * (k_hat + k2_hat),
-    tolerance = 1e-12,
-    label = "U^bd should use the supplied deterministic envelope"
-  )
-
-  # The supplied envelope differs from the sample-max default
-  vb_default <- compute_variance_bound(test_env$yields, test_env$term_premia, i = i)
-  expect_false(isTRUE(all.equal(vb_bd, vb_default)))
-})
-
 test_that("compute_variance_bound returns typed numeric NA on a degenerate component", {
   test_env <- setup_standard_test_env()
   yields_na <- test_env$yields
@@ -137,36 +116,5 @@ test_that("compute_variance_bound returns typed numeric NA on a degenerate compo
   expect_identical(
     compute_variance_bound(yields_na, test_env$term_premia, i = 60),
     NA_real_
-  )
-})
-
-test_that("a supplied c_bar does not rescue a degenerate k component", {
-  test_env <- setup_standard_test_env()
-  yields_na <- test_env$yields
-  yields_na$y60 <- NA_real_
-
-  # c_bar replaces the envelope only; k_hat and k2_hat still have no valid
-  # observations, so the bound stays NA instead of collapsing to 0.25 * c_bar * 0
-  expect_identical(
-    compute_variance_bound(
-      yields_na, test_env$term_premia,
-      i = 60, c_bar = 1.05
-    ),
-    NA_real_
-  )
-})
-
-test_that("compute_variance_bound rejects an invalid c_bar", {
-  test_env <- setup_standard_test_env()
-  expect_error(
-    compute_variance_bound(test_env$yields, test_env$term_premia, i = 48, c_bar = -1),
-    class = "hetid_error_bad_argument"
-  )
-  expect_error(
-    compute_variance_bound(
-      test_env$yields, test_env$term_premia,
-      i = 48, c_bar = c(1, 2)
-    ),
-    class = "hetid_error_bad_argument"
   )
 })

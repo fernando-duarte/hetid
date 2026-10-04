@@ -18,7 +18,6 @@ Defaults to \code{"fit"}.}
 \code{hetid_error_bad_argument} condition carrying \code{arg}.
 }
 \description{
-Checks class inheritance only. Use
-\code{\link{validate_hetid_log_variance_fit}} for structural validation.
+Checks class inheritance only.
 }
 \keyword{internal}

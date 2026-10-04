@@ -22,7 +22,7 @@ Missing or nonfinite coefficient values fail the finite-value check.
 Checks whether a fit reports success, the underlying solver converged,
 and the recovered coefficients are present and all finite. This is
 deliberately a raw predicate, not a validator -- it does not require
-\code{fit} to have passed \code{\link{validate_hetid_log_variance_fit}}, so
+\code{fit} to be structurally valid, so
 callers can probe an in-progress or hand-built fit list directly.
 }
 \details{

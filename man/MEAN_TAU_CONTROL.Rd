@@ -2,15 +2,14 @@
 % Please edit documentation in R/mean_tau_control.R
 \name{MEAN_TAU_CONTROL}
 \alias{MEAN_TAU_CONTROL}
-\title{Controls for Mean-Set Tau Brackets and Grids}
+\title{Controls for Mean-Set Tau Brackets}
 \format{
 A named list. The sweep cap is 0.99 and step is 0.005, followed by at
-most 40 bisections. Grids use a 25-point backbone and subdivide intervals
-in the last 10 percent into four parts, preserving the backbone maximum.
+most 40 bisections.
 }
 \usage{
 MEAN_TAU_CONTROL
 }
 \description{
-Controls for Mean-Set Tau Brackets and Grids
+Controls for Mean-Set Tau Brackets
 }
