@@ -48,6 +48,8 @@ harvey_ratio <- function(theta, y, x_mat) {
 #' @param pos Logical vector \code{y > 0} of length \code{length(y)}.
 #' @param col_abs Numeric vector \code{colSums(abs(x_mat))}, the per-coordinate
 #'   scale the moment is judged on. Each entry must be positive.
+#' @param log_y_pos Numeric vector \code{log(y[pos])}; a fit passes the copy it
+#'   computed once instead of taking the log on every evaluation.
 #'
 #' @return \code{NULL} for non-finite coefficients or linear predictors,
 #'   overflowing fitted variances, non-finite ratios, criterion, or scaled
@@ -56,7 +58,7 @@ harvey_ratio <- function(theta, y, x_mat) {
 #'   \code{q}, coefficient-length vector \code{moment} (\eqn{X'(r - 1)}), and
 #'   scalar \code{score_norm} (\code{max(abs(moment) / col_abs)}).
 #' @keywords internal
-harvey_eval <- function(theta, y, x_mat, pos, col_abs) {
+harvey_eval <- function(theta, y, x_mat, pos, col_abs, log_y_pos = log(y[pos])) {
   if (!all(is.finite(theta))) {
     return(NULL)
   }
@@ -66,7 +68,7 @@ harvey_eval <- function(theta, y, x_mat, pos, col_abs) {
   }
   # the ratio from the eta already in hand, in harvey_ratio()'s order
   r <- numeric(length(y))
-  r[pos] <- exp(log(y[pos]) - eta[pos])
+  r[pos] <- exp(log_y_pos - eta[pos])
   if (anyNA(r) || !all(is.finite(r[pos]))) {
     return(NULL)
   }

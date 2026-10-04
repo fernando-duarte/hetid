@@ -4,7 +4,7 @@
 \alias{harvey_eval}
 \title{Evaluate One Candidate Coefficient Vector}
 \usage{
-harvey_eval(theta, y, x_mat, pos, col_abs)
+harvey_eval(theta, y, x_mat, pos, col_abs, log_y_pos = log(y[pos]))
 }
 \arguments{
 \item{theta}{Numeric coefficient vector of length \code{ncol(x_mat)}.}
@@ -17,6 +17,9 @@ harvey_eval(theta, y, x_mat, pos, col_abs)
 
 \item{col_abs}{Numeric vector \code{colSums(abs(x_mat))}, the per-coordinate
 scale the moment is judged on. Each entry must be positive.}
+
+\item{log_y_pos}{Numeric vector \code{log(y[pos])}; a fit passes the copy it
+computed once instead of taking the log on every evaluation.}
 }
 \value{
 \code{NULL} for non-finite coefficients or linear predictors,

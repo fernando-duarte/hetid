@@ -106,13 +106,14 @@ harvey_fit_response <- function(y, x_mat, start = NULL,
     ))
   }
   col_abs <- design$col_abs
+  log_y_pos <- log(y_scaled[pos])
   ladder <- harvey_start_ladder(start, fallback_starts, y_scaled, ncol(x_mat), control)
   attempts <- list()
   criteria <- list()
   last_error <- "no_accepted_start"
   for (i in seq_along(ladder$candidates)) {
     src <- ladder$labels[i]
-    cur <- harvey_eval(ladder$candidates[[i]], y_scaled, x_mat, pos, col_abs)
+    cur <- harvey_eval(ladder$candidates[[i]], y_scaled, x_mat, pos, col_abs, log_y_pos)
     if (is.null(cur)) {
       attempts <- c(attempts, list(list(
         source = src, error_class = "invalid_start"
@@ -120,7 +121,9 @@ harvey_fit_response <- function(y, x_mat, start = NULL,
       last_error <- "invalid_start"
       next
     }
-    scored <- harvey_scoring(cur, y_scaled, x_mat, pos, col_abs, chol_xx, control)
+    scored <- harvey_scoring(
+      cur, y_scaled, x_mat, pos, col_abs, chol_xx, control, log_y_pos
+    )
     criteria <- c(criteria, list(list(
       source = src, status = scored$status,
       score_norm = scored$eval$score_norm, objective = scored$eval$q

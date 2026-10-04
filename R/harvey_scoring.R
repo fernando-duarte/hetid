@@ -36,7 +36,8 @@ NULL
 #'   with the accepted \code{eval} and the number of \code{halves} taken.
 #' @keywords internal
 harvey_line_search <- function(cur, dir, y, x_mat, pos, col_abs,
-                               control = log_variance_fit_control("harvey")) {
+                               control = log_variance_fit_control("harvey"),
+                               log_y_pos = log(y[pos])) {
   ctrl <- control
   step_size <- 1
   q_noise <- ctrl$Q_NOISE_MULTIPLIER * .Machine$double.eps *
@@ -44,7 +45,7 @@ harvey_line_search <- function(cur, dir, y, x_mat, pos, col_abs,
   margin <- ctrl$SCORE_PROGRESS_MULTIPLIER * .Machine$double.eps *
     max(1, cur$score_norm)
   for (halves in 0:ctrl$LINE_SEARCH_HALVINGS) {
-    trial <- harvey_eval(cur$theta + step_size * dir, y, x_mat, pos, col_abs)
+    trial <- harvey_eval(cur$theta + step_size * dir, y, x_mat, pos, col_abs, log_y_pos)
     if (!is.null(trial)) {
       tie <- abs(trial$q - cur$q) <= q_noise
       if (trial$q < cur$q ||
@@ -114,7 +115,8 @@ harvey_newton_dir <- function(cur, x_mat,
 #'   \code{"line_search_stall"}, or \code{"iteration_cap"}.
 #' @keywords internal
 harvey_scoring <- function(cur, y, x_mat, pos, col_abs, chol_xx,
-                           control = log_variance_fit_control("harvey")) {
+                           control = log_variance_fit_control("harvey"),
+                           log_y_pos = log(y[pos])) {
   ctrl <- control
   if (cur$score_norm <= ctrl$SCORE_TOLERANCE) {
     return(list(eval = cur, iters = 0L, halves = 0L, status = "converged"))
@@ -125,11 +127,13 @@ harvey_scoring <- function(cur, y, x_mat, pos, col_abs, chol_xx,
     taken <- if (is.null(dir_newton)) {
       NULL
     } else {
-      harvey_line_search(cur, dir_newton, y, x_mat, pos, col_abs, control)
+      harvey_line_search(cur, dir_newton, y, x_mat, pos, col_abs, control, log_y_pos)
     }
     if (is.null(taken)) {
       dir_fisher <- harvey_chol_solve(chol_xx, cur$moment)
-      taken <- harvey_line_search(cur, dir_fisher, y, x_mat, pos, col_abs, control)
+      taken <- harvey_line_search(
+        cur, dir_fisher, y, x_mat, pos, col_abs, control, log_y_pos
+      )
     }
     if (is.null(taken)) {
       return(list(
