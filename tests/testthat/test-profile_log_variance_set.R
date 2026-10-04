@@ -79,13 +79,14 @@ test_that("failed fits are skipped and counted, not fatal", {
   parts <- profile_box()
   attempt <- 0L
   testthat::local_mocked_bindings(
-    fit_log_variance_at_b = function(b, w1, w2, x, estimator = "ppml",
-                                     start = NULL, ...) {
-      attempt <<- attempt + 1L
-      if (attempt %% 2L == 0L) {
-        failed_fit()
-      } else {
-        ok_fit(c("(Intercept)" = attempt * 1.0, v1 = 0, v2 = 0), c(1, 0, 0))
+    make_log_variance_fitter = function(...) {
+      function(y, start = NULL, ...) {
+        attempt <<- attempt + 1L
+        if (attempt %% 2L == 0L) {
+          failed_fit()
+        } else {
+          ok_fit(c("(Intercept)" = attempt * 1.0, v1 = 0, v2 = 0), c(1, 0, 0))
+        }
       }
     }
   )
@@ -98,7 +99,7 @@ test_that("failed fits are skipped and counted, not fatal", {
 test_that("all fits failing yields NA with the counts intact", {
   parts <- profile_box()
   testthat::local_mocked_bindings(
-    fit_log_variance_at_b = function(...) failed_fit()
+    make_log_variance_fitter = function(...) function(...) failed_fit()
   )
   prof <- profile_log_variance_set(parts$box, parts$x_var, n_points = 2L)
   expect_true(all(is.na(prof$lower)))
@@ -112,17 +113,18 @@ test_that("the warm start advances only on a successful fit", {
   starts <- list()
   attempt <- 0L
   testthat::local_mocked_bindings(
-    fit_log_variance_at_b = function(b, w1, w2, x, estimator = "ppml",
-                                     start = NULL, ...) {
-      attempt <<- attempt + 1L
-      starts[[attempt]] <<- start
-      if (attempt == 2L) {
-        return(failed_fit())
+    make_log_variance_fitter = function(...) {
+      function(y, start = NULL, ...) {
+        attempt <<- attempt + 1L
+        starts[[attempt]] <<- start
+        if (attempt == 2L) {
+          return(failed_fit())
+        }
+        ok_fit(
+          c("(Intercept)" = 0, v1 = 0, v2 = 0),
+          c(attempt * 1.0, 0, 0)
+        )
       }
-      ok_fit(
-        c("(Intercept)" = 0, v1 = 0, v2 = 0),
-        c(attempt * 1.0, 0, 0)
-      )
     }
   )
   invisible(profile_log_variance_set(parts$box, parts$x_var, n_points = 2L))

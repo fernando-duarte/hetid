@@ -95,6 +95,11 @@ log_projection_fill <- function(values, run) {
 
 log_projection_result <- function(prep, method, multiplier, is_single,
                                   jacobian, screening, run, pass) {
+  if (is_single) {
+    return(log_projection_result_single(
+      prep, method, multiplier, jacobian, screening, pass
+    ))
+  }
   st <- LOG_PROJECTION_STATUS
   coef_mat <- matrix(NA_real_, nrow(prep$projection), length(run))
   diagnostics <- list()
@@ -110,15 +115,6 @@ log_projection_result <- function(prep, method, multiplier, is_single,
     )
   )
   status <- unname(status)
-  jac <- NULL
-  if (is_single && jacobian && status == st[["ok"]]) {
-    jac <- log_projection_jacobian(prep, method, pass)
-    dimnames(jac) <- list(rownames(prep$projection), colnames(prep$w2))
-    if (!all(is.finite(jac))) {
-      status <- st[["numerical_failure"]]
-      jac <- NULL
-    }
-  }
   # cleared only once the status is final; log keeps its divergent
   # coefficients at a zero residual (the log-OLS divergence semantics)
   clear <- status == st[["numerical_failure"]] |
@@ -128,16 +124,51 @@ log_projection_result <- function(prep, method, multiplier, is_single,
     method = method, multiplier = multiplier,
     n_mean = attr(prep, "n_mean"), n_vol = attr(prep, "n_vol")
   ))
-  if (is_single) {
-    coef_mat <- coef_mat[, 1L]
-    diagnostics <- lapply(diagnostics, function(v) {
-      if (is.matrix(v)) v[, 1L] else v
+  list(coef = coef_mat, jacobian = NULL, status = status, diagnostics = diagnostics)
+}
+
+# One candidate: the batched assembly's result for its single column, built
+# as vectors without the candidate-matrix scaffolding
+log_projection_result_single <- function(prep, method, multiplier, jacobian,
+                                         screening, pass) {
+  st <- LOG_PROJECTION_STATUS
+  coef_vec <- rep(NA_real_, nrow(prep$projection))
+  diagnostics <- list()
+  if (!is.null(pass)) {
+    coef_vec <- as.vector(pass$coef)
+    diagnostics <- lapply(pass$diagnostics, function(v) {
+      filled <- log_projection_fill(v, TRUE)
+      if (is.matrix(filled)) filled[, 1L] else filled
     })
   }
-  list(
-    coef = coef_mat, jacobian = jac, status = status,
-    diagnostics = diagnostics
-  )
+  names(coef_vec) <- rownames(prep$projection)
+  status <- if (screening$bad) {
+    st[["numerical_failure"]]
+  } else if (screening$domain) {
+    st[["domain_failure"]]
+  } else if (all(is.finite(coef_vec))) {
+    st[["ok"]]
+  } else {
+    st[["numerical_failure"]]
+  }
+  jac <- NULL
+  if (jacobian && status == st[["ok"]]) {
+    jac <- log_projection_jacobian(prep, method, pass)
+    dimnames(jac) <- list(rownames(prep$projection), colnames(prep$w2))
+    if (!all(is.finite(jac))) {
+      status <- st[["numerical_failure"]]
+      jac <- NULL
+    }
+  }
+  if (status == st[["numerical_failure"]] ||
+    (method != "log" && status == st[["domain_failure"]])) {
+    coef_vec[] <- NA_real_
+  }
+  diagnostics <- c(diagnostics, list(
+    method = method, multiplier = multiplier,
+    n_mean = attr(prep, "n_mean"), n_vol = attr(prep, "n_vol")
+  ))
+  list(coef = coef_vec, jacobian = jac, status = status, diagnostics = diagnostics)
 }
 
 log_projection_jacobian <- function(prep, method, pass) {

@@ -77,8 +77,8 @@ compute_per_maturity <- function(w1, w2, maturities,
 centered_cov <- function(a, b) {
   a <- as.matrix(a)
   b <- as.matrix(b)
-  a_centered <- sweep(a, 2, colMeans(a))
-  b_centered <- sweep(b, 2, colMeans(b))
+  a_centered <- a - rep(colMeans(a), each = nrow(a))
+  b_centered <- if (identical(a, b)) a_centered else b - rep(colMeans(b), each = nrow(b))
   crossprod(a_centered, b_centered) / nrow(a)
 }
 
